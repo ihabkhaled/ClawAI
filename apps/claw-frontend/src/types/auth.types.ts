@@ -5,16 +5,19 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface LoginResponse {
+export type TokenPair = {
   accessToken: string;
   refreshToken: string;
-  user: UserProfile;
-}
+};
 
-export interface RefreshResponse {
-  accessToken: string;
-  refreshToken: string;
-}
+export type LoginResponse = {
+  tokens: TokenPair;
+  user: UserProfile;
+};
+
+export type RefreshResponse = {
+  tokens: TokenPair;
+};
 
 export interface AuthState {
   accessToken: string | null;

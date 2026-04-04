@@ -6,8 +6,8 @@ export const authService = {
   async login(data: LoginRequest): Promise<LoginResponse> {
     const response = await authRepository.login(data);
     useAuthStore.getState().setAuth({
-      accessToken: response.accessToken,
-      refreshToken: response.refreshToken,
+      accessToken: response.tokens.accessToken,
+      refreshToken: response.tokens.refreshToken,
       user: response.user,
     });
     return response;
@@ -35,8 +35,8 @@ export const authService = {
     }
     const response = await authRepository.refresh(refreshToken);
     useAuthStore.getState().setTokens({
-      accessToken: response.accessToken,
-      refreshToken: response.refreshToken,
+      accessToken: response.tokens.accessToken,
+      refreshToken: response.tokens.refreshToken,
     });
   },
 };
