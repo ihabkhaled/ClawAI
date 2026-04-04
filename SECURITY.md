@@ -4,6 +4,17 @@ Security practices, mechanisms, and considerations for the Claw platform.
 
 ---
 
+## Microservices Security Model
+
+Claw's microservices architecture provides security through isolation:
+
+- **Network isolation**: All services communicate over a Docker bridge network; only Nginx, the frontend, and management ports are exposed to the host
+- **Database-per-service**: Each microservice has its own database instance; a compromise of one database does not expose another service's data
+- **Independent authentication**: Every microservice validates JWTs independently using the `@claw/shared-auth` package
+- **Async messaging security**: RabbitMQ connections use authenticated credentials; services only consume messages from their subscribed routing keys
+
+---
+
 ## Secret Handling
 
 ### Encryption at Rest (AES-256-GCM)
@@ -25,13 +36,29 @@ The encrypted payload stored in the database consists of: `IV + AuthTag + Cipher
 
 ### What Is Encrypted
 
-| Data                    | Encrypted | Storage Location   |
-|-------------------------|-----------|--------------------|
-| Provider API keys       | Yes       | `connectors` table |
-| AWS secret access keys  | Yes       | `connectors` table |
-| User passwords          | Hashed    | `users` table      |
-| JWT secrets             | N/A       | Environment only   |
-| Refresh tokens          | Hashed    | `refresh_tokens`   |
+| Data                    | Encrypted | Storage Location          | Service     |
+|-------------------------|-----------|---------------------------|-------------|
+| Provider API keys       | Yes       | `connectors` table        | Connector   |
+| AWS secret access keys  | Yes       | `connectors` table        | Connector   |
+| User passwords          | Hashed    | `users` table             | Auth        |
+| JWT secrets             | N/A       | Environment only          | All         |
+| Refresh tokens          | Hashed    | `refresh_tokens` table    | Auth        |
+
+### Secret Handling Per Service
+
+Each microservice only has access to the secrets it needs:
+
+| Service    | Secrets Accessed                                    |
+|------------|-----------------------------------------------------|
+| Auth       | JWT_SECRET, password hashes                         |
+| Chat       | JWT_SECRET (for validation only)                    |
+| Connector  | JWT_SECRET, ENCRYPTION_KEY, provider API keys       |
+| Routing    | JWT_SECRET                                          |
+| Memory     | JWT_SECRET                                          |
+| File       | JWT_SECRET                                          |
+| Audit      | JWT_SECRET                                          |
+| Ollama     | JWT_SECRET, OLLAMA_BASE_URL                         |
+| Health     | No secrets (stateless aggregator)                   |
 
 ---
 
@@ -43,6 +70,7 @@ The encrypted payload stored in the database consists of: `IV + AuthTag + Cipher
 - **Why argon2id**: Memory-hard algorithm resistant to GPU and ASIC attacks; recommended by OWASP
 - Passwords are never stored in plaintext or reversible encryption
 - Argon2 parameters follow OWASP recommendations for server-side hashing
+- Password operations are handled exclusively by the Auth service
 
 ### JWT (JSON Web Tokens)
 
@@ -50,11 +78,12 @@ The encrypted payload stored in the database consists of: `IV + AuthTag + Cipher
 - **Refresh tokens**: Longer-lived (default 7 days), used to obtain new access tokens
 - **Signing**: HMAC-SHA256 with the `JWT_SECRET` environment variable
 - **Storage**: Access tokens are held in memory on the frontend; refresh tokens are stored in httpOnly cookies or secure storage
+- **Validation**: Every microservice validates JWTs independently using the `@claw/shared-auth` JWT guard -- no single point of failure for auth validation
 
 ### Refresh Token Rotation
 
 When a refresh token is used:
-1. The backend verifies the token against the stored hash
+1. The Auth service verifies the token against the stored hash
 2. The old token is invalidated immediately
 3. A new access token and refresh token pair is issued
 4. The new refresh token hash replaces the old one in the database
@@ -82,19 +111,51 @@ Claw uses a simple role-based model with two roles:
 
 ### Guard Implementation
 
-Authorization is enforced using NestJS guards:
+Authorization is enforced using NestJS guards provided by `@claw/shared-auth`:
 
-- **`AuthGuard`**: Verifies the JWT is valid and attaches the user to the request
+- **`JwtAuthGuard`**: Verifies the JWT is valid and attaches the user to the request
 - **`RolesGuard`**: Checks that the authenticated user has the required role for the endpoint
 - Guards are applied at the controller or individual route level using decorators
 - All endpoints except `/auth/login`, `/auth/register`, and `/health` require authentication
+- Each microservice applies these guards independently
 
 ### Resource Ownership
 
 Beyond role checks, services enforce ownership:
-- Users can only access their own chat threads and messages
-- Users can only view and modify their own profile
-- Connectors are shared resources managed by admins
+- Users can only access their own chat threads and messages (Chat service)
+- Users can only view and modify their own profile (Auth service)
+- Connectors are shared resources managed by admins (Connector service)
+
+---
+
+## Network Security
+
+### Docker Bridge Network
+
+All microservices, databases, and infrastructure containers communicate over a private Docker bridge network:
+
+- Only the following ports are exposed to the host:
+  - Nginx (:80) -- API gateway
+  - Frontend (:3000) -- UI
+  - Individual service ports (:4001-4009) -- for development convenience
+  - Database ports (:5441-5446, :27018, :6380) -- for development convenience
+  - RabbitMQ management (:15672) -- for administration
+- In production, only Nginx (:80) and Frontend (:3000) should be exposed to the host
+- Services reference each other by Docker service name (e.g., `claw-auth-service`), not by IP
+- Database containers are not accessible from outside the Docker network in production
+
+### Inter-Service Communication
+
+- **Synchronous (HTTP)**: Services call each other via internal Docker network URLs
+- **Asynchronous (RabbitMQ)**: Events are published to the `claw.events` topic exchange; services subscribe to specific routing keys
+- No service directly accesses another service's database
+
+### RabbitMQ Authentication
+
+- RabbitMQ requires authenticated connections (username/password)
+- Default credentials (`guest`/`guest`) must be changed in production
+- Each service authenticates to RabbitMQ independently
+- Message integrity is maintained by the AMQP protocol over the Docker internal network
 
 ---
 
@@ -108,6 +169,7 @@ All incoming request data is validated using Zod schemas:
 - Validation is applied via a custom NestJS pipe that runs Zod `.parse()` before the handler executes
 - Invalid requests receive a `400 Bad Request` with structured error details
 - Zod schemas serve as the single source of truth for both validation and TypeScript types
+- Shared types are defined in `@claw/shared-types` and used across services
 
 ### Validation Rules
 
@@ -124,7 +186,7 @@ All incoming request data is validated using Zod schemas:
 
 ### Strategy
 
-Rate limiting is applied at multiple levels:
+Rate limiting is applied at the Nginx reverse proxy level and within individual services:
 
 | Endpoint Category     | Limit            | Window  | Purpose                          |
 |-----------------------|------------------|---------|----------------------------------|
@@ -138,6 +200,7 @@ Rate limiting is applied at multiple levels:
 - Rate limits are enforced using Redis-backed counters
 - Each limit is keyed by user ID (authenticated) or IP address (unauthenticated)
 - Exceeded limits return `429 Too Many Requests` with a `Retry-After` header
+- Nginx provides a first layer of rate limiting before requests reach services
 
 ---
 
@@ -165,13 +228,13 @@ Rate limiting is applied at multiple levels:
 
 - The API uses bearer token authentication (JWT in the `Authorization` header), which is inherently resistant to CSRF because browsers do not automatically attach custom headers to cross-origin requests
 - Cookies, if used for refresh tokens, are set with `SameSite=Strict` and `HttpOnly` flags
-- CORS is configured to allow only the frontend origin
+- CORS is configured on Nginx to allow only the frontend origin
 
 ### CORS Configuration
 
 - `Access-Control-Allow-Origin` is set to the frontend URL (not wildcard)
 - `Access-Control-Allow-Credentials` is enabled only when cookie-based refresh tokens are used
-- Preflight requests are handled for all mutating methods
+- Preflight requests are handled by Nginx for all mutating methods
 
 ---
 
@@ -179,26 +242,23 @@ Rate limiting is applied at multiple levels:
 
 ### Container Isolation
 
-- Each service runs in its own container with its own filesystem
+- Each microservice runs in its own container with its own filesystem
+- Each database runs in its own container, isolated from other databases
 - Containers communicate over a Docker bridge network; only necessary ports are exposed to the host
 - No containers run in privileged mode
 
 ### Image Security
 
-- Official images are used for all infrastructure services (pgvector, redis, ollama)
-- Images are pinned to major version tags (e.g., `pg16`, `7-alpine`) to balance stability and security updates
+- Official images are used for all infrastructure services (pgvector, redis, mongo, rabbitmq, ollama)
+- Images are pinned to major version tags to balance stability and security updates
 - No custom images pull from untrusted registries
 
 ### Volume Security
 
 - Database volumes persist on the host filesystem under Docker's managed volume directory
+- Each database has its own named volume
 - No sensitive data is bind-mounted from the host
 - The `.env` file is excluded from Docker contexts via `.dockerignore`
-
-### Network Security
-
-- In production, database and Redis ports should not be exposed to the host; only the backend and frontend ports need external access
-- The Docker Compose file exposes all ports for development convenience; production deployments should use internal networking
 
 ---
 
