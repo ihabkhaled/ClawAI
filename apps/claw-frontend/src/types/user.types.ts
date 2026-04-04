@@ -1,20 +1,20 @@
-import type { UserRole, UserStatus } from "@/enums";
+import type { UserRole, UserStatus } from '@/enums';
 
-export interface User {
+export type User = {
   id: string;
   email: string;
-  name: string;
-  avatarUrl: string | null;
+  username: string;
   role: UserRole;
   status: UserStatus;
+  mustChangePassword: boolean;
   createdAt: string;
   updatedAt: string;
-}
+};
 
-export interface UserProfile {
+export type UserProfile = {
   id: string;
   email: string;
-  name: string;
-  avatarUrl: string | null;
+  username: string;
   role: UserRole;
-}
+  mustChangePassword: boolean;
+};

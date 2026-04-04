@@ -34,7 +34,7 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Name</label>
-              <Input defaultValue={user?.name ?? ""} />
+              <Input defaultValue={user?.username ?? ""} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Email</label>

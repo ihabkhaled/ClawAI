@@ -1,9 +1,12 @@
-export function getInitials(name: string): string {
+export function getInitials(name: string | null | undefined): string {
+  if (!name) {
+    return '??';
+  }
   return name
-    .split(" ")
+    .split(' ')
     .map((part) => part[0])
     .filter(Boolean)
     .slice(0, 2)
-    .join("")
+    .join('')
     .toUpperCase();
 }

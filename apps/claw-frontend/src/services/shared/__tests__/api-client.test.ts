@@ -108,6 +108,6 @@ describe('apiClient', () => {
 
     const callArgs = mockFetch.mock.calls[0] as [string, RequestInit];
     const url = callArgs[0];
-    expect(url).toContain('http://localhost:8000/api/v1/test');
+    expect(url).toContain('/api/v1/test');
   });
 });

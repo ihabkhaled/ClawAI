@@ -8,9 +8,9 @@ import type { UserProfile } from '@/types';
 const mockUser: UserProfile = {
   id: 'user-1',
   email: 'test@example.com',
-  name: 'Test User',
-  avatarUrl: null,
+  username: 'claw-admin',
   role: 'ADMIN' as UserProfile['role'],
+  mustChangePassword: false,
 };
 
 describe('useAuthStore', () => {
@@ -73,13 +73,13 @@ describe('useAuthStore', () => {
       });
     });
 
-    const updatedUser: UserProfile = { ...mockUser, name: 'Updated Name' };
+    const updatedUser: UserProfile = { ...mockUser, username: 'updated-user' };
     act(() => {
       useAuthStore.getState().setUser(updatedUser);
     });
 
     const state = useAuthStore.getState();
-    expect(state.user?.name).toBe('Updated Name');
+    expect(state.user?.username).toBe('updated-user');
     expect(state.accessToken).toBe('access-123');
   });
 
