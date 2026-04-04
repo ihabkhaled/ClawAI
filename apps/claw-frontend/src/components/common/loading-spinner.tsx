@@ -1,14 +1,9 @@
 import { Loader2 } from "lucide-react";
 
+import { SPINNER_SIZE_CLASSES } from "@/constants";
 import { ComponentSize } from "@/enums";
 import { cn } from "@/lib/utils";
 import type { LoadingSpinnerProps } from "@/types";
-
-const sizeClasses = {
-  [ComponentSize.SM]: "h-4 w-4",
-  [ComponentSize.MD]: "h-8 w-8",
-  [ComponentSize.LG]: "h-12 w-12",
-} as const;
 
 export function LoadingSpinner({
   className,
@@ -24,7 +19,7 @@ export function LoadingSpinner({
       role="status"
       aria-label={label}
     >
-      <Loader2 className={cn("animate-spin text-muted-foreground", sizeClasses[size])} />
+      <Loader2 className={cn("animate-spin text-muted-foreground", SPINNER_SIZE_CLASSES[size])} />
       <p className="text-sm text-muted-foreground">{label}</p>
     </div>
   );

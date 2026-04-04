@@ -32,28 +32,32 @@ These rules are non-negotiable. Every rule must be followed in every file, every
 11. **NEVER use string literal unions for domain values** — define enums in `common/enums/` and import them.
 12. **NEVER compare domain values with raw strings** — use enum comparisons (e.g., `status === OrderStatus.ACTIVE`).
 13. **NEVER define interfaces, types, enums, constants, or standalone functions inline** in controllers, services, repositories, modules, guards, interceptors, filters, or pipes — extract them to dedicated files.
-14. **NEVER put business logic in controllers** — controllers call exactly ONE service method.
-15. **NEVER put Prisma calls outside repositories** — repositories are the sole data-access layer.
-16. **NEVER put business logic in repositories** — repositories are pure data access only.
-17. **NEVER omit explicit return types** — every function and method must have an explicit return type annotation.
-18. **NEVER expose secrets in API responses, logs, or audit records** — redact sensitive fields before output.
-19. **NEVER use class-validator or class-transformer** — use Zod for all validation and transformation.
-20. **NEVER use `@UsePipes()` at method level when `@Param()` is present** — apply pipe directly in decorator or at controller level.
-21. **EVERY exception must use `BusinessException` with a `messageKey`** — no raw `throw new Error()` or NestJS built-in exceptions.
-22. **EVERY function must have an explicit return type** — including private methods, arrow functions assigned to variables.
-23. **Service methods max 30 lines** — extract complex logic to utility files in `service.utilities/` or `manager.utilities/`.
-24. **Repository methods take properly typed params and return raw Prisma results** — no transformation, no business logic.
-25. **Controllers are 3-line methods** — extract params, call ONE service, return result.
-26. **No floating promises** — every promise must be `await`ed or explicitly `void`ed.
-27. **No N+1 queries** — use Prisma `include`, `select`, or batch queries. Review every loop that touches the database.
-28. **Every foreign key must be indexed, every WHERE column must be indexed** — add indexes in Prisma schema.
-29. **Paginate all list endpoints** — no unbounded queries. Use cursor or offset pagination with configurable limits.
-30. **All errors use messageKey pattern**: `errors.<module>.<action>` (e.g., `errors.auth.invalidCredentials`).
-31. **No magic numbers or strings** — extract to constants files.
-32. **No circular dependencies** — modules must have a clear dependency direction.
-33. **No default exports** — use named exports exclusively.
-34. **No mutable module-level state** — use providers and DI for shared state.
-35. **All Zod schemas must have `.max()` on every string and array field** — prevent unbounded input.
+14. **ALL layers zero-inline** — Controllers, Services, Managers, Repositories, Guards, Interceptors, Filters, Pipes — NONE may contain: `const` variable declarations at module level, type/interface declarations, enum declarations, standalone function declarations. Everything must be imported from dedicated files (`types/`, `constants/`, `enums/`, `utilities/`).
+15. **NEVER put business logic in controllers** — controllers call exactly ONE service method.
+16. **NEVER put Prisma calls outside repositories** — repositories are the sole data-access layer.
+17. **NEVER put business logic in repositories** — repositories are pure data access only.
+18. **NEVER omit explicit return types** — every function and method must have an explicit return type annotation.
+19. **NEVER expose secrets in API responses, logs, or audit records** — redact sensitive fields before output.
+20. **NEVER use class-validator or class-transformer** — use Zod for all validation and transformation.
+21. **NEVER use `@UsePipes()` at method level when `@Param()` is present** — apply pipe directly in decorator or at controller level.
+22. **EVERY exception must use `BusinessException` with a `messageKey`** — no raw `throw new Error()` or NestJS built-in exceptions.
+23. **EVERY function must have an explicit return type** — including private methods, arrow functions assigned to variables.
+24. **Service methods max 30 lines** — extract complex logic to utility files in `service.utilities/` or `manager.utilities/`.
+25. **Manager layer purpose** — Managers are used for complex process orchestration: routing decisions, prompt assembly, multi-step coordination, provider selection, fallback chains. They contain process logic. Services delegate TO managers for complexity. If a service method would exceed 30 lines, the logic should go into a manager.
+26. **Repository methods take properly typed params and return raw Prisma results** — no transformation, no business logic.
+27. **Controllers are 3-line methods** — extract params, call ONE service, return result.
+28. **Component splitting** — If a hook, service, or manager grows beyond 100 lines, split it into focused sub-units.
+29. **Common patterns** — If similar logic appears in 2+ modules, extract to `common/utilities/` or a shared service.
+30. **No floating promises** — every promise must be `await`ed or explicitly `void`ed.
+31. **No N+1 queries** — use Prisma `include`, `select`, or batch queries. Review every loop that touches the database.
+32. **Every foreign key must be indexed, every WHERE column must be indexed** — add indexes in Prisma schema.
+33. **Paginate all list endpoints** — no unbounded queries. Use cursor or offset pagination with configurable limits.
+34. **All errors use messageKey pattern**: `errors.<module>.<action>` (e.g., `errors.auth.invalidCredentials`).
+35. **No magic numbers or strings** — extract to constants files.
+36. **No circular dependencies** — modules must have a clear dependency direction.
+37. **No default exports** — use named exports exclusively.
+38. **No mutable module-level state** — use providers and DI for shared state.
+39. **All Zod schemas must have `.max()` on every string and array field** — prevent unbounded input.
 
 ---
 

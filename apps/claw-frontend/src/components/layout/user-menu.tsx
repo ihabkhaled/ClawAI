@@ -15,16 +15,7 @@ import {
 import { ROUTES } from "@/constants";
 import { useCurrentUser } from "@/hooks/auth/use-current-user";
 import { useLogout } from "@/hooks/auth/use-logout";
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
+import { getInitials } from "@/utilities";
 
 export function UserMenu() {
   const { user } = useCurrentUser();

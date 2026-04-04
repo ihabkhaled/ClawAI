@@ -51,6 +51,34 @@ const banUtilityFunctions = {
   message: 'Extract utility functions to src/utilities/ or src/lib/.',
 };
 
+const banInlineConstInComponent = {
+  selector:
+    'Program > VariableDeclaration[kind="const"] > VariableDeclarator[init.type!="ArrowFunctionExpression"][init.type!="CallExpression"]',
+  message:
+    'Module-level const declarations in component files must be extracted to src/constants/. Only component definitions are allowed inline.',
+};
+
+const banNonExportedFunctionInComponent = {
+  selector:
+    'Program > FunctionDeclaration:not([id.name=/^[A-Z]/]):not([id.name=/^use[A-Z]/])',
+  message:
+    'Non-component helper functions must be extracted to src/utilities/. Only component definitions (PascalCase) are allowed inline.',
+};
+
+const banInlineConstInServices = {
+  selector:
+    'Program > VariableDeclaration[kind="const"] > VariableDeclarator[init.type!="ObjectExpression"][init.type!="CallExpression"][init.type!="ArrowFunctionExpression"]',
+  message:
+    'Module-level const declarations in hooks/services/stores must be extracted to src/constants/. Only service objects and store definitions are allowed inline.',
+};
+
+const banNonExportedFunctionInServices = {
+  selector:
+    'Program > FunctionDeclaration:not([id.name=/^use[A-Z]/])',
+  message:
+    'Helper functions in hooks/services/stores must be extracted to src/utilities/.',
+};
+
 // ─── Config ──────────────────────────────────────────────────────────────────
 export default defineConfig([
   // Global ignores
@@ -271,13 +299,15 @@ export default defineConfig([
         banInlineHookArrow,
         banScreamingCaseConst,
         banUtilityFunctions,
+        banInlineConstInComponent,
+        banNonExportedFunctionInComponent,
       ],
     },
   },
 
-  // ─── Hooks, services, stores: ban inline types/enums ────────────────────
+  // ─── Hooks & stores: ban inline types/enums/consts/helpers ──────────────
   {
-    files: ['src/hooks/**/*.ts', 'src/services/**/*.ts', 'src/stores/**/*.ts'],
+    files: ['src/hooks/**/*.ts', 'src/stores/**/*.ts'],
     rules: {
       'no-restricted-syntax': [
         'error',
@@ -285,6 +315,23 @@ export default defineConfig([
         banStringLiteralUnion,
         banTypeAliasInTsx,
         banInterfaceInTsx,
+        banInlineConstInServices,
+        banNonExportedFunctionInServices,
+      ],
+    },
+  },
+
+  // ─── Services: ban inline types/enums/consts, allow private helpers ────
+  {
+    files: ['src/services/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        banEnumDeclaration,
+        banStringLiteralUnion,
+        banTypeAliasInTsx,
+        banInterfaceInTsx,
+        banInlineConstInServices,
       ],
     },
   },

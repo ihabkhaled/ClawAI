@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { forwardRef } from 'react';
 import type { LucideIcon, LucideProps } from 'lucide-react';
+import { forwardRef } from 'react';
 import { describe, expect, it } from 'vitest';
 
 import { EmptyState } from '@/components/common/empty-state';

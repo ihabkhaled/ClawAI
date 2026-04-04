@@ -238,11 +238,28 @@ export default tseslint.config(
     },
   },
 
-  // ── Manager files: logic restrictions ──────────────────────────────────────
+  // ── Manager files: logic restrictions + size limits ─────────────────────────
   {
     files: ['src/**/*.manager.ts'],
     rules: {
       'no-restricted-syntax': ['error', ...logicFileRestrictions],
+      'max-lines-per-function': ['warn', { max: 80, skipBlankLines: true, skipComments: true }],
+      complexity: ['warn', 15],
+    },
+  },
+
+  // ── Utility files: no inline types/consts (only exported functions) ────────
+  {
+    files: ['src/**/*.utility.ts', 'src/**/*.utilities.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        banInlineInterface,
+        banInlineTypeAlias,
+        banInlineEnum,
+        banTopLevelConst,
+        banExportedTopLevelConst,
+      ],
     },
   },
 

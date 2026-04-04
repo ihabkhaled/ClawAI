@@ -1,19 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+import { AUTH_INITIAL_STATE } from "@/constants";
 import type { AuthStoreActions, AuthStoreState } from "@/types";
-
-const initialState: AuthStoreState = {
-  accessToken: null,
-  refreshToken: null,
-  user: null,
-  isAuthenticated: false,
-};
 
 export const useAuthStore = create<AuthStoreState & AuthStoreActions>()(
   persist(
     (set) => ({
-      ...initialState,
+      ...AUTH_INITIAL_STATE,
 
       setAuth: ({ accessToken, refreshToken, user }) =>
         set({
@@ -28,7 +22,7 @@ export const useAuthStore = create<AuthStoreState & AuthStoreActions>()(
       setTokens: ({ accessToken, refreshToken }) =>
         set({ accessToken, refreshToken }),
 
-      clearAuth: () => set(initialState),
+      clearAuth: () => set(AUTH_INITIAL_STATE),
     }),
     {
       name: "claw-auth-storage",
