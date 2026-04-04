@@ -34,13 +34,9 @@ export type CreateThreadRequest = { title?: string };
 export type CreateMessageRequest = { threadId: string; content: string };
 export type ThreadsListResponse = {
   data: ChatThread[];
-  total: number;
-  page: number;
-  totalPages: number;
+  meta: { total: number; page: number; limit: number; totalPages: number };
 };
 export type MessagesListResponse = {
   data: ChatMessage[];
-  total: number;
-  page: number;
-  totalPages: number;
+  meta: { total: number; page: number; limit: number; totalPages: number };
 };

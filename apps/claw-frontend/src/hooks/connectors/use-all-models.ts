@@ -27,8 +27,8 @@ export function useAllModels() {
   const allModels: ConnectorModel[] = useMemo(() => {
     const models: ConnectorModel[] = [];
     for (const query of modelQueries) {
-      if (query.data?.data) {
-        models.push(...query.data.data);
+      if (query.data) {
+        models.push(...query.data);
       }
     }
     return models;

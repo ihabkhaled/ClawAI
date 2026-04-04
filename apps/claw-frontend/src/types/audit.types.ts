@@ -113,5 +113,5 @@ export interface AdminUser {
 
 export interface AdminUsersResponse {
   data: AdminUser[];
-  total: number;
+  meta: { total: number; page: number; limit: number; totalPages: number };
 }

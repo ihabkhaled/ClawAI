@@ -12,7 +12,7 @@ export function useRoutingDecisions(threadId: string) {
 
   return {
     decisions: query.data?.data ?? [],
-    total: query.data?.total ?? 0,
+    total: query.data?.meta.total ?? 0,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,

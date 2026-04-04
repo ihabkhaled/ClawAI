@@ -11,6 +11,7 @@ export function useLocalModels() {
 
   return {
     models: query.data?.data ?? [],
+    total: query.data?.meta.total ?? 0,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,

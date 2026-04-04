@@ -9,15 +9,17 @@ import type {
 } from "@/types";
 
 export const ollamaRepository = {
-  async getLocalModels(): Promise<LocalModelsListResponse> {
+  async getLocalModels(
+    params?: Record<string, string>,
+  ): Promise<LocalModelsListResponse> {
     const response =
-      await apiClient.get<LocalModelsListResponse>("/ollama/models");
+      await apiClient.get<LocalModelsListResponse>("/ollama/models", params);
     return response.data;
   },
 
   async pullModel(data: PullModelRequest): Promise<LocalModel> {
     const response = await apiClient.post<LocalModel>(
-      "/ollama/models/pull",
+      "/ollama/pull",
       data,
     );
     return response.data;
@@ -25,7 +27,7 @@ export const ollamaRepository = {
 
   async assignRole(data: AssignRoleRequest): Promise<LocalModel> {
     const response = await apiClient.post<LocalModel>(
-      "/ollama/models/roles",
+      "/ollama/assign-role",
       data,
     );
     return response.data;

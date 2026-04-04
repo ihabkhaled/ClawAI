@@ -5,15 +5,14 @@ import { queryKeys } from "@/repositories/shared/query-keys";
 
 type ToggleMemoryParams = {
   id: string;
-  isEnabled: boolean;
 };
 
 export function useToggleMemory() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: ({ id, isEnabled }: ToggleMemoryParams) =>
-      memoryRepository.toggleMemory(id, isEnabled),
+    mutationFn: ({ id }: ToggleMemoryParams) =>
+      memoryRepository.toggleMemory(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.memory.lists(),

@@ -19,7 +19,7 @@ export const filesRepository = {
   },
 
   async uploadFile(data: UploadFileRequest): Promise<UploadedFile> {
-    const response = await apiClient.post<UploadedFile>("/files", data);
+    const response = await apiClient.post<UploadedFile>("/files/upload", data);
     return response.data;
   },
 

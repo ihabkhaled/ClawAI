@@ -48,8 +48,8 @@ export function useMemoryPage() {
     }
   };
 
-  const handleToggle = (id: string, isEnabled: boolean) => {
-    toggleMemory({ id, isEnabled });
+  const handleToggle = (id: string) => {
+    toggleMemory({ id });
   };
 
   const handleDelete = (id: string) => {

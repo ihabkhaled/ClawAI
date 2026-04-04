@@ -37,7 +37,7 @@ export const contextPacksRepository = {
     id: string,
     data: UpdateContextPackRequest,
   ): Promise<ContextPack> {
-    const response = await apiClient.put<ContextPack>(
+    const response = await apiClient.patch<ContextPack>(
       `/context-packs/${id}`,
       data,
     );

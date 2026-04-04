@@ -64,7 +64,7 @@ export function MemoryCard({
         <div className="flex items-center gap-2">
           <Switch
             checked={memory.isEnabled}
-            onCheckedChange={(checked) => onToggle(memory.id, checked)}
+            onCheckedChange={() => onToggle(memory.id)}
             disabled={isTogglePending}
           />
           <DropdownMenu>

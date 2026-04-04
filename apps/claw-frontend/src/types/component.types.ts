@@ -65,7 +65,7 @@ export type SidebarNavItemProps = {
 
 export type MemoryCardProps = {
   memory: MemoryRecord;
-  onToggle: (id: string, isEnabled: boolean) => void;
+  onToggle: (id: string) => void;
   onEdit: (memory: MemoryRecord) => void;
   onDelete: (id: string) => void;
   isTogglePending: boolean;

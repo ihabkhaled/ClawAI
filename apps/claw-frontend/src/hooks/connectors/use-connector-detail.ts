@@ -18,7 +18,7 @@ export function useConnectorDetail(connectorId: string) {
 
   return {
     connector: connectorQuery.data ?? null,
-    models: modelsQuery.data?.data ?? [],
+    models: modelsQuery.data ?? [],
     isLoadingConnector: connectorQuery.isLoading,
     isLoadingModels: modelsQuery.isLoading,
     isError: connectorQuery.isError || modelsQuery.isError,

@@ -27,7 +27,7 @@ export const memoryRepository = {
     id: string,
     data: UpdateMemoryRequest,
   ): Promise<MemoryRecord> {
-    const response = await apiClient.put<MemoryRecord>(
+    const response = await apiClient.patch<MemoryRecord>(
       `/memories/${id}`,
       data,
     );
@@ -40,11 +40,8 @@ export const memoryRepository = {
 
   async toggleMemory(
     id: string,
-    isEnabled: boolean,
   ): Promise<MemoryRecord> {
-    const response = await apiClient.put<MemoryRecord>(`/memories/${id}`, {
-      isEnabled,
-    });
+    const response = await apiClient.patch<MemoryRecord>(`/memories/${id}/toggle`);
     return response.data;
   },
 };

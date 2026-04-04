@@ -68,6 +68,6 @@ export const auditRepository = {
   },
 
   async deactivateUser(userId: string): Promise<void> {
-    await apiClient.patch(`/users/${userId}/deactivate`);
+    await apiClient.delete(`/users/${userId}`);
   },
 };

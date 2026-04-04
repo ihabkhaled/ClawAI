@@ -46,9 +46,7 @@ export type UpdateConnectorRequest = Partial<CreateConnectorRequest> & {
 
 export type ConnectorsListResponse = {
   data: Connector[];
-  total: number;
-  page: number;
-  totalPages: number;
+  meta: { total: number; page: number; limit: number; totalPages: number };
 };
 
 export type HealthCheckResponse = {
@@ -63,6 +61,4 @@ export type SyncModelsResponse = {
   modelsRemoved: number;
 };
 
-export type ConnectorModelsResponse = {
-  data: ConnectorModel[];
-};
+export type ConnectorModelsResponse = ConnectorModel[];

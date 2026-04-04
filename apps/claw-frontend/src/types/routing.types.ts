@@ -72,25 +72,20 @@ export type AssignRoleRequest = { modelId: string; role: string };
 
 export type PoliciesListResponse = {
   data: RoutingPolicy[];
-  total: number;
-  page: number;
-  totalPages: number;
+  meta: { total: number; page: number; limit: number; totalPages: number };
 };
 
 export type DecisionsListResponse = {
   data: RoutingDecision[];
-  total: number;
-  page: number;
-  totalPages: number;
+  meta: { total: number; page: number; limit: number; totalPages: number };
 };
 
 export type LocalModelsListResponse = {
   data: LocalModel[];
+  meta: { total: number; page: number; limit: number; totalPages: number };
 };
 
-export type RuntimesListResponse = {
-  data: string[];
-};
+export type RuntimesListResponse = string[];
 
 export type RuntimeHealthResponse = {
   status: string;

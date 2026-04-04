@@ -28,7 +28,7 @@ export function useLocalModelsPage() {
     refetchInterval: 30000,
   });
 
-  const runtimes = runtimesQuery.data?.data ?? [];
+  const runtimes = runtimesQuery.data ?? [];
 
   const handlePullModel = () => {
     if (!pullModelName.trim() || !pullRuntime) return;
