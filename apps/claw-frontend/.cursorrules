@@ -17,3 +17,4 @@ Rules:
 - Use cn() from @/lib/utils for conditional classes
 - Use type imports: import type { ... }
 - Protected pages use useAuthGuard hook
+- NEVER import third-party libraries directly in business logic — wrap them in a utility module (e.g., src/lib/ or src/utilities/) and import from the wrapper

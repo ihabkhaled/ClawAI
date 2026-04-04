@@ -221,10 +221,10 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 4001
       DATABASE_URL: postgresql://${PG_AUTH_USER:-claw}:${PG_AUTH_PASSWORD:-claw_secret}@pg-auth:5432/${PG_AUTH_DB:-claw_auth}?schema=public
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
       JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-15m}
       JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-7d}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
@@ -259,10 +259,10 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 4002
       DATABASE_URL: postgresql://${PG_CHAT_USER:-claw}:${PG_CHAT_PASSWORD:-claw_secret}@pg-chat:5432/${PG_CHAT_DB:-claw_chat}?schema=public
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
     depends_on:
       pg-chat:
         condition: service_healthy
@@ -291,10 +291,10 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 4003
       DATABASE_URL: postgresql://${PG_CONNECTOR_USER:-claw}:${PG_CONNECTOR_PASSWORD:-claw_secret}@pg-connector:5432/${PG_CONNECTOR_DB:-claw_connectors}?schema=public
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
     depends_on:
       pg-connector:
@@ -324,10 +324,10 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 4004
       DATABASE_URL: postgresql://${PG_ROUTING_USER:-claw}:${PG_ROUTING_PASSWORD:-claw_secret}@pg-routing:5432/${PG_ROUTING_DB:-claw_routing}?schema=public
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
     depends_on:
       pg-routing:
         condition: service_healthy
@@ -356,10 +356,10 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 4005
       DATABASE_URL: postgresql://${PG_MEMORY_USER:-claw}:${PG_MEMORY_PASSWORD:-claw_secret}@pg-memory:5432/${PG_MEMORY_DB:-claw_memory}?schema=public
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
     depends_on:
       pg-memory:
         condition: service_healthy
@@ -388,11 +388,11 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 4006
       DATABASE_URL: postgresql://${PG_FILES_USER:-claw}:${PG_FILES_PASSWORD:-claw_secret}@pg-files:5432/${PG_FILES_DB:-claw_files}?schema=public
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost
-      FILE_STORAGE_PATH: /data/files
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
+      FILE_STORAGE_PATH: ${FILE_STORAGE_PATH:-/data/files}
     volumes:
       - file-storage-data:/data/files
     depends_on:
@@ -423,10 +423,10 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 4007
       MONGODB_URI: mongodb://${MONGO_USER:-claw}:${MONGO_PASSWORD:-claw_secret}@mongodb:27017/${MONGO_DB:-claw_audit}?authSource=admin
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -454,10 +454,10 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 4008
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
     depends_on:
       redis:
@@ -484,16 +484,16 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 4009
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
-      AUTH_SERVICE_URL: http://auth-service:4001
-      CHAT_SERVICE_URL: http://chat-service:4002
-      CONNECTOR_SERVICE_URL: http://connector-service:4003
-      ROUTING_SERVICE_URL: http://routing-service:4004
-      MEMORY_SERVICE_URL: http://memory-service:4005
-      FILE_SERVICE_URL: http://file-service:4006
-      AUDIT_SERVICE_URL: http://audit-service:4007
-      OLLAMA_SERVICE_URL: http://ollama-service:4008
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://auth-service:4001}
+      CHAT_SERVICE_URL: ${CHAT_SERVICE_URL:-http://chat-service:4002}
+      CONNECTOR_SERVICE_URL: ${CONNECTOR_SERVICE_URL:-http://connector-service:4003}
+      ROUTING_SERVICE_URL: ${ROUTING_SERVICE_URL:-http://routing-service:4004}
+      MEMORY_SERVICE_URL: ${MEMORY_SERVICE_URL:-http://memory-service:4005}
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:4006}
+      AUDIT_SERVICE_URL: ${AUDIT_SERVICE_URL:-http://audit-service:4007}
+      OLLAMA_SERVICE_URL: ${OLLAMA_SERVICE_URL:-http://ollama-service:4008}
     depends_on:
       redis:
         condition: service_healthy

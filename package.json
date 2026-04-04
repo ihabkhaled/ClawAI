@@ -23,6 +23,8 @@
     "docker:build": "docker compose build",
     "docker:up:full": "docker compose --profile local-ai up -d",
     "docker:up:gpu": "docker compose --profile gpu up -d",
+    "docker:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d",
+    "docker:dev:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down",
     "docker:logs": "docker compose logs -f",
     "docker:ps": "docker compose ps",
     "prepare": "node .husky/install.mjs",

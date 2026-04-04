@@ -48,6 +48,15 @@ View (TSX) -> Controller (Hook) -> Service -> Repository/API
 
 ---
 
+## Library Wrapping Rule
+Every third-party library MUST be wrapped in a dedicated module. Components, hooks, services, and repositories NEVER import third-party packages directly — they import the wrapper. If the library changes, only the wrapper file needs updating.
+
+**Already wrapped:**
+- `src/services/shared/api-client.ts` wraps `fetch`
+- `src/lib/utils.ts` wraps `clsx` + `tailwind-merge`
+
+**Pattern for new libraries:** Create a wrapper in `src/utilities/<name>.utility.ts` or `src/lib/<name>.ts`, then import from the wrapper everywhere.
+
 ## Extraction Table
 
 | What               | Where                                        |

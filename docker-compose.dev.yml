@@ -1,0 +1,90 @@
+# docker-compose.dev.yml — Development overlay
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+services:
+  auth-service:
+    build:
+      context: ./apps/claw-auth-service
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./apps/claw-auth-service/src:/app/src
+      - ./apps/claw-auth-service/prisma:/app/prisma
+    command: npm run dev
+
+  chat-service:
+    build:
+      context: ./apps/claw-chat-service
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./apps/claw-chat-service/src:/app/src
+      - ./apps/claw-chat-service/prisma:/app/prisma
+    command: npm run dev
+
+  connector-service:
+    build:
+      context: ./apps/claw-connector-service
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./apps/claw-connector-service/src:/app/src
+      - ./apps/claw-connector-service/prisma:/app/prisma
+    command: npm run dev
+
+  routing-service:
+    build:
+      context: ./apps/claw-routing-service
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./apps/claw-routing-service/src:/app/src
+      - ./apps/claw-routing-service/prisma:/app/prisma
+    command: npm run dev
+
+  memory-service:
+    build:
+      context: ./apps/claw-memory-service
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./apps/claw-memory-service/src:/app/src
+      - ./apps/claw-memory-service/prisma:/app/prisma
+    command: npm run dev
+
+  file-service:
+    build:
+      context: ./apps/claw-file-service
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./apps/claw-file-service/src:/app/src
+      - ./apps/claw-file-service/prisma:/app/prisma
+    command: npm run dev
+
+  audit-service:
+    build:
+      context: ./apps/claw-audit-service
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./apps/claw-audit-service/src:/app/src
+    command: npm run dev
+
+  ollama-service:
+    build:
+      context: ./apps/claw-ollama-service
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./apps/claw-ollama-service/src:/app/src
+    command: npm run dev
+
+  health-service:
+    build:
+      context: ./apps/claw-health-service
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./apps/claw-health-service/src:/app/src
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./apps/claw-frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./apps/claw-frontend/src:/app/src
+      - ./apps/claw-frontend/public:/app/public
+      - ./apps/claw-frontend/app:/app/app
+    command: npm run dev

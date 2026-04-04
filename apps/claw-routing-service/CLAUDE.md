@@ -29,6 +29,9 @@ Routing microservice for the Claw platform. Manages AI routing decisions and pol
 11. **All errors use BusinessException with a code**.
 12. **No default exports** -- use named exports exclusively.
 
+## Library Wrapping Rule
+Every third-party library MUST be wrapped in a utility file under `src/common/utilities/`. Services and controllers NEVER import third-party packages directly — they import the wrapper. Example: `src/common/utilities/jwt.utility.ts` wraps `jsonwebtoken`, and services import `{ signToken, verifyToken }` from the wrapper.
+
 ## Architecture
 
 ```

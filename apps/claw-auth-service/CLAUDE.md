@@ -38,6 +38,9 @@ See the root CLAUDE.md for the full set of architecture rules, naming convention
 - All errors use `BusinessException` with a `messageKey`
 - Every function must have an explicit return type
 
+## Library Wrapping Rule
+Every third-party library MUST be wrapped in a utility file under `src/common/utilities/`. Services and controllers NEVER import third-party packages directly — they import the wrapper. Example: `src/common/utilities/hashing.utility.ts` wraps `argon2`, and services import `{ hashPassword, verifyPassword }` from the wrapper.
+
 ## Commands
 
 ```bash

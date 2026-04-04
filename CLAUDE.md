@@ -43,6 +43,17 @@ claw/
 - **Service → Service (sync)**: Direct HTTP calls between services
 - **No single point of failure**: Nginx is stateless, RabbitMQ has durable queues
 
+## Library Wrapping Rule
+Every third-party library MUST be wrapped in a dedicated module/utility file (e.g., `src/common/utilities/<name>.utility.ts`). Components, hooks, services, and controllers NEVER import third-party libraries directly — they import the wrapper. If the library changes, only the wrapper file needs updating.
+
+**Backend examples:**
+- `src/common/utilities/hashing.utility.ts` wraps `argon2` — services import `{ hashPassword, verifyPassword }`
+- `src/common/utilities/jwt.utility.ts` wraps `jsonwebtoken` — services import `{ signToken, verifyToken }`
+
+**Frontend examples:**
+- `src/services/shared/api-client.ts` wraps `fetch`
+- `src/lib/utils.ts` wraps `clsx` + `tailwind-merge`
+
 ## Universal Rules (Apply Everywhere)
 1. NEVER use `any` — use proper types or `unknown`
 2. NEVER disable ESLint rules — fix the underlying issue
