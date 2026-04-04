@@ -1,0 +1,19 @@
+You are working on Claw, a local-first AI orchestration platform frontend.
+
+Tech: Next.js 14 (App Router), TypeScript (strict), Tailwind CSS 3, shadcn/ui, TanStack Query v5, Zustand, React Hook Form + Zod.
+
+Architecture: View (TSX) -> Controller (Hook) -> Service -> Repository/API
+
+Rules:
+- NEVER use `any`
+- NEVER disable ESLint
+- TSX = pure render composition only
+- No inline domain types/enums/constants in TSX
+- Enums in src/enums/, types in src/types/, constants in src/constants/
+- TanStack Query for ALL server state
+- Zustand for minimal client state only
+- React Hook Form + Zod for all forms
+- All pages need loading/empty/error states
+- Use cn() from @/lib/utils for conditional classes
+- Use type imports: import type { ... }
+- Protected pages use useAuthGuard hook

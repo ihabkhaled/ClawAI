@@ -1,0 +1,8 @@
+export enum ConnectorProvider {
+  OPENAI = 'OPENAI',
+  ANTHROPIC = 'ANTHROPIC',
+  GEMINI = 'GEMINI',
+  AWS_BEDROCK = 'AWS_BEDROCK',
+  DEEPSEEK = 'DEEPSEEK',
+  OLLAMA = 'OLLAMA',
+}

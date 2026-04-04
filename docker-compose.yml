@@ -1,0 +1,88 @@
+version: '3.9'
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: claw-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-claw}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-claw}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-claw}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: claw-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Ollama — Local AI Runtime (profile: local-ai)
+  # ---------------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: claw-ollama
+    restart: unless-stopped
+    profiles:
+      - local-ai
+      - gpu
+    ports:
+      - '11434:11434'
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+
+  # ---------------------------------------------------------------------------
+  # Ollama with GPU (profile: gpu)
+  # ---------------------------------------------------------------------------
+  ollama-gpu:
+    image: ollama/ollama:latest
+    container_name: claw-ollama-gpu
+    restart: unless-stopped
+    profiles:
+      - gpu
+    ports:
+      - '11434:11434'
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  ollama-data:
+    driver: local

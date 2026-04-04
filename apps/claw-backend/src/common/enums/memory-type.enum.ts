@@ -1,0 +1,6 @@
+export enum MemoryType {
+  SUMMARY = "SUMMARY",
+  FACT = "FACT",
+  PREFERENCE = "PREFERENCE",
+  INSTRUCTION = "INSTRUCTION",
+}

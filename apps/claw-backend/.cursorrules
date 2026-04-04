@@ -1,0 +1,42 @@
+## Claw Backend - Cursor Rules
+
+### Tech Stack
+- NestJS 10 with TypeScript (strict mode)
+- Prisma ORM with PostgreSQL + pgvector
+- Redis (ioredis) for caching and session management
+- BullMQ for background job queues
+- Zod for all validation (NOT class-validator)
+- argon2 for password hashing
+- JWT (jsonwebtoken) for authentication
+- Structured logging via nestjs-pino / pino
+
+### Architecture Rules
+1. **Controllers** are thin - call ONE service method, no business logic
+2. **Services** are thin orchestrators - coordinate managers
+3. **Managers** contain domain/process logic
+4. **Repositories** are pure data access (Prisma only here)
+5. All domain values use enums from `src/common/enums/`
+6. Explicit return types on ALL functions
+7. No raw `process.env` - use validated `AppConfig`
+
+### Code Quality
+- NEVER use `any` - use proper types or `unknown`
+- NEVER disable ESLint rules
+- NEVER use `@ts-ignore` or `@ts-nocheck`
+- No non-null assertions (`!`)
+- No `console.log` - use NestJS Logger
+- All DTO validation through Zod schemas
+- All passwords hashed with argon2
+
+### File Organization
+- `src/common/` - shared enums, types, constants, errors, utilities
+- `src/app/` - NestJS bootstrap: module, config, guards, pipes, filters, interceptors, decorators
+- `src/infrastructure/` - database (Prisma), Redis, external service clients
+- `src/modules/` - feature modules following controller/service/manager/repository pattern
+
+### Naming Conventions
+- Files: kebab-case (e.g., `auth.guard.ts`, `create-user.dto.ts`)
+- Classes: PascalCase (e.g., `AuthGuard`, `CreateUserDto`)
+- Enums: PascalCase with UPPER_SNAKE values
+- Database columns: snake_case (via Prisma @map)
+- API routes: kebab-case (e.g., `/api/v1/chat-threads`)
