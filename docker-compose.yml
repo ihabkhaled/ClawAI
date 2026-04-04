@@ -231,8 +231,8 @@ services:
   # ---------------------------------------------------------------------------
   auth-service:
     build:
-      context: ./apps/claw-auth-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/claw-auth-service/Dockerfile
     container_name: claw-auth-service
     restart: unless-stopped
     ports:
@@ -269,8 +269,8 @@ services:
 
   chat-service:
     build:
-      context: ./apps/claw-chat-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/claw-chat-service/Dockerfile
     container_name: claw-chat-service
     restart: unless-stopped
     ports:
@@ -301,8 +301,8 @@ services:
 
   connector-service:
     build:
-      context: ./apps/claw-connector-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/claw-connector-service/Dockerfile
     container_name: claw-connector-service
     restart: unless-stopped
     ports:
@@ -334,8 +334,8 @@ services:
 
   routing-service:
     build:
-      context: ./apps/claw-routing-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/claw-routing-service/Dockerfile
     container_name: claw-routing-service
     restart: unless-stopped
     ports:
@@ -366,8 +366,8 @@ services:
 
   memory-service:
     build:
-      context: ./apps/claw-memory-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/claw-memory-service/Dockerfile
     container_name: claw-memory-service
     restart: unless-stopped
     ports:
@@ -398,8 +398,8 @@ services:
 
   file-service:
     build:
-      context: ./apps/claw-file-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/claw-file-service/Dockerfile
     container_name: claw-file-service
     restart: unless-stopped
     ports:
@@ -433,8 +433,8 @@ services:
 
   audit-service:
     build:
-      context: ./apps/claw-audit-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/claw-audit-service/Dockerfile
     container_name: claw-audit-service
     restart: unless-stopped
     ports:
@@ -465,8 +465,8 @@ services:
 
   ollama-service:
     build:
-      context: ./apps/claw-ollama-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/claw-ollama-service/Dockerfile
     container_name: claw-ollama-service
     restart: unless-stopped
     ports:
@@ -498,7 +498,7 @@ services:
 
   health-service:
     build:
-      context: ./apps/claw-health-service
+      context: .
       dockerfile: Dockerfile
     container_name: claw-health-service
     restart: unless-stopped
@@ -539,7 +539,7 @@ services:
     container_name: claw-nginx
     restart: unless-stopped
     ports:
-      - '80:80'
+      - '8080:80'
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
@@ -572,13 +572,13 @@ services:
       context: ./apps/claw-frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:80}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
     container_name: claw-frontend
     restart: unless-stopped
     ports:
       - '${FRONTEND_PORT:-3000}:3000'
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:80}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
     depends_on:
       - nginx
     healthcheck:

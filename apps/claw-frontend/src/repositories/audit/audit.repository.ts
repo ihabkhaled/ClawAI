@@ -59,15 +59,15 @@ export const auditRepository = {
   },
 
   async getAdminUsers(): Promise<AdminUsersResponse> {
-    const response = await apiClient.get<AdminUsersResponse>("/auth/users");
+    const response = await apiClient.get<AdminUsersResponse>("/users");
     return response.data;
   },
 
   async updateUserRole(userId: string, role: string): Promise<void> {
-    await apiClient.patch(`/auth/users/${userId}/role`, { role });
+    await apiClient.patch(`/users/${userId}/role`, { role });
   },
 
   async deactivateUser(userId: string): Promise<void> {
-    await apiClient.patch(`/auth/users/${userId}/deactivate`);
+    await apiClient.patch(`/users/${userId}/deactivate`);
   },
 };

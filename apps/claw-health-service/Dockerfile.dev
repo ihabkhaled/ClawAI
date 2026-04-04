@@ -1,8 +1,9 @@
 FROM node:20-alpine
-RUN apk add --no-cache openssl
-WORKDIR /app
-COPY package.json ./
-RUN npm install
-COPY . .
+WORKDIR /app/apps/claw-health-service
+COPY package.json /app/package.json
+COPY packages/ /app/packages/
+COPY apps/claw-health-service/package.json ./package.json
+RUN cd /app && npm install --ignore-scripts && cd /app/apps/claw-health-service && npm install --ignore-scripts 2>/dev/null || true
+COPY apps/claw-health-service/ .
 EXPOSE 4009
 CMD ["npm", "run", "dev"]

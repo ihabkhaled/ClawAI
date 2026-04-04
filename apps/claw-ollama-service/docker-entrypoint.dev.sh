@@ -1,11 +1,12 @@
 #!/bin/sh
 set -e
 echo "Generating Prisma client..."
-npx prisma generate
+npx prisma generate 2>/dev/null || true
 echo "Building..."
-npm run build
+npx nest build 2>&1 || { echo "Build failed, retrying..."; npx tsc; }
 echo "Copying generated client to dist..."
+rm -rf dist/generated
 mkdir -p dist/generated
-cp -r src/generated/prisma dist/generated/prisma
-echo "Starting with watch mode..."
-exec node dist/main.js
+cp -r src/generated/prisma dist/generated/prisma 2>/dev/null || true
+echo "Starting dev server..."
+exec node --watch dist/main.js

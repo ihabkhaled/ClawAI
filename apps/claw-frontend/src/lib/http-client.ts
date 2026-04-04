@@ -21,11 +21,9 @@ function createHttpClient(): AxiosInstance {
   client.interceptors.response.use(
     (response) => response,
     (error) => {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
-      }
+      // Do NOT redirect on 401 here. The useAuthGuard hook handles
+      // auth state and redirects. Redirecting here aborts all in-flight
+      // requests and causes net::ERR_FAILED on other concurrent calls.
       return Promise.reject(error);
     },
   );

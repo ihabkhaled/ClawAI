@@ -1,4 +1,4 @@
-import { apiClient } from "@/services/shared/api-client";
+import { apiClient } from '@/services/shared/api-client';
 import type {
   ChatThread,
   ChatMessage,
@@ -6,46 +6,38 @@ import type {
   CreateMessageRequest,
   ThreadsListResponse,
   MessagesListResponse,
-} from "@/types";
+} from '@/types';
 
 export const chatRepository = {
   async createThread(data: CreateThreadRequest): Promise<ChatThread> {
-    const response = await apiClient.post<ChatThread>("/threads", data);
+    const response = await apiClient.post<ChatThread>('/chat-threads', data);
     return response.data;
   },
 
-  async getThreads(
-    params?: Record<string, string>,
-  ): Promise<ThreadsListResponse> {
-    const response = await apiClient.get<ThreadsListResponse>(
-      "/threads",
-      params,
-    );
+  async getThreads(params?: Record<string, string>): Promise<ThreadsListResponse> {
+    const response = await apiClient.get<ThreadsListResponse>('/chat-threads', params);
     return response.data;
   },
 
   async getThread(id: string): Promise<ChatThread> {
-    const response = await apiClient.get<ChatThread>(`/threads/${id}`);
+    const response = await apiClient.get<ChatThread>(`/chat-threads/${id}`);
     return response.data;
   },
 
-  async updateThread(
-    id: string,
-    data: Partial<ChatThread>,
-  ): Promise<ChatThread> {
-    const response = await apiClient.patch<ChatThread>(`/threads/${id}`, data);
+  async updateThread(id: string, data: Partial<ChatThread>): Promise<ChatThread> {
+    const response = await apiClient.patch<ChatThread>(`/chat-threads/${id}`, data);
     return response.data;
   },
 
   async deleteThread(id: string): Promise<void> {
-    await apiClient.delete(`/threads/${id}`);
+    await apiClient.delete(`/chat-threads/${id}`);
   },
 
   async createMessage(data: CreateMessageRequest): Promise<ChatMessage> {
-    const response = await apiClient.post<ChatMessage>(
-      `/threads/${data.threadId}/messages`,
-      { content: data.content },
-    );
+    const response = await apiClient.post<ChatMessage>('/chat-messages', {
+      threadId: data.threadId,
+      content: data.content,
+    });
     return response.data;
   },
 
@@ -54,7 +46,7 @@ export const chatRepository = {
     params?: Record<string, string>,
   ): Promise<MessagesListResponse> {
     const response = await apiClient.get<MessagesListResponse>(
-      `/threads/${threadId}/messages`,
+      `/chat-messages/thread/${threadId}`,
       params,
     );
     return response.data;

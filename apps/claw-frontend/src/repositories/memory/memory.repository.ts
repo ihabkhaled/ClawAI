@@ -9,17 +9,17 @@ export const memoryRepository = {
   async getMemories(
     params?: Record<string, string>,
   ): Promise<MemoryRecord[]> {
-    const response = await apiClient.get<MemoryRecord[]>("/memory", params);
+    const response = await apiClient.get<MemoryRecord[]>("/memories", params);
     return response.data;
   },
 
   async getMemory(id: string): Promise<MemoryRecord> {
-    const response = await apiClient.get<MemoryRecord>(`/memory/${id}`);
+    const response = await apiClient.get<MemoryRecord>(`/memories/${id}`);
     return response.data;
   },
 
   async createMemory(data: CreateMemoryRequest): Promise<MemoryRecord> {
-    const response = await apiClient.post<MemoryRecord>("/memory", data);
+    const response = await apiClient.post<MemoryRecord>("/memories", data);
     return response.data;
   },
 
@@ -28,21 +28,21 @@ export const memoryRepository = {
     data: UpdateMemoryRequest,
   ): Promise<MemoryRecord> {
     const response = await apiClient.put<MemoryRecord>(
-      `/memory/${id}`,
+      `/memories/${id}`,
       data,
     );
     return response.data;
   },
 
   async deleteMemory(id: string): Promise<void> {
-    await apiClient.delete(`/memory/${id}`);
+    await apiClient.delete(`/memories/${id}`);
   },
 
   async toggleMemory(
     id: string,
     isEnabled: boolean,
   ): Promise<MemoryRecord> {
-    const response = await apiClient.put<MemoryRecord>(`/memory/${id}`, {
+    const response = await apiClient.put<MemoryRecord>(`/memories/${id}`, {
       isEnabled,
     });
     return response.data;

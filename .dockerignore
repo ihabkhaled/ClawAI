@@ -1,0 +1,14 @@
+node_modules
+.git
+.next
+coverage
+*.zip
+.env
+.env.*
+!.env.example
+**/node_modules
+**/.next
+**/coverage
+**/.git
+# Ignore service dist/ but NOT packages dist/ (needed for @claw/* resolution)
+apps/**/dist
