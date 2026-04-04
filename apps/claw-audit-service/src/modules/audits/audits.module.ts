@@ -2,7 +2,10 @@ import { Module } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { AuditsController } from "./controllers/audits.controller";
 import { AuditsService } from "./services/audits.service";
+import { UsageService } from "./services/usage.service";
 import { AuditsRepository } from "./repositories/audits.repository";
+import { UsageLedgerRepository } from "./repositories/usage-ledger.repository";
+import { AuditEventManager } from "./managers/audit-event.manager";
 import { AuditLog, AuditLogSchema } from "./schemas/audit-log.schema";
 import { UsageLedger, UsageLedgerSchema } from "./schemas/usage-ledger.schema";
 
@@ -14,7 +17,13 @@ import { UsageLedger, UsageLedgerSchema } from "./schemas/usage-ledger.schema";
     ]),
   ],
   controllers: [AuditsController],
-  providers: [AuditsService, AuditsRepository],
-  exports: [AuditsService],
+  providers: [
+    AuditsService,
+    UsageService,
+    AuditsRepository,
+    UsageLedgerRepository,
+    AuditEventManager,
+  ],
+  exports: [AuditsService, UsageService],
 })
 export class AuditsModule {}

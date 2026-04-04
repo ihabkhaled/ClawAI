@@ -28,13 +28,13 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="text-lg">Profile</CardTitle>
             <CardDescription>
-              Update your personal information
+              Your personal information
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Name</label>
-              <Input defaultValue={user?.username ?? ""} />
+              <label className="text-sm font-medium">Username</label>
+              <Input defaultValue={user?.username ?? ""} disabled />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Email</label>
@@ -43,7 +43,36 @@ export default function SettingsPage() {
                 Email cannot be changed. Contact an administrator.
               </p>
             </div>
-            <Button>Save Changes</Button>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Role</label>
+              <Input defaultValue={user?.role ?? ""} disabled />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Separator />
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Change Password</CardTitle>
+            <CardDescription>
+              Update your account password
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Current Password</label>
+              <Input type="password" placeholder="Enter current password" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">New Password</label>
+              <Input type="password" placeholder="Enter new password" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Confirm New Password</label>
+              <Input type="password" placeholder="Confirm new password" />
+            </div>
+            <Button>Update Password</Button>
           </CardContent>
         </Card>
 
@@ -68,22 +97,6 @@ export default function SettingsPage() {
                 Toggle
               </Button>
             </div>
-          </CardContent>
-        </Card>
-
-        <Separator />
-
-        <Card className="border-destructive/20">
-          <CardHeader>
-            <CardTitle className="text-lg text-destructive">
-              Danger Zone
-            </CardTitle>
-            <CardDescription>
-              Irreversible actions for your account
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="destructive">Delete Account</Button>
           </CardContent>
         </Card>
       </div>

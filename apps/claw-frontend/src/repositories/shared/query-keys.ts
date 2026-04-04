@@ -47,8 +47,22 @@ export const queryKeys = {
   },
   audits: {
     all: ["audits"] as const,
-    list: (params: Record<string, string>) =>
-      ["audits", params] as const,
+    lists: () => [...queryKeys.audits.all, "list"] as const,
+    list: (params: Record<string, unknown>) =>
+      [...queryKeys.audits.lists(), params] as const,
+    stats: ["audits", "stats"] as const,
+  },
+  usage: {
+    all: ["usage"] as const,
+    lists: () => [...queryKeys.usage.all, "list"] as const,
+    list: (params: Record<string, unknown>) =>
+      [...queryKeys.usage.lists(), params] as const,
+    summary: ["usage", "summary"] as const,
+    cost: ["usage", "cost"] as const,
+    latency: ["usage", "latency"] as const,
+  },
+  admin: {
+    users: ["admin", "users"] as const,
   },
   memory: {
     all: ["memory"] as const,

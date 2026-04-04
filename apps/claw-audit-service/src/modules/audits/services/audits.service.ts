@@ -1,13 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import { AuditLog } from "../schemas/audit-log.schema";
-import { UsageLedger } from "../schemas/usage-ledger.schema";
 import { AuditsRepository } from "../repositories/audits.repository";
-import {
+import type {
   AuditLogFilters,
   CreateAuditLogInput,
-  CreateUsageLedgerInput,
-  UsageLedgerFilters,
+  AuditStatsResponse,
 } from "../types/audits.types";
+import type { PaginatedResult } from "@common/types";
 
 @Injectable()
 export class AuditsService {
@@ -17,15 +16,33 @@ export class AuditsService {
     return this.auditsRepository.createAuditLog(input);
   }
 
-  async findAuditLogs(filters: AuditLogFilters): Promise<AuditLog[]> {
-    return this.auditsRepository.findAuditLogs(filters);
+  async getAuditLogs(filters: AuditLogFilters): Promise<PaginatedResult<AuditLog>> {
+    const [data, total] = await Promise.all([
+      this.auditsRepository.findAll(filters),
+      this.auditsRepository.countAll(filters),
+    ]);
+
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
-  async createUsageEntry(input: CreateUsageLedgerInput): Promise<UsageLedger> {
-    return this.auditsRepository.createUsageEntry(input);
-  }
+  async getAuditStats(): Promise<AuditStatsResponse> {
+    const [byAction, bySeverity, total] = await Promise.all([
+      this.auditsRepository.aggregateByAction(),
+      this.auditsRepository.aggregateBySeverity(),
+      this.auditsRepository.countAll({}),
+    ]);
 
-  async findUsageEntries(filters: UsageLedgerFilters): Promise<UsageLedger[]> {
-    return this.auditsRepository.findUsageEntries(filters);
+    return { byAction, bySeverity, total };
   }
 }

@@ -41,7 +41,24 @@ export type {
   EvaluateRouteRequest,
   EvaluateRouteResponse,
 } from "./routing.types";
-export type { AuditEntry, AuditListParams } from "./audit.types";
+export type {
+  AuditLog,
+  UsageEntry,
+  AuditStats,
+  UsageSummary,
+  CostSummary,
+  LatencySummary,
+  AuditListResponse,
+  UsageListResponse,
+  AuditListParams,
+  UsageListParams,
+  AdminUser,
+  AdminUsersResponse,
+  ProviderAggregation,
+  ModelAggregation,
+  AggregationResult,
+  PaginationMeta,
+} from "./audit.types";
 export type {
   MemoryRecord,
   CreateMemoryRequest,

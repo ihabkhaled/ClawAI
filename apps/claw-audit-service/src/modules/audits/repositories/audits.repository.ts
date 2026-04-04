@@ -1,20 +1,18 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import { Model, type FilterQuery } from "mongoose";
 import { AuditLog } from "../schemas/audit-log.schema";
-import { UsageLedger } from "../schemas/usage-ledger.schema";
-import {
+import type {
   AuditLogFilters,
   CreateAuditLogInput,
-  CreateUsageLedgerInput,
-  UsageLedgerFilters,
+  AggregationResult,
 } from "../types/audits.types";
+import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from "@common/constants";
 
 @Injectable()
 export class AuditsRepository {
   constructor(
     @InjectModel(AuditLog.name) private readonly auditLogModel: Model<AuditLog>,
-    @InjectModel(UsageLedger.name) private readonly usageLedgerModel: Model<UsageLedger>,
   ) {}
 
   async createAuditLog(input: CreateAuditLogInput): Promise<AuditLog> {
@@ -22,27 +20,62 @@ export class AuditsRepository {
     return doc.save();
   }
 
-  async findAuditLogs(filters: AuditLogFilters): Promise<AuditLog[]> {
-    const query: Record<string, unknown> = {};
+  private buildAuditQuery(filters: AuditLogFilters): FilterQuery<AuditLog> {
+    const query: FilterQuery<AuditLog> = {};
     if (filters.userId) query["userId"] = filters.userId;
     if (filters.action) query["action"] = filters.action;
     if (filters.entityType) query["entityType"] = filters.entityType;
     if (filters.severity) query["severity"] = filters.severity;
-
-    return this.auditLogModel.find(query).sort({ createdAt: -1 }).exec();
+    if (filters.startDate || filters.endDate) {
+      query["createdAt"] = {};
+      if (filters.startDate) {
+        (query["createdAt"] as Record<string, unknown>)["$gte"] = new Date(filters.startDate);
+      }
+      if (filters.endDate) {
+        (query["createdAt"] as Record<string, unknown>)["$lte"] = new Date(filters.endDate);
+      }
+    }
+    if (filters.search) {
+      query["$or"] = [
+        { action: { $regex: filters.search, $options: "i" } },
+        { entityType: { $regex: filters.search, $options: "i" } },
+        { entityId: { $regex: filters.search, $options: "i" } },
+        { userId: { $regex: filters.search, $options: "i" } },
+      ];
+    }
+    return query;
   }
 
-  async createUsageEntry(input: CreateUsageLedgerInput): Promise<UsageLedger> {
-    const doc = new this.usageLedgerModel(input);
-    return doc.save();
+  async findAll(filters: AuditLogFilters): Promise<AuditLog[]> {
+    const page = filters.page ?? DEFAULT_PAGE;
+    const limit = filters.limit ?? DEFAULT_PAGE_SIZE;
+    const skip = (page - 1) * limit;
+    const query = this.buildAuditQuery(filters);
+
+    return this.auditLogModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
   }
 
-  async findUsageEntries(filters: UsageLedgerFilters): Promise<UsageLedger[]> {
-    const query: Record<string, unknown> = {};
-    if (filters.userId) query["userId"] = filters.userId;
-    if (filters.resourceType) query["resourceType"] = filters.resourceType;
-    if (filters.action) query["action"] = filters.action;
+  async countAll(filters: AuditLogFilters): Promise<number> {
+    const query = this.buildAuditQuery(filters);
+    return this.auditLogModel.countDocuments(query).exec();
+  }
 
-    return this.usageLedgerModel.find(query).sort({ createdAt: -1 }).exec();
+  async aggregateByAction(): Promise<AggregationResult[]> {
+    return this.auditLogModel.aggregate<AggregationResult>([
+      { $group: { _id: "$action", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]);
+  }
+
+  async aggregateBySeverity(): Promise<AggregationResult[]> {
+    return this.auditLogModel.aggregate<AggregationResult>([
+      { $group: { _id: "$severity", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]);
   }
 }
