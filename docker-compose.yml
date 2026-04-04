@@ -1,8 +1,6 @@
-version: '3.9'
-
 services:
   # ---------------------------------------------------------------------------
-  # PostgreSQL
+  # Infrastructure
   # ---------------------------------------------------------------------------
   postgres:
     image: pgvector/pgvector:pg16
@@ -13,7 +11,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-claw_secret}
       POSTGRES_DB: ${POSTGRES_DB:-claw}
     ports:
-      - '5432:5432'
+      - '5433:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -21,16 +19,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - claw-network
 
-  # ---------------------------------------------------------------------------
-  # Redis
-  # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
     container_name: claw-redis
     restart: unless-stopped
     ports:
-      - '6379:6379'
+      - '6380:6379'
     volumes:
       - redis-data:/data
     healthcheck:
@@ -38,9 +35,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - claw-network
 
   # ---------------------------------------------------------------------------
-  # Ollama — Local AI Runtime (profile: local-ai)
+  # Ollama — Local AI Runtime
   # ---------------------------------------------------------------------------
   ollama:
     image: ollama/ollama:latest
@@ -55,10 +54,9 @@ services:
       - ollama-data:/root/.ollama
     environment:
       - OLLAMA_HOST=0.0.0.0
+    networks:
+      - claw-network
 
-  # ---------------------------------------------------------------------------
-  # Ollama with GPU (profile: gpu)
-  # ---------------------------------------------------------------------------
   ollama-gpu:
     image: ollama/ollama:latest
     container_name: claw-ollama-gpu
@@ -78,6 +76,96 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
+  # Backend Application
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./apps/claw-backend
+      dockerfile: Dockerfile
+    container_name: claw-backend
+    restart: unless-stopped
+    ports:
+      - '${BACKEND_PORT:-4000}:4000'
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-claw}:${POSTGRES_PASSWORD:-claw_secret}@postgres:5432/${POSTGRES_DB:-claw}?schema=public
+      REDIS_URL: redis://redis:6379
+      BACKEND_PORT: 4000
+      NODE_ENV: ${NODE_ENV:-development}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-15m}
+      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-7d}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@claw.local}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-claw-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      OLLAMA_BASE_URL: http://ollama:11434
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4000/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
+  # Backend Migrations + Seed (run once)
+  # ---------------------------------------------------------------------------
+  backend-migrate:
+    build:
+      context: ./apps/claw-backend
+      dockerfile: Dockerfile
+      target: builder
+    container_name: claw-backend-migrate
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-claw}:${POSTGRES_PASSWORD:-claw_secret}@postgres:5432/${POSTGRES_DB:-claw}?schema=public
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@claw.local}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-claw-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    command: >
+      sh -c "npx prisma migrate deploy && npx ts-node prisma/seed.ts"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - claw-network
+    restart: 'no'
+
+  # ---------------------------------------------------------------------------
+  # Frontend Application
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./apps/claw-frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:${BACKEND_PORT:-4000}
+    container_name: claw-frontend
+    restart: unless-stopped
+    ports:
+      - '${FRONTEND_PORT:-3000}:3000'
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:${BACKEND_PORT:-4000}
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000 || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - claw-network
 
 volumes:
   postgres-data:
@@ -86,3 +174,7 @@ volumes:
     driver: local
   ollama-data:
     driver: local
+
+networks:
+  claw-network:
+    driver: bridge

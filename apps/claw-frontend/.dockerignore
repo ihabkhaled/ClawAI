@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+coverage
+tests
+*.test.ts
+*.test.tsx
+.husky
