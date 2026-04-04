@@ -1,5 +1,19 @@
 #!/usr/bin/env sh
 echo "HUSKY PRE-COMMIT RUNNING"
 
+echo "Step 1/5: lint-staged (prettier)"
 npx lint-staged || exit 1
-npm run typecheck --workspaces --if-present || exit 1
+
+echo "Step 2/5: lint (eslint per workspace)"
+npm run lint || exit 1
+
+echo "Step 3/5: typecheck"
+npm run typecheck || exit 1
+
+echo "Step 4/5: build"
+npm run build || exit 1
+
+echo "Step 5/5: test"
+npm run test || exit 1
+
+echo "All pre-commit checks passed"

@@ -48,7 +48,7 @@ export default tseslint.config(
   // ── Global ignores ─────────────────────────────────────────────────────────
   {
     ignores: [
-      'dist/**',
+      'dist/**', 'src/generated/**',
       'node_modules/**',
       'coverage/**',
       'prisma/**',
