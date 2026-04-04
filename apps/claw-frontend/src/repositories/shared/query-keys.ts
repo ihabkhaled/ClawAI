@@ -13,7 +13,13 @@ export const queryKeys = {
   },
   connectors: {
     all: ["connectors"] as const,
-    detail: (id: string) => ["connectors", id] as const,
+    lists: () => [...queryKeys.connectors.all, "list"] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.connectors.lists(), filters] as const,
+    detail: (id: string) =>
+      [...queryKeys.connectors.all, "detail", id] as const,
+    models: (id: string) =>
+      [...queryKeys.connectors.all, "models", id] as const,
   },
   models: {
     all: ["models"] as const,

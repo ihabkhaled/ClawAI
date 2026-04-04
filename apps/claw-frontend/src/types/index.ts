@@ -15,9 +15,13 @@ export type {
 } from "./chat.types";
 export type {
   Connector,
-  ConnectorDetail,
   ConnectorModel,
   CreateConnectorRequest,
+  UpdateConnectorRequest,
+  ConnectorsListResponse,
+  HealthCheckResponse,
+  SyncModelsResponse,
+  ConnectorModelsResponse,
 } from "./connector.types";
 export type { RoutingConfig, UpdateRoutingRequest } from "./routing.types";
 export type { AuditEntry, AuditListParams } from "./audit.types";
