@@ -6,4 +6,5 @@ COPY . .
 # Remove any empty app/ directory that would shadow src/app/ in Next.js
 RUN rmdir /app/app 2>/dev/null || true
 EXPOSE 3000
+# Turbopack enabled via --turbopack in package.json dev script
 CMD ["npm", "run", "dev"]
