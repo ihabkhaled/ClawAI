@@ -6,3 +6,4 @@ export type { SidebarItem } from "./sidebar.constants";
 export { SPINNER_SIZE_CLASSES } from "./spinner.constants";
 export { DASHBOARD_STAT_CARDS, DASHBOARD_QUICK_ACTIONS } from "./dashboard.constants";
 export { STATUS_STYLES } from "./status-badge.constants";
+export { ROUTING_MODE_LABELS, MESSAGE_ROLE_LABELS } from "./chat.constants";

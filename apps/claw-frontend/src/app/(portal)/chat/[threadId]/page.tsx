@@ -1,56 +1,105 @@
 "use client";
 
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useCallback, useEffect, useRef } from "react";
 
+import { MessageBubble } from "@/components/chat/message-bubble";
+import { MessageComposer } from "@/components/chat/message-composer";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { PageHeader } from "@/components/common/page-header";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { ROUTES } from "@/constants";
+import { useDeleteThread } from "@/hooks/chat/use-delete-thread";
+import { useSendMessage } from "@/hooks/chat/use-send-message";
+import { useThreadDetail } from "@/hooks/chat/use-thread-detail";
 
 export default function ThreadDetailPage() {
   const params = useParams<{ threadId: string }>();
+  const threadId = params.threadId ?? "";
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  if (!params.threadId) {
+  const { thread, messages, isLoadingThread, isLoadingMessages } =
+    useThreadDetail(threadId);
+  const { sendMessage, isPending: isSending } = useSendMessage(threadId);
+  const { deleteThread, isPending: isDeleting } = useDeleteThread();
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages.length, scrollToBottom]);
+
+  const handleSend = useCallback(
+    (content: string) => {
+      sendMessage({ threadId, content });
+    },
+    [threadId, sendMessage],
+  );
+
+  const handleDelete = useCallback(() => {
+    deleteThread(threadId);
+  }, [threadId, deleteThread]);
+
+  if (!threadId) {
     return <LoadingSpinner label="Loading thread..." />;
   }
+
+  const title = thread?.title ?? "Untitled";
 
   return (
     <div className="flex h-full flex-col">
       <PageHeader
-        title="Thread"
-        description={`Thread ${params.threadId}`}
+        title={title}
+        description={
+          thread
+            ? `${thread.routingMode}${thread.lastModel ? ` \u00b7 ${thread.lastModel}` : ""}`
+            : undefined
+        }
         actions={
-          <Button variant="outline" asChild>
-            <Link href={ROUTES.CHAT}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to threads
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href={ROUTES.CHAT}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to threads
+              </Link>
+            </Button>
+          </div>
         }
       />
 
-      <div className="flex flex-1 flex-col rounded-lg border">
+      <div className="flex flex-1 flex-col overflow-hidden rounded-lg border">
         <div className="flex-1 overflow-y-auto p-4">
-          <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-            No messages yet. Send a message to start the conversation.
-          </div>
+          {isLoadingThread || isLoadingMessages ? (
+            <LoadingSpinner label="Loading messages..." />
+          ) : messages.length === 0 ? (
+            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+              No messages yet. Send a message to start the conversation.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {messages.map((message) => (
+                <MessageBubble key={message.id} message={message} />
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
         </div>
 
         <div className="border-t p-4">
-          <form className="flex gap-2">
-            <Textarea
-              placeholder="Type your message..."
-              className="min-h-[44px] resize-none"
-              rows={1}
-            />
-            <Button type="submit" size="icon" className="shrink-0">
-              <Send className="h-4 w-4" />
-              <span className="sr-only">Send message</span>
-            </Button>
-          </form>
+          <MessageComposer onSend={handleSend} isPending={isSending} />
         </div>
       </div>
     </div>

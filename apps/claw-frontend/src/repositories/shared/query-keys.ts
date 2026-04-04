@@ -4,8 +4,12 @@ export const queryKeys = {
   },
   threads: {
     all: ["threads"] as const,
-    detail: (id: string) => ["threads", id] as const,
-    messages: (id: string) => ["threads", id, "messages"] as const,
+    lists: () => [...queryKeys.threads.all, "list"] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.threads.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.threads.all, "detail", id] as const,
+    messages: (threadId: string, page?: number) =>
+      [...queryKeys.threads.all, "messages", threadId, page] as const,
   },
   connectors: {
     all: ["connectors"] as const,

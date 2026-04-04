@@ -6,10 +6,12 @@ export type {
   AuthState,
 } from "./auth.types";
 export type {
-  Thread,
-  Message,
-  SendMessageRequest,
+  ChatThread,
+  ChatMessage,
   CreateThreadRequest,
+  CreateMessageRequest,
+  ThreadsListResponse,
+  MessagesListResponse,
 } from "./chat.types";
 export type {
   Connector,
