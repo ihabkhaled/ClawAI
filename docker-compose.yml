@@ -134,7 +134,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-claw_secret}
       MONGO_INITDB_DATABASE: ${MONGO_DB:-claw_audit}
     ports:
-      - '27017:27017'
+      - '27018:27017'
     volumes:
       - mongo-data:/data/db
     healthcheck:
@@ -153,7 +153,7 @@ services:
     container_name: claw-redis
     restart: unless-stopped
     ports:
-      - '6379:6379'
+      - '6380:6379'
     volumes:
       - redis-data:/data
     healthcheck:
@@ -416,7 +416,7 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 4007
-      MONGO_URL: mongodb://${MONGO_USER:-claw}:${MONGO_PASSWORD:-claw_secret}@mongodb:27017/${MONGO_DB:-claw_audit}?authSource=admin
+      MONGODB_URI: mongodb://${MONGO_USER:-claw}:${MONGO_PASSWORD:-claw_secret}@mongodb:27017/${MONGO_DB:-claw_audit}?authSource=admin
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
