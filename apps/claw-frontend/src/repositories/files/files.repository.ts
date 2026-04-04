@@ -9,8 +9,8 @@ export const filesRepository = {
   async getFiles(
     params?: Record<string, string>,
   ): Promise<UploadedFile[]> {
-    const response = await apiClient.get<UploadedFile[]>("/files", params);
-    return response.data;
+    const response = await apiClient.get<{ data: UploadedFile[]; meta: unknown }>("/files", params);
+    return response.data.data;
   },
 
   async getFile(id: string): Promise<FileWithChunks> {

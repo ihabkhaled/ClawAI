@@ -12,8 +12,8 @@ import type {
 export const contextPacksRepository = {
   async getContextPacks(): Promise<ContextPack[]> {
     const response =
-      await apiClient.get<ContextPack[]>("/context-packs");
-    return response.data;
+      await apiClient.get<{ data: ContextPack[]; meta: unknown }>("/context-packs");
+    return response.data.data;
   },
 
   async getContextPack(id: string): Promise<ContextPackWithItems> {

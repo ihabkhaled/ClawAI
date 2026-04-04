@@ -9,8 +9,8 @@ export const memoryRepository = {
   async getMemories(
     params?: Record<string, string>,
   ): Promise<MemoryRecord[]> {
-    const response = await apiClient.get<MemoryRecord[]>("/memories", params);
-    return response.data;
+    const response = await apiClient.get<{ data: MemoryRecord[]; meta: unknown }>("/memories", params);
+    return response.data.data;
   },
 
   async getMemory(id: string): Promise<MemoryRecord> {
