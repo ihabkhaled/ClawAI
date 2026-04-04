@@ -1,7 +1,5 @@
 # Dependencies
 node_modules/
-.pnp
-.pnp.js
 
 # Build output
 dist/
@@ -9,7 +7,10 @@ build/
 .next/
 out/
 
-# Environment
+# Prisma generated client (regenerated from schema)
+**/src/generated/
+
+# Environment (secrets)
 .env
 .env.local
 .env.development.local
@@ -36,21 +37,17 @@ yarn-error.log*
 coverage/
 .nyc_output/
 
-# Prisma
-apps/claw-backend/prisma/*.db
-apps/claw-backend/prisma/*.db-journal
-
-# Docker volumes
+# Docker volumes (local data)
 postgres-data/
 redis-data/
 ollama-data/
-upload-data/
+mongo-data/
+rabbitmq-data/
+file-storage-data/
 
-# Reference zip files (not part of source)
+# Reference zip files
 *.zip
 
 # Misc
 *.tsbuildinfo
 .turbo/
-
-*.zip

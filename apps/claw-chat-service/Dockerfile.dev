@@ -5,5 +5,7 @@ COPY package.json ./
 RUN npm install
 COPY . .
 RUN npx prisma generate
+COPY docker-entrypoint.dev.sh /app/docker-entrypoint.dev.sh
+RUN chmod +x /app/docker-entrypoint.dev.sh
 EXPOSE 4002
-CMD ["npm", "run", "dev"]
+CMD ["/app/docker-entrypoint.dev.sh"]
