@@ -3,5 +3,7 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install --legacy-peer-deps
 COPY . .
+# Remove any empty app/ directory that would shadow src/app/ in Next.js
+RUN rmdir /app/app 2>/dev/null || true
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
