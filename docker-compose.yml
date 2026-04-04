@@ -1,39 +1,188 @@
 services:
   # ---------------------------------------------------------------------------
-  # Infrastructure
+  # PostgreSQL Instances (one per service that needs relational storage)
   # ---------------------------------------------------------------------------
-  postgres:
+  pg-auth:
     image: pgvector/pgvector:pg16
-    container_name: claw-postgres
+    container_name: claw-pg-auth
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-claw}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-claw_secret}
-      POSTGRES_DB: ${POSTGRES_DB:-claw}
+      POSTGRES_USER: ${PG_AUTH_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_AUTH_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_AUTH_DB:-claw_auth}
     ports:
-      - '5433:5432'
+      - '5441:5432'
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - pg-auth-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-claw}']
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_AUTH_USER:-claw}']
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - claw-network
 
+  pg-chat:
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-chat
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_CHAT_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_CHAT_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_CHAT_DB:-claw_chat}
+    ports:
+      - '5442:5432'
+    volumes:
+      - pg-chat-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_CHAT_USER:-claw}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
+  pg-connector:
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-connector
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_CONNECTOR_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_CONNECTOR_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_CONNECTOR_DB:-claw_connectors}
+    ports:
+      - '5443:5432'
+    volumes:
+      - pg-connector-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_CONNECTOR_USER:-claw}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
+  pg-routing:
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-routing
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_ROUTING_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_ROUTING_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_ROUTING_DB:-claw_routing}
+    ports:
+      - '5444:5432'
+    volumes:
+      - pg-routing-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_ROUTING_USER:-claw}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
+  pg-memory:
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-memory
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_MEMORY_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_MEMORY_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_MEMORY_DB:-claw_memory}
+    ports:
+      - '5445:5432'
+    volumes:
+      - pg-memory-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_MEMORY_USER:-claw}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
+  pg-files:
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-files
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_FILES_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_FILES_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_FILES_DB:-claw_files}
+    ports:
+      - '5446:5432'
+    volumes:
+      - pg-files-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_FILES_USER:-claw}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
+  # MongoDB (Audit Service)
+  # ---------------------------------------------------------------------------
+  mongodb:
+    image: mongo:7
+    container_name: claw-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-claw}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-claw_secret}
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-claw_audit}
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', 'db.runCommand("ping").ok', '--quiet']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
+  # Redis
+  # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
     container_name: claw-redis
     restart: unless-stopped
     ports:
-      - '6380:6379'
+      - '6379:6379'
     volumes:
       - redis-data:/data
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
+  # RabbitMQ
+  # ---------------------------------------------------------------------------
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: claw-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-claw}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-claw_secret}
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ['CMD-SHELL', 'rabbitmq-diagnostics -q check_running']
+      interval: 15s
+      timeout: 10s
       retries: 5
     networks:
       - claw-network
@@ -57,44 +206,23 @@ services:
     networks:
       - claw-network
 
-  ollama-gpu:
-    image: ollama/ollama:latest
-    container_name: claw-ollama-gpu
-    restart: unless-stopped
-    profiles:
-      - gpu
-    ports:
-      - '11434:11434'
-    volumes:
-      - ollama-data:/root/.ollama
-    environment:
-      - OLLAMA_HOST=0.0.0.0
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    networks:
-      - claw-network
-
   # ---------------------------------------------------------------------------
-  # Backend Application
+  # Microservices
   # ---------------------------------------------------------------------------
-  backend:
+  auth-service:
     build:
-      context: ./apps/claw-backend
+      context: ./apps/claw-auth-service
       dockerfile: Dockerfile
-    container_name: claw-backend
+    container_name: claw-auth-service
     restart: unless-stopped
     ports:
-      - '${BACKEND_PORT:-4000}:4000'
+      - '4001:4001'
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-claw}:${POSTGRES_PASSWORD:-claw_secret}@postgres:5432/${POSTGRES_DB:-claw}?schema=public
-      REDIS_URL: redis://redis:6379
-      BACKEND_PORT: 4000
       NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4001
+      DATABASE_URL: postgresql://${PG_AUTH_USER:-claw}:${PG_AUTH_PASSWORD:-claw_secret}@pg-auth:5432/${PG_AUTH_DB:-claw_auth}?schema=public
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
       JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-15m}
       JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-7d}
@@ -102,14 +230,269 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@claw.local}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-claw-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-      OLLAMA_BASE_URL: http://ollama:11434
     depends_on:
-      postgres:
+      pg-auth:
         condition: service_healthy
       redis:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4000/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4001/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  chat-service:
+    build:
+      context: ./apps/claw-chat-service
+      dockerfile: Dockerfile
+    container_name: claw-chat-service
+    restart: unless-stopped
+    ports:
+      - '4002:4002'
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4002
+      DATABASE_URL: postgresql://${PG_CHAT_USER:-claw}:${PG_CHAT_PASSWORD:-claw_secret}@pg-chat:5432/${PG_CHAT_DB:-claw_chat}?schema=public
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      pg-chat:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4002/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  connector-service:
+    build:
+      context: ./apps/claw-connector-service
+      dockerfile: Dockerfile
+    container_name: claw-connector-service
+    restart: unless-stopped
+    ports:
+      - '4003:4003'
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4003
+      DATABASE_URL: postgresql://${PG_CONNECTOR_USER:-claw}:${PG_CONNECTOR_PASSWORD:-claw_secret}@pg-connector:5432/${PG_CONNECTOR_DB:-claw_connectors}?schema=public
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+    depends_on:
+      pg-connector:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4003/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  routing-service:
+    build:
+      context: ./apps/claw-routing-service
+      dockerfile: Dockerfile
+    container_name: claw-routing-service
+    restart: unless-stopped
+    ports:
+      - '4004:4004'
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4004
+      DATABASE_URL: postgresql://${PG_ROUTING_USER:-claw}:${PG_ROUTING_PASSWORD:-claw_secret}@pg-routing:5432/${PG_ROUTING_DB:-claw_routing}?schema=public
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      pg-routing:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4004/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  memory-service:
+    build:
+      context: ./apps/claw-memory-service
+      dockerfile: Dockerfile
+    container_name: claw-memory-service
+    restart: unless-stopped
+    ports:
+      - '4005:4005'
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4005
+      DATABASE_URL: postgresql://${PG_MEMORY_USER:-claw}:${PG_MEMORY_PASSWORD:-claw_secret}@pg-memory:5432/${PG_MEMORY_DB:-claw_memory}?schema=public
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      pg-memory:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4005/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  file-service:
+    build:
+      context: ./apps/claw-file-service
+      dockerfile: Dockerfile
+    container_name: claw-file-service
+    restart: unless-stopped
+    ports:
+      - '4006:4006'
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4006
+      DATABASE_URL: postgresql://${PG_FILES_USER:-claw}:${PG_FILES_PASSWORD:-claw_secret}@pg-files:5432/${PG_FILES_DB:-claw_files}?schema=public
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+      FILE_STORAGE_PATH: /data/files
+    volumes:
+      - file-storage-data:/data/files
+    depends_on:
+      pg-files:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4006/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  audit-service:
+    build:
+      context: ./apps/claw-audit-service
+      dockerfile: Dockerfile
+    container_name: claw-audit-service
+    restart: unless-stopped
+    ports:
+      - '4007:4007'
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4007
+      MONGO_URL: mongodb://${MONGO_USER:-claw}:${MONGO_PASSWORD:-claw_secret}@mongodb:27017/${MONGO_DB:-claw_audit}?authSource=admin
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4007/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  ollama-service:
+    build:
+      context: ./apps/claw-ollama-service
+      dockerfile: Dockerfile
+    container_name: claw-ollama-service
+    restart: unless-stopped
+    ports:
+      - '4008:4008'
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4008
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4008/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  health-service:
+    build:
+      context: ./apps/claw-health-service
+      dockerfile: Dockerfile
+    container_name: claw-health-service
+    restart: unless-stopped
+    ports:
+      - '4009:4009'
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4009
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      AUTH_SERVICE_URL: http://auth-service:4001
+      CHAT_SERVICE_URL: http://chat-service:4002
+      CONNECTOR_SERVICE_URL: http://connector-service:4003
+      ROUTING_SERVICE_URL: http://routing-service:4004
+      MEMORY_SERVICE_URL: http://memory-service:4005
+      FILE_SERVICE_URL: http://file-service:4006
+      AUDIT_SERVICE_URL: http://audit-service:4007
+      OLLAMA_SERVICE_URL: http://ollama-service:4008
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4009/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 5
@@ -118,46 +501,55 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
-  # Backend Migrations + Seed (run once)
+  # Nginx Reverse Proxy
   # ---------------------------------------------------------------------------
-  backend-migrate:
-    build:
-      context: ./apps/claw-backend
-      dockerfile: Dockerfile
-      target: builder
-    container_name: claw-backend-migrate
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-claw}:${POSTGRES_PASSWORD:-claw_secret}@postgres:5432/${POSTGRES_DB:-claw}?schema=public
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@claw.local}
-      ADMIN_USERNAME: ${ADMIN_USERNAME:-claw-admin}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-    command: >
-      sh -c "npx prisma migrate deploy && npx ts-node prisma/seed.ts"
+  nginx:
+    image: nginx:alpine
+    container_name: claw-nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      postgres:
+      auth-service:
+        condition: service_healthy
+      chat-service:
+        condition: service_healthy
+      connector-service:
+        condition: service_healthy
+      routing-service:
+        condition: service_healthy
+      memory-service:
+        condition: service_healthy
+      file-service:
+        condition: service_healthy
+      audit-service:
+        condition: service_healthy
+      ollama-service:
+        condition: service_healthy
+      health-service:
         condition: service_healthy
     networks:
       - claw-network
-    restart: 'no'
 
   # ---------------------------------------------------------------------------
-  # Frontend Application
+  # Frontend
   # ---------------------------------------------------------------------------
   frontend:
     build:
       context: ./apps/claw-frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:${BACKEND_PORT:-4000}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:80}
     container_name: claw-frontend
     restart: unless-stopped
     ports:
       - '${FRONTEND_PORT:-3000}:3000'
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:${BACKEND_PORT:-4000}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:80}
     depends_on:
-      backend:
-        condition: service_healthy
+      - nginx
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://localhost:3000 || exit 1']
       interval: 15s
@@ -168,11 +560,27 @@ services:
       - claw-network
 
 volumes:
-  postgres-data:
+  pg-auth-data:
+    driver: local
+  pg-chat-data:
+    driver: local
+  pg-connector-data:
+    driver: local
+  pg-routing-data:
+    driver: local
+  pg-memory-data:
+    driver: local
+  pg-files-data:
+    driver: local
+  mongo-data:
     driver: local
   redis-data:
     driver: local
+  rabbitmq-data:
+    driver: local
   ollama-data:
+    driver: local
+  file-storage-data:
     driver: local
 
 networks:

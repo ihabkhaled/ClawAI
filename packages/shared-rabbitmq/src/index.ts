@@ -1,0 +1,3 @@
+export { RabbitMQModule } from './rabbitmq.module';
+export { RabbitMQService } from './rabbitmq.service';
+export { RABBITMQ_MODULE_OPTIONS, type RabbitMQModuleOptions } from './rabbitmq.types';

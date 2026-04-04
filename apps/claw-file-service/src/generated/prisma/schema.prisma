@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FileIngestionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model File {
+  id              String              @id @default(cuid())
+  userId          String              @map("user_id")
+  filename        String
+  mimeType        String              @map("mime_type")
+  sizeBytes       Int                 @map("size_bytes")
+  storagePath     String              @map("storage_path")
+  ingestionStatus FileIngestionStatus @default(PENDING) @map("ingestion_status")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+
+  chunks FileChunk[]
+
+  @@index([userId])
+  @@index([ingestionStatus])
+  @@map("files")
+}
+
+model FileChunk {
+  id         String   @id @default(cuid())
+  fileId     String   @map("file_id")
+  chunkIndex Int      @map("chunk_index")
+  content    String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  file File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([fileId])
+  @@index([chunkIndex])
+  @@map("file_chunks")
+}

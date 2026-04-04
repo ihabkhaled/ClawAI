@@ -1,5 +1,0 @@
-#!/usr/bin/env sh
-echo "HUSKY PRE-COMMIT RUNNING"
-
-npm run lint-staged || exit 1
-npm run typecheck || exit 1

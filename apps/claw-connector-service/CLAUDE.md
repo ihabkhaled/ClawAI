@@ -1,0 +1,57 @@
+# Claw Connector Service - Development Rules
+
+## Service Overview
+
+Connector microservice for the Claw platform. Manages AI provider connectors, models, health events, and sync runs. Runs on port 4003 with its own PostgreSQL database (claw_connectors).
+
+## Tech Stack
+
+- **Runtime**: NestJS 10 with TypeScript (strict mode enabled)
+- **Database**: PostgreSQL with Prisma ORM (claw_connectors database, port 5443)
+- **Cache**: Redis (ioredis)
+- **Messaging**: RabbitMQ (amqplib)
+- **Validation**: Zod (NOT class-validator, NOT class-transformer)
+- **Auth**: JWT (jsonwebtoken) for token verification
+- **Logging**: nestjs-pino / pino structured logging
+- **Encryption**: AES-256-GCM for connector secrets (ENCRYPTION_KEY required)
+
+## Absolute Rules
+
+1. **NEVER use `any`** -- use `unknown`, generics, or proper types.
+2. **NEVER disable ESLint rules** -- no `eslint-disable`, `@ts-ignore`, `@ts-expect-error`.
+3. **NEVER use `console.log`** -- use the NestJS `Logger` service.
+4. **NEVER use `!` non-null assertion** -- handle nullability explicitly.
+5. **NEVER use `process.env` directly** -- use `AppConfig` from `src/app/config/app.config.ts`.
+6. **NEVER put business logic in controllers** -- controllers call exactly ONE service method.
+7. **NEVER put Prisma calls outside repositories** -- repositories are the sole data-access layer.
+8. **NEVER expose connector secrets in API responses or logs** -- redact sensitive fields.
+9. **EVERY function must have an explicit return type**.
+10. **Service methods max 30 lines**.
+11. **Controllers are 3-line methods**: extract params, call ONE service, return result.
+12. **All errors use BusinessException with a code**.
+13. **No default exports** -- use named exports exclusively.
+
+## Architecture
+
+```
+Controller -> Service -> Repository
+```
+
+## Owned Tables
+
+- Connector
+- ConnectorModel
+- ConnectorHealthEvent
+- ModelSyncRun
+
+## Commands
+
+```bash
+npm run dev          # Start with hot reload
+npm run build        # Production build
+npm run typecheck    # TypeScript type check
+npm run validate     # typecheck + lint:strict + format:check
+npm run test         # Run unit tests
+npm run migrate:dev  # Create and run migration
+npm run prisma:generate  # Regenerate Prisma client
+```

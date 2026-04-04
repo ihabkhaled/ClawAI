@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────
+
+enum RoutingMode {
+  AUTO
+  MANUAL_MODEL
+  LOCAL_ONLY
+  PRIVACY_FIRST
+  LOW_LATENCY
+  HIGH_REASONING
+  COST_SAVER
+}
+
+enum MessageRole {
+  SYSTEM
+  USER
+  ASSISTANT
+  TOOL
+}
+
+// ─── Models ──────────────────────────────────────────────
+
+model ChatThread {
+  id           String      @id @default(cuid())
+  userId       String      @map("user_id")
+  title        String?
+  routingMode  RoutingMode @default(AUTO) @map("routing_mode")
+  lastProvider String?     @map("last_provider")
+  lastModel    String?     @map("last_model")
+  isPinned     Boolean     @default(false) @map("is_pinned")
+  isArchived   Boolean     @default(false) @map("is_archived")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  messages ChatMessage[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("chat_threads")
+}
+
+model ChatMessage {
+  id            String       @id @default(cuid())
+  threadId      String       @map("thread_id")
+  role          MessageRole
+  content       String
+  provider      String?
+  model         String?
+  routingMode   RoutingMode? @map("routing_mode")
+  routerModel   String?      @map("router_model")
+  usedFallback  Boolean      @default(false) @map("used_fallback")
+  inputTokens   Int?         @map("input_tokens")
+  outputTokens  Int?         @map("output_tokens")
+  estimatedCost Decimal?     @map("estimated_cost") @db.Decimal(12, 8)
+  latencyMs     Int?         @map("latency_ms")
+  metadata      Json?
+  createdAt     DateTime     @default(now()) @map("created_at")
+
+  thread      ChatThread          @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  attachments MessageAttachment[]
+
+  @@index([threadId])
+  @@index([createdAt])
+  @@map("chat_messages")
+}
+
+model MessageAttachment {
+  id        String @id @default(cuid())
+  messageId String @map("message_id")
+  fileId    String @map("file_id")
+  type      String
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("message_attachments")
+}

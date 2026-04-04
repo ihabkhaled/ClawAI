@@ -1,37 +1,30 @@
 {
   "name": "claw",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Claw — Local-first AI orchestration platform",
+  "description": "Claw — Local-first AI orchestration platform (microservices)",
   "workspaces": [
+    "packages/*",
     "apps/*"
   ],
   "scripts": {
-    "dev": "npm run dev:backend & npm run dev:frontend",
     "dev:frontend": "npm run dev --workspace=claw-frontend",
-    "dev:backend": "npm run dev --workspace=claw-backend",
-    "build": "npm run build --workspace=claw-backend && npm run build --workspace=claw-frontend",
     "build:frontend": "npm run build --workspace=claw-frontend",
-    "build:backend": "npm run build --workspace=claw-backend",
-    "lint": "npm run lint --workspace=claw-backend && npm run lint --workspace=claw-frontend",
     "lint:frontend": "npm run lint --workspace=claw-frontend",
-    "lint:backend": "npm run lint --workspace=claw-backend",
-    "typecheck": "npm run typecheck --workspace=claw-backend && npm run typecheck --workspace=claw-frontend",
-    "test": "npm run test --workspace=claw-backend && npm run test --workspace=claw-frontend",
-    "test:backend": "npm run test --workspace=claw-backend",
     "test:frontend": "npm run test --workspace=claw-frontend",
-    "test:e2e": "npm run test:e2e --workspace=claw-frontend",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
     "format": "prettier --write \"**/*.{ts,tsx,json,md,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md,css}\"",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
-    "docker:up:ai": "docker compose --profile local-ai up -d",
+    "docker:build": "docker compose build",
+    "docker:up:full": "docker compose --profile local-ai up -d",
     "docker:up:gpu": "docker compose --profile gpu up -d",
-    "migrate": "npm run migrate --workspace=claw-backend",
-    "migrate:dev": "npm run migrate:dev --workspace=claw-backend",
-    "seed": "npm run seed --workspace=claw-backend",
-    "db:reset": "npm run db:reset --workspace=claw-backend",
-    "clean": "rm -rf apps/claw-frontend/.next apps/claw-backend/dist node_modules"
+    "docker:logs": "docker compose logs -f",
+    "docker:ps": "docker compose ps"
   },
   "engines": {
     "node": ">=20.0.0"

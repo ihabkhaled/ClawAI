@@ -1,0 +1,20 @@
+import { NestFactory } from "@nestjs/core";
+import { Logger } from "nestjs-pino";
+import { AppModule } from "./app/app.module";
+import { AppConfig } from "./app/config/app.config";
+
+async function bootstrap(): Promise<void> {
+  const config = AppConfig.validate();
+
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
+
+  app.useLogger(app.get(Logger));
+  app.setGlobalPrefix("api/v1");
+  app.enableCors();
+
+  await app.listen(config.PORT);
+}
+
+void bootstrap();
