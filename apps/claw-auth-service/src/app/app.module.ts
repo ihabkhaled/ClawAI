@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { LoggerModule } from "nestjs-pino";
+import { RabbitMQModule } from "@claw/shared-rabbitmq";
 
 import { PrismaModule } from "../infrastructure/database/prisma/prisma.module";
 import { RedisModule } from "../infrastructure/redis/redis.module";
@@ -25,6 +26,12 @@ import { HealthModule } from "../modules/health/health.module";
         level: process.env["NODE_ENV"] !== "production" ? "debug" : "info",
         autoLogging: true,
       },
+    }),
+    RabbitMQModule.forRootAsync({
+      useFactory: () => ({
+        url: process.env['RABBITMQ_URL'] ?? 'amqp://localhost:5672',
+        serviceName: 'auth-service',
+      }),
     }),
     PrismaModule,
     RedisModule,
