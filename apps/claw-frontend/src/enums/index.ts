@@ -8,3 +8,6 @@ export { AuditAction } from "./audit-action.enum";
 export { AuditSeverity } from "./audit-severity.enum";
 export { HttpMethod } from "./http-method.enum";
 export { ComponentSize } from "./component-size.enum";
+export { MemoryType } from "./memory-type.enum";
+export { FileIngestionStatus } from "./file-ingestion-status.enum";
+export { ContextPackItemType } from "./context-pack-item-type.enum";

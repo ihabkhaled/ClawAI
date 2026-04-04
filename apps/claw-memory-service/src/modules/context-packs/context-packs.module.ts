@@ -6,6 +6,6 @@ import { ContextPacksRepository } from "./repositories/context-packs.repository"
 @Module({
   controllers: [ContextPacksController],
   providers: [ContextPacksService, ContextPacksRepository],
-  exports: [ContextPacksService],
+  exports: [ContextPacksService, ContextPacksRepository],
 })
 export class ContextPacksModule {}

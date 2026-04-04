@@ -1,19 +1,19 @@
 import { type ContextPack, type ContextPackItem } from "../../../generated/prisma";
 
-export interface CreateContextPackInput {
+export interface CreateContextPackData {
   userId: string;
   name: string;
   description?: string;
   scope?: string;
 }
 
-export interface UpdateContextPackInput {
+export interface UpdateContextPackData {
   name?: string;
   description?: string;
   scope?: string;
 }
 
-export interface CreateContextPackItemInput {
+export interface AddContextPackItemData {
   contextPackId: string;
   type: string;
   content?: string;
@@ -21,11 +21,9 @@ export interface CreateContextPackItemInput {
   sortOrder?: number;
 }
 
-export interface UpdateContextPackItemInput {
-  type?: string;
-  content?: string;
-  fileId?: string;
-  sortOrder?: number;
+export interface ContextPackFilters {
+  userId: string;
+  search?: string;
 }
 
 export type ContextPackWithItems = ContextPack & {

@@ -6,6 +6,6 @@ import { MemoryRepository } from "./repositories/memory.repository";
 @Module({
   controllers: [MemoryController],
   providers: [MemoryService, MemoryRepository],
-  exports: [MemoryService],
+  exports: [MemoryService, MemoryRepository],
 })
 export class MemoryModule {}

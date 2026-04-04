@@ -2,6 +2,8 @@ import type { LucideIcon } from "lucide-react";
 
 import type { SidebarItem } from "@/constants";
 import type { ComponentSize, ConnectorStatus } from "@/enums";
+import type { MemoryRecord } from "./memory.types";
+import type { UploadedFile } from "./file.types";
 
 // ─── Common component props ──────────────────────────────────────────────────
 
@@ -57,6 +59,30 @@ export type StatusBadgeProps = {
 
 export type SidebarNavItemProps = {
   item: SidebarItem;
+};
+
+// ─── Memory component props ─────────────────────────────────────────────────
+
+export type MemoryCardProps = {
+  memory: MemoryRecord;
+  onToggle: (id: string, isEnabled: boolean) => void;
+  onEdit: (memory: MemoryRecord) => void;
+  onDelete: (id: string) => void;
+  isTogglePending: boolean;
+};
+
+// ─── File component props ───────────────────────────────────────────────────
+
+export type FileUploadZoneProps = {
+  onFileSelected: (file: File) => void;
+  isUploading: boolean;
+};
+
+export type FileListItemProps = {
+  file: UploadedFile;
+  onDelete: (id: string) => void;
+  onViewChunks: (id: string) => void;
+  isDeletePending: boolean;
 };
 
 // ─── Page-specific types ─────────────────────────────────────────────────────

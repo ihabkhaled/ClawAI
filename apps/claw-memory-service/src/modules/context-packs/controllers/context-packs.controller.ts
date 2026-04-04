@@ -1,15 +1,13 @@
-import { Controller, Get, Post, Put, Delete, Param, Body } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
 import { type ContextPack, type ContextPackItem } from "../../../generated/prisma";
+import { ZodValidationPipe } from "../../../app/pipes/zod-validation.pipe";
 import { CurrentUser } from "../../../app/decorators/current-user.decorator";
-import { AuthenticatedUser } from "../../../common/types";
+import { type AuthenticatedUser, type PaginatedResult } from "../../../common/types";
 import { ContextPacksService } from "../services/context-packs.service";
-import {
-  CreateContextPackInput,
-  CreateContextPackItemInput,
-  ContextPackWithItems,
-  UpdateContextPackInput,
-  UpdateContextPackItemInput,
-} from "../types/context-packs.types";
+import { type CreateContextPackDto, createContextPackSchema } from "../dto/create-context-pack.dto";
+import { type UpdateContextPackDto, updateContextPackSchema } from "../dto/update-context-pack.dto";
+import { type AddContextPackItemDto, addContextPackItemSchema } from "../dto/add-context-pack-item.dto";
+import { type ContextPackWithItems } from "../types/context-packs.types";
 
 @Controller("context-packs")
 export class ContextPacksController {
@@ -18,52 +16,66 @@ export class ContextPacksController {
   @Post()
   async create(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() body: Omit<CreateContextPackInput, "userId">,
+    @Body(new ZodValidationPipe(createContextPackSchema)) dto: CreateContextPackDto,
   ): Promise<ContextPack> {
-    return this.contextPacksService.create({ ...body, userId: user.id });
+    return this.contextPacksService.createContextPack(user.id, dto);
   }
 
   @Get()
-  async findByUser(@CurrentUser() user: AuthenticatedUser): Promise<ContextPack[]> {
-    return this.contextPacksService.findByUserId(user.id);
+  async findAll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query("page") page?: string,
+    @Query("limit") limit?: string,
+    @Query("search") search?: string,
+  ): Promise<PaginatedResult<ContextPack>> {
+    return this.contextPacksService.getContextPacks(
+      user.id,
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+      search,
+    );
   }
 
   @Get(":id")
-  async findById(@Param("id") id: string): Promise<ContextPackWithItems> {
-    return this.contextPacksService.findById(id);
+  async findOne(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ContextPackWithItems> {
+    return this.contextPacksService.getContextPack(id, user.id);
   }
 
-  @Put(":id")
+  @Patch(":id")
   async update(
     @Param("id") id: string,
-    @Body() body: UpdateContextPackInput,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(updateContextPackSchema)) dto: UpdateContextPackDto,
   ): Promise<ContextPack> {
-    return this.contextPacksService.update(id, body);
+    return this.contextPacksService.updateContextPack(id, user.id, dto);
   }
 
   @Delete(":id")
-  async delete(@Param("id") id: string): Promise<ContextPack> {
-    return this.contextPacksService.delete(id);
+  async remove(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ContextPack> {
+    return this.contextPacksService.deleteContextPack(id, user.id);
   }
 
   @Post(":id/items")
-  async createItem(
+  async addItem(
     @Param("id") contextPackId: string,
-    @Body() body: Omit<CreateContextPackItemInput, "contextPackId">,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(addContextPackItemSchema)) dto: AddContextPackItemDto,
   ): Promise<ContextPackItem> {
-    return this.contextPacksService.createItem({ ...body, contextPackId });
-  }
-
-  @Put(":id/items/:itemId")
-  async updateItem(
-    @Param("itemId") itemId: string,
-    @Body() body: UpdateContextPackItemInput,
-  ): Promise<ContextPackItem> {
-    return this.contextPacksService.updateItem(itemId, body);
+    return this.contextPacksService.addItem(contextPackId, user.id, dto);
   }
 
   @Delete(":id/items/:itemId")
-  async deleteItem(@Param("itemId") itemId: string): Promise<ContextPackItem> {
-    return this.contextPacksService.deleteItem(itemId);
+  async removeItem(
+    @Param("id") contextPackId: string,
+    @Param("itemId") itemId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ContextPackItem> {
+    return this.contextPacksService.removeItem(contextPackId, itemId, user.id);
   }
 }

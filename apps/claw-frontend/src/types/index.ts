@@ -43,6 +43,26 @@ export type {
 } from "./routing.types";
 export type { AuditEntry, AuditListParams } from "./audit.types";
 export type {
+  MemoryRecord,
+  CreateMemoryRequest,
+  UpdateMemoryRequest,
+} from "./memory.types";
+export type {
+  ContextPack,
+  ContextPackItem,
+  ContextPackWithItems,
+  CreateContextPackRequest,
+  UpdateContextPackRequest,
+  CreateContextPackItemRequest,
+  UpdateContextPackItemRequest,
+} from "./context-pack.types";
+export type {
+  UploadedFile,
+  FileChunk,
+  FileWithChunks,
+  UploadFileRequest,
+} from "./file.types";
+export type {
   DashboardStats,
   DashboardStatCard,
   DashboardQuickAction,
@@ -67,4 +87,7 @@ export type {
   StatusBadgeProps,
   SidebarNavItemProps,
   ProvidersProps,
+  MemoryCardProps,
+  FileUploadZoneProps,
+  FileListItemProps,
 } from "./component.types";

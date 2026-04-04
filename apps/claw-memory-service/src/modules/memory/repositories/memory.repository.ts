@@ -1,39 +1,73 @@
 import { Injectable } from "@nestjs/common";
-import { type MemoryRecord } from "../../../generated/prisma";
+import { type MemoryRecord, Prisma } from "../../../generated/prisma";
 import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
-import { CreateMemoryRecordInput, MemoryRecordFilters, UpdateMemoryRecordInput } from "../types/memory.types";
+import {
+  type CreateMemoryData,
+  type UpdateMemoryData,
+  type MemoryFilters,
+} from "../types/memory.types";
 
 @Injectable()
 export class MemoryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(input: CreateMemoryRecordInput): Promise<MemoryRecord> {
-    return this.prisma.memoryRecord.create({ data: input });
+  async create(data: CreateMemoryData): Promise<MemoryRecord> {
+    return this.prisma.memoryRecord.create({ data });
   }
 
   async findById(id: string): Promise<MemoryRecord | null> {
     return this.prisma.memoryRecord.findUnique({ where: { id } });
   }
 
-  async findMany(filters: MemoryRecordFilters): Promise<MemoryRecord[]> {
+  async findAll(
+    filters: MemoryFilters,
+    page: number,
+    limit: number,
+  ): Promise<MemoryRecord[]> {
+    const where = this.buildWhereClause(filters);
+    const skip = (page - 1) * limit;
+
     return this.prisma.memoryRecord.findMany({
-      where: {
-        userId: filters.userId,
-        ...(filters.type !== undefined && { type: filters.type }),
-        ...(filters.isEnabled !== undefined && { isEnabled: filters.isEnabled }),
-      },
+      where,
+      skip,
+      take: limit,
       orderBy: { createdAt: "desc" },
     });
   }
 
-  async update(id: string, input: UpdateMemoryRecordInput): Promise<MemoryRecord> {
+  async update(id: string, data: UpdateMemoryData): Promise<MemoryRecord> {
     return this.prisma.memoryRecord.update({
       where: { id },
-      data: input,
+      data,
     });
   }
 
   async delete(id: string): Promise<MemoryRecord> {
     return this.prisma.memoryRecord.delete({ where: { id } });
+  }
+
+  async countAll(filters: MemoryFilters): Promise<number> {
+    const where = this.buildWhereClause(filters);
+    return this.prisma.memoryRecord.count({ where });
+  }
+
+  private buildWhereClause(filters: MemoryFilters): Prisma.MemoryRecordWhereInput {
+    const where: Prisma.MemoryRecordWhereInput = {
+      userId: filters.userId,
+    };
+
+    if (filters.type !== undefined) {
+      where.type = filters.type;
+    }
+
+    if (filters.isEnabled !== undefined) {
+      where.isEnabled = filters.isEnabled;
+    }
+
+    if (filters.search) {
+      where.content = { contains: filters.search, mode: "insensitive" };
+    }
+
+    return where;
   }
 }

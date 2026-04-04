@@ -1,6 +1,6 @@
 import { type MemoryRecord, type MemoryType } from "../../../generated/prisma";
 
-export interface CreateMemoryRecordInput {
+export interface CreateMemoryData {
   userId: string;
   type: MemoryType;
   content: string;
@@ -8,16 +8,16 @@ export interface CreateMemoryRecordInput {
   sourceMessageId?: string;
 }
 
-export interface UpdateMemoryRecordInput {
+export interface UpdateMemoryData {
   content?: string;
-  type?: MemoryType;
   isEnabled?: boolean;
 }
 
-export interface MemoryRecordFilters {
+export interface MemoryFilters {
   userId: string;
   type?: MemoryType;
   isEnabled?: boolean;
+  search?: string;
 }
 
 export type MemoryRecordResult = MemoryRecord;

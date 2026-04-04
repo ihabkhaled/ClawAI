@@ -1,37 +1,53 @@
-import { Controller, Get, Post, Delete, Param, Body, Query } from "@nestjs/common";
-import { type File, type FileIngestionStatus } from "../../../generated/prisma";
+import { Body, Controller, Delete, Get, Param, Post, Query } from "@nestjs/common";
+import { type File, type FileChunk } from "../../../generated/prisma";
+import { ZodValidationPipe } from "../../../app/pipes/zod-validation.pipe";
 import { CurrentUser } from "../../../app/decorators/current-user.decorator";
-import { AuthenticatedUser } from "../../../common/types";
+import { type AuthenticatedUser, type PaginatedResult } from "../../../common/types";
 import { FilesService } from "../services/files.service";
-import { CreateFileInput, FileWithChunks } from "../types/files.types";
+import { type UploadFileDto, uploadFileSchema } from "../dto/upload-file.dto";
+import { type ListFilesQueryDto, listFilesQuerySchema } from "../dto/list-files-query.dto";
 
 @Controller("files")
 export class FilesController {
   constructor(private readonly filesService: FilesService) {}
 
-  @Post()
+  @Post("upload")
   async upload(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() body: Omit<CreateFileInput, "userId">,
+    @Body(new ZodValidationPipe(uploadFileSchema)) dto: UploadFileDto,
   ): Promise<File> {
-    return this.filesService.create({ ...body, userId: user.id });
+    return this.filesService.uploadFile(user.id, dto);
   }
 
   @Get()
-  async list(
+  async findAll(
     @CurrentUser() user: AuthenticatedUser,
-    @Query("ingestionStatus") ingestionStatus?: FileIngestionStatus,
-  ): Promise<File[]> {
-    return this.filesService.findMany({ userId: user.id, ingestionStatus });
+    @Query(new ZodValidationPipe(listFilesQuerySchema)) query: ListFilesQueryDto,
+  ): Promise<PaginatedResult<File>> {
+    return this.filesService.getFiles(user.id, query);
   }
 
   @Get(":id")
-  async get(@Param("id") id: string): Promise<FileWithChunks> {
-    return this.filesService.findById(id);
+  async findOne(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<File> {
+    return this.filesService.getFile(id, user.id);
   }
 
   @Delete(":id")
-  async delete(@Param("id") id: string): Promise<File> {
-    return this.filesService.delete(id);
+  async remove(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<File> {
+    return this.filesService.deleteFile(id, user.id);
+  }
+
+  @Get(":id/chunks")
+  async getChunks(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<FileChunk[]> {
+    return this.filesService.getChunks(id, user.id);
   }
 }

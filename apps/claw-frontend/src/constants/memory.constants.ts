@@ -1,0 +1,41 @@
+import { ContextPackItemType, FileIngestionStatus, MemoryType } from "@/enums";
+
+export const MEMORY_TYPE_LABELS: Record<MemoryType, string> = {
+  [MemoryType.SUMMARY]: "Summary",
+  [MemoryType.FACT]: "Fact",
+  [MemoryType.PREFERENCE]: "Preference",
+  [MemoryType.INSTRUCTION]: "Instruction",
+};
+
+export const MEMORY_TYPE_COLORS: Record<MemoryType, string> = {
+  [MemoryType.SUMMARY]: "bg-blue-100 text-blue-800 border-blue-200",
+  [MemoryType.FACT]: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  [MemoryType.PREFERENCE]: "bg-violet-100 text-violet-800 border-violet-200",
+  [MemoryType.INSTRUCTION]: "bg-amber-100 text-amber-800 border-amber-200",
+};
+
+export const INGESTION_STATUS_LABELS: Record<FileIngestionStatus, string> = {
+  [FileIngestionStatus.PENDING]: "Pending",
+  [FileIngestionStatus.PROCESSING]: "Processing",
+  [FileIngestionStatus.COMPLETED]: "Completed",
+  [FileIngestionStatus.FAILED]: "Failed",
+};
+
+export const INGESTION_STATUS_COLORS: Record<FileIngestionStatus, string> = {
+  [FileIngestionStatus.PENDING]:
+    "bg-amber-100 text-amber-800 border-amber-200",
+  [FileIngestionStatus.PROCESSING]:
+    "bg-blue-100 text-blue-800 border-blue-200",
+  [FileIngestionStatus.COMPLETED]:
+    "bg-emerald-100 text-emerald-800 border-emerald-200",
+  [FileIngestionStatus.FAILED]: "bg-red-100 text-red-800 border-red-200",
+};
+
+export const CONTEXT_PACK_ITEM_TYPE_LABELS: Record<
+  ContextPackItemType,
+  string
+> = {
+  [ContextPackItemType.NOTE]: "Text Note",
+  [ContextPackItemType.INSTRUCTION]: "Instruction",
+  [ContextPackItemType.FILE_REFERENCE]: "File Reference",
+};
