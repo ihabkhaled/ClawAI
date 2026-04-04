@@ -1,4 +1,10 @@
-import { DynamicModule, Module, Global } from '@nestjs/common';
+import {
+  type DynamicModule,
+  Module,
+  Global,
+  type InjectionToken,
+  type OptionalFactoryDependency,
+} from '@nestjs/common';
 import { RabbitMQService } from './rabbitmq.service';
 import { RABBITMQ_MODULE_OPTIONS, type RabbitMQModuleOptions } from './rabbitmq.types';
 
@@ -21,7 +27,7 @@ export class RabbitMQModule {
 
   static forRootAsync(optionsFactory: {
     useFactory: (...args: unknown[]) => RabbitMQModuleOptions | Promise<RabbitMQModuleOptions>;
-    inject?: unknown[];
+    inject?: Array<InjectionToken | OptionalFactoryDependency>;
   }): DynamicModule {
     return {
       module: RabbitMQModule,

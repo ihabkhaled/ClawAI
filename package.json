@@ -24,10 +24,18 @@
     "docker:up:full": "docker compose --profile local-ai up -d",
     "docker:up:gpu": "docker compose --profile gpu up -d",
     "docker:logs": "docker compose logs -f",
-    "docker:ps": "docker compose ps"
+    "docker:ps": "docker compose ps",
+    "prepare": "node .husky/install.mjs",
+    "lint-staged": "lint-staged"
   },
   "engines": {
     "node": ">=20.0.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0"
+  }
 }

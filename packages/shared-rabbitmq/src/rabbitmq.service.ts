@@ -1,12 +1,12 @@
 import { Injectable, Inject, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import * as amqplib from 'amqplib';
+import amqplib from 'amqplib';
 import { EXCHANGE_NAME, RABBITMQ_QUEUE_PREFIX } from '@claw/shared-constants';
 import { type EventPattern } from '@claw/shared-types';
 import { RABBITMQ_MODULE_OPTIONS, type RabbitMQModuleOptions } from './rabbitmq.types';
 
 @Injectable()
 export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
-  private connection: amqplib.Connection | null = null;
+  private connection: amqplib.ChannelModel | null = null;
   private channel: amqplib.Channel | null = null;
   private readonly logger = new Logger(RabbitMQService.name);
   private readonly exchangeName: string;
@@ -35,17 +35,21 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       await this.channel.assertExchange(this.exchangeName, 'topic', { durable: true });
       this.logger.log(`Connected to RabbitMQ, exchange: ${this.exchangeName}`);
 
-      this.connection.on('error', (err) => {
+      this.connection.on('error', (err: Error) => {
         this.logger.error('RabbitMQ connection error', err);
       });
 
       this.connection.on('close', () => {
         this.logger.warn('RabbitMQ connection closed, attempting reconnect...');
-        setTimeout(() => this.connect(), 5000);
+        setTimeout(() => {
+          void this.connect();
+        }, 5000);
       });
     } catch (err) {
       this.logger.error('Failed to connect to RabbitMQ', err);
-      setTimeout(() => this.connect(), 5000);
+      setTimeout(() => {
+        void this.connect();
+      }, 5000);
     }
   }
 
@@ -105,8 +109,8 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       if (!msg) return;
 
       try {
-        const content = JSON.parse(msg.content.toString());
-        await handler(content.data ?? content);
+        const content = JSON.parse(msg.content.toString()) as Record<string, unknown>;
+        await handler(content['data'] ?? content);
         this.channel?.ack(msg);
       } catch (err) {
         this.logger.error(`Error processing message on ${pattern}`, err);

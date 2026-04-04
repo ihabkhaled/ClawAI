@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+echo "HUSKY PRE-COMMIT RUNNING"
+
+npx lint-staged || exit 1
+npm run typecheck --workspaces --if-present || exit 1
