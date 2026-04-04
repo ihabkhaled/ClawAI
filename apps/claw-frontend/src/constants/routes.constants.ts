@@ -1,5 +1,6 @@
 export const ROUTES = {
   LOGIN: "/login",
+  DASHBOARD: "/dashboard",
   CHAT: "/chat",
   CHAT_THREAD: (threadId: string) => `/chat/${threadId}` as const,
   CONNECTORS: "/connectors",

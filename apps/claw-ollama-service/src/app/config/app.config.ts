@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const appConfigSchema = z.object({
+  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   OLLAMA_BASE_URL: z.string().min(1, "OLLAMA_BASE_URL is required"),
   REDIS_URL: z.string().min(1, "REDIS_URL is required"),
   RABBITMQ_URL: z.string().min(1, "RABBITMQ_URL is required"),

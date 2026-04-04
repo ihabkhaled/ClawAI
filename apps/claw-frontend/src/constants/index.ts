@@ -4,4 +4,5 @@ export { ROUTES, PUBLIC_ROUTES } from "./routes.constants";
 export { SIDEBAR_NAV_ITEMS } from "./sidebar.constants";
 export type { SidebarItem } from "./sidebar.constants";
 export { SPINNER_SIZE_CLASSES } from "./spinner.constants";
+export { DASHBOARD_STAT_CARDS, DASHBOARD_QUICK_ACTIONS } from "./dashboard.constants";
 export { STATUS_STYLES } from "./status-badge.constants";

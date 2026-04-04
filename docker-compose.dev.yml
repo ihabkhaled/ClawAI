@@ -127,6 +127,26 @@ services:
     networks:
       - claw-network
 
+  pg-ollama:
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-ollama
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_OLLAMA_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_OLLAMA_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_OLLAMA_DB:-claw_ollama}
+    ports:
+      - '5447:5432'
+    volumes:
+      - pg-ollama-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_OLLAMA_USER:-claw}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
   mongodb:
     image: mongo:7
     container_name: claw-mongodb
@@ -504,16 +524,20 @@ services:
       - '4008:4008'
     volumes:
       - ./apps/claw-ollama-service/src:/app/src
+      - ./apps/claw-ollama-service/prisma:/app/prisma
     environment:
       NODE_ENV: development
       PORT: 4008
+      DATABASE_URL: postgresql://${PG_OLLAMA_USER:-claw}:${PG_OLLAMA_PASSWORD:-claw_secret}@pg-ollama:5432/${PG_OLLAMA_DB:-claw_ollama}?schema=public
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET:-claw-dev-jwt-secret-9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
-    command: npm run dev
+    command: ["/app/docker-entrypoint.dev.sh"]
     depends_on:
+      pg-ollama:
+        condition: service_healthy
       redis:
         condition: service_healthy
       rabbitmq:
@@ -594,6 +618,7 @@ volumes:
   pg-routing-data:
   pg-memory-data:
   pg-files-data:
+  pg-ollama-data:
   mongo-data:
   redis-data:
   rabbitmq-data:

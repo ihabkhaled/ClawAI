@@ -1,4 +1,5 @@
 import {
+  LayoutDashboard,
   MessageSquare,
   Plug,
   Cpu,
@@ -21,6 +22,7 @@ export interface SidebarItem {
 }
 
 export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
+  { label: "Dashboard", href: ROUTES.DASHBOARD, icon: LayoutDashboard },
   { label: "Chat", href: ROUTES.CHAT, icon: MessageSquare },
   { label: "Connectors", href: ROUTES.CONNECTORS, icon: Plug },
   { label: "Models", href: ROUTES.MODELS, icon: Cpu },

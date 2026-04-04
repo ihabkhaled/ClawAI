@@ -33,6 +33,18 @@ export interface UserLogoutPayload extends BaseEventPayload {
   userId: string;
 }
 
+export interface UserRoleChangedPayload extends BaseEventPayload {
+  userId: string;
+  previousRole: UserRole;
+  newRole: UserRole;
+  changedBy: string;
+}
+
+export interface UserDeactivatedPayload extends BaseEventPayload {
+  userId: string;
+  deactivatedBy: string;
+}
+
 // ---- Message Events ----
 
 export interface MessageCreatedPayload extends BaseEventPayload {
@@ -158,6 +170,8 @@ export type EventPayload =
   | UserCreatedPayload
   | UserLoginPayload
   | UserLogoutPayload
+  | UserRoleChangedPayload
+  | UserDeactivatedPayload
   | MessageCreatedPayload
   | MessageRoutedPayload
   | MessageCompletedPayload

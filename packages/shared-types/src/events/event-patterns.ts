@@ -2,6 +2,8 @@ export enum EventPattern {
   USER_CREATED = 'user.created',
   USER_LOGIN = 'user.login',
   USER_LOGOUT = 'user.logout',
+  USER_ROLE_CHANGED = 'user.role_changed',
+  USER_DEACTIVATED = 'user.deactivated',
   MESSAGE_CREATED = 'message.created',
   MESSAGE_ROUTED = 'message.routed',
   MESSAGE_COMPLETED = 'message.completed',

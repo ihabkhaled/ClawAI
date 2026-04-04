@@ -1,21 +1,39 @@
-import { Injectable } from "@nestjs/common";
+import { HttpStatus, Injectable } from "@nestjs/common";
+import { RabbitMQService } from "@claw/shared-rabbitmq";
+import { EventPattern } from "@claw/shared-types";
 import { UsersRepository } from "../repositories/users.repository";
 import { hashPassword } from "@common/utilities";
 import { CreateUserDto } from "../dto/create-user.dto";
+import { type UpdateUserDto } from "../dto/update-user.dto";
+import { type ListUsersQueryDto } from "../dto/list-users-query.dto";
 import {
+  BusinessException,
   DuplicateEntityException,
   EntityNotFoundException,
 } from "../../../common/errors";
-import { PaginatedResult } from "../../../common/types";
-import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from "../../../common/constants";
-import { SafeUser } from "../types/users.types";
+import { type PaginatedResult } from "../../../common/types";
+import { UserRole, UserStatus } from "../../../common/enums";
+import { type SafeUser } from "../types/users.types";
 import { toSafeUser } from "../service.utilities/to-safe-user.utility";
+import { validatePasswordStrength } from "../service.utilities/password-policy.utility";
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly usersRepository: UsersRepository) {}
+  constructor(
+    private readonly usersRepository: UsersRepository,
+    private readonly rabbitMQService: RabbitMQService,
+  ) {}
 
   async create(dto: CreateUserDto): Promise<SafeUser> {
+    const passwordResult = validatePasswordStrength(dto.password);
+    if (!passwordResult.valid) {
+      throw new BusinessException(
+        passwordResult.errors.join("; "),
+        "WEAK_PASSWORD",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const existingByEmail = await this.usersRepository.findByEmail(dto.email);
     if (existingByEmail) {
       throw new DuplicateEntityException("User", "email");
@@ -36,6 +54,13 @@ export class UsersService {
       status: "ACTIVE",
     });
 
+    await this.rabbitMQService.publish(EventPattern.USER_CREATED, {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      timestamp: new Date().toISOString(),
+    });
+
     return toSafeUser(user);
   }
 
@@ -47,21 +72,118 @@ export class UsersService {
     return toSafeUser(user);
   }
 
-  async findAll(
-    page: number = DEFAULT_PAGE,
-    limit: number = DEFAULT_PAGE_SIZE,
-  ): Promise<PaginatedResult<SafeUser>> {
-    const skip = (page - 1) * limit;
-    const { users, total } = await this.usersRepository.findAll({ skip, take: limit });
+  async findAll(query: ListUsersQueryDto): Promise<PaginatedResult<SafeUser>> {
+    const skip = (query.page - 1) * query.limit;
+    const { users, total } = await this.usersRepository.findAll({
+      skip,
+      take: query.limit,
+      filters: { search: query.search, role: query.role, status: query.status },
+      sortBy: query.sortBy,
+      sortOrder: query.sortOrder,
+    });
 
     return {
       data: users.map(toSafeUser),
       meta: {
         total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        page: query.page,
+        limit: query.limit,
+        totalPages: Math.ceil(total / query.limit),
       },
     };
+  }
+
+  async updateUser(id: string, dto: UpdateUserDto, actorId: string): Promise<SafeUser> {
+    const user = await this.usersRepository.findById(id);
+    if (!user) {
+      throw new EntityNotFoundException("User", id);
+    }
+
+    if (dto.email && dto.email !== user.email) {
+      const existing = await this.usersRepository.findByEmail(dto.email);
+      if (existing) {
+        throw new DuplicateEntityException("User", "email");
+      }
+    }
+
+    if (dto.username && dto.username !== user.username) {
+      const existing = await this.usersRepository.findByUsername(dto.username);
+      if (existing) {
+        throw new DuplicateEntityException("User", "username");
+      }
+    }
+
+    const updated = await this.usersRepository.updateById(id, {
+      email: dto.email,
+      username: dto.username,
+      role: dto.role,
+      status: dto.status,
+    });
+
+    void this.rabbitMQService.publish(EventPattern.USER_CREATED, {
+      userId: updated.id,
+      actorId,
+      timestamp: new Date().toISOString(),
+    });
+
+    return toSafeUser(updated);
+  }
+
+  async deactivateUser(id: string, actorId: string): Promise<SafeUser> {
+    const user = await this.usersRepository.findById(id);
+    if (!user) {
+      throw new EntityNotFoundException("User", id);
+    }
+
+    const updated = await this.usersRepository.updateById(id, {
+      status: UserStatus.SUSPENDED,
+    });
+
+    await this.rabbitMQService.publish(EventPattern.USER_DEACTIVATED, {
+      userId: id,
+      deactivatedBy: actorId,
+      timestamp: new Date().toISOString(),
+    });
+
+    return toSafeUser(updated);
+  }
+
+  async reactivateUser(id: string, actorId: string): Promise<SafeUser> {
+    const user = await this.usersRepository.findById(id);
+    if (!user) {
+      throw new EntityNotFoundException("User", id);
+    }
+
+    const updated = await this.usersRepository.updateById(id, {
+      status: UserStatus.ACTIVE,
+    });
+
+    void this.rabbitMQService.publish(EventPattern.USER_CREATED, {
+      userId: id,
+      actorId,
+      timestamp: new Date().toISOString(),
+    });
+
+    return toSafeUser(updated);
+  }
+
+  async changeRole(id: string, role: UserRole, actorId: string): Promise<SafeUser> {
+    const user = await this.usersRepository.findById(id);
+    if (!user) {
+      throw new EntityNotFoundException("User", id);
+    }
+
+    const previousRole = user.role;
+    const updated = await this.usersRepository.updateById(id, { role });
+
+    await this.rabbitMQService.publish(EventPattern.USER_ROLE_CHANGED, {
+      userId: id,
+      previousRole,
+      newRole: role,
+      changedBy: actorId,
+      timestamp: new Date().toISOString(),
+    });
+
+    return toSafeUser(updated);
   }
 }

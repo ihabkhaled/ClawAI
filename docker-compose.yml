@@ -122,6 +122,26 @@ services:
     networks:
       - claw-network
 
+  pg-ollama:
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-ollama
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_OLLAMA_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_OLLAMA_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_OLLAMA_DB:-claw_ollama}
+    ports:
+      - '5447:5432'
+    volumes:
+      - pg-ollama-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_OLLAMA_USER:-claw}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
   # ---------------------------------------------------------------------------
   # MongoDB (Audit Service)
   # ---------------------------------------------------------------------------
@@ -454,12 +474,15 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 4008
+      DATABASE_URL: postgresql://${PG_OLLAMA_USER:-claw}:${PG_OLLAMA_PASSWORD:-claw_secret}@pg-ollama:5432/${PG_OLLAMA_DB:-claw_ollama}?schema=public
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
     depends_on:
+      pg-ollama:
+        condition: service_healthy
       redis:
         condition: service_healthy
       rabbitmq:
@@ -579,6 +602,8 @@ volumes:
   pg-memory-data:
     driver: local
   pg-files-data:
+    driver: local
+  pg-ollama-data:
     driver: local
   mongo-data:
     driver: local

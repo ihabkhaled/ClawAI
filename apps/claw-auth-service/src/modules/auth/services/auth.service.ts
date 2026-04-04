@@ -1,13 +1,26 @@
 import { Injectable } from "@nestjs/common";
+import { RabbitMQService } from "@claw/shared-rabbitmq";
+import { EventPattern } from "@claw/shared-types";
 import { AuthManager } from "../managers/auth.manager";
-import { LoginResult, RefreshResult, UserProfile } from "../types/auth.types";
+import { type LoginResult, type RefreshResult, type UserProfile } from "../types/auth.types";
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly authManager: AuthManager) {}
+  constructor(
+    private readonly authManager: AuthManager,
+    private readonly rabbitMQService: RabbitMQService,
+  ) {}
 
   async login(email: string, password: string): Promise<LoginResult> {
-    return this.authManager.login(email, password);
+    const result = await this.authManager.login(email, password);
+
+    await this.rabbitMQService.publish(EventPattern.USER_LOGIN, {
+      userId: result.user.id,
+      email: result.user.email,
+      timestamp: new Date().toISOString(),
+    });
+
+    return result;
   }
 
   async refresh(refreshToken: string): Promise<RefreshResult> {
@@ -15,7 +28,12 @@ export class AuthService {
   }
 
   async logout(userId: string): Promise<void> {
-    return this.authManager.logout(userId);
+    await this.authManager.logout(userId);
+
+    await this.rabbitMQService.publish(EventPattern.USER_LOGOUT, {
+      userId,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   async getProfile(userId: string): Promise<UserProfile> {

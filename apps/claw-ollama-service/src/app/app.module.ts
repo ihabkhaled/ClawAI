@@ -3,6 +3,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { LoggerModule } from "nestjs-pino";
 import { RabbitMQModule } from "@claw/shared-rabbitmq";
 
+import { PrismaModule } from "../infrastructure/database/prisma/prisma.module";
 import { RedisModule } from "../infrastructure/redis/redis.module";
 
 import { AuthGuard } from "./guards/auth.guard";
@@ -31,6 +32,7 @@ import { HealthModule } from "../modules/health/health.module";
         serviceName: 'ollama-service',
       }),
     }),
+    PrismaModule,
     RedisModule,
     OllamaModule,
     HealthModule,

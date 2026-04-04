@@ -20,6 +20,11 @@ export type {
 export type { RoutingConfig, UpdateRoutingRequest } from "./routing.types";
 export type { AuditEntry, AuditListParams } from "./audit.types";
 export type {
+  DashboardStats,
+  DashboardStatCard,
+  DashboardQuickAction,
+} from "./dashboard.types";
+export type {
   ApiRequestConfig,
   ApiResponse,
   ApiError,

@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
 import { Prisma, User } from "../../../generated/prisma";
+import { type UpdateUserData, type UserFilters } from "../types/users.types";
 
 @Injectable()
 export class UsersRepository {
@@ -22,23 +23,59 @@ export class UsersRepository {
     return this.prisma.user.findUnique({ where: { username } });
   }
 
-  async findAll(params: { skip: number; take: number }): Promise<{ users: User[]; total: number }> {
+  async findAll(params: {
+    skip: number;
+    take: number;
+    filters?: UserFilters;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+  }): Promise<{ users: User[]; total: number }> {
+    const where = this.buildWhereClause(params.filters);
+    const orderBy = { [params.sortBy ?? "createdAt"]: params.sortOrder ?? "desc" };
+
     const [users, total] = await this.prisma.$transaction([
       this.prisma.user.findMany({
+        where,
         skip: params.skip,
         take: params.take,
-        orderBy: { createdAt: "desc" },
+        orderBy,
       }),
-      this.prisma.user.count(),
+      this.prisma.user.count({ where }),
     ]);
     return { users, total };
   }
 
-  async update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
+  async updateById(id: string, data: UpdateUserData): Promise<User> {
     return this.prisma.user.update({ where: { id }, data });
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.user.delete({ where: { id } });
+  async deleteById(id: string): Promise<User> {
+    return this.prisma.user.delete({ where: { id } });
+  }
+
+  async countAll(filters?: UserFilters): Promise<number> {
+    const where = this.buildWhereClause(filters);
+    return this.prisma.user.count({ where });
+  }
+
+  private buildWhereClause(filters?: UserFilters): Prisma.UserWhereInput {
+    const where: Prisma.UserWhereInput = {};
+
+    if (filters?.role) {
+      where.role = filters.role;
+    }
+
+    if (filters?.status) {
+      where.status = filters.status;
+    }
+
+    if (filters?.search) {
+      where.OR = [
+        { email: { contains: filters.search, mode: "insensitive" } },
+        { username: { contains: filters.search, mode: "insensitive" } },
+      ];
+    }
+
+    return where;
   }
 }

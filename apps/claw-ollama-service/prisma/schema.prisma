@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LocalModelRole {
+  ROUTER
+  LOCAL_FALLBACK_CHAT
+  LOCAL_REASONING
+  LOCAL_CODING
+}
+
+enum RuntimeType {
+  OLLAMA
+  VLLM
+  LLAMA_CPP
+  LOCAL_AI
+}
+
+enum PullJobStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+model LocalModel {
+  id          String         @id @default(cuid())
+  name        String
+  tag         String
+  runtime     RuntimeType
+  sizeBytes   BigInt?        @map("size_bytes")
+  family      String?
+  parameters  String?
+  quantization String?
+  isInstalled Boolean        @default(true) @map("is_installed")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  roles LocalModelRoleAssignment[]
+
+  @@unique([name, tag, runtime])
+  @@index([runtime])
+  @@index([isInstalled])
+  @@map("local_models")
+}
+
+model LocalModelRoleAssignment {
+  id        String         @id @default(cuid())
+  modelId   String         @map("model_id")
+  role      LocalModelRole
+  isActive  Boolean        @default(true) @map("is_active")
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  model LocalModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@unique([role, isActive])
+  @@index([modelId])
+  @@index([role])
+  @@map("local_model_roles")
+}
+
+model PullJob {
+  id          String        @id @default(cuid())
+  modelName   String        @map("model_name")
+  runtime     RuntimeType
+  status      PullJobStatus @default(PENDING)
+  progress    Int?
+  errorMessage String?      @map("error_message")
+  startedAt   DateTime      @default(now()) @map("started_at")
+  completedAt DateTime?     @map("completed_at")
+
+  @@index([status])
+  @@index([runtime])
+  @@map("pull_jobs")
+}
+
+model RuntimeConfig {
+  id        String      @id @default(cuid())
+  runtime   RuntimeType @unique
+  baseUrl   String      @map("base_url")
+  isEnabled Boolean     @default(true) @map("is_enabled")
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  @@map("runtime_configs")
+}

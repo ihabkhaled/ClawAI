@@ -4,6 +4,8 @@ export type {
   UserCreatedPayload,
   UserLoginPayload,
   UserLogoutPayload,
+  UserRoleChangedPayload,
+  UserDeactivatedPayload,
   MessageCreatedPayload,
   MessageRoutedPayload,
   MessageCompletedPayload,
