@@ -1,64 +1,97 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { createHttpClient, type AxiosInstance } from "@common/utilities";
-import { AppConfig } from "../../app/config/app.config";
+import { Injectable } from "@nestjs/common";
+import { RabbitMQService } from "@claw/shared-rabbitmq";
+import { EventPattern } from "@claw/shared-types";
+import { type RuntimeConfig, type RuntimeType } from "../../generated/prisma";
+import { EntityNotFoundException } from "../../common/errors";
+import { type PaginatedResult } from "../../common/types";
+import { LocalModelsRepository } from "./repositories/local-models.repository";
+import { RuntimeConfigsRepository } from "./repositories/runtime-configs.repository";
+import { OllamaManager } from "./managers/ollama.manager";
+import { type PullModelDto } from "./dto/pull-model.dto";
+import { type AssignRoleDto } from "./dto/assign-role.dto";
+import { type GenerateDto } from "./dto/generate.dto";
+import { type ListModelsQueryDto } from "./dto/list-models-query.dto";
 import {
-  OLLAMA_API_GENERATE,
-  OLLAMA_API_PULL,
-  OLLAMA_API_TAGS,
-  OLLAMA_API_VERSION,
-} from "./ollama.constants";
-import {
-  GenerateRequest,
-  GenerateResponse,
-  OllamaModelsResponse,
-  OllamaStatusResponse,
-  PullModelRequest,
-  PullModelResponse,
-} from "./ollama.types";
+  type LocalModel,
+  type LocalModelRoleAssignment,
+  type GenerateResponse,
+  type RuntimeHealth,
+} from "./types/ollama.types";
 
 @Injectable()
 export class OllamaService {
-  private readonly logger = new Logger(OllamaService.name);
-  private readonly client: AxiosInstance;
+  constructor(
+    private readonly localModelsRepository: LocalModelsRepository,
+    private readonly runtimeConfigsRepository: RuntimeConfigsRepository,
+    private readonly ollamaManager: OllamaManager,
+    private readonly rabbitMQService: RabbitMQService,
+  ) {}
 
-  constructor() {
-    const config = AppConfig.get();
-    this.client = createHttpClient({
-      baseURL: config.OLLAMA_BASE_URL,
-      timeout: 120_000,
+  async getModels(query: ListModelsQueryDto): Promise<PaginatedResult<LocalModel>> {
+    const filters = {
+      runtime: query.runtime,
+      isInstalled: query.isInstalled,
+    };
+
+    const [models, total] = await Promise.all([
+      this.localModelsRepository.findAll(filters, query.page, query.limit),
+      this.localModelsRepository.countAll(filters),
+    ]);
+
+    return {
+      data: models,
+      meta: {
+        total,
+        page: query.page,
+        limit: query.limit,
+        totalPages: Math.ceil(total / query.limit),
+      },
+    };
+  }
+
+  async pullModel(dto: PullModelDto): Promise<LocalModel> {
+    const model = await this.ollamaManager.pullModel(dto.modelName, dto.runtime);
+
+    void this.rabbitMQService.publish(EventPattern.CONNECTOR_SYNCED, {
+      runtime: dto.runtime,
+      modelName: dto.modelName,
+      modelId: model.id,
+      timestamp: new Date().toISOString(),
     });
+
+    return model;
   }
 
-  async listModels(): Promise<OllamaModelsResponse> {
-    const response = await this.client.get<OllamaModelsResponse>(OLLAMA_API_TAGS);
-    return response.data;
-  }
-
-  async generate(request: GenerateRequest): Promise<GenerateResponse> {
-    const response = await this.client.post<GenerateResponse>(OLLAMA_API_GENERATE, {
-      ...request,
-      stream: false,
-    });
-    return response.data;
-  }
-
-  async pullModel(request: PullModelRequest): Promise<PullModelResponse> {
-    const response = await this.client.post<PullModelResponse>(OLLAMA_API_PULL, {
-      ...request,
-      stream: false,
-    });
-    return response.data;
-  }
-
-  async checkStatus(): Promise<OllamaStatusResponse> {
-    try {
-      const response = await this.client.get<{ version: string }>(OLLAMA_API_VERSION, {
-        timeout: 3000,
-      });
-      return { connected: true, version: response.data.version };
-    } catch (error) {
-      this.logger.warn(`Ollama connectivity check failed: ${String(error)}`);
-      return { connected: false };
+  async assignRole(dto: AssignRoleDto): Promise<LocalModelRoleAssignment> {
+    const model = await this.localModelsRepository.findById(dto.modelId);
+    if (!model) {
+      throw new EntityNotFoundException("LocalModel", dto.modelId);
     }
+
+    const assignment = await this.ollamaManager.assignRole(dto.modelId, dto.role);
+
+    void this.rabbitMQService.publish(EventPattern.CONNECTOR_UPDATED, {
+      modelId: dto.modelId,
+      role: dto.role,
+      timestamp: new Date().toISOString(),
+    });
+
+    return assignment;
+  }
+
+  async generate(dto: GenerateDto): Promise<GenerateResponse> {
+    return this.ollamaManager.generate({
+      model: dto.model,
+      prompt: dto.prompt,
+      stream: dto.stream,
+    });
+  }
+
+  async checkHealth(runtime: string): Promise<RuntimeHealth> {
+    return this.ollamaManager.checkRuntimeHealth(runtime as RuntimeType);
+  }
+
+  async getRuntimes(): Promise<RuntimeConfig[]> {
+    return this.runtimeConfigsRepository.findAll();
   }
 }

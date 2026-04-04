@@ -1,14 +1,16 @@
 import { Badge } from "@/components/ui/badge";
+import { RoutingTransparency } from "@/components/chat/routing-transparency";
 import { MESSAGE_ROLE_LABELS } from "@/constants";
 import { MessageRole } from "@/enums";
 import { cn } from "@/lib/utils";
-import type { ChatMessage } from "@/types";
+import type { ChatMessage, RoutingDecision } from "@/types";
 
 type MessageBubbleProps = {
   message: ChatMessage;
+  routingDecision?: RoutingDecision | null;
 };
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message, routingDecision }: MessageBubbleProps) {
   const isUser = message.role === MessageRole.USER;
   const roleLabel = MESSAGE_ROLE_LABELS[message.role];
 
@@ -62,6 +64,9 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               </span>
             ) : null}
           </div>
+        ) : null}
+        {!isUser && routingDecision ? (
+          <RoutingTransparency decision={routingDecision} />
         ) : null}
       </div>
     </div>

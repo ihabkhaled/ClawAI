@@ -23,7 +23,24 @@ export type {
   SyncModelsResponse,
   ConnectorModelsResponse,
 } from "./connector.types";
-export type { RoutingConfig, UpdateRoutingRequest } from "./routing.types";
+export type {
+  RoutingConfig,
+  UpdateRoutingRequest,
+  RoutingPolicy,
+  RoutingDecision,
+  LocalModel,
+  CreatePolicyRequest,
+  UpdatePolicyRequest,
+  PullModelRequest,
+  AssignRoleRequest,
+  PoliciesListResponse,
+  DecisionsListResponse,
+  LocalModelsListResponse,
+  RuntimesListResponse,
+  RuntimeHealthResponse,
+  EvaluateRouteRequest,
+  EvaluateRouteResponse,
+} from "./routing.types";
 export type { AuditEntry, AuditListParams } from "./audit.types";
 export type {
   DashboardStats,

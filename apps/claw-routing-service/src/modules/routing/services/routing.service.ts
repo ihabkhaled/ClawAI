@@ -1,21 +1,223 @@
-import { Injectable } from "@nestjs/common";
-import { RoutingPolicy } from "../../../generated/prisma";
-import { RoutingRepository } from "../repositories/routing.repository";
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { RabbitMQService } from "@claw/shared-rabbitmq";
+import { EventPattern } from "@claw/shared-types";
+import { type RoutingMode, type Prisma } from "../../../generated/prisma";
 import { EntityNotFoundException } from "../../../common/errors";
+import { type PaginatedResult } from "../../../common/types";
+import { RoutingPoliciesRepository } from "../repositories/routing-policies.repository";
+import { RoutingDecisionsRepository } from "../repositories/routing-decisions.repository";
+import { RoutingManager } from "../managers/routing.manager";
+import { type CreatePolicyDto } from "../dto/create-policy.dto";
+import { type UpdatePolicyDto } from "../dto/update-policy.dto";
+import { type ListPoliciesQueryDto } from "../dto/list-policies-query.dto";
+import { type EvaluateRouteDto } from "../dto/evaluate-route.dto";
+import {
+  type RoutingPolicy,
+  type RoutingDecision,
+  type RoutingDecisionResult,
+  type RoutingContext,
+} from "../types/routing.types";
 
 @Injectable()
-export class RoutingService {
-  constructor(private readonly routingRepository: RoutingRepository) {}
+export class RoutingService implements OnModuleInit {
+  private readonly logger = new Logger(RoutingService.name);
+  private connectorHealthCache: Record<string, boolean> = {};
+  private runtimeHealthCache: Record<string, boolean> = {};
 
-  async findActivePolicies(): Promise<RoutingPolicy[]> {
-    return this.routingRepository.findActivePolicies();
+  constructor(
+    private readonly policiesRepository: RoutingPoliciesRepository,
+    private readonly decisionsRepository: RoutingDecisionsRepository,
+    private readonly routingManager: RoutingManager,
+    private readonly rabbitMQService: RabbitMQService,
+  ) {}
+
+  async onModuleInit(): Promise<void> {
+    await this.subscribeToEvents();
   }
 
-  async findPolicyById(id: string): Promise<RoutingPolicy> {
-    const policy = await this.routingRepository.findPolicyById(id);
+  async createPolicy(dto: CreatePolicyDto): Promise<RoutingPolicy> {
+    return this.policiesRepository.create({
+      name: dto.name,
+      routingMode: dto.routingMode,
+      priority: dto.priority,
+      config: dto.config as Prisma.InputJsonValue,
+    });
+  }
+
+  async getPolicies(
+    query: ListPoliciesQueryDto,
+  ): Promise<PaginatedResult<RoutingPolicy>> {
+    const filters = {
+      routingMode: query.routingMode,
+      isActive: query.isActive,
+    };
+
+    const [policies, total] = await Promise.all([
+      this.policiesRepository.findAll(filters, query.page, query.limit),
+      this.policiesRepository.countAll(filters),
+    ]);
+
+    return {
+      data: policies,
+      meta: {
+        total,
+        page: query.page,
+        limit: query.limit,
+        totalPages: Math.ceil(total / query.limit),
+      },
+    };
+  }
+
+  async getPolicy(id: string): Promise<RoutingPolicy> {
+    const policy = await this.policiesRepository.findById(id);
     if (!policy) {
       throw new EntityNotFoundException("RoutingPolicy", id);
     }
     return policy;
+  }
+
+  async updatePolicy(id: string, dto: UpdatePolicyDto): Promise<RoutingPolicy> {
+    const policy = await this.policiesRepository.findById(id);
+    if (!policy) {
+      throw new EntityNotFoundException("RoutingPolicy", id);
+    }
+    const updateData = {
+      ...dto,
+      config: dto.config ? (dto.config as Prisma.InputJsonValue) : undefined,
+    };
+    return this.policiesRepository.update(id, updateData);
+  }
+
+  async deletePolicy(id: string): Promise<RoutingPolicy> {
+    const policy = await this.policiesRepository.findById(id);
+    if (!policy) {
+      throw new EntityNotFoundException("RoutingPolicy", id);
+    }
+    return this.policiesRepository.delete(id);
+  }
+
+  async evaluateRoute(dto: EvaluateRouteDto): Promise<RoutingDecisionResult> {
+    const context: RoutingContext = {
+      message: dto.messageContent,
+      threadId: dto.threadId,
+      userMode: dto.routingMode as RoutingMode | undefined,
+      forcedModel: dto.forcedModel,
+      connectorHealth: { ...this.connectorHealthCache },
+      runtimeHealth: { ...this.runtimeHealthCache },
+    };
+
+    return this.routingManager.evaluateRoute(context);
+  }
+
+  async getDecisions(
+    threadId: string,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResult<RoutingDecision>> {
+    const [decisions, total] = await Promise.all([
+      this.decisionsRepository.findByThreadId(threadId, page, limit),
+      this.decisionsRepository.countByThreadId(threadId),
+    ]);
+
+    return {
+      data: decisions,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  private async subscribeToEvents(): Promise<void> {
+    await this.rabbitMQService.subscribe(
+      EventPattern.MESSAGE_CREATED,
+      async (data: unknown) => {
+        await this.handleMessageCreated(data);
+      },
+    );
+
+    await this.rabbitMQService.subscribe(
+      EventPattern.CONNECTOR_HEALTH_CHECKED,
+      async (data: unknown) => {
+        this.handleConnectorHealthChecked(data);
+      },
+    );
+
+    await this.rabbitMQService.subscribe(
+      EventPattern.CONNECTOR_SYNCED,
+      async (data: unknown) => {
+        this.handleConnectorSynced(data);
+      },
+    );
+
+    this.logger.log("Subscribed to routing events");
+  }
+
+  private async handleMessageCreated(data: unknown): Promise<void> {
+    const payload = data as Record<string, unknown>;
+    const messageId = payload["messageId"] as string | undefined;
+    const threadId = payload["threadId"] as string | undefined;
+    const content = payload["content"] as string | undefined;
+    const routingMode = payload["routingMode"] as RoutingMode | undefined;
+
+    if (!threadId || !content) {
+      this.logger.warn("Received message.created with missing threadId or content");
+      return;
+    }
+
+    const context: RoutingContext = {
+      message: content,
+      threadId,
+      userMode: routingMode,
+      connectorHealth: { ...this.connectorHealthCache },
+      runtimeHealth: { ...this.runtimeHealthCache },
+    };
+
+    const decision = await this.routingManager.evaluateRoute(context);
+    const fallback = decision.fallbackChain[0];
+
+    await this.decisionsRepository.create({
+      messageId,
+      threadId,
+      selectedProvider: decision.selectedProvider,
+      selectedModel: decision.selectedModel,
+      routingMode: decision.routingMode,
+      confidence: decision.confidence,
+      reasonTags: decision.reasonTags,
+      privacyClass: decision.privacyClass,
+      costClass: decision.costClass,
+      fallbackProvider: fallback?.provider,
+      fallbackModel: fallback?.model,
+    });
+
+    void this.rabbitMQService.publish(EventPattern.MESSAGE_ROUTED, {
+      messageId,
+      threadId,
+      selectedProvider: decision.selectedProvider,
+      selectedModel: decision.selectedModel,
+      routingMode: decision.routingMode,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  private handleConnectorHealthChecked(data: unknown): void {
+    const payload = data as Record<string, unknown>;
+    const provider = payload["provider"] as string | undefined;
+    const status = payload["status"] as string | undefined;
+
+    if (provider && status) {
+      this.connectorHealthCache[provider] = status === "HEALTHY";
+    }
+  }
+
+  private handleConnectorSynced(data: unknown): void {
+    const payload = data as Record<string, unknown>;
+    const runtime = payload["runtime"] as string | undefined;
+
+    if (runtime) {
+      this.runtimeHealthCache[runtime] = true;
+    }
   }
 }
