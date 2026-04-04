@@ -224,6 +224,7 @@ services:
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost
       JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-15m}
       JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-7d}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
@@ -261,6 +262,7 @@ services:
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost
     depends_on:
       pg-chat:
         condition: service_healthy
@@ -292,6 +294,7 @@ services:
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
     depends_on:
       pg-connector:
@@ -324,6 +327,7 @@ services:
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost
     depends_on:
       pg-routing:
         condition: service_healthy
@@ -355,6 +359,7 @@ services:
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost
     depends_on:
       pg-memory:
         condition: service_healthy
@@ -386,6 +391,7 @@ services:
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost
       FILE_STORAGE_PATH: /data/files
     volumes:
       - file-storage-data:/data/files
@@ -420,6 +426,7 @@ services:
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost
     depends_on:
       mongodb:
         condition: service_healthy
@@ -450,6 +457,7 @@ services:
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
     depends_on:
       redis:
