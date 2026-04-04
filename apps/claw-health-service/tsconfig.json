@@ -38,6 +38,7 @@
     "baseUrl": "./src",
     "paths": {
       "@app/*": ["app/*"],
+      "@common/*": ["common/*"],
       "@modules/*": ["modules/*"]
     }
   },

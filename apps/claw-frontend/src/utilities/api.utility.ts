@@ -1,5 +1,3 @@
-import { API_BASE_URL } from "@/constants";
-
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") {
     return null;
@@ -22,14 +20,4 @@ export function getAccessToken(): string | null {
   } catch {
     return null;
   }
-}
-
-export function buildUrl(path: string, params?: Record<string, string>): string {
-  const url = new URL(`${API_BASE_URL}${path}`);
-  if (params) {
-    for (const [key, value] of Object.entries(params)) {
-      url.searchParams.set(key, value);
-    }
-  }
-  return url.toString();
 }

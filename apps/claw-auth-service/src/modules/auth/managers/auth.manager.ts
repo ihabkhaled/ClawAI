@@ -1,10 +1,9 @@
 import { Injectable } from "@nestjs/common";
-import * as argon2 from "argon2";
-import * as jwt from "jsonwebtoken";
-import { randomBytes } from "node:crypto";
+import type { SignOptions } from "jsonwebtoken";
 import { User } from "../../../generated/prisma";
 import { AppConfig } from "../../../app/config/app.config";
 import { JwtPayload } from "../../../common/types";
+import { verifyPassword, signAccessToken, signRefreshToken } from "@common/utilities";
 import { UserRole, UserStatus } from "../../../common/enums";
 import {
   AccountSuspendedException,
@@ -32,7 +31,7 @@ export class AuthManager {
       throw new InvalidCredentialsException();
     }
 
-    const isValid = await argon2.verify(user.passwordHash, password);
+    const isValid = await verifyPassword(user.passwordHash, password);
     if (!isValid) {
       throw new InvalidCredentialsException();
     }
@@ -104,11 +103,9 @@ export class AuthManager {
       role: user.role as UserRole,
     };
 
-    const accessToken = jwt.sign(payload, config.JWT_SECRET, {
-      expiresIn: config.JWT_ACCESS_EXPIRY as jwt.SignOptions["expiresIn"],
-    });
+    const accessToken = signAccessToken(payload as unknown as Record<string, unknown>, config.JWT_SECRET, config.JWT_ACCESS_EXPIRY as SignOptions["expiresIn"]);
 
-    const refreshTokenValue = randomBytes(48).toString("hex");
+    const refreshTokenValue = signRefreshToken();
 
     const refreshExpiryMs = this.parseExpiry(config.JWT_REFRESH_EXPIRY);
     const expiresAt = new Date(Date.now() + refreshExpiryMs);

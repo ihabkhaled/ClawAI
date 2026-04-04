@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import * as argon2 from "argon2";
 import { UsersRepository } from "../repositories/users.repository";
+import { hashPassword } from "@common/utilities";
 import { CreateUserDto } from "../dto/create-user.dto";
 import {
   DuplicateEntityException,
@@ -26,7 +26,7 @@ export class UsersService {
       throw new DuplicateEntityException("User", "username");
     }
 
-    const passwordHash = await argon2.hash(dto.password);
+    const passwordHash = await hashPassword(dto.password);
 
     const user = await this.usersRepository.create({
       email: dto.email,

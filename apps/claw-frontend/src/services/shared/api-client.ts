@@ -1,79 +1,86 @@
-import { HttpMethod } from "@/enums";
-import type { ApiError, ApiRequestConfig, ApiResponse } from "@/types";
-import { buildUrl, getAccessToken } from "@/utilities";
+import { httpClient } from '@/lib/http-client';
+import type { ApiResponse } from '@/types';
 
 export class ApiClientError extends Error {
-  public status: number;
-  public errors?: Record<string, string[]>;
+  status: number;
+  errors?: Record<string, string[]>;
 
-  constructor(apiError: ApiError) {
-    super(apiError.message);
-    this.name = "ApiClientError";
-    this.status = apiError.status;
-    this.errors = apiError.errors;
+  constructor(params: {
+    message: string;
+    status: number;
+    errors?: Record<string, string[]>;
+  }) {
+    super(params.message);
+    this.name = 'ApiClientError';
+    this.status = params.status;
+    this.errors = params.errors;
   }
-}
-
-async function request<T>(config: ApiRequestConfig): Promise<ApiResponse<T>> {
-  const token = getAccessToken();
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...config.headers,
-  };
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  const response = await fetch(buildUrl(config.path, config.params), {
-    method: config.method,
-    headers,
-    body: config.body ? JSON.stringify(config.body) : undefined,
-  });
-
-  if (!response.ok) {
-    let errorBody: ApiError;
-    try {
-      errorBody = (await response.json()) as ApiError;
-    } catch {
-      errorBody = {
-        message: response.statusText || "An unexpected error occurred",
-        status: response.status,
-      };
-    }
-    errorBody.status = response.status;
-
-    if (response.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("claw-auth-storage");
-      window.location.href = "/login";
-    }
-
-    throw new ApiClientError(errorBody);
-  }
-
-  if (response.status === 204) {
-    return { data: undefined as T, status: response.status };
-  }
-
-  const data = (await response.json()) as T;
-  return { data, status: response.status };
 }
 
 export const apiClient = {
-  get<T>(path: string, params?: Record<string, string>) {
-    return request<T>({ method: HttpMethod.GET, path, params });
+  async get<T>(
+    path: string,
+    params?: Record<string, string>,
+  ): Promise<ApiResponse<T>> {
+    try {
+      const response = await httpClient.get<T>(path, { params });
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      throw toApiClientError(error);
+    }
   },
-  post<T>(path: string, body?: unknown) {
-    return request<T>({ method: HttpMethod.POST, path, body });
+
+  async post<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
+    try {
+      const response = await httpClient.post<T>(path, body);
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      throw toApiClientError(error);
+    }
   },
-  put<T>(path: string, body?: unknown) {
-    return request<T>({ method: HttpMethod.PUT, path, body });
+
+  async put<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
+    try {
+      const response = await httpClient.put<T>(path, body);
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      throw toApiClientError(error);
+    }
   },
-  patch<T>(path: string, body?: unknown) {
-    return request<T>({ method: HttpMethod.PATCH, path, body });
+
+  async patch<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
+    try {
+      const response = await httpClient.patch<T>(path, body);
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      throw toApiClientError(error);
+    }
   },
-  delete<T>(path: string) {
-    return request<T>({ method: HttpMethod.DELETE, path });
+
+  async delete<T>(path: string): Promise<ApiResponse<T>> {
+    try {
+      const response = await httpClient.delete<T>(path);
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      throw toApiClientError(error);
+    }
   },
 };
+
+function toApiClientError(error: unknown): ApiClientError {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const axiosError = error as {
+      response?: {
+        status: number;
+        data?: { message?: string; errors?: Record<string, string[]> };
+      };
+    };
+    return new ApiClientError({
+      message:
+        axiosError.response?.data?.message ?? 'An unexpected error occurred',
+      status: axiosError.response?.status ?? 500,
+      errors: axiosError.response?.data?.errors,
+    });
+  }
+  return new ApiClientError({ message: 'Network error', status: 0 });
+}

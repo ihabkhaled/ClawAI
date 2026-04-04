@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import axios, { type AxiosInstance } from "axios";
+import { createHttpClient, type AxiosInstance } from "@common/utilities";
 import { AppConfig } from "../../app/config/app.config";
 import {
   OLLAMA_API_GENERATE,
@@ -23,7 +23,7 @@ export class OllamaService {
 
   constructor() {
     const config = AppConfig.get();
-    this.client = axios.create({
+    this.client = createHttpClient({
       baseURL: config.OLLAMA_BASE_URL,
       timeout: 120_000,
     });

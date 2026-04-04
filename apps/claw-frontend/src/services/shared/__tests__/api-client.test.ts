@@ -1,22 +1,70 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AxiosRequestConfig } from 'axios';
 
 import { ApiClientError, apiClient } from '@/services/shared/api-client';
 
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
+type RequestRecord = {
+  url: string;
+  config: AxiosRequestConfig;
+  data?: unknown;
+};
 
-function createFetchResponse(data: unknown, status = 200, ok = true) {
+const requests: RequestRecord[] = [];
+
+vi.mock('@/lib/http-client', () => {
+  function makeMethod(method: string) {
+    return (url: string, dataOrConfig?: unknown, config?: unknown) => {
+      const hasBody = ['post', 'put', 'patch'].includes(method);
+      const record: RequestRecord = {
+        url,
+        config: ((hasBody ? config : dataOrConfig) ?? {}) as AxiosRequestConfig,
+        data: hasBody ? dataOrConfig : undefined,
+      };
+      requests.push(record);
+
+      const handler = mockHandlers.shift();
+      if (handler) {
+        if ('error' in handler) {
+          return Promise.reject(handler.error);
+        }
+        return Promise.resolve(handler.response);
+      }
+      return Promise.reject(new Error('No mock handler configured'));
+    };
+  }
+
   return {
-    ok,
-    status,
-    statusText: ok ? 'OK' : 'Error',
-    json: () => Promise.resolve(data),
+    httpClient: {
+      get: makeMethod('get'),
+      post: makeMethod('post'),
+      put: makeMethod('put'),
+      patch: makeMethod('patch'),
+      delete: makeMethod('delete'),
+    },
   };
+});
+
+type MockHandler =
+  | { response: { data: unknown; status: number } }
+  | { error: { response?: { status: number; data?: { message?: string; errors?: Record<string, string[]> } } } };
+
+const mockHandlers: MockHandler[] = [];
+
+function mockResponse(data: unknown, status = 200): void {
+  mockHandlers.push({ response: { data, status } });
+}
+
+function mockError(
+  status: number,
+  data?: { message?: string; errors?: Record<string, string[]> },
+): void {
+  mockHandlers.push({ error: { response: { status, data } } });
 }
 
 describe('apiClient', () => {
   beforeEach(() => {
-    mockFetch.mockReset();
+    requests.length = 0;
+    mockHandlers.length = 0;
     localStorage.clear();
   });
 
@@ -25,64 +73,41 @@ describe('apiClient', () => {
   });
 
   it('makes a GET request to the correct URL', async () => {
-    mockFetch.mockResolvedValueOnce(
-      createFetchResponse({ id: 1, name: 'Test' }),
-    );
+    mockResponse({ id: 1, name: 'Test' });
 
     await apiClient.get('/users');
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/users'),
-      expect.objectContaining({ method: 'GET' }),
-    );
+    expect(requests).toHaveLength(1);
+    expect(requests[0]?.url).toBe('/users');
   });
 
-  it('adds Authorization header when token exists in localStorage', async () => {
-    localStorage.setItem(
-      'claw-auth-storage',
-      JSON.stringify({ state: { accessToken: 'test-token-123' } }),
+  it('passes query params for GET requests', async () => {
+    mockResponse({ ok: true });
+
+    await apiClient.get('/users', { page: '1', limit: '10' });
+
+    expect(requests[0]?.config).toEqual(
+      expect.objectContaining({ params: { page: '1', limit: '10' } }),
     );
-    mockFetch.mockResolvedValueOnce(createFetchResponse({ ok: true }));
-
-    await apiClient.get('/protected');
-
-    const callArgs = mockFetch.mock.calls[0] as [string, RequestInit];
-    const headers = callArgs[1].headers as Record<string, string>;
-    expect(headers['Authorization']).toBe('Bearer test-token-123');
-  });
-
-  it('does not add Authorization header when no token exists', async () => {
-    mockFetch.mockResolvedValueOnce(createFetchResponse({ ok: true }));
-
-    await apiClient.get('/public');
-
-    const callArgs = mockFetch.mock.calls[0] as [string, RequestInit];
-    const headers = callArgs[1].headers as Record<string, string>;
-    expect(headers['Authorization']).toBeUndefined();
   });
 
   it('sends JSON body for POST requests', async () => {
-    mockFetch.mockResolvedValueOnce(createFetchResponse({ id: 1 }));
+    mockResponse({ id: 1 });
     const body = { name: 'Test', email: 'test@example.com' };
 
     await apiClient.post('/users', body);
 
-    const callArgs = mockFetch.mock.calls[0] as [string, RequestInit];
-    expect(callArgs[1].body).toBe(JSON.stringify(body));
+    expect(requests[0]?.data).toEqual(body);
   });
 
-  it('throws ApiClientError on non-ok response', async () => {
-    mockFetch.mockResolvedValueOnce(
-      createFetchResponse({ message: 'Not Found', status: 404 }, 404, false),
-    );
+  it('throws ApiClientError on error response', async () => {
+    mockError(404, { message: 'Not Found' });
 
     await expect(apiClient.get('/missing')).rejects.toThrow(ApiClientError);
   });
 
   it('returns data and status on success', async () => {
-    mockFetch.mockResolvedValueOnce(
-      createFetchResponse({ id: 1, name: 'Test' }),
-    );
+    mockResponse({ id: 1, name: 'Test' });
 
     const result = await apiClient.get<{ id: number; name: string }>('/users');
     expect(result.data).toEqual({ id: 1, name: 'Test' });
@@ -90,24 +115,41 @@ describe('apiClient', () => {
   });
 
   it('handles 204 No Content responses', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      status: 204,
-      statusText: 'No Content',
-      json: () => Promise.reject(new Error('No body')),
-    });
+    mockResponse(undefined, 204);
 
     const result = await apiClient.delete('/users/1');
     expect(result.status).toBe(204);
   });
 
-  it('uses the correct base URL', async () => {
-    mockFetch.mockResolvedValueOnce(createFetchResponse({}));
+  it('returns correct error message and status', async () => {
+    mockError(422, {
+      message: 'Validation failed',
+      errors: { email: ['Email is required'] },
+    });
 
-    await apiClient.get('/test');
+    try {
+      await apiClient.post('/users', { name: 'Test' });
+      expect.unreachable('Should have thrown');
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiClientError);
+      const apiError = error as ApiClientError;
+      expect(apiError.status).toBe(422);
+      expect(apiError.message).toBe('Validation failed');
+      expect(apiError.errors).toEqual({ email: ['Email is required'] });
+    }
+  });
 
-    const callArgs = mockFetch.mock.calls[0] as [string, RequestInit];
-    const url = callArgs[0];
-    expect(url).toContain('/api/v1/test');
+  it('returns network error when no response object', async () => {
+    mockHandlers.push({ error: {} });
+
+    try {
+      await apiClient.get('/test');
+      expect.unreachable('Should have thrown');
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiClientError);
+      const apiError = error as ApiClientError;
+      expect(apiError.status).toBe(0);
+      expect(apiError.message).toBe('Network error');
+    }
   });
 });

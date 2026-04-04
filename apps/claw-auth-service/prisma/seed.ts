@@ -1,5 +1,5 @@
 import { PrismaClient } from "../src/generated/prisma";
-import * as argon2 from "argon2";
+import { hashPassword } from "../src/common/utilities/hashing.utility";
 
 const prisma = new PrismaClient();
 
@@ -14,7 +14,7 @@ async function main(): Promise<void> {
     );
   }
 
-  const passwordHash = await argon2.hash(password);
+  const passwordHash = await hashPassword(password);
 
   const user = await prisma.user.upsert({
     where: { email },

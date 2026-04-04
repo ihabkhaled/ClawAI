@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import axios from "axios";
+import { httpGet } from "@common/utilities";
 import { RedisService } from "../../../infrastructure/redis/redis.service";
 import { AppConfig } from "../../../app/config/app.config";
 import { HealthCheckStatus, ServiceStatus } from "../../../common/enums";
@@ -40,10 +40,10 @@ export class HealthService {
   private async checkOllama(): Promise<boolean> {
     try {
       const config = AppConfig.get();
-      const response = await axios.get(`${config.OLLAMA_BASE_URL}/api/tags`, {
+      await httpGet(`${config.OLLAMA_BASE_URL}/api/tags`, {
         timeout: 3000,
       });
-      return response.status === 200;
+      return true;
     } catch {
       return false;
     }

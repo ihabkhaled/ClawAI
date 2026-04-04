@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import axios from "axios";
+import { httpGet } from "@common/utilities";
 import { SERVICE_URLS, HEALTH_CHECK_TIMEOUT_MS } from "../constants/health.constants";
 import { AggregatedHealth, ServiceHealthResult } from "../types/health.types";
 
@@ -40,7 +40,7 @@ export class HealthService {
   private async checkService(name: string, url: string): Promise<ServiceHealthResult> {
     const start = Date.now();
     try {
-      await axios.get(url, { timeout: HEALTH_CHECK_TIMEOUT_MS });
+      await httpGet(url, { timeout: HEALTH_CHECK_TIMEOUT_MS });
       return {
         name,
         status: "up",
