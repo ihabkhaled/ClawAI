@@ -29,50 +29,58 @@ export class ChatExecutionManager {
   ): Promise<LlmResponse> {
     const startTime = Date.now();
 
-    try {
-      return await this.callProvider(
-        payload.selectedProvider,
-        payload.selectedModel,
-        threadMessages,
-        startTime,
-        false,
-      );
-    } catch (primaryError: unknown) {
-      const errorMsg = primaryError instanceof Error ? primaryError.message : "Unknown error";
-      this.logger.warn(
-        `Primary provider ${payload.selectedProvider}/${payload.selectedModel} failed: ${errorMsg}`,
-      );
+    // Build ordered list of providers to try
+    const candidates: Array<{ provider: string; model: string }> = [
+      { provider: payload.selectedProvider, model: payload.selectedModel },
+    ];
 
-      if (payload.fallbackProvider && payload.fallbackModel) {
-        return this.executeFallback(
-          payload.fallbackProvider,
-          payload.fallbackModel,
-          threadMessages,
-        );
+    if (payload.fallbackProvider && payload.fallbackModel) {
+      candidates.push({ provider: payload.fallbackProvider, model: payload.fallbackModel });
+    }
+
+    // Add all known cloud providers as last-resort fallbacks (skip duplicates)
+    const allCloudProviders = [
+      { provider: "GEMINI", model: "gemini-2.5-flash" },
+      { provider: "ANTHROPIC", model: "claude-sonnet-4" },
+      { provider: "OPENAI", model: "gpt-4o-mini" },
+      { provider: "DEEPSEEK", model: "deepseek-chat" },
+    ];
+
+    for (const cloud of allCloudProviders) {
+      if (!candidates.some((c) => c.provider === cloud.provider)) {
+        candidates.push(cloud);
+      }
+    }
+
+    let lastError: unknown = null;
+
+    for (let i = 0; i < candidates.length; i++) {
+      const candidate = candidates[i];
+      if (!candidate) {
+        continue;
       }
 
-      throw primaryError;
+      try {
+        return await this.callProvider(
+          candidate.provider,
+          candidate.model,
+          threadMessages,
+          startTime,
+          i > 0,
+        );
+      } catch (error: unknown) {
+        const errorMsg = error instanceof Error ? error.message : "Unknown error";
+        this.logger.warn(
+          `Provider ${candidate.provider}/${candidate.model} failed (attempt ${String(i + 1)}/${String(candidates.length)}): ${errorMsg}`,
+        );
+        lastError = error;
+      }
     }
-  }
 
-  private async executeFallback(
-    provider: string,
-    model: string,
-    threadMessages: ChatMessage[],
-  ): Promise<LlmResponse> {
-    const startTime = Date.now();
-    this.logger.log(`Attempting fallback provider ${provider}/${model}`);
-
-    try {
-      return await this.callProvider(provider, model, threadMessages, startTime, true);
-    } catch (fallbackError: unknown) {
-      const errorMsg = fallbackError instanceof Error ? fallbackError.message : "Unknown error";
-      this.logger.error(`Fallback provider ${provider}/${model} also failed: ${errorMsg}`);
-      throw new BusinessException(
-        "All LLM providers failed to generate a response",
-        "LLM_EXECUTION_FAILED",
-      );
-    }
+    throw lastError ?? new BusinessException(
+      "All LLM providers failed to generate a response",
+      "LLM_EXECUTION_FAILED",
+    );
   }
 
   private async callProvider(

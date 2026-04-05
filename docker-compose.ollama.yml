@@ -1,0 +1,58 @@
+# docker-compose.ollama.yml — Ollama LLM Runtime
+# Usage: docker compose -f docker-compose.ollama.yml up -d
+# Usage: ./scripts/claw.sh ollama:up
+# Auto-pulls tinyllama on first start for immediate dev use.
+# Requires: docker-compose.databases.yml running first (claw-network must exist)
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: claw-ollama
+    restart: unless-stopped
+    ports:
+      - '11434:11434'
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        # Start ollama serve in the background
+        ollama serve &
+        SERVE_PID=$$!
+
+        # Wait for Ollama to be ready
+        echo "Waiting for Ollama to start..."
+        until ollama list > /dev/null 2>&1; do
+          sleep 1
+        done
+        echo "Ollama is ready."
+
+        # Pull default model if not already present
+        if ! ollama list | grep -q "tinyllama"; then
+          echo "Pulling tinyllama (default dev model)..."
+          ollama pull tinyllama
+          echo "tinyllama pulled successfully."
+        else
+          echo "tinyllama already available."
+        fi
+
+        # Keep the container running by waiting on the serve process
+        wait $$SERVE_PID
+    healthcheck:
+      test: ['CMD-SHELL', 'ollama list > /dev/null 2>&1 || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - claw-network
+
+volumes:
+  ollama-data:
+
+networks:
+  claw-network:
+    external: true
+    name: claw-network

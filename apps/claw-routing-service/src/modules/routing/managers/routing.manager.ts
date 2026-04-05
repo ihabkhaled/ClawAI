@@ -5,8 +5,11 @@ import {
   CLOUD_MODEL_CHEAP,
   CLOUD_MODEL_DEFAULT,
   CLOUD_MODEL_FAST,
+  CLOUD_MODEL_GEMINI_DEFAULT,
   CLOUD_MODEL_REASONING,
   CLOUD_PROVIDER_ANTHROPIC,
+  CLOUD_PROVIDER_DEEPSEEK,
+  CLOUD_PROVIDER_GEMINI,
   CLOUD_PROVIDER_OPENAI,
   LOCAL_MODEL_DEFAULT,
   LOCAL_PROVIDER,
@@ -48,25 +51,28 @@ export class RoutingManager {
     const chain: FallbackEntry[] = [];
     const isLocalPrimary = primary.provider === LOCAL_PROVIDER;
 
+    const allCloudProviders: FallbackEntry[] = [
+      { provider: CLOUD_PROVIDER_ANTHROPIC, model: CLOUD_MODEL_DEFAULT },
+      { provider: CLOUD_PROVIDER_OPENAI, model: CLOUD_MODEL_FAST },
+      { provider: CLOUD_PROVIDER_GEMINI, model: CLOUD_MODEL_GEMINI_DEFAULT },
+    ];
+
     if (isLocalPrimary) {
-      if (this.isConnectorHealthy(CLOUD_PROVIDER_ANTHROPIC, context)) {
-        chain.push({ provider: CLOUD_PROVIDER_ANTHROPIC, model: CLOUD_MODEL_DEFAULT });
-      }
-      if (this.isConnectorHealthy(CLOUD_PROVIDER_OPENAI, context)) {
-        chain.push({ provider: CLOUD_PROVIDER_OPENAI, model: CLOUD_MODEL_FAST });
+      // Fallback from local to any healthy cloud connector
+      for (const cloud of allCloudProviders) {
+        if (this.isConnectorHealthy(cloud.provider, context)) {
+          chain.push(cloud);
+        }
       }
     } else {
+      // Fallback from cloud: try local first, then other cloud connectors
       if (this.isRuntimeHealthy('OLLAMA', context)) {
         chain.push({ provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT });
       }
-      const otherCloud =
-        primary.provider === CLOUD_PROVIDER_OPENAI
-          ? CLOUD_PROVIDER_ANTHROPIC
-          : CLOUD_PROVIDER_OPENAI;
-      const otherModel =
-        otherCloud === CLOUD_PROVIDER_ANTHROPIC ? CLOUD_MODEL_DEFAULT : CLOUD_MODEL_FAST;
-      if (this.isConnectorHealthy(otherCloud, context)) {
-        chain.push({ provider: otherCloud, model: otherModel });
+      for (const cloud of allCloudProviders) {
+        if (cloud.provider !== primary.provider && this.isConnectorHealthy(cloud.provider, context)) {
+          chain.push(cloud);
+        }
       }
     }
 
@@ -201,6 +207,7 @@ export class RoutingManager {
     const localHealthy = this.isRuntimeHealthy('OLLAMA', context);
     const messageLength = context.message.length;
 
+    // Prefer local for short messages if Ollama is available
     if (localHealthy && messageLength < 500) {
       const primary = { provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT };
       return {
@@ -215,27 +222,73 @@ export class RoutingManager {
       };
     }
 
-    const primary = { provider: CLOUD_PROVIDER_ANTHROPIC, model: CLOUD_MODEL_DEFAULT };
+    // For cloud: pick the best available connector in priority order
+    const cloudPriority: FallbackEntry[] = [
+      { provider: CLOUD_PROVIDER_ANTHROPIC, model: CLOUD_MODEL_DEFAULT },
+      { provider: CLOUD_PROVIDER_OPENAI, model: CLOUD_MODEL_FAST },
+      { provider: CLOUD_PROVIDER_GEMINI, model: CLOUD_MODEL_GEMINI_DEFAULT },
+    ];
+
+    const bestAvailable = cloudPriority.find((c) =>
+      this.isConnectorHealthy(c.provider, context),
+    );
+
+    if (bestAvailable) {
+      return {
+        selectedProvider: bestAvailable.provider,
+        selectedModel: bestAvailable.model,
+        routingMode: RoutingMode.AUTO,
+        confidence: 0.75,
+        reasonTags: ['auto', 'cloud_preferred', 'connector_available'],
+        privacyClass: 'cloud',
+        costClass: 'medium',
+        fallbackChain: this.buildFallbackChain(bestAvailable, context),
+      };
+    }
+
+    // No connector marked healthy — still try the first configured one as a best-effort
+    const firstCloud = cloudPriority[0];
+    if (firstCloud) {
+      return {
+        selectedProvider: firstCloud.provider,
+        selectedModel: firstCloud.model,
+        routingMode: RoutingMode.AUTO,
+        confidence: 0.5,
+        reasonTags: ['auto', 'cloud_preferred', 'no_healthy_connector'],
+        privacyClass: 'cloud',
+        costClass: 'medium',
+        fallbackChain: this.buildFallbackChain(firstCloud, context),
+      };
+    }
+
+    // Ultimate fallback — local
     return {
-      selectedProvider: CLOUD_PROVIDER_ANTHROPIC,
-      selectedModel: CLOUD_MODEL_DEFAULT,
+      selectedProvider: LOCAL_PROVIDER,
+      selectedModel: LOCAL_MODEL_DEFAULT,
       routingMode: RoutingMode.AUTO,
-      confidence: 0.75,
-      reasonTags: ['auto', 'cloud_preferred'],
-      privacyClass: 'cloud',
-      costClass: 'medium',
-      fallbackChain: this.buildFallbackChain(primary, context),
+      confidence: 0.4,
+      reasonTags: ['auto', 'no_cloud_available', 'local_fallback'],
+      privacyClass: 'local',
+      costClass: 'free',
+      fallbackChain: [],
     };
   }
 
   private inferProvider(model: string): string {
-    if (model.startsWith('claude') || model.startsWith('anthropic')) {
+    const lower = model.toLowerCase();
+    if (lower.startsWith('claude') || lower.startsWith('anthropic')) {
       return CLOUD_PROVIDER_ANTHROPIC;
     }
-    if (model.startsWith('gpt') || model.startsWith('openai')) {
+    if (lower.startsWith('gpt') || lower.startsWith('openai') || lower.startsWith('o1') || lower.startsWith('o3') || lower.startsWith('o4')) {
       return CLOUD_PROVIDER_OPENAI;
     }
-    if (model.includes('llama') || model.includes('mistral') || model.includes('phi')) {
+    if (lower.startsWith('gemini')) {
+      return CLOUD_PROVIDER_GEMINI;
+    }
+    if (lower.startsWith('deepseek')) {
+      return CLOUD_PROVIDER_DEEPSEEK;
+    }
+    if (lower.includes('llama') || lower.includes('mistral') || lower.includes('phi') || lower.includes('qwen')) {
       return LOCAL_PROVIDER;
     }
     return CLOUD_PROVIDER_ANTHROPIC;
@@ -246,7 +299,12 @@ export class RoutingManager {
   }
 
   private isConnectorHealthy(provider: string, context: RoutingContext): boolean {
-    return context.connectorHealth?.[provider] ?? false;
+    // If no health data exists at all, assume connectors are available (best-effort)
+    const healthMap = context.connectorHealth;
+    if (!healthMap || Object.keys(healthMap).length === 0) {
+      return true;
+    }
+    return healthMap[provider] ?? false;
   }
 
   async getActivePolicies(): Promise<RoutingPolicy[]> {
