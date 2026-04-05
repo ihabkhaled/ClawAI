@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { MEMORY_FILTER_OPTIONS } from '@/constants';
 import { useMemoryPage } from '@/hooks/memory/use-memory-page';
+import { useTranslation } from '@/lib/i18n';
 import type { MemoryFilterType } from '@/types';
 
 export default function MemoryPage() {
@@ -39,12 +40,14 @@ export default function MemoryPage() {
     isTogglePending,
   } = useMemoryPage();
 
+  const { t } = useTranslation();
+
   if (isError) {
     return (
       <div className="flex h-full flex-col">
         <PageHeader
-          title="Memory"
-          description="Manage persistent memory and context retention across conversations"
+          title={t('memory.title')}
+          description={t('memory.description')}
         />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-destructive">
@@ -58,8 +61,8 @@ export default function MemoryPage() {
   return (
     <div className="flex h-full flex-col">
       <PageHeader
-        title="Memory"
-        description="Manage persistent memory and context retention across conversations"
+        title={t('memory.title')}
+        description={t('memory.description')}
         actions={
           <div className="flex items-center gap-3">
             <Select

@@ -7,6 +7,8 @@ import { Separator } from '@/components/ui/separator';
 import { useSidebarStore } from '@/stores/sidebar.store';
 
 import { GlobalSearch } from './global-search';
+import { LocaleSwitcher } from './locale-switcher';
+import { ThemeSwitcher } from './theme-switcher';
 import { UserMenu } from './user-menu';
 
 export function Topbar() {
@@ -27,6 +29,9 @@ export function Topbar() {
       </div>
       <div className="flex items-center gap-2">
         <GlobalSearch />
+        <Separator orientation="vertical" className="h-6" />
+        <LocaleSwitcher />
+        <ThemeSwitcher />
         <Separator orientation="vertical" className="h-6" />
         <UserMenu />
       </div>

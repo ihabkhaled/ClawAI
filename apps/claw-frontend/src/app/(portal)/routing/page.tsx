@@ -22,9 +22,11 @@ import {
 import { ROUTING_MODE_LABELS, ROUTING_MODE_OPTIONS } from '@/constants';
 import { RoutingMode } from '@/enums';
 import { useRoutingPage } from '@/hooks/routing/use-routing-page';
+import { useTranslation } from '@/lib/i18n';
 import type { DataTableColumn, RoutingPolicy } from '@/types';
 
 export default function RoutingPage(): React.ReactElement {
+  const { t } = useTranslation();
   const {
     policies,
     isLoading,
@@ -90,8 +92,8 @@ export default function RoutingPage(): React.ReactElement {
     return (
       <div className="flex h-full flex-col">
         <PageHeader
-          title="Routing"
-          description="Configure how requests are routed across your AI models"
+          title={t('routing.title')}
+          description={t('routing.description')}
         />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-destructive">
@@ -105,8 +107,8 @@ export default function RoutingPage(): React.ReactElement {
   return (
     <div className="flex h-full flex-col">
       <PageHeader
-        title="Routing"
-        description="Configure how requests are routed across your AI models"
+        title={t('routing.title')}
+        description={t('routing.description')}
         actions={
           <Button onClick={handleOpenCreate}>
             <Plus className="me-2 h-4 w-4" />

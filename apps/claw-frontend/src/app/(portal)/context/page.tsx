@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CONTEXT_PACK_ITEM_TYPE_LABELS } from '@/constants';
 import type { ContextPackItemType } from '@/enums';
 import { useContextPage } from '@/hooks/context-packs/use-context-page';
+import { useTranslation } from '@/lib/i18n';
 import { formatDate } from '@/utilities';
 
 export default function ContextPage() {
@@ -41,12 +42,14 @@ export default function ContextPage() {
     isRemoveItemPending,
   } = useContextPage();
 
+  const { t } = useTranslation();
+
   if (isError) {
     return (
       <div className="flex h-full flex-col">
         <PageHeader
-          title="Context Packs"
-          description="Define and manage context rules for AI interactions"
+          title={t('context.title')}
+          description={t('context.description')}
         />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-destructive">
@@ -168,8 +171,8 @@ export default function ContextPage() {
   return (
     <div className="flex h-full flex-col">
       <PageHeader
-        title="Context Packs"
-        description="Define and manage context rules for AI interactions"
+        title={t('context.title')}
+        description={t('context.description')}
         actions={
           <Button onClick={() => setIsCreateFormOpen(true)}>
             <Plus className="me-2 h-4 w-4" />

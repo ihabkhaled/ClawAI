@@ -20,7 +20,7 @@ services:
     volumes:
       - pg-auth-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PG_AUTH_USER:-claw}']
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_AUTH_USER:-claw} -d ${PG_AUTH_DB:-claw_auth}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -40,7 +40,7 @@ services:
     volumes:
       - pg-chat-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PG_CHAT_USER:-claw}']
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_CHAT_USER:-claw} -d ${PG_CHAT_DB:-claw_chat}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -60,7 +60,7 @@ services:
     volumes:
       - pg-connector-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PG_CONNECTOR_USER:-claw}']
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_CONNECTOR_USER:-claw} -d ${PG_CONNECTOR_DB:-claw_connectors}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -80,7 +80,7 @@ services:
     volumes:
       - pg-routing-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PG_ROUTING_USER:-claw}']
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_ROUTING_USER:-claw} -d ${PG_ROUTING_DB:-claw_routing}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -100,7 +100,7 @@ services:
     volumes:
       - pg-memory-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PG_MEMORY_USER:-claw}']
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_MEMORY_USER:-claw} -d ${PG_MEMORY_DB:-claw_memory}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -120,7 +120,7 @@ services:
     volumes:
       - pg-files-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PG_FILES_USER:-claw}']
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_FILES_USER:-claw} -d ${PG_FILES_DB:-claw_files}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -140,7 +140,7 @@ services:
     volumes:
       - pg-ollama-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PG_OLLAMA_USER:-claw}']
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_OLLAMA_USER:-claw} -d ${PG_OLLAMA_DB:-claw_ollama}']
       interval: 10s
       timeout: 5s
       retries: 5

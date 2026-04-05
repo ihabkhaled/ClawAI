@@ -56,6 +56,7 @@ export type TranslationDictionary = {
     files: string;
     observability: string;
     audits: string;
+    logs: string;
     admin: string;
     settings: string;
   };

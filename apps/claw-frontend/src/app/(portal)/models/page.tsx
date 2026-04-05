@@ -16,6 +16,7 @@ import {
 import { ALL_FILTER, LIFECYCLE_LABELS, PROVIDER_DISPLAY_NAMES } from '@/constants';
 import { ConnectorProvider } from '@/enums';
 import { useAllModels } from '@/hooks/connectors/use-all-models';
+import { useTranslation } from '@/lib/i18n';
 
 export default function ModelsPage() {
   const {
@@ -28,13 +29,14 @@ export default function ModelsPage() {
     lifecycleFilter,
     setLifecycleFilter,
   } = useAllModels();
+  const { t } = useTranslation();
 
   if (isError) {
     return (
       <div>
         <PageHeader
-          title="Models"
-          description="Browse and manage available AI models across all connectors"
+          title={t('models.title')}
+          description={t('models.description')}
         />
         <div className="flex items-center justify-center py-12">
           <p className="text-sm text-destructive">Failed to load models.</p>
@@ -46,8 +48,8 @@ export default function ModelsPage() {
   return (
     <div>
       <PageHeader
-        title="Models"
-        description={`Browse and manage available AI models across all connectors (${totalModels} total)`}
+        title={t('models.title')}
+        description={t('models.description')}
       />
 
       {isLoading && <LoadingSpinner label="Loading models..." />}

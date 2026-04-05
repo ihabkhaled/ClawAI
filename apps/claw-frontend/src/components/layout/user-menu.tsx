@@ -15,11 +15,13 @@ import {
 import { ROUTES } from '@/constants';
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useLogout } from '@/hooks/auth/use-logout';
+import { useTranslation } from '@/lib/i18n';
 import { getInitials } from '@/utilities';
 
 export function UserMenu(): React.ReactElement | null {
   const { user } = useCurrentUser();
   const { logout, isPending } = useLogout();
+  const { t } = useTranslation();
 
   if (!user) {
     return null;
@@ -46,13 +48,13 @@ export function UserMenu(): React.ReactElement | null {
         <DropdownMenuItem asChild>
           <Link href={ROUTES.SETTINGS} className="cursor-pointer">
             <User className="me-2 h-4 w-4" />
-            Profile
+            {t('settings.profile')}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href={ROUTES.SETTINGS} className="cursor-pointer">
             <Settings className="me-2 h-4 w-4" />
-            Settings
+            {t('nav.settings')}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -62,7 +64,7 @@ export function UserMenu(): React.ReactElement | null {
           onClick={() => logout()}
         >
           <LogOut className="me-2 h-4 w-4" />
-          {isPending ? 'Logging out...' : 'Log out'}
+          {isPending ? t('common.loading') : t('auth.logout')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

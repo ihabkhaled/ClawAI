@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { HealthStatus, ServiceStatus } from '@/enums';
 import { useDashboardPage } from '@/hooks/dashboard/use-dashboard-page';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { getHealthStatusColor } from '@/utilities';
 
@@ -21,12 +22,13 @@ export default function DashboardPage() {
     healthServices,
     healthSummary,
   } = useDashboardPage();
+  const { t } = useTranslation();
 
   return (
     <div>
       <PageHeader
-        title="Dashboard"
-        description="Welcome back! Here is an overview of your Claw platform."
+        title={t('dashboard.title')}
+        description={t('dashboard.description')}
         actions={
           <div className="flex items-center gap-2 text-muted-foreground">
             <LayoutDashboard className="h-5 w-5" />

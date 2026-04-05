@@ -55,6 +55,7 @@ export const en: TranslationDictionary = {
     files: 'Files',
     observability: 'Observability',
     audits: 'Audit Logs',
+    logs: 'Logs',
     admin: 'Admin',
     settings: 'Settings',
   },

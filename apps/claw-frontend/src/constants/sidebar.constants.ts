@@ -15,24 +15,24 @@ import {
 
 import { ROUTES } from "./routes.constants";
 
-export interface SidebarItem {
-  label: string;
+export type SidebarItem = {
+  labelKey: string;
   href: string;
   icon: typeof MessageSquare;
   badge?: string;
-}
+};
 
 export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
-  { label: "Dashboard", href: ROUTES.DASHBOARD, icon: LayoutDashboard },
-  { label: "Chat", href: ROUTES.CHAT, icon: MessageSquare },
-  { label: "Connectors", href: ROUTES.CONNECTORS, icon: Plug },
-  { label: "Models", href: ROUTES.MODELS, icon: Cpu },
-  { label: "Routing", href: ROUTES.ROUTING, icon: Route },
-  { label: "Memory", href: ROUTES.MEMORY, icon: Brain },
-  { label: "Context", href: ROUTES.CONTEXT, icon: BookOpen },
-  { label: "Files", href: ROUTES.FILES, icon: FolderOpen },
-  { label: "Audits", href: ROUTES.AUDITS, icon: Shield },
-  { label: "Logs", href: ROUTES.LOGS, icon: ScrollText },
-  { label: "Observability", href: ROUTES.OBSERVABILITY, icon: Activity },
-  { label: "Settings", href: ROUTES.SETTINGS, icon: Settings },
+  { labelKey: 'nav.dashboard', href: ROUTES.DASHBOARD, icon: LayoutDashboard },
+  { labelKey: 'nav.chat', href: ROUTES.CHAT, icon: MessageSquare },
+  { labelKey: 'nav.connectors', href: ROUTES.CONNECTORS, icon: Plug },
+  { labelKey: 'nav.models', href: ROUTES.MODELS, icon: Cpu },
+  { labelKey: 'nav.routing', href: ROUTES.ROUTING, icon: Route },
+  { labelKey: 'nav.memory', href: ROUTES.MEMORY, icon: Brain },
+  { labelKey: 'nav.context', href: ROUTES.CONTEXT, icon: BookOpen },
+  { labelKey: 'nav.files', href: ROUTES.FILES, icon: FolderOpen },
+  { labelKey: 'nav.audits', href: ROUTES.AUDITS, icon: Shield },
+  { labelKey: 'nav.logs', href: ROUTES.LOGS, icon: ScrollText },
+  { labelKey: 'nav.observability', href: ROUTES.OBSERVABILITY, icon: Activity },
+  { labelKey: 'nav.settings', href: ROUTES.SETTINGS, icon: Settings },
 ];

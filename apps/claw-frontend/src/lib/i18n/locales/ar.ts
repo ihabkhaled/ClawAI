@@ -55,6 +55,7 @@ export const ar: TranslationDictionary = {
     files: 'الملفات',
     observability: 'المراقبة',
     audits: 'سجلات التدقيق',
+    logs: 'السجلات',
     admin: 'الإدارة',
     settings: 'الإعدادات',
   },

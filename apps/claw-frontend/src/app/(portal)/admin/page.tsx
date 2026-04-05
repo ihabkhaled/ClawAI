@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/common/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { HealthStatus, ServiceStatus, UserStatus } from '@/enums';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { auditRepository } from '@/repositories/audit/audit.repository';
 import { healthRepository } from '@/repositories/health/health.repository';
@@ -104,6 +105,7 @@ function UsersContent({
 }
 
 export default function AdminPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [actionPending, setActionPending] = useState<string | null>(null);
 
@@ -150,7 +152,7 @@ export default function AdminPage() {
 
   return (
     <div>
-      <PageHeader title="Admin" description="Platform administration and user management" />
+      <PageHeader title={t('admin.title')} description={t('admin.description')} />
 
       <div className="mb-6 grid gap-6 md:grid-cols-2">
         <Card>

@@ -55,6 +55,7 @@ export const ru: TranslationDictionary = {
     files: 'Файлы',
     observability: 'Мониторинг',
     audits: 'Журнал аудита',
+    logs: 'Журналы',
     admin: 'Администрирование',
     settings: 'Настройки',
   },

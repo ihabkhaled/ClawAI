@@ -17,6 +17,7 @@ import { LANGUAGE_OPTIONS, APPEARANCE_OPTIONS, APPEARANCE_ICONS } from '@/consta
 import { ComponentSize } from '@/enums';
 import type { UserLanguagePreference } from '@/enums';
 import { useSettingsPage } from '@/hooks/settings/use-settings-page';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 export default function SettingsPage() {
@@ -32,24 +33,25 @@ export default function SettingsPage() {
     handlePasswordSubmit,
     isPasswordPending,
   } = useSettingsPage();
+  const { t } = useTranslation();
 
   if (isLoading) {
     return (
       <div>
-        <PageHeader title="Settings" description="Manage your account and platform preferences" />
-        <LoadingSpinner size={ComponentSize.LG} label="Loading settings..." />
+        <PageHeader title={t('settings.title')} description={t('settings.description')} />
+        <LoadingSpinner size={ComponentSize.LG} label={t('common.loading')} />
       </div>
     );
   }
 
   return (
     <div>
-      <PageHeader title="Settings" description="Manage your account and platform preferences" />
+      <PageHeader title={t('settings.title')} description={t('settings.description')} />
 
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Profile</CardTitle>
+            <CardTitle className="text-lg">{t('settings.profile')}</CardTitle>
             <CardDescription>
               Your personal information. These fields are read-only.
             </CardDescription>
@@ -83,7 +85,7 @@ export default function SettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Change Password</CardTitle>
+            <CardTitle className="text-lg">{t('settings.changePassword')}</CardTitle>
             <CardDescription>
               Update your account password. Must be at least 8 characters with an uppercase letter,
               lowercase letter, and number.
@@ -96,7 +98,7 @@ export default function SettingsPage() {
             >
               <div className="space-y-2">
                 <label htmlFor="current-password" className="text-sm font-medium">
-                  Current Password
+                  {t('settings.currentPassword')}
                 </label>
                 <Input
                   id="current-password"
@@ -114,7 +116,7 @@ export default function SettingsPage() {
 
               <div className="space-y-2">
                 <label htmlFor="new-password" className="text-sm font-medium">
-                  New Password
+                  {t('settings.newPassword')}
                 </label>
                 <Input
                   id="new-password"
@@ -132,7 +134,7 @@ export default function SettingsPage() {
 
               <div className="space-y-2">
                 <label htmlFor="confirm-password" className="text-sm font-medium">
-                  Confirm New Password
+                  {t('settings.confirmPassword')}
                 </label>
                 <Input
                   id="confirm-password"
@@ -149,7 +151,7 @@ export default function SettingsPage() {
               </div>
 
               <Button type="submit" disabled={isPasswordPending}>
-                {isPasswordPending ? 'Changing password...' : 'Change password'}
+                {isPasswordPending ? t('common.loading') : t('settings.changePassword')}
               </Button>
             </form>
           </CardContent>
@@ -159,8 +161,8 @@ export default function SettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Language</CardTitle>
-            <CardDescription>Choose your preferred language</CardDescription>
+            <CardTitle className="text-lg">{t('settings.language')}</CardTitle>
+            <CardDescription>{t('settings.languageDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Select
@@ -188,8 +190,8 @@ export default function SettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Appearance</CardTitle>
-            <CardDescription>Choose your preferred theme</CardDescription>
+            <CardTitle className="text-lg">{t('settings.appearance')}</CardTitle>
+            <CardDescription>{t('settings.appearanceDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex gap-2">

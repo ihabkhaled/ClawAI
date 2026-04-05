@@ -55,6 +55,7 @@ export const de: TranslationDictionary = {
     files: 'Dateien',
     observability: 'Monitoring',
     audits: 'Audit-Protokolle',
+    logs: 'Protokolle',
     admin: 'Verwaltung',
     settings: 'Einstellungen',
   },

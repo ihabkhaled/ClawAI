@@ -9,6 +9,7 @@ import { ConnectorCard } from '@/components/connectors/connector-card';
 import { ConnectorForm } from '@/components/connectors/connector-form';
 import { Button } from '@/components/ui/button';
 import { useConnectorsPage } from '@/hooks/connectors/use-connectors-page';
+import { useTranslation } from '@/lib/i18n';
 import type { Connector } from '@/types';
 
 function ConnectorsContent({
@@ -90,10 +91,12 @@ export default function ConnectorsPage() {
     isSyncPending,
   } = useConnectorsPage();
 
+  const { t } = useTranslation();
+
   if (isError) {
     return (
       <div className="flex h-full flex-col">
-        <PageHeader title="Connectors" description="Manage your AI provider connections" />
+        <PageHeader title={t('connectors.title')} description={t('connectors.description')} />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-destructive">
             {error?.message ?? 'Failed to load connectors.'}
@@ -106,8 +109,8 @@ export default function ConnectorsPage() {
   return (
     <div className="flex h-full flex-col">
       <PageHeader
-        title="Connectors"
-        description="Manage your AI provider connections"
+        title={t('connectors.title')}
+        description={t('connectors.description')}
         actions={
           <Button onClick={handleOpenCreate}>
             <Plus className="me-2 h-4 w-4" />

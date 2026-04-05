@@ -20,6 +20,7 @@ import {
 import { ALL_FILTER, SEVERITY_COLORS } from '@/constants';
 import { AuditAction, AuditSeverity } from '@/enums';
 import { useAuditLogs } from '@/hooks/audit/use-audit-logs';
+import { useTranslation } from '@/lib/i18n';
 import type { AuditLog, DataTableColumn } from '@/types';
 
 function AuditContent({
@@ -166,9 +167,11 @@ export default function AuditsPage() {
     search: search || undefined,
   });
 
+  const { t } = useTranslation();
+
   return (
     <div>
-      <PageHeader title="Audits" description="Review activity logs and security audit trails" />
+      <PageHeader title={t('audits.title')} description={t('audits.description')} />
 
       <div className="mb-4 flex flex-wrap gap-3">
         <Select

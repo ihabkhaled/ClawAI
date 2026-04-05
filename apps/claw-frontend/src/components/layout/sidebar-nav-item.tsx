@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { SidebarNavItemProps } from '@/types';
 
 export function SidebarNavItem({ item }: SidebarNavItemProps) {
   const pathname = usePathname();
+  const { t } = useTranslation();
   const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
   return (
@@ -21,7 +23,7 @@ export function SidebarNavItem({ item }: SidebarNavItemProps) {
       )}
     >
       <item.icon className="h-4 w-4 shrink-0" />
-      <span>{item.label}</span>
+      <span>{t(item.labelKey)}</span>
       {item.badge ? (
         <span className="ms-auto rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
           {item.badge}

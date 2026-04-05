@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useChatPage } from '@/hooks/chat/use-chat-page';
+import { useTranslation } from '@/lib/i18n';
 import type { ChatThread } from '@/types';
 
 function ThreadList({
@@ -87,16 +88,17 @@ export default function ChatPage() {
     isPinPending,
     isArchivePending,
   } = useChatPage();
+  const { t } = useTranslation();
 
   return (
     <div className="flex h-full flex-col">
       <PageHeader
-        title="Chat"
-        description="Manage your AI conversation threads"
+        title={t('nav.chat')}
+        description={t('chat.threads')}
         actions={
           <Button onClick={handleNewChat} disabled={isCreating}>
             <Plus className="me-2 h-4 w-4" />
-            New Chat
+            {t('chat.newThread')}
           </Button>
         }
       />
@@ -109,7 +111,7 @@ export default function ChatPage() {
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search threads..."
+                placeholder={t('chat.searchThreads')}
                 className="ps-9"
               />
             </div>

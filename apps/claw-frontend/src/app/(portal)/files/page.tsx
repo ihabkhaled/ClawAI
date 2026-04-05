@@ -9,6 +9,7 @@ import { FileChunksDialog } from '@/components/files/file-chunks-dialog';
 import { FileListItem } from '@/components/files/file-list-item';
 import { FileUploadZone } from '@/components/files/file-upload-zone';
 import { useFilesPage } from '@/hooks/files/use-files-page';
+import { useTranslation } from '@/lib/i18n';
 
 export default function FilesPage() {
   const {
@@ -26,12 +27,14 @@ export default function FilesPage() {
     handleCloseChunks,
   } = useFilesPage();
 
+  const { t } = useTranslation();
+
   if (isError) {
     return (
       <div className="flex h-full flex-col">
         <PageHeader
-          title="Files"
-          description="Upload and manage files for AI context and retrieval"
+          title={t('files.title')}
+          description={t('files.description')}
         />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-destructive">{error?.message ?? 'Failed to load files.'}</p>
@@ -43,8 +46,8 @@ export default function FilesPage() {
   return (
     <div className="flex h-full flex-col">
       <PageHeader
-        title="Files"
-        description="Upload and manage files for AI context and retrieval"
+        title={t('files.title')}
+        description={t('files.description')}
       />
 
       <div className="mb-6">

@@ -9,16 +9,18 @@ import { StatCard } from '@/components/observability/stat-card';
 import { UsageChart } from '@/components/observability/usage-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useObservabilityPage } from '@/hooks/observability/use-observability-page';
+import { useTranslation } from '@/lib/i18n';
 
 export default function ObservabilityPage() {
   const { summary, cost, latency, auditStats, isLoading, isError } = useObservabilityPage();
+  const { t } = useTranslation();
 
   if (isLoading) {
     return (
       <div>
         <PageHeader
-          title="Observability"
-          description="Monitor system health, request latencies, and model performance"
+          title={t('observability.title')}
+          description={t('observability.description')}
         />
         <LoadingSpinner label="Loading observability data..." />
       </div>
@@ -29,8 +31,8 @@ export default function ObservabilityPage() {
     return (
       <div>
         <PageHeader
-          title="Observability"
-          description="Monitor system health, request latencies, and model performance"
+          title={t('observability.title')}
+          description={t('observability.description')}
         />
         <EmptyState
           icon={Activity}
@@ -47,8 +49,8 @@ export default function ObservabilityPage() {
     return (
       <div>
         <PageHeader
-          title="Observability"
-          description="Monitor system health, request latencies, and model performance"
+          title={t('observability.title')}
+          description={t('observability.description')}
         />
         <EmptyState
           icon={Activity}

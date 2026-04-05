@@ -8,15 +8,17 @@ import { ClientLogsTab } from '@/components/logs/client-logs-tab';
 import { Button } from '@/components/ui/button';
 import { LogsTab } from '@/enums';
 import { useLogsPage } from '@/hooks/logs/use-logs-page';
+import { useTranslation } from '@/lib/i18n';
 
 export default function LogsPage() {
   const controller = useLogsPage();
+  const { t } = useTranslation();
 
   return (
     <div>
       <PageHeader
-        title="Logs"
-        description="Searchable structured logs from backend audit trail and client-side activity"
+        title={t('nav.logs')}
+        description={t('audits.description')}
         actions={
           controller.activeTab === LogsTab.CLIENT ? (
             <Button
