@@ -2,8 +2,9 @@ import { HttpStatus, Injectable } from "@nestjs/common";
 import { RabbitMQService } from "@claw/shared-rabbitmq";
 import { EventPattern } from "@claw/shared-types";
 import { UsersRepository } from "../repositories/users.repository";
-import { hashPassword } from "@common/utilities";
+import { hashPassword, verifyPassword } from "@common/utilities";
 import { CreateUserDto } from "../dto/create-user.dto";
+import { type ChangePasswordDto } from "../dto/change-password.dto";
 import { type UpdateUserDto } from "../dto/update-user.dto";
 import { type UpdatePreferencesDto } from "../dto/update-preferences.dto";
 import { type ListUsersQueryDto } from "../dto/list-users-query.dto";
@@ -176,6 +177,30 @@ export class UsersService {
 
     const updated = await this.usersRepository.updatePreferences(userId, dto);
     return toSafeUser(updated);
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
+    const user = await this.usersRepository.findById(userId);
+    if (!user) {
+      throw new EntityNotFoundException("User", userId);
+    }
+
+    const isCurrentValid = await verifyPassword(user.passwordHash, dto.currentPassword);
+    if (!isCurrentValid) {
+      throw new BusinessException("Current password is incorrect", "INVALID_CURRENT_PASSWORD", HttpStatus.BAD_REQUEST);
+    }
+
+    const passwordResult = validatePasswordStrength(dto.newPassword);
+    if (!passwordResult.valid) {
+      throw new BusinessException(
+        passwordResult.errors.join("; "),
+        "WEAK_PASSWORD",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const newHash = await hashPassword(dto.newPassword);
+    await this.usersRepository.updateById(userId, { passwordHash: newHash });
   }
 
   async changeRole(id: string, role: UserRole, actorId: string): Promise<SafeUser> {

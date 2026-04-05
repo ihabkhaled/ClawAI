@@ -8,11 +8,58 @@ import { UserTable } from '@/components/admin/user-table';
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { HealthStatus, ServiceStatus, UserStatus } from '@/enums';
+import { cn } from '@/lib/utils';
 import { auditRepository } from '@/repositories/audit/audit.repository';
+import { healthRepository } from '@/repositories/health/health.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
-import type { AdminUser } from '@/types';
-import { showToast } from '@/utilities';
+import type { AdminUser, AggregatedHealth } from '@/types';
+import { getHealthStatusColor, showToast } from '@/utilities';
+
+function HealthCardContent({
+  isLoading,
+  isError,
+  health,
+}: {
+  isLoading: boolean;
+  isError: boolean;
+  health: AggregatedHealth | null;
+}): React.ReactElement {
+  if (isLoading) {
+    return <p className="text-sm text-muted-foreground">Checking services...</p>;
+  }
+
+  if (isError || !health) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Unable to reach the health service.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {health.services.map((svc) => (
+        <div key={svc.name} className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                'inline-block h-2 w-2 rounded-full',
+                getHealthStatusColor(svc.status === ServiceStatus.UP ? HealthStatus.HEALTHY : HealthStatus.UNHEALTHY),
+              )}
+            />
+            <span>{svc.name}</span>
+          </div>
+          <span className="text-muted-foreground">
+            {svc.responseTimeMs !== null ? `${String(svc.responseTimeMs)}ms` : 'down'}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function UsersContent({
   isLoading,
@@ -65,6 +112,12 @@ export default function AdminPage() {
     queryFn: () => auditRepository.getAdminUsers(),
   });
 
+  const healthQuery = useQuery({
+    queryKey: queryKeys.health.aggregated,
+    queryFn: () => healthRepository.getAggregatedHealth(),
+    refetchInterval: 30_000,
+  });
+
   const changeRoleMutation = useMutation({
     mutationFn: ({ userId, role }: { userId: string; role: string }) =>
       auditRepository.updateUserRole(userId, role),
@@ -93,7 +146,7 @@ export default function AdminPage() {
   });
 
   const users = usersQuery.data?.data ?? [];
-  const activeCount = users.filter((u) => u.status === 'ACTIVE').length;
+  const activeCount = users.filter((u) => u.status === UserStatus.ACTIVE).length;
 
   return (
     <div>
@@ -124,19 +177,33 @@ export default function AdminPage() {
 
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-muted-foreground" />
-              <CardTitle className="text-lg">Platform Health</CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-muted-foreground" />
+                <CardTitle className="text-lg">Platform Health</CardTitle>
+              </div>
+              {healthQuery.data ? (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    'capitalize',
+                    healthQuery.data.status === HealthStatus.HEALTHY && 'border-emerald-500 text-emerald-600',
+                    healthQuery.data.status === HealthStatus.DEGRADED && 'border-amber-500 text-amber-600',
+                    healthQuery.data.status === HealthStatus.UNHEALTHY && 'border-destructive text-destructive',
+                  )}
+                >
+                  {healthQuery.data.status}
+                </Badge>
+              ) : null}
             </div>
             <CardDescription>System status overview</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Service Status</span>
-                <span className="font-medium text-green-600">Operational</span>
-              </div>
-            </div>
+            <HealthCardContent
+              isLoading={healthQuery.isLoading}
+              isError={healthQuery.isError}
+              health={healthQuery.data ?? null}
+            />
           </CardContent>
         </Card>
       </div>

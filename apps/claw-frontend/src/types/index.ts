@@ -75,7 +75,14 @@ export type {
   UpdateContextPackItemRequest,
 } from './context-pack.types';
 export type { UploadedFile, FileChunk, FileWithChunks, UploadFileRequest } from './file.types';
-export type { DashboardStats, DashboardStatCard, DashboardQuickAction } from './dashboard.types';
+export type {
+  DashboardStats,
+  DashboardStatCard,
+  DashboardQuickAction,
+  DashboardDataResult,
+  DashboardPageResult,
+} from './dashboard.types';
+export type { ServiceHealthResult, AggregatedHealth } from './health.types';
 export type { ApiRequestConfig, ApiResponse, ApiError } from './api.types';
 export type {
   AuthStoreState,
@@ -119,7 +126,7 @@ export type {
   UsageChartProps,
   PolicyFormProps,
 } from './component.types';
-export type { UpdatePreferencesRequest } from './preference.types';
+export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
   TranslationDictionary,
   TranslationNamespace,

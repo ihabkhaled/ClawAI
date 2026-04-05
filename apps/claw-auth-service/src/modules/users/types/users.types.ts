@@ -23,6 +23,7 @@ export interface UpdateUserData {
   username?: string;
   role?: UserRole;
   status?: UserStatus;
+  passwordHash?: string;
 }
 
 export interface UserFilters {

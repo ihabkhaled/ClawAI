@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from "@nestjs/common";
 import { UsersService } from "../services/users.service";
 import { type SafeUser } from "../types/users.types";
 import { ZodValidationPipe } from "../../../app/pipes/zod-validation.pipe";
@@ -6,6 +6,7 @@ import { CreateUserDto, createUserSchema } from "../dto/create-user.dto";
 import { UpdateUserDto, updateUserSchema } from "../dto/update-user.dto";
 import { ListUsersQueryDto, listUsersQuerySchema } from "../dto/list-users-query.dto";
 import { ChangeRoleDto, changeRoleSchema } from "../dto/change-role.dto";
+import { ChangePasswordDto, changePasswordSchema } from "../dto/change-password.dto";
 import { UpdatePreferencesDto, updatePreferencesSchema } from "../dto/update-preferences.dto";
 import { Roles } from "../../../app/decorators/roles.decorator";
 import { CurrentUser } from "../../../app/decorators/current-user.decorator";
@@ -38,6 +39,15 @@ export class UsersController {
     @Body(new ZodValidationPipe(updatePreferencesSchema)) dto: UpdatePreferencesDto,
   ): Promise<SafeUser> {
     return this.usersService.updatePreferences(user.id, dto);
+  }
+
+  @Patch("me/password")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async changeMyPassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(changePasswordSchema)) dto: ChangePasswordDto,
+  ): Promise<void> {
+    return this.usersService.changePassword(user.id, dto);
   }
 
   @Get(":id")

@@ -88,4 +88,12 @@ export const queryKeys = {
     chunks: (id: string) =>
       [...queryKeys.files.all, "chunks", id] as const,
   },
+  health: {
+    all: ["health"] as const,
+    aggregated: ["health", "aggregated"] as const,
+  },
+  dashboard: {
+    all: ["dashboard"] as const,
+    stats: ["dashboard", "stats"] as const,
+  },
 } as const;

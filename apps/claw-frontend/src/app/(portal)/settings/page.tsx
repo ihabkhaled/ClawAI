@@ -28,6 +28,9 @@ export default function SettingsPage() {
     currentAppearance,
     handleLanguageChange,
     handleAppearanceChange,
+    passwordForm,
+    handlePasswordSubmit,
+    isPasswordPending,
   } = useSettingsPage();
 
   if (isLoading) {
@@ -47,30 +50,108 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Profile</CardTitle>
-            <CardDescription>Your personal information</CardDescription>
+            <CardDescription>
+              Your personal information. These fields are read-only.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="settings-username" className="text-sm font-medium">
                 Username
               </label>
-              <Input id="settings-username" defaultValue={user?.username ?? ''} disabled />
+              <Input id="settings-username" value={user?.username ?? ''} disabled readOnly />
             </div>
             <div className="space-y-2">
               <label htmlFor="settings-email" className="text-sm font-medium">
                 Email
               </label>
-              <Input id="settings-email" defaultValue={user?.email ?? ''} disabled />
+              <Input id="settings-email" value={user?.email ?? ''} disabled readOnly />
               <p className="text-xs text-muted-foreground">
-                Email cannot be changed. Contact an administrator.
+                Contact an administrator to change your email.
               </p>
             </div>
             <div className="space-y-2">
               <label htmlFor="settings-role" className="text-sm font-medium">
                 Role
               </label>
-              <Input id="settings-role" defaultValue={user?.role ?? ''} disabled />
+              <Input id="settings-role" value={user?.role ?? ''} disabled readOnly />
             </div>
+          </CardContent>
+        </Card>
+
+        <Separator />
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Change Password</CardTitle>
+            <CardDescription>
+              Update your account password. Must be at least 8 characters with an uppercase letter,
+              lowercase letter, and number.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form
+              onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}
+              className="space-y-4 max-w-sm"
+            >
+              <div className="space-y-2">
+                <label htmlFor="current-password" className="text-sm font-medium">
+                  Current Password
+                </label>
+                <Input
+                  id="current-password"
+                  type="password"
+                  autoComplete="current-password"
+                  disabled={isPasswordPending}
+                  {...passwordForm.register('currentPassword')}
+                />
+                {passwordForm.formState.errors.currentPassword ? (
+                  <p className="text-xs text-destructive">
+                    {passwordForm.formState.errors.currentPassword.message}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="new-password" className="text-sm font-medium">
+                  New Password
+                </label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  autoComplete="new-password"
+                  disabled={isPasswordPending}
+                  {...passwordForm.register('newPassword')}
+                />
+                {passwordForm.formState.errors.newPassword ? (
+                  <p className="text-xs text-destructive">
+                    {passwordForm.formState.errors.newPassword.message}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="confirm-password" className="text-sm font-medium">
+                  Confirm New Password
+                </label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  autoComplete="new-password"
+                  disabled={isPasswordPending}
+                  {...passwordForm.register('confirmPassword')}
+                />
+                {passwordForm.formState.errors.confirmPassword ? (
+                  <p className="text-xs text-destructive">
+                    {passwordForm.formState.errors.confirmPassword.message}
+                  </p>
+                ) : null}
+              </div>
+
+              <Button type="submit" disabled={isPasswordPending}>
+                {isPasswordPending ? 'Changing password...' : 'Change password'}
+              </Button>
+            </form>
           </CardContent>
         </Card>
 
