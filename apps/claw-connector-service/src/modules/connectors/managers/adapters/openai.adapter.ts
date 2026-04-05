@@ -1,62 +1,92 @@
 import { ConnectorStatus, ModelLifecycle } from "../../../../generated/prisma";
 import { type HealthCheckResult, type NormalizedModel } from "../../types/connectors.types";
+import { type OpenAIModelsResponse } from "../../types/provider-api.types";
+import { httpGet } from "../../../../common/utilities/http.utility";
 import {
   type ConnectorConfig,
   type ProviderAdapter,
   type ProviderCapabilities,
 } from "../provider-adapter.interface";
 
+const DEFAULT_BASE_URL = "https://api.openai.com/v1";
+
+const CHAT_MODEL_PREFIXES = ["gpt-4", "gpt-3.5", "o1", "o3", "o4", "chatgpt"];
+
+function isChatModel(modelId: string): boolean {
+  const lower = modelId.toLowerCase();
+  return CHAT_MODEL_PREFIXES.some((prefix) => lower.startsWith(prefix));
+}
+
+function formatDisplayName(modelId: string): string {
+  return modelId
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 export class OpenAIAdapter implements ProviderAdapter {
-  async healthCheck(_config: ConnectorConfig): Promise<HealthCheckResult> {
+  async healthCheck(config: ConnectorConfig): Promise<HealthCheckResult> {
+    const baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
     const start = Date.now();
-    return {
-      status: ConnectorStatus.HEALTHY,
-      latencyMs: Date.now() - start + 50,
-    };
+
+    try {
+      const response = await httpGet<OpenAIModelsResponse>({
+        url: `${baseUrl}/models`,
+        headers: {
+          Authorization: `Bearer ${config.apiKey}`,
+        },
+      });
+
+      const latencyMs = Date.now() - start;
+
+      if (response.ok) {
+        return { status: ConnectorStatus.HEALTHY, latencyMs };
+      }
+
+      return {
+        status: ConnectorStatus.DOWN,
+        latencyMs,
+        errorMessage: `OpenAI API returned status ${String(response.status)}`,
+      };
+    } catch (error: unknown) {
+      return {
+        status: ConnectorStatus.DOWN,
+        latencyMs: Date.now() - start,
+        errorMessage: error instanceof Error ? error.message : "Unknown error connecting to OpenAI",
+      };
+    }
   }
 
-  async syncModels(_config: ConnectorConfig): Promise<NormalizedModel[]> {
-    return [
-      {
-        modelKey: "gpt-5.4",
-        displayName: "GPT-5.4",
-        lifecycle: ModelLifecycle.ACTIVE,
-        capabilities: {
-          supportsStreaming: true,
-          supportsTools: true,
-          supportsVision: true,
-          supportsAudio: true,
-          supportsStructuredOutput: true,
-          maxContextTokens: 128000,
-        },
+  async syncModels(config: ConnectorConfig): Promise<NormalizedModel[]> {
+    const baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
+
+    const response = await httpGet<OpenAIModelsResponse>({
+      url: `${baseUrl}/models`,
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
       },
-      {
-        modelKey: "gpt-5.4-mini",
-        displayName: "GPT-5.4 Mini",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch OpenAI models: HTTP ${String(response.status)}`);
+    }
+
+    const models = response.data.data ?? [];
+
+    return models
+      .filter((model) => isChatModel(model.id))
+      .map((model) => ({
+        modelKey: model.id,
+        displayName: formatDisplayName(model.id),
         lifecycle: ModelLifecycle.ACTIVE,
         capabilities: {
           supportsStreaming: true,
           supportsTools: true,
-          supportsVision: true,
+          supportsVision: model.id.includes("vision") || model.id.startsWith("gpt-4"),
           supportsAudio: false,
           supportsStructuredOutput: true,
-          maxContextTokens: 128000,
         },
-      },
-      {
-        modelKey: "gpt-5.4-nano",
-        displayName: "GPT-5.4 Nano",
-        lifecycle: ModelLifecycle.ACTIVE,
-        capabilities: {
-          supportsStreaming: true,
-          supportsTools: true,
-          supportsVision: false,
-          supportsAudio: false,
-          supportsStructuredOutput: true,
-          maxContextTokens: 32000,
-        },
-      },
-    ];
+      }));
   }
 
   getCapabilities(): ProviderCapabilities {

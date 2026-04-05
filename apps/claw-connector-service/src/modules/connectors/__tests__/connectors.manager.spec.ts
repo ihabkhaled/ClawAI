@@ -24,6 +24,42 @@ jest.mock('../../../common/utilities', () => ({
   verifyAccessToken: jest.fn(),
 }));
 
+const mockOpenAIModelsResponse = {
+  object: 'list',
+  data: [
+    { id: 'gpt-4o', object: 'model', created: 1700000000, owned_by: 'openai' },
+    { id: 'gpt-4o-mini', object: 'model', created: 1700000000, owned_by: 'openai' },
+    { id: 'gpt-3.5-turbo', object: 'model', created: 1700000000, owned_by: 'openai' },
+    { id: 'dall-e-3', object: 'model', created: 1700000000, owned_by: 'openai' },
+  ],
+};
+
+const mockAnthropicModelsResponse = {
+  data: [
+    { type: 'model', id: 'claude-opus-4', display_name: 'Claude Opus 4', created_at: '2025-01-01' },
+    { type: 'model', id: 'claude-sonnet-4', display_name: 'Claude Sonnet 4', created_at: '2025-01-01' },
+    { type: 'model', id: 'claude-haiku-3.5', display_name: 'Claude Haiku 3.5', created_at: '2025-01-01' },
+  ],
+  has_more: false,
+  first_id: null,
+  last_id: null,
+};
+
+function mockFetchForProvider(provider: string): void {
+  const responseMap: Record<string, unknown> = {
+    [ConnectorProvider.OPENAI]: mockOpenAIModelsResponse,
+    [ConnectorProvider.ANTHROPIC]: mockAnthropicModelsResponse,
+    [ConnectorProvider.GEMINI]: mockOpenAIModelsResponse,
+    [ConnectorProvider.DEEPSEEK]: mockOpenAIModelsResponse,
+  };
+  const body = responseMap[provider] ?? mockOpenAIModelsResponse;
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve(body),
+  });
+}
+
 const mockConnector = {
   id: 'conn-1',
   name: 'Test OpenAI',
@@ -75,6 +111,7 @@ describe('ConnectorsManager', () => {
       healthEventsRepo as unknown as HealthEventsRepository,
       syncRunsRepo as unknown as SyncRunsRepository,
     );
+    mockFetchForProvider(ConnectorProvider.OPENAI);
   });
 
   describe('testConnector', () => {
@@ -116,7 +153,7 @@ describe('ConnectorsManager', () => {
       expect(modelsRepo.upsertMany).toHaveBeenCalledWith(
         'conn-1',
         ConnectorProvider.OPENAI,
-        expect.arrayContaining([expect.objectContaining({ modelKey: 'gpt-5.4' })]),
+        expect.arrayContaining([expect.objectContaining({ modelKey: 'gpt-4o' })]),
       );
       expect(syncRunsRepo.update).toHaveBeenCalledWith(
         'run-1',
@@ -141,6 +178,7 @@ describe('ConnectorsManager', () => {
         ...mockConnector,
         provider: ConnectorProvider.ANTHROPIC,
       };
+      mockFetchForProvider(ConnectorProvider.ANTHROPIC);
 
       const result = await manager.syncModels(anthropicConnector);
 

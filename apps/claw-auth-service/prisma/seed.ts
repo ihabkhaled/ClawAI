@@ -1,33 +1,26 @@
 import { PrismaClient } from "../src/generated/prisma";
 import { hashPassword } from "../src/common/utilities/hashing.utility";
 
+const DEFAULT_ADMIN_EMAIL = "admin@claw.local";
+const DEFAULT_ADMIN_USERNAME = "admin";
+const DEFAULT_ADMIN_PASSWORD = "Admin123!";
+
 const prisma = new PrismaClient();
 
-async function main(): Promise<void> {
-  const email = process.env["ADMIN_EMAIL"];
-  const username = process.env["ADMIN_USERNAME"];
-  const password = process.env["ADMIN_PASSWORD"];
+async function seed(): Promise<void> {
+  const existingCount = await prisma.user.count();
 
-  if (!email || !username || !password) {
-    throw new Error(
-      "ADMIN_EMAIL, ADMIN_USERNAME, and ADMIN_PASSWORD environment variables are required for seeding.",
-    );
+  if (existingCount > 0) {
+    console.warn("Users already exist — skipping seed.");
+    return;
   }
 
-  const passwordHash = await hashPassword(password);
+  const passwordHash = await hashPassword(DEFAULT_ADMIN_PASSWORD);
 
-  const user = await prisma.user.upsert({
-    where: { email },
-    update: {
-      username,
-      passwordHash,
-      role: "ADMIN",
-      status: "ACTIVE",
-      mustChangePassword: true,
-    },
-    create: {
-      email,
-      username,
+  const admin = await prisma.user.create({
+    data: {
+      email: DEFAULT_ADMIN_EMAIL,
+      username: DEFAULT_ADMIN_USERNAME,
       passwordHash,
       role: "ADMIN",
       status: "ACTIVE",
@@ -35,10 +28,11 @@ async function main(): Promise<void> {
     },
   });
 
-  console.warn(`Seeded admin user: ${user.email} (${user.id})`);
+  console.warn(`Seeded default admin user: ${admin.email} (id: ${admin.id})`);
+  console.warn("IMPORTANT: Change the admin password on first login.");
 }
 
-main()
+seed()
   .catch((error: unknown) => {
     console.error("Seed failed:", error);
     process.exit(1);

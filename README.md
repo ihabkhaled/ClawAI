@@ -37,19 +37,32 @@ Claw is an open-source platform for orchestrating AI models across multiple prov
 # 1. Clone the repository
 git clone <repo-url> claw && cd claw
 
-# 2. Copy environment file
-cp .env.example .env
+# 2. Copy environment files for all services
+bash scripts/setup.sh
+# Or manually: for each apps/claw-*/.env.example, copy to .env
 
-# 3. Start all 20 containers
-docker compose up -d
+# 3. Start all containers (infrastructure + services)
+docker compose -f docker-compose.dev.yml up -d
 
-# 4. Verify everything is healthy
+# 4. Wait for services to start (~60 seconds), then verify
 curl http://localhost:4009/api/v1/health
+
+# 5. Open the frontend
+open http://localhost:3000
 ```
 
-The frontend is available at `http://localhost:3000` and all API traffic routes through Nginx at `http://localhost:80`.
+### Default Credentials
 
-Default login: `admin@claw.local` / password from your `.env` `ADMIN_PASSWORD` value.
+| Field    | Value              |
+|----------|--------------------|
+| Email    | admin@claw.local   |
+| Password | Admin123!          |
+
+You will be prompted to change your password on first login.
+
+The auth service automatically runs database migrations and seeds the default admin user on first start. If users already exist, the seed is skipped (idempotent).
+
+The frontend is available at `http://localhost:3000` and all API traffic routes through Nginx at `http://localhost:80`.
 
 ---
 
