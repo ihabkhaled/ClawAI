@@ -1,5 +1,5 @@
 export const LOCAL_PROVIDER = 'local-ollama';
-export const LOCAL_MODEL_DEFAULT = 'llama3:latest';
+export const LOCAL_MODEL_DEFAULT = 'tinyllama';
 
 // Provider names must match the ConnectorProvider Prisma enum (uppercase)
 export const CLOUD_PROVIDER_OPENAI = 'OPENAI';

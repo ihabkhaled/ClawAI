@@ -207,14 +207,34 @@ services:
     image: ollama/ollama:latest
     container_name: claw-ollama
     restart: unless-stopped
-    profiles:
-      - local-ai
     ports:
       - '11434:11434'
     volumes:
       - ollama-data:/root/.ollama
     environment:
       - OLLAMA_HOST=0.0.0.0
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        ollama serve &
+        SERVE_PID=$$!
+        echo "Waiting for Ollama to start..."
+        until ollama list > /dev/null 2>&1; do sleep 1; done
+        echo "Ollama is ready."
+        if ! ollama list | grep -q "tinyllama"; then
+          echo "Pulling tinyllama (default model)..."
+          ollama pull tinyllama
+          echo "tinyllama pulled successfully."
+        else
+          echo "tinyllama already available."
+        fi
+        wait $$SERVE_PID
+    healthcheck:
+      test: ['CMD-SHELL', 'ollama list > /dev/null 2>&1 || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
     networks:
       - claw-network
 
