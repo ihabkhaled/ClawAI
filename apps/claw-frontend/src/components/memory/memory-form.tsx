@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -8,61 +8,67 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { MEMORY_TYPE_LABELS } from "@/constants";
-import { MemoryType } from "@/enums";
-import type { CreateMemoryRequest, MemoryRecord } from "@/types";
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { MEMORY_TYPE_LABELS, MEMORY_TYPE_OPTIONS } from '@/constants';
+import type { MemoryType } from '@/enums';
+import { createMemorySchema } from '@/lib/validation/memory.schema';
+import type { CreateMemoryRequest, FormFieldErrors, MemoryFormProps } from '@/types';
 
-type MemoryFormProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CreateMemoryRequest) => void;
-  isPending: boolean;
-  memory?: MemoryRecord | null;
-};
-
-const MEMORY_TYPE_OPTIONS = Object.values(MemoryType);
-
-export function MemoryForm({
-  open,
-  onOpenChange,
-  onSubmit,
-  isPending,
-  memory,
-}: MemoryFormProps) {
-  const [type, setType] = useState<MemoryType | "">(memory?.type ?? "");
-  const [content, setContent] = useState(memory?.content ?? "");
+export function MemoryForm({ open, onOpenChange, onSubmit, isPending, memory }: MemoryFormProps) {
+  const [type, setType] = useState<MemoryType | null>(memory?.type ?? null);
+  const [content, setContent] = useState(memory?.content ?? '');
+  const [fieldErrors, setFieldErrors] = useState<FormFieldErrors>({});
 
   const isEditing = !!memory;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!type) return;
+  useEffect(() => {
+    if (open) {
+      setType(memory?.type ?? null);
+      setContent(memory?.content ?? '');
+      setFieldErrors({});
+    }
+  }, [open, memory]);
 
-    onSubmit({ type, content });
+  const handleSubmit = (e: React.FormEvent): void => {
+    e.preventDefault();
+
+    const result = createMemorySchema.safeParse({ type, content });
+    if (!result.success) {
+      setFieldErrors(result.error.flatten().fieldErrors);
+      return;
+    }
+
+    setFieldErrors({});
+    onSubmit(result.data as CreateMemoryRequest);
   };
 
-  const isValid = !!type && content.trim().length > 0;
+  const handleOpenChange = (nextOpen: boolean): void => {
+    if (!nextOpen) {
+      setFieldErrors({});
+    }
+    onOpenChange(nextOpen);
+  };
+
+  const pendingLabel = isEditing ? 'Saving...' : 'Creating...';
+  const submitLabel = isEditing ? 'Save Changes' : 'Create Memory';
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Edit Memory" : "Create Memory"}
-          </DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit Memory' : 'Create Memory'}</DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update this memory record."
-              : "Add a new memory record to persist context across conversations."}
+              ? 'Update this memory record.'
+              : 'Add a new memory record to persist context across conversations.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4">
@@ -71,7 +77,7 @@ export function MemoryForm({
               Type
             </label>
             <Select
-              value={type}
+              value={type ?? undefined}
               onValueChange={(value) => setType(value as MemoryType)}
             >
               <SelectTrigger id="memory-type">
@@ -85,6 +91,9 @@ export function MemoryForm({
                 ))}
               </SelectContent>
             </Select>
+            {fieldErrors.type ? (
+              <p className="mt-1 text-sm text-destructive">{fieldErrors.type[0]}</p>
+            ) : null}
           </div>
 
           <div className="grid gap-2">
@@ -98,24 +107,17 @@ export function MemoryForm({
               placeholder="Enter the memory content..."
               rows={4}
             />
+            {fieldErrors.content ? (
+              <p className="mt-1 text-sm text-destructive">{fieldErrors.content[0]}</p>
+            ) : null}
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!isValid || isPending}>
-              {isPending
-                ? isEditing
-                  ? "Saving..."
-                  : "Creating..."
-                : isEditing
-                  ? "Save Changes"
-                  : "Create Memory"}
+            <Button type="submit" disabled={isPending}>
+              {isPending ? pendingLabel : submitLabel}
             </Button>
           </DialogFooter>
         </form>

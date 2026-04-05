@@ -1,61 +1,84 @@
-import { Send } from "lucide-react";
-import { useCallback, useState } from "react";
+import { Send } from 'lucide-react';
+import { useCallback, useState } from 'react';
 
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-
-type MessageComposerProps = {
-  onSend: (content: string) => void;
-  isPending: boolean;
-};
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { sendMessageSchema } from '@/lib/validation/message.schema';
+import type { MessageComposerProps } from '@/types';
 
 export function MessageComposer({ onSend, isPending }: MessageComposerProps) {
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState('');
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const validateAndSend = useCallback((): boolean => {
+    const result = sendMessageSchema.safeParse({ content: content.trim() });
+    if (!result.success) {
+      setValidationError(result.error.errors[0]?.message ?? 'Invalid message');
+      return false;
+    }
+    setValidationError(null);
+    onSend(result.data.content);
+    setContent('');
+    return true;
+  }, [content, onSend]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      const trimmed = content.trim();
-      if (!trimmed || isPending) return;
-      onSend(trimmed);
-      setContent("");
+      if (isPending) {
+        return;
+      }
+      validateAndSend();
     },
-    [content, isPending, onSend],
+    [isPending, validateAndSend],
   );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === "Enter" && !e.shiftKey) {
+      if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        const trimmed = content.trim();
-        if (!trimmed || isPending) return;
-        onSend(trimmed);
-        setContent("");
+        if (isPending) {
+          return;
+        }
+        validateAndSend();
       }
     },
-    [content, isPending, onSend],
+    [isPending, validateAndSend],
+  );
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setContent(e.target.value);
+      if (validationError) {
+        setValidationError(null);
+      }
+    },
+    [validationError],
   );
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
-      <Textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
-        className="min-h-[44px] resize-none"
-        rows={1}
-        disabled={isPending}
-      />
-      <Button
-        type="submit"
-        size="icon"
-        className="shrink-0"
-        disabled={isPending || !content.trim()}
-      >
-        <Send className="h-4 w-4" />
-        <span className="sr-only">Send message</span>
-      </Button>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-1">
+      <div className="flex gap-2">
+        <Textarea
+          value={content}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
+          className="min-h-[44px] resize-none"
+          rows={1}
+          disabled={isPending}
+        />
+        <Button
+          type="submit"
+          size="icon"
+          className="min-h-11 min-w-11 shrink-0"
+          disabled={isPending || !content.trim()}
+        >
+          <Send className="h-4 w-4" />
+          <span className="sr-only">Send message</span>
+        </Button>
+      </div>
+      {validationError ? <p className="mt-1 text-sm text-destructive">{validationError}</p> : null}
     </form>
   );
 }

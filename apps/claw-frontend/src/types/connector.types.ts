@@ -1,4 +1,4 @@
-import type { ConnectorProvider, ConnectorStatus } from "@/enums";
+import type { ConnectorProvider, ConnectorStatus } from '@/enums';
 
 export type Connector = {
   id: string;
@@ -62,3 +62,17 @@ export type SyncModelsResponse = {
 };
 
 export type ConnectorModelsResponse = ConnectorModel[];
+
+export type ConnectorFormFieldErrors = {
+  name?: string[];
+  provider?: string[];
+  authType?: string[];
+  apiKey?: string[];
+  baseUrl?: string[];
+  region?: string[];
+};
+
+export type UpdateConnectorParams = {
+  id: string;
+  data: UpdateConnectorRequest;
+};

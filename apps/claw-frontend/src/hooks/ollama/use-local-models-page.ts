@@ -1,17 +1,19 @@
-import { useState } from "react";
+import { useQuery } from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
 
-import { useQuery } from "@tanstack/react-query";
+import { pullModelSchema } from '@/lib/validation/ollama.schema';
+import { ollamaRepository } from '@/repositories/ollama/ollama.repository';
+import { queryKeys } from '@/repositories/shared/query-keys';
+import type { FormFieldErrors } from '@/types';
 
-import { ollamaRepository } from "@/repositories/ollama/ollama.repository";
-import { queryKeys } from "@/repositories/shared/query-keys";
-
-import { useLocalModels } from "./use-local-models";
-import { usePullModel } from "./use-pull-model";
-import { useAssignRole } from "./use-assign-role";
+import { useAssignRole } from './use-assign-role';
+import { useLocalModels } from './use-local-models';
+import { usePullModel } from './use-pull-model';
 
 export function useLocalModelsPage() {
-  const [pullModelName, setPullModelName] = useState("");
-  const [pullRuntime, setPullRuntime] = useState("");
+  const [pullModelName, setPullModelName] = useState('');
+  const [pullRuntime, setPullRuntime] = useState('');
+  const [pullFieldErrors, setPullFieldErrors] = useState<FormFieldErrors>({});
 
   const { models, isLoading, isError, error } = useLocalModels();
   const { pullModel, isPending: isPullPending } = usePullModel();
@@ -23,29 +25,47 @@ export function useLocalModelsPage() {
   });
 
   const healthQuery = useQuery({
-    queryKey: ["ollama", "health"] as const,
+    queryKey: ['ollama', 'health'] as const,
     queryFn: () => ollamaRepository.getHealth(),
     refetchInterval: 30000,
   });
 
   const runtimes = runtimesQuery.data ?? [];
 
-  const handlePullModel = () => {
-    if (!pullModelName.trim() || !pullRuntime) return;
+  const handlePullModel = useCallback((): void => {
+    const formData = {
+      modelName: pullModelName.trim(),
+      runtime: pullRuntime,
+    };
+
+    const result = pullModelSchema.safeParse(formData);
+    if (!result.success) {
+      setPullFieldErrors(result.error.flatten().fieldErrors);
+      return;
+    }
+
+    setPullFieldErrors({});
     pullModel(
-      { modelName: pullModelName.trim(), runtime: pullRuntime },
+      { modelName: result.data.modelName, runtime: result.data.runtime },
       {
         onSuccess: () => {
-          setPullModelName("");
-          setPullRuntime("");
+          setPullModelName('');
+          setPullRuntime('');
         },
       },
     );
-  };
+  }, [pullModelName, pullRuntime, pullModel]);
 
-  const handleAssignRole = (modelId: string, role: string) => {
-    assignRole({ modelId, role });
-  };
+  const handleAssignRole = useCallback(
+    (modelId: string, role: string): void => {
+      assignRole({ modelId, role });
+    },
+    [assignRole],
+  );
+
+  const clearPullFieldErrors = useCallback((): void => {
+    setPullFieldErrors({});
+  }, []);
 
   return {
     models,
@@ -63,6 +83,8 @@ export function useLocalModelsPage() {
     setPullRuntime,
     handlePullModel,
     isPullPending,
+    pullFieldErrors,
+    clearPullFieldErrors,
     handleAssignRole,
     isAssignPending,
   };

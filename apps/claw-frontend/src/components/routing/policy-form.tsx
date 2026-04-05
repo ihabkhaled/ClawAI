@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -8,79 +8,68 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import {
-  ROUTING_MODE_OPTIONS,
-  ROUTING_MODE_LABELS,
-  POLICY_FORM_DEFAULTS,
-} from "@/constants";
-import type { RoutingMode } from "@/enums";
-import type { RoutingPolicy, CreatePolicyRequest } from "@/types";
+} from '@/components/ui/select';
+import { ROUTING_MODE_OPTIONS, ROUTING_MODE_LABELS, POLICY_FORM_DEFAULTS } from '@/constants';
+import type { RoutingMode } from '@/enums';
+import { createRoutingPolicySchema } from '@/lib/validation/routing.schema';
+import type { FormFieldErrors, PolicyFormProps } from '@/types';
 
-type PolicyFormProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CreatePolicyRequest) => void;
-  isPending: boolean;
-  policy?: RoutingPolicy | null;
-};
-
-export function PolicyForm({
-  open,
-  onOpenChange,
-  onSubmit,
-  isPending,
-  policy,
-}: PolicyFormProps) {
-  const [name, setName] = useState(
-    policy?.name ?? POLICY_FORM_DEFAULTS.name,
-  );
+export function PolicyForm({ open, onOpenChange, onSubmit, isPending, policy }: PolicyFormProps) {
+  const [name, setName] = useState(policy?.name ?? POLICY_FORM_DEFAULTS.name);
   const [routingMode, setRoutingMode] = useState<RoutingMode>(
     policy?.routingMode ?? POLICY_FORM_DEFAULTS.routingMode,
   );
-  const [priority, setPriority] = useState(
-    policy?.priority ?? POLICY_FORM_DEFAULTS.priority,
-  );
-  const [isActive, setIsActive] = useState(
-    policy?.isActive ?? POLICY_FORM_DEFAULTS.isActive,
-  );
+  const [priority, setPriority] = useState(policy?.priority ?? POLICY_FORM_DEFAULTS.priority);
+  const [isActive, setIsActive] = useState(policy?.isActive ?? POLICY_FORM_DEFAULTS.isActive);
+  const [fieldErrors, setFieldErrors] = useState<FormFieldErrors>({});
 
   const isEditing = !!policy;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
+  useEffect(() => {
+    setFieldErrors({});
+  }, [open]);
 
-    onSubmit({
+  const handleSubmit = (e: React.FormEvent): void => {
+    e.preventDefault();
+
+    const formData = {
       name: name.trim(),
       routingMode,
       priority,
       isActive,
       config: policy?.config ?? POLICY_FORM_DEFAULTS.config,
-    });
+    };
+
+    const result = createRoutingPolicySchema.safeParse(formData);
+    if (!result.success) {
+      setFieldErrors(result.error.flatten().fieldErrors);
+      return;
+    }
+
+    setFieldErrors({});
+    onSubmit(formData);
   };
 
-  const isValid = name.trim().length > 0;
+  const pendingLabel = isEditing ? 'Saving...' : 'Creating...';
+  const submitLabel = isEditing ? 'Save Changes' : 'Create Policy';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Edit Policy" : "Create Policy"}
-          </DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit Policy' : 'Create Policy'}</DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the routing policy configuration."
-              : "Create a new routing policy to control request distribution."}
+              ? 'Update the routing policy configuration.'
+              : 'Create a new routing policy to control request distribution.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4">
@@ -94,6 +83,9 @@ export function PolicyForm({
               onChange={(e) => setName(e.target.value)}
               placeholder="My Routing Policy"
             />
+            {fieldErrors.name ? (
+              <p className="mt-1 text-sm text-destructive">{fieldErrors.name[0]}</p>
+            ) : null}
           </div>
 
           <div className="grid gap-2">
@@ -115,6 +107,9 @@ export function PolicyForm({
                 ))}
               </SelectContent>
             </Select>
+            {fieldErrors.routingMode ? (
+              <p className="mt-1 text-sm text-destructive">{fieldErrors.routingMode[0]}</p>
+            ) : null}
           </div>
 
           <div className="grid gap-2">
@@ -129,6 +124,9 @@ export function PolicyForm({
               min={0}
               max={100}
             />
+            {fieldErrors.priority ? (
+              <p className="mt-1 text-sm text-destructive">{fieldErrors.priority[0]}</p>
+            ) : null}
           </div>
 
           <div className="grid gap-2">
@@ -136,8 +134,8 @@ export function PolicyForm({
               Status
             </label>
             <Select
-              value={isActive ? "active" : "inactive"}
-              onValueChange={(value) => setIsActive(value === "active")}
+              value={isActive ? 'active' : 'inactive'}
+              onValueChange={(value) => setIsActive(value === 'active')}
             >
               <SelectTrigger id="policy-active">
                 <SelectValue />
@@ -150,21 +148,11 @@ export function PolicyForm({
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!isValid || isPending}>
-              {isPending
-                ? isEditing
-                  ? "Saving..."
-                  : "Creating..."
-                : isEditing
-                  ? "Save Changes"
-                  : "Create Policy"}
+            <Button type="submit" disabled={isPending}>
+              {isPending ? pendingLabel : submitLabel}
             </Button>
           </DialogFooter>
         </form>

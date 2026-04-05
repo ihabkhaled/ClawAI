@@ -1,12 +1,13 @@
-import { useCallback, useRef, useState } from "react";
-import { Upload } from "lucide-react";
+import { Upload } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
 
-import { cn } from "@/lib/utils";
-import type { FileUploadZoneProps } from "@/types";
+import { cn } from '@/lib/utils';
+import type { FileUploadZoneProps } from '@/types';
 
 export function FileUploadZone({
   onFileSelected,
   isUploading,
+  validationError,
 }: FileUploadZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -33,7 +34,9 @@ export function FileUploadZone({
       e.preventDefault();
       e.stopPropagation();
       setIsDragOver(false);
-      if (isUploading) return;
+      if (isUploading) {
+        return;
+      }
 
       const droppedFile = e.dataTransfer.files[0];
       if (droppedFile) {
@@ -50,13 +53,13 @@ export function FileUploadZone({
         onFileSelected(selectedFile);
       }
       if (inputRef.current) {
-        inputRef.current.value = "";
+        inputRef.current.value = '';
       }
     },
     [onFileSelected],
   );
 
-  const handleClick = () => {
+  const handleClick = (): void => {
     if (!isUploading) {
       inputRef.current?.click();
     }
@@ -71,25 +74,22 @@ export function FileUploadZone({
       onDrop={handleDrop}
       onClick={handleClick}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
+        if (e.key === 'Enter' || e.key === ' ') {
           handleClick();
         }
       }}
       className={cn(
-        "flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 text-center transition-colors",
-        isDragOver
-          ? "border-primary bg-primary/5"
-          : "border-border hover:border-primary/50",
-        isUploading && "cursor-not-allowed opacity-50",
+        'flex min-h-[120px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-4 text-center transition-colors sm:min-h-[160px] sm:p-6',
+        isDragOver ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50',
+        isUploading && 'cursor-not-allowed opacity-50',
       )}
     >
       <Upload className="mb-3 h-8 w-8 text-muted-foreground" />
       <p className="text-sm font-medium">
-        {isUploading ? "Uploading..." : "Drop a file here or click to browse"}
+        {isUploading ? 'Uploading...' : 'Drop a file here or click to browse'}
       </p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Documents, code, and other text files
-      </p>
+      <p className="mt-1 text-xs text-muted-foreground">Documents, code, and other text files</p>
+      {validationError ? <p className="mt-2 text-sm text-destructive">{validationError}</p> : null}
       <input
         ref={inputRef}
         type="file"

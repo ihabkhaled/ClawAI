@@ -1,13 +1,15 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback } from 'react';
 
-import type { UploadFileRequest } from "@/types";
+import { uploadFileSchema } from '@/lib/validation/file.schema';
+import type { UploadFileRequest } from '@/types';
 
-import { useDeleteFile } from "./use-delete-file";
-import { useFiles } from "./use-files";
-import { useUploadFile } from "./use-upload-file";
+import { useDeleteFile } from './use-delete-file';
+import { useFiles } from './use-files';
+import { useUploadFile } from './use-upload-file';
 
 export function useFilesPage() {
   const [viewingChunksId, setViewingChunksId] = useState<string | null>(null);
+  const [fileValidationError, setFileValidationError] = useState<string | null>(null);
 
   const { files, isLoading, isError, error } = useFiles();
   const { uploadFile, isPending: isUploadPending } = useUploadFile();
@@ -15,10 +17,21 @@ export function useFilesPage() {
 
   const handleFileSelected = useCallback(
     (file: File) => {
-      const data: UploadFileRequest = {
+      const metadata = {
         filename: file.name,
-        mimeType: file.type || "application/octet-stream",
+        mimeType: file.type || 'application/octet-stream',
         sizeBytes: file.size,
+      };
+
+      const result = uploadFileSchema.safeParse(metadata);
+      if (!result.success) {
+        setFileValidationError(result.error.errors[0]?.message ?? 'Invalid file');
+        return;
+      }
+
+      setFileValidationError(null);
+      const data: UploadFileRequest = {
+        ...result.data,
         storagePath: `/uploads/${file.name}`,
       };
       uploadFile(data);
@@ -26,17 +39,20 @@ export function useFilesPage() {
     [uploadFile],
   );
 
-  const handleDelete = (id: string) => {
-    deleteFile(id);
-  };
+  const handleDelete = useCallback(
+    (id: string) => {
+      deleteFile(id);
+    },
+    [deleteFile],
+  );
 
-  const handleViewChunks = (id: string) => {
+  const handleViewChunks = useCallback((id: string) => {
     setViewingChunksId(id);
-  };
+  }, []);
 
-  const handleCloseChunks = () => {
+  const handleCloseChunks = useCallback(() => {
     setViewingChunksId(null);
-  };
+  }, []);
 
   return {
     files,
@@ -45,6 +61,7 @@ export function useFilesPage() {
     error,
     handleFileSelected,
     isUploadPending,
+    fileValidationError,
     handleDelete,
     isDeletePending,
     viewingChunksId,
