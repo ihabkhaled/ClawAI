@@ -83,6 +83,7 @@ export const fr: TranslationDictionary = {
     threadUpdateFailed: 'Échec de la mise à jour de la discussion',
     messageSendFailed: "Échec de l'envoi du message",
     feedbackFailed: 'Échec de l\'enregistrement du retour',
+    regenerateFailed: 'Failed to regenerate message',
     aiThinking: "L'IA réfléchit...",
     providerModel: 'Fournisseur / Modèle',
     pinThread: 'Épingler la discussion',

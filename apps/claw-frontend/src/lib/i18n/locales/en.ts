@@ -83,6 +83,7 @@ export const en: TranslationDictionary = {
     threadUpdateFailed: 'Failed to update thread',
     messageSendFailed: 'Failed to send message',
     feedbackFailed: 'Failed to save feedback',
+    regenerateFailed: 'Failed to regenerate message',
     aiThinking: 'AI is thinking...',
     providerModel: 'Provider / Model',
     pinThread: 'Pin thread',

@@ -83,6 +83,7 @@ export const ru: TranslationDictionary = {
     threadUpdateFailed: 'Не удалось обновить беседу',
     messageSendFailed: 'Не удалось отправить сообщение',
     feedbackFailed: 'Не удалось сохранить отзыв',
+    regenerateFailed: 'Failed to regenerate message',
     aiThinking: 'ИИ думает...',
     providerModel: 'Провайдер / Модель',
     pinThread: 'Закрепить беседу',

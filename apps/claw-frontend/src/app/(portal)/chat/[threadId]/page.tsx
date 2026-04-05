@@ -16,6 +16,7 @@ import { ROUTES } from '@/constants';
 import type { MessageFeedback } from '@/enums';
 import { useDeleteThread } from '@/hooks/chat/use-delete-thread';
 import { useMessageFeedback } from '@/hooks/chat/use-message-feedback';
+import { useRegenerateMessage } from '@/hooks/chat/use-regenerate-message';
 import { useSendMessage } from '@/hooks/chat/use-send-message';
 import { useThreadDetail } from '@/hooks/chat/use-thread-detail';
 import { useThreadSettings } from '@/hooks/chat/use-thread-settings';
@@ -29,6 +30,7 @@ function MessagesContent({
   isWaitingForResponse,
   messagesEndRef,
   onFeedback,
+  onRegenerate,
 }: {
   isLoadingThread: boolean;
   isLoadingMessages: boolean;
@@ -36,6 +38,7 @@ function MessagesContent({
   isWaitingForResponse: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
   onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
+  onRegenerate: (messageId: string) => void;
 }): React.ReactElement {
   if (isLoadingThread || isLoadingMessages) {
     return <LoadingSpinner label="Loading messages..." />;
@@ -52,7 +55,7 @@ function MessagesContent({
   return (
     <div className="flex flex-col gap-4">
       {messages.map((message) => (
-        <MessageBubble key={message.id} message={message} onFeedback={onFeedback} />
+        <MessageBubble key={message.id} message={message} onFeedback={onFeedback} onRegenerate={onRegenerate} />
       ))}
       {isWaitingForResponse ? <ThinkingIndicator /> : null}
       <div ref={messagesEndRef} />
@@ -71,6 +74,7 @@ export default function ThreadDetailPage() {
   const { sendMessage, isPending: isSending } = useSendMessage(threadId, startWaitingForResponse);
   const { deleteThread, isPending: isDeleting } = useDeleteThread();
   const { setFeedback } = useMessageFeedback(threadId);
+  const { regenerate } = useRegenerateMessage(threadId, startWaitingForResponse);
   const threadSettings = useThreadSettings(thread);
 
   const scrollToBottom = useCallback(() => {
@@ -86,6 +90,13 @@ export default function ThreadDetailPage() {
       sendMessage({ threadId, content });
     },
     [threadId, sendMessage],
+  );
+
+  const handleRegenerate = useCallback(
+    (messageId: string) => {
+      regenerate(messageId);
+    },
+    [regenerate],
   );
 
   const handleFeedback = useCallback(
@@ -170,6 +181,7 @@ export default function ThreadDetailPage() {
             isWaitingForResponse={isWaitingForResponse}
             messagesEndRef={messagesEndRef}
             onFeedback={handleFeedback}
+            onRegenerate={handleRegenerate}
           />
         </div>
 

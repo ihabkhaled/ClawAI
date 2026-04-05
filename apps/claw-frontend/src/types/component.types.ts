@@ -122,6 +122,7 @@ export type MessageBubbleProps = {
   message: ChatMessage;
   routingDecision?: RoutingDecision | null;
   onFeedback?: (messageId: string, feedback: MessageFeedback | null) => void;
+  onRegenerate?: (messageId: string) => void;
 };
 
 export type ThinkingIndicatorProps = {

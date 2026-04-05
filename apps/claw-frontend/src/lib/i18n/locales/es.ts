@@ -83,6 +83,7 @@ export const es: TranslationDictionary = {
     threadUpdateFailed: 'No se pudo actualizar la conversación',
     messageSendFailed: 'No se pudo enviar el mensaje',
     feedbackFailed: 'No se pudo guardar el comentario',
+    regenerateFailed: 'Failed to regenerate message',
     aiThinking: 'La IA está pensando...',
     providerModel: 'Proveedor / Modelo',
     pinThread: 'Fijar conversación',

@@ -1,4 +1,4 @@
-import { ThumbsDown, ThumbsUp } from 'lucide-react';
+import { RefreshCw, ThumbsDown, ThumbsUp } from 'lucide-react';
 
 import { MessageProvenance } from '@/components/chat/message-provenance';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import type { MessageBubbleProps } from '@/types';
 import { formatLatency } from '@/utilities';
 
-export function MessageBubble({ message, routingDecision, onFeedback }: MessageBubbleProps) {
+export function MessageBubble({ message, routingDecision, onFeedback, onRegenerate }: MessageBubbleProps) {
   const isUser = message.role === MessageRole.USER;
   const roleLabel = MESSAGE_ROLE_LABELS[message.role];
 
@@ -57,34 +57,49 @@ export function MessageBubble({ message, routingDecision, onFeedback }: MessageB
             ) : null}
           </div>
         ) : null}
-        {!isUser && onFeedback ? (
+        {!isUser ? (
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                'h-7 w-7 p-0',
-                message.feedback === MessageFeedback.POSITIVE
-                  ? 'text-primary'
-                  : 'text-muted-foreground',
-              )}
-              onClick={() => handleFeedback(MessageFeedback.POSITIVE)}
-            >
-              <ThumbsUp className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                'h-7 w-7 p-0',
-                message.feedback === MessageFeedback.NEGATIVE
-                  ? 'text-destructive'
-                  : 'text-muted-foreground',
-              )}
-              onClick={() => handleFeedback(MessageFeedback.NEGATIVE)}
-            >
-              <ThumbsDown className="h-3.5 w-3.5" />
-            </Button>
+            {onRegenerate ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-muted-foreground"
+                onClick={() => onRegenerate(message.id)}
+                aria-label="Regenerate"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+              </Button>
+            ) : null}
+            {onFeedback ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    'h-7 w-7 p-0',
+                    message.feedback === MessageFeedback.POSITIVE
+                      ? 'text-primary'
+                      : 'text-muted-foreground',
+                  )}
+                  onClick={() => handleFeedback(MessageFeedback.POSITIVE)}
+                >
+                  <ThumbsUp className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    'h-7 w-7 p-0',
+                    message.feedback === MessageFeedback.NEGATIVE
+                      ? 'text-destructive'
+                      : 'text-muted-foreground',
+                  )}
+                  onClick={() => handleFeedback(MessageFeedback.NEGATIVE)}
+                >
+                  <ThumbsDown className="h-3.5 w-3.5" />
+                </Button>
+              </>
+            ) : null}
           </div>
         ) : null}
         {!isUser ? <MessageProvenance message={message} /> : null}

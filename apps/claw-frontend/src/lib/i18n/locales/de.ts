@@ -83,6 +83,7 @@ export const de: TranslationDictionary = {
     threadUpdateFailed: 'Unterhaltung konnte nicht aktualisiert werden',
     messageSendFailed: 'Nachricht konnte nicht gesendet werden',
     feedbackFailed: 'Feedback konnte nicht gespeichert werden',
+    regenerateFailed: 'Failed to regenerate message',
     aiThinking: 'KI denkt nach...',
     providerModel: 'Anbieter / Modell',
     pinThread: 'Unterhaltung anheften',

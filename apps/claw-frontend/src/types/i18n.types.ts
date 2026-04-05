@@ -84,6 +84,7 @@ export type TranslationDictionary = {
     threadUpdateFailed: string;
     messageSendFailed: string;
     feedbackFailed: string;
+    regenerateFailed: string;
     aiThinking: string;
     providerModel: string;
     pinThread: string;

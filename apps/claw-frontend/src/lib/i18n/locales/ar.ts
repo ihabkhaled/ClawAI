@@ -83,6 +83,7 @@ export const ar: TranslationDictionary = {
     threadUpdateFailed: 'فشل تحديث المحادثة',
     messageSendFailed: 'فشل إرسال الرسالة',
     feedbackFailed: 'فشل حفظ التقييم',
+    regenerateFailed: 'Failed to regenerate message',
     aiThinking: 'الذكاء الاصطناعي يفكر...',
     providerModel: 'المزوّد / النموذج',
     pinThread: 'تثبيت المحادثة',

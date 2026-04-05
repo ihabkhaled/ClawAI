@@ -37,6 +37,14 @@ export class ChatMessagesController {
     return this.chatMessagesService.getMessage(id, user.id);
   }
 
+  @Post(":id/regenerate")
+  async regenerate(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ChatMessage> {
+    return this.chatMessagesService.regenerateMessage(id, user.id);
+  }
+
   @Patch(":id/feedback")
   async setFeedback(
     @Param("id") id: string,
