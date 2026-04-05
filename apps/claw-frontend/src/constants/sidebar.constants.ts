@@ -8,6 +8,7 @@ import {
   BookOpen,
   FolderOpen,
   Shield,
+  ScrollText,
   Activity,
   Settings,
 } from "lucide-react";
@@ -31,6 +32,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
   { label: "Context", href: ROUTES.CONTEXT, icon: BookOpen },
   { label: "Files", href: ROUTES.FILES, icon: FolderOpen },
   { label: "Audits", href: ROUTES.AUDITS, icon: Shield },
+  { label: "Logs", href: ROUTES.LOGS, icon: ScrollText },
   { label: "Observability", href: ROUTES.OBSERVABILITY, icon: Activity },
   { label: "Settings", href: ROUTES.SETTINGS, icon: Settings },
 ];

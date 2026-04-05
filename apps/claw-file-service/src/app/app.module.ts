@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
+import type { IncomingMessage } from 'node:http';
 
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
@@ -35,6 +36,11 @@ import { HealthModule } from '../modules/health/health.module';
           ],
           censor: '[REDACTED]',
         },
+        customProps: (req: IncomingMessage) => ({
+          serviceName: 'file-service',
+          requestId: req.headers['x-request-id'] ?? undefined,
+          traceId: req.headers['x-trace-id'] ?? undefined,
+        }),
       },
     }),
     RabbitMQModule.forRootAsync({

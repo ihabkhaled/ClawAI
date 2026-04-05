@@ -36,6 +36,7 @@ export {
   CONFIDENCE_THRESHOLDS,
 } from './routing.constants';
 export { LANGUAGE_OPTIONS, APPEARANCE_OPTIONS } from './preferences.constants';
+export { LOG_MAX_ENTRIES, LOG_LEVEL_COLORS, LOG_SENSITIVE_KEYS } from './log.constants';
 export { APPEARANCE_ICONS } from './settings.constants';
 export {
   MEMORY_FILTER_OPTIONS,

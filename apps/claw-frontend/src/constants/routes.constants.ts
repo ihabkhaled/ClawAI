@@ -12,6 +12,7 @@ export const ROUTES = {
   CONTEXT: "/context",
   FILES: "/files",
   AUDITS: "/audits",
+  LOGS: "/logs",
   OBSERVABILITY: "/observability",
   SETTINGS: "/settings",
   ADMIN: "/admin",

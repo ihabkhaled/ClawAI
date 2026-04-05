@@ -128,6 +128,15 @@ export type {
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
+  LogEntry,
+  LogFilterParams,
+  LogStoreState,
+  LogStoreActions,
+  AuditLogsTabProps,
+  ClientLogsTabProps,
+  UseLogsPageReturn,
+} from './log.types';
+export type {
   TranslationDictionary,
   TranslationNamespace,
   TranslationKey,

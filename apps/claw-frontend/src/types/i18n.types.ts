@@ -22,6 +22,15 @@ export type TranslationDictionary = {
     success: string;
     warning: string;
     info: string;
+    healthy: string;
+    degraded: string;
+    unhealthy: string;
+    up: string;
+    down: string;
+    responseTime: string;
+    unknown: string;
+    operational: string;
+    notAvailable: string;
   };
   auth: {
     login: string;
@@ -63,6 +72,8 @@ export type TranslationDictionary = {
     threadCreated: string;
     threadDeleted: string;
     messageSendFailed: string;
+    aiThinking: string;
+    providerModel: string;
   };
   connectors: {
     title: string;
@@ -204,6 +215,12 @@ export type TranslationDictionary = {
     dark: string;
     theme: string;
     changePassword: string;
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+    passwordChanged: string;
+    passwordChangeFailed: string;
+    passwordRequirements: string;
     preferencesUpdated: string;
     preferencesUpdateFailed: string;
   };
@@ -212,6 +229,13 @@ export type TranslationDictionary = {
     description: string;
     quickActions: string;
     recentActivity: string;
+    totalThreads: string;
+    activeConnectors: string;
+    localModels: string;
+    systemHealth: string;
+    startNewChat: string;
+    addConnector: string;
+    configureRouting: string;
   };
   validation: {
     required: string;

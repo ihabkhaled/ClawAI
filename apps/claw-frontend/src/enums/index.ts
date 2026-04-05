@@ -19,3 +19,5 @@ export { UserLanguagePreference } from './user-language-preference.enum';
 export { UserAppearancePreference } from './user-appearance-preference.enum';
 export { HealthStatus } from './health-status.enum';
 export { ServiceStatus } from './service-status.enum';
+export { LogLevel } from './log-level.enum';
+export { LogsTab } from './logs-tab.enum';

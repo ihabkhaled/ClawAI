@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
+import type { IncomingMessage } from 'node:http';
 import { HealthModule } from '../modules/health/health.module';
 
 @Module({
@@ -23,6 +24,11 @@ import { HealthModule } from '../modules/health/health.module';
           ],
           censor: '[REDACTED]',
         },
+        customProps: (req: IncomingMessage) => ({
+          serviceName: 'health-service',
+          requestId: req.headers['x-request-id'] ?? undefined,
+          traceId: req.headers['x-trace-id'] ?? undefined,
+        }),
       },
     }),
     HealthModule,

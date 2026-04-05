@@ -20,3 +20,4 @@ export {
   themeToAppearance,
 } from './preference.utility';
 export { showToast } from './toast.utility';
+export { logger } from './logger.utility';
