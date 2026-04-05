@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { SetFeedbackParams } from '@/types';
@@ -7,6 +8,7 @@ import { logger, showToast } from '@/utilities';
 
 export function useMessageFeedback(threadId: string) {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const mutation = useMutation({
     mutationFn: (params: SetFeedbackParams) =>
@@ -23,7 +25,7 @@ export function useMessageFeedback(threadId: string) {
       });
     },
     onError: (error: Error) => {
-      showToast.apiError(error, 'Failed to save feedback');
+      showToast.apiError(error, t('chat.feedbackFailed'));
     },
   });
 

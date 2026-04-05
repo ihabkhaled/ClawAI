@@ -14,11 +14,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useLogin } from "@/hooks/auth/use-login";
+import { useTranslation } from "@/lib/i18n";
 import { loginSchema } from "@/lib/validation/login.schema";
 import type { LoginFormValues } from "@/lib/validation/login.schema";
 
 export default function LoginPage() {
   const { login, isPending, isError, error } = useLogin();
+  const { t } = useTranslation();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -39,17 +41,17 @@ export default function LoginPage() {
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
             <Zap className="h-6 w-6 text-primary-foreground" />
           </div>
-          <h1 className="mt-4 text-2xl font-bold">Welcome to Claw</h1>
+          <h1 className="mt-4 text-2xl font-bold">{t('auth.welcomeTitle')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            AI Orchestration Platform
+            {t('auth.welcomeSubtitle')}
           </p>
         </div>
 
         <Card>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-xl">Sign in</CardTitle>
+            <CardTitle className="text-xl">{t('auth.loginTitle')}</CardTitle>
             <CardDescription>
-              Enter your credentials to access the platform
+              {t('auth.loginSubtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -59,7 +61,7 @@ export default function LoginPage() {
                   htmlFor="email"
                   className="text-sm font-medium leading-none"
                 >
-                  Email
+                  {t('auth.email')}
                 </label>
                 <Input
                   id="email"
@@ -81,12 +83,12 @@ export default function LoginPage() {
                   htmlFor="password"
                   className="text-sm font-medium leading-none"
                 >
-                  Password
+                  {t('auth.password')}
                 </label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder={t('auth.passwordPlaceholder')}
                   autoComplete="current-password"
                   disabled={isPending}
                   {...form.register("password")}
@@ -100,19 +102,19 @@ export default function LoginPage() {
 
               {isError ? (
                 <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                  {error?.message ?? "Login failed. Please try again."}
+                  {error?.message ?? t('auth.loginFailed')}
                 </div>
               ) : null}
 
               <Button type="submit" className="w-full" disabled={isPending}>
-                {isPending ? "Signing in..." : "Sign in"}
+                {isPending ? t('auth.signingIn') : t('auth.loginButton')}
               </Button>
             </form>
           </CardContent>
         </Card>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Claw - Local-first AI Orchestration
+          {t('auth.tagline')}
         </p>
       </div>
     </div>

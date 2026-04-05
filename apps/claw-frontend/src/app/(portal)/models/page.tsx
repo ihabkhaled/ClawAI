@@ -39,7 +39,7 @@ export default function ModelsPage() {
           description={t('models.description')}
         />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">Failed to load models.</p>
+          <p className="text-sm text-destructive">{t('models.loadFailed')}</p>
         </div>
       </div>
     );
@@ -52,13 +52,13 @@ export default function ModelsPage() {
         description={t('models.description')}
       />
 
-      {isLoading && <LoadingSpinner label="Loading models..." />}
+      {isLoading && <LoadingSpinner label={t('models.loadingModels')} />}
 
       {!isLoading && totalModels === 0 && (
         <EmptyState
           icon={Cpu}
-          title="No models synced"
-          description="Models will appear here once you configure a connector and sync its available models."
+          title={t('models.noModels')}
+          description={t('models.noModelsDesc')}
         />
       )}
 
@@ -72,10 +72,10 @@ export default function ModelsPage() {
               }
             >
               <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="All providers" />
+                <SelectValue placeholder={t('models.allProviders')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL_FILTER}>All providers</SelectItem>
+                <SelectItem value={ALL_FILTER}>{t('models.allProviders')}</SelectItem>
                 {Object.values(ConnectorProvider).map((p) => (
                   <SelectItem key={p} value={p}>
                     {PROVIDER_DISPLAY_NAMES[p]}
@@ -89,10 +89,10 @@ export default function ModelsPage() {
               onValueChange={(value) => setLifecycleFilter(value === ALL_FILTER ? '' : value)}
             >
               <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="All lifecycle" />
+                <SelectValue placeholder={t('models.allLifecycle')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL_FILTER}>All lifecycle</SelectItem>
+                <SelectItem value={ALL_FILTER}>{t('models.allLifecycle')}</SelectItem>
                 {Object.keys(LIFECYCLE_LABELS).map((l) => (
                   <SelectItem key={l} value={l}>
                     {LIFECYCLE_LABELS[l]}
@@ -105,7 +105,7 @@ export default function ModelsPage() {
           <ModelTable
             models={models}
             showProvider
-            emptyMessage="No models match the current filters."
+            emptyMessage={t('models.noModelsMatch')}
           />
         </div>
       )}

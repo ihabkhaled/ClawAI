@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { useTranslation } from '@/lib/i18n';
 import { memoryRepository } from '@/repositories/memory/memory.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { CreateMemoryRequest } from '@/types';
@@ -7,6 +8,7 @@ import { showToast } from '@/utilities';
 
 export function useCreateMemory() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const mutation = useMutation({
     mutationFn: (data: CreateMemoryRequest) => memoryRepository.createMemory(data),
@@ -14,10 +16,10 @@ export function useCreateMemory() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.memory.lists(),
       });
-      showToast.success({ title: 'Memory created' });
+      showToast.success({ title: t('memory.memoryCreated') });
     },
     onError: (error: Error) => {
-      showToast.apiError(error, 'Failed to create memory');
+      showToast.apiError(error, t('memory.memoryCreateFailed'));
     },
   });
 

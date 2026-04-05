@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { useTranslation } from '@/lib/i18n';
 import { memoryRepository } from '@/repositories/memory/memory.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { UpdateMemoryParams } from '@/types';
@@ -7,6 +8,7 @@ import { showToast } from '@/utilities';
 
 export function useUpdateMemory() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const mutation = useMutation({
     mutationFn: ({ id, data }: UpdateMemoryParams) => memoryRepository.updateMemory(id, data),
@@ -14,10 +16,10 @@ export function useUpdateMemory() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.memory.lists(),
       });
-      showToast.success({ title: 'Memory updated' });
+      showToast.success({ title: t('memory.memoryUpdated') });
     },
     onError: (error: Error) => {
-      showToast.apiError(error, 'Failed to update memory');
+      showToast.apiError(error, t('memory.memoryUpdateFailed'));
     },
   });
 

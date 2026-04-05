@@ -51,7 +51,7 @@ export default function MemoryPage() {
         />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-destructive">
-            {error?.message ?? 'Failed to load memory records.'}
+            {error?.message ?? t('memory.loadFailed')}
           </p>
         </div>
       </div>
@@ -82,23 +82,23 @@ export default function MemoryPage() {
             </Select>
             <Button onClick={handleOpenCreate}>
               <Plus className="me-2 h-4 w-4" />
-              Add Memory
+              {t('memory.addMemory')}
             </Button>
           </div>
         }
       />
 
-      {isLoading && <LoadingSpinner label="Loading memory records..." />}
+      {isLoading && <LoadingSpinner label={t('memory.loadingMemories')} />}
 
       {!isLoading && memories.length === 0 && (
         <EmptyState
           icon={Brain}
-          title="No memory entries"
-          description="Memory entries will be created automatically as you interact with AI models, or you can create them manually."
+          title={t('memory.noMemories')}
+          description={t('memory.noMemoriesDesc')}
           action={
             <Button onClick={handleOpenCreate}>
               <Plus className="me-2 h-4 w-4" />
-              Add Memory
+              {t('memory.addMemory')}
             </Button>
           }
         />

@@ -43,6 +43,12 @@ export type TranslationDictionary = {
     logoutButton: string;
     sessionExpired: string;
     invalidCredentials: string;
+    welcomeTitle: string;
+    welcomeSubtitle: string;
+    passwordPlaceholder: string;
+    signingIn: string;
+    loginFailed: string;
+    tagline: string;
   };
   nav: {
     dashboard: string;
@@ -71,8 +77,12 @@ export type TranslationDictionary = {
     deleteThread: string;
     deleteThreadConfirm: string;
     threadCreated: string;
+    threadCreateFailed: string;
     threadDeleted: string;
+    threadDeleteFailed: string;
+    threadUpdateFailed: string;
     messageSendFailed: string;
+    feedbackFailed: string;
     aiThinking: string;
     providerModel: string;
     pinThread: string;
@@ -141,12 +151,30 @@ export type TranslationDictionary = {
     noConnectors: string;
     noConnectorsDesc: string;
     connectorCreated: string;
+    connectorCreateFailed: string;
     connectorUpdated: string;
+    connectorUpdateFailed: string;
     connectorDeleted: string;
+    connectorDeleteFailed: string;
     testSuccessful: string;
     testFailed: string;
     modelsSynced: string;
+    syncFailed: string;
     testBeforeCreate: string;
+    loadingConnectors: string;
+    loadingConnector: string;
+    addConnector: string;
+    loadFailed: string;
+    connectorDetail: string;
+    connectorNotFound: string;
+    backToConnectors: string;
+    syncing: string;
+    enabled: string;
+    disabled: string;
+    configuration: string;
+    healthHistory: string;
+    healthHistoryDesc: string;
+    models: string;
   };
   memory: {
     title: string;
@@ -161,9 +189,16 @@ export type TranslationDictionary = {
     noMemories: string;
     noMemoriesDesc: string;
     memoryCreated: string;
+    memoryCreateFailed: string;
     memoryUpdated: string;
+    memoryUpdateFailed: string;
     memoryDeleted: string;
+    memoryDeleteFailed: string;
     memoryToggled: string;
+    memoryToggleFailed: string;
+    loadFailed: string;
+    loadingMemories: string;
+    addMemory: string;
   };
   files: {
     title: string;
@@ -175,8 +210,12 @@ export type TranslationDictionary = {
     noFiles: string;
     noFilesDesc: string;
     fileUploaded: string;
+    fileUploadFailed: string;
     fileDeleted: string;
+    fileDeleteFailed: string;
     uploadFailed: string;
+    loadFailed: string;
+    loadingFiles: string;
   };
   context: {
     title: string;
@@ -188,8 +227,27 @@ export type TranslationDictionary = {
     noContextPacks: string;
     noContextPacksDesc: string;
     packCreated: string;
+    packCreateFailed: string;
+    packUpdated: string;
+    packUpdateFailed: string;
+    packDeleted: string;
+    packDeleteFailed: string;
     itemAdded: string;
+    itemAddFailed: string;
+    itemUpdated: string;
+    itemUpdateFailed: string;
     itemRemoved: string;
+    itemRemoveFailed: string;
+    loadFailed: string;
+    contextPack: string;
+    packDetailsDesc: string;
+    backToPacks: string;
+    deletePack: string;
+    deleting: string;
+    loadingPackDetails: string;
+    noItems: string;
+    noItemsDesc: string;
+    loadingContextPacks: string;
   };
   routing: {
     title: string;
@@ -204,8 +262,25 @@ export type TranslationDictionary = {
     noPolicies: string;
     noPoliciesDesc: string;
     policyCreated: string;
+    policyCreateFailed: string;
     policyUpdated: string;
+    policyUpdateFailed: string;
     policyDeleted: string;
+    policyDeleteFailed: string;
+    status: string;
+    inactive: string;
+    activate: string;
+    deactivate: string;
+    loadFailed: string;
+    defaultRoutingMode: string;
+    defaultRoutingModeDesc: string;
+    defaultMode: string;
+    fallbackSettings: string;
+    fallbackSettingsDesc: string;
+    maxRetries: string;
+    timeoutMs: string;
+    loadingPolicies: string;
+    noPoliciesConfigured: string;
   };
   models: {
     title: string;
@@ -217,7 +292,26 @@ export type TranslationDictionary = {
     noModels: string;
     noModelsDesc: string;
     modelPullStarted: string;
+    modelPullFailed: string;
     roleAssigned: string;
+    roleAssignFailed: string;
+    loadFailed: string;
+    loadingModels: string;
+    allProviders: string;
+    allLifecycle: string;
+    noModelsMatch: string;
+    localLoadFailed: string;
+    runtimeHealth: string;
+    runtimeHealthDesc: string;
+    pullModelDesc: string;
+    modelName: string;
+    runtime: string;
+    pulling: string;
+    pull: string;
+    installedModels: string;
+    loadingLocalModels: string;
+    noLocalModels: string;
+    noLocalModelsDesc: string;
   };
   observability: {
     title: string;
@@ -226,6 +320,9 @@ export type TranslationDictionary = {
     totalCost: string;
     avgLatency: string;
     activeModels: string;
+    clientLogs: string;
+    serverLogs: string;
+    auditTrail: string;
   };
   audits: {
     title: string;
@@ -236,6 +333,15 @@ export type TranslationDictionary = {
     timestamp: string;
     noAudits: string;
     noAuditsDesc: string;
+    actor: string;
+    details: string;
+    loadingAudits: string;
+    loadFailed: string;
+    loadFailedDesc: string;
+    noMatchingAudits: string;
+    allActions: string;
+    allSeverities: string;
+    searchPlaceholder: string;
   };
   admin: {
     title: string;
@@ -246,6 +352,22 @@ export type TranslationDictionary = {
     deactivate: string;
     reactivate: string;
     noUsers: string;
+    checkingServices: string;
+    healthUnreachable: string;
+    loadingUsers: string;
+    loadUsersFailed: string;
+    loadUsersFailedDesc: string;
+    userRoleUpdated: string;
+    userRoleUpdateFailed: string;
+    userDeactivated: string;
+    userDeactivateFailed: string;
+    userStats: string;
+    userStatsDesc: string;
+    totalUsers: string;
+    activeUsers: string;
+    platformHealth: string;
+    systemStatusOverview: string;
+    userManagement: string;
   };
   settings: {
     title: string;

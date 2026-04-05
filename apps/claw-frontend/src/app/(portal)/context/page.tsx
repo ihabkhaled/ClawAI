@@ -53,7 +53,7 @@ export default function ContextPage() {
         />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-destructive">
-            {error?.message ?? 'Failed to load context packs.'}
+            {error?.message ?? t('context.loadFailed')}
           </p>
         </div>
       </div>
@@ -64,37 +64,37 @@ export default function ContextPage() {
     return (
       <div className="flex h-full flex-col">
         <PageHeader
-          title={selectedPack?.name ?? 'Context Pack'}
-          description={selectedPack?.description ?? 'Pack details and items'}
+          title={selectedPack?.name ?? t('context.contextPack')}
+          description={selectedPack?.description ?? t('context.packDetailsDesc')}
           actions={
             <div className="flex items-center gap-3">
               <Button variant="outline" onClick={() => setSelectedPackId(null)}>
                 <ChevronLeft className="me-2 h-4 w-4 rtl:rotate-180" />
-                Back to Packs
+                {t('context.backToPacks')}
               </Button>
               <Button onClick={() => setIsAddItemFormOpen(true)}>
                 <Plus className="me-2 h-4 w-4" />
-                Add Item
+                {t('context.addItem')}
               </Button>
               <Button variant="destructive" onClick={handleDeletePack} disabled={isDeletePending}>
                 <Trash2 className="me-2 h-4 w-4" />
-                {isDeletePending ? 'Deleting...' : 'Delete Pack'}
+                {isDeletePending ? t('context.deleting') : t('context.deletePack')}
               </Button>
             </div>
           }
         />
 
-        {isDetailLoading && <LoadingSpinner label="Loading pack details..." />}
+        {isDetailLoading && <LoadingSpinner label={t('context.loadingPackDetails')} />}
 
         {!isDetailLoading && !selectedPack?.items.length && (
           <EmptyState
             icon={BookOpen}
-            title="No items in this pack"
-            description="Add text notes, instructions, or file references to this context pack."
+            title={t('context.noItems')}
+            description={t('context.noItemsDesc')}
             action={
               <Button onClick={() => setIsAddItemFormOpen(true)}>
                 <Plus className="me-2 h-4 w-4" />
-                Add Item
+                {t('context.addItem')}
               </Button>
             }
           />
@@ -176,22 +176,22 @@ export default function ContextPage() {
         actions={
           <Button onClick={() => setIsCreateFormOpen(true)}>
             <Plus className="me-2 h-4 w-4" />
-            Create Pack
+            {t('context.createPack')}
           </Button>
         }
       />
 
-      {isLoading && <LoadingSpinner label="Loading context packs..." />}
+      {isLoading && <LoadingSpinner label={t('context.loadingContextPacks')} />}
 
       {!isLoading && contextPacks.length === 0 && (
         <EmptyState
           icon={BookOpen}
-          title="No context packs defined"
-          description="Create context packs to provide system-level instructions, personas, and behavioral guidelines for your AI models."
+          title={t('context.noContextPacks')}
+          description={t('context.noContextPacksDesc')}
           action={
             <Button onClick={() => setIsCreateFormOpen(true)}>
               <Plus className="me-2 h-4 w-4" />
-              Create Pack
+              {t('context.createPack')}
             </Button>
           }
         />

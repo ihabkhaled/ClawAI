@@ -46,25 +46,25 @@ export default function RoutingPage(): React.ReactElement {
   const columnsWithActions: DataTableColumn<RoutingPolicy>[] = [
     {
       key: 'name',
-      header: 'Name',
+      header: t('routing.name'),
       render: (row) => <span className="font-medium">{row.name}</span>,
     },
     {
       key: 'mode',
-      header: 'Mode',
+      header: t('routing.mode'),
       render: (row) => <RoutingBadge mode={row.routingMode} />,
     },
     {
       key: 'priority',
-      header: 'Priority',
+      header: t('routing.priority'),
       render: (row) => <span className="tabular-nums">{row.priority}</span>,
     },
     {
       key: 'active',
-      header: 'Status',
+      header: t('routing.status'),
       render: (row) => (
         <Badge variant={row.isActive ? 'default' : 'secondary'}>
-          {row.isActive ? 'Active' : 'Inactive'}
+          {row.isActive ? t('routing.active') : t('routing.inactive')}
         </Badge>
       ),
     },
@@ -75,7 +75,7 @@ export default function RoutingPage(): React.ReactElement {
       render: (row) => (
         <div className="flex items-center justify-end gap-1">
           <Button variant="ghost" size="sm" onClick={() => handleToggleActive(row)}>
-            {row.isActive ? 'Deactivate' : 'Activate'}
+            {row.isActive ? t('routing.deactivate') : t('routing.activate')}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(row)}>
             <Pencil className="h-4 w-4" />
@@ -97,7 +97,7 @@ export default function RoutingPage(): React.ReactElement {
         />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-destructive">
-            {error?.message ?? 'Failed to load routing configuration.'}
+            {error?.message ?? t('routing.loadFailed')}
           </p>
         </div>
       </div>
@@ -112,7 +112,7 @@ export default function RoutingPage(): React.ReactElement {
         actions={
           <Button onClick={handleOpenCreate}>
             <Plus className="me-2 h-4 w-4" />
-            Create Policy
+            {t('routing.createPolicy')}
           </Button>
         }
       />
@@ -120,15 +120,15 @@ export default function RoutingPage(): React.ReactElement {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Default Routing Mode</CardTitle>
+            <CardTitle className="text-lg">{t('routing.defaultRoutingMode')}</CardTitle>
             <CardDescription>
-              Choose how the local router distributes requests across models
+              {t('routing.defaultRoutingModeDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="routing-default-mode" className="text-sm font-medium">
-                Default Mode
+                {t('routing.defaultMode')}
               </label>
               <Select defaultValue={RoutingMode.AUTO}>
                 <SelectTrigger id="routing-default-mode">
@@ -148,19 +148,19 @@ export default function RoutingPage(): React.ReactElement {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Fallback Settings</CardTitle>
-            <CardDescription>Configure retry and timeout behavior</CardDescription>
+            <CardTitle className="text-lg">{t('routing.fallbackSettings')}</CardTitle>
+            <CardDescription>{t('routing.fallbackSettingsDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="routing-max-retries" className="text-sm font-medium">
-                Max Retries
+                {t('routing.maxRetries')}
               </label>
               <Input id="routing-max-retries" type="number" defaultValue={3} min={0} max={10} />
             </div>
             <div className="space-y-2">
               <label htmlFor="routing-timeout" className="text-sm font-medium">
-                Timeout (ms)
+                {t('routing.timeoutMs')}
               </label>
               <Input
                 id="routing-timeout"
@@ -175,18 +175,18 @@ export default function RoutingPage(): React.ReactElement {
       </div>
 
       <div className="mt-6">
-        <h2 className="mb-4 text-lg font-semibold">Routing Policies</h2>
-        {isLoading && <LoadingSpinner label="Loading policies..." />}
+        <h2 className="mb-4 text-lg font-semibold">{t('routing.title')}</h2>
+        {isLoading && <LoadingSpinner label={t('routing.loadingPolicies')} />}
 
         {!isLoading && policies.length === 0 && (
           <EmptyState
             icon={Route}
-            title="No routing policies"
-            description="Create routing policies to control how requests are distributed across models and providers."
+            title={t('routing.noPolicies')}
+            description={t('routing.noPoliciesDesc')}
             action={
               <Button onClick={handleOpenCreate}>
                 <Plus className="me-2 h-4 w-4" />
-                Create Policy
+                {t('routing.createPolicy')}
               </Button>
             }
           />
@@ -197,7 +197,7 @@ export default function RoutingPage(): React.ReactElement {
             columns={columnsWithActions}
             data={policies}
             keyExtractor={(row) => row.id}
-            emptyMessage="No routing policies configured."
+            emptyMessage={t('routing.noPoliciesConfigured')}
           />
         )}
       </div>

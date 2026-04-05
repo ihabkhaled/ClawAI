@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { useTranslation } from '@/lib/i18n';
 import { connectorRepository } from '@/repositories/connectors/connector.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { SyncModelsResponse } from '@/types';
@@ -7,6 +8,7 @@ import { showToast } from '@/utilities';
 
 export function useSyncConnector() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const mutation = useMutation({
     mutationFn: (id: string) => connectorRepository.syncModels(id),
@@ -20,10 +22,10 @@ export function useSyncConnector() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.connectors.lists(),
       });
-      showToast.success({ title: 'Models synced successfully' });
+      showToast.success({ title: t('connectors.modelsSynced') });
     },
     onError: (error: Error) => {
-      showToast.apiError(error, 'Failed to sync models');
+      showToast.apiError(error, t('connectors.syncFailed'));
     },
   });
 

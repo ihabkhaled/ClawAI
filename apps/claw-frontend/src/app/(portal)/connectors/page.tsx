@@ -22,6 +22,7 @@ function ConnectorsContent({
   deleteConnector,
   isTestPending,
   isSyncPending,
+  t,
 }: {
   isLoading: boolean;
   connectors: Connector[];
@@ -32,21 +33,22 @@ function ConnectorsContent({
   deleteConnector: (id: string) => void;
   isTestPending: boolean;
   isSyncPending: boolean;
+  t: (key: string) => string;
 }): React.ReactElement {
   if (isLoading) {
-    return <LoadingSpinner label="Loading connectors..." />;
+    return <LoadingSpinner label={t('connectors.loadingConnectors')} />;
   }
 
   if (connectors.length === 0) {
     return (
       <EmptyState
         icon={Plug}
-        title="No connectors configured"
-        description="Connect to AI providers like OpenAI, Anthropic, Google, or your local Ollama instance to start orchestrating models."
+        title={t('connectors.noConnectors')}
+        description={t('connectors.noConnectorsDesc')}
         action={
           <Button onClick={handleOpenCreate}>
             <Plus className="me-2 h-4 w-4" />
-            Add Connector
+            {t('connectors.addConnector')}
           </Button>
         }
       />
@@ -99,7 +101,7 @@ export default function ConnectorsPage() {
         <PageHeader title={t('connectors.title')} description={t('connectors.description')} />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-destructive">
-            {error?.message ?? 'Failed to load connectors.'}
+            {error?.message ?? t('connectors.loadFailed')}
           </p>
         </div>
       </div>
@@ -114,7 +116,7 @@ export default function ConnectorsPage() {
         actions={
           <Button onClick={handleOpenCreate}>
             <Plus className="me-2 h-4 w-4" />
-            Add Connector
+            {t('connectors.addConnector')}
           </Button>
         }
       />
@@ -129,6 +131,7 @@ export default function ConnectorsPage() {
         deleteConnector={deleteConnector}
         isTestPending={isTestPending}
         isSyncPending={isSyncPending}
+        t={t}
       />
 
       <ConnectorForm

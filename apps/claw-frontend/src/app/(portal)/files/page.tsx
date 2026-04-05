@@ -37,7 +37,7 @@ export default function FilesPage() {
           description={t('files.description')}
         />
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-sm text-destructive">{error?.message ?? 'Failed to load files.'}</p>
+          <p className="text-sm text-destructive">{error?.message ?? t('files.loadFailed')}</p>
         </div>
       </div>
     );
@@ -58,13 +58,13 @@ export default function FilesPage() {
         />
       </div>
 
-      {isLoading && <LoadingSpinner label="Loading files..." />}
+      {isLoading && <LoadingSpinner label={t('files.loadingFiles')} />}
 
       {!isLoading && files.length === 0 && (
         <EmptyState
           icon={FolderOpen}
-          title="No files uploaded"
-          description="Upload documents, code, or other files to use as context in your AI conversations and for retrieval-augmented generation."
+          title={t('files.noFiles')}
+          description={t('files.noFilesDesc')}
         />
       )}
 

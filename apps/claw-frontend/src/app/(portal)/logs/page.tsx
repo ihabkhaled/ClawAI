@@ -26,21 +26,21 @@ export default function LogsPage() {
           size="sm"
           onClick={() => controller.setActiveTab(LogsTab.CLIENT)}
         >
-          Client Logs
+          {t('observability.clientLogs')}
         </Button>
         <Button
           variant={controller.activeTab === LogsTab.SERVER ? 'default' : 'outline'}
           size="sm"
           onClick={() => controller.setActiveTab(LogsTab.SERVER)}
         >
-          Server Logs
+          {t('observability.serverLogs')}
         </Button>
         <Button
           variant={controller.activeTab === LogsTab.AUDIT ? 'default' : 'outline'}
           size="sm"
           onClick={() => controller.setActiveTab(LogsTab.AUDIT)}
         >
-          Audit Trail
+          {t('observability.auditTrail')}
         </Button>
       </div>
 

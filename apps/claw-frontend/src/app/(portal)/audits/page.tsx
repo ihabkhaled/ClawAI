@@ -30,6 +30,7 @@ function AuditContent({
   meta,
   page,
   setPage,
+  t,
 }: {
   isLoading: boolean;
   isError: boolean;
@@ -37,27 +38,28 @@ function AuditContent({
   meta: { page: number; totalPages: number; total: number };
   page: number;
   setPage: React.Dispatch<React.SetStateAction<number>>;
+  t: (key: string) => string;
 }): React.ReactElement {
   const columns: DataTableColumn<AuditLog>[] = [
     {
       key: 'timestamp',
-      header: 'Timestamp',
+      header: t('audits.timestamp'),
       render: (row) => new Date(row.createdAt).toLocaleString(),
       className: 'whitespace-nowrap',
     },
     {
       key: 'action',
-      header: 'Action',
+      header: t('audits.action'),
       render: (row) => <Badge variant="outline">{row.action}</Badge>,
     },
     {
       key: 'userId',
-      header: 'Actor',
+      header: t('audits.actor'),
       render: (row) => <span className="font-mono text-xs">{row.userId}</span>,
     },
     {
       key: 'entity',
-      header: 'Entity',
+      header: t('audits.entity'),
       render: (row) => (
         <span className="text-sm">
           {row.entityType ? `${row.entityType}` : '-'}
@@ -71,7 +73,7 @@ function AuditContent({
     },
     {
       key: 'severity',
-      header: 'Severity',
+      header: t('audits.severity'),
       render: (row) => (
         <Badge variant="outline" className={SEVERITY_COLORS[row.severity as AuditSeverity] ?? ''}>
           {row.severity}
@@ -80,7 +82,7 @@ function AuditContent({
     },
     {
       key: 'details',
-      header: 'Details',
+      header: t('audits.details'),
       render: (row) =>
         row.details ? (
           <span className="block max-w-[200px] truncate text-xs text-muted-foreground">
@@ -94,15 +96,15 @@ function AuditContent({
   ];
 
   if (isLoading) {
-    return <LoadingSpinner label="Loading audit logs..." />;
+    return <LoadingSpinner label={t('audits.loadingAudits')} />;
   }
 
   if (isError) {
     return (
       <EmptyState
         icon={Shield}
-        title="Failed to load audits"
-        description="Could not fetch audit logs. Please try again later."
+        title={t('audits.loadFailed')}
+        description={t('audits.loadFailedDesc')}
       />
     );
   }
@@ -111,8 +113,8 @@ function AuditContent({
     return (
       <EmptyState
         icon={Shield}
-        title="No audit entries"
-        description="Audit logs will appear here as users perform actions within the platform. All critical operations are tracked automatically."
+        title={t('audits.noAudits')}
+        description={t('audits.noAuditsDesc')}
       />
     );
   }
@@ -123,7 +125,7 @@ function AuditContent({
         columns={columns}
         data={auditLogs}
         keyExtractor={(row) => row._id}
-        emptyMessage="No audit logs match your filters."
+        emptyMessage={t('audits.noMatchingAudits')}
       />
 
       <div className="mt-4 flex items-center justify-between">
@@ -137,7 +139,7 @@ function AuditContent({
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
           >
-            Previous
+            {t('common.previous')}
           </Button>
           <Button
             variant="outline"
@@ -145,7 +147,7 @@ function AuditContent({
             disabled={page >= meta.totalPages}
             onClick={() => setPage((p) => p + 1)}
           >
-            Next
+            {t('common.next')}
           </Button>
         </div>
       </div>
@@ -182,10 +184,10 @@ export default function AuditsPage() {
           }}
         >
           <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="All Actions" />
+            <SelectValue placeholder={t('audits.allActions')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL_FILTER}>All Actions</SelectItem>
+            <SelectItem value={ALL_FILTER}>{t('audits.allActions')}</SelectItem>
             {Object.values(AuditAction).map((a) => (
               <SelectItem key={a} value={a}>
                 {a}
@@ -202,10 +204,10 @@ export default function AuditsPage() {
           }}
         >
           <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="All Severities" />
+            <SelectValue placeholder={t('audits.allSeverities')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL_FILTER}>All Severities</SelectItem>
+            <SelectItem value={ALL_FILTER}>{t('audits.allSeverities')}</SelectItem>
             {Object.values(AuditSeverity).map((s) => (
               <SelectItem key={s} value={s}>
                 {s}
@@ -215,7 +217,7 @@ export default function AuditsPage() {
         </Select>
 
         <Input
-          placeholder="Search..."
+          placeholder={t('audits.searchPlaceholder')}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -232,6 +234,7 @@ export default function AuditsPage() {
         meta={meta}
         page={page}
         setPage={setPage}
+        t={t}
       />
     </div>
   );

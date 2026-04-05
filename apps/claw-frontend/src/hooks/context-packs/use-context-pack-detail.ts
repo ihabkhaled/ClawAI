@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { useTranslation } from '@/lib/i18n';
 import { contextPacksRepository } from '@/repositories/context-packs/context-packs.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type {
@@ -11,6 +12,7 @@ import { showToast } from '@/utilities';
 
 export function useContextPackDetail(id: string | null) {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const query = useQuery({
     queryKey: queryKeys.contextPacks.detail(id ?? ''),
@@ -28,10 +30,10 @@ export function useContextPackDetail(id: string | null) {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.contextPacks.lists(),
       });
-      showToast.success({ description: 'Context pack updated' });
+      showToast.success({ description: t('context.packUpdated') });
     },
     onError: (err: unknown) => {
-      showToast.apiError(err, 'Failed to update context pack');
+      showToast.apiError(err, t('context.packUpdateFailed'));
     },
   });
 
@@ -41,10 +43,10 @@ export function useContextPackDetail(id: string | null) {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.contextPacks.lists(),
       });
-      showToast.success({ description: 'Context pack deleted' });
+      showToast.success({ description: t('context.packDeleted') });
     },
     onError: (err: unknown) => {
-      showToast.apiError(err, 'Failed to delete context pack');
+      showToast.apiError(err, t('context.packDeleteFailed'));
     },
   });
 
@@ -55,10 +57,10 @@ export function useContextPackDetail(id: string | null) {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.contextPacks.detail(id ?? ''),
       });
-      showToast.success({ description: 'Item added to context pack' });
+      showToast.success({ description: t('context.itemAdded') });
     },
     onError: (err: unknown) => {
-      showToast.apiError(err, 'Failed to add item');
+      showToast.apiError(err, t('context.itemAddFailed'));
     },
   });
 
@@ -69,10 +71,10 @@ export function useContextPackDetail(id: string | null) {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.contextPacks.detail(id ?? ''),
       });
-      showToast.success({ description: 'Context pack item updated' });
+      showToast.success({ description: t('context.itemUpdated') });
     },
     onError: (err: unknown) => {
-      showToast.apiError(err, 'Failed to update item');
+      showToast.apiError(err, t('context.itemUpdateFailed'));
     },
   });
 
@@ -82,10 +84,10 @@ export function useContextPackDetail(id: string | null) {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.contextPacks.detail(id ?? ''),
       });
-      showToast.success({ description: 'Item removed from context pack' });
+      showToast.success({ description: t('context.itemRemoved') });
     },
     onError: (err: unknown) => {
-      showToast.apiError(err, 'Failed to remove item');
+      showToast.apiError(err, t('context.itemRemoveFailed'));
     },
   });
 

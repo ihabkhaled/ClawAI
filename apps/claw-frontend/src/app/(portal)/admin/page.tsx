@@ -23,19 +23,21 @@ function HealthCardContent({
   isLoading,
   isError,
   health,
+  t,
 }: {
   isLoading: boolean;
   isError: boolean;
   health: AggregatedHealth | null;
+  t: (key: string) => string;
 }): React.ReactElement {
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Checking services...</p>;
+    return <p className="text-sm text-muted-foreground">{t('admin.checkingServices')}</p>;
   }
 
   if (isError || !health) {
     return (
       <p className="text-sm text-muted-foreground">
-        Unable to reach the health service.
+        {t('admin.healthUnreachable')}
       </p>
     );
   }
@@ -70,6 +72,7 @@ function UsersContent({
   onDeactivate,
   isRoleChangePending,
   isDeactivatePending,
+  t,
 }: {
   isLoading: boolean;
   isError: boolean;
@@ -78,17 +81,18 @@ function UsersContent({
   onDeactivate: (userId: string) => void;
   isRoleChangePending: boolean;
   isDeactivatePending: boolean;
+  t: (key: string) => string;
 }): React.ReactElement {
   if (isLoading) {
-    return <LoadingSpinner label="Loading users..." />;
+    return <LoadingSpinner label={t('admin.loadingUsers')} />;
   }
 
   if (isError) {
     return (
       <EmptyState
         icon={Users}
-        title="Failed to load users"
-        description="Could not fetch user list. Please try again later."
+        title={t('admin.loadUsersFailed')}
+        description={t('admin.loadUsersFailedDesc')}
       />
     );
   }
@@ -126,11 +130,11 @@ export default function AdminPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.admin.users });
       setActionPending(null);
-      showToast.success({ description: 'User role updated' });
+      showToast.success({ description: t('admin.userRoleUpdated') });
     },
     onError: (err: unknown) => {
       setActionPending(null);
-      showToast.apiError(err, 'Failed to update user role');
+      showToast.apiError(err, t('admin.userRoleUpdateFailed'));
     },
   });
 
@@ -139,11 +143,11 @@ export default function AdminPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.admin.users });
       setActionPending(null);
-      showToast.success({ description: 'User deactivated' });
+      showToast.success({ description: t('admin.userDeactivated') });
     },
     onError: (err: unknown) => {
       setActionPending(null);
-      showToast.apiError(err, 'Failed to deactivate user');
+      showToast.apiError(err, t('admin.userDeactivateFailed'));
     },
   });
 
@@ -159,18 +163,18 @@ export default function AdminPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-muted-foreground" />
-              <CardTitle className="text-lg">User Stats</CardTitle>
+              <CardTitle className="text-lg">{t('admin.userStats')}</CardTitle>
             </div>
-            <CardDescription>Overview of platform users</CardDescription>
+            <CardDescription>{t('admin.userStatsDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Total Users</span>
+                <span className="text-sm text-muted-foreground">{t('admin.totalUsers')}</span>
                 <span className="font-medium">{users.length}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Active Users</span>
+                <span className="text-sm text-muted-foreground">{t('admin.activeUsers')}</span>
                 <span className="font-medium">{activeCount}</span>
               </div>
             </div>
@@ -182,7 +186,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg">Platform Health</CardTitle>
+                <CardTitle className="text-lg">{t('admin.platformHealth')}</CardTitle>
               </div>
               {healthQuery.data ? (
                 <Badge
@@ -198,20 +202,21 @@ export default function AdminPage() {
                 </Badge>
               ) : null}
             </div>
-            <CardDescription>System status overview</CardDescription>
+            <CardDescription>{t('admin.systemStatusOverview')}</CardDescription>
           </CardHeader>
           <CardContent>
             <HealthCardContent
               isLoading={healthQuery.isLoading}
               isError={healthQuery.isError}
               health={healthQuery.data ?? null}
+              t={t}
             />
           </CardContent>
         </Card>
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold">User Management</h2>
+        <h2 className="text-lg font-semibold">{t('admin.userManagement')}</h2>
 
         <UsersContent
           isLoading={usersQuery.isLoading}
@@ -227,6 +232,7 @@ export default function AdminPage() {
           }}
           isRoleChangePending={changeRoleMutation.isPending && actionPending !== null}
           isDeactivatePending={deactivateMutation.isPending && actionPending !== null}
+          t={t}
         />
       </div>
     </div>

@@ -2,12 +2,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
 import { ROUTES } from '@/constants';
+import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/services/auth/auth.service';
 import { logger, showToast } from '@/utilities';
 
 export function useLogout() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const mutation = useMutation({
     mutationFn: () => {
@@ -15,7 +17,7 @@ export function useLogout() {
       return authService.logout();
     },
     onError: (err: unknown) => {
-      showToast.apiError(err, 'Logout failed, clearing session locally');
+      showToast.apiError(err, t('toast.logoutFailed'));
     },
     onSettled: () => {
       queryClient.clear();

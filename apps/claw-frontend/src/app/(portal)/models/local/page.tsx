@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { RUNTIME_TYPE_LABELS, MODEL_ROLE_LABELS, MODEL_ROLES } from '@/constants';
 import { useLocalModelsPage } from '@/hooks/ollama/use-local-models-page';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { DataTableColumn, LocalModel } from '@/types';
 import { formatBytes, getHealthStatusColor } from '@/utilities';
@@ -45,6 +46,8 @@ export default function LocalModelsPage(): React.ReactElement {
     handleAssignRole,
     isAssignPending,
   } = useLocalModelsPage();
+
+  const { t } = useTranslation();
 
   const columns: DataTableColumn<LocalModel>[] = [
     {
@@ -124,12 +127,12 @@ export default function LocalModelsPage(): React.ReactElement {
     return (
       <div className="flex h-full flex-col">
         <PageHeader
-          title="Local Models"
-          description="Manage locally installed AI models and runtime environments"
+          title={t('models.localTitle')}
+          description={t('models.localDescription')}
         />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-destructive">
-            {error?.message ?? 'Failed to load local models.'}
+            {error?.message ?? t('models.localLoadFailed')}
           </p>
         </div>
       </div>
@@ -139,8 +142,8 @@ export default function LocalModelsPage(): React.ReactElement {
   return (
     <div className="flex h-full flex-col">
       <PageHeader
-        title="Local Models"
-        description="Manage locally installed AI models and runtime environments"
+        title={t('models.localTitle')}
+        description={t('models.localDescription')}
       />
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -148,9 +151,9 @@ export default function LocalModelsPage(): React.ReactElement {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Activity className="h-5 w-5" />
-              Runtime Health
+              {t('models.runtimeHealth')}
             </CardTitle>
-            <CardDescription>Current status of the local model runtime</CardDescription>
+            <CardDescription>{t('models.runtimeHealthDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-3">
@@ -172,15 +175,15 @@ export default function LocalModelsPage(): React.ReactElement {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Download className="h-5 w-5" />
-              Pull Model
+              {t('models.pullModel')}
             </CardTitle>
-            <CardDescription>Download a new model from the registry</CardDescription>
+            <CardDescription>{t('models.pullModelDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
               <div className="flex-1 space-y-2">
                 <label htmlFor="pull-model-name" className="text-sm font-medium">
-                  Model Name
+                  {t('models.modelName')}
                 </label>
                 <Input
                   id="pull-model-name"
@@ -197,7 +200,7 @@ export default function LocalModelsPage(): React.ReactElement {
               </div>
               <div className="w-full sm:w-[160px] space-y-2">
                 <label htmlFor="pull-model-runtime" className="text-sm font-medium">
-                  Runtime
+                  {t('models.runtime')}
                 </label>
                 <Select
                   value={pullRuntime}
@@ -228,7 +231,7 @@ export default function LocalModelsPage(): React.ReactElement {
                 )}
               </div>
               <Button onClick={handlePullModel} disabled={isPullPending}>
-                {isPullPending ? 'Pulling...' : 'Pull'}
+                {isPullPending ? t('models.pulling') : t('models.pull')}
               </Button>
             </div>
           </CardContent>
@@ -236,14 +239,14 @@ export default function LocalModelsPage(): React.ReactElement {
       </div>
 
       <div className="mt-6">
-        <h2 className="mb-4 text-lg font-semibold">Installed Models</h2>
-        {isLoading && <LoadingSpinner label="Loading local models..." />}
+        <h2 className="mb-4 text-lg font-semibold">{t('models.installedModels')}</h2>
+        {isLoading && <LoadingSpinner label={t('models.loadingLocalModels')} />}
 
         {!isLoading && models.length === 0 && (
           <EmptyState
             icon={HardDrive}
-            title="No local models installed"
-            description="Pull a model using the form above to get started with local inference."
+            title={t('models.noLocalModels')}
+            description={t('models.noLocalModelsDesc')}
           />
         )}
 
@@ -252,7 +255,7 @@ export default function LocalModelsPage(): React.ReactElement {
             columns={columns}
             data={models}
             keyExtractor={(row) => row.id}
-            emptyMessage="No local models installed."
+            emptyMessage={t('models.noLocalModels')}
           />
         )}
       </div>

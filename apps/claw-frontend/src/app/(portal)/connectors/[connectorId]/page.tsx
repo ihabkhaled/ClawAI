@@ -19,6 +19,7 @@ import {
   ROUTES,
 } from '@/constants';
 import { useConnectorDetailPage } from '@/hooks/connectors/use-connector-detail-page';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 export default function ConnectorDetailPage() {
@@ -47,28 +48,30 @@ export default function ConnectorDetailPage() {
     syncResult,
   } = useConnectorDetailPage(connectorId);
 
+  const { t } = useTranslation();
+
   if (!connectorId || isLoadingConnector) {
-    return <LoadingSpinner label="Loading connector..." />;
+    return <LoadingSpinner label={t('connectors.loadingConnector')} />;
   }
 
   if (isError || !connector) {
     return (
       <div className="flex h-full flex-col">
         <PageHeader
-          title="Connector Detail"
-          description="Connector not found"
+          title={t('connectors.connectorDetail')}
+          description={t('connectors.connectorNotFound')}
           actions={
             <Button variant="outline" asChild>
               <Link href={ROUTES.CONNECTORS}>
                 <ArrowLeft className="me-2 h-4 w-4 rtl:rotate-180" />
-                Back to connectors
+                {t('connectors.backToConnectors')}
               </Link>
             </Button>
           }
         />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-destructive">
-            {error?.message ?? 'Failed to load connector.'}
+            {error?.message ?? t('connectors.loadFailed')}
           </p>
         </div>
       </div>
@@ -92,7 +95,7 @@ export default function ConnectorDetailPage() {
               disabled={isTestPending}
             >
               <Activity className="me-2 h-4 w-4" />
-              {isTestPending ? 'Testing...' : 'Test'}
+              {isTestPending ? t('connectors.testingConnection') : t('connectors.testConnection')}
             </Button>
             <Button
               variant="outline"
@@ -101,11 +104,11 @@ export default function ConnectorDetailPage() {
               disabled={isSyncPending}
             >
               <RefreshCw className="me-2 h-4 w-4" />
-              {isSyncPending ? 'Syncing...' : 'Sync Models'}
+              {isSyncPending ? t('connectors.syncing') : t('connectors.syncModels')}
             </Button>
             <Button variant="outline" size="sm" onClick={handleOpenEdit}>
               <Pencil className="me-2 h-4 w-4" />
-              Edit
+              {t('common.edit')}
             </Button>
             <Button
               variant="destructive"
@@ -114,12 +117,12 @@ export default function ConnectorDetailPage() {
               disabled={isDeletePending}
             >
               <Trash2 className="me-2 h-4 w-4" />
-              Delete
+              {t('common.delete')}
             </Button>
             <Button variant="outline" size="sm" asChild>
               <Link href={ROUTES.CONNECTORS}>
                 <ArrowLeft className="me-2 h-4 w-4 rtl:rotate-180" />
-                Back
+                {t('common.back')}
               </Link>
             </Button>
           </div>
@@ -134,11 +137,11 @@ export default function ConnectorDetailPage() {
           <StatusBadge status={connector.status} />
           {connector.isEnabled ? (
             <Badge variant="secondary" className="text-xs">
-              Enabled
+              {t('connectors.enabled')}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-xs text-muted-foreground">
-              Disabled
+              {t('connectors.disabled')}
             </Badge>
           )}
         </div>
@@ -169,34 +172,34 @@ export default function ConnectorDetailPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Configuration</CardTitle>
+            <CardTitle className="text-lg">{t('connectors.configuration')}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Provider</span>
+              <span className="text-muted-foreground">{t('connectors.provider')}</span>
               <span className="font-medium">{providerName}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Auth Type</span>
+              <span className="text-muted-foreground">{t('connectors.authType')}</span>
               <span className="font-medium">
                 {AUTH_TYPE_LABELS[connector.authType] ?? connector.authType}
               </span>
             </div>
             {connector.maskedApiKey ? (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">API Key</span>
+                <span className="text-muted-foreground">{t('connectors.apiKey')}</span>
                 <span className="font-mono text-xs">{connector.maskedApiKey}</span>
               </div>
             ) : null}
             {connector.baseUrl ? (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Base URL</span>
+                <span className="text-muted-foreground">{t('connectors.baseUrl')}</span>
                 <span className="font-mono text-xs">{connector.baseUrl}</span>
               </div>
             ) : null}
             {connector.region ? (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Region</span>
+                <span className="text-muted-foreground">{t('connectors.region')}</span>
                 <span className="font-medium">{connector.region}</span>
               </div>
             ) : null}
@@ -205,11 +208,11 @@ export default function ConnectorDetailPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Health History</CardTitle>
+            <CardTitle className="text-lg">{t('connectors.healthHistory')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Health history tracking will be available in a future update.
+              {t('connectors.healthHistoryDesc')}
             </p>
           </CardContent>
         </Card>
@@ -217,11 +220,11 @@ export default function ConnectorDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Models ({models.length})</CardTitle>
+          <CardTitle className="text-lg">{t('connectors.models')} ({models.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoadingModels ? (
-            <LoadingSpinner label="Loading models..." />
+            <LoadingSpinner label={t('models.loadingModels')} />
           ) : (
             <ModelTable models={models} />
           )}
