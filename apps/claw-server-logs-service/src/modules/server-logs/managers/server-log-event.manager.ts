@@ -45,7 +45,7 @@ export class ServerLogEventManager implements OnModuleInit {
       messageId: payload.messageId,
       connectorId: payload.connectorId,
       provider: payload.provider,
-      model: payload.model,
+      modelName: payload.model,
       latencyMs: payload.latencyMs,
       errorCode: payload.errorCode,
       errorMessage: payload.errorMessage,

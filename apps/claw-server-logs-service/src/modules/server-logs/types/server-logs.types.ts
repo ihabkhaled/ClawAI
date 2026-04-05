@@ -18,7 +18,7 @@ export interface CreateServerLogInput {
   messageId?: string;
   connectorId?: string;
   provider?: string;
-  model?: string;
+  modelName?: string;
   latencyMs?: number;
   errorCode?: string;
   errorMessage?: string;

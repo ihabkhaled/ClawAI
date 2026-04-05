@@ -24,14 +24,16 @@ export class ServerLogsController {
   @Post()
   @UsePipes(new ZodValidationPipe(createServerLogSchema))
   async createLog(@Body() body: CreateServerLogDto): Promise<CreateServerLogResponse> {
-    return this.serverLogsService.createLog(body);
+    const { model: modelName, ...rest } = body;
+    return this.serverLogsService.createLog({ ...rest, modelName });
   }
 
   @Public()
   @Post("batch")
   @UsePipes(new ZodValidationPipe(batchCreateServerLogsSchema))
   async createBatch(@Body() body: BatchCreateServerLogsDto): Promise<BatchCreateServerLogsResponse> {
-    return this.serverLogsService.createMany(body.entries);
+    const mapped = body.entries.map(({ model: modelName, ...rest }) => ({ ...rest, modelName }));
+    return this.serverLogsService.createMany(mapped);
   }
 
   @Get()

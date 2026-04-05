@@ -60,8 +60,8 @@ export class ServerLog extends Document {
   @Prop()
   provider?: string;
 
-  @Prop()
-  model?: string;
+  @Prop({ type: String })
+  modelName?: string;
 
   @Prop()
   latencyMs?: number;

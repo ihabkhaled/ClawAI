@@ -16,7 +16,7 @@ export class ServerLogsService {
 
   async createLog(input: CreateServerLogInput): Promise<CreateServerLogResponse> {
     const doc = await this.serverLogsRepository.create(input);
-    return { id: doc._id as string };
+    return { id: String(doc._id) };
   }
 
   async createMany(inputs: CreateServerLogInput[]): Promise<BatchCreateServerLogsResponse> {
