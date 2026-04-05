@@ -1,0 +1,326 @@
+# =============================================================================
+# docker-compose.prod.services.yml — Production Backend & Frontend Services
+# =============================================================================
+# Contains: All NestJS microservices, Nginx reverse proxy, Next.js frontend
+# Requires: docker-compose.prod.databases.yml running first (claw-network must exist)
+# Uses production Dockerfiles (not Dockerfile.dev), no source volume mounts.
+#
+# Usage:
+#   docker compose -f docker-compose.prod.services.yml up -d
+#   ./scripts/claw.sh --prod services:up
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Microservices
+  # ---------------------------------------------------------------------------
+  auth-service:
+    build:
+      context: .
+      dockerfile: apps/claw-auth-service/Dockerfile
+    container_name: claw-auth-service
+    restart: unless-stopped
+    ports:
+      - '4001:4001'
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 4001
+      DATABASE_URL: postgresql://${PG_AUTH_USER:-claw}:${PG_AUTH_PASSWORD:-claw_secret}@pg-auth:5432/${PG_AUTH_DB:-claw_auth}?schema=public
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
+      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-15m}
+      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-7d}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@claw.local}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-claw-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4001/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  chat-service:
+    build:
+      context: .
+      dockerfile: apps/claw-chat-service/Dockerfile
+    container_name: claw-chat-service
+    restart: unless-stopped
+    ports:
+      - '4002:4002'
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 4002
+      DATABASE_URL: postgresql://${PG_CHAT_USER:-claw}:${PG_CHAT_PASSWORD:-claw_secret}@pg-chat:5432/${PG_CHAT_DB:-claw_chat}?schema=public
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+      OLLAMA_SERVICE_URL: ${OLLAMA_SERVICE_URL:-http://ollama-service:4008}
+      CONNECTOR_SERVICE_URL: ${CONNECTOR_SERVICE_URL:-http://connector-service:4003}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4002/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  connector-service:
+    build:
+      context: .
+      dockerfile: apps/claw-connector-service/Dockerfile
+    container_name: claw-connector-service
+    restart: unless-stopped
+    ports:
+      - '4003:4003'
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 4003
+      DATABASE_URL: postgresql://${PG_CONNECTOR_USER:-claw}:${PG_CONNECTOR_PASSWORD:-claw_secret}@pg-connector:5432/${PG_CONNECTOR_DB:-claw_connectors}?schema=public
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4003/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  routing-service:
+    build:
+      context: .
+      dockerfile: apps/claw-routing-service/Dockerfile
+    container_name: claw-routing-service
+    restart: unless-stopped
+    ports:
+      - '4004:4004'
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 4004
+      DATABASE_URL: postgresql://${PG_ROUTING_USER:-claw}:${PG_ROUTING_PASSWORD:-claw_secret}@pg-routing:5432/${PG_ROUTING_DB:-claw_routing}?schema=public
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4004/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  memory-service:
+    build:
+      context: .
+      dockerfile: apps/claw-memory-service/Dockerfile
+    container_name: claw-memory-service
+    restart: unless-stopped
+    ports:
+      - '4005:4005'
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 4005
+      DATABASE_URL: postgresql://${PG_MEMORY_USER:-claw}:${PG_MEMORY_PASSWORD:-claw_secret}@pg-memory:5432/${PG_MEMORY_DB:-claw_memory}?schema=public
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4005/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  file-service:
+    build:
+      context: .
+      dockerfile: apps/claw-file-service/Dockerfile
+    container_name: claw-file-service
+    restart: unless-stopped
+    ports:
+      - '4006:4006'
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 4006
+      DATABASE_URL: postgresql://${PG_FILES_USER:-claw}:${PG_FILES_PASSWORD:-claw_secret}@pg-files:5432/${PG_FILES_DB:-claw_files}?schema=public
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
+      FILE_STORAGE_PATH: ${FILE_STORAGE_PATH:-/data/files}
+    volumes:
+      - file-storage-data:/data/files
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4006/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  audit-service:
+    build:
+      context: .
+      dockerfile: apps/claw-audit-service/Dockerfile
+    container_name: claw-audit-service
+    restart: unless-stopped
+    ports:
+      - '4007:4007'
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 4007
+      MONGODB_URI: mongodb://${MONGO_USER:-claw}:${MONGO_PASSWORD:-claw_secret}@mongodb:27017/${MONGO_DB:-claw_audit}?authSource=admin
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4007/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  ollama-service:
+    build:
+      context: .
+      dockerfile: apps/claw-ollama-service/Dockerfile
+    container_name: claw-ollama-service
+    restart: unless-stopped
+    ports:
+      - '4008:4008'
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 4008
+      DATABASE_URL: postgresql://${PG_OLLAMA_USER:-claw}:${PG_OLLAMA_PASSWORD:-claw_secret}@pg-ollama:5432/${PG_OLLAMA_DB:-claw_ollama}?schema=public
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4008/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  health-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: claw-health-service
+    restart: unless-stopped
+    ports:
+      - '4009:4009'
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 4009
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://auth-service:4001}
+      CHAT_SERVICE_URL: ${CHAT_SERVICE_URL:-http://chat-service:4002}
+      CONNECTOR_SERVICE_URL: ${CONNECTOR_SERVICE_URL:-http://connector-service:4003}
+      ROUTING_SERVICE_URL: ${ROUTING_SERVICE_URL:-http://routing-service:4004}
+      MEMORY_SERVICE_URL: ${MEMORY_SERVICE_URL:-http://memory-service:4005}
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:4006}
+      AUDIT_SERVICE_URL: ${AUDIT_SERVICE_URL:-http://audit-service:4007}
+      OLLAMA_SERVICE_URL: ${OLLAMA_SERVICE_URL:-http://ollama-service:4008}
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4009/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
+  # Nginx Reverse Proxy
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: claw-nginx
+    restart: unless-stopped
+    ports:
+      - '8080:80'
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      chat-service:
+        condition: service_healthy
+      connector-service:
+        condition: service_healthy
+      routing-service:
+        condition: service_healthy
+      memory-service:
+        condition: service_healthy
+      file-service:
+        condition: service_healthy
+      audit-service:
+        condition: service_healthy
+      ollama-service:
+        condition: service_healthy
+      health-service:
+        condition: service_healthy
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
+  # Frontend
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./apps/claw-frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+    container_name: claw-frontend
+    restart: unless-stopped
+    ports:
+      - '${FRONTEND_PORT:-3000}:3000'
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+    depends_on:
+      - nginx
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000 || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - claw-network
+
+volumes:
+  file-storage-data:
+    driver: local
+
+networks:
+  claw-network:
+    external: true
+    name: claw-network
