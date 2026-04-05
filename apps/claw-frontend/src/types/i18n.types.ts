@@ -373,6 +373,12 @@ export type TranslationDictionary = {
     title: string;
     description: string;
     profile: string;
+    profileDescription: string;
+    username: string;
+    email: string;
+    emailReadOnly: string;
+    role: string;
+    selectLanguage: string;
     preferences: string;
     language: string;
     languageDescription: string;

@@ -53,28 +53,28 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="text-lg">{t('settings.profile')}</CardTitle>
             <CardDescription>
-              Your personal information. These fields are read-only.
+              {t('settings.profileDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="settings-username" className="text-sm font-medium">
-                Username
+                {t('settings.username')}
               </label>
               <Input id="settings-username" value={user?.username ?? ''} disabled readOnly />
             </div>
             <div className="space-y-2">
               <label htmlFor="settings-email" className="text-sm font-medium">
-                Email
+                {t('settings.email')}
               </label>
               <Input id="settings-email" value={user?.email ?? ''} disabled readOnly />
               <p className="text-xs text-muted-foreground">
-                Contact an administrator to change your email.
+                {t('settings.emailReadOnly')}
               </p>
             </div>
             <div className="space-y-2">
               <label htmlFor="settings-role" className="text-sm font-medium">
-                Role
+                {t('settings.role')}
               </label>
               <Input id="settings-role" value={user?.role ?? ''} disabled readOnly />
             </div>
@@ -87,8 +87,7 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="text-lg">{t('settings.changePassword')}</CardTitle>
             <CardDescription>
-              Update your account password. Must be at least 8 characters with an uppercase letter,
-              lowercase letter, and number.
+              {t('settings.passwordRequirements')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -173,7 +172,7 @@ export default function SettingsPage() {
               disabled={isPending}
             >
               <SelectTrigger className="w-full max-w-xs">
-                <SelectValue placeholder="Select language" />
+                <SelectValue placeholder={t('settings.selectLanguage')} />
               </SelectTrigger>
               <SelectContent>
                 {LANGUAGE_OPTIONS.map((option) => (
