@@ -1,0 +1,1 @@
+export const DEFAULT_HTTP_TIMEOUT = 5000;

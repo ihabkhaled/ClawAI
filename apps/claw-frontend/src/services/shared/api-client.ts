@@ -5,11 +5,7 @@ export class ApiClientError extends Error {
   status: number;
   errors?: Record<string, string[]>;
 
-  constructor(params: {
-    message: string;
-    status: number;
-    errors?: Record<string, string[]>;
-  }) {
+  constructor(params: { message: string; status: number; errors?: Record<string, string[]> }) {
     super(params.message);
     this.name = 'ApiClientError';
     this.status = params.status;
@@ -18,10 +14,7 @@ export class ApiClientError extends Error {
 }
 
 export const apiClient = {
-  async get<T>(
-    path: string,
-    params?: Record<string, string>,
-  ): Promise<ApiResponse<T>> {
+  async get<T>(path: string, params?: Record<string, string>): Promise<ApiResponse<T>> {
     try {
       const response = await httpClient.get<T>(path, { params });
       return { data: response.data, status: response.status };
@@ -67,6 +60,12 @@ export const apiClient = {
   },
 };
 
+/**
+ * Sanitizes backend error responses so internal details are never exposed
+ * to users. For 5xx (server) errors, a generic message is always used
+ * regardless of what the backend returned, since those messages may
+ * contain stack traces, SQL errors, or infrastructure details.
+ */
 function toApiClientError(error: unknown): ApiClientError {
   if (error && typeof error === 'object' && 'response' in error) {
     const axiosError = error as {
@@ -75,11 +74,16 @@ function toApiClientError(error: unknown): ApiClientError {
         data?: { message?: string; errors?: Record<string, string[]> };
       };
     };
+
+    const status = axiosError.response?.status ?? 500;
+    const isServerError = status >= 500;
+
     return new ApiClientError({
-      message:
-        axiosError.response?.data?.message ?? 'An unexpected error occurred',
-      status: axiosError.response?.status ?? 500,
-      errors: axiosError.response?.data?.errors,
+      message: isServerError
+        ? 'An unexpected server error occurred. Please try again later.'
+        : (axiosError.response?.data?.message ?? 'An unexpected error occurred'),
+      status,
+      errors: isServerError ? undefined : axiosError.response?.data?.errors,
     });
   }
   return new ApiClientError({ message: 'Network error', status: 0 });

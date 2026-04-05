@@ -1,15 +1,12 @@
-"use client";
+'use client';
 
-import { AlertTriangle } from "lucide-react";
-import { Component } from "react";
+import { AlertTriangle } from 'lucide-react';
+import { Component } from 'react';
 
-import { Button } from "@/components/ui/button";
-import type { ErrorBoundaryProps, ErrorBoundaryState } from "@/types";
+import { Button } from '@/components/ui/button';
+import type { ErrorBoundaryProps, ErrorBoundaryState } from '@/types';
 
-export class ErrorBoundary extends Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -36,13 +33,10 @@ export class ErrorBoundary extends Component<
           </div>
           <h3 className="mt-4 text-lg font-semibold">Something went wrong</h3>
           <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-            {this.state.error?.message ?? "An unexpected error occurred."}
+            An unexpected error occurred. Please try again or contact support if the problem
+            persists.
           </p>
-          <Button
-            variant="outline"
-            className="mt-6"
-            onClick={this.handleReset}
-          >
+          <Button variant="outline" className="mt-6" onClick={this.handleReset}>
             Try again
           </Button>
         </div>
