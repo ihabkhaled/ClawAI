@@ -47,6 +47,14 @@ export type OpenAiChatRequest = {
   model: string;
   messages: OpenAiChatMessage[];
   stream: boolean;
+  temperature?: number;
+  max_tokens?: number;
+};
+
+export type ThreadSettings = {
+  systemPrompt?: string | null;
+  temperature?: number | null;
+  maxTokens?: number | null;
 };
 
 export type OpenAiChatChoice = {

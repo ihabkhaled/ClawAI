@@ -115,6 +115,21 @@ export class ChatMessagesService implements OnModuleInit {
     return message;
   }
 
+  async setFeedback(userId: string, messageId: string, feedback: string | null): Promise<ChatMessage> {
+    const message = await this.chatMessagesRepository.findById(messageId);
+    if (!message) {
+      throw new EntityNotFoundException("ChatMessage", messageId);
+    }
+
+    const thread = await this.chatThreadsRepository.findById(message.threadId);
+    if (!thread) {
+      throw new EntityNotFoundException("ChatThread", message.threadId);
+    }
+    this.validateOwnership(thread, userId);
+
+    return this.chatMessagesRepository.updateFeedback(messageId, feedback);
+  }
+
   async regenerateMessage(id: string, userId: string): Promise<ChatMessage> {
     const message = await this.chatMessagesRepository.findById(id);
     if (!message) {
@@ -141,14 +156,22 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   async handleMessageRouted(payload: MessageRoutedData): Promise<void> {
-    const threadMessages = await this.chatMessagesRepository.findRecentByThreadId(
-      payload.threadId,
-      20,
-    );
+    const [threadMessages, thread] = await Promise.all([
+      this.chatMessagesRepository.findRecentByThreadId(payload.threadId, 20),
+      this.chatThreadsRepository.findById(payload.threadId),
+    ]);
 
     const chronologicalMessages = [...threadMessages].reverse();
 
-    const llmResponse = await this.chatExecutionManager.execute(payload, chronologicalMessages);
+    const threadSettings = thread
+      ? {
+          systemPrompt: thread.systemPrompt,
+          temperature: thread.temperature,
+          maxTokens: thread.maxTokens,
+        }
+      : undefined;
+
+    const llmResponse = await this.chatExecutionManager.execute(payload, chronologicalMessages, threadSettings);
 
     const assistantMessage = await this.chatMessagesRepository.create({
       threadId: payload.threadId,

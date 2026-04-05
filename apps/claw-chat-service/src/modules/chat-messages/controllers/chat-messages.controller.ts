@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Query } from "@nestjs/common";
 import { ChatMessagesService } from "../services/chat-messages.service";
 import { ZodValidationPipe } from "../../../app/pipes/zod-validation.pipe";
 import { CreateMessageDto, createMessageSchema } from "../dto/create-message.dto";
 import { ListMessagesQueryDto, listMessagesQuerySchema } from "../dto/list-messages-query.dto";
+import { SetFeedbackDto, setFeedbackSchema } from "../dto/set-feedback.dto";
 import { CurrentUser } from "../../../app/decorators/current-user.decorator";
 import { type AuthenticatedUser, type PaginatedResult } from "../../../common/types";
 import { type ChatMessage } from "../../../generated/prisma";
@@ -34,5 +35,14 @@ export class ChatMessagesController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ChatMessage> {
     return this.chatMessagesService.getMessage(id, user.id);
+  }
+
+  @Patch(":id/feedback")
+  async setFeedback(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(setFeedbackSchema)) dto: SetFeedbackDto,
+  ): Promise<ChatMessage> {
+    return this.chatMessagesService.setFeedback(user.id, id, dto.feedback);
   }
 }

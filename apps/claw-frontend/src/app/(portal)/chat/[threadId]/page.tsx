@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Settings, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef } from 'react';
@@ -8,13 +8,18 @@ import { useCallback, useEffect, useRef } from 'react';
 import { MessageBubble } from '@/components/chat/message-bubble';
 import { MessageComposer } from '@/components/chat/message-composer';
 import { ThinkingIndicator } from '@/components/chat/thinking-indicator';
+import { ThreadSettings } from '@/components/chat/thread-settings';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants';
+import type { MessageFeedback } from '@/enums';
 import { useDeleteThread } from '@/hooks/chat/use-delete-thread';
+import { useMessageFeedback } from '@/hooks/chat/use-message-feedback';
 import { useSendMessage } from '@/hooks/chat/use-send-message';
 import { useThreadDetail } from '@/hooks/chat/use-thread-detail';
+import { useThreadSettings } from '@/hooks/chat/use-thread-settings';
+import { useTranslation } from '@/lib/i18n/use-translation';
 import type { ChatMessage } from '@/types';
 
 function MessagesContent({
@@ -23,12 +28,14 @@ function MessagesContent({
   messages,
   isWaitingForResponse,
   messagesEndRef,
+  onFeedback,
 }: {
   isLoadingThread: boolean;
   isLoadingMessages: boolean;
   messages: ChatMessage[];
   isWaitingForResponse: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
 }): React.ReactElement {
   if (isLoadingThread || isLoadingMessages) {
     return <LoadingSpinner label="Loading messages..." />;
@@ -45,7 +52,7 @@ function MessagesContent({
   return (
     <div className="flex flex-col gap-4">
       {messages.map((message) => (
-        <MessageBubble key={message.id} message={message} />
+        <MessageBubble key={message.id} message={message} onFeedback={onFeedback} />
       ))}
       {isWaitingForResponse ? <ThinkingIndicator /> : null}
       <div ref={messagesEndRef} />
@@ -58,10 +65,13 @@ export default function ThreadDetailPage() {
   const threadId = params.threadId ?? '';
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const { t } = useTranslation();
   const { thread, messages, isLoadingThread, isLoadingMessages, isWaitingForResponse, startWaitingForResponse } =
     useThreadDetail(threadId);
   const { sendMessage, isPending: isSending } = useSendMessage(threadId, startWaitingForResponse);
   const { deleteThread, isPending: isDeleting } = useDeleteThread();
+  const { setFeedback } = useMessageFeedback(threadId);
+  const threadSettings = useThreadSettings(thread);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -76,6 +86,13 @@ export default function ThreadDetailPage() {
       sendMessage({ threadId, content });
     },
     [threadId, sendMessage],
+  );
+
+  const handleFeedback = useCallback(
+    (messageId: string, feedback: MessageFeedback | null) => {
+      setFeedback({ messageId, feedback });
+    },
+    [setFeedback],
   );
 
   const handleDelete = useCallback(() => {
@@ -100,6 +117,15 @@ export default function ThreadDetailPage() {
         actions={
           <div className="flex items-center gap-2">
             <Button
+              variant="outline"
+              size="sm"
+              className="min-h-11 min-w-11"
+              onClick={threadSettings.toggleOpen}
+            >
+              <Settings className="h-4 w-4 sm:me-2" />
+              <span className="hidden sm:inline">{t('chat.threadSettings')}</span>
+            </Button>
+            <Button
               variant="destructive"
               size="sm"
               className="min-h-11 min-w-11"
@@ -119,6 +145,22 @@ export default function ThreadDetailPage() {
         }
       />
 
+      {threadSettings.isOpen ? (
+        <div className="mb-4">
+          <ThreadSettings
+            t={t}
+            systemPrompt={threadSettings.systemPrompt}
+            onSystemPromptChange={threadSettings.setSystemPrompt}
+            temperature={threadSettings.temperature}
+            onTemperatureChange={threadSettings.setTemperature}
+            maxTokens={threadSettings.maxTokens}
+            onMaxTokensChange={threadSettings.setMaxTokens}
+            onSave={threadSettings.handleSave}
+            isPending={threadSettings.isPending}
+          />
+        </div>
+      ) : null}
+
       <div className="flex flex-1 flex-col overflow-hidden rounded-lg border">
         <div className="flex-1 overflow-y-auto p-4">
           <MessagesContent
@@ -127,6 +169,7 @@ export default function ThreadDetailPage() {
             messages={messages}
             isWaitingForResponse={isWaitingForResponse}
             messagesEndRef={messagesEndRef}
+            onFeedback={handleFeedback}
           />
         </div>
 

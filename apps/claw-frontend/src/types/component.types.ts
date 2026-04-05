@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 
 import type { SidebarItem } from '@/constants';
-import type { ComponentSize, ConnectorStatus, RoutingMode } from '@/enums';
+import type { ComponentSize, ConnectorStatus, MessageFeedback, RoutingMode } from '@/enums';
 
 import type { AdminUser } from './audit.types';
 import type { ChatMessage, ChatThread } from './chat.types';
@@ -121,6 +121,7 @@ export type UserTableProps = {
 export type MessageBubbleProps = {
   message: ChatMessage;
   routingDecision?: RoutingDecision | null;
+  onFeedback?: (messageId: string, feedback: MessageFeedback | null) => void;
 };
 
 export type ThinkingIndicatorProps = {

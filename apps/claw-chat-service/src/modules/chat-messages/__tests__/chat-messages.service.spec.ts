@@ -33,6 +33,7 @@ const mockMessage = {
   outputTokens: null,
   estimatedCost: null,
   latencyMs: null,
+  feedback: null,
   metadata: null,
   createdAt: new Date(),
 };
@@ -43,6 +44,7 @@ const mockMessagesRepository = (): Record<keyof ChatMessagesRepository, jest.Moc
   findByThreadId: jest.fn(),
   findRecentByThreadId: jest.fn(),
   countByThreadId: jest.fn(),
+  updateFeedback: jest.fn(),
   deleteByThreadId: jest.fn(),
 });
 

@@ -1,3 +1,4 @@
+import type { MessageFeedback } from '@/enums';
 import { apiClient } from '@/services/shared/api-client';
 import type {
   ChatThread,
@@ -48,6 +49,14 @@ export const chatRepository = {
     const response = await apiClient.get<MessagesListResponse>(
       `/chat-messages/thread/${threadId}`,
       params,
+    );
+    return response.data;
+  },
+
+  async setFeedback(messageId: string, feedback: MessageFeedback | null): Promise<ChatMessage> {
+    const response = await apiClient.patch<ChatMessage>(
+      `/chat-messages/${messageId}/feedback`,
+      { feedback },
     );
     return response.data;
   },

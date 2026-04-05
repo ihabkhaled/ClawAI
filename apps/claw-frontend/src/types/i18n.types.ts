@@ -101,6 +101,17 @@ export type TranslationDictionary = {
     globalSearch: string;
     globalSearchPlaceholder: string;
     globalSearchNoResults: string;
+    systemPrompt: string;
+    systemPromptPlaceholder: string;
+    temperature: string;
+    temperatureDescription: string;
+    maxTokens: string;
+    maxTokensDescription: string;
+    threadSettings: string;
+    settingsSaved: string;
+    helpful: string;
+    notHelpful: string;
+    feedbackSaved: string;
   };
   connectors: {
     title: string;

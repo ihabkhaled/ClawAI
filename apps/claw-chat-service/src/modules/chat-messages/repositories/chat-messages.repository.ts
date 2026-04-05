@@ -37,6 +37,13 @@ export class ChatMessagesRepository {
     });
   }
 
+  async updateFeedback(id: string, feedback: string | null): Promise<ChatMessage> {
+    return this.prisma.chatMessage.update({
+      where: { id },
+      data: { feedback },
+    });
+  }
+
   async deleteByThreadId(threadId: string): Promise<number> {
     const result = await this.prisma.chatMessage.deleteMany({ where: { threadId } });
     return result.count;

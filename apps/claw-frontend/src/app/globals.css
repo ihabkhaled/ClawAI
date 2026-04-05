@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* highlight.js syntax highlighting theme */
+@import 'highlight.js/styles/github.css';
+
+.dark pre code.hljs {
+  background: transparent;
+}
+
+.dark .hljs {
+  background: transparent;
+  color: inherit;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

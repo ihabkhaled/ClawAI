@@ -17,6 +17,7 @@ import {
   type OpenAiChatRequest,
   type OpenAiChatResponse,
   type ConnectorConfigResponse,
+  type ThreadSettings,
 } from "../types/execution.types";
 
 @Injectable()
@@ -26,6 +27,7 @@ export class ChatExecutionManager {
   async execute(
     payload: MessageRoutedData,
     threadMessages: ChatMessage[],
+    threadSettings?: ThreadSettings,
   ): Promise<LlmResponse> {
     const startTime = Date.now();
 
@@ -67,6 +69,7 @@ export class ChatExecutionManager {
           threadMessages,
           startTime,
           i > 0,
+          threadSettings,
         );
       } catch (error: unknown) {
         const errorMsg = error instanceof Error ? error.message : "Unknown error";
@@ -89,11 +92,12 @@ export class ChatExecutionManager {
     threadMessages: ChatMessage[],
     startTime: number,
     usedFallback: boolean,
+    threadSettings?: ThreadSettings,
   ): Promise<LlmResponse> {
     if (provider === OLLAMA_PROVIDER) {
-      return this.callOllama(model, threadMessages, startTime, usedFallback);
+      return this.callOllama(model, threadMessages, startTime, usedFallback, threadSettings);
     }
-    return this.callCloudProvider(provider, model, threadMessages, startTime, usedFallback);
+    return this.callCloudProvider(provider, model, threadMessages, startTime, usedFallback, threadSettings);
   }
 
   private async callOllama(
@@ -101,9 +105,10 @@ export class ChatExecutionManager {
     threadMessages: ChatMessage[],
     startTime: number,
     usedFallback: boolean,
+    threadSettings?: ThreadSettings,
   ): Promise<LlmResponse> {
     const config = AppConfig.get();
-    const prompt = this.buildPromptString(threadMessages);
+    const prompt = this.buildPromptString(threadMessages, threadSettings?.systemPrompt ?? undefined);
 
     const requestBody: OllamaGenerateRequest = {
       model,
@@ -145,6 +150,7 @@ export class ChatExecutionManager {
     threadMessages: ChatMessage[],
     startTime: number,
     usedFallback: boolean,
+    threadSettings?: ThreadSettings,
   ): Promise<LlmResponse> {
     const connectorConfig = await this.fetchConnectorConfig(provider);
     const baseUrl = connectorConfig.baseUrl ?? PROVIDER_BASE_URLS[provider] ?? "";
@@ -163,8 +169,16 @@ export class ChatExecutionManager {
       );
     }
 
-    const messages = this.buildChatMessages(threadMessages);
+    const messages = this.buildChatMessages(threadMessages, threadSettings?.systemPrompt ?? undefined);
     const requestBody: OpenAiChatRequest = { model, messages, stream: false };
+
+    if (threadSettings?.temperature != null) {
+      requestBody.temperature = threadSettings.temperature;
+    }
+
+    if (threadSettings?.maxTokens != null) {
+      requestBody.max_tokens = threadSettings.maxTokens;
+    }
 
     const response = await httpRequest<OpenAiChatResponse>({
       url: `${baseUrl}/chat/completions`,
@@ -226,21 +240,38 @@ export class ChatExecutionManager {
     return response.data;
   }
 
-  private buildPromptString(threadMessages: ChatMessage[]): string {
+  private buildPromptString(threadMessages: ChatMessage[], systemPrompt?: string): string {
     const recentMessages = threadMessages.slice(-THREAD_CONTEXT_LIMIT);
 
-    return recentMessages
-      .map((msg) => `${msg.role}: ${msg.content}`)
-      .join("\n\n");
+    const parts: string[] = [];
+
+    if (systemPrompt) {
+      parts.push(`SYSTEM: ${systemPrompt}`);
+    }
+
+    for (const msg of recentMessages) {
+      parts.push(`${msg.role}: ${msg.content}`);
+    }
+
+    return parts.join("\n\n");
   }
 
-  private buildChatMessages(threadMessages: ChatMessage[]): OpenAiChatMessage[] {
+  private buildChatMessages(threadMessages: ChatMessage[], systemPrompt?: string): OpenAiChatMessage[] {
     const recentMessages = threadMessages.slice(-THREAD_CONTEXT_LIMIT);
+    const messages: OpenAiChatMessage[] = [];
 
-    return recentMessages.map((msg) => ({
-      role: this.mapMessageRole(msg.role),
-      content: msg.content,
-    }));
+    if (systemPrompt) {
+      messages.push({ role: "system", content: systemPrompt });
+    }
+
+    for (const msg of recentMessages) {
+      messages.push({
+        role: this.mapMessageRole(msg.role),
+        content: msg.content,
+      });
+    }
+
+    return messages;
   }
 
   private mapMessageRole(role: string): string {

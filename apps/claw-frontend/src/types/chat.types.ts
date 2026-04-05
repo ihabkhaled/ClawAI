@@ -1,4 +1,4 @@
-import type { RoutingMode, MessageRole } from '@/enums';
+import type { MessageFeedback, MessageRole, RoutingMode } from '@/enums';
 
 export type ChatThread = {
   id: string;
@@ -9,6 +9,9 @@ export type ChatThread = {
   lastModel: string | null;
   isPinned: boolean;
   isArchived: boolean;
+  systemPrompt: string | null;
+  temperature: number | null;
+  maxTokens: number | null;
   createdAt: string;
   updatedAt: string;
   _count?: { messages: number };
@@ -26,12 +29,25 @@ export type ChatMessage = {
   usedFallback: boolean;
   inputTokens: number | null;
   outputTokens: number | null;
+  feedback: MessageFeedback | null;
   latencyMs: number | null;
   createdAt: string;
 };
 
-export type CreateThreadRequest = { title?: string };
-export type UpdateThreadRequest = { isPinned?: boolean; isArchived?: boolean; title?: string };
+export type CreateThreadRequest = {
+  title?: string;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+};
+export type UpdateThreadRequest = {
+  isPinned?: boolean;
+  isArchived?: boolean;
+  title?: string;
+  systemPrompt?: string | null;
+  temperature?: number | null;
+  maxTokens?: number | null;
+};
 export type CreateMessageRequest = { threadId: string; content: string };
 
 export type PinThreadParams = {
@@ -48,6 +64,11 @@ export type UpdateThreadMutationParams = {
   id: string;
   data: UpdateThreadRequest;
 };
+export type SetFeedbackParams = {
+  messageId: string;
+  feedback: MessageFeedback | null;
+};
+
 export type ThreadsListResponse = {
   data: ChatThread[];
   meta: { total: number; page: number; limit: number; totalPages: number };

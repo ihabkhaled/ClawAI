@@ -11,6 +11,7 @@ export type {
   PinThreadParams,
   ArchiveThreadParams,
   UpdateThreadMutationParams,
+  SetFeedbackParams,
 } from './chat.types';
 export type {
   Connector,
@@ -152,6 +153,7 @@ export type {
   ServerLogsTabProps,
   UseLogsPageReturn,
 } from './log.types';
+export type { MarkdownRendererProps } from './markdown.types';
 export type {
   TranslationDictionary,
   TranslationNamespace,

@@ -24,6 +24,9 @@ export class ChatThreadsService {
       userId,
       title: dto.title,
       routingMode: dto.routingMode,
+      systemPrompt: dto.systemPrompt,
+      temperature: dto.temperature,
+      maxTokens: dto.maxTokens,
     });
 
     void this.rabbitMQService.publish(THREAD_CREATED_EVENT, {
@@ -89,6 +92,9 @@ export class ChatThreadsService {
       isPinned: dto.isPinned,
       isArchived: dto.isArchived,
       routingMode: dto.routingMode,
+      systemPrompt: dto.systemPrompt,
+      temperature: dto.temperature,
+      maxTokens: dto.maxTokens,
     });
   }
 

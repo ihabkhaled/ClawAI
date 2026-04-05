@@ -26,6 +26,9 @@ const mockThread: ChatThread = {
   lastModel: null,
   isPinned: false,
   isArchived: false,
+  systemPrompt: null,
+  temperature: 0.7,
+  maxTokens: null,
   createdAt: '2026-01-01T00:00:00Z',
   updatedAt: '2026-01-01T00:00:00Z',
 };
@@ -42,6 +45,7 @@ const mockMessage: ChatMessage = {
   usedFallback: false,
   inputTokens: null,
   outputTokens: null,
+  feedback: null,
   latencyMs: null,
   createdAt: '2026-01-01T00:00:00Z',
 };

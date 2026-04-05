@@ -4,6 +4,9 @@ export interface CreateThreadData {
   userId: string;
   title?: string;
   routingMode?: RoutingMode;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
 }
 
 export interface UpdateThreadData {
@@ -13,6 +16,9 @@ export interface UpdateThreadData {
   routingMode?: RoutingMode;
   lastProvider?: string;
   lastModel?: string;
+  systemPrompt?: string | null;
+  temperature?: number | null;
+  maxTokens?: number | null;
 }
 
 export interface ThreadFilters {
