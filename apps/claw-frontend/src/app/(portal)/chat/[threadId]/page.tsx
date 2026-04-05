@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { MessageBubble } from '@/components/chat/message-bubble';
 import { MessageComposer } from '@/components/chat/message-composer';
+import { ThinkingIndicator } from '@/components/chat/thinking-indicator';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
@@ -20,11 +21,13 @@ function MessagesContent({
   isLoadingThread,
   isLoadingMessages,
   messages,
+  isWaitingForResponse,
   messagesEndRef,
 }: {
   isLoadingThread: boolean;
   isLoadingMessages: boolean;
   messages: ChatMessage[];
+  isWaitingForResponse: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
 }): React.ReactElement {
   if (isLoadingThread || isLoadingMessages) {
@@ -44,6 +47,7 @@ function MessagesContent({
       {messages.map((message) => (
         <MessageBubble key={message.id} message={message} />
       ))}
+      {isWaitingForResponse ? <ThinkingIndicator /> : null}
       <div ref={messagesEndRef} />
     </div>
   );
@@ -54,8 +58,9 @@ export default function ThreadDetailPage() {
   const threadId = params.threadId ?? '';
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { thread, messages, isLoadingThread, isLoadingMessages } = useThreadDetail(threadId);
-  const { sendMessage, isPending: isSending } = useSendMessage(threadId);
+  const { thread, messages, isLoadingThread, isLoadingMessages, isWaitingForResponse, startWaitingForResponse } =
+    useThreadDetail(threadId);
+  const { sendMessage, isPending: isSending } = useSendMessage(threadId, startWaitingForResponse);
   const { deleteThread, isPending: isDeleting } = useDeleteThread();
 
   const scrollToBottom = useCallback(() => {
@@ -64,7 +69,7 @@ export default function ThreadDetailPage() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages.length, scrollToBottom]);
+  }, [messages.length, isWaitingForResponse, scrollToBottom]);
 
   const handleSend = useCallback(
     (content: string) => {
@@ -120,6 +125,7 @@ export default function ThreadDetailPage() {
             isLoadingThread={isLoadingThread}
             isLoadingMessages={isLoadingMessages}
             messages={messages}
+            isWaitingForResponse={isWaitingForResponse}
             messagesEndRef={messagesEndRef}
           />
         </div>

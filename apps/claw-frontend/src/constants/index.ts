@@ -7,7 +7,12 @@ export type { SidebarItem } from './sidebar.constants';
 export { SPINNER_SIZE_CLASSES } from './spinner.constants';
 export { DASHBOARD_STAT_CARDS, DASHBOARD_QUICK_ACTIONS } from './dashboard.constants';
 export { STATUS_STYLES } from './status-badge.constants';
-export { ROUTING_MODE_LABELS, MESSAGE_ROLE_LABELS } from './chat.constants';
+export {
+  ROUTING_MODE_LABELS,
+  MESSAGE_ROLE_LABELS,
+  THINKING_INDICATOR_LABEL,
+  POLLING_INTERVAL_MS,
+} from './chat.constants';
 export {
   PROVIDER_DISPLAY_NAMES,
   PROVIDER_ICON_COLORS,
@@ -25,6 +30,8 @@ export {
   POLICY_FORM_DEFAULTS,
   CONFIDENCE_THRESHOLDS,
 } from './routing.constants';
+export { LANGUAGE_OPTIONS, APPEARANCE_OPTIONS } from './preferences.constants';
+export { APPEARANCE_ICONS } from './settings.constants';
 export {
   MEMORY_FILTER_OPTIONS,
   MEMORY_TYPE_OPTIONS,

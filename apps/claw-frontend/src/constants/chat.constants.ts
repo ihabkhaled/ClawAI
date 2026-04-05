@@ -16,3 +16,6 @@ export const MESSAGE_ROLE_LABELS: Record<MessageRole, string> = {
   [MessageRole.ASSISTANT]: "Assistant",
   [MessageRole.TOOL]: "Tool",
 };
+
+export const THINKING_INDICATOR_LABEL = "AI is thinking...";
+export const POLLING_INTERVAL_MS = 2000;

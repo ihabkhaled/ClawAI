@@ -102,6 +102,10 @@ export type ProvidersProps = {
   children: React.ReactNode;
 };
 
+export type ThemeProviderProps = {
+  children: React.ReactNode;
+};
+
 // ─── Admin component props ──────────────────────────────────────────────────
 
 export type UserTableProps = {
@@ -117,6 +121,10 @@ export type UserTableProps = {
 export type MessageBubbleProps = {
   message: ChatMessage;
   routingDecision?: RoutingDecision | null;
+};
+
+export type ThinkingIndicatorProps = {
+  className?: string;
 };
 
 export type MessageComposerProps = {

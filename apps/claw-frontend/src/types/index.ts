@@ -94,6 +94,7 @@ export type {
   StatusBadgeProps,
   SidebarNavItemProps,
   ProvidersProps,
+  ThemeProviderProps,
   MemoryCardProps,
   FileUploadZoneProps,
   FileListItemProps,
@@ -101,6 +102,7 @@ export type {
   UserTableProps,
   MessageBubbleProps,
   MessageComposerProps,
+  ThinkingIndicatorProps,
   RoutingBadgeProps,
   RoutingTransparencyProps,
   ThreadListItemProps,
@@ -117,6 +119,7 @@ export type {
   UsageChartProps,
   PolicyFormProps,
 } from './component.types';
+export type { UpdatePreferencesRequest } from './preference.types';
 export type {
   TranslationDictionary,
   TranslationNamespace,

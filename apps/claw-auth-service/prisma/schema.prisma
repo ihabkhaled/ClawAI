@@ -20,6 +20,23 @@ enum UserStatus {
   PENDING
 }
 
+enum UserLanguagePreference {
+  EN
+  AR
+  FR
+  IT
+  DE
+  ES
+  RU
+  PT
+}
+
+enum UserAppearancePreference {
+  SYSTEM
+  LIGHT
+  DARK
+}
+
 model User {
   id                 String     @id @default(cuid())
   email              String     @unique
@@ -27,9 +44,11 @@ model User {
   passwordHash       String     @map("password_hash")
   role               UserRole   @default(VIEWER)
   status             UserStatus @default(PENDING)
-  mustChangePassword Boolean    @default(false) @map("must_change_password")
-  createdAt          DateTime   @default(now()) @map("created_at")
-  updatedAt          DateTime   @updatedAt @map("updated_at")
+  mustChangePassword    Boolean                  @default(false) @map("must_change_password")
+  languagePreference    UserLanguagePreference   @default(EN) @map("language_preference")
+  appearancePreference  UserAppearancePreference @default(SYSTEM) @map("appearance_preference")
+  createdAt             DateTime                 @default(now()) @map("created_at")
+  updatedAt             DateTime                 @updatedAt @map("updated_at")
 
   sessions Session[]
 

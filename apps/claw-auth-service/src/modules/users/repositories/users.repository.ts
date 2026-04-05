@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import { Prisma, User } from '../../../generated/prisma';
+import { Prisma, User, UserAppearancePreference, UserLanguagePreference } from '../../../generated/prisma';
 import { SortOrder } from '../../../common/enums';
 import { type UpdateUserData, type UserFilters } from '../types/users.types';
 
@@ -57,6 +57,16 @@ export class UsersRepository {
   async countAll(filters?: UserFilters): Promise<number> {
     const where = this.buildWhereClause(filters);
     return this.prisma.user.count({ where });
+  }
+
+  async updatePreferences(
+    userId: string,
+    data: { languagePreference?: UserLanguagePreference; appearancePreference?: UserAppearancePreference },
+  ): Promise<User> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data,
+    });
   }
 
   private buildWhereClause(filters?: UserFilters): Prisma.UserWhereInput {

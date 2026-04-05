@@ -46,6 +46,17 @@ export function formatFileSize(bytes: number): string {
 }
 
 /**
+ * Format a latency value in milliseconds to a human-readable string.
+ * Values under 1000ms display as "Xms", values 1000ms+ display as "X.Xs".
+ */
+export function formatLatency(ms: number): string {
+  if (ms < 1000) {
+    return `${Math.round(ms)}ms`;
+  }
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
+/**
  * Format a token count to a compact string (e.g. "128K", "1.5M").
  */
 export function formatContextTokens(tokens: number | null): string {

@@ -11,6 +11,8 @@ export interface LoginResult {
     username: string;
     role: string;
     mustChangePassword: boolean;
+    languagePreference: string;
+    appearancePreference: string;
   };
 }
 
@@ -25,5 +27,7 @@ export interface UserProfile {
   role: string;
   status: string;
   mustChangePassword: boolean;
+  languagePreference: string;
+  appearancePreference: string;
   createdAt: Date;
 }

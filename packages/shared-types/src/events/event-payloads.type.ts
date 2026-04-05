@@ -58,17 +58,21 @@ export interface MessageCreatedPayload extends BaseEventPayload {
 export interface MessageRoutedPayload extends BaseEventPayload {
   messageId: string;
   threadId: string;
-  connectorId: string;
-  modelId: string;
+  selectedProvider: string;
+  selectedModel: string;
   routingMode: RoutingMode;
+  fallbackProvider?: string;
+  fallbackModel?: string;
 }
 
 export interface MessageCompletedPayload extends BaseEventPayload {
   messageId: string;
   threadId: string;
-  connectorId: string;
-  modelId: string;
-  tokensUsed: number;
+  assistantMessageId: string;
+  provider: string;
+  model: string;
+  inputTokens?: number;
+  outputTokens?: number;
   latencyMs: number;
 }
 

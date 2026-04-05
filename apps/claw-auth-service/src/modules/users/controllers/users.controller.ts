@@ -6,6 +6,7 @@ import { CreateUserDto, createUserSchema } from "../dto/create-user.dto";
 import { UpdateUserDto, updateUserSchema } from "../dto/update-user.dto";
 import { ListUsersQueryDto, listUsersQuerySchema } from "../dto/list-users-query.dto";
 import { ChangeRoleDto, changeRoleSchema } from "../dto/change-role.dto";
+import { UpdatePreferencesDto, updatePreferencesSchema } from "../dto/update-preferences.dto";
 import { Roles } from "../../../app/decorators/roles.decorator";
 import { CurrentUser } from "../../../app/decorators/current-user.decorator";
 import { UserRole } from "../../../common/enums";
@@ -29,6 +30,14 @@ export class UsersController {
     @Query(new ZodValidationPipe(listUsersQuerySchema)) query: ListUsersQueryDto,
   ): Promise<PaginatedResult<SafeUser>> {
     return this.usersService.findAll(query);
+  }
+
+  @Patch("me/preferences")
+  async updateMyPreferences(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(updatePreferencesSchema)) dto: UpdatePreferencesDto,
+  ): Promise<SafeUser> {
+    return this.usersService.updatePreferences(user.id, dto);
   }
 
   @Get(":id")

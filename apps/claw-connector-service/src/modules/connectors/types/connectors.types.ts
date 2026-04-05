@@ -83,3 +83,10 @@ export interface ModelCapabilities {
   supportsStructuredOutput: boolean;
   maxContextTokens?: number;
 }
+
+export interface ConnectorConfigResult {
+  provider: string;
+  apiKey: string;
+  baseUrl?: string;
+  region?: string;
+}

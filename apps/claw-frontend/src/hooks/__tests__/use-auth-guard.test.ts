@@ -21,6 +21,8 @@ const mockUser: UserProfile = {
   username: 'claw-admin',
   role: 'ADMIN' as UserProfile['role'],
   mustChangePassword: false,
+  languagePreference: 'EN' as UserProfile['languagePreference'],
+  appearancePreference: 'SYSTEM' as UserProfile['appearancePreference'],
 };
 
 describe('useAuthGuard', () => {

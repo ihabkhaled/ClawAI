@@ -14,6 +14,7 @@ import { type UpdateConnectorDto } from "../dto/update-connector.dto";
 import { type ListConnectorsQueryDto } from "../dto/list-connectors-query.dto";
 import {
   type ConnectorWithModels,
+  type ConnectorConfigResult,
   type HealthCheckResult,
   type SyncModelsResult,
 } from "../types/connectors.types";
@@ -167,6 +168,14 @@ export class ConnectorsService {
     });
 
     return result;
+  }
+
+  async getConnectorConfig(provider: string): Promise<ConnectorConfigResult> {
+    const connector = await this.connectorsRepository.findByProvider(provider);
+    if (!connector) {
+      throw new EntityNotFoundException("Connector", provider);
+    }
+    return this.connectorsManager.getDecryptedConfig(connector);
   }
 
   async getModels(connectorId: string): Promise<ConnectorModel[]> {

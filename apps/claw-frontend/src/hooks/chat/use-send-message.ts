@@ -5,7 +5,7 @@ import { queryKeys } from '@/repositories/shared/query-keys';
 import type { CreateMessageRequest } from '@/types';
 import { showToast } from '@/utilities';
 
-export function useSendMessage(threadId: string) {
+export function useSendMessage(threadId: string, onMessageSent?: () => void) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -17,6 +17,7 @@ export function useSendMessage(threadId: string) {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.threads.lists(),
       });
+      onMessageSent?.();
     },
     onError: (error: Error) => {
       showToast.apiError(error, 'Failed to send message');

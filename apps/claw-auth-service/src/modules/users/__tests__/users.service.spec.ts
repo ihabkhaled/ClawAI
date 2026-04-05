@@ -14,6 +14,8 @@ const mockUser = {
   role: UserRole.VIEWER,
   status: UserStatus.ACTIVE,
   mustChangePassword: false,
+  languagePreference: 'EN' as const,
+  appearancePreference: 'SYSTEM' as const,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -27,6 +29,7 @@ const mockRepository = (): Record<keyof UsersRepository, jest.Mock> => ({
   updateById: jest.fn(),
   deleteById: jest.fn(),
   countAll: jest.fn(),
+  updatePreferences: jest.fn(),
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({

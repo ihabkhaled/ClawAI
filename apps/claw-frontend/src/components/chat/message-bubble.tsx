@@ -4,12 +4,14 @@ import { MESSAGE_ROLE_LABELS } from '@/constants';
 import { MessageRole } from '@/enums';
 import { cn } from '@/lib/utils';
 import type { MessageBubbleProps } from '@/types';
+import { formatLatency } from '@/utilities';
 
 export function MessageBubble({ message, routingDecision }: MessageBubbleProps) {
   const isUser = message.role === MessageRole.USER;
   const roleLabel = MESSAGE_ROLE_LABELS[message.role];
 
   const totalTokens = (message.inputTokens ?? 0) + (message.outputTokens ?? 0);
+  const providerModel = [message.provider, message.model].filter(Boolean).join(' / ');
 
   return (
     <div className={cn('flex w-full', isUser ? 'justify-end' : 'justify-start')}>
@@ -23,23 +25,18 @@ export function MessageBubble({ message, routingDecision }: MessageBubbleProps) 
         >
           <p className="whitespace-pre-wrap">{message.content}</p>
         </div>
-        {!isUser && (message.provider ?? message.model ?? totalTokens > 0) ? (
+        {!isUser && (providerModel || totalTokens > 0 || message.latencyMs !== null) ? (
           <div className="flex flex-wrap items-center gap-1.5">
-            {message.provider ? (
+            {providerModel ? (
               <Badge variant="outline" className="text-xs">
-                {message.provider}
-              </Badge>
-            ) : null}
-            {message.model ? (
-              <Badge variant="outline" className="text-xs">
-                {message.model}
+                {providerModel}
               </Badge>
             ) : null}
             {totalTokens > 0 ? (
               <span className="text-xs text-muted-foreground">{totalTokens} tokens</span>
             ) : null}
             {message.latencyMs !== null ? (
-              <span className="text-xs text-muted-foreground">{message.latencyMs}ms</span>
+              <span className="text-xs text-muted-foreground">{formatLatency(message.latencyMs)}</span>
             ) : null}
           </div>
         ) : null}

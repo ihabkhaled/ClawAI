@@ -11,6 +11,8 @@ export interface UpdateThreadData {
   isPinned?: boolean;
   isArchived?: boolean;
   routingMode?: RoutingMode;
+  lastProvider?: string;
+  lastModel?: string;
 }
 
 export interface ThreadFilters {

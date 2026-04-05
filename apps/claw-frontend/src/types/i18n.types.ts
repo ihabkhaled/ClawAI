@@ -196,8 +196,16 @@ export type TranslationDictionary = {
     profile: string;
     preferences: string;
     language: string;
+    languageDescription: string;
+    appearance: string;
+    appearanceDescription: string;
+    system: string;
+    light: string;
+    dark: string;
     theme: string;
     changePassword: string;
+    preferencesUpdated: string;
+    preferencesUpdateFailed: string;
   };
   dashboard: {
     title: string;

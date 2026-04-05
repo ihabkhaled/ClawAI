@@ -44,6 +44,7 @@ const mockConnectorWithModels = {
 const mockConnectorsRepository = (): Record<keyof ConnectorsRepository, jest.Mock> => ({
   create: jest.fn(),
   findById: jest.fn(),
+  findByProvider: jest.fn(),
   findAll: jest.fn(),
   update: jest.fn(),
   delete: jest.fn(),

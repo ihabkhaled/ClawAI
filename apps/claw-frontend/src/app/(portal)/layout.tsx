@@ -6,9 +6,11 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { Topbar } from '@/components/layout/topbar';
 import { ComponentSize } from '@/enums';
 import { useAuthGuard } from '@/hooks/auth/use-auth-guard';
+import { usePreferenceBootstrap } from '@/hooks/settings/use-preference-bootstrap';
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const { isReady } = useAuthGuard();
+  usePreferenceBootstrap();
 
   if (!isReady) {
     return (

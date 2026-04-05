@@ -12,6 +12,8 @@ export interface SafeUser {
   role: string;
   status: string;
   mustChangePassword: boolean;
+  languagePreference: string;
+  appearancePreference: string;
   createdAt: Date;
   updatedAt: Date;
 }

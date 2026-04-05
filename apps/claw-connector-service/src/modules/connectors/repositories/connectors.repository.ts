@@ -41,6 +41,13 @@ export class ConnectorsRepository {
     return this.prisma.connector.update({ where: { id }, data });
   }
 
+  async findByProvider(provider: string): Promise<Connector | null> {
+    return this.prisma.connector.findFirst({
+      where: { provider: provider as Prisma.EnumConnectorProviderFilter["equals"], isEnabled: true },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
   async delete(id: string): Promise<Connector> {
     return this.prisma.connector.delete({ where: { id } });
   }

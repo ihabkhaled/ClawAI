@@ -8,8 +8,15 @@ export {
   formatRelativeDate,
   formatShortDateTime,
   formatFileSize,
+  formatLatency,
   formatContextTokens,
 } from './format.utility';
 export { getLifecycleBadgeVariant } from './lifecycle.utility';
 export { getInitials } from './string.utility';
+export {
+  languageToLocale,
+  localeToLanguage,
+  appearanceToTheme,
+  themeToAppearance,
+} from './preference.utility';
 export { showToast } from './toast.utility';

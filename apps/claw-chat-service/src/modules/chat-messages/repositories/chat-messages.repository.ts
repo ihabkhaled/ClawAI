@@ -29,6 +29,14 @@ export class ChatMessagesRepository {
     return this.prisma.chatMessage.count({ where: { threadId } });
   }
 
+  async findRecentByThreadId(threadId: string, limit: number): Promise<ChatMessage[]> {
+    return this.prisma.chatMessage.findMany({
+      where: { threadId },
+      take: limit,
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
   async deleteByThreadId(threadId: string): Promise<number> {
     const result = await this.prisma.chatMessage.deleteMany({ where: { threadId } });
     return result.count;

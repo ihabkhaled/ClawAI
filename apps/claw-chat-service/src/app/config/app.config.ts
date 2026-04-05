@@ -7,6 +7,9 @@ const appConfigSchema = z.object({
 
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
 
+  OLLAMA_SERVICE_URL: z.string().min(1).default("http://ollama-service:4008"),
+  CONNECTOR_SERVICE_URL: z.string().min(1).default("http://connector-service:4003"),
+
   PORT: z.coerce.number().int().positive().default(4002),
 });
 

@@ -282,6 +282,8 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET}
+      OLLAMA_SERVICE_URL: ${OLLAMA_SERVICE_URL:-http://ollama-service:4008}
+      CONNECTOR_SERVICE_URL: ${CONNECTOR_SERVICE_URL:-http://connector-service:4003}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
     depends_on:
       pg-chat:

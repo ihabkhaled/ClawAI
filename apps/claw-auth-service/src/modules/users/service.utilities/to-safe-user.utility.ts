@@ -9,6 +9,8 @@ export function toSafeUser(user: User): SafeUser {
     role: user.role,
     status: user.status,
     mustChangePassword: user.mustChangePassword,
+    languagePreference: user.languagePreference,
+    appearancePreference: user.appearancePreference,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };

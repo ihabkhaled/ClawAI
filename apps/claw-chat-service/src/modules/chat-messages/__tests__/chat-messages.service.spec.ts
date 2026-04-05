@@ -1,6 +1,7 @@
 import { ChatMessagesService } from '../services/chat-messages.service';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
+import { ChatExecutionManager } from '../managers/chat-execution.manager';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { EntityNotFoundException, BusinessException } from '../../../common/errors';
@@ -40,6 +41,7 @@ const mockMessagesRepository = (): Record<keyof ChatMessagesRepository, jest.Moc
   create: jest.fn(),
   findById: jest.fn(),
   findByThreadId: jest.fn(),
+  findRecentByThreadId: jest.fn(),
   countByThreadId: jest.fn(),
   deleteByThreadId: jest.fn(),
 });
@@ -48,23 +50,31 @@ const mockThreadsRepository = (): Partial<Record<keyof ChatThreadsRepository, je
   findById: jest.fn(),
 });
 
+const mockExecutionManager = (): Partial<Record<keyof ChatExecutionManager, jest.Mock>> => ({
+  execute: jest.fn(),
+});
+
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
   publish: jest.fn().mockResolvedValue(undefined),
+  subscribe: jest.fn().mockResolvedValue(undefined),
 });
 
 describe('ChatMessagesService', () => {
   let service: ChatMessagesService;
   let messagesRepo: ReturnType<typeof mockMessagesRepository>;
   let threadsRepo: ReturnType<typeof mockThreadsRepository>;
+  let executionManager: ReturnType<typeof mockExecutionManager>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
 
   beforeEach(() => {
     messagesRepo = mockMessagesRepository();
     threadsRepo = mockThreadsRepository();
+    executionManager = mockExecutionManager();
     rabbitMQ = mockRabbitMQ();
     service = new ChatMessagesService(
       messagesRepo as unknown as ChatMessagesRepository,
       threadsRepo as unknown as ChatThreadsRepository,
+      executionManager as unknown as ChatExecutionManager,
       rabbitMQ as unknown as RabbitMQService,
     );
   });

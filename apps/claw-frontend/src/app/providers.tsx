@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { Toaster } from '@/components/ui/toaster';
 import { LocaleProvider } from '@/lib/i18n';
+import { ThemeProvider } from '@/lib/theme';
 import type { ProvidersProps } from '@/types';
 
 export function Providers({ children }: ProvidersProps) {
@@ -23,10 +24,12 @@ export function Providers({ children }: ProvidersProps) {
 
   return (
     <LocaleProvider>
-      <QueryClientProvider client={queryClient}>
-        {children}
-        <Toaster />
-      </QueryClientProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          {children}
+          <Toaster />
+        </QueryClientProvider>
+      </ThemeProvider>
     </LocaleProvider>
   );
 }

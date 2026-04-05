@@ -5,6 +5,7 @@ import { UsersRepository } from "../repositories/users.repository";
 import { hashPassword } from "@common/utilities";
 import { CreateUserDto } from "../dto/create-user.dto";
 import { type UpdateUserDto } from "../dto/update-user.dto";
+import { type UpdatePreferencesDto } from "../dto/update-preferences.dto";
 import { type ListUsersQueryDto } from "../dto/list-users-query.dto";
 import {
   BusinessException,
@@ -164,6 +165,16 @@ export class UsersService {
       timestamp: new Date().toISOString(),
     });
 
+    return toSafeUser(updated);
+  }
+
+  async updatePreferences(userId: string, dto: UpdatePreferencesDto): Promise<SafeUser> {
+    const user = await this.usersRepository.findById(userId);
+    if (!user) {
+      throw new EntityNotFoundException("User", userId);
+    }
+
+    const updated = await this.usersRepository.updatePreferences(userId, dto);
     return toSafeUser(updated);
   }
 
