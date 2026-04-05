@@ -24,7 +24,7 @@ export function MemoryCard({
 }: MemoryCardProps) {
   const typeLabel = MEMORY_TYPE_LABELS[memory.type] ?? memory.type;
   const typeColor =
-    MEMORY_TYPE_COLORS[memory.type] ?? 'bg-slate-100 text-slate-800 border-slate-200';
+    MEMORY_TYPE_COLORS[memory.type] ?? 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-800';
 
   return (
     <Card className={cn('transition-colors', !memory.isEnabled && 'opacity-60')}>

@@ -114,7 +114,7 @@ export function ClientLogsTab({
           placeholder="Search logs..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-[250px]"
+          className="w-full sm:w-[250px]"
         />
       </div>
 

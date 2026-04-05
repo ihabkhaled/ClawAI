@@ -75,7 +75,7 @@ export default function ConnectorDetailPage() {
     );
   }
 
-  const providerColor = PROVIDER_ICON_COLORS[connector.provider] ?? 'bg-slate-100 text-slate-700';
+  const providerColor = PROVIDER_ICON_COLORS[connector.provider] ?? 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400';
   const providerName = PROVIDER_DISPLAY_NAMES[connector.provider] ?? connector.provider;
 
   return (

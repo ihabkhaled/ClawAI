@@ -1,3 +1,4 @@
+import { Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -21,11 +22,16 @@ import {
   AUTH_TYPE_LABELS,
   CONNECTOR_AUTH_TYPE_OPTIONS,
   CONNECTOR_PROVIDER_OPTIONS,
+  PROVIDER_DEFAULT_BASE_URLS,
   PROVIDER_DISPLAY_NAMES,
 } from '@/constants';
 import { ConnectorAuthType, ConnectorProvider } from '@/enums';
 import { createConnectorSchema } from '@/lib/validation/connector.schema';
 import type { ConnectorFormFieldErrors, ConnectorFormProps, CreateConnectorRequest } from '@/types';
+
+function FieldHint({ text }: { text: string }): React.ReactElement {
+  return <p className="text-xs text-muted-foreground">{text}</p>;
+}
 
 export function ConnectorForm({
   open,
@@ -94,6 +100,7 @@ export function ConnectorForm({
 
   const pendingLabel = isEditing ? 'Saving...' : 'Creating...';
   const submitLabel = isEditing ? 'Save Changes' : 'Create Connector';
+  const defaultBaseUrl = provider !== null ? PROVIDER_DEFAULT_BASE_URLS[provider] : null;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -117,6 +124,7 @@ export function ConnectorForm({
               onChange={(e) => setName(e.target.value)}
               placeholder="My OpenAI Connector"
             />
+            <FieldHint text="A friendly name to identify this connector in your dashboard." />
             {fieldErrors.name ? (
               <p className="mt-1 text-sm text-destructive">{fieldErrors.name[0]}</p>
             ) : null}
@@ -142,6 +150,7 @@ export function ConnectorForm({
                 ))}
               </SelectContent>
             </Select>
+            <FieldHint text="The AI provider this connector will communicate with." />
             {fieldErrors.provider ? (
               <p className="mt-1 text-sm text-destructive">{fieldErrors.provider[0]}</p>
             ) : null}
@@ -166,6 +175,7 @@ export function ConnectorForm({
                 ))}
               </SelectContent>
             </Select>
+            <FieldHint text="How to authenticate with the provider. Most providers use API Key." />
             {fieldErrors.authType ? (
               <p className="mt-1 text-sm text-destructive">{fieldErrors.authType[0]}</p>
             ) : null}
@@ -183,6 +193,7 @@ export function ConnectorForm({
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder={isEditing ? 'Leave blank to keep current key' : 'sk-...'}
               />
+              <FieldHint text="Your secret API key from the provider. It will be encrypted at rest." />
               {fieldErrors.apiKey ? (
                 <p className="mt-1 text-sm text-destructive">{fieldErrors.apiKey[0]}</p>
               ) : null}
@@ -197,8 +208,14 @@ export function ConnectorForm({
               id="connector-base-url"
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
-              placeholder="https://api.example.com"
+              placeholder={defaultBaseUrl ?? 'https://api.example.com'}
             />
+            <FieldHint text="Override the default API endpoint. Leave blank to use the provider default." />
+            {defaultBaseUrl !== null ? (
+              <p className="text-xs text-muted-foreground">
+                Default: <code className="rounded bg-muted px-1 py-0.5">{defaultBaseUrl}</code>
+              </p>
+            ) : null}
             {fieldErrors.baseUrl ? (
               <p className="mt-1 text-sm text-destructive">{fieldErrors.baseUrl[0]}</p>
             ) : null}
@@ -215,9 +232,19 @@ export function ConnectorForm({
                 onChange={(e) => setRegion(e.target.value)}
                 placeholder="us-east-1"
               />
+              <FieldHint text="The AWS region where your Bedrock endpoint is deployed." />
               {fieldErrors.region ? (
                 <p className="mt-1 text-sm text-destructive">{fieldErrors.region[0]}</p>
               ) : null}
+            </div>
+          ) : null}
+
+          {!isEditing ? (
+            <div className="flex items-start gap-2 rounded-md border bg-muted/50 p-3 text-xs text-muted-foreground">
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                Save the connector first, then test the connection from the connectors list.
+              </span>
             </div>
           ) : null}
 

@@ -4,9 +4,13 @@ export type {
   ChatThread,
   ChatMessage,
   CreateThreadRequest,
+  UpdateThreadRequest,
   CreateMessageRequest,
   ThreadsListResponse,
   MessagesListResponse,
+  PinThreadParams,
+  ArchiveThreadParams,
+  UpdateThreadMutationParams,
 } from './chat.types';
 export type {
   Connector,
@@ -113,6 +117,9 @@ export type {
   RoutingBadgeProps,
   RoutingTransparencyProps,
   ThreadListItemProps,
+  GlobalSearchProps,
+  MessageProvenanceProps,
+  ChatPageReturn,
   VirtualizedListProps,
   ConnectorCardProps,
   ConnectorFormProps,

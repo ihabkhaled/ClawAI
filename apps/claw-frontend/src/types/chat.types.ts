@@ -1,4 +1,4 @@
-import type { RoutingMode, MessageRole } from "@/enums";
+import type { RoutingMode, MessageRole } from '@/enums';
 
 export type ChatThread = {
   id: string;
@@ -31,7 +31,23 @@ export type ChatMessage = {
 };
 
 export type CreateThreadRequest = { title?: string };
+export type UpdateThreadRequest = { isPinned?: boolean; isArchived?: boolean; title?: string };
 export type CreateMessageRequest = { threadId: string; content: string };
+
+export type PinThreadParams = {
+  id: string;
+  isPinned: boolean;
+};
+
+export type ArchiveThreadParams = {
+  id: string;
+  isArchived: boolean;
+};
+
+export type UpdateThreadMutationParams = {
+  id: string;
+  data: UpdateThreadRequest;
+};
 export type ThreadsListResponse = {
   data: ChatThread[];
   meta: { total: number; page: number; limit: number; totalPages: number };

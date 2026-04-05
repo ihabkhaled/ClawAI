@@ -187,8 +187,8 @@ export default function AdminPage() {
                   variant="outline"
                   className={cn(
                     'capitalize',
-                    healthQuery.data.status === HealthStatus.HEALTHY && 'border-emerald-500 text-emerald-600',
-                    healthQuery.data.status === HealthStatus.DEGRADED && 'border-amber-500 text-amber-600',
+                    healthQuery.data.status === HealthStatus.HEALTHY && 'border-emerald-500 text-emerald-600 dark:text-emerald-400',
+                    healthQuery.data.status === HealthStatus.DEGRADED && 'border-amber-500 text-amber-600 dark:text-amber-400',
                     healthQuery.data.status === HealthStatus.UNHEALTHY && 'border-destructive text-destructive',
                   )}
                 >

@@ -218,7 +218,7 @@ export default function AuditsPage() {
             setSearch(e.target.value);
             setPage(1);
           }}
-          className="w-[200px]"
+          className="w-full sm:w-[200px]"
         />
       </div>
 

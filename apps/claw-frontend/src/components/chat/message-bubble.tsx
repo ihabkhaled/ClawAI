@@ -1,3 +1,4 @@
+import { MessageProvenance } from '@/components/chat/message-provenance';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
 import { Badge } from '@/components/ui/badge';
 import { MESSAGE_ROLE_LABELS } from '@/constants';
@@ -40,6 +41,7 @@ export function MessageBubble({ message, routingDecision }: MessageBubbleProps) 
             ) : null}
           </div>
         ) : null}
+        {!isUser ? <MessageProvenance message={message} /> : null}
         {!isUser && routingDecision ? <RoutingTransparency decision={routingDecision} /> : null}
       </div>
     </div>

@@ -144,6 +144,34 @@ export type RoutingTransparencyProps = {
 export type ThreadListItemProps = {
   thread: ChatThread;
   isActive?: boolean;
+  onPin?: (id: string, isPinned: boolean) => void;
+  onArchive?: (id: string, isArchived: boolean) => void;
+  isPinPending?: boolean;
+  isArchivePending?: boolean;
+};
+
+export type GlobalSearchProps = {
+  className?: string;
+};
+
+export type MessageProvenanceProps = {
+  message: ChatMessage;
+};
+
+export type ChatPageReturn = {
+  pinnedThreads: ChatThread[];
+  unpinnedThreads: ChatThread[];
+  isLoading: boolean;
+  search: string;
+  setSearch: (value: string) => void;
+  showArchived: boolean;
+  toggleShowArchived: () => void;
+  handleNewChat: () => void;
+  isCreating: boolean;
+  handlePin: (id: string, isPinned: boolean) => void;
+  handleArchive: (id: string, isArchived: boolean) => void;
+  isPinPending: boolean;
+  isArchivePending: boolean;
 };
 
 // ─── Common component props (generic) ───────────────────────────────────────

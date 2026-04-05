@@ -10,7 +10,7 @@ import { formatFileSize, formatShortDateTime } from '@/utilities';
 export function FileListItem({ file, onDelete, onViewChunks, isDeletePending }: FileListItemProps) {
   const statusLabel = INGESTION_STATUS_LABELS[file.ingestionStatus] ?? file.ingestionStatus;
   const statusColor =
-    INGESTION_STATUS_COLORS[file.ingestionStatus] ?? 'bg-slate-100 text-slate-800 border-slate-200';
+    INGESTION_STATUS_COLORS[file.ingestionStatus] ?? 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-800';
 
   return (
     <div className="flex items-center gap-4 rounded-lg border p-4">

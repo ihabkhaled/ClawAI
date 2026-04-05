@@ -101,8 +101,8 @@ export default function DashboardPage() {
                   variant="outline"
                   className={cn(
                     'capitalize',
-                    healthStatus === HealthStatus.HEALTHY && 'border-emerald-500 text-emerald-600',
-                    healthStatus === HealthStatus.DEGRADED && 'border-amber-500 text-amber-600',
+                    healthStatus === HealthStatus.HEALTHY && 'border-emerald-500 text-emerald-600 dark:text-emerald-400',
+                    healthStatus === HealthStatus.DEGRADED && 'border-amber-500 text-amber-600 dark:text-amber-400',
                     healthStatus === HealthStatus.UNHEALTHY && 'border-destructive text-destructive',
                   )}
                 >

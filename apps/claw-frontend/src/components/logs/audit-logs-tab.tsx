@@ -275,7 +275,7 @@ export function AuditLogsTab({
           placeholder="Search across all fields..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-[250px]"
+          className="w-full sm:w-[250px]"
         />
       </div>
 

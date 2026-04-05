@@ -21,3 +21,4 @@ export {
 } from './preference.utility';
 export { showToast } from './toast.utility';
 export { logger } from './logger.utility';
+export { estimateCost } from './cost.utility';

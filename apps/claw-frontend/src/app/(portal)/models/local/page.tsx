@@ -177,7 +177,7 @@ export default function LocalModelsPage(): React.ReactElement {
             <CardDescription>Download a new model from the registry</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-end gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
               <div className="flex-1 space-y-2">
                 <label htmlFor="pull-model-name" className="text-sm font-medium">
                   Model Name
@@ -195,7 +195,7 @@ export default function LocalModelsPage(): React.ReactElement {
                   <p className="mt-1 text-sm text-destructive">{pullFieldErrors.modelName[0]}</p>
                 )}
               </div>
-              <div className="w-[160px] space-y-2">
+              <div className="w-full sm:w-[160px] space-y-2">
                 <label htmlFor="pull-model-runtime" className="text-sm font-medium">
                   Runtime
                 </label>
