@@ -1,23 +1,26 @@
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
 
-import { useDebounce } from "@/hooks/common/use-debounce";
-import { chatRepository } from "@/repositories/chat/chat.repository";
-import { queryKeys } from "@/repositories/shared/query-keys";
+import { useDebounce } from '@/hooks/common/use-debounce';
+import { chatRepository } from '@/repositories/chat/chat.repository';
+import { queryKeys } from '@/repositories/shared/query-keys';
 
 export function useThreads() {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
 
-  const filters: Record<string, unknown> = {};
-  if (debouncedSearch) {
-    filters["search"] = debouncedSearch;
-  }
+  const filters = useMemo<Record<string, unknown>>(
+    () => (debouncedSearch ? { search: debouncedSearch } : {}),
+    [debouncedSearch],
+  );
 
-  const params: Record<string, string> = {};
-  if (debouncedSearch) {
-    params["search"] = debouncedSearch;
-  }
+  const params = useMemo((): Record<string, string> => {
+    const result: Record<string, string> = {};
+    if (debouncedSearch) {
+      result['search'] = debouncedSearch;
+    }
+    return result;
+  }, [debouncedSearch]);
 
   const query = useQuery({
     queryKey: queryKeys.threads.list(filters),

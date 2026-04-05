@@ -1,13 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
-import { type ConnectorHealthEvent, type ConnectorStatus } from "../../../generated/prisma";
-
-export interface CreateHealthEventData {
-  connectorId: string;
-  status: ConnectorStatus;
-  latencyMs?: number;
-  errorMessage?: string;
-}
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { type ConnectorHealthEvent } from '../../../generated/prisma';
+import { type CreateHealthEventData } from '../types/connectors.types';
 
 @Injectable()
 export class HealthEventsRepository {
@@ -17,13 +11,10 @@ export class HealthEventsRepository {
     return this.prisma.connectorHealthEvent.create({ data });
   }
 
-  async findByConnectorId(
-    connectorId: string,
-    limit: number,
-  ): Promise<ConnectorHealthEvent[]> {
+  async findByConnectorId(connectorId: string, limit: number): Promise<ConnectorHealthEvent[]> {
     return this.prisma.connectorHealthEvent.findMany({
       where: { connectorId },
-      orderBy: { checkedAt: "desc" },
+      orderBy: { checkedAt: 'desc' },
       take: limit,
     });
   }

@@ -1,4 +1,4 @@
-import type { RoutingMode } from "@/enums";
+import type { RoutingMode } from '@/enums';
 
 export type RoutingConfig = {
   id: string;
@@ -104,4 +104,9 @@ export type EvaluateRouteResponse = {
   routingMode: RoutingMode;
   confidence: number | null;
   reasonTags: string[];
+};
+
+export type UpdatePolicyParams = {
+  id: string;
+  data: UpdatePolicyRequest;
 };

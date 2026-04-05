@@ -1,4 +1,9 @@
-import { type UserRole, type UserStatus } from "../../../common/enums";
+import { type SortOrder, type UserRole, type UserStatus } from '../../../common/enums';
+
+export interface PasswordPolicyResult {
+  valid: boolean;
+  errors: string[];
+}
 
 export interface SafeUser {
   id: string;
@@ -31,5 +36,5 @@ export interface ListUsersQuery {
   role?: UserRole;
   status?: UserStatus;
   sortBy: string;
-  sortOrder: "asc" | "desc";
+  sortOrder: SortOrder;
 }

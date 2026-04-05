@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AxiosRequestConfig } from 'axios';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiClientError, apiClient } from '@/services/shared/api-client';
 
@@ -46,7 +46,14 @@ vi.mock('@/lib/http-client', () => {
 
 type MockHandler =
   | { response: { data: unknown; status: number } }
-  | { error: { response?: { status: number; data?: { message?: string; errors?: Record<string, string[]> } } } };
+  | {
+      error: {
+        response?: {
+          status: number;
+          data?: { message?: string; errors?: Record<string, string[]> };
+        };
+      };
+    };
 
 const mockHandlers: MockHandler[] = [];
 

@@ -1,4 +1,4 @@
-import type { MemoryType } from "@/enums";
+import type { MemoryFilterValue, MemoryType } from '@/enums';
 
 export type MemoryRecord = {
   id: string;
@@ -23,4 +23,15 @@ export type UpdateMemoryRequest = {
   content?: string;
   type?: MemoryType;
   isEnabled?: boolean;
+};
+
+export type MemoryFilterType = MemoryType | MemoryFilterValue.ALL;
+
+export type ToggleMemoryParams = {
+  id: string;
+};
+
+export type UpdateMemoryParams = {
+  id: string;
+  data: UpdateMemoryRequest;
 };

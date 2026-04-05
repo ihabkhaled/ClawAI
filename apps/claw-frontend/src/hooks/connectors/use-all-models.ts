@@ -1,17 +1,17 @@
-import { useQueries } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useQueries } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
 
-import { ConnectorProvider } from "@/enums";
-import { connectorRepository } from "@/repositories/connectors/connector.repository";
-import { queryKeys } from "@/repositories/shared/query-keys";
-import type { ConnectorModel } from "@/types";
+import type { ConnectorProvider } from '@/enums';
+import { connectorRepository } from '@/repositories/connectors/connector.repository';
+import { queryKeys } from '@/repositories/shared/query-keys';
+import type { ConnectorModel } from '@/types';
 
-import { useConnectors } from "./use-connectors";
+import { useConnectors } from './use-connectors';
 
 export function useAllModels() {
   const { connectors, isLoading: isLoadingConnectors } = useConnectors();
-  const [providerFilter, setProviderFilter] = useState<ConnectorProvider | "">("");
-  const [lifecycleFilter, setLifecycleFilter] = useState("");
+  const [providerFilter, setProviderFilter] = useState<ConnectorProvider | null>(null);
+  const [lifecycleFilter, setLifecycleFilter] = useState('');
 
   const modelQueries = useQueries({
     queries: connectors.map((connector) => ({

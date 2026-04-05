@@ -1,12 +1,13 @@
-import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
-import { type ChatThread, Prisma } from "../../../generated/prisma";
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { type ChatThread, Prisma } from '../../../generated/prisma';
+import { type SortOrder } from '../../../common/enums';
 import {
   type CreateThreadData,
-  type UpdateThreadData,
   type ThreadFilters,
   type ThreadWithMessageCount,
-} from "../types/chat-threads.types";
+  type UpdateThreadData,
+} from '../types/chat-threads.types';
 
 @Injectable()
 export class ChatThreadsRepository {
@@ -25,7 +26,7 @@ export class ChatThreadsRepository {
     page: number,
     limit: number,
     sortBy: string,
-    sortOrder: "asc" | "desc",
+    sortOrder: SortOrder,
   ): Promise<ThreadWithMessageCount[]> {
     const where = this.buildWhereClause(filters);
     const skip = (page - 1) * limit;
@@ -66,7 +67,7 @@ export class ChatThreadsRepository {
     }
 
     if (filters.search) {
-      where.title = { contains: filters.search, mode: "insensitive" };
+      where.title = { contains: filters.search, mode: 'insensitive' };
     }
 
     return where;

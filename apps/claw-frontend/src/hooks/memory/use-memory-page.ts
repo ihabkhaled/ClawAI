@@ -1,25 +1,23 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from 'react';
 
-import { MemoryType } from "@/enums";
-import type { CreateMemoryRequest, MemoryRecord } from "@/types";
+import { MemoryFilterValue } from '@/enums';
+import type { CreateMemoryRequest, MemoryFilterType, MemoryRecord } from '@/types';
 
-import { useCreateMemory } from "./use-create-memory";
-import { useDeleteMemory } from "./use-delete-memory";
-import { useMemories } from "./use-memories";
-import { useToggleMemory } from "./use-toggle-memory";
-import { useUpdateMemory } from "./use-update-memory";
-
-type FilterType = MemoryType | "ALL";
+import { useCreateMemory } from './use-create-memory';
+import { useDeleteMemory } from './use-delete-memory';
+import { useMemories } from './use-memories';
+import { useToggleMemory } from './use-toggle-memory';
+import { useUpdateMemory } from './use-update-memory';
 
 export function useMemoryPage() {
-  const [filterType, setFilterType] = useState<FilterType>("ALL");
+  const [filterType, setFilterType] = useState<MemoryFilterType>(MemoryFilterValue.ALL);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingMemory, setEditingMemory] = useState<MemoryRecord | null>(
-    null,
-  );
+  const [editingMemory, setEditingMemory] = useState<MemoryRecord | null>(null);
 
-  const filters: Record<string, unknown> =
-    filterType !== "ALL" ? { type: filterType } : {};
+  const filters = useMemo<Record<string, unknown>>(
+    () => (filterType !== MemoryFilterValue.ALL ? { type: filterType } : {}),
+    [filterType],
+  );
 
   const { memories, isLoading, isError, error } = useMemories(filters);
   const { createMemory, isPending: isCreatePending } = useCreateMemory();
@@ -27,34 +25,40 @@ export function useMemoryPage() {
   const { deleteMemory, isPending: isDeletePending } = useDeleteMemory();
   const { toggleMemory, isPending: isTogglePending } = useToggleMemory();
 
-  const handleOpenCreate = () => {
+  const handleOpenCreate = useCallback(() => {
     setEditingMemory(null);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleOpenEdit = (memory: MemoryRecord) => {
+  const handleOpenEdit = useCallback((memory: MemoryRecord) => {
     setEditingMemory(memory);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleFormSubmit = (data: CreateMemoryRequest) => {
-    if (editingMemory) {
-      updateMemory(
-        { id: editingMemory.id, data },
-        { onSuccess: () => setIsFormOpen(false) },
-      );
-    } else {
-      createMemory(data, { onSuccess: () => setIsFormOpen(false) });
-    }
-  };
+  const handleFormSubmit = useCallback(
+    (data: CreateMemoryRequest) => {
+      if (editingMemory) {
+        updateMemory({ id: editingMemory.id, data }, { onSuccess: () => setIsFormOpen(false) });
+      } else {
+        createMemory(data, { onSuccess: () => setIsFormOpen(false) });
+      }
+    },
+    [editingMemory, updateMemory, createMemory],
+  );
 
-  const handleToggle = (id: string) => {
-    toggleMemory({ id });
-  };
+  const handleToggle = useCallback(
+    (id: string) => {
+      toggleMemory({ id });
+    },
+    [toggleMemory],
+  );
 
-  const handleDelete = (id: string) => {
-    deleteMemory(id);
-  };
+  const handleDelete = useCallback(
+    (id: string) => {
+      deleteMemory(id);
+    },
+    [deleteMemory],
+  );
 
   return {
     memories,

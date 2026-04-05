@@ -52,6 +52,7 @@ export default tseslint.config(
       'node_modules/**',
       'coverage/**',
       'prisma/**',
+      'src/generated/**',
       '*.config.*',
       '*.mjs',
       '*.cjs',

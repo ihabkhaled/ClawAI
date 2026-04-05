@@ -1,20 +1,20 @@
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
-import { RabbitMQService } from "@claw/shared-rabbitmq";
-import { EventPattern } from "@claw/shared-types";
-import type {
-  UserLoginPayload,
-  UserLogoutPayload,
-  ConnectorCreatedPayload,
-  ConnectorUpdatedPayload,
-  ConnectorDeletedPayload,
-  ConnectorSyncedPayload,
-  ConnectorHealthCheckedPayload,
-  RoutingDecisionMadePayload,
-  MessageCompletedPayload,
-  MemoryExtractedPayload,
-} from "@claw/shared-types";
-import { AuditsService } from "../services/audits.service";
-import { UsageService } from "../services/usage.service";
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { RabbitMQService } from '@claw/shared-rabbitmq';
+import {
+  EventPattern,
+  type UserLoginPayload,
+  type UserLogoutPayload,
+  type ConnectorCreatedPayload,
+  type ConnectorUpdatedPayload,
+  type ConnectorDeletedPayload,
+  type ConnectorSyncedPayload,
+  type ConnectorHealthCheckedPayload,
+  type RoutingDecisionMadePayload,
+  type MessageCompletedPayload,
+  type MemoryExtractedPayload,
+} from '@claw/shared-types';
+import { AuditsService } from '../services/audits.service';
+import { UsageService } from '../services/usage.service';
 
 @Injectable()
 export class AuditEventManager implements OnModuleInit {
@@ -34,14 +34,38 @@ export class AuditEventManager implements OnModuleInit {
     const subscriptions: Array<[string, (data: unknown) => Promise<void>]> = [
       [EventPattern.USER_LOGIN, (d) => this.handleUserLogin(d as UserLoginPayload)],
       [EventPattern.USER_LOGOUT, (d) => this.handleUserLogout(d as UserLogoutPayload)],
-      [EventPattern.CONNECTOR_CREATED, (d) => this.handleConnectorCreated(d as ConnectorCreatedPayload)],
-      [EventPattern.CONNECTOR_UPDATED, (d) => this.handleConnectorUpdated(d as ConnectorUpdatedPayload)],
-      [EventPattern.CONNECTOR_DELETED, (d) => this.handleConnectorDeleted(d as ConnectorDeletedPayload)],
-      [EventPattern.CONNECTOR_SYNCED, (d) => this.handleConnectorSynced(d as ConnectorSyncedPayload)],
-      [EventPattern.CONNECTOR_HEALTH_CHECKED, (d) => this.handleConnectorHealthChecked(d as ConnectorHealthCheckedPayload)],
-      [EventPattern.ROUTING_DECISION_MADE, (d) => this.handleRoutingDecision(d as RoutingDecisionMadePayload)],
-      [EventPattern.MESSAGE_COMPLETED, (d) => this.handleMessageCompleted(d as MessageCompletedPayload)],
-      [EventPattern.MEMORY_EXTRACTED, (d) => this.handleMemoryExtracted(d as MemoryExtractedPayload)],
+      [
+        EventPattern.CONNECTOR_CREATED,
+        (d) => this.handleConnectorCreated(d as ConnectorCreatedPayload),
+      ],
+      [
+        EventPattern.CONNECTOR_UPDATED,
+        (d) => this.handleConnectorUpdated(d as ConnectorUpdatedPayload),
+      ],
+      [
+        EventPattern.CONNECTOR_DELETED,
+        (d) => this.handleConnectorDeleted(d as ConnectorDeletedPayload),
+      ],
+      [
+        EventPattern.CONNECTOR_SYNCED,
+        (d) => this.handleConnectorSynced(d as ConnectorSyncedPayload),
+      ],
+      [
+        EventPattern.CONNECTOR_HEALTH_CHECKED,
+        (d) => this.handleConnectorHealthChecked(d as ConnectorHealthCheckedPayload),
+      ],
+      [
+        EventPattern.ROUTING_DECISION_MADE,
+        (d) => this.handleRoutingDecision(d as RoutingDecisionMadePayload),
+      ],
+      [
+        EventPattern.MESSAGE_COMPLETED,
+        (d) => this.handleMessageCompleted(d as MessageCompletedPayload),
+      ],
+      [
+        EventPattern.MEMORY_EXTRACTED,
+        (d) => this.handleMemoryExtracted(d as MemoryExtractedPayload),
+      ],
     ];
 
     for (const [pattern, handler] of subscriptions) {
@@ -90,10 +114,10 @@ export class AuditEventManager implements OnModuleInit {
   async handleUserLogin(payload: UserLoginPayload): Promise<void> {
     await this.auditsService.createAuditLog({
       userId: payload.userId,
-      action: "LOGIN",
-      entityType: "user",
+      action: 'LOGIN',
+      entityType: 'user',
       entityId: payload.userId,
-      severity: "LOW",
+      severity: 'LOW',
       details: { email: payload.email, ipAddress: payload.ipAddress, userAgent: payload.userAgent },
       ipAddress: payload.ipAddress,
     });
@@ -102,10 +126,10 @@ export class AuditEventManager implements OnModuleInit {
   async handleUserLogout(payload: UserLogoutPayload): Promise<void> {
     await this.auditsService.createAuditLog({
       userId: payload.userId,
-      action: "LOGOUT",
-      entityType: "user",
+      action: 'LOGOUT',
+      entityType: 'user',
       entityId: payload.userId,
-      severity: "LOW",
+      severity: 'LOW',
       details: {},
     });
   }
@@ -113,53 +137,53 @@ export class AuditEventManager implements OnModuleInit {
   async handleConnectorCreated(payload: ConnectorCreatedPayload): Promise<void> {
     await this.auditsService.createAuditLog({
       userId: payload.userId,
-      action: "CREATE",
-      entityType: "connector",
+      action: 'CREATE',
+      entityType: 'connector',
       entityId: payload.connectorId,
-      severity: "MEDIUM",
+      severity: 'MEDIUM',
       details: { provider: payload.provider, name: payload.name },
     });
   }
 
   async handleConnectorUpdated(payload: ConnectorUpdatedPayload): Promise<void> {
     await this.auditsService.createAuditLog({
-      userId: "system",
-      action: "UPDATE",
-      entityType: "connector",
+      userId: 'system',
+      action: 'UPDATE',
+      entityType: 'connector',
       entityId: payload.connectorId,
-      severity: "MEDIUM",
+      severity: 'MEDIUM',
       details: { provider: payload.provider, changes: payload.changes },
     });
   }
 
   async handleConnectorDeleted(payload: ConnectorDeletedPayload): Promise<void> {
     await this.auditsService.createAuditLog({
-      userId: "system",
-      action: "DELETE",
-      entityType: "connector",
+      userId: 'system',
+      action: 'DELETE',
+      entityType: 'connector',
       entityId: payload.connectorId,
-      severity: "HIGH",
+      severity: 'HIGH',
       details: { provider: payload.provider },
     });
   }
 
   async handleConnectorSynced(payload: ConnectorSyncedPayload): Promise<void> {
     await this.auditsService.createAuditLog({
-      userId: "system",
-      action: "CONNECTOR_SYNC",
-      entityType: "connector",
+      userId: 'system',
+      action: 'CONNECTOR_SYNC',
+      entityType: 'connector',
       entityId: payload.connectorId,
-      severity: "LOW",
+      severity: 'LOW',
       details: { provider: payload.provider, modelsDiscovered: payload.modelsDiscovered },
     });
   }
 
   async handleConnectorHealthChecked(payload: ConnectorHealthCheckedPayload): Promise<void> {
-    const severity = payload.status === "DOWN" ? "HIGH" : "LOW";
+    const severity = payload.status === 'DOWN' ? 'HIGH' : 'LOW';
     await this.auditsService.createAuditLog({
-      userId: "system",
-      action: "ACCESS",
-      entityType: "connector",
+      userId: 'system',
+      action: 'ACCESS',
+      entityType: 'connector',
       entityId: payload.connectorId,
       severity,
       details: { provider: payload.provider, status: payload.status, latencyMs: payload.latencyMs },
@@ -168,11 +192,11 @@ export class AuditEventManager implements OnModuleInit {
 
   async handleRoutingDecision(payload: RoutingDecisionMadePayload): Promise<void> {
     await this.auditsService.createAuditLog({
-      userId: "system",
-      action: "ROUTING_DECISION",
-      entityType: "message",
+      userId: 'system',
+      action: 'ROUTING_DECISION',
+      entityType: 'message',
       entityId: payload.messageId,
-      severity: "LOW",
+      severity: 'LOW',
       details: {
         threadId: payload.threadId,
         routingMode: payload.routingMode,
@@ -186,11 +210,11 @@ export class AuditEventManager implements OnModuleInit {
 
   async handleMessageCompleted(payload: MessageCompletedPayload): Promise<void> {
     await this.auditsService.createAuditLog({
-      userId: "system",
-      action: "ACCESS",
-      entityType: "message",
+      userId: 'system',
+      action: 'ACCESS',
+      entityType: 'message',
       entityId: payload.messageId,
-      severity: "LOW",
+      severity: 'LOW',
       details: {
         threadId: payload.threadId,
         connectorId: payload.connectorId,
@@ -201,11 +225,11 @@ export class AuditEventManager implements OnModuleInit {
     });
 
     await this.usageService.createUsageEntry({
-      userId: "system",
-      resourceType: "llm_tokens",
-      action: "message.completed",
+      userId: 'system',
+      resourceType: 'llm_tokens',
+      action: 'message.completed',
       quantity: payload.tokensUsed,
-      unit: "tokens",
+      unit: 'tokens',
       metadata: {
         messageId: payload.messageId,
         threadId: payload.threadId,
@@ -220,10 +244,10 @@ export class AuditEventManager implements OnModuleInit {
   async handleMemoryExtracted(payload: MemoryExtractedPayload): Promise<void> {
     await this.auditsService.createAuditLog({
       userId: payload.userId,
-      action: "CREATE",
-      entityType: "memory",
+      action: 'CREATE',
+      entityType: 'memory',
       entityId: payload.memoryId,
-      severity: "LOW",
+      severity: 'LOW',
       details: {
         threadId: payload.threadId,
         type: payload.type,

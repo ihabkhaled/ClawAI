@@ -1,16 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
-import { type ModelSyncRun, type ModelSyncStatus } from "../../../generated/prisma";
-
-export interface CreateSyncRunData {
-  connectorId: string;
-  status: ModelSyncStatus;
-  modelsFound?: number;
-  modelsAdded?: number;
-  modelsRemoved?: number;
-  errorMessage?: string;
-  completedAt?: Date;
-}
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { type ModelSyncRun } from '../../../generated/prisma';
+import { type CreateSyncRunData } from '../types/connectors.types';
 
 @Injectable()
 export class SyncRunsRepository {
@@ -30,7 +21,7 @@ export class SyncRunsRepository {
   async findByConnectorId(connectorId: string, limit: number): Promise<ModelSyncRun[]> {
     return this.prisma.modelSyncRun.findMany({
       where: { connectorId },
-      orderBy: { startedAt: "desc" },
+      orderBy: { startedAt: 'desc' },
       take: limit,
     });
   }

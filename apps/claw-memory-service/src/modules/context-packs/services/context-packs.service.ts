@@ -1,15 +1,14 @@
-import { HttpStatus, Injectable } from "@nestjs/common";
-import { RabbitMQService } from "@claw/shared-rabbitmq";
-import { type ContextPack, type ContextPackItem } from "../../../generated/prisma";
-import { BusinessException, EntityNotFoundException } from "../../../common/errors";
-import { type PaginatedResult } from "../../../common/types";
-import { ContextPacksRepository } from "../repositories/context-packs.repository";
-import { type CreateContextPackDto } from "../dto/create-context-pack.dto";
-import { type UpdateContextPackDto } from "../dto/update-context-pack.dto";
-import { type AddContextPackItemDto } from "../dto/add-context-pack-item.dto";
-import { type ContextPackWithItems } from "../types/context-packs.types";
-
-const CONTEXT_PACK_UPDATED_EVENT = "context_pack.updated";
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { RabbitMQService } from '@claw/shared-rabbitmq';
+import { type ContextPack, type ContextPackItem } from '../../../generated/prisma';
+import { BusinessException, EntityNotFoundException } from '../../../common/errors';
+import { type PaginatedResult } from '../../../common/types';
+import { ContextPacksRepository } from '../repositories/context-packs.repository';
+import { type CreateContextPackDto } from '../dto/create-context-pack.dto';
+import { type UpdateContextPackDto } from '../dto/update-context-pack.dto';
+import { type AddContextPackItemDto } from '../dto/add-context-pack-item.dto';
+import { type ContextPackWithItems } from '../types/context-packs.types';
+import { CONTEXT_PACK_UPDATED_EVENT } from '../constants/context-packs.constants';
 
 @Injectable()
 export class ContextPacksService {
@@ -29,7 +28,7 @@ export class ContextPacksService {
     void this.rabbitMQService.publish(CONTEXT_PACK_UPDATED_EVENT, {
       contextPackId: pack.id,
       userId,
-      action: "created",
+      action: 'created',
       timestamp: new Date().toISOString(),
     });
 
@@ -63,7 +62,7 @@ export class ContextPacksService {
   async getContextPack(id: string, userId: string): Promise<ContextPackWithItems> {
     const pack = await this.contextPacksRepository.findById(id);
     if (!pack) {
-      throw new EntityNotFoundException("ContextPack", id);
+      throw new EntityNotFoundException('ContextPack', id);
     }
     this.validateOwnership(pack, userId);
     return pack;
@@ -76,7 +75,7 @@ export class ContextPacksService {
   ): Promise<ContextPack> {
     const pack = await this.contextPacksRepository.findById(id);
     if (!pack) {
-      throw new EntityNotFoundException("ContextPack", id);
+      throw new EntityNotFoundException('ContextPack', id);
     }
     this.validateOwnership(pack, userId);
 
@@ -89,7 +88,7 @@ export class ContextPacksService {
     void this.rabbitMQService.publish(CONTEXT_PACK_UPDATED_EVENT, {
       contextPackId: id,
       userId,
-      action: "updated",
+      action: 'updated',
       timestamp: new Date().toISOString(),
     });
 
@@ -99,7 +98,7 @@ export class ContextPacksService {
   async deleteContextPack(id: string, userId: string): Promise<ContextPack> {
     const pack = await this.contextPacksRepository.findById(id);
     if (!pack) {
-      throw new EntityNotFoundException("ContextPack", id);
+      throw new EntityNotFoundException('ContextPack', id);
     }
     this.validateOwnership(pack, userId);
 
@@ -108,7 +107,7 @@ export class ContextPacksService {
     void this.rabbitMQService.publish(CONTEXT_PACK_UPDATED_EVENT, {
       contextPackId: id,
       userId,
-      action: "deleted",
+      action: 'deleted',
       timestamp: new Date().toISOString(),
     });
 
@@ -122,7 +121,7 @@ export class ContextPacksService {
   ): Promise<ContextPackItem> {
     const pack = await this.contextPacksRepository.findById(contextPackId);
     if (!pack) {
-      throw new EntityNotFoundException("ContextPack", contextPackId);
+      throw new EntityNotFoundException('ContextPack', contextPackId);
     }
     this.validateOwnership(pack, userId);
 
@@ -137,7 +136,7 @@ export class ContextPacksService {
     void this.rabbitMQService.publish(CONTEXT_PACK_UPDATED_EVENT, {
       contextPackId,
       userId,
-      action: "item_added",
+      action: 'item_added',
       timestamp: new Date().toISOString(),
     });
 
@@ -151,7 +150,7 @@ export class ContextPacksService {
   ): Promise<ContextPackItem> {
     const pack = await this.contextPacksRepository.findById(contextPackId);
     if (!pack) {
-      throw new EntityNotFoundException("ContextPack", contextPackId);
+      throw new EntityNotFoundException('ContextPack', contextPackId);
     }
     this.validateOwnership(pack, userId);
 
@@ -160,7 +159,7 @@ export class ContextPacksService {
     void this.rabbitMQService.publish(CONTEXT_PACK_UPDATED_EVENT, {
       contextPackId,
       userId,
-      action: "item_removed",
+      action: 'item_removed',
       timestamp: new Date().toISOString(),
     });
 
@@ -170,8 +169,8 @@ export class ContextPacksService {
   private validateOwnership(pack: ContextPack, userId: string): void {
     if (pack.userId !== userId) {
       throw new BusinessException(
-        "You do not have access to this context pack",
-        "FORBIDDEN_CONTEXT_PACK_ACCESS",
+        'You do not have access to this context pack',
+        'FORBIDDEN_CONTEXT_PACK_ACCESS',
         HttpStatus.FORBIDDEN,
       );
     }

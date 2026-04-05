@@ -1,16 +1,15 @@
-import { HttpStatus, Injectable } from "@nestjs/common";
-import { RabbitMQService } from "@claw/shared-rabbitmq";
-import { ChatThreadsRepository } from "../repositories/chat-threads.repository";
-import { ChatMessagesRepository } from "../../chat-messages/repositories/chat-messages.repository";
-import { type CreateThreadDto } from "../dto/create-thread.dto";
-import { type UpdateThreadDto } from "../dto/update-thread.dto";
-import { type ListThreadsQueryDto } from "../dto/list-threads-query.dto";
-import { BusinessException, EntityNotFoundException } from "../../../common/errors";
-import { type PaginatedResult } from "../../../common/types";
-import { type ThreadWithMessageCount } from "../types/chat-threads.types";
-import { type ChatThread } from "../../../generated/prisma";
-
-const THREAD_CREATED_EVENT = "thread.created";
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { RabbitMQService } from '@claw/shared-rabbitmq';
+import { ChatThreadsRepository } from '../repositories/chat-threads.repository';
+import { ChatMessagesRepository } from '../../chat-messages/repositories/chat-messages.repository';
+import { type CreateThreadDto } from '../dto/create-thread.dto';
+import { type UpdateThreadDto } from '../dto/update-thread.dto';
+import { type ListThreadsQueryDto } from '../dto/list-threads-query.dto';
+import { BusinessException, EntityNotFoundException } from '../../../common/errors';
+import { type PaginatedResult } from '../../../common/types';
+import { type ThreadWithMessageCount } from '../types/chat-threads.types';
+import { type ChatThread } from '../../../generated/prisma';
+import { THREAD_CREATED_EVENT } from '../constants/chat-threads.constants';
 
 @Injectable()
 export class ChatThreadsService {
@@ -48,7 +47,13 @@ export class ChatThreadsService {
     };
 
     const [threads, total] = await Promise.all([
-      this.chatThreadsRepository.findAll(filters, query.page, query.limit, query.sortBy, query.sortOrder),
+      this.chatThreadsRepository.findAll(
+        filters,
+        query.page,
+        query.limit,
+        query.sortBy,
+        query.sortOrder,
+      ),
       this.chatThreadsRepository.countAll(filters),
     ]);
 
@@ -66,7 +71,7 @@ export class ChatThreadsService {
   async getThread(id: string, userId: string): Promise<ChatThread> {
     const thread = await this.chatThreadsRepository.findById(id);
     if (!thread) {
-      throw new EntityNotFoundException("ChatThread", id);
+      throw new EntityNotFoundException('ChatThread', id);
     }
     this.validateOwnership(thread, userId);
     return thread;
@@ -75,7 +80,7 @@ export class ChatThreadsService {
   async updateThread(id: string, userId: string, dto: UpdateThreadDto): Promise<ChatThread> {
     const thread = await this.chatThreadsRepository.findById(id);
     if (!thread) {
-      throw new EntityNotFoundException("ChatThread", id);
+      throw new EntityNotFoundException('ChatThread', id);
     }
     this.validateOwnership(thread, userId);
 
@@ -90,7 +95,7 @@ export class ChatThreadsService {
   async deleteThread(id: string, userId: string): Promise<ChatThread> {
     const thread = await this.chatThreadsRepository.findById(id);
     if (!thread) {
-      throw new EntityNotFoundException("ChatThread", id);
+      throw new EntityNotFoundException('ChatThread', id);
     }
     this.validateOwnership(thread, userId);
 
@@ -101,8 +106,8 @@ export class ChatThreadsService {
   private validateOwnership(thread: ChatThread, userId: string): void {
     if (thread.userId !== userId) {
       throw new BusinessException(
-        "You do not have access to this thread",
-        "FORBIDDEN_THREAD_ACCESS",
+        'You do not have access to this thread',
+        'FORBIDDEN_THREAD_ACCESS',
         HttpStatus.FORBIDDEN,
       );
     }

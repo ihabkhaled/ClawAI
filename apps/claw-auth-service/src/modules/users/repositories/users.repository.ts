@@ -1,7 +1,8 @@
-import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
-import { Prisma, User } from "../../../generated/prisma";
-import { type UpdateUserData, type UserFilters } from "../types/users.types";
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { Prisma, User } from '../../../generated/prisma';
+import { SortOrder } from '../../../common/enums';
+import { type UpdateUserData, type UserFilters } from '../types/users.types';
 
 @Injectable()
 export class UsersRepository {
@@ -28,10 +29,10 @@ export class UsersRepository {
     take: number;
     filters?: UserFilters;
     sortBy?: string;
-    sortOrder?: "asc" | "desc";
+    sortOrder?: SortOrder;
   }): Promise<{ users: User[]; total: number }> {
     const where = this.buildWhereClause(params.filters);
-    const orderBy = { [params.sortBy ?? "createdAt"]: params.sortOrder ?? "desc" };
+    const orderBy = { [params.sortBy ?? 'createdAt']: params.sortOrder ?? SortOrder.DESC };
 
     const [users, total] = await this.prisma.$transaction([
       this.prisma.user.findMany({
@@ -71,8 +72,8 @@ export class UsersRepository {
 
     if (filters?.search) {
       where.OR = [
-        { email: { contains: filters.search, mode: "insensitive" } },
-        { username: { contains: filters.search, mode: "insensitive" } },
+        { email: { contains: filters.search, mode: 'insensitive' } },
+        { username: { contains: filters.search, mode: 'insensitive' } },
       ];
     }
 

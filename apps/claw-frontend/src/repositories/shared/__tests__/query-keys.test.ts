@@ -14,16 +14,13 @@ describe('queryKeys', () => {
       expect(queryKeys.threads.all).toEqual(['threads']);
     });
 
-    it('detail returns key with thread id', () => {
-      expect(queryKeys.threads.detail('t-1')).toEqual(['threads', 't-1']);
+    it('detail returns key with detail segment and thread id', () => {
+      expect(queryKeys.threads.detail('t-1')).toEqual(['threads', 'detail', 't-1']);
     });
 
-    it('messages returns key with thread id and messages segment', () => {
-      expect(queryKeys.threads.messages('t-1')).toEqual([
-        'threads',
-        't-1',
-        'messages',
-      ]);
+    it('messages returns key with messages segment, thread id, and optional page', () => {
+      expect(queryKeys.threads.messages('t-1')).toEqual(['threads', 'messages', 't-1', undefined]);
+      expect(queryKeys.threads.messages('t-1', 2)).toEqual(['threads', 'messages', 't-1', 2]);
     });
   });
 
@@ -32,11 +29,12 @@ describe('queryKeys', () => {
       expect(queryKeys.connectors.all).toEqual(['connectors']);
     });
 
-    it('detail returns key with connector id', () => {
-      expect(queryKeys.connectors.detail('c-1')).toEqual([
-        'connectors',
-        'c-1',
-      ]);
+    it('detail returns key with detail segment and connector id', () => {
+      expect(queryKeys.connectors.detail('c-1')).toEqual(['connectors', 'detail', 'c-1']);
+    });
+
+    it('models returns key with models segment and connector id', () => {
+      expect(queryKeys.connectors.models('c-1')).toEqual(['connectors', 'models', 'c-1']);
     });
   });
 
@@ -50,6 +48,14 @@ describe('queryKeys', () => {
     it('has a config key', () => {
       expect(queryKeys.routing.config).toEqual(['routing', 'config']);
     });
+
+    it('policies all key', () => {
+      expect(queryKeys.routing.policies.all).toEqual(['routing', 'policies']);
+    });
+
+    it('decisions byThread returns key with threadId', () => {
+      expect(queryKeys.routing.decisions.byThread('t-1')).toEqual(['routing', 'decisions', 't-1']);
+    });
   });
 
   describe('audits', () => {
@@ -57,9 +63,33 @@ describe('queryKeys', () => {
       expect(queryKeys.audits.all).toEqual(['audits']);
     });
 
-    it('list returns key with params', () => {
+    it('list returns key with list segment and params', () => {
       const params = { page: '1', limit: '10' };
-      expect(queryKeys.audits.list(params)).toEqual(['audits', params]);
+      expect(queryKeys.audits.list(params)).toEqual(['audits', 'list', params]);
+    });
+
+    it('stats key', () => {
+      expect(queryKeys.audits.stats).toEqual(['audits', 'stats']);
+    });
+  });
+
+  describe('memory', () => {
+    it('has an all key', () => {
+      expect(queryKeys.memory.all).toEqual(['memory']);
+    });
+
+    it('detail returns key with detail segment and id', () => {
+      expect(queryKeys.memory.detail('m-1')).toEqual(['memory', 'detail', 'm-1']);
+    });
+  });
+
+  describe('files', () => {
+    it('has an all key', () => {
+      expect(queryKeys.files.all).toEqual(['files']);
+    });
+
+    it('chunks returns key with chunks segment and id', () => {
+      expect(queryKeys.files.chunks('f-1')).toEqual(['files', 'chunks', 'f-1']);
     });
   });
 
@@ -71,6 +101,8 @@ describe('queryKeys', () => {
       expect(Array.isArray(queryKeys.models.all)).toBe(true);
       expect(Array.isArray(queryKeys.routing.config)).toBe(true);
       expect(Array.isArray(queryKeys.audits.all)).toBe(true);
+      expect(Array.isArray(queryKeys.memory.all)).toBe(true);
+      expect(Array.isArray(queryKeys.files.all)).toBe(true);
     });
   });
 });

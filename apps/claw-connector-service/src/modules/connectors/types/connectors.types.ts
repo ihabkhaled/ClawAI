@@ -1,10 +1,11 @@
 import {
   type Connector,
-  type ConnectorProvider,
   type ConnectorAuthType,
+  type ConnectorProvider,
   type ConnectorStatus,
   type ModelLifecycle,
-} from "../../../generated/prisma";
+  type ModelSyncStatus,
+} from '../../../generated/prisma';
 
 export interface CreateConnectorData {
   name: string;
@@ -55,6 +56,23 @@ export interface NormalizedModel {
   displayName: string;
   lifecycle: ModelLifecycle;
   capabilities: ModelCapabilities;
+}
+
+export interface CreateHealthEventData {
+  connectorId: string;
+  status: ConnectorStatus;
+  latencyMs?: number;
+  errorMessage?: string;
+}
+
+export interface CreateSyncRunData {
+  connectorId: string;
+  status: ModelSyncStatus;
+  modelsFound?: number;
+  modelsAdded?: number;
+  modelsRemoved?: number;
+  errorMessage?: string;
+  completedAt?: Date;
 }
 
 export interface ModelCapabilities {
