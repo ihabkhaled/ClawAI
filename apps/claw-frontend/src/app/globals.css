@@ -1,9 +1,9 @@
+/* highlight.js syntax highlighting theme — must be before @tailwind */
+@import 'highlight.js/styles/github.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* highlight.js syntax highlighting theme */
-@import 'highlight.js/styles/github.css';
 
 .dark pre code.hljs {
   background: transparent;
