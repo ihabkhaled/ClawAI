@@ -15,7 +15,7 @@ export class ClientLogsService {
 
   async create(input: CreateClientLogInput): Promise<CreateClientLogResponse> {
     const doc = await this.clientLogsRepository.create(input);
-    return { id: doc._id as string };
+    return { id: String(doc._id) };
   }
 
   async search(filters: ClientLogFilters): Promise<PaginatedResult<ClientLog>> {
