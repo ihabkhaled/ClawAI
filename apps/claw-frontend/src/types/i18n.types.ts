@@ -1,0 +1,256 @@
+import type { Direction } from '@/enums/direction.enum';
+import type { Locale } from '@/enums/locale.enum';
+
+export type TranslationDictionary = {
+  common: {
+    save: string;
+    cancel: string;
+    delete: string;
+    edit: string;
+    create: string;
+    search: string;
+    filter: string;
+    loading: string;
+    noResults: string;
+    confirm: string;
+    back: string;
+    next: string;
+    previous: string;
+    close: string;
+    retry: string;
+    error: string;
+    success: string;
+    warning: string;
+    info: string;
+  };
+  auth: {
+    login: string;
+    logout: string;
+    email: string;
+    password: string;
+    loginTitle: string;
+    loginSubtitle: string;
+    loginButton: string;
+    logoutButton: string;
+    sessionExpired: string;
+    invalidCredentials: string;
+  };
+  nav: {
+    dashboard: string;
+    chat: string;
+    connectors: string;
+    models: string;
+    localModels: string;
+    routing: string;
+    memory: string;
+    context: string;
+    files: string;
+    observability: string;
+    audits: string;
+    admin: string;
+    settings: string;
+  };
+  chat: {
+    newThread: string;
+    threads: string;
+    searchThreads: string;
+    noThreads: string;
+    noThreadsDesc: string;
+    sendMessage: string;
+    typeMessage: string;
+    deleteThread: string;
+    deleteThreadConfirm: string;
+    threadCreated: string;
+    threadDeleted: string;
+    messageSendFailed: string;
+  };
+  connectors: {
+    title: string;
+    description: string;
+    createConnector: string;
+    editConnector: string;
+    deleteConnector: string;
+    testConnection: string;
+    syncModels: string;
+    name: string;
+    provider: string;
+    authType: string;
+    apiKey: string;
+    baseUrl: string;
+    region: string;
+    status: string;
+    healthy: string;
+    degraded: string;
+    error: string;
+    noConnectors: string;
+    noConnectorsDesc: string;
+    connectorCreated: string;
+    connectorUpdated: string;
+    connectorDeleted: string;
+    testSuccessful: string;
+    testFailed: string;
+    modelsSynced: string;
+  };
+  memory: {
+    title: string;
+    description: string;
+    createMemory: string;
+    editMemory: string;
+    deleteMemory: string;
+    type: string;
+    content: string;
+    enabled: string;
+    disabled: string;
+    noMemories: string;
+    noMemoriesDesc: string;
+    memoryCreated: string;
+    memoryUpdated: string;
+    memoryDeleted: string;
+    memoryToggled: string;
+  };
+  files: {
+    title: string;
+    description: string;
+    uploadFile: string;
+    deleteFile: string;
+    dragDrop: string;
+    maxSize: string;
+    noFiles: string;
+    noFilesDesc: string;
+    fileUploaded: string;
+    fileDeleted: string;
+    uploadFailed: string;
+  };
+  context: {
+    title: string;
+    description: string;
+    createPack: string;
+    addItem: string;
+    name: string;
+    scope: string;
+    noContextPacks: string;
+    noContextPacksDesc: string;
+    packCreated: string;
+    itemAdded: string;
+    itemRemoved: string;
+  };
+  routing: {
+    title: string;
+    description: string;
+    createPolicy: string;
+    editPolicy: string;
+    deletePolicy: string;
+    name: string;
+    mode: string;
+    priority: string;
+    active: string;
+    noPolicies: string;
+    noPoliciesDesc: string;
+    policyCreated: string;
+    policyUpdated: string;
+    policyDeleted: string;
+  };
+  models: {
+    title: string;
+    description: string;
+    localTitle: string;
+    localDescription: string;
+    pullModel: string;
+    assignRole: string;
+    noModels: string;
+    noModelsDesc: string;
+    modelPullStarted: string;
+    roleAssigned: string;
+  };
+  observability: {
+    title: string;
+    description: string;
+    totalRequests: string;
+    totalCost: string;
+    avgLatency: string;
+    activeModels: string;
+  };
+  audits: {
+    title: string;
+    description: string;
+    action: string;
+    severity: string;
+    entity: string;
+    timestamp: string;
+    noAudits: string;
+    noAuditsDesc: string;
+  };
+  admin: {
+    title: string;
+    description: string;
+    users: string;
+    createUser: string;
+    changeRole: string;
+    deactivate: string;
+    reactivate: string;
+    noUsers: string;
+  };
+  settings: {
+    title: string;
+    description: string;
+    profile: string;
+    preferences: string;
+    language: string;
+    theme: string;
+    changePassword: string;
+  };
+  dashboard: {
+    title: string;
+    description: string;
+    quickActions: string;
+    recentActivity: string;
+  };
+  validation: {
+    required: string;
+    invalidEmail: string;
+    tooShort: string;
+    tooLong: string;
+    invalidUrl: string;
+    fileTooLarge: string;
+    invalidFileType: string;
+  };
+  toast: {
+    loginSuccess: string;
+    loginFailed: string;
+    logoutFailed: string;
+    sessionExpired: string;
+  };
+};
+
+export type TranslationNamespace = keyof TranslationDictionary;
+
+export type TranslationKey<NS extends TranslationNamespace> = keyof TranslationDictionary[NS];
+
+export type FlatTranslationKey = {
+  [NS in TranslationNamespace]: `${NS}.${string & TranslationKey<NS>}`;
+}[TranslationNamespace];
+
+export type LocaleConfig = {
+  locale: Locale;
+  label: string;
+  dir: Direction;
+};
+
+export type LocaleContextValue = {
+  locale: Locale;
+  dir: Direction;
+  setLocale: (locale: Locale) => void;
+};
+
+export type LocaleProviderProps = {
+  children: React.ReactNode;
+  initialLocale?: Locale;
+};
+
+export type TranslateFunction = (key: string, params?: Record<string, string | number>) => string;
+
+export type UseTranslationReturn = {
+  t: TranslateFunction;
+  locale: Locale;
+  dir: Direction;
+};
