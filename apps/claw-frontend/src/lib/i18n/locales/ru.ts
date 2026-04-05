@@ -30,6 +30,7 @@ export const ru: TranslationDictionary = {
     unknown: 'Неизвестно',
     operational: 'Работает нормально',
     notAvailable: 'Н/Д',
+    accessDenied: 'У вас нет разрешения на доступ к этой странице.',
   },
   auth: {
     login: 'Вход',

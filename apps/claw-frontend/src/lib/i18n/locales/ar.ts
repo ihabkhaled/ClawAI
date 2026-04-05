@@ -30,6 +30,7 @@ export const ar: TranslationDictionary = {
     unknown: 'غير معروف',
     operational: 'يعمل بشكل طبيعي',
     notAvailable: 'غير متاح',
+    accessDenied: 'ليس لديك إذن للوصول إلى هذه الصفحة.',
   },
   auth: {
     login: 'تسجيل الدخول',

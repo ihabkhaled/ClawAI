@@ -31,6 +31,7 @@ export type TranslationDictionary = {
     unknown: string;
     operational: string;
     notAvailable: string;
+    accessDenied: string;
   };
   auth: {
     login: string;

@@ -30,6 +30,7 @@ export const de: TranslationDictionary = {
     unknown: 'Unbekannt',
     operational: 'Betriebsbereit',
     notAvailable: 'N/V',
+    accessDenied: 'Sie haben keine Berechtigung, auf diese Seite zuzugreifen.',
   },
   auth: {
     login: 'Anmelden',

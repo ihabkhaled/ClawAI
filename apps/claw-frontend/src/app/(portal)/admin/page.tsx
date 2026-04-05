@@ -10,7 +10,8 @@ import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { HealthStatus, ServiceStatus, UserStatus } from '@/enums';
+import { HealthStatus, ServiceStatus, UserRole, UserStatus } from '@/enums';
+import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { auditRepository } from '@/repositories/audit/audit.repository';
@@ -110,8 +111,17 @@ function UsersContent({
 
 export default function AdminPage() {
   const { t } = useTranslation();
+  const { user } = useCurrentUser();
   const queryClient = useQueryClient();
   const [actionPending, setActionPending] = useState<string | null>(null);
+
+  if (user && user.role !== UserRole.ADMIN) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <p className="text-muted-foreground">{t('common.accessDenied')}</p>
+      </div>
+    );
+  }
 
   const usersQuery = useQuery({
     queryKey: queryKeys.admin.users,

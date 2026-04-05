@@ -10,6 +10,9 @@ export const authService = {
       refreshToken: response.tokens.refreshToken,
       user: response.user,
     });
+    if (typeof document !== 'undefined') {
+      document.cookie = 'claw-auth-token=1; path=/; SameSite=Lax';
+    }
     return response;
   },
 
@@ -18,6 +21,9 @@ export const authService = {
       await authRepository.logout();
     } finally {
       useAuthStore.getState().clearAuth();
+      if (typeof document !== 'undefined') {
+        document.cookie = 'claw-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      }
     }
   },
 

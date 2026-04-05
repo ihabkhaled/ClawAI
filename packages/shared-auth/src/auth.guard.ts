@@ -40,13 +40,13 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException("Missing token");
     }
 
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      throw new UnauthorizedException("JWT_SECRET not configured");
+    const secret = process.env['JWT_SECRET'];
+    if (!secret) {
+      throw new UnauthorizedException('Authentication service misconfigured');
     }
 
     try {
-      const payload = jwt.verify(token, jwtSecret) as JwtPayload;
+      const payload = jwt.verify(token, secret) as JwtPayload;
       request.user = {
         id: payload.sub,
         email: payload.email,
