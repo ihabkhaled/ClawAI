@@ -18,4 +18,5 @@ export enum EventPattern {
   MEMORY_EXTRACTED = 'memory.extracted',
   AUDIT_EVENT = 'audit.event',
   HEALTH_CHECK = 'health.check',
+  LOG_SERVER = 'log.server',
 }

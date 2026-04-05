@@ -1,21 +1,68 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
-import type { AuditAction, AuditSeverity, LogLevel } from '@/enums';
+import type { AuditAction, AuditSeverity } from '@/enums';
 import { LogsTab } from '@/enums';
 import { useAuditLogs } from '@/hooks/audit/use-audit-logs';
-import { useLogStore } from '@/stores/log.store';
+import { useClientLogs } from '@/hooks/logs/use-client-logs';
+import { useServerLogs } from '@/hooks/logs/use-server-logs';
 import type { UseLogsPageReturn } from '@/types';
 
 export function useLogsPage(): UseLogsPageReturn {
-  const [activeTab, setActiveTab] = useState<LogsTab>(LogsTab.AUDIT);
+  const [activeTab, setActiveTab] = useState<LogsTab>(LogsTab.CLIENT);
 
-  const clientEntries = useLogStore((state) => state.entries);
-  const clearEntries = useLogStore((state) => state.clearEntries);
+  // Client logs state
+  const [clientLogsPage, setClientLogsPage] = useState(1);
+  const [clientLevelFilter, setClientLevelFilter] = useState<string | undefined>(undefined);
+  const [clientComponentFilter, setClientComponentFilter] = useState('');
+  const [clientRouteFilter, setClientRouteFilter] = useState('');
+  const [clientSearch, setClientSearch] = useState('');
+  const [clientStartDate, setClientStartDate] = useState('');
+  const [clientEndDate, setClientEndDate] = useState('');
 
-  const [levelFilter, setLevelFilter] = useState<string | undefined>(undefined);
-  const [componentFilter, setComponentFilter] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const {
+    clientLogs,
+    meta: clientLogsMeta,
+    isLoading: isClientLogsLoading,
+    isError: isClientLogsError,
+  } = useClientLogs({
+    page: clientLogsPage,
+    limit: 25,
+    level: clientLevelFilter,
+    component: clientComponentFilter || undefined,
+    route: clientRouteFilter || undefined,
+    search: clientSearch || undefined,
+    startDate: clientStartDate || undefined,
+    endDate: clientEndDate || undefined,
+  });
 
+  // Server logs state
+  const [serverLogsPage, setServerLogsPage] = useState(1);
+  const [serverLevelFilter, setServerLevelFilter] = useState<string | undefined>(undefined);
+  const [serverServiceFilter, setServerServiceFilter] = useState('');
+  const [serverControllerFilter, setServerControllerFilter] = useState('');
+  const [serverActionFilter, setServerActionFilter] = useState('');
+  const [serverSearch, setServerSearch] = useState('');
+  const [serverStartDate, setServerStartDate] = useState('');
+  const [serverEndDate, setServerEndDate] = useState('');
+
+  const {
+    serverLogs,
+    meta: serverLogsMeta,
+    isLoading: isServerLogsLoading,
+    isError: isServerLogsError,
+  } = useServerLogs({
+    page: serverLogsPage,
+    limit: 25,
+    level: serverLevelFilter,
+    serviceName: serverServiceFilter || undefined,
+    controller: serverControllerFilter || undefined,
+    action: serverActionFilter || undefined,
+    search: serverSearch || undefined,
+    startDate: serverStartDate || undefined,
+    endDate: serverEndDate || undefined,
+  });
+
+  // Audit logs state
   const [auditPage, setAuditPage] = useState(1);
   const [auditAction, setAuditAction] = useState<string | undefined>(undefined);
   const [auditSeverity, setAuditSeverity] = useState<string | undefined>(undefined);
@@ -36,57 +83,99 @@ export function useLogsPage(): UseLogsPageReturn {
       search: auditSearch || undefined,
     });
 
-  const uniqueComponents = useMemo(() => {
-    const components = new Set<string>();
-    for (const entry of clientEntries) {
-      components.add(entry.component);
-    }
-    return Array.from(components).sort();
-  }, [clientEntries]);
-
-  const filteredClientLogs = useMemo(() => {
-    let filtered = clientEntries;
-
-    if (levelFilter) {
-      const level = levelFilter as LogLevel;
-      filtered = filtered.filter((entry) => entry.level === level);
-    }
-
-    if (componentFilter) {
-      filtered = filtered.filter((entry) => entry.component === componentFilter);
-    }
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (entry) =>
-          entry.message.toLowerCase().includes(query) ||
-          entry.action.toLowerCase().includes(query) ||
-          entry.component.toLowerCase().includes(query) ||
-          (entry.details && JSON.stringify(entry.details).toLowerCase().includes(query)),
-      );
-    }
-
-    return filtered;
-  }, [clientEntries, levelFilter, componentFilter, searchQuery]);
-
   return {
     activeTab,
     setActiveTab,
-    clientLogs: clientEntries,
-    filteredClientLogs,
+
+    clientLogs,
+    clientLogsMeta,
+    clientLogsPage,
+    setClientLogsPage: (page: number) => {
+      setClientLogsPage(page);
+    },
+    isClientLogsLoading,
+    isClientLogsError,
+    clientLevelFilter,
+    setClientLevelFilter: (level: string | undefined) => {
+      setClientLevelFilter(level);
+      setClientLogsPage(1);
+    },
+    clientComponentFilter,
+    setClientComponentFilter: (component: string) => {
+      setClientComponentFilter(component);
+      setClientLogsPage(1);
+    },
+    clientRouteFilter,
+    setClientRouteFilter: (route: string) => {
+      setClientRouteFilter(route);
+      setClientLogsPage(1);
+    },
+    clientSearch,
+    setClientSearch: (search: string) => {
+      setClientSearch(search);
+      setClientLogsPage(1);
+    },
+    clientStartDate,
+    setClientStartDate: (date: string) => {
+      setClientStartDate(date);
+      setClientLogsPage(1);
+    },
+    clientEndDate,
+    setClientEndDate: (date: string) => {
+      setClientEndDate(date);
+      setClientLogsPage(1);
+    },
+
+    serverLogs,
+    serverLogsMeta,
+    serverLogsPage,
+    setServerLogsPage: (page: number) => {
+      setServerLogsPage(page);
+    },
+    isServerLogsLoading,
+    isServerLogsError,
+    serverLevelFilter,
+    setServerLevelFilter: (level: string | undefined) => {
+      setServerLevelFilter(level);
+      setServerLogsPage(1);
+    },
+    serverServiceFilter,
+    setServerServiceFilter: (service: string) => {
+      setServerServiceFilter(service);
+      setServerLogsPage(1);
+    },
+    serverControllerFilter,
+    setServerControllerFilter: (controller: string) => {
+      setServerControllerFilter(controller);
+      setServerLogsPage(1);
+    },
+    serverActionFilter,
+    setServerActionFilter: (action: string) => {
+      setServerActionFilter(action);
+      setServerLogsPage(1);
+    },
+    serverSearch,
+    setServerSearch: (search: string) => {
+      setServerSearch(search);
+      setServerLogsPage(1);
+    },
+    serverStartDate,
+    setServerStartDate: (date: string) => {
+      setServerStartDate(date);
+      setServerLogsPage(1);
+    },
+    serverEndDate,
+    setServerEndDate: (date: string) => {
+      setServerEndDate(date);
+      setServerLogsPage(1);
+    },
+
     auditLogs,
     auditMeta,
     auditPage,
     setAuditPage,
     isAuditLoading,
     isAuditError,
-    levelFilter,
-    setLevelFilter,
-    componentFilter,
-    setComponentFilter,
-    searchQuery,
-    setSearchQuery,
     auditAction,
     setAuditAction,
     auditSeverity,
@@ -99,7 +188,5 @@ export function useLogsPage(): UseLogsPageReturn {
     setAuditStartDate,
     auditEndDate,
     setAuditEndDate,
-    clearClientLogs: clearEntries,
-    uniqueComponents,
   };
 }

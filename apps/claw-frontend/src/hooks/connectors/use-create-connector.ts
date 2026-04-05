@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { connectorRepository } from '@/repositories/connectors/connector.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { CreateConnectorRequest } from '@/types';
-import { showToast } from '@/utilities';
+import { logger, showToast } from '@/utilities';
 
 export function useCreateConnector() {
   const queryClient = useQueryClient();
@@ -11,6 +11,7 @@ export function useCreateConnector() {
   const mutation = useMutation({
     mutationFn: (data: CreateConnectorRequest) => connectorRepository.createConnector(data),
     onSuccess: () => {
+      logger.info({ component: 'connectors', action: 'create-connector', message: 'Connector created' });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.connectors.lists(),
       });

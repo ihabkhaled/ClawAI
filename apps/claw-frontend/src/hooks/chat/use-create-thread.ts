@@ -5,7 +5,7 @@ import { ROUTES } from '@/constants';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { CreateThreadRequest } from '@/types';
-import { showToast } from '@/utilities';
+import { logger, showToast } from '@/utilities';
 
 export function useCreateThread() {
   const queryClient = useQueryClient();
@@ -14,6 +14,7 @@ export function useCreateThread() {
   const mutation = useMutation({
     mutationFn: (data: CreateThreadRequest) => chatRepository.createThread(data),
     onSuccess: (thread) => {
+      logger.info({ component: 'chat', action: 'create-thread', message: 'Thread created', details: { threadId: thread.id } });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.threads.lists(),
       });

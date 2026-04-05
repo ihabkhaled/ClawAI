@@ -1,10 +1,9 @@
 'use client';
 
-import { Trash2 } from 'lucide-react';
-
 import { PageHeader } from '@/components/common/page-header';
 import { AuditLogsTab } from '@/components/logs/audit-logs-tab';
 import { ClientLogsTab } from '@/components/logs/client-logs-tab';
+import { ServerLogsTab } from '@/components/logs/server-logs-tab';
 import { Button } from '@/components/ui/button';
 import { LogsTab } from '@/enums';
 import { useLogsPage } from '@/hooks/logs/use-logs-page';
@@ -19,39 +18,81 @@ export default function LogsPage() {
       <PageHeader
         title={t('nav.logs')}
         description={t('audits.description')}
-        actions={
-          controller.activeTab === LogsTab.CLIENT ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={controller.clearClientLogs}
-              disabled={controller.clientLogs.length === 0}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Clear Client Logs
-            </Button>
-          ) : undefined
-        }
       />
 
       <div className="mb-4 flex gap-2">
-        <Button
-          variant={controller.activeTab === LogsTab.AUDIT ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => controller.setActiveTab(LogsTab.AUDIT)}
-        >
-          Audit Logs
-        </Button>
         <Button
           variant={controller.activeTab === LogsTab.CLIENT ? 'default' : 'outline'}
           size="sm"
           onClick={() => controller.setActiveTab(LogsTab.CLIENT)}
         >
-          Client Logs ({controller.clientLogs.length})
+          Client Logs
+        </Button>
+        <Button
+          variant={controller.activeTab === LogsTab.SERVER ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => controller.setActiveTab(LogsTab.SERVER)}
+        >
+          Server Logs
+        </Button>
+        <Button
+          variant={controller.activeTab === LogsTab.AUDIT ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => controller.setActiveTab(LogsTab.AUDIT)}
+        >
+          Audit Trail
         </Button>
       </div>
 
-      {controller.activeTab === LogsTab.AUDIT ? (
+      {controller.activeTab === LogsTab.CLIENT && (
+        <ClientLogsTab
+          logs={controller.clientLogs}
+          meta={controller.clientLogsMeta}
+          page={controller.clientLogsPage}
+          setPage={controller.setClientLogsPage}
+          isLoading={controller.isClientLogsLoading}
+          isError={controller.isClientLogsError}
+          levelFilter={controller.clientLevelFilter}
+          setLevelFilter={controller.setClientLevelFilter}
+          componentFilter={controller.clientComponentFilter}
+          setComponentFilter={controller.setClientComponentFilter}
+          routeFilter={controller.clientRouteFilter}
+          setRouteFilter={controller.setClientRouteFilter}
+          searchQuery={controller.clientSearch}
+          setSearchQuery={controller.setClientSearch}
+          startDate={controller.clientStartDate}
+          setStartDate={controller.setClientStartDate}
+          endDate={controller.clientEndDate}
+          setEndDate={controller.setClientEndDate}
+        />
+      )}
+
+      {controller.activeTab === LogsTab.SERVER && (
+        <ServerLogsTab
+          logs={controller.serverLogs}
+          meta={controller.serverLogsMeta}
+          page={controller.serverLogsPage}
+          setPage={controller.setServerLogsPage}
+          isLoading={controller.isServerLogsLoading}
+          isError={controller.isServerLogsError}
+          levelFilter={controller.serverLevelFilter}
+          setLevelFilter={controller.setServerLevelFilter}
+          serviceFilter={controller.serverServiceFilter}
+          setServiceFilter={controller.setServerServiceFilter}
+          controllerFilter={controller.serverControllerFilter}
+          setControllerFilter={controller.setServerControllerFilter}
+          actionFilter={controller.serverActionFilter}
+          setActionFilter={controller.setServerActionFilter}
+          searchQuery={controller.serverSearch}
+          setSearchQuery={controller.setServerSearch}
+          startDate={controller.serverStartDate}
+          setStartDate={controller.setServerStartDate}
+          endDate={controller.serverEndDate}
+          setEndDate={controller.setServerEndDate}
+        />
+      )}
+
+      {controller.activeTab === LogsTab.AUDIT && (
         <AuditLogsTab
           auditLogs={controller.auditLogs}
           meta={controller.auditMeta}
@@ -89,17 +130,6 @@ export default function LogsPage() {
             controller.setAuditEndDate(v);
             controller.setAuditPage(1);
           }}
-        />
-      ) : (
-        <ClientLogsTab
-          logs={controller.filteredClientLogs}
-          levelFilter={controller.levelFilter}
-          setLevelFilter={controller.setLevelFilter}
-          componentFilter={controller.componentFilter}
-          setComponentFilter={controller.setComponentFilter}
-          searchQuery={controller.searchQuery}
-          setSearchQuery={controller.setSearchQuery}
-          uniqueComponents={controller.uniqueComponents}
         />
       )}
     </div>

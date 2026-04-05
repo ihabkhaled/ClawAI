@@ -139,8 +139,17 @@ export type {
   LogFilterParams,
   LogStoreState,
   LogStoreActions,
+  CreateClientLogRequest,
+  ClientLogEntry,
+  ServerLogEntry,
+  ClientLogsResponse,
+  ServerLogsResponse,
+  LogStats,
+  ClientLogsListParams,
+  ServerLogsListParams,
   AuditLogsTabProps,
   ClientLogsTabProps,
+  ServerLogsTabProps,
   UseLogsPageReturn,
 } from './log.types';
 export type {

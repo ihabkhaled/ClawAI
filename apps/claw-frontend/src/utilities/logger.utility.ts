@@ -1,7 +1,33 @@
 import { LOG_SENSITIVE_KEYS } from '@/constants';
 import { LogLevel } from '@/enums';
+import { httpClient } from '@/lib/http-client';
+import { useAuthStore } from '@/stores/auth.store';
 import { useLogStore } from '@/stores/log.store';
-import type { LogEntry } from '@/types';
+import type { CreateClientLogRequest, LogEntry } from '@/types';
+
+let logBuffer: CreateClientLogRequest[] = [];
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+function flushLogs(): void {
+  if (logBuffer.length === 0) {
+    return;
+  }
+  const batch = [...logBuffer];
+  logBuffer = [];
+  for (const entry of batch) {
+    httpClient.post('/client-logs', entry).catch(() => {});
+  }
+}
+
+function scheduleFlush(): void {
+  if (flushTimer) {
+    return;
+  }
+  flushTimer = setTimeout(() => {
+    flushLogs();
+    flushTimer = null;
+  }, 5000);
+}
 
 function generateId(): string {
   const timestamp = Date.now().toString(36);
@@ -59,6 +85,20 @@ function createLogEntry(params: {
   };
 }
 
+function getRoute(): string {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+  return window.location.pathname;
+}
+
+function getUserAgent(): string {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+  return navigator.userAgent;
+}
+
 type LogParams = {
   component: string;
   action: string;
@@ -67,9 +107,33 @@ type LogParams = {
   details?: Record<string, unknown>;
 };
 
+function enqueueForBackend(level: LogLevel, params: LogParams): void {
+  try {
+    const authState = useAuthStore.getState();
+    const userId = params.userId ?? authState.user?.id ?? '';
+
+    const request: CreateClientLogRequest = {
+      level,
+      message: params.message,
+      component: params.component,
+      action: params.action,
+      userId: userId || undefined,
+      route: getRoute(),
+      userAgent: getUserAgent(),
+      metadata: params.details ? redactSensitiveFields(params.details) : undefined,
+    };
+
+    logBuffer.push(request);
+    scheduleFlush();
+  } catch {
+    // Logging should never break the app
+  }
+}
+
 function logAtLevel(level: LogLevel, params: LogParams): void {
   const entry = createLogEntry({ level, ...params });
   useLogStore.getState().addEntry(entry);
+  enqueueForBackend(level, params);
 }
 
 export const logger = {

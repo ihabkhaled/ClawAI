@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
-import { RabbitMQService } from "@claw/shared-rabbitmq";
-import { EventPattern } from "@claw/shared-types";
+import { RabbitMQService, StructuredLogger } from "@claw/shared-rabbitmq";
+import { EventPattern, LogLevel } from "@claw/shared-types";
 import { type RoutingMode, type Prisma } from "../../../generated/prisma";
 import { EntityNotFoundException } from "../../../common/errors";
 import { type PaginatedResult } from "../../../common/types";
@@ -21,6 +21,7 @@ import {
 @Injectable()
 export class RoutingService implements OnModuleInit {
   private readonly logger = new Logger(RoutingService.name);
+  private readonly structuredLogger: StructuredLogger;
   private connectorHealthCache: Record<string, boolean> = {};
   private runtimeHealthCache: Record<string, boolean> = {};
 
@@ -29,7 +30,14 @@ export class RoutingService implements OnModuleInit {
     private readonly decisionsRepository: RoutingDecisionsRepository,
     private readonly routingManager: RoutingManager,
     private readonly rabbitMQService: RabbitMQService,
-  ) {}
+  ) {
+    this.structuredLogger = new StructuredLogger(
+      this.rabbitMQService,
+      'routing-service',
+      EventPattern.LOG_SERVER,
+      RoutingService.name,
+    );
+  }
 
   async onModuleInit(): Promise<void> {
     await this.subscribeToEvents();
@@ -167,6 +175,15 @@ export class RoutingService implements OnModuleInit {
       return;
     }
 
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Consumed message.created for thread ${threadId}`,
+      action: 'message_created_consumed',
+      service: RoutingService.name,
+      messageId: messageId ?? undefined,
+      threadId,
+    });
+
     const context: RoutingContext = {
       message: content,
       threadId,
@@ -190,6 +207,22 @@ export class RoutingService implements OnModuleInit {
       costClass: decision.costClass,
       fallbackProvider: fallback?.provider,
       fallbackModel: fallback?.model,
+    });
+
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Routing decision: ${decision.selectedProvider}/${decision.selectedModel} (confidence: ${String(decision.confidence)})`,
+      action: 'routing_decision',
+      service: RoutingService.name,
+      messageId: messageId ?? undefined,
+      threadId,
+      provider: decision.selectedProvider,
+      model: decision.selectedModel,
+      metadata: {
+        routingMode: decision.routingMode,
+        confidence: decision.confidence,
+        reasonTags: decision.reasonTags,
+      },
     });
 
     void this.rabbitMQService.publish(EventPattern.MESSAGE_ROUTED, {

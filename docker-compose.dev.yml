@@ -266,6 +266,10 @@ services:
         condition: service_healthy
       ollama-service:
         condition: service_healthy
+      client-logs-service:
+        condition: service_healthy
+      server-logs-service:
+        condition: service_healthy
       health-service:
         condition: service_healthy
     networks:
@@ -573,6 +577,76 @@ services:
     networks:
       - claw-network
 
+  client-logs-service:
+    build:
+      context: .
+      dockerfile: apps/claw-client-logs-service/Dockerfile.dev
+    container_name: claw-client-logs-service
+    restart: unless-stopped
+    ports:
+      - '4010:4010'
+    volumes:
+      - ./apps/claw-client-logs-service/src:/app/apps/claw-client-logs-service/src
+    environment:
+      NODE_ENV: development
+      PORT: 4010
+      MONGODB_URI: mongodb://${MONGO_USER:-claw}:${MONGO_PASSWORD:-claw_secret}@mongodb:27017/claw_client_logs?authSource=admin
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET:-claw-dev-jwt-secret-9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
+    command: npm run dev
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4010/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
+  server-logs-service:
+    build:
+      context: .
+      dockerfile: apps/claw-server-logs-service/Dockerfile.dev
+    container_name: claw-server-logs-service
+    restart: unless-stopped
+    ports:
+      - '4011:4011'
+    volumes:
+      - ./apps/claw-server-logs-service/src:/app/apps/claw-server-logs-service/src
+    environment:
+      NODE_ENV: development
+      PORT: 4011
+      MONGODB_URI: mongodb://${MONGO_USER:-claw}:${MONGO_PASSWORD:-claw_secret}@mongodb:27017/claw_server_logs?authSource=admin
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET:-claw-dev-jwt-secret-9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
+    command: npm run dev
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4011/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
   health-service:
     build:
       context: .
@@ -594,6 +668,8 @@ services:
       FILE_SERVICE_URL: http://file-service:4006
       AUDIT_SERVICE_URL: http://audit-service:4007
       OLLAMA_SERVICE_URL: http://ollama-service:4008
+      CLIENT_LOGS_SERVICE_URL: http://client-logs-service:4010
+      SERVER_LOGS_SERVICE_URL: http://server-logs-service:4011
     command: npm run dev
     depends_on:
       redis:

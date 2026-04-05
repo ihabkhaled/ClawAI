@@ -1,6 +1,6 @@
 import type { LogLevel, LogsTab } from '@/enums';
 
-import type { AuditLog } from './audit.types';
+import type { AuditLog, PaginationMeta } from './audit.types';
 
 export type LogEntry = {
   id: string;
@@ -29,6 +29,103 @@ export type LogStoreActions = {
   clearEntries: () => void;
 };
 
+export type CreateClientLogRequest = {
+  level: string;
+  message: string;
+  component: string;
+  action: string;
+  userId?: string;
+  route?: string;
+  locale?: string;
+  appearance?: string;
+  userAgent?: string;
+  metadata?: Record<string, unknown>;
+};
+
+export type ClientLogEntry = {
+  _id: string;
+  level: string;
+  message: string;
+  component: string;
+  action: string;
+  route: string;
+  userId: string;
+  sessionId: string;
+  threadId: string;
+  locale: string;
+  appearance: string;
+  userAgent: string;
+  errorCode: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type ServerLogEntry = {
+  _id: string;
+  level: string;
+  message: string;
+  serviceName: string;
+  module: string;
+  controller: string;
+  action: string;
+  route: string;
+  method: string;
+  statusCode: number;
+  requestId: string;
+  traceId: string;
+  userId: string;
+  threadId: string;
+  connectorId: string;
+  provider: string;
+  model: string;
+  latencyMs: number;
+  errorCode: string;
+  errorMessage: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type ClientLogsResponse = {
+  data: ClientLogEntry[];
+  meta: PaginationMeta;
+};
+
+export type ServerLogsResponse = {
+  data: ServerLogEntry[];
+  meta: PaginationMeta;
+};
+
+export type LogStats = {
+  byLevel: Array<{ _id: string; count: number }>;
+  total: number;
+};
+
+export type ClientLogsListParams = {
+  page?: number;
+  limit?: number;
+  level?: string;
+  component?: string;
+  route?: string;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+};
+
+export type ServerLogsListParams = {
+  page?: number;
+  limit?: number;
+  level?: string;
+  serviceName?: string;
+  controller?: string;
+  action?: string;
+  requestId?: string;
+  traceId?: string;
+  userId?: string;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+};
+
 export type AuditLogsTabProps = {
   auditLogs: AuditLog[];
   meta: { page: number; totalPages: number; total: number };
@@ -51,33 +148,96 @@ export type AuditLogsTabProps = {
 };
 
 export type ClientLogsTabProps = {
-  logs: LogEntry[];
+  logs: ClientLogEntry[];
+  meta: PaginationMeta;
+  page: number;
+  setPage: (page: number) => void;
+  isLoading: boolean;
+  isError: boolean;
   levelFilter: string | undefined;
   setLevelFilter: (level: string | undefined) => void;
   componentFilter: string;
   setComponentFilter: (component: string) => void;
+  routeFilter: string;
+  setRouteFilter: (route: string) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  uniqueComponents: string[];
+  startDate: string;
+  setStartDate: (date: string) => void;
+  endDate: string;
+  setEndDate: (date: string) => void;
+};
+
+export type ServerLogsTabProps = {
+  logs: ServerLogEntry[];
+  meta: PaginationMeta;
+  page: number;
+  setPage: (page: number) => void;
+  isLoading: boolean;
+  isError: boolean;
+  levelFilter: string | undefined;
+  setLevelFilter: (level: string | undefined) => void;
+  serviceFilter: string;
+  setServiceFilter: (service: string) => void;
+  controllerFilter: string;
+  setControllerFilter: (controller: string) => void;
+  actionFilter: string;
+  setActionFilter: (action: string) => void;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  startDate: string;
+  setStartDate: (date: string) => void;
+  endDate: string;
+  setEndDate: (date: string) => void;
 };
 
 export type UseLogsPageReturn = {
   activeTab: LogsTab;
   setActiveTab: (tab: LogsTab) => void;
-  clientLogs: LogEntry[];
-  filteredClientLogs: LogEntry[];
+  clientLogs: ClientLogEntry[];
+  clientLogsMeta: PaginationMeta;
+  clientLogsPage: number;
+  setClientLogsPage: (page: number) => void;
+  isClientLogsLoading: boolean;
+  isClientLogsError: boolean;
+  clientLevelFilter: string | undefined;
+  setClientLevelFilter: (level: string | undefined) => void;
+  clientComponentFilter: string;
+  setClientComponentFilter: (component: string) => void;
+  clientRouteFilter: string;
+  setClientRouteFilter: (route: string) => void;
+  clientSearch: string;
+  setClientSearch: (search: string) => void;
+  clientStartDate: string;
+  setClientStartDate: (date: string) => void;
+  clientEndDate: string;
+  setClientEndDate: (date: string) => void;
+  serverLogs: ServerLogEntry[];
+  serverLogsMeta: PaginationMeta;
+  serverLogsPage: number;
+  setServerLogsPage: (page: number) => void;
+  isServerLogsLoading: boolean;
+  isServerLogsError: boolean;
+  serverLevelFilter: string | undefined;
+  setServerLevelFilter: (level: string | undefined) => void;
+  serverServiceFilter: string;
+  setServerServiceFilter: (service: string) => void;
+  serverControllerFilter: string;
+  setServerControllerFilter: (controller: string) => void;
+  serverActionFilter: string;
+  setServerActionFilter: (action: string) => void;
+  serverSearch: string;
+  setServerSearch: (search: string) => void;
+  serverStartDate: string;
+  setServerStartDate: (date: string) => void;
+  serverEndDate: string;
+  setServerEndDate: (date: string) => void;
   auditLogs: AuditLog[];
   auditMeta: { page: number; totalPages: number; total: number };
   auditPage: number;
   setAuditPage: React.Dispatch<React.SetStateAction<number>>;
   isAuditLoading: boolean;
   isAuditError: boolean;
-  levelFilter: string | undefined;
-  setLevelFilter: (level: string | undefined) => void;
-  componentFilter: string;
-  setComponentFilter: (component: string) => void;
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
   auditAction: string | undefined;
   setAuditAction: (action: string | undefined) => void;
   auditSeverity: string | undefined;
@@ -90,6 +250,4 @@ export type UseLogsPageReturn = {
   setAuditStartDate: (date: string) => void;
   auditEndDate: string;
   setAuditEndDate: (date: string) => void;
-  clearClientLogs: () => void;
-  uniqueComponents: string[];
 };

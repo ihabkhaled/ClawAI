@@ -7,6 +7,8 @@ export const SERVICE_URLS: Record<string, string> = {
   "file-service": "http://file-service:4006/api/v1/health",
   "audit-service": "http://audit-service:4007/api/v1/health",
   "ollama-service": "http://ollama-service:4008/api/v1/health",
+  "client-logs-service": "http://client-logs-service:4010/api/v1/health",
+  "server-logs-service": "http://server-logs-service:4011/api/v1/health",
 };
 
 export const HEALTH_CHECK_TIMEOUT_MS = 5000;

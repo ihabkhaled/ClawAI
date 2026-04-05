@@ -45,6 +45,20 @@ export const queryKeys = {
   runtimes: {
     all: ["runtimes"] as const,
   },
+  clientLogs: {
+    all: ["clientLogs"] as const,
+    lists: () => [...queryKeys.clientLogs.all, "list"] as const,
+    list: (params: Record<string, unknown>) =>
+      [...queryKeys.clientLogs.lists(), params] as const,
+    stats: ["clientLogs", "stats"] as const,
+  },
+  serverLogs: {
+    all: ["serverLogs"] as const,
+    lists: () => [...queryKeys.serverLogs.all, "list"] as const,
+    list: (params: Record<string, unknown>) =>
+      [...queryKeys.serverLogs.lists(), params] as const,
+    stats: ["serverLogs", "stats"] as const,
+  },
   audits: {
     all: ["audits"] as const,
     lists: () => [...queryKeys.audits.all, "list"] as const,

@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable, Logger, OnModuleInit } from "@nestjs/common";
-import { RabbitMQService } from "@claw/shared-rabbitmq";
-import { EventPattern } from "@claw/shared-types";
+import { RabbitMQService, StructuredLogger } from "@claw/shared-rabbitmq";
+import { EventPattern, LogLevel } from "@claw/shared-types";
 import { ChatMessagesRepository } from "../repositories/chat-messages.repository";
 import { ChatThreadsRepository } from "../../chat-threads/repositories/chat-threads.repository";
 import { ChatExecutionManager } from "../managers/chat-execution.manager";
@@ -14,13 +14,21 @@ import { type ChatMessage, type ChatThread, type RoutingMode } from "../../../ge
 @Injectable()
 export class ChatMessagesService implements OnModuleInit {
   private readonly logger = new Logger(ChatMessagesService.name);
+  private readonly structuredLogger: StructuredLogger;
 
   constructor(
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatExecutionManager: ChatExecutionManager,
     private readonly rabbitMQService: RabbitMQService,
-  ) {}
+  ) {
+    this.structuredLogger = new StructuredLogger(
+      this.rabbitMQService,
+      'chat-service',
+      EventPattern.LOG_SERVER,
+      ChatMessagesService.name,
+    );
+  }
 
   async onModuleInit(): Promise<void> {
     await this.subscribeToEvents();
@@ -41,6 +49,16 @@ export class ChatMessagesService implements OnModuleInit {
       role: "USER",
       content: dto.content,
       routingMode: effectiveRoutingMode,
+    });
+
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `User message created in thread ${dto.threadId}`,
+      action: 'message_created',
+      service: ChatMessagesService.name,
+      userId,
+      threadId: dto.threadId,
+      messageId: message.id,
     });
 
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
@@ -150,6 +168,18 @@ export class ChatMessagesService implements OnModuleInit {
       lastModel: llmResponse.model,
     });
 
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Assistant response stored for message ${payload.messageId}`,
+      action: 'assistant_response_stored',
+      service: ChatMessagesService.name,
+      messageId: payload.messageId,
+      threadId: payload.threadId,
+      provider: llmResponse.provider,
+      model: llmResponse.model,
+      latencyMs: llmResponse.latencyMs,
+    });
+
     void this.rabbitMQService.publish(EventPattern.MESSAGE_COMPLETED, {
       messageId: payload.messageId,
       threadId: payload.threadId,
@@ -190,6 +220,17 @@ export class ChatMessagesService implements OnModuleInit {
       return;
     }
 
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Received routed message for ${messageId} via ${selectedProvider}/${selectedModel}`,
+      action: 'message_routed_received',
+      service: ChatMessagesService.name,
+      messageId,
+      threadId,
+      provider: selectedProvider,
+      model: selectedModel,
+    });
+
     try {
       await this.handleMessageRouted({
         messageId,
@@ -206,6 +247,15 @@ export class ChatMessagesService implements OnModuleInit {
       this.logger.error(
         `Failed to handle message.routed for message ${messageId}: ${errorMsg}`,
       );
+      this.structuredLogger.logAction({
+        level: LogLevel.ERROR,
+        message: `Failed to handle message.routed for message ${messageId}`,
+        action: 'message_routed_error',
+        service: ChatMessagesService.name,
+        messageId,
+        threadId,
+        errorMessage: errorMsg,
+      });
     }
   }
 

@@ -20,5 +20,6 @@ export type {
   MemoryExtractedPayload,
   AuditEventPayload,
   HealthCheckPayload,
+  ServerLogPayload,
   EventPayload,
 } from "./event-payloads.type";

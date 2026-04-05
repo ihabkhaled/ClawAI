@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { RabbitMQService } from "@claw/shared-rabbitmq";
-import { EventPattern } from "@claw/shared-types";
+import { RabbitMQService, StructuredLogger } from "@claw/shared-rabbitmq";
+import { EventPattern, LogLevel } from "@claw/shared-types";
 import { type ConnectorModel } from "../../../generated/prisma";
 import { AppConfig } from "../../../app/config/app.config";
 import { encrypt } from "../../../common/utilities";
@@ -21,12 +21,21 @@ import {
 
 @Injectable()
 export class ConnectorsService {
+  private readonly structuredLogger: StructuredLogger;
+
   constructor(
     private readonly connectorsRepository: ConnectorsRepository,
     private readonly connectorModelsRepository: ConnectorModelsRepository,
     private readonly connectorsManager: ConnectorsManager,
     private readonly rabbitMQService: RabbitMQService,
-  ) {}
+  ) {
+    this.structuredLogger = new StructuredLogger(
+      this.rabbitMQService,
+      'connector-service',
+      EventPattern.LOG_SERVER,
+      ConnectorsService.name,
+    );
+  }
 
   async createConnector(dto: CreateConnectorDto): Promise<ConnectorWithModels> {
     const encryptedConfig = dto.apiKey
@@ -40,6 +49,15 @@ export class ConnectorsService {
       encryptedConfig,
       baseUrl: dto.baseUrl,
       region: dto.region,
+    });
+
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Connector created: ${dto.name} (${dto.provider})`,
+      action: 'connector_created',
+      service: ConnectorsService.name,
+      connectorId: connector.id,
+      provider: dto.provider,
     });
 
     void this.rabbitMQService.publish(EventPattern.CONNECTOR_CREATED, {
@@ -141,6 +159,17 @@ export class ConnectorsService {
 
     const result = await this.connectorsManager.testConnector(connector);
 
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Connector test result: ${result.status} (${String(result.latencyMs)}ms)`,
+      action: 'connector_test_connection',
+      service: ConnectorsService.name,
+      connectorId: connector.id,
+      provider: connector.provider,
+      latencyMs: result.latencyMs,
+      metadata: { status: result.status },
+    });
+
     void this.rabbitMQService.publish(EventPattern.CONNECTOR_HEALTH_CHECKED, {
       connectorId: connector.id,
       status: result.status,
@@ -158,6 +187,20 @@ export class ConnectorsService {
     }
 
     const result = await this.connectorsManager.syncModels(connector);
+
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Models synced: ${String(result.modelsFound)} found, ${String(result.modelsAdded)} added, ${String(result.modelsRemoved)} removed`,
+      action: 'connector_sync_models',
+      service: ConnectorsService.name,
+      connectorId: connector.id,
+      provider: connector.provider,
+      metadata: {
+        modelsFound: result.modelsFound,
+        modelsAdded: result.modelsAdded,
+        modelsRemoved: result.modelsRemoved,
+      },
+    });
 
     void this.rabbitMQService.publish(EventPattern.CONNECTOR_SYNCED, {
       connectorId: connector.id,

@@ -3,14 +3,17 @@ import { useRouter } from 'next/navigation';
 
 import { ROUTES } from '@/constants';
 import { authService } from '@/services/auth/auth.service';
-import { showToast } from '@/utilities';
+import { logger, showToast } from '@/utilities';
 
 export function useLogout() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: () => authService.logout(),
+    mutationFn: () => {
+      logger.info({ component: 'auth', action: 'logout', message: 'User logged out' });
+      return authService.logout();
+    },
     onError: (err: unknown) => {
       showToast.apiError(err, 'Logout failed, clearing session locally');
     },

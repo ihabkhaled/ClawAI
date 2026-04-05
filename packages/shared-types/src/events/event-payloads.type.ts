@@ -6,6 +6,7 @@ import { type ConnectorStatus } from "../enums";
 import { type RoutingMode } from "../enums";
 import { type FileIngestionStatus } from "../enums";
 import { type MemoryType } from "../enums";
+import { type LogLevel } from "../enums";
 
 // ---- Base ----
 
@@ -168,6 +169,36 @@ export interface HealthCheckPayload extends BaseEventPayload {
   details?: Record<string, unknown>;
 }
 
+// ---- Server Log Events ----
+
+export interface ServerLogPayload extends BaseEventPayload {
+  level: LogLevel;
+  message: string;
+  serviceName: string;
+  module?: string;
+  controller?: string;
+  service?: string;
+  manager?: string;
+  repository?: string;
+  action?: string;
+  route?: string;
+  method?: string;
+  statusCode?: number;
+  requestId?: string;
+  traceId?: string;
+  userId?: string;
+  threadId?: string;
+  messageId?: string;
+  connectorId?: string;
+  provider?: string;
+  model?: string;
+  latencyMs?: number;
+  errorCode?: string;
+  errorMessage?: string;
+  errorStack?: string;
+  metadata?: Record<string, unknown>;
+}
+
 // ---- Union type for all payloads ----
 
 export type EventPayload =
@@ -189,4 +220,5 @@ export type EventPayload =
   | FileChunkedPayload
   | MemoryExtractedPayload
   | AuditEventPayload
-  | HealthCheckPayload;
+  | HealthCheckPayload
+  | ServerLogPayload;

@@ -14,3 +14,4 @@ export { HealthCheckStatus, ServiceStatus } from "./health-status.enum";
 export { LocalModelRole } from "./local-model-role.enum";
 export { UserLanguagePreference } from "./user-language-preference.enum";
 export { UserAppearancePreference } from "./user-appearance-preference.enum";
+export { LogLevel } from "./log-level.enum";
