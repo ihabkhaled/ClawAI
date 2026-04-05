@@ -1,8 +1,9 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { ollamaRepository } from "@/repositories/ollama/ollama.repository";
-import { queryKeys } from "@/repositories/shared/query-keys";
-import type { PullModelRequest } from "@/types";
+import { ollamaRepository } from '@/repositories/ollama/ollama.repository';
+import { queryKeys } from '@/repositories/shared/query-keys';
+import type { PullModelRequest } from '@/types';
+import { showToast } from '@/utilities';
 
 export function usePullModel() {
   const queryClient = useQueryClient();
@@ -13,6 +14,10 @@ export function usePullModel() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.localModels.all,
       });
+      showToast.success({ title: 'Model pull started' });
+    },
+    onError: (error: Error) => {
+      showToast.apiError(error, 'Failed to pull model');
     },
   });
 

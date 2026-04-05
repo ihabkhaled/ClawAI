@@ -1,7 +1,8 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { routingRepository } from "@/repositories/routing/routing.repository";
-import { queryKeys } from "@/repositories/shared/query-keys";
+import { routingRepository } from '@/repositories/routing/routing.repository';
+import { queryKeys } from '@/repositories/shared/query-keys';
+import { showToast } from '@/utilities';
 
 export function useDeletePolicy() {
   const queryClient = useQueryClient();
@@ -12,6 +13,10 @@ export function useDeletePolicy() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.routing.policies.lists(),
       });
+      showToast.success({ title: 'Policy deleted' });
+    },
+    onError: (error: Error) => {
+      showToast.apiError(error, 'Failed to delete policy');
     },
   });
 

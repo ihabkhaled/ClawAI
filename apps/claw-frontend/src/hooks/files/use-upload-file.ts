@@ -1,19 +1,23 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { filesRepository } from "@/repositories/files/files.repository";
-import { queryKeys } from "@/repositories/shared/query-keys";
-import type { UploadFileRequest } from "@/types";
+import { filesRepository } from '@/repositories/files/files.repository';
+import { queryKeys } from '@/repositories/shared/query-keys';
+import type { UploadFileRequest } from '@/types';
+import { showToast } from '@/utilities';
 
 export function useUploadFile() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (data: UploadFileRequest) =>
-      filesRepository.uploadFile(data),
+    mutationFn: (data: UploadFileRequest) => filesRepository.uploadFile(data),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.files.lists(),
       });
+      showToast.success({ title: 'File uploaded' });
+    },
+    onError: (error: Error) => {
+      showToast.apiError(error, 'Failed to upload file');
     },
   });
 

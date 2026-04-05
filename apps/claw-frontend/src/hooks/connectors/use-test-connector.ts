@@ -1,8 +1,9 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { connectorRepository } from "@/repositories/connectors/connector.repository";
-import { queryKeys } from "@/repositories/shared/query-keys";
-import type { HealthCheckResponse } from "@/types";
+import { connectorRepository } from '@/repositories/connectors/connector.repository';
+import { queryKeys } from '@/repositories/shared/query-keys';
+import type { HealthCheckResponse } from '@/types';
+import { showToast } from '@/utilities';
 
 export function useTestConnector() {
   const queryClient = useQueryClient();
@@ -13,9 +14,10 @@ export function useTestConnector() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.connectors.detail(id),
       });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.connectors.lists(),
-      });
+      showToast.success({ title: 'Connection test successful' });
+    },
+    onError: (error: Error) => {
+      showToast.apiError(error, 'Connection test failed');
     },
   });
 

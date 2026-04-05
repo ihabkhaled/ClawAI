@@ -1,15 +1,15 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { chatRepository } from "@/repositories/chat/chat.repository";
-import { queryKeys } from "@/repositories/shared/query-keys";
-import type { CreateMessageRequest } from "@/types";
+import { chatRepository } from '@/repositories/chat/chat.repository';
+import { queryKeys } from '@/repositories/shared/query-keys';
+import type { CreateMessageRequest } from '@/types';
+import { showToast } from '@/utilities';
 
 export function useSendMessage(threadId: string) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (data: CreateMessageRequest) =>
-      chatRepository.createMessage(data),
+    mutationFn: (data: CreateMessageRequest) => chatRepository.createMessage(data),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.threads.messages(threadId),
@@ -17,6 +17,9 @@ export function useSendMessage(threadId: string) {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.threads.lists(),
       });
+    },
+    onError: (error: Error) => {
+      showToast.apiError(error, 'Failed to send message');
     },
   });
 

@@ -1,7 +1,8 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { filesRepository } from "@/repositories/files/files.repository";
-import { queryKeys } from "@/repositories/shared/query-keys";
+import { filesRepository } from '@/repositories/files/files.repository';
+import { queryKeys } from '@/repositories/shared/query-keys';
+import { showToast } from '@/utilities';
 
 export function useDeleteFile() {
   const queryClient = useQueryClient();
@@ -12,6 +13,10 @@ export function useDeleteFile() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.files.lists(),
       });
+      showToast.success({ title: 'File deleted' });
+    },
+    onError: (error: Error) => {
+      showToast.apiError(error, 'Failed to delete file');
     },
   });
 

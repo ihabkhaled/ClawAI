@@ -1,9 +1,10 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 
-import { ROUTES } from "@/constants";
-import { connectorRepository } from "@/repositories/connectors/connector.repository";
-import { queryKeys } from "@/repositories/shared/query-keys";
+import { ROUTES } from '@/constants';
+import { connectorRepository } from '@/repositories/connectors/connector.repository';
+import { queryKeys } from '@/repositories/shared/query-keys';
+import { showToast } from '@/utilities';
 
 export function useDeleteConnector() {
   const queryClient = useQueryClient();
@@ -16,6 +17,10 @@ export function useDeleteConnector() {
         queryKey: queryKeys.connectors.lists(),
       });
       router.push(ROUTES.CONNECTORS);
+      showToast.success({ title: 'Connector deleted' });
+    },
+    onError: (error: Error) => {
+      showToast.apiError(error, 'Failed to delete connector');
     },
   });
 

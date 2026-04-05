@@ -1,13 +1,9 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { connectorRepository } from "@/repositories/connectors/connector.repository";
-import { queryKeys } from "@/repositories/shared/query-keys";
-import type { UpdateConnectorRequest } from "@/types";
-
-type UpdateConnectorParams = {
-  id: string;
-  data: UpdateConnectorRequest;
-};
+import { connectorRepository } from '@/repositories/connectors/connector.repository';
+import { queryKeys } from '@/repositories/shared/query-keys';
+import type { UpdateConnectorParams } from '@/types';
+import { showToast } from '@/utilities';
 
 export function useUpdateConnector() {
   const queryClient = useQueryClient();
@@ -22,6 +18,10 @@ export function useUpdateConnector() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.connectors.detail(connector.id),
       });
+      showToast.success({ title: 'Connector updated' });
+    },
+    onError: (error: Error) => {
+      showToast.apiError(error, 'Failed to update connector');
     },
   });
 
