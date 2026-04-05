@@ -1,16 +1,5 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  description?: string;
-}
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import type { StatCardProps } from '@/types';
 
 export function StatCard({ title, value, description }: StatCardProps) {
   return (

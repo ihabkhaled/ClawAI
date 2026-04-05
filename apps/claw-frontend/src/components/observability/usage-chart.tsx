@@ -1,20 +1,9 @@
-interface UsageBarItem {
-  label: string;
-  value: number;
-  secondaryValue?: number;
-}
-
-interface UsageChartProps {
-  title: string;
-  items: UsageBarItem[];
-  valueLabel?: string;
-  secondaryLabel?: string;
-}
+import type { UsageChartProps } from '@/types';
 
 export function UsageChart({
   title,
   items,
-  valueLabel = "requests",
+  valueLabel = 'requests',
   secondaryLabel,
 }: UsageChartProps) {
   const maxValue = Math.max(...items.map((i) => i.value), 1);
@@ -29,8 +18,8 @@ export function UsageChart({
           {items.map((item) => (
             <div key={item.label} className="space-y-1">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium truncate">{item.label}</span>
-                <span className="text-muted-foreground ml-2 shrink-0">
+                <span className="truncate font-medium">{item.label}</span>
+                <span className="ms-2 shrink-0 text-muted-foreground">
                   {item.value} {valueLabel}
                   {secondaryLabel && item.secondaryValue !== undefined
                     ? ` / ${item.secondaryValue.toLocaleString()} ${secondaryLabel}`

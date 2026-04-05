@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Table,
@@ -7,8 +7,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import type { DataTableColumn, DataTableProps } from "@/types";
+} from '@/components/ui/table';
+import type { DataTableColumn, DataTableProps } from '@/types';
 
 export type { DataTableColumn };
 
@@ -16,7 +16,7 @@ export function DataTable<T>({
   columns,
   data,
   keyExtractor,
-  emptyMessage = "No data available.",
+  emptyMessage = 'No data available.',
 }: DataTableProps<T>) {
   if (data.length === 0) {
     return (
@@ -27,7 +27,7 @@ export function DataTable<T>({
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="overflow-x-auto rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>

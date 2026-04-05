@@ -1,14 +1,28 @@
-"use client";
+'use client';
 
-import { Separator } from "@/components/ui/separator";
+import { Menu } from 'lucide-react';
 
-import { UserMenu } from "./user-menu";
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { useSidebarStore } from '@/stores/sidebar.store';
+
+import { UserMenu } from './user-menu';
 
 export function Topbar() {
+  const { toggle } = useSidebarStore();
+
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-card px-6">
+    <header className="flex h-16 items-center justify-between border-b bg-card px-4 sm:px-6">
       <div className="flex items-center gap-4">
-        {/* Breadcrumb or search can go here */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="min-h-11 min-w-11 md:hidden"
+          onClick={toggle}
+          aria-label="Toggle sidebar"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
       </div>
       <div className="flex items-center gap-2">
         <Separator orientation="vertical" className="h-6" />

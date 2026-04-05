@@ -1,32 +1,65 @@
-"use client";
+'use client';
 
-import { ArrowLeft, Trash2 } from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useCallback, useEffect, useRef } from "react";
+import { ArrowLeft, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useCallback, useEffect, useRef } from 'react';
 
-import { MessageBubble } from "@/components/chat/message-bubble";
-import { MessageComposer } from "@/components/chat/message-composer";
-import { LoadingSpinner } from "@/components/common/loading-spinner";
-import { PageHeader } from "@/components/common/page-header";
-import { Button } from "@/components/ui/button";
-import { ROUTES } from "@/constants";
-import { useDeleteThread } from "@/hooks/chat/use-delete-thread";
-import { useSendMessage } from "@/hooks/chat/use-send-message";
-import { useThreadDetail } from "@/hooks/chat/use-thread-detail";
+import { MessageBubble } from '@/components/chat/message-bubble';
+import { MessageComposer } from '@/components/chat/message-composer';
+import { LoadingSpinner } from '@/components/common/loading-spinner';
+import { PageHeader } from '@/components/common/page-header';
+import { Button } from '@/components/ui/button';
+import { ROUTES } from '@/constants';
+import { useDeleteThread } from '@/hooks/chat/use-delete-thread';
+import { useSendMessage } from '@/hooks/chat/use-send-message';
+import { useThreadDetail } from '@/hooks/chat/use-thread-detail';
+import type { ChatMessage } from '@/types';
+
+function MessagesContent({
+  isLoadingThread,
+  isLoadingMessages,
+  messages,
+  messagesEndRef,
+}: {
+  isLoadingThread: boolean;
+  isLoadingMessages: boolean;
+  messages: ChatMessage[];
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
+}): React.ReactElement {
+  if (isLoadingThread || isLoadingMessages) {
+    return <LoadingSpinner label="Loading messages..." />;
+  }
+
+  if (messages.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+        No messages yet. Send a message to start the conversation.
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {messages.map((message) => (
+        <MessageBubble key={message.id} message={message} />
+      ))}
+      <div ref={messagesEndRef} />
+    </div>
+  );
+}
 
 export default function ThreadDetailPage() {
   const params = useParams<{ threadId: string }>();
-  const threadId = params.threadId ?? "";
+  const threadId = params.threadId ?? '';
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { thread, messages, isLoadingThread, isLoadingMessages } =
-    useThreadDetail(threadId);
+  const { thread, messages, isLoadingThread, isLoadingMessages } = useThreadDetail(threadId);
   const { sendMessage, isPending: isSending } = useSendMessage(threadId);
   const { deleteThread, isPending: isDeleting } = useDeleteThread();
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
   useEffect(() => {
@@ -48,7 +81,7 @@ export default function ThreadDetailPage() {
     return <LoadingSpinner label="Loading thread..." />;
   }
 
-  const title = thread?.title ?? "Untitled";
+  const title = thread?.title ?? 'Untitled';
 
   return (
     <div className="flex h-full flex-col">
@@ -56,7 +89,7 @@ export default function ThreadDetailPage() {
         title={title}
         description={
           thread
-            ? `${thread.routingMode}${thread.lastModel ? ` \u00b7 ${thread.lastModel}` : ""}`
+            ? `${thread.routingMode}${thread.lastModel ? ` \u00b7 ${thread.lastModel}` : ''}`
             : undefined
         }
         actions={
@@ -64,16 +97,17 @@ export default function ThreadDetailPage() {
             <Button
               variant="destructive"
               size="sm"
+              className="min-h-11 min-w-11"
               onClick={handleDelete}
               disabled={isDeleting}
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              <Trash2 className="h-4 w-4 sm:me-2" />
+              <span className="hidden sm:inline">Delete</span>
             </Button>
-            <Button variant="outline" asChild>
+            <Button variant="outline" size="sm" className="min-h-11" asChild>
               <Link href={ROUTES.CHAT}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to threads
+                <ArrowLeft className="h-4 w-4 sm:me-2 rtl:rotate-180" />
+                <span className="hidden sm:inline">Back to threads</span>
               </Link>
             </Button>
           </div>
@@ -82,20 +116,12 @@ export default function ThreadDetailPage() {
 
       <div className="flex flex-1 flex-col overflow-hidden rounded-lg border">
         <div className="flex-1 overflow-y-auto p-4">
-          {isLoadingThread || isLoadingMessages ? (
-            <LoadingSpinner label="Loading messages..." />
-          ) : messages.length === 0 ? (
-            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-              No messages yet. Send a message to start the conversation.
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {messages.map((message) => (
-                <MessageBubble key={message.id} message={message} />
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-          )}
+          <MessagesContent
+            isLoadingThread={isLoadingThread}
+            isLoadingMessages={isLoadingMessages}
+            messages={messages}
+            messagesEndRef={messagesEndRef}
+          />
         </div>
 
         <div className="border-t p-4">

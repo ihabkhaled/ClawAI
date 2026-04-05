@@ -1,65 +1,28 @@
-"use client";
+'use client';
 
-import { Plus, Route, Trash2, Pencil } from "lucide-react";
+import { Plus, Route, Trash2, Pencil } from 'lucide-react';
 
-import { DataTable } from "@/components/common/data-table";
-import { EmptyState } from "@/components/common/empty-state";
-import { LoadingSpinner } from "@/components/common/loading-spinner";
-import { PageHeader } from "@/components/common/page-header";
-import { RoutingBadge } from "@/components/chat/routing-badge";
-import { PolicyForm } from "@/components/routing/policy-form";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { RoutingBadge } from '@/components/chat/routing-badge';
+import { DataTable } from '@/components/common/data-table';
+import { EmptyState } from '@/components/common/empty-state';
+import { LoadingSpinner } from '@/components/common/loading-spinner';
+import { PageHeader } from '@/components/common/page-header';
+import { PolicyForm } from '@/components/routing/policy-form';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import {
-  ROUTING_MODE_LABELS,
-  ROUTING_MODE_OPTIONS,
-} from "@/constants";
-import { RoutingMode } from "@/enums";
-import { useRoutingPage } from "@/hooks/routing/use-routing-page";
-import type { DataTableColumn } from "@/types";
-import type { RoutingPolicy } from "@/types";
-
-const POLICY_COLUMNS: DataTableColumn<RoutingPolicy>[] = [
-  {
-    key: "name",
-    header: "Name",
-    render: (row) => <span className="font-medium">{row.name}</span>,
-  },
-  {
-    key: "mode",
-    header: "Mode",
-    render: (row) => <RoutingBadge mode={row.routingMode} />,
-  },
-  {
-    key: "priority",
-    header: "Priority",
-    render: (row) => <span className="tabular-nums">{row.priority}</span>,
-  },
-  {
-    key: "active",
-    header: "Status",
-    render: (row) => (
-      <Badge variant={row.isActive ? "default" : "secondary"}>
-        {row.isActive ? "Active" : "Inactive"}
-      </Badge>
-    ),
-  },
-];
+} from '@/components/ui/select';
+import { ROUTING_MODE_LABELS, ROUTING_MODE_OPTIONS } from '@/constants';
+import { RoutingMode } from '@/enums';
+import { useRoutingPage } from '@/hooks/routing/use-routing-page';
+import type { DataTableColumn, RoutingPolicy } from '@/types';
 
 export default function RoutingPage(): React.ReactElement {
   const {
@@ -79,32 +42,43 @@ export default function RoutingPage(): React.ReactElement {
   } = useRoutingPage();
 
   const columnsWithActions: DataTableColumn<RoutingPolicy>[] = [
-    ...POLICY_COLUMNS,
     {
-      key: "actions",
-      header: "",
-      className: "text-right",
+      key: 'name',
+      header: 'Name',
+      render: (row) => <span className="font-medium">{row.name}</span>,
+    },
+    {
+      key: 'mode',
+      header: 'Mode',
+      render: (row) => <RoutingBadge mode={row.routingMode} />,
+    },
+    {
+      key: 'priority',
+      header: 'Priority',
+      render: (row) => <span className="tabular-nums">{row.priority}</span>,
+    },
+    {
+      key: 'active',
+      header: 'Status',
+      render: (row) => (
+        <Badge variant={row.isActive ? 'default' : 'secondary'}>
+          {row.isActive ? 'Active' : 'Inactive'}
+        </Badge>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      className: 'text-end',
       render: (row) => (
         <div className="flex items-center justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleToggleActive(row)}
-          >
-            {row.isActive ? "Deactivate" : "Activate"}
+          <Button variant="ghost" size="sm" onClick={() => handleToggleActive(row)}>
+            {row.isActive ? 'Deactivate' : 'Activate'}
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleOpenEdit(row)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(row)}>
             <Pencil className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => deletePolicy(row.id)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => deletePolicy(row.id)}>
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -121,7 +95,7 @@ export default function RoutingPage(): React.ReactElement {
         />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-destructive">
-            {error?.message ?? "Failed to load routing configuration."}
+            {error?.message ?? 'Failed to load routing configuration.'}
           </p>
         </div>
       </div>
@@ -135,7 +109,7 @@ export default function RoutingPage(): React.ReactElement {
         description="Configure how requests are routed across your AI models"
         actions={
           <Button onClick={handleOpenCreate}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="me-2 h-4 w-4" />
             Create Policy
           </Button>
         }
@@ -151,9 +125,11 @@ export default function RoutingPage(): React.ReactElement {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Default Mode</label>
+              <label htmlFor="routing-default-mode" className="text-sm font-medium">
+                Default Mode
+              </label>
               <Select defaultValue={RoutingMode.AUTO}>
-                <SelectTrigger>
+                <SelectTrigger id="routing-default-mode">
                   <SelectValue placeholder="Select routing mode" />
                 </SelectTrigger>
                 <SelectContent>
@@ -171,18 +147,21 @@ export default function RoutingPage(): React.ReactElement {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Fallback Settings</CardTitle>
-            <CardDescription>
-              Configure retry and timeout behavior
-            </CardDescription>
+            <CardDescription>Configure retry and timeout behavior</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Max Retries</label>
-              <Input type="number" defaultValue={3} min={0} max={10} />
+              <label htmlFor="routing-max-retries" className="text-sm font-medium">
+                Max Retries
+              </label>
+              <Input id="routing-max-retries" type="number" defaultValue={3} min={0} max={10} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Timeout (ms)</label>
+              <label htmlFor="routing-timeout" className="text-sm font-medium">
+                Timeout (ms)
+              </label>
               <Input
+                id="routing-timeout"
                 type="number"
                 defaultValue={30000}
                 min={1000}
@@ -195,21 +174,23 @@ export default function RoutingPage(): React.ReactElement {
 
       <div className="mt-6">
         <h2 className="mb-4 text-lg font-semibold">Routing Policies</h2>
-        {isLoading ? (
-          <LoadingSpinner label="Loading policies..." />
-        ) : policies.length === 0 ? (
+        {isLoading && <LoadingSpinner label="Loading policies..." />}
+
+        {!isLoading && policies.length === 0 && (
           <EmptyState
             icon={Route}
             title="No routing policies"
             description="Create routing policies to control how requests are distributed across models and providers."
             action={
               <Button onClick={handleOpenCreate}>
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="me-2 h-4 w-4" />
                 Create Policy
               </Button>
             }
           />
-        ) : (
+        )}
+
+        {!isLoading && policies.length > 0 && (
           <DataTable
             columns={columnsWithActions}
             data={policies}

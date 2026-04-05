@@ -1,42 +1,24 @@
-import { Badge } from "@/components/ui/badge";
-import { RoutingTransparency } from "@/components/chat/routing-transparency";
-import { MESSAGE_ROLE_LABELS } from "@/constants";
-import { MessageRole } from "@/enums";
-import { cn } from "@/lib/utils";
-import type { ChatMessage, RoutingDecision } from "@/types";
-
-type MessageBubbleProps = {
-  message: ChatMessage;
-  routingDecision?: RoutingDecision | null;
-};
+import { RoutingTransparency } from '@/components/chat/routing-transparency';
+import { Badge } from '@/components/ui/badge';
+import { MESSAGE_ROLE_LABELS } from '@/constants';
+import { MessageRole } from '@/enums';
+import { cn } from '@/lib/utils';
+import type { MessageBubbleProps } from '@/types';
 
 export function MessageBubble({ message, routingDecision }: MessageBubbleProps) {
   const isUser = message.role === MessageRole.USER;
   const roleLabel = MESSAGE_ROLE_LABELS[message.role];
 
-  const totalTokens =
-    (message.inputTokens ?? 0) + (message.outputTokens ?? 0);
+  const totalTokens = (message.inputTokens ?? 0) + (message.outputTokens ?? 0);
 
   return (
-    <div
-      className={cn(
-        "flex w-full",
-        isUser ? "justify-end" : "justify-start",
-      )}
-    >
-      <div
-        className={cn(
-          "flex max-w-[75%] flex-col gap-1",
-          isUser ? "items-end" : "items-start",
-        )}
-      >
+    <div className={cn('flex w-full', isUser ? 'justify-end' : 'justify-start')}>
+      <div className={cn('flex max-w-[75%] flex-col gap-1', isUser ? 'items-end' : 'items-start')}>
         <span className="text-xs text-muted-foreground">{roleLabel}</span>
         <div
           className={cn(
-            "rounded-lg px-4 py-2.5 text-sm",
-            isUser
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-foreground",
+            'rounded-lg px-4 py-2.5 text-sm',
+            isUser ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',
           )}
         >
           <p className="whitespace-pre-wrap">{message.content}</p>
@@ -54,20 +36,14 @@ export function MessageBubble({ message, routingDecision }: MessageBubbleProps) 
               </Badge>
             ) : null}
             {totalTokens > 0 ? (
-              <span className="text-xs text-muted-foreground">
-                {totalTokens} tokens
-              </span>
+              <span className="text-xs text-muted-foreground">{totalTokens} tokens</span>
             ) : null}
-            {message.latencyMs != null ? (
-              <span className="text-xs text-muted-foreground">
-                {message.latencyMs}ms
-              </span>
+            {message.latencyMs !== null ? (
+              <span className="text-xs text-muted-foreground">{message.latencyMs}ms</span>
             ) : null}
           </div>
         ) : null}
-        {!isUser && routingDecision ? (
-          <RoutingTransparency decision={routingDecision} />
-        ) : null}
+        {!isUser && routingDecision ? <RoutingTransparency decision={routingDecision} /> : null}
       </div>
     </div>
   );

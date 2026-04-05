@@ -1,23 +1,17 @@
-"use client";
+'use client';
 
-import { Activity } from "lucide-react";
+import { Activity } from 'lucide-react';
 
-import { EmptyState } from "@/components/common/empty-state";
-import { LoadingSpinner } from "@/components/common/loading-spinner";
-import { PageHeader } from "@/components/common/page-header";
-import { StatCard } from "@/components/observability/stat-card";
-import { UsageChart } from "@/components/observability/usage-chart";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useObservabilityPage } from "@/hooks/observability/use-observability-page";
+import { EmptyState } from '@/components/common/empty-state';
+import { LoadingSpinner } from '@/components/common/loading-spinner';
+import { PageHeader } from '@/components/common/page-header';
+import { StatCard } from '@/components/observability/stat-card';
+import { UsageChart } from '@/components/observability/usage-chart';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useObservabilityPage } from '@/hooks/observability/use-observability-page';
 
 export default function ObservabilityPage() {
-  const { summary, cost, latency, auditStats, isLoading, isError } =
-    useObservabilityPage();
+  const { summary, cost, latency, auditStats, isLoading, isError } = useObservabilityPage();
 
   if (isLoading) {
     return (
@@ -66,7 +60,7 @@ export default function ObservabilityPage() {
   }
 
   const failureCount = auditStats.bySeverity
-    .filter((s) => s._id === "HIGH" || s._id === "CRITICAL")
+    .filter((s) => s._id === 'HIGH' || s._id === 'CRITICAL')
     .reduce((sum, s) => sum + s.count, 0);
 
   return (
@@ -76,7 +70,7 @@ export default function ObservabilityPage() {
         description="Monitor system health, request latencies, and model performance"
       />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
         <StatCard
           title="Total Requests"
           value={summary.totalRequests.toLocaleString()}
@@ -99,7 +93,7 @@ export default function ObservabilityPage() {
         />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Provider Usage</CardTitle>
@@ -108,7 +102,7 @@ export default function ObservabilityPage() {
             <UsageChart
               title=""
               items={summary.byProvider.map((p) => ({
-                label: p.provider ?? "Unknown",
+                label: p.provider ?? 'Unknown',
                 value: p.count,
                 secondaryValue: p.totalTokens,
               }))}
@@ -126,7 +120,7 @@ export default function ObservabilityPage() {
             <UsageChart
               title=""
               items={summary.byModel.map((m) => ({
-                label: m.model ?? "Unknown",
+                label: m.model ?? 'Unknown',
                 value: m.count,
                 secondaryValue: m.totalTokens,
               }))}

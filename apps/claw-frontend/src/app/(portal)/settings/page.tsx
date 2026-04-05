@@ -1,51 +1,46 @@
-"use client";
+'use client';
 
-import { PageHeader } from "@/components/common/page-header";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { useCurrentUser } from "@/hooks/auth/use-current-user";
+import { PageHeader } from '@/components/common/page-header';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { useCurrentUser } from '@/hooks/auth/use-current-user';
 
 export default function SettingsPage() {
   const { user } = useCurrentUser();
 
   return (
     <div>
-      <PageHeader
-        title="Settings"
-        description="Manage your account and platform preferences"
-      />
+      <PageHeader title="Settings" description="Manage your account and platform preferences" />
 
       <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Profile</CardTitle>
-            <CardDescription>
-              Your personal information
-            </CardDescription>
+            <CardDescription>Your personal information</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Username</label>
-              <Input defaultValue={user?.username ?? ""} disabled />
+              <label htmlFor="settings-username" className="text-sm font-medium">
+                Username
+              </label>
+              <Input id="settings-username" defaultValue={user?.username ?? ''} disabled />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
-              <Input defaultValue={user?.email ?? ""} disabled />
+              <label htmlFor="settings-email" className="text-sm font-medium">
+                Email
+              </label>
+              <Input id="settings-email" defaultValue={user?.email ?? ''} disabled />
               <p className="text-xs text-muted-foreground">
                 Email cannot be changed. Contact an administrator.
               </p>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Role</label>
-              <Input defaultValue={user?.role ?? ""} disabled />
+              <label htmlFor="settings-role" className="text-sm font-medium">
+                Role
+              </label>
+              <Input id="settings-role" defaultValue={user?.role ?? ''} disabled />
             </div>
           </CardContent>
         </Card>
@@ -55,22 +50,34 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Change Password</CardTitle>
-            <CardDescription>
-              Update your account password
-            </CardDescription>
+            <CardDescription>Update your account password</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Current Password</label>
-              <Input type="password" placeholder="Enter current password" />
+              <label htmlFor="settings-current-password" className="text-sm font-medium">
+                Current Password
+              </label>
+              <Input
+                id="settings-current-password"
+                type="password"
+                placeholder="Enter current password"
+              />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">New Password</label>
-              <Input type="password" placeholder="Enter new password" />
+              <label htmlFor="settings-new-password" className="text-sm font-medium">
+                New Password
+              </label>
+              <Input id="settings-new-password" type="password" placeholder="Enter new password" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Confirm New Password</label>
-              <Input type="password" placeholder="Confirm new password" />
+              <label htmlFor="settings-confirm-password" className="text-sm font-medium">
+                Confirm New Password
+              </label>
+              <Input
+                id="settings-confirm-password"
+                type="password"
+                placeholder="Confirm new password"
+              />
             </div>
             <Button>Update Password</Button>
           </CardContent>
@@ -81,9 +88,7 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Preferences</CardTitle>
-            <CardDescription>
-              Customize your experience
-            </CardDescription>
+            <CardDescription>Customize your experience</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">

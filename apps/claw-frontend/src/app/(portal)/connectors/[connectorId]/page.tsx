@@ -1,40 +1,29 @@
-"use client";
+'use client';
 
-import {
-  Activity,
-  ArrowLeft,
-  Pencil,
-  RefreshCw,
-  Trash2,
-} from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import { Activity, ArrowLeft, Pencil, RefreshCw, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 
-import { ConnectorForm } from "@/components/connectors/connector-form";
-import { ModelTable } from "@/components/connectors/model-table";
-import { LoadingSpinner } from "@/components/common/loading-spinner";
-import { PageHeader } from "@/components/common/page-header";
-import { StatusBadge } from "@/components/common/status-badge";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { LoadingSpinner } from '@/components/common/loading-spinner';
+import { PageHeader } from '@/components/common/page-header';
+import { StatusBadge } from '@/components/common/status-badge';
+import { ConnectorForm } from '@/components/connectors/connector-form';
+import { ModelTable } from '@/components/connectors/model-table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AUTH_TYPE_LABELS,
   PROVIDER_DISPLAY_NAMES,
   PROVIDER_ICON_COLORS,
   ROUTES,
-} from "@/constants";
-import { cn } from "@/lib/utils";
-import { useConnectorDetailPage } from "@/hooks/connectors/use-connector-detail-page";
+} from '@/constants';
+import { useConnectorDetailPage } from '@/hooks/connectors/use-connector-detail-page';
+import { cn } from '@/lib/utils';
 
 export default function ConnectorDetailPage() {
   const params = useParams<{ connectorId: string }>();
-  const connectorId = params.connectorId ?? "";
+  const connectorId = params.connectorId ?? '';
 
   const {
     connector,
@@ -71,7 +60,7 @@ export default function ConnectorDetailPage() {
           actions={
             <Button variant="outline" asChild>
               <Link href={ROUTES.CONNECTORS}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
+                <ArrowLeft className="me-2 h-4 w-4 rtl:rotate-180" />
                 Back to connectors
               </Link>
             </Button>
@@ -79,17 +68,15 @@ export default function ConnectorDetailPage() {
         />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-destructive">
-            {error?.message ?? "Failed to load connector."}
+            {error?.message ?? 'Failed to load connector.'}
           </p>
         </div>
       </div>
     );
   }
 
-  const providerColor =
-    PROVIDER_ICON_COLORS[connector.provider] ?? "bg-slate-100 text-slate-700";
-  const providerName =
-    PROVIDER_DISPLAY_NAMES[connector.provider] ?? connector.provider;
+  const providerColor = PROVIDER_ICON_COLORS[connector.provider] ?? 'bg-slate-100 text-slate-700';
+  const providerName = PROVIDER_DISPLAY_NAMES[connector.provider] ?? connector.provider;
 
   return (
     <div className="flex h-full flex-col gap-6">
@@ -104,8 +91,8 @@ export default function ConnectorDetailPage() {
               onClick={() => testConnector(connector.id)}
               disabled={isTestPending}
             >
-              <Activity className="mr-2 h-4 w-4" />
-              {isTestPending ? "Testing..." : "Test"}
+              <Activity className="me-2 h-4 w-4" />
+              {isTestPending ? 'Testing...' : 'Test'}
             </Button>
             <Button
               variant="outline"
@@ -113,11 +100,11 @@ export default function ConnectorDetailPage() {
               onClick={() => syncModels(connector.id)}
               disabled={isSyncPending}
             >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              {isSyncPending ? "Syncing..." : "Sync Models"}
+              <RefreshCw className="me-2 h-4 w-4" />
+              {isSyncPending ? 'Syncing...' : 'Sync Models'}
             </Button>
             <Button variant="outline" size="sm" onClick={handleOpenEdit}>
-              <Pencil className="mr-2 h-4 w-4" />
+              <Pencil className="me-2 h-4 w-4" />
               Edit
             </Button>
             <Button
@@ -126,12 +113,12 @@ export default function ConnectorDetailPage() {
               onClick={() => deleteConnector(connector.id)}
               disabled={isDeletePending}
             >
-              <Trash2 className="mr-2 h-4 w-4" />
+              <Trash2 className="me-2 h-4 w-4" />
               Delete
             </Button>
             <Button variant="outline" size="sm" asChild>
               <Link href={ROUTES.CONNECTORS}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
+                <ArrowLeft className="me-2 h-4 w-4 rtl:rotate-180" />
                 Back
               </Link>
             </Button>
@@ -140,15 +127,8 @@ export default function ConnectorDetailPage() {
       />
 
       <div className="flex items-center gap-3">
-        <div
-          className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-lg",
-            providerColor,
-          )}
-        >
-          <span className="text-sm font-bold">
-            {providerName.charAt(0)}
-          </span>
+        <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg', providerColor)}>
+          <span className="text-sm font-bold">{providerName.charAt(0)}</span>
         </div>
         <div className="flex items-center gap-2">
           <StatusBadge status={connector.status} />
@@ -168,13 +148,9 @@ export default function ConnectorDetailPage() {
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
             <StatusBadge status={testResult.status} />
-            <span className="text-sm text-muted-foreground">
-              Latency: {testResult.latencyMs}ms
-            </span>
+            <span className="text-sm text-muted-foreground">Latency: {testResult.latencyMs}ms</span>
             {testResult.errorMessage ? (
-              <span className="text-sm text-destructive">
-                {testResult.errorMessage}
-              </span>
+              <span className="text-sm text-destructive">{testResult.errorMessage}</span>
             ) : null}
           </CardContent>
         </Card>
@@ -209,9 +185,7 @@ export default function ConnectorDetailPage() {
             {connector.maskedApiKey ? (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">API Key</span>
-                <span className="font-mono text-xs">
-                  {connector.maskedApiKey}
-                </span>
+                <span className="font-mono text-xs">{connector.maskedApiKey}</span>
               </div>
             ) : null}
             {connector.baseUrl ? (
@@ -243,9 +217,7 @@ export default function ConnectorDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">
-            Models ({models.length})
-          </CardTitle>
+          <CardTitle className="text-lg">Models ({models.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoadingModels ? (

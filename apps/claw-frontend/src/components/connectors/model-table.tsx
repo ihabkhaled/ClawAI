@@ -1,50 +1,18 @@
-import { DataTable } from "@/components/common/data-table";
-import { Badge } from "@/components/ui/badge";
-import {
-  LIFECYCLE_LABELS,
-  PROVIDER_DISPLAY_NAMES,
-} from "@/constants";
-import type { DataTableColumn } from "@/types";
-import type { ConnectorModel } from "@/types";
-
-type ModelTableProps = {
-  models: ConnectorModel[];
-  showProvider?: boolean;
-  emptyMessage?: string;
-};
-
-function formatContextTokens(tokens: number | null): string {
-  if (tokens === null) return "-";
-  if (tokens >= 1_000_000) return `${(tokens / 1_000_000).toFixed(1)}M`;
-  if (tokens >= 1_000) return `${(tokens / 1_000).toFixed(0)}K`;
-  return String(tokens);
-}
-
-function getLifecycleBadgeVariant(
-  lifecycle: string,
-): "default" | "secondary" | "outline" | "destructive" {
-  switch (lifecycle) {
-    case "ga":
-      return "default";
-    case "preview":
-    case "beta":
-      return "secondary";
-    case "deprecated":
-      return "destructive";
-    default:
-      return "outline";
-  }
-}
+import { DataTable } from '@/components/common/data-table';
+import { Badge } from '@/components/ui/badge';
+import { LIFECYCLE_LABELS, PROVIDER_DISPLAY_NAMES } from '@/constants';
+import type { ConnectorModel, DataTableColumn, ModelTableProps } from '@/types';
+import { formatContextTokens, getLifecycleBadgeVariant } from '@/utilities';
 
 export function ModelTable({
   models,
   showProvider = false,
-  emptyMessage = "No models synced yet.",
+  emptyMessage = 'No models synced yet.',
 }: ModelTableProps) {
   const columns: DataTableColumn<ConnectorModel>[] = [
     {
-      key: "displayName",
-      header: "Model",
+      key: 'displayName',
+      header: 'Model',
       render: (model) => (
         <div>
           <span className="font-medium">{model.displayName}</span>
@@ -56,20 +24,18 @@ export function ModelTable({
 
   if (showProvider) {
     columns.push({
-      key: "provider",
-      header: "Provider",
+      key: 'provider',
+      header: 'Provider',
       render: (model) => (
-        <span className="text-sm">
-          {PROVIDER_DISPLAY_NAMES[model.provider] ?? model.provider}
-        </span>
+        <span className="text-sm">{PROVIDER_DISPLAY_NAMES[model.provider] ?? model.provider}</span>
       ),
     });
   }
 
   columns.push(
     {
-      key: "lifecycle",
-      header: "Lifecycle",
+      key: 'lifecycle',
+      header: 'Lifecycle',
       render: (model) => (
         <Badge variant={getLifecycleBadgeVariant(model.lifecycle)}>
           {LIFECYCLE_LABELS[model.lifecycle] ?? model.lifecycle}
@@ -77,8 +43,8 @@ export function ModelTable({
       ),
     },
     {
-      key: "capabilities",
-      header: "Capabilities",
+      key: 'capabilities',
+      header: 'Capabilities',
       render: (model) => (
         <div className="flex flex-wrap gap-1">
           {model.supportsStreaming ? (
@@ -100,9 +66,9 @@ export function ModelTable({
       ),
     },
     {
-      key: "context",
-      header: "Context",
-      className: "text-right",
+      key: 'context',
+      header: 'Context',
+      className: 'text-end',
       render: (model) => (
         <span className="text-sm text-muted-foreground">
           {formatContextTokens(model.maxContextTokens)}

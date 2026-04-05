@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -18,17 +18,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { UserRole } from "@/enums";
-import type { AdminUser } from "@/types";
-
-interface UserTableProps {
-  users: AdminUser[];
-  onChangeRole: (userId: string, role: string) => void;
-  onDeactivate: (userId: string) => void;
-  isRoleChangePending: boolean;
-  isDeactivatePending: boolean;
-}
+} from '@/components/ui/table';
+import { UserRole } from '@/enums';
+import type { UserTableProps } from '@/types';
 
 export function UserTable({
   users,
@@ -57,7 +49,7 @@ export function UserTable({
             <TableHead>Role</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Joined</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="text-end">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -84,26 +76,26 @@ export function UserTable({
                     </SelectContent>
                   </Select>
                 ) : (
-                  <Badge variant="outline" className="cursor-pointer" onClick={() => setEditingUserId(user.id)}>
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer"
+                    onClick={() => setEditingUserId(user.id)}
+                  >
                     {user.role}
                   </Badge>
                 )}
               </TableCell>
               <TableCell>
-                <Badge
-                  variant={user.status === "ACTIVE" ? "default" : "secondary"}
-                >
+                <Badge variant={user.status === 'ACTIVE' ? 'default' : 'secondary'}>
                   {user.status}
                 </Badge>
               </TableCell>
-              <TableCell>
-                {new Date(user.createdAt).toLocaleDateString()}
-              </TableCell>
-              <TableCell className="text-right">
+              <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+              <TableCell className="text-end">
                 <Button
                   variant="destructive"
                   size="sm"
-                  disabled={isDeactivatePending || isRoleChangePending || user.status !== "ACTIVE"}
+                  disabled={isDeactivatePending || isRoleChangePending || user.status !== 'ACTIVE'}
                   onClick={() => onDeactivate(user.id)}
                 >
                   Deactivate

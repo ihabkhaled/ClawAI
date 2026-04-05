@@ -1,36 +1,19 @@
-import { MoreVertical, Pencil, Trash2, ExternalLink } from "lucide-react";
+import { ExternalLink, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Switch } from "@/components/ui/switch";
-import {
-  MEMORY_TYPE_LABELS,
-  MEMORY_TYPE_COLORS,
-  ROUTES,
-} from "@/constants";
-import { cn } from "@/lib/utils";
-import type { MemoryCardProps } from "@/types";
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString([], {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+} from '@/components/ui/dropdown-menu';
+import { Switch } from '@/components/ui/switch';
+import { MEMORY_TYPE_LABELS, MEMORY_TYPE_COLORS, ROUTES } from '@/constants';
+import { cn } from '@/lib/utils';
+import type { MemoryCardProps } from '@/types';
+import { formatShortDateTime } from '@/utilities';
 
 export function MemoryCard({
   memory,
@@ -39,16 +22,15 @@ export function MemoryCard({
   onDelete,
   isTogglePending,
 }: MemoryCardProps) {
-  const typeLabel =
-    MEMORY_TYPE_LABELS[memory.type] ?? memory.type;
+  const typeLabel = MEMORY_TYPE_LABELS[memory.type] ?? memory.type;
   const typeColor =
-    MEMORY_TYPE_COLORS[memory.type] ?? "bg-slate-100 text-slate-800 border-slate-200";
+    MEMORY_TYPE_COLORS[memory.type] ?? 'bg-slate-100 text-slate-800 border-slate-200';
 
   return (
-    <Card className={cn("transition-colors", !memory.isEnabled && "opacity-60")}>
+    <Card className={cn('transition-colors', !memory.isEnabled && 'opacity-60')}>
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className={cn("text-xs", typeColor)}>
+          <Badge variant="outline" className={cn('text-xs', typeColor)}>
             {typeLabel}
           </Badge>
           {memory.sourceThreadId ? (
@@ -76,14 +58,14 @@ export function MemoryCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onEdit(memory)}>
-                <Pencil className="mr-2 h-4 w-4" />
+                <Pencil className="me-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => onDelete(memory.id)}
                 className="text-destructive focus:text-destructive"
               >
-                <Trash2 className="mr-2 h-4 w-4" />
+                <Trash2 className="me-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -93,7 +75,7 @@ export function MemoryCard({
       <CardContent>
         <p className="text-sm leading-relaxed">{memory.content}</p>
         <p className="mt-3 text-xs text-muted-foreground">
-          Updated {formatDate(memory.updatedAt)}
+          Updated {formatShortDateTime(memory.updatedAt)}
         </p>
       </CardContent>
     </Card>

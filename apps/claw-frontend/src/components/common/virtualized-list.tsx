@@ -2,13 +2,7 @@
 
 import { Virtuoso } from 'react-virtuoso';
 
-export type VirtualizedListProps<T> = {
-  data: T[];
-  itemContent: (index: number, item: T) => React.ReactElement;
-  className?: string;
-  style?: React.CSSProperties;
-  overscan?: number;
-};
+import type { VirtualizedListProps } from '@/types';
 
 export function VirtualizedList<T>({
   data,

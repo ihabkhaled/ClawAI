@@ -1,4 +1,4 @@
-import type { UserProfile } from "./user.types";
+import type { UserProfile } from './user.types';
 
 export type AuthStoreState = {
   accessToken: string | null;
@@ -8,15 +8,18 @@ export type AuthStoreState = {
 };
 
 export type AuthStoreActions = {
-  setAuth: (data: {
-    accessToken: string;
-    refreshToken: string;
-    user: UserProfile;
-  }) => void;
+  setAuth: (data: { accessToken: string; refreshToken: string; user: UserProfile }) => void;
   setUser: (user: UserProfile) => void;
-  setTokens: (tokens: {
-    accessToken: string;
-    refreshToken: string;
-  }) => void;
+  setTokens: (tokens: { accessToken: string; refreshToken: string }) => void;
   clearAuth: () => void;
+};
+
+export type SidebarStoreState = {
+  isOpen: boolean;
+};
+
+export type SidebarStoreActions = {
+  open: () => void;
+  close: () => void;
+  toggle: () => void;
 };

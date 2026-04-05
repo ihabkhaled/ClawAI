@@ -1,28 +1,21 @@
-"use client";
+'use client';
 
-import { Cpu } from "lucide-react";
+import { Cpu } from 'lucide-react';
 
-import { ModelTable } from "@/components/connectors/model-table";
-import { EmptyState } from "@/components/common/empty-state";
-import { LoadingSpinner } from "@/components/common/loading-spinner";
-import { PageHeader } from "@/components/common/page-header";
+import { EmptyState } from '@/components/common/empty-state';
+import { LoadingSpinner } from '@/components/common/loading-spinner';
+import { PageHeader } from '@/components/common/page-header';
+import { ModelTable } from '@/components/connectors/model-table';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import {
-  LIFECYCLE_LABELS,
-  PROVIDER_DISPLAY_NAMES,
-} from "@/constants";
-import { ConnectorProvider } from "@/enums";
-import { useAllModels } from "@/hooks/connectors/use-all-models";
-
-const ALL_VALUE = "__all__";
-const PROVIDER_OPTIONS = Object.values(ConnectorProvider);
-const LIFECYCLE_OPTIONS = Object.keys(LIFECYCLE_LABELS);
+} from '@/components/ui/select';
+import { ALL_FILTER, LIFECYCLE_LABELS, PROVIDER_DISPLAY_NAMES } from '@/constants';
+import { ConnectorProvider } from '@/enums';
+import { useAllModels } from '@/hooks/connectors/use-all-models';
 
 export default function ModelsPage() {
   const {
@@ -44,9 +37,7 @@ export default function ModelsPage() {
           description="Browse and manage available AI models across all connectors"
         />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">
-            Failed to load models.
-          </p>
+          <p className="text-sm text-destructive">Failed to load models.</p>
         </div>
       </div>
     );
@@ -59,31 +50,31 @@ export default function ModelsPage() {
         description={`Browse and manage available AI models across all connectors (${totalModels} total)`}
       />
 
-      {isLoading ? (
-        <LoadingSpinner label="Loading models..." />
-      ) : totalModels === 0 ? (
+      {isLoading && <LoadingSpinner label="Loading models..." />}
+
+      {!isLoading && totalModels === 0 && (
         <EmptyState
           icon={Cpu}
           title="No models synced"
           description="Models will appear here once you configure a connector and sync its available models."
         />
-      ) : (
+      )}
+
+      {!isLoading && totalModels > 0 && (
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <Select
-              value={providerFilter || ALL_VALUE}
+              value={providerFilter ?? ALL_FILTER}
               onValueChange={(value) =>
-                setProviderFilter(
-                  value === ALL_VALUE ? "" : (value as ConnectorProvider),
-                )
+                setProviderFilter(value === ALL_FILTER ? null : (value as ConnectorProvider))
               }
             >
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="All providers" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL_VALUE}>All providers</SelectItem>
-                {PROVIDER_OPTIONS.map((p) => (
+                <SelectItem value={ALL_FILTER}>All providers</SelectItem>
+                {Object.values(ConnectorProvider).map((p) => (
                   <SelectItem key={p} value={p}>
                     {PROVIDER_DISPLAY_NAMES[p]}
                   </SelectItem>
@@ -92,17 +83,15 @@ export default function ModelsPage() {
             </Select>
 
             <Select
-              value={lifecycleFilter || ALL_VALUE}
-              onValueChange={(value) =>
-                setLifecycleFilter(value === ALL_VALUE ? "" : value)
-              }
+              value={lifecycleFilter || ALL_FILTER}
+              onValueChange={(value) => setLifecycleFilter(value === ALL_FILTER ? '' : value)}
             >
               <SelectTrigger className="w-[160px]">
                 <SelectValue placeholder="All lifecycle" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL_VALUE}>All lifecycle</SelectItem>
-                {LIFECYCLE_OPTIONS.map((l) => (
+                <SelectItem value={ALL_FILTER}>All lifecycle</SelectItem>
+                {Object.keys(LIFECYCLE_LABELS).map((l) => (
                   <SelectItem key={l} value={l}>
                     {LIFECYCLE_LABELS[l]}
                   </SelectItem>

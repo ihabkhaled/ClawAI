@@ -30,13 +30,9 @@ export function UserMenu(): React.ReactElement | null {
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-accent">
           <Avatar className="h-8 w-8">
-            <AvatarFallback className="text-xs">
-              {getInitials(user.username)}
-            </AvatarFallback>
+            <AvatarFallback className="text-xs">{getInitials(user.username)}</AvatarFallback>
           </Avatar>
-          <span className="max-w-[120px] truncate font-medium">
-            {user.username}
-          </span>
+          <span className="max-w-[120px] truncate font-medium">{user.username}</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
@@ -49,13 +45,13 @@ export function UserMenu(): React.ReactElement | null {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href={ROUTES.SETTINGS} className="cursor-pointer">
-            <User className="mr-2 h-4 w-4" />
+            <User className="me-2 h-4 w-4" />
             Profile
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href={ROUTES.SETTINGS} className="cursor-pointer">
-            <Settings className="mr-2 h-4 w-4" />
+            <Settings className="me-2 h-4 w-4" />
             Settings
           </Link>
         </DropdownMenuItem>
@@ -65,7 +61,7 @@ export function UserMenu(): React.ReactElement | null {
           disabled={isPending}
           onClick={() => logout()}
         >
-          <LogOut className="mr-2 h-4 w-4" />
+          <LogOut className="me-2 h-4 w-4" />
           {isPending ? 'Logging out...' : 'Log out'}
         </DropdownMenuItem>
       </DropdownMenuContent>
