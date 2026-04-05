@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post, Query } from "@nestjs/common";
 import { type RuntimeConfig } from "../../generated/prisma";
+import { Public } from "../../app/decorators/public.decorator";
 import { ZodValidationPipe } from "../../app/pipes/zod-validation.pipe";
 import { type PaginatedResult } from "../../common/types";
 import { OllamaService } from "./ollama.service";
@@ -39,6 +40,7 @@ export class OllamaController {
     return this.ollamaService.assignRole(dto);
   }
 
+  @Public()
   @Post("generate")
   async generate(
     @Body(new ZodValidationPipe(generateSchema)) dto: GenerateDto,
@@ -46,6 +48,7 @@ export class OllamaController {
     return this.ollamaService.generate(dto);
   }
 
+  @Public()
   @Get("health")
   async healthCheck(
     @Query("runtime") runtime: string,

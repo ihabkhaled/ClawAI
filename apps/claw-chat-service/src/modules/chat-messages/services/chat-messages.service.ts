@@ -33,11 +33,14 @@ export class ChatMessagesService implements OnModuleInit {
     }
     this.validateOwnership(thread, userId);
 
+    // Inherit routing mode from thread if not specified on the message
+    const effectiveRoutingMode = dto.routingMode ?? thread.routingMode;
+
     const message = await this.chatMessagesRepository.create({
       threadId: dto.threadId,
       role: "USER",
       content: dto.content,
-      routingMode: dto.routingMode,
+      routingMode: effectiveRoutingMode,
     });
 
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
@@ -45,7 +48,7 @@ export class ChatMessagesService implements OnModuleInit {
       threadId: message.threadId,
       userId,
       content: message.content,
-      routingMode: dto.routingMode,
+      routingMode: effectiveRoutingMode,
       timestamp: new Date().toISOString(),
     });
 
