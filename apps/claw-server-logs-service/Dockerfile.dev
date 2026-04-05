@@ -1,0 +1,10 @@
+FROM node:20-alpine
+RUN apk add --no-cache openssl
+WORKDIR /app/apps/claw-server-logs-service
+COPY package.json /app/package.json
+COPY packages/ /app/packages/
+COPY apps/claw-server-logs-service/package.json ./package.json
+RUN cd /app && npm install --ignore-scripts && cd /app/apps/claw-server-logs-service && npm install --ignore-scripts 2>/dev/null || true
+COPY apps/claw-server-logs-service/ .
+EXPOSE 4011
+CMD ["npm", "run", "dev"]
