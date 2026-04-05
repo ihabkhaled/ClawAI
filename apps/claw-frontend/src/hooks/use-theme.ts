@@ -1,6 +1,8 @@
 'use client';
 
-import { useTheme as useNextTheme } from 'next-themes';
+import { useContext } from 'react';
+
+import { ThemeContext } from '@/lib/theme/theme-provider';
 
 export function useAppTheme(): {
   theme: string;
@@ -8,12 +10,21 @@ export function useAppTheme(): {
   systemTheme: string | undefined;
   resolvedTheme: string | undefined;
 } {
-  const { theme, setTheme, systemTheme, resolvedTheme } = useNextTheme();
+  const context = useContext(ThemeContext);
+
+  if (!context) {
+    return {
+      theme: 'system',
+      setTheme: () => {},
+      systemTheme: undefined,
+      resolvedTheme: undefined,
+    };
+  }
 
   return {
-    theme: theme ?? 'system',
-    setTheme,
-    systemTheme,
-    resolvedTheme,
+    theme: context.theme,
+    setTheme: context.setTheme as (theme: string) => void,
+    systemTheme: undefined,
+    resolvedTheme: context.resolvedTheme,
   };
 }
