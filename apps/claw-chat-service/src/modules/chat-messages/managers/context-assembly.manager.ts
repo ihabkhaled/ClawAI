@@ -74,7 +74,7 @@ export class ContextAssemblyManager {
       const fileBlock = context.fileChunks
         .map((chunk) => chunk.content)
         .join("\n");
-      parts.push(`FILE CONTENT:\n${fileBlock}`);
+      parts.push(`ATTACHED FILE CONTENT (use this to answer the user's questions):\n${fileBlock}`);
     }
 
     for (const msg of context.threadMessages) {
@@ -116,7 +116,7 @@ export class ContextAssemblyManager {
       const fileBlock = context.fileChunks
         .map((chunk) => chunk.content)
         .join("\n");
-      systemParts.push(`File content:\n${fileBlock}`);
+      systemParts.push(`The user has attached the following file content. Use this content to answer their questions:\n\n${fileBlock}`);
     }
 
     if (systemParts.length > 0) {
