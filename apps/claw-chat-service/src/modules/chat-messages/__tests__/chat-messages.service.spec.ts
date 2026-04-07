@@ -3,6 +3,7 @@ import { ChatMessagesRepository } from '../repositories/chat-messages.repository
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatExecutionManager } from '../managers/chat-execution.manager';
 import { ContextAssemblyManager } from '../managers/context-assembly.manager';
+import { ChatStreamController } from '../controllers/chat-stream.controller';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { EntityNotFoundException, BusinessException } from '../../../common/errors';
@@ -68,6 +69,7 @@ const mockContextAssembly = (): Partial<Record<keyof ContextAssemblyManager, jes
     threadMessages: [],
     memories: [],
     contextPackItems: [],
+    fileChunks: [],
     tokenBudget: 4096,
   }),
   buildPromptString: jest.fn().mockReturnValue(''),
@@ -98,6 +100,7 @@ describe('ChatMessagesService', () => {
       threadsRepo as unknown as ChatThreadsRepository,
       executionManager as unknown as ChatExecutionManager,
       contextAssembly as unknown as ContextAssemblyManager,
+      { emitCompletion: jest.fn() } as unknown as ChatStreamController,
       rabbitMQ as unknown as RabbitMQService,
     );
   });

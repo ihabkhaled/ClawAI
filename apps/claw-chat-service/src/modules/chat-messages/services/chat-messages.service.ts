@@ -5,6 +5,7 @@ import { ChatMessagesRepository } from "../repositories/chat-messages.repository
 import { ChatThreadsRepository } from "../../chat-threads/repositories/chat-threads.repository";
 import { ChatExecutionManager } from "../managers/chat-execution.manager";
 import { ContextAssemblyManager } from "../managers/context-assembly.manager";
+import { ChatStreamController } from "../controllers/chat-stream.controller";
 import { type CreateMessageDto } from "../dto/create-message.dto";
 import { type ListMessagesQueryDto } from "../dto/list-messages-query.dto";
 import { type MessageRoutedData } from "../types/execution.types";
@@ -22,6 +23,7 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatExecutionManager: ChatExecutionManager,
     private readonly contextAssemblyManager: ContextAssemblyManager,
+    private readonly chatStreamController: ChatStreamController,
     private readonly rabbitMQService: RabbitMQService,
   ) {
     this.structuredLogger = new StructuredLogger(
@@ -229,6 +231,13 @@ export class ChatMessagesService implements OnModuleInit {
       lastProvider: llmResponse.provider,
       lastModel: llmResponse.model,
     });
+
+    // Notify SSE subscribers that a response is ready
+    this.chatStreamController.emitCompletion(
+      payload.threadId,
+      llmResponse.provider,
+      llmResponse.model,
+    );
 
     this.structuredLogger.logAction({
       level: LogLevel.INFO,
