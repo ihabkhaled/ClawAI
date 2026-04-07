@@ -20,20 +20,51 @@ Optional:
 
 ---
 
-## Quick Start (Docker Compose)
+## Quick Start (Automated Installer)
 
-The fastest way to run Claw is with Docker Compose, which starts all 20 containers:
+The fastest way to run Claw is with the automated install script. It checks prerequisites, generates secrets, creates your `.env`, and starts all containers:
+
+**Linux / macOS:**
+
+```bash
+git clone <repo-url> claw && cd claw
+bash scripts/install.sh
+```
+
+**Windows (PowerShell):**
+
+```powershell
+git clone <repo-url> claw; cd claw
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1
+```
+
+The script will:
+
+- Check that Docker, Node.js 20+, and Git are installed
+- Generate secure random secrets (JWT, encryption key, database passwords)
+- Prompt for admin email/password (with sensible defaults)
+- Detect NVIDIA GPU and offer GPU-accelerated Ollama
+- Create a fully configured `.env` file
+- Build and start all ~22 containers
+- Wait for health checks and print access URLs
+
+---
+
+## Quick Start (Manual)
+
+If you prefer to configure manually:
 
 ```bash
 # 1. Clone the repository
 git clone <repo-url> claw
 cd claw
 
-# 2. Copy environment file
+# 2. Copy environment file and edit secrets
 cp .env.example .env
+# Edit .env: set JWT_SECRET, ENCRYPTION_KEY, ADMIN_PASSWORD
 
 # 3. Start all containers
-docker compose up -d
+docker compose -f docker-compose.dev.yml up -d
 
 # 4. Verify health
 curl http://localhost:4009/api/v1/health
