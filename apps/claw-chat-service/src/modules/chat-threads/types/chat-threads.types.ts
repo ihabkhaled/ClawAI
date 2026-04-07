@@ -9,6 +9,7 @@ export interface CreateThreadData {
   maxTokens?: number;
   preferredProvider?: string;
   preferredModel?: string;
+  contextPackIds?: string[];
 }
 
 export interface UpdateThreadData {
@@ -23,6 +24,7 @@ export interface UpdateThreadData {
   maxTokens?: number | null;
   preferredProvider?: string | null;
   preferredModel?: string | null;
+  contextPackIds?: string[];
 }
 
 export interface ThreadFilters {

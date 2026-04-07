@@ -29,6 +29,7 @@ export class ChatThreadsService {
       maxTokens: dto.maxTokens,
       preferredProvider: dto.preferredProvider,
       preferredModel: dto.preferredModel,
+      contextPackIds: dto.contextPackIds,
     });
 
     void this.rabbitMQService.publish(THREAD_CREATED_EVENT, {
@@ -99,6 +100,7 @@ export class ChatThreadsService {
       maxTokens: dto.maxTokens,
       preferredProvider: dto.preferredProvider,
       preferredModel: dto.preferredModel,
+      contextPackIds: dto.contextPackIds,
     });
   }
 

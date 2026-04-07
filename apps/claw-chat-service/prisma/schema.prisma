@@ -40,6 +40,7 @@ model ChatThread {
   isArchived   Boolean     @default(false) @map("is_archived")
   preferredProvider String?  @map("preferred_provider")
   preferredModel    String?  @map("preferred_model")
+  contextPackIds    String[] @default([]) @map("context_pack_ids")
   systemPrompt      String?  @map("system_prompt")
   temperature       Float?   @default(0.7) @map("temperature")
   maxTokens         Int?     @map("max_tokens")

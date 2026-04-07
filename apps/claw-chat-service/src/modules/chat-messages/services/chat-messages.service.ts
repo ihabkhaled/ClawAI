@@ -208,7 +208,7 @@ export class ChatMessagesService implements OnModuleInit {
       thread?.userId ?? "system",
       chronologicalMessages,
       threadSettings,
-      undefined,
+      thread?.contextPackIds ?? undefined,
       fileIds,
     );
 
@@ -251,15 +251,21 @@ export class ChatMessagesService implements OnModuleInit {
       latencyMs: llmResponse.latencyMs,
     });
 
+    // Include content for downstream memory extraction
+    const lastUserMsg = [...chronologicalMessages].reverse().find((m) => m.role === "USER");
+
     void this.rabbitMQService.publish(EventPattern.MESSAGE_COMPLETED, {
       messageId: payload.messageId,
       threadId: payload.threadId,
       assistantMessageId: assistantMessage.id,
+      userId: thread?.userId,
       provider: llmResponse.provider,
       model: llmResponse.model,
       inputTokens: llmResponse.inputTokens,
       outputTokens: llmResponse.outputTokens,
       latencyMs: llmResponse.latencyMs,
+      content: llmResponse.content,
+      userContent: lastUserMsg?.content,
       timestamp: new Date().toISOString(),
     });
   }
