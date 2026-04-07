@@ -25,8 +25,8 @@ describe("AuditEventManager", () => {
     } as unknown as jest.Mocked<UsageService>;
 
     rabbitMQService = {
-      subscribe: jest.fn().mockResolvedValue(),
-      publish: jest.fn().mockResolvedValue(),
+      subscribe: jest.fn().mockResolvedValue(undefined),
+      publish: jest.fn().mockResolvedValue(undefined),
     };
 
     manager = new AuditEventManager(
