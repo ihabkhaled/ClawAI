@@ -1,4 +1,4 @@
-import { RefreshCw, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { Brain, FileText, RefreshCw, ThumbsDown, ThumbsUp } from 'lucide-react';
 
 import { MessageProvenance } from '@/components/chat/message-provenance';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
@@ -17,6 +17,9 @@ export function MessageBubble({ message, routingDecision, onFeedback, onRegenera
 
   const totalTokens = (message.inputTokens ?? 0) + (message.outputTokens ?? 0);
   const providerModel = [message.provider, message.model].filter(Boolean).join(' / ');
+  const metadata = message.metadata as Record<string, unknown> | null;
+  const memoryCount = typeof metadata?.['memoryCount'] === 'number' ? metadata['memoryCount'] : 0;
+  const contextFileIds = Array.isArray(metadata?.['fileIds']) ? (metadata['fileIds'] as string[]) : [];
 
   const handleFeedback = (value: MessageFeedback): void => {
     if (!onFeedback) {
@@ -47,6 +50,18 @@ export function MessageBubble({ message, routingDecision, onFeedback, onRegenera
             {providerModel ? (
               <Badge variant="outline" className="text-xs">
                 {providerModel}
+              </Badge>
+            ) : null}
+            {memoryCount >= 0 ? (
+              <Badge variant="secondary" className="gap-1 text-xs">
+                <Brain className="h-3 w-3" />
+                {memoryCount} {memoryCount === 1 ? 'memory' : 'memories'}
+              </Badge>
+            ) : null}
+            {contextFileIds.length > 0 ? (
+              <Badge variant="secondary" className="gap-1 text-xs">
+                <FileText className="h-3 w-3" />
+                {contextFileIds.length} {contextFileIds.length === 1 ? 'file' : 'files'}
               </Badge>
             ) : null}
             {totalTokens > 0 ? (

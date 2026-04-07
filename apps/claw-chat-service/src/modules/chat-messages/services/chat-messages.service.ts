@@ -165,7 +165,11 @@ export class ChatMessagesService implements OnModuleInit {
     );
 
     const llmResponse = await this.chatExecutionManager.execute(payload, context, threadSettings);
-    const assistantMessage = await this.storeAssistantResponse(payload, llmResponse);
+    const contextMetadata = {
+      memoryCount: context.memories.length,
+      fileIds: (fileIds ?? []),
+    };
+    const assistantMessage = await this.storeAssistantResponse(payload, llmResponse, contextMetadata);
     await this.updateThreadAfterResponse(payload.threadId, llmResponse);
 
     this.chatStreamController.emitCompletion(payload.threadId, llmResponse.provider, llmResponse.model);
@@ -256,7 +260,11 @@ export class ChatMessagesService implements OnModuleInit {
     return Array.isArray(metadata?.["fileIds"]) ? (metadata["fileIds"] as string[]) : undefined;
   }
 
-  private async storeAssistantResponse(payload: MessageRoutedData, llmResponse: LlmResponse): Promise<ChatMessage> {
+  private async storeAssistantResponse(
+    payload: MessageRoutedData,
+    llmResponse: LlmResponse,
+    contextMetadata?: { memoryCount: number; fileIds: string[] },
+  ): Promise<ChatMessage> {
     return this.chatMessagesRepository.create({
       threadId: payload.threadId,
       role: "ASSISTANT",
@@ -268,6 +276,7 @@ export class ChatMessagesService implements OnModuleInit {
       outputTokens: llmResponse.outputTokens,
       latencyMs: llmResponse.latencyMs,
       usedFallback: llmResponse.usedFallback,
+      metadata: contextMetadata ? { memoryCount: contextMetadata.memoryCount, fileIds: contextMetadata.fileIds } : undefined,
     });
   }
 

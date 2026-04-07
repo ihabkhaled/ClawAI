@@ -34,6 +34,7 @@ export type ChatMessage = {
   outputTokens: number | null;
   feedback: MessageFeedback | null;
   latencyMs: number | null;
+  metadata: Record<string, unknown> | null;
   createdAt: string;
 };
 
