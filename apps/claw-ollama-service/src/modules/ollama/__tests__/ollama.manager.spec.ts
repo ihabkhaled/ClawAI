@@ -72,7 +72,7 @@ const mockLocalModelsRepo = (): Partial<Record<keyof LocalModelsRepository, jest
 const mockRoleAssignmentsRepo = (): Partial<Record<keyof RoleAssignmentsRepository, jest.Mock>> => ({
   create: jest.fn().mockResolvedValue(mockRoleAssignment),
   findActiveByRole: jest.fn().mockResolvedValue(mockRoleAssignment),
-  deactivateByRole: jest.fn().mockResolvedValue(),
+  deactivateByRole: jest.fn().mockResolvedValue(undefined),
 });
 
 const mockPullJobsRepo = (): Partial<Record<keyof PullJobsRepository, jest.Mock>> => ({
