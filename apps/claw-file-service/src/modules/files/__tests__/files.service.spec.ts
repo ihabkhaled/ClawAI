@@ -1,10 +1,10 @@
 import { FilesService } from "../services/files.service";
-import { FilesRepository } from "../repositories/files.repository";
-import { FileChunksRepository } from "../repositories/file-chunks.repository";
-import { FileProcessingManager } from "../managers/file-processing.manager";
-import { RabbitMQService } from "@claw/shared-rabbitmq";
+import { type FilesRepository } from "../repositories/files.repository";
+import { type FileChunksRepository } from "../repositories/file-chunks.repository";
+import { type FileProcessingManager } from "../managers/file-processing.manager";
+import { type RabbitMQService } from "@claw/shared-rabbitmq";
 import { EventPattern } from "@claw/shared-types";
-import { EntityNotFoundException, BusinessException } from "../../../common/errors";
+import { BusinessException, EntityNotFoundException } from "../../../common/errors";
 import { FileIngestionStatus } from "../../../generated/prisma";
 
 jest.mock("../../../common/utilities", () => ({
@@ -63,12 +63,12 @@ const mockFileChunksRepository = (): Record<keyof FileChunksRepository, jest.Moc
 });
 
 const mockFileProcessingManager = (): Partial<Record<keyof FileProcessingManager, jest.Mock>> => ({
-  processFile: jest.fn().mockResolvedValue(undefined),
-  updateIngestionStatus: jest.fn().mockResolvedValue(undefined),
+  processFile: jest.fn().mockResolvedValue(),
+  updateIngestionStatus: jest.fn().mockResolvedValue(),
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(undefined),
+  publish: jest.fn().mockResolvedValue(),
 });
 
 describe("FilesService", () => {

@@ -3,7 +3,7 @@ import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { type File, type FileChunk } from '../../../generated/prisma';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
-import { saveFile, deleteFile } from '../../../common/utilities';
+import { deleteFile, saveFile } from '../../../common/utilities';
 import { type PaginatedResult } from '../../../common/types';
 import { FilesRepository } from '../repositories/files.repository';
 import { FileChunksRepository } from '../repositories/file-chunks.repository';

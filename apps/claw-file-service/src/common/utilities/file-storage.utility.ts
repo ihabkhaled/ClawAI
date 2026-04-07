@@ -4,7 +4,7 @@ import { AppConfig } from '../../app/config/app.config';
 
 function sanitizeFilename(filename: string): string {
   const basename = path.basename(filename);
-  return basename.replace(/[^a-zA-Z0-9._-]/g, '_');
+  return basename.replaceAll(/[^a-zA-Z0-9._-]/g, '_');
 }
 
 function ensureWithinStorageRoot(resolvedPath: string, storageRoot: string): void {

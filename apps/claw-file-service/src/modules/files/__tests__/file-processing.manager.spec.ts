@@ -1,7 +1,7 @@
 import { FileProcessingManager } from "../managers/file-processing.manager";
-import { FilesRepository } from "../repositories/files.repository";
-import { FileChunksRepository } from "../repositories/file-chunks.repository";
-import { RabbitMQService } from "@claw/shared-rabbitmq";
+import { type FilesRepository } from "../repositories/files.repository";
+import { type FileChunksRepository } from "../repositories/file-chunks.repository";
+import { type RabbitMQService } from "@claw/shared-rabbitmq";
 import { EventPattern } from "@claw/shared-types";
 import { FileIngestionStatus } from "../../../generated/prisma";
 
@@ -44,7 +44,7 @@ const mockFileChunksRepository = (): Record<keyof FileChunksRepository, jest.Moc
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(undefined),
+  publish: jest.fn().mockResolvedValue(),
 });
 
 describe("FileProcessingManager", () => {
