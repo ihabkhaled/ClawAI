@@ -40,8 +40,10 @@ describe("MemoryService", () => {
   beforeEach(() => {
     memoryRepo = mockMemoryRepository();
     rabbitMQ = mockRabbitMQ();
+    const extractionManager = { extract: jest.fn().mockResolvedValue(undefined) };
     service = new MemoryService(
       memoryRepo as unknown as MemoryRepository,
+      extractionManager as never,
       rabbitMQ as unknown as RabbitMQService,
     );
   });

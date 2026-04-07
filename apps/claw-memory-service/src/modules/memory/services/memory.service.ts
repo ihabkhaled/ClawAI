@@ -5,6 +5,7 @@ import { type MemoryRecord } from "../../../generated/prisma";
 import { BusinessException, EntityNotFoundException } from "../../../common/errors";
 import { type PaginatedResult } from "../../../common/types";
 import { MemoryRepository } from "../repositories/memory.repository";
+import { MemoryExtractionManager } from "../managers/memory-extraction.manager";
 import { type CreateMemoryDto } from "../dto/create-memory.dto";
 import { type UpdateMemoryDto } from "../dto/update-memory.dto";
 import { type ListMemoriesQueryDto } from "../dto/list-memories-query.dto";
@@ -15,6 +16,7 @@ export class MemoryService implements OnModuleInit {
 
   constructor(
     private readonly memoryRepository: MemoryRepository,
+    private readonly memoryExtractionManager: MemoryExtractionManager,
     private readonly rabbitMQService: RabbitMQService,
   ) {}
 
@@ -130,8 +132,55 @@ export class MemoryService implements OnModuleInit {
   }
 
   private async handleMessageCompleted(data: unknown): Promise<void> {
-    this.logger.debug("Received message.completed event for memory extraction");
     const payload = data as Record<string, unknown>;
-    this.logger.debug(`Processing memory extraction for message ${String(payload["messageId"])}`);
+    const messageId = payload["messageId"] as string | undefined;
+    const threadId = payload["threadId"] as string | undefined;
+
+    if (!messageId || !threadId) {
+      this.logger.warn("message.completed missing messageId or threadId");
+      return;
+    }
+
+    this.logger.log(`Extracting memories from message ${messageId}`);
+
+    // Extract user/assistant content from the event context
+    const assistantContent = payload["content"] as string | undefined;
+    const userContent = payload["userContent"] as string | undefined;
+
+    if (!assistantContent) {
+      this.logger.debug(`No content in event for ${messageId}, skipping extraction`);
+      return;
+    }
+
+    const extracted = await this.memoryExtractionManager.extract(
+      userContent ?? "",
+      assistantContent,
+    );
+
+    if (extracted.length === 0) {
+      this.logger.debug(`No memories extracted from ${messageId}`);
+      return;
+    }
+
+    const userId = (payload["userId"] as string) ?? "system";
+
+    for (const memory of extracted) {
+      const record = await this.memoryRepository.create({
+        userId,
+        type: memory.type,
+        content: memory.content,
+        sourceThreadId: threadId,
+        sourceMessageId: messageId,
+      });
+
+      void this.rabbitMQService.publish(EventPattern.MEMORY_EXTRACTED, {
+        memoryId: record.id,
+        userId,
+        type: record.type,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    this.logger.log(`Extracted ${String(extracted.length)} memories from ${messageId}`);
   }
 }

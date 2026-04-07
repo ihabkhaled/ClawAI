@@ -5,6 +5,8 @@ const appConfigSchema = z.object({
   REDIS_URL: z.string().min(1, "REDIS_URL is required"),
   RABBITMQ_URL: z.string().min(1, "RABBITMQ_URL is required"),
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
+  OLLAMA_SERVICE_URL: z.string().min(1).default("http://ollama-service:4008"),
+  MEMORY_EXTRACTION_MODEL: z.string().min(1).default("tinyllama"),
   MEMORY_PORT: z.string().default("4005"),
 });
 

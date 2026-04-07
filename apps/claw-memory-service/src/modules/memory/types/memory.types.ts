@@ -21,3 +21,14 @@ export interface MemoryFilters {
 }
 
 export type MemoryRecordResult = MemoryRecord;
+
+export type OllamaGenerateResponse = {
+  response: string;
+  model: string;
+  done: boolean;
+};
+
+export type ExtractedMemory = {
+  type: MemoryType;
+  content: string;
+};
