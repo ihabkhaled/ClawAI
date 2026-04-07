@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { AppConfig } from "../../../app/config/app.config";
+import { AppConfig, type AppConfigType } from "../../../app/config/app.config";
 import { httpRequest } from "../../../common/utilities";
 import {
   LOCAL_PROVIDER,
@@ -12,10 +12,12 @@ import type { OllamaGenerateResponse, OllamaRouterDecision, RoutingContext } fro
 @Injectable()
 export class OllamaRouterManager {
   private readonly logger = new Logger(OllamaRouterManager.name);
+  private cachedRouterModel: string | null = null;
 
   async route(context: RoutingContext): Promise<OllamaRouterDecision | null> {
     try {
       const config = AppConfig.get();
+      const routerModel = await this.resolveRouterModel(config);
       const healthyProviders = this.getHealthyProviders(context);
 
       const prompt = ROUTER_PROMPT_TEMPLATE
@@ -26,7 +28,7 @@ export class OllamaRouterManager {
         url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
         method: "POST",
         body: {
-          model: config.OLLAMA_ROUTER_MODEL,
+          model: routerModel,
           prompt,
           stream: false,
           options: { temperature: 0, num_predict: 200 },
@@ -59,6 +61,30 @@ export class OllamaRouterManager {
       this.logger.warn(`Ollama router failed (falling back to heuristic): ${msg}`);
       return null;
     }
+  }
+
+  private async resolveRouterModel(config: AppConfigType): Promise<string> {
+    if (this.cachedRouterModel) {
+      return this.cachedRouterModel;
+    }
+
+    try {
+      const response = await httpRequest<{ model: string | null }>({
+        url: `${config.OLLAMA_SERVICE_URL}/api/v1/internal/ollama/router-model`,
+        method: "GET",
+        timeoutMs: 3_000,
+      });
+
+      if (response.ok && response.data.model) {
+        this.cachedRouterModel = response.data.model;
+        this.logger.log(`Using assigned router model: ${response.data.model}`);
+        return response.data.model;
+      }
+    } catch {
+      this.logger.debug("Could not fetch assigned router model, using config default");
+    }
+
+    return config.OLLAMA_ROUTER_MODEL;
   }
 
   private parseResponse(raw: string): OllamaRouterDecision | null {

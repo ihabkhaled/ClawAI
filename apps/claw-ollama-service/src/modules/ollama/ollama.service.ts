@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { RabbitMQService } from "@claw/shared-rabbitmq";
 import { EventPattern } from "@claw/shared-types";
-import { type RuntimeConfig, type RuntimeType } from "../../generated/prisma";
+import { type RuntimeConfig, type RuntimeType, LocalModelRole } from "../../generated/prisma";
 import { EntityNotFoundException } from "../../common/errors";
 import { type PaginatedResult } from "../../common/types";
 import { LocalModelsRepository } from "./repositories/local-models.repository";
@@ -93,5 +93,14 @@ export class OllamaService {
 
   async getRuntimes(): Promise<RuntimeConfig[]> {
     return this.runtimeConfigsRepository.findAll();
+  }
+
+  async getRouterModelName(): Promise<string | null> {
+    const assignment = await this.ollamaManager.getModelForRole("ROUTER" as LocalModelRole);
+    if (!assignment) {
+      return null;
+    }
+    const model = await this.localModelsRepository.findById(assignment.modelId);
+    return model?.name ?? null;
   }
 }
