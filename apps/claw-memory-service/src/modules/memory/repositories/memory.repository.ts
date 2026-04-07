@@ -3,8 +3,8 @@ import { type MemoryRecord, Prisma } from "../../../generated/prisma";
 import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
 import {
   type CreateMemoryData,
-  type UpdateMemoryData,
   type MemoryFilters,
+  type UpdateMemoryData,
 } from "../types/memory.types";
 
 @Injectable()

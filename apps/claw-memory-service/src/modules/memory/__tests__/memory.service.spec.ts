@@ -1,8 +1,8 @@
 import { MemoryService } from "../services/memory.service";
-import { MemoryRepository } from "../repositories/memory.repository";
-import { RabbitMQService } from "@claw/shared-rabbitmq";
+import { type MemoryRepository } from "../repositories/memory.repository";
+import { type RabbitMQService } from "@claw/shared-rabbitmq";
 import { EventPattern } from "@claw/shared-types";
-import { EntityNotFoundException, BusinessException } from "../../../common/errors";
+import { BusinessException, EntityNotFoundException } from "../../../common/errors";
 import { MemoryType } from "../../../generated/prisma";
 
 const mockMemory = {
@@ -28,8 +28,8 @@ const mockMemoryRepository = (): Record<keyof MemoryRepository, jest.Mock> => ({
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(undefined),
-  subscribe: jest.fn().mockResolvedValue(undefined),
+  publish: jest.fn().mockResolvedValue(),
+  subscribe: jest.fn().mockResolvedValue(),
 });
 
 describe("MemoryService", () => {

@@ -1,7 +1,7 @@
 import { ContextPacksService } from "../services/context-packs.service";
-import { ContextPacksRepository } from "../repositories/context-packs.repository";
-import { RabbitMQService } from "@claw/shared-rabbitmq";
-import { EntityNotFoundException, BusinessException } from "../../../common/errors";
+import { type ContextPacksRepository } from "../repositories/context-packs.repository";
+import { type RabbitMQService } from "@claw/shared-rabbitmq";
+import { BusinessException, EntityNotFoundException } from "../../../common/errors";
 
 const mockPack = {
   id: "pack-1",
@@ -51,7 +51,7 @@ const mockContextPacksRepository = (): Record<keyof ContextPacksRepository, jest
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(undefined),
+  publish: jest.fn().mockResolvedValue(),
 });
 
 describe("ContextPacksService", () => {

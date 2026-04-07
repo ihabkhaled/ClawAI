@@ -30,8 +30,8 @@ export class ContextPacksController {
   ): Promise<PaginatedResult<ContextPack>> {
     return this.contextPacksService.getContextPacks(
       user.id,
-      page ? parseInt(page, 10) : 1,
-      limit ? parseInt(limit, 10) : 20,
+      page ? Number.parseInt(page, 10) : 1,
+      limit ? Number.parseInt(limit, 10) : 20,
       search,
     );
   }
