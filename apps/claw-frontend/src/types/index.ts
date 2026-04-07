@@ -115,6 +115,8 @@ export type {
   MessageBubbleProps,
   ModelSelection,
   ModelSelectorProps,
+  FileAttachmentPickerProps,
+  ContextPackSelectorProps,
   MessageComposerProps,
   ThinkingIndicatorProps,
   RoutingBadgeProps,

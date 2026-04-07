@@ -1,6 +1,7 @@
 import { Send } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
+import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ModelSelector } from '@/components/chat/model-selector';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,6 +12,7 @@ export function MessageComposer({ onSend, isPending, threadModel }: MessageCompo
   const [content, setContent] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [modelOverride, setModelOverride] = useState<ModelSelection | null>(null);
+  const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
 
   const activeModel = modelOverride ?? threadModel ?? null;
 
@@ -21,10 +23,15 @@ export function MessageComposer({ onSend, isPending, threadModel }: MessageCompo
       return false;
     }
     setValidationError(null);
-    onSend(result.data.content, activeModel ?? undefined);
+    onSend(
+      result.data.content,
+      activeModel ?? undefined,
+      selectedFileIds.length > 0 ? selectedFileIds : undefined,
+    );
     setContent('');
+    setSelectedFileIds([]);
     return true;
-  }, [content, onSend, activeModel]);
+  }, [content, onSend, activeModel, selectedFileIds]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -64,6 +71,11 @@ export function MessageComposer({ onSend, isPending, threadModel }: MessageCompo
     <form onSubmit={handleSubmit} className="flex flex-col gap-1">
       <div className="mb-1 flex items-center gap-2">
         <ModelSelector value={activeModel} onChange={setModelOverride} disabled={isPending} />
+        <FileAttachmentPicker
+          selectedFileIds={selectedFileIds}
+          onChange={setSelectedFileIds}
+          disabled={isPending}
+        />
       </div>
       <div className="flex gap-2">
         <Textarea

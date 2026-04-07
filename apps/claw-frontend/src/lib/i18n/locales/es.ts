@@ -125,6 +125,12 @@ export const es: TranslationDictionary = {
     helpful: '\u00datil',
     notHelpful: 'No \u00fatil',
     feedbackSaved: 'Comentario guardado',
+    attachFiles: 'Adjuntar archivos',
+    noFiles: 'No se han subido archivos',
+    selectedFiles: '{count} archivo(s) adjunto(s)',
+    contextPacks: 'Paquetes de contexto',
+    contextPacksDescription: 'Selecciona paquetes de contexto para incluir en este hilo.',
+    noContextPacks: 'No se han creado paquetes de contexto',
   },
   connectors: {
     title: 'Conectores',

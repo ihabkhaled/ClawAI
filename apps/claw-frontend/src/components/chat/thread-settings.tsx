@@ -1,3 +1,4 @@
+import { ContextPackSelector } from '@/components/chat/context-pack-selector';
 import { ModelSelector } from '@/components/chat/model-selector';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +16,8 @@ export function ThreadSettings({
   onMaxTokensChange,
   selectedModel,
   onModelChange,
+  contextPackIds,
+  onContextPackIdsChange,
   onSave,
   isPending,
 }: ThreadSettingsProps): React.ReactElement {
@@ -87,6 +90,20 @@ export function ThreadSettings({
             placeholder="32000"
             value={maxTokens}
             onChange={(e) => onMaxTokensChange(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            {t('chat.contextPacks')}
+          </label>
+          <p className="text-xs text-muted-foreground">
+            {t('chat.contextPacksDescription')}
+          </p>
+          <ContextPackSelector
+            t={t}
+            selectedIds={contextPackIds}
+            onChange={onContextPackIdsChange}
           />
         </div>
 

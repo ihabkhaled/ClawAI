@@ -87,7 +87,7 @@ export default function ThreadDetailPage() {
   }, [messages.length, isWaitingForResponse, scrollToBottom]);
 
   const handleSend = useCallback(
-    (content: string, modelSelection?: ModelSelection) => {
+    (content: string, modelSelection?: ModelSelection, fileIds?: string[]) => {
       sendMessage({
         threadId,
         content,
@@ -96,6 +96,7 @@ export default function ThreadDetailPage() {
           provider: modelSelection.provider,
           model: modelSelection.model,
         } : {}),
+        ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
       });
     },
     [threadId, sendMessage],
@@ -177,6 +178,8 @@ export default function ThreadDetailPage() {
             onMaxTokensChange={threadSettings.setMaxTokens}
             selectedModel={threadSettings.selectedModel}
             onModelChange={threadSettings.setSelectedModel}
+            contextPackIds={threadSettings.contextPackIds}
+            onContextPackIdsChange={threadSettings.setContextPackIds}
             onSave={threadSettings.handleSave}
             isPending={threadSettings.isPending}
           />

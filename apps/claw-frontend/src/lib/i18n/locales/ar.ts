@@ -125,6 +125,12 @@ export const ar: TranslationDictionary = {
     helpful: 'مفيد',
     notHelpful: 'غير مفيد',
     feedbackSaved: 'تم حفظ التقييم',
+    attachFiles: 'إرفاق ملفات',
+    noFiles: 'لم يتم رفع أي ملفات بعد',
+    selectedFiles: '{count} ملف(ات) مرفقة',
+    contextPacks: 'حزم السياق',
+    contextPacksDescription: 'اختر حزم السياق لتضمينها في هذه المحادثة.',
+    noContextPacks: 'لم يتم إنشاء حزم سياق بعد',
   },
   connectors: {
     title: 'الموصّلات',

@@ -26,6 +26,7 @@ const mockThread: ChatThread = {
   lastModel: null,
   preferredProvider: null,
   preferredModel: null,
+  contextPackIds: [],
   isPinned: false,
   isArchived: false,
   systemPrompt: null,

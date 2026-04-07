@@ -125,6 +125,12 @@ export const en: TranslationDictionary = {
     helpful: 'Helpful',
     notHelpful: 'Not helpful',
     feedbackSaved: 'Feedback saved',
+    attachFiles: 'Attach Files',
+    noFiles: 'No files uploaded yet',
+    selectedFiles: '{count} file(s) attached',
+    contextPacks: 'Context Packs',
+    contextPacksDescription: 'Select context packs to include in this thread.',
+    noContextPacks: 'No context packs created yet',
   },
   connectors: {
     title: 'Connectors',

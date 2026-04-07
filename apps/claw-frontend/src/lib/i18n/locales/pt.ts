@@ -125,6 +125,12 @@ export const pt: TranslationDictionary = {
     helpful: '\u00datil',
     notHelpful: 'N\u00e3o \u00fatil',
     feedbackSaved: 'Feedback salvo',
+    attachFiles: 'Anexar arquivos',
+    noFiles: 'Nenhum arquivo enviado ainda',
+    selectedFiles: '{count} arquivo(s) anexado(s)',
+    contextPacks: 'Pacotes de contexto',
+    contextPacksDescription: 'Selecione pacotes de contexto para incluir nesta conversa.',
+    noContextPacks: 'Nenhum pacote de contexto criado',
   },
   connectors: {
     title: 'Conectores',

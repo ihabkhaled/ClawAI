@@ -125,6 +125,12 @@ export const ru: TranslationDictionary = {
     helpful: 'Полезно',
     notHelpful: 'Не полезно',
     feedbackSaved: 'Отзыв сохранён',
+    attachFiles: 'Прикрепить файлы',
+    noFiles: 'Файлы ещё не загружены',
+    selectedFiles: '{count} файл(ов) прикреплено',
+    contextPacks: 'Пакеты контекста',
+    contextPacksDescription: 'Выберите пакеты контекста для включения в эту ветку.',
+    noContextPacks: 'Пакеты контекста ещё не созданы',
   },
   connectors: {
     title: 'Коннекторы',

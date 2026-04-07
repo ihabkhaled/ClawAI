@@ -124,6 +124,8 @@ export type ThreadSettingsProps = {
   onMaxTokensChange: (value: string) => void;
   selectedModel: ModelSelection | null;
   onModelChange: (selection: ModelSelection | null) => void;
+  contextPackIds: string[];
+  onContextPackIdsChange: (ids: string[]) => void;
   onSave: () => void;
   isPending: boolean;
 };
@@ -169,8 +171,20 @@ export type ModelSelectorProps = {
   disabled?: boolean;
 };
 
+export type FileAttachmentPickerProps = {
+  selectedFileIds: string[];
+  onChange: (fileIds: string[]) => void;
+  disabled?: boolean;
+};
+
+export type ContextPackSelectorProps = {
+  t: TranslateFunction;
+  selectedIds: string[];
+  onChange: (ids: string[]) => void;
+};
+
 export type MessageComposerProps = {
-  onSend: (content: string, modelSelection?: ModelSelection) => void;
+  onSend: (content: string, modelSelection?: ModelSelection, fileIds?: string[]) => void;
   isPending: boolean;
   threadModel?: ModelSelection | null;
 };

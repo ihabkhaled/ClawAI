@@ -126,6 +126,12 @@ export type TranslationDictionary = {
     helpful: string;
     notHelpful: string;
     feedbackSaved: string;
+    attachFiles: string;
+    noFiles: string;
+    selectedFiles: string;
+    contextPacks: string;
+    contextPacksDescription: string;
+    noContextPacks: string;
   };
   connectors: {
     title: string;
