@@ -11,8 +11,8 @@ const baseContext: RoutingContext = {
   message: "Hello, how are you?",
   threadId: "thread-1",
   connectorHealth: {
-    "openai": true,
-    "anthropic": true,
+    "OPENAI": true,
+    "ANTHROPIC": true,
   },
   runtimeHealth: {
     "OLLAMA": true,
@@ -53,7 +53,7 @@ describe("RoutingManager", () => {
       const result = await manager.evaluateRoute(context);
 
       expect(result.routingMode).toBe(RoutingMode.AUTO);
-      expect(result.selectedProvider).toBe("anthropic");
+      expect(result.selectedProvider).toBe("ANTHROPIC");
       expect(result.reasonTags).toContain("cloud_preferred");
     });
 
@@ -91,7 +91,7 @@ describe("RoutingManager", () => {
 
       const result = await manager.evaluateRoute(context);
 
-      expect(result.selectedProvider).toBe("anthropic");
+      expect(result.selectedProvider).toBe("ANTHROPIC");
     });
   });
 
@@ -146,7 +146,7 @@ describe("RoutingManager", () => {
 
       const result = await manager.evaluateRoute(context);
 
-      expect(result.selectedProvider).toBe("anthropic");
+      expect(result.selectedProvider).toBe("ANTHROPIC");
       expect(result.reasonTags).toContain("local_unavailable");
     });
   });
@@ -160,7 +160,7 @@ describe("RoutingManager", () => {
 
       const result = await manager.evaluateRoute(context);
 
-      expect(result.selectedProvider).toBe("openai");
+      expect(result.selectedProvider).toBe("OPENAI");
       expect(result.reasonTags).toContain("fastest_model");
     });
   });
@@ -174,7 +174,7 @@ describe("RoutingManager", () => {
 
       const result = await manager.evaluateRoute(context);
 
-      expect(result.selectedProvider).toBe("anthropic");
+      expect(result.selectedProvider).toBe("ANTHROPIC");
       expect(result.selectedModel).toBe("claude-opus-4");
       expect(result.reasonTags).toContain("strongest_model");
     });
@@ -202,7 +202,7 @@ describe("RoutingManager", () => {
 
       const result = await manager.evaluateRoute(context);
 
-      expect(result.selectedProvider).toBe("openai");
+      expect(result.selectedProvider).toBe("OPENAI");
       expect(result.costClass).toBe("low");
     });
   });
@@ -214,11 +214,11 @@ describe("RoutingManager", () => {
       const chain = manager.buildFallbackChain(primary, baseContext);
 
       expect(chain.length).toBeGreaterThan(0);
-      expect(chain.some((f) => f.provider === "anthropic")).toBe(true);
+      expect(chain.some((f) => f.provider === "ANTHROPIC")).toBe(true);
     });
 
     it("should include local fallback for cloud primary", () => {
-      const primary = { provider: "openai", model: "gpt-4o-mini" };
+      const primary = { provider: "OPENAI", model: "gpt-4o-mini" };
 
       const chain = manager.buildFallbackChain(primary, baseContext);
 
@@ -228,14 +228,14 @@ describe("RoutingManager", () => {
     it("should only include healthy providers in chain", () => {
       const context: RoutingContext = {
         ...baseContext,
-        connectorHealth: { "openai": false, "anthropic": true },
+        connectorHealth: { "OPENAI": false, "ANTHROPIC": true },
         runtimeHealth: { "OLLAMA": false },
       };
-      const primary = { provider: "anthropic", model: "claude-sonnet-4" };
+      const primary = { provider: "ANTHROPIC", model: "claude-sonnet-4" };
 
       const chain = manager.buildFallbackChain(primary, context);
 
-      expect(chain.every((f) => f.provider !== "openai")).toBe(true);
+      expect(chain.every((f) => f.provider !== "OPENAI")).toBe(true);
       expect(chain.every((f) => f.provider !== "local-ollama")).toBe(true);
     });
   });
