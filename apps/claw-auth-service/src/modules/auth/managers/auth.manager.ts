@@ -3,7 +3,7 @@ import type { SignOptions } from "jsonwebtoken";
 import { User } from "../../../generated/prisma";
 import { AppConfig } from "../../../app/config/app.config";
 import { JwtPayload } from "../../../common/types";
-import { verifyPassword, signAccessToken, signRefreshToken } from "@common/utilities";
+import { signAccessToken, signRefreshToken, verifyPassword } from "@common/utilities";
 import { UserRole, UserStatus } from "../../../common/enums";
 import {
   AccountSuspendedException,

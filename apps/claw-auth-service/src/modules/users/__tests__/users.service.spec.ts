@@ -1,8 +1,8 @@
 import { UsersService } from '../services/users.service';
-import { UsersRepository } from '../repositories/users.repository';
-import { RabbitMQService } from '@claw/shared-rabbitmq';
+import { type UsersRepository } from '../repositories/users.repository';
+import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
-import { EntityNotFoundException, DuplicateEntityException } from '../../../common/errors';
+import { DuplicateEntityException, EntityNotFoundException } from '../../../common/errors';
 import { UserRole, UserStatus } from '../../../common/enums';
 import { validatePasswordStrength } from '../service.utilities/password-policy.utility';
 
@@ -33,7 +33,7 @@ const mockRepository = (): Record<keyof UsersRepository, jest.Mock> => ({
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(undefined),
+  publish: jest.fn().mockResolvedValue(),
 });
 
 describe('UsersService', () => {

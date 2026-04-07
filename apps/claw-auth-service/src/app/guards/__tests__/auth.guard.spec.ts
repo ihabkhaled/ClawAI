@@ -1,5 +1,5 @@
 import { UnauthorizedException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import { type Reflector } from '@nestjs/core';
 import { AuthGuard } from '../auth.guard';
 import { UserRole } from '../../../common/enums';
 import * as utilities from '@common/utilities';

@@ -1,4 +1,4 @@
-import { signAccessToken, verifyAccessToken, signRefreshToken } from '../jwt.utility';
+import { signAccessToken, signRefreshToken, verifyAccessToken } from '../jwt.utility';
 import { UserRole } from '../../enums';
 
 const TEST_SECRET = 'test-secret-key-that-is-long-enough-for-hs256';

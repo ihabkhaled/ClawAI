@@ -11,7 +11,7 @@ import { UpdatePreferencesDto, updatePreferencesSchema } from "../dto/update-pre
 import { Roles } from "../../../app/decorators/roles.decorator";
 import { CurrentUser } from "../../../app/decorators/current-user.decorator";
 import { UserRole } from "../../../common/enums";
-import { type PaginatedResult, type AuthenticatedUser } from "../../../common/types";
+import { type AuthenticatedUser, type PaginatedResult } from "../../../common/types";
 
 @Controller("users")
 export class UsersController {
