@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { httpGet } from "@common/utilities";
-import { SERVICE_URLS, HEALTH_CHECK_TIMEOUT_MS } from "../constants/health.constants";
+import { HEALTH_CHECK_TIMEOUT_MS, SERVICE_URLS } from "../constants/health.constants";
 import { AggregatedHealth, ServiceHealthResult } from "../types/health.types";
 
 @Injectable()
