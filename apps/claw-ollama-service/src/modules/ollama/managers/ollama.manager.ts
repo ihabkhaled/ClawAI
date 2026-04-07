@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { type RuntimeConfig, PullJobStatus, RuntimeType } from "../../../generated/prisma";
+import { PullJobStatus, type RuntimeConfig, RuntimeType } from "../../../generated/prisma";
 import { LocalModelsRepository } from "../repositories/local-models.repository";
 import { RoleAssignmentsRepository } from "../repositories/role-assignments.repository";
 import { PullJobsRepository } from "../repositories/pull-jobs.repository";
@@ -8,10 +8,10 @@ import { getRuntimeAdapter } from "./adapters/runtime-adapter-factory";
 import {
   type GenerateRequest,
   type GenerateResponse,
-  type RuntimeHealth,
-  type LocalModelRole,
   type LocalModel,
+  type LocalModelRole,
   type LocalModelRoleAssignment,
+  type RuntimeHealth,
 } from "../types/ollama.types";
 
 @Injectable()

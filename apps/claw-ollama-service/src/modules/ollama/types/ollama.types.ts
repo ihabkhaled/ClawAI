@@ -1,4 +1,4 @@
-import { type LocalModel, type LocalModelRoleAssignment, type PullJob, type RuntimeType, type LocalModelRole, type PullJobStatus } from "../../../generated/prisma";
+import { type LocalModel, type LocalModelRole, type LocalModelRoleAssignment, type PullJob, type PullJobStatus, type RuntimeType } from "../../../generated/prisma";
 
 export interface RuntimeAdapter {
   listModels(): Promise<LocalModelInfo[]>;

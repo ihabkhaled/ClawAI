@@ -1,10 +1,10 @@
 import {
-  type RuntimeAdapter,
-  type LocalModelInfo,
-  type PullJobInfo,
-  type RuntimeHealth,
   type GenerateRequest,
   type GenerateResponse,
+  type LocalModelInfo,
+  type PullJobInfo,
+  type RuntimeAdapter,
+  type RuntimeHealth,
 } from "../../types/ollama.types";
 
 export class VllmRuntimeAdapter implements RuntimeAdapter {

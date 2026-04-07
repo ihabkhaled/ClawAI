@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
 import {
-  type LocalModelRoleAssignment,
   type LocalModelRole,
+  type LocalModelRoleAssignment,
 } from "../../../generated/prisma";
 import { type CreateRoleAssignmentData } from "../types/ollama.types";
 

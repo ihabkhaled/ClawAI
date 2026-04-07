@@ -1,9 +1,9 @@
 import { OllamaManager } from "../managers/ollama.manager";
-import { LocalModelsRepository } from "../repositories/local-models.repository";
-import { RoleAssignmentsRepository } from "../repositories/role-assignments.repository";
-import { PullJobsRepository } from "../repositories/pull-jobs.repository";
-import { RuntimeConfigsRepository } from "../repositories/runtime-configs.repository";
-import { RuntimeType, PullJobStatus, LocalModelRole } from "../../../generated/prisma";
+import { type LocalModelsRepository } from "../repositories/local-models.repository";
+import { type RoleAssignmentsRepository } from "../repositories/role-assignments.repository";
+import { type PullJobsRepository } from "../repositories/pull-jobs.repository";
+import { type RuntimeConfigsRepository } from "../repositories/runtime-configs.repository";
+import { LocalModelRole, PullJobStatus, RuntimeType } from "../../../generated/prisma";
 
 jest.mock("../../../app/config/app.config", () => ({
   AppConfig: {
@@ -72,7 +72,7 @@ const mockLocalModelsRepo = (): Partial<Record<keyof LocalModelsRepository, jest
 const mockRoleAssignmentsRepo = (): Partial<Record<keyof RoleAssignmentsRepository, jest.Mock>> => ({
   create: jest.fn().mockResolvedValue(mockRoleAssignment),
   findActiveByRole: jest.fn().mockResolvedValue(mockRoleAssignment),
-  deactivateByRole: jest.fn().mockResolvedValue(undefined),
+  deactivateByRole: jest.fn().mockResolvedValue(),
 });
 
 const mockPullJobsRepo = (): Partial<Record<keyof PullJobsRepository, jest.Mock>> => ({

@@ -1,17 +1,17 @@
-import { createHttpClient, type AxiosInstance } from "@common/utilities";
+import { type AxiosInstance, createHttpClient } from "@common/utilities";
 import { AppConfig } from "../../../../app/config/app.config";
 import {
-  OLLAMA_API_TAGS,
-  OLLAMA_API_PULL,
   OLLAMA_API_GENERATE,
+  OLLAMA_API_PULL,
+  OLLAMA_API_TAGS,
 } from "../../ollama.constants";
 import {
-  type RuntimeAdapter,
-  type LocalModelInfo,
-  type PullJobInfo,
-  type RuntimeHealth,
   type GenerateRequest,
   type GenerateResponse,
+  type LocalModelInfo,
+  type PullJobInfo,
+  type RuntimeAdapter,
+  type RuntimeHealth,
 } from "../../types/ollama.types";
 
 interface OllamaModelDetail {

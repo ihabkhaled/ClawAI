@@ -1,10 +1,10 @@
 import { OllamaService } from "../ollama.service";
-import { LocalModelsRepository } from "../repositories/local-models.repository";
-import { RuntimeConfigsRepository } from "../repositories/runtime-configs.repository";
-import { OllamaManager } from "../managers/ollama.manager";
-import { RabbitMQService } from "@claw/shared-rabbitmq";
+import { type LocalModelsRepository } from "../repositories/local-models.repository";
+import { type RuntimeConfigsRepository } from "../repositories/runtime-configs.repository";
+import { type OllamaManager } from "../managers/ollama.manager";
+import { type RabbitMQService } from "@claw/shared-rabbitmq";
 import { EntityNotFoundException } from "../../../common/errors";
-import { RuntimeType, LocalModelRole } from "../../../generated/prisma";
+import { LocalModelRole, RuntimeType } from "../../../generated/prisma";
 
 const mockLocalModel = {
   id: "model-1",
@@ -55,7 +55,7 @@ const mockManager = (): Partial<Record<keyof OllamaManager, jest.Mock>> => ({
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(undefined),
+  publish: jest.fn().mockResolvedValue(),
 });
 
 describe("OllamaService", () => {

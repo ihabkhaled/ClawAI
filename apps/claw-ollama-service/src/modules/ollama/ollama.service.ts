@@ -12,9 +12,9 @@ import { type AssignRoleDto } from "./dto/assign-role.dto";
 import { type GenerateDto } from "./dto/generate.dto";
 import { type ListModelsQueryDto } from "./dto/list-models-query.dto";
 import {
+  type GenerateResponse,
   type LocalModel,
   type LocalModelRoleAssignment,
-  type GenerateResponse,
   type RuntimeHealth,
 } from "./types/ollama.types";
 
