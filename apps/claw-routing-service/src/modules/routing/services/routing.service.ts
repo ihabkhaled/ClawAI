@@ -110,6 +110,7 @@ export class RoutingService implements OnModuleInit {
       threadId: dto.threadId,
       userMode: dto.routingMode as RoutingMode | undefined,
       forcedModel: dto.forcedModel,
+      forcedProvider: dto.forcedProvider,
       connectorHealth: { ...this.connectorHealthCache },
       runtimeHealth: { ...this.runtimeHealthCache },
     };

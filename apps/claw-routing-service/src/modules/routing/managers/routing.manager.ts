@@ -32,7 +32,10 @@ export class RoutingManager {
   ) {}
 
   async evaluateRoute(context: RoutingContext): Promise<RoutingDecisionResult> {
-    const mode = context.userMode ?? RoutingMode.AUTO;
+    // Check active policies for overrides
+    const policies = await this.policiesRepository.findActivePolicies();
+    const policyOverride = this.applyPolicies(policies, context);
+    const mode = policyOverride ?? context.userMode ?? RoutingMode.AUTO;
 
     switch (mode) {
       case RoutingMode.MANUAL_MODEL:
@@ -337,5 +340,33 @@ export class RoutingManager {
 
   async getActivePolicies(): Promise<RoutingPolicy[]> {
     return this.policiesRepository.findActivePolicies();
+  }
+
+  /**
+   * Evaluate active policies and return a mode override if any policy applies.
+   * Policies are evaluated by priority (highest first). The first matching
+   * policy's routingMode is used as the override.
+   */
+  private applyPolicies(
+    policies: RoutingPolicy[],
+    _context: RoutingContext,
+  ): RoutingMode | null {
+    if (policies.length === 0) {
+      return null;
+    }
+
+    // Sort by priority descending (highest priority wins)
+    const sorted = [...policies].sort((a, b) => b.priority - a.priority);
+    const topPolicy = sorted[0];
+
+    if (!topPolicy) {
+      return null;
+    }
+
+    this.logger.log(
+      `Applying routing policy "${topPolicy.name}" (priority=${String(topPolicy.priority)}, mode=${topPolicy.routingMode})`,
+    );
+
+    return topPolicy.routingMode;
   }
 }

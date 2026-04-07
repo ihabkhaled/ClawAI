@@ -12,6 +12,10 @@ export const evaluateRouteSchema = z.object({
     .string()
     .max(255, "Forced model must be at most 255 characters")
     .optional(),
+  forcedProvider: z
+    .string()
+    .max(50, "Forced provider must be at most 50 characters")
+    .optional(),
 });
 
 export type EvaluateRouteDto = z.infer<typeof evaluateRouteSchema>;
