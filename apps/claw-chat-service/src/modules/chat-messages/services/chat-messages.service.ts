@@ -5,7 +5,7 @@ import { ChatMessagesRepository } from "../repositories/chat-messages.repository
 import { ChatThreadsRepository } from "../../chat-threads/repositories/chat-threads.repository";
 import { ChatExecutionManager } from "../managers/chat-execution.manager";
 import { ContextAssemblyManager } from "../managers/context-assembly.manager";
-import { ChatStreamController } from "../controllers/chat-stream.controller";
+import { ChatStreamService } from "./chat-stream.service";
 import { type CreateMessageDto } from "../dto/create-message.dto";
 import { type ListMessagesQueryDto } from "../dto/list-messages-query.dto";
 import { type LlmResponse, type MessageRoutedData, type ThreadSettings } from "../types/execution.types";
@@ -23,7 +23,7 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatExecutionManager: ChatExecutionManager,
     private readonly contextAssemblyManager: ContextAssemblyManager,
-    private readonly chatStreamController: ChatStreamController,
+    private readonly chatStreamService: ChatStreamService,
     private readonly rabbitMQService: RabbitMQService,
   ) {
     this.structuredLogger = new StructuredLogger(
@@ -172,7 +172,7 @@ export class ChatMessagesService implements OnModuleInit {
     const assistantMessage = await this.storeAssistantResponse(payload, llmResponse, contextMetadata);
     await this.updateThreadAfterResponse(payload.threadId, llmResponse);
 
-    this.chatStreamController.emitCompletion(payload.threadId, llmResponse.provider, llmResponse.model);
+    this.chatStreamService.emitCompletion(payload.threadId, llmResponse.provider, llmResponse.model);
     this.logAssistantResponse(payload, llmResponse);
     this.publishMessageCompleted(payload, assistantMessage, llmResponse, thread, chronologicalMessages);
   }

@@ -3,7 +3,7 @@ import { type ChatMessagesRepository } from '../repositories/chat-messages.repos
 import { type ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { type ChatExecutionManager } from '../managers/chat-execution.manager';
 import { type ContextAssemblyManager } from '../managers/context-assembly.manager';
-import { type ChatStreamController } from '../controllers/chat-stream.controller';
+import { type ChatStreamService } from '../services/chat-stream.service';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
@@ -100,7 +100,7 @@ describe('ChatMessagesService', () => {
       threadsRepo as unknown as ChatThreadsRepository,
       executionManager as unknown as ChatExecutionManager,
       contextAssembly as unknown as ContextAssemblyManager,
-      { emitCompletion: jest.fn() } as unknown as ChatStreamController,
+      { emitCompletion: jest.fn() } as unknown as ChatStreamService,
       rabbitMQ as unknown as RabbitMQService,
     );
   });
