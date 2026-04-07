@@ -45,8 +45,8 @@ const mockRepository = (): Record<keyof AuthRepository, jest.Mock> => ({
   findUserById: jest.fn(),
   createSession: jest.fn().mockResolvedValue({ id: 'session-1' }),
   findSessionByRefreshToken: jest.fn(),
-  deleteSession: jest.fn().mockResolvedValue(),
-  deleteSessionsByUserId: jest.fn().mockResolvedValue(),
+  deleteSession: jest.fn().mockResolvedValue(undefined),
+  deleteSessionsByUserId: jest.fn().mockResolvedValue(undefined),
   deleteExpiredSessions: jest.fn().mockResolvedValue(0),
 });
 
@@ -60,8 +60,8 @@ describe('AuthManager', () => {
     jest.clearAllMocks();
     // Re-set defaults after clearAllMocks
     repository.createSession.mockResolvedValue({ id: 'session-1' });
-    repository.deleteSession.mockResolvedValue();
-    repository.deleteSessionsByUserId.mockResolvedValue();
+    repository.deleteSession.mockResolvedValue(undefined);
+    repository.deleteSessionsByUserId.mockResolvedValue(undefined);
   });
 
   describe('login', () => {
