@@ -1,4 +1,4 @@
-import { type MessageRole, type RoutingMode } from "../../../generated/prisma";
+import { type MessageRole, type RoutingMode, type Prisma } from "../../../generated/prisma";
 
 export type CreateMessageData = {
   threadId: string;
@@ -11,6 +11,7 @@ export type CreateMessageData = {
   outputTokens?: number;
   latencyMs?: number;
   usedFallback?: boolean;
+  metadata?: Prisma.InputJsonValue;
 };
 
 export type MessageFilters = {

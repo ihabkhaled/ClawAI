@@ -52,11 +52,16 @@ export class ChatMessagesService implements OnModuleInit {
       ? RoutingMode.MANUAL_MODEL
       : dto.routingMode ?? thread.routingMode;
 
+    const metadata = dto.fileIds && dto.fileIds.length > 0
+      ? { fileIds: dto.fileIds }
+      : undefined;
+
     const message = await this.chatMessagesRepository.create({
       threadId: dto.threadId,
       role: "USER",
       content: dto.content,
       routingMode: effectiveRoutingMode,
+      metadata,
     });
 
     this.structuredLogger.logAction({
@@ -189,11 +194,20 @@ export class ChatMessagesService implements OnModuleInit {
         }
       : undefined;
 
-    // Assemble context: thread messages + memories + context packs
+    // Extract fileIds from the latest USER message's metadata (file grounding)
+    const latestUserMessage = [...chronologicalMessages].reverse().find((m) => m.role === "USER");
+    const messageMetadata = latestUserMessage?.metadata as Record<string, unknown> | null;
+    const fileIds = Array.isArray(messageMetadata?.["fileIds"])
+      ? (messageMetadata["fileIds"] as string[])
+      : undefined;
+
+    // Assemble context: thread messages + memories + context packs + file chunks
     const context = await this.contextAssemblyManager.assemble(
       thread?.userId ?? "system",
       chronologicalMessages,
       threadSettings,
+      undefined,
+      fileIds,
     );
 
     const llmResponse = await this.chatExecutionManager.execute(payload, context, threadSettings);

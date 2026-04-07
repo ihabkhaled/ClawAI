@@ -6,6 +6,7 @@ import { type ChatMessage } from "../../../generated/prisma";
 import { type ThreadSettings } from "../types/execution.types";
 import {
   type AssembledContext,
+  type FileChunkResponse,
   type MemoryRecordResponse,
   type ContextPackResponse,
 } from "../types/context.types";
@@ -22,12 +23,14 @@ export class ContextAssemblyManager {
     threadMessages: ChatMessage[],
     threadSettings?: ThreadSettings,
     contextPackIds?: string[],
+    fileIds?: string[],
   ): Promise<AssembledContext> {
     const recentMessages = threadMessages.slice(-THREAD_CONTEXT_LIMIT);
 
-    const [memories, contextPackItems] = await Promise.all([
+    const [memories, contextPackItems, fileChunks] = await Promise.all([
       this.fetchMemories(userId),
       this.fetchContextPackItems(contextPackIds ?? []),
+      this.fetchFileChunks(fileIds ?? []),
     ]);
 
     const tokenBudget = threadSettings?.maxTokens ?? 4096;
@@ -37,6 +40,7 @@ export class ContextAssemblyManager {
       threadMessages: recentMessages,
       memories,
       contextPackItems,
+      fileChunks,
       tokenBudget,
     };
   }
@@ -63,6 +67,13 @@ export class ContextAssemblyManager {
       if (packBlock) {
         parts.push(`CONTEXT PACK:\n${packBlock}`);
       }
+    }
+
+    if (context.fileChunks.length > 0) {
+      const fileBlock = context.fileChunks
+        .map((chunk) => chunk.content)
+        .join("\n");
+      parts.push(`FILE CONTENT:\n${fileBlock}`);
     }
 
     for (const msg of context.threadMessages) {
@@ -98,6 +109,13 @@ export class ContextAssemblyManager {
       if (packBlock) {
         systemParts.push(`Context pack:\n${packBlock}`);
       }
+    }
+
+    if (context.fileChunks.length > 0) {
+      const fileBlock = context.fileChunks
+        .map((chunk) => chunk.content)
+        .join("\n");
+      systemParts.push(`File content:\n${fileBlock}`);
     }
 
     if (systemParts.length > 0) {
@@ -169,6 +187,41 @@ export class ContextAssemblyManager {
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Unknown error";
       this.logger.warn(`Context pack fetch failed (non-blocking): ${msg}`);
+      return [];
+    }
+  }
+
+  private async fetchFileChunks(
+    fileIds: string[],
+  ): Promise<FileChunkResponse[]> {
+    if (fileIds.length === 0) {
+      return [];
+    }
+
+    try {
+      const config = AppConfig.get();
+      const allChunks: FileChunkResponse[] = [];
+
+      for (const fileId of fileIds) {
+        const url = `${config.FILE_SERVICE_URL}/api/v1/internal/files/${encodeURIComponent(fileId)}/chunks`;
+
+        const response = await httpRequest<FileChunkResponse[]>({
+          url,
+          method: "GET",
+          timeoutMs: 5_000,
+        });
+
+        if (response.ok && Array.isArray(response.data)) {
+          allChunks.push(...response.data);
+        } else {
+          this.logger.warn(`Failed to fetch chunks for file ${fileId}: status ${String(response.status)}`);
+        }
+      }
+
+      return allChunks;
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      this.logger.warn(`File chunk fetch failed (non-blocking): ${msg}`);
       return [];
     }
   }

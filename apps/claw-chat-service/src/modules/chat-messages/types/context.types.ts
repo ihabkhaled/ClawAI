@@ -1,10 +1,18 @@
 import { type ChatMessage } from "../../../generated/prisma";
 
+export type FileChunkResponse = {
+  id: string;
+  fileId: string;
+  chunkIndex: number;
+  content: string;
+};
+
 export type AssembledContext = {
   systemPrompt: string | null;
   threadMessages: ChatMessage[];
   memories: MemoryRecordResponse[];
   contextPackItems: Array<{ content: string | null; type: string }>;
+  fileChunks: FileChunkResponse[];
   tokenBudget: number;
 };
 

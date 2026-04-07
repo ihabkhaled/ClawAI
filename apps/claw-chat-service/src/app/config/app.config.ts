@@ -10,6 +10,7 @@ const appConfigSchema = z.object({
   OLLAMA_SERVICE_URL: z.string().min(1).default("http://ollama-service:4008"),
   CONNECTOR_SERVICE_URL: z.string().min(1).default("http://connector-service:4003"),
   MEMORY_SERVICE_URL: z.string().min(1).default("http://memory-service:4005"),
+  FILE_SERVICE_URL: z.string().min(1).default("http://file-service:4006"),
 
   CHAT_PORT: z.coerce.number().int().positive().default(4002),
 });
