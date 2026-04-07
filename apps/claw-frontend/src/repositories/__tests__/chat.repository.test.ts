@@ -24,6 +24,8 @@ const mockThread: ChatThread = {
   routingMode: 'MANUAL' as ChatThread['routingMode'],
   lastProvider: null,
   lastModel: null,
+  preferredProvider: null,
+  preferredModel: null,
   isPinned: false,
   isArchived: false,
   systemPrompt: null,

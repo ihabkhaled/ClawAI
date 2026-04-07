@@ -201,9 +201,11 @@ describe("AuditEventManager", () => {
       const payload = {
         messageId: "msg-1",
         threadId: "thread-1",
-        connectorId: "conn-1",
-        modelId: "gpt-4",
-        tokensUsed: 500,
+        assistantMessageId: "asst-1",
+        provider: "OPENAI",
+        model: "gpt-4",
+        inputTokens: 200,
+        outputTokens: 300,
         latencyMs: 1200,
         timestamp: new Date().toISOString(),
       };
@@ -265,9 +267,11 @@ describe("AuditEventManager", () => {
       const payload = {
         messageId: "msg-2",
         threadId: "thread-2",
-        connectorId: "conn-2",
-        modelId: "claude-3",
-        tokensUsed: 1000,
+        assistantMessageId: "asst-2",
+        provider: "ANTHROPIC",
+        model: "claude-3",
+        inputTokens: 400,
+        outputTokens: 600,
         latencyMs: 800,
         timestamp: new Date().toISOString(),
       };

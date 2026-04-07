@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import type { IncomingMessage } from 'node:http';
 import { HealthModule } from '../modules/health/health.module';
@@ -32,6 +34,16 @@ import { HealthModule } from '../modules/health/health.module';
       },
     }),
     HealthModule,
+    ThrottlerModule.forRoot([{
+      ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
+      limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
+    }]),
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

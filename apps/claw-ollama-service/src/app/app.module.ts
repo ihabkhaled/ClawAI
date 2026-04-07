@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
 import type { IncomingMessage } from 'node:http';
@@ -53,6 +54,10 @@ import { HealthModule } from '../modules/health/health.module';
     RedisModule,
     OllamaModule,
     HealthModule,
+    ThrottlerModule.forRoot([{
+      ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
+      limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
+    }]),
   ],
   providers: [
     {
@@ -66,6 +71,10 @@ import { HealthModule } from '../modules/health/health.module';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
     {
       provide: APP_INTERCEPTOR,

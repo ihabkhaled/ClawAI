@@ -13,8 +13,13 @@ const mockThread = {
   routingMode: 'AUTO' as const,
   lastProvider: null,
   lastModel: null,
+  preferredProvider: null,
+  preferredModel: null,
   isPinned: false,
   isArchived: false,
+  systemPrompt: null,
+  temperature: 0.7,
+  maxTokens: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -96,7 +101,7 @@ describe('ChatMessagesService', () => {
         threadId: 'thread-1',
         role: 'USER',
         content: 'Hello world',
-        routingMode: undefined,
+        routingMode: 'AUTO',
       });
       expect(rabbitMQ.publish).toHaveBeenCalledWith(
         EventPattern.MESSAGE_CREATED,

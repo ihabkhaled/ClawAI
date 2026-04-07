@@ -235,6 +235,10 @@ if [ "$SKIP_ENV" != "true" ]; then
 NODE_ENV=development
 CORS_ORIGINS=http://localhost:3000,http://localhost:4000,http://localhost
 
+# --- Rate Limiting ---
+THROTTLE_TTL=60000
+THROTTLE_LIMIT=100
+
 # =============================================================================
 # PostgreSQL Credentials
 # =============================================================================
