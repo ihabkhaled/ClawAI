@@ -2,15 +2,12 @@ import { Body, Controller, Get, Post, Query, UsePipes } from "@nestjs/common";
 import { Public } from "../../../app/decorators/public.decorator";
 import { ZodValidationPipe } from "../../../app/pipes/zod-validation.pipe";
 import { ServerLogsService } from "../services/server-logs.service";
-import { createServerLogSchema } from "../dtos/create-server-log.dto";
-import { batchCreateServerLogsSchema } from "../dtos/batch-create-server-logs.dto";
-import { listServerLogsQuerySchema } from "../dtos/list-server-logs-query.dto";
-import type { CreateServerLogDto } from "../dtos/create-server-log.dto";
-import type { BatchCreateServerLogsDto } from "../dtos/batch-create-server-logs.dto";
-import type { ListServerLogsQueryDto } from "../dtos/list-server-logs-query.dto";
+import { type CreateServerLogDto, createServerLogSchema  } from "../dtos/create-server-log.dto";
+import { type BatchCreateServerLogsDto, batchCreateServerLogsSchema  } from "../dtos/batch-create-server-logs.dto";
+import { type ListServerLogsQueryDto, listServerLogsQuerySchema  } from "../dtos/list-server-logs-query.dto";
 import type {
-  CreateServerLogResponse,
   BatchCreateServerLogsResponse,
+  CreateServerLogResponse,
   ServerLogStatsResponse,
 } from "../types/server-logs.types";
 import type { PaginatedResult } from "@common/types";

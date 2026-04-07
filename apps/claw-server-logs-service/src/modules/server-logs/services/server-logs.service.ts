@@ -2,11 +2,11 @@ import { Injectable } from "@nestjs/common";
 import { ServerLog } from "../schemas/server-log.schema";
 import { ServerLogsRepository } from "../repositories/server-logs.repository";
 import type {
-  ServerLogFilters,
-  CreateServerLogInput,
-  ServerLogStatsResponse,
-  CreateServerLogResponse,
   BatchCreateServerLogsResponse,
+  CreateServerLogInput,
+  CreateServerLogResponse,
+  ServerLogFilters,
+  ServerLogStatsResponse,
 } from "../types/server-logs.types";
 import type { PaginatedResult } from "@common/types";
 
