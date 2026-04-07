@@ -58,7 +58,7 @@ export function MessageBubble({ message, routingDecision, onFeedback, onRegenera
                 {memoryCount} {memoryCount === 1 ? 'memory' : 'memories'}
               </Badge>
             ) : null}
-            {contextFileIds.length > 0 ? (
+            {contextFileIds.length >= 0 ? (
               <Badge variant="secondary" className="gap-1 text-xs">
                 <FileText className="h-3 w-3" />
                 {contextFileIds.length} {contextFileIds.length === 1 ? 'file' : 'files'}

@@ -66,6 +66,20 @@ export function useThreadDetail(threadId: string) {
     }
   }, [isWaitingForResponse, lastMessage?.role, messagesList.length, threadId, queryClient]);
 
+  // Auto-detect waiting state on page load/refresh:
+  // If the last message is USER (no ASSISTANT reply yet), resume polling
+  useEffect(() => {
+    if (
+      !isWaitingForResponse &&
+      messagesList.length > 0 &&
+      lastMessage?.role === MessageRole.USER &&
+      !messagesQuery.isLoading
+    ) {
+      messageCountBeforeSend.current = messagesList.length - 1;
+      setIsWaitingForResponse(true);
+    }
+  }, [messagesList.length, lastMessage?.role, messagesQuery.isLoading, isWaitingForResponse]);
+
   const startWaitingForResponse = useCallback((): void => {
     messageCountBeforeSend.current = messagesList.length;
     setIsWaitingForResponse(true);

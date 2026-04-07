@@ -29,4 +29,5 @@ export type UploadFileRequest = {
   mimeType: string;
   sizeBytes: number;
   storagePath: string;
+  content?: string;
 };

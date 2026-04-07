@@ -35,10 +35,7 @@ export const chatRepository = {
   },
 
   async createMessage(data: CreateMessageRequest): Promise<ChatMessage> {
-    const response = await apiClient.post<ChatMessage>('/chat-messages', {
-      threadId: data.threadId,
-      content: data.content,
-    });
+    const response = await apiClient.post<ChatMessage>('/chat-messages', data);
     return response.data;
   },
 
