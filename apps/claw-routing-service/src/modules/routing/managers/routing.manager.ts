@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { RoutingMode } from '../../../generated/prisma';
 import { RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
+import { OllamaRouterManager } from './ollama-router.manager';
 import {
   CLOUD_MODEL_CHEAP,
   CLOUD_MODEL_DEFAULT,
@@ -23,7 +24,12 @@ import {
 
 @Injectable()
 export class RoutingManager {
-  constructor(private readonly policiesRepository: RoutingPoliciesRepository) {}
+  private readonly logger = new Logger(RoutingManager.name);
+
+  constructor(
+    private readonly policiesRepository: RoutingPoliciesRepository,
+    private readonly ollamaRouter: OllamaRouterManager,
+  ) {}
 
   async evaluateRoute(context: RoutingContext): Promise<RoutingDecisionResult> {
     const mode = context.userMode ?? RoutingMode.AUTO;
@@ -203,7 +209,29 @@ export class RoutingManager {
     };
   }
 
-  private handleAuto(context: RoutingContext): RoutingDecisionResult {
+  private async handleAuto(context: RoutingContext): Promise<RoutingDecisionResult> {
+    // Try Ollama-assisted routing first
+    const ollamaDecision = await this.ollamaRouter.route(context);
+    if (ollamaDecision) {
+      const primary = { provider: ollamaDecision.provider, model: ollamaDecision.model };
+      return {
+        selectedProvider: ollamaDecision.provider,
+        selectedModel: ollamaDecision.model,
+        routingMode: RoutingMode.AUTO,
+        confidence: ollamaDecision.confidence,
+        reasonTags: ['auto', 'ollama_router', ollamaDecision.reason],
+        privacyClass: ollamaDecision.provider === LOCAL_PROVIDER ? 'local' : 'cloud',
+        costClass: ollamaDecision.provider === LOCAL_PROVIDER ? 'free' : 'medium',
+        fallbackChain: this.buildFallbackChain(primary, context),
+      };
+    }
+
+    // Fallback to heuristic routing
+    this.logger.debug('Ollama router unavailable, using heuristic fallback');
+    return this.handleAutoHeuristic(context);
+  }
+
+  private handleAutoHeuristic(context: RoutingContext): RoutingDecisionResult {
     const localHealthy = this.isRuntimeHealthy('OLLAMA', context);
     const messageLength = context.message.length;
 

@@ -1,4 +1,5 @@
 import { RoutingManager } from "../managers/routing.manager";
+import { OllamaRouterManager } from "../managers/ollama-router.manager";
 import { RoutingPoliciesRepository } from "../repositories/routing-policies.repository";
 import { RoutingMode } from "../../../generated/prisma";
 import { type RoutingContext } from "../types/routing.types";
@@ -24,8 +25,10 @@ describe("RoutingManager", () => {
 
   beforeEach(() => {
     const policiesRepo = mockPoliciesRepo();
+    const ollamaRouter = { route: jest.fn().mockResolvedValue(null) };
     manager = new RoutingManager(
       policiesRepo as unknown as RoutingPoliciesRepository,
+      ollamaRouter as unknown as OllamaRouterManager,
     );
   });
 
