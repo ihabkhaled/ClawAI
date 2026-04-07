@@ -1,3 +1,6 @@
+# All services read environment variables from the root .env file.
+# Copy .env.example to .env before running.
+
 services:
   # ---------------------------------------------------------------------------
   # PostgreSQL Instances (one per service that needs relational storage)
@@ -11,7 +14,7 @@ services:
       POSTGRES_PASSWORD: ${PG_AUTH_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_AUTH_DB:-claw_auth}
     ports:
-      - '5441:5432'
+      - '${PG_AUTH_PORT:-5441}:5432'
     volumes:
       - pg-auth-data:/var/lib/postgresql/data
     healthcheck:
@@ -31,7 +34,7 @@ services:
       POSTGRES_PASSWORD: ${PG_CHAT_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_CHAT_DB:-claw_chat}
     ports:
-      - '5442:5432'
+      - '${PG_CHAT_PORT:-5442}:5432'
     volumes:
       - pg-chat-data:/var/lib/postgresql/data
     healthcheck:
@@ -51,7 +54,7 @@ services:
       POSTGRES_PASSWORD: ${PG_CONNECTOR_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_CONNECTOR_DB:-claw_connectors}
     ports:
-      - '5443:5432'
+      - '${PG_CONNECTOR_PORT:-5443}:5432'
     volumes:
       - pg-connector-data:/var/lib/postgresql/data
     healthcheck:
@@ -71,7 +74,7 @@ services:
       POSTGRES_PASSWORD: ${PG_ROUTING_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_ROUTING_DB:-claw_routing}
     ports:
-      - '5444:5432'
+      - '${PG_ROUTING_PORT:-5444}:5432'
     volumes:
       - pg-routing-data:/var/lib/postgresql/data
     healthcheck:
@@ -91,7 +94,7 @@ services:
       POSTGRES_PASSWORD: ${PG_MEMORY_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_MEMORY_DB:-claw_memory}
     ports:
-      - '5445:5432'
+      - '${PG_MEMORY_PORT:-5445}:5432'
     volumes:
       - pg-memory-data:/var/lib/postgresql/data
     healthcheck:
@@ -111,7 +114,7 @@ services:
       POSTGRES_PASSWORD: ${PG_FILES_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_FILES_DB:-claw_files}
     ports:
-      - '5446:5432'
+      - '${PG_FILES_PORT:-5446}:5432'
     volumes:
       - pg-files-data:/var/lib/postgresql/data
     healthcheck:
@@ -131,7 +134,7 @@ services:
       POSTGRES_PASSWORD: ${PG_OLLAMA_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_OLLAMA_DB:-claw_ollama}
     ports:
-      - '5447:5432'
+      - '${PG_OLLAMA_PORT:-5447}:5432'
     volumes:
       - pg-ollama-data:/var/lib/postgresql/data
     healthcheck:
@@ -154,7 +157,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-claw_secret}
       MONGO_INITDB_DATABASE: ${MONGO_DB:-claw_audit}
     ports:
-      - '27018:27017'
+      - '${MONGO_PORT:-27018}:27017'
     volumes:
       - mongo-data:/data/db
     healthcheck:
@@ -173,7 +176,7 @@ services:
     container_name: claw-redis
     restart: unless-stopped
     ports:
-      - '6380:6379'
+      - '${REDIS_PORT:-6380}:6379'
     volumes:
       - redis-data:/data
     healthcheck:
@@ -195,8 +198,8 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-claw}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-claw_secret}
     ports:
-      - '5672:5672'
-      - '15672:15672'
+      - '${RABBITMQ_PORT:-5672}:5672'
+      - '${RABBITMQ_MANAGEMENT_PORT:-15672}:15672'
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
@@ -254,22 +257,9 @@ services:
       dockerfile: apps/claw-auth-service/Dockerfile
     container_name: claw-auth-service
     restart: unless-stopped
+    env_file: .env
     ports:
       - '4001:4001'
-    environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      PORT: 4001
-      DATABASE_URL: postgresql://${PG_AUTH_USER:-claw}:${PG_AUTH_PASSWORD:-claw_secret}@pg-auth:5432/${PG_AUTH_DB:-claw_auth}?schema=public
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
-      JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
-      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-15m}
-      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-7d}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@claw.local}
-      ADMIN_USERNAME: ${ADMIN_USERNAME:-claw-admin}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     depends_on:
       pg-auth:
         condition: service_healthy
@@ -292,18 +282,9 @@ services:
       dockerfile: apps/claw-chat-service/Dockerfile
     container_name: claw-chat-service
     restart: unless-stopped
+    env_file: .env
     ports:
       - '4002:4002'
-    environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      PORT: 4002
-      DATABASE_URL: postgresql://${PG_CHAT_USER:-claw}:${PG_CHAT_PASSWORD:-claw_secret}@pg-chat:5432/${PG_CHAT_DB:-claw_chat}?schema=public
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
-      JWT_SECRET: ${JWT_SECRET}
-      OLLAMA_SERVICE_URL: ${OLLAMA_SERVICE_URL:-http://ollama-service:4008}
-      CONNECTOR_SERVICE_URL: ${CONNECTOR_SERVICE_URL:-http://connector-service:4003}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
     depends_on:
       pg-chat:
         condition: service_healthy
@@ -326,17 +307,9 @@ services:
       dockerfile: apps/claw-connector-service/Dockerfile
     container_name: claw-connector-service
     restart: unless-stopped
+    env_file: .env
     ports:
       - '4003:4003'
-    environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      PORT: 4003
-      DATABASE_URL: postgresql://${PG_CONNECTOR_USER:-claw}:${PG_CONNECTOR_PASSWORD:-claw_secret}@pg-connector:5432/${PG_CONNECTOR_DB:-claw_connectors}?schema=public
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
-      JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
     depends_on:
       pg-connector:
         condition: service_healthy
@@ -359,16 +332,9 @@ services:
       dockerfile: apps/claw-routing-service/Dockerfile
     container_name: claw-routing-service
     restart: unless-stopped
+    env_file: .env
     ports:
       - '4004:4004'
-    environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      PORT: 4004
-      DATABASE_URL: postgresql://${PG_ROUTING_USER:-claw}:${PG_ROUTING_PASSWORD:-claw_secret}@pg-routing:5432/${PG_ROUTING_DB:-claw_routing}?schema=public
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
-      JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
     depends_on:
       pg-routing:
         condition: service_healthy
@@ -391,16 +357,9 @@ services:
       dockerfile: apps/claw-memory-service/Dockerfile
     container_name: claw-memory-service
     restart: unless-stopped
+    env_file: .env
     ports:
       - '4005:4005'
-    environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      PORT: 4005
-      DATABASE_URL: postgresql://${PG_MEMORY_USER:-claw}:${PG_MEMORY_PASSWORD:-claw_secret}@pg-memory:5432/${PG_MEMORY_DB:-claw_memory}?schema=public
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
-      JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
     depends_on:
       pg-memory:
         condition: service_healthy
@@ -423,17 +382,9 @@ services:
       dockerfile: apps/claw-file-service/Dockerfile
     container_name: claw-file-service
     restart: unless-stopped
+    env_file: .env
     ports:
       - '4006:4006'
-    environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      PORT: 4006
-      DATABASE_URL: postgresql://${PG_FILES_USER:-claw}:${PG_FILES_PASSWORD:-claw_secret}@pg-files:5432/${PG_FILES_DB:-claw_files}?schema=public
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
-      JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
-      FILE_STORAGE_PATH: ${FILE_STORAGE_PATH:-/data/files}
     volumes:
       - file-storage-data:/data/files
     depends_on:
@@ -458,16 +409,9 @@ services:
       dockerfile: apps/claw-audit-service/Dockerfile
     container_name: claw-audit-service
     restart: unless-stopped
+    env_file: .env
     ports:
       - '4007:4007'
-    environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      PORT: 4007
-      MONGODB_URI: mongodb://${MONGO_USER:-claw}:${MONGO_PASSWORD:-claw_secret}@mongodb:27017/${MONGO_DB:-claw_audit}?authSource=admin
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
-      JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -490,17 +434,9 @@ services:
       dockerfile: apps/claw-ollama-service/Dockerfile
     container_name: claw-ollama-service
     restart: unless-stopped
+    env_file: .env
     ports:
       - '4008:4008'
-    environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      PORT: 4008
-      DATABASE_URL: postgresql://${PG_OLLAMA_USER:-claw}:${PG_OLLAMA_PASSWORD:-claw_secret}@pg-ollama:5432/${PG_OLLAMA_DB:-claw_ollama}?schema=public
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
-      JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
     depends_on:
       pg-ollama:
         condition: service_healthy
@@ -523,16 +459,9 @@ services:
       dockerfile: apps/claw-client-logs-service/Dockerfile
     container_name: claw-client-logs-service
     restart: unless-stopped
+    env_file: .env
     ports:
       - '4010:4010'
-    environment:
-      NODE_ENV: production
-      PORT: 4010
-      MONGODB_URI: mongodb://${MONGO_USER:-claw}:${MONGO_PASSWORD:-claw_secret}@mongodb:27017/claw_client_logs?authSource=admin
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
-      JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -555,16 +484,9 @@ services:
       dockerfile: apps/claw-server-logs-service/Dockerfile
     container_name: claw-server-logs-service
     restart: unless-stopped
+    env_file: .env
     ports:
       - '4011:4011'
-    environment:
-      NODE_ENV: production
-      PORT: 4011
-      MONGODB_URI: mongodb://${MONGO_USER:-claw}:${MONGO_PASSWORD:-claw_secret}@mongodb:27017/claw_server_logs?authSource=admin
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
-      JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -587,23 +509,9 @@ services:
       dockerfile: Dockerfile
     container_name: claw-health-service
     restart: unless-stopped
+    env_file: .env
     ports:
       - '4009:4009'
-    environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      PORT: 4009
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-claw}:${RABBITMQ_PASSWORD:-claw_secret}@rabbitmq:5672
-      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://auth-service:4001}
-      CHAT_SERVICE_URL: ${CHAT_SERVICE_URL:-http://chat-service:4002}
-      CONNECTOR_SERVICE_URL: ${CONNECTOR_SERVICE_URL:-http://connector-service:4003}
-      ROUTING_SERVICE_URL: ${ROUTING_SERVICE_URL:-http://routing-service:4004}
-      MEMORY_SERVICE_URL: ${MEMORY_SERVICE_URL:-http://memory-service:4005}
-      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:4006}
-      AUDIT_SERVICE_URL: ${AUDIT_SERVICE_URL:-http://audit-service:4007}
-      OLLAMA_SERVICE_URL: ${OLLAMA_SERVICE_URL:-http://ollama-service:4008}
-      CLIENT_LOGS_SERVICE_URL: ${CLIENT_LOGS_SERVICE_URL:-http://client-logs-service:4010}
-      SERVER_LOGS_SERVICE_URL: ${SERVER_LOGS_SERVICE_URL:-http://server-logs-service:4011}
     depends_on:
       redis:
         condition: service_healthy
@@ -626,7 +534,7 @@ services:
     container_name: claw-nginx
     restart: unless-stopped
     ports:
-      - '8080:80'
+      - '4000:80'
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
@@ -663,13 +571,12 @@ services:
       context: ./apps/claw-frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
     container_name: claw-frontend
     restart: unless-stopped
+    env_file: .env
     ports:
       - '${FRONTEND_PORT:-3000}:3000'
-    environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
     depends_on:
       - nginx
     healthcheck:
@@ -710,3 +617,4 @@ volumes:
 networks:
   claw-network:
     driver: bridge
+    name: claw-network

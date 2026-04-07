@@ -4,6 +4,9 @@
 # Contains: Ollama runtime with auto-pull of tinyllama model
 # Requires: docker-compose.prod.databases.yml running first (claw-network must exist)
 #
+# Reads environment variables from the root .env file.
+# Copy .env.example to .env before running.
+#
 # Usage:
 #   docker compose -f docker-compose.prod.ollama.yml up -d
 #   ./scripts/claw.sh --prod ollama:up

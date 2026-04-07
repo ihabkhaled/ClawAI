@@ -53,16 +53,16 @@ open http://localhost:3000
 
 ### Default Credentials
 
-| Field    | Value              |
-|----------|--------------------|
-| Email    | admin@claw.local   |
-| Password | Admin123!          |
+| Field    | Value            |
+| -------- | ---------------- |
+| Email    | admin@claw.local |
+| Password | Admin123!        |
 
 You will be prompted to change your password on first login.
 
 The auth service automatically runs database migrations and seeds the default admin user on first start. If users already exist, the seed is skipped (idempotent).
 
-The frontend is available at `http://localhost:3000` and all API traffic routes through Nginx at `http://localhost:80`.
+The frontend is available at `http://localhost:3000` and all API traffic routes through Nginx at `http://localhost:4000`.
 
 ---
 
@@ -111,30 +111,30 @@ The frontend is available at `http://localhost:3000` and all API traffic routes 
 
 ### Service Table
 
-| Service    | Port | Database                  | Purpose                                   |
-|------------|------|---------------------------|-------------------------------------------|
-| Auth       | 4001 | PostgreSQL `claw_auth` (5441)     | Users, sessions, JWT, roles               |
-| Chat       | 4002 | PostgreSQL `claw_chat` (5442)     | Threads, messages, streaming              |
-| Connector  | 4003 | PostgreSQL `claw_connectors` (5443) | Provider configs, model catalogs        |
-| Routing    | 4004 | PostgreSQL `claw_routing` (5444)  | Routing decisions, policies               |
-| Memory     | 4005 | PostgreSQL `claw_memory` (5445)   | Memory, context packs, embeddings         |
-| File       | 4006 | PostgreSQL `claw_files` (5446)    | File upload, chunking                     |
-| Audit      | 4007 | MongoDB `claw_audit` (27018)      | Audit logs, usage ledger                  |
-| Ollama     | 4008 | None (Redis only)                 | Local model proxy                         |
-| Health     | 4009 | None (stateless)                  | Aggregates health from all services       |
+| Service   | Port | Database                            | Purpose                             |
+| --------- | ---- | ----------------------------------- | ----------------------------------- |
+| Auth      | 4001 | PostgreSQL `claw_auth` (5441)       | Users, sessions, JWT, roles         |
+| Chat      | 4002 | PostgreSQL `claw_chat` (5442)       | Threads, messages, streaming        |
+| Connector | 4003 | PostgreSQL `claw_connectors` (5443) | Provider configs, model catalogs    |
+| Routing   | 4004 | PostgreSQL `claw_routing` (5444)    | Routing decisions, policies         |
+| Memory    | 4005 | PostgreSQL `claw_memory` (5445)     | Memory, context packs, embeddings   |
+| File      | 4006 | PostgreSQL `claw_files` (5446)      | File upload, chunking               |
+| Audit     | 4007 | MongoDB `claw_audit` (27018)        | Audit logs, usage ledger            |
+| Ollama    | 4008 | None (Redis only)                   | Local model proxy                   |
+| Health    | 4009 | None (stateless)                    | Aggregates health from all services |
 
 ### Infrastructure
 
-| Component  | Host Port | Internal Port | Purpose                        |
-|------------|-----------|---------------|--------------------------------|
-| Nginx      | 80        | 80            | Reverse proxy / API gateway    |
-| PostgreSQL x6 | 5441-5446 | 5432       | Per-service relational storage |
-| MongoDB    | 27018     | 27017         | Audit log storage              |
-| Redis      | 6380      | 6379          | Caching, Ollama service state  |
-| RabbitMQ   | 5672      | 5672          | Async inter-service messaging  |
-| RabbitMQ UI| 15672     | 15672         | Management console             |
-| Ollama     | 11434     | 11434         | Local model inference          |
-| Frontend   | 3000      | 3000          | Next.js UI                     |
+| Component     | Host Port | Internal Port | Purpose                        |
+| ------------- | --------- | ------------- | ------------------------------ |
+| Nginx         | 80        | 80            | Reverse proxy / API gateway    |
+| PostgreSQL x6 | 5441-5446 | 5432          | Per-service relational storage |
+| MongoDB       | 27018     | 27017         | Audit log storage              |
+| Redis         | 6380      | 6379          | Caching, Ollama service state  |
+| RabbitMQ      | 5672      | 5672          | Async inter-service messaging  |
+| RabbitMQ UI   | 15672     | 15672         | Management console             |
+| Ollama        | 11434     | 11434         | Local model inference          |
+| Frontend      | 3000      | 3000          | Next.js UI                     |
 
 ---
 
@@ -179,22 +179,22 @@ claw/
 
 ## Development Commands
 
-| Command                  | Description                              |
-|--------------------------|------------------------------------------|
-| `npm run dev`            | Start all services in development mode   |
-| `npm run dev:frontend`   | Start frontend only                      |
-| `npm run dev:auth`       | Start auth service only                  |
-| `npm run dev:chat`       | Start chat service only                  |
-| `npm run build`          | Build all applications and packages      |
-| `npm run lint`           | Lint all applications and packages       |
-| `npm run typecheck`      | Type-check all applications and packages |
-| `npm run test`           | Run all test suites                      |
-| `npm run test:e2e`       | Run end-to-end tests (Playwright)        |
-| `npm run format`         | Format code with Prettier                |
-| `npm run clean`          | Remove build artifacts and node_modules  |
-| `docker compose up -d`   | Start all 20 containers                  |
-| `docker compose down`    | Stop all containers                      |
-| `docker compose logs -f <service>` | Tail logs for a specific container |
+| Command                            | Description                              |
+| ---------------------------------- | ---------------------------------------- |
+| `npm run dev`                      | Start all services in development mode   |
+| `npm run dev:frontend`             | Start frontend only                      |
+| `npm run dev:auth`                 | Start auth service only                  |
+| `npm run dev:chat`                 | Start chat service only                  |
+| `npm run build`                    | Build all applications and packages      |
+| `npm run lint`                     | Lint all applications and packages       |
+| `npm run typecheck`                | Type-check all applications and packages |
+| `npm run test`                     | Run all test suites                      |
+| `npm run test:e2e`                 | Run end-to-end tests (Playwright)        |
+| `npm run format`                   | Format code with Prettier                |
+| `npm run clean`                    | Remove build artifacts and node_modules  |
+| `docker compose up -d`             | Start all 20 containers                  |
+| `docker compose down`              | Stop all containers                      |
+| `docker compose logs -f <service>` | Tail logs for a specific container       |
 
 ---
 

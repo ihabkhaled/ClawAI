@@ -6,15 +6,16 @@ Complete guide to setting up Claw for local development.
 
 ## Prerequisites
 
-| Requirement      | Minimum Version | Notes                            |
-|------------------|-----------------|----------------------------------|
-| Node.js          | 20.0.0          | LTS recommended                  |
-| npm              | 10.0.0          | Ships with Node 20+              |
-| Docker           | 24.0.0          | Docker Desktop or Docker Engine  |
-| Docker Compose   | 2.20.0          | Included with Docker Desktop     |
-| Git              | 2.40.0          | For cloning the repository       |
+| Requirement    | Minimum Version | Notes                           |
+| -------------- | --------------- | ------------------------------- |
+| Node.js        | 20.0.0          | LTS recommended                 |
+| npm            | 10.0.0          | Ships with Node 20+             |
+| Docker         | 24.0.0          | Docker Desktop or Docker Engine |
+| Docker Compose | 2.20.0          | Included with Docker Desktop    |
+| Git            | 2.40.0          | For cloning the repository      |
 
 Optional:
+
 - **NVIDIA GPU drivers** and **NVIDIA Container Toolkit** if you want GPU-accelerated local models via Ollama.
 
 ---
@@ -40,28 +41,28 @@ curl http://localhost:4009/api/v1/health
 
 ### What Starts (20 containers)
 
-| Container              | Type           | Host Port | Internal Port |
-|------------------------|----------------|-----------|---------------|
-| claw-auth-service      | Microservice   | 4001      | 4001          |
-| claw-chat-service      | Microservice   | 4002      | 4002          |
-| claw-connector-service | Microservice   | 4003      | 4003          |
-| claw-routing-service   | Microservice   | 4004      | 4004          |
-| claw-memory-service    | Microservice   | 4005      | 4005          |
-| claw-file-service      | Microservice   | 4006      | 4006          |
-| claw-audit-service     | Microservice   | 4007      | 4007          |
-| claw-ollama-service    | Microservice   | 4008      | 4008          |
-| claw-health-service    | Microservice   | 4009      | 4009          |
-| claw-frontend          | Next.js        | 3000      | 3000          |
-| claw-nginx             | Reverse Proxy  | 80        | 80            |
-| claw-pg-auth           | PostgreSQL     | 5441      | 5432          |
-| claw-pg-chat           | PostgreSQL     | 5442      | 5432          |
-| claw-pg-connectors     | PostgreSQL     | 5443      | 5432          |
-| claw-pg-routing        | PostgreSQL     | 5444      | 5432          |
-| claw-pg-memory         | PostgreSQL     | 5445      | 5432          |
-| claw-pg-files          | PostgreSQL     | 5446      | 5432          |
-| claw-mongodb           | MongoDB        | 27018     | 27017         |
-| claw-redis             | Redis          | 6380      | 6379          |
-| claw-rabbitmq          | RabbitMQ       | 5672 / 15672 | 5672 / 15672 |
+| Container              | Type          | Host Port    | Internal Port |
+| ---------------------- | ------------- | ------------ | ------------- |
+| claw-auth-service      | Microservice  | 4001         | 4001          |
+| claw-chat-service      | Microservice  | 4002         | 4002          |
+| claw-connector-service | Microservice  | 4003         | 4003          |
+| claw-routing-service   | Microservice  | 4004         | 4004          |
+| claw-memory-service    | Microservice  | 4005         | 4005          |
+| claw-file-service      | Microservice  | 4006         | 4006          |
+| claw-audit-service     | Microservice  | 4007         | 4007          |
+| claw-ollama-service    | Microservice  | 4008         | 4008          |
+| claw-health-service    | Microservice  | 4009         | 4009          |
+| claw-frontend          | Next.js       | 3000         | 3000          |
+| claw-nginx             | Reverse Proxy | 80           | 80            |
+| claw-pg-auth           | PostgreSQL    | 5441         | 5432          |
+| claw-pg-chat           | PostgreSQL    | 5442         | 5432          |
+| claw-pg-connectors     | PostgreSQL    | 5443         | 5432          |
+| claw-pg-routing        | PostgreSQL    | 5444         | 5432          |
+| claw-pg-memory         | PostgreSQL    | 5445         | 5432          |
+| claw-pg-files          | PostgreSQL    | 5446         | 5432          |
+| claw-mongodb           | MongoDB       | 27018        | 27017         |
+| claw-redis             | Redis         | 6380         | 6379          |
+| claw-rabbitmq          | RabbitMQ      | 5672 / 15672 | 5672 / 15672  |
 
 Note: Ollama runs as a separate Docker Compose profile (see GPU / Ollama Setup below).
 
@@ -77,11 +78,11 @@ cp .env.example .env
 
 At minimum, update these values:
 
-| Variable            | Action                                        |
-|---------------------|-----------------------------------------------|
-| `JWT_SECRET`        | Generate a random 64-character string          |
-| `ENCRYPTION_KEY`    | Generate a random 32-byte hex string (64 hex chars) |
-| `ADMIN_PASSWORD`    | Set the initial admin password                 |
+| Variable         | Action                                              |
+| ---------------- | --------------------------------------------------- |
+| `JWT_SECRET`     | Generate a random 64-character string               |
+| `ENCRYPTION_KEY` | Generate a random 32-byte hex string (64 hex chars) |
+| `ADMIN_PASSWORD` | Set the initial admin password                      |
 
 To generate secure random values:
 
@@ -153,20 +154,20 @@ curl -X POST http://localhost:4001/api/v1/auth/login \
 
 ## Access Points
 
-| What              | URL                          |
-|-------------------|------------------------------|
-| Frontend          | http://localhost:3000         |
-| API (via Nginx)   | http://localhost:80           |
-| Auth Service      | http://localhost:4001         |
-| Chat Service      | http://localhost:4002         |
-| Connector Service | http://localhost:4003         |
-| Routing Service   | http://localhost:4004         |
-| Memory Service    | http://localhost:4005         |
-| File Service      | http://localhost:4006         |
-| Audit Service     | http://localhost:4007         |
-| Ollama Service    | http://localhost:4008         |
-| Health Service    | http://localhost:4009         |
-| RabbitMQ Management | http://localhost:15672      |
+| What                | URL                    |
+| ------------------- | ---------------------- |
+| Frontend            | http://localhost:3000  |
+| API (via Nginx)     | http://localhost:4000  |
+| Auth Service        | http://localhost:4001  |
+| Chat Service        | http://localhost:4002  |
+| Connector Service   | http://localhost:4003  |
+| Routing Service     | http://localhost:4004  |
+| Memory Service      | http://localhost:4005  |
+| File Service        | http://localhost:4006  |
+| Audit Service       | http://localhost:4007  |
+| Ollama Service      | http://localhost:4008  |
+| Health Service      | http://localhost:4009  |
+| RabbitMQ Management | http://localhost:15672 |
 
 Default RabbitMQ management credentials: `guest` / `guest` (change in production).
 
@@ -191,6 +192,7 @@ npm install
 ```
 
 This installs dependencies for all workspaces:
+
 - Root workspace (shared tooling)
 - All 9 service apps
 - `apps/claw-frontend` (Next.js)
@@ -236,6 +238,7 @@ This starts the Ollama container on port `11434` using CPU inference (slower but
 ### Running Ollama With GPU (NVIDIA)
 
 Prerequisites:
+
 1. Install [NVIDIA GPU drivers](https://www.nvidia.com/drivers) for your card.
 2. Install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
 3. Verify GPU access: `nvidia-smi` should show your GPU.
@@ -275,30 +278,30 @@ If you prefer running Ollama directly on your host:
 
 ## Port Mapping Reference
 
-| Host Port | Container Port | Service              |
-|-----------|----------------|----------------------|
-| 80        | 80             | Nginx reverse proxy  |
-| 3000      | 3000           | Frontend (Next.js)   |
-| 4001      | 4001           | Auth service         |
-| 4002      | 4002           | Chat service         |
-| 4003      | 4003           | Connector service    |
-| 4004      | 4004           | Routing service      |
-| 4005      | 4005           | Memory service       |
-| 4006      | 4006           | File service         |
-| 4007      | 4007           | Audit service        |
-| 4008      | 4008           | Ollama service       |
-| 4009      | 4009           | Health service       |
-| 5441      | 5432           | PostgreSQL (auth)    |
-| 5442      | 5432           | PostgreSQL (chat)    |
-| 5443      | 5432           | PostgreSQL (connectors) |
-| 5444      | 5432           | PostgreSQL (routing) |
-| 5445      | 5432           | PostgreSQL (memory)  |
-| 5446      | 5432           | PostgreSQL (files)   |
-| 27018     | 27017          | MongoDB (audit)      |
-| 6380      | 6379           | Redis                |
-| 5672      | 5672           | RabbitMQ (AMQP)      |
+| Host Port | Container Port | Service                  |
+| --------- | -------------- | ------------------------ |
+| 80        | 80             | Nginx reverse proxy      |
+| 3000      | 3000           | Frontend (Next.js)       |
+| 4001      | 4001           | Auth service             |
+| 4002      | 4002           | Chat service             |
+| 4003      | 4003           | Connector service        |
+| 4004      | 4004           | Routing service          |
+| 4005      | 4005           | Memory service           |
+| 4006      | 4006           | File service             |
+| 4007      | 4007           | Audit service            |
+| 4008      | 4008           | Ollama service           |
+| 4009      | 4009           | Health service           |
+| 5441      | 5432           | PostgreSQL (auth)        |
+| 5442      | 5432           | PostgreSQL (chat)        |
+| 5443      | 5432           | PostgreSQL (connectors)  |
+| 5444      | 5432           | PostgreSQL (routing)     |
+| 5445      | 5432           | PostgreSQL (memory)      |
+| 5446      | 5432           | PostgreSQL (files)       |
+| 27018     | 27017          | MongoDB (audit)          |
+| 6380      | 6379           | Redis                    |
+| 5672      | 5672           | RabbitMQ (AMQP)          |
 | 15672     | 15672          | RabbitMQ (Management UI) |
-| 11434     | 11434          | Ollama (optional)    |
+| 11434     | 11434          | Ollama (optional)        |
 
 ---
 

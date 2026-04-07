@@ -3,6 +3,9 @@
 # Usage: ./scripts/claw.sh ollama:up
 # Auto-pulls tinyllama on first start for immediate dev use.
 # Requires: docker-compose.databases.yml running first (claw-network must exist)
+#
+# Reads environment variables from the root .env file.
+# Copy .env.example to .env before running.
 
 services:
   ollama:
