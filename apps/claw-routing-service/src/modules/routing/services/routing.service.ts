@@ -166,18 +166,43 @@ export class RoutingService implements OnModuleInit {
 
   private async handleMessageCreated(data: unknown): Promise<void> {
     const payload = data as Record<string, unknown>;
-    const messageId = payload["messageId"] as string | undefined;
-    const threadId = payload["threadId"] as string | undefined;
-    const content = payload["content"] as string | undefined;
-    const routingMode = payload["routingMode"] as RoutingMode | undefined;
-    const forcedProvider = payload["forcedProvider"] as string | undefined;
-    const forcedModel = payload["forcedModel"] as string | undefined;
-
-    if (!threadId || !content) {
-      this.logger.warn("Received message.created with missing threadId or content");
+    const parsed = this.parseMessageCreatedPayload(payload);
+    if (!parsed) {
       return;
     }
 
+    const { messageId, threadId, content, routingMode, forcedProvider, forcedModel } = parsed;
+
+    this.logMessageCreatedConsumed(messageId, threadId);
+
+    const context = this.buildRoutingContext(content, threadId, routingMode, forcedProvider, forcedModel);
+    const decision = await this.routingManager.evaluateRoute(context);
+
+    await this.storeAndPublishDecision(messageId, threadId, decision);
+  }
+
+  private parseMessageCreatedPayload(
+    payload: Record<string, unknown>,
+  ): { messageId: string | undefined; threadId: string; content: string; routingMode: RoutingMode | undefined; forcedProvider: string | undefined; forcedModel: string | undefined } | null {
+    const threadId = payload["threadId"] as string | undefined;
+    const content = payload["content"] as string | undefined;
+
+    if (!threadId || !content) {
+      this.logger.warn("Received message.created with missing threadId or content");
+      return null;
+    }
+
+    return {
+      messageId: payload["messageId"] as string | undefined,
+      threadId,
+      content,
+      routingMode: payload["routingMode"] as RoutingMode | undefined,
+      forcedProvider: payload["forcedProvider"] as string | undefined,
+      forcedModel: payload["forcedModel"] as string | undefined,
+    };
+  }
+
+  private logMessageCreatedConsumed(messageId: string | undefined, threadId: string): void {
     this.structuredLogger.logAction({
       level: LogLevel.INFO,
       message: `Consumed message.created for thread ${threadId}`,
@@ -186,8 +211,16 @@ export class RoutingService implements OnModuleInit {
       messageId: messageId ?? undefined,
       threadId,
     });
+  }
 
-    const context: RoutingContext = {
+  private buildRoutingContext(
+    content: string,
+    threadId: string,
+    routingMode: RoutingMode | undefined,
+    forcedProvider: string | undefined,
+    forcedModel: string | undefined,
+  ): RoutingContext {
+    return {
       message: content,
       threadId,
       userMode: routingMode,
@@ -196,8 +229,13 @@ export class RoutingService implements OnModuleInit {
       connectorHealth: { ...this.connectorHealthCache },
       runtimeHealth: { ...this.runtimeHealthCache },
     };
+  }
 
-    const decision = await this.routingManager.evaluateRoute(context);
+  private async storeAndPublishDecision(
+    messageId: string | undefined,
+    threadId: string,
+    decision: RoutingDecisionResult,
+  ): Promise<void> {
     const fallback = decision.fallbackChain[0];
 
     await this.decisionsRepository.create({

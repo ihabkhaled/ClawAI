@@ -3,8 +3,8 @@ import { AppConfig } from "../../../app/config/app.config";
 import { httpRequest } from "../../../common/utilities";
 import {
   EXTRACTION_PROMPT,
-  VALID_MEMORY_TYPES,
   extractionResultSchema,
+  VALID_MEMORY_TYPES,
 } from "../../../common/constants";
 import { type MemoryType } from "../../../generated/prisma";
 import type { ExtractedMemory, OllamaGenerateResponse } from "../types/memory.types";

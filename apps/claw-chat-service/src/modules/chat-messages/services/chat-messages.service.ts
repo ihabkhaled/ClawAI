@@ -8,7 +8,7 @@ import { ContextAssemblyManager } from "../managers/context-assembly.manager";
 import { ChatStreamController } from "../controllers/chat-stream.controller";
 import { type CreateMessageDto } from "../dto/create-message.dto";
 import { type ListMessagesQueryDto } from "../dto/list-messages-query.dto";
-import { type MessageRoutedData } from "../types/execution.types";
+import { type LlmResponse, type MessageRoutedData, type ThreadSettings } from "../types/execution.types";
 import { BusinessException, EntityNotFoundException } from "../../../common/errors";
 import { type PaginatedResult } from "../../../common/types";
 import { type ChatMessage, type ChatThread, RoutingMode } from "../../../generated/prisma";
@@ -39,53 +39,19 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   async createMessage(userId: string, dto: CreateMessageDto): Promise<ChatMessage> {
-    const thread = await this.chatThreadsRepository.findById(dto.threadId);
-    if (!thread) {
-      throw new EntityNotFoundException("ChatThread", dto.threadId);
-    }
-    this.validateOwnership(thread, userId);
-
-    // Resolve provider+model: per-message override → thread default → undefined (auto)
-    const forcedProvider = dto.provider ?? thread.preferredProvider ?? undefined;
-    const forcedModel = dto.model ?? thread.preferredModel ?? undefined;
-
-    // If a specific model is selected, force MANUAL_MODEL routing
-    const effectiveRoutingMode = forcedProvider && forcedModel
-      ? RoutingMode.MANUAL_MODEL
-      : dto.routingMode ?? thread.routingMode;
-
-    const metadata = dto.fileIds && dto.fileIds.length > 0
-      ? { fileIds: dto.fileIds }
-      : undefined;
+    const thread = await this.getThreadForMessage(dto.threadId, userId);
+    const { effectiveRoutingMode, forcedProvider, forcedModel } = this.resolveRoutingParams(dto, thread);
 
     const message = await this.chatMessagesRepository.create({
       threadId: dto.threadId,
       role: "USER",
       content: dto.content,
       routingMode: effectiveRoutingMode,
-      metadata,
+      metadata: this.buildMessageMetadata(dto),
     });
 
-    this.structuredLogger.logAction({
-      level: LogLevel.INFO,
-      message: `User message created in thread ${dto.threadId}`,
-      action: 'message_created',
-      service: ChatMessagesService.name,
-      userId,
-      threadId: dto.threadId,
-      messageId: message.id,
-    });
-
-    void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
-      messageId: message.id,
-      threadId: message.threadId,
-      userId,
-      content: message.content,
-      routingMode: effectiveRoutingMode,
-      forcedProvider,
-      forcedModel,
-      timestamp: new Date().toISOString(),
-    });
+    this.logMessageCreated(userId, dto.threadId, message.id);
+    this.publishMessageCreated(message, userId, effectiveRoutingMode, forcedProvider, forcedModel);
 
     return message;
   }
@@ -187,23 +153,9 @@ export class ChatMessagesService implements OnModuleInit {
     ]);
 
     const chronologicalMessages = [...threadMessages].reverse();
+    const threadSettings = this.extractThreadSettings(thread);
+    const fileIds = this.extractFileIdsFromMessages(chronologicalMessages);
 
-    const threadSettings = thread
-      ? {
-          systemPrompt: thread.systemPrompt,
-          temperature: thread.temperature,
-          maxTokens: thread.maxTokens,
-        }
-      : undefined;
-
-    // Extract fileIds from the latest USER message's metadata (file grounding)
-    const latestUserMessage = [...chronologicalMessages].reverse().find((m) => m.role === "USER");
-    const messageMetadata = latestUserMessage?.metadata as Record<string, unknown> | null;
-    const fileIds = Array.isArray(messageMetadata?.["fileIds"])
-      ? (messageMetadata["fileIds"] as string[])
-      : undefined;
-
-    // Assemble context: thread messages + memories + context packs + file chunks
     const context = await this.contextAssemblyManager.assemble(
       thread?.userId ?? "system",
       chronologicalMessages,
@@ -213,61 +165,12 @@ export class ChatMessagesService implements OnModuleInit {
     );
 
     const llmResponse = await this.chatExecutionManager.execute(payload, context, threadSettings);
+    const assistantMessage = await this.storeAssistantResponse(payload, llmResponse);
+    await this.updateThreadAfterResponse(payload.threadId, llmResponse);
 
-    const assistantMessage = await this.chatMessagesRepository.create({
-      threadId: payload.threadId,
-      role: "ASSISTANT",
-      content: llmResponse.content,
-      provider: llmResponse.provider,
-      model: llmResponse.model,
-      routingMode: payload.routingMode as RoutingMode,
-      inputTokens: llmResponse.inputTokens,
-      outputTokens: llmResponse.outputTokens,
-      latencyMs: llmResponse.latencyMs,
-      usedFallback: llmResponse.usedFallback,
-    });
-
-    await this.chatThreadsRepository.update(payload.threadId, {
-      lastProvider: llmResponse.provider,
-      lastModel: llmResponse.model,
-    });
-
-    // Notify SSE subscribers that a response is ready
-    this.chatStreamController.emitCompletion(
-      payload.threadId,
-      llmResponse.provider,
-      llmResponse.model,
-    );
-
-    this.structuredLogger.logAction({
-      level: LogLevel.INFO,
-      message: `Assistant response stored for message ${payload.messageId}`,
-      action: 'assistant_response_stored',
-      service: ChatMessagesService.name,
-      messageId: payload.messageId,
-      threadId: payload.threadId,
-      provider: llmResponse.provider,
-      model: llmResponse.model,
-      latencyMs: llmResponse.latencyMs,
-    });
-
-    // Include content for downstream memory extraction
-    const lastUserMsg = [...chronologicalMessages].reverse().find((m) => m.role === "USER");
-
-    void this.rabbitMQService.publish(EventPattern.MESSAGE_COMPLETED, {
-      messageId: payload.messageId,
-      threadId: payload.threadId,
-      assistantMessageId: assistantMessage.id,
-      userId: thread?.userId,
-      provider: llmResponse.provider,
-      model: llmResponse.model,
-      inputTokens: llmResponse.inputTokens,
-      outputTokens: llmResponse.outputTokens,
-      latencyMs: llmResponse.latencyMs,
-      content: llmResponse.content,
-      userContent: lastUserMsg?.content,
-      timestamp: new Date().toISOString(),
-    });
+    this.chatStreamController.emitCompletion(payload.threadId, llmResponse.provider, llmResponse.model);
+    this.logAssistantResponse(payload, llmResponse);
+    this.publishMessageCompleted(payload, assistantMessage, llmResponse, thread, chronologicalMessages);
   }
 
   private async subscribeToEvents(): Promise<void> {
@@ -334,6 +237,144 @@ export class ChatMessagesService implements OnModuleInit {
         errorMessage: errorMsg,
       });
     }
+  }
+
+  private extractThreadSettings(thread: ChatThread | null): ThreadSettings | undefined {
+    if (!thread) {
+      return undefined;
+    }
+    return {
+      systemPrompt: thread.systemPrompt,
+      temperature: thread.temperature,
+      maxTokens: thread.maxTokens,
+    };
+  }
+
+  private extractFileIdsFromMessages(messages: ChatMessage[]): string[] | undefined {
+    const latestUserMsg = [...messages].reverse().find((m) => m.role === "USER");
+    const metadata = latestUserMsg?.metadata as Record<string, unknown> | null;
+    return Array.isArray(metadata?.["fileIds"]) ? (metadata["fileIds"] as string[]) : undefined;
+  }
+
+  private async storeAssistantResponse(payload: MessageRoutedData, llmResponse: LlmResponse): Promise<ChatMessage> {
+    return this.chatMessagesRepository.create({
+      threadId: payload.threadId,
+      role: "ASSISTANT",
+      content: llmResponse.content,
+      provider: llmResponse.provider,
+      model: llmResponse.model,
+      routingMode: payload.routingMode as RoutingMode,
+      inputTokens: llmResponse.inputTokens,
+      outputTokens: llmResponse.outputTokens,
+      latencyMs: llmResponse.latencyMs,
+      usedFallback: llmResponse.usedFallback,
+    });
+  }
+
+  private async updateThreadAfterResponse(threadId: string, llmResponse: LlmResponse): Promise<void> {
+    await this.chatThreadsRepository.update(threadId, {
+      lastProvider: llmResponse.provider,
+      lastModel: llmResponse.model,
+    });
+  }
+
+  private logAssistantResponse(payload: MessageRoutedData, llmResponse: LlmResponse): void {
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Assistant response stored for message ${payload.messageId}`,
+      action: 'assistant_response_stored',
+      service: ChatMessagesService.name,
+      messageId: payload.messageId,
+      threadId: payload.threadId,
+      provider: llmResponse.provider,
+      model: llmResponse.model,
+      latencyMs: llmResponse.latencyMs,
+    });
+  }
+
+  private publishMessageCompleted(
+    payload: MessageRoutedData,
+    assistantMessage: ChatMessage,
+    llmResponse: LlmResponse,
+    thread: ChatThread | null,
+    messages: ChatMessage[],
+  ): void {
+    const lastUserMsg = [...messages].reverse().find((m) => m.role === "USER");
+    void this.rabbitMQService.publish(EventPattern.MESSAGE_COMPLETED, {
+      messageId: payload.messageId,
+      threadId: payload.threadId,
+      assistantMessageId: assistantMessage.id,
+      userId: thread?.userId,
+      provider: llmResponse.provider,
+      model: llmResponse.model,
+      inputTokens: llmResponse.inputTokens,
+      outputTokens: llmResponse.outputTokens,
+      latencyMs: llmResponse.latencyMs,
+      content: llmResponse.content,
+      userContent: lastUserMsg?.content,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  private async getThreadForMessage(threadId: string, userId: string): Promise<ChatThread> {
+    const thread = await this.chatThreadsRepository.findById(threadId);
+    if (!thread) {
+      throw new EntityNotFoundException("ChatThread", threadId);
+    }
+    this.validateOwnership(thread, userId);
+    return thread;
+  }
+
+  private resolveRoutingParams(
+    dto: CreateMessageDto,
+    thread: ChatThread,
+  ): { effectiveRoutingMode: RoutingMode; forcedProvider: string | undefined; forcedModel: string | undefined } {
+    const forcedProvider = dto.provider ?? thread.preferredProvider ?? undefined;
+    const forcedModel = dto.model ?? thread.preferredModel ?? undefined;
+
+    const effectiveRoutingMode = forcedProvider && forcedModel
+      ? RoutingMode.MANUAL_MODEL
+      : dto.routingMode ?? thread.routingMode;
+
+    return { effectiveRoutingMode, forcedProvider, forcedModel };
+  }
+
+  private buildMessageMetadata(dto: CreateMessageDto): { fileIds: string[] } | undefined {
+    if (dto.fileIds && dto.fileIds.length > 0) {
+      return { fileIds: dto.fileIds };
+    }
+    return undefined;
+  }
+
+  private logMessageCreated(userId: string, threadId: string, messageId: string): void {
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `User message created in thread ${threadId}`,
+      action: 'message_created',
+      service: ChatMessagesService.name,
+      userId,
+      threadId,
+      messageId,
+    });
+  }
+
+  private publishMessageCreated(
+    message: ChatMessage,
+    userId: string,
+    routingMode: RoutingMode,
+    forcedProvider: string | undefined,
+    forcedModel: string | undefined,
+  ): void {
+    void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
+      messageId: message.id,
+      threadId: message.threadId,
+      userId,
+      content: message.content,
+      routingMode,
+      forcedProvider,
+      forcedModel,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   private validateOwnership(thread: ChatThread, userId: string): void {

@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { RabbitMQService } from "@claw/shared-rabbitmq";
 import { EventPattern } from "@claw/shared-types";
-import { type RuntimeConfig, type RuntimeType, LocalModelRole } from "../../generated/prisma";
+import { LocalModelRole, type RuntimeConfig, type RuntimeType } from "../../generated/prisma";
 import { EntityNotFoundException } from "../../common/errors";
 import { type PaginatedResult } from "../../common/types";
 import { LocalModelsRepository } from "./repositories/local-models.repository";
