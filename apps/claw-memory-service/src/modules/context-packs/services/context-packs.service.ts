@@ -166,6 +166,10 @@ export class ContextPacksService {
     return removed;
   }
 
+  async getContextPackItemsInternal(contextPackId: string): Promise<ContextPackWithItems | null> {
+    return this.contextPacksRepository.findById(contextPackId);
+  }
+
   private validateOwnership(pack: ContextPack, userId: string): void {
     if (pack.userId !== userId) {
       throw new BusinessException(

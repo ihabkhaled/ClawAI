@@ -4,29 +4,32 @@ import { httpRequest } from "../../../common/utilities";
 import { BusinessException } from "../../../common/errors";
 import {
   OLLAMA_PROVIDER,
-  THREAD_CONTEXT_LIMIT,
   PROVIDER_BASE_URLS,
 } from "../../../common/constants";
-import { type ChatMessage } from "../../../generated/prisma";
 import {
   type LlmResponse,
   type MessageRoutedData,
   type OllamaGenerateRequest,
   type OllamaGenerateResponse,
-  type OpenAiChatMessage,
   type OpenAiChatRequest,
   type OpenAiChatResponse,
   type ConnectorConfigResponse,
   type ThreadSettings,
 } from "../types/execution.types";
+import { type AssembledContext } from "../types/context.types";
+import { ContextAssemblyManager } from "./context-assembly.manager";
 
 @Injectable()
 export class ChatExecutionManager {
   private readonly logger = new Logger(ChatExecutionManager.name);
 
+  constructor(
+    private readonly contextAssembly: ContextAssemblyManager,
+  ) {}
+
   async execute(
     payload: MessageRoutedData,
-    threadMessages: ChatMessage[],
+    context: AssembledContext,
     threadSettings?: ThreadSettings,
   ): Promise<LlmResponse> {
     const startTime = Date.now();
@@ -66,7 +69,7 @@ export class ChatExecutionManager {
         return await this.callProvider(
           candidate.provider,
           candidate.model,
-          threadMessages,
+          context,
           startTime,
           i > 0,
           threadSettings,
@@ -89,26 +92,26 @@ export class ChatExecutionManager {
   private async callProvider(
     provider: string,
     model: string,
-    threadMessages: ChatMessage[],
+    context: AssembledContext,
     startTime: number,
     usedFallback: boolean,
     threadSettings?: ThreadSettings,
   ): Promise<LlmResponse> {
     if (provider === OLLAMA_PROVIDER) {
-      return this.callOllama(model, threadMessages, startTime, usedFallback, threadSettings);
+      return this.callOllama(model, context, startTime, usedFallback, threadSettings);
     }
-    return this.callCloudProvider(provider, model, threadMessages, startTime, usedFallback, threadSettings);
+    return this.callCloudProvider(provider, model, context, startTime, usedFallback, threadSettings);
   }
 
   private async callOllama(
     model: string,
-    threadMessages: ChatMessage[],
+    context: AssembledContext,
     startTime: number,
     usedFallback: boolean,
-    threadSettings?: ThreadSettings,
+    _threadSettings?: ThreadSettings,
   ): Promise<LlmResponse> {
     const config = AppConfig.get();
-    const prompt = this.buildPromptString(threadMessages, threadSettings?.systemPrompt ?? undefined);
+    const prompt = this.contextAssembly.buildPromptString(context);
 
     const requestBody: OllamaGenerateRequest = {
       model,
@@ -147,7 +150,7 @@ export class ChatExecutionManager {
   private async callCloudProvider(
     provider: string,
     model: string,
-    threadMessages: ChatMessage[],
+    context: AssembledContext,
     startTime: number,
     usedFallback: boolean,
     threadSettings?: ThreadSettings,
@@ -169,7 +172,7 @@ export class ChatExecutionManager {
       );
     }
 
-    const messages = this.buildChatMessages(threadMessages, threadSettings?.systemPrompt ?? undefined);
+    const messages = this.contextAssembly.buildChatMessages(context);
     const requestBody: OpenAiChatRequest = { model, messages, stream: false };
 
     if (threadSettings?.temperature != null) {
@@ -240,47 +243,4 @@ export class ChatExecutionManager {
     return response.data;
   }
 
-  private buildPromptString(threadMessages: ChatMessage[], systemPrompt?: string): string {
-    const recentMessages = threadMessages.slice(-THREAD_CONTEXT_LIMIT);
-
-    const parts: string[] = [];
-
-    if (systemPrompt) {
-      parts.push(`SYSTEM: ${systemPrompt}`);
-    }
-
-    for (const msg of recentMessages) {
-      parts.push(`${msg.role}: ${msg.content}`);
-    }
-
-    return parts.join("\n\n");
-  }
-
-  private buildChatMessages(threadMessages: ChatMessage[], systemPrompt?: string): OpenAiChatMessage[] {
-    const recentMessages = threadMessages.slice(-THREAD_CONTEXT_LIMIT);
-    const messages: OpenAiChatMessage[] = [];
-
-    if (systemPrompt) {
-      messages.push({ role: "system", content: systemPrompt });
-    }
-
-    for (const msg of recentMessages) {
-      messages.push({
-        role: this.mapMessageRole(msg.role),
-        content: msg.content,
-      });
-    }
-
-    return messages;
-  }
-
-  private mapMessageRole(role: string): string {
-    if (role === "USER") {
-      return "user";
-    }
-    if (role === "ASSISTANT") {
-      return "assistant";
-    }
-    return "system";
-  }
 }

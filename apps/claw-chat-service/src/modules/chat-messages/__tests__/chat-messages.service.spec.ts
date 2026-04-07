@@ -2,6 +2,7 @@ import { ChatMessagesService } from '../services/chat-messages.service';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatExecutionManager } from '../managers/chat-execution.manager';
+import { ContextAssemblyManager } from '../managers/context-assembly.manager';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { EntityNotFoundException, BusinessException } from '../../../common/errors';
@@ -61,6 +62,18 @@ const mockExecutionManager = (): Partial<Record<keyof ChatExecutionManager, jest
   execute: jest.fn(),
 });
 
+const mockContextAssembly = (): Partial<Record<keyof ContextAssemblyManager, jest.Mock>> => ({
+  assemble: jest.fn().mockResolvedValue({
+    systemPrompt: null,
+    threadMessages: [],
+    memories: [],
+    contextPackItems: [],
+    tokenBudget: 4096,
+  }),
+  buildPromptString: jest.fn().mockReturnValue(''),
+  buildChatMessages: jest.fn().mockReturnValue([]),
+});
+
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
   publish: jest.fn().mockResolvedValue(undefined),
   subscribe: jest.fn().mockResolvedValue(undefined),
@@ -71,17 +84,20 @@ describe('ChatMessagesService', () => {
   let messagesRepo: ReturnType<typeof mockMessagesRepository>;
   let threadsRepo: ReturnType<typeof mockThreadsRepository>;
   let executionManager: ReturnType<typeof mockExecutionManager>;
+  let contextAssembly: ReturnType<typeof mockContextAssembly>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
 
   beforeEach(() => {
     messagesRepo = mockMessagesRepository();
     threadsRepo = mockThreadsRepository();
     executionManager = mockExecutionManager();
+    contextAssembly = mockContextAssembly();
     rabbitMQ = mockRabbitMQ();
     service = new ChatMessagesService(
       messagesRepo as unknown as ChatMessagesRepository,
       threadsRepo as unknown as ChatThreadsRepository,
       executionManager as unknown as ChatExecutionManager,
+      contextAssembly as unknown as ContextAssemblyManager,
       rabbitMQ as unknown as RabbitMQService,
     );
   });

@@ -46,6 +46,14 @@ export class MemoryRepository {
     return this.prisma.memoryRecord.delete({ where: { id } });
   }
 
+  async findEnabledByUserId(userId: string, limit: number): Promise<MemoryRecord[]> {
+    return this.prisma.memoryRecord.findMany({
+      where: { userId, isEnabled: true },
+      orderBy: { updatedAt: "desc" },
+      take: limit,
+    });
+  }
+
   async countAll(filters: MemoryFilters): Promise<number> {
     const where = this.buildWhereClause(filters);
     return this.prisma.memoryRecord.count({ where });

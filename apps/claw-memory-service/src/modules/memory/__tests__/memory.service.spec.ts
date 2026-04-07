@@ -21,6 +21,7 @@ const mockMemoryRepository = (): Record<keyof MemoryRepository, jest.Mock> => ({
   create: jest.fn(),
   findById: jest.fn(),
   findAll: jest.fn(),
+  findEnabledByUserId: jest.fn(),
   update: jest.fn(),
   delete: jest.fn(),
   countAll: jest.fn(),

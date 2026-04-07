@@ -115,6 +115,10 @@ export class MemoryService implements OnModuleInit {
     return this.memoryRepository.update(id, { isEnabled: !memory.isEnabled });
   }
 
+  async getMemoriesForContext(userId: string, limit: number): Promise<MemoryRecord[]> {
+    return this.memoryRepository.findEnabledByUserId(userId, limit);
+  }
+
   private validateOwnership(memory: MemoryRecord, userId: string): void {
     if (memory.userId !== userId) {
       throw new BusinessException(
