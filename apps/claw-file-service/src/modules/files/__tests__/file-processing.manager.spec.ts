@@ -44,7 +44,7 @@ const mockFileChunksRepository = (): Record<keyof FileChunksRepository, jest.Moc
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(),
+  publish: jest.fn().mockResolvedValue(undefined),
 });
 
 describe("FileProcessingManager", () => {
