@@ -1,9 +1,9 @@
 import { ChatThreadsService } from '../services/chat-threads.service';
-import { ChatThreadsRepository } from '../repositories/chat-threads.repository';
-import { ChatMessagesRepository } from '../../chat-messages/repositories/chat-messages.repository';
-import { RabbitMQService } from '@claw/shared-rabbitmq';
+import { type ChatThreadsRepository } from '../repositories/chat-threads.repository';
+import { type ChatMessagesRepository } from '../../chat-messages/repositories/chat-messages.repository';
+import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { SortOrder } from '../../../common/enums';
-import { EntityNotFoundException, BusinessException } from '../../../common/errors';
+import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 
 const mockThread = {
   id: 'thread-1',
@@ -37,7 +37,7 @@ const mockMessagesRepository = (): Partial<Record<keyof ChatMessagesRepository, 
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(undefined),
+  publish: jest.fn().mockResolvedValue(),
 });
 
 describe('ChatThreadsService', () => {

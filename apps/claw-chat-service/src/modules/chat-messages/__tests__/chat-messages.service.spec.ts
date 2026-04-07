@@ -1,12 +1,12 @@
 import { ChatMessagesService } from '../services/chat-messages.service';
-import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
-import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
-import { ChatExecutionManager } from '../managers/chat-execution.manager';
-import { ContextAssemblyManager } from '../managers/context-assembly.manager';
-import { ChatStreamController } from '../controllers/chat-stream.controller';
-import { RabbitMQService } from '@claw/shared-rabbitmq';
+import { type ChatMessagesRepository } from '../repositories/chat-messages.repository';
+import { type ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
+import { type ChatExecutionManager } from '../managers/chat-execution.manager';
+import { type ContextAssemblyManager } from '../managers/context-assembly.manager';
+import { type ChatStreamController } from '../controllers/chat-stream.controller';
+import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
-import { EntityNotFoundException, BusinessException } from '../../../common/errors';
+import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 
 const mockThread = {
   id: 'thread-1',
@@ -77,8 +77,8 @@ const mockContextAssembly = (): Partial<Record<keyof ContextAssemblyManager, jes
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(undefined),
-  subscribe: jest.fn().mockResolvedValue(undefined),
+  publish: jest.fn().mockResolvedValue(),
+  subscribe: jest.fn().mockResolvedValue(),
 });
 
 describe('ChatMessagesService', () => {

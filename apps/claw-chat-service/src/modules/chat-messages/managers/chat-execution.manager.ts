@@ -7,13 +7,13 @@ import {
   PROVIDER_BASE_URLS,
 } from "../../../common/constants";
 import {
+  type ConnectorConfigResponse,
   type LlmResponse,
   type MessageRoutedData,
   type OllamaGenerateRequest,
   type OllamaGenerateResponse,
   type OpenAiChatRequest,
   type OpenAiChatResponse,
-  type ConnectorConfigResponse,
   type ThreadSettings,
 } from "../types/execution.types";
 import { type AssembledContext } from "../types/context.types";
@@ -175,11 +175,11 @@ export class ChatExecutionManager {
     const messages = this.contextAssembly.buildChatMessages(context);
     const requestBody: OpenAiChatRequest = { model, messages, stream: false };
 
-    if (threadSettings?.temperature != null) {
+    if (threadSettings?.temperature !== null && threadSettings?.temperature !== undefined) {
       requestBody.temperature = threadSettings.temperature;
     }
 
-    if (threadSettings?.maxTokens != null) {
+    if (threadSettings?.maxTokens !== null && threadSettings?.maxTokens !== undefined) {
       requestBody.max_tokens = threadSettings.maxTokens;
     }
 

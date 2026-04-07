@@ -1,18 +1,19 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { AppConfig } from "../../../app/config/app.config";
 import { httpRequest } from "../../../common/utilities";
-import { THREAD_CONTEXT_LIMIT } from "../../../common/constants";
+import {
+  APPROX_CHARS_PER_TOKEN,
+  MEMORY_FETCH_LIMIT,
+  THREAD_CONTEXT_LIMIT,
+} from "../../../common/constants";
 import { type ChatMessage } from "../../../generated/prisma";
 import { type ThreadSettings } from "../types/execution.types";
 import {
   type AssembledContext,
+  type ContextPackResponse,
   type FileChunkResponse,
   type MemoryRecordResponse,
-  type ContextPackResponse,
 } from "../types/context.types";
-
-const MEMORY_FETCH_LIMIT = 20;
-const APPROX_CHARS_PER_TOKEN = 4;
 
 @Injectable()
 export class ContextAssemblyManager {

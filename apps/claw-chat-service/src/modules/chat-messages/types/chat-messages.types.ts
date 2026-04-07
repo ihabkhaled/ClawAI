@@ -1,4 +1,4 @@
-import { type MessageRole, type RoutingMode, type Prisma } from "../../../generated/prisma";
+import { type MessageRole, type Prisma, type RoutingMode } from "../../../generated/prisma";
 
 export type CreateMessageData = {
   threadId: string;

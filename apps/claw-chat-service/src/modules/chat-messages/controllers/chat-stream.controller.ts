@@ -1,15 +1,9 @@
-import { Controller, Logger, Param, Sse, MessageEvent } from "@nestjs/common";
-import { Observable, Subject, filter, map } from "rxjs";
+import { Controller, Logger, MessageEvent, Param, Sse } from "@nestjs/common";
+import { filter, map, Observable, Subject } from "rxjs";
 import { CurrentUser } from "../../../app/decorators/current-user.decorator";
 import { type AuthenticatedUser } from "../../../common/types";
-
-type StreamEvent = {
-  threadId: string;
-  type: "chunk" | "done" | "error";
-  content?: string;
-  provider?: string;
-  model?: string;
-};
+import { StreamEventType } from "../../../common/enums";
+import { type StreamEvent } from "../types/stream.types";
 
 @Controller("chat-messages")
 export class ChatStreamController {
@@ -18,7 +12,7 @@ export class ChatStreamController {
 
   /** Called by ChatMessagesService when an assistant response is stored */
   emitCompletion(threadId: string, provider: string, model: string): void {
-    this.eventBus.next({ threadId, type: "done", provider, model });
+    this.eventBus.next({ threadId, type: StreamEventType.DONE, provider, model });
   }
 
   @Sse("stream/:threadId")
