@@ -1,5 +1,5 @@
 import { UsageService } from "@modules/audits/services/usage.service";
-import { UsageLedgerRepository } from "@modules/audits/repositories/usage-ledger.repository";
+import { type UsageLedgerRepository } from "@modules/audits/repositories/usage-ledger.repository";
 
 describe("UsageService", () => {
   let service: UsageService;

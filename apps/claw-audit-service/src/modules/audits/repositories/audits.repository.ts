@@ -1,11 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model, type FilterQuery } from "mongoose";
+import { type FilterQuery, Model } from "mongoose";
 import { AuditLog } from "../schemas/audit-log.schema";
 import type {
+  AggregationResult,
   AuditLogFilters,
   CreateAuditLogInput,
-  AggregationResult,
 } from "../types/audits.types";
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from "@common/constants";
 

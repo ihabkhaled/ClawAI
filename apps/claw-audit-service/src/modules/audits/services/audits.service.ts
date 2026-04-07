@@ -3,8 +3,8 @@ import { AuditLog } from "../schemas/audit-log.schema";
 import { AuditsRepository } from "../repositories/audits.repository";
 import type {
   AuditLogFilters,
-  CreateAuditLogInput,
   AuditStatsResponse,
+  CreateAuditLogInput,
 } from "../types/audits.types";
 import type { PaginatedResult } from "@common/types";
 

@@ -1,5 +1,5 @@
 import { AuditsService } from "@modules/audits/services/audits.service";
-import { AuditsRepository } from "@modules/audits/repositories/audits.repository";
+import { type AuditsRepository } from "@modules/audits/repositories/audits.repository";
 
 describe("AuditsService", () => {
   let service: AuditsService;

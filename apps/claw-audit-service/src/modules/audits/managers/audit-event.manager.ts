@@ -1,17 +1,17 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import {
+  type ConnectorCreatedPayload,
+  type ConnectorDeletedPayload,
+  type ConnectorHealthCheckedPayload,
+  type ConnectorSyncedPayload,
+  type ConnectorUpdatedPayload,
   EventPattern,
+  type MemoryExtractedPayload,
+  type MessageCompletedPayload,
+  type RoutingDecisionMadePayload,
   type UserLoginPayload,
   type UserLogoutPayload,
-  type ConnectorCreatedPayload,
-  type ConnectorUpdatedPayload,
-  type ConnectorDeletedPayload,
-  type ConnectorSyncedPayload,
-  type ConnectorHealthCheckedPayload,
-  type RoutingDecisionMadePayload,
-  type MessageCompletedPayload,
-  type MemoryExtractedPayload,
 } from '@claw/shared-types';
 import { AuditsService } from '../services/audits.service';
 import { UsageService } from '../services/usage.service';

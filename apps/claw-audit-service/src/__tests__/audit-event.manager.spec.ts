@@ -1,6 +1,6 @@
 import { AuditEventManager } from "@modules/audits/managers/audit-event.manager";
-import { AuditsService } from "@modules/audits/services/audits.service";
-import { UsageService } from "@modules/audits/services/usage.service";
+import { type AuditsService } from "@modules/audits/services/audits.service";
+import { type UsageService } from "@modules/audits/services/usage.service";
 import { EventPattern } from "@claw/shared-types";
 
 describe("AuditEventManager", () => {
@@ -25,8 +25,8 @@ describe("AuditEventManager", () => {
     } as unknown as jest.Mocked<UsageService>;
 
     rabbitMQService = {
-      subscribe: jest.fn().mockResolvedValue(undefined),
-      publish: jest.fn().mockResolvedValue(undefined),
+      subscribe: jest.fn().mockResolvedValue(),
+      publish: jest.fn().mockResolvedValue(),
     };
 
     manager = new AuditEventManager(
