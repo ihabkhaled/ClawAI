@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("FILES_DATABASE_URL")
 }
 
 enum FileIngestionStatus {

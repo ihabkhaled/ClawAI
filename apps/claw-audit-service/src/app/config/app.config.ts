@@ -1,11 +1,11 @@
 import { z } from "zod";
 
 const appConfigSchema = z.object({
-  MONGODB_URI: z.string().min(1, "MONGODB_URI is required"),
+  AUDIT_MONGODB_URI: z.string().min(1, "AUDIT_MONGODB_URI is required"),
   REDIS_URL: z.string().min(1, "REDIS_URL is required"),
   RABBITMQ_URL: z.string().min(1, "RABBITMQ_URL is required"),
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
-  PORT: z.string().default("4007"),
+  AUDIT_PORT: z.string().default("4007"),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

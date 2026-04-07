@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const appConfigSchema = z.object({
-  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+  CONNECTOR_DATABASE_URL: z.string().min(1, "CONNECTOR_DATABASE_URL is required"),
   REDIS_URL: z.string().min(1, "REDIS_URL is required"),
   RABBITMQ_URL: z.string().min(1, "RABBITMQ_URL is required"),
 
@@ -12,7 +12,7 @@ const appConfigSchema = z.object({
     .length(64, "ENCRYPTION_KEY must be a 64-character hex string")
     .regex(/^[0-9a-fA-F]+$/, "ENCRYPTION_KEY must be valid hex"),
 
-  PORT: z.coerce.number().int().positive().default(4003),
+  CONNECTOR_PORT: z.coerce.number().int().positive().default(4003),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

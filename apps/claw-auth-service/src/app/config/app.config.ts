@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 const appConfigSchema = z.object({
-  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+  AUTH_DATABASE_URL: z.string().min(1, "AUTH_DATABASE_URL is required"),
+  AUTH_PORT: z.coerce.number().int().positive().default(4001),
   REDIS_URL: z.string().min(1, "REDIS_URL is required"),
   RABBITMQ_URL: z.string().min(1, "RABBITMQ_URL is required"),
 

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const appConfigSchema = z.object({
-  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+  CHAT_DATABASE_URL: z.string().min(1, "CHAT_DATABASE_URL is required"),
   REDIS_URL: z.string().min(1, "REDIS_URL is required"),
   RABBITMQ_URL: z.string().min(1, "RABBITMQ_URL is required"),
 
@@ -10,7 +10,7 @@ const appConfigSchema = z.object({
   OLLAMA_SERVICE_URL: z.string().min(1).default("http://ollama-service:4008"),
   CONNECTOR_SERVICE_URL: z.string().min(1).default("http://connector-service:4003"),
 
-  PORT: z.coerce.number().int().positive().default(4002),
+  CHAT_PORT: z.coerce.number().int().positive().default(4002),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

@@ -1,12 +1,12 @@
 import { z } from "zod";
 
 const appConfigSchema = z.object({
-  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+  OLLAMA_DATABASE_URL: z.string().min(1, "OLLAMA_DATABASE_URL is required"),
   OLLAMA_BASE_URL: z.string().min(1, "OLLAMA_BASE_URL is required"),
   REDIS_URL: z.string().min(1, "REDIS_URL is required"),
   RABBITMQ_URL: z.string().min(1, "RABBITMQ_URL is required"),
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
-  PORT: z.string().default("4008"),
+  OLLAMA_PORT: z.string().default("4008"),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

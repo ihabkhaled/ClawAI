@@ -12,10 +12,10 @@ async function bootstrap(): Promise<void> {
 
   app.useLogger(app.get(Logger));
   app.setGlobalPrefix("api/v1");
-  const corsOrigins = process.env['CORS_ORIGINS']?.split(',') ?? ['http://localhost:3000', 'http://localhost:80', 'http://localhost'];
+  const corsOrigins = process.env['CORS_ORIGINS']?.split(',') ?? ['http://localhost:3000', 'http://localhost:80', 'http://localhost:4000', 'http://localhost'];
   app.enableCors({ origin: corsOrigins, credentials: true, methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'] });
 
-  await app.listen(config.PORT);
+  await app.listen(config.CONNECTOR_PORT);
 }
 
 void bootstrap();
