@@ -31,6 +31,7 @@ export function useDashboardData(): DashboardDataResult {
     queryKey: queryKeys.health.aggregated,
     queryFn: () => healthRepository.getAggregatedHealth(),
     staleTime: DASHBOARD_STALE_TIME_MS,
+    refetchInterval: 30_000,
   });
 
   const totalThreads = threadsQuery.data?.meta.total ?? null;
