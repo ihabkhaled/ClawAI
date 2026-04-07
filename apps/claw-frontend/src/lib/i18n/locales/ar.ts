@@ -119,6 +119,8 @@ export const ar: TranslationDictionary = {
     maxTokens: 'الحد الأقصى للرموز',
     maxTokensDescription: 'الحد الأقصى لطول استجابة الذكاء الاصطناعي.',
     threadSettings: 'إعدادات المحادثة',
+    preferredModel: 'نموذج الذكاء الاصطناعي الافتراضي',
+    preferredModelDescription: 'النموذج الافتراضي لهذه المحادثة. يمكن تجاوزه لكل رسالة.',
     settingsSaved: 'تم حفظ إعدادات المحادثة',
     helpful: 'مفيد',
     notHelpful: 'غير مفيد',

@@ -9,6 +9,8 @@ export const updateThreadSchema = z.object({
   systemPrompt: z.string().max(10000, "System prompt must be at most 10000 characters").optional().nullable(),
   temperature: z.number().min(0).max(2).optional().nullable(),
   maxTokens: z.number().int().min(1).max(32000).optional().nullable(),
+  preferredProvider: z.string().max(50, "Preferred provider must be at most 50 characters").optional().nullable(),
+  preferredModel: z.string().max(255, "Preferred model must be at most 255 characters").optional().nullable(),
 });
 
 export type UpdateThreadDto = z.infer<typeof updateThreadSchema>;

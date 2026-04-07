@@ -120,6 +120,8 @@ export type TranslationDictionary = {
     maxTokens: string;
     maxTokensDescription: string;
     threadSettings: string;
+    preferredModel: string;
+    preferredModelDescription: string;
     settingsSaved: string;
     helpful: string;
     notHelpful: string;

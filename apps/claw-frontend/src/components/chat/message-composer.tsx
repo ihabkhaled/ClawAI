@@ -1,14 +1,18 @@
 import { Send } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
+import { ModelSelector } from '@/components/chat/model-selector';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { sendMessageSchema } from '@/lib/validation/message.schema';
-import type { MessageComposerProps } from '@/types';
+import type { MessageComposerProps, ModelSelection } from '@/types';
 
-export function MessageComposer({ onSend, isPending }: MessageComposerProps) {
+export function MessageComposer({ onSend, isPending, threadModel }: MessageComposerProps) {
   const [content, setContent] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [modelOverride, setModelOverride] = useState<ModelSelection | null>(null);
+
+  const activeModel = modelOverride ?? threadModel ?? null;
 
   const validateAndSend = useCallback((): boolean => {
     const result = sendMessageSchema.safeParse({ content: content.trim() });
@@ -17,10 +21,10 @@ export function MessageComposer({ onSend, isPending }: MessageComposerProps) {
       return false;
     }
     setValidationError(null);
-    onSend(result.data.content);
+    onSend(result.data.content, activeModel ?? undefined);
     setContent('');
     return true;
-  }, [content, onSend]);
+  }, [content, onSend, activeModel]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -58,6 +62,9 @@ export function MessageComposer({ onSend, isPending }: MessageComposerProps) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-1">
+      <div className="mb-1 flex items-center gap-2">
+        <ModelSelector value={activeModel} onChange={setModelOverride} disabled={isPending} />
+      </div>
       <div className="flex gap-2">
         <Textarea
           value={content}

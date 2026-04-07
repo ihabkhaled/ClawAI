@@ -27,6 +27,8 @@ export class ChatThreadsService {
       systemPrompt: dto.systemPrompt,
       temperature: dto.temperature,
       maxTokens: dto.maxTokens,
+      preferredProvider: dto.preferredProvider,
+      preferredModel: dto.preferredModel,
     });
 
     void this.rabbitMQService.publish(THREAD_CREATED_EVENT, {
@@ -95,6 +97,8 @@ export class ChatThreadsService {
       systemPrompt: dto.systemPrompt,
       temperature: dto.temperature,
       maxTokens: dto.maxTokens,
+      preferredProvider: dto.preferredProvider,
+      preferredModel: dto.preferredModel,
     });
   }
 

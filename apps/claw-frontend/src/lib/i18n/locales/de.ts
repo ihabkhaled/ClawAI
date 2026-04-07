@@ -119,6 +119,8 @@ export const de: TranslationDictionary = {
     maxTokens: 'Maximale Token',
     maxTokensDescription: 'Maximale L\u00e4nge der KI-Antwort.',
     threadSettings: 'Unterhaltungseinstellungen',
+    preferredModel: 'Standard-KI-Modell',
+    preferredModelDescription: 'Standardmodell für diese Unterhaltung. Kann pro Nachricht überschrieben werden.',
     settingsSaved: 'Unterhaltungseinstellungen gespeichert',
     helpful: 'Hilfreich',
     notHelpful: 'Nicht hilfreich',

@@ -7,6 +7,8 @@ export interface CreateThreadData {
   systemPrompt?: string;
   temperature?: number;
   maxTokens?: number;
+  preferredProvider?: string;
+  preferredModel?: string;
 }
 
 export interface UpdateThreadData {
@@ -19,6 +21,8 @@ export interface UpdateThreadData {
   systemPrompt?: string | null;
   temperature?: number | null;
   maxTokens?: number | null;
+  preferredProvider?: string | null;
+  preferredModel?: string | null;
 }
 
 export interface ThreadFilters {

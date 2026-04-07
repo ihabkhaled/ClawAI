@@ -13,6 +13,7 @@ import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants';
+import { RoutingMode } from '@/enums';
 import type { MessageFeedback } from '@/enums';
 import { useDeleteThread } from '@/hooks/chat/use-delete-thread';
 import { useMessageFeedback } from '@/hooks/chat/use-message-feedback';
@@ -21,7 +22,7 @@ import { useSendMessage } from '@/hooks/chat/use-send-message';
 import { useThreadDetail } from '@/hooks/chat/use-thread-detail';
 import { useThreadSettings } from '@/hooks/chat/use-thread-settings';
 import { useTranslation } from '@/lib/i18n/use-translation';
-import type { ChatMessage } from '@/types';
+import type { ChatMessage, ModelSelection } from '@/types';
 
 function MessagesContent({
   isLoadingThread,
@@ -86,8 +87,16 @@ export default function ThreadDetailPage() {
   }, [messages.length, isWaitingForResponse, scrollToBottom]);
 
   const handleSend = useCallback(
-    (content: string) => {
-      sendMessage({ threadId, content });
+    (content: string, modelSelection?: ModelSelection) => {
+      sendMessage({
+        threadId,
+        content,
+        ...(modelSelection ? {
+          routingMode: RoutingMode.MANUAL_MODEL,
+          provider: modelSelection.provider,
+          model: modelSelection.model,
+        } : {}),
+      });
     },
     [threadId, sendMessage],
   );
@@ -166,6 +175,8 @@ export default function ThreadDetailPage() {
             onTemperatureChange={threadSettings.setTemperature}
             maxTokens={threadSettings.maxTokens}
             onMaxTokensChange={threadSettings.setMaxTokens}
+            selectedModel={threadSettings.selectedModel}
+            onModelChange={threadSettings.setSelectedModel}
             onSave={threadSettings.handleSave}
             isPending={threadSettings.isPending}
           />
@@ -186,7 +197,15 @@ export default function ThreadDetailPage() {
         </div>
 
         <div className="border-t p-4">
-          <MessageComposer onSend={handleSend} isPending={isSending} />
+          <MessageComposer
+            onSend={handleSend}
+            isPending={isSending}
+            threadModel={thread?.preferredProvider && thread?.preferredModel ? {
+              provider: thread.preferredProvider,
+              model: thread.preferredModel,
+              displayName: thread.preferredModel,
+            } : null}
+          />
         </div>
       </div>
     </div>

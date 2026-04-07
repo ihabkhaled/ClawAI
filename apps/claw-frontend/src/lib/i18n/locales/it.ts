@@ -119,6 +119,8 @@ export const it: TranslationDictionary = {
     maxTokens: 'Token massimi',
     maxTokensDescription: "Lunghezza massima della risposta dell'IA.",
     threadSettings: 'Impostazioni della conversazione',
+    preferredModel: 'Modello IA predefinito',
+    preferredModelDescription: 'Modello predefinito per questa conversazione. Può essere sovrascritto per messaggio.',
     settingsSaved: 'Impostazioni della conversazione salvate',
     helpful: 'Utile',
     notHelpful: 'Non utile',

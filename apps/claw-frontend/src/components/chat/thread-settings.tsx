@@ -1,7 +1,9 @@
+import { ModelSelector } from '@/components/chat/model-selector';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import type { ModelSelection } from '@/types';
 import type { TranslateFunction } from '@/types/i18n.types';
 
 type ThreadSettingsProps = {
@@ -12,6 +14,8 @@ type ThreadSettingsProps = {
   onTemperatureChange: (value: number) => void;
   maxTokens: string;
   onMaxTokensChange: (value: string) => void;
+  selectedModel: ModelSelection | null;
+  onModelChange: (selection: ModelSelection | null) => void;
   onSave: () => void;
   isPending: boolean;
 };
@@ -24,6 +28,8 @@ export function ThreadSettings({
   onTemperatureChange,
   maxTokens,
   onMaxTokensChange,
+  selectedModel,
+  onModelChange,
   onSave,
   isPending,
 }: ThreadSettingsProps): React.ReactElement {
@@ -33,6 +39,16 @@ export function ThreadSettings({
         <CardTitle className="text-base">{t('chat.threadSettings')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            {t('chat.preferredModel')}
+          </label>
+          <p className="text-xs text-muted-foreground">
+            {t('chat.preferredModelDescription')}
+          </p>
+          <ModelSelector value={selectedModel} onChange={onModelChange} />
+        </div>
+
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="system-prompt">
             {t('chat.systemPrompt')}

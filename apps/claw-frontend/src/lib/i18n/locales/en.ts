@@ -119,6 +119,8 @@ export const en: TranslationDictionary = {
     maxTokens: 'Max Tokens',
     maxTokensDescription: 'Maximum length of the AI response.',
     threadSettings: 'Thread Settings',
+    preferredModel: 'Default AI Model',
+    preferredModelDescription: 'Default model for this thread. Can be overridden per message.',
     settingsSaved: 'Thread settings saved',
     helpful: 'Helpful',
     notHelpful: 'Not helpful',

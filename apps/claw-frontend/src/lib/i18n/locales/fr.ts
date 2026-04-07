@@ -119,6 +119,8 @@ export const fr: TranslationDictionary = {
     maxTokens: 'Tokens maximum',
     maxTokensDescription: "Longueur maximale de la r\u00e9ponse de l'IA.",
     threadSettings: 'Param\u00e8tres de la discussion',
+    preferredModel: "Mod\u00e8le d'IA par d\u00e9faut",
+    preferredModelDescription: 'Mod\u00e8le par d\u00e9faut pour cette discussion. Peut \u00eatre remplac\u00e9 par message.',
     settingsSaved: 'Param\u00e8tres de la discussion enregistr\u00e9s',
     helpful: 'Utile',
     notHelpful: 'Pas utile',

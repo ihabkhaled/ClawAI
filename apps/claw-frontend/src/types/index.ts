@@ -113,6 +113,8 @@ export type {
   FormFieldErrors,
   UserTableProps,
   MessageBubbleProps,
+  ModelSelection,
+  ModelSelectorProps,
   MessageComposerProps,
   ThinkingIndicatorProps,
   RoutingBadgeProps,

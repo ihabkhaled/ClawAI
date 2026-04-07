@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from '@/lib/i18n/use-translation';
-import type { ChatThread } from '@/types';
+import type { ChatThread, ModelSelection } from '@/types';
 import { showToast } from '@/utilities';
 
 import { useUpdateThread } from './use-update-thread';
@@ -13,12 +13,14 @@ export function useThreadSettings(thread: ChatThread | null) {
   const [systemPrompt, setSystemPrompt] = useState('');
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState('');
+  const [selectedModel, setSelectedModel] = useState<ModelSelection | null>(null);
 
   useEffect(() => {
     if (thread) {
       setSystemPrompt(thread.systemPrompt ?? '');
       setTemperature(thread.temperature ?? 0.7);
       setMaxTokens(thread.maxTokens != null ? String(thread.maxTokens) : '');
+      setSelectedModel(thread.preferredProvider && thread.preferredModel ? { provider: thread.preferredProvider, model: thread.preferredModel, displayName: thread.preferredModel } : null);
     }
   }, [thread]);
 
@@ -40,6 +42,8 @@ export function useThreadSettings(thread: ChatThread | null) {
           systemPrompt: systemPrompt || null,
           temperature,
           maxTokens: parsedMaxTokens,
+          preferredProvider: selectedModel?.provider ?? null,
+          preferredModel: selectedModel?.model ?? null,
         },
       },
       {
@@ -48,7 +52,7 @@ export function useThreadSettings(thread: ChatThread | null) {
         },
       },
     );
-  }, [thread, systemPrompt, temperature, maxTokens, updateThread, t]);
+  }, [thread, systemPrompt, temperature, maxTokens, selectedModel, updateThread, t]);
 
   return {
     isOpen,
@@ -59,6 +63,8 @@ export function useThreadSettings(thread: ChatThread | null) {
     setTemperature,
     maxTokens,
     setMaxTokens,
+    selectedModel,
+    setSelectedModel,
     handleSave,
     isPending,
   };

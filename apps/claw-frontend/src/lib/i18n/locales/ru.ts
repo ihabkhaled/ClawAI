@@ -119,6 +119,8 @@ export const ru: TranslationDictionary = {
     maxTokens: 'Максимум токенов',
     maxTokensDescription: 'Максимальная длина ответа ИИ.',
     threadSettings: 'Настройки беседы',
+    preferredModel: 'Модель ИИ по умолчанию',
+    preferredModelDescription: 'Модель по умолчанию для этой беседы. Может быть переопределена для каждого сообщения.',
     settingsSaved: 'Настройки беседы сохранены',
     helpful: 'Полезно',
     notHelpful: 'Не полезно',

@@ -15,6 +15,7 @@ export interface RoutingContext {
   runtimeHealth?: Record<string, boolean>;
   userMode?: RoutingMode;
   forcedModel?: string;
+  forcedProvider?: string;
 }
 
 export interface RoutingDecisionResult {

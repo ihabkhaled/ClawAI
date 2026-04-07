@@ -7,6 +7,8 @@ export type ChatThread = {
   routingMode: RoutingMode;
   lastProvider: string | null;
   lastModel: string | null;
+  preferredProvider: string | null;
+  preferredModel: string | null;
   isPinned: boolean;
   isArchived: boolean;
   systemPrompt: string | null;
@@ -39,6 +41,8 @@ export type CreateThreadRequest = {
   systemPrompt?: string;
   temperature?: number;
   maxTokens?: number;
+  preferredProvider?: string;
+  preferredModel?: string;
 };
 export type UpdateThreadRequest = {
   isPinned?: boolean;
@@ -47,8 +51,16 @@ export type UpdateThreadRequest = {
   systemPrompt?: string | null;
   temperature?: number | null;
   maxTokens?: number | null;
+  preferredProvider?: string | null;
+  preferredModel?: string | null;
 };
-export type CreateMessageRequest = { threadId: string; content: string };
+export type CreateMessageRequest = {
+  threadId: string;
+  content: string;
+  routingMode?: RoutingMode;
+  provider?: string;
+  model?: string;
+};
 
 export type PinThreadParams = {
   id: string;

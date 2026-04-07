@@ -129,9 +129,22 @@ export type ThinkingIndicatorProps = {
   className?: string;
 };
 
+export type ModelSelection = {
+  provider: string;
+  model: string;
+  displayName: string;
+};
+
+export type ModelSelectorProps = {
+  value: ModelSelection | null;
+  onChange: (selection: ModelSelection | null) => void;
+  disabled?: boolean;
+};
+
 export type MessageComposerProps = {
-  onSend: (content: string) => void;
+  onSend: (content: string, modelSelection?: ModelSelection) => void;
   isPending: boolean;
+  threadModel?: ModelSelection | null;
 };
 
 export type RoutingBadgeProps = {

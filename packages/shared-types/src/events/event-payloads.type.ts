@@ -54,6 +54,8 @@ export interface MessageCreatedPayload extends BaseEventPayload {
   userId: string;
   content: string;
   routingMode?: RoutingMode;
+  forcedProvider?: string;
+  forcedModel?: string;
 }
 
 export interface MessageRoutedPayload extends BaseEventPayload {

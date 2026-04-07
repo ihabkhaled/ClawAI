@@ -81,7 +81,7 @@ export class RoutingManager {
 
   private handleManualModel(context: RoutingContext): RoutingDecisionResult {
     const model = context.forcedModel ?? CLOUD_MODEL_DEFAULT;
-    const provider = this.inferProvider(model);
+    const provider = context.forcedProvider ?? this.inferProvider(model);
     const primary = { provider, model };
     const fallback = this.buildFallbackChain(primary, context);
 

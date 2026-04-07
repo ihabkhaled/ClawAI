@@ -169,6 +169,8 @@ export class RoutingService implements OnModuleInit {
     const threadId = payload["threadId"] as string | undefined;
     const content = payload["content"] as string | undefined;
     const routingMode = payload["routingMode"] as RoutingMode | undefined;
+    const forcedProvider = payload["forcedProvider"] as string | undefined;
+    const forcedModel = payload["forcedModel"] as string | undefined;
 
     if (!threadId || !content) {
       this.logger.warn("Received message.created with missing threadId or content");
@@ -188,6 +190,8 @@ export class RoutingService implements OnModuleInit {
       message: content,
       threadId,
       userMode: routingMode,
+      forcedProvider,
+      forcedModel,
       connectorHealth: { ...this.connectorHealthCache },
       runtimeHealth: { ...this.runtimeHealthCache },
     };

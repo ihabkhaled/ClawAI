@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("CHAT_DATABASE_URL")
 }
 
 // ─── Enums ───────────────────────────────────────────────
@@ -38,9 +38,11 @@ model ChatThread {
   lastModel    String?     @map("last_model")
   isPinned     Boolean     @default(false) @map("is_pinned")
   isArchived   Boolean     @default(false) @map("is_archived")
-  systemPrompt String?     @map("system_prompt")
-  temperature  Float?      @default(0.7) @map("temperature")
-  maxTokens    Int?        @map("max_tokens")
+  preferredProvider String?  @map("preferred_provider")
+  preferredModel    String?  @map("preferred_model")
+  systemPrompt      String?  @map("system_prompt")
+  temperature       Float?   @default(0.7) @map("temperature")
+  maxTokens         Int?     @map("max_tokens")
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
 

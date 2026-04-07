@@ -9,7 +9,7 @@ import { type ListMessagesQueryDto } from "../dto/list-messages-query.dto";
 import { type MessageRoutedData } from "../types/execution.types";
 import { BusinessException, EntityNotFoundException } from "../../../common/errors";
 import { type PaginatedResult } from "../../../common/types";
-import { type ChatMessage, type ChatThread, type RoutingMode } from "../../../generated/prisma";
+import { type ChatMessage, type ChatThread, RoutingMode } from "../../../generated/prisma";
 
 @Injectable()
 export class ChatMessagesService implements OnModuleInit {
@@ -41,8 +41,14 @@ export class ChatMessagesService implements OnModuleInit {
     }
     this.validateOwnership(thread, userId);
 
-    // Inherit routing mode from thread if not specified on the message
-    const effectiveRoutingMode = dto.routingMode ?? thread.routingMode;
+    // Resolve provider+model: per-message override → thread default → undefined (auto)
+    const forcedProvider = dto.provider ?? thread.preferredProvider ?? undefined;
+    const forcedModel = dto.model ?? thread.preferredModel ?? undefined;
+
+    // If a specific model is selected, force MANUAL_MODEL routing
+    const effectiveRoutingMode = forcedProvider && forcedModel
+      ? RoutingMode.MANUAL_MODEL
+      : dto.routingMode ?? thread.routingMode;
 
     const message = await this.chatMessagesRepository.create({
       threadId: dto.threadId,
@@ -67,6 +73,8 @@ export class ChatMessagesService implements OnModuleInit {
       userId,
       content: message.content,
       routingMode: effectiveRoutingMode,
+      forcedProvider,
+      forcedModel,
       timestamp: new Date().toISOString(),
     });
 
@@ -142,12 +150,20 @@ export class ChatMessagesService implements OnModuleInit {
     }
     this.validateOwnership(thread, userId);
 
+    const regenProvider = thread.preferredProvider ?? undefined;
+    const regenModel = thread.preferredModel ?? undefined;
+    const regenRoutingMode = regenProvider && regenModel
+      ? RoutingMode.MANUAL_MODEL
+      : message.routingMode;
+
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
       messageId: message.id,
       threadId: message.threadId,
       userId,
       content: message.content,
-      routingMode: message.routingMode,
+      routingMode: regenRoutingMode,
+      forcedProvider: regenProvider,
+      forcedModel: regenModel,
       regenerate: true,
       timestamp: new Date().toISOString(),
     });

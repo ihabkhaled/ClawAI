@@ -119,6 +119,8 @@ export const pt: TranslationDictionary = {
     maxTokens: 'Tokens m\u00e1ximos',
     maxTokensDescription: 'Comprimento m\u00e1ximo da resposta da IA.',
     threadSettings: 'Configura\u00e7\u00f5es da conversa',
+    preferredModel: 'Modelo de IA padr\u00e3o',
+    preferredModelDescription: 'Modelo padr\u00e3o para esta conversa. Pode ser substitu\u00eddo por mensagem.',
     settingsSaved: 'Configura\u00e7\u00f5es da conversa salvas',
     helpful: '\u00datil',
     notHelpful: 'N\u00e3o \u00fatil',
