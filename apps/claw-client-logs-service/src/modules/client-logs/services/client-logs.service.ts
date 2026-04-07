@@ -3,9 +3,9 @@ import { ClientLog } from "../schemas/client-log.schema";
 import { ClientLogsRepository } from "../repositories/client-logs.repository";
 import type {
   ClientLogFilters,
+  ClientLogStatsResponse,
   CreateClientLogInput,
   CreateClientLogResponse,
-  ClientLogStatsResponse,
 } from "../types/client-logs.types";
 import type { PaginatedResult } from "@common/types";
 

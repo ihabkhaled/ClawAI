@@ -4,11 +4,9 @@ import { Roles } from "../../../app/decorators/roles.decorator";
 import { ZodValidationPipe } from "../../../app/pipes/zod-validation.pipe";
 import { UserRole } from "../../../common/enums";
 import { ClientLogsService } from "../services/client-logs.service";
-import { createClientLogSchema } from "../dto/create-client-log.dto";
-import { searchClientLogsSchema } from "../dto/search-client-logs.dto";
-import type { CreateClientLogDto } from "../dto/create-client-log.dto";
-import type { SearchClientLogsDto } from "../dto/search-client-logs.dto";
-import type { CreateClientLogResponse, ClientLogStatsResponse } from "../types/client-logs.types";
+import { type CreateClientLogDto, createClientLogSchema  } from "../dto/create-client-log.dto";
+import { type SearchClientLogsDto, searchClientLogsSchema  } from "../dto/search-client-logs.dto";
+import type { ClientLogStatsResponse, CreateClientLogResponse } from "../types/client-logs.types";
 import type { PaginatedResult } from "@common/types";
 import type { ClientLog } from "../schemas/client-log.schema";
 
