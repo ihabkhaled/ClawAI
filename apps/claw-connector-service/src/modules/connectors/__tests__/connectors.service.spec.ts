@@ -1,11 +1,11 @@
 import { ConnectorsService } from '../services/connectors.service';
-import { ConnectorsRepository } from '../repositories/connectors.repository';
-import { ConnectorModelsRepository } from '../repositories/connector-models.repository';
-import { ConnectorsManager } from '../managers/connectors.manager';
-import { RabbitMQService } from '@claw/shared-rabbitmq';
+import { type ConnectorsRepository } from '../repositories/connectors.repository';
+import { type ConnectorModelsRepository } from '../repositories/connector-models.repository';
+import { type ConnectorsManager } from '../managers/connectors.manager';
+import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { EntityNotFoundException } from '../../../common/errors';
-import { ConnectorProvider, ConnectorAuthType, ConnectorStatus } from '../../../generated/prisma';
+import { ConnectorAuthType, ConnectorProvider, ConnectorStatus } from '../../../generated/prisma';
 
 jest.mock('../../../app/config/app.config', () => ({
   AppConfig: {
@@ -67,7 +67,7 @@ const mockManager = (): Partial<Record<keyof ConnectorsManager, jest.Mock>> => (
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(undefined),
+  publish: jest.fn().mockResolvedValue(),
 });
 
 describe('ConnectorsService', () => {

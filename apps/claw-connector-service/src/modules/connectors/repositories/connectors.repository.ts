@@ -2,10 +2,10 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
 import { type Connector, Prisma } from "../../../generated/prisma";
 import {
-  type CreateConnectorData,
-  type UpdateConnectorData,
   type ConnectorFilters,
   type ConnectorWithModels,
+  type CreateConnectorData,
+  type UpdateConnectorData,
 } from "../types/connectors.types";
 
 @Injectable()

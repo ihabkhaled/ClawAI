@@ -1,5 +1,5 @@
 import { createConnectorSchema } from '../create-connector.dto';
-import { ConnectorProvider, ConnectorAuthType } from '../../../../generated/prisma';
+import { ConnectorAuthType, ConnectorProvider } from '../../../../generated/prisma';
 
 describe('createConnectorSchema', () => {
   it('should validate a correct connector payload with all fields', () => {

@@ -13,8 +13,8 @@ import { type CreateConnectorDto } from "../dto/create-connector.dto";
 import { type UpdateConnectorDto } from "../dto/update-connector.dto";
 import { type ListConnectorsQueryDto } from "../dto/list-connectors-query.dto";
 import {
-  type ConnectorWithModels,
   type ConnectorConfigResult,
+  type ConnectorWithModels,
   type HealthCheckResult,
   type SyncModelsResult,
 } from "../types/connectors.types";

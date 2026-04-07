@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ConnectorProvider, ConnectorAuthType } from "../../../generated/prisma";
+import { ConnectorAuthType, ConnectorProvider } from "../../../generated/prisma";
 
 export const createConnectorSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name must be at most 100 characters"),
