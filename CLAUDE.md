@@ -98,6 +98,90 @@ Every third-party library MUST be wrapped in `src/common/utilities/<name>.utilit
 
 ---
 
+## ESLint Rules (Enforced Across All Services)
+
+### Backend ESLint (all 11 NestJS services share identical config)
+
+**Plugins**: typescript-eslint (strict), eslint-plugin-security, eslint-plugin-unicorn, eslint-plugin-import-x
+
+**TypeScript Rules (errors)**:
+- `no-explicit-any` — use unknown/generics
+- `no-unused-vars` — except `_` prefixed
+- `no-non-null-assertion` — handle nullability explicitly
+- `no-floating-promises` — await or void all promises
+- `no-misused-promises` — no promises in boolean positions
+- `default-param-last`, `no-useless-empty-export`, `no-loop-func`
+- `return-await` — only in try-catch
+
+**TypeScript Rules (warnings)**:
+- `consistent-type-imports` — prefer `import type`, inline style
+- `explicit-function-return-type` — allow expressions/higher-order
+- `prefer-nullish-coalescing`, `prefer-optional-chain`, `no-shadow`
+
+**Core JS (errors)**:
+- `no-console` — only warn/error allowed
+- `eqeqeq` — always strict equality
+- `no-var`, `prefer-const`, `no-eval`, `no-implied-eval`, `no-new-func`
+- `prefer-template`, `no-param-reassign` (props: false)
+
+**Security (errors)**: detect-eval-with-expression, detect-no-csrf, detect-buffer-noassert, detect-disable-mustache-escape, detect-new-buffer
+**Security (warnings)**: detect-object-injection, detect-non-literal-regexp, detect-timing-attacks, detect-non-literal-fs, detect-child-process, detect-pseudoRandomBytes, detect-unsafe-regex
+
+**Unicorn (errors)**: prefer-node-protocol, no-nested-ternary, prefer-string-slice
+**Unicorn (warnings)**: no-array-for-each, no-useless-undefined, prefer-ternary, prefer-array-find/some/includes, prefer-number-properties, no-lonely-if, no-array-push-push, prefer-spread, prefer-string-replace-all, prefer-at
+
+**Import-x (errors)**: no-duplicates (prefer-inline), first, newline-after-import, no-mutable-exports, no-self-import, no-useless-path-segments
+**Sort-imports (warn)**: ignoreCase, ignoreDeclarationSort
+
+### Backend File-Specific Restrictions
+
+**All logic files** (service, controller, repo, module, guard, interceptor, filter, pipe, manager, utility):
+- NO inline `TSInterfaceDeclaration` — extract to types/ file
+- NO inline `TSTypeAliasDeclaration` — extract to types/ file
+- NO inline `TSEnumDeclaration` — extract to common/enums/
+- NO top-level `const` — extract to constants/ file
+- NO standalone `FunctionDeclaration` — extract to utilities/
+- NO string literal unions (`'a' | 'b'`) — use enums
+
+**Service files** (`*.service.ts`): max 50 lines/function, complexity 10
+**Manager files** (`*.manager.ts`): max 80 lines/function, complexity 15
+**Controller files** (`*.controller.ts`): + NO try/catch, NO throw
+**Repository files** (`*.repository.ts`): + NO throw (return data, let services decide)
+**Test files** (`*.spec.ts`): all restrictions OFF, `any` allowed
+
+### Frontend ESLint
+
+**Additional Plugins**: eslint-plugin-react, eslint-plugin-react-hooks, eslint-plugin-jsx-a11y
+
+**React Rules (errors)**: jsx-no-target-blank, jsx-boolean-value (never), jsx-curly-brace-presence (never), self-closing-comp, no-danger, no-unstable-nested-components, jsx-no-useless-fragment, jsx-no-constructed-context-values
+**React Hooks (errors)**: rules-of-hooks, exhaustive-deps (warn)
+**Accessibility**: alt-text, anchor-is-valid (errors); click-events-have-key-events, no-static-element-interactions, label-has-associated-control (warnings)
+
+**Additional Core Rules**: no-nested-ternary, curly (all), no-else-return, object-shorthand, no-useless-rename, no-script-url
+
+**Import Order**: enforced groups (builtin > external > internal > parent > sibling > index), `@/**` treated as internal, alphabetized, newlines between groups
+
+### Frontend File-Specific Restrictions
+
+**TSX component files**:
+- NO inline types/interfaces/enums — extract to src/types/
+- NO inline hooks (`useX`) — extract to src/hooks/
+- NO SCREAMING_CASE constants — extract to src/constants/
+- NO utility functions (format/parse/transform/etc.) — extract to src/utilities/
+- NO module-level const (except component definitions) — extract to src/constants/
+- NO non-PascalCase function declarations — only component definitions allowed
+
+**Hooks/stores files**: NO inline types/enums, NO inline constants (except objects/calls)
+**Service files**: NO inline types/enums, NO inline constants
+**shadcn/ui files** (`src/components/ui/`): all restrictions OFF (auto-generated, do not edit)
+**Test files**: all restrictions OFF
+
+### Commit Lint
+Conventional commits required: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert`
+Subject: max 100 chars, no sentence-case/start-case/pascal-case/upper-case
+
+---
+
 ## Backend Architecture Rules
 
 ### Layer Responsibilities
