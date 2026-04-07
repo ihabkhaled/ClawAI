@@ -232,7 +232,9 @@ export class ContextAssemblyManager {
     if (text.length <= maxChars) {
       return text;
     }
-    return text.slice(-maxChars);
+    // Keep the beginning (system prompt, memories, context) and truncate the end
+    // This preserves the most important context (instructions, memories) over old messages
+    return text.slice(0, maxChars);
   }
 
   private mapRole(role: string): string {

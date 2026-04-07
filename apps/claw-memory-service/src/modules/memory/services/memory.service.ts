@@ -165,6 +165,13 @@ export class MemoryService implements OnModuleInit {
     const userId = (payload["userId"] as string) ?? "system";
 
     for (const memory of extracted) {
+      // Deduplication: skip if a very similar memory already exists
+      const isDuplicate = await this.memoryRepository.existsSimilar(userId, memory.type, memory.content);
+      if (isDuplicate) {
+        this.logger.debug(`Skipping duplicate memory: [${memory.type}] ${memory.content.slice(0, 50)}...`);
+        continue;
+      }
+
       const record = await this.memoryRepository.create({
         userId,
         type: memory.type,

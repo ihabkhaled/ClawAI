@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { type MemoryRecord, Prisma } from "../../../generated/prisma";
+import { type MemoryRecord, type MemoryType, Prisma } from "../../../generated/prisma";
 import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
 import {
   type CreateMemoryData,
@@ -52,6 +52,17 @@ export class MemoryRepository {
       orderBy: { updatedAt: "desc" },
       take: limit,
     });
+  }
+
+  async existsSimilar(userId: string, type: MemoryType, content: string): Promise<boolean> {
+    const existing = await this.prisma.memoryRecord.findFirst({
+      where: {
+        userId,
+        type,
+        content: { contains: content.slice(0, 100), mode: "insensitive" },
+      },
+    });
+    return existing !== null;
   }
 
   async countAll(filters: MemoryFilters): Promise<number> {
