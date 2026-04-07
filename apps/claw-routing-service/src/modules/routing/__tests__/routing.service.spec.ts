@@ -1,8 +1,8 @@
 import { RoutingService } from "../services/routing.service";
-import { RoutingPoliciesRepository } from "../repositories/routing-policies.repository";
-import { RoutingDecisionsRepository } from "../repositories/routing-decisions.repository";
-import { RoutingManager } from "../managers/routing.manager";
-import { RabbitMQService } from "@claw/shared-rabbitmq";
+import { type RoutingPoliciesRepository } from "../repositories/routing-policies.repository";
+import { type RoutingDecisionsRepository } from "../repositories/routing-decisions.repository";
+import { type RoutingManager } from "../managers/routing.manager";
+import { type RabbitMQService } from "@claw/shared-rabbitmq";
 import { EntityNotFoundException } from "../../../common/errors";
 import { RoutingMode } from "../../../generated/prisma";
 
@@ -65,8 +65,8 @@ const mockRoutingManager = (): Partial<Record<keyof RoutingManager, jest.Mock>> 
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(undefined),
-  subscribe: jest.fn().mockResolvedValue(undefined),
+  publish: jest.fn().mockResolvedValue(),
+  subscribe: jest.fn().mockResolvedValue(),
 });
 
 describe("RoutingService", () => {

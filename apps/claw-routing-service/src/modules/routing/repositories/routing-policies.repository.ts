@@ -1,10 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
-import { type RoutingPolicy, type Prisma } from "../../../generated/prisma";
+import { type Prisma, type RoutingPolicy } from "../../../generated/prisma";
 import {
   type CreatePolicyData,
-  type UpdatePolicyData,
   type PolicyFilters,
+  type UpdatePolicyData,
 } from "../types/routing.types";
 
 @Injectable()

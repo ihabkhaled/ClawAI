@@ -1,6 +1,6 @@
 import { RoutingManager } from "../managers/routing.manager";
-import { OllamaRouterManager } from "../managers/ollama-router.manager";
-import { RoutingPoliciesRepository } from "../repositories/routing-policies.repository";
+import { type OllamaRouterManager } from "../managers/ollama-router.manager";
+import { type RoutingPoliciesRepository } from "../repositories/routing-policies.repository";
 import { RoutingMode } from "../../../generated/prisma";
 import { type RoutingContext } from "../types/routing.types";
 

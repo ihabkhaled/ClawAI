@@ -1,66 +1,13 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { z } from "zod";
 import { AppConfig } from "../../../app/config/app.config";
 import { httpRequest } from "../../../common/utilities";
 import {
-  CLOUD_PROVIDER_ANTHROPIC,
-  CLOUD_PROVIDER_DEEPSEEK,
-  CLOUD_PROVIDER_GEMINI,
-  CLOUD_PROVIDER_OPENAI,
   LOCAL_PROVIDER,
+  ollamaRouterResponseSchema,
+  ROUTER_PROMPT_TEMPLATE,
+  VALID_PROVIDERS,
 } from "../constants/routing.constants";
-import { type RoutingContext } from "../types/routing.types";
-
-const VALID_PROVIDERS = new Set([
-  LOCAL_PROVIDER,
-  CLOUD_PROVIDER_OPENAI,
-  CLOUD_PROVIDER_ANTHROPIC,
-  CLOUD_PROVIDER_GEMINI,
-  CLOUD_PROVIDER_DEEPSEEK,
-]);
-
-const ollamaRouterResponseSchema = z.object({
-  provider: z.string().min(1),
-  model: z.string().min(1),
-  confidence: z.number().min(0).max(1),
-  reason: z.string().min(1),
-});
-
-type OllamaGenerateResponse = {
-  response: string;
-  model: string;
-  done: boolean;
-};
-
-export type OllamaRouterDecision = {
-  provider: string;
-  model: string;
-  confidence: number;
-  reason: string;
-};
-
-const ROUTER_PROMPT_TEMPLATE = `You are a routing engine. Given a user message, decide which AI provider and model should answer it.
-
-Available providers and models:
-- local-ollama / tinyllama (free, local, fast for simple tasks, limited reasoning)
-- OPENAI / gpt-4o-mini (fast, good general purpose, low cost)
-- ANTHROPIC / claude-sonnet-4 (strong reasoning, good quality, medium cost)
-- GEMINI / gemini-2.5-flash (fast, multimodal, low cost)
-- DEEPSEEK / deepseek-chat (good reasoning, low cost)
-
-Healthy providers: {healthyProviders}
-
-Rules:
-- For simple greetings, math, short Q&A: prefer local-ollama
-- For complex reasoning, analysis, coding: prefer ANTHROPIC or OPENAI
-- For cost-sensitive: prefer local-ollama or DEEPSEEK
-- Only route to healthy providers
-- If unsure, use OPENAI/gpt-4o-mini
-
-Respond with ONLY a JSON object (no markdown, no explanation):
-{{"provider":"...","model":"...","confidence":0.X,"reason":"brief reason"}}
-
-User message: {message}`;
+import type { OllamaGenerateResponse, OllamaRouterDecision, RoutingContext } from "../types/routing.types";
 
 @Injectable()
 export class OllamaRouterManager {

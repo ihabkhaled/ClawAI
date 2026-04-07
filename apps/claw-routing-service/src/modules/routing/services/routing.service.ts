@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { RabbitMQService, StructuredLogger } from "@claw/shared-rabbitmq";
 import { EventPattern, LogLevel } from "@claw/shared-types";
-import { type RoutingMode, type Prisma } from "../../../generated/prisma";
+import { type Prisma, type RoutingMode } from "../../../generated/prisma";
 import { EntityNotFoundException } from "../../../common/errors";
 import { type PaginatedResult } from "../../../common/types";
 import { RoutingPoliciesRepository } from "../repositories/routing-policies.repository";
@@ -12,10 +12,10 @@ import { type UpdatePolicyDto } from "../dto/update-policy.dto";
 import { type ListPoliciesQueryDto } from "../dto/list-policies-query.dto";
 import { type EvaluateRouteDto } from "../dto/evaluate-route.dto";
 import {
-  type RoutingPolicy,
+  type RoutingContext,
   type RoutingDecision,
   type RoutingDecisionResult,
-  type RoutingContext,
+  type RoutingPolicy,
 } from "../types/routing.types";
 
 @Injectable()

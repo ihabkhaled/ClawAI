@@ -1,8 +1,8 @@
 import {
-  type RoutingDecision,
-  type RoutingPolicy,
-  type RoutingMode,
   type Prisma,
+  type RoutingDecision,
+  type RoutingMode,
+  type RoutingPolicy,
 } from "../../../generated/prisma";
 
 export interface RoutingContext {
@@ -78,5 +78,18 @@ export interface CreateDecisionData {
   fallbackProvider?: string;
   fallbackModel?: string;
 }
+
+export type OllamaGenerateResponse = {
+  response: string;
+  model: string;
+  done: boolean;
+};
+
+export type OllamaRouterDecision = {
+  provider: string;
+  model: string;
+  confidence: number;
+  reason: string;
+};
 
 export type { RoutingDecision, RoutingPolicy, RoutingMode };

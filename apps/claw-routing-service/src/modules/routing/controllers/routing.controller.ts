@@ -7,9 +7,9 @@ import { UpdatePolicyDto, updatePolicySchema } from "../dto/update-policy.dto";
 import { ListPoliciesQueryDto, listPoliciesQuerySchema } from "../dto/list-policies-query.dto";
 import { EvaluateRouteDto, evaluateRouteSchema } from "../dto/evaluate-route.dto";
 import {
-  type RoutingPolicy,
   type RoutingDecision,
   type RoutingDecisionResult,
+  type RoutingPolicy,
 } from "../types/routing.types";
 
 @Controller("routing")
@@ -63,8 +63,8 @@ export class RoutingController {
   ): Promise<PaginatedResult<RoutingDecision>> {
     return this.routingService.getDecisions(
       threadId,
-      parseInt(page, 10) || 1,
-      parseInt(limit, 10) || 20,
+      Number.parseInt(page, 10) || 1,
+      Number.parseInt(limit, 10) || 20,
     );
   }
 }
