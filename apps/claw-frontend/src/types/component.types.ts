@@ -2,6 +2,8 @@ import type { LucideIcon } from 'lucide-react';
 
 import type { SidebarItem } from '@/constants';
 import type { ComponentSize, ConnectorStatus, MessageFeedback, RoutingMode } from '@/enums';
+import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
+import type { TranslateFunction } from '@/types/i18n.types';
 
 import type { AdminUser } from './audit.types';
 import type { ChatMessage, ChatThread } from './chat.types';
@@ -104,6 +106,32 @@ export type ProvidersProps = {
 
 export type ThemeProviderProps = {
   children: React.ReactNode;
+};
+
+export type ThemeContextValue = {
+  theme: Theme;
+  resolvedTheme: ResolvedTheme;
+  setTheme: (theme: Theme) => void;
+};
+
+export type ThreadSettingsProps = {
+  t: TranslateFunction;
+  systemPrompt: string;
+  onSystemPromptChange: (value: string) => void;
+  temperature: number;
+  onTemperatureChange: (value: number) => void;
+  maxTokens: string;
+  onMaxTokensChange: (value: string) => void;
+  selectedModel: ModelSelection | null;
+  onModelChange: (selection: ModelSelection | null) => void;
+  onSave: () => void;
+  isPending: boolean;
+};
+
+export type GroupedModels = {
+  provider: string;
+  label: string;
+  models: ModelSelection[];
 };
 
 // ─── Admin component props ──────────────────────────────────────────────────

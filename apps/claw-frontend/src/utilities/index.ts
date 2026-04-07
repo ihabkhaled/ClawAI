@@ -22,3 +22,11 @@ export {
 export { showToast } from './toast.utility';
 export { logger } from './logger.utility';
 export { estimateCost } from './cost.utility';
+export { encodeModelValue, decodeModelValue } from './model-selector.utility';
+export {
+  getSystemTheme,
+  getStoredTheme,
+  resolveTheme,
+  applyTheme,
+  storeTheme,
+} from './theme.utility';

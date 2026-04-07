@@ -3,22 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import type { ModelSelection } from '@/types';
-import type { TranslateFunction } from '@/types/i18n.types';
-
-type ThreadSettingsProps = {
-  t: TranslateFunction;
-  systemPrompt: string;
-  onSystemPromptChange: (value: string) => void;
-  temperature: number;
-  onTemperatureChange: (value: number) => void;
-  maxTokens: string;
-  onMaxTokensChange: (value: string) => void;
-  selectedModel: ModelSelection | null;
-  onModelChange: (selection: ModelSelection | null) => void;
-  onSave: () => void;
-  isPending: boolean;
-};
+import type { ThreadSettingsProps } from '@/types';
 
 export function ThreadSettings({
   t,

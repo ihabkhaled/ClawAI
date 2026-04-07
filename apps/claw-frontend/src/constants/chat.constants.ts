@@ -18,6 +18,7 @@ export const MESSAGE_ROLE_LABELS: Record<MessageRole, string> = {
 };
 
 export const THINKING_INDICATOR_LABEL = 'AI is thinking...';
+export const MODEL_AUTO_VALUE = '__auto__';
 export const POLLING_INTERVAL_MS = 2000;
 
 /**

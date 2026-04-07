@@ -2,9 +2,9 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
-import { useTranslation } from '@/lib/i18n';
 import { showToast } from '@/utilities';
 
 export function useRegenerateMessage(threadId: string, onRegenerated?: () => void) {

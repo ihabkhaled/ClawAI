@@ -9,30 +9,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { MODEL_AUTO_VALUE } from '@/constants';
 import { useAvailableModels } from '@/hooks/chat/use-available-models';
 import type { ModelSelectorProps } from '@/types';
-
-const AUTO_VALUE = '__auto__';
-
-function encodeModelValue(provider: string, model: string): string {
-  return `${provider}::${model}`;
-}
-
-function decodeModelValue(value: string): { provider: string; model: string } | null {
-  const parts = value.split('::');
-  if (parts.length !== 2 || !parts[0] || !parts[1]) {
-    return null;
-  }
-  return { provider: parts[0], model: parts[1] };
-}
+import { decodeModelValue, encodeModelValue } from '@/utilities';
 
 export function ModelSelector({ value, onChange, disabled }: ModelSelectorProps): React.ReactElement {
   const { groupedModels, isLoading } = useAvailableModels();
 
-  const selectedValue = value ? encodeModelValue(value.provider, value.model) : AUTO_VALUE;
+  const selectedValue = value ? encodeModelValue(value.provider, value.model) : MODEL_AUTO_VALUE;
 
   const handleChange = (val: string): void => {
-    if (val === AUTO_VALUE) {
+    if (val === MODEL_AUTO_VALUE) {
       onChange(null);
       return;
     }
@@ -53,7 +41,7 @@ export function ModelSelector({ value, onChange, disabled }: ModelSelectorProps)
         <SelectValue placeholder={isLoading ? 'Loading models...' : 'Auto'} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value={AUTO_VALUE}>Auto (routing decides)</SelectItem>
+        <SelectItem value={MODEL_AUTO_VALUE}>Auto (routing decides)</SelectItem>
         {groupedModels.map((group) => (
           <SelectGroup key={group.provider}>
             <SelectLabel>{group.label}</SelectLabel>

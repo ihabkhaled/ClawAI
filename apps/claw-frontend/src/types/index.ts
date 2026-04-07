@@ -135,6 +135,9 @@ export type {
   UsageBarItem,
   UsageChartProps,
   PolicyFormProps,
+  ThemeContextValue,
+  ThreadSettingsProps,
+  GroupedModels,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {

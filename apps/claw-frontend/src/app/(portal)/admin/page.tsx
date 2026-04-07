@@ -109,29 +109,31 @@ function UsersContent({
   );
 }
 
+function AccessDenied({ t }: { t: (key: string) => string }): React.ReactElement {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <p className="text-muted-foreground">{t('common.accessDenied')}</p>
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const { t } = useTranslation();
   const { user } = useCurrentUser();
   const queryClient = useQueryClient();
   const [actionPending, setActionPending] = useState<string | null>(null);
 
-  if (user && user.role !== UserRole.ADMIN) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-muted-foreground">{t('common.accessDenied')}</p>
-      </div>
-    );
-  }
-
   const usersQuery = useQuery({
     queryKey: queryKeys.admin.users,
     queryFn: () => auditRepository.getAdminUsers(),
+    enabled: user?.role === UserRole.ADMIN,
   });
 
   const healthQuery = useQuery({
     queryKey: queryKeys.health.aggregated,
     queryFn: () => healthRepository.getAggregatedHealth(),
     refetchInterval: 30_000,
+    enabled: user?.role === UserRole.ADMIN,
   });
 
   const changeRoleMutation = useMutation({
@@ -160,6 +162,10 @@ export default function AdminPage() {
       showToast.apiError(err, t('admin.userDeactivateFailed'));
     },
   });
+
+  if (user && user.role !== UserRole.ADMIN) {
+    return <AccessDenied t={t} />;
+  }
 
   const users = usersQuery.data?.data ?? [];
   const activeCount = users.filter((u) => u.status === UserStatus.ACTIVE).length;

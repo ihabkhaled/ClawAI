@@ -1,13 +1,7 @@
 import { useMemo } from 'react';
 
 import { useAllModels } from '@/hooks/connectors/use-all-models';
-import type { ModelSelection } from '@/types';
-
-type GroupedModels = {
-  provider: string;
-  label: string;
-  models: ModelSelection[];
-};
+import type { GroupedModels, ModelSelection } from '@/types';
 
 const PROVIDER_LABELS: Record<string, string> = {
   OLLAMA: 'Ollama (Local)',
@@ -49,8 +43,8 @@ export function useAvailableModels(): {
 
     // Sort: Ollama first, then alphabetically
     result.sort((a, b) => {
-      if (a.provider === 'OLLAMA') return -1;
-      if (b.provider === 'OLLAMA') return 1;
+      if (a.provider === 'OLLAMA') {return -1;}
+      if (b.provider === 'OLLAMA') {return 1;}
       return a.label.localeCompare(b.label);
     });
 

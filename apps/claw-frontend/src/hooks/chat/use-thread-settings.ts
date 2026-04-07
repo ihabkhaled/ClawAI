@@ -19,7 +19,7 @@ export function useThreadSettings(thread: ChatThread | null) {
     if (thread) {
       setSystemPrompt(thread.systemPrompt ?? '');
       setTemperature(thread.temperature ?? 0.7);
-      setMaxTokens(thread.maxTokens != null ? String(thread.maxTokens) : '');
+      setMaxTokens(thread.maxTokens !== null && thread.maxTokens !== undefined ? String(thread.maxTokens) : '');
       setSelectedModel(thread.preferredProvider && thread.preferredModel ? { provider: thread.preferredProvider, model: thread.preferredModel, displayName: thread.preferredModel } : null);
     }
   }, [thread]);

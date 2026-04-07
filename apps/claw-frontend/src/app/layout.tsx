@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
+
+import { THEME_INIT_SCRIPT } from "@/constants/theme.constants";
 
 import "./globals.css";
 import { Providers } from "./providers";
@@ -12,21 +15,6 @@ export const metadata: Metadata = {
     "Local-first AI orchestration platform for managing connectors, models, and conversations.",
 };
 
-const themeScript = `
-(function() {
-  try {
-    var theme = localStorage.getItem('claw-theme') || 'system';
-    var resolved = theme;
-    if (theme === 'system') {
-      resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    if (resolved === 'dark') {
-      document.documentElement.classList.add('dark');
-    }
-  } catch(e) {}
-})();
-`;
-
 export default function RootLayout({
   children,
 }: {
@@ -35,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <Script id="theme-init" strategy="beforeInteractive">
+          {THEME_INIT_SCRIPT}
+        </Script>
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>

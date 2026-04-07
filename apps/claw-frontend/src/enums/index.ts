@@ -22,3 +22,4 @@ export { ServiceStatus } from './service-status.enum';
 export { LogLevel } from './log-level.enum';
 export { LogsTab } from './logs-tab.enum';
 export { MessageFeedback } from './message-feedback.enum';
+export { Theme, ResolvedTheme } from './theme.enum';
