@@ -35,6 +35,8 @@ function createHttpClient(): AxiosInstance {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Add correlation ID for request tracing across services
+    config.headers['X-Request-ID'] = crypto.randomUUID();
     return config;
   });
 
