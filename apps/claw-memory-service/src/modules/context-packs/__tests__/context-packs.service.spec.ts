@@ -51,7 +51,7 @@ const mockContextPacksRepository = (): Record<keyof ContextPacksRepository, jest
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(),
+  publish: jest.fn().mockResolvedValue(undefined),
 });
 
 describe("ContextPacksService", () => {

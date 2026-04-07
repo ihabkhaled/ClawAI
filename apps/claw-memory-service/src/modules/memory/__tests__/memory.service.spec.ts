@@ -28,8 +28,8 @@ const mockMemoryRepository = (): Record<keyof MemoryRepository, jest.Mock> => ({
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(),
-  subscribe: jest.fn().mockResolvedValue(),
+  publish: jest.fn().mockResolvedValue(undefined),
+  subscribe: jest.fn().mockResolvedValue(undefined),
 });
 
 describe("MemoryService", () => {
