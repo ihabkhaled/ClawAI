@@ -28,6 +28,7 @@ const mockFile = {
   mimeType: "text/plain",
   sizeBytes: 1024,
   storagePath: "/data/uploads/test-file.txt",
+  content: null,
   ingestionStatus: FileIngestionStatus.PENDING,
   createdAt: new Date(),
   updatedAt: new Date(),

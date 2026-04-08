@@ -6,6 +6,7 @@ export interface CreateFileData {
   mimeType: string;
   sizeBytes: number;
   storagePath: string;
+  content?: string | null;
 }
 
 export interface FileFilters {

@@ -7,12 +7,19 @@ export type FileChunkResponse = {
   content: string;
 };
 
+export type FileContentResponse = {
+  id: string;
+  filename: string;
+  mimeType: string;
+  content: string | null;
+};
+
 export type AssembledContext = {
   systemPrompt: string | null;
   threadMessages: ChatMessage[];
   memories: MemoryRecordResponse[];
   contextPackItems: Array<{ content: string | null; type: string }>;
-  fileChunks: FileChunkResponse[];
+  fileContents: FileContentResponse[];
   tokenBudget: number;
 };
 

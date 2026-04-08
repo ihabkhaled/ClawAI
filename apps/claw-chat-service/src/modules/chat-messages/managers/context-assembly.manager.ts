@@ -11,7 +11,7 @@ import { type ThreadSettings } from "../types/execution.types";
 import {
   type AssembledContext,
   type ContextPackResponse,
-  type FileChunkResponse,
+  type FileContentResponse,
   type MemoryRecordResponse,
 } from "../types/context.types";
 
@@ -28,10 +28,10 @@ export class ContextAssemblyManager {
   ): Promise<AssembledContext> {
     const recentMessages = threadMessages.slice(-THREAD_CONTEXT_LIMIT);
 
-    const [memories, contextPackItems, fileChunks] = await Promise.all([
+    const [memories, contextPackItems, fileContents] = await Promise.all([
       this.fetchMemories(userId),
       this.fetchContextPackItems(contextPackIds ?? []),
-      this.fetchFileChunks(fileIds ?? []),
+      this.fetchFileContents(fileIds ?? []),
     ]);
 
     const tokenBudget = threadSettings?.maxTokens ?? 4096;
@@ -41,7 +41,7 @@ export class ContextAssemblyManager {
       threadMessages: recentMessages,
       memories,
       contextPackItems,
-      fileChunks,
+      fileContents,
       tokenBudget,
     };
   }
@@ -70,11 +70,11 @@ export class ContextAssemblyManager {
       }
     }
 
-    if (context.fileChunks.length > 0) {
-      const fileBlock = context.fileChunks
-        .map((chunk) => chunk.content)
-        .join("\n");
-      parts.push(`ATTACHED FILE CONTENT (use this to answer the user's questions):\n${fileBlock}`);
+    if (context.fileContents.length > 0) {
+      for (const file of context.fileContents) {
+        const decoded = this.decodeFileContent(file);
+        parts.push(`ATTACHED FILE "${file.filename}" (use this to answer the user's questions):\n${decoded}`);
+      }
     }
 
     for (const msg of context.threadMessages) {
@@ -112,11 +112,11 @@ export class ContextAssemblyManager {
       }
     }
 
-    if (context.fileChunks.length > 0) {
-      const fileBlock = context.fileChunks
-        .map((chunk) => chunk.content)
-        .join("\n");
-      systemParts.push(`The user has attached the following file content. Use this content to answer their questions:\n\n${fileBlock}`);
+    if (context.fileContents.length > 0) {
+      for (const file of context.fileContents) {
+        const decoded = this.decodeFileContent(file);
+        systemParts.push(`The user has attached file "${file.filename}". Use this content to answer their questions:\n\n${decoded}`);
+      }
     }
 
     if (systemParts.length > 0) {
@@ -192,37 +192,37 @@ export class ContextAssemblyManager {
     }
   }
 
-  private async fetchFileChunks(
+  private async fetchFileContents(
     fileIds: string[],
-  ): Promise<FileChunkResponse[]> {
+  ): Promise<FileContentResponse[]> {
     if (fileIds.length === 0) {
       return [];
     }
 
     try {
       const config = AppConfig.get();
-      const allChunks: FileChunkResponse[] = [];
+      const results: FileContentResponse[] = [];
 
       for (const fileId of fileIds) {
-        const url = `${config.FILE_SERVICE_URL}/api/v1/internal/files/${encodeURIComponent(fileId)}/chunks`;
+        const url = `${config.FILE_SERVICE_URL}/api/v1/internal/files/${encodeURIComponent(fileId)}/content`;
 
-        const response = await httpRequest<FileChunkResponse[]>({
+        const response = await httpRequest<FileContentResponse>({
           url,
           method: "GET",
-          timeoutMs: 5_000,
+          timeoutMs: 10_000,
         });
 
-        if (response.ok && Array.isArray(response.data)) {
-          allChunks.push(...response.data);
+        if (response.ok && response.data.content) {
+          results.push(response.data);
         } else {
-          this.logger.warn(`Failed to fetch chunks for file ${fileId}: status ${String(response.status)}`);
+          this.logger.warn(`No content for file ${fileId}`);
         }
       }
 
-      return allChunks;
+      return results;
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Unknown error";
-      this.logger.warn(`File chunk fetch failed (non-blocking): ${msg}`);
+      this.logger.warn(`File content fetch failed (non-blocking): ${msg}`);
       return [];
     }
   }
@@ -235,6 +235,30 @@ export class ContextAssemblyManager {
     // Keep the beginning (system prompt, memories, context) and truncate the end
     // This preserves the most important context (instructions, memories) over old messages
     return text.slice(0, maxChars);
+  }
+
+  private decodeFileContent(file: FileContentResponse): string {
+    if (!file.content) {
+      return `[File "${file.filename}" has no content]`;
+    }
+
+    // For text-based files, decode base64 to UTF-8 string
+    const textMimeTypes = [
+      "text/plain", "text/csv", "text/markdown", "text/html", "text/xml",
+      "application/json", "application/xml",
+    ];
+
+    if (textMimeTypes.some((t) => file.mimeType.startsWith(t))) {
+      try {
+        return Buffer.from(file.content, "base64").toString("utf-8");
+      } catch {
+        return `[Failed to decode file "${file.filename}"]`;
+      }
+    }
+
+    // For binary files (PDF, images, etc.), include base64 with type hint
+    // LLMs that support multimodal can parse this; others get the filename reference
+    return `[Binary file "${file.filename}" (${file.mimeType}, base64-encoded)]\n${file.content.slice(0, 50000)}`;
   }
 
   private mapRole(role: string): string {

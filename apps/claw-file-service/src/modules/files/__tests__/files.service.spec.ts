@@ -21,6 +21,7 @@ const mockFile = {
   mimeType: "text/plain",
   sizeBytes: 1024,
   storagePath: "/data/uploads/test-file.txt",
+  content: null,
   ingestionStatus: FileIngestionStatus.PENDING,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -86,7 +87,6 @@ describe("FilesService", () => {
     service = new FilesService(
       filesRepo as unknown as FilesRepository,
       chunksRepo as unknown as FileChunksRepository,
-      processingManager as unknown as FileProcessingManager,
       rabbitMQ as unknown as RabbitMQService,
     );
   });

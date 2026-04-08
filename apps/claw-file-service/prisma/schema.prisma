@@ -22,7 +22,8 @@ model File {
   mimeType        String              @map("mime_type")
   sizeBytes       Int                 @map("size_bytes")
   storagePath     String              @map("storage_path")
-  ingestionStatus FileIngestionStatus @default(PENDING) @map("ingestion_status")
+  content         String?             @map("content")
+  ingestionStatus FileIngestionStatus @default(COMPLETED) @map("ingestion_status")
   createdAt       DateTime            @default(now()) @map("created_at")
   updatedAt       DateTime            @updatedAt @map("updated_at")
 

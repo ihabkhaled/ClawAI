@@ -7,7 +7,6 @@ import { deleteFile, saveFile } from '../../../common/utilities';
 import { type PaginatedResult } from '../../../common/types';
 import { FilesRepository } from '../repositories/files.repository';
 import { FileChunksRepository } from '../repositories/file-chunks.repository';
-import { FileProcessingManager } from '../managers/file-processing.manager';
 import { type UploadFileDto } from '../dto/upload-file.dto';
 import { type ListFilesQueryDto } from '../dto/list-files-query.dto';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '../types/files.types';
@@ -19,7 +18,6 @@ export class FilesService {
   constructor(
     private readonly filesRepository: FilesRepository,
     private readonly fileChunksRepository: FileChunksRepository,
-    private readonly fileProcessingManager: FileProcessingManager,
     private readonly rabbitMQService: RabbitMQService,
   ) {}
 
@@ -28,15 +26,16 @@ export class FilesService {
     this.validateFileSize(dto.sizeBytes);
 
     const contentBuffer = dto.content ? Buffer.from(dto.content, 'base64') : Buffer.alloc(0);
-
     const storagePath = saveFile(`${Date.now()}-${dto.filename}`, contentBuffer);
 
+    // Store file with raw content — LLMs parse files natively
     const file = await this.filesRepository.create({
       userId,
       filename: dto.filename,
       mimeType: dto.mimeType,
       sizeBytes: dto.sizeBytes,
       storagePath,
+      content: dto.content ?? null,
     });
 
     void this.rabbitMQService.publish(EventPattern.FILE_UPLOADED, {
@@ -45,8 +44,6 @@ export class FilesService {
       filename: file.filename,
       timestamp: new Date().toISOString(),
     });
-
-    void this.fileProcessingManager.processFile(file);
 
     return file;
   }

@@ -69,7 +69,7 @@ const mockContextAssembly = (): Partial<Record<keyof ContextAssemblyManager, jes
     threadMessages: [],
     memories: [],
     contextPackItems: [],
-    fileChunks: [],
+    fileContents: [],
     tokenBudget: 4096,
   }),
   buildPromptString: jest.fn().mockReturnValue(''),
