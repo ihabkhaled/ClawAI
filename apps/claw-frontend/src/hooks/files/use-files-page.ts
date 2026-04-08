@@ -30,11 +30,22 @@ export function useFilesPage() {
       }
 
       setFileValidationError(null);
-      const data: UploadFileRequest = {
-        ...result.data,
-        storagePath: `/uploads/${file.name}`,
+
+      // Read file content as base64 before uploading
+      const reader = new FileReader();
+      reader.onload = (): void => {
+        const base64 = (reader.result as string).split(',')[1] ?? '';
+        const data: UploadFileRequest = {
+          ...result.data,
+          storagePath: `/uploads/${file.name}`,
+          content: base64,
+        };
+        uploadFile(data);
       };
-      uploadFile(data);
+      reader.onerror = (): void => {
+        setFileValidationError('Failed to read file');
+      };
+      reader.readAsDataURL(file);
     },
     [uploadFile],
   );
