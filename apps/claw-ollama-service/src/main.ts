@@ -5,7 +5,7 @@ import { AppModule } from './app/app.module';
 import { AppConfig } from './app/config/app.config';
 
 // BigInt serialization support (Prisma returns BigInt for large number fields)
-(BigInt.prototype as Record<string, unknown>).toJSON = function (): number { return Number(this); };
+(BigInt.prototype as unknown as { toJSON: () => number }).toJSON = function (): number { return Number(this); };
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
