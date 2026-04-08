@@ -110,4 +110,24 @@ export class OllamaManager {
   async getRuntimeConfigs(): Promise<RuntimeConfig[]> {
     return this.runtimeConfigsRepository.findAll();
   }
+
+  async syncFromRuntime(): Promise<number> {
+    const adapter = getRuntimeAdapter(RuntimeType.OLLAMA);
+    const runtimeModels = await adapter.listModels();
+
+    for (const model of runtimeModels) {
+      await this.localModelsRepository.upsertByNameTagRuntime({
+        name: model.name,
+        tag: model.tag,
+        runtime: RuntimeType.OLLAMA,
+        sizeBytes: model.sizeBytes,
+        family: model.family,
+        parameters: model.parameters,
+        quantization: model.quantization,
+        isInstalled: true,
+      });
+    }
+
+    return runtimeModels.length;
+  }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { RabbitMQService } from "@claw/shared-rabbitmq";
 import { EventPattern } from "@claw/shared-types";
 import { LocalModelRole, type RuntimeConfig, type RuntimeType } from "../../generated/prisma";
@@ -19,13 +19,30 @@ import {
 } from "./types/ollama.types";
 
 @Injectable()
-export class OllamaService {
+export class OllamaService implements OnModuleInit {
+  private readonly logger = new Logger(OllamaService.name);
+
   constructor(
     private readonly localModelsRepository: LocalModelsRepository,
     private readonly runtimeConfigsRepository: RuntimeConfigsRepository,
     private readonly ollamaManager: OllamaManager,
     private readonly rabbitMQService: RabbitMQService,
   ) {}
+
+  async onModuleInit(): Promise<void> {
+    await this.syncModelsFromRuntime();
+  }
+
+  /** Sync installed models from Ollama runtime into the database on startup */
+  private async syncModelsFromRuntime(): Promise<void> {
+    try {
+      const runtimeModels = await this.ollamaManager.syncFromRuntime();
+      this.logger.log(`Synced ${String(runtimeModels)} models from Ollama runtime`);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      this.logger.warn(`Failed to sync models from Ollama runtime: ${msg}`);
+    }
+  }
 
   async getModels(query: ListModelsQueryDto): Promise<PaginatedResult<LocalModel>> {
     const filters = {
