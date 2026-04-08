@@ -1,7 +1,6 @@
 import { FilesService } from "../services/files.service";
 import { type FilesRepository } from "../repositories/files.repository";
 import { type FileChunksRepository } from "../repositories/file-chunks.repository";
-import { type FileProcessingManager } from "../managers/file-processing.manager";
 import { type RabbitMQService } from "@claw/shared-rabbitmq";
 import { EventPattern } from "@claw/shared-types";
 import { BusinessException, EntityNotFoundException } from "../../../common/errors";
@@ -63,10 +62,6 @@ const mockFileChunksRepository = (): Record<keyof FileChunksRepository, jest.Moc
   deleteByFileId: jest.fn(),
 });
 
-const mockFileProcessingManager = (): Partial<Record<keyof FileProcessingManager, jest.Mock>> => ({
-  processFile: jest.fn().mockResolvedValue(undefined),
-  updateIngestionStatus: jest.fn().mockResolvedValue(undefined),
-});
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
   publish: jest.fn().mockResolvedValue(undefined),
@@ -76,13 +71,11 @@ describe("FilesService", () => {
   let service: FilesService;
   let filesRepo: ReturnType<typeof mockFilesRepository>;
   let chunksRepo: ReturnType<typeof mockFileChunksRepository>;
-  let processingManager: ReturnType<typeof mockFileProcessingManager>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
 
   beforeEach(() => {
     filesRepo = mockFilesRepository();
     chunksRepo = mockFileChunksRepository();
-    processingManager = mockFileProcessingManager();
     rabbitMQ = mockRabbitMQ();
     service = new FilesService(
       filesRepo as unknown as FilesRepository,
@@ -120,16 +113,20 @@ describe("FilesService", () => {
       );
     });
 
-    it("should trigger file processing after upload", async () => {
-      filesRepo.create.mockResolvedValue(mockFile);
+    it("should store file content when provided", async () => {
+      const fileWithContent = { ...mockFile, content: "SGVsbG8=" };
+      filesRepo.create.mockResolvedValue(fileWithContent);
 
       await service.uploadFile("user-1", {
         filename: "test.txt",
         mimeType: "text/plain",
         sizeBytes: 1024,
+        content: "SGVsbG8=",
       });
 
-      expect(processingManager.processFile).toHaveBeenCalledWith(mockFile);
+      expect(filesRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ content: "SGVsbG8=" }),
+      );
     });
 
     it("should reject invalid MIME type", async () => {
