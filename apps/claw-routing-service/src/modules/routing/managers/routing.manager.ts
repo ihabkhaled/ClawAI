@@ -306,20 +306,21 @@ export class RoutingManager {
   }
 
   private inferProvider(model: string): string {
-    const lower = model.toLowerCase();
-    if (lower.startsWith('claude') || lower.startsWith('anthropic')) {
+    // Strip common prefixes like "models/" from provider-specific model IDs
+    const lower = model.toLowerCase().replace(/^models\//, '');
+    if (lower.startsWith('claude') || lower.includes('anthropic')) {
       return CLOUD_PROVIDER_ANTHROPIC;
     }
-    if (lower.startsWith('gpt') || lower.startsWith('openai') || lower.startsWith('o1') || lower.startsWith('o3') || lower.startsWith('o4')) {
+    if (lower.startsWith('gpt') || lower.includes('openai') || lower.startsWith('o1-') || lower.startsWith('o3-') || lower.startsWith('o4-')) {
       return CLOUD_PROVIDER_OPENAI;
     }
-    if (lower.startsWith('gemini')) {
+    if (lower.includes('gemini')) {
       return CLOUD_PROVIDER_GEMINI;
     }
-    if (lower.startsWith('deepseek')) {
+    if (lower.includes('deepseek')) {
       return CLOUD_PROVIDER_DEEPSEEK;
     }
-    if (lower.includes('llama') || lower.includes('mistral') || lower.includes('phi') || lower.includes('qwen')) {
+    if (lower.includes('llama') || lower.includes('mistral') || lower.includes('phi') || lower.includes('qwen') || lower.includes('tinyllama')) {
       return LOCAL_PROVIDER;
     }
     return CLOUD_PROVIDER_ANTHROPIC;
