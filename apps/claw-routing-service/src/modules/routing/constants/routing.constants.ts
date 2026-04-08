@@ -30,23 +30,29 @@ export const ollamaRouterResponseSchema = z.object({
   reason: z.string().min(1),
 });
 
-export const ROUTER_PROMPT_TEMPLATE = `You are a routing engine. Given a user message, decide which AI provider and model should answer it.
+export const ROUTER_PROMPT_TEMPLATE = `You are an intelligent AI routing engine. Analyze the user message and decide which AI provider and model is best suited to answer it.
 
 Available providers and models:
-- local-ollama / tinyllama (free, local, fast for simple tasks, limited reasoning)
-- OPENAI / gpt-4o-mini (fast, good general purpose, low cost)
-- ANTHROPIC / claude-sonnet-4 (strong reasoning, good quality, medium cost)
-- GEMINI / gemini-2.5-flash (fast, multimodal, low cost)
-- DEEPSEEK / deepseek-chat (good reasoning, low cost)
+- local-ollama / tinyllama (free, local, fast, good for simple Q&A, greetings, translations)
+- OPENAI / gpt-4o-mini (fast, general purpose, good for summarization, chat, writing)
+- ANTHROPIC / claude-sonnet-4 (excellent coding, debugging, code review, technical analysis)
+- ANTHROPIC / claude-opus-4 (best for deep reasoning, complex analysis, architecture decisions)
+- GEMINI / gemini-2.5-flash (fast, multimodal, best for image/video, web search, YouTube, file analysis)
+- DEEPSEEK / deepseek-chat (strong coding and math, very low cost)
 
 Healthy providers: {healthyProviders}
 
-Rules:
-- For simple greetings, math, short Q&A: prefer local-ollama
-- For complex reasoning, analysis, coding: prefer ANTHROPIC or OPENAI
-- For cost-sensitive: prefer local-ollama or DEEPSEEK
-- Only route to healthy providers
-- If unsure, use OPENAI/gpt-4o-mini
+ROUTING RULES (follow strictly):
+- Coding, debugging, code review, refactoring → ANTHROPIC / claude-sonnet-4
+- Complex reasoning, architecture, system design → ANTHROPIC / claude-opus-4
+- Image analysis, vision, YouTube, web search, multimodal → GEMINI / gemini-2.5-flash
+- Math, algorithms, competitive programming → DEEPSEEK / deepseek-chat
+- Creative writing, storytelling, marketing copy → OPENAI / gpt-4o-mini
+- Simple greetings, translations, quick facts → local-ollama / tinyllama
+- General chat, summarization, email drafting → OPENAI / gpt-4o-mini
+- Data analysis, CSV/JSON/file parsing → GEMINI / gemini-2.5-flash
+- ONLY route to healthy providers listed above
+- If unsure or ambiguous → OPENAI / gpt-4o-mini
 
 Respond with ONLY a JSON object (no markdown, no explanation):
 {{"provider":"...","model":"...","confidence":0.X,"reason":"brief reason"}}

@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 
 import { useAllModels } from '@/hooks/connectors/use-all-models';
+import { useLocalModels } from '@/hooks/ollama/use-local-models';
 import type { GroupedModels, ModelSelection } from '@/types';
 
 const PROVIDER_LABELS: Record<string, string> = {
-  OLLAMA: 'Ollama (Local)',
+  'local-ollama': 'Ollama (Local)',
+  OLLAMA: 'Ollama (Connector)',
   OPENAI: 'OpenAI',
   ANTHROPIC: 'Anthropic',
   GEMINI: 'Google Gemini',
@@ -16,11 +18,28 @@ export function useAvailableModels(): {
   groupedModels: GroupedModels[];
   isLoading: boolean;
 } {
-  const { models, isLoading } = useAllModels();
+  const { models, isLoading: isLoadingCloud } = useAllModels();
+  const { models: localModels, isLoading: isLoadingLocal } = useLocalModels();
 
   const groupedModels = useMemo((): GroupedModels[] => {
     const groups = new Map<string, ModelSelection[]>();
 
+    // Add local Ollama models first
+    for (const model of localModels) {
+      if (!model.isInstalled) {
+        continue;
+      }
+      const provider = 'local-ollama';
+      const existing = groups.get(provider) ?? [];
+      existing.push({
+        provider,
+        model: model.name,
+        displayName: `${model.name} (${model.family ?? 'local'})`,
+      });
+      groups.set(provider, existing);
+    }
+
+    // Add cloud connector models
     for (const model of models) {
       const provider = model.provider;
       const existing = groups.get(provider) ?? [];
@@ -41,15 +60,15 @@ export function useAvailableModels(): {
       });
     }
 
-    // Sort: Ollama first, then alphabetically
+    // Sort: local-ollama first, then alphabetically
     result.sort((a, b) => {
-      if (a.provider === 'OLLAMA') {return -1;}
-      if (b.provider === 'OLLAMA') {return 1;}
+      if (a.provider === 'local-ollama') {return -1;}
+      if (b.provider === 'local-ollama') {return 1;}
       return a.label.localeCompare(b.label);
     });
 
     return result;
-  }, [models]);
+  }, [models, localModels]);
 
-  return { groupedModels, isLoading };
+  return { groupedModels, isLoading: isLoadingCloud || isLoadingLocal };
 }
