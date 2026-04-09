@@ -344,7 +344,7 @@ export class ChatExecutionManager {
         referenceImageBase64,
         referenceImageMimeType,
       },
-      timeoutMs: 30_000,
+      timeoutMs: 120_000,
     });
 
     if (!response.ok) {
