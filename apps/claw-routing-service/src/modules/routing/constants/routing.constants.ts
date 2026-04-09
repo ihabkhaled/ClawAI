@@ -25,6 +25,37 @@ export const IMAGE_MODEL_DALLE3 = 'dall-e-3';
 export const IMAGE_MODEL_IMAGEN = 'gemini-2.5-flash-image';
 export const IMAGE_MODEL_SD_LOCAL = 'sdxl-turbo';
 
+export const IMAGE_KEYWORDS = [
+  'generate an image',
+  'generate image',
+  'generate a picture',
+  'generate picture',
+  'create an image',
+  'create image',
+  'create a picture',
+  'create picture',
+  'draw me',
+  'draw a',
+  'draw an',
+  'draw the',
+  'make an image',
+  'make a picture',
+  'make me an image',
+  'make me a picture',
+  'design an image',
+  'design a logo',
+  'sketch',
+  'illustration of',
+  'paint me',
+  'paint a',
+  'photo of',
+  'photograph of',
+  'render an image',
+  'render a',
+  'visualize',
+  'depict',
+];
+
 export const VALID_PROVIDERS = new Set([
   LOCAL_PROVIDER,
   CLOUD_PROVIDER_OPENAI,

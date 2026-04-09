@@ -12,6 +12,9 @@ import {
   CLOUD_PROVIDER_DEEPSEEK,
   CLOUD_PROVIDER_GEMINI,
   CLOUD_PROVIDER_OPENAI,
+  IMAGE_KEYWORDS,
+  IMAGE_MODEL_DALLE3,
+  IMAGE_MODEL_IMAGEN,
   IMAGE_PROVIDER_GEMINI,
   IMAGE_PROVIDER_LOCAL,
   IMAGE_PROVIDER_OPENAI,
@@ -219,6 +222,12 @@ export class RoutingManager {
   }
 
   private async handleAuto(context: RoutingContext): Promise<RoutingDecisionResult> {
+    // Detect image requests early (before Ollama router, which may misclassify)
+    const imageResult = this.detectImageRequest(context);
+    if (imageResult) {
+      return imageResult;
+    }
+
     // Try Ollama-assisted routing first
     const ollamaDecision = await this.ollamaRouter.route(context);
     if (ollamaDecision) {
@@ -241,6 +250,12 @@ export class RoutingManager {
   }
 
   private handleAutoHeuristic(context: RoutingContext): RoutingDecisionResult {
+    // Check for image generation request first
+    const imageResult = this.detectImageRequest(context);
+    if (imageResult) {
+      return imageResult;
+    }
+
     const localHealthy = this.isRuntimeHealthy('OLLAMA', context);
     const messageLength = context.message.length;
 
@@ -355,6 +370,45 @@ export class RoutingManager {
       return LOCAL_PROVIDER;
     }
     return CLOUD_PROVIDER_ANTHROPIC;
+  }
+
+  private detectImageRequest(context: RoutingContext): RoutingDecisionResult | null {
+    const lower = context.message.toLowerCase();
+    const isImage = IMAGE_KEYWORDS.some((kw) => lower.includes(kw));
+    if (!isImage) {
+      return null;
+    }
+
+    this.logger.log('Image generation request detected via keyword heuristic');
+
+    // Prefer cloud image providers if a connector is healthy
+    if (this.isConnectorHealthy('OPENAI', context)) {
+      return this.buildImageDecision(IMAGE_PROVIDER_OPENAI, IMAGE_MODEL_DALLE3, context);
+    }
+    if (this.isConnectorHealthy('GEMINI', context)) {
+      return this.buildImageDecision(IMAGE_PROVIDER_GEMINI, IMAGE_MODEL_IMAGEN, context);
+    }
+
+    // Fallback to local SD
+    return this.buildImageDecision(IMAGE_PROVIDER_LOCAL, 'sdxl-turbo', context);
+  }
+
+  private buildImageDecision(
+    provider: string,
+    model: string,
+    context: RoutingContext,
+  ): RoutingDecisionResult {
+    const primary = { provider, model };
+    return {
+      selectedProvider: provider,
+      selectedModel: model,
+      routingMode: RoutingMode.AUTO,
+      confidence: 0.95,
+      reasonTags: ['auto', 'image_generation', 'keyword_detected'],
+      privacyClass: provider === IMAGE_PROVIDER_LOCAL ? 'local' : 'cloud',
+      costClass: provider === IMAGE_PROVIDER_LOCAL ? 'free' : 'medium',
+      fallbackChain: this.buildFallbackChain(primary, context),
+    };
   }
 
   private isRuntimeHealthy(runtime: string, context: RoutingContext): boolean {
