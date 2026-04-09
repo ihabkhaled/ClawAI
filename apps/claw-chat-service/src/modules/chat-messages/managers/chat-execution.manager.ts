@@ -288,7 +288,14 @@ export class ChatExecutionManager {
   ): Promise<LlmResponse> {
     const config = AppConfig.get();
     const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
-    const prompt = lastUserMsg?.content ?? 'generate an image';
+    let prompt = lastUserMsg?.content ?? 'generate an image';
+
+    // If image files are attached, use vision model to analyze them first
+    // then build a detailed prompt for the image generator
+    const imageFiles = context.fileContents.filter((f) => f.mimeType.startsWith('image/'));
+    if (imageFiles.length > 0) {
+      prompt = await this.buildImagePromptFromVision(prompt, context);
+    }
 
     const response = await httpRequest<ImageGenerateResponse>({
       url: `${config.IMAGE_SERVICE_URL}/api/v1/internal/images/generate`,
@@ -416,6 +423,46 @@ export class ChatExecutionManager {
     ];
     // For now return first; could check connector health in future
     return providers[0] ?? { provider: 'GEMINI', model: 'gemini-2.5-flash' };
+  }
+
+  private async buildImagePromptFromVision(
+    userText: string,
+    context: AssembledContext,
+  ): Promise<string> {
+    this.logger.log('Analyzing attached image with vision model before image generation');
+
+    try {
+      // Build a vision-specific context with a system prompt that extracts image details
+      const visionContext: AssembledContext = {
+        ...context,
+        systemPrompt: `You are an image analysis expert. The user has attached an image and wants to generate a new image based on it. Your job is to:
+1. Analyze the attached image in extreme detail (colors, composition, subjects, style, lighting, mood, background, objects, text, clothing, expressions, etc.)
+2. Consider the user's request: "${userText}"
+3. Output ONLY a detailed image generation prompt (2-4 sentences) that an AI image generator like DALL-E or Gemini Imagen can use to create a similar or modified image.
+4. Do NOT explain what you're doing. Just output the prompt directly.
+5. If the user asks for "similar" or "like this", describe the original image faithfully.
+6. If the user asks for modifications, incorporate those changes into the prompt.
+7. Include style keywords (photorealistic, digital art, cartoon, etc.) based on the original image.`,
+      };
+
+      const visionResponse = await this.callCloudProvider(
+        'GEMINI',
+        'gemini-2.5-flash',
+        visionContext,
+        Date.now(),
+        false,
+        undefined,
+      );
+
+      const generatedPrompt = visionResponse.content.trim();
+      this.logger.log(`Vision analysis generated prompt: ${generatedPrompt.substring(0, 150)}...`);
+
+      return generatedPrompt.length > 10 ? generatedPrompt : userText;
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(`Vision analysis failed, using original prompt: ${msg}`);
+      return userText;
+    }
   }
 
   private async fetchConnectorConfig(provider: string): Promise<ConnectorConfigResponse> {
