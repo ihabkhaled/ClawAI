@@ -388,8 +388,18 @@ export class RoutingManager {
 
   private detectImageRequest(context: RoutingContext): RoutingDecisionResult | null {
     const lower = context.message.toLowerCase();
-    const isImage = IMAGE_KEYWORDS.some((kw) => lower.includes(kw));
-    if (!isImage) {
+
+    // Exact keyword match
+    const exactMatch = IMAGE_KEYWORDS.some((kw) => lower.includes(kw));
+
+    // Smart verb + image-word combo detection
+    const imageVerbs = ['generate', 'create', 'draw', 'make', 'paint', 'render', 'design', 'produce'];
+    const imageWords = ['image', 'picture', 'photo', 'portrait', 'illustration', 'sketch', 'art', 'artwork', 'graphic', 'poster', 'banner', 'icon', 'logo', 'wallpaper', 'avatar'];
+    const hasVerb = imageVerbs.some((v) => lower.includes(v));
+    const hasImageWord = imageWords.some((w) => lower.includes(w));
+    const comboMatch = hasVerb && hasImageWord;
+
+    if (!exactMatch && !comboMatch) {
       return null;
     }
 
