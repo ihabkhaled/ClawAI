@@ -6,4 +6,8 @@ export const imageGenerationRepository = {
     const response = await apiClient.get<ImageGeneration>(`/images/${generationId}`);
     return response.data;
   },
+
+  async retry(generationId: string): Promise<void> {
+    await apiClient.post(`/images/${generationId}/retry`);
+  },
 };

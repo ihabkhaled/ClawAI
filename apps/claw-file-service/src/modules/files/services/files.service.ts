@@ -149,6 +149,25 @@ export class FilesService {
     res.send(buffer);
   }
 
+  async downloadFilePublic(id: string, res: Response): Promise<void> {
+    const file = await this.filesRepository.findById(id);
+    if (!file) {
+      throw new EntityNotFoundException('File', id);
+    }
+
+    const buffer = readFile(file.storagePath);
+    const isImage = file.mimeType.startsWith('image/');
+    const disposition = isImage ? 'inline' : 'attachment';
+
+    res.set({
+      'Content-Type': file.mimeType,
+      'Content-Disposition': `${disposition}; filename="${file.filename}"`,
+      'Content-Length': String(buffer.length),
+      'Cache-Control': 'public, max-age=86400',
+    });
+    res.send(buffer);
+  }
+
   async storeImage(data: {
     userId: string;
     filename: string;

@@ -99,6 +99,33 @@ export class ImageGenerationService {
     };
   }
 
+  async retryGeneration(generationId: string): Promise<ImageGenerationRecord> {
+    const record = await this.getById(generationId);
+
+    await this.repository.updateStatus(generationId, ImageGenerationStatus.QUEUED, {
+      errorCode: undefined,
+      errorMessage: undefined,
+    });
+
+    await this.repository.createEvent({
+      generationId,
+      status: ImageGenerationStatus.QUEUED,
+      payloadJson: { retried: true },
+    });
+
+    this.eventsService.publish({
+      generationId,
+      status: 'QUEUED',
+      provider: record.provider,
+      model: record.model,
+    });
+
+    this.logger.log(`image_generation.retried id=${generationId}`);
+    void this.processJob(generationId);
+
+    return this.getById(generationId);
+  }
+
   private async processJob(generationId: string): Promise<void> {
     const generation = await this.repository.findById(generationId);
     if (!generation) {

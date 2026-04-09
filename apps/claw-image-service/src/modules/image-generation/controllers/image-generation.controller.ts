@@ -1,4 +1,4 @@
-import { Controller, Get, MessageEvent, Param, Query, Sse } from '@nestjs/common';
+import { Controller, Get, MessageEvent, Param, Post, Query, Sse } from '@nestjs/common';
 import { type Observable } from 'rxjs';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { type AuthenticatedUser } from '../../../common/types';
@@ -25,6 +25,15 @@ export class ImageGenerationController {
   @Get(':id')
   async getById(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser): Promise<unknown> {
     return this.imageService.getByIdForUser(id, user.id);
+  }
+
+  @Post(':id/retry')
+  async retry(
+    @Param('id') id: string,
+    @CurrentUser() _user: AuthenticatedUser,
+  ): Promise<{ generationId: string; status: string }> {
+    const record = await this.imageService.retryGeneration(id);
+    return { generationId: record.id, status: record.status };
   }
 
   @Sse(':id/events')

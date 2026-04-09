@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Res } from '@nestjs/common';
+import { type Response } from 'express';
 import { Public } from '../../../app/decorators/public.decorator';
 import { type FileChunk } from '../../../generated/prisma';
 import { FileChunksRepository } from '../repositories/file-chunks.repository';
@@ -34,6 +35,12 @@ export class FilesInternalController {
       mimeType: file.mimeType,
       content: file.content,
     };
+  }
+
+  @Public()
+  @Get('download/:id')
+  async download(@Param('id') id: string, @Res() res: Response): Promise<void> {
+    return this.filesService.downloadFilePublic(id, res);
   }
 
   @Public()
