@@ -9,9 +9,11 @@ import { getImageStatusLabel, isInProgressImageStatus } from '@/utilities';
 export function ImageGenerationBubble({
   generationId,
   prompt,
+  isAutoMode,
 }: {
   generationId: string;
   prompt: string;
+  isAutoMode?: boolean;
 }) {
   const generation = useImageGenerationListener(generationId);
   const firstAsset = generation?.assets?.[0];
@@ -29,7 +31,13 @@ export function ImageGenerationBubble({
         <ImageErrorState
           status={getImageStatusLabel(generation.status)}
           error={generation.errorMessage}
+          provider={generation.provider}
           onRetry={() => void imageGenerationRepository.retry(generationId)}
+          onTryAlternate={
+            isAutoMode
+              ? () => void imageGenerationRepository.retryAlternate(generationId)
+              : undefined
+          }
         />
       ) : null}
       {generation?.status === ImageGenerationStatus.CANCELLED ? (
@@ -62,11 +70,15 @@ function ImageLoadingState({ status, prompt }: { status: string; prompt: string 
 function ImageErrorState({
   status,
   error,
+  provider,
   onRetry,
+  onTryAlternate,
 }: {
   status: string;
   error?: string | null;
+  provider?: string;
   onRetry: () => void;
+  onTryAlternate?: () => void;
 }) {
   return (
     <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
@@ -76,15 +88,28 @@ function ImageErrorState({
       </div>
       <div className="mt-1 text-xs text-muted-foreground">
         {error ?? 'Image generation failed. Please try again.'}
+        {provider ? <span className="ms-1 opacity-60">({provider})</span> : null}
       </div>
-      <button
-        className="mt-3 flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs hover:bg-muted"
-        onClick={onRetry}
-        type="button"
-      >
-        <RefreshCw className="h-3 w-3" />
-        Retry
-      </button>
+      <div className="mt-3 flex items-center gap-2">
+        <button
+          className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs hover:bg-muted"
+          onClick={onRetry}
+          type="button"
+        >
+          <RefreshCw className="h-3 w-3" />
+          Retry
+        </button>
+        {onTryAlternate ? (
+          <button
+            className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs text-primary hover:bg-primary/10"
+            onClick={onTryAlternate}
+            type="button"
+          >
+            <RefreshCw className="h-3 w-3" />
+            Try another model
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }

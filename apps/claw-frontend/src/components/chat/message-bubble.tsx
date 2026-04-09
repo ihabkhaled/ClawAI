@@ -6,7 +6,7 @@ import { RoutingTransparency } from '@/components/chat/routing-transparency';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MESSAGE_ROLE_LABELS } from '@/constants';
-import { MessageFeedback, MessageRole } from '@/enums';
+import { MessageFeedback, MessageRole, RoutingMode } from '@/enums';
 import { MarkdownRenderer } from '@/lib/markdown';
 import { cn } from '@/lib/utils';
 import type { MessageBubbleProps } from '@/types';
@@ -52,7 +52,11 @@ export function MessageBubble({
         >
           {isUser ? <p className="whitespace-pre-wrap">{message.content}</p> : null}
           {!isUser && isImageGeneration && imageGenerationId ? (
-            <ImageGenerationBubble generationId={imageGenerationId} prompt={message.content} />
+            <ImageGenerationBubble
+              generationId={imageGenerationId}
+              prompt={message.content}
+              isAutoMode={message.routingMode === RoutingMode.AUTO}
+            />
           ) : null}
           {!isUser && !isImageGeneration ? <MarkdownRenderer content={message.content} /> : null}
         </div>

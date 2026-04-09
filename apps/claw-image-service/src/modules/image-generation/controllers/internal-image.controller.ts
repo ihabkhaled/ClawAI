@@ -43,6 +43,20 @@ export class InternalImageController {
   }
 
   @Public()
+  @Post(':generationId/retry-alternate')
+  async retryAlternate(
+    @Param('generationId') generationId: string,
+  ): Promise<{ generationId: string; status: string; provider: string; model: string }> {
+    const record = await this.imageService.retryWithAlternateModel(generationId);
+    return {
+      generationId: record.id,
+      status: record.status,
+      provider: record.provider,
+      model: record.model,
+    };
+  }
+
+  @Public()
   @Sse(':generationId/events')
   events(@Param('generationId') generationId: string): Observable<MessageEvent> {
     return this.eventsService.subscribe(generationId);

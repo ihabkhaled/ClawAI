@@ -11,6 +11,7 @@ import {
 } from '../types/image-generation.types';
 import { type ListImagesQueryDto } from '../dto/generate-image.dto';
 import { BusinessException } from '../../../common/errors';
+import { IMAGE_FALLBACK_CHAIN } from '../../../common/constants';
 
 @Injectable()
 export class ImageGenerationService {
@@ -124,6 +125,67 @@ export class ImageGenerationService {
     void this.processJob(generationId);
 
     return this.getById(generationId);
+  }
+
+  async retryWithAlternateModel(generationId: string): Promise<ImageGenerationRecord> {
+    const record = await this.getById(generationId);
+    const currentKey = `${record.provider}/${record.model}`;
+    const currentIdx = IMAGE_FALLBACK_CHAIN.findIndex(
+      (c) => `${c.provider}/${c.model}` === currentKey,
+    );
+    const nextIdx = currentIdx + 1;
+    const next = IMAGE_FALLBACK_CHAIN[nextIdx] ?? IMAGE_FALLBACK_CHAIN[0];
+
+    if (!next || `${next.provider}/${next.model}` === currentKey) {
+      throw new BusinessException('No alternate image model available', 'NO_ALTERNATE_MODEL');
+    }
+
+    const newRecord = await this.repository.create({
+      userId: record.userId,
+      threadId: record.threadId ?? undefined,
+      userMessageId: record.userMessageId ?? undefined,
+      assistantMessageId: record.assistantMessageId ?? undefined,
+      prompt: record.prompt,
+      provider: next.provider,
+      model: next.model,
+      width: record.width,
+      height: record.height,
+      quality: record.quality ?? undefined,
+      style: record.style ?? undefined,
+    });
+
+    await this.repository.createEvent({
+      generationId: newRecord.id,
+      status: ImageGenerationStatus.QUEUED,
+      payloadJson: {
+        alternateOf: generationId,
+        provider: next.provider,
+        model: next.model,
+      },
+    });
+
+    this.eventsService.publish({
+      generationId: newRecord.id,
+      status: 'QUEUED',
+      provider: next.provider,
+      model: next.model,
+    });
+
+    // Also notify the old generation's listeners about the switch
+    this.eventsService.publish({
+      generationId,
+      status: 'QUEUED',
+      provider: next.provider,
+      model: next.model,
+    });
+
+    this.logger.log(
+      `image_generation.alternate id=${newRecord.id} from=${currentKey} to=${next.provider}/${next.model}`,
+    );
+
+    void this.processJob(newRecord.id);
+
+    return newRecord;
   }
 
   private async processJob(generationId: string): Promise<void> {

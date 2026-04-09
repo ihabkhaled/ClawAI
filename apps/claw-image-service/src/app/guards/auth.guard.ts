@@ -20,20 +20,10 @@ export class AuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const authHeader = request.headers.authorization;
+    const token = this.extractToken(request);
 
-    if (!authHeader) {
-      throw new UnauthorizedException('Missing authorization header');
-    }
-
-    const parts = authHeader.split(' ');
-    if (parts.length !== 2 || parts[0] !== 'Bearer') {
-      throw new UnauthorizedException('Invalid authorization header format');
-    }
-
-    const token = parts[1];
     if (!token) {
-      throw new UnauthorizedException('Missing token');
+      throw new UnauthorizedException('Missing authorization token');
     }
 
     const config = AppConfig.get();
@@ -49,5 +39,23 @@ export class AuthGuard implements CanActivate {
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }
+  }
+
+  private extractToken(request: AuthenticatedRequest): string | undefined {
+    const authHeader = request.headers.authorization;
+    if (authHeader) {
+      const parts = authHeader.split(' ');
+      if (parts.length === 2 && parts[0] === 'Bearer' && parts[1]) {
+        return parts[1];
+      }
+    }
+
+    // Fallback: query param (for SSE/EventSource which cannot set headers)
+    const queryToken = request.query?.['token'];
+    if (typeof queryToken === 'string' && queryToken.length > 0) {
+      return queryToken;
+    }
+
+    return undefined;
   }
 }

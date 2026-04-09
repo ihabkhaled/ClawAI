@@ -36,6 +36,20 @@ export class ImageGenerationController {
     return { generationId: record.id, status: record.status };
   }
 
+  @Post(':id/retry-alternate')
+  async retryAlternate(
+    @Param('id') id: string,
+    @CurrentUser() _user: AuthenticatedUser,
+  ): Promise<{ generationId: string; status: string; provider: string; model: string }> {
+    const record = await this.imageService.retryWithAlternateModel(id);
+    return {
+      generationId: record.id,
+      status: record.status,
+      provider: record.provider,
+      model: record.model,
+    };
+  }
+
   @Sse(':id/events')
   events(@Param('id') id: string): Observable<MessageEvent> {
     return this.eventsService.subscribe(id);

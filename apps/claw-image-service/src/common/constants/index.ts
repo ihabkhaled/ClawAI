@@ -8,4 +8,5 @@ export {
   IMAGE_MODEL_DALLE3,
   IMAGE_MODEL_IMAGEN,
   IMAGE_MODEL_SD_LOCAL,
+  IMAGE_FALLBACK_CHAIN,
 } from './image.constants';

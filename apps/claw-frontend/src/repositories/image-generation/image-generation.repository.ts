@@ -10,4 +10,16 @@ export const imageGenerationRepository = {
   async retry(generationId: string): Promise<void> {
     await apiClient.post(`/images/${generationId}/retry`);
   },
+
+  async retryAlternate(
+    generationId: string,
+  ): Promise<{ generationId: string; status: string; provider: string; model: string }> {
+    const response = await apiClient.post<{
+      generationId: string;
+      status: string;
+      provider: string;
+      model: string;
+    }>(`/images/${generationId}/retry-alternate`);
+    return response.data;
+  },
 };
