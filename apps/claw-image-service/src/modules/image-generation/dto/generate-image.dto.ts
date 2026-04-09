@@ -12,6 +12,7 @@ export const generateImageSchema = z.object({
   height: z.number().int().min(256).max(4096).optional(),
   quality: z.string().max(20).optional(),
   style: z.string().max(20).optional(),
+  isAutoMode: z.boolean().optional(),
 });
 
 export type GenerateImageDto = z.infer<typeof generateImageSchema>;

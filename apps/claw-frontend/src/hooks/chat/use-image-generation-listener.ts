@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { API_BASE_URL } from '@/constants';
 import { imageGenerationRepository } from '@/repositories/image-generation/image-generation.repository';
 import type { ImageGeneration, ImageGenerationEventPayload } from '@/types/image-generation.types';
-import { getAccessToken, isTerminalImageStatus } from '@/utilities';
+import { isTerminalImageStatus } from '@/utilities';
 
 export function useImageGenerationListener(generationId: string | undefined) {
   const [generation, setGeneration] = useState<ImageGeneration | null>(null);
@@ -57,8 +57,7 @@ export function useImageGenerationListener(generationId: string | undefined) {
           return;
         }
 
-        const token = getAccessToken();
-        const sseUrl = `${API_BASE_URL}/images/${generationId}/events?token=${encodeURIComponent(token ?? '')}`;
+        const sseUrl = `${API_BASE_URL}/images/${generationId}/events`;
         const eventSource = new EventSource(sseUrl);
         eventSourceRef.current = eventSource;
 

@@ -1,6 +1,7 @@
 import { Body, Controller, Get, MessageEvent, Param, Post, Query, Sse } from '@nestjs/common';
 import { type Observable } from 'rxjs';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
+import { Public } from '../../../app/decorators/public.decorator';
 import { type AuthenticatedUser } from '../../../common/types';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { ImageGenerationService } from '../services/image-generation.service';
@@ -51,6 +52,7 @@ export class ImageGenerationController {
     };
   }
 
+  @Public()
   @Sse(':id/events')
   events(@Param('id') id: string): Observable<MessageEvent> {
     return this.eventsService.subscribe(id);

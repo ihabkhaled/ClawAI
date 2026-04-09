@@ -57,7 +57,7 @@ export class ImageGenerationService {
     );
 
     // Fire-and-forget: process the job asynchronously
-    void this.processJob(record.id);
+    void this.processJobWithFallback(record.id, params.isAutoMode ?? false);
 
     return record;
   }
@@ -196,6 +196,77 @@ export class ImageGenerationService {
     void this.processJob(newRecord.id);
 
     return newRecord;
+  }
+
+  private async processJobWithFallback(generationId: string, isAutoMode: boolean): Promise<void> {
+    await this.processJob(generationId);
+
+    if (!isAutoMode) {
+      return;
+    }
+
+    // Check if it failed — if so, auto-retry with next models in chain
+    const result = await this.repository.findById(generationId);
+    if (!result || result.status !== 'FAILED') {
+      return;
+    }
+
+    const maxRetries = 2;
+    let lastFailedKey = `${result.provider}/${result.model}`;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      const searchKey = lastFailedKey;
+      const idx = IMAGE_FALLBACK_CHAIN.findIndex((c) => `${c.provider}/${c.model}` === searchKey);
+      const next = IMAGE_FALLBACK_CHAIN[idx + 1];
+      if (!next) {
+        break;
+      }
+
+      this.logger.log(
+        `Auto-fallback attempt ${String(attempt + 1)}: ${lastFailedKey} → ${next.provider}/${next.model}`,
+      );
+
+      const fallbackRecord = await this.repository.create({
+        userId: result.userId,
+        threadId: result.threadId ?? undefined,
+        userMessageId: result.userMessageId ?? undefined,
+        assistantMessageId: result.assistantMessageId ?? undefined,
+        prompt: result.prompt,
+        provider: next.provider,
+        model: next.model,
+        width: result.width,
+        height: result.height,
+      });
+
+      this.eventsService.publish({
+        generationId: fallbackRecord.id,
+        status: 'QUEUED',
+        provider: next.provider,
+        model: next.model,
+      });
+
+      // Notify original generation listeners about the new attempt
+      this.eventsService.publish({
+        generationId,
+        status: 'QUEUED',
+        provider: next.provider,
+        model: next.model,
+      });
+
+      await this.processJob(fallbackRecord.id);
+
+      const fallbackResult = await this.repository.findById(fallbackRecord.id);
+      if (fallbackResult && fallbackResult.status === 'COMPLETED') {
+        this.logger.log(
+          `Auto-fallback succeeded: ${next.provider}/${next.model} (id=${fallbackRecord.id})`,
+        );
+        return;
+      }
+
+      lastFailedKey = `${next.provider}/${next.model}`;
+    }
+
+    this.logger.warn('All auto-fallback attempts exhausted');
   }
 
   private async processJob(generationId: string): Promise<void> {

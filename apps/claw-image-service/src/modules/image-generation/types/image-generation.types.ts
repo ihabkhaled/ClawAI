@@ -50,6 +50,7 @@ export type GenerateImageParams = {
   height?: number;
   quality?: string;
   style?: string;
+  isAutoMode?: boolean;
 };
 
 export type ImageProviderResponse = {

@@ -166,6 +166,11 @@ export class ChatMessagesService implements OnModuleInit {
     const threadSettings = this.extractThreadSettings(thread);
     const fileIds = this.extractFileIdsFromMessages(chronologicalMessages);
 
+    // Context-aware image follow-up detection:
+    // If user says "again"/"one more" and the last assistant message was image generation,
+    // override routing to use the same image provider
+    const effectivePayload = this.detectImageFollowUp(payload, thread, chronologicalMessages);
+
     const context = await this.contextAssemblyManager.assemble(
       thread?.userId ?? 'system',
       chronologicalMessages,
@@ -175,7 +180,11 @@ export class ChatMessagesService implements OnModuleInit {
     );
 
     try {
-      const llmResponse = await this.chatExecutionManager.execute(payload, context, threadSettings);
+      const llmResponse = await this.chatExecutionManager.execute(
+        effectivePayload,
+        context,
+        threadSettings,
+      );
       const contextMetadata = {
         memoryCount: context.memories.length,
         fileIds: fileIds ?? [],
@@ -447,5 +456,75 @@ export class ChatMessagesService implements OnModuleInit {
         HttpStatus.FORBIDDEN,
       );
     }
+  }
+
+  private detectImageFollowUp(
+    payload: MessageRoutedData,
+    thread: ChatThread | null,
+    messages: ChatMessage[],
+  ): MessageRoutedData {
+    // Only override AUTO routing — don't interfere with manual model selection
+    if (payload.routingMode !== 'AUTO') {
+      return payload;
+    }
+
+    // Already routed to image provider — no override needed
+    if (payload.selectedProvider.startsWith('IMAGE_')) {
+      return payload;
+    }
+
+    // Check if thread's last interaction was image generation
+    const lastProvider = thread?.lastProvider;
+    if (!lastProvider || !lastProvider.startsWith('IMAGE_')) {
+      return payload;
+    }
+
+    // Check if user's message is a short follow-up
+    const lastUserMsg = [...messages].reverse().find((m) => m.role === 'USER');
+    if (!lastUserMsg) {
+      return payload;
+    }
+
+    const lower = lastUserMsg.content.toLowerCase().trim();
+    const isFollowUp =
+      lower.length < 100 &&
+      (lower === 'again' ||
+        lower === 'one more' ||
+        lower === 'another one' ||
+        lower === 'do it again' ||
+        lower === 'retry' ||
+        lower === 'regenerate' ||
+        lower === 'redo' ||
+        lower === 'more' ||
+        lower.startsWith('another') ||
+        lower.startsWith('one more') ||
+        lower.startsWith('do another') ||
+        lower.startsWith('make another') ||
+        lower.startsWith('generate another') ||
+        lower.startsWith('create another'));
+
+    if (!isFollowUp) {
+      return payload;
+    }
+
+    // Find the original image prompt from the last image generation message
+    const lastImageMsg = [...messages].reverse().find((m) => {
+      const meta = m.metadata as Record<string, unknown> | null;
+      return meta?.['type'] === 'image_generation';
+    });
+
+    // Override routing to use the same image provider
+    this.logger.log(
+      `Context follow-up detected: "${lower}" → re-routing to ${lastProvider}/${thread?.lastModel ?? 'default'}`,
+    );
+
+    return {
+      ...payload,
+      selectedProvider: lastProvider,
+      selectedModel: thread?.lastModel ?? payload.selectedModel,
+      routingMode: payload.routingMode,
+      fallbackProvider: lastImageMsg ? undefined : payload.fallbackProvider,
+      fallbackModel: lastImageMsg ? undefined : payload.fallbackModel,
+    };
   }
 }

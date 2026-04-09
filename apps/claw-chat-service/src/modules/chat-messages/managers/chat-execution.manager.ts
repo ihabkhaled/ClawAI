@@ -77,6 +77,7 @@ export class ChatExecutionManager {
           startTime,
           i > 0,
           threadSettings,
+          payload.routingMode,
         );
       } catch (error: unknown) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
@@ -116,6 +117,7 @@ export class ChatExecutionManager {
     startTime: number,
     usedFallback: boolean,
     threadSettings?: ThreadSettings,
+    routingMode?: string,
   ): Promise<LlmResponse> {
     if (provider.startsWith(IMAGE_PROVIDER_PREFIX)) {
       return this.callImageService(
@@ -125,6 +127,7 @@ export class ChatExecutionManager {
         startTime,
         usedFallback,
         context.userId,
+        routingMode === 'AUTO',
       );
     }
     if (provider === OLLAMA_PROVIDER) {
@@ -264,6 +267,7 @@ export class ChatExecutionManager {
     startTime: number,
     usedFallback: boolean,
     userId: string,
+    isAutoMode?: boolean,
   ): Promise<LlmResponse> {
     const config = AppConfig.get();
     const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
@@ -272,7 +276,7 @@ export class ChatExecutionManager {
     const response = await httpRequest<ImageGenerateResponse>({
       url: `${config.IMAGE_SERVICE_URL}/api/v1/internal/images/generate`,
       method: 'POST',
-      body: { prompt, provider, model, userId },
+      body: { prompt, provider, model, userId, isAutoMode },
       timeoutMs: 30_000,
     });
 
