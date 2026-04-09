@@ -37,3 +37,9 @@ export {
   isTerminalImageStatus,
   isInProgressImageStatus,
 } from './image-generation.utility';
+export {
+  getFileStatusLabel,
+  isTerminalFileStatus,
+  isInProgressFileStatus,
+  formatFileSizeLabel,
+} from './file-generation.utility';

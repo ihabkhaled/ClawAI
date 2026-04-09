@@ -12,6 +12,7 @@ const appConfigSchema = z.object({
   MEMORY_SERVICE_URL: z.string().min(1).default('http://memory-service:4005'),
   FILE_SERVICE_URL: z.string().min(1).default('http://file-service:4006'),
   IMAGE_SERVICE_URL: z.string().min(1).default('http://image-service:4012'),
+  FILE_GENERATION_SERVICE_URL: z.string().min(1).default('http://file-generation-service:4013'),
 
   CHAT_PORT: z.coerce.number().int().positive().default(4002),
 });

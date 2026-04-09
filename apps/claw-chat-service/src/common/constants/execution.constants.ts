@@ -2,6 +2,8 @@ export const OLLAMA_PROVIDER = 'local-ollama';
 
 export const IMAGE_PROVIDER_PREFIX = 'IMAGE_';
 
+export const FILE_GENERATION_PROVIDER = 'FILE_GENERATION';
+
 export const THREAD_CONTEXT_LIMIT = 20;
 
 export const MEMORY_FETCH_LIMIT = 20;

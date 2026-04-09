@@ -93,6 +93,11 @@ export type TranslationDictionary = {
     imageGeneration: string;
     generatedImage: string;
     downloadImage: string;
+    fileGeneration: string;
+    generatingFile: string;
+    fileGenerationFailed: string;
+    downloadFile: string;
+    convertingFile: string;
     providerModel: string;
     pinThread: string;
     unpinThread: string;

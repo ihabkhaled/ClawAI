@@ -154,6 +154,30 @@ services:
     networks:
       - claw-network
 
+  pg-file-generations:
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-file-generations
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_FILE_GENERATIONS_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_FILE_GENERATIONS_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_FILE_GENERATIONS_DB:-claw_file_generations}
+    ports:
+      - '${PG_FILE_GENERATIONS_PORT:-5449}:5432'
+    volumes:
+      - pg-file-generations-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${PG_FILE_GENERATIONS_USER:-claw} -d ${PG_FILE_GENERATIONS_DB:-claw_file_generations}',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
   pg-images:
     image: pgvector/pgvector:pg16
     container_name: claw-pg-images
@@ -543,6 +567,35 @@ services:
     networks:
       - claw-network
 
+  file-generation-service:
+    build:
+      context: .
+      dockerfile: apps/claw-file-generation-service/Dockerfile.dev
+    container_name: claw-file-generation-service
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '4013:4013'
+    volumes:
+      - ./apps/claw-file-generation-service/src:/app/apps/claw-file-generation-service/src
+      - ./apps/claw-file-generation-service/prisma:/app/apps/claw-file-generation-service/prisma
+    command: ['./docker-entrypoint.dev.sh']
+    depends_on:
+      pg-file-generations:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4013/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
   image-service:
     build:
       context: .
@@ -685,6 +738,7 @@ volumes:
   pg-files-data:
   pg-ollama-data:
   pg-images-data:
+  pg-file-generations-data:
   mongo-data:
   redis-data:
   rabbitmq-data:

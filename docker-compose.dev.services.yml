@@ -58,7 +58,7 @@ services:
     volumes:
       - ./apps/claw-auth-service/src:/app/apps/claw-auth-service/src
       - ./apps/claw-auth-service/prisma:/app/apps/claw-auth-service/prisma
-    command: ["./docker-entrypoint.dev.sh"]
+    command: ['./docker-entrypoint.dev.sh']
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://localhost:4001/api/v1/health || exit 1']
       interval: 15s
@@ -80,7 +80,7 @@ services:
     volumes:
       - ./apps/claw-chat-service/src:/app/apps/claw-chat-service/src
       - ./apps/claw-chat-service/prisma:/app/apps/claw-chat-service/prisma
-    command: ["./docker-entrypoint.dev.sh"]
+    command: ['./docker-entrypoint.dev.sh']
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://localhost:4002/api/v1/health || exit 1']
       interval: 15s
@@ -102,7 +102,7 @@ services:
     volumes:
       - ./apps/claw-connector-service/src:/app/apps/claw-connector-service/src
       - ./apps/claw-connector-service/prisma:/app/apps/claw-connector-service/prisma
-    command: ["./docker-entrypoint.dev.sh"]
+    command: ['./docker-entrypoint.dev.sh']
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://localhost:4003/api/v1/health || exit 1']
       interval: 15s
@@ -124,7 +124,7 @@ services:
     volumes:
       - ./apps/claw-routing-service/src:/app/apps/claw-routing-service/src
       - ./apps/claw-routing-service/prisma:/app/apps/claw-routing-service/prisma
-    command: ["./docker-entrypoint.dev.sh"]
+    command: ['./docker-entrypoint.dev.sh']
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://localhost:4004/api/v1/health || exit 1']
       interval: 15s
@@ -146,7 +146,7 @@ services:
     volumes:
       - ./apps/claw-memory-service/src:/app/apps/claw-memory-service/src
       - ./apps/claw-memory-service/prisma:/app/apps/claw-memory-service/prisma
-    command: ["./docker-entrypoint.dev.sh"]
+    command: ['./docker-entrypoint.dev.sh']
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://localhost:4005/api/v1/health || exit 1']
       interval: 15s
@@ -169,7 +169,7 @@ services:
       - ./apps/claw-file-service/src:/app/apps/claw-file-service/src
       - ./apps/claw-file-service/prisma:/app/apps/claw-file-service/prisma
       - file-storage-data:/data/files
-    command: ["./docker-entrypoint.dev.sh"]
+    command: ['./docker-entrypoint.dev.sh']
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://localhost:4006/api/v1/health || exit 1']
       interval: 15s
@@ -212,7 +212,7 @@ services:
     volumes:
       - ./apps/claw-ollama-service/src:/app/apps/claw-ollama-service/src
       - ./apps/claw-ollama-service/prisma:/app/apps/claw-ollama-service/prisma
-    command: ["./docker-entrypoint.dev.sh"]
+    command: ['./docker-entrypoint.dev.sh']
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://localhost:4008/api/v1/health || exit 1']
       interval: 15s
@@ -287,6 +287,29 @@ services:
 
   # ---------------------------------------------------------------------------
   # Frontend (DEV mode — hot-reload with Turbopack)
+  # ---------------------------------------------------------------------------
+  file-generation-service:
+    build:
+      context: .
+      dockerfile: apps/claw-file-generation-service/Dockerfile.dev
+    container_name: claw-file-generation-service
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '4013:4013'
+    volumes:
+      - ./apps/claw-file-generation-service/src:/app/apps/claw-file-generation-service/src
+      - ./apps/claw-file-generation-service/prisma:/app/apps/claw-file-generation-service/prisma
+    command: ['./docker-entrypoint.dev.sh']
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4013/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
   # ---------------------------------------------------------------------------
   frontend:
     build:

@@ -56,6 +56,48 @@ export const IMAGE_KEYWORDS = [
   'depict',
 ];
 
+// File generation provider
+export const FILE_GENERATION_PROVIDER = 'FILE_GENERATION';
+
+export const FILE_GENERATION_KEYWORDS = [
+  'generate a file',
+  'generate file',
+  'create a pdf',
+  'create pdf',
+  'create a document',
+  'create document',
+  'export as',
+  'export to',
+  'save as',
+  'download as',
+  'generate a pdf',
+  'generate pdf',
+  'generate a document',
+  'generate document',
+  'write a file',
+  'make a pdf',
+  'make a document',
+  'create a text file',
+  'create a csv',
+  'create csv',
+  'generate csv',
+  'create a json file',
+  'generate json file',
+  'export markdown',
+  'create a report',
+  'generate a report',
+  'create a html',
+  'generate html',
+  'create a docx',
+  'generate docx',
+  'save to file',
+  'write to file',
+  'output as pdf',
+  'output as file',
+  'generate a text file',
+  'create text file',
+];
+
 export const VALID_PROVIDERS = new Set([
   LOCAL_PROVIDER,
   CLOUD_PROVIDER_OPENAI,
@@ -65,6 +107,7 @@ export const VALID_PROVIDERS = new Set([
   IMAGE_PROVIDER_OPENAI,
   IMAGE_PROVIDER_GEMINI,
   IMAGE_PROVIDER_LOCAL,
+  FILE_GENERATION_PROVIDER,
 ]);
 
 export const ollamaRouterResponseSchema = z.object({
@@ -109,6 +152,7 @@ ROUTING RULES (follow strictly):
 - General chat, summarization, email drafting → local-ollama / gemma3:4b or OPENAI / gpt-4o-mini
 - Data analysis, CSV/JSON/file parsing → GEMINI / gemini-2.5-flash
 - Image generation, drawing, creating pictures, illustrations, art, sketches → IMAGE_OPENAI / dall-e-3
+- File generation, create PDF, export as CSV, save as file, generate document → FILE_GENERATION / auto
 - Privacy-sensitive requests → local-ollama / gemma3:4b (never send to cloud)
 - ONLY route to healthy providers listed above
 - Prefer local models when quality is acceptable for the task

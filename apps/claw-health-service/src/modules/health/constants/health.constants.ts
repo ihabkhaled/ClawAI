@@ -10,6 +10,7 @@ export const SERVICE_URLS: Record<string, string> = {
   'client-logs-service': 'http://client-logs-service:4010/api/v1/health',
   'server-logs-service': 'http://server-logs-service:4011/api/v1/health',
   'image-service': 'http://image-service:4012/api/v1/health',
+  'file-generation-service': 'http://file-generation-service:4013/api/v1/health',
 };
 
 export const HEALTH_CHECK_TIMEOUT_MS = 5000;

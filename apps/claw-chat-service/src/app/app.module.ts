@@ -26,7 +26,12 @@ import { ChatMessagesModule } from '../modules/chat-messages/chat-messages.modul
             ? { target: 'pino-pretty', options: { colorize: true } }
             : undefined,
         level: process.env['NODE_ENV'] !== 'production' ? 'debug' : 'info',
-        autoLogging: true,
+        autoLogging: {
+          ignore: (req: IncomingMessage): boolean => {
+            const url = req.url ?? '';
+            return url.includes('/stream/');
+          },
+        },
         redact: {
           paths: [
             'req.headers.authorization',
@@ -56,10 +61,12 @@ import { ChatMessagesModule } from '../modules/chat-messages/chat-messages.modul
     HealthModule,
     ChatThreadsModule,
     ChatMessagesModule,
-    ThrottlerModule.forRoot([{
-      ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
-      limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
+        limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
+      },
+    ]),
   ],
   providers: [
     {

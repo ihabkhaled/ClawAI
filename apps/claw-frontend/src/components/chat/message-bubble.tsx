@@ -1,5 +1,6 @@
 import { Brain, FileText, RefreshCw, ThumbsDown, ThumbsUp } from 'lucide-react';
 
+import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
 import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble';
 import { MessageProvenance } from '@/components/chat/message-provenance';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
@@ -31,6 +32,11 @@ export function MessageBubble({
   const isImageGeneration = metadata?.['type'] === 'image_generation';
   const imageGenerationId =
     typeof metadata?.['generationId'] === 'string' ? metadata['generationId'] : undefined;
+  const isFileGeneration = metadata?.['type'] === 'file_generation';
+  const fileGenerationId =
+    typeof metadata?.['generationId'] === 'string' && isFileGeneration
+      ? metadata['generationId']
+      : undefined;
 
   const handleFeedback = (value: MessageFeedback): void => {
     if (!onFeedback) {
@@ -58,7 +64,12 @@ export function MessageBubble({
               isAutoMode={message.routingMode === RoutingMode.AUTO}
             />
           ) : null}
-          {!isUser && !isImageGeneration ? <MarkdownRenderer content={message.content} /> : null}
+          {!isUser && isFileGeneration && fileGenerationId ? (
+            <FileGenerationBubble generationId={fileGenerationId} prompt={message.content} />
+          ) : null}
+          {!isUser && !isImageGeneration && !isFileGeneration ? (
+            <MarkdownRenderer content={message.content} />
+          ) : null}
         </div>
         {!isUser && (providerModel || totalTokens > 0 || message.latencyMs !== null) ? (
           <div className="flex flex-wrap items-center gap-1.5">

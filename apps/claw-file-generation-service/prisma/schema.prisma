@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("FILE_GENERATION_DATABASE_URL")
+}
+
+enum FileGenerationStatus {
+  QUEUED
+  STARTING
+  GENERATING_CONTENT
+  CONVERTING
+  FINALIZING
+  COMPLETED
+  FAILED
+  TIMED_OUT
+  CANCELLED
+}
+
+enum FileFormat {
+  TXT
+  MD
+  PDF
+  DOCX
+  CSV
+  JSON
+  HTML
+}
+
+model FileGeneration {
+  id                 String               @id @default(cuid())
+  userId             String               @map("user_id")
+  threadId           String?              @map("thread_id")
+  userMessageId      String?              @map("user_message_id")
+  assistantMessageId String?              @map("assistant_message_id")
+  prompt             String
+  content            String?              @db.Text
+  format             FileFormat
+  filename           String?
+  provider           String
+  model              String
+  status             FileGenerationStatus @default(QUEUED)
+  errorCode          String?              @map("error_code")
+  errorMessage       String?              @map("error_message")
+  startedAt          DateTime?            @map("started_at")
+  completedAt        DateTime?            @map("completed_at")
+  latencyMs          Int?                 @map("latency_ms")
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+
+  assets FileGenerationAsset[]
+  events FileGenerationEvent[]
+
+  @@index([userId])
+  @@index([threadId])
+  @@index([status, createdAt])
+  @@index([assistantMessageId])
+  @@map("file_generations")
+}
+
+model FileGenerationAsset {
+  id           String   @id @default(cuid())
+  generationId String   @map("generation_id")
+  storageKey   String   @map("storage_key")
+  url          String
+  downloadUrl  String   @map("download_url")
+  mimeType     String   @map("mime_type")
+  sizeBytes    Int?     @map("size_bytes")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  generation FileGeneration @relation(fields: [generationId], references: [id], onDelete: Cascade)
+
+  @@index([generationId])
+  @@map("file_generation_assets")
+}
+
+model FileGenerationEvent {
+  id           String               @id @default(cuid())
+  generationId String               @map("generation_id")
+  status       FileGenerationStatus
+  payloadJson  Json?                @map("payload_json")
+  createdAt    DateTime             @default(now()) @map("created_at")
+
+  generation FileGeneration @relation(fields: [generationId], references: [id], onDelete: Cascade)
+
+  @@index([generationId, createdAt])
+  @@map("file_generation_events")
+}

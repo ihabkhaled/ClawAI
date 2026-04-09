@@ -19,6 +19,7 @@ export type LlmResponse = {
   finishReason?: string;
   usedFallback: boolean;
   imageGenerationId?: string;
+  fileGenerationId?: string;
 };
 
 export type OllamaGenerateRequest = {
@@ -110,4 +111,10 @@ export type ImageGenerateResponse = {
   status: string;
   provider: string;
   model: string;
+};
+
+export type FileGenerateResponse = {
+  generationId: string;
+  status: string;
+  format: string;
 };

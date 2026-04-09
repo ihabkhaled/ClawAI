@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Local-first AI orchestration platform. 12 NestJS microservices + Next.js frontend + 8 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama. Monorepo with npm workspaces.
+Local-first AI orchestration platform. 13 NestJS microservices + Next.js frontend + 9 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama. Monorepo with npm workspaces.
 
 ## Architecture at a Glance
 
@@ -11,7 +11,7 @@ Frontend (Next.js 16, port 3000)
   → Nginx reverse proxy (port 4000)
     → 11 backend services (ports 4001-4011)
       → RabbitMQ (async events, topic exchange: claw.events)
-      → 8 PostgreSQL (pgvector), 1 MongoDB (3 databases), 1 Redis
+      → 9 PostgreSQL (pgvector), 1 MongoDB (3 databases), 1 Redis
       → Ollama (local AI runtime, port 11434)
 ```
 
@@ -32,6 +32,7 @@ apps/
   claw-client-logs-service/ # Port 4010, MongoDB         — frontend logs, batched, TTL 30d
   claw-server-logs-service/ # Port 4011, MongoDB         — backend logs, Elasticsearch-ready, TTL 30d
   claw-image-service/       # Port 4012, PG claw_images  — image generation, DALL-E/Gemini/SD adapters
+  claw-file-generation-service/ # Port 4013, PG claw_file_generations — file export (PDF/DOCX/CSV/HTML/MD/TXT/JSON)
 packages/
   shared-types/      # 18 enums, event payloads, auth types
   shared-constants/  # Exchange name, ports, API prefix, pagination defaults
@@ -441,6 +442,8 @@ Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 | log.server                        | all services | server-logs    |
 | image.generated                   | image        | audit          |
 | image.failed                      | image        | audit          |
+| file.generated                    | file-gen     | audit          |
+| file_generation.failed            | file-gen     | audit          |
 
 ---
 
@@ -544,6 +547,7 @@ Active policies (sorted by priority) can override the mode.
 | /api/v1/client-logs      | client-logs:4010 | Frontend log ingestion             |
 | /api/v1/server-logs      | server-logs:4011 | Backend log viewer                 |
 | /api/v1/images           | image:4012       | Image generation                   |
+| /api/v1/file-generations | file-gen:4013    | File export (PDF/DOCX/CSV/etc.)    |
 
 ---
 
@@ -652,4 +656,211 @@ docker compose -f docker-compose.dev.yml up -d   # Start dev
 docker compose -f docker-compose.dev.yml down     # Stop
 docker compose -f docker-compose.dev.yml logs -f chat-service  # Follow logs
 ./scripts/claw.sh status   # Check all service status
+```
+
+---
+
+## Complete Software Development Lifecycle
+
+**Every feature implementation MUST follow this exact process from start to finish. No shortcuts.**
+
+### Phase 1: Understand the Feature
+
+1. Read the requirements fully before writing any code
+2. Identify ALL services that will be affected (backend + frontend + infrastructure)
+3. Check the Event Bus table — does this feature need new events?
+4. Check the Nginx Route Map — does this feature need new routes?
+5. Check the Data Models — does this need schema changes?
+
+### Phase 2: Plan the Implementation
+
+1. List every file that needs to change (controllers, services, repositories, DTOs, types, hooks, components, tests, configs)
+2. Determine the order: shared packages → backend → events → frontend → tests → docs
+3. Identify cross-service communication needed (HTTP internal endpoints, RabbitMQ events, SSE)
+
+### Phase 3: Backend Implementation
+
+For each affected backend service, follow this exact order:
+
+1. **Prisma schema** — Add/modify models, then `npx prisma migrate dev --name <name>`
+2. **Enums** — Add to `src/common/enums/` AND `packages/shared-types` if cross-service
+3. **Types** — Add to `src/modules/<domain>/types/<name>.types.ts`
+4. **Constants** — Add to `src/common/constants/` or `src/modules/<domain>/constants/`
+5. **DTOs** — Create Zod schemas in `src/modules/<domain>/dto/<name>.dto.ts`
+6. **Repository** — Pure data access, no business logic, no throw
+7. **Service** — Business logic, max 30 lines/method, ownership validation here
+8. **Manager** — Complex orchestration only if needed, max 80 lines/method
+9. **Controller** — 3-line methods only: extract params, call service, return
+10. **Module** — Register new providers/controllers in the module file
+11. **Events** — Add event pattern to `packages/shared-types`, publish in service, subscribe in consumers
+12. **Tests** — Unit tests for every new service method and DTO
+
+### Phase 4: SSE / Real-time Features (Critical Lessons Learned)
+
+When implementing SSE (Server-Sent Events) endpoints:
+
+1. **Use `@SkipLogging()` decorator** on SSE controllers — pino-http's autoLogging conflicts with SSE streaming, causing "Cannot set headers after they are sent to the client"
+2. **Use `@SkipThrottle()`** on SSE endpoints — rate limiting on long-lived connections is wrong
+3. **Exclude SSE routes from pino-http autoLogging** in `app.module.ts`:
+   ```typescript
+   autoLogging: {
+     ignore: (req) => req.url?.includes('/stream/') ?? false,
+   }
+   ```
+4. **GlobalExceptionFilter** must check `response.headersSent` before writing error responses
+5. **Nginx config** for SSE endpoints MUST have:
+   ```nginx
+   proxy_http_version 1.1;
+   proxy_set_header Connection "";
+   proxy_read_timeout 86400;
+   proxy_buffering off;
+   proxy_cache off;
+   ```
+6. **Never use EventSource API** — it cannot set Authorization headers. Use `fetch()` with `ReadableStream` instead (see `src/utilities/sse.utility.ts`)
+7. **Never pass JWT tokens in URL query params** — they leak in server logs, browser history, and Referer headers
+
+### Phase 5: Error Handling in Async Flows (Critical Lessons Learned)
+
+When a background/async operation fails (e.g., all LLM providers fail):
+
+1. **Always store an error message in the database** — the frontend polls for new messages; if no message is stored, polling runs forever
+2. **Emit SSE error events** so the frontend can react immediately (before the next poll)
+3. **Frontend must handle both paths**: SSE error event (fast) AND polling finding the error message (fallback)
+4. The error message should be stored as a regular record (e.g., ASSISTANT role with `metadata: { error: true }`) so the frontend's existing polling logic naturally picks it up
+5. Never silently swallow errors in RabbitMQ event handlers — at minimum log AND store a user-visible error
+
+### Phase 6: Frontend Implementation
+
+For each frontend change, follow this exact order:
+
+1. **Types** — Add to `src/types/<domain>.types.ts` AND export from `src/types/index.ts`
+2. **Enums** — Add to `src/enums/<name>.enum.ts` AND export from `src/enums/index.ts`
+3. **Constants** — Add to `src/constants/<name>.constants.ts` AND export from `src/constants/index.ts`
+4. **Repository** — Add API call in `src/repositories/<domain>/<domain>.repository.ts`
+5. **Query keys** — Add to `src/repositories/shared/query-keys.ts`
+6. **Hooks** — Create in `src/hooks/<domain>/use-<name>.ts` (one hook = one responsibility)
+7. **Components** — Build in `src/components/<feature>/`, TSX = render only
+8. **Page** — Wire in `src/app/(portal)/<route>/page.tsx` with ONE controller hook
+9. **i18n** — Add text to ALL 8 locale files
+10. **Utilities** — If needed, wrap in `src/utilities/<name>.utility.ts` AND export from index
+11. **Tests** — Vitest tests for utilities, hooks, components
+
+### Phase 7: Infrastructure & Config Updates
+
+Check and update ALL of these (the MANDATORY Change Checklist):
+
+1. `.env.example` + `.env` — any new environment variables
+2. `scripts/install.sh` + `scripts/install.ps1` — add to generated .env block
+3. `docker-compose.dev.yml` + `docker-compose.yml` — new service/port/volume/database
+4. `infra/nginx/nginx.conf` — new upstream + location block (SSE routes need special config!)
+5. `packages/shared-constants` — new service port and name
+6. `packages/shared-types` — new event patterns
+7. `apps/claw-health-service` — add new service to health check list
+8. `.github/workflows/ci.yml` — add to Prisma generate loop and test env vars
+
+### Phase 8: Validation (ALL must pass before considering done)
+
+```bash
+# 1. TypeScript — 0 errors in ALL changed workspaces
+npm run typecheck --workspace=apps/<service-name>
+
+# 2. ESLint — 0 errors (warnings OK if pre-existing)
+npm run lint --workspace=apps/<service-name>
+
+# 3. Tests — ALL pass
+npm run test --workspace=apps/<service-name>
+
+# 4. Docker — restart affected services and verify healthy
+docker compose -f docker-compose.dev.yml restart <service-name>
+docker compose -f docker-compose.dev.yml ps <service-name>  # must show (healthy)
+```
+
+### Phase 9: E2E API Testing
+
+Test the feature end-to-end using curl or the frontend:
+
+1. **Get a valid JWT token**: `POST /api/v1/auth/login`
+2. **Test the happy path**: send a valid request, verify response
+3. **Test through nginx** (port 4000): verify nginx routes correctly
+4. **Test directly to service** (e.g., port 4002): isolate service issues from nginx issues
+5. **Test error paths**: invalid input, missing auth, forbidden access, provider failures
+6. **Test async flows**: send message → verify SSE events → verify DB records → verify polling stops
+7. **Check service logs**: `docker compose logs <service> --since 1m` for errors
+
+### Phase 10: Cross-Service Flow Verification
+
+For features involving multiple services (e.g., message flow):
+
+1. Verify RabbitMQ events are published: check logs for "Published event: <pattern>"
+2. Verify events are consumed: check consumer service logs
+3. Verify SSE events reach the frontend (if applicable)
+4. Verify database records are created in the correct service's DB
+5. Verify audit logging captures the action
+
+### Phase 11: Documentation
+
+1. Update `CLAUDE.md` if new patterns, services, env vars, or rules were added
+2. Update `docs/` if architecture changed
+3. Update service-specific `CLAUDE.md` files (e.g., `apps/claw-chat-service/CLAUDE.md`)
+
+---
+
+## Known Gotchas & Hard-Won Lessons
+
+### SSE Streaming
+
+- pino-http `autoLogging` + NestJS `@Sse` = "Cannot set headers" crash. Always exclude SSE routes.
+- `LoggingInterceptor` calling `response.setHeader()` also conflicts. Use `@SkipLogging()`.
+- Nginx MUST have `proxy_buffering off` for SSE. Without it, events are buffered and never reach the client.
+- The SSE location block in nginx MUST come BEFORE the generic service location block (nginx uses longest prefix match, but explicit ordering prevents surprises).
+
+### Fallback & Error Handling
+
+- When all LLM providers fail, you MUST store an error message as an ASSISTANT record. Without it, the frontend's polling condition (`lastMessage.role === ASSISTANT`) is never met, and "AI is thinking..." spins forever.
+- The `ChatExecutionManager` emits SSE error events AND throws. The `handleMessageRouted` catch block must store the error message BEFORE re-throwing.
+- Frontend polling has a 3-minute max (90 polls at 1s interval) as a safety net.
+
+### Authentication
+
+- Never use `EventSource` API for authenticated SSE — it can't set headers
+- Use `fetch()` with `Authorization: Bearer` header instead (see `sse.utility.ts`)
+- Token refresh interceptor in `http-client.ts` handles 401 → refresh → retry automatically for REST calls, but NOT for SSE connections
+
+### Docker & Hot Reload
+
+- Source changes in `src/` are auto-detected by `node --watch` — no restart needed
+- Shared package changes (`packages/*`) require rebuilding the package AND restarting dependent services
+- Prisma schema changes require container rebuild (migration runs in entrypoint)
+- Nginx config changes require `docker compose restart nginx`
+
+### Testing
+
+- Frontend tests may fail on the host due to rollup native binary issues with Node.js v24+. Run inside Docker or use the vitest process cache.
+- Backend tests run with Jest, frontend with Vitest — different APIs
+- Test files (`*.spec.ts`, `*.test.ts`) have all ESLint restrictions OFF
+
+---
+
+## Documentation System
+
+Full documentation lives in `docs/` organized by layer:
+
+```
+docs/
+  00-start-here/          # Index, onboarding, system overview
+  01-executive-context/   # Product vision, business overview
+  02-business-product/    # Personas, features, user journeys
+  03-architecture/        # System architecture, message flow, routing, events, security
+  04-backend/             # Services index, controllers reference, coding standards, shared packages
+  05-frontend/            # Frontend architecture, coding standards
+  06-data/                # Database reference, environment variables
+  07-integrations/        # AI provider catalog
+  08-runtime-devops/      # Docker guide, CI/CD, nginx reference
+  09-testing/             # Testing strategy
+  10-uat-acceptance/      # UAT guide, business acceptance
+  11-runbooks/            # Troubleshooting, operational runbooks
+  12-reference/           # API reference, error catalog
+  13-adr/                 # Architecture Decision Records
+  14-risk-debt/           # Technical debt, risk register
+  15-ai-context/          # AI agent context pack, codebase navigation
 ```

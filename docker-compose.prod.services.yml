@@ -255,6 +255,26 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  # File Generation Service
+  # ---------------------------------------------------------------------------
+  file-generation-service:
+    build:
+      context: .
+      dockerfile: apps/claw-file-generation-service/Dockerfile
+    container_name: claw-file-generation-service
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '4013:4013'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4013/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
   # Frontend
   # ---------------------------------------------------------------------------
   frontend:

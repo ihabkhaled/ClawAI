@@ -282,6 +282,11 @@ PG_IMAGES_PASSWORD=${DB_PASSWORD}
 PG_IMAGES_DB=claw_images
 PG_IMAGES_PORT=5448
 
+PG_FILE_GENERATIONS_USER=claw
+PG_FILE_GENERATIONS_PASSWORD=${DB_PASSWORD}
+PG_FILE_GENERATIONS_DB=claw_file_generations
+PG_FILE_GENERATIONS_PORT=5449
+
 # =============================================================================
 # MongoDB
 # =============================================================================
@@ -359,6 +364,7 @@ AUDIT_SERVICE_URL=http://audit-service:4007
 CLIENT_LOGS_SERVICE_URL=http://client-logs-service:4010
 SERVER_LOGS_SERVICE_URL=http://server-logs-service:4011
 IMAGE_SERVICE_URL=http://image-service:4012
+FILE_GENERATION_SERVICE_URL=http://file-generation-service:4013
 
 # =============================================================================
 # Per-Service Ports
@@ -375,6 +381,7 @@ HEALTH_PORT=4009
 CLIENT_LOGS_PORT=4010
 SERVER_LOGS_PORT=4011
 IMAGE_PORT=4012
+FILE_GENERATION_PORT=4013
 
 # =============================================================================
 # Per-Service Database URLs
@@ -387,6 +394,7 @@ MEMORY_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-memory:5432/claw_memory?
 FILES_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-files:5432/claw_files?schema=public
 OLLAMA_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-ollama:5432/claw_ollama?schema=public
 IMAGE_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-images:5432/claw_images?schema=public
+FILE_GENERATION_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-file-generations:5432/claw_file_generations?schema=public
 
 STABLE_DIFFUSION_URL=http://stable-diffusion:7860
 

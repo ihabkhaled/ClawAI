@@ -21,4 +21,6 @@ export enum EventPattern {
   LOG_SERVER = 'log.server',
   IMAGE_GENERATED = 'image.generated',
   IMAGE_FAILED = 'image.failed',
+  FILE_GENERATED = 'file.generated',
+  FILE_GENERATION_FAILED = 'file_generation.failed',
 }

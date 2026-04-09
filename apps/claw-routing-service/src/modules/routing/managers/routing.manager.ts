@@ -12,6 +12,8 @@ import {
   CLOUD_PROVIDER_DEEPSEEK,
   CLOUD_PROVIDER_GEMINI,
   CLOUD_PROVIDER_OPENAI,
+  FILE_GENERATION_KEYWORDS,
+  FILE_GENERATION_PROVIDER,
   IMAGE_KEYWORDS,
   IMAGE_MODEL_DALLE3,
   IMAGE_MODEL_IMAGEN,
@@ -228,6 +230,11 @@ export class RoutingManager {
       return imageResult;
     }
 
+    const fileResult = this.detectFileGenerationRequest(context);
+    if (fileResult) {
+      return fileResult;
+    }
+
     // Try Ollama-assisted routing first
     const ollamaDecision = await this.ollamaRouter.route(context);
     if (ollamaDecision) {
@@ -250,10 +257,15 @@ export class RoutingManager {
   }
 
   private handleAutoHeuristic(context: RoutingContext): RoutingDecisionResult {
-    // Check for image generation request first
+    // Check for image/file generation requests first
     const imageResult = this.detectImageRequest(context);
     if (imageResult) {
       return imageResult;
+    }
+
+    const fileResult = this.detectFileGenerationRequest(context);
+    if (fileResult) {
+      return fileResult;
     }
 
     const localHealthy = this.isRuntimeHealthy('OLLAMA', context);
@@ -407,6 +419,28 @@ export class RoutingManager {
       reasonTags: ['auto', 'image_generation', 'keyword_detected'],
       privacyClass: provider === IMAGE_PROVIDER_LOCAL ? 'local' : 'cloud',
       costClass: provider === IMAGE_PROVIDER_LOCAL ? 'free' : 'medium',
+      fallbackChain: this.buildFallbackChain(primary, context),
+    };
+  }
+
+  private detectFileGenerationRequest(context: RoutingContext): RoutingDecisionResult | null {
+    const lower = context.message.toLowerCase();
+    const isFileGen = FILE_GENERATION_KEYWORDS.some((kw) => lower.includes(kw));
+    if (!isFileGen) {
+      return null;
+    }
+
+    this.logger.log('File generation request detected via keyword heuristic');
+
+    const primary = { provider: FILE_GENERATION_PROVIDER, model: 'auto' };
+    return {
+      selectedProvider: FILE_GENERATION_PROVIDER,
+      selectedModel: 'auto',
+      routingMode: RoutingMode.AUTO,
+      confidence: 0.95,
+      reasonTags: ['auto', 'file_generation', 'keyword_detected'],
+      privacyClass: 'cloud',
+      costClass: 'medium',
       fallbackChain: this.buildFallbackChain(primary, context),
     };
   }

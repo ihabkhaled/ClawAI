@@ -3,12 +3,14 @@ import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities';
 import { BusinessException } from '../../../common/errors';
 import {
+  FILE_GENERATION_PROVIDER,
   IMAGE_PROVIDER_PREFIX,
   OLLAMA_PROVIDER,
   PROVIDER_BASE_URLS,
 } from '../../../common/constants';
 import {
   type ConnectorConfigResponse,
+  type FileGenerateResponse,
   type ImageGenerateResponse,
   type LlmResponse,
   type MessageRoutedData,
@@ -119,6 +121,9 @@ export class ChatExecutionManager {
     threadSettings?: ThreadSettings,
     routingMode?: string,
   ): Promise<LlmResponse> {
+    if (provider === FILE_GENERATION_PROVIDER) {
+      return this.callFileGenerationService(context, startTime, usedFallback, threadSettings);
+    }
     if (provider.startsWith(IMAGE_PROVIDER_PREFIX)) {
       return this.callImageService(
         provider,
@@ -298,6 +303,96 @@ export class ChatExecutionManager {
       usedFallback,
       imageGenerationId: response.data.generationId,
     };
+  }
+
+  private async callFileGenerationService(
+    context: AssembledContext,
+    startTime: number,
+    usedFallback: boolean,
+    threadSettings?: ThreadSettings,
+  ): Promise<LlmResponse> {
+    const config = AppConfig.get();
+    const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
+    const prompt = lastUserMsg?.content ?? 'generate a file';
+    const format = this.detectFileFormat(prompt);
+
+    // Phase 1: Call LLM for content
+    const contentProvider = this.pickContentProvider(context);
+    const contentResponse = await this.callCloudProvider(
+      contentProvider.provider,
+      contentProvider.model,
+      context,
+      startTime,
+      false,
+      threadSettings,
+    );
+
+    // Phase 2: Send content to file-generation-service for conversion
+    const response = await httpRequest<FileGenerateResponse>({
+      url: `${config.FILE_GENERATION_SERVICE_URL}/api/v1/internal/file-generations/generate`,
+      method: 'POST',
+      body: {
+        prompt,
+        content: contentResponse.content,
+        format,
+        provider: contentResponse.provider,
+        model: contentResponse.model,
+        userId: context.userId,
+      },
+      timeoutMs: 30_000,
+    });
+
+    if (!response.ok) {
+      throw new BusinessException(
+        `File generation service returned status ${String(response.status)}`,
+        'FILE_GENERATION_SERVICE_REQUEST_FAILED',
+      );
+    }
+
+    const latencyMs = Date.now() - startTime;
+    return {
+      content: `Generating ${format.toLowerCase()} file\u2026`,
+      provider: FILE_GENERATION_PROVIDER,
+      model: 'auto',
+      latencyMs,
+      finishReason: 'stop',
+      usedFallback,
+      fileGenerationId: response.data.generationId,
+    };
+  }
+
+  private detectFileFormat(prompt: string): string {
+    const lower = prompt.toLowerCase();
+    if (lower.includes('pdf')) {
+      return 'PDF';
+    }
+    if (lower.includes('docx') || lower.includes('word')) {
+      return 'DOCX';
+    }
+    if (lower.includes('csv')) {
+      return 'CSV';
+    }
+    if (lower.includes('json')) {
+      return 'JSON';
+    }
+    if (lower.includes('html')) {
+      return 'HTML';
+    }
+    if (lower.includes('markdown') || lower.includes('.md')) {
+      return 'MD';
+    }
+    return 'TXT';
+  }
+
+  private pickContentProvider(_context: AssembledContext): { provider: string; model: string } {
+    // Pick first available cloud provider for content generation
+    const providers = [
+      { provider: 'GEMINI', model: 'gemini-2.5-flash' },
+      { provider: 'ANTHROPIC', model: 'claude-sonnet-4' },
+      { provider: 'OPENAI', model: 'gpt-4o-mini' },
+    ];
+    // For now return first; could check connector health in future
+    return providers[0] ?? { provider: 'GEMINI', model: 'gemini-2.5-flash' };
   }
 
   private async fetchConnectorConfig(provider: string): Promise<ConnectorConfigResponse> {

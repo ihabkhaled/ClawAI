@@ -166,10 +166,15 @@ export class ChatMessagesService implements OnModuleInit {
     const threadSettings = this.extractThreadSettings(thread);
     const fileIds = this.extractFileIdsFromMessages(chronologicalMessages);
 
-    // Context-aware image follow-up detection:
-    // If user says "again"/"one more" and the last assistant message was image generation,
-    // override routing to use the same image provider
-    const effectivePayload = this.detectImageFollowUp(payload, thread, chronologicalMessages);
+    // Context-aware follow-up detection:
+    // If user says "again"/"one more" and the last message was image/file generation,
+    // override routing to re-trigger the same generation type
+    let effectivePayload = this.detectImageFollowUp(payload, thread, chronologicalMessages);
+    effectivePayload = this.detectFileGenerationFollowUp(
+      effectivePayload,
+      thread,
+      chronologicalMessages,
+    );
 
     const context = await this.contextAssemblyManager.assemble(
       thread?.userId ?? 'system',
@@ -329,6 +334,9 @@ export class ChatMessagesService implements OnModuleInit {
           : {}),
         ...(llmResponse.imageGenerationId
           ? { type: 'image_generation', generationId: llmResponse.imageGenerationId }
+          : {}),
+        ...(llmResponse.fileGenerationId
+          ? { type: 'file_generation', generationId: llmResponse.fileGenerationId }
           : {}),
       },
     });
@@ -525,6 +533,60 @@ export class ChatMessagesService implements OnModuleInit {
       routingMode: payload.routingMode,
       fallbackProvider: lastImageMsg ? undefined : payload.fallbackProvider,
       fallbackModel: lastImageMsg ? undefined : payload.fallbackModel,
+    };
+  }
+
+  private detectFileGenerationFollowUp(
+    payload: MessageRoutedData,
+    _thread: ChatThread | null,
+    messages: ChatMessage[],
+  ): MessageRoutedData {
+    if (payload.routingMode !== 'AUTO') {
+      return payload;
+    }
+    if (payload.selectedProvider === 'FILE_GENERATION') {
+      return payload;
+    }
+
+    // Check if last assistant message was file generation
+    const lastAssistant = [...messages].reverse().find((m) => m.role === 'ASSISTANT');
+    const meta = lastAssistant?.metadata as Record<string, unknown> | null;
+    if (meta?.['type'] !== 'file_generation') {
+      return payload;
+    }
+
+    // Check for short follow-up
+    const lastUser = [...messages].reverse().find((m) => m.role === 'USER');
+    if (!lastUser) {
+      return payload;
+    }
+    const lower = lastUser.content.toLowerCase().trim();
+    const isFollowUp =
+      lower.length < 100 &&
+      (lower === 'again' ||
+        lower === 'one more' ||
+        lower === 'another one' ||
+        lower === 'do it again' ||
+        lower === 'retry' ||
+        lower === 'regenerate' ||
+        lower === 'redo' ||
+        lower === 'more' ||
+        lower.startsWith('another') ||
+        lower.startsWith('one more') ||
+        lower.startsWith('do another'));
+
+    if (!isFollowUp) {
+      return payload;
+    }
+
+    this.logger.log(
+      `File generation follow-up detected: "${lower}" → re-routing to FILE_GENERATION`,
+    );
+
+    return {
+      ...payload,
+      selectedProvider: 'FILE_GENERATION',
+      selectedModel: 'auto',
     };
   }
 }

@@ -61,7 +61,11 @@ services:
     volumes:
       - pg-connector-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PG_CONNECTOR_USER:-claw} -d ${PG_CONNECTOR_DB:-claw_connectors}']
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${PG_CONNECTOR_USER:-claw} -d ${PG_CONNECTOR_DB:-claw_connectors}',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -81,7 +85,8 @@ services:
     volumes:
       - pg-routing-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PG_ROUTING_USER:-claw} -d ${PG_ROUTING_DB:-claw_routing}']
+      test:
+        ['CMD-SHELL', 'pg_isready -U ${PG_ROUTING_USER:-claw} -d ${PG_ROUTING_DB:-claw_routing}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -142,6 +147,33 @@ services:
       - pg-ollama-data:/var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${PG_OLLAMA_USER:-claw} -d ${PG_OLLAMA_DB:-claw_ollama}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL (File Generation Service)
+  # ---------------------------------------------------------------------------
+  pg-file-generations:
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-file-generations
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_FILE_GENERATIONS_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_FILE_GENERATIONS_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_FILE_GENERATIONS_DB:-claw_file_generations}
+    ports:
+      - '${PG_FILE_GENERATIONS_PORT:-5449}:5432'
+    volumes:
+      - pg-file-generations-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${PG_FILE_GENERATIONS_USER:-claw} -d ${PG_FILE_GENERATIONS_DB:-claw_file_generations}',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -221,6 +253,7 @@ volumes:
   pg-memory-data:
   pg-files-data:
   pg-ollama-data:
+  pg-file-generations-data:
   mongo-data:
   redis-data:
   rabbitmq-data:

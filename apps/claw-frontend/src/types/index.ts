@@ -170,6 +170,11 @@ export type {
   ImageGenerationEventPayload,
 } from './image-generation.types';
 export type {
+  FileGeneration,
+  FileGenerationAsset,
+  FileGenerationEventPayload,
+} from './file-generation.types';
+export type {
   TranslationDictionary,
   TranslationNamespace,
   TranslationKey,
