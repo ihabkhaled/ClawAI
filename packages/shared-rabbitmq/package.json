@@ -14,8 +14,8 @@
     "@claw/shared-constants": "*"
   },
   "devDependencies": {
-    "@nestjs/common": "^10.4.0",
-    "@nestjs/core": "^10.4.0",
+    "@nestjs/common": "^11.1.0",
+    "@nestjs/core": "^11.1.0",
     "@types/amqplib": "^0.10.5",
     "typescript": "^5.6.0"
   }
