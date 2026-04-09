@@ -31,10 +31,12 @@ export function useAvailableModels(): {
       }
       const provider = 'local-ollama';
       const existing = groups.get(provider) ?? [];
+      const fullModelName =
+        model.tag && model.tag !== 'latest' ? `${model.name}:${model.tag}` : model.name;
       existing.push({
         provider,
-        model: model.name,
-        displayName: `${model.name} (${model.family ?? 'local'})`,
+        model: fullModelName,
+        displayName: `${fullModelName} (${model.family ?? 'local'})`,
       });
       groups.set(provider, existing);
     }
@@ -62,8 +64,12 @@ export function useAvailableModels(): {
 
     // Sort: local-ollama first, then alphabetically
     result.sort((a, b) => {
-      if (a.provider === 'local-ollama') {return -1;}
-      if (b.provider === 'local-ollama') {return 1;}
+      if (a.provider === 'local-ollama') {
+        return -1;
+      }
+      if (b.provider === 'local-ollama') {
+        return 1;
+      }
       return a.label.localeCompare(b.label);
     });
 
