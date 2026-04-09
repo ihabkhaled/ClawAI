@@ -13,6 +13,8 @@ export const generateImageSchema = z.object({
   quality: z.string().max(20).optional(),
   style: z.string().max(20).optional(),
   isAutoMode: z.boolean().optional(),
+  referenceImageBase64: z.string().max(20_000_000).optional(),
+  referenceImageMimeType: z.string().max(50).optional(),
 });
 
 export type GenerateImageDto = z.infer<typeof generateImageSchema>;

@@ -71,6 +71,8 @@ export class ImageExecutionManager {
         config.apiKey,
         prompt,
         model,
+        params.referenceImageBase64,
+        params.referenceImageMimeType,
       );
     }
 

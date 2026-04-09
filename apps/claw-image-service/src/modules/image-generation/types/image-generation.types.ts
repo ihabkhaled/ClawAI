@@ -51,6 +51,8 @@ export type GenerateImageParams = {
   quality?: string;
   style?: string;
   isAutoMode?: boolean;
+  referenceImageBase64?: string;
+  referenceImageMimeType?: string;
 };
 
 export type ImageProviderResponse = {

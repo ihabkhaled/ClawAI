@@ -16,9 +16,28 @@ export async function generateWithGemini(
   apiKey: string,
   prompt: string,
   _model: string,
+  referenceImageBase64?: string,
+  referenceImageMimeType?: string,
 ): Promise<ImageProviderResponse> {
   const cleanBaseUrl = baseUrl.replace('/openai', '');
   let lastError: unknown = null;
+
+  // Build request parts: optional reference image + text prompt
+  const requestParts: GeminiPart[] = [];
+
+  if (referenceImageBase64 && referenceImageMimeType) {
+    // Include the reference image so Gemini can see it and generate similar
+    requestParts.push({
+      inlineData: {
+        mimeType: referenceImageMimeType,
+        data: referenceImageBase64,
+      },
+    });
+    requestParts.push({ text: prompt });
+    logger.log('Including reference image in Gemini image generation request');
+  } else {
+    requestParts.push({ text: `Generate an image: ${prompt}` });
+  }
 
   // Try each model
   for (const geminiModel of IMAGE_CAPABLE_MODELS) {
@@ -30,7 +49,7 @@ export async function generateWithGemini(
         const response = await httpPost<GeminiGenerateContentResponse>(
           url,
           {
-            contents: [{ parts: [{ text: `Generate an image: ${prompt}` }] }],
+            contents: [{ parts: requestParts }],
             generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
           },
           { timeout: 120_000 },

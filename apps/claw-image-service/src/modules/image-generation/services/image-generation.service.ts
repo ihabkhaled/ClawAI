@@ -57,7 +57,12 @@ export class ImageGenerationService {
     );
 
     // Fire-and-forget: process the job asynchronously
-    void this.processJobWithFallback(record.id, params.isAutoMode ?? false);
+    void this.processJobWithFallback(
+      record.id,
+      params.isAutoMode ?? false,
+      params.referenceImageBase64,
+      params.referenceImageMimeType,
+    );
 
     return record;
   }
@@ -198,8 +203,13 @@ export class ImageGenerationService {
     return newRecord;
   }
 
-  private async processJobWithFallback(generationId: string, isAutoMode: boolean): Promise<void> {
-    await this.processJob(generationId);
+  private async processJobWithFallback(
+    generationId: string,
+    isAutoMode: boolean,
+    referenceImageBase64?: string,
+    referenceImageMimeType?: string,
+  ): Promise<void> {
+    await this.processJob(generationId, referenceImageBase64, referenceImageMimeType);
 
     if (!isAutoMode) {
       return;
@@ -269,7 +279,11 @@ export class ImageGenerationService {
     this.logger.warn('All auto-fallback attempts exhausted');
   }
 
-  private async processJob(generationId: string): Promise<void> {
+  private async processJob(
+    generationId: string,
+    referenceImageBase64?: string,
+    referenceImageMimeType?: string,
+  ): Promise<void> {
     const generation = await this.repository.findById(generationId);
     if (!generation) {
       return;
@@ -292,6 +306,8 @@ export class ImageGenerationService {
         height: generation.height,
         quality: generation.quality ?? undefined,
         style: generation.style ?? undefined,
+        referenceImageBase64,
+        referenceImageMimeType,
       });
 
       await this.transitionStatus(

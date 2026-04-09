@@ -290,17 +290,34 @@ export class ChatExecutionManager {
     const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
     let prompt = lastUserMsg?.content ?? 'generate an image';
 
-    // If image files are attached, use vision model to analyze them first
-    // then build a detailed prompt for the image generator
+    // If image files are attached:
+    // 1. Use vision model to analyze and build a detailed prompt
+    // 2. Pass the original image as reference for image-to-image generation
     const imageFiles = context.fileContents.filter((f) => f.mimeType.startsWith('image/'));
+    let referenceImageBase64: string | undefined;
+    let referenceImageMimeType: string | undefined;
+
     if (imageFiles.length > 0) {
       prompt = await this.buildImagePromptFromVision(prompt, context);
+      const firstImage = imageFiles[0];
+      if (firstImage?.content) {
+        referenceImageBase64 = firstImage.content;
+        referenceImageMimeType = firstImage.mimeType;
+      }
     }
 
     const response = await httpRequest<ImageGenerateResponse>({
       url: `${config.IMAGE_SERVICE_URL}/api/v1/internal/images/generate`,
       method: 'POST',
-      body: { prompt, provider, model, userId, isAutoMode },
+      body: {
+        prompt,
+        provider,
+        model,
+        userId,
+        isAutoMode,
+        referenceImageBase64,
+        referenceImageMimeType,
+      },
       timeoutMs: 30_000,
     });
 
