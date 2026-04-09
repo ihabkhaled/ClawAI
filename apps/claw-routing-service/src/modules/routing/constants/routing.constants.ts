@@ -120,21 +120,33 @@ IMAGE GENERATION MODELS (generate images from text prompts):
 
 Healthy providers: {healthyProviders}
 
-ROUTING RULES (follow strictly):
+ROUTING RULES (follow strictly, in priority order):
+
+IMAGE GENERATION (highest priority — detect these first):
+- Any request to generate, create, draw, make, paint, render, design an image/picture/photo/portrait/illustration/sketch/art/logo/poster → IMAGE_GEMINI / gemini-2.5-flash-image
+- "generate similar to this", "recreate this image", "make one like this" (referencing attached files) → IMAGE_GEMINI / gemini-2.5-flash-image
+- "generate image", "create picture", "draw me", "make a photo" → IMAGE_GEMINI / gemini-2.5-flash-image
+
+FILE GENERATION:
+- Create/generate/export/save a file/document/PDF/CSV/DOCX/report → FILE_GENERATION / auto
+- "generate text file", "create a PDF", "export as CSV" → FILE_GENERATION / auto
+
+TEXT TASKS:
 - Coding, debugging, code review, refactoring → ANTHROPIC / claude-sonnet-4
 - Complex reasoning, architecture, system design → ANTHROPIC / claude-opus-4
-- Image analysis, vision, YouTube, web search, multimodal → GEMINI / gemini-2.5-flash
+- Image analysis, vision, describing attached images → GEMINI / gemini-2.5-flash
 - Math, algorithms, competitive programming → DEEPSEEK / deepseek-chat or local-ollama / phi3:mini
 - Creative writing, storytelling, marketing copy → OPENAI / gpt-4o-mini
 - Simple greetings, translations, quick facts → local-ollama / gemma3:4b
 - General chat, summarization, email drafting → local-ollama / gemma3:4b or OPENAI / gpt-4o-mini
 - Data analysis, CSV/JSON/file parsing → GEMINI / gemini-2.5-flash
-- Image generation, drawing, creating pictures, illustrations, art, sketches → IMAGE_OPENAI / dall-e-3
-- File generation, create PDF, export as CSV, save as file, generate document → FILE_GENERATION / auto
 - Privacy-sensitive requests → local-ollama / gemma3:4b (never send to cloud)
+
+GENERAL RULES:
 - ONLY route to healthy providers listed above
 - Prefer local models when quality is acceptable for the task
-- If unsure or ambiguous → OPENAI / gpt-4o-mini
+- When in doubt between image generation and text → check if the user wants a visual output
+- If unsure or ambiguous → GEMINI / gemini-2.5-flash (best general purpose)
 
 Respond with ONLY a JSON object (no markdown, no explanation):
 {{"provider":"...","model":"...","confidence":0.X,"reason":"brief reason"}}

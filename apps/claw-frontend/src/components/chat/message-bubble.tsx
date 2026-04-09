@@ -2,6 +2,7 @@ import { Brain, FileText, RefreshCw, ThumbsDown, ThumbsUp } from 'lucide-react';
 
 import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
 import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble';
+import { MessageAttachments } from '@/components/chat/message-attachments';
 import { MessageProvenance } from '@/components/chat/message-provenance';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
 import { Badge } from '@/components/ui/badge';
@@ -56,7 +57,14 @@ export function MessageBubble({
             isUser ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',
           )}
         >
-          {isUser ? <p className="whitespace-pre-wrap">{message.content}</p> : null}
+          {isUser ? (
+            <>
+              <p className="whitespace-pre-wrap">{message.content}</p>
+              {contextFileIds.length > 0 ? (
+                <MessageAttachments fileIds={contextFileIds} />
+              ) : null}
+            </>
+          ) : null}
           {!isUser && isImageGeneration && imageGenerationId ? (
             <ImageGenerationBubble
               generationId={imageGenerationId}
