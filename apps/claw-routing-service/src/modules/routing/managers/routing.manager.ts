@@ -405,12 +405,12 @@ export class RoutingManager {
 
     this.logger.log('Image generation request detected via keyword heuristic');
 
-    // Prefer cloud image providers if a connector is healthy
-    if (this.isConnectorHealthy('OPENAI', context)) {
-      return this.buildImageDecision(IMAGE_PROVIDER_OPENAI, IMAGE_MODEL_DALLE3, context);
-    }
+    // Prefer Gemini for image generation, then OpenAI
     if (this.isConnectorHealthy('GEMINI', context)) {
       return this.buildImageDecision(IMAGE_PROVIDER_GEMINI, IMAGE_MODEL_IMAGEN, context);
+    }
+    if (this.isConnectorHealthy('OPENAI', context)) {
+      return this.buildImageDecision(IMAGE_PROVIDER_OPENAI, IMAGE_MODEL_DALLE3, context);
     }
 
     // Fallback to local SD
