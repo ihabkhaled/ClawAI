@@ -18,6 +18,7 @@ export type LlmResponse = {
   latencyMs: number;
   finishReason?: string;
   usedFallback: boolean;
+  imageGenerationId?: string;
 };
 
 export type OllamaGenerateRequest = {
@@ -105,7 +106,8 @@ export type CreateAssistantMessageData = {
 };
 
 export type ImageGenerateResponse = {
-  fileId: string;
-  revisedPrompt: string | null;
-  latencyMs: number;
+  generationId: string;
+  status: string;
+  provider: string;
+  model: string;
 };

@@ -165,6 +165,11 @@ export type {
 } from './log.types';
 export type { MarkdownRendererProps } from './markdown.types';
 export type {
+  ImageGeneration,
+  ImageGenerationAsset,
+  ImageGenerationEventPayload,
+} from './image-generation.types';
+export type {
   TranslationDictionary,
   TranslationNamespace,
   TranslationKey,

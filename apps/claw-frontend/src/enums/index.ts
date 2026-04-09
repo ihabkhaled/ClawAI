@@ -24,3 +24,4 @@ export { LogsTab } from './logs-tab.enum';
 export { MessageFeedback } from './message-feedback.enum';
 export { Theme, ResolvedTheme } from './theme.enum';
 export { StreamEventType } from './stream-event-type.enum';
+export { ImageGenerationStatus } from './image-generation-status.enum';

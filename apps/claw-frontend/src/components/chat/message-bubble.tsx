@@ -1,5 +1,6 @@
 import { Brain, FileText, RefreshCw, ThumbsDown, ThumbsUp } from 'lucide-react';
 
+import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble';
 import { MessageProvenance } from '@/components/chat/message-provenance';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +12,12 @@ import { cn } from '@/lib/utils';
 import type { MessageBubbleProps } from '@/types';
 import { formatLatency } from '@/utilities';
 
-export function MessageBubble({ message, routingDecision, onFeedback, onRegenerate }: MessageBubbleProps) {
+export function MessageBubble({
+  message,
+  routingDecision,
+  onFeedback,
+  onRegenerate,
+}: MessageBubbleProps) {
   const isUser = message.role === MessageRole.USER;
   const roleLabel = MESSAGE_ROLE_LABELS[message.role];
 
@@ -19,7 +25,12 @@ export function MessageBubble({ message, routingDecision, onFeedback, onRegenera
   const providerModel = [message.provider, message.model].filter(Boolean).join(' / ');
   const metadata = message.metadata as Record<string, unknown> | null;
   const memoryCount = typeof metadata?.['memoryCount'] === 'number' ? metadata['memoryCount'] : 0;
-  const contextFileIds = Array.isArray(metadata?.['fileIds']) ? (metadata['fileIds'] as string[]) : [];
+  const contextFileIds = Array.isArray(metadata?.['fileIds'])
+    ? (metadata['fileIds'] as string[])
+    : [];
+  const isImageGeneration = metadata?.['type'] === 'image_generation';
+  const imageGenerationId =
+    typeof metadata?.['generationId'] === 'string' ? metadata['generationId'] : undefined;
 
   const handleFeedback = (value: MessageFeedback): void => {
     if (!onFeedback) {
@@ -39,11 +50,11 @@ export function MessageBubble({ message, routingDecision, onFeedback, onRegenera
             isUser ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',
           )}
         >
-          {isUser ? (
-            <p className="whitespace-pre-wrap">{message.content}</p>
-          ) : (
-            <MarkdownRenderer content={message.content} />
-          )}
+          {isUser ? <p className="whitespace-pre-wrap">{message.content}</p> : null}
+          {!isUser && isImageGeneration && imageGenerationId ? (
+            <ImageGenerationBubble generationId={imageGenerationId} prompt={message.content} />
+          ) : null}
+          {!isUser && !isImageGeneration ? <MarkdownRenderer content={message.content} /> : null}
         </div>
         {!isUser && (providerModel || totalTokens > 0 || message.latencyMs !== null) ? (
           <div className="flex flex-wrap items-center gap-1.5">
@@ -68,7 +79,9 @@ export function MessageBubble({ message, routingDecision, onFeedback, onRegenera
               <span className="text-xs text-muted-foreground">{totalTokens} tokens</span>
             ) : null}
             {message.latencyMs !== null ? (
-              <span className="text-xs text-muted-foreground">{formatLatency(message.latencyMs)}</span>
+              <span className="text-xs text-muted-foreground">
+                {formatLatency(message.latencyMs)}
+              </span>
             ) : null}
           </div>
         ) : null}

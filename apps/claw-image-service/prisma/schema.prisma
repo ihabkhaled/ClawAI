@@ -9,36 +9,76 @@ datasource db {
 }
 
 enum ImageGenerationStatus {
-  PENDING
+  QUEUED
+  STARTING
   GENERATING
-  DOWNLOADING
-  STORING
+  FINALIZING
   COMPLETED
   FAILED
+  TIMED_OUT
+  CANCELLED
 }
 
 model ImageGeneration {
-  id            String                @id @default(cuid())
-  userId        String                @map("user_id")
-  threadId      String?               @map("thread_id")
-  messageId     String?               @map("message_id")
-  prompt        String
-  revisedPrompt String?               @map("revised_prompt")
-  provider      String
-  model         String
-  width         Int                   @default(1024)
-  height        Int                   @default(1024)
-  quality       String?
-  style         String?
-  fileId        String?               @map("file_id")
-  status        ImageGenerationStatus @default(PENDING)
-  errorMessage  String?               @map("error_message")
-  latencyMs     Int?                  @map("latency_ms")
-  createdAt     DateTime              @default(now()) @map("created_at")
-  updatedAt     DateTime              @updatedAt @map("updated_at")
+  id                 String                @id @default(cuid())
+  userId             String                @map("user_id")
+  threadId           String?               @map("thread_id")
+  userMessageId      String?               @map("user_message_id")
+  assistantMessageId String?               @map("assistant_message_id")
+  prompt             String
+  revisedPrompt      String?               @map("revised_prompt")
+  provider           String
+  model              String
+  width              Int                   @default(1024)
+  height             Int                   @default(1024)
+  quality            String?
+  style              String?
+  status             ImageGenerationStatus @default(QUEUED)
+  errorCode          String?               @map("error_code")
+  errorMessage       String?               @map("error_message")
+  startedAt          DateTime?             @map("started_at")
+  completedAt        DateTime?             @map("completed_at")
+  latencyMs          Int?                  @map("latency_ms")
+  createdAt          DateTime              @default(now()) @map("created_at")
+  updatedAt          DateTime              @updatedAt @map("updated_at")
+
+  assets ImageGenerationAsset[]
+  events ImageGenerationEvent[]
 
   @@index([userId])
   @@index([threadId])
-  @@index([status])
+  @@index([status, createdAt])
+  @@index([assistantMessageId])
   @@map("image_generations")
+}
+
+model ImageGenerationAsset {
+  id           String   @id @default(cuid())
+  generationId String   @map("generation_id")
+  storageKey   String   @map("storage_key")
+  url          String
+  downloadUrl  String   @map("download_url")
+  mimeType     String   @map("mime_type")
+  width        Int?
+  height       Int?
+  sizeBytes    Int?     @map("size_bytes")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  generation ImageGeneration @relation(fields: [generationId], references: [id], onDelete: Cascade)
+
+  @@index([generationId])
+  @@map("image_generation_assets")
+}
+
+model ImageGenerationEvent {
+  id           String                @id @default(cuid())
+  generationId String                @map("generation_id")
+  status       ImageGenerationStatus
+  payloadJson  Json?                 @map("payload_json")
+  createdAt    DateTime              @default(now()) @map("created_at")
+
+  generation ImageGeneration @relation(fields: [generationId], references: [id], onDelete: Cascade)
+
+  @@index([generationId, createdAt])
+  @@map("image_generation_events")
 }

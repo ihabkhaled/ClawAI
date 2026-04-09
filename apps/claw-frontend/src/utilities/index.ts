@@ -31,3 +31,9 @@ export {
   applyTheme,
   storeTheme,
 } from './theme.utility';
+export {
+  getImageStatusLabel,
+  resolveImageUrl,
+  isTerminalImageStatus,
+  isInProgressImageStatus,
+} from './image-generation.utility';

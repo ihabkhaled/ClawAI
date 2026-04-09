@@ -3,35 +3,50 @@ jest.mock('../managers/image-execution.manager');
 import { ImageGenerationService } from '../services/image-generation.service';
 import { type ImageGenerationRepository } from '../repositories/image-generation.repository';
 import { type ImageExecutionManager } from '../managers/image-execution.manager';
+import { type ImageGenerationEventsService } from '../services/image-generation-events.service';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 
 const mockRecord = {
   id: 'img-1',
   userId: 'user-1',
   threadId: null,
-  messageId: null,
+  userMessageId: null,
+  assistantMessageId: null,
   prompt: 'a cute cat',
   revisedPrompt: null,
-  provider: 'IMAGE_OPENAI',
-  model: 'dall-e-3',
+  provider: 'IMAGE_GEMINI',
+  model: 'gemini-2.5-flash-image',
   width: 1024,
   height: 1024,
   quality: null,
   style: null,
-  fileId: null,
-  status: 'PENDING',
+  status: 'QUEUED',
+  errorCode: null,
   errorMessage: null,
+  startedAt: null,
+  completedAt: null,
   latencyMs: null,
   createdAt: new Date(),
   updatedAt: new Date(),
+  assets: [],
 };
 
 const mockRepo = (): Partial<Record<keyof ImageGenerationRepository, jest.Mock>> => ({
   create: jest.fn().mockResolvedValue(mockRecord),
-  findById: jest.fn().mockResolvedValue({ ...mockRecord, fileId: 'file-1', status: 'COMPLETED' }),
+  findById: jest.fn().mockResolvedValue({ ...mockRecord, status: 'COMPLETED', assets: [] }),
   findByUserId: jest.fn().mockResolvedValue([mockRecord]),
   countByUserId: jest.fn().mockResolvedValue(1),
   updateStatus: jest.fn().mockResolvedValue(mockRecord),
+  createEvent: jest.fn().mockResolvedValue(undefined),
+  createAsset: jest.fn().mockResolvedValue({
+    id: 'asset-1',
+    url: '/api/v1/files/download/file-1',
+    downloadUrl: '/api/v1/files/download/file-1',
+    mimeType: 'image/png',
+    width: null,
+    height: null,
+    sizeBytes: null,
+  }),
 });
 
 const mockExecManager = (): Partial<Record<keyof ImageExecutionManager, jest.Mock>> => ({
@@ -42,6 +57,10 @@ const mockExecManager = (): Partial<Record<keyof ImageExecutionManager, jest.Moc
   }),
 });
 
+const mockEventsService = (): Partial<Record<keyof ImageGenerationEventsService, jest.Mock>> => ({
+  publish: jest.fn(),
+});
+
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
   publish: jest.fn().mockResolvedValue(undefined),
 });
@@ -49,51 +68,55 @@ const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
 describe('ImageGenerationService', () => {
   let service: ImageGenerationService;
   let repo: ReturnType<typeof mockRepo>;
-  let execManager: ReturnType<typeof mockExecManager>;
-  let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
+  let eventsService: ReturnType<typeof mockEventsService>;
 
   beforeEach(() => {
     repo = mockRepo();
-    execManager = mockExecManager();
-    rabbitMQ = mockRabbitMQ();
+    const execManager = mockExecManager();
+    eventsService = mockEventsService();
+    const rabbitMQ = mockRabbitMQ();
     service = new ImageGenerationService(
       repo as unknown as ImageGenerationRepository,
       execManager as unknown as ImageExecutionManager,
+      eventsService as unknown as ImageGenerationEventsService,
       rabbitMQ as unknown as RabbitMQService,
     );
   });
 
-  describe('generate', () => {
-    it('should create record, execute, update status, and publish event', async () => {
-      const result = await service.generate({
+  describe('enqueueGeneration', () => {
+    it('should create record, publish QUEUED event, and return immediately', async () => {
+      const result = await service.enqueueGeneration({
         prompt: 'a cute cat',
-        provider: 'IMAGE_OPENAI',
-        model: 'dall-e-3',
+        provider: 'IMAGE_GEMINI',
+        model: 'gemini-2.5-flash-image',
         userId: 'user-1',
       });
 
-      expect(result.fileId).toBe('file-1');
-      expect(result.latencyMs).toBe(3500);
+      expect(result.id).toBe('img-1');
+      expect(result.status).toBe('QUEUED');
       expect(repo.create).toHaveBeenCalled();
-      expect(repo.updateStatus).toHaveBeenCalledTimes(2);
-      expect(execManager.execute).toHaveBeenCalled();
-      expect(rabbitMQ.publish).toHaveBeenCalledWith('image.generated', expect.any(Object));
+      expect(repo.createEvent).toHaveBeenCalledWith(expect.objectContaining({ status: 'QUEUED' }));
+      expect(eventsService.publish).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'QUEUED', generationId: 'img-1' }),
+      );
     });
   });
 
   describe('getById', () => {
-    it('should return record when owned by user', async () => {
-      const result = await service.getById('img-1', 'user-1');
+    it('should return record when found', async () => {
+      const result = await service.getById('img-1');
       expect(result.id).toBe('img-1');
     });
 
     it('should throw when not found', async () => {
       repo.findById?.mockResolvedValue(null);
-      await expect(service.getById('missing', 'user-1')).rejects.toThrow();
+      await expect(service.getById('missing')).rejects.toThrow();
     });
+  });
 
+  describe('getByIdForUser', () => {
     it('should throw when owned by different user', async () => {
-      await expect(service.getById('img-1', 'other-user')).rejects.toThrow();
+      await expect(service.getByIdForUser('img-1', 'other-user')).rejects.toThrow();
     });
   });
 

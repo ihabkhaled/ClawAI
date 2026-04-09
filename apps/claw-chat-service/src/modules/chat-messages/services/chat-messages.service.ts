@@ -314,9 +314,14 @@ export class ChatMessagesService implements OnModuleInit {
       outputTokens: llmResponse.outputTokens,
       latencyMs: llmResponse.latencyMs,
       usedFallback: llmResponse.usedFallback,
-      metadata: contextMetadata
-        ? { memoryCount: contextMetadata.memoryCount, fileIds: contextMetadata.fileIds }
-        : undefined,
+      metadata: {
+        ...(contextMetadata
+          ? { memoryCount: contextMetadata.memoryCount, fileIds: contextMetadata.fileIds }
+          : {}),
+        ...(llmResponse.imageGenerationId
+          ? { type: 'image_generation', generationId: llmResponse.imageGenerationId }
+          : {}),
+      },
     });
   }
 

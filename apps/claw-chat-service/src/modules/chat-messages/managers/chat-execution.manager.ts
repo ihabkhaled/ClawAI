@@ -266,7 +266,7 @@ export class ChatExecutionManager {
       url: `${config.IMAGE_SERVICE_URL}/api/v1/internal/images/generate`,
       method: 'POST',
       body: { prompt, provider, model, userId },
-      timeoutMs: 180_000,
+      timeoutMs: 30_000,
     });
 
     if (!response.ok) {
@@ -277,16 +277,15 @@ export class ChatExecutionManager {
     }
 
     const latencyMs = Date.now() - startTime;
-    const revisedPrompt = response.data.revisedPrompt;
-    const caption = revisedPrompt ? `\n\n*${revisedPrompt}*` : '';
 
     return {
-      content: `![Generated Image](/api/v1/files/download/${response.data.fileId})${caption}`,
+      content: 'Generating image\u2026',
       provider,
       model,
       latencyMs,
       finishReason: 'stop',
       usedFallback,
+      imageGenerationId: response.data.generationId,
     };
   }
 

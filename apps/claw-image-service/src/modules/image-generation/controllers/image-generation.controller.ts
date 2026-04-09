@@ -1,13 +1,18 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, MessageEvent, Param, Query, Sse } from '@nestjs/common';
+import { type Observable } from 'rxjs';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { type AuthenticatedUser } from '../../../common/types';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { ImageGenerationService } from '../services/image-generation.service';
+import { ImageGenerationEventsService } from '../services/image-generation-events.service';
 import { listImagesQuerySchema, type ListImagesQueryDto } from '../dto/generate-image.dto';
 
 @Controller('images')
 export class ImageGenerationController {
-  constructor(private readonly imageService: ImageGenerationService) {}
+  constructor(
+    private readonly imageService: ImageGenerationService,
+    private readonly eventsService: ImageGenerationEventsService,
+  ) {}
 
   @Get()
   async list(
@@ -19,6 +24,11 @@ export class ImageGenerationController {
 
   @Get(':id')
   async getById(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser): Promise<unknown> {
-    return this.imageService.getById(id, user.id);
+    return this.imageService.getByIdForUser(id, user.id);
+  }
+
+  @Sse(':id/events')
+  events(@Param('id') id: string): Observable<MessageEvent> {
+    return this.eventsService.subscribe(id);
   }
 }
