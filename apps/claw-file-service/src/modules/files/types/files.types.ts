@@ -34,6 +34,7 @@ export const ALLOWED_MIME_TYPES = [
   'text/html',
   'text/xml',
   'application/xml',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'image/png',
   'image/jpeg',
   'image/webp',

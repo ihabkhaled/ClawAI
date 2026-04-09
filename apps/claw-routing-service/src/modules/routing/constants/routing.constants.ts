@@ -59,43 +59,21 @@ export const IMAGE_KEYWORDS = [
 // File generation provider
 export const FILE_GENERATION_PROVIDER = 'FILE_GENERATION';
 
+// Regex-based file generation detection:
+// Matches any combination of action verb + file format keyword
+// e.g., "generate dummy pdf", "create a text file", "make me a csv report"
+export const FILE_GENERATION_VERBS = ['generate', 'create', 'make', 'write', 'export', 'save', 'output', 'produce', 'build'];
+export const FILE_GENERATION_FORMAT_WORDS = ['file', 'pdf', 'document', 'csv', 'docx', 'word', 'txt', 'text file', 'markdown', 'json', 'html', 'report', '.md', '.pdf', '.csv', '.docx', '.txt', '.json', '.html'];
+
+// Also keep exact phrases for high-confidence matches
 export const FILE_GENERATION_KEYWORDS = [
-  'generate a file',
-  'generate file',
-  'create a pdf',
-  'create pdf',
-  'create a document',
-  'create document',
   'export as',
   'export to',
   'save as',
   'download as',
-  'generate a pdf',
-  'generate pdf',
-  'generate a document',
-  'generate document',
-  'write a file',
-  'make a pdf',
-  'make a document',
-  'create a text file',
-  'create a csv',
-  'create csv',
-  'generate csv',
-  'create a json file',
-  'generate json file',
-  'export markdown',
-  'create a report',
-  'generate a report',
-  'create a html',
-  'generate html',
-  'create a docx',
-  'generate docx',
   'save to file',
   'write to file',
-  'output as pdf',
   'output as file',
-  'generate a text file',
-  'create text file',
 ];
 
 export const VALID_PROVIDERS = new Set([

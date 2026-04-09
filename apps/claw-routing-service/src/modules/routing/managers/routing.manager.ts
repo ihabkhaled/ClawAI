@@ -12,8 +12,10 @@ import {
   CLOUD_PROVIDER_DEEPSEEK,
   CLOUD_PROVIDER_GEMINI,
   CLOUD_PROVIDER_OPENAI,
+  FILE_GENERATION_FORMAT_WORDS,
   FILE_GENERATION_KEYWORDS,
   FILE_GENERATION_PROVIDER,
+  FILE_GENERATION_VERBS,
   IMAGE_KEYWORDS,
   IMAGE_MODEL_DALLE3,
   IMAGE_MODEL_IMAGEN,
@@ -425,8 +427,16 @@ export class RoutingManager {
 
   private detectFileGenerationRequest(context: RoutingContext): RoutingDecisionResult | null {
     const lower = context.message.toLowerCase();
-    const isFileGen = FILE_GENERATION_KEYWORDS.some((kw) => lower.includes(kw));
-    if (!isFileGen) {
+
+    // Check exact phrase matches first
+    const exactMatch = FILE_GENERATION_KEYWORDS.some((kw) => lower.includes(kw));
+
+    // Then check verb + format word combo (handles "generate dummy pdf", "create text file", etc.)
+    const hasVerb = FILE_GENERATION_VERBS.some((v) => lower.includes(v));
+    const hasFormat = FILE_GENERATION_FORMAT_WORDS.some((f) => lower.includes(f));
+    const comboMatch = hasVerb && hasFormat;
+
+    if (!exactMatch && !comboMatch) {
       return null;
     }
 
