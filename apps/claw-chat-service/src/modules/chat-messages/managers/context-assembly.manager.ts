@@ -7,7 +7,11 @@ import {
   THREAD_CONTEXT_LIMIT,
 } from '../../../common/constants';
 import { type ChatMessage } from '../../../generated/prisma';
-import { type ThreadSettings } from '../types/execution.types';
+import {
+  type OpenAiChatMessage,
+  type OpenAiContentPart,
+  type ThreadSettings,
+} from '../types/execution.types';
 import {
   type AssembledContext,
   type ContextPackResponse,
@@ -85,8 +89,8 @@ export class ContextAssemblyManager {
     return this.truncateToTokenBudget(parts.join('\n\n'), context.tokenBudget);
   }
 
-  buildChatMessages(context: AssembledContext): Array<{ role: string; content: string }> {
-    const messages: Array<{ role: string; content: string }> = [];
+  buildChatMessages(context: AssembledContext): OpenAiChatMessage[] {
+    const messages: OpenAiChatMessage[] = [];
 
     const systemParts: string[] = [];
 
@@ -109,27 +113,51 @@ export class ContextAssemblyManager {
       }
     }
 
-    if (context.fileContents.length > 0) {
-      for (const file of context.fileContents) {
-        const decoded = this.decodeFileContent(file);
-        systemParts.push(
-          `The user has attached file "${file.filename}". Use this content to answer their questions:\n\n${decoded}`,
-        );
-      }
+    // Add text-based files to system prompt
+    const textFiles = context.fileContents.filter((f) => !this.isImageFile(f));
+    for (const file of textFiles) {
+      const decoded = this.decodeFileContent(file);
+      systemParts.push(
+        `The user has attached file "${file.filename}". Use this content to answer their questions:\n\n${decoded}`,
+      );
     }
 
     if (systemParts.length > 0) {
       messages.push({ role: 'system', content: systemParts.join('\n\n') });
     }
 
+    // Collect image files for multimodal injection into the last user message
+    const imageFiles = context.fileContents.filter((f) => this.isImageFile(f));
+
     for (const msg of context.threadMessages) {
-      messages.push({
-        role: this.mapRole(msg.role),
-        content: msg.content,
-      });
+      const role = this.mapRole(msg.role);
+
+      // If this is the last user message AND we have image attachments,
+      // build multimodal content (text + images)
+      const isLastUser = role === 'user' && msg === context.threadMessages.at(-1);
+      if (isLastUser && imageFiles.length > 0) {
+        const parts: OpenAiContentPart[] = [
+          { type: 'text', text: msg.content },
+        ];
+        for (const img of imageFiles) {
+          if (img.content) {
+            parts.push({
+              type: 'image_url',
+              image_url: { url: `data:${img.mimeType};base64,${img.content}` },
+            });
+          }
+        }
+        messages.push({ role, content: parts });
+      } else {
+        messages.push({ role, content: msg.content });
+      }
     }
 
     return messages;
+  }
+
+  private isImageFile(file: FileContentResponse): boolean {
+    return file.mimeType.startsWith('image/');
   }
 
   private async fetchMemories(userId: string): Promise<MemoryRecordResponse[]> {

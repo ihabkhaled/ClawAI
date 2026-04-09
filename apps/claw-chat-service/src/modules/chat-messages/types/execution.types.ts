@@ -26,6 +26,7 @@ export type OllamaGenerateRequest = {
   model: string;
   prompt: string;
   stream?: boolean;
+  images?: string[];
 };
 
 export type OllamaGenerateResponse = {
@@ -40,9 +41,21 @@ export type OllamaGenerateResponse = {
   evalDuration?: number;
 };
 
+export type OpenAiImageContent = {
+  type: 'image_url';
+  image_url: { url: string };
+};
+
+export type OpenAiTextContent = {
+  type: 'text';
+  text: string;
+};
+
+export type OpenAiContentPart = OpenAiTextContent | OpenAiImageContent;
+
 export type OpenAiChatMessage = {
   role: string;
-  content: string;
+  content: string | OpenAiContentPart[];
 };
 
 export type OpenAiChatRequest = {

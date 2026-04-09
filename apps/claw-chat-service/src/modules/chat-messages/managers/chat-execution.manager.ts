@@ -158,10 +158,17 @@ export class ChatExecutionManager {
     const config = AppConfig.get();
     const prompt = this.contextAssembly.buildPromptString(context);
 
+    // Extract base64 images for Ollama's multimodal support
+    const imageFiles = context.fileContents.filter((f) => f.mimeType.startsWith('image/'));
+    const images = imageFiles
+      .map((f) => f.content)
+      .filter((c): c is string => c !== null && c.length > 0);
+
     const requestBody: OllamaGenerateRequest = {
       model,
       prompt,
       stream: false,
+      ...(images.length > 0 ? { images } : {}),
     };
 
     const response = await httpRequest<OllamaGenerateResponse>({
@@ -253,8 +260,13 @@ export class ChatExecutionManager {
       );
     }
 
+    // Response content is always a string from the API (assistant messages)
+    const responseContent = typeof firstChoice.message.content === 'string'
+      ? firstChoice.message.content
+      : '';
+
     return {
-      content: firstChoice.message.content,
+      content: responseContent,
       provider,
       model,
       inputTokens: response.data.usage?.prompt_tokens,
