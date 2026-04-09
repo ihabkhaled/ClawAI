@@ -60,7 +60,7 @@ docs/                # 11 architecture audit documents
 2. **`.env`** — fill the new variable with a working dev value
 3. **`scripts/install.sh`** — add the variable to the generated .env block
 4. **`scripts/install.ps1`** — same for Windows PowerShell installer
-5. **Docker compose files** — if new service, port, volume, or dependency
+5. **ALL Docker compose files** — `docker-compose.dev.yml`, `docker-compose.yml` (prod), `docker-compose.dev.ollama.yml`, `docker-compose.prod.ollama.yml`, and any split compose files — if new service, port, volume, database, or AI runtime dependency
 6. **i18n locale files** — if any new user-facing text (ALL 8 locales: en, ar, de, es, fr, it, pt, ru)
 7. **Architecture docs** (`docs/`) — if the change affects documented architecture
 8. **Prisma migrations** — if any schema change (`npx prisma migrate dev --name <name>`)
@@ -68,6 +68,13 @@ docs/                # 11 architecture audit documents
 10. **Test files** — create or update tests for every code change
 11. **Frontend types** — sync `src/types/` with backend DTO/schema changes
 12. **`CLAUDE.md`** — if adding new services, env vars, patterns, or rules
+
+13. **`.github/workflows/ci.yml`** — add new service to the Prisma generate loop and test env vars
+14. **`infra/nginx/nginx.conf`** — add upstream + location block for the new service
+15. **`packages/shared-constants`** — add service port and service name constants
+16. **`packages/shared-types`** — add new event patterns if the service publishes events
+17. **Health service** (`apps/claw-health-service`) — add the new service URL to health check list
+18. **`apps/claw-frontend`** — update model selectors, types, hooks, and components if user-facing
 
 **Never skip any of these.** A feature is incomplete if any of these are missing.
 

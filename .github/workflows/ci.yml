@@ -34,7 +34,7 @@ jobs:
 
       - name: Generate Prisma clients
         run: |
-          for svc in auth chat connector routing memory file ollama; do
+          for svc in auth chat connector routing memory file ollama image; do
             cd apps/claw-${svc}-service && npx prisma generate && cd ../..
           done
 
@@ -64,7 +64,7 @@ jobs:
 
       - name: Generate Prisma clients
         run: |
-          for svc in auth chat connector routing memory file ollama; do
+          for svc in auth chat connector routing memory file ollama image; do
             cd apps/claw-${svc}-service && npx prisma generate && cd ../..
           done
 
@@ -94,7 +94,7 @@ jobs:
 
       - name: Generate Prisma clients
         run: |
-          for svc in auth chat connector routing memory file ollama; do
+          for svc in auth chat connector routing memory file ollama image; do
             cd apps/claw-${svc}-service && npx prisma generate && cd ../..
           done
 
@@ -104,6 +104,10 @@ jobs:
           # Provide minimal env vars for services that validate config on import
           OLLAMA_DATABASE_URL: postgresql://test:test@localhost:5432/test
           OLLAMA_BASE_URL: http://localhost:11434
+          IMAGE_DATABASE_URL: postgresql://test:test@localhost:5432/test
+          FILE_SERVICE_URL: http://localhost:4006
+          CONNECTOR_SERVICE_URL: http://localhost:4003
+          STABLE_DIFFUSION_URL: http://localhost:7860
           REDIS_URL: redis://localhost:6379
           RABBITMQ_URL: amqp://localhost:5672
           JWT_SECRET: ci-test-jwt-secret-9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c
@@ -132,7 +136,7 @@ jobs:
 
       - name: Generate Prisma clients
         run: |
-          for svc in auth chat connector routing memory file ollama; do
+          for svc in auth chat connector routing memory file ollama image; do
             cd apps/claw-${svc}-service && npx prisma generate && cd ../..
           done
 
