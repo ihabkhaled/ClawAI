@@ -13,13 +13,15 @@ export const imageGenerationRepository = {
 
   async retryAlternate(
     generationId: string,
+    provider?: string,
+    model?: string,
   ): Promise<{ generationId: string; status: string; provider: string; model: string }> {
     const response = await apiClient.post<{
       generationId: string;
       status: string;
       provider: string;
       model: string;
-    }>(`/images/${generationId}/retry-alternate`);
+    }>(`/images/${generationId}/retry-alternate`, { provider, model });
     return response.data;
   },
 };

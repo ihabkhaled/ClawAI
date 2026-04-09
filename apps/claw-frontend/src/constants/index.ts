@@ -52,3 +52,4 @@ export {
   CONTEXT_PACK_ITEM_TYPE_OPTIONS,
   CONTEXT_PACK_ITEM_TYPE_LABELS,
 } from './memory.constants';
+export { IMAGE_MODEL_OPTIONS } from './image.constants';

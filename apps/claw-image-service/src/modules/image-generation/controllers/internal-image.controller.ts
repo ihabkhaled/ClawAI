@@ -46,8 +46,13 @@ export class InternalImageController {
   @Post(':generationId/retry-alternate')
   async retryAlternate(
     @Param('generationId') generationId: string,
+    @Body() body?: { provider?: string; model?: string },
   ): Promise<{ generationId: string; status: string; provider: string; model: string }> {
-    const record = await this.imageService.retryWithAlternateModel(generationId);
+    const record = await this.imageService.retryWithAlternateModel(
+      generationId,
+      body?.provider,
+      body?.model,
+    );
     return {
       generationId: record.id,
       status: record.status,
