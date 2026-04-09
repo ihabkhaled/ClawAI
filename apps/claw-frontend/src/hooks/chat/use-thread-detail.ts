@@ -23,6 +23,7 @@ export function useThreadDetail(threadId: string) {
     queryKey: queryKeys.threads.messages(threadId),
     queryFn: () => chatRepository.getMessages(threadId),
     enabled: !!threadId,
+    refetchInterval: 5000,
   });
 
   const messagesList = messagesQuery.data?.data ?? [];

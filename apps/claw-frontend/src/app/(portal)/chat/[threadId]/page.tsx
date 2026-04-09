@@ -59,7 +59,7 @@ function MessagesContent({
 
   return (
     <div className="flex flex-col gap-4">
-      {messages.map((message) => (
+      {messages.map((message: ChatMessage) => (
         <MessageBubble
           key={message.id}
           message={message}

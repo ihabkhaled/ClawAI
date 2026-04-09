@@ -50,18 +50,27 @@ export const chatRepository = {
     return response.data;
   },
 
-  async regenerateMessage(messageId: string): Promise<ChatMessage> {
-    const response = await apiClient.post<ChatMessage>(
-      `/chat-messages/${messageId}/regenerate`,
+  async getMessagesPaginated(
+    threadId: string,
+    page: number,
+    limit: number,
+  ): Promise<MessagesListResponse> {
+    const response = await apiClient.get<MessagesListResponse>(
+      `/chat-messages/thread/${threadId}`,
+      { page: String(page), limit: String(limit) },
     );
     return response.data;
   },
 
+  async regenerateMessage(messageId: string): Promise<ChatMessage> {
+    const response = await apiClient.post<ChatMessage>(`/chat-messages/${messageId}/regenerate`);
+    return response.data;
+  },
+
   async setFeedback(messageId: string, feedback: MessageFeedback | null): Promise<ChatMessage> {
-    const response = await apiClient.patch<ChatMessage>(
-      `/chat-messages/${messageId}/feedback`,
-      { feedback },
-    );
+    const response = await apiClient.patch<ChatMessage>(`/chat-messages/${messageId}/feedback`, {
+      feedback,
+    });
     return response.data;
   },
 };
