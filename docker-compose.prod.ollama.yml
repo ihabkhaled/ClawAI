@@ -23,7 +23,7 @@ services:
       - ollama-data:/root/.ollama
     environment:
       - OLLAMA_HOST=0.0.0.0
-    entrypoint: ["/bin/sh", "-c"]
+    entrypoint: ['/bin/sh', '-c']
     command:
       - |
         # Start ollama serve in the background
@@ -37,14 +37,18 @@ services:
         done
         echo "Ollama is ready."
 
-        # Pull default model if not already present
-        if ! ollama list | grep -q "tinyllama"; then
-          echo "Pulling tinyllama (default model)..."
-          ollama pull tinyllama
-          echo "tinyllama pulled successfully."
-        else
-          echo "tinyllama already available."
-        fi
+        # Auto-pull all required models (skips if already installed)
+        for MODEL in tinyllama gemma3:4b gemma2:2b phi3:mini llama3.2:3b; do
+          if ! ollama list | grep -q "$${MODEL%%:*}"; then
+            echo "Pulling $$MODEL..."
+            ollama pull $$MODEL
+            echo "$$MODEL pulled successfully."
+          else
+            echo "$$MODEL already available."
+          fi
+        done
+
+        echo "All models ready."
 
         # Keep the container running by waiting on the serve process
         wait $$SERVE_PID

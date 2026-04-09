@@ -1,7 +1,9 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const LOCAL_PROVIDER = 'local-ollama';
-export const LOCAL_MODEL_DEFAULT = 'tinyllama';
+export const LOCAL_MODEL_DEFAULT = 'gemma3:4b';
+export const LOCAL_MODEL_ROUTER = 'gemma3:4b';
+export const LOCAL_MODEL_FAST = 'tinyllama';
 
 // Provider names must match the ConnectorProvider Prisma enum (uppercase)
 export const CLOUD_PROVIDER_OPENAI = 'OPENAI';
@@ -33,7 +35,15 @@ export const ollamaRouterResponseSchema = z.object({
 export const ROUTER_PROMPT_TEMPLATE = `You are an intelligent AI routing engine. Analyze the user message and decide which AI provider and model is best suited to answer it.
 
 Available providers and models:
-- local-ollama / tinyllama (free, local, fast, good for simple Q&A, greetings, translations)
+
+LOCAL MODELS (free, private, no internet needed):
+- local-ollama / gemma3:4b (Google Gemma 3, 4B params, best local model for general chat and reasoning)
+- local-ollama / llama3.2:3b (Meta Llama 3.2, 3B params, good local reasoning)
+- local-ollama / phi3:mini (Microsoft Phi-3, 3.8B params, good for coding and math)
+- local-ollama / gemma2:2b (Google Gemma 2, 2B params, fast local general purpose)
+- local-ollama / tinyllama (1.1B params, very fast but limited, best for simple routing only)
+
+CLOUD MODELS (paid, internet required, higher quality):
 - OPENAI / gpt-4o-mini (fast, general purpose, good for summarization, chat, writing)
 - ANTHROPIC / claude-sonnet-4 (excellent coding, debugging, code review, technical analysis)
 - ANTHROPIC / claude-opus-4 (best for deep reasoning, complex analysis, architecture decisions)
@@ -46,12 +56,14 @@ ROUTING RULES (follow strictly):
 - Coding, debugging, code review, refactoring → ANTHROPIC / claude-sonnet-4
 - Complex reasoning, architecture, system design → ANTHROPIC / claude-opus-4
 - Image analysis, vision, YouTube, web search, multimodal → GEMINI / gemini-2.5-flash
-- Math, algorithms, competitive programming → DEEPSEEK / deepseek-chat
+- Math, algorithms, competitive programming → DEEPSEEK / deepseek-chat or local-ollama / phi3:mini
 - Creative writing, storytelling, marketing copy → OPENAI / gpt-4o-mini
-- Simple greetings, translations, quick facts → local-ollama / tinyllama
-- General chat, summarization, email drafting → OPENAI / gpt-4o-mini
+- Simple greetings, translations, quick facts → local-ollama / gemma3:4b
+- General chat, summarization, email drafting → local-ollama / gemma3:4b or OPENAI / gpt-4o-mini
 - Data analysis, CSV/JSON/file parsing → GEMINI / gemini-2.5-flash
+- Privacy-sensitive requests → local-ollama / gemma3:4b (never send to cloud)
 - ONLY route to healthy providers listed above
+- Prefer local models when quality is acceptable for the task
 - If unsure or ambiguous → OPENAI / gpt-4o-mini
 
 Respond with ONLY a JSON object (no markdown, no explanation):

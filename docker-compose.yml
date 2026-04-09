@@ -58,7 +58,11 @@ services:
     volumes:
       - pg-connector-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PG_CONNECTOR_USER:-claw} -d ${PG_CONNECTOR_DB:-claw_connectors}']
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${PG_CONNECTOR_USER:-claw} -d ${PG_CONNECTOR_DB:-claw_connectors}',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -78,7 +82,8 @@ services:
     volumes:
       - pg-routing-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PG_ROUTING_USER:-claw} -d ${PG_ROUTING_DB:-claw_routing}']
+      test:
+        ['CMD-SHELL', 'pg_isready -U ${PG_ROUTING_USER:-claw} -d ${PG_ROUTING_DB:-claw_routing}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -223,7 +228,7 @@ services:
       - ollama-data:/root/.ollama
     environment:
       - OLLAMA_HOST=0.0.0.0
-    entrypoint: ["/bin/sh", "-c"]
+    entrypoint: ['/bin/sh', '-c']
     command:
       - |
         ollama serve &
@@ -231,13 +236,18 @@ services:
         echo "Waiting for Ollama to start..."
         until ollama list > /dev/null 2>&1; do sleep 1; done
         echo "Ollama is ready."
-        if ! ollama list | grep -q "tinyllama"; then
-          echo "Pulling tinyllama (default model)..."
-          ollama pull tinyllama
-          echo "tinyllama pulled successfully."
-        else
-          echo "tinyllama already available."
-        fi
+        # Auto-pull all required models (skips if already installed)
+        for MODEL in tinyllama gemma3:4b gemma2:2b phi3:mini llama3.2:3b; do
+          if ! ollama list | grep -q "$${MODEL%%:*}"; then
+            echo "Pulling $$MODEL..."
+            ollama pull $$MODEL
+            echo "$$MODEL pulled successfully."
+          else
+            echo "$$MODEL already available."
+          fi
+        done
+
+        echo "All models ready."
         wait $$SERVE_PID
     healthcheck:
       test: ['CMD-SHELL', 'ollama list > /dev/null 2>&1 || exit 1']

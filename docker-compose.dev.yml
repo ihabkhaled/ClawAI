@@ -62,7 +62,11 @@ services:
     volumes:
       - pg-connector-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PG_CONNECTOR_USER:-claw} -d ${PG_CONNECTOR_DB:-claw_connectors}']
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${PG_CONNECTOR_USER:-claw} -d ${PG_CONNECTOR_DB:-claw_connectors}',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -82,7 +86,8 @@ services:
     volumes:
       - pg-routing-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PG_ROUTING_USER:-claw} -d ${PG_ROUTING_DB:-claw_routing}']
+      test:
+        ['CMD-SHELL', 'pg_isready -U ${PG_ROUTING_USER:-claw} -d ${PG_ROUTING_DB:-claw_routing}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -215,7 +220,7 @@ services:
       - ollama-data:/root/.ollama
     environment:
       - OLLAMA_HOST=0.0.0.0
-    entrypoint: ["/bin/sh", "-c"]
+    entrypoint: ['/bin/sh', '-c']
     command:
       - |
         ollama serve &
@@ -223,13 +228,19 @@ services:
         echo "Waiting for Ollama to start..."
         until ollama list > /dev/null 2>&1; do sleep 1; done
         echo "Ollama is ready."
-        if ! ollama list | grep -q "tinyllama"; then
-          echo "Pulling tinyllama (default model)..."
-          ollama pull tinyllama
-          echo "tinyllama pulled successfully."
-        else
-          echo "tinyllama already available."
-        fi
+
+        # Auto-pull all required models (skips if already installed)
+        for MODEL in tinyllama gemma3:4b gemma2:2b phi3:mini llama3.2:3b; do
+          if ! ollama list | grep -q "$${MODEL%%:*}"; then
+            echo "Pulling $$MODEL..."
+            ollama pull $$MODEL
+            echo "$$MODEL pulled successfully."
+          else
+            echo "$$MODEL already available."
+          fi
+        done
+
+        echo "All models ready."
         wait $$SERVE_PID
     healthcheck:
       test: ['CMD-SHELL', 'ollama list > /dev/null 2>&1 || exit 1']
@@ -292,7 +303,7 @@ services:
     volumes:
       - ./apps/claw-auth-service/src:/app/apps/claw-auth-service/src
       - ./apps/claw-auth-service/prisma:/app/apps/claw-auth-service/prisma
-    command: ["./docker-entrypoint.dev.sh"]
+    command: ['./docker-entrypoint.dev.sh']
     depends_on:
       pg-auth:
         condition: service_healthy
@@ -321,7 +332,7 @@ services:
     volumes:
       - ./apps/claw-chat-service/src:/app/apps/claw-chat-service/src
       - ./apps/claw-chat-service/prisma:/app/apps/claw-chat-service/prisma
-    command: ["./docker-entrypoint.dev.sh"]
+    command: ['./docker-entrypoint.dev.sh']
     depends_on:
       pg-chat:
         condition: service_healthy
@@ -350,7 +361,7 @@ services:
     volumes:
       - ./apps/claw-connector-service/src:/app/apps/claw-connector-service/src
       - ./apps/claw-connector-service/prisma:/app/apps/claw-connector-service/prisma
-    command: ["./docker-entrypoint.dev.sh"]
+    command: ['./docker-entrypoint.dev.sh']
     depends_on:
       pg-connector:
         condition: service_healthy
@@ -379,7 +390,7 @@ services:
     volumes:
       - ./apps/claw-routing-service/src:/app/apps/claw-routing-service/src
       - ./apps/claw-routing-service/prisma:/app/apps/claw-routing-service/prisma
-    command: ["./docker-entrypoint.dev.sh"]
+    command: ['./docker-entrypoint.dev.sh']
     depends_on:
       pg-routing:
         condition: service_healthy
@@ -408,7 +419,7 @@ services:
     volumes:
       - ./apps/claw-memory-service/src:/app/apps/claw-memory-service/src
       - ./apps/claw-memory-service/prisma:/app/apps/claw-memory-service/prisma
-    command: ["./docker-entrypoint.dev.sh"]
+    command: ['./docker-entrypoint.dev.sh']
     depends_on:
       pg-memory:
         condition: service_healthy
@@ -438,7 +449,7 @@ services:
       - ./apps/claw-file-service/src:/app/apps/claw-file-service/src
       - ./apps/claw-file-service/prisma:/app/apps/claw-file-service/prisma
       - file-storage-data:/data/files
-    command: ["./docker-entrypoint.dev.sh"]
+    command: ['./docker-entrypoint.dev.sh']
     depends_on:
       pg-files:
         condition: service_healthy
@@ -495,7 +506,7 @@ services:
     volumes:
       - ./apps/claw-ollama-service/src:/app/apps/claw-ollama-service/src
       - ./apps/claw-ollama-service/prisma:/app/apps/claw-ollama-service/prisma
-    command: ["./docker-entrypoint.dev.sh"]
+    command: ['./docker-entrypoint.dev.sh']
     depends_on:
       pg-ollama:
         condition: service_healthy

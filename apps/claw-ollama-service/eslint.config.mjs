@@ -281,6 +281,7 @@ export default tseslint.config(
       'max-lines-per-function': 'off',
       'security/detect-object-injection': 'off',
       'security/detect-possible-timing-attacks': 'off',
+      'import-x/first': 'off',
     },
   },
 );

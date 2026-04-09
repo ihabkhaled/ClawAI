@@ -1,9 +1,11 @@
 # ClawAI — Complete Project Reference
 
 ## What This Is
+
 Local-first AI orchestration platform. 11 NestJS microservices + Next.js frontend + 7 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama. Monorepo with npm workspaces.
 
 ## Architecture at a Glance
+
 ```
 Frontend (Next.js 16, port 3000)
   → Nginx reverse proxy (port 4000)
@@ -14,6 +16,7 @@ Frontend (Next.js 16, port 3000)
 ```
 
 ## Workspace Layout
+
 ```
 apps/
   claw-frontend/            # Next.js 16, React 19, TanStack Query, Zustand, Tailwind, shadcn/ui
@@ -42,6 +45,7 @@ docs/                # 11 architecture audit documents
 ```
 
 ## Key Versions
+
 - Node >= 20, NestJS 10.4, Next.js 16.2, React 19.2, Prisma 5.22, Zod 3.24, TypeScript 5.6+
 - ESLint 9 (flat config), Prettier 3.8, Jest (backend), Vitest (frontend), Playwright (E2E)
 
@@ -71,6 +75,7 @@ docs/                # 11 architecture audit documents
 ## Universal Code Rules (MUST follow everywhere)
 
 ### Absolute Rules (Backend + Frontend)
+
 1. NEVER use `any` — use `unknown`, generics, or proper types
 2. NEVER disable ESLint rules — fix the underlying issue
 3. NEVER use string literal unions — use enums from `src/enums/` or `src/common/enums/`
@@ -94,6 +99,7 @@ docs/                # 11 architecture audit documents
 21. NEVER add user-facing text without i18n — extract to translation files
 
 ### Library Wrapping Rule
+
 Every third-party library MUST be wrapped in `src/common/utilities/<name>.utility.ts`. Services/controllers NEVER import third-party packages directly. If the library changes, only the wrapper file needs updating.
 
 ---
@@ -105,6 +111,7 @@ Every third-party library MUST be wrapped in `src/common/utilities/<name>.utilit
 **Plugins**: typescript-eslint (strict), eslint-plugin-security, eslint-plugin-unicorn, eslint-plugin-import-x
 
 **TypeScript Rules (errors)**:
+
 - `no-explicit-any` — use unknown/generics
 - `no-unused-vars` — except `_` prefixed
 - `no-non-null-assertion` — handle nullability explicitly
@@ -114,11 +121,13 @@ Every third-party library MUST be wrapped in `src/common/utilities/<name>.utilit
 - `return-await` — only in try-catch
 
 **TypeScript Rules (warnings)**:
+
 - `consistent-type-imports` — prefer `import type`, inline style
 - `explicit-function-return-type` — allow expressions/higher-order
 - `prefer-nullish-coalescing`, `prefer-optional-chain`, `no-shadow`
 
 **Core JS (errors)**:
+
 - `no-console` — only warn/error allowed
 - `eqeqeq` — always strict equality
 - `no-var`, `prefer-const`, `no-eval`, `no-implied-eval`, `no-new-func`
@@ -136,6 +145,7 @@ Every third-party library MUST be wrapped in `src/common/utilities/<name>.utilit
 ### Backend File-Specific Restrictions
 
 **All logic files** (service, controller, repo, module, guard, interceptor, filter, pipe, manager, utility):
+
 - NO inline `TSInterfaceDeclaration` — extract to types/ file
 - NO inline `TSTypeAliasDeclaration` — extract to types/ file
 - NO inline `TSEnumDeclaration` — extract to common/enums/
@@ -164,6 +174,7 @@ Every third-party library MUST be wrapped in `src/common/utilities/<name>.utilit
 ### Frontend File-Specific Restrictions
 
 **TSX component files**:
+
 - NO inline types/interfaces/enums — extract to src/types/
 - NO inline hooks (`useX`) — extract to src/hooks/
 - NO SCREAMING_CASE constants — extract to src/constants/
@@ -177,6 +188,7 @@ Every third-party library MUST be wrapped in `src/common/utilities/<name>.utilit
 **Test files**: all restrictions OFF
 
 ### Commit Lint
+
 Conventional commits required: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert`
 Subject: max 100 chars, no sentence-case/start-case/pascal-case/upper-case
 
@@ -185,12 +197,14 @@ Subject: max 100 chars, no sentence-case/start-case/pascal-case/upper-case
 ## Backend Architecture Rules
 
 ### Layer Responsibilities
+
 ```
 Controller → Service → Repository (data access only)
                     → Manager (complex logic, external calls)
 ```
 
 ### Controller Rules
+
 - 3-line methods ONLY: extract params, call ONE service method, return result
 - NO try/catch — use GlobalExceptionFilter
 - NO business logic — delegate everything to services
@@ -198,6 +212,7 @@ Controller → Service → Repository (data access only)
 - ONE service call per endpoint
 
 ### Service Rules
+
 - **Max 30 lines per method** — if longer, extract helper methods or delegate to manager
 - Split complex methods into smaller private methods
 - Each public method does ONE thing
@@ -209,6 +224,7 @@ Controller → Service → Repository (data access only)
   - Move complex orchestration to a Manager class
 
 ### Manager Rules
+
 - **Max 80 lines per method, complexity limit 15**
 - Handles complex orchestration (multiple service calls, external APIs, retries)
 - If a method grows beyond 80 lines, break into smaller private methods
@@ -216,12 +232,14 @@ Controller → Service → Repository (data access only)
 - Name clearly: `buildPromptString()`, `fetchConnectorConfig()`, `parseResponse()`
 
 ### Repository Rules
+
 - Pure data access ONLY — no business logic, no throw statements
 - Return data or null — let services decide what to do
 - Each method maps to ONE database operation
 - Use Prisma/Mongoose query builders — no raw SQL
 
 ### DTO/Validation Rules
+
 - ALL input validated with Zod schemas
 - Every `z.string()` MUST have `.max()` for length limits
 - Every `z.array()` MUST have `.max()` for size limits
@@ -229,42 +247,47 @@ Controller → Service → Repository (data access only)
 - Export both the schema and the inferred type
 
 ### Error Handling
+
 - All errors use `BusinessException` with a machine-readable `code` string
 - Entity-not-found uses `EntityNotFoundException`
 - Forbidden access uses `BusinessException` with `HttpStatus.FORBIDDEN`
 - NEVER swallow errors silently — always log and rethrow or handle explicitly
 
 ### Extraction Rules (Backend)
-| What | Where |
-|------|-------|
-| Types/interfaces | `src/modules/<domain>/types/<name>.types.ts` |
-| Enums | `src/common/enums/<name>.enum.ts` |
-| Constants | `src/common/constants/<name>.constants.ts` or `src/modules/<domain>/constants/` |
-| Utilities | `src/common/utilities/<name>.utility.ts` |
-| DTOs | `src/modules/<domain>/dto/<name>.dto.ts` |
-| Errors | `src/common/errors/` |
-| Pipes | `src/app/pipes/` |
-| Guards | `src/app/guards/` |
-| Filters | `src/app/filters/` |
-| Interceptors | `src/app/interceptors/` |
-| Decorators | `src/app/decorators/` |
+
+| What             | Where                                                                           |
+| ---------------- | ------------------------------------------------------------------------------- |
+| Types/interfaces | `src/modules/<domain>/types/<name>.types.ts`                                    |
+| Enums            | `src/common/enums/<name>.enum.ts`                                               |
+| Constants        | `src/common/constants/<name>.constants.ts` or `src/modules/<domain>/constants/` |
+| Utilities        | `src/common/utilities/<name>.utility.ts`                                        |
+| DTOs             | `src/modules/<domain>/dto/<name>.dto.ts`                                        |
+| Errors           | `src/common/errors/`                                                            |
+| Pipes            | `src/app/pipes/`                                                                |
+| Guards           | `src/app/guards/`                                                               |
+| Filters          | `src/app/filters/`                                                              |
+| Interceptors     | `src/app/interceptors/`                                                         |
+| Decorators       | `src/app/decorators/`                                                           |
 
 ---
 
 ## Frontend Architecture Rules
 
 ### Component Architecture
+
 ```
 Page (.tsx) → Controller Hook (useX) → Service → Repository/API
 ```
 
 ### Page Rules (`.tsx` files in `src/app/`)
+
 - Pure render composition ONLY — no logic, no hooks (except ONE controller hook)
 - Must handle: loading state, empty state, error state
 - No inline styles — use Tailwind classes via `cn()` utility
 - No default exports except Next.js pages/layouts
 
 ### Component Rules
+
 - Each component does ONE thing — if it's doing two things, split it
 - Props-only data flow — components NEVER fetch data internally
 - Use shadcn/ui for ALL form inputs (Input, Select, Textarea, Checkbox, etc.)
@@ -273,6 +296,7 @@ Page (.tsx) → Controller Hook (useX) → Service → Repository/API
 - Every component that needs logic gets its own hook
 
 ### Hook Rules
+
 - **Split large hooks into smaller focused hooks** — each hook does ONE thing
 - Controller hooks orchestrate smaller hooks, they don't contain business logic
 - Pattern: `useSendMessage()`, `useThreadDetail()`, `useThreadSettings()` — NOT one giant `useChat()`
@@ -282,6 +306,7 @@ Page (.tsx) → Controller Hook (useX) → Service → Repository/API
 - Hooks go in `src/hooks/<domain>/use-<name>.ts` — NEVER inside component files
 
 ### State Management Rules
+
 - TanStack Query for ALL server state (queries + mutations)
 - Zustand for MINIMAL client-only state (auth, sidebar, log filters)
 - React hooks for component-level state
@@ -289,6 +314,7 @@ Page (.tsx) → Controller Hook (useX) → Service → Repository/API
 - No redundant state — if it can be derived, derive it
 
 ### Styling Rules
+
 - CSS variables for theming (`--background`, `--foreground`, `--primary`, etc.)
 - Semantic Tailwind classes (`text-muted-foreground`, `bg-card`, `border-border`)
 - NO `dark:` prefixes — CSS variables handle dark mode automatically
@@ -297,21 +323,23 @@ Page (.tsx) → Controller Hook (useX) → Service → Repository/API
 - Mobile-first with `sm:`, `md:`, `lg:` breakpoints
 
 ### Extraction Rules (Frontend)
-| What | Where |
-|------|-------|
-| Types | `src/types/<domain>.types.ts` |
-| Component prop types | `src/types/component.types.ts` |
-| Enums | `src/enums/<name>.enum.ts` |
-| Constants | `src/constants/<name>.constants.ts` |
-| Hooks | `src/hooks/<domain>/use-<name>.ts` |
-| Utilities | `src/utilities/<name>.utility.ts` |
-| Repositories | `src/repositories/<domain>/<domain>.repository.ts` |
-| Query keys | `src/repositories/shared/query-keys.ts` |
-| Zod schemas | `src/lib/validation/<name>.schema.ts` |
-| Stores | `src/stores/<name>.store.ts` |
-| i18n types | `src/types/i18n.types.ts` |
+
+| What                 | Where                                              |
+| -------------------- | -------------------------------------------------- |
+| Types                | `src/types/<domain>.types.ts`                      |
+| Component prop types | `src/types/component.types.ts`                     |
+| Enums                | `src/enums/<name>.enum.ts`                         |
+| Constants            | `src/constants/<name>.constants.ts`                |
+| Hooks                | `src/hooks/<domain>/use-<name>.ts`                 |
+| Utilities            | `src/utilities/<name>.utility.ts`                  |
+| Repositories         | `src/repositories/<domain>/<domain>.repository.ts` |
+| Query keys           | `src/repositories/shared/query-keys.ts`            |
+| Zod schemas          | `src/lib/validation/<name>.schema.ts`              |
+| Stores               | `src/stores/<name>.store.ts`                       |
+| i18n types           | `src/types/i18n.types.ts`                          |
 
 ### i18n Rules
+
 - 8 languages: EN, AR, DE, ES, FR, IT, PT, RU (Arabic is RTL)
 - ALL user-facing text must use `t('key')` from `useTranslation()`
 - NEVER hardcode text in components
@@ -320,6 +348,7 @@ Page (.tsx) → Controller Hook (useX) → Service → Repository/API
 - Type-safe keys defined in `src/types/i18n.types.ts`
 
 ### Frontend Key Rules Summary
+
 - No `any` types anywhere
 - No `eslint-disable` comments
 - No `console.log` — only `console.warn` and `console.error`
@@ -333,43 +362,52 @@ Page (.tsx) → Controller Hook (useX) → Service → Repository/API
 ## Data Models (Quick Reference)
 
 ### Auth (PostgreSQL)
+
 - `User` — email, username, passwordHash, role (ADMIN/OPERATOR/VIEWER), status, preferences
 - `Session` — userId, refreshToken, expiresAt (rotation implemented)
 - `SystemSetting` — key/value store
 
 ### Chat (PostgreSQL)
+
 - `ChatThread` — userId, title, routingMode, preferredProvider/Model, contextPackIds[], systemPrompt, temperature, maxTokens
 - `ChatMessage` — threadId, role, content, provider, model, routingMode, inputTokens, outputTokens, latencyMs, feedback, metadata(JSON)
 - `MessageAttachment` — messageId, fileId, type
 
 ### Connectors (PostgreSQL)
+
 - `Connector` — name, provider (6 types), status, encryptedConfig (AES-256-GCM), baseUrl
 - `ConnectorModel` — modelKey, displayName, lifecycle, capability flags (streaming/tools/vision/audio)
 - `ConnectorHealthEvent`, `ModelSyncRun`
 
 ### Routing (PostgreSQL)
+
 - `RoutingDecision` — selectedProvider/Model, confidence, reasonTags[], privacyClass, costClass, fallback
 - `RoutingPolicy` — name, routingMode, priority, config(JSON), isActive
 
 ### Memory (PostgreSQL + pgvector)
+
 - `MemoryRecord` — userId, type (FACT/PREFERENCE/INSTRUCTION/SUMMARY), content, sourceThreadId/MessageId, isEnabled
 - `ContextPack` — name, description, scope
 - `ContextPackItem` — type, content, fileId, sortOrder
 
 ### Files (PostgreSQL)
+
 - `File` — userId, filename, mimeType, sizeBytes, storagePath, ingestionStatus
 - `FileChunk` — fileId, chunkIndex, content
 
 ### Ollama (PostgreSQL)
+
 - `LocalModel` — name, tag, runtime, family, parameters, sizeBytes
 - `LocalModelRoleAssignment` — modelId, role (ROUTER/FALLBACK_CHAT/REASONING/CODING), isActive
 - `PullJob`, `RuntimeConfig`
 
 ### Audit (MongoDB)
+
 - `AuditLog` — userId, action, entityType, entityId, severity, details
 - `UsageLedger` — resourceType, action, quantity, unit, metadata
 
 ### Logs (MongoDB, TTL 30 days)
+
 - `ClientLog` — level, message, component, action, userId, route, userAgent
 - `ServerLog` — level, serviceName, module, action, requestId, traceId, userId, threadId
 
@@ -379,24 +417,25 @@ Page (.tsx) → Controller Hook (useX) → Service → Repository/API
 
 Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 
-| Event | Publisher | Consumers |
-|-------|-----------|-----------|
-| message.created | chat | routing |
-| message.routed | routing | chat |
-| message.completed | chat | audit, memory |
-| thread.created | chat | — |
-| user.login/logout | auth | audit |
-| connector.created/updated/deleted | connector | audit |
-| connector.synced | connector | audit, routing |
-| connector.health_checked | connector | audit, routing |
-| routing.decision_made | routing | audit |
-| memory.extracted | memory | audit |
-| file.uploaded/chunked | file | — |
-| log.server | all services | server-logs |
+| Event                             | Publisher    | Consumers      |
+| --------------------------------- | ------------ | -------------- |
+| message.created                   | chat         | routing        |
+| message.routed                    | routing      | chat           |
+| message.completed                 | chat         | audit, memory  |
+| thread.created                    | chat         | —              |
+| user.login/logout                 | auth         | audit          |
+| connector.created/updated/deleted | connector    | audit          |
+| connector.synced                  | connector    | audit, routing |
+| connector.health_checked          | connector    | audit, routing |
+| routing.decision_made             | routing      | audit          |
+| memory.extracted                  | memory       | audit          |
+| file.uploaded/chunked             | file         | —              |
+| log.server                        | all services | server-logs    |
 
 ---
 
 ## Message Flow (End-to-End)
+
 ```
 1. User sends message → POST /chat-messages {content, provider?, model?, fileIds?}
 2. Chat service creates USER message, publishes message.created
@@ -418,22 +457,51 @@ Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 
 ---
 
+## Local Ollama Models (auto-pulled on startup)
+
+| Model       | Params | Size  | Best For                                      |
+| ----------- | ------ | ----- | --------------------------------------------- |
+| gemma3:4b   | 4B     | 3.3GB | Default local chat + routing (Google Gemma 3) |
+| llama3.2:3b | 3B     | 2.0GB | Local reasoning (Meta Llama 3.2)              |
+| phi3:mini   | 3.8B   | 2.2GB | Local coding + math (Microsoft Phi-3)         |
+| gemma2:2b   | 2B     | 1.6GB | Fast local general purpose (Google Gemma 2)   |
+| tinyllama   | 1.1B   | 637MB | Very fast but limited — routing fallback only |
+
+Default router model: `gemma3:4b` (configurable via `OLLAMA_ROUTER_MODEL`)
+Default memory extraction model: `gemma3:4b` (configurable via `MEMORY_EXTRACTION_MODEL`)
+Models auto-synced to DB on ollama-service startup.
+
 ## Routing Modes
-| Mode | Behavior |
-|------|----------|
-| AUTO | Ollama router decides (temp=0, Zod schema, provider allowlist, 5s timeout → heuristic fallback) |
-| MANUAL_MODEL | User-selected provider+model (forcedProvider/forcedModel) |
-| LOCAL_ONLY | Always local-ollama/tinyllama |
-| PRIVACY_FIRST | Local if healthy, else Anthropic |
-| LOW_LATENCY | OpenAI/gpt-4o-mini |
-| HIGH_REASONING | Anthropic/claude-opus-4 |
-| COST_SAVER | Local if healthy, else cheapest cloud |
+
+| Mode           | Behavior                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------ |
+| AUTO           | Ollama router decides (temp=0, Zod schema, provider allowlist, 10s timeout → heuristic fallback) |
+| MANUAL_MODEL   | User-selected provider+model (forcedProvider/forcedModel)                                        |
+| LOCAL_ONLY     | Always local-ollama/gemma3:4b                                                                    |
+| PRIVACY_FIRST  | Local if healthy, else Anthropic                                                                 |
+| LOW_LATENCY    | OpenAI/gpt-4o-mini                                                                               |
+| HIGH_REASONING | Anthropic/claude-opus-4                                                                          |
+| COST_SAVER     | Local if healthy, else cheapest cloud                                                            |
 
 Active policies (sorted by priority) can override the mode.
+
+### Intelligent Routing Rules (AUTO mode)
+
+| Task                           | Routes To                              |
+| ------------------------------ | -------------------------------------- |
+| Coding, debugging, code review | Anthropic / claude-sonnet-4            |
+| Deep reasoning, architecture   | Anthropic / claude-opus-4              |
+| Image/video/YouTube/web search | Gemini / gemini-2.5-flash              |
+| Math, algorithms               | DeepSeek or local phi3:mini            |
+| Creative writing, chat         | OpenAI / gpt-4o-mini                   |
+| Simple Q&A, translations       | local-ollama / gemma3:4b               |
+| File/data analysis             | Gemini / gemini-2.5-flash              |
+| Privacy-sensitive              | local-ollama / gemma3:4b (never cloud) |
 
 ---
 
 ## Security
+
 - JWT + refresh token rotation (argon2 password hashing)
 - RBAC: ADMIN, OPERATOR, VIEWER (AuthGuard + RolesGuard on all services)
 - Rate limiting: @nestjs/throttler (100 req/min, configurable via THROTTLE_TTL/THROTTLE_LIMIT)
@@ -447,43 +515,48 @@ Active policies (sorted by priority) can override the mode.
 ---
 
 ## Nginx Route Map (port 4000 → services)
-| Frontend Path | Backend Service | Notes |
-|---------------|----------------|-------|
-| /api/v1/auth/* | auth:4001 | Login, refresh, logout, me |
-| /api/v1/users/* | auth:4001 | User CRUD (admin) |
-| /api/v1/chat-threads/* | chat:4002 | Thread CRUD |
-| /api/v1/chat-messages/* | chat:4002 | Message CRUD, feedback, regenerate |
-| /api/v1/connectors/* | connector:4003 | Connector CRUD, test, sync |
-| /api/v1/routing/* | routing:4004 | Policies, decisions, evaluate |
-| /api/v1/memories/* | memory:4005 | Memory CRUD |
-| /api/v1/context-packs/* | memory:4005 | Context pack CRUD |
-| /api/v1/files/* | file:4006 | Upload, list, chunks |
-| /api/v1/audits/* | audit:4007 | Audit logs |
-| /api/v1/usage/* | audit:4007 | Usage statistics |
-| /api/v1/ollama/* | ollama:4008 | Models, pull, generate |
-| /api/v1/health | health:4009 | Aggregated health |
-| /api/v1/client-logs | client-logs:4010 | Frontend log ingestion |
-| /api/v1/server-logs | server-logs:4011 | Backend log viewer |
+
+| Frontend Path            | Backend Service  | Notes                              |
+| ------------------------ | ---------------- | ---------------------------------- |
+| /api/v1/auth/\*          | auth:4001        | Login, refresh, logout, me         |
+| /api/v1/users/\*         | auth:4001        | User CRUD (admin)                  |
+| /api/v1/chat-threads/\*  | chat:4002        | Thread CRUD                        |
+| /api/v1/chat-messages/\* | chat:4002        | Message CRUD, feedback, regenerate |
+| /api/v1/connectors/\*    | connector:4003   | Connector CRUD, test, sync         |
+| /api/v1/routing/\*       | routing:4004     | Policies, decisions, evaluate      |
+| /api/v1/memories/\*      | memory:4005      | Memory CRUD                        |
+| /api/v1/context-packs/\* | memory:4005      | Context pack CRUD                  |
+| /api/v1/files/\*         | file:4006        | Upload, list, chunks               |
+| /api/v1/audits/\*        | audit:4007       | Audit logs                         |
+| /api/v1/usage/\*         | audit:4007       | Usage statistics                   |
+| /api/v1/ollama/\*        | ollama:4008      | Models, pull, generate             |
+| /api/v1/health           | health:4009      | Aggregated health                  |
+| /api/v1/client-logs      | client-logs:4010 | Frontend log ingestion             |
+| /api/v1/server-logs      | server-logs:4011 | Backend log viewer                 |
 
 ---
 
 ## Frontend (Next.js)
 
 ### Pages (17)
+
 login, dashboard, chat, chat/[threadId], connectors, connectors/[id], models, models/local, routing, memory, context, files, observability, audits, logs, admin, settings
 
 ### State Management
+
 - TanStack Query: all server state (queries + mutations)
 - Zustand: minimal client state (auth, sidebar, log filters)
 - React hooks: component-level state
 
 ### UI Stack
+
 - shadcn/ui + Radix UI primitives + Tailwind CSS + Lucide icons
 - Dark mode via CSS variables, system preference detection
 - i18n: 8 languages (EN, AR, FR, DE, ES, IT, PT, RU), RTL support for Arabic
 - Mobile responsive (collapsible sidebar, responsive grids)
 
 ### Key Chat Components
+
 - `ModelSelector` — grouped dropdown (Auto + provider groups)
 - `FileAttachmentPicker` — paperclip button with file checkboxes
 - `ContextPackSelector` — checkbox list in thread settings
@@ -496,6 +569,7 @@ login, dashboard, chat, chat/[threadId], connectors, connectors/[id], models, mo
 ---
 
 ## Docker Compose
+
 ```bash
 docker compose -f docker-compose.dev.yml up -d    # Full dev environment (~22 containers)
 ./scripts/claw.sh up                              # Via management script
@@ -505,22 +579,25 @@ docker compose -f docker-compose.dev.yml up -d    # Full dev environment (~22 co
 All services use `env_file: .env` from root. Single `.env` file for everything.
 
 ### Hot Reload Matrix
-| Change | Action | Downtime |
-|--------|--------|----------|
-| Source code (src/) | Auto-detected by `node --watch` | None |
-| Prisma schema | Rebuild container (`prisma migrate deploy` in entrypoint) | ~30s |
-| package.json deps | Rebuild container | ~60s |
-| Docker compose config | `docker compose up -d` (recreate) | ~10s |
-| .env values | Restart containers | ~5s |
-| Shared packages | Rebuild package + restart dependents | ~30s |
-| Nginx config | Restart nginx container | ~2s |
+
+| Change                | Action                                                    | Downtime |
+| --------------------- | --------------------------------------------------------- | -------- |
+| Source code (src/)    | Auto-detected by `node --watch`                           | None     |
+| Prisma schema         | Rebuild container (`prisma migrate deploy` in entrypoint) | ~30s     |
+| package.json deps     | Rebuild container                                         | ~60s     |
+| Docker compose config | `docker compose up -d` (recreate)                         | ~10s     |
+| .env values           | Restart containers                                        | ~5s      |
+| Shared packages       | Rebuild package + restart dependents                      | ~30s     |
+| Nginx config          | Restart nginx container                                   | ~2s      |
 
 ---
 
 ## Environment Variables
+
 Single root `.env` (copy from `.env.example`). Groups:
+
 - General: NODE_ENV, CORS_ORIGINS, THROTTLE_TTL/LIMIT
-- PostgreSQL: PG_*_USER/PASSWORD/DB/PORT (7 instances)
+- PostgreSQL: PG\_\*\_USER/PASSWORD/DB/PORT (7 instances)
 - MongoDB: MONGO_USER/PASSWORD/DB/PORT
 - Redis: REDIS_URL/PORT
 - RabbitMQ: RABBITMQ_USER/PASSWORD/URL/PORT/MANAGEMENT_PORT
@@ -530,15 +607,16 @@ Single root `.env` (copy from `.env.example`). Groups:
 - Frontend: NEXT_PUBLIC_API_URL/APP_NAME/APP_URL, FRONTEND_PORT
 - Ollama: OLLAMA_BASE_URL, OLLAMA_ROUTER_MODEL, OLLAMA_ROUTER_TIMEOUT_MS, MEMORY_EXTRACTION_MODEL
 - Files: FILE_STORAGE_PATH
-- Inter-service URLs: *_SERVICE_URL (11 entries)
-- Per-service ports: *_PORT (11 entries)
-- Per-service database URLs: *_DATABASE_URL/*_MONGODB_URI (10 entries)
+- Inter-service URLs: \*\_SERVICE_URL (11 entries)
+- Per-service ports: \*\_PORT (11 entries)
+- Per-service database URLs: _\_DATABASE_URL/_\_MONGODB_URI (10 entries)
 
 ---
 
 ## Quality Gates
 
 ### Pre-Commit Hook (5 steps, all must pass)
+
 ```bash
 1. prettier --write        # Format staged files
 2. npm run lint            # ESLint all workspaces (0 errors required)
@@ -548,9 +626,11 @@ Single root `.env` (copy from `.env.example`). Groups:
 ```
 
 ### CI/CD (GitHub Actions)
+
 4 jobs: lint → typecheck → test → build (build depends on ALL 3 passing)
 
 ## Commands
+
 ```bash
 npm run lint               # Lint all
 npm run typecheck          # TypeScript check all

@@ -337,9 +337,9 @@ FRONTEND_PORT=3000
 # Ollama
 # =============================================================================
 OLLAMA_BASE_URL=http://ollama:11434
-OLLAMA_ROUTER_MODEL=tinyllama
-OLLAMA_ROUTER_TIMEOUT_MS=5000
-MEMORY_EXTRACTION_MODEL=tinyllama
+OLLAMA_ROUTER_MODEL=gemma3:4b
+OLLAMA_ROUTER_TIMEOUT_MS=10000
+MEMORY_EXTRACTION_MODEL=gemma3:4b
 
 # =============================================================================
 # File Service
