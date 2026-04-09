@@ -4,7 +4,7 @@ import { Public } from '../../../app/decorators/public.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { ImageGenerationService } from '../services/image-generation.service';
 import { ImageGenerationEventsService } from '../services/image-generation-events.service';
-import { generateImageSchema, type GenerateImageDto } from '../dto/generate-image.dto';
+import { type GenerateImageDto, generateImageSchema } from '../dto/generate-image.dto';
 
 @Controller('internal/images')
 export class InternalImageController {

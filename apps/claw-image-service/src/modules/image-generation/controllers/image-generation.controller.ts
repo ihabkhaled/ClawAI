@@ -6,7 +6,7 @@ import { type AuthenticatedUser } from '../../../common/types';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { ImageGenerationService } from '../services/image-generation.service';
 import { ImageGenerationEventsService } from '../services/image-generation-events.service';
-import { listImagesQuerySchema, type ListImagesQueryDto } from '../dto/generate-image.dto';
+import { type ListImagesQueryDto, listImagesQuerySchema } from '../dto/generate-image.dto';
 
 @Controller('images')
 export class ImageGenerationController {

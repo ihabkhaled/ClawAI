@@ -37,7 +37,7 @@ const mockMessagesRepository = (): Partial<Record<keyof ChatMessagesRepository, 
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(undefined),
+  publish: jest.fn().mockResolvedValue(void 0),
 });
 
 describe('ChatThreadsService', () => {

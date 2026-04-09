@@ -1,4 +1,4 @@
-import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
+import { Document, HeadingLevel, Packer, Paragraph, TextRun } from 'docx';
 
 export async function convertToDocx(content: string): Promise<Buffer> {
   const lines = content.split('\n');

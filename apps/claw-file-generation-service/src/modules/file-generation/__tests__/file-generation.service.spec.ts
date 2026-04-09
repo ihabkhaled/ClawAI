@@ -1,10 +1,10 @@
-jest.mock('../managers/file-execution.manager');
-
 import { FileGenerationService } from '../services/file-generation.service';
 import { type FileGenerationRepository } from '../repositories/file-generation.repository';
 import { type FileExecutionManager } from '../managers/file-execution.manager';
 import { type FileGenerationEventsService } from '../services/file-generation-events.service';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
+
+jest.mock('../managers/file-execution.manager');
 
 const mockRecord = {
   id: 'fg-1',
@@ -35,7 +35,7 @@ const mockRepo = (): Partial<Record<keyof FileGenerationRepository, jest.Mock>> 
   findByUserId: jest.fn().mockResolvedValue([mockRecord]),
   countByUserId: jest.fn().mockResolvedValue(1),
   updateStatus: jest.fn().mockResolvedValue(mockRecord),
-  createEvent: jest.fn().mockResolvedValue(undefined),
+  createEvent: jest.fn().mockResolvedValue(void 0),
   createAsset: jest.fn().mockResolvedValue({
     id: 'asset-1',
     url: '/api/v1/files/download/file-1',
@@ -56,7 +56,7 @@ const mockEventsService = (): Partial<Record<keyof FileGenerationEventsService, 
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(undefined),
+  publish: jest.fn().mockResolvedValue(void 0),
 });
 
 describe('FileGenerationService', () => {

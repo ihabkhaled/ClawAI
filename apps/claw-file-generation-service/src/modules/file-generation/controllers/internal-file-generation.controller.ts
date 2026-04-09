@@ -4,7 +4,7 @@ import { Public } from '../../../app/decorators/public.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { FileGenerationService } from '../services/file-generation.service';
 import { FileGenerationEventsService } from '../services/file-generation-events.service';
-import { generateFileSchema, type GenerateFileDto } from '../dto/generate-file.dto';
+import { type GenerateFileDto, generateFileSchema } from '../dto/generate-file.dto';
 
 @Controller('internal/file-generations')
 export class InternalFileGenerationController {

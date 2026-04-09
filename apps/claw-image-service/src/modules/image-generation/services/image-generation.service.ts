@@ -207,7 +207,7 @@ export class ImageGenerationService {
 
     // Check if it failed — if so, auto-retry with next models in chain
     const result = await this.repository.findById(generationId);
-    if (!result || result.status !== 'FAILED') {
+    if (result?.status !== 'FAILED') {
       return;
     }
 
@@ -256,7 +256,7 @@ export class ImageGenerationService {
       await this.processJob(fallbackRecord.id);
 
       const fallbackResult = await this.repository.findById(fallbackRecord.id);
-      if (fallbackResult && fallbackResult.status === 'COMPLETED') {
+      if (fallbackResult?.status === 'COMPLETED') {
         this.logger.log(
           `Auto-fallback succeeded: ${next.provider}/${next.model} (id=${fallbackRecord.id})`,
         );

@@ -7,8 +7,8 @@ import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { FileGenerationService } from '../services/file-generation.service';
 import { FileGenerationEventsService } from '../services/file-generation-events.service';
 import {
-  listFileGenerationsQuerySchema,
   type ListFileGenerationsQueryDto,
+  listFileGenerationsQuerySchema,
 } from '../dto/generate-file.dto';
 
 @Controller('file-generations')

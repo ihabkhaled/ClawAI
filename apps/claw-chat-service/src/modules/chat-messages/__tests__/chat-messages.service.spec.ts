@@ -77,8 +77,8 @@ const mockContextAssembly = (): Partial<Record<keyof ContextAssemblyManager, jes
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(undefined),
-  subscribe: jest.fn().mockResolvedValue(undefined),
+  publish: jest.fn().mockResolvedValue(void 0),
+  subscribe: jest.fn().mockResolvedValue(void 0),
 });
 
 describe('ChatMessagesService', () => {

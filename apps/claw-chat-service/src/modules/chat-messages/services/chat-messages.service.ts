@@ -483,7 +483,7 @@ export class ChatMessagesService implements OnModuleInit {
 
     // Check if thread's last interaction was image generation
     const lastProvider = thread?.lastProvider;
-    if (!lastProvider || !lastProvider.startsWith('IMAGE_')) {
+    if (!lastProvider?.startsWith('IMAGE_')) {
       return payload;
     }
 

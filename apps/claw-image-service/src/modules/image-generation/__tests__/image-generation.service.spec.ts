@@ -1,10 +1,10 @@
-jest.mock('../managers/image-execution.manager');
-
 import { ImageGenerationService } from '../services/image-generation.service';
 import { type ImageGenerationRepository } from '../repositories/image-generation.repository';
 import { type ImageExecutionManager } from '../managers/image-execution.manager';
 import { type ImageGenerationEventsService } from '../services/image-generation-events.service';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
+
+jest.mock('../managers/image-execution.manager');
 
 const mockRecord = {
   id: 'img-1',
@@ -37,7 +37,7 @@ const mockRepo = (): Partial<Record<keyof ImageGenerationRepository, jest.Mock>>
   findByUserId: jest.fn().mockResolvedValue([mockRecord]),
   countByUserId: jest.fn().mockResolvedValue(1),
   updateStatus: jest.fn().mockResolvedValue(mockRecord),
-  createEvent: jest.fn().mockResolvedValue(undefined),
+  createEvent: jest.fn().mockResolvedValue(void 0),
   createAsset: jest.fn().mockResolvedValue({
     id: 'asset-1',
     url: '/api/v1/files/download/file-1',
@@ -62,7 +62,7 @@ const mockEventsService = (): Partial<Record<keyof ImageGenerationEventsService,
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(undefined),
+  publish: jest.fn().mockResolvedValue(void 0),
 });
 
 describe('ImageGenerationService', () => {

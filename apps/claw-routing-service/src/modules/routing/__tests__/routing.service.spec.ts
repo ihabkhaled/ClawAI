@@ -1,14 +1,14 @@
-import { RoutingService } from "../services/routing.service";
-import { type RoutingPoliciesRepository } from "../repositories/routing-policies.repository";
-import { type RoutingDecisionsRepository } from "../repositories/routing-decisions.repository";
-import { type RoutingManager } from "../managers/routing.manager";
-import { type RabbitMQService } from "@claw/shared-rabbitmq";
-import { EntityNotFoundException } from "../../../common/errors";
-import { RoutingMode } from "../../../generated/prisma";
+import { RoutingService } from '../services/routing.service';
+import { type RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
+import { type RoutingDecisionsRepository } from '../repositories/routing-decisions.repository';
+import { type RoutingManager } from '../managers/routing.manager';
+import { type RabbitMQService } from '@claw/shared-rabbitmq';
+import { EntityNotFoundException } from '../../../common/errors';
+import { RoutingMode } from '../../../generated/prisma';
 
 const mockPolicy = {
-  id: "policy-1",
-  name: "Default Auto",
+  id: 'policy-1',
+  name: 'Default Auto',
   routingMode: RoutingMode.AUTO,
   priority: 0,
   isActive: true,
@@ -18,28 +18,36 @@ const mockPolicy = {
 };
 
 const mockDecision = {
-  id: "decision-1",
-  messageId: "msg-1",
-  threadId: "thread-1",
-  selectedProvider: "anthropic",
-  selectedModel: "claude-sonnet-4",
+  id: 'decision-1',
+  messageId: 'msg-1',
+  threadId: 'thread-1',
+  selectedProvider: 'anthropic',
+  selectedModel: 'claude-sonnet-4',
   routingMode: RoutingMode.AUTO,
   confidence: 0.75,
-  reasonTags: ["auto"],
-  privacyClass: "cloud",
-  costClass: "medium",
+  reasonTags: ['auto'],
+  privacyClass: 'cloud',
+  costClass: 'medium',
   fallbackProvider: null,
   fallbackModel: null,
   createdAt: new Date(),
 };
 
-const mockPoliciesRepo = (): { create: jest.Mock; findById: jest.Mock; findAll: jest.Mock; countAll: jest.Mock; findActivePolicies: jest.Mock; update: jest.Mock; delete: jest.Mock } => ({
+const mockPoliciesRepo = (): {
+  create: jest.Mock;
+  findById: jest.Mock;
+  findAll: jest.Mock;
+  countAll: jest.Mock;
+  findActivePolicies: jest.Mock;
+  update: jest.Mock;
+  delete: jest.Mock;
+} => ({
   create: jest.fn().mockResolvedValue(mockPolicy),
   findById: jest.fn().mockResolvedValue(mockPolicy),
   findAll: jest.fn().mockResolvedValue([mockPolicy]),
   countAll: jest.fn().mockResolvedValue(1),
   findActivePolicies: jest.fn().mockResolvedValue([mockPolicy]),
-  update: jest.fn().mockResolvedValue({ ...mockPolicy, name: "Updated" }),
+  update: jest.fn().mockResolvedValue({ ...mockPolicy, name: 'Updated' }),
   delete: jest.fn().mockResolvedValue(mockPolicy),
 });
 
@@ -52,24 +60,24 @@ const mockDecisionsRepo = (): Record<string, jest.Mock> => ({
 
 const mockRoutingManager = (): Partial<Record<keyof RoutingManager, jest.Mock>> => ({
   evaluateRoute: jest.fn().mockResolvedValue({
-    selectedProvider: "anthropic",
-    selectedModel: "claude-sonnet-4",
+    selectedProvider: 'anthropic',
+    selectedModel: 'claude-sonnet-4',
     routingMode: RoutingMode.AUTO,
     confidence: 0.75,
-    reasonTags: ["auto"],
-    privacyClass: "cloud",
-    costClass: "medium",
+    reasonTags: ['auto'],
+    privacyClass: 'cloud',
+    costClass: 'medium',
     fallbackChain: [],
   }),
   buildFallbackChain: jest.fn().mockReturnValue([]),
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(undefined),
-  subscribe: jest.fn().mockResolvedValue(undefined),
+  publish: jest.fn().mockResolvedValue(void 0),
+  subscribe: jest.fn().mockResolvedValue(void 0),
 });
 
-describe("RoutingService", () => {
+describe('RoutingService', () => {
   let service: RoutingService;
   let policiesRepo: ReturnType<typeof mockPoliciesRepo>;
   let decisionsRepo: ReturnType<typeof mockDecisionsRepo>;
@@ -89,31 +97,31 @@ describe("RoutingService", () => {
     );
   });
 
-  describe("createPolicy", () => {
-    it("should create a routing policy", async () => {
+  describe('createPolicy', () => {
+    it('should create a routing policy', async () => {
       const result = await service.createPolicy({
-        name: "Default Auto",
+        name: 'Default Auto',
         routingMode: RoutingMode.AUTO,
         priority: 0,
         config: {},
       });
 
-      expect(result.id).toBe("policy-1");
+      expect(result.id).toBe('policy-1');
       expect(policiesRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ name: "Default Auto" }),
+        expect.objectContaining({ name: 'Default Auto' }),
       );
     });
   });
 
-  describe("getPolicies", () => {
-    it("should return paginated policies", async () => {
+  describe('getPolicies', () => {
+    it('should return paginated policies', async () => {
       const result = await service.getPolicies({ page: 1, limit: 20 });
 
       expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);
     });
 
-    it("should pass routing mode filter", async () => {
+    it('should pass routing mode filter', async () => {
       await service.getPolicies({
         page: 1,
         limit: 20,
@@ -128,62 +136,60 @@ describe("RoutingService", () => {
     });
   });
 
-  describe("getPolicy", () => {
-    it("should return policy by id", async () => {
-      const result = await service.getPolicy("policy-1");
+  describe('getPolicy', () => {
+    it('should return policy by id', async () => {
+      const result = await service.getPolicy('policy-1');
 
-      expect(result.id).toBe("policy-1");
+      expect(result.id).toBe('policy-1');
     });
 
-    it("should throw EntityNotFoundException when not found", async () => {
+    it('should throw EntityNotFoundException when not found', async () => {
       policiesRepo.findById.mockResolvedValue(null);
 
-      await expect(service.getPolicy("nonexistent")).rejects.toThrow(
+      await expect(service.getPolicy('nonexistent')).rejects.toThrow(EntityNotFoundException);
+    });
+  });
+
+  describe('updatePolicy', () => {
+    it('should update policy', async () => {
+      const result = await service.updatePolicy('policy-1', { name: 'Updated' });
+
+      expect(result.name).toBe('Updated');
+      expect(policiesRepo.update).toHaveBeenCalledWith('policy-1', { name: 'Updated' });
+    });
+
+    it('should throw EntityNotFoundException when not found', async () => {
+      policiesRepo.findById.mockResolvedValue(null);
+
+      await expect(service.updatePolicy('nonexistent', { name: 'Updated' })).rejects.toThrow(
         EntityNotFoundException,
       );
     });
   });
 
-  describe("updatePolicy", () => {
-    it("should update policy", async () => {
-      const result = await service.updatePolicy("policy-1", { name: "Updated" });
+  describe('deletePolicy', () => {
+    it('should delete policy', async () => {
+      const result = await service.deletePolicy('policy-1');
 
-      expect(result.name).toBe("Updated");
-      expect(policiesRepo.update).toHaveBeenCalledWith("policy-1", { name: "Updated" });
-    });
-
-    it("should throw EntityNotFoundException when not found", async () => {
-      policiesRepo.findById.mockResolvedValue(null);
-
-      await expect(
-        service.updatePolicy("nonexistent", { name: "Updated" }),
-      ).rejects.toThrow(EntityNotFoundException);
+      expect(result.id).toBe('policy-1');
+      expect(policiesRepo.delete).toHaveBeenCalledWith('policy-1');
     });
   });
 
-  describe("deletePolicy", () => {
-    it("should delete policy", async () => {
-      const result = await service.deletePolicy("policy-1");
-
-      expect(result.id).toBe("policy-1");
-      expect(policiesRepo.delete).toHaveBeenCalledWith("policy-1");
-    });
-  });
-
-  describe("evaluateRoute", () => {
-    it("should evaluate route and return decision", async () => {
+  describe('evaluateRoute', () => {
+    it('should evaluate route and return decision', async () => {
       const result = await service.evaluateRoute({
-        messageContent: "Hello world",
+        messageContent: 'Hello world',
       });
 
-      expect(result.selectedProvider).toBe("anthropic");
+      expect(result.selectedProvider).toBe('anthropic');
       expect(result.routingMode).toBe(RoutingMode.AUTO);
       expect(routingManager.evaluateRoute).toHaveBeenCalled();
     });
 
-    it("should pass routing mode to manager", async () => {
+    it('should pass routing mode to manager', async () => {
       await service.evaluateRoute({
-        messageContent: "Hello",
+        messageContent: 'Hello',
         routingMode: RoutingMode.LOCAL_ONLY,
       });
 
@@ -193,18 +199,18 @@ describe("RoutingService", () => {
     });
   });
 
-  describe("getDecisions", () => {
-    it("should return paginated decisions for thread", async () => {
-      const result = await service.getDecisions("thread-1", 1, 20);
+  describe('getDecisions', () => {
+    it('should return paginated decisions for thread', async () => {
+      const result = await service.getDecisions('thread-1', 1, 20);
 
       expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);
-      expect(decisionsRepo.findByThreadId).toHaveBeenCalledWith("thread-1", 1, 20);
+      expect(decisionsRepo.findByThreadId).toHaveBeenCalledWith('thread-1', 1, 20);
     });
   });
 
-  describe("event subscriptions", () => {
-    it("should subscribe to events on module init", async () => {
+  describe('event subscriptions', () => {
+    it('should subscribe to events on module init', async () => {
       await service.onModuleInit();
 
       expect(rabbitMQ.subscribe).toHaveBeenCalledTimes(3);

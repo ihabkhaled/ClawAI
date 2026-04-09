@@ -6,8 +6,8 @@ import { FileExecutionManager } from '../managers/file-execution.manager';
 import { FileGenerationEventsService } from './file-generation-events.service';
 import { FORMAT_TO_MIME_TYPE } from '../../../common/constants';
 import {
-  type GenerateFileParams,
   type FileGenerationRecord,
+  type GenerateFileParams,
   TERMINAL_STATUSES,
 } from '../types/file-generation.types';
 import { type ListFileGenerationsQueryDto } from '../dto/generate-file.dto';

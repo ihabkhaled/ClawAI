@@ -9,9 +9,10 @@
     "build": "tsc"
   },
   "dependencies": {
-    "amqplib": "^0.10.4",
+    "@claw/shared-constants": "*",
     "@claw/shared-types": "*",
-    "@claw/shared-constants": "*"
+    "amqplib": "^0.10.4",
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@nestjs/common": "^11.1.0",

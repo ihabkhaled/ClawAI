@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type Prisma, type ImageGenerationStatus } from '../../../generated/prisma';
+import { type ImageGenerationStatus, type Prisma } from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import {
   type ImageGenerationAssetRecord,

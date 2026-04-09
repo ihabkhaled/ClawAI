@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
-import { httpPost, httpGet } from '@common/utilities';
+import { httpGet, httpPost } from '@common/utilities';
 import { BusinessException } from '../../../common/errors';
 import {
   type ConnectorConfigResponse,

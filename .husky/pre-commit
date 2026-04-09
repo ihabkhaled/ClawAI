@@ -1,11 +1,11 @@
 #!/usr/bin/env sh
 echo "HUSKY PRE-COMMIT RUNNING"
 
-echo "Step 1/5: lint-staged (prettier)"
+echo "Step 1/5: lint-staged (eslint fix, prettier)"
 npx lint-staged || exit 1
 
 echo "Step 2/5: lint (eslint per workspace)"
-npm run lint:fix || exit 1
+npm run lint || exit 1
 
 echo "Step 3/5: typecheck"
 npm run typecheck || exit 1
