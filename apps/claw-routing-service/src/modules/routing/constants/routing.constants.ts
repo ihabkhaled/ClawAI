@@ -22,7 +22,7 @@ export const IMAGE_PROVIDER_OPENAI = 'IMAGE_OPENAI';
 export const IMAGE_PROVIDER_GEMINI = 'IMAGE_GEMINI';
 export const IMAGE_PROVIDER_LOCAL = 'IMAGE_LOCAL';
 export const IMAGE_MODEL_DALLE3 = 'dall-e-3';
-export const IMAGE_MODEL_IMAGEN = 'imagen-3.0-generate-001';
+export const IMAGE_MODEL_IMAGEN = 'gemini-2.5-flash-image';
 export const IMAGE_MODEL_SD_LOCAL = 'sdxl-turbo';
 
 export const VALID_PROVIDERS = new Set([
@@ -63,7 +63,7 @@ CLOUD MODELS (paid, internet required, higher quality):
 
 IMAGE GENERATION MODELS (generate images from text prompts):
 - IMAGE_OPENAI / dall-e-3 (best quality, photorealistic images, DALL-E 3)
-- IMAGE_GEMINI / imagen-3.0-generate-001 (Google Imagen, high quality image generation)
+- IMAGE_GEMINI / gemini-2.5-flash-image (Google Gemini 2.5 image generation)
 - IMAGE_LOCAL / sdxl-turbo (local Stable Diffusion, free, no internet, lower quality)
 
 Healthy providers: {healthyProviders}

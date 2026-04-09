@@ -56,8 +56,32 @@ services:
     networks:
       - claw-network
 
+  # ---------------------------------------------------------------------------
+  # Stable Diffusion (Local Image Generation)
+  # ---------------------------------------------------------------------------
+  stable-diffusion:
+    image: ghcr.io/ai-dock/stable-diffusion-webui:latest
+    container_name: claw-stable-diffusion
+    restart: unless-stopped
+    ports:
+      - '7860:7860'
+    volumes:
+      - sd-models-data:/opt/stable-diffusion-webui/models
+    environment:
+      - COMMANDLINE_ARGS=--api --nowebui --listen --skip-torch-cuda-test
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'wget -qO- http://localhost:7860/sdapi/v1/sd-models 2>/dev/null || exit 1']
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    networks:
+      - claw-network
+
 volumes:
   ollama-data:
+  sd-models-data:
 
 networks:
   claw-network:

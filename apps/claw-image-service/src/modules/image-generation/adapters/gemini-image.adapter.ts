@@ -4,43 +4,87 @@ import { type ImageProviderResponse } from '../types/image-generation.types';
 
 const logger = new Logger('GeminiImageAdapter');
 
+// Gemini models that support image generation via generateContent + IMAGE modality
+const IMAGE_CAPABLE_MODELS = [
+  'gemini-2.5-flash-image',
+  'gemini-3.1-flash-image-preview',
+  'gemini-3-pro-image-preview',
+];
+
 export async function generateWithGemini(
   baseUrl: string,
   apiKey: string,
   prompt: string,
-  model: string,
+  _model: string,
 ): Promise<ImageProviderResponse> {
-  logger.debug(`Calling Gemini image generation: ${model}`);
+  const cleanBaseUrl = baseUrl.replace('/openai', '');
+  let lastError: unknown = null;
 
-  const response = await httpPost<GeminiImageResponse>(
-    `${baseUrl}/models/${model}:predict`,
+  // Try each model
+  for (const geminiModel of IMAGE_CAPABLE_MODELS) {
     {
-      instances: [{ prompt }],
-      parameters: { sampleCount: 1 },
-    },
-    {
-      headers: { Authorization: `Bearer ${apiKey}` },
-      timeout: 120_000,
-    },
-  );
+      const url = `${cleanBaseUrl}/models/${geminiModel}:generateContent?key=${apiKey}`;
+      logger.debug(`Trying Gemini image gen: ${geminiModel}`);
 
-  const firstPrediction = response.predictions?.[0];
-  if (!firstPrediction) {
-    throw new Error('Gemini returned no image predictions');
+      try {
+        const response = await httpPost<GeminiGenerateContentResponse>(
+          url,
+          {
+            contents: [{ parts: [{ text: `Generate an image: ${prompt}` }] }],
+            generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
+          },
+          { timeout: 120_000 },
+        );
+
+        const candidate = response.candidates?.[0];
+        const parts = candidate?.content?.parts ?? [];
+        const imagePart = parts.find((p) => p.inlineData?.mimeType?.startsWith('image/'));
+
+        if (imagePart?.inlineData) {
+          logger.log(`Gemini image generated via ${geminiModel}`);
+          return {
+            imageBase64: imagePart.inlineData.data,
+            revisedPrompt: parts.find((p) => p.text)?.text,
+            mimeType: imagePart.inlineData.mimeType ?? 'image/png',
+          };
+        }
+
+        const textPart = parts.find((p) => p.text);
+        lastError = new Error(`Gemini returned text but no image: ${textPart?.text ?? 'empty'}`);
+      } catch (error: unknown) {
+        const axiosErr = error as { response?: { status?: number; data?: unknown } };
+        const status = axiosErr.response?.status;
+        if (status === 400 || status === 404) {
+          logger.debug(`${geminiModel}: ${String(status)}, trying next`);
+          lastError = error;
+          continue;
+        }
+        throw error;
+      }
+    }
   }
 
-  return {
-    imageBase64: firstPrediction.bytesBase64Encoded,
-    revisedPrompt: undefined,
-    mimeType: firstPrediction.mimeType ?? 'image/png',
-  };
+  throw lastError ?? new Error('All Gemini image generation models failed');
 }
 
-type GeminiPrediction = {
-  bytesBase64Encoded: string;
-  mimeType?: string;
+type GeminiInlineData = {
+  mimeType: string;
+  data: string;
 };
 
-type GeminiImageResponse = {
-  predictions?: GeminiPrediction[];
+type GeminiPart = {
+  text?: string;
+  inlineData?: GeminiInlineData;
+};
+
+type GeminiContent = {
+  parts: GeminiPart[];
+};
+
+type GeminiCandidate = {
+  content: GeminiContent;
+};
+
+type GeminiGenerateContentResponse = {
+  candidates?: GeminiCandidate[];
 };

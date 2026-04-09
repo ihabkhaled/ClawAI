@@ -75,7 +75,11 @@ export function useAvailableModels(): {
       provider: 'IMAGE_GEMINI',
       label: PROVIDER_LABELS['IMAGE_GEMINI'] ?? 'Gemini (Image)',
       models: [
-        { provider: 'IMAGE_GEMINI', model: 'imagen-3.0-generate-001', displayName: 'Imagen 3.0' },
+        {
+          provider: 'IMAGE_GEMINI',
+          model: 'gemini-2.5-flash-image',
+          displayName: 'Gemini 2.5 Flash Image',
+        },
       ],
     });
     result.push({
