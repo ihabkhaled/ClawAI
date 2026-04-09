@@ -1,4 +1,4 @@
-import { type ChatMessage } from "../../../generated/prisma";
+import { type ChatMessage } from '../../../generated/prisma';
 
 export type FileChunkResponse = {
   id: string;
@@ -15,6 +15,7 @@ export type FileContentResponse = {
 };
 
 export type AssembledContext = {
+  userId: string;
   systemPrompt: string | null;
   threadMessages: ChatMessage[];
   memories: MemoryRecordResponse[];

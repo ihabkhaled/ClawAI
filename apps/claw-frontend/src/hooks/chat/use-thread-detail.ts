@@ -43,11 +43,20 @@ export function useThreadDetail(threadId: string) {
     }
   }, [streamError, isWaitingForResponse, queryClient, threadId]);
 
-  // Manual polling via setInterval for reliable auto-fetch
+  // Manual polling via setInterval for reliable auto-fetch (max 3 minutes)
   useEffect(() => {
     if (isWaitingForResponse && threadId) {
-      // Start polling
+      let pollCount = 0;
       pollingRef.current = setInterval(() => {
+        pollCount += 1;
+        if (pollCount > 90) {
+          setIsWaitingForResponse(false);
+          if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
+          }
+          return;
+        }
         void queryClient.invalidateQueries({
           queryKey: queryKeys.threads.messages(threadId),
         });

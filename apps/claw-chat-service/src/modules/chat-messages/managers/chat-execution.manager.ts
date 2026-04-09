@@ -118,7 +118,14 @@ export class ChatExecutionManager {
     threadSettings?: ThreadSettings,
   ): Promise<LlmResponse> {
     if (provider.startsWith(IMAGE_PROVIDER_PREFIX)) {
-      return this.callImageService(provider, model, context, startTime, usedFallback, 'system');
+      return this.callImageService(
+        provider,
+        model,
+        context,
+        startTime,
+        usedFallback,
+        context.userId,
+      );
     }
     if (provider === OLLAMA_PROVIDER) {
       return this.callOllama(model, context, startTime, usedFallback, threadSettings);

@@ -1,19 +1,19 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { AppConfig } from "../../../app/config/app.config";
-import { httpRequest } from "../../../common/utilities";
+import { Injectable, Logger } from '@nestjs/common';
+import { AppConfig } from '../../../app/config/app.config';
+import { httpRequest } from '../../../common/utilities';
 import {
   APPROX_CHARS_PER_TOKEN,
   MEMORY_FETCH_LIMIT,
   THREAD_CONTEXT_LIMIT,
-} from "../../../common/constants";
-import { type ChatMessage } from "../../../generated/prisma";
-import { type ThreadSettings } from "../types/execution.types";
+} from '../../../common/constants';
+import { type ChatMessage } from '../../../generated/prisma';
+import { type ThreadSettings } from '../types/execution.types';
 import {
   type AssembledContext,
   type ContextPackResponse,
   type FileContentResponse,
   type MemoryRecordResponse,
-} from "../types/context.types";
+} from '../types/context.types';
 
 @Injectable()
 export class ContextAssemblyManager {
@@ -37,6 +37,7 @@ export class ContextAssemblyManager {
     const tokenBudget = threadSettings?.maxTokens ?? 4096;
 
     return {
+      userId,
       systemPrompt: threadSettings?.systemPrompt ?? null,
       threadMessages: recentMessages,
       memories,
@@ -54,17 +55,15 @@ export class ContextAssemblyManager {
     }
 
     if (context.memories.length > 0) {
-      const memoryBlock = context.memories
-        .map((m) => `[${m.type}] ${m.content}`)
-        .join("\n");
+      const memoryBlock = context.memories.map((m) => `[${m.type}] ${m.content}`).join('\n');
       parts.push(`USER CONTEXT (memories):\n${memoryBlock}`);
     }
 
     if (context.contextPackItems.length > 0) {
       const packBlock = context.contextPackItems
-        .map((item) => item.content ?? "")
+        .map((item) => item.content ?? '')
         .filter((c) => c.length > 0)
-        .join("\n");
+        .join('\n');
       if (packBlock) {
         parts.push(`CONTEXT PACK:\n${packBlock}`);
       }
@@ -73,7 +72,9 @@ export class ContextAssemblyManager {
     if (context.fileContents.length > 0) {
       for (const file of context.fileContents) {
         const decoded = this.decodeFileContent(file);
-        parts.push(`ATTACHED FILE "${file.filename}" (use this to answer the user's questions):\n${decoded}`);
+        parts.push(
+          `ATTACHED FILE "${file.filename}" (use this to answer the user's questions):\n${decoded}`,
+        );
       }
     }
 
@@ -81,12 +82,10 @@ export class ContextAssemblyManager {
       parts.push(`${msg.role}: ${msg.content}`);
     }
 
-    return this.truncateToTokenBudget(parts.join("\n\n"), context.tokenBudget);
+    return this.truncateToTokenBudget(parts.join('\n\n'), context.tokenBudget);
   }
 
-  buildChatMessages(
-    context: AssembledContext,
-  ): Array<{ role: string; content: string }> {
+  buildChatMessages(context: AssembledContext): Array<{ role: string; content: string }> {
     const messages: Array<{ role: string; content: string }> = [];
 
     const systemParts: string[] = [];
@@ -96,17 +95,15 @@ export class ContextAssemblyManager {
     }
 
     if (context.memories.length > 0) {
-      const memoryBlock = context.memories
-        .map((m) => `[${m.type}] ${m.content}`)
-        .join("\n");
+      const memoryBlock = context.memories.map((m) => `[${m.type}] ${m.content}`).join('\n');
       systemParts.push(`User context (memories):\n${memoryBlock}`);
     }
 
     if (context.contextPackItems.length > 0) {
       const packBlock = context.contextPackItems
-        .map((item) => item.content ?? "")
+        .map((item) => item.content ?? '')
         .filter((c) => c.length > 0)
-        .join("\n");
+        .join('\n');
       if (packBlock) {
         systemParts.push(`Context pack:\n${packBlock}`);
       }
@@ -115,12 +112,14 @@ export class ContextAssemblyManager {
     if (context.fileContents.length > 0) {
       for (const file of context.fileContents) {
         const decoded = this.decodeFileContent(file);
-        systemParts.push(`The user has attached file "${file.filename}". Use this content to answer their questions:\n\n${decoded}`);
+        systemParts.push(
+          `The user has attached file "${file.filename}". Use this content to answer their questions:\n\n${decoded}`,
+        );
       }
     }
 
     if (systemParts.length > 0) {
-      messages.push({ role: "system", content: systemParts.join("\n\n") });
+      messages.push({ role: 'system', content: systemParts.join('\n\n') });
     }
 
     for (const msg of context.threadMessages) {
@@ -140,7 +139,7 @@ export class ContextAssemblyManager {
 
       const response = await httpRequest<MemoryRecordResponse[]>({
         url,
-        method: "GET",
+        method: 'GET',
         timeoutMs: 5_000,
       });
 
@@ -151,7 +150,7 @@ export class ContextAssemblyManager {
 
       return response.data;
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : "Unknown error";
+      const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`Memory fetch failed (non-blocking): ${msg}`);
       return [];
     }
@@ -173,7 +172,7 @@ export class ContextAssemblyManager {
 
         const response = await httpRequest<ContextPackResponse>({
           url,
-          method: "GET",
+          method: 'GET',
           timeoutMs: 5_000,
         });
 
@@ -186,15 +185,13 @@ export class ContextAssemblyManager {
 
       return results;
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : "Unknown error";
+      const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`Context pack fetch failed (non-blocking): ${msg}`);
       return [];
     }
   }
 
-  private async fetchFileContents(
-    fileIds: string[],
-  ): Promise<FileContentResponse[]> {
+  private async fetchFileContents(fileIds: string[]): Promise<FileContentResponse[]> {
     if (fileIds.length === 0) {
       return [];
     }
@@ -208,7 +205,7 @@ export class ContextAssemblyManager {
 
         const response = await httpRequest<FileContentResponse>({
           url,
-          method: "GET",
+          method: 'GET',
           timeoutMs: 10_000,
         });
 
@@ -221,7 +218,7 @@ export class ContextAssemblyManager {
 
       return results;
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : "Unknown error";
+      const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`File content fetch failed (non-blocking): ${msg}`);
       return [];
     }
@@ -244,13 +241,18 @@ export class ContextAssemblyManager {
 
     // For text-based files, decode base64 to UTF-8 string
     const textMimeTypes = [
-      "text/plain", "text/csv", "text/markdown", "text/html", "text/xml",
-      "application/json", "application/xml",
+      'text/plain',
+      'text/csv',
+      'text/markdown',
+      'text/html',
+      'text/xml',
+      'application/json',
+      'application/xml',
     ];
 
     if (textMimeTypes.some((t) => file.mimeType.startsWith(t))) {
       try {
-        return Buffer.from(file.content, "base64").toString("utf-8");
+        return Buffer.from(file.content, 'base64').toString('utf-8');
       } catch {
         return `[Failed to decode file "${file.filename}"]`;
       }
@@ -262,12 +264,12 @@ export class ContextAssemblyManager {
   }
 
   private mapRole(role: string): string {
-    if (role === "USER") {
-      return "user";
+    if (role === 'USER') {
+      return 'user';
     }
-    if (role === "ASSISTANT") {
-      return "assistant";
+    if (role === 'ASSISTANT') {
+      return 'assistant';
     }
-    return "system";
+    return 'system';
   }
 }

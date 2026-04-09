@@ -22,16 +22,22 @@ export function useImageGenerationListener(generationId: string | undefined) {
   }, []);
 
   const startPolling = useCallback((gid: string): void => {
+    let errorCount = 0;
     const poll = (): void => {
       void imageGenerationRepository
         .getById(gid)
         .then((gen) => {
+          errorCount = 0;
           setGeneration(gen);
           if (!isTerminalImageStatus(gen.status)) {
             pollTimerRef.current = setTimeout(poll, 2000);
           }
         })
         .catch(() => {
+          errorCount += 1;
+          if (errorCount >= 5) {
+            return;
+          }
           pollTimerRef.current = setTimeout(poll, 3000);
         });
     };
