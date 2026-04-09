@@ -12,6 +12,9 @@ const PROVIDER_LABELS: Record<string, string> = {
   GEMINI: 'Google Gemini',
   DEEPSEEK: 'DeepSeek',
   AWS_BEDROCK: 'AWS Bedrock',
+  IMAGE_OPENAI: 'OpenAI (Image)',
+  IMAGE_GEMINI: 'Gemini (Image)',
+  IMAGE_LOCAL: 'Local (Image)',
 };
 
 export function useAvailableModels(): {
@@ -61,6 +64,25 @@ export function useAvailableModels(): {
         models: providerModels.sort((a, b) => a.displayName.localeCompare(b.displayName)),
       });
     }
+
+    // Add static image generation models
+    result.push({
+      provider: 'IMAGE_OPENAI',
+      label: PROVIDER_LABELS['IMAGE_OPENAI'] ?? 'OpenAI (Image)',
+      models: [{ provider: 'IMAGE_OPENAI', model: 'dall-e-3', displayName: 'DALL-E 3' }],
+    });
+    result.push({
+      provider: 'IMAGE_GEMINI',
+      label: PROVIDER_LABELS['IMAGE_GEMINI'] ?? 'Gemini (Image)',
+      models: [
+        { provider: 'IMAGE_GEMINI', model: 'imagen-3.0-generate-001', displayName: 'Imagen 3.0' },
+      ],
+    });
+    result.push({
+      provider: 'IMAGE_LOCAL',
+      label: PROVIDER_LABELS['IMAGE_LOCAL'] ?? 'Local (Image)',
+      models: [{ provider: 'IMAGE_LOCAL', model: 'sdxl-turbo', displayName: 'SDXL Turbo (Local)' }],
+    });
 
     // Sort: local-ollama first, then alphabetically
     result.sort((a, b) => {

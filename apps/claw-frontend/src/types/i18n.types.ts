@@ -90,6 +90,9 @@ export type TranslationDictionary = {
     providerFailed: string;
     tryingProvider: string;
     allProvidersFailed: string;
+    imageGeneration: string;
+    generatedImage: string;
+    downloadImage: string;
     providerModel: string;
     pinThread: string;
     unpinThread: string;

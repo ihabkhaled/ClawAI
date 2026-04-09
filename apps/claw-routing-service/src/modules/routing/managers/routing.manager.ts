@@ -12,6 +12,9 @@ import {
   CLOUD_PROVIDER_DEEPSEEK,
   CLOUD_PROVIDER_GEMINI,
   CLOUD_PROVIDER_OPENAI,
+  IMAGE_PROVIDER_GEMINI,
+  IMAGE_PROVIDER_LOCAL,
+  IMAGE_PROVIDER_OPENAI,
   LOCAL_MODEL_DEFAULT,
   LOCAL_PROVIDER,
 } from '../constants/routing.constants';
@@ -79,7 +82,10 @@ export class RoutingManager {
         chain.push({ provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT });
       }
       for (const cloud of allCloudProviders) {
-        if (cloud.provider !== primary.provider && this.isConnectorHealthy(cloud.provider, context)) {
+        if (
+          cloud.provider !== primary.provider &&
+          this.isConnectorHealthy(cloud.provider, context)
+        ) {
           chain.push(cloud);
         }
       }
@@ -260,9 +266,7 @@ export class RoutingManager {
       { provider: CLOUD_PROVIDER_GEMINI, model: CLOUD_MODEL_GEMINI_DEFAULT },
     ];
 
-    const bestAvailable = cloudPriority.find((c) =>
-      this.isConnectorHealthy(c.provider, context),
-    );
+    const bestAvailable = cloudPriority.find((c) => this.isConnectorHealthy(c.provider, context));
 
     if (bestAvailable) {
       return {
@@ -306,12 +310,33 @@ export class RoutingManager {
   }
 
   private inferProvider(model: string): string {
-    // Strip common prefixes like "models/" from provider-specific model IDs
     const lower = model.toLowerCase().replace(/^models\//, '');
+
+    // Image generation models
+    if (lower.includes('dall-e') || lower.includes('dalle')) {
+      return IMAGE_PROVIDER_OPENAI;
+    }
+    if (lower.includes('imagen')) {
+      return IMAGE_PROVIDER_GEMINI;
+    }
+    if (
+      lower.includes('sdxl') ||
+      lower.includes('stable-diffusion') ||
+      lower.includes('sd-turbo')
+    ) {
+      return IMAGE_PROVIDER_LOCAL;
+    }
+
     if (lower.startsWith('claude') || lower.includes('anthropic')) {
       return CLOUD_PROVIDER_ANTHROPIC;
     }
-    if (lower.startsWith('gpt') || lower.includes('openai') || lower.startsWith('o1-') || lower.startsWith('o3-') || lower.startsWith('o4-')) {
+    if (
+      lower.startsWith('gpt') ||
+      lower.includes('openai') ||
+      lower.startsWith('o1-') ||
+      lower.startsWith('o3-') ||
+      lower.startsWith('o4-')
+    ) {
       return CLOUD_PROVIDER_OPENAI;
     }
     if (lower.includes('gemini')) {
@@ -320,7 +345,13 @@ export class RoutingManager {
     if (lower.includes('deepseek')) {
       return CLOUD_PROVIDER_DEEPSEEK;
     }
-    if (lower.includes('llama') || lower.includes('mistral') || lower.includes('phi') || lower.includes('qwen') || lower.includes('tinyllama')) {
+    if (
+      lower.includes('llama') ||
+      lower.includes('mistral') ||
+      lower.includes('phi') ||
+      lower.includes('qwen') ||
+      lower.includes('tinyllama')
+    ) {
       return LOCAL_PROVIDER;
     }
     return CLOUD_PROVIDER_ANTHROPIC;
@@ -348,10 +379,7 @@ export class RoutingManager {
    * Policies are evaluated by priority (highest first). The first matching
    * policy's routingMode is used as the override.
    */
-  private applyPolicies(
-    policies: RoutingPolicy[],
-    _context: RoutingContext,
-  ): RoutingMode | null {
+  private applyPolicies(policies: RoutingPolicy[], _context: RoutingContext): RoutingMode | null {
     if (policies.length === 0) {
       return null;
     }

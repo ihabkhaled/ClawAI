@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Local-first AI orchestration platform. 11 NestJS microservices + Next.js frontend + 7 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama. Monorepo with npm workspaces.
+Local-first AI orchestration platform. 12 NestJS microservices + Next.js frontend + 8 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama. Monorepo with npm workspaces.
 
 ## Architecture at a Glance
 
@@ -11,7 +11,7 @@ Frontend (Next.js 16, port 3000)
   → Nginx reverse proxy (port 4000)
     → 11 backend services (ports 4001-4011)
       → RabbitMQ (async events, topic exchange: claw.events)
-      → 7 PostgreSQL (pgvector), 1 MongoDB (3 databases), 1 Redis
+      → 8 PostgreSQL (pgvector), 1 MongoDB (3 databases), 1 Redis
       → Ollama (local AI runtime, port 11434)
 ```
 
@@ -31,6 +31,7 @@ apps/
   claw-health-service/      # Port 4009, no DB           — aggregates health from all services
   claw-client-logs-service/ # Port 4010, MongoDB         — frontend logs, batched, TTL 30d
   claw-server-logs-service/ # Port 4011, MongoDB         — backend logs, Elasticsearch-ready, TTL 30d
+  claw-image-service/       # Port 4012, PG claw_images  — image generation, DALL-E/Gemini/SD adapters
 packages/
   shared-types/      # 18 enums, event payloads, auth types
   shared-constants/  # Exchange name, ports, API prefix, pagination defaults
@@ -431,6 +432,8 @@ Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 | memory.extracted                  | memory       | audit          |
 | file.uploaded/chunked             | file         | —              |
 | log.server                        | all services | server-logs    |
+| image.generated                   | image        | audit          |
+| image.failed                      | image        | audit          |
 
 ---
 
@@ -533,6 +536,7 @@ Active policies (sorted by priority) can override the mode.
 | /api/v1/health           | health:4009      | Aggregated health                  |
 | /api/v1/client-logs      | client-logs:4010 | Frontend log ingestion             |
 | /api/v1/server-logs      | server-logs:4011 | Backend log viewer                 |
+| /api/v1/images           | image:4012       | Image generation                   |
 
 ---
 
@@ -608,8 +612,9 @@ Single root `.env` (copy from `.env.example`). Groups:
 - Ollama: OLLAMA_BASE_URL, OLLAMA_ROUTER_MODEL, OLLAMA_ROUTER_TIMEOUT_MS, MEMORY_EXTRACTION_MODEL
 - Files: FILE_STORAGE_PATH
 - Inter-service URLs: \*\_SERVICE_URL (11 entries)
-- Per-service ports: \*\_PORT (11 entries)
-- Per-service database URLs: _\_DATABASE_URL/_\_MONGODB_URI (10 entries)
+- Per-service ports: \*\_PORT (12 entries)
+- Per-service database URLs: _\_DATABASE_URL/_\_MONGODB_URI (11 entries)
+- Image: STABLE_DIFFUSION_URL, IMAGE_SERVICE_URL, IMAGE_PORT, IMAGE_DATABASE_URL
 
 ---
 

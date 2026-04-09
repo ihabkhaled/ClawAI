@@ -1,3 +1,10 @@
 export { JWT_ALGORITHM } from './jwt.constants';
 export { DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from './pagination.constants';
-export { OLLAMA_PROVIDER, THREAD_CONTEXT_LIMIT, PROVIDER_BASE_URLS, MEMORY_FETCH_LIMIT, APPROX_CHARS_PER_TOKEN } from './execution.constants';
+export {
+  OLLAMA_PROVIDER,
+  IMAGE_PROVIDER_PREFIX,
+  THREAD_CONTEXT_LIMIT,
+  PROVIDER_BASE_URLS,
+  MEMORY_FETCH_LIMIT,
+  APPROX_CHARS_PER_TOKEN,
+} from './execution.constants';

@@ -1,9 +1,10 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { type Response } from 'express';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { type File, type FileChunk } from '../../../generated/prisma';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
-import { deleteFile, saveFile } from '../../../common/utilities';
+import { deleteFile, readFile, saveFile } from '../../../common/utilities';
 import { type PaginatedResult } from '../../../common/types';
 import { FilesRepository } from '../repositories/files.repository';
 import { FileChunksRepository } from '../repositories/file-chunks.repository';
@@ -126,6 +127,50 @@ export class FilesService {
         HttpStatus.BAD_REQUEST,
       );
     }
+  }
+
+  async downloadFile(id: string, userId: string, res: Response): Promise<void> {
+    const file = await this.filesRepository.findById(id);
+    if (!file) {
+      throw new EntityNotFoundException('File', id);
+    }
+    this.validateOwnership(file, userId);
+
+    const buffer = readFile(file.storagePath);
+    const isImage = file.mimeType.startsWith('image/');
+    const disposition = isImage ? 'inline' : 'attachment';
+
+    res.set({
+      'Content-Type': file.mimeType,
+      'Content-Disposition': `${disposition}; filename="${file.filename}"`,
+      'Content-Length': String(buffer.length),
+      'Cache-Control': 'private, max-age=3600',
+    });
+    res.send(buffer);
+  }
+
+  async storeImage(data: {
+    userId: string;
+    filename: string;
+    mimeType: string;
+    base64Data: string;
+  }): Promise<{ fileId: string }> {
+    this.validateMimeType(data.mimeType);
+    const contentBuffer = Buffer.from(data.base64Data, 'base64');
+    const storagePath = saveFile(`${Date.now()}-${data.filename}`, contentBuffer);
+
+    const file = await this.filesRepository.create({
+      userId: data.userId,
+      filename: data.filename,
+      mimeType: data.mimeType,
+      sizeBytes: contentBuffer.length,
+      storagePath,
+    });
+
+    this.logger.log(
+      `Image stored: ${file.id} (${data.filename}, ${String(contentBuffer.length)} bytes)`,
+    );
+    return { fileId: file.id };
   }
 
   private validateOwnership(file: File, userId: string): void {

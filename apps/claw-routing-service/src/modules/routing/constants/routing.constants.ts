@@ -17,12 +17,23 @@ export const CLOUD_MODEL_CHEAP = 'gpt-4o-mini';
 export const CLOUD_MODEL_DEFAULT = 'claude-sonnet-4';
 export const CLOUD_MODEL_GEMINI_DEFAULT = 'gemini-2.5-flash';
 
+// Image generation providers
+export const IMAGE_PROVIDER_OPENAI = 'IMAGE_OPENAI';
+export const IMAGE_PROVIDER_GEMINI = 'IMAGE_GEMINI';
+export const IMAGE_PROVIDER_LOCAL = 'IMAGE_LOCAL';
+export const IMAGE_MODEL_DALLE3 = 'dall-e-3';
+export const IMAGE_MODEL_IMAGEN = 'imagen-3.0-generate-001';
+export const IMAGE_MODEL_SD_LOCAL = 'sdxl-turbo';
+
 export const VALID_PROVIDERS = new Set([
   LOCAL_PROVIDER,
   CLOUD_PROVIDER_OPENAI,
   CLOUD_PROVIDER_ANTHROPIC,
   CLOUD_PROVIDER_GEMINI,
   CLOUD_PROVIDER_DEEPSEEK,
+  IMAGE_PROVIDER_OPENAI,
+  IMAGE_PROVIDER_GEMINI,
+  IMAGE_PROVIDER_LOCAL,
 ]);
 
 export const ollamaRouterResponseSchema = z.object({
@@ -50,6 +61,11 @@ CLOUD MODELS (paid, internet required, higher quality):
 - GEMINI / gemini-2.5-flash (fast, multimodal, best for image/video, web search, YouTube, file analysis)
 - DEEPSEEK / deepseek-chat (strong coding and math, very low cost)
 
+IMAGE GENERATION MODELS (generate images from text prompts):
+- IMAGE_OPENAI / dall-e-3 (best quality, photorealistic images, DALL-E 3)
+- IMAGE_GEMINI / imagen-3.0-generate-001 (Google Imagen, high quality image generation)
+- IMAGE_LOCAL / sdxl-turbo (local Stable Diffusion, free, no internet, lower quality)
+
 Healthy providers: {healthyProviders}
 
 ROUTING RULES (follow strictly):
@@ -61,6 +77,7 @@ ROUTING RULES (follow strictly):
 - Simple greetings, translations, quick facts → local-ollama / gemma3:4b
 - General chat, summarization, email drafting → local-ollama / gemma3:4b or OPENAI / gpt-4o-mini
 - Data analysis, CSV/JSON/file parsing → GEMINI / gemini-2.5-flash
+- Image generation, drawing, creating pictures, illustrations, art, sketches → IMAGE_OPENAI / dall-e-3
 - Privacy-sensitive requests → local-ollama / gemma3:4b (never send to cloud)
 - ONLY route to healthy providers listed above
 - Prefer local models when quality is acceptable for the task

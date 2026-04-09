@@ -103,3 +103,9 @@ export type CreateAssistantMessageData = {
   latencyMs: number;
   usedFallback: boolean;
 };
+
+export type ImageGenerateResponse = {
+  fileId: string;
+  revisedPrompt: string | null;
+  latencyMs: number;
+};

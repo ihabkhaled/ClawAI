@@ -50,12 +50,6 @@ export class AuthGuard implements CanActivate {
       }
     }
 
-    // Fallback: query param (for SSE/EventSource which cannot set headers)
-    const queryToken = request.query?.['token'];
-    if (typeof queryToken === 'string' && queryToken.length > 0) {
-      return queryToken;
-    }
-
     return undefined;
   }
 }

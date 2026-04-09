@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("IMAGE_DATABASE_URL")
+}
+
+enum ImageGenerationStatus {
+  PENDING
+  GENERATING
+  DOWNLOADING
+  STORING
+  COMPLETED
+  FAILED
+}
+
+model ImageGeneration {
+  id            String                @id @default(cuid())
+  userId        String                @map("user_id")
+  threadId      String?               @map("thread_id")
+  messageId     String?               @map("message_id")
+  prompt        String
+  revisedPrompt String?               @map("revised_prompt")
+  provider      String
+  model         String
+  width         Int                   @default(1024)
+  height        Int                   @default(1024)
+  quality       String?
+  style         String?
+  fileId        String?               @map("file_id")
+  status        ImageGenerationStatus @default(PENDING)
+  errorMessage  String?               @map("error_message")
+  latencyMs     Int?                  @map("latency_ms")
+  createdAt     DateTime              @default(now()) @map("created_at")
+  updatedAt     DateTime              @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([threadId])
+  @@index([status])
+  @@map("image_generations")
+}

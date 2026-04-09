@@ -2,13 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { API_BASE_URL } from '@/constants';
 import { StreamEventType } from '@/enums';
-import type { FallbackAttemptInfo, StreamEvent } from '@/types';
-import { getAccessToken } from '@/utilities';
+import type { FallbackAttemptInfo, SseConnection, StreamEvent } from '@/types';
+import { connectSse } from '@/utilities';
 
 export function useChatStream(threadId: string, isActive: boolean) {
   const [fallbackAttempts, setFallbackAttempts] = useState<FallbackAttemptInfo[]>([]);
   const [streamError, setStreamError] = useState<string | null>(null);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const connectionRef = useRef<SseConnection | null>(null);
 
   const resetStream = useCallback((): void => {
     setFallbackAttempts([]);
@@ -22,57 +22,52 @@ export function useChatStream(threadId: string, isActive: boolean) {
 
     resetStream();
 
-    const token = getAccessToken();
-    const url = `${API_BASE_URL}/chat-messages/stream/${threadId}?token=${encodeURIComponent(token ?? '')}`;
+    const url = `${API_BASE_URL}/chat-messages/stream/${threadId}`;
 
-    const eventSource = new EventSource(url);
-    eventSourceRef.current = eventSource;
+    const connection = connectSse(url, {
+      onMessage: (data: string) => {
+        try {
+          const parsed = JSON.parse(data) as StreamEvent;
 
-    eventSource.onmessage = (event: MessageEvent<string>) => {
-      try {
-        const data = JSON.parse(event.data) as StreamEvent;
+          if (parsed.type === StreamEventType.FALLBACK_ATTEMPT) {
+            const attempt: FallbackAttemptInfo = {
+              failedProvider: parsed.failedProvider ?? 'unknown',
+              failedModel: parsed.failedModel ?? 'unknown',
+              error: parsed.error ?? 'Unknown error',
+              attempt: parsed.attempt ?? 0,
+              totalCandidates: parsed.totalCandidates ?? 0,
+              nextProvider: parsed.nextProvider,
+              nextModel: parsed.nextModel,
+              timestamp: Date.now(),
+            };
+            setFallbackAttempts((prev) => [...prev, attempt]);
+          }
 
-        if (data.type === StreamEventType.FALLBACK_ATTEMPT) {
-          const attempt: FallbackAttemptInfo = {
-            failedProvider: data.failedProvider ?? 'unknown',
-            failedModel: data.failedModel ?? 'unknown',
-            error: data.error ?? 'Unknown error',
-            attempt: data.attempt ?? 0,
-            totalCandidates: data.totalCandidates ?? 0,
-            nextProvider: data.nextProvider,
-            nextModel: data.nextModel,
-            timestamp: Date.now(),
-          };
-          setFallbackAttempts((prev) => [...prev, attempt]);
+          if (parsed.type === StreamEventType.ERROR) {
+            setStreamError(parsed.error ?? 'All providers failed');
+          }
+        } catch {
+          // Ignore parse errors from SSE heartbeats
         }
+      },
+      onError: () => {
+        // Connection errors handled silently; polling is the fallback
+      },
+    });
 
-        if (data.type === StreamEventType.ERROR) {
-          setStreamError(data.error ?? 'All providers failed');
-        }
-
-        if (data.type === StreamEventType.DONE) {
-          // Connection will be cleaned up by the isActive toggle
-        }
-      } catch {
-        // Ignore parse errors from SSE heartbeats
-      }
-    };
-
-    eventSource.onerror = () => {
-      // SSE reconnect is automatic; ignore transient errors
-    };
+    connectionRef.current = connection;
 
     return () => {
-      eventSource.close();
-      eventSourceRef.current = null;
+      connection.close();
+      connectionRef.current = null;
     };
   }, [threadId, isActive, resetStream]);
 
   // Clean up when no longer waiting
   useEffect(() => {
-    if (!isActive && eventSourceRef.current) {
-      eventSourceRef.current.close();
-      eventSourceRef.current = null;
+    if (!isActive && connectionRef.current) {
+      connectionRef.current.close();
+      connectionRef.current = null;
     }
   }, [isActive]);
 

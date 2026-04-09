@@ -151,6 +151,29 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  # PostgreSQL (Image Service)
+  # ---------------------------------------------------------------------------
+  pg-images:
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-images
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_IMAGES_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_IMAGES_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_IMAGES_DB:-claw_images}
+    ports:
+      - '${PG_IMAGES_PORT:-5448}:5432'
+    volumes:
+      - pg-images-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_IMAGES_USER:-claw} -d ${PG_IMAGES_DB:-claw_images}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   # MongoDB (Audit Service)
   # ---------------------------------------------------------------------------
   mongodb:
@@ -463,6 +486,31 @@ services:
     networks:
       - claw-network
 
+  image-service:
+    build:
+      context: .
+      dockerfile: apps/claw-image-service/Dockerfile
+    container_name: claw-image-service
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '4012:4012'
+    depends_on:
+      pg-images:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4012/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
   client-logs-service:
     build:
       context: .
@@ -612,6 +660,8 @@ volumes:
   pg-files-data:
     driver: local
   pg-ollama-data:
+    driver: local
+  pg-images-data:
     driver: local
   mongo-data:
     driver: local

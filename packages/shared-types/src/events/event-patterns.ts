@@ -19,4 +19,6 @@ export enum EventPattern {
   AUDIT_EVENT = 'audit.event',
   HEALTH_CHECK = 'health.check',
   LOG_SERVER = 'log.server',
+  IMAGE_GENERATED = 'image.generated',
+  IMAGE_FAILED = 'image.failed',
 }

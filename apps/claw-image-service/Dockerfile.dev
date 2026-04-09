@@ -1,0 +1,23 @@
+FROM node:20-alpine
+RUN apk add --no-cache openssl
+WORKDIR /app
+
+# Copy entire monorepo structure for workspace resolution
+COPY package.json ./package.json
+COPY packages/ ./packages/
+COPY apps/claw-image-service/ ./apps/claw-image-service/
+
+# Build shared packages first
+RUN cd packages/shared-types && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
+RUN cd packages/shared-constants && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
+RUN cd packages/shared-rabbitmq && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
+RUN cd packages/shared-auth && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
+
+# Install service dependencies with workspace resolution
+WORKDIR /app/apps/claw-image-service
+RUN npm install --ignore-scripts 2>/dev/null || npm install --legacy-peer-deps --ignore-scripts 2>/dev/null || true
+RUN npx prisma generate 2>/dev/null || true
+RUN chmod +x docker-entrypoint.dev.sh 2>/dev/null || true
+
+EXPOSE 4012
+CMD ["./docker-entrypoint.dev.sh"]

@@ -1,4 +1,4 @@
-import { type File, type FileChunk, type FileIngestionStatus } from "../../../generated/prisma";
+import { type File, type FileChunk, type FileIngestionStatus } from '../../../generated/prisma';
 
 export interface CreateFileData {
   userId: string;
@@ -26,14 +26,18 @@ export type FileWithChunks = File & {
 };
 
 export const ALLOWED_MIME_TYPES = [
-  "text/plain",
-  "text/csv",
-  "text/markdown",
-  "application/json",
-  "application/pdf",
-  "text/html",
-  "text/xml",
-  "application/xml",
+  'text/plain',
+  'text/csv',
+  'text/markdown',
+  'application/json',
+  'application/pdf',
+  'text/html',
+  'text/xml',
+  'application/xml',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
 ] as const;
 
 export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB

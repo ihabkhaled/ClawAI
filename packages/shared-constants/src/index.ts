@@ -14,6 +14,7 @@ export const FILE_SERVICE_PORT = 4006;
 export const AUDIT_SERVICE_PORT = 4007;
 export const OLLAMA_SERVICE_PORT = 4008;
 export const HEALTH_SERVICE_PORT = 4009;
+export const IMAGE_SERVICE_PORT = 4012;
 
 // ---- Service Names ----
 
@@ -26,6 +27,7 @@ export const FILE_SERVICE = 'file-service';
 export const AUDIT_SERVICE = 'audit-service';
 export const OLLAMA_SERVICE = 'ollama-service';
 export const HEALTH_SERVICE = 'health-service';
+export const IMAGE_SERVICE = 'image-service';
 
 // ---- API ----
 

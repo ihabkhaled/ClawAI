@@ -13,6 +13,7 @@ export type {
   UpdateThreadMutationParams,
   SetFeedbackParams,
   StreamEvent,
+  SseConnection,
   FallbackAttemptInfo,
 } from './chat.types';
 export type {

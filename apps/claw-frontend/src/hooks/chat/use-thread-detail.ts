@@ -33,6 +33,16 @@ export function useThreadDetail(threadId: string) {
     isWaitingForResponse,
   );
 
+  // When SSE reports an error, immediately refetch messages and stop polling.
+  // The backend stores an error ASSISTANT message, so the refetch will pick it up.
+  useEffect(() => {
+    if (streamError && isWaitingForResponse) {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.threads.messages(threadId),
+      });
+    }
+  }, [streamError, isWaitingForResponse, queryClient, threadId]);
+
   // Manual polling via setInterval for reliable auto-fetch
   useEffect(() => {
     if (isWaitingForResponse && threadId) {

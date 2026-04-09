@@ -110,6 +110,10 @@ export type StreamEvent = {
   nextModel?: string;
 };
 
+export type SseConnection = {
+  close: () => void;
+};
+
 export type FallbackAttemptInfo = {
   failedProvider: string;
   failedModel: string;

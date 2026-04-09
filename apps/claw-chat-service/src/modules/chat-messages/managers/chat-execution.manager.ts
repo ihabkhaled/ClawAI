@@ -2,9 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities';
 import { BusinessException } from '../../../common/errors';
-import { OLLAMA_PROVIDER, PROVIDER_BASE_URLS } from '../../../common/constants';
+import {
+  IMAGE_PROVIDER_PREFIX,
+  OLLAMA_PROVIDER,
+  PROVIDER_BASE_URLS,
+} from '../../../common/constants';
 import {
   type ConnectorConfigResponse,
+  type ImageGenerateResponse,
   type LlmResponse,
   type MessageRoutedData,
   type OllamaGenerateRequest,
@@ -112,6 +117,9 @@ export class ChatExecutionManager {
     usedFallback: boolean,
     threadSettings?: ThreadSettings,
   ): Promise<LlmResponse> {
+    if (provider.startsWith(IMAGE_PROVIDER_PREFIX)) {
+      return this.callImageService(provider, model, context, startTime, usedFallback, 'system');
+    }
     if (provider === OLLAMA_PROVIDER) {
       return this.callOllama(model, context, startTime, usedFallback, threadSettings);
     }
@@ -238,6 +246,46 @@ export class ChatExecutionManager {
       outputTokens: response.data.usage?.completion_tokens,
       latencyMs,
       finishReason: firstChoice.finish_reason,
+      usedFallback,
+    };
+  }
+
+  private async callImageService(
+    provider: string,
+    model: string,
+    context: AssembledContext,
+    startTime: number,
+    usedFallback: boolean,
+    userId: string,
+  ): Promise<LlmResponse> {
+    const config = AppConfig.get();
+    const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
+    const prompt = lastUserMsg?.content ?? 'generate an image';
+
+    const response = await httpRequest<ImageGenerateResponse>({
+      url: `${config.IMAGE_SERVICE_URL}/api/v1/internal/images/generate`,
+      method: 'POST',
+      body: { prompt, provider, model, userId },
+      timeoutMs: 180_000,
+    });
+
+    if (!response.ok) {
+      throw new BusinessException(
+        `Image service returned status ${String(response.status)}`,
+        'IMAGE_SERVICE_REQUEST_FAILED',
+      );
+    }
+
+    const latencyMs = Date.now() - startTime;
+    const revisedPrompt = response.data.revisedPrompt;
+    const caption = revisedPrompt ? `\n\n*${revisedPrompt}*` : '';
+
+    return {
+      content: `![Generated Image](/api/v1/files/download/${response.data.fileId})${caption}`,
+      provider,
+      model,
+      latencyMs,
+      finishReason: 'stop',
       usedFallback,
     };
   }

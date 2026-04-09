@@ -277,6 +277,11 @@ PG_OLLAMA_PASSWORD=${DB_PASSWORD}
 PG_OLLAMA_DB=claw_ollama
 PG_OLLAMA_PORT=5447
 
+PG_IMAGES_USER=claw
+PG_IMAGES_PASSWORD=${DB_PASSWORD}
+PG_IMAGES_DB=claw_images
+PG_IMAGES_PORT=5448
+
 # =============================================================================
 # MongoDB
 # =============================================================================
@@ -353,6 +358,7 @@ FILE_SERVICE_URL=http://file-service:4006
 AUDIT_SERVICE_URL=http://audit-service:4007
 CLIENT_LOGS_SERVICE_URL=http://client-logs-service:4010
 SERVER_LOGS_SERVICE_URL=http://server-logs-service:4011
+IMAGE_SERVICE_URL=http://image-service:4012
 
 # =============================================================================
 # Per-Service Ports
@@ -368,6 +374,7 @@ OLLAMA_PORT=4008
 HEALTH_PORT=4009
 CLIENT_LOGS_PORT=4010
 SERVER_LOGS_PORT=4011
+IMAGE_PORT=4012
 
 # =============================================================================
 # Per-Service Database URLs
@@ -379,6 +386,9 @@ ROUTING_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-routing:5432/claw_routi
 MEMORY_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-memory:5432/claw_memory?schema=public
 FILES_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-files:5432/claw_files?schema=public
 OLLAMA_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-ollama:5432/claw_ollama?schema=public
+IMAGE_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-images:5432/claw_images?schema=public
+
+STABLE_DIFFUSION_URL=http://stable-diffusion:7860
 
 AUDIT_MONGODB_URI=mongodb://claw:${MONGO_PASS}@mongodb:27017/claw_audit?authSource=admin
 CLIENT_LOGS_MONGODB_URI=mongodb://claw:${MONGO_PASS}@mongodb:27017/claw_client_logs?authSource=admin
