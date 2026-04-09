@@ -12,6 +12,8 @@ export type {
   ArchiveThreadParams,
   UpdateThreadMutationParams,
   SetFeedbackParams,
+  StreamEvent,
+  FallbackAttemptInfo,
 } from './chat.types';
 export type {
   Connector,

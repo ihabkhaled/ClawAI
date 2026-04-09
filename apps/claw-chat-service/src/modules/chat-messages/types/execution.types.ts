@@ -82,6 +82,16 @@ export type ConnectorConfigResponse = {
   region?: string;
 };
 
+export type FallbackAttemptData = {
+  failedProvider: string;
+  failedModel: string;
+  error: string;
+  attempt: number;
+  totalCandidates: number;
+  nextProvider?: string;
+  nextModel?: string;
+};
+
 export type CreateAssistantMessageData = {
   threadId: string;
   content: string;

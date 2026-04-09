@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { POLLING_INTERVAL_MS } from '@/constants';
 import { MessageRole } from '@/enums';
+import { useChatStream } from '@/hooks/chat/use-chat-stream';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 
@@ -26,6 +27,11 @@ export function useThreadDetail(threadId: string) {
 
   const messagesList = messagesQuery.data?.data ?? [];
   const lastMessage = messagesList.length > 0 ? messagesList[messagesList.length - 1] : undefined;
+
+  const { fallbackAttempts, streamError, resetStream } = useChatStream(
+    threadId,
+    isWaitingForResponse,
+  );
 
   // Manual polling via setInterval for reliable auto-fetch
   useEffect(() => {
@@ -82,8 +88,9 @@ export function useThreadDetail(threadId: string) {
 
   const startWaitingForResponse = useCallback((): void => {
     messageCountBeforeSend.current = messagesList.length;
+    resetStream();
     setIsWaitingForResponse(true);
-  }, [messagesList.length]);
+  }, [messagesList.length, resetStream]);
 
   return {
     thread: threadQuery.data ?? null,
@@ -95,5 +102,7 @@ export function useThreadDetail(threadId: string) {
     refetchMessages: messagesQuery.refetch,
     isWaitingForResponse,
     startWaitingForResponse,
+    fallbackAttempts,
+    streamError,
   };
 }

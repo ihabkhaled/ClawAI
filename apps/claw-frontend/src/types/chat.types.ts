@@ -1,4 +1,4 @@
-import type { MessageFeedback, MessageRole, RoutingMode } from '@/enums';
+import type { MessageFeedback, MessageRole, RoutingMode, StreamEventType } from '@/enums';
 
 export type ChatThread = {
   id: string;
@@ -93,4 +93,30 @@ export type ThreadsListResponse = {
 export type MessagesListResponse = {
   data: ChatMessage[];
   meta: { total: number; page: number; limit: number; totalPages: number };
+};
+
+export type StreamEvent = {
+  threadId: string;
+  type: StreamEventType;
+  content?: string;
+  provider?: string;
+  model?: string;
+  error?: string;
+  failedProvider?: string;
+  failedModel?: string;
+  attempt?: number;
+  totalCandidates?: number;
+  nextProvider?: string;
+  nextModel?: string;
+};
+
+export type FallbackAttemptInfo = {
+  failedProvider: string;
+  failedModel: string;
+  error: string;
+  attempt: number;
+  totalCandidates: number;
+  nextProvider?: string;
+  nextModel?: string;
+  timestamp: number;
 };

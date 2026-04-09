@@ -6,7 +6,7 @@ import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { TranslateFunction } from '@/types/i18n.types';
 
 import type { AdminUser } from './audit.types';
-import type { ChatMessage, ChatThread } from './chat.types';
+import type { ChatMessage, ChatThread, FallbackAttemptInfo } from './chat.types';
 import type { Connector, ConnectorModel, CreateConnectorRequest } from './connector.types';
 import type { CreateContextPackItemRequest, CreateContextPackRequest } from './context-pack.types';
 import type { UploadedFile } from './file.types';
@@ -157,6 +157,8 @@ export type MessageBubbleProps = {
 
 export type ThinkingIndicatorProps = {
   className?: string;
+  fallbackAttempts?: FallbackAttemptInfo[];
+  streamError?: string | null;
 };
 
 export type ModelSelection = {

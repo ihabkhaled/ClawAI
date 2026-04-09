@@ -23,3 +23,4 @@ export { LogLevel } from './log-level.enum';
 export { LogsTab } from './logs-tab.enum';
 export { MessageFeedback } from './message-feedback.enum';
 export { Theme, ResolvedTheme } from './theme.enum';
+export { StreamEventType } from './stream-event-type.enum';

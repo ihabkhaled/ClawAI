@@ -22,13 +22,15 @@ import { useSendMessage } from '@/hooks/chat/use-send-message';
 import { useThreadDetail } from '@/hooks/chat/use-thread-detail';
 import { useThreadSettings } from '@/hooks/chat/use-thread-settings';
 import { useTranslation } from '@/lib/i18n/use-translation';
-import type { ChatMessage, ModelSelection } from '@/types';
+import type { ChatMessage, FallbackAttemptInfo, ModelSelection } from '@/types';
 
 function MessagesContent({
   isLoadingThread,
   isLoadingMessages,
   messages,
   isWaitingForResponse,
+  fallbackAttempts,
+  streamError,
   messagesEndRef,
   onFeedback,
   onRegenerate,
@@ -37,6 +39,8 @@ function MessagesContent({
   isLoadingMessages: boolean;
   messages: ChatMessage[];
   isWaitingForResponse: boolean;
+  fallbackAttempts: FallbackAttemptInfo[];
+  streamError: string | null;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
   onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
   onRegenerate: (messageId: string) => void;
@@ -56,9 +60,16 @@ function MessagesContent({
   return (
     <div className="flex flex-col gap-4">
       {messages.map((message) => (
-        <MessageBubble key={message.id} message={message} onFeedback={onFeedback} onRegenerate={onRegenerate} />
+        <MessageBubble
+          key={message.id}
+          message={message}
+          onFeedback={onFeedback}
+          onRegenerate={onRegenerate}
+        />
       ))}
-      {isWaitingForResponse ? <ThinkingIndicator /> : null}
+      {isWaitingForResponse ? (
+        <ThinkingIndicator fallbackAttempts={fallbackAttempts} streamError={streamError} />
+      ) : null}
       <div ref={messagesEndRef} />
     </div>
   );
@@ -70,8 +81,16 @@ export default function ThreadDetailPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { t } = useTranslation();
-  const { thread, messages, isLoadingThread, isLoadingMessages, isWaitingForResponse, startWaitingForResponse } =
-    useThreadDetail(threadId);
+  const {
+    thread,
+    messages,
+    isLoadingThread,
+    isLoadingMessages,
+    isWaitingForResponse,
+    startWaitingForResponse,
+    fallbackAttempts,
+    streamError,
+  } = useThreadDetail(threadId);
   const { sendMessage, isPending: isSending } = useSendMessage(threadId, startWaitingForResponse);
   const { deleteThread, isPending: isDeleting } = useDeleteThread();
   const { setFeedback } = useMessageFeedback(threadId);
@@ -91,11 +110,13 @@ export default function ThreadDetailPage() {
       sendMessage({
         threadId,
         content,
-        ...(modelSelection ? {
-          routingMode: RoutingMode.MANUAL_MODEL,
-          provider: modelSelection.provider,
-          model: modelSelection.model,
-        } : {}),
+        ...(modelSelection
+          ? {
+              routingMode: RoutingMode.MANUAL_MODEL,
+              provider: modelSelection.provider,
+              model: modelSelection.model,
+            }
+          : {}),
         ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
       });
     },
@@ -193,6 +214,8 @@ export default function ThreadDetailPage() {
             isLoadingMessages={isLoadingMessages}
             messages={messages}
             isWaitingForResponse={isWaitingForResponse}
+            fallbackAttempts={fallbackAttempts}
+            streamError={streamError}
             messagesEndRef={messagesEndRef}
             onFeedback={handleFeedback}
             onRegenerate={handleRegenerate}
@@ -203,11 +226,15 @@ export default function ThreadDetailPage() {
           <MessageComposer
             onSend={handleSend}
             isPending={isSending}
-            threadModel={thread?.preferredProvider && thread?.preferredModel ? {
-              provider: thread.preferredProvider,
-              model: thread.preferredModel,
-              displayName: thread.preferredModel,
-            } : null}
+            threadModel={
+              thread?.preferredProvider && thread?.preferredModel
+                ? {
+                    provider: thread.preferredProvider,
+                    model: thread.preferredModel,
+                    displayName: thread.preferredModel,
+                  }
+                : null
+            }
           />
         </div>
       </div>
