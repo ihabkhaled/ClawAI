@@ -316,24 +316,35 @@ export class ChatExecutionManager {
     const prompt = lastUserMsg?.content ?? 'generate a file';
     const format = this.detectFileFormat(prompt);
 
-    // Phase 1: Call LLM for content
+    // Phase 1: Call LLM for content with file-generation-specific system prompt
     const contentProvider = this.pickContentProvider(context);
+    const fileContext: AssembledContext = {
+      ...context,
+      systemPrompt: `You are a file content generator. The user wants to create a ${format} file. Generate ONLY the raw content for the file — no explanations, no markdown code blocks, no "here is your file" preamble. Output the actual content that should go inside the file. For PDF/DOCX, use markdown formatting (headers, bullets, paragraphs). For CSV, output header row + data rows. For JSON, output valid JSON. For TXT, output plain text. For HTML, output HTML. For MD, output markdown.`,
+    };
     const contentResponse = await this.callCloudProvider(
       contentProvider.provider,
       contentProvider.model,
-      context,
+      fileContext,
       startTime,
       false,
       threadSettings,
     );
 
     // Phase 2: Send content to file-generation-service for conversion
+    // Strip markdown code block wrappers if present
+    let fileContent = contentResponse.content;
+    const codeBlockMatch = /^```\w*\n([\s\S]*?)```$/m.exec(fileContent.trim());
+    if (codeBlockMatch?.[1]) {
+      fileContent = codeBlockMatch[1].trim();
+    }
+
     const response = await httpRequest<FileGenerateResponse>({
       url: `${config.FILE_GENERATION_SERVICE_URL}/api/v1/internal/file-generations/generate`,
       method: 'POST',
       body: {
         prompt,
-        content: contentResponse.content,
+        content: fileContent,
         format,
         provider: contentResponse.provider,
         model: contentResponse.model,
