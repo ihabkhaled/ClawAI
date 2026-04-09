@@ -176,6 +176,11 @@ export class ChatMessagesService implements OnModuleInit {
       chronologicalMessages,
     );
 
+    // Attachment-aware image generation detection:
+    // If user attached IMAGE files and text implies "similar/recreate/like this",
+    // override to IMAGE_GEMINI even if router didn't detect it
+    effectivePayload = this.detectImageFromAttachment(effectivePayload, chronologicalMessages);
+
     const context = await this.contextAssemblyManager.assemble(
       thread?.userId ?? 'system',
       chronologicalMessages,
@@ -587,6 +592,73 @@ export class ChatMessagesService implements OnModuleInit {
       ...payload,
       selectedProvider: 'FILE_GENERATION',
       selectedModel: 'auto',
+    };
+  }
+
+  private detectImageFromAttachment(
+    payload: MessageRoutedData,
+    messages: ChatMessage[],
+  ): MessageRoutedData {
+    // Already routed to image generation
+    if (payload.selectedProvider.startsWith('IMAGE_')) {
+      return payload;
+    }
+
+    // Check if the latest user message has image attachments
+    const lastUser = [...messages].reverse().find((m) => m.role === 'USER');
+    if (!lastUser) {
+      return payload;
+    }
+
+    const meta = lastUser.metadata as Record<string, unknown> | null;
+    const fileIds = Array.isArray(meta?.['fileIds']) ? (meta['fileIds'] as string[]) : [];
+    if (fileIds.length === 0) {
+      return payload;
+    }
+
+    // Check if the user's text implies they want image generation from the attachment
+    const lower = lastUser.content.toLowerCase();
+    const imageIntentPhrases = [
+      'similar',
+      'like this',
+      'recreate',
+      'reproduce',
+      'copy',
+      'same style',
+      'identical',
+      'match',
+      'imitate',
+      'version of this',
+      'based on this',
+      'inspired by',
+      'variation',
+      'modify this',
+      'edit this',
+      'change this',
+      'transform this',
+      'convert this',
+      'make this',
+      'redo this',
+      'similar to this',
+      'like the attached',
+      'same as this',
+      'generate from this',
+      'create from this',
+    ];
+
+    const hasImageIntent = imageIntentPhrases.some((p) => lower.includes(p));
+    if (!hasImageIntent) {
+      return payload;
+    }
+
+    this.logger.log(
+      `Image-from-attachment detected: "${lower.slice(0, 50)}" with ${String(fileIds.length)} files → overriding to IMAGE_GEMINI`,
+    );
+
+    return {
+      ...payload,
+      selectedProvider: 'IMAGE_GEMINI',
+      selectedModel: 'gemini-2.5-flash-image',
     };
   }
 }

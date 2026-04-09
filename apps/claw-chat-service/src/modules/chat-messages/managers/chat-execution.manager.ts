@@ -66,7 +66,7 @@ export class ChatExecutionManager {
     let lastError: unknown = null;
 
     for (let i = 0; i < candidates.length; i++) {
-      const candidate = candidates[i];
+      const candidate = candidates.at(i);
       if (!candidate) {
         continue;
       }
@@ -207,8 +207,33 @@ export class ChatExecutionManager {
     usedFallback: boolean,
     threadSettings?: ThreadSettings,
   ): Promise<LlmResponse> {
+    const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
+    const requestBody = this.buildChatRequestBody(model, context, threadSettings);
+
+    const response = await httpRequest<OpenAiChatResponse>({
+      url: `${baseUrl}/chat/completions`,
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: requestBody,
+      timeoutMs: 120_000,
+    });
+
+    if (!response.ok) {
+      throw new BusinessException(
+        `Cloud provider ${provider} returned status ${String(response.status)}`,
+        'CLOUD_PROVIDER_REQUEST_FAILED',
+      );
+    }
+
+    return this.parseCloudResponse(response.data, provider, model, startTime, usedFallback);
+  }
+
+  private async resolveProviderConfig(
+    provider: string,
+  ): Promise<{ baseUrl: string; apiKey: string }> {
     const connectorConfig = await this.fetchConnectorConfig(provider);
-    const baseUrl = connectorConfig.baseUrl ?? PROVIDER_BASE_URLS[provider] ?? '';
+    const providerBaseUrls = PROVIDER_BASE_URLS as Readonly<Record<string, string>>;
+    const baseUrl = connectorConfig.baseUrl ?? providerBaseUrls[provider] ?? '';
 
     if (!baseUrl) {
       throw new BusinessException(
@@ -224,6 +249,14 @@ export class ChatExecutionManager {
       );
     }
 
+    return { baseUrl, apiKey: connectorConfig.apiKey };
+  }
+
+  private buildChatRequestBody(
+    model: string,
+    context: AssembledContext,
+    threadSettings?: ThreadSettings,
+  ): OpenAiChatRequest {
     const messages = this.contextAssembly.buildChatMessages(context);
     const requestBody: OpenAiChatRequest = { model, messages, stream: false };
 
@@ -235,23 +268,18 @@ export class ChatExecutionManager {
       requestBody.max_tokens = threadSettings.maxTokens;
     }
 
-    const response = await httpRequest<OpenAiChatResponse>({
-      url: `${baseUrl}/chat/completions`,
-      method: 'POST',
-      headers: { Authorization: `Bearer ${connectorConfig.apiKey}` },
-      body: requestBody,
-      timeoutMs: 120_000,
-    });
+    return requestBody;
+  }
 
-    if (!response.ok) {
-      throw new BusinessException(
-        `Cloud provider ${provider} returned status ${String(response.status)}`,
-        'CLOUD_PROVIDER_REQUEST_FAILED',
-      );
-    }
-
+  private parseCloudResponse(
+    data: OpenAiChatResponse,
+    provider: string,
+    model: string,
+    startTime: number,
+    usedFallback: boolean,
+  ): LlmResponse {
     const latencyMs = Date.now() - startTime;
-    const firstChoice = response.data.choices[0];
+    const firstChoice = data.choices[0];
 
     if (!firstChoice) {
       throw new BusinessException(
@@ -260,17 +288,15 @@ export class ChatExecutionManager {
       );
     }
 
-    // Response content is always a string from the API (assistant messages)
-    const responseContent = typeof firstChoice.message.content === 'string'
-      ? firstChoice.message.content
-      : '';
+    const responseContent =
+      typeof firstChoice.message.content === 'string' ? firstChoice.message.content : '';
 
     return {
       content: responseContent,
       provider,
       model,
-      inputTokens: response.data.usage?.prompt_tokens,
-      outputTokens: response.data.usage?.completion_tokens,
+      inputTokens: data.usage?.prompt_tokens,
+      outputTokens: data.usage?.completion_tokens,
       latencyMs,
       finishReason: firstChoice.finish_reason,
       usedFallback,
@@ -468,11 +494,10 @@ export class ChatExecutionManager {
         visionContext,
         Date.now(),
         false,
-        undefined,
       );
 
       const generatedPrompt = visionResponse.content.trim();
-      this.logger.log(`Vision analysis generated prompt: ${generatedPrompt.substring(0, 150)}...`);
+      this.logger.log(`Vision analysis generated prompt: ${generatedPrompt.slice(0, 150)}...`);
 
       return generatedPrompt.length > 10 ? generatedPrompt : userText;
     } catch (error: unknown) {

@@ -184,6 +184,7 @@ export class FilesService {
       mimeType: data.mimeType,
       sizeBytes: contentBuffer.length,
       storagePath,
+      content: data.base64Data,
     });
 
     this.logger.log(
