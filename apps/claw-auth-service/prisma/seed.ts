@@ -3,7 +3,7 @@ import { hashPassword } from "../src/common/utilities/hashing.utility";
 
 const DEFAULT_ADMIN_EMAIL = "admin@claw.local";
 const DEFAULT_ADMIN_USERNAME = "admin";
-const DEFAULT_ADMIN_PASSWORD = "Admin123!";
+const DEFAULT_ADMIN_PASSWORD = "ClawAdmin123!";
 
 const prisma = new PrismaClient();
 

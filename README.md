@@ -56,7 +56,7 @@ open http://localhost:3000
 | Field    | Value            |
 | -------- | ---------------- |
 | Email    | admin@claw.local |
-| Password | Admin123!        |
+| Password | ClawAdmin123!        |
 
 You will be prompted to change your password on first login.
 
