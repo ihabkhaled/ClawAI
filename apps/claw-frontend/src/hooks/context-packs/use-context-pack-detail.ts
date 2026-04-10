@@ -8,7 +8,7 @@ import type {
   CreateContextPackItemRequest,
   UpdateContextPackItemRequest,
 } from '@/types';
-import { showToast } from '@/utilities';
+import { logger, showToast } from '@/utilities';
 
 export function useContextPackDetail(id: string | null) {
   const queryClient = useQueryClient();
@@ -16,7 +16,10 @@ export function useContextPackDetail(id: string | null) {
 
   const query = useQuery({
     queryKey: queryKeys.contextPacks.detail(id ?? ''),
-    queryFn: () => contextPacksRepository.getContextPack(id ?? ''),
+    queryFn: () => {
+      logger.debug({ component: 'memory', action: 'fetch-context-pack-detail', message: 'Fetching context pack detail', details: { packId: id } });
+      return contextPacksRepository.getContextPack(id ?? '');
+    },
     enabled: !!id,
   });
 
