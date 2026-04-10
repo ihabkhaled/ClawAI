@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { Locale } from '@/enums/locale.enum';
+import { Theme } from '@/enums/theme.enum';
 import { UserAppearancePreference } from '@/enums/user-appearance-preference.enum';
 import { UserLanguagePreference } from '@/enums/user-language-preference.enum';
 import {
@@ -42,9 +43,9 @@ describe('localeToLanguage', () => {
 
 describe('appearanceToTheme', () => {
   it.each([
-    [UserAppearancePreference.SYSTEM, 'system'],
-    [UserAppearancePreference.LIGHT, 'light'],
-    [UserAppearancePreference.DARK, 'dark'],
+    [UserAppearancePreference.SYSTEM, Theme.SYSTEM],
+    [UserAppearancePreference.LIGHT, Theme.LIGHT],
+    [UserAppearancePreference.DARK, Theme.DARK],
   ])('maps %s to %s', (appearance, expectedTheme) => {
     expect(appearanceToTheme(appearance)).toBe(expectedTheme);
   });
@@ -52,18 +53,10 @@ describe('appearanceToTheme', () => {
 
 describe('themeToAppearance', () => {
   it.each([
-    ['system', UserAppearancePreference.SYSTEM],
-    ['light', UserAppearancePreference.LIGHT],
-    ['dark', UserAppearancePreference.DARK],
+    [Theme.SYSTEM, UserAppearancePreference.SYSTEM],
+    [Theme.LIGHT, UserAppearancePreference.LIGHT],
+    [Theme.DARK, UserAppearancePreference.DARK],
   ])('maps %s to %s', (theme, expectedAppearance) => {
     expect(themeToAppearance(theme)).toBe(expectedAppearance);
-  });
-
-  it('falls back to SYSTEM for unknown theme strings', () => {
-    expect(themeToAppearance('unknown')).toBe(UserAppearancePreference.SYSTEM);
-  });
-
-  it('falls back to SYSTEM for empty string', () => {
-    expect(themeToAppearance('')).toBe(UserAppearancePreference.SYSTEM);
   });
 });

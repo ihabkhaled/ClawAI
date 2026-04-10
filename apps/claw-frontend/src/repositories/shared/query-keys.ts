@@ -10,6 +10,10 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.threads.all, "detail", id] as const,
     messages: (threadId: string, page?: number) =>
       [...queryKeys.threads.all, "messages", threadId, page] as const,
+    messagesInfinite: (threadId: string) =>
+      [...queryKeys.threads.all, "messages-infinite", threadId] as const,
+    listInfinite: (filters: Record<string, unknown>) =>
+      [...queryKeys.threads.lists(), "infinite", filters] as const,
   },
   connectors: {
     all: ["connectors"] as const,

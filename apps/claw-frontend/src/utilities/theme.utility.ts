@@ -34,11 +34,9 @@ export function applyTheme(resolved: ResolvedTheme): void {
     return;
   }
   const root = document.documentElement;
-  if (resolved === ResolvedTheme.DARK) {
-    root.classList.add('dark');
-  } else {
-    root.classList.remove('dark');
-  }
+  root.classList.remove('light', 'dark');
+  root.classList.add(resolved);
+  root.style.colorScheme = resolved;
 }
 
 export function storeTheme(theme: Theme): void {

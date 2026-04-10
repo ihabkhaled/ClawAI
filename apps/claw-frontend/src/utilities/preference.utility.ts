@@ -1,4 +1,5 @@
 import { Locale } from '@/enums/locale.enum';
+import { Theme } from '@/enums/theme.enum';
 import { UserAppearancePreference } from '@/enums/user-appearance-preference.enum';
 import { UserLanguagePreference } from '@/enums/user-language-preference.enum';
 
@@ -24,16 +25,16 @@ const LOCALE_TO_LANGUAGE_MAP: Record<Locale, UserLanguagePreference> = {
   [Locale.PT]: UserLanguagePreference.PT,
 };
 
-const APPEARANCE_TO_THEME_MAP: Record<UserAppearancePreference, string> = {
-  [UserAppearancePreference.SYSTEM]: 'system',
-  [UserAppearancePreference.LIGHT]: 'light',
-  [UserAppearancePreference.DARK]: 'dark',
+const APPEARANCE_TO_THEME_MAP: Record<UserAppearancePreference, Theme> = {
+  [UserAppearancePreference.SYSTEM]: Theme.SYSTEM,
+  [UserAppearancePreference.LIGHT]: Theme.LIGHT,
+  [UserAppearancePreference.DARK]: Theme.DARK,
 };
 
-const THEME_TO_APPEARANCE_MAP: Record<string, UserAppearancePreference> = {
-  system: UserAppearancePreference.SYSTEM,
-  light: UserAppearancePreference.LIGHT,
-  dark: UserAppearancePreference.DARK,
+const THEME_TO_APPEARANCE_MAP: Record<Theme, UserAppearancePreference> = {
+  [Theme.SYSTEM]: UserAppearancePreference.SYSTEM,
+  [Theme.LIGHT]: UserAppearancePreference.LIGHT,
+  [Theme.DARK]: UserAppearancePreference.DARK,
 };
 
 export function languageToLocale(language: UserLanguagePreference): Locale {
@@ -44,10 +45,10 @@ export function localeToLanguage(locale: Locale): UserLanguagePreference {
   return LOCALE_TO_LANGUAGE_MAP[locale];
 }
 
-export function appearanceToTheme(appearance: UserAppearancePreference): string {
+export function appearanceToTheme(appearance: UserAppearancePreference): Theme {
   return APPEARANCE_TO_THEME_MAP[appearance];
 }
 
-export function themeToAppearance(theme: string): UserAppearancePreference {
+export function themeToAppearance(theme: Theme): UserAppearancePreference {
   return THEME_TO_APPEARANCE_MAP[theme] ?? UserAppearancePreference.SYSTEM;
 }

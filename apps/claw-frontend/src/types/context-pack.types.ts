@@ -1,4 +1,6 @@
-import type { ContextPackItemType } from "@/enums";
+import type { ContextPackItemType } from '@/enums';
+
+import type { FormFieldErrors } from './component.types';
 
 export type ContextPack = {
   id: string;
@@ -48,4 +50,41 @@ export type UpdateContextPackItemRequest = {
   content?: string;
   fileId?: string;
   sortOrder?: number;
+};
+
+export type ContextPackFormStateParams = {
+  open: boolean;
+  onSubmit: (data: CreateContextPackRequest) => void;
+  onOpenChange: (open: boolean) => void;
+};
+
+export type ContextPackFormStateReturn = {
+  name: string;
+  setName: (value: string) => void;
+  description: string;
+  setDescription: (value: string) => void;
+  scope: string;
+  setScope: (value: string) => void;
+  fieldErrors: FormFieldErrors;
+  handleSubmit: (e: React.FormEvent) => void;
+  handleOpenChange: (nextOpen: boolean) => void;
+};
+
+export type ContextPackItemFormStateParams = {
+  open: boolean;
+  onSubmit: (data: CreateContextPackItemRequest) => void;
+  onOpenChange: (open: boolean) => void;
+};
+
+export type ContextPackItemFormStateReturn = {
+  type: ContextPackItemType;
+  setType: (value: ContextPackItemType) => void;
+  content: string;
+  setContent: (value: string) => void;
+  fileId: string;
+  setFileId: (value: string) => void;
+  fieldErrors: FormFieldErrors;
+  isFileRef: boolean;
+  handleSubmit: (e: React.FormEvent) => void;
+  handleOpenChange: (nextOpen: boolean) => void;
 };

@@ -1,4 +1,4 @@
-import type { ConnectorProvider, ConnectorStatus } from '@/enums';
+import type { ConnectorAuthType, ConnectorProvider, ConnectorStatus } from '@/enums';
 
 export type Connector = {
   id: string;
@@ -75,4 +75,33 @@ export type ConnectorFormFieldErrors = {
 export type UpdateConnectorParams = {
   id: string;
   data: UpdateConnectorRequest;
+};
+
+export type ConnectorFormStateParams = {
+  open: boolean;
+  connector?: Connector | null;
+  onSubmit: (data: CreateConnectorRequest) => void;
+  onOpenChange: (open: boolean) => void;
+};
+
+export type ConnectorFormStateReturn = {
+  name: string;
+  setName: (value: string) => void;
+  provider: ConnectorProvider | null;
+  setProvider: (value: ConnectorProvider) => void;
+  authType: ConnectorAuthType;
+  setAuthType: (value: ConnectorAuthType) => void;
+  apiKey: string;
+  setApiKey: (value: string) => void;
+  baseUrl: string;
+  setBaseUrl: (value: string) => void;
+  region: string;
+  setRegion: (value: string) => void;
+  fieldErrors: ConnectorFormFieldErrors;
+  isEditing: boolean;
+  pendingLabel: string;
+  submitLabel: string;
+  defaultBaseUrl: string | null;
+  handleSubmit: (e: React.FormEvent) => void;
+  handleOpenChange: (nextOpen: boolean) => void;
 };

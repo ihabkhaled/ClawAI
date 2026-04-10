@@ -20,6 +20,19 @@ export const chatRepository = {
     return response.data;
   },
 
+  async getThreadsPaginated(
+    page: number,
+    limit: number,
+    params?: Record<string, string>,
+  ): Promise<ThreadsListResponse> {
+    const response = await apiClient.get<ThreadsListResponse>('/chat-threads', {
+      ...params,
+      page: String(page),
+      limit: String(limit),
+    });
+    return response.data;
+  },
+
   async getThread(id: string): Promise<ChatThread> {
     const response = await apiClient.get<ChatThread>(`/chat-threads/${id}`);
     return response.data;

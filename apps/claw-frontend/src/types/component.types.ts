@@ -114,6 +114,18 @@ export type ThemeContextValue = {
   setTheme: (theme: Theme) => void;
 };
 
+export type UseAppThemeReturn = {
+  theme: Theme;
+  resolvedTheme: ResolvedTheme | undefined;
+  setTheme: (theme: Theme) => void;
+};
+
+export type UseThemeSwitcherReturn = {
+  theme: Theme;
+  handleCycleTheme: () => void;
+  isPending: boolean;
+};
+
 export type ThreadSettingsProps = {
   t: TranslateFunction;
   systemPrompt: string;
@@ -217,10 +229,97 @@ export type MessageProvenanceProps = {
   message: ChatMessage;
 };
 
+export type ImageLoadingStateProps = {
+  status: string;
+  prompt: string;
+  provider?: string;
+  model?: string;
+};
+
+export type ImageErrorStateProps = {
+  status: string;
+  error?: string | null;
+  provider?: string;
+  model?: string;
+  onRetry: () => void;
+  showModelPicker?: boolean;
+  onRetryWithModel?: (provider: string, model: string) => void;
+};
+
+export type ImageCompletedStateProps = {
+  blobUrl: string;
+  prompt: string;
+};
+
+export type FileLoadingStateProps = {
+  status: string;
+  prompt: string;
+  format?: string;
+};
+
+export type FileErrorStateProps = {
+  status: string;
+  error?: string | null;
+  onRetry: () => void;
+};
+
+export type FileCompletedStateProps = {
+  blobUrl: string;
+  filename: string;
+  format: string;
+  sizeBytes: number | null;
+};
+
+export type AttachmentThumbnailProps = {
+  fileId: string;
+};
+
+export type MessagesContentProps = {
+  isLoadingThread: boolean;
+  isLoadingMessages: boolean;
+  messages: ChatMessage[];
+  isWaitingForResponse: boolean;
+  fallbackAttempts: FallbackAttemptInfo[];
+  streamError: string | null;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
+  onRegenerate: (messageId: string) => void;
+};
+
+export type VirtualizedMessagesProps = {
+  messages: ChatMessage[];
+  isLoading: boolean;
+  isFetchingPreviousPage: boolean;
+  hasPreviousPage: boolean;
+  isWaitingForResponse: boolean;
+  fallbackAttempts: FallbackAttemptInfo[];
+  streamError: string | null;
+  onStartReached: () => void;
+  onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
+  onRegenerate: (messageId: string) => void;
+};
+
+export type VirtualizedThreadListProps = {
+  threads: ChatThread[];
+  isLoading: boolean;
+  isFetchingNextPage: boolean;
+  hasNextPage: boolean;
+  onEndReached: () => void;
+  onPin: (id: string, isPinned: boolean) => void;
+  onArchive: (id: string, isArchived: boolean) => void;
+  isPinPending: boolean;
+  isArchivePending: boolean;
+  search: string;
+};
+
 export type ChatPageReturn = {
   pinnedThreads: ChatThread[];
   unpinnedThreads: ChatThread[];
+  allThreads: ChatThread[];
   isLoading: boolean;
+  isFetchingNextPage: boolean;
+  hasNextPage: boolean;
+  fetchNextPage: () => void;
   search: string;
   setSearch: (value: string) => void;
   showArchived: boolean;

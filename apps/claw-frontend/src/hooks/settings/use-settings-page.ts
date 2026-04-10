@@ -13,6 +13,7 @@ import {
   changePasswordSchema,
   type ChangePasswordFormValues,
 } from '@/lib/validation/change-password.schema';
+import { logger } from '@/utilities';
 import {
   languageToLocale,
   localeToLanguage,
@@ -43,18 +44,21 @@ export function useSettingsPage() {
   const currentAppearance = themeToAppearance(theme);
 
   function handleLanguageChange(language: UserLanguagePreference): void {
+    logger.info({ component: 'settings', action: 'change-language', message: 'User changing language', details: { language } });
     const newLocale = languageToLocale(language);
     setLocale(newLocale);
     updatePreferences({ languagePreference: language });
   }
 
   function handleAppearanceChange(appearance: UserAppearancePreference): void {
+    logger.info({ component: 'settings', action: 'change-appearance', message: 'User changing appearance', details: { appearance } });
     const newTheme = appearanceToTheme(appearance);
     setTheme(newTheme);
     updatePreferences({ appearancePreference: appearance });
   }
 
   function handlePasswordSubmit(data: ChangePasswordFormValues): void {
+    logger.info({ component: 'settings', action: 'submit-password-change', message: 'User submitting password change' });
     changePassword({
       currentPassword: data.currentPassword,
       newPassword: data.newPassword,

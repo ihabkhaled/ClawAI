@@ -124,3 +124,35 @@ export type FallbackAttemptInfo = {
   nextModel?: string;
   timestamp: number;
 };
+
+export type UseEditableTitleReturn = {
+  isEditing: boolean;
+  editValue: string;
+  setEditValue: (value: string) => void;
+  isPending: boolean;
+  startEditing: () => void;
+  cancelEditing: () => void;
+  saveTitle: () => void;
+  handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+};
+
+export type UseVirtualizedMessagesReturn = {
+  messages: ChatMessage[];
+  isLoading: boolean;
+  isFetchingPreviousPage: boolean;
+  isFetchingNextPage: boolean;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+  fetchPreviousPage: () => void;
+  fetchNextPage: () => void;
+  totalCount: number;
+};
+
+export type UseVirtualizedThreadsReturn = {
+  threads: ChatThread[];
+  isLoading: boolean;
+  isFetchingNextPage: boolean;
+  hasNextPage: boolean;
+  fetchNextPage: () => void;
+  totalCount: number;
+};

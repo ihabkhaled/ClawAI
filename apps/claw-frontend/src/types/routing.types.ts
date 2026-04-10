@@ -1,5 +1,7 @@
 import type { RoutingMode } from '@/enums';
 
+import type { FormFieldErrors } from './component.types';
+
 export type RoutingConfig = {
   id: string;
   mode: RoutingMode;
@@ -109,4 +111,27 @@ export type EvaluateRouteResponse = {
 export type UpdatePolicyParams = {
   id: string;
   data: UpdatePolicyRequest;
+};
+
+export type PolicyFormStateParams = {
+  open: boolean;
+  policy?: RoutingPolicy | null;
+  onSubmit: (data: CreatePolicyRequest) => void;
+  onOpenChange: (open: boolean) => void;
+};
+
+export type PolicyFormStateReturn = {
+  name: string;
+  setName: (value: string) => void;
+  routingMode: RoutingMode;
+  setRoutingMode: (value: RoutingMode) => void;
+  priority: number;
+  setPriority: (value: number) => void;
+  isActive: boolean;
+  setIsActive: (value: boolean) => void;
+  fieldErrors: FormFieldErrors;
+  isEditing: boolean;
+  pendingLabel: string;
+  submitLabel: string;
+  handleSubmit: (e: React.FormEvent) => void;
 };

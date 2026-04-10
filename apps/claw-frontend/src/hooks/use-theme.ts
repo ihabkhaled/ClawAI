@@ -2,29 +2,24 @@
 
 import { useContext } from 'react';
 
+import { Theme } from '@/enums';
 import { ThemeContext } from '@/lib/theme/theme-provider';
+import type { UseAppThemeReturn } from '@/types';
 
-export function useAppTheme(): {
-  theme: string;
-  setTheme: (theme: string) => void;
-  systemTheme: string | undefined;
-  resolvedTheme: string | undefined;
-} {
+export function useAppTheme(): UseAppThemeReturn {
   const context = useContext(ThemeContext);
 
   if (!context) {
     return {
-      theme: 'system',
-      setTheme: () => {},
-      systemTheme: undefined,
+      theme: Theme.SYSTEM,
       resolvedTheme: undefined,
+      setTheme: () => {},
     };
   }
 
   return {
     theme: context.theme,
-    setTheme: context.setTheme as (theme: string) => void,
-    systemTheme: undefined,
     resolvedTheme: context.resolvedTheme,
+    setTheme: context.setTheme,
   };
 }

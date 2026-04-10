@@ -20,6 +20,11 @@ export const MESSAGE_ROLE_LABELS: Record<MessageRole, string> = {
 export const THINKING_INDICATOR_LABEL = 'AI is thinking...';
 export const MODEL_AUTO_VALUE = '__auto__';
 export const POLLING_INTERVAL_MS = 2000;
+export const MESSAGES_PAGE_SIZE = 50;
+export const THREADS_PAGE_SIZE = 30;
+export const COMPOSER_MIN_HEIGHT = 80;
+export const COMPOSER_MAX_HEIGHT_RATIO = 0.5;
+export const COMPOSER_DEFAULT_HEIGHT = 120;
 
 /**
  * Rough per-token cost estimates (USD) for common providers.

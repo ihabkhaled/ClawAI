@@ -1,17 +1,19 @@
+import type { LucideIcon } from 'lucide-react';
 import { Monitor, Moon, Sun } from 'lucide-react';
 
+import { Theme } from '@/enums/theme.enum';
 import { UserAppearancePreference } from '@/enums/user-appearance-preference.enum';
 
-export const THEME_CYCLE: Record<string, UserAppearancePreference> = {
-  system: UserAppearancePreference.LIGHT,
-  light: UserAppearancePreference.DARK,
-  dark: UserAppearancePreference.SYSTEM,
+export const THEME_CYCLE: Record<Theme, UserAppearancePreference> = {
+  [Theme.SYSTEM]: UserAppearancePreference.LIGHT,
+  [Theme.LIGHT]: UserAppearancePreference.DARK,
+  [Theme.DARK]: UserAppearancePreference.SYSTEM,
 };
 
-export const THEME_ICONS: Record<string, typeof Monitor> = {
-  system: Monitor,
-  light: Sun,
-  dark: Moon,
+export const THEME_ICONS: Record<Theme, LucideIcon> = {
+  [Theme.SYSTEM]: Monitor,
+  [Theme.LIGHT]: Sun,
+  [Theme.DARK]: Moon,
 };
 
 export const THEME_INIT_SCRIPT = `
@@ -22,9 +24,9 @@ export const THEME_INIT_SCRIPT = `
     if (theme === 'system') {
       resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
-    if (resolved === 'dark') {
-      document.documentElement.classList.add('dark');
-    }
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(resolved);
+    document.documentElement.style.colorScheme = resolved;
   } catch(e) {}
 })();
 `;

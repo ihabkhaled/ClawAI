@@ -18,6 +18,7 @@ export function useUpdatePreferences() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
     },
     onError: (error: Error) => {
+      logger.error({ component: 'settings', action: 'update-preferences-error', message: error.message });
       showToast.apiError(error, t('settings.preferencesUpdateFailed'));
     },
   });

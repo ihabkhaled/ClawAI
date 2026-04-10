@@ -5,7 +5,8 @@ import { useEffect, useRef } from 'react';
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useLocale } from '@/hooks/use-locale';
 import { useAppTheme } from '@/hooks/use-theme';
-import { languageToLocale, appearanceToTheme } from '@/utilities/preference.utility';
+import { logger } from '@/utilities';
+import { appearanceToTheme, languageToLocale } from '@/utilities/preference.utility';
 
 export function usePreferenceBootstrap(): void {
   const { user } = useCurrentUser();
@@ -19,11 +20,12 @@ export function usePreferenceBootstrap(): void {
     }
 
     bootstrappedRef.current = true;
+    logger.debug({ component: 'settings', action: 'preference-bootstrap', message: 'Bootstrapping user preferences', details: { language: user.languagePreference, appearance: user.appearancePreference } });
 
     const locale = languageToLocale(user.languagePreference);
     setLocale(locale);
 
-    const theme = appearanceToTheme(user.appearancePreference);
-    setTheme(theme);
+    const resolvedTheme = appearanceToTheme(user.appearancePreference);
+    setTheme(resolvedTheme);
   }, [user, setLocale, setTheme]);
 }
