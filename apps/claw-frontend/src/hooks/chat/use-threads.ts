@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useDebounce } from '@/hooks/common/use-debounce';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
+import { logger } from '@/utilities';
 
 export function useThreads() {
   const [search, setSearch] = useState('');
@@ -24,7 +25,10 @@ export function useThreads() {
 
   const query = useQuery({
     queryKey: queryKeys.threads.list(filters),
-    queryFn: () => chatRepository.getThreads(params),
+    queryFn: () => {
+      logger.debug({ component: 'chat', action: 'fetch-threads-start', message: 'Fetching threads', details: { search: debouncedSearch } });
+      return chatRepository.getThreads(params);
+    },
   });
 
   return {

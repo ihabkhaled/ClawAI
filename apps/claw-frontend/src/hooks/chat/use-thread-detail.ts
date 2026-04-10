@@ -4,8 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { POLLING_INTERVAL_MS } from '@/constants';
 import { MessageRole } from '@/enums';
 import { useChatStream } from '@/hooks/chat/use-chat-stream';
+import { useVirtualizedMessages } from '@/hooks/chat/use-virtualized-messages';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
+import { logger } from '@/utilities';
 
 export function useThreadDetail(threadId: string) {
   const queryClient = useQueryClient();
@@ -15,19 +17,17 @@ export function useThreadDetail(threadId: string) {
 
   const threadQuery = useQuery({
     queryKey: queryKeys.threads.detail(threadId),
-    queryFn: () => chatRepository.getThread(threadId),
+    queryFn: () => {
+      logger.debug({ component: 'chat', action: 'fetch-thread-start', message: 'Fetching thread detail', details: { threadId } });
+      return chatRepository.getThread(threadId);
+    },
     enabled: !!threadId,
   });
 
-  const messagesQuery = useQuery({
-    queryKey: queryKeys.threads.messages(threadId),
-    queryFn: () => chatRepository.getMessages(threadId),
-    enabled: !!threadId,
-    refetchInterval: 5000,
-  });
+  const virtualizedMessages = useVirtualizedMessages(threadId);
 
-  const messagesList = messagesQuery.data?.data ?? [];
-  const lastMessage = messagesList.length > 0 ? messagesList[messagesList.length - 1] : undefined;
+  const messagesList = virtualizedMessages.messages;
+  const lastMessage = messagesList.length > 0 ? messagesList.at(-1) : undefined;
 
   const { fallbackAttempts, streamError, resetStream } = useChatStream(
     threadId,
@@ -38,8 +38,9 @@ export function useThreadDetail(threadId: string) {
   // The backend stores an error ASSISTANT message, so the refetch will pick it up.
   useEffect(() => {
     if (streamError && isWaitingForResponse) {
+      logger.warn({ component: 'chat', action: 'stream-error', message: 'SSE stream error received', details: { threadId, streamError } });
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.threads.messages(threadId),
+        queryKey: queryKeys.threads.messagesInfinite(threadId),
       });
     }
   }, [streamError, isWaitingForResponse, queryClient, threadId]);
@@ -51,6 +52,7 @@ export function useThreadDetail(threadId: string) {
       pollingRef.current = setInterval(() => {
         pollCount += 1;
         if (pollCount > 90) {
+          logger.warn({ component: 'chat', action: 'polling-timeout', message: 'Polling max reached (3 min), stopping', details: { threadId } });
           setIsWaitingForResponse(false);
           if (pollingRef.current) {
             clearInterval(pollingRef.current);
@@ -59,7 +61,7 @@ export function useThreadDetail(threadId: string) {
           return;
         }
         void queryClient.invalidateQueries({
-          queryKey: queryKeys.threads.messages(threadId),
+          queryKey: queryKeys.threads.messagesInfinite(threadId),
         });
       }, POLLING_INTERVAL_MS);
     }
@@ -84,6 +86,7 @@ export function useThreadDetail(threadId: string) {
       messagesList.length > messageCountBeforeSend.current;
 
     if (hasNewAssistantMessage) {
+      logger.info({ component: 'chat', action: 'response-received', message: 'Assistant response received', details: { threadId, messageCount: messagesList.length } });
       setIsWaitingForResponse(false);
       // Also refetch the thread to update lastProvider/lastModel
       void queryClient.invalidateQueries({
@@ -99,30 +102,31 @@ export function useThreadDetail(threadId: string) {
       !isWaitingForResponse &&
       messagesList.length > 0 &&
       lastMessage?.role === MessageRole.USER &&
-      !messagesQuery.isLoading
+      !virtualizedMessages.isLoading
     ) {
       messageCountBeforeSend.current = messagesList.length - 1;
       setIsWaitingForResponse(true);
     }
-  }, [messagesList.length, lastMessage?.role, messagesQuery.isLoading, isWaitingForResponse]);
+  }, [messagesList.length, lastMessage?.role, virtualizedMessages.isLoading, isWaitingForResponse]);
 
   const startWaitingForResponse = useCallback((): void => {
+    logger.debug({ component: 'chat', action: 'waiting-for-response', message: 'Started waiting for AI response', details: { threadId, currentMessageCount: messagesList.length } });
     messageCountBeforeSend.current = messagesList.length;
     resetStream();
     setIsWaitingForResponse(true);
-  }, [messagesList.length, resetStream]);
+  }, [messagesList.length, resetStream, threadId]);
 
   return {
     thread: threadQuery.data ?? null,
     messages: messagesList,
     isLoadingThread: threadQuery.isLoading,
-    isLoadingMessages: messagesQuery.isLoading,
-    isError: threadQuery.isError || messagesQuery.isError,
-    error: threadQuery.error ?? messagesQuery.error,
-    refetchMessages: messagesQuery.refetch,
+    isLoadingMessages: virtualizedMessages.isLoading,
+    isError: threadQuery.isError,
+    error: threadQuery.error ?? null,
     isWaitingForResponse,
     startWaitingForResponse,
     fallbackAttempts,
     streamError,
+    virtualizedMessages,
   };
 }

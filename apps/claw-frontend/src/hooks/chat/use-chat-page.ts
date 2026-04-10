@@ -1,21 +1,29 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useArchiveThread } from '@/hooks/chat/use-archive-thread';
 import { useCreateThread } from '@/hooks/chat/use-create-thread';
 import { usePinThread } from '@/hooks/chat/use-pin-thread';
-import { useThreads } from '@/hooks/chat/use-threads';
+import { useVirtualizedThreads } from '@/hooks/chat/use-virtualized-threads';
+import { useDebounce } from '@/hooks/common/use-debounce';
 import type { ChatPageReturn } from '@/types';
+import { logger } from '@/utilities';
 
 export function useChatPage(): ChatPageReturn {
-  const { threads, isLoading, search, setSearch } = useThreads();
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
+
+  const virtualizedThreads = useVirtualizedThreads({ search: debouncedSearch });
   const { createThread, isPending: isCreating } = useCreateThread();
   const { pinThread, isPending: isPinPending } = usePinThread();
   const { archiveThread, isPending: isArchivePending } = useArchiveThread();
   const [showArchived, setShowArchived] = useState(false);
 
   const filteredThreads = useMemo(
-    () => (showArchived ? threads : threads.filter((t) => !t.isArchived)),
-    [threads, showArchived],
+    () =>
+      showArchived
+        ? virtualizedThreads.threads
+        : virtualizedThreads.threads.filter((t) => !t.isArchived),
+    [virtualizedThreads.threads, showArchived],
   );
 
   const pinnedThreads = useMemo(() => filteredThreads.filter((t) => t.isPinned), [filteredThreads]);
@@ -26,10 +34,14 @@ export function useChatPage(): ChatPageReturn {
   );
 
   const toggleShowArchived = useCallback((): void => {
-    setShowArchived((prev) => !prev);
+    setShowArchived((prev) => {
+      logger.debug({ component: 'chat', action: 'toggle-archived', message: 'Toggled archived view', details: { showArchived: !prev } });
+      return !prev;
+    });
   }, []);
 
   const handleNewChat = useCallback((): void => {
+    logger.info({ component: 'chat', action: 'new-chat', message: 'User creating new chat thread' });
     createThread({});
   }, [createThread]);
 
@@ -50,7 +62,11 @@ export function useChatPage(): ChatPageReturn {
   return {
     pinnedThreads,
     unpinnedThreads,
-    isLoading,
+    allThreads: filteredThreads,
+    isLoading: virtualizedThreads.isLoading,
+    isFetchingNextPage: virtualizedThreads.isFetchingNextPage,
+    hasNextPage: virtualizedThreads.hasNextPage,
+    fetchNextPage: virtualizedThreads.fetchNextPage,
     search,
     setSearch,
     showArchived,
