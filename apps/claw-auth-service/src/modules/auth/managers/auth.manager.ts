@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import type { SignOptions } from "jsonwebtoken";
 import { User } from "../../../generated/prisma";
 import { AppConfig } from "../../../app/config/app.config";
@@ -15,9 +15,12 @@ import { LoginResult, RefreshResult, TokenPair, UserProfile } from "../types/aut
 
 @Injectable()
 export class AuthManager {
+  private readonly logger = new Logger(AuthManager.name);
+
   constructor(private readonly authRepository: AuthRepository) {}
 
   async login(email: string, password: string): Promise<LoginResult> {
+    this.logger.log(`login: looking up user by email=${email}`);
     const user = await this.authRepository.findUserByEmail(email);
     if (!user) {
       throw new InvalidCredentialsException();
@@ -36,7 +39,9 @@ export class AuthManager {
       throw new InvalidCredentialsException();
     }
 
+    this.logger.debug(`login: credentials verified for user ${user.id}, issuing tokens`);
     const tokens = await this.issueTokenPair(user);
+    this.logger.log(`login: completed for user ${user.id}`);
 
     return {
       tokens,
@@ -53,6 +58,7 @@ export class AuthManager {
   }
 
   async refresh(refreshToken: string): Promise<RefreshResult> {
+    this.logger.debug('refresh: validating refresh token');
     const session = await this.authRepository.findSessionByRefreshToken(refreshToken);
     if (!session) {
       throw new InvalidRefreshTokenException();
@@ -71,12 +77,15 @@ export class AuthManager {
 
     await this.authRepository.deleteSession(session.id);
 
+    this.logger.log(`refresh: rotating tokens for user ${user.id}`);
     const tokens = await this.issueTokenPair(user);
     return { tokens };
   }
 
   async logout(userId: string): Promise<void> {
+    this.logger.log(`logout: deleting sessions for user ${userId}`);
     await this.authRepository.deleteSessionsByUserId(userId);
+    this.logger.log(`logout: completed for user ${userId}`);
   }
 
   async getProfile(userId: string): Promise<UserProfile> {

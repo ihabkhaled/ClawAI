@@ -54,6 +54,28 @@ export const IMAGE_KEYWORDS = [
   'render a',
   'visualize',
   'depict',
+  // Reference-based image generation phrases
+  'generate similar',
+  'similar to this',
+  'like this image',
+  'recreate this',
+  'recreate the image',
+  'reproduce this',
+  'copy this image',
+  'same style as',
+  'based on this image',
+  'inspired by this',
+  'variation of this',
+  'generate from this',
+  'create from this',
+  'make one like this',
+  'make something like',
+  'generate like this',
+  'create similar',
+  'similar image',
+  'image like this',
+  'remake this',
+  'redo this image',
 ];
 
 // File generation provider

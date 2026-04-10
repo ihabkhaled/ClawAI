@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { RabbitMQService, StructuredLogger } from "@claw/shared-rabbitmq";
 import { EventPattern, LogLevel } from "@claw/shared-types";
 import { AuthManager } from "../managers/auth.manager";
@@ -6,6 +6,7 @@ import { type LoginResult, type RefreshResult, type UserProfile } from "../types
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly structuredLogger: StructuredLogger;
 
   constructor(
@@ -21,6 +22,7 @@ export class AuthService {
   }
 
   async login(email: string, password: string): Promise<LoginResult> {
+    this.logger.log(`login: attempting login for email=${email}`);
     try {
       const result = await this.authManager.login(email, password);
 
@@ -52,6 +54,7 @@ export class AuthService {
   }
 
   async refresh(refreshToken: string): Promise<RefreshResult> {
+    this.logger.log('refresh: attempting token refresh');
     const result = await this.authManager.refresh(refreshToken);
 
     this.structuredLogger.logAction({
@@ -65,6 +68,7 @@ export class AuthService {
   }
 
   async logout(userId: string): Promise<void> {
+    this.logger.log(`logout: logging out user ${userId}`);
     await this.authManager.logout(userId);
 
     await this.rabbitMQService.publish(EventPattern.USER_LOGOUT, {
@@ -74,6 +78,7 @@ export class AuthService {
   }
 
   async getProfile(userId: string): Promise<UserProfile> {
+    this.logger.debug(`getProfile: fetching profile for user ${userId}`);
     return this.authManager.getProfile(userId);
   }
 }

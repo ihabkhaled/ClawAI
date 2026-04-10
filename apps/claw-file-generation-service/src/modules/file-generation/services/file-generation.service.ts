@@ -99,6 +99,7 @@ export class FileGenerationService {
   }
 
   async retryGeneration(generationId: string): Promise<FileGenerationRecord> {
+    this.logger.log(`retryGeneration: retrying file generation ${generationId}`);
     await this.repository.updateStatus(generationId, FileGenerationStatus.QUEUED, {
       errorCode: undefined,
       errorMessage: undefined,

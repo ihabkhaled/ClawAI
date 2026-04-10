@@ -23,6 +23,7 @@ export class FilesService {
   ) {}
 
   async uploadFile(userId: string, dto: UploadFileDto): Promise<File> {
+    this.logger.log(`uploadFile: uploading file "${dto.filename}" (${dto.mimeType}, ${String(dto.sizeBytes)} bytes) for user ${userId}`);
     this.validateMimeType(dto.mimeType);
     this.validateFileSize(dto.sizeBytes);
 
@@ -39,6 +40,7 @@ export class FilesService {
       content: dto.content ?? null,
     });
 
+    this.logger.log(`uploadFile: uploaded file ${file.id} "${dto.filename}"`);
     void this.rabbitMQService.publish(EventPattern.FILE_UPLOADED, {
       fileId: file.id,
       userId,
@@ -82,6 +84,7 @@ export class FilesService {
   }
 
   async deleteFile(id: string, userId: string): Promise<File> {
+    this.logger.log(`deleteFile: deleting file ${id}`);
     const file = await this.filesRepository.findById(id);
     if (!file) {
       throw new EntityNotFoundException('File', id);
@@ -130,6 +133,7 @@ export class FilesService {
   }
 
   async downloadFile(id: string, userId: string, res: Response): Promise<void> {
+    this.logger.debug(`downloadFile: downloading file ${id}`);
     const file = await this.filesRepository.findById(id);
     if (!file) {
       throw new EntityNotFoundException('File', id);

@@ -44,6 +44,7 @@ export class RoutingService implements OnModuleInit {
   }
 
   async createPolicy(dto: CreatePolicyDto): Promise<RoutingPolicy> {
+    this.logger.log(`createPolicy: creating policy "${dto.name}" mode=${dto.routingMode} priority=${String(dto.priority)}`);
     return this.policiesRepository.create({
       name: dto.name,
       routingMode: dto.routingMode,
@@ -105,6 +106,7 @@ export class RoutingService implements OnModuleInit {
   }
 
   async evaluateRoute(dto: EvaluateRouteDto): Promise<RoutingDecisionResult> {
+    this.logger.log(`evaluateRoute: evaluating route for thread ${dto.threadId ?? 'none'} mode=${dto.routingMode ?? 'AUTO'}`);
     const context: RoutingContext = {
       message: dto.messageContent,
       threadId: dto.threadId,
@@ -286,7 +288,9 @@ export class RoutingService implements OnModuleInit {
     const status = payload["status"] as string | undefined;
 
     if (provider && status) {
-      this.connectorHealthCache[provider] = status === "HEALTHY";
+      const isHealthy = status === "HEALTHY";
+      this.logger.debug(`handleConnectorHealthChecked: provider=${provider} status=${status}`);
+      this.connectorHealthCache[provider] = isHealthy;
     }
   }
 
@@ -295,6 +299,7 @@ export class RoutingService implements OnModuleInit {
     const runtime = payload["runtime"] as string | undefined;
 
     if (runtime) {
+      this.logger.debug(`handleConnectorSynced: runtime=${runtime} marked healthy`);
       this.runtimeHealthCache[runtime] = true;
     }
   }

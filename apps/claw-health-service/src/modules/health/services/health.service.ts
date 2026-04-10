@@ -8,6 +8,7 @@ export class HealthService {
   private readonly logger = new Logger(HealthService.name);
 
   async checkAll(): Promise<AggregatedHealth> {
+    this.logger.log(`checkAll: checking health of ${String(Object.keys(SERVICE_URLS).length)} services`);
     const entries = Object.entries(SERVICE_URLS);
     const results = await Promise.all(
       entries.map(([name, url]) => this.checkService(name, url)),
@@ -24,6 +25,8 @@ export class HealthService {
     } else {
       status = "degraded";
     }
+
+    this.logger.log(`checkAll: completed - status=${status} up=${String(upCount)} down=${String(downCount)}`);
 
     return {
       status,

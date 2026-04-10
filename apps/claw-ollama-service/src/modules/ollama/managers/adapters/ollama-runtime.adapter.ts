@@ -5,49 +5,20 @@ import {
   OLLAMA_API_PULL,
   OLLAMA_API_TAGS,
 } from "../../ollama.constants";
-import {
-  type GenerateRequest,
-  type GenerateResponse,
-  type LocalModelInfo,
-  type PullJobInfo,
-  type RuntimeAdapter,
-  type RuntimeHealth,
+import type {
+  GenerateRequest,
+  GenerateResponse,
+  LocalModelInfo,
+  PullJobInfo,
+  RuntimeAdapter,
+  RuntimeHealth,
 } from "../../types/ollama.types";
-
-interface OllamaModelDetail {
-  name: string;
-  size: number;
-  digest: string;
-  details: {
-    format: string;
-    family: string;
-    parameter_size: string;
-    quantization_level: string;
-  };
-}
-
-interface OllamaTagsResponse {
-  models: OllamaModelDetail[];
-}
-
-interface OllamaGenerateResponse {
-  model: string;
-  created_at: string;
-  response: string;
-  done: boolean;
-  total_duration?: number;
-  load_duration?: number;
-  prompt_eval_count?: number;
-  eval_count?: number;
-  eval_duration?: number;
-}
-
-interface OllamaPullResponse {
-  status: string;
-  digest?: string;
-  total?: number;
-  completed?: number;
-}
+import type {
+  OllamaGenerateResponse,
+  OllamaModelDetail,
+  OllamaPullResponse,
+  OllamaTagsResponse,
+} from "../../types/ollama-adapters.types";
 
 export class OllamaRuntimeAdapter implements RuntimeAdapter {
   private readonly client: AxiosInstance;

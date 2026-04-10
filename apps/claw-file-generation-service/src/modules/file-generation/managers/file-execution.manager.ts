@@ -16,26 +16,40 @@ export class FileExecutionManager {
   private readonly logger = new Logger(FileExecutionManager.name);
 
   async convert(content: string, format: string): Promise<Buffer> {
-    this.logger.debug(`Converting content to ${format} (${String(content.length)} chars)`);
+    this.logger.log(`convert: converting content to ${format} (${String(content.length)} chars)`);
+    const upperFormat = format.toUpperCase();
+    this.logger.debug(`convert: dispatching to ${upperFormat} converter`);
 
-    switch (format.toUpperCase()) {
+    let result: Buffer;
+    switch (upperFormat) {
       case 'TXT':
-        return convertToTxt(content);
+        result = await convertToTxt(content);
+        break;
       case 'MD':
-        return convertToMarkdown(content);
+        result = await convertToMarkdown(content);
+        break;
       case 'JSON':
-        return convertToJson(content);
+        result = await convertToJson(content);
+        break;
       case 'CSV':
-        return convertToCsv(content);
+        result = await convertToCsv(content);
+        break;
       case 'HTML':
-        return convertToHtml(content);
+        result = await convertToHtml(content);
+        break;
       case 'PDF':
-        return convertToPdf(content);
+        result = await convertToPdf(content);
+        break;
       case 'DOCX':
-        return convertToDocx(content);
+        result = await convertToDocx(content);
+        break;
       default:
-        return convertToTxt(content);
+        this.logger.debug(`convert: unknown format "${format}" — falling back to TXT`);
+        result = await convertToTxt(content);
+        break;
     }
+    this.logger.debug(`convert: conversion complete — outputSize=${String(result.length)} bytes`);
+    return result;
   }
 
   async storeFile(params: {
@@ -44,10 +58,14 @@ export class FileExecutionManager {
     format: string;
     buffer: Buffer;
   }): Promise<string> {
+    this.logger.log(`storeFile: storing file "${params.filename}" format=${params.format} size=${String(params.buffer.length)} bytes`);
     const config = AppConfig.get();
     const mimeType = FORMAT_TO_MIME_TYPE[params.format.toUpperCase()] ?? 'application/octet-stream';
+    this.logger.debug(`storeFile: resolved mimeType=${mimeType}`);
     const base64Data = params.buffer.toString('base64');
+    this.logger.debug(`storeFile: base64 encoded — length=${String(base64Data.length)}`);
 
+    this.logger.debug(`storeFile: sending to file service at ${config.FILE_SERVICE_URL}`);
     const response = await httpPost<StoreFileResponse>(
       `${config.FILE_SERVICE_URL}/api/v1/internal/files/store-image`,
       {
@@ -59,12 +77,15 @@ export class FileExecutionManager {
       { timeout: 30_000 },
     );
 
+    this.logger.debug(`storeFile: file stored — fileId=${response.fileId}`);
     return response.fileId;
   }
 
   generateFilename(format: string): string {
     const extension = FORMAT_TO_EXTENSION[format.toUpperCase()] ?? 'txt';
     const timestamp = Date.now();
-    return `generated-${String(timestamp)}.${extension}`;
+    const filename = `generated-${String(timestamp)}.${extension}`;
+    this.logger.debug(`generateFilename: generated "${filename}" for format=${format}`);
+    return filename;
   }
 }

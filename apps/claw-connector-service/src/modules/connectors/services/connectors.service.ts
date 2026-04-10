@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { RabbitMQService, StructuredLogger } from "@claw/shared-rabbitmq";
 import { EventPattern, LogLevel } from "@claw/shared-types";
 import { type ConnectorModel } from "../../../generated/prisma";
@@ -21,6 +21,7 @@ import {
 
 @Injectable()
 export class ConnectorsService {
+  private readonly logger = new Logger(ConnectorsService.name);
   private readonly structuredLogger: StructuredLogger;
 
   constructor(
@@ -38,6 +39,7 @@ export class ConnectorsService {
   }
 
   async createConnector(dto: CreateConnectorDto): Promise<ConnectorWithModels> {
+    this.logger.log(`createConnector: creating connector "${dto.name}" provider=${dto.provider}`);
     const encryptedConfig = dto.apiKey
       ? encrypt(dto.apiKey, AppConfig.get().ENCRYPTION_KEY)
       : undefined;
@@ -106,6 +108,7 @@ export class ConnectorsService {
   }
 
   async updateConnector(id: string, dto: UpdateConnectorDto): Promise<ConnectorWithModels> {
+    this.logger.log(`updateConnector: updating connector ${id}`);
     const connector = await this.connectorsRepository.findById(id);
     if (!connector) {
       throw new EntityNotFoundException("Connector", id);
@@ -135,6 +138,7 @@ export class ConnectorsService {
   }
 
   async deleteConnector(id: string): Promise<ConnectorWithModels> {
+    this.logger.log(`deleteConnector: deleting connector ${id}`);
     const connector = await this.connectorsRepository.findById(id);
     if (!connector) {
       throw new EntityNotFoundException("Connector", id);
@@ -152,6 +156,7 @@ export class ConnectorsService {
   }
 
   async testConnector(id: string): Promise<HealthCheckResult> {
+    this.logger.log(`testConnector: testing connector ${id}`);
     const connector = await this.connectorsRepository.findById(id);
     if (!connector) {
       throw new EntityNotFoundException("Connector", id);
@@ -181,6 +186,7 @@ export class ConnectorsService {
   }
 
   async syncModels(id: string): Promise<SyncModelsResult> {
+    this.logger.log(`syncModels: syncing models for connector ${id}`);
     const connector = await this.connectorsRepository.findById(id);
     if (!connector) {
       throw new EntityNotFoundException("Connector", id);
@@ -214,6 +220,7 @@ export class ConnectorsService {
   }
 
   async getConnectorConfig(provider: string): Promise<ConnectorConfigResult> {
+    this.logger.debug(`getConnectorConfig: fetching config for provider=${provider}`);
     const connector = await this.connectorsRepository.findByProvider(provider);
     if (!connector) {
       throw new EntityNotFoundException("Connector", provider);

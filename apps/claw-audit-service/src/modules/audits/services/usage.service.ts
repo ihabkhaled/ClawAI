@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { UsageLedger } from "../schemas/usage-ledger.schema";
 import { UsageLedgerRepository } from "../repositories/usage-ledger.repository";
 import type {
@@ -12,9 +12,12 @@ import type { PaginatedResult } from "@common/types";
 
 @Injectable()
 export class UsageService {
+  private readonly logger = new Logger(UsageService.name);
+
   constructor(private readonly usageLedgerRepository: UsageLedgerRepository) {}
 
   async createUsageEntry(input: CreateUsageLedgerInput): Promise<UsageLedger> {
+    this.logger.debug(`createUsageEntry: resource=${input.resourceType} action=${input.action} qty=${String(input.quantity)}`);
     return this.usageLedgerRepository.create(input);
   }
 

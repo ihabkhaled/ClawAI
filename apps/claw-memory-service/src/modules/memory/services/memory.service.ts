@@ -30,6 +30,7 @@ export class MemoryService implements OnModuleInit {
   }
 
   async createMemory(userId: string, dto: CreateMemoryDto): Promise<MemoryRecord> {
+    this.logger.log(`createMemory: creating ${dto.type} memory for user ${userId}`);
     const memory = await this.memoryRepository.create({
       userId,
       type: dto.type,
@@ -85,6 +86,7 @@ export class MemoryService implements OnModuleInit {
   }
 
   async updateMemory(id: string, userId: string, dto: UpdateMemoryDto): Promise<MemoryRecord> {
+    this.logger.log(`updateMemory: updating memory ${id} for user ${userId}`);
     const memory = await this.memoryRepository.findById(id);
     if (!memory) {
       throw new EntityNotFoundException("MemoryRecord", id);
@@ -98,6 +100,7 @@ export class MemoryService implements OnModuleInit {
   }
 
   async deleteMemory(id: string, userId: string): Promise<MemoryRecord> {
+    this.logger.log(`deleteMemory: deleting memory ${id}`);
     const memory = await this.memoryRepository.findById(id);
     if (!memory) {
       throw new EntityNotFoundException("MemoryRecord", id);
@@ -108,6 +111,7 @@ export class MemoryService implements OnModuleInit {
   }
 
   async toggleMemory(id: string, userId: string): Promise<MemoryRecord> {
+    this.logger.debug(`toggleMemory: toggling memory ${id}`);
     const memory = await this.memoryRepository.findById(id);
     if (!memory) {
       throw new EntityNotFoundException("MemoryRecord", id);

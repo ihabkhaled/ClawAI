@@ -42,10 +42,12 @@ export class RoutingManager {
   ) {}
 
   async evaluateRoute(context: RoutingContext): Promise<RoutingDecisionResult> {
+    this.logger.log(`evaluateRoute: starting for thread ${context.threadId ?? 'none'}, userMode=${context.userMode ?? 'AUTO'}`);
     // Check active policies for overrides
     const policies = await this.policiesRepository.findActivePolicies();
     const policyOverride = this.applyPolicies(policies, context);
     const mode = policyOverride ?? context.userMode ?? RoutingMode.AUTO;
+    this.logger.debug(`evaluateRoute: resolved mode=${mode} (policyOverride=${policyOverride ?? 'none'})`);
 
     switch (mode) {
       case RoutingMode.MANUAL_MODEL:
@@ -67,6 +69,7 @@ export class RoutingManager {
   }
 
   buildFallbackChain(primary: FallbackEntry, context: RoutingContext): FallbackEntry[] {
+    this.logger.debug(`buildFallbackChain: building for primary=${primary.provider}/${primary.model}`);
     const chain: FallbackEntry[] = [];
     const isLocalPrimary = primary.provider === LOCAL_PROVIDER;
 
@@ -77,15 +80,19 @@ export class RoutingManager {
     ];
 
     if (isLocalPrimary) {
+      this.logger.debug('buildFallbackChain: primary is local — adding healthy cloud fallbacks');
       // Fallback from local to any healthy cloud connector
       for (const cloud of allCloudProviders) {
         if (this.isConnectorHealthy(cloud.provider, context)) {
+          this.logger.debug(`buildFallbackChain: adding cloud fallback ${cloud.provider}/${cloud.model}`);
           chain.push(cloud);
         }
       }
     } else {
       // Fallback from cloud: try local first, then other cloud connectors
+      this.logger.debug('buildFallbackChain: primary is cloud — checking local + other clouds');
       if (this.isRuntimeHealthy('OLLAMA', context)) {
+        this.logger.debug('buildFallbackChain: adding local fallback');
         chain.push({ provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT });
       }
       for (const cloud of allCloudProviders) {
@@ -93,19 +100,23 @@ export class RoutingManager {
           cloud.provider !== primary.provider &&
           this.isConnectorHealthy(cloud.provider, context)
         ) {
+          this.logger.debug(`buildFallbackChain: adding cloud fallback ${cloud.provider}/${cloud.model}`);
           chain.push(cloud);
         }
       }
     }
 
+    this.logger.debug(`buildFallbackChain: chain built with ${String(chain.length)} entries`);
     return chain;
   }
 
   private handleManualModel(context: RoutingContext): RoutingDecisionResult {
     const model = context.forcedModel ?? CLOUD_MODEL_DEFAULT;
     const provider = context.forcedProvider ?? this.inferProvider(model);
+    this.logger.debug(`handleManualModel: forced provider=${provider} model=${model}`);
     const primary = { provider, model };
     const fallback = this.buildFallbackChain(primary, context);
+    this.logger.debug(`handleManualModel: fallback chain length=${String(fallback.length)}`);
 
     return {
       selectedProvider: provider,
@@ -120,10 +131,12 @@ export class RoutingManager {
   }
 
   private handleLocalOnly(context: RoutingContext): RoutingDecisionResult {
+    this.logger.debug('handleLocalOnly: selecting local provider only');
     const primary = { provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT };
     const fallback = this.buildFallbackChain(primary, context).filter(
       (f) => f.provider === LOCAL_PROVIDER,
     );
+    this.logger.debug(`handleLocalOnly: local-only fallback chain length=${String(fallback.length)}`);
 
     return {
       selectedProvider: LOCAL_PROVIDER,
@@ -139,8 +152,10 @@ export class RoutingManager {
 
   private handlePrivacyFirst(context: RoutingContext): RoutingDecisionResult {
     const localHealthy = this.isRuntimeHealthy('OLLAMA', context);
+    this.logger.debug(`handlePrivacyFirst: localHealthy=${String(localHealthy)}`);
 
     if (localHealthy) {
+      this.logger.debug('handlePrivacyFirst: using local provider (privacy preferred)');
       const primary = { provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT };
       return {
         selectedProvider: LOCAL_PROVIDER,
@@ -154,6 +169,7 @@ export class RoutingManager {
       };
     }
 
+    this.logger.debug('handlePrivacyFirst: local unavailable — falling back to Anthropic');
     const primary = { provider: CLOUD_PROVIDER_ANTHROPIC, model: CLOUD_MODEL_DEFAULT };
     return {
       selectedProvider: CLOUD_PROVIDER_ANTHROPIC,
@@ -197,8 +213,10 @@ export class RoutingManager {
 
   private handleCostSaver(context: RoutingContext): RoutingDecisionResult {
     const localHealthy = this.isRuntimeHealthy('OLLAMA', context);
+    this.logger.debug(`handleCostSaver: localHealthy=${String(localHealthy)}`);
 
     if (localHealthy) {
+      this.logger.debug('handleCostSaver: using free local provider');
       const primary = { provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT };
       return {
         selectedProvider: LOCAL_PROVIDER,
@@ -212,6 +230,7 @@ export class RoutingManager {
       };
     }
 
+    this.logger.debug('handleCostSaver: local unavailable — using cheapest cloud');
     const primary = { provider: CLOUD_PROVIDER_OPENAI, model: CLOUD_MODEL_CHEAP };
     return {
       selectedProvider: CLOUD_PROVIDER_OPENAI,
@@ -226,20 +245,27 @@ export class RoutingManager {
   }
 
   private async handleAuto(context: RoutingContext): Promise<RoutingDecisionResult> {
+    this.logger.debug('handleAuto: starting AUTO routing');
     // Detect image requests early (before Ollama router, which may misclassify)
+    this.logger.debug('handleAuto: checking for image generation request');
     const imageResult = this.detectImageRequest(context);
     if (imageResult) {
+      this.logger.log('handleAuto: image generation request detected — routing to image provider');
       return imageResult;
     }
 
+    this.logger.debug('handleAuto: checking for file generation request');
     const fileResult = this.detectFileGenerationRequest(context);
     if (fileResult) {
+      this.logger.log('handleAuto: file generation request detected — routing to file-gen provider');
       return fileResult;
     }
 
     // Try Ollama-assisted routing first
+    this.logger.debug('handleAuto: attempting Ollama-assisted routing');
     const ollamaDecision = await this.ollamaRouter.route(context);
     if (ollamaDecision) {
+      this.logger.log(`handleAuto: Ollama router decided ${ollamaDecision.provider}/${ollamaDecision.model} (confidence=${String(ollamaDecision.confidence)})`);
       const primary = { provider: ollamaDecision.provider, model: ollamaDecision.model };
       return {
         selectedProvider: ollamaDecision.provider,
@@ -254,27 +280,32 @@ export class RoutingManager {
     }
 
     // Fallback to heuristic routing
-    this.logger.debug('Ollama router unavailable, using heuristic fallback');
+    this.logger.debug('handleAuto: Ollama router unavailable, using heuristic fallback');
     return this.handleAutoHeuristic(context);
   }
 
   private handleAutoHeuristic(context: RoutingContext): RoutingDecisionResult {
+    this.logger.debug('handleAutoHeuristic: starting heuristic-based routing');
     // Check for image/file generation requests first
     const imageResult = this.detectImageRequest(context);
     if (imageResult) {
+      this.logger.debug('handleAutoHeuristic: image request detected via heuristic');
       return imageResult;
     }
 
     const fileResult = this.detectFileGenerationRequest(context);
     if (fileResult) {
+      this.logger.debug('handleAutoHeuristic: file generation request detected via heuristic');
       return fileResult;
     }
 
     const localHealthy = this.isRuntimeHealthy('OLLAMA', context);
     const messageLength = context.message.length;
+    this.logger.debug(`handleAutoHeuristic: localHealthy=${String(localHealthy)} messageLength=${String(messageLength)}`);
 
     // Prefer local for short messages if Ollama is available
     if (localHealthy && messageLength < 500) {
+      this.logger.debug('handleAutoHeuristic: short message + local available — using local');
       const primary = { provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT };
       return {
         selectedProvider: LOCAL_PROVIDER,
@@ -289,6 +320,7 @@ export class RoutingManager {
     }
 
     // For cloud: pick the best available connector in priority order
+    this.logger.debug('handleAutoHeuristic: checking cloud provider availability');
     const cloudPriority: FallbackEntry[] = [
       { provider: CLOUD_PROVIDER_ANTHROPIC, model: CLOUD_MODEL_DEFAULT },
       { provider: CLOUD_PROVIDER_OPENAI, model: CLOUD_MODEL_FAST },
@@ -298,6 +330,7 @@ export class RoutingManager {
     const bestAvailable = cloudPriority.find((c) => this.isConnectorHealthy(c.provider, context));
 
     if (bestAvailable) {
+      this.logger.debug(`handleAutoHeuristic: best available cloud=${bestAvailable.provider}/${bestAvailable.model}`);
       return {
         selectedProvider: bestAvailable.provider,
         selectedModel: bestAvailable.model,
@@ -313,6 +346,7 @@ export class RoutingManager {
     // No connector marked healthy — still try the first configured one as a best-effort
     const firstCloud = cloudPriority[0];
     if (firstCloud) {
+      this.logger.debug(`handleAutoHeuristic: no healthy connector — best-effort with ${firstCloud.provider}`);
       return {
         selectedProvider: firstCloud.provider,
         selectedModel: firstCloud.model,
@@ -326,6 +360,7 @@ export class RoutingManager {
     }
 
     // Ultimate fallback — local
+    this.logger.debug('handleAutoHeuristic: no cloud available — ultimate fallback to local');
     return {
       selectedProvider: LOCAL_PROVIDER,
       selectedModel: LOCAL_MODEL_DEFAULT,
@@ -339,6 +374,7 @@ export class RoutingManager {
   }
 
   private inferProvider(model: string): string {
+    this.logger.debug(`inferProvider: inferring provider for model="${model}"`);
     const lower = model.toLowerCase().replace(/^models\//, '');
 
     // Image generation models
@@ -387,23 +423,30 @@ export class RoutingManager {
   }
 
   private detectImageRequest(context: RoutingContext): RoutingDecisionResult | null {
+    this.logger.debug('detectImageRequest: scanning message for image keywords');
     const lower = context.message.toLowerCase();
 
     // Exact keyword match
     const exactMatch = IMAGE_KEYWORDS.some((kw) => lower.includes(kw));
 
     // Smart verb + image-word combo detection
-    const imageVerbs = ['generate', 'create', 'draw', 'make', 'paint', 'render', 'design', 'produce'];
+    const imageVerbs = ['generate', 'create', 'draw', 'make', 'paint', 'render', 'design', 'produce', 'recreate', 'reproduce', 'remake', 'redo'];
     const imageWords = ['image', 'picture', 'photo', 'portrait', 'illustration', 'sketch', 'art', 'artwork', 'graphic', 'poster', 'banner', 'icon', 'logo', 'wallpaper', 'avatar'];
     const hasVerb = imageVerbs.some((v) => lower.includes(v));
     const hasImageWord = imageWords.some((w) => lower.includes(w));
     const comboMatch = hasVerb && hasImageWord;
 
-    if (!exactMatch && !comboMatch) {
+    // Reference-based phrases that imply image generation even without explicit image words
+    const referenceVerbs = ['recreate', 'reproduce', 'remake'];
+    const referenceMatch = referenceVerbs.some((v) => lower.includes(v)) && (lower.includes('this') || lower.includes('attached'));
+
+    this.logger.debug(`detectImageRequest: exactMatch=${String(exactMatch)} comboMatch=${String(comboMatch)} referenceMatch=${String(referenceMatch)}`);
+    if (!exactMatch && !comboMatch && !referenceMatch) {
+      this.logger.debug('detectImageRequest: no image request detected');
       return null;
     }
 
-    this.logger.log('Image generation request detected via keyword heuristic');
+    this.logger.log('detectImageRequest: image generation request detected via keyword heuristic');
 
     // Prefer Gemini for image generation, then OpenAI
     if (this.isConnectorHealthy('GEMINI', context)) {
@@ -436,6 +479,7 @@ export class RoutingManager {
   }
 
   private detectFileGenerationRequest(context: RoutingContext): RoutingDecisionResult | null {
+    this.logger.debug('detectFileGenerationRequest: scanning message for file-gen keywords');
     const lower = context.message.toLowerCase();
 
     // Check exact phrase matches first
@@ -446,11 +490,13 @@ export class RoutingManager {
     const hasFormat = FILE_GENERATION_FORMAT_WORDS.some((f) => lower.includes(f));
     const comboMatch = hasVerb && hasFormat;
 
+    this.logger.debug(`detectFileGenerationRequest: exactMatch=${String(exactMatch)} comboMatch=${String(comboMatch)} (hasVerb=${String(hasVerb)} hasFormat=${String(hasFormat)})`);
     if (!exactMatch && !comboMatch) {
+      this.logger.debug('detectFileGenerationRequest: no file generation request detected');
       return null;
     }
 
-    this.logger.log('File generation request detected via keyword heuristic');
+    this.logger.log('detectFileGenerationRequest: file generation request detected via keyword heuristic');
 
     const primary = { provider: FILE_GENERATION_PROVIDER, model: 'auto' };
     return {
@@ -466,16 +512,21 @@ export class RoutingManager {
   }
 
   private isRuntimeHealthy(runtime: string, context: RoutingContext): boolean {
-    return context.runtimeHealth?.[runtime] ?? false;
+    const healthy = context.runtimeHealth?.[runtime] ?? false;
+    this.logger.debug(`isRuntimeHealthy: runtime=${runtime} healthy=${String(healthy)}`);
+    return healthy;
   }
 
   private isConnectorHealthy(provider: string, context: RoutingContext): boolean {
     // If no health data exists at all, assume connectors are available (best-effort)
     const healthMap = context.connectorHealth;
     if (!healthMap || Object.keys(healthMap).length === 0) {
+      this.logger.debug(`isConnectorHealthy: no health data — assuming ${provider} is available`);
       return true;
     }
-    return healthMap[provider] ?? false;
+    const healthy = healthMap[provider] ?? false;
+    this.logger.debug(`isConnectorHealthy: provider=${provider} healthy=${String(healthy)}`);
+    return healthy;
   }
 
   async getActivePolicies(): Promise<RoutingPolicy[]> {

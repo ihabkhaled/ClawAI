@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { type ContextPack, type ContextPackItem } from '../../../generated/prisma';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
@@ -12,12 +12,15 @@ import { CONTEXT_PACK_UPDATED_EVENT } from '../constants/context-packs.constants
 
 @Injectable()
 export class ContextPacksService {
+  private readonly logger = new Logger(ContextPacksService.name);
+
   constructor(
     private readonly contextPacksRepository: ContextPacksRepository,
     private readonly rabbitMQService: RabbitMQService,
   ) {}
 
   async createContextPack(userId: string, dto: CreateContextPackDto): Promise<ContextPack> {
+    this.logger.log(`createContextPack: creating pack "${dto.name}" for user ${userId}`);
     const pack = await this.contextPacksRepository.create({
       userId,
       name: dto.name,
@@ -96,6 +99,7 @@ export class ContextPacksService {
   }
 
   async deleteContextPack(id: string, userId: string): Promise<ContextPack> {
+    this.logger.log(`deleteContextPack: deleting pack ${id}`);
     const pack = await this.contextPacksRepository.findById(id);
     if (!pack) {
       throw new EntityNotFoundException('ContextPack', id);
@@ -119,6 +123,7 @@ export class ContextPacksService {
     userId: string,
     dto: AddContextPackItemDto,
   ): Promise<ContextPackItem> {
+    this.logger.log(`addItem: adding item type=${dto.type} to pack ${contextPackId}`);
     const pack = await this.contextPacksRepository.findById(contextPackId);
     if (!pack) {
       throw new EntityNotFoundException('ContextPack', contextPackId);
@@ -148,6 +153,7 @@ export class ContextPacksService {
     itemId: string,
     userId: string,
   ): Promise<ContextPackItem> {
+    this.logger.log(`removeItem: removing item ${itemId} from pack ${contextPackId}`);
     const pack = await this.contextPacksRepository.findById(contextPackId);
     if (!pack) {
       throw new EntityNotFoundException('ContextPack', contextPackId);

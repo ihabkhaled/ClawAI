@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { ChatThreadsRepository } from '../repositories/chat-threads.repository';
 import { ChatMessagesRepository } from '../../chat-messages/repositories/chat-messages.repository';
@@ -13,6 +13,8 @@ import { THREAD_CREATED_EVENT } from '../constants/chat-threads.constants';
 
 @Injectable()
 export class ChatThreadsService {
+  private readonly logger = new Logger(ChatThreadsService.name);
+
   constructor(
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatMessagesRepository: ChatMessagesRepository,
@@ -20,6 +22,7 @@ export class ChatThreadsService {
   ) {}
 
   async createThread(userId: string, dto: CreateThreadDto): Promise<ChatThread> {
+    this.logger.log(`createThread: creating thread for user ${userId} with mode=${dto.routingMode ?? 'default'}`);
     const thread = await this.chatThreadsRepository.create({
       userId,
       title: dto.title,
@@ -32,6 +35,7 @@ export class ChatThreadsService {
       contextPackIds: dto.contextPackIds,
     });
 
+    this.logger.log(`createThread: created thread ${thread.id} for user ${userId}`);
     void this.rabbitMQService.publish(THREAD_CREATED_EVENT, {
       threadId: thread.id,
       userId,
@@ -84,6 +88,7 @@ export class ChatThreadsService {
   }
 
   async updateThread(id: string, userId: string, dto: UpdateThreadDto): Promise<ChatThread> {
+    this.logger.log(`updateThread: updating thread ${id}`);
     const thread = await this.chatThreadsRepository.findById(id);
     if (!thread) {
       throw new EntityNotFoundException('ChatThread', id);
@@ -105,6 +110,7 @@ export class ChatThreadsService {
   }
 
   async deleteThread(id: string, userId: string): Promise<ChatThread> {
+    this.logger.log(`deleteThread: deleting thread ${id} for user ${userId}`);
     const thread = await this.chatThreadsRepository.findById(id);
     if (!thread) {
       throw new EntityNotFoundException('ChatThread', id);
@@ -112,7 +118,9 @@ export class ChatThreadsService {
     this.validateOwnership(thread, userId);
 
     await this.chatMessagesRepository.deleteByThreadId(id);
-    return this.chatThreadsRepository.delete(id);
+    const deleted = await this.chatThreadsRepository.delete(id);
+    this.logger.log(`deleteThread: deleted thread ${id} and its messages`);
+    return deleted;
   }
 
   private validateOwnership(thread: ChatThread, userId: string): void {

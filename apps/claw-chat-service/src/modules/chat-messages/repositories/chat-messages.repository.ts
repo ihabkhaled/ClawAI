@@ -21,7 +21,7 @@ export class ChatMessagesRepository {
       where: { threadId },
       skip,
       take: limit,
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
     });
   }
 

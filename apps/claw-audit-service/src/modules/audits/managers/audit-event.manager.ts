@@ -112,6 +112,7 @@ export class AuditEventManager implements OnModuleInit {
   }
 
   async handleUserLogin(payload: UserLoginPayload): Promise<void> {
+    this.logger.debug(`handleUserLogin: recording login for user ${payload.userId}`);
     await this.auditsService.createAuditLog({
       userId: payload.userId,
       action: 'LOGIN',
@@ -209,6 +210,7 @@ export class AuditEventManager implements OnModuleInit {
   }
 
   async handleMessageCompleted(payload: MessageCompletedPayload): Promise<void> {
+    this.logger.debug(`handleMessageCompleted: recording for message ${payload.messageId} provider=${payload.provider ?? 'unknown'}`);
     await this.auditsService.createAuditLog({
       userId: 'system',
       action: 'ACCESS',

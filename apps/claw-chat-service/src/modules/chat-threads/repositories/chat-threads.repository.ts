@@ -67,7 +67,10 @@ export class ChatThreadsRepository {
     }
 
     if (filters.search) {
-      where.title = { contains: filters.search, mode: 'insensitive' };
+      where.OR = [
+        { title: { contains: filters.search, mode: 'insensitive' } },
+        { messages: { some: { content: { contains: filters.search, mode: 'insensitive' } } } },
+      ];
     }
 
     return where;

@@ -18,6 +18,7 @@ export class FileProcessingManager {
   ) {}
 
   async processFile(file: File): Promise<void> {
+    this.logger.log(`processFile: starting processing for file ${file.id} (${file.mimeType})`);
     await this.updateIngestionStatus(file.id, FileIngestionStatus.PROCESSING);
 
     try {

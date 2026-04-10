@@ -106,6 +106,7 @@ export class ImageGenerationService {
   }
 
   async retryGeneration(generationId: string): Promise<ImageGenerationRecord> {
+    this.logger.log(`retryGeneration: retrying generation ${generationId}`);
     const record = await this.getById(generationId);
 
     await this.repository.updateStatus(generationId, ImageGenerationStatus.QUEUED, {
@@ -137,6 +138,7 @@ export class ImageGenerationService {
     provider?: string,
     model?: string,
   ): Promise<ImageGenerationRecord> {
+    this.logger.log(`retryWithAlternateModel: retrying generation ${generationId} with provider=${provider ?? 'auto'} model=${model ?? 'auto'}`);
     const record = await this.getById(generationId);
 
     let targetProvider = provider;

@@ -67,7 +67,9 @@ export class OllamaService implements OnModuleInit {
   }
 
   async pullModel(dto: PullModelDto): Promise<LocalModel> {
+    this.logger.log(`pullModel: pulling model ${dto.modelName} runtime=${dto.runtime}`);
     const model = await this.ollamaManager.pullModel(dto.modelName, dto.runtime);
+    this.logger.log(`pullModel: completed pulling ${dto.modelName} id=${model.id}`);
 
     void this.rabbitMQService.publish(EventPattern.CONNECTOR_SYNCED, {
       runtime: dto.runtime,
@@ -80,6 +82,7 @@ export class OllamaService implements OnModuleInit {
   }
 
   async assignRole(dto: AssignRoleDto): Promise<LocalModelRoleAssignment> {
+    this.logger.log(`assignRole: assigning role=${dto.role} to model ${dto.modelId}`);
     const model = await this.localModelsRepository.findById(dto.modelId);
     if (!model) {
       throw new EntityNotFoundException("LocalModel", dto.modelId);
@@ -97,6 +100,7 @@ export class OllamaService implements OnModuleInit {
   }
 
   async generate(dto: GenerateDto): Promise<GenerateResponse> {
+    this.logger.debug(`generate: generating with model=${dto.model} stream=${String(dto.stream ?? false)}`);
     return this.ollamaManager.generate({
       model: dto.model,
       prompt: dto.prompt,
@@ -105,6 +109,7 @@ export class OllamaService implements OnModuleInit {
   }
 
   async checkHealth(runtime: string): Promise<RuntimeHealth> {
+    this.logger.debug(`checkHealth: checking runtime=${runtime}`);
     return this.ollamaManager.checkRuntimeHealth(runtime as RuntimeType);
   }
 

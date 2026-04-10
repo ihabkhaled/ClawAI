@@ -30,8 +30,12 @@ export class ContextAssemblyManager {
     contextPackIds?: string[],
     fileIds?: string[],
   ): Promise<AssembledContext> {
+    this.logger.log(`assemble: starting for user ${userId} with ${String(threadMessages.length)} messages, ${String(contextPackIds?.length ?? 0)} packs, ${String(fileIds?.length ?? 0)} files`);
+    this.logger.debug(`assemble: slicing to last ${String(THREAD_CONTEXT_LIMIT)} messages`);
     const recentMessages = threadMessages.slice(-THREAD_CONTEXT_LIMIT);
+    this.logger.debug(`assemble: using ${String(recentMessages.length)} recent messages`);
 
+    this.logger.debug('assemble: fetching memories, context packs, and file contents in parallel');
     const [memories, contextPackItems, fileContents] = await Promise.all([
       this.fetchMemories(userId),
       this.fetchContextPackItems(contextPackIds ?? []),
@@ -39,6 +43,8 @@ export class ContextAssemblyManager {
     ]);
 
     const tokenBudget = threadSettings?.maxTokens ?? 4096;
+    this.logger.debug(`assemble: tokenBudget=${String(tokenBudget)} systemPrompt=${threadSettings?.systemPrompt ? 'present' : 'none'}`);
+    this.logger.log(`assemble: completed - ${String(memories.length)} memories, ${String(contextPackItems.length)} pack items, ${String(fileContents.length)} files, ${String(recentMessages.length)} messages`);
 
     return {
       userId,
@@ -52,18 +58,22 @@ export class ContextAssemblyManager {
   }
 
   buildPromptString(context: AssembledContext): string {
+    this.logger.debug('buildPromptString: starting prompt assembly');
     const parts: string[] = [];
 
     if (context.systemPrompt) {
+      this.logger.debug(`buildPromptString: adding system prompt (${String(context.systemPrompt.length)} chars)`);
       parts.push(`SYSTEM: ${context.systemPrompt}`);
     }
 
     if (context.memories.length > 0) {
+      this.logger.debug(`buildPromptString: adding ${String(context.memories.length)} memories`);
       const memoryBlock = context.memories.map((m) => `[${m.type}] ${m.content}`).join('\n');
       parts.push(`USER CONTEXT (memories):\n${memoryBlock}`);
     }
 
     if (context.contextPackItems.length > 0) {
+      this.logger.debug(`buildPromptString: adding ${String(context.contextPackItems.length)} context pack items`);
       const packBlock = context.contextPackItems
         .map((item) => item.content ?? '')
         .filter((c) => c.length > 0)
@@ -74,7 +84,9 @@ export class ContextAssemblyManager {
     }
 
     if (context.fileContents.length > 0) {
+      this.logger.debug(`buildPromptString: adding ${String(context.fileContents.length)} file contents`);
       for (const file of context.fileContents) {
+        this.logger.debug(`buildPromptString: decoding file "${file.filename}" (${file.mimeType})`);
         const decoded = this.decodeFileContent(file);
         parts.push(
           `ATTACHED FILE "${file.filename}" (use this to answer the user's questions):\n${decoded}`,
@@ -82,28 +94,35 @@ export class ContextAssemblyManager {
       }
     }
 
+    this.logger.debug(`buildPromptString: adding ${String(context.threadMessages.length)} thread messages`);
     for (const msg of context.threadMessages) {
       parts.push(`${msg.role}: ${msg.content}`);
     }
 
-    return this.truncateToTokenBudget(parts.join('\n\n'), context.tokenBudget);
+    const fullPrompt = parts.join('\n\n');
+    this.logger.debug(`buildPromptString: full prompt assembled — ${String(fullPrompt.length)} chars, truncating to budget=${String(context.tokenBudget)}`);
+    return this.truncateToTokenBudget(fullPrompt, context.tokenBudget);
   }
 
   buildChatMessages(context: AssembledContext): OpenAiChatMessage[] {
+    this.logger.debug('buildChatMessages: starting chat message assembly');
     const messages: OpenAiChatMessage[] = [];
 
     const systemParts: string[] = [];
 
     if (context.systemPrompt) {
+      this.logger.debug('buildChatMessages: adding system prompt');
       systemParts.push(context.systemPrompt);
     }
 
     if (context.memories.length > 0) {
+      this.logger.debug(`buildChatMessages: adding ${String(context.memories.length)} memories to system`);
       const memoryBlock = context.memories.map((m) => `[${m.type}] ${m.content}`).join('\n');
       systemParts.push(`User context (memories):\n${memoryBlock}`);
     }
 
     if (context.contextPackItems.length > 0) {
+      this.logger.debug(`buildChatMessages: adding ${String(context.contextPackItems.length)} context pack items to system`);
       const packBlock = context.contextPackItems
         .map((item) => item.content ?? '')
         .filter((c) => c.length > 0)
@@ -115,7 +134,9 @@ export class ContextAssemblyManager {
 
     // Add text-based files to system prompt
     const textFiles = context.fileContents.filter((f) => !this.isImageFile(f));
+    this.logger.debug(`buildChatMessages: adding ${String(textFiles.length)} text files to system prompt`);
     for (const file of textFiles) {
+      this.logger.debug(`buildChatMessages: decoding text file "${file.filename}"`);
       const decoded = this.decodeFileContent(file);
       systemParts.push(
         `The user has attached file "${file.filename}". Use this content to answer their questions:\n\n${decoded}`,
@@ -123,11 +144,13 @@ export class ContextAssemblyManager {
     }
 
     if (systemParts.length > 0) {
+      this.logger.debug(`buildChatMessages: system message built with ${String(systemParts.length)} parts`);
       messages.push({ role: 'system', content: systemParts.join('\n\n') });
     }
 
     // Collect image files for multimodal injection into the last user message
     const imageFiles = context.fileContents.filter((f) => this.isImageFile(f));
+    this.logger.debug(`buildChatMessages: found ${String(imageFiles.length)} image files for multimodal injection`);
 
     for (const msg of context.threadMessages) {
       const role = this.mapRole(msg.role);
@@ -136,6 +159,7 @@ export class ContextAssemblyManager {
       // build multimodal content (text + images)
       const isLastUser = role === 'user' && msg === context.threadMessages.at(-1);
       if (isLastUser && imageFiles.length > 0) {
+        this.logger.debug(`buildChatMessages: building multimodal last user message with ${String(imageFiles.length)} images`);
         const parts: OpenAiContentPart[] = [
           { type: 'text', text: msg.content },
         ];
@@ -153,6 +177,7 @@ export class ContextAssemblyManager {
       }
     }
 
+    this.logger.debug(`buildChatMessages: assembled ${String(messages.length)} total messages`);
     return messages;
   }
 
@@ -161,10 +186,12 @@ export class ContextAssemblyManager {
   }
 
   private async fetchMemories(userId: string): Promise<MemoryRecordResponse[]> {
+    this.logger.debug(`fetchMemories: fetching memories for user=${userId} limit=${String(MEMORY_FETCH_LIMIT)}`);
     try {
       const config = AppConfig.get();
       const url = `${config.MEMORY_SERVICE_URL}/api/v1/internal/memories/for-context?userId=${encodeURIComponent(userId)}&limit=${String(MEMORY_FETCH_LIMIT)}`;
 
+      this.logger.debug(`fetchMemories: requesting ${url}`);
       const response = await httpRequest<MemoryRecordResponse[]>({
         url,
         method: 'GET',
@@ -172,14 +199,15 @@ export class ContextAssemblyManager {
       });
 
       if (!response.ok) {
-        this.logger.warn(`Failed to fetch memories: status ${String(response.status)}`);
+        this.logger.warn(`fetchMemories: failed with status ${String(response.status)}`);
         return [];
       }
 
+      this.logger.debug(`fetchMemories: received ${String(response.data.length)} memories`);
       return response.data;
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.warn(`Memory fetch failed (non-blocking): ${msg}`);
+      this.logger.warn(`fetchMemories: failed (non-blocking): ${msg}`);
       return [];
     }
   }
@@ -188,9 +216,11 @@ export class ContextAssemblyManager {
     packIds: string[],
   ): Promise<Array<{ content: string | null; type: string }>> {
     if (packIds.length === 0) {
+      this.logger.debug('fetchContextPackItems: no pack IDs provided — skipping');
       return [];
     }
 
+    this.logger.debug(`fetchContextPackItems: fetching items for ${String(packIds.length)} packs`);
     try {
       const config = AppConfig.get();
       const results: Array<{ content: string | null; type: string }> = [];
@@ -198,6 +228,7 @@ export class ContextAssemblyManager {
       for (const packId of packIds) {
         const url = `${config.MEMORY_SERVICE_URL}/api/v1/internal/context-packs/${encodeURIComponent(packId)}/items`;
 
+        this.logger.debug(`fetchContextPackItems: fetching pack ${packId}`);
         const response = await httpRequest<ContextPackResponse>({
           url,
           method: 'GET',
@@ -205,25 +236,31 @@ export class ContextAssemblyManager {
         });
 
         if (response.ok && response.data.items) {
+          this.logger.debug(`fetchContextPackItems: pack ${packId} returned ${String(response.data.items.length)} items`);
           for (const item of response.data.items) {
             results.push({ content: item.content, type: item.type });
           }
+        } else {
+          this.logger.debug(`fetchContextPackItems: pack ${packId} returned no items or failed status=${String(response.status)}`);
         }
       }
 
+      this.logger.debug(`fetchContextPackItems: total items collected=${String(results.length)}`);
       return results;
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.warn(`Context pack fetch failed (non-blocking): ${msg}`);
+      this.logger.warn(`fetchContextPackItems: failed (non-blocking): ${msg}`);
       return [];
     }
   }
 
   private async fetchFileContents(fileIds: string[]): Promise<FileContentResponse[]> {
     if (fileIds.length === 0) {
+      this.logger.debug('fetchFileContents: no file IDs provided — skipping');
       return [];
     }
 
+    this.logger.debug(`fetchFileContents: fetching content for ${String(fileIds.length)} files`);
     try {
       const config = AppConfig.get();
       const results: FileContentResponse[] = [];
@@ -231,6 +268,7 @@ export class ContextAssemblyManager {
       for (const fileId of fileIds) {
         const url = `${config.FILE_SERVICE_URL}/api/v1/internal/files/${encodeURIComponent(fileId)}/content`;
 
+        this.logger.debug(`fetchFileContents: fetching file ${fileId}`);
         const response = await httpRequest<FileContentResponse>({
           url,
           method: 'GET',
@@ -238,16 +276,18 @@ export class ContextAssemblyManager {
         });
 
         if (response.ok && response.data.content) {
+          this.logger.debug(`fetchFileContents: file ${fileId} received — filename=${response.data.filename} mimeType=${response.data.mimeType} contentLen=${String(response.data.content.length)}`);
           results.push(response.data);
         } else {
-          this.logger.warn(`No content for file ${fileId}`);
+          this.logger.warn(`fetchFileContents: no content for file ${fileId} — status=${String(response.status)}`);
         }
       }
 
+      this.logger.debug(`fetchFileContents: total files collected=${String(results.length)}`);
       return results;
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.warn(`File content fetch failed (non-blocking): ${msg}`);
+      this.logger.warn(`fetchFileContents: failed (non-blocking): ${msg}`);
       return [];
     }
   }
@@ -255,10 +295,12 @@ export class ContextAssemblyManager {
   private truncateToTokenBudget(text: string, tokenBudget: number): string {
     const maxChars = tokenBudget * APPROX_CHARS_PER_TOKEN;
     if (text.length <= maxChars) {
+      this.logger.debug(`truncateToTokenBudget: text fits within budget (${String(text.length)} <= ${String(maxChars)} chars)`);
       return text;
     }
     // Keep the beginning (system prompt, memories, context) and truncate the end
     // This preserves the most important context (instructions, memories) over old messages
+    this.logger.debug(`truncateToTokenBudget: truncating from ${String(text.length)} to ${String(maxChars)} chars (budget=${String(tokenBudget)} tokens)`);
     return text.slice(0, maxChars);
   }
 

@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from "@nestjs/common";
+import { HttpStatus, Injectable, Logger } from "@nestjs/common";
 import { RabbitMQService } from "@claw/shared-rabbitmq";
 import { EventPattern } from "@claw/shared-types";
 import { UsersRepository } from "../repositories/users.repository";
@@ -21,12 +21,15 @@ import { validatePasswordStrength } from "../service.utilities/password-policy.u
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly rabbitMQService: RabbitMQService,
   ) {}
 
   async create(dto: CreateUserDto): Promise<SafeUser> {
+    this.logger.log(`create: creating user email=${dto.email} role=${dto.role}`);
     const passwordResult = validatePasswordStrength(dto.password);
     if (!passwordResult.valid) {
       throw new BusinessException(
@@ -56,6 +59,7 @@ export class UsersService {
       status: "ACTIVE",
     });
 
+    this.logger.log(`create: created user ${user.id}`);
     await this.rabbitMQService.publish(EventPattern.USER_CREATED, {
       userId: user.id,
       email: user.email,
@@ -96,6 +100,7 @@ export class UsersService {
   }
 
   async updateUser(id: string, dto: UpdateUserDto, actorId: string): Promise<SafeUser> {
+    this.logger.log(`updateUser: updating user ${id} by actor ${actorId}`);
     const user = await this.usersRepository.findById(id);
     if (!user) {
       throw new EntityNotFoundException("User", id);
@@ -132,6 +137,7 @@ export class UsersService {
   }
 
   async deactivateUser(id: string, actorId: string): Promise<SafeUser> {
+    this.logger.log(`deactivateUser: deactivating user ${id} by actor ${actorId}`);
     const user = await this.usersRepository.findById(id);
     if (!user) {
       throw new EntityNotFoundException("User", id);
@@ -151,6 +157,7 @@ export class UsersService {
   }
 
   async reactivateUser(id: string, actorId: string): Promise<SafeUser> {
+    this.logger.log(`reactivateUser: reactivating user ${id} by actor ${actorId}`);
     const user = await this.usersRepository.findById(id);
     if (!user) {
       throw new EntityNotFoundException("User", id);
@@ -180,6 +187,7 @@ export class UsersService {
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
+    this.logger.log(`changePassword: changing password for user ${userId}`);
     const user = await this.usersRepository.findById(userId);
     if (!user) {
       throw new EntityNotFoundException("User", userId);
@@ -201,15 +209,18 @@ export class UsersService {
 
     const newHash = await hashPassword(dto.newPassword);
     await this.usersRepository.updateById(userId, { passwordHash: newHash });
+    this.logger.log(`changePassword: completed for user ${userId}`);
   }
 
   async changeRole(id: string, role: UserRole, actorId: string): Promise<SafeUser> {
+    this.logger.log(`changeRole: changing role for user ${id} to ${role} by actor ${actorId}`);
     const user = await this.usersRepository.findById(id);
     if (!user) {
       throw new EntityNotFoundException("User", id);
     }
 
     const previousRole = user.role;
+    this.logger.log(`changeRole: user ${id} role changing from ${previousRole} to ${role}`);
     const updated = await this.usersRepository.updateById(id, { role });
 
     await this.rabbitMQService.publish(EventPattern.USER_ROLE_CHANGED, {

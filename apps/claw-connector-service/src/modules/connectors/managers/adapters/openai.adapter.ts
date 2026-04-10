@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import { ConnectorStatus, ModelLifecycle } from "../../../../generated/prisma";
 import { type HealthCheckResult, type NormalizedModel } from "../../types/connectors.types";
 import { type OpenAIModelsResponse } from "../../types/provider-api.types";
@@ -7,14 +8,16 @@ import {
   type ProviderAdapter,
   type ProviderCapabilities,
 } from "../provider-adapter.interface";
+import {
+  OPENAI_DEFAULT_BASE_URL,
+  OPENAI_CHAT_MODEL_PREFIXES,
+} from "../../constants/openai.constants";
 
-const DEFAULT_BASE_URL = "https://api.openai.com/v1";
-
-const CHAT_MODEL_PREFIXES = ["gpt-4", "gpt-3.5", "o1", "o3", "o4", "chatgpt"];
+const logger = new Logger("OpenAIAdapter");
 
 function isChatModel(modelId: string): boolean {
   const lower = modelId.toLowerCase();
-  return CHAT_MODEL_PREFIXES.some((prefix) => lower.startsWith(prefix));
+  return OPENAI_CHAT_MODEL_PREFIXES.some((prefix) => lower.startsWith(prefix));
 }
 
 function formatDisplayName(modelId: string): string {
@@ -26,10 +29,12 @@ function formatDisplayName(modelId: string): string {
 
 export class OpenAIAdapter implements ProviderAdapter {
   async healthCheck(config: ConnectorConfig): Promise<HealthCheckResult> {
-    const baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
+    const baseUrl = config.baseUrl ?? OPENAI_DEFAULT_BASE_URL;
+    logger.debug(`healthCheck: checking OpenAI health at ${baseUrl}`);
     const start = Date.now();
 
     try {
+      logger.debug('healthCheck: sending GET /models request');
       const response = await httpGet<OpenAIModelsResponse>({
         url: `${baseUrl}/models`,
         headers: {
@@ -40,26 +45,33 @@ export class OpenAIAdapter implements ProviderAdapter {
       const latencyMs = Date.now() - start;
 
       if (response.ok) {
+        logger.debug(`healthCheck: OpenAI is healthy — latencyMs=${String(latencyMs)}`);
         return { status: ConnectorStatus.HEALTHY, latencyMs };
       }
 
+      logger.debug(`healthCheck: OpenAI returned error status=${String(response.status)} — latencyMs=${String(latencyMs)}`);
       return {
         status: ConnectorStatus.DOWN,
         latencyMs,
         errorMessage: `OpenAI API returned status ${String(response.status)}`,
       };
     } catch (error: unknown) {
+      const latencyMs = Date.now() - start;
+      const errorMsg = error instanceof Error ? error.message : "Unknown error connecting to OpenAI";
+      logger.debug(`healthCheck: OpenAI connection failed — latencyMs=${String(latencyMs)} error=${errorMsg}`);
       return {
         status: ConnectorStatus.DOWN,
-        latencyMs: Date.now() - start,
-        errorMessage: error instanceof Error ? error.message : "Unknown error connecting to OpenAI",
+        latencyMs,
+        errorMessage: errorMsg,
       };
     }
   }
 
   async syncModels(config: ConnectorConfig): Promise<NormalizedModel[]> {
-    const baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
+    const baseUrl = config.baseUrl ?? OPENAI_DEFAULT_BASE_URL;
+    logger.log(`syncModels: syncing OpenAI models from ${baseUrl}`);
 
+    logger.debug('syncModels: sending GET /models request');
     const response = await httpGet<OpenAIModelsResponse>({
       url: `${baseUrl}/models`,
       headers: {
@@ -68,14 +80,17 @@ export class OpenAIAdapter implements ProviderAdapter {
     });
 
     if (!response.ok) {
+      logger.error(`syncModels: failed to fetch OpenAI models — status=${String(response.status)}`);
       throw new Error(`Failed to fetch OpenAI models: HTTP ${String(response.status)}`);
     }
 
     const models = response.data.data ?? [];
+    logger.debug(`syncModels: received ${String(models.length)} total models — filtering for chat models`);
 
-    return models
-      .filter((model) => isChatModel(model.id))
-      .map((model) => ({
+    const chatModels = models.filter((model) => isChatModel(model.id));
+    logger.log(`syncModels: found ${String(chatModels.length)} chat models out of ${String(models.length)} total`);
+
+    return chatModels.map((model) => ({
         modelKey: model.id,
         displayName: formatDisplayName(model.id),
         lifecycle: ModelLifecycle.ACTIVE,
