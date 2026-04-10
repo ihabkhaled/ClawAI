@@ -2,11 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 
 import { connectorRepository } from "@/repositories/connectors/connector.repository";
 import { queryKeys } from "@/repositories/shared/query-keys";
+import { logger } from "@/utilities";
 
 export function useConnectorDetail(connectorId: string) {
   const connectorQuery = useQuery({
     queryKey: queryKeys.connectors.detail(connectorId),
-    queryFn: () => connectorRepository.getConnector(connectorId),
+    queryFn: () => {
+      logger.debug({ component: 'connectors', action: 'fetch-connector-detail', message: 'Fetching connector detail', details: { connectorId } });
+      return connectorRepository.getConnector(connectorId);
+    },
     enabled: !!connectorId,
   });
 

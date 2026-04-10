@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 
 import { uploadFileSchema } from '@/lib/validation/file.schema';
 import type { UploadFileRequest } from '@/types';
+import { logger } from '@/utilities';
 
 import { useDeleteFile } from './use-delete-file';
 import { useFiles } from './use-files';
@@ -17,6 +18,7 @@ export function useFilesPage() {
 
   const handleFileSelected = useCallback(
     (file: File) => {
+      logger.info({ component: 'files', action: 'file-selected', message: 'File selected for upload', details: { filename: file.name, sizeBytes: file.size } });
       const metadata = {
         filename: file.name,
         mimeType: file.type || 'application/octet-stream',

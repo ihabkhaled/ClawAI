@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { API_BASE_URL } from '@/constants';
 import { imageGenerationRepository } from '@/repositories/image-generation/image-generation.repository';
 import type { ImageGeneration, ImageGenerationEventPayload } from '@/types/image-generation.types';
-import { isTerminalImageStatus } from '@/utilities';
+import { isTerminalImageStatus, logger } from '@/utilities';
 
 export function useImageGenerationListener(generationId: string | undefined) {
   const [generation, setGeneration] = useState<ImageGeneration | null>(null);
@@ -49,11 +49,14 @@ export function useImageGenerationListener(generationId: string | undefined) {
       return;
     }
 
+    logger.debug({ component: 'chat', action: 'image-gen-listen-start', message: 'Starting image generation listener', details: { generationId } });
+
     void imageGenerationRepository
       .getById(generationId)
       .then((gen) => {
         setGeneration(gen);
         if (isTerminalImageStatus(gen.status)) {
+          logger.debug({ component: 'chat', action: 'image-gen-already-terminal', message: 'Image generation already in terminal state', details: { generationId, status: gen.status } });
           return;
         }
 
@@ -90,11 +93,13 @@ export function useImageGenerationListener(generationId: string | undefined) {
         };
 
         eventSource.onerror = () => {
+          logger.warn({ component: 'chat', action: 'image-gen-sse-error', message: 'Image generation SSE error, falling back to polling', details: { generationId } });
           cleanup();
           startPolling(generationId);
         };
       })
       .catch(() => {
+        logger.warn({ component: 'chat', action: 'image-gen-fetch-error', message: 'Failed to fetch image generation, starting polling', details: { generationId } });
         startPolling(generationId);
       });
 

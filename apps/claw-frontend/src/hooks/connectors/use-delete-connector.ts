@@ -5,7 +5,7 @@ import { ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { connectorRepository } from '@/repositories/connectors/connector.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
-import { showToast } from '@/utilities';
+import { logger, showToast } from '@/utilities';
 
 export function useDeleteConnector() {
   const queryClient = useQueryClient();
@@ -13,8 +13,12 @@ export function useDeleteConnector() {
   const { t } = useTranslation();
 
   const mutation = useMutation({
-    mutationFn: (id: string) => connectorRepository.deleteConnector(id),
+    mutationFn: (id: string) => {
+      logger.info({ component: 'connectors', action: 'delete-connector', message: 'Deleting connector', details: { connectorId: id } });
+      return connectorRepository.deleteConnector(id);
+    },
     onSuccess: () => {
+      logger.info({ component: 'connectors', action: 'delete-connector-success', message: 'Connector deleted' });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.connectors.lists(),
       });
@@ -22,6 +26,7 @@ export function useDeleteConnector() {
       showToast.success({ title: t('connectors.connectorDeleted') });
     },
     onError: (error: Error) => {
+      logger.error({ component: 'connectors', action: 'delete-connector-error', message: error.message });
       showToast.apiError(error, t('connectors.connectorDeleteFailed'));
     },
   });

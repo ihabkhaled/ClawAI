@@ -19,6 +19,7 @@ export function useLogin() {
       router.push(ROUTES.CHAT);
     },
     onError: (error: Error) => {
+      logger.error({ component: 'auth', action: 'login-error', message: 'Login failed' });
       showToast.apiError(error, t('toast.loginFailed'));
     },
   });

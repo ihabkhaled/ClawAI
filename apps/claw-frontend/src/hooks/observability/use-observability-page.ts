@@ -2,11 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 
 import { auditRepository } from "@/repositories/audit/audit.repository";
 import { queryKeys } from "@/repositories/shared/query-keys";
+import { logger } from "@/utilities";
 
 export function useObservabilityPage() {
   const summaryQuery = useQuery({
     queryKey: queryKeys.usage.summary,
-    queryFn: () => auditRepository.getUsageSummary(),
+    queryFn: () => {
+      logger.debug({ component: 'audit', action: 'fetch-observability', message: 'Fetching observability data' });
+      return auditRepository.getUsageSummary();
+    },
   });
 
   const costQuery = useQuery({

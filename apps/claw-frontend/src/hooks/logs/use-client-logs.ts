@@ -3,11 +3,15 @@ import { useQuery } from '@tanstack/react-query';
 import { clientLogsRepository } from '@/repositories/logs/client-logs.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { ClientLogsListParams } from '@/types';
+import { logger } from '@/utilities';
 
 export function useClientLogs(params: ClientLogsListParams) {
   const query = useQuery({
     queryKey: queryKeys.clientLogs.list(params as Record<string, unknown>),
-    queryFn: () => clientLogsRepository.getLogs(params),
+    queryFn: () => {
+      logger.debug({ component: 'audit', action: 'fetch-client-logs', message: 'Fetching client logs', details: { page: params.page } });
+      return clientLogsRepository.getLogs(params);
+    },
   });
 
   return {

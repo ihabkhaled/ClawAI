@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { API_BASE_URL } from '@/constants';
-import { getAccessToken } from '@/utilities';
+import { getAccessToken, logger } from '@/utilities';
 
 export function useAuthenticatedImage(path: string | undefined) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
@@ -37,7 +37,7 @@ export function useAuthenticatedImage(path: string | undefined) {
         setBlobUrl(objectUrl);
       })
       .catch(() => {
-        // silently fail
+        logger.warn({ component: 'chat', action: 'authenticated-image-error', message: 'Failed to fetch authenticated image', details: { path } });
       });
 
     return () => {

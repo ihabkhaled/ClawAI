@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type { ChatThread, ModelSelection } from '@/types';
-import { showToast } from '@/utilities';
+import { logger, showToast } from '@/utilities';
 
 import { useUpdateThread } from './use-update-thread';
 
@@ -34,6 +34,7 @@ export function useThreadSettings(thread: ChatThread | null) {
     if (!thread) {
       return;
     }
+    logger.info({ component: 'chat', action: 'save-thread-settings', message: 'Saving thread settings', details: { threadId: thread.id, temperature, maxTokens, provider: selectedModel?.provider } });
 
     const parsedMaxTokens = maxTokens !== '' ? Number(maxTokens) : null;
 

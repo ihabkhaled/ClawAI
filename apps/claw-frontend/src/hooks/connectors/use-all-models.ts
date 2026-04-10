@@ -5,6 +5,7 @@ import type { ConnectorProvider } from '@/enums';
 import { connectorRepository } from '@/repositories/connectors/connector.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { ConnectorModel } from '@/types';
+import { logger } from '@/utilities';
 
 import { useConnectors } from './use-connectors';
 
@@ -16,7 +17,10 @@ export function useAllModels() {
   const modelQueries = useQueries({
     queries: connectors.map((connector) => ({
       queryKey: queryKeys.connectors.models(connector.id),
-      queryFn: () => connectorRepository.getModels(connector.id),
+      queryFn: () => {
+        logger.debug({ component: 'connectors', action: 'fetch-connector-models', message: 'Fetching models for connector', details: { connectorId: connector.id } });
+        return connectorRepository.getModels(connector.id);
+      },
       enabled: connectors.length > 0,
     })),
   });

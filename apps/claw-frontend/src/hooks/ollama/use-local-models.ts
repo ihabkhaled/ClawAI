@@ -2,11 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 
 import { ollamaRepository } from "@/repositories/ollama/ollama.repository";
 import { queryKeys } from "@/repositories/shared/query-keys";
+import { logger } from "@/utilities";
 
 export function useLocalModels() {
   const query = useQuery({
     queryKey: queryKeys.localModels.lists(),
-    queryFn: () => ollamaRepository.getLocalModels(),
+    queryFn: () => {
+      logger.debug({ component: 'connectors', action: 'fetch-local-models', message: 'Fetching local Ollama models' });
+      return ollamaRepository.getLocalModels();
+    },
   });
 
   return {

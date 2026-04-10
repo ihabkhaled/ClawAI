@@ -20,6 +20,7 @@ export function useCreateConnector() {
       showToast.success({ title: t('connectors.connectorCreated') });
     },
     onError: (error: Error) => {
+      logger.error({ component: 'connectors', action: 'create-connector-error', message: error.message });
       showToast.apiError(error, t('connectors.connectorCreateFailed'));
     },
   });

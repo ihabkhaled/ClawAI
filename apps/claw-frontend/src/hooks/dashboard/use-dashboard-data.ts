@@ -7,11 +7,15 @@ import { healthRepository } from '@/repositories/health/health.repository';
 import { ollamaRepository } from '@/repositories/ollama/ollama.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { DashboardDataResult, DashboardStatCard } from '@/types/dashboard.types';
+import { logger } from '@/utilities';
 
 export function useDashboardData(): DashboardDataResult {
   const threadsQuery = useQuery({
     queryKey: queryKeys.threads.list({ limit: '1' }),
-    queryFn: () => chatRepository.getThreads({ limit: '1', page: '1' }),
+    queryFn: () => {
+      logger.debug({ component: 'layout', action: 'fetch-dashboard-data', message: 'Fetching dashboard thread stats' });
+      return chatRepository.getThreads({ limit: '1', page: '1' });
+    },
     staleTime: DASHBOARD_STALE_TIME_MS,
   });
 

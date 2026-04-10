@@ -4,14 +4,17 @@ import { useTranslation } from '@/lib/i18n';
 import { memoryRepository } from '@/repositories/memory/memory.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { ToggleMemoryParams } from '@/types';
-import { showToast } from '@/utilities';
+import { logger, showToast } from '@/utilities';
 
 export function useToggleMemory() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
   const mutation = useMutation({
-    mutationFn: ({ id }: ToggleMemoryParams) => memoryRepository.toggleMemory(id),
+    mutationFn: ({ id }: ToggleMemoryParams) => {
+      logger.info({ component: 'memory', action: 'toggle-memory', message: 'Toggling memory', details: { memoryId: id } });
+      return memoryRepository.toggleMemory(id);
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.memory.lists(),

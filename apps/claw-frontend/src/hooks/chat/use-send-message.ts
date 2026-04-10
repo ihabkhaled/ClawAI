@@ -11,7 +11,10 @@ export function useSendMessage(threadId: string, onMessageSent?: () => void) {
   const { t } = useTranslation();
 
   const mutation = useMutation({
-    mutationFn: (data: CreateMessageRequest) => chatRepository.createMessage(data),
+    mutationFn: (data: CreateMessageRequest) => {
+      logger.info({ component: 'chat', action: 'send-message-start', message: 'Sending message', details: { threadId, contentLength: data.content.length } });
+      return chatRepository.createMessage(data);
+    },
     onSuccess: () => {
       logger.info({ component: 'chat', action: 'send-message', message: 'Message sent', details: { threadId } });
       void queryClient.invalidateQueries({
@@ -23,6 +26,7 @@ export function useSendMessage(threadId: string, onMessageSent?: () => void) {
       onMessageSent?.();
     },
     onError: (error: Error) => {
+      logger.error({ component: 'chat', action: 'send-message-error', message: error.message, details: { threadId } });
       showToast.apiError(error, t('chat.messageSendFailed'));
     },
   });

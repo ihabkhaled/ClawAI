@@ -3,11 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import { auditRepository } from "@/repositories/audit/audit.repository";
 import { queryKeys } from "@/repositories/shared/query-keys";
 import type { AuditListParams } from "@/types";
+import { logger } from "@/utilities";
 
 export function useAuditLogs(params: AuditListParams) {
   const query = useQuery({
     queryKey: queryKeys.audits.list(params as Record<string, unknown>),
-    queryFn: () => auditRepository.getAuditLogs(params),
+    queryFn: () => {
+      logger.debug({ component: 'audit', action: 'fetch-audit-logs', message: 'Fetching audit logs', details: { page: params.page, action: params.action, severity: params.severity } });
+      return auditRepository.getAuditLogs(params);
+    },
   });
 
   return {

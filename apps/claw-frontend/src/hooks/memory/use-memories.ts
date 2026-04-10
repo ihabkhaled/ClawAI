@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { memoryRepository } from "@/repositories/memory/memory.repository";
 import { queryKeys } from "@/repositories/shared/query-keys";
+import { logger } from "@/utilities";
 
 export function useMemories(filters: Record<string, unknown> = {}) {
   const params: Record<string, string> = {};
@@ -14,7 +15,10 @@ export function useMemories(filters: Record<string, unknown> = {}) {
 
   const query = useQuery({
     queryKey: queryKeys.memory.list(filters),
-    queryFn: () => memoryRepository.getMemories(params),
+    queryFn: () => {
+      logger.debug({ component: 'memory', action: 'fetch-memories', message: 'Fetching memories', details: { filters: params } });
+      return memoryRepository.getMemories(params);
+    },
   });
 
   return {

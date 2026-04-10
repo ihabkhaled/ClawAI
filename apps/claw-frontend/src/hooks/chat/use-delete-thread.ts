@@ -5,7 +5,7 @@ import { ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
-import { showToast } from '@/utilities';
+import { logger, showToast } from '@/utilities';
 
 export function useDeleteThread() {
   const queryClient = useQueryClient();
@@ -13,8 +13,12 @@ export function useDeleteThread() {
   const { t } = useTranslation();
 
   const mutation = useMutation({
-    mutationFn: (id: string) => chatRepository.deleteThread(id),
+    mutationFn: (id: string) => {
+      logger.info({ component: 'chat', action: 'delete-thread-start', message: 'Deleting thread', details: { threadId: id } });
+      return chatRepository.deleteThread(id);
+    },
     onSuccess: () => {
+      logger.info({ component: 'chat', action: 'delete-thread-success', message: 'Thread deleted' });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.threads.lists(),
       });
@@ -22,6 +26,7 @@ export function useDeleteThread() {
       showToast.success({ title: t('chat.threadDeleted') });
     },
     onError: (error: Error) => {
+      logger.error({ component: 'chat', action: 'delete-thread-error', message: error.message });
       showToast.apiError(error, t('chat.threadDeleteFailed'));
     },
   });

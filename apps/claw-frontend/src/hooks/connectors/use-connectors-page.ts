@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import type { Connector, CreateConnectorRequest, UpdateConnectorRequest } from '@/types';
+import { logger } from '@/utilities';
 
 import { useConnectors } from './use-connectors';
 import { useCreateConnector } from './use-create-connector';
@@ -21,6 +22,7 @@ export function useConnectorsPage() {
   const { syncModels, isPending: isSyncPending } = useSyncConnector();
 
   const handleOpenCreate = useCallback(() => {
+    logger.debug({ component: 'connectors', action: 'open-create-form', message: 'Opening create connector form' });
     setEditingConnector(null);
     setIsFormOpen(true);
   }, []);

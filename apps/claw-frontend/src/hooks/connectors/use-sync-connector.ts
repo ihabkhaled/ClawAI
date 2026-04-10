@@ -4,15 +4,19 @@ import { useTranslation } from '@/lib/i18n';
 import { connectorRepository } from '@/repositories/connectors/connector.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { SyncModelsResponse } from '@/types';
-import { showToast } from '@/utilities';
+import { logger, showToast } from '@/utilities';
 
 export function useSyncConnector() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
   const mutation = useMutation({
-    mutationFn: (id: string) => connectorRepository.syncModels(id),
+    mutationFn: (id: string) => {
+      logger.info({ component: 'connectors', action: 'sync-models-start', message: 'Syncing connector models', details: { connectorId: id } });
+      return connectorRepository.syncModels(id);
+    },
     onSuccess: (_data: SyncModelsResponse, id: string) => {
+      logger.info({ component: 'connectors', action: 'sync-models-success', message: 'Models synced successfully', details: { connectorId: id } });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.connectors.models(id),
       });
@@ -25,6 +29,7 @@ export function useSyncConnector() {
       showToast.success({ title: t('connectors.modelsSynced') });
     },
     onError: (error: Error) => {
+      logger.error({ component: 'connectors', action: 'sync-models-error', message: error.message });
       showToast.apiError(error, t('connectors.syncFailed'));
     },
   });

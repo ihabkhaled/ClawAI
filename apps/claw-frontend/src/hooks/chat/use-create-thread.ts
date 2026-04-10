@@ -24,6 +24,7 @@ export function useCreateThread() {
       showToast.success({ title: t('chat.threadCreated') });
     },
     onError: (error: Error) => {
+      logger.error({ component: 'chat', action: 'create-thread-error', message: error.message });
       showToast.apiError(error, t('chat.threadCreateFailed'));
     },
   });

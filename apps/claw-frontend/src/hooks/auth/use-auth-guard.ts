@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { ROUTES } from '@/constants';
 import { useAuthStore } from '@/stores/auth.store';
+import { logger } from '@/utilities';
 
 export function useAuthGuard(): { isReady: boolean } {
   const router = useRouter();
@@ -27,6 +28,7 @@ export function useAuthGuard(): { isReady: boolean } {
   // Only redirect after hydration is complete
   useEffect(() => {
     if (hydrated && (!isAuthenticated || !accessToken)) {
+      logger.info({ component: 'auth', action: 'guard-redirect', message: 'Unauthenticated user redirected to login' });
       router.replace(ROUTES.LOGIN);
     }
   }, [hydrated, isAuthenticated, accessToken, router]);

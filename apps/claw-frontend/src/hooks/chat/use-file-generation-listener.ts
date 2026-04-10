@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { API_BASE_URL } from '@/constants';
 import { fileGenerationRepository } from '@/repositories/file-generation/file-generation.repository';
 import type { FileGeneration, FileGenerationEventPayload } from '@/types/file-generation.types';
-import { isTerminalFileStatus } from '@/utilities';
+import { isTerminalFileStatus, logger } from '@/utilities';
 
 export function useFileGenerationListener(generationId: string | undefined) {
   const [generation, setGeneration] = useState<FileGeneration | null>(null);
@@ -49,11 +49,14 @@ export function useFileGenerationListener(generationId: string | undefined) {
       return;
     }
 
+    logger.debug({ component: 'chat', action: 'file-gen-listen-start', message: 'Starting file generation listener', details: { generationId } });
+
     void fileGenerationRepository
       .getById(generationId)
       .then((gen) => {
         setGeneration(gen);
         if (isTerminalFileStatus(gen.status)) {
+          logger.debug({ component: 'chat', action: 'file-gen-already-terminal', message: 'File generation already in terminal state', details: { generationId, status: gen.status } });
           return;
         }
 
@@ -90,11 +93,13 @@ export function useFileGenerationListener(generationId: string | undefined) {
         };
 
         eventSource.onerror = () => {
+          logger.warn({ component: 'chat', action: 'file-gen-sse-error', message: 'File generation SSE error, falling back to polling', details: { generationId } });
           cleanup();
           startPolling(generationId);
         };
       })
       .catch(() => {
+        logger.warn({ component: 'chat', action: 'file-gen-fetch-error', message: 'Failed to fetch file generation, starting polling', details: { generationId } });
         startPolling(generationId);
       });
 

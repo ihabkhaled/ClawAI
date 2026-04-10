@@ -4,14 +4,17 @@ import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { UpdateThreadMutationParams } from '@/types';
-import { showToast } from '@/utilities';
+import { logger, showToast } from '@/utilities';
 
 export function useUpdateThread() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
   const mutation = useMutation({
-    mutationFn: ({ id, data }: UpdateThreadMutationParams) => chatRepository.updateThread(id, data),
+    mutationFn: ({ id, data }: UpdateThreadMutationParams) => {
+      logger.info({ component: 'chat', action: 'update-thread', message: 'Updating thread', details: { threadId: id } });
+      return chatRepository.updateThread(id, data);
+    },
     onSuccess: (_result, variables) => {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.threads.lists(),
@@ -21,6 +24,7 @@ export function useUpdateThread() {
       });
     },
     onError: (error: Error) => {
+      logger.error({ component: 'chat', action: 'update-thread-error', message: error.message });
       showToast.apiError(error, t('chat.threadUpdateFailed'));
     },
   });
