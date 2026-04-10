@@ -1,0 +1,52 @@
+import { Users } from 'lucide-react';
+
+import { UserTable } from '@/components/admin/user-table';
+import { EmptyState } from '@/components/common/empty-state';
+import { LoadingSpinner } from '@/components/common/loading-spinner';
+import type { AdminUser, TranslateFunction } from '@/types';
+
+type UsersContentProps = {
+  isLoading: boolean;
+  isError: boolean;
+  users: AdminUser[];
+  onChangeRole: (userId: string, role: string) => void;
+  onDeactivate: (userId: string) => void;
+  isRoleChangePending: boolean;
+  isDeactivatePending: boolean;
+  t: TranslateFunction;
+};
+
+export function UsersContent({
+  isLoading,
+  isError,
+  users,
+  onChangeRole,
+  onDeactivate,
+  isRoleChangePending,
+  isDeactivatePending,
+  t,
+}: UsersContentProps): React.ReactElement {
+  if (isLoading) {
+    return <LoadingSpinner label={t('admin.loadingUsers')} />;
+  }
+
+  if (isError) {
+    return (
+      <EmptyState
+        icon={Users}
+        title={t('admin.loadUsersFailed')}
+        description={t('admin.loadUsersFailedDesc')}
+      />
+    );
+  }
+
+  return (
+    <UserTable
+      users={users}
+      onChangeRole={onChangeRole}
+      onDeactivate={onDeactivate}
+      isRoleChangePending={isRoleChangePending}
+      isDeactivatePending={isDeactivatePending}
+    />
+  );
+}
