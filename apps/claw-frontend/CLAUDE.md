@@ -23,10 +23,11 @@ View (TSX) -> Controller (Hook) -> Service -> Repository/API
 6. **NEVER** use `var` — prefer `const`, use `let` only when reassignment is required.
 7. **NEVER** hardcode user-facing text — prepare for i18n by extracting strings to constants or translation files.
 8. **NEVER** use raw HTML `<select>`, `<input>`, or `<textarea>` — use shadcn/ui components.
-9. **NEVER** put `const`, `interface`, `enum`, or `type` declarations inside component, hook, service, or store files — extract to dedicated files.
+9. **NEVER** put `const`, `interface`, `enum`, or `type` declarations inside ANY file that isn't a dedicated type/constant/enum file — this includes hooks, components, services, and stores. Types go in `src/types/`, enums in `src/enums/`, constants in `src/constants/`.
 10. **NEVER** put custom hooks inside component files — hooks go in `src/hooks/`.
 11. **NEVER** put utility functions inside component files — move to `src/utilities/` or `src/lib/`.
-12. **NEVER** call hooks directly in `.tsx` files except through a single controller hook (extracted to `src/hooks/`).
+12. **NEVER** call React hooks (`useState`, `useEffect`, `useCallback`, `useRef`, `useMemo`, `useReducer`, `useContext`) directly in `.tsx` files — ALL hook logic must be in a controller hook extracted to `src/hooks/`. TSX files may only call ONE controller hook.
+12a. **NEVER** put inline sub-components (helper functions that return JSX) inside `.tsx` files — extract each to its own file in the same directory.
 13. **NEVER** use string literal unions for domain values — use enums from `src/enums/`.
 14. **NEVER** compare domain values with raw strings — use enum comparisons.
 15. **NEVER** use `dangerouslySetInnerHTML`.
@@ -56,6 +57,36 @@ Every third-party library MUST be wrapped in a dedicated module. Components, hoo
 - `src/lib/utils.ts` wraps `clsx` + `tailwind-merge`
 
 **Pattern for new libraries:** Create a wrapper in `src/utilities/<name>.utility.ts` or `src/lib/<name>.ts`, then import from the wrapper everywhere.
+
+## Hook Architecture Rules
+
+### Single Responsibility
+- Each hook MUST do ONE thing. If a hook manages form state AND validation AND submission, split it.
+- Controller hooks orchestrate smaller hooks — they should not contain business logic themselves.
+- Pattern: `useConnectorFormState()` for form state, NOT one giant `useConnectorPage()` with everything.
+
+### Size Limits
+- **Max 50 lines per hook** (excluding imports and type annotations).
+- If a hook exceeds 50 lines, split it into smaller focused hooks.
+- Each smaller hook should be < 30 lines.
+
+### No Inline Declarations in Hooks
+- **NEVER** define `type`, `interface`, `enum`, or `const` inside hook files.
+- Types for hook return values go in `src/types/<domain>.types.ts`.
+- Constants used by hooks go in `src/constants/<domain>.constants.ts`.
+
+### Hook Naming
+- Controller hooks: `use-<component-name>.ts` (e.g., `use-chat-page.ts`)
+- State hooks: `use-<feature>-state.ts` (e.g., `use-connector-form-state.ts`)
+- Shared hooks: `src/hooks/common/use-<name>.ts` (e.g., `use-toggle.ts`, `use-debounce.ts`)
+
+### Hook Composition Pattern
+```
+Page → usePageController()
+         ├── useFeatureA()
+         ├── useFeatureB()
+         └── useSharedHook()
+```
 
 ## Extraction Table
 

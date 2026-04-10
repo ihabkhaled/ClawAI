@@ -232,6 +232,7 @@ export default tseslint.config(
       'src/**/*.interceptor.ts',
       'src/**/*.filter.ts',
       'src/**/*.pipe.ts',
+      'src/**/*.adapter.ts',
     ],
     rules: {
       'no-restricted-syntax': ['error', ...logicFileRestrictions],

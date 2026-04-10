@@ -262,6 +262,16 @@ Controller → Service → Repository (data access only)
 - Forbidden access uses `BusinessException` with `HttpStatus.FORBIDDEN`
 - NEVER swallow errors silently — always log and rethrow or handle explicitly
 
+### No Inline Declarations Rule (Backend)
+
+**NEVER** define `type`, `interface`, `enum`, or module-level `const` inline in ANY of these file types:
+- `*.service.ts`, `*.manager.ts`, `*.controller.ts`, `*.repository.ts`
+- `*.adapter.ts`, `*.utility.ts`, `*.guard.ts`, `*.filter.ts`
+- `*.interceptor.ts`, `*.pipe.ts`, `*.module.ts`, `*.provider.ts`
+
+All declarations MUST be in their dedicated files per the extraction table below.
+The only exception: `private readonly logger = new Logger(...)` inside NestJS classes (this is the standard NestJS pattern).
+
 ### Extraction Rules (Backend)
 
 | What             | Where                                                                           |
@@ -306,13 +316,17 @@ Page (.tsx) → Controller Hook (useX) → Service → Repository/API
 
 ### Hook Rules
 
-- **Split large hooks into smaller focused hooks** — each hook does ONE thing
+- **Single responsibility** — each hook does exactly ONE thing (state, query, mutation, etc.)
+- **Max 50 lines per hook** (excluding imports and types). If exceeded, split into smaller hooks.
 - Controller hooks orchestrate smaller hooks, they don't contain business logic
 - Pattern: `useSendMessage()`, `useThreadDetail()`, `useThreadSettings()` — NOT one giant `useChat()`
 - All GET requests via TanStack Query `useQuery` with proper query key factories
 - All mutations via TanStack Query `useMutation` with `onSuccess` invalidation
 - Never call `useQuery`/`useMutation` directly in `.tsx` files — wrap in custom hooks
 - Hooks go in `src/hooks/<domain>/use-<name>.ts` — NEVER inside component files
+- **NEVER** define `type`, `interface`, `enum`, or `const` inline in hook files — extract to `src/types/`, `src/enums/`, `src/constants/`
+- **NEVER** call React hooks directly in `.tsx` files — ALL hook usage must be via a single controller hook
+- **NEVER** define inline sub-components (helper JSX functions) in `.tsx` files — extract each to its own `.tsx` file
 
 ### State Management Rules
 

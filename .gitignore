@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Test scripts (not for repo)
+scripts/generate-test-messages.sh
+
 # Build output
 dist/
 build/
