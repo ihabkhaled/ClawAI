@@ -2,81 +2,21 @@
 
 import { Archive, MessageSquare, Plus, Search } from 'lucide-react';
 
-import { ThreadListItem } from '@/components/chat/thread-list-item';
+import { VirtualizedThreadList } from '@/components/chat/virtualized-thread-list';
 import { EmptyState } from '@/components/common/empty-state';
-import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useChatPage } from '@/hooks/chat/use-chat-page';
 import { useTranslation } from '@/lib/i18n';
-import type { ChatThread } from '@/types';
-
-function ThreadList({
-  isLoading,
-  pinnedThreads,
-  unpinnedThreads,
-  search,
-  onPin,
-  onArchive,
-  isPinPending,
-  isArchivePending,
-}: {
-  isLoading: boolean;
-  pinnedThreads: ChatThread[];
-  unpinnedThreads: ChatThread[];
-  search: string;
-  onPin: (id: string, isPinned: boolean) => void;
-  onArchive: (id: string, isArchived: boolean) => void;
-  isPinPending: boolean;
-  isArchivePending: boolean;
-}): React.ReactElement {
-  if (isLoading) {
-    return <LoadingSpinner label="Loading threads..." />;
-  }
-
-  if (pinnedThreads.length === 0 && unpinnedThreads.length === 0) {
-    return (
-      <div className="py-8 text-center text-sm text-muted-foreground">
-        {search ? 'No threads match your search.' : 'No threads yet.'}
-      </div>
-    );
-  }
-
-  return (
-    <>
-      {pinnedThreads.map((thread) => (
-        <ThreadListItem
-          key={thread.id}
-          thread={thread}
-          onPin={onPin}
-          onArchive={onArchive}
-          isPinPending={isPinPending}
-          isArchivePending={isArchivePending}
-        />
-      ))}
-      {pinnedThreads.length > 0 && unpinnedThreads.length > 0 ? (
-        <div className="my-1 border-t" />
-      ) : null}
-      {unpinnedThreads.map((thread) => (
-        <ThreadListItem
-          key={thread.id}
-          thread={thread}
-          onPin={onPin}
-          onArchive={onArchive}
-          isPinPending={isPinPending}
-          isArchivePending={isArchivePending}
-        />
-      ))}
-    </>
-  );
-}
 
 export default function ChatPage() {
   const {
-    pinnedThreads,
-    unpinnedThreads,
+    allThreads,
     isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
     search,
     setSearch,
     showArchived,
@@ -126,16 +66,18 @@ export default function ChatPage() {
             </Button>
           </div>
 
-          <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
-            <ThreadList
+          <div className="flex-1 overflow-hidden">
+            <VirtualizedThreadList
+              threads={allThreads}
               isLoading={isLoading}
-              pinnedThreads={pinnedThreads}
-              unpinnedThreads={unpinnedThreads}
-              search={search}
+              isFetchingNextPage={isFetchingNextPage}
+              hasNextPage={hasNextPage}
+              onEndReached={fetchNextPage}
               onPin={handlePin}
               onArchive={handleArchive}
               isPinPending={isPinPending}
               isArchivePending={isArchivePending}
+              search={search}
             />
           </div>
         </div>

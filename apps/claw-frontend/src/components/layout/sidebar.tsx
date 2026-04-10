@@ -2,28 +2,16 @@
 
 import { Zap } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useCallback, useEffect } from 'react';
 
 import { Separator } from '@/components/ui/separator';
 import { ROUTES, SIDEBAR_NAV_ITEMS } from '@/constants';
+import { useSidebarController } from '@/hooks/layout/use-sidebar-controller';
 import { cn } from '@/lib/utils';
-import { useSidebarStore } from '@/stores/sidebar.store';
 
 import { SidebarNavItem } from './sidebar-nav-item';
 
 export function Sidebar() {
-  const { isOpen, close } = useSidebarStore();
-  const pathname = usePathname();
-
-  // Close mobile sidebar on route change
-  useEffect(() => {
-    close();
-  }, [pathname, close]);
-
-  const handleOverlayClick = useCallback(() => {
-    close();
-  }, [close]);
+  const { isOpen, close, handleOverlayClick } = useSidebarController();
 
   return (
     <>

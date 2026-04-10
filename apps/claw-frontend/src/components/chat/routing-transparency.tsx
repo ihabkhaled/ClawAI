@@ -1,15 +1,15 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
 
 import { RoutingBadge } from '@/components/chat/routing-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useToggle } from '@/hooks/common/use-toggle';
 import { cn } from '@/lib/utils';
 import type { RoutingTransparencyProps } from '@/types';
 import { getConfidenceClass, getConfidenceLabel } from '@/utilities';
 
 export function RoutingTransparency({ decision }: RoutingTransparencyProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const { isOpen: isExpanded, toggle: toggleExpanded } = useToggle(false);
 
   return (
     <div className="mt-1 rounded-md border bg-card p-2 text-xs">
@@ -30,7 +30,7 @@ export function RoutingTransparency({ decision }: RoutingTransparencyProps) {
           variant="ghost"
           size="sm"
           className="ms-auto h-6 px-1"
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={toggleExpanded}
         >
           {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
         </Button>

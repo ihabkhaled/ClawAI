@@ -1,15 +1,15 @@
 import { ChevronDown, ChevronUp, Info } from 'lucide-react';
-import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ROUTING_MODE_LABELS } from '@/constants';
 import type { RoutingMode } from '@/enums';
+import { useToggle } from '@/hooks/common/use-toggle';
 import type { MessageProvenanceProps } from '@/types';
 import { estimateCost, formatLatency } from '@/utilities';
 
 export function MessageProvenance({ message }: MessageProvenanceProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const { isOpen: isExpanded, toggle: toggleExpanded } = useToggle(false);
 
   const hasProvenance =
     message.provider !== null ||
@@ -30,7 +30,7 @@ export function MessageProvenance({ message }: MessageProvenanceProps) {
         variant="ghost"
         size="sm"
         className="h-6 gap-1 px-1.5 text-xs text-muted-foreground"
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={toggleExpanded}
         aria-label="Toggle message provenance"
       >
         <Info className="h-3 w-3" />

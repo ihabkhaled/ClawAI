@@ -1,6 +1,6 @@
 import { Upload } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
 
+import { useFileUploadZoneState } from '@/hooks/files/use-file-upload-zone-state';
 import { cn } from '@/lib/utils';
 import type { FileUploadZoneProps } from '@/types';
 
@@ -9,61 +9,15 @@ export function FileUploadZone({
   isUploading,
   validationError,
 }: FileUploadZoneProps) {
-  const [isDragOver, setIsDragOver] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleDragOver = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!isUploading) {
-        setIsDragOver(true);
-      }
-    },
-    [isUploading],
-  );
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-  }, []);
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragOver(false);
-      if (isUploading) {
-        return;
-      }
-
-      const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile) {
-        onFileSelected(droppedFile);
-      }
-    },
-    [isUploading, onFileSelected],
-  );
-
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const selectedFile = e.target.files?.[0];
-      if (selectedFile) {
-        onFileSelected(selectedFile);
-      }
-      if (inputRef.current) {
-        inputRef.current.value = '';
-      }
-    },
-    [onFileSelected],
-  );
-
-  const handleClick = (): void => {
-    if (!isUploading) {
-      inputRef.current?.click();
-    }
-  };
+  const {
+    isDragOver,
+    inputRef,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    handleInputChange,
+    handleClick,
+  } = useFileUploadZoneState(onFileSelected, isUploading);
 
   return (
     <div

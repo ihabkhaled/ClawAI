@@ -1,5 +1,4 @@
 import { Paperclip, Plus } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,11 +11,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { FileIngestionStatus } from '@/enums';
+import { useFileAttachmentPickerState } from '@/hooks/chat/use-file-attachment-picker-state';
 import { useFiles } from '@/hooks/files/use-files';
 import { useUploadFile } from '@/hooks/files/use-upload-file';
 import { useTranslation } from '@/lib/i18n/use-translation';
-import { uploadFileSchema } from '@/lib/validation/file.schema';
-import type { FileAttachmentPickerProps, UploadFileRequest } from '@/types';
+import type { FileAttachmentPickerProps } from '@/types';
 
 export function FileAttachmentPicker({
   selectedFileIds,
@@ -26,72 +25,16 @@ export function FileAttachmentPicker({
   const { t } = useTranslation();
   const { files, isLoading } = useFiles();
   const { uploadFile, isPending: isUploading } = useUploadFile();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [dragOver, setDragOver] = useState(false);
-
-  const handleToggle = (fileId: string, checked: boolean): void => {
-    if (checked) {
-      onChange([...selectedFileIds, fileId]);
-    } else {
-      onChange(selectedFileIds.filter((id) => id !== fileId));
-    }
-  };
-
-  const handleFileUpload = useCallback(
-    (file: File) => {
-      const metadata = {
-        filename: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        sizeBytes: file.size,
-      };
-
-      const result = uploadFileSchema.safeParse(metadata);
-      if (!result.success) {
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (): void => {
-        const base64 = (reader.result as string).split(',')[1] ?? '';
-        const data: UploadFileRequest = {
-          ...result.data,
-          storagePath: `/uploads/${file.name}`,
-          content: base64,
-        };
-        uploadFile(data);
-      };
-      reader.readAsDataURL(file);
-    },
-    [uploadFile],
-  );
-
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const selectedFile = e.target.files?.[0];
-      if (selectedFile) {
-        handleFileUpload(selectedFile);
-      }
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    },
-    [handleFileUpload],
-  );
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setDragOver(false);
-      const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile) {
-        handleFileUpload(droppedFile);
-      }
-    },
-    [handleFileUpload],
-  );
-
-  const selectedCount = selectedFileIds.length;
+  const {
+    dragOver,
+    fileInputRef,
+    handleToggle,
+    handleInputChange,
+    handleDrop,
+    handleDragOver,
+    handleDragLeave,
+    selectedCount,
+  } = useFileAttachmentPickerState({ selectedFileIds, onChange, uploadFile });
 
   return (
     <>
@@ -115,8 +58,8 @@ export function FileAttachmentPicker({
         <DropdownMenuContent
           align="start"
           className="max-h-80 w-72 overflow-y-auto"
-          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
           <DropdownMenuLabel>{t('chat.attachFiles')}</DropdownMenuLabel>

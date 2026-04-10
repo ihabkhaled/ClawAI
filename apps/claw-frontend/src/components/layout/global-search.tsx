@@ -1,92 +1,29 @@
 'use client';
 
-import { MessageSquare, Search, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useRef, useCallback } from 'react';
+import { Search, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ROUTES } from '@/constants';
-import { useGlobalThreadSearch } from '@/hooks/chat/use-global-thread-search';
+import { useGlobalSearchController } from '@/hooks/layout/use-global-search-controller';
 import { cn } from '@/lib/utils';
-import type { ChatThread, GlobalSearchProps } from '@/types';
-import { formatRelativeDate } from '@/utilities';
+import type { GlobalSearchProps } from '@/types';
 
-function SearchResults({
-  isLoading,
-  threads,
-  onSelect,
-}: {
-  isLoading: boolean;
-  threads: ChatThread[];
-  onSelect: (id: string) => void;
-}): React.ReactElement {
-  if (isLoading) {
-    return <div className="px-3 py-4 text-center text-sm text-muted-foreground">Searching...</div>;
-  }
-
-  if (threads.length === 0) {
-    return (
-      <div className="px-3 py-4 text-center text-sm text-muted-foreground">No threads found</div>
-    );
-  }
-
-  return (
-    <div className="max-h-64 overflow-y-auto">
-      {threads.map((thread) => (
-        <button
-          key={thread.id}
-          type="button"
-          className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-start text-sm transition-colors hover:bg-accent"
-          onClick={() => onSelect(thread.id)}
-        >
-          <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <div className="min-w-0 flex-1">
-            <div className="truncate font-medium">{thread.title ?? 'Untitled'}</div>
-            <div className="text-xs text-muted-foreground">
-              {formatRelativeDate(thread.updatedAt)}
-              {thread._count?.messages !== undefined
-                ? ` \u00B7 ${thread._count.messages} messages`
-                : ''}
-            </div>
-          </div>
-        </button>
-      ))}
-    </div>
-  );
-}
+import { SearchResults } from './search-results';
 
 export function GlobalSearch({ className }: GlobalSearchProps) {
-  const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const { threads, isLoading, search, setSearch, isOpen, handleOpenChange } =
-    useGlobalThreadSearch();
-
-  const handleToggle = useCallback((): void => {
-    handleOpenChange(!isOpen);
-    if (!isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 0);
-    }
-  }, [isOpen, handleOpenChange]);
-
-  const handleSelect = useCallback(
-    (threadId: string): void => {
-      handleOpenChange(false);
-      router.push(ROUTES.CHAT_THREAD(threadId));
-    },
-    [handleOpenChange, router],
-  );
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent): void => {
-      if (e.key === 'Escape') {
-        handleOpenChange(false);
-      }
-    },
-    [handleOpenChange],
-  );
-
-  const showResults = isOpen && search.length > 0;
+  const {
+    inputRef,
+    threads,
+    isLoading,
+    search,
+    setSearch,
+    isOpen,
+    showResults,
+    handleToggle,
+    handleSelect,
+    handleKeyDown,
+    handleOpenChange,
+  } = useGlobalSearchController();
 
   return (
     <div className={cn('relative', className)}>

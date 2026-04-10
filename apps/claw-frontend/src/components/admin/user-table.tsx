@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { UserRole } from '@/enums';
+import { useUserTableState } from '@/hooks/admin/use-user-table-state';
 import type { UserTableProps } from '@/types';
 
 export function UserTable({
@@ -29,7 +28,7 @@ export function UserTable({
   isRoleChangePending,
   isDeactivatePending,
 }: UserTableProps) {
-  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const { editingUserId, setEditingUserId, handleRoleSelect } = useUserTableState();
 
   if (users.length === 0) {
     return (
@@ -62,8 +61,7 @@ export function UserTable({
                   <Select
                     defaultValue={user.role}
                     onValueChange={(value) => {
-                      onChangeRole(user.id, value);
-                      setEditingUserId(null);
+                      handleRoleSelect(user.id, value, onChangeRole);
                     }}
                   >
                     <SelectTrigger className="w-[120px]">

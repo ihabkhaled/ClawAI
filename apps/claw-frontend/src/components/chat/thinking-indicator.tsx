@@ -16,9 +16,9 @@ export function ThinkingIndicator({
       <div className="flex max-w-[85%] flex-col items-start gap-1.5">
         {hasFallbacks ? (
           <div className="flex flex-col gap-1">
-            {fallbackAttempts.map((attempt) => (
+            {fallbackAttempts.map((attempt, idx) => (
               <div
-                key={`${attempt.failedProvider}-${String(attempt.attempt)}`}
+                key={`${attempt.failedProvider}-${String(attempt.attempt)}-${String(idx)}`}
                 className="flex items-center gap-1.5 text-xs text-amber-500"
               >
                 <AlertTriangle className="h-3 w-3 shrink-0" />

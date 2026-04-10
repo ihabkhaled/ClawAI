@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,51 +9,21 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { createContextPackSchema } from '@/lib/validation/context-pack.schema';
-import type { ContextPackFormProps, CreateContextPackRequest, FormFieldErrors } from '@/types';
+import { useContextPackFormState } from '@/hooks/context-packs/use-context-pack-form-state';
+import type { ContextPackFormProps } from '@/types';
 
 export function ContextPackForm({ open, onOpenChange, onSubmit, isPending }: ContextPackFormProps) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [scope, setScope] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<FormFieldErrors>({});
-
-  useEffect(() => {
-    if (open) {
-      setName('');
-      setDescription('');
-      setScope('');
-      setFieldErrors({});
-    }
-  }, [open]);
-
-  const handleSubmit = (e: React.FormEvent): void => {
-    e.preventDefault();
-
-    const payload: Record<string, unknown> = { name };
-    if (description.trim()) {
-      payload.description = description;
-    }
-    if (scope.trim()) {
-      payload.scope = scope;
-    }
-
-    const result = createContextPackSchema.safeParse(payload);
-    if (!result.success) {
-      setFieldErrors(result.error.flatten().fieldErrors);
-      return;
-    }
-
-    setFieldErrors({});
-    onSubmit(result.data as CreateContextPackRequest);
-  };
-
-  const handleOpenChange = (nextOpen: boolean): void => {
-    if (!nextOpen) {
-      setFieldErrors({});
-    }
-    onOpenChange(nextOpen);
-  };
+  const {
+    name,
+    setName,
+    description,
+    setDescription,
+    scope,
+    setScope,
+    fieldErrors,
+    handleSubmit,
+    handleOpenChange,
+  } = useContextPackFormState({ open, onSubmit, onOpenChange });
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

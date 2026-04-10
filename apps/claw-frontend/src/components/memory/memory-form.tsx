@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,46 +17,22 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { MEMORY_TYPE_LABELS, MEMORY_TYPE_OPTIONS } from '@/constants';
 import type { MemoryType } from '@/enums';
-import { createMemorySchema } from '@/lib/validation/memory.schema';
-import type { CreateMemoryRequest, FormFieldErrors, MemoryFormProps } from '@/types';
+import { useMemoryFormState } from '@/hooks/memory/use-memory-form-state';
+import type { MemoryFormProps } from '@/types';
 
 export function MemoryForm({ open, onOpenChange, onSubmit, isPending, memory }: MemoryFormProps) {
-  const [type, setType] = useState<MemoryType | null>(memory?.type ?? null);
-  const [content, setContent] = useState(memory?.content ?? '');
-  const [fieldErrors, setFieldErrors] = useState<FormFieldErrors>({});
-
-  const isEditing = !!memory;
-
-  useEffect(() => {
-    if (open) {
-      setType(memory?.type ?? null);
-      setContent(memory?.content ?? '');
-      setFieldErrors({});
-    }
-  }, [open, memory]);
-
-  const handleSubmit = (e: React.FormEvent): void => {
-    e.preventDefault();
-
-    const result = createMemorySchema.safeParse({ type, content });
-    if (!result.success) {
-      setFieldErrors(result.error.flatten().fieldErrors);
-      return;
-    }
-
-    setFieldErrors({});
-    onSubmit(result.data as CreateMemoryRequest);
-  };
-
-  const handleOpenChange = (nextOpen: boolean): void => {
-    if (!nextOpen) {
-      setFieldErrors({});
-    }
-    onOpenChange(nextOpen);
-  };
-
-  const pendingLabel = isEditing ? 'Saving...' : 'Creating...';
-  const submitLabel = isEditing ? 'Save Changes' : 'Create Memory';
+  const {
+    type,
+    setType,
+    content,
+    setContent,
+    fieldErrors,
+    isEditing,
+    pendingLabel,
+    submitLabel,
+    handleSubmit,
+    handleOpenChange,
+  } = useMemoryFormState({ open, memory, onSubmit, onOpenChange });
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

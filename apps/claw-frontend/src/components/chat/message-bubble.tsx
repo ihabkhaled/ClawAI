@@ -12,7 +12,7 @@ import { MessageFeedback, MessageRole, RoutingMode } from '@/enums';
 import { MarkdownRenderer } from '@/lib/markdown';
 import { cn } from '@/lib/utils';
 import type { MessageBubbleProps } from '@/types';
-import { formatLatency } from '@/utilities';
+import { formatLatency, formatShortDateTime } from '@/utilities';
 
 export function MessageBubble({
   message,
@@ -50,7 +50,12 @@ export function MessageBubble({
   return (
     <div className={cn('flex w-full', isUser ? 'justify-end' : 'justify-start')}>
       <div className={cn('flex max-w-[75%] flex-col gap-1', isUser ? 'items-end' : 'items-start')}>
-        <span className="text-xs text-muted-foreground">{roleLabel}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">{roleLabel}</span>
+          <span className="text-[10px] text-muted-foreground/60">
+            {formatShortDateTime(message.createdAt)}
+          </span>
+        </div>
         <div
           className={cn(
             'rounded-lg px-4 py-2.5 text-sm',

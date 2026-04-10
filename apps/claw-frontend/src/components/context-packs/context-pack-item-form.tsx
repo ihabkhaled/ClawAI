@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,13 +17,9 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { CONTEXT_PACK_ITEM_TYPE_LABELS, CONTEXT_PACK_ITEM_TYPE_OPTIONS } from '@/constants';
-import { ContextPackItemType } from '@/enums';
-import { createContextPackItemSchema } from '@/lib/validation/context-pack.schema';
-import type {
-  ContextPackItemFormProps,
-  CreateContextPackItemRequest,
-  FormFieldErrors,
-} from '@/types';
+import type { ContextPackItemType } from '@/enums';
+import { useContextPackItemFormState } from '@/hooks/context-packs/use-context-pack-item-form-state';
+import type { ContextPackItemFormProps } from '@/types';
 
 export function ContextPackItemForm({
   open,
@@ -33,49 +27,18 @@ export function ContextPackItemForm({
   onSubmit,
   isPending,
 }: ContextPackItemFormProps) {
-  const [type, setType] = useState<ContextPackItemType>(ContextPackItemType.NOTE);
-  const [content, setContent] = useState('');
-  const [fileId, setFileId] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<FormFieldErrors>({});
-
-  useEffect(() => {
-    if (open) {
-      setType(ContextPackItemType.NOTE);
-      setContent('');
-      setFileId('');
-      setFieldErrors({});
-    }
-  }, [open]);
-
-  const handleSubmit = (e: React.FormEvent): void => {
-    e.preventDefault();
-
-    const isFileRef = type === ContextPackItemType.FILE_REFERENCE;
-    const payload: Record<string, unknown> = { type };
-    if (isFileRef && fileId.trim()) {
-      payload.fileId = fileId;
-    } else if (content.trim()) {
-      payload.content = content;
-    }
-
-    const result = createContextPackItemSchema.safeParse(payload);
-    if (!result.success) {
-      setFieldErrors(result.error.flatten().fieldErrors);
-      return;
-    }
-
-    setFieldErrors({});
-    onSubmit(result.data as CreateContextPackItemRequest);
-  };
-
-  const handleOpenChange = (nextOpen: boolean): void => {
-    if (!nextOpen) {
-      setFieldErrors({});
-    }
-    onOpenChange(nextOpen);
-  };
-
-  const isFileRef = type === ContextPackItemType.FILE_REFERENCE;
+  const {
+    type,
+    setType,
+    content,
+    setContent,
+    fileId,
+    setFileId,
+    fieldErrors,
+    isFileRef,
+    handleSubmit,
+    handleOpenChange,
+  } = useContextPackItemFormState({ open, onSubmit, onOpenChange });
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
