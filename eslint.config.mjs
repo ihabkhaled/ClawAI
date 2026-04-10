@@ -18,11 +18,11 @@ const banInlineEnum = {
   message: 'Extract enums to common/enums/ directory.',
 };
 const banTopLevelConst = {
-  selector: 'Program > VariableDeclaration[kind="const"]',
+  selector: 'Program > VariableDeclaration[kind="const"] > VariableDeclarator[init.type!="NewExpression"]',
   message: 'Extract top-level constants to a dedicated constants/ file.',
 };
 const banExportedTopLevelConst = {
-  selector: 'Program > ExportNamedDeclaration > VariableDeclaration[kind="const"]',
+  selector: 'Program > ExportNamedDeclaration > VariableDeclaration[kind="const"] > VariableDeclarator[init.type!="NewExpression"][init.type!="ArrowFunctionExpression"]',
   message: 'Extract exported constants to a dedicated constants/ file.',
 };
 const banFunctionDeclaration = {

@@ -22,8 +22,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* eslint-disable-next-line react/no-danger */}
         <script
+          // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
         />
       </head>
