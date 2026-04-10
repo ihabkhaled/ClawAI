@@ -12,14 +12,14 @@ import { GEMINI_DEFAULT_BASE_URL } from "../../constants/gemini.constants";
 
 const logger = new Logger("GeminiAdapter");
 
-function formatDisplayName(modelId: string): string {
-  return modelId
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
 export class GeminiAdapter implements ProviderAdapter {
+  private static formatDisplayName(modelId: string): string {
+    return modelId
+      .split("-")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+
   async healthCheck(config: ConnectorConfig): Promise<HealthCheckResult> {
     const baseUrl = config.baseUrl ?? GEMINI_DEFAULT_BASE_URL;
     logger.debug(`healthCheck: checking Gemini health at ${baseUrl}`);
@@ -81,7 +81,7 @@ export class GeminiAdapter implements ProviderAdapter {
 
     return models.map((model) => ({
       modelKey: model.id,
-      displayName: formatDisplayName(model.id),
+      displayName: GeminiAdapter.formatDisplayName(model.id),
       lifecycle: ModelLifecycle.ACTIVE,
       capabilities: {
         supportsStreaming: true,

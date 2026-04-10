@@ -157,6 +157,11 @@ export type UseThreadDetailPageReturn = {
   handleRegenerate: (messageId: string) => void;
 };
 
+export type UseVirtualizedThreadsParams = {
+  search?: string;
+  showArchived?: boolean;
+};
+
 // ─── Common hook types ──────────────────────────────────────────────────────
 
 export type UseToggleReturn = {

@@ -15,19 +15,19 @@ import {
 
 const logger = new Logger("OpenAIAdapter");
 
-function isChatModel(modelId: string): boolean {
-  const lower = modelId.toLowerCase();
-  return OPENAI_CHAT_MODEL_PREFIXES.some((prefix) => lower.startsWith(prefix));
-}
-
-function formatDisplayName(modelId: string): string {
-  return modelId
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
 export class OpenAIAdapter implements ProviderAdapter {
+  private static isChatModel(modelId: string): boolean {
+    const lower = modelId.toLowerCase();
+    return OPENAI_CHAT_MODEL_PREFIXES.some((prefix) => lower.startsWith(prefix));
+  }
+
+  private static formatDisplayName(modelId: string): string {
+    return modelId
+      .split("-")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+
   async healthCheck(config: ConnectorConfig): Promise<HealthCheckResult> {
     const baseUrl = config.baseUrl ?? OPENAI_DEFAULT_BASE_URL;
     logger.debug(`healthCheck: checking OpenAI health at ${baseUrl}`);
@@ -87,12 +87,12 @@ export class OpenAIAdapter implements ProviderAdapter {
     const models = response.data.data ?? [];
     logger.debug(`syncModels: received ${String(models.length)} total models — filtering for chat models`);
 
-    const chatModels = models.filter((model) => isChatModel(model.id));
+    const chatModels = models.filter((model) => OpenAIAdapter.isChatModel(model.id));
     logger.log(`syncModels: found ${String(chatModels.length)} chat models out of ${String(models.length)} total`);
 
     return chatModels.map((model) => ({
         modelKey: model.id,
-        displayName: formatDisplayName(model.id),
+        displayName: OpenAIAdapter.formatDisplayName(model.id),
         lifecycle: ModelLifecycle.ACTIVE,
         capabilities: {
           supportsStreaming: true,

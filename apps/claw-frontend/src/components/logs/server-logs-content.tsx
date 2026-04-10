@@ -3,18 +3,9 @@ import { Server } from 'lucide-react';
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Button } from '@/components/ui/button';
-import type { ServerLogEntry, ServerLogsTabProps } from '@/types';
+import type { ServerLogsContentProps } from '@/types';
 
 import { ServerLogEntryRow } from './server-log-entry-row';
-
-type ServerLogsContentProps = {
-  logs: ServerLogEntry[];
-  meta: ServerLogsTabProps['meta'];
-  page: number;
-  setPage: (page: number) => void;
-  isLoading: boolean;
-  isError: boolean;
-};
 
 export function ServerLogsContent({
   logs,

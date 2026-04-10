@@ -259,8 +259,14 @@ export default tseslint.config(
         banInlineInterface,
         banInlineTypeAlias,
         banInlineEnum,
-        banTopLevelConst,
-        banExportedTopLevelConst,
+        {
+          selector: 'Program > VariableDeclaration[kind="const"] > VariableDeclarator[init.type!="NewExpression"]',
+          message: 'Extract top-level constants to a dedicated constants/ file. Logger instances (new Logger) are allowed.',
+        },
+        {
+          selector: 'Program > ExportNamedDeclaration > VariableDeclaration[kind="const"] > VariableDeclarator[init.type!="NewExpression"]',
+          message: 'Extract exported constants to a dedicated constants/ file. Logger instances are allowed.',
+        },
       ],
     },
   },

@@ -1,9 +1,5 @@
 import { useToggle } from '@/hooks/common/use-toggle';
-import type { AuditLog } from '@/types';
-
-type AuditDetailRowProps = {
-  row: AuditLog;
-};
+import type { AuditDetailRowProps } from '@/types';
 
 export function AuditDetailRow({ row }: AuditDetailRowProps): React.ReactElement {
   const { isOpen: isExpanded, toggle } = useToggle();

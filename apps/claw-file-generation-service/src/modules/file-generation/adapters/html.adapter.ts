@@ -2,7 +2,7 @@ import MarkdownIt from 'markdown-it';
 
 const md = new MarkdownIt();
 
-export function convertToHtml(content: string): Buffer {
+export const convertToHtml = (content: string): Buffer => {
   const htmlBody = md.render(content);
   const fullHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -26,4 +26,4 @@ ${htmlBody}
 </body>
 </html>`;
   return Buffer.from(fullHtml, 'utf-8');
-}
+};

@@ -1,5 +1,5 @@
-import { useCallback, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { useCallback, useEffect } from 'react';
 
 import { useSidebarStore } from '@/stores/sidebar.store';
 import type { UseSidebarControllerReturn } from '@/types';

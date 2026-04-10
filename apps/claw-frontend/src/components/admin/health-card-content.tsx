@@ -1,14 +1,7 @@
 import { HealthStatus, ServiceStatus } from '@/enums';
 import { cn } from '@/lib/utils';
-import type { AggregatedHealth, TranslateFunction } from '@/types';
+import type { HealthCardContentProps } from '@/types';
 import { getHealthStatusColor } from '@/utilities';
-
-type HealthCardContentProps = {
-  isLoading: boolean;
-  isError: boolean;
-  health: AggregatedHealth | null;
-  t: TranslateFunction;
-};
 
 export function HealthCardContent({
   isLoading,

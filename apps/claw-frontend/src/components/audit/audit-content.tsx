@@ -7,17 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SEVERITY_COLORS } from '@/constants';
 import type { AuditSeverity } from '@/enums';
-import type { AuditLog, DataTableColumn, TranslateFunction } from '@/types';
-
-type AuditContentProps = {
-  isLoading: boolean;
-  isError: boolean;
-  auditLogs: AuditLog[];
-  meta: { page: number; totalPages: number; total: number };
-  page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
-  t: TranslateFunction;
-};
+import type { AuditContentProps, AuditLog, DataTableColumn } from '@/types';
 
 export function AuditContent({
   isLoading,

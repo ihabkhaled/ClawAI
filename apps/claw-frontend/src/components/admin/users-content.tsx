@@ -3,18 +3,7 @@ import { Users } from 'lucide-react';
 import { UserTable } from '@/components/admin/user-table';
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
-import type { AdminUser, TranslateFunction } from '@/types';
-
-type UsersContentProps = {
-  isLoading: boolean;
-  isError: boolean;
-  users: AdminUser[];
-  onChangeRole: (userId: string, role: string) => void;
-  onDeactivate: (userId: string) => void;
-  isRoleChangePending: boolean;
-  isDeactivatePending: boolean;
-  t: TranslateFunction;
-};
+import type { UsersContentProps } from '@/types';
 
 export function UsersContent({
   isLoading,

@@ -4,13 +4,8 @@ import { useCallback, useMemo } from 'react';
 import { THREADS_PAGE_SIZE } from '@/constants';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
-import type { ChatThread, UseVirtualizedThreadsReturn } from '@/types';
+import type { ChatThread, UseVirtualizedThreadsParams, UseVirtualizedThreadsReturn } from '@/types';
 import { logger } from '@/utilities';
-
-type UseVirtualizedThreadsParams = {
-  search?: string;
-  showArchived?: boolean;
-};
 
 export function useVirtualizedThreads(
   params?: UseVirtualizedThreadsParams,

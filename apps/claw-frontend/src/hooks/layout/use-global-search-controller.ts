@@ -1,5 +1,5 @@
-import { useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useCallback, useRef } from 'react';
 
 import { ROUTES } from '@/constants';
 import { useGlobalThreadSearch } from '@/hooks/chat/use-global-thread-search';

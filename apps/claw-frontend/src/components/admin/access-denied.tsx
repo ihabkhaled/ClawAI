@@ -1,8 +1,4 @@
-import type { TranslateFunction } from '@/types';
-
-type AccessDeniedProps = {
-  t: TranslateFunction;
-};
+import type { AccessDeniedProps } from '@/types';
 
 export function AccessDenied({ t }: AccessDeniedProps): React.ReactElement {
   return (

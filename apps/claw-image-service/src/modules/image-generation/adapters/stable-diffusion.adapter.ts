@@ -5,12 +5,12 @@ import type { SDTxt2ImgResponse } from '../types/stable-diffusion.types';
 
 const logger = new Logger('StableDiffusionAdapter');
 
-export async function generateWithStableDiffusion(
+export const generateWithStableDiffusion = async (
   sdUrl: string,
   prompt: string,
   width: number,
   height: number,
-): Promise<ImageProviderResponse> {
+): Promise<ImageProviderResponse> => {
   logger.log(`generateWithStableDiffusion: starting — sdUrl=${sdUrl} size=${String(width)}x${String(height)}`);
   logger.debug(`generateWithStableDiffusion: promptLen=${String(prompt.length)}`);
 
@@ -41,5 +41,5 @@ export async function generateWithStableDiffusion(
     revisedPrompt: undefined,
     mimeType: 'image/png',
   };
-}
+};
 

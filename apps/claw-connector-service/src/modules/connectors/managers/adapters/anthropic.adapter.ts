@@ -15,21 +15,21 @@ import {
 
 const logger = new Logger("AnthropicAdapter");
 
-function formatDisplayName(modelId: string): string {
-  return modelId
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-function buildHeaders(apiKey: string): Record<string, string> {
-  return {
-    "x-api-key": apiKey,
-    "anthropic-version": ANTHROPIC_VERSION,
-  };
-}
-
 export class AnthropicAdapter implements ProviderAdapter {
+  private static formatDisplayName(modelId: string): string {
+    return modelId
+      .split("-")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+
+  private static buildHeaders(apiKey: string): Record<string, string> {
+    return {
+      "x-api-key": apiKey,
+      "anthropic-version": ANTHROPIC_VERSION,
+    };
+  }
+
   async healthCheck(config: ConnectorConfig): Promise<HealthCheckResult> {
     const baseUrl = config.baseUrl ?? ANTHROPIC_DEFAULT_BASE_URL;
     logger.debug(`healthCheck: checking Anthropic health at ${baseUrl}`);
@@ -39,7 +39,7 @@ export class AnthropicAdapter implements ProviderAdapter {
       logger.debug('healthCheck: sending GET /models request');
       const response = await httpGet<AnthropicModelsResponse>({
         url: `${baseUrl}/models`,
-        headers: buildHeaders(config.apiKey),
+        headers: AnthropicAdapter.buildHeaders(config.apiKey),
       });
 
       const latencyMs = Date.now() - start;
@@ -74,7 +74,7 @@ export class AnthropicAdapter implements ProviderAdapter {
     logger.debug('syncModels: sending GET /models request');
     const response = await httpGet<AnthropicModelsResponse>({
       url: `${baseUrl}/models`,
-      headers: buildHeaders(config.apiKey),
+      headers: AnthropicAdapter.buildHeaders(config.apiKey),
     });
 
     if (!response.ok) {
@@ -87,7 +87,7 @@ export class AnthropicAdapter implements ProviderAdapter {
 
     return models.map((model) => ({
       modelKey: model.id,
-      displayName: model.display_name || formatDisplayName(model.id),
+      displayName: model.display_name || AnthropicAdapter.formatDisplayName(model.id),
       lifecycle: ModelLifecycle.ACTIVE,
       capabilities: {
         supportsStreaming: true,

@@ -209,6 +209,27 @@ export default tseslint.config(
     },
   },
 
+  // ── Utility files: no inline types/consts (only exported functions) ────────
+  {
+    files: ['src/**/*.utility.ts', 'src/**/*.utilities.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        banInlineInterface,
+        banInlineTypeAlias,
+        banInlineEnum,
+        {
+          selector: 'Program > VariableDeclaration[kind="const"] > VariableDeclarator[init.type!="NewExpression"]',
+          message: 'Extract top-level constants to a dedicated constants/ file. Logger instances (new Logger) are allowed.',
+        },
+        {
+          selector: 'Program > ExportNamedDeclaration > VariableDeclaration[kind="const"] > VariableDeclarator[init.type!="NewExpression"]',
+          message: 'Extract exported constants to a dedicated constants/ file. Logger instances are allowed.',
+        },
+      ],
+    },
+  },
+
   // ── Test file overrides ────────────────────────────────────────────────────
   {
     files: ['**/*.spec.ts', '**/*.e2e-spec.ts', 'test/**/*.ts'],

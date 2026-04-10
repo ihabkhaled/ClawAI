@@ -12,14 +12,14 @@ import { DEEPSEEK_DEFAULT_BASE_URL } from "../../constants/deepseek.constants";
 
 const logger = new Logger("DeepSeekAdapter");
 
-function formatDisplayName(modelId: string): string {
-  return modelId
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
 export class DeepSeekAdapter implements ProviderAdapter {
+  private static formatDisplayName(modelId: string): string {
+    return modelId
+      .split("-")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+
   async healthCheck(config: ConnectorConfig): Promise<HealthCheckResult> {
     const baseUrl = config.baseUrl ?? DEEPSEEK_DEFAULT_BASE_URL;
     logger.debug(`healthCheck: checking DeepSeek health at ${baseUrl}`);
@@ -81,7 +81,7 @@ export class DeepSeekAdapter implements ProviderAdapter {
 
     return models.map((model) => ({
       modelKey: model.id,
-      displayName: formatDisplayName(model.id),
+      displayName: DeepSeekAdapter.formatDisplayName(model.id),
       lifecycle: ModelLifecycle.ACTIVE,
       capabilities: {
         supportsStreaming: true,

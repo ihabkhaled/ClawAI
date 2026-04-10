@@ -7,18 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SEVERITY_COLORS } from '@/constants';
 import type { AuditSeverity } from '@/enums';
-import type { AuditLog, DataTableColumn } from '@/types';
+import type { AuditLog, AuditLogsContentProps, DataTableColumn } from '@/types';
 
 import { AuditDetailRow } from './audit-detail-row';
-
-type AuditLogsContentProps = {
-  auditLogs: AuditLog[];
-  meta: { page: number; totalPages: number; total: number };
-  page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
-  isLoading: boolean;
-  isError: boolean;
-};
 
 export function AuditLogsContent({
   auditLogs,

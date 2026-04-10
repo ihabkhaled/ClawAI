@@ -1,12 +1,8 @@
-import { useToggle } from '@/hooks/common/use-toggle';
 import { Badge } from '@/components/ui/badge';
 import { LOG_LEVEL_COLORS } from '@/constants';
 import type { LogLevel } from '@/enums';
-import type { ServerLogEntry } from '@/types';
-
-type ServerLogEntryRowProps = {
-  entry: ServerLogEntry;
-};
+import { useToggle } from '@/hooks/common/use-toggle';
+import type { ServerLogEntryRowProps } from '@/types';
 
 export function ServerLogEntryRow({ entry }: ServerLogEntryRowProps): React.ReactElement {
   const { isOpen: isExpanded, toggle } = useToggle();

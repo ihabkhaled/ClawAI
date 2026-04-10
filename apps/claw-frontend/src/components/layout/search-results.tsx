@@ -1,13 +1,7 @@
 import { MessageSquare } from 'lucide-react';
 
-import type { ChatThread } from '@/types';
+import type { SearchResultsProps } from '@/types';
 import { formatRelativeDate } from '@/utilities';
-
-type SearchResultsProps = {
-  isLoading: boolean;
-  threads: ChatThread[];
-  onSelect: (id: string) => void;
-};
 
 export function SearchResults({
   isLoading,

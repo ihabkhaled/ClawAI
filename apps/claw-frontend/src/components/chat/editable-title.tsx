@@ -14,6 +14,7 @@ export function EditableTitle({
   if (editableTitle.isEditing) {
     return (
       <div className="flex items-center gap-2">
+        {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
         <Input
           value={editableTitle.editValue}
           onChange={(e) => editableTitle.setEditValue(e.target.value)}

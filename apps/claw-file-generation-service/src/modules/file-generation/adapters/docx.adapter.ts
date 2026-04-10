@@ -1,6 +1,6 @@
 import { Document, HeadingLevel, Packer, Paragraph, TextRun } from 'docx';
 
-export async function convertToDocx(content: string): Promise<Buffer> {
+export const convertToDocx = async (content: string): Promise<Buffer> => {
   const lines = content.split('\n');
   const paragraphs: Paragraph[] = [];
 
@@ -46,4 +46,4 @@ export async function convertToDocx(content: string): Promise<Buffer> {
   });
 
   return Buffer.from(await Packer.toBuffer(doc));
-}
+};

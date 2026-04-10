@@ -129,6 +129,7 @@ export default function ThreadDetailPage() {
             className="absolute inset-x-0 top-0 z-10 flex h-3 cursor-ns-resize items-center justify-center hover:bg-muted/50"
             onMouseDown={handleMouseDown}
             role="separator"
+            tabIndex={0}
             aria-orientation="horizontal"
             aria-label="Resize message input"
           >

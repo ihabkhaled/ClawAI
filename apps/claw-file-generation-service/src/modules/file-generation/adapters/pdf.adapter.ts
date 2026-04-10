@@ -1,6 +1,6 @@
 import PDFDocument from 'pdfkit';
 
-export async function convertToPdf(content: string): Promise<Buffer> {
+export const convertToPdf = async (content: string): Promise<Buffer> => {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: 'A4',
@@ -37,4 +37,4 @@ export async function convertToPdf(content: string): Promise<Buffer> {
 
     doc.end();
   });
-}
+};

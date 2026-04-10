@@ -3,18 +3,9 @@ import { ScrollText } from 'lucide-react';
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Button } from '@/components/ui/button';
-import type { ClientLogEntry, ClientLogsTabProps } from '@/types';
+import type { ClientLogsContentProps } from '@/types';
 
 import { ClientLogEntryRow } from './client-log-entry-row';
-
-type ClientLogsContentProps = {
-  logs: ClientLogEntry[];
-  meta: ClientLogsTabProps['meta'];
-  page: number;
-  setPage: (page: number) => void;
-  isLoading: boolean;
-  isError: boolean;
-};
 
 export function ClientLogsContent({
   logs,

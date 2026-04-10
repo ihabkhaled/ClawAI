@@ -5,11 +5,13 @@ import type { ComponentSize, ConnectorStatus, MessageFeedback, RoutingMode } fro
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { TranslateFunction } from '@/types/i18n.types';
 
-import type { AdminUser } from './audit.types';
+import type { AdminUser, AuditLog } from './audit.types';
 import type { ChatMessage, ChatThread, FallbackAttemptInfo } from './chat.types';
 import type { Connector, ConnectorModel, CreateConnectorRequest } from './connector.types';
 import type { CreateContextPackItemRequest, CreateContextPackRequest } from './context-pack.types';
 import type { UploadedFile } from './file.types';
+import type { AggregatedHealth } from './health.types';
+import type { ClientLogEntry, ClientLogsTabProps, ServerLogEntry, ServerLogsTabProps } from './log.types';
 import type { CreateMemoryRequest, MemoryRecord } from './memory.types';
 import type { CreatePolicyRequest, RoutingDecision, RoutingPolicy } from './routing.types';
 
@@ -430,4 +432,89 @@ export type PolicyFormProps = {
   onSubmit: (data: CreatePolicyRequest) => void;
   isPending: boolean;
   policy?: RoutingPolicy | null;
+};
+
+// ─── Admin sub-component props ─────────────────────────────────────────────
+
+export type AccessDeniedProps = {
+  t: TranslateFunction;
+};
+
+export type HealthCardContentProps = {
+  isLoading: boolean;
+  isError: boolean;
+  health: AggregatedHealth | null;
+  t: TranslateFunction;
+};
+
+export type UsersContentProps = {
+  isLoading: boolean;
+  isError: boolean;
+  users: AdminUser[];
+  onChangeRole: (userId: string, role: string) => void;
+  onDeactivate: (userId: string) => void;
+  isRoleChangePending: boolean;
+  isDeactivatePending: boolean;
+  t: TranslateFunction;
+};
+
+// ─── Audit sub-component props ─────────────────────────────────────────────
+
+export type AuditContentProps = {
+  isLoading: boolean;
+  isError: boolean;
+  auditLogs: AuditLog[];
+  meta: { page: number; totalPages: number; total: number };
+  page: number;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
+  t: TranslateFunction;
+};
+
+// ─── Layout sub-component props ────────────────────────────────────────────
+
+export type SearchResultsProps = {
+  isLoading: boolean;
+  threads: ChatThread[];
+  onSelect: (id: string) => void;
+};
+
+// ─── Log sub-component props ───────────────────────────────────────────────
+
+export type AuditDetailRowProps = {
+  row: AuditLog;
+};
+
+export type AuditLogsContentProps = {
+  auditLogs: AuditLog[];
+  meta: { page: number; totalPages: number; total: number };
+  page: number;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
+  isLoading: boolean;
+  isError: boolean;
+};
+
+export type ClientLogEntryRowProps = {
+  entry: ClientLogEntry;
+};
+
+export type ClientLogsContentProps = {
+  logs: ClientLogEntry[];
+  meta: ClientLogsTabProps['meta'];
+  page: number;
+  setPage: (page: number) => void;
+  isLoading: boolean;
+  isError: boolean;
+};
+
+export type ServerLogEntryRowProps = {
+  entry: ServerLogEntry;
+};
+
+export type ServerLogsContentProps = {
+  logs: ServerLogEntry[];
+  meta: ServerLogsTabProps['meta'];
+  page: number;
+  setPage: (page: number) => void;
+  isLoading: boolean;
+  isError: boolean;
 };

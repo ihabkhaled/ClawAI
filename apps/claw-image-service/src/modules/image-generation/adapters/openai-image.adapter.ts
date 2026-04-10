@@ -5,7 +5,7 @@ import type { OpenAIImageResponse } from '../types/openai-image.types';
 
 const logger = new Logger('OpenAIImageAdapter');
 
-export async function generateWithOpenAI(
+export const generateWithOpenAI = async (
   baseUrl: string,
   apiKey: string,
   prompt: string,
@@ -14,7 +14,7 @@ export async function generateWithOpenAI(
   height: number,
   quality?: string,
   style?: string,
-): Promise<ImageProviderResponse> {
+): Promise<ImageProviderResponse> => {
   const size = `${String(width)}x${String(height)}` as string;
   logger.log(`generateWithOpenAI: starting — model=${model} size=${size} quality=${quality ?? 'default'} style=${style ?? 'default'}`);
 
@@ -54,5 +54,5 @@ export async function generateWithOpenAI(
     revisedPrompt: firstImage.revised_prompt,
     mimeType: 'image/png',
   };
-}
+};
 

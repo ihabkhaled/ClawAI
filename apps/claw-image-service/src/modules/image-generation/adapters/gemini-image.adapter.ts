@@ -10,14 +10,14 @@ import type {
 
 const logger = new Logger('GeminiImageAdapter');
 
-export async function generateWithGemini(
+export const generateWithGemini = async (
   baseUrl: string,
   apiKey: string,
   prompt: string,
   _model: string,
   referenceImageBase64?: string,
   referenceImageMimeType?: string,
-): Promise<ImageProviderResponse> {
+): Promise<ImageProviderResponse> => {
   const cleanBaseUrl = baseUrl.replace('/openai', '');
   let lastError: unknown = null;
 
@@ -98,5 +98,5 @@ export async function generateWithGemini(
   }
 
   throw lastError ?? new Error('All Gemini image generation models failed');
-}
+};
 
