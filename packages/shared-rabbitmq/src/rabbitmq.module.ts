@@ -21,7 +21,7 @@ export class RabbitMQModule {
         },
         RabbitMQService,
       ],
-      exports: [RabbitMQService],
+      exports: [RabbitMQService, RABBITMQ_MODULE_OPTIONS],
     };
   }
 
@@ -39,7 +39,7 @@ export class RabbitMQModule {
         },
         RabbitMQService,
       ],
-      exports: [RabbitMQService],
+      exports: [RabbitMQService, RABBITMQ_MODULE_OPTIONS],
     };
   }
 }

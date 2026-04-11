@@ -5,4 +5,9 @@ export interface RabbitMQModuleOptions {
   serviceName: string;
 }
 
+export type PendingSubscription = {
+  pattern: string;
+  handler: (data: unknown) => Promise<void>;
+};
+
 export const RABBITMQ_MODULE_OPTIONS = 'RABBITMQ_MODULE_OPTIONS';

@@ -2,7 +2,7 @@ import { Injectable, Inject, OnModuleInit, OnModuleDestroy, Logger } from '@nest
 import amqplib from 'amqplib';
 import { EXCHANGE_NAME, RABBITMQ_QUEUE_PREFIX } from '@claw/shared-constants';
 import { type EventPattern } from '@claw/shared-types';
-import { RABBITMQ_MODULE_OPTIONS, type RabbitMQModuleOptions } from './rabbitmq.types';
+import { RABBITMQ_MODULE_OPTIONS, type RabbitMQModuleOptions, type PendingSubscription } from './rabbitmq.types';
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 5000;
@@ -15,6 +15,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RabbitMQService.name);
   private readonly exchangeName: string;
   private readonly queuePrefix: string;
+  private readonly pendingSubscriptions: PendingSubscription[] = [];
 
   constructor(
     @Inject(RABBITMQ_MODULE_OPTIONS)
@@ -39,12 +40,15 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       await this.channel.assertExchange(this.exchangeName, 'topic', { durable: true });
       this.logger.log(`Connected to RabbitMQ, exchange: ${this.exchangeName}`);
 
+      await this.replayPendingSubscriptions();
+
       this.connection.on('error', (err: Error) => {
         this.logger.error('RabbitMQ connection error', err);
       });
 
       this.connection.on('close', () => {
         this.logger.warn('RabbitMQ connection closed, attempting reconnect...');
+        this.channel = null;
         setTimeout(() => {
           void this.connect();
         }, 5000);
@@ -100,62 +104,16 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     pattern: EventPattern | string,
     handler: (data: unknown) => Promise<void>,
   ): Promise<void> {
+    this.storePendingSubscription(pattern, handler);
+
     if (!this.channel) {
-      this.logger.error('Cannot subscribe: channel not available');
+      this.logger.warn(
+        `Channel not available, subscription to ${pattern} will be established on connect`,
+      );
       return;
     }
 
-    const queueName = `${this.queuePrefix}.${this.options.serviceName}.${pattern}`;
-    const dlqName = `${queueName}.dlq`;
-
-    // Assert dead-letter queue
-    await this.channel.assertQueue(dlqName, {
-      durable: true,
-      arguments: { 'x-message-ttl': MESSAGE_TTL_MS },
-    });
-
-    // Assert main queue with dead-letter routing
-    await this.channel.assertQueue(queueName, {
-      durable: true,
-      arguments: {
-        'x-dead-letter-exchange': '',
-        'x-dead-letter-routing-key': dlqName,
-      },
-    });
-    await this.channel.bindQueue(queueName, this.exchangeName, pattern);
-
-    await this.channel.consume(queueName, async (msg) => {
-      if (!msg) return;
-
-      const retryCount = this.getRetryCount(msg);
-
-      try {
-        const content = JSON.parse(msg.content.toString()) as Record<string, unknown>;
-        await handler(content['data'] ?? content);
-        this.channel?.ack(msg);
-      } catch (err) {
-        const errMsg = err instanceof Error ? err.message : 'Unknown error';
-
-        if (retryCount < MAX_RETRIES) {
-          // Retry: requeue with incremented retry count after delay
-          this.logger.warn(
-            `Retry ${String(retryCount + 1)}/${String(MAX_RETRIES)} for ${pattern}: ${errMsg}`,
-          );
-          this.channel?.ack(msg);
-          setTimeout(() => {
-            this.republishWithRetry(pattern, msg.content, retryCount + 1);
-          }, RETRY_DELAY_MS * (retryCount + 1));
-        } else {
-          // Exhausted retries: send to DLQ
-          this.logger.error(
-            `Message exhausted ${String(MAX_RETRIES)} retries on ${pattern}, sending to DLQ: ${errMsg}`,
-          );
-          this.channel?.nack(msg, false, false);
-        }
-      }
-    });
-
-    this.logger.log(`Subscribed to: ${pattern} on queue: ${queueName} (DLQ: ${dlqName})`);
+    await this.subscribeInternal(pattern, handler);
   }
 
   private getRetryCount(msg: amqplib.ConsumeMessage): number {
@@ -172,5 +130,88 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       headers: { 'x-retry-count': retryCount },
       expiration: String(MESSAGE_TTL_MS),
     });
+  }
+
+  private storePendingSubscription(
+    pattern: EventPattern | string,
+    handler: (data: unknown) => Promise<void>,
+  ): void {
+    const alreadyPending = this.pendingSubscriptions.some((s) => s.pattern === pattern);
+    if (!alreadyPending) {
+      this.pendingSubscriptions.push({ pattern, handler });
+    }
+  }
+
+  private async replayPendingSubscriptions(): Promise<void> {
+    if (this.pendingSubscriptions.length === 0) {
+      return;
+    }
+
+    this.logger.log(
+      `Replaying ${String(this.pendingSubscriptions.length)} pending subscription(s)...`,
+    );
+
+    for (const sub of this.pendingSubscriptions) {
+      await this.subscribeInternal(sub.pattern, sub.handler);
+    }
+  }
+
+  private async subscribeInternal(
+    pattern: string,
+    handler: (data: unknown) => Promise<void>,
+  ): Promise<void> {
+    if (!this.channel) {
+      return;
+    }
+
+    const queueName = `${this.queuePrefix}.${this.options.serviceName}.${pattern}`;
+    const dlqName = `${queueName}.dlq`;
+
+    await this.channel.assertQueue(dlqName, {
+      durable: true,
+      arguments: { 'x-message-ttl': MESSAGE_TTL_MS },
+    });
+
+    await this.channel.assertQueue(queueName, {
+      durable: true,
+      arguments: {
+        'x-dead-letter-exchange': '',
+        'x-dead-letter-routing-key': dlqName,
+      },
+    });
+    await this.channel.bindQueue(queueName, this.exchangeName, pattern);
+
+    await this.channel.consume(queueName, async (msg) => {
+      if (!msg) {
+        return;
+      }
+
+      const retryCount = this.getRetryCount(msg);
+
+      try {
+        const content = JSON.parse(msg.content.toString()) as Record<string, unknown>;
+        await handler(content['data'] ?? content);
+        this.channel?.ack(msg);
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : 'Unknown error';
+
+        if (retryCount < MAX_RETRIES) {
+          this.logger.warn(
+            `Retry ${String(retryCount + 1)}/${String(MAX_RETRIES)} for ${pattern}: ${errMsg}`,
+          );
+          this.channel?.ack(msg);
+          setTimeout(() => {
+            this.republishWithRetry(pattern, msg.content, retryCount + 1);
+          }, RETRY_DELAY_MS * (retryCount + 1));
+        } else {
+          this.logger.error(
+            `Message exhausted ${String(MAX_RETRIES)} retries on ${pattern}, sending to DLQ: ${errMsg}`,
+          );
+          this.channel?.nack(msg, false, false);
+        }
+      }
+    });
+
+    this.logger.log(`Subscribed to: ${pattern} on queue: ${queueName} (DLQ: ${dlqName})`);
   }
 }

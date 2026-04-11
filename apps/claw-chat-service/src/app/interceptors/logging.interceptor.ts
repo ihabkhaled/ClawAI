@@ -25,7 +25,9 @@ export class LoggingInterceptor implements NestInterceptor {
 
   constructor(
     private readonly reflector: Reflector,
-    @Optional() private readonly rabbitMQService: RabbitMQService | null,
+    @Optional()
+    @Inject(RabbitMQService)
+    private readonly rabbitMQService: RabbitMQService | null,
     @Optional()
     @Inject(RABBITMQ_MODULE_OPTIONS)
     private readonly rabbitMQOptions: RabbitMQModuleOptions | null,

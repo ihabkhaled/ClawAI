@@ -22,7 +22,9 @@ export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger(LoggingInterceptor.name);
 
   constructor(
-    @Optional() private readonly rabbitMQService: RabbitMQService | null,
+    @Optional()
+    @Inject(RabbitMQService)
+    private readonly rabbitMQService: RabbitMQService | null,
     @Optional()
     @Inject(RABBITMQ_MODULE_OPTIONS)
     private readonly rabbitMQOptions: RabbitMQModuleOptions | null,
