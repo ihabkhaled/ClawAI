@@ -213,6 +213,96 @@ describe('RoutingManager', () => {
     });
   });
 
+  describe('category detection methods', () => {
+    it('should detect coding requests', () => {
+      expect(manager.detectCodingRequest('fix this bug in my code')).toBe(true);
+      expect(manager.detectCodingRequest('write a function to sort')).toBe(true);
+      expect(manager.detectCodingRequest('setup webpack config')).toBe(true);
+      expect(manager.detectCodingRequest('configure Prisma schema')).toBe(true);
+      expect(manager.detectCodingRequest('tell me a joke')).toBe(false);
+    });
+
+    it('should detect infrastructure requests', () => {
+      expect(manager.detectInfrastructureRequest('deploy to kubernetes cluster')).toBe(true);
+      expect(manager.detectInfrastructureRequest('configure terraform modules')).toBe(true);
+      expect(manager.detectInfrastructureRequest('setup AWS VPC')).toBe(true);
+      expect(manager.detectInfrastructureRequest('tell me a joke')).toBe(false);
+    });
+
+    it('should detect data analysis requests', () => {
+      expect(manager.detectDataAnalysisRequest('create a pivot table')).toBe(true);
+      expect(manager.detectDataAnalysisRequest('build an ETL pipeline')).toBe(true);
+      expect(manager.detectDataAnalysisRequest('analyze this dataset')).toBe(true);
+      expect(manager.detectDataAnalysisRequest('tell me a joke')).toBe(false);
+    });
+
+    it('should detect business requests', () => {
+      expect(manager.detectBusinessRequest('write a business case')).toBe(true);
+      expect(manager.detectBusinessRequest('analyze conversion rate')).toBe(true);
+      expect(manager.detectBusinessRequest('prepare a pitch deck')).toBe(true);
+      expect(manager.detectBusinessRequest('tell me a joke')).toBe(false);
+    });
+
+    it('should detect creative writing requests', () => {
+      expect(manager.detectCreativeWritingRequest('write a blog post')).toBe(true);
+      expect(manager.detectCreativeWritingRequest('compose a poem')).toBe(true);
+      expect(manager.detectCreativeWritingRequest('draft a newsletter')).toBe(true);
+      expect(manager.detectCreativeWritingRequest('fix this code bug')).toBe(false);
+    });
+
+    it('should detect security requests', () => {
+      expect(manager.detectSecurityRequest('check for XSS vulnerabilities')).toBe(true);
+      expect(manager.detectSecurityRequest('perform a penetration test')).toBe(true);
+      expect(manager.detectSecurityRequest('review OWASP top 10')).toBe(true);
+      expect(manager.detectSecurityRequest('tell me a joke')).toBe(false);
+    });
+
+    it('should detect medical requests', () => {
+      expect(manager.detectMedicalRequest('review patient diagnosis')).toBe(true);
+      expect(manager.detectMedicalRequest('check medication dosage')).toBe(true);
+      expect(manager.detectMedicalRequest('tell me a joke')).toBe(false);
+    });
+
+    it('should detect legal requests', () => {
+      expect(manager.detectLegalRequest('review this contract clause')).toBe(true);
+      expect(manager.detectLegalRequest('check GDPR compliance')).toBe(true);
+      expect(manager.detectLegalRequest('tell me a joke')).toBe(false);
+    });
+
+    it('should detect translation requests', () => {
+      expect(manager.detectTranslationRequest('translate this to French')).toBe(true);
+      expect(manager.detectTranslationRequest('localize the UI strings')).toBe(true);
+      expect(manager.detectTranslationRequest('tell me a joke')).toBe(false);
+    });
+
+    it('should detect privacy-sensitive requests', () => {
+      expect(manager.detectPrivacySensitive('analyze my medical records')).toBe(true);
+      expect(manager.detectPrivacySensitive('review my tax return')).toBe(true);
+      expect(manager.detectPrivacySensitive('my social security number')).toBe(true);
+      expect(manager.detectPrivacySensitive('credit card details')).toBe(true);
+      expect(manager.detectPrivacySensitive('what is the weather today')).toBe(false);
+    });
+  });
+
+  describe('privacy-enforced routing in AUTO mode', () => {
+    it('should force local when privacy-sensitive content detected', async () => {
+      const context: RoutingContext = {
+        ...baseContext,
+        message: 'analyze my patient diagnosis records',
+        userMode: RoutingMode.AUTO,
+      };
+
+      const result = await manager.evaluateRoute(context);
+
+      expect(result.selectedProvider).toBe('local-ollama');
+      expect(result.reasonTags).toContain('privacy_enforced');
+      expect(result.privacyClass).toBe('local');
+      // Should not have cloud fallbacks
+      const cloudFallbacks = result.fallbackChain.filter((f) => f.provider !== 'local-ollama');
+      expect(cloudFallbacks).toHaveLength(0);
+    });
+  });
+
   describe('buildFallbackChain', () => {
     it('should include cloud fallbacks for local primary', () => {
       const primary = { provider: 'local-ollama', model: 'llama3:latest' };

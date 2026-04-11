@@ -5,6 +5,7 @@ import { RoutingPoliciesRepository } from '../repositories/routing-policies.repo
 import { OllamaRouterManager } from './ollama-router.manager';
 import { PromptBuilderManager } from './prompt-builder.manager';
 import {
+  BUSINESS_KEYWORDS,
   CLOUD_MODEL_CHEAP,
   CLOUD_MODEL_DEFAULT,
   CLOUD_MODEL_FAST,
@@ -15,6 +16,11 @@ import {
   CLOUD_PROVIDER_GEMINI,
   CLOUD_PROVIDER_OPENAI,
   CODING_KEYWORDS,
+  CONFIDENCE_CATEGORY_KEYWORD,
+  CONFIDENCE_HEURISTIC_FALLBACK,
+  CONFIDENCE_PRIVACY_ENFORCED,
+  CREATIVE_WRITING_KEYWORDS,
+  DATA_ANALYSIS_KEYWORDS,
   FILE_GENERATION_FORMAT_WORDS,
   FILE_GENERATION_KEYWORDS,
   FILE_GENERATION_PROVIDER,
@@ -25,10 +31,16 @@ import {
   IMAGE_PROVIDER_GEMINI,
   IMAGE_PROVIDER_LOCAL,
   IMAGE_PROVIDER_OPENAI,
+  INFRASTRUCTURE_KEYWORDS,
+  LEGAL_KEYWORDS,
   LOCAL_MODEL_DEFAULT,
   LOCAL_PROVIDER,
+  MEDICAL_KEYWORDS,
+  PRIVACY_KEYWORDS,
   REASONING_KEYWORDS,
+  SECURITY_KEYWORDS,
   THINKING_KEYWORDS,
+  TRANSLATION_KEYWORDS,
 } from '../constants/routing.constants';
 import type { InstalledModelInfo } from '../types/installed-model.types';
 import {
@@ -270,6 +282,13 @@ export class RoutingManager {
 
   private async handleAuto(context: RoutingContext): Promise<RoutingDecisionResult> {
     this.logger.debug('handleAuto: starting AUTO routing');
+
+    // Privacy check FIRST — force local if sensitive content detected
+    if (this.detectPrivacySensitive(context.message)) {
+      this.logger.log('handleAuto: privacy-sensitive content detected — forcing local routing');
+      return this.buildLocalPrivacyDecision(context);
+    }
+
     // Detect image requests early (before Ollama router, which may misclassify)
     this.logger.debug('handleAuto: checking for image generation request');
     const imageResult = this.detectImageRequest(context);
@@ -355,7 +374,7 @@ export class RoutingManager {
         selectedProvider: LOCAL_PROVIDER,
         selectedModel: LOCAL_MODEL_DEFAULT,
         routingMode: RoutingMode.AUTO,
-        confidence: 0.7,
+        confidence: CONFIDENCE_HEURISTIC_FALLBACK,
         reasonTags: ['auto', 'short_message', 'local_available'],
         privacyClass: 'local',
         costClass: 'free',
@@ -669,17 +688,78 @@ export class RoutingManager {
 
   detectCodingRequest(message: string): boolean {
     const lower = message.toLowerCase();
-    return CODING_KEYWORDS.some((kw) => lower.includes(kw));
+    return CODING_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
   }
 
   detectReasoningRequest(message: string): boolean {
     const lower = message.toLowerCase();
-    return REASONING_KEYWORDS.some((kw) => lower.includes(kw));
+    return REASONING_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
   }
 
   detectThinkingRequest(message: string): boolean {
     const lower = message.toLowerCase();
-    return THINKING_KEYWORDS.some((kw) => lower.includes(kw));
+    return THINKING_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectInfrastructureRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return INFRASTRUCTURE_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectDataAnalysisRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return DATA_ANALYSIS_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectBusinessRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return BUSINESS_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectCreativeWritingRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return CREATIVE_WRITING_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectSecurityRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return SECURITY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectMedicalRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return MEDICAL_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectLegalRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return LEGAL_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectTranslationRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return TRANSLATION_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectPrivacySensitive(message: string): boolean {
+    const lower = message.toLowerCase();
+    return PRIVACY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  private buildLocalPrivacyDecision(context: RoutingContext): RoutingDecisionResult {
+    const primary = { provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT };
+    return {
+      selectedProvider: LOCAL_PROVIDER,
+      selectedModel: LOCAL_MODEL_DEFAULT,
+      routingMode: RoutingMode.AUTO,
+      confidence: CONFIDENCE_PRIVACY_ENFORCED,
+      reasonTags: ['auto', 'privacy_enforced', 'local_only'],
+      privacyClass: 'local',
+      costClass: 'free',
+      fallbackChain: this.buildFallbackChain(primary, context).filter(
+        (f) => f.provider === LOCAL_PROVIDER,
+      ),
+    };
   }
 
   private async detectCategoryRoute(
@@ -704,14 +784,39 @@ export class RoutingManager {
   }
 
   private detectCategoryRole(message: string): LocalModelRole | null {
+    // Check specific categories first (more specific before more general)
+    if (this.detectSecurityRequest(message)) {
+      return LocalModelRole.LOCAL_CODING;
+    }
+    if (this.detectMedicalRequest(message)) {
+      return LocalModelRole.LOCAL_REASONING;
+    }
+    if (this.detectLegalRequest(message)) {
+      return LocalModelRole.LOCAL_REASONING;
+    }
     if (this.detectCodingRequest(message)) {
       return LocalModelRole.LOCAL_CODING;
+    }
+    if (this.detectInfrastructureRequest(message)) {
+      return LocalModelRole.LOCAL_CODING;
+    }
+    if (this.detectDataAnalysisRequest(message)) {
+      return LocalModelRole.LOCAL_REASONING;
     }
     if (this.detectReasoningRequest(message)) {
       return LocalModelRole.LOCAL_REASONING;
     }
     if (this.detectThinkingRequest(message)) {
       return LocalModelRole.LOCAL_THINKING;
+    }
+    if (this.detectBusinessRequest(message)) {
+      return LocalModelRole.LOCAL_FILE_GENERATION;
+    }
+    if (this.detectTranslationRequest(message)) {
+      return LocalModelRole.LOCAL_FALLBACK_CHAT;
+    }
+    if (this.detectCreativeWritingRequest(message)) {
+      return LocalModelRole.LOCAL_FALLBACK_CHAT;
     }
     return null;
   }
@@ -732,7 +837,7 @@ export class RoutingManager {
       selectedProvider: LOCAL_PROVIDER,
       selectedModel: modelName,
       routingMode: RoutingMode.AUTO,
-      confidence: 0.85,
+      confidence: CONFIDENCE_CATEGORY_KEYWORD,
       reasonTags: ['auto', 'category_specific', `role_${role.toLowerCase()}`],
       privacyClass: 'local',
       costClass: 'free',
