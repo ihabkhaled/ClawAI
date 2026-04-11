@@ -2,16 +2,19 @@ import {
   CallHandler,
   ExecutionContext,
   Inject,
-  Optional,
   Injectable,
   Logger,
   NestInterceptor,
+  Optional,
 } from '@nestjs/common';
 import { Observable, tap } from 'rxjs';
 import { randomUUID } from 'node:crypto';
-import { RabbitMQService, RABBITMQ_MODULE_OPTIONS } from '@claw/shared-rabbitmq';
+import {
+  RABBITMQ_MODULE_OPTIONS,
+  type RabbitMQModuleOptions,
+  RabbitMQService,
+} from '@claw/shared-rabbitmq';
 import { EventPattern, LogLevel } from '@claw/shared-types';
-import type { RabbitMQModuleOptions } from '@claw/shared-rabbitmq';
 import type { Request, Response } from 'express';
 
 @Injectable()
@@ -20,7 +23,8 @@ export class LoggingInterceptor implements NestInterceptor {
 
   constructor(
     @Optional() private readonly rabbitMQService: RabbitMQService | null,
-    @Optional() @Inject(RABBITMQ_MODULE_OPTIONS)
+    @Optional()
+    @Inject(RABBITMQ_MODULE_OPTIONS)
     private readonly rabbitMQOptions: RabbitMQModuleOptions | null,
   ) {}
 
