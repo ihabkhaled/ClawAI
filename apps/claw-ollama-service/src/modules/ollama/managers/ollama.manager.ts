@@ -124,6 +124,14 @@ export class OllamaManager {
       `pullModelFromCatalog: pulling ${modelFullName} from catalog id=${catalogEntry.id}`,
     );
 
+    const existingJob = await this.pullJobsRepository.findActiveByModelName(modelFullName);
+    if (existingJob) {
+      this.logger.log(
+        `pullModelFromCatalog: reusing existing job ${existingJob.id} for ${modelFullName}`,
+      );
+      return { pullJobId: existingJob.id };
+    }
+
     const pullJob = await this.pullJobsRepository.create({
       modelName: modelFullName,
       runtime: catalogEntry.runtime,
@@ -147,7 +155,9 @@ export class OllamaManager {
     try {
       const adapter = getRuntimeAdapter(catalogEntry.runtime);
 
-      await (adapter instanceof OllamaRuntimeAdapter ? this.pullWithProgressTracking(adapter, modelFullName, pullJobId, subject) : adapter.pullModel(modelFullName));
+      await (adapter instanceof OllamaRuntimeAdapter
+        ? this.pullWithProgressTracking(adapter, modelFullName, pullJobId, subject)
+        : adapter.pullModel(modelFullName));
 
       await this.upsertModelFromCatalog(catalogEntry, modelFullName);
       await this.completePullJob(pullJobId);
@@ -212,6 +222,30 @@ export class OllamaManager {
       errorMessage,
       completedAt: new Date(),
     });
+  }
+
+  async deleteModel(modelId: string): Promise<void> {
+    const model = await this.localModelsRepository.findById(modelId);
+    if (!model) {
+      return;
+    }
+
+    const fullName = `${model.name}:${model.tag}`;
+    this.logger.log(`deleteModel: removing ${fullName} from runtime and DB`);
+
+    try {
+      const adapter = getRuntimeAdapter(model.runtime);
+      if (adapter instanceof OllamaRuntimeAdapter) {
+        await adapter.deleteModel(fullName);
+        this.logger.debug(`deleteModel: removed ${fullName} from Ollama runtime`);
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(`deleteModel: runtime removal failed for ${fullName}: ${msg}`);
+    }
+
+    await this.localModelsRepository.delete(modelId);
+    this.logger.log(`deleteModel: removed ${fullName} from database`);
   }
 
   getPullProgressSubject(pullJobId: string): Subject<PullProgressEvent> | undefined {

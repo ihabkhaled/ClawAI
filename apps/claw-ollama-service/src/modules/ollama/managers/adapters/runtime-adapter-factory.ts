@@ -1,15 +1,17 @@
-import { RuntimeType } from "../../../../generated/prisma";
-import { type RuntimeAdapter } from "../../types/ollama.types";
-import { OllamaRuntimeAdapter } from "./ollama-runtime.adapter";
-import { VllmRuntimeAdapter } from "./vllm-runtime.adapter";
-import { LlamaCppRuntimeAdapter } from "./llamacpp-runtime.adapter";
-import { LocalAIRuntimeAdapter } from "./localai-runtime.adapter";
+import { RuntimeType } from '../../../../generated/prisma';
+import { type RuntimeAdapter } from '../../types/ollama.types';
+import { ComfyUIRuntimeAdapter } from './comfyui-runtime.adapter';
+import { OllamaRuntimeAdapter } from './ollama-runtime.adapter';
+import { VllmRuntimeAdapter } from './vllm-runtime.adapter';
+import { LlamaCppRuntimeAdapter } from './llamacpp-runtime.adapter';
+import { LocalAIRuntimeAdapter } from './localai-runtime.adapter';
 
 const adapters: Record<string, RuntimeAdapter> = {
   [RuntimeType.OLLAMA]: new OllamaRuntimeAdapter(),
   [RuntimeType.VLLM]: new VllmRuntimeAdapter(),
   [RuntimeType.LLAMA_CPP]: new LlamaCppRuntimeAdapter(),
   [RuntimeType.LOCAL_AI]: new LocalAIRuntimeAdapter(),
+  [RuntimeType.COMFYUI]: new ComfyUIRuntimeAdapter(),
 };
 
 export function getRuntimeAdapter(runtime: RuntimeType): RuntimeAdapter {

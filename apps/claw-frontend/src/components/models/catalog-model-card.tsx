@@ -9,7 +9,15 @@ import { formatBytes } from '@/utilities';
 
 import { CatalogModelAction } from './catalog-model-action';
 
-export function CatalogModelCard({ entry, job, onPull, isPullPending, t }: CatalogModelCardProps) {
+export function CatalogModelCard({
+  entry,
+  job,
+  onPull,
+  onDelete,
+  isPullPending,
+  isDeletePending,
+  t,
+}: CatalogModelCardProps) {
   return (
     <Card className={cn('flex flex-col', entry.isRecommended && 'border-primary/50')}>
       <CardHeader className="pb-3">
@@ -63,7 +71,9 @@ export function CatalogModelCard({ entry, job, onPull, isPullPending, t }: Catal
             entry={entry}
             job={job}
             onPull={onPull}
+            onDelete={onDelete}
             isPullPending={isPullPending}
+            isDeletePending={isDeletePending}
             t={t}
           />
         </div>

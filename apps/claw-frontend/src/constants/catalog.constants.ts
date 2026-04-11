@@ -27,4 +27,6 @@ export const PULL_JOB_STATUS_LABELS: Record<string, string> = {
 
 export const PULL_JOB_POLL_INTERVAL_MS = 3000;
 
+export const DOWNLOAD_STATS_TICK_INTERVAL_MS = 1000;
+
 export const CATALOG_PAGE_SIZE = 20;

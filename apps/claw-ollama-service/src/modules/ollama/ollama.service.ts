@@ -214,13 +214,15 @@ export class OllamaService implements OnModuleInit {
     return this.mapToInstalledModelInfo(models);
   }
 
-  private mapToInstalledModelInfo(models: LocalModel[]): InstalledModelInfo[] {
+  private mapToInstalledModelInfo(
+    models: (LocalModel & { roles?: { role: string }[] })[],
+  ): InstalledModelInfo[] {
     return models.map((model) => ({
       id: model.id,
       name: model.name,
       tag: model.tag,
-      category: model.category,
-      roles: (model as LocalModel & { roles: LocalModelRoleAssignment[] }).roles ?? [],
+      category: model.category ?? null,
+      roles: (model.roles ?? []).map((r) => r.role),
       capabilities: [],
       parameterCount: model.parameters,
       sizeBytes: model.sizeBytes,
@@ -230,23 +232,41 @@ export class OllamaService implements OnModuleInit {
   private async enrichCatalogEntries(
     entries: ModelCatalogEntry[],
   ): Promise<CatalogEntryWithInstallStatus[]> {
-    const installed = await this.localModelsRepository.findAllInstalledWithRoles();
-    const installedSet = new Set(installed.map((m) => `${m.name}:${m.tag}:${m.runtime}`));
+    const installed = await this.localModelsRepository.findAllInstalled();
+    const installedMap = new Map(installed.map((m) => [`${m.name}:${m.tag}:${m.runtime}`, m.id]));
 
     return Promise.all(
       entries.map(async (entry) => {
         const key = `${entry.name}:${entry.tag}:${entry.runtime}`;
+        const installedModelId = installedMap.get(key) ?? null;
         const pullJob = await this.pullJobsRepository.findLatestByModelName(
           entry.ollamaName ?? `${entry.name}:${entry.tag}`,
         );
 
         return {
           ...entry,
-          isInstalled: installedSet.has(key),
+          isInstalled: installedModelId !== null,
+          installedModelId,
           pullJobStatus: pullJob?.status ?? null,
         };
       }),
     );
+  }
+
+  async deleteModel(modelId: string): Promise<void> {
+    const model = await this.localModelsRepository.findById(modelId);
+    if (!model) {
+      throw new EntityNotFoundException('LocalModel', modelId);
+    }
+    this.logger.log(`deleteModel: deleting model ${model.name}:${model.tag} id=${modelId}`);
+    await this.ollamaManager.deleteModel(modelId);
+
+    void this.rabbitMQService.publish(EventPattern.CONNECTOR_UPDATED, {
+      action: 'MODEL_DELETED',
+      modelId,
+      modelName: `${model.name}:${model.tag}`,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   async getRouterModelName(): Promise<string | null> {

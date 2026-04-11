@@ -1,7 +1,18 @@
-import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
+import {
+  CallHandler,
+  ExecutionContext,
+  Inject,
+  Optional,
+  Injectable,
+  Logger,
+  NestInterceptor,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable, tap } from 'rxjs';
 import { randomUUID } from 'node:crypto';
+import { RabbitMQService, RABBITMQ_MODULE_OPTIONS } from '@claw/shared-rabbitmq';
+import { EventPattern, LogLevel } from '@claw/shared-types';
+import type { RabbitMQModuleOptions } from '@claw/shared-rabbitmq';
 import type { Request, Response } from 'express';
 import { SKIP_LOGGING_KEY } from '../decorators/skip-logging.decorator';
 
@@ -9,7 +20,12 @@ import { SKIP_LOGGING_KEY } from '../decorators/skip-logging.decorator';
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger(LoggingInterceptor.name);
 
-  constructor(private readonly reflector: Reflector) {}
+  constructor(
+    private readonly reflector: Reflector,
+    @Optional() private readonly rabbitMQService: RabbitMQService | null,
+    @Optional() @Inject(RABBITMQ_MODULE_OPTIONS)
+    private readonly rabbitMQOptions: RabbitMQModuleOptions | null,
+  ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const skipLogging = this.reflector.getAllAndOverride<boolean>(SKIP_LOGGING_KEY, [
@@ -51,7 +67,39 @@ export class LoggingInterceptor implements NestInterceptor {
           },
           `${method} ${url} ${statusCode} - ${duration}ms`,
         );
+
+        this.publishLog(method, url, statusCode, duration, requestId, traceId);
       }),
     );
+  }
+
+  private publishLog(
+    method: string,
+    url: string,
+    statusCode: number,
+    latencyMs: number,
+    requestId: string,
+    traceId: string,
+  ): void {
+    if (!this.rabbitMQService || !this.rabbitMQOptions) {
+      return;
+    }
+    void this.rabbitMQService
+      .publish(EventPattern.LOG_SERVER, {
+        level: statusCode >= 400 ? LogLevel.ERROR : LogLevel.INFO,
+        message: `${method} ${url} ${String(statusCode)} - ${String(latencyMs)}ms`,
+        serviceName: this.rabbitMQOptions.serviceName,
+        action: 'http-request',
+        route: url,
+        method,
+        statusCode,
+        latencyMs,
+        requestId,
+        traceId,
+        timestamp: new Date().toISOString(),
+      })
+      .catch(() => {
+        // Never let log publishing break the request
+      });
   }
 }

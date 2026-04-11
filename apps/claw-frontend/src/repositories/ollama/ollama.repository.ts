@@ -8,6 +8,7 @@ import type {
   RuntimeHealthResponse,
   CatalogListResponse,
   ModelCatalogEntry,
+  PullFromCatalogResponse,
   PullJobResponse,
 } from '@/types';
 
@@ -47,8 +48,10 @@ export const ollamaRepository = {
     return response.data;
   },
 
-  async pullFromCatalog(catalogId: string): Promise<PullJobResponse> {
-    const response = await apiClient.post<PullJobResponse>(`/ollama/catalog/${catalogId}/pull`);
+  async pullFromCatalog(catalogId: string): Promise<PullFromCatalogResponse> {
+    const response = await apiClient.post<PullFromCatalogResponse>(
+      `/ollama/catalog/${catalogId}/pull`,
+    );
     return response.data;
   },
 
@@ -59,5 +62,9 @@ export const ollamaRepository = {
 
   async cancelPullJob(id: string): Promise<void> {
     await apiClient.delete(`/ollama/pull-jobs/${id}`);
+  },
+
+  async deleteModel(modelId: string): Promise<void> {
+    await apiClient.delete(`/ollama/models/${modelId}`);
   },
 };

@@ -33,6 +33,16 @@ export class PullJobsRepository {
     });
   }
 
+  async findActiveByModelName(modelName: string): Promise<PullJob | null> {
+    return this.prisma.pullJob.findFirst({
+      where: {
+        modelName,
+        status: { in: ['PENDING', 'IN_PROGRESS'] },
+      },
+      orderBy: { startedAt: 'desc' },
+    });
+  }
+
   async findLatestByModelName(modelName: string): Promise<PullJob | null> {
     return this.prisma.pullJob.findFirst({
       where: { modelName },

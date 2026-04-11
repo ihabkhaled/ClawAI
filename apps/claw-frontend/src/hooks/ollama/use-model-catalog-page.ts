@@ -5,6 +5,8 @@ import { useTranslation } from '@/lib/i18n';
 import type { PullJobResponse, UseModelCatalogPageReturn } from '@/types';
 
 import { useCancelPullJob } from './use-cancel-pull-job';
+import { useDeleteModel } from './use-delete-model';
+import { useDownloadStats } from './use-download-stats';
 import { useModelCatalog } from './use-model-catalog';
 import { usePullFromCatalog } from './use-pull-from-catalog';
 import { usePullJobs } from './use-pull-jobs';
@@ -24,6 +26,8 @@ export function useModelCatalogPage(): UseModelCatalogPageReturn {
   const { pullFromCatalog, isPending: isPullPending } = usePullFromCatalog();
   const { pullJobs, isLoading: isPullJobsLoading, hasActiveJobs } = usePullJobs();
   const { cancelJob, isPending: isCancelPending } = useCancelPullJob();
+  const { deleteModel, isPending: isDeletePending } = useDeleteModel();
+  const downloadStatsMap = useDownloadStats(pullJobs);
 
   const handleCategoryChange = useCallback((value: string | undefined): void => {
     setCategory(value);
@@ -47,6 +51,13 @@ export function useModelCatalogPage(): UseModelCatalogPageReturn {
     [cancelJob],
   );
 
+  const handleDelete = useCallback(
+    (modelId: string): void => {
+      deleteModel(modelId);
+    },
+    [deleteModel],
+  );
+
   const getJobForModel = useCallback(
     (modelName: string): PullJobResponse | undefined => {
       return pullJobs.find((j) => j.modelName === modelName);
@@ -65,12 +76,15 @@ export function useModelCatalogPage(): UseModelCatalogPageReturn {
     pullJobs,
     isPullJobsLoading,
     hasActiveJobs,
+    downloadStatsMap,
     handleCategoryChange,
     handleSearchChange,
     handlePull,
     handleCancelJob,
+    handleDelete,
     isPullPending,
     isCancelPending,
+    isDeletePending,
     getJobForModel,
   };
 }

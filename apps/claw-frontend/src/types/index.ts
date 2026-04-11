@@ -227,6 +227,10 @@ export type { MarkdownRendererProps } from './markdown.types';
 export type {
   ModelCatalogEntry,
   CatalogListResponse,
+  DownloadStats,
+  DownloadSnapshotEntry,
+  DownloadSnapshotMap,
+  PullFromCatalogResponse,
   PullJobResponse,
   CatalogFilterParams,
   UseModelCatalogPageReturn,

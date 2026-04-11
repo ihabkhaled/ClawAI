@@ -1,4 +1,4 @@
-import { CheckCircle, Download, Loader2 } from 'lucide-react';
+import { CheckCircle, Download, Loader2, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { PULL_JOB_STATUS_LABELS } from '@/constants';
@@ -8,28 +8,49 @@ export function CatalogModelAction({
   entry,
   job,
   onPull,
+  onDelete,
   isPullPending,
+  isDeletePending,
   t,
 }: CatalogModelCardProps) {
-  if (job?.status === 'COMPLETED') {
-    return (
-      <Button variant="ghost" size="sm" disabled className="w-full">
-        <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-        {t('catalog.installed')}
-      </Button>
-    );
-  }
+  const activeStatus = job?.status ?? entry.pullJobStatus;
 
-  if (job?.status === 'PENDING' || job?.status === 'IN_PROGRESS') {
+  if (activeStatus === 'PENDING' || activeStatus === 'IN_PROGRESS') {
     return (
       <Button variant="ghost" size="sm" disabled className="w-full">
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        {PULL_JOB_STATUS_LABELS[job.status] ?? t('catalog.downloading')}
+        {PULL_JOB_STATUS_LABELS[activeStatus] ?? t('catalog.downloading')}
       </Button>
     );
   }
 
-  if (job?.status === 'FAILED') {
+  if (entry.isInstalled || activeStatus === 'COMPLETED') {
+    return (
+      <div className="flex gap-2">
+        <Button variant="ghost" size="sm" disabled className="flex-1">
+          <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+          {t('catalog.installed')}
+        </Button>
+        {entry.installedModelId ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => onDelete(entry.installedModelId as string)}
+            disabled={isDeletePending}
+          >
+            {isDeletePending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (activeStatus === 'FAILED') {
     return (
       <Button
         variant="destructive"

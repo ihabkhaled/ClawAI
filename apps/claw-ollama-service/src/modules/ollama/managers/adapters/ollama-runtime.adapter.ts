@@ -1,6 +1,11 @@
 import { type AxiosInstance, createHttpClient } from '@common/utilities';
 import { AppConfig } from '../../../../app/config/app.config';
-import { OLLAMA_API_GENERATE, OLLAMA_API_PULL, OLLAMA_API_TAGS } from '../../ollama.constants';
+import {
+  OLLAMA_API_DELETE,
+  OLLAMA_API_GENERATE,
+  OLLAMA_API_PULL,
+  OLLAMA_API_TAGS,
+} from '../../ollama.constants';
 import type {
   GenerateRequest,
   GenerateResponse,
@@ -82,12 +87,13 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
     };
   }
 
-  async pullModelWithProgress(name: string, onProgress: PullProgressCallback): Promise<void> {
-    const config = AppConfig.get();
-    const url = `${config.OLLAMA_BASE_URL}${OLLAMA_API_PULL}`;
+  async deleteModel(name: string): Promise<void> {
+    await this.client.delete(OLLAMA_API_DELETE, { data: { name } });
+  }
 
+  async pullModelWithProgress(name: string, onProgress: PullProgressCallback): Promise<void> {
     const response = await this.client.post<NodeJS.ReadableStream>(
-      url,
+      OLLAMA_API_PULL,
       {
         name,
         stream: true,

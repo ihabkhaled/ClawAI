@@ -24,10 +24,13 @@ export default function ModelCatalogPage(): React.ReactElement {
     handleSearchChange,
     handlePull,
     handleCancelJob,
+    handleDelete,
     isPullPending,
     isCancelPending,
+    isDeletePending,
     getJobForModel,
     hasActiveJobs,
+    downloadStatsMap,
   } = useModelCatalogPage();
 
   if (isError) {
@@ -70,9 +73,11 @@ export default function ModelCatalogPage(): React.ReactElement {
             <CatalogModelCard
               key={entry.id}
               entry={entry}
-              job={getJobForModel(entry.name)}
+              job={getJobForModel(entry.ollamaName ?? `${entry.name}:${entry.tag}`)}
               onPull={handlePull}
+              onDelete={handleDelete}
               isPullPending={isPullPending}
+              isDeletePending={isDeletePending}
               t={t}
             />
           ))}
@@ -82,6 +87,7 @@ export default function ModelCatalogPage(): React.ReactElement {
       {hasActiveJobs ? (
         <ActiveDownloadsPanel
           jobs={pullJobs}
+          downloadStatsMap={downloadStatsMap}
           onCancel={handleCancelJob}
           isCancelPending={isCancelPending}
           t={t}

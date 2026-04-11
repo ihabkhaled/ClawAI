@@ -61,6 +61,13 @@ export class LocalModelsRepository {
     });
   }
 
+  async findAllInstalled(): Promise<LocalModel[]> {
+    return this.prisma.localModel.findMany({
+      where: { isInstalled: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+
   async findAllInstalledWithRoles(): Promise<LocalModel[]> {
     return this.prisma.localModel.findMany({
       where: { isInstalled: true },

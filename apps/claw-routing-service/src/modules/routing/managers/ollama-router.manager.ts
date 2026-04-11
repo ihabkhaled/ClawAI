@@ -160,7 +160,7 @@ export class OllamaRouterManager {
     }
 
     if (decision.provider === LOCAL_PROVIDER) {
-      const healthy = context.runtimeHealth?.['OLLAMA'] ?? false;
+      const healthy = context.runtimeHealth?.['OLLAMA'] ?? true;
       this.logger.debug(`validateDecision: local provider — ollamaHealthy=${String(healthy)}`);
       return healthy;
     }

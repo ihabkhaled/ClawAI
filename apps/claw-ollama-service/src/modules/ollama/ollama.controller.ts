@@ -70,6 +70,11 @@ export class OllamaController {
     return this.ollamaService.getPullJobProgress(id);
   }
 
+  @Delete('models/:id')
+  async deleteModel(@Param('id') id: string): Promise<void> {
+    return this.ollamaService.deleteModel(id);
+  }
+
   @Delete('pull-jobs/:id')
   async cancelPullJob(@Param('id') id: string): Promise<PullJob> {
     return this.ollamaService.cancelPullJob(id);

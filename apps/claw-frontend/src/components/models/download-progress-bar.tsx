@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { PULL_JOB_STATUS_LABELS } from '@/constants';
 import type { DownloadProgressBarProps } from '@/types';
-import { formatBytes } from '@/utilities';
+import { formatBytes, formatDuration, formatSpeed } from '@/utilities';
 
 export function DownloadProgressBar({
   job,
+  stats,
   onCancel,
   isCancelPending,
   t,
@@ -20,17 +21,24 @@ export function DownloadProgressBar({
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex items-center justify-between text-sm">
           <span className="truncate font-medium">{job.modelName}</span>
-          <span className="shrink-0 text-muted-foreground">
-            {PULL_JOB_STATUS_LABELS[job.status] ?? job.status}
-          </span>
+          <div className="flex shrink-0 items-center gap-2 text-muted-foreground">
+            {stats && stats.speedBytesPerSec > 0 ? (
+              <span className="text-xs">{formatSpeed(stats.speedBytesPerSec)}</span>
+            ) : null}
+            <span>{PULL_JOB_STATUS_LABELS[job.status] ?? job.status}</span>
+          </div>
         </div>
         <Progress value={progressValue} className="h-2" />
-        <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-muted-foreground">
           <span>{Math.round(progressValue)}%</span>
           {job.downloadedBytes !== null && job.totalBytes !== null ? (
             <span>
               {formatBytes(job.downloadedBytes)} / {formatBytes(job.totalBytes)}
             </span>
+          ) : null}
+          {stats ? <span>{formatDuration(stats.elapsedMs)} elapsed</span> : null}
+          {stats && stats.estimatedRemainingMs !== null ? (
+            <span>~{formatDuration(stats.estimatedRemainingMs)} left</span>
           ) : null}
         </div>
       </div>

@@ -9,11 +9,12 @@ export function usePullFromCatalog() {
 
   const mutation = useMutation({
     mutationFn: (catalogId: string) => ollamaRepository.pullFromCatalog(catalogId),
-    onSuccess: () => {
+    onSuccess: async () => {
       logger.debug({ component: 'catalog', action: 'pull-started', message: 'Pull job started' });
       showToast.success({ title: 'Model download started' });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.pullJobs.all });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.localModels.all });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.pullJobs.all });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.localModels.all });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all });
     },
     onError: () => {
       showToast.error({ title: 'Failed to start model download' });

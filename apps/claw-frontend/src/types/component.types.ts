@@ -6,7 +6,7 @@ import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { TranslateFunction } from '@/types/i18n.types';
 
 import type { AdminUser, AuditLog } from './audit.types';
-import type { ModelCatalogEntry, PullJobResponse } from './catalog.types';
+import type { DownloadStats, ModelCatalogEntry, PullJobResponse } from './catalog.types';
 import type { ChatMessage, ChatThread, FallbackAttemptInfo } from './chat.types';
 import type { Connector, ConnectorModel, CreateConnectorRequest } from './connector.types';
 import type { CreateContextPackItemRequest, CreateContextPackRequest } from './context-pack.types';
@@ -531,7 +531,9 @@ export type CatalogModelCardProps = {
   entry: ModelCatalogEntry;
   job: PullJobResponse | undefined;
   onPull: (catalogId: string) => void;
+  onDelete: (modelId: string) => void;
   isPullPending: boolean;
+  isDeletePending: boolean;
   t: TranslateFunction;
 };
 
@@ -543,6 +545,7 @@ export type CatalogCategoryFilterProps = {
 
 export type DownloadProgressBarProps = {
   job: PullJobResponse;
+  stats: DownloadStats | undefined;
   onCancel: (jobId: string) => void;
   isCancelPending: boolean;
   t: TranslateFunction;
@@ -550,6 +553,7 @@ export type DownloadProgressBarProps = {
 
 export type ActiveDownloadsPanelProps = {
   jobs: PullJobResponse[];
+  downloadStatsMap: Map<string, DownloadStats>;
   onCancel: (jobId: string) => void;
   isCancelPending: boolean;
   t: TranslateFunction;

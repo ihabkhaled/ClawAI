@@ -14,11 +14,18 @@ export type ModelCatalogEntry = {
   ollamaName: string | null;
   isRecommended: boolean;
   capabilities: string[];
+  isInstalled: boolean;
+  installedModelId: string | null;
+  pullJobStatus: string | null;
 };
 
 export type CatalogListResponse = {
   data: ModelCatalogEntry[];
   meta: PaginationMeta;
+};
+
+export type PullFromCatalogResponse = {
+  pullJobId: string;
 };
 
 export type PullJobResponse = {
@@ -33,6 +40,19 @@ export type PullJobResponse = {
   startedAt: string;
   completedAt: string | null;
 };
+
+export type DownloadStats = {
+  speedBytesPerSec: number;
+  elapsedMs: number;
+  estimatedRemainingMs: number | null;
+};
+
+export type DownloadSnapshotEntry = {
+  downloadedBytes: number;
+  timestamp: number;
+};
+
+export type DownloadSnapshotMap = Map<string, DownloadSnapshotEntry>;
 
 export type CatalogFilterParams = {
   category?: string;
@@ -52,11 +72,14 @@ export type UseModelCatalogPageReturn = {
   pullJobs: PullJobResponse[];
   isPullJobsLoading: boolean;
   hasActiveJobs: boolean;
+  downloadStatsMap: Map<string, DownloadStats>;
   handleCategoryChange: (value: string | undefined) => void;
   handleSearchChange: (value: string) => void;
   handlePull: (catalogId: string) => void;
   handleCancelJob: (jobId: string) => void;
+  handleDelete: (modelId: string) => void;
   isPullPending: boolean;
   isCancelPending: boolean;
+  isDeletePending: boolean;
   getJobForModel: (modelName: string) => PullJobResponse | undefined;
 };

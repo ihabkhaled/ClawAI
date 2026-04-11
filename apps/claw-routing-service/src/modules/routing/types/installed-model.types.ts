@@ -1,10 +1,10 @@
 export type InstalledModelInfo = {
   name: string;
   tag: string;
-  category: string;
+  category: string | null;
   roles: string[];
   capabilities: string[];
-  parameterCount: string;
+  parameterCount: string | null;
 };
 
 export type InstalledModelsResponse = {

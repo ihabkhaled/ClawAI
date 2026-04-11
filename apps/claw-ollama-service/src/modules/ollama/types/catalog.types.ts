@@ -1,5 +1,4 @@
 import type {
-  LocalModelRoleAssignment,
   ModelCatalogEntry,
   ModelCategory,
   PullJobStatus,
@@ -14,6 +13,7 @@ export type CatalogFilters = {
 
 export type CatalogEntryWithInstallStatus = ModelCatalogEntry & {
   isInstalled: boolean;
+  installedModelId: string | null;
   pullJobStatus: PullJobStatus | null;
 };
 
@@ -21,9 +21,13 @@ export type InstalledModelInfo = {
   id: string;
   name: string;
   tag: string;
-  category: ModelCategory | null;
-  roles: LocalModelRoleAssignment[];
+  category: string | null;
+  roles: string[];
   capabilities: string[];
   parameterCount: string | null;
   sizeBytes: bigint | null;
+};
+
+export type InstalledModelsApiResponse = {
+  models: InstalledModelInfo[];
 };
