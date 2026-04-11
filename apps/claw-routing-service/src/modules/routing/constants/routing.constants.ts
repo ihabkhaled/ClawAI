@@ -77,6 +77,27 @@ export const IMAGE_KEYWORDS = [
   'image like this',
   'remake this',
   'redo this image',
+  // Scene/location prompts that imply image generation
+  'fantasy map',
+  'travel poster',
+  'floor plan',
+  'book cover',
+  'album cover',
+  'movie poster',
+  'game character',
+  'profile picture',
+  'social media post',
+  'app icon',
+  // Single-word strong indicators
+  'render ',
+  'photo ',
+  'portrait ',
+  'illustration ',
+  'poster ',
+  'sticker ',
+  'logo ',
+  'banner ',
+  'mascot ',
 ];
 
 // File generation provider

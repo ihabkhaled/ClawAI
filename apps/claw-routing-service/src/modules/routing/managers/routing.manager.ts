@@ -508,10 +508,81 @@ export class RoutingManager {
       'logo',
       'wallpaper',
       'avatar',
+      'cartoon',
+      'anime',
+      'manga',
+      'comic',
+      'sticker',
+      'mascot',
+      'character',
+      'scene',
+      'landscape',
+      'cityscape',
+      'infographic',
+      'diagram',
+      'wireframe',
+      'mockup',
+      'thumbnail',
+      'cover',
+      'texture',
+      'pattern',
+      'meme',
+      'gif',
     ];
     const hasVerb = imageVerbs.some((v) => lower.includes(v));
     const hasImageWord = imageWords.some((w) => lower.includes(w));
     const comboMatch = hasVerb && hasImageWord;
+
+    // Strong image nouns that indicate visual output even without a verb
+    const strongImageNouns = [
+      'illustration',
+      'portrait',
+      'poster',
+      'logo',
+      'banner',
+      'sticker',
+      'mascot',
+      'wallpaper',
+      'avatar',
+      'icon',
+      'infographic',
+      'wireframe',
+      'mockup',
+      'thumbnail',
+      'cartoon',
+      'comic strip',
+      'manga',
+      'anime',
+    ];
+    const hasStrongNoun = strongImageNouns.some((n) => lower.includes(n));
+    // If prompt has a strong image noun + another image-related word, it is likely visual
+    const strongNounMatch = hasStrongNoun && (hasImageWord || hasVerb);
+
+    // Art style keywords that alone strongly indicate image generation
+    const artStyleIndicators = [
+      'photorealistic',
+      'watercolor',
+      'oil painting',
+      'impressionist',
+      'cyberpunk',
+      'pixel art',
+      'abstract art',
+      'digital art',
+      'concept art',
+      'fan art',
+      'line art',
+      'pop art',
+      'vintage poster',
+      'retro style',
+      'minimalist design',
+      'botanical illustration',
+      'still life',
+      'floor plan',
+      'anime style',
+      'comic strip',
+      'sticker design',
+    ];
+    const artStyleMatch = artStyleIndicators.some((s) => lower.includes(s));
 
     // Reference-based phrases that imply image generation even without explicit image words
     const referenceVerbs = ['recreate', 'reproduce', 'remake'];
@@ -520,9 +591,9 @@ export class RoutingManager {
       (lower.includes('this') || lower.includes('attached'));
 
     this.logger.debug(
-      `detectImageRequest: exactMatch=${String(exactMatch)} comboMatch=${String(comboMatch)} referenceMatch=${String(referenceMatch)}`,
+      `detectImageRequest: exactMatch=${String(exactMatch)} comboMatch=${String(comboMatch)} referenceMatch=${String(referenceMatch)} artStyleMatch=${String(artStyleMatch)}`,
     );
-    if (!exactMatch && !comboMatch && !referenceMatch) {
+    if (!exactMatch && !comboMatch && !referenceMatch && !artStyleMatch && !strongNounMatch) {
       this.logger.debug('detectImageRequest: no image request detected');
       return null;
     }
@@ -682,7 +753,8 @@ export class RoutingManager {
   }
 
   private isRuntimeHealthy(runtime: string, context: RoutingContext): boolean {
-    const healthy = context.runtimeHealth?.[runtime] ?? false;
+    // If no health data exists, assume healthy (best-effort — same as connectors)
+    const healthy = context.runtimeHealth?.[runtime] ?? true;
     this.logger.debug(`isRuntimeHealthy: runtime=${runtime} healthy=${String(healthy)}`);
     return healthy;
   }
