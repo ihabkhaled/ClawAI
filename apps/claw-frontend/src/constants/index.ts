@@ -58,3 +58,10 @@ export {
   CONTEXT_PACK_ITEM_TYPE_LABELS,
 } from './memory.constants';
 export { IMAGE_MODEL_OPTIONS } from './image.constants';
+export {
+  MODEL_CATEGORY_LABELS,
+  MODEL_CATEGORIES,
+  PULL_JOB_STATUS_LABELS,
+  PULL_JOB_POLL_INTERVAL_MS,
+  CATALOG_PAGE_SIZE,
+} from './catalog.constants';

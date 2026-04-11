@@ -1,10 +1,17 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { PullJobStatus, type RuntimeConfig, RuntimeType } from "../../../generated/prisma";
-import { LocalModelsRepository } from "../repositories/local-models.repository";
-import { RoleAssignmentsRepository } from "../repositories/role-assignments.repository";
-import { PullJobsRepository } from "../repositories/pull-jobs.repository";
-import { RuntimeConfigsRepository } from "../repositories/runtime-configs.repository";
-import { getRuntimeAdapter } from "./adapters/runtime-adapter-factory";
+import { Injectable, Logger } from '@nestjs/common';
+import { Subject } from 'rxjs';
+import {
+  type ModelCatalogEntry,
+  PullJobStatus,
+  type RuntimeConfig,
+  RuntimeType,
+} from '../../../generated/prisma';
+import { LocalModelsRepository } from '../repositories/local-models.repository';
+import { RoleAssignmentsRepository } from '../repositories/role-assignments.repository';
+import { PullJobsRepository } from '../repositories/pull-jobs.repository';
+import { RuntimeConfigsRepository } from '../repositories/runtime-configs.repository';
+import { getRuntimeAdapter } from './adapters/runtime-adapter-factory';
+import { OllamaRuntimeAdapter } from './adapters/ollama-runtime.adapter';
 import {
   type GenerateRequest,
   type GenerateResponse,
@@ -12,11 +19,14 @@ import {
   type LocalModelRole,
   type LocalModelRoleAssignment,
   type RuntimeHealth,
-} from "../types/ollama.types";
+} from '../types/ollama.types';
+import type { PullProgressEvent } from '../types/pull-progress.types';
 
 @Injectable()
 export class OllamaManager {
   private readonly logger = new Logger(OllamaManager.name);
+
+  private readonly pullProgressSubjects = new Map<string, Subject<PullProgressEvent>>();
 
   constructor(
     private readonly localModelsRepository: LocalModelsRepository,
@@ -29,7 +39,9 @@ export class OllamaManager {
     this.logger.debug(`listInstalledModels: listing models — runtime=${runtime ?? 'all'}`);
     if (runtime) {
       const models = await this.localModelsRepository.findByRuntime(runtime);
-      this.logger.debug(`listInstalledModels: found ${String(models.length)} models for runtime=${runtime}`);
+      this.logger.debug(
+        `listInstalledModels: found ${String(models.length)} models for runtime=${runtime}`,
+      );
       return models;
     }
     const models = await this.localModelsRepository.findAll({ isInstalled: true }, 1, 1000);
@@ -55,11 +67,22 @@ export class OllamaManager {
       await adapter.pullModel(name);
       this.logger.debug('pullModel: pull completed — listing runtime models');
       const models = await adapter.listModels();
-      this.logger.debug(`pullModel: runtime has ${String(models.length)} models — searching for pulled model`);
+      this.logger.debug(
+        `pullModel: runtime has ${String(models.length)} models — searching for pulled model`,
+      );
       const pulled = models.find((m) => m.name === name || `${m.name}:${m.tag}` === name);
 
-      const modelData = pulled ?? { name, tag: "latest", sizeBytes: null, family: null, parameters: null, quantization: null };
-      this.logger.debug(`pullModel: upserting model record — name=${modelData.name} tag=${modelData.tag}`);
+      const modelData = pulled ?? {
+        name,
+        tag: 'latest',
+        sizeBytes: null,
+        family: null,
+        parameters: null,
+        quantization: null,
+      };
+      this.logger.debug(
+        `pullModel: upserting model record — name=${modelData.name} tag=${modelData.tag}`,
+      );
 
       const localModel = await this.localModelsRepository.upsertByNameTagRuntime({
         name: modelData.name,
@@ -82,7 +105,7 @@ export class OllamaManager {
       this.logger.log(`pullModel: completed pulling ${name}, id=${localModel.id}`);
       return localModel;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown pull error";
+      const errorMessage = error instanceof Error ? error.message : 'Unknown pull error';
       this.logger.error(`pullModel: failed to pull model ${name}: ${errorMessage}`);
 
       this.logger.debug('pullModel: updating pull job as FAILED');
@@ -95,10 +118,107 @@ export class OllamaManager {
     }
   }
 
-  async assignRole(
-    modelId: string,
-    role: LocalModelRole,
-  ): Promise<LocalModelRoleAssignment> {
+  async pullModelFromCatalog(catalogEntry: ModelCatalogEntry): Promise<{ pullJobId: string }> {
+    const modelFullName = catalogEntry.ollamaName ?? `${catalogEntry.name}:${catalogEntry.tag}`;
+    this.logger.log(
+      `pullModelFromCatalog: pulling ${modelFullName} from catalog id=${catalogEntry.id}`,
+    );
+
+    const pullJob = await this.pullJobsRepository.create({
+      modelName: modelFullName,
+      runtime: catalogEntry.runtime,
+      status: PullJobStatus.IN_PROGRESS,
+    });
+
+    const subject = new Subject<PullProgressEvent>();
+    this.pullProgressSubjects.set(pullJob.id, subject);
+
+    void this.executeCatalogPull(catalogEntry, pullJob.id, modelFullName, subject);
+
+    return { pullJobId: pullJob.id };
+  }
+
+  private async executeCatalogPull(
+    catalogEntry: ModelCatalogEntry,
+    pullJobId: string,
+    modelFullName: string,
+    subject: Subject<PullProgressEvent>,
+  ): Promise<void> {
+    try {
+      const adapter = getRuntimeAdapter(catalogEntry.runtime);
+
+      await (adapter instanceof OllamaRuntimeAdapter ? this.pullWithProgressTracking(adapter, modelFullName, pullJobId, subject) : adapter.pullModel(modelFullName));
+
+      await this.upsertModelFromCatalog(catalogEntry, modelFullName);
+      await this.completePullJob(pullJobId);
+      subject.complete();
+    } catch (error: unknown) {
+      await this.failPullJob(pullJobId, error);
+      subject.error(error);
+    } finally {
+      this.pullProgressSubjects.delete(pullJobId);
+    }
+  }
+
+  private async pullWithProgressTracking(
+    adapter: OllamaRuntimeAdapter,
+    modelFullName: string,
+    pullJobId: string,
+    subject: Subject<PullProgressEvent>,
+  ): Promise<void> {
+    await adapter.pullModelWithProgress(modelFullName, (event) => {
+      subject.next(event);
+      void this.pullJobsRepository.update(pullJobId, {
+        progress: event.percentage,
+        totalBytes: event.total !== undefined ? BigInt(event.total) : null,
+        downloadedBytes: event.completed !== undefined ? BigInt(event.completed) : null,
+      });
+    });
+  }
+
+  private async upsertModelFromCatalog(
+    catalogEntry: ModelCatalogEntry,
+    modelFullName: string,
+  ): Promise<void> {
+    const parts = modelFullName.split(':');
+    const name = parts[0] ?? modelFullName;
+    const tag = parts[1] ?? 'latest';
+
+    await this.localModelsRepository.upsertByNameTagRuntime({
+      name,
+      tag,
+      runtime: catalogEntry.runtime,
+      sizeBytes: catalogEntry.sizeBytes,
+      parameters: catalogEntry.parameterCount,
+      category: catalogEntry.category,
+      isInstalled: true,
+    });
+  }
+
+  private async completePullJob(pullJobId: string): Promise<void> {
+    await this.pullJobsRepository.update(pullJobId, {
+      status: PullJobStatus.COMPLETED,
+      progress: 100,
+      completedAt: new Date(),
+    });
+  }
+
+  private async failPullJob(pullJobId: string, error: unknown): Promise<void> {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown pull error';
+    this.logger.error(`pullModelFromCatalog: failed pullJobId=${pullJobId}: ${errorMessage}`);
+
+    await this.pullJobsRepository.update(pullJobId, {
+      status: PullJobStatus.FAILED,
+      errorMessage,
+      completedAt: new Date(),
+    });
+  }
+
+  getPullProgressSubject(pullJobId: string): Subject<PullProgressEvent> | undefined {
+    return this.pullProgressSubjects.get(pullJobId);
+  }
+
+  async assignRole(modelId: string, role: LocalModelRole): Promise<LocalModelRoleAssignment> {
     this.logger.log(`assignRole: assigning role=${String(role)} to model ${modelId}`);
     this.logger.debug(`assignRole: deactivating existing assignments for role=${String(role)}`);
     await this.roleAssignmentsRepository.deactivateByRole(role);
@@ -116,7 +236,9 @@ export class OllamaManager {
   async getModelForRole(role: LocalModelRole): Promise<LocalModelRoleAssignment | null> {
     this.logger.debug(`getModelForRole: looking up active model for role=${String(role)}`);
     const assignment = await this.roleAssignmentsRepository.findActiveByRole(role);
-    this.logger.debug(`getModelForRole: ${assignment ? `found modelId=${assignment.modelId}` : 'no active assignment'}`);
+    this.logger.debug(
+      `getModelForRole: ${assignment ? `found modelId=${assignment.modelId}` : 'no active assignment'}`,
+    );
     return assignment;
   }
 
@@ -129,14 +251,18 @@ export class OllamaManager {
   }
 
   async generate(request: GenerateRequest): Promise<GenerateResponse> {
-    this.logger.debug(`generate: calling Ollama model=${request.model} stream=${String(request.stream ?? false)}`);
+    this.logger.debug(
+      `generate: calling Ollama model=${request.model} stream=${String(request.stream ?? false)}`,
+    );
     const startTime = Date.now();
     const runtime = RuntimeType.OLLAMA;
     const adapter = getRuntimeAdapter(runtime);
     this.logger.debug('generate: sending request to Ollama runtime');
     const response = await adapter.generate(request);
     const durationMs = Date.now() - startTime;
-    this.logger.debug(`generate: completed model=${request.model} durationMs=${String(durationMs)} responseLen=${String(response.response.length)}`);
+    this.logger.debug(
+      `generate: completed model=${request.model} durationMs=${String(durationMs)} responseLen=${String(response.response.length)}`,
+    );
     return response;
   }
 

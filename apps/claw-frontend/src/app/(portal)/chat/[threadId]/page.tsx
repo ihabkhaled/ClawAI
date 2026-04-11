@@ -55,7 +55,8 @@ export default function ThreadDetailPage() {
           <EditableTitle title={title} editableTitle={editableTitle} />
           {thread ? (
             <p className="mt-1 text-muted-foreground">
-              {thread.routingMode}{thread.lastModel ? ` · ${thread.lastModel}` : ''}
+              {thread.routingMode}
+              {thread.lastModel ? ` · ${thread.lastModel}` : ''}
             </p>
           ) : null}
         </div>
@@ -125,30 +126,28 @@ export default function ThreadDetailPage() {
         </div>
 
         <div className="relative shrink-0 border-t" style={{ height: composerHeight }}>
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
             className="absolute inset-x-0 top-0 z-10 flex h-3 cursor-ns-resize items-center justify-center hover:bg-muted/50"
             onMouseDown={handleMouseDown}
-            role="separator"
-            tabIndex={0}
-            aria-orientation="horizontal"
             aria-label="Resize message input"
           >
             <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
           </div>
           <div className="flex h-full flex-col p-4 pt-3">
-          <MessageComposer
-            onSend={handleSend}
-            isPending={isSending}
-            threadModel={
-              thread?.preferredProvider && thread?.preferredModel
-                ? {
-                    provider: thread.preferredProvider,
-                    model: thread.preferredModel,
-                    displayName: thread.preferredModel,
-                  }
-                : null
-            }
-          />
+            <MessageComposer
+              onSend={handleSend}
+              isPending={isSending}
+              threadModel={
+                thread?.preferredProvider && thread?.preferredModel
+                  ? {
+                      provider: thread.preferredProvider,
+                      model: thread.preferredModel,
+                      displayName: thread.preferredModel,
+                    }
+                  : null
+              }
+            />
           </div>
         </div>
       </div>

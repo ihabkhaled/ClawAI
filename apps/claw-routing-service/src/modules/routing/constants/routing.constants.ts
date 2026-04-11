@@ -1,3 +1,4 @@
+import { LocalModelRole } from '@claw/shared-types';
 import { z } from 'zod';
 
 export const LOCAL_PROVIDER = 'local-ollama';
@@ -84,8 +85,38 @@ export const FILE_GENERATION_PROVIDER = 'FILE_GENERATION';
 // Regex-based file generation detection:
 // Matches any combination of action verb + file format keyword
 // e.g., "generate dummy pdf", "create a text file", "make me a csv report"
-export const FILE_GENERATION_VERBS = ['generate', 'create', 'make', 'write', 'export', 'save', 'output', 'produce', 'build'];
-export const FILE_GENERATION_FORMAT_WORDS = ['file', 'pdf', 'document', 'csv', 'docx', 'word', 'txt', 'text file', 'markdown', 'json', 'html', 'report', '.md', '.pdf', '.csv', '.docx', '.txt', '.json', '.html'];
+export const FILE_GENERATION_VERBS = [
+  'generate',
+  'create',
+  'make',
+  'write',
+  'export',
+  'save',
+  'output',
+  'produce',
+  'build',
+];
+export const FILE_GENERATION_FORMAT_WORDS = [
+  'file',
+  'pdf',
+  'document',
+  'csv',
+  'docx',
+  'word',
+  'txt',
+  'text file',
+  'markdown',
+  'json',
+  'html',
+  'report',
+  '.md',
+  '.pdf',
+  '.csv',
+  '.docx',
+  '.txt',
+  '.json',
+  '.html',
+];
 
 // Also keep exact phrases for high-confidence matches
 export const FILE_GENERATION_KEYWORDS = [
@@ -174,3 +205,87 @@ Respond with ONLY a JSON object (no markdown, no explanation):
 {{"provider":"...","model":"...","confidence":0.X,"reason":"brief reason"}}
 
 User message: {message}`;
+
+export const CODING_KEYWORDS = [
+  'code',
+  'debug',
+  'function',
+  'refactor',
+  'bug',
+  'implement',
+  'class',
+  'method',
+  'compile',
+  'syntax',
+  'error in my code',
+  'write a function',
+  'fix this bug',
+  'code review',
+  'pull request',
+  'git',
+  'api endpoint',
+  'unit test',
+  'integration test',
+  'typescript',
+  'javascript',
+  'python',
+  'react',
+  'component',
+  'database query',
+  'sql',
+  'algorithm',
+  'data structure',
+];
+
+export const REASONING_KEYWORDS = [
+  'prove',
+  'solve',
+  'calculate',
+  'analyze',
+  'derive',
+  'logic',
+  'theorem',
+  'equation',
+  'mathematical',
+  'probability',
+  'statistics',
+  'optimization',
+  'constraint',
+  'inference',
+  'deduce',
+  'hypothesis',
+  'formal proof',
+  'step by step',
+  'chain of thought',
+  'why does',
+  'explain the reasoning',
+];
+
+export const THINKING_KEYWORDS = [
+  'research',
+  'search for',
+  'find information',
+  'investigate',
+  'compare and contrast',
+  'evaluate',
+  'assess',
+  'deep dive',
+  'comprehensive analysis',
+  'pros and cons',
+  'trade-offs',
+  'what are the options',
+  'current state of',
+  'latest developments',
+  'how does X compare to Y',
+];
+
+export const CATEGORY_TO_ROLE_MAP: Record<string, LocalModelRole> = {
+  coding: LocalModelRole.LOCAL_CODING,
+  reasoning: LocalModelRole.LOCAL_REASONING,
+  thinking: LocalModelRole.LOCAL_THINKING,
+  chat: LocalModelRole.LOCAL_FALLBACK_CHAT,
+  'image-generation': LocalModelRole.LOCAL_IMAGE_GENERATION,
+  'file-generation': LocalModelRole.LOCAL_FILE_GENERATION,
+};
+
+export const PROMPT_CACHE_TTL_MS = 5 * 60 * 1000;

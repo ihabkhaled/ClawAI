@@ -56,6 +56,7 @@ export type TranslationDictionary = {
     chat: string;
     connectors: string;
     models: string;
+    modelCatalog: string;
     localModels: string;
     routing: string;
     memory: string;
@@ -432,6 +433,29 @@ export type TranslationDictionary = {
     startNewChat: string;
     addConnector: string;
     configureRouting: string;
+  };
+  catalog: {
+    title: string;
+    description: string;
+    searchPlaceholder: string;
+    allCategories: string;
+    coding: string;
+    fileGeneration: string;
+    imageGeneration: string;
+    routing: string;
+    reasoning: string;
+    thinking: string;
+    download: string;
+    downloading: string;
+    installed: string;
+    failed: string;
+    cancel: string;
+    recommended: string;
+    noModels: string;
+    activeDownloads: string;
+    parameterCount: string;
+    modelSize: string;
+    capabilities: string;
   };
   validation: {
     required: string;

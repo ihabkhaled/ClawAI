@@ -179,6 +179,10 @@ export type {
   UseThemeSwitcherReturn,
   ThreadSettingsProps,
   GroupedModels,
+  CatalogModelCardProps,
+  CatalogCategoryFilterProps,
+  DownloadProgressBarProps,
+  ActiveDownloadsPanelProps,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
@@ -220,6 +224,13 @@ export type {
   UseSidebarControllerReturn,
 } from './hook.types';
 export type { MarkdownRendererProps } from './markdown.types';
+export type {
+  ModelCatalogEntry,
+  CatalogListResponse,
+  PullJobResponse,
+  CatalogFilterParams,
+  UseModelCatalogPageReturn,
+} from './catalog.types';
 export type {
   ImageGeneration,
   ImageGenerationAsset,

@@ -3,6 +3,8 @@ node_modules/
 
 # Test scripts (not for repo)
 scripts/generate-test-messages.sh
+scripts/routing-experiments.sh
+scripts/experiment-results.json
 
 # Build output
 dist/

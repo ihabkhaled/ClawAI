@@ -23,4 +23,7 @@ export enum EventPattern {
   IMAGE_FAILED = 'image.failed',
   FILE_GENERATED = 'file.generated',
   FILE_GENERATION_FAILED = 'file_generation.failed',
+  MODEL_PULLED = 'model.pulled',
+  MODEL_DELETED = 'model.deleted',
+  CATALOG_UPDATED = 'catalog.updated',
 }

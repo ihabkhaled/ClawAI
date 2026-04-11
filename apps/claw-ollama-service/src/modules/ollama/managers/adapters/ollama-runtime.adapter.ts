@@ -1,10 +1,6 @@
-import { type AxiosInstance, createHttpClient } from "@common/utilities";
-import { AppConfig } from "../../../../app/config/app.config";
-import {
-  OLLAMA_API_GENERATE,
-  OLLAMA_API_PULL,
-  OLLAMA_API_TAGS,
-} from "../../ollama.constants";
+import { type AxiosInstance, createHttpClient } from '@common/utilities';
+import { AppConfig } from '../../../../app/config/app.config';
+import { OLLAMA_API_GENERATE, OLLAMA_API_PULL, OLLAMA_API_TAGS } from '../../ollama.constants';
 import type {
   GenerateRequest,
   GenerateResponse,
@@ -12,13 +8,14 @@ import type {
   PullJobInfo,
   RuntimeAdapter,
   RuntimeHealth,
-} from "../../types/ollama.types";
+} from '../../types/ollama.types';
 import type {
   OllamaGenerateResponse,
   OllamaModelDetail,
   OllamaPullResponse,
   OllamaTagsResponse,
-} from "../../types/ollama-adapters.types";
+} from '../../types/ollama-adapters.types';
+import type { PullProgressCallback } from '../../types/pull-progress.types';
 
 export class OllamaRuntimeAdapter implements RuntimeAdapter {
   private readonly client: AxiosInstance;
@@ -49,14 +46,14 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
     try {
       await this.client.get<OllamaTagsResponse>(OLLAMA_API_TAGS, { timeout: 5000 });
       return {
-        runtime: "OLLAMA",
+        runtime: 'OLLAMA',
         healthy: true,
         latencyMs: Date.now() - start,
       };
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Unknown error";
+      const message = error instanceof Error ? error.message : 'Unknown error';
       return {
-        runtime: "OLLAMA",
+        runtime: 'OLLAMA',
         healthy: false,
         latencyMs: Date.now() - start,
         errorMessage: message,
@@ -85,10 +82,81 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
     };
   }
 
+  async pullModelWithProgress(name: string, onProgress: PullProgressCallback): Promise<void> {
+    const config = AppConfig.get();
+    const url = `${config.OLLAMA_BASE_URL}${OLLAMA_API_PULL}`;
+
+    const response = await this.client.post<NodeJS.ReadableStream>(
+      url,
+      {
+        name,
+        stream: true,
+      },
+      {
+        responseType: 'stream',
+        timeout: 600_000,
+      },
+    );
+
+    await this.parseStreamingProgress(response.data, onProgress);
+  }
+
+  private async parseStreamingProgress(
+    stream: NodeJS.ReadableStream,
+    onProgress: PullProgressCallback,
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      let buffer = '';
+
+      stream.on('data', (chunk: Buffer) => {
+        buffer += chunk.toString();
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (line.trim().length === 0) {
+            continue;
+          }
+          this.processProgressLine(line, onProgress);
+        }
+      });
+
+      stream.on('end', () => {
+        if (buffer.trim().length > 0) {
+          this.processProgressLine(buffer, onProgress);
+        }
+        resolve();
+      });
+
+      stream.on('error', (error: Error) => {
+        reject(error);
+      });
+    });
+  }
+
+  private processProgressLine(line: string, onProgress: PullProgressCallback): void {
+    try {
+      const data = JSON.parse(line) as OllamaPullResponse;
+      const total = data.total ?? 0;
+      const completed = data.completed ?? 0;
+      const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+      onProgress({
+        status: data.status,
+        digest: data.digest,
+        total: data.total,
+        completed: data.completed,
+        percentage,
+      });
+    } catch {
+      // Skip malformed JSON lines
+    }
+  }
+
   private mapModel(m: OllamaModelDetail): LocalModelInfo {
-    const parts = m.name.split(":");
+    const parts = m.name.split(':');
     const name = parts[0] ?? m.name;
-    const tag = parts[1] ?? "latest";
+    const tag = parts[1] ?? 'latest';
     return {
       name,
       tag,

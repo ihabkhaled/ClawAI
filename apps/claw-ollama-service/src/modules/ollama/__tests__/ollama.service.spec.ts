@@ -1,6 +1,8 @@
 import { OllamaService } from '../ollama.service';
 import { type LocalModelsRepository } from '../repositories/local-models.repository';
 import { type RuntimeConfigsRepository } from '../repositories/runtime-configs.repository';
+import { type ModelCatalogRepository } from '../repositories/model-catalog.repository';
+import { type PullJobsRepository } from '../repositories/pull-jobs.repository';
 import { type OllamaManager } from '../managers/ollama.manager';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EntityNotFoundException } from '../../../common/errors';
@@ -69,14 +71,33 @@ describe('OllamaService', () => {
   let manager: ReturnType<typeof mockManager>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
 
+  const mockModelCatalogRepo = (): Partial<Record<keyof ModelCatalogRepository, jest.Mock>> => ({
+    findAll: jest.fn().mockResolvedValue([]),
+    findById: jest.fn().mockResolvedValue(null),
+    countAll: jest.fn().mockResolvedValue(0),
+    search: jest.fn().mockResolvedValue([]),
+  });
+
+  const mockPullJobsRepo = (): Partial<Record<keyof PullJobsRepository, jest.Mock>> => ({
+    create: jest.fn().mockResolvedValue({ id: 'pull-1', status: 'PENDING' }),
+    findById: jest.fn().mockResolvedValue(null),
+    update: jest.fn().mockResolvedValue({ id: 'pull-1' }),
+    findRecent: jest.fn().mockResolvedValue([]),
+    findLatestByModelName: jest.fn().mockResolvedValue(null),
+  });
+
   beforeEach(() => {
     localModelsRepo = mockLocalModelsRepo();
     runtimeConfigsRepo = mockRuntimeConfigsRepo();
+    const modelCatalogRepo = mockModelCatalogRepo();
+    const pullJobsRepo = mockPullJobsRepo();
     manager = mockManager();
     rabbitMQ = mockRabbitMQ();
     service = new OllamaService(
       localModelsRepo as unknown as LocalModelsRepository,
       runtimeConfigsRepo as unknown as RuntimeConfigsRepository,
+      modelCatalogRepo as unknown as ModelCatalogRepository,
+      pullJobsRepo as unknown as PullJobsRepository,
       manager as unknown as OllamaManager,
       rabbitMQ as unknown as RabbitMQService,
     );

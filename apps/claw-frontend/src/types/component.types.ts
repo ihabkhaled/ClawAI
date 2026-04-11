@@ -6,12 +6,18 @@ import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { TranslateFunction } from '@/types/i18n.types';
 
 import type { AdminUser, AuditLog } from './audit.types';
+import type { ModelCatalogEntry, PullJobResponse } from './catalog.types';
 import type { ChatMessage, ChatThread, FallbackAttemptInfo } from './chat.types';
 import type { Connector, ConnectorModel, CreateConnectorRequest } from './connector.types';
 import type { CreateContextPackItemRequest, CreateContextPackRequest } from './context-pack.types';
 import type { UploadedFile } from './file.types';
 import type { AggregatedHealth } from './health.types';
-import type { ClientLogEntry, ClientLogsTabProps, ServerLogEntry, ServerLogsTabProps } from './log.types';
+import type {
+  ClientLogEntry,
+  ClientLogsTabProps,
+  ServerLogEntry,
+  ServerLogsTabProps,
+} from './log.types';
 import type { CreateMemoryRequest, MemoryRecord } from './memory.types';
 import type { CreatePolicyRequest, RoutingDecision, RoutingPolicy } from './routing.types';
 
@@ -517,4 +523,34 @@ export type ServerLogsContentProps = {
   setPage: (page: number) => void;
   isLoading: boolean;
   isError: boolean;
+};
+
+// ─── Catalog component props ──────────────────────────────────────────────
+
+export type CatalogModelCardProps = {
+  entry: ModelCatalogEntry;
+  job: PullJobResponse | undefined;
+  onPull: (catalogId: string) => void;
+  isPullPending: boolean;
+  t: TranslateFunction;
+};
+
+export type CatalogCategoryFilterProps = {
+  selectedCategory: string | undefined;
+  onSelect: (category: string | undefined) => void;
+  t: TranslateFunction;
+};
+
+export type DownloadProgressBarProps = {
+  job: PullJobResponse;
+  onCancel: (jobId: string) => void;
+  isCancelPending: boolean;
+  t: TranslateFunction;
+};
+
+export type ActiveDownloadsPanelProps = {
+  jobs: PullJobResponse[];
+  onCancel: (jobId: string) => void;
+  isCancelPending: boolean;
+  t: TranslateFunction;
 };

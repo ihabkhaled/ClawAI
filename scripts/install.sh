@@ -397,6 +397,9 @@ IMAGE_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-images:5432/claw_images?s
 FILE_GENERATION_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-file-generations:5432/claw_file_generations?schema=public
 
 STABLE_DIFFUSION_URL=http://stable-diffusion:7860
+COMFYUI_BASE_URL=http://comfyui:8188
+COMFYUI_PORT=8188
+AUTO_PULL_MODELS=tinyllama gemma3:4b gemma2:2b phi3:mini llama3.2:3b
 
 AUDIT_MONGODB_URI=mongodb://claw:${MONGO_PASS}@mongodb:27017/claw_audit?authSource=admin
 CLIENT_LOGS_MONGODB_URI=mongodb://claw:${MONGO_PASS}@mongodb:27017/claw_client_logs?authSource=admin

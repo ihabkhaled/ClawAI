@@ -1,22 +1,23 @@
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
-import { RabbitMQService, StructuredLogger } from "@claw/shared-rabbitmq";
-import { EventPattern, LogLevel } from "@claw/shared-types";
-import { type Prisma, type RoutingMode } from "../../../generated/prisma";
-import { EntityNotFoundException } from "../../../common/errors";
-import { type PaginatedResult } from "../../../common/types";
-import { RoutingPoliciesRepository } from "../repositories/routing-policies.repository";
-import { RoutingDecisionsRepository } from "../repositories/routing-decisions.repository";
-import { RoutingManager } from "../managers/routing.manager";
-import { type CreatePolicyDto } from "../dto/create-policy.dto";
-import { type UpdatePolicyDto } from "../dto/update-policy.dto";
-import { type ListPoliciesQueryDto } from "../dto/list-policies-query.dto";
-import { type EvaluateRouteDto } from "../dto/evaluate-route.dto";
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
+import { EventPattern, LogLevel } from '@claw/shared-types';
+import { type Prisma, type RoutingMode } from '../../../generated/prisma';
+import { EntityNotFoundException } from '../../../common/errors';
+import { type PaginatedResult } from '../../../common/types';
+import { RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
+import { RoutingDecisionsRepository } from '../repositories/routing-decisions.repository';
+import { RoutingManager } from '../managers/routing.manager';
+import { PromptBuilderManager } from '../managers/prompt-builder.manager';
+import { type CreatePolicyDto } from '../dto/create-policy.dto';
+import { type UpdatePolicyDto } from '../dto/update-policy.dto';
+import { type ListPoliciesQueryDto } from '../dto/list-policies-query.dto';
+import { type EvaluateRouteDto } from '../dto/evaluate-route.dto';
 import {
   type RoutingContext,
   type RoutingDecision,
   type RoutingDecisionResult,
   type RoutingPolicy,
-} from "../types/routing.types";
+} from '../types/routing.types';
 
 @Injectable()
 export class RoutingService implements OnModuleInit {
@@ -30,6 +31,7 @@ export class RoutingService implements OnModuleInit {
     private readonly decisionsRepository: RoutingDecisionsRepository,
     private readonly routingManager: RoutingManager,
     private readonly rabbitMQService: RabbitMQService,
+    private readonly promptBuilder: PromptBuilderManager,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -44,7 +46,9 @@ export class RoutingService implements OnModuleInit {
   }
 
   async createPolicy(dto: CreatePolicyDto): Promise<RoutingPolicy> {
-    this.logger.log(`createPolicy: creating policy "${dto.name}" mode=${dto.routingMode} priority=${String(dto.priority)}`);
+    this.logger.log(
+      `createPolicy: creating policy "${dto.name}" mode=${dto.routingMode} priority=${String(dto.priority)}`,
+    );
     return this.policiesRepository.create({
       name: dto.name,
       routingMode: dto.routingMode,
@@ -53,9 +57,7 @@ export class RoutingService implements OnModuleInit {
     });
   }
 
-  async getPolicies(
-    query: ListPoliciesQueryDto,
-  ): Promise<PaginatedResult<RoutingPolicy>> {
+  async getPolicies(query: ListPoliciesQueryDto): Promise<PaginatedResult<RoutingPolicy>> {
     const filters = {
       routingMode: query.routingMode,
       isActive: query.isActive,
@@ -80,7 +82,7 @@ export class RoutingService implements OnModuleInit {
   async getPolicy(id: string): Promise<RoutingPolicy> {
     const policy = await this.policiesRepository.findById(id);
     if (!policy) {
-      throw new EntityNotFoundException("RoutingPolicy", id);
+      throw new EntityNotFoundException('RoutingPolicy', id);
     }
     return policy;
   }
@@ -88,7 +90,7 @@ export class RoutingService implements OnModuleInit {
   async updatePolicy(id: string, dto: UpdatePolicyDto): Promise<RoutingPolicy> {
     const policy = await this.policiesRepository.findById(id);
     if (!policy) {
-      throw new EntityNotFoundException("RoutingPolicy", id);
+      throw new EntityNotFoundException('RoutingPolicy', id);
     }
     const updateData = {
       ...dto,
@@ -100,13 +102,15 @@ export class RoutingService implements OnModuleInit {
   async deletePolicy(id: string): Promise<RoutingPolicy> {
     const policy = await this.policiesRepository.findById(id);
     if (!policy) {
-      throw new EntityNotFoundException("RoutingPolicy", id);
+      throw new EntityNotFoundException('RoutingPolicy', id);
     }
     return this.policiesRepository.delete(id);
   }
 
   async evaluateRoute(dto: EvaluateRouteDto): Promise<RoutingDecisionResult> {
-    this.logger.log(`evaluateRoute: evaluating route for thread ${dto.threadId ?? 'none'} mode=${dto.routingMode ?? 'AUTO'}`);
+    this.logger.log(
+      `evaluateRoute: evaluating route for thread ${dto.threadId ?? 'none'} mode=${dto.routingMode ?? 'AUTO'}`,
+    );
     const context: RoutingContext = {
       message: dto.messageContent,
       threadId: dto.threadId,
@@ -142,12 +146,9 @@ export class RoutingService implements OnModuleInit {
   }
 
   private async subscribeToEvents(): Promise<void> {
-    await this.rabbitMQService.subscribe(
-      EventPattern.MESSAGE_CREATED,
-      async (data: unknown) => {
-        await this.handleMessageCreated(data);
-      },
-    );
+    await this.rabbitMQService.subscribe(EventPattern.MESSAGE_CREATED, async (data: unknown) => {
+      await this.handleMessageCreated(data);
+    });
 
     await this.rabbitMQService.subscribe(
       EventPattern.CONNECTOR_HEALTH_CHECKED,
@@ -156,14 +157,19 @@ export class RoutingService implements OnModuleInit {
       },
     );
 
-    await this.rabbitMQService.subscribe(
-      EventPattern.CONNECTOR_SYNCED,
-      async (data: unknown) => {
-        this.handleConnectorSynced(data);
-      },
-    );
+    await this.rabbitMQService.subscribe(EventPattern.CONNECTOR_SYNCED, async (data: unknown) => {
+      this.handleConnectorSynced(data);
+    });
 
-    this.logger.log("Subscribed to routing events");
+    await this.rabbitMQService.subscribe(EventPattern.MODEL_PULLED, async () => {
+      this.handleModelChanged('model.pulled');
+    });
+
+    await this.rabbitMQService.subscribe(EventPattern.MODEL_DELETED, async () => {
+      this.handleModelChanged('model.deleted');
+    });
+
+    this.logger.log('Subscribed to routing events');
   }
 
   private async handleMessageCreated(data: unknown): Promise<void> {
@@ -177,7 +183,13 @@ export class RoutingService implements OnModuleInit {
 
     this.logMessageCreatedConsumed(messageId, threadId);
 
-    const context = this.buildRoutingContext(content, threadId, routingMode, forcedProvider, forcedModel);
+    const context = this.buildRoutingContext(
+      content,
+      threadId,
+      routingMode,
+      forcedProvider,
+      forcedModel,
+    );
     const decision = await this.routingManager.evaluateRoute(context);
 
     await this.storeAndPublishDecision(messageId, threadId, decision);
@@ -185,22 +197,29 @@ export class RoutingService implements OnModuleInit {
 
   private parseMessageCreatedPayload(
     payload: Record<string, unknown>,
-  ): { messageId: string | undefined; threadId: string; content: string; routingMode: RoutingMode | undefined; forcedProvider: string | undefined; forcedModel: string | undefined } | null {
-    const threadId = payload["threadId"] as string | undefined;
-    const content = payload["content"] as string | undefined;
+  ): {
+    messageId: string | undefined;
+    threadId: string;
+    content: string;
+    routingMode: RoutingMode | undefined;
+    forcedProvider: string | undefined;
+    forcedModel: string | undefined;
+  } | null {
+    const threadId = payload['threadId'] as string | undefined;
+    const content = payload['content'] as string | undefined;
 
     if (!threadId || !content) {
-      this.logger.warn("Received message.created with missing threadId or content");
+      this.logger.warn('Received message.created with missing threadId or content');
       return null;
     }
 
     return {
-      messageId: payload["messageId"] as string | undefined,
+      messageId: payload['messageId'] as string | undefined,
       threadId,
       content,
-      routingMode: payload["routingMode"] as RoutingMode | undefined,
-      forcedProvider: payload["forcedProvider"] as string | undefined,
-      forcedModel: payload["forcedModel"] as string | undefined,
+      routingMode: payload['routingMode'] as RoutingMode | undefined,
+      forcedProvider: payload['forcedProvider'] as string | undefined,
+      forcedModel: payload['forcedModel'] as string | undefined,
     };
   }
 
@@ -284,11 +303,11 @@ export class RoutingService implements OnModuleInit {
 
   private handleConnectorHealthChecked(data: unknown): void {
     const payload = data as Record<string, unknown>;
-    const provider = payload["provider"] as string | undefined;
-    const status = payload["status"] as string | undefined;
+    const provider = payload['provider'] as string | undefined;
+    const status = payload['status'] as string | undefined;
 
     if (provider && status) {
-      const isHealthy = status === "HEALTHY";
+      const isHealthy = status === 'HEALTHY';
       this.logger.debug(`handleConnectorHealthChecked: provider=${provider} status=${status}`);
       this.connectorHealthCache[provider] = isHealthy;
     }
@@ -296,11 +315,17 @@ export class RoutingService implements OnModuleInit {
 
   private handleConnectorSynced(data: unknown): void {
     const payload = data as Record<string, unknown>;
-    const runtime = payload["runtime"] as string | undefined;
+    const runtime = payload['runtime'] as string | undefined;
 
     if (runtime) {
       this.logger.debug(`handleConnectorSynced: runtime=${runtime} marked healthy`);
       this.runtimeHealthCache[runtime] = true;
     }
+    this.promptBuilder.invalidateCache();
+  }
+
+  private handleModelChanged(event: string): void {
+    this.logger.log(`handleModelChanged: ${event} received — invalidating prompt cache`);
+    this.promptBuilder.invalidateCache();
   }
 }

@@ -1,4 +1,12 @@
-import { type LocalModel, type LocalModelRole, type LocalModelRoleAssignment, type PullJob, type PullJobStatus, type RuntimeType } from "../../../generated/prisma";
+import {
+  type LocalModel,
+  type LocalModelRole,
+  type LocalModelRoleAssignment,
+  type ModelCategory,
+  type PullJob,
+  type PullJobStatus,
+  type RuntimeType,
+} from '../../../generated/prisma';
 
 export interface RuntimeAdapter {
   listModels(): Promise<LocalModelInfo[]>;
@@ -57,6 +65,7 @@ export interface CreateLocalModelData {
   family?: string | null;
   parameters?: string | null;
   quantization?: string | null;
+  category?: ModelCategory | null;
   isInstalled?: boolean;
 }
 
@@ -69,11 +78,15 @@ export interface CreatePullJobData {
   modelName: string;
   runtime: RuntimeType;
   status?: PullJobStatus;
+  totalBytes?: bigint | null;
+  downloadedBytes?: bigint | null;
 }
 
 export interface UpdatePullJobData {
   status?: PullJobStatus;
   progress?: number | null;
+  totalBytes?: bigint | null;
+  downloadedBytes?: bigint | null;
   errorMessage?: string | null;
   completedAt?: Date | null;
 }
@@ -95,4 +108,12 @@ export interface UpdateRuntimeConfigData {
   isEnabled?: boolean;
 }
 
-export type { LocalModel, LocalModelRoleAssignment, PullJob, RuntimeType, LocalModelRole, PullJobStatus };
+export type {
+  LocalModel,
+  LocalModelRoleAssignment,
+  ModelCategory,
+  PullJob,
+  RuntimeType,
+  LocalModelRole,
+  PullJobStatus,
+};

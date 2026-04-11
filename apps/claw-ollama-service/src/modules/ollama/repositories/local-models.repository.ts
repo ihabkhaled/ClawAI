@@ -1,10 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
-import { type LocalModel, type Prisma, type RuntimeType } from "../../../generated/prisma";
-import {
-  type CreateLocalModelData,
-  type LocalModelFilters,
-} from "../types/ollama.types";
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { type LocalModel, type Prisma, type RuntimeType } from '../../../generated/prisma';
+import { type CreateLocalModelData, type LocalModelFilters } from '../types/ollama.types';
 
 @Injectable()
 export class LocalModelsRepository {
@@ -18,11 +15,7 @@ export class LocalModelsRepository {
     return this.prisma.localModel.findUnique({ where: { id } });
   }
 
-  async findAll(
-    filters: LocalModelFilters,
-    page: number,
-    limit: number,
-  ): Promise<LocalModel[]> {
+  async findAll(filters: LocalModelFilters, page: number, limit: number): Promise<LocalModel[]> {
     const where = this.buildWhereClause(filters);
     const skip = (page - 1) * limit;
 
@@ -30,7 +23,7 @@ export class LocalModelsRepository {
       where,
       skip,
       take: limit,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
       include: { roles: true },
     });
   }
@@ -40,9 +33,7 @@ export class LocalModelsRepository {
     return this.prisma.localModel.count({ where });
   }
 
-  async upsertByNameTagRuntime(
-    data: CreateLocalModelData,
-  ): Promise<LocalModel> {
+  async upsertByNameTagRuntime(data: CreateLocalModelData): Promise<LocalModel> {
     return this.prisma.localModel.upsert({
       where: {
         name_tag_runtime: {
@@ -56,6 +47,7 @@ export class LocalModelsRepository {
         family: data.family,
         parameters: data.parameters,
         quantization: data.quantization,
+        category: data.category,
         isInstalled: data.isInstalled ?? true,
       },
       create: data,
@@ -66,6 +58,14 @@ export class LocalModelsRepository {
     return this.prisma.localModel.findMany({
       where: { runtime, isInstalled: true },
       include: { roles: true },
+    });
+  }
+
+  async findAllInstalledWithRoles(): Promise<LocalModel[]> {
+    return this.prisma.localModel.findMany({
+      where: { isInstalled: true },
+      include: { roles: true },
+      orderBy: { name: 'asc' },
     });
   }
 

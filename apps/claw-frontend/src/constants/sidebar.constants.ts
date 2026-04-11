@@ -3,6 +3,7 @@ import {
   MessageSquare,
   Plug,
   Cpu,
+  Store,
   Route,
   Brain,
   BookOpen,
@@ -11,9 +12,9 @@ import {
   ScrollText,
   Activity,
   Settings,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { ROUTES } from "./routes.constants";
+import { ROUTES } from './routes.constants';
 
 export type SidebarItem = {
   labelKey: string;
@@ -27,6 +28,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
   { labelKey: 'nav.chat', href: ROUTES.CHAT, icon: MessageSquare },
   { labelKey: 'nav.connectors', href: ROUTES.CONNECTORS, icon: Plug },
   { labelKey: 'nav.models', href: ROUTES.MODELS, icon: Cpu },
+  { labelKey: 'nav.modelCatalog', href: ROUTES.MODELS_CATALOG, icon: Store },
   { labelKey: 'nav.routing', href: ROUTES.ROUTING, icon: Route },
   { labelKey: 'nav.memory', href: ROUTES.MEMORY, icon: Brain },
   { labelKey: 'nav.context', href: ROUTES.CONTEXT, icon: BookOpen },

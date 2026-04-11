@@ -273,8 +273,10 @@ services:
         until ollama list > /dev/null 2>&1; do sleep 1; done
         echo "Ollama is ready."
 
-        # Auto-pull all required models (skips if already installed)
-        for MODEL in tinyllama gemma3:4b gemma2:2b phi3:mini llama3.2:3b; do
+        # Auto-pull models (configurable via AUTO_PULL_MODELS env var)
+        DEFAULT_MODELS="tinyllama gemma3:4b gemma2:2b phi3:mini llama3.2:3b"
+        MODELS_TO_PULL="$${AUTO_PULL_MODELS:-$$DEFAULT_MODELS}"
+        for MODEL in $$MODELS_TO_PULL; do
           if ! ollama list | grep -q "$${MODEL%%:*}"; then
             echo "Pulling $$MODEL..."
             ollama pull $$MODEL

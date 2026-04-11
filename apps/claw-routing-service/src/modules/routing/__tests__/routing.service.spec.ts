@@ -89,11 +89,16 @@ describe('RoutingService', () => {
     decisionsRepo = mockDecisionsRepo();
     routingManager = mockRoutingManager();
     rabbitMQ = mockRabbitMQ();
+    const promptBuilder = {
+      invalidateCache: jest.fn(),
+      fetchInstalledModels: jest.fn().mockResolvedValue([]),
+    };
     service = new RoutingService(
       policiesRepo as unknown as RoutingPoliciesRepository,
       decisionsRepo as unknown as RoutingDecisionsRepository,
       routingManager as unknown as RoutingManager,
       rabbitMQ as unknown as RabbitMQService,
+      promptBuilder as any,
     );
   });
 
@@ -213,7 +218,7 @@ describe('RoutingService', () => {
     it('should subscribe to events on module init', async () => {
       await service.onModuleInit();
 
-      expect(rabbitMQ.subscribe).toHaveBeenCalledTimes(3);
+      expect(rabbitMQ.subscribe).toHaveBeenCalledTimes(5);
     });
   });
 });

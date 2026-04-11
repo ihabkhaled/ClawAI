@@ -265,6 +265,7 @@ Controller → Service → Repository (data access only)
 ### No Inline Declarations Rule (Backend)
 
 **NEVER** define `type`, `interface`, `enum`, or module-level `const` inline in ANY of these file types:
+
 - `*.service.ts`, `*.manager.ts`, `*.controller.ts`, `*.repository.ts`
 - `*.adapter.ts`, `*.utility.ts`, `*.guard.ts`, `*.filter.ts`
 - `*.interceptor.ts`, `*.pipe.ts`, `*.module.ts`, `*.provider.ts`
@@ -497,18 +498,65 @@ Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 Default router model: `gemma3:4b` (configurable via `OLLAMA_ROUTER_MODEL`)
 Default memory extraction model: `gemma3:4b` (configurable via `MEMORY_EXTRACTION_MODEL`)
 Models auto-synced to DB on ollama-service startup.
+Auto-pull list configurable via `AUTO_PULL_MODELS` env var (space-separated).
+
+## Model Catalog (30 Models, 6 Categories)
+
+Users browse and download models from the built-in catalog at `/models/catalog`. Models are organized by category:
+
+| Category         | Models                                                                         | Runtime |
+| ---------------- | ------------------------------------------------------------------------------ | ------- |
+| Coding           | Qwen 2.5 Coder 32B/14B/7B, DeepSeek Coder V2 16B, StarCoder2 7B                | Ollama  |
+| File Generation  | Qwen 3 7B, Llama 3.3 8B, Mistral Small 3 7B, Phi-4 14B, Gemma 3 9B             | Ollama  |
+| Image Generation | FLUX.2 Dev, FLUX.1 Schnell, SD 3.5, SDXL-Lightning, Z-Image-Turbo              | ComfyUI |
+| Routing          | Qwen 3 1.7B, Phi-4-mini 3.8B, SmolLM2 1.7B, Gemma 3 4B, Mistral Small 3 7B     | Ollama  |
+| Reasoning        | DeepSeek R1 32B/14B/7B, QwQ 32B, Phi-4 14B                                     | Ollama  |
+| Thinking         | GLM-4.7 Thinking, DeepSeek V3.2, MiMo-V2-Flash, Qwen 3.5 27B, Llama 4 Maverick | Ollama  |
+
+### Model Roles
+
+| Role                   | Purpose                             |
+| ---------------------- | ----------------------------------- |
+| ROUTER                 | Makes routing decisions (AUTO mode) |
+| LOCAL_FALLBACK_CHAT    | Default local chat model            |
+| LOCAL_CODING           | Specialized for code tasks          |
+| LOCAL_REASONING        | Chain-of-thought reasoning          |
+| LOCAL_FILE_GENERATION  | Structured output for files         |
+| LOCAL_THINKING         | Agentic/search/research tasks       |
+| LOCAL_IMAGE_GENERATION | Local diffusion model               |
+
+### Catalog API Endpoints
+
+| Endpoint                              | Method    | Description                 |
+| ------------------------------------- | --------- | --------------------------- |
+| /api/v1/ollama/catalog                | GET       | Browse catalog with filters |
+| /api/v1/ollama/catalog/:id            | GET       | Single catalog entry        |
+| /api/v1/ollama/catalog/:id/pull       | POST      | Download model from catalog |
+| /api/v1/ollama/pull-jobs              | GET       | List active downloads       |
+| /api/v1/ollama/pull-jobs/:id/progress | GET (SSE) | Real-time download progress |
+| /api/v1/ollama/pull-jobs/:id          | DELETE    | Cancel download             |
+
+### Dynamic Routing
+
+The router prompt is now built dynamically based on installed models:
+
+- `PromptBuilderManager` fetches installed models from ollama-service internal API
+- Groups by category, only includes healthy + installed models
+- Cached with 5-minute TTL, invalidated on MODEL_PULLED/MODEL_DELETED events
+- Category-aware routing: coding tasks → LOCAL_CODING model, reasoning → LOCAL_REASONING, etc.
+- 64 category detection keywords (28 coding, 21 reasoning, 15 thinking)
 
 ## Routing Modes
 
-| Mode           | Behavior                                                                                         |
-| -------------- | ------------------------------------------------------------------------------------------------ |
-| AUTO           | Ollama router decides (temp=0, Zod schema, provider allowlist, 10s timeout → heuristic fallback) |
-| MANUAL_MODEL   | User-selected provider+model (forcedProvider/forcedModel)                                        |
-| LOCAL_ONLY     | Always local-ollama/gemma3:4b                                                                    |
-| PRIVACY_FIRST  | Local if healthy, else Anthropic                                                                 |
-| LOW_LATENCY    | OpenAI/gpt-4o-mini                                                                               |
-| HIGH_REASONING | Anthropic/claude-opus-4                                                                          |
-| COST_SAVER     | Local if healthy, else cheapest cloud                                                            |
+| Mode           | Behavior                                                                       |
+| -------------- | ------------------------------------------------------------------------------ |
+| AUTO           | Dynamic prompt + category detection → Ollama router → heuristic fallback       |
+| MANUAL_MODEL   | User-selected provider+model (forcedProvider/forcedModel)                      |
+| LOCAL_ONLY     | Category-aware: coding→LOCAL_CODING, reasoning→LOCAL_REASONING, else gemma3:4b |
+| PRIVACY_FIRST  | Local if healthy, else Anthropic                                               |
+| LOW_LATENCY    | OpenAI/gpt-4o-mini                                                             |
+| HIGH_REASONING | Anthropic/claude-opus-4                                                        |
+| COST_SAVER     | Local if healthy, else cheapest cloud                                          |
 
 Active policies (sorted by priority) can override the mode.
 
@@ -640,6 +688,8 @@ Single root `.env` (copy from `.env.example`). Groups:
 - Per-service ports: \*\_PORT (12 entries)
 - Per-service database URLs: _\_DATABASE_URL/_\_MONGODB_URI (11 entries)
 - Image: STABLE_DIFFUSION_URL, IMAGE_SERVICE_URL, IMAGE_PORT, IMAGE_DATABASE_URL
+- ComfyUI: COMFYUI_BASE_URL, COMFYUI_PORT
+- Model Catalog: AUTO_PULL_MODELS (space-separated list of models to auto-pull on Docker startup)
 
 ---
 
@@ -759,35 +809,60 @@ For each frontend change, follow this exact order:
 10. **Utilities** — If needed, wrap in `src/utilities/<name>.utility.ts` AND export from index
 11. **Tests** — Vitest tests for utilities, hooks, components
 
-### Phase 7: Infrastructure & Config Updates
+### Phase 7: Infrastructure & Config Updates (MANDATORY — every single one)
 
-Check and update ALL of these (the MANDATORY Change Checklist):
+Check and update ALL of these:
 
-1. `.env.example` + `.env` — any new environment variables
-2. `scripts/install.sh` + `scripts/install.ps1` — add to generated .env block
-3. `docker-compose.dev.yml` + `docker-compose.yml` — new service/port/volume/database
-4. `infra/nginx/nginx.conf` — new upstream + location block (SSE routes need special config!)
-5. `packages/shared-constants` — new service port and name
-6. `packages/shared-types` — new event patterns
-7. `apps/claw-health-service` — add new service to health check list
-8. `.github/workflows/ci.yml` — add to Prisma generate loop and test env vars
+1. **`.env.example`** — add/remove/rename any environment variable with example values
+2. **`.env`** — fill the new variable with a working dev value
+3. **`scripts/install.sh`** — add the variable to the generated .env block
+4. **`scripts/install.ps1`** — same for Windows PowerShell installer
+5. **ALL Docker compose files** — `docker-compose.dev.yml`, `docker-compose.yml` (prod), `docker-compose.dev.ollama.yml`, `docker-compose.prod.ollama.yml`, and any split compose files — if new service, port, volume, database, or AI runtime dependency
+6. **`infra/nginx/nginx.conf`** — add upstream + location block for the new service (SSE routes need `proxy_buffering off`)
+7. **`packages/shared-constants`** — add service port and service name constants
+8. **`packages/shared-types`** — add new event patterns if the service publishes events
+9. **`apps/claw-health-service`** — add the new service URL to health check list
+10. **`.github/workflows/ci.yml`** — add new service to the Prisma generate loop and test env vars
+11. **i18n locale files** — if any new user-facing text (ALL 8 locales: en, ar, de, es, fr, it, pt, ru)
+12. **Architecture docs** (`docs/`) — if the change affects documented architecture
+13. **Prisma migrations** — if any schema change (`npx prisma migrate dev --name <name>`)
+14. **Seed files** — if new default data needed (e.g., catalog entries, default policies)
+15. **Test files** — create or update tests for every code change
+16. **Frontend types** — sync `src/types/` with backend DTO/schema changes
+17. **`CLAUDE.md`** — if adding new services, env vars, patterns, or rules
+18. **`apps/claw-frontend`** — update model selectors, types, hooks, and components if user-facing
+
+**Never skip any of these.** A feature is incomplete if any of these are missing.
 
 ### Phase 8: Validation (ALL must pass before considering done)
 
 ```bash
 # 1. TypeScript — 0 errors in ALL changed workspaces
-npm run typecheck --workspace=apps/<service-name>
+npm run typecheck
 
 # 2. ESLint — 0 errors (warnings OK if pre-existing)
-npm run lint --workspace=apps/<service-name>
+npm run lint
 
 # 3. Tests — ALL pass
-npm run test --workspace=apps/<service-name>
+npm run test
 
-# 4. Docker — restart affected services and verify healthy
+# 4. Build — production build succeeds
+npm run build
+
+# 5. Docker — restart affected services and verify healthy
 docker compose -f docker-compose.dev.yml restart <service-name>
 docker compose -f docker-compose.dev.yml ps <service-name>  # must show (healthy)
 ```
+
+**NEVER skip pre-commit hooks.** The pre-commit hook runs 5 steps:
+
+1. `prettier --write` — format staged files
+2. `npm run lint` — ESLint all workspaces (0 errors required)
+3. `npm run typecheck` — TypeScript strict (0 errors required)
+4. `npm run build` — production build all workspaces
+5. `npm run test` — all tests pass
+
+If pre-commit fails, fix the issue and create a NEW commit. NEVER use `--no-verify`.
 
 ### Phase 9: E2E API Testing
 
@@ -816,6 +891,52 @@ For features involving multiple services (e.g., message flow):
 1. Update `CLAUDE.md` if new patterns, services, env vars, or rules were added
 2. Update `docs/` if architecture changed
 3. Update service-specific `CLAUDE.md` files (e.g., `apps/claw-chat-service/CLAUDE.md`)
+
+---
+
+## How to Add a New Local Model
+
+1. **Add to model catalog seed** (`apps/claw-ollama-service/prisma/seed-catalog.ts`):
+   ```typescript
+   { name: 'model-name', tag: '7b', displayName: 'Model Name 7B',
+     category: 'CODING', description: '...', sizeBytes: BigInt(5_000_000_000),
+     parameterCount: '7B', runtime: 'OLLAMA', ollamaName: 'model-name:7b',
+     isRecommended: false, capabilities: ['code_generation'] }
+   ```
+2. **Run seed**: `cd apps/claw-ollama-service && npx tsx prisma/seed-catalog.ts`
+3. **Update routing constants** if the model has a new category pattern (`apps/claw-routing-service/src/modules/routing/constants/routing.constants.ts`)
+4. **Update CLAUDE.md** — add to the Model Catalog table
+5. **Update docker auto-pull** if the model should be pre-installed (`.env` → `AUTO_PULL_MODELS`)
+
+## How to Add a New Backend Service
+
+1. **Copy boilerplate** from closest existing service (e.g., `claw-ollama-service`)
+2. **Create PostgreSQL database** in all Docker compose files (dev, prod, ollama variants)
+3. **Add service container** to all Docker compose files with port, env_file, depends_on, healthcheck
+4. **Assign port** — next available after 4013 (add to `packages/shared-constants`)
+5. **Add env vars** to `.env`, `.env.example`, `scripts/install.sh`, `scripts/install.ps1`
+6. **Add nginx route** in `infra/nginx/nginx.conf` (use resolver pattern, not upstream blocks)
+7. **Add health check** in `apps/claw-health-service`
+8. **Add to CI** in `.github/workflows/ci.yml` — Prisma generate loop + test env vars
+9. **Add event patterns** to `packages/shared-types` if the service publishes events
+10. **Add frontend types/hooks/pages** if user-facing
+11. **Add to ALL 8 i18n locales** if new user-facing text
+12. **Update CLAUDE.md** — workspace layout, nginx table, event bus table, env vars section
+
+## How to Add a New Frontend Feature
+
+1. **Types** → `src/types/<domain>.types.ts` + export from `src/types/index.ts`
+2. **Enums** → `src/enums/<name>.enum.ts` + export from `src/enums/index.ts`
+3. **Constants** → `src/constants/<name>.constants.ts` + export from `src/constants/index.ts`
+4. **Repository** → `src/repositories/<domain>/<domain>.repository.ts` (API calls)
+5. **Query keys** → `src/repositories/shared/query-keys.ts`
+6. **Hooks** → `src/hooks/<domain>/use-<name>.ts` (ONE hook = ONE responsibility)
+7. **Components** → `src/components/<feature>/` (TSX = pure render, ZERO hooks)
+8. **Page** → `src/app/(portal)/<route>/page.tsx` (ONE controller hook, loading/empty/error states)
+9. **i18n** → ALL 8 locale files (`src/lib/i18n/locales/{en,ar,de,es,fr,it,pt,ru}.ts`)
+10. **Navigation** → `src/constants/sidebar.constants.ts` + `src/constants/routes.constants.ts`
+11. **No inline types/consts/enums** in any .tsx or hook file — extract to dedicated files
+12. **No React hooks in .tsx** — only ONE controller hook call per page/component
 
 ---
 

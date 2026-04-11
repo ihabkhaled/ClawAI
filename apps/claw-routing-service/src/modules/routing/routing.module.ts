@@ -1,10 +1,11 @@
-import { Module } from "@nestjs/common";
-import { RoutingController } from "./controllers/routing.controller";
-import { RoutingService } from "./services/routing.service";
-import { RoutingManager } from "./managers/routing.manager";
-import { OllamaRouterManager } from "./managers/ollama-router.manager";
-import { RoutingPoliciesRepository } from "./repositories/routing-policies.repository";
-import { RoutingDecisionsRepository } from "./repositories/routing-decisions.repository";
+import { Module } from '@nestjs/common';
+import { RoutingController } from './controllers/routing.controller';
+import { RoutingService } from './services/routing.service';
+import { RoutingManager } from './managers/routing.manager';
+import { OllamaRouterManager } from './managers/ollama-router.manager';
+import { PromptBuilderManager } from './managers/prompt-builder.manager';
+import { RoutingPoliciesRepository } from './repositories/routing-policies.repository';
+import { RoutingDecisionsRepository } from './repositories/routing-decisions.repository';
 
 @Module({
   controllers: [RoutingController],
@@ -12,6 +13,7 @@ import { RoutingDecisionsRepository } from "./repositories/routing-decisions.rep
     RoutingService,
     RoutingManager,
     OllamaRouterManager,
+    PromptBuilderManager,
     RoutingPoliciesRepository,
     RoutingDecisionsRepository,
   ],

@@ -32,8 +32,10 @@ services:
         done
         echo "Ollama is ready."
 
-        # Auto-pull all required models (skips if already installed)
-        for MODEL in tinyllama gemma3:4b gemma2:2b phi3:mini llama3.2:3b; do
+        # Auto-pull models (configurable via AUTO_PULL_MODELS env var)
+        DEFAULT_MODELS="tinyllama gemma3:4b gemma2:2b phi3:mini llama3.2:3b"
+        MODELS_TO_PULL="$${AUTO_PULL_MODELS:-$$DEFAULT_MODELS}"
+        for MODEL in $$MODELS_TO_PULL; do
           if ! ollama list | grep -q "$${MODEL%%:*}"; then
             echo "Pulling $$MODEL..."
             ollama pull $$MODEL
@@ -79,9 +81,32 @@ services:
     networks:
       - claw-network
 
+  # ---------------------------------------------------------------------------
+  # ComfyUI (Local Image Generation — FLUX, SD 3.5, SDXL-Lightning)
+  # ---------------------------------------------------------------------------
+  comfyui:
+    image: ghcr.io/ai-dock/comfyui:latest
+    container_name: claw-comfyui
+    restart: unless-stopped
+    ports:
+      - '${COMFYUI_PORT:-8188}:8188'
+    volumes:
+      - comfyui-models-data:/opt/ComfyUI/models
+    environment:
+      - CLI_ARGS=--listen 0.0.0.0
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:8188/system_stats 2>/dev/null || exit 1']
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    networks:
+      - claw-network
+
 volumes:
   ollama-data:
   sd-models-data:
+  comfyui-models-data:
 
 networks:
   claw-network:

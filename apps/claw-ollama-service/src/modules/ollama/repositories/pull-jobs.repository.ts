@@ -1,10 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
-import { type PullJob } from "../../../generated/prisma";
-import {
-  type CreatePullJobData,
-  type UpdatePullJobData,
-} from "../types/ollama.types";
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { type PullJob, type PullJobStatus } from '../../../generated/prisma';
+import { type CreatePullJobData, type UpdatePullJobData } from '../types/ollama.types';
 
 @Injectable()
 export class PullJobsRepository {
@@ -24,8 +21,22 @@ export class PullJobsRepository {
 
   async findRecent(limit: number): Promise<PullJob[]> {
     return this.prisma.pullJob.findMany({
-      orderBy: { startedAt: "desc" },
+      orderBy: { startedAt: 'desc' },
       take: limit,
+    });
+  }
+
+  async findByModelAndStatus(modelName: string, status: PullJobStatus): Promise<PullJob | null> {
+    return this.prisma.pullJob.findFirst({
+      where: { modelName, status },
+      orderBy: { startedAt: 'desc' },
+    });
+  }
+
+  async findLatestByModelName(modelName: string): Promise<PullJob | null> {
+    return this.prisma.pullJob.findFirst({
+      where: { modelName },
+      orderBy: { startedAt: 'desc' },
     });
   }
 }
