@@ -258,8 +258,11 @@ export class OllamaService implements OnModuleInit {
     if (!model) {
       throw new EntityNotFoundException('LocalModel', modelId);
     }
-    this.logger.log(`deleteModel: deleting model ${model.name}:${model.tag} id=${modelId}`);
+    const fullName = `${model.name}:${model.tag}`;
+    this.logger.log(`deleteModel: deleting model ${fullName} id=${modelId}`);
     await this.ollamaManager.deleteModel(modelId);
+    await this.pullJobsRepository.deleteByModelName(fullName);
+    this.logger.log(`deleteModel: cleaned up pull jobs for ${fullName}`);
 
     void this.rabbitMQService.publish(EventPattern.CONNECTOR_UPDATED, {
       action: 'MODEL_DELETED',

@@ -24,7 +24,7 @@ export function CatalogModelAction({
     );
   }
 
-  if (entry.isInstalled || activeStatus === 'COMPLETED') {
+  if (entry.isInstalled) {
     return (
       <div className="flex gap-2">
         <Button variant="ghost" size="sm" disabled className="flex-1">

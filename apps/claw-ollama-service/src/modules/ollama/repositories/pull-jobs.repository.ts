@@ -43,6 +43,11 @@ export class PullJobsRepository {
     });
   }
 
+  async deleteByModelName(modelName: string): Promise<number> {
+    const result = await this.prisma.pullJob.deleteMany({ where: { modelName } });
+    return result.count;
+  }
+
   async findLatestByModelName(modelName: string): Promise<PullJob | null> {
     return this.prisma.pullJob.findFirst({
       where: { modelName },
