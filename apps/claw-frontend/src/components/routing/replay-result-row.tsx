@@ -9,7 +9,17 @@ export function ReplayResultRow({ result, index, t }: ReplayResultRowProps): Rea
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center">
-      <span className="text-sm font-medium text-muted-foreground">#{index + 1}</span>
+      <div className="min-w-0 shrink-0">
+        <span className="text-sm font-medium text-muted-foreground">#{index + 1}</span>
+        {result.messagePreview ? (
+          <p
+            className="mt-1 max-w-[200px] truncate text-xs text-muted-foreground"
+            title={result.messagePreview}
+          >
+            {result.messagePreview}
+          </p>
+        ) : null}
+      </div>
 
       <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
         <div className="flex-1 space-y-1">

@@ -1,9 +1,8 @@
-import { Injectable } from "@nestjs/common";
-import { type Prisma, type RoutingMode } from "../../../generated/prisma";
-import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
-import { type RoutingDecision } from "../../../generated/prisma";
-import { type CreateDecisionData } from "../types/routing.types";
-import { type ReplayFilters } from "../types/replay.types";
+import { Injectable } from '@nestjs/common';
+import { type Prisma, type RoutingDecision, RoutingMode } from '../../../generated/prisma';
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { type CreateDecisionData } from '../types/routing.types';
+import { type ReplayFilters } from '../types/replay.types';
 
 @Injectable()
 export class RoutingDecisionsRepository {
@@ -22,17 +21,13 @@ export class RoutingDecisionsRepository {
     return this.prisma.routingDecision.findUnique({ where: { id } });
   }
 
-  async findByThreadId(
-    threadId: string,
-    page: number,
-    limit: number,
-  ): Promise<RoutingDecision[]> {
+  async findByThreadId(threadId: string, page: number, limit: number): Promise<RoutingDecision[]> {
     const skip = (page - 1) * limit;
     return this.prisma.routingDecision.findMany({
       where: { threadId },
       skip,
       take: limit,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -47,7 +42,10 @@ export class RoutingDecisionsRepository {
       where.threadId = filters.threadId;
     }
 
-    if (filters.routingMode) {
+    if (
+      filters.routingMode &&
+      Object.values(RoutingMode).includes(filters.routingMode as RoutingMode)
+    ) {
       where.routingMode = filters.routingMode as RoutingMode;
     }
 
