@@ -2,6 +2,7 @@ export { getAccessToken, getRefreshToken, setTokens, clearAuthStorage } from './
 export { cn } from './cn.utility';
 export { getConfidenceLabel, getConfidenceClass } from './confidence.utility';
 export { formatBytes } from './format-bytes.utility';
+export { getLevelBadgeClass, formatLogLatency } from './log-stats.utility';
 export { formatDuration, formatSpeed } from './format-duration.utility';
 export { formatDate } from './date.utility';
 export { getHealthStatusColor } from './health-status.utility';

@@ -2,21 +2,9 @@ import { Activity, AlertTriangle, Clock, Server } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LOG_LEVEL_COLORS, SERVER_LOG_STATS_TOP_SERVICES_LIMIT } from '@/constants';
-import { LogLevel } from '@/enums';
+import { SERVER_LOG_STATS_TOP_SERVICES_LIMIT } from '@/constants';
 import type { ServerLogsStatsProps } from '@/types';
-
-function getLevelBadgeClass(level: string): string {
-  const normalized = level.toLowerCase() as LogLevel;
-  return LOG_LEVEL_COLORS[normalized] ?? LOG_LEVEL_COLORS[LogLevel.INFO];
-}
-
-function formatLatency(ms: number): string {
-  if (ms < 1) {
-    return '<1ms';
-  }
-  return `${Math.round(ms)}ms`;
-}
+import { formatLogLatency, getLevelBadgeClass } from '@/utilities/log-stats.utility';
 
 export function ServerLogsStats({ stats }: ServerLogsStatsProps): React.ReactElement {
   const topServices = [...stats.byService]
@@ -59,7 +47,7 @@ export function ServerLogsStats({ stats }: ServerLogsStatsProps): React.ReactEle
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{formatLatency(stats.avgLatencyMs)}</p>
+            <p className="text-2xl font-bold">{formatLogLatency(stats.avgLatencyMs)}</p>
           </CardContent>
         </Card>
       </div>
@@ -72,11 +60,7 @@ export function ServerLogsStats({ stats }: ServerLogsStatsProps): React.ReactEle
           <CardContent>
             <div className="flex flex-wrap gap-2">
               {stats.byLevel.map((item) => (
-                <Badge
-                  key={item._id}
-                  variant="outline"
-                  className={getLevelBadgeClass(item._id)}
-                >
+                <Badge key={item._id} variant="outline" className={getLevelBadgeClass(item._id)}>
                   {item._id.toUpperCase()} {item.count.toLocaleString()}
                 </Badge>
               ))}
