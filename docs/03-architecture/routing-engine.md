@@ -74,22 +74,22 @@ Minimizes cost. Uses local Ollama when healthy, otherwise selects the cheapest c
 
 ## AUTO Mode: Deep Dive
 
-### Ollama Router Request
+AUTO mode uses a 5-stage pipeline. Each stage can short-circuit the pipeline by returning a routing decision. Stages are ordered by priority and computational cost (cheapest/fastest first, Ollama LLM call last).
 
-When a message arrives in AUTO mode, the routing service sends a structured prompt to the Ollama router model:
+### Stage 1-4: Keyword-Based Detection (Sub-Millisecond)
 
-```
-System: You are an AI routing assistant. Analyze the user's message and select
-the best provider and model. Consider: task type, complexity, required capabilities
-(vision, code, math, creative), privacy sensitivity, and cost.
+Before calling the Ollama router LLM, the engine runs deterministic keyword detection:
 
-Available providers: [list from active healthy connectors + local-ollama]
-Available models: [list from synced connector models + local models]
+1. **Privacy enforcement** (30 keywords) -- forces local, no cloud fallback
+2. **Image detection** (70+ keywords, 5 detection layers) -- routes to image provider
+3. **File generation detection** (7 phrases + 162 verb/format combos) -- routes to FILE_GENERATION
+4. **Category detection** (370+ keywords across 12 categories) -- routes to category-specific local model
 
-Respond with JSON matching this exact schema.
+If any of these stages match, the Ollama router is never called, saving 1-10 seconds of latency.
 
-User: <the user's message content>
-```
+### Stage 5: Ollama Router Request
+
+When no keyword match is found, the routing service sends a dynamically-built prompt to the Ollama router model. The prompt is constructed by `PromptBuilderManager` and includes only currently installed and healthy models.
 
 ### Zod Validation Schema
 
@@ -97,14 +97,10 @@ The router's response is validated against a strict Zod schema:
 
 ```
 {
-  selectedProvider: enum(provider list),
-  selectedModel: string,
+  provider: string (min 1 char),
+  model: string (min 1 char),
   confidence: number (0-1),
-  reasonTags: array of strings (max 5),
-  privacyClass: enum("LOW", "MEDIUM", "HIGH"),
-  costClass: enum("LOW", "MEDIUM", "HIGH"),
-  fallbackProvider: enum(provider list) | null,
-  fallbackModel: string | null
+  reason: string (min 1 char)
 }
 ```
 
@@ -128,45 +124,164 @@ The 10-second timeout is configurable via `OLLAMA_ROUTER_TIMEOUT_MS`. This preve
 
 ---
 
-## Heuristic Fallback Rules
+## 5-Stage Routing Pipeline
 
-When the Ollama router is unavailable or returns an invalid response, the system applies deterministic heuristic rules based on message content analysis.
+Every message in AUTO mode passes through a 5-stage pipeline. Each stage can short-circuit and return a decision, skipping later stages.
 
-### Task Detection Heuristics
+```
+Stage 1: Privacy Enforcement
+  → 30 privacy keywords scanned (medical, SSN, confidential, etc.)
+  → If ANY match: force local-ollama, confidence 0.95, NO cloud fallback
+  → Privacy is never overridden by any later stage
 
-| Task Signal                    | Detection Method                                                        | Routes To                                  |
-| ------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------ |
-| Coding, debugging, code review | Keywords: code, debug, function, class, bug, error, implement, refactor | `anthropic` / `claude-sonnet-4`            |
-| Deep reasoning, architecture   | Keywords: explain why, analyze, design, architecture, compare, evaluate | `anthropic` / `claude-opus-4`              |
-| Image/video/web content        | Keywords: image, picture, video, YouTube, website, visual, screenshot   | `google` / `gemini-2.5-flash`              |
-| Math, algorithms               | Keywords: calculate, equation, algorithm, prove, mathematical, formula  | `deepseek` or `local-ollama` / `phi3:mini` |
-| Creative writing               | Keywords: write, story, poem, creative, essay, blog, draft              | `openai` / `gpt-4o-mini`                   |
-| Simple Q&A, translations       | Short messages (< 50 words), keywords: translate, what is, define       | `local-ollama` / `gemma3:4b`               |
-| File/data analysis             | Attached files present, keywords: analyze, data, CSV, chart             | `google` / `gemini-2.5-flash`              |
-| Privacy-sensitive              | Keywords: personal, private, confidential, secret, password, medical    | `local-ollama` / `gemma3:4b`               |
+Stage 2: Image Generation Detection
+  → 70 exact-match keywords + verb/noun combo detection
+  → 12 image verbs x 34 image nouns = 408 combinations
+  → 21 art style indicators (photorealistic, watercolor, pixel art, etc.)
+  → 18 strong image nouns that indicate visual output
+  → Reference-based detection (recreate/reproduce + this/attached)
+  → Routes to IMAGE_GEMINI > IMAGE_OPENAI > IMAGE_LOCAL
 
-### Heuristic Priority
+Stage 3: File Generation Detection
+  → 7 exact phrases (export as, save as, download as, etc.)
+  → 9 verbs x 18 format words = 162 verb+format combinations
+  → Routes to FILE_GENERATION / auto
 
-When multiple signals match, the system uses this priority order:
+Stage 4: Category Detection (370+ keywords across 15 capability classes)
+  → Scans message against all 15 keyword arrays
+  → Maps detected category to a LocalModelRole
+  → Finds installed model with that role via PromptBuilderManager
+  → If found: routes to that local model, confidence 0.85
 
-1. Privacy-sensitive (always overrides, forces local)
-2. File/data analysis (if files attached)
-3. Image/video/web (if media-related)
-4. Coding (if code-related keywords detected)
-5. Math/algorithms
-6. Deep reasoning
-7. Creative writing
-8. Simple Q&A (default fallback)
+Stage 5: Ollama Router + Heuristic Fallback
+  → Sends message to Ollama router model with dynamic prompt
+  → If Ollama responds with valid JSON in 10s: use its decision
+  → If Ollama fails: heuristic fallback (short messages → local, else cloud priority)
+```
 
-### Confidence Scores
+---
 
-| Source                     | Confidence Range |
-| -------------------------- | ---------------- |
-| Ollama router (high match) | 0.80 - 0.99      |
-| Ollama router (uncertain)  | 0.50 - 0.79      |
-| Heuristic (strong signal)  | 0.60 - 0.75      |
-| Heuristic (weak signal)    | 0.30 - 0.59      |
-| Default fallback           | 0.20             |
+## 15 Capability Classes
+
+The routing engine classifies messages into 15 capability classes, each backed by a dedicated keyword array in `routing.constants.ts`. This enables fine-grained routing to the most appropriate model.
+
+| # | Capability Class | Keyword Count | Example Keywords | Routes To (Local Role) |
+| - | ---------------- | ------------- | ---------------- | ---------------------- |
+| 1 | Coding | 100 | code, debug, typescript, prisma, jest, SOLID, design pattern | LOCAL_CODING |
+| 2 | Reasoning | 21 | prove, solve, theorem, probability, chain of thought | LOCAL_REASONING |
+| 3 | Thinking | 15 | research, investigate, deep dive, trade-offs, pros and cons | LOCAL_THINKING |
+| 4 | Infrastructure | 33 | terraform, kubernetes, docker, AWS, Lambda, VPC, helm | LOCAL_CODING |
+| 5 | Data Analysis | 33 | pandas, matplotlib, ETL, BigQuery, Spark, window function | LOCAL_REASONING |
+| 6 | Business | 30 | user story, KPI, ROI, roadmap, SWOT, pitch deck, go-to-market | LOCAL_FILE_GENERATION |
+| 7 | Creative Writing | 26 | blog post, screenplay, narrative, tagline, press release | LOCAL_FALLBACK_CHAT |
+| 8 | Security | 25 | CVE, XSS, OWASP, penetration test, threat model, WAF | LOCAL_CODING |
+| 9 | Medical | 19 | clinical, diagnosis, HIPAA, ICD-10, adverse event | LOCAL_REASONING |
+| 10 | Legal | 21 | contract, NDA, GDPR, patent, jurisdiction, case law | LOCAL_REASONING |
+| 11 | Translation | 12 | translate, localize, i18n, multilingual, convert to English | LOCAL_FALLBACK_CHAT |
+| 12 | Image Generation | 70+ | generate image, draw, sketch, logo, portrait, watercolor | LOCAL_IMAGE_GENERATION |
+| 13 | File Generation | 34 | export as PDF, create CSV, generate report, save to file | LOCAL_FILE_GENERATION |
+| 14 | Privacy (enforcement) | 30 | medical, SSN, confidential, private key, PII, attorney-client | Forces local (no role) |
+| 15 | General Chat | 0 (default) | Everything that matches no other class | LOCAL_FALLBACK_CHAT |
+
+**Total keyword count**: 370+ unique keywords plus hundreds of verb/noun combinations for image and file detection.
+
+### Category-to-Role Mapping
+
+The `CATEGORY_TO_ROLE_MAP` constant maps each detected category to a `LocalModelRole`:
+
+| Category | LocalModelRole | Rationale |
+| --- | --- | --- |
+| coding | LOCAL_CODING | Code generation, debugging, refactoring |
+| reasoning | LOCAL_REASONING | Mathematical proofs, logic, step-by-step analysis |
+| thinking | LOCAL_THINKING | Research, deep investigation, comparative analysis |
+| infrastructure | LOCAL_CODING | DevOps and infra tasks need code-aware models |
+| data-analysis | LOCAL_REASONING | Data tasks need analytical reasoning |
+| business | LOCAL_FILE_GENERATION | Business tasks often produce documents |
+| creative-writing | LOCAL_FALLBACK_CHAT | Creative tasks use general chat models |
+| security | LOCAL_CODING | Security audits need code-aware models |
+| medical | LOCAL_REASONING | Medical queries need careful reasoning |
+| legal | LOCAL_REASONING | Legal analysis needs structured reasoning |
+| translation | LOCAL_FALLBACK_CHAT | Translation uses general language models |
+| image-generation | LOCAL_IMAGE_GENERATION | Routes to diffusion models |
+| file-generation | LOCAL_FILE_GENERATION | Routes to structured output models |
+| chat | LOCAL_FALLBACK_CHAT | Default general conversation |
+
+---
+
+## Privacy Enforcement Layer
+
+Privacy detection is the highest-priority check in the routing pipeline. It runs BEFORE any other detection and cannot be overridden.
+
+### 30 Privacy Keywords
+
+`medical`, `patient`, `diagnosis`, `health record`, `PHI`, `HIPAA`, `tax return`, `salary`, `SSN`, `social security`, `credit card`, `bank account`, `password`, `private key`, `secret`, `confidential`, `NDA`, `attorney-client`, `privilege`, `personal data`, `PII`, `financial statement`, `investment portfolio`, `insurance claim`, `disability`, `mental health`, `therapy`, `counseling`, `genetic`, `criminal record`
+
+### Enforcement Behavior
+
+- **Detection**: Case-insensitive substring match against all 30 keywords
+- **Action**: Force `local-ollama` / `gemma3:4b`, confidence 0.95
+- **Fallback chain**: Filtered to LOCAL_PROVIDER only (cloud entries removed)
+- **Reason tags**: `['auto', 'privacy_enforced', 'local_only']`
+- **Privacy class**: `local`
+- **Zero cloud exposure guarantee**: Even the fallback chain contains no cloud providers
+
+---
+
+## 370+ Keyword Detection System
+
+### How Detection Works
+
+Each capability class has a dedicated `detect*Request(message)` method in `RoutingManager`:
+
+1. The message is lowercased once
+2. Each keyword in the class array is checked via `String.includes()` (case-insensitive)
+3. First match wins -- no need to match all keywords
+4. Categories are checked in priority order (security > medical > legal > coding > infrastructure > data-analysis > reasoning > thinking > business > translation > creative-writing)
+
+### Detection Priority Order
+
+When a message matches multiple categories (e.g., "debug this Kubernetes deployment"), the first matching category in priority order wins:
+
+1. Security (force to LOCAL_CODING)
+2. Medical (force to LOCAL_REASONING)
+3. Legal (force to LOCAL_REASONING)
+4. Coding (LOCAL_CODING)
+5. Infrastructure (LOCAL_CODING)
+6. Data Analysis (LOCAL_REASONING)
+7. Reasoning (LOCAL_REASONING)
+8. Thinking (LOCAL_THINKING)
+9. Business (LOCAL_FILE_GENERATION)
+10. Translation (LOCAL_FALLBACK_CHAT)
+11. Creative Writing (LOCAL_FALLBACK_CHAT)
+
+### Image Detection (Multi-Layer)
+
+Image detection uses 5 independent detection layers. Any single layer matching triggers image routing:
+
+1. **Exact keyword match**: 70 phrases from `IMAGE_KEYWORDS` array
+2. **Verb + noun combo**: 12 verbs x 34 nouns (generate+image, create+portrait, etc.)
+3. **Strong noun + context**: 18 strong nouns (logo, poster, mascot) + any image verb or word
+4. **Art style indicators**: 21 style keywords (photorealistic, watercolor, pixel art, cyberpunk, etc.)
+5. **Reference-based**: recreate/reproduce/remake + this/attached
+
+### Confidence Scoring Matrix
+
+| Detection Source | Confidence | Notes |
+| --- | --- | --- |
+| Privacy enforcement | 0.95 | Highest -- never overridden |
+| Image exact keyword | 0.95 | High confidence for explicit image requests |
+| Image verb+noun combo | 0.95 | Same confidence as exact match |
+| File generation exact phrase | 0.95 | "export as PDF" is unambiguous |
+| File generation verb+format combo | 0.90 | "generate" + "pdf" may be ambiguous |
+| Category keyword match | 0.85 | Strong signal from domain-specific keywords |
+| Ollama router (high match) | 0.80 - 0.99 | Depends on router model confidence |
+| Ollama router (uncertain) | 0.50 - 0.79 | Router model was less sure |
+| Heuristic fallback (cloud) | 0.75 | Best available cloud provider |
+| Heuristic fallback (local, short msg) | 0.60 | Short message + local available |
+| Heuristic fallback (no healthy connector) | 0.50 | Best-effort, no health data |
+| Ultimate fallback (no cloud) | 0.40 | No cloud available at all |
+| Default fallback | 0.20 | Nothing matched |
+| MANUAL_MODEL | 1.00 | User explicitly chose |
 
 ---
 

@@ -361,3 +361,135 @@ Access the management UI at http://localhost:15672 (credentials from `.env`):
 ```bash
 docker compose logs nginx --since 5m
 ```
+
+---
+
+## 9. Routing Experiment Framework
+
+The routing engine can be tested systematically by sending messages from each capability class and verifying the routing decision matches expectations.
+
+### How to Run Routing Experiments
+
+1. **Get a JWT token** (see Step 1 above)
+2. **Create a thread in AUTO mode**:
+```bash
+THREAD_ID=$(curl -s -X POST http://localhost:4000/api/v1/chat-threads \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Routing Experiment","routingMode":"AUTO"}' \
+  | jq -r '.data.id')
+```
+
+3. **Send a test message and capture the routing decision**:
+```bash
+# Send message
+curl -s -X POST http://localhost:4000/api/v1/chat-messages \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"threadId\":\"$THREAD_ID\",\"content\":\"Write a Python function to sort a list\"}"
+
+# Wait for routing, then check the decision
+sleep 3
+curl -s "http://localhost:4000/api/v1/routing/decisions?threadId=$THREAD_ID&limit=1" \
+  -H "Authorization: Bearer $TOKEN" | jq '.data[0] | {selectedProvider, selectedModel, confidence, reasonTags}'
+```
+
+4. **Verify the decision matches expectations** by comparing `selectedProvider` and `selectedModel` against the expected values for that category.
+
+### Test Messages by Category
+
+Use these messages to verify each capability class routes correctly:
+
+| Category | Test Message | Expected Provider | Expected Model |
+| --- | --- | --- | --- |
+| Coding | "Write a TypeScript function to debounce API calls" | ANTHROPIC or LOCAL_CODING | claude-sonnet-4 or coding model |
+| Reasoning | "Prove that the square root of 2 is irrational step by step" | LOCAL_REASONING or DEEPSEEK | reasoning model or deepseek-chat |
+| Thinking | "Research the pros and cons of microservices vs monolith" | LOCAL_THINKING or GEMINI | thinking model or gemini-2.5-flash |
+| Infrastructure | "Write a Terraform module for an AWS VPC with subnets" | ANTHROPIC or LOCAL_CODING | claude-sonnet-4 or coding model |
+| Data Analysis | "Write a pandas script to aggregate sales by region" | LOCAL_REASONING or GEMINI | reasoning model or gemini-2.5-flash |
+| Business | "Create a SWOT analysis for launching a SaaS product" | LOCAL_FILE_GEN or FILE_GEN | file-gen model or auto |
+| Creative Writing | "Write a blog post about the future of AI" | OPENAI or LOCAL_FALLBACK | gpt-4o-mini or chat model |
+| Security | "Perform an OWASP top 10 review of this API endpoint" | ANTHROPIC or LOCAL_CODING | claude-sonnet-4 or coding model |
+| Medical | "What medication interactions should I check for metformin" | local-ollama (privacy) | gemma3:4b |
+| Legal | "Review this NDA clause for liability issues" | local-ollama (privacy) | gemma3:4b |
+| Translation | "Translate this paragraph to French" | local-ollama | gemma3:4b |
+| Image Gen | "Generate a watercolor illustration of a mountain lake" | IMAGE_GEMINI | gemini-2.5-flash-image |
+| File Gen | "Export this data as a CSV report" | FILE_GENERATION | auto |
+| Privacy | "Here is my SSN and bank account, analyze my finances" | local-ollama (privacy) | gemma3:4b |
+| General | "Hello, how are you today?" | local-ollama or OPENAI | gemma3:4b or gpt-4o-mini |
+
+### Expected Accuracy Targets per Category
+
+| Category | Target Accuracy | Notes |
+| --- | --- | --- |
+| Privacy enforcement | 100% | Zero tolerance -- no privacy-sensitive content to cloud |
+| Image generation | > 95% | Multi-layer detection makes false negatives rare |
+| File generation | > 95% | Verb+format combo is highly specific |
+| Coding | > 90% | 100 keywords cover most coding terminology |
+| Reasoning | > 85% | Some overlap with coding (algorithm, data structure) |
+| Thinking | > 85% | Research/investigation keywords are distinctive |
+| Infrastructure | > 90% | Cloud/container terms are highly specific |
+| Security | > 90% | CVE, OWASP, pentest are unambiguous |
+| Medical | > 95% | Clinical/HIPAA terms rarely appear outside medical context |
+| Legal | > 90% | Contract/NDA/GDPR terms are specific |
+| Creative Writing | > 80% | Some overlap with general chat |
+| Translation | > 90% | Translate/localize keywords are clear |
+| Data Analysis | > 85% | pandas/ETL/BigQuery are unambiguous |
+| Business | > 80% | KPI/ROI terms can appear in other contexts |
+| General Chat | N/A | Default fallback, always correct by definition |
+
+### Batch Experiment Script
+
+To run a full routing experiment across all categories:
+
+```bash
+#!/bin/bash
+# routing-experiment.sh
+# Run from project root with: bash routing-experiment.sh
+
+TOKEN=$(curl -s -X POST http://localhost:4000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@claw.local","password":"Admin123!"}' \
+  | jq -r '.data.accessToken')
+
+THREAD_ID=$(curl -s -X POST http://localhost:4000/api/v1/chat-threads \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Routing Experiment Batch","routingMode":"AUTO"}' \
+  | jq -r '.data.id')
+
+declare -A TESTS
+TESTS["coding"]="Write a TypeScript function to debounce API calls"
+TESTS["reasoning"]="Prove the square root of 2 is irrational step by step"
+TESTS["thinking"]="Research the pros and cons of microservices vs monolith"
+TESTS["infra"]="Write a Terraform module for AWS VPC with private subnets"
+TESTS["security"]="Perform an OWASP top 10 vulnerability assessment"
+TESTS["medical"]="What are the contraindications for metformin"
+TESTS["legal"]="Review this NDA clause regarding liability"
+TESTS["image"]="Generate a watercolor painting of a mountain sunset"
+TESTS["filegen"]="Export this data as a CSV report"
+TESTS["privacy"]="Here is my SSN 123-45-6789, analyze my tax return"
+TESTS["creative"]="Write a blog post about the future of remote work"
+TESTS["translation"]="Translate this paragraph to Spanish"
+TESTS["data"]="Write a pandas script to aggregate quarterly sales data"
+TESTS["business"]="Create a pitch deck outline for our Series A"
+TESTS["general"]="Hello, how are you?"
+
+for category in "${!TESTS[@]}"; do
+  echo "=== Testing: $category ==="
+  curl -s -X POST http://localhost:4000/api/v1/chat-messages \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "{\"threadId\":\"$THREAD_ID\",\"content\":\"${TESTS[$category]}\"}" > /dev/null
+
+  sleep 5
+
+  echo "Decision:"
+  curl -s "http://localhost:4000/api/v1/routing/decisions?threadId=$THREAD_ID&limit=1" \
+    -H "Authorization: Bearer $TOKEN" \
+    | jq '.data[0] | {selectedProvider, selectedModel, confidence, reasonTags}'
+  echo ""
+done
+```
+
+**Note**: This script sends real messages and triggers real AI responses. Run only in a dev environment with all services healthy.

@@ -544,13 +544,35 @@ The router prompt is now built dynamically based on installed models:
 - Groups by category, only includes healthy + installed models
 - Cached with 5-minute TTL, invalidated on MODEL_PULLED/MODEL_DELETED events
 - Category-aware routing: coding tasks → LOCAL_CODING model, reasoning → LOCAL_REASONING, etc.
-- 64 category detection keywords (28 coding, 21 reasoning, 15 thinking)
+- 370+ detection keywords across 15 capability classes
+- 30 privacy keywords force local routing (zero cloud exposure)
+- 5-stage routing pipeline: Privacy → Image → File → Category → Ollama/Heuristic
+
+### 15 Capability Classes
+
+| Class | Keywords | Local Role |
+| ----- | -------- | ---------- |
+| Coding | 100 | LOCAL_CODING |
+| Image Generation | 70+ | LOCAL_IMAGE_GENERATION |
+| Infrastructure | 33 | LOCAL_CODING |
+| Data Analysis | 33 | LOCAL_REASONING |
+| Privacy (enforcement) | 30 | Forces local (no cloud) |
+| Business | 30 | LOCAL_FILE_GENERATION |
+| Creative Writing | 26 | LOCAL_FALLBACK_CHAT |
+| Security | 25 | LOCAL_CODING |
+| Reasoning | 21 | LOCAL_REASONING |
+| Legal | 21 | LOCAL_REASONING |
+| Medical | 19 | LOCAL_REASONING |
+| File Generation | 34 | LOCAL_FILE_GENERATION |
+| Thinking | 15 | LOCAL_THINKING |
+| Translation | 12 | LOCAL_FALLBACK_CHAT |
+| General Chat | 0 (default) | LOCAL_FALLBACK_CHAT |
 
 ## Routing Modes
 
 | Mode           | Behavior                                                                       |
 | -------------- | ------------------------------------------------------------------------------ |
-| AUTO           | Dynamic prompt + category detection → Ollama router → heuristic fallback       |
+| AUTO           | 5-stage pipeline: privacy → image → file → category → Ollama/heuristic        |
 | MANUAL_MODEL   | User-selected provider+model (forcedProvider/forcedModel)                      |
 | LOCAL_ONLY     | Category-aware: coding→LOCAL_CODING, reasoning→LOCAL_REASONING, else gemma3:4b |
 | PRIVACY_FIRST  | Local if healthy, else Anthropic                                               |

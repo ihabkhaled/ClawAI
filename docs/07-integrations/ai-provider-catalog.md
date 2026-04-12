@@ -150,6 +150,79 @@ All cloud providers return similar structures. ClawAI normalizes responses in th
 }
 ```
 
+## Provider Scoring Matrix by Capability Class
+
+This matrix scores each provider on quality (1-5), cost (1-5, lower is cheaper), latency (1-5, lower is faster), and privacy (LOCAL=5, CLOUD=1) for each of the 15 capability classes.
+
+| Capability Class | Best Provider | Quality | Cost | Latency | Privacy | When To Use |
+| --- | --- | --- | --- | --- | --- | --- |
+| Coding | Anthropic/claude-sonnet-4 | 5 | 3 | 3 | 1 | Complex code gen, debugging, refactoring |
+| Reasoning | Anthropic/claude-opus-4 | 5 | 5 | 4 | 1 | Architecture decisions, complex analysis |
+| Thinking | Gemini/gemini-2.5-flash | 4 | 1 | 2 | 1 | Research, deep investigation, comparisons |
+| Infrastructure | Anthropic/claude-sonnet-4 | 5 | 3 | 3 | 1 | Terraform, K8s, Docker, cloud configs |
+| Data Analysis | Gemini/gemini-2.5-flash | 4 | 1 | 2 | 1 | Large datasets, SQL, ETL, visualization |
+| Business | OpenAI/gpt-4o-mini | 3 | 1 | 1 | 1 | KPIs, proposals, meeting summaries |
+| Creative Writing | OpenAI/gpt-4o-mini | 4 | 1 | 1 | 1 | Blog posts, copy, scripts, narratives |
+| Security | Anthropic/claude-sonnet-4 | 5 | 3 | 3 | 1 | Vulnerability analysis, threat modeling |
+| Medical | local-ollama (privacy) | 2 | 0 | 3 | 5 | Always local -- HIPAA, patient data |
+| Legal | local-ollama (privacy) | 2 | 0 | 3 | 5 | Always local if NDA/privileged content |
+| Translation | local-ollama/gemma3:4b | 3 | 0 | 2 | 5 | Simple translations, i18n |
+| Image Generation | IMAGE_GEMINI | 4 | 2 | 2 | 1 | Text-to-image, logos, illustrations |
+| File Generation | FILE_GENERATION | 4 | 2 | 2 | 1 | PDF, CSV, DOCX export |
+| Privacy-sensitive | local-ollama/gemma3:4b | 2 | 0 | 3 | 5 | Any content with PII, financial, medical |
+| General Chat | OpenAI/gpt-4o-mini | 3 | 1 | 1 | 1 | Small talk, Q&A, summaries |
+
+### When to Use Each Provider
+
+| Provider | Use When | Avoid When |
+| --- | --- | --- |
+| **Anthropic claude-sonnet-4** | Code generation, debugging, code review, security audits, technical writing | Simple Q&A, cost-sensitive tasks, privacy-sensitive data |
+| **Anthropic claude-opus-4** | Complex reasoning, architecture decisions, deep analysis, system design | Simple tasks, high-volume workloads (expensive) |
+| **OpenAI gpt-4o-mini** | Creative writing, general chat, summaries, low-latency requirements | Complex coding, deep reasoning, privacy-sensitive |
+| **OpenAI gpt-4o** | Fallback for coding tasks when Anthropic is unavailable | Cost-sensitive tasks (expensive) |
+| **Gemini gemini-2.5-flash** | Image analysis, file parsing, data analysis, research, large context | Privacy-sensitive content, offline scenarios |
+| **DeepSeek deepseek-chat** | Math problems, algorithms, competitive programming, cost-sensitive coding | Privacy-sensitive, complex natural language tasks |
+| **local-ollama** | Privacy-sensitive, simple Q&A, translations, offline usage, cost-free tasks | Complex reasoning (quality gap vs. cloud) |
+| **IMAGE_GEMINI** | Image generation, default image provider | Offline-only deployments |
+| **IMAGE_OPENAI (DALL-E)** | Photorealistic images, highest quality image gen | Budget-constrained, Gemini is available |
+| **IMAGE_LOCAL (SD)** | Offline image generation, zero-cost images | Quality matters more than cost |
+
+### Fallback Chain Strategy
+
+The routing engine builds a 3-layer fallback chain for every decision. The strategy varies by primary provider:
+
+**Primary is Cloud:**
+```
+1. Selected cloud provider/model
+2. local-ollama / gemma3:4b (if Ollama healthy)
+3. Other healthy cloud providers in priority order:
+   ANTHROPIC > OPENAI > GEMINI
+```
+
+**Primary is Local:**
+```
+1. local-ollama / selected local model
+2. Healthy cloud providers in priority order:
+   ANTHROPIC > OPENAI > GEMINI
+```
+
+**Privacy-Enforced:**
+```
+1. local-ollama / gemma3:4b
+2. (NO cloud fallbacks -- chain filtered to local only)
+```
+
+**Image Generation:**
+```
+1. IMAGE_GEMINI / gemini-2.5-flash-image
+2. IMAGE_OPENAI / dall-e-3
+3. IMAGE_LOCAL / sdxl-turbo
+```
+
+Cloud provider priority order is fixed: Anthropic > OpenAI > Gemini. This reflects quality ranking for general tasks. Each provider is only included if its connector is healthy.
+
+---
+
 ## Cost Estimation
 
 For a typical workload of 1000 messages/day with average 500 input + 200 output tokens:
