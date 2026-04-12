@@ -14,7 +14,10 @@ export function useLogsPage(): UseLogsPageReturn {
   const [clientLogsPage, setClientLogsPage] = useState(1);
   const [clientLevelFilter, setClientLevelFilter] = useState<string | undefined>(undefined);
   const [clientComponentFilter, setClientComponentFilter] = useState('');
+  const [clientActionFilter, setClientActionFilter] = useState('');
   const [clientRouteFilter, setClientRouteFilter] = useState('');
+  const [clientUserIdFilter, setClientUserIdFilter] = useState('');
+  const [clientMessageContainsFilter, setClientMessageContainsFilter] = useState('');
   const [clientSearch, setClientSearch] = useState('');
   const [clientStartDate, setClientStartDate] = useState('');
   const [clientEndDate, setClientEndDate] = useState('');
@@ -29,7 +32,10 @@ export function useLogsPage(): UseLogsPageReturn {
     limit: 25,
     level: clientLevelFilter,
     component: clientComponentFilter || undefined,
+    action: clientActionFilter || undefined,
     route: clientRouteFilter || undefined,
+    userId: clientUserIdFilter || undefined,
+    messageContains: clientMessageContainsFilter || undefined,
     search: clientSearch || undefined,
     startDate: clientStartDate || undefined,
     endDate: clientEndDate || undefined,
@@ -115,9 +121,24 @@ export function useLogsPage(): UseLogsPageReturn {
       setClientComponentFilter(component);
       setClientLogsPage(1);
     },
+    clientActionFilter,
+    setClientActionFilter: (action: string) => {
+      setClientActionFilter(action);
+      setClientLogsPage(1);
+    },
     clientRouteFilter,
     setClientRouteFilter: (route: string) => {
       setClientRouteFilter(route);
+      setClientLogsPage(1);
+    },
+    clientUserIdFilter,
+    setClientUserIdFilter: (userId: string) => {
+      setClientUserIdFilter(userId);
+      setClientLogsPage(1);
+    },
+    clientMessageContainsFilter,
+    setClientMessageContainsFilter: (contains: string) => {
+      setClientMessageContainsFilter(contains);
       setClientLogsPage(1);
     },
     clientSearch,

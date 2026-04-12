@@ -50,6 +50,7 @@ export {
   LOG_LEVEL_COLORS,
   LOG_SENSITIVE_KEYS,
   SERVER_LOG_STATS_TOP_SERVICES_LIMIT,
+  CLIENT_LOG_STATS_TOP_ITEMS_LIMIT,
 } from './log.constants';
 export { APPEARANCE_ICONS } from './settings.constants';
 export {

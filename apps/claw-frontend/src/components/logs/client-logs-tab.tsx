@@ -25,8 +25,14 @@ export function ClientLogsTab({
   setLevelFilter,
   componentFilter,
   setComponentFilter,
+  actionFilter,
+  setActionFilter,
   routeFilter,
   setRouteFilter,
+  userIdFilter,
+  setUserIdFilter,
+  messageContainsFilter,
+  setMessageContainsFilter,
   searchQuery,
   setSearchQuery,
   startDate,
@@ -62,10 +68,31 @@ export function ClientLogsTab({
         />
 
         <Input
+          placeholder="Action..."
+          value={actionFilter}
+          onChange={(e) => setActionFilter(e.target.value)}
+          className="w-[140px]"
+        />
+
+        <Input
           placeholder="Route..."
           value={routeFilter}
           onChange={(e) => setRouteFilter(e.target.value)}
           className="w-[150px]"
+        />
+
+        <Input
+          placeholder="User ID..."
+          value={userIdFilter}
+          onChange={(e) => setUserIdFilter(e.target.value)}
+          className="w-[150px]"
+        />
+
+        <Input
+          placeholder="Message contains..."
+          value={messageContainsFilter}
+          onChange={(e) => setMessageContainsFilter(e.target.value)}
+          className="w-[180px]"
         />
 
         <Input
@@ -85,10 +112,10 @@ export function ClientLogsTab({
         />
 
         <Input
-          placeholder="Search logs..."
+          placeholder="Full-text search..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full sm:w-[250px]"
+          className="w-full sm:w-[220px]"
         />
       </div>
 

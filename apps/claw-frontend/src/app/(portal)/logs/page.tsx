@@ -53,8 +53,14 @@ export default function LogsPage() {
           setLevelFilter={controller.setClientLevelFilter}
           componentFilter={controller.clientComponentFilter}
           setComponentFilter={controller.setClientComponentFilter}
+          actionFilter={controller.clientActionFilter}
+          setActionFilter={controller.setClientActionFilter}
           routeFilter={controller.clientRouteFilter}
           setRouteFilter={controller.setClientRouteFilter}
+          userIdFilter={controller.clientUserIdFilter}
+          setUserIdFilter={controller.setClientUserIdFilter}
+          messageContainsFilter={controller.clientMessageContainsFilter}
+          setMessageContainsFilter={controller.setClientMessageContainsFilter}
           searchQuery={controller.clientSearch}
           setSearchQuery={controller.setClientSearch}
           startDate={controller.clientStartDate}

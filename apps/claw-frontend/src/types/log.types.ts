@@ -117,10 +117,25 @@ export type ClientLogsListParams = {
   limit?: number;
   level?: string;
   component?: string;
+  action?: string;
   route?: string;
+  userId?: string;
+  sessionId?: string;
   search?: string;
+  messageContains?: string;
   startDate?: string;
   endDate?: string;
+  sortBy?: string;
+  sortOrder?: string;
+};
+
+export type ClientLogStats = {
+  byLevel: Array<{ _id: string; count: number }>;
+  topComponents: Array<{ _id: string; count: number }>;
+  topActions: Array<{ _id: string; count: number }>;
+  topRoutes: Array<{ _id: string; count: number }>;
+  errorCount: number;
+  total: number;
 };
 
 export type ServerLogsListParams = {
@@ -189,8 +204,14 @@ export type ClientLogsTabProps = {
   setLevelFilter: (level: string | undefined) => void;
   componentFilter: string;
   setComponentFilter: (component: string) => void;
+  actionFilter: string;
+  setActionFilter: (action: string) => void;
   routeFilter: string;
   setRouteFilter: (route: string) => void;
+  userIdFilter: string;
+  setUserIdFilter: (userId: string) => void;
+  messageContainsFilter: string;
+  setMessageContainsFilter: (contains: string) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   startDate: string;
@@ -241,8 +262,14 @@ export type UseLogsPageReturn = {
   setClientLevelFilter: (level: string | undefined) => void;
   clientComponentFilter: string;
   setClientComponentFilter: (component: string) => void;
+  clientActionFilter: string;
+  setClientActionFilter: (action: string) => void;
   clientRouteFilter: string;
   setClientRouteFilter: (route: string) => void;
+  clientUserIdFilter: string;
+  setClientUserIdFilter: (userId: string) => void;
+  clientMessageContainsFilter: string;
+  setClientMessageContainsFilter: (contains: string) => void;
   clientSearch: string;
   setClientSearch: (search: string) => void;
   clientStartDate: string;

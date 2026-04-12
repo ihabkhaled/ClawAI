@@ -3,9 +3,11 @@ import { ScrollText } from 'lucide-react';
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Button } from '@/components/ui/button';
+import { useClientLogStats } from '@/hooks/logs/use-client-log-stats';
 import type { ClientLogsContentProps } from '@/types';
 
 import { ClientLogEntryRow } from './client-log-entry-row';
+import { ClientLogsStats } from './client-logs-stats';
 
 export function ClientLogsContent({
   logs,
@@ -15,6 +17,8 @@ export function ClientLogsContent({
   isLoading,
   isError,
 }: ClientLogsContentProps): React.ReactElement {
+  const { stats, isLoading: isStatsLoading } = useClientLogStats();
+
   if (isLoading) {
     return <LoadingSpinner label="Loading client logs..." />;
   }
@@ -41,6 +45,8 @@ export function ClientLogsContent({
 
   return (
     <>
+      {stats && !isStatsLoading ? <ClientLogsStats stats={stats} /> : null}
+
       <div className="rounded-md border">
         {logs.map((entry) => (
           <ClientLogEntryRow key={entry._id} entry={entry} />

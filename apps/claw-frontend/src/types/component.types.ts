@@ -14,6 +14,7 @@ import type { UploadedFile } from './file.types';
 import type { AggregatedHealth } from './health.types';
 import type {
   ClientLogEntry,
+  ClientLogStats,
   ClientLogsTabProps,
   ServerLogEntry,
   ServerLogStats,
@@ -528,6 +529,10 @@ export type ServerLogsContentProps = {
 
 export type ServerLogsStatsProps = {
   stats: ServerLogStats;
+};
+
+export type ClientLogsStatsProps = {
+  stats: ClientLogStats;
 };
 
 // ─── Catalog component props ──────────────────────────────────────────────

@@ -15,6 +15,8 @@ export const LOG_LEVEL_COLORS: Record<LogLevel, string> = {
 
 export const SERVER_LOG_STATS_TOP_SERVICES_LIMIT = 5;
 
+export const CLIENT_LOG_STATS_TOP_ITEMS_LIMIT = 5;
+
 export const LOG_SENSITIVE_KEYS: ReadonlyArray<string> = [
   'password',
   'token',

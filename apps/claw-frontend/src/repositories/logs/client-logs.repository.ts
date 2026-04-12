@@ -1,5 +1,5 @@
 import { apiClient } from '@/services/shared/api-client';
-import type { ClientLogsListParams, ClientLogsResponse, LogStats } from '@/types';
+import type { ClientLogStats, ClientLogsListParams, ClientLogsResponse } from '@/types';
 
 function toStringParams(params: Record<string, unknown>): Record<string, string> {
   const result: Record<string, string> = {};
@@ -20,8 +20,8 @@ export const clientLogsRepository = {
     return response.data;
   },
 
-  async getStats(): Promise<LogStats> {
-    const response = await apiClient.get<LogStats>('/client-logs/stats');
+  async getStats(): Promise<ClientLogStats> {
+    const response = await apiClient.get<ClientLogStats>('/client-logs/stats');
     return response.data;
   },
 };
