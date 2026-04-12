@@ -6,7 +6,7 @@ import { UserRole } from "../../../common/enums";
 import { ClientLogsService } from "../services/client-logs.service";
 import { type CreateClientLogDto, createClientLogSchema  } from "../dto/create-client-log.dto";
 import { type SearchClientLogsDto, searchClientLogsSchema  } from "../dto/search-client-logs.dto";
-import type { ClientLogStatsResponse, CreateClientLogResponse } from "../types/client-logs.types";
+import type { ClientLogStatsResponse, CreateClientLogResponse, DistinctValuesResult } from "../types/client-logs.types";
 import type { PaginatedResult } from "@common/types";
 import type { ClientLog } from "../schemas/client-log.schema";
 
@@ -33,5 +33,11 @@ export class ClientLogsController {
   @Get("stats")
   async getStats(): Promise<ClientLogStatsResponse> {
     return this.clientLogsService.getStats();
+  }
+
+  @Roles(UserRole.ADMIN, UserRole.OPERATOR)
+  @Get("distinct")
+  async getDistinctValues(@Query("field") field: string): Promise<DistinctValuesResult> {
+    return this.clientLogsService.getDistinctValues(field, {});
   }
 }

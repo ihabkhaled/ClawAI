@@ -13,6 +13,8 @@ export const LOG_LEVEL_COLORS: Record<LogLevel, string> = {
     'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800',
 };
 
+export const SERVER_LOG_STATS_TOP_SERVICES_LIMIT = 5;
+
 export const LOG_SENSITIVE_KEYS: ReadonlyArray<string> = [
   'password',
   'token',

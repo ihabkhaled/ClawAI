@@ -3,9 +3,11 @@ import { Server } from 'lucide-react';
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Button } from '@/components/ui/button';
+import { useServerLogStats } from '@/hooks/logs/use-server-log-stats';
 import type { ServerLogsContentProps } from '@/types';
 
 import { ServerLogEntryRow } from './server-log-entry-row';
+import { ServerLogsStats } from './server-logs-stats';
 
 export function ServerLogsContent({
   logs,
@@ -15,6 +17,8 @@ export function ServerLogsContent({
   isLoading,
   isError,
 }: ServerLogsContentProps): React.ReactElement {
+  const { stats, isLoading: isStatsLoading } = useServerLogStats();
+
   if (isLoading) {
     return <LoadingSpinner label="Loading server logs..." />;
   }
@@ -41,6 +45,8 @@ export function ServerLogsContent({
 
   return (
     <>
+      {stats && !isStatsLoading ? <ServerLogsStats stats={stats} /> : null}
+
       <div className="rounded-md border">
         {logs.map((entry) => (
           <ServerLogEntryRow key={entry._id} entry={entry} />

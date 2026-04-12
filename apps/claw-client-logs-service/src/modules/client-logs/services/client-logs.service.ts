@@ -6,6 +6,7 @@ import type {
   ClientLogStatsResponse,
   CreateClientLogInput,
   CreateClientLogResponse,
+  DistinctValuesResult,
 } from "../types/client-logs.types";
 import type { PaginatedResult } from "@common/types";
 
@@ -39,13 +40,19 @@ export class ClientLogsService {
   }
 
   async getStats(): Promise<ClientLogStatsResponse> {
-    const [byLevel, topComponents, topActions, total] = await Promise.all([
+    const [byLevel, topComponents, topActions, topRoutes, total, errorCount] = await Promise.all([
       this.clientLogsRepository.aggregateByLevel(),
       this.clientLogsRepository.aggregateByComponent(),
       this.clientLogsRepository.aggregateByAction(),
+      this.clientLogsRepository.aggregateByRoute(),
       this.clientLogsRepository.countAll({}),
+      this.clientLogsRepository.getErrorCount({}),
     ]);
 
-    return { byLevel, topComponents, topActions, total };
+    return { byLevel, topComponents, topActions, topRoutes, errorCount, total };
+  }
+
+  async getDistinctValues(field: string, filters: ClientLogFilters): Promise<DistinctValuesResult> {
+    return this.clientLogsRepository.getDistinctValues(field, filters);
   }
 }

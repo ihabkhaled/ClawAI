@@ -100,6 +100,18 @@ export type LogStats = {
   total: number;
 };
 
+export type ServerLogStats = {
+  byLevel: Array<{ _id: string; count: number }>;
+  byService: Array<{ _id: string; count: number }>;
+  byAction: Array<{ _id: string; count: number }>;
+  byMethod: Array<{ _id: string; count: number }>;
+  byStatusCode: Array<{ _id: string; count: number }>;
+  byModule: Array<{ _id: string; count: number }>;
+  total: number;
+  errorCount: number;
+  avgLatencyMs: number;
+};
+
 export type ClientLogsListParams = {
   page?: number;
   limit?: number;

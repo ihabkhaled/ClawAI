@@ -76,6 +76,9 @@ export class FilesService {
   }
 
   async getFiles(userId: string, query: ListFilesQueryDto): Promise<PaginatedResult<File>> {
+    this.logger.debug(
+      `getFiles: listing files for user ${userId} — page=${String(query.page)}, limit=${String(query.limit)}, search=${query.search ?? 'none'}`,
+    );
     const filters = {
       userId,
       ingestionStatus: query.ingestionStatus,
@@ -87,6 +90,7 @@ export class FilesService {
       this.filesRepository.countAll(filters),
     ]);
 
+    this.logger.debug(`getFiles: returned ${String(files.length)} of ${String(total)} files for user ${userId}`);
     return {
       data: files,
       meta: {
@@ -99,16 +103,18 @@ export class FilesService {
   }
 
   async getFile(id: string, userId: string): Promise<File> {
+    this.logger.debug(`getFile: fetching file ${id} for user ${userId}`);
     const file = await this.filesRepository.findById(id);
     if (!file) {
       throw new EntityNotFoundException('File', id);
     }
     this.validateOwnership(file, userId);
+    this.logger.debug(`getFile: found file ${id} "${file.filename}" (${file.mimeType})`);
     return file;
   }
 
   async deleteFile(id: string, userId: string): Promise<File> {
-    this.logger.log(`deleteFile: deleting file ${id}`);
+    this.logger.log(`deleteFile: deleting file ${id} for user ${userId}`);
     const file = await this.filesRepository.findById(id);
     if (!file) {
       throw new EntityNotFoundException('File', id);
@@ -120,20 +126,27 @@ export class FilesService {
     try {
       deleteFile(file.storagePath);
     } catch {
-      this.logger.warn(`Failed to delete file from disk: ${file.storagePath}`);
+      this.logger.warn(`deleteFile: failed to delete file from disk — path=${file.storagePath}`);
     }
 
-    return this.filesRepository.delete(id);
+    const deleted = await this.filesRepository.delete(id);
+    this.logger.log(
+      `deleteFile: completed — fileId=${id}, filename="${file.filename}", mimeType=${file.mimeType}, sizeBytes=${String(file.sizeBytes)}`,
+    );
+    return deleted;
   }
 
   async getChunks(id: string, userId: string): Promise<FileChunk[]> {
+    this.logger.debug(`getChunks: fetching chunks for file ${id}, user ${userId}`);
     const file = await this.filesRepository.findById(id);
     if (!file) {
       throw new EntityNotFoundException('File', id);
     }
     this.validateOwnership(file, userId);
 
-    return this.fileChunksRepository.findByFileId(id);
+    const chunks = await this.fileChunksRepository.findByFileId(id);
+    this.logger.debug(`getChunks: returned ${String(chunks.length)} chunks for file ${id}`);
+    return chunks;
   }
 
   private validateMimeType(mimeType: string): void {
@@ -175,9 +188,13 @@ export class FilesService {
       'Cache-Control': 'private, max-age=3600',
     });
     res.send(buffer);
+    this.logger.debug(
+      `downloadFile: completed — fileId=${id}, filename="${file.filename}", bytes=${String(buffer.length)}`,
+    );
   }
 
   async downloadFilePublic(id: string, res: Response): Promise<void> {
+    this.logger.debug(`downloadFilePublic: downloading public file ${id}`);
     const file = await this.filesRepository.findById(id);
     if (!file) {
       throw new EntityNotFoundException('File', id);
@@ -194,6 +211,9 @@ export class FilesService {
       'Cache-Control': 'public, max-age=86400',
     });
     res.send(buffer);
+    this.logger.debug(
+      `downloadFilePublic: completed — fileId=${id}, filename="${file.filename}", bytes=${String(buffer.length)}`,
+    );
   }
 
   async storeImage(data: {
@@ -202,13 +222,20 @@ export class FilesService {
     mimeType: string;
     base64Data: string;
   }): Promise<{ fileId: string }> {
+    this.logger.log(
+      `storeImage: storing image "${data.filename}" (${data.mimeType}) for user ${data.userId}`,
+    );
     this.validateMimeType(data.mimeType);
     const contentBuffer = Buffer.from(data.base64Data, 'base64');
-    const storagePath = saveFile(`${Date.now()}-${data.filename}`, contentBuffer);
+    this.validateFileSize(contentBuffer.length);
+    await this.runSecurityChecks(data.filename, data.mimeType, contentBuffer);
+
+    const safeName = this.fileSecurityManager.getSanitizedFilename(data.filename);
+    const storagePath = saveFile(`${String(Date.now())}-${safeName}`, contentBuffer);
 
     const file = await this.filesRepository.create({
       userId: data.userId,
-      filename: data.filename,
+      filename: safeName,
       mimeType: data.mimeType,
       sizeBytes: contentBuffer.length,
       storagePath,
@@ -216,7 +243,7 @@ export class FilesService {
     });
 
     this.logger.log(
-      `Image stored: ${file.id} (${data.filename}, ${String(contentBuffer.length)} bytes)`,
+      `storeImage: stored ${file.id} "${safeName}" (${String(contentBuffer.length)} bytes, security checks passed)`,
     );
     return { fileId: file.id };
   }

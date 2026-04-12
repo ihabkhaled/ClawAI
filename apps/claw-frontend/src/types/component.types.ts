@@ -16,6 +16,7 @@ import type {
   ClientLogEntry,
   ClientLogsTabProps,
   ServerLogEntry,
+  ServerLogStats,
   ServerLogsTabProps,
 } from './log.types';
 import type { CreateMemoryRequest, MemoryRecord } from './memory.types';
@@ -523,6 +524,10 @@ export type ServerLogsContentProps = {
   setPage: (page: number) => void;
   isLoading: boolean;
   isError: boolean;
+};
+
+export type ServerLogsStatsProps = {
+  stats: ServerLogStats;
 };
 
 // ─── Catalog component props ──────────────────────────────────────────────

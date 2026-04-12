@@ -68,12 +68,16 @@ export class ConnectorsService {
       timestamp: new Date().toISOString(),
     });
 
+    this.logger.log(`createConnector: completed — connectorId=${connector.id}, provider=${dto.provider}`);
     return { ...connector, _count: { models: 0 } };
   }
 
   async getConnectors(
     query: ListConnectorsQueryDto,
   ): Promise<PaginatedResult<ConnectorWithModels>> {
+    this.logger.debug(
+      `getConnectors: listing — page=${String(query.page)}, limit=${String(query.limit)}, provider=${query.provider ?? 'all'}`,
+    );
     const filters = {
       provider: query.provider,
       status: query.status,
@@ -100,10 +104,12 @@ export class ConnectorsService {
   }
 
   async getConnector(id: string): Promise<ConnectorWithModels> {
+    this.logger.debug(`getConnector: fetching connector ${id}`);
     const connector = await this.connectorsRepository.findById(id);
     if (!connector) {
       throw new EntityNotFoundException("Connector", id);
     }
+    this.logger.debug(`getConnector: found connector ${id} "${connector.name}" (${connector.provider})`);
     return this.maskSecrets({ ...connector, _count: { models: 0 } });
   }
 
@@ -134,6 +140,7 @@ export class ConnectorsService {
       timestamp: new Date().toISOString(),
     });
 
+    this.logger.log(`updateConnector: completed — connectorId=${id}, provider=${updated.provider}`);
     return this.maskSecrets({ ...updated, _count: { models: 0 } });
   }
 
@@ -152,6 +159,7 @@ export class ConnectorsService {
       timestamp: new Date().toISOString(),
     });
 
+    this.logger.log(`deleteConnector: completed — connectorId=${id}, provider=${deleted.provider}`);
     return { ...deleted, _count: { models: 0 } };
   }
 
@@ -229,11 +237,14 @@ export class ConnectorsService {
   }
 
   async getModels(connectorId: string): Promise<ConnectorModel[]> {
+    this.logger.debug(`getModels: fetching models for connector ${connectorId}`);
     const connector = await this.connectorsRepository.findById(connectorId);
     if (!connector) {
       throw new EntityNotFoundException("Connector", connectorId);
     }
-    return this.connectorModelsRepository.findByConnectorId(connectorId);
+    const models = await this.connectorModelsRepository.findByConnectorId(connectorId);
+    this.logger.debug(`getModels: returned ${String(models.length)} models for connector ${connectorId}`);
+    return models;
   }
 
   private maskSecrets<T extends { encryptedConfig?: string | null }>(connector: T): T {

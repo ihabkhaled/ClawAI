@@ -42,11 +42,12 @@ export function FileUploadZone({
       <p className="text-sm font-medium">
         {isUploading ? 'Uploading...' : 'Drop a file here or click to browse'}
       </p>
-      <p className="mt-1 text-xs text-muted-foreground">Documents, code, and other text files</p>
+      <p className="mt-1 text-xs text-muted-foreground">All file types accepted (max 50 MB)</p>
       {validationError ? <p className="mt-2 text-sm text-destructive">{validationError}</p> : null}
       <input
         ref={inputRef}
         type="file"
+        accept="*/*"
         className="hidden"
         onChange={handleInputChange}
         disabled={isUploading}

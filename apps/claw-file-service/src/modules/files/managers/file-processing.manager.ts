@@ -59,6 +59,7 @@ export class FileProcessingManager {
   }
 
   async updateIngestionStatus(fileId: string, status: FileIngestionStatus): Promise<void> {
+    this.logger.debug(`updateIngestionStatus: fileId=${fileId}, status=${status}`);
     await this.filesRepository.updateIngestionStatus(fileId, status);
   }
 
@@ -90,13 +91,18 @@ export class FileProcessingManager {
   private splitIntoChunks(content: string, mimeType: string, fileId: string): ChunkData[] {
     const rawChunks = this.splitByType(content, mimeType);
 
-    return rawChunks
+    const chunks = rawChunks
       .filter((chunk) => chunk.trim().length > 0)
       .map((chunk, index) => ({
         fileId,
         chunkIndex: index,
         content: chunk.trim(),
       }));
+
+    this.logger.debug(
+      `splitIntoChunks: fileId=${fileId}, mimeType=${mimeType}, rawChunks=${String(rawChunks.length)}, finalChunks=${String(chunks.length)}`,
+    );
+    return chunks;
   }
 
   private splitByType(content: string, mimeType: string): string[] {

@@ -46,6 +46,7 @@ export class MemoryService implements OnModuleInit {
       timestamp: new Date().toISOString(),
     });
 
+    this.logger.log(`createMemory: completed — memoryId=${memory.id}, type=${dto.type}`);
     return memory;
   }
 
@@ -53,6 +54,9 @@ export class MemoryService implements OnModuleInit {
     userId: string,
     query: ListMemoriesQueryDto,
   ): Promise<PaginatedResult<MemoryRecord>> {
+    this.logger.debug(
+      `getMemories: listing for user ${userId} — page=${String(query.page)}, limit=${String(query.limit)}, type=${query.type ?? 'all'}`,
+    );
     const filters = {
       userId,
       type: query.type,
@@ -77,6 +81,7 @@ export class MemoryService implements OnModuleInit {
   }
 
   async getMemory(id: string, userId: string): Promise<MemoryRecord> {
+    this.logger.debug(`getMemory: fetching memory ${id} for user ${userId}`);
     const memory = await this.memoryRepository.findById(id);
     if (!memory) {
       throw new EntityNotFoundException("MemoryRecord", id);
@@ -93,10 +98,12 @@ export class MemoryService implements OnModuleInit {
     }
     this.validateOwnership(memory, userId);
 
-    return this.memoryRepository.update(id, {
+    const updated = await this.memoryRepository.update(id, {
       content: dto.content,
       isEnabled: dto.isEnabled,
     });
+    this.logger.log(`updateMemory: completed — memoryId=${id}, type=${updated.type}`);
+    return updated;
   }
 
   async deleteMemory(id: string, userId: string): Promise<MemoryRecord> {
@@ -107,7 +114,9 @@ export class MemoryService implements OnModuleInit {
     }
     this.validateOwnership(memory, userId);
 
-    return this.memoryRepository.delete(id);
+    const deleted = await this.memoryRepository.delete(id);
+    this.logger.log(`deleteMemory: completed — memoryId=${id}, type=${deleted.type}`);
+    return deleted;
   }
 
   async toggleMemory(id: string, userId: string): Promise<MemoryRecord> {
@@ -118,11 +127,16 @@ export class MemoryService implements OnModuleInit {
     }
     this.validateOwnership(memory, userId);
 
-    return this.memoryRepository.update(id, { isEnabled: !memory.isEnabled });
+    const toggled = await this.memoryRepository.update(id, { isEnabled: !memory.isEnabled });
+    this.logger.log(`toggleMemory: completed — memoryId=${id}, isEnabled=${String(toggled.isEnabled)}`);
+    return toggled;
   }
 
   async getMemoriesForContext(userId: string, limit: number): Promise<MemoryRecord[]> {
-    return this.memoryRepository.findEnabledByUserId(userId, limit);
+    this.logger.debug(`getMemoriesForContext: fetching up to ${String(limit)} enabled memories for user ${userId}`);
+    const memories = await this.memoryRepository.findEnabledByUserId(userId, limit);
+    this.logger.debug(`getMemoriesForContext: returned ${String(memories.length)} memories for user ${userId}`);
+    return memories;
   }
 
   private validateOwnership(memory: MemoryRecord, userId: string): void {

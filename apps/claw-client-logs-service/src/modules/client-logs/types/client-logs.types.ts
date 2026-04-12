@@ -23,9 +23,17 @@ export interface ClientLogFilters {
   action?: string;
   route?: string;
   userId?: string;
+  sessionId?: string;
+  threadId?: string;
+  connectorId?: string;
+  requestId?: string;
+  errorCode?: string;
   search?: string;
+  messageContains?: string;
   startDate?: string;
   endDate?: string;
+  sortBy?: string;
+  sortOrder?: string;
   page?: number;
   limit?: number;
 }
@@ -39,9 +47,16 @@ export interface AggregationResult {
   count: number;
 }
 
+export interface DistinctValuesResult {
+  field: string;
+  values: string[];
+}
+
 export interface ClientLogStatsResponse {
   byLevel: AggregationResult[];
   topComponents: AggregationResult[];
   topActions: AggregationResult[];
+  topRoutes: AggregationResult[];
+  errorCount: number;
   total: number;
 }

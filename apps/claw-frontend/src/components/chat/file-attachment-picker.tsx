@@ -110,6 +110,7 @@ export function FileAttachmentPicker({
       <input
         ref={fileInputRef}
         type="file"
+        accept="*/*"
         className="hidden"
         onChange={handleInputChange}
         disabled={isUploading}
