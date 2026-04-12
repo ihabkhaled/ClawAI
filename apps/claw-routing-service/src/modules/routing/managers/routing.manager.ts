@@ -24,12 +24,15 @@ import {
   DATA_ANALYSIS_KEYWORDS,
   DESIGN_KEYWORDS,
   EDUCATION_KEYWORDS,
+  ENGINEERING_KEYWORDS,
   EXECUTIVE_KEYWORDS,
   FILE_GENERATION_FORMAT_WORDS,
   FILE_GENERATION_KEYWORDS,
   FILE_GENERATION_PROVIDER,
   FILE_GENERATION_VERBS,
   FINANCE_KEYWORDS,
+  GOVERNMENT_KEYWORDS,
+  HOSPITALITY_KEYWORDS,
   HR_KEYWORDS,
   IMAGE_KEYWORDS,
   IMAGE_MODEL_DALLE3,
@@ -40,7 +43,9 @@ import {
   INFRASTRUCTURE_KEYWORDS,
   LEGAL_KEYWORDS,
   LOCAL_MODEL_DEFAULT,
+  LOGISTICS_KEYWORDS,
   LOCAL_PROVIDER,
+  MEDIA_KEYWORDS,
   MEDICAL_KEYWORDS,
   OPERATIONS_KEYWORDS,
   PRIVACY_KEYWORDS,
@@ -48,7 +53,9 @@ import {
   REASONING_KEYWORDS,
   RESEARCH_KEYWORDS,
   SALES_KEYWORDS,
+  SCIENCE_KEYWORDS,
   SECURITY_KEYWORDS,
+  SUSTAINABILITY_KEYWORDS,
   THINKING_KEYWORDS,
   TRANSLATION_KEYWORDS,
   VIDEO_AUDIO_KEYWORDS,
@@ -315,6 +322,10 @@ export class RoutingManager {
     }
     if (this.detectExecutiveRequest(context.message)) {
       this.logger.log('handleAuto: executive content detected — forcing local routing');
+      return this.buildLocalPrivacyDecision(context);
+    }
+    if (this.detectGovernmentRequest(context.message)) {
+      this.logger.log('handleAuto: government/intelligence content detected — forcing local routing');
       return this.buildLocalPrivacyDecision(context);
     }
 
@@ -825,6 +836,41 @@ export class RoutingManager {
     return EXECUTIVE_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
   }
 
+  detectEngineeringRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return ENGINEERING_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectScienceRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return SCIENCE_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectGovernmentRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return GOVERNMENT_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectLogisticsRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return LOGISTICS_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectHospitalityRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return HOSPITALITY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectMediaRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return MEDIA_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectSustainabilityRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return SUSTAINABILITY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
   detectPrivacySensitive(message: string): boolean {
     const lower = message.toLowerCase();
     return PRIVACY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
@@ -887,6 +933,15 @@ export class RoutingManager {
     if (this.detectExecutiveRequest(message)) {
       return LocalModelRole.LOCAL_REASONING;
     }
+    if (this.detectEngineeringRequest(message)) {
+      return LocalModelRole.LOCAL_REASONING;
+    }
+    if (this.detectScienceRequest(message)) {
+      return LocalModelRole.LOCAL_REASONING;
+    }
+    if (this.detectGovernmentRequest(message)) {
+      return LocalModelRole.LOCAL_REASONING;
+    }
     if (this.detectCodingRequest(message)) {
       return LocalModelRole.LOCAL_CODING;
     }
@@ -930,6 +985,18 @@ export class RoutingManager {
       return LocalModelRole.LOCAL_FALLBACK_CHAT;
     }
     if (this.detectDesignRequest(message)) {
+      return LocalModelRole.LOCAL_FALLBACK_CHAT;
+    }
+    if (this.detectLogisticsRequest(message)) {
+      return LocalModelRole.LOCAL_FALLBACK_CHAT;
+    }
+    if (this.detectHospitalityRequest(message)) {
+      return LocalModelRole.LOCAL_FALLBACK_CHAT;
+    }
+    if (this.detectMediaRequest(message)) {
+      return LocalModelRole.LOCAL_FALLBACK_CHAT;
+    }
+    if (this.detectSustainabilityRequest(message)) {
       return LocalModelRole.LOCAL_FALLBACK_CHAT;
     }
     if (this.detectCreativeWritingRequest(message)) {
