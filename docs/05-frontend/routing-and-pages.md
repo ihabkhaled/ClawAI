@@ -17,12 +17,14 @@ src/app/
     dashboard/page.tsx
     chat/page.tsx
     chat/[threadId]/page.tsx
+    chat/compare/page.tsx
     connectors/page.tsx
     connectors/[connectorId]/page.tsx
     models/page.tsx
     models/local/page.tsx
     context/page.tsx
     routing/page.tsx
+    routing/replay/page.tsx
     memory/page.tsx
     files/page.tsx
     observability/page.tsx
@@ -38,7 +40,7 @@ src/app/
 
 ---
 
-## 2. Page Inventory (18 Pages)
+## 2. Page Inventory (20 Pages)
 
 ### Authentication
 
@@ -54,11 +56,13 @@ src/app/
 | `/dashboard`                 | Dashboard        | `useDashboardPage`       | Overview stats, recent activity, health     |
 | `/chat`                      | Chat             | `useChatPage`            | Thread list, create new thread, pin/archive |
 | `/chat/[threadId]`           | Chat Thread      | `useThreadDetailPage`    | Conversation, composer, model selector      |
+| `/chat/compare`              | Parallel Compare | `useParallelComparePage` | Multi-model side-by-side response comparison |
 | `/connectors`                | Connectors       | `useConnectorsPage`      | Cloud provider connector list               |
 | `/connectors/[connectorId]`  | Connector Detail | `useConnectorDetailPage` | Config, models, health events, sync runs    |
 | `/models`                    | Models           | `useAllModels`           | All available models across connectors      |
 | `/models/local`              | Local Models     | `useLocalModelsPage`     | Ollama model management, pull, roles        |
 | `/routing`                   | Routing          | `useRoutingPage`         | Routing policies CRUD, recent decisions     |
+| `/routing/replay`            | Replay Lab       | `useReplayLabPage`       | Replay historical routing decisions, compare old vs new |
 | `/memory`                    | Memory           | `useMemoryPage`          | Memory records list, create, edit, toggle   |
 | `/context`                   | Context Packs    | Context pack hooks       | Context packs management, items             |
 | `/files`                     | Files            | `useFilesPage`           | File upload, list, ingestion status         |
@@ -226,6 +230,25 @@ export function useThreadDetailPage() {
 ### Connector Detail (`/connectors/[connectorId]`)
 
 Same pattern with `connectorId` parameter.
+
+### Routing Replay Lab (`/routing/replay`)
+
+Static route (no dynamic segments). The `useReplayLabPage` controller hook manages:
+
+- **Filters**: date range picker, routing mode dropdown, provider dropdown, limit input
+- **Summary card**: shows totalReplayed, changedCount, improvedCount, regressedCount, avgConfidenceDelta
+- **Results table**: paginated list of replay results with old vs new provider/model, confidence delta, and changed indicator
+- Calls `POST /routing/replay` via the routing repository
+
+### Parallel Compare (`/chat/compare`)
+
+Static route. The `useParallelComparePage` controller hook manages:
+
+- **Model picker**: multi-select dropdown allowing 2-5 provider/model pairs
+- **Prompt input**: shared textarea for the prompt sent to all selected models
+- **Response grid**: side-by-side cards showing each model's response, token counts, and latency
+- **Summary bar**: total latency, success/failure count, token usage comparison
+- Calls `POST /chat-messages/parallel` via the chat repository
 
 ---
 

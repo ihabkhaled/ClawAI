@@ -77,6 +77,7 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
 | POST   | /                  | Send new message (triggers flow) |
 | PATCH  | /:id/feedback      | Submit feedback on a message     |
 | POST   | /:id/regenerate    | Regenerate an assistant response |
+| POST   | /parallel          | Send prompt to 2-5 models simultaneously |
 
 ## Message Flow (End-to-End)
 
@@ -131,3 +132,44 @@ When all providers fail, the service stores an error message as an ASSISTANT rec
 
 - **ContextAssemblyManager** -- assembles full prompt from multiple sources
 - **ChatExecutionManager** -- executes LLM calls with fallback chain and error handling
+- **ParallelExecutionManager** -- executes the same prompt against 2-5 models simultaneously via `Promise.allSettled`
+
+---
+
+## Parallel Multi-Model Response Mode
+
+The parallel compare feature lets users send a single prompt to multiple models at once and view responses side by side. This is useful for comparing model quality, latency, and cost across providers.
+
+### How It Works
+
+1. **User selects 2-5 models** -- frontend multi-select picker allows choosing provider/model pairs
+2. **POST /chat-messages/parallel** -- sends the prompt, threadId, and list of models
+3. **ParallelExecutionManager** -- fires all LLM calls via `Promise.allSettled()` so failures in one model do not block others
+4. **Store responses** -- each model's response is stored as a separate ASSISTANT message with its own token counts, latency, and provider metadata
+5. **Return all results** -- response includes an array of model responses with status (fulfilled/rejected), content, latency, and token usage
+
+### ParallelExecutionManager
+
+The `ParallelExecutionManager` handles:
+
+- Building the prompt once via `ContextAssemblyManager` (shared across all models)
+- Dispatching concurrent calls to each selected provider/model
+- Collecting results via `Promise.allSettled()` -- each call is independent
+- Recording per-model latency and token counts
+- Storing each response as a separate ASSISTANT message linked to the same thread
+- Publishing `message.completed` events for each successful response
+
+### Types
+
+| Type | Description |
+| --- | --- |
+| `ParallelRequest` | threadId, content, models (array of {provider, model}), fileIds |
+| `ParallelModelResult` | provider, model, status (fulfilled/rejected), content, inputTokens, outputTokens, latencyMs, error? |
+| `ParallelResponse` | threadId, userMessageId, results (array of ParallelModelResult), totalLatencyMs |
+
+### Constraints
+
+- Minimum 2 models, maximum 5 models per request
+- Each model must belong to a healthy, active connector (or be a local Ollama model)
+- Thread ownership is validated before execution
+- All models share the same assembled context (system prompt, memories, files, history)

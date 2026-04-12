@@ -483,6 +483,18 @@ Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 11. Audit service records usage + audit log
 ```
 
+### Parallel Multi-Model Flow
+
+```
+1. User sends parallel request → POST /chat-messages/parallel {content, models[], threadId, fileIds?}
+2. Chat service creates USER message
+3. ContextAssemblyManager.assemble() builds prompt once (shared across all models)
+4. ParallelExecutionManager fires 2-5 LLM calls via Promise.allSettled()
+5. Each fulfilled result stored as separate ASSISTANT message with provider/model metadata
+6. All results returned in a single response with per-model latency and token counts
+7. message.completed published for each successful response
+```
+
 ---
 
 ## Local Ollama Models (auto-pulled on startup)
@@ -588,6 +600,10 @@ Additional 18 classes cover: HR, Education, Sales, Logistics, Hospitality, Scien
 
 Active policies (sorted by priority) can override the mode.
 
+### Routing Replay Lab
+
+`POST /routing/replay` -- re-runs historical routing decisions against the current router configuration. Returns old-vs-new comparison per decision and an aggregated summary (totalReplayed, changedCount, improvedCount, regressedCount, avgConfidenceDelta). Managed by `ReplayManager` in the routing service. Frontend page at `/routing/replay` with filters, summary card, and results table.
+
 ### Intelligent Routing Rules (AUTO mode)
 
 | Task                           | Routes To                              |
@@ -637,9 +653,9 @@ Failed checks → HTTP 422 with reason codes. Filenames sanitized before storage
 | /api/v1/auth/\*          | auth:4001        | Login, refresh, logout, me         |
 | /api/v1/users/\*         | auth:4001        | User CRUD (admin)                  |
 | /api/v1/chat-threads/\*  | chat:4002        | Thread CRUD                        |
-| /api/v1/chat-messages/\* | chat:4002        | Message CRUD, feedback, regenerate |
+| /api/v1/chat-messages/\* | chat:4002        | Message CRUD, feedback, regenerate, parallel compare |
 | /api/v1/connectors/\*    | connector:4003   | Connector CRUD, test, sync         |
-| /api/v1/routing/\*       | routing:4004     | Policies, decisions, evaluate      |
+| /api/v1/routing/\*       | routing:4004     | Policies, decisions, evaluate, replay |
 | /api/v1/memories/\*      | memory:4005      | Memory CRUD                        |
 | /api/v1/context-packs/\* | memory:4005      | Context pack CRUD                  |
 | /api/v1/files/\*         | file:4006        | Upload, list, chunks               |
@@ -656,9 +672,9 @@ Failed checks → HTTP 422 with reason codes. Filenames sanitized before storage
 
 ## Frontend (Next.js)
 
-### Pages (17)
+### Pages (19)
 
-login, dashboard, chat, chat/[threadId], connectors, connectors/[id], models, models/local, routing, memory, context, files, observability, audits, logs, admin, settings
+login, dashboard, chat, chat/[threadId], chat/compare, connectors, connectors/[id], models, models/local, routing, routing/replay, memory, context, files, observability, audits, logs, admin, settings
 
 ### State Management
 

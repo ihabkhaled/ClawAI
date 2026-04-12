@@ -200,7 +200,7 @@ export class RoutingService implements OnModuleInit {
     );
     const decision = await this.routingManager.evaluateRoute(context);
 
-    await this.storeAndPublishDecision(messageId, threadId, decision);
+    await this.storeAndPublishDecision(messageId, threadId, content, decision);
   }
 
   private parseMessageCreatedPayload(
@@ -263,6 +263,7 @@ export class RoutingService implements OnModuleInit {
   private async storeAndPublishDecision(
     messageId: string | undefined,
     threadId: string,
+    messageContent: string,
     decision: RoutingDecisionResult,
   ): Promise<void> {
     const fallback = decision.fallbackChain[0];
@@ -270,6 +271,7 @@ export class RoutingService implements OnModuleInit {
     await this.decisionsRepository.create({
       messageId,
       threadId,
+      messageContent: messageContent.slice(0, 2000),
       selectedProvider: decision.selectedProvider,
       selectedModel: decision.selectedModel,
       routingMode: decision.routingMode,

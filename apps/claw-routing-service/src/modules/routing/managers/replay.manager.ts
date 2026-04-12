@@ -44,6 +44,7 @@ export class ReplayManager {
     const improvementScore = this.calculateImprovementScore(decision, newDecision);
 
     return {
+      messagePreview: (decision.messageContent ?? '').slice(0, 100),
       originalDecision: {
         selectedProvider: decision.selectedProvider,
         selectedModel: decision.selectedModel,
@@ -68,7 +69,7 @@ export class ReplayManager {
 
   private buildContextFromDecision(decision: RoutingDecision): RoutingContext {
     return {
-      message: '',
+      message: decision.messageContent ?? '',
       threadId: decision.threadId,
       userMode: decision.routingMode,
     };

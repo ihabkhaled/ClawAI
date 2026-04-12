@@ -26,6 +26,7 @@ model RoutingDecision {
   id               String      @id @default(cuid())
   messageId        String?     @map("message_id")
   threadId         String      @map("thread_id")
+  messageContent   String?     @map("message_content")
   selectedProvider String      @map("selected_provider")
   selectedModel    String      @map("selected_model")
   routingMode      RoutingMode @map("routing_mode")

@@ -264,6 +264,98 @@ data: {"threadId":"clxyz...","type":"error","error":"All providers failed"}
 ```
 
 **Important**: Do NOT use `EventSource` API (cannot set Authorization header). Use `fetch()` with `ReadableStream`:
+
+---
+
+## Parallel Compare
+
+### POST /chat-messages/parallel
+
+Send a single prompt to 2-5 models simultaneously. All models receive the same assembled context. Results are returned together once all models have responded (or failed).
+
+**Auth**: Bearer token (must own thread)
+**Request Body**:
+```json
+{
+  "threadId": "clxyz...",
+  "content": "Explain the difference between REST and GraphQL",
+  "models": [
+    { "provider": "anthropic", "model": "claude-sonnet-4" },
+    { "provider": "openai", "model": "gpt-4o-mini" },
+    { "provider": "gemini", "model": "gemini-2.5-flash" }
+  ],
+  "fileIds": []
+}
+```
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `threadId` | string | Yes | Thread to attach messages to |
+| `content` | string | Yes | User prompt (max 10,000 chars) |
+| `models` | array of {provider, model} | Yes | 2-5 provider/model pairs |
+| `fileIds` | string[] | No | Optional file attachments |
+
+**Response 200**:
+```json
+{
+  "threadId": "clxyz...",
+  "userMessageId": "clmsg0...",
+  "results": [
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4",
+      "status": "fulfilled",
+      "content": "REST is an architectural style...",
+      "messageId": "clmsg1...",
+      "inputTokens": 280,
+      "outputTokens": 350,
+      "latencyMs": 1450
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "status": "fulfilled",
+      "content": "The key differences between REST and GraphQL...",
+      "messageId": "clmsg2...",
+      "inputTokens": 280,
+      "outputTokens": 290,
+      "latencyMs": 980
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "status": "rejected",
+      "content": null,
+      "messageId": null,
+      "error": "Provider timeout after 30000ms",
+      "latencyMs": 30000
+    }
+  ],
+  "totalLatencyMs": 30000
+}
+```
+
+**Errors**:
+- `400 VALIDATION_ERROR` -- fewer than 2 or more than 5 models, empty content
+- `403 FORBIDDEN` -- user does not own the thread
+- `404 ENTITY_NOT_FOUND` -- thread not found
+
+**curl**:
+```bash
+curl -X POST http://localhost:4000/api/v1/chat-messages/parallel \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "threadId": "clxyz...",
+    "content": "Explain REST vs GraphQL",
+    "models": [
+      {"provider": "anthropic", "model": "claude-sonnet-4"},
+      {"provider": "openai", "model": "gpt-4o-mini"}
+    ]
+  }'
+```
+
+---
 ```javascript
 const response = await fetch(url, {
   headers: { Authorization: `Bearer ${token}` },

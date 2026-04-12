@@ -175,3 +175,75 @@ Get routing decisions for a specific thread.
 | `LOW_LATENCY` | OpenAI gpt-4o-mini |
 | `HIGH_REASONING` | Anthropic claude-opus-4 |
 | `COST_SAVER` | Local if healthy, else cheapest cloud |
+
+---
+
+## Replay
+
+### POST /routing/replay
+
+Re-run historical routing decisions against the current router configuration. Returns old-vs-new comparison for each decision and an aggregated summary.
+
+**Auth**: Bearer token (ADMIN role required)
+**Request Body**:
+```json
+{
+  "startDate": "2026-04-01T00:00:00.000Z",
+  "endDate": "2026-04-11T00:00:00.000Z",
+  "routingMode": "AUTO",
+  "provider": "anthropic",
+  "limit": 50
+}
+```
+
+All fields are optional. Without filters, replays the most recent 50 decisions.
+
+| Field | Type | Default | Description |
+| --- | --- | --- | --- |
+| `startDate` | ISO 8601 string | none | Start of date range filter |
+| `endDate` | ISO 8601 string | none | End of date range filter |
+| `routingMode` | RoutingMode enum | none | Filter by original routing mode |
+| `provider` | string | none | Filter by original selected provider |
+| `limit` | int (1-200) | 50 | Max decisions to replay |
+
+**Response 200**:
+```json
+{
+  "summary": {
+    "totalReplayed": 42,
+    "changedCount": 15,
+    "improvedCount": 11,
+    "regressedCount": 2,
+    "unchangedCount": 27,
+    "avgConfidenceDelta": 0.07
+  },
+  "results": [
+    {
+      "decisionId": "cldec...",
+      "messageContent": "Write a Python function to sort a list",
+      "originalProvider": "openai",
+      "originalModel": "gpt-4o-mini",
+      "originalConfidence": 0.75,
+      "newProvider": "anthropic",
+      "newModel": "claude-sonnet-4",
+      "newConfidence": 0.88,
+      "changed": true,
+      "improvementScore": 1,
+      "reasonTags": ["coding", "python"],
+      "replayedAt": "2026-04-11T12:00:00.000Z"
+    }
+  ]
+}
+```
+
+**Errors**:
+- `400 VALIDATION_ERROR` -- invalid date range or limit out of bounds
+- `403 FORBIDDEN` -- non-ADMIN user
+
+**curl**:
+```bash
+curl -X POST http://localhost:4000/api/v1/routing/replay \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"startDate":"2026-04-01T00:00:00.000Z","limit":20}'
+```

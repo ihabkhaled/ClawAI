@@ -106,6 +106,7 @@ The order in the table above reflects the detection priority -- security is chec
 | DELETE | /policies/:id       | Delete policy (ADMIN)                |
 | GET    | /decisions          | List recent routing decisions        |
 | POST   | /evaluate           | Evaluate routing for a message       |
+| POST   | /replay             | Replay historical decisions against current router |
 
 ## Events
 
@@ -134,6 +135,7 @@ CLOUD_MODEL_GEMINI_DEFAULT = 'gemini-2.5-flash'
 - **RoutingManager** -- orchestrates the full routing decision pipeline
 - **OllamaRouterManager** -- calls Ollama with the router prompt and parses the response
 - **PromptBuilderManager** -- builds dynamic router prompts based on installed models
+- **ReplayManager** -- re-runs historical routing decisions against the current router for comparison
 
 ---
 
@@ -316,3 +318,38 @@ handleAuto(context)
 ```
 
 Each step can short-circuit the pipeline. Steps 1-3 are keyword-only (sub-millisecond). Step 4 may make an HTTP call to check installed models (cached). Step 5 calls the Ollama LLM (up to 10s). Step 6 is the final safety net.
+
+---
+
+## Routing Replay Lab
+
+The Replay Lab allows admins to re-run historical routing decisions against the current router configuration and compare old vs new results. This is useful for measuring routing improvement after adding new models, updating keywords, or changing policies.
+
+### How It Works
+
+1. **Fetch historical decisions** -- query `RoutingDecision` records matching the filter criteria (date range, routing mode, provider)
+2. **Re-route each message** -- feed the original message content through the current routing pipeline (same `handleAuto()` / mode-specific flow)
+3. **Compare results** -- for each decision, produce an old-vs-new comparison with fields: `originalProvider`, `originalModel`, `newProvider`, `newModel`, `changed` (boolean), `improvementScore`
+4. **Compute summary** -- total replayed, changed count, improvement score distribution
+
+### Improvement Scoring
+
+The `ReplayManager` computes an improvement score for each replayed decision:
+
+- **+1** -- new decision has higher confidence than original
+- **0** -- no meaningful change (same provider/model or equivalent confidence)
+- **-1** -- new decision has lower confidence or routes to a less capable model
+
+The summary aggregates these into an overall improvement percentage.
+
+### Replay Types
+
+| Type | Description |
+| --- | --- |
+| `ReplayFilter` | Date range, routing mode, provider, limit filters |
+| `ReplayResult` | Single decision comparison (old vs new provider/model, changed flag, improvementScore) |
+| `ReplaySummary` | Aggregated stats: totalReplayed, changedCount, improvedCount, regressedCount, avgConfidenceDelta |
+
+### Endpoint
+
+`POST /routing/replay` -- see [API Reference](../12-reference/api-reference-routing.md) for full request/response schema.

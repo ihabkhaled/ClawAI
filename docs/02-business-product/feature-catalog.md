@@ -33,6 +33,7 @@ Last updated: 2026-04-11
 | F-010 | Message Feedback | GA | Thumbs up/down on individual AI responses |
 | F-011 | Routing Transparency | GA | Expandable badge showing confidence, reason tags, privacy/cost class |
 | F-012 | Thinking Indicator | GA | Visual indicator while polling for AI response (3-min max) |
+| F-013 | Parallel Multi-Model Compare | GA | Send one prompt to 2-5 models simultaneously, view side-by-side responses |
 
 ### User Stories
 
@@ -45,6 +46,7 @@ Last updated: 2026-04-11
 - **F-009**: "As a user, I want to regenerate a poor response to get a better answer."
 - **F-010**: "As a user, I want to rate responses so the platform can track quality over time."
 - **F-011**: "As a privacy-conscious user, I want to verify each message was processed locally."
+- **F-013**: "As a power user, I want to send the same prompt to Claude, GPT, and Gemini simultaneously and compare their responses side by side."
 
 ---
 
@@ -64,12 +66,14 @@ Last updated: 2026-04-11
 | F-029 | File Generation Detection | GA | Regex-based verb + format detection for file export routing |
 | F-030 | Fallback Chain | GA | Primary -> fallback -> local Ollama -> error |
 | F-031 | Provider Health Check | GA | Only routes to healthy, active connectors |
+| F-032 | Routing Replay Lab | GA | Re-run historical routing decisions against the current router and compare old vs new |
 
 ### User Stories
 
 - **F-020**: "As a user, I want the system to automatically pick Claude for coding and Gemini for data analysis."
 - **F-025**: "As an admin, I want to create a policy that forces all financial queries to LOCAL_ONLY."
 - **F-026**: "As an admin, I want to test what routing decision would be made for 'debug this Python function' without sending a message."
+- **F-032**: "As an admin, I want to replay last week's routing decisions against the current router to measure improvement after adding new models."
 
 ---
 
@@ -233,8 +237,8 @@ Last updated: 2026-04-11
 
 | Category | GA | Beta | Scaffolded | Planned | Total |
 | --- | --- | --- | --- | --- | --- |
-| Chat & Messaging | 12 | 0 | 0 | 0 | 12 |
-| Intelligent Routing | 12 | 0 | 0 | 0 | 12 |
+| Chat & Messaging | 13 | 0 | 0 | 0 | 13 |
+| Intelligent Routing | 13 | 0 | 0 | 0 | 13 |
 | Memory System | 7 | 0 | 0 | 0 | 7 |
 | Model Catalog | 7 | 0 | 0 | 0 | 7 |
 | Connectors | 6 | 0 | 0 | 0 | 6 |
@@ -245,4 +249,4 @@ Last updated: 2026-04-11
 | Audit & Observability | 6 | 0 | 0 | 0 | 6 |
 | Settings | 5 | 0 | 0 | 0 | 5 |
 | Infrastructure | 5 | 0 | 0 | 0 | 5 |
-| **Total** | **75** | **3** | **0** | **0** | **78** |
+| **Total** | **77** | **3** | **0** | **0** | **80** |

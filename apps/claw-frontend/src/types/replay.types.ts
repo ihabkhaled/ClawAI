@@ -1,4 +1,5 @@
 export type ReplayResult = {
+  messagePreview: string;
   originalDecision: {
     selectedProvider: string;
     selectedModel: string;

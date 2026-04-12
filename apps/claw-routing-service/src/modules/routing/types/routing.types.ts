@@ -80,6 +80,7 @@ export interface PolicyFilters {
 export interface CreateDecisionData {
   messageId?: string;
   threadId: string;
+  messageContent?: string;
   selectedProvider: string;
   selectedModel: string;
   routingMode: RoutingMode;
