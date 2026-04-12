@@ -1,11 +1,18 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { RabbitMQService } from "@claw/shared-rabbitmq";
-import { EventPattern } from "@claw/shared-types";
-import { type File, FileIngestionStatus } from "../../../generated/prisma";
-import { readFile } from "../../../common/utilities";
-import { FilesRepository } from "../repositories/files.repository";
-import { FileChunksRepository } from "../repositories/file-chunks.repository";
-import { type ChunkData } from "../types/files.types";
+import { Injectable, Logger } from '@nestjs/common';
+import { RabbitMQService } from '@claw/shared-rabbitmq';
+import { EventPattern } from '@claw/shared-types';
+import { type File, FileIngestionStatus } from '../../../generated/prisma';
+import { readFile } from '../../../common/utilities';
+import { extractTextFromPdf } from '../../../common/utilities/pdf-parser.utility';
+import { extractTextFromDocx } from '../../../common/utilities/docx-parser.utility';
+import { FilesRepository } from '../repositories/files.repository';
+import { FileChunksRepository } from '../repositories/file-chunks.repository';
+import { type ChunkData } from '../types/files.types';
+import {
+  MIME_TYPE_DOCX,
+  MIME_TYPE_PDF,
+  MIME_TYPE_XLSX,
+} from '../constants/file-processing.constants';
 
 @Injectable()
 export class FileProcessingManager {
@@ -22,8 +29,8 @@ export class FileProcessingManager {
     await this.updateIngestionStatus(file.id, FileIngestionStatus.PROCESSING);
 
     try {
-      const content = readFile(file.storagePath);
-      const textContent = content.toString("utf-8");
+      const rawBuffer = readFile(file.storagePath);
+      const textContent = await this.extractText(rawBuffer, file.mimeType, file.filename);
       const chunks = this.splitIntoChunks(textContent, file.mimeType, file.id);
 
       await this.fileChunksRepository.createMany(chunks);
@@ -36,13 +43,13 @@ export class FileProcessingManager {
         timestamp: new Date().toISOString(),
       });
 
-      this.logger.log(`File ${file.id} processed: ${chunks.length} chunks created`);
+      this.logger.log(`File ${file.id} processed: ${String(chunks.length)} chunks created`);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown processing error";
+      const errorMessage = error instanceof Error ? error.message : 'Unknown processing error';
       this.logger.error(`File ${file.id} processing failed: ${errorMessage}`);
       await this.updateIngestionStatus(file.id, FileIngestionStatus.FAILED);
 
-      void this.rabbitMQService.publish("file.failed", {
+      void this.rabbitMQService.publish('file.failed', {
         fileId: file.id,
         userId: file.userId,
         error: errorMessage,
@@ -53,6 +60,31 @@ export class FileProcessingManager {
 
   async updateIngestionStatus(fileId: string, status: FileIngestionStatus): Promise<void> {
     await this.filesRepository.updateIngestionStatus(fileId, status);
+  }
+
+  private async extractText(buffer: Buffer, mimeType: string, filename: string): Promise<string> {
+    if (mimeType === MIME_TYPE_PDF) {
+      this.logger.debug(`extractText: parsing PDF "${filename}"`);
+      return extractTextFromPdf(buffer);
+    }
+
+    if (mimeType === MIME_TYPE_DOCX) {
+      this.logger.debug(`extractText: parsing DOCX "${filename}"`);
+      return extractTextFromDocx(buffer);
+    }
+
+    if (mimeType === MIME_TYPE_XLSX) {
+      this.logger.debug(`extractText: XLSX detected — converting to CSV text`);
+      return buffer.toString('utf-8');
+    }
+
+    if (mimeType.startsWith('image/')) {
+      this.logger.debug(`extractText: image file "${filename}" — storing base64 reference`);
+      return `[Image file: ${filename}]`;
+    }
+
+    this.logger.debug(`extractText: text file "${filename}" (${mimeType}) — UTF-8 decode`);
+    return buffer.toString('utf-8');
   }
 
   private splitIntoChunks(content: string, mimeType: string, fileId: string): ChunkData[] {
@@ -68,16 +100,16 @@ export class FileProcessingManager {
   }
 
   private splitByType(content: string, mimeType: string): string[] {
-    switch (mimeType) {
-      case "application/json":
-        return this.splitJson(content);
-      case "text/csv":
-        return this.splitCsv(content);
-      case "text/markdown":
-        return this.splitMarkdown(content);
-      default:
-        return this.splitText(content);
+    if (mimeType === 'application/json') {
+      return this.splitJson(content);
     }
+    if (mimeType === 'text/csv' || mimeType === 'text/tab-separated-values') {
+      return this.splitCsv(content);
+    }
+    if (mimeType === 'text/markdown') {
+      return this.splitMarkdown(content);
+    }
+    return this.splitText(content);
   }
 
   private splitText(content: string): string[] {
@@ -88,9 +120,9 @@ export class FileProcessingManager {
   private splitJson(content: string): string[] {
     try {
       const parsed = JSON.parse(content) as unknown;
-      if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
-        return Object.entries(parsed as Record<string, unknown>).map(
-          ([key, value]) => JSON.stringify({ [key]: value }, null, 2),
+      if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+        return Object.entries(parsed as Record<string, unknown>).map(([key, value]) =>
+          JSON.stringify({ [key]: value }, null, 2),
         );
       }
       if (Array.isArray(parsed)) {
@@ -103,7 +135,7 @@ export class FileProcessingManager {
   }
 
   private splitCsv(content: string): string[] {
-    const lines = content.split("\n");
+    const lines = content.split('\n');
     if (lines.length <= 1) {
       return [content];
     }
@@ -113,7 +145,7 @@ export class FileProcessingManager {
     const chunks: string[] = [];
 
     for (let i = 0; i < dataLines.length; i += chunkSize) {
-      const chunk = [header, ...dataLines.slice(i, i + chunkSize)].join("\n");
+      const chunk = [header, ...dataLines.slice(i, i + chunkSize)].join('\n');
       chunks.push(chunk);
     }
 

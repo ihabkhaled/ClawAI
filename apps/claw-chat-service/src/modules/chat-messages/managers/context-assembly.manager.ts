@@ -18,6 +18,11 @@ import {
   type FileContentResponse,
   type MemoryRecordResponse,
 } from '../types/context.types';
+import {
+  MAX_FILE_CONTENT_LENGTH,
+  TEXT_FILE_EXTENSIONS,
+  TEXT_MIME_PREFIXES,
+} from '../constants/file-content.constants';
 
 @Injectable()
 export class ContextAssemblyManager {
@@ -30,7 +35,9 @@ export class ContextAssemblyManager {
     contextPackIds?: string[],
     fileIds?: string[],
   ): Promise<AssembledContext> {
-    this.logger.log(`assemble: starting for user ${userId} with ${String(threadMessages.length)} messages, ${String(contextPackIds?.length ?? 0)} packs, ${String(fileIds?.length ?? 0)} files`);
+    this.logger.log(
+      `assemble: starting for user ${userId} with ${String(threadMessages.length)} messages, ${String(contextPackIds?.length ?? 0)} packs, ${String(fileIds?.length ?? 0)} files`,
+    );
     this.logger.debug(`assemble: slicing to last ${String(THREAD_CONTEXT_LIMIT)} messages`);
     const recentMessages = threadMessages.slice(-THREAD_CONTEXT_LIMIT);
     this.logger.debug(`assemble: using ${String(recentMessages.length)} recent messages`);
@@ -43,8 +50,12 @@ export class ContextAssemblyManager {
     ]);
 
     const tokenBudget = threadSettings?.maxTokens ?? 4096;
-    this.logger.debug(`assemble: tokenBudget=${String(tokenBudget)} systemPrompt=${threadSettings?.systemPrompt ? 'present' : 'none'}`);
-    this.logger.log(`assemble: completed - ${String(memories.length)} memories, ${String(contextPackItems.length)} pack items, ${String(fileContents.length)} files, ${String(recentMessages.length)} messages`);
+    this.logger.debug(
+      `assemble: tokenBudget=${String(tokenBudget)} systemPrompt=${threadSettings?.systemPrompt ? 'present' : 'none'}`,
+    );
+    this.logger.log(
+      `assemble: completed - ${String(memories.length)} memories, ${String(contextPackItems.length)} pack items, ${String(fileContents.length)} files, ${String(recentMessages.length)} messages`,
+    );
 
     return {
       userId,
@@ -62,7 +73,9 @@ export class ContextAssemblyManager {
     const parts: string[] = [];
 
     if (context.systemPrompt) {
-      this.logger.debug(`buildPromptString: adding system prompt (${String(context.systemPrompt.length)} chars)`);
+      this.logger.debug(
+        `buildPromptString: adding system prompt (${String(context.systemPrompt.length)} chars)`,
+      );
       parts.push(`SYSTEM: ${context.systemPrompt}`);
     }
 
@@ -73,7 +86,9 @@ export class ContextAssemblyManager {
     }
 
     if (context.contextPackItems.length > 0) {
-      this.logger.debug(`buildPromptString: adding ${String(context.contextPackItems.length)} context pack items`);
+      this.logger.debug(
+        `buildPromptString: adding ${String(context.contextPackItems.length)} context pack items`,
+      );
       const packBlock = context.contextPackItems
         .map((item) => item.content ?? '')
         .filter((c) => c.length > 0)
@@ -84,7 +99,9 @@ export class ContextAssemblyManager {
     }
 
     if (context.fileContents.length > 0) {
-      this.logger.debug(`buildPromptString: adding ${String(context.fileContents.length)} file contents`);
+      this.logger.debug(
+        `buildPromptString: adding ${String(context.fileContents.length)} file contents`,
+      );
       for (const file of context.fileContents) {
         this.logger.debug(`buildPromptString: decoding file "${file.filename}" (${file.mimeType})`);
         const decoded = this.decodeFileContent(file);
@@ -94,13 +111,17 @@ export class ContextAssemblyManager {
       }
     }
 
-    this.logger.debug(`buildPromptString: adding ${String(context.threadMessages.length)} thread messages`);
+    this.logger.debug(
+      `buildPromptString: adding ${String(context.threadMessages.length)} thread messages`,
+    );
     for (const msg of context.threadMessages) {
       parts.push(`${msg.role}: ${msg.content}`);
     }
 
     const fullPrompt = parts.join('\n\n');
-    this.logger.debug(`buildPromptString: full prompt assembled — ${String(fullPrompt.length)} chars, truncating to budget=${String(context.tokenBudget)}`);
+    this.logger.debug(
+      `buildPromptString: full prompt assembled — ${String(fullPrompt.length)} chars, truncating to budget=${String(context.tokenBudget)}`,
+    );
     return this.truncateToTokenBudget(fullPrompt, context.tokenBudget);
   }
 
@@ -116,13 +137,17 @@ export class ContextAssemblyManager {
     }
 
     if (context.memories.length > 0) {
-      this.logger.debug(`buildChatMessages: adding ${String(context.memories.length)} memories to system`);
+      this.logger.debug(
+        `buildChatMessages: adding ${String(context.memories.length)} memories to system`,
+      );
       const memoryBlock = context.memories.map((m) => `[${m.type}] ${m.content}`).join('\n');
       systemParts.push(`User context (memories):\n${memoryBlock}`);
     }
 
     if (context.contextPackItems.length > 0) {
-      this.logger.debug(`buildChatMessages: adding ${String(context.contextPackItems.length)} context pack items to system`);
+      this.logger.debug(
+        `buildChatMessages: adding ${String(context.contextPackItems.length)} context pack items to system`,
+      );
       const packBlock = context.contextPackItems
         .map((item) => item.content ?? '')
         .filter((c) => c.length > 0)
@@ -134,7 +159,9 @@ export class ContextAssemblyManager {
 
     // Add text-based files to system prompt
     const textFiles = context.fileContents.filter((f) => !this.isImageFile(f));
-    this.logger.debug(`buildChatMessages: adding ${String(textFiles.length)} text files to system prompt`);
+    this.logger.debug(
+      `buildChatMessages: adding ${String(textFiles.length)} text files to system prompt`,
+    );
     for (const file of textFiles) {
       this.logger.debug(`buildChatMessages: decoding text file "${file.filename}"`);
       const decoded = this.decodeFileContent(file);
@@ -144,13 +171,17 @@ export class ContextAssemblyManager {
     }
 
     if (systemParts.length > 0) {
-      this.logger.debug(`buildChatMessages: system message built with ${String(systemParts.length)} parts`);
+      this.logger.debug(
+        `buildChatMessages: system message built with ${String(systemParts.length)} parts`,
+      );
       messages.push({ role: 'system', content: systemParts.join('\n\n') });
     }
 
     // Collect image files for multimodal injection into the last user message
     const imageFiles = context.fileContents.filter((f) => this.isImageFile(f));
-    this.logger.debug(`buildChatMessages: found ${String(imageFiles.length)} image files for multimodal injection`);
+    this.logger.debug(
+      `buildChatMessages: found ${String(imageFiles.length)} image files for multimodal injection`,
+    );
 
     for (const msg of context.threadMessages) {
       const role = this.mapRole(msg.role);
@@ -159,10 +190,10 @@ export class ContextAssemblyManager {
       // build multimodal content (text + images)
       const isLastUser = role === 'user' && msg === context.threadMessages.at(-1);
       if (isLastUser && imageFiles.length > 0) {
-        this.logger.debug(`buildChatMessages: building multimodal last user message with ${String(imageFiles.length)} images`);
-        const parts: OpenAiContentPart[] = [
-          { type: 'text', text: msg.content },
-        ];
+        this.logger.debug(
+          `buildChatMessages: building multimodal last user message with ${String(imageFiles.length)} images`,
+        );
+        const parts: OpenAiContentPart[] = [{ type: 'text', text: msg.content }];
         for (const img of imageFiles) {
           if (img.content) {
             parts.push({
@@ -186,7 +217,9 @@ export class ContextAssemblyManager {
   }
 
   private async fetchMemories(userId: string): Promise<MemoryRecordResponse[]> {
-    this.logger.debug(`fetchMemories: fetching memories for user=${userId} limit=${String(MEMORY_FETCH_LIMIT)}`);
+    this.logger.debug(
+      `fetchMemories: fetching memories for user=${userId} limit=${String(MEMORY_FETCH_LIMIT)}`,
+    );
     try {
       const config = AppConfig.get();
       const url = `${config.MEMORY_SERVICE_URL}/api/v1/internal/memories/for-context?userId=${encodeURIComponent(userId)}&limit=${String(MEMORY_FETCH_LIMIT)}`;
@@ -236,12 +269,16 @@ export class ContextAssemblyManager {
         });
 
         if (response.ok && response.data.items) {
-          this.logger.debug(`fetchContextPackItems: pack ${packId} returned ${String(response.data.items.length)} items`);
+          this.logger.debug(
+            `fetchContextPackItems: pack ${packId} returned ${String(response.data.items.length)} items`,
+          );
           for (const item of response.data.items) {
             results.push({ content: item.content, type: item.type });
           }
         } else {
-          this.logger.debug(`fetchContextPackItems: pack ${packId} returned no items or failed status=${String(response.status)}`);
+          this.logger.debug(
+            `fetchContextPackItems: pack ${packId} returned no items or failed status=${String(response.status)}`,
+          );
         }
       }
 
@@ -276,10 +313,14 @@ export class ContextAssemblyManager {
         });
 
         if (response.ok && response.data.content) {
-          this.logger.debug(`fetchFileContents: file ${fileId} received — filename=${response.data.filename} mimeType=${response.data.mimeType} contentLen=${String(response.data.content.length)}`);
+          this.logger.debug(
+            `fetchFileContents: file ${fileId} received — filename=${response.data.filename} mimeType=${response.data.mimeType} contentLen=${String(response.data.content.length)}`,
+          );
           results.push(response.data);
         } else {
-          this.logger.warn(`fetchFileContents: no content for file ${fileId} — status=${String(response.status)}`);
+          this.logger.warn(
+            `fetchFileContents: no content for file ${fileId} — status=${String(response.status)}`,
+          );
         }
       }
 
@@ -295,12 +336,16 @@ export class ContextAssemblyManager {
   private truncateToTokenBudget(text: string, tokenBudget: number): string {
     const maxChars = tokenBudget * APPROX_CHARS_PER_TOKEN;
     if (text.length <= maxChars) {
-      this.logger.debug(`truncateToTokenBudget: text fits within budget (${String(text.length)} <= ${String(maxChars)} chars)`);
+      this.logger.debug(
+        `truncateToTokenBudget: text fits within budget (${String(text.length)} <= ${String(maxChars)} chars)`,
+      );
       return text;
     }
     // Keep the beginning (system prompt, memories, context) and truncate the end
     // This preserves the most important context (instructions, memories) over old messages
-    this.logger.debug(`truncateToTokenBudget: truncating from ${String(text.length)} to ${String(maxChars)} chars (budget=${String(tokenBudget)} tokens)`);
+    this.logger.debug(
+      `truncateToTokenBudget: truncating from ${String(text.length)} to ${String(maxChars)} chars (budget=${String(tokenBudget)} tokens)`,
+    );
     return text.slice(0, maxChars);
   }
 
@@ -309,28 +354,54 @@ export class ContextAssemblyManager {
       return `[File "${file.filename}" has no content]`;
     }
 
-    // For text-based files, decode base64 to UTF-8 string
-    const textMimeTypes = [
-      'text/plain',
-      'text/csv',
-      'text/markdown',
-      'text/html',
-      'text/xml',
-      'application/json',
-      'application/xml',
-    ];
-
-    if (textMimeTypes.some((t) => file.mimeType.startsWith(t))) {
-      try {
-        return Buffer.from(file.content, 'base64').toString('utf-8');
-      } catch {
-        return `[Failed to decode file "${file.filename}"]`;
-      }
+    if (this.isTextDecodable(file)) {
+      return this.decodeAsText(file);
     }
 
-    // For binary files (PDF, images, etc.), include base64 with type hint
-    // LLMs that support multimodal can parse this; others get the filename reference
-    return `[Binary file "${file.filename}" (${file.mimeType}, base64-encoded)]\n${file.content.slice(0, 50000)}`;
+    if (this.isImageFile(file)) {
+      return `[Image file "${file.filename}" — passed via multimodal images field]`;
+    }
+
+    return `[Binary file "${file.filename}" (${file.mimeType}) — content not extractable as text]`;
+  }
+
+  private isTextDecodable(file: FileContentResponse): boolean {
+    if (TEXT_MIME_PREFIXES.some((prefix) => file.mimeType.startsWith(prefix))) {
+      return true;
+    }
+
+    const ext = this.getFileExtension(file.filename);
+    if (ext && (TEXT_FILE_EXTENSIONS as ReadonlySet<string>).has(ext)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private decodeAsText(file: FileContentResponse): string {
+    if (!file.content) {
+      return `[File "${file.filename}" has no content]`;
+    }
+    try {
+      const decoded = Buffer.from(file.content, 'base64').toString('utf-8');
+      if (decoded.length > MAX_FILE_CONTENT_LENGTH) {
+        this.logger.debug(
+          `decodeAsText: truncating ${file.filename} from ${String(decoded.length)} to ${String(MAX_FILE_CONTENT_LENGTH)}`,
+        );
+        return decoded.slice(0, MAX_FILE_CONTENT_LENGTH);
+      }
+      return decoded;
+    } catch {
+      return `[Failed to decode file "${file.filename}"]`;
+    }
+  }
+
+  private getFileExtension(filename: string): string | null {
+    const dotIndex = filename.lastIndexOf('.');
+    if (dotIndex < 0) {
+      return null;
+    }
+    return filename.slice(dotIndex).toLowerCase();
   }
 
   private mapRole(role: string): string {
