@@ -1635,6 +1635,14 @@ export const PRIVACY_KEYWORDS = [
   'title search',
   'closing disclosure',
   'settlement statement',
+  // Additional privacy keywords from experiment misses
+  'board compensation',
+  'executive compensation',
+  'collections recovery',
+  'Basel capital',
+  'IP portfolio',
+  'defense mission',
+  'classified intelligence',
 ];
 
 export const ENGINEERING_KEYWORDS = [
@@ -1939,6 +1947,19 @@ export const GOVERNMENT_KEYWORDS = [
   'inspector general',
   'oversight',
   'accountability',
+  'public policy',
+  'defense mission',
+  'election',
+  'satellite',
+  'diplomat',
+  'embassy',
+  'treaty',
+  'sanction',
+  'border security',
+  'immigration policy',
+  'census',
+  'congressional',
+  'parliament',
 ];
 
 export const LOGISTICS_KEYWORDS = [
