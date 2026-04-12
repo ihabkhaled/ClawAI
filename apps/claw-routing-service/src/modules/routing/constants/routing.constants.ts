@@ -1352,6 +1352,7 @@ export const FINANCE_KEYWORDS = [
   'sensitivity analysis',
   'monte carlo',
   // Treasury / FP&A / cost accounting keywords
+  'treasury',
   'treasury management',
   'FP&A',
   'financial planning',
