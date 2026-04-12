@@ -4,11 +4,12 @@ import {
   SD_BATCH_SIZE,
   SD_DEFAULT_CFG_SCALE,
   SD_DEFAULT_STEPS,
+  SD_IMG2IMG_DENOISING_STRENGTH,
   SD_MAX_DIMENSION,
   SD_TIMEOUT_MS,
 } from '../constants/stable-diffusion.constants';
 import type { ImageProviderResponse } from '../types/image-generation.types';
-import type { SDTxt2ImgResponse } from '../types/stable-diffusion.types';
+import type { SDImg2ImgResponse, SDTxt2ImgResponse } from '../types/stable-diffusion.types';
 
 const logger = new Logger('StableDiffusionAdapter');
 
@@ -17,34 +18,48 @@ export const generateWithStableDiffusion = async (
   prompt: string,
   width: number,
   height: number,
+  referenceImageBase64?: string,
+  _referenceImageMimeType?: string,
 ): Promise<ImageProviderResponse> => {
-  const cappedWidth = Math.min(width, SD_MAX_DIMENSION);
-  const cappedHeight = Math.min(height, SD_MAX_DIMENSION);
-  logger.log(`generateWithStableDiffusion: starting — sdUrl=${sdUrl} size=${String(cappedWidth)}x${String(cappedHeight)}`);
-  logger.debug(`generateWithStableDiffusion: promptLen=${String(prompt.length)}`);
+  const w = Math.min(width, SD_MAX_DIMENSION);
+  const h = Math.min(height, SD_MAX_DIMENSION);
+  const isImg2Img = Boolean(referenceImageBase64);
+  const mode = isImg2Img ? 'img2img' : 'txt2img';
+  const endpoint = `${sdUrl}/sdapi/v1/${mode}`;
 
-  logger.debug(`generateWithStableDiffusion: sending POST to ${sdUrl}/sdapi/v1/txt2img`);
-  const response = await httpPost<SDTxt2ImgResponse>(
-    `${sdUrl}/sdapi/v1/txt2img`,
-    {
-      prompt,
-      width: cappedWidth,
-      height: cappedHeight,
-      steps: SD_DEFAULT_STEPS,
-      cfg_scale: SD_DEFAULT_CFG_SCALE,
-      batch_size: SD_BATCH_SIZE,
-    },
-    { timeout: SD_TIMEOUT_MS },
-  );
+  logger.log(`${mode}: starting — sdUrl=${sdUrl} size=${String(w)}x${String(h)}`);
+  logger.debug(`${mode}: promptLen=${String(prompt.length)}`);
 
-  logger.debug(`generateWithStableDiffusion: response received — imageCount=${String(response.images?.length ?? 0)}`);
-  const firstImage = response.images?.[0];
-  if (!firstImage) {
-    logger.error('generateWithStableDiffusion: Stable Diffusion returned no images');
-    throw new Error('Stable Diffusion returned no images');
+  const body: Record<string, unknown> = {
+    prompt,
+    width: w,
+    height: h,
+    steps: SD_DEFAULT_STEPS,
+    cfg_scale: SD_DEFAULT_CFG_SCALE,
+    batch_size: SD_BATCH_SIZE,
+  };
+
+  if (isImg2Img && referenceImageBase64) {
+    body['init_images'] = [referenceImageBase64];
+    body['denoising_strength'] = SD_IMG2IMG_DENOISING_STRENGTH;
+    logger.debug(
+      `img2img: refBase64Len=${String(referenceImageBase64.length)} denoising=${String(SD_IMG2IMG_DENOISING_STRENGTH)}`,
+    );
   }
 
-  logger.log(`generateWithStableDiffusion: image generated — base64Len=${String(firstImage.length)}`);
+  logger.debug(`${mode}: POST ${endpoint}`);
+  const response = await httpPost<SDTxt2ImgResponse | SDImg2ImgResponse>(endpoint, body, {
+    timeout: SD_TIMEOUT_MS,
+  });
+
+  logger.debug(`${mode}: response — imageCount=${String(response.images?.length ?? 0)}`);
+  const firstImage = response.images?.[0];
+  if (!firstImage) {
+    logger.error(`${mode}: Stable Diffusion returned no images`);
+    throw new Error(`Stable Diffusion ${mode} returned no images`);
+  }
+
+  logger.log(`${mode}: image generated — base64Len=${String(firstImage.length)}`);
   return {
     imageBase64: firstImage,
     revisedPrompt: undefined,
