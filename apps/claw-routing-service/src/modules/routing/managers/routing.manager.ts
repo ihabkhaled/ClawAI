@@ -905,12 +905,24 @@ export class RoutingManager {
     }
 
     const model = await this.findModelForRole(role);
-    if (!model) {
-      return null;
+    if (model) {
+      this.logger.log(`detectCategoryRoute: role=${role} model=${model.name}:${model.tag}`);
+      return this.buildCategoryDecision(model, role, context);
     }
 
-    this.logger.log(`detectCategoryRoute: role=${role} model=${model.name}:${model.tag}`);
-    return this.buildCategoryDecision(model, role, context);
+    // No specialized model installed for this role — use default local model
+    this.logger.log(`detectCategoryRoute: no model for role=${role}, using default local`);
+    const primary = { provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT };
+    return {
+      selectedProvider: LOCAL_PROVIDER,
+      selectedModel: LOCAL_MODEL_DEFAULT,
+      routingMode: RoutingMode.AUTO,
+      confidence: CONFIDENCE_CATEGORY_KEYWORD,
+      reasonTags: ['auto', 'category_detected', `role_${role}`, 'default_local'],
+      privacyClass: 'local',
+      costClass: 'free',
+      fallbackChain: this.buildFallbackChain(primary, context),
+    };
   }
 
   private detectCategoryRole(message: string): LocalModelRole | null {
