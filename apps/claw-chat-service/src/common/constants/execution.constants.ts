@@ -10,6 +10,8 @@ export const MEMORY_FETCH_LIMIT = 20;
 
 export const APPROX_CHARS_PER_TOKEN = 4;
 
+export const LOCAL_ONLY_ROUTING_MODES = new Set(['LOCAL_ONLY', 'PRIVACY_FIRST']);
+
 export const PROVIDER_BASE_URLS: Record<string, string> = {
   OPENAI: 'https://api.openai.com/v1',
   GEMINI: 'https://generativelanguage.googleapis.com/v1beta/openai',

@@ -5,6 +5,7 @@ import { BusinessException } from '../../../common/errors';
 import {
   FILE_GENERATION_PROVIDER,
   IMAGE_PROVIDER_PREFIX,
+  LOCAL_ONLY_ROUTING_MODES,
   OLLAMA_PROVIDER,
   PROVIDER_BASE_URLS,
 } from '../../../common/constants';
@@ -44,7 +45,7 @@ export class ChatExecutionManager {
       `execute: starting for message ${payload.messageId} with provider=${payload.selectedProvider} model=${payload.selectedModel}`,
     );
     const startTime = Date.now();
-    const candidates = this.buildCandidateChain(payload);
+    const candidates = this.buildCandidateChain(payload, payload.routingMode);
     const userPrompt = this.extractUserPrompt(context);
 
     this.logger.debug(`execute: built candidate chain with ${String(candidates.length)} providers`);
@@ -90,6 +91,15 @@ export class ChatExecutionManager {
           this.logger.warn(
             `Weak response detected from ${candidate.provider}/${candidate.model} (score: ${String(qualityResult.score.toFixed(2))}). Reasons: ${qualityResult.reasons.join(', ')}. Escalating to ${nextCandidate?.provider ?? 'next'}/${nextCandidate?.model ?? 'next'}.`,
           );
+          this.chatStreamService.emitFallbackAttempt(payload.threadId, {
+            failedProvider: candidate.provider,
+            failedModel: candidate.model,
+            error: `Weak response (score: ${String(qualityResult.score.toFixed(2))}): ${qualityResult.reasons.join(', ')}`,
+            attempt: reRouteAttempt + 1,
+            totalCandidates: candidates.length,
+            nextProvider: nextCandidate?.provider,
+            nextModel: nextCandidate?.model,
+          });
           reRouteAttempt++;
           continue;
         }
@@ -132,6 +142,7 @@ export class ChatExecutionManager {
 
   private buildCandidateChain(
     payload: MessageRoutedData,
+    routingMode: string,
   ): Array<{ provider: string; model: string }> {
     const candidates: Array<{ provider: string; model: string }> = [
       { provider: payload.selectedProvider, model: payload.selectedModel },
@@ -139,6 +150,14 @@ export class ChatExecutionManager {
 
     if (payload.fallbackProvider && payload.fallbackModel) {
       candidates.push({ provider: payload.fallbackProvider, model: payload.fallbackModel });
+    }
+
+    // Never add cloud providers for privacy-sensitive routing modes
+    if (LOCAL_ONLY_ROUTING_MODES.has(routingMode)) {
+      this.logger.debug(
+        `buildCandidateChain: skipping cloud providers — routingMode=${routingMode}`,
+      );
+      return candidates;
     }
 
     const allCloudProviders = [

@@ -427,6 +427,15 @@ export class ChatMessagesService implements OnModuleInit {
       provider: llmResponse.provider,
       model: llmResponse.model,
       latencyMs: llmResponse.latencyMs,
+      ...(llmResponse.reRouted
+        ? {
+            reRouted: true,
+            originalProvider: llmResponse.originalProvider,
+            originalModel: llmResponse.originalModel,
+            originalScore: llmResponse.originalScore,
+            reRouteAttempts: llmResponse.reRouteAttempts,
+          }
+        : {}),
     });
   }
 
@@ -451,6 +460,14 @@ export class ChatMessagesService implements OnModuleInit {
       content: llmResponse.content,
       userContent: lastUserMsg?.content,
       timestamp: new Date().toISOString(),
+      ...(llmResponse.reRouted
+        ? {
+            reRouted: true,
+            originalProvider: llmResponse.originalProvider,
+            originalModel: llmResponse.originalModel,
+            reRouteAttempts: llmResponse.reRouteAttempts,
+          }
+        : {}),
     });
   }
 

@@ -7,7 +7,5 @@ export type QualityCheckResult = {
 export type ReRoutingDecision = {
   shouldReRoute: boolean;
   reason: string;
-  escalationProvider: string | null;
-  escalationModel: string | null;
   originalScore: number;
 };

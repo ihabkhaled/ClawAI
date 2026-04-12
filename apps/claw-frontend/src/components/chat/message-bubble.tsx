@@ -97,7 +97,10 @@ export function MessageBubble({
               </Badge>
             ) : null}
             {isReRouted && originalProvider && originalModel ? (
-              <Badge variant="outline" className="gap-1 border-amber-500/50 text-xs text-amber-600">
+              <Badge
+                variant="outline"
+                className="gap-1 border-amber-500/50 text-xs text-amber-600 dark:text-amber-400"
+              >
                 <RotateCcw className="h-3 w-3" />
                 Re-routed from {originalProvider}/{originalModel}
                 {originalScore !== null ? ` (${String(Math.round(originalScore * 100))}%)` : null}

@@ -8,4 +8,5 @@ export {
   PROVIDER_BASE_URLS,
   MEMORY_FETCH_LIMIT,
   APPROX_CHARS_PER_TOKEN,
+  LOCAL_ONLY_ROUTING_MODES,
 } from './execution.constants';

@@ -151,8 +151,6 @@ export class QualityCheckManager {
     return {
       shouldReRoute,
       reason,
-      escalationProvider: null,
-      escalationModel: null,
       originalScore,
     };
   }
