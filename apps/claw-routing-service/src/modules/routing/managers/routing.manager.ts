@@ -294,6 +294,20 @@ export class RoutingManager {
       return this.buildLocalPrivacyDecision(context);
     }
 
+    // Medical and legal content is inherently sensitive — force local
+    if (this.detectMedicalRequest(context.message)) {
+      this.logger.log('handleAuto: medical content detected — forcing local routing');
+      return this.buildLocalPrivacyDecision(context);
+    }
+    if (this.detectLegalRequest(context.message)) {
+      this.logger.log('handleAuto: legal content detected — forcing local routing');
+      return this.buildLocalPrivacyDecision(context);
+    }
+    if (this.detectFinanceRequest(context.message)) {
+      this.logger.log('handleAuto: financial content detected — forcing local routing');
+      return this.buildLocalPrivacyDecision(context);
+    }
+
     // Detect image requests early (before Ollama router, which may misclassify)
     this.logger.debug('handleAuto: checking for image generation request');
     const imageResult = this.detectImageRequest(context);
