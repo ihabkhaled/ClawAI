@@ -73,3 +73,4 @@ export {
   CATALOG_PAGE_SIZE,
   DOWNLOAD_STATS_TICK_INTERVAL_MS,
 } from './catalog.constants';
+export { MIN_PARALLEL_MODELS, MAX_PARALLEL_MODELS } from './parallel.constants';

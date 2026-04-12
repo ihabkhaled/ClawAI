@@ -7,6 +7,8 @@ import type {
   CreateMessageRequest,
   ThreadsListResponse,
   MessagesListResponse,
+  ParallelRequest,
+  ParallelResponse,
 } from '@/types';
 
 export const chatRepository = {
@@ -84,6 +86,11 @@ export const chatRepository = {
     const response = await apiClient.patch<ChatMessage>(`/chat-messages/${messageId}/feedback`, {
       feedback,
     });
+    return response.data;
+  },
+
+  async sendParallel(data: ParallelRequest): Promise<ParallelResponse> {
+    const response = await apiClient.post<ParallelResponse>('/chat-messages/parallel', data);
     return response.data;
   },
 };

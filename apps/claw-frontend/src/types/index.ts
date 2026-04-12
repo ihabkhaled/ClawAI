@@ -188,6 +188,10 @@ export type {
   ReplaySummaryCardProps,
   ReplayResultRowProps,
   ReplayFiltersFormProps,
+  ParallelModelSelectorProps,
+  ParallelResponseCardProps,
+  ParallelResultsGridProps,
+  ParallelSummaryBarProps,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
@@ -244,6 +248,12 @@ export type {
   UseModelCatalogPageReturn,
 } from './catalog.types';
 export type { ReplayResult, ReplayBatchResult, ReplayFilters } from './replay.types';
+export type {
+  ParallelModelResponse,
+  ParallelResponse,
+  ParallelRequest,
+  UseParallelComparePageReturn,
+} from './parallel.types';
 export type {
   ImageGeneration,
   ImageGenerationAsset,

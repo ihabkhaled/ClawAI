@@ -54,6 +54,7 @@ export type TranslationDictionary = {
   nav: {
     dashboard: string;
     chat: string;
+    compareModels: string;
     connectors: string;
     models: string;
     modelCatalog: string;
@@ -474,6 +475,23 @@ export type TranslationDictionary = {
     confidenceNew: string;
     replayComplete: string;
     replayFailed: string;
+  };
+  compare: {
+    title: string;
+    description: string;
+    selectModels: string;
+    minModels: string;
+    maxModels: string;
+    sendPrompt: string;
+    comparing: string;
+    compareFailed: string;
+    results: string;
+    fastest: string;
+    completed: string;
+    failed: string;
+    latency: string;
+    tokens: string;
+    noResults: string;
   };
   validation: {
     required: string;

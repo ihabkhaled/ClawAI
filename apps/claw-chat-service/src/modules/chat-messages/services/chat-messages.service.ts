@@ -5,6 +5,7 @@ import { ChatMessagesRepository } from '../repositories/chat-messages.repository
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatExecutionManager } from '../managers/chat-execution.manager';
 import { ContextAssemblyManager } from '../managers/context-assembly.manager';
+import { ParallelExecutionManager } from '../managers/parallel-execution.manager';
 import { ChatStreamService } from './chat-stream.service';
 import { type CreateMessageDto } from '../dto/create-message.dto';
 import { type ListMessagesQueryDto } from '../dto/list-messages-query.dto';
@@ -13,6 +14,8 @@ import {
   type MessageRoutedData,
   type ThreadSettings,
 } from '../types/execution.types';
+import { type ParallelResponse } from '../types/parallel.types';
+import { type ParallelMessageDto } from '../dto/parallel-message.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
 import { type ChatMessage, type ChatThread, RoutingMode } from '../../../generated/prisma';
@@ -27,6 +30,7 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatExecutionManager: ChatExecutionManager,
     private readonly contextAssemblyManager: ContextAssemblyManager,
+    private readonly parallelExecutionManager: ParallelExecutionManager,
     private readonly chatStreamService: ChatStreamService,
     private readonly rabbitMQService: RabbitMQService,
   ) {
@@ -67,6 +71,18 @@ export class ChatMessagesService implements OnModuleInit {
     this.publishMessageCreated(message, userId, effectiveRoutingMode, forcedProvider, forcedModel);
 
     return message;
+  }
+
+  async createParallelMessage(userId: string, dto: ParallelMessageDto): Promise<ParallelResponse> {
+    const thread = await this.getThreadForMessage(dto.threadId, userId);
+
+    return this.parallelExecutionManager.executeParallel(
+      userId,
+      thread.id,
+      dto.content,
+      dto.models,
+      dto.fileIds,
+    );
   }
 
   async getMessages(

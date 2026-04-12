@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   MessageSquare,
+  GitCompareArrows,
   Plug,
   Cpu,
   Store,
@@ -27,6 +28,7 @@ export type SidebarItem = {
 export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
   { labelKey: 'nav.dashboard', href: ROUTES.DASHBOARD, icon: LayoutDashboard },
   { labelKey: 'nav.chat', href: ROUTES.CHAT, icon: MessageSquare },
+  { labelKey: 'nav.compareModels', href: ROUTES.CHAT_COMPARE, icon: GitCompareArrows },
   { labelKey: 'nav.connectors', href: ROUTES.CONNECTORS, icon: Plug },
   { labelKey: 'nav.models', href: ROUTES.MODELS, icon: Cpu },
   { labelKey: 'nav.modelCatalog', href: ROUTES.MODELS_CATALOG, icon: Store },

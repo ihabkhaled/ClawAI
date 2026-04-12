@@ -7,6 +7,7 @@ import type { TranslateFunction } from '@/types/i18n.types';
 
 import type { AdminUser, AuditLog } from './audit.types';
 import type { DownloadStats, ModelCatalogEntry, PullJobResponse } from './catalog.types';
+import type { ParallelModelResponse } from './parallel.types';
 import type { ReplayBatchResult, ReplayResult } from './replay.types';
 import type { ChatMessage, ChatThread, FallbackAttemptInfo } from './chat.types';
 import type { Connector, ConnectorModel, CreateConnectorRequest } from './connector.types';
@@ -590,5 +591,34 @@ export type ReplayFiltersFormProps = {
   onLimitChange: (value: number) => void;
   onSubmit: () => void;
   isPending: boolean;
+  t: TranslateFunction;
+};
+
+// ─── Parallel Compare component props ─────────────────────────────────────────
+
+export type ParallelModelSelectorProps = {
+  selectedModels: Array<{ provider: string; model: string }>;
+  onToggleModel: (provider: string, model: string, checked: boolean) => void;
+  selectionError: string | null;
+  t: TranslateFunction;
+};
+
+export type ParallelResponseCardProps = {
+  response: ParallelModelResponse;
+  isFastest: boolean;
+  t: TranslateFunction;
+};
+
+export type ParallelResultsGridProps = {
+  responses: ParallelModelResponse[];
+  fastestModel: string | null;
+  t: TranslateFunction;
+};
+
+export type ParallelSummaryBarProps = {
+  totalLatencyMs: number;
+  completedCount: number;
+  failedCount: number;
+  fastestModel: string | null;
   t: TranslateFunction;
 };

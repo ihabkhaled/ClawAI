@@ -115,7 +115,7 @@ export class ChatExecutionManager {
     throw finalError;
   }
 
-  private async callProvider(
+  async callProvider(
     provider: string,
     model: string,
     context: AssembledContext,

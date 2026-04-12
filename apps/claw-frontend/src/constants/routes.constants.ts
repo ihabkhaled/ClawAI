@@ -8,6 +8,7 @@ export const ROUTES = {
   MODELS: '/models',
   MODELS_CATALOG: '/models/catalog',
   ROUTING: '/routing',
+  CHAT_COMPARE: '/chat/compare',
   ROUTING_REPLAY: '/routing/replay',
   MEMORY: '/memory',
   CONTEXT: '/context',
