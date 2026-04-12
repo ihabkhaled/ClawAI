@@ -82,6 +82,7 @@ sequenceDiagram
 ### Step 1: User Sends Message
 
 **Frontend** sends:
+
 ```
 POST /api/v1/chat-messages
 Authorization: Bearer <jwt>
@@ -97,6 +98,7 @@ Authorization: Bearer <jwt>
 ```
 
 Frontend also maintains an SSE connection:
+
 ```
 GET /api/v1/chat-messages/stream/:threadId
 Authorization: Bearer <jwt>
@@ -132,6 +134,7 @@ ContextAssemblyManager orchestrates parallel data gathering:
 4. **Thread history** (local DB query): Recent messages in chronological order
 
 Prompt structure:
+
 ```
 [System Prompt]          Thread.systemPrompt or default
 [Memories]               User's enabled memories (max 20)
@@ -158,6 +161,7 @@ Response captured: content, inputTokens, outputTokens, latencyMs, actual provide
 ### Step 6: Store Assistant Message
 
 Creates ASSISTANT ChatMessage:
+
 - content, provider, model, routingMode
 - inputTokens, outputTokens, latencyMs
 - metadata: routing decision details, fallback info
@@ -183,6 +187,7 @@ data: {
 ### Step 8: Async Post-Processing
 
 **Memory Extraction** (memory-service):
+
 1. Receives `message.completed` event
 2. Sends user message + AI response to Ollama extraction model
 3. Ollama returns structured memories (Zod-validated)
@@ -191,6 +196,7 @@ data: {
 6. Publishes `memory.extracted`
 
 **Audit Logging** (audit-service):
+
 1. Receives `message.completed` event
 2. Creates AuditLog entry (action: MESSAGE_COMPLETED)
 3. Creates UsageLedger entry (tokens consumed, provider, model)
@@ -199,24 +205,26 @@ data: {
 
 ## Error Handling Matrix
 
-| Step | Error | Handling |
-| --- | --- | --- |
-| 1 | Network failure | Frontend retry with exponential backoff |
-| 2 | DB error | BusinessException, 500, no event published |
-| 3 | Ollama timeout | Heuristic fallback (no delay beyond 10s) |
-| 3 | No healthy providers | Return local-ollama, low confidence |
-| 4 | Memory service down | Continue without memories, log warning |
-| 4 | File service down | Continue without file chunks, log warning |
-| 5 | Primary provider fails | Automatic fallback to secondary |
-| 5 | All providers fail | Store error as ASSISTANT message, SSE error event |
-| 6 | DB error | Log error, SSE error to frontend |
-| 7 | SSE connection dropped | Frontend reconnects, polls for missed messages |
-| 8 | Memory extraction fails | RabbitMQ retry (3x), then DLQ |
-| 8 | Audit logging fails | RabbitMQ retry (3x), then DLQ |
+| Step | Error                   | Handling                                          |
+| ---- | ----------------------- | ------------------------------------------------- |
+| 1    | Network failure         | Frontend retry with exponential backoff           |
+| 2    | DB error                | BusinessException, 500, no event published        |
+| 3    | Ollama timeout          | Heuristic fallback (no delay beyond 10s)          |
+| 3    | No healthy providers    | Return local-ollama, low confidence               |
+| 4    | Memory service down     | Continue without memories, log warning            |
+| 4    | File service down       | Continue without file chunks, log warning         |
+| 5    | Primary provider fails  | Automatic fallback to secondary                   |
+| 5    | Weak response detected  | Auto re-route to next candidate (max 2 attempts)  |
+| 5    | All providers fail      | Store error as ASSISTANT message, SSE error event |
+| 6    | DB error                | Log error, SSE error to frontend                  |
+| 7    | SSE connection dropped  | Frontend reconnects, polls for missed messages    |
+| 8    | Memory extraction fails | RabbitMQ retry (3x), then DLQ                     |
+| 8    | Audit logging fails     | RabbitMQ retry (3x), then DLQ                     |
 
 ### Critical: All-Providers-Fail Handling
 
 When all LLM providers fail, the system MUST:
+
 1. Store an error message as an ASSISTANT record (with `metadata: { error: true }`)
 2. Emit SSE error event so the frontend can react immediately
 3. Without this, the frontend's polling ("AI is thinking...") runs forever
@@ -225,19 +233,19 @@ When all LLM providers fail, the system MUST:
 
 ## Timing Expectations
 
-| Phase | Typical Duration |
-| --- | --- |
-| Frontend to Nginx | < 5ms |
-| Nginx to chat-service | < 5ms |
-| Store USER message | 5-20ms |
-| RabbitMQ publish + consume | 10-50ms |
-| Routing decision (AUTO) | 500ms - 10s |
-| Context assembly | 50-200ms |
-| LLM execution (local) | 1-30s |
-| LLM execution (cloud) | 500ms - 60s |
-| Store ASSISTANT message | 5-20ms |
-| SSE delivery | < 5ms |
-| Memory extraction (async) | 2-15s |
-| Audit logging (async) | 5-20ms |
+| Phase                      | Typical Duration |
+| -------------------------- | ---------------- |
+| Frontend to Nginx          | < 5ms            |
+| Nginx to chat-service      | < 5ms            |
+| Store USER message         | 5-20ms           |
+| RabbitMQ publish + consume | 10-50ms          |
+| Routing decision (AUTO)    | 500ms - 10s      |
+| Context assembly           | 50-200ms         |
+| LLM execution (local)      | 1-30s            |
+| LLM execution (cloud)      | 500ms - 60s      |
+| Store ASSISTANT message    | 5-20ms           |
+| SSE delivery               | < 5ms            |
+| Memory extraction (async)  | 2-15s            |
+| Audit logging (async)      | 5-20ms           |
 
 **Total user-perceived latency**: Routing + LLM execution = typically 2-15 seconds.

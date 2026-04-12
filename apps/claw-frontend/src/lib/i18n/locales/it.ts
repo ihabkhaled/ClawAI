@@ -148,6 +148,10 @@ export const it: TranslationDictionary = {
     contextPacks: 'Pacchetti di contesto',
     contextPacksDescription: 'Seleziona i pacchetti di contesto da includere in questo thread.',
     noContextPacks: 'Nessun pacchetto di contesto creato',
+    reRouted: 'Reindirizzato',
+    reRoutedFrom: 'Reindirizzato da {provider}/{model}',
+    weakResponse: 'Risposta debole rilevata',
+    qualityScore: 'Qualit\u00e0: {score}%',
   },
   connectors: {
     title: 'Connettori',
@@ -464,7 +468,8 @@ export const it: TranslationDictionary = {
   },
   replay: {
     title: 'Laboratorio di replay del routing',
-    description: 'Riesegui le decisioni di routing storiche contro il router attuale e confronta i risultati',
+    description:
+      'Riesegui le decisioni di routing storiche contro il router attuale e confronta i risultati',
     runReplay: 'Avvia replay',
     running: 'Replay in corso...',
     totalReplayed: 'Totale rieseguiti',
@@ -481,7 +486,8 @@ export const it: TranslationDictionary = {
   },
   compare: {
     title: 'Confronta modelli',
-    description: 'Seleziona 2-5 modelli e inserisci un prompt per confrontare le risposte fianco a fianco',
+    description:
+      'Seleziona 2-5 modelli e inserisci un prompt per confrontare le risposte fianco a fianco',
     selectModels: 'Seleziona modelli',
     minModels: 'Seleziona almeno {min} modelli',
     maxModels: 'Massimo {max} modelli consentiti',

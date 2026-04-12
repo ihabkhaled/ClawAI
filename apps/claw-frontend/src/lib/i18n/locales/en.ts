@@ -146,6 +146,10 @@ export const en: TranslationDictionary = {
     contextPacks: 'Context Packs',
     contextPacksDescription: 'Select context packs to include in this thread.',
     noContextPacks: 'No context packs created yet',
+    reRouted: 'Re-routed',
+    reRoutedFrom: 'Re-routed from {provider}/{model}',
+    weakResponse: 'Weak response detected',
+    qualityScore: 'Quality: {score}%',
   },
   connectors: {
     title: 'Connectors',
@@ -461,7 +465,8 @@ export const en: TranslationDictionary = {
   },
   replay: {
     title: 'Routing Replay Lab',
-    description: 'Re-run historical routing decisions against the current router and compare results',
+    description:
+      'Re-run historical routing decisions against the current router and compare results',
     runReplay: 'Run Replay',
     running: 'Running replay...',
     totalReplayed: 'Total Replayed',

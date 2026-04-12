@@ -90,7 +90,9 @@ export class ChatMessagesService implements OnModuleInit {
     userId: string,
     query: ListMessagesQueryDto,
   ): Promise<PaginatedResult<ChatMessage>> {
-    this.logger.debug(`getMessages: fetching thread ${threadId} page=${String(query.page)} limit=${String(query.limit)}`);
+    this.logger.debug(
+      `getMessages: fetching thread ${threadId} page=${String(query.page)} limit=${String(query.limit)}`,
+    );
     const thread = await this.chatThreadsRepository.findById(threadId);
     if (!thread) {
       throw new EntityNotFoundException('ChatThread', threadId);
@@ -102,7 +104,9 @@ export class ChatMessagesService implements OnModuleInit {
       this.chatMessagesRepository.countByThreadId(threadId),
     ]);
 
-    this.logger.debug(`getMessages: returned ${String(messages.length)} of ${String(total)} messages for thread ${threadId}`);
+    this.logger.debug(
+      `getMessages: returned ${String(messages.length)} of ${String(total)} messages for thread ${threadId}`,
+    );
 
     return {
       data: messages,
@@ -135,7 +139,9 @@ export class ChatMessagesService implements OnModuleInit {
     messageId: string,
     feedback: string | null,
   ): Promise<ChatMessage> {
-    this.logger.log(`setFeedback: setting feedback="${feedback ?? 'null'}" on message ${messageId}`);
+    this.logger.log(
+      `setFeedback: setting feedback="${feedback ?? 'null'}" on message ${messageId}`,
+    );
     const message = await this.chatMessagesRepository.findById(messageId);
     if (!message) {
       throw new EntityNotFoundException('ChatMessage', messageId);
@@ -170,7 +176,9 @@ export class ChatMessagesService implements OnModuleInit {
     const regenRoutingMode =
       regenProvider && regenModel ? RoutingMode.MANUAL_MODEL : message.routingMode;
 
-    this.logger.log(`regenerateMessage: publishing message.created for regeneration of ${id} with mode=${regenRoutingMode}`);
+    this.logger.log(
+      `regenerateMessage: publishing message.created for regeneration of ${id} with mode=${regenRoutingMode}`,
+    );
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
       messageId: message.id,
       threadId: message.threadId,
@@ -187,7 +195,9 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   async handleMessageRouted(payload: MessageRoutedData): Promise<void> {
-    this.logger.log(`handleMessageRouted: starting for message ${payload.messageId} via ${payload.selectedProvider}/${payload.selectedModel}`);
+    this.logger.log(
+      `handleMessageRouted: starting for message ${payload.messageId} via ${payload.selectedProvider}/${payload.selectedModel}`,
+    );
     const [threadMessages, thread] = await Promise.all([
       this.chatMessagesRepository.findRecentByThreadId(payload.threadId, 20),
       this.chatThreadsRepository.findById(payload.threadId),
@@ -212,7 +222,9 @@ export class ChatMessagesService implements OnModuleInit {
     // override to IMAGE_GEMINI even if router didn't detect it
     effectivePayload = this.detectImageFromAttachment(effectivePayload, chronologicalMessages);
 
-    this.logger.debug(`handleMessageRouted: assembling context with ${String(chronologicalMessages.length)} messages, fileIds=${String(fileIds?.length ?? 0)}`);
+    this.logger.debug(
+      `handleMessageRouted: assembling context with ${String(chronologicalMessages.length)} messages, fileIds=${String(fileIds?.length ?? 0)}`,
+    );
     const context = await this.contextAssemblyManager.assemble(
       thread?.userId ?? 'system',
       chronologicalMessages,
@@ -221,7 +233,9 @@ export class ChatMessagesService implements OnModuleInit {
       fileIds,
     );
 
-    this.logger.debug(`handleMessageRouted: calling LLM execution for ${effectivePayload.selectedProvider}/${effectivePayload.selectedModel}`);
+    this.logger.debug(
+      `handleMessageRouted: calling LLM execution for ${effectivePayload.selectedProvider}/${effectivePayload.selectedModel}`,
+    );
     try {
       const llmResponse = await this.chatExecutionManager.execute(
         effectivePayload,
@@ -254,7 +268,9 @@ export class ChatMessagesService implements OnModuleInit {
       );
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'All providers failed';
-      this.logger.error(`handleMessageRouted: failed for message ${payload.messageId} - ${errorMsg}`);
+      this.logger.error(
+        `handleMessageRouted: failed for message ${payload.messageId} - ${errorMsg}`,
+      );
       await this.storeErrorResponse(payload, errorMsg);
       throw error;
     }
@@ -376,6 +392,15 @@ export class ChatMessagesService implements OnModuleInit {
           : {}),
         ...(llmResponse.fileGenerationId
           ? { type: 'file_generation', generationId: llmResponse.fileGenerationId }
+          : {}),
+        ...(llmResponse.reRouted
+          ? {
+              reRouted: true,
+              originalProvider: llmResponse.originalProvider,
+              originalModel: llmResponse.originalModel,
+              originalScore: llmResponse.originalScore,
+              reRouteAttempts: llmResponse.reRouteAttempts,
+            }
           : {}),
       },
     });

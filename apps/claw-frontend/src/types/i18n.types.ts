@@ -147,6 +147,10 @@ export type TranslationDictionary = {
     contextPacks: string;
     contextPacksDescription: string;
     noContextPacks: string;
+    reRouted: string;
+    reRoutedFrom: string;
+    weakResponse: string;
+    qualityScore: string;
   };
   connectors: {
     title: string;

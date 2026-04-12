@@ -148,6 +148,10 @@ export const es: TranslationDictionary = {
     contextPacks: 'Paquetes de contexto',
     contextPacksDescription: 'Selecciona paquetes de contexto para incluir en este hilo.',
     noContextPacks: 'No se han creado paquetes de contexto',
+    reRouted: 'Redirigido',
+    reRoutedFrom: 'Redirigido desde {provider}/{model}',
+    weakResponse: 'Respuesta débil detectada',
+    qualityScore: 'Calidad: {score}%',
   },
   connectors: {
     title: 'Conectores',
@@ -464,7 +468,8 @@ export const es: TranslationDictionary = {
   },
   replay: {
     title: 'Laboratorio de repeticion de enrutamiento',
-    description: 'Vuelva a ejecutar decisiones de enrutamiento historicas contra el enrutador actual y compare resultados',
+    description:
+      'Vuelva a ejecutar decisiones de enrutamiento historicas contra el enrutador actual y compare resultados',
     runReplay: 'Ejecutar repeticion',
     running: 'Ejecutando repeticion...',
     totalReplayed: 'Total repetido',

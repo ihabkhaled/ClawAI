@@ -148,6 +148,10 @@ export const fr: TranslationDictionary = {
     contextPacks: 'Packs de contexte',
     contextPacksDescription: 'S\u00e9lectionnez les packs de contexte \u00e0 inclure dans ce fil.',
     noContextPacks: 'Aucun pack de contexte cr\u00e9\u00e9',
+    reRouted: 'Rerout\u00e9',
+    reRoutedFrom: 'Rerout\u00e9 depuis {provider}/{model}',
+    weakResponse: 'R\u00e9ponse faible d\u00e9tect\u00e9e',
+    qualityScore: 'Qualit\u00e9 : {score}%',
   },
   connectors: {
     title: 'Connecteurs',
@@ -465,7 +469,8 @@ export const fr: TranslationDictionary = {
   },
   replay: {
     title: 'Laboratoire de rejeu de routage',
-    description: 'Rejouez les decisions de routage historiques contre le routeur actuel et comparez les resultats',
+    description:
+      'Rejouez les decisions de routage historiques contre le routeur actuel et comparez les resultats',
     runReplay: 'Lancer le rejeu',
     running: 'Rejeu en cours...',
     totalReplayed: 'Total rejoue',
@@ -482,7 +487,8 @@ export const fr: TranslationDictionary = {
   },
   compare: {
     title: 'Comparer les modèles',
-    description: 'Sélectionnez 2-5 modèles et entrez un prompt pour comparer les réponses côte à côte',
+    description:
+      'Sélectionnez 2-5 modèles et entrez un prompt pour comparer les réponses côte à côte',
     selectModels: 'Sélectionner les modèles',
     minModels: 'Sélectionnez au moins {min} modèles',
     maxModels: 'Maximum {max} modèles autorisés',

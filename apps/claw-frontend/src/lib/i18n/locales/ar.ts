@@ -146,6 +146,10 @@ export const ar: TranslationDictionary = {
     contextPacks: 'حزم السياق',
     contextPacksDescription: 'اختر حزم السياق لتضمينها في هذه المحادثة.',
     noContextPacks: 'لم يتم إنشاء حزم سياق بعد',
+    reRouted: 'تم إعادة التوجيه',
+    reRoutedFrom: 'تم إعادة التوجيه من {provider}/{model}',
+    weakResponse: 'تم اكتشاف استجابة ضعيفة',
+    qualityScore: 'الجودة: {score}%',
   },
   connectors: {
     title: 'الموصّلات',

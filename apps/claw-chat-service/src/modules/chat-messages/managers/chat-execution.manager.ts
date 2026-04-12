@@ -22,6 +22,7 @@ import {
 } from '../types/execution.types';
 import { type AssembledContext } from '../types/context.types';
 import { ContextAssemblyManager } from './context-assembly.manager';
+import { QualityCheckManager } from './quality-check.manager';
 import { ChatStreamService } from '../services/chat-stream.service';
 
 @Injectable()
@@ -30,6 +31,7 @@ export class ChatExecutionManager {
 
   constructor(
     private readonly contextAssembly: ContextAssemblyManager,
+    private readonly qualityCheckManager: QualityCheckManager,
     private readonly chatStreamService: ChatStreamService,
   ) {}
 
@@ -38,34 +40,16 @@ export class ChatExecutionManager {
     context: AssembledContext,
     threadSettings?: ThreadSettings,
   ): Promise<LlmResponse> {
-    this.logger.log(`execute: starting for message ${payload.messageId} with provider=${payload.selectedProvider} model=${payload.selectedModel}`);
+    this.logger.log(
+      `execute: starting for message ${payload.messageId} with provider=${payload.selectedProvider} model=${payload.selectedModel}`,
+    );
     const startTime = Date.now();
-
-    // Build ordered list of providers to try
-    const candidates: Array<{ provider: string; model: string }> = [
-      { provider: payload.selectedProvider, model: payload.selectedModel },
-    ];
-
-    if (payload.fallbackProvider && payload.fallbackModel) {
-      candidates.push({ provider: payload.fallbackProvider, model: payload.fallbackModel });
-    }
-
-    // Add all known cloud providers as last-resort fallbacks (skip duplicates)
-    const allCloudProviders = [
-      { provider: 'GEMINI', model: 'gemini-2.5-flash' },
-      { provider: 'ANTHROPIC', model: 'claude-sonnet-4' },
-      { provider: 'OPENAI', model: 'gpt-4o-mini' },
-      { provider: 'DEEPSEEK', model: 'deepseek-chat' },
-    ];
-
-    for (const cloud of allCloudProviders) {
-      if (!candidates.some((c) => c.provider === cloud.provider)) {
-        candidates.push(cloud);
-      }
-    }
+    const candidates = this.buildCandidateChain(payload);
+    const userPrompt = this.extractUserPrompt(context);
 
     this.logger.debug(`execute: built candidate chain with ${String(candidates.length)} providers`);
     let lastError: unknown = null;
+    let reRouteAttempt = 0;
 
     for (let i = 0; i < candidates.length; i++) {
       const candidate = candidates.at(i);
@@ -73,9 +57,11 @@ export class ChatExecutionManager {
         continue;
       }
 
-      this.logger.debug(`execute: trying candidate ${String(i + 1)}/${String(candidates.length)} - ${candidate.provider}/${candidate.model}`);
+      this.logger.debug(
+        `execute: trying candidate ${String(i + 1)}/${String(candidates.length)} - ${candidate.provider}/${candidate.model}`,
+      );
       try {
-        return await this.callProvider(
+        const response = await this.callProvider(
           candidate.provider,
           candidate.model,
           context,
@@ -84,6 +70,35 @@ export class ChatExecutionManager {
           threadSettings,
           payload.routingMode,
         );
+
+        // Skip quality check for image/file generation responses
+        if (this.isGenerationResponse(response)) {
+          return response;
+        }
+
+        const qualityResult = this.qualityCheckManager.checkResponseQuality(
+          response.content,
+          userPrompt,
+        );
+        const reRouteDecision = this.qualityCheckManager.shouldReRoute(
+          qualityResult,
+          reRouteAttempt,
+        );
+
+        if (reRouteDecision.shouldReRoute && i < candidates.length - 1) {
+          const nextCandidate = candidates[i + 1];
+          this.logger.warn(
+            `Weak response detected from ${candidate.provider}/${candidate.model} (score: ${String(qualityResult.score.toFixed(2))}). Reasons: ${qualityResult.reasons.join(', ')}. Escalating to ${nextCandidate?.provider ?? 'next'}/${nextCandidate?.model ?? 'next'}.`,
+          );
+          reRouteAttempt++;
+          continue;
+        }
+
+        if (reRouteAttempt > 0) {
+          return this.addReRouteMetadata(response, payload, qualityResult.score, reRouteAttempt);
+        }
+
+        return response;
       } catch (error: unknown) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
         this.logger.warn(
@@ -115,6 +130,58 @@ export class ChatExecutionManager {
     throw finalError;
   }
 
+  private buildCandidateChain(
+    payload: MessageRoutedData,
+  ): Array<{ provider: string; model: string }> {
+    const candidates: Array<{ provider: string; model: string }> = [
+      { provider: payload.selectedProvider, model: payload.selectedModel },
+    ];
+
+    if (payload.fallbackProvider && payload.fallbackModel) {
+      candidates.push({ provider: payload.fallbackProvider, model: payload.fallbackModel });
+    }
+
+    const allCloudProviders = [
+      { provider: 'GEMINI', model: 'gemini-2.5-flash' },
+      { provider: 'ANTHROPIC', model: 'claude-sonnet-4' },
+      { provider: 'OPENAI', model: 'gpt-4o-mini' },
+      { provider: 'DEEPSEEK', model: 'deepseek-chat' },
+    ];
+
+    for (const cloud of allCloudProviders) {
+      if (!candidates.some((c) => c.provider === cloud.provider)) {
+        candidates.push(cloud);
+      }
+    }
+
+    return candidates;
+  }
+
+  private extractUserPrompt(context: AssembledContext): string {
+    const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
+    return lastUserMsg?.content ?? '';
+  }
+
+  private isGenerationResponse(response: LlmResponse): boolean {
+    return response.imageGenerationId !== undefined || response.fileGenerationId !== undefined;
+  }
+
+  private addReRouteMetadata(
+    response: LlmResponse,
+    originalPayload: MessageRoutedData,
+    originalScore: number,
+    reRouteAttempts: number,
+  ): LlmResponse {
+    return {
+      ...response,
+      reRouted: true,
+      originalProvider: originalPayload.selectedProvider,
+      originalModel: originalPayload.selectedModel,
+      originalScore,
+      reRouteAttempts,
+    };
+  }
+
   async callProvider(
     provider: string,
     model: string,
@@ -124,7 +191,9 @@ export class ChatExecutionManager {
     threadSettings?: ThreadSettings,
     routingMode?: string,
   ): Promise<LlmResponse> {
-    this.logger.debug(`callProvider: dispatching to provider type — provider=${provider} model=${model} usedFallback=${String(usedFallback)}`);
+    this.logger.debug(
+      `callProvider: dispatching to provider type — provider=${provider} model=${model} usedFallback=${String(usedFallback)}`,
+    );
     if (provider === FILE_GENERATION_PROVIDER) {
       this.logger.debug('callProvider: routing to file generation service');
       return this.callFileGenerationService(context, startTime, usedFallback, threadSettings);
@@ -184,7 +253,9 @@ export class ChatExecutionManager {
       ...(images.length > 0 ? { images } : {}),
     };
 
-    this.logger.debug(`callOllama: sending request to Ollama service at ${config.OLLAMA_SERVICE_URL}`);
+    this.logger.debug(
+      `callOllama: sending request to Ollama service at ${config.OLLAMA_SERVICE_URL}`,
+    );
     const response = await httpRequest<OllamaGenerateResponse>({
       url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
       method: 'POST',
@@ -201,8 +272,12 @@ export class ChatExecutionManager {
     }
 
     const latencyMs = Date.now() - startTime;
-    this.logger.debug(`callOllama: response received — done=${String(response.data.done)} responseLen=${String(response.data.response.length)}`);
-    this.logger.log(`callOllama: completed model=${response.data.model} latencyMs=${String(latencyMs)} inputTokens=${String(response.data.promptEvalCount ?? 0)} outputTokens=${String(response.data.evalCount ?? 0)}`);
+    this.logger.debug(
+      `callOllama: response received — done=${String(response.data.done)} responseLen=${String(response.data.response.length)}`,
+    );
+    this.logger.log(
+      `callOllama: completed model=${response.data.model} latencyMs=${String(latencyMs)} inputTokens=${String(response.data.promptEvalCount ?? 0)} outputTokens=${String(response.data.evalCount ?? 0)}`,
+    );
 
     return {
       content: response.data.response,
@@ -231,7 +306,9 @@ export class ChatExecutionManager {
 
     this.logger.debug('callCloudProvider: building chat request body');
     const requestBody = this.buildChatRequestBody(model, context, threadSettings);
-    this.logger.debug(`callCloudProvider: request body built — messageCount=${String(requestBody.messages.length)} temperature=${String(requestBody.temperature ?? 'default')}`);
+    this.logger.debug(
+      `callCloudProvider: request body built — messageCount=${String(requestBody.messages.length)} temperature=${String(requestBody.temperature ?? 'default')}`,
+    );
 
     this.logger.debug(`callCloudProvider: sending POST to ${baseUrl}/chat/completions`);
     const response = await httpRequest<OpenAiChatResponse>({
@@ -243,7 +320,9 @@ export class ChatExecutionManager {
     });
 
     if (!response.ok) {
-      this.logger.error(`callCloudProvider: ${provider} returned error status=${String(response.status)}`);
+      this.logger.error(
+        `callCloudProvider: ${provider} returned error status=${String(response.status)}`,
+      );
       throw new BusinessException(
         `Cloud provider ${provider} returned status ${String(response.status)}`,
         'CLOUD_PROVIDER_REQUEST_FAILED',
@@ -252,7 +331,9 @@ export class ChatExecutionManager {
 
     this.logger.debug('callCloudProvider: parsing cloud response');
     const result = this.parseCloudResponse(response.data, provider, model, startTime, usedFallback);
-    this.logger.log(`callCloudProvider: completed ${provider}/${model} latencyMs=${String(result.latencyMs)} inputTokens=${String(result.inputTokens ?? 0)} outputTokens=${String(result.outputTokens ?? 0)}`);
+    this.logger.log(
+      `callCloudProvider: completed ${provider}/${model} latencyMs=${String(result.latencyMs)} inputTokens=${String(result.inputTokens ?? 0)} outputTokens=${String(result.outputTokens ?? 0)}`,
+    );
     return result;
   }
 
@@ -296,12 +377,16 @@ export class ChatExecutionManager {
     const requestBody: OpenAiChatRequest = { model, messages, stream: false };
 
     if (threadSettings?.temperature !== null && threadSettings?.temperature !== undefined) {
-      this.logger.debug(`buildChatRequestBody: applying temperature=${String(threadSettings.temperature)}`);
+      this.logger.debug(
+        `buildChatRequestBody: applying temperature=${String(threadSettings.temperature)}`,
+      );
       requestBody.temperature = threadSettings.temperature;
     }
 
     if (threadSettings?.maxTokens !== null && threadSettings?.maxTokens !== undefined) {
-      this.logger.debug(`buildChatRequestBody: applying maxTokens=${String(threadSettings.maxTokens)}`);
+      this.logger.debug(
+        `buildChatRequestBody: applying maxTokens=${String(threadSettings.maxTokens)}`,
+      );
       requestBody.max_tokens = threadSettings.maxTokens;
     }
 
@@ -327,10 +412,14 @@ export class ChatExecutionManager {
       );
     }
 
-    this.logger.debug(`parseCloudResponse: finishReason=${firstChoice.finish_reason} choiceCount=${String(data.choices.length)}`);
+    this.logger.debug(
+      `parseCloudResponse: finishReason=${firstChoice.finish_reason} choiceCount=${String(data.choices.length)}`,
+    );
     const responseContent =
       typeof firstChoice.message.content === 'string' ? firstChoice.message.content : '';
-    this.logger.debug(`parseCloudResponse: responseContentLen=${String(responseContent.length)} inputTokens=${String(data.usage?.prompt_tokens ?? 0)} outputTokens=${String(data.usage?.completion_tokens ?? 0)}`);
+    this.logger.debug(
+      `parseCloudResponse: responseContentLen=${String(responseContent.length)} inputTokens=${String(data.usage?.prompt_tokens ?? 0)} outputTokens=${String(data.usage?.completion_tokens ?? 0)}`,
+    );
 
     return {
       content: responseContent,
@@ -368,14 +457,18 @@ export class ChatExecutionManager {
     let referenceImageMimeType: string | undefined;
 
     if (imageFiles.length > 0) {
-      this.logger.log(`callImageService: ${String(imageFiles.length)} image files attached — building vision prompt`);
+      this.logger.log(
+        `callImageService: ${String(imageFiles.length)} image files attached — building vision prompt`,
+      );
       prompt = await this.buildImagePromptFromVision(prompt, context);
       this.logger.debug(`callImageService: vision prompt built — length=${String(prompt.length)}`);
       const firstImage = imageFiles[0];
       if (firstImage?.content) {
         referenceImageBase64 = firstImage.content;
         referenceImageMimeType = firstImage.mimeType;
-        this.logger.debug(`callImageService: reference image attached — mimeType=${firstImage.mimeType} base64Len=${String(firstImage.content.length)}`);
+        this.logger.debug(
+          `callImageService: reference image attached — mimeType=${firstImage.mimeType} base64Len=${String(firstImage.content.length)}`,
+        );
         // Prepend reference instruction so the image generator knows to match the attached image
         prompt = `REFERENCE IMAGE ATTACHED — Generate an image that closely matches the visual style, composition, colors, and subject matter of the provided reference image. Use the following detailed description as guidance:\n\n${prompt}`;
       }
@@ -383,7 +476,9 @@ export class ChatExecutionManager {
       this.logger.debug('callImageService: no image files attached — using text prompt only');
     }
 
-    this.logger.debug(`callImageService: sending request to image service at ${config.IMAGE_SERVICE_URL}`);
+    this.logger.debug(
+      `callImageService: sending request to image service at ${config.IMAGE_SERVICE_URL}`,
+    );
     const response = await httpRequest<ImageGenerateResponse>({
       url: `${config.IMAGE_SERVICE_URL}/api/v1/internal/images/generate`,
       method: 'POST',
@@ -400,7 +495,9 @@ export class ChatExecutionManager {
     });
 
     if (!response.ok) {
-      this.logger.error(`callImageService: image service returned error status=${String(response.status)}`);
+      this.logger.error(
+        `callImageService: image service returned error status=${String(response.status)}`,
+      );
       throw new BusinessException(
         `Image service returned status ${String(response.status)}`,
         'IMAGE_SERVICE_REQUEST_FAILED',
@@ -408,7 +505,9 @@ export class ChatExecutionManager {
     }
 
     const latencyMs = Date.now() - startTime;
-    this.logger.log(`callImageService: completed — generationId=${response.data.generationId} latencyMs=${String(latencyMs)}`);
+    this.logger.log(
+      `callImageService: completed — generationId=${response.data.generationId} latencyMs=${String(latencyMs)}`,
+    );
 
     return {
       content: 'Generating image\u2026',
@@ -439,7 +538,9 @@ export class ChatExecutionManager {
     // Phase 1: Call LLM for content with file-generation-specific system prompt
     this.logger.debug('callFileGenerationService: Phase 1 — picking content provider');
     const contentProvider = this.pickContentProvider(context);
-    this.logger.debug(`callFileGenerationService: content provider=${contentProvider.provider}/${contentProvider.model}`);
+    this.logger.debug(
+      `callFileGenerationService: content provider=${contentProvider.provider}/${contentProvider.model}`,
+    );
     const fileContext: AssembledContext = {
       ...context,
       systemPrompt: `You are a file content generator. The user wants to create a ${format} file. Generate ONLY the raw content for the file — no explanations, no markdown code blocks, no "here is your file" preamble. Output the actual content that should go inside the file. For PDF/DOCX, use markdown formatting (headers, bullets, paragraphs). For CSV, output header row + data rows. For JSON, output valid JSON. For TXT, output plain text. For HTML, output HTML. For MD, output markdown.`,
@@ -453,11 +554,15 @@ export class ChatExecutionManager {
       false,
       threadSettings,
     );
-    this.logger.debug(`callFileGenerationService: Phase 1 complete — contentLen=${String(contentResponse.content.length)}`);
+    this.logger.debug(
+      `callFileGenerationService: Phase 1 complete — contentLen=${String(contentResponse.content.length)}`,
+    );
 
     // Phase 2: Send content to file-generation-service for conversion
     // Strip markdown code block wrappers if present
-    this.logger.debug('callFileGenerationService: Phase 2 — stripping code block wrappers if present');
+    this.logger.debug(
+      'callFileGenerationService: Phase 2 — stripping code block wrappers if present',
+    );
     let fileContent = contentResponse.content;
     const codeBlockMatch = /^```\w*\n([\s\S]*?)```$/m.exec(fileContent.trim());
     if (codeBlockMatch?.[1]) {
@@ -465,7 +570,9 @@ export class ChatExecutionManager {
       fileContent = codeBlockMatch[1].trim();
     }
 
-    this.logger.debug(`callFileGenerationService: sending content to file-generation-service (contentLen=${String(fileContent.length)})`);
+    this.logger.debug(
+      `callFileGenerationService: sending content to file-generation-service (contentLen=${String(fileContent.length)})`,
+    );
     const response = await httpRequest<FileGenerateResponse>({
       url: `${config.FILE_GENERATION_SERVICE_URL}/api/v1/internal/file-generations/generate`,
       method: 'POST',
@@ -481,7 +588,9 @@ export class ChatExecutionManager {
     });
 
     if (!response.ok) {
-      this.logger.error(`callFileGenerationService: file-gen service returned error status=${String(response.status)}`);
+      this.logger.error(
+        `callFileGenerationService: file-gen service returned error status=${String(response.status)}`,
+      );
       throw new BusinessException(
         `File generation service returned status ${String(response.status)}`,
         'FILE_GENERATION_SERVICE_REQUEST_FAILED',
@@ -489,7 +598,9 @@ export class ChatExecutionManager {
     }
 
     const latencyMs = Date.now() - startTime;
-    this.logger.log(`callFileGenerationService: completed format=${format} generationId=${response.data.generationId} latencyMs=${String(latencyMs)}`);
+    this.logger.log(
+      `callFileGenerationService: completed format=${format} generationId=${response.data.generationId} latencyMs=${String(latencyMs)}`,
+    );
     return {
       content: `Generating ${format.toLowerCase()} file\u2026`,
       provider: FILE_GENERATION_PROVIDER,

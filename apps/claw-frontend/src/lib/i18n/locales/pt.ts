@@ -148,6 +148,10 @@ export const pt: TranslationDictionary = {
     contextPacks: 'Pacotes de contexto',
     contextPacksDescription: 'Selecione pacotes de contexto para incluir nesta conversa.',
     noContextPacks: 'Nenhum pacote de contexto criado',
+    reRouted: 'Redirecionado',
+    reRoutedFrom: 'Redirecionado de {provider}/{model}',
+    weakResponse: 'Resposta fraca detectada',
+    qualityScore: 'Qualidade: {score}%',
   },
   connectors: {
     title: 'Conectores',
@@ -464,7 +468,8 @@ export const pt: TranslationDictionary = {
   },
   replay: {
     title: 'Laboratorio de replay de roteamento',
-    description: 'Reexecute decisoes de roteamento historicas contra o roteador atual e compare os resultados',
+    description:
+      'Reexecute decisoes de roteamento historicas contra o roteador atual e compare os resultados',
     runReplay: 'Executar replay',
     running: 'Executando replay...',
     totalReplayed: 'Total repetido',

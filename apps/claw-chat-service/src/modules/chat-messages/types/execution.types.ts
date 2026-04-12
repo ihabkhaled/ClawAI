@@ -20,6 +20,11 @@ export type LlmResponse = {
   usedFallback: boolean;
   imageGenerationId?: string;
   fileGenerationId?: string;
+  reRouted?: boolean;
+  originalProvider?: string;
+  originalModel?: string;
+  originalScore?: number;
+  reRouteAttempts?: number;
 };
 
 export type OllamaGenerateRequest = {

@@ -165,23 +165,23 @@ Stage 5: Ollama Router + Heuristic Fallback
 
 The routing engine classifies messages into 33 capability classes, each backed by a dedicated keyword array in `routing.constants.ts` (2274 lines). This enables fine-grained routing to the most appropriate model. The top 15 classes by keyword count are shown below; the remaining 18 classes cover HR, Education, Sales, Logistics, Hospitality, Science, Government, Finance, Executive, and other specialty domains.
 
-| # | Capability Class | Keyword Count | Example Keywords | Routes To (Local Role) |
-| - | ---------------- | ------------- | ---------------- | ---------------------- |
-| 1 | Coding | 100 | code, debug, typescript, prisma, jest, SOLID, design pattern | LOCAL_CODING |
-| 2 | Reasoning | 21 | prove, solve, theorem, probability, chain of thought | LOCAL_REASONING |
-| 3 | Thinking | 15 | research, investigate, deep dive, trade-offs, pros and cons | LOCAL_THINKING |
-| 4 | Infrastructure | 33 | terraform, kubernetes, docker, AWS, Lambda, VPC, helm | LOCAL_CODING |
-| 5 | Data Analysis | 33 | pandas, matplotlib, ETL, BigQuery, Spark, window function | LOCAL_REASONING |
-| 6 | Business | 30 | user story, KPI, ROI, roadmap, SWOT, pitch deck, go-to-market | LOCAL_FILE_GENERATION |
-| 7 | Creative Writing | 26 | blog post, screenplay, narrative, tagline, press release | LOCAL_FALLBACK_CHAT |
-| 8 | Security | 25 | CVE, XSS, OWASP, penetration test, threat model, WAF | LOCAL_CODING |
-| 9 | Medical | 19 | clinical, diagnosis, HIPAA, ICD-10, adverse event | LOCAL_REASONING |
-| 10 | Legal | 21 | contract, NDA, GDPR, patent, jurisdiction, case law | LOCAL_REASONING |
-| 11 | Translation | 12 | translate, localize, i18n, multilingual, convert to English | LOCAL_FALLBACK_CHAT |
-| 12 | Image Generation | 70+ | generate image, draw, sketch, logo, portrait, watercolor | LOCAL_IMAGE_GENERATION |
-| 13 | File Generation | 34 | export as PDF, create CSV, generate report, save to file | LOCAL_FILE_GENERATION |
-| 14 | Privacy (enforcement) | 30 | medical, SSN, confidential, private key, PII, attorney-client | Forces local (no role) |
-| 15 | General Chat | 0 (default) | Everything that matches no other class | LOCAL_FALLBACK_CHAT |
+| #   | Capability Class      | Keyword Count | Example Keywords                                              | Routes To (Local Role) |
+| --- | --------------------- | ------------- | ------------------------------------------------------------- | ---------------------- |
+| 1   | Coding                | 100           | code, debug, typescript, prisma, jest, SOLID, design pattern  | LOCAL_CODING           |
+| 2   | Reasoning             | 21            | prove, solve, theorem, probability, chain of thought          | LOCAL_REASONING        |
+| 3   | Thinking              | 15            | research, investigate, deep dive, trade-offs, pros and cons   | LOCAL_THINKING         |
+| 4   | Infrastructure        | 33            | terraform, kubernetes, docker, AWS, Lambda, VPC, helm         | LOCAL_CODING           |
+| 5   | Data Analysis         | 33            | pandas, matplotlib, ETL, BigQuery, Spark, window function     | LOCAL_REASONING        |
+| 6   | Business              | 30            | user story, KPI, ROI, roadmap, SWOT, pitch deck, go-to-market | LOCAL_FILE_GENERATION  |
+| 7   | Creative Writing      | 26            | blog post, screenplay, narrative, tagline, press release      | LOCAL_FALLBACK_CHAT    |
+| 8   | Security              | 25            | CVE, XSS, OWASP, penetration test, threat model, WAF          | LOCAL_CODING           |
+| 9   | Medical               | 19            | clinical, diagnosis, HIPAA, ICD-10, adverse event             | LOCAL_REASONING        |
+| 10  | Legal                 | 21            | contract, NDA, GDPR, patent, jurisdiction, case law           | LOCAL_REASONING        |
+| 11  | Translation           | 12            | translate, localize, i18n, multilingual, convert to English   | LOCAL_FALLBACK_CHAT    |
+| 12  | Image Generation      | 70+           | generate image, draw, sketch, logo, portrait, watercolor      | LOCAL_IMAGE_GENERATION |
+| 13  | File Generation       | 34            | export as PDF, create CSV, generate report, save to file      | LOCAL_FILE_GENERATION  |
+| 14  | Privacy (enforcement) | 30            | medical, SSN, confidential, private key, PII, attorney-client | Forces local (no role) |
+| 15  | General Chat          | 0 (default)   | Everything that matches no other class                        | LOCAL_FALLBACK_CHAT    |
 
 **Total keyword count**: 1650+ unique keywords across 33 capability classes (2274 lines in `routing.constants.ts`), plus hundreds of verb/noun combinations for image and file detection.
 
@@ -189,22 +189,22 @@ The routing engine classifies messages into 33 capability classes, each backed b
 
 The `CATEGORY_TO_ROLE_MAP` constant maps each detected category to a `LocalModelRole`:
 
-| Category | LocalModelRole | Rationale |
-| --- | --- | --- |
-| coding | LOCAL_CODING | Code generation, debugging, refactoring |
-| reasoning | LOCAL_REASONING | Mathematical proofs, logic, step-by-step analysis |
-| thinking | LOCAL_THINKING | Research, deep investigation, comparative analysis |
-| infrastructure | LOCAL_CODING | DevOps and infra tasks need code-aware models |
-| data-analysis | LOCAL_REASONING | Data tasks need analytical reasoning |
-| business | LOCAL_FILE_GENERATION | Business tasks often produce documents |
-| creative-writing | LOCAL_FALLBACK_CHAT | Creative tasks use general chat models |
-| security | LOCAL_CODING | Security audits need code-aware models |
-| medical | LOCAL_REASONING | Medical queries need careful reasoning |
-| legal | LOCAL_REASONING | Legal analysis needs structured reasoning |
-| translation | LOCAL_FALLBACK_CHAT | Translation uses general language models |
-| image-generation | LOCAL_IMAGE_GENERATION | Routes to diffusion models |
-| file-generation | LOCAL_FILE_GENERATION | Routes to structured output models |
-| chat | LOCAL_FALLBACK_CHAT | Default general conversation |
+| Category         | LocalModelRole         | Rationale                                          |
+| ---------------- | ---------------------- | -------------------------------------------------- |
+| coding           | LOCAL_CODING           | Code generation, debugging, refactoring            |
+| reasoning        | LOCAL_REASONING        | Mathematical proofs, logic, step-by-step analysis  |
+| thinking         | LOCAL_THINKING         | Research, deep investigation, comparative analysis |
+| infrastructure   | LOCAL_CODING           | DevOps and infra tasks need code-aware models      |
+| data-analysis    | LOCAL_REASONING        | Data tasks need analytical reasoning               |
+| business         | LOCAL_FILE_GENERATION  | Business tasks often produce documents             |
+| creative-writing | LOCAL_FALLBACK_CHAT    | Creative tasks use general chat models             |
+| security         | LOCAL_CODING           | Security audits need code-aware models             |
+| medical          | LOCAL_REASONING        | Medical queries need careful reasoning             |
+| legal            | LOCAL_REASONING        | Legal analysis needs structured reasoning          |
+| translation      | LOCAL_FALLBACK_CHAT    | Translation uses general language models           |
+| image-generation | LOCAL_IMAGE_GENERATION | Routes to diffusion models                         |
+| file-generation  | LOCAL_FILE_GENERATION  | Routes to structured output models                 |
+| chat             | LOCAL_FALLBACK_CHAT    | Default general conversation                       |
 
 ---
 
@@ -266,22 +266,22 @@ Image detection uses 5 independent detection layers. Any single layer matching t
 
 ### Confidence Scoring Matrix
 
-| Detection Source | Confidence | Notes |
-| --- | --- | --- |
-| Privacy enforcement | 0.95 | Highest -- never overridden |
-| Image exact keyword | 0.95 | High confidence for explicit image requests |
-| Image verb+noun combo | 0.95 | Same confidence as exact match |
-| File generation exact phrase | 0.95 | "export as PDF" is unambiguous |
-| File generation verb+format combo | 0.90 | "generate" + "pdf" may be ambiguous |
-| Category keyword match | 0.85 | Strong signal from domain-specific keywords |
-| Ollama router (high match) | 0.80 - 0.99 | Depends on router model confidence |
-| Ollama router (uncertain) | 0.50 - 0.79 | Router model was less sure |
-| Heuristic fallback (cloud) | 0.75 | Best available cloud provider |
-| Heuristic fallback (local, short msg) | 0.60 | Short message + local available |
-| Heuristic fallback (no healthy connector) | 0.50 | Best-effort, no health data |
-| Ultimate fallback (no cloud) | 0.40 | No cloud available at all |
-| Default fallback | 0.20 | Nothing matched |
-| MANUAL_MODEL | 1.00 | User explicitly chose |
+| Detection Source                          | Confidence  | Notes                                       |
+| ----------------------------------------- | ----------- | ------------------------------------------- |
+| Privacy enforcement                       | 0.95        | Highest -- never overridden                 |
+| Image exact keyword                       | 0.95        | High confidence for explicit image requests |
+| Image verb+noun combo                     | 0.95        | Same confidence as exact match              |
+| File generation exact phrase              | 0.95        | "export as PDF" is unambiguous              |
+| File generation verb+format combo         | 0.90        | "generate" + "pdf" may be ambiguous         |
+| Category keyword match                    | 0.85        | Strong signal from domain-specific keywords |
+| Ollama router (high match)                | 0.80 - 0.99 | Depends on router model confidence          |
+| Ollama router (uncertain)                 | 0.50 - 0.79 | Router model was less sure                  |
+| Heuristic fallback (cloud)                | 0.75        | Best available cloud provider               |
+| Heuristic fallback (local, short msg)     | 0.60        | Short message + local available             |
+| Heuristic fallback (no healthy connector) | 0.50        | Best-effort, no health data                 |
+| Ultimate fallback (no cloud)              | 0.40        | No cloud available at all                   |
+| Default fallback                          | 0.20        | Nothing matched                             |
+| MANUAL_MODEL                              | 1.00        | User explicitly chose                       |
 
 ---
 
@@ -469,41 +469,67 @@ Final validation of the routing engine across 150 prompts and 500+ total experim
 
 Privacy enforcement achieved **100% accuracy** across all sensitive domains:
 
-| Domain | Enforcement Rate |
-| --- | --- |
-| Medical | 100% |
-| Legal | 100% |
-| Finance | 100% |
-| Government | 100% |
-| Executive | 100% |
+| Domain     | Enforcement Rate |
+| ---------- | ---------------- |
+| Medical    | 100%             |
+| Legal      | 100%             |
+| Finance    | 100%             |
+| Government | 100%             |
+| Executive  | 100%             |
 
 Zero privacy-sensitive messages were sent to cloud providers during any validation round. The 30 privacy keywords plus domain-specific detection ensure all sensitive content stays on local infrastructure.
 
 ### Category-Level Results
 
-| Category | Accuracy |
-| --- | --- |
-| Engineering | 100% |
-| Data / ML | 100% |
-| Security | 100% |
-| Business | 100% |
-| Creative | 100% |
-| Science | 100% |
-| Logistics | 100% |
-| Hospitality | 100% |
-| HR / Education / Sales | 100% |
-| Specialty | 100% |
-| General | 100% |
-| Privacy | 97%+ |
+| Category               | Accuracy |
+| ---------------------- | -------- |
+| Engineering            | 100%     |
+| Data / ML              | 100%     |
+| Security               | 100%     |
+| Business               | 100%     |
+| Creative               | 100%     |
+| Science                | 100%     |
+| Logistics              | 100%     |
+| Hospitality            | 100%     |
+| HR / Education / Sales | 100%     |
+| Specialty              | 100%     |
+| General                | 100%     |
+| Privacy                | 97%+     |
 
 ### Iterative Improvement
 
 The routing engine was refined across 5 experiment rounds:
 
-| Round | Image Accuracy | Overall Notes |
-| --- | --- | --- |
-| Round 1 | 33% | Initial keyword set too narrow |
-| Round 2 | 67% | Added verb/noun combos |
-| Round 3 | 85% | Added art style indicators |
-| Round 4 | 95% | Added strong noun detection |
-| Round 5 | 100% | Final 5-layer detection system |
+| Round   | Image Accuracy | Overall Notes                  |
+| ------- | -------------- | ------------------------------ |
+| Round 1 | 33%            | Initial keyword set too narrow |
+| Round 2 | 67%            | Added verb/noun combos         |
+| Round 3 | 85%            | Added art style indicators     |
+| Round 4 | 95%            | Added strong noun detection    |
+| Round 5 | 100%           | Final 5-layer detection system |
+
+---
+
+## Auto Re-Routing on Weak Answer
+
+After the LLM responds, the `QualityCheckManager` (in `claw-chat-service`) scores the response quality. If the score falls below the weak threshold (0.4), the system automatically re-routes to the next candidate in the fallback chain.
+
+### Quality Signals
+
+| Check                 | Threshold                  | Penalty |
+| --------------------- | -------------------------- | ------- |
+| Response too short    | < 20 chars                 | -0.40   |
+| Too few words         | < 5 words                  | -0.30   |
+| Error/refusal pattern | 9 patterns                 | -0.50   |
+| Excessive repetition  | > 60% trigram overlap      | -0.30   |
+| Echo response         | > 80% similarity to prompt | -0.50   |
+
+### Constraints
+
+- Max 2 re-route attempts per message (prevents loops)
+- Image and file generation responses are exempt
+- Only the final accepted response is stored (weak responses are discarded)
+- Re-routing uses the existing fallback chain, not a separate path
+- Frontend shows an amber "Re-routed from {provider}/{model}" badge
+
+See [Auto Re-Routing Spec](../02-business-product/auto-rerouting-spec.md) for full details.

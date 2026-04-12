@@ -148,6 +148,10 @@ export const ru: TranslationDictionary = {
     contextPacks: 'Пакеты контекста',
     contextPacksDescription: 'Выберите пакеты контекста для включения в эту ветку.',
     noContextPacks: 'Пакеты контекста ещё не созданы',
+    reRouted: 'Перенаправлено',
+    reRoutedFrom: 'Перенаправлено от {provider}/{model}',
+    weakResponse: 'Обнаружен слабый ответ',
+    qualityScore: 'Качество: {score}%',
   },
   connectors: {
     title: 'Коннекторы',
@@ -464,7 +468,8 @@ export const ru: TranslationDictionary = {
   },
   replay: {
     title: 'Лаборатория воспроизведения маршрутизации',
-    description: 'Повторно выполните исторические решения маршрутизации на текущем маршрутизаторе и сравните результаты',
+    description:
+      'Повторно выполните исторические решения маршрутизации на текущем маршрутизаторе и сравните результаты',
     runReplay: 'Запустить воспроизведение',
     running: 'Выполняется воспроизведение...',
     totalReplayed: 'Всего воспроизведено',

@@ -7,8 +7,6 @@ import type { TranslateFunction } from '@/types/i18n.types';
 
 import type { AdminUser, AuditLog } from './audit.types';
 import type { DownloadStats, ModelCatalogEntry, PullJobResponse } from './catalog.types';
-import type { ParallelModelResponse } from './parallel.types';
-import type { ReplayBatchResult, ReplayResult } from './replay.types';
 import type { ChatMessage, ChatThread, FallbackAttemptInfo } from './chat.types';
 import type { Connector, ConnectorModel, CreateConnectorRequest } from './connector.types';
 import type { CreateContextPackItemRequest, CreateContextPackRequest } from './context-pack.types';
@@ -23,6 +21,8 @@ import type {
   ServerLogsTabProps,
 } from './log.types';
 import type { CreateMemoryRequest, MemoryRecord } from './memory.types';
+import type { ParallelModelResponse } from './parallel.types';
+import type { ReplayBatchResult, ReplayResult } from './replay.types';
 import type { CreatePolicyRequest, RoutingDecision, RoutingPolicy } from './routing.types';
 
 // ─── Common component props ──────────────────────────────────────────────────

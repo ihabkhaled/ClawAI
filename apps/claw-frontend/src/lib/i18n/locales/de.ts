@@ -147,6 +147,10 @@ export const de: TranslationDictionary = {
     contextPacks: 'Kontextpakete',
     contextPacksDescription: 'Kontextpakete für diese Unterhaltung auswählen.',
     noContextPacks: 'Noch keine Kontextpakete erstellt',
+    reRouted: 'Umgeleitet',
+    reRoutedFrom: 'Umgeleitet von {provider}/{model}',
+    weakResponse: 'Schwache Antwort erkannt',
+    qualityScore: 'Qualität: {score}%',
   },
   connectors: {
     title: 'Konnektoren',
@@ -463,7 +467,8 @@ export const de: TranslationDictionary = {
   },
   replay: {
     title: 'Routing-Replay-Labor',
-    description: 'Historische Routing-Entscheidungen erneut gegen den aktuellen Router ausfuhren und Ergebnisse vergleichen',
+    description:
+      'Historische Routing-Entscheidungen erneut gegen den aktuellen Router ausfuhren und Ergebnisse vergleichen',
     runReplay: 'Replay starten',
     running: 'Replay wird ausgefuhrt...',
     totalReplayed: 'Gesamt wiederholt',
@@ -480,7 +485,8 @@ export const de: TranslationDictionary = {
   },
   compare: {
     title: 'Modelle vergleichen',
-    description: 'Wählen Sie 2-5 Modelle und geben Sie einen Prompt ein, um Antworten nebeneinander zu vergleichen',
+    description:
+      'Wählen Sie 2-5 Modelle und geben Sie einen Prompt ein, um Antworten nebeneinander zu vergleichen',
     selectModels: 'Modelle auswählen',
     minModels: 'Mindestens {min} Modelle auswählen',
     maxModels: 'Maximal {max} Modelle erlaubt',

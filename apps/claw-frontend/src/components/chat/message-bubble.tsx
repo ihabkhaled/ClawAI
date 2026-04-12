@@ -1,4 +1,4 @@
-import { Brain, FileText, RefreshCw, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { Brain, FileText, RefreshCw, RotateCcw, ThumbsDown, ThumbsUp } from 'lucide-react';
 
 import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
 import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble';
@@ -38,6 +38,13 @@ export function MessageBubble({
     typeof metadata?.['generationId'] === 'string' && isFileGeneration
       ? metadata['generationId']
       : undefined;
+  const isReRouted = metadata?.['reRouted'] === true;
+  const originalProvider =
+    typeof metadata?.['originalProvider'] === 'string' ? metadata['originalProvider'] : null;
+  const originalModel =
+    typeof metadata?.['originalModel'] === 'string' ? metadata['originalModel'] : null;
+  const originalScore =
+    typeof metadata?.['originalScore'] === 'number' ? metadata['originalScore'] : null;
 
   const handleFeedback = (value: MessageFeedback): void => {
     if (!onFeedback) {
@@ -65,9 +72,7 @@ export function MessageBubble({
           {isUser ? (
             <>
               <p className="whitespace-pre-wrap">{message.content}</p>
-              {contextFileIds.length > 0 ? (
-                <MessageAttachments fileIds={contextFileIds} />
-              ) : null}
+              {contextFileIds.length > 0 ? <MessageAttachments fileIds={contextFileIds} /> : null}
             </>
           ) : null}
           {!isUser && isImageGeneration && imageGenerationId ? (
@@ -89,6 +94,13 @@ export function MessageBubble({
             {providerModel ? (
               <Badge variant="outline" className="text-xs">
                 {providerModel}
+              </Badge>
+            ) : null}
+            {isReRouted && originalProvider && originalModel ? (
+              <Badge variant="outline" className="gap-1 border-amber-500/50 text-xs text-amber-600">
+                <RotateCcw className="h-3 w-3" />
+                Re-routed from {originalProvider}/{originalModel}
+                {originalScore !== null ? ` (${String(Math.round(originalScore * 100))}%)` : null}
               </Badge>
             ) : null}
             {memoryCount >= 0 ? (
