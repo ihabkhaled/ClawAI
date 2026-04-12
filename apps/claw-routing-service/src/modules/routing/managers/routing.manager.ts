@@ -304,29 +304,29 @@ export class RoutingManager {
     // Privacy check FIRST — force local if sensitive content detected
     if (this.detectPrivacySensitive(context.message)) {
       this.logger.log('handleAuto: privacy-sensitive content detected — forcing local routing');
-      return this.buildLocalPrivacyDecision(context);
+      return this.buildLocalPrivacyDecision(context, 'domain_privacy');
     }
 
     // Medical and legal content is inherently sensitive — force local
     if (this.detectMedicalRequest(context.message)) {
       this.logger.log('handleAuto: medical content detected — forcing local routing');
-      return this.buildLocalPrivacyDecision(context);
+      return this.buildLocalPrivacyDecision(context, 'domain_medical');
     }
     if (this.detectLegalRequest(context.message)) {
       this.logger.log('handleAuto: legal content detected — forcing local routing');
-      return this.buildLocalPrivacyDecision(context);
+      return this.buildLocalPrivacyDecision(context, 'domain_legal');
     }
     if (this.detectFinanceRequest(context.message)) {
       this.logger.log('handleAuto: financial content detected — forcing local routing');
-      return this.buildLocalPrivacyDecision(context);
+      return this.buildLocalPrivacyDecision(context, 'domain_finance');
     }
     if (this.detectExecutiveRequest(context.message)) {
       this.logger.log('handleAuto: executive content detected — forcing local routing');
-      return this.buildLocalPrivacyDecision(context);
+      return this.buildLocalPrivacyDecision(context, 'domain_executive');
     }
     if (this.detectGovernmentRequest(context.message)) {
       this.logger.log('handleAuto: government/intelligence content detected — forcing local routing');
-      return this.buildLocalPrivacyDecision(context);
+      return this.buildLocalPrivacyDecision(context, 'domain_government');
     }
 
     // Detect image requests early (before Ollama router, which may misclassify)
@@ -876,14 +876,24 @@ export class RoutingManager {
     return PRIVACY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
   }
 
-  private buildLocalPrivacyDecision(context: RoutingContext): RoutingDecisionResult {
+  private buildLocalPrivacyDecision(
+    context: RoutingContext,
+    detectedDomain?: string,
+  ): RoutingDecisionResult {
     const primary = { provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT };
+    const reasonTags = ['auto', 'privacy_enforced', 'local_only'];
+    if (detectedDomain) {
+      reasonTags.push(detectedDomain);
+    }
+    this.logger.log(
+      `buildLocalPrivacyDecision: routing to local (domain=${detectedDomain ?? 'generic'})`,
+    );
     return {
       selectedProvider: LOCAL_PROVIDER,
       selectedModel: LOCAL_MODEL_DEFAULT,
       routingMode: RoutingMode.AUTO,
       confidence: CONFIDENCE_PRIVACY_ENFORCED,
-      reasonTags: ['auto', 'privacy_enforced', 'local_only'],
+      reasonTags,
       privacyClass: 'local',
       costClass: 'free',
       fallbackChain: this.buildFallbackChain(primary, context).filter(
