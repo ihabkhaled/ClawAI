@@ -550,29 +550,29 @@ The router prompt is now built dynamically based on installed models:
 
 ### 15 Capability Classes
 
-| Class | Keywords | Local Role |
-| ----- | -------- | ---------- |
-| Coding | 100 | LOCAL_CODING |
-| Image Generation | 70+ | LOCAL_IMAGE_GENERATION |
-| Infrastructure | 33 | LOCAL_CODING |
-| Data Analysis | 33 | LOCAL_REASONING |
-| Privacy (enforcement) | 30 | Forces local (no cloud) |
-| Business | 30 | LOCAL_FILE_GENERATION |
-| Creative Writing | 26 | LOCAL_FALLBACK_CHAT |
-| Security | 25 | LOCAL_CODING |
-| Reasoning | 21 | LOCAL_REASONING |
-| Legal | 21 | LOCAL_REASONING |
-| Medical | 19 | LOCAL_REASONING |
-| File Generation | 34 | LOCAL_FILE_GENERATION |
-| Thinking | 15 | LOCAL_THINKING |
-| Translation | 12 | LOCAL_FALLBACK_CHAT |
-| General Chat | 0 (default) | LOCAL_FALLBACK_CHAT |
+| Class                 | Keywords    | Local Role              |
+| --------------------- | ----------- | ----------------------- |
+| Coding                | 100         | LOCAL_CODING            |
+| Image Generation      | 70+         | LOCAL_IMAGE_GENERATION  |
+| Infrastructure        | 33          | LOCAL_CODING            |
+| Data Analysis         | 33          | LOCAL_REASONING         |
+| Privacy (enforcement) | 30          | Forces local (no cloud) |
+| Business              | 30          | LOCAL_FILE_GENERATION   |
+| Creative Writing      | 26          | LOCAL_FALLBACK_CHAT     |
+| Security              | 25          | LOCAL_CODING            |
+| Reasoning             | 21          | LOCAL_REASONING         |
+| Legal                 | 21          | LOCAL_REASONING         |
+| Medical               | 19          | LOCAL_REASONING         |
+| File Generation       | 34          | LOCAL_FILE_GENERATION   |
+| Thinking              | 15          | LOCAL_THINKING          |
+| Translation           | 12          | LOCAL_FALLBACK_CHAT     |
+| General Chat          | 0 (default) | LOCAL_FALLBACK_CHAT     |
 
 ## Routing Modes
 
 | Mode           | Behavior                                                                       |
 | -------------- | ------------------------------------------------------------------------------ |
-| AUTO           | 5-stage pipeline: privacy → image → file → category → Ollama/heuristic        |
+| AUTO           | 5-stage pipeline: privacy → image → file → category → Ollama/heuristic         |
 | MANUAL_MODEL   | User-selected provider+model (forcedProvider/forcedModel)                      |
 | LOCAL_ONLY     | Category-aware: coding→LOCAL_CODING, reasoning→LOCAL_REASONING, else gemma3:4b |
 | PRIVACY_FIRST  | Local if healthy, else Anthropic                                               |
@@ -608,6 +608,19 @@ Active policies (sorted by priority) can override the mode.
 - AES-256-GCM encryption for connector API keys
 - Pino log redaction (authorization, password, refreshToken, apiKey, token, secret)
 - X-Request-ID correlation from frontend to backend
+
+### File Upload Security (FileSecurityManager)
+
+Every file upload goes through 4 security checks before being saved:
+
+1. **Antivirus Scan** — ClamAV Docker container (`clamav/clamav:stable`, port 3310). Files sent via TCP INSTREAM protocol. Graceful degradation if ClamAV is down (fail-safe: rejects).
+2. **Magic Byte Validation** — Verifies file content matches declared MIME type (PDF, PNG, JPEG, GIF, WebP, ZIP/DOCX signatures).
+3. **Filename Validation** — Blocks path traversal (`../`, `\`, `/`), null bytes, double extensions (`.exe.pdf`), 30+ dangerous extensions (`.exe`, `.dll`, `.bat`, `.ps1`, `.vbs`, etc.).
+4. **ZIP Bomb Detection** — Checks for suspicious null byte patterns in archives.
+
+Failed checks → HTTP 422 with reason codes. Filenames sanitized before storage (special chars → underscores).
+
+**Env vars**: `CLAMAV_HOST` (default: `clamav`), `CLAMAV_PORT` (default: `3310`), `CLAMAV_ENABLED` (default: `true`)
 
 ---
 

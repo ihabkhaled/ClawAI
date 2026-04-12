@@ -34,6 +34,8 @@
     "@nestjs/throttler": "^6.5.0",
     "@prisma/client": "^5.20.0",
     "amqplib": "^0.10.4",
+    "clamav.js": "^0.12.0",
+    "file-type": "^22.0.1",
     "helmet": "^8.1.0",
     "ioredis": "^5.4.0",
     "jsonwebtoken": "^9.0.2",

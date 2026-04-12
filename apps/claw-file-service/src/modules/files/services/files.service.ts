@@ -8,6 +8,7 @@ import { deleteFile, readFile, saveFile } from '../../../common/utilities';
 import { type PaginatedResult } from '../../../common/types';
 import { FilesRepository } from '../repositories/files.repository';
 import { FileChunksRepository } from '../repositories/file-chunks.repository';
+import { FileSecurityManager } from '../managers/file-security.manager';
 import { type UploadFileDto } from '../dto/upload-file.dto';
 import { type ListFilesQueryDto } from '../dto/list-files-query.dto';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '../types/files.types';
@@ -20,27 +21,32 @@ export class FilesService {
     private readonly filesRepository: FilesRepository,
     private readonly fileChunksRepository: FileChunksRepository,
     private readonly rabbitMQService: RabbitMQService,
+    private readonly fileSecurityManager: FileSecurityManager,
   ) {}
 
   async uploadFile(userId: string, dto: UploadFileDto): Promise<File> {
-    this.logger.log(`uploadFile: uploading file "${dto.filename}" (${dto.mimeType}, ${String(dto.sizeBytes)} bytes) for user ${userId}`);
+    this.logger.log(
+      `uploadFile: uploading file "${dto.filename}" (${dto.mimeType}, ${String(dto.sizeBytes)} bytes) for user ${userId}`,
+    );
     this.validateMimeType(dto.mimeType);
     this.validateFileSize(dto.sizeBytes);
 
     const contentBuffer = dto.content ? Buffer.from(dto.content, 'base64') : Buffer.alloc(0);
-    const storagePath = saveFile(`${Date.now()}-${dto.filename}`, contentBuffer);
+    await this.runSecurityChecks(dto.filename, dto.mimeType, contentBuffer);
 
-    // Store file with raw content — LLMs parse files natively
+    const safeName = this.fileSecurityManager.getSanitizedFilename(dto.filename);
+    const storagePath = saveFile(`${String(Date.now())}-${safeName}`, contentBuffer);
+
     const file = await this.filesRepository.create({
       userId,
-      filename: dto.filename,
+      filename: safeName,
       mimeType: dto.mimeType,
       sizeBytes: dto.sizeBytes,
       storagePath,
       content: dto.content ?? null,
     });
 
-    this.logger.log(`uploadFile: uploaded file ${file.id} "${dto.filename}"`);
+    this.logger.log(`uploadFile: uploaded file ${file.id} "${safeName}" (security checks passed)`);
     void this.rabbitMQService.publish(EventPattern.FILE_UPLOADED, {
       fileId: file.id,
       userId,
@@ -49,6 +55,24 @@ export class FilesService {
     });
 
     return file;
+  }
+
+  private async runSecurityChecks(
+    filename: string,
+    mimeType: string,
+    buffer: Buffer,
+  ): Promise<void> {
+    const result = await this.fileSecurityManager.runAllChecks(filename, mimeType, buffer);
+    if (!result.passed) {
+      const failedChecks = result.checks.filter((c) => !c.passed);
+      const reasons = failedChecks.map((c) => `${c.name}: ${c.reason}`).join('; ');
+      this.logger.warn(`runSecurityChecks: REJECTED "${filename}" — ${reasons}`);
+      throw new BusinessException(
+        `File rejected by security checks: ${reasons}`,
+        'FILE_SECURITY_CHECK_FAILED',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
   }
 
   async getFiles(userId: string, query: ListFilesQueryDto): Promise<PaginatedResult<File>> {

@@ -700,6 +700,28 @@ services:
     networks:
       - claw-network
 
+  # ---------------------------------------------------------------------------
+  # ClamAV (Antivirus file scanning)
+  # ---------------------------------------------------------------------------
+  clamav:
+    image: clamav/clamav:stable
+    container_name: claw-clamav
+    restart: unless-stopped
+    ports:
+      - '${CLAMAV_PORT:-3310}:3310'
+    volumes:
+      - clamav-data:/var/lib/clamav
+    environment:
+      - CLAMAV_NO_FRESHCLAMD=false
+    healthcheck:
+      test: ['CMD-SHELL', 'clamdcheck || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    networks:
+      - claw-network
+
 volumes:
   pg-auth-data:
     driver: local
@@ -728,6 +750,8 @@ volumes:
   ollama-data:
     driver: local
   file-storage-data:
+    driver: local
+  clamav-data:
     driver: local
 
 networks:

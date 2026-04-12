@@ -1,0 +1,61 @@
+export const MAX_FILENAME_LENGTH = 255;
+
+export const DANGEROUS_EXTENSIONS = new Set([
+  '.exe',
+  '.bat',
+  '.cmd',
+  '.com',
+  '.scr',
+  '.pif',
+  '.vbs',
+  '.vbe',
+  '.wsf',
+  '.wsh',
+  '.msi',
+  '.msp',
+  '.dll',
+  '.sys',
+  '.drv',
+  '.cpl',
+  '.inf',
+  '.reg',
+  '.ps1',
+  '.psm1',
+  '.psd1',
+  '.gadget',
+  '.hta',
+  '.lnk',
+  '.scf',
+  '.url',
+  '.jar',
+  '.jnlp',
+  '.application',
+  '.appref-ms',
+  '.action',
+  '.command',
+  '.workflow',
+]);
+
+export const MIME_TO_MAGIC_BYTES: Record<string, Buffer[]> = {
+  'application/pdf': [Buffer.from([0x25, 0x50, 0x44, 0x46])],
+  'image/png': [Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])],
+  'image/jpeg': [
+    Buffer.from([0xff, 0xd8, 0xff, 0xe0]),
+    Buffer.from([0xff, 0xd8, 0xff, 0xe1]),
+    Buffer.from([0xff, 0xd8, 0xff, 0xe2]),
+    Buffer.from([0xff, 0xd8, 0xff, 0xdb]),
+    Buffer.from([0xff, 0xd8, 0xff, 0xee]),
+  ],
+  'image/gif': [Buffer.from('GIF87a'), Buffer.from('GIF89a')],
+  'image/webp': [Buffer.from('RIFF')],
+  'application/zip': [Buffer.from([0x50, 0x4b, 0x03, 0x04])],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [
+    Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+  ],
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': [
+    Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+  ],
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': [
+    Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+  ],
+};

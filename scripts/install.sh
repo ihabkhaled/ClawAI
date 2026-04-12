@@ -401,6 +401,10 @@ COMFYUI_BASE_URL=http://comfyui:8188
 COMFYUI_PORT=8188
 AUTO_PULL_MODELS=tinyllama gemma3:4b gemma2:2b phi3:mini llama3.2:3b
 
+CLAMAV_HOST=clamav
+CLAMAV_PORT=3310
+CLAMAV_ENABLED=true
+
 AUDIT_MONGODB_URI=mongodb://claw:${MONGO_PASS}@mongodb:27017/claw_audit?authSource=admin
 CLIENT_LOGS_MONGODB_URI=mongodb://claw:${MONGO_PASS}@mongodb:27017/claw_client_logs?authSource=admin
 SERVER_LOGS_MONGODB_URI=mongodb://claw:${MONGO_PASS}@mongodb:27017/claw_server_logs?authSource=admin

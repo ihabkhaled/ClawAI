@@ -76,10 +76,15 @@ describe('FilesService', () => {
     filesRepo = mockFilesRepository();
     chunksRepo = mockFileChunksRepository();
     rabbitMQ = mockRabbitMQ();
+    const mockSecurityManager = {
+      runAllChecks: jest.fn().mockResolvedValue({ passed: true, checks: [] }),
+      getSanitizedFilename: jest.fn().mockImplementation((name: string) => name),
+    };
     service = new FilesService(
       filesRepo as unknown as FilesRepository,
       chunksRepo as unknown as FileChunksRepository,
       rabbitMQ as unknown as RabbitMQService,
+      mockSecurityManager as any,
     );
   });
 
