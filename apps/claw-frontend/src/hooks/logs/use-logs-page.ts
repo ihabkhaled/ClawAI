@@ -41,6 +41,9 @@ export function useLogsPage(): UseLogsPageReturn {
   const [serverServiceFilter, setServerServiceFilter] = useState('');
   const [serverControllerFilter, setServerControllerFilter] = useState('');
   const [serverActionFilter, setServerActionFilter] = useState('');
+  const [serverMethodFilter, setServerMethodFilter] = useState('');
+  const [serverRouteFilter, setServerRouteFilter] = useState('');
+  const [serverMessageContainsFilter, setServerMessageContainsFilter] = useState('');
   const [serverSearch, setServerSearch] = useState('');
   const [serverStartDate, setServerStartDate] = useState('');
   const [serverEndDate, setServerEndDate] = useState('');
@@ -57,6 +60,9 @@ export function useLogsPage(): UseLogsPageReturn {
     serviceName: serverServiceFilter || undefined,
     controller: serverControllerFilter || undefined,
     action: serverActionFilter || undefined,
+    method: serverMethodFilter || undefined,
+    route: serverRouteFilter || undefined,
+    messageContains: serverMessageContainsFilter || undefined,
     search: serverSearch || undefined,
     startDate: serverStartDate || undefined,
     endDate: serverEndDate || undefined,
@@ -71,17 +77,21 @@ export function useLogsPage(): UseLogsPageReturn {
   const [auditStartDate, setAuditStartDate] = useState('');
   const [auditEndDate, setAuditEndDate] = useState('');
 
-  const { auditLogs, meta: auditMeta, isLoading: isAuditLoading, isError: isAuditError } =
-    useAuditLogs({
-      page: auditPage,
-      limit: 25,
-      action: auditAction as AuditAction | undefined,
-      severity: auditSeverity as AuditSeverity | undefined,
-      entityType: auditEntityType || undefined,
-      startDate: auditStartDate || undefined,
-      endDate: auditEndDate || undefined,
-      search: auditSearch || undefined,
-    });
+  const {
+    auditLogs,
+    meta: auditMeta,
+    isLoading: isAuditLoading,
+    isError: isAuditError,
+  } = useAuditLogs({
+    page: auditPage,
+    limit: 25,
+    action: auditAction as AuditAction | undefined,
+    severity: auditSeverity as AuditSeverity | undefined,
+    entityType: auditEntityType || undefined,
+    startDate: auditStartDate || undefined,
+    endDate: auditEndDate || undefined,
+    search: auditSearch || undefined,
+  });
 
   return {
     activeTab,
@@ -152,6 +162,21 @@ export function useLogsPage(): UseLogsPageReturn {
     serverActionFilter,
     setServerActionFilter: (action: string) => {
       setServerActionFilter(action);
+      setServerLogsPage(1);
+    },
+    serverMethodFilter,
+    setServerMethodFilter: (method: string) => {
+      setServerMethodFilter(method);
+      setServerLogsPage(1);
+    },
+    serverRouteFilter,
+    setServerRouteFilter: (route: string) => {
+      setServerRouteFilter(route);
+      setServerLogsPage(1);
+    },
+    serverMessageContainsFilter,
+    setServerMessageContainsFilter: (contains: string) => {
+      setServerMessageContainsFilter(contains);
       setServerLogsPage(1);
     },
     serverSearch,

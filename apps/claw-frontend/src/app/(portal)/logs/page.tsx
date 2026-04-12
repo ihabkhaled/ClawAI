@@ -15,10 +15,7 @@ export default function LogsPage() {
 
   return (
     <div>
-      <PageHeader
-        title={t('nav.logs')}
-        description={t('audits.description')}
-      />
+      <PageHeader title={t('nav.logs')} description={t('audits.description')} />
 
       <div className="mb-4 flex gap-2">
         <Button
@@ -83,6 +80,12 @@ export default function LogsPage() {
           setControllerFilter={controller.setServerControllerFilter}
           actionFilter={controller.serverActionFilter}
           setActionFilter={controller.setServerActionFilter}
+          methodFilter={controller.serverMethodFilter}
+          setMethodFilter={controller.setServerMethodFilter}
+          routeFilter={controller.serverRouteFilter}
+          setRouteFilter={controller.setServerRouteFilter}
+          messageContainsFilter={controller.serverMessageContainsFilter}
+          setMessageContainsFilter={controller.setServerMessageContainsFilter}
           searchQuery={controller.serverSearch}
           setSearchQuery={controller.setServerSearch}
           startDate={controller.serverStartDate}
