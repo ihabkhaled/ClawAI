@@ -31,15 +31,31 @@ export interface ServerLogFilters {
   serviceName?: string;
   module?: string;
   controller?: string;
+  service?: string;
+  manager?: string;
   action?: string;
+  method?: string;
+  route?: string;
+  statusCode?: number;
+  statusCodeMin?: number;
+  statusCodeMax?: number;
   requestId?: string;
   traceId?: string;
   userId?: string;
   threadId?: string;
+  messageId?: string;
+  connectorId?: string;
   provider?: string;
+  modelName?: string;
+  errorCode?: string;
+  latencyMin?: number;
+  latencyMax?: number;
   search?: string;
+  messageContains?: string;
   startDate?: string;
   endDate?: string;
+  sortBy?: string;
+  sortOrder?: string;
   page?: number;
   limit?: number;
 }
@@ -49,11 +65,26 @@ export interface AggregationResult {
   count: number;
 }
 
+export interface DistinctValuesResult {
+  field: string;
+  values: string[];
+}
+
+export interface TimeSeriesBucket {
+  timestamp: string;
+  count: number;
+}
+
 export interface ServerLogStatsResponse {
   byLevel: AggregationResult[];
   byService: AggregationResult[];
   byAction: AggregationResult[];
+  byMethod: AggregationResult[];
+  byStatusCode: AggregationResult[];
+  byModule: AggregationResult[];
   total: number;
+  errorCount: number;
+  avgLatencyMs: number;
 }
 
 export interface CreateServerLogResponse {
