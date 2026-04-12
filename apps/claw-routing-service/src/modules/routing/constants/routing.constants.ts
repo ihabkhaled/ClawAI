@@ -2272,3 +2272,90 @@ export const CONFIDENCE_HEURISTIC_FALLBACK = 0.60;
 export const CONFIDENCE_PRIVACY_ENFORCED = 0.95;
 
 export const PROMPT_CACHE_TTL_MS = 5 * 60 * 1000;
+
+export const PROVIDER_COST_PER_1M_TOKENS: Record<string, { input: number; output: number }> = {
+  'local-ollama': { input: 0, output: 0 },
+  ANTHROPIC: { input: 3.0, output: 15.0 },
+  OPENAI: { input: 0.15, output: 0.6 },
+  GEMINI: { input: 0.075, output: 0.3 },
+  DEEPSEEK: { input: 0.14, output: 0.28 },
+};
+
+export const COST_CLASS_THRESHOLDS = {
+  free: 0,
+  low: 0.5,
+  medium: 5.0,
+  high: 15.0,
+};
+
+export const CATEGORY_LATENCY_SLA_MS: Record<string, number> = {
+  coding: 5000,
+  reasoning: 10000,
+  image_generation: 30000,
+  file_generation: 15000,
+  general: 3000,
+  translation: 3000,
+  customer_support: 2000,
+  security: 5000,
+  medical: 5000,
+  legal: 5000,
+  finance: 5000,
+  business: 3000,
+  creative_writing: 5000,
+  data_analysis: 8000,
+  infrastructure: 5000,
+  hr: 3000,
+  operations: 3000,
+  sales: 2000,
+  education: 3000,
+  design: 5000,
+  research: 10000,
+  executive: 3000,
+  engineering: 8000,
+  science: 10000,
+  government: 5000,
+  logistics: 3000,
+  hospitality: 3000,
+  media: 3000,
+  sustainability: 5000,
+  video_audio: 10000,
+  real_estate: 3000,
+  thinking: 10000,
+};
+
+export const MULTI_INTENT_PRIORITY: Record<string, number> = {
+  medical: 1,
+  legal: 1,
+  finance: 1,
+  government: 1,
+  executive: 1,
+  security: 2,
+  engineering: 2,
+  science: 2,
+  coding: 3,
+  infrastructure: 3,
+  data_analysis: 3,
+  reasoning: 3,
+  thinking: 3,
+  creative_writing: 4,
+  business: 4,
+  operations: 4,
+  hr: 4,
+  sales: 4,
+  education: 5,
+  customer_support: 5,
+  design: 5,
+  media: 5,
+  hospitality: 5,
+  logistics: 5,
+  sustainability: 5,
+  translation: 5,
+  real_estate: 5,
+  video_audio: 5,
+  research: 3,
+  general: 6,
+};
+
+export const MULTI_INTENT_CONFIDENCE_SINGLE = 0.95;
+export const MULTI_INTENT_CONFIDENCE_DOUBLE = 0.85;
+export const MULTI_INTENT_CONFIDENCE_MULTI = 0.75;

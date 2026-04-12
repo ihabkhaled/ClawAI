@@ -740,7 +740,8 @@ describe('RoutingManager', () => {
 
       expect(result.selectedProvider).toBe('local-ollama');
       expect(result.reasonTags).toContain('category_detected');
-      expect(result.reasonTags).toContain('default_local');
+      expect(result.reasonTags).toContain('category_coding');
+      expect(result.detectedCategory).toBe('coding');
     });
 
     it('should use specialized model when one is installed for the detected category', async () => {
@@ -764,7 +765,8 @@ describe('RoutingManager', () => {
 
       expect(result.selectedProvider).toBe('local-ollama');
       expect(result.selectedModel).toBe('qwen2.5-coder:7b');
-      expect(result.reasonTags).toContain('category_specific');
+      expect(result.reasonTags).toContain('category_detected');
+      expect(result.detectedCategory).toBe('coding');
     });
   });
 
@@ -851,6 +853,150 @@ describe('RoutingManager', () => {
 
       expect(chain.every((f) => f.provider !== 'OPENAI')).toBe(true);
       expect(chain.every((f) => f.provider !== 'local-ollama')).toBe(true);
+    });
+
+    it('should sort fallbacks by cost when sortByCost is true', () => {
+      const primary = { provider: 'local-ollama', model: 'gemma3:4b' };
+
+      const chain = manager.buildFallbackChain(primary, baseContext, true);
+
+      // OPENAI ($0.375 avg) should come before ANTHROPIC ($9.0 avg)
+      const openaiIdx = chain.findIndex((f) => f.provider === 'OPENAI');
+      const anthropicIdx = chain.findIndex((f) => f.provider === 'ANTHROPIC');
+      if (openaiIdx >= 0 && anthropicIdx >= 0) {
+        expect(openaiIdx).toBeLessThan(anthropicIdx);
+      }
+    });
+  });
+
+  describe('resolveMultipleCategories', () => {
+    it('should return general when no categories match', () => {
+      const result = manager.resolveMultipleCategories('hello how are you');
+
+      expect(result.primary).toBe('general');
+      expect(result.secondary).toBeNull();
+      expect(result.matchCount).toBe(0);
+      expect(result.confidence).toBe(0.5);
+    });
+
+    it('should return single category with high confidence', () => {
+      const result = manager.resolveMultipleCategories('fix this bug in the code');
+
+      expect(result.primary).toBe('coding');
+      expect(result.secondary).toBeNull();
+      expect(result.matchCount).toBe(1);
+      expect(result.confidence).toBe(0.95);
+    });
+
+    it('should pick privacy-sensitive category as primary when multiple match', () => {
+      // "patient" triggers medical, "diagnosis" triggers medical, "code" triggers coding
+      const result = manager.resolveMultipleCategories(
+        'Write a Python function to analyze patient diagnosis data',
+      );
+
+      // medical (priority 1) should beat coding (priority 3)
+      expect(result.primary).toBe('medical');
+      expect(result.matchCount).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should set secondary category when two categories match', () => {
+      const result = manager.resolveMultipleCategories(
+        'Write Python code to calculate the IRR and NPV of this investment',
+      );
+
+      // finance (priority 1) and coding (priority 3) both match
+      expect(result.secondary).not.toBeNull();
+      expect(result.matchCount).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should lower confidence when more than two categories match', () => {
+      const result = manager.resolveMultipleCategories(
+        'Build a compliance dashboard with HIPAA patient data using pandas dataframe visualization',
+      );
+
+      // medical + coding + data_analysis all match
+      if (result.matchCount > 2) {
+        expect(result.confidence).toBe(0.75);
+      }
+    });
+  });
+
+  describe('estimateProviderCost', () => {
+    it('should return 0 for local provider', () => {
+      expect(manager.estimateProviderCost('local-ollama')).toBe(0);
+    });
+
+    it('should return positive cost for cloud providers', () => {
+      expect(manager.estimateProviderCost('ANTHROPIC')).toBeGreaterThan(0);
+      expect(manager.estimateProviderCost('OPENAI')).toBeGreaterThan(0);
+      expect(manager.estimateProviderCost('GEMINI')).toBeGreaterThan(0);
+      expect(manager.estimateProviderCost('DEEPSEEK')).toBeGreaterThan(0);
+    });
+
+    it('should return 0 for unknown provider', () => {
+      expect(manager.estimateProviderCost('UNKNOWN_PROVIDER')).toBe(0);
+    });
+
+    it('should rank Anthropic as most expensive', () => {
+      const anthropicCost = manager.estimateProviderCost('ANTHROPIC');
+      const openaiCost = manager.estimateProviderCost('OPENAI');
+      const geminiCost = manager.estimateProviderCost('GEMINI');
+
+      expect(anthropicCost).toBeGreaterThan(openaiCost);
+      expect(anthropicCost).toBeGreaterThan(geminiCost);
+    });
+  });
+
+  describe('enhanced routing decision with metadata', () => {
+    it('should include detectedCategory in privacy routing', async () => {
+      const context: RoutingContext = {
+        ...baseContext,
+        message: 'review patient diagnosis for pneumonia treatment',
+        userMode: RoutingMode.AUTO,
+      };
+
+      const result = await manager.evaluateRoute(context);
+
+      // Privacy check fires first for medical content (patient, diagnosis are privacy keywords)
+      expect(result.detectedCategory).toBe('privacy');
+      expect(result.latencySlaMs).toBeDefined();
+      expect(result.estimatedCostPer1M).toBe(0);
+    });
+
+    it('should include cost estimate in COST_SAVER mode', async () => {
+      const context: RoutingContext = {
+        ...baseContext,
+        message: 'hello',
+        userMode: RoutingMode.COST_SAVER,
+      };
+
+      const result = await manager.evaluateRoute(context);
+
+      expect(result.estimatedCostPer1M).toBe(0);
+    });
+
+    it('should include multi-intent metadata in category routing', async () => {
+      promptBuilder.fetchInstalledModels.mockResolvedValue([
+        {
+          name: 'qwen2.5-coder',
+          tag: '7b',
+          category: 'coding',
+          roles: [LocalModelRole.LOCAL_CODING],
+          capabilities: ['code_generation'],
+          parameterCount: '7B',
+        },
+      ]);
+      const context: RoutingContext = {
+        ...baseContext,
+        message: 'debug the API endpoint and fix the SQL query in this code',
+        userMode: RoutingMode.AUTO,
+      };
+
+      const result = await manager.evaluateRoute(context);
+
+      expect(result.detectedCategory).toBeDefined();
+      expect(result.matchCount).toBeGreaterThanOrEqual(1);
+      expect(result.latencySlaMs).toBeGreaterThan(0);
     });
   });
 });

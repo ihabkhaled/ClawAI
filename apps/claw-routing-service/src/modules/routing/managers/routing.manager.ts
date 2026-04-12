@@ -6,6 +6,7 @@ import { OllamaRouterManager } from './ollama-router.manager';
 import { PromptBuilderManager } from './prompt-builder.manager';
 import {
   BUSINESS_KEYWORDS,
+  CATEGORY_LATENCY_SLA_MS,
   CLOUD_MODEL_CHEAP,
   CLOUD_MODEL_DEFAULT,
   CLOUD_MODEL_FAST,
@@ -47,8 +48,13 @@ import {
   LOCAL_PROVIDER,
   MEDIA_KEYWORDS,
   MEDICAL_KEYWORDS,
+  MULTI_INTENT_CONFIDENCE_DOUBLE,
+  MULTI_INTENT_CONFIDENCE_MULTI,
+  MULTI_INTENT_CONFIDENCE_SINGLE,
+  MULTI_INTENT_PRIORITY,
   OPERATIONS_KEYWORDS,
   PRIVACY_KEYWORDS,
+  PROVIDER_COST_PER_1M_TOKENS,
   REAL_ESTATE_KEYWORDS,
   REASONING_KEYWORDS,
   RESEARCH_KEYWORDS,
@@ -63,6 +69,7 @@ import {
 import type { InstalledModelInfo } from '../types/installed-model.types';
 import {
   type FallbackEntry,
+  type MultiIntentResult,
   type RoutingContext,
   type RoutingDecisionResult,
   type RoutingPolicy,
@@ -109,7 +116,11 @@ export class RoutingManager {
     }
   }
 
-  buildFallbackChain(primary: FallbackEntry, context: RoutingContext): FallbackEntry[] {
+  buildFallbackChain(
+    primary: FallbackEntry,
+    context: RoutingContext,
+    sortByCost?: boolean,
+  ): FallbackEntry[] {
     this.logger.debug(
       `buildFallbackChain: building for primary=${primary.provider}/${primary.model}`,
     );
@@ -151,6 +162,12 @@ export class RoutingManager {
           chain.push(cloud);
         }
       }
+    }
+
+    // Sort by cost (cheapest first) when in cost-saving mode
+    if (sortByCost) {
+      chain.sort((a, b) => this.estimateProviderCost(a.provider) - this.estimateProviderCost(b.provider));
+      this.logger.debug('buildFallbackChain: sorted fallbacks by cost (cheapest first)');
     }
 
     this.logger.debug(`buildFallbackChain: chain built with ${String(chain.length)} entries`);
@@ -280,7 +297,8 @@ export class RoutingManager {
         reasonTags: ['cost_saver', 'free_local'],
         privacyClass: 'local',
         costClass: 'free',
-        fallbackChain: this.buildFallbackChain(primary, context),
+        fallbackChain: this.buildFallbackChain(primary, context, true),
+        estimatedCostPer1M: 0,
       };
     }
 
@@ -294,7 +312,8 @@ export class RoutingManager {
       reasonTags: ['cost_saver', 'cheapest_cloud'],
       privacyClass: 'cloud',
       costClass: 'low',
-      fallbackChain: this.buildFallbackChain(primary, context),
+      fallbackChain: this.buildFallbackChain(primary, context, true),
+      estimatedCostPer1M: this.estimateProviderCost(CLOUD_PROVIDER_OPENAI),
     };
   }
 
@@ -888,6 +907,10 @@ export class RoutingManager {
     this.logger.log(
       `buildLocalPrivacyDecision: routing to local (domain=${detectedDomain ?? 'generic'})`,
     );
+
+    const category = detectedDomain?.replace('domain_', '') ?? 'general';
+    const latencySlaMs = CATEGORY_LATENCY_SLA_MS[category] ?? CATEGORY_LATENCY_SLA_MS['general'];
+
     return {
       selectedProvider: LOCAL_PROVIDER,
       selectedModel: LOCAL_MODEL_DEFAULT,
@@ -899,6 +922,9 @@ export class RoutingManager {
       fallbackChain: this.buildFallbackChain(primary, context).filter(
         (f) => f.provider === LOCAL_PROVIDER,
       ),
+      detectedCategory: category,
+      estimatedCostPer1M: 0,
+      latencySlaMs,
     };
   }
 
@@ -909,15 +935,34 @@ export class RoutingManager {
       return null;
     }
 
-    const role = this.detectCategoryRole(context.message);
+    const multiIntent = this.resolveMultipleCategories(context.message);
+    if (multiIntent.primary === 'general') {
+      return null;
+    }
+
+    const role = this.mapCategoryToRole(multiIntent.primary);
     if (!role) {
       return null;
     }
 
+    const latencySlaMs = CATEGORY_LATENCY_SLA_MS[multiIntent.primary] ?? CATEGORY_LATENCY_SLA_MS['general'];
+    const estimatedCostPer1M = this.estimateProviderCost(LOCAL_PROVIDER);
+
+    const reasonTags = this.buildCategoryReasonTags(multiIntent, role);
+
     const model = await this.findModelForRole(role);
     if (model) {
       this.logger.log(`detectCategoryRoute: role=${role} model=${model.name}:${model.tag}`);
-      return this.buildCategoryDecision(model, role, context);
+      const decision = this.buildCategoryDecision(model, role, context);
+      return {
+        ...decision,
+        reasonTags,
+        detectedCategory: multiIntent.primary,
+        secondaryCategory: multiIntent.secondary ?? undefined,
+        matchCount: multiIntent.matchCount,
+        estimatedCostPer1M,
+        latencySlaMs,
+      };
     }
 
     // No specialized model installed for this role — use default local model
@@ -927,104 +972,78 @@ export class RoutingManager {
       selectedProvider: LOCAL_PROVIDER,
       selectedModel: LOCAL_MODEL_DEFAULT,
       routingMode: RoutingMode.AUTO,
-      confidence: CONFIDENCE_CATEGORY_KEYWORD,
-      reasonTags: ['auto', 'category_detected', `role_${role}`, 'default_local'],
+      confidence: multiIntent.confidence,
+      reasonTags,
       privacyClass: 'local',
       costClass: 'free',
       fallbackChain: this.buildFallbackChain(primary, context),
+      detectedCategory: multiIntent.primary,
+      secondaryCategory: multiIntent.secondary ?? undefined,
+      matchCount: multiIntent.matchCount,
+      estimatedCostPer1M,
+      latencySlaMs,
     };
   }
 
+  private buildCategoryReasonTags(
+    multiIntent: MultiIntentResult,
+    role: LocalModelRole,
+  ): string[] {
+    const tags = ['auto', 'category_detected', `role_${role.toLowerCase()}`];
+    tags.push(`category_${multiIntent.primary}`);
+    if (multiIntent.secondary) {
+      tags.push(`secondary_${multiIntent.secondary}`);
+    }
+    if (multiIntent.matchCount > 1) {
+      tags.push('multi_intent');
+    }
+    return tags;
+  }
+
   private detectCategoryRole(message: string): LocalModelRole | null {
-    // Check specific categories first (more specific before more general)
-    if (this.detectSecurityRequest(message)) {
-      return LocalModelRole.LOCAL_CODING;
+    const multiIntent = this.resolveMultipleCategories(message);
+
+    if (multiIntent.primary === 'general') {
+      return null;
     }
-    if (this.detectMedicalRequest(message)) {
-      return LocalModelRole.LOCAL_REASONING;
-    }
-    if (this.detectLegalRequest(message)) {
-      return LocalModelRole.LOCAL_REASONING;
-    }
-    if (this.detectFinanceRequest(message)) {
-      return LocalModelRole.LOCAL_REASONING;
-    }
-    if (this.detectRealEstateRequest(message)) {
-      return LocalModelRole.LOCAL_REASONING;
-    }
-    if (this.detectExecutiveRequest(message)) {
-      return LocalModelRole.LOCAL_REASONING;
-    }
-    if (this.detectEngineeringRequest(message)) {
-      return LocalModelRole.LOCAL_REASONING;
-    }
-    if (this.detectScienceRequest(message)) {
-      return LocalModelRole.LOCAL_REASONING;
-    }
-    if (this.detectGovernmentRequest(message)) {
-      return LocalModelRole.LOCAL_REASONING;
-    }
-    if (this.detectCodingRequest(message)) {
-      return LocalModelRole.LOCAL_CODING;
-    }
-    if (this.detectInfrastructureRequest(message)) {
-      return LocalModelRole.LOCAL_CODING;
-    }
-    if (this.detectDataAnalysisRequest(message)) {
-      return LocalModelRole.LOCAL_REASONING;
-    }
-    if (this.detectResearchRequest(message)) {
-      return LocalModelRole.LOCAL_REASONING;
-    }
-    if (this.detectReasoningRequest(message)) {
-      return LocalModelRole.LOCAL_REASONING;
-    }
-    if (this.detectThinkingRequest(message)) {
-      return LocalModelRole.LOCAL_THINKING;
-    }
-    if (this.detectOperationsRequest(message)) {
-      return LocalModelRole.LOCAL_FILE_GENERATION;
-    }
-    if (this.detectBusinessRequest(message)) {
-      return LocalModelRole.LOCAL_FILE_GENERATION;
-    }
-    if (this.detectHRRequest(message)) {
-      return LocalModelRole.LOCAL_FALLBACK_CHAT;
-    }
-    if (this.detectSalesRequest(message)) {
-      return LocalModelRole.LOCAL_FALLBACK_CHAT;
-    }
-    if (this.detectTranslationRequest(message)) {
-      return LocalModelRole.LOCAL_FALLBACK_CHAT;
-    }
-    if (this.detectEducationRequest(message)) {
-      return LocalModelRole.LOCAL_FALLBACK_CHAT;
-    }
-    if (this.detectCustomerSupportRequest(message)) {
-      return LocalModelRole.LOCAL_FALLBACK_CHAT;
-    }
-    if (this.detectVideoAudioRequest(message)) {
-      return LocalModelRole.LOCAL_FALLBACK_CHAT;
-    }
-    if (this.detectDesignRequest(message)) {
-      return LocalModelRole.LOCAL_FALLBACK_CHAT;
-    }
-    if (this.detectLogisticsRequest(message)) {
-      return LocalModelRole.LOCAL_FALLBACK_CHAT;
-    }
-    if (this.detectHospitalityRequest(message)) {
-      return LocalModelRole.LOCAL_FALLBACK_CHAT;
-    }
-    if (this.detectMediaRequest(message)) {
-      return LocalModelRole.LOCAL_FALLBACK_CHAT;
-    }
-    if (this.detectSustainabilityRequest(message)) {
-      return LocalModelRole.LOCAL_FALLBACK_CHAT;
-    }
-    if (this.detectCreativeWritingRequest(message)) {
-      return LocalModelRole.LOCAL_FALLBACK_CHAT;
-    }
-    return null;
+
+    return this.mapCategoryToRole(multiIntent.primary);
+  }
+
+  private mapCategoryToRole(category: string): LocalModelRole | null {
+    const roleMap: Record<string, LocalModelRole> = {
+      security: LocalModelRole.LOCAL_CODING,
+      coding: LocalModelRole.LOCAL_CODING,
+      infrastructure: LocalModelRole.LOCAL_CODING,
+      medical: LocalModelRole.LOCAL_REASONING,
+      legal: LocalModelRole.LOCAL_REASONING,
+      finance: LocalModelRole.LOCAL_REASONING,
+      real_estate: LocalModelRole.LOCAL_REASONING,
+      executive: LocalModelRole.LOCAL_REASONING,
+      engineering: LocalModelRole.LOCAL_REASONING,
+      science: LocalModelRole.LOCAL_REASONING,
+      government: LocalModelRole.LOCAL_REASONING,
+      data_analysis: LocalModelRole.LOCAL_REASONING,
+      research: LocalModelRole.LOCAL_REASONING,
+      reasoning: LocalModelRole.LOCAL_REASONING,
+      thinking: LocalModelRole.LOCAL_THINKING,
+      operations: LocalModelRole.LOCAL_FILE_GENERATION,
+      business: LocalModelRole.LOCAL_FILE_GENERATION,
+      hr: LocalModelRole.LOCAL_FALLBACK_CHAT,
+      sales: LocalModelRole.LOCAL_FALLBACK_CHAT,
+      translation: LocalModelRole.LOCAL_FALLBACK_CHAT,
+      education: LocalModelRole.LOCAL_FALLBACK_CHAT,
+      customer_support: LocalModelRole.LOCAL_FALLBACK_CHAT,
+      video_audio: LocalModelRole.LOCAL_FALLBACK_CHAT,
+      design: LocalModelRole.LOCAL_FALLBACK_CHAT,
+      logistics: LocalModelRole.LOCAL_FALLBACK_CHAT,
+      hospitality: LocalModelRole.LOCAL_FALLBACK_CHAT,
+      media: LocalModelRole.LOCAL_FALLBACK_CHAT,
+      sustainability: LocalModelRole.LOCAL_FALLBACK_CHAT,
+      creative_writing: LocalModelRole.LOCAL_FALLBACK_CHAT,
+    };
+
+    return roleMap[category] ?? null;
   }
 
   private async findModelForRole(role: LocalModelRole): Promise<InstalledModelInfo | null> {
@@ -1080,6 +1099,90 @@ export class RoutingManager {
     const healthy = healthMap[provider] ?? false;
     this.logger.debug(`isConnectorHealthy: provider=${provider} healthy=${String(healthy)}`);
     return healthy;
+  }
+
+  resolveMultipleCategories(message: string): MultiIntentResult {
+    const matches = this.collectCategoryMatches(message);
+
+    if (matches.length === 0) {
+      return { primary: 'general', secondary: null, confidence: 0.5, matchCount: 0 };
+    }
+    if (matches.length === 1) {
+      const singleMatch = matches[0] as { category: string; priority: number };
+      return {
+        primary: singleMatch.category,
+        secondary: null,
+        confidence: MULTI_INTENT_CONFIDENCE_SINGLE,
+        matchCount: 1,
+      };
+    }
+
+    // Sort by priority (lower = higher priority, privacy-sensitive wins)
+    matches.sort((a, b) => a.priority - b.priority);
+    const confidence =
+      matches.length > 2 ? MULTI_INTENT_CONFIDENCE_MULTI : MULTI_INTENT_CONFIDENCE_DOUBLE;
+    const topMatch = matches[0] as { category: string; priority: number };
+
+    return {
+      primary: topMatch.category,
+      secondary: matches[1]?.category ?? null,
+      confidence,
+      matchCount: matches.length,
+    };
+  }
+
+  estimateProviderCost(provider: string): number {
+    const costs = PROVIDER_COST_PER_1M_TOKENS[provider];
+    if (!costs) {
+      return 0;
+    }
+    return (costs.input + costs.output) / 2;
+  }
+
+  private collectCategoryMatches(
+    message: string,
+  ): Array<{ category: string; priority: number }> {
+    const matches: Array<{ category: string; priority: number }> = [];
+    const detectors: Array<{ category: string; detect: (msg: string) => boolean }> = [
+      { category: 'medical', detect: (m) => this.detectMedicalRequest(m) },
+      { category: 'legal', detect: (m) => this.detectLegalRequest(m) },
+      { category: 'finance', detect: (m) => this.detectFinanceRequest(m) },
+      { category: 'government', detect: (m) => this.detectGovernmentRequest(m) },
+      { category: 'executive', detect: (m) => this.detectExecutiveRequest(m) },
+      { category: 'security', detect: (m) => this.detectSecurityRequest(m) },
+      { category: 'engineering', detect: (m) => this.detectEngineeringRequest(m) },
+      { category: 'science', detect: (m) => this.detectScienceRequest(m) },
+      { category: 'coding', detect: (m) => this.detectCodingRequest(m) },
+      { category: 'infrastructure', detect: (m) => this.detectInfrastructureRequest(m) },
+      { category: 'data_analysis', detect: (m) => this.detectDataAnalysisRequest(m) },
+      { category: 'reasoning', detect: (m) => this.detectReasoningRequest(m) },
+      { category: 'thinking', detect: (m) => this.detectThinkingRequest(m) },
+      { category: 'creative_writing', detect: (m) => this.detectCreativeWritingRequest(m) },
+      { category: 'business', detect: (m) => this.detectBusinessRequest(m) },
+      { category: 'operations', detect: (m) => this.detectOperationsRequest(m) },
+      { category: 'hr', detect: (m) => this.detectHRRequest(m) },
+      { category: 'sales', detect: (m) => this.detectSalesRequest(m) },
+      { category: 'education', detect: (m) => this.detectEducationRequest(m) },
+      { category: 'customer_support', detect: (m) => this.detectCustomerSupportRequest(m) },
+      { category: 'design', detect: (m) => this.detectDesignRequest(m) },
+      { category: 'media', detect: (m) => this.detectMediaRequest(m) },
+      { category: 'hospitality', detect: (m) => this.detectHospitalityRequest(m) },
+      { category: 'logistics', detect: (m) => this.detectLogisticsRequest(m) },
+      { category: 'sustainability', detect: (m) => this.detectSustainabilityRequest(m) },
+      { category: 'translation', detect: (m) => this.detectTranslationRequest(m) },
+      { category: 'real_estate', detect: (m) => this.detectRealEstateRequest(m) },
+      { category: 'video_audio', detect: (m) => this.detectVideoAudioRequest(m) },
+      { category: 'research', detect: (m) => this.detectResearchRequest(m) },
+    ];
+
+    for (const detector of detectors) {
+      if (detector.detect(message)) {
+        const priority = MULTI_INTENT_PRIORITY[detector.category] ?? 6;
+        matches.push({ category: detector.category, priority });
+      }
+    }
+
+    return matches;
   }
 
   async getActivePolicies(): Promise<RoutingPolicy[]> {

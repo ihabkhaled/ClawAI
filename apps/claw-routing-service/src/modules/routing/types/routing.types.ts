@@ -27,7 +27,19 @@ export interface RoutingDecisionResult {
   privacyClass: string;
   costClass: string;
   fallbackChain: FallbackEntry[];
+  detectedCategory?: string;
+  secondaryCategory?: string;
+  matchCount?: number;
+  estimatedCostPer1M?: number;
+  latencySlaMs?: number;
 }
+
+export type MultiIntentResult = {
+  primary: string;
+  secondary: string | null;
+  confidence: number;
+  matchCount: number;
+};
 
 export interface FallbackEntry {
   provider: string;
