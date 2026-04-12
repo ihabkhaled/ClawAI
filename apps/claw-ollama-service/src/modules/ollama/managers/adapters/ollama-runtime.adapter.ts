@@ -67,12 +67,16 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
   }
 
   async generate(request: GenerateRequest): Promise<GenerateResponse> {
-    const response = await this.client.post<OllamaGenerateResponse>(OLLAMA_API_GENERATE, {
+    const body: Record<string, unknown> = {
       model: request.model,
       prompt: request.prompt,
       stream: false,
       options: request.options,
-    });
+    };
+    if (request.images && request.images.length > 0) {
+      body['images'] = request.images;
+    }
+    const response = await this.client.post<OllamaGenerateResponse>(OLLAMA_API_GENERATE, body);
     const data = response.data;
     return {
       model: data.model,

@@ -36,6 +36,7 @@ export interface GenerateRequest {
   prompt: string;
   stream?: boolean;
   options?: Record<string, unknown>;
+  images?: string[];
 }
 
 export interface GenerateResponse {

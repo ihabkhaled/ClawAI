@@ -122,6 +122,7 @@ export class OllamaService implements OnModuleInit {
       model: dto.model,
       prompt: dto.prompt,
       stream: dto.stream,
+      images: dto.images,
     });
   }
 
