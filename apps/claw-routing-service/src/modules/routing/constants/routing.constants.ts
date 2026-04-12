@@ -1053,6 +1053,109 @@ export const REAL_ESTATE_KEYWORDS = [
   'cash-on-cash',
 ];
 
+export const EDUCATION_KEYWORDS = [
+  'curriculum',
+  'syllabus',
+  'lesson plan',
+  'learning objective',
+  'assessment',
+  'rubric',
+  'pedagogy',
+  'andragogy',
+  'blended learning',
+  'e-learning',
+  'LMS',
+  'SCORM',
+  'Bloom taxonomy',
+  'instructional design',
+  'microlearning',
+];
+
+export const CUSTOMER_SUPPORT_KEYWORDS = [
+  'ticket',
+  'helpdesk',
+  'FAQ',
+  'knowledge base',
+  'escalation',
+  'first response',
+  'resolution time',
+  'CSAT',
+  'CES',
+  'NPS',
+  'chatbot',
+  'self-service',
+  'SLA breach',
+  'macros',
+  'canned response',
+];
+
+export const VIDEO_AUDIO_KEYWORDS = [
+  'video script',
+  'storyboard',
+  'shot list',
+  'timeline',
+  'editing',
+  'premiere',
+  'davinci resolve',
+  'after effects',
+  'keyframe',
+  'transition',
+  'voiceover',
+  'narration',
+  'subtitle',
+  'caption',
+  'sound design',
+];
+
+export const DESIGN_KEYWORDS = [
+  'wireframe',
+  'mockup',
+  'prototype',
+  'Figma',
+  'Sketch',
+  'Adobe XD',
+  'design system',
+  'component library',
+  'typography',
+  'color palette',
+  'brand guidelines',
+  'logo design',
+  'UI kit',
+  'responsive design',
+  'dark mode',
+];
+
+export const RESEARCH_KEYWORDS = [
+  'literature review',
+  'hypothesis',
+  'methodology',
+  'sampling',
+  'survey design',
+  'qualitative',
+  'quantitative',
+  'thematic analysis',
+  'grounded theory',
+  'ethnography',
+  'longitudinal',
+  'cross-sectional',
+  'peer review',
+  'publication',
+  'abstract',
+];
+
+export const EXECUTIVE_KEYWORDS = [
+  'board meeting',
+  'shareholder',
+  'quarterly earnings',
+  'annual report',
+  'corporate governance',
+  'succession planning',
+  'M&A',
+  'acquisition',
+  'divestiture',
+  'IPO',
+];
+
 export const PRIVACY_KEYWORDS = [
   'medical',
   'patient',
@@ -1150,6 +1253,12 @@ export const CATEGORY_TO_ROLE_MAP: Record<string, LocalModelRole> = {
   operations: LocalModelRole.LOCAL_FILE_GENERATION,
   sales: LocalModelRole.LOCAL_FALLBACK_CHAT,
   'real-estate': LocalModelRole.LOCAL_REASONING,
+  education: LocalModelRole.LOCAL_FALLBACK_CHAT,
+  'customer-support': LocalModelRole.LOCAL_FALLBACK_CHAT,
+  'video-audio': LocalModelRole.LOCAL_FALLBACK_CHAT,
+  design: LocalModelRole.LOCAL_FALLBACK_CHAT,
+  research: LocalModelRole.LOCAL_REASONING,
+  executive: LocalModelRole.LOCAL_REASONING,
 };
 
 export const CONFIDENCE_EXACT_KEYWORD = 0.95;

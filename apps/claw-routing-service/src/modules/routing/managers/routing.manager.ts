@@ -20,7 +20,11 @@ import {
   CONFIDENCE_HEURISTIC_FALLBACK,
   CONFIDENCE_PRIVACY_ENFORCED,
   CREATIVE_WRITING_KEYWORDS,
+  CUSTOMER_SUPPORT_KEYWORDS,
   DATA_ANALYSIS_KEYWORDS,
+  DESIGN_KEYWORDS,
+  EDUCATION_KEYWORDS,
+  EXECUTIVE_KEYWORDS,
   FILE_GENERATION_FORMAT_WORDS,
   FILE_GENERATION_KEYWORDS,
   FILE_GENERATION_PROVIDER,
@@ -42,10 +46,12 @@ import {
   PRIVACY_KEYWORDS,
   REAL_ESTATE_KEYWORDS,
   REASONING_KEYWORDS,
+  RESEARCH_KEYWORDS,
   SALES_KEYWORDS,
   SECURITY_KEYWORDS,
   THINKING_KEYWORDS,
   TRANSLATION_KEYWORDS,
+  VIDEO_AUDIO_KEYWORDS,
 } from '../constants/routing.constants';
 import type { InstalledModelInfo } from '../types/installed-model.types';
 import {
@@ -305,6 +311,10 @@ export class RoutingManager {
     }
     if (this.detectFinanceRequest(context.message)) {
       this.logger.log('handleAuto: financial content detected — forcing local routing');
+      return this.buildLocalPrivacyDecision(context);
+    }
+    if (this.detectExecutiveRequest(context.message)) {
+      this.logger.log('handleAuto: executive content detected — forcing local routing');
       return this.buildLocalPrivacyDecision(context);
     }
 
@@ -785,6 +795,36 @@ export class RoutingManager {
     return REAL_ESTATE_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
   }
 
+  detectEducationRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return EDUCATION_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectCustomerSupportRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return CUSTOMER_SUPPORT_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectVideoAudioRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return VIDEO_AUDIO_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectDesignRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return DESIGN_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectResearchRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return RESEARCH_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectExecutiveRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return EXECUTIVE_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
   detectPrivacySensitive(message: string): boolean {
     const lower = message.toLowerCase();
     return PRIVACY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
@@ -844,6 +884,9 @@ export class RoutingManager {
     if (this.detectRealEstateRequest(message)) {
       return LocalModelRole.LOCAL_REASONING;
     }
+    if (this.detectExecutiveRequest(message)) {
+      return LocalModelRole.LOCAL_REASONING;
+    }
     if (this.detectCodingRequest(message)) {
       return LocalModelRole.LOCAL_CODING;
     }
@@ -851,6 +894,9 @@ export class RoutingManager {
       return LocalModelRole.LOCAL_CODING;
     }
     if (this.detectDataAnalysisRequest(message)) {
+      return LocalModelRole.LOCAL_REASONING;
+    }
+    if (this.detectResearchRequest(message)) {
       return LocalModelRole.LOCAL_REASONING;
     }
     if (this.detectReasoningRequest(message)) {
@@ -872,6 +918,18 @@ export class RoutingManager {
       return LocalModelRole.LOCAL_FALLBACK_CHAT;
     }
     if (this.detectTranslationRequest(message)) {
+      return LocalModelRole.LOCAL_FALLBACK_CHAT;
+    }
+    if (this.detectEducationRequest(message)) {
+      return LocalModelRole.LOCAL_FALLBACK_CHAT;
+    }
+    if (this.detectCustomerSupportRequest(message)) {
+      return LocalModelRole.LOCAL_FALLBACK_CHAT;
+    }
+    if (this.detectVideoAudioRequest(message)) {
+      return LocalModelRole.LOCAL_FALLBACK_CHAT;
+    }
+    if (this.detectDesignRequest(message)) {
       return LocalModelRole.LOCAL_FALLBACK_CHAT;
     }
     if (this.detectCreativeWritingRequest(message)) {
