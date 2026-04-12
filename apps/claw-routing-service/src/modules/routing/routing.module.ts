@@ -4,6 +4,7 @@ import { RoutingService } from './services/routing.service';
 import { RoutingManager } from './managers/routing.manager';
 import { OllamaRouterManager } from './managers/ollama-router.manager';
 import { PromptBuilderManager } from './managers/prompt-builder.manager';
+import { ReplayManager } from './managers/replay.manager';
 import { RoutingPoliciesRepository } from './repositories/routing-policies.repository';
 import { RoutingDecisionsRepository } from './repositories/routing-decisions.repository';
 
@@ -12,6 +13,7 @@ import { RoutingDecisionsRepository } from './repositories/routing-decisions.rep
   providers: [
     RoutingService,
     RoutingManager,
+    ReplayManager,
     OllamaRouterManager,
     PromptBuilderManager,
     RoutingPoliciesRepository,

@@ -185,6 +185,9 @@ export type {
   CatalogCategoryFilterProps,
   DownloadProgressBarProps,
   ActiveDownloadsPanelProps,
+  ReplaySummaryCardProps,
+  ReplayResultRowProps,
+  ReplayFiltersFormProps,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
@@ -226,6 +229,7 @@ export type {
   UseFileUploadZoneStateReturn,
   UseGlobalSearchControllerReturn,
   UseSidebarControllerReturn,
+  UseReplayLabPageReturn,
 } from './hook.types';
 export type { MarkdownRendererProps } from './markdown.types';
 export type {
@@ -239,6 +243,7 @@ export type {
   CatalogFilterParams,
   UseModelCatalogPageReturn,
 } from './catalog.types';
+export type { ReplayResult, ReplayBatchResult, ReplayFilters } from './replay.types';
 export type {
   ImageGeneration,
   ImageGenerationAsset,

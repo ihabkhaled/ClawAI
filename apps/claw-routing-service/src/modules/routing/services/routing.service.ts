@@ -7,8 +7,10 @@ import { type PaginatedResult } from '../../../common/types';
 import { RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
 import { RoutingDecisionsRepository } from '../repositories/routing-decisions.repository';
 import { RoutingManager } from '../managers/routing.manager';
+import { ReplayManager } from '../managers/replay.manager';
 import { PromptBuilderManager } from '../managers/prompt-builder.manager';
 import { type CreatePolicyDto } from '../dto/create-policy.dto';
+import { type ReplayRoutingDto } from '../dto/replay-routing.dto';
 import { type UpdatePolicyDto } from '../dto/update-policy.dto';
 import { type ListPoliciesQueryDto } from '../dto/list-policies-query.dto';
 import { type EvaluateRouteDto } from '../dto/evaluate-route.dto';
@@ -18,6 +20,7 @@ import {
   type RoutingDecisionResult,
   type RoutingPolicy,
 } from '../types/routing.types';
+import { type ReplayBatchResult } from '../types/replay.types';
 
 @Injectable()
 export class RoutingService implements OnModuleInit {
@@ -30,6 +33,7 @@ export class RoutingService implements OnModuleInit {
     private readonly policiesRepository: RoutingPoliciesRepository,
     private readonly decisionsRepository: RoutingDecisionsRepository,
     private readonly routingManager: RoutingManager,
+    private readonly replayManager: ReplayManager,
     private readonly rabbitMQService: RabbitMQService,
     private readonly promptBuilder: PromptBuilderManager,
   ) {
@@ -143,6 +147,10 @@ export class RoutingService implements OnModuleInit {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async replayRouting(dto: ReplayRoutingDto): Promise<ReplayBatchResult> {
+    return this.replayManager.replayDecisions(dto);
   }
 
   private async subscribeToEvents(): Promise<void> {

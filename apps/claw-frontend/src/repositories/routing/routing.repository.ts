@@ -7,6 +7,8 @@ import type {
   DecisionsListResponse,
   EvaluateRouteRequest,
   EvaluateRouteResponse,
+  ReplayFilters,
+  ReplayBatchResult,
 } from "@/types";
 
 export const routingRepository = {
@@ -60,6 +62,16 @@ export const routingRepository = {
     const response = await apiClient.post<EvaluateRouteResponse>(
       "/routing/evaluate",
       data,
+    );
+    return response.data;
+  },
+
+  async replayRouting(
+    filters: ReplayFilters,
+  ): Promise<ReplayBatchResult> {
+    const response = await apiClient.post<ReplayBatchResult>(
+      "/routing/replay",
+      filters,
     );
     return response.data;
   },

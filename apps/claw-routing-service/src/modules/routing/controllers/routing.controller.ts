@@ -6,11 +6,13 @@ import { CreatePolicyDto, createPolicySchema } from "../dto/create-policy.dto";
 import { UpdatePolicyDto, updatePolicySchema } from "../dto/update-policy.dto";
 import { ListPoliciesQueryDto, listPoliciesQuerySchema } from "../dto/list-policies-query.dto";
 import { EvaluateRouteDto, evaluateRouteSchema } from "../dto/evaluate-route.dto";
+import { type ReplayRoutingDto, replayRoutingSchema } from "../dto/replay-routing.dto";
 import {
   type RoutingDecision,
   type RoutingDecisionResult,
   type RoutingPolicy,
 } from "../types/routing.types";
+import { type ReplayBatchResult } from "../types/replay.types";
 
 @Controller("routing")
 export class RoutingController {
@@ -53,6 +55,13 @@ export class RoutingController {
     @Body(new ZodValidationPipe(evaluateRouteSchema)) dto: EvaluateRouteDto,
   ): Promise<RoutingDecisionResult> {
     return this.routingService.evaluateRoute(dto);
+  }
+
+  @Post("replay")
+  async replay(
+    @Body(new ZodValidationPipe(replayRoutingSchema)) dto: ReplayRoutingDto,
+  ): Promise<ReplayBatchResult> {
+    return this.routingService.replayRouting(dto);
   }
 
   @Get("decisions/:threadId")

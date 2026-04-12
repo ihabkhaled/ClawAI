@@ -64,6 +64,7 @@ export {
   CONTEXT_PACK_ITEM_TYPE_LABELS,
 } from './memory.constants';
 export { IMAGE_MODEL_OPTIONS } from './image.constants';
+export { REPLAY_LIMIT_OPTIONS, REPLAY_DEFAULT_LIMIT } from './replay.constants';
 export {
   MODEL_CATEGORY_LABELS,
   MODEL_CATEGORIES,

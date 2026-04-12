@@ -108,4 +108,7 @@ export const queryKeys = {
   pullJobs: {
     all: ['pullJobs'] as const,
   },
+  replay: {
+    all: ['replay'] as const,
+  },
 } as const;

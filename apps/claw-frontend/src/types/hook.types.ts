@@ -11,6 +11,7 @@ import type { ModelSelection } from './component.types';
 import type { UploadFileRequest } from './file.types';
 import type { AggregatedHealth } from './health.types';
 import type { TranslateFunction } from './i18n.types';
+import type { ReplayBatchResult } from './replay.types';
 
 // ─── Admin hook types ───────────────────────────────────────────────────────
 
@@ -203,4 +204,19 @@ export type UseSidebarControllerReturn = {
   isOpen: boolean;
   close: () => void;
   handleOverlayClick: () => void;
+};
+
+// ─── Replay hook types ────────────────────────────────────────────────────
+
+export type UseReplayLabPageReturn = {
+  t: TranslateFunction;
+  routingMode: string | undefined;
+  setRoutingMode: (value: string | undefined) => void;
+  limit: number;
+  setLimit: (value: number) => void;
+  handleRunReplay: () => void;
+  result: ReplayBatchResult | undefined;
+  isPending: boolean;
+  isError: boolean;
+  error: Error | null;
 };

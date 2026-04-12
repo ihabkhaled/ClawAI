@@ -7,6 +7,7 @@ import type { TranslateFunction } from '@/types/i18n.types';
 
 import type { AdminUser, AuditLog } from './audit.types';
 import type { DownloadStats, ModelCatalogEntry, PullJobResponse } from './catalog.types';
+import type { ReplayBatchResult, ReplayResult } from './replay.types';
 import type { ChatMessage, ChatThread, FallbackAttemptInfo } from './chat.types';
 import type { Connector, ConnectorModel, CreateConnectorRequest } from './connector.types';
 import type { CreateContextPackItemRequest, CreateContextPackRequest } from './context-pack.types';
@@ -566,5 +567,28 @@ export type ActiveDownloadsPanelProps = {
   downloadStatsMap: Map<string, DownloadStats>;
   onCancel: (jobId: string) => void;
   isCancelPending: boolean;
+  t: TranslateFunction;
+};
+
+// ─── Replay component props ───────────────────────────────────────────────
+
+export type ReplaySummaryCardProps = {
+  result: ReplayBatchResult;
+  t: TranslateFunction;
+};
+
+export type ReplayResultRowProps = {
+  result: ReplayResult;
+  index: number;
+  t: TranslateFunction;
+};
+
+export type ReplayFiltersFormProps = {
+  routingMode: string | undefined;
+  onRoutingModeChange: (value: string | undefined) => void;
+  limit: number;
+  onLimitChange: (value: number) => void;
+  onSubmit: () => void;
+  isPending: boolean;
   t: TranslateFunction;
 };

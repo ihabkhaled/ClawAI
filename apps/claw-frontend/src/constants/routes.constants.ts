@@ -8,6 +8,7 @@ export const ROUTES = {
   MODELS: '/models',
   MODELS_CATALOG: '/models/catalog',
   ROUTING: '/routing',
+  ROUTING_REPLAY: '/routing/replay',
   MEMORY: '/memory',
   CONTEXT: '/context',
   FILES: '/files',

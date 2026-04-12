@@ -1,7 +1,9 @@
 import { Injectable } from "@nestjs/common";
+import { type Prisma, type RoutingMode } from "../../../generated/prisma";
 import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
 import { type RoutingDecision } from "../../../generated/prisma";
 import { type CreateDecisionData } from "../types/routing.types";
+import { type ReplayFilters } from "../types/replay.types";
 
 @Injectable()
 export class RoutingDecisionsRepository {
@@ -36,5 +38,33 @@ export class RoutingDecisionsRepository {
 
   async countByThreadId(threadId: string): Promise<number> {
     return this.prisma.routingDecision.count({ where: { threadId } });
+  }
+
+  async findRecent(filters: ReplayFilters): Promise<RoutingDecision[]> {
+    const where: Prisma.RoutingDecisionWhereInput = {};
+
+    if (filters.threadId) {
+      where.threadId = filters.threadId;
+    }
+
+    if (filters.routingMode) {
+      where.routingMode = filters.routingMode as RoutingMode;
+    }
+
+    if (filters.startDate || filters.endDate) {
+      where.createdAt = {};
+      if (filters.startDate) {
+        where.createdAt.gte = new Date(filters.startDate);
+      }
+      if (filters.endDate) {
+        where.createdAt.lte = new Date(filters.endDate);
+      }
+    }
+
+    return this.prisma.routingDecision.findMany({
+      where,
+      take: filters.limit ?? 50,
+      orderBy: { createdAt: 'desc' },
+    });
   }
 }

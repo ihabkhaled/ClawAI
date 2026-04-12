@@ -2,6 +2,7 @@ import { RoutingService } from '../services/routing.service';
 import { type RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
 import { type RoutingDecisionsRepository } from '../repositories/routing-decisions.repository';
 import { type RoutingManager } from '../managers/routing.manager';
+import { type ReplayManager } from '../managers/replay.manager';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EntityNotFoundException } from '../../../common/errors';
 import { RoutingMode } from '../../../generated/prisma';
@@ -72,6 +73,39 @@ const mockRoutingManager = (): Partial<Record<keyof RoutingManager, jest.Mock>> 
   buildFallbackChain: jest.fn().mockReturnValue([]),
 });
 
+const mockReplayManager = (): Partial<Record<keyof ReplayManager, jest.Mock>> => ({
+  replayDecisions: jest.fn().mockResolvedValue({
+    totalReplayed: 1,
+    changed: 1,
+    unchanged: 0,
+    averageConfidenceOld: 0.75,
+    averageConfidenceNew: 0.85,
+    results: [
+      {
+        originalDecision: {
+          selectedProvider: 'anthropic',
+          selectedModel: 'claude-sonnet-4',
+          confidence: 0.75,
+          reasonTags: ['auto'],
+          costClass: 'medium',
+        },
+        replayDecision: {
+          selectedProvider: 'openai',
+          selectedModel: 'gpt-4o',
+          confidence: 0.85,
+          reasonTags: ['auto', 'category_match'],
+          costClass: 'medium',
+          detectedCategory: 'coding',
+          estimatedCostPer1M: 5,
+          latencySlaMs: 3000,
+        },
+        changed: true,
+        improvementScore: 1,
+      },
+    ],
+  }),
+});
+
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
   publish: jest.fn().mockResolvedValue(void 0),
   subscribe: jest.fn().mockResolvedValue(void 0),
@@ -82,12 +116,14 @@ describe('RoutingService', () => {
   let policiesRepo: ReturnType<typeof mockPoliciesRepo>;
   let decisionsRepo: ReturnType<typeof mockDecisionsRepo>;
   let routingManager: ReturnType<typeof mockRoutingManager>;
+  let replayMgr: ReturnType<typeof mockReplayManager>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
 
   beforeEach(() => {
     policiesRepo = mockPoliciesRepo();
     decisionsRepo = mockDecisionsRepo();
     routingManager = mockRoutingManager();
+    replayMgr = mockReplayManager();
     rabbitMQ = mockRabbitMQ();
     const promptBuilder = {
       invalidateCache: jest.fn(),
@@ -97,6 +133,7 @@ describe('RoutingService', () => {
       policiesRepo as unknown as RoutingPoliciesRepository,
       decisionsRepo as unknown as RoutingDecisionsRepository,
       routingManager as unknown as RoutingManager,
+      replayMgr as unknown as ReplayManager,
       rabbitMQ as unknown as RabbitMQService,
       promptBuilder as any,
     );
@@ -211,6 +248,34 @@ describe('RoutingService', () => {
       expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);
       expect(decisionsRepo.findByThreadId).toHaveBeenCalledWith('thread-1', 1, 20);
+    });
+  });
+
+  describe('replayRouting', () => {
+    it('should delegate to replay manager and return batch result', async () => {
+      const dto = { limit: 10 };
+      const result = await service.replayRouting(dto);
+
+      expect(result.totalReplayed).toBe(1);
+      expect(result.changed).toBe(1);
+      expect(result.unchanged).toBe(0);
+      expect(result.averageConfidenceOld).toBe(0.75);
+      expect(result.averageConfidenceNew).toBe(0.85);
+      expect(result.results).toHaveLength(1);
+      expect(replayMgr.replayDecisions).toHaveBeenCalledWith(dto);
+    });
+
+    it('should pass filters to replay manager', async () => {
+      const dto = {
+        threadId: 'thread-1',
+        routingMode: 'AUTO',
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        limit: 25,
+      };
+      await service.replayRouting(dto);
+
+      expect(replayMgr.replayDecisions).toHaveBeenCalledWith(dto);
     });
   });
 

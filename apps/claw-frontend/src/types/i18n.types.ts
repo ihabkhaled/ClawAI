@@ -59,6 +59,7 @@ export type TranslationDictionary = {
     modelCatalog: string;
     localModels: string;
     routing: string;
+    replayLab: string;
     memory: string;
     context: string;
     files: string;
@@ -456,6 +457,23 @@ export type TranslationDictionary = {
     parameterCount: string;
     modelSize: string;
     capabilities: string;
+  };
+  replay: {
+    title: string;
+    description: string;
+    runReplay: string;
+    running: string;
+    totalReplayed: string;
+    changed: string;
+    unchanged: string;
+    oldRoute: string;
+    newRoute: string;
+    improvement: string;
+    noResults: string;
+    confidenceOld: string;
+    confidenceNew: string;
+    replayComplete: string;
+    replayFailed: string;
   };
   validation: {
     required: string;
