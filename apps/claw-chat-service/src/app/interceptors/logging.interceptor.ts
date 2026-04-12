@@ -1,13 +1,5 @@
-import {
-  CallHandler,
-  ExecutionContext,
-  Inject,
-  Injectable,
-  Logger,
-  NestInterceptor,
-  Optional,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { Observable, tap } from 'rxjs';
 import { randomUUID } from 'node:crypto';
 import {
@@ -17,31 +9,31 @@ import {
 } from '@claw/shared-rabbitmq';
 import { EventPattern, LogLevel } from '@claw/shared-types';
 import type { Request, Response } from 'express';
-import { SKIP_LOGGING_KEY } from '../decorators/skip-logging.decorator';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger(LoggingInterceptor.name);
+  private rabbitMQService: RabbitMQService | null = null;
+  private rabbitMQOptions: RabbitMQModuleOptions | null = null;
+  private resolved = false;
 
-  constructor(
-    private readonly reflector: Reflector,
-    @Optional()
-    @Inject(RabbitMQService)
-    private readonly rabbitMQService: RabbitMQService | null,
-    @Optional()
-    @Inject(RABBITMQ_MODULE_OPTIONS)
-    private readonly rabbitMQOptions: RabbitMQModuleOptions | null,
-  ) {}
+  constructor(private readonly moduleRef: ModuleRef) {}
+
+  private resolveServices(): void {
+    if (this.resolved) {
+      return;
+    }
+    try {
+      this.rabbitMQService = this.moduleRef.get(RabbitMQService, { strict: false });
+      this.rabbitMQOptions = this.moduleRef.get(RABBITMQ_MODULE_OPTIONS, { strict: false });
+      this.resolved = true;
+    } catch {
+      // Services not available yet — will retry on next request
+    }
+  }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const skipLogging = this.reflector.getAllAndOverride<boolean>(SKIP_LOGGING_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-
-    if (skipLogging) {
-      return next.handle();
-    }
+    this.resolveServices();
 
     const request = context.switchToHttp().getRequest<Request>();
     const response = context.switchToHttp().getResponse<Response>();
@@ -71,7 +63,7 @@ export class LoggingInterceptor implements NestInterceptor {
             statusCode,
             durationMs: duration,
           },
-          `${method} ${url} ${statusCode} - ${duration}ms`,
+          `${method} ${url} ${String(statusCode)} - ${String(duration)}ms`,
         );
 
         this.publishLog(method, url, statusCode, duration, requestId, traceId);
