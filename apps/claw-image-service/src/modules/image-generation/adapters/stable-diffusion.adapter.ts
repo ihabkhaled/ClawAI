@@ -1,5 +1,12 @@
 import { Logger } from '@nestjs/common';
 import { httpPost } from '@common/utilities';
+import {
+  SD_BATCH_SIZE,
+  SD_DEFAULT_CFG_SCALE,
+  SD_DEFAULT_STEPS,
+  SD_MAX_DIMENSION,
+  SD_TIMEOUT_MS,
+} from '../constants/stable-diffusion.constants';
 import type { ImageProviderResponse } from '../types/image-generation.types';
 import type { SDTxt2ImgResponse } from '../types/stable-diffusion.types';
 
@@ -11,7 +18,9 @@ export const generateWithStableDiffusion = async (
   width: number,
   height: number,
 ): Promise<ImageProviderResponse> => {
-  logger.log(`generateWithStableDiffusion: starting — sdUrl=${sdUrl} size=${String(width)}x${String(height)}`);
+  const cappedWidth = Math.min(width, SD_MAX_DIMENSION);
+  const cappedHeight = Math.min(height, SD_MAX_DIMENSION);
+  logger.log(`generateWithStableDiffusion: starting — sdUrl=${sdUrl} size=${String(cappedWidth)}x${String(cappedHeight)}`);
   logger.debug(`generateWithStableDiffusion: promptLen=${String(prompt.length)}`);
 
   logger.debug(`generateWithStableDiffusion: sending POST to ${sdUrl}/sdapi/v1/txt2img`);
@@ -19,13 +28,13 @@ export const generateWithStableDiffusion = async (
     `${sdUrl}/sdapi/v1/txt2img`,
     {
       prompt,
-      width,
-      height,
-      steps: 20,
-      cfg_scale: 7,
-      batch_size: 1,
+      width: cappedWidth,
+      height: cappedHeight,
+      steps: SD_DEFAULT_STEPS,
+      cfg_scale: SD_DEFAULT_CFG_SCALE,
+      batch_size: SD_BATCH_SIZE,
     },
-    { timeout: 180_000 },
+    { timeout: SD_TIMEOUT_MS },
   );
 
   logger.debug(`generateWithStableDiffusion: response received — imageCount=${String(response.images?.length ?? 0)}`);
@@ -42,4 +51,3 @@ export const generateWithStableDiffusion = async (
     mimeType: 'image/png',
   };
 };
-

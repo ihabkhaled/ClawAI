@@ -25,6 +25,8 @@ import {
   FILE_GENERATION_KEYWORDS,
   FILE_GENERATION_PROVIDER,
   FILE_GENERATION_VERBS,
+  FINANCE_KEYWORDS,
+  HR_KEYWORDS,
   IMAGE_KEYWORDS,
   IMAGE_MODEL_DALLE3,
   IMAGE_MODEL_IMAGEN,
@@ -36,8 +38,11 @@ import {
   LOCAL_MODEL_DEFAULT,
   LOCAL_PROVIDER,
   MEDICAL_KEYWORDS,
+  OPERATIONS_KEYWORDS,
   PRIVACY_KEYWORDS,
+  REAL_ESTATE_KEYWORDS,
   REASONING_KEYWORDS,
+  SALES_KEYWORDS,
   SECURITY_KEYWORDS,
   THINKING_KEYWORDS,
   TRANSLATION_KEYWORDS,
@@ -741,6 +746,31 @@ export class RoutingManager {
     return TRANSLATION_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
   }
 
+  detectHRRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return HR_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectFinanceRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return FINANCE_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectOperationsRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return OPERATIONS_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectSalesRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return SALES_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
+  detectRealEstateRequest(message: string): boolean {
+    const lower = message.toLowerCase();
+    return REAL_ESTATE_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  }
+
   detectPrivacySensitive(message: string): boolean {
     const lower = message.toLowerCase();
     return PRIVACY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
@@ -794,6 +824,12 @@ export class RoutingManager {
     if (this.detectLegalRequest(message)) {
       return LocalModelRole.LOCAL_REASONING;
     }
+    if (this.detectFinanceRequest(message)) {
+      return LocalModelRole.LOCAL_REASONING;
+    }
+    if (this.detectRealEstateRequest(message)) {
+      return LocalModelRole.LOCAL_REASONING;
+    }
     if (this.detectCodingRequest(message)) {
       return LocalModelRole.LOCAL_CODING;
     }
@@ -809,8 +845,17 @@ export class RoutingManager {
     if (this.detectThinkingRequest(message)) {
       return LocalModelRole.LOCAL_THINKING;
     }
+    if (this.detectOperationsRequest(message)) {
+      return LocalModelRole.LOCAL_FILE_GENERATION;
+    }
     if (this.detectBusinessRequest(message)) {
       return LocalModelRole.LOCAL_FILE_GENERATION;
+    }
+    if (this.detectHRRequest(message)) {
+      return LocalModelRole.LOCAL_FALLBACK_CHAT;
+    }
+    if (this.detectSalesRequest(message)) {
+      return LocalModelRole.LOCAL_FALLBACK_CHAT;
     }
     if (this.detectTranslationRequest(message)) {
       return LocalModelRole.LOCAL_FALLBACK_CHAT;
