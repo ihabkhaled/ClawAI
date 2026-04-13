@@ -23,6 +23,7 @@ export const useThreadDetailPage = ({
     startWaitingForResponse,
     fallbackAttempts,
     streamError,
+    judgeEvaluating,
     virtualizedMessages,
   } = useThreadDetail(threadId);
 
@@ -34,7 +35,17 @@ export const useThreadDetailPage = ({
 
   const handleSend = useCallback(
     (content: string, modelSelection?: ModelSelection, fileIds?: string[]): void => {
-      logger.info({ component: 'chat', action: 'user-send', message: 'User sending message', details: { threadId, contentLength: content.length, hasModel: !!modelSelection, fileCount: fileIds?.length ?? 0 } });
+      logger.info({
+        component: 'chat',
+        action: 'user-send',
+        message: 'User sending message',
+        details: {
+          threadId,
+          contentLength: content.length,
+          hasModel: !!modelSelection,
+          fileCount: fileIds?.length ?? 0,
+        },
+      });
       sendMessage({
         threadId,
         content,
@@ -53,7 +64,12 @@ export const useThreadDetailPage = ({
 
   const handleRegenerate = useCallback(
     (messageId: string): void => {
-      logger.info({ component: 'chat', action: 'user-regenerate', message: 'User regenerating message', details: { threadId, messageId } });
+      logger.info({
+        component: 'chat',
+        action: 'user-regenerate',
+        message: 'User regenerating message',
+        details: { threadId, messageId },
+      });
       regenerate(messageId);
     },
     [regenerate],
@@ -67,7 +83,12 @@ export const useThreadDetailPage = ({
   );
 
   const handleDelete = useCallback((): void => {
-    logger.info({ component: 'chat', action: 'user-delete-thread', message: 'User deleting thread', details: { threadId } });
+    logger.info({
+      component: 'chat',
+      action: 'user-delete-thread',
+      message: 'User deleting thread',
+      details: { threadId },
+    });
     deleteThread(threadId);
   }, [threadId, deleteThread]);
 
@@ -79,6 +100,7 @@ export const useThreadDetailPage = ({
     isWaitingForResponse,
     fallbackAttempts,
     streamError,
+    judgeEvaluating,
     isSending,
     isDeleting,
     virtualizedMessages,

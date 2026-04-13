@@ -30,16 +30,46 @@ export class ParallelExecutionManager {
     models: ParallelModelTarget[],
     fileIds?: string[],
   ): Promise<ParallelResponse> {
-    const startTime = Date.now();
-    this.logger.log(`executeParallel: starting for ${String(models.length)} models in thread ${threadId}`);
+    this.logger.log(
+      `executeParallel: queuing ${String(models.length)} models in thread ${threadId}`,
+    );
 
     const userMessage = await this.storeUserMessage(threadId, content, fileIds);
-    const { context, threadSettings } = await this.buildContext(userId, threadId, fileIds);
 
-    const responses = await this.executeAllModels(models, context, threadSettings);
-    await this.storeAssistantMessages(threadId, responses);
+    void this.executeInBackground(userId, threadId, models, fileIds);
 
-    return this.buildParallelResponse(userMessage.id, threadId, content, responses, startTime);
+    return {
+      messageId: userMessage.id,
+      threadId,
+      prompt: content,
+      responses: [],
+      totalLatencyMs: 0,
+      completedCount: 0,
+      failedCount: 0,
+    };
+  }
+
+  private async executeInBackground(
+    userId: string,
+    threadId: string,
+    models: ParallelModelTarget[],
+    fileIds?: string[],
+  ): Promise<void> {
+    try {
+      const { context, threadSettings } = await this.buildContext(userId, threadId, fileIds);
+      const responses = await this.executeAllModels(models, context, threadSettings);
+      await this.storeAssistantMessages(threadId, responses);
+      const completed = responses.filter((r) => r.status === 'completed').length;
+      this.logger.log(
+        `executeInBackground: done — ${String(completed)}/${String(responses.length)} completed`,
+      );
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`executeInBackground: failed — ${msg}`);
+      await this.storeAssistantMessages(threadId, [
+        this.buildFailedResponse('system', 'parallel', `Parallel execution failed: ${msg}`),
+      ]);
+    }
   }
 
   private async storeUserMessage(
@@ -133,9 +163,16 @@ export class ParallelExecutionManager {
       };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.warn(`executeSingleModel: ${target.provider}/${target.model} failed — ${errorMessage}`);
+      this.logger.warn(
+        `executeSingleModel: ${target.provider}/${target.model} failed — ${errorMessage}`,
+      );
 
-      return this.buildFailedResponse(target.provider, target.model, errorMessage, Date.now() - modelStart);
+      return this.buildFailedResponse(
+        target.provider,
+        target.model,
+        errorMessage,
+        Date.now() - modelStart,
+      );
     }
   }
 
@@ -147,7 +184,10 @@ export class ParallelExecutionManager {
       this.chatMessagesRepository.create({
         threadId,
         role: 'ASSISTANT',
-        content: response.status === 'completed' ? response.content : `Error: ${response.errorMessage ?? 'Unknown error'}`,
+        content:
+          response.status === 'completed'
+            ? response.content
+            : `Error: ${response.errorMessage ?? 'Unknown error'}`,
         provider: response.provider,
         model: response.model,
         inputTokens: response.inputTokens ?? undefined,
@@ -176,31 +216,6 @@ export class ParallelExecutionManager {
       outputTokens: null,
       status: 'failed',
       errorMessage,
-    };
-  }
-
-  private buildParallelResponse(
-    messageId: string,
-    threadId: string,
-    prompt: string,
-    responses: ParallelModelResponse[],
-    startTime: number,
-  ): ParallelResponse {
-    const completedCount = responses.filter((r) => r.status === 'completed').length;
-    const failedCount = responses.filter((r) => r.status !== 'completed').length;
-
-    this.logger.log(
-      `executeParallel: completed — ${String(completedCount)} succeeded, ${String(failedCount)} failed, totalMs=${String(Date.now() - startTime)}`,
-    );
-
-    return {
-      messageId,
-      threadId,
-      prompt,
-      responses,
-      totalLatencyMs: Date.now() - startTime,
-      completedCount,
-      failedCount,
     };
   }
 

@@ -214,6 +214,9 @@ export function MessageBubble({
         ) : null}
         {!isUser && judgeDecision ? (
           <JudgeRefereeDetails
+            criticModel={
+              typeof metadata?.['criticModel'] === 'string' ? metadata['criticModel'] : ''
+            }
             criticFeedback={
               Array.isArray(metadata?.['criticFeedback'])
                 ? (metadata['criticFeedback'] as string[])
@@ -222,6 +225,7 @@ export function MessageBubble({
             criticScore={
               typeof metadata?.['criticScore'] === 'number' ? metadata['criticScore'] : 0
             }
+            judgeModel={typeof metadata?.['judgeModel'] === 'string' ? metadata['judgeModel'] : ''}
             judgeDecision={judgeDecision}
             judgeReasoning={
               typeof metadata?.['judgeReasoning'] === 'string' ? metadata['judgeReasoning'] : ''

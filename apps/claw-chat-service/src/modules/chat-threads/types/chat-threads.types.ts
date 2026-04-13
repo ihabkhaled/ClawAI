@@ -1,4 +1,4 @@
-import { type ChatThread, type RoutingMode } from "../../../generated/prisma";
+import { type ChatThread, type RoutingMode } from '../../../generated/prisma';
 
 export interface CreateThreadData {
   userId: string;
@@ -25,6 +25,7 @@ export interface UpdateThreadData {
   preferredProvider?: string | null;
   preferredModel?: string | null;
   contextPackIds?: string[];
+  judgeEnabled?: boolean;
 }
 
 export interface ThreadFilters {

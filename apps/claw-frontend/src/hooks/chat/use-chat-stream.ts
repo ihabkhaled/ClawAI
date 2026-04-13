@@ -8,11 +8,13 @@ import { connectSse, logger } from '@/utilities';
 export function useChatStream(threadId: string, isActive: boolean) {
   const [fallbackAttempts, setFallbackAttempts] = useState<FallbackAttemptInfo[]>([]);
   const [streamError, setStreamError] = useState<string | null>(null);
+  const [judgeEvaluating, setJudgeEvaluating] = useState(false);
   const connectionRef = useRef<SseConnection | null>(null);
 
   const resetStream = useCallback((): void => {
     setFallbackAttempts([]);
     setStreamError(null);
+    setJudgeEvaluating(false);
   }, []);
 
   useEffect(() => {
@@ -24,7 +26,12 @@ export function useChatStream(threadId: string, isActive: boolean) {
 
     const url = `${API_BASE_URL}/chat-messages/stream/${threadId}`;
 
-    logger.debug({ component: 'chat', action: 'sse-connect', message: 'Connecting to SSE stream', details: { threadId } });
+    logger.debug({
+      component: 'chat',
+      action: 'sse-connect',
+      message: 'Connecting to SSE stream',
+      details: { threadId },
+    });
 
     const connection = connectSse(url, {
       onMessage: (data: string) => {
@@ -32,7 +39,16 @@ export function useChatStream(threadId: string, isActive: boolean) {
           const parsed = JSON.parse(data) as StreamEvent;
 
           if (parsed.type === StreamEventType.FALLBACK_ATTEMPT) {
-            logger.warn({ component: 'chat', action: 'fallback-attempt', message: 'Provider fallback triggered', details: { threadId, failedProvider: parsed.failedProvider, nextProvider: parsed.nextProvider } });
+            logger.warn({
+              component: 'chat',
+              action: 'fallback-attempt',
+              message: 'Provider fallback triggered',
+              details: {
+                threadId,
+                failedProvider: parsed.failedProvider,
+                nextProvider: parsed.nextProvider,
+              },
+            });
             const attempt: FallbackAttemptInfo = {
               failedProvider: parsed.failedProvider ?? 'unknown',
               failedModel: parsed.failedModel ?? 'unknown',
@@ -46,8 +62,27 @@ export function useChatStream(threadId: string, isActive: boolean) {
             setFallbackAttempts((prev) => [...prev, attempt]);
           }
 
+          if (parsed.type === StreamEventType.JUDGE_EVALUATING) {
+            logger.info({
+              component: 'chat',
+              action: 'judge-evaluating',
+              message: 'Judge-referee pipeline started',
+              details: { threadId },
+            });
+            setJudgeEvaluating(true);
+          }
+
+          if (parsed.type === StreamEventType.DONE) {
+            setJudgeEvaluating(false);
+          }
+
           if (parsed.type === StreamEventType.ERROR) {
-            logger.error({ component: 'chat', action: 'stream-error', message: 'Stream error received', details: { threadId, error: parsed.error } });
+            logger.error({
+              component: 'chat',
+              action: 'stream-error',
+              message: 'Stream error received',
+              details: { threadId, error: parsed.error },
+            });
             setStreamError(parsed.error ?? 'All providers failed');
           }
         } catch {
@@ -55,7 +90,12 @@ export function useChatStream(threadId: string, isActive: boolean) {
         }
       },
       onError: () => {
-        logger.warn({ component: 'chat', action: 'sse-connection-error', message: 'SSE connection error, falling back to polling', details: { threadId } });
+        logger.warn({
+          component: 'chat',
+          action: 'sse-connection-error',
+          message: 'SSE connection error, falling back to polling',
+          details: { threadId },
+        });
       },
     });
 
@@ -75,5 +115,5 @@ export function useChatStream(threadId: string, isActive: boolean) {
     }
   }, [isActive]);
 
-  return { fallbackAttempts, streamError, resetStream };
+  return { fallbackAttempts, streamError, judgeEvaluating, resetStream };
 }

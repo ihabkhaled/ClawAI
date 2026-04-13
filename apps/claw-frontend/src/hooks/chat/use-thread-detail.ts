@@ -18,7 +18,12 @@ export function useThreadDetail(threadId: string) {
   const threadQuery = useQuery({
     queryKey: queryKeys.threads.detail(threadId),
     queryFn: () => {
-      logger.debug({ component: 'chat', action: 'fetch-thread-start', message: 'Fetching thread detail', details: { threadId } });
+      logger.debug({
+        component: 'chat',
+        action: 'fetch-thread-start',
+        message: 'Fetching thread detail',
+        details: { threadId },
+      });
       return chatRepository.getThread(threadId);
     },
     enabled: !!threadId,
@@ -29,7 +34,7 @@ export function useThreadDetail(threadId: string) {
   const messagesList = virtualizedMessages.messages;
   const lastMessage = messagesList.length > 0 ? messagesList.at(-1) : undefined;
 
-  const { fallbackAttempts, streamError, resetStream } = useChatStream(
+  const { fallbackAttempts, streamError, judgeEvaluating, resetStream } = useChatStream(
     threadId,
     isWaitingForResponse,
   );
@@ -38,7 +43,12 @@ export function useThreadDetail(threadId: string) {
   // The backend stores an error ASSISTANT message, so the refetch will pick it up.
   useEffect(() => {
     if (streamError && isWaitingForResponse) {
-      logger.warn({ component: 'chat', action: 'stream-error', message: 'SSE stream error received', details: { threadId, streamError } });
+      logger.warn({
+        component: 'chat',
+        action: 'stream-error',
+        message: 'SSE stream error received',
+        details: { threadId, streamError },
+      });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.threads.messagesInfinite(threadId),
       });
@@ -52,7 +62,12 @@ export function useThreadDetail(threadId: string) {
       pollingRef.current = setInterval(() => {
         pollCount += 1;
         if (pollCount > 90) {
-          logger.warn({ component: 'chat', action: 'polling-timeout', message: 'Polling max reached (3 min), stopping', details: { threadId } });
+          logger.warn({
+            component: 'chat',
+            action: 'polling-timeout',
+            message: 'Polling max reached (3 min), stopping',
+            details: { threadId },
+          });
           setIsWaitingForResponse(false);
           if (pollingRef.current) {
             clearInterval(pollingRef.current);
@@ -86,7 +101,12 @@ export function useThreadDetail(threadId: string) {
       messagesList.length > messageCountBeforeSend.current;
 
     if (hasNewAssistantMessage) {
-      logger.info({ component: 'chat', action: 'response-received', message: 'Assistant response received', details: { threadId, messageCount: messagesList.length } });
+      logger.info({
+        component: 'chat',
+        action: 'response-received',
+        message: 'Assistant response received',
+        details: { threadId, messageCount: messagesList.length },
+      });
       setIsWaitingForResponse(false);
       // Also refetch the thread to update lastProvider/lastModel
       void queryClient.invalidateQueries({
@@ -110,7 +130,12 @@ export function useThreadDetail(threadId: string) {
   }, [messagesList.length, lastMessage?.role, virtualizedMessages.isLoading, isWaitingForResponse]);
 
   const startWaitingForResponse = useCallback((): void => {
-    logger.debug({ component: 'chat', action: 'waiting-for-response', message: 'Started waiting for AI response', details: { threadId, currentMessageCount: messagesList.length } });
+    logger.debug({
+      component: 'chat',
+      action: 'waiting-for-response',
+      message: 'Started waiting for AI response',
+      details: { threadId, currentMessageCount: messagesList.length },
+    });
     messageCountBeforeSend.current = messagesList.length;
     resetStream();
     setIsWaitingForResponse(true);
@@ -127,6 +152,7 @@ export function useThreadDetail(threadId: string) {
     startWaitingForResponse,
     fallbackAttempts,
     streamError,
+    judgeEvaluating,
     virtualizedMessages,
   };
 }

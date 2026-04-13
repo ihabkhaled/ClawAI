@@ -29,6 +29,7 @@ export default function ThreadDetailPage() {
     isWaitingForResponse,
     fallbackAttempts,
     streamError,
+    judgeEvaluating,
     isSending,
     isDeleting,
     virtualizedMessages,
@@ -121,6 +122,7 @@ export default function ThreadDetailPage() {
             isWaitingForResponse={isWaitingForResponse}
             fallbackAttempts={fallbackAttempts}
             streamError={streamError}
+            judgeEvaluating={judgeEvaluating}
             onStartReached={virtualizedMessages.fetchPreviousPage}
             onFeedback={handleFeedback}
             onRegenerate={handleRegenerate}

@@ -451,6 +451,15 @@ export class ChatMessagesService implements OnModuleInit {
             reRouteAttempts: llmResponse.reRouteAttempts,
           }
         : {}),
+      ...(llmResponse.judgeRefereeMetadata
+        ? {
+            judgeDecision: llmResponse.judgeRefereeMetadata.judgeDecision,
+            criticModel: llmResponse.judgeRefereeMetadata.criticModel,
+            judgeModel: llmResponse.judgeRefereeMetadata.judgeModel,
+            criticScore: llmResponse.judgeRefereeMetadata.criticScore,
+            judgeConfidence: llmResponse.judgeRefereeMetadata.judgeConfidence,
+          }
+        : {}),
     });
   }
 
@@ -481,6 +490,13 @@ export class ChatMessagesService implements OnModuleInit {
             originalProvider: llmResponse.originalProvider,
             originalModel: llmResponse.originalModel,
             reRouteAttempts: llmResponse.reRouteAttempts,
+          }
+        : {}),
+      ...(llmResponse.judgeRefereeMetadata
+        ? {
+            judgeDecision: llmResponse.judgeRefereeMetadata.judgeDecision,
+            criticModel: llmResponse.judgeRefereeMetadata.criticModel,
+            judgeModel: llmResponse.judgeRefereeMetadata.judgeModel,
           }
         : {}),
     });

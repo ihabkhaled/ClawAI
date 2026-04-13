@@ -17,23 +17,20 @@ export function VirtualizedMessages({
   isWaitingForResponse,
   fallbackAttempts,
   streamError,
+  judgeEvaluating,
   onStartReached,
   onFeedback,
   onRegenerate,
 }: VirtualizedMessagesProps): React.ReactElement {
   const itemContent = useCallback(
     (_index: number, message: unknown): React.ReactElement => {
-      const msg = message as typeof messages[number];
+      const msg = message as (typeof messages)[number];
       if (!msg) {
         return <div />;
       }
       return (
         <div className="px-4 py-2">
-          <MessageBubble
-            message={msg}
-            onFeedback={onFeedback}
-            onRegenerate={onRegenerate}
-          />
+          <MessageBubble message={msg} onFeedback={onFeedback} onRegenerate={onRegenerate} />
         </div>
       );
     },
@@ -63,12 +60,16 @@ export function VirtualizedMessages({
     if (isWaitingForResponse) {
       return (
         <div className="px-4 py-2">
-          <ThinkingIndicator fallbackAttempts={fallbackAttempts} streamError={streamError} />
+          <ThinkingIndicator
+            fallbackAttempts={fallbackAttempts}
+            streamError={streamError}
+            judgeEvaluating={judgeEvaluating}
+          />
         </div>
       );
     }
     return null;
-  }, [isWaitingForResponse, fallbackAttempts, streamError]);
+  }, [isWaitingForResponse, fallbackAttempts, streamError, judgeEvaluating]);
 
   const handleStartReached = useCallback((): void => {
     if (hasPreviousPage && !isFetchingPreviousPage) {

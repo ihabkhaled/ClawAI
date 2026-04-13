@@ -1,5 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 
+import { ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import type { ParallelRequest, ParallelResponse } from '@/types';
@@ -12,6 +14,7 @@ export function useParallelCompare(): {
   isError: boolean;
 } {
   const { t } = useTranslation();
+  const router = useRouter();
 
   const mutation = useMutation({
     mutationFn: (data: ParallelRequest) => {
@@ -23,12 +26,19 @@ export function useParallelCompare(): {
       });
       return chatRepository.sendParallel(data);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       logger.info({
         component: 'parallel-compare',
         action: 'send-parallel-success',
-        message: 'Parallel compare completed',
+        message: `Parallel compare completed — ${String(data.completedCount)} models`,
       });
+      showToast.success({
+        title: t('compare.title'),
+        description: `${String(data.completedCount)} models compared`,
+      });
+      if (data.threadId) {
+        router.push(ROUTES.CHAT_THREAD(data.threadId));
+      }
     },
     onError: (error: Error) => {
       logger.error({

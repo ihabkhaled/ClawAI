@@ -112,13 +112,20 @@ export class ChatExecutionManager implements OnModuleInit {
           continue;
         }
 
+        let finalResponse = response;
+
         if (reRouteAttempt > 0) {
-          return this.addReRouteMetadata(response, payload, qualityResult.score, reRouteAttempt);
+          finalResponse = this.addReRouteMetadata(
+            response,
+            payload,
+            qualityResult.score,
+            reRouteAttempt,
+          );
         }
 
         // Judge-and-Referee pipeline: critic evaluates, judge decides
         const judgeResult = await this.runJudgeRefereePipeline(
-          response,
+          finalResponse,
           context,
           payload,
           threadSettings,
@@ -133,14 +140,14 @@ export class ChatExecutionManager implements OnModuleInit {
             );
             continue;
           }
-          const finalResponse = judgeResult.revisedResponse ?? response;
+          const judgedResponse = judgeResult.revisedResponse ?? finalResponse;
           return {
-            ...finalResponse,
+            ...judgedResponse,
             judgeRefereeMetadata: this.judgeRefereeManager.buildMetadata(judgeResult),
           };
         }
 
-        return response;
+        return finalResponse;
       } catch (error: unknown) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
         this.logger.warn(

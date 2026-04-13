@@ -21,7 +21,7 @@ import type {
   ServerLogsTabProps,
 } from './log.types';
 import type { CreateMemoryRequest, MemoryRecord } from './memory.types';
-import type { ParallelModelResponse } from './parallel.types';
+import type { ParallelModelResponse, ParallelResponse } from './parallel.types';
 import type { ReplayBatchResult, ReplayResult } from './replay.types';
 import type { CreatePolicyRequest, RoutingDecision, RoutingPolicy } from './routing.types';
 
@@ -157,8 +157,10 @@ export type ThreadSettingsProps = {
 };
 
 export type JudgeRefereeDetailsProps = {
+  criticModel: string;
   criticFeedback: string[];
   criticScore: number;
+  judgeModel: string;
   judgeDecision: string;
   judgeReasoning: string;
   judgeConfidence: number;
@@ -193,6 +195,7 @@ export type ThinkingIndicatorProps = {
   className?: string;
   fallbackAttempts?: FallbackAttemptInfo[];
   streamError?: string | null;
+  judgeEvaluating?: boolean;
 };
 
 export type ModelSelection = {
@@ -316,6 +319,7 @@ export type VirtualizedMessagesProps = {
   isWaitingForResponse: boolean;
   fallbackAttempts: FallbackAttemptInfo[];
   streamError: string | null;
+  judgeEvaluating?: boolean;
   onStartReached: () => void;
   onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
   onRegenerate: (messageId: string) => void;
@@ -630,5 +634,16 @@ export type ParallelSummaryBarProps = {
   completedCount: number;
   failedCount: number;
   fastestModel: string | null;
+  t: TranslateFunction;
+};
+
+export type InThreadComparePanelProps = {
+  selectedModels: Array<{ provider: string; model: string }>;
+  onToggleModel: (provider: string, model: string, checked: boolean) => void;
+  onCompare: (prompt: string) => void;
+  onClose: () => void;
+  result: ParallelResponse | undefined;
+  isPending: boolean;
+  canSend: boolean;
   t: TranslateFunction;
 };

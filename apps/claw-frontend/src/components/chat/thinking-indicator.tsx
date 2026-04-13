@@ -8,6 +8,7 @@ export function ThinkingIndicator({
   className,
   fallbackAttempts,
   streamError,
+  judgeEvaluating,
 }: ThinkingIndicatorProps) {
   const hasFallbacks = fallbackAttempts && fallbackAttempts.length > 0;
 
@@ -46,7 +47,9 @@ export function ThinkingIndicator({
         ) : (
           <>
             <span className="text-xs text-muted-foreground">
-              {hasFallbacks ? 'Retrying with fallback...' : THINKING_INDICATOR_LABEL}
+              {judgeEvaluating ? 'Verifying response...' : null}
+              {!judgeEvaluating && hasFallbacks ? 'Retrying with fallback...' : null}
+              {!judgeEvaluating && !hasFallbacks ? THINKING_INDICATOR_LABEL : null}
             </span>
             <div className="rounded-lg bg-muted px-4 py-2.5 text-sm text-foreground">
               <div

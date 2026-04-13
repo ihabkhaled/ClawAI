@@ -154,6 +154,7 @@ export type UseThreadDetailPageReturn = {
   isWaitingForResponse: boolean;
   fallbackAttempts: FallbackAttemptInfo[];
   streamError: string | null;
+  judgeEvaluating: boolean;
   isSending: boolean;
   isDeleting: boolean;
   virtualizedMessages: UseVirtualizedMessagesReturn;

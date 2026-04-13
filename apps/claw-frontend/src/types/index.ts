@@ -192,6 +192,7 @@ export type {
   ParallelResponseCardProps,
   ParallelResultsGridProps,
   ParallelSummaryBarProps,
+  InThreadComparePanelProps,
   JudgeRefereeDetailsProps,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
