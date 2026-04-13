@@ -167,6 +167,66 @@ describe('ConsensusExecutionManager', () => {
       globalThis.fetch = originalFetch;
     });
 
+    it('should store both model messages before the synthesis message when exactly 2 models complete', async () => {
+      // Use isolated mocks to avoid call-count leakage from other tests' background tasks
+      const isolatedCreate = jest.fn().mockResolvedValue({ id: 'msg-1', content: 'test' });
+      const isolatedRepo = { ...mockChatMessagesRepository, create: isolatedCreate };
+
+      const isolatedCallProvider = jest
+        .fn()
+        .mockResolvedValueOnce({
+          provider: 'ANTHROPIC',
+          model: 'claude-sonnet-4',
+          content: 'Response 1 content',
+          latencyMs: 100,
+          inputTokens: 10,
+          outputTokens: 20,
+        })
+        .mockResolvedValueOnce({
+          provider: 'OPENAI',
+          model: 'gpt-4o',
+          content: 'Response 2 content',
+          latencyMs: 110,
+          inputTokens: 10,
+          outputTokens: 20,
+        });
+      const isolatedExecManager = { callProvider: isolatedCallProvider };
+
+      const isolatedManager = new ConsensusExecutionManager(
+        isolatedExecManager as any,
+        mockContextAssemblyManager as any,
+        isolatedRepo as any,
+        mockChatThreadsRepository as any,
+        mockChatStreamService as any,
+      );
+
+      globalThis.fetch = jest.fn().mockRejectedValue(new Error('Ollama unavailable'));
+
+      await isolatedManager.executeConsensus('user-1', 'thread-1', 'test prompt', sampleModels);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const allCalls = isolatedCreate.mock.calls as Array<[any]>;
+
+      const modelMessageCalls = allCalls.filter(
+        (args) => args[0]?.metadata?.consensusExecution === true,
+      );
+      const synthCall = allCalls.find((args) => args[0]?.metadata?.consensusSynthesis === true);
+
+      // 1 user + 2 model messages + 1 synthesis = 4 total
+      expect(allCalls).toHaveLength(4);
+
+      // Both model messages must be stored (ANTHROPIC + OPENAI)
+      expect(modelMessageCalls).toHaveLength(2);
+      const providers = modelMessageCalls.map((args) => args[0].provider);
+      expect(providers).toContain('ANTHROPIC');
+      expect(providers).toContain('OPENAI');
+
+      // Synthesis must also be present
+      expect(synthCall).toBeDefined();
+
+      globalThis.fetch = undefined as any;
+    });
+
     it('should store synthesis message with consensusSynthesis metadata', async () => {
       mockChatExecutionManager.callProvider.mockResolvedValue({
         provider: 'ANTHROPIC',
@@ -199,6 +259,44 @@ describe('ConsensusExecutionManager', () => {
       expect(synthCall).toBeDefined();
       expect(synthCall[0].metadata.consensusSynthesis).toBe(true);
       expect(synthCall[0].metadata.consensusGroupId).toBeDefined();
+    });
+
+    it('should set synthesis consensusGroupId to match the user message id', async () => {
+      mockChatMessagesRepository.create
+        .mockResolvedValueOnce({ id: 'user-msg-id-123' }) // user message
+        .mockResolvedValue({ id: 'model-msg-id' }); // model messages + synthesis
+
+      mockChatExecutionManager.callProvider
+        .mockResolvedValueOnce({
+          provider: 'ANTHROPIC',
+          model: 'claude-sonnet-4',
+          content: 'Response A',
+          latencyMs: 100,
+          inputTokens: 10,
+          outputTokens: 20,
+        })
+        .mockResolvedValueOnce({
+          provider: 'OPENAI',
+          model: 'gpt-4o',
+          content: 'Response B',
+          latencyMs: 120,
+          inputTokens: 10,
+          outputTokens: 20,
+        });
+
+      globalThis.fetch = jest.fn().mockRejectedValue(new Error('Ollama unavailable'));
+
+      await manager.executeConsensus('user-1', 'thread-1', 'test prompt', sampleModels);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const allCalls = mockChatMessagesRepository.create.mock.calls as Array<[any]>;
+
+      const synthCall = allCalls.find((args) => args[0]?.metadata?.consensusSynthesis === true);
+
+      expect(synthCall).toBeDefined();
+      expect(synthCall![0].metadata?.consensusGroupId).toBe('user-msg-id-123');
+
+      globalThis.fetch = undefined as any;
     });
 
     it('should emit completion after successful synthesis', async () => {
