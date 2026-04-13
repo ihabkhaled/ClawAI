@@ -7,11 +7,18 @@ import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useBestOfNPage } from '@/hooks/chat/use-best-of-n-page';
 
-export default function BestOfNPage() {
+export default function BestOfNPage(): React.ReactElement {
   const {
     t,
     content,
@@ -72,17 +79,17 @@ export default function BestOfNPage() {
               <label className="mb-1.5 block text-sm font-medium" htmlFor="n-candidates">
                 {t('bestOfN.nCandidates')}
               </label>
-              <select
-                id="n-candidates"
-                value={n}
-                onChange={(e) => setN(Number(e.target.value))}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <option value={2}>2</option>
-                <option value={3}>3</option>
-                <option value={4}>4</option>
-                <option value={5}>5</option>
-              </select>
+              <Select value={String(n)} onValueChange={(val) => setN(Number(val))}>
+                <SelectTrigger id="n-candidates" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2">2</SelectItem>
+                  <SelectItem value="3">3</SelectItem>
+                  <SelectItem value="4">4</SelectItem>
+                  <SelectItem value="5">5</SelectItem>
+                </SelectContent>
+              </Select>
             </CardContent>
           </Card>
         </div>

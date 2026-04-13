@@ -253,5 +253,104 @@ describe('BestOfNManager', () => {
         manager.executeInBackground('thread-best-1', 'test prompt', 2),
       ).resolves.toBeUndefined();
     });
+
+    it('stores error message with error:true metadata when all candidates fail', async () => {
+      (httpClientModule.httpRequest as jest.Mock).mockRejectedValue(new Error('Network timeout'));
+      const createMock = jest.fn().mockResolvedValue({ id: 'error-msg-1' });
+      const isolatedManager = new BestOfNManager(
+        {
+          ...messagesRepo,
+          create: createMock,
+        } as unknown as import('../modules/chat-messages/repositories/chat-messages.repository').ChatMessagesRepository,
+        threadsRepo as unknown as import('../modules/chat-threads/repositories/chat-threads.repository').ChatThreadsRepository,
+        streamService as unknown as import('../modules/chat-messages/services/chat-stream.service').ChatStreamService,
+        qualityManager as unknown as import('../modules/chat-messages/managers/quality-check.manager').QualityCheckManager,
+      );
+      await isolatedManager.executeInBackground('thread-err', 'prompt', 2);
+      expect(createMock).toHaveBeenCalledWith(
+        expect.objectContaining({ metadata: expect.objectContaining({ error: true }) }),
+      );
+    });
+
+    it('stores candidates array in metadata with all n candidates', async () => {
+      messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
+      (httpClientModule.httpRequest as jest.Mock)
+        .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'answer A' } })
+        .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'answer B' } })
+        .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'answer C' } });
+
+      await manager.executeInBackground('thread-best-1', 'prompt', 3);
+
+      const call = (messagesRepo.create as jest.Mock).mock.calls[0][0] as Record<string, unknown>;
+      const meta = call['metadata'] as Record<string, unknown>;
+      const candidates = meta['candidates'] as unknown[];
+      expect(candidates).toHaveLength(3);
+    });
+
+    it('uses provided models array when given', async () => {
+      messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
+
+      await manager.executeInBackground('thread-best-1', 'prompt', 2, [
+        'qwen2.5-coder:7b',
+        'deepseek-coder-v2:16b',
+      ]);
+
+      expect(httpClientModule.httpRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({ model: 'qwen2.5-coder:7b' }),
+        }),
+      );
+    });
+
+    it('stores error message with { error: true } when storeErrorMessage itself fails', async () => {
+      (httpClientModule.httpRequest as jest.Mock).mockRejectedValue(new Error('Ollama down'));
+      const createMock = jest
+        .fn()
+        .mockRejectedValueOnce(new Error('DB write 1 failed'))
+        .mockRejectedValueOnce(new Error('DB write 2 failed'));
+      const isolatedManager = new BestOfNManager(
+        {
+          ...messagesRepo,
+          create: createMock,
+        } as unknown as import('../modules/chat-messages/repositories/chat-messages.repository').ChatMessagesRepository,
+        threadsRepo as unknown as import('../modules/chat-threads/repositories/chat-threads.repository').ChatThreadsRepository,
+        streamService as unknown as import('../modules/chat-messages/services/chat-stream.service').ChatStreamService,
+        qualityManager as unknown as import('../modules/chat-messages/managers/quality-check.manager').QualityCheckManager,
+      );
+      await expect(
+        isolatedManager.executeInBackground('thread-double-fail', 'prompt', 2),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  describe('DTO boundary checks', () => {
+    it('should accept content of exactly 10000 chars', () => {
+      const result = bestOfNMessageSchema.safeParse({ content: 'a'.repeat(10_000), n: 3 });
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject content exceeding 10000 chars', () => {
+      const result = bestOfNMessageSchema.safeParse({ content: 'a'.repeat(10_001), n: 3 });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject models array with more than 5 entries', () => {
+      const result = bestOfNMessageSchema.safeParse({
+        content: 'test',
+        n: 2,
+        models: ['a', 'b', 'c', 'd', 'e', 'f'],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should accept n=2 (minimum valid)', () => {
+      const result = bestOfNMessageSchema.safeParse({ content: 'hello', n: 2 });
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept n=5 (maximum valid)', () => {
+      const result = bestOfNMessageSchema.safeParse({ content: 'hello', n: 5 });
+      expect(result.success).toBe(true);
+    });
   });
 });
