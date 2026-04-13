@@ -73,7 +73,12 @@ export class TaskDecompositionManager {
       const errorMsg = error instanceof Error ? error.message : 'Task decomposition failed';
       this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
       this.chatStreamService.emitError(threadId, errorMsg);
-      await this.storeErrorMessage(threadId, errorMsg);
+      try {
+        await this.storeErrorMessage(threadId, errorMsg);
+      } catch (storeError: unknown) {
+        const storeMsg = storeError instanceof Error ? storeError.message : 'Store failed';
+        this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
+      }
     }
   }
 
