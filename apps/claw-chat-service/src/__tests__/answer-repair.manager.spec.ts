@@ -177,6 +177,270 @@ describe('AnswerRepairManager', () => {
     });
   });
 
+  describe('executeRepair — background task behavior', () => {
+    it('stores ASSISTANT message with repaired metadata on success', async () => {
+      const createMock = jest
+        .fn()
+        .mockResolvedValueOnce({ id: 'user-msg' })
+        .mockResolvedValueOnce({ id: 'assistant-msg' });
+      const isolatedRepo = { ...mockChatMessagesRepository, create: createMock };
+      const isolatedManager = new AnswerRepairManager(
+        isolatedRepo as any,
+        mockChatThreadsRepository as any,
+        mockChatStreamService as any,
+      );
+      mockHttpRequest.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: { response: 'Properly repaired content' },
+      });
+
+      await isolatedManager.executeRepair('user-1', {
+        content: 'Original answer',
+        threadId: 'thread-bg',
+        repairTypes: [RepairType.FORMAT],
+      });
+      // allow background to settle
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(createMock).toHaveBeenCalledTimes(2);
+      expect(createMock).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          role: 'ASSISTANT',
+          metadata: expect.objectContaining({ repaired: true }),
+        }),
+      );
+    });
+
+    it('emits SSE completion after successful repair', async () => {
+      const createMock = jest
+        .fn()
+        .mockResolvedValueOnce({ id: 'u-1' })
+        .mockResolvedValueOnce({ id: 'a-1' });
+      const streamMock = { emitCompletion: jest.fn(), emitError: jest.fn() };
+      const isolatedManager = new AnswerRepairManager(
+        { ...mockChatMessagesRepository, create: createMock } as any,
+        mockChatThreadsRepository as any,
+        streamMock as any,
+      );
+      mockHttpRequest.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: { response: 'Repaired' },
+      });
+
+      await isolatedManager.executeRepair('user-1', {
+        content: 'Answer',
+        threadId: 'thread-sse',
+        repairTypes: [RepairType.SCHEMA],
+      });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(streamMock.emitCompletion).toHaveBeenCalledWith(
+        'thread-sse',
+        expect.any(String),
+        expect.any(String),
+      );
+    });
+
+    it('stores repairTypes in ASSISTANT metadata correctly', async () => {
+      const createMock = jest
+        .fn()
+        .mockResolvedValueOnce({ id: 'u-2' })
+        .mockResolvedValueOnce({ id: 'a-2' });
+      const isolatedManager = new AnswerRepairManager(
+        { ...mockChatMessagesRepository, create: createMock } as any,
+        mockChatThreadsRepository as any,
+        mockChatStreamService as any,
+      );
+      mockHttpRequest.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: { response: 'Fixed' },
+      });
+
+      await isolatedManager.executeRepair('user-1', {
+        content: 'Text',
+        threadId: 'thread-meta',
+        repairTypes: [RepairType.COMPLETENESS, RepairType.FACTUALITY],
+      });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(createMock).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            repairTypes: [RepairType.COMPLETENESS, RepairType.FACTUALITY],
+          }),
+        }),
+      );
+    });
+
+    it('emits SSE error then stores error message when Ollama fails', async () => {
+      const createMock = jest
+        .fn()
+        .mockResolvedValueOnce({ id: 'u-3' })
+        .mockResolvedValueOnce({ id: 'err-msg' });
+      const streamMock = { emitCompletion: jest.fn(), emitError: jest.fn() };
+      const isolatedManager = new AnswerRepairManager(
+        { ...mockChatMessagesRepository, create: createMock } as any,
+        mockChatThreadsRepository as any,
+        streamMock as any,
+      );
+      mockHttpRequest.mockResolvedValue({ ok: false, status: 503, data: {} });
+
+      await isolatedManager.executeRepair('user-1', {
+        content: 'Content',
+        threadId: 'thread-fail',
+        repairTypes: [RepairType.FORMAT],
+      });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(streamMock.emitError).toHaveBeenCalledWith(
+        'thread-fail',
+        expect.stringContaining('repair failed'),
+      );
+      expect(createMock).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          role: 'ASSISTANT',
+          metadata: expect.objectContaining({ error: true }),
+        }),
+      );
+    });
+
+    it('executeRepair always resolves even when background Ollama fails (fire-and-forget)', async () => {
+      const createMock = jest
+        .fn()
+        .mockResolvedValueOnce({ id: 'u-4' })
+        .mockResolvedValue({ id: 'err-4' });
+      const streamMock = { emitCompletion: jest.fn(), emitError: jest.fn() };
+      const isolatedManager = new AnswerRepairManager(
+        { ...mockChatMessagesRepository, create: createMock } as any,
+        mockChatThreadsRepository as any,
+        streamMock as any,
+      );
+      mockHttpRequest.mockResolvedValue({ ok: false, status: 500, data: {} });
+
+      await expect(
+        isolatedManager.executeRepair('user-1', {
+          content: 'test',
+          threadId: 'thread-ff',
+          repairTypes: [RepairType.SCHEMA],
+        }),
+      ).resolves.toMatchObject({ messageId: 'u-4', threadId: 'thread-ff' });
+    });
+
+    it('throws from resolveOriginalContent when messageId not found', async () => {
+      mockChatMessagesRepository.findById.mockResolvedValue(null);
+
+      await expect(
+        manager.executeRepair('user-1', {
+          messageId: 'non-existent-msg',
+          threadId: 'thread-x',
+          repairTypes: [RepairType.FORMAT],
+        }),
+      ).rejects.toThrow('Could not resolve original content to repair');
+    });
+
+    it('throws when Ollama returns empty response string', async () => {
+      const createMock = jest
+        .fn()
+        .mockResolvedValueOnce({ id: 'u-5' })
+        .mockResolvedValue({ id: 'err-5' });
+      const streamMock = { emitCompletion: jest.fn(), emitError: jest.fn() };
+      const isolatedManager = new AnswerRepairManager(
+        { ...mockChatMessagesRepository, create: createMock } as any,
+        mockChatThreadsRepository as any,
+        streamMock as any,
+      );
+      mockHttpRequest.mockResolvedValue({ ok: true, status: 200, data: { response: '   ' } });
+
+      await isolatedManager.executeRepair('user-1', {
+        content: 'Something',
+        threadId: 'thread-empty',
+        repairTypes: [RepairType.COMPLETENESS],
+      });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(streamMock.emitError).toHaveBeenCalledWith(
+        'thread-empty',
+        expect.stringContaining('empty'),
+      );
+    });
+
+    it('uses targetProvider and targetModel in ASSISTANT metadata when provided', async () => {
+      const createMock = jest
+        .fn()
+        .mockResolvedValueOnce({ id: 'u-6' })
+        .mockResolvedValueOnce({ id: 'a-6' });
+      const isolatedManager = new AnswerRepairManager(
+        { ...mockChatMessagesRepository, create: createMock } as any,
+        mockChatThreadsRepository as any,
+        mockChatStreamService as any,
+      );
+      mockHttpRequest.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: { response: 'Repaired with custom model' },
+      });
+
+      await isolatedManager.executeRepair('user-1', {
+        content: 'Text to fix',
+        threadId: 'thread-model',
+        repairTypes: [RepairType.SCHEMA],
+        targetProvider: 'anthropic',
+        targetModel: 'claude-sonnet-4',
+      });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(createMock).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          provider: 'anthropic',
+          model: 'claude-sonnet-4',
+          metadata: expect.objectContaining({
+            repairProvider: 'anthropic',
+            repairModel: 'claude-sonnet-4',
+          }),
+        }),
+      );
+    });
+
+    it('defaults to local-ollama/gemma3:4b when no targetProvider/targetModel given', async () => {
+      const createMock = jest
+        .fn()
+        .mockResolvedValueOnce({ id: 'u-7' })
+        .mockResolvedValueOnce({ id: 'a-7' });
+      const isolatedManager = new AnswerRepairManager(
+        { ...mockChatMessagesRepository, create: createMock } as any,
+        mockChatThreadsRepository as any,
+        mockChatStreamService as any,
+      );
+      mockHttpRequest.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: { response: 'Default model repair' },
+      });
+
+      await isolatedManager.executeRepair('user-1', {
+        content: 'Plain text',
+        threadId: 'thread-default',
+        repairTypes: [RepairType.FORMAT],
+      });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(createMock).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          provider: 'local-ollama',
+          model: 'gemma3:4b',
+        }),
+      );
+    });
+  });
+
   describe('DTO validation', () => {
     it('accepts valid input with content and repairTypes', () => {
       const result = repairMessageSchema.safeParse({
@@ -219,6 +483,70 @@ describe('AnswerRepairManager', () => {
           RepairType.FACTUALITY,
           RepairType.FORMAT,
         ],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('accepts all 4 repair types simultaneously', () => {
+      const result = repairMessageSchema.safeParse({
+        content: 'Some content',
+        repairTypes: [
+          RepairType.SCHEMA,
+          RepairType.FORMAT,
+          RepairType.COMPLETENESS,
+          RepairType.FACTUALITY,
+        ],
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('rejects unknown repairType enum value', () => {
+      const result = repairMessageSchema.safeParse({
+        content: 'Some content',
+        repairTypes: ['INVALID_TYPE'],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects content that exceeds 50000 characters', () => {
+      const result = repairMessageSchema.safeParse({
+        content: 'x'.repeat(50_001),
+        repairTypes: [RepairType.FORMAT],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('accepts content at exactly 50000 characters', () => {
+      const result = repairMessageSchema.safeParse({
+        content: 'x'.repeat(50_000),
+        repairTypes: [RepairType.FORMAT],
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('accepts optional threadId, targetProvider, targetModel fields', () => {
+      const result = repairMessageSchema.safeParse({
+        content: 'Some content',
+        repairTypes: [RepairType.SCHEMA],
+        threadId: 'thread-123',
+        targetProvider: 'anthropic',
+        targetModel: 'claude-sonnet-4',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('rejects empty string content', () => {
+      const result = repairMessageSchema.safeParse({
+        content: '',
+        repairTypes: [RepairType.FORMAT],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects messageId exceeding 255 characters', () => {
+      const result = repairMessageSchema.safeParse({
+        messageId: 'x'.repeat(256),
+        repairTypes: [RepairType.FORMAT],
       });
       expect(result.success).toBe(false);
     });
