@@ -9,6 +9,7 @@ export const ROUTES = {
   MODELS_CATALOG: '/models/catalog',
   ROUTING: '/routing',
   CHAT_COMPARE: '/chat/compare',
+  CHAT_CONSENSUS: '/chat/consensus',
   ROUTING_REPLAY: '/routing/replay',
   MEMORY: '/memory',
   CONTEXT: '/context',

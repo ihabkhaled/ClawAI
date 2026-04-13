@@ -3,6 +3,7 @@ import { ChatMessagesController } from './controllers/chat-messages.controller';
 import { ChatStreamController } from './controllers/chat-stream.controller';
 import { ChatMessagesService } from './services/chat-messages.service';
 import { ChatExecutionManager } from './managers/chat-execution.manager';
+import { ConsensusExecutionManager } from './managers/consensus-execution.manager';
 import { ContextAssemblyManager } from './managers/context-assembly.manager';
 import { ParallelExecutionManager } from './managers/parallel-execution.manager';
 import { QualityCheckManager } from './managers/quality-check.manager';
@@ -16,6 +17,7 @@ import { ChatThreadsRepository } from '../chat-threads/repositories/chat-threads
   providers: [
     ChatMessagesService,
     ChatExecutionManager,
+    ConsensusExecutionManager,
     ContextAssemblyManager,
     ParallelExecutionManager,
     QualityCheckManager,

@@ -8,6 +8,7 @@ import type {
   ReplayOutcomeLabel,
   RoutingMode,
 } from '@/enums';
+import type { ConsensusConfidenceLevel } from '@/enums/consensus-confidence-level.enum';
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { TranslateFunction } from '@/types/i18n.types';
 
@@ -15,6 +16,7 @@ import type { AdminUser, AuditLog } from './audit.types';
 import type { DownloadStats, ModelCatalogEntry, PullJobResponse } from './catalog.types';
 import type { ChatMessage, ChatThread, FallbackAttemptInfo, JudgeModelOption } from './chat.types';
 import type { Connector, ConnectorModel, CreateConnectorRequest } from './connector.types';
+import type { ConsensusMetadata, ConsensusModelBreakdown } from './consensus.types';
 import type { CreateContextPackItemRequest, CreateContextPackRequest } from './context-pack.types';
 import type { UploadedFile } from './file.types';
 import type { AggregatedHealth } from './health.types';
@@ -698,6 +700,35 @@ export type ParallelResultsGridProps = {
 
 export type ParallelSummaryBarProps = {
   messages: ChatMessage[];
+  t: TranslateFunction;
+};
+
+// ─── Consensus component props ─────────────────────────────────────────────
+
+export type ConsensusSynthesisFinalAnswer = {
+  finalAnswer: string;
+  agreements: string[];
+  disagreements: string[];
+  contradictions: string[];
+  confidenceLevel: ConsensusConfidenceLevel;
+  synthesisRationale: string;
+  agreementScore: number;
+};
+
+export type ConsensusSynthesisCardProps = {
+  synthesis: ConsensusSynthesisFinalAnswer;
+  onViewInThread: () => void;
+  t: TranslateFunction;
+};
+
+export type ConsensusModelBreakdownProps = {
+  breakdown: ConsensusModelBreakdown[];
+  t: TranslateFunction;
+};
+
+export type ConsensusMetadataProps = {
+  metadata: ConsensusMetadata;
+  onViewInThread: () => void;
   t: TranslateFunction;
 };
 

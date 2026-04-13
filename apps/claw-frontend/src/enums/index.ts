@@ -29,3 +29,5 @@ export { FileGenerationStatus } from './file-generation-status.enum';
 export { ParallelModelStatus } from './parallel-model-status.enum';
 export { FallbackFailureType } from './fallback-failure-type.enum';
 export { ReplayOutcomeLabel } from './replay-outcome-label.enum';
+export { ConsensusConfidenceLevel } from './consensus-confidence-level.enum';
+export { ConsensusModelStatus } from './consensus-model-status.enum';

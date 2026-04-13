@@ -3,12 +3,14 @@ import { apiClient } from '@/services/shared/api-client';
 import type {
   ChatThread,
   ChatMessage,
+  ConsensusRequest,
+  ConsensusResponse,
   CreateThreadRequest,
   CreateMessageRequest,
-  ThreadsListResponse,
   MessagesListResponse,
   ParallelRequest,
   ParallelResponse,
+  ThreadsListResponse,
 } from '@/types';
 
 export const chatRepository = {
@@ -91,6 +93,11 @@ export const chatRepository = {
 
   async sendParallel(data: ParallelRequest): Promise<ParallelResponse> {
     const response = await apiClient.post<ParallelResponse>('/chat-messages/parallel', data);
+    return response.data;
+  },
+
+  async sendConsensus(data: ConsensusRequest): Promise<ConsensusResponse> {
+    const response = await apiClient.post<ConsensusResponse>('/chat-messages/consensus', data);
     return response.data;
   },
 };

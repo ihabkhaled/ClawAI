@@ -5,15 +5,18 @@ import { ChatMessagesRepository } from '../repositories/chat-messages.repository
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatExecutionManager } from '../managers/chat-execution.manager';
 import { ContextAssemblyManager } from '../managers/context-assembly.manager';
+import { ConsensusExecutionManager } from '../managers/consensus-execution.manager';
 import { ParallelExecutionManager } from '../managers/parallel-execution.manager';
 import { ChatStreamService } from './chat-stream.service';
 import { type CreateMessageDto } from '../dto/create-message.dto';
+import { type ConsensusMessageDto } from '../dto/consensus-message.dto';
 import { type ListMessagesQueryDto } from '../dto/list-messages-query.dto';
 import {
   type LlmResponse,
   type MessageRoutedData,
   type ThreadSettings,
 } from '../types/execution.types';
+import { type ConsensusResponse } from '../types/consensus.types';
 import { type ParallelResponse } from '../types/parallel.types';
 import { type ParallelMessageDto } from '../dto/parallel-message.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
@@ -31,6 +34,7 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly chatExecutionManager: ChatExecutionManager,
     private readonly contextAssemblyManager: ContextAssemblyManager,
     private readonly parallelExecutionManager: ParallelExecutionManager,
+    private readonly consensusExecutionManager: ConsensusExecutionManager,
     private readonly chatStreamService: ChatStreamService,
     private readonly rabbitMQService: RabbitMQService,
   ) {
@@ -84,6 +88,28 @@ export class ChatMessagesService implements OnModuleInit {
           });
 
     return this.parallelExecutionManager.executeParallel(
+      userId,
+      thread.id,
+      dto.content,
+      dto.models,
+      dto.fileIds,
+    );
+  }
+
+  async createConsensusMessage(
+    userId: string,
+    dto: ConsensusMessageDto,
+  ): Promise<ConsensusResponse> {
+    const thread =
+      dto.threadId && dto.threadId.length > 0
+        ? await this.getThreadForMessage(dto.threadId, userId)
+        : await this.chatThreadsRepository.create({
+            userId,
+            title: `Consensus: ${dto.content.slice(0, 50)}`,
+            routingMode: RoutingMode.MANUAL_MODEL,
+          });
+
+    return this.consensusExecutionManager.executeConsensus(
       userId,
       thread.id,
       dto.content,

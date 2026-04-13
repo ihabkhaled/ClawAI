@@ -195,6 +195,9 @@ export type {
   ReplayNeedsReviewListProps,
   ReplayRunHistoryProps,
   ReplayExportPanelProps,
+  ConsensusSynthesisCardProps,
+  ConsensusModelBreakdownProps,
+  ConsensusMetadataProps,
   ParallelMessageGroupProps,
   ParallelModelSelectorProps,
   ParallelResponseCardProps,
@@ -281,6 +284,17 @@ export type {
   ParallelRequest,
   UseParallelComparePageReturn,
 } from './parallel.types';
+export type {
+  ConsensusModelBreakdown,
+  ConsensusAnalysis,
+  ConsensusMetadata,
+  ConsensusSynthesisState,
+  ConsensusRequest,
+  ConsensusResponse,
+  UseConsensusSendResult,
+  UseConsensusPollResult,
+  UseConsensusPageReturn,
+} from './consensus.types';
 export type {
   ImageGeneration,
   ImageGenerationAsset,

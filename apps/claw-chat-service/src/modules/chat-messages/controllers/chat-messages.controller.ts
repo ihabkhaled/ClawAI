@@ -1,16 +1,18 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from "@nestjs/common";
-import { ChatMessagesService } from "../services/chat-messages.service";
-import { ZodValidationPipe } from "../../../app/pipes/zod-validation.pipe";
-import { CreateMessageDto, createMessageSchema } from "../dto/create-message.dto";
-import { type ParallelMessageDto, parallelMessageSchema } from "../dto/parallel-message.dto";
-import { ListMessagesQueryDto, listMessagesQuerySchema } from "../dto/list-messages-query.dto";
-import { SetFeedbackDto, setFeedbackSchema } from "../dto/set-feedback.dto";
-import { CurrentUser } from "../../../app/decorators/current-user.decorator";
-import { type AuthenticatedUser, type PaginatedResult } from "../../../common/types";
-import { type ParallelResponse } from "../types/parallel.types";
-import { type ChatMessage } from "../../../generated/prisma";
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { ChatMessagesService } from '../services/chat-messages.service';
+import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
+import { type ConsensusMessageDto, consensusMessageSchema } from '../dto/consensus-message.dto';
+import { CreateMessageDto, createMessageSchema } from '../dto/create-message.dto';
+import { type ParallelMessageDto, parallelMessageSchema } from '../dto/parallel-message.dto';
+import { ListMessagesQueryDto, listMessagesQuerySchema } from '../dto/list-messages-query.dto';
+import { SetFeedbackDto, setFeedbackSchema } from '../dto/set-feedback.dto';
+import { CurrentUser } from '../../../app/decorators/current-user.decorator';
+import { type AuthenticatedUser, type PaginatedResult } from '../../../common/types';
+import { type ConsensusResponse } from '../types/consensus.types';
+import { type ParallelResponse } from '../types/parallel.types';
+import { type ChatMessage } from '../../../generated/prisma';
 
-@Controller("chat-messages")
+@Controller('chat-messages')
 export class ChatMessagesController {
   constructor(private readonly chatMessagesService: ChatMessagesService) {}
 
@@ -22,7 +24,7 @@ export class ChatMessagesController {
     return this.chatMessagesService.createMessage(user.id, dto);
   }
 
-  @Post("parallel")
+  @Post('parallel')
   async createParallel(
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(parallelMessageSchema)) dto: ParallelMessageDto,
@@ -30,34 +32,42 @@ export class ChatMessagesController {
     return this.chatMessagesService.createParallelMessage(user.id, dto);
   }
 
-  @Get("thread/:threadId")
+  @Post('consensus')
+  async createConsensus(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(consensusMessageSchema)) dto: ConsensusMessageDto,
+  ): Promise<ConsensusResponse> {
+    return this.chatMessagesService.createConsensusMessage(user.id, dto);
+  }
+
+  @Get('thread/:threadId')
   async findByThread(
-    @Param("threadId") threadId: string,
+    @Param('threadId') threadId: string,
     @CurrentUser() user: AuthenticatedUser,
     @Query(new ZodValidationPipe(listMessagesQuerySchema)) query: ListMessagesQueryDto,
   ): Promise<PaginatedResult<ChatMessage>> {
     return this.chatMessagesService.getMessages(threadId, user.id, query);
   }
 
-  @Get(":id")
+  @Get(':id')
   async findOne(
-    @Param("id") id: string,
+    @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ChatMessage> {
     return this.chatMessagesService.getMessage(id, user.id);
   }
 
-  @Post(":id/regenerate")
+  @Post(':id/regenerate')
   async regenerate(
-    @Param("id") id: string,
+    @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ChatMessage> {
     return this.chatMessagesService.regenerateMessage(id, user.id);
   }
 
-  @Patch(":id/feedback")
+  @Patch(':id/feedback')
   async setFeedback(
-    @Param("id") id: string,
+    @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(setFeedbackSchema)) dto: SetFeedbackDto,
   ): Promise<ChatMessage> {
