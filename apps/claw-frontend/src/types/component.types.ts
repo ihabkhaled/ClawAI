@@ -7,7 +7,7 @@ import type { TranslateFunction } from '@/types/i18n.types';
 
 import type { AdminUser, AuditLog } from './audit.types';
 import type { DownloadStats, ModelCatalogEntry, PullJobResponse } from './catalog.types';
-import type { ChatMessage, ChatThread, FallbackAttemptInfo } from './chat.types';
+import type { ChatMessage, ChatThread, FallbackAttemptInfo, JudgeModelOption } from './chat.types';
 import type { Connector, ConnectorModel, CreateConnectorRequest } from './connector.types';
 import type { CreateContextPackItemRequest, CreateContextPackRequest } from './context-pack.types';
 import type { UploadedFile } from './file.types';
@@ -152,6 +152,9 @@ export type ThreadSettingsProps = {
   onContextPackIdsChange: (ids: string[]) => void;
   judgeEnabled: boolean;
   onJudgeEnabledChange: (value: boolean) => void;
+  judgeModel: string | null;
+  onJudgeModelChange: (value: string | null) => void;
+  judgeModelOptions: JudgeModelOption[];
   onSave: () => void;
   isPending: boolean;
 };
@@ -196,6 +199,8 @@ export type ThinkingIndicatorProps = {
   fallbackAttempts?: FallbackAttemptInfo[];
   streamError?: string | null;
   judgeEvaluating?: boolean;
+  executingModel?: string | null;
+  judgeModel?: string | null;
 };
 
 export type ModelSelection = {
@@ -320,6 +325,8 @@ export type VirtualizedMessagesProps = {
   fallbackAttempts: FallbackAttemptInfo[];
   streamError: string | null;
   judgeEvaluating?: boolean;
+  executingModel?: string | null;
+  judgeModel?: string | null;
   onStartReached: () => void;
   onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
   onRegenerate: (messageId: string) => void;

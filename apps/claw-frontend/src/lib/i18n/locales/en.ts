@@ -159,6 +159,9 @@ export const en: TranslationDictionary = {
     judgeCriticFeedback: 'Critic Feedback',
     judgeReasoning: 'Judge Reasoning',
     judgeEvaluating: 'Verifying response...',
+    judgeModelLabel: 'Judge Model',
+    judgeModelAuto: 'Auto (gemma3:4b)',
+    judgeModelDescription: 'Override the local model used for final verdict',
   },
   connectors: {
     title: 'Connectors',

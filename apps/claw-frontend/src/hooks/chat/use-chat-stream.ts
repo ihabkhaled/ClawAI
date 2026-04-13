@@ -9,12 +9,16 @@ export function useChatStream(threadId: string, isActive: boolean) {
   const [fallbackAttempts, setFallbackAttempts] = useState<FallbackAttemptInfo[]>([]);
   const [streamError, setStreamError] = useState<string | null>(null);
   const [judgeEvaluating, setJudgeEvaluating] = useState(false);
+  const [executingModel, setExecutingModel] = useState<string | null>(null);
+  const [judgeModel, setJudgeModel] = useState<string | null>(null);
   const connectionRef = useRef<SseConnection | null>(null);
 
   const resetStream = useCallback((): void => {
     setFallbackAttempts([]);
     setStreamError(null);
     setJudgeEvaluating(false);
+    setExecutingModel(null);
+    setJudgeModel(null);
   }, []);
 
   useEffect(() => {
@@ -62,18 +66,29 @@ export function useChatStream(threadId: string, isActive: boolean) {
             setFallbackAttempts((prev) => [...prev, attempt]);
           }
 
+          if (parsed.type === StreamEventType.PROVIDER_SELECTED) {
+            const label =
+              parsed.provider && parsed.model ? `${parsed.provider} / ${parsed.model}` : null;
+            setExecutingModel(label);
+          }
+
           if (parsed.type === StreamEventType.JUDGE_EVALUATING) {
             logger.info({
               component: 'chat',
               action: 'judge-evaluating',
               message: 'Judge-referee pipeline started',
-              details: { threadId },
+              details: { threadId, criticModel: parsed.criticModel, judgeModel: parsed.judgeModel },
             });
             setJudgeEvaluating(true);
+            if (parsed.judgeModel) {
+              setJudgeModel(parsed.judgeModel);
+            }
           }
 
           if (parsed.type === StreamEventType.DONE) {
             setJudgeEvaluating(false);
+            setExecutingModel(null);
+            setJudgeModel(null);
           }
 
           if (parsed.type === StreamEventType.ERROR) {
@@ -115,5 +130,12 @@ export function useChatStream(threadId: string, isActive: boolean) {
     }
   }, [isActive]);
 
-  return { fallbackAttempts, streamError, judgeEvaluating, resetStream };
+  return {
+    fallbackAttempts,
+    streamError,
+    judgeEvaluating,
+    executingModel,
+    judgeModel,
+    resetStream,
+  };
 }

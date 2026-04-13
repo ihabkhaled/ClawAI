@@ -4,4 +4,5 @@ export enum StreamEventType {
   ERROR = 'error',
   FALLBACK_ATTEMPT = 'fallback_attempt',
   JUDGE_EVALUATING = 'judge_evaluating',
+  PROVIDER_SELECTED = 'provider_selected',
 }

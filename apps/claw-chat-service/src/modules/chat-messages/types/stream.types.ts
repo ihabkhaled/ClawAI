@@ -13,4 +13,6 @@ export type StreamEvent = {
   totalCandidates?: number;
   nextProvider?: string;
   nextModel?: string;
+  criticModel?: string;
+  judgeModel?: string;
 };

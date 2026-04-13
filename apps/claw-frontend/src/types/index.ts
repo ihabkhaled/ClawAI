@@ -18,6 +18,7 @@ export type {
   UseEditableTitleReturn,
   UseVirtualizedMessagesReturn,
   UseVirtualizedThreadsReturn,
+  JudgeModelOption,
 } from './chat.types';
 export type {
   Connector,

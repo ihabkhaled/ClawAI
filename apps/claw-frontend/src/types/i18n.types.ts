@@ -159,6 +159,9 @@ export type TranslationDictionary = {
     judgeCriticFeedback: string;
     judgeReasoning: string;
     judgeEvaluating: string;
+    judgeModelLabel: string;
+    judgeModelAuto: string;
+    judgeModelDescription: string;
   };
   connectors: {
     title: string;

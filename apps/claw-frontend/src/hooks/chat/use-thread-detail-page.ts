@@ -24,6 +24,8 @@ export const useThreadDetailPage = ({
     fallbackAttempts,
     streamError,
     judgeEvaluating,
+    executingModel,
+    judgeModel,
     virtualizedMessages,
   } = useThreadDetail(threadId);
 
@@ -101,6 +103,8 @@ export const useThreadDetailPage = ({
     fallbackAttempts,
     streamError,
     judgeEvaluating,
+    executingModel,
+    judgeModel,
     isSending,
     isDeleting,
     virtualizedMessages,

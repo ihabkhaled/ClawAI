@@ -25,6 +25,7 @@ export const updateThreadSchema = z.object({
     .nullable(),
   contextPackIds: z.array(z.string().max(255)).max(10, 'Maximum 10 context packs').optional(),
   judgeEnabled: z.boolean().optional(),
+  judgeModel: z.string().max(255).optional().nullable(),
 });
 
 export type UpdateThreadDto = z.infer<typeof updateThreadSchema>;

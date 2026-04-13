@@ -27,9 +27,12 @@ export function useAvailableModels(): {
   const groupedModels = useMemo((): GroupedModels[] => {
     const groups = new Map<string, ModelSelection[]>();
 
-    // Add local Ollama models first
+    // Add local Ollama models first (exclude routing-only models — they run internally)
     for (const model of localModels) {
       if (!model.isInstalled) {
+        continue;
+      }
+      if (model.roles.some((r) => r.role === 'ROUTER' && r.isActive)) {
         continue;
       }
       const provider = 'local-ollama';

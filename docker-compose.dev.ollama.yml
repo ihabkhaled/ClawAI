@@ -1,7 +1,7 @@
 # docker-compose.ollama.yml — Ollama LLM Runtime
 # Usage: docker compose -f docker-compose.ollama.yml up -d
 # Usage: ./scripts/claw.sh ollama:up
-# Auto-pulls tinyllama on first start for immediate dev use.
+# Auto-pulls qwen3:1.7b, phi4-mini, gemma3:4b on first start for routing.
 # Requires: docker-compose.databases.yml running first (claw-network must exist)
 #
 # Reads environment variables from the root .env file.
@@ -33,7 +33,7 @@ services:
         echo "Ollama is ready."
 
         # Auto-pull models (configurable via AUTO_PULL_MODELS env var)
-        DEFAULT_MODELS="tinyllama gemma3:4b gemma2:2b phi3:mini llama3.2:3b"
+        DEFAULT_MODELS="qwen3:1.7b phi4-mini gemma3:4b"
         MODELS_TO_PULL="$${AUTO_PULL_MODELS:-$$DEFAULT_MODELS}"
         for MODEL in $$MODELS_TO_PULL; do
           if ! ollama list | grep -q "$${MODEL%%:*}"; then

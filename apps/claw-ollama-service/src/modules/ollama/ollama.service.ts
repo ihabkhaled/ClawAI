@@ -234,12 +234,19 @@ export class OllamaService implements OnModuleInit {
     entries: ModelCatalogEntry[],
   ): Promise<CatalogEntryWithInstallStatus[]> {
     const installed = await this.localModelsRepository.findAllInstalled();
-    const installedMap = new Map(installed.map((m) => [`${m.name}:${m.tag}:${m.runtime}`, m.id]));
+    // Key by "name:tag" — this is what Ollama returns after pulling (runtime is always OLLAMA here)
+    const installedMap = new Map(installed.map((m) => [`${m.name}:${m.tag}`, m.id]));
 
     return Promise.all(
       entries.map(async (entry) => {
-        const key = `${entry.name}:${entry.tag}:${entry.runtime}`;
-        const installedModelId = installedMap.get(key) ?? null;
+        // Use ollamaName for matching (e.g. "gemma3:4b", "mistral-small3:7b")
+        // catalog tag may differ from Ollama tag (e.g. "7b-routing" vs "7b")
+        const ollamaKey = entry.ollamaName ?? `${entry.name}:${entry.tag}`;
+        // If ollamaName has no colon it has no explicit tag — also try with ":latest" fallback
+        const installedModelId =
+          installedMap.get(ollamaKey) ??
+          (!ollamaKey.includes(':') ? (installedMap.get(`${ollamaKey}:latest`) ?? null) : null);
+
         const pullJob = await this.pullJobsRepository.findLatestByModelName(
           entry.ollamaName ?? `${entry.name}:${entry.tag}`,
         );

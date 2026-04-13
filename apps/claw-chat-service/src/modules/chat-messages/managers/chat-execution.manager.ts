@@ -70,6 +70,11 @@ export class ChatExecutionManager implements OnModuleInit {
         `execute: trying candidate ${String(i + 1)}/${String(candidates.length)} - ${candidate.provider}/${candidate.model}`,
       );
       try {
+        this.chatStreamService.emitProviderSelected(
+          payload.threadId,
+          candidate.provider,
+          candidate.model,
+        );
         const response = await this.callProvider(
           candidate.provider,
           candidate.model,

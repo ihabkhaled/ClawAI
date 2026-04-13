@@ -31,9 +31,21 @@ export class ChatStreamService {
     );
   }
 
-  emitJudgeEvaluating(threadId: string): void {
-    this.eventBus.next({ threadId, type: StreamEventType.JUDGE_EVALUATING });
-    this.logger.debug(`Emitted judge_evaluating for thread ${threadId}`);
+  emitProviderSelected(threadId: string, provider: string, model: string): void {
+    this.eventBus.next({ threadId, type: StreamEventType.PROVIDER_SELECTED, provider, model });
+    this.logger.debug(`Emitted provider_selected for thread ${threadId}: ${provider}/${model}`);
+  }
+
+  emitJudgeEvaluating(threadId: string, criticModel: string, judgeModel: string): void {
+    this.eventBus.next({
+      threadId,
+      type: StreamEventType.JUDGE_EVALUATING,
+      criticModel,
+      judgeModel,
+    });
+    this.logger.debug(
+      `Emitted judge_evaluating for thread ${threadId}: critic=${criticModel} judge=${judgeModel}`,
+    );
   }
 
   emitError(threadId: string, error: string): void {

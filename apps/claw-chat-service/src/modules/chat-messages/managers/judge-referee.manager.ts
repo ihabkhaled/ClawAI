@@ -58,11 +58,27 @@ export class JudgeRefereeManager {
       `evaluate: starting judge-referee for ${payload.messageId} category=${config.category ?? 'none'}`,
     );
 
-    this.chatStreamService.emitJudgeEvaluating(payload.threadId);
+    const criticModelInfo = this.selectCriticModel(response.provider, config.isLocalOnly);
+    const criticModelLabel = `${criticModelInfo.provider}/${criticModelInfo.model}`;
+    const overrideJudgeModel = threadSettings?.judgeModel ?? null;
+    const effectiveJudgeModel = overrideJudgeModel ?? JUDGE_LOCAL_MODEL;
+    const judgeModelLabel = `local-ollama/${effectiveJudgeModel}`;
+    this.chatStreamService.emitJudgeEvaluating(payload.threadId, criticModelLabel, judgeModelLabel);
 
-    const criticEvaluation = await this.callCritic(response, context, config);
+    const criticEvaluation = await this.callCriticWithModel(
+      response,
+      context,
+      config,
+      criticModelInfo,
+    );
 
-    const judgeVerdict = await this.callJudge(response, criticEvaluation, context, config);
+    const judgeVerdict = await this.callJudge(
+      response,
+      criticEvaluation,
+      context,
+      config,
+      effectiveJudgeModel,
+    );
 
     const totalLatencyMs = Date.now() - startTime;
     this.logger.log(
@@ -103,13 +119,13 @@ export class JudgeRefereeManager {
     };
   }
 
-  private async callCritic(
+  private async callCriticWithModel(
     response: LlmResponse,
     context: AssembledContext,
     config: JudgeRefereeConfig,
+    criticModel: { provider: string; model: string },
   ): Promise<CriticEvaluation> {
     const startTime = Date.now();
-    const criticModel = this.selectCriticModel(response.provider, config.isLocalOnly);
     const criticPrompt = this.buildCriticPrompt(config.category);
 
     this.logger.debug(
@@ -167,10 +183,11 @@ export class JudgeRefereeManager {
     response: LlmResponse,
     criticEval: CriticEvaluation,
     context: AssembledContext,
-    config: JudgeRefereeConfig,
+    _config: JudgeRefereeConfig,
+    judgeModelOverride?: string,
   ): Promise<JudgeVerdict> {
     const startTime = Date.now();
-    const judgeModel = config.isLocalOnly ? JUDGE_LOCAL_MODEL : JUDGE_LOCAL_MODEL;
+    const judgeModel = judgeModelOverride ?? JUDGE_LOCAL_MODEL;
 
     this.logger.debug(`callJudge: using ${OLLAMA_PROVIDER}/${judgeModel}`);
 

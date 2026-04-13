@@ -161,6 +161,9 @@ export const ru: TranslationDictionary = {
     judgeCriticFeedback: 'Отзыв Критика',
     judgeReasoning: 'Обоснование Судьи',
     judgeEvaluating: 'Проверка ответа...',
+    judgeModelLabel: 'Модель Судьи',
+    judgeModelAuto: 'Авто (gemma3:4b)',
+    judgeModelDescription: 'Переопределить локальную модель для финального вердикта',
   },
   connectors: {
     title: 'Коннекторы',

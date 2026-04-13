@@ -5,6 +5,7 @@ import type {
   ChatMessage,
   ChatThread,
   FallbackAttemptInfo,
+  JudgeModelOption,
   UseVirtualizedMessagesReturn,
 } from './chat.types';
 import type { ModelSelection } from './component.types';
@@ -142,6 +143,9 @@ export type UseThreadSettingsReturn = {
   setContextPackIds: (value: string[]) => void;
   judgeEnabled: boolean;
   setJudgeEnabled: (value: boolean) => void;
+  judgeModel: string | null;
+  setJudgeModel: (value: string | null) => void;
+  judgeModelOptions: JudgeModelOption[];
   handleSave: () => void;
   isPending: boolean;
 };
@@ -155,6 +159,8 @@ export type UseThreadDetailPageReturn = {
   fallbackAttempts: FallbackAttemptInfo[];
   streamError: string | null;
   judgeEvaluating: boolean;
+  executingModel: string | null;
+  judgeModel: string | null;
   isSending: boolean;
   isDeleting: boolean;
   virtualizedMessages: UseVirtualizedMessagesReturn;

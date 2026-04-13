@@ -31,6 +31,9 @@ export default function ThreadDetailPage() {
     isWaitingForResponse,
     fallbackAttempts,
     streamError,
+    judgeEvaluating,
+    executingModel,
+    judgeModel,
     isSending,
     isDeleting,
     virtualizedMessages,
@@ -130,6 +133,9 @@ export default function ThreadDetailPage() {
             onContextPackIdsChange={threadSettings.setContextPackIds}
             judgeEnabled={threadSettings.judgeEnabled}
             onJudgeEnabledChange={threadSettings.setJudgeEnabled}
+            judgeModel={threadSettings.judgeModel}
+            onJudgeModelChange={threadSettings.setJudgeModel}
+            judgeModelOptions={threadSettings.judgeModelOptions}
             onSave={threadSettings.handleSave}
             isPending={threadSettings.isPending}
           />
@@ -146,6 +152,9 @@ export default function ThreadDetailPage() {
             isWaitingForResponse={isWaitingForResponse}
             fallbackAttempts={fallbackAttempts}
             streamError={streamError}
+            judgeEvaluating={judgeEvaluating}
+            executingModel={executingModel}
+            judgeModel={judgeModel}
             onStartReached={virtualizedMessages.fetchPreviousPage}
             onFeedback={handleFeedback}
             onRegenerate={handleRegenerate}

@@ -24,7 +24,7 @@ export const MESSAGES_PAGE_SIZE = 50;
 export const THREADS_PAGE_SIZE = 30;
 export const COMPOSER_MIN_HEIGHT = 80;
 export const COMPOSER_MAX_HEIGHT_RATIO = 0.5;
-export const COMPOSER_DEFAULT_HEIGHT = 120;
+export const COMPOSER_DEFAULT_HEIGHT = 140;
 
 /**
  * Rough per-token cost estimates (USD) for common providers.

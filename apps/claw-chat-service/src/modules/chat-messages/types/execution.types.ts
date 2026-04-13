@@ -80,6 +80,7 @@ export type ThreadSettings = {
   systemPrompt?: string | null;
   temperature?: number | null;
   maxTokens?: number | null;
+  judgeModel?: string | null;
 };
 
 export type OpenAiChatChoice = {

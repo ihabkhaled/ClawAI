@@ -158,6 +158,9 @@ export const ar: TranslationDictionary = {
     judgeCriticFeedback: 'ملاحظات الناقد',
     judgeReasoning: 'تبرير الحكم',
     judgeEvaluating: 'جارٍ التحقق من الاستجابة...',
+    judgeModelLabel: 'نموذج الحكم',
+    judgeModelAuto: 'تلقائي (gemma3:4b)',
+    judgeModelDescription: 'تجاوز النموذج المحلي المستخدم للحكم النهائي',
   },
   connectors: {
     title: 'الموصّلات',

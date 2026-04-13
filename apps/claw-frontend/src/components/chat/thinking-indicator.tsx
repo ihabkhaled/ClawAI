@@ -9,8 +9,21 @@ export function ThinkingIndicator({
   fallbackAttempts,
   streamError,
   judgeEvaluating,
+  executingModel,
+  judgeModel,
 }: ThinkingIndicatorProps) {
   const hasFallbacks = fallbackAttempts && fallbackAttempts.length > 0;
+
+  let statusLabel: string;
+  if (judgeEvaluating) {
+    statusLabel = `Verifying with ${judgeModel ?? 'judge'}...`;
+  } else if (hasFallbacks) {
+    statusLabel = 'Retrying with fallback...';
+  } else if (executingModel) {
+    statusLabel = `${executingModel} is thinking...`;
+  } else {
+    statusLabel = THINKING_INDICATOR_LABEL;
+  }
 
   return (
     <div className={cn('flex w-full justify-start', className)}>
@@ -46,11 +59,7 @@ export function ThinkingIndicator({
           </div>
         ) : (
           <>
-            <span className="text-xs text-muted-foreground">
-              {judgeEvaluating ? 'Verifying response...' : null}
-              {!judgeEvaluating && hasFallbacks ? 'Retrying with fallback...' : null}
-              {!judgeEvaluating && !hasFallbacks ? THINKING_INDICATOR_LABEL : null}
-            </span>
+            <span className="text-xs text-muted-foreground">{statusLabel}</span>
             <div className="rounded-lg bg-muted px-4 py-2.5 text-sm text-foreground">
               <div
                 className="flex items-center gap-1"

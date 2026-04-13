@@ -26,6 +26,7 @@ export interface UpdateThreadData {
   preferredModel?: string | null;
   contextPackIds?: string[];
   judgeEnabled?: boolean;
+  judgeModel?: string | null;
 }
 
 export interface ThreadFilters {

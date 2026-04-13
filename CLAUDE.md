@@ -499,18 +499,20 @@ Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 
 ## Local Ollama Models (auto-pulled on startup)
 
-| Model       | Params | Size  | Best For                                      |
-| ----------- | ------ | ----- | --------------------------------------------- |
-| gemma3:4b   | 4B     | 3.3GB | Default local chat + routing (Google Gemma 3) |
-| llama3.2:3b | 3B     | 2.0GB | Local reasoning (Meta Llama 3.2)              |
-| phi3:mini   | 3.8B   | 2.2GB | Local coding + math (Microsoft Phi-3)         |
-| gemma2:2b   | 2B     | 1.6GB | Fast local general purpose (Google Gemma 2)   |
-| tinyllama   | 1.1B   | 637MB | Very fast but limited — routing fallback only |
+Only routing-optimized models are auto-pulled. They serve the router pipeline exclusively and **NEVER appear in model selector dropdowns** for end users.
+
+| Model      | Params | Size  | Role               | Best For                               |
+| ---------- | ------ | ----- | ------------------ | -------------------------------------- |
+| qwen3:1.7b | 1.7B   | 1.1GB | ROUTER (primary)   | Fast, accurate routing classification  |
+| phi4-mini  | 3.8B   | 2.2GB | ROUTER (secondary) | Strong reasoning for ambiguous queries |
+| gemma3:4b  | 4B     | 3.3GB | ROUTER (fallback)  | Default fallback + memory extraction   |
 
 Default router model: `gemma3:4b` (configurable via `OLLAMA_ROUTER_MODEL`)
 Default memory extraction model: `gemma3:4b` (configurable via `MEMORY_EXTRACTION_MODEL`)
 Models auto-synced to DB on ollama-service startup.
 Auto-pull list configurable via `AUTO_PULL_MODELS` env var (space-separated).
+
+**Rule**: Any model assigned the `ROUTER` role is automatically excluded from the chat model selector. Users browse task-execution models (coding, reasoning, thinking, file-gen) via the Model Catalog.
 
 ## Model Catalog (30 Models, 6 Categories)
 
@@ -648,25 +650,25 @@ Failed checks → HTTP 422 with reason codes. Filenames sanitized before storage
 
 ## Nginx Route Map (port 4000 → services)
 
-| Frontend Path            | Backend Service  | Notes                              |
-| ------------------------ | ---------------- | ---------------------------------- |
-| /api/v1/auth/\*          | auth:4001        | Login, refresh, logout, me         |
-| /api/v1/users/\*         | auth:4001        | User CRUD (admin)                  |
-| /api/v1/chat-threads/\*  | chat:4002        | Thread CRUD                        |
+| Frontend Path            | Backend Service  | Notes                                                |
+| ------------------------ | ---------------- | ---------------------------------------------------- |
+| /api/v1/auth/\*          | auth:4001        | Login, refresh, logout, me                           |
+| /api/v1/users/\*         | auth:4001        | User CRUD (admin)                                    |
+| /api/v1/chat-threads/\*  | chat:4002        | Thread CRUD                                          |
 | /api/v1/chat-messages/\* | chat:4002        | Message CRUD, feedback, regenerate, parallel compare |
-| /api/v1/connectors/\*    | connector:4003   | Connector CRUD, test, sync         |
-| /api/v1/routing/\*       | routing:4004     | Policies, decisions, evaluate, replay |
-| /api/v1/memories/\*      | memory:4005      | Memory CRUD                        |
-| /api/v1/context-packs/\* | memory:4005      | Context pack CRUD                  |
-| /api/v1/files/\*         | file:4006        | Upload, list, chunks               |
-| /api/v1/audits/\*        | audit:4007       | Audit logs                         |
-| /api/v1/usage/\*         | audit:4007       | Usage statistics                   |
-| /api/v1/ollama/\*        | ollama:4008      | Models, pull, generate             |
-| /api/v1/health           | health:4009      | Aggregated health                  |
-| /api/v1/client-logs      | client-logs:4010 | Frontend log ingestion             |
-| /api/v1/server-logs      | server-logs:4011 | Backend log viewer                 |
-| /api/v1/images           | image:4012       | Image generation                   |
-| /api/v1/file-generations | file-gen:4013    | File export (PDF/DOCX/CSV/etc.)    |
+| /api/v1/connectors/\*    | connector:4003   | Connector CRUD, test, sync                           |
+| /api/v1/routing/\*       | routing:4004     | Policies, decisions, evaluate, replay                |
+| /api/v1/memories/\*      | memory:4005      | Memory CRUD                                          |
+| /api/v1/context-packs/\* | memory:4005      | Context pack CRUD                                    |
+| /api/v1/files/\*         | file:4006        | Upload, list, chunks                                 |
+| /api/v1/audits/\*        | audit:4007       | Audit logs                                           |
+| /api/v1/usage/\*         | audit:4007       | Usage statistics                                     |
+| /api/v1/ollama/\*        | ollama:4008      | Models, pull, generate                               |
+| /api/v1/health           | health:4009      | Aggregated health                                    |
+| /api/v1/client-logs      | client-logs:4010 | Frontend log ingestion                               |
+| /api/v1/server-logs      | server-logs:4011 | Backend log viewer                                   |
+| /api/v1/images           | image:4012       | Image generation                                     |
+| /api/v1/file-generations | file-gen:4013    | File export (PDF/DOCX/CSV/etc.)                      |
 
 ---
 

@@ -405,7 +405,7 @@ FILE_GENERATION_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-file-generation
 STABLE_DIFFUSION_URL=http://stable-diffusion:17860
 COMFYUI_BASE_URL=http://comfyui:8188
 COMFYUI_PORT=8188
-AUTO_PULL_MODELS=tinyllama gemma3:4b gemma2:2b phi3:mini llama3.2:3b
+AUTO_PULL_MODELS=qwen3:1.7b phi4-mini gemma3:4b
 
 CLAMAV_HOST=clamav
 CLAMAV_PORT=3310

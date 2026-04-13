@@ -161,6 +161,9 @@ export const pt: TranslationDictionary = {
     judgeCriticFeedback: 'Feedback do Crítico',
     judgeReasoning: 'Raciocínio do Juiz',
     judgeEvaluating: 'Verificando resposta...',
+    judgeModelLabel: 'Modelo Juiz',
+    judgeModelAuto: 'Automático (gemma3:4b)',
+    judgeModelDescription: 'Substituir o modelo local usado para o veredicto final',
   },
   connectors: {
     title: 'Conectores',

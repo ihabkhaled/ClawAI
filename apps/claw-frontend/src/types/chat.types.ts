@@ -16,6 +16,7 @@ export type ChatThread = {
   temperature: number | null;
   maxTokens: number | null;
   judgeEnabled: boolean;
+  judgeModel: string | null;
   createdAt: string;
   updatedAt: string;
   _count?: { messages: number };
@@ -59,6 +60,7 @@ export type UpdateThreadRequest = {
   preferredModel?: string | null;
   contextPackIds?: string[];
   judgeEnabled?: boolean;
+  judgeModel?: string | null;
 };
 export type CreateMessageRequest = {
   threadId: string;
@@ -110,6 +112,8 @@ export type StreamEvent = {
   totalCandidates?: number;
   nextProvider?: string;
   nextModel?: string;
+  criticModel?: string;
+  judgeModel?: string;
 };
 
 export type SseConnection = {
@@ -148,6 +152,11 @@ export type UseVirtualizedMessagesReturn = {
   fetchPreviousPage: () => void;
   fetchNextPage: () => void;
   totalCount: number;
+};
+
+export type JudgeModelOption = {
+  value: string | null;
+  label: string;
 };
 
 export type UseVirtualizedThreadsReturn = {

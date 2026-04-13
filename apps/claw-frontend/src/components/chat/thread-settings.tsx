@@ -3,6 +3,13 @@ import { ModelSelector } from '@/components/chat/model-selector';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import type { ThreadSettingsProps } from '@/types';
@@ -21,6 +28,9 @@ export function ThreadSettings({
   onContextPackIdsChange,
   judgeEnabled,
   onJudgeEnabledChange,
+  judgeModel,
+  onJudgeModelChange,
+  judgeModelOptions,
   onSave,
   isPending,
 }: ThreadSettingsProps): React.ReactElement {
@@ -111,6 +121,29 @@ export function ThreadSettings({
             onCheckedChange={onJudgeEnabledChange}
           />
         </div>
+
+        {judgeEnabled && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium">{t('chat.judgeModelLabel')}</label>
+            <p className="text-xs text-muted-foreground">{t('chat.judgeModelDescription')}</p>
+            <Select
+              value={judgeModel ?? ''}
+              onValueChange={(v) => onJudgeModelChange(v === '' ? null : v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={t('chat.judgeModelAuto')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">{t('chat.judgeModelAuto')}</SelectItem>
+                {judgeModelOptions.map((opt) => (
+                  <SelectItem key={opt.value ?? 'auto'} value={opt.value ?? ''}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <Button onClick={onSave} disabled={isPending} size="sm">
           {isPending ? t('common.loading') : t('common.save')}

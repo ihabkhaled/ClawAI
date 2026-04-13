@@ -161,6 +161,9 @@ export const fr: TranslationDictionary = {
     judgeCriticFeedback: 'Retour du Critique',
     judgeReasoning: 'Raisonnement du Juge',
     judgeEvaluating: 'V\u00e9rification de la r\u00e9ponse...',
+    judgeModelLabel: 'Mod\u00e8le Juge',
+    judgeModelAuto: 'Automatique (gemma3:4b)',
+    judgeModelDescription: 'Remplacer le mod\u00e8le local utilis\u00e9 pour le verdict final',
   },
   connectors: {
     title: 'Connecteurs',

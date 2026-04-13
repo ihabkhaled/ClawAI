@@ -56,3 +56,5 @@ file-storage-data/
 # Misc
 *.tsbuildinfo
 .turbo/
+
+.claude/

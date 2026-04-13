@@ -18,6 +18,8 @@ export function VirtualizedMessages({
   fallbackAttempts,
   streamError,
   judgeEvaluating,
+  executingModel,
+  judgeModel,
   onStartReached,
   onFeedback,
   onRegenerate,
@@ -64,6 +66,8 @@ export function VirtualizedMessages({
             fallbackAttempts={fallbackAttempts}
             streamError={streamError}
             judgeEvaluating={judgeEvaluating}
+            executingModel={executingModel}
+            judgeModel={judgeModel}
           />
         </div>
       );

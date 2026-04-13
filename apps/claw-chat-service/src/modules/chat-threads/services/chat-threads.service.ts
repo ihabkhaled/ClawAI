@@ -109,6 +109,7 @@ export class ChatThreadsService {
       preferredModel: dto.preferredModel,
       contextPackIds: dto.contextPackIds,
       judgeEnabled: dto.judgeEnabled,
+      judgeModel: dto.judgeModel,
     });
   }
 

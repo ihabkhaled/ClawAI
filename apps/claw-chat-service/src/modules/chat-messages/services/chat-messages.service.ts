@@ -359,6 +359,7 @@ export class ChatMessagesService implements OnModuleInit {
       systemPrompt: thread.systemPrompt,
       temperature: thread.temperature,
       maxTokens: thread.maxTokens,
+      judgeModel: thread.judgeModel,
     };
   }
 

@@ -34,10 +34,14 @@ export function useThreadDetail(threadId: string) {
   const messagesList = virtualizedMessages.messages;
   const lastMessage = messagesList.length > 0 ? messagesList.at(-1) : undefined;
 
-  const { fallbackAttempts, streamError, judgeEvaluating, resetStream } = useChatStream(
-    threadId,
-    isWaitingForResponse,
-  );
+  const {
+    fallbackAttempts,
+    streamError,
+    judgeEvaluating,
+    executingModel,
+    judgeModel,
+    resetStream,
+  } = useChatStream(threadId, isWaitingForResponse);
 
   // When SSE reports an error, immediately refetch messages and stop polling.
   // The backend stores an error ASSISTANT message, so the refetch will pick it up.
@@ -153,6 +157,8 @@ export function useThreadDetail(threadId: string) {
     fallbackAttempts,
     streamError,
     judgeEvaluating,
+    executingModel,
+    judgeModel,
     virtualizedMessages,
   };
 }
