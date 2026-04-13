@@ -14,6 +14,7 @@ import { EscalationChainManager } from '../managers/escalation-chain.manager';
 import { ParallelExecutionManager } from '../managers/parallel-execution.manager';
 import { VerifierManager } from '../managers/verifier.manager';
 import { PipelineManager } from '../managers/pipeline.manager';
+import { RolePackManager } from '../managers/role-pack.manager';
 import { ChatStreamService } from './chat-stream.service';
 import { type CreateMessageDto } from '../dto/create-message.dto';
 import { type ConsensusMessageDto } from '../dto/consensus-message.dto';
@@ -37,9 +38,11 @@ import { type CostEnsembleResponse } from '../types/cost-ensemble.types';
 import { type VerifyResponse } from '../types/verifier.types';
 import { type ParallelResponse } from '../types/parallel.types';
 import { type PipelineResponse } from '../types/pipeline.types';
+import { type RolePackResponse } from '../types/role-pack.types';
 import { type ParallelMessageDto } from '../dto/parallel-message.dto';
 import { type VerifyMessageDto } from '../dto/verify-message.dto';
 import { type PipelineMessageDto } from '../dto/pipeline-message.dto';
+import { type RolePackMessageDto } from '../dto/role-pack-message.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
 import { type ChatMessage, type ChatThread, RoutingMode } from '../../../generated/prisma';
@@ -63,6 +66,7 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly costEnsembleManager: CostEnsembleManager,
     private readonly verifierManager: VerifierManager,
     private readonly pipelineManager: PipelineManager,
+    private readonly rolePackManager: RolePackManager,
     private readonly chatStreamService: ChatStreamService,
     private readonly rabbitMQService: RabbitMQService,
   ) {
@@ -196,6 +200,10 @@ export class ChatMessagesService implements OnModuleInit {
 
   async executePipeline(userId: string, dto: PipelineMessageDto): Promise<PipelineResponse> {
     return this.pipelineManager.executePipeline(userId, dto);
+  }
+
+  async executeRolePack(userId: string, dto: RolePackMessageDto): Promise<RolePackResponse> {
+    return this.rolePackManager.executeRolePack(userId, dto);
   }
 
   async getMessages(

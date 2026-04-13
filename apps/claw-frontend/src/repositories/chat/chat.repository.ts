@@ -22,6 +22,8 @@ import type {
   SendCostEnsembleResult,
   SendPipelinePayload,
   SendPipelineResult,
+  SendRolePackPayload,
+  SendRolePackResult,
   SendVerifyPayload,
   SendVerifyResult,
   ThreadsListResponse,
@@ -153,6 +155,11 @@ export const chatRepository = {
       '/chat-messages/cost-ensemble',
       payload,
     );
+    return res.data;
+  },
+
+  async sendRolePack(payload: SendRolePackPayload): Promise<SendRolePackResult> {
+    const res = await apiClient.post<SendRolePackResult>('/chat-messages/role-pack', payload);
     return res.data;
   },
 };

@@ -15,6 +15,7 @@ import {
 } from '../dto/cost-ensemble-message.dto';
 import { type VerifyMessageDto, verifyMessageSchema } from '../dto/verify-message.dto';
 import { type PipelineMessageDto, pipelineMessageSchema } from '../dto/pipeline-message.dto';
+import { type RolePackMessageDto, rolePackMessageSchema } from '../dto/role-pack-message.dto';
 import { CreateMessageDto, createMessageSchema } from '../dto/create-message.dto';
 import { type ParallelMessageDto, parallelMessageSchema } from '../dto/parallel-message.dto';
 import { ListMessagesQueryDto, listMessagesQuerySchema } from '../dto/list-messages-query.dto';
@@ -30,6 +31,7 @@ import { type CostEnsembleResponse } from '../types/cost-ensemble.types';
 import { type VerifyResponse } from '../types/verifier.types';
 import { type ParallelResponse } from '../types/parallel.types';
 import { type PipelineResponse } from '../types/pipeline.types';
+import { type RolePackResponse } from '../types/role-pack.types';
 import { type ChatMessage } from '../../../generated/prisma';
 
 @Controller('chat-messages')
@@ -106,6 +108,14 @@ export class ChatMessagesController {
     @Body(new ZodValidationPipe(verifyMessageSchema)) dto: VerifyMessageDto,
   ): Promise<VerifyResponse> {
     return this.chatMessagesService.executeVerify(user.id, dto);
+  }
+
+  @Post('role-pack')
+  async executeRolePack(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(rolePackMessageSchema)) dto: RolePackMessageDto,
+  ): Promise<RolePackResponse> {
+    return this.chatMessagesService.executeRolePack(user.id, dto);
   }
 
   @Post('pipeline')

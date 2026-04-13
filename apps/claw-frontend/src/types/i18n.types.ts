@@ -71,6 +71,7 @@ export type TranslationDictionary = {
     verifierLab: string;
     pipelineLab: string;
     costEnsemble: string;
+    rolePackLab: string;
     memory: string;
     context: string;
     files: string;
@@ -817,6 +818,27 @@ export type TranslationDictionary = {
     ambiguity: string;
     reasoning: string;
     candidates: string;
+    viewInThread: string;
+  };
+  rolePack: {
+    title: string;
+    description: string;
+    contentLabel: string;
+    contentPlaceholder: string;
+    packLabel: string;
+    packCoding: string;
+    packResearch: string;
+    packMarketing: string;
+    packLegal: string;
+    sendPrompt: string;
+    running: string;
+    synthesizing: string;
+    noResults: string;
+    sendFailed: string;
+    teamBreakdown: string;
+    role: string;
+    model: string;
+    latency: string;
     viewInThread: string;
   };
   validation: {

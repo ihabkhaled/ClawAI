@@ -17,6 +17,7 @@ export const ROUTES = {
   CHAT_VERIFY: '/chat/verify',
   CHAT_PIPELINE: '/chat/pipeline',
   CHAT_COST_ENSEMBLE: '/chat/cost-ensemble',
+  CHAT_ROLE_PACK: '/chat/role-pack',
   ROUTING_REPLAY: '/routing/replay',
   ROUTING_RECOVERY: '/routing/recovery',
   ROUTING_ADAPTIVE_INSIGHTS: '/routing/adaptive-insights',

@@ -49,6 +49,7 @@ import type { PipelineResult, PipelineStageResult } from './pipeline.types';
 import type { ProviderFailureStat, RecentFallback } from './recovery.types';
 import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
 import type { ReplayBatchResult, ReplayResult } from './replay.types';
+import type { RoleMemberResult, RolePackResult } from './role-pack.types';
 import type { CreatePolicyRequest, RoutingDecision, RoutingPolicy } from './routing.types';
 import type { DecompositionResultState, SubTaskResult } from './task-decomposition.types';
 import type { UseVerifyResultState } from './verifier.types';
@@ -895,4 +896,17 @@ export type CostEnsembleResultCardProps = {
 export type CostTierBadgeProps = {
   tier: CostTier;
   label: string;
+};
+
+// ─── Role Pack component props ────────────────────────────────────────────────
+
+export type RolePackResultCardProps = {
+  result: RolePackResult;
+  onViewInThread: () => void;
+  t: TranslateFunction;
+};
+
+export type RolePackMemberCardProps = {
+  member: RoleMemberResult;
+  t: TranslateFunction;
 };

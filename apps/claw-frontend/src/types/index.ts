@@ -225,6 +225,8 @@ export type {
   PipelineStageItemProps,
   CostEnsembleResultCardProps,
   CostTierBadgeProps,
+  RolePackResultCardProps,
+  RolePackMemberCardProps,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
@@ -417,3 +419,14 @@ export type {
   UseCostEnsemblePollResult,
   UseCostEnsemblePageReturn,
 } from './cost-ensemble.types';
+export type {
+  RolePack,
+  RoleMemberResult,
+  RolePackMetadata,
+  RolePackResult,
+  SendRolePackPayload,
+  SendRolePackResult,
+  UseSendRolePackResult,
+  UseRolePackPollResult,
+  UseRolePackPageReturn,
+} from './role-pack.types';
