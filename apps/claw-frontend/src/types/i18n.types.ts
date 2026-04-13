@@ -57,6 +57,7 @@ export type TranslationDictionary = {
     compareModels: string;
     consensusMode: string;
     escalationChain: string;
+    repairLab: string;
     connectors: string;
     models: string;
     modelCatalog: string;
@@ -646,6 +647,31 @@ export type TranslationDictionary = {
     viewInThread: string;
     stepsTimeline: string;
     finalAnswer: string;
+  };
+  repair: {
+    title: string;
+    description: string;
+    contentLabel: string;
+    contentPlaceholder: string;
+    repairTypes: string;
+    schemaLabel: string;
+    schemaDesc: string;
+    formatLabel: string;
+    formatDesc: string;
+    completenessLabel: string;
+    completenessDesc: string;
+    factualityLabel: string;
+    factualityDesc: string;
+    sendPrompt: string;
+    running: string;
+    sendFailed: string;
+    synthesizing: string;
+    resultTitle: string;
+    noResults: string;
+    viewInThread: string;
+    finalAnswer: string;
+    provider: string;
+    model: string;
   };
   validation: {
     required: string;

@@ -6,12 +6,14 @@ import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-thre
 import { ChatExecutionManager } from '../managers/chat-execution.manager';
 import { ContextAssemblyManager } from '../managers/context-assembly.manager';
 import { ConsensusExecutionManager } from '../managers/consensus-execution.manager';
+import { AnswerRepairManager } from '../managers/answer-repair.manager';
 import { EscalationChainManager } from '../managers/escalation-chain.manager';
 import { ParallelExecutionManager } from '../managers/parallel-execution.manager';
 import { ChatStreamService } from './chat-stream.service';
 import { type CreateMessageDto } from '../dto/create-message.dto';
 import { type ConsensusMessageDto } from '../dto/consensus-message.dto';
 import { type EscalationChainMessageDto } from '../dto/escalation-chain-message.dto';
+import { type RepairMessageDto } from '../dto/repair-message.dto';
 import { type ListMessagesQueryDto } from '../dto/list-messages-query.dto';
 import {
   type LlmResponse,
@@ -20,6 +22,7 @@ import {
 } from '../types/execution.types';
 import { type ConsensusResponse } from '../types/consensus.types';
 import { type EscalationChainResponse } from '../types/escalation-chain.types';
+import { type AnswerRepairResponse } from '../types/answer-repair.types';
 import { type ParallelResponse } from '../types/parallel.types';
 import { type ParallelMessageDto } from '../dto/parallel-message.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
@@ -39,6 +42,7 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly parallelExecutionManager: ParallelExecutionManager,
     private readonly consensusExecutionManager: ConsensusExecutionManager,
     private readonly escalationChainManager: EscalationChainManager,
+    private readonly answerRepairManager: AnswerRepairManager,
     private readonly chatStreamService: ChatStreamService,
     private readonly rabbitMQService: RabbitMQService,
   ) {
@@ -142,6 +146,10 @@ export class ChatMessagesService implements OnModuleInit {
       dto.chain,
       dto.fileIds,
     );
+  }
+
+  async createRepairMessage(userId: string, dto: RepairMessageDto): Promise<AnswerRepairResponse> {
+    return this.answerRepairManager.executeRepair(userId, dto);
   }
 
   async getMessages(

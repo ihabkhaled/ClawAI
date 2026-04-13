@@ -208,6 +208,8 @@ export type {
   EscalationChainBuilderProps,
   EscalationResultCardProps,
   EscalationStepTimelineProps,
+  RepairTypeSelectorProps,
+  RepairResultCardProps,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
@@ -309,6 +311,15 @@ export type {
   UseEscalationPollResult,
   UseEscalationPageReturn,
 } from './escalation-chain.types';
+export type {
+  RepairRequest,
+  RepairResponse,
+  RepairMetadata,
+  RepairResultState,
+  UseRepairSendResult,
+  UseRepairPollResult,
+  UseRepairPageReturn,
+} from './answer-repair.types';
 export type {
   ImageGeneration,
   ImageGenerationAsset,

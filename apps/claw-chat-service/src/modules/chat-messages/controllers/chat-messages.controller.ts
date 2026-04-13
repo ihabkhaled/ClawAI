@@ -6,6 +6,7 @@ import {
   type EscalationChainMessageDto,
   escalationChainMessageSchema,
 } from '../dto/escalation-chain-message.dto';
+import { type RepairMessageDto, repairMessageSchema } from '../dto/repair-message.dto';
 import { CreateMessageDto, createMessageSchema } from '../dto/create-message.dto';
 import { type ParallelMessageDto, parallelMessageSchema } from '../dto/parallel-message.dto';
 import { ListMessagesQueryDto, listMessagesQuerySchema } from '../dto/list-messages-query.dto';
@@ -14,6 +15,7 @@ import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { type AuthenticatedUser, type PaginatedResult } from '../../../common/types';
 import { type ConsensusResponse } from '../types/consensus.types';
 import { type EscalationChainResponse } from '../types/escalation-chain.types';
+import { type AnswerRepairResponse } from '../types/answer-repair.types';
 import { type ParallelResponse } from '../types/parallel.types';
 import { type ChatMessage } from '../../../generated/prisma';
 
@@ -51,6 +53,14 @@ export class ChatMessagesController {
     @Body(new ZodValidationPipe(escalationChainMessageSchema)) dto: EscalationChainMessageDto,
   ): Promise<EscalationChainResponse> {
     return this.chatMessagesService.createEscalationChainMessage(user.id, dto);
+  }
+
+  @Post('repair')
+  async createRepair(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(repairMessageSchema)) dto: RepairMessageDto,
+  ): Promise<AnswerRepairResponse> {
+    return this.chatMessagesService.createRepairMessage(user.id, dto);
   }
 
   @Get('thread/:threadId')

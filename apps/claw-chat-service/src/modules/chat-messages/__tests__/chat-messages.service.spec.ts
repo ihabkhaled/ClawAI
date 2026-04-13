@@ -3,6 +3,7 @@ import { type ChatMessagesRepository } from '../repositories/chat-messages.repos
 import { type ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { type ChatExecutionManager } from '../managers/chat-execution.manager';
 import { type ContextAssemblyManager } from '../managers/context-assembly.manager';
+import { type AnswerRepairManager } from '../managers/answer-repair.manager';
 import { type ConsensusExecutionManager } from '../managers/consensus-execution.manager';
 import { type EscalationChainManager } from '../managers/escalation-chain.manager';
 import { type ParallelExecutionManager } from '../managers/parallel-execution.manager';
@@ -106,6 +107,7 @@ describe('ChatMessagesService', () => {
       { executeParallel: jest.fn() } as unknown as ParallelExecutionManager,
       { executeConsensus: jest.fn() } as unknown as ConsensusExecutionManager,
       { executeEscalationChain: jest.fn() } as unknown as EscalationChainManager,
+      { executeRepair: jest.fn() } as unknown as AnswerRepairManager,
       { emitCompletion: jest.fn() } as unknown as ChatStreamService,
       rabbitMQ as unknown as RabbitMQService,
     );

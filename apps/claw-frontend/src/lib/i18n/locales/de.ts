@@ -56,6 +56,7 @@ export const de: TranslationDictionary = {
     compareModels: 'Modelle vergleichen',
     consensusMode: 'Konsens-Modus',
     escalationChain: 'Eskalationskette',
+    repairLab: 'Reparatur-Lab',
     connectors: 'Konnektoren',
     models: 'Modelle',
     modelCatalog: 'Modellkatalog',
@@ -653,6 +654,35 @@ export const de: TranslationDictionary = {
     viewInThread: 'Im Thread anzeigen',
     stepsTimeline: 'Schritt-Zeitachse',
     finalAnswer: 'Endgültige Antwort',
+  },
+  repair: {
+    title: 'Antwort-Reparatur-Lab',
+    description:
+      'Reparieren Sie fehlerhafte, oberflächliche, unvollständige oder halluzinierte Antworten ohne Neustart.',
+    contentLabel: 'Zu reparierende Antwort',
+    contentPlaceholder: 'Fügen Sie die Antwort ein, die Sie reparieren möchten...',
+    repairTypes: 'Reparaturtypen',
+    schemaLabel: 'Schema',
+    schemaDesc: 'Beheben Sie fehlerhafte JSON-, Struktur- oder Datenformatprobleme.',
+    formatLabel: 'Format',
+    formatDesc:
+      'Beheben Sie Markdown-Formatierung, Überschriften, Listen, Codeblöcke und Gesamtstruktur.',
+    completenessLabel: 'Vollständigkeit',
+    completenessDesc:
+      'Erweitern Sie flache oder unvollständige Abschnitte, fügen Sie fehlende Schlüsselpunkte hinzu.',
+    factualityLabel: 'Faktentreue',
+    factualityDesc:
+      'Identifizieren und korrigieren Sie Sachfehler, Halluzinationen oder falsche Behauptungen.',
+    sendPrompt: 'Antwort reparieren',
+    running: 'Wird repariert...',
+    sendFailed: 'Reparatur konnte nicht gestartet werden. Bitte versuchen Sie es erneut.',
+    synthesizing: 'Reparatur läuft...',
+    resultTitle: 'Reparierte Antwort',
+    noResults: 'Noch keine Reparaturergebnisse',
+    viewInThread: 'Im Thread anzeigen',
+    finalAnswer: 'Endgültige Antwort',
+    provider: 'Anbieter',
+    model: 'Modell',
   },
   validation: {
     required: 'Dieses Feld ist erforderlich',

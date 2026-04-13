@@ -5,6 +5,7 @@ import type {
   ComponentSize,
   ConnectorStatus,
   MessageFeedback,
+  RepairType,
   ReplayOutcomeLabel,
   RoutingMode,
 } from '@/enums';
@@ -12,6 +13,7 @@ import type { ConsensusConfidenceLevel } from '@/enums/consensus-confidence-leve
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { TranslateFunction } from '@/types/i18n.types';
 
+import type { RepairResultState } from './answer-repair.types';
 import type { AdminUser, AuditLog } from './audit.types';
 import type { DownloadStats, ModelCatalogEntry, PullJobResponse } from './catalog.types';
 import type { ChatMessage, ChatThread, FallbackAttemptInfo, JudgeModelOption } from './chat.types';
@@ -768,5 +770,19 @@ export type EscalationResultCardProps = {
 
 export type EscalationStepTimelineProps = {
   stepResults: EscalationStepResult[];
+  t: TranslateFunction;
+};
+
+// ─── Answer Repair component props ──────────────────────────────────────────
+
+export type RepairTypeSelectorProps = {
+  selectedTypes: RepairType[];
+  onToggle: (type: RepairType) => void;
+  t: TranslateFunction;
+};
+
+export type RepairResultCardProps = {
+  result: RepairResultState;
+  onViewInThread: () => void;
   t: TranslateFunction;
 };

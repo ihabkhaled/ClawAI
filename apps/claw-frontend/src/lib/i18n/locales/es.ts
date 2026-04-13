@@ -56,6 +56,7 @@ export const es: TranslationDictionary = {
     compareModels: 'Comparar modelos',
     consensusMode: 'Modo Consenso',
     escalationChain: 'Cadena de Escalado',
+    repairLab: 'Laboratorio de Reparación',
     connectors: 'Conectores',
     models: 'Modelos',
     modelCatalog: 'Catálogo de Modelos',
@@ -654,6 +655,35 @@ export const es: TranslationDictionary = {
     viewInThread: 'Ver en hilo',
     stepsTimeline: 'Línea de tiempo de pasos',
     finalAnswer: 'Respuesta final',
+  },
+  repair: {
+    title: 'Laboratorio de Reparación de Respuestas',
+    description:
+      'Repara respuestas malformadas, superficiales, incompletas o alucinadas sin reiniciar.',
+    contentLabel: 'Respuesta a reparar',
+    contentPlaceholder: 'Pega la respuesta que deseas reparar...',
+    repairTypes: 'Tipos de reparación',
+    schemaLabel: 'Esquema',
+    schemaDesc: 'Corregir JSON mal formado, estructura incorrecta o problemas de formato de datos.',
+    formatLabel: 'Formato',
+    formatDesc:
+      'Corregir el formato markdown, encabezados, listas, bloques de código y estructura general.',
+    completenessLabel: 'Completitud',
+    completenessDesc:
+      'Expandir secciones superficiales o incompletas, añadir puntos clave faltantes.',
+    factualityLabel: 'Factualidad',
+    factualityDesc:
+      'Identificar y corregir errores de hechos, alucinaciones o afirmaciones incorrectas.',
+    sendPrompt: 'Reparar respuesta',
+    running: 'Reparando...',
+    sendFailed: 'Error al iniciar la reparación. Por favor intenta de nuevo.',
+    synthesizing: 'Reparación en progreso...',
+    resultTitle: 'Respuesta Reparada',
+    noResults: 'Sin resultados de reparación aún',
+    viewInThread: 'Ver en hilo',
+    finalAnswer: 'Respuesta final',
+    provider: 'Proveedor',
+    model: 'Modelo',
   },
   validation: {
     required: 'Este campo es obligatorio',

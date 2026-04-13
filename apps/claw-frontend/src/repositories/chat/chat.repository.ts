@@ -12,6 +12,8 @@ import type {
   MessagesListResponse,
   ParallelRequest,
   ParallelResponse,
+  RepairRequest,
+  RepairResponse,
   ThreadsListResponse,
 } from '@/types';
 
@@ -108,6 +110,11 @@ export const chatRepository = {
       '/chat-messages/escalation-chain',
       data,
     );
+    return response.data;
+  },
+
+  async repairMessage(data: RepairRequest): Promise<RepairResponse> {
+    const response = await apiClient.post<RepairResponse>('/chat-messages/repair', data);
     return response.data;
   },
 };

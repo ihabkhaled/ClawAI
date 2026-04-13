@@ -1,0 +1,6 @@
+export enum RepairType {
+  SCHEMA = 'SCHEMA',
+  FORMAT = 'FORMAT',
+  COMPLETENESS = 'COMPLETENESS',
+  FACTUALITY = 'FACTUALITY',
+}

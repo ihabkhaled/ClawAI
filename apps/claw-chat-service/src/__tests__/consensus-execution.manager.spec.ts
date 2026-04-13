@@ -139,6 +139,10 @@ describe('ConsensusExecutionManager', () => {
 
   describe('background synthesis', () => {
     it('should store model messages and synthesis message when all models succeed', async () => {
+      // Use isolated mocks to prevent call-count leakage from other tests' background tasks
+      const isolatedCreate = jest.fn().mockResolvedValue({ id: 'msg-1', content: 'test' });
+      const isolatedRepo = { ...mockChatMessagesRepository, create: isolatedCreate };
+
       const responses = sampleModels.map((m, i) => ({
         provider: m.provider,
         model: m.model,
@@ -148,23 +152,32 @@ describe('ConsensusExecutionManager', () => {
         outputTokens: 20,
       }));
 
-      mockChatExecutionManager.callProvider
+      const isolatedCallProvider = jest
+        .fn()
         .mockResolvedValueOnce(responses[0])
         .mockResolvedValueOnce(responses[1]);
+      const isolatedExecManager = { callProvider: isolatedCallProvider };
+
+      const isolatedManager = new ConsensusExecutionManager(
+        isolatedExecManager as any,
+        mockContextAssemblyManager as any,
+        isolatedRepo as any,
+        mockChatThreadsRepository as any,
+        mockChatStreamService as any,
+      );
 
       // Mock Ollama synthesis to fail (test heuristic fallback path)
-      const originalFetch = globalThis.fetch;
       globalThis.fetch = jest.fn().mockRejectedValue(new Error('Ollama unavailable'));
 
-      await manager.executeConsensus('user-1', 'thread-1', 'test prompt', sampleModels);
+      await isolatedManager.executeConsensus('user-1', 'thread-1', 'test prompt', sampleModels);
 
       // Allow background execution to complete
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Should have called create for: 1 user message + 2 model messages + 1 synthesis
-      expect(mockChatMessagesRepository.create).toHaveBeenCalledTimes(4);
+      expect(isolatedCreate).toHaveBeenCalledTimes(4);
 
-      globalThis.fetch = originalFetch;
+      globalThis.fetch = undefined as any;
     });
 
     it('should store both model messages before the synthesis message when exactly 2 models complete', async () => {

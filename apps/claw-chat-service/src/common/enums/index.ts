@@ -5,3 +5,4 @@ export { StreamEventType } from './stream-event-type.enum';
 export { JudgeDecision } from './judge-decision.enum';
 export { ConsensusConfidenceLevel } from './consensus-confidence.enum';
 export { EscalationChainStatus } from './escalation-chain-status.enum';
+export { RepairType } from './repair-type.enum';
