@@ -199,4 +199,57 @@ describe('escalationChainMessageSchema', () => {
       expect(result.success).toBe(false);
     });
   });
+
+  describe('boundary conditions', () => {
+    it('should accept content of exactly 100_000 characters (at the boundary)', () => {
+      const result = escalationChainMessageSchema.safeParse({
+        content: 'a'.repeat(100_000),
+        chain: validChain,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept same provider with different models (not a duplicate)', () => {
+      const result = escalationChainMessageSchema.safeParse({
+        content: 'Hello world',
+        chain: [
+          { provider: 'OPENAI', model: 'gpt-4o-mini' },
+          { provider: 'OPENAI', model: 'gpt-4o' },
+        ],
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept same model name with different providers (not a duplicate)', () => {
+      // Edge case: same model string on two different providers — each pair is unique
+      const result = escalationChainMessageSchema.safeParse({
+        content: 'Hello world',
+        chain: [
+          { provider: 'OPENAI', model: 'shared-model' },
+          { provider: 'ANTHROPIC', model: 'shared-model' },
+        ],
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept exactly 2 steps all with qualityThreshold set', () => {
+      const result = escalationChainMessageSchema.safeParse({
+        content: 'Test',
+        chain: [
+          { provider: 'OPENAI', model: 'gpt-4o-mini', qualityThreshold: 0.5 },
+          { provider: 'ANTHROPIC', model: 'claude-sonnet-4', qualityThreshold: 0.75 },
+        ],
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept exactly 10 fileIds (at the boundary)', () => {
+      const result = escalationChainMessageSchema.safeParse({
+        content: 'Hello world',
+        chain: validChain,
+        fileIds: Array.from({ length: 10 }, (_, i) => `file-${String(i)}`),
+      });
+      expect(result.success).toBe(true);
+    });
+  });
 });
