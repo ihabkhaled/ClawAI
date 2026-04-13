@@ -156,6 +156,7 @@ export default function ThreadDetailPage() {
             judgeEvaluating={judgeEvaluating}
             executingModel={executingModel}
             judgeModel={judgeModel}
+            t={t}
             onStartReached={virtualizedMessages.fetchPreviousPage}
             onFeedback={handleFeedback}
             onRegenerate={handleRegenerate}

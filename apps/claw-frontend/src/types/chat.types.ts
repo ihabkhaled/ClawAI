@@ -1,4 +1,4 @@
-import type { MessageFeedback, MessageRole, RoutingMode, StreamEventType } from '@/enums';
+import type { FallbackFailureType, MessageFeedback, MessageRole, RoutingMode, StreamEventType } from '@/enums';
 
 export type ChatThread = {
   id: string;
@@ -129,6 +129,7 @@ export type FallbackAttemptInfo = {
   nextProvider?: string;
   nextModel?: string;
   timestamp: number;
+  failureType?: FallbackFailureType;
 };
 
 export type UseEditableTitleReturn = {

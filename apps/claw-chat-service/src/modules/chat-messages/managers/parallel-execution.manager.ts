@@ -12,10 +12,12 @@ import {
 import { type ThreadSettings } from '../types/execution.types';
 import { type AssembledContext } from '../types/context.types';
 import { type ChatThread } from '../../../generated/prisma';
+import { AppConfig } from '../../../app/config/app.config';
 
 @Injectable()
 export class ParallelExecutionManager {
   private readonly logger = new Logger(ParallelExecutionManager.name);
+  private readonly timeoutMs: number;
 
   constructor(
     private readonly chatExecutionManager: ChatExecutionManager,
@@ -23,7 +25,9 @@ export class ParallelExecutionManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
-  ) {}
+  ) {
+    this.timeoutMs = AppConfig.get().OLLAMA_GENERATE_TIMEOUT_MS;
+  }
 
   async executeParallel(
     userId: string,
@@ -119,7 +123,7 @@ export class ParallelExecutionManager {
     threadSettings: ThreadSettings | undefined,
   ): Promise<ParallelModelResponse[]> {
     const promises = models.map((target) =>
-      this.executeSingleModel(target, context, threadSettings),
+      this.executeWithTimeout(target, context, threadSettings),
     );
 
     const settled = await Promise.allSettled(promises);
@@ -136,6 +140,36 @@ export class ParallelExecutionManager {
         result.reason instanceof Error ? result.reason.message : 'Promise rejected',
       );
     });
+  }
+
+  private async executeWithTimeout(
+    target: ParallelModelTarget,
+    context: AssembledContext,
+    threadSettings: ThreadSettings | undefined,
+  ): Promise<ParallelModelResponse> {
+    const modelPromise = this.executeSingleModel(target, context, threadSettings);
+    const timeoutPromise = new Promise<never>((_resolve, reject) => {
+      setTimeout(
+        () => reject(new Error(`Model execution timeout after ${String(this.timeoutMs)}ms`)),
+        this.timeoutMs,
+      );
+    });
+
+    try {
+      return await Promise.race([modelPromise, timeoutPromise]);
+    } catch (error: unknown) {
+      const isTimeout =
+        error instanceof Error && error.message.includes('Model execution timeout');
+
+      if (isTimeout) {
+        this.logger.warn(
+          `executeWithTimeout: ${target.provider}/${target.model} timed out after ${String(this.timeoutMs)}ms`,
+        );
+        return this.buildTimedOutResponse(target.provider, target.model);
+      }
+
+      throw error;
+    }
   }
 
   private async executeSingleModel(
@@ -205,6 +239,22 @@ export class ParallelExecutionManager {
     );
 
     await Promise.all(storePromises);
+  }
+
+  private buildTimedOutResponse(
+    provider: string,
+    model: string,
+  ): ParallelModelResponse {
+    return {
+      provider,
+      model,
+      content: '',
+      latencyMs: this.timeoutMs,
+      inputTokens: null,
+      outputTokens: null,
+      status: 'timeout',
+      errorMessage: `Model execution timed out after ${String(this.timeoutMs)}ms`,
+    };
   }
 
   private buildFailedResponse(

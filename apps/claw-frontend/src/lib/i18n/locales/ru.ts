@@ -512,6 +512,8 @@ export const ru: TranslationDictionary = {
     latency: 'Задержка',
     tokens: 'Токены',
     noResults: 'Пока нет результатов сравнения',
+    modelCount: '{count} моделей',
+    expand: 'Развернуть',
   },
   validation: {
     required: 'Это поле обязательно для заполнения',

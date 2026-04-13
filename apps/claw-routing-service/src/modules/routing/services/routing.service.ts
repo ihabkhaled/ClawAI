@@ -305,6 +305,7 @@ export class RoutingService implements OnModuleInit {
       routingMode: decision.routingMode,
       fallbackProvider: fallback?.provider,
       fallbackModel: fallback?.model,
+      fallbackChain: decision.fallbackChain,
       detectedCategory: decision.detectedCategory,
       timestamp: new Date().toISOString(),
     });

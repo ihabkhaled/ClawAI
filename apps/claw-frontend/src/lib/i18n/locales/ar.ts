@@ -507,6 +507,8 @@ export const ar: TranslationDictionary = {
     latency: 'زمن الاستجابة',
     tokens: 'الرموز',
     noResults: 'لا توجد نتائج مقارنة بعد',
+    modelCount: '{count} نماذج',
+    expand: 'توسيع',
   },
   validation: {
     required: 'هذا الحقل مطلوب',

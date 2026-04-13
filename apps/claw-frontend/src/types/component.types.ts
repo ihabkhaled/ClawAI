@@ -328,6 +328,7 @@ export type VirtualizedMessagesProps = {
   judgeEvaluating?: boolean;
   executingModel?: string | null;
   judgeModel?: string | null;
+  t: TranslateFunction;
   onStartReached: () => void;
   onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
   onRegenerate: (messageId: string) => void;
@@ -620,6 +621,7 @@ export type ReplayFiltersFormProps = {
 
 export type ParallelMessageGroupProps = {
   messages: ChatMessage[];
+  t: TranslateFunction;
 };
 
 // ─── Parallel Compare component props ─────────────────────────────────────────

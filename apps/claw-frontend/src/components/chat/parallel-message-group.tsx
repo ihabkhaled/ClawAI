@@ -5,12 +5,13 @@ import { Expand, XCircle, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ParallelModelStatus } from '@/enums';
 import { useParallelMessageGroup } from '@/hooks/chat/use-parallel-message-group';
 import { MarkdownRenderer } from '@/lib/markdown';
 import type { ParallelMessageGroupProps } from '@/types';
 import { formatLatency, getParallelColClass } from '@/utilities';
 
-export function ParallelMessageGroup({ messages }: ParallelMessageGroupProps): React.ReactElement {
+export function ParallelMessageGroup({ messages, t }: ParallelMessageGroupProps): React.ReactElement {
   const { expanded, fastestId, openExpanded, closeExpanded } = useParallelMessageGroup(messages);
 
   const colClass = getParallelColClass(messages.length);
@@ -18,9 +19,9 @@ export function ParallelMessageGroup({ messages }: ParallelMessageGroupProps): R
   return (
     <div className="w-full space-y-2">
       <div className="flex items-center gap-1.5">
-        <span className="text-xs font-medium text-muted-foreground">Compare</span>
+        <span className="text-xs font-medium text-muted-foreground">{t('compare.title')}</span>
         <Badge variant="secondary" className="text-xs">
-          {messages.length} models
+          {t('compare.modelCount', { count: messages.length })}
         </Badge>
       </div>
 
@@ -28,7 +29,7 @@ export function ParallelMessageGroup({ messages }: ParallelMessageGroupProps): R
         {messages.map((msg) => {
           const meta = msg.metadata as Record<string, unknown> | null;
           const status = meta?.['status'] as string | undefined;
-          const isFailed = status === 'failed';
+          const isFailed = status === ParallelModelStatus.FAILED;
           const isFastest = msg.id === fastestId;
           const providerModel = [msg.provider, msg.model].filter(Boolean).join(' / ');
           const preview = msg.content.slice(0, 180);
@@ -69,7 +70,7 @@ export function ParallelMessageGroup({ messages }: ParallelMessageGroupProps): R
                   onClick={() => openExpanded(msg, isFastest)}
                 >
                   <Expand className="me-1 h-3 w-3" />
-                  Expand
+                  {t('compare.expand')}
                 </Button>
               ) : null}
             </div>
@@ -89,11 +90,11 @@ export function ParallelMessageGroup({ messages }: ParallelMessageGroupProps): R
             <div className="space-y-3">
               {expanded.message.latencyMs !== null ? (
                 <div className="flex gap-3 text-xs text-muted-foreground">
-                  <span>Latency: {formatLatency(expanded.message.latencyMs)}</span>
+                  <span>{t('compare.latency')}: {formatLatency(expanded.message.latencyMs)}</span>
                   {(expanded.message.inputTokens ?? 0) + (expanded.message.outputTokens ?? 0) >
                   0 ? (
                     <span>
-                      Tokens:{' '}
+                      {t('compare.tokens')}:{' '}
                       {(expanded.message.inputTokens ?? 0) + (expanded.message.outputTokens ?? 0)}
                     </span>
                   ) : null}

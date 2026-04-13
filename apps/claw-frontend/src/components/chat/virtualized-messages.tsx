@@ -23,6 +23,7 @@ export function VirtualizedMessages({
   judgeEvaluating,
   executingModel,
   judgeModel,
+  t,
   onStartReached,
   onFeedback,
   onRegenerate,
@@ -38,7 +39,7 @@ export function VirtualizedMessages({
       if (renderItem.kind === 'parallel') {
         return (
           <div className="px-4 py-2">
-            <ParallelMessageGroup messages={renderItem.messages} />
+            <ParallelMessageGroup messages={renderItem.messages} t={t} />
           </div>
         );
       }
@@ -52,7 +53,7 @@ export function VirtualizedMessages({
         </div>
       );
     },
-    [onFeedback, onRegenerate],
+    [onFeedback, onRegenerate, t],
   );
 
   const headerContent = useCallback((): React.ReactElement | null => {

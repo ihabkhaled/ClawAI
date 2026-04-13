@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { ParallelModelStatus } from '@/enums';
 import type { ChatMessage, ParallelExpandedMessage } from '@/types';
 
 export function useParallelMessageGroup(messages: ChatMessage[]): {
@@ -11,7 +12,7 @@ export function useParallelMessageGroup(messages: ChatMessage[]): {
   const [expanded, setExpanded] = useState<ParallelExpandedMessage | null>(null);
 
   const completed = messages.filter(
-    (m) => (m.metadata as Record<string, unknown> | null)?.['status'] === 'completed',
+    (m) => (m.metadata as Record<string, unknown> | null)?.['status'] === ParallelModelStatus.COMPLETED,
   );
 
   const fastestId =

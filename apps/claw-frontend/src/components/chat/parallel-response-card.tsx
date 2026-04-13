@@ -2,13 +2,14 @@ import { CheckCircle, XCircle, Zap } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ParallelModelStatus } from '@/enums';
 import { MarkdownRenderer } from '@/lib/markdown';
 import type { ParallelResponseCardProps } from '@/types';
 import { formatLatency } from '@/utilities';
 
 export function ParallelResponseCard({ response, isFastest, t }: ParallelResponseCardProps) {
-  const isCompleted = response.status === 'completed';
-  const isFailed = response.status === 'failed';
+  const isCompleted = response.status === ParallelModelStatus.COMPLETED;
+  const isFailed = response.status === ParallelModelStatus.FAILED;
 
   return (
     <Card className="flex flex-col">

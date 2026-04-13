@@ -512,6 +512,8 @@ export const pt: TranslationDictionary = {
     latency: 'Latência',
     tokens: 'Tokens',
     noResults: 'Nenhum resultado de comparação ainda',
+    modelCount: '{count} modelos',
+    expand: 'Expandir',
   },
   validation: {
     required: 'Este campo é obrigatório',

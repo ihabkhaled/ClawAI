@@ -1,3 +1,5 @@
+import type { ParallelModelStatus } from '@/enums';
+
 export type ParallelModelResponse = {
   provider: string;
   model: string;
@@ -5,7 +7,7 @@ export type ParallelModelResponse = {
   latencyMs: number;
   inputTokens: number | null;
   outputTokens: number | null;
-  status: string;
+  status: ParallelModelStatus;
   errorMessage: string | null;
 };
 

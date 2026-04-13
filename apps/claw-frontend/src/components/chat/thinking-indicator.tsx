@@ -1,6 +1,7 @@
-import { AlertTriangle, ArrowRight, XCircle } from 'lucide-react';
+import { AlertTriangle, ArrowRight, RefreshCw, XCircle } from 'lucide-react';
 
 import { THINKING_INDICATOR_LABEL } from '@/constants';
+import { FallbackFailureType } from '@/enums';
 import { cn } from '@/lib/utils';
 import type { ThinkingIndicatorProps } from '@/types';
 
@@ -33,11 +34,19 @@ export function ThinkingIndicator({
             {fallbackAttempts.map((attempt, idx) => (
               <div
                 key={`${attempt.failedProvider}-${String(attempt.attempt)}-${String(idx)}`}
-                className="flex items-center gap-1.5 text-xs text-amber-500"
+                className={cn(
+                  'flex items-center gap-1.5 text-xs',
+                  attempt.failureType === FallbackFailureType.QUALITY ? 'text-blue-500' : 'text-amber-500',
+                )}
               >
-                <AlertTriangle className="h-3 w-3 shrink-0" />
+                {attempt.failureType === FallbackFailureType.QUALITY ? (
+                  <RefreshCw className="h-3 w-3 shrink-0" />
+                ) : (
+                  <AlertTriangle className="h-3 w-3 shrink-0" />
+                )}
                 <span>
-                  {attempt.failedProvider}/{attempt.failedModel} failed
+                  {attempt.failedProvider}/{attempt.failedModel}{' '}
+                  {attempt.failureType === FallbackFailureType.QUALITY ? 'weak response' : 'failed'}
                 </span>
                 {attempt.nextProvider ? (
                   <>

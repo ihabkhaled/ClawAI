@@ -305,6 +305,9 @@ export class ChatMessagesService implements OnModuleInit {
     const routingMode = payload['routingMode'] as string | undefined;
     const fallbackProvider = payload['fallbackProvider'] as string | undefined;
     const fallbackModel = payload['fallbackModel'] as string | undefined;
+    const fallbackChain = payload['fallbackChain'] as
+      | Array<{ provider: string; model: string }>
+      | undefined;
     const timestamp = payload['timestamp'] as string | undefined;
     const detectedCategory = payload['detectedCategory'] as string | undefined;
 
@@ -333,6 +336,7 @@ export class ChatMessagesService implements OnModuleInit {
         routingMode,
         fallbackProvider,
         fallbackModel,
+        fallbackChain,
         timestamp: timestamp ?? new Date().toISOString(),
         detectedCategory,
       });

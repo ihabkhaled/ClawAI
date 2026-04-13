@@ -507,6 +507,8 @@ export type TranslationDictionary = {
     latency: string;
     tokens: string;
     noResults: string;
+    modelCount: string;
+    expand: string;
   };
   validation: {
     required: string;

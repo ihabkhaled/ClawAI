@@ -8,6 +8,7 @@ export type MessageRoutedData = {
   routingMode: string;
   fallbackProvider?: string;
   fallbackModel?: string;
+  fallbackChain?: Array<{ provider: string; model: string }>;
   timestamp: string;
   detectedCategory?: string;
   judgeEnabled?: boolean;

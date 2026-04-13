@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { API_BASE_URL } from '@/constants';
-import { StreamEventType } from '@/enums';
+import { FallbackFailureType, StreamEventType } from '@/enums';
 import type { FallbackAttemptInfo, SseConnection, StreamEvent } from '@/types';
 import { connectSse, logger } from '@/utilities';
 
@@ -53,15 +53,17 @@ export function useChatStream(threadId: string, isActive: boolean) {
                 nextProvider: parsed.nextProvider,
               },
             });
+            const errorText = parsed.error ?? 'Unknown error';
             const attempt: FallbackAttemptInfo = {
               failedProvider: parsed.failedProvider ?? 'unknown',
               failedModel: parsed.failedModel ?? 'unknown',
-              error: parsed.error ?? 'Unknown error',
+              error: errorText,
               attempt: parsed.attempt ?? 0,
               totalCandidates: parsed.totalCandidates ?? 0,
               nextProvider: parsed.nextProvider,
               nextModel: parsed.nextModel,
               timestamp: Date.now(),
+              failureType: errorText.startsWith('Weak response') ? FallbackFailureType.QUALITY : FallbackFailureType.ERROR,
             };
             setFallbackAttempts((prev) => [...prev, attempt]);
           }

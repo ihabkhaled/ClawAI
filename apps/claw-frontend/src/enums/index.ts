@@ -26,3 +26,5 @@ export { Theme, ResolvedTheme } from './theme.enum';
 export { StreamEventType } from './stream-event-type.enum';
 export { ImageGenerationStatus } from './image-generation-status.enum';
 export { FileGenerationStatus } from './file-generation-status.enum';
+export { ParallelModelStatus } from './parallel-model-status.enum';
+export { FallbackFailureType } from './fallback-failure-type.enum';

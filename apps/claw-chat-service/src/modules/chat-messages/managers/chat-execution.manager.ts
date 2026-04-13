@@ -192,7 +192,14 @@ export class ChatExecutionManager implements OnModuleInit {
       { provider: payload.selectedProvider, model: payload.selectedModel },
     ];
 
-    if (payload.fallbackProvider && payload.fallbackModel) {
+    // Use the full fallback chain from the routing service when available
+    if (payload.fallbackChain && payload.fallbackChain.length > 0) {
+      for (const entry of payload.fallbackChain) {
+        if (!candidates.some((c) => c.provider === entry.provider && c.model === entry.model)) {
+          candidates.push({ provider: entry.provider, model: entry.model });
+        }
+      }
+    } else if (payload.fallbackProvider && payload.fallbackModel) {
       candidates.push({ provider: payload.fallbackProvider, model: payload.fallbackModel });
     }
 
@@ -204,6 +211,7 @@ export class ChatExecutionManager implements OnModuleInit {
       return candidates;
     }
 
+    // Hardcoded cloud defaults as last resort if not already in the chain
     const allCloudProviders = [
       { provider: 'GEMINI', model: 'gemini-2.5-flash' },
       { provider: 'ANTHROPIC', model: 'claude-sonnet-4' },
