@@ -7,4 +7,5 @@ COPY apps/claw-server-logs-service/package.json ./package.json
 RUN cd /app && npm install --ignore-scripts && cd /app/apps/claw-server-logs-service && npm install --ignore-scripts 2>/dev/null || true
 COPY apps/claw-server-logs-service/ .
 EXPOSE 4011
+ENV NODE_OPTIONS="--max-old-space-size=1024"
 CMD ["npm", "run", "dev"]

@@ -76,6 +76,25 @@ export class LocalModelsRepository {
     });
   }
 
+  async markMissingAsUninstalled(presentKeys: string[], runtime: RuntimeType): Promise<number> {
+    const allInstalled = await this.prisma.localModel.findMany({
+      where: { runtime, isInstalled: true },
+    });
+
+    let count = 0;
+    for (const model of allInstalled) {
+      const key = `${model.name}:${model.tag}`;
+      if (!presentKeys.includes(key)) {
+        await this.prisma.localModel.update({
+          where: { id: model.id },
+          data: { isInstalled: false },
+        });
+        count++;
+      }
+    }
+    return count;
+  }
+
   async delete(id: string): Promise<LocalModel> {
     return this.prisma.localModel.delete({ where: { id } });
   }

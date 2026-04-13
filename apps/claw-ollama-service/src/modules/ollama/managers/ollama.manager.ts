@@ -161,6 +161,7 @@ export class OllamaManager {
 
       await this.upsertModelFromCatalog(catalogEntry, modelFullName);
       await this.completePullJob(pullJobId);
+      await this.pullJobsRepository.deleteOlderByModelName(modelFullName, pullJobId);
       subject.complete();
     } catch (error: unknown) {
       await this.failPullJob(pullJobId, error);
@@ -314,6 +315,8 @@ export class OllamaManager {
     const runtimeModels = await adapter.listModels();
     this.logger.debug(`syncFromRuntime: runtime has ${String(runtimeModels.length)} models`);
 
+    const runtimeKeys: string[] = [];
+
     for (const model of runtimeModels) {
       this.logger.debug(`syncFromRuntime: upserting model ${model.name}:${model.tag}`);
       await this.localModelsRepository.upsertByNameTagRuntime({
@@ -326,6 +329,15 @@ export class OllamaManager {
         quantization: model.quantization,
         isInstalled: true,
       });
+      runtimeKeys.push(`${model.name}:${model.tag}`);
+    }
+
+    const removed = await this.localModelsRepository.markMissingAsUninstalled(
+      runtimeKeys,
+      RuntimeType.OLLAMA,
+    );
+    if (removed > 0) {
+      this.logger.log(`syncFromRuntime: marked ${String(removed)} phantom models as uninstalled`);
     }
 
     this.logger.log(`syncFromRuntime: synced ${String(runtimeModels.length)} models`);
