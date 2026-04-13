@@ -32,6 +32,10 @@ export function ThreadSettings({
   judgeModel,
   onJudgeModelChange,
   judgeModelOptions,
+  qualityThreshold,
+  onQualityThresholdChange,
+  maxReRouteAttempts,
+  onMaxReRouteAttemptsChange,
   onSave,
   isPending,
 }: ThreadSettingsProps): React.ReactElement {
@@ -148,6 +152,43 @@ export function ThreadSettings({
             </Select>
           </div>
         )}
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium" htmlFor="quality-threshold">
+            {t('chat.qualityThreshold')}: {qualityThreshold.toFixed(1)}
+          </label>
+          <p className="text-xs text-muted-foreground">{t('chat.qualityThresholdDescription')}</p>
+          <input
+            id="quality-threshold"
+            type="range"
+            min={0}
+            max={1}
+            step={0.1}
+            value={qualityThreshold}
+            onChange={(e) => onQualityThresholdChange(Number(e.target.value))}
+            className="w-full accent-primary"
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>0</span>
+            <span>0.5</span>
+            <span>1</span>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium" htmlFor="max-reroute-attempts">
+            {t('chat.maxReRouteAttempts')}: {maxReRouteAttempts}
+          </label>
+          <p className="text-xs text-muted-foreground">{t('chat.maxReRouteAttemptsDescription')}</p>
+          <Input
+            id="max-reroute-attempts"
+            type="number"
+            min={0}
+            max={5}
+            value={String(maxReRouteAttempts)}
+            onChange={(e) => onMaxReRouteAttemptsChange(Number(e.target.value))}
+          />
+        </div>
 
         <Button onClick={onSave} disabled={isPending} size="sm">
           {isPending ? t('common.loading') : t('common.save')}

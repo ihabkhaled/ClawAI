@@ -39,6 +39,18 @@ export const ESTIMATED_COST_PER_INPUT_TOKEN: Record<string, number> = {
   ollama: 0,
 };
 
+/**
+ * Maps backend quality-check reason codes to human-readable labels.
+ * When the message bubble is i18n-ified, replace with `t(`chat.reRouteReason*`)`.
+ */
+export const RE_ROUTE_REASON_LABELS: Record<string, string> = {
+  response_too_short: 'Too short',
+  error_or_refusal_detected: 'Refusal detected',
+  excessive_repetition: 'Excessive repetition',
+  echo_response: 'Echo of prompt',
+  too_few_words: 'Too few words',
+};
+
 export const ESTIMATED_COST_PER_OUTPUT_TOKEN: Record<string, number> = {
   openai: 0.000015,
   anthropic: 0.000015,

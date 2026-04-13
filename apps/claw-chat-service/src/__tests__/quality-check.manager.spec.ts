@@ -117,5 +117,59 @@ describe('QualityCheckManager', () => {
       );
       expect(decision.shouldReRoute).toBe(true);
     });
+
+    it('should respect thread-level maxReRouteAttempts override', () => {
+      const decision = manager.shouldReRoute(
+        { isWeak: true, reasons: ['response_too_short'], score: 0.2 },
+        1,
+        { maxReRouteAttempts: 1 },
+      );
+      expect(decision.shouldReRoute).toBe(false);
+      expect(decision.reason).toBe('max_attempts_reached');
+    });
+
+    it('should allow more re-routes when thread maxReRouteAttempts is higher', () => {
+      const decision = manager.shouldReRoute(
+        { isWeak: true, reasons: ['response_too_short'], score: 0.2 },
+        3,
+        { maxReRouteAttempts: 5 },
+      );
+      expect(decision.shouldReRoute).toBe(true);
+    });
+  });
+
+  describe('checkResponseQuality with thread overrides', () => {
+    it('should use thread qualityThreshold when provided', () => {
+      const result = manager.checkResponseQuality(
+        'This is a perfectly fine response with enough words and content to be considered acceptable.',
+        'Tell me something',
+        { qualityThreshold: 0.99 },
+      );
+      // Score is 1.0 but threshold is 0.99, so still not weak
+      expect(result.isWeak).toBe(false);
+    });
+
+    it('should mark response as weak when thread threshold is very strict', () => {
+      const result = manager.checkResponseQuality(
+        'I apologize, but I cannot help with that request because it goes against my guidelines.',
+        'Do something for me',
+        { qualityThreshold: 0.9 },
+      );
+      expect(result.isWeak).toBe(true);
+    });
+
+    it('should accept weak responses when thread threshold is zero', () => {
+      const result = manager.checkResponseQuality('OK', 'Write me a poem', {
+        qualityThreshold: 0,
+      });
+      expect(result.isWeak).toBe(false);
+    });
+
+    it('should fall back to default threshold when thread setting is null', () => {
+      const result = manager.checkResponseQuality('OK', 'Write me a poem', {
+        qualityThreshold: null,
+      });
+      expect(result.isWeak).toBe(true);
+    });
   });
 });

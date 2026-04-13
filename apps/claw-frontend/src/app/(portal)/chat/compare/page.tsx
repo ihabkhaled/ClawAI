@@ -1,10 +1,13 @@
 'use client';
 
-import { GitCompareArrows, Loader2, Send } from 'lucide-react';
+import { ArrowRight, GitCompareArrows, Loader2, Send } from 'lucide-react';
 
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
+import { ParallelResultsGrid } from '@/components/chat/parallel-results-grid';
+import { ParallelSummaryBar } from '@/components/chat/parallel-summary-bar';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,7 +25,15 @@ export default function ComparePage() {
     isPending,
     canSend,
     selectionError,
+    pollingMessages,
+    isPolling,
+    allResponded,
+    handleViewInThread,
   } = useParallelComparePage();
+
+  const showLoading = isPending || (isPolling && pollingMessages.length === 0);
+  const showResults = pollingMessages.length > 0;
+  const showEmpty = !isPending && !isPolling && pollingMessages.length === 0;
 
   return (
     <div className="flex h-full flex-col gap-6">
@@ -49,12 +60,12 @@ export default function ComparePage() {
               />
               <div className="mt-3 flex justify-end">
                 <Button onClick={handleSend} disabled={!canSend}>
-                  {isPending ? (
+                  {isPending || isPolling ? (
                     <Loader2 className="me-2 h-4 w-4 animate-spin" />
                   ) : (
                     <Send className="me-2 h-4 w-4" />
                   )}
-                  {isPending ? t('compare.comparing') : t('compare.sendPrompt')}
+                  {isPending || isPolling ? t('compare.comparing') : t('compare.sendPrompt')}
                 </Button>
               </div>
             </CardContent>
@@ -62,7 +73,7 @@ export default function ComparePage() {
         </div>
       </div>
 
-      {isPending ? (
+      {showLoading ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {selectedModels.map((m) => (
             <Card key={`${m.provider}:${m.model}`} className="p-4">
@@ -76,7 +87,33 @@ export default function ComparePage() {
         </div>
       ) : null}
 
-      {!isPending ? (
+      {showResults ? (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">{t('compare.results')}</span>
+              <Badge variant="secondary">
+                {pollingMessages.length} / {selectedModels.length}
+              </Badge>
+              {isPolling ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+              ) : null}
+            </div>
+            {allResponded ? (
+              <Button variant="outline" size="sm" onClick={handleViewInThread}>
+                {t('compare.viewInThread')}
+                <ArrowRight className="ms-1.5 h-3.5 w-3.5" />
+              </Button>
+            ) : null}
+          </div>
+
+          {allResponded ? <ParallelSummaryBar messages={pollingMessages} t={t} /> : null}
+
+          <ParallelResultsGrid messages={pollingMessages} t={t} />
+        </div>
+      ) : null}
+
+      {showEmpty ? (
         <EmptyState
           icon={GitCompareArrows}
           title={t('compare.noResults')}

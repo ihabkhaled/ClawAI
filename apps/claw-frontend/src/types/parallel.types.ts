@@ -1,5 +1,7 @@
 import type { ParallelModelStatus } from '@/enums';
 
+import type { ChatMessage } from './chat.types';
+
 export type ParallelModelResponse = {
   provider: string;
   model: string;
@@ -39,4 +41,8 @@ export type UseParallelComparePageReturn = {
   isError: boolean;
   canSend: boolean;
   selectionError: string | null;
+  pollingMessages: ChatMessage[];
+  isPolling: boolean;
+  allResponded: boolean;
+  handleViewInThread: () => void;
 };

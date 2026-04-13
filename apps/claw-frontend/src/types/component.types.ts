@@ -155,6 +155,10 @@ export type ThreadSettingsProps = {
   judgeModel: string | null;
   onJudgeModelChange: (value: string | null) => void;
   judgeModelOptions: JudgeModelOption[];
+  qualityThreshold: number;
+  onQualityThresholdChange: (value: number) => void;
+  maxReRouteAttempts: number;
+  onMaxReRouteAttemptsChange: (value: number) => void;
   onSave: () => void;
   isPending: boolean;
 };
@@ -640,16 +644,12 @@ export type ParallelResponseCardProps = {
 };
 
 export type ParallelResultsGridProps = {
-  responses: ParallelModelResponse[];
-  fastestModel: string | null;
+  messages: ChatMessage[];
   t: TranslateFunction;
 };
 
 export type ParallelSummaryBarProps = {
-  totalLatencyMs: number;
-  completedCount: number;
-  failedCount: number;
-  fastestModel: string | null;
+  messages: ChatMessage[];
   t: TranslateFunction;
 };
 

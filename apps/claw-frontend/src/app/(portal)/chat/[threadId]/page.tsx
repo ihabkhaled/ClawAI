@@ -136,6 +136,10 @@ export default function ThreadDetailPage() {
             judgeModel={threadSettings.judgeModel}
             onJudgeModelChange={threadSettings.setJudgeModel}
             judgeModelOptions={threadSettings.judgeModelOptions}
+            qualityThreshold={threadSettings.qualityThreshold}
+            onQualityThresholdChange={threadSettings.setQualityThreshold}
+            maxReRouteAttempts={threadSettings.maxReRouteAttempts}
+            onMaxReRouteAttemptsChange={threadSettings.setMaxReRouteAttempts}
             onSave={threadSettings.handleSave}
             isPending={threadSettings.isPending}
           />

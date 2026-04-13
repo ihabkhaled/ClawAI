@@ -1,4 +1,10 @@
-import type { FallbackFailureType, MessageFeedback, MessageRole, RoutingMode, StreamEventType } from '@/enums';
+import type {
+  FallbackFailureType,
+  MessageFeedback,
+  MessageRole,
+  RoutingMode,
+  StreamEventType,
+} from '@/enums';
 
 export type ChatThread = {
   id: string;
@@ -17,6 +23,8 @@ export type ChatThread = {
   maxTokens: number | null;
   judgeEnabled: boolean;
   judgeModel: string | null;
+  qualityThreshold: number | null;
+  maxReRouteAttempts: number | null;
   createdAt: string;
   updatedAt: string;
   _count?: { messages: number };
@@ -61,6 +69,8 @@ export type UpdateThreadRequest = {
   contextPackIds?: string[];
   judgeEnabled?: boolean;
   judgeModel?: string | null;
+  qualityThreshold?: number | null;
+  maxReRouteAttempts?: number | null;
 };
 export type CreateMessageRequest = {
   threadId: string;

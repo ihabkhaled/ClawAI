@@ -59,6 +59,7 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.debug(`execute: built candidate chain with ${String(candidates.length)} providers`);
     let lastError: unknown = null;
     let reRouteAttempt = 0;
+    let reRouteReasons: string[] = [];
 
     for (let i = 0; i < candidates.length; i++) {
       const candidate = candidates.at(i);
@@ -93,10 +94,12 @@ export class ChatExecutionManager implements OnModuleInit {
         const qualityResult = this.qualityCheckManager.checkResponseQuality(
           response.content,
           userPrompt,
+          threadSettings,
         );
         const reRouteDecision = this.qualityCheckManager.shouldReRoute(
           qualityResult,
           reRouteAttempt,
+          threadSettings,
         );
 
         if (reRouteDecision.shouldReRoute && i < candidates.length - 1) {
@@ -113,6 +116,7 @@ export class ChatExecutionManager implements OnModuleInit {
             nextProvider: nextCandidate?.provider,
             nextModel: nextCandidate?.model,
           });
+          reRouteReasons = [...reRouteReasons, ...qualityResult.reasons];
           reRouteAttempt++;
           continue;
         }
@@ -125,6 +129,7 @@ export class ChatExecutionManager implements OnModuleInit {
             payload,
             qualityResult.score,
             reRouteAttempt,
+            reRouteReasons,
           );
         }
 
@@ -266,6 +271,7 @@ export class ChatExecutionManager implements OnModuleInit {
     originalPayload: MessageRoutedData,
     originalScore: number,
     reRouteAttempts: number,
+    reRouteReasons: string[],
   ): LlmResponse {
     return {
       ...response,
@@ -274,6 +280,7 @@ export class ChatExecutionManager implements OnModuleInit {
       originalModel: originalPayload.selectedModel,
       originalScore,
       reRouteAttempts,
+      reRouteReasons,
     };
   }
 

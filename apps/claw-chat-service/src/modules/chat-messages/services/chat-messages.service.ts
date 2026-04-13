@@ -364,6 +364,8 @@ export class ChatMessagesService implements OnModuleInit {
       temperature: thread.temperature,
       maxTokens: thread.maxTokens,
       judgeModel: thread.judgeModel,
+      qualityThreshold: thread.qualityThreshold,
+      maxReRouteAttempts: thread.maxReRouteAttempts,
     };
   }
 
@@ -419,6 +421,7 @@ export class ChatMessagesService implements OnModuleInit {
               originalModel: llmResponse.originalModel,
               originalScore: llmResponse.originalScore,
               reRouteAttempts: llmResponse.reRouteAttempts,
+              reRouteReasons: llmResponse.reRouteReasons,
             }
           : {}),
         ...(llmResponse.judgeRefereeMetadata ?? {}),

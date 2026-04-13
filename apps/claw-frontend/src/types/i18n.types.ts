@@ -162,6 +162,15 @@ export type TranslationDictionary = {
     judgeModelLabel: string;
     judgeModelAuto: string;
     judgeModelDescription: string;
+    qualityThreshold: string;
+    qualityThresholdDescription: string;
+    maxReRouteAttempts: string;
+    maxReRouteAttemptsDescription: string;
+    reRouteReasonShort: string;
+    reRouteReasonRefusal: string;
+    reRouteReasonRepetition: string;
+    reRouteReasonEcho: string;
+    reRouteReasonLowWords: string;
   };
   connectors: {
     title: string;
@@ -509,6 +518,19 @@ export type TranslationDictionary = {
     noResults: string;
     modelCount: string;
     expand: string;
+    bestResponse: string;
+    viewInThread: string;
+    totalTokens: string;
+    avgLatencyLabel: string;
+    completedCount: string;
+    failedCount: string;
+    timeoutCount: string;
+    modelsCompared: string;
+    summaryTitle: string;
+    showMore: string;
+    showLess: string;
+    timeout: string;
+    noContent: string;
   };
   validation: {
     required: string;

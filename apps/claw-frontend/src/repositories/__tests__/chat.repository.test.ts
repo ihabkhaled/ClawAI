@@ -34,6 +34,8 @@ const mockThread: ChatThread = {
   maxTokens: null,
   judgeEnabled: false,
   judgeModel: null,
+  qualityThreshold: null,
+  maxReRouteAttempts: null,
   createdAt: '2026-01-01T00:00:00Z',
   updatedAt: '2026-01-01T00:00:00Z',
 };

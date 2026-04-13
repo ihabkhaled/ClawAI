@@ -19,6 +19,8 @@ export function useThreadSettings(thread: ChatThread | null) {
   const [contextPackIds, setContextPackIds] = useState<string[]>([]);
   const [judgeEnabled, setJudgeEnabled] = useState(false);
   const [judgeModel, setJudgeModel] = useState<string | null>(null);
+  const [qualityThreshold, setQualityThreshold] = useState(0.4);
+  const [maxReRouteAttempts, setMaxReRouteAttempts] = useState(2);
 
   useEffect(() => {
     if (thread) {
@@ -39,6 +41,8 @@ export function useThreadSettings(thread: ChatThread | null) {
       setContextPackIds(thread.contextPackIds ?? []);
       setJudgeEnabled(thread.judgeEnabled ?? false);
       setJudgeModel(thread.judgeModel ?? null);
+      setQualityThreshold(thread.qualityThreshold ?? 0.4);
+      setMaxReRouteAttempts(thread.maxReRouteAttempts ?? 2);
     }
   }, [thread]);
 
@@ -71,6 +75,8 @@ export function useThreadSettings(thread: ChatThread | null) {
           contextPackIds,
           judgeEnabled,
           judgeModel,
+          qualityThreshold,
+          maxReRouteAttempts,
         },
       },
       {
@@ -89,6 +95,8 @@ export function useThreadSettings(thread: ChatThread | null) {
     contextPackIds,
     judgeEnabled,
     judgeModel,
+    qualityThreshold,
+    maxReRouteAttempts,
     updateThread,
     t,
   ]);
@@ -111,6 +119,10 @@ export function useThreadSettings(thread: ChatThread | null) {
     judgeModel,
     setJudgeModel,
     judgeModelOptions,
+    qualityThreshold,
+    setQualityThreshold,
+    maxReRouteAttempts,
+    setMaxReRouteAttempts,
     handleSave,
     isPending,
   };

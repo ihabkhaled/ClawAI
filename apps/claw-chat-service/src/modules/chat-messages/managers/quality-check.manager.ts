@@ -6,12 +6,17 @@ import {
   QUALITY_THRESHOLDS,
 } from '../constants/quality-thresholds.constants';
 import type { QualityCheckResult, ReRoutingDecision } from '../types/quality-check.types';
+import type { ThreadSettings } from '../types/execution.types';
 
 @Injectable()
 export class QualityCheckManager {
   private readonly logger = new Logger(QualityCheckManager.name);
 
-  checkResponseQuality(content: string, userPrompt: string): QualityCheckResult {
+  checkResponseQuality(
+    content: string,
+    userPrompt: string,
+    threadSettings?: ThreadSettings,
+  ): QualityCheckResult {
     const reasons: string[] = [];
     let score = 1.0;
 
@@ -23,27 +28,36 @@ export class QualityCheckManager {
 
     score = Math.max(0, Math.min(1, score));
 
+    const threshold = threadSettings?.qualityThreshold ?? QUALITY_THRESHOLDS.WEAK_SCORE_THRESHOLD;
+
     const result: QualityCheckResult = {
-      isWeak: score < QUALITY_THRESHOLDS.WEAK_SCORE_THRESHOLD,
+      isWeak: score < threshold,
       reasons,
       score,
     };
 
     this.logger.debug(
-      `checkResponseQuality: score=${String(score.toFixed(2))} isWeak=${String(result.isWeak)} reasons=[${reasons.join(', ')}]`,
+      `checkResponseQuality: score=${String(score.toFixed(2))} threshold=${String(threshold)} isWeak=${String(result.isWeak)} reasons=[${reasons.join(', ')}]`,
     );
 
     return result;
   }
 
-  shouldReRoute(qualityResult: QualityCheckResult, attemptCount: number): ReRoutingDecision {
+  shouldReRoute(
+    qualityResult: QualityCheckResult,
+    attemptCount: number,
+    threadSettings?: ThreadSettings,
+  ): ReRoutingDecision {
     if (!qualityResult.isWeak) {
       return this.buildDecision(false, 'quality_acceptable', qualityResult.score);
     }
 
-    if (attemptCount >= QUALITY_THRESHOLDS.MAX_REROUTE_ATTEMPTS) {
+    const maxAttempts =
+      threadSettings?.maxReRouteAttempts ?? QUALITY_THRESHOLDS.MAX_REROUTE_ATTEMPTS;
+
+    if (attemptCount >= maxAttempts) {
       this.logger.warn(
-        `shouldReRoute: max re-route attempts (${String(attemptCount)}) reached — accepting weak response`,
+        `shouldReRoute: max re-route attempts (${String(attemptCount)}/${String(maxAttempts)}) reached — accepting weak response`,
       );
       return this.buildDecision(false, 'max_attempts_reached', qualityResult.score);
     }

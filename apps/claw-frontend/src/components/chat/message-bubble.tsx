@@ -17,7 +17,7 @@ import { MessageProvenance } from '@/components/chat/message-provenance';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MESSAGE_ROLE_LABELS } from '@/constants';
+import { MESSAGE_ROLE_LABELS, RE_ROUTE_REASON_LABELS } from '@/constants';
 import { MessageFeedback, MessageRole, RoutingMode } from '@/enums';
 import { MarkdownRenderer } from '@/lib/markdown';
 import { cn } from '@/lib/utils';
@@ -55,6 +55,9 @@ export function MessageBubble({
     typeof metadata?.['originalModel'] === 'string' ? metadata['originalModel'] : null;
   const originalScore =
     typeof metadata?.['originalScore'] === 'number' ? metadata['originalScore'] : null;
+  const reRouteReasons = Array.isArray(metadata?.['reRouteReasons'])
+    ? (metadata['reRouteReasons'] as string[])
+    : [];
   const judgeDecision =
     typeof metadata?.['judgeDecision'] === 'string' ? metadata['judgeDecision'] : null;
 
@@ -118,6 +121,17 @@ export function MessageBubble({
                 {originalScore !== null ? ` (${String(Math.round(originalScore * 100))}%)` : null}
               </Badge>
             ) : null}
+            {isReRouted && reRouteReasons.length > 0
+              ? reRouteReasons.map((reason) => (
+                  <Badge
+                    key={reason}
+                    variant="outline"
+                    className="border-amber-500/30 text-xs text-amber-600 dark:text-amber-400"
+                  >
+                    {RE_ROUTE_REASON_LABELS[reason] ?? reason}
+                  </Badge>
+                ))
+              : null}
             {judgeDecision === 'ACCEPT' ? (
               <Badge
                 variant="outline"

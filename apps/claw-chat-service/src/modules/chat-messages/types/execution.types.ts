@@ -30,6 +30,7 @@ export type LlmResponse = {
   originalModel?: string;
   originalScore?: number;
   reRouteAttempts?: number;
+  reRouteReasons?: string[];
   judgeRefereeMetadata?: JudgeRefereeMetadata;
 };
 
@@ -82,6 +83,8 @@ export type ThreadSettings = {
   temperature?: number | null;
   maxTokens?: number | null;
   judgeModel?: string | null;
+  qualityThreshold?: number | null;
+  maxReRouteAttempts?: number | null;
 };
 
 export type OpenAiChatChoice = {
