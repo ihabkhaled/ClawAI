@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack --port 3000",
-    "build": "next build --webpack",
+    "clear-cache": "rm -rf .next",
+    "dev": "npm run clear-cache && next dev --turbopack --port 3000",
+    "build": "npm run clear-cache && next build --webpack",
     "start": "next start",
     "lint": "eslint src/",
     "lint:strict": "next lint && eslint src/ --max-warnings 0",

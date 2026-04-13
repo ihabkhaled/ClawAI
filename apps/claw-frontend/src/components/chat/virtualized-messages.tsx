@@ -5,15 +5,18 @@ import { useCallback } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 
 import { MessageBubble } from '@/components/chat/message-bubble';
+import { ParallelMessageGroup } from '@/components/chat/parallel-message-group';
 import { ThinkingIndicator } from '@/components/chat/thinking-indicator';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
-import type { VirtualizedMessagesProps } from '@/types';
+import type { MessageRenderItem, VirtualizedMessagesProps } from '@/types';
+import { groupParallelMessages } from '@/utilities';
 
 export function VirtualizedMessages({
   messages,
   isLoading,
   isFetchingPreviousPage,
   hasPreviousPage,
+  firstItemIndex,
   isWaitingForResponse,
   fallbackAttempts,
   streamError,
@@ -24,15 +27,28 @@ export function VirtualizedMessages({
   onFeedback,
   onRegenerate,
 }: VirtualizedMessagesProps): React.ReactElement {
+  const renderItems = groupParallelMessages(messages);
+
   const itemContent = useCallback(
-    (_index: number, message: unknown): React.ReactElement => {
-      const msg = message as (typeof messages)[number];
-      if (!msg) {
+    (_index: number, item: unknown): React.ReactElement => {
+      const renderItem = item as MessageRenderItem;
+      if (!renderItem) {
         return <div />;
+      }
+      if (renderItem.kind === 'parallel') {
+        return (
+          <div className="px-4 py-2">
+            <ParallelMessageGroup messages={renderItem.messages} />
+          </div>
+        );
       }
       return (
         <div className="px-4 py-2">
-          <MessageBubble message={msg} onFeedback={onFeedback} onRegenerate={onRegenerate} />
+          <MessageBubble
+            message={renderItem.message}
+            onFeedback={onFeedback}
+            onRegenerate={onRegenerate}
+          />
         </div>
       );
     },
@@ -73,7 +89,14 @@ export function VirtualizedMessages({
       );
     }
     return null;
-  }, [isWaitingForResponse, fallbackAttempts, streamError, judgeEvaluating]);
+  }, [
+    isWaitingForResponse,
+    fallbackAttempts,
+    streamError,
+    judgeEvaluating,
+    executingModel,
+    judgeModel,
+  ]);
 
   const handleStartReached = useCallback((): void => {
     if (hasPreviousPage && !isFetchingPreviousPage) {
@@ -96,14 +119,14 @@ export function VirtualizedMessages({
   return (
     <Virtuoso
       style={{ height: '100%' }}
-      data={messages}
+      data={renderItems}
       itemContent={itemContent}
-      initialTopMostItemIndex={messages.length - 1}
-      firstItemIndex={Math.max(0, 1000000 - messages.length)}
+      initialTopMostItemIndex={renderItems.length - 1}
+      firstItemIndex={firstItemIndex}
       alignToBottom
       followOutput="smooth"
       startReached={handleStartReached}
-      increaseViewportBy={{ top: 400, bottom: 100 }}
+      increaseViewportBy={{ top: 1200, bottom: 200 }}
       components={{
         Header: headerContent,
         Footer: footerContent,

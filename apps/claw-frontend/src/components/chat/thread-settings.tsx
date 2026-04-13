@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { MODEL_AUTO_VALUE } from '@/constants';
 import type { ThreadSettingsProps } from '@/types';
 
 export function ThreadSettings({
@@ -127,16 +128,19 @@ export function ThreadSettings({
             <label className="text-sm font-medium">{t('chat.judgeModelLabel')}</label>
             <p className="text-xs text-muted-foreground">{t('chat.judgeModelDescription')}</p>
             <Select
-              value={judgeModel ?? ''}
-              onValueChange={(v) => onJudgeModelChange(v === '' ? null : v)}
+              value={judgeModel ?? MODEL_AUTO_VALUE}
+              onValueChange={(v) => onJudgeModelChange(v === MODEL_AUTO_VALUE ? null : v)}
             >
               <SelectTrigger>
                 <SelectValue placeholder={t('chat.judgeModelAuto')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{t('chat.judgeModelAuto')}</SelectItem>
+                <SelectItem value={MODEL_AUTO_VALUE}>{t('chat.judgeModelAuto')}</SelectItem>
                 {judgeModelOptions.map((opt) => (
-                  <SelectItem key={opt.value ?? 'auto'} value={opt.value ?? ''}>
+                  <SelectItem
+                    key={opt.value ?? MODEL_AUTO_VALUE}
+                    value={opt.value ?? MODEL_AUTO_VALUE}
+                  >
                     {opt.label}
                   </SelectItem>
                 ))}

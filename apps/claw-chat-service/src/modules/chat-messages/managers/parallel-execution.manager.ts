@@ -3,6 +3,7 @@ import { ChatExecutionManager } from './chat-execution.manager';
 import { ContextAssemblyManager } from './context-assembly.manager';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
+import { ChatStreamService } from '../services/chat-stream.service';
 import {
   type ParallelModelResponse,
   type ParallelModelTarget,
@@ -21,6 +22,7 @@ export class ParallelExecutionManager {
     private readonly contextAssemblyManager: ContextAssemblyManager,
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
+    private readonly chatStreamService: ChatStreamService,
   ) {}
 
   async executeParallel(
@@ -36,7 +38,7 @@ export class ParallelExecutionManager {
 
     const userMessage = await this.storeUserMessage(threadId, content, fileIds);
 
-    void this.executeInBackground(userId, threadId, models, fileIds);
+    void this.executeInBackground(userId, threadId, userMessage.id, models, fileIds);
 
     return {
       messageId: userMessage.id,
@@ -52,23 +54,26 @@ export class ParallelExecutionManager {
   private async executeInBackground(
     userId: string,
     threadId: string,
+    parallelGroupId: string,
     models: ParallelModelTarget[],
     fileIds?: string[],
   ): Promise<void> {
     try {
       const { context, threadSettings } = await this.buildContext(userId, threadId, fileIds);
       const responses = await this.executeAllModels(models, context, threadSettings);
-      await this.storeAssistantMessages(threadId, responses);
+      await this.storeAssistantMessages(threadId, parallelGroupId, responses);
       const completed = responses.filter((r) => r.status === 'completed').length;
       this.logger.log(
         `executeInBackground: done — ${String(completed)}/${String(responses.length)} completed`,
       );
+      this.chatStreamService.emitCompletion(threadId, 'parallel', 'parallel');
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`executeInBackground: failed — ${msg}`);
-      await this.storeAssistantMessages(threadId, [
+      await this.storeAssistantMessages(threadId, parallelGroupId, [
         this.buildFailedResponse('system', 'parallel', `Parallel execution failed: ${msg}`),
       ]);
+      this.chatStreamService.emitError(threadId, `Parallel execution failed: ${msg}`);
     }
   }
 
@@ -178,6 +183,7 @@ export class ParallelExecutionManager {
 
   private async storeAssistantMessages(
     threadId: string,
+    parallelGroupId: string,
     responses: ParallelModelResponse[],
   ): Promise<void> {
     const storePromises = responses.map((response) =>
@@ -194,7 +200,7 @@ export class ParallelExecutionManager {
         outputTokens: response.outputTokens ?? undefined,
         latencyMs: response.latencyMs,
         usedFallback: false,
-        metadata: { parallelExecution: true, status: response.status },
+        metadata: { parallelExecution: true, parallelGroupId, status: response.status },
       }),
     );
 

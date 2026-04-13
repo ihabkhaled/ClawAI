@@ -45,4 +45,4 @@ export {
   isInProgressFileStatus,
   formatFileSizeLabel,
 } from './file-generation.utility';
-export { getFastestModel } from './parallel.utility';
+export { getFastestModel, groupParallelMessages, getParallelColClass } from './parallel.utility';

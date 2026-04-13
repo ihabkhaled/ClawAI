@@ -321,6 +321,7 @@ export type VirtualizedMessagesProps = {
   isLoading: boolean;
   isFetchingPreviousPage: boolean;
   hasPreviousPage: boolean;
+  firstItemIndex: number;
   isWaitingForResponse: boolean;
   fallbackAttempts: FallbackAttemptInfo[];
   streamError: string | null;
@@ -613,6 +614,12 @@ export type ReplayFiltersFormProps = {
   onSubmit: () => void;
   isPending: boolean;
   t: TranslateFunction;
+};
+
+// ─── Parallel message group props ─────────────────────────────────────────────
+
+export type ParallelMessageGroupProps = {
+  messages: ChatMessage[];
 };
 
 // ─── Parallel Compare component props ─────────────────────────────────────────

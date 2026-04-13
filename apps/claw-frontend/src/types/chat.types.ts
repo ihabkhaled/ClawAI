@@ -152,11 +152,21 @@ export type UseVirtualizedMessagesReturn = {
   fetchPreviousPage: () => void;
   fetchNextPage: () => void;
   totalCount: number;
+  firstItemIndex: number;
 };
 
 export type JudgeModelOption = {
   value: string | null;
   label: string;
+};
+
+export type MessageRenderItem =
+  | { kind: 'single'; message: ChatMessage }
+  | { kind: 'parallel'; messages: ChatMessage[] };
+
+export type ParallelExpandedMessage = {
+  message: ChatMessage;
+  isFastest: boolean;
 };
 
 export type UseVirtualizedThreadsReturn = {

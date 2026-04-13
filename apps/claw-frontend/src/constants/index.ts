@@ -25,6 +25,7 @@ export {
   COMPOSER_MIN_HEIGHT,
   COMPOSER_MAX_HEIGHT_RATIO,
   COMPOSER_DEFAULT_HEIGHT,
+  VIRTUOSO_START_INDEX,
 } from './chat.constants';
 export {
   PROVIDER_DISPLAY_NAMES,
@@ -73,4 +74,8 @@ export {
   CATALOG_PAGE_SIZE,
   DOWNLOAD_STATS_TICK_INTERVAL_MS,
 } from './catalog.constants';
-export { MIN_PARALLEL_MODELS, MAX_PARALLEL_MODELS } from './parallel.constants';
+export {
+  MIN_PARALLEL_MODELS,
+  MAX_PARALLEL_MODELS,
+  PARALLEL_GRID_COL_CLASSES,
+} from './parallel.constants';

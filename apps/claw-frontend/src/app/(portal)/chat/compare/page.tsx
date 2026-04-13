@@ -3,8 +3,6 @@
 import { GitCompareArrows, Loader2, Send } from 'lucide-react';
 
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
-import { ParallelResultsGrid } from '@/components/chat/parallel-results-grid';
-import { ParallelSummaryBar } from '@/components/chat/parallel-summary-bar';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
@@ -12,7 +10,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useParallelComparePage } from '@/hooks/chat/use-parallel-compare-page';
-import { getFastestModel } from '@/utilities/parallel.utility';
 
 export default function ComparePage() {
   const {
@@ -22,13 +19,10 @@ export default function ComparePage() {
     setPrompt,
     handleToggleModel,
     handleSend,
-    result,
     isPending,
     canSend,
     selectionError,
   } = useParallelComparePage();
-
-  const fastestModel = result ? getFastestModel(result.responses) : null;
 
   return (
     <div className="flex h-full flex-col gap-6">
@@ -82,21 +76,7 @@ export default function ComparePage() {
         </div>
       ) : null}
 
-      {result ? (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">{t('compare.results')}</h2>
-          <ParallelSummaryBar
-            totalLatencyMs={result.totalLatencyMs}
-            completedCount={result.completedCount}
-            failedCount={result.failedCount}
-            fastestModel={fastestModel}
-            t={t}
-          />
-          <ParallelResultsGrid responses={result.responses} fastestModel={fastestModel} t={t} />
-        </div>
-      ) : null}
-
-      {!result && !isPending ? (
+      {!isPending ? (
         <EmptyState
           icon={GitCompareArrows}
           title={t('compare.noResults')}

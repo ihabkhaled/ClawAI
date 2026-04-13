@@ -1,11 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { RoutingDecisionsRepository } from '../repositories/routing-decisions.repository';
 import { RoutingManager } from './routing.manager';
-import type {
-  ReplayBatchResult,
-  ReplayFilters,
-  ReplayResult,
-} from '../types/replay.types';
+import type { ReplayBatchResult, ReplayFilters, ReplayResult } from '../types/replay.types';
 import type {
   RoutingContext,
   RoutingDecision,
@@ -24,13 +20,18 @@ export class ReplayManager {
   async replayDecisions(filters: ReplayFilters): Promise<ReplayBatchResult> {
     const decisions = await this.decisionsRepository.findRecent(filters);
 
-    this.logger.log(`Replaying ${String(decisions.length)} historical decisions`);
+    this.logger.log(`Replaying ${String(decisions.length)} historical decisions in parallel`);
+
+    const settled = await Promise.allSettled(decisions.map((d) => this.replaySingleDecision(d)));
 
     const results: ReplayResult[] = [];
-
-    for (const decision of decisions) {
-      const result = await this.replaySingleDecision(decision);
-      results.push(result);
+    for (const [index, result] of settled.entries()) {
+      if (result.status === 'fulfilled') {
+        results.push(result.value);
+      } else {
+        const msg = result.reason instanceof Error ? result.reason.message : 'Unknown error';
+        this.logger.warn(`replaySingleDecision[${String(index)}] failed: ${msg}`);
+      }
     }
 
     return this.buildBatchResult(results);
@@ -75,10 +76,7 @@ export class ReplayManager {
     };
   }
 
-  private hasDecisionChanged(
-    original: RoutingDecision,
-    replay: RoutingDecisionResult,
-  ): boolean {
+  private hasDecisionChanged(original: RoutingDecision, replay: RoutingDecisionResult): boolean {
     return (
       original.selectedProvider !== replay.selectedProvider ||
       original.selectedModel !== replay.selectedModel

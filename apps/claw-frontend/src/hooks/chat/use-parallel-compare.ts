@@ -30,11 +30,8 @@ export function useParallelCompare(): {
       logger.info({
         component: 'parallel-compare',
         action: 'send-parallel-success',
-        message: `Parallel compare completed — ${String(data.completedCount)} models`,
-      });
-      showToast.success({
-        title: t('compare.title'),
-        description: `${String(data.completedCount)} models compared`,
+        message: 'Parallel compare started, navigating to thread',
+        details: { threadId: data.threadId },
       });
       if (data.threadId) {
         router.push(ROUTES.CHAT_THREAD(data.threadId));

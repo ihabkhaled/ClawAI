@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { MESSAGES_PAGE_SIZE } from '@/constants';
+import { MESSAGES_PAGE_SIZE, VIRTUOSO_START_INDEX } from '@/constants';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { ChatMessage, UseVirtualizedMessagesReturn } from '@/types';
@@ -11,7 +11,12 @@ export function useVirtualizedMessages(threadId: string): UseVirtualizedMessages
   const query = useInfiniteQuery({
     queryKey: queryKeys.threads.messagesInfinite(threadId),
     queryFn: ({ pageParam }) => {
-      logger.debug({ component: 'chat', action: 'fetch-messages-page', message: `Fetching messages page ${String(pageParam)}`, details: { threadId, page: pageParam } });
+      logger.debug({
+        component: 'chat',
+        action: 'fetch-messages-page',
+        message: `Fetching messages page ${String(pageParam)}`,
+        details: { threadId, page: pageParam },
+      });
       return chatRepository.getMessagesPaginated(threadId, pageParam, MESSAGES_PAGE_SIZE);
     },
     initialPageParam: 1,
@@ -21,6 +26,7 @@ export function useVirtualizedMessages(threadId: string): UseVirtualizedMessages
     },
     enabled: !!threadId,
     refetchInterval: 5000,
+    staleTime: 2000,
     maxPages: undefined,
   });
 
@@ -50,10 +56,32 @@ export function useVirtualizedMessages(threadId: string): UseVirtualizedMessages
 
   const totalCount = query.data?.pages[0]?.meta.total ?? 0;
 
+  // Stable firstItemIndex: starts at VIRTUOSO_START_INDEX - initialCount.
+  // When older messages are prepended (messages.length grows), decrement by delta
+  // so Virtuoso can maintain scroll position without a visual jump.
+  const [firstItemIndex, setFirstItemIndex] = useState(() =>
+    Math.max(0, VIRTUOSO_START_INDEX - messages.length),
+  );
+  const prevLengthRef = useRef(messages.length);
+
+  useEffect(() => {
+    const newLength = messages.length;
+    if (newLength > prevLengthRef.current) {
+      const delta = newLength - prevLengthRef.current;
+      setFirstItemIndex((prev) => Math.max(0, prev - delta));
+    }
+    prevLengthRef.current = newLength;
+  }, [messages.length]);
+
   // "Fetch older" = fetch next page in the infinite query (higher page number = older messages)
   const fetchOlderMessages = useCallback((): void => {
     if (query.hasNextPage && !query.isFetchingNextPage) {
-      logger.debug({ component: 'chat', action: 'fetch-older-messages', message: 'Loading older messages', details: { currentPages: query.data?.pages.length } });
+      logger.debug({
+        component: 'chat',
+        action: 'fetch-older-messages',
+        message: 'Loading older messages',
+        details: { currentPages: query.data?.pages.length },
+      });
       void query.fetchNextPage();
     }
   }, [query]);
@@ -68,5 +96,6 @@ export function useVirtualizedMessages(threadId: string): UseVirtualizedMessages
     fetchPreviousPage: fetchOlderMessages,
     fetchNextPage: () => {},
     totalCount,
+    firstItemIndex,
   };
 }

@@ -149,6 +149,7 @@ export default function ThreadDetailPage() {
             isLoading={isLoadingThread || isLoadingMessages}
             isFetchingPreviousPage={virtualizedMessages.isFetchingPreviousPage}
             hasPreviousPage={virtualizedMessages.hasPreviousPage}
+            firstItemIndex={virtualizedMessages.firstItemIndex}
             isWaitingForResponse={isWaitingForResponse}
             fallbackAttempts={fallbackAttempts}
             streamError={streamError}

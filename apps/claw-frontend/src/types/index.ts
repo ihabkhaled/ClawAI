@@ -19,6 +19,8 @@ export type {
   UseVirtualizedMessagesReturn,
   UseVirtualizedThreadsReturn,
   JudgeModelOption,
+  MessageRenderItem,
+  ParallelExpandedMessage,
 } from './chat.types';
 export type {
   Connector,
@@ -189,6 +191,7 @@ export type {
   ReplaySummaryCardProps,
   ReplayResultRowProps,
   ReplayFiltersFormProps,
+  ParallelMessageGroupProps,
   ParallelModelSelectorProps,
   ParallelResponseCardProps,
   ParallelResultsGridProps,
