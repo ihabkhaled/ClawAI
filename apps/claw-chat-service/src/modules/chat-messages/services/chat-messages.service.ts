@@ -11,6 +11,7 @@ import { TaskDecompositionManager } from '../managers/task-decomposition.manager
 import { BestOfNManager } from '../managers/best-of-n.manager';
 import { EscalationChainManager } from '../managers/escalation-chain.manager';
 import { ParallelExecutionManager } from '../managers/parallel-execution.manager';
+import { VerifierManager } from '../managers/verifier.manager';
 import { ChatStreamService } from './chat-stream.service';
 import { type CreateMessageDto } from '../dto/create-message.dto';
 import { type ConsensusMessageDto } from '../dto/consensus-message.dto';
@@ -29,8 +30,10 @@ import { type EscalationChainResponse } from '../types/escalation-chain.types';
 import { type AnswerRepairResponse } from '../types/answer-repair.types';
 import { type TaskDecompositionResponse } from '../types/task-decomposition.types';
 import { type BestOfNResponse } from '../types/best-of-n.types';
+import { type VerifyResponse } from '../types/verifier.types';
 import { type ParallelResponse } from '../types/parallel.types';
 import { type ParallelMessageDto } from '../dto/parallel-message.dto';
+import { type VerifyMessageDto } from '../dto/verify-message.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
 import { type ChatMessage, type ChatThread, RoutingMode } from '../../../generated/prisma';
@@ -51,6 +54,7 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly answerRepairManager: AnswerRepairManager,
     private readonly taskDecompositionManager: TaskDecompositionManager,
     private readonly bestOfNManager: BestOfNManager,
+    private readonly verifierManager: VerifierManager,
     private readonly chatStreamService: ChatStreamService,
     private readonly rabbitMQService: RabbitMQService,
   ) {
@@ -169,6 +173,10 @@ export class ChatMessagesService implements OnModuleInit {
 
   async executeBestOfN(userId: string, dto: BestOfNMessageDto): Promise<BestOfNResponse> {
     return this.bestOfNManager.executeBestOfN(userId, dto);
+  }
+
+  async executeVerify(userId: string, dto: VerifyMessageDto): Promise<VerifyResponse> {
+    return this.verifierManager.executeVerify(userId, dto);
   }
 
   async getMessages(

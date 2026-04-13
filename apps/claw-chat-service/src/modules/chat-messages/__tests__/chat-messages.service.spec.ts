@@ -9,6 +9,7 @@ import { type ConsensusExecutionManager } from '../managers/consensus-execution.
 import { type EscalationChainManager } from '../managers/escalation-chain.manager';
 import { type ParallelExecutionManager } from '../managers/parallel-execution.manager';
 import { type BestOfNManager } from '../managers/best-of-n.manager';
+import { type VerifierManager } from '../managers/verifier.manager';
 import { type ChatStreamService } from '../services/chat-stream.service';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
@@ -112,6 +113,7 @@ describe('ChatMessagesService', () => {
       { executeRepair: jest.fn() } as unknown as AnswerRepairManager,
       { executeDecomposition: jest.fn() } as unknown as TaskDecompositionManager,
       { executeBestOfN: jest.fn() } as unknown as BestOfNManager,
+      { executeVerify: jest.fn() } as unknown as VerifierManager,
       { emitCompletion: jest.fn() } as unknown as ChatStreamService,
       rabbitMQ as unknown as RabbitMQService,
     );
@@ -263,6 +265,39 @@ describe('ChatMessagesService', () => {
       await expect(service.regenerateMessage('msg-1', 'other-user')).rejects.toThrow(
         BusinessException,
       );
+    });
+  });
+
+  describe('executeVerify', () => {
+    it('should delegate to verifierManager.executeVerify', async () => {
+      const mockResult = { messageId: 'msg-v-1', threadId: 'thread-v-1' };
+      const verifierManager = { executeVerify: jest.fn().mockResolvedValue(mockResult) };
+      const localService = new ChatMessagesService(
+        messagesRepo as unknown as ChatMessagesRepository,
+        threadsRepo as unknown as ChatThreadsRepository,
+        executionManager as unknown as ChatExecutionManager,
+        contextAssembly as unknown as ContextAssemblyManager,
+        { executeParallel: jest.fn() } as unknown as ParallelExecutionManager,
+        { executeConsensus: jest.fn() } as unknown as ConsensusExecutionManager,
+        { executeEscalationChain: jest.fn() } as unknown as EscalationChainManager,
+        { executeRepair: jest.fn() } as unknown as AnswerRepairManager,
+        { executeDecomposition: jest.fn() } as unknown as TaskDecompositionManager,
+        { executeBestOfN: jest.fn() } as unknown as BestOfNManager,
+        verifierManager as unknown as VerifierManager,
+        { emitCompletion: jest.fn() } as unknown as ChatStreamService,
+        rabbitMQ as unknown as RabbitMQService,
+      );
+
+      const result = await localService.executeVerify('user-1', {
+        content: 'test',
+        maxRevisions: 1,
+      });
+
+      expect(verifierManager.executeVerify).toHaveBeenCalledWith('user-1', {
+        content: 'test',
+        maxRevisions: 1,
+      });
+      expect(result).toEqual(mockResult);
     });
   });
 

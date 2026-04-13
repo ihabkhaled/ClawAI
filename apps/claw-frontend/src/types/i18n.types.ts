@@ -67,6 +67,7 @@ export type TranslationDictionary = {
     recoveryLab: string;
     decomposeLab: string;
     bestOfNLab: string;
+    verifierLab: string;
     memory: string;
     context: string;
     files: string;
@@ -735,6 +736,23 @@ export type TranslationDictionary = {
     noData: string;
     loading: string;
     error: string;
+  };
+  verify: {
+    title: string;
+    description: string;
+    contentLabel: string;
+    contentPlaceholder: string;
+    maxRevisionsLabel: string;
+    sendPrompt: string;
+    running: string;
+    synthesizing: string;
+    noResults: string;
+    sendFailed: string;
+    verified: string;
+    verifierScore: string;
+    revisions: string;
+    issues: string;
+    viewInThread: string;
   };
   validation: {
     required: string;

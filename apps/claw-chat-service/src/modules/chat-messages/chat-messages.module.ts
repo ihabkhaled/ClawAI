@@ -12,6 +12,7 @@ import { EscalationChainManager } from './managers/escalation-chain.manager';
 import { ParallelExecutionManager } from './managers/parallel-execution.manager';
 import { QualityCheckManager } from './managers/quality-check.manager';
 import { JudgeRefereeManager } from './managers/judge-referee.manager';
+import { VerifierManager } from './managers/verifier.manager';
 import { ChatStreamService } from './services/chat-stream.service';
 import { ChatMessagesRepository } from './repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../chat-threads/repositories/chat-threads.repository';
@@ -30,6 +31,7 @@ import { ChatThreadsRepository } from '../chat-threads/repositories/chat-threads
     ParallelExecutionManager,
     QualityCheckManager,
     JudgeRefereeManager,
+    VerifierManager,
     ChatStreamService,
     ChatMessagesRepository,
     ChatThreadsRepository,

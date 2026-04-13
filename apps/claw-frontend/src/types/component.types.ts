@@ -43,6 +43,7 @@ import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './
 import type { ReplayBatchResult, ReplayResult } from './replay.types';
 import type { CreatePolicyRequest, RoutingDecision, RoutingPolicy } from './routing.types';
 import type { DecompositionResultState, SubTaskResult } from './task-decomposition.types';
+import type { UseVerifyResultState } from './verifier.types';
 
 // ─── Common component props ──────────────────────────────────────────────────
 
@@ -833,5 +834,13 @@ export type BestOfNResultCardProps = {
 
 export type CandidateCardProps = {
   candidate: CandidateResult;
+  t: TranslateFunction;
+};
+
+// ─── Verifier component props ────────────────────────────────────────────────
+
+export type VerifyResultCardProps = {
+  result: UseVerifyResultState;
+  onViewInThread: () => void;
   t: TranslateFunction;
 };

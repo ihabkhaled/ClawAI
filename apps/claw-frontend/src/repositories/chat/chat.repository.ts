@@ -18,6 +18,8 @@ import type {
   ParallelResponse,
   RepairRequest,
   RepairResponse,
+  SendVerifyPayload,
+  SendVerifyResult,
   ThreadsListResponse,
 } from '@/types';
 
@@ -130,5 +132,10 @@ export const chatRepository = {
   async bestOfNMessage(data: BestOfNRequest): Promise<BestOfNResponse> {
     const response = await apiClient.post<BestOfNResponse>('/chat-messages/best-of-n', data);
     return response.data;
+  },
+
+  async sendVerify(payload: SendVerifyPayload): Promise<SendVerifyResult> {
+    const res = await apiClient.post<SendVerifyResult>('/chat-messages/verify', payload);
+    return res.data;
   },
 };

@@ -217,6 +217,7 @@ export type {
   SubTaskResultCardProps,
   BestOfNResultCardProps,
   CandidateCardProps,
+  VerifyResultCardProps,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
@@ -370,3 +371,13 @@ export type {
   UseDecomposePollResult,
   UseDecomposePageReturn,
 } from './task-decomposition.types';
+export type {
+  VerifyMetadata,
+  VerifyResult,
+  SendVerifyPayload,
+  SendVerifyResult,
+  UseVerifyResultState,
+  UseSendVerifyResult,
+  UseVerifyPollResult,
+  UseVerifyPageReturn,
+} from './verifier.types';

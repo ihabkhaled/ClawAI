@@ -14,6 +14,7 @@ export const ROUTES = {
   CHAT_REPAIR: '/chat/repair',
   CHAT_DECOMPOSE: '/chat/decompose',
   CHAT_BEST_OF_N: '/chat/best-of-n',
+  CHAT_VERIFY: '/chat/verify',
   ROUTING_REPLAY: '/routing/replay',
   ROUTING_RECOVERY: '/routing/recovery',
   MEMORY: '/memory',
