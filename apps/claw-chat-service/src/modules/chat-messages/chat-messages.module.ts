@@ -5,6 +5,7 @@ import { ChatMessagesService } from './services/chat-messages.service';
 import { ChatExecutionManager } from './managers/chat-execution.manager';
 import { ConsensusExecutionManager } from './managers/consensus-execution.manager';
 import { ContextAssemblyManager } from './managers/context-assembly.manager';
+import { EscalationChainManager } from './managers/escalation-chain.manager';
 import { ParallelExecutionManager } from './managers/parallel-execution.manager';
 import { QualityCheckManager } from './managers/quality-check.manager';
 import { JudgeRefereeManager } from './managers/judge-referee.manager';
@@ -19,6 +20,7 @@ import { ChatThreadsRepository } from '../chat-threads/repositories/chat-threads
     ChatExecutionManager,
     ConsensusExecutionManager,
     ContextAssemblyManager,
+    EscalationChainManager,
     ParallelExecutionManager,
     QualityCheckManager,
     JudgeRefereeManager,

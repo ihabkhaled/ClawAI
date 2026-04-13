@@ -1,0 +1,5 @@
+export enum EscalationChainStatus {
+  RESOLVED_AT_STEP = 'RESOLVED_AT_STEP',
+  EXHAUSTED = 'EXHAUSTED',
+  SINGLE_STEP = 'SINGLE_STEP',
+}

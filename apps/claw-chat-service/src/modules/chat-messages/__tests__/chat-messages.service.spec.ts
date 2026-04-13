@@ -4,6 +4,7 @@ import { type ChatThreadsRepository } from '../../chat-threads/repositories/chat
 import { type ChatExecutionManager } from '../managers/chat-execution.manager';
 import { type ContextAssemblyManager } from '../managers/context-assembly.manager';
 import { type ConsensusExecutionManager } from '../managers/consensus-execution.manager';
+import { type EscalationChainManager } from '../managers/escalation-chain.manager';
 import { type ParallelExecutionManager } from '../managers/parallel-execution.manager';
 import { type ChatStreamService } from '../services/chat-stream.service';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
@@ -104,6 +105,7 @@ describe('ChatMessagesService', () => {
       contextAssembly as unknown as ContextAssemblyManager,
       { executeParallel: jest.fn() } as unknown as ParallelExecutionManager,
       { executeConsensus: jest.fn() } as unknown as ConsensusExecutionManager,
+      { executeEscalationChain: jest.fn() } as unknown as EscalationChainManager,
       { emitCompletion: jest.fn() } as unknown as ChatStreamService,
       rabbitMQ as unknown as RabbitMQService,
     );
