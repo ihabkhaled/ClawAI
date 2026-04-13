@@ -1,14 +1,46 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 
 import { MAX_PARALLEL_MODELS, MIN_PARALLEL_MODELS } from '@/constants';
-import { useParallelCompare } from '@/hooks/chat/use-parallel-compare';
+import { useTranslation } from '@/lib/i18n';
+import { chatRepository } from '@/repositories/chat/chat.repository';
+import { queryKeys } from '@/repositories/shared/query-keys';
+import type { ParallelRequest, ParallelResponse } from '@/types';
+import { logger, showToast } from '@/utilities';
 
 export function useInThreadCompare(threadId: string) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedModels, setSelectedModels] = useState<Array<{ provider: string; model: string }>>(
     [],
   );
-  const { send, result, isPending, isError } = useParallelCompare();
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (data: ParallelRequest) => {
+      logger.info({
+        component: 'in-thread-compare',
+        action: 'compare-start',
+        message: 'Starting in-thread compare',
+      });
+      return chatRepository.sendParallel(data);
+    },
+    onSuccess: async () => {
+      showToast.success({
+        title: t('compare.title'),
+        description: 'Models are processing. Results will appear below.',
+      });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.threads.all });
+    },
+    onError: (error: Error) => {
+      logger.error({
+        component: 'in-thread-compare',
+        action: 'compare-error',
+        message: error.message,
+      });
+      showToast.apiError(error, t('compare.compareFailed'));
+    },
+  });
 
   const toggleOpen = useCallback(() => setIsOpen((v) => !v), []);
 
@@ -21,16 +53,16 @@ export function useInThreadCompare(threadId: string) {
     });
   }, []);
 
-  const canSend = selectedModels.length >= MIN_PARALLEL_MODELS && !isPending;
+  const canSend = selectedModels.length >= MIN_PARALLEL_MODELS && !mutation.isPending;
 
   const handleCompare = useCallback(
     (prompt: string) => {
       if (!canSend || prompt.trim().length === 0) {
         return;
       }
-      send({ threadId, content: prompt.trim(), models: selectedModels });
+      mutation.mutate({ threadId, content: prompt.trim(), models: selectedModels });
     },
-    [canSend, send, threadId, selectedModels],
+    [canSend, mutation, threadId, selectedModels],
   );
 
   return {
@@ -39,9 +71,9 @@ export function useInThreadCompare(threadId: string) {
     selectedModels,
     handleToggleModel,
     handleCompare,
-    result,
-    isPending,
-    isError,
+    result: mutation.data as ParallelResponse | undefined,
+    isPending: mutation.isPending,
+    isError: mutation.isError,
     canSend,
   };
 }

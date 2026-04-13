@@ -1,10 +1,11 @@
 'use client';
 
-import { ArrowLeft, Settings, Trash2 } from 'lucide-react';
+import { ArrowLeft, GitCompareArrows, Settings, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 import { EditableTitle } from '@/components/chat/editable-title';
+import { InThreadComparePanel } from '@/components/chat/in-thread-compare-panel';
 import { MessageComposer } from '@/components/chat/message-composer';
 import { ThreadSettings } from '@/components/chat/thread-settings';
 import { VirtualizedMessages } from '@/components/chat/virtualized-messages';
@@ -12,6 +13,7 @@ import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants';
 import { useEditableTitle } from '@/hooks/chat/use-editable-title';
+import { useInThreadCompare } from '@/hooks/chat/use-in-thread-compare';
 import { useResizableComposer } from '@/hooks/chat/use-resizable-composer';
 import { useThreadDetailPage } from '@/hooks/chat/use-thread-detail-page';
 import { useTranslation } from '@/lib/i18n/use-translation';
@@ -29,7 +31,6 @@ export default function ThreadDetailPage() {
     isWaitingForResponse,
     fallbackAttempts,
     streamError,
-    judgeEvaluating,
     isSending,
     isDeleting,
     virtualizedMessages,
@@ -42,6 +43,7 @@ export default function ThreadDetailPage() {
 
   const editableTitle = useEditableTitle(threadId, thread?.title ?? undefined);
   const { composerHeight, handleMouseDown } = useResizableComposer();
+  const comparePanel = useInThreadCompare(threadId);
 
   if (!threadId) {
     return <LoadingSpinner label="Loading thread..." />;
@@ -62,6 +64,15 @@ export default function ThreadDetailPage() {
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <Button
+            variant={comparePanel.isOpen ? 'default' : 'outline'}
+            size="sm"
+            className="min-h-11 min-w-11"
+            onClick={comparePanel.toggleOpen}
+          >
+            <GitCompareArrows className="h-4 w-4 sm:me-2" />
+            <span className="hidden sm:inline">{t('compare.title')}</span>
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -89,6 +100,19 @@ export default function ThreadDetailPage() {
           </Button>
         </div>
       </div>
+
+      {comparePanel.isOpen ? (
+        <InThreadComparePanel
+          selectedModels={comparePanel.selectedModels}
+          onToggleModel={comparePanel.handleToggleModel}
+          onCompare={comparePanel.handleCompare}
+          onClose={comparePanel.toggleOpen}
+          result={comparePanel.result}
+          isPending={comparePanel.isPending}
+          canSend={comparePanel.canSend}
+          t={t}
+        />
+      ) : null}
 
       {threadSettings.isOpen ? (
         <div className="mb-4">
@@ -122,7 +146,6 @@ export default function ThreadDetailPage() {
             isWaitingForResponse={isWaitingForResponse}
             fallbackAttempts={fallbackAttempts}
             streamError={streamError}
-            judgeEvaluating={judgeEvaluating}
             onStartReached={virtualizedMessages.fetchPreviousPage}
             onFeedback={handleFeedback}
             onRegenerate={handleRegenerate}

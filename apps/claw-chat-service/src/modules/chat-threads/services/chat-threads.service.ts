@@ -22,7 +22,9 @@ export class ChatThreadsService {
   ) {}
 
   async createThread(userId: string, dto: CreateThreadDto): Promise<ChatThread> {
-    this.logger.log(`createThread: creating thread for user ${userId} with mode=${dto.routingMode ?? 'default'}`);
+    this.logger.log(
+      `createThread: creating thread for user ${userId} with mode=${dto.routingMode ?? 'default'}`,
+    );
     const thread = await this.chatThreadsRepository.create({
       userId,
       title: dto.title,
@@ -106,6 +108,7 @@ export class ChatThreadsService {
       preferredProvider: dto.preferredProvider,
       preferredModel: dto.preferredModel,
       contextPackIds: dto.contextPackIds,
+      judgeEnabled: dto.judgeEnabled,
     });
   }
 
