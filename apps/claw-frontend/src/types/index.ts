@@ -191,6 +191,10 @@ export type {
   ReplaySummaryCardProps,
   ReplayResultRowProps,
   ReplayFiltersFormProps,
+  ReplayOutcomeBadgeProps,
+  ReplayNeedsReviewListProps,
+  ReplayRunHistoryProps,
+  ReplayExportPanelProps,
   ParallelMessageGroupProps,
   ParallelModelSelectorProps,
   ParallelResponseCardProps,
@@ -253,7 +257,24 @@ export type {
   CatalogFilterParams,
   UseModelCatalogPageReturn,
 } from './catalog.types';
-export type { ReplayResult, ReplayBatchResult, ReplayFilters } from './replay.types';
+export type {
+  ReplayResult,
+  ReplayBatchResult,
+  ReplayFilters,
+  LabelBreakdown,
+} from './replay.types';
+export type {
+  ExportBundle,
+  ExportCase,
+  ExportCaseDecision,
+  PromotedTestFixture,
+  ReplayCaseDetail,
+  ReplayRunSummary,
+  ReplayRunsListResponse,
+  ReviewCaseRequest,
+  RunComparisonDelta,
+  RunComparisonResult,
+} from './replay-run.types';
 export type {
   ParallelModelResponse,
   ParallelResponse,

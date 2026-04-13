@@ -61,6 +61,8 @@ describe('ReplayManager', () => {
     findSuspiciousByRunId: jest.Mock;
     findById: jest.Mock;
     review: jest.Mock;
+    promote: jest.Mock;
+    findConfirmedRegressionsByRunId: jest.Mock;
   };
   let routingManager: { evaluateRoute: jest.Mock };
 
@@ -80,6 +82,33 @@ describe('ReplayManager', () => {
       findSuspiciousByRunId: jest.fn().mockResolvedValue([]),
       findById: jest.fn().mockResolvedValue(null),
       review: jest.fn(),
+      promote: jest.fn().mockResolvedValue({
+        id: 'case-1',
+        runId: 'run-1',
+        decisionId: null,
+        messagePreview: 'Write a Python function to sort a list',
+        messageContent: 'Write a Python function to sort a list',
+        hasOriginalContent: true,
+        oldProvider: 'anthropic',
+        oldModel: 'claude-sonnet-4',
+        oldConfidence: 0.75,
+        oldCostClass: 'medium',
+        newProvider: 'openai',
+        newModel: 'gpt-4o',
+        newConfidence: 0.9,
+        newCostClass: 'low',
+        changed: true,
+        improvementScore: 1,
+        outcomeLabel: 'correct_improvement',
+        isSuspicious: false,
+        suspiciousReasons: [],
+        isConfirmedRegression: false,
+        reviewNotes: null,
+        isPromoted: true,
+        reviewedAt: null,
+        createdAt: new Date(),
+      }),
+      findConfirmedRegressionsByRunId: jest.fn().mockResolvedValue([]),
     };
     routingManager = {
       evaluateRoute: jest.fn().mockResolvedValue(mockNewDecisionResult),
@@ -362,6 +391,177 @@ describe('ReplayManager', () => {
         result.labelBreakdown.uncertain;
 
       expect(total).toBe(result.totalReplayed);
+    });
+  });
+
+  describe('buildExportBundle', () => {
+    it('should include claudePrompt in the export bundle', async () => {
+      casesRepo.findSuspiciousByRunId.mockResolvedValue([
+        {
+          id: 'case-1',
+          runId: 'run-1',
+          messagePreview: 'Write a sorting function',
+          messageContent: 'Write a sorting function',
+          oldProvider: 'anthropic',
+          oldModel: 'claude-sonnet-4',
+          oldConfidence: 0.75,
+          oldCostClass: 'medium',
+          newProvider: 'openai',
+          newModel: 'gpt-4o',
+          newConfidence: 0.5,
+          newCostClass: 'high',
+          outcomeLabel: 'bad_regression',
+          suspiciousReasons: ['large_confidence_drop'],
+          improvementScore: -0.5,
+        },
+      ]);
+      runsRepo.findById.mockResolvedValue(mockRun);
+
+      const bundle = await manager.buildExportBundle('run-1');
+
+      expect(bundle.claudePrompt).toBeDefined();
+      expect(bundle.claudePrompt.length).toBeGreaterThan(0);
+      expect(bundle.claudePrompt).toContain('DIAGNOSIS');
+      expect(bundle.claudePrompt).toContain('CODE / POLICY CHANGES');
+      expect(bundle.claudePrompt).toContain('REGRESSION TESTS');
+    });
+
+    it('should include all cases in the claudePrompt', async () => {
+      casesRepo.findSuspiciousByRunId.mockResolvedValue([
+        {
+          id: 'case-1',
+          runId: 'run-1',
+          messagePreview: 'Write a sorting function',
+          messageContent: null,
+          oldProvider: 'anthropic',
+          oldModel: 'claude-sonnet-4',
+          oldConfidence: null,
+          oldCostClass: null,
+          newProvider: 'openai',
+          newModel: 'gpt-4o',
+          newConfidence: 0.9,
+          newCostClass: 'low',
+          outcomeLabel: 'quality_win',
+          suspiciousReasons: [],
+          improvementScore: 1,
+        },
+      ]);
+
+      const bundle = await manager.buildExportBundle('run-1');
+
+      expect(bundle.totalCases).toBe(1);
+      expect(bundle.cases).toHaveLength(1);
+    });
+  });
+
+  describe('promoteCase', () => {
+    it('should call casesRepository.promote and return a test fixture', async () => {
+      const result = await manager.promoteCase('case-1');
+
+      expect(casesRepo.promote).toHaveBeenCalledWith('case-1');
+      expect(result.caseId).toBe('case-1');
+      expect(result.testCode).toBeDefined();
+      expect(result.testDescription).toBeDefined();
+    });
+
+    it('should include provider names in the test fixture code', async () => {
+      const result = await manager.promoteCase('case-1');
+
+      expect(result.testCode).toContain('anthropic');
+      expect(result.testCode).toContain('openai');
+    });
+
+    it('should include a descriptive test description', async () => {
+      const result = await manager.promoteCase('case-1');
+
+      expect(result.testDescription).toContain('anthropic');
+      expect(result.testDescription).toContain('openai');
+    });
+  });
+
+  describe('compareRuns', () => {
+    const mockRunA = {
+      id: 'run-a',
+      name: 'Before fix',
+      totalReplayed: 50,
+      changedCount: 20,
+      suspiciousCount: 5,
+      avgConfOld: 0.6,
+      avgConfNew: 0.55,
+      avgImprovement: -0.1,
+      labelBreakdown: {
+        correctImprovement: 5,
+        badRegression: 10,
+        costWin: 2,
+        qualityWin: 1,
+        uncertain: 2,
+      },
+      createdAt: new Date(),
+    };
+    const mockRunB = {
+      id: 'run-b',
+      name: 'After fix',
+      totalReplayed: 50,
+      changedCount: 10,
+      suspiciousCount: 2,
+      avgConfOld: 0.6,
+      avgConfNew: 0.75,
+      avgImprovement: 0.3,
+      labelBreakdown: {
+        correctImprovement: 8,
+        badRegression: 2,
+        costWin: 4,
+        qualityWin: 3,
+        uncertain: 3,
+      },
+      createdAt: new Date(),
+    };
+
+    it('should return both run summaries', async () => {
+      runsRepo.findById.mockResolvedValueOnce(mockRunA).mockResolvedValueOnce(mockRunB);
+
+      const result = await manager.compareRuns('run-a', 'run-b');
+
+      expect(result.runA.id).toBe('run-a');
+      expect(result.runB.id).toBe('run-b');
+    });
+
+    it('should compute positive delta when run B improved', async () => {
+      runsRepo.findById.mockResolvedValueOnce(mockRunA).mockResolvedValueOnce(mockRunB);
+
+      const result = await manager.compareRuns('run-a', 'run-b');
+
+      expect(result.delta.avgConfNewDelta).toBeGreaterThan(0);
+      expect(result.delta.avgImprovementDelta).toBeGreaterThan(0);
+      expect(result.improved).toBe(true);
+    });
+
+    it('should compute negative delta when run B regressed', async () => {
+      runsRepo.findById.mockResolvedValueOnce(mockRunB).mockResolvedValueOnce(mockRunA);
+
+      const result = await manager.compareRuns('run-b', 'run-a');
+
+      expect(result.delta.avgConfNewDelta).toBeLessThan(0);
+      expect(result.improved).toBe(false);
+    });
+
+    it('should compute correct suspicious count delta', async () => {
+      runsRepo.findById.mockResolvedValueOnce(mockRunA).mockResolvedValueOnce(mockRunB);
+
+      const result = await manager.compareRuns('run-a', 'run-b');
+
+      expect(result.delta.suspiciousCount).toBe(
+        mockRunB.suspiciousCount - mockRunA.suspiciousCount,
+      );
+    });
+
+    it('should handle null runs gracefully', async () => {
+      runsRepo.findById.mockResolvedValue(null);
+
+      const result = await manager.compareRuns('run-a', 'run-b');
+
+      expect(result.runA.id).toBe('');
+      expect(result.runB.id).toBe('');
     });
   });
 });

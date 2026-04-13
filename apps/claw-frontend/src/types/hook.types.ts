@@ -12,6 +12,7 @@ import type { ModelSelection } from './component.types';
 import type { UploadFileRequest } from './file.types';
 import type { AggregatedHealth } from './health.types';
 import type { TranslateFunction } from './i18n.types';
+import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
 import type { ReplayBatchResult } from './replay.types';
 
 // ─── Admin hook types ───────────────────────────────────────────────────────
@@ -227,13 +228,39 @@ export type UseSidebarControllerReturn = {
 
 export type UseReplayLabPageReturn = {
   t: TranslateFunction;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
   routingMode: string | undefined;
   setRoutingMode: (value: string | undefined) => void;
+  threadId: string;
+  setThreadId: (value: string) => void;
+  startDate: string;
+  setStartDate: (value: string) => void;
+  endDate: string;
+  setEndDate: (value: string) => void;
   limit: number;
   setLimit: (value: number) => void;
+  saveRun: boolean;
+  setSaveRun: (value: boolean) => void;
+  runName: string;
+  setRunName: (value: string) => void;
   handleRunReplay: () => void;
   result: ReplayBatchResult | undefined;
   isPending: boolean;
   isError: boolean;
   error: Error | null;
+  runs: ReplayRunSummary[];
+  isRunsLoading: boolean;
+  suspiciousCases: ReplayCaseDetail[];
+  isSuspiciousLoading: boolean;
+  handleReviewCase: (caseId: string, isRegression: boolean, notes: string) => void;
+  isReviewPending: boolean;
+  handlePromoteCase: (caseId: string) => void;
+  isPromotePending: boolean;
+  compareRunId1: string | null;
+  compareRunId2: string | null;
+  setCompareRunId1: (id: string | null) => void;
+  setCompareRunId2: (id: string | null) => void;
+  compareResult: RunComparisonResult | undefined;
+  isCompareLoading: boolean;
 };

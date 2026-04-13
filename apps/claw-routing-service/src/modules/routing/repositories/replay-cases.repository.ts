@@ -43,4 +43,18 @@ export class ReplayCasesRepository {
       },
     });
   }
+
+  async promote(id: string): Promise<ReplayCase> {
+    return this.prisma.replayCase.update({
+      where: { id },
+      data: { isPromoted: true },
+    });
+  }
+
+  async findConfirmedRegressionsByRunId(runId: string): Promise<ReplayCase[]> {
+    return this.prisma.replayCase.findMany({
+      where: { runId, isConfirmedRegression: true },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
 }

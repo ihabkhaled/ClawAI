@@ -21,7 +21,13 @@ import {
   type RoutingPolicy,
 } from '../types/routing.types';
 import { type ReplayBatchResult } from '../types/replay.types';
-import type { ExportBundle, ReplayCaseDetail, ReplayRunSummary } from '../types/replay-run.types';
+import type {
+  ExportBundle,
+  PromotedTestFixture,
+  ReplayCaseDetail,
+  ReplayRunSummary,
+  RunComparisonResult,
+} from '../types/replay-run.types';
 
 @Injectable()
 export class RoutingService implements OnModuleInit {
@@ -180,6 +186,14 @@ export class RoutingService implements OnModuleInit {
 
   async exportReplayRun(runId: string): Promise<ExportBundle> {
     return this.replayManager.buildExportBundle(runId);
+  }
+
+  async promoteCase(caseId: string): Promise<PromotedTestFixture> {
+    return this.replayManager.promoteCase(caseId);
+  }
+
+  async compareRuns(runId1: string, runId2: string): Promise<RunComparisonResult> {
+    return this.replayManager.compareRuns(runId1, runId2);
   }
 
   private async subscribeToEvents(): Promise<void> {

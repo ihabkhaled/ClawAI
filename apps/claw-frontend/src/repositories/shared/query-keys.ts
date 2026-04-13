@@ -110,5 +110,13 @@ export const queryKeys = {
   },
   replay: {
     all: ['replay'] as const,
+    runs: {
+      all: () => ['replay', 'runs'] as const,
+      cases: (runId: string) => ['replay', 'runs', runId, 'cases'] as const,
+      compare: (runId1: string, runId2: string) =>
+        ['replay', 'runs', 'compare', runId1, runId2] as const,
+      list: (params?: Record<string, unknown>) => ['replay', 'runs', 'list', params] as const,
+      suspicious: (runId: string) => ['replay', 'runs', runId, 'suspicious'] as const,
+    },
   },
 } as const;

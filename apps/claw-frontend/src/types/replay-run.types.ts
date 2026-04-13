@@ -1,39 +1,7 @@
-import type { OutcomeLabel } from '../../../generated/prisma';
-import type { ReplayOutcomeLabel } from '../../../common/enums/replay-outcome-label.enum';
+import type { ReplayOutcomeLabel } from '@/enums';
+
+import type { PaginationMeta } from './audit.types';
 import type { LabelBreakdown } from './replay.types';
-
-export type CreateReplayCaseData = {
-  runId: string;
-  decisionId?: string;
-  messagePreview: string;
-  messageContent?: string;
-  hasOriginalContent: boolean;
-  oldProvider: string;
-  oldModel: string;
-  oldConfidence?: number;
-  oldCostClass?: string;
-  newProvider: string;
-  newModel: string;
-  newConfidence: number;
-  newCostClass: string;
-  changed: boolean;
-  improvementScore: number;
-  outcomeLabel: OutcomeLabel;
-  isSuspicious: boolean;
-  suspiciousReasons: string[];
-};
-
-export type CreateReplayRunData = {
-  name?: string;
-  filters: Record<string, string | number | null>;
-  totalReplayed: number;
-  changedCount: number;
-  suspiciousCount: number;
-  avgConfOld: number;
-  avgConfNew: number;
-  avgImprovement: number;
-  labelBreakdown: LabelBreakdown;
-};
 
 export type ReplayRunSummary = {
   id: string;
@@ -75,7 +43,7 @@ export type ReplayCaseDetail = {
   createdAt: string;
 };
 
-export type ReviewCaseData = {
+export type ReviewCaseRequest = {
   isConfirmedRegression: boolean;
   reviewNotes?: string;
 };
@@ -128,4 +96,9 @@ export type RunComparisonResult = {
   runB: ReplayRunSummary;
   delta: RunComparisonDelta;
   improved: boolean;
+};
+
+export type ReplayRunsListResponse = {
+  data: ReplayRunSummary[];
+  meta: PaginationMeta;
 };

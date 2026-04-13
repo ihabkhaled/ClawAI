@@ -7,15 +7,22 @@ import { UpdatePolicyDto, updatePolicySchema } from '../dto/update-policy.dto';
 import { ListPoliciesQueryDto, listPoliciesQuerySchema } from '../dto/list-policies-query.dto';
 import { EvaluateRouteDto, evaluateRouteSchema } from '../dto/evaluate-route.dto';
 import { type ReplayRoutingDto, replayRoutingSchema } from '../dto/replay-routing.dto';
-import { ReviewCaseDto, reviewCaseSchema } from '../dto/review-case.dto';
+import { type CompareRunsDto, compareRunsSchema } from '../dto/compare-runs.dto';
 import { ListReplayRunsDto, listReplayRunsSchema } from '../dto/list-replay-runs.dto';
+import { ReviewCaseDto, reviewCaseSchema } from '../dto/review-case.dto';
 import {
   type RoutingDecision,
   type RoutingDecisionResult,
   type RoutingPolicy,
 } from '../types/routing.types';
 import { type ReplayBatchResult } from '../types/replay.types';
-import type { ExportBundle, ReplayCaseDetail, ReplayRunSummary } from '../types/replay-run.types';
+import type {
+  ExportBundle,
+  PromotedTestFixture,
+  ReplayCaseDetail,
+  ReplayRunSummary,
+  RunComparisonResult,
+} from '../types/replay-run.types';
 
 @Controller('routing')
 export class RoutingController {
@@ -95,6 +102,18 @@ export class RoutingController {
   @Get('replay/runs/:runId/export')
   async exportReplayRun(@Param('runId') runId: string): Promise<ExportBundle> {
     return this.routingService.exportReplayRun(runId);
+  }
+
+  @Post('replay/cases/:caseId/promote')
+  async promoteCase(@Param('caseId') caseId: string): Promise<PromotedTestFixture> {
+    return this.routingService.promoteCase(caseId);
+  }
+
+  @Get('replay/runs/compare')
+  async compareRuns(
+    @Query(new ZodValidationPipe(compareRunsSchema)) query: CompareRunsDto,
+  ): Promise<RunComparisonResult> {
+    return this.routingService.compareRuns(query.runId1, query.runId2);
   }
 
   @Get('decisions/:threadId')

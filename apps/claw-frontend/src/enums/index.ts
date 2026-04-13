@@ -28,3 +28,4 @@ export { ImageGenerationStatus } from './image-generation-status.enum';
 export { FileGenerationStatus } from './file-generation-status.enum';
 export { ParallelModelStatus } from './parallel-model-status.enum';
 export { FallbackFailureType } from './fallback-failure-type.enum';
+export { ReplayOutcomeLabel } from './replay-outcome-label.enum';

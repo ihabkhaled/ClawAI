@@ -19,7 +19,14 @@ import type {
   ReplayFilters,
   ReplayResult,
 } from '../types/replay.types';
-import type { ExportBundle, ReplayCaseDetail, ReplayRunSummary } from '../types/replay-run.types';
+import type {
+  ExportBundle,
+  PromotedTestFixture,
+  ReplayCaseDetail,
+  ReplayRunSummary,
+  RunComparisonDelta,
+  RunComparisonResult,
+} from '../types/replay-run.types';
 import type {
   RoutingContext,
   RoutingDecision,
@@ -144,32 +151,70 @@ export class ReplayManager {
     const run = await this.runsRepository.findById(runId);
     const cases = await this.casesRepository.findSuspiciousByRunId(runId);
 
+    const exportCases = cases.map((c) => ({
+      id: c.id,
+      messagePreview: c.messagePreview,
+      originalPrompt: c.messageContent,
+      originalDecision: {
+        provider: c.oldProvider,
+        model: c.oldModel,
+        confidence: c.oldConfidence ? Number(c.oldConfidence) : null,
+        costClass: c.oldCostClass,
+      },
+      replayDecision: {
+        provider: c.newProvider,
+        model: c.newModel,
+        confidence: Number(c.newConfidence),
+        costClass: c.newCostClass,
+      },
+      outcomeLabel: c.outcomeLabel,
+      suspiciousReasons: c.suspiciousReasons,
+      improvementScore: Number(c.improvementScore),
+    }));
+
     return {
       runId,
       runName: run?.name ?? null,
       exportedAt: new Date().toISOString(),
-      totalCases: cases.length,
-      cases: cases.map((c) => ({
-        id: c.id,
-        messagePreview: c.messagePreview,
-        originalPrompt: c.messageContent,
-        originalDecision: {
-          provider: c.oldProvider,
-          model: c.oldModel,
-          confidence: c.oldConfidence ? Number(c.oldConfidence) : null,
-          costClass: c.oldCostClass,
-        },
-        replayDecision: {
-          provider: c.newProvider,
-          model: c.newModel,
-          confidence: Number(c.newConfidence),
-          costClass: c.newCostClass,
-        },
-        outcomeLabel: c.outcomeLabel,
-        suspiciousReasons: c.suspiciousReasons,
-        improvementScore: Number(c.improvementScore),
-      })),
+      totalCases: exportCases.length,
+      cases: exportCases,
+      claudePrompt: this.buildClaudePrompt(runId, run?.name ?? null, exportCases),
     };
+  }
+
+  async promoteCase(caseId: string): Promise<PromotedTestFixture> {
+    const c = await this.casesRepository.promote(caseId);
+    this.logger.log(`promoteCase: case ${caseId} marked as promoted`);
+    return {
+      caseId: c.id,
+      testDescription: this.buildTestDescription(c.messagePreview, c.oldProvider, c.newProvider),
+      testCode: this.buildTestFixtureCode(
+        c.messagePreview,
+        c.messageContent,
+        c.oldProvider,
+        c.oldModel,
+        c.newProvider,
+        c.newModel,
+      ),
+    };
+  }
+
+  async compareRuns(runId1: string, runId2: string): Promise<RunComparisonResult> {
+    const [runA, runB] = await Promise.all([
+      this.runsRepository.findById(runId1),
+      this.runsRepository.findById(runId2),
+    ]);
+
+    const summaryA = this.mapRunToSummary(runA);
+    const summaryB = this.mapRunToSummary(runB);
+
+    const delta = this.buildRunDelta(summaryA, summaryB);
+    const improved =
+      delta.avgConfNewDelta > 0 ||
+      delta.avgImprovementDelta > 0 ||
+      (delta.suspiciousCount < 0 && delta.avgConfNewDelta >= 0);
+
+    return { runA: summaryA, runB: summaryB, delta, improved };
   }
 
   private async replaySingleDecision(decision: RoutingDecision): Promise<ReplayResult> {
@@ -408,5 +453,151 @@ export class ReplayManager {
     if (values.length === 0) return 0;
     const sum = values.reduce((acc, val) => acc + val, 0);
     return sum / values.length;
+  }
+
+  private mapRunToSummary(
+    run: {
+      id: string;
+      name: string | null;
+      totalReplayed: number;
+      changedCount: number;
+      suspiciousCount: number;
+      avgConfOld: unknown;
+      avgConfNew: unknown;
+      avgImprovement: unknown;
+      labelBreakdown: unknown;
+      createdAt: Date;
+    } | null,
+  ): ReplayRunSummary {
+    return {
+      id: run?.id ?? '',
+      name: run?.name ?? null,
+      totalReplayed: run?.totalReplayed ?? 0,
+      changedCount: run?.changedCount ?? 0,
+      suspiciousCount: run?.suspiciousCount ?? 0,
+      avgConfOld: run ? Number(run.avgConfOld) : 0,
+      avgConfNew: run ? Number(run.avgConfNew) : 0,
+      avgImprovement: run ? Number(run.avgImprovement) : 0,
+      labelBreakdown: (run?.labelBreakdown ?? {
+        correctImprovement: 0,
+        badRegression: 0,
+        costWin: 0,
+        qualityWin: 0,
+        uncertain: 0,
+      }) as LabelBreakdown,
+      createdAt: run ? run.createdAt.toISOString() : new Date().toISOString(),
+    };
+  }
+
+  private buildRunDelta(a: ReplayRunSummary, b: ReplayRunSummary): RunComparisonDelta {
+    return {
+      totalReplayed: b.totalReplayed - a.totalReplayed,
+      changedCount: b.changedCount - a.changedCount,
+      suspiciousCount: b.suspiciousCount - a.suspiciousCount,
+      avgConfOldDelta: b.avgConfOld - a.avgConfOld,
+      avgConfNewDelta: b.avgConfNew - a.avgConfNew,
+      avgImprovementDelta: b.avgImprovement - a.avgImprovement,
+      labelBreakdownDelta: {
+        correctImprovement:
+          b.labelBreakdown.correctImprovement - a.labelBreakdown.correctImprovement,
+        badRegression: b.labelBreakdown.badRegression - a.labelBreakdown.badRegression,
+        costWin: b.labelBreakdown.costWin - a.labelBreakdown.costWin,
+        qualityWin: b.labelBreakdown.qualityWin - a.labelBreakdown.qualityWin,
+        uncertain: b.labelBreakdown.uncertain - a.labelBreakdown.uncertain,
+      },
+    };
+  }
+
+  private buildClaudePrompt(
+    runId: string,
+    runName: string | null,
+    cases: {
+      id: string;
+      messagePreview: string;
+      originalPrompt: string | null;
+      originalDecision: {
+        provider: string;
+        model: string;
+        confidence: number | null;
+        costClass: string | null;
+      };
+      replayDecision: {
+        provider: string;
+        model: string;
+        confidence: number;
+        costClass: string | null;
+      };
+      outcomeLabel: string;
+      suspiciousReasons: string[];
+      improvementScore: number;
+    }[],
+  ): string {
+    const casesSummary = cases
+      .map(
+        (c, i) =>
+          `Case ${String(i + 1)} [${c.id}]:\n` +
+          `  Message: "${c.messagePreview}"\n` +
+          `  Original: ${c.originalDecision.provider}/${c.originalDecision.model} (conf=${String(c.originalDecision.confidence ?? 'n/a')}, cost=${c.originalDecision.costClass ?? 'n/a'})\n` +
+          `  Replay:   ${c.replayDecision.provider}/${c.replayDecision.model} (conf=${String(c.replayDecision.confidence)}, cost=${c.replayDecision.costClass ?? 'n/a'})\n` +
+          `  Label: ${c.outcomeLabel} | Score: ${String(c.improvementScore)} | Flags: ${c.suspiciousReasons.join(', ') || 'none'}`,
+      )
+      .join('\n\n');
+
+    return (
+      `## Routing Regression Analysis Request\n\n` +
+      `Run ID: ${runId}\n` +
+      `Run Name: ${runName ?? 'unnamed'}\n` +
+      `Suspicious Cases: ${String(cases.length)}\n\n` +
+      `### Cases\n\n${casesSummary}\n\n` +
+      `### Required Output — Return EXACTLY 3 sections\n\n` +
+      `**1. DIAGNOSIS**\n` +
+      `Identify the root cause. Be specific: which routing rule, policy, model assignment, or confidence threshold is wrong.\n\n` +
+      `**2. CODE / POLICY CHANGES**\n` +
+      `Provide exact file paths and minimal code or JSON policy changes. No prose — just the diff or config block.\n\n` +
+      `**3. REGRESSION TESTS**\n` +
+      `Provide Jest test cases using the pattern from replay.manager.spec.ts that would catch this regression.`
+    );
+  }
+
+  private buildTestDescription(
+    messagePreview: string,
+    oldProvider: string,
+    newProvider: string,
+  ): string {
+    return `regression: "${messagePreview.slice(0, 60)}" should NOT change from ${oldProvider} to ${newProvider}`;
+  }
+
+  private buildTestFixtureCode(
+    messagePreview: string,
+    messageContent: string | null,
+    oldProvider: string,
+    oldModel: string,
+    newProvider: string,
+    newModel: string,
+  ): string {
+    const safeContent = (messageContent ?? messagePreview)
+      .slice(0, 200)
+      .replaceAll('`', "'")
+      .replaceAll('\\', '\\\\');
+
+    return (
+      `it('should NOT route away from ${oldProvider}/${oldModel} for this message', async () => {\n` +
+      `  routingManager.evaluateRoute.mockResolvedValue({\n` +
+      `    ...mockNewDecisionResult,\n` +
+      `    selectedProvider: '${newProvider}',\n` +
+      `    selectedModel: '${newModel}',\n` +
+      `  });\n` +
+      `  decisionsRepo.findRecent.mockResolvedValue([{\n` +
+      `    ...mockDecision,\n` +
+      `    messageContent: \`${safeContent}\`,\n` +
+      `    selectedProvider: '${oldProvider}',\n` +
+      `    selectedModel: '${oldModel}',\n` +
+      `  }]);\n\n` +
+      `  const result = await manager.replayDecisions({ limit: 1 });\n\n` +
+      `  // This regression test confirms the router must NOT change from ${oldProvider}/${oldModel}\n` +
+      `  expect(result.results[0]?.changed).toBe(false);\n` +
+      `  expect(result.results[0]?.originalDecision.selectedProvider).toBe('${oldProvider}');\n` +
+      `});`
+    );
   }
 }

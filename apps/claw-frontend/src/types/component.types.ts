@@ -1,7 +1,13 @@
 import type { LucideIcon } from 'lucide-react';
 
 import type { SidebarItem } from '@/constants';
-import type { ComponentSize, ConnectorStatus, MessageFeedback, RoutingMode } from '@/enums';
+import type {
+  ComponentSize,
+  ConnectorStatus,
+  MessageFeedback,
+  ReplayOutcomeLabel,
+  RoutingMode,
+} from '@/enums';
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { TranslateFunction } from '@/types/i18n.types';
 
@@ -14,14 +20,15 @@ import type { UploadedFile } from './file.types';
 import type { AggregatedHealth } from './health.types';
 import type {
   ClientLogEntry,
-  ClientLogStats,
   ClientLogsTabProps,
+  ClientLogStats,
   ServerLogEntry,
-  ServerLogStats,
   ServerLogsTabProps,
+  ServerLogStats,
 } from './log.types';
 import type { CreateMemoryRequest, MemoryRecord } from './memory.types';
 import type { ParallelModelResponse, ParallelResponse } from './parallel.types';
+import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
 import type { ReplayBatchResult, ReplayResult } from './replay.types';
 import type { CreatePolicyRequest, RoutingDecision, RoutingPolicy } from './routing.types';
 
@@ -614,10 +621,51 @@ export type ReplayResultRowProps = {
 export type ReplayFiltersFormProps = {
   routingMode: string | undefined;
   onRoutingModeChange: (value: string | undefined) => void;
+  threadId: string;
+  onThreadIdChange: (value: string) => void;
+  startDate: string;
+  onStartDateChange: (value: string) => void;
+  endDate: string;
+  onEndDateChange: (value: string) => void;
   limit: number;
   onLimitChange: (value: number) => void;
+  saveRun: boolean;
+  onSaveRunChange: (value: boolean) => void;
+  runName: string;
+  onRunNameChange: (value: string) => void;
   onSubmit: () => void;
   isPending: boolean;
+  t: TranslateFunction;
+};
+
+export type ReplayOutcomeBadgeProps = {
+  outcomeLabel: ReplayOutcomeLabel;
+  t: TranslateFunction;
+};
+
+export type ReplayNeedsReviewListProps = {
+  cases: ReplayCaseDetail[];
+  onReview: (caseId: string, isConfirmedRegression: boolean, notes: string) => void;
+  isReviewPending: boolean;
+  onPromote: (caseId: string) => void;
+  isPromotePending: boolean;
+  t: TranslateFunction;
+};
+
+export type ReplayRunHistoryProps = {
+  runs: ReplayRunSummary[];
+  isLoading: boolean;
+  compareRunId1: string | null;
+  compareRunId2: string | null;
+  onCompareRunId1Change: (id: string | null) => void;
+  onCompareRunId2Change: (id: string | null) => void;
+  compareResult: RunComparisonResult | undefined;
+  isCompareLoading: boolean;
+  t: TranslateFunction;
+};
+
+export type ReplayExportPanelProps = {
+  runId: string;
   t: TranslateFunction;
 };
 

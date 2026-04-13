@@ -604,7 +604,28 @@ Active policies (sorted by priority) can override the mode.
 
 ### Routing Replay Lab
 
-`POST /routing/replay` -- re-runs historical routing decisions against the current router configuration. Returns old-vs-new comparison per decision and an aggregated summary (totalReplayed, changedCount, improvedCount, regressedCount, avgConfidenceDelta). Managed by `ReplayManager` in the routing service. Frontend page at `/routing/replay` with filters, summary card, and results table.
+`POST /routing/replay` -- re-runs historical routing decisions against the current router configuration. Returns old-vs-new comparison per decision and an aggregated summary (totalReplayed, changedCount, suspiciousCount, averageConfidenceOld/New, labelBreakdown). Managed by `ReplayManager` in the routing service. Frontend page at `/routing/replay` with 3-tab layout: Results, Needs Review, History.
+
+**Replay Lab v2 Endpoints (all under `/api/v1/routing`):**
+
+| Endpoint                         | Method | Description                                             |
+| -------------------------------- | ------ | ------------------------------------------------------- |
+| `/replay`                        | POST   | Run a replay batch (optional saveRun, runName)          |
+| `/replay/runs`                   | GET    | List saved run summaries (paginated)                    |
+| `/replay/runs/compare`           | GET    | Compare two runs delta (runId1, runId2 query params)    |
+| `/replay/runs/:runId/cases`      | GET    | All cases for a run                                     |
+| `/replay/runs/:runId/suspicious` | GET    | Only suspicious cases for a run                         |
+| `/replay/runs/:runId/export`     | GET    | Export bundle with claudePrompt for structured analysis |
+| `/replay/cases/:caseId/review`   | POST   | Mark confirmed regression + review notes                |
+| `/replay/cases/:caseId/promote`  | POST   | Promote to regression test fixture (returns testCode)   |
+
+**Outcome Labels**: `correct_improvement`, `bad_regression`, `cost_win`, `quality_win`, `uncertain`
+
+**Suspicious triggers**: `empty_message_content`, `large_confidence_drop` (≥0.2), `large_cost_increase` (≥2 rank jumps), `route_changed_with_negative_improvement`
+
+**Export Bundle**: includes `claudePrompt` — a structured 3-section analysis prompt (DIAGNOSIS / CODE CHANGES / REGRESSION TESTS) ready to paste into Claude for root-cause analysis.
+
+**Run Comparison**: `RunComparisonResult` includes both run summaries + delta (avgConfNewDelta, avgImprovementDelta, suspiciousCount delta, labelBreakdown delta) + `improved: boolean`.
 
 ### Intelligent Routing Rules (AUTO mode)
 
