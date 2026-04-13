@@ -3,6 +3,7 @@ import { ChatMessagesController } from './controllers/chat-messages.controller';
 import { ChatStreamController } from './controllers/chat-stream.controller';
 import { ChatMessagesService } from './services/chat-messages.service';
 import { AnswerRepairManager } from './managers/answer-repair.manager';
+import { TaskDecompositionManager } from './managers/task-decomposition.manager';
 import { ChatExecutionManager } from './managers/chat-execution.manager';
 import { ConsensusExecutionManager } from './managers/consensus-execution.manager';
 import { ContextAssemblyManager } from './managers/context-assembly.manager';
@@ -19,6 +20,7 @@ import { ChatThreadsRepository } from '../chat-threads/repositories/chat-threads
   providers: [
     ChatMessagesService,
     AnswerRepairManager,
+    TaskDecompositionManager,
     ChatExecutionManager,
     ConsensusExecutionManager,
     ContextAssemblyManager,

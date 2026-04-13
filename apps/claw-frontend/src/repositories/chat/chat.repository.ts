@@ -7,6 +7,8 @@ import type {
   ConsensusResponse,
   CreateThreadRequest,
   CreateMessageRequest,
+  DecomposeRequest,
+  DecomposeResponse,
   EscalationChainRequest,
   EscalationChainResponse,
   MessagesListResponse,
@@ -115,6 +117,11 @@ export const chatRepository = {
 
   async repairMessage(data: RepairRequest): Promise<RepairResponse> {
     const response = await apiClient.post<RepairResponse>('/chat-messages/repair', data);
+    return response.data;
+  },
+
+  async decomposeTask(data: DecomposeRequest): Promise<DecomposeResponse> {
+    const response = await apiClient.post<DecomposeResponse>('/chat-messages/decompose', data);
     return response.data;
   },
 };

@@ -124,3 +124,10 @@ export {
   REPAIR_CONTENT_MIN_LENGTH,
 } from './answer-repair.constants';
 export { RECOVERY_STATS_LIMIT } from './recovery.constants';
+export {
+  DECOMPOSE_POLL_INTERVAL_MS,
+  DECOMPOSE_POLL_MESSAGES_LIMIT,
+  DECOMPOSE_AUTO_NAVIGATE_DELAY_MS,
+  MAX_DECOMPOSE_POLL_COUNT,
+  DECOMPOSE_CONTENT_MIN_LENGTH,
+} from './task-decomposition.constants';

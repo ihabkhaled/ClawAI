@@ -65,6 +65,7 @@ export type TranslationDictionary = {
     routing: string;
     replayLab: string;
     recoveryLab: string;
+    decomposeLab: string;
     memory: string;
     context: string;
     files: string;
@@ -673,6 +674,25 @@ export type TranslationDictionary = {
     finalAnswer: string;
     provider: string;
     model: string;
+  };
+  decompose: {
+    title: string;
+    description: string;
+    contentLabel: string;
+    contentPlaceholder: string;
+    maxSubTasks: string;
+    sendPrompt: string;
+    running: string;
+    synthesizing: string;
+    resultTitle: string;
+    viewInThread: string;
+    subTasksHeader: string;
+    subTaskResult: string;
+    category: string;
+    model: string;
+    latencyMs: string;
+    noResults: string;
+    sendFailed: string;
   };
   recovery: {
     title: string;

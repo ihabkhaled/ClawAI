@@ -1,0 +1,8 @@
+export enum TaskDecompositionStatus {
+  PENDING = 'PENDING',
+  DECOMPOSING = 'DECOMPOSING',
+  EXECUTING = 'EXECUTING',
+  MERGING = 'MERGING',
+  COMPLETE = 'COMPLETE',
+  FAILED = 'FAILED',
+}

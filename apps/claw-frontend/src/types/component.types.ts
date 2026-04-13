@@ -41,6 +41,7 @@ import type { ProviderFailureStat, RecentFallback } from './recovery.types';
 import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
 import type { ReplayBatchResult, ReplayResult } from './replay.types';
 import type { CreatePolicyRequest, RoutingDecision, RoutingPolicy } from './routing.types';
+import type { DecompositionResultState, SubTaskResult } from './task-decomposition.types';
 
 // ─── Common component props ──────────────────────────────────────────────────
 
@@ -804,5 +805,19 @@ export type RecoveryProviderTableProps = {
 
 export type RecoveryFallbackRowProps = {
   fallback: RecentFallback;
+  t: TranslateFunction;
+};
+
+// ─── Task Decomposition component props ────────────────────────────────────
+
+export type DecompositionResultCardProps = {
+  result: DecompositionResultState;
+  onViewInThread: () => void;
+  t: TranslateFunction;
+};
+
+export type SubTaskResultCardProps = {
+  subTask: SubTaskResult;
+  index: number;
   t: TranslateFunction;
 };

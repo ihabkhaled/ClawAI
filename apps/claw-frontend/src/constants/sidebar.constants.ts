@@ -35,6 +35,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
   { labelKey: 'nav.consensusMode', href: ROUTES.CHAT_CONSENSUS, icon: Layers },
   { labelKey: 'nav.escalationChain', href: ROUTES.CHAT_ESCALATION, icon: GitFork },
   { labelKey: 'nav.repairLab', href: ROUTES.CHAT_REPAIR, icon: Wrench },
+  { labelKey: 'nav.decomposeLab', href: ROUTES.CHAT_DECOMPOSE, icon: Layers },
   { labelKey: 'nav.connectors', href: ROUTES.CONNECTORS, icon: Plug },
   { labelKey: 'nav.models', href: ROUTES.MODELS, icon: Cpu },
   { labelKey: 'nav.modelCatalog', href: ROUTES.MODELS_CATALOG, icon: Store },

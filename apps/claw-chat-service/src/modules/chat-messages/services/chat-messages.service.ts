@@ -7,6 +7,7 @@ import { ChatExecutionManager } from '../managers/chat-execution.manager';
 import { ContextAssemblyManager } from '../managers/context-assembly.manager';
 import { ConsensusExecutionManager } from '../managers/consensus-execution.manager';
 import { AnswerRepairManager } from '../managers/answer-repair.manager';
+import { TaskDecompositionManager } from '../managers/task-decomposition.manager';
 import { EscalationChainManager } from '../managers/escalation-chain.manager';
 import { ParallelExecutionManager } from '../managers/parallel-execution.manager';
 import { ChatStreamService } from './chat-stream.service';
@@ -14,6 +15,7 @@ import { type CreateMessageDto } from '../dto/create-message.dto';
 import { type ConsensusMessageDto } from '../dto/consensus-message.dto';
 import { type EscalationChainMessageDto } from '../dto/escalation-chain-message.dto';
 import { type RepairMessageDto } from '../dto/repair-message.dto';
+import { type DecomposeTaskDto } from '../dto/decompose-task.dto';
 import { type ListMessagesQueryDto } from '../dto/list-messages-query.dto';
 import {
   type LlmResponse,
@@ -23,6 +25,7 @@ import {
 import { type ConsensusResponse } from '../types/consensus.types';
 import { type EscalationChainResponse } from '../types/escalation-chain.types';
 import { type AnswerRepairResponse } from '../types/answer-repair.types';
+import { type TaskDecompositionResponse } from '../types/task-decomposition.types';
 import { type ParallelResponse } from '../types/parallel.types';
 import { type ParallelMessageDto } from '../dto/parallel-message.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
@@ -43,6 +46,7 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly consensusExecutionManager: ConsensusExecutionManager,
     private readonly escalationChainManager: EscalationChainManager,
     private readonly answerRepairManager: AnswerRepairManager,
+    private readonly taskDecompositionManager: TaskDecompositionManager,
     private readonly chatStreamService: ChatStreamService,
     private readonly rabbitMQService: RabbitMQService,
   ) {
@@ -150,6 +154,13 @@ export class ChatMessagesService implements OnModuleInit {
 
   async createRepairMessage(userId: string, dto: RepairMessageDto): Promise<AnswerRepairResponse> {
     return this.answerRepairManager.executeRepair(userId, dto);
+  }
+
+  async executeDecomposition(
+    userId: string,
+    dto: DecomposeTaskDto,
+  ): Promise<TaskDecompositionResponse> {
+    return this.taskDecompositionManager.executeDecomposition(userId, dto);
   }
 
   async getMessages(

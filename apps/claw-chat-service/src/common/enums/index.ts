@@ -6,3 +6,4 @@ export { JudgeDecision } from './judge-decision.enum';
 export { ConsensusConfidenceLevel } from './consensus-confidence.enum';
 export { EscalationChainStatus } from './escalation-chain-status.enum';
 export { RepairType } from './repair-type.enum';
+export { TaskDecompositionStatus } from './task-decomposition-status.enum';

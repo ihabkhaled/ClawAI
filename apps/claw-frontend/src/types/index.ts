@@ -213,6 +213,8 @@ export type {
   RecoveryStatsCardProps,
   RecoveryProviderTableProps,
   RecoveryFallbackRowProps,
+  DecompositionResultCardProps,
+  SubTaskResultCardProps,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
@@ -346,3 +348,13 @@ export type {
   UseTranslationReturn,
 } from './i18n.types';
 export type { ProviderFailureStat, RecentFallback, RecoveryStats } from './recovery.types';
+export type {
+  SubTaskResult,
+  DecompositionMetadata,
+  DecompositionResultState,
+  DecomposeRequest,
+  DecomposeResponse,
+  UseDecomposeSendResult,
+  UseDecomposePollResult,
+  UseDecomposePageReturn,
+} from './task-decomposition.types';
