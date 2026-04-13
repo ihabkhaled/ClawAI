@@ -134,6 +134,7 @@ describe('RoutingService', () => {
       decisionsRepo as unknown as RoutingDecisionsRepository,
       routingManager as unknown as RoutingManager,
       replayMgr as unknown as ReplayManager,
+      {} as any,
       rabbitMQ as unknown as RabbitMQService,
       promptBuilder as any,
     );

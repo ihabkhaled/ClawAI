@@ -8,6 +8,7 @@ import { RoutingPoliciesRepository } from '../repositories/routing-policies.repo
 import { RoutingDecisionsRepository } from '../repositories/routing-decisions.repository';
 import { RoutingManager } from '../managers/routing.manager';
 import { ReplayManager } from '../managers/replay.manager';
+import { AdaptiveLearningManager } from '../managers/adaptive-learning.manager';
 import { PromptBuilderManager } from '../managers/prompt-builder.manager';
 import { type CreatePolicyDto } from '../dto/create-policy.dto';
 import { type ReplayRoutingDto } from '../dto/replay-routing.dto';
@@ -29,6 +30,7 @@ import type {
   RunComparisonResult,
 } from '../types/replay-run.types';
 import type { ProviderFailureStat, RecentFallback, RecoveryStats } from '../types/recovery.types';
+import type { AdaptiveLearningInsights } from '../types/adaptive-learning.types';
 
 @Injectable()
 export class RoutingService implements OnModuleInit {
@@ -42,6 +44,7 @@ export class RoutingService implements OnModuleInit {
     private readonly decisionsRepository: RoutingDecisionsRepository,
     private readonly routingManager: RoutingManager,
     private readonly replayManager: ReplayManager,
+    private readonly adaptiveLearningManager: AdaptiveLearningManager,
     private readonly rabbitMQService: RabbitMQService,
     private readonly promptBuilder: PromptBuilderManager,
   ) {
@@ -195,6 +198,10 @@ export class RoutingService implements OnModuleInit {
 
   async compareRuns(runId1: string, runId2: string): Promise<RunComparisonResult> {
     return this.replayManager.compareRuns(runId1, runId2);
+  }
+
+  async getAdaptiveInsights(windowDays: number): Promise<AdaptiveLearningInsights> {
+    return this.adaptiveLearningManager.computeInsights(windowDays);
   }
 
   async getRecoveryStats(limit: number): Promise<RecoveryStats> {

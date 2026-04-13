@@ -67,6 +67,14 @@ export class RoutingDecisionsRepository {
     });
   }
 
+  async findInWindow(windowDays: number): Promise<RoutingDecision[]> {
+    const since = new Date(Date.now() - windowDays * 86_400_000);
+    return this.prisma.routingDecision.findMany({
+      where: { createdAt: { gte: since } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async getRecoveryStats(limit: number): Promise<RawRecoveryData> {
     const fallbackWhere = { fallbackProvider: { not: null } };
 

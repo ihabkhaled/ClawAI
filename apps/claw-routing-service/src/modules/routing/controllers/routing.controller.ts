@@ -24,6 +24,7 @@ import type {
   RunComparisonResult,
 } from '../types/replay-run.types';
 import type { RecoveryStats } from '../types/recovery.types';
+import type { AdaptiveLearningInsights } from '../types/adaptive-learning.types';
 
 @Controller('routing')
 export class RoutingController {
@@ -115,6 +116,17 @@ export class RoutingController {
     @Query(new ZodValidationPipe(compareRunsSchema)) query: CompareRunsDto,
   ): Promise<RunComparisonResult> {
     return this.routingService.compareRuns(query.runId1, query.runId2);
+  }
+
+  @Get('adaptive-insights')
+  async getAdaptiveInsights(
+    @Query('windowDays') windowDays?: string,
+  ): Promise<AdaptiveLearningInsights> {
+    const days =
+      windowDays !== undefined
+        ? Math.min(Math.max(Number.parseInt(windowDays, 10) || 30, 1), 90)
+        : 30;
+    return this.routingService.getAdaptiveInsights(days);
   }
 
   @Get('recovery/stats')

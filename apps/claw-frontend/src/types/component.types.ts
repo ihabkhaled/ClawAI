@@ -13,6 +13,11 @@ import type { ConsensusConfidenceLevel } from '@/enums/consensus-confidence-leve
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { TranslateFunction } from '@/types/i18n.types';
 
+import type {
+  AdaptiveLearningInsights,
+  ModeInsight,
+  ProviderInsight,
+} from './adaptive-learning.types';
 import type { RepairResultState } from './answer-repair.types';
 import type { AdminUser, AuditLog } from './audit.types';
 import type { BestOfNResultState, CandidateResult } from './best-of-n.types';
@@ -842,5 +847,22 @@ export type CandidateCardProps = {
 export type VerifyResultCardProps = {
   result: UseVerifyResultState;
   onViewInThread: () => void;
+  t: TranslateFunction;
+};
+
+// ─── Adaptive Learning component props ────────────────────────────────────────
+
+export type AdaptiveProviderTableProps = {
+  providerInsights: ProviderInsight[];
+  t: TranslateFunction;
+};
+
+export type AdaptiveModeChartProps = {
+  modeInsights: ModeInsight[];
+  t: TranslateFunction;
+};
+
+export type AdaptiveStatsCardProps = {
+  insights: AdaptiveLearningInsights;
   t: TranslateFunction;
 };

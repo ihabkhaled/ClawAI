@@ -36,6 +36,7 @@ describe('RoutingService.getRecoveryStats', () => {
       decisionsRepo as unknown as RoutingDecisionsRepository,
       {} as any,
       {} as any,
+      {} as any,
       {
         subscribe: jest.fn(),
         publish: jest.fn(),

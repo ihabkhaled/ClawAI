@@ -1,5 +1,6 @@
 import type { MessageFeedback } from '@/enums';
 
+import type { AdaptiveLearningInsights } from './adaptive-learning.types';
 import type { AdminUser, AuditLog } from './audit.types';
 import type {
   ChatMessage,
@@ -273,4 +274,15 @@ export type UseRecoveryPageReturn = {
   data: RecoveryStats | undefined;
   isLoading: boolean;
   isError: boolean;
+};
+
+// ─── Adaptive Learning hook types ────────────────────────────────────────────
+
+export type UseAdaptiveLearningPageReturn = {
+  t: TranslateFunction;
+  insights: AdaptiveLearningInsights | undefined;
+  isLoading: boolean;
+  isError: boolean;
+  windowDays: number;
+  setWindowDays: (days: number) => void;
 };

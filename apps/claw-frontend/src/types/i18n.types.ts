@@ -65,6 +65,7 @@ export type TranslationDictionary = {
     routing: string;
     replayLab: string;
     recoveryLab: string;
+    adaptiveInsights: string;
     decomposeLab: string;
     bestOfNLab: string;
     verifierLab: string;
@@ -753,6 +754,27 @@ export type TranslationDictionary = {
     revisions: string;
     issues: string;
     viewInThread: string;
+  };
+  adaptiveLearning: {
+    title: string;
+    description: string;
+    loading: string;
+    error: string;
+    windowDays: string;
+    days: string;
+    totalDecisions: string;
+    avgConfidence: string;
+    topReasonTags: string;
+    providerTable: string;
+    modeBreakdown: string;
+    noData: string;
+    provider: string;
+    fallbackRate: string;
+    totalCalls: string;
+    topModes: string;
+    mode: string;
+    count: string;
+    percentage: string;
   };
   validation: {
     required: string;

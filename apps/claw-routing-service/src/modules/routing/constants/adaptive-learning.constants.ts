@@ -1,0 +1,3 @@
+export const ADAPTIVE_INSIGHTS_WINDOW_DAYS = 30;
+export const MIN_DECISIONS_FOR_INSIGHT = 1;
+export const MAX_REASON_TAGS = 10;

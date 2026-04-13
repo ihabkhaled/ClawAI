@@ -145,3 +145,7 @@ export {
   VERIFIER_AUTO_NAVIGATE_DELAY_MS,
   VERIFIER_CONTENT_MIN_LENGTH,
 } from './verifier.constants';
+export {
+  ADAPTIVE_LEARNING_DEFAULT_WINDOW_DAYS,
+  ADAPTIVE_LEARNING_WINDOW_OPTIONS,
+} from './adaptive-learning.constants';

@@ -17,6 +17,7 @@ export const ROUTES = {
   CHAT_VERIFY: '/chat/verify',
   ROUTING_REPLAY: '/routing/replay',
   ROUTING_RECOVERY: '/routing/recovery',
+  ROUTING_ADAPTIVE_INSIGHTS: '/routing/adaptive-insights',
   MEMORY: '/memory',
   CONTEXT: '/context',
   FILES: '/files',

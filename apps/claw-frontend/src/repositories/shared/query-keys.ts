@@ -120,4 +120,8 @@ export const queryKeys = {
       suspicious: (runId: string) => ['replay', 'runs', runId, 'suspicious'] as const,
     },
   },
+  adaptiveLearning: {
+    all: ['adaptive-learning'] as const,
+    insights: (windowDays: number) => ['adaptive-learning', 'insights', windowDays] as const,
+  },
 } as const;

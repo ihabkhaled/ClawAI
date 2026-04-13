@@ -1,5 +1,6 @@
 import { apiClient } from '@/services/shared/api-client';
 import type {
+  AdaptiveLearningInsights,
   CreatePolicyRequest,
   DecisionsListResponse,
   EvaluateRouteRequest,
@@ -108,6 +109,13 @@ export const routingRepository = {
     const response = await apiClient.get<RecoveryStats>('/routing/recovery/stats', {
       limit: String(limit),
     });
+    return response.data;
+  },
+
+  async getAdaptiveInsights(windowDays: number): Promise<AdaptiveLearningInsights> {
+    const response = await apiClient.get<AdaptiveLearningInsights>(
+      `/routing/adaptive-insights?windowDays=${String(windowDays)}`,
+    );
     return response.data;
   },
 };

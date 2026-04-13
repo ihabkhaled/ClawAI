@@ -218,6 +218,9 @@ export type {
   BestOfNResultCardProps,
   CandidateCardProps,
   VerifyResultCardProps,
+  AdaptiveProviderTableProps,
+  AdaptiveModeChartProps,
+  AdaptiveStatsCardProps,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
@@ -261,6 +264,7 @@ export type {
   UseSidebarControllerReturn,
   UseReplayLabPageReturn,
   UseRecoveryPageReturn,
+  UseAdaptiveLearningPageReturn,
 } from './hook.types';
 export type {
   CandidateResult,
@@ -381,3 +385,8 @@ export type {
   UseVerifyPollResult,
   UseVerifyPageReturn,
 } from './verifier.types';
+export type {
+  ProviderInsight,
+  ModeInsight,
+  AdaptiveLearningInsights,
+} from './adaptive-learning.types';
