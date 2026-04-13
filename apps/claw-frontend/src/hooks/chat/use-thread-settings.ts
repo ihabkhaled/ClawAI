@@ -15,14 +15,26 @@ export function useThreadSettings(thread: ChatThread | null) {
   const [maxTokens, setMaxTokens] = useState('');
   const [selectedModel, setSelectedModel] = useState<ModelSelection | null>(null);
   const [contextPackIds, setContextPackIds] = useState<string[]>([]);
+  const [judgeEnabled, setJudgeEnabled] = useState(false);
 
   useEffect(() => {
     if (thread) {
       setSystemPrompt(thread.systemPrompt ?? '');
       setTemperature(thread.temperature ?? 0.7);
-      setMaxTokens(thread.maxTokens !== null && thread.maxTokens !== undefined ? String(thread.maxTokens) : '');
-      setSelectedModel(thread.preferredProvider && thread.preferredModel ? { provider: thread.preferredProvider, model: thread.preferredModel, displayName: thread.preferredModel } : null);
+      setMaxTokens(
+        thread.maxTokens !== null && thread.maxTokens !== undefined ? String(thread.maxTokens) : '',
+      );
+      setSelectedModel(
+        thread.preferredProvider && thread.preferredModel
+          ? {
+              provider: thread.preferredProvider,
+              model: thread.preferredModel,
+              displayName: thread.preferredModel,
+            }
+          : null,
+      );
       setContextPackIds(thread.contextPackIds ?? []);
+      setJudgeEnabled(thread.judgeEnabled ?? false);
     }
   }, [thread]);
 
@@ -34,7 +46,12 @@ export function useThreadSettings(thread: ChatThread | null) {
     if (!thread) {
       return;
     }
-    logger.info({ component: 'chat', action: 'save-thread-settings', message: 'Saving thread settings', details: { threadId: thread.id, temperature, maxTokens, provider: selectedModel?.provider } });
+    logger.info({
+      component: 'chat',
+      action: 'save-thread-settings',
+      message: 'Saving thread settings',
+      details: { threadId: thread.id, temperature, maxTokens, provider: selectedModel?.provider },
+    });
 
     const parsedMaxTokens = maxTokens !== '' ? Number(maxTokens) : null;
 
@@ -48,6 +65,7 @@ export function useThreadSettings(thread: ChatThread | null) {
           preferredProvider: selectedModel?.provider ?? null,
           preferredModel: selectedModel?.model ?? null,
           contextPackIds,
+          judgeEnabled,
         },
       },
       {
@@ -56,7 +74,17 @@ export function useThreadSettings(thread: ChatThread | null) {
         },
       },
     );
-  }, [thread, systemPrompt, temperature, maxTokens, selectedModel, contextPackIds, updateThread, t]);
+  }, [
+    thread,
+    systemPrompt,
+    temperature,
+    maxTokens,
+    selectedModel,
+    contextPackIds,
+    judgeEnabled,
+    updateThread,
+    t,
+  ]);
 
   return {
     isOpen,
@@ -71,6 +99,8 @@ export function useThreadSettings(thread: ChatThread | null) {
     setSelectedModel,
     contextPackIds,
     setContextPackIds,
+    judgeEnabled,
+    setJudgeEnabled,
     handleSave,
     isPending,
   };

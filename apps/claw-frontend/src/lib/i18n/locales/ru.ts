@@ -152,6 +152,15 @@ export const ru: TranslationDictionary = {
     reRoutedFrom: 'Перенаправлено от {provider}/{model}',
     weakResponse: 'Обнаружен слабый ответ',
     qualityScore: 'Качество: {score}%',
+    judgeReferee: 'Судья и Арбитр',
+    judgeRefereeDescription:
+      'Включить критику и верификацию ответов с помощью ИИ для повышения точности.',
+    judgeVerified: 'Проверено',
+    judgeRevised: 'Пересмотрено',
+    judgeEscalated: 'Эскалировано',
+    judgeCriticFeedback: 'Отзыв Критика',
+    judgeReasoning: 'Обоснование Судьи',
+    judgeEvaluating: 'Проверка ответа...',
   },
   connectors: {
     title: 'Коннекторы',

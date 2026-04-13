@@ -44,6 +44,7 @@ model ChatThread {
   systemPrompt      String?  @map("system_prompt")
   temperature       Float?   @default(0.7) @map("temperature")
   maxTokens         Int?     @map("max_tokens")
+  judgeEnabled      Boolean  @default(false) @map("judge_enabled")
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
 

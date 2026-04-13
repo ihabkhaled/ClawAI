@@ -150,6 +150,15 @@ export const en: TranslationDictionary = {
     reRoutedFrom: 'Re-routed from {provider}/{model}',
     weakResponse: 'Weak response detected',
     qualityScore: 'Quality: {score}%',
+    judgeReferee: 'Judge & Referee',
+    judgeRefereeDescription:
+      'Enable AI-powered critique and verification of responses for higher accuracy.',
+    judgeVerified: 'Verified',
+    judgeRevised: 'Revised',
+    judgeEscalated: 'Escalated',
+    judgeCriticFeedback: 'Critic Feedback',
+    judgeReasoning: 'Judge Reasoning',
+    judgeEvaluating: 'Verifying response...',
   },
   connectors: {
     title: 'Connectors',

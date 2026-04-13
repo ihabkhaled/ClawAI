@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities';
 import { BusinessException } from '../../../common/errors';
@@ -21,20 +21,28 @@ import {
   type OpenAiChatResponse,
   type ThreadSettings,
 } from '../types/execution.types';
+import { JudgeDecision } from '../../../common/enums';
+import type { JudgeRefereeConfig } from '../types/judge-referee.types';
 import { type AssembledContext } from '../types/context.types';
 import { ContextAssemblyManager } from './context-assembly.manager';
 import { QualityCheckManager } from './quality-check.manager';
+import { JudgeRefereeManager } from './judge-referee.manager';
 import { ChatStreamService } from '../services/chat-stream.service';
 
 @Injectable()
-export class ChatExecutionManager {
+export class ChatExecutionManager implements OnModuleInit {
   private readonly logger = new Logger(ChatExecutionManager.name);
 
   constructor(
     private readonly contextAssembly: ContextAssemblyManager,
     private readonly qualityCheckManager: QualityCheckManager,
+    private readonly judgeRefereeManager: JudgeRefereeManager,
     private readonly chatStreamService: ChatStreamService,
   ) {}
+
+  onModuleInit(): void {
+    this.judgeRefereeManager.setExecutionManager(this);
+  }
 
   async execute(
     payload: MessageRoutedData,
@@ -106,6 +114,30 @@ export class ChatExecutionManager {
 
         if (reRouteAttempt > 0) {
           return this.addReRouteMetadata(response, payload, qualityResult.score, reRouteAttempt);
+        }
+
+        // Judge-and-Referee pipeline: critic evaluates, judge decides
+        const judgeResult = await this.runJudgeRefereePipeline(
+          response,
+          context,
+          payload,
+          threadSettings,
+        );
+        if (judgeResult) {
+          if (
+            judgeResult.judgeVerdict.decision === JudgeDecision.ESCALATE &&
+            i < candidates.length - 1
+          ) {
+            this.logger.warn(
+              `Judge escalated from ${candidate.provider}/${candidate.model}: ${judgeResult.judgeVerdict.reasoning}`,
+            );
+            continue;
+          }
+          const finalResponse = judgeResult.revisedResponse ?? response;
+          return {
+            ...finalResponse,
+            judgeRefereeMetadata: this.judgeRefereeManager.buildMetadata(judgeResult),
+          };
         }
 
         return response;
@@ -183,6 +215,30 @@ export class ChatExecutionManager {
 
   private isGenerationResponse(response: LlmResponse): boolean {
     return response.imageGenerationId !== undefined || response.fileGenerationId !== undefined;
+  }
+
+  private async runJudgeRefereePipeline(
+    response: LlmResponse,
+    context: AssembledContext,
+    payload: MessageRoutedData,
+    threadSettings?: ThreadSettings,
+  ): Promise<import('../types/judge-referee.types').JudgeRefereeResult | null> {
+    const config: JudgeRefereeConfig = {
+      enabled: payload.judgeEnabled ?? false,
+      category: payload.detectedCategory,
+      routingMode: payload.routingMode,
+      isLocalOnly: LOCAL_ONLY_ROUTING_MODES.has(payload.routingMode),
+    };
+
+    if (!this.judgeRefereeManager.shouldActivate(config)) {
+      return null;
+    }
+
+    this.logger.log(
+      `runJudgeRefereePipeline: activated for ${payload.messageId} category=${config.category ?? 'none'}`,
+    );
+
+    return this.judgeRefereeManager.evaluate(response, context, config, payload, threadSettings);
   }
 
   private addReRouteMetadata(

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const parallelMessageSchema = z.object({
-  threadId: z.string().max(255, 'Thread ID must be at most 255 characters'),
+  threadId: z.string().max(255, 'Thread ID must be at most 255 characters').optional(),
   content: z
     .string()
     .min(1, 'Content must not be empty')

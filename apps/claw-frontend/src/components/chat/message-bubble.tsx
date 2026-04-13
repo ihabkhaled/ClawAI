@@ -1,7 +1,17 @@
-import { Brain, FileText, RefreshCw, RotateCcw, ThumbsDown, ThumbsUp } from 'lucide-react';
+import {
+  ArrowUpCircle,
+  Brain,
+  FileText,
+  RefreshCw,
+  RotateCcw,
+  ShieldCheck,
+  ThumbsDown,
+  ThumbsUp,
+} from 'lucide-react';
 
 import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
 import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble';
+import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
 import { MessageAttachments } from '@/components/chat/message-attachments';
 import { MessageProvenance } from '@/components/chat/message-provenance';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
@@ -45,6 +55,8 @@ export function MessageBubble({
     typeof metadata?.['originalModel'] === 'string' ? metadata['originalModel'] : null;
   const originalScore =
     typeof metadata?.['originalScore'] === 'number' ? metadata['originalScore'] : null;
+  const judgeDecision =
+    typeof metadata?.['judgeDecision'] === 'string' ? metadata['judgeDecision'] : null;
 
   const handleFeedback = (value: MessageFeedback): void => {
     if (!onFeedback) {
@@ -104,6 +116,33 @@ export function MessageBubble({
                 <RotateCcw className="h-3 w-3" />
                 Re-routed from {originalProvider}/{originalModel}
                 {originalScore !== null ? ` (${String(Math.round(originalScore * 100))}%)` : null}
+              </Badge>
+            ) : null}
+            {judgeDecision === 'ACCEPT' ? (
+              <Badge
+                variant="outline"
+                className="gap-1 border-green-500/50 text-xs text-green-600 dark:text-green-400"
+              >
+                <ShieldCheck className="h-3 w-3" />
+                Verified
+              </Badge>
+            ) : null}
+            {judgeDecision === 'REVISE' ? (
+              <Badge
+                variant="outline"
+                className="gap-1 border-amber-500/50 text-xs text-amber-600 dark:text-amber-400"
+              >
+                <RefreshCw className="h-3 w-3" />
+                Revised
+              </Badge>
+            ) : null}
+            {judgeDecision === 'ESCALATE' ? (
+              <Badge
+                variant="outline"
+                className="gap-1 border-blue-500/50 text-xs text-blue-600 dark:text-blue-400"
+              >
+                <ArrowUpCircle className="h-3 w-3" />
+                Escalated
               </Badge>
             ) : null}
             {memoryCount >= 0 ? (
@@ -172,6 +211,25 @@ export function MessageBubble({
               </>
             ) : null}
           </div>
+        ) : null}
+        {!isUser && judgeDecision ? (
+          <JudgeRefereeDetails
+            criticFeedback={
+              Array.isArray(metadata?.['criticFeedback'])
+                ? (metadata['criticFeedback'] as string[])
+                : []
+            }
+            criticScore={
+              typeof metadata?.['criticScore'] === 'number' ? metadata['criticScore'] : 0
+            }
+            judgeDecision={judgeDecision}
+            judgeReasoning={
+              typeof metadata?.['judgeReasoning'] === 'string' ? metadata['judgeReasoning'] : ''
+            }
+            judgeConfidence={
+              typeof metadata?.['judgeConfidence'] === 'number' ? metadata['judgeConfidence'] : 0
+            }
+          />
         ) : null}
         {!isUser ? <MessageProvenance message={message} /> : null}
         {!isUser && routingDecision ? <RoutingTransparency decision={routingDecision} /> : null}

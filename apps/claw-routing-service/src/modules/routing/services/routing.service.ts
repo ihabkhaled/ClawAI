@@ -203,9 +203,7 @@ export class RoutingService implements OnModuleInit {
     await this.storeAndPublishDecision(messageId, threadId, content, decision);
   }
 
-  private parseMessageCreatedPayload(
-    payload: Record<string, unknown>,
-  ): {
+  private parseMessageCreatedPayload(payload: Record<string, unknown>): {
     messageId: string | undefined;
     threadId: string;
     content: string;
@@ -307,6 +305,7 @@ export class RoutingService implements OnModuleInit {
       routingMode: decision.routingMode,
       fallbackProvider: fallback?.provider,
       fallbackModel: fallback?.model,
+      detectedCategory: decision.detectedCategory,
       timestamp: new Date().toISOString(),
     });
   }

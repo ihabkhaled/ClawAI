@@ -24,26 +24,23 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     prompt.trim().length > 0 &&
     !isPending;
 
-  const handleToggleModel = useCallback(
-    (provider: string, model: string, checked: boolean) => {
-      setSelectedModels((prev) => {
-        if (checked) {
-          if (prev.length >= MAX_PARALLEL_MODELS) {
-            return prev;
-          }
-          return [...prev, { provider, model }];
+  const handleToggleModel = useCallback((provider: string, model: string, checked: boolean) => {
+    setSelectedModels((prev) => {
+      if (checked) {
+        if (prev.length >= MAX_PARALLEL_MODELS) {
+          return prev;
         }
-        return prev.filter((m) => m.provider !== provider || m.model !== model);
-      });
-    },
-    [],
-  );
+        return [...prev, { provider, model }];
+      }
+      return prev.filter((m) => m.provider !== provider || m.model !== model);
+    });
+  }, []);
 
   const handleSend = useCallback(() => {
     if (!canSend) {
       return;
     }
-    send({ threadId: '', content: prompt.trim(), models: selectedModels });
+    send({ content: prompt.trim(), models: selectedModels });
   }, [canSend, send, prompt, selectedModels]);
 
   return {

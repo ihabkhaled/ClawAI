@@ -150,8 +150,18 @@ export type ThreadSettingsProps = {
   onModelChange: (selection: ModelSelection | null) => void;
   contextPackIds: string[];
   onContextPackIdsChange: (ids: string[]) => void;
+  judgeEnabled: boolean;
+  onJudgeEnabledChange: (value: boolean) => void;
   onSave: () => void;
   isPending: boolean;
+};
+
+export type JudgeRefereeDetailsProps = {
+  criticFeedback: string[];
+  criticScore: number;
+  judgeDecision: string;
+  judgeReasoning: string;
+  judgeConfidence: number;
 };
 
 export type GroupedModels = {

@@ -39,7 +39,11 @@ export type UseAdminPageReturn = {
 export type UseUserTableStateReturn = {
   editingUserId: string | null;
   setEditingUserId: (id: string | null) => void;
-  handleRoleSelect: (userId: string, role: string, onChangeRole: (userId: string, role: string) => void) => void;
+  handleRoleSelect: (
+    userId: string,
+    role: string,
+    onChangeRole: (userId: string, role: string) => void,
+  ) => void;
 };
 
 // ─── Audit hook types ───────────────────────────────────────────────────────
@@ -136,6 +140,8 @@ export type UseThreadSettingsReturn = {
   setSelectedModel: (value: ModelSelection | null) => void;
   contextPackIds: string[];
   setContextPackIds: (value: string[]) => void;
+  judgeEnabled: boolean;
+  setJudgeEnabled: (value: boolean) => void;
   handleSave: () => void;
   isPending: boolean;
 };

@@ -152,6 +152,15 @@ export const es: TranslationDictionary = {
     reRoutedFrom: 'Redirigido desde {provider}/{model}',
     weakResponse: 'Respuesta débil detectada',
     qualityScore: 'Calidad: {score}%',
+    judgeReferee: 'Juez y Árbitro',
+    judgeRefereeDescription:
+      'Habilitar crítica y verificación de respuestas impulsada por IA para mayor precisión.',
+    judgeVerified: 'Verificado',
+    judgeRevised: 'Revisado',
+    judgeEscalated: 'Escalado',
+    judgeCriticFeedback: 'Retroalimentación del Crítico',
+    judgeReasoning: 'Razonamiento del Juez',
+    judgeEvaluating: 'Verificando respuesta...',
   },
   connectors: {
     title: 'Conectores',

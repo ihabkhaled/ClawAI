@@ -3,6 +3,7 @@ import { ModelSelector } from '@/components/chat/model-selector';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import type { ThreadSettingsProps } from '@/types';
 
@@ -18,6 +19,8 @@ export function ThreadSettings({
   onModelChange,
   contextPackIds,
   onContextPackIdsChange,
+  judgeEnabled,
+  onJudgeEnabledChange,
   onSave,
   isPending,
 }: ThreadSettingsProps): React.ReactElement {
@@ -28,12 +31,8 @@ export function ThreadSettings({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium">
-            {t('chat.preferredModel')}
-          </label>
-          <p className="text-xs text-muted-foreground">
-            {t('chat.preferredModelDescription')}
-          </p>
+          <label className="text-sm font-medium">{t('chat.preferredModel')}</label>
+          <p className="text-xs text-muted-foreground">{t('chat.preferredModelDescription')}</p>
           <ModelSelector value={selectedModel} onChange={onModelChange} />
         </div>
 
@@ -55,9 +54,7 @@ export function ThreadSettings({
           <label className="text-sm font-medium" htmlFor="temperature">
             {t('chat.temperature')}: {temperature.toFixed(1)}
           </label>
-          <p className="text-xs text-muted-foreground">
-            {t('chat.temperatureDescription')}
-          </p>
+          <p className="text-xs text-muted-foreground">{t('chat.temperatureDescription')}</p>
           <input
             id="temperature"
             type="range"
@@ -79,9 +76,7 @@ export function ThreadSettings({
           <label className="text-sm font-medium" htmlFor="max-tokens">
             {t('chat.maxTokens')}
           </label>
-          <p className="text-xs text-muted-foreground">
-            {t('chat.maxTokensDescription')}
-          </p>
+          <p className="text-xs text-muted-foreground">{t('chat.maxTokensDescription')}</p>
           <Input
             id="max-tokens"
             type="number"
@@ -94,16 +89,26 @@ export function ThreadSettings({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">
-            {t('chat.contextPacks')}
-          </label>
-          <p className="text-xs text-muted-foreground">
-            {t('chat.contextPacksDescription')}
-          </p>
+          <label className="text-sm font-medium">{t('chat.contextPacks')}</label>
+          <p className="text-xs text-muted-foreground">{t('chat.contextPacksDescription')}</p>
           <ContextPackSelector
             t={t}
             selectedIds={contextPackIds}
             onChange={onContextPackIdsChange}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <label className="text-sm font-medium" htmlFor="judge-enabled">
+              {t('chat.judgeReferee')}
+            </label>
+            <p className="text-xs text-muted-foreground">{t('chat.judgeRefereeDescription')}</p>
+          </div>
+          <Switch
+            id="judge-enabled"
+            checked={judgeEnabled}
+            onCheckedChange={onJudgeEnabledChange}
           />
         </div>
 

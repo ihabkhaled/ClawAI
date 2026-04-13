@@ -35,6 +35,7 @@ Last updated: 2026-04-11
 | F-012 | Thinking Indicator             | GA     | Visual indicator while polling for AI response (3-min max)                                           |
 | F-013 | Parallel Multi-Model Compare   | GA     | Send one prompt to 2-5 models simultaneously, view side-by-side responses                            |
 | F-014 | Auto Re-Routing on Weak Answer | GA     | Detects weak responses (short, repetitive, refusal) and re-routes to fallback provider automatically |
+| F-015 | Judge-and-Referee Layer        | GA     | Generator-critic-judge pipeline: second model critiques, local judge accepts/revises/escalates       |
 
 ### User Stories
 
@@ -49,6 +50,7 @@ Last updated: 2026-04-11
 - **F-011**: "As a privacy-conscious user, I want to verify each message was processed locally."
 - **F-013**: "As a power user, I want to send the same prompt to Claude, GPT, and Gemini simultaneously and compare their responses side by side."
 - **F-014**: "As a user, I want the system to automatically try a better model when the first one gives a weak or broken response, without me having to click Regenerate."
+- **F-015**: "As a developer, I want my coding responses verified by a second model before delivery so I can trust the output without manual review."
 
 ---
 

@@ -152,6 +152,15 @@ export const fr: TranslationDictionary = {
     reRoutedFrom: 'Rerout\u00e9 depuis {provider}/{model}',
     weakResponse: 'R\u00e9ponse faible d\u00e9tect\u00e9e',
     qualityScore: 'Qualit\u00e9 : {score}%',
+    judgeReferee: 'Juge et Arbitre',
+    judgeRefereeDescription:
+      "Activer la critique et la v\u00e9rification des r\u00e9ponses par l'IA pour une meilleure pr\u00e9cision.",
+    judgeVerified: 'V\u00e9rifi\u00e9',
+    judgeRevised: 'R\u00e9vis\u00e9',
+    judgeEscalated: 'Escalad\u00e9',
+    judgeCriticFeedback: 'Retour du Critique',
+    judgeReasoning: 'Raisonnement du Juge',
+    judgeEvaluating: 'V\u00e9rification de la r\u00e9ponse...',
   },
   connectors: {
     title: 'Connecteurs',

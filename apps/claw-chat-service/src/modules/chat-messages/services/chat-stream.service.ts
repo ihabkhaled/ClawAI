@@ -31,6 +31,11 @@ export class ChatStreamService {
     );
   }
 
+  emitJudgeEvaluating(threadId: string): void {
+    this.eventBus.next({ threadId, type: StreamEventType.JUDGE_EVALUATING });
+    this.logger.debug(`Emitted judge_evaluating for thread ${threadId}`);
+  }
+
   emitError(threadId: string, error: string): void {
     this.eventBus.next({ threadId, type: StreamEventType.ERROR, error });
     this.logger.debug(`Emitted error for thread ${threadId}: ${error}`);

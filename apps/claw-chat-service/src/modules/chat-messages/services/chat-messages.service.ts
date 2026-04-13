@@ -74,7 +74,13 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   async createParallelMessage(userId: string, dto: ParallelMessageDto): Promise<ParallelResponse> {
-    const thread = await this.getThreadForMessage(dto.threadId, userId);
+    const thread = dto.threadId
+      ? await this.getThreadForMessage(dto.threadId, userId)
+      : await this.chatThreadsRepository.create({
+          userId,
+          title: `Compare: ${dto.content.slice(0, 50)}`,
+          routingMode: RoutingMode.MANUAL_MODEL,
+        });
 
     return this.parallelExecutionManager.executeParallel(
       userId,
@@ -222,6 +228,11 @@ export class ChatMessagesService implements OnModuleInit {
     // override to IMAGE_GEMINI even if router didn't detect it
     effectivePayload = this.detectImageFromAttachment(effectivePayload, chronologicalMessages);
 
+    // Inject judge-referee config from thread settings
+    if (thread?.judgeEnabled) {
+      effectivePayload = { ...effectivePayload, judgeEnabled: true };
+    }
+
     this.logger.debug(
       `handleMessageRouted: assembling context with ${String(chronologicalMessages.length)} messages, fileIds=${String(fileIds?.length ?? 0)}`,
     );
@@ -294,6 +305,7 @@ export class ChatMessagesService implements OnModuleInit {
     const fallbackProvider = payload['fallbackProvider'] as string | undefined;
     const fallbackModel = payload['fallbackModel'] as string | undefined;
     const timestamp = payload['timestamp'] as string | undefined;
+    const detectedCategory = payload['detectedCategory'] as string | undefined;
 
     if (!messageId || !threadId || !selectedProvider || !selectedModel || !routingMode) {
       this.logger.warn('Received message.routed with missing required fields');
@@ -321,6 +333,7 @@ export class ChatMessagesService implements OnModuleInit {
         fallbackProvider,
         fallbackModel,
         timestamp: timestamp ?? new Date().toISOString(),
+        detectedCategory,
       });
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
@@ -402,6 +415,7 @@ export class ChatMessagesService implements OnModuleInit {
               reRouteAttempts: llmResponse.reRouteAttempts,
             }
           : {}),
+        ...(llmResponse.judgeRefereeMetadata ?? {}),
       },
     });
   }

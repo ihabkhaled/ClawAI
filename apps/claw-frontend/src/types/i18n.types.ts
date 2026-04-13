@@ -151,6 +151,14 @@ export type TranslationDictionary = {
     reRoutedFrom: string;
     weakResponse: string;
     qualityScore: string;
+    judgeReferee: string;
+    judgeRefereeDescription: string;
+    judgeVerified: string;
+    judgeRevised: string;
+    judgeEscalated: string;
+    judgeCriticFeedback: string;
+    judgeReasoning: string;
+    judgeEvaluating: string;
   };
   connectors: {
     title: string;

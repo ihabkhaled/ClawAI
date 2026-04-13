@@ -103,6 +103,8 @@ export default function ThreadDetailPage() {
             onModelChange={threadSettings.setSelectedModel}
             contextPackIds={threadSettings.contextPackIds}
             onContextPackIdsChange={threadSettings.setContextPackIds}
+            judgeEnabled={threadSettings.judgeEnabled}
+            onJudgeEnabledChange={threadSettings.setJudgeEnabled}
             onSave={threadSettings.handleSave}
             isPending={threadSettings.isPending}
           />

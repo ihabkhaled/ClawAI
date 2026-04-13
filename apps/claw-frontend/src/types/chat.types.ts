@@ -15,6 +15,7 @@ export type ChatThread = {
   systemPrompt: string | null;
   temperature: number | null;
   maxTokens: number | null;
+  judgeEnabled: boolean;
   createdAt: string;
   updatedAt: string;
   _count?: { messages: number };
@@ -57,6 +58,7 @@ export type UpdateThreadRequest = {
   preferredProvider?: string | null;
   preferredModel?: string | null;
   contextPackIds?: string[];
+  judgeEnabled?: boolean;
 };
 export type CreateMessageRequest = {
   threadId: string;

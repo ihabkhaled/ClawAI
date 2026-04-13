@@ -1,3 +1,5 @@
+import type { JudgeRefereeMetadata } from './judge-referee.types';
+
 export type MessageRoutedData = {
   messageId: string;
   threadId: string;
@@ -7,6 +9,8 @@ export type MessageRoutedData = {
   fallbackProvider?: string;
   fallbackModel?: string;
   timestamp: string;
+  detectedCategory?: string;
+  judgeEnabled?: boolean;
 };
 
 export type LlmResponse = {
@@ -25,6 +29,7 @@ export type LlmResponse = {
   originalModel?: string;
   originalScore?: number;
   reRouteAttempts?: number;
+  judgeRefereeMetadata?: JudgeRefereeMetadata;
 };
 
 export type OllamaGenerateRequest = {
