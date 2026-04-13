@@ -32,10 +32,11 @@ Image generation microservice for the Claw platform. Orchestrates image generati
 ## No Inline Declarations Rule
 
 **NEVER** define `type`, `interface`, `enum`, or module-level `const` inline in service, controller, repository, manager, adapter, utility, guard, filter, interceptor, pipe, or module files. Extract to dedicated files:
+
 - Types/interfaces → `src/modules/<domain>/types/<name>.types.ts`
 - Enums → `src/common/enums/<name>.enum.ts`
 - Constants → `src/modules/<domain>/constants/<name>.constants.ts`
-Only exception: `private readonly logger = new Logger(...)` inside NestJS classes.
+  Only exception: `private readonly logger = new Logger(...)` inside NestJS classes.
 
 ## Library Wrapping Rule
 
@@ -63,3 +64,16 @@ npm run test         # Run unit tests
 npm run migrate:dev  # Create and run migration
 npm run prisma:generate  # Regenerate Prisma client
 ```
+
+## Docker Container Rebuild Procedure
+
+When rebuilding this service (especially after shared package changes):
+
+```bash
+docker compose -f docker-compose.dev.yml stop image-service
+docker compose -f docker-compose.dev.yml rm -f image-service
+docker rmi claw-image-service
+docker compose -f docker-compose.dev.yml up -d --build image-service
+```
+
+**NEVER skip steps.** See root CLAUDE.md for full explanation.

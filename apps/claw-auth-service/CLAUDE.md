@@ -41,12 +41,14 @@ See the root CLAUDE.md for the full set of architecture rules, naming convention
 ## No Inline Declarations Rule
 
 **NEVER** define `type`, `interface`, `enum`, or module-level `const` inline in service, controller, repository, manager, adapter, utility, guard, filter, interceptor, pipe, or module files. Extract to dedicated files:
+
 - Types/interfaces → `src/modules/<domain>/types/<name>.types.ts`
 - Enums → `src/common/enums/<name>.enum.ts`
 - Constants → `src/modules/<domain>/constants/<name>.constants.ts`
-Only exception: `private readonly logger = new Logger(...)` inside NestJS classes.
+  Only exception: `private readonly logger = new Logger(...)` inside NestJS classes.
 
 ## Library Wrapping Rule
+
 Every third-party library MUST be wrapped in a utility file under `src/common/utilities/`. Services and controllers NEVER import third-party packages directly — they import the wrapper. Example: `src/common/utilities/hashing.utility.ts` wraps `argon2`, and services import `{ hashPassword, verifyPassword }` from the wrapper.
 
 ## Commands
@@ -62,3 +64,16 @@ npm run migrate:dev      # Create + run migration (dev)
 npm run seed             # Seed admin user
 npm run prisma:generate  # Regenerate Prisma client
 ```
+
+## Docker Container Rebuild Procedure
+
+When rebuilding this service (especially after shared package changes):
+
+```bash
+docker compose -f docker-compose.dev.yml stop auth-service
+docker compose -f docker-compose.dev.yml rm -f auth-service
+docker rmi claw-auth-service
+docker compose -f docker-compose.dev.yml up -d --build auth-service
+```
+
+**NEVER skip steps.** See root CLAUDE.md for full explanation.

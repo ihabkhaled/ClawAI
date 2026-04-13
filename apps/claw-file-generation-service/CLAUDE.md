@@ -53,3 +53,16 @@ npm run test         # Run unit tests
 npm run migrate:dev  # Create and run migration
 npm run prisma:generate  # Regenerate Prisma client
 ```
+
+## Docker Container Rebuild Procedure
+
+When rebuilding this service (especially after shared package changes):
+
+```bash
+docker compose -f docker-compose.dev.yml stop file-generation-service
+docker compose -f docker-compose.dev.yml rm -f file-generation-service
+docker rmi claw-file-generation-service
+docker compose -f docker-compose.dev.yml up -d --build file-generation-service
+```
+
+**NEVER skip steps.** See root CLAUDE.md for full explanation.

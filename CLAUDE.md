@@ -704,6 +704,37 @@ login, dashboard, chat, chat/[threadId], chat/compare, connectors, connectors/[i
 
 ---
 
+## MANDATORY: Read Before Acting
+
+**Before making ANY change to the codebase — even a one-line fix — you MUST first:**
+
+1. Read this root `CLAUDE.md` — architecture rules, code standards, mandatory checklist
+2. Read the service-specific `CLAUDE.md` for whichever service is being modified (e.g., `apps/claw-chat-service/CLAUDE.md`)
+3. Understand ESLint rules — no inline types, extraction rules, file-specific restrictions
+4. Read relevant docs in `docs/` if touching cross-service flows, events, or architecture
+
+**This is not optional. This is the first step of every task. No exceptions.**
+
+## Docker Container Rebuild Procedure
+
+**When rebuilding a Docker container (especially after shared package changes), ALWAYS follow this exact sequence:**
+
+```bash
+# 1. Stop the container
+docker compose -f docker-compose.dev.yml stop <service-name>
+
+# 2. Remove the container
+docker compose -f docker-compose.dev.yml rm -f <service-name>
+
+# 3. Remove the image
+docker rmi <image-name>
+
+# 4. Rebuild and start
+docker compose -f docker-compose.dev.yml up -d --build <service-name>
+```
+
+**NEVER skip steps.** Just restarting or using `--build` alone leaves stale compiled code, cached layers, and old `node_modules`. When a shared package (`shared-rabbitmq`, `shared-types`, `shared-constants`, `shared-auth`) is modified, ALL dependent service containers must go through the full stop → rm → rmi → build cycle.
+
 ## Docker Compose
 
 ```bash
@@ -950,6 +981,89 @@ For features involving multiple services (e.g., message flow):
 1. Update `CLAUDE.md` if new patterns, services, env vars, or rules were added
 2. Update `docs/` if architecture changed
 3. Update service-specific `CLAUDE.md` files (e.g., `apps/claw-chat-service/CLAUDE.md`)
+
+### Phase 12: Quality Engineering Gates (Mandatory)
+
+Every feature and bug fix MUST pass through the full Quality Engineering lifecycle defined in `docs/16-quality-engineering/`. The phases below are **non-skippable**.
+
+#### QE Phase A — Requirement & Risk Understanding
+
+Before writing code: restate the feature/bug in plain language, identify ALL affected services/pages/DB/events/Docker/env/Nginx/CI/docs, define success/failure/risk criteria.
+
+#### QE Phase B — Baseline Audit
+
+Inspect what already exists: related controller/service/manager/repository methods, existing and missing tests, duplication risk, existing enums/constants/types, docs to update.
+
+#### QE Phase C — Code Review
+
+Review every changed file for: architecture violations, missing DTO/schema validation, missing null/error handling, missing messageKey responses, missing enum usage, missing logging, missing i18n, missing tests, race conditions, security flaws, performance issues, Docker/env/Nginx/doc omissions.
+
+#### QE Phase D — TDD Implementation
+
+Write or update tests as code is written. Define acceptance criteria before finalizing. Ensure no layer is left untested. Ensure changed code is deterministic and observable.
+
+#### QE Phase E — Developer-Side Testing
+
+Before handing off: run unit tests, typecheck, lint, build, targeted API tests, targeted browser checks, inspect logs and DB persistence.
+
+#### QE Phase F — QA Phase
+
+Full quality assurance: feature testing, bug hunting, negative testing, weird-case testing, browser testing, API testing, UI+API integration testing, DB validation, logs validation, event validation, regression testing, system testing, UAT, client-phase testing.
+
+#### QE Phase G — Bug Loop
+
+Collect bugs → classify → reproduce → root cause → fix → unit test fix → re-run browser/API tests → re-run integration → re-run regression → re-run UAT/client checks → repeat until green. No bug is "done" without retest.
+
+#### QE Phase H — Release Readiness
+
+All services healthy, Docker logs clean, Nginx routes correct, DB writes/reads correct, observability signals exist, docs updated, CLAUDE.md updated if patterns changed.
+
+### Quality Engineering Mindset Rules
+
+1. **Never trust a passing happy path alone** — test negative, boundary, and weird cases
+2. **Never stop at unit tests** — validate through API, UI, integration, E2E, system, regression, UAT, client layers
+3. **Never trust UI state without DB/API truth** — always verify persistence with a subsequent GET
+4. **Never trust DB truth without GET/fetch truth** — caches and transforms can lie
+5. **Never trust feature isolation without regression** — changes have side effects
+6. **Never trust technical correctness without business correctness** — UAT must confirm
+7. **Never trust business correctness without client smoothness** — simulate a real non-technical user
+8. **A feature is NOT implemented when code compiles** — only when reviewed, tested across all layers, and UAT passes
+9. **A bug is NOT fixed when the symptom disappears** — only when root cause is understood, tested, and regressions checked
+
+### Quality Engineering Output Requirements
+
+For every implemented feature or bug fix, produce:
+
+1. Changed files summary
+2. Affected services summary
+3. Test plan summary
+4. Test cases summary
+5. Executed test evidence
+6. Bug list (if any)
+7. Fixes list (if any)
+8. Regression summary
+9. Docs/config updates summary
+10. Release readiness summary
+
+### Quality Engineering Documents
+
+Full standards live in `docs/16-quality-engineering/`:
+
+- `QUALITY_ENGINEERING_OPERATING_SYSTEM.md` — Complete lifecycle definition
+- `CODE_REVIEW_AND_PR_REVIEW_STANDARD.md` — Review checklist and PR criteria
+- `TEST_CASE_DESIGN_STANDARD.md` — Test case structure, severity, priority, scenarios
+- `API_TESTING_STANDARD.md` — Endpoint testing methodology
+- `UI_BROWSER_TESTING_STANDARD.md` — Browser testing, dark mode, RTL, stale state
+- `INTEGRATION_TESTING_STANDARD.md` — Cross-service flow validation
+- `E2E_PLAYWRIGHT_STANDARD.md` — End-to-end journey definitions
+- `REGRESSION_TESTING_STANDARD.md` — When and what to regress
+- `SYSTEM_TESTING_STANDARD.md` — Docker, Nginx, health, startup verification
+- `UAT_STANDARD.md` — Business acceptance validation
+- `CLIENT_ACCEPTANCE_TESTING_STANDARD.md` — Non-technical client simulation
+- `BUG_TRIAGE_AND_RETEST_STANDARD.md` — Severity model, reproduction, retest rules
+- `RELEASE_READY_QUALITY_GATE.md` — Must-pass checks for release
+- `TEST_DATA_AND_SEED_STRATEGY.md` — Fixtures, seed data, negative data scenarios
+- `OBSERVABILITY_AND_LOG_VERIFICATION_STANDARD.md` — Log, audit, event verification
 
 ---
 
