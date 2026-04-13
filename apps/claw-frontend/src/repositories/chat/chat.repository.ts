@@ -18,6 +18,8 @@ import type {
   ParallelResponse,
   RepairRequest,
   RepairResponse,
+  SendPipelinePayload,
+  SendPipelineResult,
   SendVerifyPayload,
   SendVerifyResult,
   ThreadsListResponse,
@@ -136,6 +138,11 @@ export const chatRepository = {
 
   async sendVerify(payload: SendVerifyPayload): Promise<SendVerifyResult> {
     const res = await apiClient.post<SendVerifyResult>('/chat-messages/verify', payload);
+    return res.data;
+  },
+
+  async sendPipeline(payload: SendPipelinePayload): Promise<SendPipelineResult> {
+    const res = await apiClient.post<SendPipelineResult>('/chat-messages/pipeline', payload);
     return res.data;
   },
 };

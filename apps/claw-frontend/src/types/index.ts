@@ -221,6 +221,8 @@ export type {
   AdaptiveProviderTableProps,
   AdaptiveModeChartProps,
   AdaptiveStatsCardProps,
+  PipelineResultCardProps,
+  PipelineStageItemProps,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
@@ -244,6 +246,7 @@ export type {
   UseLogsPageReturn,
 } from './log.types';
 export type {
+  UsePipelinePageHookReturn,
   UseAdminPageReturn,
   UseUserTableStateReturn,
   UseAuditsPageReturn,
@@ -390,3 +393,13 @@ export type {
   ModeInsight,
   AdaptiveLearningInsights,
 } from './adaptive-learning.types';
+export type {
+  PipelineStageResult,
+  PipelineMetadata,
+  PipelineResult,
+  SendPipelinePayload,
+  SendPipelineResult,
+  UseSendPipelineResult,
+  UsePipelinePollResult,
+  UsePipelinePageReturn,
+} from './pipeline.types';

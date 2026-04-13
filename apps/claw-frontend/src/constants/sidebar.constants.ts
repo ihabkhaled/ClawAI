@@ -40,6 +40,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
   { labelKey: 'nav.decomposeLab', href: ROUTES.CHAT_DECOMPOSE, icon: Layers },
   { labelKey: 'nav.bestOfNLab', href: ROUTES.CHAT_BEST_OF_N, icon: Trophy },
   { labelKey: 'nav.verifierLab', href: ROUTES.CHAT_VERIFY, icon: ShieldCheck },
+  { labelKey: 'nav.pipelineLab', href: ROUTES.CHAT_PIPELINE, icon: Layers },
   { labelKey: 'nav.connectors', href: ROUTES.CONNECTORS, icon: Plug },
   { labelKey: 'nav.models', href: ROUTES.MODELS, icon: Cpu },
   { labelKey: 'nav.modelCatalog', href: ROUTES.MODELS_CATALOG, icon: Store },

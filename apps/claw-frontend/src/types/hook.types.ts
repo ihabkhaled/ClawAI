@@ -13,6 +13,7 @@ import type { ModelSelection } from './component.types';
 import type { UploadFileRequest } from './file.types';
 import type { AggregatedHealth } from './health.types';
 import type { TranslateFunction } from './i18n.types';
+import type { PipelineResult } from './pipeline.types';
 import type { RecoveryStats } from './recovery.types';
 import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
 import type { ReplayBatchResult } from './replay.types';
@@ -285,4 +286,23 @@ export type UseAdaptiveLearningPageReturn = {
   isError: boolean;
   windowDays: number;
   setWindowDays: (days: number) => void;
+};
+
+// ─── Pipeline hook types ─────────────────────────────────────────────────────
+
+export type UsePipelinePageHookReturn = {
+  t: TranslateFunction;
+  content: string;
+  setContent: (value: string) => void;
+  template: string;
+  setTemplate: (value: string) => void;
+  handleSend: () => void;
+  canSend: boolean;
+  isPending: boolean;
+  isError: boolean;
+  isPipelineError: boolean;
+  pipelineResult: PipelineResult | null;
+  isPolling: boolean;
+  isPipelineReady: boolean;
+  handleViewInThread: () => void;
 };

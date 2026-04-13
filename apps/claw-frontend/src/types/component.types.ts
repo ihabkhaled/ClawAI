@@ -43,6 +43,7 @@ import type {
 } from './log.types';
 import type { CreateMemoryRequest, MemoryRecord } from './memory.types';
 import type { ParallelModelResponse, ParallelResponse } from './parallel.types';
+import type { PipelineResult, PipelineStageResult } from './pipeline.types';
 import type { ProviderFailureStat, RecentFallback } from './recovery.types';
 import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
 import type { ReplayBatchResult, ReplayResult } from './replay.types';
@@ -864,5 +865,19 @@ export type AdaptiveModeChartProps = {
 
 export type AdaptiveStatsCardProps = {
   insights: AdaptiveLearningInsights;
+  t: TranslateFunction;
+};
+
+// ─── Pipeline component props ────────────────────────────────────────────────
+
+export type PipelineResultCardProps = {
+  result: PipelineResult;
+  onViewInThread: () => void;
+  t: TranslateFunction;
+};
+
+export type PipelineStageItemProps = {
+  stage: PipelineStageResult;
+  stageNumber: number;
   t: TranslateFunction;
 };

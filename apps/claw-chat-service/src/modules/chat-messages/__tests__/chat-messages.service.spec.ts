@@ -10,6 +10,7 @@ import { type EscalationChainManager } from '../managers/escalation-chain.manage
 import { type ParallelExecutionManager } from '../managers/parallel-execution.manager';
 import { type BestOfNManager } from '../managers/best-of-n.manager';
 import { type VerifierManager } from '../managers/verifier.manager';
+import { type PipelineManager } from '../managers/pipeline.manager';
 import { type ChatStreamService } from '../services/chat-stream.service';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
@@ -114,6 +115,7 @@ describe('ChatMessagesService', () => {
       { executeDecomposition: jest.fn() } as unknown as TaskDecompositionManager,
       { executeBestOfN: jest.fn() } as unknown as BestOfNManager,
       { executeVerify: jest.fn() } as unknown as VerifierManager,
+      { executePipeline: jest.fn() } as unknown as PipelineManager,
       { emitCompletion: jest.fn() } as unknown as ChatStreamService,
       rabbitMQ as unknown as RabbitMQService,
     );
@@ -284,6 +286,7 @@ describe('ChatMessagesService', () => {
         { executeDecomposition: jest.fn() } as unknown as TaskDecompositionManager,
         { executeBestOfN: jest.fn() } as unknown as BestOfNManager,
         verifierManager as unknown as VerifierManager,
+        { executePipeline: jest.fn() } as unknown as PipelineManager,
         { emitCompletion: jest.fn() } as unknown as ChatStreamService,
         rabbitMQ as unknown as RabbitMQService,
       );

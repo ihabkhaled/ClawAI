@@ -10,6 +10,7 @@ import { type RepairMessageDto, repairMessageSchema } from '../dto/repair-messag
 import { type DecomposeTaskDto, decomposeTaskSchema } from '../dto/decompose-task.dto';
 import { type BestOfNMessageDto, bestOfNMessageSchema } from '../dto/best-of-n-message.dto';
 import { type VerifyMessageDto, verifyMessageSchema } from '../dto/verify-message.dto';
+import { type PipelineMessageDto, pipelineMessageSchema } from '../dto/pipeline-message.dto';
 import { CreateMessageDto, createMessageSchema } from '../dto/create-message.dto';
 import { type ParallelMessageDto, parallelMessageSchema } from '../dto/parallel-message.dto';
 import { ListMessagesQueryDto, listMessagesQuerySchema } from '../dto/list-messages-query.dto';
@@ -23,6 +24,7 @@ import { type TaskDecompositionResponse } from '../types/task-decomposition.type
 import { type BestOfNResponse } from '../types/best-of-n.types';
 import { type VerifyResponse } from '../types/verifier.types';
 import { type ParallelResponse } from '../types/parallel.types';
+import { type PipelineResponse } from '../types/pipeline.types';
 import { type ChatMessage } from '../../../generated/prisma';
 
 @Controller('chat-messages')
@@ -91,6 +93,14 @@ export class ChatMessagesController {
     @Body(new ZodValidationPipe(verifyMessageSchema)) dto: VerifyMessageDto,
   ): Promise<VerifyResponse> {
     return this.chatMessagesService.executeVerify(user.id, dto);
+  }
+
+  @Post('pipeline')
+  async executePipeline(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(pipelineMessageSchema)) dto: PipelineMessageDto,
+  ): Promise<PipelineResponse> {
+    return this.chatMessagesService.executePipeline(user.id, dto);
   }
 
   @Get('thread/:threadId')

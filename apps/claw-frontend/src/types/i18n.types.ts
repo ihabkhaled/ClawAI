@@ -69,6 +69,7 @@ export type TranslationDictionary = {
     decomposeLab: string;
     bestOfNLab: string;
     verifierLab: string;
+    pipelineLab: string;
     memory: string;
     context: string;
     files: string;
@@ -775,6 +776,26 @@ export type TranslationDictionary = {
     mode: string;
     count: string;
     percentage: string;
+  };
+  pipeline: {
+    title: string;
+    description: string;
+    contentLabel: string;
+    contentPlaceholder: string;
+    templateLabel: string;
+    templateAnalyze: string;
+    templateCode: string;
+    templateDraft: string;
+    sendPrompt: string;
+    running: string;
+    synthesizing: string;
+    noResults: string;
+    sendFailed: string;
+    stageBreakdown: string;
+    stage: string;
+    model: string;
+    latency: string;
+    viewInThread: string;
   };
   validation: {
     required: string;
