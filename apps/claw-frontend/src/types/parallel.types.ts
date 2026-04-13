@@ -20,7 +20,7 @@ export type ParallelResponse = {
 };
 
 export type ParallelRequest = {
-  threadId: string;
+  threadId?: string;
   content: string;
   models: Array<{ provider: string; model: string }>;
 };

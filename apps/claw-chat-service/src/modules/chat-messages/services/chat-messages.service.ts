@@ -74,13 +74,14 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   async createParallelMessage(userId: string, dto: ParallelMessageDto): Promise<ParallelResponse> {
-    const thread = dto.threadId
-      ? await this.getThreadForMessage(dto.threadId, userId)
-      : await this.chatThreadsRepository.create({
-          userId,
-          title: `Compare: ${dto.content.slice(0, 50)}`,
-          routingMode: RoutingMode.MANUAL_MODEL,
-        });
+    const thread =
+      dto.threadId && dto.threadId.length > 0
+        ? await this.getThreadForMessage(dto.threadId, userId)
+        : await this.chatThreadsRepository.create({
+            userId,
+            title: `Compare: ${dto.content.slice(0, 50)}`,
+            routingMode: RoutingMode.MANUAL_MODEL,
+          });
 
     return this.parallelExecutionManager.executeParallel(
       userId,
