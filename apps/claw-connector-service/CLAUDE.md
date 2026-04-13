@@ -81,3 +81,58 @@ docker compose -f docker-compose.dev.yml up -d --build connector-service
 ```
 
 **NEVER skip steps.** See root CLAUDE.md for full explanation.
+
+## Workflow Phase Requirements
+
+All work on this service MUST follow the phases defined in the root `CLAUDE.md`:
+
+- **Phase 0** (Planning Gate): Document impacted areas, risks, acceptance criteria before coding
+- **Phase 0g** (Business Framing): Define user problem, success metrics, UAT seed for user-facing changes
+- **Phase 1-3** (Implementation): Follow backend architecture rules above
+- **Phase 4** (SSE rules if applicable): Apply SSE-specific patterns from root CLAUDE.md
+- **Phase 5** (Error handling): All async errors stored + SSE emitted
+- **Phase 8** (Validation): typecheck + lint + test + build before any commit
+- **Phase 9** (API testing): Verify all new endpoints with curl/Postman before claiming done
+- **Phase 12** (QE Gates): All phases from docs/16-quality-engineering/ must pass
+
+## Pre-Implementation Checklist (this service)
+
+Before writing code for this service:
+
+- [ ] Read root CLAUDE.md
+- [ ] Read this service CLAUDE.md
+- [ ] Read existing service code for the area being changed
+- [ ] Read current Prisma schema (if DB changes)
+- [ ] Identify all RabbitMQ events published/consumed by this service
+- [ ] Check if shared packages need updating
+
+## Post-Implementation Checklist (this service)
+
+After implementing any change to this service:
+
+- [ ] `npm run typecheck` → 0 errors
+- [ ] `npm run lint` → 0 errors
+- [ ] `npm run test` → all pass
+- [ ] `npm run build` → success
+- [ ] All new Zod DTOs have: max() on strings, max() on arrays, required fields explicit
+- [ ] All new service methods are ≤ 30 lines
+- [ ] All new manager methods are ≤ 80 lines
+- [ ] All new controllers are 3-line methods
+- [ ] No try/catch in controllers
+- [ ] No Prisma calls outside repositories
+- [ ] All new events published using RabbitMQService
+- [ ] All new messageKeys added to error catalog
+- [ ] All background tasks use fire-and-forget with `void`
+- [ ] All fire-and-forget error paths: `emitError` → `storeErrorMessage` in nested try-catch
+- [ ] All poll-detected flows store metadata `{ error: true }` on failure
+
+## Required Output Format
+
+After completing any implementation task on this service, produce:
+
+1. **Files changed** (list with purpose of each change)
+2. **Tests added/updated** (list with what each test covers)
+3. **API changes** (new endpoints, changed contracts)
+4. **Infrastructure changes** (env vars, Docker, Nginx, CI)
+5. **Known gaps or follow-up items**
+6. **Evidence**: typecheck output, lint output, test output

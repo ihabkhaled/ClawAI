@@ -736,6 +736,37 @@ login, dashboard, chat, chat/[threadId], chat/compare, connectors, connectors/[i
 
 **This is not optional. This is the first step of every task. No exceptions.**
 
+## Mandatory Pre-Implementation Checklist
+
+Before writing any code, confirm:
+
+- [ ] Root CLAUDE.md read (this file)
+- [ ] Service-specific CLAUDE.md read for each affected service
+- [ ] docs/16-quality-engineering/PLANNING_STANDARD.md consulted
+- [ ] docs/16-quality-engineering/DOCS_ENV_DOCKER_NGINX_CI_CHECKLIST.md checked
+- [ ] Existing related code read (never modify code you haven't read)
+- [ ] Test file structure understood for affected services
+- [ ] Current Prisma schema read if DB changes needed
+- [ ] Current nginx.conf read if new endpoints added
+
+## Mandatory Post-Implementation Checklist
+
+After completing any implementation, confirm ALL are done:
+
+- [ ] npm run typecheck → 0 errors in all affected workspaces
+- [ ] npm run lint → 0 errors in all affected workspaces
+- [ ] npm run test → all tests pass
+- [ ] npm run build → production build succeeds
+- [ ] All new pages have: loading state, empty state, error state, success state
+- [ ] All form controls use shadcn/ui (no raw select/input/textarea)
+- [ ] All page functions have explicit React.ReactElement return type
+- [ ] All new text has i18n keys in all 8 locale files
+- [ ] All fire-and-forget managers have storeErrorMessage in nested try-catch
+- [ ] All poll hooks detect meta?.error === true to stop polling
+- [ ] All 18 mandatory checklist items verified
+- [ ] Git commit with conventional commit format
+- [ ] Git push to origin/main
+
 ## Docker Container Rebuild Procedure
 
 **When rebuilding a Docker container (especially after shared package changes), ALWAYS follow this exact sequence:**
@@ -820,6 +851,61 @@ Single root `.env` (copy from `.env.example`). Groups:
 
 4 jobs: lint → typecheck → test → build (build depends on ALL 3 passing)
 
+## Claude Output Requirements
+
+### After Every Implementation Task
+
+Claude MUST produce this output after completing ANY implementation:
+
+1. **Changed files summary** — list every file modified/created with purpose
+2. **Affected services** — which services were touched
+3. **Test evidence** — run and show test output (pass/fail count)
+4. **Lint/typecheck evidence** — show 0 errors
+5. **Impacted-area checklist** — confirm each item from the 18-item checklist was checked
+6. **Known gaps** — any known issues, deferred items, or follow-up needed
+
+### Before Claiming "Done"
+
+Claude MUST verify ALL of these before saying a task is complete:
+
+- [ ] npm run typecheck → 0 errors
+- [ ] npm run lint → 0 errors
+- [ ] npm run test → all pass
+- [ ] npm run build → success
+- [ ] All 18 mandatory checklist items checked
+- [ ] No raw HTML elements where shadcn/ui required
+- [ ] No `any` types introduced
+- [ ] No inline types/enums/constants in restricted files
+- [ ] All new user-facing text has i18n keys in all 8 locales
+- [ ] Error states (not just happy paths) implemented and testable
+- [ ] storeErrorMessage wrapped in try-catch for all fire-and-forget managers
+- [ ] emitError called before storeErrorMessage in error paths
+
+### What Claude Must Never Skip
+
+1. Reading CLAUDE.md before starting any task
+2. Running typecheck and lint after every change
+3. Testing background manager error paths
+4. Checking error detection in poll hooks (meta?.error === true)
+5. Verifying shadcn/ui usage (no raw select/input/textarea)
+6. Confirming explicit return types on all page functions
+7. Confirming all 8 i18n locales updated for new text
+8. Checking nginx.conf for new endpoints
+
+### What Claude Treats as Blockers
+
+These are NEVER acceptable and ALWAYS block delivery:
+
+- TypeScript errors
+- ESLint errors
+- Test failures
+- Raw HTML select/input/textarea in UI
+- Inline types/enums/constants in restricted files
+- Missing i18n keys
+- Missing error state handling
+- storeErrorMessage not in try-catch
+- Missing explicit return type on page components
+
 ## Commands
 
 ```bash
@@ -838,6 +924,69 @@ docker compose -f docker-compose.dev.yml logs -f chat-service  # Follow logs
 ## Complete Software Development Lifecycle
 
 **Every feature implementation MUST follow this exact process from start to finish. No shortcuts.**
+
+**Phase order: 0 (Planning Gate) → 0g (Business Framing) → 1 (Understand) → 2 (Plan) → 3 (Backend) → 4 (SSE) → 5 (Error Handling) → 6 (Frontend) → 7 (Infra) → 8 (Validation) → 9 (E2E) → 10 (Cross-Service) → 11 (Docs) → 12 (QE Gates)**
+
+### Phase 0: Pre-Coding Planning Gate (MANDATORY — Cannot be skipped)
+
+Before writing a single line of code for ANY feature, bug fix, or refactor, you MUST complete this planning gate.
+
+#### 0a. Feature/Bug Brief
+
+Write a 2-sentence plain-language summary:
+
+- What is being built or fixed?
+- What user/business problem does it solve?
+
+#### 0b. Impacted-Area Map
+
+Enumerate every dimension that will change:
+
+- Which backend services (by name)?
+- Which frontend pages/components?
+- Which DB schemas (Prisma/Mongo)?
+- Which RabbitMQ events (new/changed)?
+- Which API endpoints (new/modified)?
+- Which shared packages?
+- Which env vars (added/changed/removed)?
+- Which Docker compose files?
+- Nginx changes?
+- CI changes?
+- i18n locales?
+- Which docs in docs/?
+
+#### 0c. Risk Assessment
+
+For each risk: description → likelihood (LOW/MED/HIGH) → impact (LOW/MED/HIGH) → mitigation
+
+#### 0d. Acceptance Criteria
+
+Numbered, explicit, testable statements. No vague language.
+Example: "POST /api/v1/chat-threads returns 201 with `{ id, title, routingMode }`"
+
+#### 0e. Failure Criteria
+
+What must NOT happen. Example: "Original thread messages must NOT be copied."
+
+#### 0f. Test Strategy Seed
+
+Which test types are needed (unit, API, UI, integration, E2E, regression) and why.
+
+**Planning gate output:** All 0a–0f documented before coding starts.
+
+### Phase 0g: Business and Product Framing (MANDATORY for new features)
+
+Before implementing user-facing features:
+
+1. **Business driver**: Why does this exist? What business outcome does it unlock?
+2. **User problem**: Who is affected, what pain exists, what outcome improves?
+3. **Success metrics**: How is success measured? (quantifiable, observable)
+4. **User-visible states**: List every state the user can see (loading, empty, success, error, partial)
+5. **Failure state matrix**: Which failures are acceptable (graceful degradation) vs. unacceptable (blockers)?
+6. **UAT checklist seed**: Write at least 3 testable user scenarios before coding
+7. **"Done" definition**: What does "done" mean from product perspective, not just engineering?
+
+**Product framing gate output:** All 7 items documented.
 
 ### Phase 1: Understand the Feature
 
@@ -1132,6 +1281,45 @@ Full standards live in `docs/16-quality-engineering/`:
 11. **No inline types/consts/enums** in any .tsx or hook file — extract to dedicated files
 12. **No React hooks in .tsx** — only ONE controller hook call per page/component
 
+## Quality Engineering Document Index
+
+Full standards live in `docs/16-quality-engineering/`:
+
+### Process Standards (Phase 0 — Before Coding)
+
+- `PLANNING_STANDARD.md` — Pre-coding planning gate requirements
+- `PRODUCT_AND_BUSINESS_FRAMING_STANDARD.md` — Business/product framing requirements
+
+### Code Quality Standards
+
+- `CODE_REVIEW_AND_PR_REVIEW_STANDARD.md` — PR review checklists
+- `TDD_AND_UNIT_TESTING_STANDARD.md` — Unit testing requirements and patterns
+
+### Testing Standards (Post-Implementation)
+
+- `TEST_CASE_DESIGN_STANDARD.md` — How to design test cases
+- `API_TESTING_STANDARD.md` — API testing methodology
+- `UI_BROWSER_TESTING_STANDARD.md` — Browser/UI testing
+- `INTEGRATION_TESTING_STANDARD.md` — Cross-service testing
+- `E2E_PLAYWRIGHT_STANDARD.md` — End-to-end journey definitions
+- `REGRESSION_TESTING_STANDARD.md` — What and when to regress
+- `SYSTEM_TESTING_STANDARD.md` — Docker/Nginx/health verification
+- `UAT_STANDARD.md` — Business acceptance validation
+- `CLIENT_ACCEPTANCE_TESTING_STANDARD.md` — Client-grade simulation
+- `OBSERVABILITY_AND_LOG_VERIFICATION_STANDARD.md` — Log/event verification
+- `TEST_DATA_AND_SEED_STRATEGY.md` — Test data and fixtures
+
+### Release Standards
+
+- `DOCS_ENV_DOCKER_NGINX_CI_CHECKLIST.md` — Infrastructure completeness
+- `RELEASE_GATES_STANDARD.md` — Release gate framework
+- `RELEASE_READY_QUALITY_GATE.md` — Release readiness checklist
+- `BUG_TRIAGE_AND_RETEST_STANDARD.md` — Bug severity and retest rules
+
+### Operating System
+
+- `QUALITY_ENGINEERING_OPERATING_SYSTEM.md` — Complete lifecycle definition
+
 ---
 
 ## Known Gotchas & Hard-Won Lessons
@@ -1192,4 +1380,5 @@ docs/
   13-adr/                 # Architecture Decision Records
   14-risk-debt/           # Technical debt, risk register
   15-ai-context/          # AI agent context pack, codebase navigation
+  16-quality-engineering/ # QE lifecycle, test standards, release gates, bug triage (20+ documents)
 ```

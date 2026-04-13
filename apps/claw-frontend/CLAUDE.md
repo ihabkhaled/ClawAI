@@ -27,7 +27,7 @@ View (TSX) -> Controller (Hook) -> Service -> Repository/API
 10. **NEVER** put custom hooks inside component files — hooks go in `src/hooks/`.
 11. **NEVER** put utility functions inside component files — move to `src/utilities/` or `src/lib/`.
 12. **NEVER** call React hooks (`useState`, `useEffect`, `useCallback`, `useRef`, `useMemo`, `useReducer`, `useContext`) directly in `.tsx` files — ALL hook logic must be in a controller hook extracted to `src/hooks/`. TSX files may only call ONE controller hook.
-12a. **NEVER** put inline sub-components (helper functions that return JSX) inside `.tsx` files — extract each to its own file in the same directory.
+    12a. **NEVER** put inline sub-components (helper functions that return JSX) inside `.tsx` files — extract each to its own file in the same directory.
 13. **NEVER** use string literal unions for domain values — use enums from `src/enums/`.
 14. **NEVER** compare domain values with raw strings — use enum comparisons.
 15. **NEVER** use `dangerouslySetInnerHTML`.
@@ -50,9 +50,11 @@ View (TSX) -> Controller (Hook) -> Service -> Repository/API
 ---
 
 ## Library Wrapping Rule
+
 Every third-party library MUST be wrapped in a dedicated module. Components, hooks, services, and repositories NEVER import third-party packages directly — they import the wrapper. If the library changes, only the wrapper file needs updating.
 
 **Already wrapped:**
+
 - `src/services/shared/api-client.ts` wraps `fetch`
 - `src/lib/utils.ts` wraps `clsx` + `tailwind-merge`
 
@@ -61,26 +63,31 @@ Every third-party library MUST be wrapped in a dedicated module. Components, hoo
 ## Hook Architecture Rules
 
 ### Single Responsibility
+
 - Each hook MUST do ONE thing. If a hook manages form state AND validation AND submission, split it.
 - Controller hooks orchestrate smaller hooks — they should not contain business logic themselves.
 - Pattern: `useConnectorFormState()` for form state, NOT one giant `useConnectorPage()` with everything.
 
 ### Size Limits
+
 - **Max 50 lines per hook** (excluding imports and type annotations).
 - If a hook exceeds 50 lines, split it into smaller focused hooks.
 - Each smaller hook should be < 30 lines.
 
 ### No Inline Declarations in Hooks
+
 - **NEVER** define `type`, `interface`, `enum`, or `const` inside hook files.
 - Types for hook return values go in `src/types/<domain>.types.ts`.
 - Constants used by hooks go in `src/constants/<domain>.constants.ts`.
 
 ### Hook Naming
+
 - Controller hooks: `use-<component-name>.ts` (e.g., `use-chat-page.ts`)
 - State hooks: `use-<feature>-state.ts` (e.g., `use-connector-form-state.ts`)
 - Shared hooks: `src/hooks/common/use-<name>.ts` (e.g., `use-toggle.ts`, `use-debounce.ts`)
 
 ### Hook Composition Pattern
+
 ```
 Page → usePageController()
          ├── useFeatureA()
@@ -90,20 +97,20 @@ Page → usePageController()
 
 ## Extraction Table
 
-| What               | Where                                        |
-| ------------------ | -------------------------------------------- |
-| Hooks              | `src/hooks/useX.ts`                          |
-| Types              | `src/types/<domain>.types.ts`                |
-| Enums              | `src/enums/<name>.enum.ts`                   |
-| Constants          | `src/constants/<name>.constants.ts`          |
-| Query keys         | `src/repositories/shared/query-keys.ts`      |
-| Helpers / Utils    | `src/utilities/<name>.utility.ts`            |
-| Schemas            | `src/lib/validation/<name>.schema.ts`        |
-| Repositories       | `src/repositories/<domain>.repository.ts`    |
-| Services           | `src/services/<domain>.service.ts`           |
-| UI Primitives      | `src/components/ui/` (shadcn/ui generated)   |
-| Common Components  | `src/components/common/`                     |
-| Layout Components  | `src/components/layout/`                     |
+| What              | Where                                      |
+| ----------------- | ------------------------------------------ |
+| Hooks             | `src/hooks/useX.ts`                        |
+| Types             | `src/types/<domain>.types.ts`              |
+| Enums             | `src/enums/<name>.enum.ts`                 |
+| Constants         | `src/constants/<name>.constants.ts`        |
+| Query keys        | `src/repositories/shared/query-keys.ts`    |
+| Helpers / Utils   | `src/utilities/<name>.utility.ts`          |
+| Schemas           | `src/lib/validation/<name>.schema.ts`      |
+| Repositories      | `src/repositories/<domain>.repository.ts`  |
+| Services          | `src/services/<domain>.service.ts`         |
+| UI Primitives     | `src/components/ui/` (shadcn/ui generated) |
+| Common Components | `src/components/common/`                   |
+| Layout Components | `src/components/layout/`                   |
 
 ---
 
@@ -183,21 +190,21 @@ src/
 
 ## Commands
 
-| Command              | Description                                    |
-| -------------------- | ---------------------------------------------- |
-| `npm run dev`        | Development server on port 3000                |
-| `npm run build`      | Production build                               |
-| `npm run lint`       | ESLint check                                   |
-| `npm run lint:strict`| ESLint check with zero warnings                |
-| `npm run lint:fix`   | ESLint auto-fix                                |
-| `npm run format`     | Prettier format all source files               |
-| `npm run format:check`| Check formatting without writing              |
-| `npm run typecheck`  | TypeScript type checking                       |
-| `npm run validate`   | Full validation (typecheck + lint + format)     |
-| `npm run test`       | Run unit tests                                 |
-| `npm run test:watch` | Run tests in watch mode                        |
-| `npm run test:cov`   | Run tests with coverage                        |
-| `npm run test:e2e`   | Run Playwright end-to-end tests                |
+| Command                | Description                                 |
+| ---------------------- | ------------------------------------------- |
+| `npm run dev`          | Development server on port 3000             |
+| `npm run build`        | Production build                            |
+| `npm run lint`         | ESLint check                                |
+| `npm run lint:strict`  | ESLint check with zero warnings             |
+| `npm run lint:fix`     | ESLint auto-fix                             |
+| `npm run format`       | Prettier format all source files            |
+| `npm run format:check` | Check formatting without writing            |
+| `npm run typecheck`    | TypeScript type checking                    |
+| `npm run validate`     | Full validation (typecheck + lint + format) |
+| `npm run test`         | Run unit tests                              |
+| `npm run test:watch`   | Run tests in watch mode                     |
+| `npm run test:cov`     | Run tests with coverage                     |
+| `npm run test:e2e`     | Run Playwright end-to-end tests             |
 
 ---
 
@@ -231,3 +238,55 @@ Before every commit, verify:
 6. Implement proper CSRF protection for mutations.
 7. Never expose internal error details to users — show user-friendly messages.
 8. Auth tokens must be stored securely (httpOnly cookies preferred over localStorage).
+
+## Workflow Phase Requirements
+
+All frontend work MUST follow the phases defined in the root `CLAUDE.md`:
+
+- **Phase 0** (Planning Gate): Map all affected pages/components/hooks/types before coding
+- **Phase 0g** (Business Framing): Define user states, loading/error/empty/success for every new page
+- **Phase 6** (Frontend Implementation): Follow exact order: types→enums→constants→repository→hooks→components→page→i18n
+- **Phase 8** (Validation): typecheck + lint + test + build before any commit
+- **Phase 9** (UI testing): Manually verify all loading/empty/error/success states after implementation
+
+## Pre-Implementation Checklist (frontend)
+
+Before writing frontend code:
+
+- [ ] Read root CLAUDE.md
+- [ ] Read apps/claw-frontend/CLAUDE.md (this file)
+- [ ] Read existing hook/component structure for the feature area
+- [ ] Confirm backend API contract exists and is stable
+- [ ] Confirm all i18n key names planned
+- [ ] Confirm all required types are mapped from backend DTOs
+
+## Post-Implementation Checklist (frontend)
+
+After implementing any frontend change:
+
+- [ ] `npm run typecheck` → 0 errors
+- [ ] `npm run lint` → 0 errors
+- [ ] `npm run test` → all pass
+- [ ] `npm run build` → success
+- [ ] All new pages have: loading state, empty state, error state, success state
+- [ ] All form controls use shadcn/ui (NO raw `<select>`, `<input>`, `<textarea>`)
+- [ ] All page component functions have explicit `React.ReactElement` return type
+- [ ] All new text has i18n keys in ALL 8 locale files (en, ar, de, es, fr, it, pt, ru)
+- [ ] No React hooks directly in `.tsx` files (all in controller hook)
+- [ ] No inline types/enums/constants in any `.tsx` or hook file
+- [ ] All poll hooks detect `meta?.['error'] === true` to stop polling
+- [ ] All poll hooks detect success metadata to stop polling
+- [ ] No raw string comparisons — use enum comparisons
+- [ ] `import type { ... }` for all type-only imports
+- [ ] All new components receive data via props (no internal fetching)
+
+## Required Output Format
+
+After completing any frontend implementation:
+
+1. **Files changed** (list with purpose of each change)
+2. **New routes added** (page paths)
+3. **New hooks** (what each does)
+4. **i18n keys added** (count per locale)
+5. **Evidence**: typecheck output, lint output, test output
+6. **Known gaps or follow-up items**
