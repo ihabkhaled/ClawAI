@@ -55,5 +55,9 @@ export {
   messagesToParallelResponses,
   getFastestMessage,
 } from './parallel.utility';
-export { getEscalationStatusBadgeVariant, getEscalationStatusLabel } from './escalation.utility';
+export {
+  getEscalationStatusBadgeVariant,
+  getEscalationStatusLabel,
+  isModelInChain,
+} from './escalation.utility';
 export type { EscalationStatusBadgeVariant } from './escalation.utility';

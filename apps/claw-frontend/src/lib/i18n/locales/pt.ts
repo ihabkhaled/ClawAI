@@ -649,6 +649,7 @@ export const pt: TranslationDictionary = {
     step: 'Passo',
     passed: 'Aprovado',
     failed: 'Falhou',
+    finalModel: 'Modelo final',
     noResults: 'Nenhum resultado de escalada ainda',
     viewInThread: 'Ver no tópico',
     stepsTimeline: 'Linha do tempo dos passos',

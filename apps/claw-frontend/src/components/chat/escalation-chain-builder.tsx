@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MAX_CHAIN_STEPS } from '@/constants';
 import { useAvailableModels } from '@/hooks/chat/use-available-models';
 import type { EscalationChainBuilderProps } from '@/types';
-import { cn } from '@/utilities';
+import { cn, isModelInChain } from '@/utilities';
 
 export function EscalationChainBuilder({
   chainModels,
@@ -18,9 +18,6 @@ export function EscalationChainBuilder({
   t,
 }: EscalationChainBuilderProps) {
   const { groupedModels, isLoading } = useAvailableModels();
-
-  const isInChain = (provider: string, model: string): boolean =>
-    chainModels.some((m) => m.provider === provider && m.model === model);
 
   const isMaxReached = chainModels.length >= MAX_CHAIN_STEPS;
 
@@ -37,7 +34,7 @@ export function EscalationChainBuilder({
 
           {chainModels.map((step, index) => (
             <div
-              key={`${step.provider}:${step.model}`}
+              key={index}
               className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2"
             >
               <Badge variant="outline" className="shrink-0 text-xs">
@@ -108,7 +105,7 @@ export function EscalationChainBuilder({
                     </p>
                     <div className="space-y-1">
                       {group.models.map((model) => {
-                        const inChain = isInChain(model.provider, model.model);
+                        const inChain = isModelInChain(chainModels, model.provider, model.model);
                         const disabled = !inChain && isMaxReached;
                         return (
                           <Button

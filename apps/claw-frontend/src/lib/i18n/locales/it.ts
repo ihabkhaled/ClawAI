@@ -650,6 +650,7 @@ export const it: TranslationDictionary = {
     step: 'Passo',
     passed: 'Superato',
     failed: 'Fallito',
+    finalModel: 'Modello finale',
     noResults: 'Nessun risultato di escalation ancora',
     viewInThread: 'Visualizza nel thread',
     stepsTimeline: 'Cronologia dei passi',

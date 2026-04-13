@@ -648,6 +648,7 @@ export const de: TranslationDictionary = {
     step: 'Schritt',
     passed: 'Bestanden',
     failed: 'Fehlgeschlagen',
+    finalModel: 'Endmodell',
     noResults: 'Noch keine Eskalationsergebnisse',
     viewInThread: 'Im Thread anzeigen',
     stepsTimeline: 'Schritt-Zeitachse',

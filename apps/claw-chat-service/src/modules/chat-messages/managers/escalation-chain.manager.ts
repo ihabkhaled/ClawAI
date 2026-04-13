@@ -68,8 +68,13 @@ export class EscalationChainManager {
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`executeInBackground: escalation chain failed — ${msg}`);
-      await this.storeErrorMessage(threadId, msg);
       this.chatStreamService.emitError(threadId, `Escalation chain failed: ${msg}`);
+      try {
+        await this.storeErrorMessage(threadId, msg);
+      } catch (storeError: unknown) {
+        const storeMsg = storeError instanceof Error ? storeError.message : 'Unknown store error';
+        this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
+      }
     }
   }
 

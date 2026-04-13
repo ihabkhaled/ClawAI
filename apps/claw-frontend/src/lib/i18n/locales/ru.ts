@@ -649,6 +649,7 @@ export const ru: TranslationDictionary = {
     step: 'Шаг',
     passed: 'Пройден',
     failed: 'Провален',
+    finalModel: 'Финальная модель',
     noResults: 'Результатов эскалации пока нет',
     viewInThread: 'Просмотреть в ветке',
     stepsTimeline: 'Хронология шагов',

@@ -49,7 +49,7 @@ export function EscalationResultCard({ result, onViewInThread, t }: EscalationRe
             )}
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-muted-foreground">{t('escalation.status')}:</span>
+            <span className="text-muted-foreground">{t('escalation.finalModel')}:</span>
             <span className="text-xs font-medium">
               {metadata.finalProvider} / {metadata.finalModel}
             </span>

@@ -641,6 +641,7 @@ export type TranslationDictionary = {
     step: string;
     passed: string;
     failed: string;
+    finalModel: string;
     noResults: string;
     viewInThread: string;
     stepsTimeline: string;

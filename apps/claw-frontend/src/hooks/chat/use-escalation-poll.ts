@@ -6,6 +6,7 @@ import {
   ESCALATION_AUTO_NAVIGATE_DELAY_MS,
   ESCALATION_POLL_INTERVAL_MS,
   ESCALATION_POLL_MESSAGES_LIMIT,
+  MAX_ESCALATION_POLL_COUNT,
   ROUTES,
 } from '@/constants';
 import { chatRepository } from '@/repositories/chat/chat.repository';
@@ -20,17 +21,24 @@ export function useEscalationPoll(threadId: string | null): UseEscalationPollRes
   const router = useRouter();
   const [pollingEnabled, setPollingEnabled] = useState(false);
   const autoNavTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollCountRef = useRef(0);
 
   useEffect(() => {
+    pollCountRef.current = 0;
     setPollingEnabled(!!threadId);
   }, [threadId]);
 
   const { data } = useQuery({
     queryKey: queryKeys.threads.messages(threadId ?? '', 1),
-    queryFn: () =>
-      chatRepository.getMessagesPaginated(threadId ?? '', 1, ESCALATION_POLL_MESSAGES_LIMIT),
+    queryFn: () => {
+      pollCountRef.current += 1;
+      if (pollCountRef.current >= MAX_ESCALATION_POLL_COUNT) {
+        setPollingEnabled(false);
+      }
+      return chatRepository.getMessagesPaginated(threadId ?? '', 1, ESCALATION_POLL_MESSAGES_LIMIT);
+    },
     enabled: pollingEnabled,
-    refetchInterval: ESCALATION_POLL_INTERVAL_MS,
+    refetchInterval: pollingEnabled ? ESCALATION_POLL_INTERVAL_MS : false,
   });
 
   const synthesisMessage = (() => {

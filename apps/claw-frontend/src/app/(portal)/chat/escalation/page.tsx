@@ -25,6 +25,7 @@ export default function EscalationPage() {
     handleMoveDown,
     handleSend,
     isPending,
+    isError,
     canSend,
     selectionError,
     synthesisMessage,
@@ -35,7 +36,7 @@ export default function EscalationPage() {
 
   const showLoading = isPending || (isPolling && !isSynthesisReady);
   const showResults = isSynthesisReady && synthesisMessage !== null;
-  const showEmpty = !isPending && !isPolling && !isSynthesisReady;
+  const showEmpty = !isPending && !isPolling && !isSynthesisReady && !isError;
 
   return (
     <div className="flex h-full flex-col gap-6">
@@ -101,6 +102,12 @@ export default function EscalationPage() {
           />
           <EscalationStepTimeline stepResults={synthesisMessage.metadata.stepResults} t={t} />
         </div>
+      ) : null}
+
+      {isError ? (
+        <Card className="border-destructive bg-destructive/10 p-4">
+          <p className="text-sm text-destructive">{t('escalation.sendFailed')}</p>
+        </Card>
       ) : null}
 
       {showEmpty ? (

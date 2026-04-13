@@ -651,6 +651,7 @@ export const fr: TranslationDictionary = {
     step: 'Étape',
     passed: 'Réussi',
     failed: 'Échoué',
+    finalModel: 'Modèle final',
     noResults: "Aucun résultat d'escalade pour l'instant",
     viewInThread: 'Voir dans le fil',
     stepsTimeline: 'Chronologie des étapes',

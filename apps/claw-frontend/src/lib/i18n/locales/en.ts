@@ -645,6 +645,7 @@ export const en: TranslationDictionary = {
     step: 'Step',
     passed: 'Passed',
     failed: 'Failed',
+    finalModel: 'Final Model',
     noResults: 'No escalation results yet',
     viewInThread: 'View in thread',
     stepsTimeline: 'Steps Timeline',

@@ -643,6 +643,7 @@ export const ar: TranslationDictionary = {
     step: 'خطوة',
     passed: 'نجح',
     failed: 'فشل',
+    finalModel: 'النموذج النهائي',
     noResults: 'لا توجد نتائج تصعيد بعد',
     viewInThread: 'عرض في المحادثة',
     stepsTimeline: 'جدول زمني للخطوات',

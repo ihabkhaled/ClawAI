@@ -1,6 +1,15 @@
 import { EscalationChainStatus } from '@/enums';
+import type { EscalationChainStep } from '@/types';
 
 export type EscalationStatusBadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline';
+
+export function isModelInChain(
+  chain: EscalationChainStep[],
+  provider: string,
+  model: string,
+): boolean {
+  return chain.some((m) => m.provider === provider && m.model === model);
+}
 
 export function getEscalationStatusBadgeVariant(
   status: EscalationChainStatus,

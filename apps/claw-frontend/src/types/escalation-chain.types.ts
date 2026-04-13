@@ -10,6 +10,7 @@ export type EscalationStepResult = {
   step: number;
   provider: string;
   model: string;
+  content: string | null;
   qualityScore: number;
   passed: boolean;
   latencyMs: number;

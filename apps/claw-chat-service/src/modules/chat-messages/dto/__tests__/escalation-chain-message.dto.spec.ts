@@ -175,5 +175,28 @@ describe('escalationChainMessageSchema', () => {
       });
       expect(result.success).toBe(false);
     });
+
+    it('should reject duplicate provider/model pairs in chain', () => {
+      const result = escalationChainMessageSchema.safeParse({
+        content: 'Hello world',
+        chain: [
+          { provider: 'OPENAI', model: 'gpt-4o' },
+          { provider: 'OPENAI', model: 'gpt-4o' },
+        ],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject duplicate across more than 2 steps', () => {
+      const result = escalationChainMessageSchema.safeParse({
+        content: 'Hello world',
+        chain: [
+          { provider: 'OPENAI', model: 'gpt-4o-mini' },
+          { provider: 'ANTHROPIC', model: 'claude-sonnet-4' },
+          { provider: 'OPENAI', model: 'gpt-4o-mini' },
+        ],
+      });
+      expect(result.success).toBe(false);
+    });
   });
 });
