@@ -56,6 +56,7 @@ export type TranslationDictionary = {
     chat: string;
     compareModels: string;
     consensusMode: string;
+    escalationChain: string;
     connectors: string;
     models: string;
     modelCatalog: string;
@@ -610,6 +611,40 @@ export type TranslationDictionary = {
     low: string;
     modelsSelected: string;
     synthesisRationaleLabel: string;
+  };
+  escalation: {
+    title: string;
+    description: string;
+    chainBuilder: string;
+    addModel: string;
+    removeModel: string;
+    moveUp: string;
+    moveDown: string;
+    minSteps: string;
+    maxSteps: string;
+    sendPrompt: string;
+    running: string;
+    sendFailed: string;
+    synthesizing: string;
+    synthesisReady: string;
+    resultTitle: string;
+    stepUsed: string;
+    totalSteps: string;
+    escalated: string;
+    notEscalated: string;
+    status: string;
+    statusSingleStep: string;
+    statusResolved: string;
+    statusExhausted: string;
+    qualityScore: string;
+    latency: string;
+    step: string;
+    passed: string;
+    failed: string;
+    noResults: string;
+    viewInThread: string;
+    stepsTimeline: string;
+    finalAnswer: string;
   };
   validation: {
     required: string;

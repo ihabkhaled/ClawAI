@@ -18,6 +18,11 @@ import type { ChatMessage, ChatThread, FallbackAttemptInfo, JudgeModelOption } f
 import type { Connector, ConnectorModel, CreateConnectorRequest } from './connector.types';
 import type { ConsensusMetadata, ConsensusModelBreakdown } from './consensus.types';
 import type { CreateContextPackItemRequest, CreateContextPackRequest } from './context-pack.types';
+import type {
+  EscalationChainStep,
+  EscalationChainSynthesisState,
+  EscalationStepResult,
+} from './escalation-chain.types';
 import type { UploadedFile } from './file.types';
 import type { AggregatedHealth } from './health.types';
 import type {
@@ -740,5 +745,28 @@ export type InThreadComparePanelProps = {
   result: ParallelResponse | undefined;
   isPending: boolean;
   canSend: boolean;
+  t: TranslateFunction;
+};
+
+// ─── Escalation Chain component props ───────────────────────────────────────
+
+export type EscalationChainBuilderProps = {
+  chainModels: EscalationChainStep[];
+  onAddModel: (provider: string, model: string) => void;
+  onRemoveModel: (index: number) => void;
+  onMoveUp: (index: number) => void;
+  onMoveDown: (index: number) => void;
+  selectionError: string | null;
+  t: TranslateFunction;
+};
+
+export type EscalationResultCardProps = {
+  result: EscalationChainSynthesisState;
+  onViewInThread: () => void;
+  t: TranslateFunction;
+};
+
+export type EscalationStepTimelineProps = {
+  stepResults: EscalationStepResult[];
   t: TranslateFunction;
 };

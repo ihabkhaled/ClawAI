@@ -7,6 +7,8 @@ import type {
   ConsensusResponse,
   CreateThreadRequest,
   CreateMessageRequest,
+  EscalationChainRequest,
+  EscalationChainResponse,
   MessagesListResponse,
   ParallelRequest,
   ParallelResponse,
@@ -98,6 +100,14 @@ export const chatRepository = {
 
   async sendConsensus(data: ConsensusRequest): Promise<ConsensusResponse> {
     const response = await apiClient.post<ConsensusResponse>('/chat-messages/consensus', data);
+    return response.data;
+  },
+
+  async sendEscalationChain(data: EscalationChainRequest): Promise<EscalationChainResponse> {
+    const response = await apiClient.post<EscalationChainResponse>(
+      '/chat-messages/escalation-chain',
+      data,
+    );
     return response.data;
   },
 };

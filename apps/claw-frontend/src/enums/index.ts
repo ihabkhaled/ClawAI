@@ -31,3 +31,4 @@ export { FallbackFailureType } from './fallback-failure-type.enum';
 export { ReplayOutcomeLabel } from './replay-outcome-label.enum';
 export { ConsensusConfidenceLevel } from './consensus-confidence-level.enum';
 export { ConsensusModelStatus } from './consensus-model-status.enum';
+export { EscalationChainStatus } from './escalation-chain-status.enum';

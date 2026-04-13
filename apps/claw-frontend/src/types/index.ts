@@ -205,6 +205,9 @@ export type {
   ParallelSummaryBarProps,
   InThreadComparePanelProps,
   JudgeRefereeDetailsProps,
+  EscalationChainBuilderProps,
+  EscalationResultCardProps,
+  EscalationStepTimelineProps,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
@@ -295,6 +298,17 @@ export type {
   UseConsensusPollResult,
   UseConsensusPageReturn,
 } from './consensus.types';
+export type {
+  EscalationChainStep,
+  EscalationStepResult,
+  EscalationChainMetadata,
+  EscalationChainSynthesisState,
+  EscalationChainRequest,
+  EscalationChainResponse,
+  UseEscalationSendResult,
+  UseEscalationPollResult,
+  UseEscalationPageReturn,
+} from './escalation-chain.types';
 export type {
   ImageGeneration,
   ImageGenerationAsset,

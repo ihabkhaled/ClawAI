@@ -10,6 +10,7 @@ export const ROUTES = {
   ROUTING: '/routing',
   CHAT_COMPARE: '/chat/compare',
   CHAT_CONSENSUS: '/chat/consensus',
+  CHAT_ESCALATION: '/chat/escalation',
   ROUTING_REPLAY: '/routing/replay',
   MEMORY: '/memory',
   CONTEXT: '/context',
