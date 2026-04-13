@@ -17,7 +17,8 @@ export function useRepairPage(): UseRepairPageReturn {
   const { send, result, isPending, isError } = useSendRepair();
 
   const threadId = result?.threadId ?? null;
-  const { repairMessage, isPolling, isRepairReady, handleViewInThread } = useRepairPoll(threadId);
+  const { repairMessage, isPolling, isRepairReady, isRepairError, handleViewInThread } =
+    useRepairPoll(threadId);
 
   const handleToggleRepairType = useCallback((type: RepairType): void => {
     setSelectedRepairTypes((prev) => {
@@ -57,6 +58,7 @@ export function useRepairPage(): UseRepairPageReturn {
     handleSend,
     isPending,
     isError,
+    isRepairError,
     canSend,
     repairMessage,
     isPolling,

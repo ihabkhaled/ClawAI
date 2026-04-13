@@ -16,11 +16,13 @@ import type { RepairMetadata, RepairResultState, UseRepairPollResult } from '@/t
 export function useRepairPoll(threadId: string | null): UseRepairPollResult {
   const router = useRouter();
   const [pollingEnabled, setPollingEnabled] = useState(false);
+  const [isRepairError, setIsRepairError] = useState(false);
   const autoNavTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollCountRef = useRef(0);
 
   useEffect(() => {
     pollCountRef.current = 0;
+    setIsRepairError(false);
     setPollingEnabled(!!threadId);
   }, [threadId]);
 
@@ -38,7 +40,15 @@ export function useRepairPoll(threadId: string | null): UseRepairPollResult {
   });
 
   const repairMessage = (() => {
-    const found = (data?.data ?? []).find((msg) => {
+    const messages = data?.data ?? [];
+    const errorMsg = messages.find((msg) => {
+      const meta = msg.metadata as Record<string, unknown> | null;
+      return meta?.['error'] === true;
+    });
+    if (errorMsg) {
+      return null;
+    }
+    const found = messages.find((msg) => {
       const meta = msg.metadata as Record<string, unknown> | null;
       return meta?.['repaired'] === true;
     });
@@ -53,6 +63,18 @@ export function useRepairPoll(threadId: string | null): UseRepairPollResult {
   })();
 
   const isRepairReady = repairMessage !== null;
+
+  useEffect(() => {
+    const messages = data?.data ?? [];
+    const errorMsg = messages.find((msg) => {
+      const meta = msg.metadata as Record<string, unknown> | null;
+      return meta?.['error'] === true;
+    });
+    if (errorMsg) {
+      setIsRepairError(true);
+      setPollingEnabled(false);
+    }
+  }, [data]);
 
   useEffect(() => {
     if (isRepairReady) {
@@ -83,6 +105,7 @@ export function useRepairPoll(threadId: string | null): UseRepairPollResult {
     repairMessage,
     isPolling: pollingEnabled,
     isRepairReady,
+    isRepairError,
     handleViewInThread,
   };
 }

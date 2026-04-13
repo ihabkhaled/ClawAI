@@ -22,6 +22,7 @@ export default function RepairPage() {
     handleSend,
     isPending,
     isError,
+    isRepairError,
     canSend,
     repairMessage,
     isPolling,
@@ -29,9 +30,10 @@ export default function RepairPage() {
     handleViewInThread,
   } = useRepairPage();
 
-  const showLoading = isPending || (isPolling && !isRepairReady);
+  const hasAnyError = isError || isRepairError;
+  const showLoading = isPending || (isPolling && !isRepairReady && !isRepairError);
   const showResults = isRepairReady && repairMessage !== null;
-  const showEmpty = !isPending && !isPolling && !isRepairReady && !isError;
+  const showEmpty = !isPending && !isPolling && !isRepairReady && !hasAnyError;
 
   return (
     <div className="flex h-full flex-col gap-6">
@@ -94,7 +96,7 @@ export default function RepairPage() {
         <RepairResultCard result={repairMessage} onViewInThread={handleViewInThread} t={t} />
       ) : null}
 
-      {isError ? (
+      {hasAnyError ? (
         <Card className="border-destructive bg-destructive/10 p-4">
           <p className="text-sm text-destructive">{t('repair.sendFailed')}</p>
         </Card>

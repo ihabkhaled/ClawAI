@@ -38,6 +38,7 @@ export type UseRepairPollResult = {
   repairMessage: RepairResultState | null;
   isPolling: boolean;
   isRepairReady: boolean;
+  isRepairError: boolean;
   handleViewInThread: () => void;
 };
 
@@ -52,6 +53,7 @@ export type UseRepairPageReturn = {
   handleSend: () => void;
   isPending: boolean;
   isError: boolean;
+  isRepairError: boolean;
   canSend: boolean;
   repairMessage: RepairResultState | null;
   isPolling: boolean;
