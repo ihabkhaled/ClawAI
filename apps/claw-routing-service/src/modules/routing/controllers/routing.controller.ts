@@ -23,6 +23,7 @@ import type {
   ReplayRunSummary,
   RunComparisonResult,
 } from '../types/replay-run.types';
+import type { RecoveryStats } from '../types/recovery.types';
 
 @Controller('routing')
 export class RoutingController {
@@ -114,6 +115,12 @@ export class RoutingController {
     @Query(new ZodValidationPipe(compareRunsSchema)) query: CompareRunsDto,
   ): Promise<RunComparisonResult> {
     return this.routingService.compareRuns(query.runId1, query.runId2);
+  }
+
+  @Get('recovery/stats')
+  async getRecoveryStats(@Query('limit') limitStr?: string): Promise<RecoveryStats> {
+    const limit = limitStr !== undefined ? Math.min(Number.parseInt(limitStr, 10) || 20, 100) : 20;
+    return this.routingService.getRecoveryStats(limit);
   }
 
   @Get('decisions/:threadId')

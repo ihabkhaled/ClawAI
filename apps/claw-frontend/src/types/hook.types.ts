@@ -12,6 +12,7 @@ import type { ModelSelection } from './component.types';
 import type { UploadFileRequest } from './file.types';
 import type { AggregatedHealth } from './health.types';
 import type { TranslateFunction } from './i18n.types';
+import type { RecoveryStats } from './recovery.types';
 import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
 import type { ReplayBatchResult } from './replay.types';
 
@@ -263,4 +264,13 @@ export type UseReplayLabPageReturn = {
   setCompareRunId2: (id: string | null) => void;
   compareResult: RunComparisonResult | undefined;
   isCompareLoading: boolean;
+};
+
+// ─── Recovery hook types ─────────────────────────────────────────────────────
+
+export type UseRecoveryPageReturn = {
+  t: TranslateFunction;
+  data: RecoveryStats | undefined;
+  isLoading: boolean;
+  isError: boolean;
 };

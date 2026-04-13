@@ -11,6 +11,7 @@ import type {
   ReplayCaseDetail,
   ReplayFilters,
   ReplayRunsListResponse,
+  RecoveryStats,
   ReviewCaseRequest,
   RoutingPolicy,
   RunComparisonResult,
@@ -99,6 +100,13 @@ export const routingRepository = {
     const response = await apiClient.get<RunComparisonResult>('/routing/replay/runs/compare', {
       runId1,
       runId2,
+    });
+    return response.data;
+  },
+
+  async getRecoveryStats(limit = 20): Promise<RecoveryStats> {
+    const response = await apiClient.get<RecoveryStats>('/routing/recovery/stats', {
+      limit: String(limit),
     });
     return response.data;
   },

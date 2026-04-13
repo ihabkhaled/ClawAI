@@ -13,6 +13,7 @@ export const ROUTES = {
   CHAT_ESCALATION: '/chat/escalation',
   CHAT_REPAIR: '/chat/repair',
   ROUTING_REPLAY: '/routing/replay',
+  ROUTING_RECOVERY: '/routing/recovery',
   MEMORY: '/memory',
   CONTEXT: '/context',
   FILES: '/files',

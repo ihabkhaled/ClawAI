@@ -40,6 +40,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
   { labelKey: 'nav.modelCatalog', href: ROUTES.MODELS_CATALOG, icon: Store },
   { labelKey: 'nav.routing', href: ROUTES.ROUTING, icon: Route },
   { labelKey: 'nav.replayLab', href: ROUTES.ROUTING_REPLAY, icon: FlaskConical },
+  { labelKey: 'nav.recoveryLab', href: ROUTES.ROUTING_RECOVERY, icon: Activity },
   { labelKey: 'nav.memory', href: ROUTES.MEMORY, icon: Brain },
   { labelKey: 'nav.context', href: ROUTES.CONTEXT, icon: BookOpen },
   { labelKey: 'nav.files', href: ROUTES.FILES, icon: FolderOpen },

@@ -37,6 +37,7 @@ import type {
 } from './log.types';
 import type { CreateMemoryRequest, MemoryRecord } from './memory.types';
 import type { ParallelModelResponse, ParallelResponse } from './parallel.types';
+import type { ProviderFailureStat, RecentFallback } from './recovery.types';
 import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
 import type { ReplayBatchResult, ReplayResult } from './replay.types';
 import type { CreatePolicyRequest, RoutingDecision, RoutingPolicy } from './routing.types';
@@ -784,5 +785,24 @@ export type RepairTypeSelectorProps = {
 export type RepairResultCardProps = {
   result: RepairResultState;
   onViewInThread: () => void;
+  t: TranslateFunction;
+};
+
+// ─── Recovery component props ────────────────────────────────────────────────
+
+export type RecoveryStatsCardProps = {
+  totalDecisions: number;
+  totalWithFallback: number;
+  fallbackRate: number;
+  t: TranslateFunction;
+};
+
+export type RecoveryProviderTableProps = {
+  providerStats: ProviderFailureStat[];
+  t: TranslateFunction;
+};
+
+export type RecoveryFallbackRowProps = {
+  fallback: RecentFallback;
   t: TranslateFunction;
 };

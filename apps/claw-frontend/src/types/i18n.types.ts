@@ -64,6 +64,7 @@ export type TranslationDictionary = {
     localModels: string;
     routing: string;
     replayLab: string;
+    recoveryLab: string;
     memory: string;
     context: string;
     files: string;
@@ -672,6 +673,28 @@ export type TranslationDictionary = {
     finalAnswer: string;
     provider: string;
     model: string;
+  };
+  recovery: {
+    title: string;
+    description: string;
+    totalDecisions: string;
+    totalFallbacks: string;
+    fallbackRate: string;
+    providerTable: string;
+    provider: string;
+    fallbackCount: string;
+    rate: string;
+    recentFallbacks: string;
+    originalProvider: string;
+    originalModel: string;
+    fallbackProvider: string;
+    fallbackModel: string;
+    mode: string;
+    time: string;
+    noFallbacks: string;
+    noData: string;
+    loading: string;
+    error: string;
   };
   validation: {
     required: string;

@@ -210,6 +210,9 @@ export type {
   EscalationStepTimelineProps,
   RepairTypeSelectorProps,
   RepairResultCardProps,
+  RecoveryStatsCardProps,
+  RecoveryProviderTableProps,
+  RecoveryFallbackRowProps,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
@@ -252,6 +255,7 @@ export type {
   UseGlobalSearchControllerReturn,
   UseSidebarControllerReturn,
   UseReplayLabPageReturn,
+  UseRecoveryPageReturn,
 } from './hook.types';
 export type { MarkdownRendererProps } from './markdown.types';
 export type {
@@ -341,3 +345,4 @@ export type {
   TranslateFunction,
   UseTranslationReturn,
 } from './i18n.types';
+export type { ProviderFailureStat, RecentFallback, RecoveryStats } from './recovery.types';

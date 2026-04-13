@@ -3,6 +3,7 @@ import { type Prisma, type RoutingDecision, RoutingMode } from '../../../generat
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { type CreateDecisionData } from '../types/routing.types';
 import { type ReplayFilters } from '../types/replay.types';
+import { type RawRecoveryData } from '../types/recovery.types';
 
 @Injectable()
 export class RoutingDecisionsRepository {
@@ -64,5 +65,35 @@ export class RoutingDecisionsRepository {
       take: filters.limit ?? 50,
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async getRecoveryStats(limit: number): Promise<RawRecoveryData> {
+    const fallbackWhere = { fallbackProvider: { not: null } };
+
+    const [total, withFallback, providerCounts, recent] = await Promise.all([
+      this.prisma.routingDecision.count(),
+      this.prisma.routingDecision.count({ where: fallbackWhere }),
+      this.prisma.routingDecision.groupBy({
+        by: ['selectedProvider'],
+        _count: { selectedProvider: true },
+        where: fallbackWhere,
+      }),
+      this.prisma.routingDecision.findMany({
+        where: fallbackWhere,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          createdAt: true,
+          selectedProvider: true,
+          selectedModel: true,
+          fallbackProvider: true,
+          fallbackModel: true,
+          routingMode: true,
+        },
+      }),
+    ]);
+
+    return { total, withFallback, providerCounts, recent };
   }
 }

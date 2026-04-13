@@ -28,6 +28,7 @@ import type {
   ReplayRunSummary,
   RunComparisonResult,
 } from '../types/replay-run.types';
+import type { ProviderFailureStat, RecentFallback, RecoveryStats } from '../types/recovery.types';
 
 @Injectable()
 export class RoutingService implements OnModuleInit {
@@ -194,6 +195,36 @@ export class RoutingService implements OnModuleInit {
 
   async compareRuns(runId1: string, runId2: string): Promise<RunComparisonResult> {
     return this.replayManager.compareRuns(runId1, runId2);
+  }
+
+  async getRecoveryStats(limit: number): Promise<RecoveryStats> {
+    const raw = await this.decisionsRepository.getRecoveryStats(limit);
+    const fallbackRate = raw.total > 0 ? raw.withFallback / raw.total : 0;
+
+    const providerStats: ProviderFailureStat[] = raw.providerCounts.map((pc) => ({
+      provider: pc.selectedProvider,
+      fallbackCount: pc._count.selectedProvider,
+      totalCount: raw.total,
+      fallbackRate: raw.total > 0 ? pc._count.selectedProvider / raw.total : 0,
+    }));
+
+    const recentFallbacks: RecentFallback[] = raw.recent.map((r) => ({
+      id: r.id,
+      createdAt: r.createdAt,
+      selectedProvider: r.selectedProvider,
+      selectedModel: r.selectedModel,
+      fallbackProvider: r.fallbackProvider,
+      fallbackModel: r.fallbackModel,
+      routingMode: r.routingMode,
+    }));
+
+    return {
+      totalDecisions: raw.total,
+      totalWithFallback: raw.withFallback,
+      fallbackRate,
+      providerStats,
+      recentFallbacks,
+    };
   }
 
   private async subscribeToEvents(): Promise<void> {
