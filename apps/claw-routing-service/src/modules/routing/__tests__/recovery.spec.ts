@@ -88,4 +88,49 @@ describe('RoutingService.getRecoveryStats', () => {
     await service.getRecoveryStats(50);
     expect(decisionsRepo.getRecoveryStats).toHaveBeenCalledWith(50);
   });
+
+  it('handles null fallbackProvider and fallbackModel in recent fallbacks', async () => {
+    decisionsRepo.getRecoveryStats.mockResolvedValue({
+      ...mockRawData,
+      recent: [
+        {
+          id: 'decision-null',
+          createdAt: new Date('2024-01-02T10:00:00Z'),
+          selectedProvider: 'gemini',
+          selectedModel: 'gemini-2.5-flash',
+          fallbackProvider: null,
+          fallbackModel: null,
+          routingMode: 'AUTO',
+        },
+      ],
+    });
+    const result = await service.getRecoveryStats(20);
+    expect(result.recentFallbacks[0]?.fallbackProvider).toBeNull();
+    expect(result.recentFallbacks[0]?.fallbackModel).toBeNull();
+  });
+
+  it('preserves routingMode in recentFallbacks', async () => {
+    const result = await service.getRecoveryStats(20);
+    expect(result.recentFallbacks[0]?.routingMode).toBe('AUTO');
+  });
+
+  it('returns empty providerStats and recentFallbacks when no fallback events exist', async () => {
+    decisionsRepo.getRecoveryStats.mockResolvedValue({
+      total: 50,
+      withFallback: 0,
+      providerCounts: [],
+      recent: [],
+    });
+    const result = await service.getRecoveryStats(20);
+    expect(result.totalWithFallback).toBe(0);
+    expect(result.providerStats).toEqual([]);
+    expect(result.recentFallbacks).toEqual([]);
+  });
+
+  it('sorts providerStats by fallbackCount descending based on raw data order', async () => {
+    const result = await service.getRecoveryStats(20);
+    // anthropic (12) comes before openai (8) as provided by the groupBy result
+    expect(result.providerStats[0]?.provider).toBe('anthropic');
+    expect(result.providerStats[1]?.provider).toBe('openai');
+  });
 });
