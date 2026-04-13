@@ -8,6 +8,7 @@ import { ContextAssemblyManager } from '../managers/context-assembly.manager';
 import { ConsensusExecutionManager } from '../managers/consensus-execution.manager';
 import { AnswerRepairManager } from '../managers/answer-repair.manager';
 import { TaskDecompositionManager } from '../managers/task-decomposition.manager';
+import { BestOfNManager } from '../managers/best-of-n.manager';
 import { EscalationChainManager } from '../managers/escalation-chain.manager';
 import { ParallelExecutionManager } from '../managers/parallel-execution.manager';
 import { ChatStreamService } from './chat-stream.service';
@@ -16,6 +17,7 @@ import { type ConsensusMessageDto } from '../dto/consensus-message.dto';
 import { type EscalationChainMessageDto } from '../dto/escalation-chain-message.dto';
 import { type RepairMessageDto } from '../dto/repair-message.dto';
 import { type DecomposeTaskDto } from '../dto/decompose-task.dto';
+import { type BestOfNMessageDto } from '../dto/best-of-n-message.dto';
 import { type ListMessagesQueryDto } from '../dto/list-messages-query.dto';
 import {
   type LlmResponse,
@@ -26,6 +28,7 @@ import { type ConsensusResponse } from '../types/consensus.types';
 import { type EscalationChainResponse } from '../types/escalation-chain.types';
 import { type AnswerRepairResponse } from '../types/answer-repair.types';
 import { type TaskDecompositionResponse } from '../types/task-decomposition.types';
+import { type BestOfNResponse } from '../types/best-of-n.types';
 import { type ParallelResponse } from '../types/parallel.types';
 import { type ParallelMessageDto } from '../dto/parallel-message.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
@@ -47,6 +50,7 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly escalationChainManager: EscalationChainManager,
     private readonly answerRepairManager: AnswerRepairManager,
     private readonly taskDecompositionManager: TaskDecompositionManager,
+    private readonly bestOfNManager: BestOfNManager,
     private readonly chatStreamService: ChatStreamService,
     private readonly rabbitMQService: RabbitMQService,
   ) {
@@ -161,6 +165,10 @@ export class ChatMessagesService implements OnModuleInit {
     dto: DecomposeTaskDto,
   ): Promise<TaskDecompositionResponse> {
     return this.taskDecompositionManager.executeDecomposition(userId, dto);
+  }
+
+  async executeBestOfN(userId: string, dto: BestOfNMessageDto): Promise<BestOfNResponse> {
+    return this.bestOfNManager.executeBestOfN(userId, dto);
   }
 
   async getMessages(

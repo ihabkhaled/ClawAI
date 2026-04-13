@@ -15,6 +15,7 @@ import type { TranslateFunction } from '@/types/i18n.types';
 
 import type { RepairResultState } from './answer-repair.types';
 import type { AdminUser, AuditLog } from './audit.types';
+import type { BestOfNResultState, CandidateResult } from './best-of-n.types';
 import type { DownloadStats, ModelCatalogEntry, PullJobResponse } from './catalog.types';
 import type { ChatMessage, ChatThread, FallbackAttemptInfo, JudgeModelOption } from './chat.types';
 import type { Connector, ConnectorModel, CreateConnectorRequest } from './connector.types';
@@ -819,5 +820,18 @@ export type DecompositionResultCardProps = {
 export type SubTaskResultCardProps = {
   subTask: SubTaskResult;
   index: number;
+  t: TranslateFunction;
+};
+
+// ─── Best-of-N component props ────────────────────────────────────────────
+
+export type BestOfNResultCardProps = {
+  result: BestOfNResultState;
+  onViewInThread: () => void;
+  t: TranslateFunction;
+};
+
+export type CandidateCardProps = {
+  candidate: CandidateResult;
   t: TranslateFunction;
 };

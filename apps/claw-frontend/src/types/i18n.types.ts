@@ -66,6 +66,7 @@ export type TranslationDictionary = {
     replayLab: string;
     recoveryLab: string;
     decomposeLab: string;
+    bestOfNLab: string;
     memory: string;
     context: string;
     files: string;
@@ -691,6 +692,25 @@ export type TranslationDictionary = {
     category: string;
     model: string;
     latencyMs: string;
+    noResults: string;
+    sendFailed: string;
+  };
+  bestOfN: {
+    title: string;
+    description: string;
+    contentLabel: string;
+    contentPlaceholder: string;
+    nCandidates: string;
+    sendPrompt: string;
+    running: string;
+    synthesizing: string;
+    resultTitle: string;
+    viewInThread: string;
+    candidatesHeader: string;
+    rank: string;
+    score: string;
+    model: string;
+    latency: string;
     noResults: string;
     sendFailed: string;
   };

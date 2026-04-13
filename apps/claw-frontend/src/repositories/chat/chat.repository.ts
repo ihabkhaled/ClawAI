@@ -1,6 +1,8 @@
 import type { MessageFeedback } from '@/enums';
 import { apiClient } from '@/services/shared/api-client';
 import type {
+  BestOfNRequest,
+  BestOfNResponse,
   ChatThread,
   ChatMessage,
   ConsensusRequest,
@@ -122,6 +124,11 @@ export const chatRepository = {
 
   async decomposeTask(data: DecomposeRequest): Promise<DecomposeResponse> {
     const response = await apiClient.post<DecomposeResponse>('/chat-messages/decompose', data);
+    return response.data;
+  },
+
+  async bestOfNMessage(data: BestOfNRequest): Promise<BestOfNResponse> {
+    const response = await apiClient.post<BestOfNResponse>('/chat-messages/best-of-n', data);
     return response.data;
   },
 };

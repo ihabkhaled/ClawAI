@@ -1,0 +1,257 @@
+import { BestOfNManager } from '../modules/chat-messages/managers/best-of-n.manager';
+import { type ChatMessagesRepository } from '../modules/chat-messages/repositories/chat-messages.repository';
+import { type ChatThreadsRepository } from '../modules/chat-threads/repositories/chat-threads.repository';
+import { type ChatStreamService } from '../modules/chat-messages/services/chat-stream.service';
+import { type QualityCheckManager } from '../modules/chat-messages/managers/quality-check.manager';
+import { bestOfNMessageSchema } from '../modules/chat-messages/dto/best-of-n-message.dto';
+import * as httpClientModule from '../common/utilities/http-client.utility';
+
+jest.mock('../modules/chat-messages/managers/best-of-n.manager', () => {
+  const actual = jest.requireActual<
+    typeof import('../modules/chat-messages/managers/best-of-n.manager')
+  >('../modules/chat-messages/managers/best-of-n.manager');
+  return actual;
+});
+
+jest.mock('../app/config/app.config', () => ({
+  AppConfig: {
+    get: jest.fn().mockReturnValue({
+      OLLAMA_SERVICE_URL: 'http://localhost:11434',
+    }),
+  },
+}));
+
+jest.mock('../common/utilities/http-client.utility', () => ({
+  httpRequest: jest.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    data: { response: 'mocked response content' },
+  }),
+}));
+
+const mockThread = {
+  id: 'thread-best-1',
+  userId: 'user-1',
+  title: 'Best-of-N: test',
+  routingMode: 'AUTO' as const,
+  lastProvider: null,
+  lastModel: null,
+  preferredProvider: null,
+  preferredModel: null,
+  isPinned: false,
+  isArchived: false,
+  systemPrompt: null,
+  temperature: 0.7,
+  maxTokens: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
+const mockUserMessage = {
+  id: 'msg-user-1',
+  threadId: 'thread-best-1',
+  role: 'USER' as const,
+  content: 'test prompt',
+  provider: null,
+  model: null,
+  routingMode: null,
+  routerModel: null,
+  usedFallback: false,
+  inputTokens: null,
+  outputTokens: null,
+  estimatedCost: null,
+  latencyMs: null,
+  feedback: null,
+  metadata: null,
+  createdAt: new Date(),
+};
+
+const mockAssistantMessage = {
+  id: 'msg-assistant-1',
+  threadId: 'thread-best-1',
+  role: 'ASSISTANT' as const,
+  content: 'best response',
+  provider: 'local-ollama',
+  model: 'gemma3:4b',
+  routingMode: 'AUTO' as const,
+  routerModel: null,
+  usedFallback: false,
+  inputTokens: null,
+  outputTokens: null,
+  estimatedCost: null,
+  latencyMs: 100,
+  feedback: null,
+  metadata: { bestOfN: true, candidates: [], bestRank: 1 },
+  createdAt: new Date(),
+};
+
+const mockMessagesRepository = (): Partial<Record<keyof ChatMessagesRepository, jest.Mock>> => ({
+  create: jest.fn(),
+});
+
+const mockThreadsRepository = (): Partial<Record<keyof ChatThreadsRepository, jest.Mock>> => ({
+  create: jest.fn(),
+  findById: jest.fn(),
+});
+
+const mockStreamService = (): Partial<Record<keyof ChatStreamService, jest.Mock>> => ({
+  emitCompletion: jest.fn(),
+  emitError: jest.fn(),
+});
+
+const mockQualityCheckManager = (): Partial<Record<keyof QualityCheckManager, jest.Mock>> => ({
+  checkResponseQuality: jest.fn().mockReturnValue({ score: 0.8, reasons: [], isWeak: false }),
+});
+
+describe('BestOfNManager', () => {
+  let manager: BestOfNManager;
+  let messagesRepo: ReturnType<typeof mockMessagesRepository>;
+  let threadsRepo: ReturnType<typeof mockThreadsRepository>;
+  let streamService: ReturnType<typeof mockStreamService>;
+  let qualityManager: ReturnType<typeof mockQualityCheckManager>;
+
+  beforeEach(() => {
+    messagesRepo = mockMessagesRepository();
+    threadsRepo = mockThreadsRepository();
+    streamService = mockStreamService();
+    qualityManager = mockQualityCheckManager();
+
+    manager = new BestOfNManager(
+      messagesRepo as unknown as ChatMessagesRepository,
+      threadsRepo as unknown as ChatThreadsRepository,
+      streamService as unknown as ChatStreamService,
+      qualityManager as unknown as QualityCheckManager,
+    );
+
+    jest.clearAllMocks();
+    (httpClientModule.httpRequest as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { response: 'mocked response content' },
+    });
+  });
+
+  describe('executeBestOfN', () => {
+    it('should return messageId and threadId', async () => {
+      messagesRepo.create!.mockResolvedValue(mockUserMessage);
+
+      const result = await manager.executeBestOfN('user-1', {
+        content: 'test prompt',
+        threadId: 'thread-best-1',
+        n: 3,
+        models: undefined,
+      });
+
+      expect(result).toHaveProperty('messageId');
+      expect(result).toHaveProperty('threadId', 'thread-best-1');
+    });
+
+    it('should create a new thread when no threadId provided', async () => {
+      threadsRepo.create!.mockResolvedValue(mockThread);
+      messagesRepo.create!.mockResolvedValue(mockUserMessage);
+
+      const result = await manager.executeBestOfN('user-1', {
+        content: 'test prompt',
+        n: 2,
+        models: undefined,
+      });
+
+      expect(threadsRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-1',
+          routingMode: 'AUTO',
+        }),
+      );
+      expect(result.threadId).toBe('thread-best-1');
+    });
+  });
+
+  describe('DTO validation', () => {
+    it('should accept valid dto with n=3', () => {
+      const result = bestOfNMessageSchema.safeParse({ content: 'hello', n: 3 });
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject n < 2', () => {
+      const result = bestOfNMessageSchema.safeParse({ content: 'hello', n: 1 });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject n > 5', () => {
+      const result = bestOfNMessageSchema.safeParse({ content: 'hello', n: 6 });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject empty content', () => {
+      const result = bestOfNMessageSchema.safeParse({ content: '', n: 3 });
+      expect(result.success).toBe(false);
+    });
+
+    it('should default n to 3 when not provided', () => {
+      const result = bestOfNMessageSchema.safeParse({ content: 'hello' });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.n).toBe(3);
+      }
+    });
+  });
+
+  describe('executeInBackground', () => {
+    it('should store ASSISTANT message with bestOfN:true metadata', async () => {
+      messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
+
+      await manager.executeInBackground('thread-best-1', 'test prompt', 2);
+
+      expect(messagesRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role: 'ASSISTANT',
+          metadata: expect.objectContaining({ bestOfN: true }),
+        }),
+      );
+    });
+
+    it('should store message where best candidate has rank 1', async () => {
+      messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
+
+      await manager.executeInBackground('thread-best-1', 'test prompt', 2);
+
+      expect(messagesRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({ bestRank: 1 }),
+        }),
+      );
+    });
+
+    it('should emit SSE completion on success', async () => {
+      messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
+
+      await manager.executeInBackground('thread-best-1', 'test prompt', 2);
+
+      expect(streamService.emitCompletion).toHaveBeenCalledWith(
+        'thread-best-1',
+        'local-ollama',
+        expect.any(String),
+      );
+    });
+
+    it('should store error message and emit SSE error on failure', async () => {
+      (httpClientModule.httpRequest as jest.Mock).mockRejectedValue(
+        new Error('Ollama unreachable'),
+      );
+      messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
+
+      await manager.executeInBackground('thread-best-1', 'test prompt', 2);
+
+      expect(streamService.emitError).toHaveBeenCalledWith('thread-best-1', expect.any(String));
+    });
+
+    it('should resolve (fire-and-forget) even if everything fails', async () => {
+      (httpClientModule.httpRequest as jest.Mock).mockRejectedValue(new Error('Fatal'));
+      messagesRepo.create!.mockRejectedValue(new Error('DB down'));
+
+      await expect(
+        manager.executeInBackground('thread-best-1', 'test prompt', 2),
+      ).resolves.toBeUndefined();
+    });
+  });
+});

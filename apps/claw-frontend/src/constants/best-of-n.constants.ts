@@ -1,0 +1,5 @@
+export const BEST_OF_N_POLL_INTERVAL_MS = 3000;
+export const BEST_OF_N_POLL_MESSAGES_LIMIT = 50;
+export const BEST_OF_N_AUTO_NAVIGATE_DELAY_MS = 3000;
+export const MAX_BEST_OF_N_POLL_COUNT = 60;
+export const BEST_OF_N_CONTENT_MIN_LENGTH = 1;

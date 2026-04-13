@@ -215,6 +215,8 @@ export type {
   RecoveryFallbackRowProps,
   DecompositionResultCardProps,
   SubTaskResultCardProps,
+  BestOfNResultCardProps,
+  CandidateCardProps,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
@@ -259,6 +261,16 @@ export type {
   UseReplayLabPageReturn,
   UseRecoveryPageReturn,
 } from './hook.types';
+export type {
+  CandidateResult,
+  BestOfNMetadata,
+  BestOfNResultState,
+  BestOfNRequest,
+  BestOfNResponse,
+  UseBestOfNSendResult,
+  UseBestOfNPollResult,
+  UseBestOfNPageReturn,
+} from './best-of-n.types';
 export type { MarkdownRendererProps } from './markdown.types';
 export type {
   ModelCatalogEntry,

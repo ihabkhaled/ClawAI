@@ -8,6 +8,7 @@ import { type TaskDecompositionManager } from '../managers/task-decomposition.ma
 import { type ConsensusExecutionManager } from '../managers/consensus-execution.manager';
 import { type EscalationChainManager } from '../managers/escalation-chain.manager';
 import { type ParallelExecutionManager } from '../managers/parallel-execution.manager';
+import { type BestOfNManager } from '../managers/best-of-n.manager';
 import { type ChatStreamService } from '../services/chat-stream.service';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
@@ -110,6 +111,7 @@ describe('ChatMessagesService', () => {
       { executeEscalationChain: jest.fn() } as unknown as EscalationChainManager,
       { executeRepair: jest.fn() } as unknown as AnswerRepairManager,
       { executeDecomposition: jest.fn() } as unknown as TaskDecompositionManager,
+      { executeBestOfN: jest.fn() } as unknown as BestOfNManager,
       { emitCompletion: jest.fn() } as unknown as ChatStreamService,
       rabbitMQ as unknown as RabbitMQService,
     );
