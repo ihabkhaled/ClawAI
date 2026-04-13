@@ -6,6 +6,8 @@ export const replayRoutingSchema = z.object({
   startDate: z.string().max(50).optional(),
   endDate: z.string().max(50).optional(),
   limit: z.coerce.number().int().min(1).max(500).default(50),
+  saveRun: z.boolean().default(false),
+  runName: z.string().max(255).optional(),
 });
 
 export type ReplayRoutingDto = z.infer<typeof replayRoutingSchema>;

@@ -1,74 +1,107 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
-import { ZodValidationPipe } from "../../../app/pipes/zod-validation.pipe";
-import { type PaginatedResult } from "../../../common/types";
-import { RoutingService } from "../services/routing.service";
-import { CreatePolicyDto, createPolicySchema } from "../dto/create-policy.dto";
-import { UpdatePolicyDto, updatePolicySchema } from "../dto/update-policy.dto";
-import { ListPoliciesQueryDto, listPoliciesQuerySchema } from "../dto/list-policies-query.dto";
-import { EvaluateRouteDto, evaluateRouteSchema } from "../dto/evaluate-route.dto";
-import { type ReplayRoutingDto, replayRoutingSchema } from "../dto/replay-routing.dto";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
+import { type PaginatedResult } from '../../../common/types';
+import { RoutingService } from '../services/routing.service';
+import { CreatePolicyDto, createPolicySchema } from '../dto/create-policy.dto';
+import { UpdatePolicyDto, updatePolicySchema } from '../dto/update-policy.dto';
+import { ListPoliciesQueryDto, listPoliciesQuerySchema } from '../dto/list-policies-query.dto';
+import { EvaluateRouteDto, evaluateRouteSchema } from '../dto/evaluate-route.dto';
+import { type ReplayRoutingDto, replayRoutingSchema } from '../dto/replay-routing.dto';
+import { ReviewCaseDto, reviewCaseSchema } from '../dto/review-case.dto';
+import { ListReplayRunsDto, listReplayRunsSchema } from '../dto/list-replay-runs.dto';
 import {
   type RoutingDecision,
   type RoutingDecisionResult,
   type RoutingPolicy,
-} from "../types/routing.types";
-import { type ReplayBatchResult } from "../types/replay.types";
+} from '../types/routing.types';
+import { type ReplayBatchResult } from '../types/replay.types';
+import type { ExportBundle, ReplayCaseDetail, ReplayRunSummary } from '../types/replay-run.types';
 
-@Controller("routing")
+@Controller('routing')
 export class RoutingController {
   constructor(private readonly routingService: RoutingService) {}
 
-  @Post("policies")
+  @Post('policies')
   async createPolicy(
     @Body(new ZodValidationPipe(createPolicySchema)) dto: CreatePolicyDto,
   ): Promise<RoutingPolicy> {
     return this.routingService.createPolicy(dto);
   }
 
-  @Get("policies")
+  @Get('policies')
   async getPolicies(
     @Query(new ZodValidationPipe(listPoliciesQuerySchema)) query: ListPoliciesQueryDto,
   ): Promise<PaginatedResult<RoutingPolicy>> {
     return this.routingService.getPolicies(query);
   }
 
-  @Get("policies/:id")
-  async getPolicy(@Param("id") id: string): Promise<RoutingPolicy> {
+  @Get('policies/:id')
+  async getPolicy(@Param('id') id: string): Promise<RoutingPolicy> {
     return this.routingService.getPolicy(id);
   }
 
-  @Patch("policies/:id")
+  @Patch('policies/:id')
   async updatePolicy(
-    @Param("id") id: string,
+    @Param('id') id: string,
     @Body(new ZodValidationPipe(updatePolicySchema)) dto: UpdatePolicyDto,
   ): Promise<RoutingPolicy> {
     return this.routingService.updatePolicy(id, dto);
   }
 
-  @Delete("policies/:id")
-  async deletePolicy(@Param("id") id: string): Promise<RoutingPolicy> {
+  @Delete('policies/:id')
+  async deletePolicy(@Param('id') id: string): Promise<RoutingPolicy> {
     return this.routingService.deletePolicy(id);
   }
 
-  @Post("evaluate")
+  @Post('evaluate')
   async evaluateRoute(
     @Body(new ZodValidationPipe(evaluateRouteSchema)) dto: EvaluateRouteDto,
   ): Promise<RoutingDecisionResult> {
     return this.routingService.evaluateRoute(dto);
   }
 
-  @Post("replay")
+  @Post('replay')
   async replay(
     @Body(new ZodValidationPipe(replayRoutingSchema)) dto: ReplayRoutingDto,
   ): Promise<ReplayBatchResult> {
     return this.routingService.replayRouting(dto);
   }
 
-  @Get("decisions/:threadId")
+  @Get('replay/runs')
+  async getReplayRuns(
+    @Query(new ZodValidationPipe(listReplayRunsSchema)) query: ListReplayRunsDto,
+  ): Promise<PaginatedResult<ReplayRunSummary>> {
+    return this.routingService.getReplayRuns(query.page, query.limit);
+  }
+
+  @Get('replay/runs/:runId/cases')
+  async getReplayRunCases(@Param('runId') runId: string): Promise<ReplayCaseDetail[]> {
+    return this.routingService.getReplayRunCases(runId);
+  }
+
+  @Get('replay/runs/:runId/suspicious')
+  async getSuspiciousCases(@Param('runId') runId: string): Promise<ReplayCaseDetail[]> {
+    return this.routingService.getSuspiciousCases(runId);
+  }
+
+  @Post('replay/cases/:caseId/review')
+  async reviewCase(
+    @Param('caseId') caseId: string,
+    @Body(new ZodValidationPipe(reviewCaseSchema)) dto: ReviewCaseDto,
+  ): Promise<ReplayCaseDetail> {
+    return this.routingService.reviewCase(caseId, dto.isConfirmedRegression, dto.reviewNotes);
+  }
+
+  @Get('replay/runs/:runId/export')
+  async exportReplayRun(@Param('runId') runId: string): Promise<ExportBundle> {
+    return this.routingService.exportReplayRun(runId);
+  }
+
+  @Get('decisions/:threadId')
   async getDecisions(
-    @Param("threadId") threadId: string,
-    @Query("page") page: string,
-    @Query("limit") limit: string,
+    @Param('threadId') threadId: string,
+    @Query('page') page: string,
+    @Query('limit') limit: string,
   ): Promise<PaginatedResult<RoutingDecision>> {
     return this.routingService.getDecisions(
       threadId,

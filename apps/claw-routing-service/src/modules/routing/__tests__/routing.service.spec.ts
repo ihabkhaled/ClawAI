@@ -253,7 +253,7 @@ describe('RoutingService', () => {
 
   describe('replayRouting', () => {
     it('should delegate to replay manager and return batch result', async () => {
-      const dto = { limit: 10 };
+      const dto = { limit: 10, saveRun: false as const };
       const result = await service.replayRouting(dto);
 
       expect(result.totalReplayed).toBe(1);
@@ -272,6 +272,7 @@ describe('RoutingService', () => {
         startDate: '2026-01-01',
         endDate: '2026-12-31',
         limit: 25,
+        saveRun: false as const,
       };
       await service.replayRouting(dto);
 

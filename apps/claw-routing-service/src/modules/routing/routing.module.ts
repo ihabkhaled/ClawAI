@@ -7,6 +7,8 @@ import { PromptBuilderManager } from './managers/prompt-builder.manager';
 import { ReplayManager } from './managers/replay.manager';
 import { RoutingPoliciesRepository } from './repositories/routing-policies.repository';
 import { RoutingDecisionsRepository } from './repositories/routing-decisions.repository';
+import { ReplayRunsRepository } from './repositories/replay-runs.repository';
+import { ReplayCasesRepository } from './repositories/replay-cases.repository';
 
 @Module({
   controllers: [RoutingController],
@@ -18,6 +20,8 @@ import { RoutingDecisionsRepository } from './repositories/routing-decisions.rep
     PromptBuilderManager,
     RoutingPoliciesRepository,
     RoutingDecisionsRepository,
+    ReplayRunsRepository,
+    ReplayCasesRepository,
   ],
   exports: [RoutingService],
 })

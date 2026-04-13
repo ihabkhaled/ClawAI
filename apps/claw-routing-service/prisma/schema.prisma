@@ -20,6 +20,14 @@ enum RoutingMode {
   COST_SAVER
 }
 
+enum OutcomeLabel {
+  CORRECT_IMPROVEMENT
+  BAD_REGRESSION
+  COST_WIN
+  QUALITY_WIN
+  UNCERTAIN
+}
+
 // ─── Models ──────────────────────────────────────────────
 
 model RoutingDecision {
@@ -61,3 +69,54 @@ model RoutingPolicy {
   @@map("routing_policies")
 }
 
+model ReplayRun {
+  id              String       @id @default(cuid())
+  name            String?
+  filters         Json
+  totalReplayed   Int          @map("total_replayed")
+  changedCount    Int          @map("changed_count")
+  suspiciousCount Int          @map("suspicious_count")
+  avgConfOld      Decimal      @map("avg_conf_old") @db.Decimal(5, 4)
+  avgConfNew      Decimal      @map("avg_conf_new") @db.Decimal(5, 4)
+  avgImprovement  Decimal      @map("avg_improvement") @db.Decimal(6, 4)
+  labelBreakdown  Json         @map("label_breakdown")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  cases           ReplayCase[]
+
+  @@index([createdAt])
+  @@map("replay_runs")
+}
+
+model ReplayCase {
+  id                    String       @id @default(cuid())
+  runId                 String       @map("run_id")
+  decisionId            String?      @map("decision_id")
+  messagePreview        String       @map("message_preview")
+  messageContent        String?      @map("message_content")
+  hasOriginalContent    Boolean      @map("has_original_content")
+  oldProvider           String       @map("old_provider")
+  oldModel              String       @map("old_model")
+  oldConfidence         Decimal?     @map("old_confidence") @db.Decimal(5, 4)
+  oldCostClass          String?      @map("old_cost_class")
+  newProvider           String       @map("new_provider")
+  newModel              String       @map("new_model")
+  newConfidence         Decimal      @map("new_confidence") @db.Decimal(5, 4)
+  newCostClass          String       @map("new_cost_class")
+  changed               Boolean
+  improvementScore      Decimal      @map("improvement_score") @db.Decimal(6, 4)
+  outcomeLabel          OutcomeLabel @map("outcome_label")
+  isSuspicious          Boolean      @map("is_suspicious")
+  suspiciousReasons     String[]     @map("suspicious_reasons")
+  isConfirmedRegression Boolean      @default(false) @map("is_confirmed_regression")
+  reviewNotes           String?      @map("review_notes")
+  isPromoted            Boolean      @default(false) @map("is_promoted")
+  reviewedAt            DateTime?    @map("reviewed_at")
+  run                   ReplayRun    @relation(fields: [runId], references: [id], onDelete: Cascade)
+  createdAt             DateTime     @default(now()) @map("created_at")
+
+  @@index([runId])
+  @@index([isSuspicious])
+  @@index([outcomeLabel])
+  @@index([isConfirmedRegression])
+  @@map("replay_cases")
+}

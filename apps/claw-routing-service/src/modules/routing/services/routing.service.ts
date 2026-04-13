@@ -21,6 +21,7 @@ import {
   type RoutingPolicy,
 } from '../types/routing.types';
 import { type ReplayBatchResult } from '../types/replay.types';
+import type { ExportBundle, ReplayCaseDetail, ReplayRunSummary } from '../types/replay-run.types';
 
 @Injectable()
 export class RoutingService implements OnModuleInit {
@@ -151,6 +152,34 @@ export class RoutingService implements OnModuleInit {
 
   async replayRouting(dto: ReplayRoutingDto): Promise<ReplayBatchResult> {
     return this.replayManager.replayDecisions(dto);
+  }
+
+  async getReplayRuns(page: number, limit: number): Promise<PaginatedResult<ReplayRunSummary>> {
+    const [runs, total] = await Promise.all([
+      this.replayManager.getRunSummaries(page, limit),
+      this.replayManager.countRuns(),
+    ]);
+    return { data: runs, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async getReplayRunCases(runId: string): Promise<ReplayCaseDetail[]> {
+    return this.replayManager.getRunCases(runId);
+  }
+
+  async getSuspiciousCases(runId: string): Promise<ReplayCaseDetail[]> {
+    return this.replayManager.getSuspiciousCases(runId);
+  }
+
+  async reviewCase(
+    caseId: string,
+    isConfirmedRegression: boolean,
+    reviewNotes: string | undefined,
+  ): Promise<ReplayCaseDetail> {
+    return this.replayManager.reviewCase(caseId, isConfirmedRegression, reviewNotes);
+  }
+
+  async exportReplayRun(runId: string): Promise<ExportBundle> {
+    return this.replayManager.buildExportBundle(runId);
   }
 
   private async subscribeToEvents(): Promise<void> {
