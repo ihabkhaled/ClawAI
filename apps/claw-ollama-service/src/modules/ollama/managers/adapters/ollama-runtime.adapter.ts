@@ -24,6 +24,7 @@ import type { PullProgressCallback } from '../../types/pull-progress.types';
 
 export class OllamaRuntimeAdapter implements RuntimeAdapter {
   private readonly client: AxiosInstance;
+  private readonly generateTimeout: number;
 
   constructor() {
     const config = AppConfig.get();
@@ -31,6 +32,7 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
       baseURL: config.OLLAMA_BASE_URL,
       timeout: 120_000,
     });
+    this.generateTimeout = config.OLLAMA_GENERATE_TIMEOUT_MS;
   }
 
   async listModels(): Promise<LocalModelInfo[]> {
@@ -76,7 +78,9 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
     if (request.images && request.images.length > 0) {
       body['images'] = request.images;
     }
-    const response = await this.client.post<OllamaGenerateResponse>(OLLAMA_API_GENERATE, body);
+    const response = await this.client.post<OllamaGenerateResponse>(OLLAMA_API_GENERATE, body, {
+      timeout: this.generateTimeout,
+    });
     const data = response.data;
     return {
       model: data.model,

@@ -343,6 +343,7 @@ FRONTEND_PORT=3000
 OLLAMA_BASE_URL=http://ollama:11434
 OLLAMA_ROUTER_MODEL=gemma3:4b
 OLLAMA_ROUTER_TIMEOUT_MS=10000
+OLLAMA_GENERATE_TIMEOUT_MS=300000
 MEMORY_EXTRACTION_MODEL=gemma3:4b
 
 # =============================================================================

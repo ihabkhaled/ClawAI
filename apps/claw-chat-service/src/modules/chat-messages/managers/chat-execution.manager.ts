@@ -347,7 +347,7 @@ export class ChatExecutionManager implements OnModuleInit {
       url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
       method: 'POST',
       body: requestBody,
-      timeoutMs: 120_000,
+      timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
     });
 
     if (!response.ok) {
@@ -387,6 +387,7 @@ export class ChatExecutionManager implements OnModuleInit {
     threadSettings?: ThreadSettings,
   ): Promise<LlmResponse> {
     this.logger.log(`callCloudProvider: calling ${provider}/${model}`);
+    const config = AppConfig.get();
     this.logger.debug(`callCloudProvider: resolving provider config for ${provider}`);
     const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
     this.logger.debug(`callCloudProvider: config resolved — baseUrl=${baseUrl}`);
@@ -403,7 +404,7 @@ export class ChatExecutionManager implements OnModuleInit {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}` },
       body: requestBody,
-      timeoutMs: 120_000,
+      timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
     });
 
     if (!response.ok) {
@@ -578,7 +579,7 @@ export class ChatExecutionManager implements OnModuleInit {
         referenceImageBase64,
         referenceImageMimeType,
       },
-      timeoutMs: 120_000,
+      timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
     });
 
     if (!response.ok) {
