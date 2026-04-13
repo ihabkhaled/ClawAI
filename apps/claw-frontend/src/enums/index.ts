@@ -33,3 +33,4 @@ export { ConsensusConfidenceLevel } from './consensus-confidence-level.enum';
 export { ConsensusModelStatus } from './consensus-model-status.enum';
 export { EscalationChainStatus } from './escalation-chain-status.enum';
 export { RepairType } from './repair-type.enum';
+export { CostTier } from './cost-tier.enum';

@@ -10,6 +10,7 @@ import type {
   UseVirtualizedMessagesReturn,
 } from './chat.types';
 import type { ModelSelection } from './component.types';
+import type { CostEnsembleResult as CostEnsembleResultType } from './cost-ensemble.types';
 import type { UploadFileRequest } from './file.types';
 import type { AggregatedHealth } from './health.types';
 import type { TranslateFunction } from './i18n.types';
@@ -286,6 +287,23 @@ export type UseAdaptiveLearningPageReturn = {
   isError: boolean;
   windowDays: number;
   setWindowDays: (days: number) => void;
+};
+
+// ─── Cost Ensemble hook types ─────────────────────────────────────────────────
+
+export type UseCostEnsembleHookPageReturn = {
+  t: TranslateFunction;
+  content: string;
+  setContent: (v: string) => void;
+  handleSend: () => void;
+  canSend: boolean;
+  isPending: boolean;
+  isError: boolean;
+  isCostEnsembleError: boolean;
+  costEnsembleResult: CostEnsembleResultType | null;
+  isPolling: boolean;
+  isCostEnsembleReady: boolean;
+  handleViewInThread: () => void;
 };
 
 // ─── Pipeline hook types ─────────────────────────────────────────────────────

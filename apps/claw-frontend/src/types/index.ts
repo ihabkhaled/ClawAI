@@ -223,6 +223,8 @@ export type {
   AdaptiveStatsCardProps,
   PipelineResultCardProps,
   PipelineStageItemProps,
+  CostEnsembleResultCardProps,
+  CostTierBadgeProps,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
@@ -268,6 +270,7 @@ export type {
   UseReplayLabPageReturn,
   UseRecoveryPageReturn,
   UseAdaptiveLearningPageReturn,
+  UseCostEnsembleHookPageReturn,
 } from './hook.types';
 export type {
   CandidateResult,
@@ -403,3 +406,14 @@ export type {
   UsePipelinePollResult,
   UsePipelinePageReturn,
 } from './pipeline.types';
+export type {
+  CostClassification,
+  EnsembleCandidate,
+  CostEnsembleMetadata,
+  CostEnsembleResult,
+  SendCostEnsemblePayload,
+  SendCostEnsembleResult,
+  UseSendCostEnsembleResult,
+  UseCostEnsemblePollResult,
+  UseCostEnsemblePageReturn,
+} from './cost-ensemble.types';

@@ -14,6 +14,7 @@ import { QualityCheckManager } from './managers/quality-check.manager';
 import { JudgeRefereeManager } from './managers/judge-referee.manager';
 import { VerifierManager } from './managers/verifier.manager';
 import { PipelineManager } from './managers/pipeline.manager';
+import { CostEnsembleManager } from './managers/cost-ensemble.manager';
 import { ChatStreamService } from './services/chat-stream.service';
 import { ChatMessagesRepository } from './repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../chat-threads/repositories/chat-threads.repository';
@@ -34,6 +35,7 @@ import { ChatThreadsRepository } from '../chat-threads/repositories/chat-threads
     JudgeRefereeManager,
     VerifierManager,
     PipelineManager,
+    CostEnsembleManager,
     ChatStreamService,
     ChatMessagesRepository,
     ChatThreadsRepository,

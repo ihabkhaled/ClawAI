@@ -9,6 +9,7 @@ import { ConsensusExecutionManager } from '../managers/consensus-execution.manag
 import { AnswerRepairManager } from '../managers/answer-repair.manager';
 import { TaskDecompositionManager } from '../managers/task-decomposition.manager';
 import { BestOfNManager } from '../managers/best-of-n.manager';
+import { CostEnsembleManager } from '../managers/cost-ensemble.manager';
 import { EscalationChainManager } from '../managers/escalation-chain.manager';
 import { ParallelExecutionManager } from '../managers/parallel-execution.manager';
 import { VerifierManager } from '../managers/verifier.manager';
@@ -20,6 +21,7 @@ import { type EscalationChainMessageDto } from '../dto/escalation-chain-message.
 import { type RepairMessageDto } from '../dto/repair-message.dto';
 import { type DecomposeTaskDto } from '../dto/decompose-task.dto';
 import { type BestOfNMessageDto } from '../dto/best-of-n-message.dto';
+import { type CostEnsembleMessageDto } from '../dto/cost-ensemble-message.dto';
 import { type ListMessagesQueryDto } from '../dto/list-messages-query.dto';
 import {
   type LlmResponse,
@@ -31,6 +33,7 @@ import { type EscalationChainResponse } from '../types/escalation-chain.types';
 import { type AnswerRepairResponse } from '../types/answer-repair.types';
 import { type TaskDecompositionResponse } from '../types/task-decomposition.types';
 import { type BestOfNResponse } from '../types/best-of-n.types';
+import { type CostEnsembleResponse } from '../types/cost-ensemble.types';
 import { type VerifyResponse } from '../types/verifier.types';
 import { type ParallelResponse } from '../types/parallel.types';
 import { type PipelineResponse } from '../types/pipeline.types';
@@ -57,6 +60,7 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly answerRepairManager: AnswerRepairManager,
     private readonly taskDecompositionManager: TaskDecompositionManager,
     private readonly bestOfNManager: BestOfNManager,
+    private readonly costEnsembleManager: CostEnsembleManager,
     private readonly verifierManager: VerifierManager,
     private readonly pipelineManager: PipelineManager,
     private readonly chatStreamService: ChatStreamService,
@@ -177,6 +181,13 @@ export class ChatMessagesService implements OnModuleInit {
 
   async executeBestOfN(userId: string, dto: BestOfNMessageDto): Promise<BestOfNResponse> {
     return this.bestOfNManager.executeBestOfN(userId, dto);
+  }
+
+  async executeCostEnsemble(
+    userId: string,
+    dto: CostEnsembleMessageDto,
+  ): Promise<CostEnsembleResponse> {
+    return this.costEnsembleManager.executeCostEnsemble(userId, dto);
   }
 
   async executeVerify(userId: string, dto: VerifyMessageDto): Promise<VerifyResponse> {

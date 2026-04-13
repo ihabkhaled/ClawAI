@@ -70,6 +70,7 @@ export type TranslationDictionary = {
     bestOfNLab: string;
     verifierLab: string;
     pipelineLab: string;
+    costEnsemble: string;
     memory: string;
     context: string;
     files: string;
@@ -795,6 +796,27 @@ export type TranslationDictionary = {
     stage: string;
     model: string;
     latency: string;
+    viewInThread: string;
+  };
+  costEnsemble: {
+    title: string;
+    description: string;
+    contentLabel: string;
+    contentPlaceholder: string;
+    sendPrompt: string;
+    running: string;
+    synthesizing: string;
+    noResults: string;
+    sendFailed: string;
+    tier: string;
+    tierSingle: string;
+    tierDuo: string;
+    tierTrio: string;
+    complexity: string;
+    risk: string;
+    ambiguity: string;
+    reasoning: string;
+    candidates: string;
     viewInThread: string;
   };
   validation: {

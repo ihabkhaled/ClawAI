@@ -4,6 +4,7 @@ import type { SidebarItem } from '@/constants';
 import type {
   ComponentSize,
   ConnectorStatus,
+  CostTier,
   MessageFeedback,
   RepairType,
   ReplayOutcomeLabel,
@@ -26,6 +27,7 @@ import type { ChatMessage, ChatThread, FallbackAttemptInfo, JudgeModelOption } f
 import type { Connector, ConnectorModel, CreateConnectorRequest } from './connector.types';
 import type { ConsensusMetadata, ConsensusModelBreakdown } from './consensus.types';
 import type { CreateContextPackItemRequest, CreateContextPackRequest } from './context-pack.types';
+import type { CostEnsembleResult } from './cost-ensemble.types';
 import type {
   EscalationChainStep,
   EscalationChainSynthesisState,
@@ -880,4 +882,17 @@ export type PipelineStageItemProps = {
   stage: PipelineStageResult;
   stageNumber: number;
   t: TranslateFunction;
+};
+
+// ─── Cost Ensemble component props ───────────────────────────────────────────
+
+export type CostEnsembleResultCardProps = {
+  result: CostEnsembleResult;
+  onViewInThread: () => void;
+  t: TranslateFunction;
+};
+
+export type CostTierBadgeProps = {
+  tier: CostTier;
+  label: string;
 };

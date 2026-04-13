@@ -1,0 +1,4 @@
+export const COST_ENSEMBLE_TIMEOUT_MS = 120_000;
+export const DEFAULT_COST_ENSEMBLE_MODEL = 'gemma3:4b';
+export const COST_TIER_THRESHOLD_DUO = 0.4;
+export const COST_TIER_THRESHOLD_TRIO = 0.7;

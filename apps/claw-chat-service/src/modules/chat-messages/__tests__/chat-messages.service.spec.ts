@@ -9,6 +9,7 @@ import { type ConsensusExecutionManager } from '../managers/consensus-execution.
 import { type EscalationChainManager } from '../managers/escalation-chain.manager';
 import { type ParallelExecutionManager } from '../managers/parallel-execution.manager';
 import { type BestOfNManager } from '../managers/best-of-n.manager';
+import { type CostEnsembleManager } from '../managers/cost-ensemble.manager';
 import { type VerifierManager } from '../managers/verifier.manager';
 import { type PipelineManager } from '../managers/pipeline.manager';
 import { type ChatStreamService } from '../services/chat-stream.service';
@@ -114,6 +115,7 @@ describe('ChatMessagesService', () => {
       { executeRepair: jest.fn() } as unknown as AnswerRepairManager,
       { executeDecomposition: jest.fn() } as unknown as TaskDecompositionManager,
       { executeBestOfN: jest.fn() } as unknown as BestOfNManager,
+      { executeCostEnsemble: jest.fn() } as unknown as CostEnsembleManager,
       { executeVerify: jest.fn() } as unknown as VerifierManager,
       { executePipeline: jest.fn() } as unknown as PipelineManager,
       { emitCompletion: jest.fn() } as unknown as ChatStreamService,
@@ -285,6 +287,7 @@ describe('ChatMessagesService', () => {
         { executeRepair: jest.fn() } as unknown as AnswerRepairManager,
         { executeDecomposition: jest.fn() } as unknown as TaskDecompositionManager,
         { executeBestOfN: jest.fn() } as unknown as BestOfNManager,
+        { executeCostEnsemble: jest.fn() } as unknown as CostEnsembleManager,
         verifierManager as unknown as VerifierManager,
         { executePipeline: jest.fn() } as unknown as PipelineManager,
         { emitCompletion: jest.fn() } as unknown as ChatStreamService,
