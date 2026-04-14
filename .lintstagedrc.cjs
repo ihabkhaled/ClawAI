@@ -13,8 +13,10 @@ const buildGitAddCommand = (fileNames) =>
 
 module.exports = {
   '*.{ts,tsx,js,jsx}': (files) => {
-    if (!files.length) return [];
-    return [buildEslintFixCommand(files), buildGitAddCommand(files)];
+    // agent-cli is a standalone Node.js script — exclude from monorepo ESLint
+    const filtered = files.filter((f) => !toForwardSlash(f).includes('agent-cli/'));
+    if (!filtered.length) return [];
+    return [buildEslintFixCommand(filtered), buildGitAddCommand(filtered)];
   },
   '*.{ts,tsx,js,jsx,json,css,md,yml,yaml}': (files) => {
     if (!files.length) return [];
