@@ -31,6 +31,9 @@ export const ROUTES = {
   ADMIN: '/admin',
   WORKSPACE: '/workspace',
   WORKSPACE_ACTIONS: '/workspace/actions',
+  AGENT: '/agent',
+  AGENT_TERMINAL: '/agent/terminal',
+  AGENT_REPOS: '/agent/repos',
 } as const;
 
 export const PUBLIC_ROUTES = [ROUTES.LOGIN] as const;

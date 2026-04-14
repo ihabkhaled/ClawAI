@@ -149,4 +149,29 @@ export const queryKeys = {
       [...queryKeys.workspaceActions.lists(), filters] as const,
     detail: (id: string) => [...queryKeys.workspaceActions.all, 'detail', id] as const,
   },
+  agentSessions: {
+    all: ['agentSessions'] as const,
+    lists: () => [...queryKeys.agentSessions.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.agentSessions.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.agentSessions.all, 'detail', id] as const,
+  },
+  agentCommands: {
+    all: ['agentCommands'] as const,
+    lists: () => [...queryKeys.agentCommands.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.agentCommands.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.agentCommands.all, 'detail', id] as const,
+  },
+  agentRepos: {
+    all: ['agentRepos'] as const,
+    lists: () => [...queryKeys.agentRepos.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) => [...queryKeys.agentRepos.lists(), filters] as const,
+  },
+  agentEvents: {
+    all: ['agentEvents'] as const,
+    lists: () => [...queryKeys.agentEvents.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.agentEvents.lists(), filters] as const,
+  },
 } as const;

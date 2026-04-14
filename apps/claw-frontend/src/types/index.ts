@@ -449,3 +449,20 @@ export type {
   WorkspaceObjectLink,
   WorkspaceSyncResult,
 } from './workspace.types';
+export type {
+  AgentSession,
+  RegisterSessionResult,
+  TerminalCommand,
+  LocalRepo,
+  FileWatchEvent,
+  PaginatedAgentSessions,
+  PaginatedCommands,
+  PaginatedRepos,
+  PaginatedFileEvents,
+  CreateCommandRequest,
+  RejectCommandRequest,
+  ListSessionsQuery,
+  ListCommandsQuery,
+  ListReposQuery,
+  ListEventsQuery,
+} from './agent.types';

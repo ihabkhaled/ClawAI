@@ -82,6 +82,9 @@ export type TranslationDictionary = {
     settings: string;
     workspace: string;
     workspaceActions: string;
+    agent: string;
+    agentTerminal: string;
+    agentRepos: string;
   };
   chat: {
     newThread: string;
@@ -950,6 +953,31 @@ export type TranslationDictionary = {
     noActions: string;
     noActionsDesc: string;
     loadFailed: string;
+  };
+  agent: {
+    title: string;
+    description: string;
+    loading: string;
+    loadFailed: string;
+    noSessions: string;
+    noSessionsDesc: string;
+    noCommands: string;
+    noCommandsDesc: string;
+    noRepos: string;
+    noReposDesc: string;
+    terminal: string;
+    terminalDesc: string;
+    repos: string;
+    reposDesc: string;
+    pendingCommands: string;
+    pendingApproval: string;
+    recentCommands: string;
+    approve: string;
+    reject: string;
+    version: string;
+    commands: string;
+    files: string;
+    dirty: string;
   };
   validation: {
     required: string;
