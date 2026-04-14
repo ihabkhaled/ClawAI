@@ -2,6 +2,7 @@ import { RoutingManager } from '../managers/routing.manager';
 import { type OllamaRouterManager } from '../managers/ollama-router.manager';
 import { type PromptBuilderManager } from '../managers/prompt-builder.manager';
 import { ComplexityClassifierManager } from '../managers/complexity-classifier.manager';
+import { CapabilityRouterManager } from '../managers/capability-router.manager';
 import { RoutingMode } from '../../../generated/prisma';
 import { ComplexityClass } from '../../../common/enums/complexity-class.enum';
 import { type RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
@@ -38,13 +39,15 @@ describe('RoutingManager', () => {
       fetchInstalledModels: jest.fn().mockResolvedValue([]),
       invalidateCache: jest.fn(),
     };
-    // Use real ComplexityClassifierManager (pure logic, no deps)
+    // Use real managers (pure logic, no deps)
     const complexityClassifier = new ComplexityClassifierManager();
+    const capabilityRouter = new CapabilityRouterManager();
     manager = new RoutingManager(
       policiesRepo as unknown as RoutingPoliciesRepository,
       ollamaRouter as unknown as OllamaRouterManager,
       promptBuilder as unknown as PromptBuilderManager,
       complexityClassifier,
+      capabilityRouter,
     );
   });
 

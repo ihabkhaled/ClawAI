@@ -6,6 +6,7 @@ import { RoutingPoliciesRepository } from '../repositories/routing-policies.repo
 import { OllamaRouterManager } from './ollama-router.manager';
 import { PromptBuilderManager } from './prompt-builder.manager';
 import { ComplexityClassifierManager } from './complexity-classifier.manager';
+import { CapabilityRouterManager } from './capability-router.manager';
 import type { ComplexityClassification } from '../types/complexity.types';
 import type { ExplanationFactor, RoutingExplanation } from '../types/explanation.types';
 import {
@@ -88,6 +89,7 @@ export class RoutingManager {
     private readonly ollamaRouter: OllamaRouterManager,
     private readonly promptBuilder: PromptBuilderManager,
     private readonly complexityClassifier: ComplexityClassifierManager,
+    private readonly capabilityRouter: CapabilityRouterManager,
   ) {}
 
   async evaluateRoute(context: RoutingContext): Promise<RoutingDecisionResult> {
@@ -436,6 +438,26 @@ export class RoutingManager {
       return fileResult;
     }
 
+    // Multimodal capability routing — audio, video, PDF, OCR, web search, vision
+    const capabilityResult = this.capabilityRouter.route(context);
+    if (capabilityResult) {
+      this.logger.log(
+        `handleAutoHeuristic: capability routing → ${capabilityResult.provider}/${capabilityResult.model} (${capabilityResult.capability})`,
+      );
+      const primary = { provider: capabilityResult.provider, model: capabilityResult.model };
+      return {
+        selectedProvider: capabilityResult.provider,
+        selectedModel: capabilityResult.model,
+        routingMode: RoutingMode.AUTO,
+        confidence: 0.88,
+        reasonTags: ['auto', 'multimodal', capabilityResult.reason],
+        privacyClass: 'cloud',
+        costClass: 'medium',
+        detectedCategory: capabilityResult.capability.toLowerCase(),
+        fallbackChain: this.buildFallbackChain(primary, context),
+      };
+    }
+
     // Check category-specific local model routing in heuristic path
     const categoryResult = await this.detectCategoryRoute(context);
     if (categoryResult) {
@@ -451,21 +473,24 @@ export class RoutingManager {
     );
 
     // SAR2: EXPERT complexity → prefer high-reasoning cloud model when available
-    if (complexity?.class === ComplexityClass.EXPERT && this.isConnectorHealthy(CLOUD_PROVIDER_ANTHROPIC, context)) {
-        this.logger.log('handleAutoHeuristic: EXPERT complexity — routing to high-reasoning cloud');
-        const primary = { provider: CLOUD_PROVIDER_ANTHROPIC, model: CLOUD_MODEL_REASONING };
-        return {
-          selectedProvider: CLOUD_PROVIDER_ANTHROPIC,
-          selectedModel: CLOUD_MODEL_REASONING,
-          routingMode: RoutingMode.AUTO,
-          confidence: 0.82,
-          reasonTags: ['auto', 'expert_complexity', 'high_reasoning_cloud'],
-          privacyClass: 'cloud',
-          costClass: 'high',
-          fallbackChain: this.buildFallbackChain(primary, context),
-          estimatedCostPer1M: this.estimateProviderCost(CLOUD_PROVIDER_ANTHROPIC),
-        };
-      }
+    if (
+      complexity?.class === ComplexityClass.EXPERT &&
+      this.isConnectorHealthy(CLOUD_PROVIDER_ANTHROPIC, context)
+    ) {
+      this.logger.log('handleAutoHeuristic: EXPERT complexity — routing to high-reasoning cloud');
+      const primary = { provider: CLOUD_PROVIDER_ANTHROPIC, model: CLOUD_MODEL_REASONING };
+      return {
+        selectedProvider: CLOUD_PROVIDER_ANTHROPIC,
+        selectedModel: CLOUD_MODEL_REASONING,
+        routingMode: RoutingMode.AUTO,
+        confidence: 0.82,
+        reasonTags: ['auto', 'expert_complexity', 'high_reasoning_cloud'],
+        privacyClass: 'cloud',
+        costClass: 'high',
+        fallbackChain: this.buildFallbackChain(primary, context),
+        estimatedCostPer1M: this.estimateProviderCost(CLOUD_PROVIDER_ANTHROPIC),
+      };
+    }
 
     // SAR2: SIMPLE complexity + local available → prefer local immediately
     if (complexity?.class === ComplexityClass.SIMPLE && localHealthy) {

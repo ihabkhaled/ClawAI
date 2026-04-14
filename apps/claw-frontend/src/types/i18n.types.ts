@@ -350,6 +350,19 @@ export type TranslationDictionary = {
     explanationSummary: string;
     explanationFactors: string;
     routingDurationMs: string;
+    modalityLabel: string;
+    modalityText: string;
+    modalityCode: string;
+    modalityImageInput: string;
+    modalityImageOutput: string;
+    modalityAudioInput: string;
+    modalityVideoInput: string;
+    modalityPdfInput: string;
+    modalityWebSearch: string;
+    modalityToolCalling: string;
+    modalityStructuredOutput: string;
+    modalityOcr: string;
+    modalityReasoning: string;
   };
   models: {
     title: string;
