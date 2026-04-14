@@ -1253,10 +1253,26 @@ Full standards live in `docs/16-quality-engineering/`:
 
 ## How to Add a New Backend Service
 
+> **MANDATORY DOCKER RULE — NEVER SKIP**: Every new service and every new database MUST be added to ALL 7 compose files simultaneously, in the same commit. No exceptions. The 7 files are:
+>
+> 1. `docker-compose.dev.yml` — dev all-in-one
+> 2. `docker-compose.yml` — prod all-in-one
+> 3. `docker-compose.dev.databases.yml` — dev split: databases only
+> 4. `docker-compose.dev.services.yml` — dev split: services only
+> 5. `docker-compose.prod.databases.yml` — prod split: databases only
+> 6. `docker-compose.prod.services.yml` — prod split: services only
+> 7. `docker-compose.dev.ollama.yml` / `docker-compose.prod.ollama.yml` — only if service depends on Ollama
+>
+> **Databases** go into files 1, 2, 3, 5 (all-in-one + database split files).
+> **Services** go into files 1, 2, 4, 6 (all-in-one + service split files).
+> **Volumes** must be declared in every file that defines the corresponding service or database.
+>
+> If you add a DB to only one file and not the others, the split-file deployment will fail with "container not found". This has burned us before.
+
 1. **Copy boilerplate** from closest existing service (e.g., `claw-ollama-service`)
-2. **Create PostgreSQL database** in all Docker compose files (dev, prod, ollama variants)
-3. **Add service container** to all Docker compose files with port, env_file, depends_on, healthcheck
-4. **Assign port** — next available after 4013 (add to `packages/shared-constants`)
+2. **Create PostgreSQL database** in ALL Docker compose files — see mandatory rule above
+3. **Add service container** to ALL Docker compose files — see mandatory rule above
+4. **Assign port** — next available after 4014 (add to `packages/shared-constants`)
 5. **Add env vars** to `.env`, `.env.example`, `scripts/install.sh`, `scripts/install.ps1`
 6. **Add nginx route** in `infra/nginx/nginx.conf` (use resolver pattern, not upstream blocks)
 7. **Add health check** in `apps/claw-health-service`

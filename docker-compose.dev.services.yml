@@ -286,7 +286,55 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
-  # Frontend (DEV mode — hot-reload with Turbopack)
+  # Image Service (DEV mode)
+  # ---------------------------------------------------------------------------
+  image-service:
+    build:
+      context: .
+      dockerfile: apps/claw-image-service/Dockerfile.dev
+    container_name: claw-image-service
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '4012:4012'
+    volumes:
+      - ./apps/claw-image-service/src:/app/apps/claw-image-service/src
+      - ./apps/claw-image-service/prisma:/app/apps/claw-image-service/prisma
+    command: ['./docker-entrypoint.dev.sh']
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4012/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
+  # Workspace Service (DEV mode)
+  # ---------------------------------------------------------------------------
+  workspace-service:
+    build:
+      context: .
+      dockerfile: apps/claw-workspace-service/Dockerfile.dev
+    container_name: claw-workspace-service
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '4014:4014'
+    volumes:
+      - ./apps/claw-workspace-service/src:/app/apps/claw-workspace-service/src
+      - ./apps/claw-workspace-service/prisma:/app/apps/claw-workspace-service/prisma
+    command: ['./docker-entrypoint.dev.sh']
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4014/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
   # ---------------------------------------------------------------------------
   file-generation-service:
     build:

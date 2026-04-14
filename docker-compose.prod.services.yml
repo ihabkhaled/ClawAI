@@ -255,6 +255,48 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  # Image Service
+  # ---------------------------------------------------------------------------
+  image-service:
+    build:
+      context: .
+      dockerfile: apps/claw-image-service/Dockerfile
+    container_name: claw-image-service
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '4012:4012'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4012/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
+  # Workspace Service
+  # ---------------------------------------------------------------------------
+  workspace-service:
+    build:
+      context: .
+      dockerfile: apps/claw-workspace-service/Dockerfile
+    container_name: claw-workspace-service
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '4014:4014'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4014/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   # File Generation Service
   # ---------------------------------------------------------------------------
   file-generation-service:
