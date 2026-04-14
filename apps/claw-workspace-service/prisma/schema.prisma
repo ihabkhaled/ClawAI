@@ -63,6 +63,25 @@ enum WorkspacePermissionLevel {
   ADMIN
 }
 
+enum WorkspaceActionType {
+  CREATE_ISSUE
+  CREATE_ISSUE_COMMENT
+  CREATE_PR_DESCRIPTION
+  CREATE_TICKET
+  ADD_TICKET_COMMENT
+  SEND_SLACK_MESSAGE
+}
+
+enum WorkspaceActionStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  EXECUTING
+  EXECUTED
+  FAILED
+  EXPIRED
+}
+
 // ─── Models ──────────────────────────────────────────────
 
 model WorkspaceConnector {
@@ -88,6 +107,7 @@ model WorkspaceConnector {
   syncRuns      WorkspaceSyncRun[]
   healthEvents  WorkspaceHealthEvent[]
   objects       WorkspaceObject[]
+  actions       WorkspaceAction[]
 
   @@index([userId])
   @@index([provider])
@@ -160,6 +180,31 @@ model WorkspaceObject {
   @@index([connectorId])
   @@index([type])
   @@map("workspace_objects")
+}
+
+model WorkspaceAction {
+  id              String                @id @default(cuid())
+  userId          String                @map("user_id") @db.VarChar(128)
+  connectorId     String                @map("connector_id")
+  actionType      WorkspaceActionType   @map("action_type")
+  status          WorkspaceActionStatus @default(PENDING_APPROVAL) @map("status")
+  payload         Json
+  result          Json?
+  requestedAt     DateTime              @default(now()) @map("requested_at")
+  reviewedAt      DateTime?             @map("reviewed_at")
+  executedAt      DateTime?             @map("executed_at")
+  expiresAt       DateTime?             @map("expires_at")
+  reviewedBy      String?               @map("reviewed_by") @db.VarChar(128)
+  rejectionReason String?               @map("rejection_reason") @db.VarChar(1000)
+  errorMessage    String?               @map("error_message") @db.VarChar(2000)
+
+  connector WorkspaceConnector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([connectorId])
+  @@index([status])
+  @@index([requestedAt])
+  @@map("workspace_actions")
 }
 
 model WorkspaceObjectLink {

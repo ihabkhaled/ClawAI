@@ -128,3 +128,11 @@ export type WorkspaceSearchFilters = {
   types?: WorkspaceObjectType[];
   providers?: WorkspaceProvider[];
 };
+
+export type WriteActionResult = {
+  success: boolean;
+  externalId?: string;
+  url?: string;
+  metadata?: Record<string, unknown>;
+  errorMessage?: string;
+};

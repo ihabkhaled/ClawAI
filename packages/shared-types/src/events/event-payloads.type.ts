@@ -250,6 +250,45 @@ export interface WorkspaceObjectSyncedPayload extends BaseEventPayload {
   deltaUsed: boolean;
 }
 
+// ---- Workspace Action Events ----
+
+export interface WorkspaceActionDraftedPayload extends BaseEventPayload {
+  actionId: string;
+  userId: string;
+  connectorId: string;
+  provider: WorkspaceProvider;
+  actionType: string;
+}
+
+export interface WorkspaceActionApprovedPayload extends BaseEventPayload {
+  actionId: string;
+  userId: string;
+  reviewedBy: string;
+}
+
+export interface WorkspaceActionRejectedPayload extends BaseEventPayload {
+  actionId: string;
+  userId: string;
+  reviewedBy: string;
+  reason?: string;
+}
+
+export interface WorkspaceActionExecutedPayload extends BaseEventPayload {
+  actionId: string;
+  userId: string;
+  provider: WorkspaceProvider;
+  actionType: string;
+  externalUrl?: string;
+}
+
+export interface WorkspaceActionFailedPayload extends BaseEventPayload {
+  actionId: string;
+  userId: string;
+  provider: WorkspaceProvider;
+  actionType: string;
+  errorMessage: string;
+}
+
 // ---- Union type for all payloads ----
 
 export type EventPayload =
@@ -278,4 +317,9 @@ export type EventPayload =
   | WorkspaceConnectorDeletedPayload
   | WorkspaceConnectorSyncedPayload
   | WorkspaceConnectorHealthCheckedPayload
-  | WorkspaceObjectSyncedPayload;
+  | WorkspaceObjectSyncedPayload
+  | WorkspaceActionDraftedPayload
+  | WorkspaceActionApprovedPayload
+  | WorkspaceActionRejectedPayload
+  | WorkspaceActionExecutedPayload
+  | WorkspaceActionFailedPayload;

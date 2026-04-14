@@ -6,6 +6,7 @@ import {
   GITHUB_AUTH_BASE,
   GITHUB_TOKEN_URL,
   HEALTH_CHECK_TIMEOUT_MS,
+  WRITE_EXECUTION_TIMEOUT_MS,
 } from '../../../common/constants/workspace.constants';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { WorkspaceAdapter } from './workspace-adapter.interface';
@@ -15,6 +16,7 @@ import type {
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
+  WriteActionResult,
 } from '../types/workspace.types';
 
 @Injectable()
@@ -144,5 +146,87 @@ export class GitHubAdapter implements WorkspaceAdapter {
 
   getDefaultScopes(): string[] {
     return ['repo', 'read:user', 'read:org'];
+  }
+
+  supportsWrite(): boolean {
+    return true;
+  }
+
+  async executeWriteAction(
+    accessToken: string,
+    actionType: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+    };
+    const signal = AbortSignal.timeout(WRITE_EXECUTION_TIMEOUT_MS);
+
+    if (actionType === 'CREATE_ISSUE') {
+      const owner = payload['owner'] as string;
+      const repo = payload['repo'] as string;
+      const response = await fetch(`${GITHUB_API_BASE}/repos/${owner}/${repo}/issues`, {
+        method: 'POST',
+        headers,
+        signal,
+        body: JSON.stringify({
+          title: payload['title'],
+          body: payload['body'],
+          labels: payload['labels'] ?? [],
+        }),
+      });
+      if (!response.ok) {
+        return { success: false, errorMessage: `GitHub API error: HTTP ${response.status}` };
+      }
+      const issue = (await response.json()) as { number: number; html_url: string };
+      return { success: true, externalId: String(issue.number), url: issue.html_url };
+    }
+
+    if (actionType === 'CREATE_ISSUE_COMMENT') {
+      const owner = payload['owner'] as string;
+      const repo = payload['repo'] as string;
+      const issueNumber = payload['issueNumber'] as number;
+      const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
+        {
+          method: 'POST',
+          headers,
+          signal,
+          body: JSON.stringify({ body: payload['body'] }),
+        },
+      );
+      if (!response.ok) {
+        return { success: false, errorMessage: `GitHub API error: HTTP ${response.status}` };
+      }
+      const comment = (await response.json()) as { id: number; html_url: string };
+      return { success: true, externalId: String(comment.id), url: comment.html_url };
+    }
+
+    if (actionType === 'CREATE_PR_DESCRIPTION') {
+      const owner = payload['owner'] as string;
+      const repo = payload['repo'] as string;
+      const pullNumber = payload['pullNumber'] as number;
+      const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}`,
+        {
+          method: 'PATCH',
+          headers,
+          signal,
+          body: JSON.stringify({ body: payload['body'] }),
+        },
+      );
+      if (!response.ok) {
+        return { success: false, errorMessage: `GitHub API error: HTTP ${response.status}` };
+      }
+      const pr = (await response.json()) as { number: number; html_url: string };
+      return { success: true, externalId: String(pr.number), url: pr.html_url };
+    }
+
+    return {
+      success: false,
+      errorMessage: `GitHub adapter: unsupported action type ${actionType}`,
+    };
   }
 }

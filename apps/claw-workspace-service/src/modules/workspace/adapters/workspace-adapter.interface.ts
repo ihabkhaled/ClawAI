@@ -4,6 +4,7 @@ import type {
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
+  WriteActionResult,
 } from '../types/workspace.types';
 
 export type { SyncedObject };
@@ -21,4 +22,12 @@ export interface WorkspaceAdapter {
   getAuthorizationBaseUrl(): string;
   getClientId(): string;
   getDefaultScopes(): string[];
+
+  // Optional write capability — only implemented by adapters that support write actions
+  supportsWrite?(): boolean;
+  executeWriteAction?(
+    accessToken: string,
+    actionType: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult>;
 }

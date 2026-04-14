@@ -12,6 +12,7 @@ import { GlobalExceptionFilter } from './filters/global-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { HealthModule } from '../modules/health/health.module';
 import { WorkspaceModule } from '../modules/workspace/workspace.module';
+import { ActionsModule } from '../modules/actions/actions.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { WorkspaceModule } from '../modules/workspace/workspace.module';
     RedisModule,
     HealthModule,
     WorkspaceModule,
+    ActionsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

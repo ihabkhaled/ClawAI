@@ -6,6 +6,7 @@ import {
   SLACK_API_BASE,
   SLACK_AUTH_URL,
   SLACK_TOKEN_URL,
+  WRITE_EXECUTION_TIMEOUT_MS,
 } from '../../../common/constants/workspace.constants';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { WorkspaceAdapter } from './workspace-adapter.interface';
@@ -15,6 +16,7 @@ import type {
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
+  WriteActionResult,
 } from '../types/workspace.types';
 
 @Injectable()
@@ -138,5 +140,40 @@ export class SlackAdapter implements WorkspaceAdapter {
 
   getDefaultScopes(): string[] {
     return ['channels:read', 'channels:history', 'users:read'];
+  }
+
+  supportsWrite(): boolean {
+    return true;
+  }
+
+  async executeWriteAction(
+    accessToken: string,
+    actionType: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const signal = AbortSignal.timeout(WRITE_EXECUTION_TIMEOUT_MS);
+
+    if (actionType === 'SEND_SLACK_MESSAGE') {
+      const response = await fetch(`${SLACK_API_BASE}/chat.postMessage`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        signal,
+        body: JSON.stringify({
+          channel: payload['channel'],
+          text: payload['text'],
+          ...(payload['blocks'] !== undefined ? { blocks: payload['blocks'] } : {}),
+        }),
+      });
+      const data = (await response.json()) as { ok: boolean; ts?: string; error?: string };
+      if (!data.ok) {
+        return { success: false, errorMessage: `Slack API error: ${data['error'] ?? 'unknown'}` };
+      }
+      return { success: true, externalId: data['ts'] };
+    }
+
+    return { success: false, errorMessage: `Slack adapter: unsupported action type ${actionType}` };
   }
 }

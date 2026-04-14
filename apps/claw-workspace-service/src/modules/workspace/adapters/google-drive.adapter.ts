@@ -187,4 +187,8 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
   getDefaultScopes(): string[] {
     return ['https://www.googleapis.com/auth/drive.readonly'];
   }
+
+  supportsWrite(): boolean {
+    return false;
+  }
 }

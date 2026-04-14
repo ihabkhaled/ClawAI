@@ -4,3 +4,5 @@ export { WorkspaceSyncStatus } from './workspace-sync-status.enum';
 export { WorkspaceObjectType } from './workspace-object-type.enum';
 export { WorkspacePermissionLevel } from './workspace-permission-level.enum';
 export { WorkspaceObjectLinkType } from './workspace-object-link-type.enum';
+export { WorkspaceActionType } from './workspace-action-type.enum';
+export { WorkspaceActionStatus } from './workspace-action-status.enum';

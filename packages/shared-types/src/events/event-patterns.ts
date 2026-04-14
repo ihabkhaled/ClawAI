@@ -32,4 +32,9 @@ export enum EventPattern {
   WORKSPACE_CONNECTOR_SYNCED = 'workspace_connector.synced',
   WORKSPACE_CONNECTOR_HEALTH_CHECKED = 'workspace_connector.health_checked',
   WORKSPACE_OBJECT_SYNCED = 'workspace_object.synced',
+  WORKSPACE_ACTION_DRAFTED = 'workspace_action.drafted',
+  WORKSPACE_ACTION_APPROVED = 'workspace_action.approved',
+  WORKSPACE_ACTION_REJECTED = 'workspace_action.rejected',
+  WORKSPACE_ACTION_EXECUTED = 'workspace_action.executed',
+  WORKSPACE_ACTION_FAILED = 'workspace_action.failed',
 }

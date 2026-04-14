@@ -40,6 +40,11 @@ export const TOKEN_EXPIRY_BUFFER_SECONDS = 300;
 export const OBJECT_UPSERT_BATCH_SIZE = 100;
 export const OBJECT_CONTENT_MAX_LENGTH = 65_536;
 export const SEARCH_SNIPPET_LENGTH = 200;
+
+// ─── Action Layer constants ───────────────────────────────────────────────────
+export const ACTION_EXPIRY_HOURS = 24;
+export const ACTION_EXPIRY_MS = ACTION_EXPIRY_HOURS * 60 * 60 * 1000;
+export const WRITE_EXECUTION_TIMEOUT_MS = 10_000;
 export const SEARCH_DEFAULT_LIMIT = 10;
 export const SEARCH_MAX_LIMIT = 20;
 export const SEARCH_MIN_QUERY_LENGTH = 2;

@@ -3,9 +3,11 @@ import { AppConfig } from '../../../app/config/app.config';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import {
   HEALTH_CHECK_TIMEOUT_MS,
+  JIRA_API_BASE,
   JIRA_API_RESOURCES,
   JIRA_AUTH_URL,
   JIRA_TOKEN_URL,
+  WRITE_EXECUTION_TIMEOUT_MS,
 } from '../../../common/constants/workspace.constants';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { WorkspaceAdapter } from './workspace-adapter.interface';
@@ -15,6 +17,7 @@ import type {
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
+  WriteActionResult,
 } from '../types/workspace.types';
 
 @Injectable()
@@ -195,5 +198,90 @@ export class JiraAdapter implements WorkspaceAdapter {
 
   getDefaultScopes(): string[] {
     return ['read:jira-work', 'read:jira-user', 'offline_access'];
+  }
+
+  supportsWrite(): boolean {
+    return true;
+  }
+
+  async executeWriteAction(
+    accessToken: string,
+    actionType: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const signal = AbortSignal.timeout(WRITE_EXECUTION_TIMEOUT_MS);
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    };
+
+    // Resolve cloud ID (site) to build API URL
+    const resourcesResponse = await fetch(JIRA_API_RESOURCES, { headers, signal });
+    if (!resourcesResponse.ok) {
+      return {
+        success: false,
+        errorMessage: `Jira site lookup failed: HTTP ${resourcesResponse.status}`,
+      };
+    }
+    const resources = (await resourcesResponse.json()) as Array<{ id: string; url: string }>;
+    const site = resources[0];
+    if (site === undefined) {
+      return { success: false, errorMessage: 'No Jira site accessible with this token' };
+    }
+    const baseUrl = `${JIRA_API_BASE}/ex/jira/${site.id}/rest/api/3`;
+
+    if (actionType === 'CREATE_TICKET') {
+      const response = await fetch(`${baseUrl}/issue`, {
+        method: 'POST',
+        headers,
+        signal,
+        body: JSON.stringify({
+          fields: {
+            project: { key: payload['projectKey'] },
+            summary: payload['summary'],
+            description: payload['description'] ?? null,
+            issuetype: { name: payload['issueType'] ?? 'Task' },
+          },
+        }),
+      });
+      if (!response.ok) {
+        return { success: false, errorMessage: `Jira API error: HTTP ${response.status}` };
+      }
+      const issue = (await response.json()) as { id: string; key: string; self: string };
+      return {
+        success: true,
+        externalId: issue.key,
+        url: `${site.url}/browse/${issue.key}`,
+      };
+    }
+
+    if (actionType === 'ADD_TICKET_COMMENT') {
+      const issueKey = payload['issueKey'] as string;
+      const response = await fetch(`${baseUrl}/issue/${issueKey}/comment`, {
+        method: 'POST',
+        headers,
+        signal,
+        body: JSON.stringify({
+          body: {
+            type: 'doc',
+            version: 1,
+            content: [
+              {
+                type: 'paragraph',
+                content: [{ type: 'text', text: payload['body'] as string }],
+              },
+            ],
+          },
+        }),
+      });
+      if (!response.ok) {
+        return { success: false, errorMessage: `Jira API error: HTTP ${response.status}` };
+      }
+      const comment = (await response.json()) as { id: string };
+      return { success: true, externalId: comment.id };
+    }
+
+    return { success: false, errorMessage: `Jira adapter: unsupported action type ${actionType}` };
   }
 }
