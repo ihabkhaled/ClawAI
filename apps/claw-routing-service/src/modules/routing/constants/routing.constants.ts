@@ -11,6 +11,8 @@ export const CLOUD_PROVIDER_OPENAI = 'OPENAI';
 export const CLOUD_PROVIDER_ANTHROPIC = 'ANTHROPIC';
 export const CLOUD_PROVIDER_GEMINI = 'GEMINI';
 export const CLOUD_PROVIDER_DEEPSEEK = 'DEEPSEEK';
+export const CLOUD_PROVIDER_GROK = 'GROK';
+export const CLOUD_MODEL_GROK_DEFAULT = 'grok-3-mini';
 
 export const CLOUD_MODEL_REASONING = 'claude-opus-4';
 export const CLOUD_MODEL_FAST = 'gpt-4o-mini';
@@ -156,6 +158,7 @@ export const VALID_PROVIDERS = new Set([
   CLOUD_PROVIDER_ANTHROPIC,
   CLOUD_PROVIDER_GEMINI,
   CLOUD_PROVIDER_DEEPSEEK,
+  CLOUD_PROVIDER_GROK,
   IMAGE_PROVIDER_OPENAI,
   IMAGE_PROVIDER_GEMINI,
   IMAGE_PROVIDER_LOCAL,
@@ -2266,9 +2269,9 @@ export const CATEGORY_TO_ROLE_MAP: Record<string, LocalModelRole> = {
 };
 
 export const CONFIDENCE_EXACT_KEYWORD = 0.95;
-export const CONFIDENCE_VERB_NOUN_COMBO = 0.90;
+export const CONFIDENCE_VERB_NOUN_COMBO = 0.9;
 export const CONFIDENCE_CATEGORY_KEYWORD = 0.85;
-export const CONFIDENCE_HEURISTIC_FALLBACK = 0.60;
+export const CONFIDENCE_HEURISTIC_FALLBACK = 0.6;
 export const CONFIDENCE_PRIVACY_ENFORCED = 0.95;
 
 export const PROMPT_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -2279,6 +2282,7 @@ export const PROVIDER_COST_PER_1M_TOKENS: Record<string, { input: number; output
   OPENAI: { input: 0.15, output: 0.6 },
   GEMINI: { input: 0.075, output: 0.3 },
   DEEPSEEK: { input: 0.14, output: 0.28 },
+  GROK: { input: 3.0, output: 15.0 },
 };
 
 export const COST_CLASS_THRESHOLDS = {

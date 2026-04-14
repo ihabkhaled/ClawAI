@@ -16,10 +16,12 @@ import {
   CLOUD_MODEL_DEFAULT,
   CLOUD_MODEL_FAST,
   CLOUD_MODEL_GEMINI_DEFAULT,
+  CLOUD_MODEL_GROK_DEFAULT,
   CLOUD_MODEL_REASONING,
   CLOUD_PROVIDER_ANTHROPIC,
   CLOUD_PROVIDER_DEEPSEEK,
   CLOUD_PROVIDER_GEMINI,
+  CLOUD_PROVIDER_GROK,
   CLOUD_PROVIDER_OPENAI,
   CODING_KEYWORDS,
   CONFIDENCE_CATEGORY_KEYWORD,
@@ -153,6 +155,7 @@ export class RoutingManager {
       { provider: CLOUD_PROVIDER_ANTHROPIC, model: CLOUD_MODEL_DEFAULT },
       { provider: CLOUD_PROVIDER_OPENAI, model: CLOUD_MODEL_FAST },
       { provider: CLOUD_PROVIDER_GEMINI, model: CLOUD_MODEL_GEMINI_DEFAULT },
+      { provider: CLOUD_PROVIDER_GROK, model: CLOUD_MODEL_GROK_DEFAULT },
     ];
 
     if (isLocalPrimary) {
@@ -640,6 +643,9 @@ export class RoutingManager {
     }
     if (lower.includes('deepseek')) {
       return CLOUD_PROVIDER_DEEPSEEK;
+    }
+    if (lower.startsWith('grok')) {
+      return CLOUD_PROVIDER_GROK;
     }
     if (
       lower.includes('llama') ||
