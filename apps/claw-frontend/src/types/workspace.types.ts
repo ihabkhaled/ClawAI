@@ -129,3 +129,29 @@ export type ListWorkspaceObjectsQuery = {
   connectorId?: string;
   type?: WorkspaceObjectType;
 };
+
+export type WorkspaceSearchResult = {
+  id: string;
+  title: string;
+  type: string;
+  provider: string;
+  url: string | null;
+  snippet: string | null;
+  score: number;
+  externalId: string;
+  connectorId: string;
+  externalCreatedAt: string | null;
+};
+
+export type WorkspaceSearchQuery = {
+  query: string;
+  limit?: number;
+  types?: WorkspaceObjectType[];
+  providers?: WorkspaceProvider[];
+};
+
+export type WorkspaceSearchResponse = {
+  results: WorkspaceSearchResult[];
+  total: number;
+  query: string;
+};

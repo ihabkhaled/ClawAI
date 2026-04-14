@@ -917,6 +917,18 @@ export type TranslationDictionary = {
     source: string;
     viewObject: string;
   };
+  workspaceSearch: {
+    title: string;
+    description: string;
+    placeholder: string;
+    searching: string;
+    noResults: string;
+    noResultsDesc: string;
+    searchFailed: string;
+    resultCount: string;
+    viewSource: string;
+    score: string;
+  };
   validation: {
     required: string;
     invalidEmail: string;

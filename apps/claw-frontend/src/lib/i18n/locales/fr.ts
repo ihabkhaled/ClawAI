@@ -938,6 +938,18 @@ export const fr: TranslationDictionary = {
     source: 'Source',
     viewObject: "Voir l'objet",
   },
+  workspaceSearch: {
+    title: "Recherche dans l'espace de travail",
+    description: 'Recherchez parmi tous les objets synchronisés de votre espace de travail.',
+    placeholder: 'Rechercher des documents, problèmes, messages...',
+    searching: 'Recherche en cours...',
+    noResults: 'Aucun résultat trouvé.',
+    noResultsDesc: 'Essayez un autre terme de recherche ou synchronisez davantage de connecteurs.',
+    searchFailed: 'La recherche a échoué. Veuillez réessayer.',
+    resultCount: '{count} résultat(s)',
+    viewSource: 'Voir la source',
+    score: 'Pertinence',
+  },
   validation: {
     required: 'Ce champ est requis',
     invalidEmail: 'Veuillez saisir une adresse e-mail valide',

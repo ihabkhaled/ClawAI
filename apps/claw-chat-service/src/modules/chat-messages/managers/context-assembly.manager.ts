@@ -5,6 +5,7 @@ import {
   APPROX_CHARS_PER_TOKEN,
   MEMORY_FETCH_LIMIT,
   THREAD_CONTEXT_LIMIT,
+  WORKSPACE_CONTEXT_LIMIT,
 } from '../../../common/constants';
 import { type ChatMessage } from '../../../generated/prisma';
 import {
@@ -17,6 +18,8 @@ import {
   type ContextPackResponse,
   type FileContentResponse,
   type MemoryRecordResponse,
+  type WorkspaceCitation,
+  type WorkspaceSearchApiResponse,
 } from '../types/context.types';
 import {
   MAX_FILE_CONTENT_LENGTH,
@@ -42,11 +45,15 @@ export class ContextAssemblyManager {
     const recentMessages = threadMessages.slice(-THREAD_CONTEXT_LIMIT);
     this.logger.debug(`assemble: using ${String(recentMessages.length)} recent messages`);
 
-    this.logger.debug('assemble: fetching memories, context packs, and file contents in parallel');
-    const [memories, contextPackItems, fileContents] = await Promise.all([
+    const lastUserContent = recentMessages.at(-1)?.content ?? '';
+    this.logger.debug(
+      'assemble: fetching memories, context packs, file contents, and workspace context in parallel',
+    );
+    const [memories, contextPackItems, fileContents, workspaceCitations] = await Promise.all([
       this.fetchMemories(userId),
       this.fetchContextPackItems(contextPackIds ?? []),
       this.fetchFileContents(fileIds ?? []),
+      this.fetchWorkspaceContext(userId, lastUserContent),
     ]);
 
     const tokenBudget = threadSettings?.maxTokens ?? 4096;
@@ -54,7 +61,7 @@ export class ContextAssemblyManager {
       `assemble: tokenBudget=${String(tokenBudget)} systemPrompt=${threadSettings?.systemPrompt ? 'present' : 'none'}`,
     );
     this.logger.log(
-      `assemble: completed - ${String(memories.length)} memories, ${String(contextPackItems.length)} pack items, ${String(fileContents.length)} files, ${String(recentMessages.length)} messages`,
+      `assemble: completed - ${String(memories.length)} memories, ${String(contextPackItems.length)} pack items, ${String(fileContents.length)} files, ${String(workspaceCitations.length)} workspace citations, ${String(recentMessages.length)} messages`,
     );
 
     return {
@@ -64,6 +71,7 @@ export class ContextAssemblyManager {
       memories,
       contextPackItems,
       fileContents,
+      workspaceCitations,
       tokenBudget,
     };
   }
@@ -111,6 +119,21 @@ export class ContextAssemblyManager {
       }
     }
 
+    if (context.workspaceCitations.length > 0) {
+      this.logger.debug(
+        `buildPromptString: adding ${String(context.workspaceCitations.length)} workspace citations`,
+      );
+      const citationBlock = context.workspaceCitations
+        .map((c) => {
+          const lines = [`[${c.type}/${c.provider}] ${c.title}`];
+          if (c.snippet) lines.push(c.snippet);
+          if (c.url) lines.push(`URL: ${c.url}`);
+          return lines.join('\n');
+        })
+        .join('\n\n');
+      parts.push(`WORKSPACE CONTEXT (relevant documents and issues):\n${citationBlock}`);
+    }
+
     this.logger.debug(
       `buildPromptString: adding ${String(context.threadMessages.length)} thread messages`,
     );
@@ -155,6 +178,21 @@ export class ContextAssemblyManager {
       if (packBlock) {
         systemParts.push(`Context pack:\n${packBlock}`);
       }
+    }
+
+    if (context.workspaceCitations.length > 0) {
+      this.logger.debug(
+        `buildChatMessages: adding ${String(context.workspaceCitations.length)} workspace citations to system`,
+      );
+      const citationBlock = context.workspaceCitations
+        .map((c) => {
+          const lines = [`[${c.type}/${c.provider}] ${c.title}`];
+          if (c.snippet) lines.push(c.snippet);
+          if (c.url) lines.push(`URL: ${c.url}`);
+          return lines.join('\n');
+        })
+        .join('\n\n');
+      systemParts.push(`Workspace context (relevant documents and issues):\n${citationBlock}`);
     }
 
     // Add text-based files to system prompt
@@ -329,6 +367,47 @@ export class ContextAssemblyManager {
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`fetchFileContents: failed (non-blocking): ${msg}`);
+      return [];
+    }
+  }
+
+  private async fetchWorkspaceContext(userId: string, query: string): Promise<WorkspaceCitation[]> {
+    if (query.length < 2) {
+      this.logger.debug('fetchWorkspaceContext: query too short — skipping');
+      return [];
+    }
+    this.logger.debug(
+      `fetchWorkspaceContext: fetching workspace context for user=${userId} limit=${String(WORKSPACE_CONTEXT_LIMIT)}`,
+    );
+    try {
+      const config = AppConfig.get();
+      const url = `${config.WORKSPACE_SERVICE_URL}/api/v1/internal/workspace/search`;
+      const response = await httpRequest<WorkspaceSearchApiResponse>({
+        url,
+        method: 'POST',
+        body: { query, userId, limit: WORKSPACE_CONTEXT_LIMIT },
+        timeoutMs: 5_000,
+      });
+
+      if (!response.ok) {
+        this.logger.warn(`fetchWorkspaceContext: failed with status ${String(response.status)}`);
+        return [];
+      }
+
+      this.logger.debug(
+        `fetchWorkspaceContext: received ${String(response.data.results.length)} results`,
+      );
+      return response.data.results.map((r) => ({
+        id: r.id,
+        title: r.title,
+        type: r.type,
+        provider: r.provider,
+        url: r.url,
+        snippet: r.snippet,
+      }));
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(`fetchWorkspaceContext: failed (non-blocking): ${msg}`);
       return [];
     }
   }

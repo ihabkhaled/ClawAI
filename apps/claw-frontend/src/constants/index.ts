@@ -178,3 +178,8 @@ export {
   WORKSPACE_CONNECTOR_STATUS_VARIANT,
   WORKSPACE_CONNECTOR_STATUS_I18N_KEY,
 } from './workspace-connector.constants';
+export {
+  WORKSPACE_SEARCH_MIN_QUERY_LENGTH,
+  WORKSPACE_SEARCH_DEBOUNCE_MS,
+  WORKSPACE_SEARCH_DEFAULT_LIMIT,
+} from './workspace-search.constants';

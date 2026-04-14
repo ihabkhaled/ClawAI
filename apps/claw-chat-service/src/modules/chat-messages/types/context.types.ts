@@ -14,6 +14,15 @@ export type FileContentResponse = {
   content: string | null;
 };
 
+export type WorkspaceCitation = {
+  id: string;
+  title: string;
+  type: string;
+  provider: string;
+  url: string | null;
+  snippet: string | null;
+};
+
 export type AssembledContext = {
   userId: string;
   systemPrompt: string | null;
@@ -21,6 +30,7 @@ export type AssembledContext = {
   memories: MemoryRecordResponse[];
   contextPackItems: Array<{ content: string | null; type: string }>;
   fileContents: FileContentResponse[];
+  workspaceCitations: WorkspaceCitation[];
   tokenBudget: number;
 };
 
@@ -41,4 +51,19 @@ export type ContextPackResponse = {
     content: string | null;
     sortOrder: number;
   }>;
+};
+
+export type WorkspaceSearchHit = {
+  id: string;
+  title: string;
+  type: string;
+  provider: string;
+  url: string | null;
+  snippet: string | null;
+};
+
+export type WorkspaceSearchApiResponse = {
+  results: WorkspaceSearchHit[];
+  total: number;
+  query: string;
 };

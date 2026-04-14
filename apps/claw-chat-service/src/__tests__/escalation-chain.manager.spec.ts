@@ -55,6 +55,7 @@ describe('EscalationChainManager', () => {
     memories: [],
     contextPackItems: [],
     fileContents: [],
+    workspaceCitations: [],
     tokenBudget: 4096,
   };
 

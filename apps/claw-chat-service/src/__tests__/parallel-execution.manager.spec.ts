@@ -53,6 +53,7 @@ describe('ParallelExecutionManager', () => {
     memories: [],
     contextPackItems: [],
     fileContents: [],
+    workspaceCitations: [],
     tokenBudget: 4096,
   };
 

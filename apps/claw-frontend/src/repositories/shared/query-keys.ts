@@ -138,4 +138,8 @@ export const queryKeys = {
       [...queryKeys.workspaceObjects.lists(), filters] as const,
     detail: (id: string) => [...queryKeys.workspaceObjects.all, 'detail', id] as const,
   },
+  workspaceSearch: {
+    all: ['workspaceSearch'] as const,
+    results: (query: string) => [...queryKeys.workspaceSearch.all, 'results', query] as const,
+  },
 } as const;

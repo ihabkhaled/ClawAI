@@ -18,7 +18,7 @@ import type { PipelineResult } from './pipeline.types';
 import type { RecoveryStats } from './recovery.types';
 import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
 import type { ReplayBatchResult } from './replay.types';
-import type { WorkspaceConnector } from './workspace.types';
+import type { WorkspaceConnector, WorkspaceSearchResult } from './workspace.types';
 
 // ─── Admin hook types ───────────────────────────────────────────────────────
 
@@ -344,4 +344,13 @@ export type UseWorkspacePageReturn = {
   isDeleting: boolean;
   isCheckingHealth: boolean;
   isSyncing: boolean;
+};
+
+export type UseWorkspaceSearchPageReturn = {
+  query: string;
+  setQuery: (value: string) => void;
+  results: WorkspaceSearchResult[];
+  total: number;
+  isLoading: boolean;
+  isError: boolean;
 };

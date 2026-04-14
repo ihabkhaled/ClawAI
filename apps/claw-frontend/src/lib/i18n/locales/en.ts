@@ -925,6 +925,18 @@ export const en: TranslationDictionary = {
     source: 'Source',
     viewObject: 'View Object',
   },
+  workspaceSearch: {
+    title: 'Workspace Search',
+    description: 'Search across all synced workspace objects.',
+    placeholder: 'Search documents, issues, messages...',
+    searching: 'Searching...',
+    noResults: 'No results found.',
+    noResultsDesc: 'Try a different search term or sync more connectors.',
+    searchFailed: 'Search failed. Please try again.',
+    resultCount: '{count} result(s)',
+    viewSource: 'View Source',
+    score: 'Relevance',
+  },
   validation: {
     required: 'This field is required',
     invalidEmail: 'Please enter a valid email address',

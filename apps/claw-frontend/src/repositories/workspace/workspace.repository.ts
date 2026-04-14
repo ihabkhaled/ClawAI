@@ -11,6 +11,8 @@ import type {
   WorkspaceConnector,
   WorkspaceHealthCheckResult,
   WorkspaceObject,
+  WorkspaceSearchQuery,
+  WorkspaceSearchResponse,
   WorkspaceSyncResult,
 } from '../../types/workspace.types';
 
@@ -118,5 +120,10 @@ export async function listWorkspaceObjects(
 
 export async function getWorkspaceObject(id: string): Promise<WorkspaceObject> {
   const response = await apiClient.get<WorkspaceObject>(`${BASE}/objects/${id}`);
+  return response.data;
+}
+
+export async function searchWorkspace(dto: WorkspaceSearchQuery): Promise<WorkspaceSearchResponse> {
+  const response = await apiClient.post<WorkspaceSearchResponse>(`${BASE}/search`, dto);
   return response.data;
 }

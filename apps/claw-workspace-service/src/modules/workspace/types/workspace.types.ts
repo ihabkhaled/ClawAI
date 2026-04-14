@@ -7,6 +7,7 @@ import type {
 } from '../../../generated/prisma';
 import type { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import type { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
+import type { WorkspaceProvider } from '../../../common/enums/workspace-provider.enum';
 
 export type WorkspaceConnectorWithStats = WorkspaceConnector & {
   _count: {
@@ -102,4 +103,28 @@ export type RateLimitState = {
 
 export type WorkspaceSyncRunWithConnector = WorkspaceSyncRun & {
   connector: Pick<WorkspaceConnector, 'id' | 'name' | 'provider'>;
+};
+
+export type WorkspaceSearchResult = {
+  id: string;
+  title: string;
+  type: string;
+  provider: string;
+  url: string | null;
+  snippet: string | null;
+  score: number;
+  externalId: string;
+  connectorId: string;
+  externalCreatedAt: Date | null;
+};
+
+export type WorkspaceSearchResponse = {
+  results: WorkspaceSearchResult[];
+  total: number;
+  query: string;
+};
+
+export type WorkspaceSearchFilters = {
+  types?: WorkspaceObjectType[];
+  providers?: WorkspaceProvider[];
 };

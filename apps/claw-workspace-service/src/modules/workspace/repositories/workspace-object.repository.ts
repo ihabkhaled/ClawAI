@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import type { Prisma, WorkspaceObject } from '../../../generated/prisma';
-import type { PaginatedWorkspaceObjects } from '../types/workspace.types';
+import type { PaginatedWorkspaceObjects, WorkspaceSearchFilters } from '../types/workspace.types';
 
 @Injectable()
 export class WorkspaceObjectRepository {
@@ -86,6 +86,32 @@ export class WorkspaceObjectRepository {
 
   async deleteByConnectorId(connectorId: string): Promise<void> {
     await this.prisma.workspaceObject.deleteMany({ where: { connectorId } });
+  }
+
+  async search(
+    userId: string,
+    query: string,
+    limit: number,
+    filters?: WorkspaceSearchFilters,
+  ): Promise<WorkspaceObject[]> {
+    const where: Prisma.WorkspaceObjectWhereInput = {
+      userId,
+      OR: [
+        { title: { contains: query, mode: 'insensitive' } },
+        { content: { contains: query, mode: 'insensitive' } },
+      ],
+    };
+    if (filters?.types !== undefined && filters.types.length > 0) {
+      where.type = { in: filters.types as WorkspaceObject['type'][] };
+    }
+    if (filters?.providers !== undefined && filters.providers.length > 0) {
+      where.provider = { in: filters.providers as WorkspaceObject['provider'][] };
+    }
+    return this.prisma.workspaceObject.findMany({
+      where,
+      orderBy: { externalUpdatedAt: 'desc' },
+      take: limit,
+    });
   }
 
   async createLink(

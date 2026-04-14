@@ -8,6 +8,8 @@ export const THREAD_CONTEXT_LIMIT = 20;
 
 export const MEMORY_FETCH_LIMIT = 20;
 
+export const WORKSPACE_CONTEXT_LIMIT = 5;
+
 export const APPROX_CHARS_PER_TOKEN = 4;
 
 export const LOCAL_ONLY_ROUTING_MODES = new Set(['LOCAL_ONLY', 'PRIVACY_FIRST']);

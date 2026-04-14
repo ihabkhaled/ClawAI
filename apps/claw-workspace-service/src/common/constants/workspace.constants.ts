@@ -39,6 +39,11 @@ export const DEFAULT_PAGE_SIZE = 20;
 export const TOKEN_EXPIRY_BUFFER_SECONDS = 300;
 export const OBJECT_UPSERT_BATCH_SIZE = 100;
 export const OBJECT_CONTENT_MAX_LENGTH = 65_536;
+export const SEARCH_SNIPPET_LENGTH = 200;
+export const SEARCH_DEFAULT_LIMIT = 10;
+export const SEARCH_MAX_LIMIT = 20;
+export const SEARCH_MIN_QUERY_LENGTH = 2;
+export const SEARCH_MAX_QUERY_LENGTH = 500;
 
 // ─── Cross-reference detection patterns ──────────────────────────────────────
 export const JIRA_KEY_PATTERN = /\b[A-Z][A-Z0-9]+-\d+\b/g;

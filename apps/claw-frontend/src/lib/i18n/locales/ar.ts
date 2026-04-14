@@ -921,6 +921,18 @@ export const ar: TranslationDictionary = {
     source: 'المصدر',
     viewObject: 'عرض الكائن',
   },
+  workspaceSearch: {
+    title: 'بحث في مساحة العمل',
+    description: 'البحث عبر جميع كائنات مساحة العمل المزامنة.',
+    placeholder: 'ابحث عن المستندات والمشكلات والرسائل...',
+    searching: 'جارٍ البحث...',
+    noResults: 'لم يتم العثور على نتائج.',
+    noResultsDesc: 'حاول استخدام مصطلح بحث مختلف أو قم بمزامنة المزيد من الموصلات.',
+    searchFailed: 'فشل البحث. يرجى المحاولة مرة أخرى.',
+    resultCount: '{count} نتيجة (نتائج)',
+    viewSource: 'عرض المصدر',
+    score: 'الصلة',
+  },
   validation: {
     required: 'هذا الحقل مطلوب',
     invalidEmail: 'يرجى إدخال بريد إلكتروني صالح',
