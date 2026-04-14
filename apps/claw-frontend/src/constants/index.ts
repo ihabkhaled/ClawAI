@@ -183,3 +183,8 @@ export {
   WORKSPACE_SEARCH_DEBOUNCE_MS,
   WORKSPACE_SEARCH_DEFAULT_LIMIT,
 } from './workspace-search.constants';
+export {
+  WORKSPACE_ACTION_STATUS_VARIANT,
+  WORKSPACE_ACTION_STATUS_I18N_KEY,
+  WORKSPACE_ACTION_TYPE_LABEL,
+} from './workspace-action.constants';

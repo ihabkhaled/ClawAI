@@ -929,6 +929,27 @@ export type TranslationDictionary = {
     viewSource: string;
     score: string;
   };
+  workspaceActions: {
+    title: string;
+    description: string;
+    approve: string;
+    reject: string;
+    cancel: string;
+    rejectTitle: string;
+    rejectDesc: string;
+    rejectReasonPlaceholder: string;
+    confirmReject: string;
+    connector: string;
+    rejectionReason: string;
+    pendingApproval: string;
+    executing: string;
+    executed: string;
+    failed: string;
+    rejected: string;
+    noActions: string;
+    noActionsDesc: string;
+    loadFailed: string;
+  };
   validation: {
     required: string;
     invalidEmail: string;

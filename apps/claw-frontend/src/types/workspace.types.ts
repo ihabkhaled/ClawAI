@@ -1,3 +1,5 @@
+import type { WorkspaceActionStatus } from '../enums/workspace-action-status.enum';
+import type { WorkspaceActionType } from '../enums/workspace-action-type.enum';
 import type { WorkspaceConnectorStatus } from '../enums/workspace-connector-status.enum';
 import type { WorkspaceObjectType } from '../enums/workspace-object-type.enum';
 import type { WorkspaceProvider } from '../enums/workspace-provider.enum';
@@ -154,4 +156,53 @@ export type WorkspaceSearchResponse = {
   results: WorkspaceSearchResult[];
   total: number;
   query: string;
+};
+
+export type WorkspaceActionConnector = {
+  id: string;
+  name: string;
+  provider: WorkspaceProvider;
+};
+
+export type WorkspaceAction = {
+  id: string;
+  userId: string;
+  connectorId: string;
+  actionType: WorkspaceActionType;
+  status: WorkspaceActionStatus;
+  payload: Record<string, unknown>;
+  result: Record<string, unknown> | null;
+  errorMessage: string | null;
+  rejectionReason: string | null;
+  requestedAt: string;
+  reviewedAt: string | null;
+  executedAt: string | null;
+  expiresAt: string | null;
+  reviewedBy: string | null;
+  connector: WorkspaceActionConnector;
+};
+
+export type PaginatedWorkspaceActions = {
+  data: WorkspaceAction[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type CreateWorkspaceActionRequest = {
+  connectorId: string;
+  actionType: WorkspaceActionType;
+  payload: Record<string, unknown>;
+  expiresInHours?: number;
+};
+
+export type RejectWorkspaceActionRequest = {
+  reason?: string;
+};
+
+export type ListWorkspaceActionsQuery = {
+  page?: number;
+  pageSize?: number;
+  status?: WorkspaceActionStatus;
+  connectorId?: string;
 };

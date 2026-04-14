@@ -1,13 +1,18 @@
 import { apiClient } from '../../services/shared/api-client';
 import type {
+  CreateWorkspaceActionRequest,
+  CreateWorkspaceConnectorRequest,
+  ListWorkspaceActionsQuery,
   ListWorkspaceConnectorsQuery,
   ListWorkspaceObjectsQuery,
   OAuthInitRequest,
   OAuthInitResult,
+  PaginatedWorkspaceActions,
   PaginatedWorkspaceConnectors,
   PaginatedWorkspaceObjects,
-  CreateWorkspaceConnectorRequest,
+  RejectWorkspaceActionRequest,
   UpdateWorkspaceConnectorRequest,
+  WorkspaceAction,
   WorkspaceConnector,
   WorkspaceHealthCheckResult,
   WorkspaceObject,
@@ -125,5 +130,53 @@ export async function getWorkspaceObject(id: string): Promise<WorkspaceObject> {
 
 export async function searchWorkspace(dto: WorkspaceSearchQuery): Promise<WorkspaceSearchResponse> {
   const response = await apiClient.post<WorkspaceSearchResponse>(`${BASE}/search`, dto);
+  return response.data;
+}
+
+export async function listWorkspaceActions(
+  query?: ListWorkspaceActionsQuery,
+): Promise<PaginatedWorkspaceActions> {
+  const params = new URLSearchParams();
+  if (query?.page !== undefined) {
+    params.set('page', String(query.page));
+  }
+  if (query?.pageSize !== undefined) {
+    params.set('pageSize', String(query.pageSize));
+  }
+  if (query?.status !== undefined) {
+    params.set('status', query.status);
+  }
+  if (query?.connectorId !== undefined) {
+    params.set('connectorId', query.connectorId);
+  }
+  const qs = params.toString();
+  const response = await apiClient.get<PaginatedWorkspaceActions>(
+    `${BASE}/actions${qs ? `?${qs}` : ''}`,
+  );
+  return response.data;
+}
+
+export async function getWorkspaceAction(id: string): Promise<WorkspaceAction> {
+  const response = await apiClient.get<WorkspaceAction>(`${BASE}/actions/${id}`);
+  return response.data;
+}
+
+export async function createWorkspaceAction(
+  dto: CreateWorkspaceActionRequest,
+): Promise<WorkspaceAction> {
+  const response = await apiClient.post<WorkspaceAction>(`${BASE}/actions`, dto);
+  return response.data;
+}
+
+export async function approveWorkspaceAction(id: string): Promise<WorkspaceAction> {
+  const response = await apiClient.post<WorkspaceAction>(`${BASE}/actions/${id}/approve`, {});
+  return response.data;
+}
+
+export async function rejectWorkspaceAction(
+  id: string,
+  dto?: RejectWorkspaceActionRequest,
+): Promise<WorkspaceAction> {
+  const response = await apiClient.post<WorkspaceAction>(`${BASE}/actions/${id}/reject`, dto ?? {});
   return response.data;
 }

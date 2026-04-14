@@ -30,6 +30,7 @@ export const ROUTES = {
   SETTINGS: '/settings',
   ADMIN: '/admin',
   WORKSPACE: '/workspace',
+  WORKSPACE_ACTIONS: '/workspace/actions',
 } as const;
 
 export const PUBLIC_ROUTES = [ROUTES.LOGIN] as const;

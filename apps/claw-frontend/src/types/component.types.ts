@@ -53,7 +53,12 @@ import type { RoleMemberResult, RolePackResult } from './role-pack.types';
 import type { CreatePolicyRequest, RoutingDecision, RoutingPolicy } from './routing.types';
 import type { DecompositionResultState, SubTaskResult } from './task-decomposition.types';
 import type { UseVerifyResultState } from './verifier.types';
-import type { WorkspaceConnector, WorkspaceObject, WorkspaceSearchResult } from './workspace.types';
+import type {
+  WorkspaceAction,
+  WorkspaceConnector,
+  WorkspaceObject,
+  WorkspaceSearchResult,
+} from './workspace.types';
 
 // ─── Common component props ──────────────────────────────────────────────────
 
@@ -942,5 +947,28 @@ export type WorkspaceSearchResultsProps = {
   isLoading: boolean;
   isError: boolean;
   query: string;
+  t: TranslateFunction;
+};
+
+export type WorkspaceActionStatusBadgeProps = {
+  status: WorkspaceAction['status'];
+  t: TranslateFunction;
+};
+
+export type WorkspaceActionRowProps = {
+  action: WorkspaceAction;
+  onApprove: (id: string) => void;
+  onReject: (action: WorkspaceAction) => void;
+  isApproving: boolean;
+  t: TranslateFunction;
+};
+
+export type WorkspaceActionListProps = {
+  actions: WorkspaceAction[];
+  isLoading: boolean;
+  isError: boolean;
+  onApprove: (id: string) => void;
+  onReject: (action: WorkspaceAction) => void;
+  isApproving: boolean;
   t: TranslateFunction;
 };

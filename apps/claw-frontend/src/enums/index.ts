@@ -41,3 +41,5 @@ export { ModelCapability } from './model-capability.enum';
 export { WorkspaceConnectorStatus } from './workspace-connector-status.enum';
 export { WorkspaceObjectType } from './workspace-object-type.enum';
 export { WorkspaceProvider } from './workspace-provider.enum';
+export { WorkspaceActionStatus } from './workspace-action-status.enum';
+export { WorkspaceActionType } from './workspace-action-type.enum';

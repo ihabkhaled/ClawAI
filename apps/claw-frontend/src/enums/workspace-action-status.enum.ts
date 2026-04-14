@@ -1,0 +1,7 @@
+export enum WorkspaceActionStatus {
+  PENDING_APPROVAL = 'PENDING_APPROVAL',
+  EXECUTING = 'EXECUTING',
+  EXECUTED = 'EXECUTED',
+  FAILED = 'FAILED',
+  REJECTED = 'REJECTED',
+}
