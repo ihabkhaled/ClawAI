@@ -33,6 +33,7 @@ apps/
   claw-server-logs-service/ # Port 4011, MongoDB         — backend logs, Elasticsearch-ready, TTL 30d
   claw-image-service/       # Port 4012, PG claw_images  — image generation, DALL-E/Gemini/SD adapters
   claw-file-generation-service/ # Port 4013, PG claw_file_generations — file export (PDF/DOCX/CSV/HTML/MD/TXT/JSON)
+  claw-agent-service/           # Port 4015, PG claw_agent — desktop agent sessions, terminal command approval, repo tracking, file events
 packages/
   shared-types/      # 18 enums, event payloads, auth types
   shared-constants/  # Exchange name, ports, API prefix, pagination defaults
@@ -459,6 +460,8 @@ Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 | image.failed                      | image        | audit          |
 | file.generated                    | file-gen     | audit          |
 | file_generation.failed            | file-gen     | audit          |
+| agent.session.connected           | agent        | audit          |
+| agent.session.disconnected        | agent        | audit          |
 
 ---
 
@@ -690,14 +693,15 @@ Failed checks → HTTP 422 with reason codes. Filenames sanitized before storage
 | /api/v1/server-logs      | server-logs:4011 | Backend log viewer                                   |
 | /api/v1/images           | image:4012       | Image generation                                     |
 | /api/v1/file-generations | file-gen:4013    | File export (PDF/DOCX/CSV/etc.)                      |
+| /api/v1/agent/\*         | agent:4015       | Sessions, terminal commands, repos, file events      |
 
 ---
 
 ## Frontend (Next.js)
 
-### Pages (19)
+### Pages (22)
 
-login, dashboard, chat, chat/[threadId], chat/compare, connectors, connectors/[id], models, models/local, routing, routing/replay, memory, context, files, observability, audits, logs, admin, settings
+login, dashboard, chat, chat/[threadId], chat/compare, connectors, connectors/[id], models, models/local, routing, routing/replay, memory, context, files, observability, audits, logs, admin, settings, agent, agent/terminal, agent/repos
 
 ### State Management
 
@@ -862,7 +866,8 @@ Claude MUST produce this output after completing ANY implementation:
 3. **Test evidence** — run and show test output (pass/fail count)
 4. **Lint/typecheck evidence** — show 0 errors
 5. **Impacted-area checklist** — confirm each item from the 18-item checklist was checked
-6. **Known gaps** — any known issues, deferred items, or follow-up needed
+6. **Documentation output** — list every doc created or modified, with a 1-line description of what was added
+7. **Known gaps** — any known issues, deferred items, or follow-up needed
 
 ### Before Claiming "Done"
 
@@ -873,6 +878,7 @@ Claude MUST verify ALL of these before saying a task is complete:
 - [ ] npm run test → all pass
 - [ ] npm run build → success
 - [ ] All 18 mandatory checklist items checked
+- [ ] Docs updated or created (Phase 11 documentation checklist completed)
 - [ ] No raw HTML elements where shadcn/ui required
 - [ ] No `any` types introduced
 - [ ] No inline types/enums/constants in restricted files
@@ -891,6 +897,7 @@ Claude MUST verify ALL of these before saying a task is complete:
 6. Confirming explicit return types on all page functions
 7. Confirming all 8 i18n locales updated for new text
 8. Checking nginx.conf for new endpoints
+   8b. **Writing and updating architecture docs** — every new service, feature, or architectural change MUST produce or update docs in `docs/`. No doc = incomplete implementation.
 9. **Writing and running a real QA script** (`qa/test-<service>.sh`) — MANDATORY for every new feature
 10. **DB verification** — querying the actual database after every write to confirm persistence
 11. **Docker log check** — scanning service logs for UnhandledPromiseRejection/FATAL after every test run
@@ -1228,11 +1235,40 @@ For features involving multiple services (e.g., message flow):
 4. Verify database records are created in the correct service's DB
 5. Verify audit logging captures the action
 
-### Phase 11: Documentation
+### Phase 11: Documentation (MANDATORY — Cannot Be Skipped)
 
-1. Update `CLAUDE.md` if new patterns, services, env vars, or rules were added
-2. Update `docs/` if architecture changed
-3. Update service-specific `CLAUDE.md` files (e.g., `apps/claw-chat-service/CLAUDE.md`)
+**Documentation is NOT optional. Every feature, bug fix, or enhancement MUST produce or update documentation before the task is considered done. This is non-negotiable.**
+
+For every change, you MUST:
+
+1. **Update `CLAUDE.md`** (root) — add new services, env vars, routes, patterns, or rules
+2. **Update or create docs** in `docs/` — if architecture, data models, events, or flows changed:
+   - New service → create `docs/04-backend/<service-name>.md` with full architecture description
+   - New endpoints → update or create `docs/12-reference/api-reference.md`
+   - New events → update `docs/03-architecture/event-bus.md`
+   - New routing behavior → update `docs/03-architecture/routing.md`
+   - New env vars → update `docs/06-data/environment-variables.md`
+   - New Docker changes → update `docs/08-runtime-devops/docker-guide.md`
+3. **Update service-specific `CLAUDE.md`** for every service touched
+4. **Write architecture explanation** — for every new service or major feature, write a clear narrative:
+   - What problem it solves
+   - How it fits into the overall architecture
+   - Key design decisions and trade-offs
+   - Data flow (sequence or narrative)
+   - Authentication model
+   - Key API endpoints
+   - Background jobs / event subscriptions
+5. **Update the `docs/00-start-here/` index** if a new category or service was added
+
+**Minimum doc output per new service:**
+
+- `docs/04-backend/<service>.md` — full architecture doc
+- `apps/claw-<service>/CLAUDE.md` — service-specific rules
+
+**Minimum doc output per new feature:**
+
+- Updated section in relevant `docs/` file
+- Updated `CLAUDE.md` table/section if it changes documented architecture
 
 ### Phase 12: Quality Engineering Gates (Mandatory)
 

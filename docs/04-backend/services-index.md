@@ -1,26 +1,27 @@
 # Backend Services Index
 
-Complete reference for all 13 ClawAI NestJS backend services.
+Complete reference for all 14 ClawAI NestJS backend services.
 
 ---
 
 ## Quick Reference Table
 
-| #   | Service         | App Name                       | Port | Database                             | Primary Purpose                                     |
-| --- | --------------- | ------------------------------ | ---- | ------------------------------------ | --------------------------------------------------- |
-| 1   | Auth            | `claw-auth-service`            | 4001 | PostgreSQL (`claw_auth`)             | Authentication, user management, sessions, RBAC     |
-| 2   | Chat            | `claw-chat-service`            | 4002 | PostgreSQL (`claw_chat`)             | Threads, messages, context assembly, AI execution   |
-| 3   | Connector       | `claw-connector-service`       | 4003 | PostgreSQL (`claw_connectors`)       | Cloud AI provider management, model sync, health    |
-| 4   | Routing         | `claw-routing-service`         | 4004 | PostgreSQL (`claw_routing`)          | Intelligent model routing, policies, decisions      |
-| 5   | Memory          | `claw-memory-service`          | 4005 | PostgreSQL (`claw_memory`, pgvector) | Memory CRUD, extraction, context packs              |
-| 6   | File            | `claw-file-service`            | 4006 | PostgreSQL (`claw_files`)            | File upload, storage, chunking, download            |
-| 7   | Audit           | `claw-audit-service`           | 4007 | MongoDB (`claw_audit`)               | Audit trail, usage ledger, cost/latency analytics   |
-| 8   | Ollama          | `claw-ollama-service`          | 4008 | PostgreSQL (`claw_ollama`)           | Local model management, pull, generate, roles       |
-| 9   | Health          | `claw-health-service`          | 4009 | None                                 | Aggregated health checks across all services        |
-| 10  | Client Logs     | `claw-client-logs-service`     | 4010 | MongoDB (`claw_client_logs`)         | Frontend log ingestion, search, stats (TTL 30d)     |
-| 11  | Server Logs     | `claw-server-logs-service`     | 4011 | MongoDB (`claw_server_logs`)         | Backend structured logs, search, stats (TTL 30d)    |
-| 12  | Image           | `claw-image-service`           | 4012 | PostgreSQL (`claw_images`)           | Image generation orchestration (DALL-E, Gemini, SD) |
-| 13  | File Generation | `claw-file-generation-service` | 4013 | PostgreSQL (`claw_file_generations`) | File format conversion (PDF, DOCX, CSV, HTML, etc.) |
+| #   | Service         | App Name                       | Port | Database                             | Primary Purpose                                             |
+| --- | --------------- | ------------------------------ | ---- | ------------------------------------ | ----------------------------------------------------------- |
+| 1   | Auth            | `claw-auth-service`            | 4001 | PostgreSQL (`claw_auth`)             | Authentication, user management, sessions, RBAC             |
+| 2   | Chat            | `claw-chat-service`            | 4002 | PostgreSQL (`claw_chat`)             | Threads, messages, context assembly, AI execution           |
+| 3   | Connector       | `claw-connector-service`       | 4003 | PostgreSQL (`claw_connectors`)       | Cloud AI provider management, model sync, health            |
+| 4   | Routing         | `claw-routing-service`         | 4004 | PostgreSQL (`claw_routing`)          | Intelligent model routing, policies, decisions              |
+| 5   | Memory          | `claw-memory-service`          | 4005 | PostgreSQL (`claw_memory`, pgvector) | Memory CRUD, extraction, context packs                      |
+| 6   | File            | `claw-file-service`            | 4006 | PostgreSQL (`claw_files`)            | File upload, storage, chunking, download                    |
+| 7   | Audit           | `claw-audit-service`           | 4007 | MongoDB (`claw_audit`)               | Audit trail, usage ledger, cost/latency analytics           |
+| 8   | Ollama          | `claw-ollama-service`          | 4008 | PostgreSQL (`claw_ollama`)           | Local model management, pull, generate, roles               |
+| 9   | Health          | `claw-health-service`          | 4009 | None                                 | Aggregated health checks across all services                |
+| 10  | Client Logs     | `claw-client-logs-service`     | 4010 | MongoDB (`claw_client_logs`)         | Frontend log ingestion, search, stats (TTL 30d)             |
+| 11  | Server Logs     | `claw-server-logs-service`     | 4011 | MongoDB (`claw_server_logs`)         | Backend structured logs, search, stats (TTL 30d)            |
+| 12  | Image           | `claw-image-service`           | 4012 | PostgreSQL (`claw_images`)           | Image generation orchestration (DALL-E, Gemini, SD)         |
+| 13  | File Generation | `claw-file-generation-service` | 4013 | PostgreSQL (`claw_file_generations`) | File format conversion (PDF, DOCX, CSV, HTML, etc.)         |
+| 14  | Agent           | `claw-agent-service`           | 4015 | PostgreSQL (`claw_agent`)            | Desktop agent sessions, terminal approval, repos, FS events |
 
 ---
 
@@ -693,6 +694,10 @@ Image Service
 
 File Generation Service
   -> File Service       (POST /internal/files/store-image)
+
+Agent Service
+  -> Auth Service       (JWT validation via shared-auth)
+  -> RabbitMQ           (publishes agent.session.connected / disconnected)
 
 Health Service
   -> All services       (GET /health)
