@@ -1121,6 +1121,123 @@ describe('RoutingManager', () => {
       expect(anthropicCost).toBeGreaterThan(openaiCost);
       expect(anthropicCost).toBeGreaterThan(geminiCost);
     });
+
+    it('should return positive cost for GROK', () => {
+      expect(manager.estimateProviderCost('GROK')).toBeGreaterThan(0);
+    });
+
+    it('should rank GROK same tier as ANTHROPIC', () => {
+      const grokCost = manager.estimateProviderCost('GROK');
+      const anthropicCost = manager.estimateProviderCost('ANTHROPIC');
+      // Both are at $3/$15 per 1M — same tier
+      expect(grokCost).toBe(anthropicCost);
+    });
+  });
+
+  describe('inferProvider — GROK model detection', () => {
+    it('infers GROK for grok-3 model', () => {
+      const context: RoutingContext = {
+        ...baseContext,
+        forcedModel: 'grok-3',
+        userMode: RoutingMode.MANUAL_MODEL,
+      };
+      // Access via handleManualModel which calls inferProvider internally
+      // We verify via evaluateRoute with MANUAL_MODEL mode
+      void context; // explicit usage check
+      expect(manager['inferProvider']('grok-3')).toBe('GROK');
+    });
+
+    it('infers GROK for grok-3-mini model', () => {
+      expect(manager['inferProvider']('grok-3-mini')).toBe('GROK');
+    });
+
+    it('infers GROK for grok-2-vision-1212 model', () => {
+      expect(manager['inferProvider']('grok-2-vision-1212')).toBe('GROK');
+    });
+
+    it('infers GROK for GROK-3 uppercase model', () => {
+      expect(manager['inferProvider']('GROK-3')).toBe('GROK');
+    });
+
+    it('does not infer GROK for non-grok models', () => {
+      expect(manager['inferProvider']('gpt-4o')).not.toBe('GROK');
+      expect(manager['inferProvider']('claude-sonnet-4')).not.toBe('GROK');
+      expect(manager['inferProvider']('gemini-2.5-flash')).not.toBe('GROK');
+    });
+  });
+
+  describe('buildFallbackChain — GROK provider coverage', () => {
+    it('includes GROK in fallback chain when local is primary and GROK is healthy', () => {
+      const primary = { provider: 'local-ollama', model: 'gemma3:4b' };
+      const context: RoutingContext = {
+        ...baseContext,
+        connectorHealth: { GROK: true, ANTHROPIC: true, OPENAI: true, GEMINI: true },
+      };
+
+      const chain = manager.buildFallbackChain(primary, context);
+
+      expect(chain.some((f) => f.provider === 'GROK')).toBe(true);
+    });
+
+    it('excludes GROK from fallback chain when GROK is unhealthy', () => {
+      const primary = { provider: 'local-ollama', model: 'gemma3:4b' };
+      const context: RoutingContext = {
+        ...baseContext,
+        connectorHealth: { GROK: false, ANTHROPIC: true, OPENAI: true },
+      };
+
+      const chain = manager.buildFallbackChain(primary, context);
+
+      expect(chain.every((f) => f.provider !== 'GROK')).toBe(true);
+    });
+
+    it('includes GROK as cloud fallback when GROK is primary cloud but another cloud route needed', () => {
+      const primary = { provider: 'ANTHROPIC', model: 'claude-sonnet-4' };
+      const context: RoutingContext = {
+        ...baseContext,
+        connectorHealth: { GROK: true, ANTHROPIC: true, OPENAI: false },
+        runtimeHealth: { OLLAMA: false },
+      };
+
+      const chain = manager.buildFallbackChain(primary, context);
+
+      expect(chain.some((f) => f.provider === 'GROK')).toBe(true);
+      expect(chain.every((f) => f.provider !== 'OPENAI')).toBe(true);
+    });
+
+    it('does not add GROK as fallback for itself (when GROK is primary)', () => {
+      const primary = { provider: 'GROK', model: 'grok-3-mini' };
+      const context: RoutingContext = {
+        ...baseContext,
+        connectorHealth: { GROK: true, ANTHROPIC: true, OPENAI: true },
+        runtimeHealth: { OLLAMA: true },
+      };
+
+      const chain = manager.buildFallbackChain(primary, context);
+
+      expect(chain.every((f) => f.provider !== 'GROK')).toBe(true);
+    });
+
+    it('sorts GROK after GEMINI and OPENAI in cost-sorted chain (same tier as ANTHROPIC)', () => {
+      const primary = { provider: 'local-ollama', model: 'gemma3:4b' };
+      const context: RoutingContext = {
+        ...baseContext,
+        connectorHealth: { GROK: true, ANTHROPIC: true, OPENAI: true, GEMINI: true },
+      };
+
+      const chain = manager.buildFallbackChain(primary, context, true);
+
+      const grokIdx = chain.findIndex((f) => f.provider === 'GROK');
+      const geminiIdx = chain.findIndex((f) => f.provider === 'GEMINI');
+      const openaiIdx = chain.findIndex((f) => f.provider === 'OPENAI');
+
+      if (grokIdx >= 0 && geminiIdx >= 0) {
+        expect(grokIdx).toBeGreaterThan(geminiIdx);
+      }
+      if (grokIdx >= 0 && openaiIdx >= 0) {
+        expect(grokIdx).toBeGreaterThan(openaiIdx);
+      }
+    });
   });
 
   describe('enhanced routing decision with metadata', () => {

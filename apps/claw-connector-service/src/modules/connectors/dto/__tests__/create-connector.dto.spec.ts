@@ -46,6 +46,7 @@ describe('createConnectorSchema', () => {
       ConnectorProvider.AWS_BEDROCK,
       ConnectorProvider.DEEPSEEK,
       ConnectorProvider.OLLAMA,
+      ConnectorProvider.GROK,
     ];
 
     for (const provider of providers) {
@@ -195,5 +196,32 @@ describe('createConnectorSchema', () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it('should accept a fully-populated GROK connector payload', () => {
+    const result = createConnectorSchema.safeParse({
+      name: 'My Grok Connector',
+      provider: ConnectorProvider.GROK,
+      authType: ConnectorAuthType.API_KEY,
+      apiKey: 'xai-test-key-abc123',
+      baseUrl: 'https://api.x.ai/v1',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.provider).toBe(ConnectorProvider.GROK);
+      expect(result.data.apiKey).toBe('xai-test-key-abc123');
+      expect(result.data.baseUrl).toBe('https://api.x.ai/v1');
+    }
+  });
+
+  it('should accept GROK connector with no apiKey (deferred credential entry)', () => {
+    const result = createConnectorSchema.safeParse({
+      name: 'Grok No Key',
+      provider: ConnectorProvider.GROK,
+      authType: ConnectorAuthType.API_KEY,
+    });
+
+    expect(result.success).toBe(true);
   });
 });
