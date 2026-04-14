@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { WorkspaceConnectorService } from '../services/workspace-connector.service';
@@ -12,6 +12,7 @@ export class WorkspaceOAuthController {
   constructor(private readonly service: WorkspaceConnectorService) {}
 
   @Post('init')
+  @HttpCode(HttpStatus.OK)
   async initOAuth(
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(oauthInitSchema)) dto: OAuthInitDto,

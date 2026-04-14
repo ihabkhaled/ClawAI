@@ -5,6 +5,10 @@ node_modules/
 scripts/generate-test-messages.sh
 scripts/routing-experiments.sh
 scripts/experiment-results.json
+scripts/qa-test-workspace.sh
+
+# QA test scripts and evidence (never committed)
+qa/
 
 # Build output
 dist/

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { WorkspaceActionService } from '../services/workspace-action.service';
@@ -40,6 +40,7 @@ export class WorkspaceActionController {
   }
 
   @Post(':id/approve')
+  @HttpCode(HttpStatus.OK)
   async approve(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -48,6 +49,7 @@ export class WorkspaceActionController {
   }
 
   @Post(':id/reject')
+  @HttpCode(HttpStatus.OK)
   async reject(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,

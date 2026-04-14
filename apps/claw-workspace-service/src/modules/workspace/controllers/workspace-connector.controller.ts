@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { WorkspaceConnectorService } from '../services/workspace-connector.service';
@@ -69,6 +80,7 @@ export class WorkspaceConnectorController {
   }
 
   @Post(':id/health')
+  @HttpCode(HttpStatus.OK)
   async testHealth(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -77,6 +89,7 @@ export class WorkspaceConnectorController {
   }
 
   @Post(':id/sync')
+  @HttpCode(HttpStatus.OK)
   async triggerSync(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,

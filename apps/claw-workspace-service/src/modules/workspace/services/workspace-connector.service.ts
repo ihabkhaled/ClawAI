@@ -6,6 +6,10 @@ import { WorkspaceAdapterFactory } from '../adapters/workspace-adapter.factory';
 import { OAuthTokenManager } from '../managers/oauth-token.manager';
 import { WorkspaceHealthManager } from '../managers/workspace-health.manager';
 import { WorkspaceSyncManager } from '../managers/workspace-sync.manager';
+import {
+  sanitizeConnector,
+  sanitizeConnectors,
+} from '../../../common/utilities/connector-sanitizer.utility';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
@@ -71,29 +75,18 @@ export class WorkspaceConnectorService {
       userId,
     });
     this.logger.log(`Created workspace connector ${connector.id} (${connector.provider})`);
-    return this.getConnector(connector.id, userId);
+    return sanitizeConnector(await this.getConnectorRaw(connector.id, userId));
   }
 
   async getConnectors(
     userId: string,
     query: ListWorkspaceConnectorsQueryDto,
   ): Promise<PaginatedWorkspaceConnectors> {
-    return this.repository.findAllByUser(userId, query);
+    return sanitizeConnectors(await this.repository.findAllByUser(userId, query));
   }
 
   async getConnector(id: string, userId: string): Promise<WorkspaceConnectorWithStats> {
-    const connector = await this.repository.findByIdWithStats(id);
-    if (connector === null) {
-      throw new EntityNotFoundException('WorkspaceConnector', id);
-    }
-    if (connector.userId !== userId) {
-      throw new BusinessException(
-        'workspace.connector.forbidden',
-        'FORBIDDEN',
-        HttpStatus.FORBIDDEN,
-      );
-    }
-    return connector;
+    return sanitizeConnector(await this.getConnectorRaw(id, userId));
   }
 
   async update(
@@ -101,7 +94,7 @@ export class WorkspaceConnectorService {
     userId: string,
     dto: UpdateWorkspaceConnectorDto,
   ): Promise<WorkspaceConnectorWithStats> {
-    await this.getConnector(id, userId);
+    await this.getConnectorRaw(id, userId);
     const updateData: Prisma.WorkspaceConnectorUpdateInput = {
       ...(dto.name !== undefined ? { name: dto.name } : {}),
       ...(dto.permissionLevel !== undefined ? { permissionLevel: dto.permissionLevel } : {}),
@@ -115,35 +108,35 @@ export class WorkspaceConnectorService {
       changes: dto as Record<string, unknown>,
       userId,
     });
-    return this.getConnector(id, userId);
+    return sanitizeConnector(await this.getConnectorRaw(id, userId));
   }
 
   async delete(id: string, userId: string): Promise<WorkspaceConnectorWithStats> {
-    const connector = await this.getConnector(id, userId);
+    const connector = await this.getConnectorRaw(id, userId);
     await this.repository.delete(id);
     void this.publishEvent(EventPattern.WORKSPACE_CONNECTOR_DELETED, {
       connectorId: id,
       provider: connector.provider,
       userId,
     });
-    return connector;
+    return sanitizeConnector(connector);
   }
 
   async testHealth(id: string, userId: string): Promise<HealthCheckResult> {
-    const connector = await this.getConnector(id, userId);
-    return this.healthManager.checkHealth(connector);
+    const fullConnector = await this.getConnectorRaw(id, userId);
+    return this.healthManager.checkHealth(fullConnector);
   }
 
   async triggerSync(id: string, userId: string, isDelta: boolean): Promise<SyncResult> {
-    const connector = await this.getConnector(id, userId);
-    if (connector.status === WorkspaceConnectorStatus.PENDING_AUTH) {
+    const fullConnector = await this.getConnectorRaw(id, userId);
+    if (fullConnector.status === WorkspaceConnectorStatus.PENDING_AUTH) {
       throw new BusinessException(
         'workspace.connector.not_authorized',
         'NOT_AUTHORIZED',
         HttpStatus.CONFLICT,
       );
     }
-    return this.syncManager.syncConnector(connector, isDelta);
+    return this.syncManager.syncConnector(fullConnector, isDelta);
   }
 
   async initOAuth(userId: string, dto: OAuthInitDto): Promise<OAuthInitResult> {
@@ -202,7 +195,22 @@ export class WorkspaceConnectorService {
       name: connector.name,
       userId,
     });
-    return this.getConnector(connector.id, userId);
+    return sanitizeConnector(await this.getConnectorRaw(connector.id, userId));
+  }
+
+  private async getConnectorRaw(id: string, userId: string): Promise<WorkspaceConnectorWithStats> {
+    const connector = await this.repository.findByIdWithStats(id);
+    if (connector === null) {
+      throw new EntityNotFoundException('WorkspaceConnector', id);
+    }
+    if (connector.userId !== userId) {
+      throw new BusinessException(
+        'workspace.connector.forbidden',
+        'FORBIDDEN',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    return connector;
   }
 
   private async publishEvent(

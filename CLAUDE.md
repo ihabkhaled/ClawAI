@@ -891,6 +891,10 @@ Claude MUST verify ALL of these before saying a task is complete:
 6. Confirming explicit return types on all page functions
 7. Confirming all 8 i18n locales updated for new text
 8. Checking nginx.conf for new endpoints
+9. **Writing and running a real QA script** (`qa/test-<service>.sh`) — MANDATORY for every new feature
+10. **DB verification** — querying the actual database after every write to confirm persistence
+11. **Docker log check** — scanning service logs for UnhandledPromiseRejection/FATAL after every test run
+12. **Documenting QA evidence** in `.claude/Integrations/<feature>__QA_output.md`
 
 ### What Claude Treats as Blockers
 
@@ -901,6 +905,10 @@ These are NEVER acceptable and ALWAYS block delivery:
 - Test failures
 - Raw HTML select/input/textarea in UI
 - Inline types/enums/constants in restricted files
+- **QA script not written or not run** — every feature requires a `qa/test-<service>.sh`
+- **QA tests failing** — 0 failures required before delivery
+- **DB verification skipped** — every write must be confirmed in the actual database
+- **Docker log errors present** — UnhandledPromiseRejection or FATAL in service logs block delivery
 - Missing i18n keys
 - Missing error state handling
 - storeErrorMessage not in try-catch
@@ -1124,7 +1132,81 @@ docker compose -f docker-compose.dev.yml ps <service-name>  # must show (healthy
 
 If pre-commit fails, fix the issue and create a NEW commit. NEVER use `--no-verify`.
 
-### Phase 9: E2E API Testing
+### Phase 9: Real QA Execution (MANDATORY — Not Optional, Not Skippable)
+
+> **This is not code review. This is hands-on execution.** Every feature MUST be tested by running real curl scripts, real DB queries, and real Docker log inspection. Skipping this is a delivery blocker.
+
+#### QA Script Location
+
+All QA test scripts live in `qa/` (gitignored — NEVER committed to the repo). Each feature gets its own script:
+
+- `qa/test-<service-name>.sh` — API tests + DB verification + Docker log checks
+
+#### QA Script Anatomy (Required Sections)
+
+Every script MUST have ALL of these sections:
+
+```bash
+# Section 1: AUTH — get admin JWT token
+# Section 2+: Per-feature API tests (happy path + error paths + boundary conditions)
+# Section N-1: DATABASE — verify every write operation persisted correctly
+# Section N: DOCKER LOGS — verify no UnhandledPromiseRejection or FATAL errors
+# Section N+1: SUMMARY — PASS/FAIL count with list of failures
+```
+
+#### What Each Test Case Must Verify
+
+For every API endpoint:
+
+1. **Correct HTTP status code** (200/201/400/401/403/404/409/422 — never assume)
+2. **Correct response shape** (required fields present, forbidden fields absent)
+3. **Security**: sensitive fields like `encryptedTokens`, `passwordHash` MUST NOT appear in responses
+4. **Validation**: too-long inputs, missing required fields, invalid enum values → 400
+5. **Auth**: unauthenticated requests → 401, wrong-user requests → 403/404
+
+#### Database Verification (Required After Every Write Operation)
+
+After any CREATE, UPDATE, DELETE, or state transition tested via API:
+
+```bash
+docker exec <db-container> psql -U <user> -d <db> -tAc \
+  "SELECT COUNT(*) FROM <table> WHERE <condition>;"
+```
+
+Verify:
+
+- Row count increased/decreased as expected
+- Sensitive columns exist in DB (encrypted) even when stripped from API
+- Deleted rows are actually gone
+- Status transitions reflect in DB (e.g., `EXECUTED` vs `FAILED`)
+
+#### Docker Log Check (Required at End of Every Script)
+
+```bash
+ERROR_COUNT=$(docker compose -f docker-compose.dev.yml logs <service> --tail=200 2>/dev/null | \
+  grep -cE "UnhandledPromiseRejection|FATAL|Cannot read properties of undefined")
+[ "$ERROR_COUNT" -eq 0 ] || echo "FAIL: $ERROR_COUNT critical errors found"
+```
+
+#### How to Run
+
+```bash
+bash qa/test-<service>.sh
+```
+
+All tests must pass (0 failures) before declaring a feature complete.
+
+#### Test Evidence Documentation
+
+After running tests, document evidence in `.claude/Integrations/<feature>__QA_output.md`:
+
+- Test run date and time
+- Pass/fail counts
+- Any bugs found and their fixes
+- DB verification results
+- Docker log status
+
+#### E2E API Testing (Original Phase 9 Content)
 
 Test the feature end-to-end using curl or the frontend:
 
