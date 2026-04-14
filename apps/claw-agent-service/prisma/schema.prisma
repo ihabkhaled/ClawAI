@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("AGENT_DATABASE_URL")
+}
+
+enum AgentSessionStatus {
+  CONNECTED
+  DISCONNECTED
+  EXPIRED
+}
+
+enum TerminalCommandStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  EXECUTING
+  EXECUTED
+  FAILED
+  EXPIRED
+}
+
+enum FileEventType {
+  CREATED
+  MODIFIED
+  DELETED
+  RENAMED
+}
+
+model AgentSession {
+  id             String             @id @default(cuid())
+  userId         String
+  sessionKey     String             @unique
+  hostname       String
+  platform       String
+  agentVersion   String
+  status         AgentSessionStatus @default(CONNECTED)
+  lastHeartbeatAt DateTime?
+  connectedAt    DateTime           @default(now())
+  disconnectedAt DateTime?
+  metadata       Json?
+  commands       TerminalCommand[]
+  repos          LocalRepo[]
+  fileEvents     FileWatchEvent[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([userId, status])
+  @@index([sessionKey])
+  @@map("agent_sessions")
+}
+
+model TerminalCommand {
+  id              String                @id @default(cuid())
+  sessionId       String
+  session         AgentSession          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId          String
+  command         String
+  workingDir      String?
+  status          TerminalCommandStatus @default(PENDING_APPROVAL)
+  stdout          String?
+  stderr          String?
+  exitCode        Int?
+  approvedAt      DateTime?
+  rejectedAt      DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  rejectionReason String?
+  requestedAt     DateTime              @default(now())
+  expiresAt       DateTime
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([sessionId, status])
+  @@index([userId, status])
+  @@map("terminal_commands")
+}
+
+model LocalRepo {
+  id            String       @id @default(cuid())
+  sessionId     String
+  session       AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId        String
+  repoPath      String
+  name          String
+  branch        String?
+  commitHash    String?
+  isDirty       Boolean      @default(false)
+  fileCount     Int          @default(0)
+  lastScannedAt DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([sessionId])
+  @@map("local_repos")
+}
+
+model FileWatchEvent {
+  id        String       @id @default(cuid())
+  sessionId String
+  session   AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId    String
+  eventType FileEventType
+  filePath  String
+  repoId    String?
+  createdAt DateTime     @default(now())
+
+  @@index([sessionId, createdAt])
+  @@index([userId, createdAt])
+  @@map("file_watch_events")
+}
