@@ -341,6 +341,15 @@ export type TranslationDictionary = {
     timeoutMs: string;
     loadingPolicies: string;
     noPoliciesConfigured: string;
+    complexityLabel: string;
+    complexitySimple: string;
+    complexityMedium: string;
+    complexityComplex: string;
+    complexityExpert: string;
+    routingExplanation: string;
+    explanationSummary: string;
+    explanationFactors: string;
+    routingDurationMs: string;
   };
   models: {
     title: string;

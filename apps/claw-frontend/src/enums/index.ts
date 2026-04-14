@@ -35,3 +35,5 @@ export { EscalationChainStatus } from './escalation-chain-status.enum';
 export { RepairType } from './repair-type.enum';
 export { CostTier } from './cost-tier.enum';
 export { RolePackName } from './role-pack.enum';
+export { ComplexityClass } from './complexity-class.enum';
+export { ExplanationWeight } from './explanation-weight.enum';

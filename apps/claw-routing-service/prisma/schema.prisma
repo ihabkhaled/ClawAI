@@ -10,6 +10,13 @@ datasource db {
 
 // ─── Enums ───────────────────────────────────────────────
 
+enum ComplexityClass {
+  SIMPLE
+  MEDIUM
+  COMPLEX
+  EXPERT
+}
+
 enum RoutingMode {
   AUTO
   MANUAL_MODEL
@@ -42,9 +49,12 @@ model RoutingDecision {
   reasonTags       String[]    @map("reason_tags")
   privacyClass     String?     @map("privacy_class")
   costClass        String?     @map("cost_class")
-  fallbackProvider String?     @map("fallback_provider")
-  fallbackModel    String?     @map("fallback_model")
-  createdAt        DateTime    @default(now()) @map("created_at")
+  fallbackProvider  String?       @map("fallback_provider")
+  fallbackModel     String?       @map("fallback_model")
+  complexityClass   ComplexityClass? @map("complexity_class")
+  explanation       Json?
+  routingDurationMs Int?          @map("routing_duration_ms")
+  createdAt         DateTime      @default(now()) @map("created_at")
 
   @@index([messageId])
   @@index([threadId])

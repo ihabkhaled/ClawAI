@@ -1,9 +1,12 @@
 import {
   type Prisma,
+  type ComplexityClass as PrismaComplexityClass,
   type RoutingDecision,
   type RoutingMode,
   type RoutingPolicy,
-} from "../../../generated/prisma";
+} from '../../../generated/prisma';
+import type { ComplexityClassification } from './complexity.types';
+import type { RoutingExplanation } from './explanation.types';
 
 export interface RoutingContext {
   message: string;
@@ -16,6 +19,7 @@ export interface RoutingContext {
   userMode?: RoutingMode;
   forcedModel?: string;
   forcedProvider?: string;
+  complexity?: ComplexityClassification;
 }
 
 export interface RoutingDecisionResult {
@@ -32,6 +36,9 @@ export interface RoutingDecisionResult {
   matchCount?: number;
   estimatedCostPer1M?: number;
   latencySlaMs?: number;
+  complexityClass?: ComplexityClassification['class'];
+  explanation?: RoutingExplanation;
+  routingDurationMs?: number;
 }
 
 export type MultiIntentResult = {
@@ -90,6 +97,9 @@ export interface CreateDecisionData {
   costClass?: string;
   fallbackProvider?: string;
   fallbackModel?: string;
+  complexityClass?: PrismaComplexityClass;
+  explanation?: Prisma.InputJsonValue;
+  routingDurationMs?: number;
 }
 
 export type OllamaGenerateResponse = {
@@ -106,3 +116,5 @@ export type OllamaRouterDecision = {
 };
 
 export type { RoutingDecision, RoutingPolicy, RoutingMode };
+export type { ComplexityClassification } from './complexity.types';
+export type { RoutingExplanation, ExplanationFactor, RejectedEntry } from './explanation.types';

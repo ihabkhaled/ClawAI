@@ -1,7 +1,9 @@
 import { RoutingManager } from '../managers/routing.manager';
 import { type OllamaRouterManager } from '../managers/ollama-router.manager';
 import { type PromptBuilderManager } from '../managers/prompt-builder.manager';
+import { ComplexityClassifierManager } from '../managers/complexity-classifier.manager';
 import { RoutingMode } from '../../../generated/prisma';
+import { ComplexityClass } from '../../../common/enums/complexity-class.enum';
 import { type RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
 import { type RoutingContext } from '../types/routing.types';
 import { LocalModelRole } from '@claw/shared-types';
@@ -36,15 +38,18 @@ describe('RoutingManager', () => {
       fetchInstalledModels: jest.fn().mockResolvedValue([]),
       invalidateCache: jest.fn(),
     };
+    // Use real ComplexityClassifierManager (pure logic, no deps)
+    const complexityClassifier = new ComplexityClassifierManager();
     manager = new RoutingManager(
       policiesRepo as unknown as RoutingPoliciesRepository,
       ollamaRouter as unknown as OllamaRouterManager,
       promptBuilder as unknown as PromptBuilderManager,
+      complexityClassifier,
     );
   });
 
   describe('evaluateRoute - AUTO', () => {
-    it('should route short messages to local when runtime is healthy', async () => {
+    it('should route SIMPLE messages to local when runtime is healthy (SAR2)', async () => {
       const context: RoutingContext = {
         ...baseContext,
         userMode: RoutingMode.AUTO,
@@ -54,14 +59,18 @@ describe('RoutingManager', () => {
 
       expect(result.routingMode).toBe(RoutingMode.AUTO);
       expect(result.selectedProvider).toBe('local-ollama');
-      expect(result.reasonTags).toContain('short_message');
+      // SAR2: short messages are SIMPLE complexity → simple_complexity tag
+      expect(result.reasonTags).toContain('auto');
+      expect(result.complexityClass).toBe(ComplexityClass.SIMPLE);
     });
 
-    it('should route long messages to cloud', async () => {
+    it('should route MEDIUM-length messages to cloud when local unavailable', async () => {
+      const longMessage = 'word '.repeat(150).trim(); // 150 words = MEDIUM
       const context: RoutingContext = {
         ...baseContext,
-        message: 'a'.repeat(600),
+        message: longMessage,
         userMode: RoutingMode.AUTO,
+        runtimeHealth: { OLLAMA: false }, // local unavailable
       };
 
       const result = await manager.evaluateRoute(context);
@@ -479,7 +488,9 @@ describe('RoutingManager', () => {
     it('should detect customer support prompts', () => {
       expect(manager.detectCustomerSupportRequest('create a helpdesk ticket template')).toBe(true);
       expect(manager.detectCustomerSupportRequest('build a knowledge base article')).toBe(true);
-      expect(manager.detectCustomerSupportRequest('draft a canned response for refunds')).toBe(true);
+      expect(manager.detectCustomerSupportRequest('draft a canned response for refunds')).toBe(
+        true,
+      );
       expect(manager.detectCustomerSupportRequest('improve our CSAT scores')).toBe(true);
     });
 
@@ -549,7 +560,9 @@ describe('RoutingManager', () => {
     it('should detect engineering prompts', () => {
       expect(manager.detectEngineeringRequest('run FEA on this structural model')).toBe(true);
       expect(manager.detectEngineeringRequest('design a PCB schematic')).toBe(true);
-      expect(manager.detectEngineeringRequest('analyze the fluid dynamics of this pipe')).toBe(true);
+      expect(manager.detectEngineeringRequest('analyze the fluid dynamics of this pipe')).toBe(
+        true,
+      );
       expect(manager.detectEngineeringRequest('create a CAD model of the bracket')).toBe(true);
     });
 
@@ -632,9 +645,13 @@ describe('RoutingManager', () => {
   describe('detectSustainabilityRequest', () => {
     it('should detect sustainability prompts', () => {
       expect(manager.detectSustainabilityRequest('prepare an ESG reporting framework')).toBe(true);
-      expect(manager.detectSustainabilityRequest('calculate carbon emissions for Scope 1')).toBe(true);
+      expect(manager.detectSustainabilityRequest('calculate carbon emissions for Scope 1')).toBe(
+        true,
+      );
       expect(manager.detectSustainabilityRequest('analyze the carbon offset options')).toBe(true);
-      expect(manager.detectSustainabilityRequest('implement circular economy principles')).toBe(true);
+      expect(manager.detectSustainabilityRequest('implement circular economy principles')).toBe(
+        true,
+      );
     });
 
     it('should not detect non-sustainability prompts', () => {

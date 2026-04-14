@@ -1,7 +1,11 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import { EventPattern, LogLevel } from '@claw/shared-types';
-import { type Prisma, type RoutingMode } from '../../../generated/prisma';
+import {
+  type Prisma,
+  type ComplexityClass as PrismaComplexityClass,
+  type RoutingMode,
+} from '../../../generated/prisma';
 import { EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
 import { RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
@@ -360,6 +364,9 @@ export class RoutingService implements OnModuleInit {
       costClass: decision.costClass,
       fallbackProvider: fallback?.provider,
       fallbackModel: fallback?.model,
+      complexityClass: decision.complexityClass as PrismaComplexityClass | undefined,
+      explanation: decision.explanation as Prisma.InputJsonValue | undefined,
+      routingDurationMs: decision.routingDurationMs,
     });
 
     this.structuredLogger.logAction({

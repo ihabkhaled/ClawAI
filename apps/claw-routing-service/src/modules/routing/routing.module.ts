@@ -6,6 +6,7 @@ import { OllamaRouterManager } from './managers/ollama-router.manager';
 import { PromptBuilderManager } from './managers/prompt-builder.manager';
 import { ReplayManager } from './managers/replay.manager';
 import { AdaptiveLearningManager } from './managers/adaptive-learning.manager';
+import { ComplexityClassifierManager } from './managers/complexity-classifier.manager';
 import { RoutingPoliciesRepository } from './repositories/routing-policies.repository';
 import { RoutingDecisionsRepository } from './repositories/routing-decisions.repository';
 import { ReplayRunsRepository } from './repositories/replay-runs.repository';
@@ -20,6 +21,7 @@ import { ReplayCasesRepository } from './repositories/replay-cases.repository';
     AdaptiveLearningManager,
     OllamaRouterManager,
     PromptBuilderManager,
+    ComplexityClassifierManager,
     RoutingPoliciesRepository,
     RoutingDecisionsRepository,
     ReplayRunsRepository,

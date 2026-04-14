@@ -1,9 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { LocalModelRole } from '@claw/shared-types';
 import { RoutingMode } from '../../../generated/prisma';
+import { ComplexityClass } from '../../../common/enums/complexity-class.enum';
 import { RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
 import { OllamaRouterManager } from './ollama-router.manager';
 import { PromptBuilderManager } from './prompt-builder.manager';
+import { ComplexityClassifierManager } from './complexity-classifier.manager';
+import type { ComplexityClassification } from '../types/complexity.types';
+import type { ExplanationFactor, RoutingExplanation } from '../types/explanation.types';
 import {
   BUSINESS_KEYWORDS,
   CATEGORY_LATENCY_SLA_MS,
@@ -44,8 +48,8 @@ import {
   INFRASTRUCTURE_KEYWORDS,
   LEGAL_KEYWORDS,
   LOCAL_MODEL_DEFAULT,
-  LOGISTICS_KEYWORDS,
   LOCAL_PROVIDER,
+  LOGISTICS_KEYWORDS,
   MEDIA_KEYWORDS,
   MEDICAL_KEYWORDS,
   MULTI_INTENT_CONFIDENCE_DOUBLE,
@@ -83,18 +87,34 @@ export class RoutingManager {
     private readonly policiesRepository: RoutingPoliciesRepository,
     private readonly ollamaRouter: OllamaRouterManager,
     private readonly promptBuilder: PromptBuilderManager,
+    private readonly complexityClassifier: ComplexityClassifierManager,
   ) {}
 
   async evaluateRoute(context: RoutingContext): Promise<RoutingDecisionResult> {
+    const start = Date.now();
+    const complexity = this.complexityClassifier.classify(context.message);
+    const enrichedContext = { ...context, complexity };
+
+    const result = await this.doEvaluate(enrichedContext);
+
+    return {
+      ...result,
+      complexityClass: complexity.class,
+      explanation: this.buildExplanation(result, complexity),
+      routingDurationMs: Date.now() - start,
+    };
+  }
+
+  private async doEvaluate(context: RoutingContext): Promise<RoutingDecisionResult> {
     this.logger.log(
-      `evaluateRoute: starting for thread ${context.threadId ?? 'none'}, userMode=${context.userMode ?? 'AUTO'}`,
+      `doEvaluate: starting for thread ${context.threadId ?? 'none'}, userMode=${context.userMode ?? 'AUTO'}, complexity=${context.complexity?.class ?? 'unknown'}`,
     );
     // Check active policies for overrides
     const policies = await this.policiesRepository.findActivePolicies();
     const policyOverride = this.applyPolicies(policies, context);
     const mode = policyOverride ?? context.userMode ?? RoutingMode.AUTO;
     this.logger.debug(
-      `evaluateRoute: resolved mode=${mode} (policyOverride=${policyOverride ?? 'none'})`,
+      `doEvaluate: resolved mode=${mode} (policyOverride=${policyOverride ?? 'none'})`,
     );
 
     switch (mode) {
@@ -166,7 +186,9 @@ export class RoutingManager {
 
     // Sort by cost (cheapest first) when in cost-saving mode
     if (sortByCost) {
-      chain.sort((a, b) => this.estimateProviderCost(a.provider) - this.estimateProviderCost(b.provider));
+      chain.sort(
+        (a, b) => this.estimateProviderCost(a.provider) - this.estimateProviderCost(b.provider),
+      );
       this.logger.debug('buildFallbackChain: sorted fallbacks by cost (cheapest first)');
     }
 
@@ -344,7 +366,9 @@ export class RoutingManager {
       return this.buildLocalPrivacyDecision(context, 'domain_executive');
     }
     if (this.detectGovernmentRequest(context.message)) {
-      this.logger.log('handleAuto: government/intelligence content detected — forcing local routing');
+      this.logger.log(
+        'handleAuto: government/intelligence content detected — forcing local routing',
+      );
       return this.buildLocalPrivacyDecision(context, 'domain_government');
     }
 
@@ -421,9 +445,44 @@ export class RoutingManager {
 
     const localHealthy = this.isRuntimeHealthy('OLLAMA', context);
     const messageLength = context.message.length;
+    const complexity = context.complexity;
     this.logger.debug(
-      `handleAutoHeuristic: localHealthy=${String(localHealthy)} messageLength=${String(messageLength)}`,
+      `handleAutoHeuristic: localHealthy=${String(localHealthy)} messageLength=${String(messageLength)} complexity=${complexity?.class ?? 'unclassified'}`,
     );
+
+    // SAR2: EXPERT complexity → prefer high-reasoning cloud model when available
+    if (complexity?.class === ComplexityClass.EXPERT && this.isConnectorHealthy(CLOUD_PROVIDER_ANTHROPIC, context)) {
+        this.logger.log('handleAutoHeuristic: EXPERT complexity — routing to high-reasoning cloud');
+        const primary = { provider: CLOUD_PROVIDER_ANTHROPIC, model: CLOUD_MODEL_REASONING };
+        return {
+          selectedProvider: CLOUD_PROVIDER_ANTHROPIC,
+          selectedModel: CLOUD_MODEL_REASONING,
+          routingMode: RoutingMode.AUTO,
+          confidence: 0.82,
+          reasonTags: ['auto', 'expert_complexity', 'high_reasoning_cloud'],
+          privacyClass: 'cloud',
+          costClass: 'high',
+          fallbackChain: this.buildFallbackChain(primary, context),
+          estimatedCostPer1M: this.estimateProviderCost(CLOUD_PROVIDER_ANTHROPIC),
+        };
+      }
+
+    // SAR2: SIMPLE complexity + local available → prefer local immediately
+    if (complexity?.class === ComplexityClass.SIMPLE && localHealthy) {
+      this.logger.log('handleAutoHeuristic: SIMPLE complexity + local available — routing local');
+      const primary = { provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT };
+      return {
+        selectedProvider: LOCAL_PROVIDER,
+        selectedModel: LOCAL_MODEL_DEFAULT,
+        routingMode: RoutingMode.AUTO,
+        confidence: CONFIDENCE_HEURISTIC_FALLBACK,
+        reasonTags: ['auto', 'simple_complexity', 'local_preferred'],
+        privacyClass: 'local',
+        costClass: 'free',
+        fallbackChain: this.buildFallbackChain(primary, context),
+        estimatedCostPer1M: 0,
+      };
+    }
 
     // Prefer local for short messages if Ollama is available
     if (localHealthy && messageLength < 500) {
@@ -895,6 +954,65 @@ export class RoutingManager {
     return PRIVACY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
   }
 
+  private buildExplanation(
+    result: RoutingDecisionResult,
+    complexity: ComplexityClassification,
+  ): RoutingExplanation {
+    const factors: ExplanationFactor[] = [
+      {
+        factor: 'routing_mode',
+        value: result.routingMode,
+        weight: 'HIGH',
+        description: `Routing mode: ${result.routingMode}`,
+      },
+      {
+        factor: 'complexity',
+        value: complexity.class,
+        weight: 'HIGH',
+        description: `Message complexity: ${complexity.class} (${complexity.wordCount} words${complexity.factors.length > 0 ? `, factors: ${complexity.factors.join(', ')}` : ''})`,
+      },
+      {
+        factor: 'privacy',
+        value: result.privacyClass,
+        weight: 'HIGH',
+        description:
+          result.privacyClass === 'local'
+            ? 'Privacy-sensitive content — routed locally'
+            : 'No privacy constraints detected',
+      },
+      {
+        factor: 'cost',
+        value: result.costClass,
+        weight: 'MEDIUM',
+        description: `Cost class: ${result.costClass}${result.estimatedCostPer1M !== undefined ? ` (~$${result.estimatedCostPer1M.toFixed(2)}/1M tokens)` : ''}`,
+      },
+    ];
+
+    if (result.detectedCategory) {
+      factors.push({
+        factor: 'category',
+        value: result.detectedCategory,
+        weight: 'MEDIUM',
+        description: `Detected task category: ${result.detectedCategory}`,
+      });
+    }
+
+    if (result.latencySlaMs !== undefined) {
+      factors.push({
+        factor: 'latency_sla',
+        value: `${String(result.latencySlaMs)}ms`,
+        weight: 'LOW',
+        description: `Target latency SLA: ${String(result.latencySlaMs)}ms`,
+      });
+    }
+
+    return {
+      summary: `Routed to ${result.selectedProvider}/${result.selectedModel} via ${result.routingMode} mode`,
+      factors,
+      rejected: [],
+    };
+  }
+
   private buildLocalPrivacyDecision(
     context: RoutingContext,
     detectedDomain?: string,
@@ -945,7 +1063,8 @@ export class RoutingManager {
       return null;
     }
 
-    const latencySlaMs = CATEGORY_LATENCY_SLA_MS[multiIntent.primary] ?? CATEGORY_LATENCY_SLA_MS['general'];
+    const latencySlaMs =
+      CATEGORY_LATENCY_SLA_MS[multiIntent.primary] ?? CATEGORY_LATENCY_SLA_MS['general'];
     const estimatedCostPer1M = this.estimateProviderCost(LOCAL_PROVIDER);
 
     const reasonTags = this.buildCategoryReasonTags(multiIntent, role);
@@ -985,10 +1104,7 @@ export class RoutingManager {
     };
   }
 
-  private buildCategoryReasonTags(
-    multiIntent: MultiIntentResult,
-    role: LocalModelRole,
-  ): string[] {
+  private buildCategoryReasonTags(multiIntent: MultiIntentResult, role: LocalModelRole): string[] {
     const tags = ['auto', 'category_detected', `role_${role.toLowerCase()}`];
     tags.push(`category_${multiIntent.primary}`);
     if (multiIntent.secondary) {
@@ -1139,9 +1255,7 @@ export class RoutingManager {
     return (costs.input + costs.output) / 2;
   }
 
-  private collectCategoryMatches(
-    message: string,
-  ): Array<{ category: string; priority: number }> {
+  private collectCategoryMatches(message: string): Array<{ category: string; priority: number }> {
     const matches: Array<{ category: string; priority: number }> = [];
     const detectors: Array<{ category: string; detect: (msg: string) => boolean }> = [
       { category: 'medical', detect: (m) => this.detectMedicalRequest(m) },

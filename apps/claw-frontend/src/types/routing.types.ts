@@ -1,6 +1,24 @@
-import type { RoutingMode } from '@/enums';
+import type { ComplexityClass, ExplanationWeight, RoutingMode } from '@/enums';
 
 import type { FormFieldErrors } from './component.types';
+
+export type ExplanationFactor = {
+  factor: string;
+  value: string;
+  weight: ExplanationWeight;
+  description: string;
+};
+
+export type RejectedEntry = {
+  provider: string;
+  reason: string;
+};
+
+export type RoutingExplanation = {
+  summary: string;
+  factors: ExplanationFactor[];
+  rejected: RejectedEntry[];
+};
 
 export type RoutingConfig = {
   id: string;
@@ -44,6 +62,9 @@ export type RoutingDecision = {
   costClass: string | null;
   fallbackProvider: string | null;
   fallbackModel: string | null;
+  complexityClass: ComplexityClass | null;
+  explanation: RoutingExplanation | null;
+  routingDurationMs: number | null;
   createdAt: string;
 };
 
@@ -106,6 +127,9 @@ export type EvaluateRouteResponse = {
   routingMode: RoutingMode;
   confidence: number | null;
   reasonTags: string[];
+  complexityClass: ComplexityClass | null;
+  explanation: RoutingExplanation | null;
+  routingDurationMs: number | null;
 };
 
 export type UpdatePolicyParams = {
