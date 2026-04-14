@@ -21,7 +21,7 @@ import type {
   WorkspaceSyncResult,
 } from '../../types/workspace.types';
 
-const BASE = '/api/v1/workspace';
+const BASE = '/workspace';
 
 export async function listWorkspaceConnectors(
   query?: ListWorkspaceConnectorsQuery,

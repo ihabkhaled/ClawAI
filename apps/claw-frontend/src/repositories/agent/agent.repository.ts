@@ -14,7 +14,7 @@ import type {
   TerminalCommand,
 } from '../../types/agent.types';
 
-const BASE = '/api/v1/agent';
+const BASE = '/agent';
 
 export async function listAgentSessions(
   query?: ListSessionsQuery,
