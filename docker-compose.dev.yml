@@ -202,6 +202,26 @@ services:
     networks:
       - claw-network
 
+  pg-agent:
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-agent
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_AGENT_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_AGENT_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_AGENT_DB:-claw_agent}
+    ports:
+      - '${PG_AGENT_PORT:-5451}:5432'
+    volumes:
+      - pg-agent-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_AGENT_USER:-claw} -d ${PG_AGENT_DB:-claw_agent}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
   pg-images:
     image: pgvector/pgvector:pg16
     container_name: claw-pg-images
@@ -651,6 +671,35 @@ services:
     networks:
       - claw-network
 
+  agent-service:
+    build:
+      context: .
+      dockerfile: apps/claw-agent-service/Dockerfile.dev
+    container_name: claw-agent-service
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '4015:4015'
+    volumes:
+      - ./apps/claw-agent-service/src:/app/apps/claw-agent-service/src
+      - ./apps/claw-agent-service/prisma:/app/apps/claw-agent-service/prisma
+    command: ['./docker-entrypoint.dev.sh']
+    depends_on:
+      pg-agent:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4015/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
   image-service:
     build:
       context: .
@@ -817,6 +866,7 @@ volumes:
   pg-images-data:
   pg-file-generations-data:
   pg-workspace-data:
+  pg-agent-data:
   mongo-data:
   redis-data:
   rabbitmq-data:

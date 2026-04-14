@@ -336,6 +336,31 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  # Agent Service (DEV mode)
+  # ---------------------------------------------------------------------------
+  agent-service:
+    build:
+      context: .
+      dockerfile: apps/claw-agent-service/Dockerfile.dev
+    container_name: claw-agent-service
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '4015:4015'
+    volumes:
+      - ./apps/claw-agent-service/src:/app/apps/claw-agent-service/src
+      - ./apps/claw-agent-service/prisma:/app/apps/claw-agent-service/prisma
+    command: ['./docker-entrypoint.dev.sh']
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4015/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   file-generation-service:
     build:
       context: .

@@ -204,6 +204,29 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  # PostgreSQL (Agent Service)
+  # ---------------------------------------------------------------------------
+  pg-agent:
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-agent
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_AGENT_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_AGENT_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_AGENT_DB:-claw_agent}
+    ports:
+      - '${PG_AGENT_PORT:-5451}:5432'
+    volumes:
+      - pg-agent-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_AGENT_USER:-claw} -d ${PG_AGENT_DB:-claw_agent}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   # PostgreSQL (File Generation Service)
   # ---------------------------------------------------------------------------
   pg-file-generations:
@@ -327,6 +350,7 @@ volumes:
   pg-ollama-data:
   pg-images-data:
   pg-workspace-data:
+  pg-agent-data:
   pg-file-generations-data:
   mongo-data:
   redis-data:

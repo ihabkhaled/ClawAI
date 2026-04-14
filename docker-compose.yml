@@ -230,6 +230,29 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  # PostgreSQL (Agent Service)
+  # ---------------------------------------------------------------------------
+  pg-agent:
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-agent
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_AGENT_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_AGENT_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_AGENT_DB:-claw_agent}
+    ports:
+      - '${PG_AGENT_PORT:-5451}:5432'
+    volumes:
+      - pg-agent-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_AGENT_USER:-claw} -d ${PG_AGENT_DB:-claw_agent}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   # MongoDB (Audit Service)
   # ---------------------------------------------------------------------------
   mongodb:
@@ -619,6 +642,31 @@ services:
     networks:
       - claw-network
 
+  agent-service:
+    build:
+      context: .
+      dockerfile: apps/claw-agent-service/Dockerfile
+    container_name: claw-agent-service
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '4015:4015'
+    depends_on:
+      pg-agent:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4015/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
   client-logs-service:
     build:
       context: .
@@ -794,6 +842,8 @@ volumes:
   pg-images-data:
     driver: local
   pg-workspace-data:
+    driver: local
+  pg-agent-data:
     driver: local
   pg-file-generations-data:
     driver: local

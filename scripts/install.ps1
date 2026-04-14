@@ -390,6 +390,7 @@ SERVER_LOGS_PORT=4011
 IMAGE_PORT=4012
 FILE_GENERATION_PORT=4013
 WORKSPACE_PORT=4014
+AGENT_PORT=4015
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 SLACK_CLIENT_ID=
@@ -412,6 +413,7 @@ OLLAMA_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-ollama:5432/claw_ollama?
 IMAGE_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-images:5432/claw_images?schema=public
 FILE_GENERATION_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-file-generations:5432/claw_file_generations?schema=public
 WORKSPACE_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-workspace:5432/claw_workspace?schema=public
+AGENT_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-agent:5432/claw_agent?schema=public
 
 STABLE_DIFFUSION_URL=http://stable-diffusion:17860
 COMFYUI_BASE_URL=http://comfyui:8188
