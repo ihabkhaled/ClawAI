@@ -5,6 +5,20 @@ import type {
   RuntimeType,
 } from '../../../generated/prisma';
 
+export type CatalogEntryInput = {
+  name: string;
+  tag: string;
+  displayName: string;
+  category: string;
+  description?: string;
+  sizeBytes?: bigint;
+  parameterCount?: string;
+  runtime: string;
+  ollamaName?: string | null;
+  isRecommended: boolean;
+  capabilities: readonly string[];
+};
+
 export type CatalogFilters = {
   category?: ModelCategory;
   runtime?: RuntimeType;

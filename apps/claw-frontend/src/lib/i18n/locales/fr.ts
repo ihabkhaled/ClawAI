@@ -527,6 +527,9 @@ export const fr: TranslationDictionary = {
     parameterCount: 'Paramètres',
     modelSize: 'Taille',
     capabilities: 'Capacités',
+    models: 'modèles',
+    scrollForMore: 'Faire défiler pour plus',
+    allLoaded: 'Tous les modèles chargés',
   },
   replay: {
     title: 'Laboratoire de rejeu de routage',

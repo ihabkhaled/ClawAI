@@ -104,6 +104,8 @@ export const queryKeys = {
     all: ['catalog'] as const,
     lists: () => [...queryKeys.catalog.all, 'list'] as const,
     list: (filters: Record<string, unknown>) => [...queryKeys.catalog.lists(), filters] as const,
+    listInfinite: (filters: Record<string, unknown>) =>
+      [...queryKeys.catalog.lists(), 'infinite', filters] as const,
     detail: (id: string) => [...queryKeys.catalog.all, 'detail', id] as const,
   },
   pullJobs: {

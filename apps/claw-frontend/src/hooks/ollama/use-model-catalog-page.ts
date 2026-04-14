@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { CATALOG_PAGE_SIZE } from '@/constants';
+import { useInfiniteScroll } from '@/hooks/common/use-infinite-scroll';
 import { useTranslation } from '@/lib/i18n';
 import type { PullJobResponse, UseModelCatalogPageReturn } from '@/types';
 
@@ -16,12 +16,10 @@ export function useModelCatalogPage(): UseModelCatalogPageReturn {
   const [search, setSearch] = useState('');
   const { t } = useTranslation();
 
-  const { entries, meta, isLoading, isError } = useModelCatalog({
-    category,
-    search: search || undefined,
-    page: 1,
-    limit: CATALOG_PAGE_SIZE,
-  });
+  const { entries, meta, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useModelCatalog({ category, search: search || undefined });
+
+  const sentinelRef = useInfiniteScroll(fetchNextPage, hasNextPage && !isFetchingNextPage);
 
   const { pullFromCatalog, isPending: isPullPending } = usePullFromCatalog();
   const { pullJobs, isLoading: isPullJobsLoading, hasActiveJobs } = usePullJobs();
@@ -71,6 +69,9 @@ export function useModelCatalogPage(): UseModelCatalogPageReturn {
     meta,
     isLoading,
     isError,
+    isFetchingNextPage,
+    hasNextPage,
+    sentinelRef,
     category,
     search,
     pullJobs,

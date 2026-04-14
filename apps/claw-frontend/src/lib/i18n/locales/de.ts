@@ -524,6 +524,9 @@ export const de: TranslationDictionary = {
     parameterCount: 'Parameter',
     modelSize: 'Größe',
     capabilities: 'Fähigkeiten',
+    models: 'Modelle',
+    scrollForMore: 'Scrollen für mehr',
+    allLoaded: 'Alle Modelle geladen',
   },
   replay: {
     title: 'Routing-Replay-Labor',

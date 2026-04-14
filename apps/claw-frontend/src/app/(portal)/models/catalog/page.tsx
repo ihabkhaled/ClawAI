@@ -1,6 +1,6 @@
 'use client';
 
-import { Store } from 'lucide-react';
+import { Loader2, Store } from 'lucide-react';
 
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
@@ -15,8 +15,12 @@ export default function ModelCatalogPage(): React.ReactElement {
   const {
     t,
     entries,
+    meta,
     isLoading,
     isError,
+    isFetchingNextPage,
+    hasNextPage,
+    sentinelRef,
     category,
     search,
     pullJobs,
@@ -50,12 +54,19 @@ export default function ModelCatalogPage(): React.ReactElement {
 
       <CatalogCategoryFilter selectedCategory={category} onSelect={handleCategoryChange} t={t} />
 
-      <Input
-        placeholder={t('catalog.searchPlaceholder')}
-        value={search}
-        onChange={(e) => handleSearchChange(e.target.value)}
-        className="max-w-sm"
-      />
+      <div className="flex items-center gap-3">
+        <Input
+          placeholder={t('catalog.searchPlaceholder')}
+          value={search}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          className="max-w-sm"
+        />
+        {!isLoading ? (
+          <span className="text-sm text-muted-foreground">
+            {entries.length} / {meta.total} {t('catalog.models')}
+          </span>
+        ) : null}
+      </div>
 
       {isLoading ? <LoadingSpinner label={t('common.loading')} /> : null}
 
@@ -68,20 +79,34 @@ export default function ModelCatalogPage(): React.ReactElement {
       ) : null}
 
       {!isLoading && entries.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {entries.map((entry) => (
-            <CatalogModelCard
-              key={entry.id}
-              entry={entry}
-              job={getJobForModel(entry.ollamaName ?? `${entry.name}:${entry.tag}`)}
-              onPull={handlePull}
-              onDelete={handleDelete}
-              isPullPending={isPullPending}
-              isDeletePending={isDeletePending}
-              t={t}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {entries.map((entry) => (
+              <CatalogModelCard
+                key={entry.id}
+                entry={entry}
+                job={getJobForModel(entry.ollamaName ?? `${entry.name}:${entry.tag}`)}
+                onPull={handlePull}
+                onDelete={handleDelete}
+                isPullPending={isPullPending}
+                isDeletePending={isDeletePending}
+                t={t}
+              />
+            ))}
+          </div>
+
+          <div ref={sentinelRef} className="flex items-center justify-center py-4">
+            {isFetchingNextPage && (
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            )}
+            {!isFetchingNextPage && hasNextPage && (
+              <span className="text-xs text-muted-foreground">{t('catalog.scrollForMore')}</span>
+            )}
+            {!isFetchingNextPage && !hasNextPage && (
+              <span className="text-xs text-muted-foreground">{t('catalog.allLoaded')}</span>
+            )}
+          </div>
+        </>
       ) : null}
 
       {hasActiveJobs ? (

@@ -67,6 +67,9 @@ export type UseModelCatalogPageReturn = {
   meta: PaginationMeta;
   isLoading: boolean;
   isError: boolean;
+  isFetchingNextPage: boolean;
+  hasNextPage: boolean;
+  sentinelRef: React.RefObject<HTMLDivElement | null>;
   category: string | undefined;
   search: string;
   pullJobs: PullJobResponse[];

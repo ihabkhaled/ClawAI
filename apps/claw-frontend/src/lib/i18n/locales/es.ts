@@ -525,6 +525,9 @@ export const es: TranslationDictionary = {
     parameterCount: 'Parámetros',
     modelSize: 'Tamaño',
     capabilities: 'Capacidades',
+    models: 'modelos',
+    scrollForMore: 'Desplázate para ver más',
+    allLoaded: 'Todos los modelos cargados',
   },
   replay: {
     title: 'Laboratorio de repeticion de enrutamiento',

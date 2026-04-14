@@ -8,6 +8,7 @@ import { RoleAssignmentsRepository } from './repositories/role-assignments.repos
 import { PullJobsRepository } from './repositories/pull-jobs.repository';
 import { RuntimeConfigsRepository } from './repositories/runtime-configs.repository';
 import { ModelCatalogRepository } from './repositories/model-catalog.repository';
+import { CatalogSeedService } from './services/catalog-seed.service';
 
 @Module({
   controllers: [OllamaController, OllamaInternalController],
@@ -19,6 +20,7 @@ import { ModelCatalogRepository } from './repositories/model-catalog.repository'
     PullJobsRepository,
     RuntimeConfigsRepository,
     ModelCatalogRepository,
+    CatalogSeedService,
   ],
   exports: [OllamaService],
 })

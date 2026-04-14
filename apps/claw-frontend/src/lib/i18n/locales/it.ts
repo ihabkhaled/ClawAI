@@ -526,6 +526,9 @@ export const it: TranslationDictionary = {
     parameterCount: 'Parametri',
     modelSize: 'Dimensione',
     capabilities: 'Capacità',
+    models: 'modelli',
+    scrollForMore: 'Scorri per altri',
+    allLoaded: 'Tutti i modelli caricati',
   },
   replay: {
     title: 'Laboratorio di replay del routing',

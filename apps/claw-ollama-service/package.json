@@ -18,7 +18,8 @@
     "validate": "npm run typecheck && npm run lint:strict && npm run format:check",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
-    "test:cov": "jest --coverage"
+    "test:cov": "jest --coverage",
+    "seed:catalog": "npx tsx --tsconfig prisma/tsconfig.seed.json prisma/seed-catalog.ts"
   },
   "dependencies": {
     "@claw/shared-constants": "*",

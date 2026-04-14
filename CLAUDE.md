@@ -517,18 +517,19 @@ Auto-pull list configurable via `AUTO_PULL_MODELS` env var (space-separated).
 
 **Rule**: Any model assigned the `ROUTER` role is automatically excluded from the chat model selector. Users browse task-execution models (coding, reasoning, thinking, file-gen) via the Model Catalog.
 
-## Model Catalog (30 Models, 6 Categories)
+## Model Catalog (142 Models, 7 Categories)
 
 Users browse and download models from the built-in catalog at `/models/catalog`. Models are organized by category:
 
-| Category         | Models                                                                         | Runtime |
-| ---------------- | ------------------------------------------------------------------------------ | ------- |
-| Coding           | Qwen 2.5 Coder 32B/14B/7B, DeepSeek Coder V2 16B, StarCoder2 7B                | Ollama  |
-| File Generation  | Qwen 3 7B, Llama 3.3 8B, Mistral Small 3 7B, Phi-4 14B, Gemma 3 9B             | Ollama  |
-| Image Generation | FLUX.2 Dev, FLUX.1 Schnell, SD 3.5, SDXL-Lightning, Z-Image-Turbo              | ComfyUI |
-| Routing          | Qwen 3 1.7B, Phi-4-mini 3.8B, SmolLM2 1.7B, Gemma 3 4B, Mistral Small 3 7B     | Ollama  |
-| Reasoning        | DeepSeek R1 32B/14B/7B, QwQ 32B, Phi-4 14B                                     | Ollama  |
-| Thinking         | GLM-4.7 Thinking, DeepSeek V3.2, MiMo-V2-Flash, Qwen 3.5 27B, Llama 4 Maverick | Ollama  |
+| Category         | Highlights                                                                                                  | Runtime        |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- | -------------- |
+| Coding           | Qwen 2.5 Coder 32B/14B/7B, DeepSeek Coder V2 16B, Qwen3-Coder-Next 32B, Devstral 2 24B, Devstral Small 2 7B | Ollama         |
+| File Generation  | Qwen 3 7B/14B, Llama 3.3 8B/70B, Mistral Small 3 7B/24B, Phi-4 14B, Gemma 3 9B/27B, Command R+ 104B         | Ollama         |
+| Image Generation | FLUX.2 Dev, FLUX.1 Schnell, SD 3.5, SDXL-Lightning, Z-Image-Turbo, Kandinsky 3.1, Playground v2.5           | ComfyUI        |
+| Routing          | Qwen 3 0.6B/1.7B, Phi-4-mini 3.8B, SmolLM2 360M/1.7B, Gemma 3 1B/4B, Gemma 4 E2B, TinyLlama 1.1B            | Ollama         |
+| Reasoning        | DeepSeek R1 0528/32B/14B/7B/70B, QwQ 32B/72B, Phi-4 14B, Phi-4-mini Reasoning, DeepSeek R1 0528             | Ollama         |
+| Thinking         | GLM-5.1, GLM-5, GLM-5-Turbo, GLM-4.7 Thinking, DeepSeek V3.2/V3.1, Gemma 4 31B/26B, Qwen3 80B/235B, Llama 4 | Ollama         |
+| General          | Gemma 3/4, GLM-4.7/4.5-Air, Phi-4 Multimodal, Mistral Small 4 22B, Llama 3.3 70B, Qwen 3, Mixtral, Meditron | Ollama/ComfyUI |
 
 ### Model Roles
 

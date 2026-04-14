@@ -526,6 +526,9 @@ export const ru: TranslationDictionary = {
     parameterCount: 'Параметры',
     modelSize: 'Размер',
     capabilities: 'Возможности',
+    models: 'моделей',
+    scrollForMore: 'Прокрутите для загрузки',
+    allLoaded: 'Все модели загружены',
   },
   replay: {
     title: 'Лаборатория воспроизведения маршрутизации',

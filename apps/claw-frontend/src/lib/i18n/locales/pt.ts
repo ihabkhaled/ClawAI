@@ -526,6 +526,9 @@ export const pt: TranslationDictionary = {
     parameterCount: 'Parâmetros',
     modelSize: 'Tamanho',
     capabilities: 'Capacidades',
+    models: 'modelos',
+    scrollForMore: 'Role para ver mais',
+    allLoaded: 'Todos os modelos carregados',
   },
   replay: {
     title: 'Laboratorio de replay de roteamento',

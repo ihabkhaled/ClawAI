@@ -521,6 +521,9 @@ export const ar: TranslationDictionary = {
     parameterCount: 'المعلمات',
     modelSize: 'الحجم',
     capabilities: 'القدرات',
+    models: 'نماذج',
+    scrollForMore: 'مرر لمزيد',
+    allLoaded: 'تم تحميل جميع النماذج',
   },
   replay: {
     title: 'مختبر إعادة التوجيه',

@@ -520,6 +520,9 @@ export type TranslationDictionary = {
     parameterCount: string;
     modelSize: string;
     capabilities: string;
+    models: string;
+    scrollForMore: string;
+    allLoaded: string;
   };
   replay: {
     title: string;

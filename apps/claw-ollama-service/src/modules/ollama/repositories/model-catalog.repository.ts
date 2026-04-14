@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import { type ModelCatalogEntry, type Prisma } from '../../../generated/prisma';
-import { type CatalogFilters } from '../types/catalog.types';
+import {
+  type ModelCatalogEntry,
+  ModelCategory,
+  type Prisma,
+  RuntimeType,
+} from '../../../generated/prisma';
+import { type CatalogEntryInput, type CatalogFilters } from '../types/catalog.types';
 
 @Injectable()
 export class ModelCatalogRepository {
@@ -27,11 +32,6 @@ export class ModelCatalogRepository {
     return this.prisma.modelCatalogEntry.findUnique({ where: { id } });
   }
 
-  async countAll(filters: CatalogFilters): Promise<number> {
-    const where = this.buildWhereClause(filters);
-    return this.prisma.modelCatalogEntry.count({ where });
-  }
-
   async search(query: string): Promise<ModelCatalogEntry[]> {
     return this.prisma.modelCatalogEntry.findMany({
       where: {
@@ -44,6 +44,43 @@ export class ModelCatalogRepository {
       orderBy: [{ isRecommended: 'desc' }, { displayName: 'asc' }],
       take: 50,
     });
+  }
+
+  async upsertEntry(entry: CatalogEntryInput): Promise<void> {
+    const runtime = entry.runtime as RuntimeType;
+    const category = entry.category as ModelCategory;
+
+    await this.prisma.modelCatalogEntry.upsert({
+      where: { name_tag_runtime: { name: entry.name, tag: entry.tag, runtime } },
+      update: {
+        displayName: entry.displayName,
+        category,
+        description: entry.description,
+        sizeBytes: entry.sizeBytes,
+        parameterCount: entry.parameterCount,
+        ollamaName: entry.ollamaName,
+        isRecommended: entry.isRecommended,
+        capabilities: [...entry.capabilities],
+      },
+      create: {
+        name: entry.name,
+        tag: entry.tag,
+        displayName: entry.displayName,
+        category,
+        description: entry.description,
+        sizeBytes: entry.sizeBytes,
+        parameterCount: entry.parameterCount,
+        runtime,
+        ollamaName: entry.ollamaName,
+        isRecommended: entry.isRecommended,
+        capabilities: [...entry.capabilities],
+      },
+    });
+  }
+
+  async countAll(filters: CatalogFilters): Promise<number> {
+    const where = this.buildWhereClause(filters);
+    return this.prisma.modelCatalogEntry.count({ where });
   }
 
   private buildWhereClause(filters: CatalogFilters): Prisma.ModelCatalogEntryWhereInput {

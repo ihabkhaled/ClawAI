@@ -522,6 +522,9 @@ export const en: TranslationDictionary = {
     parameterCount: 'Parameters',
     modelSize: 'Size',
     capabilities: 'Capabilities',
+    models: 'models',
+    scrollForMore: 'Scroll for more',
+    allLoaded: 'All models loaded',
   },
   replay: {
     title: 'Routing Replay Lab',
