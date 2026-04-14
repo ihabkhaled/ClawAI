@@ -160,5 +160,76 @@ describe('ComplexityClassifierManager', () => {
       const result = manager.classify('Hi');
       expect(result.score).toBeLessThan(0.01);
     });
+
+    it('exactly 16 words is near SIMPLE/MEDIUM boundary', () => {
+      const msg = 'word '.repeat(16).trim(); // score = 16/400 = 0.04 → exactly at SIMPLE boundary
+      const result = manager.classify(msg);
+      // score = 0.04 which is NOT < 0.04 so class is MEDIUM
+      expect(result.score).toBeCloseTo(0.04, 3);
+      expect(result.class).toBe(ComplexityClass.MEDIUM);
+    });
+
+    it('15 words classifies as SIMPLE', () => {
+      const msg = 'word '.repeat(15).trim(); // score = 15/400 = 0.0375 < 0.04 → SIMPLE
+      const result = manager.classify(msg);
+      expect(result.class).toBe(ComplexityClass.SIMPLE);
+    });
+  });
+
+  // ─── Edge cases ───────────────────────────────────────────────────────────
+  describe('edge cases', () => {
+    it('empty string returns SIMPLE with wordCount 0', () => {
+      const result = manager.classify('');
+      expect(result.class).toBe(ComplexityClass.SIMPLE);
+      expect(result.wordCount).toBe(0);
+      expect(result.score).toBe(0);
+      expect(result.factors).toHaveLength(0);
+    });
+
+    it('only whitespace returns SIMPLE', () => {
+      const result = manager.classify('   \t\n  ');
+      expect(result.class).toBe(ComplexityClass.SIMPLE);
+      expect(result.wordCount).toBe(0);
+    });
+
+    it('message with all 3 factor boosts accumulates correctly', () => {
+      // multi_step + expert_domain + context_reference boosts = 0.45 total
+      // With 0 words → base score = 0, but clamped to 0 so just boosts apply
+      const msg = 'step 1: architecture based on the above';
+      const result = manager.classify(msg);
+      expect(result.factors).toContain('multi_step');
+      expect(result.factors).toContain('expert_domain');
+      expect(result.factors).toContain('context_reference');
+      // 7 words = 0.0175 + 0.20 + 0.15 + 0.10 = 0.4675 → COMPLEX
+      expect(result.class).toBe(ComplexityClass.COMPLEX);
+    });
+
+    it('does not double-count the same factor', () => {
+      // Two multi-step patterns in same message — still only 1 factor tag
+      const msg = 'step 1: do this. step 2: do that.';
+      const result = manager.classify(msg);
+      const multiStepCount = result.factors.filter((f) => f === 'multi_step').length;
+      expect(multiStepCount).toBe(1);
+    });
+
+    it('handles newlines and tabs in word count', () => {
+      const msg = 'line one\nline two\ttab word';
+      const result = manager.classify(msg);
+      expect(result.wordCount).toBe(6); // split on whitespace: "line","one","line","two","tab","word"
+    });
+
+    it('handles punctuation-heavy text without inflating word count', () => {
+      // "Hello, world!" = 2 words
+      const result = manager.classify('Hello, world!');
+      expect(result.wordCount).toBe(2);
+    });
+
+    it('score does not exceed 1.0 even with all boosts on a long message', () => {
+      const longExpertMultiStepContextMsg = `step 1: ${'architecture '.repeat(
+        50,
+      )} based on the above distributed system trade-offs`;
+      const result = manager.classify(longExpertMultiStepContextMsg);
+      expect(result.score).toBeLessThanOrEqual(1.0);
+    });
   });
 });

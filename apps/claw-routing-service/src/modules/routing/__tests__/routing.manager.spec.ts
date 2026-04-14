@@ -168,6 +168,42 @@ describe('RoutingManager', () => {
       expect(complexityFactor).toBeDefined();
       expect(complexityFactor?.weight).toBe('HIGH');
     });
+
+    // ─── SAR2: routing priority — EXPERT path must NOT override higher-priority routes ──
+    it('SAR2: privacy route takes precedence over EXPERT complexity', async () => {
+      // Privacy keyword forces local regardless of complexity
+      const expertPrivacyMsg = `password ${'word '.repeat(599).trim()}`; // 600 words → EXPERT, but has privacy keyword
+      const context: RoutingContext = {
+        ...baseContext,
+        message: expertPrivacyMsg,
+        userMode: RoutingMode.AUTO,
+        connectorHealth: { ANTHROPIC: true, OPENAI: true },
+        runtimeHealth: { OLLAMA: true },
+      };
+
+      const result = await manager.evaluateRoute(context);
+
+      // Privacy enforcement should win → local provider
+      expect(result.selectedProvider).toBe('local-ollama');
+      expect(result.reasonTags).toContain('privacy_enforced');
+    });
+
+    it('SAR2: all modes produce explanation and routingDurationMs', async () => {
+      const modes = [
+        RoutingMode.LOCAL_ONLY,
+        RoutingMode.PRIVACY_FIRST,
+        RoutingMode.LOW_LATENCY,
+        RoutingMode.HIGH_REASONING,
+        RoutingMode.COST_SAVER,
+      ];
+
+      for (const mode of modes) {
+        const result = await manager.evaluateRoute({ ...baseContext, userMode: mode });
+        expect(result.explanation).toBeDefined();
+        expect(result.routingDurationMs).toBeGreaterThanOrEqual(0);
+        expect(result.complexityClass).toBeDefined();
+      }
+    });
   });
 
   describe('evaluateRoute - MANUAL_MODEL', () => {
