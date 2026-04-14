@@ -10,14 +10,14 @@ const appConfigSchema = z.object({
     .length(64, 'ENCRYPTION_KEY must be a 64-character hex string')
     .regex(/^[\da-fA-F]+$/, 'ENCRYPTION_KEY must be valid hex'),
   WORKSPACE_PORT: z.coerce.number().int().positive().default(4014),
-  GITHUB_CLIENT_ID: z.string().min(1).default(''),
-  GITHUB_CLIENT_SECRET: z.string().min(1).default(''),
-  SLACK_CLIENT_ID: z.string().min(1).default(''),
-  SLACK_CLIENT_SECRET: z.string().min(1).default(''),
-  JIRA_CLIENT_ID: z.string().min(1).default(''),
-  JIRA_CLIENT_SECRET: z.string().min(1).default(''),
-  GOOGLE_CLIENT_ID: z.string().min(1).default(''),
-  GOOGLE_CLIENT_SECRET: z.string().min(1).default(''),
+  GITHUB_CLIENT_ID: z.string().default(''),
+  GITHUB_CLIENT_SECRET: z.string().default(''),
+  SLACK_CLIENT_ID: z.string().default(''),
+  SLACK_CLIENT_SECRET: z.string().default(''),
+  JIRA_CLIENT_ID: z.string().default(''),
+  JIRA_CLIENT_SECRET: z.string().default(''),
+  GOOGLE_CLIENT_ID: z.string().default(''),
+  GOOGLE_CLIENT_SECRET: z.string().default(''),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

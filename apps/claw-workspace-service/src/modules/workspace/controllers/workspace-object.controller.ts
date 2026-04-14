@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UsePipes } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { WorkspaceObjectService } from '../services/workspace-object.service';
@@ -14,10 +14,10 @@ export class WorkspaceObjectController {
   constructor(private readonly service: WorkspaceObjectService) {}
 
   @Get()
-  @UsePipes(new ZodValidationPipe(listWorkspaceObjectsQuerySchema))
   listObjects(
     @CurrentUser() user: AuthenticatedUser,
-    @Query() query: ListWorkspaceObjectsQueryDto,
+    @Query(new ZodValidationPipe(listWorkspaceObjectsQuerySchema))
+    query: ListWorkspaceObjectsQueryDto,
   ): Promise<PaginatedWorkspaceObjects> {
     return this.service.listObjects(user.id, query);
   }

@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UsePipes } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 
 import { CurrentUser } from '@claw/shared-auth';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -15,10 +15,10 @@ export class WorkspaceSearchController {
   constructor(private readonly service: WorkspaceSearchService) {}
 
   @Post()
-  @UsePipes(new ZodValidationPipe(workspaceSearchQuerySchema))
+  @HttpCode(HttpStatus.OK)
   search(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: WorkspaceSearchQueryDto,
+    @Body(new ZodValidationPipe(workspaceSearchQuerySchema)) dto: WorkspaceSearchQueryDto,
   ): Promise<WorkspaceSearchResponse> {
     return this.service.search(user.id, dto);
   }

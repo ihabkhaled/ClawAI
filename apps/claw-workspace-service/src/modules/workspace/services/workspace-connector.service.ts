@@ -9,6 +9,7 @@ import { WorkspaceSyncManager } from '../managers/workspace-sync.manager';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
+import { OAUTH_PROVIDERS } from '../../../common/constants/workspace.constants';
 import type { CreateWorkspaceConnectorDto } from '../dto/create-workspace-connector.dto';
 import type { UpdateWorkspaceConnectorDto } from '../dto/update-workspace-connector.dto';
 import type { ListWorkspaceConnectorsQueryDto } from '../dto/list-workspace-connectors-query.dto';
@@ -146,6 +147,13 @@ export class WorkspaceConnectorService {
   }
 
   async initOAuth(userId: string, dto: OAuthInitDto): Promise<OAuthInitResult> {
+    if (!OAUTH_PROVIDERS.has(dto.provider)) {
+      throw new BusinessException(
+        'workspace.oauth.provider_not_supported',
+        'OAUTH_NOT_SUPPORTED',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     const adapter = this.adapterFactory.getAdapter(dto.provider);
     const scopes = dto.scopes.length > 0 ? dto.scopes : adapter.getDefaultScopes();
     return this.tokenManager.initOAuthFlow(

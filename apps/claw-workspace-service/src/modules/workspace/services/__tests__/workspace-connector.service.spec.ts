@@ -164,11 +164,16 @@ describe('WorkspaceConnectorService', () => {
   });
 
   describe('initOAuth', () => {
-    it('should call tokenManager initOAuthFlow and return result', async () => {
-      const dto = { provider: WorkspaceProvider.GITHUB, redirectUri: 'https://app/cb', scopes: [] };
+    it('should call tokenManager initOAuthFlow and return result for OAuth providers', async () => {
+      const dto = { provider: WorkspaceProvider.SLACK, redirectUri: 'https://app/cb', scopes: [] };
       const result = await service.initOAuth('u1', dto);
       expect(result.authorizationUrl).toBeDefined();
       expect(result.state).toBeDefined();
+    });
+
+    it('should throw when provider does not support OAuth (PAT-only providers)', async () => {
+      const dto = { provider: WorkspaceProvider.GITHUB, redirectUri: 'https://app/cb', scopes: [] };
+      await expect(service.initOAuth('u1', dto)).rejects.toThrow(BusinessException);
     });
   });
 
