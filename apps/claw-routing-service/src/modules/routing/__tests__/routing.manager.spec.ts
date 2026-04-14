@@ -207,6 +207,45 @@ describe('RoutingManager', () => {
         expect(result.complexityClass).toBeDefined();
       }
     });
+
+    // ─── Multimodal capability routing pipeline ordering ──────────────────────
+    it('capability routing fires before category routing — video does not fall into local category', async () => {
+      // "analyze this video" matches VIDEO_MODALITY_PATTERNS and should route to GEMINI.
+      // Without the pipeline-order fix it matched the "reasoning" category and went local.
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'analyze this video clip',
+        connectorHealth: { OPENAI: true, ANTHROPIC: true, GEMINI: true },
+        userMode: RoutingMode.AUTO,
+      });
+      expect(result.selectedProvider).toBe('GEMINI');
+      expect(result.reasonTags).toContain('multimodal');
+      expect(result.reasonTags).toContain('capability_video_input');
+    });
+
+    it('capability routing fires before category routing — web search does not fall into local category', async () => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'search the web for latest AI news',
+        connectorHealth: { OPENAI: true, ANTHROPIC: true, GEMINI: true },
+        userMode: RoutingMode.AUTO,
+      });
+      expect(result.selectedProvider).toBe('GEMINI');
+      expect(result.reasonTags).toContain('multimodal');
+      expect(result.reasonTags).toContain('capability_web_search');
+    });
+
+    it('privacy enforcement still takes precedence over capability routing', async () => {
+      // Medical content + vision keyword → local (privacy wins)
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'what is in this image of my medical records',
+        connectorHealth: { OPENAI: true, ANTHROPIC: true, GEMINI: true },
+        userMode: RoutingMode.AUTO,
+      });
+      expect(result.selectedProvider).toBe('local-ollama');
+      expect(result.reasonTags).toContain('privacy_enforced');
+    });
   });
 
   describe('evaluateRoute - MANUAL_MODEL', () => {

@@ -391,6 +391,27 @@ export class RoutingManager {
       return fileResult;
     }
 
+    // Multimodal capability routing — must run before category detection so that
+    // audio/video/OCR/web-search messages are not incorrectly claimed by local categories
+    const capabilityResult = this.capabilityRouter.route(context);
+    if (capabilityResult) {
+      this.logger.log(
+        `handleAuto: capability routing → ${capabilityResult.provider}/${capabilityResult.model} (${capabilityResult.capability})`,
+      );
+      const primary = { provider: capabilityResult.provider, model: capabilityResult.model };
+      return {
+        selectedProvider: capabilityResult.provider,
+        selectedModel: capabilityResult.model,
+        routingMode: RoutingMode.AUTO,
+        confidence: 0.88,
+        reasonTags: ['auto', 'multimodal', capabilityResult.reason],
+        privacyClass: 'cloud',
+        costClass: 'medium',
+        detectedCategory: capabilityResult.capability.toLowerCase(),
+        fallbackChain: this.buildFallbackChain(primary, context),
+      };
+    }
+
     // Check category-specific local model routing
     const categoryResult = await this.detectCategoryRoute(context);
     if (categoryResult) {
