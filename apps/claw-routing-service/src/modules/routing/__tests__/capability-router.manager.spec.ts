@@ -217,5 +217,124 @@ describe('CapabilityRouterManager', () => {
       const result = manager.route(context);
       expect(result?.provider).toBe('GEMINI');
     });
+
+    // ─── Phase 3: reason string format ───────────────────────────────────────
+    it('reason string is lowercase underscore format — capability_audio_input', () => {
+      const result = manager.route({ ...healthyContext, message: 'transcribe this audio file' });
+      expect(result?.reason).toBe('capability_audio_input');
+    });
+
+    it('reason string is lowercase underscore format — capability_image_input', () => {
+      const result = manager.route({ ...healthyContext, message: 'what is in this image?' });
+      expect(result?.reason).toBe('capability_image_input');
+    });
+
+    it('reason string is lowercase underscore format — capability_web_search', () => {
+      const result = manager.route({ ...healthyContext, message: 'search the web for news' });
+      expect(result?.reason).toBe('capability_web_search');
+    });
+
+    // ─── Phase 3: fallback chains ─────────────────────────────────────────────
+    it('OCR: falls back to ANTHROPIC when GEMINI unavailable', () => {
+      const result = manager.route({
+        ...healthyContext,
+        message: 'extract text from this image',
+        connectorHealth: { GEMINI: false, OPENAI: true, ANTHROPIC: true },
+      });
+      // OCR priority: GEMINI → ANTHROPIC → OPENAI
+      expect(result?.provider).toBe('ANTHROPIC');
+      expect(result?.capability).toBe(ModelCapability.OCR);
+    });
+
+    it('OCR: falls back to OPENAI when GEMINI+ANTHROPIC unavailable', () => {
+      const result = manager.route({
+        ...healthyContext,
+        message: 'ocr this document',
+        connectorHealth: { GEMINI: false, OPENAI: true, ANTHROPIC: false },
+      });
+      expect(result?.provider).toBe('OPENAI');
+    });
+
+    it('WEB_SEARCH: falls back to OPENAI when GEMINI unavailable', () => {
+      const result = manager.route({
+        ...healthyContext,
+        message: 'search the web for latest AI news',
+        connectorHealth: { GEMINI: false, OPENAI: true, ANTHROPIC: true },
+      });
+      expect(result?.provider).toBe('OPENAI');
+    });
+
+    it('WEB_SEARCH: returns null when GEMINI+OPENAI both unavailable', () => {
+      const result = manager.route({
+        ...healthyContext,
+        message: 'search the web for news',
+        connectorHealth: { GEMINI: false, OPENAI: false, ANTHROPIC: true },
+      });
+      // WEB_SEARCH priority: GEMINI → OPENAI only (ANTHROPIC not supported)
+      expect(result).toBeNull();
+    });
+
+    it('IMAGE_INPUT: routes to local-ollama when all cloud unavailable', () => {
+      const result = manager.route({
+        message: 'what is in this image?',
+        connectorHealth: { GEMINI: false, OPENAI: false, ANTHROPIC: false },
+        runtimeHealth: { OLLAMA: true },
+      });
+      // IMAGE_INPUT priority: GEMINI → ANTHROPIC → OPENAI → local-ollama
+      expect(result?.provider).toBe('local-ollama');
+    });
+
+    it('PDF: returns null when all cloud unavailable (local-ollama has no PDF_INPUT)', () => {
+      const result = manager.route({
+        message: 'summarize this document',
+        connectorHealth: { GEMINI: false, OPENAI: false, ANTHROPIC: false },
+        runtimeHealth: { OLLAMA: true },
+      });
+      expect(result).toBeNull();
+    });
+
+    // ─── Phase 3: connector health undefined/null ─────────────────────────────
+    it('treats undefined connectorHealth as fully healthy', () => {
+      const result = manager.route({
+        message: 'transcribe this audio file',
+        connectorHealth: undefined,
+        runtimeHealth: { OLLAMA: true },
+      });
+      expect(result?.provider).toBe('GEMINI');
+    });
+
+    // ─── Phase 3: case sensitivity (via route() which normalizes to lowercase) ─
+    it('route() is case-insensitive — UPPERCASE audio message routes correctly', () => {
+      const result = manager.route({ ...healthyContext, message: 'TRANSCRIBE THIS AUDIO FILE' });
+      expect(result?.capability).toBe(ModelCapability.AUDIO_INPUT);
+      expect(result?.provider).toBe('GEMINI');
+    });
+
+    it('route() is case-insensitive — mixed-case vision message routes correctly', () => {
+      const result = manager.route({ ...healthyContext, message: 'What Is In This Image?' });
+      expect(result?.capability).toBe(ModelCapability.IMAGE_INPUT);
+      expect(result?.provider).toBe('GEMINI');
+    });
+
+    // ─── Phase 3: local-ollama health check ───────────────────────────────────
+    it('local-ollama unavailable does not affect cloud provider selection', () => {
+      const result = manager.route({
+        message: 'transcribe this audio file',
+        connectorHealth: { GEMINI: true, OPENAI: true },
+        runtimeHealth: { OLLAMA: false },
+      });
+      // OLLAMA health doesn't affect GEMINI for audio
+      expect(result?.provider).toBe('GEMINI');
+    });
+
+    it('IMAGE_INPUT skips local-ollama when OLLAMA runtime is unhealthy', () => {
+      const result = manager.route({
+        message: 'what is in this image?',
+        connectorHealth: { GEMINI: false, OPENAI: false, ANTHROPIC: false },
+        runtimeHealth: { OLLAMA: false },
+      });
+      // All cloud down + OLLAMA down → null
+      expect(result).toBeNull();
+    });
   });
 });
