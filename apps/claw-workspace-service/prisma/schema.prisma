@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("WORKSPACE_DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────
+
+enum WorkspaceProvider {
+  GITHUB
+  GITLAB
+  BITBUCKET
+  SLACK
+  JIRA
+  CONFLUENCE
+  FIGMA
+  CLICKUP
+  GOOGLE_DRIVE
+  GMAIL
+  MICROSOFT_SHAREPOINT
+  MICROSOFT_ONEDRIVE
+}
+
+enum WorkspaceConnectorStatus {
+  CONNECTED
+  DEGRADED
+  DISCONNECTED
+  PENDING_AUTH
+  UNKNOWN
+}
+
+enum WorkspaceSyncStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+enum WorkspaceObjectType {
+  REPOSITORY
+  ISSUE
+  PULL_REQUEST
+  MESSAGE
+  CHANNEL
+  DOCUMENT
+  FILE
+  TICKET
+  COMMENT
+  USER
+  PROJECT
+}
+
+enum WorkspacePermissionLevel {
+  READ
+  WRITE
+  ADMIN
+}
+
+// ─── Models ──────────────────────────────────────────────
+
+model WorkspaceConnector {
+  id               String                   @id @default(cuid())
+  userId           String                   @map("user_id")
+  name             String
+  provider         WorkspaceProvider
+  status           WorkspaceConnectorStatus @default(PENDING_AUTH)
+  permissionLevel  WorkspacePermissionLevel @default(READ) @map("permission_level")
+  encryptedTokens  String?                  @map("encrypted_tokens")
+  scopes           String[]                 @default([])
+  expiresAt        DateTime?                @map("expires_at")
+  lastSyncAt       DateTime?                @map("last_sync_at")
+  deltaToken       String?                  @map("delta_token")
+  isEnabled        Boolean                  @default(true) @map("is_enabled")
+  webhookId        String?                  @map("webhook_id")
+  metadata         Json?
+  createdAt        DateTime                 @default(now()) @map("created_at")
+  updatedAt        DateTime                 @updatedAt @map("updated_at")
+
+  syncRuns      WorkspaceSyncRun[]
+  healthEvents  WorkspaceHealthEvent[]
+
+  @@index([userId])
+  @@index([provider])
+  @@index([status])
+  @@index([isEnabled])
+  @@map("workspace_connectors")
+}
+
+model WorkspaceSyncRun {
+  id              String              @id @default(cuid())
+  connectorId     String              @map("connector_id")
+  status          WorkspaceSyncStatus
+  objectType      WorkspaceObjectType @map("object_type")
+  isDelta         Boolean             @default(false) @map("is_delta")
+  objectsFound    Int                 @default(0) @map("objects_found")
+  objectsSynced   Int                 @default(0) @map("objects_synced")
+  objectsFailed   Int                 @default(0) @map("objects_failed")
+  deltaTokenIn    String?             @map("delta_token_in")
+  deltaTokenOut   String?             @map("delta_token_out")
+  startedAt       DateTime            @default(now()) @map("started_at")
+  completedAt     DateTime?           @map("completed_at")
+  errorMessage    String?             @map("error_message")
+
+  connector WorkspaceConnector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+
+  @@index([connectorId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("workspace_sync_runs")
+}
+
+model WorkspaceHealthEvent {
+  id           String                   @id @default(cuid())
+  connectorId  String                   @map("connector_id")
+  status       WorkspaceConnectorStatus
+  latencyMs    Int?                     @map("latency_ms")
+  errorMessage String?                  @map("error_message")
+  checkedAt    DateTime                 @default(now()) @map("checked_at")
+
+  connector WorkspaceConnector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+
+  @@index([connectorId])
+  @@index([checkedAt])
+  @@map("workspace_health_events")
+}

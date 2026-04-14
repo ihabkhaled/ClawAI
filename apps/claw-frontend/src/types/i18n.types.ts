@@ -80,6 +80,7 @@ export type TranslationDictionary = {
     logs: string;
     admin: string;
     settings: string;
+    workspace: string;
   };
   chat: {
     newThread: string;
@@ -862,6 +863,48 @@ export type TranslationDictionary = {
     model: string;
     latency: string;
     viewInThread: string;
+  };
+  workspaceConnectors: {
+    title: string;
+    description: string;
+    createConnector: string;
+    editConnector: string;
+    deleteConnector: string;
+    testHealth: string;
+    triggerSync: string;
+    name: string;
+    nameHelp: string;
+    provider: string;
+    providerHelp: string;
+    permissionLevel: string;
+    permissionLevelHelp: string;
+    status: string;
+    connected: string;
+    degraded: string;
+    disconnected: string;
+    pendingAuth: string;
+    unknown: string;
+    noConnectors: string;
+    noConnectorsDesc: string;
+    connectorCreated: string;
+    connectorCreateFailed: string;
+    connectorDeleted: string;
+    connectorDeleteFailed: string;
+    healthCheckStarted: string;
+    healthCheckFailed: string;
+    syncStarted: string;
+    syncFailed: string;
+    loadFailed: string;
+    loadingConnectors: string;
+    addConnector: string;
+    connectViaOAuth: string;
+    lastSync: string;
+    never: string;
+    syncRuns: string;
+    healthEvents: string;
+    enabled: string;
+    disabled: string;
+    deleteConfirm: string;
   };
   validation: {
     required: string;

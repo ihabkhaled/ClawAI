@@ -174,3 +174,7 @@ export {
   ROLE_PACK_CONTENT_MIN_LENGTH,
   ROLE_PACK_OPTIONS,
 } from './role-pack.constants';
+export {
+  WORKSPACE_CONNECTOR_STATUS_VARIANT,
+  WORKSPACE_CONNECTOR_STATUS_I18N_KEY,
+} from './workspace-connector.constants';

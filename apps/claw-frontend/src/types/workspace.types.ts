@@ -1,0 +1,88 @@
+import type { WorkspaceConnectorStatus } from '../enums/workspace-connector-status.enum';
+import type { WorkspaceProvider } from '../enums/workspace-provider.enum';
+
+export type WorkspaceConnector = {
+  id: string;
+  userId: string;
+  name: string;
+  provider: WorkspaceProvider;
+  status: WorkspaceConnectorStatus;
+  permissionLevel: string;
+  scopes: string[];
+  expiresAt: string | null;
+  lastSyncAt: string | null;
+  isEnabled: boolean;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+  _count: {
+    syncRuns: number;
+    healthEvents: number;
+  };
+  healthEvents: WorkspaceHealthEvent[];
+};
+
+export type WorkspaceHealthEvent = {
+  id: string;
+  connectorId: string;
+  status: WorkspaceConnectorStatus;
+  latencyMs: number | null;
+  errorMessage: string | null;
+  checkedAt: string;
+};
+
+export type PaginatedWorkspaceConnectors = {
+  data: WorkspaceConnector[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type CreateWorkspaceConnectorRequest = {
+  name: string;
+  provider: WorkspaceProvider;
+  permissionLevel?: string;
+  accessToken?: string;
+  refreshToken?: string;
+  scopes?: string[];
+  metadata?: Record<string, unknown>;
+};
+
+export type UpdateWorkspaceConnectorRequest = {
+  name?: string;
+  permissionLevel?: string;
+  isEnabled?: boolean;
+  scopes?: string[];
+};
+
+export type OAuthInitRequest = {
+  provider: WorkspaceProvider;
+  redirectUri: string;
+  scopes?: string[];
+};
+
+export type OAuthInitResult = {
+  authorizationUrl: string;
+  state: string;
+};
+
+export type WorkspaceHealthCheckResult = {
+  status: WorkspaceConnectorStatus;
+  latencyMs: number;
+  errorMessage?: string;
+};
+
+export type WorkspaceSyncResult = {
+  objectsFound: number;
+  objectsSynced: number;
+  objectsFailed: number;
+  errorMessage?: string;
+};
+
+export type ListWorkspaceConnectorsQuery = {
+  page?: number;
+  pageSize?: number;
+  provider?: WorkspaceProvider;
+  status?: WorkspaceConnectorStatus;
+  isEnabled?: boolean;
+};

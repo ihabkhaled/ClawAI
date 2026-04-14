@@ -1,12 +1,16 @@
-import { type UserRole } from "../enums";
-import { type AuditAction } from "../enums";
-import { type AuditSeverity } from "../enums";
-import { type ConnectorProvider } from "../enums";
-import { type ConnectorStatus } from "../enums";
-import { type RoutingMode } from "../enums";
-import { type FileIngestionStatus } from "../enums";
-import { type MemoryType } from "../enums";
-import { type LogLevel } from "../enums";
+import {
+  type AuditAction,
+  type AuditSeverity,
+  type ConnectorProvider,
+  type ConnectorStatus,
+  type FileIngestionStatus,
+  type LogLevel,
+  type MemoryType,
+  type RoutingMode,
+  type UserRole,
+  type WorkspaceConnectorStatus,
+  type WorkspaceProvider,
+} from '../enums';
 
 // ---- Base ----
 
@@ -201,6 +205,43 @@ export interface ServerLogPayload extends BaseEventPayload {
   metadata?: Record<string, unknown>;
 }
 
+// ---- Workspace Connector Events ----
+
+export interface WorkspaceConnectorCreatedPayload extends BaseEventPayload {
+  connectorId: string;
+  provider: WorkspaceProvider;
+  name: string;
+  userId: string;
+}
+
+export interface WorkspaceConnectorUpdatedPayload extends BaseEventPayload {
+  connectorId: string;
+  provider: WorkspaceProvider;
+  changes: Record<string, unknown>;
+  userId: string;
+}
+
+export interface WorkspaceConnectorDeletedPayload extends BaseEventPayload {
+  connectorId: string;
+  provider: WorkspaceProvider;
+  userId: string;
+}
+
+export interface WorkspaceConnectorSyncedPayload extends BaseEventPayload {
+  connectorId: string;
+  provider: WorkspaceProvider;
+  objectsDiscovered: number;
+  objectsSynced: number;
+  userId: string;
+}
+
+export interface WorkspaceConnectorHealthCheckedPayload extends BaseEventPayload {
+  connectorId: string;
+  provider: WorkspaceProvider;
+  status: WorkspaceConnectorStatus;
+  latencyMs?: number;
+}
+
 // ---- Union type for all payloads ----
 
 export type EventPayload =
@@ -223,4 +264,9 @@ export type EventPayload =
   | MemoryExtractedPayload
   | AuditEventPayload
   | HealthCheckPayload
-  | ServerLogPayload;
+  | ServerLogPayload
+  | WorkspaceConnectorCreatedPayload
+  | WorkspaceConnectorUpdatedPayload
+  | WorkspaceConnectorDeletedPayload
+  | WorkspaceConnectorSyncedPayload
+  | WorkspaceConnectorHealthCheckedPayload;

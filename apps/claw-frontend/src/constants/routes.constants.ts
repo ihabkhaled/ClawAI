@@ -29,6 +29,7 @@ export const ROUTES = {
   OBSERVABILITY: '/observability',
   SETTINGS: '/settings',
   ADMIN: '/admin',
+  WORKSPACE: '/workspace',
 } as const;
 
 export const PUBLIC_ROUTES = [ROUTES.LOGIN] as const;

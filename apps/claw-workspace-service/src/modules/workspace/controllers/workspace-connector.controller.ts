@@ -1,0 +1,87 @@
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { CurrentUser } from '@claw/shared-auth';
+import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
+import { WorkspaceConnectorService } from '../services/workspace-connector.service';
+import {
+  type CreateWorkspaceConnectorDto,
+  createWorkspaceConnectorSchema,
+} from '../dto/create-workspace-connector.dto';
+import {
+  type UpdateWorkspaceConnectorDto,
+  updateWorkspaceConnectorSchema,
+} from '../dto/update-workspace-connector.dto';
+import {
+  type ListWorkspaceConnectorsQueryDto,
+  listWorkspaceConnectorsQuerySchema,
+} from '../dto/list-workspace-connectors-query.dto';
+import type {
+  HealthCheckResult,
+  PaginatedWorkspaceConnectors,
+  SyncResult,
+  WorkspaceConnectorWithStats,
+} from '../types/workspace.types';
+import type { AuthenticatedUser } from '../../../common/types/auth.types';
+
+@Controller('workspace/connectors')
+export class WorkspaceConnectorController {
+  constructor(private readonly service: WorkspaceConnectorService) {}
+
+  @Post()
+  async create(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(createWorkspaceConnectorSchema)) dto: CreateWorkspaceConnectorDto,
+  ): Promise<WorkspaceConnectorWithStats> {
+    return this.service.create(user.id, dto);
+  }
+
+  @Get()
+  async findAll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query(new ZodValidationPipe(listWorkspaceConnectorsQuerySchema))
+    query: ListWorkspaceConnectorsQueryDto,
+  ): Promise<PaginatedWorkspaceConnectors> {
+    return this.service.getConnectors(user.id, query);
+  }
+
+  @Get(':id')
+  async findOne(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ): Promise<WorkspaceConnectorWithStats> {
+    return this.service.getConnector(id, user.id);
+  }
+
+  @Patch(':id')
+  async update(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateWorkspaceConnectorSchema)) dto: UpdateWorkspaceConnectorDto,
+  ): Promise<WorkspaceConnectorWithStats> {
+    return this.service.update(id, user.id, dto);
+  }
+
+  @Delete(':id')
+  async remove(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ): Promise<WorkspaceConnectorWithStats> {
+    return this.service.delete(id, user.id);
+  }
+
+  @Post(':id/health')
+  async testHealth(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ): Promise<HealthCheckResult> {
+    return this.service.testHealth(id, user.id);
+  }
+
+  @Post(':id/sync')
+  async triggerSync(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Query('delta') delta: string,
+  ): Promise<SyncResult> {
+    return this.service.triggerSync(id, user.id, delta === 'true');
+  }
+}

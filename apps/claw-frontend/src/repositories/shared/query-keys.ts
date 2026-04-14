@@ -124,4 +124,11 @@ export const queryKeys = {
     all: ['adaptive-learning'] as const,
     insights: (windowDays: number) => ['adaptive-learning', 'insights', windowDays] as const,
   },
+  workspaceConnectors: {
+    all: ['workspaceConnectors'] as const,
+    lists: () => [...queryKeys.workspaceConnectors.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.workspaceConnectors.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.workspaceConnectors.all, 'detail', id] as const,
+  },
 } as const;

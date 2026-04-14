@@ -1,0 +1,7 @@
+export enum WorkspaceConnectorStatus {
+  CONNECTED = 'CONNECTED',
+  DEGRADED = 'DEGRADED',
+  DISCONNECTED = 'DISCONNECTED',
+  PENDING_AUTH = 'PENDING_AUTH',
+  UNKNOWN = 'UNKNOWN',
+}

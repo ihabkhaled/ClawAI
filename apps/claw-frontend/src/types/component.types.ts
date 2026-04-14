@@ -53,6 +53,7 @@ import type { RoleMemberResult, RolePackResult } from './role-pack.types';
 import type { CreatePolicyRequest, RoutingDecision, RoutingPolicy } from './routing.types';
 import type { DecompositionResultState, SubTaskResult } from './task-decomposition.types';
 import type { UseVerifyResultState } from './verifier.types';
+import type { WorkspaceConnector } from './workspace.types';
 
 // ─── Common component props ──────────────────────────────────────────────────
 
@@ -908,5 +909,23 @@ export type RolePackResultCardProps = {
 
 export type RolePackMemberCardProps = {
   member: RoleMemberResult;
+  t: TranslateFunction;
+};
+
+// ─── Workspace connector component props ─────────────────────────────────────
+
+export type WorkspaceConnectorCardProps = {
+  connector: WorkspaceConnector;
+  onDelete: (id: string) => void;
+  onHealthCheck: (id: string) => void;
+  onSync: (id: string) => void;
+  isDeleting: boolean;
+  isCheckingHealth: boolean;
+  isSyncing: boolean;
+  t: TranslateFunction;
+};
+
+export type WorkspaceConnectorStatusBadgeProps = {
+  connector: WorkspaceConnector;
   t: TranslateFunction;
 };

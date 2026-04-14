@@ -1,6 +1,11 @@
-export { EventPattern } from "./event-patterns";
+export { EventPattern } from './event-patterns';
 export type {
   BaseEventPayload,
+  WorkspaceConnectorCreatedPayload,
+  WorkspaceConnectorUpdatedPayload,
+  WorkspaceConnectorDeletedPayload,
+  WorkspaceConnectorSyncedPayload,
+  WorkspaceConnectorHealthCheckedPayload,
   UserCreatedPayload,
   UserLoginPayload,
   UserLogoutPayload,
@@ -22,4 +27,4 @@ export type {
   HealthCheckPayload,
   ServerLogPayload,
   EventPayload,
-} from "./event-payloads.type";
+} from './event-payloads.type';

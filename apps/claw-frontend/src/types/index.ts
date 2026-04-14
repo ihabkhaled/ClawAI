@@ -433,3 +433,15 @@ export type {
   UseRolePackPollResult,
   UseRolePackPageReturn,
 } from './role-pack.types';
+export type {
+  WorkspaceConnector,
+  WorkspaceHealthEvent,
+  PaginatedWorkspaceConnectors,
+  CreateWorkspaceConnectorRequest,
+  UpdateWorkspaceConnectorRequest,
+  OAuthInitRequest,
+  OAuthInitResult,
+  WorkspaceHealthCheckResult,
+  WorkspaceSyncResult,
+  ListWorkspaceConnectorsQuery,
+} from './workspace.types';

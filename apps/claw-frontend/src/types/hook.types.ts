@@ -18,6 +18,7 @@ import type { PipelineResult } from './pipeline.types';
 import type { RecoveryStats } from './recovery.types';
 import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
 import type { ReplayBatchResult } from './replay.types';
+import type { WorkspaceConnector } from './workspace.types';
 
 // ─── Admin hook types ───────────────────────────────────────────────────────
 
@@ -323,4 +324,24 @@ export type UsePipelinePageHookReturn = {
   isPolling: boolean;
   isPipelineReady: boolean;
   handleViewInThread: () => void;
+};
+
+// ─── Workspace hook types ─────────────────────────────────────────────────────
+
+export type UseWorkspacePageReturn = {
+  connectors: WorkspaceConnector[];
+  total: number;
+  isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+  selectedConnector: WorkspaceConnector | null;
+  setSelectedConnector: (c: WorkspaceConnector | null) => void;
+  isCreateOpen: boolean;
+  setIsCreateOpen: (open: boolean) => void;
+  handleDelete: (id: string) => void;
+  handleHealthCheck: (id: string) => void;
+  handleSync: (id: string) => void;
+  isDeleting: boolean;
+  isCheckingHealth: boolean;
+  isSyncing: boolean;
 };

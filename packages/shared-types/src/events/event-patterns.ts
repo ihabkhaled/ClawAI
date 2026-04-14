@@ -26,4 +26,9 @@ export enum EventPattern {
   MODEL_PULLED = 'model.pulled',
   MODEL_DELETED = 'model.deleted',
   CATALOG_UPDATED = 'catalog.updated',
+  WORKSPACE_CONNECTOR_CREATED = 'workspace_connector.created',
+  WORKSPACE_CONNECTOR_UPDATED = 'workspace_connector.updated',
+  WORKSPACE_CONNECTOR_DELETED = 'workspace_connector.deleted',
+  WORKSPACE_CONNECTOR_SYNCED = 'workspace_connector.synced',
+  WORKSPACE_CONNECTOR_HEALTH_CHECKED = 'workspace_connector.health_checked',
 }

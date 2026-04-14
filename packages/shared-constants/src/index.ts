@@ -16,6 +16,7 @@ export const OLLAMA_SERVICE_PORT = 4008;
 export const HEALTH_SERVICE_PORT = 4009;
 export const IMAGE_SERVICE_PORT = 4012;
 export const FILE_GENERATION_SERVICE_PORT = 4013;
+export const WORKSPACE_SERVICE_PORT = 4014;
 
 // ---- Service Names ----
 
@@ -30,6 +31,7 @@ export const OLLAMA_SERVICE = 'ollama-service';
 export const HEALTH_SERVICE = 'health-service';
 export const IMAGE_SERVICE = 'image-service';
 export const FILE_GENERATION_SERVICE = 'file-generation-service';
+export const WORKSPACE_SERVICE = 'workspace-service';
 
 // ---- API ----
 
