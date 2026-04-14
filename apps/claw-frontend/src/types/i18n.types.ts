@@ -81,6 +81,7 @@ export type TranslationDictionary = {
     admin: string;
     settings: string;
     workspace: string;
+    workspaceActions: string;
   };
   chat: {
     newThread: string;

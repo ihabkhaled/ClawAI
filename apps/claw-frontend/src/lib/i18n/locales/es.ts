@@ -80,6 +80,7 @@ export const es: TranslationDictionary = {
     admin: 'Administración',
     settings: 'Configuración',
     workspace: 'Espacio de trabajo',
+    workspaceActions: 'Acciones',
   },
   chat: {
     newThread: 'Nueva conversación',

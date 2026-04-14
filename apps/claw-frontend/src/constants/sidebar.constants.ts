@@ -22,6 +22,7 @@ import {
   Activity,
   Settings,
   Workflow,
+  CheckSquare,
 } from 'lucide-react';
 
 import { ROUTES } from './routes.constants';
@@ -48,6 +49,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
   { labelKey: 'nav.rolePackLab', href: ROUTES.CHAT_ROLE_PACK, icon: Users },
   { labelKey: 'nav.connectors', href: ROUTES.CONNECTORS, icon: Plug },
   { labelKey: 'nav.workspace', href: ROUTES.WORKSPACE, icon: Workflow },
+  { labelKey: 'nav.workspaceActions', href: ROUTES.WORKSPACE_ACTIONS, icon: CheckSquare },
   { labelKey: 'nav.models', href: ROUTES.MODELS, icon: Cpu },
   { labelKey: 'nav.modelCatalog', href: ROUTES.MODELS_CATALOG, icon: Store },
   { labelKey: 'nav.routing', href: ROUTES.ROUTING, icon: Route },
