@@ -57,6 +57,18 @@ export const PROVIDER_CAPABILITY_MATRIX: ProviderCapabilityEntry[] = [
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE, ModelCapability.REASONING],
   },
   {
+    provider: 'GROK',
+    model: 'grok-3',
+    capabilities: [
+      ModelCapability.TEXT,
+      ModelCapability.CODE,
+      ModelCapability.IMAGE_INPUT,
+      ModelCapability.TOOL_CALLING,
+      ModelCapability.STRUCTURED_OUTPUT,
+      ModelCapability.REASONING,
+    ],
+  },
+  {
     provider: 'local-ollama',
     model: 'gemma3:4b',
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE, ModelCapability.IMAGE_INPUT],
@@ -190,8 +202,8 @@ export const CAPABILITY_PROVIDER_PRIORITY: Record<string, string[]> = {
   [ModelCapability.PDF_INPUT]: ['GEMINI', 'ANTHROPIC', 'OPENAI'],
   [ModelCapability.OCR]: ['GEMINI', 'ANTHROPIC', 'OPENAI'],
   [ModelCapability.WEB_SEARCH]: ['GEMINI', 'OPENAI'],
-  [ModelCapability.IMAGE_INPUT]: ['GEMINI', 'ANTHROPIC', 'OPENAI', 'local-ollama'],
-  [ModelCapability.TOOL_CALLING]: ['ANTHROPIC', 'OPENAI', 'GEMINI'],
-  [ModelCapability.REASONING]: ['ANTHROPIC', 'DEEPSEEK'],
-  [ModelCapability.STRUCTURED_OUTPUT]: ['OPENAI', 'ANTHROPIC', 'GEMINI'],
+  [ModelCapability.IMAGE_INPUT]: ['GEMINI', 'ANTHROPIC', 'OPENAI', 'GROK', 'local-ollama'],
+  [ModelCapability.TOOL_CALLING]: ['ANTHROPIC', 'OPENAI', 'GEMINI', 'GROK'],
+  [ModelCapability.REASONING]: ['ANTHROPIC', 'DEEPSEEK', 'GROK'],
+  [ModelCapability.STRUCTURED_OUTPUT]: ['OPENAI', 'ANTHROPIC', 'GEMINI', 'GROK'],
 };

@@ -17,6 +17,7 @@ enum ConnectorProvider {
   AWS_BEDROCK
   DEEPSEEK
   OLLAMA
+  GROK
 }
 
 enum ConnectorStatus {

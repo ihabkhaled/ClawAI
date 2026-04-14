@@ -5,4 +5,5 @@ export enum ConnectorProvider {
   AWS_BEDROCK = 'AWS_BEDROCK',
   DEEPSEEK = 'DEEPSEEK',
   OLLAMA = 'OLLAMA',
+  GROK = 'GROK',
 }

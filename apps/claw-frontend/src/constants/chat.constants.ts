@@ -37,6 +37,7 @@ export const ESTIMATED_COST_PER_INPUT_TOKEN: Record<string, number> = {
   gemini: 0.0000005,
   deepseek: 0.0000014,
   ollama: 0,
+  grok: 0.000003,
 };
 
 /**
@@ -57,4 +58,5 @@ export const ESTIMATED_COST_PER_OUTPUT_TOKEN: Record<string, number> = {
   gemini: 0.0000015,
   deepseek: 0.0000028,
   ollama: 0,
+  grok: 0.000015,
 };

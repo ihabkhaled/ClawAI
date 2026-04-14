@@ -17,4 +17,5 @@ export const PROVIDER_BASE_URLS: Record<string, string> = {
   GEMINI: 'https://generativelanguage.googleapis.com/v1beta/openai',
   DEEPSEEK: 'https://api.deepseek.com/v1',
   ANTHROPIC: 'https://api.anthropic.com/v1',
+  GROK: 'https://api.x.ai/v1',
 };

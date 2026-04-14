@@ -7,6 +7,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<ConnectorProvider, string> = {
   [ConnectorProvider.AWS_BEDROCK]: 'AWS Bedrock',
   [ConnectorProvider.DEEPSEEK]: 'DeepSeek',
   [ConnectorProvider.OLLAMA]: 'Ollama',
+  [ConnectorProvider.GROK]: 'Grok (xAI)',
 };
 
 export const PROVIDER_ICON_COLORS: Record<ConnectorProvider, string> = {
@@ -21,6 +22,7 @@ export const PROVIDER_ICON_COLORS: Record<ConnectorProvider, string> = {
     'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
   [ConnectorProvider.OLLAMA]:
     'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400',
+  [ConnectorProvider.GROK]: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
 };
 
 export const AUTH_TYPE_LABELS: Record<string, string> = {
@@ -54,4 +56,5 @@ export const PROVIDER_DEFAULT_BASE_URLS: Record<ConnectorProvider, string> = {
   [ConnectorProvider.AWS_BEDROCK]: 'https://bedrock-runtime.{region}.amazonaws.com',
   [ConnectorProvider.DEEPSEEK]: 'https://api.deepseek.com/v1',
   [ConnectorProvider.OLLAMA]: 'http://localhost:11434',
+  [ConnectorProvider.GROK]: 'https://api.x.ai/v1',
 };

@@ -1,10 +1,11 @@
-import { ConnectorProvider } from "../../../../generated/prisma";
-import { type ProviderAdapter } from "../provider-adapter.interface";
-import { OpenAIAdapter } from "./openai.adapter";
-import { AnthropicAdapter } from "./anthropic.adapter";
-import { GeminiAdapter } from "./gemini.adapter";
-import { BedrockAdapter } from "./bedrock.adapter";
-import { DeepSeekAdapter } from "./deepseek.adapter";
+import { ConnectorProvider } from '../../../../generated/prisma';
+import { type ProviderAdapter } from '../provider-adapter.interface';
+import { OpenAIAdapter } from './openai.adapter';
+import { AnthropicAdapter } from './anthropic.adapter';
+import { GeminiAdapter } from './gemini.adapter';
+import { BedrockAdapter } from './bedrock.adapter';
+import { DeepSeekAdapter } from './deepseek.adapter';
+import { GrokAdapter } from './grok.adapter';
 
 const adapters: Record<string, ProviderAdapter> = {
   [ConnectorProvider.OPENAI]: new OpenAIAdapter(),
@@ -12,6 +13,7 @@ const adapters: Record<string, ProviderAdapter> = {
   [ConnectorProvider.GEMINI]: new GeminiAdapter(),
   [ConnectorProvider.AWS_BEDROCK]: new BedrockAdapter(),
   [ConnectorProvider.DEEPSEEK]: new DeepSeekAdapter(),
+  [ConnectorProvider.GROK]: new GrokAdapter(),
 };
 
 export function getAdapter(provider: ConnectorProvider): ProviderAdapter {

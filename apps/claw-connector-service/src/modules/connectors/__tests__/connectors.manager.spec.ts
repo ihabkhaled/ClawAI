@@ -37,12 +37,32 @@ const mockOpenAIModelsResponse = {
 const mockAnthropicModelsResponse = {
   data: [
     { type: 'model', id: 'claude-opus-4', display_name: 'Claude Opus 4', created_at: '2025-01-01' },
-    { type: 'model', id: 'claude-sonnet-4', display_name: 'Claude Sonnet 4', created_at: '2025-01-01' },
-    { type: 'model', id: 'claude-haiku-3.5', display_name: 'Claude Haiku 3.5', created_at: '2025-01-01' },
+    {
+      type: 'model',
+      id: 'claude-sonnet-4',
+      display_name: 'Claude Sonnet 4',
+      created_at: '2025-01-01',
+    },
+    {
+      type: 'model',
+      id: 'claude-haiku-3.5',
+      display_name: 'Claude Haiku 3.5',
+      created_at: '2025-01-01',
+    },
   ],
   has_more: false,
   first_id: null,
   last_id: null,
+};
+
+const mockGrokModelsResponse = {
+  object: 'list',
+  data: [
+    { id: 'grok-3', object: 'model', created: 1700000000, owned_by: 'xai' },
+    { id: 'grok-3-mini', object: 'model', created: 1700000000, owned_by: 'xai' },
+    { id: 'grok-3-fast', object: 'model', created: 1700000000, owned_by: 'xai' },
+    { id: 'grok-2-vision-1212', object: 'model', created: 1700000000, owned_by: 'xai' },
+  ],
 };
 
 function mockFetchForProvider(provider: string): void {
@@ -51,6 +71,7 @@ function mockFetchForProvider(provider: string): void {
     [ConnectorProvider.ANTHROPIC]: mockAnthropicModelsResponse,
     [ConnectorProvider.GEMINI]: mockOpenAIModelsResponse,
     [ConnectorProvider.DEEPSEEK]: mockOpenAIModelsResponse,
+    [ConnectorProvider.GROK]: mockGrokModelsResponse,
   };
   const body = responseMap[provider] ?? mockOpenAIModelsResponse;
   global.fetch = jest.fn().mockResolvedValue({
@@ -187,6 +208,27 @@ describe('ConnectorsManager', () => {
         'conn-1',
         ConnectorProvider.ANTHROPIC,
         expect.arrayContaining([expect.objectContaining({ modelKey: 'claude-opus-4' })]),
+      );
+    });
+
+    it('should sync Grok models using GROK adapter', async () => {
+      const grokConnector = {
+        ...mockConnector,
+        provider: ConnectorProvider.GROK,
+        name: 'Test Grok',
+      };
+      mockFetchForProvider(ConnectorProvider.GROK);
+
+      const result = await manager.syncModels(grokConnector);
+
+      expect(result.modelsFound).toBe(4);
+      expect(modelsRepo.upsertMany).toHaveBeenCalledWith(
+        'conn-1',
+        ConnectorProvider.GROK,
+        expect.arrayContaining([
+          expect.objectContaining({ modelKey: 'grok-3' }),
+          expect.objectContaining({ modelKey: 'grok-3-mini' }),
+        ]),
       );
     });
   });

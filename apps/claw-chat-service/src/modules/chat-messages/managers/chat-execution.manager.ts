@@ -222,6 +222,7 @@ export class ChatExecutionManager implements OnModuleInit {
       { provider: 'ANTHROPIC', model: 'claude-sonnet-4' },
       { provider: 'OPENAI', model: 'gpt-4o-mini' },
       { provider: 'DEEPSEEK', model: 'deepseek-chat' },
+      { provider: 'GROK', model: 'grok-3-mini' },
     ];
 
     for (const cloud of allCloudProviders) {

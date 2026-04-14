@@ -26,6 +26,19 @@ export type AnthropicModelEntry = {
   created_at: string;
 };
 
+/** Grok/xAI OpenAI-compatible /v1/models response */
+export type GrokModelsResponse = {
+  object: string;
+  data: GrokModelEntry[];
+};
+
+export type GrokModelEntry = {
+  id: string;
+  object: string;
+  created: number;
+  owned_by: string;
+};
+
 /** Gemini OpenAI-compatible /models response */
 export type GeminiModelsResponse = {
   object: string;

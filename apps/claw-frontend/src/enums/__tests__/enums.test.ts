@@ -47,8 +47,8 @@ describe('RoutingMode enum', () => {
 });
 
 describe('ConnectorProvider enum', () => {
-  it('has all 6 providers', () => {
-    expect(Object.keys(ConnectorProvider)).toHaveLength(6);
+  it('has all 7 providers', () => {
+    expect(Object.keys(ConnectorProvider)).toHaveLength(7);
   });
 
   it('contains expected providers', () => {
@@ -58,6 +58,7 @@ describe('ConnectorProvider enum', () => {
     expect(ConnectorProvider.AWS_BEDROCK).toBe('AWS_BEDROCK');
     expect(ConnectorProvider.DEEPSEEK).toBe('DEEPSEEK');
     expect(ConnectorProvider.OLLAMA).toBe('OLLAMA');
+    expect(ConnectorProvider.GROK).toBe('GROK');
   });
 });
 
