@@ -37,4 +37,10 @@ export enum EventPattern {
   WORKSPACE_ACTION_REJECTED = 'workspace_action.rejected',
   WORKSPACE_ACTION_EXECUTED = 'workspace_action.executed',
   WORKSPACE_ACTION_FAILED = 'workspace_action.failed',
+  AGENT_SESSION_CONNECTED = 'agent.session_connected',
+  AGENT_SESSION_DISCONNECTED = 'agent.session_disconnected',
+  AGENT_COMMAND_REQUESTED = 'agent.command_requested',
+  AGENT_COMMAND_APPROVED = 'agent.command_approved',
+  AGENT_COMMAND_REJECTED = 'agent.command_rejected',
+  AGENT_COMMAND_COMPLETED = 'agent.command_completed',
 }

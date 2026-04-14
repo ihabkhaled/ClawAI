@@ -17,6 +17,7 @@ export const HEALTH_SERVICE_PORT = 4009;
 export const IMAGE_SERVICE_PORT = 4012;
 export const FILE_GENERATION_SERVICE_PORT = 4013;
 export const WORKSPACE_SERVICE_PORT = 4014;
+export const AGENT_SERVICE_PORT = 4015;
 
 // ---- Service Names ----
 
@@ -32,6 +33,7 @@ export const HEALTH_SERVICE = 'health-service';
 export const IMAGE_SERVICE = 'image-service';
 export const FILE_GENERATION_SERVICE = 'file-generation-service';
 export const WORKSPACE_SERVICE = 'workspace-service';
+export const AGENT_SERVICE = 'agent-service';
 
 // ---- API ----
 
