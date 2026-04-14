@@ -10,42 +10,41 @@
 | Env prefix  | `AGENT_`                  |
 | Nginx route | `/api/v1/agent/*`         |
 
-The agent service is the backend for the **desktop agent runtime** — a local Node.js CLI (`agent-cli/`) that runs on the user's machine. It manages agent session lifecycle, a **human-in-the-loop terminal command approval flow**, local repository awareness, and filesystem event ingestion. This enables ClawAI to act as a local AI orchestrator that can run commands on behalf of the user — but only after the user explicitly approves them in the web UI.
+The agent service is the backend for the desktop agent runtime -- a local Node.js CLI (`agent-cli/`) that runs on the user's machine. It manages agent session lifecycle, a human-in-the-loop terminal command approval flow, local repository awareness, and filesystem event ingestion.
 
 ---
 
 ## Architecture
 
-```
+```text
 Desktop Machine (agent-cli/)
-  → POST /sessions            (register)
-  → POST /sessions/heartbeat  (keepalive every 60s)
-  → GET  /commands/pending    (poll for approved commands, every 3s)
-  → POST /commands/:id/dispatch (claim + start execution atomically)
-  → POST /commands/:id/result   (report output + exit code)
-  → POST /repos               (register discovered repos)
-  → POST /events              (batch-ingest file watch events)
+  -> POST /agent/sessions                (register)
+  -> POST /agent/sessions/:id/heartbeat  (keepalive)
+  -> GET  /agent/commands/pending        (poll approved commands)
+  -> POST /agent/commands/:id/complete   (report output + exit code)
+  -> POST /agent/events                  (batch-ingest file watch events)
 
 Web UI (user)
-  → GET  /sessions            (see connected agents)
-  → POST /commands            (send a command to an agent session)
-  → POST /commands/:id/approve (approve a pending command)
-  → POST /commands/:id/reject  (reject a pending command)
-  → GET  /commands            (audit trail of all commands)
-  → GET  /repos               (list detected local repos)
-  → GET  /events              (file system change history)
+  -> GET    /agent/sessions              (see connected agents)
+  -> POST   /agent/commands              (queue a command)
+  -> POST   /agent/commands/:id/approve  (approve pending command)
+  -> POST   /agent/commands/:id/reject   (reject pending command)
+  -> GET    /agent/commands              (audit trail of commands)
+  -> GET    /agent/repos                 (list detected local repos)
+  -> POST   /agent/repos                 (register repo metadata)
+  -> GET    /agent/events                (file system change history)
 ```
 
 ### Dual Authentication Model
 
-The service uses **two distinct authentication mechanisms** in parallel:
+The service uses two distinct authentication mechanisms in parallel:
 
 | Audience    | Guard           | Token type                                         | How obtained                  |
 | ----------- | --------------- | -------------------------------------------------- | ----------------------------- |
 | Web browser | `AuthGuard`     | JWT (`Authorization: Bearer <jwt>`)                | Login via auth-service        |
 | Desktop CLI | `AgentKeyGuard` | Session key (`Authorization: Bearer <sessionKey>`) | Returned once at registration |
 
-The `sessionKey` is a 32-byte cryptographically random hex string (`randomBytes(32).toString('hex')`). It is stored hashed in the database and returned only once at registration. Subsequent agent requests use this key as a Bearer token. The `AgentKeyGuard` validates the key and also checks that the session status is `CONNECTED` — a disconnected or expired session key is immediately rejected with `401`.
+The `sessionKey` is a cryptographically random token. It is stored hashed in the database and returned only once at registration. Subsequent agent requests use this key as a Bearer token. The `AgentKeyGuard` validates the key and checks that the session is still active.
 
 ---
 
@@ -58,18 +57,16 @@ Represents one running instance of the agent CLI on a user's machine.
 | Column          | Type               | Notes                                             |
 | --------------- | ------------------ | ------------------------------------------------- |
 | id              | CUID               | Primary key                                       |
-| userId          | String             | Owning user (from JWT at registration)            |
-| sessionKey      | String             | Unique, used as Bearer token by agent             |
+| userId          | String             | Owning user                                       |
+| sessionKey      | String             | Used as Bearer token by agent                     |
 | hostname        | String             | Machine hostname                                  |
-| platform        | String             | OS platform (linux/win32/darwin)                  |
-| agentVersion    | String             | Semver of the CLI                                 |
+| platform        | String             | OS platform                                       |
+| agentVersion    | String             | CLI semver                                        |
 | status          | AgentSessionStatus | CONNECTED / DISCONNECTED / EXPIRED                |
 | lastHeartbeatAt | DateTime?          | Updated every heartbeat                           |
 | connectedAt     | DateTime           | When session was created                          |
 | disconnectedAt  | DateTime?          | When explicitly disconnected                      |
-| metadata        | Json?              | Arbitrary CLI metadata (Prisma.DbNull for absent) |
-
-**Indexes**: `(userId, status)`, `(sessionKey)`
+| metadata        | Json?              | Arbitrary CLI metadata                            |
 
 ### TerminalCommand
 
@@ -78,11 +75,11 @@ Represents one command dispatched from the web UI to an agent session, with a fu
 | Column          | Type                  | Notes                      |
 | --------------- | --------------------- | -------------------------- |
 | id              | CUID                  | Primary key                |
-| sessionId       | String → AgentSession | Cascade delete             |
+| sessionId       | String -> AgentSession| Cascade delete             |
 | userId          | String                | Owner                      |
 | command         | String                | Shell command string       |
 | workingDir      | String?               | Execution directory        |
-| status          | TerminalCommandStatus | See lifecycle below        |
+| status          | TerminalCommandStatus | Pending, approved, executing, completed, failed, etc. |
 | stdout          | String?               | Captured stdout            |
 | stderr          | String?               | Captured stderr            |
 | exitCode        | Int?                  | Process exit code          |
@@ -90,28 +87,8 @@ Represents one command dispatched from the web UI to an agent session, with a fu
 | rejectedAt      | DateTime?             | When rejected              |
 | startedAt       | DateTime?             | When agent began executing |
 | completedAt     | DateTime?             | When execution finished    |
-| rejectionReason | String?               | Free-text rejection note   |
-| expiresAt       | DateTime              | 10 minutes from creation   |
-
-**Command Lifecycle**:
-
-```
-PENDING_APPROVAL
-  ↓ user approves
-APPROVED
-  ↓ agent polls + dispatches (atomic updateMany with compound condition)
-EXECUTING
-  ↓ agent reports result
-EXECUTED  (exitCode = 0)
-FAILED    (exitCode ≠ 0 or error)
-          (OR)
-REJECTED  (user rejects before execution)
-EXPIRED   (not approved within 10 minutes — background cleanup job)
-```
-
-**Atomic dispatch**: The agent calls `POST /commands/:id/dispatch` which internally uses `updateMany({ where: { id, sessionId, status: APPROVED } })`. This compound condition prevents double-execution if two agent processes poll simultaneously.
-
-**Indexes**: `(sessionId, status)`, `(userId, status)`
+| rejectionReason | String?               | Optional rejection note    |
+| expiresAt       | DateTime              | Approval timeout           |
 
 ### LocalRepo
 
@@ -132,7 +109,7 @@ Represents a Git repository discovered by the agent on the local machine.
 
 ### FileWatchEvent
 
-Batched filesystem change events streamed from the agent's chokidar watcher.
+Batched filesystem change events streamed from the agent's watcher.
 
 | Column    | Type          | Notes                                  |
 | --------- | ------------- | -------------------------------------- |
@@ -141,10 +118,8 @@ Batched filesystem change events streamed from the agent's chokidar watcher.
 | userId    | String        | Owner                                  |
 | eventType | FileEventType | CREATED / MODIFIED / DELETED / RENAMED |
 | filePath  | String        | Absolute path on machine               |
-| repoId    | String?       | Associated local repo (if any)         |
+| repoId    | String?       | Associated local repo                  |
 | createdAt | DateTime      | Server-side ingestion timestamp        |
-
-Events are batch-inserted with `createMany({ skipDuplicates: true })` for efficiency.
 
 ---
 
@@ -152,54 +127,58 @@ Events are batch-inserted with `createMany({ skipDuplicates: true })` for effici
 
 ### User-facing (JWT required)
 
-| Method | Path                                  | Description                                    |
-| ------ | ------------------------------------- | ---------------------------------------------- |
-| POST   | /api/v1/agent/sessions                | Register new session (returns sessionKey once) |
-| GET    | /api/v1/agent/sessions                | List all sessions for current user             |
-| GET    | /api/v1/agent/sessions/:id            | Get single session with counts                 |
-| POST   | /api/v1/agent/sessions/:id/disconnect | Disconnect session                             |
-| POST   | /api/v1/agent/commands                | Create command (sends to agent session)        |
-| GET    | /api/v1/agent/commands                | List commands (filterable by session, status)  |
-| GET    | /api/v1/agent/commands/:id            | Get single command                             |
-| POST   | /api/v1/agent/commands/:id/approve    | Approve pending command                        |
-| POST   | /api/v1/agent/commands/:id/reject     | Reject pending command                         |
-| GET    | /api/v1/agent/repos                   | List repos for current user                    |
-| GET    | /api/v1/agent/events                  | List file events (filterable by session)       |
+| Method   | Path                           | Description                                    |
+| -------- | ------------------------------ | ---------------------------------------------- |
+| POST     | /api/v1/agent/sessions         | Register new session (returns sessionKey once) |
+| GET      | /api/v1/agent/sessions         | List all sessions for current user             |
+| GET      | /api/v1/agent/sessions/:id     | Get single session with counts                 |
+| DELETE   | /api/v1/agent/sessions/:id     | Disconnect session                             |
+| POST     | /api/v1/agent/commands         | Create command for an agent session            |
+| GET      | /api/v1/agent/commands         | List commands                                  |
+| GET      | /api/v1/agent/commands/:id     | Get single command                             |
+| POST     | /api/v1/agent/commands/:id/approve | Approve pending command                    |
+| POST     | /api/v1/agent/commands/:id/reject  | Reject pending command                     |
+| GET      | /api/v1/agent/repos            | List repos for current user                    |
+| POST     | /api/v1/agent/repos            | Register repo                                  |
+| GET      | /api/v1/agent/repos/:id        | Get repo                                       |
+| PATCH    | /api/v1/agent/repos/:id        | Update repo                                    |
+| DELETE   | /api/v1/agent/repos/:id        | Delete repo                                    |
+| GET      | /api/v1/agent/events           | List file events                               |
 
-### Agent-facing (AgentKeyGuard — sessionKey as Bearer token)
+### Agent-facing (AgentKeyGuard)
 
 | Method | Path                                | Description                             |
 | ------ | ----------------------------------- | --------------------------------------- |
-| POST   | /api/v1/agent/sessions/heartbeat    | Update lastHeartbeatAt                  |
+| POST   | /api/v1/agent/sessions/:id/heartbeat | Update lastHeartbeatAt                 |
 | GET    | /api/v1/agent/commands/pending      | Poll approved commands ready to execute |
-| POST   | /api/v1/agent/commands/:id/dispatch | Atomically claim + start execution      |
-| POST   | /api/v1/agent/commands/:id/result   | Report stdout/stderr/exitCode           |
-| POST   | /api/v1/agent/repos                 | Register discovered repo                |
+| POST   | /api/v1/agent/commands/:id/complete | Report stdout/stderr/exitCode           |
 | POST   | /api/v1/agent/events                | Batch-ingest file watch events          |
+
+`GET /agent/commands/pending` also marks the returned commands as started so they cannot be executed twice by a second polling process.
 
 ---
 
 ## Background Jobs
 
-The service uses `@nestjs/schedule` with `@Interval()` decorators for two cleanup tasks, both running every 60 seconds:
+The service uses scheduled cleanup tasks:
 
-### Expired Command Cleanup (`AgentCommandManager.expireStaleCommands`)
+### Expired Command Cleanup
 
-- Finds all commands in `PENDING_APPROVAL` or `APPROVED` status where `expiresAt < now()`
-- Bulk-updates them to `EXPIRED`
-- Prevents commands from staying in the approval queue indefinitely (10-minute TTL)
-
-### Stuck Execution Cleanup (`AgentCommandManager.expireStaleCommands`)
-
-- Finds all commands in `EXECUTING` status where `startedAt < now() - 5 minutes`
-- Bulk-updates them to `FAILED`
-- Handles the case where an agent crashes mid-execution without reporting a result
-
-### Session Expiry Cleanup (`AgentSessionManager` / via repository)
-
-- Finds sessions with `lastHeartbeatAt < now() - SESSION_HEARTBEAT_TIMEOUT_SECONDS (120s)`
+- Finds commands still waiting for approval after their TTL
 - Marks them as `EXPIRED`
-- Prevents stale sessions from appearing as CONNECTED in the UI
+- Prevents stale approval queues
+
+### Stuck Execution Cleanup
+
+- Finds commands stuck in `EXECUTING`
+- Marks them as `FAILED`
+- Handles the case where a local CLI crashes mid-run
+
+### Session Expiry Cleanup
+
+- Finds sessions with stale heartbeats
+- Marks them as `EXPIRED`
+- Prevents stale sessions from appearing as connected
 
 ---
 
@@ -210,37 +189,37 @@ The service uses `@nestjs/schedule` with `@Interval()` decorators for two cleanu
 | `agent.session.connected`    | Session registered   | `{ sessionId, userId, timestamp }` |
 | `agent.session.disconnected` | Session disconnected | `{ sessionId, userId, timestamp }` |
 
-Events are published as fire-and-forget (`void this.publishEvent(...)`) with error logging but no throwing. The audit service can subscribe to these to record agent activity.
+Events are fire-and-forget with error logging so RabbitMQ availability does not block agent operations.
 
 ---
 
 ## Desktop Agent CLI (`agent-cli/`)
 
-The `agent-cli/` package at the root is a standalone Node.js CLI that connects to the ClawAI backend.
+The `agent-cli/` package at the repo root is a standalone Node.js CLI that connects to the ClawAI backend.
 
 ### Commands
 
 ```bash
-node agent-cli/index.js register  # First-time registration (prompts for server URL + JWT)
+node agent-cli/index.js register  # First-time registration
 node agent-cli/index.js start     # Connect to server and begin working
 node agent-cli/index.js status    # Show current session status
 ```
 
 ### Runtime Behavior (when started)
 
-1. Reads config from `~/.claw-agent/config.json`
-2. Sends `POST /sessions/heartbeat` every 30s
-3. Polls `GET /commands/pending` every 3s
-4. For each pending command: calls `POST /commands/:id/dispatch`, executes it via `child_process.exec`, reports result via `POST /commands/:id/result`
-5. Watches the filesystem with **chokidar** and batches `CREATED/MODIFIED/DELETED/RENAMED` events, flushing them every 2s via `POST /events`
-6. Handles `SIGINT` gracefully — stops all loops and calls `POST /sessions/:id/disconnect`
+1. Reads config from local agent config storage
+2. Sends heartbeat on the registered session
+3. Polls `GET /commands/pending`
+4. Executes approved commands locally
+5. Reports results through `POST /commands/:id/complete`
+6. Watches the filesystem and batches file events to `POST /events`
 
 ### Security Model
 
-- The CLI stores the session key in `~/.claw-agent/config.json` on the local machine
+- The CLI stores the session key locally
 - The key is never sent to the frontend or exposed in logs
-- Commands only execute after **explicit user approval** in the web UI
-- The atomic dispatch mechanism prevents double-execution
+- Commands only execute after explicit user approval in the web UI
+- Session and command cleanup limit stale execution state
 
 ---
 
@@ -249,7 +228,7 @@ node agent-cli/index.js status    # Show current session status
 | Page           | Route             | Description                                       |
 | -------------- | ----------------- | ------------------------------------------------- |
 | Agent Sessions | `/agent`          | Grid of connected agents + pending command list   |
-| Terminal       | `/agent/terminal` | Approval queue (pending) + recent command history |
+| Terminal       | `/agent/terminal` | Approval queue + recent command history           |
 | Repositories   | `/agent/repos`    | Cards showing detected local Git repositories     |
 
 ### Key Frontend Hooks
@@ -257,11 +236,11 @@ node agent-cli/index.js status    # Show current session status
 | Hook                       | Responsibility                                                        |
 | -------------------------- | --------------------------------------------------------------------- |
 | `useAgentSessions`         | TanStack Query wrapper for session list                               |
-| `useAgentCommands`         | TanStack Query with `refetchInterval: 5000` (live polling)            |
+| `useAgentCommands`         | TanStack Query wrapper for command list                               |
 | `useAgentRepos`            | TanStack Query wrapper for repo list                                  |
-| `useAgentCommandMutations` | `useCreateCommand`, `useApproveCommand`, `useRejectCommand` mutations |
+| `useAgentCommandMutations` | Create, approve, reject command mutations                             |
 | `useAgentPage`             | Controller hook for `/agent` page                                     |
-| `useAgentTerminalPage`     | Controller hook for `/agent/terminal` — splits pending vs recent      |
+| `useAgentTerminalPage`     | Controller hook for terminal queue/history                            |
 | `useAgentReposPage`        | Controller hook for `/agent/repos`                                    |
 
 ---
@@ -270,19 +249,19 @@ node agent-cli/index.js status    # Show current session status
 
 ### Why a separate service?
 
-The agent runtime has completely different data access patterns from the chat service (heartbeats, polling, batch events) and owns its own PostgreSQL database. Keeping it separate follows the microservice ownership principle: one service, one database, no shared tables.
+The agent runtime has completely different data access patterns from the chat service and owns its own PostgreSQL database. Keeping it separate follows the microservice ownership principle: one service, one database, no shared tables.
 
-### Why atomic dispatch?
+### Why approval-gated command execution?
 
-Without atomic dispatch, two rapid agent poll-then-execute cycles could both pick up the same APPROVED command. The `updateMany({ where: { id, sessionId, status: APPROVED } })` returns a count — if count is 0, the command was already claimed. This prevents double-execution without any additional locking.
+The product goal is local execution with human control. The backend stores, audits, and transitions command state, but the CLI only executes work that the user has explicitly approved.
 
-### Why 10-minute command TTL?
+### Why poll for pending commands?
 
-Commands that sit unapproved for 10 minutes are likely forgotten. The TTL prevents indefinite accumulation and ensures the agent's poll queue stays clean.
+Polling keeps the local CLI simple and resilient. The backend can atomically transition commands into execution as they are claimed by the CLI.
 
 ### Why fire-and-forget event publishing?
 
-RabbitMQ availability should not block agent operations. If the message bus is down, sessions still register and commands still flow. The `void publishEvent(...)` pattern with error logging ensures agent stability under infrastructure failures.
+RabbitMQ availability should not block session registration or command handling. Event publication failures are logged, but core agent flows keep moving.
 
 ---
 
@@ -302,24 +281,14 @@ RabbitMQ availability should not block agent operations. If the message bus is d
 
 ## Module Structure
 
-```
+```text
 apps/claw-agent-service/src/
   common/
-    constants/
-      agent.constants.ts     # COMMAND_EXPIRY_MS, SESSION_HEARTBEAT_TIMEOUT_SECONDS, etc.
     decorators/
-      agent-session.decorator.ts  # @AgentSession() param decorator
     enums/
-      agent-session-status.enum.ts
-      terminal-command-status.enum.ts
-      file-event-type.enum.ts
     errors/
-      business.exception.ts
-      entity-not-found.exception.ts
     guards/
-      agent-key.guard.ts      # Validates sessionKey Bearer token
     types/
-      auth.types.ts           # AgentAuthContext, AgentRequest (IncomingMessage-based)
   modules/agent/
     controllers/
       agent-session.controller.ts
@@ -332,7 +301,7 @@ apps/claw-agent-service/src/
       agent-repo.service.ts
       agent-event.service.ts
     managers/
-      agent-command.manager.ts  # Background cleanup jobs, atomic dispatch
+      agent-command.manager.ts
     repositories/
       agent-session.repository.ts
       agent-command.repository.ts
@@ -340,16 +309,11 @@ apps/claw-agent-service/src/
       agent-event.repository.ts
     dto/
       create-agent-session.dto.ts
-      list-sessions-query.dto.ts
       create-command.dto.ts
-      approve-command.dto.ts
-      reject-command.dto.ts
-      list-commands-query.dto.ts
-      report-command-result.dto.ts
+      complete-command.dto.ts
       register-repo.dto.ts
       create-file-events.dto.ts
-      list-events-query.dto.ts
     types/
-      agent.types.ts   # All response/domain types including ListEventsQuery
-  generated/prisma/    # Prisma client (generated at build time)
+      agent.types.ts
+  generated/prisma/
 ```

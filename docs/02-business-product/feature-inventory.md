@@ -796,7 +796,7 @@ System health monitoring and log management.
 
 ### 10.1 Health Dashboard
 
-**Description:** Aggregated health status across all 11 backend services, Ollama runtime, and external connectors.
+**Description:** Aggregated health status across 14 downstream platform services, the Ollama runtime, and the broader local runtime dependencies.
 
 **Related Services:** claw-health-service (port 4009), all services
 
@@ -1072,3 +1072,106 @@ Management of locally installed AI models via the Ollama runtime.
 **Acceptance Criteria:**
 
 - GET /api/v1/ollama/runtimes returns all RuntimeConfig records.
+
+---
+
+## 15. Workspace Integrations
+
+External workspace sync, search, and approval-backed actions.
+
+### 15.1 Workspace Connector Management
+
+**Description:** Users create, update, test, sync, and remove workspace connectors for providers such as GitHub, Slack, Jira, Google, and similar systems.
+
+**Related Services:** claw-workspace-service (port 4014)
+
+**Acceptance Criteria:**
+
+- POST /api/v1/workspace/connectors creates a connector with provider, scopes, and permission settings.
+- GET /api/v1/workspace/connectors lists user connectors.
+- POST /api/v1/workspace/connectors/:id/health runs a health check.
+- POST /api/v1/workspace/connectors/:id/sync triggers a sync run.
+
+### 15.2 Workspace OAuth
+
+**Description:** OAuth-based provider setup for supported workspace providers.
+
+**Related Services:** claw-workspace-service (port 4014)
+
+**Acceptance Criteria:**
+
+- POST /api/v1/workspace/oauth/init starts an OAuth flow.
+- GET /api/v1/workspace/oauth/callback completes the flow.
+- Provider-specific credentials are read from `.env`.
+
+### 15.3 Workspace Search and Object Browser
+
+**Description:** Search synced external objects and inspect their details for grounding and traceability.
+
+**Related Services:** claw-workspace-service (port 4014), claw-chat-service (port 4002)
+
+**Acceptance Criteria:**
+
+- POST /api/v1/workspace/search returns matched synced objects for the current user.
+- GET /api/v1/workspace/objects lists synced objects.
+- GET /api/v1/workspace/objects/:id returns object detail.
+- POST /api/v1/internal/workspace/search is used by chat context assembly.
+
+### 15.4 Workspace Action Approval
+
+**Description:** Draft external actions such as issue creation or outbound messages, then require explicit user approval before execution.
+
+**Related Services:** claw-workspace-service (port 4014)
+
+**Acceptance Criteria:**
+
+- POST /api/v1/workspace/actions creates an action draft.
+- POST /api/v1/workspace/actions/:id/approve approves an action.
+- POST /api/v1/workspace/actions/:id/reject rejects an action.
+- Action state transitions are recorded in the workspace database.
+
+---
+
+## 16. Local Agent Runtime
+
+Backend support for a local CLI that can register with the platform, receive approved commands, and report local repo and file activity.
+
+### 16.1 Agent Sessions
+
+**Description:** Register and monitor local agent sessions tied to the authenticated user.
+
+**Related Services:** claw-agent-service (port 4015)
+
+**Acceptance Criteria:**
+
+- POST /api/v1/agent/sessions creates a session and returns a session key once.
+- GET /api/v1/agent/sessions lists sessions.
+- DELETE /api/v1/agent/sessions/:id disconnects a session.
+- POST /api/v1/agent/sessions/:id/heartbeat refreshes the heartbeat using the session key.
+
+### 16.2 Command Approval Workflow
+
+**Description:** Create commands in the UI, approve or reject them, then let the local CLI execute approved work and report completion.
+
+**Related Services:** claw-agent-service (port 4015)
+
+**Acceptance Criteria:**
+
+- POST /api/v1/agent/commands creates a command.
+- POST /api/v1/agent/commands/:id/approve approves the command.
+- POST /api/v1/agent/commands/:id/reject rejects the command.
+- GET /api/v1/agent/commands/pending returns approved commands for the CLI.
+- POST /api/v1/agent/commands/:id/complete records stdout, stderr, and exitCode.
+
+### 16.3 Repo and File Event Reporting
+
+**Description:** Register local repositories and report filesystem activity from the CLI.
+
+**Related Services:** claw-agent-service (port 4015)
+
+**Acceptance Criteria:**
+
+- POST /api/v1/agent/repos registers repository metadata.
+- GET /api/v1/agent/repos lists repositories.
+- POST /api/v1/agent/events reports batched file events.
+- GET /api/v1/agent/events lists recorded file events.

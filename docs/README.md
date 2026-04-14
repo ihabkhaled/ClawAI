@@ -1,6 +1,6 @@
 # ClawAI Documentation Hub
 
-> **Local-first AI orchestration platform** — 13 NestJS microservices + Next.js frontend + 8 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama
+> **Local-first AI orchestration platform** -- 15 NestJS backend services + Next.js frontend + 11 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama + ClamAV
 
 ---
 
@@ -8,12 +8,12 @@
 
 | Role              | Start Here                                                    | Then Read                                                                                                             |
 | ----------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **New Engineer**  | [Onboarding (5 min)](00-start-here/onboarding-5-minutes.md)   | [System at a Glance](00-start-here/system-at-a-glance.md) → [Backend Services](04-backend/services-index.md)          |
-| **Product Owner** | [Product Vision](01-executive-context/product-vision.md)      | [Feature Inventory](02-business-product/feature-inventory.md) → [User Journeys](02-business-product/user-journeys.md) |
-| **QA / Tester**   | [Testing Strategy](09-testing/testing-strategy.md)            | [UAT Guide](10-uat-acceptance/uat-guide.md) → [API Reference](12-reference/api-reference.md)                          |
-| **DevOps**        | [Docker Guide](08-runtime-devops/docker-guide.md)             | [Nginx Reference](08-runtime-devops/nginx-reference.md) → [Troubleshooting](11-runbooks/troubleshooting.md)           |
-| **AI Agent**      | [AI Context Pack](15-ai-context/ai-context-pack.md)           | [Codebase Navigation](15-ai-context/codebase-navigation.md) → [Services Index](04-backend/services-index.md)          |
-| **Architect**     | [System Architecture](03-architecture/system-architecture.md) | [Message Flow](03-architecture/message-flow.md) → [ADRs](13-adr/adr-index.md)                                         |
+| **New Engineer**  | [Onboarding (5 min)](00-start-here/onboarding-5-minutes.md)   | [System at a Glance](00-start-here/system-at-a-glance.md) -> [Backend Services](04-backend/services-index.md)         |
+| **Product Owner** | [Product Vision](01-executive-context/product-vision.md)      | [Feature Inventory](02-business-product/feature-inventory.md) -> [User Journeys](02-business-product/user-journeys.md) |
+| **QA / Tester**   | [Testing Strategy](09-testing/testing-strategy.md)            | [UAT Guide](10-uat-acceptance/uat-guide.md) -> [API Reference](12-reference/api-reference.md)                          |
+| **DevOps**        | [Docker Guide](08-runtime-devops/docker-guide.md)             | [Nginx Reference](08-runtime-devops/nginx-reference.md) -> [Troubleshooting](11-runbooks/troubleshooting.md)           |
+| **AI Agent**      | [AI Context Pack](15-ai-context/ai-context-pack.md)           | [Codebase Navigation](15-ai-context/codebase-navigation.md) -> [Services Index](04-backend/services-index.md)          |
+| **Architect**     | [System Architecture](03-architecture/system-architecture.md) | [Message Flow](03-architecture/message-flow.md) -> [ADRs](13-adr/adr-index.md)                                         |
 
 ---
 
@@ -34,14 +34,15 @@
 | [Product Vision](01-executive-context/product-vision.md)       | Mission, goals, KPIs, positioning                       |
 | [Business Overview](01-executive-context/business-overview.md) | Problem, market, personas, business rules, glossary     |
 | [User Personas](02-business-product/user-personas.md)          | 5 personas with workflows and RBAC mapping              |
-| [Feature Inventory](02-business-product/feature-inventory.md)  | 14 feature domains with stories and acceptance criteria |
-| [User Journeys](02-business-product/user-journeys.md)          | 8 end-to-end user journeys with error paths             |
+| [Feature Inventory](02-business-product/feature-inventory.md)  | Current feature domains with stories and acceptance criteria |
+| [User Journeys](02-business-product/user-journeys.md)          | End-to-end user journeys with error paths               |
 
 ### Layer C: Technical Architecture
 
 | Document                                                          | Purpose                                                 |
 | ----------------------------------------------------------------- | ------------------------------------------------------- |
 | [System Architecture](03-architecture/system-architecture.md)     | Context diagram, containers, principles, data ownership |
+| [System Overview](03-architecture/system-overview.md)             | Runtime topology, storage, and communication patterns   |
 | [Message Flow](03-architecture/message-flow.md)                   | End-to-end message lifecycle with sequence diagram      |
 | [Routing Engine](03-architecture/routing-engine.md)               | 7 routing modes, AUTO deep-dive, policies, fallback     |
 | [Event Bus](03-architecture/event-bus.md)                         | RabbitMQ topology, all events, DLQ, retry strategy      |
@@ -51,45 +52,62 @@
 
 | Document                                                      | Purpose                                                        |
 | ------------------------------------------------------------- | -------------------------------------------------------------- |
-| [Services Index](04-backend/services-index.md)                | All 13 services: ports, DBs, controllers, events, dependencies |
+| [Services Index](04-backend/services-index.md)                | All 15 services: ports, DBs, controllers, events, dependencies |
 | [Controllers Reference](04-backend/controllers-reference.md)  | Every route across all services                                |
 | [Backend Coding Standards](04-backend/coding-standards.md)    | Layer rules, ESLint, extraction, error handling                |
 | [Shared Packages](04-backend/shared-packages.md)              | shared-types, shared-constants, shared-rabbitmq, shared-auth   |
-| [Frontend Architecture](05-frontend/frontend-architecture.md) | Page→Hook→Service→Repo pattern, state management, i18n         |
-| [Frontend Coding Standards](05-frontend/coding-standards.md)  | 30 rules, component/hook/query patterns                        |
+| [Workspace Service Guide](04-backend/service-guide-workspace.md) | Workspace sync, search, actions, OAuth                      |
+| [Agent Service Guide](04-backend/service-guide-agent.md)      | Local agent sessions, approvals, repos, file events            |
+| [Frontend Architecture](05-frontend/frontend-architecture.md) | Page->Hook->Service->Repo pattern, state management, i18n      |
+| [Frontend Coding Standards](05-frontend/coding-standards.md)  | Component/hook/query patterns                                  |
 
 ### Layer E: Data & Integrations
 
 | Document                                                  | Purpose                                                            |
 | --------------------------------------------------------- | ------------------------------------------------------------------ |
-| [Database Reference](06-data/database-reference.md)       | All 30+ tables, fields, relationships, migrations                  |
-| [Environment Variables](06-data/environment-variables.md) | All 80+ env vars with defaults and security notes                  |
+| [Database Reference](06-data/database-reference.md)       | Service databases, tables, relationships, migrations               |
+| [Environment Variables](06-data/environment-variables.md) | Active env vars with defaults and security notes                   |
 | [Provider Catalog](07-integrations/provider-catalog.md)   | OpenAI, Anthropic, Gemini, DeepSeek, Ollama setup and capabilities |
 
 ### Layer F: DevOps, Testing & Operations
 
 | Document                                                        | Purpose                                                   |
 | --------------------------------------------------------------- | --------------------------------------------------------- |
-| [Docker Guide](08-runtime-devops/docker-guide.md)               | 26 containers, hot reload, startup order, troubleshooting |
+| [Docker Guide](08-runtime-devops/docker-guide.md)               | 33-container dev stack, hot reload, startup order, troubleshooting |
 | [CI/CD Pipeline](08-runtime-devops/cicd-pipeline.md)            | GitHub Actions, pre-commit hooks, quality gates           |
 | [Nginx Reference](08-runtime-devops/nginx-reference.md)         | Route mappings, SSE config, security headers              |
 | [Testing Strategy](09-testing/testing-strategy.md)              | Test pyramid, inventory, commands, coverage               |
-| [UAT Guide](10-uat-acceptance/uat-guide.md)                     | 60+ test scenarios across 11 features                     |
+| [UAT Guide](10-uat-acceptance/uat-guide.md)                     | End-to-end test scenarios                                 |
 | [Business Acceptance](10-uat-acceptance/business-acceptance.md) | Per-feature checklists, go-live criteria, rollback plan   |
-| [Troubleshooting](11-runbooks/troubleshooting.md)               | 13 problem categories with solutions                      |
-| [Operational Runbooks](11-runbooks/operational-runbooks.md)     | 10 procedures: add provider, backup, rotate secrets, etc. |
+| [Troubleshooting](11-runbooks/troubleshooting.md)               | Problem categories with solutions                         |
+| [Operational Runbooks](11-runbooks/operational-runbooks.md)     | Procedures: add provider, backup, rotate secrets, etc.    |
 
 ### Layer G: Reference
 
 | Document                                                    | Purpose                                      |
 | ----------------------------------------------------------- | -------------------------------------------- |
 | [API Reference](12-reference/api-reference.md)              | Every endpoint: method, path, schema, errors |
-| [Error Catalog](12-reference/error-catalog.md)              | 30+ error codes with retry guidance          |
-| [ADR Index](13-adr/adr-index.md)                            | 10 architecture decisions with rationale     |
-| [Technical Debt](14-risk-debt/technical-debt.md)            | 20 items with severity and prioritization    |
-| [Risk Register](14-risk-debt/risk-register.md)              | 17 risks with scores and mitigations         |
+| [Chat API Reference](12-reference/api-reference-chat.md)    | Chat routes including orchestration modes    |
+| [Workspace API Reference](12-reference/api-reference-workspace.md) | Workspace routes and examples           |
+| [Agent API Reference](12-reference/api-reference-agent.md)  | Agent routes and approval flow               |
+| [Health API Reference](12-reference/api-reference-health.md) | Aggregated and per-service health          |
+| [Error Catalog](12-reference/error-catalog.md)              | Error codes with retry guidance              |
+| [ADR Index](13-adr/adr-index.md)                            | Architecture decisions with rationale        |
+| [Technical Debt](14-risk-debt/technical-debt.md)            | Debt items with severity and prioritization  |
+| [Risk Register](14-risk-debt/risk-register.md)              | Risks with scores and mitigations            |
 | [AI Context Pack](15-ai-context/ai-context-pack.md)         | Optimized for AI coding agents               |
 | [Codebase Navigation](15-ai-context/codebase-navigation.md) | Where to find everything                     |
+
+---
+
+## Current Platform Additions
+
+These docs now reflect the latest additions to the active platform surface:
+
+- `claw-workspace-service` for workspace connectors, OAuth, sync, search, and action approvals
+- `claw-agent-service` for local agent sessions, command approvals, repos, and file events
+- advanced chat orchestration endpoints including `parallel`, `consensus`, `escalation-chain`, `repair`, `decompose`, `best-of-n`, `cost-ensemble`, `verify`, `role-pack`, and `pipeline`
+- expanded runtime topology with 11 PostgreSQL databases and the full 33-container dev stack
 
 ---
 

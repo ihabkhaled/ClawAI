@@ -36,6 +36,10 @@ Last updated: 2026-04-11
 | F-013 | Parallel Multi-Model Compare   | GA     | Send one prompt to 2-5 models simultaneously, view side-by-side responses                            |
 | F-014 | Auto Re-Routing on Weak Answer | GA     | Detects weak responses (short, repetitive, refusal) and re-routes to fallback provider automatically |
 | F-015 | Judge-and-Referee Layer        | GA     | Generator-critic-judge pipeline: second model critiques, local judge accepts/revises/escalates       |
+| F-016 | Consensus Response Mode        | GA     | Collects multiple candidate answers and synthesizes a consensus result                                |
+| F-017 | Escalation Chain               | GA     | Starts with lower-cost or faster models, escalates to stronger ones when thresholds are not met       |
+| F-018 | Answer Repair and Verification | GA     | Repair, verify, and best-of-n style quality workflows before final delivery                           |
+| F-019 | Role Packs and Pipelines       | GA     | Multi-role prompt packs and staged response pipelines                                                 |
 
 ### User Stories
 
@@ -51,6 +55,10 @@ Last updated: 2026-04-11
 - **F-013**: "As a power user, I want to send the same prompt to Claude, GPT, and Gemini simultaneously and compare their responses side by side."
 - **F-014**: "As a user, I want the system to automatically try a better model when the first one gives a weak or broken response, without me having to click Regenerate."
 - **F-015**: "As a developer, I want my coding responses verified by a second model before delivery so I can trust the output without manual review."
+- **F-016**: "As an analyst, I want the platform to compare several candidate answers and return the best merged result."
+- **F-017**: "As a cost-conscious user, I want the system to start cheap and escalate only when the answer quality is not good enough."
+- **F-018**: "As a developer, I want a broken answer repaired or verified before it reaches me."
+- **F-019**: "As a power user, I want staged workflows and multi-role prompting for more structured results."
 
 ---
 
@@ -188,32 +196,69 @@ Last updated: 2026-04-11
 
 ---
 
-## 9. Authentication & Authorization
+## 9. Workspace and External Context
 
-| #     | Feature                 | Status | Description                                           |
-| ----- | ----------------------- | ------ | ----------------------------------------------------- |
-| F-160 | JWT Authentication      | GA     | Short-lived access tokens with refresh token rotation |
-| F-161 | RBAC (3 Roles)          | GA     | ADMIN, OPERATOR, VIEWER with per-endpoint enforcement |
-| F-162 | Session Management      | GA     | Tracked sessions with IP, user agent, revocation      |
-| F-163 | Argon2 Password Hashing | GA     | Memory-hard hashing resistant to GPU attacks          |
-| F-164 | User Management         | GA     | Admin CRUD for user accounts, roles, status           |
+| #     | Feature                   | Status | Description                                                           |
+| ----- | ------------------------- | ------ | --------------------------------------------------------------------- |
+| F-150 | Workspace Connector CRUD  | GA     | Create, update, test, sync, and remove workspace connectors           |
+| F-151 | Workspace OAuth Flows     | GA     | OAuth init and callback flows for supported workspace providers       |
+| F-152 | Workspace Search          | GA     | Search synced external objects for grounding and retrieval            |
+| F-153 | Workspace Object Browser  | GA     | View synced issues, docs, files, messages, and related object detail  |
+| F-154 | Workspace Action Approval | GA     | Draft, approve, reject, and execute external workspace actions        |
+
+### User Stories
+
+- **F-150**: "As an operator, I want to connect GitHub, Jira, or Slack so chat can use live workspace context."
+- **F-151**: "As an admin, I want OAuth-based provider setup rather than copying raw tokens around."
+- **F-152**: "As a user, I want my answers grounded in synced workspace material."
+- **F-154**: "As a team lead, I want creating an external issue or message to require explicit approval."
 
 ---
 
-## 10. Audit & Observability
+## 10. Local Agent Runtime
+
+| #     | Feature                     | Status | Description                                                     |
+| ----- | --------------------------- | ------ | --------------------------------------------------------------- |
+| F-160 | Agent Session Registration  | GA     | Register and monitor local desktop agent sessions               |
+| F-161 | Command Approval Workflow   | GA     | Queue commands, approve/reject, execute, and record results     |
+| F-162 | Repository Awareness        | GA     | Register and browse local repositories connected to a session   |
+| F-163 | File Event Reporting        | GA     | Stream local file-system changes from the CLI to the backend    |
+
+### User Stories
+
+- **F-160**: "As a developer, I want my local agent to show up in the UI as an active session."
+- **F-161**: "As a user, I want every terminal command reviewed before my machine runs it."
+- **F-162**: "As a maintainer, I want the platform to know which local repos are connected to an agent."
+- **F-163**: "As a user, I want file changes on my machine visible to the platform for context and audit."
+
+---
+
+## 11. Authentication & Authorization
+
+| #     | Feature                 | Status | Description                                           |
+| ----- | ----------------------- | ------ | ----------------------------------------------------- |
+| F-170 | JWT Authentication      | GA     | Short-lived access tokens with refresh token rotation |
+| F-171 | RBAC (3 Roles)          | GA     | ADMIN, OPERATOR, VIEWER with per-endpoint enforcement |
+| F-172 | Session Management      | GA     | Tracked sessions with IP, user agent, revocation      |
+| F-173 | Argon2 Password Hashing | GA     | Memory-hard hashing resistant to GPU attacks          |
+| F-174 | User Management         | GA     | Admin CRUD for user accounts, roles, status           |
+
+---
+
+## 12. Audit & Observability
 
 | #     | Feature             | Status | Description                                           |
 | ----- | ------------------- | ------ | ----------------------------------------------------- |
-| F-180 | Audit Logging       | GA     | 10 event types, immutable append-only logs in MongoDB |
+| F-180 | Audit Logging       | GA     | 10+ event types, immutable append-only logs in MongoDB |
 | F-181 | Usage Ledger        | GA     | Token consumption tracking by provider, model, user   |
-| F-182 | Health Dashboard    | GA     | Aggregated health from all 13 services                |
+| F-182 | Health Dashboard    | GA     | Aggregated health from 14 downstream services         |
 | F-183 | Server Logs         | GA     | Centralized backend logs with 30-day TTL              |
 | F-184 | Client Logs         | GA     | Frontend log ingestion with 30-day TTL                |
 | F-185 | Request Correlation | GA     | X-Request-ID from frontend through all services       |
 
 ---
 
-## 11. Settings & Preferences
+## 13. Settings & Preferences
 
 | #     | Feature            | Status | Description                                                    |
 | ----- | ------------------ | ------ | -------------------------------------------------------------- |
@@ -225,12 +270,12 @@ Last updated: 2026-04-11
 
 ---
 
-## 12. Infrastructure Features
+## 14. Infrastructure Features
 
 | #     | Feature                   | Status | Description                                        |
 | ----- | ------------------------- | ------ | -------------------------------------------------- |
-| F-220 | Docker Compose Deployment | GA     | Single-command startup for ~22 containers          |
-| F-221 | Nginx Reverse Proxy       | GA     | 20+ route mappings with SSE support                |
+| F-220 | Docker Compose Deployment | GA     | Single-command startup for the 33-container dev stack |
+| F-221 | Nginx Reverse Proxy       | GA     | Route mappings for all backend services with SSE support |
 | F-222 | Hot Reload Development    | GA     | Node --watch for source, auto-migration for Prisma |
 | F-223 | Pre-Commit Quality Gates  | GA     | Prettier + ESLint + TypeScript + Build + Test      |
 | F-224 | CI/CD Pipeline            | GA     | GitHub Actions: lint -> typecheck -> test -> build |
@@ -241,7 +286,7 @@ Last updated: 2026-04-11
 
 | Category              | GA     | Beta  | Scaffolded | Planned | Total  |
 | --------------------- | ------ | ----- | ---------- | ------- | ------ |
-| Chat & Messaging      | 13     | 0     | 0          | 0       | 13     |
+| Chat & Messaging      | 19     | 0     | 0          | 0       | 19     |
 | Intelligent Routing   | 13     | 0     | 0          | 0       | 13     |
 | Memory System         | 7      | 0     | 0          | 0       | 7      |
 | Model Catalog         | 7      | 0     | 0          | 0       | 7      |
@@ -249,8 +294,10 @@ Last updated: 2026-04-11
 | File Management       | 4      | 0     | 0          | 0       | 4      |
 | Image Generation      | 5      | 0     | 0          | 0       | 5      |
 | File Generation       | 1      | 3     | 0          | 0       | 4      |
+| Workspace             | 5      | 0     | 0          | 0       | 5      |
+| Local Agent Runtime   | 4      | 0     | 0          | 0       | 4      |
 | Auth & Authz          | 5      | 0     | 0          | 0       | 5      |
 | Audit & Observability | 6      | 0     | 0          | 0       | 6      |
 | Settings              | 5      | 0     | 0          | 0       | 5      |
 | Infrastructure        | 5      | 0     | 0          | 0       | 5      |
-| **Total**             | **77** | **3** | **0**      | **0**   | **80** |
+| **Total**             | **92** | **3** | **0**      | **0**   | **95** |

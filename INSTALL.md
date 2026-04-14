@@ -16,7 +16,8 @@ Complete guide to setting up Claw for local development.
 
 Optional:
 
-- **NVIDIA GPU drivers** and **NVIDIA Container Toolkit** if you want GPU-accelerated local models via Ollama.
+- **NVIDIA GPU drivers** and **NVIDIA Container Toolkit** if you want faster local Ollama inference
+- **Workspace OAuth credentials** if you want to test GitHub, Slack, Jira, or Google workspace integrations
 
 ---
 
@@ -43,9 +44,8 @@ The script will:
 - Check that Docker, Node.js 20+, and Git are installed
 - Generate secure random secrets (JWT, encryption key, database passwords)
 - Prompt for admin email/password (with sensible defaults)
-- Detect NVIDIA GPU and offer GPU-accelerated Ollama
 - Create a fully configured `.env` file
-- Build and start all ~22 containers
+- Build and start the full development stack
 - Wait for health checks and print access URLs
 
 ---
@@ -61,41 +61,52 @@ cd claw
 
 # 2. Copy environment file and edit secrets
 cp .env.example .env
-# Edit .env: set JWT_SECRET, ENCRYPTION_KEY, ADMIN_PASSWORD
+# Edit .env: set JWT_SECRET, ENCRYPTION_KEY, ADMIN_PASSWORD, and any provider/OAuth credentials
 
 # 3. Start all containers
 docker compose -f docker-compose.dev.yml up -d
 
 # 4. Verify health
-curl http://localhost:4009/api/v1/health
+curl http://localhost:4000/api/v1/health
 ```
 
-### What Starts (20 containers)
+### What Starts (33 containers)
 
-| Container              | Type          | Host Port    | Internal Port |
-| ---------------------- | ------------- | ------------ | ------------- |
-| claw-auth-service      | Microservice  | 4001         | 4001          |
-| claw-chat-service      | Microservice  | 4002         | 4002          |
-| claw-connector-service | Microservice  | 4003         | 4003          |
-| claw-routing-service   | Microservice  | 4004         | 4004          |
-| claw-memory-service    | Microservice  | 4005         | 4005          |
-| claw-file-service      | Microservice  | 4006         | 4006          |
-| claw-audit-service     | Microservice  | 4007         | 4007          |
-| claw-ollama-service    | Microservice  | 4008         | 4008          |
-| claw-health-service    | Microservice  | 4009         | 4009          |
-| claw-frontend          | Next.js       | 3000         | 3000          |
-| claw-nginx             | Reverse Proxy | 80           | 80            |
-| claw-pg-auth           | PostgreSQL    | 5441         | 5432          |
-| claw-pg-chat           | PostgreSQL    | 5442         | 5432          |
-| claw-pg-connectors     | PostgreSQL    | 5443         | 5432          |
-| claw-pg-routing        | PostgreSQL    | 5444         | 5432          |
-| claw-pg-memory         | PostgreSQL    | 5445         | 5432          |
-| claw-pg-files          | PostgreSQL    | 5446         | 5432          |
-| claw-mongodb           | MongoDB       | 27018        | 27017         |
-| claw-redis             | Redis         | 6380         | 6379          |
-| claw-rabbitmq          | RabbitMQ      | 5672 / 15672 | 5672 / 15672  |
-
-Note: Ollama runs as a separate Docker Compose profile (see GPU / Ollama Setup below).
+| Container                   | Type          | Host Port    | Internal Port |
+| --------------------------- | ------------- | ------------ | ------------- |
+| claw-auth-service           | Microservice  | 4001         | 4001          |
+| claw-chat-service           | Microservice  | 4002         | 4002          |
+| claw-connector-service      | Microservice  | 4003         | 4003          |
+| claw-routing-service        | Microservice  | 4004         | 4004          |
+| claw-memory-service         | Microservice  | 4005         | 4005          |
+| claw-file-service           | Microservice  | 4006         | 4006          |
+| claw-audit-service          | Microservice  | 4007         | 4007          |
+| claw-ollama-service         | Microservice  | 4008         | 4008          |
+| claw-health-service         | Microservice  | 4009         | 4009          |
+| claw-client-logs-service    | Microservice  | 4010         | 4010          |
+| claw-server-logs-service    | Microservice  | 4011         | 4011          |
+| claw-image-service          | Microservice  | 4012         | 4012          |
+| claw-file-generation-service| Microservice  | 4013         | 4013          |
+| claw-workspace-service      | Microservice  | 4014         | 4014          |
+| claw-agent-service          | Microservice  | 4015         | 4015          |
+| claw-frontend               | Next.js       | 3000         | 3000          |
+| claw-nginx                  | Reverse Proxy | 4000         | 80            |
+| claw-pg-auth                | PostgreSQL    | 5441         | 5432          |
+| claw-pg-chat                | PostgreSQL    | 5442         | 5432          |
+| claw-pg-connector           | PostgreSQL    | 5443         | 5432          |
+| claw-pg-routing             | PostgreSQL    | 5444         | 5432          |
+| claw-pg-memory              | PostgreSQL    | 5445         | 5432          |
+| claw-pg-files               | PostgreSQL    | 5446         | 5432          |
+| claw-pg-ollama              | PostgreSQL    | 5447         | 5432          |
+| claw-pg-images              | PostgreSQL    | 5448         | 5432          |
+| claw-pg-file-generations    | PostgreSQL    | 5449         | 5432          |
+| claw-pg-workspace           | PostgreSQL    | 5450         | 5432          |
+| claw-pg-agent               | PostgreSQL    | 5451         | 5432          |
+| claw-mongodb                | MongoDB       | 27018        | 27017         |
+| claw-redis                  | Redis         | 6380         | 6379          |
+| claw-rabbitmq               | RabbitMQ      | 5672 / 15672 | 5672 / 15672  |
+| claw-ollama                 | Ollama        | 11434        | 11434         |
+| claw-clamav                 | ClamAV        | 3310         | 3310          |
 
 ---
 
@@ -115,6 +126,18 @@ At minimum, update these values:
 | `ENCRYPTION_KEY` | Generate a random 32-byte hex string (64 hex chars) |
 | `ADMIN_PASSWORD` | Set the initial admin password                      |
 
+If you want to test the newer platform capabilities, also review:
+
+| Variable | Purpose |
+| -------- | ------- |
+| `WORKSPACE_SERVICE_URL` | Internal workspace service base URL |
+| `AGENT_SERVICE_URL` | Internal agent service base URL |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub workspace OAuth |
+| `SLACK_CLIENT_ID` / `SLACK_CLIENT_SECRET` | Slack workspace OAuth |
+| `JIRA_CLIENT_ID` / `JIRA_CLIENT_SECRET` | Jira workspace OAuth |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google workspace OAuth |
+| `CLAMAV_ENABLED` | Enable or disable antivirus scanning |
+
 To generate secure random values:
 
 ```bash
@@ -130,25 +153,25 @@ openssl rand -hex 32
 ## Step 2: Start All Services
 
 ```bash
-docker compose up -d
+docker compose -f docker-compose.dev.yml up -d
 ```
 
-Wait for all containers to become healthy (this may take 30-60 seconds on first run):
+Wait for all containers to become healthy (this may take 30-60 seconds on first run, longer if Ollama pulls models or ClamAV refreshes signatures):
 
 ```bash
-docker compose ps
+docker compose -f docker-compose.dev.yml ps
 ```
 
-All 20 containers should show status `running` or `healthy`.
+All 33 containers should show status `running` or `healthy`.
 
 ---
 
 ## Step 3: Verify Health
 
-The health service aggregates status from all microservices:
+The health service aggregates status from the platform services:
 
 ```bash
-curl http://localhost:4009/api/v1/health
+curl http://localhost:4000/api/v1/health
 ```
 
 You should receive a JSON response showing each service's health status.
@@ -168,7 +191,7 @@ You should receive a JSON response showing each service's health status.
 ### Via the API (through Nginx)
 
 ```bash
-curl -X POST http://localhost/api/v1/auth/login \
+curl -X POST http://localhost:4000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "admin@claw.local", "password": "your-admin-password"}'
 ```
@@ -198,9 +221,16 @@ curl -X POST http://localhost:4001/api/v1/auth/login \
 | Audit Service       | http://localhost:4007  |
 | Ollama Service      | http://localhost:4008  |
 | Health Service      | http://localhost:4009  |
+| Client Logs Service | http://localhost:4010  |
+| Server Logs Service | http://localhost:4011  |
+| Image Service       | http://localhost:4012  |
+| File Generation     | http://localhost:4013  |
+| Workspace Service   | http://localhost:4014  |
+| Agent Service       | http://localhost:4015  |
 | RabbitMQ Management | http://localhost:15672 |
+| Ollama Runtime      | http://localhost:11434 |
 
-Default RabbitMQ management credentials: `guest` / `guest` (change in production).
+Default RabbitMQ management credentials come from `RABBITMQ_USER` / `RABBITMQ_PASSWORD` in `.env`.
 
 ---
 
@@ -210,10 +240,13 @@ For active development on a specific service, you can run it outside Docker whil
 
 ### 1. Start Infrastructure Only
 
-Start only the databases, Redis, RabbitMQ, and Nginx:
+Start only the databases, Redis, RabbitMQ, Ollama, ClamAV, and Nginx:
 
 ```bash
-docker compose up -d claw-pg-auth claw-pg-chat claw-pg-connectors claw-pg-routing claw-pg-memory claw-pg-files claw-mongodb claw-redis claw-rabbitmq
+docker compose -f docker-compose.dev.yml up -d \
+  pg-auth pg-chat pg-connector pg-routing pg-memory pg-files pg-ollama \
+  pg-images pg-file-generations pg-workspace pg-agent \
+  mongodb redis rabbitmq ollama clamav nginx
 ```
 
 ### 2. Install Dependencies
@@ -225,7 +258,7 @@ npm install
 This installs dependencies for all workspaces:
 
 - Root workspace (shared tooling)
-- All 9 service apps
+- All 15 service apps
 - `apps/claw-frontend` (Next.js)
 - All 4 shared packages
 
@@ -244,27 +277,33 @@ npm run build -w packages/shared-auth
 
 ```bash
 # Example: run the auth service locally
-npm run dev:auth
+npm run dev --workspace=claw-auth-service
+
+# Example: run the workspace service locally
+npm run dev --workspace=claw-workspace-service
+
+# Example: run the agent service locally
+npm run dev --workspace=claw-agent-service
 
 # Example: run the frontend locally
 npm run dev:frontend
 ```
 
-Each service reads its own `.env` file (or inherits from the root `.env`) for database connection strings. When running locally, ensure the connection strings point to `localhost` with the correct host ports (e.g., `localhost:5441` for the auth database).
+Each service reads the root `.env` file for service URLs and database connection strings. When running locally, ensure the connection strings point to `localhost` with the correct host ports (for example `localhost:5450` for the workspace database).
 
 ---
 
 ## GPU / Ollama Setup
 
-### Running Ollama Without GPU
+### Running Ollama in Docker
 
-Start Ollama alongside the other services using the `ollama` profile:
+The development stack includes the Ollama runtime by default:
 
 ```bash
-docker compose --profile ollama up -d
+docker compose -f docker-compose.dev.yml up -d ollama ollama-service
 ```
 
-This starts the Ollama container on port `11434` using CPU inference (slower but works on any machine).
+This starts the Ollama container on port `11434`.
 
 ### Running Ollama With GPU (NVIDIA)
 
@@ -274,21 +313,18 @@ Prerequisites:
 2. Install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
 3. Verify GPU access: `nvidia-smi` should show your GPU.
 
-Start with the GPU profile:
-
-```bash
-docker compose --profile ollama-gpu up -d
-```
+The current dev stack does not use a separate Docker profile for GPU. If Docker can see the GPU, Ollama can use it automatically.
 
 ### Pulling Local Models
 
 Once Ollama is running, pull the models you want to use:
 
 ```bash
-# Recommended: small and fast model for routing/judge duties
-docker exec claw-ollama ollama pull qwen2.5:3b
+# Recommended router / local reasoning models
+docker exec claw-ollama ollama pull gemma3:4b
+docker exec claw-ollama ollama pull qwen3:1.7b
 
-# General-purpose models
+# General-purpose local models
 docker exec claw-ollama ollama pull llama3.1:8b
 docker exec claw-ollama ollama pull mistral:7b
 
@@ -303,36 +339,79 @@ If you prefer running Ollama directly on your host:
 1. Install Ollama from [ollama.com](https://ollama.com).
 2. Start it: `ollama serve`.
 3. Set `OLLAMA_BASE_URL=http://host.docker.internal:11434` in your `.env` so Docker services can reach it.
-4. Pull models: `ollama pull qwen2.5:3b`.
+4. Pull models: `ollama pull gemma3:4b`.
+
+---
+
+## Workspace and Agent Setup
+
+### Workspace Service
+
+To test workspace integrations:
+
+1. Add the provider credentials you need to `.env`
+2. Start the stack
+3. Open the workspace UI flows through the frontend or call `/api/v1/workspace/*`
+
+Core workspace routes:
+
+- `/api/v1/workspace/connectors`
+- `/api/v1/workspace/oauth/init`
+- `/api/v1/workspace/search`
+- `/api/v1/workspace/actions`
+
+### Agent Service
+
+The agent backend runs at `http://localhost:4015` and the local CLI lives in `agent-cli/`.
+
+Typical flow:
+
+1. Start the backend stack
+2. Sign in through the frontend
+3. Register the CLI against the agent service
+4. Approve or reject commands from the UI
+5. Review repos and file events through `/api/v1/agent/*`
 
 ---
 
 ## Port Mapping Reference
 
-| Host Port | Container Port | Service                  |
-| --------- | -------------- | ------------------------ |
-| 80        | 80             | Nginx reverse proxy      |
-| 3000      | 3000           | Frontend (Next.js)       |
-| 4001      | 4001           | Auth service             |
-| 4002      | 4002           | Chat service             |
-| 4003      | 4003           | Connector service        |
-| 4004      | 4004           | Routing service          |
-| 4005      | 4005           | Memory service           |
-| 4006      | 4006           | File service             |
-| 4007      | 4007           | Audit service            |
-| 4008      | 4008           | Ollama service           |
-| 4009      | 4009           | Health service           |
-| 5441      | 5432           | PostgreSQL (auth)        |
-| 5442      | 5432           | PostgreSQL (chat)        |
-| 5443      | 5432           | PostgreSQL (connectors)  |
-| 5444      | 5432           | PostgreSQL (routing)     |
-| 5445      | 5432           | PostgreSQL (memory)      |
-| 5446      | 5432           | PostgreSQL (files)       |
-| 27018     | 27017          | MongoDB (audit)          |
-| 6380      | 6379           | Redis                    |
-| 5672      | 5672           | RabbitMQ (AMQP)          |
-| 15672     | 15672          | RabbitMQ (Management UI) |
-| 11434     | 11434          | Ollama (optional)        |
+| Host Port | Container Port | Service                       |
+| --------- | -------------- | ----------------------------- |
+| 4000      | 80             | Nginx reverse proxy           |
+| 3000      | 3000           | Frontend (Next.js)            |
+| 4001      | 4001           | Auth service                  |
+| 4002      | 4002           | Chat service                  |
+| 4003      | 4003           | Connector service             |
+| 4004      | 4004           | Routing service               |
+| 4005      | 4005           | Memory service                |
+| 4006      | 4006           | File service                  |
+| 4007      | 4007           | Audit service                 |
+| 4008      | 4008           | Ollama service                |
+| 4009      | 4009           | Health service                |
+| 4010      | 4010           | Client logs service           |
+| 4011      | 4011           | Server logs service           |
+| 4012      | 4012           | Image service                 |
+| 4013      | 4013           | File generation service       |
+| 4014      | 4014           | Workspace service             |
+| 4015      | 4015           | Agent service                 |
+| 5441      | 5432           | PostgreSQL (auth)             |
+| 5442      | 5432           | PostgreSQL (chat)             |
+| 5443      | 5432           | PostgreSQL (connector)        |
+| 5444      | 5432           | PostgreSQL (routing)          |
+| 5445      | 5432           | PostgreSQL (memory)           |
+| 5446      | 5432           | PostgreSQL (files)            |
+| 5447      | 5432           | PostgreSQL (ollama)           |
+| 5448      | 5432           | PostgreSQL (images)           |
+| 5449      | 5432           | PostgreSQL (file generations) |
+| 5450      | 5432           | PostgreSQL (workspace)        |
+| 5451      | 5432           | PostgreSQL (agent)            |
+| 27018     | 27017          | MongoDB                       |
+| 6380      | 6379           | Redis                         |
+| 5672      | 5672           | RabbitMQ (AMQP)               |
+| 15672     | 15672          | RabbitMQ (Management UI)      |
+| 11434     | 11434          | Ollama runtime                |
+| 3310      | 3310           | ClamAV                        |
 
 ---
 
@@ -340,15 +419,15 @@ If you prefer running Ollama directly on your host:
 
 ### Port Conflicts
 
-If any ports are already in use, update the corresponding port mappings in `docker-compose.yml` and the relevant `.env` variables.
+If any ports are already in use, update the corresponding port mappings in `docker-compose.dev.yml` and the relevant `.env` variables.
 
 ### Container Fails to Start
 
 Check the logs for the specific container:
 
 ```bash
-docker compose logs claw-auth-service
-docker compose logs claw-pg-auth
+docker compose -f docker-compose.dev.yml logs claw-auth-service
+docker compose -f docker-compose.dev.yml logs claw-pg-auth
 ```
 
 ### Database Connection Issues
@@ -356,7 +435,7 @@ docker compose logs claw-pg-auth
 Ensure the relevant PostgreSQL container is running and healthy:
 
 ```bash
-docker compose ps | grep pg
+docker compose -f docker-compose.dev.yml ps
 ```
 
 ### RabbitMQ Connection Refused
@@ -364,10 +443,22 @@ docker compose ps | grep pg
 RabbitMQ can take 15-30 seconds to fully start. Check its status:
 
 ```bash
-docker compose logs claw-rabbitmq
+docker compose -f docker-compose.dev.yml logs claw-rabbitmq
 ```
 
 Services will retry RabbitMQ connections automatically.
+
+### Workspace OAuth Callback Fails
+
+Verify that the provider client ID, secret, and redirect URL in `.env` match the provider application configuration.
+
+### Agent Session Never Connects
+
+Check that:
+
+- the agent service is healthy
+- the CLI is pointed at the correct base URL
+- the JWT used during registration is still valid
 
 ### Permission Errors on Linux
 
@@ -383,8 +474,8 @@ sudo usermod -aG docker $USER
 To reset everything and start fresh:
 
 ```bash
-docker compose down -v
+docker compose -f docker-compose.dev.yml down -v
 npm run clean
 npm install
-docker compose up -d
+docker compose -f docker-compose.dev.yml up -d
 ```

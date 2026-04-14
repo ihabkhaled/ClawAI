@@ -2,7 +2,7 @@
 
 ## What Is ClawAI?
 
-ClawAI is a local-first AI orchestration platform that routes conversations to the best AI provider automatically. It runs 13 NestJS microservices behind a Next.js frontend, supports 7 routing modes (from fully automatic to privacy-first), and keeps sensitive data local via Ollama. Three roles (Admin, Operator, Viewer), eight languages, full audit trail.
+ClawAI is a local-first AI orchestration platform that routes conversations to the best AI provider automatically. It now runs 15 NestJS backend services behind a Next.js frontend, supports 7 routing modes (from fully automatic to privacy-first), adds advanced orchestration workflows, and keeps sensitive data local via Ollama. Three roles (Admin, Operator, Viewer), eight languages, full audit trail, workspace grounding, and local agent-assisted workflows are all part of the active platform.
 
 ---
 
@@ -12,11 +12,11 @@ ClawAI is a local-first AI orchestration platform that routes conversations to t
 | --------------------- | ---------------------------- | --------------------------------------------------- |
 | **Start Here**        | `docs/00-start-here/`        | This index, system overview, onboarding guide       |
 | **Executive Context** | `docs/01-executive-context/` | Product vision, business overview, personas         |
-| **Architecture**      | `docs/02-architecture/`      | System design, service topology, data flow          |
-| **Service Guides**    | `docs/03-services/`          | Per-service deep dives (auth, chat, routing, etc.)  |
-| **Frontend**          | `docs/04-frontend/`          | Next.js app structure, components, state management |
-| **Infrastructure**    | `docs/05-infrastructure/`    | Docker, Nginx, databases, RabbitMQ, Ollama          |
-| **Operations**        | `docs/06-operations/`        | Deployment, monitoring, troubleshooting, runbooks   |
+| **Architecture**      | `docs/03-architecture/`      | System design, service topology, data flow          |
+| **Backend**           | `docs/04-backend/`           | Per-service deep dives, routes, communication       |
+| **Frontend**          | `docs/05-frontend/`          | Next.js app structure, components, state management |
+| **Infrastructure**    | `docs/08-runtime-devops/`    | Docker, Nginx, databases, RabbitMQ, Ollama          |
+| **Operations**        | `docs/11-runbooks/`          | Deployment, monitoring, troubleshooting, runbooks   |
 
 ---
 
@@ -27,28 +27,29 @@ ClawAI is a local-first AI orchestration platform that routes conversations to t
 1. [Onboarding in 5 Minutes](./onboarding-5-minutes.md) -- get the system running
 2. [System at a Glance](./system-at-a-glance.md) -- understand the architecture
 3. `CLAUDE.md` (project root) -- mandatory coding rules and patterns
-4. Service guide for the service you'll work on (in `docs/03-services/`)
-5. Frontend guide if touching the UI (in `docs/04-frontend/`)
+4. Service guide for the service you'll work on (in `docs/04-backend/`)
+5. Frontend guide if touching the UI (in `docs/05-frontend/`)
 
 ### QA Engineer
 
 1. [System at a Glance](./system-at-a-glance.md) -- understand what you're testing
 2. [Business Overview](../01-executive-context/business-overview.md) -- business rules and workflows
 3. [Onboarding in 5 Minutes](./onboarding-5-minutes.md) -- run the system locally
-4. Service guides for test coverage details (in `docs/03-services/`)
+4. Service guides and API references for test coverage details
 
 ### Product Owner / Stakeholder
 
 1. [Product Vision](../01-executive-context/product-vision.md) -- mission, goals, success metrics
 2. [Business Overview](../01-executive-context/business-overview.md) -- personas, workflows, glossary
-3. [System at a Glance](./system-at-a-glance.md) -- technical context without deep detail
+3. [Feature Catalog](../02-business-product/feature-catalog.md) -- product surface including new services
+4. [System at a Glance](./system-at-a-glance.md) -- technical context without deep detail
 
 ### DevOps / Infrastructure Engineer
 
 1. [System at a Glance](./system-at-a-glance.md) -- ports, databases, containers
 2. [Onboarding in 5 Minutes](./onboarding-5-minutes.md) -- local setup
-3. Infrastructure docs (in `docs/05-infrastructure/`) -- Docker, Nginx, database topology
-4. Operations docs (in `docs/06-operations/`) -- deployment, monitoring, runbooks
+3. Runtime docs (in `docs/08-runtime-devops/`) -- Docker, Nginx, database topology
+4. Operations docs (in `docs/11-runbooks/`) -- deployment, monitoring, runbooks
 
 ### AI Agent (Claude Code, Copilot, etc.)
 
@@ -67,10 +68,10 @@ The docs follow a layered structure, from broad context down to operational deta
 | -------------------------- | -------------------------------------- | ------------------------------------------------------------------------------- |
 | **A -- Start Here**        | `00-start-here/`                       | Orientation. Where everyone begins. Index, overview, onboarding.                |
 | **B -- Executive Context** | `01-executive-context/`                | The "why." Product vision, business rules, personas, glossary.                  |
-| **C -- Architecture**      | `02-architecture/`                     | The "how at a high level." System design, data flow, security model, event bus. |
-| **D -- Service Guides**    | `03-services/`                         | The "how in detail." One doc per microservice covering API, data model, logic.  |
-| **E -- Frontend**          | `04-frontend/`                         | UI architecture, component catalog, state management, i18n.                     |
-| **F -- Infra & Ops**       | `05-infrastructure/`, `06-operations/` | Running it. Docker, Nginx, databases, deployment, monitoring, troubleshooting.  |
+| **C -- Architecture**      | `03-architecture/`                     | The "how at a high level." System design, data flow, security model, event bus. |
+| **D -- Backend**           | `04-backend/`                          | The "how in detail." One doc per service plus cross-service references.          |
+| **E -- Frontend**          | `05-frontend/`                         | UI architecture, component catalog, state management, i18n.                     |
+| **F -- Data & Runtime**    | `06-data/`, `08-runtime-devops/`       | Data topology, env vars, Docker, Nginx, startup, troubleshooting.               |
 
 Each layer assumes you've read the layers above it. If something in a service guide doesn't make sense, check the architecture docs. If the architecture doesn't make sense, check the executive context.
 

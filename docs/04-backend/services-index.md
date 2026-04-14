@@ -1,6 +1,6 @@
 # Backend Services Index
 
-Complete reference for all 14 ClawAI NestJS backend services.
+Complete reference for all 15 ClawAI NestJS backend services.
 
 ---
 
@@ -16,12 +16,13 @@ Complete reference for all 14 ClawAI NestJS backend services.
 | 6   | File            | `claw-file-service`            | 4006 | PostgreSQL (`claw_files`)            | File upload, storage, chunking, download                    |
 | 7   | Audit           | `claw-audit-service`           | 4007 | MongoDB (`claw_audit`)               | Audit trail, usage ledger, cost/latency analytics           |
 | 8   | Ollama          | `claw-ollama-service`          | 4008 | PostgreSQL (`claw_ollama`)           | Local model management, pull, generate, roles               |
-| 9   | Health          | `claw-health-service`          | 4009 | None                                 | Aggregated health checks across all services                |
+| 9   | Health          | `claw-health-service`          | 4009 | None                                 | Aggregated health checks across downstream services         |
 | 10  | Client Logs     | `claw-client-logs-service`     | 4010 | MongoDB (`claw_client_logs`)         | Frontend log ingestion, search, stats (TTL 30d)             |
 | 11  | Server Logs     | `claw-server-logs-service`     | 4011 | MongoDB (`claw_server_logs`)         | Backend structured logs, search, stats (TTL 30d)            |
 | 12  | Image           | `claw-image-service`           | 4012 | PostgreSQL (`claw_images`)           | Image generation orchestration (DALL-E, Gemini, SD)         |
 | 13  | File Generation | `claw-file-generation-service` | 4013 | PostgreSQL (`claw_file_generations`) | File format conversion (PDF, DOCX, CSV, HTML, etc.)         |
-| 14  | Agent           | `claw-agent-service`           | 4015 | PostgreSQL (`claw_agent`)            | Desktop agent sessions, terminal approval, repos, FS events |
+| 14  | Workspace       | `claw-workspace-service`       | 4014 | PostgreSQL (`claw_workspace`)        | Workspace connectors, sync, search, objects, actions        |
+| 15  | Agent           | `claw-agent-service`           | 4015 | PostgreSQL (`claw_agent`)            | Desktop agent sessions, terminal approval, repos, FS events |
 
 ---
 
@@ -132,6 +133,7 @@ Core chat functionality. Manages threads and messages, assembles context (memori
 - Routing Service -- via RabbitMQ (message.created -> message.routed)
 - Memory Service -- HTTP (`/internal/memories/for-context`)
 - Memory Service -- HTTP (`/internal/context-packs/:id/items`)
+- Workspace Service -- HTTP (`/internal/workspace/search`)
 - File Service -- HTTP (`/internal/files/:id/chunks`, `/internal/files/:id/content`)
 - Connector Service -- HTTP (`/internal/connectors/config`)
 - Ollama Service -- HTTP (`/internal/ollama/router-model`)
@@ -638,6 +640,124 @@ Converts LLM-generated text content into downloadable files. Supports 7 output f
 
 ---
 
+### 14. Workspace Service
+
+**Port**: 4014 | **Database**: PostgreSQL (`claw_workspace`) | **ORM**: Prisma
+
+External workspace integration layer. Manages provider connectors, OAuth, sync runs, searchable objects, and approval-gated actions. The chat service uses it to ground prompts with workspace citations during context assembly.
+
+**Controllers**:
+
+| Controller                        | Route Prefix                       | Description                        |
+| --------------------------------- | ---------------------------------- | ---------------------------------- |
+| `WorkspaceConnectorController`    | `/api/v1/workspace/connectors`     | Connector CRUD, health, sync       |
+| `WorkspaceOAuthController`        | `/api/v1/workspace/oauth`          | OAuth init and callback            |
+| `WorkspaceSearchController`       | `/api/v1/workspace/search`         | User-facing workspace search       |
+| `WorkspaceObjectController`       | `/api/v1/workspace/objects`        | Synced object list and detail      |
+| `WorkspaceActionController`       | `/api/v1/workspace/actions`        | Action drafts, approve, reject     |
+| `WorkspaceSearchInternalController` | `/api/v1/internal/workspace/search` | Internal search for chat grounding |
+| `HealthController`                | `/api/v1/health`                   | Service health check               |
+
+**Key Routes**:
+
+- `POST /workspace/connectors` -- Create workspace connector
+- `GET /workspace/connectors` -- List connectors
+- `POST /workspace/connectors/:id/health` -- Run connector health check
+- `POST /workspace/connectors/:id/sync` -- Trigger sync
+- `POST /workspace/oauth/init` -- Start OAuth flow
+- `GET /workspace/oauth/callback` -- Complete OAuth callback
+- `POST /workspace/search` -- Search synced objects for current user
+- `GET /workspace/objects` -- List synced objects
+- `GET /workspace/objects/:id` -- Get object detail
+- `POST /workspace/actions` -- Create action draft
+- `GET /workspace/actions` -- List actions
+- `POST /workspace/actions/:id/approve` -- Approve action
+- `POST /workspace/actions/:id/reject` -- Reject action
+- `POST /internal/workspace/search` -- Internal search for chat context assembly
+
+**Key Services**: `WorkspaceConnectorService`, `WorkspaceSearchService`, `WorkspaceActionService`, `WorkspaceOAuthService`
+
+**Database Tables**:
+
+- `WorkspaceConnector` -- provider, scopes, permissionLevel, token metadata, status
+- `WorkspaceSyncRun` -- sync mode, object type, totals, errors
+- `WorkspaceHealthEvent` -- health check history
+- `WorkspaceObject` -- synced issues, repos, docs, files, comments, channels, tickets
+- `WorkspaceObjectLink` -- graph edges between synced objects
+- `WorkspaceAction` -- action drafts and approval lifecycle
+
+**Events Published**: None required for the core request path
+
+**Events Consumed**: None
+
+**Inter-Service Dependencies**:
+
+- Auth Service -- JWT auth via shared-auth
+- Redis -- ephemeral state and OAuth/search helpers
+
+**Health Endpoint**: `GET /api/v1/health`
+
+---
+
+### 15. Agent Service
+
+**Port**: 4015 | **Database**: PostgreSQL (`claw_agent`) | **ORM**: Prisma
+
+Backend for the local desktop agent runtime. Manages CLI sessions, human-approved command execution, local repository registration, and file-system event ingestion.
+
+**Controllers**:
+
+| Controller             | Route Prefix            | Description                         |
+| ---------------------- | ----------------------- | ----------------------------------- |
+| `AgentSessionController` | `/api/v1/agent/sessions` | Session register, list, disconnect, heartbeat |
+| `AgentCommandController` | `/api/v1/agent/commands` | Create, list, approve, reject, complete |
+| `AgentRepoController`    | `/api/v1/agent/repos`    | Repo register, list, update, delete |
+| `AgentEventController`   | `/api/v1/agent/events`   | File event reporting and listing    |
+| `HealthController`       | `/api/v1/health`         | Service health check                |
+
+**Key Routes**:
+
+- `POST /agent/sessions` -- Register CLI session
+- `GET /agent/sessions` -- List sessions
+- `GET /agent/sessions/:id` -- Get session details
+- `DELETE /agent/sessions/:id` -- Disconnect session
+- `POST /agent/sessions/:id/heartbeat` -- Refresh session heartbeat
+- `POST /agent/commands` -- Create command
+- `GET /agent/commands` -- List commands
+- `GET /agent/commands/pending` -- Agent polls and claims approved commands
+- `POST /agent/commands/:id/approve` -- Approve command
+- `POST /agent/commands/:id/reject` -- Reject command
+- `POST /agent/commands/:id/complete` -- Agent reports completion
+- `POST /agent/repos` -- Register repo
+- `GET /agent/repos` -- List repos
+- `POST /agent/events` -- Report file-system events
+- `GET /agent/events` -- List file-system events
+
+**Key Services**: `AgentSessionService`, `AgentCommandService`, `AgentCommandManager`, `AgentRepoService`, `AgentEventService`
+
+**Database Tables**:
+
+- `AgentSession` -- hostname, platform, version, heartbeat, status
+- `TerminalCommand` -- command text, lifecycle state, stdout/stderr, exitCode
+- `LocalRepo` -- repo path, branch, dirty state, metadata
+- `FileWatchEvent` -- created/modified/deleted/renamed activity
+
+**Events Published**:
+
+- `agent.session.connected` -- When a local CLI registers
+- `agent.session.disconnected` -- When a session disconnects
+
+**Events Consumed**: None
+
+**Inter-Service Dependencies**:
+
+- Auth Service -- JWT auth via shared-auth
+- RabbitMQ -- session lifecycle events
+
+**Health Endpoint**: `GET /api/v1/health`
+
+---
+
 ## Event Bus Summary
 
 All events flow through the `claw.events` topic exchange on RabbitMQ with durable queues, 3 retries with exponential backoff, and dead-letter queues.
@@ -663,6 +783,8 @@ All events flow through the `claw.events` topic exchange on RabbitMQ with durabl
 | `memory.extracted`         | Memory       | Audit          |
 | `image.generated`          | Image        | --             |
 | `image.failed`             | Image        | --             |
+| `agent.session.connected`  | Agent        | --             |
+| `agent.session.disconnected` | Agent      | --             |
 | `health.check`             | Health       | --             |
 | `log.server`               | All services | Server Logs    |
 
@@ -675,6 +797,7 @@ Chat Service
   -> Connector Service  (GET /internal/connectors/config)
   -> Memory Service     (GET /internal/memories/for-context)
   -> Memory Service     (GET /internal/context-packs/:id/items)
+  -> Workspace Service  (POST /internal/workspace/search)
   -> File Service       (GET /internal/files/:id/chunks)
   -> File Service       (GET /internal/files/:id/content)
   -> Ollama Service     (GET /internal/ollama/router-model)
@@ -699,8 +822,14 @@ Agent Service
   -> Auth Service       (JWT validation via shared-auth)
   -> RabbitMQ           (publishes agent.session.connected / disconnected)
 
+Workspace Service
+  -> Provider APIs      (sync / search via provider-specific connectors)
+
+Agent Service
+  -> RabbitMQ           (publishes agent session lifecycle)
+
 Health Service
-  -> All services       (GET /health)
+  -> All 14 downstream services (GET /health)
 ```
 
 ---

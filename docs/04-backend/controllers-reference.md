@@ -1,6 +1,6 @@
 # Controllers Reference
 
-Complete reference for all controllers across all 13 ClawAI backend services. Every route is prefixed with `/api/v1/` via the global API prefix.
+Complete reference for all controllers across all 15 ClawAI backend services. Every route is prefixed with `/api/v1/` via the global API prefix.
 
 ---
 
@@ -19,6 +19,8 @@ Complete reference for all controllers across all 13 ClawAI backend services. Ev
 11. [Server Logs Service Controllers](#server-logs-service-controllers)
 12. [Image Service Controllers](#image-service-controllers)
 13. [File Generation Service Controllers](#file-generation-service-controllers)
+14. [Workspace Service Controllers](#workspace-service-controllers)
+15. [Agent Service Controllers](#agent-service-controllers)
 
 ---
 
@@ -65,6 +67,16 @@ Complete reference for all controllers across all 13 ClawAI backend services. Ev
 | Method  | Path                              | Auth          | Description                                      | Input DTO                                                                                    | Response Type                  | Error Codes                                                  |
 | ------- | --------------------------------- | ------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------ |
 | `POST`  | `/chat-messages`                  | Authenticated | Send a message (triggers routing + AI execution) | `CreateMessageDto` (`createMessageSchema`) -- threadId, content, provider?, model?, fileIds? | `ChatMessage`                  | `THREAD_NOT_FOUND`, `THREAD_ACCESS_DENIED`, `ROUTING_FAILED` |
+| `POST`  | `/chat-messages/parallel`         | Authenticated | Send one prompt to multiple models               | `ParallelMessageDto`                                                                         | `ParallelResponse`             | `THREAD_NOT_FOUND`, `THREAD_ACCESS_DENIED`                   |
+| `POST`  | `/chat-messages/consensus`        | Authenticated | Build a consensus answer from multiple models    | `ConsensusMessageDto`                                                                        | `ConsensusResponse`            | `THREAD_NOT_FOUND`, `THREAD_ACCESS_DENIED`                   |
+| `POST`  | `/chat-messages/escalation-chain` | Authenticated | Escalate across stronger models as needed        | `EscalationChainMessageDto`                                                                  | `EscalationChainResponse`      | `THREAD_NOT_FOUND`, `THREAD_ACCESS_DENIED`                   |
+| `POST`  | `/chat-messages/repair`           | Authenticated | Repair or critique an answer                     | `RepairMessageDto`                                                                           | `AnswerRepairResponse`         | `THREAD_NOT_FOUND`, `THREAD_ACCESS_DENIED`                   |
+| `POST`  | `/chat-messages/decompose`        | Authenticated | Decompose a task into structured subtasks        | `DecomposeTaskDto`                                                                           | `TaskDecompositionResponse`    | `VALIDATION_ERROR`                                           |
+| `POST`  | `/chat-messages/best-of-n`        | Authenticated | Generate multiple candidates and choose one      | `BestOfNMessageDto`                                                                          | `BestOfNResponse`              | `VALIDATION_ERROR`                                           |
+| `POST`  | `/chat-messages/cost-ensemble`    | Authenticated | Balance answer quality and cost                  | `CostEnsembleMessageDto`                                                                     | `CostEnsembleResponse`         | `VALIDATION_ERROR`                                           |
+| `POST`  | `/chat-messages/verify`           | Authenticated | Verify an answer against checks                  | `VerifyMessageDto`                                                                           | `VerifyResponse`               | `VALIDATION_ERROR`                                           |
+| `POST`  | `/chat-messages/role-pack`        | Authenticated | Run multi-role prompt packs                      | `RolePackMessageDto`                                                                         | `RolePackResponse`             | `VALIDATION_ERROR`                                           |
+| `POST`  | `/chat-messages/pipeline`         | Authenticated | Execute staged prompt pipeline                   | `PipelineMessageDto`                                                                         | `PipelineResponse`             | `VALIDATION_ERROR`                                           |
 | `GET`   | `/chat-messages/thread/:threadId` | Authenticated | List messages in a thread                        | `ListMessagesQueryDto` (`listMessagesQuerySchema`) -- page, limit                            | `PaginatedResult<ChatMessage>` | `THREAD_NOT_FOUND`, `THREAD_ACCESS_DENIED`                   |
 | `GET`   | `/chat-messages/:id`              | Authenticated | Get a single message                             | Path: `id` (UUID)                                                                            | `ChatMessage`                  | `MESSAGE_NOT_FOUND`, `MESSAGE_ACCESS_DENIED`                 |
 | `POST`  | `/chat-messages/:id/regenerate`   | Authenticated | Regenerate AI response for a message             | Path: `id` (UUID)                                                                            | `ChatMessage`                  | `MESSAGE_NOT_FOUND`, `REGENERATION_FAILED`                   |
@@ -371,6 +383,131 @@ Complete reference for all controllers across all 13 ClawAI backend services. Ev
 | `GET`  | `/internal/file-generations/:generationId`        | Public | Get generation status                   | Path: `generationId` (UUID)                                                    | File generation record             | --          |
 | `POST` | `/internal/file-generations/:generationId/retry`  | Public | Retry generation                        | Path: `generationId` (UUID)                                                    | `{ generationId, status }`         | --          |
 | `SSE`  | `/internal/file-generations/:generationId/events` | Public | Generation progress stream              | Path: `generationId` (UUID)                                                    | `Observable<MessageEvent>`         | --          |
+
+---
+
+## Workspace Service Controllers
+
+### WorkspaceConnectorController
+
+**Route Prefix**: `/api/v1/workspace/connectors`
+**File**: `apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts`
+
+| Method | Path                             | Auth          | Description                 | Input DTO | Response Type | Error Codes |
+| ------ | -------------------------------- | ------------- | --------------------------- | --------- | ------------- | ----------- |
+| `POST` | `/workspace/connectors`          | Authenticated | Create workspace connector  | Create connector DTO | Workspace connector | -- |
+| `GET`  | `/workspace/connectors`          | Authenticated | List connectors             | Query DTO | Paginated/list response | -- |
+| `GET`  | `/workspace/connectors/:id`      | Authenticated | Get connector               | Path: `id` | Workspace connector | `ENTITY_NOT_FOUND` |
+| `PATCH`| `/workspace/connectors/:id`      | Authenticated | Update connector            | Update connector DTO | Workspace connector | `ENTITY_NOT_FOUND` |
+| `DELETE`| `/workspace/connectors/:id`     | Authenticated | Delete connector            | Path: `id` | Workspace connector | `ENTITY_NOT_FOUND` |
+| `POST` | `/workspace/connectors/:id/health` | Authenticated | Run connector health check | Path: `id` | Health result | `ENTITY_NOT_FOUND` |
+| `POST` | `/workspace/connectors/:id/sync` | Authenticated | Trigger sync run            | Path: `id` | Sync result | `ENTITY_NOT_FOUND` |
+
+### WorkspaceOAuthController
+
+**Route Prefix**: `/api/v1/workspace/oauth`
+**File**: `apps/claw-workspace-service/src/modules/workspace/controllers/workspace-oauth.controller.ts`
+
+| Method | Path                        | Auth          | Description         | Input DTO | Response Type | Error Codes |
+| ------ | --------------------------- | ------------- | ------------------- | --------- | ------------- | ----------- |
+| `POST` | `/workspace/oauth/init`     | Authenticated | Start OAuth flow    | OAuth init DTO | Redirect/init result | -- |
+| `GET`  | `/workspace/oauth/callback` | Public        | Complete OAuth flow | Query params | Callback result | -- |
+
+### WorkspaceSearchController
+
+**Route Prefix**: `/api/v1/workspace/search`
+**File**: `apps/claw-workspace-service/src/modules/workspace/controllers/workspace-search.controller.ts`
+
+| Method | Path                | Auth          | Description                 | Input DTO | Response Type | Error Codes |
+| ------ | ------------------- | ------------- | --------------------------- | --------- | ------------- | ----------- |
+| `POST` | `/workspace/search` | Authenticated | Search synced workspace data | Search DTO | Search result | -- |
+
+### WorkspaceObjectController
+
+**Route Prefix**: `/api/v1/workspace/objects`
+**File**: `apps/claw-workspace-service/src/modules/workspace/controllers/workspace-object.controller.ts`
+
+| Method | Path                     | Auth          | Description           | Input DTO | Response Type | Error Codes |
+| ------ | ------------------------ | ------------- | --------------------- | --------- | ------------- | ----------- |
+| `GET`  | `/workspace/objects`     | Authenticated | List synced objects   | Query DTO | Paginated/list response | -- |
+| `GET`  | `/workspace/objects/:id` | Authenticated | Get object detail     | Path: `id` | Workspace object | `ENTITY_NOT_FOUND` |
+
+### WorkspaceActionController
+
+**Route Prefix**: `/api/v1/workspace/actions`
+**File**: `apps/claw-workspace-service/src/modules/actions/controllers/workspace-action.controller.ts`
+
+| Method | Path                               | Auth          | Description           | Input DTO | Response Type | Error Codes |
+| ------ | ---------------------------------- | ------------- | --------------------- | --------- | ------------- | ----------- |
+| `POST` | `/workspace/actions`               | Authenticated | Create action draft   | Create action DTO | Workspace action | -- |
+| `GET`  | `/workspace/actions`               | Authenticated | List actions          | Query DTO | Paginated/list response | -- |
+| `GET`  | `/workspace/actions/:id`           | Authenticated | Get action            | Path: `id` | Workspace action | `ENTITY_NOT_FOUND` |
+| `POST` | `/workspace/actions/:id/approve`   | Authenticated | Approve action        | Path: `id` | Workspace action | `ENTITY_NOT_FOUND` |
+| `POST` | `/workspace/actions/:id/reject`    | Authenticated | Reject action         | Path: `id` | Workspace action | `ENTITY_NOT_FOUND` |
+
+### WorkspaceSearchInternalController
+
+**Route Prefix**: `/api/v1/internal/workspace/search`
+**File**: `apps/claw-workspace-service/src/modules/workspace/controllers/workspace-search-internal.controller.ts`
+
+| Method | Path                         | Auth   | Description                     | Input DTO | Response Type | Error Codes |
+| ------ | ---------------------------- | ------ | ------------------------------- | --------- | ------------- | ----------- |
+| `POST` | `/internal/workspace/search` | Public | Internal search for chat-grounding | Search DTO | Search result | -- |
+
+---
+
+## Agent Service Controllers
+
+### AgentSessionController
+
+**Route Prefix**: `/api/v1/agent/sessions`
+**File**: `apps/claw-agent-service/src/modules/agent/controllers/agent-session.controller.ts`
+
+| Method   | Path                           | Auth          | Description                       | Input DTO | Response Type | Error Codes |
+| -------- | ------------------------------ | ------------- | --------------------------------- | --------- | ------------- | ----------- |
+| `POST`   | `/agent/sessions`              | Authenticated | Register agent session            | `CreateAgentSessionDto` | `RegisterSessionResult` | -- |
+| `GET`    | `/agent/sessions`              | Authenticated | List sessions                     | `ListSessionsQueryDto` | `PaginatedAgentSessions` | -- |
+| `GET`    | `/agent/sessions/:id`          | Authenticated | Get session                       | Path: `id` | `AgentSessionWithCounts` | `ENTITY_NOT_FOUND` |
+| `DELETE` | `/agent/sessions/:id`          | Authenticated | Disconnect session                | Path: `id` | `AgentSessionWithCounts` | `ENTITY_NOT_FOUND` |
+| `POST`   | `/agent/sessions/:id/heartbeat`| Public + AgentKey | Refresh heartbeat               | None | `HeartbeatResult` | `UNAUTHORIZED` |
+
+### AgentCommandController
+
+**Route Prefix**: `/api/v1/agent/commands`
+**File**: `apps/claw-agent-service/src/modules/agent/controllers/agent-command.controller.ts`
+
+| Method | Path                           | Auth             | Description                         | Input DTO | Response Type | Error Codes |
+| ------ | ------------------------------ | ---------------- | ----------------------------------- | --------- | ------------- | ----------- |
+| `POST` | `/agent/commands`              | Authenticated    | Create command                      | `CreateCommandDto` | `TerminalCommand` | -- |
+| `GET`  | `/agent/commands`              | Authenticated    | List commands                       | `ListCommandsQueryDto` | `PaginatedCommands` | -- |
+| `GET`  | `/agent/commands/pending`      | Public + AgentKey| Agent polls and claims approved work| None | `TerminalCommand[]` | `UNAUTHORIZED` |
+| `GET`  | `/agent/commands/:id`          | Authenticated    | Get command                         | Path: `id` | `TerminalCommand` | `ENTITY_NOT_FOUND` |
+| `POST` | `/agent/commands/:id/approve`  | Authenticated    | Approve command                     | Path: `id` | `TerminalCommand` | `ENTITY_NOT_FOUND` |
+| `POST` | `/agent/commands/:id/reject`   | Authenticated    | Reject command                      | `RejectCommandDto` | `TerminalCommand` | `ENTITY_NOT_FOUND` |
+| `POST` | `/agent/commands/:id/complete` | Public + AgentKey| Report command completion           | `CompleteCommandDto` | `TerminalCommand` | `UNAUTHORIZED` |
+
+### AgentRepoController
+
+**Route Prefix**: `/api/v1/agent/repos`
+**File**: `apps/claw-agent-service/src/modules/agent/controllers/agent-repo.controller.ts`
+
+| Method   | Path              | Auth          | Description     | Input DTO | Response Type | Error Codes |
+| -------- | ----------------- | ------------- | --------------- | --------- | ------------- | ----------- |
+| `POST`   | `/agent/repos`    | Authenticated | Register repo   | `RegisterRepoDto` | `LocalRepo` | -- |
+| `GET`    | `/agent/repos`    | Authenticated | List repos      | `ListReposQueryDto` | `PaginatedRepos` | -- |
+| `GET`    | `/agent/repos/:id`| Authenticated | Get repo        | Path: `id` | `LocalRepo` | `ENTITY_NOT_FOUND` |
+| `PATCH`  | `/agent/repos/:id`| Authenticated | Update repo     | `UpdateRepoDto` | `LocalRepo` | `ENTITY_NOT_FOUND` |
+| `DELETE` | `/agent/repos/:id`| Authenticated | Delete repo     | Path: `id` | `LocalRepo` | `ENTITY_NOT_FOUND` |
+
+### AgentEventController
+
+**Route Prefix**: `/api/v1/agent/events`
+**File**: `apps/claw-agent-service/src/modules/agent/controllers/agent-event.controller.ts`
+
+| Method | Path             | Auth             | Description            | Input DTO | Response Type | Error Codes |
+| ------ | ---------------- | ---------------- | ---------------------- | --------- | ------------- | ----------- |
+| `POST` | `/agent/events`  | Public + AgentKey| Report file events     | `CreateFileEventsDto` | `ReportEventsResult` | `UNAUTHORIZED` |
+| `GET`  | `/agent/events`  | Authenticated    | List file events       | `ListEventsQueryDto` | `PaginatedFileEvents` | -- |
 
 ---
 

@@ -17,7 +17,7 @@ ClawAI uses two communication patterns: synchronous HTTP for request/response an
 
 ## HTTP Internal Endpoints
 
-All internal endpoints are prefixed with `/api/v1/internal/` and marked `@Public()` (no JWT required). They are NOT exposed through nginx — only accessible within the Docker network.
+All internal endpoints are prefixed with `/api/v1/internal/` and marked `@Public()` (no JWT required). They are not exposed through Nginx for external use.
 
 ### Memory Service Internal API
 
@@ -32,7 +32,7 @@ All internal endpoints are prefixed with `/api/v1/internal/` and marked `@Public
 |----------|--------|-----------|---------|
 | `/internal/files/:id/chunks` | GET | chat-service | Fetch file chunks for context assembly |
 | `/internal/files/:id/content` | GET | chat-service | Fetch raw file content |
-| `/internal/files/download/:id` | GET | image-service, file-gen | Download file without auth |
+| `/internal/files/download/:id` | GET | image-service, file-generation-service | Download file without auth |
 | `/internal/files/store-image` | POST | image-service | Store generated image as a file |
 
 ### Connector Service Internal API
@@ -45,36 +45,40 @@ All internal endpoints are prefixed with `/api/v1/internal/` and marked `@Public
 
 | Endpoint | Method | Called By | Purpose |
 |----------|--------|-----------|---------|
-| `/internal/ollama/router-model` | GET | routing-service | Get current router model name |
-| `/internal/ollama/installed-models` | GET | routing-service | Get installed models with categories |
+| `/internal/ollama/router-model` | GET | chat-service, routing-service | Get current router model name |
+
+### Workspace Service Internal API
+
+| Endpoint | Method | Called By | Purpose |
+|----------|--------|-----------|---------|
+| `/internal/workspace/search` | POST | chat-service | Search synced external objects for context grounding |
 
 ### Image Service Internal API
 
 | Endpoint | Method | Called By | Purpose |
 |----------|--------|-----------|---------|
 | `/internal/images/generate` | POST | chat-service | Enqueue image generation |
-| `/internal/images/:id` | GET | chat-service | Check generation status |
-| `/internal/images/:id/retry` | POST | chat-service | Retry failed generation |
-| `/internal/images/:id/retry-alternate` | POST | chat-service | Retry with different model |
-| `/internal/images/:id/events` | SSE | chat-service | Stream generation progress |
+| `/internal/images/:generationId` | GET | chat-service | Check generation status |
+| `/internal/images/:generationId/retry` | POST | chat-service | Retry failed generation |
+| `/internal/images/:generationId/retry-alternate` | POST | chat-service | Retry with different model |
+| `/internal/images/:generationId/events` | SSE | chat-service | Stream generation progress |
 
 ### File Generation Service Internal API
 
 | Endpoint | Method | Called By | Purpose |
 |----------|--------|-----------|---------|
 | `/internal/file-generations/generate` | POST | chat-service | Enqueue file generation |
-| `/internal/file-generations/:id` | GET | chat-service | Check generation status |
-| `/internal/file-generations/:id/retry` | POST | chat-service | Retry failed generation |
-| `/internal/file-generations/:id/events` | SSE | chat-service | Stream generation progress |
+| `/internal/file-generations/:generationId` | GET | chat-service | Check generation status |
+| `/internal/file-generations/:generationId/retry` | POST | chat-service | Retry failed generation |
+| `/internal/file-generations/:generationId/events` | SSE | chat-service | Stream generation progress |
 
 ---
 
 ## HTTP Call Pattern
 
-Services use a shared HTTP utility (wrapped `fetch` or `axios`):
+Services use a shared HTTP utility:
 
 ```typescript
-// Fetching memories for context
 const memories = await httpGet<MemoryRecord[]>(
   `${this.config.memoryServiceUrl}/api/v1/internal/memories/for-context`,
   {
@@ -95,7 +99,6 @@ try {
   return config;
 } catch (error: unknown) {
   this.logger.warn(`Failed to fetch connector config for ${provider}`);
-  // Graceful degradation — continue without this data
   return null;
 }
 ```
@@ -104,16 +107,17 @@ try {
 
 ## Service Dependency Map
 
-```
+```text
 chat-service
   -> memory-service (HTTP: fetch memories, context packs)
+  -> workspace-service (HTTP: search synced objects for grounding)
   -> file-service (HTTP: fetch file chunks, content)
   -> connector-service (HTTP: fetch provider config)
   -> image-service (HTTP: enqueue image generation)
   -> file-generation-service (HTTP: enqueue file generation)
 
 routing-service
-  -> ollama-service (HTTP: get router model, installed models)
+  -> ollama-service (HTTP: get router model / local inference helpers)
   -> connector-service (HTTP: get provider config)
 
 image-service
@@ -121,40 +125,48 @@ image-service
   -> connector-service (HTTP: get provider config)
 
 file-generation-service
-  -> connector-service (HTTP: get provider config)
-  -> ollama-service (HTTP: generate text)
+  -> file-service (HTTP: store generated files)
 
 memory-service
   -> ollama-service (HTTP: generate for extraction)
 
 health-service
-  -> all 12 services (HTTP: health check)
+  -> all 14 downstream services (HTTP: health check)
 ```
 
 ---
 
 ## RabbitMQ Event Flow
 
-See `event-bus-reference.md` for the complete event reference. Key async flows:
+See `event-bus-reference.md` and `03-architecture/event-bus.md` for the complete event reference. Key async flows:
 
 ### Message Processing Flow
-```
+
+```text
 chat -> message.created -> routing
 routing -> message.routed -> chat
 chat -> message.completed -> audit, memory
 ```
 
 ### Connector Lifecycle
-```
+
+```text
 connector -> connector.created -> audit
 connector -> connector.synced -> audit, routing
 connector -> connector.health_checked -> audit, routing
 ```
 
-### Model Management
+### Agent Lifecycle
+
+```text
+agent -> agent.session.connected -> consumers
+agent -> agent.session.disconnected -> consumers
 ```
-ollama -> model.pulled -> routing (invalidate cache)
-ollama -> model.deleted -> routing (invalidate cache)
+
+### Logging
+
+```text
+all services -> log.server -> server-logs-service
 ```
 
 ---
@@ -166,10 +178,18 @@ Services discover each other via environment variables (Docker hostnames):
 ```env
 OLLAMA_SERVICE_URL=http://ollama-service:4008
 CONNECTOR_SERVICE_URL=http://connector-service:4003
+AUTH_SERVICE_URL=http://auth-service:4001
+CHAT_SERVICE_URL=http://chat-service:4002
+ROUTING_SERVICE_URL=http://routing-service:4004
 MEMORY_SERVICE_URL=http://memory-service:4005
 FILE_SERVICE_URL=http://file-service:4006
+AUDIT_SERVICE_URL=http://audit-service:4007
+CLIENT_LOGS_SERVICE_URL=http://client-logs-service:4010
+SERVER_LOGS_SERVICE_URL=http://server-logs-service:4011
 IMAGE_SERVICE_URL=http://image-service:4012
 FILE_GENERATION_SERVICE_URL=http://file-generation-service:4013
+WORKSPACE_SERVICE_URL=http://workspace-service:4014
+AGENT_SERVICE_URL=http://agent-service:4015
 ```
 
 These are loaded via Zod-validated `AppConfig` (never `process.env` directly).
@@ -180,22 +200,24 @@ These are loaded via Zod-validated `AppConfig` (never `process.env` directly).
 
 Each service owns its data. Cross-database queries are forbidden:
 
-```
-auth-service     -> claw_auth (PostgreSQL)
-chat-service     -> claw_chat (PostgreSQL)
-connector-service -> claw_connectors (PostgreSQL)
-routing-service  -> claw_routing (PostgreSQL)
-memory-service   -> claw_memory (PostgreSQL + pgvector)
-file-service     -> claw_files (PostgreSQL)
-ollama-service   -> claw_ollama (PostgreSQL)
-image-service    -> claw_images (PostgreSQL)
-file-gen-service -> claw_file_generations (PostgreSQL)
-audit-service    -> claw_audit (MongoDB)
-client-logs      -> claw_client_logs (MongoDB)
-server-logs      -> claw_server_logs (MongoDB)
+```text
+auth-service             -> claw_auth (PostgreSQL)
+chat-service             -> claw_chat (PostgreSQL)
+connector-service        -> claw_connectors (PostgreSQL)
+routing-service          -> claw_routing (PostgreSQL)
+memory-service           -> claw_memory (PostgreSQL + pgvector)
+file-service             -> claw_files (PostgreSQL)
+ollama-service           -> claw_ollama (PostgreSQL)
+image-service            -> claw_images (PostgreSQL)
+file-generation-service  -> claw_file_generations (PostgreSQL)
+workspace-service        -> claw_workspace (PostgreSQL)
+agent-service            -> claw_agent (PostgreSQL)
+audit-service            -> claw_audit (MongoDB)
+client-logs-service      -> claw_client_logs (MongoDB)
+server-logs-service      -> claw_server_logs (MongoDB)
 ```
 
-If service A needs data from service B's database, it MUST call service B's internal HTTP API.
+If service A needs data from service B's database, it must call service B's internal HTTP API.
 
 ---
 
@@ -204,7 +226,7 @@ If service A needs data from service B's database, it MUST call service B's inte
 | Call Type | Timeout | Retry |
 |-----------|---------|-------|
 | Health check | 5000ms | None |
-| Internal HTTP GET | 5000ms | None (graceful degradation) |
+| Internal HTTP GET/POST | 5000ms | None (graceful degradation) |
 | Ollama router call | 10000ms (configurable) | Fallback to heuristic |
 | Connector config fetch | 5000ms | None |
 | AI provider call | 60000ms | Fallback chain |
@@ -217,7 +239,7 @@ If service A needs data from service B's database, it MUST call service B's inte
 
 Every request gets two tracking IDs propagated across services:
 
-- `X-Request-ID`: Unique per HTTP request, generated by LoggingInterceptor if not provided
+- `X-Request-ID`: Unique per HTTP request, generated by logging middleware if not provided
 - `X-Trace-ID`: Unique per user action, spans multiple service calls
 
-These are set in request/response headers and included in structured log events for end-to-end tracing.
+These are included in structured log events for end-to-end tracing.

@@ -33,7 +33,7 @@ cd ClawAI
 npm install
 ```
 
-This installs dependencies for all 13 backend services, the frontend, and shared packages (npm workspaces handles everything from the root).
+This installs dependencies for all 15 backend services, the frontend, and shared packages (npm workspaces handles everything from the root).
 
 ---
 
@@ -43,7 +43,7 @@ This installs dependencies for all 13 backend services, the frontend, and shared
 cp .env.example .env
 ```
 
-The `.env.example` file contains working defaults for local development. Review it and update any values if needed (database passwords, JWT secret, etc.).
+The `.env.example` file contains working defaults for local development. Review it and update any values if needed (database passwords, JWT secret, workspace OAuth credentials, etc.).
 
 **Or use the automated installer:**
 
@@ -55,7 +55,7 @@ The `.env.example` file contains working defaults for local development. Review 
 ./scripts/install.ps1
 ```
 
-The installer creates the `.env` file, sets up databases, runs Prisma migrations, seeds default data (admin user, default routing policies), and pulls Ollama models.
+The installer creates the `.env` file, sets up databases, runs Prisma migrations, seeds default data (admin user, default routing policies), and prepares the runtime stack.
 
 ---
 
@@ -65,7 +65,7 @@ The installer creates the `.env` file, sets up databases, runs Prisma migrations
 docker compose -f docker-compose.dev.yml up -d
 ```
 
-This starts approximately 25 containers: 13 backend services, frontend, Nginx, 8 PostgreSQL, MongoDB, Redis, RabbitMQ, and Ollama.
+This starts 33 containers: 15 backend services, frontend, Nginx, 11 PostgreSQL databases, MongoDB, Redis, RabbitMQ, Ollama, and ClamAV.
 
 Wait about 60 seconds for all services to initialize, run migrations, and pull local models.
 
@@ -79,7 +79,7 @@ Wait about 60 seconds for all services to initialize, run migrations, and pull l
 
 - Frontend: http://localhost:3000
 - API (via Nginx): http://localhost:4000/api/v1/health
-- RabbitMQ management: http://localhost:15672 (guest/guest)
+- RabbitMQ management: http://localhost:15672
 
 ---
 
@@ -87,9 +87,9 @@ Wait about 60 seconds for all services to initialize, run migrations, and pull l
 
 Default admin credentials (set in `.env`):
 
-```
-Email:    admin@clawai.local
-Password: admin123
+```text
+Email:    admin@claw.local
+Password: ClawAdmin123!
 ```
 
 ---
@@ -125,7 +125,7 @@ Password: admin123
 
 ### Per-Service Commands
 
-Run from the service directory (e.g., `apps/claw-chat-service/`):
+Run from the service directory (for example `apps/claw-chat-service/`):
 
 ```bash
 npm run start:dev    # Start with hot reload
@@ -133,45 +133,56 @@ npm run test         # Run tests
 npm run lint         # Lint this service
 ```
 
+Or directly from the repo root:
+
+```bash
+npm run dev --workspace=claw-chat-service
+npm run dev --workspace=claw-workspace-service
+npm run dev --workspace=claw-agent-service
+```
+
 ---
 
 ## Where Code Lives
 
-```
+```text
 ClawAI/
   apps/
-    claw-frontend/              # Next.js UI (pages, components, hooks, stores)
-    claw-auth-service/          # Authentication + user management
-    claw-chat-service/          # Chat threads, messages, AI execution
-    claw-connector-service/     # Cloud provider configuration
-    claw-routing-service/       # Intelligent routing engine
-    claw-memory-service/        # Memory extraction + context packs
-    claw-file-service/          # File upload + chunking
-    claw-audit-service/         # Audit trail + usage tracking
-    claw-ollama-service/        # Local Ollama model management
-    claw-health-service/        # Aggregated health checks
-    claw-client-logs-service/   # Frontend log ingestion
-    claw-server-logs-service/   # Backend log aggregation
-    claw-image-service/         # Image generation
+    claw-frontend/                # Next.js UI (pages, components, hooks, stores)
+    claw-auth-service/            # Authentication + user management
+    claw-chat-service/            # Chat threads, messages, AI execution
+    claw-connector-service/       # Cloud provider configuration
+    claw-routing-service/         # Intelligent routing engine
+    claw-memory-service/          # Memory extraction + context packs
+    claw-file-service/            # File upload + chunking
+    claw-audit-service/           # Audit trail + usage tracking
+    claw-ollama-service/          # Local Ollama model management
+    claw-health-service/          # Aggregated health checks
+    claw-client-logs-service/     # Frontend log ingestion
+    claw-server-logs-service/     # Backend log aggregation
+    claw-image-service/           # Image generation
     claw-file-generation-service/ # File/document generation
+    claw-workspace-service/       # Workspace sync, search, action approvals
+    claw-agent-service/           # Local agent session and command backend
   packages/
-    shared-types/               # Enums, event payloads, auth types
-    shared-constants/           # Exchange name, ports, API prefix
-    shared-rabbitmq/            # RabbitMQ module, retry logic, structured logger
-    shared-auth/                # AuthGuard, RolesGuard, decorators
-  infra/nginx/                  # Nginx reverse proxy config
-  scripts/                      # install.sh, install.ps1, claw.sh
-  docs/                         # Architecture documentation
-  CLAUDE.md                     # Coding rules (READ THIS)
-  .env.example                  # Environment variable template
-  docker-compose.dev.yml        # Development Docker Compose
+    shared-types/                 # Enums, event payloads, auth types
+    shared-constants/             # Exchange name, ports, API prefix
+    shared-rabbitmq/              # RabbitMQ module, retry logic, structured logger
+    shared-auth/                  # AuthGuard, RolesGuard, decorators
+  infra/nginx/                    # Nginx reverse proxy config
+  scripts/                        # install.sh, install.ps1, claw.sh
+  docs/                           # Architecture documentation
+  agent-cli/                      # Local companion CLI for the agent service
+  CLAUDE.md                       # Coding rules (READ THIS)
+  .env.example                    # Environment variable template
+  docker-compose.dev.yml          # Development Docker Compose
 ```
 
 ### Inside a Backend Service
 
 Every NestJS service follows the same structure:
 
-```
+```text
 apps/claw-chat-service/
   prisma/
     schema.prisma               # Database schema
@@ -191,10 +202,10 @@ apps/claw-chat-service/
       utilities/                # Third-party library wrappers
     modules/
       <domain>/
-        <domain>.controller.ts  # HTTP endpoints (3-line methods)
-        <domain>.service.ts     # Business logic (max 30 lines/method)
-        <domain>.repository.ts  # Data access (Prisma/Mongoose, no throws)
-        <domain>.manager.ts     # Complex orchestration (max 80 lines/method)
+        <domain>.controller.ts  # HTTP endpoints
+        <domain>.service.ts     # Business logic
+        <domain>.repository.ts  # Data access
+        <domain>.manager.ts     # Complex orchestration
         <domain>.module.ts      # NestJS module definition
         dto/                    # Zod schemas + inferred types
         types/                  # Domain-specific types
@@ -206,7 +217,7 @@ apps/claw-chat-service/
 
 ### Inside the Frontend
 
-```
+```text
 apps/claw-frontend/
   src/
     app/                        # Next.js pages (App Router)
@@ -224,7 +235,7 @@ apps/claw-frontend/
     constants/                  # Frontend constants
     utilities/                  # Utility functions
     lib/
-      i18n/locales/             # 8 locale files (en, ar, de, es, fr, it, pt, ru)
+      i18n/locales/             # 8 locale files
       validation/               # Zod schemas for forms
 ```
 
@@ -237,10 +248,10 @@ apps/claw-frontend/
 1. Find the relevant service in `apps/claw-<name>-service/`
 2. Locate the module in `src/modules/<domain>/`
 3. Make your change following the layer rules:
-   - **Controller**: 3-line methods only (extract, call service, return)
-   - **Service**: Business logic, max 30 lines per method
-   - **Repository**: Data access only, no throws
-   - **Manager**: Complex orchestration, max 80 lines per method
+   - **Controller**: extract, call service, return
+   - **Service**: business logic
+   - **Repository**: data access only
+   - **Manager**: complex orchestration
 4. Add/update Zod DTOs in `dto/` for any input changes
 5. Add/update tests in `test/` or alongside the module
 6. Run `npm run lint && npm run typecheck && npm run test`
@@ -252,7 +263,7 @@ apps/claw-frontend/
 2. Follow the pattern: Page -> Controller Hook -> Service -> Repository
 3. Extract types to `src/types/`, hooks to `src/hooks/`, constants to `src/constants/`
 4. No business logic in `.tsx` files -- put it in hooks
-5. All user-facing text must use `t('key')` and be added to all 8 locale files
+5. All user-facing text must use `t('key')` and be added to all locale files
 6. Run `npm run lint && npm run typecheck && npm run test`
 
 ---
@@ -282,7 +293,7 @@ cd apps/claw-frontend && npx playwright test
 
 ### "Port already in use"
 
-Another process is using one of the service ports (3000, 4000-4013). Kill it or change the port in `.env`.
+Another process is using one of the service ports (3000, 4000-4015). Kill it or change the port in `.env`.
 
 ### Prisma migration fails
 
@@ -302,28 +313,31 @@ docker compose -f docker-compose.dev.yml logs rabbitmq
 
 ### Ollama models not pulling
 
-The ollama-service auto-pulls models on startup. This requires 5-10GB of disk space and a working internet connection. Check progress:
+The ollama runtime may auto-pull models on startup. This requires disk space and a working internet connection. Check progress:
 
 ```bash
 docker compose -f docker-compose.dev.yml logs -f ollama
 docker compose -f docker-compose.dev.yml logs -f ollama-service
 ```
 
-### ESLint errors on commit
+### Workspace OAuth flow fails
 
-The pre-commit hook runs 5 quality gates: format, lint, typecheck, build, test. All must pass. Fix the errors rather than skipping the hook. Common issues:
+Check that your workspace provider credentials and callback URLs in `.env` match the provider app configuration.
 
-- Using `any` instead of `unknown` or proper types
-- Missing explicit return types
-- Inline type definitions instead of extracted to `types/` files
-- Using `console.log` instead of the NestJS Logger
+### Agent session never becomes active
+
+Check that:
+
+- `agent-service` is healthy
+- the CLI is pointed at the correct base URL
+- the JWT used during registration is valid
 
 ### Shared package changes not reflected
 
 After changing code in `packages/shared-*`, dependent services need to be restarted:
 
 ```bash
-docker compose -f docker-compose.dev.yml restart chat-service routing-service
+docker compose -f docker-compose.dev.yml restart chat-service routing-service workspace-service agent-service
 ```
 
 ### "Cannot find module" after pulling changes
@@ -340,4 +354,4 @@ Dependencies may have changed. Always run `npm install` after pulling.
 
 - [System at a Glance](./system-at-a-glance.md) -- full architecture overview
 - `CLAUDE.md` (project root) -- mandatory coding rules and patterns
-- The service guide for whatever service you'll be working on (in `docs/03-services/`)
+- The service guide for whatever service you'll be working on (in `docs/04-backend/`)

@@ -78,6 +78,15 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
 | PATCH  | /:id/feedback     | Submit feedback on a message             |
 | POST   | /:id/regenerate   | Regenerate an assistant response         |
 | POST   | /parallel         | Send prompt to 2-5 models simultaneously |
+| POST   | /consensus        | Build a consensus answer from multiple models |
+| POST   | /escalation-chain | Escalate to stronger models if needed    |
+| POST   | /repair           | Repair or critique an answer             |
+| POST   | /decompose        | Decompose a task into structured subtasks |
+| POST   | /best-of-n        | Generate multiple candidates and choose one |
+| POST   | /cost-ensemble    | Balance answer quality against spend     |
+| POST   | /verify           | Run verification checks on an answer     |
+| POST   | /role-pack        | Execute multi-role prompt pack workflows |
+| POST   | /pipeline         | Execute staged prompt pipelines          |
 
 ## Message Flow (End-to-End)
 
@@ -87,6 +96,7 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
 4. **Context assembly** -- `ContextAssemblyManager` gathers:
    - User memories from memory-service (HTTP, limit 20)
    - Context pack items from memory-service (HTTP)
+   - Workspace search results from workspace-service (HTTP)
    - File chunks from file-service (HTTP)
    - Thread message history
 5. **Prompt building** -- system prompt, memories, packs, files, history, with token budget truncation
@@ -126,6 +136,7 @@ When all providers fail, the service stores an error message as an ASSISTANT rec
 | Target Service    | Purpose                         |
 | ----------------- | ------------------------------- |
 | memory-service    | Fetch user memories, pack items |
+| workspace-service | Fetch grounded workspace search results |
 | file-service      | Fetch file chunks               |
 | connector-service | Execute LLM calls               |
 | ollama-service    | Execute local Ollama calls      |
@@ -136,6 +147,24 @@ When all providers fail, the service stores an error message as an ASSISTANT rec
 - **ChatExecutionManager** -- executes LLM calls with fallback chain, quality checking, and auto re-routing
 - **QualityCheckManager** -- scores response quality (5 signals), recommends re-routing for weak answers
 - **ParallelExecutionManager** -- executes the same prompt against 2-5 models simultaneously via `Promise.allSettled`
+
+---
+
+## Advanced Orchestration Modes
+
+The chat service now exposes a family of higher-order endpoints for structured response generation and comparison:
+
+- **`/consensus`** -- collect candidate answers and synthesize one consensus result
+- **`/escalation-chain`** -- try lower-cost or faster models first, then escalate when thresholds are not met
+- **`/repair`** -- critique and repair a candidate answer
+- **`/decompose`** -- split a complex prompt into ordered subtasks
+- **`/best-of-n`** -- generate multiple candidates and choose the strongest output
+- **`/cost-ensemble`** -- balance quality and cost across model choices
+- **`/verify`** -- run lightweight verification against explicit checks
+- **`/role-pack`** -- apply structured multi-role prompting
+- **`/pipeline`** -- execute staged prompt steps with a final aggregated result
+
+These flows live alongside the standard message path and the parallel compare path. They share the same service boundaries: context assembly stays in chat, provider configuration stays in connector-service, local model support stays in ollama-service, and external grounding stays in workspace-service.
 
 ---
 
