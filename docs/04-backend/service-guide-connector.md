@@ -2,49 +2,49 @@
 
 ## Overview
 
-| Property       | Value                                |
-| -------------- | ------------------------------------ |
-| Port           | 4003                                 |
-| Database       | PostgreSQL (`claw_connectors`)       |
-| ORM            | Prisma 5.20                          |
-| Env prefix     | `CONNECTOR_`                         |
-| Nginx route    | `/api/v1/connectors/*`               |
+| Property    | Value                          |
+| ----------- | ------------------------------ |
+| Port        | 4003                           |
+| Database    | PostgreSQL (`claw_connectors`) |
+| ORM         | Prisma 5.20                    |
+| Env prefix  | `CONNECTOR_`                   |
+| Nginx route | `/api/v1/connectors/*`         |
 
-The connector service manages AI provider connections (OpenAI, Anthropic, Gemini, DeepSeek, AWS Bedrock, Ollama). It stores encrypted API keys, syncs available models from each provider, and runs periodic health checks.
+The connector service manages AI provider connections (OpenAI, Anthropic, Gemini, DeepSeek, AWS Bedrock, Ollama, Grok/xAI). It stores encrypted API keys, syncs available models from each provider, and runs periodic health checks.
 
 ## Database Schema
 
 ### Connector
 
-| Column          | Type              | Notes                              |
-| --------------- | ----------------- | ---------------------------------- |
-| id              | String            | CUID primary key                   |
-| name            | String            | User-friendly name                 |
-| provider        | ConnectorProvider  | OPENAI, ANTHROPIC, GEMINI, etc.    |
-| status          | ConnectorStatus    | HEALTHY, DEGRADED, DOWN, UNKNOWN   |
-| authType        | ConnectorAuthType  | API_KEY, OAUTH2, NONE              |
-| encryptedConfig | String?            | AES-256-GCM encrypted credentials  |
-| isEnabled       | Boolean            | Soft enable/disable                |
-| defaultModelId  | String?            | Default model for this connector   |
-| baseUrl         | String?            | Custom API base URL                |
-| region          | String?            | AWS region (Bedrock only)          |
+| Column          | Type              | Notes                             |
+| --------------- | ----------------- | --------------------------------- |
+| id              | String            | CUID primary key                  |
+| name            | String            | User-friendly name                |
+| provider        | ConnectorProvider | OPENAI, ANTHROPIC, GEMINI, etc.   |
+| status          | ConnectorStatus   | HEALTHY, DEGRADED, DOWN, UNKNOWN  |
+| authType        | ConnectorAuthType | API_KEY, OAUTH2, NONE             |
+| encryptedConfig | String?           | AES-256-GCM encrypted credentials |
+| isEnabled       | Boolean           | Soft enable/disable               |
+| defaultModelId  | String?           | Default model for this connector  |
+| baseUrl         | String?           | Custom API base URL               |
+| region          | String?           | AWS region (Bedrock only)         |
 
 ### ConnectorModel
 
-| Column                   | Type           | Notes                         |
-| ------------------------ | -------------- | ----------------------------- |
-| id                       | String         | CUID primary key              |
-| connectorId              | String         | FK to Connector               |
-| provider                 | ConnectorProvider | Denormalized for queries    |
-| modelKey                 | String         | API model identifier          |
-| displayName              | String         | Human-readable name           |
-| lifecycle                | ModelLifecycle | ACTIVE, DEPRECATED, SUNSET    |
-| supportsStreaming         | Boolean        | Streaming capability          |
-| supportsTools            | Boolean        | Function calling support      |
-| supportsVision           | Boolean        | Image input support           |
-| supportsAudio            | Boolean        | Audio input support           |
-| supportsStructuredOutput | Boolean        | JSON mode support             |
-| maxContextTokens         | Int?           | Context window size           |
+| Column                   | Type              | Notes                      |
+| ------------------------ | ----------------- | -------------------------- |
+| id                       | String            | CUID primary key           |
+| connectorId              | String            | FK to Connector            |
+| provider                 | ConnectorProvider | Denormalized for queries   |
+| modelKey                 | String            | API model identifier       |
+| displayName              | String            | Human-readable name        |
+| lifecycle                | ModelLifecycle    | ACTIVE, DEPRECATED, SUNSET |
+| supportsStreaming        | Boolean           | Streaming capability       |
+| supportsTools            | Boolean           | Function calling support   |
+| supportsVision           | Boolean           | Image input support        |
+| supportsAudio            | Boolean           | Audio input support        |
+| supportsStructuredOutput | Boolean           | JSON mode support          |
+| maxContextTokens         | Int?              | Context window size        |
 
 ### ConnectorHealthEvent
 
@@ -56,17 +56,17 @@ Tracks model sync operations with counts of models found, added, and removed per
 
 ## API Endpoints
 
-| Method | Path                    | Auth          | Description                       |
-| ------ | ----------------------- | ------------- | --------------------------------- |
-| GET    | /                       | Bearer        | List connectors                   |
-| POST   | /                       | ADMIN         | Create connector                  |
-| GET    | /:id                    | Bearer        | Get connector details             |
-| PATCH  | /:id                    | ADMIN         | Update connector                  |
-| DELETE | /:id                    | ADMIN         | Delete connector                  |
-| POST   | /:id/test               | ADMIN         | Test connector connectivity       |
-| POST   | /:id/sync               | ADMIN         | Trigger model sync                |
-| GET    | /:id/models             | Bearer        | List models for a connector       |
-| GET    | /:id/health             | Bearer        | Get health history                |
+| Method | Path        | Auth   | Description                 |
+| ------ | ----------- | ------ | --------------------------- |
+| GET    | /           | Bearer | List connectors             |
+| POST   | /           | ADMIN  | Create connector            |
+| GET    | /:id        | Bearer | Get connector details       |
+| PATCH  | /:id        | ADMIN  | Update connector            |
+| DELETE | /:id        | ADMIN  | Delete connector            |
+| POST   | /:id/test   | ADMIN  | Test connector connectivity |
+| POST   | /:id/sync   | ADMIN  | Trigger model sync          |
+| GET    | /:id/models | Bearer | List models for a connector |
+| GET    | /:id/health | Bearer | Get health history          |
 
 ## Encryption
 
@@ -99,23 +99,33 @@ Periodic health checks verify each connector is reachable:
 
 ## Events
 
-| Event                     | Direction | Consumers        |
-| ------------------------- | --------- | ---------------- |
-| connector.created         | Publish   | audit            |
-| connector.updated         | Publish   | audit            |
-| connector.deleted         | Publish   | audit            |
-| connector.synced          | Publish   | audit, routing   |
-| connector.health_checked  | Publish   | audit, routing   |
+| Event                    | Direction | Consumers      |
+| ------------------------ | --------- | -------------- |
+| connector.created        | Publish   | audit          |
+| connector.updated        | Publish   | audit          |
+| connector.deleted        | Publish   | audit          |
+| connector.synced         | Publish   | audit, routing |
+| connector.health_checked | Publish   | audit, routing |
 
 ## Provider Adapters
 
 Each cloud provider has specific API patterns:
 
-| Provider    | Auth         | Model List API                    | Chat API                    |
-| ----------- | ------------ | --------------------------------- | --------------------------- |
-| OpenAI      | Bearer token | GET /v1/models                    | POST /v1/chat/completions   |
-| Anthropic   | x-api-key    | Hardcoded model list              | POST /v1/messages           |
-| Gemini      | API key      | GET /v1/models                    | POST /v1/generateContent    |
-| DeepSeek    | Bearer token | GET /v1/models (OpenAI-compatible)| POST /v1/chat/completions   |
-| AWS Bedrock | IAM/SigV4    | ListFoundationModels              | InvokeModel                 |
-| Ollama      | None         | GET /api/tags                     | POST /api/generate          |
+| Provider    | Auth         | Model List API                     | Chat API                  |
+| ----------- | ------------ | ---------------------------------- | ------------------------- |
+| OpenAI      | Bearer token | GET /v1/models                     | POST /v1/chat/completions |
+| Anthropic   | x-api-key    | Hardcoded model list               | POST /v1/messages         |
+| Gemini      | API key      | GET /v1/models                     | POST /v1/generateContent  |
+| DeepSeek    | Bearer token | GET /v1/models (OpenAI-compatible) | POST /v1/chat/completions |
+| AWS Bedrock | IAM/SigV4    | ListFoundationModels               | InvokeModel               |
+| Ollama      | None         | GET /api/tags                      | POST /api/generate        |
+| Grok (xAI)  | Bearer token | GET /v1/models (filters grok-\*)   | POST /v1/chat/completions |
+
+### Grok/xAI Adapter Notes
+
+- **Base URL**: `https://api.x.ai/v1` (OpenAI-compatible format)
+- **Model filtering**: Only models with `grok-` prefix are synced (excludes image/embedding models)
+- **Vision support**: Auto-detected from model name (`vision` substring)
+- **Chat execution**: Uses the same `callCloudProvider()` path as OpenAI/DeepSeek (OpenAI-compatible endpoint)
+- **Routing integration**: GROK is included in the fallback chain and capability priority map
+- **Cost tier**: $3.00/$15.00 per 1M tokens (input/output) — same tier as Anthropic

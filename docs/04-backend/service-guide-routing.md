@@ -2,13 +2,13 @@
 
 ## Overview
 
-| Property       | Value                          |
-| -------------- | ------------------------------ |
-| Port           | 4004                           |
-| Database       | PostgreSQL (`claw_routing`)    |
-| ORM            | Prisma 5.20                    |
-| Env prefix     | `ROUTING_`                     |
-| Nginx route    | `/api/v1/routing/*`            |
+| Property    | Value                       |
+| ----------- | --------------------------- |
+| Port        | 4004                        |
+| Database    | PostgreSQL (`claw_routing`) |
+| ORM         | Prisma 5.20                 |
+| Env prefix  | `ROUTING_`                  |
+| Nginx route | `/api/v1/routing/*`         |
 
 The routing service decides which AI provider and model should handle each user message. It supports 7 routing modes, uses Ollama for intelligent AUTO routing, and maintains a history of routing decisions.
 
@@ -16,54 +16,55 @@ The routing service decides which AI provider and model should handle each user 
 
 ### RoutingDecision
 
-| Column           | Type         | Notes                             |
-| ---------------- | ------------ | --------------------------------- |
-| id               | String       | CUID primary key                  |
-| messageId        | String?      | Associated message                |
-| threadId         | String       | Thread context                    |
-| selectedProvider | String       | Chosen provider (e.g., ANTHROPIC) |
-| selectedModel    | String       | Chosen model (e.g., claude-sonnet-4) |
-| routingMode      | RoutingMode  | Mode used for this decision       |
-| confidence       | Decimal?     | 0.0-1.0 confidence score          |
-| reasonTags       | String[]     | Why this route was chosen         |
-| privacyClass     | String?      | Privacy classification            |
-| costClass        | String?      | Cost classification               |
-| fallbackProvider | String?      | Backup provider if primary fails  |
-| fallbackModel    | String?      | Backup model                      |
+| Column           | Type        | Notes                                |
+| ---------------- | ----------- | ------------------------------------ |
+| id               | String      | CUID primary key                     |
+| messageId        | String?     | Associated message                   |
+| threadId         | String      | Thread context                       |
+| selectedProvider | String      | Chosen provider (e.g., ANTHROPIC)    |
+| selectedModel    | String      | Chosen model (e.g., claude-sonnet-4) |
+| routingMode      | RoutingMode | Mode used for this decision          |
+| confidence       | Decimal?    | 0.0-1.0 confidence score             |
+| reasonTags       | String[]    | Why this route was chosen            |
+| privacyClass     | String?     | Privacy classification               |
+| costClass        | String?     | Cost classification                  |
+| fallbackProvider | String?     | Backup provider if primary fails     |
+| fallbackModel    | String?     | Backup model                         |
 
 ### RoutingPolicy
 
-| Column      | Type        | Notes                              |
-| ----------- | ----------- | ---------------------------------- |
-| id          | String      | CUID primary key                   |
-| name        | String      | Policy name                        |
-| routingMode | RoutingMode | Which mode this policy applies to  |
-| priority    | Int         | Higher priority = evaluated first  |
-| isActive    | Boolean     | Soft enable/disable                |
-| config      | Json        | Mode-specific configuration        |
+| Column      | Type        | Notes                             |
+| ----------- | ----------- | --------------------------------- |
+| id          | String      | CUID primary key                  |
+| name        | String      | Policy name                       |
+| routingMode | RoutingMode | Which mode this policy applies to |
+| priority    | Int         | Higher priority = evaluated first |
+| isActive    | Boolean     | Soft enable/disable               |
+| config      | Json        | Mode-specific configuration       |
 
 ## 7 Routing Modes
 
-| Mode           | Logic                                                                  |
-| -------------- | ---------------------------------------------------------------------- |
-| AUTO           | Dynamic prompt + category keywords + Ollama router + heuristic fallback|
-| MANUAL_MODEL   | User explicitly selects provider + model (forcedProvider/forcedModel)   |
+| Mode           | Logic                                                                                               |
+| -------------- | --------------------------------------------------------------------------------------------------- |
+| AUTO           | Dynamic prompt + category keywords + Ollama router + heuristic fallback                             |
+| MANUAL_MODEL   | User explicitly selects provider + model (forcedProvider/forcedModel)                               |
 | LOCAL_ONLY     | Category-aware: coding tasks go to LOCAL_CODING model, reasoning to LOCAL_REASONING, else gemma3:4b |
-| PRIVACY_FIRST  | Local if Ollama healthy; else Anthropic (most privacy-conscious cloud) |
-| LOW_LATENCY    | Routes to OpenAI gpt-4o-mini for fastest responses                    |
-| HIGH_REASONING | Routes to Anthropic claude-opus-4 for deep analysis                   |
-| COST_SAVER     | Local if healthy; else cheapest cloud model                           |
+| PRIVACY_FIRST  | Local if Ollama healthy; else Anthropic (most privacy-conscious cloud)                              |
+| LOW_LATENCY    | Routes to OpenAI gpt-4o-mini for fastest responses                                                  |
+| HIGH_REASONING | Routes to Anthropic claude-opus-4 for deep analysis                                                 |
+| COST_SAVER     | Local if healthy; else cheapest cloud model                                                         |
 
 ## AUTO Mode Deep Dive
 
-AUTO mode is the most complex. It follows a 5-stage pipeline where each stage can short-circuit:
+AUTO mode is the most complex. It follows a 6-stage pipeline where each stage can short-circuit:
 
 1. **Privacy enforcement** -- 30 privacy keywords scanned; if ANY match, forces local routing (no cloud fallback)
 2. **Image detection** -- 70+ exact keywords + 5 detection layers (verb+noun combo, art styles, reference-based, strong nouns)
 3. **File generation detection** -- 7 exact phrases + 9 verbs x 18 format words = 162 combinations
-4. **Category detection** -- 370+ keywords across 15 capability classes (coding 100, infrastructure 33, security 25, etc.); maps to LocalModelRole and finds installed model
-5. **Ollama router call** -- `PromptBuilderManager` builds dynamic prompt with installed models; sends to router model (default: gemma3:4b) with temperature 0 and Zod-validated JSON response
-6. **Heuristic fallback** -- if Ollama fails or returns an invalid response, falls back to cloud priority order or local
+4. **Multimodal capability routing** _(SAR 2.0)_ -- detects audio/video/PDF/OCR/web-search/vision keywords; routes to best healthy cloud provider per capability priority (GEMINI first for most modalities); runs BEFORE category detection to prevent multimodal messages from incorrectly matching local categories
+5. **Category detection** -- 1650+ keywords across 33 capability classes; maps to LocalModelRole and finds installed model
+6. **Ollama router call** -- `PromptBuilderManager` builds dynamic prompt with installed models; sends to router model (default: gemma3:4b) with temperature 0 and Zod-validated JSON response
+7. **Heuristic fallback** -- if Ollama fails or returns an invalid response, falls back to cloud priority order or local
 
 ## Dynamic Prompt Builder
 
@@ -79,46 +80,59 @@ The `PromptBuilderManager` builds the router prompt dynamically:
 
 When LOCAL_ONLY mode is used (and in AUTO mode's category detection stage), the service detects task category from message content and maps to the appropriate local model role:
 
-| Category | Keywords (count) | Sample Keywords | Routes To |
-| --- | --- | --- | --- |
-| Security | 25 | CVE, XSS, OWASP, pentest, threat model | LOCAL_CODING |
-| Medical | 19 | clinical, HIPAA, diagnosis, ICD-10 | LOCAL_REASONING |
-| Legal | 21 | NDA, GDPR, contract, jurisdiction | LOCAL_REASONING |
-| Coding | 100 | typescript, debug, prisma, jest, SOLID | LOCAL_CODING |
-| Infrastructure | 33 | terraform, kubernetes, AWS, Lambda | LOCAL_CODING |
-| Data Analysis | 33 | pandas, ETL, BigQuery, window function | LOCAL_REASONING |
-| Reasoning | 21 | prove, theorem, probability, step by step | LOCAL_REASONING |
-| Thinking | 15 | research, deep dive, trade-offs, pros and cons | LOCAL_THINKING |
-| Business | 30 | KPI, ROI, pitch deck, go-to-market | LOCAL_FILE_GENERATION |
-| Translation | 12 | translate, localize, i18n, multilingual | LOCAL_FALLBACK_CHAT |
-| Creative Writing | 26 | blog post, screenplay, tagline, ad copy | LOCAL_FALLBACK_CHAT |
-| Default | 0 | Everything else | gemma3:4b |
+| Category         | Keywords (count) | Sample Keywords                                | Routes To             |
+| ---------------- | ---------------- | ---------------------------------------------- | --------------------- |
+| Security         | 25               | CVE, XSS, OWASP, pentest, threat model         | LOCAL_CODING          |
+| Medical          | 19               | clinical, HIPAA, diagnosis, ICD-10             | LOCAL_REASONING       |
+| Legal            | 21               | NDA, GDPR, contract, jurisdiction              | LOCAL_REASONING       |
+| Coding           | 100              | typescript, debug, prisma, jest, SOLID         | LOCAL_CODING          |
+| Infrastructure   | 33               | terraform, kubernetes, AWS, Lambda             | LOCAL_CODING          |
+| Data Analysis    | 33               | pandas, ETL, BigQuery, window function         | LOCAL_REASONING       |
+| Reasoning        | 21               | prove, theorem, probability, step by step      | LOCAL_REASONING       |
+| Thinking         | 15               | research, deep dive, trade-offs, pros and cons | LOCAL_THINKING        |
+| Business         | 30               | KPI, ROI, pitch deck, go-to-market             | LOCAL_FILE_GENERATION |
+| Translation      | 12               | translate, localize, i18n, multilingual        | LOCAL_FALLBACK_CHAT   |
+| Creative Writing | 26               | blog post, screenplay, tagline, ad copy        | LOCAL_FALLBACK_CHAT   |
+| Default          | 0                | Everything else                                | gemma3:4b             |
 
 The order in the table above reflects the detection priority -- security is checked first, creative writing last.
 
+## Complexity Classification (SAR 2.0)
+
+Every routing decision is enriched with automatic complexity classification via `ComplexityClassifierManager`:
+
+| Class   | Criteria                                                    |
+| ------- | ----------------------------------------------------------- |
+| SIMPLE  | Short (< 30 chars), greetings, single-word queries          |
+| MEDIUM  | Standard multi-sentence, single topic                       |
+| COMPLEX | Long (> 200 chars), multi-intent, technical depth           |
+| EXPERT  | Architecture/medical/legal + multiple complexity indicators |
+
+The `RoutingDecision` record stores `complexityClass`, a structured `explanation` JSON (summary + factors array), and `routingDurationMs`. These are surfaced in the `RoutingTransparency` frontend component under "Why this model?".
+
 ## API Endpoints
 
-| Method | Path                | Description                          |
-| ------ | ------------------- | ------------------------------------ |
-| GET    | /policies           | List routing policies (paginated)    |
-| POST   | /policies           | Create policy (ADMIN)                |
-| PATCH  | /policies/:id       | Update policy (ADMIN)                |
-| DELETE | /policies/:id       | Delete policy (ADMIN)                |
-| GET    | /decisions          | List recent routing decisions        |
-| POST   | /evaluate           | Evaluate routing for a message       |
-| POST   | /replay             | Replay historical decisions against current router |
+| Method | Path          | Description                                        |
+| ------ | ------------- | -------------------------------------------------- |
+| GET    | /policies     | List routing policies (paginated)                  |
+| POST   | /policies     | Create policy (ADMIN)                              |
+| PATCH  | /policies/:id | Update policy (ADMIN)                              |
+| DELETE | /policies/:id | Delete policy (ADMIN)                              |
+| GET    | /decisions    | List recent routing decisions                      |
+| POST   | /evaluate     | Evaluate routing for a message                     |
+| POST   | /replay       | Replay historical decisions against current router |
 
 ## Events
 
-| Event                | Direction | Notes                                  |
-| -------------------- | --------- | -------------------------------------- |
-| message.created      | Subscribe | Triggers routing decision              |
-| message.routed       | Publish   | Sends decision back to chat service    |
-| routing.decision_made| Publish   | Audit trail                            |
-| connector.synced     | Subscribe | Updates healthy provider list           |
+| Event                    | Direction | Notes                               |
+| ------------------------ | --------- | ----------------------------------- |
+| message.created          | Subscribe | Triggers routing decision           |
+| message.routed           | Publish   | Sends decision back to chat service |
+| routing.decision_made    | Publish   | Audit trail                         |
+| connector.synced         | Subscribe | Updates healthy provider list       |
 | connector.health_checked | Subscribe | Updates provider health status      |
-| model.pulled         | Subscribe | Invalidates prompt cache               |
-| model.deleted        | Subscribe | Invalidates prompt cache               |
+| model.pulled             | Subscribe | Invalidates prompt cache            |
+| model.deleted            | Subscribe | Invalidates prompt cache            |
 
 ## Key Constants
 
@@ -143,38 +157,38 @@ CLOUD_MODEL_GEMINI_DEFAULT = 'gemini-2.5-flash'
 
 All keyword arrays are defined in `src/modules/routing/constants/routing.constants.ts`. The routing engine uses these for deterministic category detection before falling back to the Ollama router.
 
-| Array Name | Count | Used By | Purpose |
-| --- | --- | --- | --- |
-| `CODING_KEYWORDS` | 100 | `detectCodingRequest()` | Languages, tools, patterns, Git, testing, architecture |
-| `IMAGE_KEYWORDS` | 70 | `detectImageRequest()` | Exact phrases for image generation detection |
-| `INFRASTRUCTURE_KEYWORDS` | 33 | `detectInfrastructureRequest()` | Cloud, containers, networking, serverless |
-| `DATA_ANALYSIS_KEYWORDS` | 33 | `detectDataAnalysisRequest()` | Data tools, SQL, ETL, warehousing, visualization |
-| `BUSINESS_KEYWORDS` | 30 | `detectBusinessRequest()` | Agile, KPIs, strategy, proposals, meetings |
-| `PRIVACY_KEYWORDS` | 30 | `detectPrivacySensitive()` | PII, medical, financial, legal privilege |
-| `CREATIVE_WRITING_KEYWORDS` | 26 | `detectCreativeWritingRequest()` | Content types, copywriting, narrative |
-| `SECURITY_KEYWORDS` | 25 | `detectSecurityRequest()` | Vulnerabilities, pentesting, OWASP, SOC |
-| `REASONING_KEYWORDS` | 21 | `detectReasoningRequest()` | Math, proofs, logic, step-by-step analysis |
-| `LEGAL_KEYWORDS` | 21 | `detectLegalRequest()` | Contracts, compliance, IP, litigation |
-| `MEDICAL_KEYWORDS` | 19 | `detectMedicalRequest()` | Clinical, diagnosis, HIPAA, trials |
-| `FILE_GENERATION_FORMAT_WORDS` | 18 | `detectFileGenerationRequest()` | File extensions and format names |
-| `THINKING_KEYWORDS` | 15 | `detectThinkingRequest()` | Research, investigation, comparison |
-| `TRANSLATION_KEYWORDS` | 12 | `detectTranslationRequest()` | i18n, language conversion |
-| `FILE_GENERATION_VERBS` | 9 | `detectFileGenerationRequest()` | Action verbs for file creation |
-| `FILE_GENERATION_KEYWORDS` | 7 | `detectFileGenerationRequest()` | Exact file generation phrases |
+| Array Name                     | Count | Used By                          | Purpose                                                |
+| ------------------------------ | ----- | -------------------------------- | ------------------------------------------------------ |
+| `CODING_KEYWORDS`              | 100   | `detectCodingRequest()`          | Languages, tools, patterns, Git, testing, architecture |
+| `IMAGE_KEYWORDS`               | 70    | `detectImageRequest()`           | Exact phrases for image generation detection           |
+| `INFRASTRUCTURE_KEYWORDS`      | 33    | `detectInfrastructureRequest()`  | Cloud, containers, networking, serverless              |
+| `DATA_ANALYSIS_KEYWORDS`       | 33    | `detectDataAnalysisRequest()`    | Data tools, SQL, ETL, warehousing, visualization       |
+| `BUSINESS_KEYWORDS`            | 30    | `detectBusinessRequest()`        | Agile, KPIs, strategy, proposals, meetings             |
+| `PRIVACY_KEYWORDS`             | 30    | `detectPrivacySensitive()`       | PII, medical, financial, legal privilege               |
+| `CREATIVE_WRITING_KEYWORDS`    | 26    | `detectCreativeWritingRequest()` | Content types, copywriting, narrative                  |
+| `SECURITY_KEYWORDS`            | 25    | `detectSecurityRequest()`        | Vulnerabilities, pentesting, OWASP, SOC                |
+| `REASONING_KEYWORDS`           | 21    | `detectReasoningRequest()`       | Math, proofs, logic, step-by-step analysis             |
+| `LEGAL_KEYWORDS`               | 21    | `detectLegalRequest()`           | Contracts, compliance, IP, litigation                  |
+| `MEDICAL_KEYWORDS`             | 19    | `detectMedicalRequest()`         | Clinical, diagnosis, HIPAA, trials                     |
+| `FILE_GENERATION_FORMAT_WORDS` | 18    | `detectFileGenerationRequest()`  | File extensions and format names                       |
+| `THINKING_KEYWORDS`            | 15    | `detectThinkingRequest()`        | Research, investigation, comparison                    |
+| `TRANSLATION_KEYWORDS`         | 12    | `detectTranslationRequest()`     | i18n, language conversion                              |
+| `FILE_GENERATION_VERBS`        | 9     | `detectFileGenerationRequest()`  | Action verbs for file creation                         |
+| `FILE_GENERATION_KEYWORDS`     | 7     | `detectFileGenerationRequest()`  | Exact file generation phrases                          |
 
 **Total**: 370+ unique keywords. Image detection adds another 85+ terms via inline arrays in `detectImageRequest()` (12 verbs, 34 nouns, 18 strong nouns, 21 art styles).
 
 ### Additional Constants
 
-| Constant | Value | Purpose |
-| --- | --- | --- |
-| `CONFIDENCE_EXACT_KEYWORD` | 0.95 | Image/file exact match confidence |
-| `CONFIDENCE_VERB_NOUN_COMBO` | 0.90 | Verb+noun combo detection confidence |
-| `CONFIDENCE_CATEGORY_KEYWORD` | 0.85 | Category detection confidence |
-| `CONFIDENCE_HEURISTIC_FALLBACK` | 0.60 | Heuristic fallback confidence |
-| `CONFIDENCE_PRIVACY_ENFORCED` | 0.95 | Privacy-forced local routing confidence |
-| `PROMPT_CACHE_TTL_MS` | 300000 (5 min) | Dynamic prompt cache lifetime |
-| `CATEGORY_TO_ROLE_MAP` | Record<string, LocalModelRole> | Maps 14 categories to model roles |
+| Constant                        | Value                          | Purpose                                 |
+| ------------------------------- | ------------------------------ | --------------------------------------- |
+| `CONFIDENCE_EXACT_KEYWORD`      | 0.95                           | Image/file exact match confidence       |
+| `CONFIDENCE_VERB_NOUN_COMBO`    | 0.90                           | Verb+noun combo detection confidence    |
+| `CONFIDENCE_CATEGORY_KEYWORD`   | 0.85                           | Category detection confidence           |
+| `CONFIDENCE_HEURISTIC_FALLBACK` | 0.60                           | Heuristic fallback confidence           |
+| `CONFIDENCE_PRIVACY_ENFORCED`   | 0.95                           | Privacy-forced local routing confidence |
+| `PROMPT_CACHE_TTL_MS`           | 300000 (5 min)                 | Dynamic prompt cache lifetime           |
+| `CATEGORY_TO_ROLE_MAP`          | Record<string, LocalModelRole> | Maps 14 categories to model roles       |
 
 ---
 
@@ -184,28 +198,28 @@ The `RoutingManager` class exposes 15 detection methods. Each takes a `message: 
 
 ### Public Detection Methods
 
-| Method | Keyword Array | Returns |
-| --- | --- | --- |
-| `detectCodingRequest(message)` | `CODING_KEYWORDS` | boolean |
-| `detectReasoningRequest(message)` | `REASONING_KEYWORDS` | boolean |
-| `detectThinkingRequest(message)` | `THINKING_KEYWORDS` | boolean |
-| `detectInfrastructureRequest(message)` | `INFRASTRUCTURE_KEYWORDS` | boolean |
-| `detectDataAnalysisRequest(message)` | `DATA_ANALYSIS_KEYWORDS` | boolean |
-| `detectBusinessRequest(message)` | `BUSINESS_KEYWORDS` | boolean |
+| Method                                  | Keyword Array               | Returns |
+| --------------------------------------- | --------------------------- | ------- |
+| `detectCodingRequest(message)`          | `CODING_KEYWORDS`           | boolean |
+| `detectReasoningRequest(message)`       | `REASONING_KEYWORDS`        | boolean |
+| `detectThinkingRequest(message)`        | `THINKING_KEYWORDS`         | boolean |
+| `detectInfrastructureRequest(message)`  | `INFRASTRUCTURE_KEYWORDS`   | boolean |
+| `detectDataAnalysisRequest(message)`    | `DATA_ANALYSIS_KEYWORDS`    | boolean |
+| `detectBusinessRequest(message)`        | `BUSINESS_KEYWORDS`         | boolean |
 | `detectCreativeWritingRequest(message)` | `CREATIVE_WRITING_KEYWORDS` | boolean |
-| `detectSecurityRequest(message)` | `SECURITY_KEYWORDS` | boolean |
-| `detectMedicalRequest(message)` | `MEDICAL_KEYWORDS` | boolean |
-| `detectLegalRequest(message)` | `LEGAL_KEYWORDS` | boolean |
-| `detectTranslationRequest(message)` | `TRANSLATION_KEYWORDS` | boolean |
-| `detectPrivacySensitive(message)` | `PRIVACY_KEYWORDS` | boolean |
+| `detectSecurityRequest(message)`        | `SECURITY_KEYWORDS`         | boolean |
+| `detectMedicalRequest(message)`         | `MEDICAL_KEYWORDS`          | boolean |
+| `detectLegalRequest(message)`           | `LEGAL_KEYWORDS`            | boolean |
+| `detectTranslationRequest(message)`     | `TRANSLATION_KEYWORDS`      | boolean |
+| `detectPrivacySensitive(message)`       | `PRIVACY_KEYWORDS`          | boolean |
 
 ### Private Detection Methods
 
-| Method | Detection Logic | Returns |
-| --- | --- | --- |
-| `detectImageRequest(context)` | 5-layer image detection (exact, verb+noun, strong noun, art style, reference) | `RoutingDecisionResult \| null` |
-| `detectFileGenerationRequest(context)` | Exact phrases + verb+format combo | `RoutingDecisionResult \| null` |
-| `detectCategoryRole(message)` | Calls all 11 boolean detectors in priority order | `LocalModelRole \| null` |
+| Method                                 | Detection Logic                                                               | Returns                         |
+| -------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------- |
+| `detectImageRequest(context)`          | 5-layer image detection (exact, verb+noun, strong noun, art style, reference) | `RoutingDecisionResult \| null` |
+| `detectFileGenerationRequest(context)` | Exact phrases + verb+format combo                                             | `RoutingDecisionResult \| null` |
+| `detectCategoryRole(message)`          | Calls all 11 boolean detectors in priority order                              | `LocalModelRole \| null`        |
 
 ### Detection Priority in `detectCategoryRole()`
 
@@ -344,10 +358,10 @@ The summary aggregates these into an overall improvement percentage.
 
 ### Replay Types
 
-| Type | Description |
-| --- | --- |
-| `ReplayFilter` | Date range, routing mode, provider, limit filters |
-| `ReplayResult` | Single decision comparison (old vs new provider/model, changed flag, improvementScore) |
+| Type            | Description                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------ |
+| `ReplayFilter`  | Date range, routing mode, provider, limit filters                                                |
+| `ReplayResult`  | Single decision comparison (old vs new provider/model, changed flag, improvementScore)           |
 | `ReplaySummary` | Aggregated stats: totalReplayed, changedCount, improvedCount, regressedCount, avgConfidenceDelta |
 
 ### Endpoint

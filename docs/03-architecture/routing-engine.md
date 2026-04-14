@@ -510,6 +510,113 @@ The routing engine was refined across 5 experiment rounds:
 
 ---
 
+## Multimodal Capability Routing
+
+The routing engine detects multimodal message content **before** category-based routing, ensuring that messages requiring specific model capabilities (audio, video, PDF, OCR, web-search, vision) are routed to cloud providers that support them — rather than falling into local categories.
+
+### Capability Detection Order
+
+Modality detection follows a strict priority hierarchy (highest to lowest):
+
+1. **AUDIO_INPUT** — transcription, voice, speech, audio file keywords → GEMINI (primary)
+2. **VIDEO_INPUT** — video clip, watch video, YouTube, stream → GEMINI (primary)
+3. **PDF_INPUT** — .pdf attachment, extract from PDF → GEMINI or ANTHROPIC
+4. **OCR** — scan document, extract text from image, read photo → GEMINI
+5. **WEB_SEARCH** — search the web, look up online, browse → GEMINI or OPENAI
+6. **IMAGE_INPUT** — analyze this image, describe photo → GEMINI (or local-ollama as last resort)
+
+### Provider Priority per Capability
+
+| Capability  | Priority Order                                    |
+| ----------- | ------------------------------------------------- |
+| AUDIO_INPUT | GEMINI → ANTHROPIC → OPENAI                       |
+| VIDEO_INPUT | GEMINI → OPENAI                                   |
+| PDF_INPUT   | GEMINI → ANTHROPIC → OPENAI                       |
+| OCR         | GEMINI → ANTHROPIC → OPENAI                       |
+| WEB_SEARCH  | GEMINI → OPENAI                                   |
+| IMAGE_INPUT | GEMINI → ANTHROPIC → OPENAI → GROK → local-ollama |
+
+The capability router skips unhealthy providers and selects the first healthy one. If no cloud provider is healthy for the capability, returns `null` and routing continues to category-based detection.
+
+### Pipeline Position
+
+Capability routing runs BEFORE category detection in `handleAuto()`. This prevents multimodal messages from matching local categories (e.g., "analyze this video clip" previously matched the "reasoning" category and was routed locally before this fix).
+
+---
+
+## Smart Auto Router 2.0 — Complexity Classification
+
+Every routing decision includes automatic complexity classification and a human-readable explanation.
+
+### Complexity Classes
+
+| Class   | Criteria                                                    | Routing Influence               |
+| ------- | ----------------------------------------------------------- | ------------------------------- |
+| SIMPLE  | Short messages (< 30 chars), greetings, single-word queries | Favors cheap/fast providers     |
+| MEDIUM  | Standard queries, multi-sentence, single topic              | Standard routing applies        |
+| COMPLEX | Long messages (> 200 chars), multi-intent, technical depth  | Favors capable providers        |
+| EXPERT  | Deep technical, architecture, medical/legal + complex       | Forces high-reasoning providers |
+
+### Routing Decision Fields (added in SAR 2.0)
+
+| Field               | Type | Description                                         |
+| ------------------- | ---- | --------------------------------------------------- |
+| `complexityClass`   | Enum | SIMPLE / MEDIUM / COMPLEX / EXPERT                  |
+| `explanation`       | JSON | Structured explanation: summary + reasoning factors |
+| `routingDurationMs` | Int  | Time taken for the routing decision (ms)            |
+
+### Routing Explanation Structure
+
+```json
+{
+  "summary": "Routed to ANTHROPIC/claude-sonnet-4 for complex coding task",
+  "factors": [
+    {
+      "label": "Complexity",
+      "value": "COMPLEX",
+      "reason": "Multi-step implementation request with architecture decisions"
+    },
+    { "label": "Category", "value": "coding", "reason": "Contains 8 coding keywords" },
+    {
+      "label": "Privacy",
+      "value": "cloud-safe",
+      "reason": "No privacy-sensitive content detected"
+    },
+    {
+      "label": "Provider",
+      "value": "ANTHROPIC",
+      "reason": "Best capability match for coding tasks"
+    }
+  ]
+}
+```
+
+The explanation is surfaced in the `RoutingTransparency` component under "Why this model?" and helps users understand routing decisions without needing to interpret raw reason tags.
+
+---
+
+## Grok/xAI Routing Integration
+
+Grok is registered as a cloud provider in the routing engine's fallback chain and capability matrix.
+
+### Fallback Chain Inclusion
+
+GROK is included in `allCloudProviders` within `buildFallbackChain()`:
+
+- **Local-primary routes**: GROK can be a cloud fallback when local Ollama fails
+- **Cloud-primary routes**: GROK is included as a cross-cloud fallback (skipped if GROK is the primary)
+- **Unhealthy GROK**: Excluded from chain if `connectorHealth.GROK === false`
+
+### Cost Tier
+
+GROK is priced at `$3.00/$15.00` per 1M input/output tokens — the same tier as Anthropic. In cost-sorted chains, GROK appears after GEMINI ($0.075/$0.30) and OPENAI ($0.15/$0.60).
+
+### Model Inference
+
+The `inferProvider()` method maps `grok-*` model names to the GROK provider, enabling MANUAL_MODEL mode to work correctly when users specify a Grok model (e.g., `grok-3`, `grok-3-mini`, `grok-2-vision-1212`).
+
+---
+
 ## Auto Re-Routing on Weak Answer
 
 After the LLM responds, the `QualityCheckManager` (in `claw-chat-service`) scores the response quality. If the score falls below the weak threshold (0.4), the system automatically re-routes to the next candidate in the fallback chain.
