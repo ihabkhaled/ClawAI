@@ -22,7 +22,7 @@ apps/
   claw-frontend/            # Next.js 16, React 19, TanStack Query, Zustand, Tailwind, shadcn/ui
   claw-auth-service/        # Port 4001, PG claw_auth   — JWT, RBAC, users, sessions
   claw-chat-service/        # Port 4002, PG claw_chat   — threads, messages, context assembly, execution
-  claw-connector-service/   # Port 4003, PG claw_connectors — 5 cloud providers, health, model sync
+  claw-connector-service/   # Port 4003, PG claw_connectors — 7 providers (OpenAI, Anthropic, Gemini, Bedrock, DeepSeek, Ollama, Grok), health, model sync
   claw-routing-service/     # Port 4004, PG claw_routing — 7 modes, Ollama-assisted AUTO, policies
   claw-memory-service/      # Port 4005, PG claw_memory  — memory CRUD, extraction, context packs
   claw-file-service/        # Port 4006, PG claw_files   — upload, chunking (JSON/CSV/MD/text)
@@ -399,7 +399,7 @@ Page (.tsx) → Controller Hook (useX) → Service → Repository/API
 
 ### Connectors (PostgreSQL)
 
-- `Connector` — name, provider (6 types), status, encryptedConfig (AES-256-GCM), baseUrl
+- `Connector` — name, provider (7 types: OPENAI, ANTHROPIC, GEMINI, AWS_BEDROCK, DEEPSEEK, OLLAMA, GROK), status, encryptedConfig (AES-256-GCM), baseUrl
 - `ConnectorModel` — modelKey, displayName, lifecycle, capability flags (streaming/tools/vision/audio)
 - `ConnectorHealthEvent`, `ModelSyncRun`
 
