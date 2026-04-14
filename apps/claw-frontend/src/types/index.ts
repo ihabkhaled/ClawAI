@@ -37,6 +37,9 @@ export type {
   ConnectorFormStateReturn,
 } from './connector.types';
 export type {
+  ExplanationFactor,
+  RejectedEntry,
+  RoutingExplanation,
   RoutingConfig,
   UpdateRoutingRequest,
   RoutingPolicy,

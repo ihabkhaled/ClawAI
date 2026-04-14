@@ -87,6 +87,87 @@ describe('RoutingManager', () => {
 
       expect(result.routingMode).toBe(RoutingMode.AUTO);
     });
+
+    // ─── SAR2: EXPERT complexity path ─────────────────────────────────────────
+    it('SAR2: EXPERT complexity routes to Anthropic/claude-opus-4 when healthy', async () => {
+      // 600-word message → score = 1.0 → EXPERT
+      const expertMessage = 'word '.repeat(600).trim();
+      const context: RoutingContext = {
+        ...baseContext,
+        message: expertMessage,
+        userMode: RoutingMode.AUTO,
+        connectorHealth: { ANTHROPIC: true, OPENAI: true },
+        runtimeHealth: { OLLAMA: true },
+      };
+
+      const result = await manager.evaluateRoute(context);
+
+      expect(result.complexityClass).toBe(ComplexityClass.EXPERT);
+      expect(result.selectedProvider).toBe('ANTHROPIC');
+      expect(result.selectedModel).toBe('claude-opus-4');
+      expect(result.reasonTags).toContain('expert_complexity');
+      expect(result.reasonTags).toContain('high_reasoning_cloud');
+    });
+
+    it('SAR2: EXPERT complexity falls through to next handler when Anthropic unhealthy', async () => {
+      const expertMessage = 'word '.repeat(600).trim();
+      const context: RoutingContext = {
+        ...baseContext,
+        message: expertMessage,
+        userMode: RoutingMode.AUTO,
+        connectorHealth: { ANTHROPIC: false, OPENAI: true },
+        runtimeHealth: { OLLAMA: true },
+      };
+
+      const result = await manager.evaluateRoute(context);
+
+      expect(result.complexityClass).toBe(ComplexityClass.EXPERT);
+      // EXPERT path skipped (Anthropic unhealthy) → falls to short-message local path (600 words = long, so cloud)
+      expect(result.selectedProvider).not.toBe('ANTHROPIC');
+    });
+
+    it('SAR2: SIMPLE complexity with local unhealthy falls through to cloud', async () => {
+      const simpleMessage = 'Hello';
+      const context: RoutingContext = {
+        ...baseContext,
+        message: simpleMessage,
+        userMode: RoutingMode.AUTO,
+        connectorHealth: { ANTHROPIC: true, OPENAI: true },
+        runtimeHealth: { OLLAMA: false },
+      };
+
+      const result = await manager.evaluateRoute(context);
+
+      expect(result.complexityClass).toBe(ComplexityClass.SIMPLE);
+      // SIMPLE path skipped (local unhealthy) → falls through to cloud
+      expect(result.selectedProvider).not.toBe('local-ollama');
+    });
+
+    // ─── SAR2: explanation and routingDurationMs fields ───────────────────────
+    it('SAR2: result always includes explanation with summary and factors', async () => {
+      const result = await manager.evaluateRoute({ ...baseContext });
+
+      expect(result.explanation).toBeDefined();
+      expect(result.explanation?.summary).toContain('/');
+      expect(Array.isArray(result.explanation?.factors)).toBe(true);
+      expect(result.explanation?.factors.length).toBeGreaterThanOrEqual(4);
+      expect(Array.isArray(result.explanation?.rejected)).toBe(true);
+    });
+
+    it('SAR2: result always includes routingDurationMs >= 0', async () => {
+      const result = await manager.evaluateRoute({ ...baseContext });
+
+      expect(result.routingDurationMs).toBeDefined();
+      expect(result.routingDurationMs).toBeGreaterThanOrEqual(0);
+    });
+
+    it('SAR2: explanation contains complexity factor', async () => {
+      const result = await manager.evaluateRoute({ ...baseContext });
+
+      const complexityFactor = result.explanation?.factors.find((f) => f.factor === 'complexity');
+      expect(complexityFactor).toBeDefined();
+      expect(complexityFactor?.weight).toBe('HIGH');
+    });
   });
 
   describe('evaluateRoute - MANUAL_MODEL', () => {
