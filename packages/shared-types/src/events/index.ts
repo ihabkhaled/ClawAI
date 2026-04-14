@@ -6,6 +6,7 @@ export type {
   WorkspaceConnectorDeletedPayload,
   WorkspaceConnectorSyncedPayload,
   WorkspaceConnectorHealthCheckedPayload,
+  WorkspaceObjectSyncedPayload,
   UserCreatedPayload,
   UserLoginPayload,
   UserLogoutPayload,

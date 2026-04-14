@@ -906,6 +906,17 @@ export type TranslationDictionary = {
     disabled: string;
     deleteConfirm: string;
   };
+  workspaceObjects: {
+    title: string;
+    description: string;
+    loading: string;
+    loadFailed: string;
+    noObjects: string;
+    noObjectsDesc: string;
+    selectConnector: string;
+    source: string;
+    viewObject: string;
+  };
   validation: {
     required: string;
     invalidEmail: string;

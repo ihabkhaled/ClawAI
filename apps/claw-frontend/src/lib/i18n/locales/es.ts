@@ -923,6 +923,17 @@ export const es: TranslationDictionary = {
     deleteConfirm:
       '¿Está seguro de que desea eliminar este conector? Esta acción no se puede deshacer.',
   },
+  workspaceObjects: {
+    title: 'Objetos sincronizados',
+    description: 'Objetos sincronizados de sus herramientas de workspace conectadas.',
+    loading: 'Cargando objetos...',
+    loadFailed: 'Error al cargar los objetos del workspace.',
+    noObjects: 'Aún no se han sincronizado objetos.',
+    noObjectsDesc: 'Active una sincronización en un conector para importar objetos del workspace.',
+    selectConnector: 'Seleccione un conector para ver sus objetos sincronizados.',
+    source: 'Fuente',
+    viewObject: 'Ver objeto',
+  },
   validation: {
     required: 'Este campo es obligatorio',
     invalidEmail: 'Ingrese un correo electrónico válido',

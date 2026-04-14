@@ -7,11 +7,13 @@ import {
   SLACK_AUTH_URL,
   SLACK_TOKEN_URL,
 } from '../../../common/constants/workspace.constants';
+import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { WorkspaceAdapter } from './workspace-adapter.interface';
 import type {
   AdapterCapabilities,
   HealthCheckResult,
   OAuthTokenSet,
+  SyncedObject,
   SyncResult,
 } from '../types/workspace.types';
 
@@ -57,12 +59,28 @@ export class SlackAdapter implements WorkspaceAdapter {
         headers: { Authorization: `Bearer ${accessToken}` },
       },
     );
-    const data = (await response.json()) as { ok: boolean; channels?: unknown[]; error?: string };
+    const data = (await response.json()) as {
+      ok: boolean;
+      channels?: Array<{ id: string; name: string; purpose?: { value: string }; created: number }>;
+      error?: string;
+    };
     if (!data['ok']) {
       throw new Error(`Slack sync failed: ${data['error'] ?? 'unknown'}`);
     }
     const channels = data['channels'] ?? [];
-    return { objectsFound: channels.length, objectsSynced: channels.length, objectsFailed: 0 };
+    const objects: SyncedObject[] = channels.map((channel) => ({
+      externalId: channel.id,
+      type: WorkspaceObjectType.CHANNEL,
+      title: `#${channel.name}`,
+      content: channel.purpose?.value,
+      externalCreatedAt: new Date(channel.created * 1000),
+    }));
+    return {
+      objectsFound: objects.length,
+      objectsSynced: objects.length,
+      objectsFailed: 0,
+      objects,
+    };
   }
 
   async exchangeCodeForTokens(

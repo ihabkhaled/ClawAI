@@ -105,4 +105,8 @@ export class WorkspaceConnectorRepository {
       orderBy: { checkedAt: 'desc' },
     });
   }
+
+  async getObjectCount(connectorId: string): Promise<number> {
+    return this.prisma.workspaceObject.count({ where: { connectorId } });
+  }
 }

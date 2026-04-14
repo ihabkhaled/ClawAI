@@ -1,12 +1,13 @@
 'use client';
 
-import { Plus, Plug } from 'lucide-react';
+import { Package, Plug, Plus } from 'lucide-react';
 
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
 import { WorkspaceConnectorCard } from '@/components/workspace/workspace-connector-card';
+import { WorkspaceObjectList } from '@/components/workspace/workspace-object-list';
 import { useWorkspacePage } from '@/hooks/workspace/use-workspace-page';
 import { useTranslation } from '@/lib/i18n';
 
@@ -24,6 +25,11 @@ export default function WorkspacePage(): React.ReactElement {
     isCheckingHealth,
     isSyncing,
     setIsCreateOpen,
+    selectedConnector,
+    setSelectedConnector,
+    objects,
+    isObjectsLoading,
+    isObjectsError,
   } = useWorkspacePage();
 
   if (isError) {
@@ -43,7 +49,7 @@ export default function WorkspacePage(): React.ReactElement {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col gap-6">
       <PageHeader
         title={t('workspaceConnectors.title')}
         description={t('workspaceConnectors.description')}
@@ -88,6 +94,50 @@ export default function WorkspacePage(): React.ReactElement {
               t={t}
             />
           ))}
+        </div>
+      )}
+
+      {!isLoading && connectors.length > 0 && (
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <Package className="size-4 text-muted-foreground" />
+            <h2 className="text-base font-semibold">
+              {selectedConnector !== null
+                ? t('workspaceObjects.title')
+                : t('workspaceObjects.selectConnector')}
+            </h2>
+          </div>
+          {selectedConnector === null ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {connectors.map((c) => (
+                <Button
+                  key={c.id}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedConnector(c)}
+                >
+                  {c.name}
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-fit"
+                onClick={() => setSelectedConnector(null)}
+              >
+                ← {t('common.back')}
+              </Button>
+              <WorkspaceObjectList
+                objects={objects}
+                isLoading={isObjectsLoading}
+                isError={isObjectsError}
+                t={t}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

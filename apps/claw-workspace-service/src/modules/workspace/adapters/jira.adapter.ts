@@ -7,11 +7,13 @@ import {
   JIRA_AUTH_URL,
   JIRA_TOKEN_URL,
 } from '../../../common/constants/workspace.constants';
+import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { WorkspaceAdapter } from './workspace-adapter.interface';
 import type {
   AdapterCapabilities,
   HealthCheckResult,
   OAuthTokenSet,
+  SyncedObject,
   SyncResult,
 } from '../types/workspace.types';
 
@@ -63,7 +65,7 @@ export class JiraAdapter implements WorkspaceAdapter {
     const resources = (await resourcesResponse.json()) as Array<{ id: string; url: string }>;
     const site = resources[0];
     if (site === undefined) {
-      return { objectsFound: 0, objectsSynced: 0, objectsFailed: 0 };
+      return { objectsFound: 0, objectsSynced: 0, objectsFailed: 0, objects: [] };
     }
     const issueResponse = await fetch(
       `${site.url}/rest/api/3/search?maxResults=100&jql=ORDER+BY+updated+DESC`,
@@ -74,8 +76,36 @@ export class JiraAdapter implements WorkspaceAdapter {
     if (!issueResponse.ok) {
       throw new Error(`Jira issue fetch failed: HTTP ${issueResponse.status}`);
     }
-    const data = (await issueResponse.json()) as { total: number; issues: unknown[] };
-    return { objectsFound: data.total, objectsSynced: data.issues.length, objectsFailed: 0 };
+    const data = (await issueResponse.json()) as {
+      total: number;
+      issues: Array<{
+        id: string;
+        key: string;
+        fields: {
+          summary: string;
+          description?: unknown;
+          assignee?: { emailAddress: string };
+          created: string;
+          updated: string;
+          self: string;
+        };
+      }>;
+    };
+    const objects: SyncedObject[] = data.issues.map((issue) => ({
+      externalId: issue.id,
+      type: WorkspaceObjectType.TICKET,
+      title: `${issue.key}: ${issue.fields.summary}`,
+      authorId: issue.fields.assignee?.emailAddress,
+      url: issue.fields.self,
+      externalCreatedAt: new Date(issue.fields.created),
+      externalUpdatedAt: new Date(issue.fields.updated),
+    }));
+    return {
+      objectsFound: data.total,
+      objectsSynced: objects.length,
+      objectsFailed: 0,
+      objects,
+    };
   }
 
   async exchangeCodeForTokens(

@@ -910,6 +910,17 @@ export const ar: TranslationDictionary = {
     disabled: 'معطّل',
     deleteConfirm: 'هل أنت متأكد من حذف هذا الموصل؟ لا يمكن التراجع عن هذا الإجراء.',
   },
+  workspaceObjects: {
+    title: 'الكائنات المزامنة',
+    description: 'الكائنات المزامنة من أدوات مساحة العمل المتصلة.',
+    loading: 'جارٍ تحميل الكائنات...',
+    loadFailed: 'فشل تحميل كائنات مساحة العمل.',
+    noObjects: 'لم تتم مزامنة أي كائنات بعد.',
+    noObjectsDesc: 'قم بتشغيل مزامنة على موصل لاستيراد كائنات مساحة العمل.',
+    selectConnector: 'اختر موصلاً لعرض كائناته المزامنة.',
+    source: 'المصدر',
+    viewObject: 'عرض الكائن',
+  },
   validation: {
     required: 'هذا الحقل مطلوب',
     invalidEmail: 'يرجى إدخال بريد إلكتروني صالح',

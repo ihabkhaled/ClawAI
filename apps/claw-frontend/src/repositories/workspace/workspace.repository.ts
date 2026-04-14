@@ -1,14 +1,17 @@
 import { apiClient } from '../../services/shared/api-client';
 import type {
-  WorkspaceConnector,
-  PaginatedWorkspaceConnectors,
-  CreateWorkspaceConnectorRequest,
-  UpdateWorkspaceConnectorRequest,
+  ListWorkspaceConnectorsQuery,
+  ListWorkspaceObjectsQuery,
   OAuthInitRequest,
   OAuthInitResult,
+  PaginatedWorkspaceConnectors,
+  PaginatedWorkspaceObjects,
+  CreateWorkspaceConnectorRequest,
+  UpdateWorkspaceConnectorRequest,
+  WorkspaceConnector,
   WorkspaceHealthCheckResult,
+  WorkspaceObject,
   WorkspaceSyncResult,
-  ListWorkspaceConnectorsQuery,
 } from '../../types/workspace.types';
 
 const BASE = '/api/v1/workspace';
@@ -87,5 +90,33 @@ export async function triggerWorkspaceSync(
 
 export async function initWorkspaceOAuth(dto: OAuthInitRequest): Promise<OAuthInitResult> {
   const response = await apiClient.post<OAuthInitResult>(`${BASE}/oauth/init`, dto);
+  return response.data;
+}
+
+export async function listWorkspaceObjects(
+  query?: ListWorkspaceObjectsQuery,
+): Promise<PaginatedWorkspaceObjects> {
+  const params = new URLSearchParams();
+  if (query?.page !== undefined) {
+    params.set('page', String(query.page));
+  }
+  if (query?.limit !== undefined) {
+    params.set('limit', String(query.limit));
+  }
+  if (query?.connectorId !== undefined) {
+    params.set('connectorId', query.connectorId);
+  }
+  if (query?.type !== undefined) {
+    params.set('type', query.type);
+  }
+  const qs = params.toString();
+  const response = await apiClient.get<PaginatedWorkspaceObjects>(
+    `${BASE}/objects${qs ? `?${qs}` : ''}`,
+  );
+  return response.data;
+}
+
+export async function getWorkspaceObject(id: string): Promise<WorkspaceObject> {
+  const response = await apiClient.get<WorkspaceObject>(`${BASE}/objects/${id}`);
   return response.data;
 }

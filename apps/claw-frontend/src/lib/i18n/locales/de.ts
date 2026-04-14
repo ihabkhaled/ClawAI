@@ -921,6 +921,19 @@ export const de: TranslationDictionary = {
     deleteConfirm:
       'Möchten Sie diesen Konnektor wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.',
   },
+  workspaceObjects: {
+    title: 'Synchronisierte Objekte',
+    description: 'Objekte, die von Ihren verbundenen Workspace-Tools synchronisiert wurden.',
+    loading: 'Objekte werden geladen...',
+    loadFailed: 'Workspace-Objekte konnten nicht geladen werden.',
+    noObjects: 'Noch keine Objekte synchronisiert.',
+    noObjectsDesc:
+      'Starten Sie eine Synchronisierung eines Konnektors, um Workspace-Objekte zu importieren.',
+    selectConnector:
+      'Wählen Sie einen Konnektor aus, um seine synchronisierten Objekte anzuzeigen.',
+    source: 'Quelle',
+    viewObject: 'Objekt anzeigen',
+  },
   validation: {
     required: 'Dieses Feld ist erforderlich',
     invalidEmail: 'Bitte geben Sie eine gültige E-Mail-Adresse ein',

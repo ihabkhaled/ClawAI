@@ -37,6 +37,14 @@ export const HEALTH_CHECK_TIMEOUT_MS = 5000;
 export const MAX_PAGE_SIZE = 100;
 export const DEFAULT_PAGE_SIZE = 20;
 export const TOKEN_EXPIRY_BUFFER_SECONDS = 300;
+export const OBJECT_UPSERT_BATCH_SIZE = 100;
+export const OBJECT_CONTENT_MAX_LENGTH = 65_536;
+
+// ─── Cross-reference detection patterns ──────────────────────────────────────
+export const JIRA_KEY_PATTERN = /\b[A-Z][A-Z0-9]+-\d+\b/g;
+export const GITHUB_PR_URL_PATTERN = /https?:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+/g;
+export const GITHUB_ISSUE_URL_PATTERN = /https?:\/\/github\.com\/[^/]+\/[^/]+\/issues\/\d+/g;
+export const SLACK_CHANNEL_PATTERN = /<#[A-Z0-9]+\|[^>]+>/g;
 
 export const OAUTH_PROVIDERS: ReadonlySet<WorkspaceProvider> = new Set([
   'SLACK',

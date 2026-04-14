@@ -38,5 +38,6 @@ export { RolePackName } from './role-pack.enum';
 export { ComplexityClass } from './complexity-class.enum';
 export { ExplanationWeight } from './explanation-weight.enum';
 export { ModelCapability } from './model-capability.enum';
-export { WorkspaceProvider } from './workspace-provider.enum';
 export { WorkspaceConnectorStatus } from './workspace-connector-status.enum';
+export { WorkspaceObjectType } from './workspace-object-type.enum';
+export { WorkspaceProvider } from './workspace-provider.enum';

@@ -242,6 +242,14 @@ export interface WorkspaceConnectorHealthCheckedPayload extends BaseEventPayload
   latencyMs?: number;
 }
 
+export interface WorkspaceObjectSyncedPayload extends BaseEventPayload {
+  connectorId: string;
+  provider: WorkspaceProvider;
+  userId: string;
+  objectCount: number;
+  deltaUsed: boolean;
+}
+
 // ---- Union type for all payloads ----
 
 export type EventPayload =
@@ -269,4 +277,5 @@ export type EventPayload =
   | WorkspaceConnectorUpdatedPayload
   | WorkspaceConnectorDeletedPayload
   | WorkspaceConnectorSyncedPayload
-  | WorkspaceConnectorHealthCheckedPayload;
+  | WorkspaceConnectorHealthCheckedPayload
+  | WorkspaceObjectSyncedPayload;

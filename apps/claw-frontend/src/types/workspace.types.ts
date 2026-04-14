@@ -1,4 +1,5 @@
 import type { WorkspaceConnectorStatus } from '../enums/workspace-connector-status.enum';
+import type { WorkspaceObjectType } from '../enums/workspace-object-type.enum';
 import type { WorkspaceProvider } from '../enums/workspace-provider.enum';
 
 export type WorkspaceConnector = {
@@ -85,4 +86,46 @@ export type ListWorkspaceConnectorsQuery = {
   provider?: WorkspaceProvider;
   status?: WorkspaceConnectorStatus;
   isEnabled?: boolean;
+};
+
+export type WorkspaceObject = {
+  id: string;
+  connectorId: string;
+  userId: string;
+  externalId: string;
+  type: WorkspaceObjectType;
+  title: string;
+  content: string | null;
+  url: string | null;
+  authorId: string | null;
+  provider: WorkspaceProvider;
+  metadata: Record<string, unknown>;
+  externalCreatedAt: string | null;
+  externalUpdatedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type WorkspaceObjectLink = {
+  id: string;
+  sourceObjectId: string;
+  targetObjectId: string;
+  externalRef: string | null;
+  linkType: string;
+  confidence: number;
+  createdAt: string;
+};
+
+export type PaginatedWorkspaceObjects = {
+  data: WorkspaceObject[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type ListWorkspaceObjectsQuery = {
+  page?: number;
+  limit?: number;
+  connectorId?: string;
+  type?: WorkspaceObjectType;
 };

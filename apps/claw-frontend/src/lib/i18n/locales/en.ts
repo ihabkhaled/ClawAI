@@ -914,6 +914,17 @@ export const en: TranslationDictionary = {
     disabled: 'Disabled',
     deleteConfirm: 'Are you sure you want to delete this connector? This action cannot be undone.',
   },
+  workspaceObjects: {
+    title: 'Synced Objects',
+    description: 'Objects synced from your connected workspace tools.',
+    loading: 'Loading objects...',
+    loadFailed: 'Failed to load workspace objects.',
+    noObjects: 'No objects synced yet.',
+    noObjectsDesc: 'Trigger a sync on a connector to import workspace objects.',
+    selectConnector: 'Select a connector to view its synced objects.',
+    source: 'Source',
+    viewObject: 'View Object',
+  },
   validation: {
     required: 'This field is required',
     invalidEmail: 'Please enter a valid email address',

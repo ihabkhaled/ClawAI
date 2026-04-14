@@ -2,8 +2,11 @@ import type {
   AdapterCapabilities,
   HealthCheckResult,
   OAuthTokenSet,
+  SyncedObject,
   SyncResult,
 } from '../types/workspace.types';
+
+export type { SyncedObject };
 
 export interface WorkspaceAdapter {
   healthCheck(accessToken: string, baseUrl?: string): Promise<HealthCheckResult>;

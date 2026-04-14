@@ -31,4 +31,5 @@ export enum EventPattern {
   WORKSPACE_CONNECTOR_DELETED = 'workspace_connector.deleted',
   WORKSPACE_CONNECTOR_SYNCED = 'workspace_connector.synced',
   WORKSPACE_CONNECTOR_HEALTH_CHECKED = 'workspace_connector.health_checked',
+  WORKSPACE_OBJECT_SYNCED = 'workspace_object.synced',
 }

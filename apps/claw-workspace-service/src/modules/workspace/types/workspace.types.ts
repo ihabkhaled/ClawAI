@@ -1,9 +1,12 @@
 import type {
   WorkspaceConnector,
   WorkspaceHealthEvent,
+  WorkspaceObject,
+  WorkspaceObjectLink,
   WorkspaceSyncRun,
 } from '../../../generated/prisma';
 import type { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
+import type { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 
 export type WorkspaceConnectorWithStats = WorkspaceConnector & {
   _count: {
@@ -51,12 +54,36 @@ export type HealthCheckResult = {
   errorMessage?: string;
 };
 
+export type SyncedObject = {
+  externalId: string;
+  type: WorkspaceObjectType;
+  title: string;
+  content?: string;
+  url?: string;
+  authorId?: string;
+  metadata?: Record<string, unknown>;
+  externalCreatedAt?: Date;
+  externalUpdatedAt?: Date;
+};
+
 export type SyncResult = {
   objectsFound: number;
   objectsSynced: number;
   objectsFailed: number;
   deltaTokenOut?: string;
   errorMessage?: string;
+  objects: SyncedObject[];
+};
+
+export type WorkspaceObjectWithLinks = WorkspaceObject & {
+  sourceLinks: WorkspaceObjectLink[];
+};
+
+export type PaginatedWorkspaceObjects = {
+  data: WorkspaceObject[];
+  total: number;
+  page: number;
+  pageSize: number;
 };
 
 export type AdapterCapabilities = {

@@ -7,11 +7,13 @@ import {
   GITHUB_TOKEN_URL,
   HEALTH_CHECK_TIMEOUT_MS,
 } from '../../../common/constants/workspace.constants';
+import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { WorkspaceAdapter } from './workspace-adapter.interface';
 import type {
   AdapterCapabilities,
   HealthCheckResult,
   OAuthTokenSet,
+  SyncedObject,
   SyncResult,
 } from '../types/workspace.types';
 
@@ -64,13 +66,31 @@ export class GitHubAdapter implements WorkspaceAdapter {
     if (!response.ok) {
       throw new Error(`GitHub sync failed: HTTP ${response.status}`);
     }
-    const repos = (await response.json()) as unknown[];
-    const nextDeltaToken = new Date().toISOString();
+    const repos = (await response.json()) as Array<{
+      id: number;
+      full_name: string;
+      description: string | null;
+      html_url: string;
+      owner: { login: string };
+      created_at: string;
+      updated_at: string;
+    }>;
+    const objects: SyncedObject[] = repos.map((repo) => ({
+      externalId: String(repo.id),
+      type: WorkspaceObjectType.REPOSITORY,
+      title: repo.full_name,
+      content: repo.description ?? undefined,
+      url: repo.html_url,
+      authorId: repo.owner.login,
+      externalCreatedAt: new Date(repo.created_at),
+      externalUpdatedAt: new Date(repo.updated_at),
+    }));
     return {
-      objectsFound: repos.length,
-      objectsSynced: repos.length,
+      objectsFound: objects.length,
+      objectsSynced: objects.length,
       objectsFailed: 0,
-      deltaTokenOut: nextDeltaToken,
+      deltaTokenOut: new Date().toISOString(),
+      objects,
     };
   }
 

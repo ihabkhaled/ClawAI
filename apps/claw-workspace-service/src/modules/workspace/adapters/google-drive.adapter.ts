@@ -7,11 +7,13 @@ import {
   GOOGLE_TOKEN_URL,
   HEALTH_CHECK_TIMEOUT_MS,
 } from '../../../common/constants/workspace.constants';
+import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { WorkspaceAdapter } from './workspace-adapter.interface';
 import type {
   AdapterCapabilities,
   HealthCheckResult,
   OAuthTokenSet,
+  SyncedObject,
   SyncResult,
 } from '../types/workspace.types';
 
@@ -56,7 +58,7 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
   async syncObjects(accessToken: string, deltaToken?: string): Promise<SyncResult> {
     const params = new URLSearchParams({
       pageSize: '100',
-      fields: 'files(id,name,mimeType)',
+      fields: 'files(id,name,mimeType,webViewLink,owners,createdTime,modifiedTime)',
       ...(deltaToken ? { pageToken: deltaToken } : {}),
     });
     const response = await fetch(`${GOOGLE_DRIVE_API_BASE}/files?${params.toString()}`, {
@@ -65,13 +67,45 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
     if (!response.ok) {
       throw new Error(`Google Drive sync failed: HTTP ${response.status}`);
     }
-    const data = (await response.json()) as { files: unknown[]; nextPageToken?: string };
+    const data = (await response.json()) as {
+      files: Array<{
+        id: string;
+        name: string;
+        mimeType: string;
+        webViewLink?: string;
+        owners?: Array<{ emailAddress: string }>;
+        createdTime?: string;
+        modifiedTime?: string;
+      }>;
+      nextPageToken?: string;
+    };
+    const objects: SyncedObject[] = data.files.map((file) => ({
+      externalId: file.id,
+      type: this.resolveObjectType(file.mimeType),
+      title: file.name,
+      url: file.webViewLink,
+      authorId: file.owners?.[0]?.emailAddress,
+      metadata: { mimeType: file.mimeType } as Record<string, unknown>,
+      externalCreatedAt: file.createdTime ? new Date(file.createdTime) : undefined,
+      externalUpdatedAt: file.modifiedTime ? new Date(file.modifiedTime) : undefined,
+    }));
     return {
-      objectsFound: data.files.length,
-      objectsSynced: data.files.length,
+      objectsFound: objects.length,
+      objectsSynced: objects.length,
       objectsFailed: 0,
       deltaTokenOut: data['nextPageToken'],
+      objects,
     };
+  }
+
+  private resolveObjectType(mimeType: string): WorkspaceObjectType {
+    if (mimeType === 'application/vnd.google-apps.spreadsheet') {
+      return WorkspaceObjectType.SPREADSHEET;
+    }
+    if (mimeType === 'application/vnd.google-apps.folder') {
+      return WorkspaceObjectType.PROJECT;
+    }
+    return WorkspaceObjectType.DOCUMENT;
   }
 
   async exchangeCodeForTokens(

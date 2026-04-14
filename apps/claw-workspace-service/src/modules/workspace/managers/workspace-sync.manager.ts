@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { RabbitMQService } from '@claw/shared-rabbitmq';
+import { EventPattern } from '@claw/shared-types';
 import { WorkspaceConnectorRepository } from '../repositories/workspace-connector.repository';
 import { WorkspaceAdapterFactory } from '../adapters/workspace-adapter.factory';
 import { OAuthTokenManager } from './oauth-token.manager';
+import { WorkspaceObjectManager } from './workspace-object.manager';
 import { WorkspaceSyncStatus } from '../../../common/enums/workspace-sync-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import {
@@ -19,6 +22,8 @@ export class WorkspaceSyncManager {
     private readonly repository: WorkspaceConnectorRepository,
     private readonly adapterFactory: WorkspaceAdapterFactory,
     private readonly tokenManager: OAuthTokenManager,
+    private readonly objectManager: WorkspaceObjectManager,
+    private readonly rabbitmq: RabbitMQService,
   ) {}
 
   async syncConnector(connector: WorkspaceConnector, isDelta: boolean): Promise<SyncResult> {
@@ -33,10 +38,20 @@ export class WorkspaceSyncManager {
 
     const result = await this.executeSyncWithRetry(connector, isDelta, syncRun.id);
 
+    let upsertedCount = 0;
+    if (result.objects.length > 0 && result.errorMessage === undefined) {
+      upsertedCount = await this.objectManager.upsertBatch(
+        connector.id,
+        connector.userId,
+        connector.provider,
+        result.objects,
+      );
+    }
+
     await this.repository.updateSyncRun(syncRun.id, {
       status: result.errorMessage ? WorkspaceSyncStatus.FAILED : WorkspaceSyncStatus.COMPLETED,
       objectsFound: result.objectsFound,
-      objectsSynced: result.objectsSynced,
+      objectsSynced: upsertedCount > 0 ? upsertedCount : result.objectsSynced,
       objectsFailed: result.objectsFailed,
       deltaTokenOut: result.deltaTokenOut,
       completedAt: new Date(),
@@ -47,11 +62,26 @@ export class WorkspaceSyncManager {
       ? this.repository.update(connector.id, {
           deltaToken: result.deltaTokenOut,
           lastSyncAt: new Date(),
+          objectCount: await this.repository.getObjectCount(connector.id),
         })
-      : this.repository.update(connector.id, { lastSyncAt: new Date() }));
+      : this.repository.update(connector.id, {
+          lastSyncAt: new Date(),
+          objectCount: await this.repository.getObjectCount(connector.id),
+        }));
+
+    if (result.errorMessage === undefined) {
+      void this.rabbitmq.publish(EventPattern.WORKSPACE_OBJECT_SYNCED, {
+        connectorId: connector.id,
+        provider: connector.provider,
+        userId: connector.userId,
+        objectCount: upsertedCount,
+        deltaUsed: isDelta && connector.deltaToken !== null,
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     this.logger.log(
-      `Sync completed for ${connector.id}: ${result.objectsSynced}/${result.objectsFound} objects`,
+      `Sync completed for ${connector.id}: ${upsertedCount}/${result.objectsFound} objects`,
     );
     return result;
   }
@@ -83,7 +113,7 @@ export class WorkspaceSyncManager {
 
     const errorMessage =
       lastError instanceof Error ? lastError.message : 'Sync failed after retries';
-    return { objectsFound: 0, objectsSynced: 0, objectsFailed: 0, errorMessage };
+    return { objectsFound: 0, objectsSynced: 0, objectsFailed: 0, errorMessage, objects: [] };
   }
 
   private delay(ms: number): Promise<void> {

@@ -2,6 +2,8 @@ import { WorkspaceSyncManager } from '../workspace-sync.manager';
 import type { WorkspaceConnectorRepository } from '../../repositories/workspace-connector.repository';
 import type { WorkspaceAdapterFactory } from '../../adapters/workspace-adapter.factory';
 import type { OAuthTokenManager } from '../oauth-token.manager';
+import type { WorkspaceObjectManager } from '../workspace-object.manager';
+import type { RabbitMQService } from '@claw/shared-rabbitmq';
 import type { WorkspaceConnector } from '../../../../generated/prisma';
 import { WorkspaceSyncStatus } from '../../../../common/enums/workspace-sync-status.enum';
 
@@ -13,6 +15,7 @@ const mockConnector = {
   status: 'CONNECTED',
   encryptedTokens: null,
   deltaToken: null,
+  objectCount: 0,
   isEnabled: true,
   permissionLevel: 'READ',
   scopes: [],
@@ -34,20 +37,35 @@ const mockAdapterFactory = {
 
 const mockRepo = {
   createSyncRun: jest.fn().mockResolvedValue({ id: 'run1' }),
-  updateSyncRun: jest.fn().mockResolvedValue({}),
-  update: jest.fn().mockResolvedValue({}),
+  updateSyncRun: jest.fn().mockImplementation(() => Promise.resolve({})),
+  update: jest.fn().mockImplementation(() => Promise.resolve({})),
+  getObjectCount: jest.fn().mockResolvedValue(0),
 } as unknown as WorkspaceConnectorRepository;
 
 const mockTokenManager = {
   decryptTokenSet: jest.fn().mockReturnValue({ accessToken: 'tok', scopes: [] }),
 } as unknown as OAuthTokenManager;
 
+const mockObjectManager = {
+  upsertBatch: jest.fn().mockResolvedValue(0),
+} as unknown as WorkspaceObjectManager;
+
+const mockRabbitMQ = {
+  publish: jest.fn().mockImplementation(() => Promise.resolve()),
+} as unknown as RabbitMQService;
+
 describe('WorkspaceSyncManager', () => {
   let manager: WorkspaceSyncManager;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    manager = new WorkspaceSyncManager(mockRepo, mockAdapterFactory, mockTokenManager);
+    manager = new WorkspaceSyncManager(
+      mockRepo,
+      mockAdapterFactory,
+      mockTokenManager,
+      mockObjectManager,
+      mockRabbitMQ,
+    );
   });
 
   describe('syncConnector', () => {
@@ -56,6 +74,7 @@ describe('WorkspaceSyncManager', () => {
         objectsFound: 10,
         objectsSynced: 10,
         objectsFailed: 0,
+        objects: [],
       });
       const result = await manager.syncConnector(mockConnector, false);
       expect(result.objectsSynced).toBe(10);
@@ -67,6 +86,7 @@ describe('WorkspaceSyncManager', () => {
         objectsFound: 5,
         objectsSynced: 5,
         objectsFailed: 0,
+        objects: [],
       });
       await manager.syncConnector(mockConnector, false);
       expect(mockRepo.updateSyncRun).toHaveBeenCalledWith(
@@ -97,6 +117,7 @@ describe('WorkspaceSyncManager', () => {
         objectsSynced: 3,
         objectsFailed: 0,
         deltaTokenOut: 'dt-next',
+        objects: [],
       });
       await manager.syncConnector(mockConnector, true);
       expect(mockRepo.update).toHaveBeenCalledWith(
@@ -111,9 +132,43 @@ describe('WorkspaceSyncManager', () => {
         objectsFound: 0,
         objectsSynced: 0,
         objectsFailed: 0,
+        objects: [],
       });
       await manager.syncConnector(connectorNoTokens, false);
       expect(mockTokenManager.decryptTokenSet).not.toHaveBeenCalled();
+    });
+
+    it('should call objectManager.upsertBatch when objects are returned', async () => {
+      const objects = [
+        {
+          externalId: 'ext1',
+          type: 'REPOSITORY',
+          title: 'my-repo',
+        },
+      ];
+      (mockAdapter.syncObjects as jest.Mock).mockResolvedValue({
+        objectsFound: 1,
+        objectsSynced: 1,
+        objectsFailed: 0,
+        objects,
+      });
+      (mockObjectManager.upsertBatch as jest.Mock).mockResolvedValue(1);
+      await manager.syncConnector(mockConnector, false);
+      expect(mockObjectManager.upsertBatch).toHaveBeenCalledWith('c1', 'u1', 'GITHUB', objects);
+    });
+
+    it('should publish WORKSPACE_OBJECT_SYNCED event on success', async () => {
+      (mockAdapter.syncObjects as jest.Mock).mockResolvedValue({
+        objectsFound: 2,
+        objectsSynced: 2,
+        objectsFailed: 0,
+        objects: [],
+      });
+      await manager.syncConnector(mockConnector, false);
+      expect(mockRabbitMQ.publish).toHaveBeenCalledWith(
+        'workspace_object.synced',
+        expect.objectContaining({ connectorId: 'c1' }),
+      );
     });
   });
 });

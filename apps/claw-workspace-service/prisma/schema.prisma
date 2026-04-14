@@ -52,6 +52,9 @@ enum WorkspaceObjectType {
   COMMENT
   USER
   PROJECT
+  EMAIL
+  MEETING_NOTE
+  SPREADSHEET
 }
 
 enum WorkspacePermissionLevel {
@@ -80,8 +83,11 @@ model WorkspaceConnector {
   createdAt        DateTime                 @default(now()) @map("created_at")
   updatedAt        DateTime                 @updatedAt @map("updated_at")
 
+  objectCount   Int                    @default(0) @map("object_count")
+
   syncRuns      WorkspaceSyncRun[]
   healthEvents  WorkspaceHealthEvent[]
+  objects       WorkspaceObject[]
 
   @@index([userId])
   @@index([provider])
@@ -126,4 +132,50 @@ model WorkspaceHealthEvent {
   @@index([connectorId])
   @@index([checkedAt])
   @@map("workspace_health_events")
+}
+
+model WorkspaceObject {
+  id                String              @id @default(cuid())
+  connectorId       String              @map("connector_id")
+  userId            String              @map("user_id")
+  externalId        String              @map("external_id")
+  type              WorkspaceObjectType
+  title             String
+  content           String?
+  url               String?
+  authorId          String?             @map("author_id")
+  provider          WorkspaceProvider
+  metadata          Json                @default("{}")
+  externalCreatedAt DateTime?           @map("external_created_at")
+  externalUpdatedAt DateTime?           @map("external_updated_at")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+
+  connector    WorkspaceConnector    @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+  sourceLinks  WorkspaceObjectLink[] @relation("SourceObject")
+  targetLinks  WorkspaceObjectLink[] @relation("TargetObject")
+
+  @@unique([connectorId, externalId])
+  @@index([userId])
+  @@index([connectorId])
+  @@index([type])
+  @@map("workspace_objects")
+}
+
+model WorkspaceObjectLink {
+  id             String  @id @default(cuid())
+  sourceObjectId String  @map("source_object_id")
+  targetObjectId String? @map("target_object_id")
+  externalRef    String? @map("external_ref")
+  linkType       String  @map("link_type")
+  confidence     Float   @default(1.0)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  sourceObject WorkspaceObject  @relation("SourceObject", fields: [sourceObjectId], references: [id], onDelete: Cascade)
+  targetObject WorkspaceObject? @relation("TargetObject", fields: [targetObjectId], references: [id], onDelete: SetNull)
+
+  @@index([sourceObjectId])
+  @@index([targetObjectId])
+  @@map("workspace_object_links")
 }
