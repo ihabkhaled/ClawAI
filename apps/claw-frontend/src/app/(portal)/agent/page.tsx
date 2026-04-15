@@ -21,7 +21,7 @@ export default function AgentPage(): React.ReactElement {
     error,
     handleApprove,
     handleReject,
-    isApproving,
+    isCommandActionPending,
   } = useAgentPage();
 
   if (isError) {
@@ -102,7 +102,7 @@ export default function AgentPage(): React.ReactElement {
                 <div className="flex shrink-0 gap-2">
                   <button
                     type="button"
-                    disabled={isApproving}
+                    disabled={isCommandActionPending}
                     onClick={() => handleApprove(cmd.id)}
                     className="rounded px-2 py-1 text-xs font-medium text-green-600 hover:bg-green-50"
                   >
@@ -110,6 +110,7 @@ export default function AgentPage(): React.ReactElement {
                   </button>
                   <button
                     type="button"
+                    disabled={isCommandActionPending}
                     onClick={() => handleReject(cmd.id, 'Rejected by user')}
                     className="rounded px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
                   >

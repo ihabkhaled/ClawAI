@@ -1,8 +1,13 @@
+import type { Dispatch, FormEvent, SetStateAction } from 'react';
+
 import type { WorkspaceActionStatus } from '../enums/workspace-action-status.enum';
 import type { WorkspaceActionType } from '../enums/workspace-action-type.enum';
 import type { WorkspaceConnectorStatus } from '../enums/workspace-connector-status.enum';
 import type { WorkspaceObjectType } from '../enums/workspace-object-type.enum';
+import type { WorkspacePermissionLevel } from '../enums/workspace-permission-level.enum';
 import type { WorkspaceProvider } from '../enums/workspace-provider.enum';
+
+import type { TranslateFunction } from './i18n.types';
 
 export type WorkspaceConnector = {
   id: string;
@@ -88,6 +93,36 @@ export type ListWorkspaceConnectorsQuery = {
   provider?: WorkspaceProvider;
   status?: WorkspaceConnectorStatus;
   isEnabled?: boolean;
+};
+
+export type WorkspaceConnectorFormFieldErrors = Record<string, string[] | undefined>;
+
+export type WorkspaceConnectorFormProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (dto: CreateWorkspaceConnectorRequest) => void;
+  isPending: boolean;
+  t: TranslateFunction;
+};
+
+export type WorkspaceConnectorFormStateParams = {
+  open: boolean;
+  onSubmit: (dto: CreateWorkspaceConnectorRequest) => void;
+  onOpenChange: (open: boolean) => void;
+};
+
+export type WorkspaceConnectorFormStateReturn = {
+  name: string;
+  setName: Dispatch<SetStateAction<string>>;
+  provider: WorkspaceProvider;
+  setProvider: Dispatch<SetStateAction<WorkspaceProvider>>;
+  permissionLevel: WorkspacePermissionLevel;
+  setPermissionLevel: Dispatch<SetStateAction<WorkspacePermissionLevel>>;
+  fieldErrors: WorkspaceConnectorFormFieldErrors;
+  pendingLabel: string;
+  submitLabel: string;
+  handleSubmit: (event: FormEvent) => void;
+  handleOpenChange: (open: boolean) => void;
 };
 
 export type WorkspaceObject = {

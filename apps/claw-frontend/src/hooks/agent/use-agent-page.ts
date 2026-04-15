@@ -1,3 +1,5 @@
+import { TerminalCommandStatus } from '../../enums';
+
 import { useApproveCommand, useRejectCommand } from './use-agent-command-mutations';
 import { useAgentCommands } from './use-agent-commands';
 import { useAgentSessions } from './use-agent-sessions';
@@ -12,6 +14,7 @@ export function useAgentPage() {
   const { data: commandsData, isLoading: isCommandsLoading } = useAgentCommands({
     page: 1,
     pageSize: 20,
+    status: TerminalCommandStatus.PENDING_APPROVAL,
   });
   const approveMutation = useApproveCommand();
   const rejectMutation = useRejectCommand();
@@ -38,5 +41,6 @@ export function useAgentPage() {
     handleReject,
     isApproving: approveMutation.isPending,
     isRejecting: rejectMutation.isPending,
+    isCommandActionPending: approveMutation.isPending || rejectMutation.isPending,
   };
 }

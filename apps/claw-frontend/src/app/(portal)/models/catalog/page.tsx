@@ -78,6 +78,16 @@ export default function ModelCatalogPage(): React.ReactElement {
         />
       ) : null}
 
+      {hasActiveJobs ? (
+        <ActiveDownloadsPanel
+          jobs={pullJobs}
+          downloadStatsMap={downloadStatsMap}
+          onCancel={handleCancelJob}
+          isCancelPending={isCancelPending}
+          t={t}
+        />
+      ) : null}
+
       {!isLoading && entries.length > 0 ? (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -107,16 +117,6 @@ export default function ModelCatalogPage(): React.ReactElement {
             )}
           </div>
         </>
-      ) : null}
-
-      {hasActiveJobs ? (
-        <ActiveDownloadsPanel
-          jobs={pullJobs}
-          downloadStatsMap={downloadStatsMap}
-          onCancel={handleCancelJob}
-          isCancelPending={isCancelPending}
-          t={t}
-        />
       ) : null}
     </div>
   );

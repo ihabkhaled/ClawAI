@@ -64,17 +64,34 @@ async function get(url, authToken) {
 }
 
 /**
+ * Normalize Node platform names to the API's canonical labels where needed.
+ * @param {NodeJS.Platform} value
+ * @returns {string}
+ */
+function normalizePlatformName(value) {
+  if (value === 'win32' || value === 'cygwin') {
+    return 'windows';
+  }
+
+  return value;
+}
+
+/**
  * Register a new agent session with the Claw server.
  * @param {string} apiUrl
  * @param {string} userJwt
  */
 async function register(apiUrl, userJwt) {
   console.log(`Registering with ${apiUrl}...`);
+  const detectedPlatform = platform();
   const body = {
     hostname: hostname(),
-    platform: platform(),
+    platform: normalizePlatformName(detectedPlatform),
     agentVersion: VERSION,
-    osRelease: release(),
+    metadata: {
+      osRelease: release(),
+      nodePlatform: detectedPlatform,
+    },
   };
   const result = await post(`${apiUrl}/api/v1/agent/sessions`, body, userJwt);
   const session = /** @type {any} */ (result);

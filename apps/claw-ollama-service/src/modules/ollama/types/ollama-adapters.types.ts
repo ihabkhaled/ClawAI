@@ -31,4 +31,5 @@ export type OllamaPullResponse = {
   digest?: string;
   total?: number;
   completed?: number;
+  error?: string;
 };

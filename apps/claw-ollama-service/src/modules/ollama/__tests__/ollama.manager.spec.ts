@@ -4,6 +4,7 @@ import { type RoleAssignmentsRepository } from '../repositories/role-assignments
 import { type PullJobsRepository } from '../repositories/pull-jobs.repository';
 import { type RuntimeConfigsRepository } from '../repositories/runtime-configs.repository';
 import { LocalModelRole, PullJobStatus, RuntimeType } from '../../../generated/prisma';
+import { getRuntimeAdapter } from '../managers/adapters/runtime-adapter-factory';
 
 jest.mock('../../../app/config/app.config', () => ({
   AppConfig: {
@@ -23,27 +24,15 @@ jest.mock('../../../common/utilities', () => ({
   verifyAccessToken: jest.fn(),
 }));
 
+const mockRuntimeAdapter = {
+  listModels: jest.fn(),
+  pullModel: jest.fn(),
+  healthCheck: jest.fn(),
+  generate: jest.fn(),
+};
+
 jest.mock('../managers/adapters/runtime-adapter-factory', () => ({
-  getRuntimeAdapter: jest.fn().mockReturnValue({
-    listModels: jest.fn().mockResolvedValue([
-      {
-        name: 'llama3',
-        tag: 'latest',
-        sizeBytes: BigInt(4000000000),
-        family: 'llama',
-        parameters: '8B',
-        quantization: 'Q4_0',
-      },
-    ]),
-    pullModel: jest.fn().mockResolvedValue({ status: 'success' }),
-    healthCheck: jest.fn().mockResolvedValue({ runtime: 'OLLAMA', healthy: true, latencyMs: 50 }),
-    generate: jest.fn().mockResolvedValue({
-      model: 'llama3',
-      createdAt: '2024-01-01T00:00:00Z',
-      response: 'Hello!',
-      done: true,
-    }),
-  }),
+  getRuntimeAdapter: jest.fn(),
 }));
 
 const mockLocalModel = {
@@ -87,6 +76,8 @@ const mockRoleAssignmentsRepo = (): Partial<
 const mockPullJobsRepo = (): Partial<Record<keyof PullJobsRepository, jest.Mock>> => ({
   create: jest.fn().mockResolvedValue({ id: 'job-1', status: PullJobStatus.IN_PROGRESS }),
   update: jest.fn().mockResolvedValue({ id: 'job-1', status: PullJobStatus.COMPLETED }),
+  findActiveByModelName: jest.fn().mockResolvedValue(null),
+  deleteOlderByModelName: jest.fn().mockResolvedValue(0),
 });
 
 const mockRuntimeConfigsRepo = (): Partial<Record<keyof RuntimeConfigsRepository, jest.Mock>> => ({
@@ -102,6 +93,29 @@ describe('OllamaManager', () => {
   let runtimeConfigsRepo: ReturnType<typeof mockRuntimeConfigsRepo>;
 
   beforeEach(() => {
+    mockRuntimeAdapter.listModels.mockResolvedValue([
+      {
+        name: 'llama3',
+        tag: 'latest',
+        sizeBytes: BigInt(4000000000),
+        family: 'llama',
+        parameters: '8B',
+        quantization: 'Q4_0',
+      },
+    ]);
+    mockRuntimeAdapter.pullModel.mockResolvedValue({ status: 'success' });
+    mockRuntimeAdapter.healthCheck.mockResolvedValue({
+      runtime: 'OLLAMA',
+      healthy: true,
+      latencyMs: 50,
+    });
+    mockRuntimeAdapter.generate.mockResolvedValue({
+      model: 'llama3',
+      createdAt: '2024-01-01T00:00:00Z',
+      response: 'Hello!',
+      done: true,
+    });
+    (getRuntimeAdapter as jest.Mock).mockReturnValue(mockRuntimeAdapter);
     localModelsRepo = mockLocalModelsRepo();
     roleAssignmentsRepo = mockRoleAssignmentsRepo();
     pullJobsRepo = mockPullJobsRepo();
@@ -164,6 +178,51 @@ describe('OllamaManager', () => {
           name: 'llama3',
           tag: 'latest',
           runtime: RuntimeType.OLLAMA,
+        }),
+      );
+    });
+
+    it('should fail the pull job when the runtime never lists the pulled model', async () => {
+      mockRuntimeAdapter.listModels.mockResolvedValue([]);
+
+      await expect(manager.pullModel('glm5.1:latest', RuntimeType.OLLAMA)).rejects.toThrow(
+        'Model glm5.1:latest was not found in the runtime after pull',
+      );
+
+      expect(localModelsRepo.upsertByNameTagRuntime).not.toHaveBeenCalled();
+      expect(pullJobsRepo.update).toHaveBeenCalledWith(
+        'job-1',
+        expect.objectContaining({
+          status: PullJobStatus.FAILED,
+          errorMessage: 'Model glm5.1:latest was not found in the runtime after pull',
+        }),
+      );
+    });
+  });
+
+  describe('pullModelFromCatalog', () => {
+    it('should fail the job when the runtime does not list the catalog model after pull', async () => {
+      mockRuntimeAdapter.listModels.mockResolvedValue([]);
+
+      await manager.pullModelFromCatalog({
+        id: 'catalog-1',
+        name: 'glm5.1',
+        tag: 'latest',
+        runtime: RuntimeType.OLLAMA,
+        ollamaName: 'glm5.1:latest',
+        sizeBytes: BigInt(0),
+        parameterCount: '7B',
+        category: null,
+      } as never);
+
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(localModelsRepo.upsertByNameTagRuntime).not.toHaveBeenCalled();
+      expect(pullJobsRepo.update).toHaveBeenCalledWith(
+        'job-1',
+        expect.objectContaining({
+          status: PullJobStatus.FAILED,
+          errorMessage: 'Model glm5.1:latest was not found in the runtime after pull',
         }),
       );
     });

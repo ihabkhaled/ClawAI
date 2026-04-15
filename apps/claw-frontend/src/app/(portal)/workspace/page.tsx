@@ -7,6 +7,7 @@ import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
 import { WorkspaceConnectorCard } from '@/components/workspace/workspace-connector-card';
+import { WorkspaceConnectorForm } from '@/components/workspace/workspace-connector-form';
 import { WorkspaceObjectList } from '@/components/workspace/workspace-object-list';
 import { useWorkspacePage } from '@/hooks/workspace/use-workspace-page';
 import { useTranslation } from '@/lib/i18n';
@@ -24,7 +25,10 @@ export default function WorkspacePage(): React.ReactElement {
     isDeleting,
     isCheckingHealth,
     isSyncing,
+    isCreateOpen,
     setIsCreateOpen,
+    handleCreate,
+    isCreating,
     selectedConnector,
     setSelectedConnector,
     objects,
@@ -59,6 +63,14 @@ export default function WorkspacePage(): React.ReactElement {
             {t('workspaceConnectors.addConnector')}
           </Button>
         }
+      />
+
+      <WorkspaceConnectorForm
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        onSubmit={handleCreate}
+        isPending={isCreating}
+        t={t}
       />
 
       {isLoading && <LoadingSpinner label={t('workspaceConnectors.loadingConnectors')} />}

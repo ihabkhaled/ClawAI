@@ -16,8 +16,10 @@ import {
   type GenerateRequest,
   type GenerateResponse,
   type LocalModel,
+  type LocalModelInfo,
   type LocalModelRole,
   type LocalModelRoleAssignment,
+  type RuntimeAdapter,
   type RuntimeHealth,
 } from '../types/ollama.types';
 import type { PullProgressEvent } from '../types/pull-progress.types';
@@ -65,21 +67,7 @@ export class OllamaManager {
     try {
       this.logger.debug(`pullModel: initiating model pull for ${name}`);
       await adapter.pullModel(name);
-      this.logger.debug('pullModel: pull completed — listing runtime models');
-      const models = await adapter.listModels();
-      this.logger.debug(
-        `pullModel: runtime has ${String(models.length)} models — searching for pulled model`,
-      );
-      const pulled = models.find((m) => m.name === name || `${m.name}:${m.tag}` === name);
-
-      const modelData = pulled ?? {
-        name,
-        tag: 'latest',
-        sizeBytes: null,
-        family: null,
-        parameters: null,
-        quantization: null,
-      };
+      const modelData = await this.resolveInstalledModelInfo(adapter, name);
       this.logger.debug(
         `pullModel: upserting model record — name=${modelData.name} tag=${modelData.tag}`,
       );
@@ -159,7 +147,8 @@ export class OllamaManager {
         ? this.pullWithProgressTracking(adapter, modelFullName, pullJobId, subject)
         : adapter.pullModel(modelFullName));
 
-      await this.upsertModelFromCatalog(catalogEntry, modelFullName);
+      const installedModel = await this.resolveInstalledModelInfo(adapter, modelFullName);
+      await this.upsertModelFromCatalog(catalogEntry, installedModel);
       await this.completePullJob(pullJobId);
       await this.pullJobsRepository.deleteOlderByModelName(modelFullName, pullJobId);
       subject.complete();
@@ -189,21 +178,40 @@ export class OllamaManager {
 
   private async upsertModelFromCatalog(
     catalogEntry: ModelCatalogEntry,
-    modelFullName: string,
+    installedModel: LocalModelInfo,
   ): Promise<void> {
-    const parts = modelFullName.split(':');
-    const name = parts[0] ?? modelFullName;
-    const tag = parts[1] ?? 'latest';
-
     await this.localModelsRepository.upsertByNameTagRuntime({
-      name,
-      tag,
+      name: installedModel.name,
+      tag: installedModel.tag,
       runtime: catalogEntry.runtime,
-      sizeBytes: catalogEntry.sizeBytes,
-      parameters: catalogEntry.parameterCount,
+      sizeBytes: installedModel.sizeBytes ?? catalogEntry.sizeBytes,
+      family: installedModel.family,
+      parameters: installedModel.parameters ?? catalogEntry.parameterCount,
+      quantization: installedModel.quantization,
       category: catalogEntry.category,
       isInstalled: true,
     });
+  }
+
+  private async resolveInstalledModelInfo(
+    adapter: RuntimeAdapter,
+    modelFullName: string,
+  ): Promise<LocalModelInfo> {
+    this.logger.debug(`resolveInstalledModelInfo: verifying ${modelFullName} exists in runtime`);
+    const models = await adapter.listModels();
+    this.logger.debug(
+      `resolveInstalledModelInfo: runtime has ${String(models.length)} models after pull`,
+    );
+
+    const installedModel = models.find(
+      (model) => model.name === modelFullName || `${model.name}:${model.tag}` === modelFullName,
+    );
+
+    if (installedModel === undefined) {
+      throw new Error(`Model ${modelFullName} was not found in the runtime after pull`);
+    }
+
+    return installedModel;
   }
 
   private async completePullJob(pullJobId: string): Promise<void> {

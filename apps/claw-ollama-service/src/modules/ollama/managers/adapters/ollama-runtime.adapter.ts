@@ -121,6 +121,25 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       let buffer = '';
+      let isSettled = false;
+
+      const rejectOnce = (error: Error): void => {
+        if (isSettled) {
+          return;
+        }
+
+        isSettled = true;
+        reject(error);
+      };
+
+      const resolveOnce = (): void => {
+        if (isSettled) {
+          return;
+        }
+
+        isSettled = true;
+        resolve();
+      };
 
       stream.on('data', (chunk: Buffer) => {
         buffer += chunk.toString();
@@ -131,26 +150,42 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
           if (line.trim().length === 0) {
             continue;
           }
-          this.processProgressLine(line, onProgress);
+          const errorMessage = this.processProgressLine(line, onProgress);
+          if (errorMessage !== null) {
+            rejectOnce(new Error(errorMessage));
+            return;
+          }
         }
       });
 
       stream.on('end', () => {
-        if (buffer.trim().length > 0) {
-          this.processProgressLine(buffer, onProgress);
+        if (isSettled) {
+          return;
         }
-        resolve();
+
+        if (buffer.trim().length > 0) {
+          const errorMessage = this.processProgressLine(buffer, onProgress);
+          if (errorMessage !== null) {
+            rejectOnce(new Error(errorMessage));
+            return;
+          }
+        }
+        resolveOnce();
       });
 
       stream.on('error', (error: Error) => {
-        reject(error);
+        rejectOnce(error);
       });
     });
   }
 
-  private processProgressLine(line: string, onProgress: PullProgressCallback): void {
+  private processProgressLine(line: string, onProgress: PullProgressCallback): string | null {
     try {
       const data = JSON.parse(line) as OllamaPullResponse;
+      if (typeof data.error === 'string' && data.error.length > 0) {
+        return data.error;
+      }
+
       const total = data.total ?? 0;
       const completed = data.completed ?? 0;
       const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -165,6 +200,8 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
     } catch {
       // Skip malformed JSON lines
     }
+
+    return null;
   }
 
   private mapModel(m: OllamaModelDetail): LocalModelInfo {
