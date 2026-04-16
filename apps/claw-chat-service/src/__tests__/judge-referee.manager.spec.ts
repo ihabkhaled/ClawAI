@@ -96,30 +96,30 @@ describe('JudgeRefereeManager', () => {
   });
 
   describe('selectCriticModel', () => {
-    it('should return local model for local-only mode', () => {
-      const result = manager.selectCriticModel('ANTHROPIC', true);
+    it('should return local model for local-only mode', async () => {
+      const result = await manager.selectCriticModel('ANTHROPIC', true);
       expect(result.provider).toBe('local-ollama');
-      expect(result.model).toBe('qwen3:1.7b');
+      expect(result.model).toBe('AUTO');
     });
 
-    it('should return a different provider than generator', () => {
-      const result = manager.selectCriticModel('ANTHROPIC', false);
+    it('should return a different provider than generator', async () => {
+      const result = await manager.selectCriticModel('ANTHROPIC', false);
       expect(result.provider).not.toBe('ANTHROPIC');
     });
 
-    it('should skip generator provider in cloud models', () => {
-      const result = manager.selectCriticModel('ANTHROPIC', false);
+    it('should skip generator provider in cloud models', async () => {
+      const result = await manager.selectCriticModel('ANTHROPIC', false);
       expect(result.provider).toBe('GEMINI');
     });
 
-    it('should return first available when generator is not in critic list', () => {
-      const result = manager.selectCriticModel('DEEPSEEK', false);
+    it('should return first available when generator is not in critic list', async () => {
+      const result = await manager.selectCriticModel('DEEPSEEK', false);
       expect(result.provider).toBe('ANTHROPIC');
     });
 
-    it('should fallback to local when all cloud models match generator', () => {
+    it('should fallback to local when all cloud models match generator', async () => {
       // Edge case: generator is ANTHROPIC, but our list starts with ANTHROPIC
-      const result = manager.selectCriticModel('ANTHROPIC', false);
+      const result = await manager.selectCriticModel('ANTHROPIC', false);
       expect(result.provider).not.toBe('ANTHROPIC');
     });
   });
@@ -203,7 +203,7 @@ describe('JudgeRefereeManager', () => {
           decision: JudgeDecision.REVISE,
           reasoning: 'Code has fixable issues',
           confidence: 0.75,
-          model: 'local-ollama/qwen3:1.7b',
+          model: 'local-ollama/AUTO',
           latencyMs: 1500,
         },
         revisedResponse: undefined,
@@ -216,7 +216,7 @@ describe('JudgeRefereeManager', () => {
       expect(metadata.criticModel).toBe('ANTHROPIC/claude-sonnet-4');
       expect(metadata.criticFeedback).toEqual(['Missing error handling', 'No input validation']);
       expect(metadata.criticScore).toBe(0.6);
-      expect(metadata.judgeModel).toBe('local-ollama/qwen3:1.7b');
+      expect(metadata.judgeModel).toBe('local-ollama/AUTO');
       expect(metadata.judgeDecision).toBe('REVISE');
       expect(metadata.judgeReasoning).toBe('Code has fixable issues');
       expect(metadata.judgeConfidence).toBe(0.75);
@@ -237,7 +237,7 @@ describe('JudgeRefereeManager', () => {
           decision: JudgeDecision.ACCEPT,
           reasoning: 'Good response',
           confidence: 0.95,
-          model: 'local-ollama/qwen3:1.7b',
+          model: 'local-ollama/AUTO',
           latencyMs: 500,
         },
         revisedResponse: {

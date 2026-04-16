@@ -11,6 +11,7 @@ import {
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type { DecomposeTaskDto } from '../dto/decompose-task.dto';
 import type {
   SubTask,
@@ -28,6 +29,7 @@ export class TaskDecompositionManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
   async executeDecomposition(
@@ -62,13 +64,13 @@ export class TaskDecompositionManager {
         role: 'ASSISTANT',
         content: mergedContent,
         provider: 'local-ollama',
-        model: DEFAULT_DECOMPOSITION_MODEL,
+        model: await this.resolveModel(),
         latencyMs: Date.now() - startTime,
         usedFallback: false,
         metadata: { decomposed: true, subTasks: subTaskResults },
       });
 
-      this.chatStreamService.emitCompletion(threadId, 'local-ollama', DEFAULT_DECOMPOSITION_MODEL);
+      this.chatStreamService.emitCompletion(threadId, 'local-ollama', await this.resolveModel());
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Task decomposition failed';
       this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
@@ -84,7 +86,7 @@ export class TaskDecompositionManager {
 
   private async decomposeContent(content: string, maxSubTasks: number): Promise<SubTask[]> {
     const config = AppConfig.get();
-    const model = DEFAULT_DECOMPOSITION_MODEL;
+    const model = await this.resolveModel();
 
     const prompt = `You are a task decomposition assistant. Break the following complex task into ${String(maxSubTasks)} or fewer focused sub-tasks.
 
@@ -143,6 +145,7 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
   }
 
   private async executeSubTasks(subTasks: SubTask[]): Promise<SubTaskResult[]> {
+    const fallbackModel = await this.resolveModel();
     const results = await Promise.allSettled(
       subTasks.map((subTask) => this.executeOneSubTask(subTask)),
     );
@@ -158,7 +161,7 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
         category: subTask?.category ?? 'general',
         result: `Sub-task failed: ${result.reason instanceof Error ? result.reason.message : 'Unknown error'}`,
         provider: 'local-ollama',
-        model: DEFAULT_DECOMPOSITION_MODEL,
+        model: fallbackModel,
         latencyMs: 0,
       };
     });
@@ -167,7 +170,7 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
   private async executeOneSubTask(subTask: SubTask): Promise<SubTaskResult> {
     const config = AppConfig.get();
     const startTime = Date.now();
-    const model = DEFAULT_DECOMPOSITION_MODEL;
+    const model = await this.resolveModel();
 
     const requestBody: OllamaGenerateRequest = {
       model,
@@ -202,7 +205,7 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
     subTaskResults: SubTaskResult[],
   ): Promise<string> {
     const config = AppConfig.get();
-    const model = DEFAULT_DECOMPOSITION_MODEL;
+    const model = await this.resolveModel();
 
     const subTasksSummary = subTaskResults
       .map((r, i) => `## Sub-task ${String(i + 1)}: ${r.title}\n${r.result}`)
@@ -269,5 +272,12 @@ Provide a unified, coherent response that integrates all sub-task results into a
       usedFallback: false,
       metadata: { decomposed: false, error: true },
     });
+  }
+
+  private async resolveModel(): Promise<string> {
+    if (DEFAULT_DECOMPOSITION_MODEL !== 'AUTO') {
+      return DEFAULT_DECOMPOSITION_MODEL;
+    }
+    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 }

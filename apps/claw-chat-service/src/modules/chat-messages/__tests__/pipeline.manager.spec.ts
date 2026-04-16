@@ -148,11 +148,7 @@ describe('PipelineManager', () => {
         template: 'analyze-reason-format',
       });
 
-      expect(streamService.emitCompletion).toHaveBeenCalledWith(
-        'thread-1',
-        'local-ollama',
-        'qwen3:1.7b',
-      );
+      expect(streamService.emitCompletion).toHaveBeenCalledWith('thread-1', 'local-ollama', 'AUTO');
     });
 
     it('should emit SSE error and store error message when Ollama fails', async () => {
@@ -210,8 +206,8 @@ describe('PipelineManager', () => {
         content: 'Content',
         template: 'custom',
         customStages: [
-          { name: 'Stage A', instruction: 'Do A:', model: 'qwen3:1.7b' },
-          { name: 'Stage B', instruction: 'Do B:', model: 'qwen3:1.7b' },
+          { name: 'Stage A', instruction: 'Do A:', model: 'AUTO' },
+          { name: 'Stage B', instruction: 'Do B:', model: 'AUTO' },
         ],
       });
 
@@ -248,12 +244,12 @@ describe('PipelineManager', () => {
         content: 'A request content here',
         template: 'custom',
         customStages: [
-          { name: 'S1', instruction: 'Do 1:', model: 'qwen3:1.7b' },
-          { name: 'S2', instruction: 'Do 2:', model: 'qwen3:1.7b' },
-          { name: 'S3', instruction: 'Do 3:', model: 'qwen3:1.7b' },
-          { name: 'S4', instruction: 'Do 4:', model: 'qwen3:1.7b' },
-          { name: 'S5', instruction: 'Do 5:', model: 'qwen3:1.7b' },
-          { name: 'S6', instruction: 'Do 6:', model: 'qwen3:1.7b' },
+          { name: 'S1', instruction: 'Do 1:', model: 'AUTO' },
+          { name: 'S2', instruction: 'Do 2:', model: 'AUTO' },
+          { name: 'S3', instruction: 'Do 3:', model: 'AUTO' },
+          { name: 'S4', instruction: 'Do 4:', model: 'AUTO' },
+          { name: 'S5', instruction: 'Do 5:', model: 'AUTO' },
+          { name: 'S6', instruction: 'Do 6:', model: 'AUTO' },
         ],
       });
       expect(result.success).toBe(false);

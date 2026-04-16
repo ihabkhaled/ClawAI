@@ -70,7 +70,7 @@ export const PROVIDER_CAPABILITY_MATRIX: ProviderCapabilityEntry[] = [
   },
   {
     provider: 'local-ollama',
-    model: 'qwen3:1.7b',
+    model: 'AUTO',
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE, ModelCapability.IMAGE_INPUT],
   },
 ];

@@ -22,7 +22,7 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nestjs
 RUN adduser --system --uid 1001 nestjs
 COPY --from=builder /app/apps/claw-routing-service/dist ./dist
-COPY --from=builder /app/apps/claw-routing-service/node_modules ./node_modules
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/claw-routing-service/package.json ./package.json
 COPY --from=builder /app/apps/claw-routing-service/prisma ./prisma
 COPY --from=builder /app/packages /app/packages

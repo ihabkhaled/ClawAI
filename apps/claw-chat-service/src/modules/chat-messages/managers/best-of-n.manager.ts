@@ -6,6 +6,7 @@ import { CANDIDATE_TIMEOUT_MS, DEFAULT_CANDIDATE_MODEL } from '../constants/best
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { QualityCheckManager } from './quality-check.manager';
 import type { BestOfNMessageDto } from '../dto/best-of-n-message.dto';
 import type { BestOfNResponse, CandidateResult } from '../types/best-of-n.types';
@@ -21,6 +22,7 @@ export class BestOfNManager {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly qualityCheckManager: QualityCheckManager,
+    private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
   async executeBestOfN(userId: string, dto: BestOfNMessageDto): Promise<BestOfNResponse> {
@@ -96,8 +98,12 @@ export class BestOfNManager {
     startTime: number,
   ): Promise<CandidateResult[]> {
     const config = AppConfig.get();
+    const resolvedModels = candidateModels.includes(DEFAULT_CANDIDATE_MODEL)
+      ? ((await this.localModelSelection?.resolveModelList(candidateModels.length)) ??
+        Array.from({ length: candidateModels.length }, () => 'AUTO'))
+      : candidateModels;
     const results = await Promise.allSettled(
-      candidateModels.map((model) =>
+      resolvedModels.map((model) =>
         this.runOneCandidate(config.OLLAMA_SERVICE_URL, model, content, startTime),
       ),
     );
@@ -141,10 +147,7 @@ export class BestOfNManager {
     const latencyMs = Date.now() - candidateStart;
     const responseContent = response.data.response.trim();
 
-    const qualityResult = this.qualityCheckManager.checkResponseQuality(
-      responseContent,
-      content,
-    );
+    const qualityResult = this.qualityCheckManager.checkResponseQuality(responseContent, content);
 
     return {
       content: responseContent,
@@ -180,7 +183,7 @@ export class BestOfNManager {
       role: 'ASSISTANT',
       content: `\u26A0\uFE0F ${errorMsg}`,
       provider: 'local-ollama',
-      model: DEFAULT_CANDIDATE_MODEL,
+      model: (await this.localModelSelection?.resolveDefaultModel()) ?? 'AUTO',
       routingMode: RoutingMode.AUTO,
       usedFallback: true,
       metadata: { error: true },

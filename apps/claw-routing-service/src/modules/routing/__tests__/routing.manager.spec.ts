@@ -29,6 +29,7 @@ describe('RoutingManager', () => {
   let manager: RoutingManager;
   let promptBuilder: {
     fetchInstalledModels: jest.Mock;
+    getInstalledModels: jest.Mock;
     invalidateCache: jest.Mock;
   };
 
@@ -37,6 +38,7 @@ describe('RoutingManager', () => {
     const ollamaRouter = { route: jest.fn().mockResolvedValue(null) };
     promptBuilder = {
       fetchInstalledModels: jest.fn().mockResolvedValue([]),
+      getInstalledModels: jest.fn().mockResolvedValue([]),
       invalidateCache: jest.fn(),
     };
     // Use real managers (pure logic, no deps)
@@ -52,7 +54,31 @@ describe('RoutingManager', () => {
   });
 
   describe('evaluateRoute - AUTO', () => {
-    it('should route SIMPLE messages to local when runtime is healthy (SAR2)', async () => {
+    it('should route SIMPLE messages to cloud when only heavy local models are installed', async () => {
+      const context: RoutingContext = {
+        ...baseContext,
+        userMode: RoutingMode.AUTO,
+      };
+
+      const result = await manager.evaluateRoute(context);
+
+      expect(result.routingMode).toBe(RoutingMode.AUTO);
+      expect(result.selectedProvider).toBe('ANTHROPIC');
+      expect(result.reasonTags).toContain('auto');
+      expect(result.complexityClass).toBe(ComplexityClass.SIMPLE);
+    });
+
+    it('should route SIMPLE messages to local when a lightweight chat model exists', async () => {
+      promptBuilder.getInstalledModels.mockResolvedValue([
+        {
+          name: 'tiny-chat',
+          tag: 'latest',
+          category: 'general',
+          roles: [LocalModelRole.LOCAL_FALLBACK_CHAT],
+          capabilities: ['chat'],
+          parameterCount: '3B',
+        },
+      ]);
       const context: RoutingContext = {
         ...baseContext,
         userMode: RoutingMode.AUTO,
@@ -62,9 +88,7 @@ describe('RoutingManager', () => {
 
       expect(result.routingMode).toBe(RoutingMode.AUTO);
       expect(result.selectedProvider).toBe('local-ollama');
-      // SAR2: short messages are SIMPLE complexity → simple_complexity tag
-      expect(result.reasonTags).toContain('auto');
-      expect(result.complexityClass).toBe(ComplexityClass.SIMPLE);
+      expect(result.reasonTags).toContain('simple_complexity');
     });
 
     it('should route MEDIUM-length messages to cloud when local unavailable', async () => {
@@ -1032,7 +1056,7 @@ describe('RoutingManager', () => {
     });
 
     it('should sort fallbacks by cost when sortByCost is true', () => {
-      const primary = { provider: 'local-ollama', model: 'qwen3:1.7b' };
+      const primary = { provider: 'local-ollama', model: 'AUTO' };
 
       const chain = manager.buildFallbackChain(primary, baseContext, true);
 
@@ -1168,7 +1192,7 @@ describe('RoutingManager', () => {
 
   describe('buildFallbackChain — GROK provider coverage', () => {
     it('includes GROK in fallback chain when local is primary and GROK is healthy', () => {
-      const primary = { provider: 'local-ollama', model: 'qwen3:1.7b' };
+      const primary = { provider: 'local-ollama', model: 'AUTO' };
       const context: RoutingContext = {
         ...baseContext,
         connectorHealth: { GROK: true, ANTHROPIC: true, OPENAI: true, GEMINI: true },
@@ -1180,7 +1204,7 @@ describe('RoutingManager', () => {
     });
 
     it('excludes GROK from fallback chain when GROK is unhealthy', () => {
-      const primary = { provider: 'local-ollama', model: 'qwen3:1.7b' };
+      const primary = { provider: 'local-ollama', model: 'AUTO' };
       const context: RoutingContext = {
         ...baseContext,
         connectorHealth: { GROK: false, ANTHROPIC: true, OPENAI: true },
@@ -1219,7 +1243,7 @@ describe('RoutingManager', () => {
     });
 
     it('sorts GROK after GEMINI and OPENAI in cost-sorted chain (same tier as ANTHROPIC)', () => {
-      const primary = { provider: 'local-ollama', model: 'qwen3:1.7b' };
+      const primary = { provider: 'local-ollama', model: 'AUTO' };
       const context: RoutingContext = {
         ...baseContext,
         connectorHealth: { GROK: true, ANTHROPIC: true, OPENAI: true, GEMINI: true },

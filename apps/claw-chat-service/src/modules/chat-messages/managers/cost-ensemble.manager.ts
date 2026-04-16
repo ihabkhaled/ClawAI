@@ -11,6 +11,7 @@ import {
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { QualityCheckManager } from './quality-check.manager';
 import type { CostEnsembleMessageDto } from '../dto/cost-ensemble-message.dto';
 import type {
@@ -32,6 +33,7 @@ export class CostEnsembleManager {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly qualityCheckManager: QualityCheckManager,
+    private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
   async executeCostEnsemble(
@@ -68,7 +70,7 @@ export class CostEnsembleManager {
         role: 'ASSISTANT',
         content: best,
         provider: 'local-ollama',
-        model: DEFAULT_COST_ENSEMBLE_MODEL,
+        model: await this.resolveModel(),
         latencyMs: candidates[selectedIndex]?.latencyMs ?? 0,
         usedFallback: false,
         routingMode: RoutingMode.AUTO,
@@ -81,7 +83,7 @@ export class CostEnsembleManager {
         },
       });
 
-      this.chatStreamService.emitCompletion(threadId, 'local-ollama', DEFAULT_COST_ENSEMBLE_MODEL);
+      this.chatStreamService.emitCompletion(threadId, 'local-ollama', await this.resolveModel());
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Cost ensemble generation failed';
       this.logger.error(`executeInBackground: failed for thread ${threadId} — ${errorMsg}`);
@@ -164,9 +166,10 @@ export class CostEnsembleManager {
   private async runEnsemble(content: string, tier: CostTier): Promise<EnsembleCandidate[]> {
     const count = this.tierToCount(tier);
     const config = AppConfig.get();
+    const model = await this.resolveModel();
 
     const calls = Array.from({ length: count }, () =>
-      this.runOneCall(config.OLLAMA_SERVICE_URL, content),
+      this.runOneCall(config.OLLAMA_SERVICE_URL, content, model),
     );
 
     const results = await Promise.allSettled(calls);
@@ -184,10 +187,14 @@ export class CostEnsembleManager {
     return candidates;
   }
 
-  private async runOneCall(ollamaServiceUrl: string, content: string): Promise<EnsembleCandidate> {
+  private async runOneCall(
+    ollamaServiceUrl: string,
+    content: string,
+    model: string,
+  ): Promise<EnsembleCandidate> {
     const start = Date.now();
     const requestBody: OllamaGenerateRequest = {
-      model: DEFAULT_COST_ENSEMBLE_MODEL,
+      model,
       prompt: content,
       stream: false,
     };
@@ -204,7 +211,7 @@ export class CostEnsembleManager {
     }
 
     return {
-      model: DEFAULT_COST_ENSEMBLE_MODEL,
+      model,
       response: response.data.response.trim(),
       latencyMs: Date.now() - start,
     };
@@ -259,11 +266,18 @@ export class CostEnsembleManager {
       role: 'ASSISTANT',
       content: `\u26A0\uFE0F ${errorMsg}`,
       provider: 'local-ollama',
-      model: DEFAULT_COST_ENSEMBLE_MODEL,
+      model: await this.resolveModel(),
       routingMode: RoutingMode.AUTO,
       usedFallback: true,
       metadata: { error: true },
     });
+  }
+
+  private async resolveModel(): Promise<string> {
+    if (DEFAULT_COST_ENSEMBLE_MODEL !== 'AUTO') {
+      return DEFAULT_COST_ENSEMBLE_MODEL;
+    }
+    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 
   private defaultClassification(): RawClassification {

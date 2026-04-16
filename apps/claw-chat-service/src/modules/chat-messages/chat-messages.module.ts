@@ -17,6 +17,7 @@ import { PipelineManager } from './managers/pipeline.manager';
 import { CostEnsembleManager } from './managers/cost-ensemble.manager';
 import { RolePackManager } from './managers/role-pack.manager';
 import { ChatStreamService } from './services/chat-stream.service';
+import { LocalModelSelectionService } from './services/local-model-selection.service';
 import { ChatMessagesRepository } from './repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../chat-threads/repositories/chat-threads.repository';
 
@@ -39,6 +40,7 @@ import { ChatThreadsRepository } from '../chat-threads/repositories/chat-threads
     CostEnsembleManager,
     RolePackManager,
     ChatStreamService,
+    LocalModelSelectionService,
     ChatMessagesRepository,
     ChatThreadsRepository,
   ],

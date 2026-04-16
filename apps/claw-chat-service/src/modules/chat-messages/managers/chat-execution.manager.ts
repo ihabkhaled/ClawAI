@@ -28,6 +28,7 @@ import { ContextAssemblyManager } from './context-assembly.manager';
 import { QualityCheckManager } from './quality-check.manager';
 import { JudgeRefereeManager } from './judge-referee.manager';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { LocalModelSelectionService } from '../services/local-model-selection.service';
 
 @Injectable()
 export class ChatExecutionManager implements OnModuleInit {
@@ -38,6 +39,7 @@ export class ChatExecutionManager implements OnModuleInit {
     private readonly qualityCheckManager: QualityCheckManager,
     private readonly judgeRefereeManager: JudgeRefereeManager,
     private readonly chatStreamService: ChatStreamService,
+    private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
   onModuleInit(): void {
@@ -216,12 +218,11 @@ export class ChatExecutionManager implements OnModuleInit {
       return candidates;
     }
 
-    // Hardcoded cloud defaults as last resort if not already in the chain
+    // Cloud fallbacks come from the current routing decision plus the healthy connector set.
     const allCloudProviders = [
       { provider: 'GEMINI', model: 'gemini-2.5-flash' },
       { provider: 'ANTHROPIC', model: 'claude-sonnet-4' },
       { provider: 'OPENAI', model: 'gpt-4o-mini' },
-      { provider: 'DEEPSEEK', model: 'deepseek-chat' },
       { provider: 'GROK', model: 'grok-3-mini' },
     ];
 
@@ -335,7 +336,8 @@ export class ChatExecutionManager implements OnModuleInit {
     usedFallback: boolean,
     _threadSettings?: ThreadSettings,
   ): Promise<LlmResponse> {
-    this.logger.log(`callOllama: calling model=${model}`);
+    const resolvedModel = await this.resolveModel(model);
+    this.logger.log(`callOllama: calling model=${resolvedModel}`);
     const config = AppConfig.get();
     this.logger.debug('callOllama: building prompt string from context');
     const prompt = this.contextAssembly.buildPromptString(context);
@@ -350,7 +352,7 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.debug(`callOllama: found ${String(images.length)} images for multimodal input`);
 
     const requestBody: OllamaGenerateRequest = {
-      model,
+      model: resolvedModel,
       prompt,
       stream: false,
       ...(images.length > 0 ? { images } : {}),
@@ -714,6 +716,13 @@ export class ChatExecutionManager implements OnModuleInit {
       usedFallback,
       fileGenerationId: response.data.generationId,
     };
+  }
+
+  private async resolveModel(model: string): Promise<string> {
+    if (model !== 'AUTO') {
+      return model;
+    }
+    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 
   private detectFileFormat(prompt: string): string {

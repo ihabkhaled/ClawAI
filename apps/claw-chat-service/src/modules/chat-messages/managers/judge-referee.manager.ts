@@ -11,6 +11,7 @@ import {
   JUDGE_REFEREE_AUTO_CATEGORIES,
   JUDGE_SYSTEM_PROMPT,
 } from '../constants/judge-referee.constants';
+import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type { AssembledContext } from '../types/context.types';
 import type { LlmResponse, MessageRoutedData, ThreadSettings } from '../types/execution.types';
 import type {
@@ -28,7 +29,10 @@ import { ChatStreamService } from '../services/chat-stream.service';
 export class JudgeRefereeManager {
   private readonly logger = new Logger(JudgeRefereeManager.name);
 
-  constructor(private readonly chatStreamService: ChatStreamService) {}
+  constructor(
+    private readonly chatStreamService: ChatStreamService,
+    private readonly localModelSelection?: LocalModelSelectionService,
+  ) {}
 
   private executionManager: ChatExecutionManager | null = null;
 
@@ -58,10 +62,10 @@ export class JudgeRefereeManager {
       `evaluate: starting judge-referee for ${payload.messageId} category=${config.category ?? 'none'}`,
     );
 
-    const criticModelInfo = this.selectCriticModel(response.provider, config.isLocalOnly);
+    const criticModelInfo = await this.selectCriticModel(response.provider, config.isLocalOnly);
     const criticModelLabel = `${criticModelInfo.provider}/${criticModelInfo.model}`;
     const overrideJudgeModel = threadSettings?.judgeModel ?? null;
-    const effectiveJudgeModel = overrideJudgeModel ?? JUDGE_LOCAL_MODEL;
+    const effectiveJudgeModel = await this.resolveModel(overrideJudgeModel ?? JUDGE_LOCAL_MODEL);
     const judgeModelLabel = `local-ollama/${effectiveJudgeModel}`;
     this.chatStreamService.emitJudgeEvaluating(payload.threadId, criticModelLabel, judgeModelLabel);
 
@@ -187,7 +191,7 @@ export class JudgeRefereeManager {
     judgeModelOverride?: string,
   ): Promise<JudgeVerdict> {
     const startTime = Date.now();
-    const judgeModel = judgeModelOverride ?? JUDGE_LOCAL_MODEL;
+    const judgeModel = await this.resolveModel(judgeModelOverride ?? JUDGE_LOCAL_MODEL);
 
     this.logger.debug(`callJudge: using ${OLLAMA_PROVIDER}/${judgeModel}`);
 
@@ -287,17 +291,26 @@ export class JudgeRefereeManager {
     }
   }
 
-  selectCriticModel(
+  async selectCriticModel(
     generatorProvider: string,
     isLocalOnly: boolean,
-  ): { provider: string; model: string } {
+  ): Promise<{ provider: string; model: string }> {
     if (isLocalOnly) {
-      return { provider: OLLAMA_PROVIDER, model: CRITIC_LOCAL_MODEL };
+      return { provider: OLLAMA_PROVIDER, model: await this.resolveModel(CRITIC_LOCAL_MODEL) };
     }
 
     const available = CRITIC_CLOUD_MODELS.find((c) => c.provider !== generatorProvider);
 
-    return available ?? { provider: OLLAMA_PROVIDER, model: CRITIC_LOCAL_MODEL };
+    return (
+      available ?? { provider: OLLAMA_PROVIDER, model: await this.resolveModel(CRITIC_LOCAL_MODEL) }
+    );
+  }
+
+  private async resolveModel(model: string): Promise<string> {
+    if (model !== 'AUTO') {
+      return model;
+    }
+    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 
   private buildCriticPrompt(category: string | undefined): string {

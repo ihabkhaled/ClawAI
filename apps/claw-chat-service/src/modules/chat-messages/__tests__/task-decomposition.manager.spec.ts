@@ -230,11 +230,7 @@ describe('TaskDecompositionManager', () => {
 
       await manager.executeInBackground('thread-1', 'Complex task content here', 2);
 
-      expect(streamService.emitCompletion).toHaveBeenCalledWith(
-        'thread-1',
-        'local-ollama',
-        'qwen3:1.7b',
-      );
+      expect(streamService.emitCompletion).toHaveBeenCalledWith('thread-1', 'local-ollama', 'AUTO');
     });
   });
 });

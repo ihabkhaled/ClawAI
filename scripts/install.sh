@@ -344,7 +344,7 @@ OLLAMA_BASE_URL=http://ollama:11434
 OLLAMA_ROUTER_MODEL=qwen3:1.7b
 OLLAMA_ROUTER_TIMEOUT_MS=10000
 OLLAMA_GENERATE_TIMEOUT_MS=300000
-MEMORY_EXTRACTION_MODEL=qwen3:1.7b
+MEMORY_EXTRACTION_MODEL=AUTO
 
 # =============================================================================
 # File Service

@@ -426,20 +426,27 @@ export class RoutingManager {
     this.logger.debug('handleAuto: attempting Ollama-assisted routing');
     const ollamaDecision = await this.ollamaRouter.route(context);
     if (ollamaDecision) {
-      this.logger.log(
-        `handleAuto: Ollama router decided ${ollamaDecision.provider}/${ollamaDecision.model} (confidence=${String(ollamaDecision.confidence)})`,
-      );
-      const primary = { provider: ollamaDecision.provider, model: ollamaDecision.model };
-      return {
-        selectedProvider: ollamaDecision.provider,
-        selectedModel: ollamaDecision.model,
-        routingMode: RoutingMode.AUTO,
-        confidence: ollamaDecision.confidence,
-        reasonTags: ['auto', 'ollama_router', ollamaDecision.reason],
-        privacyClass: ollamaDecision.provider === LOCAL_PROVIDER ? 'local' : 'cloud',
-        costClass: ollamaDecision.provider === LOCAL_PROVIDER ? 'free' : 'medium',
-        fallbackChain: this.buildFallbackChain(primary, context),
-      };
+      const canPreferGenericLocal = await this.canPreferGenericLocal(context);
+      if (ollamaDecision.provider === LOCAL_PROVIDER && !canPreferGenericLocal) {
+        this.logger.log(
+          'handleAuto: Ollama router selected local, but no lightweight local chat model is available - continuing to cloud fallback logic',
+        );
+      } else {
+        this.logger.log(
+          `handleAuto: Ollama router decided ${ollamaDecision.provider}/${ollamaDecision.model} (confidence=${String(ollamaDecision.confidence)})`,
+        );
+        const primary = { provider: ollamaDecision.provider, model: ollamaDecision.model };
+        return {
+          selectedProvider: ollamaDecision.provider,
+          selectedModel: ollamaDecision.model,
+          routingMode: RoutingMode.AUTO,
+          confidence: ollamaDecision.confidence,
+          reasonTags: ['auto', 'ollama_router', ollamaDecision.reason],
+          privacyClass: ollamaDecision.provider === LOCAL_PROVIDER ? 'local' : 'cloud',
+          costClass: ollamaDecision.provider === LOCAL_PROVIDER ? 'free' : 'medium',
+          fallbackChain: this.buildFallbackChain(primary, context),
+        };
+      }
     }
 
     // Fallback to heuristic routing
@@ -492,8 +499,9 @@ export class RoutingManager {
     const localHealthy = this.isRuntimeHealthy('OLLAMA', context);
     const messageLength = context.message.length;
     const complexity = context.complexity;
+    const canPreferGenericLocal = await this.canPreferGenericLocal(context);
     this.logger.debug(
-      `handleAutoHeuristic: localHealthy=${String(localHealthy)} messageLength=${String(messageLength)} complexity=${complexity?.class ?? 'unclassified'}`,
+      `handleAutoHeuristic: localHealthy=${String(localHealthy)} messageLength=${String(messageLength)} complexity=${complexity?.class ?? 'unclassified'} canPreferGenericLocal=${String(canPreferGenericLocal)}`,
     );
 
     // SAR2: EXPERT complexity → prefer high-reasoning cloud model when available
@@ -517,7 +525,7 @@ export class RoutingManager {
     }
 
     // SAR2: SIMPLE complexity + local available → prefer local immediately
-    if (complexity?.class === ComplexityClass.SIMPLE && localHealthy) {
+    if (complexity?.class === ComplexityClass.SIMPLE && localHealthy && canPreferGenericLocal) {
       this.logger.log('handleAutoHeuristic: SIMPLE complexity + local available — routing local');
       const primary = { provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT };
       return {
@@ -534,7 +542,7 @@ export class RoutingManager {
     }
 
     // Prefer local for short messages if Ollama is available
-    if (localHealthy && messageLength < 500) {
+    if (localHealthy && messageLength < 500 && canPreferGenericLocal) {
       this.logger.debug('handleAutoHeuristic: short message + local available — using local');
       const primary = { provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT };
       return {
@@ -1217,6 +1225,25 @@ export class RoutingManager {
   private async findModelForRole(role: LocalModelRole): Promise<InstalledModelInfo | null> {
     const models = await this.promptBuilder.fetchInstalledModels();
     return models.find((m) => m.roles.includes(role)) ?? null;
+  }
+
+  private async canPreferGenericLocal(context: RoutingContext): Promise<boolean> {
+    if (!this.isRuntimeHealthy('OLLAMA', context)) {
+      return false;
+    }
+
+    const models = await this.promptBuilder.getInstalledModels();
+    const usable = models.filter((model) => !model.roles.includes('ROUTER'));
+    return usable.some((model) => this.isGenericChatModel(model));
+  }
+
+  private isGenericChatModel(model: InstalledModelInfo): boolean {
+    if (model.roles.includes(LocalModelRole.LOCAL_FALLBACK_CHAT)) {
+      return true;
+    }
+
+    const category = (model.category ?? '').toUpperCase();
+    return category === 'GENERAL';
   }
 
   private buildCategoryDecision(

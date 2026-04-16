@@ -10,6 +10,7 @@ import {
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type { PipelineMessageDto } from '../dto/pipeline-message.dto';
 import type { PipelineResponse, PipelineStage, PipelineStageResult } from '../types/pipeline.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
@@ -23,6 +24,7 @@ export class PipelineManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
   async executePipeline(userId: string, dto: PipelineMessageDto): Promise<PipelineResponse> {
@@ -49,7 +51,7 @@ export class PipelineManager {
   ): Promise<void> {
     const startTime = Date.now();
     try {
-      const stages = this.resolveStages(dto);
+      const stages = await this.resolveStages(dto);
       const config = AppConfig.get();
       const stageResults = await this.runAllStages(stages, content, config.OLLAMA_SERVICE_URL);
       const finalOutput = stageResults.at(-1)?.output ?? content;
@@ -59,7 +61,7 @@ export class PipelineManager {
         role: 'ASSISTANT',
         content: finalOutput,
         provider: 'local-ollama',
-        model: DEFAULT_PIPELINE_MODEL,
+        model: await this.resolveModel(),
         latencyMs: Date.now() - startTime,
         usedFallback: false,
         metadata: {
@@ -70,7 +72,7 @@ export class PipelineManager {
         },
       });
 
-      this.chatStreamService.emitCompletion(threadId, 'local-ollama', DEFAULT_PIPELINE_MODEL);
+      this.chatStreamService.emitCompletion(threadId, 'local-ollama', await this.resolveModel());
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Pipeline execution failed';
       this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
@@ -84,11 +86,11 @@ export class PipelineManager {
     }
   }
 
-  private resolveStages(dto: PipelineMessageDto): PipelineStage[] {
+  private async resolveStages(dto: PipelineMessageDto): Promise<PipelineStage[]> {
     if (dto.template !== 'custom') {
-      return PIPELINE_TEMPLATES[dto.template] ?? [];
+      return this.resolveStageModels(PIPELINE_TEMPLATES[dto.template] ?? []);
     }
-    return dto.customStages ?? [];
+    return this.resolveStageModels(dto.customStages ?? []);
   }
 
   private async runAllStages(
@@ -115,9 +117,10 @@ export class PipelineManager {
   ): Promise<PipelineStageResult> {
     const startTime = Date.now();
     const prompt = `${stage.instruction}\n\n${input}`;
+    const model = await this.resolveModel(stage.model);
 
     const requestBody: OllamaGenerateRequest = {
-      model: stage.model,
+      model,
       prompt,
       stream: false,
     };
@@ -137,10 +140,29 @@ export class PipelineManager {
 
     return {
       stageName: stage.name,
-      model: stage.model,
+      model,
       output: response.data.response.trim(),
       latencyMs: Date.now() - startTime,
     };
+  }
+
+  private async resolveStageModels(stages: PipelineStage[]): Promise<PipelineStage[]> {
+    return Promise.all(
+      stages.map(async (stage) => ({
+        ...stage,
+        model: await this.resolveModel(stage.model),
+      })),
+    );
+  }
+
+  private async resolveModel(model?: string): Promise<string> {
+    if (model && model !== 'AUTO') {
+      return model;
+    }
+    if (DEFAULT_PIPELINE_MODEL !== 'AUTO') {
+      return DEFAULT_PIPELINE_MODEL;
+    }
+    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 
   private async resolveThreadId(userId: string, dto: PipelineMessageDto): Promise<string> {

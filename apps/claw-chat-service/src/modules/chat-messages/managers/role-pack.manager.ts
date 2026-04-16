@@ -10,6 +10,7 @@ import {
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type { RolePackMessageDto } from '../dto/role-pack-message.dto';
 import type { RoleMember, RoleMemberResult, RolePackResponse } from '../types/role-pack.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
@@ -23,6 +24,7 @@ export class RolePackManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
   async executeRolePack(userId: string, dto: RolePackMessageDto): Promise<RolePackResponse> {
@@ -47,7 +49,8 @@ export class RolePackManager {
     try {
       const members = ROLE_PACKS[pack] ?? [];
       const config = AppConfig.get();
-      const results = await this.runAllMembers(members, content, config.OLLAMA_SERVICE_URL);
+      const resolvedMembers = await this.resolveMembers(members);
+      const results = await this.runAllMembers(resolvedMembers, content, config.OLLAMA_SERVICE_URL);
       const allFailed = results.every((r) => r.output === 'Role failed');
       if (allFailed) {
         throw new Error('All role pack members failed to produce output');
@@ -59,14 +62,14 @@ export class RolePackManager {
         role: 'ASSISTANT',
         content: bestOutput,
         provider: 'local-ollama',
-        model: DEFAULT_ROLE_PACK_MODEL,
+        model: await this.resolveModel(),
         latencyMs: Date.now() - startTime,
         usedFallback: false,
         routingMode: RoutingMode.AUTO,
         metadata: { rolePack: true, pack, members: results },
       });
 
-      this.chatStreamService.emitCompletion(threadId, 'local-ollama', DEFAULT_ROLE_PACK_MODEL);
+      this.chatStreamService.emitCompletion(threadId, 'local-ollama', await this.resolveModel());
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Role pack execution failed';
       this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
@@ -85,6 +88,7 @@ export class RolePackManager {
     content: string,
     ollamaUrl: string,
   ): Promise<RoleMemberResult[]> {
+    const fallbackModel = await this.resolveModel();
     const settled = await Promise.allSettled(
       members.map((member) => this.runMember(member, content, ollamaUrl)),
     );
@@ -97,7 +101,7 @@ export class RolePackManager {
       this.logger.warn(`runAllMembers: member ${String(index)} failed — ${msg}`);
       return {
         role: members[index]?.role ?? `role-${String(index)}`,
-        model: members[index]?.model ?? DEFAULT_ROLE_PACK_MODEL,
+        model: members[index]?.model ?? fallbackModel,
         output: 'Role failed',
         latencyMs: 0,
       };
@@ -111,9 +115,10 @@ export class RolePackManager {
   ): Promise<RoleMemberResult> {
     const startTime = Date.now();
     const prompt = `${member.instruction}\n\n${content}`;
+    const model = await this.resolveModel(member.model);
 
     const requestBody: OllamaGenerateRequest = {
-      model: member.model,
+      model,
       prompt,
       stream: false,
     };
@@ -131,10 +136,19 @@ export class RolePackManager {
 
     return {
       role: member.role,
-      model: member.model,
+      model,
       output: response.data.response.trim(),
       latencyMs: Date.now() - startTime,
     };
+  }
+
+  private async resolveMembers(members: RoleMember[]): Promise<RoleMember[]> {
+    return Promise.all(
+      members.map(async (member) => ({
+        ...member,
+        model: await this.resolveModel(member.model),
+      })),
+    );
   }
 
   private selectBestOutput(results: RoleMemberResult[], pack: string): string {
@@ -172,10 +186,20 @@ export class RolePackManager {
       role: 'ASSISTANT',
       content: `\u26A0\uFE0F ${errorMsg}`,
       provider: 'local-ollama',
-      model: DEFAULT_ROLE_PACK_MODEL,
+      model: await this.resolveModel(),
       routingMode: RoutingMode.AUTO,
       usedFallback: true,
       metadata: { error: true },
     });
+  }
+
+  private async resolveModel(model?: string): Promise<string> {
+    if (model && model !== 'AUTO') {
+      return model;
+    }
+    if (DEFAULT_ROLE_PACK_MODEL !== 'AUTO') {
+      return DEFAULT_ROLE_PACK_MODEL;
+    }
+    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 }

@@ -107,8 +107,18 @@ export class OllamaService implements OnModuleInit {
     if (!model) {
       throw new EntityNotFoundException('LocalModel', dto.modelId);
     }
+    const fullName = `${model.name}:${model.tag}`;
+    if (fullName === DEFAULT_ROUTER_MODEL && dto.role !== ('ROUTER' as LocalModelRole)) {
+      throw new BusinessException(
+        `Model ${fullName} is reserved for router-only use`,
+        'ROUTER_ONLY_MODEL',
+      );
+    }
 
     const assignment = await this.ollamaManager.assignRole(dto.modelId, dto.role);
+    if (fullName === DEFAULT_ROUTER_MODEL) {
+      await this.ollamaManager.clearOtherRolesForModel(dto.modelId, 'ROUTER' as LocalModelRole);
+    }
 
     void this.rabbitMQService.publish(EventPattern.CONNECTOR_UPDATED, {
       modelId: dto.modelId,
@@ -345,6 +355,10 @@ export class OllamaService implements OnModuleInit {
       `ensureDefaultRouterModel: assigning ROUTER to ${defaultRouterModel.name}:${defaultRouterModel.tag}`,
     );
     await this.ollamaManager.assignRole(defaultRouterModel.id, 'ROUTER' as LocalModelRole);
+    await this.ollamaManager.clearOtherRolesForModel(
+      defaultRouterModel.id,
+      'ROUTER' as LocalModelRole,
+    );
   }
 
   private async findDefaultRouterModel(): Promise<LocalModel | null> {

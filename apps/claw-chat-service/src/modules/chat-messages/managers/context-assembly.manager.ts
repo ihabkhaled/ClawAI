@@ -46,14 +46,20 @@ export class ContextAssemblyManager {
     this.logger.debug(`assemble: using ${String(recentMessages.length)} recent messages`);
 
     const lastUserContent = recentMessages.at(-1)?.content ?? '';
+    const skipExpensiveContext = this.shouldSkipExpensiveContext(lastUserContent, fileIds ?? []);
+    this.logger.debug(
+      `assemble: context shortcut=${String(skipExpensiveContext)} for last user content length=${String(lastUserContent.length)}`,
+    );
     this.logger.debug(
       'assemble: fetching memories, context packs, file contents, and workspace context in parallel',
     );
     const [memories, contextPackItems, fileContents, workspaceCitations] = await Promise.all([
-      this.fetchMemories(userId),
-      this.fetchContextPackItems(contextPackIds ?? []),
+      skipExpensiveContext ? Promise.resolve([]) : this.fetchMemories(userId),
+      skipExpensiveContext ? Promise.resolve([]) : this.fetchContextPackItems(contextPackIds ?? []),
       this.fetchFileContents(fileIds ?? []),
-      this.fetchWorkspaceContext(userId, lastUserContent),
+      skipExpensiveContext
+        ? Promise.resolve([])
+        : this.fetchWorkspaceContext(userId, lastUserContent),
     ]);
 
     const tokenBudget = threadSettings?.maxTokens ?? 4096;
@@ -491,5 +497,25 @@ export class ContextAssemblyManager {
       return 'assistant';
     }
     return 'system';
+  }
+
+  private shouldSkipExpensiveContext(query: string, fileIds: string[]): boolean {
+    if (fileIds.length > 0) {
+      return false;
+    }
+
+    const prompt = query.trim().toLowerCase();
+    if (prompt.length === 0) {
+      return true;
+    }
+
+    const words = prompt.split(/\s+/).filter((word) => word.length > 0);
+    if (words.length <= 3) {
+      return true;
+    }
+
+    return /^(hi|hello|hey|yo|thanks|thank you|good (morning|afternoon|evening))(?:[!.?]*)$/.test(
+      prompt,
+    );
   }
 }

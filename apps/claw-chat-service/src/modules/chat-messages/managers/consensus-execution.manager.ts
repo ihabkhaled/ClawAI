@@ -10,6 +10,7 @@ import {
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type {
   ConsensusAnalysis,
   ConsensusModelBreakdown,
@@ -36,6 +37,7 @@ export class ConsensusExecutionManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly localModelSelection?: LocalModelSelectionService,
   ) {
     this.timeoutMs = AppConfig.get().OLLAMA_GENERATE_TIMEOUT_MS;
   }
@@ -235,7 +237,7 @@ export class ConsensusExecutionManager {
       completedResponses.length,
     );
     const requestBody: OllamaGenerateRequest = {
-      model: 'qwen3:1.7b',
+      model: await this.resolveModel(),
       prompt: synthesisPrompt,
       stream: false,
       options: { temperature: 0, num_predict: 800 },
@@ -448,6 +450,10 @@ Rules: agreementScore 0.0-1.0, confidenceLevel must be HIGH/MEDIUM/LOW, max 3 it
         modelBreakdown: synthesis.modelBreakdown,
       },
     });
+  }
+
+  private async resolveModel(): Promise<string> {
+    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 
   private extractThreadSettings(thread: ChatThread | null): ThreadSettings | undefined {

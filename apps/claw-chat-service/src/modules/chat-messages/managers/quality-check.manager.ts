@@ -17,6 +17,15 @@ export class QualityCheckManager {
     userPrompt: string,
     threadSettings?: ThreadSettings,
   ): QualityCheckResult {
+    if (this.shouldBypassQualityChecks(userPrompt, content)) {
+      this.logger.debug('checkResponseQuality: bypassing reroute checks for short/trivial prompt');
+      return {
+        isWeak: false,
+        reasons: [],
+        score: 1,
+      };
+    }
+
     const reasons: string[] = [];
     let score = 1.0;
 
@@ -167,5 +176,25 @@ export class QualityCheckManager {
       reason,
       originalScore,
     };
+  }
+
+  private shouldBypassQualityChecks(userPrompt: string, content: string): boolean {
+    if (content.trim().length === 0) {
+      return false;
+    }
+
+    const prompt = userPrompt.trim().toLowerCase();
+    if (prompt.length === 0) {
+      return false;
+    }
+
+    const promptWords = prompt.split(/\s+/).filter((word) => word.length > 0);
+    if (promptWords.length <= 3) {
+      return true;
+    }
+
+    return /^(hi|hello|hey|yo|thanks|thank you|good (morning|afternoon|evening))(?:[!.?]*)$/.test(
+      prompt,
+    );
   }
 }

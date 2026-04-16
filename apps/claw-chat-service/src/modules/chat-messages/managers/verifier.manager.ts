@@ -11,6 +11,7 @@ import {
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type { VerifyMessageDto } from '../dto/verify-message.dto';
 import type { VerifierCheckResult, VerifyResponse } from '../types/verifier.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
@@ -24,6 +25,7 @@ export class VerifierManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
   async executeVerify(userId: string, dto: VerifyMessageDto): Promise<VerifyResponse> {
@@ -55,7 +57,11 @@ export class VerifierManager {
 
       if (checkResult.score >= VERIFIER_PASS_THRESHOLD || maxRevisions === 0) {
         await this.storeVerifiedMessage(threadId, draft, checkResult, 0, startTime);
-        this.chatStreamService.emitCompletion(threadId, 'local-ollama', DEFAULT_VERIFIER_MODEL);
+        this.chatStreamService.emitCompletion(
+          threadId,
+          'local-ollama',
+          await this.resolveModel(DEFAULT_VERIFIER_MODEL),
+        );
         return;
       }
 
@@ -67,7 +73,11 @@ export class VerifierManager {
       );
 
       await this.storeVerifiedMessage(threadId, finalDraft, finalCheck, revisionCount, startTime);
-      this.chatStreamService.emitCompletion(threadId, 'local-ollama', DEFAULT_VERIFIER_MODEL);
+      this.chatStreamService.emitCompletion(
+        threadId,
+        'local-ollama',
+        await this.resolveModel(DEFAULT_VERIFIER_MODEL),
+      );
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Verification failed';
       this.logger.error(`executeInBackground: failed for thread ${threadId} — ${msg}`);
@@ -108,9 +118,10 @@ export class VerifierManager {
 
   private async generateDraft(content: string, _startTime: number): Promise<string> {
     const config = AppConfig.get();
+    const model = await this.resolveModel(DEFAULT_VERIFIER_MODEL);
 
     const requestBody: OllamaGenerateRequest = {
-      model: DEFAULT_VERIFIER_MODEL,
+      model,
       prompt: content,
       stream: false,
     };
@@ -136,6 +147,7 @@ export class VerifierManager {
 
   private async runVerifierCheck(content: string, draft: string): Promise<VerifierCheckResult> {
     const config = AppConfig.get();
+    const model = await this.resolveModel(DEFAULT_VERIFIER_MODEL);
 
     const verifierPrompt = `You are a response quality verifier. Evaluate this response to the given question.
 
@@ -147,7 +159,7 @@ Score the response on: factuality (0-1), completeness (0-1), safety (0-1), forma
 Return ONLY JSON: { "score": <average 0-1>, "issues": ["..."], "suggestions": ["..."] }`;
 
     const requestBody: OllamaGenerateRequest = {
-      model: DEFAULT_VERIFIER_MODEL,
+      model,
       prompt: verifierPrompt,
       stream: false,
     };
@@ -195,6 +207,7 @@ Return ONLY JSON: { "score": <average 0-1>, "issues": ["..."], "suggestions": ["
     suggestions: string[],
   ): Promise<string> {
     const config = AppConfig.get();
+    const model = await this.resolveModel(DEFAULT_VERIFIER_MODEL);
 
     const suggestionText =
       suggestions.length > 0
@@ -214,7 +227,7 @@ ${suggestionText}
 Return ONLY the improved response. Do not explain changes.`;
 
     const requestBody: OllamaGenerateRequest = {
-      model: DEFAULT_VERIFIER_MODEL,
+      model,
       prompt: repairPrompt,
       stream: false,
     };
@@ -249,7 +262,7 @@ Return ONLY the improved response. Do not explain changes.`;
       role: 'ASSISTANT',
       content,
       provider: 'local-ollama',
-      model: DEFAULT_VERIFIER_MODEL,
+      model: await this.resolveModel(DEFAULT_VERIFIER_MODEL),
       routingMode: RoutingMode.AUTO,
       latencyMs: Date.now() - startTime,
       usedFallback: false,
@@ -280,11 +293,21 @@ Return ONLY the improved response. Do not explain changes.`;
       role: 'ASSISTANT',
       content: `Verification failed: ${errorMsg}`,
       provider: 'local-ollama',
-      model: DEFAULT_VERIFIER_MODEL,
+      model: await this.resolveModel(DEFAULT_VERIFIER_MODEL),
       routingMode: RoutingMode.AUTO,
       usedFallback: true,
       metadata: { verified: false, error: true },
     });
+  }
+
+  private async resolveModel(model: string): Promise<string> {
+    if (model !== 'AUTO') {
+      return model;
+    }
+    if (DEFAULT_VERIFIER_MODEL !== 'AUTO') {
+      return DEFAULT_VERIFIER_MODEL;
+    }
+    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 }
 

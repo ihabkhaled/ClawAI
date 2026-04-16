@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig, type AppConfigType } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities';
 import {
+  LOCAL_MODEL_DEFAULT,
+  LOCAL_MODEL_ROUTER,
   LOCAL_PROVIDER,
   ollamaRouterResponseSchema,
   VALID_PROVIDERS,
@@ -68,21 +70,23 @@ export class OllamaRouterManager {
         return null;
       }
 
+      const normalized = this.normalizeDecision(parsed);
+
       this.logger.debug(
-        `route: parsed decision — provider=${parsed.provider} model=${parsed.model} confidence=${String(parsed.confidence)}`,
+        `route: parsed decision — provider=${normalized.provider} model=${normalized.model} confidence=${String(normalized.confidence)}`,
       );
-      if (!this.validateDecision(parsed, context)) {
+      if (!this.validateDecision(normalized, context)) {
         this.logger.warn(
-          `route: decision rejected — provider=${parsed.provider} not valid/healthy`,
+          `route: decision rejected — provider=${normalized.provider} not valid/healthy`,
         );
         return null;
       }
 
       this.logger.log(
-        `route: Ollama router decision: ${parsed.provider}/${parsed.model} (confidence=${String(parsed.confidence)}, reason=${parsed.reason})`,
+        `route: Ollama router decision: ${normalized.provider}/${normalized.model} (confidence=${String(normalized.confidence)}, reason=${normalized.reason})`,
       );
 
-      return parsed;
+      return normalized;
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`route: Ollama router failed (falling back to heuristic): ${msg}`);
@@ -148,6 +152,20 @@ export class OllamaRouterManager {
       this.logger.warn('parseResponse: raw response is not valid JSON');
       return null;
     }
+  }
+
+  private normalizeDecision(decision: OllamaRouterDecision): OllamaRouterDecision {
+    if (decision.provider === LOCAL_PROVIDER) {
+      const model = decision.model.trim();
+      if (model.length === 0 || model === LOCAL_MODEL_ROUTER) {
+        this.logger.warn(
+          `normalizeDecision: router selected router-only model ${model || '(empty)'}, remapping to ${LOCAL_MODEL_DEFAULT}`,
+        );
+        return { ...decision, model: LOCAL_MODEL_DEFAULT };
+      }
+    }
+
+    return decision;
   }
 
   private validateDecision(decision: OllamaRouterDecision, context: RoutingContext): boolean {

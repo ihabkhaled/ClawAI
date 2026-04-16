@@ -7,6 +7,7 @@ import { REPAIR_GENERATION_TIMEOUT_MS } from '../constants/answer-repair.constan
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type { RepairMessageDto } from '../dto/repair-message.dto';
 import type { AnswerRepairResponse } from '../types/answer-repair.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
@@ -20,6 +21,7 @@ export class AnswerRepairManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
   async executeRepair(userId: string, dto: RepairMessageDto): Promise<AnswerRepairResponse> {
@@ -65,7 +67,7 @@ export class AnswerRepairManager {
       );
 
       const provider = targetProvider ?? 'local-ollama';
-      const model = targetModel ?? 'qwen3:1.7b';
+      const model = await this.resolveModel(targetModel);
 
       await this.chatMessagesRepository.create({
         threadId,
@@ -108,7 +110,7 @@ export class AnswerRepairManager {
   ): Promise<string> {
     const config = AppConfig.get();
     const repairPrompt = this.buildRepairPrompt(originalContent, repairTypes);
-    const model = targetModel ?? 'qwen3:1.7b';
+    const model = await this.resolveModel(targetModel);
 
     const requestBody: OllamaGenerateRequest = {
       model,
@@ -200,5 +202,12 @@ Return ONLY the repaired answer. Do not explain what you changed. Do not add pre
       usedFallback: false,
       metadata: { repaired: false, error: true },
     });
+  }
+
+  private async resolveModel(model?: string): Promise<string> {
+    if (model && model !== 'AUTO') {
+      return model;
+    }
+    return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
   }
 }

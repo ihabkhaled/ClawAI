@@ -66,7 +66,7 @@ export class PromptBuilderManager {
     this.cachedModels = null;
   }
 
-  private async getInstalledModels(): Promise<InstalledModelInfo[]> {
+  async getInstalledModels(): Promise<InstalledModelInfo[]> {
     if (this.cachedModels) {
       this.logger.debug('getInstalledModels: using cached models');
       return this.cachedModels;
@@ -98,10 +98,17 @@ export class PromptBuilderManager {
   }
 
   private generateDynamicPrompt(models: InstalledModelInfo[]): string {
-    this.logger.debug(`generateDynamicPrompt: building from ${String(models.length)} models`);
-    const grouped = this.groupModelsByCategory(models);
+    const filteredModels = this.filterRouterOnlyModels(models);
+    this.logger.debug(
+      `generateDynamicPrompt: building from ${String(filteredModels.length)} response models (filtered from ${String(models.length)})`,
+    );
+    const grouped = this.groupModelsByCategory(filteredModels);
     const localSection = this.buildLocalModelsSection(grouped);
     return this.buildFullPromptTemplate(localSection);
+  }
+
+  private filterRouterOnlyModels(models: InstalledModelInfo[]): InstalledModelInfo[] {
+    return models.filter((model) => !model.roles.includes('ROUTER'));
   }
 
   private groupModelsByCategory(models: InstalledModelInfo[]): Map<string, InstalledModelInfo[]> {
@@ -144,7 +151,6 @@ CLOUD MODELS (paid, internet required, higher quality):
 - ANTHROPIC / claude-sonnet-4 (excellent coding, debugging, code review, technical analysis)
 - ANTHROPIC / claude-opus-4 (best for deep reasoning, complex analysis, architecture decisions)
 - GEMINI / gemini-2.5-flash (fast, multimodal, best for image/video, web search, YouTube, file analysis)
-- DEEPSEEK / deepseek-chat (strong coding and math, very low cost)
 
 IMAGE GENERATION MODELS (generate images from text prompts):
 - IMAGE_OPENAI / dall-e-3 (best quality, photorealistic images, DALL-E 3)

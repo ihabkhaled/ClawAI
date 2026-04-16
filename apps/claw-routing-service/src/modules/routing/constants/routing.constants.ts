@@ -2,9 +2,9 @@ import { LocalModelRole } from '@claw/shared-types';
 import { z } from 'zod';
 
 export const LOCAL_PROVIDER = 'local-ollama';
-export const LOCAL_MODEL_DEFAULT = 'qwen3:1.7b';
+export const LOCAL_MODEL_DEFAULT = 'AUTO';
 export const LOCAL_MODEL_ROUTER = 'qwen3:1.7b';
-export const LOCAL_MODEL_FAST = 'qwen3:1.7b';
+export const LOCAL_MODEL_FAST = 'AUTO';
 
 // Provider names must match the ConnectorProvider Prisma enum (uppercase)
 export const CLOUD_PROVIDER_OPENAI = 'OPENAI';
@@ -177,7 +177,8 @@ export const ROUTER_PROMPT_TEMPLATE = `You are an intelligent AI routing engine.
 Available providers and models:
 
 LOCAL MODELS (free, private, no internet needed):
-- local-ollama / qwen3:1.7b (Alibaba Qwen 3, 1.7B params, default local router and general chat model)
+- local-ollama / AUTO (default local response model resolved from the currently installed models)
+- local-ollama / qwen3:1.7b (router-only model; do not use as a response model)
 
 CLOUD MODELS (paid, internet required, higher quality):
 - OPENAI / gpt-4o-mini (fast, general purpose, good for summarization, chat, writing)
@@ -208,12 +209,12 @@ TEXT TASKS:
 - Coding, debugging, code review, refactoring → ANTHROPIC / claude-sonnet-4
 - Complex reasoning, architecture, system design → ANTHROPIC / claude-opus-4
 - Image analysis, vision, describing attached images → GEMINI / gemini-2.5-flash
-- Math, algorithms, competitive programming → DEEPSEEK / deepseek-chat or local-ollama / qwen3:1.7b
+- Math, algorithms, competitive programming → DEEPSEEK / deepseek-chat or local-ollama / AUTO
 - Creative writing, storytelling, marketing copy → OPENAI / gpt-4o-mini
-- Simple greetings, translations, quick facts → local-ollama / qwen3:1.7b
-- General chat, summarization, email drafting → local-ollama / qwen3:1.7b or OPENAI / gpt-4o-mini
+- Simple greetings, translations, quick facts → local-ollama / AUTO
+- General chat, summarization, email drafting → local-ollama / AUTO or OPENAI / gpt-4o-mini
 - Data analysis, CSV/JSON/file parsing → GEMINI / gemini-2.5-flash
-- Privacy-sensitive requests → local-ollama / qwen3:1.7b (never send to cloud)
+- Privacy-sensitive requests → local-ollama / AUTO (never send to cloud)
 
 GENERAL RULES:
 - ONLY route to healthy providers listed above

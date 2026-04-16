@@ -283,6 +283,23 @@ export class OllamaManager {
     return assignment;
   }
 
+  async clearOtherRolesForModel(modelId: string, keepRole?: LocalModelRole): Promise<number> {
+    this.logger.log(
+      `clearOtherRolesForModel: removing stale roles for model=${modelId} keepRole=${keepRole ?? 'none'}`,
+    );
+    const assignments = await this.roleAssignmentsRepository.findByModelId(modelId);
+    const removable = assignments.filter((assignment) => assignment.role !== keepRole);
+
+    for (const assignment of removable) {
+      await this.roleAssignmentsRepository.delete(assignment.id);
+    }
+
+    this.logger.debug(
+      `clearOtherRolesForModel: removed ${String(removable.length)} stale assignments for model=${modelId}`,
+    );
+    return removable.length;
+  }
+
   async getModelForRole(role: LocalModelRole): Promise<LocalModelRoleAssignment | null> {
     this.logger.debug(`getModelForRole: looking up active model for role=${String(role)}`);
     const assignment = await this.roleAssignmentsRepository.findActiveByRole(role);
