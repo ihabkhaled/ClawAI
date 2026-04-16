@@ -7,6 +7,8 @@ import {
   RuntimeType,
 } from '../../../generated/prisma';
 import { type CatalogEntryInput, type CatalogFilters } from '../types/catalog.types';
+import { resolveCatalogSourceUrl } from '../utilities/catalog-reference.utility';
+import { DEPRECATED_DEFAULT_LOCAL_MODEL_KEYS } from '../constants/default-models.constants';
 
 @Injectable()
 export class ModelCatalogRepository {
@@ -49,6 +51,7 @@ export class ModelCatalogRepository {
   async upsertEntry(entry: CatalogEntryInput): Promise<void> {
     const runtime = entry.runtime as RuntimeType;
     const category = entry.category as ModelCategory;
+    const sourceUrl = resolveCatalogSourceUrl({ ...entry, runtime });
 
     await this.prisma.modelCatalogEntry.upsert({
       where: { name_tag_runtime: { name: entry.name, tag: entry.tag, runtime } },
@@ -56,9 +59,10 @@ export class ModelCatalogRepository {
         displayName: entry.displayName,
         category,
         description: entry.description,
-        sizeBytes: entry.sizeBytes,
+        sizeBytes: null,
         parameterCount: entry.parameterCount,
         ollamaName: entry.ollamaName,
+        sourceUrl,
         isRecommended: entry.isRecommended,
         capabilities: [...entry.capabilities],
       },
@@ -68,14 +72,47 @@ export class ModelCatalogRepository {
         displayName: entry.displayName,
         category,
         description: entry.description,
-        sizeBytes: entry.sizeBytes,
+        sizeBytes: null,
         parameterCount: entry.parameterCount,
         runtime,
         ollamaName: entry.ollamaName,
+        sourceUrl,
         isRecommended: entry.isRecommended,
         capabilities: [...entry.capabilities],
       },
     });
+  }
+
+  async updateSourceUrlIfChanged(id: string, sourceUrl: string): Promise<void> {
+    await this.prisma.modelCatalogEntry.updateMany({
+      where: {
+        id,
+        OR: [{ sourceUrl: null }, { sourceUrl: { not: sourceUrl } }],
+      },
+      data: { sourceUrl },
+    });
+  }
+
+  async deleteDeprecatedDefaults(): Promise<number> {
+    const keys = [...DEPRECATED_DEFAULT_LOCAL_MODEL_KEYS];
+    if (keys.length === 0) {
+      return 0;
+    }
+
+    const result = await this.prisma.modelCatalogEntry.deleteMany({
+      where: {
+        runtime: RuntimeType.OLLAMA,
+        OR: keys.map((key) => {
+          const [name, tag] = key.split(':');
+          if (tag) {
+            return { name, tag };
+          }
+          return { name: key };
+        }),
+      },
+    });
+
+    return result.count;
   }
 
   async countAll(filters: CatalogFilters): Promise<number> {

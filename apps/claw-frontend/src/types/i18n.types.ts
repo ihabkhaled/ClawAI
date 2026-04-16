@@ -513,6 +513,8 @@ export type TranslationDictionary = {
     downloading: string;
     installed: string;
     failed: string;
+    unavailable: string;
+    cloudOnly: string;
     cancel: string;
     recommended: string;
     noModels: string;

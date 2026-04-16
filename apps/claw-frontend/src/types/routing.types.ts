@@ -76,6 +76,7 @@ export type LocalModel = {
   sizeBytes: number | null;
   family: string | null;
   parameters: string | null;
+  category: string | null;
   isInstalled: boolean;
   roles: { role: string; isActive: boolean }[];
 };

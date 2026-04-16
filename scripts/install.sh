@@ -341,10 +341,10 @@ FRONTEND_PORT=3000
 # Ollama
 # =============================================================================
 OLLAMA_BASE_URL=http://ollama:11434
-OLLAMA_ROUTER_MODEL=gemma3:4b
+OLLAMA_ROUTER_MODEL=qwen3:1.7b
 OLLAMA_ROUTER_TIMEOUT_MS=10000
 OLLAMA_GENERATE_TIMEOUT_MS=300000
-MEMORY_EXTRACTION_MODEL=gemma3:4b
+MEMORY_EXTRACTION_MODEL=qwen3:1.7b
 
 # =============================================================================
 # File Service
@@ -412,7 +412,7 @@ AGENT_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-agent:5432/claw_agent?sch
 STABLE_DIFFUSION_URL=http://stable-diffusion:17860
 COMFYUI_BASE_URL=http://comfyui:8188
 COMFYUI_PORT=8188
-AUTO_PULL_MODELS=qwen3:1.7b phi4-mini gemma3:4b
+AUTO_PULL_MODELS=qwen3:1.7b
 
 CLAMAV_HOST=clamav
 CLAMAV_PORT=3310

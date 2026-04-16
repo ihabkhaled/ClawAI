@@ -50,6 +50,22 @@ export function CatalogModelAction({
     );
   }
 
+  if (!entry.isAvailable) {
+    return (
+      <Button variant="ghost" size="sm" className="w-full" disabled>
+        {t('catalog.unavailable')}
+      </Button>
+    );
+  }
+
+  if (!entry.isDownloadable) {
+    return (
+      <Button variant="ghost" size="sm" className="w-full" disabled>
+        {t('catalog.cloudOnly')}
+      </Button>
+    );
+  }
+
   if (activeStatus === 'FAILED') {
     return (
       <Button

@@ -14,7 +14,11 @@ import { useAvailableModels } from '@/hooks/chat/use-available-models';
 import type { ModelSelectorProps } from '@/types';
 import { decodeModelValue, encodeModelValue } from '@/utilities';
 
-export function ModelSelector({ value, onChange, disabled }: ModelSelectorProps): React.ReactElement {
+export function ModelSelector({
+  value,
+  onChange,
+  disabled,
+}: ModelSelectorProps): React.ReactElement {
   const { groupedModels, isLoading } = useAvailableModels();
 
   const selectedValue = value ? encodeModelValue(value.provider, value.model) : MODEL_AUTO_VALUE;
@@ -31,16 +35,18 @@ export function ModelSelector({ value, onChange, disabled }: ModelSelectorProps)
     }
     const group = groupedModels.find((g) => g.provider === decoded.provider);
     const match = group?.models.find((m) => m.model === decoded.model);
-    onChange(match ?? { provider: decoded.provider, model: decoded.model, displayName: decoded.model });
+    onChange(
+      match ?? { provider: decoded.provider, model: decoded.model, displayName: decoded.model },
+    );
   };
 
   return (
     <Select value={selectedValue} onValueChange={handleChange} disabled={disabled || isLoading}>
-      <SelectTrigger className="h-9 w-[200px] text-xs">
+      <SelectTrigger className="h-9 w-[220px] text-xs sm:w-[260px]">
         <Bot className="mr-1 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         <SelectValue placeholder={isLoading ? 'Loading models...' : 'Auto'} />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="w-[min(420px,calc(100vw-2rem))]">
         <SelectItem value={MODEL_AUTO_VALUE}>Auto (routing decides)</SelectItem>
         {groupedModels.map((group) => (
           <SelectGroup key={group.provider}>
@@ -49,8 +55,23 @@ export function ModelSelector({ value, onChange, disabled }: ModelSelectorProps)
               <SelectItem
                 key={encodeModelValue(model.provider, model.model)}
                 value={encodeModelValue(model.provider, model.model)}
+                textValue={model.displayName}
               >
-                {model.displayName}
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate">{model.displayName}</span>
+                  {model.specifications !== undefined && model.specifications.length > 0 ? (
+                    <span className="flex shrink-0 flex-wrap justify-end gap-1">
+                      {model.specifications.map((specification) => (
+                        <span
+                          key={specification}
+                          className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] leading-none text-muted-foreground"
+                        >
+                          {specification}
+                        </span>
+                      ))}
+                    </span>
+                  ) : null}
+                </span>
               </SelectItem>
             ))}
           </SelectGroup>

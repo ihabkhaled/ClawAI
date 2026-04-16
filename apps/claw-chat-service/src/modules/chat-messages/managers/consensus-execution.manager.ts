@@ -235,7 +235,7 @@ export class ConsensusExecutionManager {
       completedResponses.length,
     );
     const requestBody: OllamaGenerateRequest = {
-      model: 'gemma3:4b',
+      model: 'qwen3:1.7b',
       prompt: synthesisPrompt,
       stream: false,
       options: { temperature: 0, num_predict: 800 },

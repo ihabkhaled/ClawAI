@@ -408,7 +408,7 @@ describe('AnswerRepairManager', () => {
       );
     });
 
-    it('defaults to local-ollama/gemma3:4b when no targetProvider/targetModel given', async () => {
+    it('defaults to local-ollama/qwen3:1.7b when no targetProvider/targetModel given', async () => {
       const createMock = jest
         .fn()
         .mockResolvedValueOnce({ id: 'u-7' })
@@ -435,7 +435,7 @@ describe('AnswerRepairManager', () => {
         2,
         expect.objectContaining({
           provider: 'local-ollama',
-          model: 'gemma3:4b',
+          model: 'qwen3:1.7b',
         }),
       );
     });

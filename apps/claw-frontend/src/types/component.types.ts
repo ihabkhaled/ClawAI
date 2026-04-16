@@ -246,6 +246,7 @@ export type ModelSelection = {
   provider: string;
   model: string;
   displayName: string;
+  specifications?: string[];
 };
 
 export type ModelSelectorProps = {

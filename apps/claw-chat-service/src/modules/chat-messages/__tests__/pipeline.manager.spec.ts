@@ -151,7 +151,7 @@ describe('PipelineManager', () => {
       expect(streamService.emitCompletion).toHaveBeenCalledWith(
         'thread-1',
         'local-ollama',
-        'gemma3:4b',
+        'qwen3:1.7b',
       );
     });
 
@@ -210,8 +210,8 @@ describe('PipelineManager', () => {
         content: 'Content',
         template: 'custom',
         customStages: [
-          { name: 'Stage A', instruction: 'Do A:', model: 'gemma3:4b' },
-          { name: 'Stage B', instruction: 'Do B:', model: 'gemma3:4b' },
+          { name: 'Stage A', instruction: 'Do A:', model: 'qwen3:1.7b' },
+          { name: 'Stage B', instruction: 'Do B:', model: 'qwen3:1.7b' },
         ],
       });
 
@@ -248,12 +248,12 @@ describe('PipelineManager', () => {
         content: 'A request content here',
         template: 'custom',
         customStages: [
-          { name: 'S1', instruction: 'Do 1:', model: 'gemma3:4b' },
-          { name: 'S2', instruction: 'Do 2:', model: 'gemma3:4b' },
-          { name: 'S3', instruction: 'Do 3:', model: 'gemma3:4b' },
-          { name: 'S4', instruction: 'Do 4:', model: 'gemma3:4b' },
-          { name: 'S5', instruction: 'Do 5:', model: 'gemma3:4b' },
-          { name: 'S6', instruction: 'Do 6:', model: 'gemma3:4b' },
+          { name: 'S1', instruction: 'Do 1:', model: 'qwen3:1.7b' },
+          { name: 'S2', instruction: 'Do 2:', model: 'qwen3:1.7b' },
+          { name: 'S3', instruction: 'Do 3:', model: 'qwen3:1.7b' },
+          { name: 'S4', instruction: 'Do 4:', model: 'qwen3:1.7b' },
+          { name: 'S5', instruction: 'Do 5:', model: 'qwen3:1.7b' },
+          { name: 'S6', instruction: 'Do 6:', model: 'qwen3:1.7b' },
         ],
       });
       expect(result.success).toBe(false);

@@ -17,6 +17,7 @@ import { RuntimeConfigsRepository } from './repositories/runtime-configs.reposit
 import { ModelCatalogRepository } from './repositories/model-catalog.repository';
 import { PullJobsRepository } from './repositories/pull-jobs.repository';
 import { OllamaManager } from './managers/ollama.manager';
+import { CatalogRemoteMetadataService } from './services/catalog-remote-metadata.service';
 import { type PullModelDto } from './dto/pull-model.dto';
 import { type AssignRoleDto } from './dto/assign-role.dto';
 import { type GenerateDto } from './dto/generate.dto';
@@ -30,6 +31,8 @@ import {
 } from './types/ollama.types';
 import type { CatalogEntryWithInstallStatus, InstalledModelInfo } from './types/catalog.types';
 import { PULL_JOBS_RECENT_LIMIT, SSE_EVENT_PULL_PROGRESS } from './constants/catalog.constants';
+import { enrichCatalogEntryReference } from './utilities/catalog-reference.utility';
+import { DEFAULT_ROUTER_MODEL } from './constants/default-models.constants';
 
 @Injectable()
 export class OllamaService implements OnModuleInit {
@@ -42,10 +45,12 @@ export class OllamaService implements OnModuleInit {
     private readonly pullJobsRepository: PullJobsRepository,
     private readonly ollamaManager: OllamaManager,
     private readonly rabbitMQService: RabbitMQService,
+    private readonly catalogRemoteMetadataService: CatalogRemoteMetadataService,
   ) {}
 
   async onModuleInit(): Promise<void> {
     await this.syncModelsFromRuntime();
+    await this.ensureDefaultRouterModel();
   }
 
   /** Sync installed models from Ollama runtime into the database on startup */
@@ -172,8 +177,16 @@ export class OllamaService implements OnModuleInit {
     if (!entry) {
       throw new EntityNotFoundException('ModelCatalogEntry', catalogId);
     }
+    const metadata = await this.catalogRemoteMetadataService.getMetadata(entry);
+    await this.syncCatalogSourceUrl(entry, metadata.sourceUrl);
+    if (!metadata.isDownloadable || metadata.resolvedOllamaName === null) {
+      throw new BusinessException(
+        `Model ${entry.displayName} is not downloadable from the Ollama registry`,
+        'MODEL_NOT_DOWNLOADABLE',
+      );
+    }
     this.logger.log(`pullFromCatalog: starting pull for catalog entry ${catalogId}`);
-    return this.ollamaManager.pullModelFromCatalog(entry);
+    return this.ollamaManager.pullModelFromCatalog(entry, metadata.resolvedOllamaName);
   }
 
   async getPullJobs(): Promise<PullJob[]> {
@@ -235,30 +248,52 @@ export class OllamaService implements OnModuleInit {
   ): Promise<CatalogEntryWithInstallStatus[]> {
     const installed = await this.localModelsRepository.findAllInstalled();
     // Key by "name:tag" — this is what Ollama returns after pulling (runtime is always OLLAMA here)
-    const installedMap = new Map(installed.map((m) => [`${m.name}:${m.tag}`, m.id]));
+    const installedMap = new Map(installed.map((m) => [`${m.name}:${m.tag}`, m]));
 
     return Promise.all(
       entries.map(async (entry) => {
+        const metadata = await this.catalogRemoteMetadataService.getMetadata(entry);
+        await this.syncCatalogSourceUrl(entry, metadata.sourceUrl);
         // Use ollamaName for matching (e.g. "gemma3:4b", "mistral-small3:7b")
         // catalog tag may differ from Ollama tag (e.g. "7b-routing" vs "7b")
-        const ollamaKey = entry.ollamaName ?? `${entry.name}:${entry.tag}`;
+        const catalogModelKey = entry.ollamaName ?? `${entry.name}:${entry.tag}`;
+        const ollamaKey = metadata.resolvedOllamaName ?? catalogModelKey;
         // If ollamaName has no colon it has no explicit tag — also try with ":latest" fallback
-        const installedModelId =
+        const installedModel =
           installedMap.get(ollamaKey) ??
           (!ollamaKey.includes(':') ? (installedMap.get(`${ollamaKey}:latest`) ?? null) : null);
+        const runtimeSizeBytes = installedModel?.sizeBytes ?? null;
 
-        const pullJob = await this.pullJobsRepository.findLatestByModelName(
-          entry.ollamaName ?? `${entry.name}:${entry.tag}`,
-        );
+        const pullJob =
+          (await this.pullJobsRepository.findLatestByModelName(ollamaKey)) ??
+          (ollamaKey !== catalogModelKey
+            ? await this.pullJobsRepository.findLatestByModelName(catalogModelKey)
+            : null);
 
         return {
           ...entry,
-          isInstalled: installedModelId !== null,
-          installedModelId,
+          sourceUrl: metadata.sourceUrl ?? enrichCatalogEntryReference(entry).sourceUrl,
+          sizeBytes: metadata.sizeBytes ?? runtimeSizeBytes,
+          isAvailable: metadata.isAvailable,
+          isDownloadable: metadata.isDownloadable,
+          availabilityError: metadata.availabilityError,
+          isInstalled: installedModel !== null,
+          installedModelId: installedModel?.id ?? null,
           pullJobStatus: pullJob?.status ?? null,
         };
       }),
     );
+  }
+
+  private async syncCatalogSourceUrl(
+    entry: ModelCatalogEntry,
+    sourceUrl: string | null,
+  ): Promise<void> {
+    if (sourceUrl === null || sourceUrl === entry.sourceUrl) {
+      return;
+    }
+
+    await this.modelCatalogRepository.updateSourceUrlIfChanged(entry.id, sourceUrl);
   }
 
   async deleteModel(modelId: string): Promise<void> {
@@ -283,9 +318,41 @@ export class OllamaService implements OnModuleInit {
   async getRouterModelName(): Promise<string | null> {
     const assignment = await this.ollamaManager.getModelForRole('ROUTER' as LocalModelRole);
     if (!assignment) {
-      return null;
+      const fallback = await this.findDefaultRouterModel();
+      return fallback ? `${fallback.name}:${fallback.tag}` : null;
     }
     const model = await this.localModelsRepository.findById(assignment.modelId);
-    return model?.name ?? null;
+    if (model) {
+      return `${model.name}:${model.tag}`;
+    }
+    const fallback = await this.findDefaultRouterModel();
+    return fallback ? `${fallback.name}:${fallback.tag}` : null;
+  }
+
+  private async ensureDefaultRouterModel(): Promise<void> {
+    const defaultRouterModel = await this.findDefaultRouterModel();
+    if (!defaultRouterModel) {
+      this.logger.warn(`Default router model ${DEFAULT_ROUTER_MODEL} is not installed`);
+      return;
+    }
+
+    const currentAssignment = await this.ollamaManager.getModelForRole('ROUTER' as LocalModelRole);
+    if (currentAssignment?.modelId === defaultRouterModel.id) {
+      return;
+    }
+
+    this.logger.log(
+      `ensureDefaultRouterModel: assigning ROUTER to ${defaultRouterModel.name}:${defaultRouterModel.tag}`,
+    );
+    await this.ollamaManager.assignRole(defaultRouterModel.id, 'ROUTER' as LocalModelRole);
+  }
+
+  private async findDefaultRouterModel(): Promise<LocalModel | null> {
+    const models = await this.localModelsRepository.findAllInstalled();
+    const [defaultName, defaultTag] = DEFAULT_ROUTER_MODEL.split(':');
+    if (!defaultName || !defaultTag) {
+      return null;
+    }
+    return models.find((model) => model.name === defaultName && model.tag === defaultTag) ?? null;
   }
 }

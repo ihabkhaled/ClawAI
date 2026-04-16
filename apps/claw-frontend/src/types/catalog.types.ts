@@ -12,11 +12,15 @@ export type ModelCatalogEntry = {
   parameterCount: string | null;
   runtime: string;
   ollamaName: string | null;
+  sourceUrl: string | null;
   isRecommended: boolean;
   capabilities: string[];
   isInstalled: boolean;
   installedModelId: string | null;
   pullJobStatus: string | null;
+  isAvailable: boolean;
+  isDownloadable: boolean;
+  availabilityError: string | null;
 };
 
 export type CatalogListResponse = {

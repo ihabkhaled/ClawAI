@@ -178,7 +178,7 @@ export const pt: TranslationDictionary = {
     judgeReasoning: 'Raciocínio do Juiz',
     judgeEvaluating: 'Verificando resposta...',
     judgeModelLabel: 'Modelo Juiz',
-    judgeModelAuto: 'Automático (gemma3:4b)',
+    judgeModelAuto: 'Automático (qwen3:1.7b)',
     judgeModelDescription: 'Substituir o modelo local usado para o veredicto final',
     qualityThreshold: 'Limite de qualidade',
     qualityThresholdDescription:
@@ -519,6 +519,8 @@ export const pt: TranslationDictionary = {
     downloading: 'Baixando...',
     installed: 'Instalado',
     failed: 'Falhou',
+    unavailable: 'Indisponível',
+    cloudOnly: 'Somente nuvem',
     cancel: 'Cancelar',
     recommended: 'Recomendado',
     noModels: 'Nenhum modelo encontrado',

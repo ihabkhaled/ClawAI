@@ -1,7 +1,7 @@
 # docker-compose.ollama.yml — Ollama LLM Runtime
 # Usage: docker compose -f docker-compose.ollama.yml up -d
 # Usage: ./scripts/claw.sh ollama:up
-# Auto-pulls qwen3:1.7b, phi4-mini, gemma3:4b on first start for routing.
+# Auto-pulls qwen3:1.7b on first start for routing.
 # Requires: docker-compose.databases.yml running first (claw-network must exist)
 #
 # Reads environment variables from the root .env file.
@@ -12,6 +12,7 @@ services:
     image: ollama/ollama:latest
     container_name: claw-ollama
     restart: unless-stopped
+    gpus: all
     ports:
       - '11434:11434'
     volumes:
@@ -33,7 +34,7 @@ services:
         echo "Ollama is ready."
 
         # Auto-pull models (configurable via AUTO_PULL_MODELS env var)
-        DEFAULT_MODELS="qwen3:1.7b phi4-mini gemma3:4b"
+        DEFAULT_MODELS="qwen3:1.7b"
         MODELS_TO_PULL="$${AUTO_PULL_MODELS:-$$DEFAULT_MODELS}"
         for MODEL in $$MODELS_TO_PULL; do
           if ! ollama list | grep -q "$${MODEL%%:*}"; then
@@ -43,6 +44,17 @@ services:
           else
             echo "$$MODEL already available."
           fi
+        done
+
+        DEPRECATED_MODELS="phi4-mini gemma3:4b gemma2:2b tinyllama phi3:mini llama3.2:3b"
+        for INSTALLED in $$(ollama list | awk 'NR>1 {print $$1}'); do
+          for MODEL in $$DEPRECATED_MODELS; do
+            if [ "$$INSTALLED" = "$$MODEL" ] || printf '%s' "$$INSTALLED" | grep -Fq "$$MODEL:"; then
+              echo "Removing deprecated model $$INSTALLED..."
+              ollama rm "$$INSTALLED" || true
+              break
+            fi
+          done
         done
 
         echo "All models ready."

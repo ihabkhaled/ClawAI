@@ -25,7 +25,11 @@ export { showToast } from './toast.utility';
 export { logger } from './logger.utility';
 export { estimateCost } from './cost.utility';
 export { connectSse } from './sse.utility';
-export { encodeModelValue, decodeModelValue } from './model-selector.utility';
+export {
+  encodeModelValue,
+  decodeModelValue,
+  getLocalModelSpecificationLabels,
+} from './model-selector.utility';
 export {
   getSystemTheme,
   getStoredTheme,

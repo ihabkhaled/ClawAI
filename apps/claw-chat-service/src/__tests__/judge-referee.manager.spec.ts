@@ -99,7 +99,7 @@ describe('JudgeRefereeManager', () => {
     it('should return local model for local-only mode', () => {
       const result = manager.selectCriticModel('ANTHROPIC', true);
       expect(result.provider).toBe('local-ollama');
-      expect(result.model).toBe('gemma3:4b');
+      expect(result.model).toBe('qwen3:1.7b');
     });
 
     it('should return a different provider than generator', () => {
@@ -203,7 +203,7 @@ describe('JudgeRefereeManager', () => {
           decision: JudgeDecision.REVISE,
           reasoning: 'Code has fixable issues',
           confidence: 0.75,
-          model: 'local-ollama/gemma3:4b',
+          model: 'local-ollama/qwen3:1.7b',
           latencyMs: 1500,
         },
         revisedResponse: undefined,
@@ -216,7 +216,7 @@ describe('JudgeRefereeManager', () => {
       expect(metadata.criticModel).toBe('ANTHROPIC/claude-sonnet-4');
       expect(metadata.criticFeedback).toEqual(['Missing error handling', 'No input validation']);
       expect(metadata.criticScore).toBe(0.6);
-      expect(metadata.judgeModel).toBe('local-ollama/gemma3:4b');
+      expect(metadata.judgeModel).toBe('local-ollama/qwen3:1.7b');
       expect(metadata.judgeDecision).toBe('REVISE');
       expect(metadata.judgeReasoning).toBe('Code has fixable issues');
       expect(metadata.judgeConfidence).toBe(0.75);
@@ -237,7 +237,7 @@ describe('JudgeRefereeManager', () => {
           decision: JudgeDecision.ACCEPT,
           reasoning: 'Good response',
           confidence: 0.95,
-          model: 'local-ollama/gemma3:4b',
+          model: 'local-ollama/qwen3:1.7b',
           latencyMs: 500,
         },
         revisedResponse: {

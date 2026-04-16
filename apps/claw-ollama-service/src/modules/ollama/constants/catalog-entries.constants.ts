@@ -1,6 +1,8 @@
 // Single source of truth for model catalog entries.
 // Used by both CatalogSeedService (auto-bootstrap) and prisma/seed-catalog.ts (manual).
-export const CATALOG_ENTRIES = [
+import { isDeprecatedDefaultLocalModel } from './default-models.constants';
+
+const RAW_CATALOG_ENTRIES = [
   // ─── CODING (5 models) ──────────────────────────────────────────────
   {
     name: 'qwen2.5-coder',
@@ -231,7 +233,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(2_469_606_195),
     parameterCount: '3.8B',
     runtime: 'OLLAMA',
-    ollamaName: 'phi4-mini',
+    ollamaName: 'phi4-mini:latest',
     isRecommended: false,
     capabilities: ['intent_classification', 'reasoning', 'structured_output'],
   },
@@ -365,7 +367,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(39_728_447_488),
     parameterCount: '671B (37B active)',
     runtime: 'OLLAMA',
-    ollamaName: 'deepseek-v3.2',
+    ollamaName: 'deepseek-v3.2:cloud',
     isRecommended: false,
     capabilities: ['thinking', 'tool_use', 'agentic', 'research', 'deep_analysis'],
   },
@@ -404,7 +406,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(18_253_611_008),
     parameterCount: '400B (17B active)',
     runtime: 'OLLAMA',
-    ollamaName: 'llama4-maverick',
+    ollamaName: 'llama4:maverick',
     isRecommended: false,
     capabilities: ['general_purpose', 'function_calling', 'agentic', 'multimodal'],
   },
@@ -816,7 +818,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(30_000_000_000),
     parameterCount: '109B (17B active)',
     runtime: 'OLLAMA',
-    ollamaName: 'llama4-scout',
+    ollamaName: 'llama4:scout',
     isRecommended: false,
     capabilities: ['agentic', 'tool_use', 'thinking', 'multimodal'],
   },
@@ -842,7 +844,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(38_000_000_000),
     parameterCount: '685B (37B active)',
     runtime: 'OLLAMA',
-    ollamaName: 'deepseek-v3',
+    ollamaName: 'deepseek-v3:latest',
     isRecommended: false,
     capabilities: ['thinking', 'agentic', 'research', 'deep_analysis'],
   },
@@ -1441,7 +1443,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(1_300_000_000),
     parameterCount: '335M',
     runtime: 'OLLAMA',
-    ollamaName: 'mxbai-embed-large',
+    ollamaName: 'mxbai-embed-large:latest',
     isRecommended: false,
     capabilities: ['embedding', 'retrieval', 'classification'],
   },
@@ -1454,7 +1456,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(800_000_000),
     parameterCount: '110M',
     runtime: 'OLLAMA',
-    ollamaName: 'snowflake-arctic-embed',
+    ollamaName: 'snowflake-arctic-embed:latest',
     isRecommended: false,
     capabilities: ['embedding', 'enterprise', 'analytics'],
   },
@@ -1567,7 +1569,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(6_000_000_000),
     parameterCount: '9B',
     runtime: 'OLLAMA',
-    ollamaName: 'glm5.1:latest',
+    ollamaName: 'glm-5.1:cloud',
     isRecommended: true,
     capabilities: ['agentic', 'tool_use', 'thinking', 'code_generation', 'research'],
   },
@@ -1581,7 +1583,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(20_000_000_000),
     parameterCount: '30B',
     runtime: 'OLLAMA',
-    ollamaName: 'glm5:latest',
+    ollamaName: 'glm-5:cloud',
     isRecommended: false,
     capabilities: ['agentic', 'thinking', 'long_context', 'reasoning', 'tool_use'],
   },
@@ -1609,7 +1611,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(3_200_000_000),
     parameterCount: '4.7B',
     runtime: 'OLLAMA',
-    ollamaName: 'glm4.7:latest',
+    ollamaName: 'glm-4.7:cloud',
     isRecommended: false,
     capabilities: ['general_chat', 'multilingual', 'code_generation', 'instruction_following'],
   },
@@ -1653,7 +1655,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(17_000_000_000),
     parameterCount: '26B (4B active)',
     runtime: 'OLLAMA',
-    ollamaName: 'gemma4:26b-a4b',
+    ollamaName: 'gemma4:26b',
     isRecommended: false,
     capabilities: ['agentic', 'thinking', 'moe', 'fast_generation', 'reasoning'],
   },
@@ -1725,7 +1727,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(21_000_000_000),
     parameterCount: '32B',
     runtime: 'OLLAMA',
-    ollamaName: 'qwen3-coder:next',
+    ollamaName: 'qwen3-coder-next:latest',
     isRecommended: true,
     capabilities: ['code_generation', 'agentic', 'repo_level', 'test_generation', 'debugging'],
   },
@@ -1813,7 +1815,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(40_000_000_000),
     parameterCount: '671B (37B active)',
     runtime: 'OLLAMA',
-    ollamaName: 'deepseek-v3.2:special',
+    ollamaName: 'deepseek-v3.2:cloud',
     isRecommended: false,
     capabilities: ['thinking', 'agentic', 'tool_use', 'long_context', 'research'],
   },
@@ -1841,7 +1843,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(21_000_000_000),
     parameterCount: '32B',
     runtime: 'OLLAMA',
-    ollamaName: 'deepseek-r1:0528',
+    ollamaName: 'deepseek-r1:32b',
     isRecommended: true,
     capabilities: ['chain_of_thought', 'math', 'logic', 'analysis', 'problem_solving', 'aime'],
   },
@@ -1857,7 +1859,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(9_663_676_416),
     parameterCount: '14B',
     runtime: 'OLLAMA',
-    ollamaName: 'phi4:base',
+    ollamaName: 'phi4:14b',
     isRecommended: false,
     capabilities: ['general_chat', 'few_shot', 'instruction_following', 'math', 'reasoning'],
   },
@@ -1871,7 +1873,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(2_469_606_195),
     parameterCount: '3.8B',
     runtime: 'OLLAMA',
-    ollamaName: 'phi4-mini:chat',
+    ollamaName: 'phi4-mini:3.8b',
     isRecommended: false,
     capabilities: ['general_chat', 'reasoning', 'fast_generation', 'lightweight', 'math'],
   },
@@ -1899,7 +1901,7 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(10_000_000_000),
     parameterCount: '15B',
     runtime: 'OLLAMA',
-    ollamaName: 'phi4-reasoning:15b-vision',
+    ollamaName: 'phi4-reasoning:latest',
     isRecommended: false,
     capabilities: ['thinking', 'vision', 'chain_of_thought', 'math', 'reasoning', 'ocr'],
   },
@@ -1913,8 +1915,19 @@ export const CATALOG_ENTRIES = [
     sizeBytes: BigInt(2_469_606_195),
     parameterCount: '3.8B',
     runtime: 'OLLAMA',
-    ollamaName: 'phi4-mini:reasoning',
+    ollamaName: 'phi4-mini:3.8b',
     isRecommended: false,
     capabilities: ['chain_of_thought', 'math', 'reasoning', 'lightweight', 'fast_generation'],
   },
 ] as const;
+
+export const CATALOG_ENTRIES = RAW_CATALOG_ENTRIES.filter((entry) => {
+  const taggedKey = `${entry.name}:${entry.tag}`;
+  const ollamaKey = entry.ollamaName ?? taggedKey;
+  const [ollamaName = entry.name, ollamaTag] = ollamaKey.split(':');
+
+  return (
+    !isDeprecatedDefaultLocalModel(entry.name, entry.tag) &&
+    !isDeprecatedDefaultLocalModel(ollamaName, ollamaTag)
+  );
+});

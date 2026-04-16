@@ -318,7 +318,7 @@ services:
         echo "Ollama is ready."
 
         # Auto-pull models (configurable via AUTO_PULL_MODELS env var)
-        DEFAULT_MODELS="qwen3:1.7b phi4-mini gemma3:4b"
+        DEFAULT_MODELS="qwen3:1.7b"
         MODELS_TO_PULL="$${AUTO_PULL_MODELS:-$$DEFAULT_MODELS}"
         for MODEL in $$MODELS_TO_PULL; do
           if ! ollama list | grep -q "$${MODEL%%:*}"; then

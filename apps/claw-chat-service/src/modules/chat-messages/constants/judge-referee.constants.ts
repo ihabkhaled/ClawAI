@@ -7,9 +7,9 @@ export const JUDGE_REFEREE_AUTO_CATEGORIES = new Set([
   'data-analysis',
 ]);
 
-export const JUDGE_LOCAL_MODEL = 'gemma3:4b';
+export const JUDGE_LOCAL_MODEL = 'qwen3:1.7b';
 
-export const CRITIC_LOCAL_MODEL = 'gemma3:4b';
+export const CRITIC_LOCAL_MODEL = 'qwen3:1.7b';
 
 export const CRITIC_CLOUD_MODELS = [
   { provider: 'ANTHROPIC', model: 'claude-sonnet-4' },

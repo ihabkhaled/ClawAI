@@ -64,7 +64,7 @@ const mockAssistantMessage = {
   role: 'ASSISTANT' as const,
   content: 'reviewed code',
   provider: 'local-ollama',
-  model: 'gemma3:4b',
+  model: 'qwen3:1.7b',
   routingMode: 'AUTO' as const,
   routerModel: null,
   usedFallback: false,

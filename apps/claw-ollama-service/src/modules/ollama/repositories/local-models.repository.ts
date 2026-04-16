@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { type LocalModel, type Prisma, type RuntimeType } from '../../../generated/prisma';
 import { type CreateLocalModelData, type LocalModelFilters } from '../types/ollama.types';
+import { DEPRECATED_DEFAULT_LOCAL_MODEL_KEYS } from '../constants/default-models.constants';
 
 @Injectable()
 export class LocalModelsRepository {
@@ -97,6 +98,28 @@ export class LocalModelsRepository {
 
   async delete(id: string): Promise<LocalModel> {
     return this.prisma.localModel.delete({ where: { id } });
+  }
+
+  async deleteDeprecatedDefaults(runtime: RuntimeType): Promise<number> {
+    const keys = [...DEPRECATED_DEFAULT_LOCAL_MODEL_KEYS];
+    if (keys.length === 0) {
+      return 0;
+    }
+
+    const result = await this.prisma.localModel.deleteMany({
+      where: {
+        runtime,
+        OR: keys.map((key) => {
+          const [name, tag] = key.split(':');
+          if (tag) {
+            return { name, tag };
+          }
+          return { name: key };
+        }),
+      },
+    });
+
+    return result.count;
   }
 
   private buildWhereClause(filters: LocalModelFilters): Prisma.LocalModelWhereInput {

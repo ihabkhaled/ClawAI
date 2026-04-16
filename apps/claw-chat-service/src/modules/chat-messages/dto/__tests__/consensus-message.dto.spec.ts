@@ -29,7 +29,7 @@ describe('consensusMessageSchema', () => {
           { provider: 'OPENAI', model: 'gpt-4o' },
           { provider: 'GEMINI', model: 'gemini-2.5-flash' },
           { provider: 'DEEPSEEK', model: 'deepseek-r1' },
-          { provider: 'OLLAMA', model: 'gemma3:4b' },
+          { provider: 'OLLAMA', model: 'qwen3:1.7b' },
         ],
         fileIds: ['file-1', 'file-2'],
       });
@@ -116,7 +116,7 @@ describe('consensusMessageSchema', () => {
           { provider: 'OPENAI', model: 'gpt-4o' },
           { provider: 'GEMINI', model: 'gemini-2.5-flash' },
           { provider: 'DEEPSEEK', model: 'deepseek-r1' },
-          { provider: 'OLLAMA', model: 'gemma3:4b' },
+          { provider: 'OLLAMA', model: 'qwen3:1.7b' },
           { provider: 'EXTRA', model: 'extra-model' },
         ],
       });

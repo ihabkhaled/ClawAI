@@ -233,7 +233,7 @@ describe('TaskDecompositionManager', () => {
       expect(streamService.emitCompletion).toHaveBeenCalledWith(
         'thread-1',
         'local-ollama',
-        'gemma3:4b',
+        'qwen3:1.7b',
       );
     });
   });

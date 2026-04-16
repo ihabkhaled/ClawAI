@@ -65,7 +65,7 @@ export class AnswerRepairManager {
       );
 
       const provider = targetProvider ?? 'local-ollama';
-      const model = targetModel ?? 'gemma3:4b';
+      const model = targetModel ?? 'qwen3:1.7b';
 
       await this.chatMessagesRepository.create({
         threadId,
@@ -108,7 +108,7 @@ export class AnswerRepairManager {
   ): Promise<string> {
     const config = AppConfig.get();
     const repairPrompt = this.buildRepairPrompt(originalContent, repairTypes);
-    const model = targetModel ?? 'gemma3:4b';
+    const model = targetModel ?? 'qwen3:1.7b';
 
     const requestBody: OllamaGenerateRequest = {
       model,

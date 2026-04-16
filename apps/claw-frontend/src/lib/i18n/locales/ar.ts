@@ -175,7 +175,7 @@ export const ar: TranslationDictionary = {
     judgeReasoning: 'تبرير الحكم',
     judgeEvaluating: 'جارٍ التحقق من الاستجابة...',
     judgeModelLabel: 'نموذج الحكم',
-    judgeModelAuto: 'تلقائي (gemma3:4b)',
+    judgeModelAuto: 'تلقائي (qwen3:1.7b)',
     judgeModelDescription: 'تجاوز النموذج المحلي المستخدم للحكم النهائي',
     qualityThreshold: 'حد الجودة',
     qualityThresholdDescription:
@@ -514,6 +514,8 @@ export const ar: TranslationDictionary = {
     downloading: 'جارٍ التنزيل...',
     installed: 'مثبّت',
     failed: 'فشل',
+    unavailable: 'غير متاح',
+    cloudOnly: 'سحابي فقط',
     cancel: 'إلغاء',
     recommended: 'موصى به',
     noModels: 'لم يتم العثور على نماذج',

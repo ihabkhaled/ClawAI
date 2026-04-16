@@ -4,9 +4,10 @@ import { type RuntimeConfigsRepository } from '../repositories/runtime-configs.r
 import { type ModelCatalogRepository } from '../repositories/model-catalog.repository';
 import { type PullJobsRepository } from '../repositories/pull-jobs.repository';
 import { type OllamaManager } from '../managers/ollama.manager';
+import { type CatalogRemoteMetadataService } from '../services/catalog-remote-metadata.service';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EntityNotFoundException } from '../../../common/errors';
-import { LocalModelRole, RuntimeType } from '../../../generated/prisma';
+import { LocalModelRole, ModelCategory, RuntimeType } from '../../../generated/prisma';
 
 jest.mock('../managers/adapters/runtime-adapter-factory', () => ({
   getRuntimeAdapter: jest.fn(),
@@ -34,10 +35,30 @@ const mockRoleAssignment = {
   createdAt: new Date(),
 };
 
+const mockCatalogEntry = {
+  id: 'catalog-1',
+  name: 'llama3',
+  tag: 'latest',
+  displayName: 'Llama 3',
+  category: ModelCategory.GENERAL,
+  description: 'Llama model',
+  sizeBytes: null,
+  parameterCount: '8B',
+  quantization: null,
+  runtime: RuntimeType.OLLAMA,
+  ollamaName: 'llama3:latest',
+  sourceUrl: 'https://ollama.com/library/stale-llama3',
+  isRecommended: false,
+  capabilities: [],
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
 const mockLocalModelsRepo = (): Partial<Record<keyof LocalModelsRepository, jest.Mock>> => ({
   findAll: jest.fn().mockResolvedValue([mockLocalModel]),
   countAll: jest.fn().mockResolvedValue(1),
   findById: jest.fn().mockResolvedValue(mockLocalModel),
+  findAllInstalled: jest.fn().mockResolvedValue([mockLocalModel]),
 });
 
 const mockRuntimeConfigsRepo = (): Partial<Record<keyof RuntimeConfigsRepository, jest.Mock>> => ({
@@ -64,18 +85,35 @@ const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
   publish: jest.fn().mockResolvedValue(void 0),
 });
 
+const mockCatalogRemoteMetadataService = (): Partial<
+  Record<keyof CatalogRemoteMetadataService, jest.Mock>
+> => ({
+  getMetadata: jest.fn().mockResolvedValue({
+    sourceUrl: 'https://ollama.com/library/llama3',
+    isAvailable: true,
+    isDownloadable: true,
+    sizeBytes: BigInt(4000000000),
+    resolvedOllamaName: 'llama3:latest',
+    availabilityError: null,
+  }),
+});
+
 describe('OllamaService', () => {
   let service: OllamaService;
   let localModelsRepo: ReturnType<typeof mockLocalModelsRepo>;
   let runtimeConfigsRepo: ReturnType<typeof mockRuntimeConfigsRepo>;
+  let modelCatalogRepo: Partial<Record<keyof ModelCatalogRepository, jest.Mock>>;
+  let pullJobsRepo: Partial<Record<keyof PullJobsRepository, jest.Mock>>;
   let manager: ReturnType<typeof mockManager>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
+  let catalogRemoteMetadataService: ReturnType<typeof mockCatalogRemoteMetadataService>;
 
   const mockModelCatalogRepo = (): Partial<Record<keyof ModelCatalogRepository, jest.Mock>> => ({
     findAll: jest.fn().mockResolvedValue([]),
     findById: jest.fn().mockResolvedValue(null),
     countAll: jest.fn().mockResolvedValue(0),
     search: jest.fn().mockResolvedValue([]),
+    updateSourceUrlIfChanged: jest.fn().mockResolvedValue(void 0),
   });
 
   const mockPullJobsRepo = (): Partial<Record<keyof PullJobsRepository, jest.Mock>> => ({
@@ -89,10 +127,11 @@ describe('OllamaService', () => {
   beforeEach(() => {
     localModelsRepo = mockLocalModelsRepo();
     runtimeConfigsRepo = mockRuntimeConfigsRepo();
-    const modelCatalogRepo = mockModelCatalogRepo();
-    const pullJobsRepo = mockPullJobsRepo();
+    modelCatalogRepo = mockModelCatalogRepo();
+    pullJobsRepo = mockPullJobsRepo();
     manager = mockManager();
     rabbitMQ = mockRabbitMQ();
+    catalogRemoteMetadataService = mockCatalogRemoteMetadataService();
     service = new OllamaService(
       localModelsRepo as unknown as LocalModelsRepository,
       runtimeConfigsRepo as unknown as RuntimeConfigsRepository,
@@ -100,6 +139,7 @@ describe('OllamaService', () => {
       pullJobsRepo as unknown as PullJobsRepository,
       manager as unknown as OllamaManager,
       rabbitMQ as unknown as RabbitMQService,
+      catalogRemoteMetadataService as unknown as CatalogRemoteMetadataService,
     );
   });
 
@@ -133,6 +173,30 @@ describe('OllamaService', () => {
       expect(result.id).toBe('model-1');
       expect(manager.pullModel).toHaveBeenCalledWith('llama3', RuntimeType.OLLAMA);
       expect(rabbitMQ.publish).toHaveBeenCalled();
+    });
+  });
+
+  describe('getCatalog', () => {
+    it('should sync verified source urls and match installed models by canonical registry name', async () => {
+      modelCatalogRepo.findAll?.mockResolvedValue([mockCatalogEntry]);
+      modelCatalogRepo.countAll?.mockResolvedValue(1);
+      catalogRemoteMetadataService.getMetadata?.mockResolvedValue({
+        sourceUrl: 'https://ollama.com/library/llama3',
+        isAvailable: true,
+        isDownloadable: true,
+        sizeBytes: BigInt(4000000000),
+        resolvedOllamaName: 'llama3:latest',
+        availabilityError: null,
+      });
+
+      const result = await service.getCatalog({ page: 1, limit: 20 });
+
+      expect(modelCatalogRepo.updateSourceUrlIfChanged).toHaveBeenCalledWith(
+        'catalog-1',
+        'https://ollama.com/library/llama3',
+      );
+      expect(result.data[0]?.sourceUrl).toBe('https://ollama.com/library/llama3');
+      expect(result.data[0]?.isInstalled).toBe(true);
     });
   });
 

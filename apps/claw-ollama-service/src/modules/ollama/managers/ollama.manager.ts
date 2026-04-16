@@ -10,6 +10,7 @@ import { LocalModelsRepository } from '../repositories/local-models.repository';
 import { RoleAssignmentsRepository } from '../repositories/role-assignments.repository';
 import { PullJobsRepository } from '../repositories/pull-jobs.repository';
 import { RuntimeConfigsRepository } from '../repositories/runtime-configs.repository';
+import { DEPRECATED_DEFAULT_LOCAL_MODEL_KEYS } from '../constants/default-models.constants';
 import { getRuntimeAdapter } from './adapters/runtime-adapter-factory';
 import { OllamaRuntimeAdapter } from './adapters/ollama-runtime.adapter';
 import {
@@ -106,8 +107,14 @@ export class OllamaManager {
     }
   }
 
-  async pullModelFromCatalog(catalogEntry: ModelCatalogEntry): Promise<{ pullJobId: string }> {
-    const modelFullName = catalogEntry.ollamaName ?? `${catalogEntry.name}:${catalogEntry.tag}`;
+  async pullModelFromCatalog(
+    catalogEntry: ModelCatalogEntry,
+    modelFullNameOverride?: string,
+  ): Promise<{ pullJobId: string }> {
+    const modelFullName =
+      modelFullNameOverride ??
+      catalogEntry.ollamaName ??
+      `${catalogEntry.name}:${catalogEntry.tag}`;
     this.logger.log(
       `pullModelFromCatalog: pulling ${modelFullName} from catalog id=${catalogEntry.id}`,
     );
@@ -184,7 +191,7 @@ export class OllamaManager {
       name: installedModel.name,
       tag: installedModel.tag,
       runtime: catalogEntry.runtime,
-      sizeBytes: installedModel.sizeBytes ?? catalogEntry.sizeBytes,
+      sizeBytes: installedModel.sizeBytes,
       family: installedModel.family,
       parameters: installedModel.parameters ?? catalogEntry.parameterCount,
       quantization: installedModel.quantization,
@@ -294,19 +301,25 @@ export class OllamaManager {
   }
 
   async generate(request: GenerateRequest): Promise<GenerateResponse> {
-    this.logger.debug(
-      `generate: calling Ollama model=${request.model} stream=${String(request.stream ?? false)}`,
-    );
-    const startTime = Date.now();
-    const runtime = RuntimeType.OLLAMA;
-    const adapter = getRuntimeAdapter(runtime);
-    this.logger.debug('generate: sending request to Ollama runtime');
-    const response = await adapter.generate(request);
-    const durationMs = Date.now() - startTime;
-    this.logger.debug(
-      `generate: completed model=${request.model} durationMs=${String(durationMs)} responseLen=${String(response.response.length)}`,
-    );
-    return response;
+    try {
+      this.logger.debug(
+        `generate: calling Ollama model=${request.model} stream=${String(request.stream ?? false)}`,
+      );
+      const startTime = Date.now();
+      const runtime = RuntimeType.OLLAMA;
+      const adapter = getRuntimeAdapter(runtime);
+      this.logger.debug('generate: sending request to Ollama runtime');
+      const response = await adapter.generate(request);
+      const durationMs = Date.now() - startTime;
+      this.logger.debug(
+        `generate: completed model=${request.model} durationMs=${String(durationMs)} responseLen=${String(response.response.length)}`,
+      );
+      return response;
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`generate: failed model=${request.model} error=${msg}`);
+      throw error;
+    }
   }
 
   async getRuntimeConfigs(): Promise<RuntimeConfig[]> {
@@ -326,6 +339,23 @@ export class OllamaManager {
     const runtimeKeys: string[] = [];
 
     for (const model of runtimeModels) {
+      const modelKey = `${model.name}:${model.tag}`;
+      if (
+        DEPRECATED_DEFAULT_LOCAL_MODEL_KEYS.has(model.name) ||
+        DEPRECATED_DEFAULT_LOCAL_MODEL_KEYS.has(modelKey)
+      ) {
+        this.logger.log(`syncFromRuntime: pruning deprecated model ${modelKey}`);
+        try {
+          if (adapter instanceof OllamaRuntimeAdapter) {
+            await adapter.deleteModel(modelKey);
+          }
+        } catch (error: unknown) {
+          const msg = error instanceof Error ? error.message : 'Unknown error';
+          this.logger.warn(`syncFromRuntime: failed to prune ${modelKey} from runtime: ${msg}`);
+        }
+        continue;
+      }
+
       this.logger.debug(`syncFromRuntime: upserting model ${model.name}:${model.tag}`);
       await this.localModelsRepository.upsertByNameTagRuntime({
         name: model.name,
@@ -337,7 +367,16 @@ export class OllamaManager {
         quantization: model.quantization,
         isInstalled: true,
       });
-      runtimeKeys.push(`${model.name}:${model.tag}`);
+      runtimeKeys.push(modelKey);
+    }
+
+    const deletedDeprecated = await this.localModelsRepository.deleteDeprecatedDefaults(
+      RuntimeType.OLLAMA,
+    );
+    if (deletedDeprecated > 0) {
+      this.logger.log(
+        `syncFromRuntime: deleted ${String(deletedDeprecated)} deprecated model rows from DB`,
+      );
     }
 
     const removed = await this.localModelsRepository.markMissingAsUninstalled(

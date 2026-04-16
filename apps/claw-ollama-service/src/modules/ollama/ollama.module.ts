@@ -9,6 +9,7 @@ import { PullJobsRepository } from './repositories/pull-jobs.repository';
 import { RuntimeConfigsRepository } from './repositories/runtime-configs.repository';
 import { ModelCatalogRepository } from './repositories/model-catalog.repository';
 import { CatalogSeedService } from './services/catalog-seed.service';
+import { CatalogRemoteMetadataService } from './services/catalog-remote-metadata.service';
 
 @Module({
   controllers: [OllamaController, OllamaInternalController],
@@ -21,6 +22,7 @@ import { CatalogSeedService } from './services/catalog-seed.service';
     RuntimeConfigsRepository,
     ModelCatalogRepository,
     CatalogSeedService,
+    CatalogRemoteMetadataService,
   ],
   exports: [OllamaService],
 })

@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useAllModels } from '@/hooks/connectors/use-all-models';
 import { useLocalModels } from '@/hooks/ollama/use-local-models';
 import type { GroupedModels, ModelSelection } from '@/types';
+import { getLocalModelSpecificationLabels } from '@/utilities';
 
 const PROVIDER_LABELS: Record<string, string> = {
   'local-ollama': 'Ollama (Local)',
@@ -27,12 +28,9 @@ export function useAvailableModels(): {
   const groupedModels = useMemo((): GroupedModels[] => {
     const groups = new Map<string, ModelSelection[]>();
 
-    // Add local Ollama models first (exclude routing-only models — they run internally)
+    // Add local Ollama models first.
     for (const model of localModels) {
       if (!model.isInstalled) {
-        continue;
-      }
-      if (model.roles.some((r) => r.role === 'ROUTER' && r.isActive)) {
         continue;
       }
       const provider = 'local-ollama';
@@ -43,11 +41,12 @@ export function useAvailableModels(): {
         provider,
         model: fullModelName,
         displayName: `${fullModelName} (${model.family ?? 'local'})`,
+        specifications: getLocalModelSpecificationLabels(model),
       });
       groups.set(provider, existing);
     }
 
-    // Add cloud connector models
+    // Add cloud connector models.
     for (const model of models) {
       const provider = model.provider;
       const existing = groups.get(provider) ?? [];
@@ -68,7 +67,6 @@ export function useAvailableModels(): {
       });
     }
 
-    // Add static image generation models
     result.push({
       provider: 'IMAGE_OPENAI',
       label: PROVIDER_LABELS['IMAGE_OPENAI'] ?? 'OpenAI (Image)',
@@ -91,7 +89,6 @@ export function useAvailableModels(): {
       models: [{ provider: 'IMAGE_LOCAL', model: 'sdxl-turbo', displayName: 'SDXL Turbo (Local)' }],
     });
 
-    // Sort: local-ollama first, then alphabetically
     result.sort((a, b) => {
       if (a.provider === 'local-ollama') {
         return -1;

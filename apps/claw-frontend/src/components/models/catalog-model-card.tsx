@@ -56,6 +56,17 @@ export function CatalogModelCard({
           <p className="line-clamp-2 text-sm text-muted-foreground">{entry.description}</p>
         ) : null}
 
+        {entry.sourceUrl ? (
+          <a
+            href={entry.sourceUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="truncate text-xs text-primary underline-offset-4 hover:underline"
+          >
+            {entry.sourceUrl}
+          </a>
+        ) : null}
+
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           {entry.parameterCount ? (
             <span>

@@ -70,7 +70,7 @@ export const PROVIDER_CAPABILITY_MATRIX: ProviderCapabilityEntry[] = [
   },
   {
     provider: 'local-ollama',
-    model: 'gemma3:4b',
+    model: 'qwen3:1.7b',
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE, ModelCapability.IMAGE_INPUT],
   },
 ];

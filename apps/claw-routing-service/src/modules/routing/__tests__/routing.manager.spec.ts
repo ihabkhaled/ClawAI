@@ -1032,7 +1032,7 @@ describe('RoutingManager', () => {
     });
 
     it('should sort fallbacks by cost when sortByCost is true', () => {
-      const primary = { provider: 'local-ollama', model: 'gemma3:4b' };
+      const primary = { provider: 'local-ollama', model: 'qwen3:1.7b' };
 
       const chain = manager.buildFallbackChain(primary, baseContext, true);
 
@@ -1168,7 +1168,7 @@ describe('RoutingManager', () => {
 
   describe('buildFallbackChain — GROK provider coverage', () => {
     it('includes GROK in fallback chain when local is primary and GROK is healthy', () => {
-      const primary = { provider: 'local-ollama', model: 'gemma3:4b' };
+      const primary = { provider: 'local-ollama', model: 'qwen3:1.7b' };
       const context: RoutingContext = {
         ...baseContext,
         connectorHealth: { GROK: true, ANTHROPIC: true, OPENAI: true, GEMINI: true },
@@ -1180,7 +1180,7 @@ describe('RoutingManager', () => {
     });
 
     it('excludes GROK from fallback chain when GROK is unhealthy', () => {
-      const primary = { provider: 'local-ollama', model: 'gemma3:4b' };
+      const primary = { provider: 'local-ollama', model: 'qwen3:1.7b' };
       const context: RoutingContext = {
         ...baseContext,
         connectorHealth: { GROK: false, ANTHROPIC: true, OPENAI: true },
@@ -1219,7 +1219,7 @@ describe('RoutingManager', () => {
     });
 
     it('sorts GROK after GEMINI and OPENAI in cost-sorted chain (same tier as ANTHROPIC)', () => {
-      const primary = { provider: 'local-ollama', model: 'gemma3:4b' };
+      const primary = { provider: 'local-ollama', model: 'qwen3:1.7b' };
       const context: RoutingContext = {
         ...baseContext,
         connectorHealth: { GROK: true, ANTHROPIC: true, OPENAI: true, GEMINI: true },

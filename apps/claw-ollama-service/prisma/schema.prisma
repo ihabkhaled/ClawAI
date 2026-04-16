@@ -121,6 +121,7 @@ model ModelCatalogEntry {
   quantization   String?
   runtime        RuntimeType
   ollamaName     String?       @map("ollama_name")
+  sourceUrl      String?       @map("source_url")
   isRecommended  Boolean       @default(false) @map("is_recommended")
   capabilities   String[]
   createdAt      DateTime      @default(now()) @map("created_at")

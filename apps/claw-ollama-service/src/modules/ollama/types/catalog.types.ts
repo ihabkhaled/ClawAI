@@ -15,6 +15,7 @@ export type CatalogEntryInput = {
   parameterCount?: string;
   runtime: string;
   ollamaName?: string | null;
+  sourceUrl?: string | null;
   isRecommended: boolean;
   capabilities: readonly string[];
 };
@@ -29,6 +30,10 @@ export type CatalogEntryWithInstallStatus = ModelCatalogEntry & {
   isInstalled: boolean;
   installedModelId: string | null;
   pullJobStatus: PullJobStatus | null;
+  sourceUrl: string | null;
+  isAvailable: boolean;
+  isDownloadable: boolean;
+  availabilityError: string | null;
 };
 
 export type InstalledModelInfo = {

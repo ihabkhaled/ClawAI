@@ -178,7 +178,7 @@ export const ru: TranslationDictionary = {
     judgeReasoning: 'Обоснование Судьи',
     judgeEvaluating: 'Проверка ответа...',
     judgeModelLabel: 'Модель Судьи',
-    judgeModelAuto: 'Авто (gemma3:4b)',
+    judgeModelAuto: 'Авто (qwen3:1.7b)',
     judgeModelDescription: 'Переопределить локальную модель для финального вердикта',
     qualityThreshold: 'Порог качества',
     qualityThresholdDescription:
@@ -519,6 +519,8 @@ export const ru: TranslationDictionary = {
     downloading: 'Загрузка...',
     installed: 'Установлено',
     failed: 'Ошибка',
+    unavailable: 'Недоступно',
+    cloudOnly: 'Только облако',
     cancel: 'Отмена',
     recommended: 'Рекомендуемый',
     noModels: 'Модели не найдены',

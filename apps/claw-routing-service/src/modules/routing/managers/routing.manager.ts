@@ -652,7 +652,7 @@ export class RoutingManager {
       lower.includes('mistral') ||
       lower.includes('phi') ||
       lower.includes('qwen') ||
-      lower.includes('tinyllama')
+      lower.includes('qwen')
     ) {
       return LOCAL_PROVIDER;
     }
