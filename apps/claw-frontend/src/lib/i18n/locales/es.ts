@@ -84,6 +84,7 @@ export const es: TranslationDictionary = {
     agent: 'Agente',
     agentTerminal: 'Terminal',
     agentRepos: 'Repositorios',
+    discovery: 'Descubrimiento',
   },
   chat: {
     newThread: 'Nueva conversación',
@@ -1001,6 +1002,50 @@ export const es: TranslationDictionary = {
     commands: 'comandos',
     files: 'archivos',
     dirty: 'Modificado',
+  },
+  discovery: {
+    title: 'Descubrimiento de Modelos',
+    description: 'Descubra, clasifique y apruebe nuevos modelos de Ollama dinámicamente.',
+    searchPlaceholder: 'Buscar candidatos...',
+    filter: {
+      status: 'Estado',
+      all: 'Todos',
+      pending: 'Pendiente',
+      approved: 'Aprobado',
+      rejected: 'Rechazado',
+      imported: 'Importado',
+      duplicate: 'Duplicado',
+    },
+    actions: {
+      refresh: 'Ejecutar descubrimiento',
+      dryRun: 'Prueba',
+      approve: 'Aprobar',
+      reject: 'Rechazar',
+    },
+    runs: {
+      title: 'Ejecuciones recientes',
+      empty: 'Aún no hay ejecuciones.',
+      discovered: 'descubiertos',
+      imported: 'importados',
+      skipped: 'omitidos',
+    },
+    candidates: {
+      title: 'Candidatos',
+      empty: {
+        title: 'Sin candidatos',
+        description: 'Active el descubrimiento para encontrar nuevos modelos.',
+      },
+    },
+    candidate: {
+      size: 'Tamaño',
+      confidence: 'Confianza',
+    },
+    packs: {
+      title: 'Paquetes de hardware',
+      empty: 'Sin paquetes configurados.',
+      install: 'Instalar paquete',
+      noModelsYet: 'Aún no hay modelos para este perfil.',
+    },
   },
   validation: {
     required: 'Este campo es obligatorio',

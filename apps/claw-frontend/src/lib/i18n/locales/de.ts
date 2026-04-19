@@ -84,6 +84,7 @@ export const de: TranslationDictionary = {
     agent: 'Agent',
     agentTerminal: 'Terminal',
     agentRepos: 'Repositories',
+    discovery: 'Modell-Erkennung',
   },
   chat: {
     newThread: 'Neuer Chat',
@@ -1002,6 +1003,50 @@ export const de: TranslationDictionary = {
     commands: 'Befehle',
     files: 'Dateien',
     dirty: 'Geändert',
+  },
+  discovery: {
+    title: 'Modell-Erkennung',
+    description: 'Entdecken, klassifizieren und genehmigen Sie neue Ollama-Modelle dynamisch.',
+    searchPlaceholder: 'Kandidaten suchen...',
+    filter: {
+      status: 'Status',
+      all: 'Alle',
+      pending: 'Ausstehend',
+      approved: 'Genehmigt',
+      rejected: 'Abgelehnt',
+      imported: 'Importiert',
+      duplicate: 'Duplikat',
+    },
+    actions: {
+      refresh: 'Erkennung ausführen',
+      dryRun: 'Testlauf',
+      approve: 'Genehmigen',
+      reject: 'Ablehnen',
+    },
+    runs: {
+      title: 'Letzte Erkennungsläufe',
+      empty: 'Noch keine Erkennungsläufe.',
+      discovered: 'entdeckt',
+      imported: 'importiert',
+      skipped: 'übersprungen',
+    },
+    candidates: {
+      title: 'Kandidaten',
+      empty: {
+        title: 'Keine Kandidaten',
+        description: 'Lösen Sie eine Erkennung aus, um neue Modelle zu finden.',
+      },
+    },
+    candidate: {
+      size: 'Größe',
+      confidence: 'Vertrauen',
+    },
+    packs: {
+      title: 'Hardware-Pakete',
+      empty: 'Keine Hardware-Pakete konfiguriert.',
+      install: 'Paket installieren',
+      noModelsYet: 'Noch keine Modelle für dieses Profil.',
+    },
   },
   validation: {
     required: 'Dieses Feld ist erforderlich',

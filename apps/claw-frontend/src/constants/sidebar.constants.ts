@@ -26,6 +26,7 @@ import {
   Terminal,
   GitBranch,
   Bot,
+  Radar,
 } from 'lucide-react';
 
 import { ROUTES } from './routes.constants';
@@ -58,6 +59,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
   { labelKey: 'nav.agentRepos', href: ROUTES.AGENT_REPOS, icon: GitBranch },
   { labelKey: 'nav.models', href: ROUTES.MODELS, icon: Cpu },
   { labelKey: 'nav.modelCatalog', href: ROUTES.MODELS_CATALOG, icon: Store },
+  { labelKey: 'nav.discovery', href: ROUTES.MODELS_DISCOVERY, icon: Radar },
   { labelKey: 'nav.routing', href: ROUTES.ROUTING, icon: Route },
   { labelKey: 'nav.replayLab', href: ROUTES.ROUTING_REPLAY, icon: FlaskConical },
   { labelKey: 'nav.recoveryLab', href: ROUTES.ROUTING_RECOVERY, icon: Activity },

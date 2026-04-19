@@ -111,6 +111,26 @@ export const queryKeys = {
   pullJobs: {
     all: ['pullJobs'] as const,
   },
+  discovery: {
+    all: ['discovery'] as const,
+    sources: {
+      all: ['discovery', 'sources'] as const,
+      detail: (id: string) => ['discovery', 'sources', id] as const,
+    },
+    runs: {
+      all: ['discovery', 'runs'] as const,
+      list: (filters: Record<string, unknown>) => ['discovery', 'runs', 'list', filters] as const,
+      detail: (id: string) => ['discovery', 'runs', id] as const,
+    },
+    candidates: {
+      all: ['discovery', 'candidates'] as const,
+      list: (filters: Record<string, unknown>) =>
+        ['discovery', 'candidates', 'list', filters] as const,
+    },
+    packs: {
+      all: ['discovery', 'packs'] as const,
+    },
+  },
   replay: {
     all: ['replay'] as const,
     runs: {

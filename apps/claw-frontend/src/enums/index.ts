@@ -47,3 +47,10 @@ export { WorkspaceActionType } from './workspace-action-type.enum';
 export { AgentSessionStatus } from './agent-session-status.enum';
 export { TerminalCommandStatus } from './terminal-command-status.enum';
 export { FileEventType } from './file-event-type.enum';
+export {
+  CandidateStatus,
+  CandidateStatusFilter,
+  DiscoveryRunStatus,
+  DiscoverySourceType,
+  DownloadStatus,
+} from './discovery.enum';

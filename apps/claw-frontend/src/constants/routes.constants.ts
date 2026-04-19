@@ -7,6 +7,7 @@ export const ROUTES = {
   CONNECTOR_DETAIL: (connectorId: string) => `/connectors/${connectorId}` as const,
   MODELS: '/models',
   MODELS_CATALOG: '/models/catalog',
+  MODELS_DISCOVERY: '/models/discovery',
   ROUTING: '/routing',
   CHAT_COMPARE: '/chat/compare',
   CHAT_CONSENSUS: '/chat/consensus',

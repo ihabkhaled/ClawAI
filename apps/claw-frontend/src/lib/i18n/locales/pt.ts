@@ -84,6 +84,7 @@ export const pt: TranslationDictionary = {
     agent: 'Agente',
     agentTerminal: 'Terminal',
     agentRepos: 'Repositórios',
+    discovery: 'Descoberta',
   },
   chat: {
     newThread: 'Nova conversa',
@@ -999,6 +1000,50 @@ export const pt: TranslationDictionary = {
     commands: 'comandos',
     files: 'arquivos',
     dirty: 'Modificado',
+  },
+  discovery: {
+    title: 'Descoberta de Modelos',
+    description: 'Descubra, classifique e aprove novos modelos Ollama dinamicamente.',
+    searchPlaceholder: 'Pesquisar candidatos...',
+    filter: {
+      status: 'Status',
+      all: 'Todos',
+      pending: 'Pendente',
+      approved: 'Aprovado',
+      rejected: 'Rejeitado',
+      imported: 'Importado',
+      duplicate: 'Duplicado',
+    },
+    actions: {
+      refresh: 'Executar descoberta',
+      dryRun: 'Teste',
+      approve: 'Aprovar',
+      reject: 'Rejeitar',
+    },
+    runs: {
+      title: 'Execuções recentes',
+      empty: 'Nenhuma execução ainda.',
+      discovered: 'descobertos',
+      imported: 'importados',
+      skipped: 'ignorados',
+    },
+    candidates: {
+      title: 'Candidatos',
+      empty: {
+        title: 'Sem candidatos',
+        description: 'Inicie uma descoberta para encontrar novos modelos.',
+      },
+    },
+    candidate: {
+      size: 'Tamanho',
+      confidence: 'Confiança',
+    },
+    packs: {
+      title: 'Pacotes de hardware',
+      empty: 'Nenhum pacote configurado.',
+      install: 'Instalar pacote',
+      noModelsYet: 'Ainda não há modelos para este perfil.',
+    },
   },
   validation: {
     required: 'Este campo é obrigatório',

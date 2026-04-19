@@ -85,6 +85,7 @@ export type TranslationDictionary = {
     agent: string;
     agentTerminal: string;
     agentRepos: string;
+    discovery: string;
   };
   chat: {
     newThread: string;
@@ -983,6 +984,50 @@ export type TranslationDictionary = {
     commands: string;
     files: string;
     dirty: string;
+  };
+  discovery: {
+    title: string;
+    description: string;
+    searchPlaceholder: string;
+    filter: {
+      status: string;
+      all: string;
+      pending: string;
+      approved: string;
+      rejected: string;
+      imported: string;
+      duplicate: string;
+    };
+    actions: {
+      refresh: string;
+      dryRun: string;
+      approve: string;
+      reject: string;
+    };
+    runs: {
+      title: string;
+      empty: string;
+      discovered: string;
+      imported: string;
+      skipped: string;
+    };
+    candidates: {
+      title: string;
+      empty: {
+        title: string;
+        description: string;
+      };
+    };
+    candidate: {
+      size: string;
+      confidence: string;
+    };
+    packs: {
+      title: string;
+      empty: string;
+      install: string;
+      noModelsYet: string;
+    };
   };
   validation: {
     required: string;

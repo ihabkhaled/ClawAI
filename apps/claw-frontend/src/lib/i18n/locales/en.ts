@@ -84,6 +84,7 @@ export const en: TranslationDictionary = {
     agent: 'Agent',
     agentTerminal: 'Terminal',
     agentRepos: 'Repositories',
+    discovery: 'Model Discovery',
   },
   chat: {
     newThread: 'New Chat',
@@ -991,6 +992,50 @@ export const en: TranslationDictionary = {
     commands: 'commands',
     files: 'files',
     dirty: 'Modified',
+  },
+  discovery: {
+    title: 'Model Discovery',
+    description: 'Discover, classify, and approve new Ollama models dynamically.',
+    searchPlaceholder: 'Search candidates...',
+    filter: {
+      status: 'Status',
+      all: 'All',
+      pending: 'Pending',
+      approved: 'Approved',
+      rejected: 'Rejected',
+      imported: 'Imported',
+      duplicate: 'Duplicate',
+    },
+    actions: {
+      refresh: 'Run Discovery',
+      dryRun: 'Dry Run',
+      approve: 'Approve',
+      reject: 'Reject',
+    },
+    runs: {
+      title: 'Recent Discovery Runs',
+      empty: 'No discovery runs yet. Click "Run Discovery" to begin.',
+      discovered: 'discovered',
+      imported: 'imported',
+      skipped: 'skipped',
+    },
+    candidates: {
+      title: 'Candidates',
+      empty: {
+        title: 'No candidates',
+        description: 'Trigger a discovery run to find new models.',
+      },
+    },
+    candidate: {
+      size: 'Size',
+      confidence: 'Confidence',
+    },
+    packs: {
+      title: 'Hardware Packs',
+      empty: 'No hardware packs configured.',
+      install: 'Install Pack',
+      noModelsYet: 'No models match this profile yet.',
+    },
   },
   validation: {
     required: 'This field is required',

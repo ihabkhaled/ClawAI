@@ -84,6 +84,7 @@ export const ru: TranslationDictionary = {
     agent: 'Агент',
     agentTerminal: 'Терминал',
     agentRepos: 'Репозитории',
+    discovery: 'Обнаружение',
   },
   chat: {
     newThread: 'Новый чат',
@@ -997,6 +998,50 @@ export const ru: TranslationDictionary = {
     commands: 'команд',
     files: 'файлов',
     dirty: 'Изменён',
+  },
+  discovery: {
+    title: 'Обнаружение моделей',
+    description: 'Находите, классифицируйте и одобряйте новые модели Ollama динамически.',
+    searchPlaceholder: 'Поиск кандидатов...',
+    filter: {
+      status: 'Статус',
+      all: 'Все',
+      pending: 'Ожидает',
+      approved: 'Одобрено',
+      rejected: 'Отклонено',
+      imported: 'Импортировано',
+      duplicate: 'Дубликат',
+    },
+    actions: {
+      refresh: 'Запустить обнаружение',
+      dryRun: 'Тестовый запуск',
+      approve: 'Одобрить',
+      reject: 'Отклонить',
+    },
+    runs: {
+      title: 'Последние запуски',
+      empty: 'Запусков пока нет.',
+      discovered: 'найдено',
+      imported: 'импортировано',
+      skipped: 'пропущено',
+    },
+    candidates: {
+      title: 'Кандидаты',
+      empty: {
+        title: 'Нет кандидатов',
+        description: 'Запустите обнаружение, чтобы найти новые модели.',
+      },
+    },
+    candidate: {
+      size: 'Размер',
+      confidence: 'Уверенность',
+    },
+    packs: {
+      title: 'Аппаратные пакеты',
+      empty: 'Пакеты не настроены.',
+      install: 'Установить пакет',
+      noModelsYet: 'Для этого профиля пока нет моделей.',
+    },
   },
   validation: {
     required: 'Это поле обязательно для заполнения',

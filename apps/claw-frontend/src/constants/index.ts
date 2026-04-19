@@ -190,3 +190,4 @@ export {
   WORKSPACE_ACTION_STATUS_I18N_KEY,
   WORKSPACE_ACTION_TYPE_LABEL,
 } from './workspace-action.constants';
+export { DISCOVERY_STATUS_OPTIONS } from './discovery.constants';

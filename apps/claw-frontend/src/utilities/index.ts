@@ -65,3 +65,4 @@ export {
   isModelInChain,
 } from './escalation.utility';
 export type { EscalationStatusBadgeVariant } from './escalation.utility';
+export { formatModelSize } from './model-size.utility';

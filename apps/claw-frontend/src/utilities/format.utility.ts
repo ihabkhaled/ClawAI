@@ -71,3 +71,10 @@ export function formatContextTokens(tokens: number | null): string {
   }
   return String(tokens);
 }
+
+/**
+ * Format a date/time string using the user's locale.
+ */
+export function formatTimestamp(dateString: string): string {
+  return new Date(dateString).toLocaleString();
+}

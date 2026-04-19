@@ -84,6 +84,7 @@ export const fr: TranslationDictionary = {
     agent: 'Agent',
     agentTerminal: 'Terminal',
     agentRepos: 'Dépôts',
+    discovery: 'Découverte',
   },
   chat: {
     newThread: 'Nouvelle discussion',
@@ -1005,6 +1006,50 @@ export const fr: TranslationDictionary = {
     commands: 'commandes',
     files: 'fichiers',
     dirty: 'Modifié',
+  },
+  discovery: {
+    title: 'Découverte de modèles',
+    description: 'Découvrez, classez et approuvez dynamiquement de nouveaux modèles Ollama.',
+    searchPlaceholder: 'Rechercher des candidats...',
+    filter: {
+      status: 'Statut',
+      all: 'Tous',
+      pending: 'En attente',
+      approved: 'Approuvé',
+      rejected: 'Rejeté',
+      imported: 'Importé',
+      duplicate: 'Doublon',
+    },
+    actions: {
+      refresh: 'Exécuter la découverte',
+      dryRun: 'Essai',
+      approve: 'Approuver',
+      reject: 'Rejeter',
+    },
+    runs: {
+      title: 'Exécutions récentes',
+      empty: 'Aucune exécution pour le moment.',
+      discovered: 'découverts',
+      imported: 'importés',
+      skipped: 'ignorés',
+    },
+    candidates: {
+      title: 'Candidats',
+      empty: {
+        title: 'Aucun candidat',
+        description: 'Lancez une découverte pour trouver de nouveaux modèles.',
+      },
+    },
+    candidate: {
+      size: 'Taille',
+      confidence: 'Confiance',
+    },
+    packs: {
+      title: 'Packs matériel',
+      empty: 'Aucun pack configuré.',
+      install: 'Installer le pack',
+      noModelsYet: 'Pas encore de modèles pour ce profil.',
+    },
   },
   validation: {
     required: 'Ce champ est requis',

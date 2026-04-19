@@ -84,6 +84,7 @@ export const ar: TranslationDictionary = {
     agent: 'الوكيل',
     agentTerminal: 'الطرفية',
     agentRepos: 'المستودعات',
+    discovery: 'اكتشاف النماذج',
   },
   chat: {
     newThread: 'محادثة جديدة',
@@ -987,6 +988,50 @@ export const ar: TranslationDictionary = {
     commands: 'أوامر',
     files: 'ملفات',
     dirty: 'معدّل',
+  },
+  discovery: {
+    title: 'اكتشاف النماذج',
+    description: 'اكتشف وصنّف نماذج أولاما جديدة ديناميكيًا.',
+    searchPlaceholder: 'ابحث في المرشحات...',
+    filter: {
+      status: 'الحالة',
+      all: 'الكل',
+      pending: 'قيد الانتظار',
+      approved: 'معتمد',
+      rejected: 'مرفوض',
+      imported: 'مستورد',
+      duplicate: 'مكرر',
+    },
+    actions: {
+      refresh: 'تشغيل الاكتشاف',
+      dryRun: 'تشغيل تجريبي',
+      approve: 'موافقة',
+      reject: 'رفض',
+    },
+    runs: {
+      title: 'عمليات الاكتشاف الأخيرة',
+      empty: 'لا توجد عمليات اكتشاف بعد.',
+      discovered: 'تم اكتشافه',
+      imported: 'مستورد',
+      skipped: 'تم تخطيه',
+    },
+    candidates: {
+      title: 'المرشحون',
+      empty: {
+        title: 'لا يوجد مرشحون',
+        description: 'شغّل عملية اكتشاف لإيجاد نماذج جديدة.',
+      },
+    },
+    candidate: {
+      size: 'الحجم',
+      confidence: 'الثقة',
+    },
+    packs: {
+      title: 'حزم الأجهزة',
+      empty: 'لم يتم تكوين أي حزم.',
+      install: 'تثبيت الحزمة',
+      noModelsYet: 'لا توجد نماذج تطابق هذا الملف بعد.',
+    },
   },
   validation: {
     required: 'هذا الحقل مطلوب',

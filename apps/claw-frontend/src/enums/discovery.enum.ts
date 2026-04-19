@@ -1,0 +1,39 @@
+export enum DiscoverySourceType {
+  OLLAMA_REGISTRY = 'OLLAMA_REGISTRY',
+  OLLAMA_LIBRARY = 'OLLAMA_LIBRARY',
+  MANUAL = 'MANUAL',
+}
+
+export enum DiscoveryRunStatus {
+  PENDING = 'PENDING',
+  RUNNING = 'RUNNING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum CandidateStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  IMPORTED = 'IMPORTED',
+  DUPLICATE = 'DUPLICATE',
+  STALE = 'STALE',
+}
+
+export enum DownloadStatus {
+  AVAILABLE = 'AVAILABLE',
+  UNAVAILABLE = 'UNAVAILABLE',
+  CLOUD_ONLY = 'CLOUD_ONLY',
+  UNKNOWN = 'UNKNOWN',
+}
+
+export enum CandidateStatusFilter {
+  ALL = 'ALL',
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  IMPORTED = 'IMPORTED',
+  DUPLICATE = 'DUPLICATE',
+  STALE = 'STALE',
+}
