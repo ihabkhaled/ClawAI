@@ -1,10 +1,10 @@
-# ClawAI — Codex Agent Guide
+# ClawAI — Cursor Agent Guide
 
 ## Scope
 
-This file is the authoritative guide for **OpenAI Codex** (and any other OpenAI-based AI coding agent) working on the ClawAI codebase. It mirrors the rules in `CLAUDE.md` but is optimized for Codex's tool surface.
+This file is the authoritative guide for **Cursor** (and any other IDE-integrated AI coding agent) working on the ClawAI codebase. It mirrors the rules in `CLAUDE.md` but is optimized for Cursor's editing-focused surface.
 
-If you are Codex, read this file BEFORE making any change. Also read the root `CLAUDE.md` — the rules there apply to every AI agent equally. Differences between the two files are tooling-specific only; the engineering standards, mindsets, and constraints are identical.
+If you are Cursor, read this file BEFORE making any change. Also read the root `CLAUDE.md` — the rules there apply to every AI agent equally. Differences between the two files are tooling-specific only; the engineering standards, mindsets, and constraints are identical.
 
 ## Mandatory rule
 
@@ -19,17 +19,17 @@ If you are Codex, read this file BEFORE making any change. Also read the root `C
 
 Do not deviate from those rules. Do not invent new patterns. Do not bypass tests.
 
-## Codex-specific workflow
+## Cursor-specific workflow
 
-1. **Start each task by reading `CLAUDE.md` top to bottom.** It contains all rules, layered architecture, and conventions.
-2. **Read the service-specific `CLAUDE.md`** for each service you touch (e.g. `apps/claw-ollama-service/CLAUDE.md`).
-3. **Read `docs/16-quality-engineering/QUALITY_ENGINEERING_OPERATING_SYSTEM.md`** before writing tests.
-4. **Read `docs/04-backend/services-index.md`** to understand what services exist.
-5. **Write Phase 0 planning document** in `.claude/Integrations/<feature>__PLAN.md` (even though you're Codex — we reuse the same file location).
+1. **Open `CLAUDE.md` first.** Pin it in your tab bar. Read it every session.
+2. **Open the service-specific `CLAUDE.md`** for every service you touch.
+3. **Use Cursor's Agent / Compose mode** for multi-file changes — always with an explicit plan.
+4. **Use Cursor's inline chat (Cmd+K / Ctrl+K)** for small edits within a file — never for architectural changes.
+5. **Use Cursor's indexing** to find related code before editing. Do not grep-replace without reading.
 
 ## The 20 mindsets (mirror of CLAUDE.md)
 
-Every mindset in `CLAUDE.md` applies to Codex identically:
+Every mindset in `CLAUDE.md` applies to Cursor identically:
 
 1. Planning-first
 2. TDD (write failing tests first)
@@ -52,20 +52,29 @@ Every mindset in `CLAUDE.md` applies to Codex identically:
 19. Least-code (delete more than add, no premature abstraction)
 20. Honest-status (never claim done when incomplete)
 
-## Codex command conventions
+## Cursor editing conventions
 
-- Prefer Codex's file-edit and bash tools over shell-wrapping pipelines.
-- Use Codex's built-in tests runner where applicable — but always verify the result matches `npm run test` output.
-- If Codex has a planning / scratchpad feature, use it to draft the Phase 0 document before coding.
+- Never mass-rename without reading every file first.
+- Never accept a multi-file diff that contains inline types in restricted files (see ESLint rules in `CLAUDE.md`).
+- Use the "Apply" button deliberately — review every hunk.
+- For prisma schema changes, always follow with `prisma migrate dev --name <name>`.
 
 ## Commit and push conventions
 
 - Conventional commits: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert` + scope.
 - Commit bodies describe WHY, not WHAT.
-- Include `Co-Authored-By: Codex <noreply@openai.com>` footer line.
+- Include `Co-Authored-By: Cursor <noreply@cursor.sh>` footer line.
 - Never use `--no-verify`. The pre-commit hook runs lint-staged → lint → typecheck → build → test.
 - Chunk commits by logical boundary (schema, backend logic, frontend, infra, docs) — not by time.
 
-## If Codex and Claude disagree
+## If Cursor suggests something contrary to CLAUDE.md
 
-Both agents follow the same `CLAUDE.md`. If an earlier commit by the other agent seems off, investigate the plan and tests first. Do not unilaterally rewrite. When in doubt, defer to the user.
+**CLAUDE.md wins.** Always. Cursor's suggestions are just that — suggestions. They are not authority. Reject any suggestion that:
+
+- Introduces `any` types
+- Adds inline types in restricted files
+- Uses string literal unions where enums exist
+- Skips i18n for user-facing text
+- Disables ESLint rules
+- Adds a new service without wiring through all 7 compose files + nginx + health + shared packages
+- Claims "done" without QA script running

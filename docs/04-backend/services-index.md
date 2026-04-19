@@ -400,15 +400,16 @@ Audit trail and usage ledger. Records 11 audit actions across all services. Prov
 
 **Port**: 4008 | **Database**: PostgreSQL (`claw_ollama`) | **ORM**: Prisma
 
-Manages the local Ollama AI runtime. Handles model pulling, role assignment (router, fallback, reasoning, coding), text generation, and health monitoring. Auto-pulls 5 default models on startup.
+Manages the local Ollama AI runtime and the **dynamic model discovery pipeline**. Handles model pulling, role assignment, text generation, health monitoring, and a scheduled cron job that periodically discovers new Ollama models, classifies them into 17 technical + 15 business categories, and queues admin-review candidates. See `docs/07-integrations/model-discovery-pipeline.md` for the full design.
 
 **Controllers**:
 
-| Controller                 | Route Prefix              | Description                                           |
-| -------------------------- | ------------------------- | ----------------------------------------------------- |
-| `OllamaController`         | `/api/v1/ollama`          | Models, pull, assign-role, generate, health, runtimes |
-| `OllamaInternalController` | `/api/v1/internal/ollama` | Inter-service router model lookup                     |
-| `HealthController`         | `/api/v1/health`          | Service health check                                  |
+| Controller                  | Route Prefix              | Description                                                                     |
+| --------------------------- | ------------------------- | ------------------------------------------------------------------------------- |
+| `OllamaController`          | `/api/v1/ollama`          | Models, pull, assign-role, generate, health, runtimes                           |
+| `OllamaDiscoveryController` | `/api/v1/ollama`          | Discovery sources, runs, candidates, bulk approve, admin catalog CRUD, hw packs |
+| `OllamaInternalController`  | `/api/v1/internal/ollama` | Inter-service router model lookup                                               |
+| `HealthController`          | `/api/v1/health`          | Service health check                                                            |
 
 **Key Routes**:
 
@@ -419,8 +420,19 @@ Manages the local Ollama AI runtime. Handles model pulling, role assignment (rou
 - `GET /ollama/health?runtime=X` -- Check Ollama runtime health (public)
 - `GET /ollama/runtimes` -- List configured runtimes
 - `GET /internal/ollama/router-model` -- Get current router model name (internal, public)
+- `GET|POST|PUT|DELETE /ollama/discovery/sources[/:id]` -- Manage discovery sources (admin)
+- `POST /ollama/discovery/refresh` -- Trigger discovery run (optional dryRun flag)
+- `GET /ollama/discovery/runs[/:id]` -- List or inspect discovery runs
+- `GET /ollama/discovery/candidates` -- List candidates with status + search filters
+- `POST /ollama/discovery/candidates/:id/approve|reject` -- Per-candidate actions (admin)
+- `POST /ollama/discovery/candidates/bulk-approve` -- Bulk approve array of IDs (admin)
+- `POST|PUT|DELETE /ollama/catalog/admin[/:id]` -- Direct catalog entry CRUD (admin)
+- `GET /ollama/packs` -- List hardware packs (CPU, 8/12/16/24/48GB+)
+- `POST /ollama/packs/:profile/install` -- Bulk pull pack (admin)
 
-**Key Services**: `OllamaService`, `OllamaStartupService`
+**Key Services**: `OllamaService`, `CatalogSeedService`, `CatalogRemoteMetadataService`, `CatalogSyncService` (scheduled cron), `DiscoverySourceService`, `DiscoveryJobService`, `HardwarePackService`
+
+**Key Managers**: `OllamaManager`, `DiscoveryManager`, `OllamaLibraryDiscoveryManager`, `ModelEnrichmentManager`, `CandidateImportManager`
 
 **Database Tables**:
 
@@ -428,14 +440,23 @@ Manages the local Ollama AI runtime. Handles model pulling, role assignment (rou
 - `LocalModelRoleAssignment` -- modelId, role, isActive
 - `PullJob` -- model pull progress tracking
 - `RuntimeConfig` -- runtime configuration
+- `ModelCatalogEntry` -- name, tag, displayName, category, businessCategories, hardwareProfiles, isDiscovered, downloadStatus
+- `DiscoverySource` -- admin-managed crawler configuration
+- `ModelDiscoveryRun` -- one execution across enabled sources
+- `ModelDiscoveryCandidate` -- discovered model awaiting review (PENDING / IMPORTED / REJECTED / DUPLICATE)
 
 **Events Published**: None (generates on request)
 
 **Events Consumed**: None
 
+**Scheduled Jobs**:
+
+- `CatalogSyncService.scheduledRefresh()` — daily at 3:00 AM when `DISCOVERY_AUTO_REFRESH_ENABLED=true`
+
 **Inter-Service Dependencies**:
 
 - Ollama Runtime -- HTTP (`OLLAMA_BASE_URL`, default port 11434)
+- Ollama Library/Registry (public) -- HTTP for discovery crawl
 
 **Health Endpoint**: `GET /api/v1/health`
 
@@ -648,15 +669,15 @@ External workspace integration layer. Manages provider connectors, OAuth, sync r
 
 **Controllers**:
 
-| Controller                        | Route Prefix                       | Description                        |
-| --------------------------------- | ---------------------------------- | ---------------------------------- |
-| `WorkspaceConnectorController`    | `/api/v1/workspace/connectors`     | Connector CRUD, health, sync       |
-| `WorkspaceOAuthController`        | `/api/v1/workspace/oauth`          | OAuth init and callback            |
-| `WorkspaceSearchController`       | `/api/v1/workspace/search`         | User-facing workspace search       |
-| `WorkspaceObjectController`       | `/api/v1/workspace/objects`        | Synced object list and detail      |
-| `WorkspaceActionController`       | `/api/v1/workspace/actions`        | Action drafts, approve, reject     |
+| Controller                          | Route Prefix                        | Description                        |
+| ----------------------------------- | ----------------------------------- | ---------------------------------- |
+| `WorkspaceConnectorController`      | `/api/v1/workspace/connectors`      | Connector CRUD, health, sync       |
+| `WorkspaceOAuthController`          | `/api/v1/workspace/oauth`           | OAuth init and callback            |
+| `WorkspaceSearchController`         | `/api/v1/workspace/search`          | User-facing workspace search       |
+| `WorkspaceObjectController`         | `/api/v1/workspace/objects`         | Synced object list and detail      |
+| `WorkspaceActionController`         | `/api/v1/workspace/actions`         | Action drafts, approve, reject     |
 | `WorkspaceSearchInternalController` | `/api/v1/internal/workspace/search` | Internal search for chat grounding |
-| `HealthController`                | `/api/v1/health`                   | Service health check               |
+| `HealthController`                  | `/api/v1/health`                    | Service health check               |
 
 **Key Routes**:
 
@@ -707,13 +728,13 @@ Backend for the local desktop agent runtime. Manages CLI sessions, human-approve
 
 **Controllers**:
 
-| Controller             | Route Prefix            | Description                         |
-| ---------------------- | ----------------------- | ----------------------------------- |
+| Controller               | Route Prefix             | Description                                   |
+| ------------------------ | ------------------------ | --------------------------------------------- |
 | `AgentSessionController` | `/api/v1/agent/sessions` | Session register, list, disconnect, heartbeat |
-| `AgentCommandController` | `/api/v1/agent/commands` | Create, list, approve, reject, complete |
-| `AgentRepoController`    | `/api/v1/agent/repos`    | Repo register, list, update, delete |
-| `AgentEventController`   | `/api/v1/agent/events`   | File event reporting and listing    |
-| `HealthController`       | `/api/v1/health`         | Service health check                |
+| `AgentCommandController` | `/api/v1/agent/commands` | Create, list, approve, reject, complete       |
+| `AgentRepoController`    | `/api/v1/agent/repos`    | Repo register, list, update, delete           |
+| `AgentEventController`   | `/api/v1/agent/events`   | File event reporting and listing              |
+| `HealthController`       | `/api/v1/health`         | Service health check                          |
 
 **Key Routes**:
 
@@ -762,31 +783,31 @@ Backend for the local desktop agent runtime. Manages CLI sessions, human-approve
 
 All events flow through the `claw.events` topic exchange on RabbitMQ with durable queues, 3 retries with exponential backoff, and dead-letter queues.
 
-| Event Pattern              | Publisher    | Consumers      |
-| -------------------------- | ------------ | -------------- |
-| `user.created`             | Auth         | --             |
-| `user.login`               | Auth         | Audit          |
-| `user.logout`              | Auth         | Audit          |
-| `user.role_changed`        | Auth         | --             |
-| `user.deactivated`         | Auth         | --             |
-| `message.created`          | Chat         | Routing        |
-| `message.routed`           | Routing      | Chat           |
-| `message.completed`        | Chat         | Audit, Memory  |
-| `connector.created`        | Connector    | Audit          |
-| `connector.updated`        | Connector    | Audit          |
-| `connector.deleted`        | Connector    | Audit          |
-| `connector.synced`         | Connector    | Audit, Routing |
-| `connector.health_checked` | Connector    | Audit, Routing |
-| `routing.decision_made`    | Routing      | Audit          |
-| `file.uploaded`            | File         | --             |
-| `file.chunked`             | File         | --             |
-| `memory.extracted`         | Memory       | Audit          |
-| `image.generated`          | Image        | --             |
-| `image.failed`             | Image        | --             |
-| `agent.session.connected`  | Agent        | --             |
-| `agent.session.disconnected` | Agent      | --             |
-| `health.check`             | Health       | --             |
-| `log.server`               | All services | Server Logs    |
+| Event Pattern                | Publisher    | Consumers      |
+| ---------------------------- | ------------ | -------------- |
+| `user.created`               | Auth         | --             |
+| `user.login`                 | Auth         | Audit          |
+| `user.logout`                | Auth         | Audit          |
+| `user.role_changed`          | Auth         | --             |
+| `user.deactivated`           | Auth         | --             |
+| `message.created`            | Chat         | Routing        |
+| `message.routed`             | Routing      | Chat           |
+| `message.completed`          | Chat         | Audit, Memory  |
+| `connector.created`          | Connector    | Audit          |
+| `connector.updated`          | Connector    | Audit          |
+| `connector.deleted`          | Connector    | Audit          |
+| `connector.synced`           | Connector    | Audit, Routing |
+| `connector.health_checked`   | Connector    | Audit, Routing |
+| `routing.decision_made`      | Routing      | Audit          |
+| `file.uploaded`              | File         | --             |
+| `file.chunked`               | File         | --             |
+| `memory.extracted`           | Memory       | Audit          |
+| `image.generated`            | Image        | --             |
+| `image.failed`               | Image        | --             |
+| `agent.session.connected`    | Agent        | --             |
+| `agent.session.disconnected` | Agent        | --             |
+| `health.check`               | Health       | --             |
+| `log.server`                 | All services | Server Logs    |
 
 ---
 

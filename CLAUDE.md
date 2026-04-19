@@ -1517,3 +1517,180 @@ docs/
   15-ai-context/          # AI agent context pack, codebase navigation
   16-quality-engineering/ # QE lifecycle, test standards, release gates, bug triage (20+ documents)
 ```
+
+---
+
+## The ClawAI Engineering Mindset (MANDATORY for every AI agent — Claude, Codex, Cursor, any other)
+
+**This section is the north star.** Every AI agent working on this codebase — Claude Code, OpenAI Codex, Cursor, or any other — MUST adopt and enforce these mindsets. They are not optional, aspirational, or situational. They apply to every task, every change, every commit.
+
+### 1. Planning-first mindset
+
+- Never write a single line of code without a written plan.
+- Phase 0 (requirement + risk + acceptance + failure criteria) is non-skippable.
+- If you cannot state the business driver and success metric in one sentence, you do not understand the task.
+- Plan → confirm scope → write tests → implement → verify.
+- Plans belong in `.claude/Integrations/<feature>__PLAN.md` or the equivalent location for your tool.
+
+### 2. TDD mindset (Test-Driven Development)
+
+- Write failing tests BEFORE writing implementation code.
+- Every utility, classifier, normalizer, manager, service, repository, hook, and component has a test file co-located in `__tests__/`.
+- Test cases must cover: happy path, boundary conditions, null inputs, empty inputs, error inputs, duplicate inputs, concurrent inputs, and malformed inputs.
+- A feature is not built until its tests run and pass.
+- Target 98%+ test coverage on all new code. Skip only trivial getters.
+
+### 3. Experimentation mindset
+
+- When the path is unclear, write a throwaway experiment first — inside `.claude/Integrations/experiments/`.
+- Validate the approach on 1 small case before scaling to 50.
+- If the Ollama scraper picks up CSS classes as tags, fix the parser before onboarding 500 models.
+- Every manager and utility should be testable in isolation with a small, obvious example.
+
+### 4. Audit-first mindset
+
+- Before building, read. Before rewriting, audit.
+- Understand what exists: schema, existing services, existing tests, existing patterns.
+- Reuse patterns (repository → service → manager, adapter factory, SSE subjects, etc.).
+- Never introduce a second way to do what the codebase already does once.
+
+### 5. Business-product mindset (productifying)
+
+- Every technical change must connect to a business outcome.
+- "What user pain does this fix? What business metric does this move?" — answer these before coding.
+- Write the feature summary for a non-technical product manager, not a reviewer.
+- Check the product roadmap, feature catalog, and personas before proposing scope.
+
+### 6. QA and intensive testing mindset
+
+- Unit tests are the floor, not the ceiling.
+- For every feature, write a `qa/test-<feature>.sh` script that covers:
+  - Auth
+  - Every endpoint (happy + 400 + 401 + 403 + 404 + 409)
+  - DTO validation
+  - DB verification via `docker exec … psql -tAc`
+  - Docker log check (no `UnhandledPromiseRejection`, no `FATAL`)
+- The script must pass 0 failures before the feature is declared done.
+- QA is not optional and cannot be skipped.
+
+### 7. Manual API testing mindset
+
+- After writing the QA script, test each endpoint MANUALLY in a second terminal with curl.
+- Verify response shape, status code, error codes, headers.
+- Test boundary values: 0-length strings, max-length strings, nulls, negatives, enum mismatches.
+- Verify pagination, sorting, filtering each work independently.
+
+### 8. Manual UI testing mindset
+
+- After the backend passes QA, test the UI MANUALLY in a real browser.
+- Test the golden path end-to-end.
+- Test loading, empty, error, and success states for every screen.
+- Test RTL mode with Arabic locale.
+- Test dark mode.
+- Test mobile viewport.
+- Test accessibility (tab order, focus rings, aria labels).
+
+### 9. UAT (User Acceptance Testing) mindset
+
+- Ask: "Does a non-technical user understand this feature?"
+- Simulate real user workflows, not happy paths.
+- Click the wrong buttons. Type the wrong input. Refresh mid-flow.
+- A feature passes UAT only when a first-time user can complete the golden path without documentation.
+
+### 10. Bug-free mindset
+
+- Blockers block delivery. Full stop.
+- A lint warning is not a blocker. A lint error is.
+- A TypeScript error is a blocker.
+- A failing test is a blocker.
+- An `UnhandledPromiseRejection` in Docker logs is a blocker.
+- A 500 on any tested endpoint is a blocker.
+- Never use `--no-verify` to bypass hooks. Never mark a task "done" with known bugs.
+
+### 11. Coverage mindset
+
+- Target ≥98% test coverage on new code.
+- Run `npm run test:cov` before committing.
+- If coverage drops, add tests before merging.
+- Coverage is a proxy for "did you actually think about edge cases?"
+
+### 12. Wiring-everything mindset
+
+- Every new service must be wired into:
+  - All 7 Docker compose files (not just one)
+  - Nginx reverse proxy
+  - Health service aggregator
+  - `packages/shared-constants` (port + name)
+  - `packages/shared-types` (event patterns if publishing)
+  - `.env` and `.env.example`
+  - `scripts/install.sh` + `scripts/install.ps1`
+  - `.github/workflows/ci.yml`
+  - i18n (all 8 locales) if user-facing
+  - `docs/04-backend/services-index.md`
+  - `CLAUDE.md` workspace layout
+  - Frontend types, hooks, and pages if user-facing
+- A feature is incomplete if any of these are missing.
+
+### 13. No-missing-requirements mindset
+
+- Re-read the user's request 3 times before starting.
+- List every verb and every noun in the request as a checklist.
+- Map each to an acceptance criterion.
+- If something in the request is ambiguous, ask or assume-and-state.
+- Don't declare "done" until every item in the original request is checked off.
+
+### 14. Observability mindset
+
+- Every service-level action must log with structured fields.
+- Every event must be auditable.
+- Every background job must emit a correlation ID.
+- Never silently swallow errors. Log, rethrow, or handle explicitly.
+- The user who opens Docker logs at 2 AM must be able to trace a request end-to-end.
+
+### 15. Idempotency mindset
+
+- QA scripts must be re-runnable without breaking.
+- Migrations must be additive, not destructive.
+- API operations must tolerate retries.
+- If a side effect could happen twice, design for it.
+
+### 16. Documentation mindset (MANDATORY — non-skippable)
+
+- Every feature must produce or update docs. No exception.
+- New service → `docs/04-backend/service-guide-<name>.md`
+- New pipeline → `docs/07-integrations/<pipeline>.md` or `docs/03-architecture/<topic>.md`
+- New env var → `docs/06-data/environment-variables.md`
+- New endpoint → `docs/12-reference/api-reference.md`
+- Update `CLAUDE.md` root for any new service, env var, pattern, or mindset rule.
+- Update `codex.md` and `cursor.md` so other AI agents follow the same mindset.
+- A feature is incomplete if docs are missing or stale.
+
+### 17. Root-cause mindset
+
+- A bug is not fixed when the symptom disappears.
+- A bug is fixed when the root cause is understood, tested, and regression-protected.
+- If you bypass a failing test, you have not fixed anything.
+
+### 18. Reversibility mindset
+
+- Prefer reversible actions (new commit) over irreversible (amend, force-push, drop table).
+- Confirm before: `git push --force`, `rm -rf`, `DROP TABLE`, `git reset --hard`, `kubectl delete`.
+- Destructive actions are last resort, never shortcuts.
+
+### 19. Least-code mindset
+
+- Delete more than you add.
+- Reuse patterns. Don't abstract prematurely.
+- 3 similar lines are better than 1 abstraction nobody reads.
+- Comments explain WHY, not WHAT. The code explains WHAT.
+
+### 20. Honest-status mindset
+
+- Don't claim "done" until done.
+- Don't hide test failures. Don't hide lint warnings that became errors.
+- Don't claim 98% coverage if you skipped the manager's error path.
+- If something is incomplete, say so in plain English.
+
+---
+
+**These 20 mindsets are the default operating mode.** Any AI agent that does not follow them is doing it wrong. Any code reviewer seeing a violation should block the merge.
