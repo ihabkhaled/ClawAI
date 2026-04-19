@@ -29,6 +29,20 @@ import { QualityCheckManager } from './quality-check.manager';
 import { JudgeRefereeManager } from './judge-referee.manager';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
+import {
+  AUTO_MAX_OUTPUT_TOKENS,
+  DEFAULT_MAX_OUTPUT_TOKENS,
+  FAST_PATH_COMPLEXITY_PATTERN,
+  FAST_PATH_MAX_NEWLINES,
+  FAST_PATH_MAX_OUTPUT_TOKENS,
+  FAST_PATH_MAX_PROMPT_CHARS,
+  FAST_PATH_MAX_PROMPT_WORDS,
+  FAST_PATH_OPERATIONAL_PREFIX_PATTERN,
+  FAST_PATH_RESPONSE_CONSTRAINT,
+  HARD_MAX_OUTPUT_TOKENS,
+  MIN_OUTPUT_TOKENS,
+} from '../constants/execution-fast-path.constants';
+import type { ExecutionOptions } from '../types/execution-options.types';
 
 @Injectable()
 export class ChatExecutionManager implements OnModuleInit {
@@ -57,8 +71,12 @@ export class ChatExecutionManager implements OnModuleInit {
     const startTime = Date.now();
     const candidates = this.buildCandidateChain(payload, payload.routingMode);
     const userPrompt = this.extractUserPrompt(context);
+    const executionOptions = this.resolveExecutionOptions(payload, userPrompt, threadSettings);
 
     this.logger.debug(`execute: built candidate chain with ${String(candidates.length)} providers`);
+    this.logger.debug(
+      `execute: options fastPath=${String(executionOptions.fastPathEnabled)} maxOutputTokens=${String(executionOptions.maxOutputTokens)}`,
+    );
     let lastError: unknown = null;
     let reRouteAttempt = 0;
     let reRouteReasons: string[] = [];
@@ -86,53 +104,58 @@ export class ChatExecutionManager implements OnModuleInit {
           i > 0,
           threadSettings,
           payload.routingMode,
+          executionOptions,
         );
 
         // Skip quality check for image/file generation responses
         if (this.isGenerationResponse(response)) {
-          return response;
-        }
-
-        const qualityResult = this.qualityCheckManager.checkResponseQuality(
-          response.content,
-          userPrompt,
-          threadSettings,
-        );
-        const reRouteDecision = this.qualityCheckManager.shouldReRoute(
-          qualityResult,
-          reRouteAttempt,
-          threadSettings,
-        );
-
-        if (reRouteDecision.shouldReRoute && i < candidates.length - 1) {
-          const nextCandidate = candidates[i + 1];
-          this.logger.warn(
-            `Weak response detected from ${candidate.provider}/${candidate.model} (score: ${String(qualityResult.score.toFixed(2))}). Reasons: ${qualityResult.reasons.join(', ')}. Escalating to ${nextCandidate?.provider ?? 'next'}/${nextCandidate?.model ?? 'next'}.`,
-          );
-          this.chatStreamService.emitFallbackAttempt(payload.threadId, {
-            failedProvider: candidate.provider,
-            failedModel: candidate.model,
-            error: `Weak response (score: ${String(qualityResult.score.toFixed(2))}): ${qualityResult.reasons.join(', ')}`,
-            attempt: reRouteAttempt + 1,
-            totalCandidates: candidates.length,
-            nextProvider: nextCandidate?.provider,
-            nextModel: nextCandidate?.model,
-          });
-          reRouteReasons = [...reRouteReasons, ...qualityResult.reasons];
-          reRouteAttempt++;
-          continue;
+          return { ...response, fastPathUsed: executionOptions.fastPathEnabled };
         }
 
         let finalResponse = response;
+        let qualityScore = 1;
 
-        if (reRouteAttempt > 0) {
-          finalResponse = this.addReRouteMetadata(
-            response,
-            payload,
-            qualityResult.score,
-            reRouteAttempt,
-            reRouteReasons,
+        if (!executionOptions.fastPathEnabled) {
+          const qualityResult = this.qualityCheckManager.checkResponseQuality(
+            response.content,
+            userPrompt,
+            threadSettings,
           );
+          qualityScore = qualityResult.score;
+          const reRouteDecision = this.qualityCheckManager.shouldReRoute(
+            qualityResult,
+            reRouteAttempt,
+            threadSettings,
+          );
+
+          if (reRouteDecision.shouldReRoute && i < candidates.length - 1) {
+            const nextCandidate = candidates[i + 1];
+            this.logger.warn(
+              `Weak response detected from ${candidate.provider}/${candidate.model} (score: ${String(qualityResult.score.toFixed(2))}). Reasons: ${qualityResult.reasons.join(', ')}. Escalating to ${nextCandidate?.provider ?? 'next'}/${nextCandidate?.model ?? 'next'}.`,
+            );
+            this.chatStreamService.emitFallbackAttempt(payload.threadId, {
+              failedProvider: candidate.provider,
+              failedModel: candidate.model,
+              error: `Weak response (score: ${String(qualityResult.score.toFixed(2))}): ${qualityResult.reasons.join(', ')}`,
+              attempt: reRouteAttempt + 1,
+              totalCandidates: candidates.length,
+              nextProvider: nextCandidate?.provider,
+              nextModel: nextCandidate?.model,
+            });
+            reRouteReasons = [...reRouteReasons, ...qualityResult.reasons];
+            reRouteAttempt++;
+            continue;
+          }
+
+          if (reRouteAttempt > 0) {
+            finalResponse = this.addReRouteMetadata(
+              response,
+              payload,
+              qualityScore,
+              reRouteAttempt,
+              reRouteReasons,
+            );
+          }
         }
 
         // Judge-and-Referee pipeline: critic evaluates, judge decides
@@ -141,6 +164,7 @@ export class ChatExecutionManager implements OnModuleInit {
           context,
           payload,
           threadSettings,
+          executionOptions.fastPathEnabled,
         );
         if (judgeResult) {
           if (
@@ -156,10 +180,11 @@ export class ChatExecutionManager implements OnModuleInit {
           return {
             ...judgedResponse,
             judgeRefereeMetadata: this.judgeRefereeManager.buildMetadata(judgeResult),
+            fastPathUsed: executionOptions.fastPathEnabled,
           };
         }
 
-        return finalResponse;
+        return { ...finalResponse, fastPathUsed: executionOptions.fastPathEnabled };
       } catch (error: unknown) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
         this.logger.warn(
@@ -230,12 +255,100 @@ export class ChatExecutionManager implements OnModuleInit {
     return response.imageGenerationId !== undefined || response.fileGenerationId !== undefined;
   }
 
+  private resolveExecutionOptions(
+    payload: MessageRoutedData,
+    userPrompt: string,
+    threadSettings?: ThreadSettings,
+  ): ExecutionOptions {
+    const fastPathEnabled = this.shouldUseFastPath(payload, userPrompt);
+    return {
+      fastPathEnabled,
+      maxOutputTokens: this.resolveMaxOutputTokens(
+        payload.routingMode,
+        threadSettings,
+        fastPathEnabled,
+        payload.selectedModel,
+      ),
+      applyShortResponseConstraint: fastPathEnabled,
+    };
+  }
+
+  private shouldUseFastPath(payload: MessageRoutedData, userPrompt: string): boolean {
+    if (payload.routingMode !== 'AUTO') {
+      return false;
+    }
+    if (payload.judgeEnabled === true) {
+      return false;
+    }
+    if (payload.selectedProvider === FILE_GENERATION_PROVIDER) {
+      return false;
+    }
+    if (payload.selectedProvider.startsWith(IMAGE_PROVIDER_PREFIX)) {
+      return false;
+    }
+
+    const normalizedPrompt = userPrompt.trim();
+    if (!normalizedPrompt) {
+      return false;
+    }
+    if (normalizedPrompt.length > FAST_PATH_MAX_PROMPT_CHARS) {
+      return false;
+    }
+
+    const newlineCount = (normalizedPrompt.match(/\n/g) ?? []).length;
+    if (newlineCount > FAST_PATH_MAX_NEWLINES) {
+      return false;
+    }
+
+    const wordCount = normalizedPrompt.split(/\s+/).filter(Boolean).length;
+    if (wordCount > FAST_PATH_MAX_PROMPT_WORDS) {
+      return false;
+    }
+
+    if (FAST_PATH_COMPLEXITY_PATTERN.test(normalizedPrompt)) {
+      return false;
+    }
+
+    return (
+      FAST_PATH_OPERATIONAL_PREFIX_PATTERN.test(normalizedPrompt.toLowerCase()) ||
+      normalizedPrompt.length <= 80
+    );
+  }
+
+  private resolveMaxOutputTokens(
+    routingMode: string,
+    threadSettings: ThreadSettings | undefined,
+    fastPathEnabled: boolean,
+    model: string,
+  ): number {
+    let routeCap = DEFAULT_MAX_OUTPUT_TOKENS;
+    if (routingMode === 'AUTO' || model === 'AUTO') {
+      routeCap = fastPathEnabled ? FAST_PATH_MAX_OUTPUT_TOKENS : AUTO_MAX_OUTPUT_TOKENS;
+    }
+
+    const requestedMaxTokens = threadSettings?.maxTokens ?? routeCap;
+    const bounded = Math.min(requestedMaxTokens, routeCap, HARD_MAX_OUTPUT_TOKENS);
+    return Math.max(MIN_OUTPUT_TOKENS, bounded);
+  }
+
+  private applyShortResponseConstraint(prompt: string): string {
+    return `${prompt}\n\n${FAST_PATH_RESPONSE_CONSTRAINT}`;
+  }
+
   private async runJudgeRefereePipeline(
     response: LlmResponse,
     context: AssembledContext,
     payload: MessageRoutedData,
     threadSettings?: ThreadSettings,
+    fastPathEnabled = false,
   ): Promise<import('../types/judge-referee.types').JudgeRefereeResult | null> {
+    if (fastPathEnabled && !payload.judgeEnabled) {
+      this.logger.debug(
+        `runJudgeRefereePipeline: skipped for fast path message ${payload.messageId}`,
+      );
+      return null;
+    }
+
     const config: JudgeRefereeConfig = {
       enabled: payload.judgeEnabled ?? false,
       category: payload.detectedCategory,
@@ -280,6 +393,7 @@ export class ChatExecutionManager implements OnModuleInit {
     usedFallback: boolean,
     threadSettings?: ThreadSettings,
     routingMode?: string,
+    executionOptions?: ExecutionOptions,
   ): Promise<LlmResponse> {
     this.logger.debug(
       `callProvider: dispatching to provider type — provider=${provider} model=${model} usedFallback=${String(usedFallback)}`,
@@ -302,7 +416,14 @@ export class ChatExecutionManager implements OnModuleInit {
     }
     if (provider === OLLAMA_PROVIDER) {
       this.logger.debug('callProvider: routing to Ollama local provider');
-      return this.callOllama(model, context, startTime, usedFallback, threadSettings);
+      return this.callOllama(
+        model,
+        context,
+        startTime,
+        usedFallback,
+        threadSettings,
+        executionOptions,
+      );
     }
     this.logger.debug('callProvider: routing to cloud provider');
     return this.callCloudProvider(
@@ -312,6 +433,7 @@ export class ChatExecutionManager implements OnModuleInit {
       startTime,
       usedFallback,
       threadSettings,
+      executionOptions,
     );
   }
 
@@ -321,12 +443,17 @@ export class ChatExecutionManager implements OnModuleInit {
     startTime: number,
     usedFallback: boolean,
     threadSettings?: ThreadSettings,
+    executionOptions?: ExecutionOptions,
   ): Promise<LlmResponse> {
     const resolvedModel = await this.resolveModel(model);
     this.logger.log(`callOllama: calling model=${resolvedModel}`);
     const config = AppConfig.get();
     this.logger.debug('callOllama: building prompt string from context');
     const prompt = this.contextAssembly.buildPromptString(context);
+    const constrainedPrompt =
+      executionOptions?.applyShortResponseConstraint === true
+        ? this.applyShortResponseConstraint(prompt)
+        : prompt;
     this.logger.debug(`callOllama: prompt built — length=${String(prompt.length)} chars`);
 
     // Extract base64 images for Ollama's multimodal support
@@ -337,10 +464,12 @@ export class ChatExecutionManager implements OnModuleInit {
       .filter((c): c is string => c !== null && c.length > 0);
     this.logger.debug(`callOllama: found ${String(images.length)} images for multimodal input`);
 
-    const maxOutputTokens = Math.min(threadSettings?.maxTokens ?? 128, 128);
+    const maxOutputTokens =
+      executionOptions?.maxOutputTokens ??
+      this.resolveMaxOutputTokens('AUTO', threadSettings, false, model);
     const requestBody: OllamaGenerateRequest = {
       model: resolvedModel,
-      prompt,
+      prompt: constrainedPrompt,
       stream: false,
       options: {
         temperature: threadSettings?.temperature ?? 0.2,
@@ -394,6 +523,7 @@ export class ChatExecutionManager implements OnModuleInit {
     startTime: number,
     usedFallback: boolean,
     threadSettings?: ThreadSettings,
+    executionOptions?: ExecutionOptions,
   ): Promise<LlmResponse> {
     this.logger.log(`callCloudProvider: calling ${provider}/${model}`);
     const config = AppConfig.get();
@@ -402,7 +532,7 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.debug(`callCloudProvider: config resolved — baseUrl=${baseUrl}`);
 
     this.logger.debug('callCloudProvider: building chat request body');
-    const requestBody = this.buildChatRequestBody(model, context, threadSettings);
+    const requestBody = this.buildChatRequestBody(model, context, threadSettings, executionOptions);
     this.logger.debug(
       `callCloudProvider: request body built — messageCount=${String(requestBody.messages.length)} temperature=${String(requestBody.temperature ?? 'default')}`,
     );
@@ -467,11 +597,22 @@ export class ChatExecutionManager implements OnModuleInit {
     model: string,
     context: AssembledContext,
     threadSettings?: ThreadSettings,
+    executionOptions?: ExecutionOptions,
   ): OpenAiChatRequest {
     this.logger.debug(`buildChatRequestBody: building request for model=${model}`);
     const messages = this.contextAssembly.buildChatMessages(context);
+    const requestMessages =
+      executionOptions?.applyShortResponseConstraint === true
+        ? [
+            {
+              role: 'system',
+              content: FAST_PATH_RESPONSE_CONSTRAINT,
+            },
+            ...messages,
+          ]
+        : messages;
     this.logger.debug(`buildChatRequestBody: built ${String(messages.length)} chat messages`);
-    const requestBody: OpenAiChatRequest = { model, messages, stream: false };
+    const requestBody: OpenAiChatRequest = { model, messages: requestMessages, stream: false };
 
     if (threadSettings?.temperature !== null && threadSettings?.temperature !== undefined) {
       this.logger.debug(
@@ -480,11 +621,13 @@ export class ChatExecutionManager implements OnModuleInit {
       requestBody.temperature = threadSettings.temperature;
     }
 
-    if (threadSettings?.maxTokens !== null && threadSettings?.maxTokens !== undefined) {
+    if (executionOptions?.maxOutputTokens !== undefined) {
+      requestBody.max_tokens = executionOptions.maxOutputTokens;
+    } else if (threadSettings?.maxTokens !== null && threadSettings?.maxTokens !== undefined) {
       this.logger.debug(
         `buildChatRequestBody: applying maxTokens=${String(threadSettings.maxTokens)}`,
       );
-      requestBody.max_tokens = threadSettings.maxTokens;
+      requestBody.max_tokens = Math.min(threadSettings.maxTokens, HARD_MAX_OUTPUT_TOKENS);
     }
 
     return requestBody;

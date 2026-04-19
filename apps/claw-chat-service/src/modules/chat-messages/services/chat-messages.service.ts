@@ -538,6 +538,7 @@ export class ChatMessagesService implements OnModuleInit {
               reRouteReasons: llmResponse.reRouteReasons,
             }
           : {}),
+        ...(llmResponse.fastPathUsed ? { fastPathUsed: true } : {}),
         ...(llmResponse.judgeRefereeMetadata ?? {}),
       },
     });

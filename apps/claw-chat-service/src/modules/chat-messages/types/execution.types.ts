@@ -32,6 +32,7 @@ export type LlmResponse = {
   reRouteAttempts?: number;
   reRouteReasons?: string[];
   judgeRefereeMetadata?: JudgeRefereeMetadata;
+  fastPathUsed?: boolean;
 };
 
 export type OllamaGenerateRequest = {
