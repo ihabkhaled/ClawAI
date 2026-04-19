@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AppConfig } from '../../../app/config/app.config';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import {
   GOOGLE_AUTH_URL,
@@ -8,7 +7,7 @@ import {
   HEALTH_CHECK_TIMEOUT_MS,
 } from '../../../common/constants/workspace.constants';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
-import type { WorkspaceAdapter } from './workspace-adapter.interface';
+import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
 import type {
   AdapterCapabilities,
   HealthCheckResult,
@@ -111,13 +110,18 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
   async exchangeCodeForTokens(
     code: string,
     redirectUri: string,
-    codeVerifier?: string,
+    codeVerifier: string | undefined,
+    appCredentials: AdapterAppCredentials,
   ): Promise<OAuthTokenSet> {
-    const config = AppConfig.get();
+    if (!appCredentials.clientId || !appCredentials.clientSecret) {
+      throw new Error(
+        'Google Drive OAuth requires clientId and clientSecret from provider app config',
+      );
+    }
     const body: Record<string, string> = {
       code,
-      client_id: config.GOOGLE_CLIENT_ID,
-      client_secret: config.GOOGLE_CLIENT_SECRET,
+      client_id: appCredentials.clientId,
+      client_secret: appCredentials.clientSecret,
       redirect_uri: redirectUri,
       grant_type: 'authorization_code',
     };
@@ -146,12 +150,19 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
     };
   }
 
-  async refreshTokens(refreshToken: string): Promise<OAuthTokenSet> {
-    const config = AppConfig.get();
+  async refreshTokens(
+    refreshToken: string,
+    appCredentials: AdapterAppCredentials,
+  ): Promise<OAuthTokenSet> {
+    if (!appCredentials.clientId || !appCredentials.clientSecret) {
+      throw new Error(
+        'Google Drive OAuth refresh requires clientId and clientSecret from provider app config',
+      );
+    }
     const body = new URLSearchParams({
       grant_type: 'refresh_token',
-      client_id: config.GOOGLE_CLIENT_ID,
-      client_secret: config.GOOGLE_CLIENT_SECRET,
+      client_id: appCredentials.clientId,
+      client_secret: appCredentials.clientSecret,
       refresh_token: refreshToken,
     });
     const response = await fetch(GOOGLE_TOKEN_URL, {
@@ -178,10 +189,6 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
 
   getAuthorizationBaseUrl(): string {
     return GOOGLE_AUTH_URL;
-  }
-
-  getClientId(): string {
-    return AppConfig.get().GOOGLE_CLIENT_ID;
   }
 
   getDefaultScopes(): string[] {

@@ -57,6 +57,9 @@ export const GITHUB_ISSUE_URL_PATTERN = /https?:\/\/github\.com\/[^/]+\/[^/]+\/i
 export const SLACK_CHANNEL_PATTERN = /<#[A-Z0-9]+\|[^>]+>/g;
 
 export const OAUTH_PROVIDERS: ReadonlySet<WorkspaceProvider> = new Set([
+  'GITHUB',
+  'GITLAB',
+  'BITBUCKET',
   'SLACK',
   'JIRA',
   'CONFLUENCE',

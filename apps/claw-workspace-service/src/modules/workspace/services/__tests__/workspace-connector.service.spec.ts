@@ -66,6 +66,18 @@ const mockSyncManager = { syncConnector: jest.fn() } as unknown as WorkspaceSync
 const mockRabbitMQ = {
   publish: jest.fn().mockImplementation(() => Promise.resolve()),
 } as unknown as RabbitMQService;
+const mockProviderAppConfigs = {
+  getById: jest.fn().mockResolvedValue({
+    id: 'cfg-1',
+    provider: WorkspaceProvider.GITHUB,
+    authMode: 'OAUTH2',
+    status: 'READY',
+    publicConfig: { clientId: 'gh-id' },
+    secretVersion: 1,
+    name: 'default',
+  }),
+  getDecryptedSecret: jest.fn().mockResolvedValue({ clientSecret: 'gh-secret' }),
+} as unknown as import('../provider-app-config.service').ProviderAppConfigService;
 
 describe('WorkspaceConnectorService', () => {
   let service: WorkspaceConnectorService;
@@ -78,6 +90,7 @@ describe('WorkspaceConnectorService', () => {
       mockTokenManager,
       mockHealthManager,
       mockSyncManager,
+      mockProviderAppConfigs,
       mockRabbitMQ,
     );
   });
@@ -165,14 +178,42 @@ describe('WorkspaceConnectorService', () => {
 
   describe('initOAuth', () => {
     it('should call tokenManager initOAuthFlow and return result for OAuth providers', async () => {
-      const dto = { provider: WorkspaceProvider.SLACK, redirectUri: 'https://app/cb', scopes: [] };
+      (mockProviderAppConfigs.getById as jest.Mock).mockResolvedValueOnce({
+        id: 'cfg-1',
+        provider: WorkspaceProvider.SLACK,
+        authMode: 'OAUTH2',
+        status: 'READY',
+        publicConfig: { clientId: 'slack-id' },
+        secretVersion: 1,
+        name: 'default',
+      });
+      const dto = {
+        provider: WorkspaceProvider.SLACK,
+        providerAppConfigId: 'cfg-1',
+        redirectUri: 'https://app/cb',
+        scopes: [],
+      };
       const result = await service.initOAuth('u1', dto);
       expect(result.authorizationUrl).toBeDefined();
       expect(result.state).toBeDefined();
     });
 
-    it('should throw when provider does not support OAuth (PAT-only providers)', async () => {
-      const dto = { provider: WorkspaceProvider.GITHUB, redirectUri: 'https://app/cb', scopes: [] };
+    it('should throw when config provider mismatches requested provider', async () => {
+      (mockProviderAppConfigs.getById as jest.Mock).mockResolvedValueOnce({
+        id: 'cfg-1',
+        provider: WorkspaceProvider.GITHUB,
+        authMode: 'OAUTH2',
+        status: 'READY',
+        publicConfig: { clientId: 'gh-id' },
+        secretVersion: 1,
+        name: 'default',
+      });
+      const dto = {
+        provider: WorkspaceProvider.SLACK,
+        providerAppConfigId: 'cfg-1',
+        redirectUri: 'https://app/cb',
+        scopes: [],
+      };
       await expect(service.initOAuth('u1', dto)).rejects.toThrow(BusinessException);
     });
   });

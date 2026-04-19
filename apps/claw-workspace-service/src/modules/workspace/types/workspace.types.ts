@@ -49,6 +49,14 @@ export type OAuthInitResult = {
   state: string;
 };
 
+export type OAuthStatePayload = {
+  userId: string;
+  provider: string;
+  providerAppConfigId: string;
+  redirectUri: string;
+  verifier: string;
+};
+
 export type HealthCheckResult = {
   status: WorkspaceConnectorStatus;
   latencyMs: number;

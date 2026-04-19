@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AppConfig } from '../../../app/config/app.config';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import {
   HEALTH_CHECK_TIMEOUT_MS,
@@ -9,7 +8,7 @@ import {
   WRITE_EXECUTION_TIMEOUT_MS,
 } from '../../../common/constants/workspace.constants';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
-import type { WorkspaceAdapter } from './workspace-adapter.interface';
+import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
 import type {
   AdapterCapabilities,
   HealthCheckResult,
@@ -88,12 +87,15 @@ export class SlackAdapter implements WorkspaceAdapter {
   async exchangeCodeForTokens(
     code: string,
     redirectUri: string,
-    _codeVerifier?: string,
+    _codeVerifier: string | undefined,
+    appCredentials: AdapterAppCredentials,
   ): Promise<OAuthTokenSet> {
-    const config = AppConfig.get();
+    if (!appCredentials.clientId || !appCredentials.clientSecret) {
+      throw new Error('Slack OAuth requires clientId and clientSecret from provider app config');
+    }
     const body = new URLSearchParams({
-      client_id: config.SLACK_CLIENT_ID,
-      client_secret: config.SLACK_CLIENT_SECRET,
+      client_id: appCredentials.clientId,
+      client_secret: appCredentials.clientSecret,
       code,
       redirect_uri: redirectUri,
     });
@@ -116,7 +118,10 @@ export class SlackAdapter implements WorkspaceAdapter {
     return { accessToken, scopes: (data['scope'] ?? '').split(',').filter(Boolean) };
   }
 
-  async refreshTokens(_refreshToken: string): Promise<OAuthTokenSet> {
+  async refreshTokens(
+    _refreshToken: string,
+    _appCredentials: AdapterAppCredentials,
+  ): Promise<OAuthTokenSet> {
     throw new Error('Slack does not support token refresh via refresh_token flow');
   }
 
@@ -132,10 +137,6 @@ export class SlackAdapter implements WorkspaceAdapter {
 
   getAuthorizationBaseUrl(): string {
     return SLACK_AUTH_URL;
-  }
-
-  getClientId(): string {
-    return AppConfig.get().SLACK_CLIENT_ID;
   }
 
   getDefaultScopes(): string[] {

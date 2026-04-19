@@ -7,7 +7,7 @@ import {
   generateCodeVerifier,
   generateOAuthState,
 } from '../../../common/utilities/pkce.utility';
-import type { OAuthInitResult, OAuthTokenSet } from '../types/workspace.types';
+import type { OAuthInitResult, OAuthStatePayload, OAuthTokenSet } from '../types/workspace.types';
 import {
   OAUTH_REFRESH_LOCK_TTL_SECONDS,
   OAUTH_STATE_TTL_SECONDS,
@@ -23,6 +23,7 @@ export class OAuthTokenManager {
   async initOAuthFlow(
     userId: string,
     provider: string,
+    providerAppConfigId: string,
     redirectUri: string,
     authBaseUrl: string,
     clientId: string,
@@ -32,8 +33,18 @@ export class OAuthTokenManager {
     const verifier = generateCodeVerifier();
     const challenge = generateCodeChallenge(verifier);
 
-    const stateData = JSON.stringify({ userId, provider, redirectUri, verifier });
-    await this.redis.set(`oauth:state:${state}`, stateData, OAUTH_STATE_TTL_SECONDS);
+    const stateData: OAuthStatePayload = {
+      userId,
+      provider,
+      providerAppConfigId,
+      redirectUri,
+      verifier,
+    };
+    await this.redis.set(
+      `oauth:state:${state}`,
+      JSON.stringify(stateData),
+      OAUTH_STATE_TTL_SECONDS,
+    );
 
     const params = new URLSearchParams({
       client_id: clientId,
@@ -48,20 +59,13 @@ export class OAuthTokenManager {
     return { authorizationUrl: `${authBaseUrl}?${params.toString()}`, state };
   }
 
-  async resolveOAuthState(
-    state: string,
-  ): Promise<{ userId: string; provider: string; redirectUri: string; verifier: string } | null> {
+  async resolveOAuthState(state: string): Promise<OAuthStatePayload | null> {
     const raw = await this.redis.get(`oauth:state:${state}`);
     if (raw === null) {
       return null;
     }
     await this.redis.del(`oauth:state:${state}`);
-    return JSON.parse(raw) as {
-      userId: string;
-      provider: string;
-      redirectUri: string;
-      verifier: string;
-    };
+    return JSON.parse(raw) as OAuthStatePayload;
   }
 
   encryptTokenSet(tokens: OAuthTokenSet): string {

@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AppConfig } from '../../../app/config/app.config';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import {
   HEALTH_CHECK_TIMEOUT_MS,
@@ -10,7 +9,7 @@ import {
   WRITE_EXECUTION_TIMEOUT_MS,
 } from '../../../common/constants/workspace.constants';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
-import type { WorkspaceAdapter } from './workspace-adapter.interface';
+import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
 import type {
   AdapterCapabilities,
   HealthCheckResult,
@@ -114,13 +113,16 @@ export class JiraAdapter implements WorkspaceAdapter {
   async exchangeCodeForTokens(
     code: string,
     redirectUri: string,
-    codeVerifier?: string,
+    codeVerifier: string | undefined,
+    appCredentials: AdapterAppCredentials,
   ): Promise<OAuthTokenSet> {
-    const config = AppConfig.get();
+    if (!appCredentials.clientId || !appCredentials.clientSecret) {
+      throw new Error('Jira OAuth requires clientId and clientSecret from provider app config');
+    }
     const body: Record<string, string> = {
       grant_type: 'authorization_code',
-      client_id: config.JIRA_CLIENT_ID,
-      client_secret: config.JIRA_CLIENT_SECRET,
+      client_id: appCredentials.clientId,
+      client_secret: appCredentials.clientSecret,
       code,
       redirect_uri: redirectUri,
     };
@@ -149,12 +151,19 @@ export class JiraAdapter implements WorkspaceAdapter {
     };
   }
 
-  async refreshTokens(refreshToken: string): Promise<OAuthTokenSet> {
-    const config = AppConfig.get();
+  async refreshTokens(
+    refreshToken: string,
+    appCredentials: AdapterAppCredentials,
+  ): Promise<OAuthTokenSet> {
+    if (!appCredentials.clientId || !appCredentials.clientSecret) {
+      throw new Error(
+        'Jira OAuth refresh requires clientId and clientSecret from provider app config',
+      );
+    }
     const body = {
       grant_type: 'refresh_token',
-      client_id: config.JIRA_CLIENT_ID,
-      client_secret: config.JIRA_CLIENT_SECRET,
+      client_id: appCredentials.clientId,
+      client_secret: appCredentials.clientSecret,
       refresh_token: refreshToken,
     };
     const response = await fetch(JIRA_TOKEN_URL, {
@@ -190,10 +199,6 @@ export class JiraAdapter implements WorkspaceAdapter {
 
   getAuthorizationBaseUrl(): string {
     return JIRA_AUTH_URL;
-  }
-
-  getClientId(): string {
-    return AppConfig.get().JIRA_CLIENT_ID;
   }
 
   getDefaultScopes(): string[] {

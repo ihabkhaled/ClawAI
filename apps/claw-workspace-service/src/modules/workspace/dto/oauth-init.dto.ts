@@ -3,6 +3,7 @@ import { WorkspaceProvider } from '../../../common/enums/workspace-provider.enum
 
 export const oauthInitSchema = z.object({
   provider: z.nativeEnum(WorkspaceProvider),
+  providerAppConfigId: z.string().trim().min(1).max(64),
   redirectUri: z.string().url().max(500),
   scopes: z.array(z.string().max(100)).max(20).optional().default([]),
 });

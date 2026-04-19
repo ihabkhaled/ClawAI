@@ -91,15 +91,11 @@ describe('GitHubAdapter', () => {
     });
   });
 
-  describe('getClientId', () => {
-    it('should return configured client id', () => {
-      expect(adapter.getClientId()).toBe('gh-id');
-    });
-  });
-
   describe('refreshTokens', () => {
     it('should throw since GitHub PAT does not support refresh', async () => {
-      await expect(adapter.refreshTokens('ref')).rejects.toThrow();
+      await expect(
+        adapter.refreshTokens('ref', { clientId: 'x', clientSecret: 'y' }),
+      ).rejects.toThrow();
     });
   });
 });

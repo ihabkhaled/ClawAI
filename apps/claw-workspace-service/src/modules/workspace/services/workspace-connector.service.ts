@@ -3,9 +3,15 @@ import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { WorkspaceConnectorRepository } from '../repositories/workspace-connector.repository';
 import { WorkspaceAdapterFactory } from '../adapters/workspace-adapter.factory';
+import type { AdapterAppCredentials } from '../adapters/workspace-adapter.interface';
 import { OAuthTokenManager } from '../managers/oauth-token.manager';
 import { WorkspaceHealthManager } from '../managers/workspace-health.manager';
 import { WorkspaceSyncManager } from '../managers/workspace-sync.manager';
+import { ProviderAppConfigService } from './provider-app-config.service';
+import {
+  type Prisma,
+  WorkspaceProviderAppConfigStatus, WorkspaceProviderAuthMode 
+} from '../../../generated/prisma';
 import {
   sanitizeConnector,
   sanitizeConnectors,
@@ -19,7 +25,6 @@ import type { UpdateWorkspaceConnectorDto } from '../dto/update-workspace-connec
 import type { ListWorkspaceConnectorsQueryDto } from '../dto/list-workspace-connectors-query.dto';
 import type { OAuthInitDto } from '../dto/oauth-init.dto';
 import type { OAuthCallbackDto } from '../dto/oauth-callback.dto';
-import type { Prisma } from '../../../generated/prisma';
 import type {
   HealthCheckResult,
   OAuthInitResult,
@@ -39,6 +44,7 @@ export class WorkspaceConnectorService {
     private readonly tokenManager: OAuthTokenManager,
     private readonly healthManager: WorkspaceHealthManager,
     private readonly syncManager: WorkspaceSyncManager,
+    private readonly providerAppConfigs: ProviderAppConfigService,
     private readonly rabbitMQ: RabbitMQService,
   ) {}
 
@@ -147,14 +153,46 @@ export class WorkspaceConnectorService {
         HttpStatus.BAD_REQUEST,
       );
     }
+    const appConfig = await this.providerAppConfigs.getById(dto.providerAppConfigId);
+    if (appConfig.provider !== dto.provider) {
+      throw new BusinessException(
+        'Provider app config does not match requested provider',
+        'PROVIDER_APP_CONFIG_MISMATCH',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (appConfig.status !== WorkspaceProviderAppConfigStatus.READY) {
+      throw new BusinessException(
+        `Provider app config "${appConfig.name}" is not READY (status=${appConfig.status})`,
+        'PROVIDER_APP_CONFIG_NOT_READY',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (appConfig.authMode !== WorkspaceProviderAuthMode.OAUTH2) {
+      throw new BusinessException(
+        `Provider app config "${appConfig.name}" is not configured for OAUTH2`,
+        'PROVIDER_APP_CONFIG_NOT_OAUTH',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const publicConfig = appConfig.publicConfig as Record<string, unknown>;
+    const clientId = typeof publicConfig['clientId'] === 'string' ? publicConfig['clientId'] : '';
+    if (clientId.length === 0) {
+      throw new BusinessException(
+        `Provider app config is missing clientId`,
+        'PROVIDER_APP_CONFIG_INVALID',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     const adapter = this.adapterFactory.getAdapter(dto.provider);
     const scopes = dto.scopes.length > 0 ? dto.scopes : adapter.getDefaultScopes();
     return this.tokenManager.initOAuthFlow(
       userId,
       dto.provider,
+      appConfig.id,
       dto.redirectUri,
       adapter.getAuthorizationBaseUrl(),
-      adapter.getClientId(),
+      clientId,
       scopes,
     );
   }
@@ -171,22 +209,36 @@ export class WorkspaceConnectorService {
         HttpStatus.BAD_REQUEST,
       );
     }
+    const appConfig = await this.providerAppConfigs.getById(stateData.providerAppConfigId);
+    if (appConfig.status !== WorkspaceProviderAppConfigStatus.READY) {
+      throw new BusinessException(
+        'The selected provider app config is no longer READY',
+        'PROVIDER_APP_CONFIG_NOT_READY',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const adapterCreds = await this.buildAdapterCredentials(stateData.providerAppConfigId);
     const adapter = this.adapterFactory.getAdapter(stateData.provider);
     const tokens = await adapter.exchangeCodeForTokens(
       dto.code,
       dto.redirectUri,
       stateData.verifier,
+      adapterCreds,
     );
     const encryptedTokens = this.tokenManager.encryptTokenSet(tokens);
 
     const connector = await this.repository.create({
       userId,
-      name: `${stateData.provider} — ${new Date().toLocaleDateString()}`,
+      name: `${stateData.provider} — ${appConfig.name}`,
       provider: stateData.provider as WorkspaceProvider,
+      appConfig: { connect: { id: appConfig.id } },
+      authMode: WorkspaceProviderAuthMode.OAUTH2,
       status: WorkspaceConnectorStatus.CONNECTED,
       encryptedTokens,
+      tokenVersion: appConfig.secretVersion,
       scopes: tokens.scopes,
       expiresAt: tokens.expiresAt,
+      lastAuthAt: new Date(),
     });
 
     void this.publishEvent(EventPattern.WORKSPACE_CONNECTOR_CREATED, {
@@ -196,6 +248,75 @@ export class WorkspaceConnectorService {
       userId,
     });
     return sanitizeConnector(await this.getConnectorRaw(connector.id, userId));
+  }
+
+  /**
+   * Validate a saved provider app config's credentials without triggering a
+   * full OAuth authorization. Useful for "Test connection" buttons.
+   *
+   * For OAuth-only providers we can't hit the provider without a real access
+   * token, so we return UNKNOWN with guidance. For PAT-based providers we
+   * call `adapter.validatePat()` with the decrypted secret.
+   */
+  async testAppConfigConnection(input: {
+    provider: WorkspaceProvider;
+    providerAppConfigId: string;
+  }): Promise<HealthCheckResult> {
+    const creds = await this.buildAdapterCredentials(input.providerAppConfigId);
+    const adapter = this.adapterFactory.getAdapter(input.provider);
+    if (creds.personalAccessToken !== undefined && adapter.validatePat !== undefined) {
+      return adapter.validatePat(creds.personalAccessToken, creds.baseUrl);
+    }
+    return {
+      status: WorkspaceConnectorStatus.UNKNOWN,
+      latencyMs: 0,
+      errorMessage:
+        'OAuth app configs are tested by completing the authorization flow via /workspace/oauth/init + /callback.',
+    };
+  }
+
+  /**
+   * Validate a raw PAT without saving it. Adapter must implement `validatePat`.
+   */
+  async testPat(input: {
+    provider: WorkspaceProvider;
+    personalAccessToken: string;
+    baseUrl?: string;
+  }): Promise<HealthCheckResult> {
+    const adapter = this.adapterFactory.getAdapter(input.provider);
+    if (adapter.validatePat === undefined) {
+      throw new BusinessException(
+        `Provider ${input.provider} does not support PAT validation`,
+        'PAT_NOT_SUPPORTED',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return adapter.validatePat(input.personalAccessToken, input.baseUrl);
+  }
+
+  /**
+   * Build the per-call adapter credentials from a provider app config.
+   * Reads `publicConfig` (clientId, redirectUri, baseUrl, tenantId, ...) and
+   * the decrypted `secretConfig` (clientSecret, personalAccessToken, apiToken, ...).
+   */
+  async buildAdapterCredentials(providerAppConfigId: string): Promise<AdapterAppCredentials> {
+    const appConfig = await this.providerAppConfigs.getById(providerAppConfigId);
+    const publicConfig = appConfig.publicConfig as Record<string, unknown>;
+    const secrets = (await this.providerAppConfigs.getDecryptedSecret(providerAppConfigId)) ?? {};
+
+    const readString = (source: Record<string, unknown>, key: string): string | undefined => {
+      const value = source[key];
+      return typeof value === 'string' && value.length > 0 ? value : undefined;
+    };
+
+    return {
+      clientId: readString(publicConfig, 'clientId'),
+      clientSecret: readString(secrets, 'clientSecret'),
+      personalAccessToken:
+        readString(secrets, 'personalAccessToken') ?? readString(secrets, 'apiToken'),
+      baseUrl: readString(publicConfig, 'apiBaseUrl') ?? readString(publicConfig, 'siteUrl'),
+      tenantId: readString(publicConfig, 'tenantId'),
+    };
   }
 
   private async getConnectorRaw(id: string, userId: string): Promise<WorkspaceConnectorWithStats> {

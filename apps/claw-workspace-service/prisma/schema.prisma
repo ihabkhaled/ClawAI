@@ -107,25 +107,31 @@ enum WorkspaceActionStatus {
 // ─── Models ──────────────────────────────────────────────
 
 model WorkspaceConnector {
-  id               String                   @id @default(cuid())
-  userId           String                   @map("user_id")
-  name             String
-  provider         WorkspaceProvider
-  status           WorkspaceConnectorStatus @default(PENDING_AUTH)
-  permissionLevel  WorkspacePermissionLevel @default(READ) @map("permission_level")
-  encryptedTokens  String?                  @map("encrypted_tokens")
-  scopes           String[]                 @default([])
-  expiresAt        DateTime?                @map("expires_at")
-  lastSyncAt       DateTime?                @map("last_sync_at")
-  deltaToken       String?                  @map("delta_token")
-  isEnabled        Boolean                  @default(true) @map("is_enabled")
-  webhookId        String?                  @map("webhook_id")
-  metadata         Json?
-  createdAt        DateTime                 @default(now()) @map("created_at")
-  updatedAt        DateTime                 @updatedAt @map("updated_at")
+  id                  String                    @id @default(cuid())
+  userId              String                    @map("user_id")
+  name                String
+  provider            WorkspaceProvider
+  providerAppConfigId String?                   @map("provider_app_config_id")
+  authMode            WorkspaceProviderAuthMode? @map("auth_mode")
+  status              WorkspaceConnectorStatus  @default(PENDING_AUTH)
+  statusReason        String?                   @map("status_reason")
+  permissionLevel     WorkspacePermissionLevel  @default(READ) @map("permission_level")
+  encryptedTokens     String?                   @map("encrypted_tokens")
+  tokenVersion        Int                       @default(0) @map("token_version")
+  scopes              String[]                  @default([])
+  expiresAt           DateTime?                 @map("expires_at")
+  lastSyncAt          DateTime?                 @map("last_sync_at")
+  lastAuthAt          DateTime?                 @map("last_auth_at")
+  deltaToken          String?                   @map("delta_token")
+  isEnabled           Boolean                   @default(true) @map("is_enabled")
+  webhookId           String?                   @map("webhook_id")
+  metadata            Json?
+  createdAt           DateTime                  @default(now()) @map("created_at")
+  updatedAt           DateTime                  @updatedAt @map("updated_at")
 
   objectCount   Int                    @default(0) @map("object_count")
 
+  appConfig     WorkspaceProviderAppConfig? @relation(fields: [providerAppConfigId], references: [id], onDelete: SetNull)
   syncRuns      WorkspaceSyncRun[]
   healthEvents  WorkspaceHealthEvent[]
   objects       WorkspaceObject[]
@@ -135,6 +141,7 @@ model WorkspaceConnector {
   @@index([provider])
   @@index([status])
   @@index([isEnabled])
+  @@index([providerAppConfigId])
   @@map("workspace_connectors")
 }
 
@@ -273,6 +280,7 @@ model WorkspaceProviderAppConfig {
   updatedAt       DateTime                         @updatedAt @map("updated_at")
 
   definition WorkspaceProviderDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+  connectors WorkspaceConnector[]
 
   @@unique([provider, name])
   @@index([status])

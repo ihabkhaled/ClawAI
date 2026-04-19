@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AppConfig } from '../../../app/config/app.config';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import {
   GITHUB_API_BASE,
@@ -9,7 +8,7 @@ import {
   WRITE_EXECUTION_TIMEOUT_MS,
 } from '../../../common/constants/workspace.constants';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
-import type { WorkspaceAdapter } from './workspace-adapter.interface';
+import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
 import type {
   AdapterCapabilities,
   HealthCheckResult,
@@ -99,15 +98,18 @@ export class GitHubAdapter implements WorkspaceAdapter {
   async exchangeCodeForTokens(
     code: string,
     redirectUri: string,
-    _codeVerifier?: string,
+    _codeVerifier: string | undefined,
+    appCredentials: AdapterAppCredentials,
   ): Promise<OAuthTokenSet> {
-    const config = AppConfig.get();
+    if (!appCredentials.clientId || !appCredentials.clientSecret) {
+      throw new Error('GitHub OAuth requires clientId and clientSecret from provider app config');
+    }
     const response = await fetch(GITHUB_TOKEN_URL, {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        client_id: config.GITHUB_CLIENT_ID,
-        client_secret: config.GITHUB_CLIENT_SECRET,
+        client_id: appCredentials.clientId,
+        client_secret: appCredentials.clientSecret,
         code,
         redirect_uri: redirectUri,
       }),
@@ -122,8 +124,15 @@ export class GitHubAdapter implements WorkspaceAdapter {
     };
   }
 
-  async refreshTokens(_refreshToken: string): Promise<OAuthTokenSet> {
+  async refreshTokens(
+    _refreshToken: string,
+    _appCredentials: AdapterAppCredentials,
+  ): Promise<OAuthTokenSet> {
     throw new Error('GitHub PAT tokens do not support refresh — re-authorize required');
+  }
+
+  async validatePat(personalAccessToken: string): Promise<HealthCheckResult> {
+    return this.healthCheck(personalAccessToken);
   }
 
   getCapabilities(): AdapterCapabilities {
@@ -138,10 +147,6 @@ export class GitHubAdapter implements WorkspaceAdapter {
 
   getAuthorizationBaseUrl(): string {
     return GITHUB_AUTH_BASE;
-  }
-
-  getClientId(): string {
-    return AppConfig.get().GITHUB_CLIENT_ID;
   }
 
   getDefaultScopes(): string[] {

@@ -79,6 +79,7 @@ describe('OAuthTokenManager', () => {
       const result = await manager.initOAuthFlow(
         'user1',
         'GITHUB',
+        'app-config-1',
         'https://app.test/cb',
         'https://github.com/login/oauth/authorize',
         'gh-id',
