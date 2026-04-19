@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import {
+  DownloadStatus,
   type ModelCatalogEntry,
   ModelCategory,
   type Prisma,
   RuntimeType,
 } from '../../../generated/prisma';
 import { type CatalogEntryInput, type CatalogFilters } from '../types/catalog.types';
+import { type CatalogEntryDedupRef } from '../types/ollama.types';
 import { resolveCatalogSourceUrl } from '../utilities/catalog-reference.utility';
 import { DEPRECATED_DEFAULT_LOCAL_MODEL_KEYS } from '../constants/default-models.constants';
 
@@ -118,6 +120,57 @@ export class ModelCatalogRepository {
   async countAll(filters: CatalogFilters): Promise<number> {
     const where = this.buildWhereClause(filters);
     return this.prisma.modelCatalogEntry.count({ where });
+  }
+
+  async createAdminEntry(data: Prisma.ModelCatalogEntryCreateInput): Promise<ModelCatalogEntry> {
+    return this.prisma.modelCatalogEntry.create({ data });
+  }
+
+  async updateById(
+    id: string,
+    data: Prisma.ModelCatalogEntryUpdateInput,
+  ): Promise<ModelCatalogEntry> {
+    return this.prisma.modelCatalogEntry.update({ where: { id }, data });
+  }
+
+  async deleteById(id: string): Promise<ModelCatalogEntry | null> {
+    return this.prisma.modelCatalogEntry.delete({ where: { id } }).catch(() => null);
+  }
+
+  async findByOllamaName(ollamaName: string): Promise<ModelCatalogEntry | null> {
+    return this.prisma.modelCatalogEntry.findFirst({
+      where: { ollamaName: { equals: ollamaName, mode: 'insensitive' } },
+    });
+  }
+
+  async findByHardwareProfile(
+    profile: string,
+    runtime: RuntimeType,
+    limit: number,
+  ): Promise<ModelCatalogEntry[]> {
+    return this.prisma.modelCatalogEntry.findMany({
+      where: {
+        runtime,
+        hardwareProfiles: { has: profile },
+        downloadStatus: { in: [DownloadStatus.AVAILABLE, DownloadStatus.UNKNOWN] },
+      },
+      orderBy: [{ isRecommended: 'desc' }, { displayName: 'asc' }],
+      take: limit,
+    });
+  }
+
+  async listByDownloadStatus(status: DownloadStatus, limit: number): Promise<ModelCatalogEntry[]> {
+    return this.prisma.modelCatalogEntry.findMany({
+      where: { downloadStatus: status },
+      orderBy: [{ isRecommended: 'desc' }, { displayName: 'asc' }],
+      take: limit,
+    });
+  }
+
+  async findAllForDedup(): Promise<CatalogEntryDedupRef[]> {
+    return this.prisma.modelCatalogEntry.findMany({
+      select: { name: true, tag: true, ollamaName: true },
+    });
   }
 
   private buildWhereClause(filters: CatalogFilters): Prisma.ModelCatalogEntryWhereInput {

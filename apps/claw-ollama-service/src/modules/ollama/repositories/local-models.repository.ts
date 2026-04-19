@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { type LocalModel, type Prisma, type RuntimeType } from '../../../generated/prisma';
-import { type CreateLocalModelData, type LocalModelFilters } from '../types/ollama.types';
+import {
+  type CreateLocalModelData,
+  type InstalledModelDedupRef,
+  type LocalModelFilters,
+} from '../types/ollama.types';
 import { DEPRECATED_DEFAULT_LOCAL_MODEL_KEYS } from '../constants/default-models.constants';
 
 @Injectable()
@@ -66,6 +70,13 @@ export class LocalModelsRepository {
     return this.prisma.localModel.findMany({
       where: { isInstalled: true },
       orderBy: { name: 'asc' },
+    });
+  }
+
+  async findInstalledForDedup(): Promise<InstalledModelDedupRef[]> {
+    return this.prisma.localModel.findMany({
+      where: { isInstalled: true },
+      select: { name: true, tag: true },
     });
   }
 

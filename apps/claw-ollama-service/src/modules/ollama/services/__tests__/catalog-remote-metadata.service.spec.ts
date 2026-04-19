@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
-import { type ModelCatalogEntry, ModelCategory, RuntimeType } from '../../../../generated/prisma';
+import {
+  DownloadStatus,
+  type ModelCatalogEntry,
+  ModelCategory,
+  RuntimeType,
+} from '../../../../generated/prisma';
 import { CatalogRemoteMetadataService } from '../catalog-remote-metadata.service';
 
 const getMock = jest.fn<(url: string, config?: unknown) => Promise<unknown>>();
@@ -27,6 +32,12 @@ function createCatalogEntry(overrides: Partial<ModelCatalogEntry> = {}): ModelCa
     sourceUrl: 'https://ollama.com/library/qwen3',
     isRecommended: false,
     capabilities: [],
+    businessCategories: [],
+    hardwareProfiles: [],
+    isDiscovered: false,
+    discoverySourceId: null,
+    downloadStatus: DownloadStatus.UNKNOWN,
+    lastVerifiedAt: null,
     createdAt: new Date('2026-01-01T00:00:00Z'),
     updatedAt: new Date('2026-01-01T00:00:00Z'),
     ...overrides,

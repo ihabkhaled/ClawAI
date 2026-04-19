@@ -109,6 +109,17 @@ export interface UpdateRuntimeConfigData {
   isEnabled?: boolean;
 }
 
+export type InstalledModelDedupRef = {
+  name: string;
+  tag: string;
+};
+
+export type CatalogEntryDedupRef = {
+  name: string;
+  tag: string;
+  ollamaName: string | null;
+};
+
 export type {
   LocalModel,
   LocalModelRoleAssignment,

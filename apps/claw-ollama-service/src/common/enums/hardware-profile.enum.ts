@@ -1,0 +1,8 @@
+export enum HardwareProfile {
+  CPU_ONLY = 'CPU_ONLY',
+  VRAM_8GB = 'VRAM_8GB',
+  VRAM_12GB = 'VRAM_12GB',
+  VRAM_16GB = 'VRAM_16GB',
+  VRAM_24GB = 'VRAM_24GB',
+  VRAM_48GB_PLUS = 'VRAM_48GB_PLUS',
+}

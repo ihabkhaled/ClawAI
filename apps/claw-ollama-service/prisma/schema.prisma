@@ -34,6 +34,16 @@ enum ModelCategory {
   REASONING
   THINKING
   GENERAL
+  MEDICAL
+  MARKETING
+  BUSINESS
+  LITERATURE
+  AGENT
+  SUMMARIZATION
+  JUDGE
+  TRANSLATION
+  VISION
+  EMBEDDING
 }
 
 enum PullJobStatus {
@@ -41,6 +51,36 @@ enum PullJobStatus {
   IN_PROGRESS
   COMPLETED
   FAILED
+}
+
+enum DiscoverySourceType {
+  OLLAMA_REGISTRY
+  OLLAMA_LIBRARY
+  MANUAL
+}
+
+enum DiscoveryRunStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum CandidateStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  IMPORTED
+  DUPLICATE
+  STALE
+}
+
+enum DownloadStatus {
+  AVAILABLE
+  UNAVAILABLE
+  CLOUD_ONLY
+  UNKNOWN
 }
 
 model LocalModel {
@@ -110,25 +150,116 @@ model RuntimeConfig {
 }
 
 model ModelCatalogEntry {
-  id             String        @id @default(cuid())
-  name           String
-  tag            String
-  displayName    String        @map("display_name")
-  category       ModelCategory
-  description    String?
-  sizeBytes      BigInt?       @map("size_bytes")
-  parameterCount String?       @map("parameter_count")
-  quantization   String?
-  runtime        RuntimeType
-  ollamaName     String?       @map("ollama_name")
-  sourceUrl      String?       @map("source_url")
-  isRecommended  Boolean       @default(false) @map("is_recommended")
-  capabilities   String[]
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
+  id                 String              @id @default(cuid())
+  name               String
+  tag                String
+  displayName        String              @map("display_name")
+  category           ModelCategory
+  description        String?
+  sizeBytes          BigInt?             @map("size_bytes")
+  parameterCount     String?             @map("parameter_count")
+  quantization       String?
+  runtime            RuntimeType
+  ollamaName         String?             @map("ollama_name")
+  sourceUrl          String?             @map("source_url")
+  isRecommended      Boolean             @default(false) @map("is_recommended")
+  capabilities       String[]
+  businessCategories String[]            @default([]) @map("business_categories")
+  hardwareProfiles   String[]            @default([]) @map("hardware_profiles")
+  isDiscovered       Boolean             @default(false) @map("is_discovered")
+  discoverySourceId  String?             @map("discovery_source_id")
+  downloadStatus     DownloadStatus      @default(UNKNOWN) @map("download_status")
+  lastVerifiedAt     DateTime?           @map("last_verified_at")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+
+  discoverySource DiscoverySource? @relation(fields: [discoverySourceId], references: [id], onDelete: SetNull)
 
   @@unique([name, tag, runtime])
   @@index([category])
   @@index([runtime])
+  @@index([isDiscovered])
+  @@index([downloadStatus])
   @@map("model_catalog_entries")
+}
+
+model DiscoverySource {
+  id          String              @id @default(cuid())
+  name        String
+  type        DiscoverySourceType
+  baseUrl     String              @map("base_url")
+  isEnabled   Boolean             @default(true) @map("is_enabled")
+  categories  String[]            @default([])
+  maxResults  Int                 @default(50) @map("max_results")
+  minQuality  Int                 @default(0) @map("min_quality")
+  lastRunAt   DateTime?           @map("last_run_at")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  runs            ModelDiscoveryRun[]
+  catalogEntries  ModelCatalogEntry[]
+
+  @@unique([name])
+  @@index([isEnabled])
+  @@index([type])
+  @@map("discovery_sources")
+}
+
+model ModelDiscoveryRun {
+  id              String             @id @default(cuid())
+  sourceId        String             @map("source_id")
+  status          DiscoveryRunStatus @default(PENDING)
+  isDryRun        Boolean            @default(false) @map("is_dry_run")
+  discoveredCount Int                @default(0) @map("discovered_count")
+  importedCount   Int                @default(0) @map("imported_count")
+  skippedCount    Int                @default(0) @map("skipped_count")
+  failedCount     Int                @default(0) @map("failed_count")
+  errorMessage    String?            @map("error_message")
+  triggeredBy     String?            @map("triggered_by")
+  startedAt       DateTime           @default(now()) @map("started_at")
+  completedAt     DateTime?          @map("completed_at")
+
+  source     DiscoverySource           @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  candidates ModelDiscoveryCandidate[]
+
+  @@index([sourceId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("discovery_runs")
+}
+
+model ModelDiscoveryCandidate {
+  id                 String          @id @default(cuid())
+  runId              String          @map("run_id")
+  name               String
+  tag                String
+  displayName        String          @map("display_name")
+  ollamaName         String          @map("ollama_name")
+  description        String?
+  sizeBytes          BigInt?         @map("size_bytes")
+  parameterCount     String?         @map("parameter_count")
+  familyName         String?         @map("family_name")
+  runtime            RuntimeType     @default(OLLAMA)
+  capabilities       String[]        @default([])
+  suggestedCategory  ModelCategory   @map("suggested_category")
+  businessCategories String[]        @default([]) @map("business_categories")
+  hardwareProfiles   String[]        @default([]) @map("hardware_profiles")
+  downloadStatus     DownloadStatus  @default(UNKNOWN) @map("download_status")
+  confidence         Float           @default(0)
+  sourceUrl          String?         @map("source_url")
+  status             CandidateStatus @default(PENDING)
+  duplicateOfId      String?         @map("duplicate_of_id")
+  importedEntryId    String?         @map("imported_entry_id")
+  rejectionReason    String?         @map("rejection_reason")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+
+  run ModelDiscoveryRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, name, tag])
+  @@index([status])
+  @@index([suggestedCategory])
+  @@index([downloadStatus])
+  @@index([ollamaName])
+  @@map("discovery_candidates")
 }

@@ -1,0 +1,238 @@
+import { BusinessCategory } from '../../../common/enums/business-category.enum';
+import { ModelCategory } from '../../../generated/prisma';
+
+export type FamilyTaxonomyEntry = {
+  family: string;
+  aliases: string[];
+  defaultCategory: ModelCategory;
+  businessCategories: BusinessCategory[];
+};
+
+export const FAMILY_TAXONOMY: FamilyTaxonomyEntry[] = [
+  {
+    family: 'qwen',
+    aliases: ['qwen2', 'qwen2.5', 'qwen3', 'qwen-coder', 'qwen2.5-coder'],
+    defaultCategory: ModelCategory.GENERAL,
+    businessCategories: [BusinessCategory.GPT_ASSISTANT, BusinessCategory.PRODUCTIVITY],
+  },
+  {
+    family: 'qwen-coder',
+    aliases: ['qwen2.5-coder', 'qwen3-coder', 'codeqwen'],
+    defaultCategory: ModelCategory.CODING,
+    businessCategories: [BusinessCategory.CODING_ASSISTANT],
+  },
+  {
+    family: 'llama',
+    aliases: ['llama2', 'llama3', 'llama3.1', 'llama3.2', 'llama3.3', 'llama4'],
+    defaultCategory: ModelCategory.GENERAL,
+    businessCategories: [BusinessCategory.GPT_ASSISTANT, BusinessCategory.LITERATURE_WRITER],
+  },
+  {
+    family: 'gemma',
+    aliases: ['gemma', 'gemma2', 'gemma3', 'gemma4'],
+    defaultCategory: ModelCategory.GENERAL,
+    businessCategories: [BusinessCategory.GPT_ASSISTANT, BusinessCategory.PRODUCTIVITY],
+  },
+  {
+    family: 'phi',
+    aliases: ['phi', 'phi2', 'phi3', 'phi4', 'phi4-mini'],
+    defaultCategory: ModelCategory.ROUTING,
+    businessCategories: [BusinessCategory.ROUTER_JUDGE, BusinessCategory.SUMMARIZER],
+  },
+  {
+    family: 'deepseek',
+    aliases: ['deepseek', 'deepseek-r1', 'deepseek-v3'],
+    defaultCategory: ModelCategory.REASONING,
+    businessCategories: [BusinessCategory.ANALYST_RESEARCH],
+  },
+  {
+    family: 'deepseek-coder',
+    aliases: ['deepseek-coder', 'deepseek-coder-v2'],
+    defaultCategory: ModelCategory.CODING,
+    businessCategories: [BusinessCategory.CODING_ASSISTANT],
+  },
+  {
+    family: 'mistral',
+    aliases: ['mistral', 'mixtral', 'mistral-small', 'mistral-nemo'],
+    defaultCategory: ModelCategory.GENERAL,
+    businessCategories: [BusinessCategory.GPT_ASSISTANT, BusinessCategory.BUSINESS_STRATEGIST],
+  },
+  {
+    family: 'devstral',
+    aliases: ['devstral', 'devstral-small', 'codestral'],
+    defaultCategory: ModelCategory.CODING,
+    businessCategories: [BusinessCategory.CODING_ASSISTANT, BusinessCategory.AGENT_TOOL_USE],
+  },
+  {
+    family: 'starcoder',
+    aliases: ['starcoder', 'starcoder2'],
+    defaultCategory: ModelCategory.CODING,
+    businessCategories: [BusinessCategory.CODING_ASSISTANT],
+  },
+  {
+    family: 'codegeex',
+    aliases: ['codegeex', 'codegeex4'],
+    defaultCategory: ModelCategory.CODING,
+    businessCategories: [BusinessCategory.CODING_ASSISTANT],
+  },
+  {
+    family: 'qwq',
+    aliases: ['qwq'],
+    defaultCategory: ModelCategory.REASONING,
+    businessCategories: [BusinessCategory.ANALYST_RESEARCH],
+  },
+  {
+    family: 'glm',
+    aliases: ['glm', 'glm-4', 'glm-5'],
+    defaultCategory: ModelCategory.THINKING,
+    businessCategories: [BusinessCategory.BUSINESS_STRATEGIST, BusinessCategory.ANALYST_RESEARCH],
+  },
+  {
+    family: 'command-r',
+    aliases: ['command-r', 'command-r-plus'],
+    defaultCategory: ModelCategory.FILE_GENERATION,
+    businessCategories: [BusinessCategory.STRUCTURED_OUTPUT, BusinessCategory.AGENT_TOOL_USE],
+  },
+  {
+    family: 'meditron',
+    aliases: ['meditron', 'medllama'],
+    defaultCategory: ModelCategory.MEDICAL,
+    businessCategories: [BusinessCategory.MEDICAL],
+  },
+  {
+    family: 'medgemma',
+    aliases: ['medgemma'],
+    defaultCategory: ModelCategory.MEDICAL,
+    businessCategories: [BusinessCategory.MEDICAL],
+  },
+  {
+    family: 'bio-medical',
+    aliases: ['biomistral', 'bio-medical-llama'],
+    defaultCategory: ModelCategory.MEDICAL,
+    businessCategories: [BusinessCategory.MEDICAL],
+  },
+  {
+    family: 'wizardcoder',
+    aliases: ['wizardcoder', 'wizardlm'],
+    defaultCategory: ModelCategory.CODING,
+    businessCategories: [BusinessCategory.CODING_ASSISTANT],
+  },
+  {
+    family: 'granite',
+    aliases: ['granite', 'granite-code', 'granite3'],
+    defaultCategory: ModelCategory.CODING,
+    businessCategories: [BusinessCategory.CODING_ASSISTANT, BusinessCategory.BUSINESS_STRATEGIST],
+  },
+  {
+    family: 'nous-hermes',
+    aliases: ['nous-hermes', 'hermes', 'openhermes'],
+    defaultCategory: ModelCategory.GENERAL,
+    businessCategories: [BusinessCategory.GPT_ASSISTANT, BusinessCategory.LITERATURE_WRITER],
+  },
+  {
+    family: 'solar',
+    aliases: ['solar'],
+    defaultCategory: ModelCategory.GENERAL,
+    businessCategories: [BusinessCategory.GPT_ASSISTANT],
+  },
+  {
+    family: 'yi',
+    aliases: ['yi', 'yi-coder'],
+    defaultCategory: ModelCategory.GENERAL,
+    businessCategories: [BusinessCategory.GPT_ASSISTANT, BusinessCategory.CODING_ASSISTANT],
+  },
+  {
+    family: 'nemotron',
+    aliases: ['nemotron'],
+    defaultCategory: ModelCategory.REASONING,
+    businessCategories: [BusinessCategory.ANALYST_RESEARCH],
+  },
+  {
+    family: 'storytime',
+    aliases: ['storytime', 'writer', 'storyteller'],
+    defaultCategory: ModelCategory.LITERATURE,
+    businessCategories: [BusinessCategory.LITERATURE_WRITER],
+  },
+  {
+    family: 'marketingllama',
+    aliases: ['marketing-llama', 'saleslama', 'copy-writer'],
+    defaultCategory: ModelCategory.MARKETING,
+    businessCategories: [BusinessCategory.MARKETING],
+  },
+  {
+    family: 'llava',
+    aliases: ['llava', 'bakllava', 'moondream'],
+    defaultCategory: ModelCategory.VISION,
+    businessCategories: [BusinessCategory.VISION_MULTIMODAL],
+  },
+  {
+    family: 'nomic-embed',
+    aliases: ['nomic-embed-text', 'mxbai-embed-large', 'snowflake-arctic-embed'],
+    defaultCategory: ModelCategory.EMBEDDING,
+    businessCategories: [BusinessCategory.SUMMARIZER],
+  },
+  {
+    family: 'tinyllama',
+    aliases: ['tinyllama', 'smollm', 'smollm2'],
+    defaultCategory: ModelCategory.ROUTING,
+    businessCategories: [BusinessCategory.ROUTER_JUDGE],
+  },
+];
+
+export const KEYWORD_TO_CATEGORY: Record<string, ModelCategory> = {
+  coder: ModelCategory.CODING,
+  coding: ModelCategory.CODING,
+  code: ModelCategory.CODING,
+  dev: ModelCategory.CODING,
+  medical: ModelCategory.MEDICAL,
+  med: ModelCategory.MEDICAL,
+  clinic: ModelCategory.MEDICAL,
+  bio: ModelCategory.MEDICAL,
+  marketing: ModelCategory.MARKETING,
+  copy: ModelCategory.MARKETING,
+  sales: ModelCategory.MARKETING,
+  writer: ModelCategory.LITERATURE,
+  story: ModelCategory.LITERATURE,
+  creative: ModelCategory.LITERATURE,
+  reason: ModelCategory.REASONING,
+  think: ModelCategory.THINKING,
+  judge: ModelCategory.JUDGE,
+  router: ModelCategory.ROUTING,
+  embed: ModelCategory.EMBEDDING,
+  vision: ModelCategory.VISION,
+  multimodal: ModelCategory.VISION,
+  translate: ModelCategory.TRANSLATION,
+  summar: ModelCategory.SUMMARIZATION,
+  agent: ModelCategory.AGENT,
+  tool: ModelCategory.AGENT,
+};
+
+export const KEYWORD_TO_BUSINESS: Record<string, BusinessCategory> = {
+  coder: BusinessCategory.CODING_ASSISTANT,
+  coding: BusinessCategory.CODING_ASSISTANT,
+  medical: BusinessCategory.MEDICAL,
+  clinic: BusinessCategory.MEDICAL,
+  marketing: BusinessCategory.MARKETING,
+  copy: BusinessCategory.MARKETING,
+  sales: BusinessCategory.MARKETING,
+  business: BusinessCategory.BUSINESS_STRATEGIST,
+  strategy: BusinessCategory.BUSINESS_STRATEGIST,
+  writer: BusinessCategory.LITERATURE_WRITER,
+  story: BusinessCategory.LITERATURE_WRITER,
+  creative: BusinessCategory.LITERATURE_WRITER,
+  analyst: BusinessCategory.ANALYST_RESEARCH,
+  research: BusinessCategory.ANALYST_RESEARCH,
+  reason: BusinessCategory.ANALYST_RESEARCH,
+  legal: BusinessCategory.LEGAL_DRAFTING,
+  law: BusinessCategory.LEGAL_DRAFTING,
+  agent: BusinessCategory.AGENT_TOOL_USE,
+  tool: BusinessCategory.AGENT_TOOL_USE,
+  judge: BusinessCategory.ROUTER_JUDGE,
+  router: BusinessCategory.ROUTER_JUDGE,
+  summar: BusinessCategory.SUMMARIZER,
+  translate: BusinessCategory.TRANSLATOR,
+  vision: BusinessCategory.VISION_MULTIMODAL,
+  multimodal: BusinessCategory.VISION_MULTIMODAL,
+  chat: BusinessCategory.GPT_ASSISTANT,
+  assistant: BusinessCategory.GPT_ASSISTANT,
+};
