@@ -346,48 +346,49 @@ export class RoutingManager {
 
   private async handleAuto(context: RoutingContext): Promise<RoutingDecisionResult> {
     this.logger.debug('handleAuto: starting AUTO routing');
+    const localEnforcementDomain = this.detectLocalEnforcementDomain(context.message);
 
     // Privacy check FIRST — force local if sensitive content detected
     if (this.detectPrivacySensitive(context.message)) {
       this.logger.log('handleAuto: privacy-sensitive content detected — forcing local routing');
-      return this.buildLocalPrivacyDecision(context, 'domain_privacy');
+      this.logger.debug('handleAuto: local enforcement deferred until after Ollama router');
     }
 
     // Medical and legal content is inherently sensitive — force local
     if (this.detectMedicalRequest(context.message)) {
       this.logger.log('handleAuto: medical content detected — forcing local routing');
-      return this.buildLocalPrivacyDecision(context, 'domain_medical');
+      this.logger.debug('handleAuto: local enforcement deferred until after Ollama router');
     }
     if (this.detectLegalRequest(context.message)) {
       this.logger.log('handleAuto: legal content detected — forcing local routing');
-      return this.buildLocalPrivacyDecision(context, 'domain_legal');
+      this.logger.debug('handleAuto: local enforcement deferred until after Ollama router');
     }
     if (this.detectFinanceRequest(context.message)) {
       this.logger.log('handleAuto: financial content detected — forcing local routing');
-      return this.buildLocalPrivacyDecision(context, 'domain_finance');
+      this.logger.debug('handleAuto: local enforcement deferred until after Ollama router');
     }
     if (this.detectExecutiveRequest(context.message)) {
       this.logger.log('handleAuto: executive content detected — forcing local routing');
-      return this.buildLocalPrivacyDecision(context, 'domain_executive');
+      this.logger.debug('handleAuto: local enforcement deferred until after Ollama router');
     }
     if (this.detectGovernmentRequest(context.message)) {
       this.logger.log(
         'handleAuto: government/intelligence content detected — forcing local routing',
       );
-      return this.buildLocalPrivacyDecision(context, 'domain_government');
+      this.logger.debug('handleAuto: local enforcement deferred until after Ollama router');
     }
 
     // Detect image requests early (before Ollama router, which may misclassify)
     this.logger.debug('handleAuto: checking for image generation request');
     const imageResult = this.detectImageRequest(context);
-    if (imageResult) {
+    if (imageResult && !localEnforcementDomain) {
       this.logger.log('handleAuto: image generation request detected — routing to image provider');
       return imageResult;
     }
 
     this.logger.debug('handleAuto: checking for file generation request');
     const fileResult = this.detectFileGenerationRequest(context);
-    if (fileResult) {
+    if (fileResult && !localEnforcementDomain) {
       this.logger.log(
         'handleAuto: file generation request detected — routing to file-gen provider',
       );
@@ -397,7 +398,7 @@ export class RoutingManager {
     // Multimodal capability routing — must run before category detection so that
     // audio/video/OCR/web-search messages are not incorrectly claimed by local categories
     const capabilityResult = this.capabilityRouter.route(context);
-    if (capabilityResult) {
+    if (capabilityResult && !localEnforcementDomain) {
       this.logger.log(
         `handleAuto: capability routing → ${capabilityResult.provider}/${capabilityResult.model} (${capabilityResult.capability})`,
       );
@@ -415,43 +416,74 @@ export class RoutingManager {
       };
     }
 
-    // Check category-specific local model routing
+    // Try Ollama-assisted routing first
+    this.logger.debug('handleAuto: attempting Ollama-assisted routing');
+    const ollamaDecision = await this.ollamaRouter.route(context);
+    if (ollamaDecision) {
+      this.logger.log(
+        `handleAuto: Ollama router decided ${ollamaDecision.provider}/${ollamaDecision.model} (confidence=${String(ollamaDecision.confidence)})`,
+      );
+      const enforcedLocal = Boolean(localEnforcementDomain);
+      const selectedProvider = enforcedLocal ? LOCAL_PROVIDER : ollamaDecision.provider;
+      const selectedModel = enforcedLocal ? LOCAL_MODEL_DEFAULT : ollamaDecision.model;
+      const primary = { provider: selectedProvider, model: selectedModel };
+      const reasonTags = ['auto', 'ollama_router', ollamaDecision.reason];
+      if (enforcedLocal && localEnforcementDomain) {
+        reasonTags.push('privacy_enforced', 'local_only', localEnforcementDomain);
+      }
+
+      return {
+        selectedProvider,
+        selectedModel,
+        routingMode: RoutingMode.AUTO,
+        confidence: ollamaDecision.confidence,
+        reasonTags,
+        privacyClass: selectedProvider === LOCAL_PROVIDER ? 'local' : 'cloud',
+        costClass: selectedProvider === LOCAL_PROVIDER ? 'free' : 'medium',
+        detectedCategory: localEnforcementDomain?.replace('domain_', ''),
+        fallbackChain: this.buildFallbackChain(primary, context),
+      };
+    }
+
+    if (localEnforcementDomain) {
+      this.logger.log(
+        `handleAuto: Ollama router unavailable - forcing local for ${localEnforcementDomain}`,
+      );
+      return this.buildLocalPrivacyDecision(context, localEnforcementDomain);
+    }
+
+    // Check category-specific local model routing after the router has had first refusal.
     const categoryResult = await this.detectCategoryRoute(context);
     if (categoryResult) {
       this.logger.log('handleAuto: category-specific local model matched');
       return categoryResult;
     }
 
-    // Try Ollama-assisted routing first
-    this.logger.debug('handleAuto: attempting Ollama-assisted routing');
-    const ollamaDecision = await this.ollamaRouter.route(context);
-    if (ollamaDecision) {
-      const canPreferGenericLocal = await this.canPreferGenericLocal(context);
-      if (ollamaDecision.provider === LOCAL_PROVIDER && !canPreferGenericLocal) {
-        this.logger.log(
-          'handleAuto: Ollama router selected local, but no lightweight local chat model is available - continuing to cloud fallback logic',
-        );
-      } else {
-        this.logger.log(
-          `handleAuto: Ollama router decided ${ollamaDecision.provider}/${ollamaDecision.model} (confidence=${String(ollamaDecision.confidence)})`,
-        );
-        const primary = { provider: ollamaDecision.provider, model: ollamaDecision.model };
-        return {
-          selectedProvider: ollamaDecision.provider,
-          selectedModel: ollamaDecision.model,
-          routingMode: RoutingMode.AUTO,
-          confidence: ollamaDecision.confidence,
-          reasonTags: ['auto', 'ollama_router', ollamaDecision.reason],
-          privacyClass: ollamaDecision.provider === LOCAL_PROVIDER ? 'local' : 'cloud',
-          costClass: ollamaDecision.provider === LOCAL_PROVIDER ? 'free' : 'medium',
-          fallbackChain: this.buildFallbackChain(primary, context),
-        };
-      }
-    }
-
     // Fallback to heuristic routing
     this.logger.debug('handleAuto: Ollama router unavailable, using heuristic fallback');
     return this.handleAutoHeuristic(context);
+  }
+
+  private detectLocalEnforcementDomain(message: string): string | null {
+    if (this.detectPrivacySensitive(message)) {
+      return 'domain_privacy';
+    }
+    if (this.detectMedicalRequest(message)) {
+      return 'domain_medical';
+    }
+    if (this.detectLegalRequest(message)) {
+      return 'domain_legal';
+    }
+    if (this.detectFinanceRequest(message)) {
+      return 'domain_finance';
+    }
+    if (this.detectExecutiveRequest(message)) {
+      return 'domain_executive';
+    }
+    if (this.detectGovernmentRequest(message)) {
+      return 'domain_government';
+    }
+    return null;
   }
 
   private async handleAutoHeuristic(context: RoutingContext): Promise<RoutingDecisionResult> {
@@ -1285,11 +1317,11 @@ export class RoutingManager {
   }
 
   private isConnectorHealthy(provider: string, context: RoutingContext): boolean {
-    // If no health data exists at all, assume connectors are available (best-effort)
+    // If no health data exists, treat connectors as unavailable
     const healthMap = context.connectorHealth;
     if (!healthMap || Object.keys(healthMap).length === 0) {
-      this.logger.debug(`isConnectorHealthy: no health data — assuming ${provider} is available`);
-      return true;
+      this.logger.debug(`isConnectorHealthy: no health data - treating ${provider} as unavailable`);
+      return false;
     }
     const healthy = healthMap[provider] ?? false;
     this.logger.debug(`isConnectorHealthy: provider=${provider} healthy=${String(healthy)}`);

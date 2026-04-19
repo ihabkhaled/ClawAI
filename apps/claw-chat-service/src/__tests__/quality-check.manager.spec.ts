@@ -48,8 +48,8 @@ describe('QualityCheckManager', () => {
       expect(result.score).toBeLessThan(1);
     });
 
-    it('should mark short echo responses as weak', () => {
-      const prompt = 'Hi there';
+    it('should mark short echo responses as weak for non-trivial prompts', () => {
+      const prompt = 'Need quick status update';
       const result = manager.checkResponseQuality(prompt, prompt);
       expect(result.isWeak).toBe(true);
       expect(result.reasons).toContain('echo_response');
@@ -57,7 +57,7 @@ describe('QualityCheckManager', () => {
 
     it('should detect excessive repetition', () => {
       const repeatedText = Array(20).fill('the same words repeated').join(' ');
-      const result = manager.checkResponseQuality(repeatedText, 'Tell me something');
+      const result = manager.checkResponseQuality(repeatedText, 'Please tell me something useful');
       expect(result.reasons).toContain('excessive_repetition');
     });
 

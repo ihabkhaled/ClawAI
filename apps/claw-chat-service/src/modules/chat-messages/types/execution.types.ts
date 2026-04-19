@@ -39,6 +39,10 @@ export type OllamaGenerateRequest = {
   prompt: string;
   stream?: boolean;
   images?: string[];
+  options?: {
+    temperature?: number;
+    num_predict?: number;
+  };
 };
 
 export type OllamaGenerateResponse = {

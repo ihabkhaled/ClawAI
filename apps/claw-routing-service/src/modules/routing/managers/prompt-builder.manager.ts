@@ -104,7 +104,10 @@ export class PromptBuilderManager {
     );
     const grouped = this.groupModelsByCategory(filteredModels);
     const localSection = this.buildLocalModelsSection(grouped);
-    return this.buildFullPromptTemplate(localSection);
+    const useCompactPrompt = process.env.ROUTER_COMPACT_PROMPT !== 'false';
+    return useCompactPrompt
+      ? this.buildCompactPromptTemplate(localSection)
+      : this.buildFullPromptTemplate(localSection);
   }
 
   private filterRouterOnlyModels(models: InstalledModelInfo[]): InstalledModelInfo[] {
@@ -137,6 +140,38 @@ export class PromptBuilderManager {
     }
 
     return lines.join('\n');
+  }
+
+  private buildCompactPromptTemplate(localSection: string): string {
+    return `You are a routing engine. Pick the best provider and model for the user message.
+Return only valid JSON. Do not answer the user.
+
+Available local response models:
+${localSection}
+
+Cloud and special providers:
+- GEMINI / gemini-2.5-flash: fast general cloud, multimodal, file reading, vision
+- ANTHROPIC / claude-sonnet-4: coding, debugging, technical work
+- ANTHROPIC / claude-opus-4: complex reasoning and architecture
+- OPENAI / gpt-4o-mini: quick general text
+- IMAGE_GEMINI / gemini-2.5-flash-image: image creation
+- IMAGE_LOCAL / sdxl-turbo: local image creation
+- FILE_GENERATION / auto: file, PDF, DOCX, CSV, or export creation
+
+Healthy providers: {healthyProviders}
+
+Rules:
+- Never choose qwen3:1.7b as the response model; it is router-only.
+- Use only providers listed in Healthy providers.
+- Private, medical, legal, finance, secrets, or internal business data must stay local-ollama.
+- Image creation uses IMAGE_GEMINI / gemini-2.5-flash-image.
+- File creation uses FILE_GENERATION / auto.
+- Coding uses ANTHROPIC / claude-sonnet-4 if healthy, otherwise local-ollama / AUTO.
+- Simple chat, summaries, translation, and private work use local-ollama / AUTO.
+- Always return model "AUTO" when provider is local-ollama; do not choose a specific local response model.
+- Return exactly this JSON shape: {"provider":"...","model":"...","confidence":0.0,"reason":"..."}
+
+User message: {message}`;
   }
 
   private buildFullPromptTemplate(localSection: string): string {

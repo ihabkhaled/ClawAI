@@ -3,6 +3,7 @@ export type InstalledModelInfo = {
   tag: string;
   roles: string[];
   parameterCount: string | null;
+  sizeBytes: number | null;
 };
 
 export type InstalledModelsResponse = {

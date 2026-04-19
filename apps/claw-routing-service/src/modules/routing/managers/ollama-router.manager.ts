@@ -3,7 +3,6 @@ import { AppConfig, type AppConfigType } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities';
 import {
   LOCAL_MODEL_DEFAULT,
-  LOCAL_MODEL_ROUTER,
   LOCAL_PROVIDER,
   ollamaRouterResponseSchema,
   VALID_PROVIDERS,
@@ -51,7 +50,7 @@ export class OllamaRouterManager {
           model: routerModel,
           prompt,
           stream: false,
-          options: { temperature: 0, num_predict: 200 },
+          options: { temperature: 0, num_predict: 80 },
         },
         timeoutMs: config.OLLAMA_ROUTER_TIMEOUT_MS,
       });
@@ -79,6 +78,13 @@ export class OllamaRouterManager {
         this.logger.warn(
           `route: decision rejected — provider=${normalized.provider} not valid/healthy`,
         );
+        const localFallback = this.buildLocalFallbackDecision(normalized, context);
+        if (localFallback) {
+          this.logger.log(
+            `route: router selected unavailable provider ${normalized.provider}; using ${LOCAL_PROVIDER}/${LOCAL_MODEL_DEFAULT}`,
+          );
+          return localFallback;
+        }
         return null;
       }
 
@@ -155,17 +161,45 @@ export class OllamaRouterManager {
   }
 
   private normalizeDecision(decision: OllamaRouterDecision): OllamaRouterDecision {
-    if (decision.provider === LOCAL_PROVIDER) {
+    const rawProvider = decision.provider.trim();
+    const provider =
+      rawProvider.toLowerCase() === LOCAL_PROVIDER ? LOCAL_PROVIDER : rawProvider.toUpperCase();
+
+    if (provider !== decision.provider) {
+      this.logger.debug(
+        `normalizeDecision: provider ${decision.provider} canonicalized to ${provider}`,
+      );
+    }
+
+    if (provider === LOCAL_PROVIDER) {
       const model = decision.model.trim();
-      if (model.length === 0 || model === LOCAL_MODEL_ROUTER) {
+      if (model !== LOCAL_MODEL_DEFAULT) {
         this.logger.warn(
-          `normalizeDecision: router selected router-only model ${model || '(empty)'}, remapping to ${LOCAL_MODEL_DEFAULT}`,
+          `normalizeDecision: local model ${model || '(empty)'} remapped to ${LOCAL_MODEL_DEFAULT}`,
         );
-        return { ...decision, model: LOCAL_MODEL_DEFAULT };
+        return { ...decision, provider, model: LOCAL_MODEL_DEFAULT };
       }
     }
 
-    return decision;
+    return { ...decision, provider, model: decision.model.trim() };
+  }
+
+  private buildLocalFallbackDecision(
+    decision: OllamaRouterDecision,
+    context: RoutingContext,
+  ): OllamaRouterDecision | null {
+    const localHealthy = context.runtimeHealth?.['OLLAMA'] ?? true;
+    if (!localHealthy || decision.provider === LOCAL_PROVIDER) {
+      return null;
+    }
+
+    return {
+      ...decision,
+      provider: LOCAL_PROVIDER,
+      model: LOCAL_MODEL_DEFAULT,
+      confidence: 0.6,
+      reason: `Router selected unavailable ${decision.provider}; using local AUTO`,
+    };
   }
 
   private validateDecision(decision: OllamaRouterDecision, context: RoutingContext): boolean {
@@ -186,9 +220,9 @@ export class OllamaRouterManager {
     const healthMap = context.connectorHealth;
     if (!healthMap || Object.keys(healthMap).length === 0) {
       this.logger.debug(
-        `validateDecision: no health data — assuming ${decision.provider} is available`,
+        `validateDecision: no health data - treating ${decision.provider} as unavailable`,
       );
-      return true;
+      return false;
     }
     const healthy = healthMap[decision.provider] ?? false;
     this.logger.debug(

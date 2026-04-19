@@ -218,20 +218,6 @@ export class ChatExecutionManager implements OnModuleInit {
       return candidates;
     }
 
-    // Cloud fallbacks come from the current routing decision plus the healthy connector set.
-    const allCloudProviders = [
-      { provider: 'GEMINI', model: 'gemini-2.5-flash' },
-      { provider: 'ANTHROPIC', model: 'claude-sonnet-4' },
-      { provider: 'OPENAI', model: 'gpt-4o-mini' },
-      { provider: 'GROK', model: 'grok-3-mini' },
-    ];
-
-    for (const cloud of allCloudProviders) {
-      if (!candidates.some((c) => c.provider === cloud.provider)) {
-        candidates.push(cloud);
-      }
-    }
-
     return candidates;
   }
 
@@ -334,7 +320,7 @@ export class ChatExecutionManager implements OnModuleInit {
     context: AssembledContext,
     startTime: number,
     usedFallback: boolean,
-    _threadSettings?: ThreadSettings,
+    threadSettings?: ThreadSettings,
   ): Promise<LlmResponse> {
     const resolvedModel = await this.resolveModel(model);
     this.logger.log(`callOllama: calling model=${resolvedModel}`);
@@ -351,10 +337,15 @@ export class ChatExecutionManager implements OnModuleInit {
       .filter((c): c is string => c !== null && c.length > 0);
     this.logger.debug(`callOllama: found ${String(images.length)} images for multimodal input`);
 
+    const maxOutputTokens = Math.min(threadSettings?.maxTokens ?? 128, 128);
     const requestBody: OllamaGenerateRequest = {
       model: resolvedModel,
       prompt,
       stream: false,
+      options: {
+        temperature: threadSettings?.temperature ?? 0.2,
+        num_predict: maxOutputTokens,
+      },
       ...(images.length > 0 ? { images } : {}),
     };
 

@@ -91,6 +91,10 @@ export class LocalModelSelectionService {
   }
 
   private modelScore(model: InstalledModelInfo): number {
+    if (model.sizeBytes !== null && Number.isFinite(model.sizeBytes)) {
+      return model.sizeBytes;
+    }
+
     const raw = model.parameterCount ?? '';
     const normalized = raw.toLowerCase().replaceAll(/[^0-9.]/g, '');
     const parsed = Number.parseFloat(normalized);

@@ -312,6 +312,13 @@ export class OllamaService implements OnModuleInit {
       throw new EntityNotFoundException('LocalModel', modelId);
     }
     const fullName = `${model.name}:${model.tag}`;
+    if (fullName === DEFAULT_ROUTER_MODEL) {
+      throw new BusinessException(
+        `Model ${fullName} is reserved for AUTO routing and cannot be deleted`,
+        'ROUTER_MODEL_NOT_DELETABLE',
+      );
+    }
+
     this.logger.log(`deleteModel: deleting model ${fullName} id=${modelId}`);
     await this.ollamaManager.deleteModel(modelId);
     await this.pullJobsRepository.deleteByModelName(fullName);

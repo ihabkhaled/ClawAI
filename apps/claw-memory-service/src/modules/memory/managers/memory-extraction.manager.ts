@@ -110,6 +110,7 @@ export class MemoryExtractionManager {
           tag: string;
           roles: string[];
           parameterCount: string | null;
+          sizeBytes?: number | null;
         }>;
       }>({
         url: `${ollamaUrl}/api/v1/internal/ollama/installed-models`,
@@ -122,6 +123,7 @@ export class MemoryExtractionManager {
       }
 
       const candidates = response.data.models.filter((entry) => !entry.roles.includes('ROUTER'));
+      candidates.sort((a, b) => this.modelScore(a) - this.modelScore(b));
       const fallback =
         candidates.find((entry) => entry.roles.includes('LOCAL_REASONING')) ??
         candidates.find((entry) => entry.roles.includes('LOCAL_FALLBACK_CHAT')) ??
@@ -131,5 +133,19 @@ export class MemoryExtractionManager {
     } catch {
       return 'AUTO';
     }
+  }
+
+  private modelScore(model: { parameterCount: string | null; sizeBytes?: number | null }): number {
+    if (
+      model.sizeBytes !== null &&
+      model.sizeBytes !== undefined &&
+      Number.isFinite(model.sizeBytes)
+    ) {
+      return model.sizeBytes;
+    }
+
+    const normalized = (model.parameterCount ?? '').toLowerCase().replaceAll(/[^0-9.]/g, '');
+    const parsed = Number.parseFloat(normalized);
+    return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
   }
 }
