@@ -1,9 +1,5 @@
 import { Locale } from '@/enums/locale.enum';
-import type {
-  TranslationDictionary,
-  TranslationKey,
-  TranslationNamespace,
-} from '@/types/i18n.types';
+import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEFAULT_LOCALE } from './i18n.constants';
 import { ar } from './locales/ar';
@@ -48,30 +44,28 @@ export function getTranslation(
   const dict = getDictionary(locale);
   const parts = key.split('.');
 
-  if (parts.length !== 2) {
+  if (parts.length < 2) {
     return key;
   }
 
-  const [namespace, field] = parts as [string, string];
-
-  const section = dict[namespace as TranslationNamespace] as Record<string, string> | undefined;
-
-  if (!section) {
-    return key;
+  let current: unknown = dict;
+  for (const part of parts) {
+    if (typeof current !== 'object' || current === null) {
+      return key;
+    }
+    current = (current as Record<string, unknown>)[part];
   }
 
-  const value = section[field as TranslationKey<TranslationNamespace>];
-
-  if (typeof value !== 'string') {
+  if (typeof current !== 'string') {
     return key;
   }
 
   if (!params) {
-    return value;
+    return current;
   }
 
   return Object.entries(params).reduce<string>(
     (result, [paramKey, paramValue]) => result.replaceAll(`{${paramKey}}`, String(paramValue)),
-    value,
+    current,
   );
 }

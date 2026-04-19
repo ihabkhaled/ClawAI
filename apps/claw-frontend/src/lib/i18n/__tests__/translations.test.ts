@@ -49,8 +49,14 @@ describe('getTranslation', () => {
     expect(getTranslation(Locale.EN, 'nodot')).toBe('nodot');
   });
 
-  it('returns the key itself when key has more than one dot', () => {
-    expect(getTranslation(Locale.EN, 'a.b.c')).toBe('a.b.c');
+  it('returns the key itself when nested key does not resolve', () => {
+    expect(getTranslation(Locale.EN, 'nonexistent.nested.key')).toBe('nonexistent.nested.key');
+  });
+
+  it('resolves valid nested keys (3+ levels deep)', () => {
+    expect(getTranslation(Locale.EN, 'discovery.title')).toBe('Model Discovery');
+    expect(getTranslation(Locale.EN, 'discovery.filter.pending')).toBe('Pending');
+    expect(getTranslation(Locale.EN, 'discovery.candidates.empty.title')).toBe('No candidates');
   });
 
   it('returns the key for an empty string', () => {
