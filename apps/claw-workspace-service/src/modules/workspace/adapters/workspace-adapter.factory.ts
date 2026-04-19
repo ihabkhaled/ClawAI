@@ -7,6 +7,17 @@ import { JiraAdapter } from './jira.adapter';
 import { GoogleDriveAdapter } from './google-drive.adapter';
 import type { WorkspaceAdapter } from './workspace-adapter.interface';
 
+const NOT_IMPLEMENTED_PROVIDERS = new Set<WorkspaceProvider>([
+  WorkspaceProvider.GITLAB,
+  WorkspaceProvider.BITBUCKET,
+  WorkspaceProvider.CONFLUENCE,
+  WorkspaceProvider.GMAIL,
+  WorkspaceProvider.FIGMA,
+  WorkspaceProvider.CLICKUP,
+  WorkspaceProvider.MICROSOFT_SHAREPOINT,
+  WorkspaceProvider.MICROSOFT_ONEDRIVE,
+]);
+
 @Injectable()
 export class WorkspaceAdapterFactory {
   constructor(
@@ -17,18 +28,25 @@ export class WorkspaceAdapterFactory {
   ) {}
 
   getAdapter(provider: WorkspaceProvider | string): WorkspaceAdapter {
-    switch (provider) {
+    const typed = provider as WorkspaceProvider;
+
+    if (NOT_IMPLEMENTED_PROVIDERS.has(typed)) {
+      throw new BusinessException(
+        `Adapter for provider ${provider} is registered but not yet implemented`,
+        'ADAPTER_NOT_IMPLEMENTED',
+        HttpStatus.NOT_IMPLEMENTED,
+        { provider },
+      );
+    }
+
+    switch (typed) {
       case WorkspaceProvider.GITHUB:
-      case WorkspaceProvider.GITLAB:
-      case WorkspaceProvider.BITBUCKET:
         return this.github;
       case WorkspaceProvider.SLACK:
         return this.slack;
       case WorkspaceProvider.JIRA:
-      case WorkspaceProvider.CONFLUENCE:
         return this.jira;
       case WorkspaceProvider.GOOGLE_DRIVE:
-      case WorkspaceProvider.GMAIL:
         return this.googleDrive;
       default:
         throw new BusinessException(

@@ -127,7 +127,7 @@ describe('ChatExecutionManager', () => {
       options: { num_predict: number };
       prompt: string;
     };
-    expect(requestBody.options.num_predict).toBe(96);
+    expect(requestBody.options.num_predict).toBe(72);
     expect(requestBody.prompt).toContain('Respond briefly in 2-4 sentences');
   });
 
@@ -163,7 +163,7 @@ describe('ChatExecutionManager', () => {
     expect(result.fastPathUsed).toBe(false);
 
     const requestBody = httpRequest.mock.calls[0][0].body as { options: { num_predict: number } };
-    expect(requestBody.options.num_predict).toBe(128);
+    expect(requestBody.options.num_predict).toBe(112);
   });
 
   it('caps cloud max_tokens and injects short constraint in fast AUTO mode', async () => {
@@ -200,7 +200,7 @@ describe('ChatExecutionManager', () => {
       false,
       undefined,
       'AUTO',
-      { fastPathEnabled: true, maxOutputTokens: 96, applyShortResponseConstraint: true },
+      { fastPathEnabled: true, maxOutputTokens: 72, applyShortResponseConstraint: true },
     );
 
     expect(result.content).toBe('Service is healthy.');
@@ -208,7 +208,7 @@ describe('ChatExecutionManager', () => {
       max_tokens: number;
       messages: Array<{ role: string; content: string }>;
     };
-    expect(completionRequest.max_tokens).toBe(96);
+    expect(completionRequest.max_tokens).toBe(72);
     expect(completionRequest.messages[0]?.role).toBe('system');
     expect(completionRequest.messages[0]?.content).toContain('Respond briefly in 2-4 sentences');
   });

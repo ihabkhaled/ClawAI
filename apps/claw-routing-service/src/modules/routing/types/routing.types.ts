@@ -16,6 +16,10 @@ export interface RoutingContext {
   contextPacks?: string[];
   connectorHealth?: Record<string, boolean>;
   runtimeHealth?: Record<string, boolean>;
+  providerLatencyMs?: Record<string, number>;
+  providerCircuitOpenUntil?: Record<string, number>;
+  localDegradeLatencyMs?: number;
+  latencyPenaltyStepMs?: number;
   userMode?: RoutingMode;
   forcedModel?: string;
   forcedProvider?: string;

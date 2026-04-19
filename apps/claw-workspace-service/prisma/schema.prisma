@@ -25,6 +25,28 @@ enum WorkspaceProvider {
   MICROSOFT_ONEDRIVE
 }
 
+enum WorkspaceProviderAuthMode {
+  OAUTH2
+  PAT
+  BASIC
+  SERVICE_ACCOUNT
+  NONE
+}
+
+enum WorkspaceProviderDefinitionStatus {
+  ACTIVE
+  BETA
+  DEPRECATED
+  DISABLED
+}
+
+enum WorkspaceProviderAppConfigStatus {
+  DRAFT
+  READY
+  DISABLED
+  INVALID
+}
+
 enum WorkspaceConnectorStatus {
   CONNECTED
   DEGRADED
@@ -205,6 +227,57 @@ model WorkspaceAction {
   @@index([status])
   @@index([requestedAt])
   @@map("workspace_actions")
+}
+
+model WorkspaceProviderDefinition {
+  id               String                            @id @default(cuid())
+  provider         WorkspaceProvider                 @unique
+  displayName      String                            @map("display_name")
+  description      String?
+  authModes        WorkspaceProviderAuthMode[]       @map("auth_modes")
+  defaultAuthMode  WorkspaceProviderAuthMode         @map("default_auth_mode")
+  configSchema     Json                              @map("config_schema")
+  capabilities     Json                              @default("{}")
+  supportedObjects WorkspaceObjectType[]             @map("supported_objects")
+  supportedActions WorkspaceActionType[]             @map("supported_actions")
+  iconUrl          String?                           @map("icon_url")
+  docsUrl          String?                           @map("docs_url")
+  adapterKey       String                            @map("adapter_key")
+  status           WorkspaceProviderDefinitionStatus @default(ACTIVE)
+  version          Int                               @default(1)
+  createdAt        DateTime                          @default(now()) @map("created_at")
+  updatedAt        DateTime                          @updatedAt @map("updated_at")
+
+  appConfigs WorkspaceProviderAppConfig[]
+
+  @@index([status])
+  @@map("workspace_provider_definitions")
+}
+
+model WorkspaceProviderAppConfig {
+  id              String                           @id @default(cuid())
+  provider        WorkspaceProvider
+  definitionId    String                           @map("definition_id")
+  name            String
+  description     String?
+  authMode        WorkspaceProviderAuthMode        @map("auth_mode")
+  publicConfig    Json                             @default("{}") @map("public_config")
+  encryptedSecret String?                          @map("encrypted_secret")
+  secretVersion   Int                              @default(0) @map("secret_version")
+  scopes          String[]                         @default([])
+  status          WorkspaceProviderAppConfigStatus @default(DRAFT)
+  lastValidatedAt DateTime?                        @map("last_validated_at")
+  validationError String?                          @map("validation_error")
+  createdBy       String                           @map("created_by")
+  createdAt       DateTime                         @default(now()) @map("created_at")
+  updatedAt       DateTime                         @updatedAt @map("updated_at")
+
+  definition WorkspaceProviderDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, name])
+  @@index([status])
+  @@index([definitionId])
+  @@map("workspace_provider_app_configs")
 }
 
 model WorkspaceObjectLink {

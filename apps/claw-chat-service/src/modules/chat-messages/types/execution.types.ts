@@ -33,12 +33,16 @@ export type LlmResponse = {
   reRouteReasons?: string[];
   judgeRefereeMetadata?: JudgeRefereeMetadata;
   fastPathUsed?: boolean;
+  fastPathEscalated?: boolean;
+  executionPath?: 'fast' | 'standard' | 'fast_escalated';
+  targetLatencyMs?: number;
 };
 
 export type OllamaGenerateRequest = {
   model: string;
   prompt: string;
   stream?: boolean;
+  keep_alive?: string;
   images?: string[];
   options?: {
     temperature?: number;

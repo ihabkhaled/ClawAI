@@ -45,6 +45,7 @@ import {
   IMAGE_KEYWORDS,
   IMAGE_MODEL_DALLE3,
   IMAGE_MODEL_IMAGEN,
+  IMAGE_MODEL_SD_LOCAL,
   IMAGE_PROVIDER_GEMINI,
   IMAGE_PROVIDER_LOCAL,
   IMAGE_PROVIDER_OPENAI,
@@ -148,6 +149,20 @@ export class RoutingManager {
     this.logger.debug(
       `buildFallbackChain: building for primary=${primary.provider}/${primary.model}`,
     );
+
+    if (primary.provider === FILE_GENERATION_PROVIDER) {
+      this.logger.debug('buildFallbackChain: file-generation primary - no cross-class fallback');
+      return [];
+    }
+
+    if (primary.provider.startsWith('IMAGE_')) {
+      const imageChain = this.buildImageFallbackChain(primary, context);
+      this.logger.debug(
+        `buildFallbackChain: image primary - chain length=${String(imageChain.length)}`,
+      );
+      return imageChain;
+    }
+
     const chain: FallbackEntry[] = [];
     const isLocalPrimary = primary.provider === LOCAL_PROVIDER;
 
@@ -196,6 +211,11 @@ export class RoutingManager {
       );
       this.logger.debug('buildFallbackChain: sorted fallbacks by cost (cheapest first)');
     }
+
+    chain.sort(
+      (a, b) =>
+        this.getLatencyPenalty(a.provider, context) - this.getLatencyPenalty(b.provider, context),
+    );
 
     this.logger.debug(`buildFallbackChain: chain built with ${String(chain.length)} entries`);
     return chain;
@@ -532,9 +552,20 @@ export class RoutingManager {
     const messageLength = context.message.length;
     const complexity = context.complexity;
     const canPreferGenericLocal = await this.canPreferGenericLocal(context);
+    const localLatencyMs = context.providerLatencyMs?.[LOCAL_PROVIDER] ?? null;
     this.logger.debug(
-      `handleAutoHeuristic: localHealthy=${String(localHealthy)} messageLength=${String(messageLength)} complexity=${complexity?.class ?? 'unclassified'} canPreferGenericLocal=${String(canPreferGenericLocal)}`,
+      `handleAutoHeuristic: localHealthy=${String(localHealthy)} messageLength=${String(messageLength)} complexity=${complexity?.class ?? 'unclassified'} canPreferGenericLocal=${String(canPreferGenericLocal)} localLatencyMs=${String(localLatencyMs ?? 'n/a')}`,
     );
+    const cloudPriority: FallbackEntry[] = [
+      { provider: CLOUD_PROVIDER_ANTHROPIC, model: CLOUD_MODEL_DEFAULT },
+      { provider: CLOUD_PROVIDER_OPENAI, model: CLOUD_MODEL_FAST },
+      { provider: CLOUD_PROVIDER_GEMINI, model: CLOUD_MODEL_GEMINI_DEFAULT },
+    ];
+    const bestAvailable = this.selectBestCloudCandidate(context, cloudPriority);
+    const localLikelySlow =
+      localLatencyMs !== null &&
+      localLatencyMs >= (context.localDegradeLatencyMs ?? 18_000) &&
+      bestAvailable !== null;
 
     // SAR2: EXPERT complexity → prefer high-reasoning cloud model when available
     if (
@@ -557,7 +588,12 @@ export class RoutingManager {
     }
 
     // SAR2: SIMPLE complexity + local available → prefer local immediately
-    if (complexity?.class === ComplexityClass.SIMPLE && localHealthy && canPreferGenericLocal) {
+    if (
+      complexity?.class === ComplexityClass.SIMPLE &&
+      localHealthy &&
+      canPreferGenericLocal &&
+      !localLikelySlow
+    ) {
       this.logger.log('handleAutoHeuristic: SIMPLE complexity + local available — routing local');
       const primary = { provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT };
       return {
@@ -574,7 +610,7 @@ export class RoutingManager {
     }
 
     // Prefer local for short messages if Ollama is available
-    if (localHealthy && messageLength < 500 && canPreferGenericLocal) {
+    if (localHealthy && messageLength < 500 && canPreferGenericLocal && !localLikelySlow) {
       this.logger.debug('handleAutoHeuristic: short message + local available — using local');
       const primary = { provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT };
       return {
@@ -589,16 +625,6 @@ export class RoutingManager {
       };
     }
 
-    // For cloud: pick the best available connector in priority order
-    this.logger.debug('handleAutoHeuristic: checking cloud provider availability');
-    const cloudPriority: FallbackEntry[] = [
-      { provider: CLOUD_PROVIDER_ANTHROPIC, model: CLOUD_MODEL_DEFAULT },
-      { provider: CLOUD_PROVIDER_OPENAI, model: CLOUD_MODEL_FAST },
-      { provider: CLOUD_PROVIDER_GEMINI, model: CLOUD_MODEL_GEMINI_DEFAULT },
-    ];
-
-    const bestAvailable = cloudPriority.find((c) => this.isConnectorHealthy(c.provider, context));
-
     if (bestAvailable) {
       this.logger.debug(
         `handleAutoHeuristic: best available cloud=${bestAvailable.provider}/${bestAvailable.model}`,
@@ -607,8 +633,13 @@ export class RoutingManager {
         selectedProvider: bestAvailable.provider,
         selectedModel: bestAvailable.model,
         routingMode: RoutingMode.AUTO,
-        confidence: 0.75,
-        reasonTags: ['auto', 'cloud_preferred', 'connector_available'],
+        confidence: localLikelySlow ? 0.8 : 0.75,
+        reasonTags: [
+          'auto',
+          'cloud_preferred',
+          'connector_available',
+          ...(localLikelySlow ? ['latency_aware', 'local_slow'] : ['latency_aware']),
+        ],
         privacyClass: 'cloud',
         costClass: 'medium',
         fallbackChain: this.buildFallbackChain(bestAvailable, context),
@@ -838,7 +869,7 @@ export class RoutingManager {
     }
 
     // Fallback to local SD
-    return this.buildImageDecision(IMAGE_PROVIDER_LOCAL, 'sdxl-turbo', context);
+    return this.buildImageDecision(IMAGE_PROVIDER_LOCAL, IMAGE_MODEL_SD_LOCAL, context);
   }
 
   private buildImageDecision(
@@ -1309,7 +1340,122 @@ export class RoutingManager {
     return `${model.name}:${model.tag}`;
   }
 
+  private buildImageFallbackChain(
+    primary: FallbackEntry,
+    context: RoutingContext,
+  ): FallbackEntry[] {
+    const candidates: FallbackEntry[] = [
+      { provider: IMAGE_PROVIDER_GEMINI, model: IMAGE_MODEL_IMAGEN },
+      { provider: IMAGE_PROVIDER_OPENAI, model: IMAGE_MODEL_DALLE3 },
+      { provider: IMAGE_PROVIDER_LOCAL, model: IMAGE_MODEL_SD_LOCAL },
+    ];
+
+    const fallback = candidates
+      .filter((candidate) => candidate.provider !== primary.provider)
+      .filter((candidate) => this.isImageProviderHealthy(candidate.provider, context));
+
+    fallback.sort(
+      (a, b) =>
+        this.getLatencyPenalty(a.provider, context) - this.getLatencyPenalty(b.provider, context),
+    );
+
+    return fallback;
+  }
+
+  private isImageProviderHealthy(provider: string, context: RoutingContext): boolean {
+    switch (provider) {
+      case IMAGE_PROVIDER_GEMINI:
+        return this.isConnectorHealthy(CLOUD_PROVIDER_GEMINI, context);
+      case IMAGE_PROVIDER_OPENAI:
+        return this.isConnectorHealthy(CLOUD_PROVIDER_OPENAI, context);
+      case IMAGE_PROVIDER_LOCAL:
+        return this.isRuntimeHealthy('OLLAMA', context);
+      default:
+        return false;
+    }
+  }
+
+  private selectBestCloudCandidate(
+    context: RoutingContext,
+    cloudPriority: FallbackEntry[],
+  ): FallbackEntry | null {
+    const healthyCandidates = cloudPriority.filter(
+      (candidate) =>
+        this.isConnectorHealthy(candidate.provider, context) &&
+        !this.isProviderCircuitOpen(candidate.provider, context),
+    );
+
+    if (healthyCandidates.length === 0) {
+      return null;
+    }
+
+    healthyCandidates.sort(
+      (a, b) =>
+        this.getLatencyPenalty(a.provider, context) - this.getLatencyPenalty(b.provider, context),
+    );
+
+    return healthyCandidates[0] ?? null;
+  }
+
+  private getLatencyPenalty(provider: string, context: RoutingContext): number {
+    if (this.isProviderCircuitOpen(provider, context)) {
+      return Number.MAX_SAFE_INTEGER;
+    }
+
+    const candidates = this.getProviderMetricCandidates(provider);
+    const latencyMap = context.providerLatencyMs ?? {};
+    const latencyPenaltyStepMs = context.latencyPenaltyStepMs ?? 6_000;
+    let bestLatency = Number.POSITIVE_INFINITY;
+
+    for (const candidate of candidates) {
+      const value = latencyMap[candidate];
+      if (typeof value === 'number' && value > 0 && value < bestLatency) {
+        bestLatency = value;
+      }
+    }
+
+    if (!Number.isFinite(bestLatency)) {
+      return 0;
+    }
+
+    return Math.floor(bestLatency / latencyPenaltyStepMs);
+  }
+
+  private isProviderCircuitOpen(provider: string, context: RoutingContext): boolean {
+    const circuitMap = context.providerCircuitOpenUntil;
+    if (!circuitMap) {
+      return false;
+    }
+
+    const now = Date.now();
+    const candidates = this.getProviderMetricCandidates(provider);
+    return candidates.some((candidate) => {
+      const openUntil = circuitMap[candidate];
+      return typeof openUntil === 'number' && openUntil > now;
+    });
+  }
+
+  private getProviderMetricCandidates(provider: string): string[] {
+    if (provider === LOCAL_PROVIDER || provider === IMAGE_PROVIDER_LOCAL) {
+      return [provider, LOCAL_PROVIDER];
+    }
+    if (provider === IMAGE_PROVIDER_OPENAI) {
+      return [provider, CLOUD_PROVIDER_OPENAI];
+    }
+    if (provider === IMAGE_PROVIDER_GEMINI) {
+      return [provider, CLOUD_PROVIDER_GEMINI];
+    }
+    return [provider];
+  }
+
   private isRuntimeHealthy(runtime: string, context: RoutingContext): boolean {
+    if (runtime === 'OLLAMA' && this.isProviderCircuitOpen(LOCAL_PROVIDER, context)) {
+      this.logger.debug(
+        `isRuntimeHealthy: runtime=${runtime} healthy=false (latency circuit open)`,
+      );
+      return false;
+    }
+
     // If no health data exists, assume healthy (best-effort — same as connectors)
     const healthy = context.runtimeHealth?.[runtime] ?? true;
     this.logger.debug(`isRuntimeHealthy: runtime=${runtime} healthy=${String(healthy)}`);
@@ -1323,6 +1469,14 @@ export class RoutingManager {
       this.logger.debug(`isConnectorHealthy: no health data - treating ${provider} as unavailable`);
       return false;
     }
+
+    if (this.isProviderCircuitOpen(provider, context)) {
+      this.logger.debug(
+        `isConnectorHealthy: provider=${provider} unhealthy (latency circuit open)`,
+      );
+      return false;
+    }
+
     const healthy = healthMap[provider] ?? false;
     this.logger.debug(`isConnectorHealthy: provider=${provider} healthy=${String(healthy)}`);
     return healthy;

@@ -19,27 +19,39 @@ describe('WorkspaceAdapterFactory', () => {
 
   it.each([
     [WorkspaceProvider.GITHUB, github],
-    [WorkspaceProvider.GITLAB, github],
-    [WorkspaceProvider.BITBUCKET, github],
     [WorkspaceProvider.SLACK, slack],
     [WorkspaceProvider.JIRA, jira],
-    [WorkspaceProvider.CONFLUENCE, jira],
     [WorkspaceProvider.GOOGLE_DRIVE, googleDrive],
-    [WorkspaceProvider.GMAIL, googleDrive],
-  ])('should return correct adapter for %s', (provider, expected) => {
+  ])('returns correct adapter for implemented provider %s', (provider, expected) => {
     expect(factory.getAdapter(provider)).toBe(expected);
   });
 
-  it('should throw BusinessException for unsupported provider', () => {
-    expect(() => factory.getAdapter('UNSUPPORTED' as WorkspaceProvider)).toThrow(BusinessException);
-  });
-
   it.each([
+    WorkspaceProvider.GITLAB,
+    WorkspaceProvider.BITBUCKET,
+    WorkspaceProvider.CONFLUENCE,
+    WorkspaceProvider.GMAIL,
     WorkspaceProvider.FIGMA,
     WorkspaceProvider.CLICKUP,
     WorkspaceProvider.MICROSOFT_SHAREPOINT,
     WorkspaceProvider.MICROSOFT_ONEDRIVE,
-  ])('should throw for not-yet-implemented provider %s', (provider) => {
-    expect(() => factory.getAdapter(provider)).toThrow(BusinessException);
+  ])('throws ADAPTER_NOT_IMPLEMENTED for registered-but-unimplemented provider %s', (provider) => {
+    expect.assertions(2);
+    try {
+      factory.getAdapter(provider);
+    } catch (error) {
+      expect(error).toBeInstanceOf(BusinessException);
+      expect((error as BusinessException).code).toBe('ADAPTER_NOT_IMPLEMENTED');
+    }
+  });
+
+  it('throws UNSUPPORTED_PROVIDER for entirely unknown provider key', () => {
+    expect.assertions(2);
+    try {
+      factory.getAdapter('UNSUPPORTED' as WorkspaceProvider);
+    } catch (error) {
+      expect(error).toBeInstanceOf(BusinessException);
+      expect((error as BusinessException).code).toBe('UNSUPPORTED_PROVIDER');
+    }
   });
 });

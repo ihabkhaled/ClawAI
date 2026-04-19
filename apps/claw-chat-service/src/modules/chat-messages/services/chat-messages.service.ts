@@ -539,6 +539,9 @@ export class ChatMessagesService implements OnModuleInit {
             }
           : {}),
         ...(llmResponse.fastPathUsed ? { fastPathUsed: true } : {}),
+        ...(llmResponse.fastPathEscalated ? { fastPathEscalated: true } : {}),
+        ...(llmResponse.executionPath ? { executionPath: llmResponse.executionPath } : {}),
+        ...(llmResponse.targetLatencyMs ? { targetLatencyMs: llmResponse.targetLatencyMs } : {}),
         ...(llmResponse.judgeRefereeMetadata ?? {}),
       },
     });
@@ -607,6 +610,10 @@ export class ChatMessagesService implements OnModuleInit {
       content: llmResponse.content,
       userContent: lastUserMsg?.content,
       timestamp: new Date().toISOString(),
+      ...(llmResponse.executionPath ? { executionPath: llmResponse.executionPath } : {}),
+      ...(llmResponse.targetLatencyMs ? { targetLatencyMs: llmResponse.targetLatencyMs } : {}),
+      ...(llmResponse.fastPathUsed ? { fastPathUsed: true } : {}),
+      ...(llmResponse.fastPathEscalated ? { fastPathEscalated: true } : {}),
       ...(llmResponse.reRouted
         ? {
             reRouted: true,

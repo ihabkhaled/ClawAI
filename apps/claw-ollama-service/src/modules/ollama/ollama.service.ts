@@ -138,6 +138,8 @@ export class OllamaService implements OnModuleInit {
       prompt: dto.prompt,
       stream: dto.stream,
       images: dto.images,
+      options: dto.options,
+      keepAlive: dto.keepAlive ?? dto.keep_alive,
     });
   }
 

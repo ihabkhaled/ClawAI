@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import { EventPattern, LogLevel } from '@claw/shared-types';
+import { AppConfig } from '../../../app/config/app.config';
 import {
   type Prisma,
   type ComplexityClass as PrismaComplexityClass,
@@ -42,6 +43,9 @@ export class RoutingService implements OnModuleInit {
   private readonly structuredLogger: StructuredLogger;
   private connectorHealthCache: Record<string, boolean> = {};
   private runtimeHealthCache: Record<string, boolean> = {};
+  private providerLatencyCache: Record<string, number> = {};
+  private providerSlowStreakCache: Record<string, number> = {};
+  private providerCircuitOpenUntilCache: Record<string, number> = {};
 
   constructor(
     private readonly policiesRepository: RoutingPoliciesRepository,
@@ -127,6 +131,7 @@ export class RoutingService implements OnModuleInit {
   }
 
   async evaluateRoute(dto: EvaluateRouteDto): Promise<RoutingDecisionResult> {
+    const config = this.getRuntimeRoutingConfig();
     this.logger.log(
       `evaluateRoute: evaluating route for thread ${dto.threadId ?? 'none'} mode=${dto.routingMode ?? 'AUTO'}`,
     );
@@ -138,6 +143,10 @@ export class RoutingService implements OnModuleInit {
       forcedProvider: dto.forcedProvider,
       connectorHealth: { ...this.connectorHealthCache },
       runtimeHealth: { ...this.runtimeHealthCache },
+      providerLatencyMs: { ...this.providerLatencyCache },
+      providerCircuitOpenUntil: this.getActiveProviderCircuits(),
+      localDegradeLatencyMs: config.localDegradeLatencyMs,
+      latencyPenaltyStepMs: config.latencyPenaltyStepMs,
     };
 
     return this.routingManager.evaluateRoute(context);
@@ -262,6 +271,10 @@ export class RoutingService implements OnModuleInit {
       this.handleModelChanged('model.deleted');
     });
 
+    await this.rabbitMQService.subscribe(EventPattern.MESSAGE_COMPLETED, async (data: unknown) => {
+      this.handleMessageCompleted(data);
+    });
+
     this.logger.log('Subscribed to routing events');
   }
 
@@ -332,6 +345,7 @@ export class RoutingService implements OnModuleInit {
     forcedProvider: string | undefined,
     forcedModel: string | undefined,
   ): RoutingContext {
+    const config = this.getRuntimeRoutingConfig();
     return {
       message: content,
       threadId,
@@ -340,6 +354,10 @@ export class RoutingService implements OnModuleInit {
       forcedModel,
       connectorHealth: { ...this.connectorHealthCache },
       runtimeHealth: { ...this.runtimeHealthCache },
+      providerLatencyMs: { ...this.providerLatencyCache },
+      providerCircuitOpenUntil: this.getActiveProviderCircuits(),
+      localDegradeLatencyMs: config.localDegradeLatencyMs,
+      latencyPenaltyStepMs: config.latencyPenaltyStepMs,
     };
   }
 
@@ -425,5 +443,106 @@ export class RoutingService implements OnModuleInit {
   private handleModelChanged(event: string): void {
     this.logger.log(`handleModelChanged: ${event} received — invalidating prompt cache`);
     this.promptBuilder.invalidateCache();
+  }
+
+  private handleMessageCompleted(data: unknown): void {
+    const config = this.getRuntimeRoutingConfig();
+    const payload = data as Record<string, unknown>;
+    const providerRaw = payload['provider'];
+    const latencyRaw = payload['latencyMs'];
+
+    if (typeof providerRaw !== 'string' || typeof latencyRaw !== 'number' || latencyRaw <= 0) {
+      return;
+    }
+
+    const provider = this.normalizeProviderName(providerRaw);
+    const latencyMs = Math.round(latencyRaw);
+    const prevLatency = this.providerLatencyCache[provider];
+    const weight = config.latencyEwmaWeight;
+    const nextLatency =
+      typeof prevLatency === 'number'
+        ? Math.round(prevLatency * weight + latencyMs * (1 - weight))
+        : latencyMs;
+    this.providerLatencyCache[provider] = nextLatency;
+
+    const threshold = config.providerSlowThresholdMs;
+    if (latencyMs >= threshold) {
+      const nextStreak = (this.providerSlowStreakCache[provider] ?? 0) + 1;
+      this.providerSlowStreakCache[provider] = nextStreak;
+
+      if (nextStreak >= config.providerSlowStreak) {
+        const openUntil = Date.now() + config.providerCircuitOpenMs;
+        this.providerCircuitOpenUntilCache[provider] = openUntil;
+        this.providerSlowStreakCache[provider] = 0;
+        this.logger.warn(
+          `handleMessageCompleted: opening latency circuit for ${provider} until ${new Date(openUntil).toISOString()}`,
+        );
+      }
+    } else {
+      this.providerSlowStreakCache[provider] = 0;
+      const openUntil = this.providerCircuitOpenUntilCache[provider];
+      if (typeof openUntil === 'number' && openUntil > Date.now()) {
+        this.removeProviderCircuit(provider);
+        this.logger.log(`handleMessageCompleted: closing latency circuit for ${provider}`);
+      }
+    }
+
+    this.pruneExpiredProviderCircuits();
+  }
+
+  private pruneExpiredProviderCircuits(): void {
+    const now = Date.now();
+    this.providerCircuitOpenUntilCache = Object.fromEntries(
+      Object.entries(this.providerCircuitOpenUntilCache).filter(([, openUntil]) => openUntil > now),
+    ) as Record<string, number>;
+  }
+
+  private getActiveProviderCircuits(): Record<string, number> {
+    this.pruneExpiredProviderCircuits();
+    return { ...this.providerCircuitOpenUntilCache };
+  }
+
+  private normalizeProviderName(provider: string): string {
+    const normalized = provider.trim();
+    if (normalized.toLowerCase() === 'local-ollama') {
+      return 'local-ollama';
+    }
+    return normalized.toUpperCase();
+  }
+
+  private removeProviderCircuit(provider: string): void {
+    this.providerCircuitOpenUntilCache = Object.fromEntries(
+      Object.entries(this.providerCircuitOpenUntilCache).filter(([name]) => name !== provider),
+    ) as Record<string, number>;
+  }
+
+  private getRuntimeRoutingConfig(): {
+    localDegradeLatencyMs: number;
+    latencyPenaltyStepMs: number;
+    latencyEwmaWeight: number;
+    providerSlowThresholdMs: number;
+    providerSlowStreak: number;
+    providerCircuitOpenMs: number;
+  } {
+    try {
+      const config = AppConfig.get();
+      return {
+        localDegradeLatencyMs: config.ROUTING_LOCAL_DEGRADE_LATENCY_MS,
+        latencyPenaltyStepMs: config.ROUTING_LATENCY_PENALTY_STEP_MS,
+        latencyEwmaWeight: config.ROUTING_LATENCY_EWMA_WEIGHT,
+        providerSlowThresholdMs: config.ROUTING_PROVIDER_SLOW_THRESHOLD_MS,
+        providerSlowStreak: config.ROUTING_PROVIDER_SLOW_STREAK,
+        providerCircuitOpenMs: config.ROUTING_PROVIDER_CIRCUIT_OPEN_MS,
+      };
+    } catch {
+      return {
+        localDegradeLatencyMs: 18_000,
+        latencyPenaltyStepMs: 6_000,
+        latencyEwmaWeight: 0.7,
+        providerSlowThresholdMs: 15_000,
+        providerSlowStreak: 3,
+        providerCircuitOpenMs: 90_000,
+      };
+    }
   }
 }

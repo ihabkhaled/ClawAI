@@ -16,6 +16,7 @@ const appConfigSchema = z.object({
   WORKSPACE_SERVICE_URL: z.string().min(1).default('http://workspace-service:4014'),
 
   OLLAMA_GENERATE_TIMEOUT_MS: z.coerce.number().default(300_000),
+  OLLAMA_KEEP_ALIVE: z.string().min(1).default('20m'),
   CHAT_PORT: z.coerce.number().int().positive().default(4002),
 });
 

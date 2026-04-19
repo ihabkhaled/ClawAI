@@ -285,7 +285,7 @@ describe('RoutingService', () => {
     it('should subscribe to events on module init', async () => {
       await service.onModuleInit();
 
-      expect(rabbitMQ.subscribe).toHaveBeenCalledTimes(5);
+      expect(rabbitMQ.subscribe).toHaveBeenCalledTimes(6);
     });
   });
 });

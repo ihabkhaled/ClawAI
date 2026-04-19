@@ -1,39 +1,49 @@
 import { Module } from '@nestjs/common';
-import { WorkspaceConnectorRepository } from './repositories/workspace-connector.repository';
-import { WorkspaceObjectRepository } from './repositories/workspace-object.repository';
-import { WorkspaceConnectorService } from './services/workspace-connector.service';
-import { WorkspaceObjectService } from './services/workspace-object.service';
-import { WorkspaceSearchService } from './services/workspace-search.service';
+import { GitHubAdapter } from './adapters/github.adapter';
+import { GoogleDriveAdapter } from './adapters/google-drive.adapter';
+import { JiraAdapter } from './adapters/jira.adapter';
+import { SlackAdapter } from './adapters/slack.adapter';
+import { WorkspaceAdapterFactory } from './adapters/workspace-adapter.factory';
 import { WorkspaceConnectorController } from './controllers/workspace-connector.controller';
 import { WorkspaceOAuthController } from './controllers/workspace-oauth.controller';
 import { WorkspaceObjectController } from './controllers/workspace-object.controller';
+import { WorkspaceProviderRegistryController } from './controllers/workspace-provider-registry.controller';
 import { WorkspaceSearchController } from './controllers/workspace-search.controller';
 import { WorkspaceSearchInternalController } from './controllers/workspace-search-internal.controller';
 import { OAuthTokenManager } from './managers/oauth-token.manager';
 import { WorkspaceHealthManager } from './managers/workspace-health.manager';
-import { WorkspaceSyncManager } from './managers/workspace-sync.manager';
 import { WorkspaceObjectManager } from './managers/workspace-object.manager';
 import { WorkspaceSearchManager } from './managers/workspace-search.manager';
-import { WorkspaceAdapterFactory } from './adapters/workspace-adapter.factory';
-import { GitHubAdapter } from './adapters/github.adapter';
-import { SlackAdapter } from './adapters/slack.adapter';
-import { JiraAdapter } from './adapters/jira.adapter';
-import { GoogleDriveAdapter } from './adapters/google-drive.adapter';
+import { WorkspaceSyncManager } from './managers/workspace-sync.manager';
+import { ProviderAppConfigRepository } from './repositories/provider-app-config.repository';
+import { ProviderDefinitionRepository } from './repositories/provider-definition.repository';
+import { WorkspaceConnectorRepository } from './repositories/workspace-connector.repository';
+import { WorkspaceObjectRepository } from './repositories/workspace-object.repository';
+import { ProviderAppConfigService } from './services/provider-app-config.service';
+import { ProviderRegistryService } from './services/provider-registry.service';
+import { WorkspaceConnectorService } from './services/workspace-connector.service';
+import { WorkspaceObjectService } from './services/workspace-object.service';
+import { WorkspaceSearchService } from './services/workspace-search.service';
 
 @Module({
   controllers: [
     WorkspaceConnectorController,
     WorkspaceOAuthController,
     WorkspaceObjectController,
+    WorkspaceProviderRegistryController,
     WorkspaceSearchController,
     WorkspaceSearchInternalController,
   ],
   providers: [
     WorkspaceConnectorRepository,
     WorkspaceObjectRepository,
+    ProviderDefinitionRepository,
+    ProviderAppConfigRepository,
     WorkspaceConnectorService,
     WorkspaceObjectService,
     WorkspaceSearchService,
+    ProviderRegistryService,
+    ProviderAppConfigService,
     OAuthTokenManager,
     WorkspaceHealthManager,
     WorkspaceSyncManager,
@@ -45,6 +55,12 @@ import { GoogleDriveAdapter } from './adapters/google-drive.adapter';
     JiraAdapter,
     GoogleDriveAdapter,
   ],
-  exports: [WorkspaceConnectorService, WorkspaceObjectService, WorkspaceSearchService],
+  exports: [
+    WorkspaceConnectorService,
+    WorkspaceObjectService,
+    WorkspaceSearchService,
+    ProviderRegistryService,
+    ProviderAppConfigService,
+  ],
 })
 export class WorkspaceModule {}

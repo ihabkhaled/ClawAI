@@ -37,6 +37,7 @@ export interface GenerateRequest {
   stream?: boolean;
   options?: Record<string, unknown>;
   images?: string[];
+  keepAlive?: string;
 }
 
 export interface GenerateResponse {

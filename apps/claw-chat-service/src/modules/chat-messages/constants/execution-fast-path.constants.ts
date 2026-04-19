@@ -1,11 +1,18 @@
-export const FAST_PATH_MAX_OUTPUT_TOKENS = 96;
-export const AUTO_MAX_OUTPUT_TOKENS = 128;
+export const FAST_PATH_MAX_OUTPUT_TOKENS = 72;
+export const AUTO_MAX_OUTPUT_TOKENS = 112;
 export const DEFAULT_MAX_OUTPUT_TOKENS = 256;
 export const HARD_MAX_OUTPUT_TOKENS = 512;
-export const MIN_OUTPUT_TOKENS = 32;
+export const MIN_OUTPUT_TOKENS = 24;
 export const FAST_PATH_MAX_PROMPT_CHARS = 220;
 export const FAST_PATH_MAX_PROMPT_WORDS = 36;
 export const FAST_PATH_MAX_NEWLINES = 1;
+export const FAST_PATH_MIN_RESPONSE_CHARS = 42;
+export const FAST_PATH_CONTEXT_MAX_MESSAGES = 6;
+export const FAST_PATH_CONTEXT_MAX_MEMORIES = 2;
+export const FAST_PATH_CONTEXT_MAX_CITATIONS = 2;
+export const FAST_PATH_CONTEXT_TOKEN_BUDGET = 1024;
+export const FAST_PATH_TARGET_LATENCY_MS = 12_000;
+export const STANDARD_TARGET_LATENCY_MS = 20_000;
 
 export const FAST_PATH_COMPLEXITY_PATTERN =
   /(step by step|comprehensive|detailed|thorough|architecture|design|research|analy[sz]e|trade[ -]?off|legal|medical|finance|security|compliance|plan|strategy|debug|implement|refactor|multi[- ]?step|deep dive|long answer)/i;

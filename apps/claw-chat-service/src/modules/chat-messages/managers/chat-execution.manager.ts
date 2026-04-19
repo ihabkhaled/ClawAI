@@ -33,14 +33,21 @@ import {
   AUTO_MAX_OUTPUT_TOKENS,
   DEFAULT_MAX_OUTPUT_TOKENS,
   FAST_PATH_COMPLEXITY_PATTERN,
+  FAST_PATH_CONTEXT_MAX_CITATIONS,
+  FAST_PATH_CONTEXT_MAX_MEMORIES,
+  FAST_PATH_CONTEXT_MAX_MESSAGES,
+  FAST_PATH_CONTEXT_TOKEN_BUDGET,
   FAST_PATH_MAX_NEWLINES,
   FAST_PATH_MAX_OUTPUT_TOKENS,
   FAST_PATH_MAX_PROMPT_CHARS,
   FAST_PATH_MAX_PROMPT_WORDS,
+  FAST_PATH_MIN_RESPONSE_CHARS,
   FAST_PATH_OPERATIONAL_PREFIX_PATTERN,
   FAST_PATH_RESPONSE_CONSTRAINT,
+  FAST_PATH_TARGET_LATENCY_MS,
   HARD_MAX_OUTPUT_TOKENS,
   MIN_OUTPUT_TOKENS,
+  STANDARD_TARGET_LATENCY_MS,
 } from '../constants/execution-fast-path.constants';
 import type { ExecutionOptions } from '../types/execution-options.types';
 
@@ -72,6 +79,8 @@ export class ChatExecutionManager implements OnModuleInit {
     const candidates = this.buildCandidateChain(payload, payload.routingMode);
     const userPrompt = this.extractUserPrompt(context);
     const executionOptions = this.resolveExecutionOptions(payload, userPrompt, threadSettings);
+    const executionContext = this.buildExecutionContext(context, executionOptions.fastPathEnabled);
+    let fastPathEscalated = false;
 
     this.logger.debug(`execute: built candidate chain with ${String(candidates.length)} providers`);
     this.logger.debug(
@@ -99,7 +108,7 @@ export class ChatExecutionManager implements OnModuleInit {
         const response = await this.callProvider(
           candidate.provider,
           candidate.model,
-          context,
+          executionContext,
           startTime,
           i > 0,
           threadSettings,
@@ -107,12 +116,56 @@ export class ChatExecutionManager implements OnModuleInit {
           executionOptions,
         );
 
-        // Skip quality check for image/file generation responses
-        if (this.isGenerationResponse(response)) {
-          return { ...response, fastPathUsed: executionOptions.fastPathEnabled };
+        let finalProviderResponse = response;
+        if (
+          executionOptions.fastPathEnabled &&
+          !this.isGenerationResponse(response) &&
+          this.shouldEscalateFastPathResponse(response.content)
+        ) {
+          this.logger.debug(
+            `execute: escalating fast path to full path for message ${payload.messageId}`,
+          );
+          const escalatedExecutionOptions: ExecutionOptions = {
+            fastPathEnabled: false,
+            maxOutputTokens: this.resolveMaxOutputTokens(
+              payload.routingMode,
+              threadSettings,
+              false,
+              payload.selectedModel,
+            ),
+            applyShortResponseConstraint: false,
+          };
+          finalProviderResponse = await this.callProvider(
+            candidate.provider,
+            candidate.model,
+            context,
+            startTime,
+            i > 0,
+            threadSettings,
+            payload.routingMode,
+            escalatedExecutionOptions,
+          );
+          fastPathEscalated = true;
         }
 
-        let finalResponse = response;
+        // Skip quality check for image/file generation responses
+        if (this.isGenerationResponse(finalProviderResponse)) {
+          return {
+            ...finalProviderResponse,
+            fastPathUsed: executionOptions.fastPathEnabled,
+            fastPathEscalated,
+            executionPath: fastPathEscalated
+              ? 'fast_escalated'
+              : (executionOptions.fastPathEnabled
+                ? 'fast'
+                : 'standard'),
+            targetLatencyMs: executionOptions.fastPathEnabled
+              ? FAST_PATH_TARGET_LATENCY_MS
+              : STANDARD_TARGET_LATENCY_MS,
+          };
+        }
+
+        let finalResponse = finalProviderResponse;
         let qualityScore = 1;
 
         if (!executionOptions.fastPathEnabled) {
@@ -181,10 +234,31 @@ export class ChatExecutionManager implements OnModuleInit {
             ...judgedResponse,
             judgeRefereeMetadata: this.judgeRefereeManager.buildMetadata(judgeResult),
             fastPathUsed: executionOptions.fastPathEnabled,
+            fastPathEscalated,
+            executionPath: fastPathEscalated
+              ? 'fast_escalated'
+              : (executionOptions.fastPathEnabled
+                ? 'fast'
+                : 'standard'),
+            targetLatencyMs: executionOptions.fastPathEnabled
+              ? FAST_PATH_TARGET_LATENCY_MS
+              : STANDARD_TARGET_LATENCY_MS,
           };
         }
 
-        return { ...finalResponse, fastPathUsed: executionOptions.fastPathEnabled };
+        return {
+          ...finalResponse,
+          fastPathUsed: executionOptions.fastPathEnabled,
+          fastPathEscalated,
+          executionPath: fastPathEscalated
+            ? 'fast_escalated'
+            : (executionOptions.fastPathEnabled
+              ? 'fast'
+              : 'standard'),
+          targetLatencyMs: executionOptions.fastPathEnabled
+            ? FAST_PATH_TARGET_LATENCY_MS
+            : STANDARD_TARGET_LATENCY_MS,
+        };
       } catch (error: unknown) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
         this.logger.warn(
@@ -331,6 +405,32 @@ export class ChatExecutionManager implements OnModuleInit {
     return Math.max(MIN_OUTPUT_TOKENS, bounded);
   }
 
+  private shouldEscalateFastPathResponse(content: string): boolean {
+    const trimmed = content.trim();
+    if (trimmed.length < FAST_PATH_MIN_RESPONSE_CHARS) {
+      return true;
+    }
+    const weakPattern = /(i('?| )don'?t know|not sure|unable to|cannot help|unknown)/i;
+    return weakPattern.test(trimmed);
+  }
+
+  private buildExecutionContext(
+    context: AssembledContext,
+    fastPathEnabled: boolean,
+  ): AssembledContext {
+    if (!fastPathEnabled) {
+      return context;
+    }
+
+    return {
+      ...context,
+      threadMessages: context.threadMessages.slice(-FAST_PATH_CONTEXT_MAX_MESSAGES),
+      memories: context.memories.slice(0, FAST_PATH_CONTEXT_MAX_MEMORIES),
+      workspaceCitations: context.workspaceCitations.slice(0, FAST_PATH_CONTEXT_MAX_CITATIONS),
+      tokenBudget: Math.min(context.tokenBudget, FAST_PATH_CONTEXT_TOKEN_BUDGET),
+    };
+  }
+
   private applyShortResponseConstraint(prompt: string): string {
     return `${prompt}\n\n${FAST_PATH_RESPONSE_CONSTRAINT}`;
   }
@@ -471,6 +571,7 @@ export class ChatExecutionManager implements OnModuleInit {
       model: resolvedModel,
       prompt: constrainedPrompt,
       stream: false,
+      keep_alive: config.OLLAMA_KEEP_ALIVE,
       options: {
         temperature: threadSettings?.temperature ?? 0.2,
         num_predict: maxOutputTokens,

@@ -72,11 +72,14 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
     const body: Record<string, unknown> = {
       model: request.model,
       prompt: request.prompt,
-      stream: false,
+      stream: request.stream ?? false,
       options: request.options,
     };
     if (request.images && request.images.length > 0) {
       body['images'] = request.images;
+    }
+    if (request.keepAlive) {
+      body['keep_alive'] = request.keepAlive;
     }
     const response = await this.client.post<OllamaGenerateResponse>(OLLAMA_API_GENERATE, body, {
       timeout: this.generateTimeout,

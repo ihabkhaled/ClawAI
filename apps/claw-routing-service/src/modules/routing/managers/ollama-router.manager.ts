@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { AppConfig, type AppConfigType } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities';
 import {
@@ -15,11 +15,32 @@ import type {
 import { PromptBuilderManager } from './prompt-builder.manager';
 
 @Injectable()
-export class OllamaRouterManager {
+export class OllamaRouterManager implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(OllamaRouterManager.name);
   private cachedRouterModel: string | null = null;
+  private warmupTimer: NodeJS.Timeout | null = null;
 
   constructor(private readonly promptBuilder: PromptBuilderManager) {}
+
+  async onModuleInit(): Promise<void> {
+    const config = AppConfig.get();
+    if (!config.OLLAMA_ROUTER_WARMUP_ENABLED) {
+      return;
+    }
+
+    await this.warmupRouterModel(config, 'startup');
+    this.warmupTimer = setInterval(() => {
+      void this.warmupRouterModel(config, 'interval');
+    }, config.OLLAMA_ROUTER_WARMUP_INTERVAL_MS);
+    this.warmupTimer.unref?.();
+  }
+
+  onModuleDestroy(): void {
+    if (this.warmupTimer) {
+      clearInterval(this.warmupTimer);
+      this.warmupTimer = null;
+    }
+  }
 
   async route(context: RoutingContext): Promise<OllamaRouterDecision | null> {
     this.logger.log(
@@ -50,6 +71,7 @@ export class OllamaRouterManager {
           model: routerModel,
           prompt,
           stream: false,
+          keepAlive: config.OLLAMA_KEEP_ALIVE,
           options: { temperature: 0, num_predict: 80 },
         },
         timeoutMs: config.OLLAMA_ROUTER_TIMEOUT_MS,
@@ -250,5 +272,35 @@ export class OllamaRouterManager {
 
     this.logger.debug(`getHealthyProviders: total healthy=${String(healthy.length)}`);
     return healthy;
+  }
+
+  private async warmupRouterModel(config: AppConfigType, source: string): Promise<void> {
+    try {
+      const routerModel = await this.resolveRouterModel(config);
+      const response = await httpRequest<OllamaGenerateResponse>({
+        url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
+        method: 'POST',
+        body: {
+          model: routerModel,
+          prompt: 'Reply with: OK',
+          stream: false,
+          keepAlive: config.OLLAMA_KEEP_ALIVE,
+          options: { temperature: 0, num_predict: 4 },
+        },
+        timeoutMs: Math.min(config.OLLAMA_ROUTER_TIMEOUT_MS, 4_000),
+      });
+
+      if (!response.ok) {
+        this.logger.warn(
+          `warmupRouterModel: ${source} warmup failed with status ${String(response.status)}`,
+        );
+        return;
+      }
+
+      this.logger.debug(`warmupRouterModel: ${source} warmup successful for ${routerModel}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(`warmupRouterModel: ${source} warmup failed: ${message}`);
+    }
   }
 }
