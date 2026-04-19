@@ -10,12 +10,14 @@ import { WorkspaceSyncManager } from '../managers/workspace-sync.manager';
 import { ProviderAppConfigService } from './provider-app-config.service';
 import {
   type Prisma,
-  WorkspaceProviderAppConfigStatus, WorkspaceProviderAuthMode 
+  WorkspaceProviderAppConfigStatus,
+  WorkspaceProviderAuthMode,
 } from '../../../generated/prisma';
 import {
   sanitizeConnector,
   sanitizeConnectors,
 } from '../../../common/utilities/connector-sanitizer.utility';
+import { assertSafeOutboundUrl } from '../../../common/utilities/url-safety.utility';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
@@ -290,6 +292,14 @@ export class WorkspaceConnectorService {
         'PAT_NOT_SUPPORTED',
         HttpStatus.BAD_REQUEST,
       );
+    }
+    if (input.baseUrl !== undefined) {
+      try {
+        assertSafeOutboundUrl(input.baseUrl);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unsafe URL';
+        throw new BusinessException(message, 'UNSAFE_BASE_URL', HttpStatus.BAD_REQUEST);
+      }
     }
     return adapter.validatePat(input.personalAccessToken, input.baseUrl);
   }

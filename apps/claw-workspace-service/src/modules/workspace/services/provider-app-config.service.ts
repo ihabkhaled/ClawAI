@@ -3,6 +3,7 @@ import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
 import { decryptString, encryptString } from '../../../common/utilities/crypto.utility';
+import { assertSafeOutboundUrl } from '../../../common/utilities/url-safety.utility';
 import {
   type Prisma,
   WorkspaceProvider,
@@ -207,15 +208,27 @@ export class ProviderAppConfigService {
       return;
     }
     const value = field.secret ? secretConfig[field.key] : publicConfig[field.key];
-    if (!field.required) {
+    if (value === undefined || value === null || value === '') {
+      if (field.required) {
+        throw new BusinessException(
+          `Field "${field.key}" is required for provider ${provider}`,
+          'REQUIRED_FIELD_MISSING',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
       return;
     }
-    if (value === undefined || value === null || value === '') {
-      throw new BusinessException(
-        `Field "${field.key}" is required for provider ${provider}`,
-        'REQUIRED_FIELD_MISSING',
-        HttpStatus.BAD_REQUEST,
-      );
+    if (field.type === 'url' && typeof value === 'string') {
+      try {
+        assertSafeOutboundUrl(value);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Invalid URL';
+        throw new BusinessException(
+          `Field "${field.key}" must be a safe public URL: ${message}`,
+          'UNSAFE_URL_FIELD',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
     }
   }
 

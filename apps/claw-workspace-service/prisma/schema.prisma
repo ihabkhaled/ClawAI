@@ -219,6 +219,8 @@ model WorkspaceAction {
   status          WorkspaceActionStatus @default(PENDING_APPROVAL) @map("status")
   payload         Json
   result          Json?
+  idempotencyKey  String?               @map("idempotency_key") @db.VarChar(128)
+  retryCount      Int                   @default(0) @map("retry_count")
   requestedAt     DateTime              @default(now()) @map("requested_at")
   reviewedAt      DateTime?             @map("reviewed_at")
   executedAt      DateTime?             @map("executed_at")
@@ -229,6 +231,7 @@ model WorkspaceAction {
 
   connector WorkspaceConnector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, idempotencyKey])
   @@index([userId])
   @@index([connectorId])
   @@index([status])
