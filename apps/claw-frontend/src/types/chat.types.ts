@@ -5,6 +5,7 @@ import type {
   RoutingMode,
   StreamEventType,
 } from '@/enums';
+import type { ResearchMode } from '@/enums/research-mode.enum';
 
 export type ChatThread = {
   id: string;
@@ -79,6 +80,8 @@ export type CreateMessageRequest = {
   provider?: string;
   model?: string;
   fileIds?: string[];
+  researchMode?: ResearchMode;
+  researchProviderId?: string;
 };
 
 export type PinThreadParams = {

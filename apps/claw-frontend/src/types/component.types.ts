@@ -11,8 +11,14 @@ import type {
   RoutingMode,
 } from '@/enums';
 import type { ConsensusConfidenceLevel } from '@/enums/consensus-confidence-level.enum';
+import type { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { TranslateFunction } from '@/types/i18n.types';
+import type {
+  ResearchEvidenceBundle,
+  ResearchOptions,
+  SanitizedResearchProvider,
+} from '@/types/research.types';
 
 import type {
   AdaptiveLearningInsights,
@@ -268,9 +274,53 @@ export type ContextPackSelectorProps = {
 };
 
 export type MessageComposerProps = {
-  onSend: (content: string, modelSelection?: ModelSelection, fileIds?: string[]) => void;
+  onSend: (
+    content: string,
+    modelSelection?: ModelSelection,
+    fileIds?: string[],
+    research?: ResearchOptions,
+  ) => void;
   isPending: boolean;
   threadModel?: ModelSelection | null;
+};
+
+export type ResearchToggleProps = {
+  value: ResearchOptions;
+  onChange: (value: ResearchOptions) => void;
+  disabled?: boolean;
+};
+
+export type EvidenceViewerProps = {
+  bundle: ResearchEvidenceBundle | null;
+  t: TranslateFunction;
+};
+
+export type ResearchProviderRowProps = {
+  provider: SanitizedResearchProvider;
+  onTest: (id: string) => void;
+  onDelete: (id: string) => void;
+  isTestPending: boolean;
+  isDeletePending: boolean;
+};
+
+export type ResearchProviderFormProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  form: ResearchProviderFormStateValue;
+  onSetField: <K extends keyof ResearchProviderFormStateValue>(
+    key: K,
+    value: ResearchProviderFormStateValue[K],
+  ) => void;
+  onSubmit: () => void;
+  isPending: boolean;
+  error: string | null;
+};
+
+type ResearchProviderFormStateValue = {
+  kind: ResearchProviderKind;
+  name: string;
+  baseUrl: string;
+  apiKey: string;
 };
 
 export type RoutingBadgeProps = {

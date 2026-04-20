@@ -1,5 +1,7 @@
 import type { MessageFeedback } from '@/enums';
 
+import type { ResearchProviderKind } from '../enums/research-provider-kind.enum';
+
 import type { AdaptiveLearningInsights } from './adaptive-learning.types';
 import type { AdminUser, AuditLog } from './audit.types';
 import type {
@@ -18,6 +20,7 @@ import type { PipelineResult } from './pipeline.types';
 import type { RecoveryStats } from './recovery.types';
 import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
 import type { ReplayBatchResult } from './replay.types';
+import type { ResearchOptions, SanitizedResearchProvider } from './research.types';
 import type {
   WorkspaceConnector,
   WorkspaceObject,
@@ -116,7 +119,12 @@ export type UseImageGenerationBubbleStateReturn = {
 };
 
 export type UseMessageComposerStateParams = {
-  onSend: (content: string, modelSelection?: ModelSelection, fileIds?: string[]) => void;
+  onSend: (
+    content: string,
+    modelSelection?: ModelSelection,
+    fileIds?: string[],
+    research?: ResearchOptions,
+  ) => void;
   isPending: boolean;
   threadModel?: ModelSelection | null;
 };
@@ -129,6 +137,8 @@ export type UseMessageComposerStateReturn = {
   setModelOverride: (value: ModelSelection | null) => void;
   selectedFileIds: string[];
   setSelectedFileIds: (value: string[]) => void;
+  research: ResearchOptions;
+  setResearch: (value: ResearchOptions) => void;
   handleSubmit: (e: React.FormEvent) => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   handleChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -180,7 +190,12 @@ export type UseThreadDetailPageReturn = {
   isDeleting: boolean;
   virtualizedMessages: UseVirtualizedMessagesReturn;
   threadSettings: UseThreadSettingsReturn;
-  handleSend: (content: string, modelSelection?: ModelSelection, fileIds?: string[]) => void;
+  handleSend: (
+    content: string,
+    modelSelection?: ModelSelection,
+    fileIds?: string[],
+    research?: ResearchOptions,
+  ) => void;
   handleDelete: () => void;
   handleFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
   handleRegenerate: (messageId: string) => void;
@@ -387,4 +402,34 @@ export type UseWorkspaceObjectDetailPageReturn = {
   refreshError: Error | null;
   onRefresh: () => void;
   onBack: () => void;
+};
+
+export type ResearchProviderFormState = {
+  kind: ResearchProviderKind;
+  name: string;
+  baseUrl: string;
+  apiKey: string;
+};
+
+export type UseResearchProvidersPageReturn = {
+  t: TranslateFunction;
+  providers: SanitizedResearchProvider[];
+  isLoading: boolean;
+  isError: boolean;
+  isCreateOpen: boolean;
+  openCreate: () => void;
+  closeCreate: () => void;
+  form: ResearchProviderFormState;
+  setFormField: <K extends keyof ResearchProviderFormState>(
+    key: K,
+    value: ResearchProviderFormState[K],
+  ) => void;
+  isCreatePending: boolean;
+  createError: string | null;
+  isDeletePending: boolean;
+  isTestPending: boolean;
+  lastTestMessage: string | null;
+  handleSubmit: () => Promise<void>;
+  handleDelete: (id: string) => void;
+  handleTest: (id: string) => void;
 };

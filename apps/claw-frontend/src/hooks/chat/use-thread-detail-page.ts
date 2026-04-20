@@ -1,7 +1,13 @@
 import { useCallback } from 'react';
 
 import { type MessageFeedback, RoutingMode } from '@/enums';
-import type { ModelSelection, UseThreadDetailPageParams, UseThreadDetailPageReturn } from '@/types';
+import { ResearchMode } from '@/enums/research-mode.enum';
+import type {
+  ModelSelection,
+  ResearchOptions,
+  UseThreadDetailPageParams,
+  UseThreadDetailPageReturn,
+} from '@/types';
 import { logger } from '@/utilities';
 
 import { useDeleteThread } from './use-delete-thread';
@@ -36,7 +42,12 @@ export const useThreadDetailPage = ({
   const threadSettings = useThreadSettings(thread);
 
   const handleSend = useCallback(
-    (content: string, modelSelection?: ModelSelection, fileIds?: string[]): void => {
+    (
+      content: string,
+      modelSelection?: ModelSelection,
+      fileIds?: string[],
+      research?: ResearchOptions,
+    ): void => {
       logger.info({
         component: 'chat',
         action: 'user-send',
@@ -46,6 +57,7 @@ export const useThreadDetailPage = ({
           contentLength: content.length,
           hasModel: !!modelSelection,
           fileCount: fileIds?.length ?? 0,
+          researchMode: research?.mode ?? 'OFF',
         },
       });
       sendMessage({
@@ -59,6 +71,14 @@ export const useThreadDetailPage = ({
             }
           : {}),
         ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
+        ...(research && research.mode !== ResearchMode.OFF
+          ? {
+              researchMode: research.mode,
+              ...(research.providerId !== undefined
+                ? { researchProviderId: research.providerId }
+                : {}),
+            }
+          : {}),
       });
     },
     [threadId, sendMessage],

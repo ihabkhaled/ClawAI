@@ -30,6 +30,8 @@ export const ROUTES = {
   OBSERVABILITY: '/observability',
   SETTINGS: '/settings',
   ADMIN: '/admin',
+  RESEARCH_PROVIDERS: '/research/providers',
+  RESEARCH_RUNS: '/research/runs',
   WORKSPACE: '/workspace',
   WORKSPACE_ACTIONS: '/workspace/actions',
   WORKSPACE_PROVIDERS: '/workspace/providers',

@@ -88,6 +88,8 @@ export type TranslationDictionary = {
     discovery: string;
     workspaceProviders: string;
     workspaceAppConfigs: string;
+    researchProviders: string;
+    researchRuns: string;
   };
   chat: {
     newThread: string;
@@ -969,6 +971,59 @@ export type TranslationDictionary = {
     synced: string;
     failed: string;
     duration: string;
+  };
+  research: {
+    toggle: { placeholder: string };
+    modes: {
+      off: string;
+      searchOnly: string;
+      searchThenFetch: string;
+      searchFetchExtract: string;
+    };
+    providers: {
+      title: string;
+      description: string;
+      createButton: string;
+      createTitle: string;
+      createDescription: string;
+      create: string;
+      creating: string;
+      kind: string;
+      name: string;
+      baseUrl: string;
+      apiKey: string;
+      test: string;
+      secretStored: string;
+      healthy: string;
+      unhealthy: string;
+      loadFailed: string;
+      emptyTitle: string;
+      emptyDescription: string;
+      col: {
+        name: string;
+        kind: string;
+        baseUrl: string;
+        status: string;
+        secret: string;
+        actions: string;
+      };
+    };
+    runs: {
+      title: string;
+      description: string;
+      loadFailed: string;
+      emptyTitle: string;
+      emptyDescription: string;
+    };
+    evidence: {
+      title: string;
+      empty: string;
+      noTitle: string;
+      confidence: string;
+      warnings: string;
+      requestedModel: string;
+      toolsUsed: string;
+    };
   };
   workspaceActions: {
     title: string;

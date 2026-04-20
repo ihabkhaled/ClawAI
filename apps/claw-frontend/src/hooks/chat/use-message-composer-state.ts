@@ -1,8 +1,11 @@
 import { useCallback, useState } from 'react';
 
+import { DEFAULT_RESEARCH_OPTIONS } from '@/constants/research.constants';
+import { ResearchMode } from '@/enums/research-mode.enum';
 import { sendMessageSchema } from '@/lib/validation/message.schema';
 import type {
   ModelSelection,
+  ResearchOptions,
   UseMessageComposerStateParams,
   UseMessageComposerStateReturn,
 } from '@/types';
@@ -17,27 +20,44 @@ export const useMessageComposerState = ({
   const [validationError, setValidationError] = useState<string | null>(null);
   const [modelOverride, setModelOverride] = useState<ModelSelection | null>(null);
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
+  const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
 
   const activeModel = modelOverride ?? threadModel ?? null;
 
   const validateAndSend = useCallback((): boolean => {
     const result = sendMessageSchema.safeParse({ content: content.trim() });
     if (!result.success) {
-      logger.warn({ component: 'chat', action: 'validation-error', message: 'Message validation failed', details: { error: result.error.errors[0]?.message } });
+      logger.warn({
+        component: 'chat',
+        action: 'validation-error',
+        message: 'Message validation failed',
+        details: { error: result.error.errors[0]?.message },
+      });
       setValidationError(result.error.errors[0]?.message ?? 'Invalid message');
       return false;
     }
     setValidationError(null);
-    logger.debug({ component: 'chat', action: 'compose-submit', message: 'Submitting composed message', details: { contentLength: result.data.content.length, hasModelOverride: !!activeModel, fileCount: selectedFileIds.length } });
+    logger.debug({
+      component: 'chat',
+      action: 'compose-submit',
+      message: 'Submitting composed message',
+      details: {
+        contentLength: result.data.content.length,
+        hasModelOverride: !!activeModel,
+        fileCount: selectedFileIds.length,
+        researchMode: research.mode,
+      },
+    });
     onSend(
       result.data.content,
       activeModel ?? undefined,
       selectedFileIds.length > 0 ? selectedFileIds : undefined,
+      research.mode === ResearchMode.OFF ? undefined : research,
     );
     setContent('');
     setSelectedFileIds([]);
     return true;
-  }, [content, onSend, activeModel, selectedFileIds]);
+  }, [content, onSend, activeModel, selectedFileIds, research]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent): void => {
@@ -81,6 +101,8 @@ export const useMessageComposerState = ({
     setModelOverride,
     selectedFileIds,
     setSelectedFileIds,
+    research,
+    setResearch,
     handleSubmit,
     handleKeyDown,
     handleChange,

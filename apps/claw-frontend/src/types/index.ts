@@ -531,3 +531,20 @@ export type {
   RunStatusIconProps,
   DiscoveryPageReturn,
 } from './discovery.types';
+export type {
+  ResearchOptions,
+  SanitizedResearchProvider,
+  ResearchEvidenceItem,
+  ResearchEvidenceBundle,
+  ResearchTraceEntry,
+  ResearchRun,
+  CreateResearchProviderRequest,
+  ProviderHealthResult,
+} from './research.types';
+export type {
+  ResearchToggleProps,
+  EvidenceViewerProps,
+  ResearchProviderFormProps,
+  ResearchProviderRowProps,
+} from './component.types';
+export type { ResearchProviderFormState, UseResearchProvidersPageReturn } from './hook.types';

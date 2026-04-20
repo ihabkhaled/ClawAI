@@ -2,12 +2,17 @@ import { Send } from 'lucide-react';
 
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ModelSelector } from '@/components/chat/model-selector';
+import { ResearchToggle } from '@/components/chat/research-toggle';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useMessageComposerState } from '@/hooks/chat/use-message-composer-state';
 import type { MessageComposerProps } from '@/types';
 
-export function MessageComposer({ onSend, isPending, threadModel }: MessageComposerProps) {
+export function MessageComposer({
+  onSend,
+  isPending,
+  threadModel,
+}: MessageComposerProps): React.ReactElement {
   const {
     content,
     validationError,
@@ -15,6 +20,8 @@ export function MessageComposer({ onSend, isPending, threadModel }: MessageCompo
     selectedFileIds,
     setSelectedFileIds,
     setModelOverride,
+    research,
+    setResearch,
     handleSubmit,
     handleKeyDown,
     handleChange,
@@ -22,13 +29,14 @@ export function MessageComposer({ onSend, isPending, threadModel }: MessageCompo
 
   return (
     <form onSubmit={handleSubmit} className="flex h-full flex-col gap-1">
-      <div className="mb-1 flex shrink-0 items-center gap-2">
+      <div className="mb-1 flex shrink-0 flex-wrap items-center gap-2">
         <ModelSelector value={activeModel} onChange={setModelOverride} disabled={isPending} />
         <FileAttachmentPicker
           selectedFileIds={selectedFileIds}
           onChange={setSelectedFileIds}
           disabled={isPending}
         />
+        <ResearchToggle value={research} onChange={setResearch} disabled={isPending} />
       </div>
       <div className="flex min-h-0 flex-1 gap-2">
         <Textarea
