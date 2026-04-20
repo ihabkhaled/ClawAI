@@ -155,7 +155,14 @@ export class OllamaService implements OnModuleInit {
   async getCatalog(
     query: ListCatalogQueryDto,
   ): Promise<PaginatedResult<CatalogEntryWithInstallStatus>> {
-    const filters = { category: query.category, runtime: query.runtime, search: query.search };
+    const onlySearchBrowser = query.capability === 'SEARCH_BROWSER';
+    const filters = {
+      category: query.category,
+      runtime: query.runtime,
+      search: query.search,
+      onlySearchBrowser,
+      searchBrowserMinScore: onlySearchBrowser ? (query.minScore ?? 0.5) : query.minScore,
+    };
 
     const [entries, total] = await Promise.all([
       this.modelCatalogRepository.findAll(filters, query.page, query.limit),

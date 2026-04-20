@@ -16,6 +16,7 @@ import { ModelCatalogRepository } from './repositories/model-catalog.repository'
 import { DiscoveryCandidateRepository } from './repositories/discovery-candidate.repository';
 import { DiscoveryRunRepository } from './repositories/discovery-run.repository';
 import { DiscoverySourceRepository } from './repositories/discovery-source.repository';
+import { CatalogClassificationService } from './services/catalog-classification.service';
 import { CatalogSeedService } from './services/catalog-seed.service';
 import { CatalogRemoteMetadataService } from './services/catalog-remote-metadata.service';
 import { CatalogSyncService } from './services/catalog-sync.service';
@@ -40,6 +41,7 @@ import { HardwarePackService } from './services/hardware-pack.service';
     DiscoveryCandidateRepository,
     DiscoveryRunRepository,
     DiscoverySourceRepository,
+    CatalogClassificationService,
     CatalogSeedService,
     CatalogRemoteMetadataService,
     CatalogSyncService,

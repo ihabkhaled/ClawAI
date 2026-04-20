@@ -173,6 +173,27 @@ export class ModelCatalogRepository {
     });
   }
 
+  async findAllForClassification(): Promise<ModelCatalogEntry[]> {
+    return this.prisma.modelCatalogEntry.findMany({
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async updateSearchBrowserScore(
+    id: string,
+    score: number,
+    reasons: string[],
+  ): Promise<ModelCatalogEntry> {
+    return this.prisma.modelCatalogEntry.update({
+      where: { id },
+      data: {
+        searchBrowserScore: score,
+        searchBrowserScoreAt: new Date(),
+        searchBrowserReasons: reasons,
+      },
+    });
+  }
+
   private buildWhereClause(filters: CatalogFilters): Prisma.ModelCatalogEntryWhereInput {
     const where: Prisma.ModelCatalogEntryWhereInput = {};
 
@@ -190,6 +211,11 @@ export class ModelCatalogRepository {
         { displayName: { contains: filters.search, mode: 'insensitive' } },
         { description: { contains: filters.search, mode: 'insensitive' } },
       ];
+    }
+
+    if (filters.onlySearchBrowser === true || filters.searchBrowserMinScore !== undefined) {
+      const minScore = filters.searchBrowserMinScore ?? 0.5;
+      where.searchBrowserScore = { gte: minScore };
     }
 
     return where;

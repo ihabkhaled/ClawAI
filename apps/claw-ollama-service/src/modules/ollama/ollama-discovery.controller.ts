@@ -46,6 +46,7 @@ import {
   type ListRunsQueryDto,
   listRunsQuerySchema,
 } from './dto/list-candidates-query.dto';
+import { CatalogClassificationService } from './services/catalog-classification.service';
 import { CatalogSyncService } from './services/catalog-sync.service';
 import { DiscoveryJobService } from './services/discovery-job.service';
 import { DiscoverySourceService } from './services/discovery-source.service';
@@ -57,6 +58,7 @@ import type {
   PaginatedCandidates,
   PaginatedRuns,
 } from './types/discovery.types';
+import type { SearchBrowserReclassifySummary } from './types/search-browser-reclassify.types';
 
 @Controller('ollama')
 export class OllamaDiscoveryController {
@@ -65,7 +67,14 @@ export class OllamaDiscoveryController {
     private readonly jobService: DiscoveryJobService,
     private readonly catalogSync: CatalogSyncService,
     private readonly hardwarePackService: HardwarePackService,
+    private readonly catalogClassification: CatalogClassificationService,
   ) {}
+
+  @Post('catalog/reclassify')
+  @Roles(UserRole.ADMIN)
+  reclassifySearchBrowser(): Promise<SearchBrowserReclassifySummary> {
+    return this.catalogClassification.reclassifySearchBrowser();
+  }
 
   @Get('discovery/sources')
   @Roles(UserRole.ADMIN, UserRole.OPERATOR)

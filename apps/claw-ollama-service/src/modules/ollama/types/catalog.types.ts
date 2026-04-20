@@ -24,6 +24,8 @@ export type CatalogFilters = {
   category?: ModelCategory;
   runtime?: RuntimeType;
   search?: string;
+  searchBrowserMinScore?: number;
+  onlySearchBrowser?: boolean;
 };
 
 export type CatalogEntryWithInstallStatus = ModelCatalogEntry & {
