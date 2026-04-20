@@ -989,6 +989,8 @@ export const en: TranslationDictionary = {
     healthOk: 'OK',
     activating:
       'Activating this connector — importing your first set of objects from the provider. You can keep using Claw while this runs.',
+    askAi: 'Ask AI about this',
+    askAiTitle: 'About {name}',
   },
   workspaceSyncRuns: {
     title: 'Sync runs',

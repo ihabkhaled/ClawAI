@@ -979,6 +979,8 @@ export type TranslationDictionary = {
     noHealthEvents: string;
     healthOk: string;
     activating: string;
+    askAi: string;
+    askAiTitle: string;
   };
   workspaceSyncRuns: {
     title: string;

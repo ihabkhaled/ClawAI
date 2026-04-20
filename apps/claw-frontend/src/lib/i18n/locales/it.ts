@@ -999,6 +999,8 @@ export const it: TranslationDictionary = {
     healthOk: 'OK',
     activating:
       'Attivazione del connettore — importazione del primo set di oggetti dal provider.',
+    askAi: 'Chiedi all’IA',
+    askAiTitle: 'Su {name}',
   },
   workspaceSyncRuns: {
     title: 'Esecuzioni di sincronizzazione',

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 
 import { ROUTES } from '@/constants';
+import { useCreateThread } from '@/hooks/chat/use-create-thread';
 import { useTranslation } from '@/lib/i18n';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import {
@@ -10,6 +11,7 @@ import {
   listWorkspaceSyncRuns,
 } from '@/repositories/workspace/workspace.repository';
 import type { UseConnectorDetailPageReturn } from '@/types';
+import { buildConnectorSystemPrompt } from '@/utilities/workspace-chat-handoff.utility';
 
 import {
   useDeleteWorkspaceConnector,
@@ -63,6 +65,7 @@ export function useConnectorDetailPage(): UseConnectorDetailPageReturn {
   const syncMutation = useTriggerWorkspaceSync();
   const healthMutation = useTestWorkspaceConnectorHealth();
   const deleteMutation = useDeleteWorkspaceConnector();
+  const { createThread, isPending: isAskingAi } = useCreateThread();
 
   const onBack = (): void => router.push(ROUTES.WORKSPACE);
   const onSync = (): void => syncMutation.mutate({ id: connectorId });
@@ -70,6 +73,15 @@ export function useConnectorDetailPage(): UseConnectorDetailPageReturn {
   const onDelete = (): void => {
     deleteMutation.mutate(connectorId, {
       onSuccess: () => router.push(ROUTES.WORKSPACE),
+    });
+  };
+  const onAskAi = (): void => {
+    if (connectorQuery.data === undefined) {
+      return;
+    }
+    createThread({
+      title: t('connectorDetail.askAiTitle', { name: connectorQuery.data.name }),
+      systemPrompt: buildConnectorSystemPrompt(connectorQuery.data),
     });
   };
 
@@ -95,9 +107,11 @@ export function useConnectorDetailPage(): UseConnectorDetailPageReturn {
     isCheckingHealth: healthMutation.isPending,
     isDeleting: deleteMutation.isPending,
     isActivating,
+    isAskingAi,
     onSync,
     onHealthCheck,
     onDelete,
+    onAskAi,
     onBack,
   };
 }

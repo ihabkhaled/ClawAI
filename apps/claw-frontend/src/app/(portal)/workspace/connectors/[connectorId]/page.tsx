@@ -48,9 +48,11 @@ export default function WorkspaceConnectorDetailPage(): React.ReactElement {
           isSyncing={ctrl.isSyncing}
           isCheckingHealth={ctrl.isCheckingHealth}
           isDeleting={ctrl.isDeleting}
+          isAskingAi={ctrl.isAskingAi}
           onSync={ctrl.onSync}
           onHealthCheck={ctrl.onHealthCheck}
           onDelete={ctrl.onDelete}
+          onAskAi={ctrl.onAskAi}
           t={ctrl.t}
         />
       ) : null}

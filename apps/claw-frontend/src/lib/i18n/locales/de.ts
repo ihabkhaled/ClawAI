@@ -1001,6 +1001,8 @@ export const de: TranslationDictionary = {
     healthOk: 'OK',
     activating:
       'Konnektor wird aktiviert — die erste Objektmenge wird vom Anbieter importiert.',
+    askAi: 'KI hierzu fragen',
+    askAiTitle: 'Über {name}',
   },
   workspaceSyncRuns: {
     title: 'Synchronisationsläufe',

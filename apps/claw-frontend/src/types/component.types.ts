@@ -1001,9 +1001,11 @@ export type ConnectorDetailViewProps = {
   isSyncing: boolean;
   isCheckingHealth: boolean;
   isDeleting: boolean;
+  isAskingAi: boolean;
   onSync: () => void;
   onHealthCheck: () => void;
   onDelete: () => void;
+  onAskAi: () => void;
   t: TranslateFunction;
 };
 

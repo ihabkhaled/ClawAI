@@ -1001,6 +1001,8 @@ export const es: TranslationDictionary = {
     healthOk: 'OK',
     activating:
       'Activando este conector — importando el primer conjunto de objetos del proveedor.',
+    askAi: 'Preguntar a la IA',
+    askAiTitle: 'Sobre {name}',
   },
   workspaceSyncRuns: {
     title: 'Ejecuciones de sincronización',

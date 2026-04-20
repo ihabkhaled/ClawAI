@@ -1,6 +1,6 @@
 'use client';
 
-import { Activity, Package, RefreshCw, Trash2 } from 'lucide-react';
+import { Activity, MessageSquare, Package, RefreshCw, Trash2 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,9 +17,11 @@ export function ConnectorDetailView({
   isSyncing,
   isCheckingHealth,
   isDeleting,
+  isAskingAi,
   onSync,
   onHealthCheck,
   onDelete,
+  onAskAi,
   t,
 }: ConnectorDetailViewProps): React.ReactElement {
   return (
@@ -41,6 +43,10 @@ export function ConnectorDetailView({
             </p>
           </div>
           <div className="flex shrink-0 gap-2">
+            <Button variant="default" size="sm" disabled={isAskingAi} onClick={onAskAi}>
+              <MessageSquare className="me-2 size-4" />
+              {t('connectorDetail.askAi')}
+            </Button>
             <Button variant="outline" size="sm" disabled={isCheckingHealth} onClick={onHealthCheck}>
               <Activity className="me-2 size-4" />
               {t('workspaceConnectors.testHealth')}

@@ -997,6 +997,8 @@ export const ru: TranslationDictionary = {
     healthOk: 'OK',
     activating:
       'Активация коннектора — импортируется первый набор объектов у провайдера.',
+    askAi: 'Спросить ИИ',
+    askAiTitle: 'О {name}',
   },
   workspaceSyncRuns: {
     title: 'Запуски синхронизации',

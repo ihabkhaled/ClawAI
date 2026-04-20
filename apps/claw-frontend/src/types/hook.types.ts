@@ -424,9 +424,11 @@ export type UseConnectorDetailPageReturn = {
   isCheckingHealth: boolean;
   isDeleting: boolean;
   isActivating: boolean;
+  isAskingAi: boolean;
   onSync: () => void;
   onHealthCheck: () => void;
   onDelete: () => void;
+  onAskAi: () => void;
   onBack: () => void;
 };
 

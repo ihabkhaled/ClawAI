@@ -984,6 +984,8 @@ export const ar: TranslationDictionary = {
     noHealthEvents: 'لا توجد فحوص صحة مسجلة.',
     healthOk: 'سليم',
     activating: 'جارٍ تفعيل هذا الموصل — يتم استيراد المجموعة الأولى من الكائنات من المزود.',
+    askAi: 'اسأل الذكاء الاصطناعي',
+    askAiTitle: 'عن {name}',
   },
   workspaceSyncRuns: {
     title: 'عمليات المزامنة',
