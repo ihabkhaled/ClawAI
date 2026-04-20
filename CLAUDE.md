@@ -463,6 +463,11 @@ Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 | file_generation.failed            | file-gen     | audit          |
 | agent.session.connected           | agent        | audit          |
 | agent.session.disconnected        | agent        | audit          |
+| agent.device_paired               | agent        | audit          |
+| agent.device_revoked              | agent        | audit          |
+| agent.token_rotated               | agent        | audit          |
+| agent.token_reuse_detected        | agent        | audit          |
+| agent.policy_violated             | agent        | audit          |
 
 ---
 

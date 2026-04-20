@@ -114,6 +114,11 @@ jobs:
           WORKSPACE_SERVICE_URL: http://localhost:4014
           AGENT_DATABASE_URL: postgresql://test:test@localhost:5432/test
           AGENT_SERVICE_URL: http://localhost:4015
+          AGENT_ACCESS_TTL_SECONDS: 900
+          AGENT_REFRESH_TTL_DAYS: 30
+          AGENT_PAIRING_TTL_SECONDS: 120
+          AGENT_DEVICE_CODE_TTL_SECONDS: 900
+          AGENT_REFRESH_GRACE_SECONDS: 15
           RESEARCH_DATABASE_URL: postgresql://test:test@localhost:5432/test
           RESEARCH_SERVICE_URL: http://localhost:4016
           REDIS_URL: redis://localhost:6379
