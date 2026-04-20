@@ -13,6 +13,7 @@ import type {
 import type { ConsensusConfidenceLevel } from '@/enums/consensus-confidence-level.enum';
 import type { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
+import type { WorkspaceConnectorStatus } from '@/enums/workspace-connector-status.enum';
 import type { TranslateFunction } from '@/types/i18n.types';
 import type {
   ResearchEvidenceBundle,
@@ -62,8 +63,10 @@ import type { UseVerifyResultState } from './verifier.types';
 import type {
   WorkspaceAction,
   WorkspaceConnector,
+  WorkspaceHealthEvent,
   WorkspaceObject,
   WorkspaceSearchResult,
+  WorkspaceSyncRun,
 } from './workspace.types';
 
 // ─── Common component props ──────────────────────────────────────────────────
@@ -983,6 +986,24 @@ export type WorkspaceConnectorCardProps = {
 
 export type WorkspaceConnectorStatusBadgeProps = {
   connector: WorkspaceConnector;
+  t: TranslateFunction;
+};
+
+export type ConnectorStatusBadgeProps = {
+  status: WorkspaceConnectorStatus;
+};
+
+export type ConnectorDetailViewProps = {
+  connector: WorkspaceConnector;
+  syncRuns: WorkspaceSyncRun[];
+  healthEvents: WorkspaceHealthEvent[];
+  recentObjects: WorkspaceObject[];
+  isSyncing: boolean;
+  isCheckingHealth: boolean;
+  isDeleting: boolean;
+  onSync: () => void;
+  onHealthCheck: () => void;
+  onDelete: () => void;
   t: TranslateFunction;
 };
 

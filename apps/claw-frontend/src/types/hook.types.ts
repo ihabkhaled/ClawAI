@@ -23,6 +23,7 @@ import type { ReplayBatchResult } from './replay.types';
 import type { ResearchOptions, SanitizedResearchProvider } from './research.types';
 import type {
   WorkspaceConnector,
+  WorkspaceHealthEvent,
   WorkspaceObject,
   WorkspaceSearchResult,
   WorkspaceSyncRun,
@@ -406,6 +407,25 @@ export type UseWorkspaceObjectDetailPageReturn = {
   isRefreshing: boolean;
   refreshError: Error | null;
   onRefresh: () => void;
+  onBack: () => void;
+};
+
+export type UseConnectorDetailPageReturn = {
+  t: TranslateFunction;
+  connectorId: string;
+  connector: WorkspaceConnector | undefined;
+  syncRuns: WorkspaceSyncRun[];
+  healthEvents: WorkspaceHealthEvent[];
+  recentObjects: WorkspaceObject[];
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  isSyncing: boolean;
+  isCheckingHealth: boolean;
+  isDeleting: boolean;
+  onSync: () => void;
+  onHealthCheck: () => void;
+  onDelete: () => void;
   onBack: () => void;
 };
 

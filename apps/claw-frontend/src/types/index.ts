@@ -276,6 +276,7 @@ export type {
   UseRecoveryPageReturn,
   UseAdaptiveLearningPageReturn,
   UseCostEnsembleHookPageReturn,
+  UseConnectorDetailPageReturn,
 } from './hook.types';
 export type {
   CandidateResult,
@@ -548,5 +549,7 @@ export type {
   EvidenceViewerProps,
   ResearchProviderFormProps,
   ResearchProviderRowProps,
+  ConnectorStatusBadgeProps,
+  ConnectorDetailViewProps,
 } from './component.types';
 export type { ResearchProviderFormState, UseResearchProvidersPageReturn } from './hook.types';

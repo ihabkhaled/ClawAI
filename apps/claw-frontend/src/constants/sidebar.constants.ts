@@ -27,7 +27,6 @@ import {
   GitBranch,
   Bot,
   Radar,
-  Package,
   KeyRound,
   Globe,
   Search,
@@ -77,7 +76,6 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
     href: ROUTES.WORKSPACE,
     icon: Workflow,
     children: [
-      { labelKey: 'nav.workspaceProviders', href: ROUTES.WORKSPACE_PROVIDERS, icon: Package },
       { labelKey: 'nav.workspaceAppConfigs', href: ROUTES.WORKSPACE_APP_CONFIGS, icon: KeyRound },
       { labelKey: 'nav.workspaceActions', href: ROUTES.WORKSPACE_ACTIONS, icon: CheckSquare },
     ],

@@ -1,7 +1,9 @@
-import { Activity, RefreshCw, Trash2 } from 'lucide-react';
+import { Activity, ExternalLink, RefreshCw, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { ROUTES } from '@/constants';
 import type { WorkspaceConnectorCardProps } from '@/types/component.types';
 
 import { WorkspaceConnectorStatusBadge } from './workspace-connector-status-badge';
@@ -24,7 +26,15 @@ export function WorkspaceConnectorCard({
     <Card className="flex flex-col">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-base leading-tight">{connector.name}</CardTitle>
+          <Link
+            href={ROUTES.WORKSPACE_CONNECTOR_DETAIL(connector.id)}
+            className="flex-1 truncate hover:underline"
+          >
+            <CardTitle className="flex items-center gap-2 text-base leading-tight">
+              {connector.name}
+              <ExternalLink className="size-3 text-muted-foreground" />
+            </CardTitle>
+          </Link>
           <WorkspaceConnectorStatusBadge connector={connector} t={t} />
         </div>
         <p className="text-sm text-muted-foreground">{connector.provider}</p>

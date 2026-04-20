@@ -36,6 +36,7 @@ export const ROUTES = {
   WORKSPACE_ACTIONS: '/workspace/actions',
   WORKSPACE_PROVIDERS: '/workspace/providers',
   WORKSPACE_APP_CONFIGS: '/workspace/app-configs',
+  WORKSPACE_CONNECTOR_DETAIL: (id: string) => `/workspace/connectors/${id}`,
   AGENT: '/agent',
   AGENT_TERMINAL: '/agent/terminal',
   AGENT_REPOS: '/agent/repos',

@@ -15,6 +15,7 @@ import type {
   WorkspaceAction,
   WorkspaceConnector,
   WorkspaceHealthCheckResult,
+  WorkspaceHealthEvent,
   WorkspaceObject,
   WorkspaceSearchQuery,
   WorkspaceSearchResponse,
@@ -140,6 +141,16 @@ export async function listWorkspaceSyncRuns(
 ): Promise<WorkspaceSyncRun[]> {
   const response = await apiClient.get<WorkspaceSyncRun[]>(
     `${BASE}/connectors/${connectorId}/sync-runs?limit=${String(limit)}`,
+  );
+  return response.data;
+}
+
+export async function listWorkspaceHealthEvents(
+  connectorId: string,
+  limit = 20,
+): Promise<WorkspaceHealthEvent[]> {
+  const response = await apiClient.get<WorkspaceHealthEvent[]>(
+    `${BASE}/connectors/${connectorId}/health-events?limit=${String(limit)}`,
   );
   return response.data;
 }

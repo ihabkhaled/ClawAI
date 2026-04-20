@@ -1,0 +1,91 @@
+import { useQuery } from '@tanstack/react-query';
+import { useParams, useRouter } from 'next/navigation';
+
+import { ROUTES } from '@/constants';
+import { useTranslation } from '@/lib/i18n';
+import { queryKeys } from '@/repositories/shared/query-keys';
+import {
+  getWorkspaceConnector,
+  listWorkspaceHealthEvents,
+  listWorkspaceSyncRuns,
+} from '@/repositories/workspace/workspace.repository';
+import type { UseConnectorDetailPageReturn } from '@/types';
+
+import {
+  useDeleteWorkspaceConnector,
+  useTestWorkspaceConnectorHealth,
+  useTriggerWorkspaceSync,
+} from './use-workspace-connector-mutations';
+import { useWorkspaceObjects } from './use-workspace-objects';
+
+export function useConnectorDetailPage(): UseConnectorDetailPageReturn {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const params = useParams<{ connectorId: string }>();
+  const connectorId = params.connectorId ?? '';
+
+  const connectorQuery = useQuery({
+    queryKey: queryKeys.workspaceConnectors.detail(connectorId),
+    queryFn: () => getWorkspaceConnector(connectorId),
+    enabled: connectorId.length > 0,
+    staleTime: 5_000,
+  });
+
+  const syncRunsQuery = useQuery({
+    queryKey: queryKeys.workspaceConnectors.syncRuns(connectorId),
+    queryFn: () => listWorkspaceSyncRuns(connectorId, 20),
+    enabled: connectorId.length > 0,
+    staleTime: 5_000,
+  });
+
+  const healthEventsQuery = useQuery({
+    queryKey: queryKeys.workspaceConnectors.healthEvents(connectorId),
+    queryFn: () => listWorkspaceHealthEvents(connectorId, 20),
+    enabled: connectorId.length > 0,
+    staleTime: 5_000,
+  });
+
+  const objectsQuery = useWorkspaceObjects(
+    connectorId.length > 0 ? { connectorId, limit: 20 } : undefined,
+  );
+
+  const syncMutation = useTriggerWorkspaceSync();
+  const healthMutation = useTestWorkspaceConnectorHealth();
+  const deleteMutation = useDeleteWorkspaceConnector();
+
+  const onBack = (): void => router.push(ROUTES.WORKSPACE);
+  const onSync = (): void => syncMutation.mutate({ id: connectorId });
+  const onHealthCheck = (): void => healthMutation.mutate(connectorId);
+  const onDelete = (): void => {
+    deleteMutation.mutate(connectorId, {
+      onSuccess: () => router.push(ROUTES.WORKSPACE),
+    });
+  };
+
+  return {
+    t,
+    connectorId,
+    connector: connectorQuery.data,
+    syncRuns: syncRunsQuery.data ?? [],
+    healthEvents: healthEventsQuery.data ?? [],
+    recentObjects: objectsQuery.data?.data ?? [],
+    isLoading:
+      connectorQuery.isLoading ||
+      syncRunsQuery.isLoading ||
+      healthEventsQuery.isLoading ||
+      objectsQuery.isLoading,
+    isError:
+      connectorQuery.isError ||
+      syncRunsQuery.isError ||
+      healthEventsQuery.isError ||
+      objectsQuery.isError,
+    error: (connectorQuery.error ?? syncRunsQuery.error ?? healthEventsQuery.error) as Error | null,
+    isSyncing: syncMutation.isPending,
+    isCheckingHealth: healthMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+    onSync,
+    onHealthCheck,
+    onDelete,
+    onBack,
+  };
+}

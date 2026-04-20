@@ -962,6 +962,23 @@ export type TranslationDictionary = {
     openInProvider: string;
     author: string;
   };
+  connectorDetail: {
+    title: string;
+    description: string;
+    loadFailed: string;
+    never: string;
+    lastSync: string;
+    syncRunsCount: string;
+    objectsCount: string;
+    recentObjects: string;
+    noObjects: string;
+    syncHistory: string;
+    noSyncRuns: string;
+    syncRunLine: string;
+    healthHistory: string;
+    noHealthEvents: string;
+    healthOk: string;
+  };
   workspaceSyncRuns: {
     title: string;
     description: string;
