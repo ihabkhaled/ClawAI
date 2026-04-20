@@ -14,6 +14,12 @@ const appConfigSchema = z.object({
   CORS_ORIGINS: z.string().default('http://localhost:3000'),
   THROTTLE_TTL: z.coerce.number().int().positive().default(60_000),
   THROTTLE_LIMIT: z.coerce.number().int().positive().default(100),
+  AGENT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+  AGENT_REFRESH_TTL_DAYS: z.coerce.number().int().positive().default(30),
+  AGENT_PAIRING_TTL_SECONDS: z.coerce.number().int().positive().default(120),
+  AGENT_DEVICE_CODE_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+  AGENT_REFRESH_GRACE_SECONDS: z.coerce.number().int().nonnegative().default(15),
+  NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
 });
 
 export type AgentAppConfig = z.infer<typeof appConfigSchema>;
