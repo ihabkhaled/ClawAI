@@ -494,6 +494,16 @@ export const de: TranslationDictionary = {
       'Das Passwort muss mindestens 8 Zeichen mit Groß- und Kleinbuchstaben sowie einer Zahl enthalten',
     preferencesUpdated: 'Einstellungen erfolgreich aktualisiert',
     preferencesUpdateFailed: 'Einstellungen konnten nicht aktualisiert werden',
+    devices: {
+      title: 'Geräte',
+      description: 'Verwalten Sie Desktop-Agenten, die mit Ihrem Konto verknüpft sind.',
+      emptyTitle: 'Keine gekoppelten Geräte',
+      emptyBody: 'Führen Sie `claw-agent login` auf Ihrem Rechner aus, um ein Gerät zu koppeln.',
+      revoke: 'Widerrufen',
+      rename: 'Umbenennen',
+      scopesHeading: 'Berechtigungen',
+      revokedBanner: 'Dieses Gerät wurde widerrufen',
+    },
   },
   dashboard: {
     title: 'Übersicht',
@@ -535,6 +545,10 @@ export const de: TranslationDictionary = {
     models: 'Modelle',
     scrollForMore: 'Scrollen für mehr',
     allLoaded: 'Alle Modelle geladen',
+    searchBrowserHelpers: 'Such-/Browser-Helfer',
+    searchBrowserScoreLabel: 'Helfer',
+    searchBrowserScoreTooltip:
+      'Eignung für Such- und Browser-Helfer-Workflows (metadatenbasierter Score, 0,00–1,00)',
   },
   replay: {
     title: 'Routing-Replay-Labor',
@@ -999,8 +1013,7 @@ export const de: TranslationDictionary = {
     healthHistory: 'Health-Historie',
     noHealthEvents: 'Noch keine Health-Checks aufgezeichnet.',
     healthOk: 'OK',
-    activating:
-      'Konnektor wird aktiviert — die erste Objektmenge wird vom Anbieter importiert.',
+    activating: 'Konnektor wird aktiviert — die erste Objektmenge wird vom Anbieter importiert.',
     askAi: 'KI hierzu fragen',
     askAiTitle: 'Über {name}',
     reconnect: 'Erneut verbinden',
@@ -1187,6 +1200,22 @@ export const de: TranslationDictionary = {
     commands: 'Befehle',
     files: 'Dateien',
     dirty: 'Geändert',
+    connect: {
+      title: 'Gerät verbinden',
+      approveDescription: 'Überprüfen Sie Gerätedaten und Berechtigungen vor der Freigabe.',
+      scopesLabel: 'Berechtigungen (Scopes)',
+      approveButton: 'Genehmigen',
+      denyButton: 'Abbrechen',
+      successTitle: 'Gerät gekoppelt',
+      successBody: 'Sie können diesen Tab schließen und zum Terminal zurückkehren.',
+      expiredTitle: 'Kopplungslink ungültig oder abgelaufen',
+      expiredBody: 'Führen Sie `claw-agent login` erneut aus, um eine neue Kopplung zu starten.',
+      deniedTitle: 'Freigabe abgebrochen',
+      deniedBody: 'Es wurden keine Anmeldedaten ausgestellt. Sie können diesen Tab schließen.',
+      accountMismatchTitle: 'Falsches Konto',
+      accountMismatchBody:
+        'Melden Sie sich mit dem Konto an, mit dem Sie dieses Gerät verknüpfen möchten.',
+    },
   },
   discovery: {
     title: 'Modell-Erkennung',

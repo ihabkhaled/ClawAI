@@ -496,6 +496,16 @@ export const pt: TranslationDictionary = {
       'A senha deve ter pelo menos 8 caracteres com letras maiúsculas, minúsculas e um número',
     preferencesUpdated: 'Preferências atualizadas com sucesso',
     preferencesUpdateFailed: 'Falha ao atualizar as preferências',
+    devices: {
+      title: 'Dispositivos',
+      description: 'Gerencie os agentes de desktop vinculados à sua conta.',
+      emptyTitle: 'Nenhum dispositivo emparelhado',
+      emptyBody: 'Execute `claw-agent login` na sua máquina para emparelhar um dispositivo.',
+      revoke: 'Revogar',
+      rename: 'Renomear',
+      scopesHeading: 'Permissões',
+      revokedBanner: 'Este dispositivo foi revogado',
+    },
   },
   dashboard: {
     title: 'Painel de controle',
@@ -537,6 +547,10 @@ export const pt: TranslationDictionary = {
     models: 'modelos',
     scrollForMore: 'Role para ver mais',
     allLoaded: 'Todos os modelos carregados',
+    searchBrowserHelpers: 'Assistentes de pesquisa/navegador',
+    searchBrowserScoreLabel: 'Assistente',
+    searchBrowserScoreTooltip:
+      'Adequação para fluxos de assistente de pesquisa e navegador (pontuação baseada em metadados, 0,00–1,00)',
   },
   replay: {
     title: 'Laboratorio de replay de roteamento',
@@ -982,8 +996,7 @@ export const pt: TranslationDictionary = {
   },
   connectorDetail: {
     title: 'Detalhe do conector',
-    description:
-      'Histórico de sincronização, eventos de saúde e objetos recentes deste conector.',
+    description: 'Histórico de sincronização, eventos de saúde e objetos recentes deste conector.',
     loadFailed: 'Falha ao carregar o conector.',
     never: 'nunca',
     lastSync: 'Última sincronização: {value}',
@@ -997,8 +1010,7 @@ export const pt: TranslationDictionary = {
     healthHistory: 'Histórico de saúde',
     noHealthEvents: 'Nenhuma verificação de saúde registrada.',
     healthOk: 'OK',
-    activating:
-      'Ativando este conector — importando o primeiro conjunto de objetos do provedor.',
+    activating: 'Ativando este conector — importando o primeiro conjunto de objetos do provedor.',
     askAi: 'Perguntar à IA',
     askAiTitle: 'Sobre {name}',
     reconnect: 'Reconectar',
@@ -1185,6 +1197,21 @@ export const pt: TranslationDictionary = {
     commands: 'comandos',
     files: 'arquivos',
     dirty: 'Modificado',
+    connect: {
+      title: 'Conectar um dispositivo',
+      approveDescription: 'Revise os detalhes do dispositivo e as permissões antes de aprovar.',
+      scopesLabel: 'Permissões (scopes)',
+      approveButton: 'Aprovar',
+      denyButton: 'Cancelar',
+      successTitle: 'Dispositivo emparelhado',
+      successBody: 'Você pode fechar esta aba e voltar ao terminal.',
+      expiredTitle: 'Link de emparelhamento inválido ou expirado',
+      expiredBody: 'Execute novamente `claw-agent login` para iniciar um novo emparelhamento.',
+      deniedTitle: 'Aprovação cancelada',
+      deniedBody: 'Nenhuma credencial foi emitida. Você pode fechar esta aba.',
+      accountMismatchTitle: 'Conta incorreta',
+      accountMismatchBody: 'Entre com a conta que você deseja associar a este dispositivo.',
+    },
   },
   discovery: {
     title: 'Descoberta de Modelos',

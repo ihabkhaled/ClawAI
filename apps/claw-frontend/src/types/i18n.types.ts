@@ -490,6 +490,16 @@ export type TranslationDictionary = {
     passwordRequirements: string;
     preferencesUpdated: string;
     preferencesUpdateFailed: string;
+    devices: {
+      title: string;
+      description: string;
+      emptyTitle: string;
+      emptyBody: string;
+      revoke: string;
+      rename: string;
+      scopesHeading: string;
+      revokedBanner: string;
+    };
   };
   dashboard: {
     title: string;
@@ -531,6 +541,9 @@ export type TranslationDictionary = {
     models: string;
     scrollForMore: string;
     allLoaded: string;
+    searchBrowserHelpers: string;
+    searchBrowserScoreLabel: string;
+    searchBrowserScoreTooltip: string;
   };
   replay: {
     title: string;
@@ -1162,6 +1175,21 @@ export type TranslationDictionary = {
     commands: string;
     files: string;
     dirty: string;
+    connect: {
+      title: string;
+      approveDescription: string;
+      scopesLabel: string;
+      approveButton: string;
+      denyButton: string;
+      successTitle: string;
+      successBody: string;
+      expiredTitle: string;
+      expiredBody: string;
+      deniedTitle: string;
+      deniedBody: string;
+      accountMismatchTitle: string;
+      accountMismatchBody: string;
+    };
   };
   discovery: {
     title: string;

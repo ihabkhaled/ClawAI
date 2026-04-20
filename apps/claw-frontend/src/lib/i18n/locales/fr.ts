@@ -497,6 +497,16 @@ export const fr: TranslationDictionary = {
       'Le mot de passe doit contenir au moins 8 caractères avec des majuscules, des minuscules et un chiffre',
     preferencesUpdated: 'Préférences mises à jour avec succès',
     preferencesUpdateFailed: 'Échec de la mise à jour des préférences',
+    devices: {
+      title: 'Appareils',
+      description: 'Gérez les agents de bureau associés à votre compte.',
+      emptyTitle: 'Aucun appareil associé',
+      emptyBody: 'Exécutez `claw-agent login` sur votre machine pour associer un appareil.',
+      revoke: 'Révoquer',
+      rename: 'Renommer',
+      scopesHeading: 'Autorisations',
+      revokedBanner: 'Cet appareil a été révoqué',
+    },
   },
   dashboard: {
     title: 'Tableau de bord',
@@ -538,6 +548,10 @@ export const fr: TranslationDictionary = {
     models: 'modèles',
     scrollForMore: 'Faire défiler pour plus',
     allLoaded: 'Tous les modèles chargés',
+    searchBrowserHelpers: 'Assistants de recherche/navigateur',
+    searchBrowserScoreLabel: 'Assistant',
+    searchBrowserScoreTooltip:
+      'Aptitude aux workflows d’assistant de recherche et de navigation (score basé sur les métadonnées, 0,00–1,00)',
   },
   replay: {
     title: 'Laboratoire de rejeu de routage',
@@ -1191,6 +1205,23 @@ export const fr: TranslationDictionary = {
     commands: 'commandes',
     files: 'fichiers',
     dirty: 'Modifié',
+    connect: {
+      title: 'Connecter un appareil',
+      approveDescription:
+        "Vérifiez les détails de l'appareil et les autorisations avant d'approuver.",
+      scopesLabel: 'Autorisations (scopes)',
+      approveButton: 'Approuver',
+      denyButton: 'Annuler',
+      successTitle: 'Appareil jumelé',
+      successBody: 'Vous pouvez fermer cet onglet et revenir à votre terminal.',
+      expiredTitle: 'Lien de jumelage invalide ou expiré',
+      expiredBody: 'Exécutez à nouveau `claw-agent login` pour démarrer un nouveau jumelage.',
+      deniedTitle: 'Approbation annulée',
+      deniedBody: "Aucun identifiant n'a été émis. Vous pouvez fermer cet onglet.",
+      accountMismatchTitle: 'Compte incorrect',
+      accountMismatchBody:
+        'Connectez-vous avec le compte auquel vous souhaitez associer cet appareil.',
+    },
   },
   discovery: {
     title: 'Découverte de modèles',

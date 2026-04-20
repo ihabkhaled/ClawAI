@@ -496,6 +496,16 @@ export const it: TranslationDictionary = {
       'La password deve contenere almeno 8 caratteri con maiuscole, minuscole e un numero',
     preferencesUpdated: 'Preferenze aggiornate con successo',
     preferencesUpdateFailed: 'Aggiornamento delle preferenze non riuscito',
+    devices: {
+      title: 'Dispositivi',
+      description: 'Gestisci gli agent desktop collegati al tuo account.',
+      emptyTitle: 'Nessun dispositivo collegato',
+      emptyBody: 'Esegui `claw-agent login` sul tuo computer per collegare un dispositivo.',
+      revoke: 'Revoca',
+      rename: 'Rinomina',
+      scopesHeading: 'Autorizzazioni',
+      revokedBanner: 'Questo dispositivo è stato revocato',
+    },
   },
   dashboard: {
     title: 'Pannello di controllo',
@@ -537,6 +547,10 @@ export const it: TranslationDictionary = {
     models: 'modelli',
     scrollForMore: 'Scorri per altri',
     allLoaded: 'Tutti i modelli caricati',
+    searchBrowserHelpers: 'Assistenti di ricerca/browser',
+    searchBrowserScoreLabel: 'Assistente',
+    searchBrowserScoreTooltip:
+      'Idoneità per i flussi di assistente ricerca e browser (punteggio basato sui metadati, 0,00–1,00)',
   },
   replay: {
     title: 'Laboratorio di replay del routing',
@@ -997,8 +1011,7 @@ export const it: TranslationDictionary = {
     healthHistory: 'Cronologia salute',
     noHealthEvents: 'Nessun controllo di salute registrato.',
     healthOk: 'OK',
-    activating:
-      'Attivazione del connettore — importazione del primo set di oggetti dal provider.',
+    activating: 'Attivazione del connettore — importazione del primo set di oggetti dal provider.',
     askAi: 'Chiedi all’IA',
     askAiTitle: 'Su {name}',
     reconnect: 'Riconnetti',
@@ -1186,6 +1199,22 @@ export const it: TranslationDictionary = {
     commands: 'comandi',
     files: 'file',
     dirty: 'Modificato',
+    connect: {
+      title: 'Collega un dispositivo',
+      approveDescription:
+        'Verifica i dettagli del dispositivo e le autorizzazioni prima di approvare.',
+      scopesLabel: 'Autorizzazioni (scopes)',
+      approveButton: 'Approva',
+      denyButton: 'Annulla',
+      successTitle: 'Dispositivo associato',
+      successBody: 'Puoi chiudere questa scheda e tornare al terminale.',
+      expiredTitle: 'Link di associazione non valido o scaduto',
+      expiredBody: 'Esegui di nuovo `claw-agent login` per avviare una nuova associazione.',
+      deniedTitle: 'Approvazione annullata',
+      deniedBody: 'Nessuna credenziale è stata emessa. Puoi chiudere questa scheda.',
+      accountMismatchTitle: 'Account errato',
+      accountMismatchBody: "Accedi con l'account a cui vuoi associare questo dispositivo.",
+    },
   },
   discovery: {
     title: 'Scoperta modelli',

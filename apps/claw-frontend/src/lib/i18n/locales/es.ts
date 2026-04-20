@@ -495,6 +495,16 @@ export const es: TranslationDictionary = {
       'La contraseña debe tener al menos 8 caracteres con mayúsculas, minúsculas y un número',
     preferencesUpdated: 'Preferencias actualizadas correctamente',
     preferencesUpdateFailed: 'Error al actualizar las preferencias',
+    devices: {
+      title: 'Dispositivos',
+      description: 'Gestiona los agentes de escritorio vinculados a tu cuenta.',
+      emptyTitle: 'No hay dispositivos emparejados',
+      emptyBody: 'Ejecuta `claw-agent login` en tu máquina para emparejar un dispositivo.',
+      revoke: 'Revocar',
+      rename: 'Renombrar',
+      scopesHeading: 'Permisos',
+      revokedBanner: 'Este dispositivo ha sido revocado',
+    },
   },
   dashboard: {
     title: 'Panel de control',
@@ -536,6 +546,10 @@ export const es: TranslationDictionary = {
     models: 'modelos',
     scrollForMore: 'Desplázate para ver más',
     allLoaded: 'Todos los modelos cargados',
+    searchBrowserHelpers: 'Ayudantes de búsqueda/navegador',
+    searchBrowserScoreLabel: 'Ayudante',
+    searchBrowserScoreTooltip:
+      'Idoneidad para flujos de búsqueda y navegador (puntaje basado en metadatos, 0,00–1,00)',
   },
   replay: {
     title: 'Laboratorio de repeticion de enrutamiento',
@@ -999,8 +1013,7 @@ export const es: TranslationDictionary = {
     healthHistory: 'Historial de salud',
     noHealthEvents: 'Sin comprobaciones de salud registradas.',
     healthOk: 'OK',
-    activating:
-      'Activando este conector — importando el primer conjunto de objetos del proveedor.',
+    activating: 'Activando este conector — importando el primer conjunto de objetos del proveedor.',
     askAi: 'Preguntar a la IA',
     askAiTitle: 'Sobre {name}',
     reconnect: 'Reconectar',
@@ -1188,6 +1201,22 @@ export const es: TranslationDictionary = {
     commands: 'comandos',
     files: 'archivos',
     dirty: 'Modificado',
+    connect: {
+      title: 'Conectar un dispositivo',
+      approveDescription: 'Revisa los detalles del dispositivo y los permisos antes de aprobar.',
+      scopesLabel: 'Permisos (scopes)',
+      approveButton: 'Aprobar',
+      denyButton: 'Cancelar',
+      successTitle: 'Dispositivo emparejado',
+      successBody: 'Puedes cerrar esta pestaña y volver a tu terminal.',
+      expiredTitle: 'Enlace de emparejamiento no válido o caducado',
+      expiredBody: 'Vuelve a ejecutar `claw-agent login` para iniciar un nuevo emparejamiento.',
+      deniedTitle: 'Aprobación cancelada',
+      deniedBody: 'No se emitieron credenciales. Puedes cerrar esta pestaña.',
+      accountMismatchTitle: 'Cuenta incorrecta',
+      accountMismatchBody:
+        'Inicia sesión con la cuenta con la que quieres emparejar este dispositivo.',
+    },
   },
   discovery: {
     title: 'Descubrimiento de Modelos',
