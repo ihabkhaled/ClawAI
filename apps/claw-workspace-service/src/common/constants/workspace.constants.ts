@@ -12,6 +12,22 @@ export const GITHUB_SYNC_ISSUES_PER_REPO = 30;
 /** Max pull requests fetched per repo per sync. */
 export const GITHUB_SYNC_PRS_PER_REPO = 20;
 
+// ─── GitLab adapter URLs ──────────────────────────────────────────────────────
+export const GITLAB_DEFAULT_API_BASE = 'https://gitlab.com/api/v4';
+export const GITLAB_DEFAULT_HOST = 'https://gitlab.com';
+export const GITLAB_AUTH_PATH = '/oauth/authorize';
+export const GITLAB_TOKEN_PATH = '/oauth/token';
+export const GITLAB_SYNC_PROJECT_DEPTH = 3;
+export const GITLAB_SYNC_ISSUES_PER_PROJECT = 30;
+export const GITLAB_SYNC_MRS_PER_PROJECT = 20;
+
+// ─── Bitbucket adapter URLs ───────────────────────────────────────────────────
+export const BITBUCKET_API_BASE = 'https://api.bitbucket.org/2.0';
+export const BITBUCKET_AUTH_URL = 'https://bitbucket.org/site/oauth2/authorize';
+export const BITBUCKET_TOKEN_URL = 'https://bitbucket.org/site/oauth2/access_token';
+export const BITBUCKET_SYNC_REPO_LIMIT = 50;
+export const BITBUCKET_SYNC_PRS_PER_REPO = 20;
+
 // ─── Slack adapter URLs ───────────────────────────────────────────────────────
 export const SLACK_API_BASE = 'https://slack.com/api';
 export const SLACK_AUTH_URL = 'https://slack.com/oauth/v2/authorize';

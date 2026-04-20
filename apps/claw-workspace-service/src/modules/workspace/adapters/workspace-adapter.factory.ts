@@ -1,15 +1,15 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { WorkspaceProvider } from '../../../common/enums/workspace-provider.enum';
+import { BitbucketAdapter } from './bitbucket.adapter';
 import { GitHubAdapter } from './github.adapter';
-import { SlackAdapter } from './slack.adapter';
-import { JiraAdapter } from './jira.adapter';
+import { GitLabAdapter } from './gitlab.adapter';
 import { GoogleDriveAdapter } from './google-drive.adapter';
+import { JiraAdapter } from './jira.adapter';
+import { SlackAdapter } from './slack.adapter';
 import type { WorkspaceAdapter } from './workspace-adapter.interface';
 
 const NOT_IMPLEMENTED_PROVIDERS = new Set<WorkspaceProvider>([
-  WorkspaceProvider.GITLAB,
-  WorkspaceProvider.BITBUCKET,
   WorkspaceProvider.CONFLUENCE,
   WorkspaceProvider.GMAIL,
   WorkspaceProvider.FIGMA,
@@ -22,6 +22,8 @@ const NOT_IMPLEMENTED_PROVIDERS = new Set<WorkspaceProvider>([
 export class WorkspaceAdapterFactory {
   constructor(
     private readonly github: GitHubAdapter,
+    private readonly gitlab: GitLabAdapter,
+    private readonly bitbucket: BitbucketAdapter,
     private readonly slack: SlackAdapter,
     private readonly jira: JiraAdapter,
     private readonly googleDrive: GoogleDriveAdapter,
@@ -42,6 +44,10 @@ export class WorkspaceAdapterFactory {
     switch (typed) {
       case WorkspaceProvider.GITHUB:
         return this.github;
+      case WorkspaceProvider.GITLAB:
+        return this.gitlab;
+      case WorkspaceProvider.BITBUCKET:
+        return this.bitbucket;
       case WorkspaceProvider.SLACK:
         return this.slack;
       case WorkspaceProvider.JIRA:

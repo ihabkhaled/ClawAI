@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
+import { BitbucketAdapter } from './adapters/bitbucket.adapter';
 import { GitHubAdapter } from './adapters/github.adapter';
+import { GitLabAdapter } from './adapters/gitlab.adapter';
 import { GoogleDriveAdapter } from './adapters/google-drive.adapter';
 import { JiraAdapter } from './adapters/jira.adapter';
 import { SlackAdapter } from './adapters/slack.adapter';
@@ -51,6 +53,8 @@ import { WorkspaceSearchService } from './services/workspace-search.service';
     WorkspaceSearchManager,
     WorkspaceAdapterFactory,
     GitHubAdapter,
+    GitLabAdapter,
+    BitbucketAdapter,
     SlackAdapter,
     JiraAdapter,
     GoogleDriveAdapter,

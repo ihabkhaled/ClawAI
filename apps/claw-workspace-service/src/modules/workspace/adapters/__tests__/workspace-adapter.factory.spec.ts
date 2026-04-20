@@ -1,6 +1,8 @@
 import { WorkspaceAdapterFactory } from '../workspace-adapter.factory';
 import { WorkspaceProvider } from '../../../../common/enums/workspace-provider.enum';
+import { BitbucketAdapter } from '../bitbucket.adapter';
 import { GitHubAdapter } from '../github.adapter';
+import { GitLabAdapter } from '../gitlab.adapter';
 import { SlackAdapter } from '../slack.adapter';
 import { JiraAdapter } from '../jira.adapter';
 import { GoogleDriveAdapter } from '../google-drive.adapter';
@@ -9,16 +11,20 @@ import { BusinessException } from '../../../../common/errors/business.exception'
 describe('WorkspaceAdapterFactory', () => {
   let factory: WorkspaceAdapterFactory;
   const github = new GitHubAdapter();
+  const gitlab = new GitLabAdapter();
+  const bitbucket = new BitbucketAdapter();
   const slack = new SlackAdapter();
   const jira = new JiraAdapter();
   const googleDrive = new GoogleDriveAdapter();
 
   beforeEach(() => {
-    factory = new WorkspaceAdapterFactory(github, slack, jira, googleDrive);
+    factory = new WorkspaceAdapterFactory(github, gitlab, bitbucket, slack, jira, googleDrive);
   });
 
   it.each([
     [WorkspaceProvider.GITHUB, github],
+    [WorkspaceProvider.GITLAB, gitlab],
+    [WorkspaceProvider.BITBUCKET, bitbucket],
     [WorkspaceProvider.SLACK, slack],
     [WorkspaceProvider.JIRA, jira],
     [WorkspaceProvider.GOOGLE_DRIVE, googleDrive],
@@ -27,8 +33,6 @@ describe('WorkspaceAdapterFactory', () => {
   });
 
   it.each([
-    WorkspaceProvider.GITLAB,
-    WorkspaceProvider.BITBUCKET,
     WorkspaceProvider.CONFLUENCE,
     WorkspaceProvider.GMAIL,
     WorkspaceProvider.FIGMA,

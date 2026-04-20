@@ -12,6 +12,8 @@ import type { ProviderAppConfigFormValues } from '@/types';
  */
 export const IMPLEMENTED_WORKSPACE_ADAPTERS: ReadonlySet<string> = new Set([
   'GITHUB',
+  'GITLAB',
+  'BITBUCKET',
   'SLACK',
   'JIRA',
   'GOOGLE_DRIVE',
