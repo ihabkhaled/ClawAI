@@ -1,0 +1,7 @@
+# Always check out shell scripts with LF line endings so Alpine containers
+# can execute them regardless of the committer's OS.
+*.sh text eol=lf
+docker-entrypoint*.sh text eol=lf
+
+# Keep other text files cross-platform-friendly.
+* text=auto
