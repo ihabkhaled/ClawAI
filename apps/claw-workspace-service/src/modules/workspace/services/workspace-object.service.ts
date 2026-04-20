@@ -126,7 +126,12 @@ export class WorkspaceObjectService {
         HttpStatus.NOT_IMPLEMENTED,
       );
     }
-    const live = await adapter.fetchObjectDetails(tokens.accessToken, obj.externalId, obj.type);
+    const live = await adapter.fetchObjectDetails(
+      tokens.accessToken,
+      obj.externalId,
+      obj.type,
+      (obj.metadata ?? {}) as Record<string, unknown>,
+    );
     if (live === null) {
       this.logger.warn(`Object ${obj.id} no longer exists upstream (${obj.externalId})`);
       throw new BusinessException('workspace.object.refresh.gone', 'OBJECT_GONE', HttpStatus.GONE);

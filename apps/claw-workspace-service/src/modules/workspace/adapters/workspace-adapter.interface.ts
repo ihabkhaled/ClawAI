@@ -80,5 +80,6 @@ export interface WorkspaceAdapter {
     accessToken: string,
     externalId: string,
     objectType: string,
+    metadata?: Record<string, unknown>,
   ): Promise<LiveObjectDetails | null>;
 }

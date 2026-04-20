@@ -5,6 +5,13 @@ export const GITHUB_API_BASE = 'https://api.github.com';
 export const GITHUB_AUTH_BASE = 'https://github.com/login/oauth/authorize';
 export const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token';
 
+/** How many of the user's top repos we drill into for issues/PRs per sync. */
+export const GITHUB_SYNC_REPO_DEPTH = 3;
+/** Max issues fetched per repo per sync. */
+export const GITHUB_SYNC_ISSUES_PER_REPO = 30;
+/** Max pull requests fetched per repo per sync. */
+export const GITHUB_SYNC_PRS_PER_REPO = 20;
+
 // ─── Slack adapter URLs ───────────────────────────────────────────────────────
 export const SLACK_API_BASE = 'https://slack.com/api';
 export const SLACK_AUTH_URL = 'https://slack.com/oauth/v2/authorize';

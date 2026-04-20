@@ -69,6 +69,12 @@ New page `/workspace/objects/[objectId]`:
 
 ## Gaps Intentionally Deferred
 
-- `fetchObjectDetails` is only implemented for `GITHUB / REPOSITORY` today. Slack / Jira / Google Drive raise `ADAPTER_REFRESH_UNSUPPORTED` until each provider pass lands.
-- The sync endpoint still hardcodes `objectType = REPOSITORY`. Per-type sync filters remain on the provider roadmap (one provider pass at a time will unlock more types).
+- `fetchObjectDetails` is implemented for GitHub **repositories, issues, and pull requests** (prompt 09). Slack / Jira / Google Drive still raise `ADAPTER_REFRESH_UNSUPPORTED` until their provider passes land.
+- The sync endpoint's `WorkspaceSyncRun.objectType` still records `REPOSITORY` even when the adapter syncs multiple types in one pass; a per-type breakdown is a future refactor.
 - No UI yet for sync-run history; the hook and endpoint exist, a drawer in the workspace page is planned for the next UI pass.
+
+## Prompt 09 — GitHub enrichment
+
+- `GitHubAdapter.syncObjects` now returns repositories **plus** recent issues and pull requests from the first `GITHUB_SYNC_REPO_DEPTH` repos (defaults: 3 repos, 30 issues, 20 PRs). Per-repo failures are logged and skipped — they do not abort the whole sync.
+- Each issue/PR is stored with `metadata = { fullName, number, state, merged? }` so it can be refreshed later without another directory lookup.
+- `fetchObjectDetails` resolves `ISSUE` and `PULL_REQUEST` by reading `fullName` + `number` from the stored metadata and hitting `GET /repos/{owner}/{repo}/issues/{n}` or `/pulls/{n}`. Missing metadata returns `null` safely.

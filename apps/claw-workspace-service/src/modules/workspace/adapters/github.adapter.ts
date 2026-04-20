@@ -3,12 +3,16 @@ import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connec
 import {
   GITHUB_API_BASE,
   GITHUB_AUTH_BASE,
+  GITHUB_SYNC_ISSUES_PER_REPO,
+  GITHUB_SYNC_PRS_PER_REPO,
+  GITHUB_SYNC_REPO_DEPTH,
   GITHUB_TOKEN_URL,
   HEALTH_CHECK_TIMEOUT_MS,
   WRITE_EXECUTION_TIMEOUT_MS,
 } from '../../../common/constants/workspace.constants';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
+import type { GitHubIssue, GitHubPull, GitHubRepo } from '../types/github-api.types';
 import type {
   AdapterCapabilities,
   HealthCheckResult,
@@ -58,6 +62,30 @@ export class GitHubAdapter implements WorkspaceAdapter {
   }
 
   async syncObjects(accessToken: string, deltaToken?: string): Promise<SyncResult> {
+    const repos = await this.fetchUserRepos(accessToken, deltaToken);
+    const objects: SyncedObject[] = repos.map((repo) => this.mapRepoToSynced(repo));
+
+    const topRepos = repos.slice(0, GITHUB_SYNC_REPO_DEPTH);
+    for (const repo of topRepos) {
+      const issues = await this.safeFetchIssues(accessToken, repo.full_name);
+      objects.push(...issues);
+      const prs = await this.safeFetchPulls(accessToken, repo.full_name);
+      objects.push(...prs);
+    }
+
+    return {
+      objectsFound: objects.length,
+      objectsSynced: objects.length,
+      objectsFailed: 0,
+      deltaTokenOut: new Date().toISOString(),
+      objects,
+    };
+  }
+
+  private async fetchUserRepos(
+    accessToken: string,
+    deltaToken?: string,
+  ): Promise<Array<GitHubRepo>> {
     const params = new URLSearchParams({
       per_page: '100',
       ...(deltaToken ? { since: deltaToken } : {}),
@@ -68,32 +96,98 @@ export class GitHubAdapter implements WorkspaceAdapter {
     if (!response.ok) {
       throw new Error(`GitHub sync failed: HTTP ${response.status}`);
     }
-    const repos = (await response.json()) as Array<{
-      id: number;
-      full_name: string;
-      description: string | null;
-      html_url: string;
-      owner: { login: string };
-      created_at: string;
-      updated_at: string;
-    }>;
-    const objects: SyncedObject[] = repos.map((repo) => ({
+    return (await response.json()) as Array<GitHubRepo>;
+  }
+
+  private mapRepoToSynced(repo: GitHubRepo): SyncedObject {
+    return {
       externalId: String(repo.id),
       type: WorkspaceObjectType.REPOSITORY,
       title: repo.full_name,
       content: repo.description ?? undefined,
       url: repo.html_url,
       authorId: repo.owner.login,
+      metadata: { fullName: repo.full_name },
       externalCreatedAt: new Date(repo.created_at),
       externalUpdatedAt: new Date(repo.updated_at),
-    }));
-    return {
-      objectsFound: objects.length,
-      objectsSynced: objects.length,
-      objectsFailed: 0,
-      deltaTokenOut: new Date().toISOString(),
-      objects,
     };
+  }
+
+  private async safeFetchIssues(accessToken: string, fullName: string): Promise<SyncedObject[]> {
+    try {
+      const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${fullName}/issues?state=all&per_page=${String(GITHUB_SYNC_ISSUES_PER_REPO)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: 'application/vnd.github+json',
+          },
+        },
+      );
+      if (!response.ok) {
+        this.logger.warn(`issues fetch failed for ${fullName}: HTTP ${response.status}`);
+        return [];
+      }
+      const items = (await response.json()) as Array<GitHubIssue>;
+      return items
+        .filter((i) => i.pull_request === undefined)
+        .map((issue) => ({
+          externalId: String(issue.id),
+          type: WorkspaceObjectType.ISSUE,
+          title: issue.title,
+          content: issue.body ?? undefined,
+          url: issue.html_url,
+          authorId: issue.user?.login,
+          metadata: {
+            fullName,
+            number: issue.number,
+            state: issue.state,
+          },
+          externalCreatedAt: new Date(issue.created_at),
+          externalUpdatedAt: new Date(issue.updated_at),
+        }));
+    } catch (error) {
+      this.logger.warn(`issues fetch error for ${fullName}: ${String(error)}`);
+      return [];
+    }
+  }
+
+  private async safeFetchPulls(accessToken: string, fullName: string): Promise<SyncedObject[]> {
+    try {
+      const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${fullName}/pulls?state=all&per_page=${String(GITHUB_SYNC_PRS_PER_REPO)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: 'application/vnd.github+json',
+          },
+        },
+      );
+      if (!response.ok) {
+        this.logger.warn(`pulls fetch failed for ${fullName}: HTTP ${response.status}`);
+        return [];
+      }
+      const items = (await response.json()) as Array<GitHubPull>;
+      return items.map((pr) => ({
+        externalId: String(pr.id),
+        type: WorkspaceObjectType.PULL_REQUEST,
+        title: pr.title,
+        content: pr.body ?? undefined,
+        url: pr.html_url,
+        authorId: pr.user?.login,
+        metadata: {
+          fullName,
+          number: pr.number,
+          state: pr.state,
+          merged: pr.merged_at !== null,
+        },
+        externalCreatedAt: new Date(pr.created_at),
+        externalUpdatedAt: new Date(pr.updated_at),
+      }));
+    } catch (error) {
+      this.logger.warn(`pulls fetch error for ${fullName}: ${String(error)}`);
+      return [];
+    }
   }
 
   async exchangeCodeForTokens(
@@ -240,6 +334,7 @@ export class GitHubAdapter implements WorkspaceAdapter {
     accessToken: string,
     externalId: string,
     objectType: string,
+    metadata?: Record<string, unknown>,
   ): Promise<LiveObjectDetails | null> {
     const headers = {
       Authorization: `Bearer ${accessToken}`,
@@ -258,20 +353,7 @@ export class GitHubAdapter implements WorkspaceAdapter {
       if (!response.ok) {
         throw new Error(`GitHub fetchObjectDetails failed: HTTP ${response.status}`);
       }
-      const repo = (await response.json()) as {
-        id: number;
-        full_name: string;
-        description: string | null;
-        html_url: string;
-        owner: { login: string };
-        created_at: string;
-        updated_at: string;
-        stargazers_count: number;
-        forks_count: number;
-        open_issues_count: number;
-        default_branch: string;
-        visibility?: string;
-      };
+      const repo = (await response.json()) as GitHubRepo;
       return {
         externalId: String(repo.id),
         title: repo.full_name,
@@ -286,6 +368,49 @@ export class GitHubAdapter implements WorkspaceAdapter {
           openIssues: repo.open_issues_count,
           defaultBranch: repo.default_branch,
           visibility: repo.visibility,
+        },
+      };
+    }
+
+    if (
+      objectType === WorkspaceObjectType.ISSUE ||
+      objectType === WorkspaceObjectType.PULL_REQUEST
+    ) {
+      const fullName = typeof metadata?.['fullName'] === 'string' ? metadata['fullName'] : null;
+      const number = typeof metadata?.['number'] === 'number' ? metadata['number'] : null;
+      if (fullName === null || number === null) {
+        this.logger.warn(
+          `GitHub refresh skipped for ${objectType} ${externalId}: missing fullName/number metadata`,
+        );
+        return null;
+      }
+      const segment = objectType === WorkspaceObjectType.ISSUE ? 'issues' : 'pulls';
+      const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${fullName}/${segment}/${String(number)}`,
+        { headers, signal },
+      );
+      if (response.status === 404) {
+        return null;
+      }
+      if (!response.ok) {
+        throw new Error(`GitHub fetchObjectDetails failed: HTTP ${response.status}`);
+      }
+      const item = (await response.json()) as GitHubIssue | GitHubPull;
+      return {
+        externalId: String(item.id),
+        title: item.title,
+        content: item.body ?? null,
+        url: item.html_url,
+        authorId: item.user?.login ?? null,
+        externalCreatedAt: new Date(item.created_at),
+        externalUpdatedAt: new Date(item.updated_at),
+        metadata: {
+          fullName,
+          number,
+          state: item.state,
+          ...(objectType === WorkspaceObjectType.PULL_REQUEST
+            ? { merged: (item as GitHubPull).merged_at !== null }
+            : {}),
         },
       };
     }
