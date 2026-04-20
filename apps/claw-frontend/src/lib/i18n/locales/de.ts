@@ -1093,6 +1093,10 @@ export const de: TranslationDictionary = {
     noActions: 'Keine Aktionen gefunden',
     noActionsDesc: 'Hier werden automatisierte Schreibaktionen der KI zur Überprüfung angezeigt.',
     loadFailed: 'Laden der Aktionen fehlgeschlagen.',
+    viewPayload: 'Payload anzeigen',
+    requestedAt: 'angefordert {value}',
+    reviewedAt: 'überprüft {value}',
+    executedAt: 'ausgeführt {value}',
   },
   workspaceProviders: {
     catalog: {

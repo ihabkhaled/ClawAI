@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { WORKSPACE_ACTION_TYPE_LABEL } from '@/constants/workspace-action.constants';
 import { WorkspaceActionStatus } from '@/enums/workspace-action-status.enum';
 import type { WorkspaceActionRowProps } from '@/types/component.types';
+import { formatPayloadPreview } from '@/utilities/workspace-action-payload.utility';
 
 import { WorkspaceActionStatusBadge } from './workspace-action-status-badge';
 
@@ -16,9 +17,10 @@ export function WorkspaceActionRow({
 }: WorkspaceActionRowProps): React.ReactElement {
   const isPending = action.status === WorkspaceActionStatus.PENDING_APPROVAL;
   const typeLabel = WORKSPACE_ACTION_TYPE_LABEL[action.actionType] ?? action.actionType;
+  const payloadPreview = formatPayloadPreview(action.payload);
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center">
+    <div className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-start">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <WorkspaceActionStatusBadge status={action.status} t={t} />
@@ -27,6 +29,16 @@ export function WorkspaceActionRow({
         <p className="mt-1 text-xs text-muted-foreground">
           {t('workspaceActions.connector')}: {action.connector.name}
         </p>
+        {payloadPreview !== null ? (
+          <details className="mt-2 text-xs text-muted-foreground">
+            <summary className="cursor-pointer select-none hover:text-foreground">
+              {t('workspaceActions.viewPayload')}
+            </summary>
+            <pre className="mt-2 max-h-48 overflow-auto rounded border bg-muted/50 p-2 font-mono text-[11px]">
+              {payloadPreview}
+            </pre>
+          </details>
+        ) : null}
         {action.errorMessage !== null ? (
           <p className="mt-1 text-xs text-destructive">{action.errorMessage}</p>
         ) : null}
@@ -36,7 +48,13 @@ export function WorkspaceActionRow({
           </p>
         ) : null}
         <p className="mt-1 text-xs text-muted-foreground">
-          {new Date(action.requestedAt).toLocaleString()}
+          {t('workspaceActions.requestedAt', { value: new Date(action.requestedAt).toLocaleString() })}
+          {action.reviewedAt !== null
+            ? ` · ${t('workspaceActions.reviewedAt', { value: new Date(action.reviewedAt).toLocaleString() })}`
+            : ''}
+          {action.executedAt !== null
+            ? ` · ${t('workspaceActions.executedAt', { value: new Date(action.executedAt).toLocaleString() })}`
+            : ''}
         </p>
       </div>
 

@@ -1088,6 +1088,10 @@ export const ru: TranslationDictionary = {
     noActions: 'Действий не найдено',
     noActionsDesc: 'Автоматизированные действия записи, созданные ИИ, появятся здесь для проверки.',
     loadFailed: 'Не удалось загрузить действия.',
+    viewPayload: 'Показать payload',
+    requestedAt: 'запрошено {value}',
+    reviewedAt: 'рассмотрено {value}',
+    executedAt: 'выполнено {value}',
   },
   workspaceProviders: {
     catalog: {

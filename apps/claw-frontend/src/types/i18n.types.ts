@@ -1070,6 +1070,10 @@ export type TranslationDictionary = {
     noActions: string;
     noActionsDesc: string;
     loadFailed: string;
+    viewPayload: string;
+    requestedAt: string;
+    reviewedAt: string;
+    executedAt: string;
   };
   workspaceProviders: {
     catalog: {

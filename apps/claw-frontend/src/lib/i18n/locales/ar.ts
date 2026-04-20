@@ -1075,6 +1075,10 @@ export const ar: TranslationDictionary = {
     noActions: 'لا توجد إجراءات',
     noActionsDesc: 'ستظهر إجراءات الكتابة الآلية التي أنشأها الذكاء الاصطناعي هنا للمراجعة.',
     loadFailed: 'فشل تحميل الإجراءات.',
+    viewPayload: 'عرض الحمولة',
+    requestedAt: 'تم الطلب {value}',
+    reviewedAt: 'تمت المراجعة {value}',
+    executedAt: 'تم التنفيذ {value}',
   },
   workspaceProviders: {
     catalog: {

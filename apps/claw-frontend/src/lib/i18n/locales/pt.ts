@@ -1091,6 +1091,10 @@ export const pt: TranslationDictionary = {
     noActionsDesc:
       'As ações de escrita automatizadas criadas pela IA aparecerão aqui para revisão.',
     loadFailed: 'Falha ao carregar as ações.',
+    viewPayload: 'Ver payload',
+    requestedAt: 'solicitada {value}',
+    reviewedAt: 'revisada {value}',
+    executedAt: 'executada {value}',
   },
   workspaceProviders: {
     catalog: {

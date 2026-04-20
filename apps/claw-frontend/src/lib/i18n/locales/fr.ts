@@ -1097,6 +1097,10 @@ export const fr: TranslationDictionary = {
     noActionsDesc:
       "Les actions d'écriture automatisées créées par l'IA apparaîtront ici pour révision.",
     loadFailed: 'Échec du chargement des actions.',
+    viewPayload: 'Voir la charge',
+    requestedAt: 'demandée {value}',
+    reviewedAt: 'révisée {value}',
+    executedAt: 'exécutée {value}',
   },
   workspaceProviders: {
     catalog: {

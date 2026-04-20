@@ -1080,6 +1080,10 @@ export const en: TranslationDictionary = {
     noActions: 'No actions found',
     noActionsDesc: 'Automated write actions created by AI will appear here for your review.',
     loadFailed: 'Failed to load actions.',
+    viewPayload: 'View payload',
+    requestedAt: 'requested {value}',
+    reviewedAt: 'reviewed {value}',
+    executedAt: 'executed {value}',
   },
   workspaceProviders: {
     catalog: {
