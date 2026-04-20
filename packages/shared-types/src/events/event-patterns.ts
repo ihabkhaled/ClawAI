@@ -43,4 +43,9 @@ export enum EventPattern {
   AGENT_COMMAND_APPROVED = 'agent.command_approved',
   AGENT_COMMAND_REJECTED = 'agent.command_rejected',
   AGENT_COMMAND_COMPLETED = 'agent.command_completed',
+  AGENT_DEVICE_PAIRED = 'agent.device_paired',
+  AGENT_DEVICE_REVOKED = 'agent.device_revoked',
+  AGENT_TOKEN_ROTATED = 'agent.token_rotated',
+  AGENT_TOKEN_REUSE_DETECTED = 'agent.token_reuse_detected',
+  AGENT_POLICY_VIOLATED = 'agent.policy_violated',
 }

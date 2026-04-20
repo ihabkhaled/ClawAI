@@ -289,6 +289,52 @@ export interface WorkspaceActionFailedPayload extends BaseEventPayload {
   errorMessage: string;
 }
 
+// ---- Agent Device / Auth Events ----
+
+export interface AgentDevicePairedPayload extends BaseEventPayload {
+  deviceId: string;
+  userId: string;
+  scopes: string[];
+  hostname: string;
+  os: string;
+  platform: string;
+  agentVersion: string;
+}
+
+export interface AgentDeviceRevokedPayload extends BaseEventPayload {
+  deviceId: string;
+  userId: string;
+  reason: string;
+  revokedByUserId?: string;
+}
+
+export interface AgentTokenRotatedPayload extends BaseEventPayload {
+  deviceId: string;
+  userId: string;
+  oldJti: string;
+  newJti: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+export interface AgentTokenReuseDetectedPayload extends BaseEventPayload {
+  deviceId: string;
+  userId: string;
+  presentedJti: string;
+  usedAtOriginal?: string;
+  ipAddress?: string;
+}
+
+export interface AgentPolicyViolatedPayload extends BaseEventPayload {
+  commandId: string;
+  sessionId: string;
+  userId: string;
+  matchedPolicyId?: string;
+  matchedPolicyName?: string;
+  riskScore: number;
+  riskLabel: string;
+}
+
 // ---- Union type for all payloads ----
 
 export type EventPayload =
@@ -322,4 +368,9 @@ export type EventPayload =
   | WorkspaceActionApprovedPayload
   | WorkspaceActionRejectedPayload
   | WorkspaceActionExecutedPayload
-  | WorkspaceActionFailedPayload;
+  | WorkspaceActionFailedPayload
+  | AgentDevicePairedPayload
+  | AgentDeviceRevokedPayload
+  | AgentTokenRotatedPayload
+  | AgentTokenReuseDetectedPayload
+  | AgentPolicyViolatedPayload;
