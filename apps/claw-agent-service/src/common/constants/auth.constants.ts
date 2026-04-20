@@ -1,0 +1,20 @@
+export const PAIRING_CODE_BYTES = 40;
+export const REFRESH_TOKEN_BYTES = 40;
+export const STATE_NONCE_BYTES = 16;
+export const DEVICE_CODE_BYTES = 40;
+
+export const USER_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+export const USER_CODE_GROUP_LENGTH = 4;
+
+export const PAIR_INIT_RATE_LIMIT_PER_MINUTE = 10;
+export const PAIR_POLL_MIN_INTERVAL_MS = 1_000;
+export const DEVICE_CODE_SLOW_DOWN_PENALTY_SECONDS = 5;
+export const DEVICE_CODE_MAX_OFFENCES = 10;
+
+export const AUTH_CLEANUP_INTERVAL_MS = 30_000;
+export const REFRESH_CLEANUP_INTERVAL_MS = 60 * 60 * 1_000;
+export const REFRESH_RETENTION_DAYS = 30;
+
+export const DEPRECATION_HEADER = 'Deprecation';
+export const SUNSET_HEADER = 'Sunset';
+export const LEGACY_SUNSET_DATE = '2026-07-01';

@@ -1,3 +1,11 @@
 export { AgentSessionStatus } from './agent-session-status.enum';
+export { DeviceCodeError } from './device-code-error.enum';
+export { DeviceCodeStatus } from './device-code-status.enum';
+export { DeviceScope } from './device-scope.enum';
+export { DeviceStatus } from './device-status.enum';
 export { FileEventType } from './file-event-type.enum';
+export { PairingStatus } from './pairing-status.enum';
+export { PolicyKind } from './policy-kind.enum';
+export { RefreshTokenStatus } from './refresh-token-status.enum';
+export { RiskLabel } from './risk-label.enum';
 export { TerminalCommandStatus } from './terminal-command-status.enum';
