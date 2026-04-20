@@ -26,6 +26,8 @@ const config: Config = {
     },
   },
   testEnvironment: 'node',
+  forceExit: true,
+  testTimeout: 30_000,
   moduleNameMapper: {
     '@app/(.*)': '<rootDir>/src/app/$1',
     '@common/(.*)': '<rootDir>/src/common/$1',
