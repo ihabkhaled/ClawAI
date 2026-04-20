@@ -983,6 +983,7 @@ export const ar: TranslationDictionary = {
     healthHistory: 'سجل الصحة',
     noHealthEvents: 'لا توجد فحوص صحة مسجلة.',
     healthOk: 'سليم',
+    activating: 'جارٍ تفعيل هذا الموصل — يتم استيراد المجموعة الأولى من الكائنات من المزود.',
   },
   workspaceSyncRuns: {
     title: 'عمليات المزامنة',

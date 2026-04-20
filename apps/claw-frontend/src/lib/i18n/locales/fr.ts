@@ -1003,6 +1003,8 @@ export const fr: TranslationDictionary = {
     healthHistory: 'Historique de santé',
     noHealthEvents: 'Aucun contrôle de santé enregistré.',
     healthOk: 'OK',
+    activating:
+      'Activation du connecteur — importation du premier ensemble d’objets depuis le fournisseur.',
   },
   workspaceSyncRuns: {
     title: 'Exécutions de synchronisation',

@@ -987,6 +987,8 @@ export const en: TranslationDictionary = {
     healthHistory: 'Health history',
     noHealthEvents: 'No health checks recorded yet.',
     healthOk: 'OK',
+    activating:
+      'Activating this connector — importing your first set of objects from the provider. You can keep using Claw while this runs.',
   },
   workspaceSyncRuns: {
     title: 'Sync runs',

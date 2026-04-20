@@ -999,6 +999,8 @@ export const de: TranslationDictionary = {
     healthHistory: 'Health-Historie',
     noHealthEvents: 'Noch keine Health-Checks aufgezeichnet.',
     healthOk: 'OK',
+    activating:
+      'Konnektor wird aktiviert — die erste Objektmenge wird vom Anbieter importiert.',
   },
   workspaceSyncRuns: {
     title: 'Synchronisationsläufe',

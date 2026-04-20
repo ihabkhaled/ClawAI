@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
@@ -23,6 +23,13 @@ export default function WorkspaceConnectorDetailPage(): React.ReactElement {
           </Button>
         }
       />
+
+      {ctrl.isActivating ? (
+        <div className="flex items-center gap-3 rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm text-primary">
+          <Loader2 className="size-4 animate-spin" />
+          <span>{ctrl.t('connectorDetail.activating')}</span>
+        </div>
+      ) : null}
 
       {ctrl.isLoading ? <LoadingSpinner label={ctrl.t('common.loading')} /> : null}
 

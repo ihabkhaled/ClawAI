@@ -1,6 +1,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { ROUTES } from '@/constants';
 import { WORKSPACE_OAUTH_CALLBACK_PATH } from '@/constants/workspace-providers.constants';
 import { OAuthCallbackPhase } from '@/enums/oauth-callback-phase.enum';
 import { workspaceProviderRegistryRepository } from '@/repositories/workspace/provider-registry.repository';
@@ -42,7 +43,7 @@ export function useOAuthCallbackPage(): UseOAuthCallbackPageReturn {
       .then((connector) => {
         setConnectorName(connector.name);
         setPhase(OAuthCallbackPhase.SUCCESS);
-        setTimeout(() => router.push('/workspace'), 2000);
+        setTimeout(() => router.push(ROUTES.WORKSPACE_CONNECTOR_DETAIL(connector.id)), 1500);
       })
       .catch((error: unknown) => {
         setPhase(OAuthCallbackPhase.ERROR);

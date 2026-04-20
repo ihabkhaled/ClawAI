@@ -995,6 +995,8 @@ export const ru: TranslationDictionary = {
     healthHistory: 'История здоровья',
     noHealthEvents: 'Проверок здоровья ещё не было.',
     healthOk: 'OK',
+    activating:
+      'Активация коннектора — импортируется первый набор объектов у провайдера.',
   },
   workspaceSyncRuns: {
     title: 'Запуски синхронизации',

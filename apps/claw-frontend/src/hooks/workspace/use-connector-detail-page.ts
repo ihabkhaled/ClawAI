@@ -24,18 +24,28 @@ export function useConnectorDetailPage(): UseConnectorDetailPageReturn {
   const params = useParams<{ connectorId: string }>();
   const connectorId = params.connectorId ?? '';
 
-  const connectorQuery = useQuery({
-    queryKey: queryKeys.workspaceConnectors.detail(connectorId),
-    queryFn: () => getWorkspaceConnector(connectorId),
-    enabled: connectorId.length > 0,
-    staleTime: 5_000,
-  });
-
   const syncRunsQuery = useQuery({
     queryKey: queryKeys.workspaceConnectors.syncRuns(connectorId),
     queryFn: () => listWorkspaceSyncRuns(connectorId, 20),
     enabled: connectorId.length > 0,
     staleTime: 5_000,
+    refetchInterval: (query) => {
+      const latest = query.state.data?.[0];
+      if (latest?.status === 'RUNNING' || latest?.status === 'PENDING') {
+        return 2_000;
+      }
+      return false;
+    },
+  });
+
+  const isActivating = syncRunsQuery.data?.[0]?.status === 'RUNNING';
+
+  const connectorQuery = useQuery({
+    queryKey: queryKeys.workspaceConnectors.detail(connectorId),
+    queryFn: () => getWorkspaceConnector(connectorId),
+    enabled: connectorId.length > 0,
+    staleTime: 5_000,
+    refetchInterval: isActivating ? 2_000 : false,
   });
 
   const healthEventsQuery = useQuery({
@@ -47,6 +57,7 @@ export function useConnectorDetailPage(): UseConnectorDetailPageReturn {
 
   const objectsQuery = useWorkspaceObjects(
     connectorId.length > 0 ? { connectorId, limit: 20 } : undefined,
+    isActivating ? 2_000 : undefined,
   );
 
   const syncMutation = useTriggerWorkspaceSync();
@@ -83,6 +94,7 @@ export function useConnectorDetailPage(): UseConnectorDetailPageReturn {
     isSyncing: syncMutation.isPending,
     isCheckingHealth: healthMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    isActivating,
     onSync,
     onHealthCheck,
     onDelete,

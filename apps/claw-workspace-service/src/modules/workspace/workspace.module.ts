@@ -18,6 +18,7 @@ import { WorkspaceObjectController } from './controllers/workspace-object.contro
 import { WorkspaceProviderRegistryController } from './controllers/workspace-provider-registry.controller';
 import { WorkspaceSearchController } from './controllers/workspace-search.controller';
 import { WorkspaceSearchInternalController } from './controllers/workspace-search-internal.controller';
+import { ConnectorActivationManager } from './managers/connector-activation.manager';
 import { OAuthTokenManager } from './managers/oauth-token.manager';
 import { WorkspaceHealthManager } from './managers/workspace-health.manager';
 import { WorkspaceObjectManager } from './managers/workspace-object.manager';
@@ -57,6 +58,7 @@ import { WorkspaceSearchService } from './services/workspace-search.service';
     WorkspaceSyncManager,
     WorkspaceObjectManager,
     WorkspaceSearchManager,
+    ConnectorActivationManager,
     WorkspaceAdapterFactory,
     GitHubAdapter,
     GitLabAdapter,

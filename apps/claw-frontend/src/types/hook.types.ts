@@ -423,6 +423,7 @@ export type UseConnectorDetailPageReturn = {
   isSyncing: boolean;
   isCheckingHealth: boolean;
   isDeleting: boolean;
+  isActivating: boolean;
   onSync: () => void;
   onHealthCheck: () => void;
   onDelete: () => void;
