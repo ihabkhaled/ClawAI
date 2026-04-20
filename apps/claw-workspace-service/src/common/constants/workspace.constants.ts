@@ -90,6 +90,9 @@ export const SYNC_RETRY_DELAY_MS = 1000;
 export const HEALTH_CHECK_TIMEOUT_MS = 5000;
 export const OAUTH_PROBE_INVALID_CODE = 'claw-probe-invalid-code-xxxxxxxxxxxx';
 export const OAUTH_PROBE_INVALID_REDIRECT_URI = 'https://probe.invalid/callback';
+// GitHub and several other providers require a User-Agent on every
+// request and return HTTP 400 / 403 without one. Keep short + stable.
+export const CLAW_USER_AGENT = 'ClawAI-Workspace/1.0 (+https://github.com/ihabkhaled/ClawAI)';
 export const MAX_PAGE_SIZE = 100;
 export const DEFAULT_PAGE_SIZE = 20;
 export const TOKEN_EXPIRY_BUFFER_SECONDS = 300;

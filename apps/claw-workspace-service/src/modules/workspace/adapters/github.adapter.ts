@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import {
+  CLAW_USER_AGENT,
   GITHUB_API_BASE,
   GITHUB_AUTH_BASE,
   GITHUB_SYNC_ISSUES_PER_REPO,
@@ -35,7 +36,11 @@ export class GitHubAdapter implements WorkspaceAdapter {
     const start = Date.now();
     try {
       const response = await fetch(`${GITHUB_API_BASE}/user`, {
-        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/vnd.github+json' },
+        headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github+json',
+        'User-Agent': CLAW_USER_AGENT,
+      },
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
       });
       const latencyMs = Date.now() - start;
@@ -95,7 +100,11 @@ export class GitHubAdapter implements WorkspaceAdapter {
       ...(deltaToken ? { since: deltaToken } : {}),
     });
     const response = await fetch(`${GITHUB_API_BASE}/user/repos?${params.toString()}`, {
-      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/vnd.github+json' },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github+json',
+        'User-Agent': CLAW_USER_AGENT,
+      },
     });
     if (!response.ok) {
       throw new Error(`GitHub sync failed: HTTP ${response.status}`);
@@ -125,6 +134,7 @@ export class GitHubAdapter implements WorkspaceAdapter {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             Accept: 'application/vnd.github+json',
+            'User-Agent': CLAW_USER_AGENT,
           },
         },
       );
@@ -164,6 +174,7 @@ export class GitHubAdapter implements WorkspaceAdapter {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             Accept: 'application/vnd.github+json',
+            'User-Agent': CLAW_USER_AGENT,
           },
         },
       );
@@ -205,7 +216,13 @@ export class GitHubAdapter implements WorkspaceAdapter {
     }
     const response = await fetch(GITHUB_TOKEN_URL, {
       method: 'POST',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        // GitHub rejects requests without a User-Agent with HTTP 400.
+        // See https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
+        'User-Agent': CLAW_USER_AGENT,
+      },
       body: JSON.stringify({
         client_id: appCredentials.clientId,
         client_secret: appCredentials.clientSecret,
@@ -213,13 +230,18 @@ export class GitHubAdapter implements WorkspaceAdapter {
         redirect_uri: redirectUri,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`GitHub token exchange failed: HTTP ${response.status}`);
+    // GitHub is quirky: semantic errors (bad code, wrong secret) come back
+    // as HTTP 200 with an error body, NOT 4xx. So inspect the body too.
+    const data = (await response.json().catch(() => null)) as
+      | { access_token?: string; scope?: string; error?: string; error_description?: string }
+      | null;
+    if (!response.ok || data === null || data.error !== undefined || !data.access_token) {
+      const reason = data?.error_description ?? data?.error ?? `HTTP ${response.status}`;
+      throw new Error(`GitHub token exchange failed: ${reason}`);
     }
-    const data = (await response.json()) as { access_token: string; scope: string };
     return {
-      accessToken: data['access_token'],
-      scopes: (data['scope'] ?? '').split(',').filter(Boolean),
+      accessToken: data.access_token,
+      scopes: (data.scope ?? '').split(',').filter(Boolean),
     };
   }
 
@@ -295,6 +317,7 @@ export class GitHubAdapter implements WorkspaceAdapter {
       Authorization: `Bearer ${accessToken}`,
       Accept: 'application/vnd.github+json',
       'Content-Type': 'application/json',
+      'User-Agent': CLAW_USER_AGENT,
     };
     const signal = AbortSignal.timeout(WRITE_EXECUTION_TIMEOUT_MS);
 
@@ -373,6 +396,7 @@ export class GitHubAdapter implements WorkspaceAdapter {
     const headers = {
       Authorization: `Bearer ${accessToken}`,
       Accept: 'application/vnd.github+json',
+      'User-Agent': CLAW_USER_AGENT,
     };
     const signal = AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS);
 

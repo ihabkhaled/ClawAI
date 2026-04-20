@@ -235,12 +235,23 @@ export class WorkspaceConnectorService {
     }
     const adapterCreds = await this.buildAdapterCredentials(stateData.providerAppConfigId);
     const adapter = this.adapterFactory.getAdapter(stateData.provider);
-    const tokens = await adapter.exchangeCodeForTokens(
-      dto.code,
-      dto.redirectUri,
-      stateData.verifier,
-      adapterCreds,
-    );
+    let tokens;
+    try {
+      tokens = await adapter.exchangeCodeForTokens(
+        dto.code,
+        dto.redirectUri,
+        stateData.verifier,
+        adapterCreds,
+      );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Token exchange failed';
+      this.logger.warn(`OAuth exchange failed for ${stateData.provider}: ${message}`);
+      throw new BusinessException(
+        message,
+        WorkspaceErrorCode.OAUTH_EXCHANGE_FAILED,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     const encryptedTokens = this.tokenManager.encryptTokenSet(tokens);
 
     const connector = await this.repository.create({
