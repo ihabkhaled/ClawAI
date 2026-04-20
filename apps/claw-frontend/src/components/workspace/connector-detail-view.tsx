@@ -111,16 +111,21 @@ export function ConnectorDetailView({
             {syncRuns.map((run) => (
               <li
                 key={run.id}
-                className="flex items-center gap-3 px-4 py-2 text-xs text-muted-foreground"
+                className="flex flex-col gap-1 px-4 py-2 text-xs text-muted-foreground"
               >
-                <span className="w-32">{formatOptionalIsoDate(run.startedAt)}</span>
-                <Badge variant="outline">{run.status}</Badge>
-                <span className="flex-1">
-                  {t('connectorDetail.syncRunLine', {
-                    synced: run.objectsSynced ?? 0,
-                    failed: run.objectsFailed ?? 0,
-                  })}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="w-32">{formatOptionalIsoDate(run.startedAt)}</span>
+                  <Badge variant="outline">{run.status}</Badge>
+                  <span className="flex-1">
+                    {t('connectorDetail.syncRunLine', {
+                      synced: run.objectsSynced ?? 0,
+                      failed: run.objectsFailed ?? 0,
+                    })}
+                  </span>
+                </div>
+                {run.errorMessage !== null && run.errorMessage !== undefined ? (
+                  <p className="ms-[8.5rem] text-destructive">{run.errorMessage}</p>
+                ) : null}
               </li>
             ))}
           </ul>

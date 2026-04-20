@@ -192,10 +192,12 @@ export class GmailAdapter implements WorkspaceAdapter {
   }
 
   getDefaultScopes(): string[] {
-    return [
-      'https://www.googleapis.com/auth/gmail.readonly',
-      'https://www.googleapis.com/auth/gmail.metadata',
-    ];
+    // NOTE: do NOT request gmail.metadata alongside gmail.readonly.
+    // Gmail applies the most restrictive scope to any given request, and
+    // messages.list with `q=` search queries is forbidden under
+    // gmail.metadata (which only allows header-level access). Granting
+    // both scopes causes 403 on message list.
+    return ['https://www.googleapis.com/auth/gmail.readonly'];
   }
 
   async fetchObjectDetails(
@@ -232,12 +234,16 @@ export class GmailAdapter implements WorkspaceAdapter {
   private async listRecentMessages(
     accessToken: string,
   ): Promise<Array<{ id: string; threadId: string }>> {
+    // NOTE: intentionally NOT using `q=newer_than:30d` — that query is
+    // forbidden under gmail.metadata scope (returns 403). Use labelIds
+    // instead, which works under both metadata and readonly.
     const response = await fetch(
-      `${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/messages?maxResults=${String(GMAIL_SYNC_MESSAGE_LIMIT)}&q=newer_than:30d`,
+      `${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/messages?maxResults=${String(GMAIL_SYNC_MESSAGE_LIMIT)}&labelIds=INBOX`,
       { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
     );
     if (!response.ok) {
-      throw new Error(`Gmail list failed: HTTP ${response.status}`);
+      const body = await response.text().catch(() => '');
+      throw new Error(`Gmail list failed: HTTP ${response.status}${body ? ` — ${body.slice(0, 200)}` : ''}`);
     }
     const data = (await response.json()) as GmailMessageListResponse;
     return data.messages ?? [];
