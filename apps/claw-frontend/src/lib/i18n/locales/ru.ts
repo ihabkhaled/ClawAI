@@ -915,6 +915,12 @@ export const ru: TranslationDictionary = {
     unknown: 'Неизвестно',
     noConnectors: 'Нет коннекторов',
     noConnectorsDesc: 'Подключите первый инструмент для начала работы.',
+    noConnectorsGuidance:
+      'Подключения начинаются с Конфигураций приложений. Зарегистрируйте OAuth-приложение и нажмите Подключить.',
+    overviewDescription:
+      'Подключённые инструменты рабочей области. Добавляйте новые в Конфигурациях приложений.',
+    manageAppConfigs: 'Управлять Конфигурациями',
+    goToAppConfigs: 'К Конфигурациям приложений',
     connectorCreated: 'Коннектор успешно создан.',
     connectorCreateFailed: 'Не удалось создать коннектор.',
     connectorDeleted: 'Коннектор успешно удалён.',

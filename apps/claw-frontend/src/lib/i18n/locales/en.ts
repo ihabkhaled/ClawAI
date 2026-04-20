@@ -909,6 +909,11 @@ export const en: TranslationDictionary = {
     unknown: 'Unknown',
     noConnectors: 'No workspace connectors',
     noConnectorsDesc: 'Connect your first workspace tool to get started.',
+    noConnectorsGuidance:
+      'Connections start from App Configurations. Register your OAuth app there, then click Connect to link it here.',
+    overviewDescription: 'Your connected workspace tools. Add new ones from App Configurations.',
+    manageAppConfigs: 'Manage App Configurations',
+    goToAppConfigs: 'Go to App Configurations',
     connectorCreated: 'Connector created successfully.',
     connectorCreateFailed: 'Failed to create connector.',
     connectorDeleted: 'Connector deleted successfully.',

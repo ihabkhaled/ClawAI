@@ -6,3 +6,4 @@ export { WorkspacePermissionLevel } from './workspace-permission-level.enum';
 export { WorkspaceObjectLinkType } from './workspace-object-link-type.enum';
 export { WorkspaceActionType } from './workspace-action-type.enum';
 export { WorkspaceActionStatus } from './workspace-action-status.enum';
+export { WorkspaceErrorCode } from './workspace-error-code.enum';

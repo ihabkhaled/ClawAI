@@ -905,6 +905,11 @@ export const ar: TranslationDictionary = {
     unknown: 'غير معروف',
     noConnectors: 'لا توجد موصلات',
     noConnectorsDesc: 'قم بتوصيل أداة العمل الأولى للبدء.',
+    noConnectorsGuidance:
+      'تبدأ الاتصالات من تكوينات التطبيق. سجّل تطبيق OAuth هناك، ثم اضغط اتصال لربطه هنا.',
+    overviewDescription: 'أدوات مساحة العمل المتصلة. أضف أدوات جديدة من تكوينات التطبيق.',
+    manageAppConfigs: 'إدارة تكوينات التطبيق',
+    goToAppConfigs: 'الانتقال إلى تكوينات التطبيق',
     connectorCreated: 'تم إنشاء الموصل بنجاح.',
     connectorCreateFailed: 'فشل إنشاء الموصل.',
     connectorDeleted: 'تم حذف الموصل بنجاح.',

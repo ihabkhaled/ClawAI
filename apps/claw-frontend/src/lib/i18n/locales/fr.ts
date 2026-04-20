@@ -920,6 +920,12 @@ export const fr: TranslationDictionary = {
     unknown: 'Inconnu',
     noConnectors: 'Aucun connecteur',
     noConnectorsDesc: 'Connectez votre premier outil pour commencer.',
+    noConnectorsGuidance:
+      'Les connexions démarrent depuis Configurations d’App. Enregistrez votre app OAuth, puis cliquez sur Connecter.',
+    overviewDescription:
+      'Vos outils d’espace de travail connectés. Ajoutez-en depuis Configurations d’App.',
+    manageAppConfigs: 'Gérer les Configurations d’App',
+    goToAppConfigs: 'Aller aux Configurations d’App',
     connectorCreated: 'Connecteur créé avec succès.',
     connectorCreateFailed: 'Échec de la création du connecteur.',
     connectorDeleted: 'Connecteur supprimé avec succès.',

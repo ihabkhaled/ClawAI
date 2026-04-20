@@ -917,6 +917,12 @@ export const es: TranslationDictionary = {
     unknown: 'Desconocido',
     noConnectors: 'No hay conectores',
     noConnectorsDesc: 'Conecte su primera herramienta de espacio de trabajo para comenzar.',
+    noConnectorsGuidance:
+      'Las conexiones comienzan desde Configuraciones de App. Registre su app OAuth allí y haga clic en Conectar.',
+    overviewDescription:
+      'Sus herramientas de espacio de trabajo conectadas. Agregue nuevas desde Configuraciones de App.',
+    manageAppConfigs: 'Gestionar Configuraciones de App',
+    goToAppConfigs: 'Ir a Configuraciones de App',
     connectorCreated: 'Conector creado exitosamente.',
     connectorCreateFailed: 'Error al crear el conector.',
     connectorDeleted: 'Conector eliminado exitosamente.',

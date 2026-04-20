@@ -21,6 +21,7 @@ import { assertSafeOutboundUrl } from '../../../common/utilities/url-safety.util
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
+import { WorkspaceErrorCode } from '../../../common/enums/workspace-error-code.enum';
 import { OAUTH_PROVIDERS } from '../../../common/constants/workspace.constants';
 import type { CreateWorkspaceConnectorDto } from '../dto/create-workspace-connector.dto';
 import type { UpdateWorkspaceConnectorDto } from '../dto/update-workspace-connector.dto';
@@ -54,6 +55,14 @@ export class WorkspaceConnectorService {
     userId: string,
     dto: CreateWorkspaceConnectorDto,
   ): Promise<WorkspaceConnectorWithStats> {
+    if (OAUTH_PROVIDERS.has(dto.provider) && dto.accessToken === undefined) {
+      throw new BusinessException(
+        'workspace.connector.oauth_requires_flow',
+        WorkspaceErrorCode.OAUTH_REQUIRED,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const encryptedTokens = dto.accessToken
       ? this.tokenManager.encryptTokenSet({
           accessToken: dto.accessToken,

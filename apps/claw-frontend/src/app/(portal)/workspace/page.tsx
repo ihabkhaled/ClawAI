@@ -1,14 +1,15 @@
 'use client';
 
-import { Package, Plug, Plus } from 'lucide-react';
+import { KeyRound, Package, Plug } from 'lucide-react';
+import Link from 'next/link';
 
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
 import { WorkspaceConnectorCard } from '@/components/workspace/workspace-connector-card';
-import { WorkspaceConnectorForm } from '@/components/workspace/workspace-connector-form';
 import { WorkspaceObjectList } from '@/components/workspace/workspace-object-list';
+import { ROUTES } from '@/constants';
 import { useWorkspacePage } from '@/hooks/workspace/use-workspace-page';
 import { useTranslation } from '@/lib/i18n';
 
@@ -25,10 +26,6 @@ export default function WorkspacePage(): React.ReactElement {
     isDeleting,
     isCheckingHealth,
     isSyncing,
-    isCreateOpen,
-    setIsCreateOpen,
-    handleCreate,
-    isCreating,
     selectedConnector,
     setSelectedConnector,
     objects,
@@ -56,21 +53,15 @@ export default function WorkspacePage(): React.ReactElement {
     <div className="flex h-full flex-col gap-6">
       <PageHeader
         title={t('workspaceConnectors.title')}
-        description={t('workspaceConnectors.description')}
+        description={t('workspaceConnectors.overviewDescription')}
         actions={
-          <Button onClick={() => setIsCreateOpen(true)}>
-            <Plus className="me-2 size-4" />
-            {t('workspaceConnectors.addConnector')}
+          <Button asChild>
+            <Link href={ROUTES.WORKSPACE_APP_CONFIGS}>
+              <KeyRound className="me-2 size-4" />
+              {t('workspaceConnectors.manageAppConfigs')}
+            </Link>
           </Button>
         }
-      />
-
-      <WorkspaceConnectorForm
-        open={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
-        onSubmit={handleCreate}
-        isPending={isCreating}
-        t={t}
       />
 
       {isLoading && <LoadingSpinner label={t('workspaceConnectors.loadingConnectors')} />}
@@ -80,11 +71,13 @@ export default function WorkspacePage(): React.ReactElement {
           <EmptyState
             icon={Plug}
             title={t('workspaceConnectors.noConnectors')}
-            description={t('workspaceConnectors.noConnectorsDesc')}
+            description={t('workspaceConnectors.noConnectorsGuidance')}
             action={
-              <Button onClick={() => setIsCreateOpen(true)}>
-                <Plus className="me-2 size-4" />
-                {t('workspaceConnectors.addConnector')}
+              <Button asChild>
+                <Link href={ROUTES.WORKSPACE_APP_CONFIGS}>
+                  <KeyRound className="me-2 size-4" />
+                  {t('workspaceConnectors.goToAppConfigs')}
+                </Link>
               </Button>
             }
           />

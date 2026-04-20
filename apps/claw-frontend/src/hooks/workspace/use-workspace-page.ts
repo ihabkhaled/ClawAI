@@ -1,12 +1,8 @@
 import { useState } from 'react';
 
-import type {
-  CreateWorkspaceConnectorRequest,
-  WorkspaceConnector,
-} from '../../types/workspace.types';
+import type { WorkspaceConnector } from '../../types/workspace.types';
 
 import {
-  useCreateWorkspaceConnector,
   useDeleteWorkspaceConnector,
   useTestWorkspaceConnectorHealth,
   useTriggerWorkspaceSync,
@@ -16,7 +12,6 @@ import { useWorkspaceObjects } from './use-workspace-objects';
 
 export function useWorkspacePage() {
   const [selectedConnector, setSelectedConnector] = useState<WorkspaceConnector | null>(null);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const { data, isLoading, isError, error } = useWorkspaceConnectors();
   const {
@@ -26,7 +21,6 @@ export function useWorkspacePage() {
   } = useWorkspaceObjects(
     selectedConnector !== null ? { connectorId: selectedConnector.id, limit: 50 } : undefined,
   );
-  const createMutation = useCreateWorkspaceConnector();
   const deleteMutation = useDeleteWorkspaceConnector();
   const healthMutation = useTestWorkspaceConnectorHealth();
   const syncMutation = useTriggerWorkspaceSync();
@@ -34,14 +28,6 @@ export function useWorkspacePage() {
   const connectors = data?.data ?? [];
   const total = data?.total ?? 0;
   const objects = objectsData?.data ?? [];
-
-  const handleCreate = (dto: CreateWorkspaceConnectorRequest) =>
-    createMutation.mutate(dto, {
-      onSuccess: (connector) => {
-        setIsCreateOpen(false);
-        setSelectedConnector(connector);
-      },
-    });
 
   const handleDelete = (id: string) => deleteMutation.mutate(id);
   const handleHealthCheck = (id: string) => healthMutation.mutate(id);
@@ -55,13 +41,9 @@ export function useWorkspacePage() {
     error,
     selectedConnector,
     setSelectedConnector,
-    isCreateOpen,
-    setIsCreateOpen,
-    handleCreate,
     handleDelete,
     handleHealthCheck,
     handleSync,
-    isCreating: createMutation.isPending,
     isDeleting: deleteMutation.isPending,
     isCheckingHealth: healthMutation.isPending,
     isSyncing: syncMutation.isPending,

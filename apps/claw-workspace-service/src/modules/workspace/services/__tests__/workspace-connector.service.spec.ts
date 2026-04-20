@@ -2,6 +2,7 @@ import { WorkspaceConnectorService } from '../workspace-connector.service';
 import { EntityNotFoundException } from '../../../../common/errors/entity-not-found.exception';
 import { BusinessException } from '../../../../common/errors/business.exception';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
+import { WorkspaceErrorCode } from '../../../../common/enums/workspace-error-code.enum';
 import type { WorkspaceConnectorRepository } from '../../repositories/workspace-connector.repository';
 import type { WorkspaceAdapterFactory } from '../../adapters/workspace-adapter.factory';
 import type { OAuthTokenManager } from '../../managers/oauth-token.manager';
@@ -96,12 +97,26 @@ describe('WorkspaceConnectorService', () => {
   });
 
   describe('create', () => {
-    it('should create a connector and return stats', async () => {
+    it('rejects OAuth provider without accessToken (must go through OAuth flow)', async () => {
       const dto = {
         name: 'Test',
         provider: WorkspaceProvider.GITHUB,
         permissionLevel: WorkspacePermissionLevel.READ,
         scopes: [],
+      };
+      const promise = service.create('u1', dto);
+      await expect(promise).rejects.toThrow(BusinessException);
+      await expect(promise).rejects.toMatchObject({ code: WorkspaceErrorCode.OAUTH_REQUIRED });
+      expect(mockRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('accepts OAuth provider when an accessToken is supplied (admin/test path)', async () => {
+      const dto = {
+        name: 'Test',
+        provider: WorkspaceProvider.GITHUB,
+        permissionLevel: WorkspacePermissionLevel.READ,
+        scopes: [],
+        accessToken: 'tok',
       };
       const result = await service.create('u1', dto);
       expect(result).toBeDefined();

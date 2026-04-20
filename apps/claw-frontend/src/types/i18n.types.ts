@@ -901,6 +901,10 @@ export type TranslationDictionary = {
     unknown: string;
     noConnectors: string;
     noConnectorsDesc: string;
+    noConnectorsGuidance: string;
+    overviewDescription: string;
+    manageAppConfigs: string;
+    goToAppConfigs: string;
     connectorCreated: string;
     connectorCreateFailed: string;
     connectorDeleted: string;
