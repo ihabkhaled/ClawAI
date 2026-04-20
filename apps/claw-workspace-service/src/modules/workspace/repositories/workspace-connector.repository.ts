@@ -93,6 +93,14 @@ export class WorkspaceConnectorRepository {
     return this.prisma.workspaceSyncRun.update({ where: { id }, data });
   }
 
+  async findSyncRunsByConnectorId(connectorId: string, limit: number): Promise<WorkspaceSyncRun[]> {
+    return this.prisma.workspaceSyncRun.findMany({
+      where: { connectorId },
+      orderBy: { startedAt: 'desc' },
+      take: limit,
+    });
+  }
+
   async createHealthEvent(
     data: Prisma.WorkspaceHealthEventCreateInput,
   ): Promise<WorkspaceHealthEvent> {

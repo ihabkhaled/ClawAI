@@ -163,6 +163,7 @@ export const queryKeys = {
     list: (filters: Record<string, unknown>) =>
       [...queryKeys.workspaceConnectors.lists(), filters] as const,
     detail: (id: string) => [...queryKeys.workspaceConnectors.all, 'detail', id] as const,
+    syncRuns: (id: string) => [...queryKeys.workspaceConnectors.all, 'syncRuns', id] as const,
   },
   workspaceObjects: {
     all: ['workspaceObjects'] as const,

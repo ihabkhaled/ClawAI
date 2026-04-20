@@ -941,6 +941,35 @@ export type TranslationDictionary = {
     viewSource: string;
     score: string;
   };
+  workspaceObjectDetail: {
+    title: string;
+    description: string;
+    loadFailed: string;
+    refresh: string;
+    refreshing: string;
+    refreshFailed: string;
+    content: string;
+    metadata: string;
+    externalCreated: string;
+    externalUpdated: string;
+    openInProvider: string;
+    author: string;
+  };
+  workspaceSyncRuns: {
+    title: string;
+    description: string;
+    loading: string;
+    loadFailed: string;
+    empty: string;
+    started: string;
+    status: string;
+    type: string;
+    delta: string;
+    found: string;
+    synced: string;
+    failed: string;
+    duration: string;
+  };
   workspaceActions: {
     title: string;
     description: string;

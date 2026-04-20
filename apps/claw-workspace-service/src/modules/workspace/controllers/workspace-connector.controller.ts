@@ -13,6 +13,7 @@ import {
 import { CurrentUser } from '@claw/shared-auth';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { WorkspaceConnectorService } from '../services/workspace-connector.service';
+import { WorkspaceObjectService } from '../services/workspace-object.service';
 import {
   type CreateWorkspaceConnectorDto,
   createWorkspaceConnectorSchema,
@@ -32,10 +33,14 @@ import type {
   WorkspaceConnectorWithStats,
 } from '../types/workspace.types';
 import type { AuthenticatedUser } from '../../../common/types/auth.types';
+import type { WorkspaceSyncRun } from '../../../generated/prisma';
 
 @Controller('workspace/connectors')
 export class WorkspaceConnectorController {
-  constructor(private readonly service: WorkspaceConnectorService) {}
+  constructor(
+    private readonly service: WorkspaceConnectorService,
+    private readonly objectService: WorkspaceObjectService,
+  ) {}
 
   @Post()
   async create(
@@ -96,5 +101,17 @@ export class WorkspaceConnectorController {
     @Query('delta') delta: string,
   ): Promise<SyncResult> {
     return this.service.triggerSync(id, user.id, delta === 'true');
+  }
+
+  @Get(':id/sync-runs')
+  async listSyncRuns(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Query('limit') limit?: string,
+  ): Promise<WorkspaceSyncRun[]> {
+    const parsedLimit = limit === undefined ? 20 : Number.parseInt(limit, 10);
+    const safe =
+      Number.isFinite(parsedLimit) && parsedLimit > 0 && parsedLimit <= 100 ? parsedLimit : 20;
+    return this.objectService.listSyncRuns(id, user.id, safe);
   }
 }

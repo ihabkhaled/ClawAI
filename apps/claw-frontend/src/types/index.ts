@@ -448,6 +448,8 @@ export type {
   WorkspaceObject,
   WorkspaceObjectLink,
   WorkspaceSyncResult,
+  WorkspaceSyncRun,
+  WorkspaceObjectDetailProps,
 } from './workspace.types';
 export type {
   AgentSession,

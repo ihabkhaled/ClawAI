@@ -12,6 +12,7 @@ import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapte
 import type {
   AdapterCapabilities,
   HealthCheckResult,
+  LiveObjectDetails,
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
@@ -233,5 +234,62 @@ export class GitHubAdapter implements WorkspaceAdapter {
       success: false,
       errorMessage: `GitHub adapter: unsupported action type ${actionType}`,
     };
+  }
+
+  async fetchObjectDetails(
+    accessToken: string,
+    externalId: string,
+    objectType: string,
+  ): Promise<LiveObjectDetails | null> {
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/vnd.github+json',
+    };
+    const signal = AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS);
+
+    if (objectType === WorkspaceObjectType.REPOSITORY) {
+      const response = await fetch(`${GITHUB_API_BASE}/repositories/${externalId}`, {
+        headers,
+        signal,
+      });
+      if (response.status === 404) {
+        return null;
+      }
+      if (!response.ok) {
+        throw new Error(`GitHub fetchObjectDetails failed: HTTP ${response.status}`);
+      }
+      const repo = (await response.json()) as {
+        id: number;
+        full_name: string;
+        description: string | null;
+        html_url: string;
+        owner: { login: string };
+        created_at: string;
+        updated_at: string;
+        stargazers_count: number;
+        forks_count: number;
+        open_issues_count: number;
+        default_branch: string;
+        visibility?: string;
+      };
+      return {
+        externalId: String(repo.id),
+        title: repo.full_name,
+        content: repo.description,
+        url: repo.html_url,
+        authorId: repo.owner.login,
+        externalCreatedAt: new Date(repo.created_at),
+        externalUpdatedAt: new Date(repo.updated_at),
+        metadata: {
+          stargazers: repo.stargazers_count,
+          forks: repo.forks_count,
+          openIssues: repo.open_issues_count,
+          defaultBranch: repo.default_branch,
+          visibility: repo.visibility,
+        },
+      };
+    }
+
+    return null;
   }
 }

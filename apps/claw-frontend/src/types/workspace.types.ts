@@ -87,6 +87,30 @@ export type WorkspaceSyncResult = {
   errorMessage?: string;
 };
 
+export type WorkspaceObjectDetailProps = {
+  object: WorkspaceObject;
+  isRefreshing: boolean;
+  refreshError: Error | null;
+  onRefresh: () => void;
+  t: TranslateFunction;
+};
+
+export type WorkspaceSyncRun = {
+  id: string;
+  connectorId: string;
+  status: string;
+  objectType: string;
+  isDelta: boolean;
+  deltaTokenIn: string | null;
+  deltaTokenOut: string | null;
+  objectsFound: number;
+  objectsSynced: number;
+  objectsFailed: number;
+  errorMessage: string | null;
+  startedAt: string;
+  completedAt: string | null;
+};
+
 export type ListWorkspaceConnectorsQuery = {
   page?: number;
   pageSize?: number;

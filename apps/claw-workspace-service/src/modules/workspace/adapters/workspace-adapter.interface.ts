@@ -1,13 +1,14 @@
 import type {
   AdapterCapabilities,
   HealthCheckResult,
+  LiveObjectDetails,
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
   WriteActionResult,
 } from '../types/workspace.types';
 
-export type { SyncedObject };
+export type { LiveObjectDetails, SyncedObject };
 
 /**
  * Credentials passed per-call, resolved at runtime from
@@ -68,4 +69,16 @@ export interface WorkspaceAdapter {
     actionType: string,
     payload: Record<string, unknown>,
   ): Promise<WriteActionResult>;
+
+  /**
+   * Optional live-fetch for a single object by its external id. Implementors
+   * return provider-native metadata that the operations-center uses to
+   * refresh the stored WorkspaceObject. `null` means the object no longer
+   * exists upstream (404/gone).
+   */
+  fetchObjectDetails?(
+    accessToken: string,
+    externalId: string,
+    objectType: string,
+  ): Promise<LiveObjectDetails | null>;
 }

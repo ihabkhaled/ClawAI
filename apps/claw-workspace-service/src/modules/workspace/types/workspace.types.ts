@@ -144,3 +144,19 @@ export type WriteActionResult = {
   metadata?: Record<string, unknown>;
   errorMessage?: string;
 };
+
+/**
+ * Provider-native object details fetched live (not from the synced cache).
+ * Returned by `WorkspaceAdapter.fetchObjectDetails` and consumed by the
+ * operations-center refresh flow.
+ */
+export type LiveObjectDetails = {
+  externalId: string;
+  title: string | null;
+  content: string | null;
+  url: string | null;
+  authorId: string | null;
+  externalCreatedAt: Date | null;
+  externalUpdatedAt: Date | null;
+  metadata: Record<string, unknown>;
+};

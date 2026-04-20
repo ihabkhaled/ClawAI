@@ -19,6 +19,7 @@ import type {
   WorkspaceSearchQuery,
   WorkspaceSearchResponse,
   WorkspaceSyncResult,
+  WorkspaceSyncRun,
 } from '../../types/workspace.types';
 
 const BASE = '/workspace';
@@ -125,6 +126,21 @@ export async function listWorkspaceObjects(
 
 export async function getWorkspaceObject(id: string): Promise<WorkspaceObject> {
   const response = await apiClient.get<WorkspaceObject>(`${BASE}/objects/${id}`);
+  return response.data;
+}
+
+export async function refreshWorkspaceObject(id: string): Promise<WorkspaceObject> {
+  const response = await apiClient.post<WorkspaceObject>(`${BASE}/objects/${id}/refresh`, {});
+  return response.data;
+}
+
+export async function listWorkspaceSyncRuns(
+  connectorId: string,
+  limit = 20,
+): Promise<WorkspaceSyncRun[]> {
+  const response = await apiClient.get<WorkspaceSyncRun[]>(
+    `${BASE}/connectors/${connectorId}/sync-runs?limit=${String(limit)}`,
+  );
   return response.data;
 }
 
