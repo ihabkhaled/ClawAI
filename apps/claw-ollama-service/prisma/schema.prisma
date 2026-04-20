@@ -170,6 +170,9 @@ model ModelCatalogEntry {
   discoverySourceId  String?             @map("discovery_source_id")
   downloadStatus     DownloadStatus      @default(UNKNOWN) @map("download_status")
   lastVerifiedAt     DateTime?           @map("last_verified_at")
+  searchBrowserScore    Float?           @map("search_browser_score")
+  searchBrowserScoreAt  DateTime?        @map("search_browser_score_at")
+  searchBrowserReasons  String[]         @default([]) @map("search_browser_reasons")
   createdAt          DateTime            @default(now()) @map("created_at")
   updatedAt          DateTime            @updatedAt @map("updated_at")
 
@@ -180,6 +183,7 @@ model ModelCatalogEntry {
   @@index([runtime])
   @@index([isDiscovered])
   @@index([downloadStatus])
+  @@index([searchBrowserScore])
   @@map("model_catalog_entries")
 }
 
