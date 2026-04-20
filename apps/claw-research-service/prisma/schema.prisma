@@ -36,6 +36,19 @@ enum ResearchWorkflowKind {
   REPO_CLONE_ANALYZE
 }
 
+enum FetchJobStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  CACHED
+}
+
+enum ResearchRunStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
 // ─── Tables ──────────────────────────────────────────────
 
 /// A DB-backed search provider definition. Admin-managed.
@@ -95,4 +108,78 @@ model SearchRun {
   @@index([userId, startedAt])
   @@index([providerId, startedAt])
   @@map("search_runs")
+}
+
+/// A web page fetch for a given URL. We keep a cache and log each attempt.
+model FetchJob {
+  id          String         @id @default(cuid())
+  userId      String
+  /// Normalized URL (lowercased scheme+host, kept query + path as-is).
+  url         String
+  finalUrl    String?
+  status      FetchJobStatus @default(RUNNING)
+  httpStatus  Int?
+  mimeType    String?
+  /// Raw byte size (pre-extraction).
+  byteSize    Int?
+  /// Extracted clean content (truncated to MAX length).
+  content     String?
+  /// Extracted page title.
+  title       String?
+  /// Outbound links discovered on the page.
+  links       String[]       @default([])
+  /// Was the response served from the PageCache rather than fetched live?
+  cacheHit    Boolean        @default(false)
+  errorMessage String?
+  latencyMs   Int?
+  startedAt   DateTime       @default(now())
+  completedAt DateTime?
+
+  @@index([userId, startedAt])
+  @@index([url, startedAt])
+  @@map("fetch_jobs")
+}
+
+/// Shared cache of page content keyed by URL (or URL + variant).
+model PageCache {
+  /// Cache key: SHA256 of the normalized URL.
+  key         String   @id
+  url         String
+  finalUrl    String?
+  httpStatus  Int
+  mimeType    String?
+  title       String?
+  content     String
+  links       String[] @default([])
+  byteSize    Int
+  fetchedAt   DateTime @default(now())
+  /// TTL expires-at; consumers must re-fetch beyond this instant.
+  expiresAt   DateTime
+
+  @@index([url])
+  @@index([expiresAt])
+  @@map("page_cache")
+}
+
+/// A research orchestration run — user intent, workflow, and the produced
+/// evidence bundle. This is what chat-service passes to the final model.
+model ResearchRun {
+  id              String            @id @default(cuid())
+  userId          String
+  /// Model the user picked for the final answer — preserved through the run.
+  requestedModel  String?
+  requestedProvider String?
+  workflow        ResearchWorkflowKind
+  intent          String
+  status          ResearchRunStatus @default(RUNNING)
+  /// Array of normalized evidence items — see EvidenceBundle types.
+  bundle          Json              @default("{}")
+  /// Free-form trace entries: search/fetch/error phases with timings.
+  trace           Json              @default("[]")
+  errorMessage    String?
+  startedAt       DateTime          @default(now())
+  completedAt     DateTime?
+
+  @@index([userId, startedAt])
+  @@map("research_runs")
 }

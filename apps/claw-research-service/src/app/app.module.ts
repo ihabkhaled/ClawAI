@@ -10,7 +10,9 @@ import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
 import { GlobalExceptionFilter } from './filters/global-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
+import { FetchModule } from '../modules/fetch/fetch.module';
 import { HealthModule } from '../modules/health/health.module';
+import { ResearchModule } from '../modules/research/research.module';
 import { SearchModule } from '../modules/search/search.module';
 
 @Module({
@@ -58,6 +60,8 @@ import { SearchModule } from '../modules/search/search.module';
     RedisModule,
     HealthModule,
     SearchModule,
+    FetchModule,
+    ResearchModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
