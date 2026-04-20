@@ -1001,6 +1001,10 @@ export const it: TranslationDictionary = {
       'Attivazione del connettore — importazione del primo set di oggetti dal provider.',
     askAi: 'Chiedi all’IA',
     askAiTitle: 'Su {name}',
+    reconnect: 'Riconnetti',
+    reconnectTitle: 'Questo connettore è disconnesso',
+    reconnectDescription:
+      'Le credenziali memorizzate non sono più valide. Autorizza di nuovo da Configurazioni App.',
   },
   workspaceSyncRuns: {
     title: 'Esecuzioni di sincronizzazione',

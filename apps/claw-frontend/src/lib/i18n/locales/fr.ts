@@ -1007,6 +1007,10 @@ export const fr: TranslationDictionary = {
       'Activation du connecteur — importation du premier ensemble d’objets depuis le fournisseur.',
     askAi: 'Interroger l’IA',
     askAiTitle: 'À propos de {name}',
+    reconnect: 'Se reconnecter',
+    reconnectTitle: 'Ce connecteur est déconnecté',
+    reconnectDescription:
+      'Les identifiants stockés ne sont plus valides. Autorisez à nouveau depuis Configurations d’App.',
   },
   workspaceSyncRuns: {
     title: 'Exécutions de synchronisation',

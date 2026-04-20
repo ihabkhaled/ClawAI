@@ -1,9 +1,12 @@
 'use client';
 
-import { Activity, MessageSquare, Package, RefreshCw, Trash2 } from 'lucide-react';
+import { Activity, AlertTriangle, KeyRound, MessageSquare, Package, RefreshCw, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ROUTES } from '@/constants';
+import { WorkspaceConnectorStatus } from '@/enums';
 import type { ConnectorDetailViewProps } from '@/types';
 import { formatOptionalIsoDate } from '@/utilities/date.utility';
 
@@ -24,8 +27,28 @@ export function ConnectorDetailView({
   onAskAi,
   t,
 }: ConnectorDetailViewProps): React.ReactElement {
+  const isDisconnected =
+    connector.status === WorkspaceConnectorStatus.DISCONNECTED ||
+    connector.status === WorkspaceConnectorStatus.PENDING_AUTH;
+
   return (
     <div className="flex flex-col gap-6">
+      {isDisconnected ? (
+        <div className="flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
+          <div className="flex-1">
+            <p className="font-medium text-destructive">{t('connectorDetail.reconnectTitle')}</p>
+            <p className="mt-1 text-muted-foreground">{t('connectorDetail.reconnectDescription')}</p>
+          </div>
+          <Button asChild size="sm" variant="default">
+            <Link href={ROUTES.WORKSPACE_APP_CONFIGS}>
+              <KeyRound className="me-2 size-4" />
+              {t('connectorDetail.reconnect')}
+            </Link>
+          </Button>
+        </div>
+      ) : null}
+
       <div className="rounded-lg border bg-card p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-2">

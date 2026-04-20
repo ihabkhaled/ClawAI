@@ -1003,6 +1003,10 @@ export const de: TranslationDictionary = {
       'Konnektor wird aktiviert — die erste Objektmenge wird vom Anbieter importiert.',
     askAi: 'KI hierzu fragen',
     askAiTitle: 'Über {name}',
+    reconnect: 'Erneut verbinden',
+    reconnectTitle: 'Dieser Konnektor ist getrennt',
+    reconnectDescription:
+      'Die gespeicherten Zugangsdaten sind nicht mehr gültig. Erneut autorisieren über App-Konfigurationen.',
   },
   workspaceSyncRuns: {
     title: 'Synchronisationsläufe',

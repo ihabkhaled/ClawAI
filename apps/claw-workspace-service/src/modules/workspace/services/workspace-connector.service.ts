@@ -63,6 +63,11 @@ export class WorkspaceConnectorService {
       );
     }
 
+    this.logger.warn(
+      `DEPRECATED: POST /workspace/connectors (admin/test path) used by user ${userId} ` +
+        `for ${dto.provider}. Preferred flow is /workspace/oauth/init → /workspace/oauth/callback.`,
+    );
+
     const encryptedTokens = dto.accessToken
       ? this.tokenManager.encryptTokenSet({
           accessToken: dto.accessToken,

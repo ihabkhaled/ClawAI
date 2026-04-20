@@ -991,6 +991,10 @@ export const en: TranslationDictionary = {
       'Activating this connector — importing your first set of objects from the provider. You can keep using Claw while this runs.',
     askAi: 'Ask AI about this',
     askAiTitle: 'About {name}',
+    reconnect: 'Reconnect',
+    reconnectTitle: 'This connector is disconnected',
+    reconnectDescription:
+      'The stored credentials are no longer valid. Re-authorize from App Configurations to restore access.',
   },
   workspaceSyncRuns: {
     title: 'Sync runs',

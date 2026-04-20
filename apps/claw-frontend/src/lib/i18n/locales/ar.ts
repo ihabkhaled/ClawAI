@@ -986,6 +986,10 @@ export const ar: TranslationDictionary = {
     activating: 'جارٍ تفعيل هذا الموصل — يتم استيراد المجموعة الأولى من الكائنات من المزود.',
     askAi: 'اسأل الذكاء الاصطناعي',
     askAiTitle: 'عن {name}',
+    reconnect: 'إعادة الاتصال',
+    reconnectTitle: 'هذا الموصل مفصول',
+    reconnectDescription:
+      'لم تعد بيانات الاعتماد المخزنة صالحة. قم بإعادة التفويض من تكوينات التطبيق لاستعادة الوصول.',
   },
   workspaceSyncRuns: {
     title: 'عمليات المزامنة',

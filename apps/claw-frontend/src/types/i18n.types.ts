@@ -981,6 +981,9 @@ export type TranslationDictionary = {
     activating: string;
     askAi: string;
     askAiTitle: string;
+    reconnect: string;
+    reconnectTitle: string;
+    reconnectDescription: string;
   };
   workspaceSyncRuns: {
     title: string;
