@@ -13,20 +13,31 @@ import {
 import { CurrentUser, Public } from '@claw/shared-auth';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { AgentSessionService } from '../services/agent-session.service';
-import { AgentKeyGuard } from '../../../common/guards/agent-key.guard';
+import { CompatAgentGuard } from '../../../common/guards/compat-agent.guard';
+import { DeviceAccessGuard } from '../../../common/guards/device-access.guard';
+import { ScopeGuard } from '../../../common/guards/scope.guard';
 import { AgentSession } from '../../../common/decorators/agent-session.decorator';
+import { CurrentDevice } from '../../../common/decorators/current-device.decorator';
+import { RequireScopes } from '../../../common/decorators/require-scopes.decorator';
+import { DeviceScope } from '../../../common/enums/device-scope.enum';
 import {
   type CreateAgentSessionDto,
   createAgentSessionSchema,
 } from '../dto/create-agent-session.dto';
 import { type ListSessionsQueryDto, listSessionsQuerySchema } from '../dto/list-sessions-query.dto';
+import { type AttachSessionDto, attachSessionSchema } from '../dto/attach-session.dto';
 import type {
   AgentSessionWithCounts,
+  AttachSessionResult,
   HeartbeatResult,
   PaginatedAgentSessions,
   RegisterSessionResult,
 } from '../types/agent.types';
-import type { AgentAuthContext, AuthenticatedUser } from '../../../common/types/auth.types';
+import type {
+  AgentAuthContext,
+  AuthenticatedUser,
+  DeviceContext,
+} from '../../../common/types/auth.types';
 
 @Controller('agent/sessions')
 export class AgentSessionController {
@@ -38,6 +49,18 @@ export class AgentSessionController {
     @Body(new ZodValidationPipe(createAgentSessionSchema)) dto: CreateAgentSessionDto,
   ): Promise<RegisterSessionResult> {
     return this.service.register(user.id, dto);
+  }
+
+  @Post('attach')
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @UseGuards(DeviceAccessGuard, ScopeGuard)
+  @RequireScopes(DeviceScope.SESSIONS_READ)
+  async attach(
+    @CurrentDevice() device: DeviceContext,
+    @Body(new ZodValidationPipe(attachSessionSchema)) dto: AttachSessionDto,
+  ): Promise<AttachSessionResult> {
+    return this.service.attachDevice(device, dto);
   }
 
   @Get()
@@ -67,7 +90,7 @@ export class AgentSessionController {
   @Post(':id/heartbeat')
   @HttpCode(HttpStatus.OK)
   @Public()
-  @UseGuards(AgentKeyGuard)
+  @UseGuards(CompatAgentGuard)
   async heartbeat(@AgentSession() ctx: AgentAuthContext): Promise<HeartbeatResult> {
     return this.service.heartbeat(ctx.sessionId);
   }

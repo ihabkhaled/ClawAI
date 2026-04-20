@@ -11,7 +11,7 @@ import {
 import { CurrentUser, Public } from '@claw/shared-auth';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { AgentEventService } from '../services/agent-event.service';
-import { AgentKeyGuard } from '../../../common/guards/agent-key.guard';
+import { CompatAgentGuard } from '../../../common/guards/compat-agent.guard';
 import { AgentSession } from '../../../common/decorators/agent-session.decorator';
 import { type CreateFileEventsDto, createFileEventsSchema } from '../dto/create-file-events.dto';
 import { type ListEventsQueryDto, listEventsQuerySchema } from '../dto/list-events-query.dto';
@@ -25,7 +25,7 @@ export class AgentEventController {
   @Post()
   @HttpCode(HttpStatus.OK)
   @Public()
-  @UseGuards(AgentKeyGuard)
+  @UseGuards(CompatAgentGuard)
   async reportEvents(
     @AgentSession() ctx: AgentAuthContext,
     @Body(new ZodValidationPipe(createFileEventsSchema)) dto: CreateFileEventsDto,

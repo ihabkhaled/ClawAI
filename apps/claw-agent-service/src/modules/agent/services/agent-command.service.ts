@@ -8,12 +8,14 @@ import { EntityNotFoundException } from '../../../common/errors/entity-not-found
 import { TerminalCommandStatus } from '../../../common/enums/terminal-command-status.enum';
 import { AgentSessionStatus } from '../../../common/enums/agent-session-status.enum';
 import { COMMAND_EXPIRY_MS } from '../../../common/constants/agent.constants';
+import { CommandRiskService } from './command-risk.service';
 import type { CreateCommandDto } from '../dto/create-command.dto';
 import type { ListCommandsQueryDto } from '../dto/list-commands-query.dto';
 import type { RejectCommandDto } from '../dto/reject-command.dto';
 import type { CompleteCommandDto } from '../dto/complete-command.dto';
 import type { PaginatedCommands } from '../types/agent.types';
 import type { TerminalCommand } from '../../../generated/prisma';
+import type { RiskAssessment } from '../types/policy.types';
 
 @Injectable()
 export class AgentCommandService {
@@ -23,10 +25,12 @@ export class AgentCommandService {
     private readonly commandRepo: AgentCommandRepository,
     private readonly sessionRepo: AgentSessionRepository,
     private readonly rabbitMQ: RabbitMQService,
+    private readonly riskService: CommandRiskService,
   ) {}
 
   async createCommand(userId: string, dto: CreateCommandDto): Promise<TerminalCommand> {
     await this.assertSessionOwnership(dto.sessionId, userId);
+    const assessment = await this.riskService.assess(dto.command);
     const expiresAt = new Date(Date.now() + COMMAND_EXPIRY_MS);
     const command = await this.commandRepo.create({
       session: { connect: { id: dto.sessionId } },
@@ -34,13 +38,64 @@ export class AgentCommandService {
       command: dto.command,
       workingDir: dto.workingDir,
       expiresAt,
+      status: this.resolveInitialStatus(assessment),
+      approvedAt: assessment.autoApproved && !assessment.blockedByPolicy ? new Date() : null,
+      rejectedAt: assessment.blockedByPolicy ? new Date() : null,
+      rejectionReason: assessment.blockedByPolicy
+        ? `Blocked by policy "${assessment.matchedPolicyName ?? 'unknown'}"`
+        : null,
+      riskScore: assessment.riskScore,
+      riskLabel: assessment.riskLabel,
+      matchedPolicy:
+        assessment.matchedPolicyId === null
+          ? undefined
+          : { connect: { id: assessment.matchedPolicyId } },
+      riskReasons: assessment.reasons.length > 0 ? assessment.reasons.join(' | ') : null,
+      autoApproved: assessment.autoApproved && !assessment.blockedByPolicy,
+      blockedByPolicy: assessment.blockedByPolicy,
     });
-    void this.publishEvent(EventPattern.AGENT_COMMAND_REQUESTED, {
-      commandId: command.id,
-      sessionId: dto.sessionId,
-      userId,
-    });
+    void this.publishCreationEvents(userId, command, assessment);
     return command;
+  }
+
+  private resolveInitialStatus(assessment: RiskAssessment): TerminalCommandStatus {
+    if (assessment.blockedByPolicy) return TerminalCommandStatus.REJECTED;
+    if (assessment.autoApproved) return TerminalCommandStatus.APPROVED;
+    return TerminalCommandStatus.PENDING_APPROVAL;
+  }
+
+  private async publishCreationEvents(
+    userId: string,
+    command: TerminalCommand,
+    assessment: RiskAssessment,
+  ): Promise<void> {
+    await this.publishEvent(EventPattern.AGENT_COMMAND_REQUESTED, {
+      commandId: command.id,
+      sessionId: command.sessionId,
+      userId,
+      riskScore: assessment.riskScore,
+      riskLabel: assessment.riskLabel,
+      blockedByPolicy: assessment.blockedByPolicy,
+      autoApproved: assessment.autoApproved,
+    });
+    if (assessment.blockedByPolicy) {
+      await this.publishEvent(EventPattern.AGENT_POLICY_VIOLATED, {
+        commandId: command.id,
+        sessionId: command.sessionId,
+        userId,
+        matchedPolicyId: assessment.matchedPolicyId ?? undefined,
+        matchedPolicyName: assessment.matchedPolicyName ?? undefined,
+        riskScore: assessment.riskScore,
+        riskLabel: assessment.riskLabel,
+      });
+    } else if (assessment.autoApproved) {
+      await this.publishEvent(EventPattern.AGENT_COMMAND_APPROVED, {
+        commandId: command.id,
+        sessionId: command.sessionId,
+        userId,
+        autoApproved: true,
+      });
+    }
   }
 
   async listCommands(userId: string, query: ListCommandsQueryDto): Promise<PaginatedCommands> {

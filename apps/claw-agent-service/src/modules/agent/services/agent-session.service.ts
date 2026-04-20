@@ -12,10 +12,13 @@ import type { CreateAgentSessionDto } from '../dto/create-agent-session.dto';
 import type { ListSessionsQueryDto } from '../dto/list-sessions-query.dto';
 import type {
   AgentSessionWithCounts,
+  AttachSessionResult,
   HeartbeatResult,
   PaginatedAgentSessions,
   RegisterSessionResult,
 } from '../types/agent.types';
+import type { DeviceContext } from '../../../common/types/auth.types';
+import type { AttachSessionDto } from '../dto/attach-session.dto';
 
 @Injectable()
 export class AgentSessionService {
@@ -55,6 +58,34 @@ export class AgentSessionService {
   async heartbeat(sessionId: string): Promise<HeartbeatResult> {
     await this.repository.updateHeartbeat(sessionId);
     return { ok: true, nextHeartbeatInSeconds: SESSION_HEARTBEAT_TIMEOUT_SECONDS / 2 };
+  }
+
+  async attachDevice(device: DeviceContext, dto: AttachSessionDto): Promise<AttachSessionResult> {
+    const sessionKey = randomBytes(32).toString('hex');
+    const session = await this.repository.create({
+      userId: device.userId,
+      sessionKey,
+      hostname: dto.hostname,
+      platform: dto.platform,
+      agentVersion: dto.agentVersion,
+      status: AgentSessionStatus.CONNECTED,
+      lastHeartbeatAt: new Date(),
+      device: { connect: { id: device.deviceId } },
+      metadata:
+        dto.metadata !== undefined ? (dto.metadata as Prisma.InputJsonValue) : Prisma.DbNull,
+    });
+    void this.publishEvent(EventPattern.AGENT_SESSION_CONNECTED, {
+      sessionId: session.id,
+      userId: device.userId,
+      deviceId: device.deviceId,
+    });
+    this.logger.log(
+      `Device-attached session: ${session.id} (${dto.hostname}, device=${device.deviceId})`,
+    );
+    return {
+      sessionId: session.id,
+      heartbeatIntervalSeconds: SESSION_HEARTBEAT_TIMEOUT_SECONDS / 2,
+    };
   }
 
   async disconnect(id: string, userId: string): Promise<AgentSessionWithCounts> {

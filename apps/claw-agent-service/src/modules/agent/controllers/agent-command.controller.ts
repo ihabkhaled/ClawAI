@@ -13,8 +13,11 @@ import { CurrentUser, Public } from '@claw/shared-auth';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { AgentCommandService } from '../services/agent-command.service';
 import { AgentCommandManager } from '../managers/agent-command.manager';
-import { AgentKeyGuard } from '../../../common/guards/agent-key.guard';
+import { CompatAgentGuard } from '../../../common/guards/compat-agent.guard';
+import { ScopeGuard } from '../../../common/guards/scope.guard';
 import { AgentSession } from '../../../common/decorators/agent-session.decorator';
+import { RequireScopes } from '../../../common/decorators/require-scopes.decorator';
+import { DeviceScope } from '../../../common/enums/device-scope.enum';
 import { type CreateCommandDto, createCommandSchema } from '../dto/create-command.dto';
 import { type ListCommandsQueryDto, listCommandsQuerySchema } from '../dto/list-commands-query.dto';
 import { type RejectCommandDto, rejectCommandSchema } from '../dto/reject-command.dto';
@@ -48,7 +51,8 @@ export class AgentCommandController {
 
   @Get('pending')
   @Public()
-  @UseGuards(AgentKeyGuard)
+  @UseGuards(CompatAgentGuard, ScopeGuard)
+  @RequireScopes(DeviceScope.SHELL_EXEC)
   async getPending(@AgentSession() ctx: AgentAuthContext): Promise<TerminalCommand[]> {
     const commands = await this.service.getPendingForSession(ctx.sessionId);
     const started = await Promise.all(
@@ -87,7 +91,8 @@ export class AgentCommandController {
   @Post(':id/complete')
   @HttpCode(HttpStatus.OK)
   @Public()
-  @UseGuards(AgentKeyGuard)
+  @UseGuards(CompatAgentGuard, ScopeGuard)
+  @RequireScopes(DeviceScope.SHELL_EXEC)
   async complete(
     @AgentSession() ctx: AgentAuthContext,
     @Param('id') id: string,
