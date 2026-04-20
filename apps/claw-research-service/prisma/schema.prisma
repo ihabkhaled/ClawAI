@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("RESEARCH_DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────
+
+enum SearchProviderKind {
+  OLLAMA_WEB
+  TAVILY
+  SEARXNG
+  GENERIC_HTTP
+}
+
+enum SearchProviderStatus {
+  ACTIVE
+  DISABLED
+  INVALID
+}
+
+enum SearchRunStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum ResearchWorkflowKind {
+  SEARCH_ONLY
+  SEARCH_THEN_FETCH
+  SEARCH_FETCH_EXTRACT
+  REPO_CLONE_ANALYZE
+}
+
+// ─── Tables ──────────────────────────────────────────────
+
+/// A DB-backed search provider definition. Admin-managed.
+/// Credentials live in `encryptedSecret` (AES-256-GCM) — never in .env.
+model SearchProvider {
+  id              String               @id @default(cuid())
+  kind            SearchProviderKind
+  name            String               @unique
+  description     String?
+  /// Base URL for the provider (e.g. https://api.tavily.com, SearXNG host, or Ollama host).
+  baseUrl         String
+  /// Encrypted secret blob — typically {"apiKey": "..."} JSON.
+  encryptedSecret String?
+  secretVersion   Int                  @default(0)
+  enabled         Boolean              @default(true)
+  priority        Int                  @default(100)
+  status          SearchProviderStatus @default(ACTIVE)
+  /// Additional provider-specific non-secret config (e.g. {"maxResults":10}).
+  publicConfig    Json                 @default("{}")
+  /// Per-provider domain allow/block lists.
+  allowlistDomains String[]            @default([])
+  blocklistDomains String[]            @default([])
+  /// Per-run timeout in ms.
+  timeoutMs       Int                  @default(15000)
+  lastValidatedAt DateTime?
+  validationError String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  runs SearchRun[]
+
+  @@index([kind])
+  @@index([status])
+  @@map("search_providers")
+}
+
+/// A single search execution against a provider.
+model SearchRun {
+  id          String          @id @default(cuid())
+  providerId  String
+  provider    SearchProvider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  userId      String
+  query       String
+  status      SearchRunStatus @default(RUNNING)
+  /// Number of normalized results returned.
+  resultCount Int             @default(0)
+  /// Latency in ms from start to completion.
+  latencyMs   Int?
+  errorMessage String?
+  /// Full normalized result payload for later inspection.
+  results     Json            @default("[]")
+  /// Optional filters: provider-specific knobs (site, lang, freshness, etc).
+  filters     Json            @default("{}")
+  startedAt   DateTime        @default(now())
+  completedAt DateTime?
+
+  @@index([userId, startedAt])
+  @@index([providerId, startedAt])
+  @@map("search_runs")
+}

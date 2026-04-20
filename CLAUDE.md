@@ -34,6 +34,7 @@ apps/
   claw-image-service/       # Port 4012, PG claw_images  — image generation, DALL-E/Gemini/SD adapters
   claw-file-generation-service/ # Port 4013, PG claw_file_generations — file export (PDF/DOCX/CSV/HTML/MD/TXT/JSON)
   claw-agent-service/           # Port 4015, PG claw_agent — desktop agent sessions, terminal command approval, repo tracking, file events
+  claw-research-service/        # Port 4016, PG claw_research — dynamic search/fetch/scrape/clone + evidence orchestration (Tavily, SearXNG, Ollama Web)
 packages/
   shared-types/      # 18 enums, event payloads, auth types
   shared-constants/  # Exchange name, ports, API prefix, pagination defaults
@@ -695,6 +696,7 @@ Failed checks → HTTP 422 with reason codes. Filenames sanitized before storage
 | /api/v1/images           | image:4012       | Image generation                                     |
 | /api/v1/file-generations | file-gen:4013    | File export (PDF/DOCX/CSV/etc.)                      |
 | /api/v1/agent/\*         | agent:4015       | Sessions, terminal commands, repos, file events      |
+| /api/v1/research/\*      | research:4016    | Dynamic search providers + search runs (Phase 1)     |
 
 ---
 

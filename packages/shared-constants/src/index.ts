@@ -18,6 +18,7 @@ export const IMAGE_SERVICE_PORT = 4012;
 export const FILE_GENERATION_SERVICE_PORT = 4013;
 export const WORKSPACE_SERVICE_PORT = 4014;
 export const AGENT_SERVICE_PORT = 4015;
+export const RESEARCH_SERVICE_PORT = 4016;
 
 // ---- Service Names ----
 
@@ -34,6 +35,7 @@ export const IMAGE_SERVICE = 'image-service';
 export const FILE_GENERATION_SERVICE = 'file-generation-service';
 export const WORKSPACE_SERVICE = 'workspace-service';
 export const AGENT_SERVICE = 'agent-service';
+export const RESEARCH_SERVICE = 'research-service';
 
 // ---- API ----
 

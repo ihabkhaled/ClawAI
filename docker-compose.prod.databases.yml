@@ -212,6 +212,30 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  # PostgreSQL (Research Service)
+  # ---------------------------------------------------------------------------
+  pg-research:
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-research
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_RESEARCH_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_RESEARCH_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_RESEARCH_DB:-claw_research}
+    ports:
+      - '${PG_RESEARCH_PORT:-5452}:5432'
+    volumes:
+      - pg-research-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'pg_isready -U ${PG_RESEARCH_USER:-claw} -d ${PG_RESEARCH_DB:-claw_research}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   # PostgreSQL (Agent Service)
   # ---------------------------------------------------------------------------
   pg-agent:
@@ -366,6 +390,8 @@ volumes:
   pg-images-data:
     driver: local
   pg-workspace-data:
+    driver: local
+  pg-research-data:
     driver: local
   pg-agent-data:
     driver: local

@@ -318,6 +318,27 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  # Research Service
+  # ---------------------------------------------------------------------------
+  research-service:
+    build:
+      context: .
+      dockerfile: apps/claw-research-service/Dockerfile.dev
+    container_name: claw-research-service
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '4016:4016'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4016/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   # File Generation Service
   # ---------------------------------------------------------------------------
   file-generation-service:

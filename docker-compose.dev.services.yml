@@ -361,6 +361,31 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  # Research Service (DEV mode)
+  # ---------------------------------------------------------------------------
+  research-service:
+    build:
+      context: .
+      dockerfile: apps/claw-research-service/Dockerfile.dev
+    container_name: claw-research-service
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '4016:4016'
+    volumes:
+      - ./apps/claw-research-service/src:/app/apps/claw-research-service/src
+      - ./apps/claw-research-service/prisma:/app/apps/claw-research-service/prisma
+    command: ['./docker-entrypoint.dev.sh']
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4016/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   file-generation-service:
     build:
       context: .
