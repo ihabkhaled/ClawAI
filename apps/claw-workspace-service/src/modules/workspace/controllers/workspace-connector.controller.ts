@@ -33,7 +33,7 @@ import type {
   WorkspaceConnectorWithStats,
 } from '../types/workspace.types';
 import type { AuthenticatedUser } from '../../../common/types/auth.types';
-import type { WorkspaceSyncRun } from '../../../generated/prisma';
+import type { WorkspaceHealthEvent, WorkspaceSyncRun } from '../../../generated/prisma';
 
 @Controller('workspace/connectors')
 export class WorkspaceConnectorController {
@@ -113,5 +113,17 @@ export class WorkspaceConnectorController {
     const safe =
       Number.isFinite(parsedLimit) && parsedLimit > 0 && parsedLimit <= 100 ? parsedLimit : 20;
     return this.objectService.listSyncRuns(id, user.id, safe);
+  }
+
+  @Get(':id/health-events')
+  async listHealthEvents(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Query('limit') limit?: string,
+  ): Promise<WorkspaceHealthEvent[]> {
+    const parsedLimit = limit === undefined ? 20 : Number.parseInt(limit, 10);
+    const safe =
+      Number.isFinite(parsedLimit) && parsedLimit > 0 && parsedLimit <= 100 ? parsedLimit : 20;
+    return this.objectService.listHealthEvents(id, user.id, safe);
   }
 }

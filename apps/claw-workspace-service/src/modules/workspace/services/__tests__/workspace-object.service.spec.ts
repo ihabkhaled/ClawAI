@@ -16,6 +16,7 @@ const mockObjectRepository = {
 const mockConnectorRepository = {
   findById: jest.fn(),
   findSyncRunsByConnectorId: jest.fn(),
+  findHealthEventsByConnectorId: jest.fn(),
 } as unknown as WorkspaceConnectorRepository;
 
 const mockAdapterFactory = {
@@ -191,6 +192,32 @@ describe('WorkspaceObjectService', () => {
         userId: 'other',
       });
       await expect(service.listSyncRuns('conn1', 'user1', 10)).rejects.toBeInstanceOf(
+        BusinessException,
+      );
+    });
+  });
+
+  describe('listHealthEvents', () => {
+    it('returns recent events for an owned connector', async () => {
+      (mockConnectorRepository.findById as jest.Mock).mockResolvedValue(mockConnector);
+      (mockConnectorRepository.findHealthEventsByConnectorId as jest.Mock).mockResolvedValue([
+        { id: 'e1' },
+        { id: 'e2' },
+      ]);
+      const result = await service.listHealthEvents('conn1', 'user1', 20);
+      expect(result).toHaveLength(2);
+      expect(mockConnectorRepository.findHealthEventsByConnectorId).toHaveBeenCalledWith(
+        'conn1',
+        20,
+      );
+    });
+
+    it('throws forbidden when connector belongs to another user', async () => {
+      (mockConnectorRepository.findById as jest.Mock).mockResolvedValue({
+        id: 'conn1',
+        userId: 'other',
+      });
+      await expect(service.listHealthEvents('conn1', 'user1', 10)).rejects.toBeInstanceOf(
         BusinessException,
       );
     });

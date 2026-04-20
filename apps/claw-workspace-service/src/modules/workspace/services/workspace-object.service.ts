@@ -6,7 +6,12 @@ import { WorkspaceConnectorRepository } from '../repositories/workspace-connecto
 import { WorkspaceAdapterFactory } from '../adapters/workspace-adapter.factory';
 import { OAuthTokenManager } from '../managers/oauth-token.manager';
 import type { ListWorkspaceObjectsQueryDto } from '../dto/list-workspace-objects-query.dto';
-import type { Prisma, WorkspaceObject, WorkspaceSyncRun } from '../../../generated/prisma';
+import type {
+  Prisma,
+  WorkspaceHealthEvent,
+  WorkspaceObject,
+  WorkspaceSyncRun,
+} from '../../../generated/prisma';
 import type {
   LiveObjectDetails,
   PaginatedWorkspaceObjects,
@@ -145,6 +150,21 @@ export class WorkspaceObjectService {
     userId: string,
     limit: number,
   ): Promise<WorkspaceSyncRun[]> {
+    await this.assertOwnedConnector(connectorId, userId);
+    return this.connectorRepository.findSyncRunsByConnectorId(connectorId, limit);
+  }
+
+  /** Recent health events for a connector. */
+  async listHealthEvents(
+    connectorId: string,
+    userId: string,
+    limit: number,
+  ): Promise<WorkspaceHealthEvent[]> {
+    await this.assertOwnedConnector(connectorId, userId);
+    return this.connectorRepository.findHealthEventsByConnectorId(connectorId, limit);
+  }
+
+  private async assertOwnedConnector(connectorId: string, userId: string): Promise<void> {
     const connector = await this.connectorRepository.findById(connectorId);
     if (connector === null) {
       throw new EntityNotFoundException('WorkspaceConnector', connectorId);
@@ -156,6 +176,5 @@ export class WorkspaceObjectService {
         HttpStatus.FORBIDDEN,
       );
     }
-    return this.connectorRepository.findSyncRunsByConnectorId(connectorId, limit);
   }
 }

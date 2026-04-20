@@ -114,6 +114,17 @@ export class WorkspaceConnectorRepository {
     });
   }
 
+  async findHealthEventsByConnectorId(
+    connectorId: string,
+    limit: number,
+  ): Promise<WorkspaceHealthEvent[]> {
+    return this.prisma.workspaceHealthEvent.findMany({
+      where: { connectorId },
+      orderBy: { checkedAt: 'desc' },
+      take: limit,
+    });
+  }
+
   async getObjectCount(connectorId: string): Promise<number> {
     return this.prisma.workspaceObject.count({ where: { connectorId } });
   }
