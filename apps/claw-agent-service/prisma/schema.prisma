@@ -31,27 +31,156 @@ enum FileEventType {
   RENAMED
 }
 
+enum DeviceStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum RefreshTokenStatus {
+  ACTIVE
+  USED
+  REVOKED
+}
+
+enum PairingStatus {
+  PENDING
+  APPROVED
+  DENIED
+  EXPIRED
+  CONSUMED
+}
+
+enum DeviceCodeStatus {
+  PENDING
+  APPROVED
+  DENIED
+  EXPIRED
+  CONSUMED
+}
+
+enum PolicyKind {
+  ALLOW
+  DENY
+  AUTO_APPROVE
+}
+
+enum RiskLabel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
 model AgentSession {
-  id             String             @id @default(cuid())
-  userId         String
-  sessionKey     String             @unique
-  hostname       String
-  platform       String
-  agentVersion   String
-  status         AgentSessionStatus @default(CONNECTED)
+  id              String             @id @default(cuid())
+  userId          String
+  deviceId        String?
+  device          Device?            @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  sessionKey      String             @unique
+  deprecatedKey   Boolean            @default(false)
+  hostname        String
+  platform        String
+  agentVersion    String
+  status          AgentSessionStatus @default(CONNECTED)
   lastHeartbeatAt DateTime?
-  connectedAt    DateTime           @default(now())
-  disconnectedAt DateTime?
-  metadata       Json?
-  commands       TerminalCommand[]
-  repos          LocalRepo[]
-  fileEvents     FileWatchEvent[]
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  connectedAt     DateTime           @default(now())
+  disconnectedAt  DateTime?
+  metadata        Json?
+  commands        TerminalCommand[]
+  repos           LocalRepo[]
+  fileEvents      FileWatchEvent[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 
   @@index([userId, status])
   @@index([sessionKey])
+  @@index([deviceId])
   @@map("agent_sessions")
+}
+
+model Device {
+  id           String       @id @default(cuid())
+  userId       String
+  orgId        String?
+  name         String
+  hostname     String
+  os           String
+  platform     String
+  agentVersion String
+  scopesCsv    String
+  status       DeviceStatus @default(ACTIVE)
+  lastSeenAt   DateTime?
+  lastIp       String?
+  revokedAt    DateTime?
+  revokeReason String?
+  metadata     Json?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  sessions      AgentSession[]
+  refreshTokens RefreshToken[]
+
+  @@index([userId, status])
+  @@index([userId, lastSeenAt])
+  @@map("devices")
+}
+
+model RefreshToken {
+  id           String             @id @default(cuid())
+  deviceId     String
+  device       Device             @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  tokenHash    String             @unique
+  jti          String             @unique
+  status       RefreshTokenStatus @default(ACTIVE)
+  expiresAt    DateTime
+  usedAt       DateTime?
+  replacedById String?
+  replacedBy   RefreshToken?      @relation("RefreshTokenReplacement", fields: [replacedById], references: [id], onDelete: SetNull)
+  ancestors    RefreshToken[]     @relation("RefreshTokenReplacement")
+  createdAt    DateTime           @default(now())
+  lastUsedIp   String?
+
+  @@index([deviceId, status])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model PairingRequest {
+  id                String        @id @default(cuid())
+  codeHash          String        @unique
+  stateNonce        String
+  deviceHint        Json
+  loopbackPort      Int?
+  status            PairingStatus @default(PENDING)
+  approvedByUserId  String?
+  approvedDeviceId  String?
+  approvedScopesCsv String?
+  expiresAt         DateTime
+  createdAt         DateTime      @default(now())
+  consumedAt        DateTime?
+
+  @@index([status, expiresAt])
+  @@map("pairing_requests")
+}
+
+model DeviceCodeRequest {
+  id                String           @id @default(cuid())
+  userCode          String           @unique
+  deviceCodeHash    String           @unique
+  deviceHint        Json
+  intervalSeconds   Int              @default(5)
+  slowDownUntil     DateTime?
+  offenceCount      Int              @default(0)
+  status            DeviceCodeStatus @default(PENDING)
+  approvedByUserId  String?
+  approvedDeviceId  String?
+  approvedScopesCsv String?
+  expiresAt         DateTime
+  createdAt         DateTime         @default(now())
+  consumedAt        DateTime?
+
+  @@index([status, expiresAt])
+  @@map("device_code_requests")
 }
 
 model TerminalCommand {
@@ -62,6 +191,13 @@ model TerminalCommand {
   command         String
   workingDir      String?
   status          TerminalCommandStatus @default(PENDING_APPROVAL)
+  riskScore       Int                   @default(0)
+  riskLabel       RiskLabel             @default(LOW)
+  matchedPolicyId String?
+  matchedPolicy   AccessPolicy?         @relation(fields: [matchedPolicyId], references: [id], onDelete: SetNull)
+  riskReasons     String?
+  autoApproved    Boolean               @default(false)
+  blockedByPolicy Boolean               @default(false)
   stdout          String?
   stderr          String?
   exitCode        Int?
@@ -77,7 +213,30 @@ model TerminalCommand {
 
   @@index([sessionId, status])
   @@index([userId, status])
+  @@index([matchedPolicyId])
   @@map("terminal_commands")
+}
+
+model AccessPolicy {
+  id          String     @id @default(cuid())
+  name        String
+  kind        PolicyKind
+  pattern     String
+  scope       String?
+  riskScore   Int        @default(0)
+  riskLabel   RiskLabel  @default(LOW)
+  description String?
+  priority    Int        @default(0)
+  isActive    Boolean    @default(true)
+  orgId       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  commands TerminalCommand[]
+
+  @@index([kind, isActive, priority])
+  @@index([orgId])
+  @@map("access_policies")
 }
 
 model LocalRepo {
@@ -101,14 +260,14 @@ model LocalRepo {
 }
 
 model FileWatchEvent {
-  id        String       @id @default(cuid())
+  id        String        @id @default(cuid())
   sessionId String
-  session   AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session   AgentSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   userId    String
   eventType FileEventType
   filePath  String
   repoId    String?
-  createdAt DateTime     @default(now())
+  createdAt DateTime      @default(now())
 
   @@index([sessionId, createdAt])
   @@index([userId, createdAt])
