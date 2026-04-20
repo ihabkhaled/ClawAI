@@ -45,6 +45,25 @@ export const GOOGLE_DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
 export const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 export const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
+// ─── Gmail adapter URLs ───────────────────────────────────────────────────────
+export const GMAIL_API_BASE = 'https://gmail.googleapis.com/gmail/v1';
+export const GMAIL_SYNC_MESSAGE_LIMIT = 50;
+export const GMAIL_USER_ENDPOINT = 'me';
+
+// ─── Confluence (Atlassian) adapter URLs ──────────────────────────────────────
+export const CONFLUENCE_API_RESOURCES =
+  'https://api.atlassian.com/oauth/token/accessible-resources';
+export const CONFLUENCE_AUTH_URL = 'https://auth.atlassian.com/authorize';
+export const CONFLUENCE_TOKEN_URL = 'https://auth.atlassian.com/oauth/token';
+export const CONFLUENCE_SYNC_PAGE_LIMIT = 50;
+
+// ─── Microsoft Graph (SharePoint + OneDrive) URLs ─────────────────────────────
+export const MICROSOFT_GRAPH_API_BASE = 'https://graph.microsoft.com/v1.0';
+export const MICROSOFT_AUTH_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
+export const MICROSOFT_TOKEN_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
+export const MICROSOFT_ONEDRIVE_SYNC_LIMIT = 50;
+export const MICROSOFT_SHAREPOINT_SYNC_LIMIT = 50;
+
 // ─── Crypto utility constants ─────────────────────────────────────────────────
 export const AES_ALGORITHM = 'aes-256-gcm';
 export const AES_IV_LENGTH = 12;

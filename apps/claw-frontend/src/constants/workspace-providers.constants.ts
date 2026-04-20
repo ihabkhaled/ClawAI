@@ -16,7 +16,11 @@ export const IMPLEMENTED_WORKSPACE_ADAPTERS: ReadonlySet<string> = new Set([
   'BITBUCKET',
   'SLACK',
   'JIRA',
+  'CONFLUENCE',
   'GOOGLE_DRIVE',
+  'GMAIL',
+  'MICROSOFT_SHAREPOINT',
+  'MICROSOFT_ONEDRIVE',
 ]);
 
 export const EMPTY_APP_CONFIG_FORM: ProviderAppConfigFormValues = {

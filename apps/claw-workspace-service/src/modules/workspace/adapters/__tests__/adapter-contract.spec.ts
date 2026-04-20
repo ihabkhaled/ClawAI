@@ -1,8 +1,12 @@
 import { BitbucketAdapter } from '../bitbucket.adapter';
+import { ConfluenceAdapter } from '../confluence.adapter';
 import { GitHubAdapter } from '../github.adapter';
 import { GitLabAdapter } from '../gitlab.adapter';
+import { GmailAdapter } from '../gmail.adapter';
 import { GoogleDriveAdapter } from '../google-drive.adapter';
 import { JiraAdapter } from '../jira.adapter';
+import { OneDriveAdapter } from '../onedrive.adapter';
+import { SharePointAdapter } from '../sharepoint.adapter';
 import { SlackAdapter } from '../slack.adapter';
 import { runAdapterContract } from './adapter-contract';
 
@@ -26,6 +30,22 @@ describe('JiraAdapter', () => {
   runAdapterContract(() => new JiraAdapter());
 });
 
+describe('ConfluenceAdapter', () => {
+  runAdapterContract(() => new ConfluenceAdapter());
+});
+
 describe('GoogleDriveAdapter', () => {
   runAdapterContract(() => new GoogleDriveAdapter());
+});
+
+describe('GmailAdapter', () => {
+  runAdapterContract(() => new GmailAdapter());
+});
+
+describe('SharePointAdapter', () => {
+  runAdapterContract(() => new SharePointAdapter());
+});
+
+describe('OneDriveAdapter', () => {
+  runAdapterContract(() => new OneDriveAdapter());
 });

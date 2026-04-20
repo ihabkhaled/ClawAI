@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
 import { BitbucketAdapter } from './adapters/bitbucket.adapter';
+import { ConfluenceAdapter } from './adapters/confluence.adapter';
 import { GitHubAdapter } from './adapters/github.adapter';
 import { GitLabAdapter } from './adapters/gitlab.adapter';
+import { GmailAdapter } from './adapters/gmail.adapter';
 import { GoogleDriveAdapter } from './adapters/google-drive.adapter';
 import { JiraAdapter } from './adapters/jira.adapter';
+import { OneDriveAdapter } from './adapters/onedrive.adapter';
+import { SharePointAdapter } from './adapters/sharepoint.adapter';
 import { SlackAdapter } from './adapters/slack.adapter';
 import { WorkspaceAdapterFactory } from './adapters/workspace-adapter.factory';
 import { WorkspaceConnectorController } from './controllers/workspace-connector.controller';
@@ -57,7 +61,11 @@ import { WorkspaceSearchService } from './services/workspace-search.service';
     BitbucketAdapter,
     SlackAdapter,
     JiraAdapter,
+    ConfluenceAdapter,
     GoogleDriveAdapter,
+    GmailAdapter,
+    SharePointAdapter,
+    OneDriveAdapter,
   ],
   exports: [
     WorkspaceConnectorService,
