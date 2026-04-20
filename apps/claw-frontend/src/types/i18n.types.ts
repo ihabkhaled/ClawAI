@@ -86,6 +86,8 @@ export type TranslationDictionary = {
     agentTerminal: string;
     agentRepos: string;
     discovery: string;
+    workspaceProviders: string;
+    workspaceAppConfigs: string;
   };
   chat: {
     newThread: string;
@@ -959,6 +961,56 @@ export type TranslationDictionary = {
     noActions: string;
     noActionsDesc: string;
     loadFailed: string;
+  };
+  workspaceProviders: {
+    catalog: {
+      title: string;
+      description: string;
+      loadFailed: string;
+      emptyTitle: string;
+      emptyDescription: string;
+      available: string;
+      comingSoon: string;
+      objectTypes: string;
+      docs: string;
+    };
+    appConfigs: {
+      title: string;
+      description: string;
+      createButton: string;
+      createTitle: string;
+      createDescription: string;
+      create: string;
+      creating: string;
+      provider: string;
+      providerPlaceholder: string;
+      name: string;
+      namePlaceholder: string;
+      descriptionLabel: string;
+      descriptionPlaceholder: string;
+      authMode: string;
+      test: string;
+      testResult: string;
+      secretStored: string;
+      emptyTitle: string;
+      emptyDescription: string;
+      loadFailed: string;
+      fields: {
+        secret: string;
+      };
+      columns: {
+        name: string;
+        provider: string;
+        authMode: string;
+        status: string;
+        secret: string;
+        lastValidated: string;
+        actions: string;
+      };
+      errors: {
+        nameRequired: string;
+      };
+    };
   };
   agent: {
     title: string;

@@ -85,6 +85,8 @@ export const es: TranslationDictionary = {
     agentTerminal: 'Terminal',
     agentRepos: 'Repositorios',
     discovery: 'Descubrimiento',
+    workspaceProviders: 'Proveedores',
+    workspaceAppConfigs: 'Configuraciones de aplicaciones',
   },
   chat: {
     newThread: 'Nueva conversación',
@@ -977,6 +979,58 @@ export const es: TranslationDictionary = {
     noActionsDesc:
       'Aquí aparecerán las acciones de escritura automatizadas creadas por la IA para su revisión.',
     loadFailed: 'Error al cargar las acciones.',
+  },
+  workspaceProviders: {
+    catalog: {
+      title: 'Catálogo de proveedores del espacio de trabajo',
+      description: 'Explore las integraciones del espacio de trabajo compatibles.',
+      loadFailed: 'Error al cargar el catálogo de proveedores.',
+      emptyTitle: 'No hay proveedores disponibles',
+      emptyDescription: 'Aún no se ha registrado ningún proveedor del espacio de trabajo.',
+      available: 'Disponible',
+      comingSoon: 'Próximamente',
+      objectTypes: 'tipos de objetos',
+      docs: 'Documentación',
+    },
+    appConfigs: {
+      title: 'Configuraciones de aplicaciones del proveedor',
+      description:
+        'Registre aplicaciones OAuth y credenciales para proveedores del espacio de trabajo.',
+      createButton: 'Nueva configuración',
+      createTitle: 'Crear configuración de aplicación del proveedor',
+      createDescription: 'Registre credenciales OAuth o un token de acceso personal.',
+      create: 'Crear',
+      creating: 'Creando...',
+      provider: 'Proveedor',
+      providerPlaceholder: 'Seleccione un proveedor...',
+      name: 'Nombre',
+      namePlaceholder: 'p. ej. App de producción de GitHub',
+      authMode: 'Modo de autenticación',
+      descriptionLabel: 'Descripción',
+      descriptionPlaceholder: 'Notas opcionales sobre esta configuración',
+      test: 'Probar',
+      testResult: 'Resultado de la prueba: {status} ({latency} ms)',
+      secretStored: 'Secreto almacenado',
+      emptyTitle: 'Aún no hay configuraciones de proveedor',
+      emptyDescription:
+        'Añada sus primeras credenciales de proveedor para habilitar los conectores del espacio de trabajo.',
+      loadFailed: 'Error al cargar las configuraciones de aplicaciones.',
+      fields: {
+        secret: '(secreto)',
+      },
+      columns: {
+        name: 'Nombre',
+        provider: 'Proveedor',
+        authMode: 'Autenticación',
+        status: 'Estado',
+        secret: 'Secreto',
+        lastValidated: 'Última validación',
+        actions: 'Acciones',
+      },
+      errors: {
+        nameRequired: 'Se requiere un nombre.',
+      },
+    },
   },
   agent: {
     title: 'Agente de escritorio',

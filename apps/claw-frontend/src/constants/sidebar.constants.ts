@@ -27,6 +27,8 @@ import {
   GitBranch,
   Bot,
   Radar,
+  Package,
+  KeyRound,
 } from 'lucide-react';
 
 import { ROUTES } from './routes.constants';
@@ -53,6 +55,8 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
   { labelKey: 'nav.rolePackLab', href: ROUTES.CHAT_ROLE_PACK, icon: Users },
   { labelKey: 'nav.connectors', href: ROUTES.CONNECTORS, icon: Plug },
   { labelKey: 'nav.workspace', href: ROUTES.WORKSPACE, icon: Workflow },
+  { labelKey: 'nav.workspaceProviders', href: ROUTES.WORKSPACE_PROVIDERS, icon: Package },
+  { labelKey: 'nav.workspaceAppConfigs', href: ROUTES.WORKSPACE_APP_CONFIGS, icon: KeyRound },
   { labelKey: 'nav.workspaceActions', href: ROUTES.WORKSPACE_ACTIONS, icon: CheckSquare },
   { labelKey: 'nav.agent', href: ROUTES.AGENT, icon: Bot },
   { labelKey: 'nav.agentTerminal', href: ROUTES.AGENT_TERMINAL, icon: Terminal },

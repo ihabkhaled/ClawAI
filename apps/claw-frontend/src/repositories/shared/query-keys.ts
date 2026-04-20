@@ -111,6 +111,17 @@ export const queryKeys = {
   pullJobs: {
     all: ['pullJobs'] as const,
   },
+  workspaceProviders: {
+    all: ['workspaceProviders'] as const,
+    catalog: () => ['workspaceProviders', 'catalog'] as const,
+    detail: (provider: string) => ['workspaceProviders', 'detail', provider] as const,
+  },
+  workspaceProviderAppConfigs: {
+    all: ['workspaceProviderAppConfigs'] as const,
+    list: (provider?: string) =>
+      ['workspaceProviderAppConfigs', 'list', provider ?? 'all'] as const,
+    detail: (id: string) => ['workspaceProviderAppConfigs', 'detail', id] as const,
+  },
   discovery: {
     all: ['discovery'] as const,
     sources: {

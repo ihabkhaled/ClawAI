@@ -1,0 +1,16 @@
+export enum WorkspaceProviderFieldType {
+  TEXT = 'text',
+  TEXTAREA = 'textarea',
+  SECRET = 'secret',
+  URL = 'url',
+  EMAIL = 'email',
+  NUMBER = 'number',
+  BOOLEAN = 'boolean',
+  ENUM = 'enum',
+  MULTI_SELECT = 'multi_select',
+  JSON = 'json',
+  SCOPE_PICKER = 'scope_picker',
+  REGION_PICKER = 'region_picker',
+  TENANT_SELECTOR = 'tenant_selector',
+  HIDDEN = 'hidden',
+}

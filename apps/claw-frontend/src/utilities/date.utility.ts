@@ -7,3 +7,10 @@ export function formatDate(dateString: string): string {
     minute: '2-digit',
   });
 }
+
+export function formatOptionalIsoDate(iso: string | null): string {
+  if (iso === null) {
+    return '—';
+  }
+  return new Date(iso).toLocaleString();
+}
