@@ -47,6 +47,11 @@ export { WorkspaceActionType } from './workspace-action-type.enum';
 export { AgentSessionStatus } from './agent-session-status.enum';
 export { TerminalCommandStatus } from './terminal-command-status.enum';
 export { FileEventType } from './file-event-type.enum';
+export { DeviceScope } from './device-scope.enum';
+export { DeviceStatus } from './device-status.enum';
+export { MutationStatus } from './mutation-status.enum';
+export { PairingEmptyStateKind } from './pairing-empty-state-kind.enum';
+export { RiskLabel } from './risk-label.enum';
 export { OAuthCallbackPhase } from './oauth-callback-phase.enum';
 export {
   CandidateStatus,

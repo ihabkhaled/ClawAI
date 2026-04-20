@@ -2,6 +2,7 @@
 
 import { Bot, Monitor, Terminal } from 'lucide-react';
 
+import { RiskBadge } from '@/components/agent/risk-badge';
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
@@ -98,8 +99,16 @@ export default function AgentPage(): React.ReactElement {
           {commands.map((cmd) => (
             <Card key={cmd.id} className="border-warning/30">
               <CardContent className="flex items-center justify-between gap-4 py-3">
-                <code className="flex-1 truncate text-xs">{cmd.command}</code>
-                <div className="flex shrink-0 gap-2">
+                <div className="flex flex-1 flex-col gap-1 overflow-hidden">
+                  <code className="truncate text-xs">{cmd.command}</code>
+                  {cmd.riskReasons !== null && cmd.riskReasons.length > 0 ? (
+                    <span className="truncate text-[10px] text-muted-foreground">
+                      {cmd.riskReasons}
+                    </span>
+                  ) : null}
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <RiskBadge label={cmd.riskLabel} score={cmd.riskScore} />
                   <button
                     type="button"
                     disabled={isCommandActionPending}

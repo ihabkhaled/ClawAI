@@ -210,6 +210,12 @@ export const queryKeys = {
     list: (filters: Record<string, unknown>) =>
       [...queryKeys.agentEvents.lists(), filters] as const,
   },
+  devices: {
+    all: ['devices'] as const,
+    lists: () => [...queryKeys.devices.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) => [...queryKeys.devices.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.devices.all, 'detail', id] as const,
+  },
   researchProviders: {
     all: ['researchProviders'] as const,
     list: () => ['researchProviders', 'list'] as const,

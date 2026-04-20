@@ -1,4 +1,11 @@
-import type { AgentSessionStatus, FileEventType, TerminalCommandStatus } from '../enums';
+import type {
+  AgentSessionStatus,
+  DeviceScope,
+  DeviceStatus,
+  FileEventType,
+  RiskLabel,
+  TerminalCommandStatus,
+} from '../enums';
 
 export type AgentSession = {
   id: string;
@@ -31,6 +38,12 @@ export type TerminalCommand = {
   command: string;
   workingDir: string | null;
   status: TerminalCommandStatus;
+  riskScore: number;
+  riskLabel: RiskLabel;
+  matchedPolicyId: string | null;
+  riskReasons: string | null;
+  autoApproved: boolean;
+  blockedByPolicy: boolean;
   stdout: string | null;
   stderr: string | null;
   exitCode: number | null;
@@ -129,6 +142,67 @@ export type ListReposQuery = {
 
 export type ListEventsQuery = {
   sessionId?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+// ---- Phase A: Device / Auth ----
+
+export type Device = {
+  id: string;
+  userId: string;
+  orgId: string | null;
+  name: string;
+  hostname: string;
+  os: string;
+  platform: string;
+  agentVersion: string;
+  scopes: DeviceScope[];
+  status: DeviceStatus;
+  lastSeenAt: string | null;
+  lastIp: string | null;
+  revokedAt: string | null;
+  revokeReason: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DeviceWithCounts = Device & {
+  _count: {
+    sessions: number;
+    refreshTokens: number;
+  };
+};
+
+export type PaginatedDevices = {
+  data: Device[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type ApprovePairingRequest = {
+  pairingCode: string;
+  scopes: DeviceScope[];
+  deviceName?: string;
+};
+
+export type DenyPairingRequest = {
+  pairingCode: string;
+};
+
+export type UpdateDeviceRequest = {
+  name?: string;
+  scopes?: DeviceScope[];
+};
+
+export type RevokeDeviceRequest = {
+  reason?: string;
+};
+
+export type ListDevicesQuery = {
+  status?: DeviceStatus;
   page?: number;
   pageSize?: number;
 };
