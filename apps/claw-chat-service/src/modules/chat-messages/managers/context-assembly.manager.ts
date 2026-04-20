@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
-import { httpRequest } from '../../../common/utilities';
+import { httpRequest, runResearch } from '../../../common/utilities';
 import {
   APPROX_CHARS_PER_TOKEN,
   MEMORY_FETCH_LIMIT,
@@ -18,9 +18,12 @@ import {
   type ContextPackResponse,
   type FileContentResponse,
   type MemoryRecordResponse,
+  type ResearchEvidenceCitation,
   type WorkspaceCitation,
   type WorkspaceSearchApiResponse,
 } from '../types/context.types';
+import { type ResearchOptions } from '../types/research-options.types';
+import { type ResearchRunResponse } from '../types/research.types';
 import {
   MAX_FILE_CONTENT_LENGTH,
   TEXT_FILE_EXTENSIONS,
@@ -37,9 +40,10 @@ export class ContextAssemblyManager {
     threadSettings?: ThreadSettings,
     contextPackIds?: string[],
     fileIds?: string[],
+    research?: ResearchOptions,
   ): Promise<AssembledContext> {
     this.logger.log(
-      `assemble: starting for user ${userId} with ${String(threadMessages.length)} messages, ${String(contextPackIds?.length ?? 0)} packs, ${String(fileIds?.length ?? 0)} files`,
+      `assemble: starting for user ${userId} with ${String(threadMessages.length)} messages, ${String(contextPackIds?.length ?? 0)} packs, ${String(fileIds?.length ?? 0)} files, research=${research?.mode ?? 'OFF'}`,
     );
     this.logger.debug(`assemble: slicing to last ${String(THREAD_CONTEXT_LIMIT)} messages`);
     const recentMessages = threadMessages.slice(-THREAD_CONTEXT_LIMIT);
@@ -51,23 +55,33 @@ export class ContextAssemblyManager {
       `assemble: context shortcut=${String(skipExpensiveContext)} for last user content length=${String(lastUserContent.length)}`,
     );
     this.logger.debug(
-      'assemble: fetching memories, context packs, file contents, and workspace context in parallel',
+      'assemble: fetching memories, context packs, file contents, workspace context, and research evidence in parallel',
     );
-    const [memories, contextPackItems, fileContents, workspaceCitations] = await Promise.all([
-      skipExpensiveContext ? Promise.resolve([]) : this.fetchMemories(userId),
-      skipExpensiveContext ? Promise.resolve([]) : this.fetchContextPackItems(contextPackIds ?? []),
-      this.fetchFileContents(fileIds ?? []),
-      skipExpensiveContext
-        ? Promise.resolve([])
-        : this.fetchWorkspaceContext(userId, lastUserContent),
-    ]);
+    const lastUserMessage = recentMessages.at(-1);
+    const [memories, contextPackItems, fileContents, workspaceCitations, researchRun] =
+      await Promise.all([
+        skipExpensiveContext ? Promise.resolve([]) : this.fetchMemories(userId),
+        skipExpensiveContext
+          ? Promise.resolve([])
+          : this.fetchContextPackItems(contextPackIds ?? []),
+        this.fetchFileContents(fileIds ?? []),
+        skipExpensiveContext
+          ? Promise.resolve([])
+          : this.fetchWorkspaceContext(userId, lastUserContent),
+        this.fetchResearchEvidence(userId, lastUserContent, research, lastUserMessage),
+      ]);
 
+    const researchEvidence = this.extractEvidenceCitations(researchRun);
+    const researchWarnings =
+      researchRun?.bundle && 'warnings' in researchRun.bundle
+        ? (researchRun.bundle.warnings ?? [])
+        : [];
     const tokenBudget = threadSettings?.maxTokens ?? 4096;
     this.logger.debug(
       `assemble: tokenBudget=${String(tokenBudget)} systemPrompt=${threadSettings?.systemPrompt ? 'present' : 'none'}`,
     );
     this.logger.log(
-      `assemble: completed - ${String(memories.length)} memories, ${String(contextPackItems.length)} pack items, ${String(fileContents.length)} files, ${String(workspaceCitations.length)} workspace citations, ${String(recentMessages.length)} messages`,
+      `assemble: completed - ${String(memories.length)} memories, ${String(contextPackItems.length)} pack items, ${String(fileContents.length)} files, ${String(workspaceCitations.length)} workspace citations, ${String(researchEvidence.length)} research items, ${String(recentMessages.length)} messages`,
     );
 
     return {
@@ -78,8 +92,98 @@ export class ContextAssemblyManager {
       contextPackItems,
       fileContents,
       workspaceCitations,
+      researchEvidence,
+      researchRunId: researchRun?.id ?? null,
+      researchWarnings,
       tokenBudget,
     };
+  }
+
+  private async fetchResearchEvidence(
+    userId: string,
+    intent: string,
+    research: ResearchOptions | undefined,
+    lastUserMessage: ChatMessage | undefined,
+  ): Promise<ResearchRunResponse | null> {
+    // Primary path: the research bundle was attached to the user message
+    // when it was created (with the caller's bearer token). Re-use it.
+    const fromMetadata = this.extractResearchFromMetadata(lastUserMessage);
+    if (fromMetadata !== null) {
+      return fromMetadata;
+    }
+    // Fallback: caller passed an explicit ResearchOptions and still holds
+    // a bearer token. Useful for internal orchestrators.
+    if (research === undefined || research.mode === 'OFF' || intent.length === 0) {
+      return null;
+    }
+    const config = AppConfig.get();
+    const run = await runResearch(config.RESEARCH_SERVICE_URL, {
+      userToken: research.userToken,
+      userId,
+      intent,
+      workflow: research.mode,
+      searchProviderId: research.providerId,
+      requestedModel: research.requestedModel,
+      requestedProvider: research.requestedProvider,
+    });
+    if (run === null) {
+      this.logger.warn(
+        `research: request failed for user=${userId} intent="${intent.slice(0, 80)}"`,
+      );
+      return null;
+    }
+    this.logger.log(`research: run ${run.id} completed status=${run.status}`);
+    return run;
+  }
+
+  private extractResearchFromMetadata(
+    message: ChatMessage | undefined,
+  ): ResearchRunResponse | null {
+    if (
+      message === undefined ||
+      message.metadata === null ||
+      typeof message.metadata !== 'object'
+    ) {
+      return null;
+    }
+    const metadata = message.metadata as {
+      research?: { runId?: string; bundle?: unknown };
+    };
+    const research = metadata.research;
+    if (research?.runId === undefined || research.bundle === undefined) {
+      return null;
+    }
+    return {
+      id: research.runId,
+      userId: '',
+      requestedModel: null,
+      requestedProvider: null,
+      workflow: '',
+      intent: message.content ?? '',
+      status: 'COMPLETED',
+      bundle: research.bundle as ResearchRunResponse['bundle'],
+      trace: [],
+      errorMessage: null,
+      startedAt: '',
+      completedAt: null,
+    };
+  }
+
+  private extractEvidenceCitations(run: ResearchRunResponse | null): ResearchEvidenceCitation[] {
+    if (run === null || !('items' in (run.bundle ?? {}))) {
+      return [];
+    }
+    const items = (run.bundle as { items?: unknown[] }).items ?? [];
+    return (items as ResearchEvidenceCitation[]).map((item) => ({
+      id: item.id,
+      title: item.title,
+      url: item.url,
+      snippet: item.snippet,
+      source: item.source,
+      providerKind: item.providerKind,
+      publishedAt: item.publishedAt,
+      confidence: item.confidence,
+    }));
   }
 
   buildPromptString(context: AssembledContext): string {
@@ -138,6 +242,13 @@ export class ContextAssemblyManager {
         })
         .join('\n\n');
       parts.push(`WORKSPACE CONTEXT (relevant documents and issues):\n${citationBlock}`);
+    }
+
+    if (context.researchEvidence.length > 0) {
+      this.logger.debug(
+        `buildPromptString: adding ${String(context.researchEvidence.length)} research evidence items`,
+      );
+      parts.push(this.formatResearchBlock(context));
     }
 
     this.logger.debug(
@@ -199,6 +310,13 @@ export class ContextAssemblyManager {
         })
         .join('\n\n');
       systemParts.push(`Workspace context (relevant documents and issues):\n${citationBlock}`);
+    }
+
+    if (context.researchEvidence.length > 0) {
+      this.logger.debug(
+        `buildChatMessages: adding ${String(context.researchEvidence.length)} research evidence items to system`,
+      );
+      systemParts.push(this.formatResearchBlock(context));
     }
 
     // Add text-based files to system prompt
@@ -416,6 +534,25 @@ export class ContextAssemblyManager {
       this.logger.warn(`fetchWorkspaceContext: failed (non-blocking): ${msg}`);
       return [];
     }
+  }
+
+  private formatResearchBlock(context: AssembledContext): string {
+    const lines: string[] = [
+      'LIVE RESEARCH EVIDENCE (ground your answer strictly in these sources — cite them as [n]):',
+    ];
+    for (const [index, item] of context.researchEvidence.entries()) {
+      lines.push(`[${String(index + 1)}] ${item.title ?? '(no title)'} — ${item.url}`);
+      if (item.snippet.length > 0) {
+        lines.push(item.snippet);
+      }
+    }
+    if (context.researchWarnings.length > 0) {
+      lines.push('WARNINGS:');
+      for (const warning of context.researchWarnings) {
+        lines.push(`- ${warning}`);
+      }
+    }
+    return lines.join('\n');
   }
 
   private truncateToTokenBudget(text: string, tokenBudget: number): string {

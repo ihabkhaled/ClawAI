@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { researchFields } from './research-fields.dto';
 
 import { RepairType } from '../../../common/enums/repair-type.enum';
 
@@ -10,6 +11,7 @@ export const repairMessageSchema = z
     repairTypes: z.array(z.nativeEnum(RepairType)).min(1).max(4),
     targetProvider: z.string().max(50).optional(),
     targetModel: z.string().max(255).optional(),
+    ...researchFields,
   })
   .refine((data) => data.messageId !== undefined || data.content !== undefined, {
     message: 'Either messageId or content must be provided',

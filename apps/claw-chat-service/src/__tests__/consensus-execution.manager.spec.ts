@@ -52,6 +52,9 @@ describe('ConsensusExecutionManager', () => {
     fileContents: [],
     workspaceCitations: [],
     tokenBudget: 4096,
+    researchEvidence: [],
+    researchRunId: null,
+    researchWarnings: [],
   };
 
   const sampleModels: ParallelModelTarget[] = [

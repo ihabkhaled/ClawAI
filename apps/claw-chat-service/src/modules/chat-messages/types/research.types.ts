@@ -1,0 +1,62 @@
+/**
+ * Shape of a research run returned by claw-research-service. Mirrored from
+ * `apps/claw-research-service/src/modules/research/types/evidence-bundle.types.ts`
+ * — we only type the fields the chat layer actually reads.
+ */
+
+export type ResearchEvidenceItem = {
+  id: string;
+  title: string | null;
+  url: string;
+  snippet: string;
+  source: string;
+  providerKind: string | null;
+  publishedAt: string | null;
+  fetchedAt: string | null;
+  confidence: number;
+};
+
+export type ResearchEvidenceBundle = {
+  intent: string;
+  workflow: string;
+  requestedModel: string | null;
+  requestedProvider: string | null;
+  helperModels: string[];
+  toolsUsed: string[];
+  items: ResearchEvidenceItem[];
+  warnings: string[];
+  generatedAt: string;
+  mode: string;
+};
+
+export type ResearchRunResponse = {
+  id: string;
+  userId: string;
+  requestedModel: string | null;
+  requestedProvider: string | null;
+  workflow: string;
+  intent: string;
+  status: string;
+  bundle: ResearchEvidenceBundle | Record<string, never>;
+  trace: Array<{
+    phase: string;
+    status: string;
+    latencyMs: number | null;
+    message: string | null;
+    timestamp: string;
+  }>;
+  errorMessage: string | null;
+  startedAt: string;
+  completedAt: string | null;
+};
+
+export type ResearchRequest = {
+  userToken: string;
+  userId: string;
+  intent: string;
+  workflow: 'SEARCH_ONLY' | 'SEARCH_THEN_FETCH' | 'SEARCH_FETCH_EXTRACT';
+  searchProviderId?: string;
+  requestedModel?: string;
+  requestedProvider?: string;
+  maxResults?: number;
+};

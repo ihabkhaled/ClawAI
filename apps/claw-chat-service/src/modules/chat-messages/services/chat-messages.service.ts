@@ -1,6 +1,8 @@
 import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import { EventPattern, LogLevel } from '@claw/shared-types';
+import { AppConfig } from '../../../app/config/app.config';
+import { runResearch } from '../../../common/utilities';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatExecutionManager } from '../managers/chat-execution.manager';
@@ -17,6 +19,8 @@ import { PipelineManager } from '../managers/pipeline.manager';
 import { RolePackManager } from '../managers/role-pack.manager';
 import { ChatStreamService } from './chat-stream.service';
 import { type CreateMessageDto } from '../dto/create-message.dto';
+import { type ResearchRunResponse } from '../types/research.types';
+import { type UserMessageMetadata } from '../types/user-message-metadata.types';
 import { type ConsensusMessageDto } from '../dto/consensus-message.dto';
 import { type EscalationChainMessageDto } from '../dto/escalation-chain-message.dto';
 import { type RepairMessageDto } from '../dto/repair-message.dto';
@@ -82,7 +86,11 @@ export class ChatMessagesService implements OnModuleInit {
     await this.subscribeToEvents();
   }
 
-  async createMessage(userId: string, dto: CreateMessageDto): Promise<ChatMessage> {
+  async createMessage(
+    userId: string,
+    dto: CreateMessageDto,
+    userToken: string,
+  ): Promise<ChatMessage> {
     this.logger.log(`createMessage: starting for user ${userId} in thread ${dto.threadId}`);
     const thread = await this.getThreadForMessage(dto.threadId, userId);
     const { effectiveRoutingMode, forcedProvider, forcedModel } = this.resolveRoutingParams(
@@ -91,7 +99,15 @@ export class ChatMessagesService implements OnModuleInit {
     );
 
     this.logger.debug(
-      `createMessage: resolved routing mode=${effectiveRoutingMode}, provider=${forcedProvider ?? 'auto'}, model=${forcedModel ?? 'auto'}`,
+      `createMessage: resolved routing mode=${effectiveRoutingMode}, provider=${forcedProvider ?? 'auto'}, model=${forcedModel ?? 'auto'}, research=${dto.researchMode ?? 'OFF'}`,
+    );
+
+    const researchBundle = await this.runResearchIfRequested(
+      userId,
+      userToken,
+      dto,
+      forcedProvider,
+      forcedModel,
     );
 
     const message = await this.chatMessagesRepository.create({
@@ -99,7 +115,7 @@ export class ChatMessagesService implements OnModuleInit {
       role: 'USER',
       content: dto.content,
       routingMode: effectiveRoutingMode,
-      metadata: this.buildMessageMetadata(dto),
+      metadata: this.buildMessageMetadata(dto, researchBundle),
     });
 
     this.logger.log(`createMessage: created message ${message.id} in thread ${dto.threadId}`);
@@ -107,6 +123,42 @@ export class ChatMessagesService implements OnModuleInit {
     this.publishMessageCreated(message, userId, effectiveRoutingMode, forcedProvider, forcedModel);
 
     return message;
+  }
+
+  private async runResearchIfRequested(
+    userId: string,
+    userToken: string,
+    dto: CreateMessageDto,
+    forcedProvider: string | undefined,
+    forcedModel: string | undefined,
+  ): Promise<ResearchRunResponse | null> {
+    if (dto.researchMode === undefined || dto.researchMode === 'OFF') {
+      return null;
+    }
+    if (userToken.length === 0) {
+      this.logger.warn(
+        `createMessage: researchMode=${dto.researchMode} but no bearer token; skipping research`,
+      );
+      return null;
+    }
+    const config = AppConfig.get();
+    const run = await runResearch(config.RESEARCH_SERVICE_URL, {
+      userToken,
+      userId,
+      intent: dto.content,
+      workflow: dto.researchMode,
+      searchProviderId: dto.researchProviderId,
+      requestedProvider: forcedProvider,
+      requestedModel: forcedModel,
+    });
+    if (run === null) {
+      this.logger.warn(
+        `createMessage: research run failed for user ${userId} — continuing without evidence`,
+      );
+    } else {
+      this.logger.log(`createMessage: research run ${run.id} completed (${dto.researchMode})`);
+    }
+    return run;
   }
 
   async createParallelMessage(userId: string, dto: ParallelMessageDto): Promise<ParallelResponse> {
@@ -660,11 +712,22 @@ export class ChatMessagesService implements OnModuleInit {
     return { effectiveRoutingMode, forcedProvider, forcedModel };
   }
 
-  private buildMessageMetadata(dto: CreateMessageDto): { fileIds: string[] } | undefined {
+  private buildMessageMetadata(
+    dto: CreateMessageDto,
+    researchRun: ResearchRunResponse | null,
+  ): UserMessageMetadata | undefined {
+    const metadata: UserMessageMetadata = {};
     if (dto.fileIds && dto.fileIds.length > 0) {
-      return { fileIds: dto.fileIds };
+      metadata.fileIds = dto.fileIds;
     }
-    return undefined;
+    if (researchRun !== null) {
+      metadata.research = {
+        runId: researchRun.id,
+        mode: researchRun.workflow,
+        bundle: researchRun.bundle,
+      };
+    }
+    return Object.keys(metadata).length === 0 ? undefined : metadata;
   }
 
   private logMessageCreated(userId: string, threadId: string, messageId: string): void {

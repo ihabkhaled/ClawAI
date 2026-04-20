@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { researchFields } from './research-fields.dto';
 
 export const consensusMessageSchema = z.object({
   threadId: z.string().max(255, 'Thread ID must be at most 255 characters').optional(),
@@ -19,6 +20,7 @@ export const consensusMessageSchema = z.object({
     .array(z.string().max(255, 'File ID must be at most 255 characters'))
     .max(10, 'Maximum 10 files per message')
     .optional(),
+  ...researchFields,
 });
 
 export type ConsensusMessageDto = z.infer<typeof consensusMessageSchema>;

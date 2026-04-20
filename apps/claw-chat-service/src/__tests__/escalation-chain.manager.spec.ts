@@ -57,6 +57,9 @@ describe('EscalationChainManager', () => {
     fileContents: [],
     workspaceCitations: [],
     tokenBudget: 4096,
+    researchEvidence: [],
+    researchRunId: null,
+    researchWarnings: [],
   };
 
   const twoStepChain: EscalationChainStep[] = [

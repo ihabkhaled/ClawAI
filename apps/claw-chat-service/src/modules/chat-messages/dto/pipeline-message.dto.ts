@@ -1,9 +1,11 @@
 import { z } from 'zod';
+import { researchFields } from './research-fields.dto';
 
 const pipelineStageSchema = z.object({
   name: z.string().min(1).max(100),
   instruction: z.string().min(1).max(2000),
   model: z.string().min(1).max(255),
+  ...researchFields,
 });
 
 export const pipelineMessageSchema = z.object({
@@ -13,6 +15,7 @@ export const pipelineMessageSchema = z.object({
     .enum(['analyze-reason-format', 'code-debug-review', 'draft-critique-revise', 'custom'])
     .default('analyze-reason-format'),
   customStages: z.array(pipelineStageSchema).max(5).optional(),
+  ...researchFields,
 });
 
 export type PipelineMessageDto = z.infer<typeof pipelineMessageSchema>;

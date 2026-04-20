@@ -131,10 +131,11 @@ describe('ChatMessagesService', () => {
       threadsRepo.findById!.mockResolvedValue(mockThread);
       messagesRepo.create.mockResolvedValue(mockMessage);
 
-      const result = await service.createMessage('user-1', {
-        threadId: 'thread-1',
-        content: 'Hello world',
-      });
+      const result = await service.createMessage(
+        'user-1',
+        { threadId: 'thread-1', content: 'Hello world' },
+        '',
+      );
 
       expect(result).toEqual(mockMessage);
       expect(messagesRepo.create).toHaveBeenCalledWith({
@@ -157,7 +158,7 @@ describe('ChatMessagesService', () => {
       threadsRepo.findById!.mockResolvedValue(null);
 
       await expect(
-        service.createMessage('user-1', { threadId: 'nonexistent', content: 'Hello' }),
+        service.createMessage('user-1', { threadId: 'nonexistent', content: 'Hello' }, ''),
       ).rejects.toThrow(EntityNotFoundException);
     });
 
@@ -165,7 +166,7 @@ describe('ChatMessagesService', () => {
       threadsRepo.findById!.mockResolvedValue(mockThread);
 
       await expect(
-        service.createMessage('other-user', { threadId: 'thread-1', content: 'Hello' }),
+        service.createMessage('other-user', { threadId: 'thread-1', content: 'Hello' }, ''),
       ).rejects.toThrow(BusinessException);
     });
   });

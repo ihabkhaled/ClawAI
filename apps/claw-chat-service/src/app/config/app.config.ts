@@ -14,6 +14,7 @@ const appConfigSchema = z.object({
   IMAGE_SERVICE_URL: z.string().min(1).default('http://image-service:4012'),
   FILE_GENERATION_SERVICE_URL: z.string().min(1).default('http://file-generation-service:4013'),
   WORKSPACE_SERVICE_URL: z.string().min(1).default('http://workspace-service:4014'),
+  RESEARCH_SERVICE_URL: z.string().min(1).default('http://research-service:4016'),
 
   OLLAMA_GENERATE_TIMEOUT_MS: z.coerce.number().default(300_000),
   OLLAMA_KEEP_ALIVE: z.string().min(1).default('20m'),

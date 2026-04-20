@@ -31,7 +31,24 @@ export type AssembledContext = {
   contextPackItems: Array<{ content: string | null; type: string }>;
   fileContents: FileContentResponse[];
   workspaceCitations: WorkspaceCitation[];
+  /** Evidence items produced by a research run (web search, fetch, etc). */
+  researchEvidence: ResearchEvidenceCitation[];
+  /** Id of the ResearchRun whose evidence is in `researchEvidence` (for trace). */
+  researchRunId: string | null;
+  /** Warnings produced by the research run (e.g. fetch failures). */
+  researchWarnings: string[];
   tokenBudget: number;
+};
+
+export type ResearchEvidenceCitation = {
+  id: string;
+  title: string | null;
+  url: string;
+  snippet: string;
+  source: string;
+  providerKind: string | null;
+  publishedAt: string | null;
+  confidence: number;
 };
 
 export type MemoryRecordResponse = {

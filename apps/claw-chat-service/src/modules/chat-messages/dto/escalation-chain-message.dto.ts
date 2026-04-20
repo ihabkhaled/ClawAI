@@ -1,9 +1,11 @@
 import { z } from 'zod';
+import { researchFields } from './research-fields.dto';
 
 const escalationStepSchema = z.object({
   provider: z.string().min(1).max(50),
   model: z.string().min(1).max(255),
   qualityThreshold: z.number().min(0).max(1).optional(),
+  ...researchFields,
 });
 
 export const escalationChainMessageSchema = z

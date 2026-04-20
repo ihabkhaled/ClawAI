@@ -1,5 +1,7 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
+import { type Request } from 'express';
 import { ChatMessagesService } from '../services/chat-messages.service';
+import { extractBearer } from '../../../common/utilities';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { type ConsensusMessageDto, consensusMessageSchema } from '../dto/consensus-message.dto';
 import {
@@ -41,9 +43,10 @@ export class ChatMessagesController {
   @Post()
   async create(
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
     @Body(new ZodValidationPipe(createMessageSchema)) dto: CreateMessageDto,
   ): Promise<ChatMessage> {
-    return this.chatMessagesService.createMessage(user.id, dto);
+    return this.chatMessagesService.createMessage(user.id, dto, extractBearer(req));
   }
 
   @Post('parallel')
