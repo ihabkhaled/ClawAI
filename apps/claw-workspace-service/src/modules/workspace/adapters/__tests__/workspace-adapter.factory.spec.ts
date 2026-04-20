@@ -1,7 +1,9 @@
 import { WorkspaceAdapterFactory } from '../workspace-adapter.factory';
 import { WorkspaceProvider } from '../../../../common/enums/workspace-provider.enum';
 import { BitbucketAdapter } from '../bitbucket.adapter';
+import { ClickUpAdapter } from '../clickup.adapter';
 import { ConfluenceAdapter } from '../confluence.adapter';
+import { FigmaAdapter } from '../figma.adapter';
 import { GitHubAdapter } from '../github.adapter';
 import { GitLabAdapter } from '../gitlab.adapter';
 import { GmailAdapter } from '../gmail.adapter';
@@ -24,6 +26,8 @@ describe('WorkspaceAdapterFactory', () => {
   const gmail = new GmailAdapter();
   const sharepoint = new SharePointAdapter();
   const onedrive = new OneDriveAdapter();
+  const figma = new FigmaAdapter();
+  const clickup = new ClickUpAdapter();
 
   beforeEach(() => {
     factory = new WorkspaceAdapterFactory(
@@ -37,6 +41,8 @@ describe('WorkspaceAdapterFactory', () => {
       gmail,
       sharepoint,
       onedrive,
+      figma,
+      clickup,
     );
   });
 
@@ -51,22 +57,11 @@ describe('WorkspaceAdapterFactory', () => {
     [WorkspaceProvider.GMAIL, gmail],
     [WorkspaceProvider.MICROSOFT_SHAREPOINT, sharepoint],
     [WorkspaceProvider.MICROSOFT_ONEDRIVE, onedrive],
+    [WorkspaceProvider.FIGMA, figma],
+    [WorkspaceProvider.CLICKUP, clickup],
   ])('returns correct adapter for implemented provider %s', (provider, expected) => {
     expect(factory.getAdapter(provider)).toBe(expected);
   });
-
-  it.each([WorkspaceProvider.FIGMA, WorkspaceProvider.CLICKUP])(
-    'throws ADAPTER_NOT_IMPLEMENTED for registered-but-unimplemented provider %s',
-    (provider) => {
-      expect.assertions(2);
-      try {
-        factory.getAdapter(provider);
-      } catch (error) {
-        expect(error).toBeInstanceOf(BusinessException);
-        expect((error as BusinessException).code).toBe('ADAPTER_NOT_IMPLEMENTED');
-      }
-    },
-  );
 
   it('throws UNSUPPORTED_PROVIDER for entirely unknown provider key', () => {
     expect.assertions(2);

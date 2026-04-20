@@ -57,6 +57,18 @@ export const CONFLUENCE_AUTH_URL = 'https://auth.atlassian.com/authorize';
 export const CONFLUENCE_TOKEN_URL = 'https://auth.atlassian.com/oauth/token';
 export const CONFLUENCE_SYNC_PAGE_LIMIT = 50;
 
+// ─── Figma adapter URLs ───────────────────────────────────────────────────────
+export const FIGMA_API_BASE = 'https://api.figma.com/v1';
+export const FIGMA_AUTH_URL = 'https://www.figma.com/oauth';
+export const FIGMA_TOKEN_URL = 'https://api.figma.com/v1/oauth/token';
+export const FIGMA_SYNC_PROJECTS_LIMIT = 30;
+
+// ─── ClickUp adapter URLs ─────────────────────────────────────────────────────
+export const CLICKUP_API_BASE = 'https://api.clickup.com/api/v2';
+export const CLICKUP_AUTH_URL = 'https://app.clickup.com/api';
+export const CLICKUP_TOKEN_URL = 'https://api.clickup.com/api/v2/oauth/token';
+export const CLICKUP_SYNC_TASKS_PER_LIST = 30;
+
 // ─── Microsoft Graph (SharePoint + OneDrive) URLs ─────────────────────────────
 export const MICROSOFT_GRAPH_API_BASE = 'https://graph.microsoft.com/v1.0';
 export const MICROSOFT_AUTH_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';

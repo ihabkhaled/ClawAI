@@ -1,5 +1,7 @@
 import { BitbucketAdapter } from '../bitbucket.adapter';
+import { ClickUpAdapter } from '../clickup.adapter';
 import { ConfluenceAdapter } from '../confluence.adapter';
+import { FigmaAdapter } from '../figma.adapter';
 import { GitHubAdapter } from '../github.adapter';
 import { GitLabAdapter } from '../gitlab.adapter';
 import { GmailAdapter } from '../gmail.adapter';
@@ -48,4 +50,12 @@ describe('SharePointAdapter', () => {
 
 describe('OneDriveAdapter', () => {
   runAdapterContract(() => new OneDriveAdapter());
+});
+
+describe('FigmaAdapter', () => {
+  runAdapterContract(() => new FigmaAdapter());
+});
+
+describe('ClickUpAdapter', () => {
+  runAdapterContract(() => new ClickUpAdapter());
 });

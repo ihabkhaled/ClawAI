@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { BitbucketAdapter } from './adapters/bitbucket.adapter';
+import { ClickUpAdapter } from './adapters/clickup.adapter';
 import { ConfluenceAdapter } from './adapters/confluence.adapter';
+import { FigmaAdapter } from './adapters/figma.adapter';
 import { GitHubAdapter } from './adapters/github.adapter';
 import { GitLabAdapter } from './adapters/gitlab.adapter';
 import { GmailAdapter } from './adapters/gmail.adapter';
@@ -66,6 +68,8 @@ import { WorkspaceSearchService } from './services/workspace-search.service';
     GmailAdapter,
     SharePointAdapter,
     OneDriveAdapter,
+    FigmaAdapter,
+    ClickUpAdapter,
   ],
   exports: [
     WorkspaceConnectorService,

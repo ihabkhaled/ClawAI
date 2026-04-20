@@ -21,6 +21,8 @@ export const IMPLEMENTED_WORKSPACE_ADAPTERS: ReadonlySet<string> = new Set([
   'GMAIL',
   'MICROSOFT_SHAREPOINT',
   'MICROSOFT_ONEDRIVE',
+  'FIGMA',
+  'CLICKUP',
 ]);
 
 export const EMPTY_APP_CONFIG_FORM: ProviderAppConfigFormValues = {
