@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
 
-import { EMPTY_APP_CONFIG_FORM } from '@/constants/workspace-providers.constants';
+import {
+  EMPTY_APP_CONFIG_FORM,
+  WORKSPACE_OAUTH_CALLBACK_PATH,
+} from '@/constants/workspace-providers.constants';
 import { WorkspaceProviderAuthMode } from '@/enums/workspace-provider-auth-mode.enum';
 import { useTranslation } from '@/lib/i18n';
 import type {
@@ -12,6 +15,7 @@ import type {
 import {
   useCreateProviderAppConfig,
   useDeleteProviderAppConfig,
+  useInitOAuth,
   useProviderAppConfigs,
   useTestConnection,
 } from './use-provider-app-configs';
@@ -24,6 +28,7 @@ export function useWorkspaceAppConfigsPage(): UseAppConfigsPageReturn {
   const createMutation = useCreateProviderAppConfig();
   const deleteMutation = useDeleteProviderAppConfig();
   const testMutation = useTestConnection();
+  const initOAuthMutation = useInitOAuth();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [form, setForm] = useState<ProviderAppConfigFormValues>(EMPTY_APP_CONFIG_FORM);
@@ -99,6 +104,16 @@ export function useWorkspaceAppConfigsPage(): UseAppConfigsPageReturn {
     testMutation.mutate({ provider, providerAppConfigId: id });
   };
 
+  const handleConnect = async (id: string, provider: string): Promise<void> => {
+    const redirectUri = `${window.location.origin}${WORKSPACE_OAUTH_CALLBACK_PATH}`;
+    const result = await initOAuthMutation.mutateAsync({
+      provider,
+      providerAppConfigId: id,
+      redirectUri,
+    });
+    window.location.href = result.authorizationUrl;
+  };
+
   return {
     t,
     providers: catalog.providers,
@@ -127,5 +142,7 @@ export function useWorkspaceAppConfigsPage(): UseAppConfigsPageReturn {
     handleSubmit,
     handleDelete,
     handleTest,
+    handleConnect,
+    isConnectPending: initOAuthMutation.isPending,
   };
 }

@@ -89,6 +89,7 @@ export const fr: TranslationDictionary = {
     workspaceAppConfigs: 'Configurations d’application',
     researchProviders: 'Research Providers',
     researchRuns: 'Research Runs',
+    research: 'Recherche',
   },
   chat: {
     newThread: 'Nouvelle discussion',
@@ -1097,6 +1098,7 @@ export const fr: TranslationDictionary = {
       descriptionLabel: 'Description',
       descriptionPlaceholder: 'Notes facultatives sur cette configuration',
       test: 'Tester',
+      connect: 'Connecter',
       testResult: 'Résultat du test : {status} ({latency} ms)',
       secretStored: 'Secret stocké',
       emptyTitle: 'Aucune configuration de fournisseur pour l’instant',
@@ -1118,6 +1120,15 @@ export const fr: TranslationDictionary = {
       errors: {
         nameRequired: 'Un nom est requis.',
       },
+    },
+    oauthCallback: {
+      exchangingTitle: 'Finalisation de la connexion...',
+      exchangingDescription: 'Échange du code d’autorisation avec le fournisseur.',
+      successTitle: 'Connecté !',
+      successDescription: 'Redirection vers l’espace de travail...',
+      successDescriptionNamed: '{name} connecté. Redirection...',
+      errorTitle: 'Échec de la connexion',
+      errorUnknown: 'Une erreur inconnue est survenue.',
     },
   },
   agent: {

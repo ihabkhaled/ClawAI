@@ -8,8 +8,12 @@ import {
   GITHUB_SYNC_REPO_DEPTH,
   GITHUB_TOKEN_URL,
   HEALTH_CHECK_TIMEOUT_MS,
+  OAUTH_PROBE_INVALID_CODE,
+  OAUTH_PROBE_INVALID_REDIRECT_URI,
   WRITE_EXECUTION_TIMEOUT_MS,
 } from '../../../common/constants/workspace.constants';
+import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
+import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
 import type { GitHubIssue, GitHubPull, GitHubRepo } from '../types/github-api.types';
@@ -228,6 +232,36 @@ export class GitHubAdapter implements WorkspaceAdapter {
 
   async validatePat(personalAccessToken: string): Promise<HealthCheckResult> {
     return this.healthCheck(personalAccessToken);
+  }
+
+  async validateOAuthAppConfig(appCredentials: AdapterAppCredentials): Promise<HealthCheckResult> {
+    if (!appCredentials.clientId || !appCredentials.clientSecret) {
+      throw new Error('GitHub OAuth probe requires clientId and clientSecret');
+    }
+    return probeOAuthAppCredentials({
+      tokenUrl: GITHUB_TOKEN_URL,
+      requestBuilder: () => ({
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: appCredentials.clientId,
+          client_secret: appCredentials.clientSecret,
+          code: OAUTH_PROBE_INVALID_CODE,
+          redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
+        }),
+      }),
+      interpret: (payload) => {
+        const data = payload as { error?: string } | null;
+        const error = data?.error;
+        if (error === 'bad_verification_code' || error === 'redirect_uri_mismatch') {
+          return OAuthProbeOutcome.CREDENTIALS_OK;
+        }
+        if (error === 'incorrect_client_credentials' || error === 'invalid_client') {
+          return OAuthProbeOutcome.CREDENTIALS_BAD;
+        }
+        return OAuthProbeOutcome.UNKNOWN;
+      },
+    });
   }
 
   getCapabilities(): AdapterCapabilities {

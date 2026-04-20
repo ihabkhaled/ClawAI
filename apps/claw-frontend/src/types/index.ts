@@ -490,6 +490,8 @@ export type {
   UseUpdateProviderAppConfigReturn,
   UseDeleteProviderAppConfigReturn,
   UseTestConnectionReturn,
+  UseInitOAuthReturn,
+  UseOAuthCallbackPageReturn,
   UseAppConfigsPageReturn,
 } from './workspace-providers.types';
 export type {

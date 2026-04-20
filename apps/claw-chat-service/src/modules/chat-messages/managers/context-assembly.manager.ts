@@ -24,6 +24,7 @@ import {
 } from '../types/context.types';
 import { type ResearchOptions } from '../types/research-options.types';
 import { type ResearchRunResponse } from '../types/research.types';
+import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
 import {
   MAX_FILE_CONTENT_LENGTH,
   TEXT_FILE_EXTENSIONS,
@@ -121,7 +122,7 @@ export class ContextAssemblyManager {
       userToken: research.userToken,
       userId,
       intent,
-      workflow: research.mode,
+      workflow: research.mode as ResearchWorkflow,
       searchProviderId: research.providerId,
       requestedModel: research.requestedModel,
       requestedProvider: research.requestedProvider,

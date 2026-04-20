@@ -6,7 +6,11 @@ import {
   FIGMA_SYNC_PROJECTS_LIMIT,
   FIGMA_TOKEN_URL,
   HEALTH_CHECK_TIMEOUT_MS,
+  OAUTH_PROBE_INVALID_CODE,
+  OAUTH_PROBE_INVALID_REDIRECT_URI,
 } from '../../../common/constants/workspace.constants';
+import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
+import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
@@ -145,6 +149,41 @@ export class FigmaAdapter implements WorkspaceAdapter {
     }
     const data = (await response.json()) as FigmaTokenResponse;
     return this.normalizeTokenResponse(data);
+  }
+
+  async validateOAuthAppConfig(appCredentials: AdapterAppCredentials): Promise<HealthCheckResult> {
+    if (!appCredentials.clientId || !appCredentials.clientSecret) {
+      throw new Error('Figma OAuth probe requires clientId and clientSecret');
+    }
+    const form = new URLSearchParams({
+      client_id: appCredentials.clientId,
+      client_secret: appCredentials.clientSecret,
+      grant_type: 'authorization_code',
+      code: OAUTH_PROBE_INVALID_CODE,
+      redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
+    });
+    return probeOAuthAppCredentials({
+      tokenUrl: FIGMA_TOKEN_URL,
+      requestBuilder: () => ({
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+        },
+        body: form.toString(),
+      }),
+      interpret: (payload, status) => {
+        const data = payload as { error?: string; status?: number; message?: string } | null;
+        const error = data?.error;
+        if (error === 'invalid_grant' || error === 'invalid_request') {
+          return OAuthProbeOutcome.CREDENTIALS_OK;
+        }
+        if (error === 'invalid_client' || status === 401 || status === 403) {
+          return OAuthProbeOutcome.CREDENTIALS_BAD;
+        }
+        return OAuthProbeOutcome.UNKNOWN;
+      },
+    });
   }
 
   getCapabilities(): AdapterCapabilities {

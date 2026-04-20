@@ -90,6 +90,7 @@ export type TranslationDictionary = {
     workspaceAppConfigs: string;
     researchProviders: string;
     researchRuns: string;
+    research: string;
   };
   chat: {
     newThread: string;
@@ -1074,6 +1075,7 @@ export type TranslationDictionary = {
       descriptionPlaceholder: string;
       authMode: string;
       test: string;
+      connect: string;
       testResult: string;
       secretStored: string;
       emptyTitle: string;
@@ -1094,6 +1096,15 @@ export type TranslationDictionary = {
       errors: {
         nameRequired: string;
       };
+    };
+    oauthCallback: {
+      exchangingTitle: string;
+      exchangingDescription: string;
+      successTitle: string;
+      successDescription: string;
+      successDescriptionNamed: string;
+      errorTitle: string;
+      errorUnknown: string;
     };
   };
   agent: {

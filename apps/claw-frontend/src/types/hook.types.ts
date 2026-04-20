@@ -249,6 +249,11 @@ export type UseSidebarControllerReturn = {
   handleOverlayClick: () => void;
 };
 
+export type UseSidebarNavItemStateReturn = {
+  expanded: boolean;
+  toggle: () => void;
+};
+
 // ─── Replay hook types ────────────────────────────────────────────────────
 
 export type UseReplayLabPageReturn = {

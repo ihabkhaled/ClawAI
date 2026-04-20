@@ -1,0 +1,5 @@
+export enum OAuthProbeOutcome {
+  CREDENTIALS_OK = 'CREDENTIALS_OK',
+  CREDENTIALS_BAD = 'CREDENTIALS_BAD',
+  UNKNOWN = 'UNKNOWN',
+}

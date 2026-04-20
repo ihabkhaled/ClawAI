@@ -5,7 +5,11 @@ import {
   GOOGLE_DRIVE_API_BASE,
   GOOGLE_TOKEN_URL,
   HEALTH_CHECK_TIMEOUT_MS,
+  OAUTH_PROBE_INVALID_CODE,
+  OAUTH_PROBE_INVALID_REDIRECT_URI,
 } from '../../../common/constants/workspace.constants';
+import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
+import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
 import type {
@@ -175,6 +179,41 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
       ? new Date(Date.now() + data['expires_in'] * 1000)
       : undefined;
     return { accessToken: data['access_token'], refreshToken, expiresAt, scopes: [] };
+  }
+
+  async validateOAuthAppConfig(appCredentials: AdapterAppCredentials): Promise<HealthCheckResult> {
+    if (!appCredentials.clientId || !appCredentials.clientSecret) {
+      throw new Error('Google OAuth probe requires clientId and clientSecret');
+    }
+    const form = new URLSearchParams({
+      client_id: appCredentials.clientId,
+      client_secret: appCredentials.clientSecret,
+      grant_type: 'authorization_code',
+      code: OAUTH_PROBE_INVALID_CODE,
+      redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
+    });
+    return probeOAuthAppCredentials({
+      tokenUrl: GOOGLE_TOKEN_URL,
+      requestBuilder: () => ({
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+        },
+        body: form.toString(),
+      }),
+      interpret: (payload, status) => {
+        const data = payload as { error?: string; error_description?: string } | null;
+        const error = data?.error;
+        if (error === 'invalid_grant' || error === 'redirect_uri_mismatch') {
+          return OAuthProbeOutcome.CREDENTIALS_OK;
+        }
+        if (error === 'invalid_client' || status === 401) {
+          return OAuthProbeOutcome.CREDENTIALS_BAD;
+        }
+        return OAuthProbeOutcome.UNKNOWN;
+      },
+    });
   }
 
   getCapabilities(): AdapterCapabilities {

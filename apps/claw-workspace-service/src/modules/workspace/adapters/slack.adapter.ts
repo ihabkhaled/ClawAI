@@ -2,11 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import {
   HEALTH_CHECK_TIMEOUT_MS,
+  OAUTH_PROBE_INVALID_CODE,
+  OAUTH_PROBE_INVALID_REDIRECT_URI,
   SLACK_API_BASE,
   SLACK_AUTH_URL,
   SLACK_TOKEN_URL,
   WRITE_EXECUTION_TIMEOUT_MS,
 } from '../../../common/constants/workspace.constants';
+import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
+import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
 import type {
@@ -123,6 +127,48 @@ export class SlackAdapter implements WorkspaceAdapter {
     _appCredentials: AdapterAppCredentials,
   ): Promise<OAuthTokenSet> {
     throw new Error('Slack does not support token refresh via refresh_token flow');
+  }
+
+  async validateOAuthAppConfig(appCredentials: AdapterAppCredentials): Promise<HealthCheckResult> {
+    if (!appCredentials.clientId || !appCredentials.clientSecret) {
+      throw new Error('Slack OAuth probe requires clientId and clientSecret');
+    }
+    const form = new URLSearchParams({
+      client_id: appCredentials.clientId,
+      client_secret: appCredentials.clientSecret,
+      code: OAUTH_PROBE_INVALID_CODE,
+      redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
+    });
+    return probeOAuthAppCredentials({
+      tokenUrl: SLACK_TOKEN_URL,
+      requestBuilder: () => ({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: form.toString(),
+      }),
+      interpret: (payload) => {
+        const data = payload as { ok?: boolean; error?: string } | null;
+        if (data?.ok === true) {
+          return OAuthProbeOutcome.CREDENTIALS_OK;
+        }
+        const error = data?.error;
+        if (
+          error === 'invalid_code' ||
+          error === 'bad_redirect_uri' ||
+          error === 'code_already_used'
+        ) {
+          return OAuthProbeOutcome.CREDENTIALS_OK;
+        }
+        if (
+          error === 'invalid_client_id' ||
+          error === 'bad_client_secret' ||
+          error === 'invalid_client_secret'
+        ) {
+          return OAuthProbeOutcome.CREDENTIALS_BAD;
+        }
+        return OAuthProbeOutcome.UNKNOWN;
+      },
+    });
   }
 
   getCapabilities(): AdapterCapabilities {

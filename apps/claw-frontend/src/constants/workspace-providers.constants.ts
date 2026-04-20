@@ -33,3 +33,5 @@ export const EMPTY_APP_CONFIG_FORM: ProviderAppConfigFormValues = {
   publicConfig: {},
   secretConfig: {},
 };
+
+export const WORKSPACE_OAUTH_CALLBACK_PATH = '/workspace/oauth/callback';

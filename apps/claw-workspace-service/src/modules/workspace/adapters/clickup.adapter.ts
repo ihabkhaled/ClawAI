@@ -6,7 +6,10 @@ import {
   CLICKUP_SYNC_TASKS_PER_LIST,
   CLICKUP_TOKEN_URL,
   HEALTH_CHECK_TIMEOUT_MS,
+  OAUTH_PROBE_INVALID_CODE,
 } from '../../../common/constants/workspace.constants';
+import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
+import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
@@ -125,6 +128,45 @@ export class ClickUpAdapter implements WorkspaceAdapter {
       throw new Error('ClickUp refresh requires clientId and clientSecret');
     }
     throw new Error('ClickUp tokens do not expire; refresh is not supported');
+  }
+
+  async validateOAuthAppConfig(appCredentials: AdapterAppCredentials): Promise<HealthCheckResult> {
+    if (!appCredentials.clientId || !appCredentials.clientSecret) {
+      throw new Error('ClickUp OAuth probe requires clientId and clientSecret');
+    }
+    const params = new URLSearchParams({
+      client_id: appCredentials.clientId,
+      client_secret: appCredentials.clientSecret,
+      code: OAUTH_PROBE_INVALID_CODE,
+    });
+    return probeOAuthAppCredentials({
+      tokenUrl: `${CLICKUP_TOKEN_URL}?${params.toString()}`,
+      requestBuilder: () => ({
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+      }),
+      interpret: (payload, status) => {
+        const data = payload as { err?: string; ECODE?: string; error?: string } | null;
+        const code = data?.ECODE ?? data?.err ?? data?.error;
+        if (
+          code === 'OAUTH_077' ||
+          code === 'OAUTH_017' ||
+          code === 'OAUTH_019' ||
+          code === 'OAUTH_023'
+        ) {
+          return OAuthProbeOutcome.CREDENTIALS_OK;
+        }
+        if (
+          code === 'OAUTH_024' ||
+          code === 'OAUTH_026' ||
+          code === 'OAUTH_027' ||
+          status === 401
+        ) {
+          return OAuthProbeOutcome.CREDENTIALS_BAD;
+        }
+        return OAuthProbeOutcome.UNKNOWN;
+      },
+    });
   }
 
   getCapabilities(): AdapterCapabilities {

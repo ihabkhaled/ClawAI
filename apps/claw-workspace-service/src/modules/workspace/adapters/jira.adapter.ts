@@ -6,8 +6,12 @@ import {
   JIRA_API_RESOURCES,
   JIRA_AUTH_URL,
   JIRA_TOKEN_URL,
+  OAUTH_PROBE_INVALID_CODE,
+  OAUTH_PROBE_INVALID_REDIRECT_URI,
   WRITE_EXECUTION_TIMEOUT_MS,
 } from '../../../common/constants/workspace.constants';
+import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
+import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
 import type {
@@ -185,6 +189,37 @@ export class JiraAdapter implements WorkspaceAdapter {
       expiresAt,
       scopes: [],
     };
+  }
+
+  async validateOAuthAppConfig(appCredentials: AdapterAppCredentials): Promise<HealthCheckResult> {
+    if (!appCredentials.clientId || !appCredentials.clientSecret) {
+      throw new Error('Jira OAuth probe requires clientId and clientSecret');
+    }
+    return probeOAuthAppCredentials({
+      tokenUrl: JIRA_TOKEN_URL,
+      requestBuilder: () => ({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          grant_type: 'authorization_code',
+          client_id: appCredentials.clientId,
+          client_secret: appCredentials.clientSecret,
+          code: OAUTH_PROBE_INVALID_CODE,
+          redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
+        }),
+      }),
+      interpret: (payload, status) => {
+        const data = payload as { error?: string } | null;
+        const error = data?.error;
+        if (error === 'invalid_grant' || error === 'invalid_request') {
+          return OAuthProbeOutcome.CREDENTIALS_OK;
+        }
+        if (error === 'invalid_client' || error === 'unauthorized_client' || status === 401) {
+          return OAuthProbeOutcome.CREDENTIALS_BAD;
+        }
+        return OAuthProbeOutcome.UNKNOWN;
+      },
+    });
   }
 
   getCapabilities(): AdapterCapabilities {

@@ -7,7 +7,11 @@ import {
   BITBUCKET_SYNC_REPO_LIMIT,
   BITBUCKET_TOKEN_URL,
   HEALTH_CHECK_TIMEOUT_MS,
+  OAUTH_PROBE_INVALID_CODE,
+  OAUTH_PROBE_INVALID_REDIRECT_URI,
 } from '../../../common/constants/workspace.constants';
+import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
+import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
@@ -139,6 +143,43 @@ export class BitbucketAdapter implements WorkspaceAdapter {
     }
     const data = (await response.json()) as BitbucketTokenResponse;
     return this.normalizeTokenResponse(data);
+  }
+
+  async validateOAuthAppConfig(appCredentials: AdapterAppCredentials): Promise<HealthCheckResult> {
+    if (!appCredentials.clientId || !appCredentials.clientSecret) {
+      throw new Error('Bitbucket OAuth probe requires clientId and clientSecret');
+    }
+    const basic = Buffer.from(`${appCredentials.clientId}:${appCredentials.clientSecret}`).toString(
+      'base64',
+    );
+    const body = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code: OAUTH_PROBE_INVALID_CODE,
+      redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
+    });
+    return probeOAuthAppCredentials({
+      tokenUrl: BITBUCKET_TOKEN_URL,
+      requestBuilder: () => ({
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${basic}`,
+          Accept: 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
+      }),
+      interpret: (payload, status) => {
+        const data = payload as { error?: string; error_description?: string } | null;
+        const error = data?.error;
+        if (error === 'invalid_grant' || error === 'invalid_request') {
+          return OAuthProbeOutcome.CREDENTIALS_OK;
+        }
+        if (error === 'invalid_client' || error === 'unauthorized_client' || status === 401) {
+          return OAuthProbeOutcome.CREDENTIALS_BAD;
+        }
+        return OAuthProbeOutcome.UNKNOWN;
+      },
+    });
   }
 
   getCapabilities(): AdapterCapabilities {

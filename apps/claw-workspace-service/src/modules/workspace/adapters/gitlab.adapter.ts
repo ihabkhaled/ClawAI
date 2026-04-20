@@ -9,7 +9,11 @@ import {
   GITLAB_SYNC_PROJECT_DEPTH,
   GITLAB_TOKEN_PATH,
   HEALTH_CHECK_TIMEOUT_MS,
+  OAUTH_PROBE_INVALID_CODE,
+  OAUTH_PROBE_INVALID_REDIRECT_URI,
 } from '../../../common/constants/workspace.constants';
+import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
+import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
@@ -146,6 +150,42 @@ export class GitLabAdapter implements WorkspaceAdapter {
 
   async validatePat(personalAccessToken: string, baseUrl?: string): Promise<HealthCheckResult> {
     return this.healthCheck(personalAccessToken, baseUrl);
+  }
+
+  async validateOAuthAppConfig(appCredentials: AdapterAppCredentials): Promise<HealthCheckResult> {
+    if (!appCredentials.clientId || !appCredentials.clientSecret) {
+      throw new Error('GitLab OAuth probe requires clientId and clientSecret');
+    }
+    const tokenUrl = this.resolveHost(appCredentials.baseUrl) + GITLAB_TOKEN_PATH;
+    const form = new URLSearchParams({
+      client_id: appCredentials.clientId,
+      client_secret: appCredentials.clientSecret,
+      grant_type: 'authorization_code',
+      code: OAUTH_PROBE_INVALID_CODE,
+      redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
+    });
+    return probeOAuthAppCredentials({
+      tokenUrl,
+      requestBuilder: () => ({
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+        },
+        body: form.toString(),
+      }),
+      interpret: (payload, status) => {
+        const data = payload as { error?: string } | null;
+        const error = data?.error;
+        if (error === 'invalid_grant' || error === 'invalid_request') {
+          return OAuthProbeOutcome.CREDENTIALS_OK;
+        }
+        if (error === 'invalid_client' || status === 401) {
+          return OAuthProbeOutcome.CREDENTIALS_BAD;
+        }
+        return OAuthProbeOutcome.UNKNOWN;
+      },
+    });
   }
 
   getCapabilities(): AdapterCapabilities {

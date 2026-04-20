@@ -269,11 +269,18 @@ export class WorkspaceConnectorService {
     if (creds.personalAccessToken !== undefined && adapter.validatePat !== undefined) {
       return adapter.validatePat(creds.personalAccessToken, creds.baseUrl);
     }
+    if (
+      creds.clientId !== undefined &&
+      creds.clientSecret !== undefined &&
+      adapter.validateOAuthAppConfig !== undefined
+    ) {
+      return adapter.validateOAuthAppConfig(creds);
+    }
     return {
       status: WorkspaceConnectorStatus.UNKNOWN,
       latencyMs: 0,
       errorMessage:
-        'OAuth app configs are tested by completing the authorization flow via /workspace/oauth/init + /callback.',
+        'No credentials available to probe. Set either a personalAccessToken (PAT) or clientId+clientSecret (OAuth) for this provider app config.',
     };
   }
 

@@ -3,6 +3,7 @@ import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import { EventPattern, LogLevel } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
 import { runResearch } from '../../../common/utilities';
+import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatExecutionManager } from '../managers/chat-execution.manager';
@@ -132,33 +133,68 @@ export class ChatMessagesService implements OnModuleInit {
     forcedProvider: string | undefined,
     forcedModel: string | undefined,
   ): Promise<ResearchRunResponse | null> {
-    if (dto.researchMode === undefined || dto.researchMode === 'OFF') {
+    return this.runResearchForIntent(userId, userToken, dto.content, {
+      mode: dto.researchMode,
+      providerId: dto.researchProviderId,
+      forcedProvider,
+      forcedModel,
+    });
+  }
+
+  /**
+   * Shared research runner used by every chat flow (main + compare +
+   * consensus + escalation + …). Callers pass the intent + an optional
+   * mode; a falsy mode or empty token short-circuits to null.
+   */
+  async runResearchForIntent(
+    userId: string,
+    userToken: string,
+    intent: string,
+    options: {
+      mode?: string;
+      providerId?: string;
+      forcedProvider?: string;
+      forcedModel?: string;
+    },
+  ): Promise<ResearchRunResponse | null> {
+    if (options.mode === undefined || options.mode === 'OFF') {
       return null;
     }
     if (userToken.length === 0) {
-      this.logger.warn(
-        `createMessage: researchMode=${dto.researchMode} but no bearer token; skipping research`,
-      );
+      this.logger.warn(`research: researchMode=${options.mode} but no bearer token; skipping`);
       return null;
     }
     const config = AppConfig.get();
     const run = await runResearch(config.RESEARCH_SERVICE_URL, {
       userToken,
       userId,
-      intent: dto.content,
-      workflow: dto.researchMode,
-      searchProviderId: dto.researchProviderId,
-      requestedProvider: forcedProvider,
-      requestedModel: forcedModel,
+      intent,
+      workflow: options.mode as ResearchWorkflow,
+      searchProviderId: options.providerId,
+      requestedProvider: options.forcedProvider,
+      requestedModel: options.forcedModel,
     });
     if (run === null) {
-      this.logger.warn(
-        `createMessage: research run failed for user ${userId} — continuing without evidence`,
-      );
+      this.logger.warn(`research: run failed for user ${userId} — continuing without evidence`);
     } else {
-      this.logger.log(`createMessage: research run ${run.id} completed (${dto.researchMode})`);
+      this.logger.log(`research: run ${run.id} completed (${options.mode})`);
     }
     return run;
+  }
+
+  /** Metadata payload attached to a USER message when research has run. */
+  buildResearchMetadata(
+    run: ResearchRunResponse | null,
+    fileIds: string[] | undefined,
+  ): UserMessageMetadata | undefined {
+    const metadata: UserMessageMetadata = {};
+    if (fileIds !== undefined && fileIds.length > 0) {
+      metadata.fileIds = fileIds;
+    }
+    if (run !== null) {
+      metadata.research = { runId: run.id, mode: run.workflow, bundle: run.bundle };
+    }
+    return Object.keys(metadata).length === 0 ? undefined : metadata;
   }
 
   async createParallelMessage(userId: string, dto: ParallelMessageDto): Promise<ParallelResponse> {

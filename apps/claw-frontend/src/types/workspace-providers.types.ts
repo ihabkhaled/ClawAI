@@ -1,3 +1,4 @@
+import type { OAuthCallbackPhase } from '../enums/oauth-callback-phase.enum';
 import type { WorkspaceProviderAppConfigStatus } from '../enums/workspace-provider-app-config-status.enum';
 import type { WorkspaceProviderAuthMode } from '../enums/workspace-provider-auth-mode.enum';
 import type { WorkspaceProviderDefinitionStatus } from '../enums/workspace-provider-definition-status.enum';
@@ -122,8 +123,10 @@ export type AppConfigRowProps = {
   config: WorkspaceProviderAppConfig;
   onTest: (id: string, provider: string) => void;
   onDelete: (id: string) => void;
+  onConnect: (id: string, provider: string) => Promise<void>;
   isTestPending: boolean;
   isDeletePending: boolean;
+  isConnectPending: boolean;
   t: TranslateFunction;
 };
 
@@ -186,6 +189,23 @@ export type UseTestConnectionReturn = {
   error: Error | null;
 };
 
+export type UseInitOAuthReturn = {
+  mutateAsync: (input: {
+    provider: string;
+    providerAppConfigId: string;
+    redirectUri: string;
+    scopes?: string[];
+  }) => Promise<{ authorizationUrl: string; state: string }>;
+  isPending: boolean;
+  error: Error | null;
+};
+
+export type UseOAuthCallbackPageReturn = {
+  phase: OAuthCallbackPhase;
+  errorMessage: string | undefined;
+  connectorName: string | undefined;
+};
+
 export type UseAppConfigsPageReturn = {
   t: TranslateFunction;
   providers: WorkspaceProviderDefinition[];
@@ -213,4 +233,6 @@ export type UseAppConfigsPageReturn = {
   handleSubmit: () => Promise<void>;
   handleDelete: (id: string) => void;
   handleTest: (id: string, provider: string) => void;
+  handleConnect: (id: string, provider: string) => Promise<void>;
+  isConnectPending: boolean;
 };

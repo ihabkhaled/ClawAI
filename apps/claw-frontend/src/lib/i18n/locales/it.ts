@@ -89,6 +89,7 @@ export const it: TranslationDictionary = {
     workspaceAppConfigs: 'Configurazioni app',
     researchProviders: 'Research Providers',
     researchRuns: 'Research Runs',
+    research: 'Ricerca',
   },
   chat: {
     newThread: 'Nuova chat',
@@ -1092,6 +1093,7 @@ export const it: TranslationDictionary = {
       descriptionLabel: 'Descrizione',
       descriptionPlaceholder: 'Note facoltative su questa configurazione',
       test: 'Testa',
+      connect: 'Connetti',
       testResult: 'Risultato del test: {status} ({latency} ms)',
       secretStored: 'Segreto salvato',
       emptyTitle: 'Nessuna configurazione provider',
@@ -1113,6 +1115,15 @@ export const it: TranslationDictionary = {
       errors: {
         nameRequired: 'Il nome è obbligatorio.',
       },
+    },
+    oauthCallback: {
+      exchangingTitle: 'Completamento della connessione...',
+      exchangingDescription: 'Scambio del codice di autorizzazione con il provider.',
+      successTitle: 'Connesso!',
+      successDescription: 'Reindirizzamento allo spazio di lavoro...',
+      successDescriptionNamed: '{name} connesso. Reindirizzamento...',
+      errorTitle: 'Connessione fallita',
+      errorUnknown: 'Si è verificato un errore sconosciuto.',
     },
   },
   agent: {

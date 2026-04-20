@@ -89,6 +89,7 @@ export const ru: TranslationDictionary = {
     workspaceAppConfigs: 'Конфигурации приложений',
     researchProviders: 'Research Providers',
     researchRuns: 'Research Runs',
+    research: 'Исследование',
   },
   chat: {
     newThread: 'Новый чат',
@@ -1089,6 +1090,7 @@ export const ru: TranslationDictionary = {
       descriptionLabel: 'Описание',
       descriptionPlaceholder: 'Необязательные заметки об этой конфигурации',
       test: 'Тест',
+      connect: 'Подключить',
       testResult: 'Результат теста: {status} ({latency} мс)',
       secretStored: 'Секрет сохранён',
       emptyTitle: 'Пока нет конфигураций провайдеров',
@@ -1110,6 +1112,15 @@ export const ru: TranslationDictionary = {
       errors: {
         nameRequired: 'Требуется имя.',
       },
+    },
+    oauthCallback: {
+      exchangingTitle: 'Завершение подключения...',
+      exchangingDescription: 'Обмен кода авторизации с провайдером.',
+      successTitle: 'Подключено!',
+      successDescription: 'Перенаправление в рабочее пространство...',
+      successDescriptionNamed: '{name} подключён. Перенаправление...',
+      errorTitle: 'Ошибка подключения',
+      errorUnknown: 'Произошла неизвестная ошибка.',
     },
   },
   agent: {

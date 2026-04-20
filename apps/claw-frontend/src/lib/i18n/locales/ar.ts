@@ -89,6 +89,7 @@ export const ar: TranslationDictionary = {
     workspaceAppConfigs: 'تكوينات التطبيق',
     researchProviders: 'Research Providers',
     researchRuns: 'Research Runs',
+    research: 'البحث',
   },
   chat: {
     newThread: 'محادثة جديدة',
@@ -1078,6 +1079,7 @@ export const ar: TranslationDictionary = {
       descriptionLabel: 'الوصف',
       descriptionPlaceholder: 'ملاحظات اختيارية حول هذا التكوين',
       test: 'اختبار',
+      connect: 'اتصال',
       testResult: 'نتيجة الاختبار: {status} ({latency} مللي ثانية)',
       secretStored: 'تم تخزين السر',
       emptyTitle: 'لا توجد تكوينات موفر بعد',
@@ -1098,6 +1100,15 @@ export const ar: TranslationDictionary = {
       errors: {
         nameRequired: 'الاسم مطلوب.',
       },
+    },
+    oauthCallback: {
+      exchangingTitle: 'إتمام الاتصال...',
+      exchangingDescription: 'يتم تبادل رمز التفويض مع المزود.',
+      successTitle: 'تم الاتصال!',
+      successDescription: 'سيتم إعادة توجيهك إلى مساحة العمل...',
+      successDescriptionNamed: 'تم توصيل {name}. إعادة توجيهك...',
+      errorTitle: 'فشل الاتصال',
+      errorUnknown: 'حدث خطأ غير معروف.',
     },
   },
   agent: {

@@ -7,6 +7,7 @@ import type {
   UpdateProviderAppConfigRequest,
   UseCreateProviderAppConfigReturn,
   UseDeleteProviderAppConfigReturn,
+  UseInitOAuthReturn,
   UseProviderAppConfigsReturn,
   UseTestConnectionReturn,
   UseUpdateProviderAppConfigReturn,
@@ -87,5 +88,21 @@ export function useTestConnection(): UseTestConnectionReturn {
     isPending: mutation.isPending,
     error: mutation.error as Error | null,
     lastResult: mutation.data,
+  };
+}
+
+export function useInitOAuth(): UseInitOAuthReturn {
+  const mutation = useMutation({
+    mutationFn: (input: {
+      provider: string;
+      providerAppConfigId: string;
+      redirectUri: string;
+      scopes?: string[];
+    }) => workspaceProviderRegistryRepository.initOAuth(input),
+  });
+  return {
+    mutateAsync: mutation.mutateAsync,
+    isPending: mutation.isPending,
+    error: mutation.error as Error | null,
   };
 }

@@ -1,10 +1,11 @@
 'use client';
 
-import { ShieldCheck, Trash2 } from 'lucide-react';
+import { Link2, ShieldCheck, Trash2 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { WorkspaceProviderAppConfigStatus } from '@/enums/workspace-provider-app-config-status.enum';
+import { WorkspaceProviderAuthMode } from '@/enums/workspace-provider-auth-mode.enum';
 import type { AppConfigRowProps } from '@/types';
 import { formatOptionalIsoDate } from '@/utilities/date.utility';
 
@@ -12,10 +13,15 @@ export function AppConfigRow({
   config,
   onTest,
   onDelete,
+  onConnect,
   isTestPending,
   isDeletePending,
+  isConnectPending,
   t,
 }: AppConfigRowProps): React.ReactElement {
+  const canConnect =
+    config.authMode === WorkspaceProviderAuthMode.OAUTH2 &&
+    config.status === WorkspaceProviderAppConfigStatus.READY;
   return (
     <tr className="border-t">
       <td className="px-4 py-2 text-sm font-medium">{config.name}</td>
@@ -51,6 +57,19 @@ export function AppConfigRow({
             <ShieldCheck className="h-4 w-4" />
             {t('workspaceProviders.appConfigs.test')}
           </Button>
+          {canConnect ? (
+            <Button
+              variant="default"
+              size="sm"
+              disabled={isConnectPending}
+              onClick={() => {
+                void onConnect(config.id, config.provider);
+              }}
+            >
+              <Link2 className="h-4 w-4" />
+              {t('workspaceProviders.appConfigs.connect')}
+            </Button>
+          ) : null}
           <Button
             variant="ghost"
             size="sm"

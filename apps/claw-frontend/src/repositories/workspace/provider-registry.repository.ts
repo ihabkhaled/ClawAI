@@ -83,4 +83,33 @@ export const workspaceProviderRegistryRepository = {
     );
     return response.data;
   },
+
+  async initOAuth(input: {
+    provider: string;
+    providerAppConfigId: string;
+    redirectUri: string;
+    scopes?: string[];
+  }): Promise<{ authorizationUrl: string; state: string }> {
+    const response = await apiClient.post<{ authorizationUrl: string; state: string }>(
+      '/workspace/oauth/init',
+      { ...input, scopes: input.scopes ?? [] },
+    );
+    return response.data;
+  },
+
+  async completeOAuth(input: {
+    code: string;
+    state: string;
+    redirectUri: string;
+  }): Promise<{ id: string; provider: string; name: string }> {
+    const params = new URLSearchParams({
+      code: input.code,
+      state: input.state,
+      redirectUri: input.redirectUri,
+    });
+    const response = await apiClient.get<{ id: string; provider: string; name: string }>(
+      `/workspace/oauth/callback?${params.toString()}`,
+    );
+    return response.data;
+  },
 };

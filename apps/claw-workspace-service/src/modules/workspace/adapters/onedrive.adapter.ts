@@ -6,7 +6,11 @@ import {
   MICROSOFT_GRAPH_API_BASE,
   MICROSOFT_ONEDRIVE_SYNC_LIMIT,
   MICROSOFT_TOKEN_URL,
+  OAUTH_PROBE_INVALID_CODE,
+  OAUTH_PROBE_INVALID_REDIRECT_URI,
 } from '../../../common/constants/workspace.constants';
+import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
+import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
@@ -128,6 +132,53 @@ export class OneDriveAdapter implements WorkspaceAdapter {
     }
     const data = (await response.json()) as MicrosoftTokenResponse;
     return this.normalizeTokenResponse(data);
+  }
+
+  async validateOAuthAppConfig(appCredentials: AdapterAppCredentials): Promise<HealthCheckResult> {
+    if (!appCredentials.clientId || !appCredentials.clientSecret) {
+      throw new Error('Microsoft OAuth probe requires clientId and clientSecret');
+    }
+    const tokenUrl = appCredentials.tenantId
+      ? MICROSOFT_TOKEN_URL.replace('/common/', `/${appCredentials.tenantId}/`)
+      : MICROSOFT_TOKEN_URL;
+    const form = new URLSearchParams({
+      client_id: appCredentials.clientId,
+      client_secret: appCredentials.clientSecret,
+      grant_type: 'authorization_code',
+      code: OAUTH_PROBE_INVALID_CODE,
+      redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
+    });
+    return probeOAuthAppCredentials({
+      tokenUrl,
+      requestBuilder: () => ({
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+        },
+        body: form.toString(),
+      }),
+      interpret: (payload, status) => {
+        const data = payload as { error?: string; error_description?: string } | null;
+        const error = data?.error;
+        const description = data?.error_description ?? '';
+        if (
+          error === 'invalid_grant' ||
+          /AADSTS70008|AADSTS54005|AADSTS9002313/.test(description)
+        ) {
+          return OAuthProbeOutcome.CREDENTIALS_OK;
+        }
+        if (
+          error === 'invalid_client' ||
+          error === 'unauthorized_client' ||
+          /AADSTS7000215|AADSTS700016|AADSTS90002/.test(description) ||
+          status === 401
+        ) {
+          return OAuthProbeOutcome.CREDENTIALS_BAD;
+        }
+        return OAuthProbeOutcome.UNKNOWN;
+      },
+    });
   }
 
   getCapabilities(): AdapterCapabilities {

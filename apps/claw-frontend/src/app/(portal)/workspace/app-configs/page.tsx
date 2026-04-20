@@ -119,8 +119,10 @@ export default function WorkspaceAppConfigsPage(): React.ReactElement {
                   config={config}
                   onTest={ctrl.handleTest}
                   onDelete={ctrl.handleDelete}
+                  onConnect={ctrl.handleConnect}
                   isTestPending={ctrl.isTestPending}
                   isDeletePending={ctrl.isDeletePending}
+                  isConnectPending={ctrl.isConnectPending}
                   t={ctrl.t}
                 />
               ))}

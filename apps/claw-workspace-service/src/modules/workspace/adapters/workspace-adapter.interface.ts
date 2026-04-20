@@ -51,6 +51,21 @@ export interface WorkspaceAdapter {
    */
   validatePat?(personalAccessToken: string, baseUrl?: string): Promise<HealthCheckResult>;
 
+  /**
+   * Validate OAuth2 app credentials (clientId/clientSecret) WITHOUT a user flow.
+   *
+   * Implementation pattern: POST a deliberately invalid authorization_code to
+   * the provider's token endpoint. Interpret the response:
+   *   - error = invalid_grant / bad_verification_code / invalid_code
+   *     → credentials ACCEPTED by provider (CONNECTED)
+   *   - error = invalid_client / incorrect_client_credentials / unauthorized_client
+   *     → credentials REJECTED (DISCONNECTED)
+   *   - network / 5xx → UNKNOWN
+   *
+   * This is the standard "credentials-only probe" for OAuth2 apps.
+   */
+  validateOAuthAppConfig?(appCredentials: AdapterAppCredentials): Promise<HealthCheckResult>;
+
   getCapabilities(): AdapterCapabilities;
 
   /**

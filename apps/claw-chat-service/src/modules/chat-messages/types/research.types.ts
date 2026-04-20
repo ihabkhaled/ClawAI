@@ -4,6 +4,8 @@
  * — we only type the fields the chat layer actually reads.
  */
 
+import type { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
+
 export type ResearchEvidenceItem = {
   id: string;
   title: string | null;
@@ -54,7 +56,7 @@ export type ResearchRequest = {
   userToken: string;
   userId: string;
   intent: string;
-  workflow: 'SEARCH_ONLY' | 'SEARCH_THEN_FETCH' | 'SEARCH_FETCH_EXTRACT';
+  workflow: ResearchWorkflow;
   searchProviderId?: string;
   requestedModel?: string;
   requestedProvider?: string;
