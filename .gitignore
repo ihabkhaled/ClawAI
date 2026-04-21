@@ -63,3 +63,4 @@ file-storage-data/
 
 .claude/
 plan-prompts/
+tmp/
