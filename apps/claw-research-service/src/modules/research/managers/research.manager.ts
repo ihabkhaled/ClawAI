@@ -47,7 +47,7 @@ export class ResearchManager {
     const items: EvidenceItem[] = [];
 
     try {
-      const searchItems = await this.runSearch(userId, dto, trace, toolsUsed);
+      const searchItems = await this.runSearch(userId, dto, trace, toolsUsed, warnings);
       items.push(...searchItems);
 
       if (this.needsFetch(dto.workflow)) {
@@ -92,6 +92,7 @@ export class ResearchManager {
     dto: ExecuteResearchDto,
     trace: ResearchTraceEntry[],
     toolsUsed: string[],
+    warnings: string[],
   ): Promise<EvidenceItem[]> {
     const start = Date.now();
     const searchResult = await this.searchService.execute(userId, {
@@ -100,13 +101,22 @@ export class ResearchManager {
       maxResults: dto.maxResults,
       filters: dto.filters,
     });
+    warnings.push(...(searchResult.warnings ?? []));
     toolsUsed.push('web_search');
+    const searchStatus =
+      (searchResult.warnings?.length ?? 0) > 0 || searchResult.results.length === 0
+        ? 'warning'
+        : 'ok';
+    const warningSummary =
+      (searchResult.warnings?.length ?? 0) > 0
+        ? ` warnings=${searchResult.warnings?.join(' | ')}`
+        : '';
     trace.push(
       traceEntry(
         'search',
-        'ok',
+        searchStatus,
         Date.now() - start,
-        `${String(searchResult.results.length)} results from ${searchResult.providerName}`,
+        `${String(searchResult.results.length)} results from ${searchResult.providerName}${warningSummary}`,
       ),
     );
     return searchResult.results.map((result) => this.searchResultToEvidence(result));

@@ -56,6 +56,7 @@ export class SearchExecutionService {
         query: dto.query,
         results: filteredResults,
         latencyMs: response.latencyMs,
+        warnings: response.warnings ?? [],
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';

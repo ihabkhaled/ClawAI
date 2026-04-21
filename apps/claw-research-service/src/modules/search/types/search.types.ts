@@ -30,6 +30,12 @@ export type SearchRequest = {
 export type SearchResponse = {
   results: SearchResult[];
   latencyMs: number;
+  warnings?: string[];
+};
+
+export type ResultSetQuality = {
+  bestScore: number;
+  averageTopScore: number;
 };
 
 /** Result of a health probe against a provider. */

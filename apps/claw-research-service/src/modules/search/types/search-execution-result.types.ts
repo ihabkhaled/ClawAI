@@ -8,4 +8,5 @@ export type SearchExecutionResult = {
   query: string;
   results: SearchResult[];
   latencyMs: number;
+  warnings?: string[];
 };

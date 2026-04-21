@@ -52,27 +52,21 @@ describe('OllamaWebSearchAdapter', () => {
     expect(scores[1]).toBeGreaterThan(scores[2] ?? 0);
   });
 
-  it('search falls back to Bing RSS when Ollama Web is unauthorized', async () => {
+  it('search falls back to DuckDuckGo HTML when Ollama Web is unauthorized', async () => {
     (global.fetch as jest.Mock)
       .mockResolvedValueOnce({ ok: false, status: 401 })
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
-        text: async () => `<?xml version="1.0"?>
-          <rss version="2.0">
-            <channel>
-              <item>
-                <title><![CDATA[A]]></title>
-                <link>https://example.com/a</link>
-                <description><![CDATA[Snippet A]]></description>
-              </item>
-              <item>
-                <title>B</title>
-                <link>https://example.com/b</link>
-                <description>Snippet B</description>
-              </item>
-            </channel>
-          </rss>`,
+        text: async () => `
+          <html>
+            <body>
+              <a class="result__a" href="//duckduckgo.com/l/?uddg=${encodeURIComponent('https://example.com/a')}">A</a>
+              <a class="result__snippet">Snippet A</a>
+              <a class="result__a" href="//duckduckgo.com/l/?uddg=${encodeURIComponent('https://example.com/b')}">B</a>
+              <a class="result__snippet">Snippet B</a>
+            </body>
+          </html>`,
       });
 
     const response = await adapter.search({ query: 'q', maxResults: 2 }, context);
@@ -81,5 +75,90 @@ describe('OllamaWebSearchAdapter', () => {
     expect(response.results[0]?.url).toBe('https://example.com/a');
     expect(response.results[1]?.url).toBe('https://example.com/b');
     expect(response.results[0]?.snippet).toBe('Snippet A');
+  });
+
+  it('falls back when Ollama Web results are weakly matched to the query', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          results: [
+            {
+              title: 'Recycle Bin help in Windows',
+              url: 'https://support.microsoft.com/recycle-bin',
+              content: 'Find the recycle bin icon in Windows.',
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => `
+          <html>
+            <body>
+              <a class="result__a" href="//duckduckgo.com/l/?uddg=${encodeURIComponent('https://learn.microsoft.com/windows/release-health/status-windows-11-24h2')}">Known issues in Windows 11, version 24H2</a>
+              <a class="result__snippet">Current known issues for Windows 11, version 24H2.</a>
+            </body>
+          </html>`,
+      });
+
+    const response = await adapter.search(
+      { query: 'Windows 11 24H2 known issues', maxResults: 5 },
+      context,
+    );
+
+    expect(response.results).toHaveLength(1);
+    expect(response.results[0]?.title).toContain('24H2');
+    expect(response.warnings ?? []).toHaveLength(0);
+  });
+
+  it('withholds evidence when both providers return weakly matched results', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          results: [
+            {
+              title: 'Recycle Bin help in Windows',
+              url: 'https://support.microsoft.com/recycle-bin',
+              content: 'Find the recycle bin icon in Windows.',
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => `
+          <html>
+            <body>
+              <a class="result__a" href="//duckduckgo.com/l/?uddg=${encodeURIComponent('https://support.microsoft.com/windows')}">Windows help and learning</a>
+              <a class="result__snippet">Find help and learning resources for Windows.</a>
+            </body>
+          </html>`,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => `<?xml version="1.0"?>
+          <rss version="2.0">
+            <channel>
+              <item>
+                <title>Windows help and learning</title>
+                <link>https://support.microsoft.com/windows</link>
+                <description>Find help and learning resources for Windows.</description>
+              </item>
+            </channel>
+          </rss>`,
+      });
+
+    const response = await adapter.search(
+      { query: 'Windows 11 24H2 known issues', maxResults: 5 },
+      context,
+    );
+
+    expect(response.results).toHaveLength(0);
+    expect(response.warnings?.[0]).toMatch(/withheld/i);
   });
 });
