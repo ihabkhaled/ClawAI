@@ -190,6 +190,8 @@ export class ContextAssemblyManager {
   buildPromptString(context: AssembledContext): string {
     this.logger.debug('buildPromptString: starting prompt assembly');
     const parts: string[] = [];
+    const hasResearchContext =
+      context.researchEvidence.length > 0 || context.researchWarnings.length > 0;
 
     if (context.systemPrompt) {
       this.logger.debug(
@@ -198,23 +200,11 @@ export class ContextAssemblyManager {
       parts.push(`SYSTEM: ${context.systemPrompt}`);
     }
 
-    if (context.memories.length > 0) {
-      this.logger.debug(`buildPromptString: adding ${String(context.memories.length)} memories`);
-      const memoryBlock = context.memories.map((m) => `[${m.type}] ${m.content}`).join('\n');
-      parts.push(`USER CONTEXT (memories):\n${memoryBlock}`);
-    }
-
-    if (context.contextPackItems.length > 0) {
+    if (hasResearchContext) {
       this.logger.debug(
-        `buildPromptString: adding ${String(context.contextPackItems.length)} context pack items`,
+        `buildPromptString: adding research context with ${String(context.researchEvidence.length)} evidence items and ${String(context.researchWarnings.length)} warnings`,
       );
-      const packBlock = context.contextPackItems
-        .map((item) => item.content ?? '')
-        .filter((c) => c.length > 0)
-        .join('\n');
-      if (packBlock) {
-        parts.push(`CONTEXT PACK:\n${packBlock}`);
-      }
+      parts.push(this.formatResearchBlock(context));
     }
 
     if (context.fileContents.length > 0) {
@@ -228,6 +218,13 @@ export class ContextAssemblyManager {
           `ATTACHED FILE "${file.filename}" (use this to answer the user's questions):\n${decoded}`,
         );
       }
+    }
+
+    this.logger.debug(
+      `buildPromptString: adding ${String(context.threadMessages.length)} thread messages`,
+    );
+    for (const msg of context.threadMessages) {
+      parts.push(`${msg.role}: ${msg.content}`);
     }
 
     if (context.workspaceCitations.length > 0) {
@@ -245,18 +242,23 @@ export class ContextAssemblyManager {
       parts.push(`WORKSPACE CONTEXT (relevant documents and issues):\n${citationBlock}`);
     }
 
-    if (context.researchEvidence.length > 0) {
+    if (context.contextPackItems.length > 0) {
       this.logger.debug(
-        `buildPromptString: adding ${String(context.researchEvidence.length)} research evidence items`,
+        `buildPromptString: adding ${String(context.contextPackItems.length)} context pack items`,
       );
-      parts.push(this.formatResearchBlock(context));
+      const packBlock = context.contextPackItems
+        .map((item) => item.content ?? '')
+        .filter((c) => c.length > 0)
+        .join('\n');
+      if (packBlock) {
+        parts.push(`CONTEXT PACK:\n${packBlock}`);
+      }
     }
 
-    this.logger.debug(
-      `buildPromptString: adding ${String(context.threadMessages.length)} thread messages`,
-    );
-    for (const msg of context.threadMessages) {
-      parts.push(`${msg.role}: ${msg.content}`);
+    if (context.memories.length > 0) {
+      this.logger.debug(`buildPromptString: adding ${String(context.memories.length)} memories`);
+      const memoryBlock = context.memories.map((m) => `[${m.type}] ${m.content}`).join('\n');
+      parts.push(`USER CONTEXT (memories):\n${memoryBlock}`);
     }
 
     const fullPrompt = parts.join('\n\n');
@@ -269,6 +271,8 @@ export class ContextAssemblyManager {
   buildChatMessages(context: AssembledContext): OpenAiChatMessage[] {
     this.logger.debug('buildChatMessages: starting chat message assembly');
     const messages: OpenAiChatMessage[] = [];
+    const hasResearchContext =
+      context.researchEvidence.length > 0 || context.researchWarnings.length > 0;
 
     const systemParts: string[] = [];
 
@@ -313,9 +317,9 @@ export class ContextAssemblyManager {
       systemParts.push(`Workspace context (relevant documents and issues):\n${citationBlock}`);
     }
 
-    if (context.researchEvidence.length > 0) {
+    if (hasResearchContext) {
       this.logger.debug(
-        `buildChatMessages: adding ${String(context.researchEvidence.length)} research evidence items to system`,
+        `buildChatMessages: adding research context with ${String(context.researchEvidence.length)} evidence items and ${String(context.researchWarnings.length)} warnings to system`,
       );
       systemParts.push(this.formatResearchBlock(context));
     }
@@ -539,8 +543,19 @@ export class ContextAssemblyManager {
 
   private formatResearchBlock(context: AssembledContext): string {
     const lines: string[] = [
+      'The web search and browsing steps have already been completed for you.',
+      'Use the evidence below for any web claim and cite sources as [n].',
+      "Do not say that you can't browse the web or access the internet.",
+      'If the evidence is incomplete, state the uncertainty briefly and give the best supported answer.',
       'LIVE RESEARCH EVIDENCE (ground your answer strictly in these sources — cite them as [n]):',
     ];
+    if (context.researchEvidence.length === 0) {
+      lines.push(
+        'No reliable search evidence passed relevance validation for this request.',
+        'Do not invent facts, dates, issues, or citations when no reliable evidence is available.',
+        'Instead, say that this run did not produce reliable web evidence and ask the user to retry or refine the search.',
+      );
+    }
     for (const [index, item] of context.researchEvidence.entries()) {
       lines.push(`[${String(index + 1)}] ${item.title ?? '(no title)'} — ${item.url}`);
       if (item.snippet.length > 0) {
@@ -564,12 +579,15 @@ export class ContextAssemblyManager {
       );
       return text;
     }
-    // Keep the beginning (system prompt, memories, context) and truncate the end
-    // This preserves the most important context (instructions, memories) over old messages
+    const tailChars = Math.max(Math.floor(maxChars * 0.4), Math.min(320, maxChars));
+    const headChars = Math.max(maxChars - tailChars - 32, 0);
     this.logger.debug(
       `truncateToTokenBudget: truncating from ${String(text.length)} to ${String(maxChars)} chars (budget=${String(tokenBudget)} tokens)`,
     );
-    return text.slice(0, maxChars);
+    if (headChars === 0) {
+      return text.slice(-maxChars);
+    }
+    return `${text.slice(0, headChars)}\n\n[...truncated older context...]\n\n${text.slice(-tailChars)}`;
   }
 
   private decodeFileContent(file: FileContentResponse): string {
