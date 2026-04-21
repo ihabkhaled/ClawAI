@@ -34,6 +34,7 @@ export type OllamaGenerateRequest = {
   model: string;
   prompt: string;
   stream: boolean;
+  think?: boolean;
   options?: {
     temperature?: number;
     num_predict?: number;
@@ -42,5 +43,6 @@ export type OllamaGenerateRequest = {
 
 export type OllamaGenerateResponse = {
   response: string;
+  thinking?: string;
   done: boolean;
 };

@@ -124,9 +124,11 @@ describe('ChatExecutionManager', () => {
     expect(result.fastPathUsed).toBe(true);
 
     const requestBody = httpRequest.mock.calls[0][0].body as {
+      think: boolean;
       options: { num_predict: number };
       prompt: string;
     };
+    expect(requestBody.think).toBe(false);
     expect(requestBody.options.num_predict).toBe(72);
     expect(requestBody.prompt).toContain('Respond briefly in 2-4 sentences');
   });
@@ -162,7 +164,11 @@ describe('ChatExecutionManager', () => {
     expect(judgeManager.shouldActivate).toHaveBeenCalledTimes(1);
     expect(result.fastPathUsed).toBe(false);
 
-    const requestBody = httpRequest.mock.calls[0][0].body as { options: { num_predict: number } };
+    const requestBody = httpRequest.mock.calls[0][0].body as {
+      think: boolean;
+      options: { num_predict: number };
+    };
+    expect(requestBody.think).toBe(false);
     expect(requestBody.options.num_predict).toBe(112);
   });
 

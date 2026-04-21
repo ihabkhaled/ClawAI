@@ -7,6 +7,7 @@ export const generateSchema = z.object({
     .min(1, 'Prompt is required')
     .max(100000, 'Prompt must be at most 100000 characters'),
   stream: z.boolean().optional(),
+  think: z.boolean().optional(),
   images: z.array(z.string().max(20_000_000)).max(10).optional(),
   options: z.record(z.unknown()).optional(),
   keepAlive: z.string().min(1).max(32).optional(),

@@ -101,6 +101,7 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
       model,
       prompt,
       stream: false,
+      think: false,
     };
 
     const response = await httpRequest<OllamaGenerateResponse>({
@@ -176,6 +177,7 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
       model,
       prompt: subTask.instruction,
       stream: false,
+      think: false,
     };
 
     const response = await httpRequest<OllamaGenerateResponse>({
@@ -229,6 +231,7 @@ Provide a unified, coherent response that integrates all sub-task results into a
       model,
       prompt: mergePrompt,
       stream: false,
+      think: false,
     };
 
     const response = await httpRequest<OllamaGenerateResponse>({

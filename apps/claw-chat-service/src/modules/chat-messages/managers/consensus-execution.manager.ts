@@ -240,6 +240,7 @@ export class ConsensusExecutionManager {
       model: await this.resolveModel(),
       prompt: synthesisPrompt,
       stream: false,
+      think: false,
       options: { temperature: 0, num_predict: 800 },
     };
 

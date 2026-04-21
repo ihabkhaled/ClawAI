@@ -137,6 +137,7 @@ export class OllamaService implements OnModuleInit {
       model: dto.model,
       prompt: dto.prompt,
       stream: dto.stream,
+      think: dto.think,
       images: dto.images,
       options: dto.options,
       keepAlive: dto.keepAlive ?? dto.keep_alive,

@@ -123,6 +123,7 @@ export class PipelineManager {
       model,
       prompt,
       stream: false,
+      think: false,
     };
 
     const response = await httpRequest<OllamaGenerateResponse>({

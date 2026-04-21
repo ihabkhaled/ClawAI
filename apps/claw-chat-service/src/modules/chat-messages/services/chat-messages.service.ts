@@ -595,10 +595,15 @@ export class ChatMessagesService implements OnModuleInit {
     llmResponse: LlmResponse,
     contextMetadata?: { memoryCount: number; fileIds: string[] },
   ): Promise<ChatMessage> {
+    const hasVisibleContent = llmResponse.content.trim().length > 0;
+    const storedContent = hasVisibleContent
+      ? llmResponse.content
+      : 'Warning: no visible final answer was produced for this reply. Please regenerate to retry.';
+
     return this.chatMessagesRepository.create({
       threadId: payload.threadId,
       role: 'ASSISTANT',
-      content: llmResponse.content,
+      content: storedContent,
       provider: llmResponse.provider,
       model: llmResponse.model,
       routingMode: payload.routingMode as RoutingMode,
@@ -630,6 +635,7 @@ export class ChatMessagesService implements OnModuleInit {
         ...(llmResponse.fastPathEscalated ? { fastPathEscalated: true } : {}),
         ...(llmResponse.executionPath ? { executionPath: llmResponse.executionPath } : {}),
         ...(llmResponse.targetLatencyMs ? { targetLatencyMs: llmResponse.targetLatencyMs } : {}),
+        ...(!hasVisibleContent ? { emptyContent: true } : {}),
         ...(llmResponse.judgeRefereeMetadata ?? {}),
       },
     });
@@ -695,7 +701,7 @@ export class ChatMessagesService implements OnModuleInit {
       inputTokens: llmResponse.inputTokens,
       outputTokens: llmResponse.outputTokens,
       latencyMs: llmResponse.latencyMs,
-      content: llmResponse.content,
+      content: assistantMessage.content,
       userContent: lastUserMsg?.content,
       timestamp: new Date().toISOString(),
       ...(llmResponse.executionPath ? { executionPath: llmResponse.executionPath } : {}),

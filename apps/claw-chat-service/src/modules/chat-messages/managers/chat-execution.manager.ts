@@ -6,6 +6,7 @@ import {
   FILE_GENERATION_PROVIDER,
   IMAGE_PROVIDER_PREFIX,
   LOCAL_ONLY_ROUTING_MODES,
+  OLLAMA_CONNECTOR_PROVIDER,
   OLLAMA_PROVIDER,
   PROVIDER_BASE_URLS,
 } from '../../../common/constants';
@@ -514,8 +515,10 @@ export class ChatExecutionManager implements OnModuleInit {
         routingMode === 'AUTO',
       );
     }
-    if (provider === OLLAMA_PROVIDER) {
-      this.logger.debug('callProvider: routing to Ollama local provider');
+    if (provider === OLLAMA_PROVIDER || provider === OLLAMA_CONNECTOR_PROVIDER) {
+      this.logger.debug(
+        `callProvider: routing to Ollama runtime (provider=${provider}) for model=${model}`,
+      );
       return this.callOllama(
         model,
         context,
@@ -571,6 +574,7 @@ export class ChatExecutionManager implements OnModuleInit {
       model: resolvedModel,
       prompt: constrainedPrompt,
       stream: false,
+      think: false,
       keep_alive: config.OLLAMA_KEEP_ALIVE,
       options: {
         temperature: threadSettings?.temperature ?? 0.2,
@@ -598,9 +602,19 @@ export class ChatExecutionManager implements OnModuleInit {
     }
 
     const latencyMs = Date.now() - startTime;
+    const thinkingLength = response.data.thinking?.length ?? 0;
     this.logger.debug(
       `callOllama: response received — done=${String(response.data.done)} responseLen=${String(response.data.response.length)}`,
     );
+    if (response.data.response.trim().length === 0) {
+      this.logger.warn(
+        `callOllama: model=${response.data.model} returned no visible answer (thinkingLen=${String(thinkingLength)})`,
+      );
+      throw new BusinessException(
+        'Local model returned no visible answer',
+        'OLLAMA_EMPTY_RESPONSE',
+      );
+    }
     this.logger.log(
       `callOllama: completed model=${response.data.model} latencyMs=${String(latencyMs)} inputTokens=${String(response.data.promptEvalCount ?? 0)} outputTokens=${String(response.data.evalCount ?? 0)}`,
     );

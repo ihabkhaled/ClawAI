@@ -75,6 +75,9 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
       stream: request.stream ?? false,
       options: request.options,
     };
+    if (typeof request.think === 'boolean') {
+      body['think'] = request.think;
+    }
     if (request.images && request.images.length > 0) {
       body['images'] = request.images;
     }
@@ -90,6 +93,7 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
       model: data.model,
       createdAt: data.created_at,
       response: data.response,
+      thinking: data.thinking,
       done: data.done,
       totalDuration: data.total_duration,
       loadDuration: data.load_duration,

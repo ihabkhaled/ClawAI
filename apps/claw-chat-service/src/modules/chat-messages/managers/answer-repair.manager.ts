@@ -116,6 +116,7 @@ export class AnswerRepairManager {
       model,
       prompt: repairPrompt,
       stream: false,
+      think: false,
     };
 
     const response = await httpRequest<OllamaGenerateResponse>({

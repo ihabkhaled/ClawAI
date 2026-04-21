@@ -124,6 +124,7 @@ export class VerifierManager {
       model,
       prompt: content,
       stream: false,
+      think: false,
     };
 
     const response = await httpRequest<OllamaGenerateResponse>({
@@ -162,6 +163,7 @@ Return ONLY JSON: { "score": <average 0-1>, "issues": ["..."], "suggestions": ["
       model,
       prompt: verifierPrompt,
       stream: false,
+      think: false,
     };
 
     const response = await httpRequest<OllamaGenerateResponse>({
@@ -230,6 +232,7 @@ Return ONLY the improved response. Do not explain changes.`;
       model,
       prompt: repairPrompt,
       stream: false,
+      think: false,
     };
 
     const response = await httpRequest<OllamaGenerateResponse>({

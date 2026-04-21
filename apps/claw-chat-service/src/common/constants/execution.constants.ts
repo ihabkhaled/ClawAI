@@ -1,5 +1,7 @@
 export const OLLAMA_PROVIDER = 'local-ollama';
 
+export const OLLAMA_CONNECTOR_PROVIDER = 'OLLAMA';
+
 export const IMAGE_PROVIDER_PREFIX = 'IMAGE_';
 
 export const FILE_GENERATION_PROVIDER = 'FILE_GENERATION';

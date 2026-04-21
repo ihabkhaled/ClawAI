@@ -121,6 +121,7 @@ export class RolePackManager {
       model,
       prompt,
       stream: false,
+      think: false,
     };
 
     const response = await httpRequest<OllamaGenerateResponse>({

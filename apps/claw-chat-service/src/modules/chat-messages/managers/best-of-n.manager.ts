@@ -131,6 +131,7 @@ export class BestOfNManager {
       model,
       prompt: content,
       stream: false,
+      think: false,
     };
 
     const response = await httpRequest<OllamaGenerateResponse>({

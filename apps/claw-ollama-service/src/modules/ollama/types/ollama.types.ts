@@ -35,6 +35,7 @@ export interface GenerateRequest {
   model: string;
   prompt: string;
   stream?: boolean;
+  think?: boolean;
   options?: Record<string, unknown>;
   images?: string[];
   keepAlive?: string;
@@ -44,6 +45,7 @@ export interface GenerateResponse {
   model: string;
   createdAt: string;
   response: string;
+  thinking?: string;
   done: boolean;
   totalDuration?: number;
   loadDuration?: number;

@@ -42,6 +42,7 @@ export type OllamaGenerateRequest = {
   model: string;
   prompt: string;
   stream?: boolean;
+  think?: boolean;
   keep_alive?: string;
   images?: string[];
   options?: {
@@ -54,6 +55,7 @@ export type OllamaGenerateResponse = {
   model: string;
   createdAt: string;
   response: string;
+  thinking?: string;
   done: boolean;
   totalDuration?: number;
   loadDuration?: number;

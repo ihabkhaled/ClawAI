@@ -18,6 +18,7 @@ export type OllamaGenerateResponse = {
   model: string;
   created_at: string;
   response: string;
+  thinking?: string;
   done: boolean;
   total_duration?: number;
   load_duration?: number;

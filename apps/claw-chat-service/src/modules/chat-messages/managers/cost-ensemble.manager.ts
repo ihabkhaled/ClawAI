@@ -114,6 +114,7 @@ export class CostEnsembleManager {
       model: DEFAULT_COST_ENSEMBLE_MODEL,
       prompt: classifyPrompt,
       stream: false,
+      think: false,
     };
 
     try {
@@ -197,6 +198,7 @@ export class CostEnsembleManager {
       model,
       prompt: content,
       stream: false,
+      think: false,
     };
 
     const response = await httpRequest<OllamaGenerateResponse>({
