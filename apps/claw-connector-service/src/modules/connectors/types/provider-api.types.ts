@@ -51,3 +51,21 @@ export type GeminiModelEntry = {
   created: number;
   owned_by: string;
 };
+
+/** Ollama /api/tags response */
+export type OllamaModelsResponse = {
+  models: OllamaModelEntry[];
+};
+
+export type OllamaModelEntry = {
+  name: string;
+  model: string;
+  modified_at: string;
+  size: number;
+  digest: string;
+  details?: {
+    family?: string;
+    parameter_size?: string;
+    quantization_level?: string;
+  };
+};
