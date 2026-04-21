@@ -671,6 +671,17 @@ export type CatalogCategoryFilterProps = {
   t: TranslateFunction;
 };
 
+export type CatalogCapabilityFilterProps = {
+  selectedCapability: string | undefined;
+  onSelect: (capability: string | undefined) => void;
+  t: TranslateFunction;
+};
+
+export type SearchBrowserScoreBadgeProps = {
+  score: number | null;
+  t: TranslateFunction;
+};
+
 export type DownloadProgressBarProps = {
   job: PullJobResponse;
   stats: DownloadStats | undefined;

@@ -189,6 +189,8 @@ export type {
   GroupedModels,
   CatalogModelCardProps,
   CatalogCategoryFilterProps,
+  CatalogCapabilityFilterProps,
+  SearchBrowserScoreBadgeProps,
   DownloadProgressBarProps,
   ActiveDownloadsPanelProps,
   ReplaySummaryCardProps,

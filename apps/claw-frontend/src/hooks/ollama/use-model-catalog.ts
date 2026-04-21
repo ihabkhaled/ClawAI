@@ -14,6 +14,9 @@ export function useModelCatalog(params: CatalogFilterParams) {
   if (params.search) {
     filters['search'] = params.search;
   }
+  if (params.capability) {
+    filters['capability'] = params.capability;
+  }
 
   const query = useInfiniteQuery({
     queryKey: queryKeys.catalog.listInfinite(filters),
@@ -24,6 +27,9 @@ export function useModelCatalog(params: CatalogFilterParams) {
       }
       if (params.search) {
         queryParams['search'] = params.search;
+      }
+      if (params.capability) {
+        queryParams['capability'] = params.capability;
       }
       queryParams['page'] = String(pageParam);
       queryParams['limit'] = String(CATALOG_PAGE_SIZE);

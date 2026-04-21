@@ -12,6 +12,7 @@ import type { CatalogModelCardProps } from '@/types';
 import { formatBytes } from '@/utilities';
 
 import { CatalogModelAction } from './catalog-model-action';
+import { SearchBrowserScoreBadge } from './search-browser-score-badge';
 
 export function CatalogModelCard({
   entry,
@@ -48,6 +49,7 @@ export function CatalogModelCard({
             <span className={cn('rounded border px-1.5 py-0.5 text-xs font-medium', runtimeClass)}>
               {runtimeLabel}
             </span>
+            <SearchBrowserScoreBadge score={entry.searchBrowserScore} t={t} />
           </div>
         </div>
       </CardHeader>

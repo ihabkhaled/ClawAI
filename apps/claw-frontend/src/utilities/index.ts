@@ -66,3 +66,4 @@ export {
 } from './escalation.utility';
 export type { EscalationStatusBadgeVariant } from './escalation.utility';
 export { formatModelSize } from './model-size.utility';
+export { resolveSearchBrowserScoreTone } from './search-browser-score-tone.utility';

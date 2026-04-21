@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { ActiveDownloadsPanel } from '@/components/models/active-downloads-panel';
+import { CatalogCapabilityFilter } from '@/components/models/catalog-capability-filter';
 import { CatalogCategoryFilter } from '@/components/models/catalog-category-filter';
 import { CatalogModelCard } from '@/components/models/catalog-model-card';
 import { Input } from '@/components/ui/input';
@@ -22,9 +23,11 @@ export default function ModelCatalogPage(): React.ReactElement {
     hasNextPage,
     sentinelRef,
     category,
+    capability,
     search,
     pullJobs,
     handleCategoryChange,
+    handleCapabilityChange,
     handleSearchChange,
     handlePull,
     handleCancelJob,
@@ -53,6 +56,12 @@ export default function ModelCatalogPage(): React.ReactElement {
       <PageHeader title={t('catalog.title')} description={t('catalog.description')} />
 
       <CatalogCategoryFilter selectedCategory={category} onSelect={handleCategoryChange} t={t} />
+
+      <CatalogCapabilityFilter
+        selectedCapability={capability}
+        onSelect={handleCapabilityChange}
+        t={t}
+      />
 
       <div className="flex items-center gap-3">
         <Input

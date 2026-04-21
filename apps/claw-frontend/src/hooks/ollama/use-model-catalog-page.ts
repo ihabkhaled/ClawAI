@@ -13,11 +13,12 @@ import { usePullJobs } from './use-pull-jobs';
 
 export function useModelCatalogPage(): UseModelCatalogPageReturn {
   const [category, setCategory] = useState<string | undefined>();
+  const [capability, setCapability] = useState<string | undefined>();
   const [search, setSearch] = useState('');
   const { t } = useTranslation();
 
   const { entries, meta, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useModelCatalog({ category, search: search || undefined });
+    useModelCatalog({ category, capability, search: search || undefined });
 
   const sentinelRef = useInfiniteScroll(fetchNextPage, hasNextPage && !isFetchingNextPage);
 
@@ -29,6 +30,10 @@ export function useModelCatalogPage(): UseModelCatalogPageReturn {
 
   const handleCategoryChange = useCallback((value: string | undefined): void => {
     setCategory(value);
+  }, []);
+
+  const handleCapabilityChange = useCallback((value: string | undefined): void => {
+    setCapability(value);
   }, []);
 
   const handleSearchChange = useCallback((value: string): void => {
@@ -73,12 +78,14 @@ export function useModelCatalogPage(): UseModelCatalogPageReturn {
     hasNextPage,
     sentinelRef,
     category,
+    capability,
     search,
     pullJobs,
     isPullJobsLoading,
     hasActiveJobs,
     downloadStatsMap,
     handleCategoryChange,
+    handleCapabilityChange,
     handleSearchChange,
     handlePull,
     handleCancelJob,

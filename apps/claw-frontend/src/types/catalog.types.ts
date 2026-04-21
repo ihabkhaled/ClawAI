@@ -21,6 +21,8 @@ export type ModelCatalogEntry = {
   isAvailable: boolean;
   isDownloadable: boolean;
   availabilityError: string | null;
+  searchBrowserScore: number | null;
+  searchBrowserReasons: string[];
 };
 
 export type CatalogListResponse = {
@@ -61,6 +63,7 @@ export type DownloadSnapshotMap = Map<string, DownloadSnapshotEntry>;
 export type CatalogFilterParams = {
   category?: string;
   search?: string;
+  capability?: string;
   page?: number;
   limit?: number;
 };
@@ -76,12 +79,14 @@ export type UseModelCatalogPageReturn = {
   sentinelRef: React.RefObject<HTMLDivElement | null>;
   category: string | undefined;
   search: string;
+  capability: string | undefined;
   pullJobs: PullJobResponse[];
   isPullJobsLoading: boolean;
   hasActiveJobs: boolean;
   downloadStatsMap: Map<string, DownloadStats>;
   handleCategoryChange: (value: string | undefined) => void;
   handleSearchChange: (value: string) => void;
+  handleCapabilityChange: (value: string | undefined) => void;
   handlePull: (catalogId: string) => void;
   handleCancelJob: (jobId: string) => void;
   handleDelete: (modelId: string) => void;
