@@ -127,15 +127,13 @@ export type UseMessageComposerStateParams = {
     research?: ResearchOptions,
   ) => void;
   isPending: boolean;
-  threadModel?: ModelSelection | null;
+  selectedModel: ModelSelection | null;
 };
 
 export type UseMessageComposerStateReturn = {
   content: string;
   setContent: (value: string) => void;
   validationError: string | null;
-  modelOverride: ModelSelection | null;
-  setModelOverride: (value: ModelSelection | null) => void;
   selectedFileIds: string[];
   setSelectedFileIds: (value: string[]) => void;
   research: ResearchOptions;
@@ -143,7 +141,6 @@ export type UseMessageComposerStateReturn = {
   handleSubmit: (e: React.FormEvent) => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   handleChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  activeModel: ModelSelection | null;
 };
 
 export type UseThreadDetailPageParams = {
@@ -161,6 +158,7 @@ export type UseThreadSettingsReturn = {
   setMaxTokens: (value: string) => void;
   selectedModel: ModelSelection | null;
   setSelectedModel: (value: ModelSelection | null) => void;
+  handleModelChange: (value: ModelSelection | null) => void;
   contextPackIds: string[];
   setContextPackIds: (value: string[]) => void;
   judgeEnabled: boolean;

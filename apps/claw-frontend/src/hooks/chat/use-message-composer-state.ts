@@ -4,7 +4,6 @@ import { DEFAULT_RESEARCH_OPTIONS } from '@/constants/research.constants';
 import { ResearchMode } from '@/enums/research-mode.enum';
 import { sendMessageSchema } from '@/lib/validation/message.schema';
 import type {
-  ModelSelection,
   ResearchOptions,
   UseMessageComposerStateParams,
   UseMessageComposerStateReturn,
@@ -14,15 +13,12 @@ import { logger } from '@/utilities';
 export const useMessageComposerState = ({
   onSend,
   isPending,
-  threadModel,
+  selectedModel,
 }: UseMessageComposerStateParams): UseMessageComposerStateReturn => {
   const [content, setContent] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [modelOverride, setModelOverride] = useState<ModelSelection | null>(null);
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
-
-  const activeModel = modelOverride ?? threadModel ?? null;
 
   const validateAndSend = useCallback((): boolean => {
     const result = sendMessageSchema.safeParse({ content: content.trim() });
@@ -43,21 +39,21 @@ export const useMessageComposerState = ({
       message: 'Submitting composed message',
       details: {
         contentLength: result.data.content.length,
-        hasModelOverride: !!activeModel,
+        hasModelOverride: selectedModel !== null,
         fileCount: selectedFileIds.length,
         researchMode: research.mode,
       },
     });
     onSend(
       result.data.content,
-      activeModel ?? undefined,
+      selectedModel ?? undefined,
       selectedFileIds.length > 0 ? selectedFileIds : undefined,
       research.mode === ResearchMode.OFF ? undefined : research,
     );
     setContent('');
     setSelectedFileIds([]);
     return true;
-  }, [content, onSend, activeModel, selectedFileIds, research]);
+  }, [content, onSend, selectedModel, selectedFileIds, research]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent): void => {
@@ -97,8 +93,6 @@ export const useMessageComposerState = ({
     content,
     setContent,
     validationError,
-    modelOverride,
-    setModelOverride,
     selectedFileIds,
     setSelectedFileIds,
     research,
@@ -106,6 +100,5 @@ export const useMessageComposerState = ({
     handleSubmit,
     handleKeyDown,
     handleChange,
-    activeModel,
   };
 };

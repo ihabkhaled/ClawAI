@@ -128,7 +128,7 @@ export default function ThreadDetailPage() {
             maxTokens={threadSettings.maxTokens}
             onMaxTokensChange={threadSettings.setMaxTokens}
             selectedModel={threadSettings.selectedModel}
-            onModelChange={threadSettings.setSelectedModel}
+            onModelChange={threadSettings.handleModelChange}
             contextPackIds={threadSettings.contextPackIds}
             onContextPackIdsChange={threadSettings.setContextPackIds}
             judgeEnabled={threadSettings.judgeEnabled}
@@ -180,15 +180,8 @@ export default function ThreadDetailPage() {
             <MessageComposer
               onSend={handleSend}
               isPending={isSending}
-              threadModel={
-                thread?.preferredProvider && thread?.preferredModel
-                  ? {
-                      provider: thread.preferredProvider,
-                      model: thread.preferredModel,
-                      displayName: thread.preferredModel,
-                    }
-                  : null
-              }
+              selectedModel={threadSettings.selectedModel}
+              onModelChange={threadSettings.handleModelChange}
             />
           </div>
         </div>

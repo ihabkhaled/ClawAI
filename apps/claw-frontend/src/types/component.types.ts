@@ -284,7 +284,8 @@ export type MessageComposerProps = {
     research?: ResearchOptions,
   ) => void;
   isPending: boolean;
-  threadModel?: ModelSelection | null;
+  selectedModel: ModelSelection | null;
+  onModelChange: (model: ModelSelection | null) => void;
 };
 
 export type ResearchToggleProps = {

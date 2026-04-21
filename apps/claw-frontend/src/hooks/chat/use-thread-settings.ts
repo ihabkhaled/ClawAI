@@ -50,6 +50,29 @@ export function useThreadSettings(thread: ChatThread | null) {
     setIsOpen((prev) => !prev);
   }, []);
 
+  const handleModelChange = useCallback(
+    (model: ModelSelection | null): void => {
+      setSelectedModel(model);
+      if (!thread) {
+        return;
+      }
+      logger.info({
+        component: 'chat',
+        action: 'change-thread-model',
+        message: 'Persisting thread model change',
+        details: { threadId: thread.id, provider: model?.provider, model: model?.model },
+      });
+      updateThread({
+        id: thread.id,
+        data: {
+          preferredProvider: model?.provider ?? null,
+          preferredModel: model?.model ?? null,
+        },
+      });
+    },
+    [thread, updateThread],
+  );
+
   const handleSave = useCallback((): void => {
     if (!thread) {
       return;
@@ -112,6 +135,7 @@ export function useThreadSettings(thread: ChatThread | null) {
     setMaxTokens,
     selectedModel,
     setSelectedModel,
+    handleModelChange,
     contextPackIds,
     setContextPackIds,
     judgeEnabled,

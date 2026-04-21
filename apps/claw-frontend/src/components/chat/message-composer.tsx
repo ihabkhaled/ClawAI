@@ -11,26 +11,25 @@ import type { MessageComposerProps } from '@/types';
 export function MessageComposer({
   onSend,
   isPending,
-  threadModel,
+  selectedModel,
+  onModelChange,
 }: MessageComposerProps): React.ReactElement {
   const {
     content,
     validationError,
-    activeModel,
     selectedFileIds,
     setSelectedFileIds,
-    setModelOverride,
     research,
     setResearch,
     handleSubmit,
     handleKeyDown,
     handleChange,
-  } = useMessageComposerState({ onSend, isPending, threadModel });
+  } = useMessageComposerState({ onSend, isPending, selectedModel });
 
   return (
     <form onSubmit={handleSubmit} className="flex h-full flex-col gap-1">
       <div className="mb-1 flex shrink-0 flex-wrap items-center gap-2">
-        <ModelSelector value={activeModel} onChange={setModelOverride} disabled={isPending} />
+        <ModelSelector value={selectedModel} onChange={onModelChange} disabled={isPending} />
         <FileAttachmentPicker
           selectedFileIds={selectedFileIds}
           onChange={setSelectedFileIds}

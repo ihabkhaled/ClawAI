@@ -48,6 +48,14 @@ export function MessageBubble({
     typeof metadata?.['generationId'] === 'string' && isFileGeneration
       ? metadata['generationId']
       : undefined;
+  const hasVisibleAssistantContent = message.content.trim().length > 0;
+  const assistantContent = hasVisibleAssistantContent ? (
+    <MarkdownRenderer content={message.content} />
+  ) : (
+    <p className="whitespace-pre-wrap text-muted-foreground">
+      No visible final answer was produced for this reply. Regenerate to retry.
+    </p>
+  );
   const isReRouted = metadata?.['reRouted'] === true;
   const originalProvider =
     typeof metadata?.['originalProvider'] === 'string' ? metadata['originalProvider'] : null;
@@ -100,9 +108,7 @@ export function MessageBubble({
           {!isUser && isFileGeneration && fileGenerationId ? (
             <FileGenerationBubble generationId={fileGenerationId} prompt={message.content} />
           ) : null}
-          {!isUser && !isImageGeneration && !isFileGeneration ? (
-            <MarkdownRenderer content={message.content} />
-          ) : null}
+          {!isUser && !isImageGeneration && !isFileGeneration ? assistantContent : null}
         </div>
         {!isUser && (providerModel || totalTokens > 0 || message.latencyMs !== null) ? (
           <div className="flex flex-wrap items-center gap-1.5">
