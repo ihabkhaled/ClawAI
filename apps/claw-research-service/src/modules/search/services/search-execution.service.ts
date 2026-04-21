@@ -1,9 +1,12 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 
 import { SEARCH_DEFAULT_MAX_RESULTS } from '../../../common/constants/search.constants';
+import { ResearchErrorCode } from '../../../common/enums/research-error-code.enum';
 import { SearchRunStatus } from '../../../common/enums/search-run-status.enum';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
+import { DomainPolicyOutcome } from '../../fetch/enums/domain-policy-outcome.enum';
+import { evaluateDomainPolicy } from '../../fetch/utilities/domain-policy.utility';
 import { SearchAdapterFactory } from '../adapters/search-adapter.factory';
 import { SearchProviderRepository } from '../repositories/search-provider.repository';
 import { SearchRunRepository } from '../repositories/search-run.repository';
@@ -60,7 +63,7 @@ export class SearchExecutionService {
       await this.failRun(run, message);
       throw new BusinessException(
         'research.search.execution_failed',
-        'SEARCH_FAILED',
+        ResearchErrorCode.SEARCH_FAILED,
         HttpStatus.BAD_GATEWAY,
         { providerId: provider.id, message },
       );
@@ -91,7 +94,7 @@ export class SearchExecutionService {
     if (first === null) {
       throw new BusinessException(
         'research.search.no_enabled_provider',
-        'NO_ENABLED_PROVIDER',
+        ResearchErrorCode.NO_ENABLED_PROVIDER,
         HttpStatus.FAILED_DEPENDENCY,
       );
     }
@@ -102,7 +105,7 @@ export class SearchExecutionService {
     if (!provider.enabled || provider.status !== 'ACTIVE') {
       throw new BusinessException(
         'research.search.provider_disabled',
-        'PROVIDER_DISABLED',
+        ResearchErrorCode.PROVIDER_DISABLED,
         HttpStatus.FAILED_DEPENDENCY,
         { providerId: provider.id, status: provider.status },
       );
@@ -110,22 +113,13 @@ export class SearchExecutionService {
   }
 
   private applyDomainPolicy(results: SearchResult[], provider: SearchProvider): SearchResult[] {
-    const allow = new Set(provider.allowlistDomains);
-    const block = new Set(provider.blocklistDomains);
     return results.filter((item) => {
-      let host: string;
-      try {
-        host = new URL(item.url).hostname;
-      } catch {
-        return false;
-      }
-      if (block.has(host)) {
-        return false;
-      }
-      if (allow.size > 0 && !allow.has(host)) {
-        return false;
-      }
-      return true;
+      const outcome = evaluateDomainPolicy(
+        item.url,
+        provider.allowlistDomains,
+        provider.blocklistDomains,
+      ).outcome;
+      return outcome === DomainPolicyOutcome.ALLOWED;
     });
   }
 

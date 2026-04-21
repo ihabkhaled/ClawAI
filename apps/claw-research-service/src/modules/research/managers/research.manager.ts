@@ -5,6 +5,8 @@ import { ResearchRunStatus } from '../../../common/enums/research-run-status.enu
 import { ResearchWorkflowKind } from '../../../common/enums/research-workflow-kind.enum';
 import { sha1Short } from '../../../common/utilities/hash.utility';
 import { FetchService } from '../../fetch/services/fetch.service';
+import { ExtractionProfile } from '../../scrape/enums/extraction-profile.enum';
+import { ScrapeService } from '../../scrape/services/scrape.service';
 import { SearchExecutionService } from '../../search/services/search-execution.service';
 import { ResearchRunRepository } from '../repositories/research-run.repository';
 import { buildEvidenceBundle, traceEntry } from '../utilities/evidence-builder.utility';
@@ -26,6 +28,7 @@ export class ResearchManager {
     private readonly runs: ResearchRunRepository,
     private readonly searchService: SearchExecutionService,
     private readonly fetchService: FetchService,
+    private readonly scrapeService: ScrapeService,
   ) {}
 
   async run(userId: string, dto: ExecuteResearchDto): Promise<ResearchRun> {
@@ -48,8 +51,11 @@ export class ResearchManager {
       items.push(...searchItems);
 
       if (this.needsFetch(dto.workflow)) {
-        const fetchItems = await this.runFetch(userId, searchItems, trace, toolsUsed, warnings);
-        items.push(...fetchItems);
+        const fetch = await this.runFetch(userId, searchItems, trace, toolsUsed, warnings);
+        items.push(...fetch.items);
+        if (this.needsExtract(dto.workflow)) {
+          this.runExtract(fetch.items, fetch.rawByUrl, dto, trace, toolsUsed, warnings);
+        }
       }
 
       const bundle = this.finalize(dto, items, warnings, toolsUsed);
@@ -75,6 +81,10 @@ export class ResearchManager {
       workflow === ResearchWorkflowKind.SEARCH_THEN_FETCH ||
       workflow === ResearchWorkflowKind.SEARCH_FETCH_EXTRACT
     );
+  }
+
+  private needsExtract(workflow: ResearchWorkflowKind): boolean {
+    return workflow === ResearchWorkflowKind.SEARCH_FETCH_EXTRACT;
   }
 
   private async runSearch(
@@ -108,15 +118,20 @@ export class ResearchManager {
     trace: ResearchTraceEntry[],
     toolsUsed: string[],
     warnings: string[],
-  ): Promise<EvidenceItem[]> {
+  ): Promise<{ items: EvidenceItem[]; rawByUrl: Map<string, string> }> {
     const top = searchItems.slice(0, EVIDENCE_FETCH_TOP_N);
     const fetched: EvidenceItem[] = [];
+    const rawByUrl = new Map<string, string>();
     for (const item of top) {
       const start = Date.now();
       try {
         const result = await this.fetchService.fetchPage(userId, { url: item.url });
         toolsUsed.push('web_fetch');
-        fetched.push(this.fetchResultToEvidence(item, result));
+        const evidence = this.fetchResultToEvidence(item, result);
+        fetched.push(evidence);
+        if (result.rawHtml !== undefined) {
+          rawByUrl.set(evidence.url, result.rawHtml);
+        }
         trace.push(
           traceEntry(
             'fetch',
@@ -131,7 +146,74 @@ export class ResearchManager {
         trace.push(traceEntry('fetch', 'warning', Date.now() - start, `${item.url}: ${message}`));
       }
     }
-    return fetched;
+    return { items: fetched, rawByUrl };
+  }
+
+  private runExtract(
+    fetchItems: EvidenceItem[],
+    rawByUrl: Map<string, string>,
+    dto: ExecuteResearchDto,
+    trace: ResearchTraceEntry[],
+    toolsUsed: string[],
+    warnings: string[],
+  ): void {
+    const profile = dto.extractionProfile ?? ExtractionProfile.ARTICLE;
+    if (fetchItems.length === 0) {
+      trace.push(traceEntry('extract', 'skipped', 0, 'No fetched items available'));
+      warnings.push('Extract skipped because there were no fetched evidence items.');
+      return;
+    }
+
+    const profileTool = `scrape:${profile.toLowerCase()}`;
+    toolsUsed.push('web_extract', profileTool);
+    let extractedCount = 0;
+    let skippedCount = 0;
+
+    for (const item of fetchItems) {
+      const start = Date.now();
+      const rawHtml = rawByUrl.get(item.url) ?? item.snippet;
+      if (rawHtml.length === 0) {
+        skippedCount += 1;
+        trace.push(traceEntry(profileTool, 'skipped', 0, `${item.url}: empty html/content`));
+        continue;
+      }
+      try {
+        const out = this.scrapeService.extract(rawHtml, item.url, profile);
+        item.source = 'scrape';
+        item.structured = out.structured;
+        if (out.title !== null && (item.title === null || item.title.length === 0)) {
+          item.title = out.title;
+        }
+        if (out.text.length > 0) {
+          item.snippet = out.text;
+        }
+        extractedCount += 1;
+        warnings.push(...out.warnings.map((warning) => `scrape(${item.url}): ${warning}`));
+        trace.push(
+          traceEntry(
+            profileTool,
+            'ok',
+            Date.now() - start,
+            `${item.url} -> ${String(out.text.length)} chars`,
+          ),
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        skippedCount += 1;
+        warnings.push(`Scrape failed for ${item.url}: ${message}`);
+        trace.push(traceEntry(profileTool, 'warning', Date.now() - start, message));
+      }
+    }
+
+    const status = extractedCount > 0 ? 'ok' : 'warning';
+    trace.push(
+      traceEntry(
+        'extract',
+        status,
+        null,
+        `extracted=${String(extractedCount)} skipped=${String(skippedCount)} profile=${profile}`,
+      ),
+    );
   }
 
   private finalize(
@@ -203,7 +285,6 @@ export class ResearchManager {
       providerKind: null,
       publishedAt: searchItem.publishedAt,
       fetchedAt: new Date().toISOString(),
-      // Slightly boost fetched items over raw search items.
       confidence: Math.min(1, searchItem.confidence + 0.05),
     };
   }

@@ -6,6 +6,7 @@ import {
   SEARCH_MAX_QUERY_LENGTH,
   SEARCH_MIN_QUERY_LENGTH,
 } from '../../../common/constants/search.constants';
+import { ExtractionProfile } from '../../scrape/enums/extraction-profile.enum';
 
 export const executeResearchSchema = z.object({
   intent: z.string().min(SEARCH_MIN_QUERY_LENGTH).max(SEARCH_MAX_QUERY_LENGTH),
@@ -19,6 +20,11 @@ export const executeResearchSchema = z.object({
   /** Evidence bundle mode — "detailed" or "compressed". */
   mode: z.enum(['detailed', 'compressed']).optional(),
   filters: z.record(z.unknown()).optional(),
+  /**
+   * Scrape profile applied by SEARCH_FETCH_EXTRACT. Defaults to ARTICLE.
+   * Ignored by other workflows.
+   */
+  extractionProfile: z.nativeEnum(ExtractionProfile).optional(),
 });
 
 export type ExecuteResearchDto = z.infer<typeof executeResearchSchema>;

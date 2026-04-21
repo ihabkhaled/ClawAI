@@ -47,6 +47,7 @@ export class HttpFetchAdapter implements FetchAdapter {
       byteSize: body.length,
       cacheHit: false,
       latencyMs,
+      rawHtml: mimeType === 'text/html' || mimeType === 'application/xhtml+xml' ? body : undefined,
     };
   }
 

@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 
 import { BusinessException } from '../../../common/errors/business.exception';
+import { ResearchErrorCode } from '../../../common/enums/research-error-code.enum';
 import { SearchProviderKind } from '../../../common/enums/search-provider-kind.enum';
 import { OllamaWebSearchAdapter } from './ollama-web.adapter';
 import { SearxngAdapter } from './searxng.adapter';
@@ -26,14 +27,14 @@ export class SearchAdapterFactory {
       case SearchProviderKind.GENERIC_HTTP:
         throw new BusinessException(
           'research.search_provider.generic_http_not_implemented',
-          'ADAPTER_NOT_IMPLEMENTED',
+          ResearchErrorCode.ADAPTER_NOT_IMPLEMENTED,
           HttpStatus.NOT_IMPLEMENTED,
           { kind },
         );
       default:
         throw new BusinessException(
           'research.search_provider.unsupported_kind',
-          'UNSUPPORTED_PROVIDER',
+          ResearchErrorCode.UNSUPPORTED_PROVIDER,
           HttpStatus.BAD_REQUEST,
           { kind },
         );

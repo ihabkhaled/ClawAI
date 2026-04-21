@@ -9,6 +9,7 @@ import { SearchProviderController } from './controllers/search-provider.controll
 import { SearchProviderRepository } from './repositories/search-provider.repository';
 import { SearchRunRepository } from './repositories/search-run.repository';
 import { SearchExecutionService } from './services/search-execution.service';
+import { SearchProviderBootstrapService } from './services/search-provider-bootstrap.service';
 import { SearchProviderService } from './services/search-provider.service';
 
 @Module({
@@ -16,6 +17,7 @@ import { SearchProviderService } from './services/search-provider.service';
   providers: [
     SearchProviderRepository,
     SearchRunRepository,
+    SearchProviderBootstrapService,
     SearchProviderService,
     SearchExecutionService,
     SearchAdapterFactory,

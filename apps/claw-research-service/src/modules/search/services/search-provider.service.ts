@@ -2,6 +2,7 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
+import { ResearchErrorCode } from '../../../common/enums/research-error-code.enum';
 import { SearchProviderStatus } from '../../../common/enums/search-provider-status.enum';
 import { decryptString, encryptString } from '../../../common/utilities/crypto.utility';
 import { SearchAdapterFactory } from '../adapters/search-adapter.factory';
@@ -35,7 +36,7 @@ export class SearchProviderService {
     if (existing !== null) {
       throw new BusinessException(
         'research.search_provider.name_taken',
-        'NAME_TAKEN',
+        ResearchErrorCode.NAME_TAKEN,
         HttpStatus.CONFLICT,
         { name: dto.name },
       );

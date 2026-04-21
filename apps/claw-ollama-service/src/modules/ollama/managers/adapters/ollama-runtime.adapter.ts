@@ -79,7 +79,8 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
       body['images'] = request.images;
     }
     if (request.keepAlive) {
-      body['keep_alive'] = request.keepAlive;
+      // Normalize bare "-1" (no unit) to "-1m" — Go's time.ParseDuration requires a unit
+      body['keep_alive'] = request.keepAlive === '-1' ? '-1m' : request.keepAlive;
     }
     const response = await this.client.post<OllamaGenerateResponse>(OLLAMA_API_GENERATE, body, {
       timeout: this.generateTimeout,

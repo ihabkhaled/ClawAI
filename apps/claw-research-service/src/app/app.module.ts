@@ -13,6 +13,7 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { FetchModule } from '../modules/fetch/fetch.module';
 import { HealthModule } from '../modules/health/health.module';
 import { ResearchModule } from '../modules/research/research.module';
+import { ScrapeModule } from '../modules/scrape/scrape.module';
 import { SearchModule } from '../modules/search/search.module';
 
 @Module({
@@ -61,6 +62,7 @@ import { SearchModule } from '../modules/search/search.module';
     HealthModule,
     SearchModule,
     FetchModule,
+    ScrapeModule,
     ResearchModule,
   ],
   providers: [

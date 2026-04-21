@@ -3,6 +3,7 @@ import {
   EVIDENCE_DETAILED_SNIPPET_LENGTH,
   EVIDENCE_MAX_ITEMS,
 } from '../../../common/constants/evidence.constants';
+import { sanitizeForLlm } from '../../../common/utilities/content-safety.utility';
 import type {
   BuildEvidenceInput,
   EvidenceBundle,
@@ -18,12 +19,27 @@ export function buildEvidenceBundle(input: BuildEvidenceInput): EvidenceBundle {
   const deduped = dedupeByUrl(input.items);
   const ranked = [...deduped].sort((a, b) => b.confidence - a.confidence);
   const capped = ranked.slice(0, EVIDENCE_MAX_ITEMS);
-  const trimmed = capped.map((item) => ({
-    ...item,
-    snippet: item.snippet.length > limit ? `${item.snippet.slice(0, limit)}…` : item.snippet,
-  }));
 
   const warnings = [...input.warnings];
+  const trimmed = capped.map((item) => {
+    const safety = sanitizeForLlm(item.snippet);
+    if (safety.detected.length > 0) {
+      warnings.push(
+        `Prompt-injection patterns detected in ${item.url}: ${safety.detected.join(', ')}`,
+      );
+    }
+    if (safety.redactedCount > 0) {
+      warnings.push(
+        `Redacted ${String(safety.redactedCount)} secret-pattern match(es) in ${item.url}`,
+      );
+    }
+    const safeSnippet = safety.text;
+    return {
+      ...item,
+      snippet: safeSnippet.length > limit ? `${safeSnippet.slice(0, limit)}…` : safeSnippet,
+    };
+  });
+
   if (ranked.length > EVIDENCE_MAX_ITEMS) {
     warnings.push(
       `Evidence truncated to ${String(EVIDENCE_MAX_ITEMS)} items (had ${String(ranked.length)})`,

@@ -1,12 +1,16 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 
+import { AppConfig } from '../../../app/config/app.config';
 import { FETCH_CACHE_TTL_MS } from '../../../common/constants/fetch.constants';
+import { ResearchErrorCode } from '../../../common/enums/research-error-code.enum';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
 import { sha256Hex } from '../../../common/utilities/crypto.utility';
 import { HttpFetchAdapter } from '../adapters/http-fetch.adapter';
+import { DomainPolicyOutcome } from '../enums/domain-policy-outcome.enum';
 import { FetchJobRepository } from '../repositories/fetch-job.repository';
 import { PageCacheRepository } from '../repositories/page-cache.repository';
+import { evaluateDomainPolicy } from '../utilities/domain-policy.utility';
 import { type FetchJob, FetchJobStatus } from '../../../generated/prisma';
 import type { FetchResult } from '../types/fetch.types';
 import type { FetchRequestDto } from '../dto/fetch-request.dto';
@@ -23,6 +27,7 @@ export class FetchService {
 
   async fetchPage(userId: string, dto: FetchRequestDto): Promise<FetchResult> {
     const normalized = this.normalizeUrl(dto.url);
+    this.enforceDomainPolicy(normalized);
     const cacheKey = sha256Hex(normalized);
     const job = await this.jobs.create({
       userId,
@@ -53,10 +58,12 @@ export class FetchService {
         errorMessage: message,
         completedAt: new Date(),
       });
-      throw new BusinessException('research.fetch.failed', 'FETCH_FAILED', HttpStatus.BAD_GATEWAY, {
-        url: normalized,
-        message,
-      });
+      throw new BusinessException(
+        'research.fetch.failed',
+        ResearchErrorCode.FETCH_FAILED,
+        HttpStatus.BAD_GATEWAY,
+        { url: normalized, message },
+      );
     }
   }
 
@@ -78,6 +85,39 @@ export class FetchService {
     parsed.hostname = parsed.hostname.toLowerCase();
     parsed.protocol = parsed.protocol.toLowerCase();
     return parsed.href;
+  }
+
+  private enforceDomainPolicy(url: string): void {
+    const config = AppConfig.get();
+    const result = evaluateDomainPolicy(
+      url,
+      config.RESEARCH_DOMAIN_ALLOWLIST,
+      config.RESEARCH_DOMAIN_BLOCKLIST,
+    );
+    if (result.outcome === DomainPolicyOutcome.BLOCKED) {
+      throw new BusinessException(
+        result.reason ?? 'Domain blocked by policy',
+        ResearchErrorCode.DOMAIN_BLOCKED,
+        HttpStatus.FORBIDDEN,
+        { url, host: result.host },
+      );
+    }
+    if (result.outcome === DomainPolicyOutcome.NOT_ALLOWED) {
+      throw new BusinessException(
+        result.reason ?? 'Domain not on allowlist',
+        ResearchErrorCode.DOMAIN_NOT_ALLOWED,
+        HttpStatus.FORBIDDEN,
+        { url, host: result.host },
+      );
+    }
+    if (result.outcome === DomainPolicyOutcome.INVALID_URL) {
+      throw new BusinessException(
+        result.reason ?? 'Invalid URL',
+        ResearchErrorCode.UNSAFE_URL,
+        HttpStatus.BAD_REQUEST,
+        { url },
+      );
+    }
   }
 
   private async completeFromCache(

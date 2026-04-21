@@ -10,6 +10,29 @@ const appConfigSchema = z.object({
     .length(64, 'ENCRYPTION_KEY must be a 64-character hex string')
     .regex(/^[\da-fA-F]+$/, 'ENCRYPTION_KEY must be valid hex'),
   RESEARCH_PORT: z.coerce.number().int().positive().default(4016),
+  // Comma-separated domain policy lists applied globally to fetch/search.
+  // Each entry is either an exact host ("github.com") or a wildcard suffix
+  // ("*.github.com"). Leave empty for permissive (default).
+  RESEARCH_DOMAIN_ALLOWLIST: z
+    .string()
+    .optional()
+    .default('')
+    .transform((v) =>
+      v
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0),
+    ),
+  RESEARCH_DOMAIN_BLOCKLIST: z
+    .string()
+    .optional()
+    .default('')
+    .transform((v) =>
+      v
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0),
+    ),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

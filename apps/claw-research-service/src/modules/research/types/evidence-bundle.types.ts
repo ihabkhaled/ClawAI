@@ -16,6 +16,12 @@ export type EvidenceItem = {
   fetchedAt: string | null;
   /** Confidence in usefulness for this intent (0..1). */
   confidence: number;
+  /**
+   * Profile-specific structured data (headings, outline, tables, …)
+   * populated by the SEARCH_FETCH_EXTRACT workflow. Undefined for
+   * plain search/fetch items.
+   */
+  structured?: Record<string, unknown>;
 };
 
 /** A trace entry describing a phase of the research run. */
