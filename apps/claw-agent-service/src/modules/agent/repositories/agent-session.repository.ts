@@ -21,7 +21,7 @@ export class AgentSessionRepository {
       },
     });
     if (result === null) return null;
-     
+
     const { sessionKey: _sk, ...rest } = result;
     return rest as AgentSessionWithCounts;
   }
@@ -84,5 +84,12 @@ export class AgentSessionRepository {
       data: { status: AgentSessionStatus.EXPIRED, disconnectedAt: new Date() },
     });
     return result.count;
+  }
+
+  async findConnectedForDevice(deviceId: string): Promise<AgentSession[]> {
+    return this.prisma.agentSession.findMany({
+      where: { deviceId, status: AgentSessionStatus.CONNECTED },
+      orderBy: { lastHeartbeatAt: 'desc' },
+    });
   }
 }

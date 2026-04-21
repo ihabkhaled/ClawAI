@@ -6,3 +6,6 @@ export const MAX_COMMAND_BATCH_POLL = 5;
 export const FILE_EVENT_BATCH_MAX = 100;
 export const CLEANUP_INTERVAL_MS = 60_000;
 export const STUCK_EXECUTING_TIMEOUT_MS = 5 * 60 * 1000;
+
+export const SCHEDULER_TICK_MS = 30_000;
+export const SCHEDULER_DUE_BATCH_SIZE = 25;

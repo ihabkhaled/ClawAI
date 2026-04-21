@@ -72,6 +72,12 @@ enum RiskLabel {
   CRITICAL
 }
 
+enum ScheduledCommandStatus {
+  ENABLED
+  PAUSED
+  DISABLED
+}
+
 model AgentSession {
   id              String             @id @default(cuid())
   userId          String
@@ -118,8 +124,9 @@ model Device {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  sessions      AgentSession[]
-  refreshTokens RefreshToken[]
+  sessions          AgentSession[]
+  refreshTokens     RefreshToken[]
+  scheduledCommands ScheduledCommand[]
 
   @@index([userId, status])
   @@index([userId, lastSeenAt])
@@ -219,6 +226,27 @@ model TerminalCommand {
   @@index([userId, status])
   @@index([matchedPolicyId])
   @@map("terminal_commands")
+}
+
+model ScheduledCommand {
+  id            String                 @id @default(cuid())
+  userId        String
+  deviceId      String
+  device        Device                 @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  name          String
+  command       String
+  workingDir    String?
+  intervalMinutes Int
+  status        ScheduledCommandStatus @default(ENABLED)
+  lastRunAt     DateTime?
+  lastCommandId String?
+  nextRunAt     DateTime
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  @@index([deviceId, status])
+  @@index([nextRunAt, status])
+  @@map("scheduled_commands")
 }
 
 model AccessPolicy {
