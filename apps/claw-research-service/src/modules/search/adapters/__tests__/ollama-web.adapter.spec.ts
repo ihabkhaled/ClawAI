@@ -25,7 +25,7 @@ describe('OllamaWebSearchAdapter', () => {
     expect(result.healthy).toBe(true);
   });
 
-  it('healthCheck falls back to DuckDuckGo when Ollama Web returns 401', async () => {
+  it('healthCheck falls back to Bing RSS when Ollama Web returns 401', async () => {
     (global.fetch as jest.Mock)
       .mockResolvedValueOnce({ ok: false, status: 401 })
       .mockResolvedValueOnce({ ok: true, status: 200 });
@@ -52,18 +52,27 @@ describe('OllamaWebSearchAdapter', () => {
     expect(scores[1]).toBeGreaterThan(scores[2] ?? 0);
   });
 
-  it('search falls back to DuckDuckGo HTML when Ollama Web is unauthorized', async () => {
+  it('search falls back to Bing RSS when Ollama Web is unauthorized', async () => {
     (global.fetch as jest.Mock)
       .mockResolvedValueOnce({ ok: false, status: 401 })
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
-        text: async () => `
-          <a class="result__a" href="https://duckduckgo.com/l/?uddg=https%3A%2F%2Fexample.com%2Fa">A</a>
-          <a class="result__snippet">Snippet A</a>
-          <a class="result__a" href="https://example.com/b">B</a>
-          <a class="result__snippet">Snippet B</a>
-        `,
+        text: async () => `<?xml version="1.0"?>
+          <rss version="2.0">
+            <channel>
+              <item>
+                <title><![CDATA[A]]></title>
+                <link>https://example.com/a</link>
+                <description><![CDATA[Snippet A]]></description>
+              </item>
+              <item>
+                <title>B</title>
+                <link>https://example.com/b</link>
+                <description>Snippet B</description>
+              </item>
+            </channel>
+          </rss>`,
       });
 
     const response = await adapter.search({ query: 'q', maxResults: 2 }, context);

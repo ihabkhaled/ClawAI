@@ -22,7 +22,7 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
   readonly kind = SearchProviderKind.OLLAMA_WEB;
 
   private readonly logger = new Logger(OllamaWebSearchAdapter.name);
-  private static readonly DUCKDUCKGO_HTML_URL = 'https://duckduckgo.com/html/';
+  private static readonly BING_SEARCH_URL = 'https://www.bing.com/search';
 
   async healthCheck(context: SearchAdapterContext): Promise<ProviderHealthResult> {
     const start = Date.now();
@@ -38,7 +38,7 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
         return { healthy: true, latencyMs };
       }
       if (response.status === 401 || response.status === 403) {
-        const fallback = await this.healthCheckDuckDuckGo();
+        const fallback = await this.healthCheckBingRss();
         if (fallback.healthy) {
           return fallback;
         }
@@ -81,7 +81,7 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
     }
 
     if (response.status === 401 || response.status === 403 || response.status === 429) {
-      const fallback = await this.searchDuckDuckGo(request, context.timeoutMs);
+      const fallback = await this.searchBingRss(request, context.timeoutMs);
       return { ...fallback, latencyMs: Date.now() - start };
     }
 
@@ -101,17 +101,24 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
     return headers;
   }
 
-  private async healthCheckDuckDuckGo(): Promise<ProviderHealthResult> {
+  private async healthCheckBingRss(): Promise<ProviderHealthResult> {
     const start = Date.now();
+    const params = new URLSearchParams({
+      q: 'ping',
+      format: 'rss',
+    });
     try {
-      const response = await fetch(`${OllamaWebSearchAdapter.DUCKDUCKGO_HTML_URL}?q=ping`, {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'ClawAI-ResearchBot/1.0',
-          Accept: 'text/html',
+      const response = await fetch(
+        `${OllamaWebSearchAdapter.BING_SEARCH_URL}?${params.toString()}`,
+        {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'ClawAI-ResearchBot/1.0',
+            Accept: 'application/rss+xml, application/xml, text/xml',
+          },
+          signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
         },
-        signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
-      });
+      );
       const latencyMs = Date.now() - start;
       if (response.ok) {
         return { healthy: true, latencyMs };
@@ -127,69 +134,50 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
     }
   }
 
-  private async searchDuckDuckGo(
-    request: SearchRequest,
-    timeoutMs: number,
-  ): Promise<SearchResponse> {
+  private async searchBingRss(request: SearchRequest, timeoutMs: number): Promise<SearchResponse> {
     const params = new URLSearchParams({
       q: request.query,
+      format: 'rss',
     });
-    const response = await fetch(
-      `${OllamaWebSearchAdapter.DUCKDUCKGO_HTML_URL}?${params.toString()}`,
-      {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'ClawAI-ResearchBot/1.0',
-          Accept: 'text/html',
-        },
-        signal: AbortSignal.timeout(timeoutMs),
+    const response = await fetch(`${OllamaWebSearchAdapter.BING_SEARCH_URL}?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'ClawAI-ResearchBot/1.0',
+        Accept: 'application/rss+xml, application/xml, text/xml',
       },
-    );
+      signal: AbortSignal.timeout(timeoutMs),
+    });
     if (!response.ok) {
-      throw new Error(`DuckDuckGo fallback failed: HTTP ${response.status}`);
+      throw new Error(`Bing RSS fallback failed: HTTP ${response.status}`);
     }
 
-    const html = await response.text();
-    const parsed = this.parseDuckDuckGoResults(html, request.maxResults);
+    const rssXml = await response.text();
+    const parsed = this.parseBingRssResults(rssXml, request.maxResults);
     return { results: parsed, latencyMs: 0 };
   }
 
-  private parseDuckDuckGoResults(html: string, maxResults: number): SearchResult[] {
-    const anchorRegex = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
-    const snippetRegex =
-      /<a[^>]*class="result__a"[\s\S]*?<\/a>[\s\S]*?<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/a>/gi;
-    const snippets: string[] = [];
-    let snippetMatch: RegExpExecArray | null;
-    while ((snippetMatch = snippetRegex.exec(html)) !== null) {
-      const snippetRaw = snippetMatch[1] ?? '';
-      snippets.push(this.decodeHtml(snippetRaw).trim());
-    }
-
+  private parseBingRssResults(rssXml: string, maxResults: number): SearchResult[] {
+    const itemRegex = /<item\b[\s\S]*?<\/item>/gi;
     const results: SearchResult[] = [];
-    let anchorMatch: RegExpExecArray | null;
+    let itemMatch: RegExpExecArray | null;
     let index = 0;
-    while ((anchorMatch = anchorRegex.exec(html)) !== null && results.length < maxResults) {
-      const href = anchorMatch[1];
-      const titleRaw = anchorMatch[2];
-      if (href === undefined || titleRaw === undefined) {
-        continue;
-      }
-
-      const resolvedUrl = this.resolveDuckDuckGoRedirect(href);
-      if (resolvedUrl === null) {
-        continue;
-      }
-
-      const title = this.decodeHtml(titleRaw).trim();
+    while ((itemMatch = itemRegex.exec(rssXml)) !== null && results.length < maxResults) {
+      const rawItem = itemMatch[0];
+      const title = this.readXmlTag(rawItem, 'title');
+      const url = this.readXmlTag(rawItem, 'link');
       if (title.length === 0) {
         continue;
       }
+      if (url.length === 0) {
+        continue;
+      }
+      const snippet = this.readXmlTag(rawItem, 'description');
 
       results.push({
-        id: sha1Short(resolvedUrl),
+        id: sha1Short(url),
         title,
-        url: resolvedUrl,
-        snippet: snippets[index] ?? null,
+        url,
+        snippet: snippet.length > 0 ? snippet : null,
         publishedAt: null,
         freshness: null,
         score: 1 - index / Math.max(1, maxResults),
@@ -201,28 +189,25 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
     return results;
   }
 
-  private resolveDuckDuckGoRedirect(href: string): string | null {
-    try {
-      const parsed = new URL(href, 'https://duckduckgo.com');
-      if (parsed.pathname === '/l/') {
-        const target = parsed.searchParams.get('uddg');
-        if (target === null || target.length === 0) {
-          return null;
-        }
-        return decodeURIComponent(target);
-      }
-      if (parsed.protocol.startsWith('http')) {
-        return parsed.href;
-      }
-      return null;
-    } catch {
-      return null;
+  private readXmlTag(input: string, tagName: string): string {
+    const escaped = tagName.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const tagRegex = new RegExp(`<${escaped}>([\\s\\S]*?)<\\/${escaped}>`, 'i');
+    const match = tagRegex.exec(input);
+    if (match === null) {
+      return '';
     }
+    const raw = match[1] ?? '';
+    const withoutCdata = raw
+      .replace(/^<!\[CDATA\[/i, '')
+      .replace(/\]\]>$/i, '')
+      .trim();
+    return this.decodeHtml(withoutCdata).trim();
   }
 
   private decodeHtml(input: string): string {
     return input
       .replaceAll('&amp;', '&')
+      .replaceAll('&apos;', "'")
       .replaceAll('&quot;', '"')
       .replaceAll('&#x27;', "'")
       .replaceAll('&#39;', "'")
