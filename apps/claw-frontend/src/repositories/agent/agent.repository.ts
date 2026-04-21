@@ -1,6 +1,7 @@
 import { apiClient } from '../../services/shared/api-client';
 import type {
   AgentSession,
+  CancelCommandRequest,
   CreateCommandRequest,
   ListCommandsQuery,
   ListEventsQuery,
@@ -82,6 +83,14 @@ export async function rejectCommand(
   dto: RejectCommandRequest,
 ): Promise<TerminalCommand> {
   const response = await apiClient.post<TerminalCommand>(`${BASE}/commands/${id}/reject`, dto);
+  return response.data;
+}
+
+export async function cancelCommand(
+  id: string,
+  dto: CancelCommandRequest,
+): Promise<TerminalCommand> {
+  const response = await apiClient.post<TerminalCommand>(`${BASE}/commands/${id}/cancel`, dto);
   return response.data;
 }
 

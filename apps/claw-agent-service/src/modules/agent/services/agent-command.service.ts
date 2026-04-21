@@ -9,10 +9,12 @@ import { TerminalCommandStatus } from '../../../common/enums/terminal-command-st
 import { AgentSessionStatus } from '../../../common/enums/agent-session-status.enum';
 import { COMMAND_EXPIRY_MS } from '../../../common/constants/agent.constants';
 import { CommandRiskService } from './command-risk.service';
+import { CommandStreamService } from './command-stream.service';
 import type { CreateCommandDto } from '../dto/create-command.dto';
 import type { ListCommandsQueryDto } from '../dto/list-commands-query.dto';
 import type { RejectCommandDto } from '../dto/reject-command.dto';
 import type { CompleteCommandDto } from '../dto/complete-command.dto';
+import type { CancelCommandDto } from '../dto/cancel-command.dto';
 import type { PaginatedCommands } from '../types/agent.types';
 import type { TerminalCommand } from '../../../generated/prisma';
 import type { RiskAssessment } from '../types/policy.types';
@@ -26,7 +28,37 @@ export class AgentCommandService {
     private readonly sessionRepo: AgentSessionRepository,
     private readonly rabbitMQ: RabbitMQService,
     private readonly riskService: CommandRiskService,
+    private readonly streamService: CommandStreamService,
   ) {}
+
+  async cancel(id: string, userId: string, dto: CancelCommandDto): Promise<TerminalCommand> {
+    const command = await this.getCommandRaw(id, userId);
+    if (
+      command.status === TerminalCommandStatus.EXECUTED ||
+      command.status === TerminalCommandStatus.FAILED ||
+      command.status === TerminalCommandStatus.CANCELLED ||
+      command.status === TerminalCommandStatus.EXPIRED ||
+      command.status === TerminalCommandStatus.REJECTED
+    ) {
+      throw new BusinessException(
+        'agent.command.already_terminal',
+        'ACTION_NOT_CANCELLABLE',
+        HttpStatus.CONFLICT,
+      );
+    }
+    const updated = await this.commandRepo.update(id, { cancelRequested: true });
+    await this.streamService.requestCancel(id);
+    const reason = dto.reason ?? 'user_requested_cancel';
+    void this.publishEvent(EventPattern.AGENT_COMMAND_CANCELLED, {
+      commandId: id,
+      sessionId: command.sessionId,
+      userId,
+      reason,
+      requestedByUserId: userId,
+    });
+    this.logger.log(`Cancel requested for command ${id} by user ${userId}`);
+    return updated;
+  }
 
   async createCommand(userId: string, dto: CreateCommandDto): Promise<TerminalCommand> {
     await this.assertSessionOwnership(dto.sessionId, userId);

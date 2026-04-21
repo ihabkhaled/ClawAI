@@ -335,6 +335,22 @@ export interface AgentPolicyViolatedPayload extends BaseEventPayload {
   riskLabel: string;
 }
 
+export interface AgentCommandCancelledPayload extends BaseEventPayload {
+  commandId: string;
+  sessionId: string;
+  userId: string;
+  reason: string;
+  requestedByUserId?: string;
+}
+
+export interface AgentCommandStreamedPayload extends BaseEventPayload {
+  commandId: string;
+  sessionId: string;
+  userId: string;
+  bytesStreamed: number;
+  finalChunk: boolean;
+}
+
 // ---- Union type for all payloads ----
 
 export type EventPayload =
@@ -373,4 +389,6 @@ export type EventPayload =
   | AgentDeviceRevokedPayload
   | AgentTokenRotatedPayload
   | AgentTokenReuseDetectedPayload
-  | AgentPolicyViolatedPayload;
+  | AgentPolicyViolatedPayload
+  | AgentCommandCancelledPayload
+  | AgentCommandStreamedPayload;

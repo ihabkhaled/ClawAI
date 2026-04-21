@@ -8,4 +8,5 @@ export { PairingStatus } from './pairing-status.enum';
 export { PolicyKind } from './policy-kind.enum';
 export { RefreshTokenStatus } from './refresh-token-status.enum';
 export { RiskLabel } from './risk-label.enum';
+export { StreamChunkType } from './stream-chunk-type.enum';
 export { TerminalCommandStatus } from './terminal-command-status.enum';

@@ -48,4 +48,6 @@ export enum EventPattern {
   AGENT_TOKEN_ROTATED = 'agent.token_rotated',
   AGENT_TOKEN_REUSE_DETECTED = 'agent.token_reuse_detected',
   AGENT_POLICY_VIOLATED = 'agent.policy_violated',
+  AGENT_COMMAND_CANCELLED = 'agent.command_cancelled',
+  AGENT_COMMAND_STREAMED = 'agent.command_streamed',
 }

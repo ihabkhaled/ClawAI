@@ -7,6 +7,7 @@ import { AgentRepoController } from './controllers/agent-repo.controller';
 import { AgentEventController } from './controllers/agent-event.controller';
 import { AgentAuthController } from './controllers/agent-auth.controller';
 import { AgentDeviceController } from './controllers/agent-device.controller';
+import { AgentCommandStreamController } from './controllers/agent-command-stream.controller';
 import { AgentSessionService } from './services/agent-session.service';
 import { AgentCommandService } from './services/agent-command.service';
 import { AgentRepoService } from './services/agent-repo.service';
@@ -19,6 +20,7 @@ import { TokenService } from './services/token.service';
 import { RevocationCacheService } from './services/revocation-cache.service';
 import { PolicyService } from './services/policy.service';
 import { CommandRiskService } from './services/command-risk.service';
+import { CommandStreamService } from './services/command-stream.service';
 import { AgentSessionManager } from './managers/agent-session.manager';
 import { AgentCommandManager } from './managers/agent-command.manager';
 import { PairingCleanupManager } from './managers/pairing-cleanup.manager';
@@ -46,6 +48,7 @@ import { CompatAgentGuard } from '../../common/guards/compat-agent.guard';
     AgentEventController,
     AgentAuthController,
     AgentDeviceController,
+    AgentCommandStreamController,
   ],
   providers: [
     AgentSessionService,
@@ -60,6 +63,7 @@ import { CompatAgentGuard } from '../../common/guards/compat-agent.guard';
     RevocationCacheService,
     PolicyService,
     CommandRiskService,
+    CommandStreamService,
     AgentSessionManager,
     AgentCommandManager,
     PairingCleanupManager,

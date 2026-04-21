@@ -4,6 +4,7 @@ import type {
   DeviceStatus,
   FileEventType,
   RiskLabel,
+  StreamChunkType,
   TerminalCommandStatus,
 } from '../enums';
 
@@ -51,11 +52,25 @@ export type TerminalCommand = {
   rejectedAt: string | null;
   startedAt: string | null;
   completedAt: string | null;
+  cancelledAt: string | null;
+  cancelRequested: boolean;
+  timeoutSeconds: number;
   rejectionReason: string | null;
   requestedAt: string;
   expiresAt: string;
   createdAt: string;
   updatedAt: string;
+};
+
+export type CancelCommandRequest = {
+  reason?: string;
+};
+
+export type StreamChunk = {
+  seq: number;
+  type: StreamChunkType;
+  data: string;
+  timestamp: string;
 };
 
 export type LocalRepo = {

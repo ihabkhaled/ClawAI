@@ -1,21 +1,15 @@
 import { hostname, platform, release } from 'node:os';
-import { exec } from 'node:child_process';
-import { promisify } from 'node:util';
 import chokidar from 'chokidar';
 import { request, ApiError } from '../api/client.js';
 import { readSecrets } from '../auth/auth-store.js';
 import { AGENT_VERSION } from '../auth/pairing.js';
 import { getPlatform } from '../config/paths.js';
+import { runWithStream } from '../runtime/spawn-manager.js';
 import * as log from '../utils/logger.js';
-
-const execAsync = promisify(exec);
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
 const POLL_INTERVAL_MS = 3_000;
 const EVENT_BATCH_WINDOW_MS = 2_000;
-const EXEC_TIMEOUT_MS = 60_000;
-const STDOUT_MAX_BYTES = 10 * 1024;
-const STDERR_MAX_BYTES = 5 * 1024;
 const WATCH_DEPTH = 5;
 const WATCH_IGNORES = /(^|[\/\\])(node_modules|\.git|dist|\.next|\.turbo|\.cache)/;
 const FILE_EVENT_MAP = {
@@ -44,25 +38,13 @@ async function heartbeat(sessionId) {
   }
 }
 
-async function executeShellCommand(command, workingDir) {
-  const cwd = workingDir && workingDir.length > 0 ? workingDir : process.cwd();
-  try {
-    const { stdout, stderr } = await execAsync(command, {
-      cwd,
-      timeout: EXEC_TIMEOUT_MS,
-      maxBuffer: 16 * 1024 * 1024,
-    });
-    return {
-      stdout: String(stdout ?? '').slice(0, STDOUT_MAX_BYTES),
-      stderr: String(stderr ?? '').slice(0, STDERR_MAX_BYTES),
-      exitCode: 0,
-    };
-  } catch (err) {
-    const stdout = String(err?.stdout ?? '').slice(0, STDOUT_MAX_BYTES);
-    const stderr = String(err?.stderr ?? err?.message ?? '').slice(0, STDERR_MAX_BYTES);
-    const exitCode = typeof err?.code === 'number' ? err.code : 1;
-    return { stdout, stderr, exitCode };
-  }
+async function executeShellCommand(command, workingDir, timeoutSeconds, commandId) {
+  const result = await runWithStream(commandId, command, workingDir, timeoutSeconds);
+  return {
+    stdout: result.stdout,
+    stderr: result.stderr,
+    exitCode: result.exitCode,
+  };
 }
 
 async function pollAndRunCommands(sessionId) {
@@ -82,7 +64,12 @@ async function pollAndRunCommands(sessionId) {
   if (!Array.isArray(commands) || commands.length === 0) return;
   for (const cmd of commands) {
     log.info(`Executing command ${cmd.id} (risk=${cmd.riskLabel ?? 'LOW'})`);
-    const result = await executeShellCommand(cmd.command, cmd.workingDir);
+    const result = await executeShellCommand(
+      cmd.command,
+      cmd.workingDir,
+      cmd.timeoutSeconds,
+      cmd.id,
+    );
     try {
       await request(
         `/api/v1/agent/commands/${encodeURIComponent(cmd.id)}/complete?sessionId=${encodeURIComponent(sessionId)}`,

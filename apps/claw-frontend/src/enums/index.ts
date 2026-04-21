@@ -52,6 +52,7 @@ export { DeviceStatus } from './device-status.enum';
 export { MutationStatus } from './mutation-status.enum';
 export { PairingEmptyStateKind } from './pairing-empty-state-kind.enum';
 export { RiskLabel } from './risk-label.enum';
+export { StreamChunkType } from './stream-chunk-type.enum';
 export { OAuthCallbackPhase } from './oauth-callback-phase.enum';
 export {
   CandidateStatus,

@@ -6,4 +6,5 @@ export enum TerminalCommandStatus {
   EXECUTED = 'EXECUTED',
   FAILED = 'FAILED',
   EXPIRED = 'EXPIRED',
+  CANCELLED = 'CANCELLED',
 }

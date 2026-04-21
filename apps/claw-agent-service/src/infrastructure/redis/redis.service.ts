@@ -38,6 +38,22 @@ export class RedisService implements OnModuleDestroy {
     return value;
   }
 
+  async rpush(key: string, ...values: string[]): Promise<number> {
+    return this.client.rpush(key, ...values);
+  }
+
+  async lrange(key: string, start: number, stop: number): Promise<string[]> {
+    return this.client.lrange(key, start, stop);
+  }
+
+  async llen(key: string): Promise<number> {
+    return this.client.llen(key);
+  }
+
+  async expire(key: string, ttlSeconds: number): Promise<void> {
+    await this.client.expire(key, ttlSeconds);
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.client.quit();
   }
