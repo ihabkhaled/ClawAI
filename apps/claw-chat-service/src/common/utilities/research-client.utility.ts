@@ -1,10 +1,17 @@
 import { Logger } from '@nestjs/common';
 
 import { httpRequest } from './http-client.utility';
+import {
+  RESEARCH_REQUEST_TIMEOUT_MS,
+  SEARCH_FETCH_EXTRACT_DEFAULT_MAX_RESULTS,
+  SEARCH_ONLY_DEFAULT_MAX_RESULTS,
+  SEARCH_THEN_FETCH_DEFAULT_MAX_RESULTS,
+} from '../constants/research-client.constants';
 import type {
   ResearchRequest,
   ResearchRunResponse,
 } from '../../modules/chat-messages/types/research.types';
+import { ResearchWorkflow } from '../enums/research-workflow.enum';
 
 const logger = new Logger('ResearchClient');
 
@@ -29,9 +36,9 @@ export async function runResearch(
         searchProviderId: request.searchProviderId,
         requestedModel: request.requestedModel,
         requestedProvider: request.requestedProvider,
-        maxResults: request.maxResults,
+        maxResults: request.maxResults ?? inferDefaultMaxResults(request.workflow),
       },
-      timeoutMs: 45_000,
+      timeoutMs: RESEARCH_REQUEST_TIMEOUT_MS,
     });
     if (!response.ok) {
       logger.warn(
@@ -46,5 +53,18 @@ export async function runResearch(
     const message = error instanceof Error ? error.message : 'Unknown error';
     logger.warn(`runResearch: failed for user=${request.userId}: ${message}`);
     return null;
+  }
+}
+
+function inferDefaultMaxResults(workflow: ResearchWorkflow): number {
+  switch (workflow) {
+    case ResearchWorkflow.SEARCH_ONLY:
+      return SEARCH_ONLY_DEFAULT_MAX_RESULTS;
+    case ResearchWorkflow.SEARCH_THEN_FETCH:
+      return SEARCH_THEN_FETCH_DEFAULT_MAX_RESULTS;
+    case ResearchWorkflow.SEARCH_FETCH_EXTRACT:
+      return SEARCH_FETCH_EXTRACT_DEFAULT_MAX_RESULTS;
+    default:
+      return SEARCH_ONLY_DEFAULT_MAX_RESULTS;
   }
 }
