@@ -354,7 +354,7 @@ services:
   # ClamAV (Antivirus file scanning)
   # ---------------------------------------------------------------------------
   clamav:
-    image: clamav/clamav:stable
+    image: clamav/clamav-debian:stable
     container_name: claw-clamav
     restart: unless-stopped
     ports:
