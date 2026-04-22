@@ -43,6 +43,7 @@ export interface RoutingDecisionResult {
   complexityClass?: ComplexityClassification['class'];
   explanation?: RoutingExplanation;
   routingDurationMs?: number;
+  routerModel?: string | null;
 }
 
 export type MultiIntentResult = {
@@ -117,6 +118,7 @@ export type OllamaRouterDecision = {
   model: string;
   confidence: number;
   reason: string;
+  routerModel?: string;
 };
 
 export type { RoutingDecision, RoutingPolicy, RoutingMode };

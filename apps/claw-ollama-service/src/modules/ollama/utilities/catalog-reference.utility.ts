@@ -1,4 +1,4 @@
-import type { ModelCatalogEntry } from '../../../generated/prisma';
+import { DownloadStatus, type ModelCatalogEntry } from '../../../generated/prisma';
 import {
   OLLAMA_LIBRARY_BASE_URL,
   OLLAMA_REGISTRY_MANIFEST_PATH_PREFIX,
@@ -53,6 +53,21 @@ export function resolveCatalogSourceUrl(entry: CatalogReferenceInput): string | 
   }
 
   return null;
+}
+
+export function resolveCatalogDownloadStatus(entry: CatalogReferenceInput): DownloadStatus {
+  if (entry.runtime !== 'OLLAMA') {
+    return DownloadStatus.UNAVAILABLE;
+  }
+
+  if (entry.ollamaName !== undefined && entry.ollamaName !== null) {
+    const parsed = parseOllamaModelName(entry.ollamaName);
+    if (parsed.tag.toLowerCase() === 'cloud') {
+      return DownloadStatus.CLOUD_ONLY;
+    }
+  }
+
+  return DownloadStatus.UNKNOWN;
 }
 
 export function resolveOllamaModelReference(ollamaName: string): OllamaModelReference {

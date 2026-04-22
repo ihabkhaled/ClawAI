@@ -1,3 +1,5 @@
+import type { DownloadStatus } from '@/enums';
+
 import type { PaginationMeta } from './audit.types';
 import type { TranslateFunction } from './i18n.types';
 
@@ -20,6 +22,7 @@ export type ModelCatalogEntry = {
   pullJobStatus: string | null;
   isAvailable: boolean;
   isDownloadable: boolean;
+  downloadStatus: DownloadStatus;
   availabilityError: string | null;
   searchBrowserScore: number | null;
   searchBrowserReasons: string[];
@@ -62,6 +65,8 @@ export type DownloadSnapshotMap = Map<string, DownloadSnapshotEntry>;
 
 export type CatalogFilterParams = {
   category?: string;
+  runtime?: string;
+  downloadStatus?: DownloadStatus;
   search?: string;
   capability?: string;
   page?: number;

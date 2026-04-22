@@ -409,6 +409,7 @@ export class RoutingService implements OnModuleInit {
       selectedProvider: decision.selectedProvider,
       selectedModel: decision.selectedModel,
       routingMode: decision.routingMode,
+      routerModel: decision.routerModel ?? null,
       fallbackProvider: fallback?.provider,
       fallbackModel: fallback?.model,
       fallbackChain: decision.fallbackChain,

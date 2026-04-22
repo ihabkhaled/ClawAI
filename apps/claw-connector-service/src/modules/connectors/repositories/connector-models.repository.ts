@@ -1,7 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
-import { type ConnectorModel, type ConnectorProvider } from "../../../generated/prisma";
-import { type NormalizedModel } from "../types/connectors.types";
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { type ConnectorModel, type ConnectorProvider } from '../../../generated/prisma';
+import { type NormalizedModel } from '../types/connectors.types';
 
 @Injectable()
 export class ConnectorModelsRepository {
@@ -48,10 +48,62 @@ export class ConnectorModelsRepository {
     return results.length;
   }
 
+  async replaceMany(
+    connectorId: string,
+    provider: ConnectorProvider,
+    models: NormalizedModel[],
+  ): Promise<{ upserted: number; deleted: number }> {
+    const uniqueModels = [...new Map(models.map((model) => [model.modelKey, model])).values()];
+    const modelKeys = uniqueModels.map((model) => model.modelKey);
+
+    const operations = [
+      this.prisma.connectorModel.deleteMany({
+        where: {
+          connectorId,
+          ...(modelKeys.length > 0 ? { modelKey: { notIn: modelKeys } } : {}),
+        },
+      }),
+      ...uniqueModels.map((model) =>
+        this.prisma.connectorModel.upsert({
+          where: {
+            connectorId_modelKey: { connectorId, modelKey: model.modelKey },
+          },
+          update: {
+            displayName: model.displayName,
+            lifecycle: model.lifecycle,
+            supportsStreaming: model.capabilities.supportsStreaming,
+            supportsTools: model.capabilities.supportsTools,
+            supportsVision: model.capabilities.supportsVision,
+            supportsAudio: model.capabilities.supportsAudio,
+            supportsStructuredOutput: model.capabilities.supportsStructuredOutput,
+            maxContextTokens: model.capabilities.maxContextTokens,
+            syncedAt: new Date(),
+          },
+          create: {
+            connectorId,
+            provider,
+            modelKey: model.modelKey,
+            displayName: model.displayName,
+            lifecycle: model.lifecycle,
+            supportsStreaming: model.capabilities.supportsStreaming,
+            supportsTools: model.capabilities.supportsTools,
+            supportsVision: model.capabilities.supportsVision,
+            supportsAudio: model.capabilities.supportsAudio,
+            supportsStructuredOutput: model.capabilities.supportsStructuredOutput,
+            maxContextTokens: model.capabilities.maxContextTokens,
+          },
+        }),
+      ),
+    ];
+
+    const [deleted, ...upserted] = await this.prisma.$transaction(operations);
+    return { deleted: (deleted as { count: number }).count, upserted: upserted.length };
+  }
+
   async findByConnectorId(connectorId: string): Promise<ConnectorModel[]> {
     return this.prisma.connectorModel.findMany({
       where: { connectorId },
-      orderBy: { displayName: "asc" },
+      orderBy: { displayName: 'asc' },
     });
   }
 

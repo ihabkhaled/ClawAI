@@ -9,7 +9,10 @@ import {
 } from '../../../generated/prisma';
 import { type CatalogEntryInput, type CatalogFilters } from '../types/catalog.types';
 import { type CatalogEntryDedupRef } from '../types/ollama.types';
-import { resolveCatalogSourceUrl } from '../utilities/catalog-reference.utility';
+import {
+  resolveCatalogDownloadStatus,
+  resolveCatalogSourceUrl,
+} from '../utilities/catalog-reference.utility';
 import { DEPRECATED_DEFAULT_LOCAL_MODEL_KEYS } from '../constants/default-models.constants';
 
 @Injectable()
@@ -54,6 +57,7 @@ export class ModelCatalogRepository {
     const runtime = entry.runtime as RuntimeType;
     const category = entry.category as ModelCategory;
     const sourceUrl = resolveCatalogSourceUrl({ ...entry, runtime });
+    const downloadStatus = resolveCatalogDownloadStatus({ ...entry, runtime });
 
     await this.prisma.modelCatalogEntry.upsert({
       where: { name_tag_runtime: { name: entry.name, tag: entry.tag, runtime } },
@@ -65,6 +69,7 @@ export class ModelCatalogRepository {
         parameterCount: entry.parameterCount,
         ollamaName: entry.ollamaName,
         sourceUrl,
+        downloadStatus,
         isRecommended: entry.isRecommended,
         capabilities: [...entry.capabilities],
       },
@@ -79,6 +84,7 @@ export class ModelCatalogRepository {
         runtime,
         ollamaName: entry.ollamaName,
         sourceUrl,
+        downloadStatus,
         isRecommended: entry.isRecommended,
         capabilities: [...entry.capabilities],
       },
@@ -203,6 +209,10 @@ export class ModelCatalogRepository {
 
     if (filters.runtime !== undefined) {
       where.runtime = filters.runtime;
+    }
+
+    if (filters.downloadStatus !== undefined) {
+      where.downloadStatus = filters.downloadStatus;
     }
 
     if (filters.search !== undefined && filters.search.length > 0) {

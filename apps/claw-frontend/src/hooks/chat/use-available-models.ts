@@ -27,6 +27,7 @@ export function useAvailableModels(): {
 
   const groupedModels = useMemo((): GroupedModels[] => {
     const groups = new Map<string, ModelSelection[]>();
+    const localModelNames = new Set<string>();
 
     // Add local Ollama models first.
     for (const model of localModels) {
@@ -43,11 +44,17 @@ export function useAvailableModels(): {
         displayName: `${fullModelName} (${model.family ?? 'local'})`,
         specifications: getLocalModelSpecificationLabels(model),
       });
+      localModelNames.add(fullModelName);
+      localModelNames.add(`${model.name}:${model.tag}`);
+      localModelNames.add(model.name);
       groups.set(provider, existing);
     }
 
-    // Add cloud connector models.
+    // Add connector models while keeping local downloaded Ollama entries in the local section only.
     for (const model of models) {
+      if (model.provider === 'OLLAMA' && localModelNames.has(model.modelKey)) {
+        continue;
+      }
       const provider = model.provider;
       const existing = groups.get(provider) ?? [];
       existing.push({
@@ -102,5 +109,8 @@ export function useAvailableModels(): {
     return result;
   }, [models, localModels]);
 
-  return { groupedModels, isLoading: isLoadingCloud || isLoadingLocal };
+  return {
+    groupedModels,
+    isLoading: isLoadingCloud || isLoadingLocal,
+  };
 }

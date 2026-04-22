@@ -5,7 +5,10 @@ import {
   DEPRECATED_DEFAULT_LOCAL_MODEL_KEYS,
   isDeprecatedDefaultLocalModel,
 } from '../src/modules/ollama/constants/default-models.constants';
-import { resolveCatalogSourceUrl } from '../src/modules/ollama/utilities/catalog-reference.utility';
+import {
+  resolveCatalogDownloadStatus,
+  resolveCatalogSourceUrl,
+} from '../src/modules/ollama/utilities/catalog-reference.utility';
 
 const prisma = new PrismaClient();
 
@@ -36,6 +39,13 @@ async function seedCatalog(): Promise<void> {
     const runtime = entry.runtime as 'OLLAMA' | 'COMFYUI';
     const sourceUrl = resolveCatalogSourceUrl({ ...entry, runtime });
     const ollamaName = entry.ollamaName ?? `${entry.name}:${entry.tag}`;
+    const downloadStatus = resolveCatalogDownloadStatus({
+      name: entry.name,
+      tag: entry.tag,
+      runtime,
+      ollamaName: entry.ollamaName,
+      sourceUrl,
+    });
     if (runtime === 'OLLAMA') {
       const [name, tag] = ollamaName.split(':');
       const key = `${name}:${tag}`;
@@ -60,6 +70,7 @@ async function seedCatalog(): Promise<void> {
         parameterCount: entry.parameterCount,
         ollamaName: entry.ollamaName,
         sourceUrl,
+        downloadStatus,
         isRecommended: entry.isRecommended,
         capabilities: [...entry.capabilities],
       },
@@ -74,6 +85,7 @@ async function seedCatalog(): Promise<void> {
         runtime,
         ollamaName: entry.ollamaName,
         sourceUrl,
+        downloadStatus,
         isRecommended: entry.isRecommended,
         capabilities: [...entry.capabilities],
       },

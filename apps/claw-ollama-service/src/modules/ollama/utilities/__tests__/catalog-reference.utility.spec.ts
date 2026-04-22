@@ -1,9 +1,11 @@
 import { describe, expect, it } from '@jest/globals';
+import { DownloadStatus } from '../../../../generated/prisma';
 
 import { CATALOG_ENTRIES } from '../../constants/catalog-entries.constants';
 import {
   buildOllamaSlugCandidates,
   ensureCatalogEntryHasReference,
+  resolveCatalogDownloadStatus,
   resolveCatalogSourceUrl,
 } from '../catalog-reference.utility';
 
@@ -21,6 +23,17 @@ describe('catalog-reference.utility', () => {
 
   it('builds generic slug candidates for letter-number names', () => {
     expect(buildOllamaSlugCandidates('model2.1')).toEqual(['model2.1', 'model-2.1']);
+  });
+
+  it('marks cloud-tagged Ollama catalog entries as CLOUD_ONLY', () => {
+    expect(
+      resolveCatalogDownloadStatus({
+        name: 'glm5.1',
+        tag: 'latest',
+        runtime: 'OLLAMA',
+        ollamaName: 'glm-5.1:cloud',
+      }),
+    ).toBe(DownloadStatus.CLOUD_ONLY);
   });
 
   it('resolves a source url for every seeded catalog entry', () => {

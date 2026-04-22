@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { AppConfig } from '../../../../app/config/app.config';
 import { httpGet, httpGetText } from '../../../../common/utilities/http.utility';
 import { ConnectorStatus, ModelLifecycle } from '../../../../generated/prisma';
 import {
@@ -9,8 +8,7 @@ import {
   OLLAMA_CATALOG_MAX_MODELS,
   OLLAMA_CATALOG_POPULAR_URL,
   OLLAMA_CATALOG_USER_AGENT,
-  OLLAMA_CLOUD_TAG,
-  OLLAMA_DEFAULT_TAG,
+  OLLAMA_CLOUD_API_BASE_URL,
   OLLAMA_LOCALHOST_PATTERNS,
 } from '../../constants/ollama.constants';
 import { type HealthCheckResult, type NormalizedModel } from '../../types/connectors.types';
@@ -32,7 +30,8 @@ export class OllamaAdapter implements ProviderAdapter {
 
     try {
       const response = await httpGet<OllamaModelsResponse>({
-        url: `${baseUrl}/api/tags`,
+        url: `${baseUrl}/tags`,
+        headers: this.buildHeaders(config.apiKey),
       });
 
       const latencyMs = Date.now() - start;
@@ -62,12 +61,12 @@ export class OllamaAdapter implements ProviderAdapter {
     const baseUrl = this.resolveBaseUrl(config.baseUrl);
     this.logger.log(`syncModels: syncing Ollama models from ${baseUrl}`);
 
-    const localModels = await this.fetchLocalModels(baseUrl);
-    const publicModels = await this.fetchPublicCatalog();
+    const cloudModels = await this.fetchCloudModels(baseUrl, config.apiKey);
+    const publicModels = await this.fetchPublicCatalog(cloudModels);
 
     const merged: NormalizedModel[] = [];
     const seenKeys = new Set<string>();
-    for (const model of [...localModels, ...publicModels]) {
+    for (const model of [...cloudModels, ...publicModels]) {
       if (!seenKeys.has(model.modelKey)) {
         seenKeys.add(model.modelKey);
         merged.push(model);
@@ -75,25 +74,26 @@ export class OllamaAdapter implements ProviderAdapter {
     }
 
     this.logger.log(
-      `syncModels: local=${String(localModels.length)} public=${String(publicModels.length)} total=${String(merged.length)}`,
+      `syncModels: cloud=${String(cloudModels.length)} public=${String(publicModels.length)} total=${String(merged.length)}`,
     );
-    return merged;
+    return merged.slice(0, OLLAMA_CATALOG_MAX_MODELS);
   }
 
-  private async fetchLocalModels(baseUrl: string): Promise<NormalizedModel[]> {
+  private async fetchCloudModels(baseUrl: string, apiKey: string): Promise<NormalizedModel[]> {
     try {
       const response = await httpGet<OllamaModelsResponse>({
-        url: `${baseUrl}/api/tags`,
+        url: `${baseUrl}/tags`,
+        headers: this.buildHeaders(apiKey),
       });
       if (!response.ok) {
-        this.logger.warn(`fetchLocalModels: status=${String(response.status)} - skipping local`);
+        this.logger.warn(`fetchCloudModels: status=${String(response.status)} - skipping cloud`);
         return [];
       }
       const models = response.data.models ?? [];
       return models.map((model) => this.buildNormalizedModel(model.name, model.name));
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'unknown error';
-      this.logger.warn(`fetchLocalModels: failed - ${msg}`);
+      this.logger.warn(`fetchCloudModels: failed - ${msg}`);
       return [];
     }
   }
@@ -107,15 +107,38 @@ export class OllamaAdapter implements ProviderAdapter {
   }
 
   private resolveBaseUrl(configured: string | undefined): string {
-    const envUrl = AppConfig.get().OLLAMA_BASE_URL;
-    if (configured === undefined || configured.trim() === '') {
-      return envUrl;
+    const trimmed = configured?.trim();
+    if (trimmed === undefined || trimmed.length === 0) {
+      return OLLAMA_CLOUD_API_BASE_URL;
     }
-    const isLocalhost = OLLAMA_LOCALHOST_PATTERNS.some((pattern) => configured.includes(pattern));
+
+    const normalized = trimmed.replace(/\/+$/, '');
+    const isLocalhost = OLLAMA_LOCALHOST_PATTERNS.some((pattern) => normalized.includes(pattern));
     if (isLocalhost) {
-      return envUrl;
+      return OLLAMA_CLOUD_API_BASE_URL;
     }
-    return configured;
+
+    if (normalized.includes('ollama.com')) {
+      if (normalized.endsWith('/api')) {
+        return normalized;
+      }
+      if (normalized.endsWith('/v1')) {
+        return normalized.replace(/\/v1$/, '/api');
+      }
+      return `${normalized}/api`;
+    }
+
+    return normalized;
+  }
+
+  private buildHeaders(apiKey: string): Record<string, string> | undefined {
+    if (apiKey.trim().length === 0) {
+      return undefined;
+    }
+
+    return {
+      Authorization: `Bearer ${apiKey}`,
+    };
   }
 
   private buildNormalizedModel(modelKey: string, displayName: string): NormalizedModel {
@@ -172,7 +195,7 @@ export class OllamaAdapter implements ProviderAdapter {
     }
   }
 
-  private async fetchPublicCatalog(): Promise<NormalizedModel[]> {
+  private async fetchPublicCatalog(cloudModels: NormalizedModel[]): Promise<NormalizedModel[]> {
     const [cloudSlugs, popularSlugs] = await Promise.all([
       this.fetchSlugs(OLLAMA_CATALOG_CLOUD_URL),
       this.fetchSlugs(OLLAMA_CATALOG_POPULAR_URL),
@@ -180,23 +203,22 @@ export class OllamaAdapter implements ProviderAdapter {
 
     const models: NormalizedModel[] = [];
     const seenKeys = new Set<string>();
+    const taggedModelsBySlug = this.groupModelsBySlug(cloudModels);
 
-    for (const slug of cloudSlugs) {
-      const key = `${slug}:${OLLAMA_CLOUD_TAG}`;
-      if (!seenKeys.has(key)) {
-        seenKeys.add(key);
-        models.push(this.buildNormalizedModel(key, `${slug} (cloud)`));
-      }
-    }
-
-    for (const slug of popularSlugs) {
+    for (const slug of [...popularSlugs, ...cloudSlugs]) {
       if (models.length >= OLLAMA_CATALOG_MAX_MODELS) {
         break;
       }
-      const key = `${slug}:${OLLAMA_DEFAULT_TAG}`;
-      if (!seenKeys.has(key)) {
-        seenKeys.add(key);
-        models.push(this.buildNormalizedModel(key, slug));
+
+      const taggedModels = taggedModelsBySlug.get(slug) ?? [];
+      for (const model of taggedModels) {
+        if (models.length >= OLLAMA_CATALOG_MAX_MODELS) {
+          break;
+        }
+        if (!seenKeys.has(model.modelKey)) {
+          seenKeys.add(model.modelKey);
+          models.push(model);
+        }
       }
     }
 
@@ -204,5 +226,22 @@ export class OllamaAdapter implements ProviderAdapter {
       `fetchPublicCatalog: cloud=${String(cloudSlugs.length)} popular=${String(popularSlugs.length)} merged=${String(models.length)}`,
     );
     return models.slice(0, OLLAMA_CATALOG_MAX_MODELS);
+  }
+
+  private groupModelsBySlug(models: NormalizedModel[]): Map<string, NormalizedModel[]> {
+    const grouped = new Map<string, NormalizedModel[]>();
+
+    for (const model of models) {
+      const slug = this.extractSlug(model.modelKey);
+      const existing = grouped.get(slug) ?? [];
+      existing.push(model);
+      grouped.set(slug, existing);
+    }
+
+    return grouped;
+  }
+
+  private extractSlug(modelKey: string): string {
+    return modelKey.split(':')[0]?.trim().toLowerCase() ?? modelKey.trim().toLowerCase();
   }
 }

@@ -102,7 +102,8 @@ const mockConnectorsRepo = (): Partial<Record<keyof ConnectorsRepository, jest.M
 
 const mockModelsRepo = (): Partial<Record<keyof ConnectorModelsRepository, jest.Mock>> => ({
   upsertMany: jest.fn().mockResolvedValue(3),
-  countByConnectorId: jest.fn().mockResolvedValue(0),
+  replaceMany: jest.fn().mockResolvedValue({ upserted: 3, deleted: 0 }),
+  findByConnectorId: jest.fn().mockResolvedValue([]),
 });
 
 const mockHealthEventsRepo = (): Partial<Record<keyof HealthEventsRepository, jest.Mock>> => ({
@@ -171,7 +172,8 @@ describe('ConnectorsManager', () => {
         connectorId: 'conn-1',
         status: ModelSyncStatus.RUNNING,
       });
-      expect(modelsRepo.upsertMany).toHaveBeenCalledWith(
+      expect(modelsRepo.findByConnectorId).toHaveBeenCalledWith('conn-1');
+      expect(modelsRepo.replaceMany).toHaveBeenCalledWith(
         'conn-1',
         ConnectorProvider.OPENAI,
         expect.arrayContaining([expect.objectContaining({ modelKey: 'gpt-4o' })]),
@@ -186,7 +188,7 @@ describe('ConnectorsManager', () => {
     });
 
     it('should calculate modelsAdded correctly for new connector', async () => {
-      modelsRepo.countByConnectorId?.mockResolvedValue(0);
+      modelsRepo.findByConnectorId?.mockResolvedValue([]);
 
       const result = await manager.syncModels(mockConnector);
 
@@ -204,7 +206,7 @@ describe('ConnectorsManager', () => {
       const result = await manager.syncModels(anthropicConnector);
 
       expect(result.modelsFound).toBe(3);
-      expect(modelsRepo.upsertMany).toHaveBeenCalledWith(
+      expect(modelsRepo.replaceMany).toHaveBeenCalledWith(
         'conn-1',
         ConnectorProvider.ANTHROPIC,
         expect.arrayContaining([expect.objectContaining({ modelKey: 'claude-opus-4' })]),
@@ -222,7 +224,7 @@ describe('ConnectorsManager', () => {
       const result = await manager.syncModels(grokConnector);
 
       expect(result.modelsFound).toBe(4);
-      expect(modelsRepo.upsertMany).toHaveBeenCalledWith(
+      expect(modelsRepo.replaceMany).toHaveBeenCalledWith(
         'conn-1',
         ConnectorProvider.GROK,
         expect.arrayContaining([
@@ -272,7 +274,19 @@ describe('ConnectorsManager', () => {
 
   describe('syncModels - modelsRemoved calculation', () => {
     it('should calculate modelsRemoved when existing models exceed synced models', async () => {
-      modelsRepo.countByConnectorId?.mockResolvedValue(10);
+      modelsRepo.findByConnectorId?.mockResolvedValue([
+        { modelKey: 'gpt-4o' },
+        { modelKey: 'gpt-4o-mini' },
+        { modelKey: 'gpt-3.5-turbo' },
+        { modelKey: 'old-1' },
+        { modelKey: 'old-2' },
+        { modelKey: 'old-3' },
+        { modelKey: 'old-4' },
+        { modelKey: 'old-5' },
+        { modelKey: 'old-6' },
+        { modelKey: 'old-7' },
+      ]);
+      modelsRepo.replaceMany?.mockResolvedValueOnce({ upserted: 3, deleted: 7 });
 
       const result = await manager.syncModels(mockConnector);
 

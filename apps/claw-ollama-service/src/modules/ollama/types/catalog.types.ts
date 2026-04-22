@@ -1,4 +1,5 @@
 import type {
+  DownloadStatus,
   ModelCatalogEntry,
   ModelCategory,
   PullJobStatus,
@@ -23,6 +24,7 @@ export type CatalogEntryInput = {
 export type CatalogFilters = {
   category?: ModelCategory;
   runtime?: RuntimeType;
+  downloadStatus?: DownloadStatus;
   search?: string;
   searchBrowserMinScore?: number;
   onlySearchBrowser?: boolean;

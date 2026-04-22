@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { Subject } from 'rxjs';
 import {
   type ModelCatalogEntry,
@@ -13,6 +13,7 @@ import { RuntimeConfigsRepository } from '../repositories/runtime-configs.reposi
 import { DEPRECATED_DEFAULT_LOCAL_MODEL_KEYS } from '../constants/default-models.constants';
 import { getRuntimeAdapter } from './adapters/runtime-adapter-factory';
 import { OllamaRuntimeAdapter } from './adapters/ollama-runtime.adapter';
+import { BusinessException } from '../../../common/errors';
 import {
   type GenerateRequest,
   type GenerateResponse,
@@ -333,9 +334,9 @@ export class OllamaManager {
       );
       return response;
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : String(error);
-      this.logger.error(`generate: failed model=${request.model} error=${msg}`);
-      throw error;
+      const errorMessage = this.extractGenerateErrorMessage(error);
+      this.logger.error(`generate: failed model=${request.model} error=${errorMessage}`);
+      throw new BusinessException(errorMessage, 'OLLAMA_REQUEST_FAILED', HttpStatus.BAD_GATEWAY);
     }
   }
 
@@ -406,5 +407,33 @@ export class OllamaManager {
 
     this.logger.log(`syncFromRuntime: synced ${String(runtimeModels.length)} models`);
     return runtimeModels.length;
+  }
+
+  private extractGenerateErrorMessage(error: unknown): string {
+    if (error !== null && typeof error === 'object') {
+      const payload = error as Record<string, unknown>;
+      const response = payload['response'];
+
+      if (response !== null && typeof response === 'object') {
+        const responsePayload = response as Record<string, unknown>;
+        const data = responsePayload['data'];
+        if (data !== null && typeof data === 'object') {
+          const dataPayload = data as Record<string, unknown>;
+          const message = dataPayload['message'];
+          if (typeof message === 'string' && message.trim().length > 0) {
+            return message;
+          }
+
+          const errorMessage = dataPayload['error'];
+          if (typeof errorMessage === 'string' && errorMessage.trim().length > 0) {
+            return errorMessage;
+          }
+        }
+      }
+    }
+
+    return error instanceof Error && error.message.trim().length > 0
+      ? error.message
+      : 'Ollama runtime request failed';
   }
 }

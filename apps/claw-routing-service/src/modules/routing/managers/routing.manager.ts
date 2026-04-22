@@ -163,8 +163,9 @@ export class RoutingManager {
       return imageChain;
     }
 
-    const chain: FallbackEntry[] = [];
     const isLocalPrimary = primary.provider === LOCAL_PROVIDER;
+    const cloudFallbacks: FallbackEntry[] = [];
+    const localFallbacks: FallbackEntry[] = [];
 
     const allCloudProviders: FallbackEntry[] = [
       { provider: CLOUD_PROVIDER_ANTHROPIC, model: CLOUD_MODEL_DEFAULT },
@@ -181,15 +182,15 @@ export class RoutingManager {
           this.logger.debug(
             `buildFallbackChain: adding cloud fallback ${cloud.provider}/${cloud.model}`,
           );
-          chain.push(cloud);
+          cloudFallbacks.push(cloud);
         }
       }
     } else {
-      // Fallback from cloud: try local first, then other cloud connectors
+      // Fallback from cloud: try other cloud connectors first, then local models.
       this.logger.debug('buildFallbackChain: primary is cloud — checking local + other clouds');
       if (this.isRuntimeHealthy('OLLAMA', context)) {
         this.logger.debug('buildFallbackChain: adding local fallback');
-        chain.push({ provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT });
+        localFallbacks.push({ provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT });
       }
       for (const cloud of allCloudProviders) {
         if (
@@ -199,24 +200,25 @@ export class RoutingManager {
           this.logger.debug(
             `buildFallbackChain: adding cloud fallback ${cloud.provider}/${cloud.model}`,
           );
-          chain.push(cloud);
+          cloudFallbacks.push(cloud);
         }
       }
     }
 
     // Sort by cost (cheapest first) when in cost-saving mode
     if (sortByCost) {
-      chain.sort(
+      cloudFallbacks.sort(
         (a, b) => this.estimateProviderCost(a.provider) - this.estimateProviderCost(b.provider),
       );
       this.logger.debug('buildFallbackChain: sorted fallbacks by cost (cheapest first)');
     }
 
-    chain.sort(
+    cloudFallbacks.sort(
       (a, b) =>
         this.getLatencyPenalty(a.provider, context) - this.getLatencyPenalty(b.provider, context),
     );
 
+    const chain = [...cloudFallbacks, ...localFallbacks];
     this.logger.debug(`buildFallbackChain: chain built with ${String(chain.length)} entries`);
     return chain;
   }
@@ -462,6 +464,7 @@ export class RoutingManager {
         costClass: selectedProvider === LOCAL_PROVIDER ? 'free' : 'medium',
         detectedCategory: localEnforcementDomain?.replace('domain_', ''),
         fallbackChain: this.buildFallbackChain(primary, context),
+        routerModel: ollamaDecision.routerModel,
       };
     }
 

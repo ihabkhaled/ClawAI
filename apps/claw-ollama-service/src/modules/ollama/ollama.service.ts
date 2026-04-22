@@ -160,6 +160,7 @@ export class OllamaService implements OnModuleInit {
     const filters = {
       category: query.category,
       runtime: query.runtime,
+      downloadStatus: query.downloadStatus,
       search: query.search,
       onlySearchBrowser,
       searchBrowserMinScore: onlySearchBrowser ? (query.minScore ?? 0.5) : query.minScore,

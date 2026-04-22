@@ -1,5 +1,6 @@
 export const OLLAMA_DEFAULT_BASE_URL = 'http://ollama:11434';
 export const OLLAMA_LOCALHOST_PATTERNS = ['localhost', '127.0.0.1', '0.0.0.0'];
+export const OLLAMA_CLOUD_API_BASE_URL = 'https://ollama.com/api';
 
 export const OLLAMA_CATALOG_CLOUD_URL = 'https://ollama.com/search?c=cloud';
 export const OLLAMA_CATALOG_POPULAR_URL = 'https://ollama.com/library?sort=popular';

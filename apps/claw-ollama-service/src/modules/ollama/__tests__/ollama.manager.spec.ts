@@ -292,5 +292,22 @@ describe('OllamaManager', () => {
       expect(result.response).toBe('Hello!');
       expect(result.done).toBe(true);
     });
+
+    it('should surface upstream runtime errors with the original message', async () => {
+      mockRuntimeAdapter.generate.mockRejectedValueOnce({
+        response: {
+          data: {
+            message: 'Request failed with status code 401',
+          },
+        },
+      });
+
+      await expect(
+        manager.generate({
+          model: 'llama3',
+          prompt: 'Hello',
+        }),
+      ).rejects.toThrow('Request failed with status code 401');
+    });
   });
 });

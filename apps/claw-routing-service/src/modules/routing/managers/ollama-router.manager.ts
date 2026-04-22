@@ -106,7 +106,7 @@ export class OllamaRouterManager implements OnModuleInit, OnModuleDestroy {
           this.logger.log(
             `route: router selected unavailable provider ${normalized.provider}; using ${LOCAL_PROVIDER}/${LOCAL_MODEL_DEFAULT}`,
           );
-          return localFallback;
+          return { ...localFallback, routerModel };
         }
         return null;
       }
@@ -115,7 +115,7 @@ export class OllamaRouterManager implements OnModuleInit, OnModuleDestroy {
         `route: Ollama router decision: ${normalized.provider}/${normalized.model} (confidence=${String(normalized.confidence)}, reason=${normalized.reason})`,
       );
 
-      return normalized;
+      return { ...normalized, routerModel };
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`route: Ollama router failed (falling back to heuristic): ${msg}`);

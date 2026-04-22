@@ -159,9 +159,9 @@ export class ChatExecutionManager implements OnModuleInit {
             fastPathEscalated,
             executionPath: fastPathEscalated
               ? 'fast_escalated'
-              : executionOptions.fastPathEnabled
+              : (executionOptions.fastPathEnabled
                 ? 'fast'
-                : 'standard',
+                : 'standard'),
             targetLatencyMs: executionOptions.fastPathEnabled
               ? FAST_PATH_TARGET_LATENCY_MS
               : STANDARD_TARGET_LATENCY_MS,
@@ -240,9 +240,9 @@ export class ChatExecutionManager implements OnModuleInit {
             fastPathEscalated,
             executionPath: fastPathEscalated
               ? 'fast_escalated'
-              : executionOptions.fastPathEnabled
+              : (executionOptions.fastPathEnabled
                 ? 'fast'
-                : 'standard',
+                : 'standard'),
             targetLatencyMs: executionOptions.fastPathEnabled
               ? FAST_PATH_TARGET_LATENCY_MS
               : STANDARD_TARGET_LATENCY_MS,
@@ -255,9 +255,9 @@ export class ChatExecutionManager implements OnModuleInit {
           fastPathEscalated,
           executionPath: fastPathEscalated
             ? 'fast_escalated'
-            : executionOptions.fastPathEnabled
+            : (executionOptions.fastPathEnabled
               ? 'fast'
-              : 'standard',
+              : 'standard'),
           targetLatencyMs: executionOptions.fastPathEnabled
             ? FAST_PATH_TARGET_LATENCY_MS
             : STANDARD_TARGET_LATENCY_MS,

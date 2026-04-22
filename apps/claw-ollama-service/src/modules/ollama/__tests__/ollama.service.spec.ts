@@ -7,7 +7,12 @@ import { type OllamaManager } from '../managers/ollama.manager';
 import { type CatalogRemoteMetadataService } from '../services/catalog-remote-metadata.service';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EntityNotFoundException } from '../../../common/errors';
-import { LocalModelRole, ModelCategory, RuntimeType } from '../../../generated/prisma';
+import {
+  DownloadStatus,
+  LocalModelRole,
+  ModelCategory,
+  RuntimeType,
+} from '../../../generated/prisma';
 
 jest.mock('../managers/adapters/runtime-adapter-factory', () => ({
   getRuntimeAdapter: jest.fn(),
@@ -48,6 +53,7 @@ const mockCatalogEntry = {
   runtime: RuntimeType.OLLAMA,
   ollamaName: 'llama3:latest',
   sourceUrl: 'https://ollama.com/library/stale-llama3',
+  downloadStatus: DownloadStatus.UNKNOWN,
   isRecommended: false,
   capabilities: [],
   createdAt: new Date(),
@@ -197,6 +203,27 @@ describe('OllamaService', () => {
       );
       expect(result.data[0]?.sourceUrl).toBe('https://ollama.com/library/llama3');
       expect(result.data[0]?.isInstalled).toBe(true);
+    });
+
+    it('should pass downloadStatus filters to the repository', async () => {
+      modelCatalogRepo.findAll?.mockResolvedValue([]);
+      modelCatalogRepo.countAll?.mockResolvedValue(0);
+
+      await service.getCatalog({
+        page: 1,
+        limit: 20,
+        runtime: RuntimeType.OLLAMA,
+        downloadStatus: DownloadStatus.CLOUD_ONLY,
+      });
+
+      expect(modelCatalogRepo.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          runtime: RuntimeType.OLLAMA,
+          downloadStatus: DownloadStatus.CLOUD_ONLY,
+        }),
+        1,
+        20,
+      );
     });
   });
 

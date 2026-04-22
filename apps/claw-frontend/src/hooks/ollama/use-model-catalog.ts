@@ -11,6 +11,12 @@ export function useModelCatalog(params: CatalogFilterParams) {
   if (params.category) {
     filters['category'] = params.category;
   }
+  if (params.runtime) {
+    filters['runtime'] = params.runtime;
+  }
+  if (params.downloadStatus) {
+    filters['downloadStatus'] = params.downloadStatus;
+  }
   if (params.search) {
     filters['search'] = params.search;
   }
@@ -24,6 +30,12 @@ export function useModelCatalog(params: CatalogFilterParams) {
       const queryParams: Record<string, string> = {};
       if (params.category) {
         queryParams['category'] = params.category;
+      }
+      if (params.runtime) {
+        queryParams['runtime'] = params.runtime;
+      }
+      if (params.downloadStatus) {
+        queryParams['downloadStatus'] = params.downloadStatus;
       }
       if (params.search) {
         queryParams['search'] = params.search;

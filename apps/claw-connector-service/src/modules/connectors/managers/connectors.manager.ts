@@ -1,17 +1,14 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { type Connector, ModelSyncStatus } from "../../../generated/prisma";
-import { AppConfig } from "../../../app/config/app.config";
-import { decrypt } from "../../../common/utilities";
-import { ConnectorModelsRepository } from "../repositories/connector-models.repository";
-import { HealthEventsRepository } from "../repositories/health-events.repository";
-import { SyncRunsRepository } from "../repositories/sync-runs.repository";
-import { ConnectorsRepository } from "../repositories/connectors.repository";
-import { getAdapter } from "./adapters/adapter-factory";
-import { type ConnectorConfig } from "./provider-adapter.interface";
-import {
-  type HealthCheckResult,
-  type SyncModelsResult,
-} from "../types/connectors.types";
+import { Injectable, Logger } from '@nestjs/common';
+import { type Connector, ModelSyncStatus } from '../../../generated/prisma';
+import { AppConfig } from '../../../app/config/app.config';
+import { decrypt } from '../../../common/utilities';
+import { ConnectorModelsRepository } from '../repositories/connector-models.repository';
+import { HealthEventsRepository } from '../repositories/health-events.repository';
+import { SyncRunsRepository } from '../repositories/sync-runs.repository';
+import { ConnectorsRepository } from '../repositories/connectors.repository';
+import { getAdapter } from './adapters/adapter-factory';
+import { type ConnectorConfig } from './provider-adapter.interface';
+import { type HealthCheckResult, type SyncModelsResult } from '../types/connectors.types';
 
 @Injectable()
 export class ConnectorsManager {
@@ -25,7 +22,9 @@ export class ConnectorsManager {
   ) {}
 
   async testConnector(connector: Connector): Promise<HealthCheckResult> {
-    this.logger.log(`testConnector: testing connector ${connector.id} provider=${connector.provider}`);
+    this.logger.log(
+      `testConnector: testing connector ${connector.id} provider=${connector.provider}`,
+    );
     this.logger.debug('testConnector: decrypting connector config');
     const config = this.getDecryptedConfig(connector);
     this.logger.debug(`testConnector: getting adapter for provider=${connector.provider}`);
@@ -33,7 +32,9 @@ export class ConnectorsManager {
     this.logger.debug('testConnector: running health check');
     const result = await adapter.healthCheck(config);
 
-    this.logger.log(`testConnector: result status=${result.status} latencyMs=${String(result.latencyMs)}`);
+    this.logger.log(
+      `testConnector: result status=${result.status} latencyMs=${String(result.latencyMs)}`,
+    );
     this.logger.debug('testConnector: storing health event');
     await this.healthEventsRepository.create({
       connectorId: connector.id,
@@ -49,7 +50,9 @@ export class ConnectorsManager {
   }
 
   async syncModels(connector: Connector): Promise<SyncModelsResult> {
-    this.logger.log(`syncModels: syncing models for connector ${connector.id} provider=${connector.provider}`);
+    this.logger.log(
+      `syncModels: syncing models for connector ${connector.id} provider=${connector.provider}`,
+    );
     this.logger.debug('syncModels: decrypting connector config');
     const config = this.getDecryptedConfig(connector);
     this.logger.debug(`syncModels: getting adapter for provider=${connector.provider}`);
@@ -64,18 +67,27 @@ export class ConnectorsManager {
 
     try {
       this.logger.debug('syncModels: fetching models from provider');
+      const existingModels = await this.connectorModelsRepository.findByConnectorId(connector.id);
+      const existingKeys = new Set(existingModels.map((model) => model.modelKey));
       const models = await adapter.syncModels(config);
       this.logger.debug(`syncModels: provider returned ${String(models.length)} models`);
+      const nextKeys = new Set(models.map((model) => model.modelKey));
 
-      this.logger.debug('syncModels: counting existing models in DB');
-      const existingCount = await this.connectorModelsRepository.countByConnectorId(connector.id);
-      this.logger.debug(`syncModels: existing models in DB=${String(existingCount)}`);
+      this.logger.debug('syncModels: replacing connector models with latest provider snapshot');
+      const syncResult = await this.connectorModelsRepository.replaceMany(
+        connector.id,
+        connector.provider,
+        models,
+      );
 
-      this.logger.debug('syncModels: upserting models');
-      await this.connectorModelsRepository.upsertMany(connector.id, connector.provider, models);
+      const modelsAdded = models.filter((model) => !existingKeys.has(model.modelKey)).length;
+      const modelsRemoved = existingModels.filter((model) => !nextKeys.has(model.modelKey)).length;
 
-      const modelsAdded = Math.max(0, models.length - existingCount);
-      const modelsRemoved = Math.max(0, existingCount - models.length);
+      if (syncResult.deleted !== modelsRemoved) {
+        this.logger.warn(
+          `syncModels: deleted count ${String(syncResult.deleted)} did not match computed removed count ${String(modelsRemoved)}`,
+        );
+      }
 
       this.logger.debug('syncModels: updating sync run as COMPLETED');
       await this.syncRunsRepository.update(syncRun.id, {
@@ -86,10 +98,12 @@ export class ConnectorsManager {
         completedAt: new Date(),
       });
 
-      this.logger.log(`syncModels: completed - found=${String(models.length)} added=${String(modelsAdded)} removed=${String(modelsRemoved)}`);
+      this.logger.log(
+        `syncModels: completed - found=${String(models.length)} added=${String(modelsAdded)} removed=${String(modelsRemoved)}`,
+      );
       return { modelsFound: models.length, modelsAdded, modelsRemoved };
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown sync error";
+      const errorMessage = error instanceof Error ? error.message : 'Unknown sync error';
       this.logger.error(`syncModels: failed for connector ${connector.id} - ${errorMessage}`);
       this.logger.debug('syncModels: updating sync run as FAILED');
       await this.syncRunsRepository.update(syncRun.id, {
@@ -106,8 +120,10 @@ export class ConnectorsManager {
     const config = AppConfig.get();
     const apiKey = connector.encryptedConfig
       ? decrypt(connector.encryptedConfig, config.ENCRYPTION_KEY)
-      : "";
-    this.logger.debug(`getDecryptedConfig: config decrypted — hasApiKey=${String(apiKey.length > 0)} baseUrl=${connector.baseUrl ?? 'default'}`);
+      : '';
+    this.logger.debug(
+      `getDecryptedConfig: config decrypted — hasApiKey=${String(apiKey.length > 0)} baseUrl=${connector.baseUrl ?? 'default'}`,
+    );
 
     return {
       provider: connector.provider,

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ModelCategory, RuntimeType } from '../../../generated/prisma';
+import { DownloadStatus, ModelCategory, RuntimeType } from '../../../generated/prisma';
 import { ModelCapability } from '../../../common/enums/model-capability.enum';
 import {
   CATALOG_DEFAULT_LIMIT,
@@ -13,6 +13,7 @@ export const listCatalogQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(CATALOG_MAX_LIMIT).default(CATALOG_DEFAULT_LIMIT),
   category: z.nativeEnum(ModelCategory).optional(),
   runtime: z.nativeEnum(RuntimeType).optional(),
+  downloadStatus: z.nativeEnum(DownloadStatus).optional(),
   search: z.string().max(CATALOG_SEARCH_MAX_LENGTH).optional(),
   capability: z.nativeEnum(ModelCapability).optional(),
   minScore: z.coerce.number().min(0).max(1).optional(),

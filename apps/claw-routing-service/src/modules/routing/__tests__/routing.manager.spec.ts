@@ -259,6 +259,19 @@ describe('RoutingManager', () => {
       expect(result.reasonTags).toContain('capability_web_search');
     });
 
+    it('detects image generation requests before category routing', async () => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'generate a picture of a lighthouse at sunset',
+        connectorHealth: { OPENAI: true, ANTHROPIC: true, GEMINI: true },
+        userMode: RoutingMode.AUTO,
+      });
+
+      expect(result.selectedProvider).toBe('IMAGE_GEMINI');
+      expect(result.selectedModel).toBe('gemini-2.5-flash-image');
+      expect(result.reasonTags).toContain('image_generation');
+    });
+
     it('privacy enforcement still takes precedence over capability routing', async () => {
       // Medical content + vision keyword → local (privacy wins)
       const result = await manager.evaluateRoute({
@@ -1039,6 +1052,11 @@ describe('RoutingManager', () => {
       const chain = manager.buildFallbackChain(primary, baseContext);
 
       expect(chain.some((f) => f.provider === 'local-ollama')).toBe(true);
+      const localIndex = chain.findIndex((f) => f.provider === 'local-ollama');
+      const anthropicIndex = chain.findIndex((f) => f.provider === 'ANTHROPIC');
+      if (anthropicIndex >= 0 && localIndex >= 0) {
+        expect(anthropicIndex).toBeLessThan(localIndex);
+      }
     });
 
     it('should only include healthy providers in chain', () => {
