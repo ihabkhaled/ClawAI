@@ -668,7 +668,7 @@ Active policies (sorted by priority) can override the mode.
 
 Every file upload goes through 4 security checks before being saved:
 
-1. **Antivirus Scan** — ClamAV Docker container (`clamav/clamav:stable`, port 3310). Files sent via TCP INSTREAM protocol. Graceful degradation if ClamAV is down (fail-safe: rejects).
+1. **Antivirus Scan** — ClamAV Docker container (`clamav/clamav-debian:stable`, port 3310). Files sent via TCP INSTREAM protocol. Graceful degradation if ClamAV is down (fail-safe: rejects).
 2. **Magic Byte Validation** — Verifies file content matches declared MIME type (PDF, PNG, JPEG, GIF, WebP, ZIP/DOCX signatures).
 3. **Filename Validation** — Blocks path traversal (`../`, `\`, `/`), null bytes, double extensions (`.exe.pdf`), 30+ dangerous extensions (`.exe`, `.dll`, `.bat`, `.ps1`, `.vbs`, etc.).
 4. **ZIP Bomb Detection** — Checks for suspicious null byte patterns in archives.

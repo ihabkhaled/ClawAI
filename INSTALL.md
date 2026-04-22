@@ -72,41 +72,41 @@ curl http://localhost:4000/api/v1/health
 
 ### What Starts (33 containers)
 
-| Container                   | Type          | Host Port    | Internal Port |
-| --------------------------- | ------------- | ------------ | ------------- |
-| claw-auth-service           | Microservice  | 4001         | 4001          |
-| claw-chat-service           | Microservice  | 4002         | 4002          |
-| claw-connector-service      | Microservice  | 4003         | 4003          |
-| claw-routing-service        | Microservice  | 4004         | 4004          |
-| claw-memory-service         | Microservice  | 4005         | 4005          |
-| claw-file-service           | Microservice  | 4006         | 4006          |
-| claw-audit-service          | Microservice  | 4007         | 4007          |
-| claw-ollama-service         | Microservice  | 4008         | 4008          |
-| claw-health-service         | Microservice  | 4009         | 4009          |
-| claw-client-logs-service    | Microservice  | 4010         | 4010          |
-| claw-server-logs-service    | Microservice  | 4011         | 4011          |
-| claw-image-service          | Microservice  | 4012         | 4012          |
-| claw-file-generation-service| Microservice  | 4013         | 4013          |
-| claw-workspace-service      | Microservice  | 4014         | 4014          |
-| claw-agent-service          | Microservice  | 4015         | 4015          |
-| claw-frontend               | Next.js       | 3000         | 3000          |
-| claw-nginx                  | Reverse Proxy | 4000         | 80            |
-| claw-pg-auth                | PostgreSQL    | 5441         | 5432          |
-| claw-pg-chat                | PostgreSQL    | 5442         | 5432          |
-| claw-pg-connector           | PostgreSQL    | 5443         | 5432          |
-| claw-pg-routing             | PostgreSQL    | 5444         | 5432          |
-| claw-pg-memory              | PostgreSQL    | 5445         | 5432          |
-| claw-pg-files               | PostgreSQL    | 5446         | 5432          |
-| claw-pg-ollama              | PostgreSQL    | 5447         | 5432          |
-| claw-pg-images              | PostgreSQL    | 5448         | 5432          |
-| claw-pg-file-generations    | PostgreSQL    | 5449         | 5432          |
-| claw-pg-workspace           | PostgreSQL    | 5450         | 5432          |
-| claw-pg-agent               | PostgreSQL    | 5451         | 5432          |
-| claw-mongodb                | MongoDB       | 27018        | 27017         |
-| claw-redis                  | Redis         | 6380         | 6379          |
-| claw-rabbitmq               | RabbitMQ      | 5672 / 15672 | 5672 / 15672  |
-| claw-ollama                 | Ollama        | 11434        | 11434         |
-| claw-clamav                 | ClamAV        | 3310         | 3310          |
+| Container                    | Type          | Host Port    | Internal Port |
+| ---------------------------- | ------------- | ------------ | ------------- |
+| claw-auth-service            | Microservice  | 4001         | 4001          |
+| claw-chat-service            | Microservice  | 4002         | 4002          |
+| claw-connector-service       | Microservice  | 4003         | 4003          |
+| claw-routing-service         | Microservice  | 4004         | 4004          |
+| claw-memory-service          | Microservice  | 4005         | 4005          |
+| claw-file-service            | Microservice  | 4006         | 4006          |
+| claw-audit-service           | Microservice  | 4007         | 4007          |
+| claw-ollama-service          | Microservice  | 4008         | 4008          |
+| claw-health-service          | Microservice  | 4009         | 4009          |
+| claw-client-logs-service     | Microservice  | 4010         | 4010          |
+| claw-server-logs-service     | Microservice  | 4011         | 4011          |
+| claw-image-service           | Microservice  | 4012         | 4012          |
+| claw-file-generation-service | Microservice  | 4013         | 4013          |
+| claw-workspace-service       | Microservice  | 4014         | 4014          |
+| claw-agent-service           | Microservice  | 4015         | 4015          |
+| claw-frontend                | Next.js       | 3000         | 3000          |
+| claw-nginx                   | Reverse Proxy | 4000         | 80            |
+| claw-pg-auth                 | PostgreSQL    | 5441         | 5432          |
+| claw-pg-chat                 | PostgreSQL    | 5442         | 5432          |
+| claw-pg-connector            | PostgreSQL    | 5443         | 5432          |
+| claw-pg-routing              | PostgreSQL    | 5444         | 5432          |
+| claw-pg-memory               | PostgreSQL    | 5445         | 5432          |
+| claw-pg-files                | PostgreSQL    | 5446         | 5432          |
+| claw-pg-ollama               | PostgreSQL    | 5447         | 5432          |
+| claw-pg-images               | PostgreSQL    | 5448         | 5432          |
+| claw-pg-file-generations     | PostgreSQL    | 5449         | 5432          |
+| claw-pg-workspace            | PostgreSQL    | 5450         | 5432          |
+| claw-pg-agent                | PostgreSQL    | 5451         | 5432          |
+| claw-mongodb                 | MongoDB       | 27018        | 27017         |
+| claw-redis                   | Redis         | 6380         | 6379          |
+| claw-rabbitmq                | RabbitMQ      | 5672 / 15672 | 5672 / 15672  |
+| claw-ollama                  | Ollama        | 11434        | 11434         |
+| claw-clamav                  | ClamAV        | 3310         | 3310          |
 
 ---
 
@@ -128,15 +128,15 @@ At minimum, update these values:
 
 If you want to test the newer platform capabilities, also review:
 
-| Variable | Purpose |
-| -------- | ------- |
-| `WORKSPACE_SERVICE_URL` | Internal workspace service base URL |
-| `AGENT_SERVICE_URL` | Internal agent service base URL |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub workspace OAuth |
-| `SLACK_CLIENT_ID` / `SLACK_CLIENT_SECRET` | Slack workspace OAuth |
-| `JIRA_CLIENT_ID` / `JIRA_CLIENT_SECRET` | Jira workspace OAuth |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google workspace OAuth |
-| `CLAMAV_ENABLED` | Enable or disable antivirus scanning |
+| Variable                                    | Purpose                              |
+| ------------------------------------------- | ------------------------------------ |
+| `WORKSPACE_SERVICE_URL`                     | Internal workspace service base URL  |
+| `AGENT_SERVICE_URL`                         | Internal agent service base URL      |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub workspace OAuth               |
+| `SLACK_CLIENT_ID` / `SLACK_CLIENT_SECRET`   | Slack workspace OAuth                |
+| `JIRA_CLIENT_ID` / `JIRA_CLIENT_SECRET`     | Jira workspace OAuth                 |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google workspace OAuth               |
+| `CLAMAV_ENABLED`                            | Enable or disable antivirus scanning |
 
 To generate secure random values:
 
@@ -305,15 +305,18 @@ docker compose -f docker-compose.dev.yml up -d ollama ollama-service
 
 This starts the Ollama container on port `11434`.
 
-### Running Ollama With GPU (NVIDIA)
+### Running Ollama With GPU
 
 Prerequisites:
 
-1. Install [NVIDIA GPU drivers](https://www.nvidia.com/drivers) for your card.
-2. Install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
-3. Verify GPU access: `nvidia-smi` should show your GPU.
+1. For NVIDIA GPUs, install [NVIDIA GPU drivers](https://www.nvidia.com/drivers) for your card.
+2. For NVIDIA GPUs in Docker, install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
+3. Verify GPU access on your platform:
+   - NVIDIA: `nvidia-smi` should show your GPU.
+   - macOS / Apple Silicon: use native Ollama on the host if you want Metal acceleration.
+   - AMD / Radeon: the installer will detect the GPU, but Docker passthrough still depends on your runtime setup.
 
-The current dev stack does not use a separate Docker profile for GPU. If Docker can see the GPU, Ollama can use it automatically.
+The current dev stack does not use a separate Docker profile for GPU. If Docker can see the GPU on a supported host, Ollama can use it automatically.
 
 ### Pulling Local Models
 

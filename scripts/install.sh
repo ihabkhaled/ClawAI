@@ -20,6 +20,7 @@ ask()   { printf "${CYAN}[?]${NC}     %s" "$1"; }
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
+ENV_FILE="$PROJECT_ROOT/.env"
 
 # ─── Banner ──────────────────────────────────────────────────────────────────
 echo ""
@@ -60,6 +61,105 @@ gen_password() {
   else
     node -e "console.log(require('crypto').randomBytes(15).toString('base64url').slice(0,20))"
   fi
+}
+
+get_env_value() {
+  local key="$1"
+  local file="$2"
+
+  if [ ! -f "$file" ]; then
+    return 0
+  fi
+
+  awk -F= -v key="$key" '
+    $1 == key {
+      sub(/^[^=]*=/, "", $0)
+      print
+      exit
+    }
+  ' "$file"
+}
+
+detect_gpu() {
+  local gpu_name=""
+  local gpu_vendor=""
+  local machine_os
+  machine_os="$(uname -s 2>/dev/null || echo "")"
+
+  if command -v nvidia-smi &>/dev/null; then
+    gpu_name="$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1 | tr -d '\r')"
+    if [ -n "$gpu_name" ]; then
+      echo "nvidia|$gpu_name"
+      return 0
+    fi
+  fi
+
+  if [ "$machine_os" = "Darwin" ] && command -v system_profiler &>/dev/null; then
+    gpu_name="$(system_profiler SPDisplaysDataType 2>/dev/null | awk -F': ' '/Chipset Model|Model/ {print $2; exit}' | tr -d '\r')"
+    if [ -n "$gpu_name" ]; then
+      case "$gpu_name" in
+        *NVIDIA*) gpu_vendor="nvidia" ;;
+        *AMD*|*Radeon*) gpu_vendor="amd" ;;
+        *Apple*) gpu_vendor="apple" ;;
+        *Intel*) gpu_vendor="intel" ;;
+        *) gpu_vendor="unknown" ;;
+      esac
+      echo "$gpu_vendor|$gpu_name"
+      return 0
+    fi
+  fi
+
+  if command -v lspci &>/dev/null; then
+    gpu_name="$(lspci 2>/dev/null | awk '/VGA compatible controller|3D controller|Display controller/ {sub(/.*: /, "", $0); print; exit}' | tr -d '\r')"
+    if [ -n "$gpu_name" ]; then
+      case "$gpu_name" in
+        *NVIDIA*) gpu_vendor="nvidia" ;;
+        *AMD*|*Radeon*) gpu_vendor="amd" ;;
+        *Apple*) gpu_vendor="apple" ;;
+        *Intel*) gpu_vendor="intel" ;;
+        *) gpu_vendor="unknown" ;;
+      esac
+      echo "$gpu_vendor|$gpu_name"
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+resolve_compose_tasks() {
+  docker compose -f docker-compose.dev.yml config --format json 2>/dev/null | node -e '
+const fs = require("fs");
+const raw = fs.readFileSync(0, "utf8").trim();
+if (!raw) process.exit(0);
+
+const cfg = JSON.parse(raw);
+const services = cfg.services || {};
+const downloads = [];
+const builds = [];
+
+for (const [name, svc] of Object.entries(services)) {
+  if (svc && svc.image && !svc.build) {
+    downloads.push({ name, detail: svc.image });
+    continue;
+  }
+
+  if (svc && svc.build) {
+    const build = svc.build;
+    const context = typeof build === "string" ? build : (build.context || ".");
+    const dockerfile = typeof build === "object" && build.dockerfile ? build.dockerfile : "Dockerfile";
+    builds.push({ name, detail: `context=${context} dockerfile=${dockerfile}` });
+  }
+}
+
+for (const task of downloads) {
+  console.log(`download|${task.name}|${task.detail}`);
+}
+
+for (const task of builds) {
+  console.log(`build|${task.name}|${task.detail}`);
+}
+'
 }
 
 # ─── Step 1: Check prerequisites ────────────────────────────────────────────
@@ -168,18 +268,42 @@ echo ""
 
 ADMIN_EMAIL="admin@claw.local"
 ADMIN_USERNAME="claw-admin"
+REUSE_EXISTING_ADMIN="false"
+EXISTING_ADMIN_EMAIL=""
+EXISTING_ADMIN_USERNAME=""
+EXISTING_ADMIN_PASS=""
 
-ask "Admin email [${ADMIN_EMAIL}]: "
-read -r input
-if [ -n "$input" ]; then ADMIN_EMAIL="$input"; fi
+if [ -f "$ENV_FILE" ]; then
+  EXISTING_ADMIN_EMAIL="$(get_env_value "ADMIN_EMAIL" "$ENV_FILE")"
+  EXISTING_ADMIN_USERNAME="$(get_env_value "ADMIN_USERNAME" "$ENV_FILE")"
+  EXISTING_ADMIN_PASS="$(get_env_value "ADMIN_PASSWORD" "$ENV_FILE")"
+fi
 
-ask "Admin username [${ADMIN_USERNAME}]: "
-read -r input
-if [ -n "$input" ]; then ADMIN_USERNAME="$input"; fi
+if [ -n "$EXISTING_ADMIN_EMAIL" ] && [ -n "$EXISTING_ADMIN_USERNAME" ] && [ -n "$EXISTING_ADMIN_PASS" ]; then
+  ask "Reuse admin credentials from the previous install? [Y/n]: "
+  read -r reuse_admin
+  if [[ "$reuse_admin" != "n" && "$reuse_admin" != "N" ]]; then
+    REUSE_EXISTING_ADMIN="true"
+    ADMIN_EMAIL="${EXISTING_ADMIN_EMAIL:-$ADMIN_EMAIL}"
+    ADMIN_USERNAME="${EXISTING_ADMIN_USERNAME:-$ADMIN_USERNAME}"
+    ADMIN_PASS="${EXISTING_ADMIN_PASS:-$ADMIN_PASS}"
+    ok "Reusing admin credentials from existing .env"
+  fi
+fi
 
-ask "Admin password [auto-generated]: "
-read -r input
-if [ -n "$input" ]; then ADMIN_PASS="$input"; fi
+if [ "$REUSE_EXISTING_ADMIN" != "true" ]; then
+  ask "Admin email [${ADMIN_EMAIL}]: "
+  read -r input
+  if [ -n "$input" ]; then ADMIN_EMAIL="$input"; fi
+
+  ask "Admin username [${ADMIN_USERNAME}]: "
+  read -r input
+  if [ -n "$input" ]; then ADMIN_USERNAME="$input"; fi
+
+  ask "Admin password [auto-generated]: "
+  read -r input
+  if [ -n "$input" ]; then ADMIN_PASS="$input"; fi
+fi
 
 echo ""
 
@@ -189,18 +313,48 @@ echo ""
 
 USE_GPU="false"
 ENABLE_OLLAMA="true"
+GPU_STATUS="No supported GPU detected"
 
-if command -v nvidia-smi &>/dev/null; then
-  GPU_NAME=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)
-  ok "NVIDIA GPU detected: $GPU_NAME"
-  ask "Enable GPU-accelerated Ollama? [Y/n]: "
-  read -r gpu_answer
-  if [[ "$gpu_answer" != "n" && "$gpu_answer" != "N" ]]; then
-    USE_GPU="true"
-    ok "GPU Ollama enabled"
-  fi
+if GPU_INFO="$(detect_gpu)"; then
+  GPU_VENDOR="${GPU_INFO%%|*}"
+  GPU_NAME="${GPU_INFO#*|}"
+  ok "GPU detected: $GPU_NAME"
+
+  case "$GPU_VENDOR" in
+    nvidia)
+      ask "Enable GPU-accelerated Ollama? [Y/n]: "
+      read -r gpu_answer
+      if [[ "$gpu_answer" != "n" && "$gpu_answer" != "N" ]]; then
+        USE_GPU="true"
+        ok "GPU Ollama enabled"
+        GPU_STATUS="NVIDIA GPU detected: $GPU_NAME (GPU mode enabled)"
+      else
+        GPU_STATUS="NVIDIA GPU detected: $GPU_NAME (CPU mode selected)"
+      fi
+      ;;
+    amd)
+      warn "AMD/Radeon GPU detected: $GPU_NAME"
+      info "This Docker-based Ollama install will stay in CPU mode unless you use a ROCm-enabled runtime."
+      GPU_STATUS="AMD/Radeon GPU detected: $GPU_NAME (Docker CPU mode)"
+      ;;
+    apple)
+      warn "Apple GPU detected: $GPU_NAME"
+      info "This Docker-based Ollama install will stay in CPU mode on macOS unless you switch to a native Ollama host install."
+      GPU_STATUS="Apple GPU detected: $GPU_NAME (Docker CPU mode)"
+      ;;
+    intel)
+      info "Intel GPU detected: $GPU_NAME"
+      info "This Docker-based Ollama install will use CPU mode."
+      GPU_STATUS="Intel GPU detected: $GPU_NAME (Docker CPU mode)"
+      ;;
+    *)
+      info "GPU detected: $GPU_NAME"
+      info "This Docker-based Ollama install will use CPU mode."
+      GPU_STATUS="GPU detected: $GPU_NAME (Docker CPU mode)"
+      ;;
+  esac
 else
-  info "No NVIDIA GPU detected — Ollama will use CPU mode"
+  info "No supported GPU detected — Ollama will use CPU mode"
 fi
 echo ""
 
@@ -208,20 +362,24 @@ echo ""
 echo "${BOLD}Step 6/7: Generating .env file${NC}"
 echo ""
 
-ENV_FILE="$PROJECT_ROOT/.env"
+SKIP_ENV=false
 
 if [ -f "$ENV_FILE" ]; then
-  warn "Existing .env file found"
-  ask "Overwrite? [y/N]: "
-  read -r overwrite
-  if [[ "$overwrite" != "y" && "$overwrite" != "Y" ]]; then
-    info "Keeping existing .env — skipping generation"
+  if [ "$REUSE_EXISTING_ADMIN" = "true" ]; then
+    info "Keeping existing .env and reusing the previous admin credentials"
     SKIP_ENV=true
   else
-    SKIP_ENV=false
+    warn "Existing .env file found"
+    ask "Overwrite it with the recreated credentials? [y/N]: "
+    read -r overwrite
+    if [[ "$overwrite" != "y" && "$overwrite" != "Y" ]]; then
+      info "Keeping existing .env — skipping generation"
+      if [ -n "$EXISTING_ADMIN_EMAIL" ]; then ADMIN_EMAIL="$EXISTING_ADMIN_EMAIL"; fi
+      if [ -n "$EXISTING_ADMIN_USERNAME" ]; then ADMIN_USERNAME="$EXISTING_ADMIN_USERNAME"; fi
+      if [ -n "$EXISTING_ADMIN_PASS" ]; then ADMIN_PASS="$EXISTING_ADMIN_PASS"; fi
+      SKIP_ENV=true
+    fi
   fi
-else
-  SKIP_ENV=false
 fi
 
 if [ "$SKIP_ENV" != "true" ]; then
@@ -452,7 +610,8 @@ echo "  RabbitMQ UI:       http://localhost:15672"
 echo ""
 echo "  Admin email:       ${ADMIN_EMAIL}"
 echo "  Admin username:    ${ADMIN_USERNAME}"
-echo "  Admin password:    ${ADMIN_PASS}"
+echo "  Admin password:    stored in .env"
+echo "  GPU:               ${GPU_STATUS}"
 echo ""
 echo "  Ollama:            $([ "$ENABLE_OLLAMA" = "true" ] && echo "Enabled" || echo "Disabled") $([ "$USE_GPU" = "true" ] && echo "(GPU)" || echo "(CPU)")"
 echo "  Containers:        ~22 (7 databases, 11 services, nginx, frontend, redis, rabbitmq, ollama)"
@@ -472,11 +631,49 @@ echo ""
 echo "${BOLD}Step 7/7: Starting Claw${NC}"
 echo ""
 
-info "Pulling Docker images (this may take a few minutes on first run)..."
-docker compose -f docker-compose.dev.yml pull 2>/dev/null || true
+info "Fetching Docker progress plan..."
+COMPOSE_TASKS=()
+if COMPOSE_TASKS_RAW="$(resolve_compose_tasks)"; then
+  while IFS= read -r task_line; do
+    [ -n "$task_line" ] && COMPOSE_TASKS+=("$task_line")
+  done <<< "$COMPOSE_TASKS_RAW"
+fi
 
-info "Building and starting containers..."
-docker compose -f docker-compose.dev.yml up -d --build 2>&1 | tail -5
+TOTAL_TASKS=${#COMPOSE_TASKS[@]}
+
+if [ "$TOTAL_TASKS" -gt 0 ]; then
+  DOWNLOAD_COUNT=0
+  BUILD_COUNT=0
+  TASK_INDEX=0
+
+  for TASK in "${COMPOSE_TASKS[@]}"; do
+    TASK_INDEX=$((TASK_INDEX + 1))
+    IFS='|' read -r TASK_PHASE TASK_NAME TASK_DETAIL <<< "$TASK"
+    PROGRESS=$((5 + (((TASK_INDEX - 1) * 80) / TOTAL_TASKS)))
+
+    if [ "$TASK_PHASE" = "download" ]; then
+      DOWNLOAD_COUNT=$((DOWNLOAD_COUNT + 1))
+      info "[$PROGRESS%] Downloading $TASK_NAME ($TASK_DETAIL) [$TASK_INDEX/$TOTAL_TASKS]"
+      docker compose -f docker-compose.dev.yml pull "$TASK_NAME"
+    else
+      BUILD_COUNT=$((BUILD_COUNT + 1))
+      info "[$PROGRESS%] Building $TASK_NAME ($TASK_DETAIL) [$TASK_INDEX/$TOTAL_TASKS]"
+      docker compose -f docker-compose.dev.yml build --progress plain "$TASK_NAME"
+    fi
+  done
+
+  ok "Docker progress plan: $DOWNLOAD_COUNT downloads, $BUILD_COUNT builds"
+else
+  warn "Could not resolve Docker progress plan; falling back to the legacy startup path"
+  info "Pulling Docker images (this may take a few minutes on first run)..."
+  docker compose -f docker-compose.dev.yml pull
+
+  info "Building and starting containers..."
+  docker compose -f docker-compose.dev.yml up -d --build
+fi
+
+info "[90%] Finalizing containers..."
+docker compose -f docker-compose.dev.yml up -d --no-build
 
 echo ""
 info "Waiting for services to become healthy..."
@@ -485,12 +682,16 @@ info "Waiting for services to become healthy..."
 MAX_WAIT=180
 ELAPSED=0
 INTERVAL=5
+TOTAL_SERVICES=$(docker compose -f docker-compose.dev.yml config --services 2>/dev/null | awk 'END {print NR+0}')
 
 while [ $ELAPSED -lt $MAX_WAIT ]; do
-  HEALTHY=$(docker compose -f docker-compose.dev.yml ps --format json 2>/dev/null | grep -c '"healthy"' || echo "0")
-  TOTAL=$(docker compose -f docker-compose.dev.yml ps --format json 2>/dev/null | grep -c '"running\|"healthy\|"starting"' || echo "0")
+  HEALTHY=$(docker compose -f docker-compose.dev.yml ps 2>/dev/null | grep -c "(healthy)" || echo "0")
+  PROGRESS=$((90 + (ELAPSED * 10 / MAX_WAIT)))
+  if [ "$PROGRESS" -gt 99 ]; then
+    PROGRESS=99
+  fi
 
-  printf "\r  ${BLUE}[%3ds]${NC} %s/%s containers healthy..." "$ELAPSED" "$HEALTHY" "$TOTAL"
+  info "[$PROGRESS%] Finalizing containers: $HEALTHY/$TOTAL_SERVICES healthy"
 
   # Check if auth-service is healthy (key indicator — it depends on DB + runs seed)
   if docker compose -f docker-compose.dev.yml ps auth-service 2>/dev/null | grep -q "(healthy)"; then
@@ -501,6 +702,7 @@ while [ $ELAPSED -lt $MAX_WAIT ]; do
   ELAPSED=$((ELAPSED + INTERVAL))
 done
 
+info "[100%] Finalizing containers: complete"
 echo ""
 echo ""
 

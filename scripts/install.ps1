@@ -5,6 +5,9 @@
 # =============================================================================
 
 $ErrorActionPreference = "Stop"
+if ($PSVersionTable.PSVersion.Major -ge 7) {
+    $PSNativeCommandUseErrorActionPreference = $true
+}
 
 # --- Colors ---
 function Write-Info    { param($msg) Write-Host "[INFO]  $msg" -ForegroundColor Blue }
@@ -17,6 +20,7 @@ function Write-Ask     { param($msg) Write-Host "[?]     $msg" -ForegroundColor 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Split-Path -Parent $ScriptDir
 Set-Location $ProjectRoot
+$envFile = Join-Path $ProjectRoot ".env"
 
 # --- Banner ---
 Write-Host ""
@@ -49,6 +53,142 @@ function New-Password {
     [System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
     $raw = [Convert]::ToBase64String($bytes) -replace '[/+=]', ''
     return $raw.Substring(0, [Math]::Min(20, $raw.Length))
+}
+
+function Get-EnvValue {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][string]$Key
+    )
+
+    if (-not (Test-Path $Path)) {
+        return $null
+    }
+
+    $pattern = "^$([regex]::Escape($Key))=(.*)$"
+    foreach ($line in Get-Content -LiteralPath $Path) {
+        if ($line -match $pattern) {
+            return $Matches[1]
+        }
+    }
+
+    return $null
+}
+
+function Get-GpuInfo {
+    $gpuName = $null
+    $gpuVendor = $null
+
+    if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) {
+        $gpuName = (nvidia-smi --query-gpu=name --format=csv,noheader 2>$null | Select-Object -First 1).Trim()
+        if ($gpuName) {
+            return [pscustomobject]@{ Vendor = "nvidia"; Name = $gpuName }
+        }
+    }
+
+    if ($IsMacOS -and (Get-Command system_profiler -ErrorAction SilentlyContinue)) {
+        $gpuLine = system_profiler SPDisplaysDataType 2>$null | Select-String -Pattern "Chipset Model|Model" | Select-Object -First 1
+        if ($gpuLine) {
+            $parts = $gpuLine.ToString() -split ": ", 2
+            if ($parts.Count -ge 2) {
+                $gpuName = $parts[1].Trim()
+                switch -Regex ($gpuName) {
+                    "NVIDIA" { $gpuVendor = "nvidia" }
+                    "AMD|Radeon" { $gpuVendor = "amd" }
+                    "Apple" { $gpuVendor = "apple" }
+                    "Intel" { $gpuVendor = "intel" }
+                    default { $gpuVendor = "unknown" }
+                }
+                return [pscustomobject]@{ Vendor = $gpuVendor; Name = $gpuName }
+            }
+        }
+    }
+
+    try {
+        $controller = Get-CimInstance Win32_VideoController -ErrorAction Stop | Select-Object -First 1
+        if ($controller -and $controller.Name) {
+            $gpuName = $controller.Name.Trim()
+            switch -Regex ($gpuName) {
+                "NVIDIA" { $gpuVendor = "nvidia" }
+                "AMD|Radeon" { $gpuVendor = "amd" }
+                "Apple" { $gpuVendor = "apple" }
+                "Intel" { $gpuVendor = "intel" }
+                default { $gpuVendor = "unknown" }
+            }
+            return [pscustomobject]@{ Vendor = $gpuVendor; Name = $gpuName }
+        }
+    } catch {
+        # Ignore and try Linux/WSL detection below.
+    }
+
+    if (Get-Command lspci -ErrorAction SilentlyContinue) {
+        $gpuLine = lspci 2>$null | Select-String -Pattern "VGA compatible controller|3D controller|Display controller" | Select-Object -First 1
+        if ($gpuLine) {
+            $gpuName = ($gpuLine.ToString() -replace '^.*: ', '').Trim()
+            switch -Regex ($gpuName) {
+                "NVIDIA" { $gpuVendor = "nvidia" }
+                "AMD|Radeon" { $gpuVendor = "amd" }
+                "Apple" { $gpuVendor = "apple" }
+                "Intel" { $gpuVendor = "intel" }
+                default { $gpuVendor = "unknown" }
+            }
+            return [pscustomobject]@{ Vendor = $gpuVendor; Name = $gpuName }
+        }
+    }
+
+    return $null
+}
+
+function Get-ComposeTasks {
+    $configJson = docker compose -f docker-compose.dev.yml config --format json 2>$null
+    if ($LASTEXITCODE -ne 0 -or -not $configJson) {
+        return @()
+    }
+
+    try {
+        $config = $configJson | ConvertFrom-Json
+    } catch {
+        return @()
+    }
+
+    if (-not $config.services) {
+        return @()
+    }
+
+    $downloads = @()
+    $builds = @()
+
+    foreach ($property in $config.services.PSObject.Properties) {
+        $name = $property.Name
+        $svc = $property.Value
+
+        if ($svc.image -and -not $svc.build) {
+            $downloads += [pscustomobject]@{
+                Phase  = "download"
+                Name   = $name
+                Detail = $svc.image
+            }
+            continue
+        }
+
+        if ($svc.build) {
+            if ($svc.build -is [string]) {
+                $context = $svc.build
+                $dockerfile = "Dockerfile"
+            } else {
+                $context = if ($svc.build.context) { $svc.build.context } else { "." }
+                $dockerfile = if ($svc.build.dockerfile) { $svc.build.dockerfile } else { "Dockerfile" }
+            }
+
+            $builds += [pscustomobject]@{
+                Phase  = "build"
+                Name   = $name
+                Detail = "context=$context dockerfile=$dockerfile"
+            }
+        }
+    }
+
+    return @($downloads + $builds)
 }
 
 function Test-PortAvailable {
@@ -170,18 +310,42 @@ Write-Host ""
 
 $adminEmail = "admin@claw.local"
 $adminUsername = "claw-admin"
+$reuseExistingAdmin = $false
+$existingAdminEmail = $null
+$existingAdminUsername = $null
+$existingAdminPass = $null
 
-Write-Ask "Admin email [$adminEmail]: "
-$input = Read-Host
-if ($input) { $adminEmail = $input }
+if (Test-Path $envFile) {
+    $existingAdminEmail = Get-EnvValue -Path $envFile -Key "ADMIN_EMAIL"
+    $existingAdminUsername = Get-EnvValue -Path $envFile -Key "ADMIN_USERNAME"
+    $existingAdminPass = Get-EnvValue -Path $envFile -Key "ADMIN_PASSWORD"
+}
 
-Write-Ask "Admin username [$adminUsername]: "
-$input = Read-Host
-if ($input) { $adminUsername = $input }
+if ($existingAdminEmail -and $existingAdminUsername -and $existingAdminPass) {
+    Write-Ask "Reuse admin credentials from the previous install? [Y/n]: "
+    $reuseAnswer = Read-Host
+    if ($reuseAnswer -ne "n" -and $reuseAnswer -ne "N") {
+        $reuseExistingAdmin = $true
+        if ($existingAdminEmail) { $adminEmail = $existingAdminEmail }
+        if ($existingAdminUsername) { $adminUsername = $existingAdminUsername }
+        if ($existingAdminPass) { $adminPass = $existingAdminPass }
+        Write-Ok "Reusing admin credentials from existing .env"
+    }
+}
 
-Write-Ask "Admin password [auto-generated]: "
-$input = Read-Host
-if ($input) { $adminPass = $input }
+if (-not $reuseExistingAdmin) {
+    Write-Ask "Admin email [$adminEmail]: "
+    $input = Read-Host
+    if ($input) { $adminEmail = $input }
+
+    Write-Ask "Admin username [$adminUsername]: "
+    $input = Read-Host
+    if ($input) { $adminUsername = $input }
+
+    Write-Ask "Admin password [auto-generated]: "
+    $input = Read-Host
+    if ($input) { $adminPass = $input }
+}
 
 Write-Host ""
 
@@ -192,20 +356,51 @@ Write-Host "Step 5/7: Ollama & GPU detection" -ForegroundColor White
 Write-Host ""
 
 $useGpu = $false
+$gpuStatus = "No supported GPU detected"
 
 try {
-    $gpuName = (nvidia-smi --query-gpu=name --format=csv,noheader 2>$null) | Select-Object -First 1
-    if ($gpuName) {
-        Write-Ok "NVIDIA GPU detected: $gpuName"
-        Write-Ask "Enable GPU-accelerated Ollama? [Y/n]: "
-        $gpuAnswer = Read-Host
-        if ($gpuAnswer -ne "n" -and $gpuAnswer -ne "N") {
-            $useGpu = $true
-            Write-Ok "GPU Ollama enabled"
+    $gpuInfo = Get-GpuInfo
+    if ($gpuInfo) {
+        Write-Ok "GPU detected: $($gpuInfo.Name)"
+
+        switch ($gpuInfo.Vendor) {
+            "nvidia" {
+                Write-Ask "Enable GPU-accelerated Ollama? [Y/n]: "
+                $gpuAnswer = Read-Host
+                if ($gpuAnswer -ne "n" -and $gpuAnswer -ne "N") {
+                    $useGpu = $true
+                    Write-Ok "GPU Ollama enabled"
+                    $gpuStatus = "NVIDIA GPU detected: $($gpuInfo.Name) (GPU mode enabled)"
+                } else {
+                    $gpuStatus = "NVIDIA GPU detected: $($gpuInfo.Name) (CPU mode selected)"
+                }
+            }
+            "amd" {
+                Write-Warn "AMD/Radeon GPU detected: $($gpuInfo.Name)"
+                Write-Info "This Docker-based Ollama install will stay in CPU mode unless you use a ROCm-enabled runtime."
+                $gpuStatus = "AMD/Radeon GPU detected: $($gpuInfo.Name) (Docker CPU mode)"
+            }
+            "apple" {
+                Write-Warn "Apple GPU detected: $($gpuInfo.Name)"
+                Write-Info "This Docker-based Ollama install will stay in CPU mode on macOS unless you switch to a native Ollama host install."
+                $gpuStatus = "Apple GPU detected: $($gpuInfo.Name) (Docker CPU mode)"
+            }
+            "intel" {
+                Write-Info "Intel GPU detected: $($gpuInfo.Name)"
+                Write-Info "This Docker-based Ollama install will use CPU mode."
+                $gpuStatus = "Intel GPU detected: $($gpuInfo.Name) (Docker CPU mode)"
+            }
+            default {
+                Write-Info "GPU detected: $($gpuInfo.Name)"
+                Write-Info "This Docker-based Ollama install will use CPU mode."
+                $gpuStatus = "GPU detected: $($gpuInfo.Name) (Docker CPU mode)"
+            }
         }
-    } else { throw "no gpu" }
+    } else {
+        Write-Info "No supported GPU detected - Ollama will use CPU mode"
+    }
 } catch {
-    Write-Info "No NVIDIA GPU detected - Ollama will use CPU mode"
+    Write-Info "No supported GPU detected - Ollama will use CPU mode"
 }
 Write-Host ""
 
@@ -215,16 +410,23 @@ Write-Host ""
 Write-Host "Step 6/7: Generating .env file" -ForegroundColor White
 Write-Host ""
 
-$envFile = Join-Path $ProjectRoot ".env"
 $skipEnv = $false
 
 if (Test-Path $envFile) {
-    Write-Warn "Existing .env file found"
-    Write-Ask "Overwrite? [y/N]: "
-    $overwrite = Read-Host
-    if ($overwrite -ne "y" -and $overwrite -ne "Y") {
-        Write-Info "Keeping existing .env - skipping generation"
+    if ($reuseExistingAdmin) {
+        Write-Info "Keeping existing .env and reusing the previous admin credentials"
         $skipEnv = $true
+    } else {
+        Write-Warn "Existing .env file found"
+        Write-Ask "Overwrite it with the recreated credentials? [y/N]: "
+        $overwrite = Read-Host
+        if ($overwrite -ne "y" -and $overwrite -ne "Y") {
+            Write-Info "Keeping existing .env - skipping generation"
+            if ($existingAdminEmail) { $adminEmail = $existingAdminEmail }
+            if ($existingAdminUsername) { $adminUsername = $existingAdminUsername }
+            if ($existingAdminPass) { $adminPass = $existingAdminPass }
+            $skipEnv = $true
+        }
     }
 }
 
@@ -461,7 +663,8 @@ Write-Host "  RabbitMQ UI:       http://localhost:15672"
 Write-Host ""
 Write-Host "  Admin email:       $adminEmail"
 Write-Host "  Admin username:    $adminUsername"
-Write-Host "  Admin password:    $adminPass"
+Write-Host "  Admin password:    stored in .env"
+Write-Host "  GPU:               $gpuStatus"
 Write-Host ""
 $ollamaMode = if ($useGpu) { "Enabled (GPU)" } else { "Enabled (CPU)" }
 Write-Host "  Ollama:            $ollamaMode"
@@ -484,11 +687,41 @@ Write-Host ""
 Write-Host "Step 7/7: Starting Claw" -ForegroundColor White
 Write-Host ""
 
-Write-Info "Pulling Docker images (this may take a few minutes on first run)..."
-docker compose -f docker-compose.dev.yml pull 2>$null
+Write-Info "Fetching Docker progress plan..."
+$composeTasks = @(Get-ComposeTasks)
+$totalTasks = $composeTasks.Count
 
-Write-Info "Building and starting containers..."
-docker compose -f docker-compose.dev.yml up -d --build 2>&1 | Select-Object -Last 5
+if ($totalTasks -gt 0) {
+    $downloadCount = 0
+    $buildCount = 0
+
+    for ($index = 0; $index -lt $totalTasks; $index++) {
+        $task = $composeTasks[$index]
+        $progress = 5 + [Math]::Floor((($index) * 80) / [Math]::Max($totalTasks, 1))
+
+        if ($task.Phase -eq "download") {
+            $downloadCount++
+            Write-Info ("[{0,3}%] Downloading {1} ({2}) [{3}/{4}]" -f $progress, $task.Name, $task.Detail, ($index + 1), $totalTasks)
+            docker compose -f docker-compose.dev.yml pull $task.Name
+        } else {
+            $buildCount++
+            Write-Info ("[{0,3}%] Building {1} ({2}) [{3}/{4}]" -f $progress, $task.Name, $task.Detail, ($index + 1), $totalTasks)
+            docker compose -f docker-compose.dev.yml build --progress plain $task.Name
+        }
+    }
+
+    Write-Ok "Docker progress plan: $downloadCount downloads, $buildCount builds"
+} else {
+    Write-Warn "Could not resolve Docker progress plan; falling back to the legacy startup path"
+    Write-Info "Pulling Docker images (this may take a few minutes on first run)..."
+    docker compose -f docker-compose.dev.yml pull
+
+    Write-Info "Building and starting containers..."
+    docker compose -f docker-compose.dev.yml up -d --build
+}
+
+Write-Info "[90%] Finalizing containers..."
+docker compose -f docker-compose.dev.yml up -d --no-build
 
 Write-Host ""
 Write-Info "Waiting for services to become healthy..."
@@ -496,16 +729,21 @@ Write-Info "Waiting for services to become healthy..."
 $maxWait = 180
 $elapsed = 0
 $interval = 5
+$totalServices = @(docker compose -f docker-compose.dev.yml config --services 2>$null).Count
 
 while ($elapsed -lt $maxWait) {
     $status = docker compose -f docker-compose.dev.yml ps auth-service 2>$null
     if ($status -match "\(healthy\)") { break }
 
-    Write-Host "`r  [$($elapsed)s] Waiting for services..." -NoNewline -ForegroundColor Blue
+    $progress = 90 + [Math]::Floor(($elapsed * 10) / $maxWait)
+    if ($progress -gt 99) { $progress = 99 }
+    $healthy = (docker compose -f docker-compose.dev.yml ps 2>$null | Select-String "healthy").Count
+    Write-Info ("[{0,3}%] Finalizing containers: {1}/{2} healthy" -f $progress, $healthy, $totalServices)
     Start-Sleep -Seconds $interval
     $elapsed += $interval
 }
 
+Write-Ok "[100%] Finalizing containers: complete"
 Write-Host ""
 Write-Host ""
 
@@ -526,11 +764,12 @@ if ($unhealthy -eq 0) {
 Write-Host ""
 Write-Host "  Open Claw:         http://localhost:3000" -ForegroundColor White
 Write-Host "  API Gateway:       http://localhost:4000" -ForegroundColor White
-Write-Host "  RabbitMQ UI:       http://localhost:15672  (claw / $rabbitPass)" -ForegroundColor White
+Write-Host "  RabbitMQ UI:       http://localhost:15672" -ForegroundColor White
 Write-Host ""
 Write-Host "  Admin login:" -ForegroundColor White
 Write-Host "    Email:           $adminEmail"
-Write-Host "    Password:        $adminPass"
+Write-Host "    Password:        stored in .env"
+Write-Host "  GPU:               $gpuStatus" -ForegroundColor White
 Write-Host ""
 Write-Host "  Useful commands:" -ForegroundColor White
 Write-Host "    .\scripts\claw.sh status        Check service status"
