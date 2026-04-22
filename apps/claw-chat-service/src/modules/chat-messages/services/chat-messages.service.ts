@@ -32,6 +32,7 @@ import { type ListMessagesQueryDto } from '../dto/list-messages-query.dto';
 import {
   type LlmResponse,
   type MessageRoutedData,
+  type RouteRoadmap,
   type ThreadSettings,
 } from '../types/execution.types';
 import { type ConsensusResponse } from '../types/consensus.types';
@@ -415,6 +416,7 @@ export class ChatMessagesService implements OnModuleInit {
     const chronologicalMessages = [...threadMessages].reverse();
     const threadSettings = this.extractThreadSettings(thread);
     const fileIds = this.extractFileIdsFromMessages(chronologicalMessages);
+    const latestUserMetadata = this.extractLatestUserMetadata(chronologicalMessages);
 
     // Context-aware follow-up detection:
     // If user says "again"/"one more" and the last message was image/file generation,
@@ -464,6 +466,7 @@ export class ChatMessagesService implements OnModuleInit {
         payload,
         llmResponse,
         contextMetadata,
+        latestUserMetadata,
       );
       await this.updateThreadAfterResponse(payload.threadId, llmResponse);
 
@@ -505,6 +508,7 @@ export class ChatMessagesService implements OnModuleInit {
     const selectedProvider = payload['selectedProvider'] as string | undefined;
     const selectedModel = payload['selectedModel'] as string | undefined;
     const routingMode = payload['routingMode'] as string | undefined;
+    const routerModel = payload['routerModel'] as string | null | undefined;
     const fallbackProvider = payload['fallbackProvider'] as string | undefined;
     const fallbackModel = payload['fallbackModel'] as string | undefined;
     const fallbackChain = payload['fallbackChain'] as
@@ -536,6 +540,7 @@ export class ChatMessagesService implements OnModuleInit {
         selectedProvider,
         selectedModel,
         routingMode,
+        routerModel: routerModel ?? null,
         fallbackProvider,
         fallbackModel,
         fallbackChain,
@@ -577,6 +582,11 @@ export class ChatMessagesService implements OnModuleInit {
     return Array.isArray(metadata?.['fileIds']) ? (metadata['fileIds'] as string[]) : undefined;
   }
 
+  private extractLatestUserMetadata(messages: ChatMessage[]): Record<string, unknown> | null {
+    const latestUserMsg = [...messages].reverse().find((m) => m.role === 'USER');
+    return (latestUserMsg?.metadata as Record<string, unknown> | null) ?? null;
+  }
+
   private async storeErrorResponse(payload: MessageRoutedData, errorMsg: string): Promise<void> {
     await this.chatMessagesRepository.create({
       threadId: payload.threadId,
@@ -585,6 +595,7 @@ export class ChatMessagesService implements OnModuleInit {
       provider: payload.selectedProvider,
       model: payload.selectedModel,
       routingMode: payload.routingMode as RoutingMode,
+      routerModel: payload.routerModel ?? null,
       usedFallback: true,
       metadata: { error: true },
     });
@@ -594,11 +605,55 @@ export class ChatMessagesService implements OnModuleInit {
     payload: MessageRoutedData,
     llmResponse: LlmResponse,
     contextMetadata?: { memoryCount: number; fileIds: string[] },
+    latestUserMetadata?: Record<string, unknown> | null,
   ): Promise<ChatMessage> {
     const hasVisibleContent = llmResponse.content.trim().length > 0;
     const storedContent = hasVisibleContent
       ? llmResponse.content
       : 'Warning: no visible final answer was produced for this reply. Please regenerate to retry.';
+    const requestedModelDisplayName =
+      typeof latestUserMetadata?.['modelDisplayName'] === 'string'
+        ? latestUserMetadata['modelDisplayName']
+        : null;
+    const finalDisplayName = llmResponse.model;
+    const routeRoadmap: RouteRoadmap = {
+      routingMode: payload.routingMode,
+      routerModel: payload.routerModel ?? null,
+      selectedProvider: payload.selectedProvider,
+      selectedModel: payload.selectedModel,
+      finalProvider: llmResponse.provider,
+      finalModel: llmResponse.model,
+      finalDisplayName,
+      steps:
+        payload.routingMode === 'AUTO' && payload.routerModel
+          ? [
+              {
+                stage: 'router',
+                provider: 'local-ollama',
+                model: payload.routerModel,
+                displayName: payload.routerModel,
+              },
+              {
+                stage: 'decision',
+                provider: payload.selectedProvider,
+                model: payload.selectedModel,
+              },
+              {
+                stage: 'execution',
+                provider: llmResponse.provider,
+                model: llmResponse.model,
+                displayName: finalDisplayName,
+              },
+            ]
+          : [
+              {
+                stage: 'execution',
+                provider: llmResponse.provider,
+                model: llmResponse.model,
+                displayName: finalDisplayName,
+              },
+            ],
+    };
 
     return this.chatMessagesRepository.create({
       threadId: payload.threadId,
@@ -607,6 +662,7 @@ export class ChatMessagesService implements OnModuleInit {
       provider: llmResponse.provider,
       model: llmResponse.model,
       routingMode: payload.routingMode as RoutingMode,
+      routerModel: payload.routingMode === 'AUTO' ? (payload.routerModel ?? null) : null,
       inputTokens: llmResponse.inputTokens,
       outputTokens: llmResponse.outputTokens,
       latencyMs: llmResponse.latencyMs,
@@ -636,6 +692,8 @@ export class ChatMessagesService implements OnModuleInit {
         ...(llmResponse.executionPath ? { executionPath: llmResponse.executionPath } : {}),
         ...(llmResponse.targetLatencyMs ? { targetLatencyMs: llmResponse.targetLatencyMs } : {}),
         ...(!hasVisibleContent ? { emptyContent: true } : {}),
+        ...(requestedModelDisplayName ? { requestedModelDisplayName } : {}),
+        routeRoadmap,
         ...(llmResponse.judgeRefereeMetadata ?? {}),
       },
     });
@@ -680,6 +738,7 @@ export class ChatMessagesService implements OnModuleInit {
             judgeConfidence: llmResponse.judgeRefereeMetadata.judgeConfidence,
           }
         : {}),
+      ...(payload.routerModel ? { metadata: { routerModel: payload.routerModel } } : {}),
     });
   }
 
@@ -704,6 +763,7 @@ export class ChatMessagesService implements OnModuleInit {
       content: assistantMessage.content,
       userContent: lastUserMsg?.content,
       timestamp: new Date().toISOString(),
+      ...(payload.routerModel ? { routerModel: payload.routerModel } : {}),
       ...(llmResponse.executionPath ? { executionPath: llmResponse.executionPath } : {}),
       ...(llmResponse.targetLatencyMs ? { targetLatencyMs: llmResponse.targetLatencyMs } : {}),
       ...(llmResponse.fastPathUsed ? { fastPathUsed: true } : {}),
@@ -743,13 +803,15 @@ export class ChatMessagesService implements OnModuleInit {
     forcedProvider: string | undefined;
     forcedModel: string | undefined;
   } {
-    const forcedProvider = dto.provider ?? thread.preferredProvider ?? undefined;
-    const forcedModel = dto.model ?? thread.preferredModel ?? undefined;
-
-    const effectiveRoutingMode =
-      forcedProvider && forcedModel
-        ? RoutingMode.MANUAL_MODEL
-        : (dto.routingMode ?? thread.routingMode);
+    const effectiveRoutingMode = dto.routingMode ?? thread.routingMode;
+    const forcedProvider =
+      effectiveRoutingMode === RoutingMode.MANUAL_MODEL
+        ? (dto.provider ?? thread.preferredProvider ?? undefined)
+        : undefined;
+    const forcedModel =
+      effectiveRoutingMode === RoutingMode.MANUAL_MODEL
+        ? (dto.model ?? thread.preferredModel ?? undefined)
+        : undefined;
 
     return { effectiveRoutingMode, forcedProvider, forcedModel };
   }
@@ -761,6 +823,9 @@ export class ChatMessagesService implements OnModuleInit {
     const metadata: UserMessageMetadata = {};
     if (dto.fileIds && dto.fileIds.length > 0) {
       metadata.fileIds = dto.fileIds;
+    }
+    if (typeof dto.modelDisplayName === 'string' && dto.modelDisplayName.length > 0) {
+      metadata.modelDisplayName = dto.modelDisplayName;
     }
     if (researchRun !== null) {
       metadata.research = {

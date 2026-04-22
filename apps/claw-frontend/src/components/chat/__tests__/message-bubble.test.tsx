@@ -59,4 +59,35 @@ describe('MessageBubble', () => {
       screen.getByText('No visible final answer was produced for this reply. Regenerate to retry.'),
     ).toBeInTheDocument();
   });
+
+  it('renders the routed model and router path from metadata', () => {
+    const message: ChatMessage = {
+      id: 'msg-2',
+      threadId: 'thread-1',
+      role: MessageRole.ASSISTANT,
+      content: 'Here is the result.',
+      provider: 'local-ollama',
+      model: 'glm4:latest',
+      routingMode: RoutingMode.AUTO,
+      routerModel: 'qwen3:1.7b',
+      usedFallback: false,
+      inputTokens: 40,
+      outputTokens: 12,
+      feedback: null,
+      latencyMs: 2200,
+      metadata: {
+        routeRoadmap: {
+          routerModel: 'qwen3:1.7b',
+          finalProvider: 'local-ollama',
+          finalModel: 'glm-5.1:cloud',
+        },
+      },
+      createdAt: '2026-04-21T12:00:00.000Z',
+    };
+
+    render(<MessageBubble message={message} />);
+
+    expect(screen.getByText('local-ollama / glm-5.1:cloud')).toBeInTheDocument();
+    expect(screen.getByText('Route: qwen3:1.7b -> glm-5.1:cloud')).toBeInTheDocument();
+  });
 });

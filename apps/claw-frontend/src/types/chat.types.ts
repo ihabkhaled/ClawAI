@@ -79,6 +79,7 @@ export type CreateMessageRequest = {
   routingMode?: RoutingMode;
   provider?: string;
   model?: string;
+  modelDisplayName?: string;
   fileIds?: string[];
   researchMode?: ResearchMode;
   researchProviderId?: string;

@@ -68,6 +68,7 @@ export const useThreadDetailPage = ({
               routingMode: RoutingMode.MANUAL_MODEL,
               provider: modelSelection.provider,
               model: modelSelection.model,
+              modelDisplayName: modelSelection.displayName,
             }
           : {}),
         ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),

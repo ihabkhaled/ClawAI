@@ -1,14 +1,34 @@
 import type { JudgeRefereeMetadata } from './judge-referee.types';
 
+export type RouteRoadmapStep = {
+  stage: 'router' | 'decision' | 'execution' | 'fallback';
+  provider: string;
+  model: string;
+  displayName?: string | null;
+};
+
+export type RouteRoadmap = {
+  routingMode: string;
+  routerModel: string | null;
+  selectedProvider: string;
+  selectedModel: string;
+  finalProvider: string;
+  finalModel: string;
+  finalDisplayName?: string | null;
+  steps: RouteRoadmapStep[];
+};
+
 export type MessageRoutedData = {
   messageId: string;
   threadId: string;
   selectedProvider: string;
   selectedModel: string;
   routingMode: string;
+  routerModel?: string | null;
   fallbackProvider?: string;
   fallbackModel?: string;
   fallbackChain?: Array<{ provider: string; model: string }>;
+  routeRoadmap?: RouteRoadmap;
   timestamp: string;
   detectedCategory?: string;
   judgeEnabled?: boolean;
@@ -62,6 +82,29 @@ export type OllamaGenerateResponse = {
   promptEvalCount?: number;
   evalCount?: number;
   evalDuration?: number;
+};
+
+export type OllamaChatRequest = {
+  model: string;
+  messages: OpenAiChatMessage[];
+  stream: boolean;
+  options?: {
+    temperature?: number;
+    num_predict?: number;
+  };
+};
+
+export type OllamaChatResponse = {
+  model: string;
+  created_at?: string;
+  message?: {
+    role?: string;
+    content?: string;
+  };
+  done?: boolean;
+  done_reason?: string;
+  prompt_eval_count?: number;
+  eval_count?: number;
 };
 
 export type OpenAiImageContent = {

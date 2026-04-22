@@ -219,6 +219,142 @@ describe('ChatExecutionManager', () => {
     expect(completionRequest.messages[0]?.content).toContain('Respond briefly in 2-4 sentences');
   });
 
+  it('routes local-ollama models through the local Ollama runtime path', async () => {
+    const context = makeContext('compare local ollama behavior');
+    const now = Date.now();
+
+    httpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 201,
+      data: {
+        model: 'glm4:latest',
+        response: 'local response',
+        done: true,
+        promptEvalCount: 9,
+        evalCount: 6,
+      },
+    });
+
+    const result = await manager.callProvider(
+      'local-ollama',
+      'glm4:latest',
+      context,
+      now,
+      false,
+      undefined,
+      'MANUAL_MODEL',
+      { fastPathEnabled: false, maxOutputTokens: 128, applyShortResponseConstraint: false },
+    );
+
+    expect(result.provider).toBe('local-ollama');
+    expect(result.model).toBe('glm4:latest');
+    expect(httpRequest).toHaveBeenCalledTimes(1);
+    expect(httpRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'http://ollama:4008/api/v1/ollama/generate',
+        method: 'POST',
+      }),
+    );
+    const requestBody = httpRequest.mock.calls[0][0].body as {
+      model: string;
+      prompt: string;
+    };
+    expect(requestBody.model).toBe('glm4:latest');
+    expect(requestBody.prompt).toContain('user prompt');
+  });
+
+  it('routes Ollama connector models through the cloud transport path', async () => {
+    const context = makeContext('compare cloud ollama behavior');
+    const now = Date.now();
+
+    httpRequest
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          provider: 'OLLAMA',
+          apiKey: 'ollama-cloud-key',
+          baseUrl: 'http://localhost:11434',
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          model: 'deepseek-v3.2',
+          message: { role: 'assistant', content: 'cloud response' },
+          done: true,
+          done_reason: 'stop',
+          prompt_eval_count: 11,
+          eval_count: 7,
+        },
+      });
+
+    const result = await manager.callProvider(
+      'OLLAMA',
+      'deepseek-v3.2',
+      context,
+      now,
+      false,
+      undefined,
+      'MANUAL_MODEL',
+      { fastPathEnabled: false, maxOutputTokens: 128, applyShortResponseConstraint: false },
+    );
+
+    expect(result.provider).toBe('OLLAMA');
+    expect(result.model).toBe('deepseek-v3.2');
+    expect(httpRequest).toHaveBeenCalledTimes(2);
+    expect(httpRequest).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        url: 'http://connector:4011/api/v1/internal/connectors/config?provider=OLLAMA',
+        method: 'GET',
+      }),
+    );
+    expect(httpRequest).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        url: 'https://ollama.com/api/chat',
+        method: 'POST',
+        headers: { Authorization: 'Bearer ollama-cloud-key' },
+      }),
+    );
+    const requestBody = httpRequest.mock.calls[1][0].body as {
+      model: string;
+      messages: Array<{ role: string; content: string }>;
+      options: { num_predict: number };
+    };
+    expect(requestBody.model).toBe('deepseek-v3.2');
+    expect(requestBody.messages).toHaveLength(1);
+    expect(requestBody.messages[0]?.content).toContain('Explain this briefly');
+    expect(requestBody.options.num_predict).toBe(128);
+  });
+
+  it('does not fall back to another model for manual selection failures', async () => {
+    const context = makeContext('compare deepseek cloud behavior');
+    httpRequest.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      data: { message: 'Request failed with status code 401' },
+    });
+
+    await expect(
+      manager.execute(
+        {
+          messageId: 'msg-manual-fail',
+          threadId: 'thread-1',
+          selectedProvider: 'OLLAMA',
+          selectedModel: 'deepseek-v3.2:cloud',
+          routingMode: 'MANUAL_MODEL',
+          timestamp: new Date().toISOString(),
+        },
+        context,
+      ),
+    ).rejects.toThrow('Request failed with status code 401');
+
+    expect(httpRequest).toHaveBeenCalledTimes(1);
+  });
+
   it('does not force fast path when judge is explicitly enabled', async () => {
     const context = makeContext('status?');
     httpRequest.mockResolvedValue({

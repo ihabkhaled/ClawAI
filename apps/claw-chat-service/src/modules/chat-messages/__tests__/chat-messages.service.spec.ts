@@ -154,6 +154,27 @@ describe('ChatMessagesService', () => {
       );
     });
 
+    it('should preserve AUTO routing even when the thread has a preferred model', async () => {
+      threadsRepo.findById!.mockResolvedValue({
+        ...mockThread,
+        preferredProvider: 'OLLAMA',
+        preferredModel: 'gemma4:e4b',
+      });
+      messagesRepo.create.mockResolvedValue(mockMessage);
+
+      await service.createMessage(
+        'user-1',
+        { threadId: 'thread-1', content: 'Generate a picture of a lighthouse' },
+        '',
+      );
+
+      expect(messagesRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          routingMode: 'AUTO',
+        }),
+      );
+    });
+
     it('should throw EntityNotFoundException when thread not found', async () => {
       threadsRepo.findById!.mockResolvedValue(null);
 

@@ -7,6 +7,7 @@ import type { ResearchEvidenceBundle } from './research.types';
  */
 export type UserMessageMetadata = {
   fileIds?: string[];
+  modelDisplayName?: string;
   research?: {
     runId: string;
     mode: string;

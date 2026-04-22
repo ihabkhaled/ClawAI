@@ -16,6 +16,8 @@ import {
   type ImageGenerateResponse,
   type LlmResponse,
   type MessageRoutedData,
+  type OllamaChatRequest,
+  type OllamaChatResponse,
   type OllamaGenerateRequest,
   type OllamaGenerateResponse,
   type OpenAiChatRequest,
@@ -157,9 +159,9 @@ export class ChatExecutionManager implements OnModuleInit {
             fastPathEscalated,
             executionPath: fastPathEscalated
               ? 'fast_escalated'
-              : (executionOptions.fastPathEnabled
+              : executionOptions.fastPathEnabled
                 ? 'fast'
-                : 'standard'),
+                : 'standard',
             targetLatencyMs: executionOptions.fastPathEnabled
               ? FAST_PATH_TARGET_LATENCY_MS
               : STANDARD_TARGET_LATENCY_MS,
@@ -238,9 +240,9 @@ export class ChatExecutionManager implements OnModuleInit {
             fastPathEscalated,
             executionPath: fastPathEscalated
               ? 'fast_escalated'
-              : (executionOptions.fastPathEnabled
+              : executionOptions.fastPathEnabled
                 ? 'fast'
-                : 'standard'),
+                : 'standard',
             targetLatencyMs: executionOptions.fastPathEnabled
               ? FAST_PATH_TARGET_LATENCY_MS
               : STANDARD_TARGET_LATENCY_MS,
@@ -253,9 +255,9 @@ export class ChatExecutionManager implements OnModuleInit {
           fastPathEscalated,
           executionPath: fastPathEscalated
             ? 'fast_escalated'
-            : (executionOptions.fastPathEnabled
+            : executionOptions.fastPathEnabled
               ? 'fast'
-              : 'standard'),
+              : 'standard',
           targetLatencyMs: executionOptions.fastPathEnabled
             ? FAST_PATH_TARGET_LATENCY_MS
             : STANDARD_TARGET_LATENCY_MS,
@@ -298,6 +300,10 @@ export class ChatExecutionManager implements OnModuleInit {
     const candidates: Array<{ provider: string; model: string }> = [
       { provider: payload.selectedProvider, model: payload.selectedModel },
     ];
+
+    if (routingMode === 'MANUAL_MODEL') {
+      return candidates;
+    }
 
     // Use the full fallback chain from the routing service when available
     if (payload.fallbackChain && payload.fallbackChain.length > 0) {
@@ -515,9 +521,23 @@ export class ChatExecutionManager implements OnModuleInit {
         routingMode === 'AUTO',
       );
     }
-    if (provider === OLLAMA_PROVIDER || provider === OLLAMA_CONNECTOR_PROVIDER) {
+    if (provider === OLLAMA_CONNECTOR_PROVIDER) {
       this.logger.debug(
-        `callProvider: routing to Ollama runtime (provider=${provider}) for model=${model}`,
+        `callProvider: routing Ollama connector model through cloud transport for model=${model}`,
+      );
+      return this.callCloudProvider(
+        provider,
+        this.normalizeCloudOllamaModel(model),
+        context,
+        startTime,
+        usedFallback,
+        threadSettings,
+        executionOptions,
+      );
+    }
+    if (provider === OLLAMA_PROVIDER) {
+      this.logger.debug(
+        `callProvider: routing to local Ollama runtime (provider=${provider}) for model=${model}`,
       );
       return this.callOllama(
         model,
@@ -594,11 +614,14 @@ export class ChatExecutionManager implements OnModuleInit {
     });
 
     if (!response.ok) {
-      this.logger.error(`callOllama: Ollama returned error status=${String(response.status)}`);
-      throw new BusinessException(
+      const errorMessage = this.extractHttpErrorMessage(
+        response.data,
         `Ollama service returned status ${String(response.status)}`,
-        'OLLAMA_REQUEST_FAILED',
       );
+      this.logger.error(
+        `callOllama: Ollama returned error status=${String(response.status)} message=${errorMessage}`,
+      );
+      throw new BusinessException(errorMessage, 'OLLAMA_REQUEST_FAILED');
     }
 
     const latencyMs = Date.now() - startTime;
@@ -646,15 +669,17 @@ export class ChatExecutionManager implements OnModuleInit {
     const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
     this.logger.debug(`callCloudProvider: config resolved — baseUrl=${baseUrl}`);
 
-    this.logger.debug('callCloudProvider: building chat request body');
-    const requestBody = this.buildChatRequestBody(model, context, threadSettings, executionOptions);
+    const isOllamaConnector = provider === OLLAMA_CONNECTOR_PROVIDER;
+    const requestBody = isOllamaConnector
+      ? this.buildOllamaChatRequestBody(model, context, threadSettings, executionOptions)
+      : this.buildChatRequestBody(model, context, threadSettings, executionOptions);
+    const url = isOllamaConnector ? `${baseUrl}/chat` : `${baseUrl}/chat/completions`;
     this.logger.debug(
-      `callCloudProvider: request body built — messageCount=${String(requestBody.messages.length)} temperature=${String(requestBody.temperature ?? 'default')}`,
+      `callCloudProvider: request body built — messageCount=${String(requestBody.messages.length)}`,
     );
-
-    this.logger.debug(`callCloudProvider: sending POST to ${baseUrl}/chat/completions`);
-    const response = await httpRequest<OpenAiChatResponse>({
-      url: `${baseUrl}/chat/completions`,
+    this.logger.debug(`callCloudProvider: sending POST to ${url}`);
+    const response = await httpRequest<OpenAiChatResponse | OllamaChatResponse>({
+      url,
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}` },
       body: requestBody,
@@ -662,17 +687,32 @@ export class ChatExecutionManager implements OnModuleInit {
     });
 
     if (!response.ok) {
-      this.logger.error(
-        `callCloudProvider: ${provider} returned error status=${String(response.status)}`,
-      );
-      throw new BusinessException(
+      const errorMessage = this.extractHttpErrorMessage(
+        response.data,
         `Cloud provider ${provider} returned status ${String(response.status)}`,
-        'CLOUD_PROVIDER_REQUEST_FAILED',
       );
+      this.logger.error(
+        `callCloudProvider: ${provider} returned error status=${String(response.status)} message=${errorMessage}`,
+      );
+      throw new BusinessException(errorMessage, 'CLOUD_PROVIDER_REQUEST_FAILED');
     }
 
     this.logger.debug('callCloudProvider: parsing cloud response');
-    const result = this.parseCloudResponse(response.data, provider, model, startTime, usedFallback);
+    const result = isOllamaConnector
+      ? this.parseOllamaChatResponse(
+          response.data as OllamaChatResponse,
+          provider,
+          model,
+          startTime,
+          usedFallback,
+        )
+      : this.parseCloudResponse(
+          response.data as OpenAiChatResponse,
+          provider,
+          model,
+          startTime,
+          usedFallback,
+        );
     this.logger.log(
       `callCloudProvider: completed ${provider}/${model} latencyMs=${String(result.latencyMs)} inputTokens=${String(result.inputTokens ?? 0)} outputTokens=${String(result.outputTokens ?? 0)}`,
     );
@@ -686,7 +726,11 @@ export class ChatExecutionManager implements OnModuleInit {
     const connectorConfig = await this.fetchConnectorConfig(provider);
     this.logger.debug(`resolveProviderConfig: connector config received for ${provider}`);
     const providerBaseUrls = PROVIDER_BASE_URLS as Readonly<Record<string, string>>;
-    const baseUrl = connectorConfig.baseUrl ?? providerBaseUrls[provider] ?? '';
+    const connectorBaseUrl = connectorConfig.baseUrl?.trim() ?? '';
+    const baseUrl =
+      provider === OLLAMA_CONNECTOR_PROVIDER
+        ? this.resolveOllamaConnectorBaseUrl(connectorBaseUrl, providerBaseUrls[provider] ?? '')
+        : (connectorConfig.baseUrl ?? providerBaseUrls[provider] ?? '');
 
     if (!baseUrl) {
       this.logger.error(`resolveProviderConfig: no base URL for provider ${provider}`);
@@ -748,6 +792,41 @@ export class ChatExecutionManager implements OnModuleInit {
     return requestBody;
   }
 
+  private buildOllamaChatRequestBody(
+    model: string,
+    context: AssembledContext,
+    threadSettings?: ThreadSettings,
+    executionOptions?: ExecutionOptions,
+  ): OllamaChatRequest {
+    const requestBody: OllamaChatRequest = {
+      model: this.normalizeCloudOllamaModel(model),
+      messages: this.contextAssembly.buildChatMessages(context),
+      stream: false,
+    };
+
+    if (threadSettings?.temperature !== null && threadSettings?.temperature !== undefined) {
+      requestBody.options = {
+        ...(requestBody.options ?? {}),
+        temperature: threadSettings.temperature,
+      };
+    }
+
+    const maxOutputTokens =
+      executionOptions?.maxOutputTokens ??
+      (threadSettings?.maxTokens !== null && threadSettings?.maxTokens !== undefined
+        ? Math.min(threadSettings.maxTokens, HARD_MAX_OUTPUT_TOKENS)
+        : undefined);
+
+    if (maxOutputTokens !== undefined) {
+      requestBody.options = {
+        ...(requestBody.options ?? {}),
+        num_predict: maxOutputTokens,
+      };
+    }
+
+    return requestBody;
+  }
+
   private parseCloudResponse(
     data: OpenAiChatResponse,
     provider: string,
@@ -784,6 +863,35 @@ export class ChatExecutionManager implements OnModuleInit {
       outputTokens: data.usage?.completion_tokens,
       latencyMs,
       finishReason: firstChoice.finish_reason,
+      usedFallback,
+    };
+  }
+
+  private parseOllamaChatResponse(
+    data: OllamaChatResponse,
+    provider: string,
+    model: string,
+    startTime: number,
+    usedFallback: boolean,
+  ): LlmResponse {
+    const latencyMs = Date.now() - startTime;
+    const responseContent = data.message?.content ?? '';
+
+    if (responseContent.trim().length === 0) {
+      throw new BusinessException(
+        `Cloud provider ${provider} returned no message content`,
+        'CLOUD_PROVIDER_EMPTY_RESPONSE',
+      );
+    }
+
+    return {
+      content: responseContent,
+      provider,
+      model,
+      inputTokens: data.prompt_eval_count,
+      outputTokens: data.eval_count,
+      latencyMs,
+      finishReason: data.done_reason ?? (data.done ? 'stop' : undefined),
       usedFallback,
     };
   }
@@ -1087,12 +1195,56 @@ Your task:
     });
 
     if (!response.ok) {
-      throw new BusinessException(
+      const errorMessage = this.extractHttpErrorMessage(
+        response.data,
         `Failed to fetch connector config for provider ${provider}`,
-        'CONNECTOR_CONFIG_FETCH_FAILED',
       );
+      throw new BusinessException(errorMessage, 'CONNECTOR_CONFIG_FETCH_FAILED');
     }
 
     return response.data;
+  }
+
+  private extractHttpErrorMessage(responseData: unknown, fallbackMessage: string): string {
+    if (responseData !== null && typeof responseData === 'object') {
+      const payload = responseData as Record<string, unknown>;
+      const message = payload['message'];
+      if (typeof message === 'string' && message.trim().length > 0) {
+        return message;
+      }
+
+      const error = payload['error'];
+      if (typeof error === 'string' && error.trim().length > 0) {
+        return error;
+      }
+    }
+
+    return fallbackMessage;
+  }
+
+  private normalizeCloudOllamaModel(model: string): string {
+    return model.trim().replace(/:cloud$/i, '');
+  }
+
+  private resolveOllamaConnectorBaseUrl(connectorBaseUrl: string, fallbackBaseUrl: string): string {
+    const trimmed = connectorBaseUrl.trim();
+    if (!trimmed) {
+      return fallbackBaseUrl;
+    }
+
+    const normalized = trimmed.replace(/\/+$/, '');
+    const isLocalhost = ['localhost', '127.0.0.1', '0.0.0.0'].some((pattern) =>
+      normalized.includes(pattern),
+    );
+    if (isLocalhost) {
+      return fallbackBaseUrl;
+    }
+    if (normalized.endsWith('/api')) {
+      return normalized;
+    }
+    if (normalized.endsWith('/v1')) {
+      return normalized.replace(/\/v1$/, '/api');
+    }
+    return normalized.includes('ollama.com') ? `${normalized}/api` : normalized;
   }
 }

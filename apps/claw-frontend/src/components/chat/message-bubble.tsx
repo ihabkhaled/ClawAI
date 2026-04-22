@@ -34,8 +34,25 @@ export function MessageBubble({
   const roleLabel = MESSAGE_ROLE_LABELS[message.role];
 
   const totalTokens = (message.inputTokens ?? 0) + (message.outputTokens ?? 0);
-  const providerModel = [message.provider, message.model].filter(Boolean).join(' / ');
   const metadata = message.metadata as Record<string, unknown> | null;
+  const routeRoadmap = metadata?.['routeRoadmap'] as
+    | {
+        routerModel?: string | null;
+        finalProvider?: string | null;
+        finalModel?: string | null;
+      }
+    | undefined;
+  const routerModel =
+    typeof routeRoadmap?.routerModel === 'string' ? routeRoadmap.routerModel : null;
+  const displayedProvider = routeRoadmap?.finalProvider ?? message.provider;
+  const displayedModel = routeRoadmap?.finalModel ?? message.model;
+  const providerModel = [displayedProvider, displayedModel ?? 'unknown']
+    .filter(Boolean)
+    .join(' / ');
+  const routeSummary =
+    message.routingMode === RoutingMode.AUTO && routerModel
+      ? `Route: ${routerModel} -> ${displayedModel ?? 'unknown'}`
+      : null;
   const memoryCount = typeof metadata?.['memoryCount'] === 'number' ? metadata['memoryCount'] : 0;
   const contextFileIds = Array.isArray(metadata?.['fileIds'])
     ? (metadata['fileIds'] as string[])
@@ -115,6 +132,11 @@ export function MessageBubble({
             {providerModel ? (
               <Badge variant="outline" className="text-xs">
                 {providerModel}
+              </Badge>
+            ) : null}
+            {routeSummary ? (
+              <Badge variant="outline" className="text-xs">
+                {routeSummary}
               </Badge>
             ) : null}
             {isReRouted && originalProvider && originalModel ? (

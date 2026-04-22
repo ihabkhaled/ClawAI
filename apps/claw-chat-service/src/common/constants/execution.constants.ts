@@ -22,4 +22,5 @@ export const PROVIDER_BASE_URLS: Record<string, string> = {
   DEEPSEEK: 'https://api.deepseek.com/v1',
   ANTHROPIC: 'https://api.anthropic.com/v1',
   GROK: 'https://api.x.ai/v1',
+  OLLAMA: 'https://ollama.com/api',
 };

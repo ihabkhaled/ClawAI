@@ -10,8 +10,32 @@ import { estimateCost, formatLatency } from '@/utilities';
 
 export function MessageProvenance({ message }: MessageProvenanceProps) {
   const { isOpen: isExpanded, toggle: toggleExpanded } = useToggle(false);
+  const metadata = message.metadata as Record<string, unknown> | null;
+  const routeRoadmap = metadata?.['routeRoadmap'] as
+    | {
+        routerModel?: string | null;
+        finalDisplayName?: string | null;
+        finalProvider?: string | null;
+        finalModel?: string | null;
+        steps?: Array<{
+          provider?: string;
+          model?: string;
+          displayName?: string | null;
+        }>;
+      }
+    | undefined;
+  const routePath = Array.isArray(routeRoadmap?.steps)
+    ? routeRoadmap.steps
+        .map((step) => {
+          const display = step.model ?? step.displayName ?? 'unknown';
+          const provider = step.provider ?? 'unknown';
+          return `${provider}/${display}`;
+        })
+        .join(' -> ')
+    : null;
 
   const hasProvenance =
+    routeRoadmap !== undefined ||
     message.provider !== null ||
     message.model !== null ||
     message.latencyMs !== null ||
@@ -55,6 +79,22 @@ export function MessageProvenance({ message }: MessageProvenanceProps) {
                 <Badge variant="outline" className="text-xs">
                   {message.model}
                 </Badge>
+              </div>
+            ) : null}
+
+            {routeRoadmap?.routerModel ? (
+              <div className="col-span-2">
+                <span className="text-muted-foreground">Router model: </span>
+                <Badge variant="outline" className="text-xs">
+                  {routeRoadmap.routerModel}
+                </Badge>
+              </div>
+            ) : null}
+
+            {routePath ? (
+              <div className="col-span-2">
+                <span className="text-muted-foreground">Route path: </span>
+                <span>{routePath}</span>
               </div>
             ) : null}
 

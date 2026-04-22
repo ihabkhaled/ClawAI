@@ -17,6 +17,10 @@ export const createMessageSchema = z.object({
   routingMode: z.nativeEnum(RoutingMode).optional(),
   provider: z.string().max(50, 'Provider must be at most 50 characters').optional(),
   model: z.string().max(255, 'Model must be at most 255 characters').optional(),
+  modelDisplayName: z
+    .string()
+    .max(255, 'Model display name must be at most 255 characters')
+    .optional(),
   fileIds: z.array(z.string().max(255)).max(10, 'Maximum 10 files per message').optional(),
   researchMode: researchModeSchema.optional(),
   researchProviderId: z.string().max(64, 'Research provider id too long').optional(),
