@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common';
 
+import { BraveAdapter } from './adapters/brave.adapter';
+import { ExaAdapter } from './adapters/exa.adapter';
+import { FirecrawlAdapter } from './adapters/firecrawl.adapter';
 import { OllamaWebSearchAdapter } from './adapters/ollama-web.adapter';
 import { SearchAdapterFactory } from './adapters/search-adapter.factory';
 import { SearxngAdapter } from './adapters/searxng.adapter';
+import { SerpApiAdapter } from './adapters/serpapi.adapter';
 import { TavilyAdapter } from './adapters/tavily.adapter';
 import { SearchController } from './controllers/search.controller';
 import { SearchProviderController } from './controllers/search-provider.controller';
@@ -24,6 +28,10 @@ import { SearchProviderService } from './services/search-provider.service';
     TavilyAdapter,
     OllamaWebSearchAdapter,
     SearxngAdapter,
+    ExaAdapter,
+    FirecrawlAdapter,
+    BraveAdapter,
+    SerpApiAdapter,
   ],
   exports: [SearchProviderService, SearchExecutionService],
 })
