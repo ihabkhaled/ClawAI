@@ -1,9 +1,13 @@
+import { ModelSelectionMode } from '../common/enums/model-selection-mode.enum';
+import { BusinessException } from '../common/errors/business.exception';
 import { RolePackManager } from '../modules/chat-messages/managers/role-pack.manager';
 import { type ChatMessagesRepository } from '../modules/chat-messages/repositories/chat-messages.repository';
 import { type ChatThreadsRepository } from '../modules/chat-threads/repositories/chat-threads.repository';
 import { type ChatStreamService } from '../modules/chat-messages/services/chat-stream.service';
+import { type AdvancedModuleModelSelectionService } from '../modules/chat-messages/services/advanced-module-model-selection.service';
 import { rolePackMessageSchema } from '../modules/chat-messages/dto/role-pack-message.dto';
 import * as httpClientModule from '../common/utilities/http-client.utility';
+import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
 
 jest.mock('../app/config/app.config', () => ({
   AppConfig: {
@@ -276,6 +280,84 @@ describe('RolePackManager', () => {
       for (const pack of packs) {
         const result = rolePackMessageSchema.safeParse({ content: 'hello', pack });
         expect(result.success).toBe(true);
+      }
+    });
+  });
+
+  describe('model selection', () => {
+    it('rejects manual selection with unsupported provider before queuing', async () => {
+      const selectionService: Partial<
+        Record<keyof AdvancedModuleModelSelectionService, jest.Mock>
+      > = {
+        resolveSelection: jest
+          .fn()
+          .mockRejectedValue(
+            new BusinessException(
+              'unsupported provider',
+              'ADVANCED_MODULE_MODEL_PROVIDER_UNSUPPORTED',
+            ),
+          ),
+      };
+      const isolated = new RolePackManager(
+        messagesRepo as unknown as ChatMessagesRepository,
+        threadsRepo as unknown as ChatThreadsRepository,
+        streamService as unknown as ChatStreamService,
+        selectionService as unknown as AdvancedModuleModelSelectionService,
+      );
+
+      await expect(
+        isolated.executeRolePack('user-1', {
+          content: 'implement login',
+          threadId: 'thread-role-1',
+          pack: 'coding-team',
+          requestedProvider: 'OPENAI',
+          requestedModel: 'gpt-4.1',
+          modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
+        }),
+      ).rejects.toThrow('unsupported provider');
+      expect(messagesRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('MANUAL_MODEL: all roles execute with the single chosen model (documented single-model behavior)', async () => {
+      const manualResolution: AdvancedModelSelectionResolution = {
+        modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
+        requestedProvider: 'local-ollama',
+        requestedModel: 'qwen2.5:7b',
+        requestedDisplayName: 'qwen2.5:7b',
+        selectedModelSource: 'LOCAL',
+        actualProvider: 'local-ollama',
+        actualModel: 'qwen2.5:7b',
+      };
+      messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
+
+      await (
+        manager as unknown as {
+          executeInBackground: (
+            threadId: string,
+            content: string,
+            pack: string,
+            selection: AdvancedModelSelectionResolution,
+          ) => Promise<void>;
+        }
+      ).executeInBackground('thread-role-1', 'implement login', 'coding-team', manualResolution);
+
+      const assistantCall = (messagesRepo.create as jest.Mock).mock.calls.find(
+        (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
+      );
+      expect(assistantCall).toBeDefined();
+      const metadata = (
+        assistantCall![0] as {
+          metadata?: {
+            modelSelection?: AdvancedModelSelectionResolution;
+            members?: Array<{ model?: string }>;
+          };
+        }
+      ).metadata;
+      expect(metadata?.modelSelection?.modelSelectionMode).toBe(ModelSelectionMode.MANUAL_MODEL);
+      expect(metadata?.modelSelection?.actualModel).toBe('qwen2.5:7b');
+      // All members should use the single manually-selected model
+      for (const member of metadata?.members ?? []) {
+        expect(member.model).toBe('qwen2.5:7b');
       }
     });
   });

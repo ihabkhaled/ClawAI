@@ -127,31 +127,35 @@ describe('JudgeRefereeManager', () => {
   describe('parseJudgeOutput', () => {
     it('should parse valid JSON with ACCEPT', () => {
       const result = manager.parseJudgeOutput(
-        '{"decision": "ACCEPT", "reasoning": "Response is good", "confidence": 0.9}',
+        '{"decision": "ACCEPT", "summary": "Verified", "reasoning": "Response is good", "confidence": 0.9, "responseType": "verification_note", "response": "The answer is acceptable.", "recommendedChanges": []}',
       );
       expect(result.decision).toBe('ACCEPT');
+      expect(result.summary).toBe('Verified');
       expect(result.reasoning).toBe('Response is good');
       expect(result.confidence).toBe(0.9);
+      expect(result.responseType).toBe('verification_note');
     });
 
     it('should parse valid JSON with REVISE', () => {
       const result = manager.parseJudgeOutput(
-        '{"decision": "REVISE", "reasoning": "Missing edge cases", "confidence": 0.7}',
+        '{"decision": "REVISE", "summary": "Needs revision", "reasoning": "Missing edge cases", "confidence": 0.7, "responseType": "summary", "response": "Add edge-case handling.", "recommendedChanges": ["Handle edge cases"]}',
       );
       expect(result.decision).toBe('REVISE');
       expect(result.reasoning).toBe('Missing edge cases');
+      expect(result.recommendedChanges).toEqual(['Handle edge cases']);
     });
 
     it('should parse valid JSON with ESCALATE', () => {
       const result = manager.parseJudgeOutput(
-        '{"decision": "ESCALATE", "reasoning": "Fundamentally wrong", "confidence": 0.85}',
+        '{"decision": "ESCALATE", "summary": "Escalate", "reasoning": "Fundamentally wrong", "confidence": 0.85, "response": "Here is a stronger replacement answer.", "responseType": "escalated_answer", "recommendedChanges": []}',
       );
       expect(result.decision).toBe('ESCALATE');
+      expect(result.responseType).toBe('escalated_answer');
     });
 
     it('should handle JSON wrapped in markdown code block', () => {
       const result = manager.parseJudgeOutput(
-        '```json\n{"decision": "ACCEPT", "reasoning": "Looks good", "confidence": 0.95}\n```',
+        '```json\n{"decision": "ACCEPT", "summary": "Verified", "reasoning": "Looks good", "confidence": 0.95, "responseType": "verification_note", "response": "Looks acceptable.", "recommendedChanges": []}\n```',
       );
       expect(result.decision).toBe('ACCEPT');
     });
@@ -171,27 +175,44 @@ describe('JudgeRefereeManager', () => {
 
     it('should clamp confidence between 0 and 1', () => {
       const result = manager.parseJudgeOutput(
-        '{"decision": "ACCEPT", "reasoning": "Sure", "confidence": 1.5}',
+        '{"decision": "ACCEPT", "summary": "Verified", "reasoning": "Sure", "confidence": 1.5, "responseType": "verification_note", "response": "Verified.", "recommendedChanges": []}',
       );
       expect(result.confidence).toBeLessThanOrEqual(1);
     });
 
     it('should handle missing confidence with threshold default', () => {
-      const result = manager.parseJudgeOutput('{"decision": "ACCEPT", "reasoning": "OK"}');
+      const result = manager.parseJudgeOutput(
+        '{"decision": "ACCEPT", "summary": "Verified", "reasoning": "OK", "responseType": "verification_note", "response": "Verified.", "recommendedChanges": []}',
+      );
       expect(result.confidence).toBe(0.6);
     });
 
     it('should handle JSON with surrounding text', () => {
       const result = manager.parseJudgeOutput(
-        'Here is my evaluation:\n{"decision": "REVISE", "reasoning": "Needs work", "confidence": 0.65}\nEnd of evaluation.',
+        'Here is my evaluation:\n{"decision": "REVISE", "summary": "Needs work", "reasoning": "Needs work", "confidence": 0.65, "responseType": "summary", "response": "Tighten the answer.", "recommendedChanges": []}\nEnd of evaluation.',
       );
       expect(result.decision).toBe('REVISE');
+    });
+
+    it('should parse plain text judge output without failing', () => {
+      const result = manager.parseJudgeOutput('The answer passed review.');
+      expect(result.decision).toBe('ACCEPT');
+      expect(result.summary).toBe('The answer passed review.');
+      expect(result.response).toBe('The answer passed review.');
+      expect(result.responseType).toBe('verification_note');
     });
   });
 
   describe('buildMetadata', () => {
     it('should produce correct metadata shape', () => {
       const result: JudgeRefereeResult = {
+        originalResponse: {
+          content: 'Original answer',
+          provider: 'OPENAI',
+          model: 'gpt-4o-mini',
+          latencyMs: 900,
+          usedFallback: false,
+        },
         criticEvaluation: {
           feedback: ['Missing error handling', 'No input validation'],
           score: 0.6,
@@ -201,8 +222,12 @@ describe('JudgeRefereeManager', () => {
         },
         judgeVerdict: {
           decision: JudgeDecision.REVISE,
+          summary: 'Needs revision',
           reasoning: 'Code has fixable issues',
           confidence: 0.75,
+          response: 'Improve error handling and validation.',
+          responseType: 'summary',
+          recommendedChanges: ['Add error handling', 'Validate inputs'],
           model: 'local-ollama/AUTO',
           latencyMs: 1500,
         },
@@ -222,10 +247,19 @@ describe('JudgeRefereeManager', () => {
       expect(metadata.judgeConfidence).toBe(0.75);
       expect(metadata.revisionsCount).toBe(0);
       expect(metadata.judgeTotalLatencyMs).toBe(3500);
+      expect(metadata.judgeReview.judgeSummary).toBe('Needs revision');
+      expect(metadata.judgeReview.originalAnswerSnapshot).toBe('Original answer');
     });
 
     it('should set revisionsCount to 1 when revised response exists', () => {
       const result: JudgeRefereeResult = {
+        originalResponse: {
+          content: 'Original answer',
+          provider: 'OPENAI',
+          model: 'gpt-4o-mini',
+          latencyMs: 600,
+          usedFallback: false,
+        },
         criticEvaluation: {
           feedback: [],
           score: 0.9,
@@ -235,8 +269,12 @@ describe('JudgeRefereeManager', () => {
         },
         judgeVerdict: {
           decision: JudgeDecision.ACCEPT,
+          summary: 'Verified',
           reasoning: 'Good response',
           confidence: 0.95,
+          response: 'The answer is correct.',
+          responseType: 'verification_note',
+          recommendedChanges: [],
           model: 'local-ollama/AUTO',
           latencyMs: 500,
         },
@@ -252,6 +290,7 @@ describe('JudgeRefereeManager', () => {
 
       const metadata = manager.buildMetadata(result);
       expect(metadata.revisionsCount).toBe(1);
+      expect(metadata.judgeReview.revisedAnswer).toBe('Revised content');
     });
   });
 

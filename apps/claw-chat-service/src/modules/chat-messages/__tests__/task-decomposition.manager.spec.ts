@@ -1,8 +1,12 @@
+import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
+import { BusinessException } from '../../../common/errors/business.exception';
 import { TaskDecompositionManager } from '../managers/task-decomposition.manager';
 import { type ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { type ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { type ChatStreamService } from '../services/chat-stream.service';
+import { type AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { decomposeTaskSchema } from '../dto/decompose-task.dto';
+import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 
 jest.mock('../../../common/utilities/http-client.utility');
 jest.mock('../../../app/config/app.config');
@@ -233,6 +237,112 @@ describe('TaskDecompositionManager', () => {
       await manager.executeInBackground('thread-1', 'Complex task content here', 2);
 
       expect(streamService.emitCompletion).toHaveBeenCalledWith('thread-1', 'local-ollama', 'AUTO');
+    });
+  });
+
+  describe('model selection', () => {
+    it('rejects manual selection with unsupported provider before queuing', async () => {
+      const selectionService: Partial<
+        Record<keyof AdvancedModuleModelSelectionService, jest.Mock>
+      > = {
+        resolveSelection: jest
+          .fn()
+          .mockRejectedValue(
+            new BusinessException(
+              'unsupported provider',
+              'ADVANCED_MODULE_MODEL_PROVIDER_UNSUPPORTED',
+            ),
+          ),
+      };
+      const isolated = new TaskDecompositionManager(
+        messagesRepo as unknown as ChatMessagesRepository,
+        threadsRepo as unknown as ChatThreadsRepository,
+        streamService as unknown as ChatStreamService,
+        selectionService as unknown as AdvancedModuleModelSelectionService,
+      );
+
+      await expect(
+        isolated.executeDecomposition('user-1', {
+          content: 'A complex task with enough characters',
+          threadId: 'thread-1',
+          maxSubTasks: 2,
+          requestedProvider: 'OPENAI',
+          requestedModel: 'gpt-4.1',
+          modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
+        }),
+      ).rejects.toThrow('unsupported provider');
+      expect(messagesRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('persists modelSelection + routeRoadmap for MANUAL_MODEL execution', async () => {
+      const manualResolution: AdvancedModelSelectionResolution = {
+        modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
+        requestedProvider: 'local-ollama',
+        requestedModel: 'qwen2.5:7b',
+        requestedDisplayName: 'qwen2.5:7b',
+        selectedModelSource: 'LOCAL',
+        actualProvider: 'local-ollama',
+        actualModel: 'qwen2.5:7b',
+      };
+      httpRequest
+        .mockResolvedValueOnce(
+          makeOllamaSuccess(
+            JSON.stringify([{ title: 'T', instruction: 'do', category: 'general' }]),
+          ),
+        )
+        .mockResolvedValueOnce(makeOllamaSuccess('sub-result'))
+        .mockResolvedValueOnce(makeOllamaSuccess('merged'));
+      messagesRepo.create!.mockResolvedValue({ id: 'msg-manual', threadId: 'thread-m' });
+
+      await manager.executeInBackground('thread-m', 'Some complex task', 2, manualResolution);
+
+      const assistantCall = messagesRepo.create!.mock.calls.find(
+        (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
+      );
+      expect(assistantCall).toBeDefined();
+      const metadata = (
+        assistantCall![0] as {
+          metadata?: {
+            modelSelection?: AdvancedModelSelectionResolution;
+            routeRoadmap?: {
+              finalProvider?: string;
+              finalModel?: string;
+              selectedProvider?: string;
+              selectedModel?: string;
+            };
+          };
+        }
+      ).metadata;
+      expect(metadata?.modelSelection?.actualModel).toBe('qwen2.5:7b');
+      expect(metadata?.modelSelection?.modelSelectionMode).toBe(ModelSelectionMode.MANUAL_MODEL);
+      expect(metadata?.routeRoadmap?.finalProvider).toBe('local-ollama');
+      expect(metadata?.routeRoadmap?.finalModel).toBe('qwen2.5:7b');
+    });
+
+    it('uses AUTO fallback resolution when no selection service is injected', async () => {
+      httpRequest
+        .mockResolvedValueOnce(
+          makeOllamaSuccess(
+            JSON.stringify([{ title: 'T', instruction: 'do', category: 'general' }]),
+          ),
+        )
+        .mockResolvedValueOnce(makeOllamaSuccess('sub-result'))
+        .mockResolvedValueOnce(makeOllamaSuccess('merged'));
+      messagesRepo.create!.mockResolvedValue({ id: 'msg-auto', threadId: 'thread-a' });
+
+      await manager.executeInBackground('thread-a', 'Some complex task', 2);
+
+      const assistantCall = messagesRepo.create!.mock.calls.find(
+        (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
+      );
+      expect(assistantCall).toBeDefined();
+      const metadata = (
+        assistantCall![0] as {
+          metadata?: { modelSelection?: AdvancedModelSelectionResolution };
+        }
+      ).metadata;
+      expect(metadata?.modelSelection?.modelSelectionMode).toBe(ModelSelectionMode.AUTO);
+      expect(metadata?.modelSelection?.actualProvider).toBe('local-ollama');
     });
   });
 });

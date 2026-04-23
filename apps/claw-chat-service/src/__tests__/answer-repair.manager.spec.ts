@@ -1,7 +1,10 @@
 import { AppConfig } from '../app/config/app.config';
+import { BusinessException } from '../common/errors';
+import { ModelSelectionMode } from '../common/enums/model-selection-mode.enum';
 import { AnswerRepairManager } from '../modules/chat-messages/managers/answer-repair.manager';
 import { RepairType } from '../common/enums/repair-type.enum';
 import { repairMessageSchema } from '../modules/chat-messages/dto/repair-message.dto';
+import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
 
 jest.spyOn(AppConfig, 'get').mockReturnValue({
   CHAT_DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
@@ -370,7 +373,7 @@ describe('AnswerRepairManager', () => {
       );
     });
 
-    it('uses targetProvider and targetModel in ASSISTANT metadata when provided', async () => {
+    it('uses the requested local model in ASSISTANT metadata when provided', async () => {
       const createMock = jest
         .fn()
         .mockResolvedValueOnce({ id: 'u-6' })
@@ -390,19 +393,91 @@ describe('AnswerRepairManager', () => {
         content: 'Text to fix',
         threadId: 'thread-model',
         repairTypes: [RepairType.SCHEMA],
-        targetProvider: 'anthropic',
-        targetModel: 'claude-sonnet-4',
+        targetProvider: 'local-ollama',
+        targetModel: 'qwen2.5:7b',
       });
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(createMock).toHaveBeenNthCalledWith(
         2,
         expect.objectContaining({
-          provider: 'anthropic',
-          model: 'claude-sonnet-4',
+          provider: 'local-ollama',
+          model: 'qwen2.5:7b',
           metadata: expect.objectContaining({
-            repairProvider: 'anthropic',
-            repairModel: 'claude-sonnet-4',
+            repairProvider: 'local-ollama',
+            repairModel: 'qwen2.5:7b',
+          }),
+        }),
+      );
+    });
+
+    it('rejects unsupported manual providers before queuing a repair request', async () => {
+      const selectionService = {
+        resolveSelection: jest
+          .fn()
+          .mockRejectedValue(
+            new BusinessException(
+              'unsupported provider',
+              'ADVANCED_MODULE_MODEL_PROVIDER_UNSUPPORTED',
+            ),
+          ),
+      };
+      const isolatedManager = new AnswerRepairManager(
+        mockChatMessagesRepository as any,
+        mockChatThreadsRepository as any,
+        mockChatStreamService as any,
+        selectionService as any,
+      );
+
+      await expect(
+        isolatedManager.executeRepair('user-1', {
+          content: 'Text to fix',
+          threadId: 'thread-invalid',
+          repairTypes: [RepairType.FORMAT],
+          requestedProvider: 'OPENAI',
+          requestedModel: 'gpt-4.1',
+        }),
+      ).rejects.toThrow('unsupported provider');
+      expect(mockChatMessagesRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('stores model-selection metadata for manual repair execution', async () => {
+      const manualSelection: AdvancedModelSelectionResolution = {
+        modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
+        requestedProvider: 'local-ollama',
+        requestedModel: 'qwen2.5:7b',
+        requestedDisplayName: 'qwen2.5:7b',
+        selectedModelSource: 'LOCAL',
+        actualProvider: 'local-ollama',
+        actualModel: 'qwen2.5:7b',
+      };
+      const createMock = jest.fn().mockResolvedValue({ id: 'a-8' });
+      const isolatedManager = new AnswerRepairManager(
+        { ...mockChatMessagesRepository, create: createMock } as any,
+        mockChatThreadsRepository as any,
+        mockChatStreamService as any,
+      );
+      mockHttpRequest.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: { response: 'Manual local repair' },
+      });
+
+      await (isolatedManager as any).executeInBackground(
+        'thread-manual',
+        'Text to fix',
+        [RepairType.FORMAT],
+        manualSelection,
+      );
+
+      expect(createMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: 'qwen2.5:7b',
+          metadata: expect.objectContaining({
+            modelSelection: expect.objectContaining({
+              actualModel: 'qwen2.5:7b',
+              requestedModel: 'qwen2.5:7b',
+            }),
           }),
         }),
       );

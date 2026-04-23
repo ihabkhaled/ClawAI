@@ -1,10 +1,14 @@
+import { ModelSelectionMode } from '../common/enums/model-selection-mode.enum';
+import { BusinessException } from '../common/errors/business.exception';
 import { BestOfNManager } from '../modules/chat-messages/managers/best-of-n.manager';
 import { type ChatMessagesRepository } from '../modules/chat-messages/repositories/chat-messages.repository';
 import { type ChatThreadsRepository } from '../modules/chat-threads/repositories/chat-threads.repository';
 import { type ChatStreamService } from '../modules/chat-messages/services/chat-stream.service';
 import { type QualityCheckManager } from '../modules/chat-messages/managers/quality-check.manager';
+import { type AdvancedModuleModelSelectionService } from '../modules/chat-messages/services/advanced-module-model-selection.service';
 import { bestOfNMessageSchema } from '../modules/chat-messages/dto/best-of-n-message.dto';
 import * as httpClientModule from '../common/utilities/http-client.utility';
+import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
 
 jest.mock('../modules/chat-messages/managers/best-of-n.manager', () => {
   const actual = jest.requireActual<
@@ -351,6 +355,116 @@ describe('BestOfNManager', () => {
     it('should accept n=5 (maximum valid)', () => {
       const result = bestOfNMessageSchema.safeParse({ content: 'hello', n: 5 });
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe('model selection', () => {
+    it('rejects manual selection with unsupported provider before queuing', async () => {
+      const selectionService: Partial<
+        Record<keyof AdvancedModuleModelSelectionService, jest.Mock>
+      > = {
+        resolveSelection: jest
+          .fn()
+          .mockRejectedValue(
+            new BusinessException(
+              'unsupported provider',
+              'ADVANCED_MODULE_MODEL_PROVIDER_UNSUPPORTED',
+            ),
+          ),
+      };
+      const isolated = new BestOfNManager(
+        messagesRepo as unknown as ChatMessagesRepository,
+        threadsRepo as unknown as ChatThreadsRepository,
+        streamService as unknown as ChatStreamService,
+        qualityManager as unknown as QualityCheckManager,
+        selectionService as unknown as AdvancedModuleModelSelectionService,
+      );
+
+      await expect(
+        isolated.executeBestOfN('user-1', {
+          content: 'test prompt',
+          threadId: 'thread-best-1',
+          n: 3,
+          models: undefined,
+          requestedProvider: 'OPENAI',
+          requestedModel: 'gpt-4.1',
+          modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
+        }),
+      ).rejects.toThrow('unsupported provider');
+      expect(messagesRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('persists modelSelection metadata with resolved model for MANUAL_MODEL', async () => {
+      const manualResolution: AdvancedModelSelectionResolution = {
+        modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
+        requestedProvider: 'local-ollama',
+        requestedModel: 'qwen2.5:7b',
+        requestedDisplayName: 'qwen2.5:7b',
+        selectedModelSource: 'LOCAL',
+        actualProvider: 'local-ollama',
+        actualModel: 'qwen2.5:7b',
+      };
+      messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
+
+      await (
+        manager as unknown as {
+          executeInBackground: (
+            threadId: string,
+            content: string,
+            n: number,
+            selection: AdvancedModelSelectionResolution,
+            models?: string[],
+          ) => Promise<void>;
+        }
+      ).executeInBackground('thread-best-1', 'test prompt', 2, manualResolution);
+
+      const assistantCall = messagesRepo.create!.mock.calls.find(
+        (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
+      );
+      expect(assistantCall).toBeDefined();
+      const metadata = (
+        assistantCall![0] as {
+          metadata?: { modelSelection?: AdvancedModelSelectionResolution };
+        }
+      ).metadata;
+      expect(metadata?.modelSelection?.modelSelectionMode).toBe(ModelSelectionMode.MANUAL_MODEL);
+      expect(metadata?.modelSelection?.actualModel).toBe('qwen2.5:7b');
+    });
+
+    it('AUTO path: all N candidates run with the resolved fallback model', async () => {
+      const autoResolution: AdvancedModelSelectionResolution = {
+        modelSelectionMode: ModelSelectionMode.AUTO,
+        requestedProvider: null,
+        requestedModel: null,
+        requestedDisplayName: null,
+        selectedModelSource: null,
+        actualProvider: 'local-ollama',
+        actualModel: 'gemma3:4b',
+      };
+      messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
+
+      await (
+        manager as unknown as {
+          executeInBackground: (
+            threadId: string,
+            content: string,
+            n: number,
+            selection: AdvancedModelSelectionResolution,
+            models?: string[],
+          ) => Promise<void>;
+        }
+      ).executeInBackground('thread-best-1', 'test prompt', 3, autoResolution);
+
+      const assistantCall = messagesRepo.create!.mock.calls.find(
+        (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
+      );
+      const metadata = (
+        assistantCall![0] as {
+          metadata?: { modelSelection?: AdvancedModelSelectionResolution };
+        }
+      ).metadata;
+      expect(metadata?.modelSelection?.modelSelectionMode).toBe(ModelSelectionMode.AUTO);
+      expect(metadata?.modelSelection?.actualModel).toBe('gemma3:4b');
     });
   });
 });

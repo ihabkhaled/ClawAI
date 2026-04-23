@@ -372,6 +372,13 @@ describe('ChatExecutionManager', () => {
 
     judgeManager.shouldActivate = jest.fn().mockReturnValue(true);
     judgeManager.evaluate = jest.fn().mockResolvedValue({
+      originalResponse: {
+        content: 'All good.',
+        provider: 'local-ollama',
+        model: 'AUTO',
+        latencyMs: 120,
+        usedFallback: false,
+      },
       criticEvaluation: {
         feedback: [],
         score: 0.9,
@@ -381,8 +388,12 @@ describe('ChatExecutionManager', () => {
       },
       judgeVerdict: {
         decision: JudgeDecision.ACCEPT,
+        summary: 'Verified',
         reasoning: 'Looks good',
         confidence: 0.9,
+        response: 'The answer passed review.',
+        responseType: 'verification_note',
+        recommendedChanges: [],
         model: 'local-ollama/AUTO',
         latencyMs: 80,
       },
@@ -406,5 +417,72 @@ describe('ChatExecutionManager', () => {
     expect(qualityManager.checkResponseQuality).toHaveBeenCalledTimes(1);
     expect(judgeManager.shouldActivate).toHaveBeenCalledTimes(1);
     expect(result.fastPathUsed).toBe(false);
+  });
+
+  it('returns the judge escalated answer when escalation produces a stronger response', async () => {
+    const context = makeContext('status?');
+    httpRequest.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        model: 'qwen3:1.7b',
+        response: 'Weak answer.',
+        done: true,
+      },
+    });
+
+    judgeManager.shouldActivate = jest.fn().mockReturnValue(true);
+    judgeManager.evaluate = jest.fn().mockResolvedValue({
+      originalResponse: {
+        content: 'Weak answer.',
+        provider: 'local-ollama',
+        model: 'AUTO',
+        latencyMs: 120,
+        usedFallback: false,
+      },
+      criticEvaluation: {
+        feedback: ['Incomplete answer'],
+        score: 0.3,
+        category: 'generic',
+        model: 'OPENAI/gpt-4o-mini',
+        latencyMs: 100,
+      },
+      judgeVerdict: {
+        decision: JudgeDecision.ESCALATE,
+        summary: 'Escalate',
+        reasoning: 'The answer is too weak.',
+        confidence: 0.92,
+        response: 'Here is a stronger answer.',
+        responseType: 'escalated_answer',
+        recommendedChanges: ['Answer directly'],
+        model: 'local-ollama/AUTO',
+        latencyMs: 80,
+      },
+      escalatedResponse: {
+        content: 'Here is a stronger answer.',
+        provider: 'local-ollama',
+        model: 'AUTO',
+        latencyMs: 80,
+        usedFallback: false,
+      },
+      totalLatencyMs: 180,
+      revisedResponse: undefined,
+    });
+
+    const result = await manager.execute(
+      {
+        messageId: 'msg-4',
+        threadId: 'thread-1',
+        selectedProvider: 'local-ollama',
+        selectedModel: 'AUTO',
+        routingMode: 'AUTO',
+        judgeEnabled: true,
+        timestamp: new Date().toISOString(),
+      },
+      context,
+    );
+
+    expect(result.content).toBe('Here is a stronger answer.');
+    expect(judgeManager.buildMetadata).toHaveBeenCalledTimes(1);
   });
 });

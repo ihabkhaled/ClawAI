@@ -32,6 +32,11 @@ describe('ParallelExecutionManager', () => {
     assemble: jest.fn(),
   };
 
+  const mockJudgeRefereeManager = {
+    evaluate: jest.fn(),
+    buildMetadata: jest.fn(),
+  };
+
   const mockChatMessagesRepository = {
     create: jest.fn(),
     findRecentByThreadId: jest.fn(),
@@ -66,6 +71,7 @@ describe('ParallelExecutionManager', () => {
     { provider: 'ANTHROPIC', model: 'claude-sonnet-4' },
     { provider: 'GEMINI', model: 'gemini-2.5-flash' },
   ];
+  const disabledJudgeConfig = { enabled: false, model: null };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -84,6 +90,7 @@ describe('ParallelExecutionManager', () => {
     manager = new ParallelExecutionManager(
       mockChatExecutionManager as any,
       mockContextAssemblyManager as any,
+      mockJudgeRefereeManager as any,
       mockChatMessagesRepository as any,
       mockChatThreadsRepository as any,
       mockChatStreamService as any,
@@ -97,13 +104,17 @@ describe('ParallelExecutionManager', () => {
         'thread-1',
         'Hello world',
         sampleModels,
+        disabledJudgeConfig,
       );
 
       expect(mockChatMessagesRepository.create).toHaveBeenCalledWith({
         threadId: 'thread-1',
         role: 'USER',
         content: 'Hello world',
-        metadata: undefined,
+        metadata: {
+          compareJudgeEnabled: false,
+          compareJudgeModel: null,
+        },
       });
 
       expect(result.messageId).toBe('msg-user-1');
@@ -112,7 +123,13 @@ describe('ParallelExecutionManager', () => {
     });
 
     it('should return empty responses initially', async () => {
-      const result = await manager.executeParallel('user-1', 'thread-1', 'Hello', sampleModels);
+      const result = await manager.executeParallel(
+        'user-1',
+        'thread-1',
+        'Hello',
+        sampleModels,
+        disabledJudgeConfig,
+      );
 
       expect(result.responses).toEqual([]);
       expect(result.totalLatencyMs).toBe(0);
@@ -121,14 +138,22 @@ describe('ParallelExecutionManager', () => {
     });
 
     it('should store fileIds in user message metadata when provided', async () => {
-      await manager.executeParallel('user-1', 'thread-1', 'Analyze this', sampleModels, [
-        'file-1',
-        'file-2',
-      ]);
+      await manager.executeParallel(
+        'user-1',
+        'thread-1',
+        'Analyze this',
+        sampleModels,
+        disabledJudgeConfig,
+        ['file-1', 'file-2'],
+      );
 
       expect(mockChatMessagesRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          metadata: { fileIds: ['file-1', 'file-2'] },
+          metadata: {
+            compareJudgeEnabled: false,
+            compareJudgeModel: null,
+            fileIds: ['file-1', 'file-2'],
+          },
         }),
       );
     });
@@ -158,6 +183,9 @@ describe('ParallelExecutionManager', () => {
       const results: ParallelModelResponse[] = await (manager as any).executeAllModels(
         sampleModels,
         mockContext,
+        disabledJudgeConfig,
+        'group-1',
+        'thread-1',
       );
 
       expect(results).toHaveLength(2);
@@ -182,6 +210,9 @@ describe('ParallelExecutionManager', () => {
       const results: ParallelModelResponse[] = await (manager as any).executeAllModels(
         sampleModels,
         mockContext,
+        disabledJudgeConfig,
+        'group-1',
+        'thread-1',
       );
 
       expect(results).toHaveLength(2);
@@ -199,6 +230,9 @@ describe('ParallelExecutionManager', () => {
       const results: ParallelModelResponse[] = await (manager as any).executeAllModels(
         sampleModels,
         mockContext,
+        disabledJudgeConfig,
+        'group-1',
+        'thread-1',
       );
 
       expect(results).toHaveLength(2);
@@ -214,6 +248,9 @@ describe('ParallelExecutionManager', () => {
       const results: ParallelModelResponse[] = await (manager as any).executeAllModels(
         sampleModels,
         mockContext,
+        disabledJudgeConfig,
+        'group-1',
+        'thread-1',
       );
 
       expect(results[0]!.provider).toBe('ANTHROPIC');
@@ -539,9 +576,13 @@ describe('ParallelExecutionManager', () => {
         outputTokens: 100,
       });
 
-      await (manager as any).executeInBackground('user-1', 'thread-1', 'group-1', [
-        { provider: 'ANTHROPIC', model: 'claude-sonnet-4' },
-      ]);
+      await (manager as any).executeInBackground(
+        'user-1',
+        'thread-1',
+        'group-1',
+        [{ provider: 'ANTHROPIC', model: 'claude-sonnet-4' }],
+        disabledJudgeConfig,
+      );
 
       expect(mockContextAssemblyManager.assemble).toHaveBeenCalled();
       expect(mockChatExecutionManager.callProvider).toHaveBeenCalledTimes(1);
@@ -558,7 +599,13 @@ describe('ParallelExecutionManager', () => {
     it('should store error message and emit error when background execution fails', async () => {
       mockChatThreadsRepository.findById.mockRejectedValue(new Error('DB connection lost'));
 
-      await (manager as any).executeInBackground('user-1', 'thread-1', 'group-1', sampleModels);
+      await (manager as any).executeInBackground(
+        'user-1',
+        'thread-1',
+        'group-1',
+        sampleModels,
+        disabledJudgeConfig,
+      );
 
       // Should store a failed response
       expect(mockChatMessagesRepository.create).toHaveBeenCalledWith(
