@@ -1,3 +1,4 @@
+import { ProviderSelectionMode } from '../../../../common/enums/provider-selection-mode.enum';
 import { ResearchWorkflowKind } from '../../../../common/enums/research-workflow-kind.enum';
 import { buildEvidenceBundle, traceEntry } from '../evidence-builder.utility';
 import type { EvidenceItem } from '../../types/evidence-bundle.types';
@@ -18,12 +19,22 @@ function makeItem(overrides: Partial<EvidenceItem> = {}): EvidenceItem {
 }
 
 describe('buildEvidenceBundle', () => {
+  const providerSelection = {
+    providerId: 'provider-1',
+    providerName: 'Tavily',
+    providerKind: 'TAVILY',
+    selectionMode: ProviderSelectionMode.AUTO,
+    fallbackUsed: false,
+    attemptedProviders: ['Tavily'],
+  };
+
   it('deduplicates by URL, keeping the higher-confidence item', () => {
     const bundle = buildEvidenceBundle({
       intent: 'q',
       workflow: ResearchWorkflowKind.SEARCH_ONLY,
       requestedModel: 'glm-4.7',
       requestedProvider: 'glm',
+      providerSelection,
       helperModels: [],
       toolsUsed: ['web_search'],
       items: [
@@ -43,6 +54,7 @@ describe('buildEvidenceBundle', () => {
       workflow: ResearchWorkflowKind.SEARCH_ONLY,
       requestedModel: null,
       requestedProvider: null,
+      providerSelection,
       helperModels: [],
       toolsUsed: [],
       items: [
@@ -62,6 +74,7 @@ describe('buildEvidenceBundle', () => {
       workflow: ResearchWorkflowKind.SEARCH_ONLY,
       requestedModel: null,
       requestedProvider: null,
+      providerSelection,
       helperModels: [],
       toolsUsed: [],
       items: [makeItem({ snippet: long })],
@@ -81,6 +94,7 @@ describe('buildEvidenceBundle', () => {
       workflow: ResearchWorkflowKind.SEARCH_ONLY,
       requestedModel: null,
       requestedProvider: null,
+      providerSelection,
       helperModels: [],
       toolsUsed: [],
       items,
@@ -96,6 +110,7 @@ describe('buildEvidenceBundle', () => {
       workflow: ResearchWorkflowKind.SEARCH_THEN_FETCH,
       requestedModel: null,
       requestedProvider: null,
+      providerSelection,
       helperModels: [],
       toolsUsed: ['web_search', 'web_fetch', 'web_fetch'],
       items: [],

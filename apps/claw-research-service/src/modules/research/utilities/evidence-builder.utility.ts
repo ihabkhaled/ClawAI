@@ -51,6 +51,7 @@ export function buildEvidenceBundle(input: BuildEvidenceInput): EvidenceBundle {
     workflow: input.workflow,
     requestedModel: input.requestedModel,
     requestedProvider: input.requestedProvider,
+    providerSelection: input.providerSelection,
     helperModels: input.helperModels,
     toolsUsed: input.toolsUsed,
     items: trimmed,

@@ -1,8 +1,10 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 
 import { SEARCH_DEFAULT_MAX_RESULTS } from '../../../common/constants/search.constants';
+import { ProviderSelectionMode } from '../../../common/enums/provider-selection-mode.enum';
 import { ResearchErrorCode } from '../../../common/enums/research-error-code.enum';
 import { SearchRunStatus } from '../../../common/enums/search-run-status.enum';
+import { SearchProviderKind } from '../../../common/enums/search-provider-kind.enum';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
 import { DomainPolicyOutcome } from '../../fetch/enums/domain-policy-outcome.enum';
@@ -28,46 +30,85 @@ export class SearchExecutionService {
   ) {}
 
   async execute(userId: string, dto: ExecuteSearchDto): Promise<SearchExecutionResult> {
-    const provider = await this.resolveProvider(dto.providerId);
-    this.assertEnabled(provider);
     const maxResults = dto.maxResults ?? SEARCH_DEFAULT_MAX_RESULTS;
+    const selection = await this.resolveProviders(dto.providerId, dto.filters);
     const run = await this.runRepository.create({
-      provider: { connect: { id: provider.id } },
+      provider: { connect: { id: selection.primary.id } },
       userId,
       query: dto.query,
       status: SearchRunStatus.RUNNING,
       filters: (dto.filters ?? {}) as Prisma.InputJsonValue,
     });
 
+    const warnings: string[] = [];
+    const attemptedProviders: string[] = [];
     try {
-      const adapter = this.adapterFactory.getAdapter(provider.kind);
-      const context = this.providerService.buildContext(provider);
-      const response = await adapter.search(
-        { query: dto.query, maxResults, filters: dto.filters },
-        context,
-      );
-      const filteredResults = this.applyDomainPolicy(response.results, provider);
-      await this.completeRun(run, filteredResults, response.latencyMs);
-      return {
-        runId: run.id,
-        providerId: provider.id,
-        providerName: provider.name,
-        providerKind: provider.kind,
-        query: dto.query,
-        results: filteredResults,
-        latencyMs: response.latencyMs,
-        warnings: response.warnings ?? [],
-      };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+      let lastError: string | null = null;
+      for (const provider of selection.candidates) {
+        attemptedProviders.push(provider.name);
+        try {
+          const adapter = this.adapterFactory.getAdapter(provider.kind);
+          const context = this.providerService.buildContext(provider);
+          const response = await adapter.search(
+            { query: dto.query, maxResults, filters: dto.filters },
+            context,
+          );
+          const filteredResults = this.applyDomainPolicy(response.results, provider);
+          if (provider.id !== selection.primary.id) {
+            await this.runRepository.update(run.id, {
+              provider: { connect: { id: provider.id } },
+            });
+          }
+          if (attemptedProviders.length > 1) {
+            warnings.push(
+              `Fallback chain used: ${attemptedProviders.slice(0, -1).join(' -> ')} -> ${provider.name}`,
+            );
+          }
+          await this.completeRun(run, filteredResults, response.latencyMs);
+          return {
+            runId: run.id,
+            providerId: provider.id,
+            providerName: provider.name,
+            providerKind: provider.kind,
+            selectionMode: selection.mode,
+            fallbackUsed: attemptedProviders.length > 1,
+            attemptedProviders,
+            query: dto.query,
+            results: filteredResults,
+            latencyMs: response.latencyMs,
+            warnings: [...(response.warnings ?? []), ...warnings],
+          };
+        } catch (error) {
+          lastError = error instanceof Error ? error.message : 'Unknown error';
+          warnings.push(`Provider ${provider.name} failed: ${lastError}`);
+        }
+      }
+      const message = lastError ?? 'Unknown error';
       this.logger.warn(`Search failed for run ${run.id}: ${message}`);
       await this.failRun(run, message);
       throw new BusinessException(
         'research.search.execution_failed',
         ResearchErrorCode.SEARCH_FAILED,
         HttpStatus.BAD_GATEWAY,
-        { providerId: provider.id, message },
+        { providerId: selection.primary.id, message },
       );
+    } catch (error) {
+      if (error instanceof BusinessException) {
+        throw error;
+      }
+      return {
+        runId: run.id,
+        providerId: selection.primary.id,
+        providerName: selection.primary.name,
+        providerKind: selection.primary.kind,
+        selectionMode: selection.mode,
+        fallbackUsed: attemptedProviders.length > 1,
+        attemptedProviders,
+        query: dto.query,
+        results: [],
+        latencyMs: 0,
+        warnings,
+      };
     }
   }
 
@@ -83,23 +124,90 @@ export class SearchExecutionService {
     return this.runRepository.listByUser(userId, limit);
   }
 
-  private async resolveProvider(providerId?: string): Promise<SearchProvider> {
+  private async resolveProviders(
+    providerId?: string,
+    filters?: Record<string, unknown>,
+  ): Promise<{
+    primary: SearchProvider;
+    candidates: SearchProvider[];
+    mode: ProviderSelectionMode;
+  }> {
     if (providerId !== undefined) {
       const provider = await this.providerRepository.findById(providerId);
       if (provider === null) {
         throw new EntityNotFoundException('SearchProvider', providerId);
       }
-      return provider;
+      this.assertEnabled(provider);
+      return { primary: provider, candidates: [provider], mode: ProviderSelectionMode.EXPLICIT };
     }
-    const first = await this.providerRepository.findFirstEnabled();
-    if (first === null) {
+
+    const enabled = await this.providerRepository.findEnabled();
+    if (enabled.length === 0) {
       throw new BusinessException(
         'research.search.no_enabled_provider',
         ResearchErrorCode.NO_ENABLED_PROVIDER,
         HttpStatus.FAILED_DEPENDENCY,
       );
     }
-    return first;
+
+    const ranked = [...enabled].sort(
+      (left, right) =>
+        this.scoreProvider(right.kind, filters) - this.scoreProvider(left.kind, filters),
+    );
+    const primary = ranked[0];
+    if (primary === undefined) {
+      throw new BusinessException(
+        'research.search.no_enabled_provider',
+        ResearchErrorCode.NO_ENABLED_PROVIDER,
+        HttpStatus.FAILED_DEPENDENCY,
+      );
+    }
+    return { primary, candidates: ranked, mode: ProviderSelectionMode.AUTO };
+  }
+
+  private scoreProvider(kind: string, filters?: Record<string, unknown>): number {
+    const workflow =
+      typeof filters?.['researchWorkflow'] === 'string' ? filters['researchWorkflow'] : '';
+
+    if (workflow.includes('FETCH') || workflow.includes('EXTRACT')) {
+      switch (kind) {
+        case SearchProviderKind.FIRECRAWL:
+          return 100;
+        case SearchProviderKind.EXA:
+          return 90;
+        case SearchProviderKind.BRAVE:
+          return 80;
+        case SearchProviderKind.TAVILY:
+          return 70;
+        case SearchProviderKind.SERPAPI:
+          return 60;
+        case SearchProviderKind.SEARXNG:
+          return 50;
+        case SearchProviderKind.OLLAMA_WEB:
+          return 40;
+        default:
+          return 10;
+      }
+    }
+
+    switch (kind) {
+      case SearchProviderKind.EXA:
+        return 100;
+      case SearchProviderKind.BRAVE:
+        return 90;
+      case SearchProviderKind.TAVILY:
+        return 80;
+      case SearchProviderKind.SERPAPI:
+        return 70;
+      case SearchProviderKind.FIRECRAWL:
+        return 65;
+      case SearchProviderKind.SEARXNG:
+        return 60;
+      case SearchProviderKind.OLLAMA_WEB:
+        return 50;
+      default:
+        return 10;
+    }
   }
 
   private assertEnabled(provider: SearchProvider): void {

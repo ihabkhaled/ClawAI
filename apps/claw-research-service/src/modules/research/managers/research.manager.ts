@@ -47,18 +47,18 @@ export class ResearchManager {
     const items: EvidenceItem[] = [];
 
     try {
-      const searchItems = await this.runSearch(userId, dto, trace, toolsUsed, warnings);
-      items.push(...searchItems);
+      const search = await this.runSearch(userId, dto, trace, toolsUsed, warnings);
+      items.push(...search.items);
 
       if (this.needsFetch(dto.workflow)) {
-        const fetch = await this.runFetch(userId, searchItems, trace, toolsUsed, warnings);
+        const fetch = await this.runFetch(userId, search.items, trace, toolsUsed, warnings);
         items.push(...fetch.items);
         if (this.needsExtract(dto.workflow)) {
           this.runExtract(fetch.items, fetch.rawByUrl, dto, trace, toolsUsed, warnings);
         }
       }
 
-      const bundle = this.finalize(dto, items, warnings, toolsUsed);
+      const bundle = this.finalize(dto, search.providerSelection, items, warnings, toolsUsed);
       return await this.completeRun(run.id, bundle, trace);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
@@ -93,16 +93,23 @@ export class ResearchManager {
     trace: ResearchTraceEntry[],
     toolsUsed: string[],
     warnings: string[],
-  ): Promise<EvidenceItem[]> {
+  ): Promise<{
+    items: EvidenceItem[];
+    providerSelection: EvidenceBundle['providerSelection'];
+  }> {
     const start = Date.now();
     const searchResult = await this.searchService.execute(userId, {
       providerId: dto.searchProviderId,
       query: dto.intent,
       maxResults: dto.maxResults,
-      filters: dto.filters,
+      filters: {
+        ...(dto.filters ?? {}),
+        researchWorkflow: dto.workflow,
+        researchMode: dto.mode,
+      },
     });
     warnings.push(...(searchResult.warnings ?? []));
-    toolsUsed.push('web_search');
+    toolsUsed.push('web_search', `search:${String(searchResult.providerKind).toLowerCase()}`);
     const searchStatus =
       (searchResult.warnings?.length ?? 0) > 0 || searchResult.results.length === 0
         ? 'warning'
@@ -116,10 +123,20 @@ export class ResearchManager {
         'search',
         searchStatus,
         Date.now() - start,
-        `${String(searchResult.results.length)} results from ${searchResult.providerName}${warningSummary}`,
+        `${String(searchResult.results.length)} results from ${searchResult.providerName} (${searchResult.selectionMode}${searchResult.fallbackUsed ? ', fallback' : ''})${warningSummary}`,
       ),
     );
-    return searchResult.results.map((result) => this.searchResultToEvidence(result));
+    return {
+      items: searchResult.results.map((result) => this.searchResultToEvidence(result)),
+      providerSelection: {
+        providerId: searchResult.providerId,
+        providerName: searchResult.providerName,
+        providerKind: searchResult.providerKind,
+        selectionMode: searchResult.selectionMode,
+        fallbackUsed: searchResult.fallbackUsed,
+        attemptedProviders: searchResult.attemptedProviders,
+      },
+    };
   }
 
   private async runFetch(
@@ -228,6 +245,7 @@ export class ResearchManager {
 
   private finalize(
     dto: ExecuteResearchDto,
+    providerSelection: EvidenceBundle['providerSelection'],
     items: EvidenceItem[],
     warnings: string[],
     toolsUsed: string[],
@@ -237,6 +255,7 @@ export class ResearchManager {
       workflow: dto.workflow,
       requestedModel: dto.requestedModel ?? null,
       requestedProvider: dto.requestedProvider ?? null,
+      providerSelection,
       helperModels: [],
       toolsUsed: [...new Set(toolsUsed)],
       items,

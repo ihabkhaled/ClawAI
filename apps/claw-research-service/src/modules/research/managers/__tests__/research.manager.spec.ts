@@ -1,3 +1,4 @@
+import { ProviderSelectionMode } from '../../../../common/enums/provider-selection-mode.enum';
 import { ResearchWorkflowKind } from '../../../../common/enums/research-workflow-kind.enum';
 import { SearchProviderKind } from '../../../../common/enums/search-provider-kind.enum';
 import { ResearchManager } from '../research.manager';
@@ -33,7 +34,12 @@ describe('ResearchManager', () => {
     };
     search = {
       execute: jest.fn(async () => ({
+        providerId: 'provider-1',
         providerName: 'Ollama Web Search',
+        providerKind: SearchProviderKind.OLLAMA_WEB,
+        selectionMode: ProviderSelectionMode.AUTO,
+        fallbackUsed: false,
+        attemptedProviders: ['Ollama Web Search'],
         results: [
           {
             id: 's1',
@@ -89,11 +95,14 @@ describe('ResearchManager', () => {
 
     expect(scrapeService.extract).toHaveBeenCalledTimes(1);
     const updatePayload = runs.update.mock.calls.at(-1)?.[1] as {
-      bundle?: { toolsUsed?: string[] };
+      bundle?: { toolsUsed?: string[]; providerSelection?: { providerKind?: string | null } };
       trace?: Array<{ phase?: string }>;
     };
     expect(updatePayload.bundle?.toolsUsed).toEqual(
-      expect.arrayContaining(['web_search', 'web_fetch', 'web_extract']),
+      expect.arrayContaining(['web_search', 'web_fetch', 'web_extract', 'search:ollama_web']),
+    );
+    expect(updatePayload.bundle?.providerSelection?.providerKind).toBe(
+      SearchProviderKind.OLLAMA_WEB,
     );
     const phases = (updatePayload.trace ?? []).map((entry) => entry.phase ?? '');
     expect(phases).toEqual(expect.arrayContaining(['search', 'fetch', 'extract']));

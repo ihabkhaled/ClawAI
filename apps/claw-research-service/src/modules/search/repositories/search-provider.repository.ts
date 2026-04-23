@@ -26,6 +26,13 @@ export class SearchProviderRepository {
     });
   }
 
+  async findEnabled(): Promise<SearchProvider[]> {
+    return this.prisma.searchProvider.findMany({
+      where: { enabled: true, status: 'ACTIVE' },
+      orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
+    });
+  }
+
   async list(): Promise<SearchProvider[]> {
     return this.prisma.searchProvider.findMany({ orderBy: [{ priority: 'asc' }, { name: 'asc' }] });
   }

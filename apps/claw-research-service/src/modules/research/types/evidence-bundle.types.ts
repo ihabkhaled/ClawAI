@@ -1,3 +1,4 @@
+import type { ProviderSelectionMode } from '../../../common/enums/provider-selection-mode.enum';
 import type { ResearchWorkflowKind } from '../../../common/enums/research-workflow-kind.enum';
 
 /** Single citation unit that gets passed to the final answering model. */
@@ -39,6 +40,14 @@ export type EvidenceBundle = {
   workflow: ResearchWorkflowKind;
   requestedModel: string | null;
   requestedProvider: string | null;
+  providerSelection: {
+    providerId: string | null;
+    providerName: string | null;
+    providerKind: string | null;
+    selectionMode: ProviderSelectionMode;
+    fallbackUsed: boolean;
+    attemptedProviders: string[];
+  };
   helperModels: string[];
   toolsUsed: string[];
   items: EvidenceItem[];
@@ -54,6 +63,7 @@ export type BuildEvidenceInput = {
   workflow: ResearchWorkflowKind;
   requestedModel: string | null;
   requestedProvider: string | null;
+  providerSelection: EvidenceBundle['providerSelection'];
   helperModels: string[];
   toolsUsed: string[];
   items: EvidenceItem[];
