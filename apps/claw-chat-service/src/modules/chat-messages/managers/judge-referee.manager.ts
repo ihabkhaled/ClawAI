@@ -167,7 +167,7 @@ export class JudgeRefereeManager {
         feedback: parsed.feedback,
         score: parsed.score,
         category: config.category ?? 'generic',
-        model: `${criticModel.provider}/${criticModel.model}`,
+        model: `${OLLAMA_PROVIDER}/${CRITIC_LOCAL_MODEL}`,
         latencyMs,
       };
     } catch (error: unknown) {
@@ -177,7 +177,7 @@ export class JudgeRefereeManager {
         feedback: [],
         score: 1.0,
         category: config.category ?? 'generic',
-        model: `${criticModel.provider}/${criticModel.model}`,
+        model: `${OLLAMA_PROVIDER}/${CRITIC_LOCAL_MODEL}`,
         latencyMs: Date.now() - startTime,
       };
     }

@@ -254,4 +254,62 @@ describe('JudgeRefereeManager', () => {
       expect(metadata.revisionsCount).toBe(1);
     });
   });
+
+  describe('evaluate', () => {
+    it('falls back to an honest local critic label when the cloud critic is unavailable', async () => {
+      const executionManager = {
+        callProvider: jest
+          .fn()
+          .mockRejectedValueOnce(new Error('Anthropic connector unavailable'))
+          .mockResolvedValueOnce({
+            content: '{"decision":"ACCEPT","reasoning":"Looks good","confidence":0.95}',
+            provider: 'local-ollama',
+            model: 'AUTO',
+            latencyMs: 25,
+            usedFallback: false,
+          }),
+      } as any;
+
+      manager.setExecutionManager(executionManager);
+
+      const response = {
+        content: 'Final answer text',
+        provider: 'OPENAI',
+        model: 'gpt-4o-mini',
+        latencyMs: 120,
+        usedFallback: false,
+      };
+
+      const context = {
+        userId: 'user-1',
+        threadId: 'thread-1',
+        threadMessages: [
+          { role: 'USER', content: 'Explain this clearly.' },
+          { role: 'ASSISTANT', content: 'Sure.' },
+        ],
+        systemPrompt: 'system',
+      } as any;
+
+      const config: JudgeRefereeConfig = {
+        enabled: true,
+        category: 'generic',
+        routingMode: 'AUTO',
+        isLocalOnly: false,
+      };
+
+      const payload = {
+        messageId: 'msg-1',
+        threadId: 'thread-1',
+        selectedProvider: 'OPENAI',
+        selectedModel: 'gpt-4o-mini',
+        routingMode: 'AUTO',
+      } as any;
+
+      const result = await manager.evaluate(response as any, context, config, payload);
+
+      expect(result.criticEvaluation.model).toBe('local-ollama/AUTO');
+      expect(result.judgeVerdict.model).toBe('local-ollama/AUTO');
+      expect(executionManager.callProvider).toHaveBeenCalledTimes(2);
+    });
+  });
 });
