@@ -16,6 +16,12 @@ export const parallelMessageSchema = z.object({
     )
     .min(2, 'At least 2 models are required')
     .max(5, 'At most 5 models are allowed'),
+  judgeEnabled: z.boolean().optional(),
+  judgeModel: z
+    .string()
+    .max(255, 'Judge model must be at most 255 characters')
+    .optional()
+    .nullable(),
   fileIds: z
     .array(z.string().max(255, 'File ID must be at most 255 characters'))
     .max(10, 'Maximum 10 files per message')

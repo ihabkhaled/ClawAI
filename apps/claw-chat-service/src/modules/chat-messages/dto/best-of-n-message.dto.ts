@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { advancedModelSelectionFields } from './advanced-model-selection-fields.dto';
 import { researchFields } from './research-fields.dto';
 
 export const bestOfNMessageSchema = z.object({
@@ -6,6 +7,7 @@ export const bestOfNMessageSchema = z.object({
   threadId: z.string().max(255).optional(),
   n: z.number().int().min(2).max(5).default(3),
   models: z.array(z.string().max(255)).max(5).optional(),
+  ...advancedModelSelectionFields,
   ...researchFields,
 });
 

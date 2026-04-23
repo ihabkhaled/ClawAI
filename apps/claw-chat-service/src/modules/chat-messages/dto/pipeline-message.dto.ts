@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { advancedModelSelectionFields } from './advanced-model-selection-fields.dto';
 import { researchFields } from './research-fields.dto';
 
 const pipelineStageSchema = z.object({
@@ -15,6 +16,7 @@ export const pipelineMessageSchema = z.object({
     .enum(['analyze-reason-format', 'code-debug-review', 'draft-critique-revise', 'custom'])
     .default('analyze-reason-format'),
   customStages: z.array(pipelineStageSchema).max(5).optional(),
+  ...advancedModelSelectionFields,
   ...researchFields,
 });
 
