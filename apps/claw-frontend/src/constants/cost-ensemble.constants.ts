@@ -1,7 +1,6 @@
 export const COST_ENSEMBLE_POLL_INTERVAL_MS = 2000;
 export const MAX_COST_ENSEMBLE_POLL_COUNT = 90;
 export const COST_ENSEMBLE_POLL_MESSAGES_LIMIT = 10;
-export const COST_ENSEMBLE_AUTO_NAVIGATE_DELAY_MS = 3000;
 export const COST_ENSEMBLE_CONTENT_MIN_LENGTH = 10;
 
 export const COST_TIER_STYLES: Record<string, string> = {

@@ -1,4 +1,4 @@
-import type { TranslationDictionary } from '@/types/i18n.types';
+﻿import type { TranslationDictionary } from '@/types/i18n.types';
 
 export const en: TranslationDictionary = {
   common: {
@@ -184,6 +184,29 @@ export const en: TranslationDictionary = {
     judgeModelLabel: 'Judge Model',
     judgeModelAuto: 'Auto (qwen3:1.7b)',
     judgeModelDescription: 'Override the local model used for final verdict',
+    judgeOpenReview: 'View Judge Response',
+    judgeReviewTitle: 'Judge Review',
+    judgeReviewDescription:
+      'Inspect the original answer, the judge decision, and the judge-generated response.',
+    judgeDecisionLabel: 'Decision',
+    judgeConfidenceLabel: 'Confidence',
+    judgeSummary: 'Judge Summary',
+    judgeResponse: 'Judge Response',
+    judgeOriginalAnswer: 'Original Answer',
+    judgeRevisedAnswer: 'Revised Answer',
+    judgeEscalatedAnswer: 'Escalated Answer',
+    judgeExecutionModel: 'Execution Model',
+    judgeJudgeModel: 'Judge Model',
+    judgeCriticModel: 'Critic Model',
+    judgeCriticScore: 'Critic Score',
+    judgeJudgeLatency: 'Judge Latency',
+    judgeTotalLatency: 'Total Review Latency',
+    judgeRecommendedChanges: 'Recommended Changes',
+    judgeNoCriticFeedback: 'No critic feedback was recorded for this review.',
+    judgeResponseTypeSummary: 'Summary',
+    judgeResponseTypeRevisedAnswer: 'Revised Answer',
+    judgeResponseTypeEscalatedAnswer: 'Escalated Answer',
+    judgeResponseTypeVerificationNote: 'Verification Note',
     qualityThreshold: 'Quality Threshold',
     qualityThresholdDescription:
       'Minimum quality score before re-routing (0 = accept all, 1 = very strict)',
@@ -644,6 +667,14 @@ export const en: TranslationDictionary = {
     showLess: 'Show less',
     timeout: 'Timed out',
     noContent: 'No content available',
+    noJudge: 'No judge',
+    judgeAwaiting: 'Awaiting judge',
+    judgeSkipped: 'Judge skipped',
+    judgeFailed: 'Judge failed',
+    judgeUnavailable: 'Judge unavailable',
+    judgeVerified: 'Verified',
+    judgeRevised: 'Revised',
+    judgeEscalated: 'Escalated',
   },
   consensus: {
     title: 'Consensus Mode',
@@ -901,6 +932,13 @@ export const en: TranslationDictionary = {
     latency: 'Latency',
     viewInThread: 'View in Thread',
   },
+  advancedModelSelector: {
+    label: 'Execution model',
+    auto: 'Auto (choose best local model)',
+    loading: 'Loading models...',
+    description: 'Choose Auto or a specific locally installed Ollama model for this lab.',
+    empty: 'No local text models are available for this lab yet.',
+  },
   workspaceConnectors: {
     title: 'Workspace Connectors',
     description: 'Connect your workspace tools — GitHub, Slack, Jira, Google Drive, and more.',
@@ -1026,7 +1064,11 @@ export const en: TranslationDictionary = {
     duration: 'Duration',
   },
   research: {
-    toggle: { placeholder: 'Research' },
+    toggle: {
+      placeholder: 'Research',
+      autoProvider: 'Auto Provider',
+      noProviders: 'No providers configured',
+    },
     modes: {
       off: 'No research',
       searchOnly: 'Web search',
@@ -1076,6 +1118,21 @@ export const en: TranslationDictionary = {
       warnings: 'Warnings',
       requestedModel: 'Requested model',
       toolsUsed: 'Tools',
+    },
+    results: {
+      open: 'Search Results',
+      title: 'Research Results',
+      description:
+        'Inspect the provider choice, fallback chain, evidence bundle, and research trace.',
+      provider: 'Provider',
+      selectionMode: 'Selection',
+      selectionAuto: 'Auto',
+      selectionExplicit: 'Explicit',
+      fallbackUsed: 'Fallback used',
+      query: 'Research query',
+      evidenceCount: 'Evidence items',
+      attempts: 'Provider attempts',
+      trace: 'Research trace',
     },
   },
   workspaceActions: {

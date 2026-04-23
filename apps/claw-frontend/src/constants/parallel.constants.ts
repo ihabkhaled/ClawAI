@@ -5,7 +5,6 @@ export const PARALLEL_GRID_COL_CLASSES: Record<string, string> = {
   '2': 'grid-cols-2',
 };
 export const PARALLEL_POLL_INTERVAL_MS = 3000;
-export const PARALLEL_AUTO_NAVIGATE_DELAY_MS = 2000;
 export const PARALLEL_POLL_MESSAGES_LIMIT = 50;
 export const SCORE_LENGTH_DIVISOR = 1000;
 export const SCORE_LATENCY_DIVISOR = 120_000;

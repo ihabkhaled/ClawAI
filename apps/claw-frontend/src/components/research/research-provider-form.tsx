@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RESEARCH_PROVIDER_KINDS } from '@/constants/research.constants';
+import { RESEARCH_PROVIDER_KINDS, RESEARCH_PROVIDER_LABELS } from '@/constants/research.constants';
 import type { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
 import { useTranslation } from '@/lib/i18n';
 import type { ResearchProviderFormProps } from '@/types';
@@ -54,7 +54,7 @@ export function ResearchProviderForm({
               <SelectContent>
                 {RESEARCH_PROVIDER_KINDS.map((k) => (
                   <SelectItem key={k} value={k}>
-                    {k}
+                    {RESEARCH_PROVIDER_LABELS[k]}
                   </SelectItem>
                 ))}
               </SelectContent>
