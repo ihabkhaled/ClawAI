@@ -85,6 +85,7 @@ export class ReplayManager {
         results.map((r) => ({
           runId: run.id,
           messagePreview: r.messagePreview,
+          messageContent: r.hasOriginalContent ? r.messagePreview : undefined,
           hasOriginalContent: r.hasOriginalContent,
           oldProvider: r.originalDecision.selectedProvider,
           oldModel: r.originalDecision.selectedModel,
@@ -96,7 +97,7 @@ export class ReplayManager {
           newCostClass: r.replayDecision.costClass,
           changed: r.changed,
           improvementScore: r.improvementScore,
-          outcomeLabel: r.outcomeLabel as unknown as OutcomeLabel,
+          outcomeLabel: this.toPrismaOutcomeLabel(r.outcomeLabel),
           isSuspicious: r.isSuspicious,
           suspiciousReasons: r.suspiciousReasons,
         })),
@@ -215,6 +216,22 @@ export class ReplayManager {
       (delta.suspiciousCount < 0 && delta.avgConfNewDelta >= 0);
 
     return { runA: summaryA, runB: summaryB, delta, improved };
+  }
+
+  private toPrismaOutcomeLabel(label: ReplayOutcomeLabel): OutcomeLabel {
+    switch (label) {
+      case ReplayOutcomeLabel.CORRECT_IMPROVEMENT:
+        return 'CORRECT_IMPROVEMENT';
+      case ReplayOutcomeLabel.BAD_REGRESSION:
+        return 'BAD_REGRESSION';
+      case ReplayOutcomeLabel.COST_WIN:
+        return 'COST_WIN';
+      case ReplayOutcomeLabel.QUALITY_WIN:
+        return 'QUALITY_WIN';
+      case ReplayOutcomeLabel.UNCERTAIN:
+      default:
+        return 'UNCERTAIN';
+    }
   }
 
   private async replaySingleDecision(decision: RoutingDecision): Promise<ReplayResult> {

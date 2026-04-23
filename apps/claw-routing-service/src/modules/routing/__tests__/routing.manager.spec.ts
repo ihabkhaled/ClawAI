@@ -27,6 +27,7 @@ const baseContext: RoutingContext = {
 
 describe('RoutingManager', () => {
   let manager: RoutingManager;
+  let policiesRepo: Partial<Record<keyof RoutingPoliciesRepository, jest.Mock>>;
   let promptBuilder: {
     fetchInstalledModels: jest.Mock;
     getInstalledModels: jest.Mock;
@@ -34,7 +35,7 @@ describe('RoutingManager', () => {
   };
 
   beforeEach(() => {
-    const policiesRepo = mockPoliciesRepo();
+    policiesRepo = mockPoliciesRepo();
     const ollamaRouter = { route: jest.fn().mockResolvedValue(null) };
     promptBuilder = {
       fetchInstalledModels: jest.fn().mockResolvedValue([]),
@@ -68,6 +69,21 @@ describe('RoutingManager', () => {
       expect(result.complexityClass).toBe(ComplexityClass.SIMPLE);
     });
 
+    it('should route file-transform prompts to FILE_GENERATION even when phrased conversationally', async () => {
+      const context: RoutingContext = {
+        ...baseContext,
+        message:
+          'As Principal report analyst, turn these notes into a formatted report with headings and tables.',
+        userMode: RoutingMode.AUTO,
+      };
+
+      const result = await manager.evaluateRoute(context);
+
+      expect(result.selectedProvider).toBe('FILE_GENERATION');
+      expect(result.selectedModel).toBe('auto');
+      expect(result.reasonTags).toContain('file_generation');
+    });
+
     it('should route SIMPLE messages to local when a lightweight chat model exists', async () => {
       promptBuilder.getInstalledModels.mockResolvedValue([
         {
@@ -89,6 +105,22 @@ describe('RoutingManager', () => {
       expect(result.routingMode).toBe(RoutingMode.AUTO);
       expect(result.selectedProvider).toBe('local-ollama');
       expect(result.reasonTags).toContain('simple_complexity');
+    });
+
+    it('should route coding prompts to a strong cloud model when healthy', async () => {
+      const context: RoutingContext = {
+        ...baseContext,
+        message:
+          'As Senior backend engineer, review this API design for race conditions and suggest a cleaner async flow.',
+        userMode: RoutingMode.AUTO,
+        connectorHealth: { ANTHROPIC: true, OPENAI: true, GEMINI: true },
+      };
+
+      const result = await manager.evaluateRoute(context);
+
+      expect(result.selectedProvider).toBe('ANTHROPIC');
+      expect(result.selectedModel).toContain('sonnet');
+      expect(result.reasonTags).toContain('cloud_coding_preferred');
     });
 
     it('should route MEDIUM-length messages to cloud when local unavailable', async () => {
@@ -272,6 +304,16 @@ describe('RoutingManager', () => {
       expect(result.reasonTags).toContain('image_generation');
     });
 
+    it('does not misroute conversational response prompts to file generation', async () => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'write a safe response for a request involving regulated documents',
+        userMode: RoutingMode.AUTO,
+      });
+
+      expect(result.selectedProvider).not.toBe('FILE_GENERATION');
+    });
+
     it('privacy enforcement still takes precedence over capability routing', async () => {
       // Medical content + vision keyword → local (privacy wins)
       const result = await manager.evaluateRoute({
@@ -352,6 +394,25 @@ describe('RoutingManager', () => {
 
       expect(result.selectedProvider).toBe('ANTHROPIC');
     });
+
+    it('does not let AUTO policy override manual model selection', async () => {
+      policiesRepo.findActivePolicies?.mockResolvedValue([
+        { id: 'p-1', name: 'Auto Routing', priority: 0, routingMode: RoutingMode.AUTO },
+      ]);
+      const context: RoutingContext = {
+        ...baseContext,
+        userMode: RoutingMode.MANUAL_MODEL,
+        forcedProvider: 'local-ollama',
+        forcedModel: 'qwen2.5-coder:1.5b',
+      };
+
+      const result = await manager.evaluateRoute(context);
+
+      expect(result.routingMode).toBe(RoutingMode.MANUAL_MODEL);
+      expect(result.selectedProvider).toBe('local-ollama');
+      expect(result.selectedModel).toBe('qwen2.5-coder:1.5b');
+      expect(result.reasonTags).toContain('user_forced');
+    });
   });
 
   describe('evaluateRoute - LOCAL_ONLY', () => {
@@ -378,6 +439,21 @@ describe('RoutingManager', () => {
 
       const cloudFallbacks = result.fallbackChain.filter((f) => f.provider !== 'local-ollama');
       expect(cloudFallbacks).toHaveLength(0);
+    });
+
+    it('does not let AUTO policy override explicit LOCAL_ONLY mode', async () => {
+      policiesRepo.findActivePolicies?.mockResolvedValue([
+        { id: 'p-1', name: 'Auto Routing', priority: 0, routingMode: RoutingMode.AUTO },
+      ]);
+      const context: RoutingContext = {
+        ...baseContext,
+        userMode: RoutingMode.LOCAL_ONLY,
+      };
+
+      const result = await manager.evaluateRoute(context);
+
+      expect(result.routingMode).toBe(RoutingMode.LOCAL_ONLY);
+      expect(result.selectedProvider).toBe('local-ollama');
     });
   });
 
@@ -991,9 +1067,9 @@ describe('RoutingManager', () => {
 
       const result = await manager.evaluateRoute(context);
 
-      expect(result.selectedProvider).toBe('local-ollama');
-      expect(result.reasonTags).toContain('category_detected');
-      expect(result.reasonTags).toContain('category_coding');
+      expect(result.selectedProvider).toBe('ANTHROPIC');
+      expect(result.selectedModel).toContain('sonnet');
+      expect(result.reasonTags).toContain('cloud_coding_preferred');
       expect(result.detectedCategory).toBe('coding');
     });
 
@@ -1016,9 +1092,9 @@ describe('RoutingManager', () => {
 
       const result = await manager.evaluateRoute(context);
 
-      expect(result.selectedProvider).toBe('local-ollama');
-      expect(result.selectedModel).toBe('qwen2.5-coder:7b');
-      expect(result.reasonTags).toContain('category_detected');
+      expect(result.selectedProvider).toBe('ANTHROPIC');
+      expect(result.selectedModel).toContain('sonnet');
+      expect(result.reasonTags).toContain('cloud_coding_preferred');
       expect(result.detectedCategory).toBe('coding');
     });
   });

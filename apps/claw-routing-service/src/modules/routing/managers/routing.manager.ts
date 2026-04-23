@@ -115,9 +115,14 @@ export class RoutingManager {
     this.logger.log(
       `doEvaluate: starting for thread ${context.threadId ?? 'none'}, userMode=${context.userMode ?? 'AUTO'}, complexity=${context.complexity?.class ?? 'unknown'}`,
     );
+    const explicitUserMode =
+      context.userMode !== undefined &&
+      context.userMode !== null &&
+      context.userMode !== RoutingMode.AUTO;
+
     // Check active policies for overrides
-    const policies = await this.policiesRepository.findActivePolicies();
-    const policyOverride = this.applyPolicies(policies, context);
+    const policies = explicitUserMode ? [] : await this.policiesRepository.findActivePolicies();
+    const policyOverride = explicitUserMode ? null : this.applyPolicies(policies, context);
     const mode = policyOverride ?? context.userMode ?? RoutingMode.AUTO;
     this.logger.debug(
       `doEvaluate: resolved mode=${mode} (policyOverride=${policyOverride ?? 'none'})`,
@@ -902,6 +907,18 @@ export class RoutingManager {
   private detectFileGenerationRequest(context: RoutingContext): RoutingDecisionResult | null {
     this.logger.debug('detectFileGenerationRequest: scanning message for file-gen keywords');
     const lower = context.message.toLowerCase();
+    const hasConversationalResponseIntent = /\b(response|reply|answer|respond)\b/.test(lower);
+    const hasStrongArtifactIntent =
+      /\b(file|pdf|csv|docx|spreadsheet|slides|deck|memo|report|brief|checklist|printable|formatted|export|download|save as)\b/.test(
+        lower,
+      );
+
+    if (hasConversationalResponseIntent && !hasStrongArtifactIntent) {
+      this.logger.debug(
+        'detectFileGenerationRequest: conversational response intent without explicit artifact - skipping file generation',
+      );
+      return null;
+    }
 
     // Check exact phrase matches first
     const exactMatch = FILE_GENERATION_KEYWORDS.some((kw) => lower.includes(kw));
@@ -1197,9 +1214,19 @@ export class RoutingManager {
 
     const latencySlaMs =
       CATEGORY_LATENCY_SLA_MS[multiIntent.primary] ?? CATEGORY_LATENCY_SLA_MS['general'];
-    const estimatedCostPer1M = this.estimateProviderCost(LOCAL_PROVIDER);
-
     const reasonTags = this.buildCategoryReasonTags(multiIntent, role);
+
+    const cloudCategoryDecision = this.buildCloudCategoryDecision(
+      role,
+      context,
+      multiIntent,
+      reasonTags,
+    );
+    if (cloudCategoryDecision !== null) {
+      return cloudCategoryDecision;
+    }
+
+    const estimatedCostPer1M = this.estimateProviderCost(LOCAL_PROVIDER);
 
     const model = await this.findModelForRole(role);
     if (model) {
@@ -1335,6 +1362,88 @@ export class RoutingManager {
       costClass: 'free',
       fallbackChain: this.buildFallbackChain(primary, context),
     };
+  }
+
+  private buildCloudCategoryDecision(
+    role: LocalModelRole,
+    context: RoutingContext,
+    multiIntent: MultiIntentResult,
+    reasonTags: string[],
+  ): RoutingDecisionResult | null {
+    const category = multiIntent.primary;
+    const latencySlaMs = CATEGORY_LATENCY_SLA_MS[category] ?? CATEGORY_LATENCY_SLA_MS['general'];
+    const hasCodingSignal = this.detectCodingRequest(context.message);
+    const hasReasoningSignal =
+      this.detectReasoningRequest(context.message) || this.detectThinkingRequest(context.message);
+
+    const build = (
+      provider: string,
+      model: string,
+      costClass: RoutingDecisionResult['costClass'],
+      confidence: number,
+      extraReasonTag: string,
+    ): RoutingDecisionResult => {
+      const primary = { provider, model };
+      return {
+        selectedProvider: provider,
+        selectedModel: model,
+        routingMode: RoutingMode.AUTO,
+        confidence,
+        reasonTags: [...reasonTags, extraReasonTag],
+        privacyClass: 'cloud',
+        costClass,
+        fallbackChain: this.buildFallbackChain(primary, context),
+        detectedCategory: category,
+        secondaryCategory: multiIntent.secondary ?? undefined,
+        matchCount: multiIntent.matchCount,
+        estimatedCostPer1M: this.estimateProviderCost(provider),
+        latencySlaMs,
+      };
+    };
+
+    if (role === LocalModelRole.LOCAL_CODING && hasCodingSignal) {
+      if (this.isConnectorHealthy(CLOUD_PROVIDER_ANTHROPIC, context)) {
+        return build(
+          CLOUD_PROVIDER_ANTHROPIC,
+          CLOUD_MODEL_DEFAULT,
+          'high',
+          0.93,
+          'cloud_coding_preferred',
+        );
+      }
+      if (this.isConnectorHealthy(CLOUD_PROVIDER_OPENAI, context)) {
+        return build(
+          CLOUD_PROVIDER_OPENAI,
+          CLOUD_MODEL_FAST,
+          'medium',
+          0.86,
+          'cloud_coding_fallback',
+        );
+      }
+    }
+
+    if (role === LocalModelRole.LOCAL_REASONING && hasReasoningSignal) {
+      if (this.isConnectorHealthy(CLOUD_PROVIDER_ANTHROPIC, context)) {
+        return build(
+          CLOUD_PROVIDER_ANTHROPIC,
+          CLOUD_MODEL_REASONING,
+          'high',
+          0.94,
+          'cloud_reasoning_preferred',
+        );
+      }
+      if (this.isConnectorHealthy(CLOUD_PROVIDER_GEMINI, context)) {
+        return build(
+          CLOUD_PROVIDER_GEMINI,
+          CLOUD_MODEL_GEMINI_DEFAULT,
+          'medium',
+          0.88,
+          'cloud_reasoning_fallback',
+        );
+      }
+    }
+
+    return null;
   }
 
   private async selectCategoryModel(message: string): Promise<string | null> {

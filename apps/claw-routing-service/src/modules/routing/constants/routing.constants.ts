@@ -118,6 +118,12 @@ export const FILE_GENERATION_VERBS = [
   'output',
   'produce',
   'build',
+  'turn',
+  'convert',
+  'transform',
+  'compile',
+  'package',
+  'assemble',
 ];
 export const FILE_GENERATION_FORMAT_WORDS = [
   'file',

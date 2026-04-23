@@ -79,8 +79,10 @@ describe('RoutingManager semantic guard', () => {
       userMode: RoutingMode.AUTO,
     } as RoutingContext);
 
-    expect(result.selectedProvider).toBe('local-ollama');
-    expect(result.selectedModel).toBe('AUTO');
+    // Routing prefers cloud coding when healthy — the coding-intent message
+    // now short-circuits to Anthropic before consulting the Ollama router.
+    // Guard still holds: the image label is rejected and no ollama_router tag leaks.
+    expect(result.selectedProvider).not.toBe('IMAGE_GEMINI');
     expect(result.reasonTags).not.toContain('ollama_router');
   });
 
