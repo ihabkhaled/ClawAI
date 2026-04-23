@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
+import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import {
   DEFAULT_VERIFIER_MODEL,
@@ -11,8 +12,10 @@ import {
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type { VerifyMessageDto } from '../dto/verify-message.dto';
+import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { VerifierCheckResult, VerifyResponse } from '../types/verifier.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
 import { RoutingMode } from '../../../generated/prisma';
@@ -25,6 +28,7 @@ export class VerifierManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
@@ -32,15 +36,16 @@ export class VerifierManager {
     this.logger.log(`executeVerify: starting for user ${userId}`);
 
     const threadId = await this.resolveThreadId(userId, dto);
+    const selection = await this.resolveSelection(dto);
 
     const userMessage = await this.chatMessagesRepository.create({
       threadId,
       role: 'USER',
       content: dto.content,
-      metadata: { verifyRequest: true, maxRevisions: dto.maxRevisions },
+      metadata: { verifyRequest: true, maxRevisions: dto.maxRevisions, modelSelection: selection },
     });
 
-    void this.executeInBackground(threadId, dto.content, dto.maxRevisions);
+    void this.executeInBackground(threadId, dto.content, dto.maxRevisions, selection);
 
     return { messageId: userMessage.id, threadId };
   }
@@ -49,18 +54,27 @@ export class VerifierManager {
     threadId: string,
     content: string,
     maxRevisions: number,
+    selection?: AdvancedModelSelectionResolution,
   ): Promise<void> {
     const startTime = Date.now();
     try {
-      const draft = await this.generateDraft(content, startTime);
-      const checkResult = await this.runVerifierCheck(content, draft);
+      const resolvedSelection = selection ?? (await this.buildAutoSelection());
+      const draft = await this.generateDraft(content, resolvedSelection);
+      const checkResult = await this.runVerifierCheck(content, draft, resolvedSelection);
 
       if (checkResult.score >= VERIFIER_PASS_THRESHOLD || maxRevisions === 0) {
-        await this.storeVerifiedMessage(threadId, draft, checkResult, 0, startTime);
+        await this.storeVerifiedMessage(
+          threadId,
+          draft,
+          checkResult,
+          0,
+          startTime,
+          resolvedSelection,
+        );
         this.chatStreamService.emitCompletion(
           threadId,
-          'local-ollama',
-          await this.resolveModel(DEFAULT_VERIFIER_MODEL),
+          resolvedSelection.actualProvider,
+          resolvedSelection.actualModel,
         );
         return;
       }
@@ -70,13 +84,21 @@ export class VerifierManager {
         draft,
         checkResult,
         maxRevisions,
+        resolvedSelection,
       );
 
-      await this.storeVerifiedMessage(threadId, finalDraft, finalCheck, revisionCount, startTime);
+      await this.storeVerifiedMessage(
+        threadId,
+        finalDraft,
+        finalCheck,
+        revisionCount,
+        startTime,
+        resolvedSelection,
+      );
       this.chatStreamService.emitCompletion(
         threadId,
-        'local-ollama',
-        await this.resolveModel(DEFAULT_VERIFIER_MODEL),
+        resolvedSelection.actualProvider,
+        resolvedSelection.actualModel,
       );
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Verification failed';
@@ -96,14 +118,20 @@ export class VerifierManager {
     initialDraft: string,
     initialCheck: VerifierCheckResult,
     maxRevisions: number,
+    selection: AdvancedModelSelectionResolution,
   ): Promise<{ finalDraft: string; finalCheck: VerifierCheckResult; revisionCount: number }> {
     let currentDraft = initialDraft;
     let currentCheck = initialCheck;
     let revisionCount = 0;
 
     for (let i = 0; i < maxRevisions; i++) {
-      const revised = await this.repairDraft(content, currentDraft, currentCheck.suggestions);
-      const recheck = await this.runVerifierCheck(content, revised);
+      const revised = await this.repairDraft(
+        content,
+        currentDraft,
+        currentCheck.suggestions,
+        selection,
+      );
+      const recheck = await this.runVerifierCheck(content, revised, selection);
       revisionCount += 1;
       currentDraft = revised;
       currentCheck = recheck;
@@ -116,9 +144,12 @@ export class VerifierManager {
     return { finalDraft: currentDraft, finalCheck: currentCheck, revisionCount };
   }
 
-  private async generateDraft(content: string, _startTime: number): Promise<string> {
+  private async generateDraft(
+    content: string,
+    selection: AdvancedModelSelectionResolution,
+  ): Promise<string> {
     const config = AppConfig.get();
-    const model = await this.resolveModel(DEFAULT_VERIFIER_MODEL);
+    const model = selection.actualModel;
 
     const requestBody: OllamaGenerateRequest = {
       model,
@@ -146,9 +177,13 @@ export class VerifierManager {
     return draft;
   }
 
-  private async runVerifierCheck(content: string, draft: string): Promise<VerifierCheckResult> {
+  private async runVerifierCheck(
+    content: string,
+    draft: string,
+    selection: AdvancedModelSelectionResolution,
+  ): Promise<VerifierCheckResult> {
     const config = AppConfig.get();
-    const model = await this.resolveModel(DEFAULT_VERIFIER_MODEL);
+    const model = selection.actualModel;
 
     const verifierPrompt = `You are a response quality verifier. Evaluate this response to the given question.
 
@@ -207,9 +242,10 @@ Return ONLY JSON: { "score": <average 0-1>, "issues": ["..."], "suggestions": ["
     content: string,
     draft: string,
     suggestions: string[],
+    selection: AdvancedModelSelectionResolution,
   ): Promise<string> {
     const config = AppConfig.get();
-    const model = await this.resolveModel(DEFAULT_VERIFIER_MODEL);
+    const model = selection.actualModel;
 
     const suggestionText =
       suggestions.length > 0
@@ -259,14 +295,18 @@ Return ONLY the improved response. Do not explain changes.`;
     checkResult: VerifierCheckResult,
     revisionCount: number,
     startTime: number,
+    selection: AdvancedModelSelectionResolution,
   ): Promise<void> {
     await this.chatMessagesRepository.create({
       threadId,
       role: 'ASSISTANT',
       content,
-      provider: 'local-ollama',
-      model: await this.resolveModel(DEFAULT_VERIFIER_MODEL),
-      routingMode: RoutingMode.AUTO,
+      provider: selection.actualProvider,
+      model: selection.actualModel,
+      routingMode:
+        selection.modelSelectionMode === 'MANUAL_MODEL'
+          ? RoutingMode.MANUAL_MODEL
+          : RoutingMode.AUTO,
       latencyMs: Date.now() - startTime,
       usedFallback: false,
       metadata: {
@@ -274,6 +314,7 @@ Return ONLY the improved response. Do not explain changes.`;
         verifierScore: checkResult.score,
         verifierIssues: checkResult.issues,
         revisionCount,
+        modelSelection: selection,
       },
     });
   }
@@ -311,6 +352,46 @@ Return ONLY the improved response. Do not explain changes.`;
       return DEFAULT_VERIFIER_MODEL;
     }
     return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+  }
+
+  private async resolveSelection(dto: VerifyMessageDto): Promise<AdvancedModelSelectionResolution> {
+    if (this.advancedModelSelectionService) {
+      return this.advancedModelSelectionService.resolveSelection(
+        {
+          modelSelectionMode: dto.modelSelectionMode,
+          requestedProvider: dto.requestedProvider,
+          requestedModel: dto.requestedModel,
+          requestedDisplayName: dto.requestedDisplayName,
+          selectedModelSource: dto.selectedModelSource,
+        },
+        await this.resolveModel(DEFAULT_VERIFIER_MODEL),
+      );
+    }
+
+    return this.buildAutoSelection({
+      requestedProvider: dto.requestedProvider ?? null,
+      requestedModel: dto.requestedModel ?? null,
+      requestedDisplayName: dto.requestedDisplayName,
+      selectedModelSource: dto.selectedModelSource ?? null,
+    });
+  }
+
+  private async buildAutoSelection(
+    overrides?: Partial<AdvancedModelSelectionResolution>,
+  ): Promise<AdvancedModelSelectionResolution> {
+    const actualModel =
+      overrides?.requestedModel ?? (await this.resolveModel(DEFAULT_VERIFIER_MODEL));
+    return {
+      modelSelectionMode: overrides?.requestedModel
+        ? ModelSelectionMode.MANUAL_MODEL
+        : ModelSelectionMode.AUTO,
+      requestedProvider: overrides?.requestedProvider ?? null,
+      requestedModel: overrides?.requestedModel ?? null,
+      requestedDisplayName: overrides?.requestedDisplayName ?? null,
+      selectedModelSource: overrides?.selectedModelSource ?? null,
+      actualProvider: 'local-ollama',
+      actualModel,
+    };
   }
 }
 

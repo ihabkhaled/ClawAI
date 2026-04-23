@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
+import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import {
   DEFAULT_ROLE_PACK_MODEL,
@@ -10,12 +11,25 @@ import {
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type { RolePackMessageDto } from '../dto/role-pack-message.dto';
+import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { RoleMember, RoleMemberResult, RolePackResponse } from '../types/role-pack.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
 import { RoutingMode } from '../../../generated/prisma';
 
+/**
+ * Orchestrates role-based ensemble execution.
+ *
+ * Model selection semantics:
+ * - AUTO: each role runs with its category-assigned local model (coder, reviewer, researcher, etc.)
+ *   resolved from the installed-model inventory via LocalModelSelectionService.
+ * - MANUAL_MODEL: ALL roles in the pack execute with the single user-selected model.
+ *   Role specialization still drives prompt construction; only the execution model is unified.
+ *   If the requested model is unsupported or unavailable, AdvancedModuleModelSelectionService
+ *   throws BusinessException before any role runs (no silent fallback).
+ */
 @Injectable()
 export class RolePackManager {
   private readonly logger = new Logger(RolePackManager.name);
@@ -24,6 +38,7 @@ export class RolePackManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
@@ -31,25 +46,32 @@ export class RolePackManager {
     this.logger.log(`executeRolePack: starting for user ${userId}, pack=${dto.pack}`);
 
     const threadId = await this.resolveThreadId(userId, dto);
+    const selection = await this.resolveSelection(dto);
 
     const userMessage = await this.chatMessagesRepository.create({
       threadId,
       role: 'USER',
       content: dto.content,
-      metadata: { rolePackRequest: true },
+      metadata: { rolePackRequest: true, modelSelection: selection },
     });
 
-    void this.executeInBackground(threadId, dto.content, dto.pack);
+    void this.executeInBackground(threadId, dto.content, dto.pack, selection);
 
     return { messageId: userMessage.id, threadId };
   }
 
-  async executeInBackground(threadId: string, content: string, pack: string): Promise<void> {
+  async executeInBackground(
+    threadId: string,
+    content: string,
+    pack: string,
+    selection?: AdvancedModelSelectionResolution,
+  ): Promise<void> {
     const startTime = Date.now();
     try {
+      const resolvedSelection = selection ?? (await this.buildAutoSelection());
       const members = ROLE_PACKS[pack] ?? [];
       const config = AppConfig.get();
-      const resolvedMembers = await this.resolveMembers(members);
+      const resolvedMembers = await this.resolveMembers(members, resolvedSelection);
       const results = await this.runAllMembers(resolvedMembers, content, config.OLLAMA_SERVICE_URL);
       const allFailed = results.every((r) => r.output === 'Role failed');
       if (allFailed) {
@@ -61,15 +83,22 @@ export class RolePackManager {
         threadId,
         role: 'ASSISTANT',
         content: bestOutput,
-        provider: 'local-ollama',
-        model: await this.resolveModel(),
+        provider: resolvedSelection.actualProvider,
+        model: resolvedSelection.actualModel,
         latencyMs: Date.now() - startTime,
         usedFallback: false,
-        routingMode: RoutingMode.AUTO,
-        metadata: { rolePack: true, pack, members: results },
+        routingMode:
+          resolvedSelection.modelSelectionMode === 'MANUAL_MODEL'
+            ? RoutingMode.MANUAL_MODEL
+            : RoutingMode.AUTO,
+        metadata: { rolePack: true, pack, members: results, modelSelection: resolvedSelection },
       });
 
-      this.chatStreamService.emitCompletion(threadId, 'local-ollama', await this.resolveModel());
+      this.chatStreamService.emitCompletion(
+        threadId,
+        resolvedSelection.actualProvider,
+        resolvedSelection.actualModel,
+      );
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Role pack execution failed';
       this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
@@ -143,7 +172,13 @@ export class RolePackManager {
     };
   }
 
-  private async resolveMembers(members: RoleMember[]): Promise<RoleMember[]> {
+  private async resolveMembers(
+    members: RoleMember[],
+    selection: AdvancedModelSelectionResolution,
+  ): Promise<RoleMember[]> {
+    if (selection.modelSelectionMode === 'MANUAL_MODEL') {
+      return members.map((member) => ({ ...member, model: selection.actualModel }));
+    }
     return Promise.all(
       members.map(async (member) => ({
         ...member,
@@ -202,5 +237,46 @@ export class RolePackManager {
       return DEFAULT_ROLE_PACK_MODEL;
     }
     return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+  }
+
+  private async resolveSelection(
+    dto: RolePackMessageDto,
+  ): Promise<AdvancedModelSelectionResolution> {
+    if (this.advancedModelSelectionService) {
+      return this.advancedModelSelectionService.resolveSelection(
+        {
+          modelSelectionMode: dto.modelSelectionMode,
+          requestedProvider: dto.requestedProvider,
+          requestedModel: dto.requestedModel,
+          requestedDisplayName: dto.requestedDisplayName,
+          selectedModelSource: dto.selectedModelSource,
+        },
+        await this.resolveModel(),
+      );
+    }
+
+    return this.buildAutoSelection({
+      requestedProvider: dto.requestedProvider ?? null,
+      requestedModel: dto.requestedModel ?? null,
+      requestedDisplayName: dto.requestedDisplayName,
+      selectedModelSource: dto.selectedModelSource ?? null,
+    });
+  }
+
+  private async buildAutoSelection(
+    overrides?: Partial<AdvancedModelSelectionResolution>,
+  ): Promise<AdvancedModelSelectionResolution> {
+    const actualModel = overrides?.requestedModel ?? (await this.resolveModel());
+    return {
+      modelSelectionMode: overrides?.requestedModel
+        ? ModelSelectionMode.MANUAL_MODEL
+        : ModelSelectionMode.AUTO,
+      requestedProvider: overrides?.requestedProvider ?? null,
+      requestedModel: overrides?.requestedModel ?? null,
+      requestedDisplayName: overrides?.requestedDisplayName ?? null,
+      selectedModelSource: overrides?.selectedModelSource ?? null,
+      actualProvider: 'local-ollama',
+      actualModel,
+    };
   }
 }

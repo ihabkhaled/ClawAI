@@ -8,6 +8,8 @@ import {
 import type { QualityCheckResult, ReRoutingDecision } from '../types/quality-check.types';
 import type { ThreadSettings } from '../types/execution.types';
 
+const CRITICAL_WEAK_REASONS = new Set(['prior_answer_bleed']);
+
 @Injectable()
 export class QualityCheckManager {
   private readonly logger = new Logger(QualityCheckManager.name);
@@ -16,6 +18,7 @@ export class QualityCheckManager {
     content: string,
     userPrompt: string,
     threadSettings?: ThreadSettings,
+    recentAssistantContents: string[] = [],
   ): QualityCheckResult {
     if (this.shouldBypassQualityChecks(userPrompt, content)) {
       this.logger.debug('checkResponseQuality: bypassing reroute checks for short/trivial prompt');
@@ -28,25 +31,35 @@ export class QualityCheckManager {
 
     const reasons: string[] = [];
     let score = 1.0;
+    const minLength = this.getMinimumLength(userPrompt);
 
-    score = this.checkLength(content, reasons, score);
-    score = this.checkWordCount(content, reasons, score);
+    score = this.checkLength(content, reasons, score, minLength);
+    score = this.checkWordCount(content, reasons, score, userPrompt);
     score = this.checkErrorPatterns(content, reasons, score);
     score = this.checkRepetition(content, reasons, score);
     score = this.checkEchoResponse(content, userPrompt, reasons, score);
+    score = this.checkPriorAnswerBleed(
+      content,
+      userPrompt,
+      recentAssistantContents,
+      reasons,
+      score,
+    );
 
     score = Math.max(0, Math.min(1, score));
 
     const threshold = threadSettings?.qualityThreshold ?? QUALITY_THRESHOLDS.WEAK_SCORE_THRESHOLD;
 
+    const hasCriticalWeakReason = reasons.some((reason) => CRITICAL_WEAK_REASONS.has(reason));
+
     const result: QualityCheckResult = {
-      isWeak: score < threshold,
+      isWeak: hasCriticalWeakReason || score < threshold,
       reasons,
       score,
     };
 
     this.logger.debug(
-      `checkResponseQuality: score=${String(score.toFixed(2))} threshold=${String(threshold)} isWeak=${String(result.isWeak)} reasons=[${reasons.join(', ')}]`,
+      `checkResponseQuality: score=${String(score.toFixed(2))} threshold=${String(threshold)} critical=${String(hasCriticalWeakReason)} isWeak=${String(result.isWeak)} reasons=[${reasons.join(', ')}]`,
     );
 
     return result;
@@ -78,17 +91,28 @@ export class QualityCheckManager {
     return this.buildDecision(true, qualityResult.reasons.join(', '), qualityResult.score);
   }
 
-  private checkLength(content: string, reasons: string[], score: number): number {
-    if (content.length < QUALITY_THRESHOLDS.MIN_RESPONSE_LENGTH) {
+  private checkLength(
+    content: string,
+    reasons: string[],
+    score: number,
+    minLength: number,
+  ): number {
+    if (content.length < minLength) {
       reasons.push('response_too_short');
       return score - QUALITY_SCORE_PENALTIES.TOO_SHORT;
     }
     return score;
   }
 
-  private checkWordCount(content: string, reasons: string[], score: number): number {
+  private checkWordCount(
+    content: string,
+    reasons: string[],
+    score: number,
+    userPrompt: string,
+  ): number {
     const wordCount = content.split(/\s+/).filter((w) => w.length > 0).length;
-    if (wordCount < QUALITY_THRESHOLDS.MIN_WORD_COUNT) {
+    const minWords = this.getMinimumWordCount(userPrompt);
+    if (wordCount < minWords) {
       reasons.push('too_few_words');
       return score - QUALITY_SCORE_PENALTIES.TOO_FEW_WORDS;
     }
@@ -129,6 +153,36 @@ export class QualityCheckManager {
     return score;
   }
 
+  private checkPriorAnswerBleed(
+    content: string,
+    userPrompt: string,
+    recentAssistantContents: string[],
+    reasons: string[],
+    score: number,
+  ): number {
+    if (recentAssistantContents.length === 0) {
+      return score;
+    }
+
+    const promptAlignment = this.calculateTokenOverlap(
+      content,
+      this.normalizeIntentText(userPrompt),
+    );
+    const strongestPriorSimilarity = recentAssistantContents.reduce((best, candidate) => {
+      return Math.max(best, this.calculateContainmentSimilarity(content, candidate));
+    }, 0);
+
+    if (
+      strongestPriorSimilarity >= QUALITY_THRESHOLDS.PRIOR_ANSWER_SIMILARITY_THRESHOLD &&
+      promptAlignment <= QUALITY_THRESHOLDS.PRIOR_ANSWER_MAX_PROMPT_ALIGNMENT
+    ) {
+      reasons.push('prior_answer_bleed');
+      return score - QUALITY_SCORE_PENALTIES.PRIOR_ANSWER_BLEED;
+    }
+
+    return score;
+  }
+
   private detectRepetition(content: string): number {
     const words = content.toLowerCase().split(/\s+/);
     if (words.length < MIN_WORDS_FOR_REPETITION_CHECK) {
@@ -164,6 +218,117 @@ export class QualityCheckManager {
       return shorter.length / longer.length;
     }
     return 0;
+  }
+
+  private calculateContainmentSimilarity(a: string, b: string): number {
+    return this.calculateSimilarity(a.toLowerCase(), b.toLowerCase());
+  }
+
+  private calculateTokenOverlap(a: string, b: string): number {
+    const aTokens = new Set(this.tokenize(this.normalizeIntentText(a)));
+    const bTokens = new Set(this.tokenize(this.normalizeIntentText(b)));
+    if (aTokens.size === 0 || bTokens.size === 0) {
+      return 0;
+    }
+
+    let hits = 0;
+    for (const token of aTokens) {
+      if (bTokens.has(token)) {
+        hits += 1;
+      }
+    }
+
+    return hits / Math.max(Math.min(aTokens.size, bTokens.size), 1);
+  }
+
+  private tokenize(value: string): string[] {
+    const ignoredTokens = new Set([
+      'associate',
+      'senior',
+      'lead',
+      'principal',
+      'engineer',
+      'advisor',
+      'director',
+      'manager',
+      'analyst',
+      'strategist',
+      'consultant',
+      'support',
+      'backend',
+      'frontend',
+      'product',
+      'customer',
+      'security',
+      'operations',
+      'research',
+      'scientist',
+      'architect',
+      'designer',
+      'artist',
+      'legal',
+      'medical',
+      'finance',
+      'procurement',
+      'executive',
+    ]);
+    return value
+      .toLowerCase()
+      .replaceAll(/[^a-z0-9\s]+/g, ' ')
+      .split(/\s+/)
+      .filter((token) => token.length >= 4 && !ignoredTokens.has(token));
+  }
+
+  private normalizeIntentText(value: string): string {
+    const trimmed = value.trim();
+    const commaIndex = trimmed.indexOf(',');
+    if (trimmed.startsWith('As ') && commaIndex > 0) {
+      return trimmed.slice(commaIndex + 1).trim();
+    }
+    return trimmed;
+  }
+
+  private getMinimumLength(userPrompt: string): number {
+    const prompt = this.normalizeIntentText(userPrompt).toLowerCase();
+    if (
+      /\b(file|pdf|csv|docx|spreadsheet|report|memo|brief|checklist|slides|deck)\b/.test(prompt)
+    ) {
+      return QUALITY_THRESHOLDS.MIN_RESPONSE_LENGTH;
+    }
+    if (
+      /\b(reason|reasoning|tradeoff|compare|evaluate|recommend|decide|next step|summary|summarize)\b/.test(
+        prompt,
+      )
+    ) {
+      return 12;
+    }
+    if (
+      /\b(explain|help me decide|what is|what should|give me|answer in plain english)\b/.test(
+        prompt,
+      )
+    ) {
+      return 12;
+    }
+    return QUALITY_THRESHOLDS.MIN_RESPONSE_LENGTH;
+  }
+
+  private getMinimumWordCount(userPrompt: string): number {
+    const prompt = this.normalizeIntentText(userPrompt).toLowerCase();
+    if (
+      /\b(reason|reasoning|tradeoff|compare|evaluate|recommend|decide|summary|summarize)\b/.test(
+        prompt,
+      )
+    ) {
+      return 3;
+    }
+    if (
+      /\b(explain|help me decide|what is|what should|give me|answer in plain english)\b/.test(
+        prompt,
+      )
+    ) {
+      return 3;
+    }
+    return QUALITY_THRESHOLDS.MIN_WORD_COUNT;
   }
 
   private buildDecision(

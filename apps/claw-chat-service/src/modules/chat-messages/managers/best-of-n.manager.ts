@@ -1,18 +1,35 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
+import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import { CANDIDATE_TIMEOUT_MS, DEFAULT_CANDIDATE_MODEL } from '../constants/best-of-n.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { QualityCheckManager } from './quality-check.manager';
 import type { BestOfNMessageDto } from '../dto/best-of-n-message.dto';
+import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { BestOfNResponse, CandidateResult } from '../types/best-of-n.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
 import { RoutingMode } from '../../../generated/prisma';
 
+/**
+ * Generates N candidate answers and picks the best via quality scoring.
+ *
+ * Model selection semantics:
+ * - AUTO: N candidates may use a mixed model set. LocalModelSelectionService resolves
+ *   an execution plan from the installed-model inventory; diversity across candidates
+ *   is intentional to surface the best-scoring response.
+ * - MANUAL_MODEL: ALL N candidates run with the single user-selected model. Diversity
+ *   comes from sampling variance (temperature, seed). If the requested model is
+ *   unsupported or unavailable, AdvancedModuleModelSelectionService throws
+ *   BusinessException before any candidate runs.
+ * - If `dto.models` is explicitly provided, it overrides auto candidate assignment
+ *   but NOT the user's manual selection (manual wins).
+ */
 @Injectable()
 export class BestOfNManager {
   private readonly logger = new Logger(BestOfNManager.name);
@@ -22,6 +39,7 @@ export class BestOfNManager {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly qualityCheckManager: QualityCheckManager,
+    private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
@@ -29,15 +47,16 @@ export class BestOfNManager {
     this.logger.log(`executeBestOfN: starting for user ${userId}, n=${String(dto.n)}`);
 
     const threadId = await this.resolveThreadId(userId, dto);
+    const selection = await this.resolveSelection(dto);
 
     const userMessage = await this.chatMessagesRepository.create({
       threadId,
       role: 'USER',
       content: dto.content,
-      metadata: { bestOfNRequest: true },
+      metadata: { bestOfNRequest: true, modelSelection: selection },
     });
 
-    void this.executeInBackground(threadId, dto.content, dto.n, dto.models);
+    void this.executeInBackground(threadId, dto.content, dto.n, selection, dto.models);
 
     return { messageId: userMessage.id, threadId };
   }
@@ -46,11 +65,20 @@ export class BestOfNManager {
     threadId: string,
     content: string,
     n: number,
+    selectionOrModels?: AdvancedModelSelectionResolution | string[],
     models?: string[],
   ): Promise<void> {
     const startTime = Date.now();
     try {
-      const candidateModels = this.buildCandidateModels(n, models);
+      const isLegacyModels = Array.isArray(selectionOrModels);
+      const resolvedSelection = isLegacyModels
+        ? await this.buildAutoSelection()
+        : (selectionOrModels ?? (await this.buildAutoSelection()));
+      const candidateModels = this.buildCandidateModels(
+        n,
+        resolvedSelection,
+        isLegacyModels ? selectionOrModels : models,
+      );
       const candidates = await this.runCandidates(content, candidateModels, startTime);
       const ranked = this.rankCandidates(candidates, content);
       const best = ranked[0];
@@ -67,8 +95,16 @@ export class BestOfNManager {
         model: best.model,
         latencyMs: best.latencyMs,
         usedFallback: false,
-        routingMode: RoutingMode.AUTO,
-        metadata: { bestOfN: true, candidates: ranked, bestRank: 1 },
+        routingMode:
+          resolvedSelection.modelSelectionMode === 'MANUAL_MODEL'
+            ? RoutingMode.MANUAL_MODEL
+            : RoutingMode.AUTO,
+        metadata: {
+          bestOfN: true,
+          candidates: ranked,
+          bestRank: 1,
+          modelSelection: resolvedSelection,
+        },
       });
 
       this.chatStreamService.emitCompletion(threadId, 'local-ollama', best.model);
@@ -85,7 +121,14 @@ export class BestOfNManager {
     }
   }
 
-  private buildCandidateModels(n: number, models?: string[]): string[] {
+  private buildCandidateModels(
+    n: number,
+    selection: AdvancedModelSelectionResolution,
+    models?: string[],
+  ): string[] {
+    if (selection.modelSelectionMode === 'MANUAL_MODEL') {
+      return Array.from({ length: n }, () => selection.actualModel);
+    }
     if (models && models.length > 0) {
       return models;
     }
@@ -189,5 +232,49 @@ export class BestOfNManager {
       usedFallback: true,
       metadata: { error: true },
     });
+  }
+
+  private async resolveSelection(
+    dto: BestOfNMessageDto,
+  ): Promise<AdvancedModelSelectionResolution> {
+    if (this.advancedModelSelectionService) {
+      return this.advancedModelSelectionService.resolveSelection(
+        {
+          modelSelectionMode: dto.modelSelectionMode,
+          requestedProvider: dto.requestedProvider,
+          requestedModel: dto.requestedModel,
+          requestedDisplayName: dto.requestedDisplayName,
+          selectedModelSource: dto.selectedModelSource,
+        },
+        (await this.localModelSelection?.resolveDefaultModel()) ?? DEFAULT_CANDIDATE_MODEL,
+      );
+    }
+
+    return this.buildAutoSelection({
+      requestedProvider: dto.requestedProvider ?? null,
+      requestedModel: dto.requestedModel ?? null,
+      requestedDisplayName: dto.requestedDisplayName,
+      selectedModelSource: dto.selectedModelSource ?? null,
+    });
+  }
+
+  private async buildAutoSelection(
+    overrides?: Partial<AdvancedModelSelectionResolution>,
+  ): Promise<AdvancedModelSelectionResolution> {
+    const actualModel =
+      overrides?.requestedModel ??
+      (await this.localModelSelection?.resolveDefaultModel()) ??
+      DEFAULT_CANDIDATE_MODEL;
+    return {
+      modelSelectionMode: overrides?.requestedModel
+        ? ModelSelectionMode.MANUAL_MODEL
+        : ModelSelectionMode.AUTO,
+      requestedProvider: overrides?.requestedProvider ?? null,
+      requestedModel: overrides?.requestedModel ?? null,
+      requestedDisplayName: overrides?.requestedDisplayName ?? null,
+      selectedModelSource: overrides?.selectedModelSource ?? null,
+      actualProvider: 'local-ollama',
+      actualModel,
+    };
   }
 }

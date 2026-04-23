@@ -19,6 +19,8 @@ import type {
   JudgeRefereeConfig,
   JudgeRefereeMetadata,
   JudgeRefereeResult,
+  JudgeResponseType,
+  JudgeReviewPayload,
   JudgeVerdict,
   ParsedJudgeVerdict,
 } from '../types/judge-referee.types';
@@ -90,6 +92,7 @@ export class JudgeRefereeManager {
     );
 
     const result: JudgeRefereeResult = {
+      originalResponse: response,
       criticEvaluation,
       judgeVerdict,
       totalLatencyMs,
@@ -105,10 +108,25 @@ export class JudgeRefereeManager {
       );
     }
 
+    if (
+      judgeVerdict.decision === JudgeDecision.ESCALATE &&
+      judgeVerdict.response.trim().length > 0
+    ) {
+      result.escalatedResponse = {
+        content: judgeVerdict.response,
+        provider: OLLAMA_PROVIDER,
+        model: effectiveJudgeModel,
+        latencyMs: judgeVerdict.latencyMs,
+        usedFallback: false,
+      };
+    }
+
     return result;
   }
 
   buildMetadata(result: JudgeRefereeResult): JudgeRefereeMetadata {
+    const judgeReview = this.buildJudgeReviewPayload(result);
+
     return {
       judgeEnabled: true,
       criticModel: result.criticEvaluation.model,
@@ -120,6 +138,8 @@ export class JudgeRefereeManager {
       judgeConfidence: result.judgeVerdict.confidence,
       revisionsCount: result.revisedResponse ? 1 : 0,
       judgeTotalLatencyMs: result.totalLatencyMs,
+      judgeErrorState: result.judgeVerdict.fallbackState ?? null,
+      judgeReview,
     };
   }
 
@@ -235,12 +255,64 @@ export class JudgeRefereeManager {
       this.logger.warn(`callJudge: failed — ${msg}. Defaulting to ACCEPT.`);
       return {
         decision: JudgeDecision.ACCEPT,
+        summary: 'The answer passed review.',
         reasoning: 'Judge unavailable, accepting response',
         confidence: JUDGE_CONFIDENCE_THRESHOLD,
+        response: 'The answer passed review because the judge service was unavailable.',
+        responseType: 'verification_note',
+        recommendedChanges: [],
         model: `${OLLAMA_PROVIDER}/${judgeModel}`,
         latencyMs: Date.now() - startTime,
+        wasFallback: true,
+        fallbackState: 'unavailable',
       };
     }
+  }
+
+  private buildJudgeReviewPayload(result: JudgeRefereeResult): JudgeReviewPayload {
+    const revisedAnswer = result.revisedResponse?.content ?? null;
+    const escalatedAnswer = result.escalatedResponse?.content ?? null;
+    const judgeResponse =
+      escalatedAnswer ??
+      revisedAnswer ??
+      result.judgeVerdict.response ??
+      result.judgeVerdict.summary ??
+      result.judgeVerdict.reasoning;
+    const judgeResponseType: JudgeResponseType = escalatedAnswer
+      ? 'escalated_answer'
+      : (revisedAnswer
+        ? 'revised_answer'
+        : result.judgeVerdict.responseType);
+
+    return {
+      version: 1,
+      judgeDecision: result.judgeVerdict.decision,
+      judgeModel: result.judgeVerdict.model,
+      judgeDisplayName: result.judgeVerdict.model,
+      judgeConfidence: result.judgeVerdict.confidence,
+      judgeReasoning: result.judgeVerdict.reasoning,
+      judgeSummary: result.judgeVerdict.summary,
+      judgeResponse,
+      judgeResponseType,
+      criticModel: result.criticEvaluation.model,
+      criticDisplayName: result.criticEvaluation.model,
+      criticFeedback: result.criticEvaluation.feedback,
+      criticScore: result.criticEvaluation.score,
+      originalExecutionModel: `${result.originalResponse.provider}/${result.originalResponse.model}`,
+      originalExecutionDisplayName: `${result.originalResponse.provider}/${result.originalResponse.model}`,
+      originalAnswerSnapshot: result.originalResponse.content,
+      revisedAnswer,
+      escalatedAnswer,
+      judgeLatencyMs: result.judgeVerdict.latencyMs,
+      criticLatencyMs: result.criticEvaluation.latencyMs,
+      judgeTotalLatencyMs: result.totalLatencyMs,
+      judgeMetadata: {
+        category: result.criticEvaluation.category,
+        recommendedChanges: result.judgeVerdict.recommendedChanges,
+      },
+      judgeDialogAvailable: result.judgeVerdict.wasFallback !== true,
+      generatedAt: new Date().toISOString(),
+    };
   }
 
   private async attemptRevision(
@@ -326,6 +398,74 @@ export class JudgeRefereeManager {
     return CRITIC_SYSTEM_PROMPTS[category] ?? CRITIC_SYSTEM_PROMPTS['generic'] ?? '';
   }
 
+  private parseJudgePlainTextOutput(content: string): ParsedJudgeVerdict | null {
+    const normalizedContent = content.trim();
+    if (normalizedContent.length === 0) {
+      return null;
+    }
+
+    const decision = this.inferJudgeDecision(normalizedContent);
+    const summary = this.buildJudgeSummary(normalizedContent);
+    const responseType: JudgeResponseType =
+      decision === JudgeDecision.ESCALATE
+        ? 'escalated_answer'
+        : (decision === JudgeDecision.REVISE
+          ? 'summary'
+          : 'verification_note');
+
+    return {
+      decision,
+      summary,
+      reasoning: normalizedContent,
+      confidence: JUDGE_CONFIDENCE_THRESHOLD,
+      response: normalizedContent,
+      responseType,
+      recommendedChanges: [],
+    };
+  }
+
+  private inferJudgeDecision(content: string): JudgeDecision {
+    const normalized = content.toLowerCase();
+
+    const escalateHints = [
+      'escalate',
+      'stronger answer',
+      'replace the answer',
+      'fundamentally flawed',
+      'dangerous advice',
+      'needs a stronger',
+    ];
+    if (escalateHints.some((hint) => normalized.includes(hint))) {
+      return JudgeDecision.ESCALATE;
+    }
+
+    const reviseHints = [
+      'revise',
+      'needs revision',
+      'needs work',
+      'fix',
+      'improve',
+      'missing',
+      'incomplete',
+    ];
+    if (reviseHints.some((hint) => normalized.includes(hint))) {
+      return JudgeDecision.REVISE;
+    }
+
+    return JudgeDecision.ACCEPT;
+  }
+
+  private buildJudgeSummary(content: string): string {
+    const normalized = content.replaceAll(/\s+/g, ' ').trim();
+    const firstSentence = normalized.split(/(?<=[.!?])\s+/u)[0]?.trim();
+
+    if (firstSentence && firstSentence.length > 0) {
+      return firstSentence.slice(0, 180);
+    }
+
+    return normalized.slice(0, 180);
+  }
+
   parseJudgeOutput(content: string): ParsedJudgeVerdict {
     try {
       let jsonStr = content.trim();
@@ -339,13 +479,21 @@ export class JudgeRefereeManager {
       // Extract JSON object from the string
       const jsonMatch = /\{[\s\S]*\}/.exec(jsonStr);
       if (!jsonMatch) {
+        const plainVerdict = this.parseJudgePlainTextOutput(content);
+        if (plainVerdict) {
+          return plainVerdict;
+        }
         throw new Error('No JSON object found');
       }
 
       const parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
       const decision = parsed['decision'];
+      const summary = parsed['summary'];
       const reasoning = parsed['reasoning'];
       const confidence = parsed['confidence'];
+      const response = parsed['response'];
+      const responseType = parsed['responseType'];
+      const recommendedChangesRaw = parsed['recommendedChanges'];
 
       if (
         decision !== JudgeDecision.ACCEPT &&
@@ -355,21 +503,57 @@ export class JudgeRefereeManager {
         throw new Error(`Invalid decision: ${String(decision)}`);
       }
 
+      const resolvedResponseType: JudgeResponseType =
+        responseType === 'summary' ||
+        responseType === 'revised_answer' ||
+        responseType === 'escalated_answer' ||
+        responseType === 'verification_note'
+          ? responseType
+          : (decision === JudgeDecision.ESCALATE
+            ? 'escalated_answer'
+            : 'verification_note');
+
       return {
         decision,
+        summary:
+          typeof summary === 'string' && summary.trim().length > 0
+            ? summary
+            : 'The judge completed a review of the answer.',
         reasoning: typeof reasoning === 'string' ? reasoning : 'No reasoning provided',
         confidence:
           typeof confidence === 'number'
             ? Math.max(0, Math.min(1, confidence))
             : JUDGE_CONFIDENCE_THRESHOLD,
+        response:
+          typeof response === 'string' && response.trim().length > 0
+            ? response
+            : (decision === JudgeDecision.ESCALATE
+              ? 'A stronger answer is required for this request.'
+              : 'The answer passed review.'),
+        responseType: resolvedResponseType,
+        recommendedChanges: Array.isArray(recommendedChangesRaw)
+          ? recommendedChangesRaw.filter(
+              (change): change is string => typeof change === 'string' && change.trim().length > 0,
+            )
+          : [],
       };
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Parse error';
       this.logger.warn(`parseJudgeOutput: failed to parse — ${msg}. Defaulting to ACCEPT.`);
+      const plainVerdict = this.parseJudgePlainTextOutput(content);
+      if (plainVerdict) {
+        return plainVerdict;
+      }
       return {
         decision: JudgeDecision.ACCEPT,
+        summary: 'The judge completed a review of the answer.',
         reasoning: 'Could not parse judge output, accepting by default',
         confidence: JUDGE_CONFIDENCE_THRESHOLD,
+        response: 'The answer passed review.',
+        responseType: 'verification_note',
+        recommendedChanges: [],
+        wasFallback: true,
+        fallbackState: 'failed',
       };
     }
   }

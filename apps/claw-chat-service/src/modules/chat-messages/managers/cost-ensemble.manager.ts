@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
+import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import {
   COST_ENSEMBLE_TIMEOUT_MS,
@@ -11,9 +12,11 @@ import {
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { QualityCheckManager } from './quality-check.manager';
 import type { CostEnsembleMessageDto } from '../dto/cost-ensemble-message.dto';
+import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type {
   CostClassification,
   CostEnsembleResponse,
@@ -24,6 +27,21 @@ import type {
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
 import { RoutingMode } from '../../../generated/prisma';
 
+/**
+ * Classifies the request (complexity/risk/ambiguity), picks an ensemble tier
+ * (single / duo / trio), runs the tier in parallel, and returns the best candidate.
+ *
+ * Model selection semantics:
+ * - AUTO: tier is decided by task classification; candidates are drawn from the
+ *   installed-model inventory according to tier.
+ * - MANUAL_MODEL: the ensemble still scales by tier, but every candidate runs with
+ *   the single user-selected model (diversity comes from sampling variance, not
+ *   model diversity). Cost-aware tier logic is preserved; user's model choice is
+ *   honored without silent fallback.
+ * - Validation: if the requested model is unsupported or unavailable,
+ *   AdvancedModuleModelSelectionService throws BusinessException before the
+ *   ensemble runs.
+ */
 @Injectable()
 export class CostEnsembleManager {
   private readonly logger = new Logger(CostEnsembleManager.name);
@@ -33,6 +51,7 @@ export class CostEnsembleManager {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly qualityCheckManager: QualityCheckManager,
+    private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
@@ -43,47 +62,86 @@ export class CostEnsembleManager {
     this.logger.log(`executeCostEnsemble: starting for user ${userId}`);
 
     const threadId = await this.resolveThreadId(userId, dto);
+    const selection = await this.resolveSelection(dto);
 
     const userMessage = await this.chatMessagesRepository.create({
       threadId,
       role: 'USER',
       content: dto.content,
-      metadata: { costEnsembleRequest: true },
+      metadata: { costEnsembleRequest: true, modelSelection: selection },
     });
 
-    void this.executeInBackground(threadId, dto.content);
+    void this.executeInBackground(threadId, dto.content, selection);
 
     return { messageId: userMessage.id, threadId };
   }
 
-  async executeInBackground(threadId: string, content: string): Promise<void> {
+  async executeInBackground(
+    threadId: string,
+    content: string,
+    selection?: AdvancedModelSelectionResolution,
+  ): Promise<void> {
     try {
-      const rawClassification = await this.classifyTask(content);
+      const resolvedSelection = selection ?? (await this.buildAutoSelection());
+      const rawClassification = await this.classifyTask(content, resolvedSelection);
       const tier = this.determineTier(rawClassification);
       const classification: CostClassification = { tier, ...rawClassification };
 
-      const candidates = await this.runEnsemble(content, tier);
+      const candidates = await this.runEnsemble(content, tier, resolvedSelection);
       const { selectedIndex, best } = this.selectBest(candidates, content);
 
       await this.chatMessagesRepository.create({
         threadId,
         role: 'ASSISTANT',
         content: best,
-        provider: 'local-ollama',
-        model: await this.resolveModel(),
+        provider: resolvedSelection.actualProvider,
+        model: resolvedSelection.actualModel,
         latencyMs: candidates[selectedIndex]?.latencyMs ?? 0,
         usedFallback: false,
-        routingMode: RoutingMode.AUTO,
+        routingMode:
+          resolvedSelection.modelSelectionMode === 'MANUAL_MODEL'
+            ? RoutingMode.MANUAL_MODEL
+            : RoutingMode.AUTO,
         metadata: {
           costEnsemble: true,
           tier,
           classification,
           candidates,
           selectedIndex,
+          modelSelection: resolvedSelection,
+          routeRoadmap: {
+            routingMode: resolvedSelection.modelSelectionMode,
+            routerModel: null,
+            selectedProvider:
+              resolvedSelection.requestedProvider ?? resolvedSelection.actualProvider,
+            selectedModel: resolvedSelection.requestedModel ?? resolvedSelection.actualModel,
+            finalProvider: resolvedSelection.actualProvider,
+            finalModel: resolvedSelection.actualModel,
+            finalDisplayName: resolvedSelection.actualModel,
+            steps: [
+              {
+                stage: 'tool',
+                provider: 'cost-ensemble',
+                model: tier,
+                displayName: `Cost-aware ${tier} ensemble`,
+                description: `${String(candidates.length)} candidates evaluated; winner index=${String(selectedIndex)}`,
+              },
+              {
+                stage: 'execution',
+                provider: resolvedSelection.actualProvider,
+                model: resolvedSelection.actualModel,
+                displayName: resolvedSelection.actualModel,
+              },
+            ],
+          },
         },
       });
 
-      this.chatStreamService.emitCompletion(threadId, 'local-ollama', await this.resolveModel());
+      this.chatStreamService.emitCompletion(
+        threadId,
+        resolvedSelection.actualProvider,
+        resolvedSelection.actualModel,
+      );
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Cost ensemble generation failed';
       this.logger.error(`executeInBackground: failed for thread ${threadId} — ${errorMsg}`);
@@ -97,7 +155,10 @@ export class CostEnsembleManager {
     }
   }
 
-  private async classifyTask(content: string): Promise<RawClassification> {
+  private async classifyTask(
+    content: string,
+    selection: AdvancedModelSelectionResolution,
+  ): Promise<RawClassification> {
     const config = AppConfig.get();
     const classifyPrompt = [
       'You are a task complexity classifier. Analyze the following task and return ONLY a valid JSON object.',
@@ -111,7 +172,7 @@ export class CostEnsembleManager {
     ].join('\n');
 
     const requestBody: OllamaGenerateRequest = {
-      model: DEFAULT_COST_ENSEMBLE_MODEL,
+      model: selection.actualModel,
       prompt: classifyPrompt,
       stream: false,
       think: false,
@@ -164,10 +225,14 @@ export class CostEnsembleManager {
     return 1;
   }
 
-  private async runEnsemble(content: string, tier: CostTier): Promise<EnsembleCandidate[]> {
+  private async runEnsemble(
+    content: string,
+    tier: CostTier,
+    selection: AdvancedModelSelectionResolution,
+  ): Promise<EnsembleCandidate[]> {
     const count = this.tierToCount(tier);
     const config = AppConfig.get();
-    const model = await this.resolveModel();
+    const model = selection.actualModel;
 
     const calls = Array.from({ length: count }, () =>
       this.runOneCall(config.OLLAMA_SERVICE_URL, content, model),
@@ -280,6 +345,47 @@ export class CostEnsembleManager {
       return DEFAULT_COST_ENSEMBLE_MODEL;
     }
     return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+  }
+
+  private async resolveSelection(
+    dto: CostEnsembleMessageDto,
+  ): Promise<AdvancedModelSelectionResolution> {
+    if (this.advancedModelSelectionService) {
+      return this.advancedModelSelectionService.resolveSelection(
+        {
+          modelSelectionMode: dto.modelSelectionMode,
+          requestedProvider: dto.requestedProvider,
+          requestedModel: dto.requestedModel,
+          requestedDisplayName: dto.requestedDisplayName,
+          selectedModelSource: dto.selectedModelSource,
+        },
+        await this.resolveModel(),
+      );
+    }
+
+    return this.buildAutoSelection({
+      requestedProvider: dto.requestedProvider ?? null,
+      requestedModel: dto.requestedModel ?? null,
+      requestedDisplayName: dto.requestedDisplayName,
+      selectedModelSource: dto.selectedModelSource ?? null,
+    });
+  }
+
+  private async buildAutoSelection(
+    overrides?: Partial<AdvancedModelSelectionResolution>,
+  ): Promise<AdvancedModelSelectionResolution> {
+    const actualModel = overrides?.requestedModel ?? (await this.resolveModel());
+    return {
+      modelSelectionMode: overrides?.requestedModel
+        ? ModelSelectionMode.MANUAL_MODEL
+        : ModelSelectionMode.AUTO,
+      requestedProvider: overrides?.requestedProvider ?? null,
+      requestedModel: overrides?.requestedModel ?? null,
+      requestedDisplayName: overrides?.requestedDisplayName ?? null,
+      selectedModelSource: overrides?.selectedModelSource ?? null,
+      actualProvider: 'local-ollama',
+      actualModel,
+    };
   }
 
   private defaultClassification(): RawClassification {

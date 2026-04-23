@@ -1,15 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
+import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { RepairType } from '../../../common/enums/repair-type.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import { REPAIR_GENERATION_TIMEOUT_MS } from '../constants/answer-repair.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type { RepairMessageDto } from '../dto/repair-message.dto';
 import type { AnswerRepairResponse } from '../types/answer-repair.types';
+import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
 import { type RoutingMode } from '../../../generated/prisma';
 
@@ -21,6 +24,7 @@ export class AnswerRepairManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
@@ -31,21 +35,20 @@ export class AnswerRepairManager {
 
     const threadId = await this.resolveThreadId(userId, dto);
     const originalContent = await this.resolveOriginalContent(dto);
+    const selection = await this.resolveSelection(dto);
 
     const userMessage = await this.chatMessagesRepository.create({
       threadId,
       role: 'USER',
       content: `Repair request: ${originalContent.slice(0, 100)}...`,
-      metadata: { repairRequest: true, repairTypes: dto.repairTypes },
+      metadata: {
+        repairRequest: true,
+        repairTypes: dto.repairTypes,
+        modelSelection: selection,
+      },
     });
 
-    void this.executeInBackground(
-      threadId,
-      originalContent,
-      dto.repairTypes,
-      dto.targetProvider,
-      dto.targetModel,
-    );
+    void this.executeInBackground(threadId, originalContent, dto.repairTypes, selection);
 
     return { messageId: userMessage.id, threadId };
   }
@@ -54,20 +57,19 @@ export class AnswerRepairManager {
     threadId: string,
     originalContent: string,
     repairTypes: RepairType[],
-    targetProvider: string | undefined,
-    targetModel: string | undefined,
+    selection?: AdvancedModelSelectionResolution,
   ): Promise<void> {
     const startTime = Date.now();
     try {
+      const resolvedSelection = selection ?? (await this.buildAutoSelection());
       const repairedContent = await this.callRepairLlm(
         originalContent,
         repairTypes,
-        targetModel,
-        startTime,
+        resolvedSelection,
       );
 
-      const provider = targetProvider ?? 'local-ollama';
-      const model = await this.resolveModel(targetModel);
+      const provider = resolvedSelection.actualProvider;
+      const model = resolvedSelection.actualModel;
 
       await this.chatMessagesRepository.create({
         threadId,
@@ -82,6 +84,7 @@ export class AnswerRepairManager {
           repairTypes,
           repairProvider: provider,
           repairModel: model,
+          modelSelection: resolvedSelection,
         },
       });
 
@@ -105,12 +108,11 @@ export class AnswerRepairManager {
   private async callRepairLlm(
     originalContent: string,
     repairTypes: RepairType[],
-    targetModel: string | undefined,
-    _startTime: number,
+    selection: AdvancedModelSelectionResolution,
   ): Promise<string> {
     const config = AppConfig.get();
     const repairPrompt = this.buildRepairPrompt(originalContent, repairTypes);
-    const model = await this.resolveModel(targetModel);
+    const model = selection.actualModel;
 
     const requestBody: OllamaGenerateRequest = {
       model,
@@ -210,5 +212,45 @@ Return ONLY the repaired answer. Do not explain what you changed. Do not add pre
       return model;
     }
     return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+  }
+
+  private async resolveSelection(dto: RepairMessageDto): Promise<AdvancedModelSelectionResolution> {
+    if (this.advancedModelSelectionService) {
+      return this.advancedModelSelectionService.resolveSelection(
+        {
+          modelSelectionMode: dto.modelSelectionMode,
+          requestedProvider: dto.requestedProvider ?? dto.targetProvider,
+          requestedModel: dto.requestedModel ?? dto.targetModel,
+          requestedDisplayName: dto.requestedDisplayName,
+          selectedModelSource: dto.selectedModelSource,
+        },
+        await this.resolveModel(),
+      );
+    }
+
+    return this.buildAutoSelection({
+      requestedProvider: dto.requestedProvider ?? dto.targetProvider ?? 'local-ollama',
+      requestedModel: dto.requestedModel ?? dto.targetModel ?? null,
+      requestedDisplayName: dto.requestedDisplayName,
+      selectedModelSource: dto.selectedModelSource ?? null,
+    });
+  }
+
+  private async buildAutoSelection(
+    overrides?: Partial<AdvancedModelSelectionResolution>,
+  ): Promise<AdvancedModelSelectionResolution> {
+    const actualModel =
+      overrides?.actualModel ?? overrides?.requestedModel ?? (await this.resolveModel());
+    return {
+      modelSelectionMode: overrides?.requestedModel
+        ? ModelSelectionMode.MANUAL_MODEL
+        : ModelSelectionMode.AUTO,
+      requestedProvider: overrides?.requestedProvider ?? null,
+      requestedModel: overrides?.requestedModel ?? null,
+      requestedDisplayName: overrides?.requestedDisplayName ?? null,
+      selectedModelSource: overrides?.selectedModelSource ?? null,
+      actualProvider: 'local-ollama',
+      actualModel,
+    };
   }
 }

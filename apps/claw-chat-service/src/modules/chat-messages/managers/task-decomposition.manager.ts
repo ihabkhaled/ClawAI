@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ProgressActorType, StreamEventType } from '../../../common/enums';
+import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
@@ -12,8 +13,10 @@ import {
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type { DecomposeTaskDto } from '../dto/decompose-task.dto';
+import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type {
   SubTask,
   SubTaskResult,
@@ -30,6 +33,7 @@ export class TaskDecompositionManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
@@ -40,39 +44,46 @@ export class TaskDecompositionManager {
     this.logger.log(`executeDecomposition: starting for user ${userId}`);
 
     const threadId = await this.resolveThreadId(userId, dto);
+    const selection = await this.resolveSelection(dto);
     this.chatStreamService.emitRequestAccepted(threadId);
 
     const userMessage = await this.chatMessagesRepository.create({
       threadId,
       role: 'USER',
       content: dto.content,
-      metadata: { decompositionRequest: true },
+      metadata: { decompositionRequest: true, modelSelection: selection },
     });
 
-    void this.executeInBackground(threadId, dto.content, dto.maxSubTasks);
+    void this.executeInBackground(threadId, dto.content, dto.maxSubTasks, selection);
 
     return { messageId: userMessage.id, threadId };
   }
 
-  async executeInBackground(threadId: string, content: string, maxSubTasks: number): Promise<void> {
+  async executeInBackground(
+    threadId: string,
+    content: string,
+    maxSubTasks: number,
+    selection?: AdvancedModelSelectionResolution,
+  ): Promise<void> {
     const startTime = Date.now();
     try {
+      const resolvedSelection = selection ?? (await this.buildAutoSelection());
       this.chatStreamService.emitProgressStage(threadId, StreamEventType.RESPONSE_STREAMING, {
         label: 'Decomposing task',
         description: `Breaking the request into up to ${String(maxSubTasks)} sub-tasks.`,
         actorType: ProgressActorType.SYSTEM,
         actorName: 'Task decomposition',
       });
-      const subTasks = await this.decomposeContent(content, maxSubTasks);
+      const subTasks = await this.decomposeContent(content, maxSubTasks, resolvedSelection);
       this.chatStreamService.emitProgressStage(threadId, StreamEventType.RESPONSE_STREAMING, {
         label: 'Executing sub-tasks',
         description: `${String(subTasks.length)} sub-tasks are running in parallel.`,
         actorType: ProgressActorType.SYSTEM,
         actorName: 'Task decomposition',
       });
-      const subTaskResults = await this.executeSubTasks(subTasks);
-      const mergedContent = await this.mergeResults(content, subTaskResults);
-      const resolvedModel = await this.resolveModel();
+      const subTaskResults = await this.executeSubTasks(subTasks, resolvedSelection);
+      const mergedContent = await this.mergeResults(content, subTaskResults, resolvedSelection);
+      const resolvedModel = resolvedSelection.actualModel;
 
       await this.chatMessagesRepository.create({
         threadId,
@@ -85,12 +96,14 @@ export class TaskDecompositionManager {
         metadata: {
           decomposed: true,
           subTasks: subTaskResults,
+          modelSelection: resolvedSelection,
           routeRoadmap: {
-            routingMode: 'MANUAL_MODEL',
+            routingMode: resolvedSelection.modelSelectionMode,
             routerModel: null,
-            selectedProvider: 'local-ollama',
-            selectedModel: resolvedModel,
-            finalProvider: 'local-ollama',
+            selectedProvider:
+              resolvedSelection.requestedProvider ?? resolvedSelection.actualProvider,
+            selectedModel: resolvedSelection.requestedModel ?? resolvedModel,
+            finalProvider: resolvedSelection.actualProvider,
             finalModel: resolvedModel,
             finalDisplayName: resolvedModel,
             steps: [
@@ -149,9 +162,13 @@ export class TaskDecompositionManager {
     }
   }
 
-  private async decomposeContent(content: string, maxSubTasks: number): Promise<SubTask[]> {
+  private async decomposeContent(
+    content: string,
+    maxSubTasks: number,
+    selection: AdvancedModelSelectionResolution,
+  ): Promise<SubTask[]> {
     const config = AppConfig.get();
-    const model = await this.resolveModel();
+    const model = selection.actualModel;
 
     const prompt = `You are a task decomposition assistant. Break the following complex task into ${String(maxSubTasks)} or fewer focused sub-tasks.
 
@@ -210,10 +227,13 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
     ];
   }
 
-  private async executeSubTasks(subTasks: SubTask[]): Promise<SubTaskResult[]> {
-    const fallbackModel = await this.resolveModel();
+  private async executeSubTasks(
+    subTasks: SubTask[],
+    selection: AdvancedModelSelectionResolution,
+  ): Promise<SubTaskResult[]> {
+    const fallbackModel = selection.actualModel;
     const results = await Promise.allSettled(
-      subTasks.map((subTask) => this.executeOneSubTask(subTask)),
+      subTasks.map((subTask) => this.executeOneSubTask(subTask, selection)),
     );
 
     return results.map((result, index) => {
@@ -233,10 +253,13 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
     });
   }
 
-  private async executeOneSubTask(subTask: SubTask): Promise<SubTaskResult> {
+  private async executeOneSubTask(
+    subTask: SubTask,
+    selection: AdvancedModelSelectionResolution,
+  ): Promise<SubTaskResult> {
     const config = AppConfig.get();
     const startTime = Date.now();
-    const model = await this.resolveModel();
+    const model = selection.actualModel;
 
     const requestBody: OllamaGenerateRequest = {
       model,
@@ -270,9 +293,10 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
   private async mergeResults(
     originalContent: string,
     subTaskResults: SubTaskResult[],
+    selection: AdvancedModelSelectionResolution,
   ): Promise<string> {
     const config = AppConfig.get();
-    const model = await this.resolveModel();
+    const model = selection.actualModel;
 
     const subTasksSummary = subTaskResults
       .map((r, i) => `## Sub-task ${String(i + 1)}: ${r.title}\n${r.result}`)
@@ -347,5 +371,44 @@ Provide a unified, coherent response that integrates all sub-task results into a
       return DEFAULT_DECOMPOSITION_MODEL;
     }
     return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+  }
+
+  private async resolveSelection(dto: DecomposeTaskDto): Promise<AdvancedModelSelectionResolution> {
+    if (this.advancedModelSelectionService) {
+      return this.advancedModelSelectionService.resolveSelection(
+        {
+          modelSelectionMode: dto.modelSelectionMode,
+          requestedProvider: dto.requestedProvider,
+          requestedModel: dto.requestedModel,
+          requestedDisplayName: dto.requestedDisplayName,
+          selectedModelSource: dto.selectedModelSource,
+        },
+        await this.resolveModel(),
+      );
+    }
+
+    return this.buildAutoSelection({
+      requestedProvider: dto.requestedProvider ?? null,
+      requestedModel: dto.requestedModel ?? null,
+      requestedDisplayName: dto.requestedDisplayName,
+      selectedModelSource: dto.selectedModelSource ?? null,
+    });
+  }
+
+  private async buildAutoSelection(
+    overrides?: Partial<AdvancedModelSelectionResolution>,
+  ): Promise<AdvancedModelSelectionResolution> {
+    const actualModel = overrides?.requestedModel ?? (await this.resolveModel());
+    return {
+      modelSelectionMode: overrides?.requestedModel
+        ? ModelSelectionMode.MANUAL_MODEL
+        : ModelSelectionMode.AUTO,
+      requestedProvider: overrides?.requestedProvider ?? null,
+      requestedModel: overrides?.requestedModel ?? null,
+      requestedDisplayName: overrides?.requestedDisplayName ?? null,
+      selectedModelSource: overrides?.selectedModelSource ?? null,
+      actualProvider: 'local-ollama',
+      actualModel,
+    };
   }
 }

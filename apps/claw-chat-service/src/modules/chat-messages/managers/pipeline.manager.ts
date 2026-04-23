@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ProgressActorType, StreamEventType } from '../../../common/enums';
+import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
@@ -11,12 +12,27 @@ import {
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type { PipelineMessageDto } from '../dto/pipeline-message.dto';
+import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { PipelineResponse, PipelineStage, PipelineStageResult } from '../types/pipeline.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
 import { type RoutingMode } from '../../../generated/prisma';
 
+/**
+ * Runs a multi-stage specialist pipeline (analyze → reason → format by default,
+ * or a custom stage list). Stage output feeds into the next stage.
+ *
+ * Model selection semantics:
+ * - AUTO: each stage uses its category-specialized local model (analyzer, reasoner,
+ *   formatter) resolved from the installed-model inventory.
+ * - MANUAL_MODEL: ALL stages execute with the single user-selected model. Stage
+ *   specialization still drives prompts; only the execution model is unified.
+ *   Per-stage override is not yet supported — tracked as future work.
+ * - Validation: if the requested model is unsupported or unavailable,
+ *   AdvancedModuleModelSelectionService throws BusinessException before any stage runs.
+ */
 @Injectable()
 export class PipelineManager {
   private readonly logger = new Logger(PipelineManager.name);
@@ -25,6 +41,7 @@ export class PipelineManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
@@ -32,16 +49,17 @@ export class PipelineManager {
     this.logger.log(`executePipeline: starting for user ${userId}`);
 
     const threadId = await this.resolveThreadId(userId, dto);
+    const selection = await this.resolveSelection(dto);
     this.chatStreamService.emitRequestAccepted(threadId);
 
     const userMessage = await this.chatMessagesRepository.create({
       threadId,
       role: 'USER',
       content: dto.content,
-      metadata: { pipelineRequest: true },
+      metadata: { pipelineRequest: true, modelSelection: selection },
     });
 
-    void this.executeInBackground(threadId, dto.content, dto);
+    void this.executeInBackground(threadId, dto.content, dto, selection);
 
     return { messageId: userMessage.id, threadId };
   }
@@ -50,16 +68,18 @@ export class PipelineManager {
     threadId: string,
     content: string,
     dto: PipelineMessageDto,
+    selection?: AdvancedModelSelectionResolution,
   ): Promise<void> {
     const startTime = Date.now();
     try {
+      const resolvedSelection = selection ?? (await this.buildAutoSelection());
       this.chatStreamService.emitProgressStage(threadId, StreamEventType.RESPONSE_STREAMING, {
         label: 'Preparing pipeline',
         description: 'Resolving the pipeline stages for this request.',
         actorType: ProgressActorType.SYSTEM,
         actorName: 'Pipeline workflow',
       });
-      const stages = await this.resolveStages(dto);
+      const stages = await this.resolveStages(dto, resolvedSelection);
       this.chatStreamService.emitProgressStage(threadId, StreamEventType.RESPONSE_STREAMING, {
         label: 'Running pipeline',
         description: `${String(stages.length)} stages are executing in order.`,
@@ -69,7 +89,7 @@ export class PipelineManager {
       const config = AppConfig.get();
       const stageResults = await this.runAllStages(stages, content, config.OLLAMA_SERVICE_URL);
       const finalOutput = stageResults.at(-1)?.output ?? content;
-      const resolvedModel = await this.resolveModel();
+      const resolvedModel = resolvedSelection.actualModel;
 
       await this.chatMessagesRepository.create({
         threadId,
@@ -84,12 +104,14 @@ export class PipelineManager {
           template: dto.template,
           stages: stageResults,
           stageCount: stageResults.length,
+          modelSelection: resolvedSelection,
           routeRoadmap: {
-            routingMode: 'MANUAL_MODEL',
+            routingMode: resolvedSelection.modelSelectionMode,
             routerModel: null,
-            selectedProvider: 'local-ollama',
-            selectedModel: resolvedModel,
-            finalProvider: 'local-ollama',
+            selectedProvider:
+              resolvedSelection.requestedProvider ?? resolvedSelection.actualProvider,
+            selectedModel: resolvedSelection.requestedModel ?? resolvedModel,
+            finalProvider: resolvedSelection.actualProvider,
             finalModel: resolvedModel,
             finalDisplayName: resolvedModel,
             steps: [
@@ -148,11 +170,14 @@ export class PipelineManager {
     }
   }
 
-  private async resolveStages(dto: PipelineMessageDto): Promise<PipelineStage[]> {
+  private async resolveStages(
+    dto: PipelineMessageDto,
+    selection: AdvancedModelSelectionResolution,
+  ): Promise<PipelineStage[]> {
     if (dto.template !== 'custom') {
-      return this.resolveStageModels(PIPELINE_TEMPLATES[dto.template] ?? []);
+      return this.resolveStageModels(PIPELINE_TEMPLATES[dto.template] ?? [], selection);
     }
-    return this.resolveStageModels(dto.customStages ?? []);
+    return this.resolveStageModels(dto.customStages ?? [], selection);
   }
 
   private async runAllStages(
@@ -209,7 +234,13 @@ export class PipelineManager {
     };
   }
 
-  private async resolveStageModels(stages: PipelineStage[]): Promise<PipelineStage[]> {
+  private async resolveStageModels(
+    stages: PipelineStage[],
+    selection: AdvancedModelSelectionResolution,
+  ): Promise<PipelineStage[]> {
+    if (selection.modelSelectionMode === 'MANUAL_MODEL') {
+      return stages.map((stage) => ({ ...stage, model: selection.actualModel }));
+    }
     return Promise.all(
       stages.map(async (stage) => ({
         ...stage,
@@ -226,6 +257,47 @@ export class PipelineManager {
       return DEFAULT_PIPELINE_MODEL;
     }
     return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+  }
+
+  private async resolveSelection(
+    dto: PipelineMessageDto,
+  ): Promise<AdvancedModelSelectionResolution> {
+    if (this.advancedModelSelectionService) {
+      return this.advancedModelSelectionService.resolveSelection(
+        {
+          modelSelectionMode: dto.modelSelectionMode,
+          requestedProvider: dto.requestedProvider,
+          requestedModel: dto.requestedModel,
+          requestedDisplayName: dto.requestedDisplayName,
+          selectedModelSource: dto.selectedModelSource,
+        },
+        await this.resolveModel(),
+      );
+    }
+
+    return this.buildAutoSelection({
+      requestedProvider: dto.requestedProvider ?? null,
+      requestedModel: dto.requestedModel ?? null,
+      requestedDisplayName: dto.requestedDisplayName,
+      selectedModelSource: dto.selectedModelSource ?? null,
+    });
+  }
+
+  private async buildAutoSelection(
+    overrides?: Partial<AdvancedModelSelectionResolution>,
+  ): Promise<AdvancedModelSelectionResolution> {
+    const actualModel = overrides?.requestedModel ?? (await this.resolveModel());
+    return {
+      modelSelectionMode: overrides?.requestedModel
+        ? ModelSelectionMode.MANUAL_MODEL
+        : ModelSelectionMode.AUTO,
+      requestedProvider: overrides?.requestedProvider ?? null,
+      requestedModel: overrides?.requestedModel ?? null,
+      requestedDisplayName: overrides?.requestedDisplayName ?? null,
+      selectedModelSource: overrides?.selectedModelSource ?? null,
+      actualProvider: 'local-ollama',
+      actualModel,
+    };
   }
 
   private async resolveThreadId(userId: string, dto: PipelineMessageDto): Promise<string> {
