@@ -1,5 +1,6 @@
 import { CheckCircle, Loader2, Play, X } from 'lucide-react';
 
+import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,12 @@ export function InThreadComparePanel({
   result,
   isPending,
   canSend,
+  judgeEnabled,
+  onJudgeEnabledChange,
+  judgeModel,
+  onJudgeModelChange,
+  judgeModelOptions,
+  judgeModelOptionsLoading,
   t,
 }: InThreadComparePanelProps) {
   return (
@@ -35,6 +42,16 @@ export function InThreadComparePanel({
           selectedModels={selectedModels}
           onToggleModel={onToggleModel}
           selectionError={null}
+          t={t}
+        />
+
+        <CompareJudgeControls
+          judgeEnabled={judgeEnabled}
+          onJudgeEnabledChange={onJudgeEnabledChange}
+          judgeModel={judgeModel}
+          onJudgeModelChange={onJudgeModelChange}
+          judgeModelOptions={judgeModelOptions}
+          judgeModelOptionsLoading={judgeModelOptionsLoading}
           t={t}
         />
 

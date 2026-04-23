@@ -1,12 +1,27 @@
 'use client';
 
-import { CheckCircle, ChevronDown, ChevronUp, Clock, Trophy, XCircle, Zap } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowUpCircle,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Info,
+  MinusCircle,
+  RefreshCw,
+  ShieldCheck,
+  Trophy,
+  XCircle,
+  Zap,
+} from 'lucide-react';
 
+import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { PARALLEL_CONTENT_PREVIEW_LENGTH } from '@/constants';
-import { ParallelModelStatus } from '@/enums';
+import { CompareJudgeState, ParallelModelStatus } from '@/enums';
 import { useParallelResultsGrid } from '@/hooks/chat/use-parallel-results-grid';
 import { MarkdownRenderer } from '@/lib/markdown';
 import type { ParallelResultsGridProps } from '@/types';
@@ -35,6 +50,9 @@ export function ParallelResultsGrid({ messages, t }: ParallelResultsGridProps): 
         const isExpanded = expandedIds.has(r.model);
         const needsTruncation = r.content.length > PARALLEL_CONTENT_PREVIEW_LENGTH;
         const totalTokens = (r.inputTokens ?? 0) + (r.outputTokens ?? 0);
+        const judgeState = r.judgeState ?? CompareJudgeState.NONE;
+        const judgeReview = r.judgeReview;
+        const hasJudgeDetails = judgeReview?.judgeDialogAvailable === true;
 
         return (
           <Card
@@ -87,6 +105,54 @@ export function ParallelResultsGrid({ messages, t }: ParallelResultsGridProps): 
                     {t('compare.tokens')}: {totalTokens.toLocaleString()}
                   </span>
                 ) : null}
+                {judgeState === CompareJudgeState.VERIFIED ? (
+                  <span className="inline-flex items-center gap-1 text-green-600">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    {t('compare.judgeVerified')}
+                  </span>
+                ) : null}
+                {judgeState === CompareJudgeState.REVISED ? (
+                  <span className="inline-flex items-center gap-1 text-amber-600">
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    {t('compare.judgeRevised')}
+                  </span>
+                ) : null}
+                {judgeState === CompareJudgeState.ESCALATED ? (
+                  <span className="inline-flex items-center gap-1 text-blue-600">
+                    <ArrowUpCircle className="h-3.5 w-3.5" />
+                    {t('compare.judgeEscalated')}
+                  </span>
+                ) : null}
+                {judgeState === CompareJudgeState.FAILED ? (
+                  <span className="inline-flex items-center gap-1 text-red-600">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    {t('compare.judgeFailed')}
+                  </span>
+                ) : null}
+                {judgeState === CompareJudgeState.UNAVAILABLE ? (
+                  <span className="inline-flex items-center gap-1 text-orange-600">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    {t('compare.judgeUnavailable')}
+                  </span>
+                ) : null}
+                {judgeState === CompareJudgeState.SKIPPED ? (
+                  <span className="inline-flex items-center gap-1 text-muted-foreground">
+                    <MinusCircle className="h-3.5 w-3.5" />
+                    {t('compare.judgeSkipped')}
+                  </span>
+                ) : null}
+                {judgeState === CompareJudgeState.AWAITING ? (
+                  <span className="inline-flex items-center gap-1 text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" />
+                    {t('compare.judgeAwaiting')}
+                  </span>
+                ) : null}
+                {judgeState === CompareJudgeState.NONE ? (
+                  <span className="inline-flex items-center gap-1 text-muted-foreground">
+                    <Info className="h-3.5 w-3.5" />
+                    {t('compare.noJudge')}
+                  </span>
+                ) : null}
               </div>
             </CardHeader>
 
@@ -106,6 +172,11 @@ export function ParallelResultsGrid({ messages, t }: ParallelResultsGridProps): 
                       {r.content.slice(0, PARALLEL_CONTENT_PREVIEW_LENGTH)}...
                     </p>
                   )}
+                </div>
+              ) : null}
+              {hasJudgeDetails && r.message ? (
+                <div className="mt-4 border-t border-border/60 pt-3">
+                  <JudgeRefereeDetails message={r.message} />
                 </div>
               ) : null}
               {needsTruncation ? (

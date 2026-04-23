@@ -25,6 +25,10 @@ vi.mock('@/components/chat/message-provenance', () => ({
   MessageProvenance: () => <div>provenance</div>,
 }));
 
+vi.mock('@/components/chat/research-run-details', () => ({
+  ResearchRunDetails: () => <div>research-details</div>,
+}));
+
 vi.mock('@/components/chat/routing-transparency', () => ({
   RoutingTransparency: () => <div>routing</div>,
 }));

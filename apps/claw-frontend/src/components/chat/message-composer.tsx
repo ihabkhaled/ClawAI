@@ -21,6 +21,8 @@ export function MessageComposer({
     setSelectedFileIds,
     research,
     setResearch,
+    researchProviders,
+    isResearchProvidersLoading,
     handleSubmit,
     handleKeyDown,
     handleChange,
@@ -35,7 +37,13 @@ export function MessageComposer({
           onChange={setSelectedFileIds}
           disabled={isPending}
         />
-        <ResearchToggle value={research} onChange={setResearch} disabled={isPending} />
+        <ResearchToggle
+          value={research}
+          providers={researchProviders}
+          isProvidersLoading={isResearchProvidersLoading}
+          onChange={setResearch}
+          disabled={isPending}
+        />
       </div>
       <div className="flex min-h-0 flex-1 gap-2">
         <Textarea

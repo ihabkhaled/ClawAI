@@ -14,6 +14,7 @@ import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble
 import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
 import { MessageAttachments } from '@/components/chat/message-attachments';
 import { MessageProvenance } from '@/components/chat/message-provenance';
+import { ResearchRunDetails } from '@/components/chat/research-run-details';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,7 @@ import { MessageFeedback, MessageRole, RoutingMode } from '@/enums';
 import { MarkdownRenderer } from '@/lib/markdown';
 import { cn } from '@/lib/utils';
 import type { MessageBubbleProps } from '@/types';
-import { formatLatency, formatShortDateTime } from '@/utilities';
+import { formatLatency, formatShortDateTime, getJudgeReviewFromMessage } from '@/utilities';
 
 export function MessageBubble({
   message,
@@ -95,8 +96,8 @@ export function MessageBubble({
   const reRouteReasons = Array.isArray(metadata?.['reRouteReasons'])
     ? (metadata['reRouteReasons'] as string[])
     : [];
-  const judgeDecision =
-    typeof metadata?.['judgeDecision'] === 'string' ? metadata['judgeDecision'] : null;
+  const judgeReview = getJudgeReviewFromMessage(message);
+  const judgeDecision = judgeReview?.judgeDecision ?? null;
 
   const handleFeedback = (value: MessageFeedback): void => {
     if (!onFeedback) {
@@ -271,29 +272,8 @@ export function MessageBubble({
             ) : null}
           </div>
         ) : null}
-        {!isUser && judgeDecision ? (
-          <JudgeRefereeDetails
-            criticModel={
-              typeof metadata?.['criticModel'] === 'string' ? metadata['criticModel'] : ''
-            }
-            criticFeedback={
-              Array.isArray(metadata?.['criticFeedback'])
-                ? (metadata['criticFeedback'] as string[])
-                : []
-            }
-            criticScore={
-              typeof metadata?.['criticScore'] === 'number' ? metadata['criticScore'] : 0
-            }
-            judgeModel={typeof metadata?.['judgeModel'] === 'string' ? metadata['judgeModel'] : ''}
-            judgeDecision={judgeDecision}
-            judgeReasoning={
-              typeof metadata?.['judgeReasoning'] === 'string' ? metadata['judgeReasoning'] : ''
-            }
-            judgeConfidence={
-              typeof metadata?.['judgeConfidence'] === 'number' ? metadata['judgeConfidence'] : 0
-            }
-          />
-        ) : null}
+        {!isUser && judgeDecision ? <JudgeRefereeDetails message={message} /> : null}
+        {!isUser ? <ResearchRunDetails message={message} /> : null}
         {!isUser ? <MessageProvenance message={message} /> : null}
         {!isUser && routingDecision ? <RoutingTransparency decision={routingDecision} /> : null}
       </div>
