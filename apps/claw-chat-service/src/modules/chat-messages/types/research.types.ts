@@ -23,6 +23,14 @@ export type ResearchEvidenceBundle = {
   workflow: string;
   requestedModel: string | null;
   requestedProvider: string | null;
+  providerSelection: {
+    providerId: string | null;
+    providerName: string | null;
+    providerKind: string | null;
+    selectionMode: 'explicit' | 'auto';
+    fallbackUsed: boolean;
+    attemptedProviders: string[];
+  };
   helperModels: string[];
   toolsUsed: string[];
   items: ResearchEvidenceItem[];

@@ -1,3 +1,6 @@
+import type { CompareJudgeState } from '../../../common/enums';
+import type { JudgeReviewPayload } from './judge-referee.types';
+
 export type ParallelModelTarget = {
   provider: string;
   model: string;
@@ -12,6 +15,18 @@ export type ParallelModelResponse = {
   outputTokens: number | null;
   status: 'completed' | 'failed' | 'timeout';
   errorMessage: string | null;
+  judgeEnabled?: boolean;
+  judgeModel?: string | null;
+  judgeDisplayName?: string | null;
+  judgeState?: CompareJudgeState;
+  judgeErrorState?: CompareJudgeState | null;
+  judgeDialogAvailable?: boolean;
+  judgeReview?: JudgeReviewPayload | null;
+};
+
+export type ParallelJudgeConfig = {
+  enabled: boolean;
+  model: string | null;
 };
 
 export type ParallelResponse = {
@@ -22,4 +37,6 @@ export type ParallelResponse = {
   totalLatencyMs: number;
   completedCount: number;
   failedCount: number;
+  judgeEnabled: boolean;
+  judgeModel: string | null;
 };
