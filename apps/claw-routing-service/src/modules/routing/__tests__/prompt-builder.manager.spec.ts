@@ -28,6 +28,7 @@ describe('PromptBuilderManager', () => {
         roles: ['LOCAL_FALLBACK_CHAT'],
         capabilities: ['chat'],
         parameterCount: '3B',
+        sizeBytes: 2_400_000_000,
       },
       {
         name: 'coder',
@@ -36,6 +37,7 @@ describe('PromptBuilderManager', () => {
         roles: ['LOCAL_CODING'],
         capabilities: ['code_generation'],
         parameterCount: '7B',
+        sizeBytes: 8_000_000_000,
       },
     ]);
 
@@ -51,6 +53,11 @@ describe('PromptBuilderManager', () => {
     expect(prompt).toContain('LOCAL_FALLBACK_CHAT');
     expect(prompt).toContain('coder:latest');
     expect(prompt).toContain('LOCAL_CODING');
+    expect(prompt).toContain('inferred=general_chat, summarization, drafting');
+    expect(prompt).toContain('size=small');
+    expect(prompt).toContain('size=medium');
+    expect(prompt).toContain('ROUTER TRAINING EXAMPLES');
+    expect(prompt).toContain('Create a PDF brief for this summary');
     expect(prompt).toContain('ROUTING SIGNALS');
     expect(prompt).toContain('OPENAI=1200');
     expect(prompt).toContain('open circuits');

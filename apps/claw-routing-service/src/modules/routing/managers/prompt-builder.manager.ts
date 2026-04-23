@@ -309,15 +309,17 @@ User message: {message}`;
     const intelligenceSection = this.buildModelIntelligenceSection(
       this.filterRouterOnlyModels(models),
     );
+    const examplesSection = this.buildTrainingExamplesSection();
     const signalsSection = this.buildRoutingSignalsSection(routingSignals);
-    return [prompt.trim(), intelligenceSection, signalsSection].join('\n\n');
+    return [prompt.trim(), intelligenceSection, examplesSection, signalsSection].join('\n\n');
   }
 
   private buildModelIntelligenceSection(models: InstalledModelInfo[]): string {
     const lines: string[] = ['MODEL INTELLIGENCE (use this to pick the best execution target):'];
 
     if (models.length === 0) {
-      lines.push('- No local execution models detected.', 
+      lines.push(
+        '- No local execution models detected.',
         '- If no healthy execution model exists, return {"provider":"ERROR","model":"ERROR","confidence":0,"reason":"No execution model available"}.',
       );
       return lines.join('\n');
@@ -328,8 +330,10 @@ User message: {message}`;
       const roles = model.roles.length > 0 ? model.roles : ['LOCAL_FALLBACK_CHAT'];
       const capabilities =
         model.capabilities.length > 0 ? model.capabilities.join(', ') : 'unknown';
+      const inferredCapabilities = this.inferCapabilities(model, roles);
+      const sizeBand = this.classifySizeBand(model.sizeBytes ?? null);
       lines.push(
-        `- ${model.name}:${model.tag} | category=${model.category ?? 'general'} | roles=${roles.join(', ')} | capabilities=${capabilities} | params=${model.parameterCount ?? 'unknown'}`,
+        `- ${model.name}:${model.tag} | category=${model.category ?? 'general'} | roles=${roles.join(', ')} | capabilities=${capabilities} | inferred=${inferredCapabilities.join(', ') || 'none'} | size=${sizeBand} | params=${model.parameterCount ?? 'unknown'}`,
       );
 
       for (const role of roles) {
@@ -347,6 +351,20 @@ User message: {message}`;
     }
 
     return lines.join('\n');
+  }
+
+  private buildTrainingExamplesSection(): string {
+    return [
+      'ROUTER TRAINING EXAMPLES (follow the pattern, do not answer the user):',
+      '- "Write a TypeScript retry service with tests" -> ANTHROPIC / claude-sonnet-4, reason: coding and testing work.',
+      '- "Create a PDF brief for this summary" -> FILE_GENERATION / auto, reason: explicit file output request.',
+      '- "Generate a photorealistic poster of a night market" -> IMAGE_GEMINI / gemini-2.5-flash-image, reason: image generation request.',
+      '- "Review this NDA for risk" -> local-ollama / AUTO, reason: privacy-sensitive legal content must stay local.',
+      '- "Compare these quarterly revenue scenarios and recommend the safest option" -> local-ollama / AUTO or ANTHROPIC / claude-opus-4, reason: executive analysis with risk trade-offs.',
+      '- "Translate this short note into Arabic" -> local-ollama / AUTO, reason: simple language task should stay cheap and private.',
+      '- "Analyze the CSV and summarize outliers" -> GEMINI / gemini-2.5-flash or LOCAL_REASONING if installed, reason: data parsing and structured analysis.',
+      '- Never emit prose in the route response. Only emit JSON.',
+    ].join('\n');
   }
 
   private buildRoutingSignalsSection(routingSignals?: RouterRoutingSignals): string {
@@ -388,5 +406,72 @@ User message: {message}`;
     }
 
     return lines.join('\n');
+  }
+
+  private inferCapabilities(model: InstalledModelInfo, roles: string[]): string[] {
+    const inferred = new Set<string>();
+
+    for (const role of roles) {
+      switch (role) {
+        case 'LOCAL_CODING':
+          inferred.add('code_generation');
+          inferred.add('debugging');
+          inferred.add('refactoring');
+          break;
+        case 'LOCAL_REASONING':
+          inferred.add('reasoning');
+          inferred.add('analysis');
+          inferred.add('math');
+          break;
+        case 'LOCAL_THINKING':
+          inferred.add('research');
+          inferred.add('trade_offs');
+          inferred.add('deep_analysis');
+          break;
+        case 'LOCAL_FILE_GENERATION':
+          inferred.add('document_creation');
+          inferred.add('reports');
+          inferred.add('spreadsheets');
+          break;
+        case 'LOCAL_FALLBACK_CHAT':
+          inferred.add('general_chat');
+          inferred.add('summarization');
+          inferred.add('drafting');
+          break;
+        default:
+          break;
+      }
+    }
+
+    const category = (model.category ?? '').toLowerCase();
+    if (category === 'coding') {
+      inferred.add('code_generation');
+    } else if (category === 'reasoning' || category === 'science' || category === 'engineering') {
+      inferred.add('reasoning');
+    } else if (category === 'business' || category === 'operations') {
+      inferred.add('document_creation');
+    }
+
+    return [...inferred];
+  }
+
+  private classifySizeBand(sizeBytes: number | null): string {
+    if (sizeBytes === null || !Number.isFinite(sizeBytes) || sizeBytes <= 0) {
+      return 'unknown';
+    }
+
+    if (sizeBytes < 1_500_000_000) {
+      return 'tiny';
+    }
+    if (sizeBytes < 6_000_000_000) {
+      return 'small';
+    }
+    if (sizeBytes < 16_000_000_000) {
+      return 'medium';
+    }
+    if (sizeBytes < 40_000_000_000) {
+      return 'large';
+    }
+    return 'huge';
   }
 }

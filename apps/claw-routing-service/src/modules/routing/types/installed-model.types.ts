@@ -5,6 +5,7 @@ export type InstalledModelInfo = {
   roles: string[];
   capabilities: string[];
   parameterCount: string | null;
+  sizeBytes?: number | null;
 };
 
 export type InstalledModelsResponse = {
