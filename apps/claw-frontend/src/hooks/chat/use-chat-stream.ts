@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { API_BASE_URL } from '@/constants';
+import { API_BASE_URL, PROGRESS_EVENT_TYPES  } from '@/constants';
 import { FallbackFailureType, StreamEventType, VisibleProgressStageStatus } from '@/enums';
 import type {
   FallbackAttemptInfo,
@@ -32,7 +32,7 @@ export function useChatStream(threadId: string, isActive: boolean) {
 
   const upsertStage = useCallback((event: StreamEvent, status: VisibleProgressStage['status']) => {
     const actorKey = event.model ?? event.actorName ?? event.provider ?? event.type;
-    const stageId = `${event.type}:${actorKey}`;
+    const stageId = event.stageId ?? `${event.type}:${actorKey}`;
     const nextStage: VisibleProgressStage = {
       id: stageId,
       type: event.type,
@@ -44,6 +44,8 @@ export function useChatStream(threadId: string, isActive: boolean) {
       model: event.model,
       status,
       timestamp: Date.now(),
+      sequence: event.sequence,
+      createdAt: event.createdAt,
     };
 
     setProgressStages((prev) => {
@@ -80,13 +82,8 @@ export function useChatStream(threadId: string, isActive: boolean) {
         try {
           const parsed = JSON.parse(data) as StreamEvent;
 
-          if (
-            parsed.type === StreamEventType.REQUEST_ACCEPTED ||
-            parsed.type === StreamEventType.ROUTER_STARTED ||
-            parsed.type === StreamEventType.PROVIDER_SELECTED ||
-            parsed.type === StreamEventType.RESPONSE_STREAMING
-          ) {
-            upsertStage(parsed, VisibleProgressStageStatus.ACTIVE);
+          if (PROGRESS_EVENT_TYPES.has(parsed.type)) {
+            upsertStage(parsed, parsed.status ?? VisibleProgressStageStatus.ACTIVE);
           }
 
           if (parsed.type === StreamEventType.FALLBACK_ATTEMPT) {

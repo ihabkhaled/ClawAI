@@ -116,8 +116,13 @@ export type MessagesListResponse = {
 };
 
 export type StreamEvent = {
+  eventId?: string;
   threadId: string;
   type: StreamEventType;
+  sequence?: number;
+  stageId?: string;
+  status?: VisibleProgressStageStatus;
+  createdAt?: string;
   content?: string;
   provider?: string;
   model?: string;
@@ -147,6 +152,8 @@ export type VisibleProgressStage = {
   model?: string;
   status: VisibleProgressStageStatus;
   timestamp: number;
+  sequence?: number;
+  createdAt?: string;
 };
 
 export type SseConnection = {

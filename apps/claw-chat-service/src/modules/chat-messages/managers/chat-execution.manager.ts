@@ -116,16 +116,26 @@ export class ChatExecutionManager implements OnModuleInit {
           candidate.provider,
           candidate.model,
         );
-        const response = await this.callProvider(
+        const stopProgressHeartbeat = this.chatStreamService.startResponseProgressHeartbeat(
+          payload.threadId,
           candidate.provider,
           candidate.model,
-          executionContext,
-          startTime,
-          i > 0,
-          threadSettings,
-          payload.routingMode,
-          executionOptions,
         );
+        let response: LlmResponse;
+        try {
+          response = await this.callProvider(
+            candidate.provider,
+            candidate.model,
+            executionContext,
+            startTime,
+            i > 0,
+            threadSettings,
+            payload.routingMode,
+            executionOptions,
+          );
+        } finally {
+          stopProgressHeartbeat();
+        }
 
         let finalProviderResponse = response;
         if (

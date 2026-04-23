@@ -1,6 +1,6 @@
 import { Controller, Logger, MessageEvent, Param, Sse } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
-import { filter, map, Observable } from 'rxjs';
+import { concat, filter, from, map, Observable } from 'rxjs';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { SkipLogging } from '../../../app/decorators/skip-logging.decorator';
 import { type AuthenticatedUser } from '../../../common/types';
@@ -21,8 +21,12 @@ export class ChatStreamController {
   ): Observable<MessageEvent> {
     this.logger.debug(`SSE connection opened for thread ${threadId}`);
 
-    return this.chatStreamService.eventBus.pipe(
+    const replayEvents = from(this.chatStreamService.getRecentEvents(threadId));
+    const liveEvents = this.chatStreamService.eventBus.pipe(
       filter((event) => event.threadId === threadId),
+    );
+
+    return concat(replayEvents, liveEvents).pipe(
       map(
         (event): MessageEvent => ({
           data: JSON.stringify(event),

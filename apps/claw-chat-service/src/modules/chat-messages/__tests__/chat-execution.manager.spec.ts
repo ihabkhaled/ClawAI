@@ -78,6 +78,7 @@ describe('ChatExecutionManager', () => {
       emitRouterStarted: jest.fn(),
       emitProviderSelected: jest.fn(),
       emitResponseStreaming: jest.fn(),
+      startResponseProgressHeartbeat: jest.fn().mockReturnValue(jest.fn()),
       emitFallbackAttempt: jest.fn(),
       emitError: jest.fn(),
     };

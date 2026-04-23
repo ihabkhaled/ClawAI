@@ -1,4 +1,11 @@
-import { AlertTriangle, ArrowRight, RefreshCw, XCircle } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  CircleDot,
+  RefreshCw,
+  XCircle,
+} from 'lucide-react';
 
 import { THINKING_INDICATOR_LABEL } from '@/constants';
 import { FallbackFailureType, VisibleProgressStageStatus } from '@/enums';
@@ -16,7 +23,7 @@ export function ThinkingIndicator({
   currentStageLabel,
 }: ThinkingIndicatorProps) {
   const hasFallbacks = fallbackAttempts && fallbackAttempts.length > 0;
-  const recentStages = progressStages?.slice(-4) ?? [];
+  const recentStages = progressStages?.slice(-6) ?? [];
 
   let statusLabel: string;
   if (judgeEvaluating) {
@@ -75,39 +82,82 @@ export function ThinkingIndicator({
           </div>
         ) : (
           <>
-            <span className="text-xs text-muted-foreground">{statusLabel}</span>
-            {recentStages.length > 0 ? (
-              <div className="flex flex-col gap-1 rounded-lg border border-border/60 bg-background/80 px-3 py-2">
-                {recentStages.map((stage) => (
-                  <div
-                    key={stage.id}
-                    className="flex items-start justify-between gap-3 text-xs text-muted-foreground"
-                  >
-                    <div className="min-w-0">
-                      <div className="font-medium text-foreground">{stage.label}</div>
-                      {stage.description ? (
-                        <div className="truncate text-muted-foreground">{stage.description}</div>
+            <section
+              className="w-full min-w-[18rem] max-w-xl overflow-hidden rounded-2xl border border-sky-500/25 bg-gradient-to-br from-sky-500/10 via-background to-emerald-500/10 shadow-sm"
+              aria-label={`Current AI progress: ${statusLabel}`}
+            >
+              <div className="flex items-center justify-between gap-3 border-b border-border/60 px-3 py-2">
+                <div className="min-w-0">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-700 dark:text-sky-300">
+                    Visible AI progress
+                  </div>
+                  <div className="truncate text-sm font-medium text-foreground">{statusLabel}</div>
+                </div>
+                <div className="flex items-center gap-1.5 rounded-full bg-background/80 px-2 py-1 text-[11px] text-muted-foreground">
+                  <CircleDot className="h-3 w-3 animate-pulse text-sky-500" />
+                  live
+                </div>
+              </div>
+              {recentStages.length > 0 ? (
+                <div className="flex flex-col gap-2 px-3 py-2.5">
+                  {recentStages.map((stage, index) => (
+                    <div
+                      key={stage.id}
+                      className="grid grid-cols-[auto_1fr_auto] items-start gap-2 text-xs"
+                    >
+                      <div
+                        className={cn(
+                          'mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border',
+                          stage.status === VisibleProgressStageStatus.COMPLETED
+                            ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600'
+                            : 'border-sky-500/40 bg-sky-500/10 text-sky-600',
+                        )}
+                      >
+                        {stage.status === VisibleProgressStageStatus.COMPLETED ? (
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        ) : (
+                          <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                          <span className="font-medium text-foreground">{stage.label}</span>
+                          {stage.actorName ? (
+                            <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                              {stage.actorName}
+                            </span>
+                          ) : null}
+                        </div>
+                        {stage.description ? (
+                          <div className="line-clamp-2 text-muted-foreground">
+                            {stage.description}
+                          </div>
+                        ) : null}
+                      </div>
+                      <span
+                        className={cn(
+                          'shrink-0 rounded-md px-1.5 py-0.5 text-[10px] uppercase tracking-wide',
+                          {
+                            'bg-destructive/10 text-destructive':
+                              stage.status === VisibleProgressStageStatus.ERROR,
+                            'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400':
+                              stage.status === VisibleProgressStageStatus.COMPLETED,
+                            'bg-blue-500/10 text-blue-600 dark:text-blue-400':
+                              stage.status === VisibleProgressStageStatus.ACTIVE ||
+                              stage.status === VisibleProgressStageStatus.QUEUED,
+                          },
+                        )}
+                      >
+                        {stage.status}
+                      </span>
+                      {index < recentStages.length - 1 ? (
+                        <div className="ml-2.5 h-2 border-l border-border/80" aria-hidden />
                       ) : null}
                     </div>
-                    <span
-                      className={cn(
-                        'shrink-0 rounded-md px-1.5 py-0.5 text-[10px] uppercase tracking-wide',
-                        {
-                          'bg-destructive/10 text-destructive':
-                            stage.status === VisibleProgressStageStatus.ERROR,
-                          'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400':
-                            stage.status === VisibleProgressStageStatus.COMPLETED,
-                          'bg-blue-500/10 text-blue-600 dark:text-blue-400':
-                            stage.status === VisibleProgressStageStatus.ACTIVE,
-                        },
-                      )}
-                    >
-                      {stage.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : null}
+                  ))}
+                </div>
+              ) : null}
+            </section>
             <div className="rounded-lg bg-muted px-4 py-2.5 text-sm text-foreground">
               <div
                 className="flex items-center gap-1"

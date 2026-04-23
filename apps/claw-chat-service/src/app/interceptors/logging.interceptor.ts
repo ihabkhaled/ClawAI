@@ -47,8 +47,10 @@ export class LoggingInterceptor implements NestInterceptor {
     request.headers['x-request-id'] = requestId;
     request.headers['x-trace-id'] = traceId;
 
-    response.setHeader('x-request-id', requestId);
-    response.setHeader('x-trace-id', traceId);
+    if (!response.headersSent && !(request.url?.includes('/stream/') ?? false)) {
+      response.setHeader('x-request-id', requestId);
+      response.setHeader('x-trace-id', traceId);
+    }
 
     return next.handle().pipe(
       tap(() => {

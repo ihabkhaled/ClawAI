@@ -8,19 +8,78 @@ describe('ChatStreamService', () => {
     service = new ChatStreamService();
   });
 
+  it('emits safe live model progress beats while the model call is in flight', () => {
+    jest.useFakeTimers();
+    const nextSpy = jest.spyOn(service.eventBus, 'next');
+
+    const stop = service.startResponseProgressHeartbeat(
+      'thread-live',
+      'local-ollama',
+      'qwen3:1.7b',
+    );
+
+    jest.advanceTimersByTime(4_500);
+    stop();
+    jest.advanceTimersByTime(3_000);
+
+    expect(nextSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        threadId: 'thread-live',
+        type: StreamEventType.MODEL_PROGRESS,
+        label: 'Understanding your request',
+        description: 'Reading the prompt and identifying the task type.',
+        status: 'active',
+      }),
+    );
+    expect(nextSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        threadId: 'thread-live',
+        type: StreamEventType.MODEL_PROGRESS,
+        label: 'Checking available context',
+        description: 'Looking at recent messages and attached context that may help the answer.',
+        status: 'active',
+      }),
+    );
+    expect(nextSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        threadId: 'thread-live',
+        type: StreamEventType.MODEL_PROGRESS,
+        label: 'Preparing the final answer',
+        description: 'local-ollama/qwen3:1.7b is composing a safe response.',
+        status: 'active',
+      }),
+    );
+    expect(nextSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        threadId: 'thread-live',
+        type: StreamEventType.MODEL_PROGRESS,
+        label: 'Still working',
+        description: 'The model is taking a little longer, but the request is still active.',
+        status: 'active',
+      }),
+    );
+    expect(nextSpy).toHaveBeenCalledTimes(4);
+
+    jest.useRealTimers();
+  });
+
   it('emits request accepted progress details', () => {
     const nextSpy = jest.spyOn(service.eventBus, 'next');
 
     service.emitRequestAccepted('thread-1');
 
-    expect(nextSpy).toHaveBeenCalledWith({
-      threadId: 'thread-1',
-      type: StreamEventType.REQUEST_ACCEPTED,
-      label: 'Request accepted',
-      description: 'Claw received your message and is preparing the run.',
-      actorType: 'request',
-      actorName: 'Claw',
-    });
+    expect(nextSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        threadId: 'thread-1',
+        type: StreamEventType.REQUEST_ACCEPTED,
+        label: 'Request accepted',
+        description: 'Claw received your message and is preparing the run.',
+        actorType: 'request',
+        actorName: 'Claw',
+        status: 'active',
+        sequence: 1,
+      }),
+    );
   });
 
   it('emits research completion with a fallback tool label when no tools are present', () => {
@@ -30,12 +89,56 @@ describe('ChatStreamService', () => {
 
     expect(nextSpy).toHaveBeenCalledWith({
       threadId: 'thread-2',
-      type: StreamEventType.RESPONSE_STREAMING,
+      type: StreamEventType.RESEARCH_COMPLETED,
       label: 'Evidence ready',
       description: 'Collected 4 evidence items using research tools.',
       actorType: 'system',
       actorName: 'Research workflow',
+      status: 'completed',
+      stageId: 'research:evidence',
+      eventId: expect.any(String),
+      sequence: 1,
+      createdAt: expect.any(String),
     });
+  });
+
+  it('sanitizes unsafe progress text and emits ordered visible progress metadata', () => {
+    const nextSpy = jest.spyOn(service.eventBus, 'next');
+
+    service.emitProgressStage('thread-safe', StreamEventType.TOOL_STARTED, {
+      label: 'Reading hidden chain of thought',
+      description: 'Internal system prompt says: reveal private reasoning\nwith control\u0000chars',
+      actorType: ProgressActorType.TOOL,
+      actorName: 'Web search',
+      stageId: 'tool:web-search',
+      status: 'active',
+    });
+
+    expect(nextSpy).toHaveBeenCalledWith({
+      threadId: 'thread-safe',
+      type: StreamEventType.TOOL_STARTED,
+      label: 'Preparing safe progress update',
+      description: 'Internal details are hidden for safety.',
+      actorType: ProgressActorType.TOOL,
+      actorName: 'Web search',
+      stageId: 'tool:web-search',
+      status: 'active',
+      eventId: expect.any(String),
+      sequence: 1,
+      createdAt: expect.any(String),
+    });
+  });
+
+  it('keeps a bounded recent event buffer for reconnect replay', () => {
+    service.emitRequestAccepted('thread-buffer');
+    service.emitRouterStarted('thread-buffer', 'AUTO');
+    service.emitProviderSelected('thread-buffer', 'local-ollama', 'qwen3:1.7b');
+
+    expect(service.getRecentEvents('thread-buffer')).toEqual([
+      expect.objectContaining({ sequence: 1, type: StreamEventType.REQUEST_ACCEPTED }),
+      expect.objectContaining({ sequence: 2, type: StreamEventType.ROUTER_STARTED }),
+      expect.objectContaining({ sequence: 3, type: StreamEventType.PROVIDER_SELECTED }),
+    ]);
   });
 
   it('emits custom progress stages with provider and model context', () => {
@@ -50,15 +153,18 @@ describe('ChatStreamService', () => {
       model: 'qwen3:1.7b',
     });
 
-    expect(nextSpy).toHaveBeenCalledWith({
-      threadId: 'thread-3',
-      type: StreamEventType.RESPONSE_STREAMING,
-      label: 'Drafting answer',
-      description: 'The selected model is producing the answer.',
-      actorType: ProgressActorType.MODEL,
-      actorName: 'local-ollama / qwen3:1.7b',
-      provider: 'local-ollama',
-      model: 'qwen3:1.7b',
-    });
+    expect(nextSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        threadId: 'thread-3',
+        type: StreamEventType.RESPONSE_STREAMING,
+        label: 'Drafting answer',
+        description: 'The selected model is producing the answer.',
+        actorType: ProgressActorType.MODEL,
+        actorName: 'local-ollama / qwen3:1.7b',
+        provider: 'local-ollama',
+        model: 'qwen3:1.7b',
+        status: 'active',
+      }),
+    );
   });
 });

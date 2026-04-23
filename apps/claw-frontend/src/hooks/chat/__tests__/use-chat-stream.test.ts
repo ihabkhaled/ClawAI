@@ -167,4 +167,49 @@ describe('useChatStream', () => {
 
     expect(closeSpy).toHaveBeenCalledTimes(1);
   });
+
+  it('tracks typed tool and research progress events using stable stage ids and statuses', () => {
+    const { result } = renderHook(() => useChatStream('thread-progress', true));
+
+    act(() => {
+      capturedOptions.onMessage(
+        JSON.stringify({
+          threadId: 'thread-progress',
+          type: StreamEventType.RESEARCH_STARTED,
+          stageId: 'research:evidence',
+          status: VisibleProgressStageStatus.ACTIVE,
+          label: 'Gathering evidence',
+          description: 'Searching trusted sources.',
+          actorType: 'tool',
+          actorName: 'Research workflow',
+          sequence: 1,
+          createdAt: '2026-04-23T07:00:00.000Z',
+        }),
+      );
+      capturedOptions.onMessage(
+        JSON.stringify({
+          threadId: 'thread-progress',
+          type: StreamEventType.RESEARCH_COMPLETED,
+          stageId: 'research:evidence',
+          status: VisibleProgressStageStatus.COMPLETED,
+          label: 'Evidence ready',
+          description: 'Collected 6 evidence items.',
+          actorType: 'tool',
+          actorName: 'Research workflow',
+          sequence: 2,
+          createdAt: '2026-04-23T07:00:01.000Z',
+        }),
+      );
+    });
+
+    expect(result.current.currentStageLabel).toBe('Evidence ready');
+    expect(result.current.progressStages).toEqual([
+      expect.objectContaining({
+        id: 'research:evidence',
+        type: StreamEventType.RESEARCH_COMPLETED,
+        status: VisibleProgressStageStatus.COMPLETED,
+        sequence: 2,
+      }),
+    ]);
+  });
 });
