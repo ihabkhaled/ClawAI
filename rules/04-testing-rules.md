@@ -207,6 +207,8 @@ After every feature change, verify existing features still work:
 5. Files: upload, list, delete still work
 6. The specific service area neighboring your change
 
+For routing intelligence, judge-referee, or prompt-builder changes, the regression loop must include two manual rounds: one replay/adaptive-insights round and one live API/SSE round with mixed-intent prompts. Do not sign off on a single sample.
+
 ---
 
 ### T7 — DB Verification (Every Write)

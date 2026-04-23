@@ -10,6 +10,7 @@ The Routing Replay Lab allows users and administrators to re-run historical rout
 - **Regression detection**: Catch routing regressions before they impact users
 - **Confidence tracking**: Monitor average confidence scores over time
 - **Cost optimization**: See if new routing rules reduce cloud API costs
+- **Long-tail tuning**: Replay summaries can feed future routing priors and connector weights
 
 ## User Flow
 
@@ -18,6 +19,8 @@ The Routing Replay Lab allows users and administrators to re-run historical rout
 3. Click "Run Replay"
 4. View summary: total replayed, changed count, unchanged count, avg confidence old vs new
 5. Browse individual results: old route vs new route, improvement score, detected category
+
+Replay output is useful for more than reporting. The summary trends and reason tags are also the raw material for future prompt tuning, so ambiguous prompts get better handling over time.
 
 ## Architecture
 

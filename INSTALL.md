@@ -235,6 +235,11 @@ curl -X POST http://localhost:4001/api/v1/auth/login \
 
 Default RabbitMQ management credentials come from `RABBITMQ_USER` / `RABBITMQ_PASSWORD` in `.env`.
 
+After first login, use the routing replay and intelligence views to confirm the router is learning from telemetry and replay data:
+
+- Replay Lab: `http://localhost:3000/routing/replay`
+- Routing insights: `/api/v1/routing/adaptive-insights`
+
 ---
 
 ## Running Individual Services Locally (Outside Docker)

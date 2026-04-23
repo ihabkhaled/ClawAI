@@ -284,6 +284,15 @@ for f in qa/test-*.sh; do
 done
 ```
 
+## Routing Intelligence QA
+
+For routing, judge, or replay changes, run at least two rounds:
+
+1. Replay round: inspect `GET /api/v1/routing/adaptive-insights`, compare recent replay trends, and verify the long-tail priors look sane.
+2. Live round: send mixed-intent prompts across coding, business, privacy, image, file, and general chat, then confirm the SSE stream shows visible thinking progress before the final answer.
+
+Keep the matrix broad enough to catch false positives, weak fallback behavior, and missing visibility during generation.
+
 ---
 
 ## UI Test Checklist (manual)

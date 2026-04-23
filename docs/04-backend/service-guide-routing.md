@@ -63,7 +63,7 @@ AUTO mode is the most complex. It follows a 6-stage pipeline where each stage ca
 3. **File generation detection** -- 7 exact phrases + 9 verbs x 18 format words = 162 combinations
 4. **Multimodal capability routing** _(SAR 2.0)_ -- detects audio/video/PDF/OCR/web-search/vision keywords; routes to best healthy cloud provider per capability priority (GEMINI first for most modalities); runs BEFORE category detection to prevent multimodal messages from incorrectly matching local categories
 5. **Category detection** -- 1650+ keywords across 33 capability classes; maps to LocalModelRole and finds installed model
-6. **Ollama router call** -- `PromptBuilderManager` builds dynamic prompt with installed models; sends to router model (default: gemma3:4b) with temperature 0 and Zod-validated JSON response
+6. **Ollama router call** -- `PromptBuilderManager` builds dynamic prompt with installed models, adaptive insights, and learned priors; sends to router model (default: gemma3:4b) with temperature 0 and Zod-validated JSON response
 7. **Heuristic fallback** -- if Ollama fails or returns an invalid response, falls back to cloud priority order or local
 
 ## Dynamic Prompt Builder
@@ -148,7 +148,7 @@ CLOUD_MODEL_GEMINI_DEFAULT = 'gemini-2.5-flash'
 
 - **RoutingManager** -- orchestrates the full routing decision pipeline
 - **OllamaRouterManager** -- calls Ollama with the router prompt and parses the response
-- **PromptBuilderManager** -- builds dynamic router prompts based on installed models
+- **PromptBuilderManager** -- builds dynamic router prompts based on installed models, telemetry, and replay-derived priors
 - **ReplayManager** -- re-runs historical routing decisions against the current router for comparison
 
 ---
@@ -241,16 +241,18 @@ The `RoutingManager` class exposes 15 detection methods. Each takes a `message: 
 
 ## PromptBuilderManager Dynamic Prompt System
 
-The `PromptBuilderManager` generates router prompts dynamically based on which models are actually installed and healthy.
+The `PromptBuilderManager` generates router prompts dynamically based on which models are actually installed and healthy, plus recent telemetry and replay-derived priors.
 
 ### How It Works
 
 1. **Fetch models**: Calls `GET /api/v1/internal/ollama/installed-models` on the ollama-service (5s timeout)
-2. **Group by category**: Models are grouped by their `category` field (CODING, REASONING, THINKING, etc.)
-3. **Build local section**: Generates a formatted list of local models with roles and parameter counts
-4. **Merge with template**: Combines the dynamic local section with the static cloud models and routing rules
-5. **Cache**: The generated prompt is cached for 5 minutes (`PROMPT_CACHE_TTL_MS`)
-6. **Apply variables**: `{healthyProviders}` placeholder is replaced with the current healthy provider list
+2. **Fetch adaptive insights**: Loads recent routing telemetry and replay-derived priors
+3. **Group by category**: Models are grouped by their `category` field (CODING, REASONING, THINKING, etc.)
+4. **Build local section**: Generates a formatted list of local models with roles and parameter counts
+5. **Compute priors**: Adds connector-level weights from fallback rate, average confidence, and health state
+6. **Merge with template**: Combines the dynamic local section with the static cloud models and routing rules
+7. **Cache**: The generated prompt is cached for 5 minutes (`PROMPT_CACHE_TTL_MS`)
+8. **Apply variables**: `{healthyProviders}` placeholder is replaced with the current healthy provider list
 
 ### Cache Invalidation
 
@@ -345,6 +347,8 @@ The Replay Lab allows admins to re-run historical routing decisions against the 
 2. **Re-route each message** -- feed the original message content through the current routing pipeline (same `handleAuto()` / mode-specific flow)
 3. **Compare results** -- for each decision, produce an old-vs-new comparison with fields: `originalProvider`, `originalModel`, `newProvider`, `newModel`, `changed` (boolean), `improvementScore`
 4. **Compute summary** -- total replayed, changed count, improvement score distribution
+
+The replay summary is also a tuning input. It can inform future learned priors so the next router prompt reflects what actually worked on previous long-tail decisions.
 
 ### Improvement Scoring
 

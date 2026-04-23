@@ -106,6 +106,7 @@
 | Service + DB | CRUD operations with mocked Prisma                         |
 | Service + MQ | Event publishing with mocked RabbitMQ                      |
 | Managers     | Multi-service orchestration with mocked dependencies        |
+| Routing QA   | Replay-based regression round, adaptive-insights check, and live SSE smoke for long-tail prompts |
 
 ### E2E Tests
 
@@ -116,6 +117,15 @@
 | Connector               | Create connector, test connection, sync models     |
 | File upload             | Upload file, verify ingestion, attach to chat      |
 | Memory                  | Create memory, verify it appears in context        |
+
+### Routing Intelligence Validation
+
+For routing, judge-referee, or prompt-builder changes, validate in two rounds:
+
+1. Replay recent routing decisions and compare the summary against the prior run.
+2. Run a live API/SSE matrix with mixed intents, including coding, business, privacy, image, and file prompts.
+
+Use both rounds to confirm the router is visible during thinking, the final answer still renders, and no regressions show up in the adaptive-insights output.
 
 ---
 

@@ -55,6 +55,8 @@ When to use rebuild vs restart:
 - **Restart only**: `.env` value changed, docker-compose config changed
 - **Full rebuild**: `src/` code changes that hot-reload missed, `package.json` deps changed, shared package changed, Prisma schema changed
 
+Prompt-plan or docs-only edits under `plan-prompts/` do not require a Docker action at all.
+
 ---
 
 ## Shared Package Rebuild (Cascading Rebuild)

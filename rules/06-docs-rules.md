@@ -12,7 +12,7 @@
 | New frontend page       | Update `docs/05-frontend/` relevant section                       |
 | New API endpoint        | `docs/12-reference/api-reference.md`                              |
 | New RabbitMQ event      | `docs/03-architecture/event-bus.md`                               |
-| New routing behavior    | `docs/03-architecture/routing.md`                                 |
+| New routing behavior    | `docs/03-architecture/routing-engine.md` and the related business spec |
 | New env variable        | `docs/06-data/environment-variables.md`                           |
 | New Docker change       | `docs/08-runtime-devops/docker-guide.md`                          |
 | New Nginx route         | `docs/08-runtime-devops/docker-guide.md` or nginx-specific doc    |

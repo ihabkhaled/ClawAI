@@ -107,6 +107,8 @@ These docs now reflect the latest additions to the active platform surface:
 - `claw-workspace-service` for workspace connectors, OAuth, sync, search, and action approvals
 - `claw-agent-service` for local agent sessions, command approvals, repos, and file events
 - advanced chat orchestration endpoints including `parallel`, `consensus`, `escalation-chain`, `repair`, `decompose`, `best-of-n`, `cost-ensemble`, `verify`, `role-pack`, and `pipeline`
+- routing replay and judge/referee flows for continuous quality tuning
+- adaptive routing priors derived from telemetry and replay data
 - expanded runtime topology with 11 PostgreSQL databases and the full 33-container dev stack
 
 ---

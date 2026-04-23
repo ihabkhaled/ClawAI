@@ -28,6 +28,8 @@ A generator-critic-judge pipeline that adds AI-powered quality verification to r
    - **ESCALATE**: Skip to next candidate in fallback chain (better model)
 7. Metadata stored: critic model, feedback, score, judge decision, reasoning, confidence
 
+The critic and judge prompts are kept intentionally small and category-specific. Compliance-oriented cases use rewrite examples, and operator-facing responses can include executive-summary examples so the judge stays stable on long-tail content.
+
 ## Activation
 
 | Trigger           | Mechanism                                                                        |

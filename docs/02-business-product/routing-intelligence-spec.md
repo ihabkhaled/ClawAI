@@ -12,10 +12,10 @@ ClawAI's routing engine automatically selects the optimal AI provider and model 
 
 The intelligent routing mode. A local Ollama model analyzes the user's message and selects the best provider/model combination.
 
-- **How it works**: The routing service sends the user's message to a local Ollama model (default: gemma3:4b) with a structured prompt listing all available providers and models. The model returns a JSON response with provider, model, confidence, and reason.
+- **How it works**: The routing service sends the user's message to a local Ollama model (default: gemma3:4b) with a structured prompt listing all available providers and models. The prompt also includes learned priors from routing telemetry, replay summaries, and connector health so the router can improve on long-tail cases. The model returns a JSON response with provider, model, confidence, and reason.
 - **Timeout**: 10 seconds (configurable via `OLLAMA_ROUTER_TIMEOUT_MS`)
 - **Fallback**: If Ollama times out or returns invalid output, deterministic heuristic rules are applied
-- **Dynamic prompt**: The router prompt is built dynamically based on installed models, cached for 5 minutes
+- **Dynamic prompt**: The router prompt is built dynamically based on installed models and adaptive insights, cached for 5 minutes
 
 ```mermaid
 flowchart TD
@@ -309,6 +309,8 @@ ClawAI's routing engine is a key differentiator. Unlike single-provider AI platf
 
 5. **Full transparency**: Every routing decision is recorded and shown to users with confidence scores, reason tags, and fallback indicators. Users can override any decision via MANUAL_MODEL.
 
+6. **Continuous tuning**: Replay history and routing telemetry feed learned priors back into the prompt builder so long-tail prompts get better over time without weakening deterministic rules.
+
 ---
 
 ## Business Rules Catalog (20 Rules)
@@ -328,8 +330,8 @@ These are the business rules enforced by the routing engine:
 | 9 | Every routing decision is persisted | RoutingDecision record created for every message |
 | 10 | Unhealthy providers are skipped | Connector health checked before selection |
 | 11 | Fallback chain always terminates at local | Local Ollama is the last resort in every chain |
-| 12 | Dynamic prompts reflect installed models | PromptBuilderManager rebuilds prompt when models change |
-| 13 | Prompt cache invalidated on model changes | MODEL_PULLED and MODEL_DELETED events clear cache |
+| 12 | Dynamic prompts reflect installed models and adaptive insights | PromptBuilderManager rebuilds prompt when models or priors change |
+| 13 | Prompt cache invalidated on model changes | MODEL_PULLED and MODEL_DELETED events clear cache; telemetry refresh updates priors on next build |
 | 14 | Router timeout prevents blocking | 10s timeout on Ollama router, configurable |
 | 15 | Zod validates router output | Invalid JSON from router triggers heuristic fallback |
 | 16 | Category detection runs before Ollama router | Avoids unnecessary LLM call for clear categories |

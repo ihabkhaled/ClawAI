@@ -91,6 +91,8 @@ If any of these stages match, the Ollama router is never called, saving 1-10 sec
 
 When no keyword match is found, the routing service sends a dynamically-built prompt to the Ollama router model. The prompt is constructed by `PromptBuilderManager` and includes only currently installed and healthy models.
 
+The prompt builder also adds learned routing priors from recent telemetry, connector-level weights, and replay summaries. That keeps the router honest on long-tail prompts without replacing the deterministic category and privacy gates.
+
 ### Zod Validation Schema
 
 The router's response is validated against a strict Zod schema:

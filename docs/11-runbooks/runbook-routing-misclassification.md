@@ -54,7 +54,16 @@ The router prompt is built dynamically from installed models:
 docker compose -f docker-compose.dev.yml logs --tail=50 routing-service | grep -i "prompt\|installed\|model"
 ```
 
-### 5. Check Installed Models and Roles
+### 5. Check Adaptive Insights
+
+If the issue is repeating on ambiguous prompts, inspect recent routing telemetry and replay-derived priors:
+
+```bash
+curl -s "http://localhost:4000/api/v1/routing/adaptive-insights?windowDays=30" \
+  -H "Authorization: Bearer $TOKEN" | jq .
+```
+
+### 6. Check Installed Models and Roles
 
 ```bash
 # List installed models and their roles
@@ -159,6 +168,7 @@ After modifying keywords or routing logic:
    - General messages route to default models
    - Privacy-sensitive messages stay local
 4. Check for false positives by sending ambiguous messages
+5. Run one replay round against recent decisions and one live API round with mixed-intent prompts so the long-tail cases are covered twice.
 
 ## Prevention
 
