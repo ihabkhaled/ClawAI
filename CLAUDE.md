@@ -35,6 +35,7 @@ apps/
   claw-file-generation-service/ # Port 4013, PG claw_file_generations — file export (PDF/DOCX/CSV/HTML/MD/TXT/JSON)
   claw-agent-service/           # Port 4015, PG claw_agent — desktop agent sessions, terminal command approval, repo tracking, file events
   claw-research-service/        # Port 4016, PG claw_research — dynamic search/fetch/scrape/clone + evidence orchestration (Tavily, SearXNG, Ollama Web)
+  claw-workspace-service/       # Port 4017, PG claw_workspace — workspace connectors (GitHub, GitLab, Jira, Slack, Drive, OneDrive, SharePoint, Confluence, Figma, Gmail, Bitbucket, ClickUp), OAuth2/PKCE, webhook, sync, search
 packages/
   shared-types/      # 18 enums, event payloads, auth types
   shared-constants/  # Exchange name, ports, API prefix, pagination defaults
@@ -737,14 +738,33 @@ login, dashboard, chat, chat/[threadId], chat/compare, connectors, connectors/[i
 
 ---
 
+## Rules and Skills Folders (MANDATORY for all AI agents)
+
+This project has two authoritative folders every AI agent MUST read before acting:
+
+- **`rules/`** — Strict non-negotiable rules: planning gate, backend/frontend architecture, testing mandate, infra checklist, docs requirements, commit format, security. Read the relevant rule file for your task domain.
+- **`skills/`** — God-mode operational runbooks: codebase navigation, service scaffolding, feature scaffolding, debug toolkit, QA automation, Docker operations, database toolkit, event bus toolkit.
+
+**Reading order for every task:**
+
+1. `rules/00-master-rules.md`
+2. Root `CLAUDE.md` (this file)
+3. Service-specific `CLAUDE.md`
+4. The relevant `rules/` file for the task type
+5. The relevant `skills/` file for the operation type
+
+---
+
 ## MANDATORY: Read Before Acting
 
 **Before making ANY change to the codebase — even a one-line fix — you MUST first:**
 
-1. Read this root `CLAUDE.md` — architecture rules, code standards, mandatory checklist
-2. Read the service-specific `CLAUDE.md` for whichever service is being modified (e.g., `apps/claw-chat-service/CLAUDE.md`)
-3. Understand ESLint rules — no inline types, extraction rules, file-specific restrictions
-4. Read relevant docs in `docs/` if touching cross-service flows, events, or architecture
+1. Read `rules/00-master-rules.md`
+2. Read this root `CLAUDE.md` — architecture rules, code standards, mandatory checklist
+3. Read the service-specific `CLAUDE.md` for whichever service is being modified
+4. Read the relevant `rules/` file for your task domain
+5. Understand ESLint rules — no inline types, extraction rules, file-specific restrictions
+6. Read relevant docs in `docs/` if touching cross-service flows, events, or architecture
 
 **This is not optional. This is the first step of every task. No exceptions.**
 
@@ -752,32 +772,58 @@ login, dashboard, chat, chat/[threadId], chat/compare, connectors, connectors/[i
 
 Before writing any code, confirm:
 
+- [ ] `rules/00-master-rules.md` read
 - [ ] Root CLAUDE.md read (this file)
 - [ ] Service-specific CLAUDE.md read for each affected service
+- [ ] Relevant `rules/` file read for task domain
 - [ ] docs/16-quality-engineering/PLANNING_STANDARD.md consulted
 - [ ] docs/16-quality-engineering/DOCS_ENV_DOCKER_NGINX_CI_CHECKLIST.md checked
 - [ ] Existing related code read (never modify code you haven't read)
 - [ ] Test file structure understood for affected services
 - [ ] Current Prisma schema read if DB changes needed
 - [ ] Current nginx.conf read if new endpoints added
+- [ ] Planning gate (Phase 0) document written and saved
 
 ## Mandatory Post-Implementation Checklist
 
 After completing any implementation, confirm ALL are done:
 
+**Automated Quality Gates:**
+
 - [ ] npm run typecheck → 0 errors in all affected workspaces
 - [ ] npm run lint → 0 errors in all affected workspaces
-- [ ] npm run test → all tests pass
+- [ ] npm run test → all tests pass (≥95% coverage on new code)
 - [ ] npm run build → production build succeeds
+
+**Code Quality:**
+
 - [ ] All new pages have: loading state, empty state, error state, success state
 - [ ] All form controls use shadcn/ui (no raw select/input/textarea)
 - [ ] All page functions have explicit React.ReactElement return type
 - [ ] All new text has i18n keys in all 8 locale files
 - [ ] All fire-and-forget managers have storeErrorMessage in nested try-catch
 - [ ] All poll hooks detect meta?.error === true to stop polling
-- [ ] All 18 mandatory checklist items verified
+- [ ] No inline types/enums/consts in restricted files
+- [ ] No `any` types introduced
+
+**MANDATORY MANUAL TESTING (see rules/04-testing-rules.md):**
+
+- [ ] QA script written: `qa/test-<feature>.sh`
+- [ ] QA script run with 0 failures (20-25 API variations per endpoint)
+- [ ] DTO fuzz tests written and passing (boundary/null/empty/overflow cases)
+- [ ] DB writes verified via `docker exec ... psql -tAc "SELECT COUNT(*) ..."`
+- [ ] Docker logs checked: 0 UnhandledPromiseRejection, 0 FATAL
+- [ ] UI tested in real browser: loading / empty / error / success states all verified
+- [ ] Dark mode tested (no invisible text, no white flashes)
+- [ ] Arabic RTL tested (layout mirrors correctly)
+- [ ] Mobile viewport tested (375×812, no overflow)
+- [ ] QA evidence documented in `.claude/Integrations/<feature>__QA_output.md`
+
+**Delivery:**
+
+- [ ] All 18 mandatory infra checklist items verified
+- [ ] Documentation created or updated (docs/, CLAUDE.md, rules/, skills/)
 - [ ] Git commit with conventional commit format
-- [ ] Git push to origin/main
 
 ## Docker Container Rebuild Procedure
 

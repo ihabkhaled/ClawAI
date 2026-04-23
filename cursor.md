@@ -6,9 +6,40 @@ This file is the authoritative guide for **Cursor** (and any other IDE-integrate
 
 If you are Cursor, read this file BEFORE making any change. Also read the root `CLAUDE.md` — the rules there apply to every AI agent equally. Differences between the two files are tooling-specific only; the engineering standards, mindsets, and constraints are identical.
 
+## Rules and Skills Folders (Read First)
+
+Before making any change, read:
+
+1. `rules/00-master-rules.md` — The 5 absolute blockers. "Done" definition. Non-negotiable constraints.
+2. The relevant rule file for your task:
+   - `rules/01-planning-rules.md` for planning/architecture decisions
+   - `rules/02-backend-rules.md` for NestJS service changes
+   - `rules/03-frontend-rules.md` for Next.js/React changes
+   - **`rules/04-testing-rules.md`** for testing requirements — READ THIS before every PR
+   - `rules/05-infra-rules.md` for Docker/Nginx/CI/env changes
+   - `rules/06-docs-rules.md` for documentation requirements
+3. The relevant skill file for your operation:
+   - `skills/04-debug-toolkit.md` when diagnosing an issue
+   - `skills/05-qa-toolkit.md` when writing tests or QA evidence
+   - `skills/06-docker-toolkit.md` for container operations
+   - `skills/01-codebase-navigation.md` when exploring unfamiliar code
+
+## Hard Testing Mandate (from rules/04-testing-rules.md)
+
+These are DELIVERY BLOCKERS — a PR without them is rejected:
+
+1. **Unit tests written BEFORE implementation** (TDD) — failing tests first
+2. **QA script** in `qa/test-<feature>.sh` with **20-25 API variations** per endpoint (happy + 401 + 403 + 404 + 400 + boundary + null + overflow)
+3. **DTO fuzz tests** — every new Zod schema tested for all invalid inputs
+4. **DB verification** — `docker exec ... psql -tAc "SELECT COUNT(*) ..."` after every write test
+5. **Docker log check** — 0 UnhandledPromiseRejection, 0 FATAL at end of QA
+6. **UI manual testing** — real browser: loading / empty / error / success states
+7. **Coverage ≥ 95%** on all new code
+8. **QA evidence** documented in `.claude/Integrations/<feature>__QA_output.md`
+
 ## Mandatory rule
 
-**Follow `CLAUDE.md` exactly.** That file defines:
+**Follow `CLAUDE.md` and `rules/` exactly.** `CLAUDE.md` defines:
 
 - Architecture (14 NestJS microservices + Next.js + Ollama + 9 PostgreSQL + MongoDB + Redis + RabbitMQ)
 - Layer boundaries (Controller → Service → Repository → Manager)

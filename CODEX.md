@@ -1,5 +1,35 @@
 # ClawAI — Complete Project Reference
 
+## Rules and Skills Folders (MANDATORY)
+
+Every AI agent (Claude, Codex, Cursor, or any other) working on this codebase MUST read these folders before acting:
+
+- **`rules/`** — Non-negotiable strict rules for every task type:
+  - `rules/00-master-rules.md` — Start here. The 5 absolute blockers. "Done" definition.
+  - `rules/01-planning-rules.md` — Phase 0–0g planning gate (mandatory before coding)
+  - `rules/02-backend-rules.md` — NestJS: controllers, services, managers, repos, DTOs
+  - `rules/03-frontend-rules.md` — Next.js: pages, hooks, components, state, i18n
+  - `rules/04-testing-rules.md` — **Hard testing mandate**: TDD, 20-25× API tests, UI per component, QA scripts, ≥95% coverage
+  - `rules/05-infra-rules.md` — Docker 7-compose rule, Nginx, CI, env vars, shared packages
+  - `rules/06-docs-rules.md` — When and what to document
+  - `rules/07-commit-rules.md` — Conventional commits, PR format
+  - `rules/08-security-rules.md` — Auth, secrets, input validation, OWASP
+
+- **`skills/`** — Operational runbooks for common tasks:
+  - `skills/00-index.md` — Master index with quick-reference card
+  - `skills/01-codebase-navigation.md` — Trace any feature end-to-end
+  - `skills/02-service-scaffold.md` — Add a new NestJS service (all 12 steps)
+  - `skills/03-feature-scaffold.md` — Add backend + frontend feature
+  - `skills/04-debug-toolkit.md` — Docker logs, DB queries, API testing, common errors
+  - `skills/05-qa-toolkit.md` — QA script template, DTO fuzz template, evidence format
+  - `skills/06-docker-toolkit.md` — Container management, rebuild procedure, networking
+  - `skills/07-database-toolkit.md` — Prisma migrations, DB queries, seed scripts
+  - `skills/08-event-bus-toolkit.md` — Event publishing, consuming, RabbitMQ inspection
+
+**Reading order**: `rules/00-master-rules.md` → Root CLAUDE.md → This file → Service CLAUDE.md → Relevant rules/ file
+
+---
+
 ## What This Is
 
 Local-first AI orchestration platform. 13 NestJS microservices + Next.js frontend + 9 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama. Monorepo with npm workspaces.
