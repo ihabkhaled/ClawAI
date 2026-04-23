@@ -548,6 +548,10 @@ export class ReplayManager {
       `Run ID: ${runId}\n` +
       `Run Name: ${runName ?? 'unnamed'}\n` +
       `Suspicious Cases: ${String(cases.length)}\n\n` +
+      `### Reference Examples\n\n` +
+      `- Compliance rewrite: if the case rewrites HIPAA, GDPR, NDA, or policy text, judge whether facts, obligations, and risk language were preserved before judging style.\n` +
+      `- Complex compliance comparison: if the case compares frameworks or obligations, judge omissions, overconfident claims, and missing caveats as regressions.\n` +
+      `- Executive rewrite: if the case compresses a board memo or incident update, judge factual fidelity first and concision second.\n\n` +
       `### Cases\n\n${casesSummary}\n\n` +
       `### Required Output — Return EXACTLY 3 sections\n\n` +
       `**1. DIAGNOSIS**\n` +

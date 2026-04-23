@@ -72,4 +72,56 @@ describe('PromptBuilderManager', () => {
     expect(prompt).toContain('No local execution models detected');
     expect(prompt).toContain('No execution model available');
   });
+
+  it('adds learned routing priors from recent decisions', async () => {
+    const adaptiveInsights = {
+      windowDays: 30,
+      totalDecisions: 12,
+      avgConfidence: 0.81,
+      topReasonTags: ['auto', 'category_detected', 'privacy_enforced'],
+      providerInsights: [
+        {
+          provider: 'ANTHROPIC',
+          totalDecisions: 5,
+          fallbackCount: 1,
+          fallbackRate: 0.2,
+          avgConfidence: 0.88,
+          topModes: ['AUTO', 'HIGH_REASONING'],
+        },
+        {
+          provider: 'local-ollama',
+          totalDecisions: 7,
+          fallbackCount: 0,
+          fallbackRate: 0,
+          avgConfidence: 0.79,
+          topModes: ['AUTO', 'LOCAL_ONLY'],
+        },
+      ],
+      modeInsights: [
+        { routingMode: 'AUTO', count: 9, percentage: 0.75, avgConfidence: 0.82 },
+        { routingMode: 'LOCAL_ONLY', count: 3, percentage: 0.25, avgConfidence: 0.78 },
+      ],
+    };
+
+    const adaptiveLearningManager = {
+      computeInsights: jest.fn().mockResolvedValue(adaptiveInsights),
+    };
+
+    const managerWithInsights = new PromptBuilderManager(adaptiveLearningManager as never);
+
+    jest.spyOn(managerWithInsights, 'fetchInstalledModels').mockResolvedValue([]);
+
+    const prompt = await managerWithInsights.buildRouterPrompt(['OPENAI']);
+
+    expect(prompt).toContain('LEARNED ROUTING PRIORS');
+    expect(prompt).toContain('weight=0.70');
+    expect(prompt).toContain('fallbackRate=0.20');
+    expect(prompt).toContain('avgConfidence=0.88');
+    expect(prompt).toContain('AUTO: 9');
+    expect(prompt).toContain('topTags=auto, category_detected, privacy_enforced');
+    expect(prompt).toContain('CONNECTOR PRIORS');
+    expect(prompt).toContain('ANTHROPIC: status=unhealthy');
+    expect(prompt).toContain('OPENAI: status=healthy');
+    expect(adaptiveLearningManager.computeInsights).toHaveBeenCalledWith(30);
+  });
 });

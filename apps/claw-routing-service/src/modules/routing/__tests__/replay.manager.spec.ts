@@ -424,6 +424,9 @@ describe('ReplayManager', () => {
       expect(bundle.claudePrompt).toContain('DIAGNOSIS');
       expect(bundle.claudePrompt).toContain('CODE / POLICY CHANGES');
       expect(bundle.claudePrompt).toContain('REGRESSION TESTS');
+      expect(bundle.claudePrompt).toContain('Reference Examples');
+      expect(bundle.claudePrompt).toContain('Compliance rewrite');
+      expect(bundle.claudePrompt).toContain('Executive rewrite');
     });
 
     it('should include all cases in the claudePrompt', async () => {

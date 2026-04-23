@@ -1,3 +1,5 @@
+import type { AdaptiveLearningInsights } from './adaptive-learning.types';
+
 export type InstalledModelInfo = {
   name: string;
   tag: string;
@@ -22,4 +24,10 @@ export type RouterRoutingSignals = {
   providerCircuitOpenUntil?: Record<string, number>;
   localDegradeLatencyMs?: number;
   latencyPenaltyStepMs?: number;
+};
+
+export type CachedInsightsData = {
+  insights: AdaptiveLearningInsights;
+  generatedAt: number;
+  ttlMs: number;
 };

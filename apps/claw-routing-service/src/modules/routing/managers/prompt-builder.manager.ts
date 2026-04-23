@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities';
 import { PROMPT_CACHE_TTL_MS, ROUTER_PROMPT_TEMPLATE } from '../constants/routing.constants';
+import { AdaptiveLearningManager } from './adaptive-learning.manager';
+import type { AdaptiveLearningInsights } from '../types/adaptive-learning.types';
 import type {
+  CachedInsightsData,
   CachedPromptData,
   InstalledModelInfo,
   InstalledModelsResponse,
@@ -14,6 +17,9 @@ export class PromptBuilderManager {
   private readonly logger = new Logger(PromptBuilderManager.name);
   private cachedPrompt: CachedPromptData | null = null;
   private cachedModels: InstalledModelInfo[] | null = null;
+  private cachedInsights: CachedInsightsData | null = null;
+
+  constructor(private readonly adaptiveLearningManager?: AdaptiveLearningManager) {}
 
   async buildRouterPrompt(
     healthyProviders: string[],
@@ -21,12 +27,21 @@ export class PromptBuilderManager {
   ): Promise<string> {
     this.logger.debug('buildRouterPrompt: generating dynamic prompt');
     const models = await this.getInstalledModels();
+    const insights = await this.getAdaptiveInsights();
+    const priorsSection = this.buildLearnedRoutingPriorsSection(insights);
+    const connectorPriorsSection = this.buildConnectorPriorsSection(
+      healthyProviders,
+      routingSignals,
+      insights,
+    );
 
     if (models.length === 0) {
       this.logger.debug('buildRouterPrompt: no installed models - using static template');
       return this.appendRoutingContext(
         this.applyTemplateVariables(ROUTER_PROMPT_TEMPLATE, healthyProviders),
         models,
+        priorsSection,
+        connectorPriorsSection,
         routingSignals,
       );
     }
@@ -37,6 +52,8 @@ export class PromptBuilderManager {
       return this.appendRoutingContext(
         this.applyTemplateVariables(cached, healthyProviders),
         models,
+        priorsSection,
+        connectorPriorsSection,
         routingSignals,
       );
     }
@@ -46,6 +63,8 @@ export class PromptBuilderManager {
     return this.appendRoutingContext(
       this.applyTemplateVariables(dynamicPrompt, healthyProviders),
       models,
+      priorsSection,
+      connectorPriorsSection,
       routingSignals,
     );
   }
@@ -80,6 +99,7 @@ export class PromptBuilderManager {
     this.logger.log('invalidateCache: clearing prompt and model caches');
     this.cachedPrompt = null;
     this.cachedModels = null;
+    this.cachedInsights = null;
   }
 
   async getInstalledModels(): Promise<InstalledModelInfo[]> {
@@ -304,6 +324,8 @@ User message: {message}`;
   private appendRoutingContext(
     prompt: string,
     models: InstalledModelInfo[],
+    priorsSection: string,
+    connectorPriorsSection: string,
     routingSignals?: RouterRoutingSignals,
   ): string {
     const intelligenceSection = this.buildModelIntelligenceSection(
@@ -311,7 +333,14 @@ User message: {message}`;
     );
     const examplesSection = this.buildTrainingExamplesSection();
     const signalsSection = this.buildRoutingSignalsSection(routingSignals);
-    return [prompt.trim(), intelligenceSection, examplesSection, signalsSection].join('\n\n');
+    return [
+      prompt.trim(),
+      intelligenceSection,
+      examplesSection,
+      priorsSection,
+      connectorPriorsSection,
+      signalsSection,
+    ].join('\n\n');
   }
 
   private buildModelIntelligenceSection(models: InstalledModelInfo[]): string {
@@ -360,11 +389,137 @@ User message: {message}`;
       '- "Create a PDF brief for this summary" -> FILE_GENERATION / auto, reason: explicit file output request.',
       '- "Generate a photorealistic poster of a night market" -> IMAGE_GEMINI / gemini-2.5-flash-image, reason: image generation request.',
       '- "Review this NDA for risk" -> local-ollama / AUTO, reason: privacy-sensitive legal content must stay local.',
+      '- "Rewrite this HIPAA policy for employees in plain English" -> local-ollama / AUTO, reason: compliance-sensitive rewrite must stay private and factual.',
       '- "Compare these quarterly revenue scenarios and recommend the safest option" -> local-ollama / AUTO or ANTHROPIC / claude-opus-4, reason: executive analysis with risk trade-offs.',
+      '- "Draft a concise sales follow-up email from these notes" -> OPENAI / gpt-4o-mini or local-ollama / AUTO, reason: short commercial writing should stay lightweight.',
       '- "Translate this short note into Arabic" -> local-ollama / AUTO, reason: simple language task should stay cheap and private.',
+      '- "Turn this incident summary into a board-ready update" -> local-ollama / AUTO, reason: executive rewrite should preserve facts before polishing tone.',
       '- "Analyze the CSV and summarize outliers" -> GEMINI / gemini-2.5-flash or LOCAL_REASONING if installed, reason: data parsing and structured analysis.',
       '- Never emit prose in the route response. Only emit JSON.',
     ].join('\n');
+  }
+
+  private buildLearnedRoutingPriorsSection(insights: AdaptiveLearningInsights | null): string {
+    const lines: string[] = ['LEARNED ROUTING PRIORS (from recent routing decisions):'];
+
+    if (!insights) {
+      lines.push('- No routing history available yet.');
+      return lines.join('\n');
+    }
+
+    lines.push(`- windowDays=${insights.windowDays} totalDecisions=${insights.totalDecisions}`);
+    lines.push(`- avgConfidence=${insights.avgConfidence.toFixed(2)}`);
+
+    if (insights.providerInsights.length > 0) {
+      for (const provider of insights.providerInsights.slice(0, 6)) {
+        const topModes = provider.topModes.length > 0 ? provider.topModes.join(', ') : 'n/a';
+        const learnedWeight = this.computeProviderLearnedWeight(
+          provider.avgConfidence,
+          provider.fallbackRate,
+        );
+        lines.push(
+          `- ${provider.provider}: total=${provider.totalDecisions} fallbackRate=${provider.fallbackRate.toFixed(2)} avgConfidence=${provider.avgConfidence.toFixed(2)} weight=${learnedWeight.toFixed(2)} topModes=${topModes}`,
+        );
+      }
+    } else {
+      lines.push('- providerInsights: unavailable');
+    }
+
+    if (insights.modeInsights.length > 0) {
+      lines.push(
+        `- modeInsights: ${insights.modeInsights
+          .slice(0, 6)
+          .map(
+            (mode) => `${mode.routingMode}: ${mode.count} (${Math.round(mode.percentage * 100)}%)`,
+          )
+          .join(' | ')}`,
+      );
+    } else {
+      lines.push('- modeInsights: unavailable');
+    }
+
+    if (insights.topReasonTags.length > 0) {
+      lines.push(`- topTags=${insights.topReasonTags.join(', ')}`);
+    }
+
+    lines.push(
+      '- Prefer providers with lower fallback rate and stronger average confidence for the same task class.',
+    );
+
+    return lines.join('\n');
+  }
+
+  private buildConnectorPriorsSection(
+    healthyProviders: string[],
+    routingSignals?: RouterRoutingSignals,
+    insights?: AdaptiveLearningInsights | null,
+  ): string {
+    const lines: string[] = ['CONNECTOR PRIORS (current health + learned fit):'];
+    const healthySet = new Set(healthyProviders);
+    const providerInsights = new Map(
+      insights?.providerInsights.map((provider) => [provider.provider, provider]) ?? [],
+    );
+    const now = Date.now();
+
+    const providerNames = new Set<string>([
+      ...healthyProviders,
+      ...(routingSignals?.providerLatencyMs ? Object.keys(routingSignals.providerLatencyMs) : []),
+      ...(routingSignals?.providerCircuitOpenUntil
+        ? Object.keys(routingSignals.providerCircuitOpenUntil)
+        : []),
+      ...(insights?.providerInsights.map((provider) => provider.provider) ?? []),
+    ]);
+
+    if (providerNames.size === 0) {
+      lines.push('- No connector priors available yet.');
+      return lines.join('\n');
+    }
+
+    const rankedProviders = [...providerNames].sort((a, b) => {
+      const aInsight = providerInsights.get(a);
+      const bInsight = providerInsights.get(b);
+      const aWeight = aInsight
+        ? this.computeProviderLearnedWeight(aInsight.avgConfidence, aInsight.fallbackRate)
+        : -1;
+      const bWeight = bInsight
+        ? this.computeProviderLearnedWeight(bInsight.avgConfidence, bInsight.fallbackRate)
+        : -1;
+      return bWeight - aWeight || a.localeCompare(b);
+    });
+
+    for (const provider of rankedProviders.slice(0, 10)) {
+      const insight = providerInsights.get(provider);
+      const status = healthySet.has(provider)
+        ? 'healthy'
+        : (routingSignals?.providerCircuitOpenUntil?.[provider] &&
+            routingSignals.providerCircuitOpenUntil[provider] > now
+          ? 'circuit_open'
+          : 'unhealthy');
+      const latency = routingSignals?.providerLatencyMs?.[provider];
+      const circuitOpenUntil = routingSignals?.providerCircuitOpenUntil?.[provider];
+      const learnedWeight =
+        insight !== undefined
+          ? this.computeProviderLearnedWeight(insight.avgConfidence, insight.fallbackRate)
+          : null;
+      const topModes = insight?.topModes.length ? insight.topModes.join(', ') : 'n/a';
+      const fallbackRate = insight ? insight.fallbackRate.toFixed(2) : 'n/a';
+      const avgConfidence = insight ? insight.avgConfidence.toFixed(2) : 'n/a';
+      const latencyText = typeof latency === 'number' ? `${Math.round(latency)}ms` : 'n/a';
+      const circuitText =
+        typeof circuitOpenUntil === 'number' && circuitOpenUntil > now
+          ? new Date(circuitOpenUntil).toISOString()
+          : 'closed';
+
+      lines.push(
+        `- ${provider}: status=${status} weight=${learnedWeight !== null ? learnedWeight.toFixed(2) : 'n/a'} avgConfidence=${avgConfidence} fallbackRate=${fallbackRate} latency=${latencyText} circuit=${circuitText} topModes=${topModes}`,
+      );
+    }
+
+    lines.push(
+      '- Prefer healthy connectors with the highest weight when several routes are valid.',
+    );
+
+    return lines.join('\n');
   }
 
   private buildRoutingSignalsSection(routingSignals?: RouterRoutingSignals): string {
@@ -473,5 +628,36 @@ User message: {message}`;
       return 'large';
     }
     return 'huge';
+  }
+
+  private computeProviderLearnedWeight(avgConfidence: number, fallbackRate: number): number {
+    const confidence = Math.max(0, Math.min(1, avgConfidence));
+    const fallbackPenalty = Math.max(0, Math.min(1, fallbackRate));
+    return confidence * (1 - fallbackPenalty);
+  }
+
+  private async getAdaptiveInsights(): Promise<AdaptiveLearningInsights | null> {
+    if (!this.adaptiveLearningManager) {
+      return null;
+    }
+
+    const cache = this.cachedInsights;
+    if (cache && Date.now() - cache.generatedAt <= cache.ttlMs) {
+      return cache.insights;
+    }
+
+    try {
+      const insights = await this.adaptiveLearningManager.computeInsights(30);
+      this.cachedInsights = {
+        insights,
+        generatedAt: Date.now(),
+        ttlMs: PROMPT_CACHE_TTL_MS,
+      };
+      return insights;
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(`getAdaptiveInsights: failed - ${msg}`);
+      return null;
+    }
   }
 }

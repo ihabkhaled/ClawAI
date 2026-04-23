@@ -285,6 +285,46 @@ describe('RoutingManager', () => {
     });
   });
 
+  describe('business and compliance regression matrix', () => {
+    it.each([
+      {
+        message: 'review the NDA and summarize the indemnity and liability exposure',
+        expectedTag: 'privacy_enforced',
+      },
+      {
+        message: 'compare HIPAA and GDPR obligations for a patient analytics vendor',
+        expectedTag: 'privacy_enforced',
+      },
+      {
+        message: 'prepare the M&A board memo about acquisition risk and investor messaging',
+        expectedTag: 'privacy_enforced',
+      },
+      {
+        message: 'draft a business case for a new pricing tier and pitch deck outline',
+        expectedTag: 'category_business',
+      },
+      {
+        message: 'draft a procurement SOP for warehouse reorder approvals',
+        expectedTag: 'secondary_operations',
+      },
+      {
+        message: 'create an HR onboarding plan for a new engineering hire',
+        expectedTag: 'category_hr',
+      },
+    ])('routes "$message" locally with the expected signal', async ({ message, expectedTag }) => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message,
+        userMode: RoutingMode.AUTO,
+      });
+
+      expect(result.selectedProvider).toBe('local-ollama');
+      expect(result.privacyClass).toBe('local');
+      expect(result.reasonTags).toContain('auto');
+      expect(result.reasonTags).toContain(expectedTag);
+    });
+  });
+
   describe('evaluateRoute - MANUAL_MODEL', () => {
     it('should use forced model when specified', async () => {
       const context: RoutingContext = {
