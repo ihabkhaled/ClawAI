@@ -2,6 +2,7 @@
 
 import { Loader2, Send, Wrench } from 'lucide-react';
 
+import { AdvancedModuleModelSelector } from '@/components/chat/advanced-module-model-selector';
 import { RepairResultCard } from '@/components/chat/repair-result-card';
 import { RepairTypeSelector } from '@/components/chat/repair-type-selector';
 import { EmptyState } from '@/components/common/empty-state';
@@ -19,6 +20,8 @@ export default function RepairPage() {
     setContent,
     selectedRepairTypes,
     handleToggleRepairType,
+    selectedModel,
+    setSelectedModel,
     handleSend,
     isPending,
     isError,
@@ -75,6 +78,14 @@ export default function RepairPage() {
                 onToggle={handleToggleRepairType}
                 t={t}
               />
+              <div className="mt-4">
+                <AdvancedModuleModelSelector
+                  t={t}
+                  value={selectedModel}
+                  onChange={setSelectedModel}
+                  disabled={isPending || isPolling}
+                />
+              </div>
             </CardContent>
           </Card>
         </div>

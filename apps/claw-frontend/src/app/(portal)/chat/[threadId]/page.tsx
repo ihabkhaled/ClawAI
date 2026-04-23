@@ -48,7 +48,11 @@ export default function ThreadDetailPage() {
 
   const editableTitle = useEditableTitle(threadId, thread?.title ?? undefined);
   const { composerHeight, handleMouseDown } = useResizableComposer();
-  const comparePanel = useInThreadCompare(threadId);
+  const comparePanel = useInThreadCompare({
+    threadId,
+    initialJudgeEnabled: threadSettings.judgeEnabled,
+    initialJudgeModel: threadSettings.judgeModel,
+  });
 
   if (!threadId) {
     return <LoadingSpinner label="Loading thread..." />;
@@ -115,6 +119,12 @@ export default function ThreadDetailPage() {
           result={comparePanel.result}
           isPending={comparePanel.isPending}
           canSend={comparePanel.canSend}
+          judgeEnabled={comparePanel.judgeEnabled}
+          onJudgeEnabledChange={comparePanel.setJudgeEnabled}
+          judgeModel={comparePanel.judgeModel}
+          onJudgeModelChange={comparePanel.setJudgeModel}
+          judgeModelOptions={comparePanel.judgeModelOptions}
+          judgeModelOptionsLoading={comparePanel.isJudgeModelOptionsLoading}
           t={t}
         />
       ) : null}

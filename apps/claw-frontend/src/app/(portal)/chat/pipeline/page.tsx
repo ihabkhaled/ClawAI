@@ -2,6 +2,7 @@
 
 import { Layers, Loader2, Send } from 'lucide-react';
 
+import { AdvancedModuleModelSelector } from '@/components/chat/advanced-module-model-selector';
 import { PipelineResultCard } from '@/components/chat/pipeline-result-card';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
@@ -26,6 +27,8 @@ export default function PipelinePage(): React.ReactElement {
     setContent,
     template,
     setTemplate,
+    selectedModel,
+    setSelectedModel,
     handleSend,
     canSend,
     isPending,
@@ -92,6 +95,14 @@ export default function PipelinePage(): React.ReactElement {
                   ))}
                 </SelectContent>
               </Select>
+              <div className="mt-4">
+                <AdvancedModuleModelSelector
+                  t={t}
+                  value={selectedModel}
+                  onChange={setSelectedModel}
+                  disabled={isPending || isPolling}
+                />
+              </div>
             </CardContent>
           </Card>
         </div>

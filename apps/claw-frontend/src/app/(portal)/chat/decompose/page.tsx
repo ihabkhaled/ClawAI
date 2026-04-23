@@ -2,6 +2,7 @@
 
 import { Layers, Loader2, Send } from 'lucide-react';
 
+import { AdvancedModuleModelSelector } from '@/components/chat/advanced-module-model-selector';
 import { DecompositionResultCard } from '@/components/chat/decomposition-result-card';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
@@ -18,6 +19,8 @@ export default function DecomposePage() {
     setContent,
     maxSubTasks,
     setMaxSubTasks,
+    selectedModel,
+    setSelectedModel,
     handleSend,
     canSend,
     isPending,
@@ -83,6 +86,14 @@ export default function DecomposePage() {
                 <option value={4}>4</option>
                 <option value={5}>5</option>
               </select>
+              <div className="mt-4">
+                <AdvancedModuleModelSelector
+                  t={t}
+                  value={selectedModel}
+                  onChange={setSelectedModel}
+                  disabled={isPending || isPolling}
+                />
+              </div>
             </CardContent>
           </Card>
         </div>

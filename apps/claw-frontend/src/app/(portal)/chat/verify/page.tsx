@@ -2,6 +2,7 @@
 
 import { Loader2, Send, ShieldCheck } from 'lucide-react';
 
+import { AdvancedModuleModelSelector } from '@/components/chat/advanced-module-model-selector';
 import { VerifyResultCard } from '@/components/chat/verify-result-card';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
@@ -25,6 +26,8 @@ export default function VerifyPage(): React.ReactElement {
     setContent,
     maxRevisions,
     setMaxRevisions,
+    selectedModel,
+    setSelectedModel,
     handleSend,
     canSend,
     isPending,
@@ -93,6 +96,14 @@ export default function VerifyPage(): React.ReactElement {
                   <SelectItem value="3">3</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="mt-4">
+                <AdvancedModuleModelSelector
+                  t={t}
+                  value={selectedModel}
+                  onChange={setSelectedModel}
+                  disabled={isPending || isPolling}
+                />
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -2,6 +2,7 @@
 
 import { Coins, Loader2, Send } from 'lucide-react';
 
+import { AdvancedModuleModelSelector } from '@/components/chat/advanced-module-model-selector';
 import { CostEnsembleResultCard } from '@/components/chat/cost-ensemble-result-card';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
@@ -16,6 +17,8 @@ export default function CostEnsemblePage(): React.ReactElement {
     t,
     content,
     setContent,
+    selectedModel,
+    setSelectedModel,
     handleSend,
     canSend,
     isPending,
@@ -48,6 +51,14 @@ export default function CostEnsemblePage(): React.ReactElement {
             placeholder={t('costEnsemble.contentPlaceholder')}
             className="min-h-[160px] resize-y"
           />
+          <div className="mt-4">
+            <AdvancedModuleModelSelector
+              t={t}
+              value={selectedModel}
+              onChange={setSelectedModel}
+              disabled={isPending || isPolling}
+            />
+          </div>
           <div className="mt-3 flex justify-end">
             <Button onClick={handleSend} disabled={!canSend}>
               {isPending || isPolling ? (

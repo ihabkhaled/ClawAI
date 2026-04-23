@@ -2,6 +2,7 @@
 
 import { ArrowRight, GitCompareArrows, Loader2, Send } from 'lucide-react';
 
+import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
 import { ParallelResultsGrid } from '@/components/chat/parallel-results-grid';
 import { ParallelSummaryBar } from '@/components/chat/parallel-summary-bar';
@@ -29,6 +30,12 @@ export default function ComparePage() {
     isPolling,
     allResponded,
     handleViewInThread,
+    judgeEnabled,
+    setJudgeEnabled,
+    judgeModel,
+    setJudgeModel,
+    judgeModelOptions,
+    isJudgeModelOptionsLoading,
   } = useParallelComparePage();
 
   const showLoading = isPending || (isPolling && pollingMessages.length === 0);
@@ -41,12 +48,23 @@ export default function ComparePage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
-          <ParallelModelSelector
-            selectedModels={selectedModels}
-            onToggleModel={handleToggleModel}
-            selectionError={selectionError}
-            t={t}
-          />
+          <div className="space-y-4">
+            <ParallelModelSelector
+              selectedModels={selectedModels}
+              onToggleModel={handleToggleModel}
+              selectionError={selectionError}
+              t={t}
+            />
+            <CompareJudgeControls
+              judgeEnabled={judgeEnabled}
+              onJudgeEnabledChange={setJudgeEnabled}
+              judgeModel={judgeModel}
+              onJudgeModelChange={setJudgeModel}
+              judgeModelOptions={judgeModelOptions}
+              judgeModelOptionsLoading={isJudgeModelOptionsLoading}
+              t={t}
+            />
+          </div>
         </div>
 
         <div className="space-y-4 lg:col-span-2">
