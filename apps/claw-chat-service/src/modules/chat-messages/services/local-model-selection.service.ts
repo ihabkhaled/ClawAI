@@ -23,7 +23,7 @@ export class LocalModelSelectionService {
       ? usable.filter((model) => model.roles.includes(preferredRole))
       : usable.filter((model) => model.roles.includes('LOCAL_FALLBACK_CHAT'));
     const pool = preferred.length > 0 ? preferred : usable;
-    const selected = this.pickBest(pool);
+    const selected = this.pickBest(pool, preferredRole);
 
     if (!selected) {
       this.logger.warn('resolveDefaultModel: failed to select a local model');
@@ -36,9 +36,12 @@ export class LocalModelSelectionService {
   }
 
   async resolveModelList(count: number): Promise<string[]> {
-    const models = await this.fetchInstalledModels();
-    const usable = models.filter((model) => !model.roles.includes('ROUTER'));
-    const ordered = [...usable].sort((a, b) => this.modelScore(a) - this.modelScore(b));
+    const usable = await this.listUsableModels();
+    const ordered = [...usable].sort(
+      (a, b) =>
+        this.selectionScore(b, 'LOCAL_FALLBACK_CHAT') -
+        this.selectionScore(a, 'LOCAL_FALLBACK_CHAT'),
+    );
     const unique: string[] = [];
 
     for (const model of ordered) {
@@ -62,6 +65,21 @@ export class LocalModelSelectionService {
     return unique;
   }
 
+  async listInstalledModelNames(): Promise<string[]> {
+    const models = await this.listUsableModels();
+    return models.map((model) => `${model.name}:${model.tag}`);
+  }
+
+  async isInstalledModel(modelName: string): Promise<boolean> {
+    const installedModels = await this.listInstalledModelNames();
+    return installedModels.includes(modelName);
+  }
+
+  private async listUsableModels(): Promise<InstalledModelInfo[]> {
+    const models = await this.fetchInstalledModels();
+    return models.filter((model) => !model.roles.includes('ROUTER'));
+  }
+
   private async fetchInstalledModels(): Promise<InstalledModelInfo[]> {
     try {
       const config = AppConfig.get();
@@ -83,11 +101,38 @@ export class LocalModelSelectionService {
     }
   }
 
-  private pickBest(models: InstalledModelInfo[]): InstalledModelInfo | null {
+  private pickBest(
+    models: InstalledModelInfo[],
+    preferredRole?: string,
+  ): InstalledModelInfo | null {
     if (models.length === 0) {
       return null;
     }
-    return [...models].sort((a, b) => this.modelScore(a) - this.modelScore(b))[0] ?? null;
+    return (
+      [...models].sort(
+        (a, b) => this.selectionScore(b, preferredRole) - this.selectionScore(a, preferredRole),
+      )[0] ?? null
+    );
+  }
+
+  private selectionScore(model: InstalledModelInfo, preferredRole?: string): number {
+    let score = this.modelScore(model);
+    const identity = `${model.name}:${model.tag}`.toLowerCase();
+
+    if (preferredRole && model.roles.includes(preferredRole)) {
+      score *= 1.2;
+    }
+
+    if (!preferredRole || preferredRole === 'LOCAL_FALLBACK_CHAT') {
+      if (identity.includes('coder')) {
+        score *= 0.7;
+      }
+      if (/(llama|gemma|glm|mistral|mixtral)/.test(identity)) {
+        score *= 1.08;
+      }
+    }
+
+    return score;
   }
 
   private modelScore(model: InstalledModelInfo): number {
