@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ProgressActorType, StreamEventType } from '../../../common/enums';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
@@ -39,6 +40,7 @@ export class TaskDecompositionManager {
     this.logger.log(`executeDecomposition: starting for user ${userId}`);
 
     const threadId = await this.resolveThreadId(userId, dto);
+    this.chatStreamService.emitRequestAccepted(threadId);
 
     const userMessage = await this.chatMessagesRepository.create({
       threadId,
@@ -55,22 +57,85 @@ export class TaskDecompositionManager {
   async executeInBackground(threadId: string, content: string, maxSubTasks: number): Promise<void> {
     const startTime = Date.now();
     try {
+      this.chatStreamService.emitProgressStage(threadId, StreamEventType.RESPONSE_STREAMING, {
+        label: 'Decomposing task',
+        description: `Breaking the request into up to ${String(maxSubTasks)} sub-tasks.`,
+        actorType: ProgressActorType.SYSTEM,
+        actorName: 'Task decomposition',
+      });
       const subTasks = await this.decomposeContent(content, maxSubTasks);
+      this.chatStreamService.emitProgressStage(threadId, StreamEventType.RESPONSE_STREAMING, {
+        label: 'Executing sub-tasks',
+        description: `${String(subTasks.length)} sub-tasks are running in parallel.`,
+        actorType: ProgressActorType.SYSTEM,
+        actorName: 'Task decomposition',
+      });
       const subTaskResults = await this.executeSubTasks(subTasks);
       const mergedContent = await this.mergeResults(content, subTaskResults);
+      const resolvedModel = await this.resolveModel();
 
       await this.chatMessagesRepository.create({
         threadId,
         role: 'ASSISTANT',
         content: mergedContent,
         provider: 'local-ollama',
-        model: await this.resolveModel(),
+        model: resolvedModel,
         latencyMs: Date.now() - startTime,
         usedFallback: false,
-        metadata: { decomposed: true, subTasks: subTaskResults },
+        metadata: {
+          decomposed: true,
+          subTasks: subTaskResults,
+          routeRoadmap: {
+            routingMode: 'MANUAL_MODEL',
+            routerModel: null,
+            selectedProvider: 'local-ollama',
+            selectedModel: resolvedModel,
+            finalProvider: 'local-ollama',
+            finalModel: resolvedModel,
+            finalDisplayName: resolvedModel,
+            steps: [
+              {
+                stage: 'tool',
+                provider: 'decompose',
+                model: 'task-decomposition',
+                displayName: 'Task decomposition',
+                description: `${String(subTaskResults.length)} sub-task results merged`,
+              },
+              {
+                stage: 'execution',
+                provider: 'local-ollama',
+                model: resolvedModel,
+                displayName: resolvedModel,
+              },
+            ],
+          },
+          progressSummary: [
+            {
+              label: 'Request accepted',
+              description: 'Task decomposition was queued.',
+              actorType: 'request',
+              actorName: 'Claw',
+              status: 'completed',
+            },
+            {
+              label: 'Executing sub-tasks',
+              description: `${String(subTaskResults.length)} sub-tasks completed.`,
+              actorType: 'system',
+              actorName: 'Task decomposition',
+              status: 'completed',
+            },
+            {
+              label: 'Response complete',
+              description: 'Merged result saved to the thread.',
+              actorType: 'model',
+              actorName: `local-ollama / ${resolvedModel}`,
+              status: 'completed',
+            },
+          ],
+        },
       });
 
-      this.chatStreamService.emitCompletion(threadId, 'local-ollama', await this.resolveModel());
+      this.chatStreamService.emitCompletion(threadId, 'local-ollama', resolvedModel);
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Task decomposition failed';
       this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);

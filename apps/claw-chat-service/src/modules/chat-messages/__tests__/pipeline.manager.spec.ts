@@ -27,6 +27,8 @@ const mockThreadsRepo = (): Partial<Record<keyof ChatThreadsRepository, jest.Moc
 });
 
 const mockStreamService = (): Partial<Record<keyof ChatStreamService, jest.Mock>> => ({
+  emitRequestAccepted: jest.fn(),
+  emitProgressStage: jest.fn(),
   emitCompletion: jest.fn(),
   emitError: jest.fn(),
 });

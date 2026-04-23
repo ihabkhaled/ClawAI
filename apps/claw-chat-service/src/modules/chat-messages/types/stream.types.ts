@@ -1,4 +1,4 @@
-import { type StreamEventType } from '../../../common/enums';
+import { type ProgressActorType, type StreamEventType } from '../../../common/enums';
 
 export type StreamEvent = {
   threadId: string;
@@ -7,6 +7,10 @@ export type StreamEvent = {
   provider?: string;
   model?: string;
   error?: string;
+  label?: string;
+  description?: string;
+  actorType?: ProgressActorType;
+  actorName?: string;
   failedProvider?: string;
   failedModel?: string;
   attempt?: number;

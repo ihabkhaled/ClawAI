@@ -121,7 +121,10 @@ describe('ChatMessagesService', () => {
       { executeVerify: jest.fn() } as unknown as VerifierManager,
       { executePipeline: jest.fn() } as unknown as PipelineManager,
       { executeRolePack: jest.fn() } as unknown as RolePackManager,
-      { emitCompletion: jest.fn() } as unknown as ChatStreamService,
+      {
+        emitRequestAccepted: jest.fn(),
+        emitCompletion: jest.fn(),
+      } as unknown as ChatStreamService,
       rabbitMQ as unknown as RabbitMQService,
     );
   });
@@ -316,7 +319,10 @@ describe('ChatMessagesService', () => {
         verifierManager as unknown as VerifierManager,
         { executePipeline: jest.fn() } as unknown as PipelineManager,
         { executeRolePack: jest.fn() } as unknown as RolePackManager,
-        { emitCompletion: jest.fn() } as unknown as ChatStreamService,
+        {
+          emitRequestAccepted: jest.fn(),
+          emitCompletion: jest.fn(),
+        } as unknown as ChatStreamService,
         rabbitMQ as unknown as RabbitMQService,
       );
 

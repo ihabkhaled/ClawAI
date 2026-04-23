@@ -75,7 +75,9 @@ describe('ChatExecutionManager', () => {
     };
 
     streamService = {
+      emitRouterStarted: jest.fn(),
       emitProviderSelected: jest.fn(),
+      emitResponseStreaming: jest.fn(),
       emitFallbackAttempt: jest.fn(),
       emitError: jest.fn(),
     };

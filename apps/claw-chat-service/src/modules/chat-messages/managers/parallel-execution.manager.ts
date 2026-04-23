@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ProgressActorType, StreamEventType } from '../../../common/enums';
 import { ChatExecutionManager } from './chat-execution.manager';
 import { ContextAssemblyManager } from './context-assembly.manager';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
@@ -39,6 +40,7 @@ export class ParallelExecutionManager {
     this.logger.log(
       `executeParallel: queuing ${String(models.length)} models in thread ${threadId}`,
     );
+    this.chatStreamService.emitRequestAccepted(threadId);
 
     const userMessage = await this.storeUserMessage(threadId, content, fileIds);
 
@@ -63,6 +65,12 @@ export class ParallelExecutionManager {
     fileIds?: string[],
   ): Promise<void> {
     try {
+      this.chatStreamService.emitProgressStage(threadId, StreamEventType.RESPONSE_STREAMING, {
+        label: 'Launching comparison',
+        description: `${String(models.length)} models are being executed in parallel.`,
+        actorType: ProgressActorType.SYSTEM,
+        actorName: 'Parallel compare',
+      });
       const { context, threadSettings } = await this.buildContext(userId, threadId, fileIds);
       const responses = await this.executeAllModels(models, context, threadSettings);
       await this.storeAssistantMessages(threadId, parallelGroupId, responses);
@@ -148,8 +156,9 @@ export class ParallelExecutionManager {
     threadSettings: ThreadSettings | undefined,
   ): Promise<ParallelModelResponse> {
     const modelPromise = this.executeSingleModel(target, context, threadSettings);
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
     const timeoutPromise = new Promise<never>((_resolve, reject) => {
-      setTimeout(
+      timeoutHandle = setTimeout(
         () => reject(new Error(`Model execution timeout after ${String(this.timeoutMs)}ms`)),
         this.timeoutMs,
       );
@@ -158,8 +167,7 @@ export class ParallelExecutionManager {
     try {
       return await Promise.race([modelPromise, timeoutPromise]);
     } catch (error: unknown) {
-      const isTimeout =
-        error instanceof Error && error.message.includes('Model execution timeout');
+      const isTimeout = error instanceof Error && error.message.includes('Model execution timeout');
 
       if (isTimeout) {
         this.logger.warn(
@@ -169,6 +177,10 @@ export class ParallelExecutionManager {
       }
 
       throw error;
+    } finally {
+      if (timeoutHandle !== undefined) {
+        clearTimeout(timeoutHandle);
+      }
     }
   }
 
@@ -234,17 +246,68 @@ export class ParallelExecutionManager {
         outputTokens: response.outputTokens ?? undefined,
         latencyMs: response.latencyMs,
         usedFallback: false,
-        metadata: { parallelExecution: true, parallelGroupId, status: response.status },
+        metadata: {
+          parallelExecution: true,
+          parallelGroupId,
+          status: response.status,
+          routeRoadmap: {
+            routingMode: 'MANUAL_MODEL',
+            routerModel: null,
+            selectedProvider: response.provider,
+            selectedModel: response.model,
+            finalProvider: response.provider,
+            finalModel: response.model,
+            finalDisplayName: response.model,
+            steps: [
+              {
+                stage: 'tool',
+                provider: 'parallel',
+                model: 'parallel',
+                displayName: 'Parallel compare',
+                description: `Model finished with status ${response.status}`,
+              },
+              {
+                stage: 'execution',
+                provider: response.provider,
+                model: response.model,
+                displayName: response.model,
+              },
+            ],
+          },
+          progressSummary: [
+            {
+              label: 'Request accepted',
+              description: 'Parallel comparison was queued.',
+              actorType: 'request',
+              actorName: 'Claw',
+              status: 'completed',
+            },
+            {
+              label: 'Launching comparison',
+              description: 'The model finished its parallel run.',
+              actorType: 'system',
+              actorName: 'Parallel compare',
+              status: response.status === 'completed' ? 'completed' : 'error',
+            },
+            {
+              label: response.status === 'completed' ? 'Response complete' : 'Response failed',
+              description:
+                response.status === 'completed'
+                  ? 'Parallel response saved to the thread.'
+                  : (response.errorMessage ?? 'Parallel execution failed'),
+              actorType: 'model',
+              actorName: `${response.provider} / ${response.model}`,
+              status: response.status === 'completed' ? 'completed' : 'error',
+            },
+          ],
+        },
       }),
     );
 
     await Promise.all(storePromises);
   }
 
-  private buildTimedOutResponse(
-    provider: string,
-    model: string,
-  ): ParallelModelResponse {
+  private buildTimedOutResponse(provider: string, model: string): ParallelModelResponse {
     return {
       provider,
       model,

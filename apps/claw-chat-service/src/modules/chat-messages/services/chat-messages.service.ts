@@ -32,7 +32,9 @@ import { type ListMessagesQueryDto } from '../dto/list-messages-query.dto';
 import {
   type LlmResponse,
   type MessageRoutedData,
+  type ResearchExecutionSummary,
   type RouteRoadmap,
+  type StoredProgressSummaryStep,
   type ThreadSettings,
 } from '../types/execution.types';
 import { type ConsensusResponse } from '../types/consensus.types';
@@ -104,10 +106,13 @@ export class ChatMessagesService implements OnModuleInit {
       `createMessage: resolved routing mode=${effectiveRoutingMode}, provider=${forcedProvider ?? 'auto'}, model=${forcedModel ?? 'auto'}, research=${dto.researchMode ?? 'OFF'}`,
     );
 
+    this.chatStreamService.emitRequestAccepted(dto.threadId);
+
     const researchBundle = await this.runResearchIfRequested(
       userId,
       userToken,
       dto,
+      dto.threadId,
       forcedProvider,
       forcedModel,
     );
@@ -131,10 +136,14 @@ export class ChatMessagesService implements OnModuleInit {
     userId: string,
     userToken: string,
     dto: CreateMessageDto,
+    threadId: string,
     forcedProvider: string | undefined,
     forcedModel: string | undefined,
   ): Promise<ResearchRunResponse | null> {
-    return this.runResearchForIntent(userId, userToken, dto.content, {
+    if (dto.researchMode !== undefined && dto.researchMode !== 'OFF') {
+      this.chatStreamService.emitResearchStarted(threadId, dto.researchMode);
+    }
+    return this.runResearchForIntent(userId, userToken, threadId, dto.content, {
       mode: dto.researchMode,
       providerId: dto.researchProviderId,
       forcedProvider,
@@ -150,6 +159,7 @@ export class ChatMessagesService implements OnModuleInit {
   async runResearchForIntent(
     userId: string,
     userToken: string,
+    threadId: string,
     intent: string,
     options: {
       mode?: string;
@@ -179,6 +189,8 @@ export class ChatMessagesService implements OnModuleInit {
       this.logger.warn(`research: run failed for user ${userId} — continuing without evidence`);
     } else {
       this.logger.log(`research: run ${run.id} completed (${options.mode})`);
+      const bundle = this.extractResearchBundle(run);
+      this.chatStreamService.emitResearchCompleted(threadId, bundle.itemCount, bundle.toolsUsed);
     }
     return run;
   }
@@ -408,6 +420,7 @@ export class ChatMessagesService implements OnModuleInit {
     this.logger.log(
       `handleMessageRouted: starting for message ${payload.messageId} via ${payload.selectedProvider}/${payload.selectedModel}`,
     );
+    this.chatStreamService.emitRequestAccepted(payload.threadId);
     const [threadMessages, thread] = await Promise.all([
       this.chatMessagesRepository.findRecentByThreadId(payload.threadId, 20),
       this.chatThreadsRepository.findById(payload.threadId),
@@ -616,6 +629,8 @@ export class ChatMessagesService implements OnModuleInit {
         ? latestUserMetadata['modelDisplayName']
         : null;
     const finalDisplayName = llmResponse.model;
+    const researchSummary = this.extractResearchSummary(latestUserMetadata);
+    const progressSummary = this.buildStoredProgressSummary(payload, llmResponse, researchSummary);
     const routeRoadmap: RouteRoadmap = {
       routingMode: payload.routingMode,
       routerModel: payload.routerModel ?? null,
@@ -638,6 +653,17 @@ export class ChatMessagesService implements OnModuleInit {
                 provider: payload.selectedProvider,
                 model: payload.selectedModel,
               },
+              ...(researchSummary !== null
+                ? [
+                    {
+                      stage: 'research' as const,
+                      provider: 'research-service',
+                      model: researchSummary.workflow,
+                      displayName: 'Research workflow',
+                      description: `${String(researchSummary.itemCount)} evidence items collected`,
+                    },
+                  ]
+                : []),
               {
                 stage: 'execution',
                 provider: llmResponse.provider,
@@ -646,6 +672,17 @@ export class ChatMessagesService implements OnModuleInit {
               },
             ]
           : [
+              ...(researchSummary !== null
+                ? [
+                    {
+                      stage: 'research' as const,
+                      provider: 'research-service',
+                      model: researchSummary.workflow,
+                      displayName: 'Research workflow',
+                      description: `${String(researchSummary.itemCount)} evidence items collected`,
+                    },
+                  ]
+                : []),
               {
                 stage: 'execution',
                 provider: llmResponse.provider,
@@ -653,6 +690,7 @@ export class ChatMessagesService implements OnModuleInit {
                 displayName: finalDisplayName,
               },
             ],
+      research: researchSummary,
     };
 
     return this.chatMessagesRepository.create({
@@ -694,9 +732,129 @@ export class ChatMessagesService implements OnModuleInit {
         ...(!hasVisibleContent ? { emptyContent: true } : {}),
         ...(requestedModelDisplayName ? { requestedModelDisplayName } : {}),
         routeRoadmap,
+        progressSummary,
         ...(llmResponse.judgeRefereeMetadata ?? {}),
       },
     });
+  }
+
+  private buildStoredProgressSummary(
+    payload: MessageRoutedData,
+    llmResponse: LlmResponse,
+    researchSummary: ResearchExecutionSummary | null,
+  ): StoredProgressSummaryStep[] {
+    const steps: StoredProgressSummaryStep[] = [
+      {
+        label: 'Request accepted',
+        description: 'Claw received your message and queued execution.',
+        actorType: 'request',
+        actorName: 'Claw',
+        status: 'completed',
+      },
+    ];
+
+    if (payload.routingMode === 'AUTO') {
+      steps.push({
+        label: 'Routing request',
+        description: 'The router selected the execution path for this message.',
+        actorType: 'router',
+        actorName: payload.routerModel ?? 'Auto router',
+        status: 'completed',
+      });
+    }
+
+    if (researchSummary !== null) {
+      steps.push({
+        label: 'Gathering evidence',
+        description: `${String(researchSummary.itemCount)} evidence items collected with ${researchSummary.toolsUsed.join(', ') || 'research tools'}.`,
+        actorType: 'system',
+        actorName: 'Research workflow',
+        status: 'completed',
+      });
+    }
+
+    steps.push({
+      label: 'Model selected',
+      description: `${llmResponse.provider}/${llmResponse.model} prepared the response.`,
+      actorType: 'model',
+      actorName: `${llmResponse.provider} / ${llmResponse.model}`,
+      status: 'completed',
+    });
+
+    if (llmResponse.judgeRefereeMetadata !== undefined) {
+      steps.push({
+        label: 'Verifying answer',
+        description: `Judge decision: ${llmResponse.judgeRefereeMetadata.judgeDecision}.`,
+        actorType: 'judge',
+        actorName: llmResponse.judgeRefereeMetadata.judgeModel,
+        status: 'completed',
+      });
+    }
+
+    steps.push({
+      label: 'Response complete',
+      description: 'The final answer was stored successfully.',
+      actorType: 'model',
+      actorName: `${llmResponse.provider} / ${llmResponse.model}`,
+      status: 'completed',
+    });
+
+    return steps;
+  }
+
+  private extractResearchSummary(
+    latestUserMetadata?: Record<string, unknown> | null,
+  ): ResearchExecutionSummary | null {
+    const research = latestUserMetadata?.['research'];
+    if (research === null || typeof research !== 'object') {
+      return null;
+    }
+
+    const researchRecord = research as Record<string, unknown>;
+    const bundle = researchRecord['bundle'];
+    if (bundle === null || typeof bundle !== 'object') {
+      return null;
+    }
+
+    const bundleRecord = bundle as Record<string, unknown>;
+    const toolsUsed = Array.isArray(bundleRecord['toolsUsed'])
+      ? bundleRecord['toolsUsed'].filter((tool): tool is string => typeof tool === 'string')
+      : [];
+    const helperModels = Array.isArray(bundleRecord['helperModels'])
+      ? bundleRecord['helperModels'].filter((model): model is string => typeof model === 'string')
+      : [];
+    const itemCount = Array.isArray(bundleRecord['items']) ? bundleRecord['items'].length : 0;
+    const warningCount = Array.isArray(bundleRecord['warnings'])
+      ? bundleRecord['warnings'].length
+      : 0;
+
+    return {
+      runId: typeof researchRecord['runId'] === 'string' ? researchRecord['runId'] : 'unknown',
+      workflow: typeof researchRecord['mode'] === 'string' ? researchRecord['mode'] : 'unknown',
+      toolsUsed,
+      helperModels,
+      itemCount,
+      warningCount,
+    };
+  }
+
+  private extractResearchBundle(run: ResearchRunResponse): ResearchExecutionSummary {
+    const bundle = run.bundle as Record<string, unknown>;
+    const toolsUsed = Array.isArray(bundle['toolsUsed'])
+      ? bundle['toolsUsed'].filter((tool): tool is string => typeof tool === 'string')
+      : [];
+    const helperModels = Array.isArray(bundle['helperModels'])
+      ? bundle['helperModels'].filter((model): model is string => typeof model === 'string')
+      : [];
+
+    return {
+      runId: run.id,
+      workflow: run.workflow,
+      toolsUsed,
+      helperModels,
+      itemCount: Array.isArray(bundle['items']) ? bundle['items'].length : 0,
+      warningCount: Array.isArray(bundle['warnings']) ? bundle['warnings'].length : 0,
+    };
   }
 
   private async updateThreadAfterResponse(

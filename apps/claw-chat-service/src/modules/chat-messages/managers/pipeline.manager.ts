@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ProgressActorType, StreamEventType } from '../../../common/enums';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
@@ -31,6 +32,7 @@ export class PipelineManager {
     this.logger.log(`executePipeline: starting for user ${userId}`);
 
     const threadId = await this.resolveThreadId(userId, dto);
+    this.chatStreamService.emitRequestAccepted(threadId);
 
     const userMessage = await this.chatMessagesRepository.create({
       threadId,
@@ -51,17 +53,30 @@ export class PipelineManager {
   ): Promise<void> {
     const startTime = Date.now();
     try {
+      this.chatStreamService.emitProgressStage(threadId, StreamEventType.RESPONSE_STREAMING, {
+        label: 'Preparing pipeline',
+        description: 'Resolving the pipeline stages for this request.',
+        actorType: ProgressActorType.SYSTEM,
+        actorName: 'Pipeline workflow',
+      });
       const stages = await this.resolveStages(dto);
+      this.chatStreamService.emitProgressStage(threadId, StreamEventType.RESPONSE_STREAMING, {
+        label: 'Running pipeline',
+        description: `${String(stages.length)} stages are executing in order.`,
+        actorType: ProgressActorType.SYSTEM,
+        actorName: 'Pipeline workflow',
+      });
       const config = AppConfig.get();
       const stageResults = await this.runAllStages(stages, content, config.OLLAMA_SERVICE_URL);
       const finalOutput = stageResults.at(-1)?.output ?? content;
+      const resolvedModel = await this.resolveModel();
 
       await this.chatMessagesRepository.create({
         threadId,
         role: 'ASSISTANT',
         content: finalOutput,
         provider: 'local-ollama',
-        model: await this.resolveModel(),
+        model: resolvedModel,
         latencyMs: Date.now() - startTime,
         usedFallback: false,
         metadata: {
@@ -69,10 +84,57 @@ export class PipelineManager {
           template: dto.template,
           stages: stageResults,
           stageCount: stageResults.length,
+          routeRoadmap: {
+            routingMode: 'MANUAL_MODEL',
+            routerModel: null,
+            selectedProvider: 'local-ollama',
+            selectedModel: resolvedModel,
+            finalProvider: 'local-ollama',
+            finalModel: resolvedModel,
+            finalDisplayName: resolvedModel,
+            steps: [
+              {
+                stage: 'tool',
+                provider: 'pipeline',
+                model: dto.template,
+                displayName: 'Pipeline workflow',
+                description: `${String(stageResults.length)} stages completed`,
+              },
+              {
+                stage: 'execution',
+                provider: 'local-ollama',
+                model: resolvedModel,
+                displayName: resolvedModel,
+              },
+            ],
+          },
+          progressSummary: [
+            {
+              label: 'Request accepted',
+              description: 'Pipeline execution was queued.',
+              actorType: 'request',
+              actorName: 'Claw',
+              status: 'completed',
+            },
+            {
+              label: 'Running pipeline',
+              description: `${String(stageResults.length)} stages completed.`,
+              actorType: 'system',
+              actorName: 'Pipeline workflow',
+              status: 'completed',
+            },
+            {
+              label: 'Response complete',
+              description: 'Pipeline result saved to the thread.',
+              actorType: 'model',
+              actorName: `local-ollama / ${resolvedModel}`,
+              status: 'completed',
+            },
+          ],
         },
       });
 
-      this.chatStreamService.emitCompletion(threadId, 'local-ollama', await this.resolveModel());
+      this.chatStreamService.emitCompletion(threadId, 'local-ollama', resolvedModel);
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Pipeline execution failed';
       this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);

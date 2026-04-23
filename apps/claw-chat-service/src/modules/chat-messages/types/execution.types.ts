@@ -1,10 +1,28 @@
 import type { JudgeRefereeMetadata } from './judge-referee.types';
 
 export type RouteRoadmapStep = {
-  stage: 'router' | 'decision' | 'execution' | 'fallback';
+  stage: 'router' | 'decision' | 'research' | 'tool' | 'execution' | 'fallback';
   provider: string;
   model: string;
   displayName?: string | null;
+  description?: string | null;
+};
+
+export type ResearchExecutionSummary = {
+  runId: string;
+  workflow: string;
+  toolsUsed: string[];
+  helperModels: string[];
+  itemCount: number;
+  warningCount: number;
+};
+
+export type StoredProgressSummaryStep = {
+  label: string;
+  description?: string | null;
+  actorType: 'request' | 'router' | 'model' | 'judge' | 'system';
+  actorName?: string | null;
+  status: 'completed' | 'error';
 };
 
 export type RouteRoadmap = {
@@ -16,6 +34,7 @@ export type RouteRoadmap = {
   finalModel: string;
   finalDisplayName?: string | null;
   steps: RouteRoadmapStep[];
+  research?: ResearchExecutionSummary | null;
 };
 
 export type MessageRoutedData = {

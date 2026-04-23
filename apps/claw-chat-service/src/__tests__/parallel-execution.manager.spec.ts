@@ -42,6 +42,8 @@ describe('ParallelExecutionManager', () => {
   };
 
   const mockChatStreamService = {
+    emitRequestAccepted: jest.fn(),
+    emitProgressStage: jest.fn(),
     emitCompletion: jest.fn(),
     emitError: jest.fn(),
   };
@@ -367,11 +369,19 @@ describe('ParallelExecutionManager', () => {
           outputTokens: 200,
           latencyMs: 1500,
           usedFallback: false,
-          metadata: {
+          metadata: expect.objectContaining({
             parallelExecution: true,
             parallelGroupId: 'group-1',
             status: 'completed',
-          },
+            routeRoadmap: expect.objectContaining({
+              finalProvider: 'ANTHROPIC',
+              finalModel: 'claude-sonnet-4',
+            }),
+            progressSummary: expect.arrayContaining([
+              expect.objectContaining({ label: 'Request accepted', status: 'completed' }),
+              expect.objectContaining({ label: 'Response complete', status: 'completed' }),
+            ]),
+          }),
         }),
       );
 
@@ -382,11 +392,15 @@ describe('ParallelExecutionManager', () => {
           content: 'Gemini response',
           provider: 'GEMINI',
           model: 'gemini-2.5-flash',
-          metadata: {
+          metadata: expect.objectContaining({
             parallelExecution: true,
             parallelGroupId: 'group-1',
             status: 'completed',
-          },
+            routeRoadmap: expect.objectContaining({
+              finalProvider: 'GEMINI',
+              finalModel: 'gemini-2.5-flash',
+            }),
+          }),
         }),
       );
     });
@@ -410,11 +424,14 @@ describe('ParallelExecutionManager', () => {
       expect(mockChatMessagesRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           content: 'Error: Provider timeout',
-          metadata: {
+          metadata: expect.objectContaining({
             parallelExecution: true,
             parallelGroupId: 'group-1',
             status: 'failed',
-          },
+            progressSummary: expect.arrayContaining([
+              expect.objectContaining({ label: 'Response failed', status: 'error' }),
+            ]),
+          }),
         }),
       );
     });

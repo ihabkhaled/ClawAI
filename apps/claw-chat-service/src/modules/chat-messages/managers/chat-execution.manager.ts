@@ -78,6 +78,9 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.log(
       `execute: starting for message ${payload.messageId} with provider=${payload.selectedProvider} model=${payload.selectedModel}`,
     );
+    if (payload.routingMode === 'AUTO') {
+      this.chatStreamService.emitRouterStarted(payload.threadId, payload.routerModel);
+    }
     const startTime = Date.now();
     const candidates = this.buildCandidateChain(payload, payload.routingMode);
     const userPrompt = this.extractUserPrompt(context);
@@ -104,6 +107,11 @@ export class ChatExecutionManager implements OnModuleInit {
       );
       try {
         this.chatStreamService.emitProviderSelected(
+          payload.threadId,
+          candidate.provider,
+          candidate.model,
+        );
+        this.chatStreamService.emitResponseStreaming(
           payload.threadId,
           candidate.provider,
           candidate.model,
