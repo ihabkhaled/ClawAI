@@ -6,6 +6,7 @@ import type {
   CachedPromptData,
   InstalledModelInfo,
   InstalledModelsResponse,
+  RouterRoutingSignals,
 } from '../types/installed-model.types';
 
 @Injectable()
@@ -14,24 +15,39 @@ export class PromptBuilderManager {
   private cachedPrompt: CachedPromptData | null = null;
   private cachedModels: InstalledModelInfo[] | null = null;
 
-  async buildRouterPrompt(healthyProviders: string[]): Promise<string> {
+  async buildRouterPrompt(
+    healthyProviders: string[],
+    routingSignals?: RouterRoutingSignals,
+  ): Promise<string> {
     this.logger.debug('buildRouterPrompt: generating dynamic prompt');
     const models = await this.getInstalledModels();
 
     if (models.length === 0) {
-      this.logger.debug('buildRouterPrompt: no installed models — using static template');
-      return this.applyTemplateVariables(ROUTER_PROMPT_TEMPLATE, healthyProviders);
+      this.logger.debug('buildRouterPrompt: no installed models - using static template');
+      return this.appendRoutingContext(
+        this.applyTemplateVariables(ROUTER_PROMPT_TEMPLATE, healthyProviders),
+        models,
+        routingSignals,
+      );
     }
 
     const cached = this.getCachedPrompt();
     if (cached) {
       this.logger.debug('buildRouterPrompt: using cached prompt');
-      return this.applyTemplateVariables(cached, healthyProviders);
+      return this.appendRoutingContext(
+        this.applyTemplateVariables(cached, healthyProviders),
+        models,
+        routingSignals,
+      );
     }
 
     const dynamicPrompt = this.generateDynamicPrompt(models);
     this.setCachedPrompt(dynamicPrompt);
-    return this.applyTemplateVariables(dynamicPrompt, healthyProviders);
+    return this.appendRoutingContext(
+      this.applyTemplateVariables(dynamicPrompt, healthyProviders),
+      models,
+      routingSignals,
+    );
   }
 
   async fetchInstalledModels(): Promise<InstalledModelInfo[]> {
@@ -55,7 +71,7 @@ export class PromptBuilderManager {
       return response.data.models;
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.warn(`fetchInstalledModels: error — ${msg}`);
+      this.logger.warn(`fetchInstalledModels: error - ${msg}`);
       return [];
     }
   }
@@ -194,64 +210,64 @@ IMAGE GENERATION MODELS (generate images from text prompts):
 
 Healthy providers: {healthyProviders}
 
-CAPABILITY CLASSES (33 categories — detect in this priority order):
+CAPABILITY CLASSES (33 categories - detect in this priority order):
 
-PRIVACY-SENSITIVE (MUST route to local-ollama — NEVER send to cloud):
-1. Privacy — personal data, PII, SSN, credit cards, passwords, secrets, confidential info
-2. Medical — clinical, patient, diagnosis, HIPAA, PHI, medication, health records
-3. Legal — contracts, NDA, compliance, GDPR, litigation, attorney-client privilege
-4. Finance — P&L, balance sheet, tax, portfolio, banking, credit, investment data
-5. Executive — board meetings, M&A, acquisitions, IPO, corporate governance, earnings
-6. Government — classified, intelligence, national security, defense, clearance, SIGINT
+PRIVACY-SENSITIVE (MUST route to local-ollama - NEVER send to cloud):
+1. Privacy - personal data, PII, SSN, credit cards, passwords, secrets, confidential info
+2. Medical - clinical, patient, diagnosis, HIPAA, PHI, medication, health records
+3. Legal - contracts, NDA, compliance, GDPR, litigation, attorney-client privilege
+4. Finance - P&L, balance sheet, tax, portfolio, banking, credit, investment data
+5. Executive - board meetings, M&A, acquisitions, IPO, corporate governance, earnings
+6. Government - classified, intelligence, national security, defense, clearance, SIGINT
 
 SPECIALIZED ROUTING (use category-specific models when available):
-7. Coding — code, debug, refactor, APIs, testing, Git, frameworks → LOCAL_CODING or ANTHROPIC
-8. Infrastructure — Terraform, Kubernetes, Docker, AWS, CI/CD, DevOps → LOCAL_CODING or ANTHROPIC
-9. Security — vulnerabilities, penetration testing, OWASP, threat hunting, forensics → LOCAL_CODING
-10. Data Analysis — datasets, ML, AI, NLP, statistics, visualization, ETL → LOCAL_REASONING or GEMINI
-11. Reasoning — proofs, theorems, math, logic, step-by-step analysis → LOCAL_REASONING or ANTHROPIC
-12. Research — literature review, methodology, surveys, academic papers → LOCAL_REASONING or GEMINI
-13. Engineering — CAD, FEA, CFD, circuit design, manufacturing, automotive → LOCAL_REASONING
-14. Science — chemistry, biology, physics, quantum mechanics, climate → LOCAL_REASONING
-15. Real Estate — property, mortgage, appraisal, zoning, cap rate → LOCAL_REASONING
-16. Thinking — deep research, compare-and-contrast, investigation, trade-offs → LOCAL_THINKING or GEMINI
+7. Coding - code, debug, refactor, APIs, testing, Git, frameworks -> LOCAL_CODING or ANTHROPIC
+8. Infrastructure - Terraform, Kubernetes, Docker, AWS, CI/CD, DevOps -> LOCAL_CODING or ANTHROPIC
+9. Security - vulnerabilities, penetration testing, OWASP, threat hunting, forensics -> LOCAL_CODING
+10. Data Analysis - datasets, ML, AI, NLP, statistics, visualization, ETL -> LOCAL_REASONING or GEMINI
+11. Reasoning - proofs, theorems, math, logic, step-by-step analysis -> LOCAL_REASONING or ANTHROPIC
+12. Research - literature review, methodology, surveys, academic papers -> LOCAL_REASONING or GEMINI
+13. Engineering - CAD, FEA, CFD, circuit design, manufacturing, automotive -> LOCAL_REASONING
+14. Science - chemistry, biology, physics, quantum mechanics, climate -> LOCAL_REASONING
+15. Real Estate - property, mortgage, appraisal, zoning, cap rate -> LOCAL_REASONING
+16. Thinking - deep research, compare-and-contrast, investigation, trade-offs -> LOCAL_THINKING or GEMINI
 
 FILE & IMAGE GENERATION:
-17. Image Generation — generate/create/draw images, photos, art, logos → IMAGE_GEMINI or IMAGE_OPENAI
-18. File Generation — create/export PDF, CSV, DOCX, reports, documents → FILE_GENERATION / auto
+17. Image Generation - generate/create/draw images, photos, art, logos -> IMAGE_GEMINI or IMAGE_OPENAI
+18. File Generation - create/export PDF, CSV, DOCX, reports, documents -> FILE_GENERATION / auto
 
 BUSINESS & OPERATIONS (route to file generation or chat models):
-19. Business — KPIs, ROI, campaigns, market analysis, pitch decks → LOCAL_FILE_GENERATION or OPENAI
-20. Operations — supply chain, lean, six sigma, SOP, procurement → LOCAL_FILE_GENERATION
-21. HR — job descriptions, onboarding, performance reviews, talent → LOCAL_FALLBACK_CHAT
-22. Sales — demos, POC, churn, battle cards, competitive positioning → LOCAL_FALLBACK_CHAT
-23. Customer Support — helpdesk, tickets, knowledge base, SLA → LOCAL_FALLBACK_CHAT
+19. Business - KPIs, ROI, campaigns, market analysis, pitch decks -> LOCAL_FILE_GENERATION or OPENAI
+20. Operations - supply chain, lean, six sigma, SOP, procurement -> LOCAL_FILE_GENERATION
+21. HR - job descriptions, onboarding, performance reviews, talent -> LOCAL_FALLBACK_CHAT
+22. Sales - demos, POC, churn, battle cards, competitive positioning -> LOCAL_FALLBACK_CHAT
+23. Customer Support - helpdesk, tickets, knowledge base, SLA -> LOCAL_FALLBACK_CHAT
 
 CONTENT & COMMUNICATION:
-24. Creative Writing — blog posts, articles, poems, scripts, copywriting → LOCAL_FALLBACK_CHAT or OPENAI
-25. Translation — translate, localize, i18n, multilingual → LOCAL_FALLBACK_CHAT
-26. Video/Audio — video scripts, storyboards, editing, voiceover → LOCAL_FALLBACK_CHAT
-27. Design — wireframes, mockups, Figma, design systems, UI/UX → LOCAL_FALLBACK_CHAT
-28. Media — journalism, editorial, publishing, broadcasting, ad tech → LOCAL_FALLBACK_CHAT
-29. Education — curriculum, lesson plans, pedagogy, LMS, assessments → LOCAL_FALLBACK_CHAT
+24. Creative Writing - blog posts, articles, poems, scripts, copywriting -> LOCAL_FALLBACK_CHAT or OPENAI
+25. Translation - translate, localize, i18n, multilingual -> LOCAL_FALLBACK_CHAT
+26. Video/Audio - video scripts, storyboards, editing, voiceover -> LOCAL_FALLBACK_CHAT
+27. Design - wireframes, mockups, Figma, design systems, UI/UX -> LOCAL_FALLBACK_CHAT
+28. Media - journalism, editorial, publishing, broadcasting, ad tech -> LOCAL_FALLBACK_CHAT
+29. Education - curriculum, lesson plans, pedagogy, LMS, assessments -> LOCAL_FALLBACK_CHAT
 
 DOMAIN-SPECIFIC:
-30. Logistics — freight, shipping, warehouse management, fleet, customs → LOCAL_FALLBACK_CHAT
-31. Hospitality — hotel revenue, restaurant ops, event planning, tourism → LOCAL_FALLBACK_CHAT
-32. Sustainability — ESG, carbon emissions, green building, circular economy → LOCAL_FALLBACK_CHAT
-33. General Chat — greetings, small talk, quick facts, simple questions → LOCAL_FALLBACK_CHAT
+30. Logistics - freight, shipping, warehouse management, fleet, customs -> LOCAL_FALLBACK_CHAT
+31. Hospitality - hotel revenue, restaurant ops, event planning, tourism -> LOCAL_FALLBACK_CHAT
+32. Sustainability - ESG, carbon emissions, green building, circular economy -> LOCAL_FALLBACK_CHAT
+33. General Chat - greetings, small talk, quick facts, simple questions -> LOCAL_FALLBACK_CHAT
 
 ROUTING RULES (follow strictly, in priority order):
 
-1. IMAGE GENERATION (highest priority — detect these first):
-   - Any request to generate, create, draw, make, paint, render, design an image → IMAGE_GEMINI / gemini-2.5-flash-image
-   - Art style keywords (photorealistic, watercolor, pixel art, etc.) → IMAGE_GEMINI / gemini-2.5-flash-image
+1. IMAGE GENERATION (highest priority - detect these first):
+   - Any request to generate, create, draw, make, paint, render, design an image -> IMAGE_GEMINI / gemini-2.5-flash-image
+   - Art style keywords (photorealistic, watercolor, pixel art, etc.) -> IMAGE_GEMINI / gemini-2.5-flash-image
 
 2. FILE GENERATION:
-   - Create/generate/export/save a file/document/PDF/CSV/DOCX/report → FILE_GENERATION / auto
+   - Create/generate/export/save a file/document/PDF/CSV/DOCX/report -> FILE_GENERATION / auto
 
 3. PRIVACY-SENSITIVE (categories 1-6 above):
-   - ALWAYS route to local-ollama — NEVER send to cloud providers
+   - ALWAYS route to local-ollama - NEVER send to cloud providers
    - Medical, legal, financial, executive, and government content is inherently private
 
 4. CATEGORY-SPECIFIC (categories 7-16 above):
@@ -259,18 +275,18 @@ ROUTING RULES (follow strictly, in priority order):
    - Fall back to cloud if no local model available
 
 5. GENERAL TEXT TASKS:
-   - Coding, debugging, code review → ANTHROPIC / claude-sonnet-4
-   - Complex reasoning, architecture → ANTHROPIC / claude-opus-4
-   - Math, algorithms → DEEPSEEK / deepseek-chat or local reasoning
-   - Creative writing, marketing copy → OPENAI / gpt-4o-mini
-   - Simple greetings, translations → local-ollama / default
-   - Data analysis, file parsing → GEMINI / gemini-2.5-flash
+   - Coding, debugging, code review -> ANTHROPIC / claude-sonnet-4
+   - Complex reasoning, architecture -> ANTHROPIC / claude-opus-4
+   - Math, algorithms -> DEEPSEEK / deepseek-chat or local reasoning
+   - Creative writing, marketing copy -> OPENAI / gpt-4o-mini
+   - Simple greetings, translations -> local-ollama / default
+   - Data analysis, file parsing -> GEMINI / gemini-2.5-flash
 
 GENERAL RULES:
 - ONLY route to healthy providers listed above
 - Prefer local models when quality is acceptable for the task
 - Use category-specific local models when available (coding model for code, reasoning model for math/logic)
-- If unsure or ambiguous → GEMINI / gemini-2.5-flash (best general purpose)
+- If unsure or ambiguous -> GEMINI / gemini-2.5-flash (best general purpose)
 
 Respond with ONLY a JSON object (no markdown, no explanation):
 {{"provider":"...","model":"...","confidence":0.X,"reason":"brief reason"}}
@@ -283,5 +299,94 @@ User message: {message}`;
       '{healthyProviders}',
       healthyProviders.join(', ') || 'all (no health data)',
     );
+  }
+
+  private appendRoutingContext(
+    prompt: string,
+    models: InstalledModelInfo[],
+    routingSignals?: RouterRoutingSignals,
+  ): string {
+    const intelligenceSection = this.buildModelIntelligenceSection(
+      this.filterRouterOnlyModels(models),
+    );
+    const signalsSection = this.buildRoutingSignalsSection(routingSignals);
+    return [prompt.trim(), intelligenceSection, signalsSection].join('\n\n');
+  }
+
+  private buildModelIntelligenceSection(models: InstalledModelInfo[]): string {
+    const lines: string[] = ['MODEL INTELLIGENCE (use this to pick the best execution target):'];
+
+    if (models.length === 0) {
+      lines.push('- No local execution models detected.', 
+        '- If no healthy execution model exists, return {"provider":"ERROR","model":"ERROR","confidence":0,"reason":"No execution model available"}.',
+      );
+      return lines.join('\n');
+    }
+
+    const roleMap = new Map<string, InstalledModelInfo[]>();
+    for (const model of models) {
+      const roles = model.roles.length > 0 ? model.roles : ['LOCAL_FALLBACK_CHAT'];
+      const capabilities =
+        model.capabilities.length > 0 ? model.capabilities.join(', ') : 'unknown';
+      lines.push(
+        `- ${model.name}:${model.tag} | category=${model.category ?? 'general'} | roles=${roles.join(', ')} | capabilities=${capabilities} | params=${model.parameterCount ?? 'unknown'}`,
+      );
+
+      for (const role of roles) {
+        const existing = roleMap.get(role) ?? [];
+        existing.push(model);
+        roleMap.set(role, existing);
+      }
+    }
+
+    lines.push('ROLE TO MODEL HINTS:');
+    for (const [role, roleModels] of roleMap) {
+      lines.push(
+        `- ${role}: ${roleModels.map((model) => `${model.name}:${model.tag}`).join(' > ')}`,
+      );
+    }
+
+    return lines.join('\n');
+  }
+
+  private buildRoutingSignalsSection(routingSignals?: RouterRoutingSignals): string {
+    const lines: string[] = ['ROUTING SIGNALS (runtime context):'];
+
+    if (!routingSignals) {
+      lines.push('- No live latency or circuit data available.');
+      return lines.join('\n');
+    }
+
+    const latencyEntries = Object.entries(routingSignals.providerLatencyMs ?? {})
+      .filter(([, latency]) => typeof latency === 'number' && latency > 0)
+      .sort((a, b) => a[1] - b[1]);
+    const openCircuits = Object.entries(routingSignals.providerCircuitOpenUntil ?? {})
+      .filter(([, openUntil]) => typeof openUntil === 'number' && openUntil > Date.now())
+      .sort((a, b) => a[1] - b[1]);
+
+    lines.push(
+      `- latency penalty step ms: ${String(routingSignals.latencyPenaltyStepMs ?? 'n/a')}`,
+    );
+    lines.push(
+      `- local degrade threshold ms: ${String(routingSignals.localDegradeLatencyMs ?? 'n/a')}`,
+    );
+
+    if (latencyEntries.length > 0) {
+      lines.push(
+        `- provider latency ms: ${latencyEntries.map(([provider, latency]) => `${provider}=${String(Math.round(latency))}`).join(', ')}`,
+      );
+    } else {
+      lines.push('- provider latency ms: unavailable');
+    }
+
+    if (openCircuits.length > 0) {
+      lines.push(
+        `- open circuits: ${openCircuits.map(([provider, openUntil]) => `${provider} until ${new Date(openUntil).toISOString()}`).join(', ')}`,
+      );
+    } else {
+      lines.push('- open circuits: none');
+    }
+
+    return lines.join('\n');
   }
 }

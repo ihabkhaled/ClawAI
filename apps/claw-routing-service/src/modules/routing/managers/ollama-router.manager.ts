@@ -57,7 +57,12 @@ export class OllamaRouterManager implements OnModuleInit, OnModuleDestroy {
       this.logger.debug(`route: healthy providers=[${healthyProviders.join(', ')}]`);
 
       this.logger.debug('route: building router prompt via PromptBuilderManager');
-      const promptTemplate = await this.promptBuilder.buildRouterPrompt(healthyProviders);
+      const promptTemplate = await this.promptBuilder.buildRouterPrompt(healthyProviders, {
+        providerLatencyMs: context.providerLatencyMs,
+        providerCircuitOpenUntil: context.providerCircuitOpenUntil,
+        localDegradeLatencyMs: context.localDegradeLatencyMs,
+        latencyPenaltyStepMs: context.latencyPenaltyStepMs,
+      });
       const prompt = promptTemplate.replace('{message}', context.message.slice(0, 500));
       this.logger.debug(`route: prompt built — length=${String(prompt.length)} chars`);
 

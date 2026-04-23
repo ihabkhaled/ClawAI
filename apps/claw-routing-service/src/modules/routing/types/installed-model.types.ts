@@ -15,3 +15,10 @@ export type CachedPromptData = {
   prompt: string;
   generatedAt: number;
 };
+
+export type RouterRoutingSignals = {
+  providerLatencyMs?: Record<string, number>;
+  providerCircuitOpenUntil?: Record<string, number>;
+  localDegradeLatencyMs?: number;
+  latencyPenaltyStepMs?: number;
+};

@@ -121,6 +121,12 @@ export type OllamaRouterDecision = {
   routerModel?: string;
 };
 
+export interface RouterDecisionSnapshot {
+  provider: string;
+  model: string;
+  reason: string;
+}
+
 export type { RoutingDecision, RoutingPolicy, RoutingMode };
 export type { ComplexityClassification } from './complexity.types';
 export type { RoutingExplanation, ExplanationFactor, RejectedEntry } from './explanation.types';

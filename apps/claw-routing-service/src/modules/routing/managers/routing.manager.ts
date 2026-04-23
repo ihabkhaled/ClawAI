@@ -78,6 +78,7 @@ import type { InstalledModelInfo } from '../types/installed-model.types';
 import {
   type FallbackEntry,
   type MultiIntentResult,
+  type RouterDecisionSnapshot,
   type RoutingContext,
   type RoutingDecisionResult,
   type RoutingPolicy,
@@ -445,27 +446,33 @@ export class RoutingManager {
       this.logger.log(
         `handleAuto: Ollama router decided ${ollamaDecision.provider}/${ollamaDecision.model} (confidence=${String(ollamaDecision.confidence)})`,
       );
-      const enforcedLocal = Boolean(localEnforcementDomain);
-      const selectedProvider = enforcedLocal ? LOCAL_PROVIDER : ollamaDecision.provider;
-      const selectedModel = enforcedLocal ? LOCAL_MODEL_DEFAULT : ollamaDecision.model;
-      const primary = { provider: selectedProvider, model: selectedModel };
-      const reasonTags = ['auto', 'ollama_router', ollamaDecision.reason];
-      if (enforcedLocal && localEnforcementDomain) {
-        reasonTags.push('privacy_enforced', 'local_only', localEnforcementDomain);
-      }
+      if (this.shouldRejectRouterSelection(context.message, ollamaDecision)) {
+        this.logger.warn(
+          `handleAuto: rejecting semantically invalid Ollama route ${ollamaDecision.provider}/${ollamaDecision.model} for message="${context.message.slice(0, 80)}"`,
+        );
+      } else {
+        const enforcedLocal = Boolean(localEnforcementDomain);
+        const selectedProvider = enforcedLocal ? LOCAL_PROVIDER : ollamaDecision.provider;
+        const selectedModel = enforcedLocal ? LOCAL_MODEL_DEFAULT : ollamaDecision.model;
+        const primary = { provider: selectedProvider, model: selectedModel };
+        const reasonTags = ['auto', 'ollama_router', ollamaDecision.reason];
+        if (enforcedLocal && localEnforcementDomain) {
+          reasonTags.push('privacy_enforced', 'local_only', localEnforcementDomain);
+        }
 
-      return {
-        selectedProvider,
-        selectedModel,
-        routingMode: RoutingMode.AUTO,
-        confidence: ollamaDecision.confidence,
-        reasonTags,
-        privacyClass: selectedProvider === LOCAL_PROVIDER ? 'local' : 'cloud',
-        costClass: selectedProvider === LOCAL_PROVIDER ? 'free' : 'medium',
-        detectedCategory: localEnforcementDomain?.replace('domain_', ''),
-        fallbackChain: this.buildFallbackChain(primary, context),
-        routerModel: ollamaDecision.routerModel,
-      };
+        return {
+          selectedProvider,
+          selectedModel,
+          routingMode: RoutingMode.AUTO,
+          confidence: ollamaDecision.confidence,
+          reasonTags,
+          privacyClass: selectedProvider === LOCAL_PROVIDER ? 'local' : 'cloud',
+          costClass: selectedProvider === LOCAL_PROVIDER ? 'free' : 'medium',
+          detectedCategory: localEnforcementDomain?.replace('domain_', ''),
+          fallbackChain: this.buildFallbackChain(primary, context),
+          routerModel: ollamaDecision.routerModel,
+        };
+      }
     }
 
     if (localEnforcementDomain) {
@@ -762,7 +769,6 @@ export class RoutingManager {
       'portrait',
       'illustration',
       'sketch',
-      'art',
       'artwork',
       'graphic',
       'poster',
@@ -1594,5 +1600,47 @@ export class RoutingManager {
     );
 
     return topPolicy.routingMode;
+  }
+
+  private shouldRejectRouterSelection(message: string, decision: RouterDecisionSnapshot): boolean {
+    if (decision.provider === FILE_GENERATION_PROVIDER) {
+      return this.detectFileGenerationRequest({ message } as RoutingContext) === null;
+    }
+
+    if (decision.provider.startsWith('IMAGE_')) {
+      return (
+        this.detectImageRequest({
+          message,
+          connectorHealth: { GEMINI: true, OPENAI: true },
+          runtimeHealth: { OLLAMA: true },
+        } as RoutingContext) === null
+      );
+    }
+
+    if (
+      decision.provider === LOCAL_PROVIDER &&
+      decision.model === LOCAL_MODEL_DEFAULT &&
+      decision.reason.startsWith('Router selected unavailable ')
+    ) {
+      const match = decision.reason.match(
+        /^Router selected unavailable ([^;]+); using local AUTO$/,
+      );
+      const originalProvider = match?.[1];
+      if (originalProvider?.startsWith('IMAGE_')) {
+        return (
+          this.detectImageRequest({
+            message,
+            connectorHealth: { GEMINI: true, OPENAI: true },
+            runtimeHealth: { OLLAMA: true },
+          } as RoutingContext) === null
+        );
+      }
+
+      if (originalProvider === FILE_GENERATION_PROVIDER) {
+        return this.detectFileGenerationRequest({ message } as RoutingContext) === null;
+      }
+    }
+
+    return false;
   }
 }
