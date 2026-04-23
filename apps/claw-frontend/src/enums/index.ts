@@ -27,6 +27,7 @@ export { StreamEventType } from './stream-event-type.enum';
 export { ImageGenerationStatus } from './image-generation-status.enum';
 export { FileGenerationStatus } from './file-generation-status.enum';
 export { ParallelModelStatus } from './parallel-model-status.enum';
+export { CompareJudgeState } from './compare-judge-state.enum';
 export { FallbackFailureType } from './fallback-failure-type.enum';
 export { ReplayOutcomeLabel } from './replay-outcome-label.enum';
 export { ConsensusConfidenceLevel } from './consensus-confidence-level.enum';
@@ -56,6 +57,11 @@ export { StreamChunkType } from './stream-chunk-type.enum';
 export { VisibleProgressActorType } from './visible-progress-actor-type.enum';
 export { VisibleProgressStageStatus } from './visible-progress-stage-status.enum';
 export { OAuthCallbackPhase } from './oauth-callback-phase.enum';
+export { ModelSelectionMode } from './model-selection-mode.enum';
+export { SelectedModelSource } from './selected-model-source.enum';
+export { JudgeResponseType } from './judge-response-type.enum';
+export { JudgeReviewDecision } from './judge-review-decision.enum';
+export { ResearchProviderSelectionMode } from './research-provider-selection-mode.enum';
 export {
   CandidateStatus,
   CandidateStatusFilter,

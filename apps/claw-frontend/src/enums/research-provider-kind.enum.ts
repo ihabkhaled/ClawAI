@@ -2,5 +2,9 @@ export enum ResearchProviderKind {
   OLLAMA_WEB = 'OLLAMA_WEB',
   TAVILY = 'TAVILY',
   SEARXNG = 'SEARXNG',
+  EXA = 'EXA',
+  FIRECRAWL = 'FIRECRAWL',
+  BRAVE = 'BRAVE',
+  SERPAPI = 'SERPAPI',
   GENERIC_HTTP = 'GENERIC_HTTP',
 }
