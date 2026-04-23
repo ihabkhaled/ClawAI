@@ -1,3 +1,7 @@
+import type {
+  AdvancedModuleModelSelection,
+  AdvancedModelSelectionPayload,
+} from './advanced-model-selection.types';
 import type { TranslateFunction } from './i18n.types';
 
 export type PipelineStageResult = {
@@ -19,7 +23,7 @@ export type PipelineResult = {
   metadata: PipelineMetadata;
 };
 
-export type SendPipelinePayload = {
+export type SendPipelinePayload = AdvancedModelSelectionPayload & {
   content: string;
   template: string;
 };
@@ -51,6 +55,8 @@ export type UsePipelinePageReturn = {
   setContent: (value: string) => void;
   template: string;
   setTemplate: (value: string) => void;
+  selectedModel: AdvancedModuleModelSelection;
+  setSelectedModel: (value: AdvancedModuleModelSelection) => void;
   handleSend: () => void;
   canSend: boolean;
   isPending: boolean;

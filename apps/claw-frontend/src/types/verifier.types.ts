@@ -1,3 +1,8 @@
+import type {
+  AdvancedModuleModelSelection,
+  AdvancedModelSelectionPayload,
+} from './advanced-model-selection.types';
+
 export type VerifyMetadata = {
   verified: boolean;
   verifierScore: number;
@@ -10,7 +15,7 @@ export type VerifyResult = {
   metadata: VerifyMetadata;
 };
 
-export type SendVerifyPayload = {
+export type SendVerifyPayload = AdvancedModelSelectionPayload & {
   content: string;
   maxRevisions?: number;
 };
@@ -46,6 +51,8 @@ export type UseVerifyPageReturn = {
   setContent: (value: string) => void;
   maxRevisions: number;
   setMaxRevisions: (value: number) => void;
+  selectedModel: AdvancedModuleModelSelection;
+  setSelectedModel: (value: AdvancedModuleModelSelection) => void;
   handleSend: () => void;
   canSend: boolean;
   isPending: boolean;

@@ -184,6 +184,28 @@ export type TranslationDictionary = {
     judgeModelLabel: string;
     judgeModelAuto: string;
     judgeModelDescription: string;
+    judgeOpenReview: string;
+    judgeReviewTitle: string;
+    judgeReviewDescription: string;
+    judgeDecisionLabel: string;
+    judgeConfidenceLabel: string;
+    judgeSummary: string;
+    judgeResponse: string;
+    judgeOriginalAnswer: string;
+    judgeRevisedAnswer: string;
+    judgeEscalatedAnswer: string;
+    judgeExecutionModel: string;
+    judgeJudgeModel: string;
+    judgeCriticModel: string;
+    judgeCriticScore: string;
+    judgeJudgeLatency: string;
+    judgeTotalLatency: string;
+    judgeRecommendedChanges: string;
+    judgeNoCriticFeedback: string;
+    judgeResponseTypeSummary: string;
+    judgeResponseTypeRevisedAnswer: string;
+    judgeResponseTypeEscalatedAnswer: string;
+    judgeResponseTypeVerificationNote: string;
     qualityThreshold: string;
     qualityThresholdDescription: string;
     maxReRouteAttempts: string;
@@ -640,6 +662,14 @@ export type TranslationDictionary = {
     showLess: string;
     timeout: string;
     noContent: string;
+    noJudge: string;
+    judgeAwaiting: string;
+    judgeSkipped: string;
+    judgeFailed: string;
+    judgeUnavailable: string;
+    judgeVerified: string;
+    judgeRevised: string;
+    judgeEscalated: string;
   };
   consensus: {
     title: string;
@@ -892,6 +922,13 @@ export type TranslationDictionary = {
     latency: string;
     viewInThread: string;
   };
+  advancedModelSelector: {
+    label: string;
+    auto: string;
+    loading: string;
+    description: string;
+    empty: string;
+  };
   workspaceConnectors: {
     title: string;
     description: string;
@@ -1014,7 +1051,11 @@ export type TranslationDictionary = {
     duration: string;
   };
   research: {
-    toggle: { placeholder: string };
+    toggle: {
+      placeholder: string;
+      autoProvider: string;
+      noProviders: string;
+    };
     modes: {
       off: string;
       searchOnly: string;
@@ -1064,6 +1105,20 @@ export type TranslationDictionary = {
       warnings: string;
       requestedModel: string;
       toolsUsed: string;
+    };
+    results: {
+      open: string;
+      title: string;
+      description: string;
+      provider: string;
+      selectionMode: string;
+      selectionAuto: string;
+      selectionExplicit: string;
+      fallbackUsed: string;
+      query: string;
+      evidenceCount: string;
+      attempts: string;
+      trace: string;
     };
   };
   workspaceActions: {

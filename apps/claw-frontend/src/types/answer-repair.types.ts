@@ -1,7 +1,11 @@
 import type { RepairType } from '@/enums/repair-type.enum';
+import type {
+  AdvancedModuleModelSelection,
+  AdvancedModelSelectionPayload,
+} from '@/types/advanced-model-selection.types';
 import type { TranslateFunction } from '@/types/i18n.types';
 
-export type RepairRequest = {
+export type RepairRequest = AdvancedModelSelectionPayload & {
   messageId?: string;
   content?: string;
   threadId?: string;
@@ -48,8 +52,8 @@ export type UseRepairPageReturn = {
   setContent: (value: string) => void;
   selectedRepairTypes: RepairType[];
   handleToggleRepairType: (type: RepairType) => void;
-  targetProvider: string | undefined;
-  targetModel: string | undefined;
+  selectedModel: AdvancedModuleModelSelection;
+  setSelectedModel: (value: AdvancedModuleModelSelection) => void;
   handleSend: () => void;
   isPending: boolean;
   isError: boolean;

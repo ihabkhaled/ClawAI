@@ -139,6 +139,8 @@ export type UseMessageComposerStateReturn = {
   setSelectedFileIds: (value: string[]) => void;
   research: ResearchOptions;
   setResearch: (value: ResearchOptions) => void;
+  researchProviders: SanitizedResearchProvider[];
+  isResearchProvidersLoading: boolean;
   handleSubmit: (e: React.FormEvent) => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   handleChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;

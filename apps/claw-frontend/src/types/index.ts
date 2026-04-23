@@ -20,6 +20,7 @@ export type {
   UseVirtualizedMessagesReturn,
   UseVirtualizedThreadsReturn,
   JudgeModelOption,
+  JudgeReview,
   MessageRenderItem,
   ParallelExpandedMessage,
 } from './chat.types';
@@ -188,6 +189,7 @@ export type {
   UseThemeSwitcherReturn,
   ThreadSettingsProps,
   GroupedModels,
+  AdvancedModuleModelSelectorProps,
   CatalogModelCardProps,
   CatalogCategoryFilterProps,
   CatalogCapabilityFilterProps,
@@ -206,6 +208,7 @@ export type {
   ConsensusMetadataProps,
   ParallelMessageGroupProps,
   ParallelModelSelectorProps,
+  CompareJudgeControlsProps,
   ParallelResponseCardProps,
   ParallelResultsGridProps,
   ParallelSummaryBarProps,
@@ -235,6 +238,11 @@ export type {
   RolePackMemberCardProps,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
+export type {
+  AdvancedModelSelectionMode,
+  AdvancedModelSelectionPayload,
+  AdvancedModuleModelSelection,
+} from './advanced-model-selection.types';
 export type {
   LogEntry,
   LogFilterParams,
@@ -323,9 +331,13 @@ export type {
 } from './replay-run.types';
 export type {
   ParallelModelResponse,
+  ParallelModelTarget,
+  ParallelJudgeConfig,
   ParallelResponse,
   ParallelRequest,
   UseParallelComparePageReturn,
+  UseInThreadCompareParams,
+  UseInThreadCompareReturn,
 } from './parallel.types';
 export type {
   ConsensusModelBreakdown,
@@ -550,6 +562,7 @@ export type {
 export type {
   ResearchToggleProps,
   EvidenceViewerProps,
+  ResearchRunDetailsProps,
   ResearchProviderFormProps,
   ResearchProviderRowProps,
   ConnectorStatusBadgeProps,

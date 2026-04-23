@@ -1,5 +1,6 @@
 import type { ResearchMode } from '@/enums/research-mode.enum';
 import type { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
+import type { ResearchProviderSelectionMode } from '@/enums/research-provider-selection-mode.enum';
 import type { ResearchProviderStatus } from '@/enums/research-provider-status.enum';
 
 export type ResearchOptions = {
@@ -45,6 +46,14 @@ export type ResearchEvidenceBundle = {
   workflow: string;
   requestedModel: string | null;
   requestedProvider: string | null;
+  providerSelection: {
+    providerId: string | null;
+    providerName: string | null;
+    providerKind: string | null;
+    selectionMode: ResearchProviderSelectionMode;
+    fallbackUsed: boolean;
+    attemptedProviders: string[];
+  };
   helperModels: string[];
   toolsUsed: string[];
   items: ResearchEvidenceItem[];

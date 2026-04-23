@@ -57,7 +57,11 @@ import type {
   ServerLogStats,
 } from './log.types';
 import type { CreateMemoryRequest, MemoryRecord } from './memory.types';
-import type { ParallelModelResponse, ParallelResponse } from './parallel.types';
+import type {
+  ParallelModelResponse,
+  ParallelModelTarget,
+  ParallelResponse,
+} from './parallel.types';
 import type { PipelineResult, PipelineStageResult } from './pipeline.types';
 import type { ProviderFailureStat, RecentFallback } from './recovery.types';
 import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
@@ -214,13 +218,11 @@ export type ThreadSettingsProps = {
 };
 
 export type JudgeRefereeDetailsProps = {
-  criticModel: string;
-  criticFeedback: string[];
-  criticScore: number;
-  judgeModel: string;
-  judgeDecision: string;
-  judgeReasoning: string;
-  judgeConfidence: number;
+  message: ChatMessage;
+};
+
+export type ResearchRunDetailsProps = {
+  message: ChatMessage;
 };
 
 export type GroupedModels = {
@@ -272,6 +274,13 @@ export type ModelSelectorProps = {
   disabled?: boolean;
 };
 
+export type AdvancedModuleModelSelectorProps = {
+  t: TranslateFunction;
+  value: ModelSelection | null;
+  onChange: (selection: ModelSelection | null) => void;
+  disabled?: boolean;
+};
+
 export type FileAttachmentPickerProps = {
   selectedFileIds: string[];
   onChange: (fileIds: string[]) => void;
@@ -298,6 +307,8 @@ export type MessageComposerProps = {
 
 export type ResearchToggleProps = {
   value: ResearchOptions;
+  providers: SanitizedResearchProvider[];
+  isProvidersLoading?: boolean;
   onChange: (value: ResearchOptions) => void;
   disabled?: boolean;
 };
@@ -785,9 +796,19 @@ export type ParallelMessageGroupProps = {
 // ─── Parallel Compare component props ─────────────────────────────────────────
 
 export type ParallelModelSelectorProps = {
-  selectedModels: Array<{ provider: string; model: string }>;
+  selectedModels: ParallelModelTarget[];
   onToggleModel: (provider: string, model: string, checked: boolean) => void;
   selectionError: string | null;
+  t: TranslateFunction;
+};
+
+export type CompareJudgeControlsProps = {
+  judgeEnabled: boolean;
+  onJudgeEnabledChange: (value: boolean) => void;
+  judgeModel: string | null;
+  onJudgeModelChange: (value: string | null) => void;
+  judgeModelOptions: JudgeModelOption[];
+  judgeModelOptionsLoading: boolean;
   t: TranslateFunction;
 };
 
@@ -837,13 +858,19 @@ export type ConsensusMetadataProps = {
 };
 
 export type InThreadComparePanelProps = {
-  selectedModels: Array<{ provider: string; model: string }>;
+  selectedModels: ParallelModelTarget[];
   onToggleModel: (provider: string, model: string, checked: boolean) => void;
   onCompare: (prompt: string) => void;
   onClose: () => void;
   result: ParallelResponse | undefined;
   isPending: boolean;
   canSend: boolean;
+  judgeEnabled: boolean;
+  onJudgeEnabledChange: (value: boolean) => void;
+  judgeModel: string | null;
+  onJudgeModelChange: (value: string | null) => void;
+  judgeModelOptions: JudgeModelOption[];
+  judgeModelOptionsLoading: boolean;
   t: TranslateFunction;
 };
 

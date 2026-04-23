@@ -1,5 +1,7 @@
 import type {
   FallbackFailureType,
+  JudgeResponseType,
+  JudgeReviewDecision,
   MessageFeedback,
   MessageRole,
   RoutingMode,
@@ -49,6 +51,36 @@ export type ChatMessage = {
   latencyMs: number | null;
   metadata: Record<string, unknown> | null;
   createdAt: string;
+};
+
+export type JudgeReview = {
+  version: 1;
+  judgeDecision: JudgeReviewDecision;
+  judgeModel: string;
+  judgeDisplayName: string;
+  judgeConfidence: number;
+  judgeReasoning: string;
+  judgeSummary: string;
+  judgeResponse: string;
+  judgeResponseType: JudgeResponseType;
+  criticModel: string;
+  criticDisplayName: string;
+  criticFeedback: string[];
+  criticScore: number;
+  originalExecutionModel: string;
+  originalExecutionDisplayName: string;
+  originalAnswerSnapshot: string;
+  revisedAnswer: string | null;
+  escalatedAnswer: string | null;
+  judgeLatencyMs: number;
+  criticLatencyMs: number;
+  judgeTotalLatencyMs: number;
+  judgeMetadata: {
+    category: string;
+    recommendedChanges: string[];
+  };
+  judgeDialogAvailable: boolean;
+  generatedAt: string;
 };
 
 export type CreateThreadRequest = {

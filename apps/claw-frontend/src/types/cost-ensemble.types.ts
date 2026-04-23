@@ -1,5 +1,9 @@
 import type { CostTier } from '@/enums';
 
+import type {
+  AdvancedModuleModelSelection,
+  AdvancedModelSelectionPayload,
+} from './advanced-model-selection.types';
 import type { TranslateFunction } from './i18n.types';
 
 export type CostClassification = {
@@ -29,7 +33,7 @@ export type CostEnsembleResult = {
   metadata: CostEnsembleMetadata;
 };
 
-export type SendCostEnsemblePayload = {
+export type SendCostEnsemblePayload = AdvancedModelSelectionPayload & {
   content: string;
 };
 
@@ -57,6 +61,8 @@ export type UseCostEnsemblePageReturn = {
   t: TranslateFunction;
   content: string;
   setContent: (v: string) => void;
+  selectedModel: AdvancedModuleModelSelection;
+  setSelectedModel: (value: AdvancedModuleModelSelection) => void;
   handleSend: () => void;
   canSend: boolean;
   isPending: boolean;

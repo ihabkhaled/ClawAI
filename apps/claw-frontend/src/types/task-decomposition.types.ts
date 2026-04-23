@@ -1,3 +1,7 @@
+import type {
+  AdvancedModuleModelSelection,
+  AdvancedModelSelectionPayload,
+} from './advanced-model-selection.types';
 import type { TranslateFunction } from './i18n.types';
 
 export type SubTaskResult = {
@@ -20,7 +24,7 @@ export type DecompositionResultState = {
   metadata: DecompositionMetadata;
 };
 
-export type DecomposeRequest = {
+export type DecomposeRequest = AdvancedModelSelectionPayload & {
   content: string;
   threadId?: string;
   maxSubTasks?: number;
@@ -52,6 +56,8 @@ export type UseDecomposePageReturn = {
   setContent: (v: string) => void;
   maxSubTasks: number;
   setMaxSubTasks: (n: number) => void;
+  selectedModel: AdvancedModuleModelSelection;
+  setSelectedModel: (value: AdvancedModuleModelSelection) => void;
   handleSend: () => void;
   canSend: boolean;
   isPending: boolean;

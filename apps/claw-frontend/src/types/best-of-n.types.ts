@@ -1,3 +1,7 @@
+import type {
+  AdvancedModuleModelSelection,
+  AdvancedModelSelectionPayload,
+} from './advanced-model-selection.types';
 import type { TranslateFunction } from './i18n.types';
 
 export type CandidateResult = {
@@ -21,7 +25,7 @@ export type BestOfNResultState = {
   metadata: BestOfNMetadata;
 };
 
-export type BestOfNRequest = {
+export type BestOfNRequest = AdvancedModelSelectionPayload & {
   content: string;
   threadId?: string;
   n: number;
@@ -54,6 +58,8 @@ export type UseBestOfNPageReturn = {
   setContent: (v: string) => void;
   n: number;
   setN: (n: number) => void;
+  selectedModel: AdvancedModuleModelSelection;
+  setSelectedModel: (value: AdvancedModuleModelSelection) => void;
   handleSend: () => void;
   canSend: boolean;
   isPending: boolean;
