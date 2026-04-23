@@ -44,7 +44,7 @@ import { type TaskDecompositionResponse } from '../types/task-decomposition.type
 import { type BestOfNResponse } from '../types/best-of-n.types';
 import { type CostEnsembleResponse } from '../types/cost-ensemble.types';
 import { type VerifyResponse } from '../types/verifier.types';
-import { type ParallelResponse } from '../types/parallel.types';
+import { type ParallelJudgeConfig, type ParallelResponse } from '../types/parallel.types';
 import { type PipelineResponse } from '../types/pipeline.types';
 import { type RolePackResponse } from '../types/role-pack.types';
 import { type ParallelMessageDto } from '../dto/parallel-message.dto';
@@ -53,7 +53,7 @@ import { type PipelineMessageDto } from '../dto/pipeline-message.dto';
 import { type RolePackMessageDto } from '../dto/role-pack-message.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
-import { type ChatMessage, type ChatThread, RoutingMode } from '../../../generated/prisma';
+import { type ChatMessage, type ChatThread, Prisma, RoutingMode } from '../../../generated/prisma';
 
 @Injectable()
 export class ChatMessagesService implements OnModuleInit {
@@ -225,6 +225,10 @@ export class ChatMessagesService implements OnModuleInit {
       thread.id,
       dto.content,
       dto.models,
+      {
+        enabled: dto.judgeEnabled === true,
+        model: dto.judgeModel ?? null,
+      } as ParallelJudgeConfig,
       dto.fileIds,
     );
   }
@@ -709,6 +713,9 @@ export class ChatMessagesService implements OnModuleInit {
         ...(contextMetadata
           ? { memoryCount: contextMetadata.memoryCount, fileIds: contextMetadata.fileIds }
           : {}),
+        ...(this.extractPersistedResearch(latestUserMetadata) !== null
+          ? { research: this.extractPersistedResearch(latestUserMetadata) }
+          : {}),
         ...(llmResponse.imageGenerationId
           ? { type: 'image_generation', generationId: llmResponse.imageGenerationId }
           : {}),
@@ -734,7 +741,7 @@ export class ChatMessagesService implements OnModuleInit {
         routeRoadmap,
         progressSummary,
         ...(llmResponse.judgeRefereeMetadata ?? {}),
-      },
+      } as Prisma.InputJsonValue,
     });
   }
 
@@ -836,6 +843,16 @@ export class ChatMessagesService implements OnModuleInit {
       itemCount,
       warningCount,
     };
+  }
+
+  private extractPersistedResearch(
+    latestUserMetadata?: Record<string, unknown> | null,
+  ): Record<string, unknown> | null {
+    const research = latestUserMetadata?.['research'];
+    if (research === null || typeof research !== 'object') {
+      return null;
+    }
+    return research as Record<string, unknown>;
   }
 
   private extractResearchBundle(run: ResearchRunResponse): ResearchExecutionSummary {

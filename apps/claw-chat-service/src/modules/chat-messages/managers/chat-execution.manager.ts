@@ -24,7 +24,6 @@ import {
   type OpenAiChatResponse,
   type ThreadSettings,
 } from '../types/execution.types';
-import { JudgeDecision } from '../../../common/enums';
 import type { JudgeRefereeConfig } from '../types/judge-referee.types';
 import { type AssembledContext } from '../types/context.types';
 import { ContextAssemblyManager } from './context-assembly.manager';
@@ -190,10 +189,15 @@ export class ChatExecutionManager implements OnModuleInit {
         let qualityScore = 1;
 
         if (!executionOptions.fastPathEnabled) {
+          const recentAssistantContents = context.threadMessages
+            .filter((message) => message.role === 'ASSISTANT')
+            .slice(-3)
+            .map((message) => message.content);
           const qualityResult = this.qualityCheckManager.checkResponseQuality(
             response.content,
             userPrompt,
             threadSettings,
+            recentAssistantContents,
           );
           qualityScore = qualityResult.score;
           const reRouteDecision = this.qualityCheckManager.shouldReRoute(
@@ -241,16 +245,8 @@ export class ChatExecutionManager implements OnModuleInit {
           executionOptions.fastPathEnabled,
         );
         if (judgeResult) {
-          if (
-            judgeResult.judgeVerdict.decision === JudgeDecision.ESCALATE &&
-            i < candidates.length - 1
-          ) {
-            this.logger.warn(
-              `Judge escalated from ${candidate.provider}/${candidate.model}: ${judgeResult.judgeVerdict.reasoning}`,
-            );
-            continue;
-          }
-          const judgedResponse = judgeResult.revisedResponse ?? finalResponse;
+          const judgedResponse =
+            judgeResult.escalatedResponse ?? judgeResult.revisedResponse ?? finalResponse;
           return {
             ...judgedResponse,
             judgeRefereeMetadata: this.judgeRefereeManager.buildMetadata(judgeResult),

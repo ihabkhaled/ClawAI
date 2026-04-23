@@ -192,6 +192,16 @@ export class ContextAssemblyManager {
     const parts: string[] = [];
     const hasResearchContext =
       context.researchEvidence.length > 0 || context.researchWarnings.length > 0;
+    const currentIntent = this.extractCurrentIntent(context.threadMessages);
+    const relevantMessages = this.filterThreadMessagesForIntent(
+      context.threadMessages,
+      currentIntent,
+    );
+    const relevantMemories = this.filterMemoriesForIntent(context.memories, currentIntent);
+    const relevantWorkspaceCitations = this.filterWorkspaceCitationsForIntent(
+      context.workspaceCitations,
+      currentIntent,
+    );
 
     if (context.systemPrompt) {
       this.logger.debug(
@@ -221,17 +231,17 @@ export class ContextAssemblyManager {
     }
 
     this.logger.debug(
-      `buildPromptString: adding ${String(context.threadMessages.length)} thread messages`,
+      `buildPromptString: adding ${String(relevantMessages.length)} filtered thread messages`,
     );
-    for (const msg of context.threadMessages) {
+    for (const msg of relevantMessages) {
       parts.push(`${msg.role}: ${msg.content}`);
     }
 
-    if (context.workspaceCitations.length > 0) {
+    if (relevantWorkspaceCitations.length > 0) {
       this.logger.debug(
-        `buildPromptString: adding ${String(context.workspaceCitations.length)} workspace citations`,
+        `buildPromptString: adding ${String(relevantWorkspaceCitations.length)} workspace citations`,
       );
-      const citationBlock = context.workspaceCitations
+      const citationBlock = relevantWorkspaceCitations
         .map((c) => {
           const lines = [`[${c.type}/${c.provider}] ${c.title}`];
           if (c.snippet) lines.push(c.snippet);
@@ -255,9 +265,9 @@ export class ContextAssemblyManager {
       }
     }
 
-    if (context.memories.length > 0) {
-      this.logger.debug(`buildPromptString: adding ${String(context.memories.length)} memories`);
-      const memoryBlock = context.memories.map((m) => `[${m.type}] ${m.content}`).join('\n');
+    if (relevantMemories.length > 0) {
+      this.logger.debug(`buildPromptString: adding ${String(relevantMemories.length)} memories`);
+      const memoryBlock = relevantMemories.map((m) => `[${m.type}] ${m.content}`).join('\n');
       parts.push(`USER CONTEXT (memories):\n${memoryBlock}`);
     }
 
@@ -273,6 +283,16 @@ export class ContextAssemblyManager {
     const messages: OpenAiChatMessage[] = [];
     const hasResearchContext =
       context.researchEvidence.length > 0 || context.researchWarnings.length > 0;
+    const currentIntent = this.extractCurrentIntent(context.threadMessages);
+    const relevantMessages = this.filterThreadMessagesForIntent(
+      context.threadMessages,
+      currentIntent,
+    );
+    const relevantMemories = this.filterMemoriesForIntent(context.memories, currentIntent);
+    const relevantWorkspaceCitations = this.filterWorkspaceCitationsForIntent(
+      context.workspaceCitations,
+      currentIntent,
+    );
 
     const systemParts: string[] = [];
 
@@ -281,11 +301,11 @@ export class ContextAssemblyManager {
       systemParts.push(context.systemPrompt);
     }
 
-    if (context.memories.length > 0) {
+    if (relevantMemories.length > 0) {
       this.logger.debug(
-        `buildChatMessages: adding ${String(context.memories.length)} memories to system`,
+        `buildChatMessages: adding ${String(relevantMemories.length)} memories to system`,
       );
-      const memoryBlock = context.memories.map((m) => `[${m.type}] ${m.content}`).join('\n');
+      const memoryBlock = relevantMemories.map((m) => `[${m.type}] ${m.content}`).join('\n');
       systemParts.push(`User context (memories):\n${memoryBlock}`);
     }
 
@@ -302,11 +322,11 @@ export class ContextAssemblyManager {
       }
     }
 
-    if (context.workspaceCitations.length > 0) {
+    if (relevantWorkspaceCitations.length > 0) {
       this.logger.debug(
-        `buildChatMessages: adding ${String(context.workspaceCitations.length)} workspace citations to system`,
+        `buildChatMessages: adding ${String(relevantWorkspaceCitations.length)} workspace citations to system`,
       );
-      const citationBlock = context.workspaceCitations
+      const citationBlock = relevantWorkspaceCitations
         .map((c) => {
           const lines = [`[${c.type}/${c.provider}] ${c.title}`];
           if (c.snippet) lines.push(c.snippet);
@@ -350,12 +370,12 @@ export class ContextAssemblyManager {
       `buildChatMessages: found ${String(imageFiles.length)} image files for multimodal injection`,
     );
 
-    for (const msg of context.threadMessages) {
+    for (const msg of relevantMessages) {
       const role = this.mapRole(msg.role);
 
       // If this is the last user message AND we have image attachments,
       // build multimodal content (text + images)
-      const isLastUser = role === 'user' && msg === context.threadMessages.at(-1);
+      const isLastUser = role === 'user' && msg === relevantMessages.at(-1);
       if (isLastUser && imageFiles.length > 0) {
         this.logger.debug(
           `buildChatMessages: building multimodal last user message with ${String(imageFiles.length)} images`,
@@ -653,6 +673,156 @@ export class ContextAssemblyManager {
       return 'assistant';
     }
     return 'system';
+  }
+
+  private extractCurrentIntent(messages: ChatMessage[]): string {
+    const lastUser = [...messages].reverse().find((msg) => msg.role === 'USER');
+    return this.normalizeIntentText(lastUser?.content ?? '');
+  }
+
+  private filterThreadMessagesForIntent(
+    messages: ChatMessage[],
+    currentIntent: string,
+  ): ChatMessage[] {
+    if (messages.length <= 2) {
+      return messages;
+    }
+
+    if (this.isLikelyFollowUp(currentIntent)) {
+      return messages.slice(-6);
+    }
+
+    const lastUser = [...messages].reverse().find((msg) => msg.role === 'USER');
+    const selected = messages.filter((msg) => {
+      if (msg.id === lastUser?.id) {
+        return true;
+      }
+      if (msg.role === 'SYSTEM') {
+        return true;
+      }
+      if (msg.role === 'ASSISTANT') {
+        return false;
+      }
+      return this.calculateTokenOverlap(msg.content, currentIntent) >= 0.45;
+    });
+
+    return selected.length > 0 ? selected.slice(-4) : messages.slice(-1);
+  }
+
+  private filterMemoriesForIntent(
+    memories: MemoryRecordResponse[],
+    currentIntent: string,
+  ): MemoryRecordResponse[] {
+    if (memories.length === 0) {
+      return memories;
+    }
+
+    const relevant = memories
+      .filter((memory) => {
+        if (this.isPreferenceLikeMemory(memory)) {
+          return true;
+        }
+        return this.calculateTokenOverlap(memory.content, currentIntent) >= 0.28;
+      })
+      .slice(0, 3);
+
+    return relevant;
+  }
+
+  private filterWorkspaceCitationsForIntent(
+    citations: WorkspaceCitation[],
+    currentIntent: string,
+  ): WorkspaceCitation[] {
+    if (citations.length === 0) {
+      return citations;
+    }
+
+    return citations
+      .filter((citation) => {
+        const combined = `${citation.title}\n${citation.snippet ?? ''}`;
+        return this.calculateTokenOverlap(combined, currentIntent) >= 0.12;
+      })
+      .slice(0, 4);
+  }
+
+  private isPreferenceLikeMemory(memory: MemoryRecordResponse): boolean {
+    const value = `${memory.type} ${memory.content}`.toLowerCase();
+    return /(preference|profile|identity|setting|locale|language|name|timezone|style)/.test(value);
+  }
+
+  private isLikelyFollowUp(prompt: string): boolean {
+    const normalized = prompt.trim().toLowerCase();
+    if (normalized.length === 0) {
+      return false;
+    }
+
+    return /(^|\b)(again|another|one more|continue|expand|shorter|longer|rewrite|rephrase|summarize that|fix that|use that|based on that|from above|previous|earlier|same answer|same style)(\b|$)/.test(
+      normalized,
+    );
+  }
+
+  private calculateTokenOverlap(a: string, b: string): number {
+    const aTokens = new Set(this.tokenize(this.normalizeIntentText(a)));
+    const bTokens = new Set(this.tokenize(this.normalizeIntentText(b)));
+    if (aTokens.size === 0 || bTokens.size === 0) {
+      return 0;
+    }
+
+    let hits = 0;
+    for (const token of aTokens) {
+      if (bTokens.has(token)) {
+        hits += 1;
+      }
+    }
+
+    return hits / Math.max(Math.min(aTokens.size, bTokens.size), 1);
+  }
+
+  private tokenize(value: string): string[] {
+    const ignoredTokens = new Set([
+      'associate',
+      'senior',
+      'lead',
+      'principal',
+      'engineer',
+      'advisor',
+      'director',
+      'manager',
+      'analyst',
+      'strategist',
+      'consultant',
+      'support',
+      'backend',
+      'frontend',
+      'product',
+      'customer',
+      'security',
+      'operations',
+      'research',
+      'scientist',
+      'architect',
+      'designer',
+      'artist',
+      'legal',
+      'medical',
+      'finance',
+      'procurement',
+      'executive',
+    ]);
+    return value
+      .toLowerCase()
+      .replaceAll(/[^a-z0-9\s]+/g, ' ')
+      .split(/\s+/)
+      .filter((token) => token.length >= 4 && !ignoredTokens.has(token));
+  }
+
+  private normalizeIntentText(value: string): string {
+    const trimmed = value.trim();
+    const commaIndex = trimmed.indexOf(',');
+    if (trimmed.startsWith('As ') && commaIndex > 0) {
+      return trimmed.slice(commaIndex + 1).trim();
+    }
+    return trimmed;
   }
 
   private shouldSkipExpensiveContext(query: string, fileIds: string[]): boolean {

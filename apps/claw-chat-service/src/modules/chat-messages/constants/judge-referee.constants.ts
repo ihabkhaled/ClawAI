@@ -84,6 +84,12 @@ Rules:
 - If critic score >= 0.5 and issues are fixable (formatting, completeness), REVISE.
 - If critic score < 0.5 or there are fundamental errors (wrong approach, dangerous advice), ESCALATE.
 - Confidence indicates how sure you are (0.0-1.0).
+- Always include a short user-facing summary.
+- Always include a user-facing response field.
+- For ACCEPT, response must be a short verification note explaining why the answer is acceptable.
+- For REVISE, response must explain what should change. Do not output the full revised answer in response.
+- For ESCALATE, response must be a stronger replacement answer to the original user question.
+- recommendedChanges should be a short list of concrete fixes. Use an empty array when none are needed.
 
 Output ONLY valid JSON with no explanation:
-{"decision": "ACCEPT|REVISE|ESCALATE", "reasoning": "one sentence", "confidence": 0.0-1.0}`;
+{"decision": "ACCEPT|REVISE|ESCALATE", "summary": "short user-facing summary", "reasoning": "brief explanation for the verdict", "confidence": 0.0-1.0, "responseType": "verification_note|summary|escalated_answer", "response": "user-facing note or stronger replacement answer", "recommendedChanges": ["fix 1", "fix 2"]}`;
