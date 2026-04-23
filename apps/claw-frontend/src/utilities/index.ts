@@ -30,6 +30,7 @@ export {
   decodeModelValue,
   getLocalModelSpecificationLabels,
 } from './model-selector.utility';
+export { buildAdvancedModelSelectionPayload } from './advanced-model-selection.utility';
 export {
   getSystemTheme,
   getStoredTheme,
@@ -67,3 +68,11 @@ export {
 export type { EscalationStatusBadgeVariant } from './escalation.utility';
 export { formatModelSize } from './model-size.utility';
 export { resolveSearchBrowserScoreTone } from './search-browser-score-tone.utility';
+export { getJudgeReviewFromMessage } from './judge-review.utility';
+export { getResearchRunFromMessage } from './research-run.utility';
+export {
+  getJudgeDecisionLabel,
+  getJudgeDecisionTone,
+  getJudgeResponseTypeLabel,
+} from './judge-referee-display.utility';
+export { getProviderPlaceholder } from './research-toggle-display.utility';

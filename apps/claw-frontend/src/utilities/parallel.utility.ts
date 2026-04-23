@@ -8,8 +8,10 @@ import {
   SCORE_TOKEN_DIVISOR,
   SCORE_TOKEN_WEIGHT,
 } from '@/constants';
-import { ParallelModelStatus } from '@/enums';
-import type { ChatMessage, MessageRenderItem, ParallelModelResponse } from '@/types';
+import { CompareJudgeState, ParallelModelStatus } from '@/enums';
+import type { ChatMessage, JudgeReview, MessageRenderItem, ParallelModelResponse } from '@/types';
+
+import { getJudgeReviewFromMessage } from './judge-review.utility';
 
 export function groupParallelMessages(messages: ChatMessage[]): MessageRenderItem[] {
   const items: MessageRenderItem[] = [];
@@ -83,6 +85,10 @@ export function messageToParallelResponse(msg: ChatMessage): ParallelModelRespon
   const meta = msg.metadata as Record<string, unknown> | null;
   const status = (meta?.['status'] as string) ?? ParallelModelStatus.COMPLETED;
   const errorMessage = (meta?.['errorMessage'] as string) ?? null;
+  const judgeReview = getJudgeReviewFromMessage(msg);
+  const judgeState = getParallelJudgeState(meta, judgeReview, status as ParallelModelStatus);
+  const judgeModel = getString(meta?.['judgeModel']);
+  const judgeDisplayName = getString(meta?.['judgeDisplayName'], judgeModel ?? '');
 
   return {
     provider: msg.provider ?? '',
@@ -93,7 +99,89 @@ export function messageToParallelResponse(msg: ChatMessage): ParallelModelRespon
     outputTokens: msg.outputTokens,
     status: status as ParallelModelStatus,
     errorMessage,
+    judgeEnabled: meta?.['judgeEnabled'] === true,
+    judgeModel: judgeModel.length > 0 ? judgeModel : null,
+    judgeDisplayName: judgeDisplayName.length > 0 ? judgeDisplayName : null,
+    judgeState,
+    judgeErrorState: getJudgeErrorState(meta, judgeReview, judgeState),
+    judgeDialogAvailable: judgeReview?.judgeDialogAvailable === true,
+    judgeReview,
+    message: msg,
   };
+}
+
+function getString(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function getParallelJudgeState(
+  meta: Record<string, unknown> | null,
+  judgeReview: JudgeReview | null,
+  status: ParallelModelStatus,
+): CompareJudgeState {
+  const rawState = meta?.['judgeState'];
+  if (
+    rawState === CompareJudgeState.NONE ||
+    rawState === CompareJudgeState.AWAITING ||
+    rawState === CompareJudgeState.VERIFIED ||
+    rawState === CompareJudgeState.REVISED ||
+    rawState === CompareJudgeState.ESCALATED ||
+    rawState === CompareJudgeState.FAILED ||
+    rawState === CompareJudgeState.UNAVAILABLE ||
+    rawState === CompareJudgeState.SKIPPED
+  ) {
+    return rawState;
+  }
+
+  if (judgeReview?.judgeDialogAvailable === false) {
+    const errorState = meta?.['judgeErrorState'];
+    if (
+      errorState === CompareJudgeState.FAILED ||
+      errorState === CompareJudgeState.UNAVAILABLE ||
+      errorState === CompareJudgeState.SKIPPED
+    ) {
+      return errorState;
+    }
+  }
+
+  if (judgeReview?.judgeDecision === 'REVISE') {
+    return CompareJudgeState.REVISED;
+  }
+
+  if (judgeReview?.judgeDecision === 'ESCALATE') {
+    return CompareJudgeState.ESCALATED;
+  }
+
+  if (judgeReview?.judgeDecision === 'ACCEPT') {
+    return judgeReview.judgeDialogAvailable === false
+      ? CompareJudgeState.UNAVAILABLE
+      : CompareJudgeState.VERIFIED;
+  }
+
+  return status === ParallelModelStatus.COMPLETED
+    ? CompareJudgeState.NONE
+    : CompareJudgeState.SKIPPED;
+}
+
+function getJudgeErrorState(
+  meta: Record<string, unknown> | null,
+  judgeReview: JudgeReview | null,
+  judgeState: CompareJudgeState,
+): CompareJudgeState | null {
+  const rawState = meta?.['judgeErrorState'];
+  if (
+    rawState === CompareJudgeState.FAILED ||
+    rawState === CompareJudgeState.UNAVAILABLE ||
+    rawState === CompareJudgeState.SKIPPED
+  ) {
+    return rawState;
+  }
+
+  if (judgeReview?.judgeDialogAvailable === false) {
+    return judgeState;
+  }
+
+  return null;
 }
 
 export function messagesToParallelResponses(messages: ChatMessage[]): ParallelModelResponse[] {
