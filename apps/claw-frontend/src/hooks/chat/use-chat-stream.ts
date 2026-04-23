@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { API_BASE_URL } from '@/constants';
-import { FallbackFailureType, StreamEventType } from '@/enums';
-import type { FallbackAttemptInfo, SseConnection, StreamEvent } from '@/types';
+import { FallbackFailureType, StreamEventType, VisibleProgressStageStatus } from '@/enums';
+import type {
+  FallbackAttemptInfo,
+  SseConnection,
+  StreamEvent,
+  VisibleProgressStage,
+} from '@/types';
 import { connectSse, logger } from '@/utilities';
 
 export function useChatStream(threadId: string, isActive: boolean) {
@@ -11,6 +16,8 @@ export function useChatStream(threadId: string, isActive: boolean) {
   const [judgeEvaluating, setJudgeEvaluating] = useState(false);
   const [executingModel, setExecutingModel] = useState<string | null>(null);
   const [judgeModel, setJudgeModel] = useState<string | null>(null);
+  const [progressStages, setProgressStages] = useState<VisibleProgressStage[]>([]);
+  const [currentStageLabel, setCurrentStageLabel] = useState<string | null>(null);
   const connectionRef = useRef<SseConnection | null>(null);
 
   const resetStream = useCallback((): void => {
@@ -19,6 +26,37 @@ export function useChatStream(threadId: string, isActive: boolean) {
     setJudgeEvaluating(false);
     setExecutingModel(null);
     setJudgeModel(null);
+    setProgressStages([]);
+    setCurrentStageLabel(null);
+  }, []);
+
+  const upsertStage = useCallback((event: StreamEvent, status: VisibleProgressStage['status']) => {
+    const actorKey = event.model ?? event.actorName ?? event.provider ?? event.type;
+    const stageId = `${event.type}:${actorKey}`;
+    const nextStage: VisibleProgressStage = {
+      id: stageId,
+      type: event.type,
+      label: event.label ?? event.type,
+      description: event.description,
+      actorType: event.actorType,
+      actorName: event.actorName,
+      provider: event.provider,
+      model: event.model,
+      status,
+      timestamp: Date.now(),
+    };
+
+    setProgressStages((prev) => {
+      const existingIndex = prev.findIndex((stage) => stage.id === stageId);
+      if (existingIndex === -1) {
+        return [...prev, nextStage];
+      }
+
+      const updated = [...prev];
+      updated[existingIndex] = nextStage;
+      return updated;
+    });
+    setCurrentStageLabel(nextStage.label);
   }, []);
 
   useEffect(() => {
@@ -42,6 +80,15 @@ export function useChatStream(threadId: string, isActive: boolean) {
         try {
           const parsed = JSON.parse(data) as StreamEvent;
 
+          if (
+            parsed.type === StreamEventType.REQUEST_ACCEPTED ||
+            parsed.type === StreamEventType.ROUTER_STARTED ||
+            parsed.type === StreamEventType.PROVIDER_SELECTED ||
+            parsed.type === StreamEventType.RESPONSE_STREAMING
+          ) {
+            upsertStage(parsed, VisibleProgressStageStatus.ACTIVE);
+          }
+
           if (parsed.type === StreamEventType.FALLBACK_ATTEMPT) {
             logger.warn({
               component: 'chat',
@@ -63,9 +110,12 @@ export function useChatStream(threadId: string, isActive: boolean) {
               nextProvider: parsed.nextProvider,
               nextModel: parsed.nextModel,
               timestamp: Date.now(),
-              failureType: errorText.startsWith('Weak response') ? FallbackFailureType.QUALITY : FallbackFailureType.ERROR,
+              failureType: errorText.startsWith('Weak response')
+                ? FallbackFailureType.QUALITY
+                : FallbackFailureType.ERROR,
             };
             setFallbackAttempts((prev) => [...prev, attempt]);
+            upsertStage(parsed, VisibleProgressStageStatus.ACTIVE);
           }
 
           if (parsed.type === StreamEventType.PROVIDER_SELECTED) {
@@ -85,12 +135,14 @@ export function useChatStream(threadId: string, isActive: boolean) {
             if (parsed.judgeModel) {
               setJudgeModel(parsed.judgeModel);
             }
+            upsertStage(parsed, VisibleProgressStageStatus.ACTIVE);
           }
 
           if (parsed.type === StreamEventType.DONE) {
             setJudgeEvaluating(false);
             setExecutingModel(null);
             setJudgeModel(null);
+            upsertStage(parsed, VisibleProgressStageStatus.COMPLETED);
           }
 
           if (parsed.type === StreamEventType.ERROR) {
@@ -101,6 +153,7 @@ export function useChatStream(threadId: string, isActive: boolean) {
               details: { threadId, error: parsed.error },
             });
             setStreamError(parsed.error ?? 'All providers failed');
+            upsertStage(parsed, VisibleProgressStageStatus.ERROR);
           }
         } catch {
           // Ignore parse errors from SSE heartbeats
@@ -122,7 +175,7 @@ export function useChatStream(threadId: string, isActive: boolean) {
       connection.close();
       connectionRef.current = null;
     };
-  }, [threadId, isActive, resetStream]);
+  }, [threadId, isActive, resetStream, upsertStage]);
 
   // Clean up when no longer waiting
   useEffect(() => {
@@ -138,6 +191,8 @@ export function useChatStream(threadId: string, isActive: boolean) {
     judgeEvaluating,
     executingModel,
     judgeModel,
+    progressStages,
+    currentStageLabel,
     resetStream,
   };
 }

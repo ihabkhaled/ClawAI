@@ -22,16 +22,38 @@ describe('MessageProvenance', () => {
       feedback: null,
       latencyMs: null,
       metadata: {
+        progressSummary: [
+          {
+            label: 'Request accepted',
+            description: 'Queued successfully.',
+            actorName: 'Claw',
+            status: 'completed',
+          },
+        ],
         routeRoadmap: {
           routerModel: 'qwen3:1.7b',
+          research: {
+            workflow: 'SEARCH_FETCH_EXTRACT',
+            toolsUsed: ['search', 'fetch'],
+            itemCount: 3,
+            warningCount: 1,
+          },
           finalProvider: 'local-ollama',
           finalModel: 'glm-5.1:cloud',
           steps: [
             {
+              stage: 'router',
               provider: 'local-ollama',
               model: 'qwen3:1.7b',
             },
             {
+              stage: 'research',
+              provider: 'research-service',
+              model: 'SEARCH_FETCH_EXTRACT',
+              displayName: 'Research workflow',
+            },
+            {
+              stage: 'execution',
               provider: 'local-ollama',
               model: 'glm-5.1:cloud',
             },
@@ -49,7 +71,15 @@ describe('MessageProvenance', () => {
     expect(screen.getByText('qwen3:1.7b')).toBeInTheDocument();
     expect(screen.getByText('Route path:')).toBeInTheDocument();
     expect(
-      screen.getByText('local-ollama/qwen3:1.7b -> local-ollama/glm-5.1:cloud'),
+      screen.getByText(
+        'router: local-ollama/qwen3:1.7b -> research: research-service/Research workflow -> execution: local-ollama/glm-5.1:cloud',
+      ),
     ).toBeInTheDocument();
+    expect(screen.getByText('Research:')).toBeInTheDocument();
+    expect(
+      screen.getByText('SEARCH_FETCH_EXTRACT • 3 items • search, fetch • 1 warnings'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Progress summary:')).toBeInTheDocument();
+    expect(screen.getByText('Queued successfully.')).toBeInTheDocument();
   });
 });

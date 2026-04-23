@@ -4,6 +4,8 @@ import type {
   MessageRole,
   RoutingMode,
   StreamEventType,
+  VisibleProgressActorType,
+  VisibleProgressStageStatus,
 } from '@/enums';
 import type { ResearchMode } from '@/enums/research-mode.enum';
 
@@ -120,6 +122,10 @@ export type StreamEvent = {
   provider?: string;
   model?: string;
   error?: string;
+  label?: string;
+  description?: string;
+  actorType?: VisibleProgressActorType;
+  actorName?: string;
   failedProvider?: string;
   failedModel?: string;
   attempt?: number;
@@ -128,6 +134,19 @@ export type StreamEvent = {
   nextModel?: string;
   criticModel?: string;
   judgeModel?: string;
+};
+
+export type VisibleProgressStage = {
+  id: string;
+  type: StreamEventType;
+  label: string;
+  description?: string;
+  actorType?: VisibleProgressActorType;
+  actorName?: string;
+  provider?: string;
+  model?: string;
+  status: VisibleProgressStageStatus;
+  timestamp: number;
 };
 
 export type SseConnection = {

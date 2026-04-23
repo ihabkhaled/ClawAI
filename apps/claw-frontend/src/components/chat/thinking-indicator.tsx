@@ -1,7 +1,7 @@
 import { AlertTriangle, ArrowRight, RefreshCw, XCircle } from 'lucide-react';
 
 import { THINKING_INDICATOR_LABEL } from '@/constants';
-import { FallbackFailureType } from '@/enums';
+import { FallbackFailureType, VisibleProgressStageStatus } from '@/enums';
 import { cn } from '@/lib/utils';
 import type { ThinkingIndicatorProps } from '@/types';
 
@@ -12,12 +12,17 @@ export function ThinkingIndicator({
   judgeEvaluating,
   executingModel,
   judgeModel,
+  progressStages,
+  currentStageLabel,
 }: ThinkingIndicatorProps) {
   const hasFallbacks = fallbackAttempts && fallbackAttempts.length > 0;
+  const recentStages = progressStages?.slice(-4) ?? [];
 
   let statusLabel: string;
   if (judgeEvaluating) {
     statusLabel = `Verifying with ${judgeModel ?? 'judge'}...`;
+  } else if (currentStageLabel) {
+    statusLabel = currentStageLabel;
   } else if (hasFallbacks) {
     statusLabel = 'Retrying with fallback...';
   } else if (executingModel) {
@@ -36,7 +41,9 @@ export function ThinkingIndicator({
                 key={`${attempt.failedProvider}-${String(attempt.attempt)}-${String(idx)}`}
                 className={cn(
                   'flex items-center gap-1.5 text-xs',
-                  attempt.failureType === FallbackFailureType.QUALITY ? 'text-blue-500' : 'text-amber-500',
+                  attempt.failureType === FallbackFailureType.QUALITY
+                    ? 'text-blue-500'
+                    : 'text-amber-500',
                 )}
               >
                 {attempt.failureType === FallbackFailureType.QUALITY ? (
@@ -69,6 +76,38 @@ export function ThinkingIndicator({
         ) : (
           <>
             <span className="text-xs text-muted-foreground">{statusLabel}</span>
+            {recentStages.length > 0 ? (
+              <div className="flex flex-col gap-1 rounded-lg border border-border/60 bg-background/80 px-3 py-2">
+                {recentStages.map((stage) => (
+                  <div
+                    key={stage.id}
+                    className="flex items-start justify-between gap-3 text-xs text-muted-foreground"
+                  >
+                    <div className="min-w-0">
+                      <div className="font-medium text-foreground">{stage.label}</div>
+                      {stage.description ? (
+                        <div className="truncate text-muted-foreground">{stage.description}</div>
+                      ) : null}
+                    </div>
+                    <span
+                      className={cn(
+                        'shrink-0 rounded-md px-1.5 py-0.5 text-[10px] uppercase tracking-wide',
+                        {
+                          'bg-destructive/10 text-destructive':
+                            stage.status === VisibleProgressStageStatus.ERROR,
+                          'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400':
+                            stage.status === VisibleProgressStageStatus.COMPLETED,
+                          'bg-blue-500/10 text-blue-600 dark:text-blue-400':
+                            stage.status === VisibleProgressStageStatus.ACTIVE,
+                        },
+                      )}
+                    >
+                      {stage.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
             <div className="rounded-lg bg-muted px-4 py-2.5 text-sm text-foreground">
               <div
                 className="flex items-center gap-1"

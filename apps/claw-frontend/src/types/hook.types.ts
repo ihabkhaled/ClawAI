@@ -10,6 +10,7 @@ import type {
   FallbackAttemptInfo,
   JudgeModelOption,
   UseVirtualizedMessagesReturn,
+  VisibleProgressStage,
 } from './chat.types';
 import type { ModelSelection } from './component.types';
 import type { CostEnsembleResult as CostEnsembleResultType } from './cost-ensemble.types';
@@ -185,6 +186,8 @@ export type UseThreadDetailPageReturn = {
   judgeEvaluating: boolean;
   executingModel: string | null;
   judgeModel: string | null;
+  progressStages: VisibleProgressStage[];
+  currentStageLabel: string | null;
   isSending: boolean;
   isDeleting: boolean;
   virtualizedMessages: UseVirtualizedMessagesReturn;

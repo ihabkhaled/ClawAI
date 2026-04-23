@@ -32,6 +32,8 @@ export const useThreadDetailPage = ({
     judgeEvaluating,
     executingModel,
     judgeModel,
+    progressStages,
+    currentStageLabel,
     virtualizedMessages,
   } = useThreadDetail(threadId);
 
@@ -126,6 +128,8 @@ export const useThreadDetailPage = ({
     judgeEvaluating,
     executingModel,
     judgeModel,
+    progressStages,
+    currentStageLabel,
     isSending,
     isDeleting,
     virtualizedMessages,

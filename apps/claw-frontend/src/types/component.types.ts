@@ -30,7 +30,13 @@ import type { RepairResultState } from './answer-repair.types';
 import type { AdminUser, AuditLog } from './audit.types';
 import type { BestOfNResultState, CandidateResult } from './best-of-n.types';
 import type { DownloadStats, ModelCatalogEntry, PullJobResponse } from './catalog.types';
-import type { ChatMessage, ChatThread, FallbackAttemptInfo, JudgeModelOption } from './chat.types';
+import type {
+  ChatMessage,
+  ChatThread,
+  FallbackAttemptInfo,
+  JudgeModelOption,
+  VisibleProgressStage,
+} from './chat.types';
 import type { Connector, ConnectorModel, CreateConnectorRequest } from './connector.types';
 import type { ConsensusMetadata, ConsensusModelBreakdown } from './consensus.types';
 import type { CreateContextPackItemRequest, CreateContextPackRequest } from './context-pack.types';
@@ -249,6 +255,8 @@ export type ThinkingIndicatorProps = {
   judgeEvaluating?: boolean;
   executingModel?: string | null;
   judgeModel?: string | null;
+  progressStages?: VisibleProgressStage[];
+  currentStageLabel?: string | null;
 };
 
 export type ModelSelection = {
@@ -405,6 +413,8 @@ export type MessagesContentProps = {
   isWaitingForResponse: boolean;
   fallbackAttempts: FallbackAttemptInfo[];
   streamError: string | null;
+  progressStages: VisibleProgressStage[];
+  currentStageLabel: string | null;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
   onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
   onRegenerate: (messageId: string) => void;
@@ -422,6 +432,8 @@ export type VirtualizedMessagesProps = {
   judgeEvaluating?: boolean;
   executingModel?: string | null;
   judgeModel?: string | null;
+  progressStages: VisibleProgressStage[];
+  currentStageLabel: string | null;
   t: TranslateFunction;
   onStartReached: () => void;
   onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;

@@ -34,6 +34,8 @@ export default function ThreadDetailPage() {
     judgeEvaluating,
     executingModel,
     judgeModel,
+    progressStages,
+    currentStageLabel,
     isSending,
     isDeleting,
     virtualizedMessages,
@@ -160,6 +162,8 @@ export default function ThreadDetailPage() {
             judgeEvaluating={judgeEvaluating}
             executingModel={executingModel}
             judgeModel={judgeModel}
+            progressStages={progressStages}
+            currentStageLabel={currentStageLabel}
             t={t}
             onStartReached={virtualizedMessages.fetchPreviousPage}
             onFeedback={handleFeedback}

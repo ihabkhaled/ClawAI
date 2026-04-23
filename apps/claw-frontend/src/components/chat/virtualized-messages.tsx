@@ -23,6 +23,8 @@ export function VirtualizedMessages({
   judgeEvaluating,
   executingModel,
   judgeModel,
+  progressStages,
+  currentStageLabel,
   t,
   onStartReached,
   onFeedback,
@@ -85,6 +87,8 @@ export function VirtualizedMessages({
             judgeEvaluating={judgeEvaluating}
             executingModel={executingModel}
             judgeModel={judgeModel}
+            progressStages={progressStages}
+            currentStageLabel={currentStageLabel}
           />
         </div>
       );
@@ -97,6 +101,8 @@ export function VirtualizedMessages({
     judgeEvaluating,
     executingModel,
     judgeModel,
+    progressStages,
+    currentStageLabel,
   ]);
 
   const handleStartReached = useCallback((): void => {

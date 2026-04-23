@@ -78,6 +78,10 @@ describe('MessageBubble', () => {
       metadata: {
         routeRoadmap: {
           routerModel: 'qwen3:1.7b',
+          research: {
+            workflow: 'SEARCH_FETCH_EXTRACT',
+            itemCount: 3,
+          },
           finalProvider: 'local-ollama',
           finalModel: 'glm-5.1:cloud',
         },
@@ -89,5 +93,6 @@ describe('MessageBubble', () => {
 
     expect(screen.getByText('local-ollama / glm-5.1:cloud')).toBeInTheDocument();
     expect(screen.getByText('Route: qwen3:1.7b -> glm-5.1:cloud')).toBeInTheDocument();
+    expect(screen.getByText('Research: SEARCH_FETCH_EXTRACT (3 items)')).toBeInTheDocument();
   });
 });

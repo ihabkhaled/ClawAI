@@ -13,6 +13,7 @@ export type {
   UpdateThreadMutationParams,
   SetFeedbackParams,
   StreamEvent,
+  VisibleProgressStage,
   SseConnection,
   FallbackAttemptInfo,
   UseEditableTitleReturn,

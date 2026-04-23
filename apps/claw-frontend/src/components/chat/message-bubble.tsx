@@ -38,6 +38,11 @@ export function MessageBubble({
   const routeRoadmap = metadata?.['routeRoadmap'] as
     | {
         routerModel?: string | null;
+        research?: {
+          workflow?: string | null;
+          toolsUsed?: string[];
+          itemCount?: number;
+        } | null;
         finalProvider?: string | null;
         finalModel?: string | null;
       }
@@ -52,6 +57,13 @@ export function MessageBubble({
   const routeSummary =
     message.routingMode === RoutingMode.AUTO && routerModel
       ? `Route: ${routerModel} -> ${displayedModel ?? 'unknown'}`
+      : null;
+  const researchSummary = routeRoadmap?.research;
+  const researchBadgeLabel =
+    researchSummary !== null &&
+    researchSummary !== undefined &&
+    typeof researchSummary.workflow === 'string'
+      ? `Research: ${researchSummary.workflow}${typeof researchSummary.itemCount === 'number' ? ` (${String(researchSummary.itemCount)} items)` : ''}`
       : null;
   const memoryCount = typeof metadata?.['memoryCount'] === 'number' ? metadata['memoryCount'] : 0;
   const contextFileIds = Array.isArray(metadata?.['fileIds'])
@@ -137,6 +149,11 @@ export function MessageBubble({
             {routeSummary ? (
               <Badge variant="outline" className="text-xs">
                 {routeSummary}
+              </Badge>
+            ) : null}
+            {researchBadgeLabel ? (
+              <Badge variant="outline" className="text-xs">
+                {researchBadgeLabel}
               </Badge>
             ) : null}
             {isReRouted && originalProvider && originalModel ? (

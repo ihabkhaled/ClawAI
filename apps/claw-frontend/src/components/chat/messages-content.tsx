@@ -10,6 +10,8 @@ export function MessagesContent({
   isWaitingForResponse,
   fallbackAttempts,
   streamError,
+  progressStages,
+  currentStageLabel,
   messagesEndRef,
   onFeedback,
   onRegenerate,
@@ -37,7 +39,12 @@ export function MessagesContent({
         />
       ))}
       {isWaitingForResponse ? (
-        <ThinkingIndicator fallbackAttempts={fallbackAttempts} streamError={streamError} />
+        <ThinkingIndicator
+          fallbackAttempts={fallbackAttempts}
+          streamError={streamError}
+          progressStages={progressStages}
+          currentStageLabel={currentStageLabel}
+        />
       ) : null}
       <div ref={messagesEndRef} />
     </div>

@@ -53,6 +53,8 @@ export { MutationStatus } from './mutation-status.enum';
 export { PairingEmptyStateKind } from './pairing-empty-state-kind.enum';
 export { RiskLabel } from './risk-label.enum';
 export { StreamChunkType } from './stream-chunk-type.enum';
+export { VisibleProgressActorType } from './visible-progress-actor-type.enum';
+export { VisibleProgressStageStatus } from './visible-progress-stage-status.enum';
 export { OAuthCallbackPhase } from './oauth-callback-phase.enum';
 export {
   CandidateStatus,

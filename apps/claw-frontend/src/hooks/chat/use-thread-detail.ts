@@ -40,6 +40,8 @@ export function useThreadDetail(threadId: string) {
     judgeEvaluating,
     executingModel,
     judgeModel,
+    progressStages,
+    currentStageLabel,
     resetStream,
   } = useChatStream(threadId, isWaitingForResponse);
 
@@ -159,6 +161,8 @@ export function useThreadDetail(threadId: string) {
     judgeEvaluating,
     executingModel,
     judgeModel,
+    progressStages,
+    currentStageLabel,
     virtualizedMessages,
   };
 }

@@ -14,25 +14,44 @@ export function MessageProvenance({ message }: MessageProvenanceProps) {
   const routeRoadmap = metadata?.['routeRoadmap'] as
     | {
         routerModel?: string | null;
+        research?: {
+          workflow?: string | null;
+          toolsUsed?: string[];
+          itemCount?: number;
+          warningCount?: number;
+        } | null;
         finalDisplayName?: string | null;
         finalProvider?: string | null;
         finalModel?: string | null;
         steps?: Array<{
+          stage?: string;
           provider?: string;
           model?: string;
           displayName?: string | null;
+          description?: string | null;
         }>;
       }
     | undefined;
+  const progressSummary = Array.isArray(metadata?.['progressSummary'])
+    ? (metadata['progressSummary'] as Array<{
+        label?: string;
+        description?: string | null;
+        actorType?: string;
+        actorName?: string | null;
+        status?: string;
+      }>)
+    : [];
   const routePath = Array.isArray(routeRoadmap?.steps)
     ? routeRoadmap.steps
         .map((step) => {
-          const display = step.model ?? step.displayName ?? 'unknown';
+          const stagePrefix = typeof step.stage === 'string' ? `${step.stage}: ` : '';
+          const display = step.displayName ?? step.model ?? 'unknown';
           const provider = step.provider ?? 'unknown';
-          return `${provider}/${display}`;
+          return `${stagePrefix}${provider}/${display}`;
         })
         .join(' -> ')
     : null;
+  const researchSummary = routeRoadmap?.research ?? null;
 
   const hasProvenance =
     routeRoadmap !== undefined ||
@@ -95,6 +114,52 @@ export function MessageProvenance({ message }: MessageProvenanceProps) {
               <div className="col-span-2">
                 <span className="text-muted-foreground">Route path: </span>
                 <span>{routePath}</span>
+              </div>
+            ) : null}
+
+            {researchSummary ? (
+              <div className="col-span-2">
+                <span className="text-muted-foreground">Research: </span>
+                <span>
+                  {researchSummary.workflow ?? 'unknown'}
+                  {typeof researchSummary.itemCount === 'number'
+                    ? ` • ${String(researchSummary.itemCount)} items`
+                    : ''}
+                  {Array.isArray(researchSummary.toolsUsed) && researchSummary.toolsUsed.length > 0
+                    ? ` • ${researchSummary.toolsUsed.join(', ')}`
+                    : ''}
+                  {typeof researchSummary.warningCount === 'number' &&
+                  researchSummary.warningCount > 0
+                    ? ` • ${String(researchSummary.warningCount)} warnings`
+                    : ''}
+                </span>
+              </div>
+            ) : null}
+
+            {progressSummary.length > 0 ? (
+              <div className="col-span-2">
+                <span className="text-muted-foreground">Progress summary: </span>
+                <div className="mt-1 flex flex-col gap-1">
+                  {progressSummary.map((step, index) => (
+                    <div
+                      key={`${step.label ?? 'step'}-${String(index)}`}
+                      className="rounded-md border border-border/60 px-2 py-1"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium text-foreground">{step.label ?? 'Step'}</span>
+                        <Badge variant="outline" className="text-[10px]">
+                          {step.status ?? 'completed'}
+                        </Badge>
+                      </div>
+                      {typeof step.description === 'string' && step.description.length > 0 ? (
+                        <div className="text-muted-foreground">{step.description}</div>
+                      ) : null}
+                      {typeof step.actorName === 'string' && step.actorName.length > 0 ? (
+                        <div className="text-muted-foreground">Actor: {step.actorName}</div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : null}
 
