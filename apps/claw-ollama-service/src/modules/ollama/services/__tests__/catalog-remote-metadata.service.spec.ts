@@ -29,7 +29,7 @@ function createCatalogEntry(overrides: Partial<ModelCatalogEntry> = {}): ModelCa
     quantization: null,
     runtime: RuntimeType.OLLAMA,
     ollamaName: 'qwen3:latest',
-    sourceUrl: 'https://ollama.com/library/qwen3',
+    sourceUrl: 'https://registry.ollama.com/library/qwen3',
     isRecommended: false,
     capabilities: [],
     businessCategories: [],
@@ -79,13 +79,13 @@ describe('CatalogRemoteMetadataService', () => {
       createCatalogEntry({
         name: 'glm5.1',
         ollamaName: 'glm5.1:latest',
-        sourceUrl: 'https://ollama.com/library/glm5.1',
+        sourceUrl: 'https://registry.ollama.com/library/glm5.1',
       }),
     );
 
     expect(getMock).toHaveBeenNthCalledWith(1, '/v2/library/glm5.1/manifests/latest');
     expect(getMock).toHaveBeenNthCalledWith(2, '/v2/library/glm-5.1/manifests/latest');
-    expect(metadata.sourceUrl).toBe('https://ollama.com/library/glm-5.1');
+    expect(metadata.sourceUrl).toBe('https://registry.ollama.com/library/glm-5.1');
     expect(metadata.resolvedOllamaName).toBe('glm-5.1:latest');
   });
 
@@ -104,12 +104,12 @@ describe('CatalogRemoteMetadataService', () => {
     const metadata = await service.getMetadata(
       createCatalogEntry({
         ollamaName: 'qwen3:7b',
-        sourceUrl: 'https://ollama.com/library/qwen3.5',
+        sourceUrl: 'https://registry.ollama.com/library/qwen3.5',
       }),
     );
 
     expect(getMock).toHaveBeenNthCalledWith(4, '/v2/library/qwen3/manifests/7b');
-    expect(metadata.sourceUrl).toBe('https://ollama.com/library/qwen3');
+    expect(metadata.sourceUrl).toBe('https://registry.ollama.com/library/qwen3');
     expect(metadata.isDownloadable).toBe(false);
   });
 

@@ -9,6 +9,7 @@ import {
   resolveCatalogDownloadStatus,
   resolveCatalogSourceUrl,
 } from '../src/modules/ollama/utilities/catalog-reference.utility';
+import { prepareCatalogSeedEntry } from '../src/modules/ollama/utilities/catalog-seed-entry.utility';
 
 const prisma = new PrismaClient();
 
@@ -36,20 +37,14 @@ async function seedCatalog(): Promise<void> {
   });
 
   for (const entry of CATALOG_ENTRIES) {
-    const runtime = entry.runtime as 'OLLAMA' | 'COMFYUI';
-    const sourceUrl = resolveCatalogSourceUrl({ ...entry, runtime });
-    const ollamaName = entry.ollamaName ?? `${entry.name}:${entry.tag}`;
-    const downloadStatus = resolveCatalogDownloadStatus({
-      name: entry.name,
-      tag: entry.tag,
-      runtime,
-      ollamaName: entry.ollamaName,
-      sourceUrl,
-    });
+    const preparedEntry = prepareCatalogSeedEntry(entry);
+    const runtime = preparedEntry.runtime;
+    const sourceUrl = resolveCatalogSourceUrl(preparedEntry);
+    const ollamaName = preparedEntry.ollamaName ?? `${preparedEntry.name}:${preparedEntry.tag}`;
+    const downloadStatus = resolveCatalogDownloadStatus(preparedEntry);
     if (runtime === 'OLLAMA') {
       const [name, tag] = ollamaName.split(':');
-      const key = `${name}:${tag}`;
-      if (isDeprecatedDefaultLocalModel(name, tag)) {
+      if (name && tag && isDeprecatedDefaultLocalModel(name, tag)) {
         continue;
       }
     }
@@ -57,37 +52,37 @@ async function seedCatalog(): Promise<void> {
     await prisma.modelCatalogEntry.upsert({
       where: {
         name_tag_runtime: {
-          name: entry.name,
-          tag: entry.tag,
+          name: preparedEntry.name,
+          tag: preparedEntry.tag,
           runtime,
         },
       },
       update: {
-        displayName: entry.displayName,
-        category: entry.category as ModelCategory,
-        description: entry.description,
-        sizeBytes: null,
-        parameterCount: entry.parameterCount,
-        ollamaName: entry.ollamaName,
+        displayName: preparedEntry.displayName,
+        category: preparedEntry.category as ModelCategory,
+        description: preparedEntry.description,
+        sizeBytes: preparedEntry.sizeBytes,
+        parameterCount: preparedEntry.parameterCount,
+        ollamaName: preparedEntry.ollamaName,
         sourceUrl,
         downloadStatus,
-        isRecommended: entry.isRecommended,
-        capabilities: [...entry.capabilities],
+        isRecommended: preparedEntry.isRecommended,
+        capabilities: [...preparedEntry.capabilities],
       },
       create: {
-        name: entry.name,
-        tag: entry.tag,
-        displayName: entry.displayName,
-        category: entry.category as ModelCategory,
-        description: entry.description,
-        sizeBytes: null,
-        parameterCount: entry.parameterCount,
+        name: preparedEntry.name,
+        tag: preparedEntry.tag,
+        displayName: preparedEntry.displayName,
+        category: preparedEntry.category as ModelCategory,
+        description: preparedEntry.description,
+        sizeBytes: preparedEntry.sizeBytes,
+        parameterCount: preparedEntry.parameterCount,
         runtime,
-        ollamaName: entry.ollamaName,
+        ollamaName: preparedEntry.ollamaName,
         sourceUrl,
         downloadStatus,
-        isRecommended: entry.isRecommended,
-        capabilities: [...entry.capabilities],
+        isRecommended: preparedEntry.isRecommended,
+        capabilities: [...preparedEntry.capabilities],
       },
     });
   }

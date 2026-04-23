@@ -18,7 +18,7 @@ describe('catalog-reference.utility', () => {
         runtime: 'OLLAMA',
         ollamaName: 'model2.1:latest',
       }),
-    ).toBe('https://ollama.com/library/model2.1');
+    ).toBe('https://registry.ollama.com/library/model2.1');
   });
 
   it('builds generic slug candidates for letter-number names', () => {
@@ -47,6 +47,12 @@ describe('catalog-reference.utility', () => {
         }),
       ).not.toBeNull();
     }
+  });
+
+  it('exports a deduplicated catalog with more than 400 entries', () => {
+    const keys = CATALOG_ENTRIES.map((entry) => `${entry.name}:${entry.tag}:${entry.runtime}`);
+    expect(new Set(keys).size).toBe(keys.length);
+    expect(CATALOG_ENTRIES.length).toBeGreaterThan(400);
   });
 
   it('falls back to a provider reference for comfyui entries', () => {

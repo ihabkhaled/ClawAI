@@ -128,10 +128,20 @@ export class OllamaLibraryDiscoveryManager {
   }
 
   private isValidTag(tag: string): boolean {
-    if (tag.length === 0 || tag.length > 30) return false;
+    if (tag.length === 0 || tag.length > 50) return false;
+    if (tag === 'cloud') return false;
     if (tag === 'latest') return true;
-    if (/^\d+(?:\.\d+)?[bm](?:-[a-z0-9_]+)?$/i.test(tag)) return true;
-    if (/^v?\d+(?:\.\d+)*$/i.test(tag)) return true;
+    if (/(?:^|[-_])(q\d|q\d+_[a-z0-9_]+|bf16|fp16|mxfp\d+|nvfp\d+|mlx)/i.test(tag)) return false;
+    if (/^\d+(?:\.\d+)?[bm]$/i.test(tag)) return true;
+    if (/^[a-z]{1,8}\d+(?:\.\d+)?[bm]$/i.test(tag)) return true;
+    if (
+      /^(base|chat|instruct|instruction|reasoning|thinking|vision|embedding|coder|mini|super|next|vl|it|tool|tools|agent|pt|moe|plus|text|image|audio)$/i.test(
+        tag,
+      )
+    ) {
+      return true;
+    }
+    if (/^[a-z]+(?:-[a-z0-9.]+)+$/i.test(tag) && !tag.includes('cloud')) return true;
     return false;
   }
 

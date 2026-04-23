@@ -12,13 +12,21 @@ export type CatalogEntryInput = {
   displayName: string;
   category: string;
   description?: string;
-  sizeBytes?: bigint;
-  parameterCount?: string;
-  runtime: string;
+  sizeBytes?: bigint | null;
+  parameterCount?: string | null;
+  runtime: RuntimeType;
   ollamaName?: string | null;
   sourceUrl?: string | null;
   isRecommended: boolean;
   capabilities: readonly string[];
+  businessCategories?: readonly string[];
+  hardwareProfiles?: readonly string[];
+};
+
+export type PreparedCatalogEntryInput = CatalogEntryInput & {
+  sizeBytes: bigint | null;
+  businessCategories: string[];
+  hardwareProfiles: string[];
 };
 
 export type CatalogFilters = {

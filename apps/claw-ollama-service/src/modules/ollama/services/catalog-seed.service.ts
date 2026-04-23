@@ -4,6 +4,7 @@ import { CATALOG_ENTRIES } from '../constants/catalog-entries.constants';
 import { isDeprecatedDefaultLocalModel } from '../constants/default-models.constants';
 import { ModelCatalogRepository } from '../repositories/model-catalog.repository';
 import { ensureCatalogEntryHasReference } from '../utilities/catalog-reference.utility';
+import { prepareCatalogSeedEntry } from '../utilities/catalog-seed-entry.utility';
 
 @Injectable()
 export class CatalogSeedService implements OnApplicationBootstrap {
@@ -29,13 +30,14 @@ export class CatalogSeedService implements OnApplicationBootstrap {
     }
 
     for (const entry of entries) {
-      ensureCatalogEntryHasReference(entry);
-      const ollamaName = entry.ollamaName ?? `${entry.name}:${entry.tag}`;
+      const preparedEntry = prepareCatalogSeedEntry(entry);
+      ensureCatalogEntryHasReference(preparedEntry);
+      const ollamaName = preparedEntry.ollamaName ?? `${preparedEntry.name}:${preparedEntry.tag}`;
       const [name, tag] = ollamaName.split(':');
       if (name && tag && isDeprecatedDefaultLocalModel(name, tag)) {
         continue;
       }
-      await this.catalogRepository.upsertEntry(entry);
+      await this.catalogRepository.upsertEntry(preparedEntry);
     }
 
     this.logger.log(`Model catalog seed complete (${String(entries.length)} entries upserted)`);

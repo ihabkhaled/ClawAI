@@ -52,7 +52,7 @@ const mockCatalogEntry = {
   quantization: null,
   runtime: RuntimeType.OLLAMA,
   ollamaName: 'llama3:latest',
-  sourceUrl: 'https://ollama.com/library/stale-llama3',
+  sourceUrl: 'https://registry.ollama.com/library/stale-llama3',
   downloadStatus: DownloadStatus.UNKNOWN,
   isRecommended: false,
   capabilities: [],
@@ -95,7 +95,7 @@ const mockCatalogRemoteMetadataService = (): Partial<
   Record<keyof CatalogRemoteMetadataService, jest.Mock>
 > => ({
   getMetadata: jest.fn().mockResolvedValue({
-    sourceUrl: 'https://ollama.com/library/llama3',
+    sourceUrl: 'https://registry.ollama.com/library/llama3',
     isAvailable: true,
     isDownloadable: true,
     sizeBytes: BigInt(4000000000),
@@ -187,7 +187,7 @@ describe('OllamaService', () => {
       modelCatalogRepo.findAll?.mockResolvedValue([mockCatalogEntry]);
       modelCatalogRepo.countAll?.mockResolvedValue(1);
       catalogRemoteMetadataService.getMetadata?.mockResolvedValue({
-        sourceUrl: 'https://ollama.com/library/llama3',
+        sourceUrl: 'https://registry.ollama.com/library/llama3',
         isAvailable: true,
         isDownloadable: true,
         sizeBytes: BigInt(4000000000),
@@ -199,9 +199,9 @@ describe('OllamaService', () => {
 
       expect(modelCatalogRepo.updateSourceUrlIfChanged).toHaveBeenCalledWith(
         'catalog-1',
-        'https://ollama.com/library/llama3',
+        'https://registry.ollama.com/library/llama3',
       );
-      expect(result.data[0]?.sourceUrl).toBe('https://ollama.com/library/llama3');
+      expect(result.data[0]?.sourceUrl).toBe('https://registry.ollama.com/library/llama3');
       expect(result.data[0]?.isInstalled).toBe(true);
     });
 

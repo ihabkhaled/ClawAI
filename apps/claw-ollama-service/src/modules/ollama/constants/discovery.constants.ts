@@ -9,9 +9,21 @@ export const DISCOVERY_RANK_SCORE_WEIGHT_FAMILY = 0.4;
 export const DISCOVERY_RANK_SCORE_WEIGHT_SIZE = 0.2;
 export const DISCOVERY_RANK_SCORE_WEIGHT_CAPABILITY = 0.1;
 export const DISCOVERY_SEED_FAMILIES = [
+  'qwen3.6',
+  'gemma4',
+  'qwen3.5',
+  'glm-5.1',
+  'minimax-m2.7',
+  'medgemma1.5',
+  'llama3.3',
+  'qwen3-coder-next',
+  'nemotron-cascade-2',
+  'olmo-3.1',
+  'lfm2.5-thinking',
+  'translategemma',
   'qwen3',
   'qwen2.5-coder',
-  'llama3.3',
+  'llama3.1',
   'llama3.2',
   'gemma3',
   'phi4',
@@ -41,12 +53,12 @@ export const DISCOVERY_DEFAULT_SOURCES = [
   {
     name: 'Ollama Public Library',
     type: 'OLLAMA_LIBRARY' as const,
-    baseUrl: 'https://ollama.com/library',
+    baseUrl: 'https://registry.ollama.com',
   },
   {
     name: 'Ollama Registry',
     type: 'OLLAMA_REGISTRY' as const,
-    baseUrl: 'https://registry.ollama.ai',
+    baseUrl: 'https://registry.ollama.com',
   },
 ];
 
@@ -57,10 +69,10 @@ export const LIBRARY_SIMPLE_HREF_REGEX = /href="\/library\/([^":/]+)"/g;
 
 export const LIBRARY_TAG_REGEX = /\/library\/[^/]+:([a-z0-9][a-z0-9._-]*)/gi;
 
-export const VALID_PARAM_TAG_REGEX = /^(\d+(?:\.\d+)?[bm])$/i;
+export const VALID_PARAM_TAG_REGEX = /(\d+(?:\.\d+)?[bm])/i;
 
-export const LIBRARY_TOP_LISTINGS = 10;
-export const LIBRARY_MAX_TAGS_PER_MODEL = 5;
+export const LIBRARY_TOP_LISTINGS = 20;
+export const LIBRARY_MAX_TAGS_PER_MODEL = 8;
 export const ENRICHMENT_CONCURRENCY = 4;
 
 export const PACK_RECOMMENDED_LIMIT = 8;

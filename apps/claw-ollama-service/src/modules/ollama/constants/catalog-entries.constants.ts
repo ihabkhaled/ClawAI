@@ -1,6 +1,7 @@
 // Single source of truth for model catalog entries.
 // Used by both CatalogSeedService (auto-bootstrap) and prisma/seed-catalog.ts (manual).
 import { isDeprecatedDefaultLocalModel } from './default-models.constants';
+import { REGISTRY_CATALOG_ENTRIES } from './registry-catalog-entries.generated';
 
 const RAW_CATALOG_ENTRIES = [
   // ─── CODING (5 models) ──────────────────────────────────────────────
@@ -1921,7 +1922,35 @@ const RAW_CATALOG_ENTRIES = [
   },
 ] as const;
 
-export const CATALOG_ENTRIES = RAW_CATALOG_ENTRIES.filter((entry) => {
+const REGISTRY_CATALOG_ENTRY_KEYS = new Set(
+  REGISTRY_CATALOG_ENTRIES.map((entry) => `${entry.name}:${entry.tag}:${entry.runtime}`),
+);
+
+const VALID_RAW_CATALOG_ENTRIES = RAW_CATALOG_ENTRIES.filter((entry) => {
+  if (entry.runtime !== 'OLLAMA') {
+    return true;
+  }
+
+  const taggedKey = `${entry.name}:${entry.tag}`;
+  const ollamaKey = entry.ollamaName ?? taggedKey;
+  const [ollamaName = entry.name, ollamaTag = entry.tag] = ollamaKey.split(':');
+  const rawKey = `${entry.name}:${entry.tag}:${entry.runtime}`;
+  const ollamaReferenceKey = `${ollamaName}:${ollamaTag}:${entry.runtime}`;
+
+  return (
+    REGISTRY_CATALOG_ENTRY_KEYS.has(rawKey) || REGISTRY_CATALOG_ENTRY_KEYS.has(ollamaReferenceKey)
+  );
+});
+
+const MERGED_CATALOG_ENTRIES = [...VALID_RAW_CATALOG_ENTRIES, ...REGISTRY_CATALOG_ENTRIES];
+
+const DEDUPED_CATALOG_ENTRIES = [
+  ...new Map(
+    MERGED_CATALOG_ENTRIES.map((entry) => [`${entry.name}:${entry.tag}:${entry.runtime}`, entry]),
+  ).values(),
+];
+
+export const CATALOG_ENTRIES = DEDUPED_CATALOG_ENTRIES.filter((entry) => {
   const taggedKey = `${entry.name}:${entry.tag}`;
   const ollamaKey = entry.ollamaName ?? taggedKey;
   const [ollamaName = entry.name, ollamaTag] = ollamaKey.split(':');
