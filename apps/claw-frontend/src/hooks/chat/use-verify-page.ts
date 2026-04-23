@@ -4,12 +4,14 @@ import { VERIFIER_CONTENT_MIN_LENGTH } from '@/constants';
 import { useSendVerify } from '@/hooks/chat/use-send-verify';
 import { useVerifyPoll } from '@/hooks/chat/use-verify-poll';
 import { useTranslation } from '@/lib/i18n';
-import type { UseVerifyPageReturn } from '@/types';
+import type { AdvancedModuleModelSelection, UseVerifyPageReturn } from '@/types';
+import { buildAdvancedModelSelectionPayload } from '@/utilities';
 
 export function useVerifyPage(): UseVerifyPageReturn {
   const { t } = useTranslation();
   const [content, setContent] = useState('');
   const [maxRevisions, setMaxRevisions] = useState(1);
+  const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
 
   const { send, result, isPending, isError } = useSendVerify();
 
@@ -26,8 +28,9 @@ export function useVerifyPage(): UseVerifyPageReturn {
     send({
       content: content.trim(),
       maxRevisions,
+      ...buildAdvancedModelSelectionPayload(selectedModel),
     });
-  }, [canSend, send, content, maxRevisions]);
+  }, [canSend, send, content, maxRevisions, selectedModel]);
 
   return {
     t,
@@ -35,6 +38,8 @@ export function useVerifyPage(): UseVerifyPageReturn {
     setContent,
     maxRevisions,
     setMaxRevisions,
+    selectedModel,
+    setSelectedModel,
     handleSend,
     canSend,
     isPending,

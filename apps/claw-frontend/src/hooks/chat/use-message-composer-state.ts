@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { DEFAULT_RESEARCH_OPTIONS } from '@/constants/research.constants';
 import { ResearchMode } from '@/enums/research-mode.enum';
+import { useResearchProviders } from '@/hooks/research/use-research-providers';
 import { sendMessageSchema } from '@/lib/validation/message.schema';
 import type {
   ResearchOptions,
@@ -19,6 +20,7 @@ export const useMessageComposerState = ({
   const [validationError, setValidationError] = useState<string | null>(null);
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
+  const providerQuery = useResearchProviders();
 
   const validateAndSend = useCallback((): boolean => {
     const result = sendMessageSchema.safeParse({ content: content.trim() });
@@ -97,6 +99,8 @@ export const useMessageComposerState = ({
     setSelectedFileIds,
     research,
     setResearch,
+    researchProviders: providerQuery.providers,
+    isResearchProvidersLoading: providerQuery.isLoading,
     handleSubmit,
     handleKeyDown,
     handleChange,

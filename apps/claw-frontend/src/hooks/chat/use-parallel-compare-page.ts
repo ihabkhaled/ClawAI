@@ -1,17 +1,20 @@
 import { useCallback, useState } from 'react';
 
 import { MIN_PARALLEL_MODELS, MAX_PARALLEL_MODELS } from '@/constants';
+import { useJudgeModelOptions } from '@/hooks/chat/use-judge-model-options';
 import { useParallelCompare } from '@/hooks/chat/use-parallel-compare';
 import { useParallelPoll } from '@/hooks/chat/use-parallel-poll';
 import { useTranslation } from '@/lib/i18n';
-import type { UseParallelComparePageReturn } from '@/types';
+import type { ParallelModelTarget, UseParallelComparePageReturn } from '@/types';
 
 export function useParallelComparePage(): UseParallelComparePageReturn {
   const { t } = useTranslation();
-  const [selectedModels, setSelectedModels] = useState<Array<{ provider: string; model: string }>>(
-    [],
-  );
+  const { options: judgeModelOptions, isLoading: isJudgeModelOptionsLoading } =
+    useJudgeModelOptions();
+  const [selectedModels, setSelectedModels] = useState<ParallelModelTarget[]>([]);
   const [prompt, setPrompt] = useState('');
+  const [judgeEnabled, setJudgeEnabled] = useState(false);
+  const [judgeModel, setJudgeModel] = useState<string | null>(null);
   const { send, result, isPending, isError } = useParallelCompare();
 
   const threadId = result?.threadId ?? null;
@@ -48,8 +51,8 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     if (!canSend) {
       return;
     }
-    send({ content: prompt.trim(), models: selectedModels });
-  }, [canSend, send, prompt, selectedModels]);
+    send({ content: prompt.trim(), models: selectedModels, judgeEnabled, judgeModel });
+  }, [canSend, send, prompt, selectedModels, judgeEnabled, judgeModel]);
 
   return {
     t,
@@ -67,5 +70,11 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     isPolling,
     allResponded,
     handleViewInThread,
+    judgeEnabled,
+    setJudgeEnabled,
+    judgeModel,
+    setJudgeModel,
+    judgeModelOptions,
+    isJudgeModelOptionsLoading,
   };
 }

@@ -1,20 +1,33 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { MAX_PARALLEL_MODELS, MIN_PARALLEL_MODELS } from '@/constants';
+import { useJudgeModelOptions } from '@/hooks/chat/use-judge-model-options';
 import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
-import type { ParallelRequest, ParallelResponse } from '@/types';
+import type {
+  ParallelModelTarget,
+  ParallelRequest,
+  ParallelResponse,
+  UseInThreadCompareParams,
+  UseInThreadCompareReturn,
+} from '@/types';
 import { logger, showToast } from '@/utilities';
 
-export function useInThreadCompare(threadId: string) {
+export function useInThreadCompare({
+  threadId,
+  initialJudgeEnabled = false,
+  initialJudgeModel = null,
+}: UseInThreadCompareParams): UseInThreadCompareReturn {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedModels, setSelectedModels] = useState<Array<{ provider: string; model: string }>>(
-    [],
-  );
+  const [selectedModels, setSelectedModels] = useState<ParallelModelTarget[]>([]);
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const { options: judgeModelOptions, isLoading: isJudgeModelOptionsLoading } =
+    useJudgeModelOptions();
+  const [judgeEnabled, setJudgeEnabled] = useState(initialJudgeEnabled);
+  const [judgeModel, setJudgeModel] = useState<string | null>(initialJudgeModel);
 
   const mutation = useMutation({
     mutationFn: (data: ParallelRequest) => {
@@ -31,6 +44,9 @@ export function useInThreadCompare(threadId: string) {
         description: 'Models are processing. Results will appear below.',
       });
       await queryClient.invalidateQueries({ queryKey: queryKeys.threads.all });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.threads.messagesInfinite(threadId),
+      });
     },
     onError: (error: Error) => {
       logger.error({
@@ -43,6 +59,10 @@ export function useInThreadCompare(threadId: string) {
   });
 
   const toggleOpen = useCallback(() => setIsOpen((v) => !v), []);
+  useEffect(() => {
+    setJudgeEnabled(initialJudgeEnabled);
+    setJudgeModel(initialJudgeModel);
+  }, [initialJudgeEnabled, initialJudgeModel]);
 
   const handleToggleModel = useCallback((provider: string, model: string, checked: boolean) => {
     setSelectedModels((prev) => {
@@ -60,9 +80,15 @@ export function useInThreadCompare(threadId: string) {
       if (!canSend || prompt.trim().length === 0) {
         return;
       }
-      mutation.mutate({ threadId, content: prompt.trim(), models: selectedModels });
+      mutation.mutate({
+        threadId,
+        content: prompt.trim(),
+        models: selectedModels,
+        judgeEnabled,
+        judgeModel,
+      });
     },
-    [canSend, mutation, threadId, selectedModels],
+    [canSend, mutation, threadId, selectedModels, judgeEnabled, judgeModel],
   );
 
   return {
@@ -75,5 +101,11 @@ export function useInThreadCompare(threadId: string) {
     isPending: mutation.isPending,
     isError: mutation.isError,
     canSend,
+    judgeEnabled,
+    setJudgeEnabled,
+    judgeModel,
+    setJudgeModel,
+    judgeModelOptions,
+    isJudgeModelOptionsLoading,
   };
 }

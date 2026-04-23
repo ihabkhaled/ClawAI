@@ -4,11 +4,13 @@ import { COST_ENSEMBLE_CONTENT_MIN_LENGTH } from '@/constants';
 import { useCostEnsemblePoll } from '@/hooks/chat/use-cost-ensemble-poll';
 import { useSendCostEnsemble } from '@/hooks/chat/use-send-cost-ensemble';
 import { useTranslation } from '@/lib/i18n';
-import type { UseCostEnsemblePageReturn } from '@/types';
+import type { AdvancedModuleModelSelection, UseCostEnsemblePageReturn } from '@/types';
+import { buildAdvancedModelSelectionPayload } from '@/utilities';
 
 export function useCostEnsemblePage(): UseCostEnsemblePageReturn {
   const { t } = useTranslation();
   const [content, setContent] = useState('');
+  const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
 
   const { send, result, isPending, isError } = useSendCostEnsemble();
 
@@ -28,13 +30,15 @@ export function useCostEnsemblePage(): UseCostEnsemblePageReturn {
     if (!canSend) {
       return;
     }
-    send({ content: content.trim() });
-  }, [canSend, send, content]);
+    send({ content: content.trim(), ...buildAdvancedModelSelectionPayload(selectedModel) });
+  }, [canSend, send, content, selectedModel]);
 
   return {
     t,
     content,
     setContent,
+    selectedModel,
+    setSelectedModel,
     handleSend,
     canSend,
     isPending,

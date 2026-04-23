@@ -1,6 +1,9 @@
 import { useState } from 'react';
 
-import { INITIAL_RESEARCH_PROVIDER_FORM } from '@/constants/research.constants';
+import {
+  INITIAL_RESEARCH_PROVIDER_FORM,
+  RESEARCH_PROVIDER_DEFAULT_BASE_URLS,
+} from '@/constants/research.constants';
 import { useTranslation } from '@/lib/i18n';
 import type {
   CreateResearchProviderRequest,
@@ -28,7 +31,21 @@ export function useResearchProvidersPage(): UseResearchProvidersPageReturn {
   const [lastTestMessage, setLastTestMessage] = useState<string | null>(null);
 
   const setFormField: UseResearchProvidersPageReturn['setFormField'] = (key, value) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => {
+      if (key === 'kind') {
+        const nextKind = value as ResearchProviderFormState['kind'];
+        const currentDefault = RESEARCH_PROVIDER_DEFAULT_BASE_URLS[prev.kind];
+        return {
+          ...prev,
+          kind: nextKind,
+          baseUrl:
+            prev.baseUrl === currentDefault || prev.baseUrl.trim().length === 0
+              ? RESEARCH_PROVIDER_DEFAULT_BASE_URLS[nextKind]
+              : prev.baseUrl,
+        };
+      }
+      return { ...prev, [key]: value };
+    });
   };
 
   const handleSubmit = async (): Promise<void> => {

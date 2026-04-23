@@ -3,7 +3,6 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
-  ESCALATION_AUTO_NAVIGATE_DELAY_MS,
   ESCALATION_POLL_INTERVAL_MS,
   ESCALATION_POLL_MESSAGES_LIMIT,
   MAX_ESCALATION_POLL_COUNT,
@@ -61,17 +60,7 @@ export function useEscalationPoll(threadId: string | null): UseEscalationPollRes
   useEffect(() => {
     if (isSynthesisReady) {
       setPollingEnabled(false);
-      autoNavTimerRef.current = setTimeout(() => {
-        if (threadId) {
-          router.push(ROUTES.CHAT_THREAD(threadId));
-        }
-      }, ESCALATION_AUTO_NAVIGATE_DELAY_MS);
     }
-    return () => {
-      if (autoNavTimerRef.current) {
-        clearTimeout(autoNavTimerRef.current);
-      }
-    };
   }, [isSynthesisReady, threadId, router]);
 
   const handleViewInThread = useCallback((): void => {

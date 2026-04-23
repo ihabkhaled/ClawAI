@@ -3,7 +3,6 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
-  COST_ENSEMBLE_AUTO_NAVIGATE_DELAY_MS,
   COST_ENSEMBLE_POLL_INTERVAL_MS,
   COST_ENSEMBLE_POLL_MESSAGES_LIMIT,
   MAX_COST_ENSEMBLE_POLL_COUNT,
@@ -83,17 +82,7 @@ export function useCostEnsemblePoll(threadId: string | null): UseCostEnsemblePol
   useEffect(() => {
     if (isCostEnsembleReady) {
       setPollingEnabled(false);
-      autoNavTimerRef.current = setTimeout(() => {
-        if (threadId) {
-          router.push(ROUTES.CHAT_THREAD(threadId));
-        }
-      }, COST_ENSEMBLE_AUTO_NAVIGATE_DELAY_MS);
     }
-    return () => {
-      if (autoNavTimerRef.current) {
-        clearTimeout(autoNavTimerRef.current);
-      }
-    };
   }, [isCostEnsembleReady, threadId, router]);
 
   const handleViewInThread = useCallback((): void => {

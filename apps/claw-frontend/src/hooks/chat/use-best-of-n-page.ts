@@ -4,12 +4,14 @@ import { BEST_OF_N_CONTENT_MIN_LENGTH } from '@/constants';
 import { useBestOfNPoll } from '@/hooks/chat/use-best-of-n-poll';
 import { useSendBestOfN } from '@/hooks/chat/use-send-best-of-n';
 import { useTranslation } from '@/lib/i18n';
-import type { UseBestOfNPageReturn } from '@/types';
+import type { AdvancedModuleModelSelection, UseBestOfNPageReturn } from '@/types';
+import { buildAdvancedModelSelectionPayload } from '@/utilities';
 
 export function useBestOfNPage(): UseBestOfNPageReturn {
   const { t } = useTranslation();
   const [content, setContent] = useState('');
   const [n, setN] = useState(3);
+  const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
 
   const { send, result, isPending, isError } = useSendBestOfN();
 
@@ -26,8 +28,9 @@ export function useBestOfNPage(): UseBestOfNPageReturn {
     send({
       content: content.trim(),
       n,
+      ...buildAdvancedModelSelectionPayload(selectedModel),
     });
-  }, [canSend, send, content, n]);
+  }, [canSend, send, content, n, selectedModel]);
 
   return {
     t,
@@ -35,6 +38,8 @@ export function useBestOfNPage(): UseBestOfNPageReturn {
     setContent,
     n,
     setN,
+    selectedModel,
+    setSelectedModel,
     handleSend,
     canSend,
     isPending,

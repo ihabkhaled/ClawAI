@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   MAX_VERIFIER_POLL_COUNT,
   ROUTES,
-  VERIFIER_AUTO_NAVIGATE_DELAY_MS,
   VERIFIER_POLL_INTERVAL_MS,
   VERIFIER_POLL_MESSAGES_LIMIT,
 } from '@/constants';
@@ -79,17 +78,7 @@ export function useVerifyPoll(threadId: string | null): UseVerifyPollResult {
   useEffect(() => {
     if (isVerifyReady) {
       setPollingEnabled(false);
-      autoNavTimerRef.current = setTimeout(() => {
-        if (threadId) {
-          router.push(ROUTES.CHAT_THREAD(threadId));
-        }
-      }, VERIFIER_AUTO_NAVIGATE_DELAY_MS);
     }
-    return () => {
-      if (autoNavTimerRef.current) {
-        clearTimeout(autoNavTimerRef.current);
-      }
-    };
   }, [isVerifyReady, threadId, router]);
 
   const handleViewInThread = useCallback((): void => {

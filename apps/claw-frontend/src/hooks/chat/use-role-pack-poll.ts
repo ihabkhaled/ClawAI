@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   MAX_ROLE_PACK_POLL_COUNT,
-  ROLE_PACK_AUTO_NAVIGATE_DELAY_MS,
   ROLE_PACK_POLL_INTERVAL_MS,
   ROLE_PACK_POLL_MESSAGES_LIMIT,
   ROUTES,
@@ -79,17 +78,7 @@ export function useRolePackPoll(threadId: string | null): UseRolePackPollResult 
   useEffect(() => {
     if (isRolePackReady) {
       setPollingEnabled(false);
-      autoNavTimerRef.current = setTimeout(() => {
-        if (threadId) {
-          router.push(ROUTES.CHAT_THREAD(threadId));
-        }
-      }, ROLE_PACK_AUTO_NAVIGATE_DELAY_MS);
     }
-    return () => {
-      if (autoNavTimerRef.current) {
-        clearTimeout(autoNavTimerRef.current);
-      }
-    };
   }, [isRolePackReady, threadId, router]);
 
   const handleViewInThread = useCallback((): void => {

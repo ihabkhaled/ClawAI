@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   MAX_PIPELINE_POLL_COUNT,
-  PIPELINE_AUTO_NAVIGATE_DELAY_MS,
   PIPELINE_POLL_INTERVAL_MS,
   PIPELINE_POLL_MESSAGES_LIMIT,
   ROUTES,
@@ -79,17 +78,7 @@ export function usePipelinePoll(threadId: string | null): UsePipelinePollResult 
   useEffect(() => {
     if (isPipelineReady) {
       setPollingEnabled(false);
-      autoNavTimerRef.current = setTimeout(() => {
-        if (threadId) {
-          router.push(ROUTES.CHAT_THREAD(threadId));
-        }
-      }, PIPELINE_AUTO_NAVIGATE_DELAY_MS);
     }
-    return () => {
-      if (autoNavTimerRef.current) {
-        clearTimeout(autoNavTimerRef.current);
-      }
-    };
   }, [isPipelineReady, threadId, router]);
 
   const handleViewInThread = useCallback((): void => {

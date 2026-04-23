@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react';
 
 import { ParallelModelStatus } from '@/enums';
 import type { ChatMessage, ParallelExpandedMessage, ParallelModelResponse } from '@/types';
-import { getBestResponse } from '@/utilities';
+import { getBestResponse, messageToParallelResponse } from '@/utilities';
 
 export function useParallelMessageGroup(messages: ChatMessage[]): {
+  responses: ParallelModelResponse[];
   expanded: ParallelExpandedMessage | null;
   fastestId: string | null;
   bestId: string | null;
@@ -12,6 +13,10 @@ export function useParallelMessageGroup(messages: ChatMessage[]): {
   closeExpanded: () => void;
 } {
   const [expanded, setExpanded] = useState<ParallelExpandedMessage | null>(null);
+  const responses = useMemo(
+    () => messages.map((message) => messageToParallelResponse(message)),
+    [messages],
+  );
 
   const completed = messages.filter(
     (m) =>
@@ -26,19 +31,6 @@ export function useParallelMessageGroup(messages: ChatMessage[]): {
       : null;
 
   const bestId = useMemo(() => {
-    const responses: ParallelModelResponse[] = messages.map((m) => {
-      const meta = m.metadata as Record<string, unknown> | null;
-      return {
-        provider: m.provider ?? '',
-        model: m.model ?? '',
-        content: m.content,
-        latencyMs: m.latencyMs ?? 0,
-        inputTokens: m.inputTokens ?? null,
-        outputTokens: m.outputTokens ?? null,
-        status: (meta?.['status'] as ParallelModelStatus) ?? ParallelModelStatus.FAILED,
-        errorMessage: null,
-      };
-    });
     const bestModel = getBestResponse(responses);
     if (!bestModel) {
       return null;
@@ -55,5 +47,5 @@ export function useParallelMessageGroup(messages: ChatMessage[]): {
     setExpanded(null);
   };
 
-  return { expanded, fastestId, bestId, openExpanded, closeExpanded };
+  return { responses, expanded, fastestId, bestId, openExpanded, closeExpanded };
 }

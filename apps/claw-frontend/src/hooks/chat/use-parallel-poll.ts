@@ -2,12 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  PARALLEL_AUTO_NAVIGATE_DELAY_MS,
-  PARALLEL_POLL_INTERVAL_MS,
-  PARALLEL_POLL_MESSAGES_LIMIT,
-  ROUTES,
-} from '@/constants';
+import { PARALLEL_POLL_INTERVAL_MS, PARALLEL_POLL_MESSAGES_LIMIT, ROUTES } from '@/constants';
 import { MessageRole } from '@/enums';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
@@ -48,17 +43,7 @@ export function useParallelPoll(
   useEffect(() => {
     if (allResponded) {
       setPollingEnabled(false);
-      autoNavTimerRef.current = setTimeout(() => {
-        if (threadId) {
-          router.push(ROUTES.CHAT_THREAD(threadId));
-        }
-      }, PARALLEL_AUTO_NAVIGATE_DELAY_MS);
     }
-    return () => {
-      if (autoNavTimerRef.current) {
-        clearTimeout(autoNavTimerRef.current);
-      }
-    };
   }, [allResponded, threadId, router]);
 
   const handleViewInThread = useCallback((): void => {

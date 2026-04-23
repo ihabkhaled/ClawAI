@@ -5,14 +5,14 @@ import type { RepairType } from '@/enums/repair-type.enum';
 import { useRepairPoll } from '@/hooks/chat/use-repair-poll';
 import { useSendRepair } from '@/hooks/chat/use-send-repair';
 import { useTranslation } from '@/lib/i18n';
-import type { UseRepairPageReturn } from '@/types';
+import type { AdvancedModuleModelSelection, UseRepairPageReturn } from '@/types';
+import { buildAdvancedModelSelectionPayload } from '@/utilities';
 
 export function useRepairPage(): UseRepairPageReturn {
   const { t } = useTranslation();
   const [content, setContent] = useState('');
   const [selectedRepairTypes, setSelectedRepairTypes] = useState<RepairType[]>([]);
-  const [targetProvider] = useState<string | undefined>(undefined);
-  const [targetModel] = useState<string | undefined>(undefined);
+  const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
 
   const { send, result, isPending, isError } = useSendRepair();
 
@@ -42,10 +42,11 @@ export function useRepairPage(): UseRepairPageReturn {
     send({
       content: content.trim(),
       repairTypes: selectedRepairTypes,
-      targetProvider,
-      targetModel,
+      targetProvider: selectedModel?.provider,
+      targetModel: selectedModel?.model,
+      ...buildAdvancedModelSelectionPayload(selectedModel),
     });
-  }, [canSend, send, content, selectedRepairTypes, targetProvider, targetModel]);
+  }, [canSend, send, content, selectedRepairTypes, selectedModel]);
 
   return {
     t,
@@ -53,8 +54,8 @@ export function useRepairPage(): UseRepairPageReturn {
     setContent,
     selectedRepairTypes,
     handleToggleRepairType,
-    targetProvider,
-    targetModel,
+    selectedModel,
+    setSelectedModel,
     handleSend,
     isPending,
     isError,

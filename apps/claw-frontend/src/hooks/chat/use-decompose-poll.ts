@@ -3,7 +3,6 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
-  DECOMPOSE_AUTO_NAVIGATE_DELAY_MS,
   DECOMPOSE_POLL_INTERVAL_MS,
   DECOMPOSE_POLL_MESSAGES_LIMIT,
   MAX_DECOMPOSE_POLL_COUNT,
@@ -83,17 +82,7 @@ export function useDecomposePoll(threadId: string | null): UseDecomposePollResul
   useEffect(() => {
     if (isDecompositionReady) {
       setPollingEnabled(false);
-      autoNavTimerRef.current = setTimeout(() => {
-        if (threadId) {
-          router.push(ROUTES.CHAT_THREAD(threadId));
-        }
-      }, DECOMPOSE_AUTO_NAVIGATE_DELAY_MS);
     }
-    return () => {
-      if (autoNavTimerRef.current) {
-        clearTimeout(autoNavTimerRef.current);
-      }
-    };
   }, [isDecompositionReady, threadId, router]);
 
   const handleViewInThread = useCallback((): void => {

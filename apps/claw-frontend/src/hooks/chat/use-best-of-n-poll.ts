@@ -3,7 +3,6 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
-  BEST_OF_N_AUTO_NAVIGATE_DELAY_MS,
   BEST_OF_N_POLL_INTERVAL_MS,
   BEST_OF_N_POLL_MESSAGES_LIMIT,
   MAX_BEST_OF_N_POLL_COUNT,
@@ -79,17 +78,7 @@ export function useBestOfNPoll(threadId: string | null): UseBestOfNPollResult {
   useEffect(() => {
     if (isBestOfNReady) {
       setPollingEnabled(false);
-      autoNavTimerRef.current = setTimeout(() => {
-        if (threadId) {
-          router.push(ROUTES.CHAT_THREAD(threadId));
-        }
-      }, BEST_OF_N_AUTO_NAVIGATE_DELAY_MS);
     }
-    return () => {
-      if (autoNavTimerRef.current) {
-        clearTimeout(autoNavTimerRef.current);
-      }
-    };
   }, [isBestOfNReady, threadId, router]);
 
   const handleViewInThread = useCallback((): void => {

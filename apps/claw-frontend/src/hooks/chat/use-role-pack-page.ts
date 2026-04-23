@@ -5,12 +5,14 @@ import { RolePackName } from '@/enums/role-pack.enum';
 import { useRolePackPoll } from '@/hooks/chat/use-role-pack-poll';
 import { useSendRolePack } from '@/hooks/chat/use-send-role-pack';
 import { useTranslation } from '@/lib/i18n';
-import type { RolePack, UseRolePackPageReturn } from '@/types';
+import type { AdvancedModuleModelSelection, RolePack, UseRolePackPageReturn } from '@/types';
+import { buildAdvancedModelSelectionPayload } from '@/utilities';
 
 export function useRolePackPage(): UseRolePackPageReturn {
   const { t } = useTranslation();
   const [content, setContent] = useState('');
   const [pack, setPack] = useState<RolePack>(RolePackName.CodingTeam);
+  const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
 
   const { mutate, data: sendResult, isPending, isError } = useSendRolePack();
 
@@ -24,8 +26,12 @@ export function useRolePackPage(): UseRolePackPageReturn {
     if (!canSend) {
       return;
     }
-    mutate({ content: content.trim(), pack });
-  }, [canSend, mutate, content, pack]);
+    mutate({
+      content: content.trim(),
+      pack,
+      ...buildAdvancedModelSelectionPayload(selectedModel),
+    });
+  }, [canSend, mutate, content, pack, selectedModel]);
 
   return {
     t,
@@ -33,6 +39,8 @@ export function useRolePackPage(): UseRolePackPageReturn {
     setContent,
     pack,
     setPack,
+    selectedModel,
+    setSelectedModel,
     handleSend,
     canSend,
     isPending,

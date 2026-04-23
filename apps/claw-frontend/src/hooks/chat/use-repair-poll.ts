@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   MAX_REPAIR_POLL_COUNT,
-  REPAIR_AUTO_NAVIGATE_DELAY_MS,
   REPAIR_POLL_INTERVAL_MS,
   REPAIR_POLL_MESSAGES_LIMIT,
   ROUTES,
@@ -79,17 +78,7 @@ export function useRepairPoll(threadId: string | null): UseRepairPollResult {
   useEffect(() => {
     if (isRepairReady) {
       setPollingEnabled(false);
-      autoNavTimerRef.current = setTimeout(() => {
-        if (threadId) {
-          router.push(ROUTES.CHAT_THREAD(threadId));
-        }
-      }, REPAIR_AUTO_NAVIGATE_DELAY_MS);
     }
-    return () => {
-      if (autoNavTimerRef.current) {
-        clearTimeout(autoNavTimerRef.current);
-      }
-    };
   }, [isRepairReady, threadId, router]);
 
   const handleViewInThread = useCallback((): void => {

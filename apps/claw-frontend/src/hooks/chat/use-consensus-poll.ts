@@ -2,12 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  CONSENSUS_AUTO_NAVIGATE_DELAY_MS,
-  CONSENSUS_POLL_INTERVAL_MS,
-  CONSENSUS_POLL_MESSAGES_LIMIT,
-  ROUTES,
-} from '@/constants';
+import { CONSENSUS_POLL_INTERVAL_MS, CONSENSUS_POLL_MESSAGES_LIMIT, ROUTES } from '@/constants';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { ConsensusMetadata, ConsensusSynthesisState, UseConsensusPollResult } from '@/types';
@@ -49,17 +44,7 @@ export function useConsensusPoll(threadId: string | null): UseConsensusPollResul
   useEffect(() => {
     if (isSynthesisReady) {
       setPollingEnabled(false);
-      autoNavTimerRef.current = setTimeout(() => {
-        if (threadId) {
-          router.push(ROUTES.CHAT_THREAD(threadId));
-        }
-      }, CONSENSUS_AUTO_NAVIGATE_DELAY_MS);
     }
-    return () => {
-      if (autoNavTimerRef.current) {
-        clearTimeout(autoNavTimerRef.current);
-      }
-    };
   }, [isSynthesisReady, threadId, router]);
 
   const handleViewInThread = useCallback((): void => {
