@@ -64,3 +64,5 @@ file-storage-data/
 .claude/
 plan-prompts/
 tmp/
+tmp/qa-run.log
+qa-run.log
