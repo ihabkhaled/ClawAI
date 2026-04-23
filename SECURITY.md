@@ -8,9 +8,9 @@ Security practices, mechanisms, and considerations for the Claw platform.
 
 Claw's microservices architecture provides security through isolation:
 
-- **Network isolation**: All services communicate over a Docker bridge network; only Nginx, the frontend, and management ports are exposed to the host
-- **Database-per-service**: Each microservice has its own database instance; a compromise of one database does not expose another service's data
-- **Independent authentication**: Every microservice validates JWTs independently using the `@claw/shared-auth` package
+- **Network isolation**: All services communicate over a Docker bridge network; only Nginx (4000), the frontend (3000), and management ports are exposed to the host
+- **Database-per-service**: 12 independent PostgreSQL instances + MongoDB; a compromise of one database does not expose another service's data
+- **Independent authentication**: Every microservice validates JWTs independently using `@claw/shared-auth`
 - **Async messaging security**: RabbitMQ connections use authenticated credentials; services only consume messages from their subscribed routing keys
 
 ---
@@ -19,46 +19,52 @@ Claw's microservices architecture provides security through isolation:
 
 ### Encryption at Rest (AES-256-GCM)
 
-All sensitive credentials (provider API keys, connector secrets) are encrypted before storage using AES-256-GCM:
+All sensitive credentials (provider API keys, connector secrets) are encrypted before storage:
 
 - **Algorithm**: AES-256-GCM (authenticated encryption with associated data)
-- **Key**: 32-byte key derived from the `ENCRYPTION_KEY` environment variable
-- **IV**: A unique 12-byte initialization vector is generated for each encryption operation
-- **Auth Tag**: A 16-byte authentication tag is stored alongside the ciphertext to detect tampering
+- **Key**: 32-byte key from the `ENCRYPTION_KEY` environment variable (64 hex characters)
+- **IV**: Unique 12-byte initialization vector generated per encryption operation
+- **Auth Tag**: 16-byte tag stored alongside ciphertext to detect tampering
 
-The encrypted payload stored in the database consists of: `IV + AuthTag + Ciphertext`, base64-encoded.
+Stored payload format: `Base64(IV + AuthTag + Ciphertext)`
 
 ### Key Management
 
-- The `ENCRYPTION_KEY` is stored only in the environment, never in the database or source code
-- Rotation requires re-encrypting all stored secrets with the new key (a migration script is provided)
-- The key must be a 32-byte value represented as a 64-character hex string
+- `ENCRYPTION_KEY` stored only in the environment, never in the database or source code
+- Rotation requires re-encrypting all stored secrets with the new key
+- Generate with: `openssl rand -hex 32`
 
 ### What Is Encrypted
 
-| Data                    | Encrypted | Storage Location          | Service     |
-|-------------------------|-----------|---------------------------|-------------|
-| Provider API keys       | Yes       | `connectors` table        | Connector   |
-| AWS secret access keys  | Yes       | `connectors` table        | Connector   |
-| User passwords          | Hashed    | `users` table             | Auth        |
-| JWT secrets             | N/A       | Environment only          | All         |
-| Refresh tokens          | Hashed    | `refresh_tokens` table    | Auth        |
+| Data                   | Protection  | Storage Location       | Service   |
+| ---------------------- | ----------- | ---------------------- | --------- |
+| Provider API keys      | AES-256-GCM | `connectors` table     | Connector |
+| AWS secret access keys | AES-256-GCM | `connectors` table     | Connector |
+| Workspace OAuth tokens | AES-256-GCM | `workspace_connectors` | Workspace |
+| User passwords         | argon2id    | `users` table          | Auth      |
+| Refresh tokens         | Hashed      | `sessions` table       | Auth      |
+| JWT secrets            | N/A         | Environment only       | All       |
 
 ### Secret Handling Per Service
 
-Each microservice only has access to the secrets it needs:
-
-| Service    | Secrets Accessed                                    |
-|------------|-----------------------------------------------------|
-| Auth       | JWT_SECRET, password hashes                         |
-| Chat       | JWT_SECRET (for validation only)                    |
-| Connector  | JWT_SECRET, ENCRYPTION_KEY, provider API keys       |
-| Routing    | JWT_SECRET                                          |
-| Memory     | JWT_SECRET                                          |
-| File       | JWT_SECRET                                          |
-| Audit      | JWT_SECRET                                          |
-| Ollama     | JWT_SECRET, OLLAMA_BASE_URL                         |
-| Health     | No secrets (stateless aggregator)                   |
+| Service         | Secrets Accessed                                      |
+| --------------- | ----------------------------------------------------- |
+| Auth            | JWT_SECRET, password hashes                           |
+| Chat            | JWT_SECRET (validation only)                          |
+| Connector       | JWT_SECRET, ENCRYPTION_KEY, provider API keys         |
+| Routing         | JWT_SECRET                                            |
+| Memory          | JWT_SECRET                                            |
+| File            | JWT_SECRET                                            |
+| Audit           | JWT_SECRET                                            |
+| Ollama Service  | JWT_SECRET, OLLAMA_BASE_URL                           |
+| Health          | No secrets (stateless aggregator)                     |
+| Client Logs     | JWT_SECRET                                            |
+| Server Logs     | JWT_SECRET                                            |
+| Image           | JWT_SECRET, provider API keys (via connector service) |
+| File Generation | JWT_SECRET                                            |
+| Agent           | JWT_SECRET, agent session tokens                      |
+| Research        | JWT_SECRET, TAVILY_API_KEY, SEARXNG_BASE_URL          |
+| Workspace       | JWT_SECRET, ENCRYPTION_KEY, workspace OAuth tokens    |
 
 ---
 
@@ -66,35 +72,35 @@ Each microservice only has access to the secrets it needs:
 
 ### Password Hashing
 
-- **Algorithm**: argon2id
-- **Why argon2id**: Memory-hard algorithm resistant to GPU and ASIC attacks; recommended by OWASP
-- Passwords are never stored in plaintext or reversible encryption
-- Argon2 parameters follow OWASP recommendations for server-side hashing
-- Password operations are handled exclusively by the Auth service
+- **Algorithm**: argon2id (memory-hard, GPU/ASIC resistant)
+- Recommended by OWASP for server-side password hashing
+- Parameters follow OWASP recommendations
+- Password operations handled exclusively by the Auth service
 
-### JWT (JSON Web Tokens)
+### JWT
 
-- **Access tokens**: Short-lived (default 15 minutes), contain user ID and role
-- **Refresh tokens**: Longer-lived (default 7 days), used to obtain new access tokens
-- **Signing**: HMAC-SHA256 with the `JWT_SECRET` environment variable
-- **Storage**: Access tokens are held in memory on the frontend; refresh tokens are stored in httpOnly cookies or secure storage
-- **Validation**: Every microservice validates JWTs independently using the `@claw/shared-auth` JWT guard -- no single point of failure for auth validation
+- **Access tokens**: Short-lived (default 15 min), contain user ID and role
+- **Refresh tokens**: Longer-lived (default 7 days), for obtaining new access tokens
+- **Signing**: HMAC-SHA256 with `JWT_SECRET`
+- **Validation**: Every microservice validates JWTs independently (no single point of failure)
+- **SSE note**: Never pass JWT tokens in URL query params — they leak in server logs, browser history, and Referer headers. Frontend SSE client uses `fetch()` with `Authorization: Bearer` header
 
 ### Refresh Token Rotation
 
-When a refresh token is used:
-1. The Auth service verifies the token against the stored hash
-2. The old token is invalidated immediately
-3. A new access token and refresh token pair is issued
-4. The new refresh token hash replaces the old one in the database
+On each use:
 
-This limits the damage window if a refresh token is compromised -- it can only be used once.
+1. Auth service verifies the token against the stored hash
+2. Old token is invalidated immediately
+3. New access + refresh token pair is issued
+4. New refresh token hash replaces the old one
+
+This limits the damage window — each refresh token can only be used once.
 
 ### Session Invalidation
 
-- Logging out invalidates all refresh tokens for the user
+- Logout invalidates all refresh tokens for the user
 - Admin users can force-invalidate all sessions for any user
-- Expired refresh tokens are periodically cleaned from the database
+- Expired tokens are periodically cleaned from the database
 
 ---
 
@@ -102,29 +108,62 @@ This limits the damage window if a refresh token is compromised -- it can only b
 
 ### Role-Based Access Control (RBAC)
 
-Claw uses a simple role-based model with two roles:
-
-| Role    | Capabilities                                                      |
-|---------|-------------------------------------------------------------------|
-| `ADMIN` | Full access: manage users, connectors, routing rules, view audits |
-| `USER`  | Use chat, manage own threads, view own profile                    |
+| Role       | Capabilities                                                          |
+| ---------- | --------------------------------------------------------------------- |
+| `ADMIN`    | Full access: manage users, connectors, routing rules, view all audits |
+| `OPERATOR` | Manage connectors and routing; cannot manage users                    |
+| `VIEWER`   | Read-only access to chat and observability                            |
 
 ### Guard Implementation
 
-Authorization is enforced using NestJS guards provided by `@claw/shared-auth`:
+Enforced via NestJS guards from `@claw/shared-auth`:
 
-- **`JwtAuthGuard`**: Verifies the JWT is valid and attaches the user to the request
-- **`RolesGuard`**: Checks that the authenticated user has the required role for the endpoint
-- Guards are applied at the controller or individual route level using decorators
+- **`AuthGuard`**: Verifies JWT validity; attaches user to request
+- **`RolesGuard`**: Checks user role against `@Roles()` decorator
 - All endpoints except `/auth/login`, `/auth/register`, and `/health` require authentication
-- Each microservice applies these guards independently
+- Each microservice applies guards independently
 
 ### Resource Ownership
 
 Beyond role checks, services enforce ownership:
-- Users can only access their own chat threads and messages (Chat service)
-- Users can only view and modify their own profile (Auth service)
-- Connectors are shared resources managed by admins (Connector service)
+
+- Users can only access their own chat threads and messages
+- Users can only view and modify their own profile
+- Connectors are shared resources managed by admins and operators
+
+---
+
+## File Upload Security
+
+Every uploaded file passes 4 security checks before storage:
+
+### 1. Antivirus Scan (ClamAV)
+
+- ClamAV Docker container (`clamav/clamav-debian:stable`, port 3310)
+- Files sent via TCP INSTREAM protocol
+- **Fail-closed**: if ClamAV is down, upload is rejected (not allowed through)
+- Configure: `CLAMAV_HOST`, `CLAMAV_PORT`, `CLAMAV_ENABLED`
+
+### 2. Magic Byte Validation
+
+- Verifies file content matches declared MIME type
+- Checked types: PDF (`%PDF`), PNG (`\x89PNG`), JPEG (`\xFF\xD8\xFF`), GIF (`GIF8`), WebP, ZIP/DOCX
+- Declared type mismatch → HTTP 422 `INVALID_FILE_TYPE`
+
+### 3. Filename Validation
+
+- Blocks path traversal attempts (`../`, `\`, `/` in filename)
+- Blocks null bytes (`\0`)
+- Blocks double extensions (`.exe.pdf`, `.php.jpg`)
+- Blocks 30+ dangerous extensions: `.exe`, `.dll`, `.bat`, `.ps1`, `.vbs`, `.sh`, `.cmd`, `.msi`, etc.
+- Filenames sanitized before storage (special chars replaced with underscores)
+
+### 4. ZIP Bomb Detection
+
+- Detects suspicious null byte patterns in archive files
+- Prevents decompression bombs from crashing the file service
+
+Failed checks return HTTP 422 with a machine-readable reason code.
 
 ---
 
@@ -132,75 +171,73 @@ Beyond role checks, services enforce ownership:
 
 ### Docker Bridge Network
 
-All microservices, databases, and infrastructure containers communicate over a private Docker bridge network:
+All containers communicate over a private Docker bridge network:
 
-- Only the following ports are exposed to the host:
-  - Nginx (:80) -- API gateway
-  - Frontend (:3000) -- UI
-  - Individual service ports (:4001-4009) -- for development convenience
-  - Database ports (:5441-5446, :27018, :6380) -- for development convenience
-  - RabbitMQ management (:15672) -- for administration
-- In production, only Nginx (:80) and Frontend (:3000) should be exposed to the host
-- Services reference each other by Docker service name (e.g., `claw-auth-service`), not by IP
-- Database containers are not accessible from outside the Docker network in production
+- **Development**: Service ports 4001–4017, database ports 5441–5452, management ports are exposed to host for convenience
+- **Production**: Only Nginx (:80 → 4000) and Frontend (:3000) should be exposed; all other ports blocked by firewall
 
 ### Inter-Service Communication
 
-- **Synchronous (HTTP)**: Services call each other via internal Docker network URLs
-- **Asynchronous (RabbitMQ)**: Events are published to the `claw.events` topic exchange; services subscribe to specific routing keys
+- **Synchronous (HTTP)**: Internal Docker service names (e.g., `http://claw-auth-service:4001`)
+- **Asynchronous (RabbitMQ)**: Topic exchange, services subscribe to specific routing keys only
 - No service directly accesses another service's database
 
-### RabbitMQ Authentication
+### Workspace OAuth2 / PKCE Security
 
-- RabbitMQ requires authenticated connections (username/password)
-- Default credentials (`guest`/`guest`) must be changed in production
-- Each service authenticates to RabbitMQ independently
-- Message integrity is maintained by the AMQP protocol over the Docker internal network
+The workspace service implements OAuth2 with PKCE for external integrations:
+
+- PKCE challenge generated and stored in Redis with a short TTL (10 minutes)
+- State parameter validated on callback to prevent CSRF in OAuth flows
+- OAuth tokens stored encrypted (AES-256-GCM) in `workspace_connectors` table
+- Token refresh handled server-side; client never sees raw OAuth tokens
+
+### Agent Terminal Command Security
+
+The agent service requires explicit human approval for terminal commands:
+
+- All commands queued as `PENDING` records before execution
+- Frontend presents commands to the user for approve/reject
+- Commands can be executed only after approval is recorded
+- Commands with `APPROVED` status are logged with executor identity and timestamp
+- Policy violation events are published to the audit log
 
 ---
 
 ## Input Validation
 
-### Zod DTOs
+All incoming data validated with Zod schemas before reaching service logic:
 
-All incoming request data is validated using Zod schemas:
-
-- Every endpoint defines a Zod schema for its request body, query parameters, and path parameters
-- Validation is applied via a custom NestJS pipe that runs Zod `.parse()` before the handler executes
-- Invalid requests receive a `400 Bad Request` with structured error details
-- Zod schemas serve as the single source of truth for both validation and TypeScript types
-- Shared types are defined in `@claw/shared-types` and used across services
-
-### Validation Rules
-
-- **String inputs**: Maximum length enforced, trimmed of whitespace
-- **Email addresses**: Format validated with Zod's `.email()` refinement
-- **Passwords**: Minimum length enforced (8 characters)
-- **UUIDs**: All ID parameters validated as UUID format
-- **Enums**: Domain values validated against TypeScript enums, never raw strings
-- **Pagination**: Page and limit values validated as positive integers with upper bounds
+- Every endpoint has a Zod schema for body, query params, and path params
+- Custom NestJS pipe runs `z.safeParse()` before the handler executes
+- Invalid requests → `400 Bad Request` with structured error details
+- **Rule**: Every `z.string()` MUST have `.max()` — unbounded strings are a denial-of-service risk
+- **Rule**: Every `z.array()` MUST have `.max()` — unbounded arrays are a denial-of-service risk
+- Enums: domain values validated against TypeScript enums, never raw string comparisons
+- UUIDs: all ID parameters validated as UUID format
 
 ---
 
 ## Rate Limiting
 
-### Strategy
+Rate limiting at two levels:
 
-Rate limiting is applied at the Nginx reverse proxy level and within individual services:
+### 1. Nginx (request-level, pre-service)
 
-| Endpoint Category     | Limit            | Window  | Purpose                          |
-|-----------------------|------------------|---------|----------------------------------|
-| Authentication        | 5 requests       | 1 min   | Prevent brute-force attacks      |
-| Token refresh         | 10 requests      | 1 min   | Prevent token abuse              |
-| Chat message send     | 30 requests      | 1 min   | Prevent API cost abuse           |
-| General API           | 100 requests     | 1 min   | General abuse prevention         |
+- Configured per route group in `infra/nginx/nginx.conf`
+- Returns 429 before the request reaches any microservice
 
-### Implementation
+### 2. NestJS `@nestjs/throttler` (per-service, per-user)
 
-- Rate limits are enforced using Redis-backed counters
-- Each limit is keyed by user ID (authenticated) or IP address (unauthenticated)
-- Exceeded limits return `429 Too Many Requests` with a `Retry-After` header
-- Nginx provides a first layer of rate limiting before requests reach services
+| Endpoint Category | Limit        | Window | Purpose                  |
+| ----------------- | ------------ | ------ | ------------------------ |
+| Authentication    | 5 requests   | 1 min  | Prevent brute-force      |
+| Token refresh     | 10 requests  | 1 min  | Prevent token abuse      |
+| Chat message send | 30 requests  | 1 min  | Prevent API cost abuse   |
+| General API       | 100 requests | 1 min  | General abuse prevention |
+
+- Rate-limit counters stored in Redis, keyed by user ID (authenticated) or IP (unauthenticated)
+- Exceeded limits return `429 Too Many Requests` with `Retry-After` header
+- SSE streaming endpoints use `@SkipThrottle()` — long-lived connections should not consume the rate-limit budget
 
 ---
 
@@ -208,72 +245,71 @@ Rate limiting is applied at the Nginx reverse proxy level and within individual 
 
 ### Frontend
 
-- React's JSX automatically escapes rendered values, preventing most XSS vectors
-- `dangerouslySetInnerHTML` is never used in the codebase
-- User-generated content (chat messages) is rendered as plain text, not HTML
-- Content Security Policy (CSP) headers restrict script sources to same-origin
+- React JSX automatically escapes all rendered values
+- `dangerouslySetInnerHTML` is prohibited in the codebase (ESLint rule enforced)
+- Chat message content rendered as plain text / markdown, not raw HTML
+- Content Security Policy headers restrict script sources
 
 ### Backend
 
 - All API responses use `Content-Type: application/json`
-- HTML content is never generated or served by the API
-- User input is validated and sanitized before storage
-- Structured logging (pino) prevents log injection
+- HTML never generated or served by the API
+- Structured logging (pino) with redaction for authorization, password, apiKey, token, secret fields
 
 ---
 
 ## CSRF Considerations
 
-### Current Approach
+- JWT bearer token auth is inherently CSRF-resistant (browsers cannot auto-attach Authorization headers cross-origin)
+- Cookies set with `SameSite=Strict` and `HttpOnly` flags where used for refresh tokens
+- CORS configured on Nginx to allow only the frontend origin (not wildcard)
+- OAuth2 state parameter validated on all workspace OAuth callbacks
 
-- The API uses bearer token authentication (JWT in the `Authorization` header), which is inherently resistant to CSRF because browsers do not automatically attach custom headers to cross-origin requests
-- Cookies, if used for refresh tokens, are set with `SameSite=Strict` and `HttpOnly` flags
-- CORS is configured on Nginx to allow only the frontend origin
+---
 
-### CORS Configuration
+## Helmet (Security Headers)
 
-- `Access-Control-Allow-Origin` is set to the frontend URL (not wildcard)
-- `Access-Control-Allow-Credentials` is enabled only when cookie-based refresh tokens are used
-- Preflight requests are handled by Nginx for all mutating methods
+All 16 NestJS services apply `helmet` middleware:
+
+- `Strict-Transport-Security` (HSTS)
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `X-XSS-Protection`
+- `Referrer-Policy`
+- `Content-Security-Policy`
 
 ---
 
 ## Docker Security
 
-### Container Isolation
-
-- Each microservice runs in its own container with its own filesystem
-- Each database runs in its own container, isolated from other databases
-- Containers communicate over a Docker bridge network; only necessary ports are exposed to the host
+- Each service and database runs in its own container with its own filesystem
 - No containers run in privileged mode
+- Official images used for all infrastructure (pgvector, redis, mongo, rabbitmq, ollama)
+- Images pinned to major version tags
+- `.env` file excluded from Docker contexts via `.dockerignore`
+- Each database has its own named volume; no sensitive bind mounts from host
 
-### Image Security
+---
 
-- Official images are used for all infrastructure services (pgvector, redis, mongo, rabbitmq, ollama)
-- Images are pinned to major version tags to balance stability and security updates
-- No custom images pull from untrusted registries
+## Pino Log Redaction
 
-### Volume Security
+Structured logs produced by all 16 services redact sensitive fields:
 
-- Database volumes persist on the host filesystem under Docker's managed volume directory
-- Each database has its own named volume
-- No sensitive data is bind-mounted from the host
-- The `.env` file is excluded from Docker contexts via `.dockerignore`
+```json
+{ "redact": ["req.headers.authorization", "password", "refreshToken", "apiKey", "token", "secret"] }
+```
+
+Log entries containing these fields have their values replaced with `[Redacted]`.
 
 ---
 
 ## Reporting Vulnerabilities
 
-If you discover a security vulnerability in Claw, please report it responsibly:
+If you discover a security vulnerability:
 
-1. **Do not** open a public GitHub issue for security vulnerabilities
+1. **Do not** open a public GitHub issue
 2. Email the maintainers at the address listed in the repository's security policy
-3. Include:
-   - Description of the vulnerability
-   - Steps to reproduce
-   - Potential impact assessment
-   - Suggested fix (if you have one)
-4. You will receive an acknowledgment within 48 hours
-5. A fix will be developed and released as a patch before public disclosure
+3. Include: description, reproduction steps, potential impact, suggested fix (if known)
+4. Acknowledgment within 48 hours; fix released as a patch before public disclosure
 
-We follow coordinated disclosure practices. We will credit reporters in the release notes unless they prefer to remain anonymous.
+We follow coordinated disclosure practices and credit reporters in release notes.

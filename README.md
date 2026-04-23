@@ -20,7 +20,7 @@ Claw is an open-source platform for orchestrating AI models across multiple prov
 - **Multi-provider routing** -- OpenAI, Anthropic, Google Gemini, AWS Bedrock, DeepSeek, xAI, and local models via Ollama
 - **Intelligent model routing** -- A local judge model selects the best provider/model for each request based on task characteristics
 - **Local-first architecture** -- Run entirely on your own hardware with Ollama; cloud providers are optional
-- **Microservices backend** -- 15 independent NestJS services with fault isolation and independent scaling
+- **Microservices backend** -- 16 independent NestJS services with fault isolation and independent scaling
 - **Secure secret management** -- Connector API keys encrypted at rest with AES-256-GCM
 - **Chat interface** -- Threaded conversations with full message history
 - **Memory and context packs** -- Persistent memory and embeddings for contextual conversations
@@ -31,7 +31,7 @@ Claw is an open-source platform for orchestrating AI models across multiple prov
 - **Image and file generation** -- Dedicated services for image output and downloadable document/file generation
 - **Operational visibility** -- Aggregated health, audit logging, usage ledgers, client logs, and server logs
 - **Role-based access control** -- Admin, operator, and viewer roles with JWT authentication
-- **Monorepo structure** -- Frontend, 15 backend services, and 4 shared packages using npm workspaces
+- **Monorepo structure** -- Frontend, 16 backend services, and 4 shared packages using npm workspaces
 
 ---
 
@@ -94,8 +94,9 @@ Nginx Reverse Proxy (:4000)
   +--> Server Logs (:4011) ------> MongoDB claw_server_logs (:27018)
   +--> Image (:4012) ------------> PostgreSQL claw_images (:5448)
   +--> File Generation (:4013) --> PostgreSQL claw_file_generations (:5449)
-  +--> Workspace (:4014) --------> PostgreSQL claw_workspace (:5450)
   +--> Agent (:4015) ------------> PostgreSQL claw_agent (:5451)
+  +--> Research (:4016) ---------> PostgreSQL claw_research (:5452)
+  +--> Workspace (:4017) --------> PostgreSQL claw_workspace (:5450)
 
 Shared infrastructure:
   - RabbitMQ (:5672 / :15672)
@@ -106,30 +107,31 @@ Shared infrastructure:
 
 ### Service Table
 
-| Service         | Port | Database                                     | Purpose                                               |
-| --------------- | ---- | -------------------------------------------- | ----------------------------------------------------- |
-| Auth            | 4001 | PostgreSQL `claw_auth` (5441)                | Users, sessions, JWT, roles                           |
-| Chat            | 4002 | PostgreSQL `claw_chat` (5442)                | Threads, messages, streaming, orchestration workflows |
-| Connector       | 4003 | PostgreSQL `claw_connectors` (5443)          | Provider configs, model catalogs                      |
-| Routing         | 4004 | PostgreSQL `claw_routing` (5444)             | Routing decisions, policies                           |
-| Memory          | 4005 | PostgreSQL `claw_memory` (5445, pgvector)    | Memory, context packs, embeddings                     |
-| File            | 4006 | PostgreSQL `claw_files` (5446)               | File upload, chunking                                 |
-| Audit           | 4007 | MongoDB `claw_audit` (27018)                 | Audit logs, usage ledger                              |
-| Ollama Service  | 4008 | PostgreSQL `claw_ollama` (5447)              | Local model proxy and catalog                         |
-| Health          | 4009 | None (stateless)                             | Aggregates health from downstream services            |
-| Client Logs     | 4010 | MongoDB `claw_client_logs` (27018)           | Frontend log ingestion                                |
-| Server Logs     | 4011 | MongoDB `claw_server_logs` (27018)           | Backend structured log aggregation                    |
-| Image           | 4012 | PostgreSQL `claw_images` (5448)              | Image generation orchestration                        |
-| File Generation | 4013 | PostgreSQL `claw_file_generations` (5449)    | Downloadable document/file generation                 |
-| Workspace       | 4014 | PostgreSQL `claw_workspace` (5450)           | External workspace context, sync, actions             |
-| Agent           | 4015 | PostgreSQL `claw_agent` (5451)               | Local agent sessions, commands, repos, file events    |
+| Service         | Port | Database                                  | Purpose                                               |
+| --------------- | ---- | ----------------------------------------- | ----------------------------------------------------- |
+| Auth            | 4001 | PostgreSQL `claw_auth` (5441)             | Users, sessions, JWT, roles                           |
+| Chat            | 4002 | PostgreSQL `claw_chat` (5442)             | Threads, messages, streaming, orchestration workflows |
+| Connector       | 4003 | PostgreSQL `claw_connectors` (5443)       | Provider configs, model catalogs                      |
+| Routing         | 4004 | PostgreSQL `claw_routing` (5444)          | Routing decisions, policies                           |
+| Memory          | 4005 | PostgreSQL `claw_memory` (5445, pgvector) | Memory, context packs, embeddings                     |
+| File            | 4006 | PostgreSQL `claw_files` (5446)            | File upload, chunking                                 |
+| Audit           | 4007 | MongoDB `claw_audit` (27018)              | Audit logs, usage ledger                              |
+| Ollama Service  | 4008 | PostgreSQL `claw_ollama` (5447)           | Local model proxy and catalog                         |
+| Health          | 4009 | None (stateless)                          | Aggregates health from downstream services            |
+| Client Logs     | 4010 | MongoDB `claw_client_logs` (27018)        | Frontend log ingestion                                |
+| Server Logs     | 4011 | MongoDB `claw_server_logs` (27018)        | Backend structured log aggregation                    |
+| Image           | 4012 | PostgreSQL `claw_images` (5448)           | Image generation orchestration                        |
+| File Generation | 4013 | PostgreSQL `claw_file_generations` (5449) | Downloadable document/file generation                 |
+| Agent           | 4015 | PostgreSQL `claw_agent` (5451)            | Local agent sessions, commands, repos, file events    |
+| Research        | 4016 | PostgreSQL `claw_research` (5452)         | Dynamic search, fetch, scrape, evidence orchestration |
+| Workspace       | 4017 | PostgreSQL `claw_workspace` (5450)        | External workspace context, sync, actions             |
 
 ### Infrastructure
 
 | Component      | Host Port(s) | Internal Port | Purpose                        |
 | -------------- | ------------ | ------------- | ------------------------------ |
 | Nginx          | 4000         | 80            | Reverse proxy / API gateway    |
-| PostgreSQL x11 | 5441-5451    | 5432          | Per-service relational storage |
+| PostgreSQL x12 | 5441-5452    | 5432          | Per-service relational storage |
 | MongoDB        | 27018        | 27017         | Audit and log storage          |
 | Redis          | 6380         | 6379          | Caching and ephemeral state    |
 | RabbitMQ       | 5672         | 5672          | Async inter-service messaging  |
@@ -159,8 +161,9 @@ claw/
 │   ├── claw-server-logs-service/     # Backend log aggregation (:4011)
 │   ├── claw-image-service/           # Image generation service (:4012)
 │   ├── claw-file-generation-service/ # File generation service (:4013)
-│   ├── claw-workspace-service/       # Workspace grounding and actions (:4014)
-│   └── claw-agent-service/           # Local agent runtime backend (:4015)
+│   ├── claw-agent-service/           # Local agent runtime backend (:4015)
+│   ├── claw-research-service/        # Dynamic search and evidence orchestration (:4016)
+│   └── claw-workspace-service/       # Workspace grounding and actions (:4017)
 ├── packages/
 │   ├── shared-types/                 # @claw/shared-types
 │   ├── shared-constants/             # @claw/shared-constants
@@ -178,22 +181,22 @@ claw/
 
 ## Development Commands
 
-| Command                                                | Description                              |
-| ------------------------------------------------------ | ---------------------------------------- |
-| `npm run dev:frontend`                                 | Start frontend only                      |
-| `npm run dev --workspace=claw-chat-service`            | Start chat service only                  |
-| `npm run dev --workspace=claw-workspace-service`       | Start workspace service only             |
-| `npm run dev --workspace=claw-agent-service`           | Start agent service only                 |
-| `npm run build`                                        | Build all applications and packages      |
-| `npm run lint`                                         | Lint all applications and packages       |
-| `npm run typecheck`                                    | Type-check all applications and packages |
-| `npm run test`                                         | Run all test suites                      |
-| `npm run test:e2e`                                     | Run end-to-end tests (Playwright)        |
-| `npm run format`                                       | Format code with Prettier                |
-| `npm run clean`                                        | Remove build artifacts and node_modules  |
-| `docker compose -f docker-compose.dev.yml up -d`       | Start the full dev stack                 |
-| `docker compose -f docker-compose.dev.yml down`        | Stop the full dev stack                  |
-| `docker compose -f docker-compose.dev.yml logs -f <service>` | Tail logs for a specific container |
+| Command                                                      | Description                              |
+| ------------------------------------------------------------ | ---------------------------------------- |
+| `npm run dev:frontend`                                       | Start frontend only                      |
+| `npm run dev --workspace=claw-chat-service`                  | Start chat service only                  |
+| `npm run dev --workspace=claw-workspace-service`             | Start workspace service only             |
+| `npm run dev --workspace=claw-agent-service`                 | Start agent service only                 |
+| `npm run build`                                              | Build all applications and packages      |
+| `npm run lint`                                               | Lint all applications and packages       |
+| `npm run typecheck`                                          | Type-check all applications and packages |
+| `npm run test`                                               | Run all test suites                      |
+| `npm run test:e2e`                                           | Run end-to-end tests (Playwright)        |
+| `npm run format`                                             | Format code with Prettier                |
+| `npm run clean`                                              | Remove build artifacts and node_modules  |
+| `docker compose -f docker-compose.dev.yml up -d`             | Start the full dev stack                 |
+| `docker compose -f docker-compose.dev.yml down`              | Stop the full dev stack                  |
+| `docker compose -f docker-compose.dev.yml logs -f <service>` | Tail logs for a specific container       |
 
 ---
 

@@ -70,7 +70,7 @@ docker compose -f docker-compose.dev.yml up -d
 curl http://localhost:4000/api/v1/health
 ```
 
-### What Starts (33 containers)
+### What Starts (35 containers)
 
 | Container                    | Type          | Host Port    | Internal Port |
 | ---------------------------- | ------------- | ------------ | ------------- |
@@ -87,8 +87,9 @@ curl http://localhost:4000/api/v1/health
 | claw-server-logs-service     | Microservice  | 4011         | 4011          |
 | claw-image-service           | Microservice  | 4012         | 4012          |
 | claw-file-generation-service | Microservice  | 4013         | 4013          |
-| claw-workspace-service       | Microservice  | 4014         | 4014          |
 | claw-agent-service           | Microservice  | 4015         | 4015          |
+| claw-research-service        | Microservice  | 4016         | 4016          |
+| claw-workspace-service       | Microservice  | 4017         | 4017          |
 | claw-frontend                | Next.js       | 3000         | 3000          |
 | claw-nginx                   | Reverse Proxy | 4000         | 80            |
 | claw-pg-auth                 | PostgreSQL    | 5441         | 5432          |
@@ -100,8 +101,9 @@ curl http://localhost:4000/api/v1/health
 | claw-pg-ollama               | PostgreSQL    | 5447         | 5432          |
 | claw-pg-images               | PostgreSQL    | 5448         | 5432          |
 | claw-pg-file-generations     | PostgreSQL    | 5449         | 5432          |
-| claw-pg-workspace            | PostgreSQL    | 5450         | 5432          |
 | claw-pg-agent                | PostgreSQL    | 5451         | 5432          |
+| claw-pg-research             | PostgreSQL    | 5452         | 5432          |
+| claw-pg-workspace            | PostgreSQL    | 5450         | 5432          |
 | claw-mongodb                 | MongoDB       | 27018        | 27017         |
 | claw-redis                   | Redis         | 6380         | 6379          |
 | claw-rabbitmq                | RabbitMQ      | 5672 / 15672 | 5672 / 15672  |
@@ -162,7 +164,7 @@ Wait for all containers to become healthy (this may take 30-60 seconds on first 
 docker compose -f docker-compose.dev.yml ps
 ```
 
-All 33 containers should show status `running` or `healthy`.
+All 35 containers should show status `running` or `healthy`.
 
 ---
 
@@ -225,8 +227,9 @@ curl -X POST http://localhost:4001/api/v1/auth/login \
 | Server Logs Service | http://localhost:4011  |
 | Image Service       | http://localhost:4012  |
 | File Generation     | http://localhost:4013  |
-| Workspace Service   | http://localhost:4014  |
 | Agent Service       | http://localhost:4015  |
+| Research Service    | http://localhost:4016  |
+| Workspace Service   | http://localhost:4017  |
 | RabbitMQ Management | http://localhost:15672 |
 | Ollama Runtime      | http://localhost:11434 |
 
@@ -245,7 +248,7 @@ Start only the databases, Redis, RabbitMQ, Ollama, ClamAV, and Nginx:
 ```bash
 docker compose -f docker-compose.dev.yml up -d \
   pg-auth pg-chat pg-connector pg-routing pg-memory pg-files pg-ollama \
-  pg-images pg-file-generations pg-workspace pg-agent \
+  pg-images pg-file-generations pg-agent pg-research pg-workspace \
   mongodb redis rabbitmq ollama clamav nginx
 ```
 
@@ -258,7 +261,7 @@ npm install
 This installs dependencies for all workspaces:
 
 - Root workspace (shared tooling)
-- All 15 service apps
+- All 16 service apps
 - `apps/claw-frontend` (Next.js)
 - All 4 shared packages
 
@@ -396,8 +399,9 @@ Typical flow:
 | 4011      | 4011           | Server logs service           |
 | 4012      | 4012           | Image service                 |
 | 4013      | 4013           | File generation service       |
-| 4014      | 4014           | Workspace service             |
 | 4015      | 4015           | Agent service                 |
+| 4016      | 4016           | Research service              |
+| 4017      | 4017           | Workspace service             |
 | 5441      | 5432           | PostgreSQL (auth)             |
 | 5442      | 5432           | PostgreSQL (chat)             |
 | 5443      | 5432           | PostgreSQL (connector)        |
@@ -407,8 +411,9 @@ Typical flow:
 | 5447      | 5432           | PostgreSQL (ollama)           |
 | 5448      | 5432           | PostgreSQL (images)           |
 | 5449      | 5432           | PostgreSQL (file generations) |
-| 5450      | 5432           | PostgreSQL (workspace)        |
 | 5451      | 5432           | PostgreSQL (agent)            |
+| 5452      | 5432           | PostgreSQL (research)         |
+| 5450      | 5432           | PostgreSQL (workspace)        |
 | 27018     | 27017          | MongoDB                       |
 | 6380      | 6379           | Redis                         |
 | 5672      | 5672           | RabbitMQ (AMQP)               |

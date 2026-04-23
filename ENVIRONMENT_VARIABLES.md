@@ -2,103 +2,144 @@
 
 Complete reference for all environment variables used by Claw.
 
-All variables are defined in `.env.example` at the project root. Each microservice reads from the root `.env` or its own `.env` file.
+All variables are defined in `.env.example` at the project root. Copy it to `.env` and fill in secrets before starting.
+
+---
+
+## General
+
+| Variable         | Required | Default                 | Description                              |
+| ---------------- | -------- | ----------------------- | ---------------------------------------- |
+| `NODE_ENV`       | No       | `development`           | `development` or `production`            |
+| `CORS_ORIGINS`   | Yes      | `http://localhost:3000` | Comma-separated allowed origins for CORS |
+| `THROTTLE_TTL`   | No       | `60000`                 | Rate-limit window in milliseconds        |
+| `THROTTLE_LIMIT` | No       | `100`                   | Max requests per window per user/IP      |
 
 ---
 
 ## PostgreSQL Instances
 
-Claw uses 6 separate PostgreSQL instances, one per data-owning service.
+Claw uses 12 separate PostgreSQL instances, one per data-owning service.
 
-| Variable                 | Required | Default           | Description                  |
-| ------------------------ | -------- | ----------------- | ---------------------------- |
-| `PG_AUTH_HOST`           | Yes      | `localhost`       | Auth database host           |
-| `PG_AUTH_PORT`           | Yes      | `5441`            | Auth database host port      |
-| `PG_AUTH_USER`           | Yes      | `claw`            | Auth database username       |
-| `PG_AUTH_PASSWORD`       | Yes      | `claw_secret`     | Auth database password       |
-| `PG_AUTH_DB`             | Yes      | `claw_auth`       | Auth database name           |
-| `PG_CHAT_HOST`           | Yes      | `localhost`       | Chat database host           |
-| `PG_CHAT_PORT`           | Yes      | `5442`            | Chat database host port      |
-| `PG_CHAT_USER`           | Yes      | `claw`            | Chat database username       |
-| `PG_CHAT_PASSWORD`       | Yes      | `claw_secret`     | Chat database password       |
-| `PG_CHAT_DB`             | Yes      | `claw_chat`       | Chat database name           |
-| `PG_CONNECTORS_HOST`     | Yes      | `localhost`       | Connector database host      |
-| `PG_CONNECTORS_PORT`     | Yes      | `5443`            | Connector database host port |
-| `PG_CONNECTORS_USER`     | Yes      | `claw`            | Connector database username  |
-| `PG_CONNECTORS_PASSWORD` | Yes      | `claw_secret`     | Connector database password  |
-| `PG_CONNECTORS_DB`       | Yes      | `claw_connectors` | Connector database name      |
-| `PG_ROUTING_HOST`        | Yes      | `localhost`       | Routing database host        |
-| `PG_ROUTING_PORT`        | Yes      | `5444`            | Routing database host port   |
-| `PG_ROUTING_USER`        | Yes      | `claw`            | Routing database username    |
-| `PG_ROUTING_PASSWORD`    | Yes      | `claw_secret`     | Routing database password    |
-| `PG_ROUTING_DB`          | Yes      | `claw_routing`    | Routing database name        |
-| `PG_MEMORY_HOST`         | Yes      | `localhost`       | Memory database host         |
-| `PG_MEMORY_PORT`         | Yes      | `5445`            | Memory database host port    |
-| `PG_MEMORY_USER`         | Yes      | `claw`            | Memory database username     |
-| `PG_MEMORY_PASSWORD`     | Yes      | `claw_secret`     | Memory database password     |
-| `PG_MEMORY_DB`           | Yes      | `claw_memory`     | Memory database name         |
-| `PG_FILES_HOST`          | Yes      | `localhost`       | File database host           |
-| `PG_FILES_PORT`          | Yes      | `5446`            | File database host port      |
-| `PG_FILES_USER`          | Yes      | `claw`            | File database username       |
-| `PG_FILES_PASSWORD`      | Yes      | `claw_secret`     | File database password       |
-| `PG_FILES_DB`            | Yes      | `claw_files`      | File database name           |
+| Variable                       | Required | Default                    | Description                         |
+| ------------------------------ | -------- | -------------------------- | ----------------------------------- |
+| `PG_AUTH_HOST`                 | Yes      | `claw-pg-auth`             | Auth database host                  |
+| `PG_AUTH_PORT`                 | Yes      | `5432`                     | Auth database port (internal)       |
+| `PG_AUTH_USER`                 | Yes      | `claw`                     | Auth database username              |
+| `PG_AUTH_PASSWORD`             | Yes      | `claw_secret`              | Auth database password              |
+| `PG_AUTH_DB`                   | Yes      | `claw_auth`                | Auth database name                  |
+| `PG_CHAT_HOST`                 | Yes      | `claw-pg-chat`             | Chat database host                  |
+| `PG_CHAT_PORT`                 | Yes      | `5432`                     | Chat database port                  |
+| `PG_CHAT_USER`                 | Yes      | `claw`                     | Chat database username              |
+| `PG_CHAT_PASSWORD`             | Yes      | `claw_secret`              | Chat database password              |
+| `PG_CHAT_DB`                   | Yes      | `claw_chat`                | Chat database name                  |
+| `PG_CONNECTORS_HOST`           | Yes      | `claw-pg-connector`        | Connector database host             |
+| `PG_CONNECTORS_PORT`           | Yes      | `5432`                     | Connector database port             |
+| `PG_CONNECTORS_USER`           | Yes      | `claw`                     | Connector database username         |
+| `PG_CONNECTORS_PASSWORD`       | Yes      | `claw_secret`              | Connector database password         |
+| `PG_CONNECTORS_DB`             | Yes      | `claw_connectors`          | Connector database name             |
+| `PG_ROUTING_HOST`              | Yes      | `claw-pg-routing`          | Routing database host               |
+| `PG_ROUTING_PORT`              | Yes      | `5432`                     | Routing database port               |
+| `PG_ROUTING_USER`              | Yes      | `claw`                     | Routing database username           |
+| `PG_ROUTING_PASSWORD`          | Yes      | `claw_secret`              | Routing database password           |
+| `PG_ROUTING_DB`                | Yes      | `claw_routing`             | Routing database name               |
+| `PG_MEMORY_HOST`               | Yes      | `claw-pg-memory`           | Memory database host                |
+| `PG_MEMORY_PORT`               | Yes      | `5432`                     | Memory database port                |
+| `PG_MEMORY_USER`               | Yes      | `claw`                     | Memory database username            |
+| `PG_MEMORY_PASSWORD`           | Yes      | `claw_secret`              | Memory database password            |
+| `PG_MEMORY_DB`                 | Yes      | `claw_memory`              | Memory database name                |
+| `PG_FILES_HOST`                | Yes      | `claw-pg-files`            | File database host                  |
+| `PG_FILES_PORT`                | Yes      | `5432`                     | File database port                  |
+| `PG_FILES_USER`                | Yes      | `claw`                     | File database username              |
+| `PG_FILES_PASSWORD`            | Yes      | `claw_secret`              | File database password              |
+| `PG_FILES_DB`                  | Yes      | `claw_files`               | File database name                  |
+| `PG_OLLAMA_HOST`               | Yes      | `claw-pg-ollama`           | Ollama service database host        |
+| `PG_OLLAMA_PORT`               | Yes      | `5432`                     | Ollama service database port        |
+| `PG_OLLAMA_USER`               | Yes      | `claw`                     | Ollama service database username    |
+| `PG_OLLAMA_PASSWORD`           | Yes      | `claw_secret`              | Ollama service database password    |
+| `PG_OLLAMA_DB`                 | Yes      | `claw_ollama`              | Ollama service database name        |
+| `PG_IMAGES_HOST`               | Yes      | `claw-pg-images`           | Image service database host         |
+| `PG_IMAGES_PORT`               | Yes      | `5432`                     | Image service database port         |
+| `PG_IMAGES_USER`               | Yes      | `claw`                     | Image service database username     |
+| `PG_IMAGES_PASSWORD`           | Yes      | `claw_secret`              | Image service database password     |
+| `PG_IMAGES_DB`                 | Yes      | `claw_images`              | Image service database name         |
+| `PG_FILE_GENERATIONS_HOST`     | Yes      | `claw-pg-file-generations` | File gen database host              |
+| `PG_FILE_GENERATIONS_PORT`     | Yes      | `5432`                     | File gen database port              |
+| `PG_FILE_GENERATIONS_USER`     | Yes      | `claw`                     | File gen database username          |
+| `PG_FILE_GENERATIONS_PASSWORD` | Yes      | `claw_secret`              | File gen database password          |
+| `PG_FILE_GENERATIONS_DB`       | Yes      | `claw_file_generations`    | File gen database name              |
+| `PG_AGENT_HOST`                | Yes      | `claw-pg-agent`            | Agent service database host         |
+| `PG_AGENT_PORT`                | Yes      | `5432`                     | Agent service database port         |
+| `PG_AGENT_USER`                | Yes      | `claw`                     | Agent service database username     |
+| `PG_AGENT_PASSWORD`            | Yes      | `claw_secret`              | Agent service database password     |
+| `PG_AGENT_DB`                  | Yes      | `claw_agent`               | Agent service database name         |
+| `PG_RESEARCH_HOST`             | Yes      | `claw-pg-research`         | Research service database host      |
+| `PG_RESEARCH_PORT`             | Yes      | `5432`                     | Research service database port      |
+| `PG_RESEARCH_USER`             | Yes      | `claw`                     | Research service database username  |
+| `PG_RESEARCH_PASSWORD`         | Yes      | `claw_secret`              | Research service database password  |
+| `PG_RESEARCH_DB`               | Yes      | `claw_research`            | Research service database name      |
+| `PG_WORKSPACE_HOST`            | Yes      | `claw-pg-workspace`        | Workspace service database host     |
+| `PG_WORKSPACE_PORT`            | Yes      | `5432`                     | Workspace service database port     |
+| `PG_WORKSPACE_USER`            | Yes      | `claw`                     | Workspace service database username |
+| `PG_WORKSPACE_PASSWORD`        | Yes      | `claw_secret`              | Workspace service database password |
+| `PG_WORKSPACE_DB`              | Yes      | `claw_workspace`           | Workspace service database name     |
 
 **Notes:**
 
-- Inside Docker Compose, services use Docker service names as hosts (e.g., `claw-pg-auth`) and internal port `5432`.
-- When running services locally, use `localhost` with the host port (e.g., `5441` for auth).
+- Inside Docker Compose, services use Docker service names as hosts (e.g., `claw-pg-auth`) with internal port `5432`.
+- When running services locally (outside Docker), use `localhost` with the host port (e.g., `5441` for auth).
 - Each PostgreSQL instance is a separate Docker container for fault isolation.
+- Memory service uses pgvector extension for embedding similarity search.
 
 ---
 
 ## MongoDB
 
-| Variable         | Required | Default      | Description                        |
-| ---------------- | -------- | ------------ | ---------------------------------- |
-| `MONGO_HOST`     | Yes      | `localhost`  | MongoDB host                       |
-| `MONGO_PORT`     | Yes      | `27018`      | MongoDB host port                  |
-| `MONGO_DB`       | Yes      | `claw_audit` | MongoDB database name              |
-| `MONGO_USER`     | No       | --           | MongoDB username (if auth enabled) |
-| `MONGO_PASSWORD` | No       | --           | MongoDB password (if auth enabled) |
+| Variable         | Required | Default        | Description                        |
+| ---------------- | -------- | -------------- | ---------------------------------- |
+| `MONGO_HOST`     | Yes      | `claw-mongodb` | MongoDB host                       |
+| `MONGO_PORT`     | Yes      | `27017`        | MongoDB port (internal)            |
+| `MONGO_USER`     | No       | —              | MongoDB username (if auth enabled) |
+| `MONGO_PASSWORD` | No       | —              | MongoDB password (if auth enabled) |
 
 **Notes:**
 
-- Used exclusively by the Audit service for audit logs and the usage ledger.
+- Used by Audit service (`claw_audit`), Client Logs service (`claw_client_logs`), and Server Logs service (`claw_server_logs`).
 - Internal Docker port is `27017`; host port is `27018`.
+- All log collections have a 30-day TTL index.
 
 ---
 
 ## Redis
 
-| Variable     | Required | Default                  | Description          |
-| ------------ | -------- | ------------------------ | -------------------- |
-| `REDIS_HOST` | Yes      | `localhost`              | Redis host           |
-| `REDIS_PORT` | Yes      | `6380`                   | Redis host port      |
-| `REDIS_URL`  | No       | `redis://localhost:6380` | Redis connection URL |
+| Variable     | Required | Default                   | Description           |
+| ------------ | -------- | ------------------------- | --------------------- |
+| `REDIS_HOST` | Yes      | `claw-redis`              | Redis host            |
+| `REDIS_PORT` | Yes      | `6379`                    | Redis port (internal) |
+| `REDIS_URL`  | No       | `redis://claw-redis:6379` | Redis connection URL  |
 
 **Notes:**
 
-- Used by the Ollama service for state management and by other services for caching.
-- Internal Docker port is `6379`; host port is `6380`.
+- Used by Ollama service for state, by routing service for prompt cache (5-minute TTL), and by throttler middleware for rate-limit counters.
+- Internal port `6379`; host port `6380`.
 
 ---
 
 ## RabbitMQ
 
-| Variable             | Required | Default     | Description                 |
-| -------------------- | -------- | ----------- | --------------------------- |
-| `RABBITMQ_HOST`      | Yes      | `localhost` | RabbitMQ host               |
-| `RABBITMQ_PORT`      | Yes      | `5672`      | RabbitMQ AMQP port          |
-| `RABBITMQ_USER`      | Yes      | `guest`     | RabbitMQ username           |
-| `RABBITMQ_PASSWORD`  | Yes      | `guest`     | RabbitMQ password           |
-| `RABBITMQ_MGMT_PORT` | No       | `15672`     | RabbitMQ management UI port |
+| Variable             | Required | Default            | Description                 |
+| -------------------- | -------- | ------------------ | --------------------------- |
+| `RABBITMQ_HOST`      | Yes      | `claw-rabbitmq`    | RabbitMQ host               |
+| `RABBITMQ_PORT`      | Yes      | `5672`             | RabbitMQ AMQP port          |
+| `RABBITMQ_USER`      | Yes      | `guest`            | RabbitMQ username           |
+| `RABBITMQ_PASSWORD`  | Yes      | `guest`            | RabbitMQ password           |
+| `RABBITMQ_URL`       | No       | (built from above) | Full AMQP URL               |
+| `RABBITMQ_MGMT_PORT` | No       | `15672`            | RabbitMQ management UI port |
 
 **Notes:**
 
-- All microservices connect to RabbitMQ for async event-driven communication.
-- The topic exchange `claw.events` is used for inter-service messaging.
-- Change default credentials (`guest`/`guest`) in production.
-- Management UI is accessible at `http://localhost:15672`.
+- Topic exchange `claw.events` with dead-letter queue and 3 retries with backoff.
+- Change default credentials in production.
 
 ---
 
@@ -106,15 +147,14 @@ Claw uses 6 separate PostgreSQL instances, one per data-owning service.
 
 | Variable             | Required | Default | Description                                         |
 | -------------------- | -------- | ------- | --------------------------------------------------- |
-| `JWT_SECRET`         | Yes      | --      | Secret key for signing JWTs (minimum 32 characters) |
+| `JWT_SECRET`         | Yes      | —       | Secret key for signing JWTs (minimum 32 characters) |
 | `JWT_ACCESS_EXPIRY`  | No       | `15m`   | Access token lifetime (e.g., `15m`, `1h`)           |
 | `JWT_REFRESH_EXPIRY` | No       | `7d`    | Refresh token lifetime (e.g., `7d`, `30d`)          |
 
 **Notes:**
 
-- `JWT_SECRET` must be a cryptographically random string. Generate with: `openssl rand -base64 48`.
-- The `@claw/shared-auth` package provides the JWT guard used by all services.
-- Every microservice validates JWTs independently using this shared secret.
+- Generate with: `openssl rand -base64 48`
+- Every microservice validates JWTs independently using `@claw/shared-auth`.
 
 ---
 
@@ -122,12 +162,12 @@ Claw uses 6 separate PostgreSQL instances, one per data-owning service.
 
 | Variable         | Required | Default | Description                                            |
 | ---------------- | -------- | ------- | ------------------------------------------------------ |
-| `ENCRYPTION_KEY` | Yes      | --      | 32-byte hex string (64 hex characters) for AES-256-GCM |
+| `ENCRYPTION_KEY` | Yes      | —       | 32-byte hex string (64 hex characters) for AES-256-GCM |
 
 **Notes:**
 
-- Used by the Connector service to encrypt provider API keys at rest.
-- Generate with: `openssl rand -hex 32`.
+- Used by Connector service to encrypt provider API keys at rest.
+- Generate with: `openssl rand -hex 32`
 - Never commit this value to version control.
 
 ---
@@ -139,11 +179,6 @@ Claw uses 6 separate PostgreSQL instances, one per data-owning service.
 | `ADMIN_EMAIL`    | No       | `admin@claw.local`         | Email for the seeded admin account    |
 | `ADMIN_USERNAME` | No       | `claw-admin`               | Username for the seeded admin account |
 | `ADMIN_PASSWORD` | Yes      | `change-me-on-first-login` | Password for the seeded admin account |
-
-**Notes:**
-
-- Used by the Auth service to create the initial admin user on first startup.
-- Change the password immediately after first login in production.
 
 ---
 
@@ -158,71 +193,168 @@ Claw uses 6 separate PostgreSQL instances, one per data-owning service.
 
 **Notes:**
 
-- Variables prefixed with `NEXT_PUBLIC_` are embedded in the frontend bundle and visible to browsers.
-- Never put secrets in `NEXT_PUBLIC_` variables.
-- `NEXT_PUBLIC_API_URL` should point to the Nginx reverse proxy (`http://localhost:4000`), which routes requests to the appropriate microservice.
+- Variables prefixed with `NEXT_PUBLIC_` are embedded in the browser bundle. Never put secrets here.
 
 ---
 
 ## Ollama (Local AI Runtime)
 
-| Variable          | Required | Default                  | Description              |
-| ----------------- | -------- | ------------------------ | ------------------------ |
-| `OLLAMA_BASE_URL` | No       | `http://localhost:11434` | Ollama HTTP API base URL |
+| Variable                   | Required | Default                          | Description                                            |
+| -------------------------- | -------- | -------------------------------- | ------------------------------------------------------ |
+| `OLLAMA_BASE_URL`          | Yes      | `http://claw-ollama:11434`       | Ollama HTTP API base URL                               |
+| `OLLAMA_ROUTER_MODEL`      | No       | `gemma3:4b`                      | Model used for routing decisions                       |
+| `OLLAMA_ROUTER_TIMEOUT_MS` | No       | `30000`                          | Timeout for router model calls (ms)                    |
+| `MEMORY_EXTRACTION_MODEL`  | No       | `gemma3:4b`                      | Model used for memory extraction                       |
+| `AUTO_PULL_MODELS`         | No       | `qwen3:1.7b phi4-mini gemma3:4b` | Space-separated list of models to auto-pull on startup |
 
 **Notes:**
 
-- Used by the Ollama service (:4008) to communicate with the Ollama runtime.
-- Inside Docker, this points to the Ollama container service name (e.g., `http://claw-ollama:11434`).
-- If running Ollama on the host, use `http://host.docker.internal:11434` from Docker services.
+- Inside Docker, use the container service name as host (`claw-ollama`).
+- When running Ollama on the host, use `http://host.docker.internal:11434`.
+- Router models are auto-excluded from user-facing model selector dropdowns.
 
 ---
 
-## Per-Service Environment Variables
+## File Storage
 
-Each service may define service-specific variables in addition to the shared ones above. Common per-service variables:
-
-| Variable    | Required | Default       | Description                                      |
-| ----------- | -------- | ------------- | ------------------------------------------------ |
-| `PORT`      | No       | (see table)   | Port the service listens on                      |
-| `NODE_ENV`  | No       | `development` | Environment mode (`development` or `production`) |
-| `LOG_LEVEL` | No       | `info`        | Logging level (`debug`, `info`, `warn`, `error`) |
-
-### Service Ports (defaults)
-
-| Service   | Default Port |
-| --------- | ------------ |
-| Auth      | 4001         |
-| Chat      | 4002         |
-| Connector | 4003         |
-| Routing   | 4004         |
-| Memory    | 4005         |
-| File      | 4006         |
-| Audit     | 4007         |
-| Ollama    | 4008         |
-| Health    | 4009         |
+| Variable            | Required | Default         | Description                                   |
+| ------------------- | -------- | --------------- | --------------------------------------------- |
+| `FILE_STORAGE_PATH` | Yes      | `/data/uploads` | Absolute path where uploaded files are stored |
+| `CLAMAV_HOST`       | No       | `clamav`        | ClamAV container host                         |
+| `CLAMAV_PORT`       | No       | `3310`          | ClamAV TCP port                               |
+| `CLAMAV_ENABLED`    | No       | `true`          | Enable/disable antivirus scanning             |
 
 ---
 
-## Provider API Keys (Optional)
+## Image Service
 
-These are optional and can also be configured through the UI connector management interface.
+| Variable               | Required | Default                          | Description                    |
+| ---------------------- | -------- | -------------------------------- | ------------------------------ |
+| `IMAGE_SERVICE_URL`    | Yes      | `http://claw-image-service:4012` | Internal image service URL     |
+| `IMAGE_PORT`           | No       | `4012`                           | Image service port             |
+| `STABLE_DIFFUSION_URL` | No       | `http://claw-comfyui:8188`       | ComfyUI / Stable Diffusion URL |
+| `COMFYUI_BASE_URL`     | No       | `http://claw-comfyui:8188`       | ComfyUI API base URL           |
+| `COMFYUI_PORT`         | No       | `8188`                           | ComfyUI container port         |
+
+---
+
+## Inter-Service URLs
+
+All services communicate via internal Docker service names.
+
+| Variable                      | Required | Default                                    |
+| ----------------------------- | -------- | ------------------------------------------ |
+| `AUTH_SERVICE_URL`            | Yes      | `http://claw-auth-service:4001`            |
+| `CHAT_SERVICE_URL`            | Yes      | `http://claw-chat-service:4002`            |
+| `CONNECTOR_SERVICE_URL`       | Yes      | `http://claw-connector-service:4003`       |
+| `ROUTING_SERVICE_URL`         | Yes      | `http://claw-routing-service:4004`         |
+| `MEMORY_SERVICE_URL`          | Yes      | `http://claw-memory-service:4005`          |
+| `FILE_SERVICE_URL`            | Yes      | `http://claw-file-service:4006`            |
+| `AUDIT_SERVICE_URL`           | Yes      | `http://claw-audit-service:4007`           |
+| `OLLAMA_SERVICE_URL`          | Yes      | `http://claw-ollama-service:4008`          |
+| `HEALTH_SERVICE_URL`          | Yes      | `http://claw-health-service:4009`          |
+| `IMAGE_SERVICE_URL`           | Yes      | `http://claw-image-service:4012`           |
+| `FILE_GENERATION_SERVICE_URL` | Yes      | `http://claw-file-generation-service:4013` |
+| `AGENT_SERVICE_URL`           | Yes      | `http://claw-agent-service:4015`           |
+| `RESEARCH_SERVICE_URL`        | Yes      | `http://claw-research-service:4016`        |
+| `WORKSPACE_SERVICE_URL`       | Yes      | `http://claw-workspace-service:4017`       |
+
+---
+
+## Per-Service Port Variables
+
+| Variable               | Default | Service         |
+| ---------------------- | ------- | --------------- |
+| `AUTH_PORT`            | `4001`  | Auth            |
+| `CHAT_PORT`            | `4002`  | Chat            |
+| `CONNECTOR_PORT`       | `4003`  | Connector       |
+| `ROUTING_PORT`         | `4004`  | Routing         |
+| `MEMORY_PORT`          | `4005`  | Memory          |
+| `FILE_PORT`            | `4006`  | File            |
+| `AUDIT_PORT`           | `4007`  | Audit           |
+| `OLLAMA_SERVICE_PORT`  | `4008`  | Ollama Service  |
+| `HEALTH_PORT`          | `4009`  | Health          |
+| `CLIENT_LOGS_PORT`     | `4010`  | Client Logs     |
+| `SERVER_LOGS_PORT`     | `4011`  | Server Logs     |
+| `IMAGE_PORT`           | `4012`  | Image           |
+| `FILE_GENERATION_PORT` | `4013`  | File Generation |
+| `AGENT_PORT`           | `4015`  | Agent           |
+| `RESEARCH_PORT`        | `4016`  | Research        |
+| `WORKSPACE_PORT`       | `4017`  | Workspace       |
+
+---
+
+## Per-Service Database URLs
+
+Prisma reads from `DATABASE_URL` per service. Each service's `.env` or the root `.env` sets a namespaced variable:
+
+| Variable                        | Service         |
+| ------------------------------- | --------------- |
+| `AUTH_DATABASE_URL`             | Auth            |
+| `CHAT_DATABASE_URL`             | Chat            |
+| `CONNECTOR_DATABASE_URL`        | Connector       |
+| `ROUTING_DATABASE_URL`          | Routing         |
+| `MEMORY_DATABASE_URL`           | Memory          |
+| `FILES_DATABASE_URL`            | File            |
+| `OLLAMA_DATABASE_URL`           | Ollama Service  |
+| `IMAGES_DATABASE_URL`           | Image           |
+| `FILE_GENERATIONS_DATABASE_URL` | File Generation |
+| `AGENT_DATABASE_URL`            | Agent           |
+| `RESEARCH_DATABASE_URL`         | Research        |
+| `WORKSPACE_DATABASE_URL`        | Workspace       |
+| `AUDIT_MONGODB_URI`             | Audit           |
+| `CLIENT_LOGS_MONGODB_URI`       | Client Logs     |
+| `SERVER_LOGS_MONGODB_URI`       | Server Logs     |
+
+---
+
+## Workspace OAuth Credentials
+
+| Variable               | Required | Description                           |
+| ---------------------- | -------- | ------------------------------------- |
+| `GITHUB_CLIENT_ID`     | No       | GitHub OAuth app client ID            |
+| `GITHUB_CLIENT_SECRET` | No       | GitHub OAuth app client secret        |
+| `GITLAB_CLIENT_ID`     | No       | GitLab OAuth app client ID            |
+| `GITLAB_CLIENT_SECRET` | No       | GitLab OAuth app client secret        |
+| `SLACK_CLIENT_ID`      | No       | Slack app client ID                   |
+| `SLACK_CLIENT_SECRET`  | No       | Slack app client secret               |
+| `JIRA_CLIENT_ID`       | No       | Jira (Atlassian) OAuth client ID      |
+| `JIRA_CLIENT_SECRET`   | No       | Jira OAuth client secret              |
+| `GOOGLE_CLIENT_ID`     | No       | Google OAuth client ID (Drive, Gmail) |
+| `GOOGLE_CLIENT_SECRET` | No       | Google OAuth client secret            |
+| `FIGMA_CLIENT_ID`      | No       | Figma OAuth client ID                 |
+| `FIGMA_CLIENT_SECRET`  | No       | Figma OAuth client secret             |
+
+---
+
+## Research Service
+
+| Variable           | Required | Default | Description                    |
+| ------------------ | -------- | ------- | ------------------------------ |
+| `TAVILY_API_KEY`   | No       | —       | Tavily search provider API key |
+| `SEARXNG_BASE_URL` | No       | —       | SearXNG instance base URL      |
+
+---
+
+## Provider API Keys
+
+Optional — can also be configured through the UI connector management interface.
 
 | Variable                | Required | Default     | Description                |
 | ----------------------- | -------- | ----------- | -------------------------- |
-| `OPENAI_API_KEY`        | No       | --          | OpenAI API key             |
-| `ANTHROPIC_API_KEY`     | No       | --          | Anthropic API key          |
-| `GOOGLE_GEMINI_API_KEY` | No       | --          | Google Gemini API key      |
-| `AWS_ACCESS_KEY_ID`     | No       | --          | AWS access key for Bedrock |
-| `AWS_SECRET_ACCESS_KEY` | No       | --          | AWS secret key for Bedrock |
+| `OPENAI_API_KEY`        | No       | —           | OpenAI API key             |
+| `ANTHROPIC_API_KEY`     | No       | —           | Anthropic API key          |
+| `GOOGLE_GEMINI_API_KEY` | No       | —           | Google Gemini API key      |
+| `AWS_ACCESS_KEY_ID`     | No       | —           | AWS access key for Bedrock |
+| `AWS_SECRET_ACCESS_KEY` | No       | —           | AWS secret key for Bedrock |
 | `AWS_REGION`            | No       | `us-east-1` | AWS region for Bedrock     |
-| `DEEPSEEK_API_KEY`      | No       | --          | DeepSeek API key           |
+| `DEEPSEEK_API_KEY`      | No       | —           | DeepSeek API key           |
+| `GROK_API_KEY`          | No       | —           | xAI Grok API key           |
 
 **Notes:**
 
-- Environment-based keys are used as fallback when no connector is configured in the UI.
 - Keys configured through the UI (connectors) take precedence over environment variables.
-- All keys are encrypted at rest when stored via the Connector service.
+- All keys are encrypted at rest with AES-256-GCM when stored via the Connector service.
 
 ---
 
@@ -231,11 +363,6 @@ These are optional and can also be configured through the UI connector managemen
 | Variable             | Required | Default | Description                                     |
 | -------------------- | -------- | ------- | ----------------------------------------------- |
 | `USE_MOCK_PROVIDERS` | No       | `false` | Use mock provider adapters instead of real APIs |
-
-**Notes:**
-
-- Set to `true` for development without API keys, CI pipelines, and testing.
-- Mock adapters return deterministic responses and simulate provider behavior.
 
 ---
 
