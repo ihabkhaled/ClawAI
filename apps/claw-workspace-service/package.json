@@ -25,6 +25,7 @@
     "prisma:generate": "prisma generate"
   },
   "dependencies": {
+    "@claw/shared-auth": "*",
     "@claw/shared-constants": "*",
     "@claw/shared-rabbitmq": "*",
     "@claw/shared-types": "*",

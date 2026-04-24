@@ -199,13 +199,20 @@ Claw uses 12 separate PostgreSQL instances, one per data-owning service.
 
 ## Ollama (Local AI Runtime)
 
-| Variable                   | Required | Default                          | Description                                            |
-| -------------------------- | -------- | -------------------------------- | ------------------------------------------------------ |
-| `OLLAMA_BASE_URL`          | Yes      | `http://claw-ollama:11434`       | Ollama HTTP API base URL                               |
-| `OLLAMA_ROUTER_MODEL`      | No       | `gemma3:4b`                      | Model used for routing decisions                       |
-| `OLLAMA_ROUTER_TIMEOUT_MS` | No       | `30000`                          | Timeout for router model calls (ms)                    |
-| `MEMORY_EXTRACTION_MODEL`  | No       | `gemma3:4b`                      | Model used for memory extraction                       |
-| `AUTO_PULL_MODELS`         | No       | `qwen3:1.7b phi4-mini gemma3:4b` | Space-separated list of models to auto-pull on startup |
+| Variable                     | Required | Default                    | Description                                                                |
+| ---------------------------- | -------- | -------------------------- | -------------------------------------------------------------------------- |
+| `OLLAMA_BASE_URL`            | Yes      | `http://claw-ollama:11434` | Ollama HTTP API base URL                                                   |
+| `OLLAMA_ROUTER_MODEL`        | No       | `qwen3:1.7b`               | Model used for routing decisions                                           |
+| `OLLAMA_ROUTER_TIMEOUT_MS`   | No       | `10000`                    | Timeout for router model calls (ms)                                        |
+| `ROUTER_COMPACT_PROMPT`      | No       | `true`                     | Toggles compact vs expanded AUTO router prompt layout                      |
+| `OLLAMA_GENERATE_TIMEOUT_MS` | No       | `300000`                   | Timeout for non-router generation calls (ms)                               |
+| `OLLAMA_KEEP_ALIVE`          | No       | `-1m`                      | How long the runtime keeps a model resident; `-1m` = forever until evicted |
+| `OLLAMA_MAX_LOADED_MODELS`   | No       | `2`                        | Max number of models loaded into VRAM concurrently                         |
+| `OLLAMA_NUM_PARALLEL`        | No       | `1`                        | Parallel generation slots per loaded model                                 |
+| `OLLAMA_FLASH_ATTENTION`     | No       | `1`                        | Enable flash-attention kernel when supported by the GPU                    |
+| `OLLAMA_KV_CACHE_TYPE`       | No       | `q8_0`                     | KV-cache quantization (`f16`, `q8_0`, `q4_0`)                              |
+| `MEMORY_EXTRACTION_MODEL`    | No       | `AUTO`                     | Model used for memory extraction (`AUTO` picks best installed)             |
+| `AUTO_PULL_MODELS`           | No       | `qwen3:1.7b`               | Space-separated list of models to auto-pull on startup                     |
 
 **Notes:**
 
@@ -257,7 +264,7 @@ All services communicate via internal Docker service names.
 | `FILE_GENERATION_SERVICE_URL` | Yes      | `http://claw-file-generation-service:4013` |
 | `AGENT_SERVICE_URL`           | Yes      | `http://claw-agent-service:4015`           |
 | `RESEARCH_SERVICE_URL`        | Yes      | `http://claw-research-service:4016`        |
-| `WORKSPACE_SERVICE_URL`       | Yes      | `http://claw-workspace-service:4017`       |
+| `WORKSPACE_SERVICE_URL`       | Yes      | `http://claw-workspace-service:4014`       |
 
 ---
 
@@ -280,7 +287,7 @@ All services communicate via internal Docker service names.
 | `FILE_GENERATION_PORT` | `4013`  | File Generation |
 | `AGENT_PORT`           | `4015`  | Agent           |
 | `RESEARCH_PORT`        | `4016`  | Research        |
-| `WORKSPACE_PORT`       | `4017`  | Workspace       |
+| `WORKSPACE_PORT`       | `4014`  | Workspace       |
 
 ---
 
@@ -333,6 +340,28 @@ Prisma reads from `DATABASE_URL` per service. Each service's `.env` or the root 
 | ------------------ | -------- | ------- | ------------------------------ |
 | `TAVILY_API_KEY`   | No       | —       | Tavily search provider API key |
 | `SEARXNG_BASE_URL` | No       | —       | SearXNG instance base URL      |
+
+---
+
+## Dynamic Model Discovery (Ollama service)
+
+| Variable                            | Required | Default | Description                                                   |
+| ----------------------------------- | -------- | ------- | ------------------------------------------------------------- |
+| `DISCOVERY_AUTO_REFRESH_ENABLED`    | No       | `true`  | Enable background refresh of the Ollama model catalog         |
+| `DISCOVERY_MAX_RESULTS_PER_SOURCE`  | No       | `50`    | Max catalog entries pulled per discovery source per refresh   |
+| `DISCOVERY_AUTO_APPROVE_CONFIDENCE` | No       | `0.85`  | Min classifier confidence for auto-approving new catalog rows |
+
+---
+
+## Desktop Agent Auth (Phase A — magic-link pairing + device-code + refresh rotation)
+
+| Variable                        | Required | Default | Description                                                               |
+| ------------------------------- | -------- | ------- | ------------------------------------------------------------------------- |
+| `AGENT_ACCESS_TTL_SECONDS`      | No       | `900`   | Access token lifetime for a paired desktop agent session                  |
+| `AGENT_REFRESH_TTL_DAYS`        | No       | `30`    | Refresh token lifetime for a paired desktop agent session                 |
+| `AGENT_PAIRING_TTL_SECONDS`     | No       | `120`   | Window for a user to complete magic-link pairing                          |
+| `AGENT_DEVICE_CODE_TTL_SECONDS` | No       | `900`   | Device-code authorization request lifetime                                |
+| `AGENT_REFRESH_GRACE_SECONDS`   | No       | `15`    | Grace window allowing the old refresh token after rotation (replay guard) |
 
 ---
 
