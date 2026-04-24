@@ -27,6 +27,7 @@ import type {
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
+  WriteActionResult,
 } from '../types/workspace.types';
 
 @Injectable()
@@ -304,6 +305,106 @@ export class ConfluenceAdapter implements WorkspaceAdapter {
         version: page.version?.number,
         status: page.status,
       },
+    };
+  }
+
+  supportsWrite(): boolean {
+    return true;
+  }
+
+  async executeWriteAction(
+    accessToken: string,
+    actionType: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    };
+
+    const resourcesResponse = await fetch(CONFLUENCE_API_RESOURCES, { headers });
+    if (!resourcesResponse.ok) {
+      return {
+        success: false,
+        errorMessage: `Confluence site lookup failed: HTTP ${resourcesResponse.status}`,
+      };
+    }
+    const resources = (await resourcesResponse.json()) as Array<ConfluenceResource>;
+    const site = resources[0];
+    if (site === undefined) {
+      return { success: false, errorMessage: 'No Confluence site accessible with this token' };
+    }
+    const baseUrl = `https://api.atlassian.com/ex/confluence/${site.id}/wiki/rest/api`;
+
+    if (actionType === 'CREATE_CONFLUENCE') {
+      const response = await fetch(`${baseUrl}/content`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          type: 'page',
+          title: payload['title'],
+          space: { key: payload['spaceKey'] },
+          body: {
+            storage: {
+              value: payload['storage'] ?? payload['body'],
+              representation: 'storage',
+            },
+          },
+          ...(payload['parentId'] !== undefined
+            ? { ancestors: [{ id: payload['parentId'] }] }
+            : {}),
+        }),
+      });
+      if (!response.ok) {
+        return { success: false, errorMessage: `Confluence API error: HTTP ${response.status}` };
+      }
+      const page = (await response.json()) as { id: string; _links?: { webui?: string } };
+      return {
+        success: true,
+        externalId: page.id,
+        url: page._links?.webui,
+      };
+    }
+
+    if (actionType === 'EDIT_CONFLUENCE') {
+      const pageId = payload['pageId'] as string;
+      const expectedVersion = payload['expectedVersion'] as number;
+      const response = await fetch(`${baseUrl}/content/${pageId}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          id: pageId,
+          type: 'page',
+          title: payload['title'],
+          version: { number: expectedVersion + 1 },
+          body: {
+            storage: {
+              value: payload['storage'] ?? payload['body'],
+              representation: 'storage',
+            },
+          },
+        }),
+      });
+      if (!response.ok) {
+        return { success: false, errorMessage: `Confluence API error: HTTP ${response.status}` };
+      }
+      const page = (await response.json()) as {
+        id: string;
+        version?: { number: number };
+        _links?: { webui?: string };
+      };
+      return {
+        success: true,
+        externalId: page.id,
+        url: page._links?.webui,
+        metadata: { newVersion: page.version?.number },
+      };
+    }
+
+    return {
+      success: false,
+      errorMessage: `Confluence adapter: unsupported action type ${actionType}`,
     };
   }
 }

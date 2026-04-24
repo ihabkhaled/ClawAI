@@ -308,7 +308,7 @@ export class JiraAdapter implements WorkspaceAdapter {
     }
     const baseUrl = `${JIRA_API_BASE}/ex/jira/${site.id}/rest/api/3`;
 
-    if (actionType === 'CREATE_TICKET') {
+    if (actionType === 'CREATE_TICKET' || actionType === 'CREATE_JIRA_FROM_FIGMA') {
       const response = await fetch(`${baseUrl}/issue`, {
         method: 'POST',
         headers,
@@ -319,6 +319,7 @@ export class JiraAdapter implements WorkspaceAdapter {
             summary: payload['summary'],
             description: payload['description'] ?? null,
             issuetype: { name: payload['issueType'] ?? 'Task' },
+            ...(Array.isArray(payload['labels']) ? { labels: payload['labels'] } : {}),
           },
         }),
       });
@@ -333,7 +334,25 @@ export class JiraAdapter implements WorkspaceAdapter {
       };
     }
 
-    if (actionType === 'ADD_TICKET_COMMENT') {
+    if (actionType === 'UPDATE_JIRA_ISSUE') {
+      const issueKey = payload['issueKey'] as string;
+      const response = await fetch(`${baseUrl}/issue/${issueKey}`, {
+        method: 'PUT',
+        headers,
+        signal,
+        body: JSON.stringify({ fields: payload['fields'] ?? {} }),
+      });
+      if (!response.ok) {
+        return { success: false, errorMessage: `Jira API error: HTTP ${response.status}` };
+      }
+      return {
+        success: true,
+        externalId: issueKey,
+        url: `${site.url}/browse/${issueKey}`,
+      };
+    }
+
+    if (actionType === 'ADD_TICKET_COMMENT' || actionType === 'COMMENT_JIRA') {
       const issueKey = payload['issueKey'] as string;
       const response = await fetch(`${baseUrl}/issue/${issueKey}/comment`, {
         method: 'POST',

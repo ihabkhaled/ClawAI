@@ -18,6 +18,7 @@ import type {
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
+  WriteActionResult,
 } from '../types/workspace.types';
 
 @Injectable()
@@ -231,10 +232,99 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
   }
 
   getDefaultScopes(): string[] {
-    return ['https://www.googleapis.com/auth/drive.readonly'];
+    return [
+      'https://www.googleapis.com/auth/drive.readonly',
+      'https://www.googleapis.com/auth/drive.file',
+    ];
   }
 
   supportsWrite(): boolean {
-    return false;
+    return true;
+  }
+
+  async executeWriteAction(
+    accessToken: string,
+    actionType: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    if (actionType === 'UPLOAD_DRIVE') {
+      const name = typeof payload['name'] === 'string' ? payload['name'] : null;
+      const content = typeof payload['content'] === 'string' ? payload['content'] : null;
+      const parentId = typeof payload['parentId'] === 'string' ? payload['parentId'] : undefined;
+      const mimeType = typeof payload['mimeType'] === 'string' ? payload['mimeType'] : 'text/plain';
+      if (name === null || content === null) {
+        return {
+          success: false,
+          errorMessage: 'UPLOAD_DRIVE requires {name, content} in payload',
+        };
+      }
+      const boundary = `claw-upload-${Date.now().toString(16)}`;
+      const metadata: Record<string, unknown> = { name, mimeType };
+      if (parentId !== undefined) {
+        metadata['parents'] = [parentId];
+      }
+      const multipart = [
+        `--${boundary}`,
+        'Content-Type: application/json; charset=UTF-8',
+        '',
+        JSON.stringify(metadata),
+        `--${boundary}`,
+        `Content-Type: ${mimeType}`,
+        '',
+        content,
+        `--${boundary}--`,
+      ].join('\r\n');
+      const response = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': `multipart/related; boundary=${boundary}`,
+          },
+          body: multipart,
+        },
+      );
+      if (!response.ok) {
+        return { success: false, errorMessage: `Drive upload failed: HTTP ${response.status}` };
+      }
+      const data = (await response.json()) as { id: string; webViewLink?: string };
+      return {
+        success: true,
+        externalId: data.id,
+        url: data.webViewLink,
+      };
+    }
+
+    if (actionType === 'MOVE_DRIVE') {
+      const fileId = payload['fileId'] as string;
+      const addParents = payload['addParents'] as string | undefined;
+      const removeParents = payload['removeParents'] as string | undefined;
+      const qs = new URLSearchParams();
+      if (addParents !== undefined) {
+        qs.set('addParents', addParents);
+      }
+      if (removeParents !== undefined) {
+        qs.set('removeParents', removeParents);
+      }
+      const response = await fetch(`${GOOGLE_DRIVE_API_BASE}/files/${fileId}?${qs.toString()}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      });
+      if (!response.ok) {
+        return { success: false, errorMessage: `Drive move failed: HTTP ${response.status}` };
+      }
+      const data = (await response.json()) as { id: string; webViewLink?: string };
+      return { success: true, externalId: data.id, url: data.webViewLink };
+    }
+
+    return {
+      success: false,
+      errorMessage: `Google Drive adapter: unsupported action type ${actionType}`,
+    };
   }
 }

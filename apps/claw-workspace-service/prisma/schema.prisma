@@ -93,6 +93,22 @@ enum WorkspaceActionType {
   CREATE_TICKET
   ADD_TICKET_COMMENT
   SEND_SLACK_MESSAGE
+  SEND_EMAIL
+  REPLY_EMAIL
+  UPDATE_JIRA_ISSUE
+  COMMENT_JIRA
+  COMMENT_PR
+  APPROVE_PR
+  ADD_PR_SUGGESTION
+  SEND_SLACK
+  REPLY_SLACK
+  EDIT_CONFLUENCE
+  CREATE_CONFLUENCE
+  UPLOAD_DRIVE
+  MOVE_DRIVE
+  CREATE_USER_STORY_FROM_FIGMA
+  CREATE_JIRA_FROM_FIGMA
+  POST_FIGMA_COMMENT
 }
 
 enum WorkspaceActionStatus {
@@ -103,6 +119,7 @@ enum WorkspaceActionStatus {
   EXECUTED
   FAILED
   EXPIRED
+  EDITED
 }
 
 // ─── Models ──────────────────────────────────────────────
@@ -266,6 +283,13 @@ model WorkspaceAction {
   rejectionReason String?               @map("rejection_reason") @db.VarChar(1000)
   errorMessage    String?               @map("error_message") @db.VarChar(2000)
 
+  // Stream 02 Phase 5 — v3 approval center
+  generatedBy     Json?                 @map("generated_by")
+  draftHistory    Json                  @default("[]") @map("draft_history")
+  sourceObjectId  String?               @map("source_object_id")
+  sourceFetchedAt DateTime?             @map("source_fetched_at")
+  bulkGroupId     String?               @map("bulk_group_id")
+
   connector WorkspaceConnector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
 
   @@unique([userId, idempotencyKey])
@@ -273,6 +297,7 @@ model WorkspaceAction {
   @@index([connectorId])
   @@index([status])
   @@index([requestedAt])
+  @@index([bulkGroupId], map: "workspace_actions_bulk_group_idx")
   @@map("workspace_actions")
 }
 

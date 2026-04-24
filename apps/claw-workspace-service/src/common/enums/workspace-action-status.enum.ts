@@ -6,4 +6,5 @@ export enum WorkspaceActionStatus {
   EXECUTED = 'EXECUTED',
   FAILED = 'FAILED',
   EXPIRED = 'EXPIRED',
+  EDITED = 'EDITED',
 }

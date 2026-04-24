@@ -15,6 +15,7 @@ const mockActionRepository = {
   findById: jest.fn(),
   findAllByUser: jest.fn(),
   update: jest.fn(),
+  findManyByIds: jest.fn(),
 };
 
 const mockConnectorRepository = {
@@ -46,7 +47,8 @@ const makeAction = (overrides = {}) => ({
   status: WorkspaceActionStatus.PENDING_APPROVAL,
   payload: {},
   expiresAt: new Date(Date.now() + 3_600_000),
-  connector: { id: 'c1', name: 'My GitHub', provider: 'GITHUB' },
+  draftHistory: [],
+  connector: { id: 'c1', name: 'My GitHub', provider: 'GITHUB', status: 'CONNECTED' },
   ...overrides,
 });
 
@@ -208,6 +210,173 @@ describe('WorkspaceActionService', () => {
         page: 1,
         pageSize: 20,
       });
+    });
+  });
+
+  describe('approve — stale connector blocker', () => {
+    it('blocks approve when connector is DEGRADED and publishes stale_blocked', async () => {
+      mockActionRepository.findById.mockResolvedValue(
+        makeAction({
+          connector: { id: 'c1', name: 'X', provider: 'GMAIL', status: 'DEGRADED' },
+        }),
+      );
+
+      await expect(service.approve('a1', 'u1')).rejects.toThrow(BusinessException);
+      expect(mockRabbitMQ.publish).toHaveBeenCalledWith(
+        'workspace_action.stale_blocked',
+        expect.objectContaining({ actionId: 'a1', connectorStatus: 'DEGRADED' }),
+      );
+    });
+
+    it('blocks approve when connector is PAUSED', async () => {
+      mockActionRepository.findById.mockResolvedValue(
+        makeAction({
+          connector: { id: 'c1', name: 'X', provider: 'SLACK', status: 'PAUSED' },
+        }),
+      );
+      await expect(service.approve('a1', 'u1')).rejects.toThrow(BusinessException);
+    });
+
+    it('blocks approve when connector is DISCONNECTED', async () => {
+      mockActionRepository.findById.mockResolvedValue(
+        makeAction({
+          connector: { id: 'c1', name: 'X', provider: 'JIRA', status: 'DISCONNECTED' },
+        }),
+      );
+      await expect(service.approve('a1', 'u1')).rejects.toThrow(BusinessException);
+    });
+
+    it('blocks approve when connector is PENDING_AUTH', async () => {
+      mockActionRepository.findById.mockResolvedValue(
+        makeAction({
+          connector: { id: 'c1', name: 'X', provider: 'JIRA', status: 'PENDING_AUTH' },
+        }),
+      );
+      await expect(service.approve('a1', 'u1')).rejects.toThrow(BusinessException);
+    });
+  });
+
+  describe('editDraft', () => {
+    it('increments draftHistory and transitions to EDITED', async () => {
+      mockActionRepository.findById.mockResolvedValue(
+        makeAction({ payload: { old: true }, draftHistory: [] }),
+      );
+      mockActionRepository.update.mockResolvedValue(
+        makeAction({ status: WorkspaceActionStatus.EDITED, payload: { new: true } }),
+      );
+
+      const result = await service.editDraft('a1', 'u1', {
+        payload: { new: true },
+        editReason: 'clearer tone',
+      });
+
+      expect(result.status).toBe(WorkspaceActionStatus.EDITED);
+      expect(mockActionRepository.update).toHaveBeenCalledWith(
+        'a1',
+        expect.objectContaining({
+          status: WorkspaceActionStatus.EDITED,
+          payload: { new: true },
+          draftHistory: expect.arrayContaining([
+            expect.objectContaining({ version: 1, payload: { old: true } }),
+          ]),
+        }),
+      );
+      expect(mockRabbitMQ.publish).toHaveBeenCalledWith(
+        'workspace_action.edited',
+        expect.objectContaining({ actionId: 'a1', newVersion: 1 }),
+      );
+    });
+
+    it('rejects edit when action is EXECUTED', async () => {
+      mockActionRepository.findById.mockResolvedValue(
+        makeAction({ status: WorkspaceActionStatus.EXECUTED }),
+      );
+
+      await expect(service.editDraft('a1', 'u1', { payload: { x: 1 } })).rejects.toThrow(
+        BusinessException,
+      );
+    });
+
+    it('allows re-editing an EDITED action and increments version', async () => {
+      mockActionRepository.findById.mockResolvedValue(
+        makeAction({
+          status: WorkspaceActionStatus.EDITED,
+          payload: { v2: true },
+          draftHistory: [{ version: 1, editedAt: 'x', editedBy: 'u1', payload: { v1: true } }],
+        }),
+      );
+      mockActionRepository.update.mockResolvedValue(
+        makeAction({ status: WorkspaceActionStatus.EDITED, payload: { v3: true } }),
+      );
+
+      await service.editDraft('a1', 'u1', { payload: { v3: true } });
+
+      expect(mockActionRepository.update).toHaveBeenCalledWith(
+        'a1',
+        expect.objectContaining({
+          draftHistory: expect.arrayContaining([
+            expect.objectContaining({ version: 1 }),
+            expect.objectContaining({ version: 2, payload: { v2: true } }),
+          ]),
+        }),
+      );
+    });
+  });
+
+  describe('bulkApprove', () => {
+    it('approves every eligible action, skips blocked with reasons', async () => {
+      const healthyConnector = { id: 'c1', name: 'X', provider: 'GMAIL', status: 'CONNECTED' };
+      const staleConnector = { id: 'c2', name: 'Y', provider: 'SLACK', status: 'DEGRADED' };
+      mockActionRepository.findManyByIds.mockResolvedValue([
+        makeAction({ id: 'a1', connector: healthyConnector }),
+        makeAction({ id: 'a2', connector: staleConnector }),
+        makeAction({
+          id: 'a3',
+          connector: healthyConnector,
+          status: WorkspaceActionStatus.EXECUTED,
+        }),
+      ]);
+      mockActionRepository.update.mockResolvedValue(
+        makeAction({ status: WorkspaceActionStatus.EXECUTING }),
+      );
+      mockActionRepository.findById.mockResolvedValue(
+        makeAction({ status: WorkspaceActionStatus.EXECUTING }),
+      );
+      mockExecutionManager.execute.mockResolvedValue({ success: true });
+
+      const outcome = await service.bulkApprove('u1', { actionIds: ['a1', 'a2', 'a3'] });
+
+      expect(outcome.approvedActionIds).toEqual(['a1']);
+      expect(outcome.blockedActionIds).toEqual(expect.arrayContaining(['a2', 'a3']));
+      expect(outcome.blockedReasons['a2']).toMatch(/DEGRADED/);
+      expect(outcome.blockedReasons['a3']).toMatch(/EXECUTED/);
+      expect(mockRabbitMQ.publish).toHaveBeenCalledWith(
+        'workspace_action.bulk_approved',
+        expect.objectContaining({ total: 1, actionIds: ['a1'] }),
+      );
+    });
+
+    it('produces a stable bulkGroupId shared by approved actions', async () => {
+      mockActionRepository.findManyByIds.mockResolvedValue([
+        makeAction({ id: 'a1' }),
+        makeAction({ id: 'a2' }),
+      ]);
+      mockActionRepository.update.mockResolvedValue(
+        makeAction({ status: WorkspaceActionStatus.EXECUTING }),
+      );
+      mockActionRepository.findById.mockResolvedValue(
+        makeAction({ status: WorkspaceActionStatus.EXECUTING }),
+      );
+      mockExecutionManager.execute.mockResolvedValue({ success: true });
+
+      const outcome = await service.bulkApprove('u1', { actionIds: ['a1', 'a2'] });
+
+      expect(outcome.bulkGroupId).toMatch(/[0-9a-f-]{36}/);
+      const updateCalls = (mockActionRepository.update as jest.Mock).mock.calls;
+      const bulkIds = updateCalls
+        .map((call) => call[1]?.bulkGroupId)
+        .filter((v): v is string => Boolean(v));
+      expect(new Set(bulkIds).size).toBe(1);
     });
   });
 });

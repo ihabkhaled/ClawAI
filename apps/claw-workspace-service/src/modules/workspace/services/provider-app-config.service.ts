@@ -220,11 +220,14 @@ export class ProviderAppConfigService {
     }
     if (field.type === 'url' && typeof value === 'string') {
       try {
-        assertSafeOutboundUrl(value);
+        // Provider app config URLs (OAuth endpoints, custom server URLs) are
+        // admin-controlled — allow self-hosted internal hosts; keep cloud
+        // metadata endpoint blocked.
+        assertSafeOutboundUrl(value, { allowPrivateHosts: true });
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Invalid URL';
         throw new BusinessException(
-          `Field "${field.key}" must be a safe public URL: ${message}`,
+          `Field "${field.key}" must be a safe URL: ${message}`,
           'UNSAFE_URL_FIELD',
           HttpStatus.BAD_REQUEST,
         );

@@ -430,6 +430,33 @@ export interface WorkspaceActionFailedPayload extends BaseEventPayload {
   errorMessage: string;
 }
 
+export interface WorkspaceActionEditedPayload extends BaseEventPayload {
+  actionId: string;
+  userId: string;
+  actorUserId: string;
+  connectorId: string;
+  provider: WorkspaceProvider;
+  actionType: string;
+  previousVersion: number;
+  newVersion: number;
+}
+
+export interface WorkspaceActionBulkApprovedPayload extends BaseEventPayload {
+  bulkGroupId: string;
+  actionIds: string[];
+  actorUserId: string;
+  total: number;
+}
+
+export interface WorkspaceActionStaleBlockedPayload extends BaseEventPayload {
+  actionId: string;
+  userId: string;
+  connectorId: string;
+  provider: WorkspaceProvider;
+  connectorStatus: string;
+  reason: string;
+}
+
 // ---- Agent Device / Auth Events ----
 
 export interface AgentDevicePairedPayload extends BaseEventPayload {
@@ -532,6 +559,9 @@ export type EventPayload =
   | WorkspaceSyncRateLimitedPayload
   | WorkspaceSyncDlqSentPayload
   | WorkspaceActionDraftedPayload
+  | WorkspaceActionEditedPayload
+  | WorkspaceActionBulkApprovedPayload
+  | WorkspaceActionStaleBlockedPayload
   | WorkspaceActionApprovedPayload
   | WorkspaceActionRejectedPayload
   | WorkspaceActionExecutedPayload

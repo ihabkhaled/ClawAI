@@ -71,4 +71,53 @@ describe('assertSafeOutboundUrl', () => {
       }),
     ).not.toThrow();
   });
+
+  describe('allowPrivateHosts', () => {
+    it('accepts localhost when allowPrivateHosts is true', () => {
+      expect(() =>
+        assertSafeOutboundUrl('http://localhost:3000/', { allowPrivateHosts: true }),
+      ).not.toThrow();
+    });
+
+    it('accepts 127.0.0.1 when allowPrivateHosts is true', () => {
+      expect(() =>
+        assertSafeOutboundUrl('http://127.0.0.1:8080/api', { allowPrivateHosts: true }),
+      ).not.toThrow();
+    });
+
+    it('accepts RFC1918 hosts when allowPrivateHosts is true', () => {
+      expect(() =>
+        assertSafeOutboundUrl('https://10.0.0.5/api', { allowPrivateHosts: true }),
+      ).not.toThrow();
+      expect(() =>
+        assertSafeOutboundUrl('https://192.168.1.10/', { allowPrivateHosts: true }),
+      ).not.toThrow();
+      expect(() =>
+        assertSafeOutboundUrl('https://172.20.0.1/', { allowPrivateHosts: true }),
+      ).not.toThrow();
+    });
+
+    it('still blocks AWS metadata endpoint even when allowPrivateHosts is true', () => {
+      expect(() =>
+        assertSafeOutboundUrl('http://169.254.169.254/latest/meta-data/', {
+          allowPrivateHosts: true,
+        }),
+      ).toThrow(/cloud-metadata/i);
+    });
+
+    it('still enforces allowedHosts when allowPrivateHosts is true', () => {
+      expect(() =>
+        assertSafeOutboundUrl('http://localhost:3000/', {
+          allowPrivateHosts: true,
+          allowedHosts: ['github.com'],
+        }),
+      ).toThrow(/allowlist/i);
+    });
+
+    it('still blocks non-http(s) protocols even when allowPrivateHosts is true', () => {
+      expect(() =>
+        assertSafeOutboundUrl('file:///etc/passwd', { allowPrivateHosts: true }),
+      ).toThrow();
+    });
+  });
 });

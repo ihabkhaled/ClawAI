@@ -200,7 +200,21 @@ export class SlackAdapter implements WorkspaceAdapter {
   ): Promise<WriteActionResult> {
     const signal = AbortSignal.timeout(WRITE_EXECUTION_TIMEOUT_MS);
 
-    if (actionType === 'SEND_SLACK_MESSAGE') {
+    if (
+      actionType === 'SEND_SLACK_MESSAGE' ||
+      actionType === 'SEND_SLACK' ||
+      actionType === 'REPLY_SLACK'
+    ) {
+      const postBody: Record<string, unknown> = {
+        channel: payload['channel'],
+        text: payload['text'],
+      };
+      if (payload['blocks'] !== undefined) {
+        postBody['blocks'] = payload['blocks'];
+      }
+      if (actionType === 'REPLY_SLACK' && typeof payload['threadTs'] === 'string') {
+        postBody['thread_ts'] = payload['threadTs'];
+      }
       const response = await fetch(`${SLACK_API_BASE}/chat.postMessage`, {
         method: 'POST',
         headers: {
@@ -208,11 +222,7 @@ export class SlackAdapter implements WorkspaceAdapter {
           'Content-Type': 'application/json',
         },
         signal,
-        body: JSON.stringify({
-          channel: payload['channel'],
-          text: payload['text'],
-          ...(payload['blocks'] !== undefined ? { blocks: payload['blocks'] } : {}),
-        }),
+        body: JSON.stringify(postBody),
       });
       const data = (await response.json()) as { ok: boolean; ts?: string; error?: string };
       if (!data.ok) {

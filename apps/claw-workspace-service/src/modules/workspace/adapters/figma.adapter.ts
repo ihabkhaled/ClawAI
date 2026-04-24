@@ -29,6 +29,7 @@ import type {
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
+  WriteActionResult,
 } from '../types/workspace.types';
 
 @Injectable()
@@ -295,6 +296,44 @@ export class FigmaAdapter implements WorkspaceAdapter {
         thumbnailUrl: file.thumbnail_url,
       },
       externalUpdatedAt: new Date(file.last_modified),
+    };
+  }
+
+  supportsWrite(): boolean {
+    return true;
+  }
+
+  async executeWriteAction(
+    accessToken: string,
+    actionType: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    if (actionType === 'POST_FIGMA_COMMENT') {
+      const fileKey = payload['fileKey'] as string;
+      const message = payload['message'] as string;
+      const clientMeta = payload['clientMeta'] ?? { x: 0, y: 0 };
+      const response = await fetch(`https://api.figma.com/v1/files/${fileKey}/comments`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message, client_meta: clientMeta }),
+      });
+      if (!response.ok) {
+        return { success: false, errorMessage: `Figma API error: HTTP ${response.status}` };
+      }
+      const data = (await response.json()) as { id: string };
+      return {
+        success: true,
+        externalId: data.id,
+        url: `https://www.figma.com/file/${fileKey}?comment=${data.id}`,
+      };
+    }
+
+    return {
+      success: false,
+      errorMessage: `Figma adapter: unsupported action type ${actionType}`,
     };
   }
 }

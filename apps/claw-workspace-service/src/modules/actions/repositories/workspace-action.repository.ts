@@ -7,6 +7,7 @@ import type {
 } from '../types/action.types';
 import type { ListActionsQueryDto } from '../dto/list-actions.dto';
 import { WorkspaceActionStatus } from '../../../common/enums/workspace-action-status.enum';
+import { CONNECTOR_SELECT } from '../constants/workspace-action.constants';
 
 @Injectable()
 export class WorkspaceActionRepository {
@@ -19,8 +20,16 @@ export class WorkspaceActionRepository {
   async findById(id: string): Promise<WorkspaceActionWithConnector | null> {
     return this.prisma.workspaceAction.findUnique({
       where: { id },
-      include: { connector: { select: { id: true, name: true, provider: true } } },
+      include: { connector: { select: CONNECTOR_SELECT } },
     }) as Promise<WorkspaceActionWithConnector | null>;
+  }
+
+  async findManyByIds(ids: string[], userId: string): Promise<WorkspaceActionWithConnector[]> {
+    const rows = await this.prisma.workspaceAction.findMany({
+      where: { id: { in: ids }, userId },
+      include: { connector: { select: CONNECTOR_SELECT } },
+    });
+    return rows as WorkspaceActionWithConnector[];
   }
 
   async findAllByUser(
@@ -40,7 +49,7 @@ export class WorkspaceActionRepository {
         skip,
         take: query.pageSize,
         orderBy: { requestedAt: 'desc' },
-        include: { connector: { select: { id: true, name: true, provider: true } } },
+        include: { connector: { select: CONNECTOR_SELECT } },
       }),
       this.prisma.workspaceAction.count({ where }),
     ]);
@@ -60,7 +69,7 @@ export class WorkspaceActionRepository {
     return this.prisma.workspaceAction.update({
       where: { id },
       data,
-      include: { connector: { select: { id: true, name: true, provider: true } } },
+      include: { connector: { select: CONNECTOR_SELECT } },
     }) as Promise<WorkspaceActionWithConnector>;
   }
 

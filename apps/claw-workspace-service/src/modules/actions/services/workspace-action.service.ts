@@ -1,21 +1,51 @@
+import { randomUUID } from 'node:crypto';
+
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
-import { EventPattern } from '@claw/shared-types';
+import {
+  EventPattern,
+  type WorkspaceActionBulkApprovedPayload,
+  type WorkspaceActionEditedPayload,
+  type WorkspaceActionStaleBlockedPayload,
+} from '@claw/shared-types';
 import { WorkspaceActionRepository } from '../repositories/workspace-action.repository';
 import { ActionExecutionManager } from '../managers/action-execution.manager';
 import { WorkspaceConnectorRepository } from '../../workspace/repositories/workspace-connector.repository';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
 import { WorkspaceActionStatus } from '../../../common/enums/workspace-action-status.enum';
+import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspacePermissionLevel } from '../../../common/enums/workspace-permission-level.enum';
 import type { Prisma } from '../../../generated/prisma';
 import type { CreateActionDraftDto } from '../dto/create-action-draft.dto';
+import type { EditActionDto } from '../dto/edit-action.dto';
+import type { BulkApproveDto } from '../dto/bulk-approve.dto';
 import type { ListActionsQueryDto } from '../dto/list-actions.dto';
 import type { RejectActionDto } from '../dto/reject-action.dto';
 import type {
+  ActionDraftRevision,
+  BulkApproveOutcome,
   PaginatedWorkspaceActions,
   WorkspaceActionWithConnector,
 } from '../types/action.types';
+import type { WorkspaceProvider } from '../../../common/enums/workspace-provider.enum';
+
+/**
+ * Statuses that mean "the connector backing this action is not currently
+ * reliable for writes". Writes attempted during these states are blocked by
+ * the approval service with a clear messageKey.
+ */
+const STALE_WRITE_BLOCKING_STATUSES: ReadonlySet<WorkspaceConnectorStatus> = new Set([
+  WorkspaceConnectorStatus.DEGRADED,
+  WorkspaceConnectorStatus.PAUSED,
+  WorkspaceConnectorStatus.DISCONNECTED,
+  WorkspaceConnectorStatus.PENDING_AUTH,
+]);
+
+const APPROVABLE_STATUSES: ReadonlySet<WorkspaceActionStatus> = new Set([
+  WorkspaceActionStatus.PENDING_APPROVAL,
+  WorkspaceActionStatus.EDITED,
+]);
 
 @Injectable()
 export class WorkspaceActionService {
@@ -95,7 +125,8 @@ export class WorkspaceActionService {
 
   async approve(id: string, userId: string): Promise<WorkspaceActionWithConnector> {
     const action = await this.getAction(id, userId);
-    this.assertPendingAndNotExpired(action);
+    this.assertApprovableAndNotExpired(action);
+    await this.assertConnectorWritable(action);
 
     const approved = await this.repository.update(id, {
       status: WorkspaceActionStatus.EXECUTING,
@@ -119,7 +150,7 @@ export class WorkspaceActionService {
     dto: RejectActionDto,
   ): Promise<WorkspaceActionWithConnector> {
     const action = await this.getAction(id, userId);
-    this.assertPendingAndNotExpired(action);
+    this.assertApprovableAndNotExpired(action);
 
     const rejected = await this.repository.update(id, {
       status: WorkspaceActionStatus.REJECTED,
@@ -137,8 +168,94 @@ export class WorkspaceActionService {
     return rejected;
   }
 
-  private assertPendingAndNotExpired(action: WorkspaceActionWithConnector): void {
-    if (action.status !== WorkspaceActionStatus.PENDING_APPROVAL) {
+  async editDraft(
+    id: string,
+    userId: string,
+    dto: EditActionDto,
+  ): Promise<WorkspaceActionWithConnector> {
+    const action = await this.getAction(id, userId);
+    this.assertEditable(action);
+
+    const history = this.pushDraftRevision(action, userId, dto);
+    const edited = await this.repository.update(id, {
+      payload: dto.payload as Prisma.InputJsonValue,
+      status: WorkspaceActionStatus.EDITED,
+      draftHistory: history as unknown as Prisma.InputJsonValue,
+    });
+
+    const payload: WorkspaceActionEditedPayload = {
+      actionId: id,
+      userId,
+      actorUserId: userId,
+      connectorId: action.connectorId,
+      provider: action.connector.provider as WorkspaceProvider,
+      actionType: action.actionType,
+      previousVersion: history.length - 1,
+      newVersion: history.length,
+      timestamp: new Date().toISOString(),
+    };
+    void this.publishEvent(
+      EventPattern.WORKSPACE_ACTION_EDITED,
+      payload as unknown as Record<string, unknown>,
+    );
+
+    return edited;
+  }
+
+  async bulkApprove(userId: string, dto: BulkApproveDto): Promise<BulkApproveOutcome> {
+    const actions = await this.repository.findManyByIds(dto.actionIds, userId);
+    const bulkGroupId = randomUUID();
+    const approvedIds: string[] = [];
+    const blockedIds: string[] = [];
+    const blockedReasons: Record<string, string> = {};
+
+    for (const action of actions) {
+      const blockMessage = this.describeBlocker(action);
+      if (blockMessage !== null) {
+        blockedIds.push(action.id);
+        blockedReasons[action.id] = blockMessage;
+        continue;
+      }
+      await this.repository.update(action.id, {
+        status: WorkspaceActionStatus.EXECUTING,
+        reviewedAt: new Date(),
+        reviewedBy: userId,
+        bulkGroupId,
+      });
+      approvedIds.push(action.id);
+      void this.publishEvent(EventPattern.WORKSPACE_ACTION_APPROVED, {
+        actionId: action.id,
+        userId,
+        reviewedBy: userId,
+      });
+      const refreshed = await this.repository.findById(action.id);
+      if (refreshed !== null) {
+        void this.runExecution(refreshed, userId);
+      }
+    }
+
+    const payload: WorkspaceActionBulkApprovedPayload = {
+      bulkGroupId,
+      actionIds: approvedIds,
+      actorUserId: userId,
+      total: approvedIds.length,
+      timestamp: new Date().toISOString(),
+    };
+    void this.publishEvent(
+      EventPattern.WORKSPACE_ACTION_BULK_APPROVED,
+      payload as unknown as Record<string, unknown>,
+    );
+
+    return {
+      bulkGroupId,
+      approvedActionIds: approvedIds,
+      blockedActionIds: blockedIds,
+      blockedReasons,
+    };
+  }
+
+  private assertApprovableAndNotExpired(action: WorkspaceActionWithConnector): void {
+    if (!APPROVABLE_STATUSES.has(action.status as WorkspaceActionStatus)) {
       throw new BusinessException(
         'workspace.action.not_pending',
         'ACTION_NOT_PENDING',
@@ -148,6 +265,80 @@ export class WorkspaceActionService {
     if (action.expiresAt !== null && action.expiresAt < new Date()) {
       throw new BusinessException('workspace.action.expired', 'ACTION_EXPIRED', HttpStatus.GONE);
     }
+  }
+
+  private assertEditable(action: WorkspaceActionWithConnector): void {
+    if (!APPROVABLE_STATUSES.has(action.status as WorkspaceActionStatus)) {
+      throw new BusinessException(
+        'workspace.action.not_editable',
+        'ACTION_NOT_EDITABLE',
+        HttpStatus.CONFLICT,
+      );
+    }
+  }
+
+  private async assertConnectorWritable(action: WorkspaceActionWithConnector): Promise<void> {
+    const status = action.connector.status as WorkspaceConnectorStatus;
+    if (!STALE_WRITE_BLOCKING_STATUSES.has(status)) {
+      return;
+    }
+    const payload: WorkspaceActionStaleBlockedPayload = {
+      actionId: action.id,
+      userId: action.userId,
+      connectorId: action.connectorId,
+      provider: action.connector.provider as WorkspaceProvider,
+      connectorStatus: status,
+      reason: `Connector is ${status} — resolve before approving writes`,
+      timestamp: new Date().toISOString(),
+    };
+    await this.publishEvent(
+      EventPattern.WORKSPACE_ACTION_STALE_BLOCKED,
+      payload as unknown as Record<string, unknown>,
+    );
+    throw new BusinessException(
+      'workspace.action.source_stale',
+      'SOURCE_STALE',
+      HttpStatus.CONFLICT,
+    );
+  }
+
+  private describeBlocker(action: WorkspaceActionWithConnector): string | null {
+    if (!APPROVABLE_STATUSES.has(action.status as WorkspaceActionStatus)) {
+      return `Action is ${action.status}, cannot approve`;
+    }
+    if (action.expiresAt !== null && action.expiresAt < new Date()) {
+      return 'Action has expired';
+    }
+    const status = action.connector.status as WorkspaceConnectorStatus;
+    if (STALE_WRITE_BLOCKING_STATUSES.has(status)) {
+      return `Connector is ${status} — resolve before approving writes`;
+    }
+    return null;
+  }
+
+  private pushDraftRevision(
+    action: WorkspaceActionWithConnector,
+    userId: string,
+    dto: EditActionDto,
+  ): ActionDraftRevision[] {
+    const previous = this.readDraftHistory(action);
+    const nextVersion = previous.length + 1;
+    const revision: ActionDraftRevision = {
+      version: nextVersion,
+      editedAt: new Date().toISOString(),
+      editedBy: userId,
+      payload: action.payload as Record<string, unknown>,
+      reason: dto.editReason,
+    };
+    return [...previous, revision];
+  }
+
+  private readDraftHistory(action: WorkspaceActionWithConnector): ActionDraftRevision[] {
+    const raw = action.draftHistory;
+    if (Array.isArray(raw)) {
+      return raw as unknown as ActionDraftRevision[];
+    }
+    return [];
   }
 
   private async runExecution(action: WorkspaceActionWithConnector, userId: string): Promise<void> {

@@ -28,6 +28,7 @@ import type {
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
+  WriteActionResult,
 } from '../types/workspace.types';
 
 @Injectable()
@@ -282,7 +283,10 @@ export class GmailAdapter implements WorkspaceAdapter {
     // messages.list with `q=` search queries is forbidden under
     // gmail.metadata (which only allows header-level access). Granting
     // both scopes causes 403 on message list.
-    return ['https://www.googleapis.com/auth/gmail.readonly'];
+    return [
+      'https://www.googleapis.com/auth/gmail.readonly',
+      'https://www.googleapis.com/auth/gmail.send',
+    ];
   }
 
   async fetchObjectDetails(
@@ -399,6 +403,78 @@ export class GmailAdapter implements WorkspaceAdapter {
         from,
         to,
       },
+    };
+  }
+
+  supportsWrite(): boolean {
+    return true;
+  }
+
+  async executeWriteAction(
+    accessToken: string,
+    actionType: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    if (actionType === 'SEND_EMAIL' || actionType === 'REPLY_EMAIL') {
+      return this.sendEmail(accessToken, payload, actionType === 'REPLY_EMAIL');
+    }
+    return {
+      success: false,
+      errorMessage: `Gmail adapter: unsupported action type ${actionType}`,
+    };
+  }
+
+  private async sendEmail(
+    accessToken: string,
+    payload: Record<string, unknown>,
+    isReply: boolean,
+  ): Promise<WriteActionResult> {
+    const to = typeof payload['to'] === 'string' ? payload['to'] : null;
+    const subject = typeof payload['subject'] === 'string' ? payload['subject'] : null;
+    const body = typeof payload['body'] === 'string' ? payload['body'] : null;
+    const threadId =
+      isReply && typeof payload['threadId'] === 'string' ? payload['threadId'] : undefined;
+    if (to === null || subject === null || body === null) {
+      return {
+        success: false,
+        errorMessage: 'Gmail send requires {to, subject, body} fields in payload',
+      };
+    }
+
+    const rfc822 = [
+      `To: ${to}`,
+      `Subject: ${subject}`,
+      'Content-Type: text/plain; charset=utf-8',
+      'MIME-Version: 1.0',
+      '',
+      body,
+    ].join('\r\n');
+    const raw = Buffer.from(rfc822, 'utf-8').toString('base64url');
+
+    const response = await fetch(`${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/messages/send`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ raw, ...(threadId !== undefined ? { threadId } : {}) }),
+    });
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      return {
+        success: false,
+        errorMessage: `Gmail send failed: HTTP ${response.status} ${errorText.slice(0, 200)}`,
+      };
+    }
+    const data = (await response.json()) as { id?: string; threadId?: string };
+    return {
+      success: true,
+      externalId: data.id,
+      url:
+        data.threadId !== undefined
+          ? `https://mail.google.com/mail/u/0/#inbox/${data.threadId}`
+          : undefined,
+      metadata: { threadId: data.threadId },
     };
   }
 }

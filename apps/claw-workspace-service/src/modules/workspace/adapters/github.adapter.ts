@@ -406,6 +406,83 @@ export class GitHubAdapter implements WorkspaceAdapter {
       return { success: true, externalId: String(pr.number), url: pr.html_url };
     }
 
+    if (actionType === 'COMMENT_PR') {
+      const owner = payload['owner'] as string;
+      const repo = payload['repo'] as string;
+      const pullNumber = payload['pullNumber'] as number;
+      const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/issues/${pullNumber}/comments`,
+        {
+          method: 'POST',
+          headers,
+          signal,
+          body: JSON.stringify({ body: payload['body'] }),
+        },
+      );
+      if (!response.ok) {
+        return { success: false, errorMessage: `GitHub API error: HTTP ${response.status}` };
+      }
+      const comment = (await response.json()) as { id: number; html_url: string };
+      return { success: true, externalId: String(comment.id), url: comment.html_url };
+    }
+
+    if (actionType === 'APPROVE_PR') {
+      const owner = payload['owner'] as string;
+      const repo = payload['repo'] as string;
+      const pullNumber = payload['pullNumber'] as number;
+      const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}/reviews`,
+        {
+          method: 'POST',
+          headers,
+          signal,
+          body: JSON.stringify({
+            event: 'APPROVE',
+            body:
+              typeof payload['body'] === 'string'
+                ? payload['body']
+                : 'Approved via ClawAI multi-judge quorum',
+          }),
+        },
+      );
+      if (!response.ok) {
+        return { success: false, errorMessage: `GitHub API error: HTTP ${response.status}` };
+      }
+      const review = (await response.json()) as { id: number; html_url: string };
+      return { success: true, externalId: String(review.id), url: review.html_url };
+    }
+
+    if (actionType === 'ADD_PR_SUGGESTION') {
+      const owner = payload['owner'] as string;
+      const repo = payload['repo'] as string;
+      const pullNumber = payload['pullNumber'] as number;
+      const commitId = payload['commitId'] as string;
+      const path = payload['path'] as string;
+      const line = payload['line'] as number;
+      const suggestion = payload['suggestion'] as string;
+      const body = `\`\`\`suggestion\n${suggestion}\n\`\`\``;
+      const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}/comments`,
+        {
+          method: 'POST',
+          headers,
+          signal,
+          body: JSON.stringify({
+            commit_id: commitId,
+            path,
+            line,
+            body,
+            side: 'RIGHT',
+          }),
+        },
+      );
+      if (!response.ok) {
+        return { success: false, errorMessage: `GitHub API error: HTTP ${response.status}` };
+      }
+      const comment = (await response.json()) as { id: number; html_url: string };
+      return { success: true, externalId: String(comment.id), url: comment.html_url };
+    }
+
     return {
       success: false,
       errorMessage: `GitHub adapter: unsupported action type ${actionType}`,

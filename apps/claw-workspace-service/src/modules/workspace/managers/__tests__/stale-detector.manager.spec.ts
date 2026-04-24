@@ -48,7 +48,7 @@ describe('StaleDetectorManager', () => {
     }),
   } as unknown as WorkspaceSyncSchedulerManager;
   const rabbitmq = {
-    publish: jest.fn().mockResolvedValue(),
+    publish: jest.fn().mockImplementation(() => Promise.resolve()),
   } as unknown as RabbitMQService;
 
   beforeEach(() => {

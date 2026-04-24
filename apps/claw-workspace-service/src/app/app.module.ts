@@ -14,6 +14,7 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { HealthModule } from '../modules/health/health.module';
 import { WorkspaceModule } from '../modules/workspace/workspace.module';
 import { ActionsModule } from '../modules/actions/actions.module';
+import { AiActionsModule } from '../modules/ai-actions/ai-actions.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { ActionsModule } from '../modules/actions/actions.module';
     HealthModule,
     WorkspaceModule,
     ActionsModule,
+    AiActionsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
