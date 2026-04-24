@@ -1274,8 +1274,13 @@ export type TranslationDictionary = {
       description: string;
       model_label: string;
       generate: string;
+      regenerate: string;
       resolving: string;
       cancel: string;
+      close: string;
+      copy: string;
+      copied: string;
+      generated_by: string;
       resolution_mode: string;
       resolution_primary: string;
       resolution_fallback: string;
@@ -1438,6 +1443,11 @@ export type TranslationDictionary = {
       createDescription: string;
       create: string;
       creating: string;
+      editTitle: string;
+      editDescription: string;
+      editSecretHint: string;
+      save: string;
+      saving: string;
       provider: string;
       providerPlaceholder: string;
       name: string;

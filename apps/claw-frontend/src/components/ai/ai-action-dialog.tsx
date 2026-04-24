@@ -1,7 +1,6 @@
 'use client';
 
-import { Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { Copy, Sparkles } from 'lucide-react';
 import type { ReactElement } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -14,9 +13,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { AiActionPrivacyClass } from '@/enums/ai-action-kind.enum';
-import { useAvailableModelsForAction } from '@/hooks/ai-actions/use-available-models-for-action';
-import { useResolveAiAction } from '@/hooks/ai-actions/use-resolve-ai-action';
+import { useAiActionDialog } from '@/hooks/ai-actions/use-ai-action-dialog';
 import type { AiActionDialogProps } from '@/types/ai-action.types';
+import { resolveGenerateLabel } from '@/utilities/ai-action-dialog-label.utility';
 
 export function AiActionDialog({
   open,
@@ -24,37 +23,21 @@ export function AiActionDialog({
   actionKind,
   privacyClass = AiActionPrivacyClass.INTERNAL,
   contextPreview,
+  initialContext,
+  onGenerated,
   t,
 }: AiActionDialogProps): ReactElement {
-  const { groupedModels, isLoading: isLoadingModels } = useAvailableModelsForAction(actionKind);
-  const { resolution, resolve, isPending, error } = useResolveAiAction();
-  const [selectedKey, setSelectedKey] = useState<string>('AUTO::auto');
-
-  const handleResolve = (): void => {
-    if (selectedKey === 'AUTO::auto') {
-      resolve({ actionKind, privacyClass });
-      return;
-    }
-    const [provider, model] = selectedKey.split('::');
-    const group = groupedModels.find((g) => g.provider === provider);
-    const entry = group?.models.find((m) => m.model === model);
-    if (entry === undefined) {
-      return;
-    }
-    resolve({
-      actionKind,
-      privacyClass,
-      preferredModel: {
-        provider: entry.provider,
-        model: entry.model,
-        displayName: entry.displayName,
-      },
-    });
-  };
+  const ctrl = useAiActionDialog({
+    actionKind,
+    privacyClass,
+    initialContext,
+    onGenerated,
+    onClose,
+  });
 
   return (
-    <Dialog open={open} onOpenChange={(v) => (!v ? onClose() : undefined)}>
-      <DialogContent className="max-w-2xl">
+    <Dialog open={open} onOpenChange={(v) => (!v ? ctrl.handleClose() : undefined)}>
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="size-4" />
@@ -63,7 +46,7 @@ export function AiActionDialog({
           <DialogDescription>{t('aiActions.dialog.description')}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto">
           <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
             {contextPreview}
           </div>
@@ -75,11 +58,11 @@ export function AiActionDialog({
             <select
               id="ai-action-model"
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              value={selectedKey}
-              onChange={(event) => setSelectedKey(event.target.value)}
-              disabled={isLoadingModels || isPending}
+              value={ctrl.selectedKey}
+              onChange={(event) => ctrl.setSelectedKey(event.target.value)}
+              disabled={ctrl.isLoadingModels || ctrl.isPending}
             >
-              {groupedModels.map((group) => (
+              {ctrl.groupedModels.map((group) => (
                 <optgroup key={group.provider} label={group.label}>
                   {group.models.map((entry) => (
                     <option
@@ -94,35 +77,49 @@ export function AiActionDialog({
             </select>
           </div>
 
-          {resolution !== null ? (
-            <div className="rounded-md border border-border bg-card p-3 text-xs">
-              <div className="font-medium">
-                {t('aiActions.dialog.resolution_mode', { mode: resolution.mode })}
-              </div>
-              <div className="text-muted-foreground">
-                {t('aiActions.dialog.resolution_primary', {
-                  model: resolution.primary.displayName,
-                })}
-              </div>
-              {resolution.fallbackChain.length > 0 ? (
-                <div className="text-muted-foreground">
-                  {t('aiActions.dialog.resolution_fallback', {
-                    count: String(resolution.fallbackChain.length),
+          {ctrl.result !== null ? (
+            <div className="flex flex-col gap-2 rounded-md border border-border bg-card p-3">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>
+                  {t('aiActions.dialog.generated_by', {
+                    model: ctrl.result.generatedBy.displayName,
                   })}
-                </div>
-              ) : null}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={ctrl.handleCopy}
+                  className="h-7 gap-1 text-xs"
+                >
+                  <Copy className="size-3" aria-hidden="true" />
+                  {ctrl.copied ? t('aiActions.dialog.copied') : t('aiActions.dialog.copy')}
+                </Button>
+              </div>
+              <div className="whitespace-pre-wrap break-words text-sm text-foreground">
+                {ctrl.result.content}
+              </div>
             </div>
           ) : null}
 
-          {error !== null ? <div className="text-sm text-red-500">{error.message}</div> : null}
+          {ctrl.error !== null ? (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+              {ctrl.error.message}
+            </div>
+          ) : null}
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
-            {t('aiActions.dialog.cancel')}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={ctrl.handleClose}
+            disabled={ctrl.isPending}
+          >
+            {t('aiActions.dialog.close')}
           </Button>
-          <Button type="button" onClick={handleResolve} disabled={isPending}>
-            {isPending ? t('aiActions.dialog.resolving') : t('aiActions.dialog.generate')}
+          <Button type="button" onClick={ctrl.handleGenerate} disabled={ctrl.isPending}>
+            {resolveGenerateLabel(ctrl.isPending, ctrl.result !== null, t)}
           </Button>
         </DialogFooter>
       </DialogContent>

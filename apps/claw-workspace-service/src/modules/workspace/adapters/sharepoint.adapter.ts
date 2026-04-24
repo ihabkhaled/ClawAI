@@ -11,6 +11,7 @@ import {
 } from '../../../common/constants/workspace.constants';
 import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
 import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
+import { buildOAuthErrorMessage } from '../utilities/oauth-error.utility';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
@@ -101,7 +102,7 @@ export class SharePointAdapter implements WorkspaceAdapter {
       body: body.toString(),
     });
     if (!response.ok) {
-      throw new Error(`SharePoint token exchange failed: HTTP ${response.status}`);
+      throw new Error(await buildOAuthErrorMessage('SharePoint', 'token exchange', response));
     }
     const data = (await response.json()) as MicrosoftTokenResponse;
     return this.normalizeTokenResponse(data);
@@ -126,7 +127,7 @@ export class SharePointAdapter implements WorkspaceAdapter {
       body: body.toString(),
     });
     if (!response.ok) {
-      throw new Error(`SharePoint token refresh failed: HTTP ${response.status}`);
+      throw new Error(await buildOAuthErrorMessage('SharePoint', 'token refresh', response));
     }
     const data = (await response.json()) as MicrosoftTokenResponse;
     return this.normalizeTokenResponse(data);

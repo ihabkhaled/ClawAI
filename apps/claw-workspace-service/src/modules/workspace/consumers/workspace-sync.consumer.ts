@@ -3,7 +3,10 @@ import { RabbitMQService } from '@claw/shared-rabbitmq';
 
 import { WorkspaceConnectorRepository } from '../repositories/workspace-connector.repository';
 import { WorkspaceSyncManager } from '../managers/workspace-sync.manager';
-import { SYNC_TICK_ROUTING_KEY_PREFIX } from '../constants/sync-cadence.constants';
+import {
+  ORPHAN_RUN_MAX_AGE_MS,
+  SYNC_TICK_ROUTING_KEY_PREFIX,
+} from '../constants/sync-cadence.constants';
 import type { SchedulerTickPayload } from '../types/sync-cadence.types';
 import type { WorkspaceConnector } from '../../../generated/prisma';
 
@@ -56,8 +59,18 @@ export class WorkspaceSyncConsumer implements OnModuleInit {
 
     const existingRun = await this.connectorRepository.findInFlightRun(connector.id);
     if (existingRun !== null) {
-      this.logger.debug(`Tick for ${connector.id} skipped — in-flight run ${existingRun.id}`);
-      return;
+      const ageMs = Date.now() - existingRun.startedAt.getTime();
+      if (ageMs < ORPHAN_RUN_MAX_AGE_MS) {
+        this.logger.debug(`Tick for ${connector.id} skipped — in-flight run ${existingRun.id}`);
+        return;
+      }
+      this.logger.warn(
+        `Tick for ${connector.id} recovering orphaned run ${existingRun.id} (age=${String(ageMs)}ms)`,
+      );
+      await this.connectorRepository.markOrphanedRunsAsFailed(
+        new Date(Date.now() - ORPHAN_RUN_MAX_AGE_MS),
+        `Orphaned run recovered by tick consumer`,
+      );
     }
 
     try {

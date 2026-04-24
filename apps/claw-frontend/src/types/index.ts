@@ -502,6 +502,7 @@ export type {
   AppConfigRowProps,
   DynamicConfigFormProps,
   AppConfigCreateDialogProps,
+  AppConfigEditDialogProps,
   UseCreateProviderAppConfigReturn,
   UseUpdateProviderAppConfigReturn,
   UseDeleteProviderAppConfigReturn,

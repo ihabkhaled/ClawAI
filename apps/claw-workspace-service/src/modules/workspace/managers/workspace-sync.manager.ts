@@ -51,27 +51,51 @@ export class WorkspaceSyncManager {
     const syncRun = await this.openSyncRun(connector, isDelta, cursorIn, startedAt, options);
     await this.emitRunStarted(connector, syncRun.id, cursorIn, isDelta, options);
 
-    const retryOutcome = await this.runWithRetry(connector, isDelta, cursorIn);
-    const completedAt = new Date();
-    const durationMs = completedAt.getTime() - startedAt.getTime();
+    let runClosed = false;
+    try {
+      const retryOutcome = await this.runWithRetry(connector, isDelta, cursorIn);
+      const completedAt = new Date();
+      const durationMs = completedAt.getTime() - startedAt.getTime();
 
-    const upsertedCount = await this.upsertIfSucceeded(connector, retryOutcome, options);
-    await this.closeSyncRun(syncRun.id, retryOutcome, upsertedCount, completedAt, durationMs);
-    await this.emitLifecycleOutcome(
-      connector,
-      syncRun.id,
-      retryOutcome,
-      upsertedCount,
-      startedAt,
-      completedAt,
-      durationMs,
-      cursorIn,
-      isDelta,
-      options,
-    );
+      const upsertedCount = await this.upsertIfSucceeded(connector, retryOutcome, options);
+      await this.closeSyncRun(syncRun.id, retryOutcome, upsertedCount, completedAt, durationMs);
+      runClosed = true;
+      await this.emitLifecycleOutcome(
+        connector,
+        syncRun.id,
+        retryOutcome,
+        upsertedCount,
+        startedAt,
+        completedAt,
+        durationMs,
+        cursorIn,
+        isDelta,
+        options,
+      );
 
-    this.logOutcome(connector, retryOutcome, upsertedCount, durationMs);
-    return retryOutcome.result;
+      this.logOutcome(connector, retryOutcome, upsertedCount, durationMs);
+      return retryOutcome.result;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`syncConnector: unexpected failure for ${connector.id} — ${message}`);
+      if (!runClosed) {
+        await this.forceCloseOrphanRun(syncRun.id, message).catch((closeErr) => {
+          this.logger.error(
+            `syncConnector: failed to close orphan run ${syncRun.id} — ${String(closeErr)}`,
+          );
+        });
+      }
+      throw error;
+    }
+  }
+
+  private async forceCloseOrphanRun(runId: string, message: string): Promise<void> {
+    await this.repository.updateSyncRun(runId, {
+      status: WorkspaceSyncStatus.FAILED,
+      completedAt: new Date(),
+      errorCode: 'SyncPipelineException',
+      errorMessage: message.slice(0, 2000),
+    });
   }
 
   private async openSyncRun(

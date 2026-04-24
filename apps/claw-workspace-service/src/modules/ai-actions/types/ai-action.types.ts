@@ -39,3 +39,39 @@ export type AiActionResult = {
   inputTokens?: number;
   outputTokens?: number;
 };
+
+export type RunAiActionInput = {
+  actionKind: AiActionKind;
+  privacyClass: AiActionPrivacyClass;
+  context: string;
+  preferredModel?: ModelChoice;
+};
+
+export type BuiltAiActionPrompt = {
+  systemPrompt: string;
+  userPrompt: string;
+};
+
+export type OllamaGenerateInput = {
+  baseUrl: string;
+  model: string;
+  prompt: string;
+  timeoutMs: number;
+};
+
+export type OllamaGenerateOutput = {
+  content: string;
+  totalDurationMs: number;
+  promptEvalCount?: number;
+  evalCount?: number;
+};
+
+export type RawGenerateResponse = {
+  response?: string;
+  totalDuration?: number;
+  total_duration?: number;
+  promptEvalCount?: number;
+  prompt_eval_count?: number;
+  evalCount?: number;
+  eval_count?: number;
+};

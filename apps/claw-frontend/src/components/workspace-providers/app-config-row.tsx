@@ -1,6 +1,6 @@
 'use client';
 
-import { Link2, ShieldCheck, Trash2 } from 'lucide-react';
+import { Link2, Pencil, ShieldCheck, Trash2 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ export function AppConfigRow({
   onTest,
   onDelete,
   onConnect,
+  onEdit,
   isTestPending,
   isDeletePending,
   isConnectPending,
@@ -70,6 +71,9 @@ export function AppConfigRow({
               {t('workspaceProviders.appConfigs.connect')}
             </Button>
           ) : null}
+          <Button variant="ghost" size="sm" onClick={() => onEdit(config)}>
+            <Pencil className="h-4 w-4" />
+          </Button>
           <Button
             variant="ghost"
             size="sm"

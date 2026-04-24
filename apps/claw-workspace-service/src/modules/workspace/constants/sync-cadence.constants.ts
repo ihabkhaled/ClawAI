@@ -47,6 +47,8 @@ export const MANUAL_SYNC_PRIORITY_RATE_LIMIT_PER_HOUR = 10;
 
 export const SCHEDULER_TICK_CRON = '*/30 * * * * *';
 export const STALE_DETECTOR_CRON = '*/60 * * * * *';
+export const ORPHAN_RUN_RECOVERY_CRON = '*/90 * * * * *';
+export const ORPHAN_RUN_MAX_AGE_MS = 15 * 60 * 1000;
 
 export const DEFAULT_SYNC_RUN_OPTIONS = {
   triggeredBy: 'manual' as const,

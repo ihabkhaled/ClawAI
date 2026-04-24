@@ -11,6 +11,7 @@ import {
 } from '../../../common/constants/workspace.constants';
 import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
 import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
+import { buildOAuthErrorMessage } from '../utilities/oauth-error.utility';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
@@ -103,7 +104,7 @@ export class OneDriveAdapter implements WorkspaceAdapter {
       body: body.toString(),
     });
     if (!response.ok) {
-      throw new Error(`OneDrive token exchange failed: HTTP ${response.status}`);
+      throw new Error(await buildOAuthErrorMessage('OneDrive', 'token exchange', response));
     }
     const data = (await response.json()) as MicrosoftTokenResponse;
     return this.normalizeTokenResponse(data);
@@ -128,7 +129,7 @@ export class OneDriveAdapter implements WorkspaceAdapter {
       body: body.toString(),
     });
     if (!response.ok) {
-      throw new Error(`OneDrive token refresh failed: HTTP ${response.status}`);
+      throw new Error(await buildOAuthErrorMessage('OneDrive', 'token refresh', response));
     }
     const data = (await response.json()) as MicrosoftTokenResponse;
     return this.normalizeTokenResponse(data);

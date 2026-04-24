@@ -191,6 +191,22 @@ export class WorkspaceConnectorRepository {
     });
   }
 
+  async markOrphanedRunsAsFailed(olderThan: Date, reason: string): Promise<number> {
+    const result = await this.prisma.workspaceSyncRun.updateMany({
+      where: {
+        status: WorkspaceSyncStatusEnum.RUNNING,
+        startedAt: { lt: olderThan },
+      },
+      data: {
+        status: WorkspaceSyncStatusEnum.FAILED,
+        completedAt: new Date(),
+        errorCode: 'OrphanedRunRecovered',
+        errorMessage: reason,
+      },
+    });
+    return result.count;
+  }
+
   async updateCadence(connectorId: string, intervalSeconds: number): Promise<WorkspaceConnector> {
     return this.prisma.workspaceConnector.update({
       where: { id: connectorId },

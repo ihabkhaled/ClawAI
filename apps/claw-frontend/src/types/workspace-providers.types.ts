@@ -124,6 +124,7 @@ export type AppConfigRowProps = {
   onTest: (id: string, provider: string) => void;
   onDelete: (id: string) => void;
   onConnect: (id: string, provider: string) => Promise<void>;
+  onEdit: (config: WorkspaceProviderAppConfig) => void;
   isTestPending: boolean;
   isDeletePending: boolean;
   isConnectPending: boolean;
@@ -213,15 +214,20 @@ export type UseAppConfigsPageReturn = {
   isLoading: boolean;
   isError: boolean;
   isCreateOpen: boolean;
+  isEditOpen: boolean;
+  editingConfigId: string | null;
   form: ProviderAppConfigFormValues;
   fieldErrors: Partial<Record<string, string>>;
   isCreatePending: boolean;
+  isEditPending: boolean;
   isDeletePending: boolean;
   isTestPending: boolean;
   testResult: WorkspaceHealthCheckResult | undefined;
   selectedProvider: WorkspaceProviderDefinition | null;
   openCreateDialog: () => void;
   closeCreateDialog: () => void;
+  openEditDialog: (config: WorkspaceProviderAppConfig) => void;
+  closeEditDialog: () => void;
   setFormField: <K extends keyof ProviderAppConfigFormValues>(
     key: K,
     value: ProviderAppConfigFormValues[K],
@@ -231,8 +237,27 @@ export type UseAppConfigsPageReturn = {
   setPublicField: (key: string, value: string) => void;
   setSecretField: (key: string, value: string) => void;
   handleSubmit: () => Promise<void>;
+  handleEditSubmit: () => Promise<void>;
   handleDelete: (id: string) => void;
   handleTest: (id: string, provider: string) => void;
   handleConnect: (id: string, provider: string) => Promise<void>;
   isConnectPending: boolean;
+};
+
+export type AppConfigEditDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedProvider: WorkspaceProviderDefinition | null;
+  form: ProviderAppConfigFormValues;
+  fieldErrors: Partial<Record<string, string>>;
+  onSetFormAuthMode: (mode: WorkspaceProviderAuthMode) => void;
+  onSetField: <K extends keyof ProviderAppConfigFormValues>(
+    key: K,
+    value: ProviderAppConfigFormValues[K],
+  ) => void;
+  onSetPublicField: (key: string, value: string) => void;
+  onSetSecretField: (key: string, value: string) => void;
+  onSubmit: () => void;
+  isPending: boolean;
+  t: TranslateFunction;
 };

@@ -7,6 +7,7 @@ import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
 import { AppConfigCreateDialog } from '@/components/workspace-providers/app-config-create-dialog';
+import { AppConfigEditDialog } from '@/components/workspace-providers/app-config-edit-dialog';
 import { AppConfigRow } from '@/components/workspace-providers/app-config-row';
 import { WorkspaceConnectorStatus } from '@/enums/workspace-connector-status.enum';
 import { useWorkspaceAppConfigsPage } from '@/hooks/workspace-providers/use-workspace-app-configs-page';
@@ -43,6 +44,23 @@ export default function WorkspaceAppConfigsPage(): React.ReactElement {
           void ctrl.handleSubmit();
         }}
         isPending={ctrl.isCreatePending}
+        t={ctrl.t}
+      />
+
+      <AppConfigEditDialog
+        open={ctrl.isEditOpen}
+        onOpenChange={(open) => (open ? undefined : ctrl.closeEditDialog())}
+        selectedProvider={ctrl.selectedProvider}
+        form={ctrl.form}
+        fieldErrors={ctrl.fieldErrors}
+        onSetFormAuthMode={ctrl.setFormAuthMode}
+        onSetField={ctrl.setFormField}
+        onSetPublicField={ctrl.setPublicField}
+        onSetSecretField={ctrl.setSecretField}
+        onSubmit={() => {
+          void ctrl.handleEditSubmit();
+        }}
+        isPending={ctrl.isEditPending}
         t={ctrl.t}
       />
 
@@ -120,6 +138,7 @@ export default function WorkspaceAppConfigsPage(): React.ReactElement {
                   onTest={ctrl.handleTest}
                   onDelete={ctrl.handleDelete}
                   onConnect={ctrl.handleConnect}
+                  onEdit={ctrl.openEditDialog}
                   isTestPending={ctrl.isTestPending}
                   isDeletePending={ctrl.isDeletePending}
                   isConnectPending={ctrl.isConnectPending}

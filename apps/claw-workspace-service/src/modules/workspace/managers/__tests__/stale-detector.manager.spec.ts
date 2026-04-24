@@ -32,6 +32,9 @@ jest.spyOn(AppConfig, 'get').mockReturnValue({
   JIRA_CLIENT_SECRET: '',
   GOOGLE_CLIENT_ID: '',
   GOOGLE_CLIENT_SECRET: '',
+  OLLAMA_SERVICE_URL: 'http://ollama-service:4008',
+  AI_ACTION_LOCAL_MODEL: 'gemma3:4b',
+  AI_ACTION_REQUEST_TIMEOUT_MS: 120_000,
 });
 
 describe('StaleDetectorManager', () => {

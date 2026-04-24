@@ -9,8 +9,10 @@ import { useTranslation } from '@/lib/i18n';
 import type {
   ProviderAppConfigFormValues,
   UseAppConfigsPageReturn,
+  WorkspaceProviderAppConfig,
   WorkspaceProviderDefinition,
 } from '@/types';
+import { normalizeStringRecord } from '@/utilities/workspace-provider-config.utility';
 
 import {
   useCreateProviderAppConfig,
@@ -18,6 +20,7 @@ import {
   useInitOAuth,
   useProviderAppConfigs,
   useTestConnection,
+  useUpdateProviderAppConfig,
 } from './use-provider-app-configs';
 import { useProviderCatalog } from './use-provider-catalog';
 
@@ -26,11 +29,14 @@ export function useWorkspaceAppConfigsPage(): UseAppConfigsPageReturn {
   const catalog = useProviderCatalog();
   const list = useProviderAppConfigs();
   const createMutation = useCreateProviderAppConfig();
+  const updateMutation = useUpdateProviderAppConfig();
   const deleteMutation = useDeleteProviderAppConfig();
   const testMutation = useTestConnection();
   const initOAuthMutation = useInitOAuth();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingConfigId, setEditingConfigId] = useState<string | null>(null);
   const [form, setForm] = useState<ProviderAppConfigFormValues>(EMPTY_APP_CONFIG_FORM);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({});
 
@@ -73,6 +79,28 @@ export function useWorkspaceAppConfigsPage(): UseAppConfigsPageReturn {
     setForm((prev) => ({ ...prev, secretConfig: { ...prev.secretConfig, [key]: value } }));
   };
 
+  const openEditDialog = (config: WorkspaceProviderAppConfig): void => {
+    const publicConfig = normalizeStringRecord(config.publicConfig);
+    setForm({
+      provider: config.provider,
+      name: config.name,
+      description: config.description ?? '',
+      authMode: config.authMode,
+      publicConfig,
+      secretConfig: {},
+    });
+    setEditingConfigId(config.id);
+    setFieldErrors({});
+    setIsEditOpen(true);
+  };
+
+  const closeEditDialog = (): void => {
+    setIsEditOpen(false);
+    setEditingConfigId(null);
+    setForm(EMPTY_APP_CONFIG_FORM);
+    setFieldErrors({});
+  };
+
   const handleSubmit = async (): Promise<void> => {
     setFieldErrors({});
     if (form.provider.length === 0 || form.name.trim().length === 0) {
@@ -90,6 +118,33 @@ export function useWorkspaceAppConfigsPage(): UseAppConfigsPageReturn {
       });
       setForm(EMPTY_APP_CONFIG_FORM);
       setIsCreateOpen(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setFieldErrors({ _form: message });
+    }
+  };
+
+  const handleEditSubmit = async (): Promise<void> => {
+    setFieldErrors({});
+    if (editingConfigId === null || form.name.trim().length === 0) {
+      setFieldErrors({ name: t('workspaceProviders.appConfigs.errors.nameRequired') });
+      return;
+    }
+    const hasSecretChange = Object.values(form.secretConfig).some(
+      (v) => typeof v === 'string' && v.length > 0,
+    );
+    try {
+      await updateMutation.mutateAsync({
+        id: editingConfigId,
+        data: {
+          name: form.name.trim(),
+          description: form.description.trim() === '' ? undefined : form.description.trim(),
+          authMode: form.authMode,
+          publicConfig: form.publicConfig,
+          secretConfig: hasSecretChange ? form.secretConfig : undefined,
+        },
+      });
+      closeEditDialog();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       setFieldErrors({ _form: message });
@@ -121,9 +176,12 @@ export function useWorkspaceAppConfigsPage(): UseAppConfigsPageReturn {
     isLoading: catalog.isLoading || list.isLoading,
     isError: catalog.isError || list.isError,
     isCreateOpen,
+    isEditOpen,
+    editingConfigId,
     form,
     fieldErrors,
     isCreatePending: createMutation.isPending,
+    isEditPending: updateMutation.isPending,
     isDeletePending: deleteMutation.isPending,
     isTestPending: testMutation.isPending,
     testResult: testMutation.lastResult,
@@ -134,12 +192,15 @@ export function useWorkspaceAppConfigsPage(): UseAppConfigsPageReturn {
       setForm(EMPTY_APP_CONFIG_FORM);
       setFieldErrors({});
     },
+    openEditDialog,
+    closeEditDialog,
     setFormField,
     setFormProvider,
     setFormAuthMode,
     setPublicField,
     setSecretField,
     handleSubmit,
+    handleEditSubmit,
     handleDelete,
     handleTest,
     handleConnect,

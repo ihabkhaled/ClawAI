@@ -10,6 +10,7 @@ import {
 } from '../../../common/constants/workspace.constants';
 import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
 import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
+import { buildOAuthErrorMessage } from '../utilities/oauth-error.utility';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
@@ -111,7 +112,7 @@ export class ClickUpAdapter implements WorkspaceAdapter {
       body: body.toString(),
     });
     if (!response.ok) {
-      throw new Error(`ClickUp token exchange failed: HTTP ${response.status}`);
+      throw new Error(await buildOAuthErrorMessage('ClickUp', 'token exchange', response));
     }
     const data = (await response.json()) as ClickUpTokenResponse;
     return {

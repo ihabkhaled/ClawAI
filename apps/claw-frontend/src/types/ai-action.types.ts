@@ -93,3 +93,30 @@ export type UseAvailableModelsForActionResult = {
   groupedModels: GroupedModels[];
   isLoading: boolean;
 };
+
+export type UseRunAiActionResult = {
+  result: AiActionResult | null;
+  run: (body: {
+    actionKind: AiActionKind;
+    privacyClass: AiActionPrivacyClass;
+    context: string;
+    preferredModel?: ModelChoice;
+  }) => void;
+  reset: () => void;
+  isPending: boolean;
+  error: Error | null;
+};
+
+export type UseAiActionDialogResult = {
+  groupedModels: GroupedModels[];
+  isLoadingModels: boolean;
+  selectedKey: string;
+  setSelectedKey: (key: string) => void;
+  result: AiActionResult | null;
+  isPending: boolean;
+  error: Error | null;
+  copied: boolean;
+  handleGenerate: () => void;
+  handleCopy: () => void;
+  handleClose: () => void;
+};

@@ -34,6 +34,9 @@ const appConfigSchema = z.object({
   JIRA_CLIENT_SECRET: z.string().default(''),
   GOOGLE_CLIENT_ID: z.string().default(''),
   GOOGLE_CLIENT_SECRET: z.string().default(''),
+  OLLAMA_SERVICE_URL: z.string().min(1).default('http://ollama-service:4008'),
+  AI_ACTION_LOCAL_MODEL: z.string().min(1).default('gemma3:4b'),
+  AI_ACTION_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(120_000),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

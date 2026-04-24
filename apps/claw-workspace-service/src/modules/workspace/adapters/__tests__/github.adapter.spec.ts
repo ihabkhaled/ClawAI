@@ -29,6 +29,9 @@ jest.spyOn(AppConfig, 'get').mockReturnValue({
   JIRA_CLIENT_SECRET: 'jira-secret',
   GOOGLE_CLIENT_ID: 'goog-id',
   GOOGLE_CLIENT_SECRET: 'goog-secret',
+  OLLAMA_SERVICE_URL: 'http://ollama-service:4008',
+  AI_ACTION_LOCAL_MODEL: 'gemma3:4b',
+  AI_ACTION_REQUEST_TIMEOUT_MS: 120_000,
 });
 
 global.fetch = jest.fn();

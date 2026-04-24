@@ -23,6 +23,7 @@ import { WorkspaceSearchController } from './controllers/workspace-search.contro
 import { WorkspaceSearchInternalController } from './controllers/workspace-search-internal.controller';
 import { ConnectorActivationManager } from './managers/connector-activation.manager';
 import { OAuthTokenManager } from './managers/oauth-token.manager';
+import { OrphanSyncRecoveryManager } from './managers/orphan-sync-recovery.manager';
 import { StaleDetectorManager } from './managers/stale-detector.manager';
 import { TokenRefreshManager } from './managers/token-refresh.manager';
 import { WorkspaceHealthManager } from './managers/workspace-health.manager';
@@ -71,6 +72,7 @@ import { WorkspaceSearchService } from './services/workspace-search.service';
     WorkspaceSyncManager,
     WorkspaceSyncSchedulerManager,
     StaleDetectorManager,
+    OrphanSyncRecoveryManager,
     WorkspaceObjectManager,
     WorkspaceSearchManager,
     ConnectorActivationManager,
