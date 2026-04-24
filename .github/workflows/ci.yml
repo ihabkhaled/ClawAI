@@ -179,6 +179,10 @@ jobs:
         if: matrix.prisma == true
         run: cd apps/claw-${{ matrix.service }}-service && npx prisma generate
 
+      - name: Hoist vite to root (frontend hoisting fix)
+        if: matrix.service == 'frontend'
+        run: npm install --no-save vite
+
       - name: Run tests
         run: npm run test --workspace=${{ matrix.workspace }}
 
