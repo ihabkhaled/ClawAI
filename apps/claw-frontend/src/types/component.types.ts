@@ -50,6 +50,7 @@ import type {
 import type { UploadedFile } from './file.types';
 import type { GmailMessageMetadata } from './gmail.types';
 import type { AggregatedHealth } from './health.types';
+import type { JiraTicketMetadata } from './jira.types';
 import type {
   ClientLogEntry,
   ClientLogsTabProps,
@@ -1125,6 +1126,36 @@ export type GmailMessageDialogProps = {
 
 export type GmailActionsBarProps = {
   message: WorkspaceObject;
+  onAction: (kind: AiActionKind) => void;
+  isDraftPending: boolean;
+  t: TranslateFunction;
+};
+
+export type JiraTicketRowProps = {
+  ticket: WorkspaceObject;
+  metadata: JiraTicketMetadata;
+  onClick: () => void;
+  t: TranslateFunction;
+};
+
+export type JiraTicketListProps = {
+  tickets: WorkspaceObject[];
+  isLoading: boolean;
+  isError: boolean;
+  onSelectTicket: (ticket: WorkspaceObject) => void;
+  t: TranslateFunction;
+};
+
+export type JiraTicketDialogProps = {
+  ticket: WorkspaceObject | null;
+  open: boolean;
+  onClose: () => void;
+  onOpenAiAction: (kind: AiActionKind) => void;
+  t: TranslateFunction;
+};
+
+export type JiraActionsBarProps = {
+  ticket: WorkspaceObject;
   onAction: (kind: AiActionKind) => void;
   isDraftPending: boolean;
   t: TranslateFunction;

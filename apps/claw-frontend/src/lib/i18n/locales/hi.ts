@@ -1728,4 +1728,37 @@ export const hi: TranslationDictionary = {
       draft_failed: 'मसौदा बनाने में विफल',
     },
   },
+  jira: {
+    page: {
+      title: 'Jira',
+      description: 'सिंक किए गए Jira टिकट देखें और प्रबंधित करें।',
+      empty_title: 'कोई टिकट सिंक नहीं हुए',
+      empty_description:
+        'अभी तक कोई Jira टिकट सिंक नहीं हुए। टिकट लोड करने के लिए अपने Jira कनेक्टर पर सिंक चलाएं।',
+      error_title: 'टिकट लोड नहीं हो सके',
+      no_connector_title: 'कोई Jira कनेक्टर नहीं मिला',
+      no_connector_description:
+        'अपने टिकट देखना शुरू करने के लिए Workspace Connectors में Jira खाता जोड़ें।',
+    },
+    ticket: {
+      status: 'स्थिति',
+      priority: 'प्राथमिकता',
+      assignee: 'असाइनी',
+      reporter: 'रिपोर्टर',
+      project: 'प्रोजेक्ट',
+      sprint: 'स्प्रिंट',
+      story_points: 'स्टोरी पॉइंट',
+      due_date: 'देय तिथि',
+      labels: 'लेबल',
+      issue_type: 'प्रकार',
+      open_in_jira: 'Jira में खोलें',
+      unassigned: 'असाइन नहीं',
+      no_sprint: 'कोई स्प्रिंट नहीं',
+    },
+    actions: {
+      summarize: 'सारांश',
+      write_comment: 'टिप्पणी लिखें',
+      extract_tasks: 'कार्य निकालें',
+    },
+  },
 };

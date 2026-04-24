@@ -1756,4 +1756,37 @@ export const fr: TranslationDictionary = {
       draft_failed: 'Échec de la création du brouillon',
     },
   },
+  jira: {
+    page: {
+      title: 'Jira',
+      description: 'Parcourez et gérez les tickets Jira synchronisés.',
+      empty_title: 'Aucun ticket synchronisé',
+      empty_description:
+        "Aucun ticket Jira n'a encore été synchronisé. Déclenchez une synchronisation sur votre connecteur Jira pour charger les tickets.",
+      error_title: 'Impossible de charger les tickets',
+      no_connector_title: 'Aucun connecteur Jira trouvé',
+      no_connector_description:
+        'Connectez un compte Jira dans les Connecteurs Workspace pour commencer à parcourir vos tickets.',
+    },
+    ticket: {
+      status: 'Statut',
+      priority: 'Priorité',
+      assignee: 'Assigné',
+      reporter: 'Rapporteur',
+      project: 'Projet',
+      sprint: 'Sprint',
+      story_points: "Points d'histoire",
+      due_date: 'Échéance',
+      labels: 'Étiquettes',
+      issue_type: 'Type',
+      open_in_jira: 'Ouvrir dans Jira',
+      unassigned: 'Non assigné',
+      no_sprint: 'Aucun sprint',
+    },
+    actions: {
+      summarize: 'Résumer',
+      write_comment: 'Écrire un commentaire',
+      extract_tasks: 'Extraire les tâches',
+    },
+  },
 };

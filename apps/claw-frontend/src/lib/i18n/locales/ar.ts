@@ -1711,4 +1711,36 @@ export const ar: TranslationDictionary = {
       draft_failed: 'فشل إنشاء المسودة',
     },
   },
+  jira: {
+    page: {
+      title: 'Jira',
+      description: 'استعرض وأدر تذاكر Jira المزامَنة.',
+      empty_title: 'لا توجد تذاكر مزامَنة',
+      empty_description:
+        'لم تتم مزامنة أي تذاكر Jira بعد. شغّل المزامنة على موصّل Jira لتحميل التذاكر.',
+      error_title: 'تعذّر تحميل التذاكر',
+      no_connector_title: 'لم يُعثر على موصّل Jira',
+      no_connector_description: 'قم بتوصيل حساب Jira في موصّلات مساحة العمل لبدء تصفح تذاكرك.',
+    },
+    ticket: {
+      status: 'الحالة',
+      priority: 'الأولوية',
+      assignee: 'المُعيَّن إليه',
+      reporter: 'المُبلِّغ',
+      project: 'المشروع',
+      sprint: 'السبرينت',
+      story_points: 'نقاط القصة',
+      due_date: 'الاستحقاق',
+      labels: 'التسميات',
+      issue_type: 'النوع',
+      open_in_jira: 'فتح في Jira',
+      unassigned: 'غير مُعيَّن',
+      no_sprint: 'لا يوجد سبرينت',
+    },
+    actions: {
+      summarize: 'تلخيص',
+      write_comment: 'كتابة تعليق',
+      extract_tasks: 'استخراج المهام',
+    },
+  },
 };

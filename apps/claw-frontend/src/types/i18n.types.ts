@@ -1699,6 +1699,37 @@ export type TranslationDictionary = {
       draft_failed: string;
     };
   };
+  jira: {
+    page: {
+      title: string;
+      description: string;
+      empty_title: string;
+      empty_description: string;
+      error_title: string;
+      no_connector_title: string;
+      no_connector_description: string;
+    };
+    ticket: {
+      status: string;
+      priority: string;
+      assignee: string;
+      reporter: string;
+      project: string;
+      sprint: string;
+      story_points: string;
+      due_date: string;
+      labels: string;
+      issue_type: string;
+      open_in_jira: string;
+      unassigned: string;
+      no_sprint: string;
+    };
+    actions: {
+      summarize: string;
+      write_comment: string;
+      extract_tasks: string;
+    };
+  };
 };
 
 export type TranslationNamespace = keyof TranslationDictionary;

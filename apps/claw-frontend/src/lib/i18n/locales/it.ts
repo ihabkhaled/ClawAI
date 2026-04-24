@@ -1747,4 +1747,37 @@ export const it: TranslationDictionary = {
       draft_failed: 'Creazione bozza fallita',
     },
   },
+  jira: {
+    page: {
+      title: 'Jira',
+      description: 'Sfoglia e gestisci i ticket Jira sincronizzati.',
+      empty_title: 'Nessun ticket sincronizzato',
+      empty_description:
+        'Nessun ticket Jira è stato ancora sincronizzato. Avvia una sincronizzazione sul tuo connettore Jira per caricare i ticket.',
+      error_title: 'Impossibile caricare i ticket',
+      no_connector_title: 'Nessun connettore Jira trovato',
+      no_connector_description:
+        'Collega un account Jira nei Connettori Workspace per iniziare a sfogliare i tuoi ticket.',
+    },
+    ticket: {
+      status: 'Stato',
+      priority: 'Priorità',
+      assignee: 'Assegnatario',
+      reporter: 'Reporter',
+      project: 'Progetto',
+      sprint: 'Sprint',
+      story_points: 'Story Point',
+      due_date: 'Scadenza',
+      labels: 'Etichette',
+      issue_type: 'Tipo',
+      open_in_jira: 'Apri in Jira',
+      unassigned: 'Non assegnato',
+      no_sprint: 'Nessuno sprint',
+    },
+    actions: {
+      summarize: 'Riassumi',
+      write_comment: 'Scrivi commento',
+      extract_tasks: 'Estrai attività',
+    },
+  },
 };

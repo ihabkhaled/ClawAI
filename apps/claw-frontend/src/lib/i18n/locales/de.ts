@@ -1752,4 +1752,37 @@ export const de: TranslationDictionary = {
       draft_failed: 'Entwurf konnte nicht erstellt werden',
     },
   },
+  jira: {
+    page: {
+      title: 'Jira',
+      description: 'Synchronisierte Jira-Tickets durchsuchen und verwalten.',
+      empty_title: 'Keine Tickets synchronisiert',
+      empty_description:
+        'Es wurden noch keine Jira-Tickets synchronisiert. Lösen Sie eine Synchronisierung am Jira-Connector aus, um Tickets zu laden.',
+      error_title: 'Tickets können nicht geladen werden',
+      no_connector_title: 'Kein Jira-Connector gefunden',
+      no_connector_description:
+        'Verbinden Sie ein Jira-Konto in den Workspace-Connectors, um Ihre Tickets zu durchsuchen.',
+    },
+    ticket: {
+      status: 'Status',
+      priority: 'Priorität',
+      assignee: 'Zugewiesen',
+      reporter: 'Melder',
+      project: 'Projekt',
+      sprint: 'Sprint',
+      story_points: 'Story Points',
+      due_date: 'Fällig',
+      labels: 'Labels',
+      issue_type: 'Typ',
+      open_in_jira: 'In Jira öffnen',
+      unassigned: 'Nicht zugewiesen',
+      no_sprint: 'Kein Sprint',
+    },
+    actions: {
+      summarize: 'Zusammenfassen',
+      write_comment: 'Kommentar schreiben',
+      extract_tasks: 'Aufgaben extrahieren',
+    },
+  },
 };

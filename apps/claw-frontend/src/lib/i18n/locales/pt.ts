@@ -1738,4 +1738,37 @@ export const pt: TranslationDictionary = {
       draft_failed: 'Falha ao criar rascunho',
     },
   },
+  jira: {
+    page: {
+      title: 'Jira',
+      description: 'Navegue e gerencie tickets Jira sincronizados.',
+      empty_title: 'Nenhum ticket sincronizado',
+      empty_description:
+        'Nenhum ticket Jira foi sincronizado ainda. Acione uma sincronização no seu conector Jira para carregar tickets.',
+      error_title: 'Não foi possível carregar os tickets',
+      no_connector_title: 'Nenhum conector Jira encontrado',
+      no_connector_description:
+        'Conecte uma conta Jira nos Conectores do Workspace para começar a navegar seus tickets.',
+    },
+    ticket: {
+      status: 'Status',
+      priority: 'Prioridade',
+      assignee: 'Responsável',
+      reporter: 'Relator',
+      project: 'Projeto',
+      sprint: 'Sprint',
+      story_points: 'Pontos de história',
+      due_date: 'Prazo',
+      labels: 'Rótulos',
+      issue_type: 'Tipo',
+      open_in_jira: 'Abrir no Jira',
+      unassigned: 'Não atribuído',
+      no_sprint: 'Sem sprint',
+    },
+    actions: {
+      summarize: 'Resumir',
+      write_comment: 'Escrever comentário',
+      extract_tasks: 'Extrair tarefas',
+    },
+  },
 };

@@ -1716,4 +1716,37 @@ export const en: TranslationDictionary = {
       draft_failed: 'Failed to create draft',
     },
   },
+  jira: {
+    page: {
+      title: 'Jira',
+      description: 'Browse and manage synced Jira tickets.',
+      empty_title: 'No tickets synced',
+      empty_description:
+        'No Jira tickets have been synced yet. Trigger a sync on your Jira connector to load tickets.',
+      error_title: 'Unable to load tickets',
+      no_connector_title: 'No Jira connector found',
+      no_connector_description:
+        'Connect a Jira account in Workspace Connectors to start browsing your tickets.',
+    },
+    ticket: {
+      status: 'Status',
+      priority: 'Priority',
+      assignee: 'Assignee',
+      reporter: 'Reporter',
+      project: 'Project',
+      sprint: 'Sprint',
+      story_points: 'Story Points',
+      due_date: 'Due',
+      labels: 'Labels',
+      issue_type: 'Type',
+      open_in_jira: 'Open in Jira',
+      unassigned: 'Unassigned',
+      no_sprint: 'No sprint',
+    },
+    actions: {
+      summarize: 'Summarize',
+      write_comment: 'Write Comment',
+      extract_tasks: 'Extract Tasks',
+    },
+  },
 };

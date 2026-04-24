@@ -1745,4 +1745,37 @@ export const ru: TranslationDictionary = {
       draft_failed: 'Не удалось создать черновик',
     },
   },
+  jira: {
+    page: {
+      title: 'Jira',
+      description: 'Просматривайте и управляйте синхронизированными тикетами Jira.',
+      empty_title: 'Тикеты не синхронизированы',
+      empty_description:
+        'Тикеты Jira ещё не синхронизированы. Запустите синхронизацию в коннекторе Jira, чтобы загрузить тикеты.',
+      error_title: 'Не удалось загрузить тикеты',
+      no_connector_title: 'Коннектор Jira не найден',
+      no_connector_description:
+        'Подключите аккаунт Jira в Коннекторах Workspace, чтобы начать просмотр тикетов.',
+    },
+    ticket: {
+      status: 'Статус',
+      priority: 'Приоритет',
+      assignee: 'Исполнитель',
+      reporter: 'Автор',
+      project: 'Проект',
+      sprint: 'Спринт',
+      story_points: 'Story Points',
+      due_date: 'Срок',
+      labels: 'Метки',
+      issue_type: 'Тип',
+      open_in_jira: 'Открыть в Jira',
+      unassigned: 'Не назначен',
+      no_sprint: 'Без спринта',
+    },
+    actions: {
+      summarize: 'Резюме',
+      write_comment: 'Написать комментарий',
+      extract_tasks: 'Извлечь задачи',
+    },
+  },
 };
