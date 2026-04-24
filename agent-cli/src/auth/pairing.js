@@ -20,15 +20,18 @@ export function buildDeviceHint(overrideName) {
 }
 
 function openBrowser(url) {
+  if (typeof url !== 'string' || !url.startsWith('https://')) {
+    return false;
+  }
   const osName = getPlatform();
   const opener =
     osName === 'windows'
-      ? { cmd: 'cmd', args: ['/c', 'start', '""', url] }
+      ? { cmd: 'cmd', args: ['/c', 'start', '', url] }
       : osName === 'darwin'
-        ? { cmd: 'open', args: [url] }
-        : { cmd: 'xdg-open', args: [url] };
+        ? { cmd: 'open', args: ['--', url] }
+        : { cmd: 'xdg-open', args: ['--', url] };
   try {
-    const proc = spawn(opener.cmd, opener.args, { stdio: 'ignore', detached: true });
+    const proc = spawn(opener.cmd, opener.args, { stdio: 'ignore', detached: true, shell: false });
     proc.unref();
     return true;
   } catch {

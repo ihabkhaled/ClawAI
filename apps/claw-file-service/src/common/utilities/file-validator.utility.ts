@@ -84,9 +84,8 @@ export function detectZipBomb(buffer: Buffer): FileValidationResult {
 }
 
 function hasControlChars(str: string): boolean {
-  for (let i = 0; i < str.length; i++) {
-    const code = str.charCodeAt(i);
-    if (code < 0x20) {
+  for (const ch of str) {
+    if ((ch.codePointAt(0) ?? 0) < 0x20) {
       return true;
     }
   }
@@ -95,9 +94,8 @@ function hasControlChars(str: string): boolean {
 
 function replaceUnsafeChars(str: string): string {
   let result = '';
-  for (let i = 0; i < str.length; i++) {
-    const ch = str[i] ?? '';
-    const code = str.charCodeAt(i);
+  for (const ch of str) {
+    const code = ch.codePointAt(0) ?? 0;
     result += code < 0x20 || '<>:"|?*'.includes(ch) ? '_' : ch;
   }
   return result;

@@ -550,13 +550,13 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
 
   private decodeHtml(input: string): string {
     return input
-      .replaceAll('&amp;', '&')
+      .replaceAll(/<[^>]+>/g, ' ')
       .replaceAll('&apos;', "'")
       .replaceAll('&quot;', '"')
       .replaceAll('&#x27;', "'")
       .replaceAll('&#39;', "'")
       .replaceAll('&lt;', '<')
       .replaceAll('&gt;', '>')
-      .replaceAll(/<[^>]+>/g, ' ');
+      .replaceAll('&amp;', '&');
   }
 }

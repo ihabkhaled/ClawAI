@@ -41,12 +41,18 @@
     "eslint": "^9.39.4",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
-    "prettier": "^3.8.1"
+    "prettier": "^3.8.1",
+    "vite": "^8.0.0"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.18",
     "@nestjs/core": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",
     "rxjs": "^7.8.2"
+  },
+  "overrides": {
+    "@xmldom/xmldom": "^0.8.13",
+    "follow-redirects": "^1.16.0",
+    "postcss": "^8.5.10"
   }
 }

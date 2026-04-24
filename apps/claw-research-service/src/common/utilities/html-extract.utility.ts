@@ -4,6 +4,7 @@
  * (phase 5) will add a dedicated adapter.
  */
 import {
+  HTML_BLOCKED_SCHEMES,
   HTML_ENTITY_MAP,
   HTML_ENTITY_RE,
   HTML_LINK_RE,
@@ -42,10 +43,14 @@ export function extractHtml(html: string, baseUrl: string | null = null): Extrac
 }
 
 function resolveLink(href: string, baseUrl: string | null): string | null {
-  if (href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:')) {
+  if (href.startsWith('#')) {
     return null;
   }
-  if (href.startsWith('http://') || href.startsWith('https://')) {
+  const lower = href.toLowerCase();
+  if (HTML_BLOCKED_SCHEMES.some((scheme) => lower.startsWith(scheme))) {
+    return null;
+  }
+  if (lower.startsWith('http://') || lower.startsWith('https://')) {
     return href;
   }
   if (baseUrl === null) {

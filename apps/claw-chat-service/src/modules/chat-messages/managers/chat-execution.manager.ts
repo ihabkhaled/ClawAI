@@ -26,6 +26,7 @@ import {
   type ThreadSettings,
 } from '../types/execution.types';
 import type { JudgeRefereeConfig } from '../types/judge-referee.types';
+import type { InternalGenerateResponse } from '../types/internal-generate.types';
 import { type AssembledContext } from '../types/context.types';
 import { ContextAssemblyManager } from './context-assembly.manager';
 import { QualityCheckManager } from './quality-check.manager';
@@ -573,6 +574,60 @@ export class ChatExecutionManager implements OnModuleInit {
       threadSettings,
       executionOptions,
     );
+  }
+
+  async generateOnce(
+    provider: string,
+    model: string,
+    systemPrompt: string,
+    userPrompt: string,
+    maxTokens?: number,
+  ): Promise<InternalGenerateResponse> {
+    const config = AppConfig.get();
+    const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
+    const body: OpenAiChatRequest = {
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      stream: false,
+    };
+    if (maxTokens !== undefined) {
+      body.max_tokens = Math.min(maxTokens, HARD_MAX_OUTPUT_TOKENS);
+    }
+    const startTime = Date.now();
+    const response = await httpRequest<OpenAiChatResponse>({
+      url: `${baseUrl}/chat/completions`,
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body,
+      timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
+    });
+    if (!response.ok) {
+      throw new BusinessException(
+        this.extractHttpErrorMessage(
+          response.data,
+          `Provider ${provider} returned ${String(response.status)}`,
+        ),
+        'CLOUD_PROVIDER_REQUEST_FAILED',
+      );
+    }
+    const parsed = this.parseCloudResponse(
+      response.data as OpenAiChatResponse,
+      provider,
+      model,
+      startTime,
+      false,
+    );
+    return {
+      content: parsed.content,
+      provider: parsed.provider,
+      model: parsed.model,
+      inputTokens: parsed.inputTokens,
+      outputTokens: parsed.outputTokens,
+      durationMs: parsed.latencyMs,
+    };
   }
 
   private async callOllama(
@@ -1331,6 +1386,15 @@ Your task:
     if (normalized.endsWith('/v1')) {
       return normalized.replace(/\/v1$/, '/api');
     }
-    return normalized.includes('ollama.com') ? `${normalized}/api` : normalized;
+    let hostname = '';
+    try {
+      const withScheme = normalized.startsWith('http') ? normalized : `https://${normalized}`;
+      hostname = new URL(withScheme).hostname;
+    } catch {
+      hostname = '';
+    }
+    return hostname === 'ollama.com' || hostname.endsWith('.ollama.com')
+      ? `${normalized}/api`
+      : normalized;
   }
 }
