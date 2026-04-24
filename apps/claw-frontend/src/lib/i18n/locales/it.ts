@@ -1918,4 +1918,24 @@ export const it: TranslationDictionary = {
       draft_spec: 'Bozza specifica',
     },
   },
+  workflow: {
+    page: {
+      title: 'Workflow multi-area di lavoro',
+      description: 'Seleziona oggetti da più provider e esegui azioni AI sul contesto combinato.',
+      empty_title: 'Nessun oggetto trovato',
+      empty_description: "Nessun oggetto dell'area di lavoro è stato ancora sincronizzato.",
+      error_title: 'Impossibile caricare gli oggetti',
+    },
+    object: {
+      add: 'Aggiungi',
+      remove: 'Rimuovi',
+      selected_count: 'oggetti selezionati',
+      clear_all: 'Cancella tutto',
+    },
+    actions: {
+      summarize_all: 'Riassumi tutto',
+      extract_requirements: 'Estrai requisiti',
+      draft_prd: 'Bozza PRD',
+    },
+  },
 };

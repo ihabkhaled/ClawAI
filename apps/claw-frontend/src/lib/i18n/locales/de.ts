@@ -1924,4 +1924,25 @@ export const de: TranslationDictionary = {
       draft_spec: 'Spezifikation entwerfen',
     },
   },
+  workflow: {
+    page: {
+      title: 'Arbeitsbereichs-übergreifende Workflows',
+      description:
+        'Objekte aus mehreren Workspace-Anbietern auswählen und KI-Aktionen auf kombinierten Kontext anwenden.',
+      empty_title: 'Keine Objekte gefunden',
+      empty_description: 'Es wurden noch keine Workspace-Objekte synchronisiert.',
+      error_title: 'Objekte konnten nicht geladen werden',
+    },
+    object: {
+      add: 'Hinzufügen',
+      remove: 'Entfernen',
+      selected_count: 'Objekte ausgewählt',
+      clear_all: 'Alle löschen',
+    },
+    actions: {
+      summarize_all: 'Alles zusammenfassen',
+      extract_requirements: 'Anforderungen extrahieren',
+      draft_prd: 'PRD entwerfen',
+    },
+  },
 };

@@ -1882,4 +1882,25 @@ export const ar: TranslationDictionary = {
       draft_spec: 'صياغة المواصفات',
     },
   },
+  workflow: {
+    page: {
+      title: 'سير عمل متعدد المصادر',
+      description:
+        'اختر كائنات من مزودي مساحة العمل المختلفين وشغّل إجراءات الذكاء الاصطناعي على السياق المجمّع.',
+      empty_title: 'لم يتم العثور على كائنات',
+      empty_description: 'لم تتم مزامنة أي كائنات من مساحة العمل بعد.',
+      error_title: 'فشل تحميل الكائنات',
+    },
+    object: {
+      add: 'إضافة',
+      remove: 'إزالة',
+      selected_count: 'كائنات محددة',
+      clear_all: 'مسح الكل',
+    },
+    actions: {
+      summarize_all: 'تلخيص الكل',
+      extract_requirements: 'استخراج المتطلبات',
+      draft_prd: 'صياغة وثيقة المتطلبات',
+    },
+  },
 };

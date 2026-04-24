@@ -1889,4 +1889,25 @@ export const en: TranslationDictionary = {
       draft_spec: 'Draft Spec',
     },
   },
+  workflow: {
+    page: {
+      title: 'Cross-Workspace Workflows',
+      description:
+        'Select objects from multiple workspace providers and run AI actions on combined context.',
+      empty_title: 'No objects found',
+      empty_description: 'No workspace objects have been synced yet.',
+      error_title: 'Failed to load objects',
+    },
+    object: {
+      add: 'Add',
+      remove: 'Remove',
+      selected_count: 'objects selected',
+      clear_all: 'Clear all',
+    },
+    actions: {
+      summarize_all: 'Summarize All',
+      extract_requirements: 'Extract Requirements',
+      draft_prd: 'Draft PRD',
+    },
+  },
 };

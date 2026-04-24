@@ -1916,4 +1916,25 @@ export const ru: TranslationDictionary = {
       draft_spec: 'Составить спецификацию',
     },
   },
+  workflow: {
+    page: {
+      title: 'Кросс-рабочие процессы',
+      description:
+        'Выберите объекты из нескольких провайдеров и запускайте действия ИИ на комбинированном контексте.',
+      empty_title: 'Объекты не найдены',
+      empty_description: 'Объекты рабочего пространства ещё не синхронизированы.',
+      error_title: 'Не удалось загрузить объекты',
+    },
+    object: {
+      add: 'Добавить',
+      remove: 'Удалить',
+      selected_count: 'объектов выбрано',
+      clear_all: 'Очистить всё',
+    },
+    actions: {
+      summarize_all: 'Резюмировать всё',
+      extract_requirements: 'Извлечь требования',
+      draft_prd: 'Составить PRD',
+    },
+  },
 };

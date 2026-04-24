@@ -1901,4 +1901,25 @@ export const hi: TranslationDictionary = {
       draft_spec: 'स्पेक तैयार करें',
     },
   },
+  workflow: {
+    page: {
+      title: 'क्रॉस-वर्कस्पेस वर्कफ़्लो',
+      description:
+        'कई वर्कस्पेस प्रदाताओं से ऑब्जेक्ट चुनें और संयुक्त संदर्भ पर AI क्रियाएँ चलाएँ।',
+      empty_title: 'कोई ऑब्जेक्ट नहीं मिला',
+      empty_description: 'अभी तक कोई वर्कस्पेस ऑब्जेक्ट सिंक नहीं हुआ है।',
+      error_title: 'ऑब्जेक्ट लोड करने में विफल',
+    },
+    object: {
+      add: 'जोड़ें',
+      remove: 'हटाएँ',
+      selected_count: 'ऑब्जेक्ट चुने गए',
+      clear_all: 'सब हटाएँ',
+    },
+    actions: {
+      summarize_all: 'सब सारांश करें',
+      extract_requirements: 'आवश्यकताएँ निकालें',
+      draft_prd: 'PRD तैयार करें',
+    },
+  },
 };

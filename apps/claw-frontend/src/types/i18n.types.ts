@@ -1861,6 +1861,26 @@ export type TranslationDictionary = {
       draft_spec: string;
     };
   };
+  workflow: {
+    page: {
+      title: string;
+      description: string;
+      empty_title: string;
+      empty_description: string;
+      error_title: string;
+    };
+    object: {
+      add: string;
+      remove: string;
+      selected_count: string;
+      clear_all: string;
+    };
+    actions: {
+      summarize_all: string;
+      extract_requirements: string;
+      draft_prd: string;
+    };
+  };
 };
 
 export type TranslationNamespace = keyof TranslationDictionary;

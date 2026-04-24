@@ -1923,4 +1923,25 @@ export const es: TranslationDictionary = {
       draft_spec: 'Redactar especificación',
     },
   },
+  workflow: {
+    page: {
+      title: 'Flujos de trabajo entre espacios',
+      description:
+        'Selecciona objetos de múltiples proveedores y ejecuta acciones de IA sobre el contexto combinado.',
+      empty_title: 'No se encontraron objetos',
+      empty_description: 'Aún no se han sincronizado objetos del espacio de trabajo.',
+      error_title: 'Error al cargar los objetos',
+    },
+    object: {
+      add: 'Agregar',
+      remove: 'Eliminar',
+      selected_count: 'objetos seleccionados',
+      clear_all: 'Limpiar todo',
+    },
+    actions: {
+      summarize_all: 'Resumir todo',
+      extract_requirements: 'Extraer requisitos',
+      draft_prd: 'Redactar PRD',
+    },
+  },
 };

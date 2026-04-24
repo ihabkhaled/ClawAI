@@ -1929,4 +1929,25 @@ export const fr: TranslationDictionary = {
       draft_spec: 'Rédiger la spécification',
     },
   },
+  workflow: {
+    page: {
+      title: 'Workflows multi-espaces',
+      description:
+        'Sélectionnez des objets de plusieurs fournisseurs et exécutez des actions IA sur le contexte combiné.',
+      empty_title: 'Aucun objet trouvé',
+      empty_description: "Aucun objet d'espace de travail n'a encore été synchronisé.",
+      error_title: 'Impossible de charger les objets',
+    },
+    object: {
+      add: 'Ajouter',
+      remove: 'Supprimer',
+      selected_count: 'objets sélectionnés',
+      clear_all: 'Tout effacer',
+    },
+    actions: {
+      summarize_all: 'Tout résumer',
+      extract_requirements: 'Extraire les exigences',
+      draft_prd: 'Rédiger le PRD',
+    },
+  },
 };

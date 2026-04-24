@@ -1315,3 +1315,34 @@ export type FigmaActionsBarProps = {
   isDraftPending: boolean;
   t: TranslateFunction;
 };
+
+export type WorkflowObjectRowProps = {
+  object: WorkspaceObject;
+  isSelected: boolean;
+  onAdd: (object: WorkspaceObject) => void;
+  onRemove: (id: string) => void;
+  t: TranslateFunction;
+};
+
+export type WorkflowObjectListProps = {
+  objects: WorkspaceObject[];
+  selectedItemIds: string[];
+  isLoading: boolean;
+  isError: boolean;
+  onAdd: (object: WorkspaceObject) => void;
+  onRemove: (id: string) => void;
+  t: TranslateFunction;
+};
+
+export type WorkflowSelectedStripProps = {
+  selectedItems: WorkspaceObject[];
+  onRemove: (id: string) => void;
+  onClear: () => void;
+  t: TranslateFunction;
+};
+
+export type WorkflowActionsBarProps = {
+  hasItems: boolean;
+  onAction: (kind: AiActionKind) => void;
+  t: TranslateFunction;
+};
