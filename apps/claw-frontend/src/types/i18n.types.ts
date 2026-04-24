@@ -101,6 +101,14 @@ export type TranslationDictionary = {
     discovery: string;
     workspaceProviders: string;
     workspaceAppConfigs: string;
+    workspaceGmail: string;
+    workspaceJira: string;
+    workspaceSourceControl: string;
+    workspaceSlack: string;
+    workspaceDocs: string;
+    workspaceConfluence: string;
+    workspaceFigma: string;
+    workspaceWorkflows: string;
     researchProviders: string;
     researchRuns: string;
     research: string;

@@ -30,6 +30,11 @@ import {
   KeyRound,
   Globe,
   Search,
+  Mail,
+  ListTodo,
+  Hash,
+  FileText,
+  Figma,
 } from 'lucide-react';
 
 import { ROUTES } from './routes.constants';
@@ -80,6 +85,18 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
       { labelKey: 'nav.workspaceActions', href: ROUTES.WORKSPACE_ACTIONS, icon: CheckSquare },
       { labelKey: 'nav.workspaceApprovals', href: ROUTES.WORKSPACE_APPROVALS, icon: CheckSquare },
       { labelKey: 'nav.workspaceSyncHealth', href: ROUTES.WORKSPACE_SYNC_HEALTH, icon: Activity },
+      { labelKey: 'nav.workspaceGmail', href: ROUTES.WORKSPACE_GMAIL, icon: Mail },
+      { labelKey: 'nav.workspaceJira', href: ROUTES.WORKSPACE_JIRA, icon: ListTodo },
+      {
+        labelKey: 'nav.workspaceSourceControl',
+        href: ROUTES.WORKSPACE_SOURCE_CONTROL,
+        icon: GitBranch,
+      },
+      { labelKey: 'nav.workspaceSlack', href: ROUTES.WORKSPACE_SLACK, icon: Hash },
+      { labelKey: 'nav.workspaceDocs', href: ROUTES.WORKSPACE_DOCS, icon: FileText },
+      { labelKey: 'nav.workspaceConfluence', href: ROUTES.WORKSPACE_CONFLUENCE, icon: BookOpen },
+      { labelKey: 'nav.workspaceFigma', href: ROUTES.WORKSPACE_FIGMA, icon: Figma },
+      { labelKey: 'nav.workspaceWorkflows', href: ROUTES.WORKSPACE_WORKFLOWS, icon: Workflow },
     ],
   },
   {
