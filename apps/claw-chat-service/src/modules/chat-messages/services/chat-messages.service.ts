@@ -380,6 +380,38 @@ export class ChatMessagesService implements OnModuleInit {
     this.validateOwnership(thread, userId);
 
     const updated = await this.chatMessagesRepository.updateFeedback(messageId, feedback);
+    const metadata =
+      updated.metadata !== null && typeof updated.metadata === 'object'
+        ? (updated.metadata as Record<string, unknown>)
+        : null;
+    const judgeDecision =
+      typeof metadata?.['judgeDecision'] === 'string' ? metadata['judgeDecision'] : undefined;
+    const judgeConfidence =
+      typeof metadata?.['judgeConfidence'] === 'number' ? metadata['judgeConfidence'] : undefined;
+    const routingMessageId =
+      typeof metadata?.['sourceMessageId'] === 'string' ? metadata['sourceMessageId'] : undefined;
+    const routeRoadmap =
+      metadata?.['routeRoadmap'] !== null && typeof metadata?.['routeRoadmap'] === 'object'
+        ? (metadata['routeRoadmap'] as Record<string, unknown>)
+        : null;
+    const detectedCategory =
+      typeof routeRoadmap?.['selectedExecutionPath'] === 'string'
+        ? routeRoadmap['selectedExecutionPath']
+        : undefined;
+    void this.rabbitMQService.publish(EventPattern.MESSAGE_FEEDBACK_SET, {
+      messageId: updated.id,
+      threadId: updated.threadId,
+      feedback,
+      routingMessageId,
+      provider: updated.provider ?? undefined,
+      model: updated.model ?? undefined,
+      routingMode: updated.routingMode ?? undefined,
+      routerModel: updated.routerModel ?? null,
+      judgeDecision,
+      judgeConfidence,
+      detectedCategory,
+      timestamp: new Date().toISOString(),
+    });
     this.logger.log(`setFeedback: completed for message ${messageId}`);
     return updated;
   }
@@ -424,6 +456,7 @@ export class ChatMessagesService implements OnModuleInit {
     this.logger.log(
       `handleMessageRouted: starting for message ${payload.messageId} via ${payload.selectedProvider}/${payload.selectedModel}`,
     );
+    const startedAt = Date.now();
     this.chatStreamService.emitRequestAccepted(payload.threadId);
     const [threadMessages, thread] = await Promise.all([
       this.chatMessagesRepository.findRecentByThreadId(payload.threadId, 20),
@@ -502,10 +535,29 @@ export class ChatMessagesService implements OnModuleInit {
       );
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'All providers failed';
+      const failureLatencyMs = Math.max(1, Date.now() - startedAt);
       this.logger.error(
         `handleMessageRouted: failed for message ${payload.messageId} - ${errorMsg}`,
       );
-      await this.storeErrorResponse(payload, errorMsg);
+      const errorMessage = await this.storeErrorResponse(payload, errorMsg);
+      this.publishMessageCompleted(
+        payload,
+        errorMessage,
+        {
+          content: errorMessage.content,
+          provider: errorMessage.provider ?? payload.selectedProvider,
+          model: errorMessage.model ?? payload.selectedModel,
+          latencyMs: failureLatencyMs,
+          usedFallback: true,
+        },
+        thread,
+        chronologicalMessages,
+        {
+          executionSuccess: false,
+          finalStatus: 'failed',
+          errorMessage: errorMsg,
+        },
+      );
       throw error;
     }
   }
@@ -604,8 +656,11 @@ export class ChatMessagesService implements OnModuleInit {
     return (latestUserMsg?.metadata as Record<string, unknown> | null) ?? null;
   }
 
-  private async storeErrorResponse(payload: MessageRoutedData, errorMsg: string): Promise<void> {
-    await this.chatMessagesRepository.create({
+  private async storeErrorResponse(
+    payload: MessageRoutedData,
+    errorMsg: string,
+  ): Promise<ChatMessage> {
+    return this.chatMessagesRepository.create({
       threadId: payload.threadId,
       role: 'ASSISTANT',
       content: `⚠️ ${errorMsg}`,
@@ -614,7 +669,7 @@ export class ChatMessagesService implements OnModuleInit {
       routingMode: payload.routingMode as RoutingMode,
       routerModel: payload.routerModel ?? null,
       usedFallback: true,
-      metadata: { error: true },
+      metadata: { error: true, sourceMessageId: payload.messageId },
     });
   }
 
@@ -722,6 +777,7 @@ export class ChatMessagesService implements OnModuleInit {
         ...(llmResponse.fileGenerationId
           ? { type: 'file_generation', generationId: llmResponse.fileGenerationId }
           : {}),
+        sourceMessageId: payload.messageId,
         ...(llmResponse.reRouted
           ? {
               reRouted: true,
@@ -923,6 +979,11 @@ export class ChatMessagesService implements OnModuleInit {
     llmResponse: LlmResponse,
     thread: ChatThread | null,
     messages: ChatMessage[],
+    outcomeOverrides?: {
+      executionSuccess?: boolean;
+      finalStatus?: string;
+      errorMessage?: string;
+    },
   ): void {
     const lastUserMsg = [...messages].reverse().find((m) => m.role === 'USER');
     void this.rabbitMQService.publish(EventPattern.MESSAGE_COMPLETED, {
@@ -935,9 +996,15 @@ export class ChatMessagesService implements OnModuleInit {
       inputTokens: llmResponse.inputTokens,
       outputTokens: llmResponse.outputTokens,
       latencyMs: llmResponse.latencyMs,
+      usedFallback: llmResponse.usedFallback,
+      routingMode: payload.routingMode as RoutingMode,
+      detectedCategory: payload.detectedCategory,
       content: assistantMessage.content,
       userContent: lastUserMsg?.content,
       timestamp: new Date().toISOString(),
+      executionSuccess: outcomeOverrides?.executionSuccess ?? true,
+      finalStatus: outcomeOverrides?.finalStatus ?? 'completed',
+      ...(outcomeOverrides?.errorMessage ? { errorMessage: outcomeOverrides.errorMessage } : {}),
       ...(payload.routerModel ? { routerModel: payload.routerModel } : {}),
       ...(llmResponse.executionPath ? { executionPath: llmResponse.executionPath } : {}),
       ...(llmResponse.targetLatencyMs ? { targetLatencyMs: llmResponse.targetLatencyMs } : {}),
@@ -956,6 +1023,8 @@ export class ChatMessagesService implements OnModuleInit {
             judgeDecision: llmResponse.judgeRefereeMetadata.judgeDecision,
             criticModel: llmResponse.judgeRefereeMetadata.criticModel,
             judgeModel: llmResponse.judgeRefereeMetadata.judgeModel,
+            criticScore: llmResponse.judgeRefereeMetadata.criticScore,
+            judgeConfidence: llmResponse.judgeRefereeMetadata.judgeConfidence,
           }
         : {}),
     });

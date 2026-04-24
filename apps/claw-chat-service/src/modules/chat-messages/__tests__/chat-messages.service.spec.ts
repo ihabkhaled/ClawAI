@@ -362,4 +362,109 @@ describe('ChatMessagesService', () => {
       expect(result.meta.total).toBe(75);
     });
   });
+
+  describe('setFeedback', () => {
+    it('publishes a feedback learning event after storing feedback', async () => {
+      const assistantMessage = {
+        ...mockMessage,
+        role: 'ASSISTANT' as const,
+        provider: 'ANTHROPIC',
+        model: 'claude-sonnet-4',
+        routingMode: 'AUTO' as const,
+        routerModel: 'qwen3:1.7b',
+        metadata: {
+          sourceMessageId: 'user-msg-1',
+          judgeDecision: 'ACCEPT',
+          judgeConfidence: 0.91,
+        },
+      };
+      messagesRepo.findById.mockResolvedValue(assistantMessage);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      messagesRepo.updateFeedback.mockResolvedValue({
+        ...assistantMessage,
+        feedback: 'positive',
+      });
+
+      await service.setFeedback('user-1', assistantMessage.id, 'positive');
+
+      expect(messagesRepo.updateFeedback).toHaveBeenCalledWith('msg-1', 'positive');
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_FEEDBACK_SET,
+        expect.objectContaining({
+          messageId: 'msg-1',
+          threadId: 'thread-1',
+          feedback: 'positive',
+          routingMessageId: 'user-msg-1',
+          provider: 'ANTHROPIC',
+          model: 'claude-sonnet-4',
+        }),
+      );
+    });
+  });
+
+  describe('handleMessageRouted', () => {
+    it('publishes message.completed even when execution fails after storing an error response', async () => {
+      const routedPayload = {
+        messageId: 'msg-1',
+        threadId: 'thread-1',
+        selectedProvider: 'FILE_GENERATION',
+        selectedModel: 'auto',
+        routingMode: 'AUTO',
+        timestamp: new Date().toISOString(),
+      };
+      const errorAssistant = {
+        ...mockMessage,
+        id: 'msg-error-1',
+        role: 'ASSISTANT' as const,
+        content: '⚠️ Cloud provider GEMINI returned status 429',
+        provider: 'FILE_GENERATION',
+        model: 'auto',
+        routingMode: 'AUTO' as const,
+        usedFallback: true,
+        metadata: { error: true, sourceMessageId: 'msg-1' },
+      };
+
+      messagesRepo.findRecentByThreadId.mockResolvedValue([mockMessage]);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      executionManager.execute!.mockRejectedValue(
+        new Error('Cloud provider GEMINI returned status 429'),
+      );
+      messagesRepo.create.mockResolvedValue(errorAssistant);
+
+      await expect(service.handleMessageRouted(routedPayload)).rejects.toThrow(
+        'Cloud provider GEMINI returned status 429',
+      );
+
+      expect(messagesRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          threadId: 'thread-1',
+          role: 'ASSISTANT',
+          provider: 'FILE_GENERATION',
+          model: 'auto',
+          usedFallback: true,
+          metadata: { error: true, sourceMessageId: 'msg-1' },
+        }),
+      );
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_COMPLETED,
+        expect.objectContaining({
+          messageId: 'msg-1',
+          threadId: 'thread-1',
+          assistantMessageId: 'msg-error-1',
+          provider: 'FILE_GENERATION',
+          model: 'auto',
+          usedFallback: true,
+          content: '⚠️ Cloud provider GEMINI returned status 429',
+        }),
+      );
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_COMPLETED,
+        expect.objectContaining({
+          executionSuccess: false,
+          finalStatus: 'failed',
+          errorMessage: 'Cloud provider GEMINI returned status 429',
+        }),
+      );
+    });
+  });
 });

@@ -23,6 +23,7 @@ AppConfig.get.mockReturnValue({
   OLLAMA_SERVICE_URL: 'http://ollama:4008',
   OLLAMA_GENERATE_TIMEOUT_MS: 10_000,
   CONNECTOR_SERVICE_URL: 'http://connector:4011',
+  FILE_GENERATION_SERVICE_URL: 'http://file-generation:4013',
 });
 
 const makeContext = (content: string): AssembledContext =>
@@ -85,6 +86,7 @@ describe('ChatExecutionManager', () => {
 
     localModelSelection = {
       resolveDefaultModel: jest.fn().mockResolvedValue('qwen3:1.7b'),
+      resolveModelList: jest.fn().mockResolvedValue(['qwen3:7b', 'llama3.3:8b']),
     };
 
     manager = new ChatExecutionManager(
@@ -356,6 +358,149 @@ describe('ChatExecutionManager', () => {
     ).rejects.toThrow('Request failed with status code 401');
 
     expect(httpRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it('prefers local file-generation models before cloud providers', async () => {
+    const context = makeContext(
+      'Generate a DOCX board brief for an enterprise SOC 2 launch with risks and owners.',
+    );
+    const now = Date.now();
+
+    httpRequest
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        data: {
+          model: 'qwen3:7b',
+          response: '# Board Brief\n\n- Risk: Vendor due diligence\n- Owner: Security',
+          done: true,
+          promptEvalCount: 18,
+          evalCount: 64,
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        data: {
+          generationId: 'file-gen-1',
+          status: 'QUEUED',
+          format: 'DOCX',
+        },
+      });
+
+    const result = await manager.callProvider('FILE_GENERATION', 'auto', context, now, false);
+
+    expect(localModelSelection.resolveModelList).toHaveBeenCalledWith(3, 'LOCAL_FILE_GENERATION');
+    expect(httpRequest).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        url: 'http://ollama:4008/api/v1/ollama/generate',
+        method: 'POST',
+      }),
+    );
+    expect(httpRequest).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        url: 'http://file-generation:4013/api/v1/internal/file-generations/generate',
+        method: 'POST',
+      }),
+    );
+
+    const ollamaBody = httpRequest.mock.calls[0][0].body as {
+      model: string;
+      options: { num_predict: number };
+    };
+    expect(ollamaBody.model).toBe('qwen3:7b');
+    expect(ollamaBody.options.num_predict).toBe(512);
+
+    const fileGenerationBody = httpRequest.mock.calls[1][0].body as {
+      provider: string;
+      model: string;
+      format: string;
+    };
+    expect(fileGenerationBody.provider).toBe('local-ollama');
+    expect(fileGenerationBody.model).toBe('qwen3:7b');
+    expect(fileGenerationBody.format).toBe('DOCX');
+
+    expect(result.provider).toBe('FILE_GENERATION');
+    expect(result.model).toBe('auto');
+    expect(result.fileGenerationId).toBe('file-gen-1');
+    expect(result.usedFallback).toBe(false);
+  });
+
+  it('falls back to the next file content provider when the first local model fails', async () => {
+    const context = makeContext(
+      'Generate a PDF project status report with milestones and blockers.',
+    );
+    const now = Date.now();
+
+    httpRequest
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        data: { message: 'first local file model failed' },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        data: {
+          model: 'llama3.3:8b',
+          response: '# Status Report\n\n- Milestone: Complete\n- Blocker: None',
+          done: true,
+          promptEvalCount: 22,
+          evalCount: 71,
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        data: {
+          generationId: 'file-gen-2',
+          status: 'QUEUED',
+          format: 'PDF',
+        },
+      });
+
+    const result = await manager.callProvider('FILE_GENERATION', 'auto', context, now, false);
+
+    expect(httpRequest).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        url: 'http://ollama:4008/api/v1/ollama/generate',
+        method: 'POST',
+      }),
+    );
+    expect(httpRequest).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        url: 'http://ollama:4008/api/v1/ollama/generate',
+        method: 'POST',
+      }),
+    );
+    expect(httpRequest).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        url: 'http://file-generation:4013/api/v1/internal/file-generations/generate',
+        method: 'POST',
+      }),
+    );
+
+    const retryOllamaBody = httpRequest.mock.calls[1][0].body as {
+      model: string;
+      options: { num_predict: number };
+    };
+    expect(retryOllamaBody.model).toBe('llama3.3:8b');
+    expect(retryOllamaBody.options.num_predict).toBe(512);
+
+    const fileGenerationBody = httpRequest.mock.calls[2][0].body as {
+      provider: string;
+      model: string;
+    };
+    expect(fileGenerationBody.provider).toBe('local-ollama');
+    expect(fileGenerationBody.model).toBe('llama3.3:8b');
+
+    expect(result.fileGenerationId).toBe('file-gen-2');
+    expect(result.usedFallback).toBe(true);
   });
 
   it('does not force fast path when judge is explicitly enabled', async () => {

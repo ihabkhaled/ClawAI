@@ -35,12 +35,12 @@ export class LocalModelSelectionService {
     return modelName;
   }
 
-  async resolveModelList(count: number): Promise<string[]> {
+  async resolveModelList(count: number, preferredRole?: string): Promise<string[]> {
     const usable = await this.listUsableModels();
     const ordered = [...usable].sort(
       (a, b) =>
-        this.selectionScore(b, 'LOCAL_FALLBACK_CHAT') -
-        this.selectionScore(a, 'LOCAL_FALLBACK_CHAT'),
+        this.selectionScore(b, preferredRole ?? 'LOCAL_FALLBACK_CHAT') -
+        this.selectionScore(a, preferredRole ?? 'LOCAL_FALLBACK_CHAT'),
     );
     const unique: string[] = [];
 

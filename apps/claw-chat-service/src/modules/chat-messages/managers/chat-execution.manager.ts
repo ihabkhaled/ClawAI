@@ -1,4 +1,5 @@
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import { LocalModelRole } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities';
 import { BusinessException } from '../../../common/errors';
@@ -1011,26 +1012,60 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.debug(`callFileGenerationService: prompt length=${String(prompt.length)}`);
     const format = this.detectFileFormat(prompt);
     this.logger.debug(`callFileGenerationService: detected format=${format}`);
+    const fileExecutionOptions = this.buildFileGenerationExecutionOptions(threadSettings);
 
     // Phase 1: Call LLM for content with file-generation-specific system prompt
     this.logger.debug('callFileGenerationService: Phase 1 — picking content provider');
-    const contentProvider = this.pickContentProvider(context);
-    this.logger.debug(
-      `callFileGenerationService: content provider=${contentProvider.provider}/${contentProvider.model}`,
-    );
     const fileContext: AssembledContext = {
       ...context,
       systemPrompt: `You are a file content generator. The user wants to create a ${format} file. Generate ONLY the raw content for the file — no explanations, no markdown code blocks, no "here is your file" preamble. Output the actual content that should go inside the file. For PDF/DOCX, use markdown formatting (headers, bullets, paragraphs). For CSV, output header row + data rows. For JSON, output valid JSON. For TXT, output plain text. For HTML, output HTML. For MD, output markdown.`,
     };
-    this.logger.debug('callFileGenerationService: calling cloud provider for content generation');
-    const contentResponse = await this.callCloudProvider(
-      contentProvider.provider,
-      contentProvider.model,
-      fileContext,
-      startTime,
-      false,
-      threadSettings,
-    );
+    this.logger.debug('callFileGenerationService: building content provider candidate chain');
+    let contentResponse: LlmResponse | null = null;
+    let contentFallbackUsed = false;
+    let lastContentError: unknown = null;
+    const contentCandidates = await this.buildFileContentProviderCandidates();
+
+    for (let index = 0; index < contentCandidates.length; index++) {
+      const candidate = contentCandidates[index];
+      if (!candidate) {
+        continue;
+      }
+
+      this.logger.debug(
+        `callFileGenerationService: trying content provider ${String(index + 1)}/${String(contentCandidates.length)} - ${candidate.provider}/${candidate.model}`,
+      );
+      try {
+        contentResponse = await this.callProvider(
+          candidate.provider,
+          candidate.model,
+          fileContext,
+          startTime,
+          usedFallback || index > 0,
+          threadSettings,
+          'AUTO',
+          fileExecutionOptions,
+        );
+        contentFallbackUsed = index > 0;
+        break;
+      } catch (error: unknown) {
+        lastContentError = error;
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        this.logger.warn(
+          `callFileGenerationService: content provider ${candidate.provider}/${candidate.model} failed: ${errorMessage}`,
+        );
+      }
+    }
+
+    if (contentResponse === null) {
+      throw (
+        lastContentError ??
+        new BusinessException(
+          'No file content provider could generate the requested file',
+          'FILE_GENERATION_CONTENT_FAILED',
+        )
+      );
+    }
     this.logger.debug(
       `callFileGenerationService: Phase 1 complete — contentLen=${String(contentResponse.content.length)}`,
     );
@@ -1084,9 +1119,57 @@ export class ChatExecutionManager implements OnModuleInit {
       model: 'auto',
       latencyMs,
       finishReason: 'stop',
-      usedFallback,
+      usedFallback: usedFallback || contentFallbackUsed,
       fileGenerationId: response.data.generationId,
     };
+  }
+
+  private buildFileGenerationExecutionOptions(threadSettings?: ThreadSettings): ExecutionOptions {
+    const requestedMaxTokens = threadSettings?.maxTokens;
+    const boundedRequestedMaxTokens =
+      requestedMaxTokens !== null && requestedMaxTokens !== undefined
+        ? Math.min(requestedMaxTokens, HARD_MAX_OUTPUT_TOKENS)
+        : HARD_MAX_OUTPUT_TOKENS;
+
+    return {
+      fastPathEnabled: false,
+      maxOutputTokens: Math.max(DEFAULT_MAX_OUTPUT_TOKENS, boundedRequestedMaxTokens),
+      applyShortResponseConstraint: false,
+    };
+  }
+
+  private async buildFileContentProviderCandidates(): Promise<
+    Array<{ provider: string; model: string }>
+  > {
+    const candidates: Array<{ provider: string; model: string }> = [];
+    const localCandidates =
+      (await this.localModelSelection?.resolveModelList(3, LocalModelRole.LOCAL_FILE_GENERATION)) ??
+      [];
+
+    for (const model of localCandidates) {
+      if (model === 'AUTO') {
+        continue;
+      }
+      this.pushUniqueProviderCandidate(candidates, OLLAMA_PROVIDER, model);
+    }
+
+    this.pushUniqueProviderCandidate(candidates, 'ANTHROPIC', 'claude-sonnet-4');
+    this.pushUniqueProviderCandidate(candidates, 'OPENAI', 'gpt-4o-mini');
+    this.pushUniqueProviderCandidate(candidates, 'GEMINI', 'gemini-2.5-flash');
+
+    return candidates;
+  }
+
+  private pushUniqueProviderCandidate(
+    candidates: Array<{ provider: string; model: string }>,
+    provider: string,
+    model: string,
+  ): void {
+    if (
+      !candidates.some((candidate) => candidate.provider === provider && candidate.model === model)
+    ) {
+      candidates.push({ provider, model });
+    }
   }
 
   private async resolveModel(model: string): Promise<string> {
@@ -1125,17 +1208,6 @@ export class ChatExecutionManager implements OnModuleInit {
     }
     this.logger.debug('detectFileFormat: no specific format matched — defaulting to TXT');
     return 'TXT';
-  }
-
-  private pickContentProvider(_context: AssembledContext): { provider: string; model: string } {
-    // Pick first available cloud provider for content generation
-    const providers = [
-      { provider: 'GEMINI', model: 'gemini-2.5-flash' },
-      { provider: 'ANTHROPIC', model: 'claude-sonnet-4' },
-      { provider: 'OPENAI', model: 'gpt-4o-mini' },
-    ];
-    // For now return first; could check connector health in future
-    return providers[0] ?? { provider: 'GEMINI', model: 'gemini-2.5-flash' };
   }
 
   private async buildImagePromptFromVision(
