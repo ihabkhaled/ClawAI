@@ -538,6 +538,7 @@ export type {
   ApproveCandidateMutationResult,
   RejectCandidateMutationResult,
   BulkApproveMutationResult,
+  MutationCallbacks,
   HardwarePacksQueryResult,
   InstallPackMutationResult,
   DiscoveryToolbarProps,

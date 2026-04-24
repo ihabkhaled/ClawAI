@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { WorkspaceConnectorStatus as WorkspaceConnectorStatusEnum } from '../../../common/enums/workspace-connector-status.enum';
+import { WorkspaceSyncStatus as WorkspaceSyncStatusEnum } from '../../../common/enums/workspace-sync-status.enum';
 import type {
   Prisma,
   WorkspaceConnector,
@@ -10,6 +12,7 @@ import type {
   PaginatedWorkspaceConnectors,
   WorkspaceConnectorWithStats,
 } from '../types/workspace.types';
+import type { ScheduleCandidateFields, StaleCandidateFields } from '../types/sync-cadence.types';
 import type { ListWorkspaceConnectorsQueryDto } from '../dto/list-workspace-connectors-query.dto';
 
 @Injectable()
@@ -127,5 +130,107 @@ export class WorkspaceConnectorRepository {
 
   async getObjectCount(connectorId: string): Promise<number> {
     return this.prisma.workspaceObject.count({ where: { connectorId } });
+  }
+
+  /**
+   * Connectors the scheduler might tick on this pass: enabled, not paused
+   * and not in PENDING_AUTH / DISCONNECTED. Returns minimal projection.
+   */
+  async findScheduleCandidates(): Promise<
+    Array<Pick<WorkspaceConnector, ScheduleCandidateFields>>
+  > {
+    return this.prisma.workspaceConnector.findMany({
+      where: {
+        isEnabled: true,
+        status: {
+          notIn: [
+            WorkspaceConnectorStatusEnum.PAUSED,
+            WorkspaceConnectorStatusEnum.PENDING_AUTH,
+            WorkspaceConnectorStatusEnum.DISCONNECTED,
+          ],
+        },
+      },
+      select: {
+        id: true,
+        userId: true,
+        provider: true,
+        status: true,
+        syncIntervalSeconds: true,
+        lastSyncAt: true,
+        lastTickAt: true,
+      },
+    });
+  }
+
+  async findStaleCandidates(
+    olderThan: Date,
+  ): Promise<Array<Pick<WorkspaceConnector, StaleCandidateFields>>> {
+    return this.prisma.workspaceConnector.findMany({
+      where: {
+        isEnabled: true,
+        status: {
+          in: [WorkspaceConnectorStatusEnum.CONNECTED, WorkspaceConnectorStatusEnum.DEGRADED],
+        },
+        OR: [{ lastSyncAt: { lt: olderThan } }, { lastSyncAt: null }],
+      },
+      select: {
+        id: true,
+        userId: true,
+        provider: true,
+        status: true,
+        lastSyncAt: true,
+        syncIntervalSeconds: true,
+      },
+    });
+  }
+
+  async findInFlightRun(connectorId: string): Promise<WorkspaceSyncRun | null> {
+    return this.prisma.workspaceSyncRun.findFirst({
+      where: { connectorId, status: WorkspaceSyncStatusEnum.RUNNING },
+      orderBy: { startedAt: 'desc' },
+    });
+  }
+
+  async updateCadence(connectorId: string, intervalSeconds: number): Promise<WorkspaceConnector> {
+    return this.prisma.workspaceConnector.update({
+      where: { id: connectorId },
+      data: { syncIntervalSeconds: intervalSeconds },
+    });
+  }
+
+  async markPaused(connectorId: string, reason: string | null): Promise<WorkspaceConnector> {
+    return this.prisma.workspaceConnector.update({
+      where: { id: connectorId },
+      data: {
+        status: WorkspaceConnectorStatusEnum.PAUSED,
+        pausedAt: new Date(),
+        pauseReason: reason ?? undefined,
+      },
+    });
+  }
+
+  async markResumed(connectorId: string): Promise<WorkspaceConnector> {
+    return this.prisma.workspaceConnector.update({
+      where: { id: connectorId },
+      data: {
+        status: WorkspaceConnectorStatusEnum.CONNECTED,
+        pausedAt: null,
+        pauseReason: null,
+      },
+    });
+  }
+
+  async markDegraded(connectorId: string, reason: string): Promise<WorkspaceConnector> {
+    return this.prisma.workspaceConnector.update({
+      where: { id: connectorId },
+      data: { status: WorkspaceConnectorStatusEnum.DEGRADED, statusReason: reason },
+    });
+  }
+
+  async markTick(connectorId: string, tickedAt: Date): Promise<void> {
+    await this.prisma.workspaceConnector.update({
+      where: { id: connectorId },
+      data: { lastTickAt: tickedAt },
+    });
   }
 }

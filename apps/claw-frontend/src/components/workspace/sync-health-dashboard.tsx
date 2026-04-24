@@ -1,0 +1,84 @@
+import type { ReactElement } from 'react';
+
+import type { SyncHealthDashboardViewProps } from '../../types/sync-health-component.types';
+import { compareConnectorsByFreshness } from '../../utilities/sync-band-label.utility';
+
+import { SyncHealthRow } from './sync-health-row';
+
+export function SyncHealthDashboardView({
+  dashboard,
+  t,
+}: SyncHealthDashboardViewProps): ReactElement {
+  const orderedRows = [...dashboard.connectors].sort(compareConnectorsByFreshness);
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-lg border border-border bg-card p-4">
+        <h2 className="mb-3 text-base font-semibold">
+          {t('workspaceSync.dashboard.scheduler_title')}
+        </h2>
+        <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+          <div>
+            <dt className="text-muted-foreground">
+              {t('workspaceSync.dashboard.scheduler_enabled')}
+            </dt>
+            <dd className="font-medium">
+              {dashboard.scheduler.enabled ? t('common.yes') : t('common.no')}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">{t('workspaceSync.dashboard.last_tick')}</dt>
+            <dd className="font-medium">{dashboard.scheduler.lastTickAt ?? t('common.never')}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">{t('workspaceSync.dashboard.active_runs')}</dt>
+            <dd className="font-medium">{dashboard.scheduler.activeRuns}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">{t('workspaceSync.dashboard.dlq_backlog')}</dt>
+            <dd className="font-medium">{dashboard.scheduler.dlqBacklog}</dd>
+          </div>
+        </dl>
+      </section>
+      <section className="rounded-lg border border-border bg-card">
+        <h2 className="border-b border-border p-4 text-base font-semibold">
+          {t('workspaceSync.dashboard.connectors_title')}
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-muted/30">
+              <tr>
+                <th className="px-3 py-2 text-xs font-medium text-muted-foreground">
+                  {t('workspaceSync.dashboard.col.connector')}
+                </th>
+                <th className="px-3 py-2 text-xs font-medium text-muted-foreground">
+                  {t('workspaceSync.dashboard.col.freshness')}
+                </th>
+                <th className="px-3 py-2 text-xs font-medium text-muted-foreground">
+                  {t('workspaceSync.dashboard.col.last_sync')}
+                </th>
+                <th className="px-3 py-2 text-xs font-medium text-muted-foreground">
+                  {t('workspaceSync.dashboard.col.cadence')}
+                </th>
+                <th className="px-3 py-2 text-xs font-medium text-muted-foreground">
+                  {t('workspaceSync.dashboard.col.success_rate')}
+                </th>
+                <th className="px-3 py-2 text-xs font-medium text-muted-foreground">
+                  {t('workspaceSync.dashboard.col.avg_duration')}
+                </th>
+                <th className="px-3 py-2 text-xs font-medium text-muted-foreground">
+                  {t('workspaceSync.dashboard.col.status')}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {orderedRows.map((row) => (
+                <SyncHealthRow key={row.connectorId} row={row} t={t} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  );
+}

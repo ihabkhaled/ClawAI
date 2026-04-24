@@ -6,12 +6,14 @@ import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { ROUTES, SIDEBAR_NAV_ITEMS } from '@/constants';
 import { useSidebarController } from '@/hooks/layout/use-sidebar-controller';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 import { SidebarNavItem } from './sidebar-nav-item';
 
 export function Sidebar() {
   const { isOpen, close, handleOverlayClick } = useSidebarController();
+  const { t } = useTranslation();
 
   return (
     <>
@@ -27,7 +29,7 @@ export function Sidebar() {
           }}
           role="button"
           tabIndex={-1}
-          aria-label="Close sidebar"
+          aria-label={t('accessibility.closeSidebar')}
         />
       ) : null}
 
@@ -43,7 +45,7 @@ export function Sidebar() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <Zap className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span>Claw</span>
+            <span>{t('common.brandName')}</span>
           </Link>
         </div>
         <Separator />
@@ -54,7 +56,9 @@ export function Sidebar() {
         </nav>
         <Separator />
         <div className="px-4 py-3">
-          <p className="text-xs text-muted-foreground">Claw v0.1.0</p>
+          <p className="text-xs text-muted-foreground">
+            {t('common.brandVersion', { version: '0.1.0' })}
+          </p>
         </div>
       </aside>
     </>

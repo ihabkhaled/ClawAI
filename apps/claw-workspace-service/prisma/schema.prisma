@@ -52,6 +52,7 @@ enum WorkspaceConnectorStatus {
   DEGRADED
   DISCONNECTED
   PENDING_AUTH
+  PAUSED
   UNKNOWN
 }
 
@@ -129,6 +130,16 @@ model WorkspaceConnector {
   createdAt           DateTime                  @default(now()) @map("created_at")
   updatedAt           DateTime                  @updatedAt @map("updated_at")
 
+  // Stream 01 Phase 5 — scheduled sync cadence + state
+  syncIntervalSeconds Int?                      @map("sync_interval_seconds")
+  backfillWindowDays  Int?                      @map("backfill_window_days")
+  pausedAt            DateTime?                 @map("paused_at")
+  pauseReason         String?                   @map("pause_reason")
+  rateLimitState      Json?                     @map("rate_limit_state")
+  circuitState        Json?                     @map("circuit_state")
+  lastTickAt          DateTime?                 @map("last_tick_at")
+  lastRunKey          String?                   @map("last_run_key")
+
   objectCount   Int                    @default(0) @map("object_count")
 
   appConfig     WorkspaceProviderAppConfig? @relation(fields: [providerAppConfigId], references: [id], onDelete: SetNull)
@@ -160,12 +171,38 @@ model WorkspaceSyncRun {
   completedAt     DateTime?           @map("completed_at")
   errorMessage    String?             @map("error_message")
 
+  // Stream 01 Phase 5 — run observability
+  durationMs      Int?                @map("duration_ms")
+  retryCount      Int                 @default(0) @map("retry_count")
+  cursorBefore    String?             @map("cursor_before")
+  cursorAfter     String?             @map("cursor_after")
+  errorCode       String?             @map("error_code")
+  isDryRun        Boolean             @default(false) @map("is_dry_run")
+  triggeredBy     String              @default("manual") @map("triggered_by")
+  runKey          String?             @map("run_key")
+
   connector WorkspaceConnector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
 
   @@index([connectorId])
   @@index([status])
   @@index([startedAt])
+  @@index([connectorId, startedAt(sort: Desc)], map: "workspace_sync_runs_connector_started_idx")
+  @@unique([connectorId, runKey], map: "workspace_sync_runs_connector_run_key_key")
   @@map("workspace_sync_runs")
+}
+
+model SyncCadenceDefault {
+  provider             WorkspaceProvider @id
+  intervalSeconds      Int               @map("interval_seconds")
+  backfillWindowDays   Int               @default(30) @map("backfill_window_days")
+  priority             Int               @default(50)
+  supportsDeltaSync    Boolean           @default(false) @map("supports_delta_sync")
+  supportsWebhookSync  Boolean           @default(false) @map("supports_webhook_sync")
+  nativeCursorKind     String?           @map("native_cursor_kind")
+  notes                String?
+  updatedAt            DateTime          @default(now()) @updatedAt @map("updated_at")
+
+  @@map("workspace_sync_cadence_defaults")
 }
 
 model WorkspaceHealthEvent {

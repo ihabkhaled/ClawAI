@@ -61,7 +61,7 @@ export class JiraAdapter implements WorkspaceAdapter {
     }
   }
 
-  async syncObjects(accessToken: string, _deltaToken?: string): Promise<SyncResult> {
+  async syncObjects(accessToken: string, deltaToken?: string): Promise<SyncResult> {
     const resourcesResponse = await fetch(JIRA_API_RESOURCES, {
       headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
     });
@@ -73,45 +73,82 @@ export class JiraAdapter implements WorkspaceAdapter {
     if (site === undefined) {
       return { objectsFound: 0, objectsSynced: 0, objectsFailed: 0, objects: [] };
     }
-    const issueResponse = await fetch(
-      `${site.url}/rest/api/3/search?maxResults=100&jql=ORDER+BY+updated+DESC`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-      },
-    );
+    // /rest/api/3/search was removed; migrate to /rest/api/3/search/jql.
+    // Breaking changes we handle here:
+    //   - `fields` defaults to `id` only on the new endpoint; we must request what we use.
+    //   - `total` is no longer returned; pagination is token-based via `nextPageToken`+`isLast`.
+    //   - `self` is a top-level property on the issue, not inside `fields`.
+    // OAuth 2.0 (3LO) tokens must hit https://api.atlassian.com/ex/jira/{cloudId}/... —
+    // not the direct tenant URL (site.url), which rejects bearer tokens with 401.
+    const apiBaseUrl = `${JIRA_API_BASE}/ex/jira/${site.id}/rest/api/3`;
+    // Phase 5: delta cursor is an ISO timestamp from last successful sync.
+    // Use `updated >= "<ISO>"` for true incremental fetch; fall back to 30d window
+    // on first run (or when cursor is stale and we want a safety net).
+    const jql = this.buildJqlForDelta(deltaToken);
+    const searchParams = new URLSearchParams({
+      jql,
+      maxResults: '100',
+      fields: 'summary,assignee,created,updated',
+    });
+    const searchUrl = `${apiBaseUrl}/search/jql?${searchParams.toString()}`;
+    const issueResponse = await fetch(searchUrl, {
+      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+    });
+    this.logger.debug(`Jira search: ${searchUrl}`);
     if (!issueResponse.ok) {
+      const errorBody = await issueResponse.text().catch(() => '');
+      this.logger.error(`Jira issue fetch failed: HTTP ${issueResponse.status} ${errorBody}`);
       throw new Error(`Jira issue fetch failed: HTTP ${issueResponse.status}`);
     }
     const data = (await issueResponse.json()) as {
-      total: number;
       issues: Array<{
         id: string;
         key: string;
         fields: {
           summary: string;
-          description?: unknown;
-          assignee?: { emailAddress: string };
+          assignee?: { emailAddress?: string } | null;
           created: string;
           updated: string;
-          self: string;
         };
       }>;
+      nextPageToken?: string;
+      isLast?: boolean;
     };
     const objects: SyncedObject[] = data.issues.map((issue) => ({
       externalId: issue.id,
       type: WorkspaceObjectType.TICKET,
       title: `${issue.key}: ${issue.fields.summary}`,
       authorId: issue.fields.assignee?.emailAddress,
-      url: issue.fields.self,
+      // Prefer the browser-facing tenant URL over issue.self (which is the API URL).
+      url: `${site.url}/browse/${issue.key}`,
       externalCreatedAt: new Date(issue.fields.created),
       externalUpdatedAt: new Date(issue.fields.updated),
     }));
+    const latestUpdatedAt = objects
+      .map((obj) => obj.externalUpdatedAt?.toISOString())
+      .filter((value): value is string => value !== undefined)
+      .sort()
+      .at(-1);
     return {
-      objectsFound: data.total,
+      objectsFound: objects.length,
       objectsSynced: objects.length,
       objectsFailed: 0,
+      deltaTokenOut: latestUpdatedAt ?? deltaToken ?? new Date().toISOString(),
       objects,
     };
+  }
+
+  private buildJqlForDelta(deltaToken?: string): string {
+    if (deltaToken === undefined || deltaToken.length === 0) {
+      return 'updated >= -30d ORDER BY updated DESC';
+    }
+    const parsed = new Date(deltaToken);
+    if (Number.isNaN(parsed.getTime())) {
+      return 'updated >= -30d ORDER BY updated DESC';
+    }
+    // Jira JQL accepts `updated >= "YYYY-MM-DD HH:mm"` format.
+    const stamp = parsed.toISOString().replace('T', ' ').slice(0, 16);
+    return `updated >= "${stamp}" ORDER BY updated DESC`;
   }
 
   async exchangeCodeForTokens(

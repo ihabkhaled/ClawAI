@@ -2,13 +2,13 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Port | 4014 |
-| Database | PostgreSQL `claw_workspace` |
-| ORM | Prisma 5.x |
-| Env prefix | `WORKSPACE_` |
-| Public route space | `/api/v1/workspace/*` |
+| Property             | Value                          |
+| -------------------- | ------------------------------ |
+| Port                 | 4014                           |
+| Database             | PostgreSQL `claw_workspace`    |
+| ORM                  | Prisma 5.x                     |
+| Env prefix           | `WORKSPACE_`                   |
+| Public route space   | `/api/v1/workspace/*`          |
 | Internal route space | `/api/v1/internal/workspace/*` |
 
 The workspace service is Claw's integration layer for external tools and knowledge systems. It manages workspace connectors, OAuth flows, connector health and sync runs, searchable synced objects, and approval-style workspace actions. Chat uses it during context assembly to pull relevant external citations.
@@ -76,41 +76,41 @@ Stores graph-style relationships between synced workspace objects.
 
 ### Connectors
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `POST` | `/api/v1/workspace/connectors` | Create connector |
-| `GET` | `/api/v1/workspace/connectors` | List connectors |
-| `GET` | `/api/v1/workspace/connectors/:id` | Get connector |
-| `PATCH` | `/api/v1/workspace/connectors/:id` | Update connector |
-| `DELETE` | `/api/v1/workspace/connectors/:id` | Delete connector |
-| `POST` | `/api/v1/workspace/connectors/:id/health` | Run health check |
-| `POST` | `/api/v1/workspace/connectors/:id/sync` | Trigger sync, optional delta mode |
+| Method   | Path                                      | Purpose                           |
+| -------- | ----------------------------------------- | --------------------------------- |
+| `POST`   | `/api/v1/workspace/connectors`            | Create connector                  |
+| `GET`    | `/api/v1/workspace/connectors`            | List connectors                   |
+| `GET`    | `/api/v1/workspace/connectors/:id`        | Get connector                     |
+| `PATCH`  | `/api/v1/workspace/connectors/:id`        | Update connector                  |
+| `DELETE` | `/api/v1/workspace/connectors/:id`        | Delete connector                  |
+| `POST`   | `/api/v1/workspace/connectors/:id/health` | Run health check                  |
+| `POST`   | `/api/v1/workspace/connectors/:id/sync`   | Trigger sync, optional delta mode |
 
 ### OAuth
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `POST` | `/api/v1/workspace/oauth/init` | Start OAuth/PKCE flow |
-| `GET` | `/api/v1/workspace/oauth/callback` | Complete OAuth callback |
+| Method | Path                               | Purpose                 |
+| ------ | ---------------------------------- | ----------------------- |
+| `POST` | `/api/v1/workspace/oauth/init`     | Start OAuth/PKCE flow   |
+| `GET`  | `/api/v1/workspace/oauth/callback` | Complete OAuth callback |
 
 ### Search and objects
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `POST` | `/api/v1/workspace/search` | Search synced objects for current user |
-| `GET` | `/api/v1/workspace/objects` | List synced objects |
-| `GET` | `/api/v1/workspace/objects/:id` | Get object details |
+| Method | Path                                | Purpose                                   |
+| ------ | ----------------------------------- | ----------------------------------------- |
+| `POST` | `/api/v1/workspace/search`          | Search synced objects for current user    |
+| `GET`  | `/api/v1/workspace/objects`         | List synced objects                       |
+| `GET`  | `/api/v1/workspace/objects/:id`     | Get object details                        |
 | `POST` | `/api/v1/internal/workspace/search` | Internal search for chat context assembly |
 
 ### Actions
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `POST` | `/api/v1/workspace/actions` | Create action draft |
-| `GET` | `/api/v1/workspace/actions` | List actions |
-| `GET` | `/api/v1/workspace/actions/:id` | Get action |
-| `POST` | `/api/v1/workspace/actions/:id/approve` | Approve action |
-| `POST` | `/api/v1/workspace/actions/:id/reject` | Reject action |
+| Method | Path                                    | Purpose             |
+| ------ | --------------------------------------- | ------------------- |
+| `POST` | `/api/v1/workspace/actions`             | Create action draft |
+| `GET`  | `/api/v1/workspace/actions`             | List actions        |
+| `GET`  | `/api/v1/workspace/actions/:id`         | Get action          |
+| `POST` | `/api/v1/workspace/actions/:id/approve` | Approve action      |
+| `POST` | `/api/v1/workspace/actions/:id/reject`  | Reject action       |
 
 ---
 
@@ -193,17 +193,75 @@ That keeps workspace grounding inside service boundaries:
 
 ## Key Environment Variables
 
-| Variable | Purpose |
-| --- | --- |
-| `WORKSPACE_DATABASE_URL` | PostgreSQL connection string |
-| `WORKSPACE_PORT` | HTTP port |
-| `WORKSPACE_SERVICE_URL` | Internal service URL |
-| `PG_WORKSPACE_USER` / `PG_WORKSPACE_PASSWORD` / `PG_WORKSPACE_DB` / `PG_WORKSPACE_PORT` | Database container config |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth |
-| `SLACK_CLIENT_ID` / `SLACK_CLIENT_SECRET` | Slack OAuth |
-| `JIRA_CLIENT_ID` / `JIRA_CLIENT_SECRET` | Jira OAuth |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth |
-| `ENCRYPTION_KEY` | Token encryption |
+| Variable                                                                                | Purpose                                                                |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `WORKSPACE_DATABASE_URL`                                                                | PostgreSQL connection string                                           |
+| `WORKSPACE_PORT`                                                                        | HTTP port                                                              |
+| `WORKSPACE_SERVICE_URL`                                                                 | Internal service URL                                                   |
+| `PG_WORKSPACE_USER` / `PG_WORKSPACE_PASSWORD` / `PG_WORKSPACE_DB` / `PG_WORKSPACE_PORT` | Database container config                                              |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`                                             | GitHub OAuth                                                           |
+| `SLACK_CLIENT_ID` / `SLACK_CLIENT_SECRET`                                               | Slack OAuth                                                            |
+| `JIRA_CLIENT_ID` / `JIRA_CLIENT_SECRET`                                                 | Jira OAuth                                                             |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`                                             | Google OAuth                                                           |
+| `ENCRYPTION_KEY`                                                                        | Token encryption                                                       |
+| `WORKSPACE_SCHEDULER_ENABLED`                                                           | Master kill-switch for the background sync scheduler (default `true`)  |
+| `WORKSPACE_SCHEDULER_TICK_CRON`                                                         | Cron expression for the scheduler tick (default `*/30 * * * * *`)      |
+| `WORKSPACE_SYNC_STALE_DETECTOR_CRON`                                                    | Cron expression for the stale detector (default `*/60 * * * * *`)      |
+| `WORKSPACE_SYNC_STALE_MULTIPLIER`                                                       | Flip to DEGRADED when `lastSyncAt < now - N × cadence` (default `3`)   |
+| `WORKSPACE_SYNC_DEFAULT_INTERVAL_SECONDS`                                               | Fallback cadence when no SyncCadenceDefault row exists (default `600`) |
+| `WORKSPACE_SYNC_MAX_CONCURRENT_GLOBAL`                                                  | Global concurrency cap for sync runs (default `20`)                    |
+| `WORKSPACE_SYNC_MAX_CONCURRENT_PER_PROVIDER`                                            | Per-provider cap (default `5`)                                         |
+| `WORKSPACE_SYNC_MAX_CONCURRENT_PER_CONNECTOR`                                           | Per-connector cap (default `1`)                                        |
+| `WORKSPACE_SYNC_RETRY_MAX_ATTEMPTS`                                                     | Retry attempts before DLQ (default `3`)                                |
+| `WORKSPACE_SYNC_RETRY_BASE_MS`                                                          | Exponential backoff base (default `1000`)                              |
+| `WORKSPACE_SYNC_RETRY_JITTER_MS`                                                        | Jitter cap added on top of backoff (default `500`)                     |
+| `WORKSPACE_SYNC_DLQ_ROUTING_PREFIX`                                                     | DLQ routing-key prefix (default `workspace.sync.dlq`)                  |
+
+---
+
+## Scheduled sync architecture (Stream 01 v1)
+
+The workspace service runs an in-process scheduler built on `@nestjs/schedule`. It eliminates the pre-v1 requirement that operators click "Sync now" on every connector. Flow:
+
+```
+@Cron('*/30 * * * * *') WorkspaceSyncSchedulerManager
+    → acquires Postgres advisory lock (single-replica election)
+    → loads connectors via findScheduleCandidates
+    → computes eligibility per connector (cadence + lastSyncAt)
+    → publishes `workspace.sync.tick.<provider>` to claw.events
+WorkspaceSyncConsumer (subscribe `workspace.sync.tick.*`)
+    → dedups against in-flight WorkspaceSyncRun
+    → invokes WorkspaceSyncManager.syncConnector
+WorkspaceSyncManager
+    → opens sync run with cursor_before / isDryRun / triggeredBy
+    → adapter.syncObjects(token, cursor) with exponential retry + jitter
+    → on success: upsert objects, update deltaToken/lastSyncAt, publish run_completed
+    → on terminal failure: publish run_failed + DLQ + dlq_sent
+```
+
+Per-provider cadence defaults live in table `workspace_sync_cadence_defaults`. Operators can override per connector via `WorkspaceConnector.syncIntervalSeconds`. A separate `@Cron('*/60 * * * * *')` job (`StaleDetectorManager`) flips connectors whose `lastSyncAt` is older than `cadence × WORKSPACE_SYNC_STALE_MULTIPLIER` to `DEGRADED` and emits `workspace.sync.stale_detected`.
+
+### New endpoints
+
+| Endpoint                                   | Method | Purpose                                                                               |
+| ------------------------------------------ | ------ | ------------------------------------------------------------------------------------- |
+| `/api/v1/workspace/sync/dashboard`         | GET    | Admin-only aggregate view: per-connector freshness, success rate, scheduler heartbeat |
+| `/api/v1/workspace/connectors/:id/cadence` | PATCH  | Override `syncIntervalSeconds` for one connector                                      |
+| `/api/v1/workspace/connectors/:id/pause`   | POST   | Flip connector to `PAUSED`; scheduler skips on next tick                              |
+| `/api/v1/workspace/connectors/:id/resume`  | POST   | Flip `PAUSED` → `CONNECTED`                                                           |
+| `/api/v1/workspace/connectors/:id/sync`    | POST   | Manual sync; supports `?delta`, `?priority`, `?dryRun`                                |
+| `/internal/workspace/sync/health`          | GET    | Internal probe for claw-health-service (service-role JWT)                             |
+
+### New events
+
+`workspace.sync.run_started`, `workspace.sync.run_completed`, `workspace.sync.run_failed`, `workspace.sync.stale_detected`, `workspace.sync.manual_triggered`, `workspace.sync.paused`, `workspace.sync.resumed`, `workspace.sync.rate_limited`, `workspace.sync.dlq_sent`. All consumed by `claw-audit-service` via `WorkspaceSyncAuditConsumer`.
+
+### Delta cursor support matrix (v1)
+
+- Gmail — true delta via `historyId`; falls back to full poll on 404/410.
+- Jira — true delta via `updated >= "<ISO>"` JQL; falls back to `updated >= -30d` window.
+- GitHub — hybrid delta via `since=` on repos + issues; PRs client-filter by `updated_at`.
+- Other 9 adapters — full poll on cadence (delta upgrade queued for v1.5).
 
 ---
 

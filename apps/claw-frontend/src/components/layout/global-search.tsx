@@ -5,6 +5,7 @@ import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useGlobalSearchController } from '@/hooks/layout/use-global-search-controller';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { GlobalSearchProps } from '@/types';
 
@@ -24,6 +25,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
     handleKeyDown,
     handleOpenChange,
   } = useGlobalSearchController();
+  const { t } = useTranslation();
 
   return (
     <div className={cn('relative', className)}>
@@ -36,7 +38,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Search all threads..."
+              placeholder={t('chat.globalSearchPlaceholder')}
               className="h-9 w-64 ps-8 text-sm"
             />
           </div>
@@ -45,7 +47,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
             size="icon"
             className="h-9 w-9"
             onClick={() => handleOpenChange(false)}
-            aria-label="Close search"
+            aria-label={t('accessibility.closeSearch')}
           >
             <X className="h-4 w-4" />
           </Button>
@@ -56,7 +58,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
           size="icon"
           className="h-9 w-9"
           onClick={handleToggle}
-          aria-label="Search threads"
+          aria-label={t('accessibility.openSearch')}
         >
           <Search className="h-4 w-4" />
         </Button>

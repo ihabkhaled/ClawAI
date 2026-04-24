@@ -4,6 +4,7 @@ import { Menu } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { useTranslation } from '@/lib/i18n';
 import { useSidebarStore } from '@/stores/sidebar.store';
 
 import { GlobalSearch } from './global-search';
@@ -13,6 +14,7 @@ import { UserMenu } from './user-menu';
 
 export function Topbar() {
   const { toggle } = useSidebarStore();
+  const { t } = useTranslation();
 
   return (
     <header className="flex h-16 items-center justify-between border-b bg-card px-4 sm:px-6">
@@ -22,7 +24,7 @@ export function Topbar() {
           size="icon"
           className="min-h-11 min-w-11 md:hidden"
           onClick={toggle}
-          aria-label="Toggle sidebar"
+          aria-label={t('accessibility.toggleSidebar')}
         >
           <Menu className="h-5 w-5" />
         </Button>

@@ -7,9 +7,12 @@ import type {
   ApproveCandidateRequest,
   BulkApproveMutationResult,
   BulkApproveRequest,
+  BulkApproveResponse,
   CandidateListFilters,
   CandidateListResponse,
   CandidatesQueryResult,
+  DiscoveryCandidate,
+  MutationCallbacks,
   RejectCandidateMutationResult,
   RejectCandidateRequest,
 } from '@/types';
@@ -43,7 +46,15 @@ export function useApproveCandidate(): ApproveCandidateMutationResult {
     },
   });
   return {
-    mutate: mutation.mutate,
+    mutate: (
+      input: { id: string; data: ApproveCandidateRequest },
+      options?: MutationCallbacks<DiscoveryCandidate>,
+    ) => {
+      mutation.mutate(input, {
+        onSuccess: options?.onSuccess,
+        onError: options?.onError,
+      });
+    },
     isPending: mutation.isPending,
     error: mutation.error as Error | null,
   };
@@ -75,7 +86,12 @@ export function useBulkApproveCandidates(): BulkApproveMutationResult {
     },
   });
   return {
-    mutate: mutation.mutate,
+    mutate: (data: BulkApproveRequest, options?: MutationCallbacks<BulkApproveResponse>) => {
+      mutation.mutate(data, {
+        onSuccess: options?.onSuccess,
+        onError: options?.onError,
+      });
+    },
     isPending: mutation.isPending,
     error: mutation.error as Error | null,
     lastResult: mutation.data,

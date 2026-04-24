@@ -44,6 +44,12 @@ const mockRepo = {
   updateSyncRun: jest.fn(),
   createHealthEvent: jest.fn(),
   findLatestHealthEvent: jest.fn(),
+  findInFlightRun: jest.fn().mockResolvedValue(null),
+  updateCadence: jest.fn(),
+  markPaused: jest.fn(),
+  markResumed: jest.fn(),
+  markDegraded: jest.fn(),
+  markTick: jest.fn(),
 } as unknown as WorkspaceConnectorRepository;
 
 const mockAdapter = {
@@ -174,19 +180,20 @@ describe('WorkspaceConnectorService', () => {
         ...mockConnectorWithStats,
         status: WorkspaceConnectorStatus.PENDING_AUTH,
       });
-      await expect(service.triggerSync('c1', 'u1', false)).rejects.toThrow(
+      await expect(service.triggerSync('c1', 'u1', { delta: false })).rejects.toThrow(
         expect.objectContaining({ code: 'NOT_AUTHORIZED' }),
       );
     });
 
     it('should call syncManager when status allows', async () => {
       (mockRepo.findByIdWithStats as jest.Mock).mockResolvedValue(mockConnectorWithStats);
+      (mockRepo.findInFlightRun as jest.Mock).mockResolvedValue(null);
       (mockSyncManager.syncConnector as jest.Mock).mockResolvedValue({
         objectsFound: 5,
         objectsSynced: 5,
         objectsFailed: 0,
       });
-      await service.triggerSync('c1', 'u1', false);
+      await service.triggerSync('c1', 'u1', { delta: false });
       expect(mockSyncManager.syncConnector).toHaveBeenCalled();
     });
   });

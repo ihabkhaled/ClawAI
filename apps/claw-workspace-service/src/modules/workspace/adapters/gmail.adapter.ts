@@ -68,7 +68,14 @@ export class GmailAdapter implements WorkspaceAdapter {
     }
   }
 
-  async syncObjects(accessToken: string, _deltaToken?: string): Promise<SyncResult> {
+  async syncObjects(accessToken: string, deltaToken?: string): Promise<SyncResult> {
+    if (deltaToken !== undefined && deltaToken.length > 0) {
+      const deltaResult = await this.syncObjectsWithHistory(accessToken, deltaToken);
+      if (deltaResult !== null) {
+        return deltaResult;
+      }
+      this.logger.warn('Gmail historyId stale or invalid — falling back to full list');
+    }
     const list = await this.listRecentMessages(accessToken);
     const objects: SyncedObject[] = [];
     for (const ref of list.slice(0, GMAIL_SYNC_MESSAGE_LIMIT)) {
@@ -79,13 +86,91 @@ export class GmailAdapter implements WorkspaceAdapter {
         this.logger.warn(`Gmail message fetch failed id=${ref.id}: ${String(error)}`);
       }
     }
+    const newHistoryId = await this.fetchCurrentHistoryId(accessToken);
     return {
       objectsFound: list.length,
       objectsSynced: objects.length,
       objectsFailed: list.length - objects.length,
-      deltaTokenOut: new Date().toISOString(),
+      deltaTokenOut: newHistoryId ?? new Date().toISOString(),
       objects,
     };
+  }
+
+  /**
+   * Delta-mode sync using Gmail `users.history.list?startHistoryId=<last>`.
+   * Returns null to signal "cursor invalid, caller must fall back to full poll".
+   */
+  private async syncObjectsWithHistory(
+    accessToken: string,
+    startHistoryId: string,
+  ): Promise<SyncResult | null> {
+    try {
+      const response = await fetch(
+        `${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/history?startHistoryId=${encodeURIComponent(startHistoryId)}&historyTypes=messageAdded&historyTypes=labelAdded`,
+        { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
+      );
+      if (response.status === 404 || response.status === 410) {
+        return null;
+      }
+      if (!response.ok) {
+        throw new Error(`Gmail history failed: HTTP ${response.status}`);
+      }
+      const data = (await response.json()) as {
+        history?: Array<{
+          id: string;
+          messagesAdded?: Array<{ message: { id: string; threadId: string } }>;
+          messages?: Array<{ id: string; threadId: string }>;
+        }>;
+        historyId?: string;
+      };
+
+      const messageIds = new Set<string>();
+      for (const entry of data.history ?? []) {
+        for (const added of entry.messagesAdded ?? []) {
+          messageIds.add(added.message.id);
+        }
+        for (const msg of entry.messages ?? []) {
+          messageIds.add(msg.id);
+        }
+      }
+
+      const ids = [...messageIds].slice(0, GMAIL_SYNC_MESSAGE_LIMIT);
+      const objects: SyncedObject[] = [];
+      for (const id of ids) {
+        try {
+          const full = await this.fetchMessage(accessToken, id);
+          objects.push(this.mapMessageToSynced(full));
+        } catch (error) {
+          this.logger.warn(`Gmail history fetch failed id=${id}: ${String(error)}`);
+        }
+      }
+
+      return {
+        objectsFound: ids.length,
+        objectsSynced: objects.length,
+        objectsFailed: ids.length - objects.length,
+        deltaTokenOut: data.historyId ?? startHistoryId,
+        objects,
+      };
+    } catch (error) {
+      this.logger.warn(`Gmail history delta failed: ${String(error)}`);
+      return null;
+    }
+  }
+
+  private async fetchCurrentHistoryId(accessToken: string): Promise<string | undefined> {
+    try {
+      const response = await fetch(`${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/profile`, {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+      });
+      if (!response.ok) {
+        return undefined;
+      }
+      const data = (await response.json()) as { historyId?: string };
+      return data.historyId;
+    } catch {
+      return undefined;
+    }
   }
 
   async exchangeCodeForTokens(
@@ -181,7 +266,7 @@ export class GmailAdapter implements WorkspaceAdapter {
     return {
       supportsOAuth: true,
       supportsPat: false,
-      supportsDeltaSync: false,
+      supportsDeltaSync: true,
       supportsWebhooks: false,
       objectTypes: ['EMAIL'],
     };
@@ -243,7 +328,9 @@ export class GmailAdapter implements WorkspaceAdapter {
     );
     if (!response.ok) {
       const body = await response.text().catch(() => '');
-      throw new Error(`Gmail list failed: HTTP ${response.status}${body ? ` — ${body.slice(0, 200)}` : ''}`);
+      throw new Error(
+        `Gmail list failed: HTTP ${response.status}${body ? ` — ${body.slice(0, 200)}` : ''}`,
+      );
     }
     const data = (await response.json()) as GmailMessageListResponse;
     return data.messages ?? [];

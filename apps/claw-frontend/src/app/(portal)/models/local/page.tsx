@@ -52,7 +52,7 @@ export default function LocalModelsPage(): React.ReactElement {
   const columns: DataTableColumn<LocalModel>[] = [
     {
       key: 'name',
-      header: 'Model',
+      header: t('models.colModel'),
       render: (row) => (
         <div className="flex flex-col">
           <span className="font-medium">{row.name}</span>
@@ -62,31 +62,35 @@ export default function LocalModelsPage(): React.ReactElement {
     },
     {
       key: 'runtime',
-      header: 'Runtime',
+      header: t('models.colRuntime'),
       render: (row) => (
         <Badge variant="outline">{RUNTIME_TYPE_LABELS[row.runtime] ?? row.runtime}</Badge>
       ),
     },
     {
       key: 'size',
-      header: 'Size',
+      header: t('models.colSize'),
       render: (row) => <span className="tabular-nums">{formatBytes(row.sizeBytes)}</span>,
     },
     {
       key: 'family',
-      header: 'Family',
-      render: (row) => <span className="text-muted-foreground">{row.family ?? 'N/A'}</span>,
+      header: t('models.colFamily'),
+      render: (row) => (
+        <span className="text-muted-foreground">{row.family ?? t('common.notAvailable')}</span>
+      ),
     },
     {
       key: 'parameters',
-      header: 'Parameters',
+      header: t('models.colParameters'),
       render: (row) => (
-        <span className="tabular-nums text-muted-foreground">{row.parameters ?? 'N/A'}</span>
+        <span className="tabular-nums text-muted-foreground">
+          {row.parameters ?? t('common.notAvailable')}
+        </span>
       ),
     },
     {
       key: 'roles',
-      header: 'Roles',
+      header: t('models.colRoles'),
       render: (row) => (
         <div className="flex flex-wrap gap-1">
           {row.roles
@@ -97,7 +101,7 @@ export default function LocalModelsPage(): React.ReactElement {
               </Badge>
             ))}
           {row.roles.filter((r) => r.isActive).length === 0 ? (
-            <span className="text-xs text-muted-foreground">None</span>
+            <span className="text-xs text-muted-foreground">{t('models.noneRole')}</span>
           ) : null}
         </div>
       ),
@@ -109,7 +113,7 @@ export default function LocalModelsPage(): React.ReactElement {
       render: (row) => (
         <Select onValueChange={(role) => handleAssignRole(row.id, role)} disabled={isAssignPending}>
           <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Assign role" />
+            <SelectValue placeholder={t('models.assignRole')} />
           </SelectTrigger>
           <SelectContent>
             {MODEL_ROLES.map((role) => (
@@ -126,10 +130,7 @@ export default function LocalModelsPage(): React.ReactElement {
   if (isError) {
     return (
       <div className="flex h-full flex-col">
-        <PageHeader
-          title={t('models.localTitle')}
-          description={t('models.localDescription')}
-        />
+        <PageHeader title={t('models.localTitle')} description={t('models.localDescription')} />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-sm text-destructive">
             {error?.message ?? t('models.localLoadFailed')}
@@ -141,10 +142,7 @@ export default function LocalModelsPage(): React.ReactElement {
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader
-        title={t('models.localTitle')}
-        description={t('models.localDescription')}
-      />
+      <PageHeader title={t('models.localTitle')} description={t('models.localDescription')} />
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
@@ -159,7 +157,9 @@ export default function LocalModelsPage(): React.ReactElement {
             <div className="flex items-center gap-3">
               <div className={cn('h-3 w-3 rounded-full', getHealthStatusColor(healthStatus))} />
               <div className="flex flex-col">
-                <span className="text-sm font-medium capitalize">{healthStatus ?? 'Unknown'}</span>
+                <span className="text-sm font-medium capitalize">
+                  {healthStatus ?? t('common.unknown')}
+                </span>
                 {healthRuntime ? (
                   <span className="text-xs text-muted-foreground">
                     {RUNTIME_TYPE_LABELS[healthRuntime] ?? healthRuntime}
@@ -192,13 +192,13 @@ export default function LocalModelsPage(): React.ReactElement {
                     setPullModelName(e.target.value);
                     clearPullFieldErrors();
                   }}
-                  placeholder="llama3:8b"
+                  placeholder={t('models.modelNamePlaceholder')}
                 />
                 {pullFieldErrors.modelName && (
                   <p className="mt-1 text-sm text-destructive">{pullFieldErrors.modelName[0]}</p>
                 )}
               </div>
-              <div className="w-full sm:w-[160px] space-y-2">
+              <div className="w-full space-y-2 sm:w-[160px]">
                 <label htmlFor="pull-model-runtime" className="text-sm font-medium">
                   {t('models.runtime')}
                 </label>
@@ -210,12 +210,12 @@ export default function LocalModelsPage(): React.ReactElement {
                   }}
                 >
                   <SelectTrigger id="pull-model-runtime">
-                    <SelectValue placeholder="Select" />
+                    <SelectValue placeholder={t('common.select')} />
                   </SelectTrigger>
                   <SelectContent>
                     {isRuntimesLoading ? (
                       <SelectItem value="__loading__" disabled>
-                        Loading...
+                        {t('common.loading')}
                       </SelectItem>
                     ) : (
                       runtimes.map((rt) => (

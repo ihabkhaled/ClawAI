@@ -31,7 +31,13 @@ export type TranslationDictionary = {
     unknown: string;
     operational: string;
     notAvailable: string;
+    yes: string;
+    no: string;
+    never: string;
     accessDenied: string;
+    brandName: string;
+    brandVersion: string;
+    select: string;
   };
   auth: {
     login: string;
@@ -58,6 +64,12 @@ export type TranslationDictionary = {
     consensusMode: string;
     escalationChain: string;
     repairLab: string;
+    decomposeLab: string;
+    bestOfNLab: string;
+    verifierLab: string;
+    pipelineLab: string;
+    costEnsemble: string;
+    rolePackLab: string;
     connectors: string;
     models: string;
     modelCatalog: string;
@@ -66,12 +78,6 @@ export type TranslationDictionary = {
     replayLab: string;
     recoveryLab: string;
     adaptiveInsights: string;
-    decomposeLab: string;
-    bestOfNLab: string;
-    verifierLab: string;
-    pipelineLab: string;
-    costEnsemble: string;
-    rolePackLab: string;
     memory: string;
     context: string;
     files: string;
@@ -82,6 +88,7 @@ export type TranslationDictionary = {
     settings: string;
     workspace: string;
     workspaceActions: string;
+    workspaceSyncHealth: string;
     agent: string;
     agentTerminal: string;
     agentRepos: string;
@@ -215,6 +222,11 @@ export type TranslationDictionary = {
     reRouteReasonRepetition: string;
     reRouteReasonEcho: string;
     reRouteReasonLowWords: string;
+    backToThreads: string;
+    loadingThread: string;
+    selectOrStartTitle: string;
+    selectOrStartDesc: string;
+    untitled: string;
   };
   connectors: {
     title: string;
@@ -268,6 +280,9 @@ export type TranslationDictionary = {
     healthHistory: string;
     healthHistoryDesc: string;
     models: string;
+    oneModel: string;
+    manyModels: string;
+    updatedAt: string;
   };
   memory: {
     title: string;
@@ -341,6 +356,14 @@ export type TranslationDictionary = {
     noItems: string;
     noItemsDesc: string;
     loadingContextPacks: string;
+    addItemDesc: string;
+    adding: string;
+    content: string;
+    contentPlaceholder: string;
+    fileId: string;
+    fileIdPlaceholder: string;
+    itemType: string;
+    selectType: string;
   };
   routing: {
     title: string;
@@ -396,6 +419,10 @@ export type TranslationDictionary = {
     modalityStructuredOutput: string;
     modalityOcr: string;
     modalityReasoning: string;
+    namePlaceholder: string;
+    selectModePlaceholder: string;
+    editPolicyDesc: string;
+    createPolicyDesc: string;
   };
   models: {
     title: string;
@@ -427,6 +454,14 @@ export type TranslationDictionary = {
     loadingLocalModels: string;
     noLocalModels: string;
     noLocalModelsDesc: string;
+    colModel: string;
+    colRuntime: string;
+    colSize: string;
+    colFamily: string;
+    colParameters: string;
+    colRoles: string;
+    noneRole: string;
+    modelNamePlaceholder: string;
   };
   observability: {
     title: string;
@@ -438,6 +473,28 @@ export type TranslationDictionary = {
     clientLogs: string;
     serverLogs: string;
     auditTrail: string;
+    loadingData: string;
+    failedToLoad: string;
+    failedToLoadDesc: string;
+    noDataYet: string;
+    noDataDesc: string;
+    fullDescription: string;
+    totalRequestsLabel: string;
+    acrossProviders: string;
+    estimatedCost: string;
+    estimatedCostLabel: string;
+    recentFailures: string;
+    highCriticalSeverity: string;
+    providerUsage: string;
+    modelUsage: string;
+    latencyBreakdown: string;
+    costSummary: string;
+    avg: string;
+    p50Median: string;
+    p95: string;
+    totalTokens: string;
+    requests: string;
+    tokens: string;
   };
   audits: {
     title: string;
@@ -483,6 +540,15 @@ export type TranslationDictionary = {
     platformHealth: string;
     systemStatusOverview: string;
     userManagement: string;
+    colUsername: string;
+    colEmail: string;
+    colRole: string;
+    colStatus: string;
+    colJoined: string;
+    colActions: string;
+    roleAdmin: string;
+    roleOperator: string;
+    roleViewer: string;
   };
   settings: {
     title: string;
@@ -535,6 +601,12 @@ export type TranslationDictionary = {
     startNewChat: string;
     addConnector: string;
     configureRouting: string;
+    serviceStatus: string;
+    checkingHealth: string;
+    healthUnreachable: string;
+    servicesOperational: string;
+    responseTimeMs: string;
+    unreachable: string;
   };
   catalog: {
     title: string;
@@ -1050,6 +1122,57 @@ export type TranslationDictionary = {
     failed: string;
     duration: string;
   };
+  workspaceSync: {
+    dashboard: {
+      title: string;
+      description: string;
+      error_title: string;
+      empty_title: string;
+      empty_description: string;
+      scheduler_title: string;
+      scheduler_enabled: string;
+      last_tick: string;
+      active_runs: string;
+      dlq_backlog: string;
+      connectors_title: string;
+      col: {
+        connector: string;
+        freshness: string;
+        last_sync: string;
+        cadence: string;
+        success_rate: string;
+        avg_duration: string;
+        status: string;
+      };
+    };
+    band: {
+      fresh: string;
+      slow: string;
+      stale: string;
+    };
+    cadence: {
+      label: string;
+      '1m': string;
+      '5m': string;
+      '10m': string;
+      '30m': string;
+      '1h': string;
+      save: string;
+      saving: string;
+      saved: string;
+    };
+    pause: {
+      pause: string;
+      resume: string;
+      paused_label: string;
+      reason_placeholder: string;
+    };
+    chip: {
+      synced_ago: string;
+      stale: string;
+      paused: string;
+    };
+  };
   research: {
     toggle: {
       placeholder: string;
@@ -1170,9 +1293,9 @@ export type TranslationDictionary = {
       providerPlaceholder: string;
       name: string;
       namePlaceholder: string;
+      authMode: string;
       descriptionLabel: string;
       descriptionPlaceholder: string;
-      authMode: string;
       test: string;
       connect: string;
       testResult: string;
@@ -1245,6 +1368,7 @@ export type TranslationDictionary = {
       accountMismatchTitle: string;
       accountMismatchBody: string;
     };
+    rejectedByUser: string;
   };
   discovery: {
     title: string;
@@ -1304,6 +1428,85 @@ export type TranslationDictionary = {
     loginFailed: string;
     logoutFailed: string;
     sessionExpired: string;
+  };
+  accessibility: {
+    closeSidebar: string;
+    openSidebar: string;
+    toggleSidebar: string;
+    userMenu: string;
+    closeDialog: string;
+    openMenu: string;
+    search: string;
+    openSearch: string;
+    closeSearch: string;
+    navigation: string;
+    notifications: string;
+    languageSelector: string;
+    themeToggle: string;
+    resizeInput: string;
+  };
+  actions: {
+    test: string;
+    testing: string;
+    sync: string;
+    syncing: string;
+    archive: string;
+    unarchive: string;
+    pin: string;
+    unpin: string;
+    duplicate: string;
+    copy: string;
+    copied: string;
+    copyToClipboard: string;
+    view: string;
+    viewAll: string;
+    viewDetails: string;
+    download: string;
+    upload: string;
+    refresh: string;
+    reset: string;
+    apply: string;
+    approve: string;
+    approving: string;
+    reject: string;
+    rejecting: string;
+    reload: string;
+    reconnect: string;
+    expand: string;
+    collapse: string;
+    enable: string;
+    disable: string;
+    remove: string;
+    add: string;
+    select: string;
+    selectAll: string;
+    deselectAll: string;
+    clear: string;
+    submit: string;
+    more: string;
+    less: string;
+    showMore: string;
+    showLess: string;
+  };
+  logs: {
+    allLevels: string;
+    allActions: string;
+    allSeverities: string;
+    allMethods: string;
+    methodPlaceholder: string;
+    componentPlaceholder: string;
+    actionPlaceholder: string;
+    routePlaceholder: string;
+    routeRegexPlaceholder: string;
+    userIdPlaceholder: string;
+    messageContainsPlaceholder: string;
+    servicePlaceholder: string;
+    controllerPlaceholder: string;
+    entityTypePlaceholder: string;
+    startDate: string;
+    endDate: string;
+    fullTextSearch: string;
+    searchAllFields: string;
   };
 };
 

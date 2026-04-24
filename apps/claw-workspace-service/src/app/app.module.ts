@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
@@ -63,6 +64,7 @@ import { ActionsModule } from '../modules/actions/actions.module';
         limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
       },
     ]),
+    ScheduleModule.forRoot(),
     PrismaModule,
     RedisModule,
     HealthModule,

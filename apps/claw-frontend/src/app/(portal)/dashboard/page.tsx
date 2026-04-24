@@ -14,14 +14,8 @@ import { cn } from '@/lib/utils';
 import { getHealthStatusColor } from '@/utilities';
 
 export default function DashboardPage() {
-  const {
-    statCards,
-    quickActions,
-    isLoading,
-    healthStatus,
-    healthServices,
-    healthSummary,
-  } = useDashboardPage();
+  const { statCards, quickActions, isLoading, healthStatus, healthServices, healthSummary } =
+    useDashboardPage();
   const { t } = useTranslation();
 
   return (
@@ -44,16 +38,14 @@ export default function DashboardPage() {
               <stat.icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {isLoading ? '-' : stat.value}
-              </div>
+              <div className="text-2xl font-bold">{isLoading ? '-' : stat.value}</div>
             </CardContent>
           </Card>
         ))}
       </div>
 
       <div className="mt-8">
-        <h2 className="mb-4 text-xl font-semibold tracking-tight">Quick Actions</h2>
+        <h2 className="mb-4 text-xl font-semibold tracking-tight">{t('dashboard.quickActions')}</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
           {quickActions.map((action) => (
             <Card key={action.label} className="transition-colors hover:border-primary/50">
@@ -75,15 +67,13 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-8">
-        <h2 className="mb-4 text-xl font-semibold tracking-tight">System Health</h2>
+        <h2 className="mb-4 text-xl font-semibold tracking-tight">{t('dashboard.systemHealth')}</h2>
         {healthStatus === null ? (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Service Status</CardTitle>
+              <CardTitle className="text-base">{t('dashboard.serviceStatus')}</CardTitle>
               <CardDescription>
-                {isLoading
-                  ? 'Checking service health...'
-                  : 'Could not reach the health aggregator. Please verify the health service is running.'}
+                {isLoading ? t('dashboard.checkingHealth') : t('dashboard.healthUnreachable')}
               </CardDescription>
             </CardHeader>
           </Card>
@@ -92,20 +82,26 @@ export default function DashboardPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-base">Service Status</CardTitle>
+                  <CardTitle className="text-base">{t('dashboard.serviceStatus')}</CardTitle>
                   <CardDescription>
                     {healthSummary
-                      ? `${String(healthSummary.up)} of ${String(healthSummary.total)} services operational`
-                      : 'Loading...'}
+                      ? t('dashboard.servicesOperational', {
+                          up: String(healthSummary.up),
+                          total: String(healthSummary.total),
+                        })
+                      : t('common.loading')}
                   </CardDescription>
                 </div>
                 <Badge
                   variant="outline"
                   className={cn(
                     'capitalize',
-                    healthStatus === HealthStatus.HEALTHY && 'border-emerald-500 text-emerald-600 dark:text-emerald-400',
-                    healthStatus === HealthStatus.DEGRADED && 'border-amber-500 text-amber-600 dark:text-amber-400',
-                    healthStatus === HealthStatus.UNHEALTHY && 'border-destructive text-destructive',
+                    healthStatus === HealthStatus.HEALTHY &&
+                      'border-emerald-500 text-emerald-600 dark:text-emerald-400',
+                    healthStatus === HealthStatus.DEGRADED &&
+                      'border-amber-500 text-amber-600 dark:text-amber-400',
+                    healthStatus === HealthStatus.UNHEALTHY &&
+                      'border-destructive text-destructive',
                   )}
                 >
                   {healthStatus}
@@ -120,13 +116,19 @@ export default function DashboardPage() {
                       <span
                         className={cn(
                           'inline-block h-2 w-2 rounded-full',
-                          getHealthStatusColor(svc.status === ServiceStatus.UP ? HealthStatus.HEALTHY : HealthStatus.UNHEALTHY),
+                          getHealthStatusColor(
+                            svc.status === ServiceStatus.UP
+                              ? HealthStatus.HEALTHY
+                              : HealthStatus.UNHEALTHY,
+                          ),
                         )}
                       />
                       <span>{svc.name}</span>
                     </div>
                     <span className="text-muted-foreground">
-                      {svc.responseTimeMs !== null ? `${String(svc.responseTimeMs)}ms` : 'unreachable'}
+                      {svc.responseTimeMs !== null
+                        ? t('dashboard.responseTimeMs', { ms: String(svc.responseTimeMs) })
+                        : t('dashboard.unreachable')}
                     </span>
                   </div>
                 ))}

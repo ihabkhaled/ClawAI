@@ -81,6 +81,36 @@ export interface MessageCompletedPayload extends BaseEventPayload {
   inputTokens?: number;
   outputTokens?: number;
   latencyMs: number;
+  estimatedCost?: number;
+  executionSuccess?: boolean;
+  finalStatus?: string;
+  errorMessage?: string;
+  usedFallback?: boolean;
+  routingMode?: RoutingMode;
+  routerModel?: string | null;
+  detectedCategory?: string;
+  reRouted?: boolean;
+  originalProvider?: string;
+  originalModel?: string;
+  judgeDecision?: string;
+  judgeConfidence?: number;
+  criticScore?: number;
+  executionPath?: string;
+  targetLatencyMs?: number;
+}
+
+export interface MessageFeedbackSetPayload extends BaseEventPayload {
+  messageId: string;
+  threadId: string;
+  feedback: 'positive' | 'negative' | null;
+  routingMessageId?: string;
+  provider?: string;
+  model?: string;
+  routingMode?: RoutingMode;
+  routerModel?: string | null;
+  judgeDecision?: string;
+  judgeConfidence?: number;
+  detectedCategory?: string;
 }
 
 // ---- Connector Events ----
@@ -250,6 +280,117 @@ export interface WorkspaceObjectSyncedPayload extends BaseEventPayload {
   deltaUsed: boolean;
 }
 
+// ---- Workspace Sync Lifecycle Events (Stream 01 Phase 5) ----
+
+export type WorkspaceSyncTriggeredBy = 'cron' | 'manual' | 'priority' | 'dlq_retry';
+export type WorkspaceSyncErrorClass =
+  | 'RateLimitedException'
+  | 'OAuthExpiredException'
+  | 'ProviderUnavailableException'
+  | 'AdapterException'
+  | 'UnknownException';
+export type WorkspaceSyncPauseReason =
+  | 'user_requested'
+  | 'quiet_hours'
+  | 'budget_exceeded'
+  | 'circuit_open'
+  | 'deploy_freeze';
+
+export interface WorkspaceSyncRunStartedPayload extends BaseEventPayload {
+  connectorId: string;
+  provider: WorkspaceProvider;
+  userId: string;
+  runId: string;
+  isDelta: boolean;
+  isDryRun: boolean;
+  cursorIn: string | null;
+  triggeredBy: WorkspaceSyncTriggeredBy;
+  actorUserId: string | null;
+}
+
+export interface WorkspaceSyncRunCompletedPayload extends BaseEventPayload {
+  connectorId: string;
+  provider: WorkspaceProvider;
+  userId: string;
+  runId: string;
+  startedAt: string;
+  completedAt: string;
+  durationMs: number;
+  cursorIn: string | null;
+  cursorOut: string | null;
+  objectsFound: number;
+  objectsSynced: number;
+  objectsFailed: number;
+  retryCount: number;
+  triggeredBy: WorkspaceSyncTriggeredBy;
+}
+
+export interface WorkspaceSyncRunFailedPayload extends BaseEventPayload {
+  connectorId: string;
+  provider: WorkspaceProvider;
+  userId: string;
+  runId: string;
+  startedAt: string;
+  failedAt: string;
+  durationMs: number;
+  retryCount: number;
+  terminal: boolean;
+  errorClass: WorkspaceSyncErrorClass;
+  errorMessage: string;
+  dlqPublished: boolean;
+  triggeredBy: WorkspaceSyncTriggeredBy;
+}
+
+export interface WorkspaceSyncStaleDetectedPayload extends BaseEventPayload {
+  connectorId: string;
+  provider: WorkspaceProvider;
+  userId: string;
+  lastSyncAt: string | null;
+  cadenceSeconds: number;
+  overdueSeconds: number;
+  staleMultiplier: number;
+}
+
+export interface WorkspaceSyncManualTriggeredPayload extends BaseEventPayload {
+  connectorId: string;
+  provider: WorkspaceProvider;
+  actorUserId: string;
+  priority: boolean;
+  dryRun: boolean;
+  reusedInFlight: boolean;
+  reusedRunId: string | null;
+}
+
+export interface WorkspaceSyncPausedPayload extends BaseEventPayload {
+  connectorId: string;
+  provider: WorkspaceProvider;
+  actorUserId: string;
+  reason: WorkspaceSyncPauseReason;
+}
+
+export interface WorkspaceSyncResumedPayload extends BaseEventPayload {
+  connectorId: string;
+  provider: WorkspaceProvider;
+  actorUserId: string;
+}
+
+export interface WorkspaceSyncRateLimitedPayload extends BaseEventPayload {
+  connectorId: string;
+  provider: WorkspaceProvider;
+  retryAfterMs: number;
+  strikes: number;
+  endpointHint: string | null;
+}
+
+export interface WorkspaceSyncDlqSentPayload extends BaseEventPayload {
+  connectorId: string;
+  provider: WorkspaceProvider;
+  runId: string;
+  queue: string;
+  errorClass: WorkspaceSyncErrorClass;
+  attemptsConsumed: number;
+}
+
 // ---- Workspace Action Events ----
 
 export interface WorkspaceActionDraftedPayload extends BaseEventPayload {
@@ -362,6 +503,7 @@ export type EventPayload =
   | MessageCreatedPayload
   | MessageRoutedPayload
   | MessageCompletedPayload
+  | MessageFeedbackSetPayload
   | ConnectorCreatedPayload
   | ConnectorUpdatedPayload
   | ConnectorDeletedPayload
@@ -380,6 +522,15 @@ export type EventPayload =
   | WorkspaceConnectorSyncedPayload
   | WorkspaceConnectorHealthCheckedPayload
   | WorkspaceObjectSyncedPayload
+  | WorkspaceSyncRunStartedPayload
+  | WorkspaceSyncRunCompletedPayload
+  | WorkspaceSyncRunFailedPayload
+  | WorkspaceSyncStaleDetectedPayload
+  | WorkspaceSyncManualTriggeredPayload
+  | WorkspaceSyncPausedPayload
+  | WorkspaceSyncResumedPayload
+  | WorkspaceSyncRateLimitedPayload
+  | WorkspaceSyncDlqSentPayload
   | WorkspaceActionDraftedPayload
   | WorkspaceActionApprovedPayload
   | WorkspaceActionRejectedPayload

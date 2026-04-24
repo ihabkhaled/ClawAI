@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { CandidateStatus } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
@@ -40,6 +40,30 @@ export function useDiscoveryPage(): DiscoveryPageReturn {
   const bulkMutation = useBulkApproveCandidates();
   const installPackMutation = useInstallPack();
 
+  const handleApprove = useCallback(
+    (id: string): void => {
+      approveMutation.mutate(
+        { id, data: {} },
+        {
+          onSuccess: () => setStatusFilter(CandidateStatus.IMPORTED),
+        },
+      );
+    },
+    [approveMutation],
+  );
+
+  const handleBulkApprove = useCallback(
+    (ids: string[]): void => {
+      bulkMutation.mutate(
+        { candidateIds: ids },
+        {
+          onSuccess: () => setStatusFilter(CandidateStatus.IMPORTED),
+        },
+      );
+    },
+    [bulkMutation],
+  );
+
   return {
     t,
     sources: sourcesQuery.sources,
@@ -63,9 +87,9 @@ export function useDiscoveryPage(): DiscoveryPageReturn {
     handleTriggerRefresh: (sourceId?: string) =>
       triggerMutation.mutate({ sourceId, isDryRun: false }),
     handleTriggerDryRun: () => triggerMutation.mutate({ isDryRun: true }),
-    handleApprove: (id: string) => approveMutation.mutate({ id, data: {} }),
+    handleApprove,
     handleReject: (id: string, reason: string) => rejectMutation.mutate({ id, data: { reason } }),
-    handleBulkApprove: (ids: string[]) => bulkMutation.mutate({ candidateIds: ids }),
+    handleBulkApprove,
     handleInstallPack: (profile: string) => installPackMutation.mutate(profile),
   };
 }

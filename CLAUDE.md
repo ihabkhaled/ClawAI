@@ -35,7 +35,7 @@ apps/
   claw-file-generation-service/ # Port 4013, PG claw_file_generations — file export (PDF/DOCX/CSV/HTML/MD/TXT/JSON)
   claw-agent-service/           # Port 4015, PG claw_agent — desktop agent sessions, terminal command approval, repo tracking, file events
   claw-research-service/        # Port 4016, PG claw_research — dynamic search/fetch/scrape/clone + evidence orchestration (Tavily, SearXNG, Ollama Web)
-  claw-workspace-service/       # Port 4017, PG claw_workspace — workspace connectors (GitHub, GitLab, Jira, Slack, Drive, OneDrive, SharePoint, Confluence, Figma, Gmail, Bitbucket, ClickUp), OAuth2/PKCE, webhook, sync, search
+  claw-workspace-service/       # Port 4014, PG claw_workspace — workspace connectors (GitHub, GitLab, Jira, Slack, Drive, OneDrive, SharePoint, Confluence, Figma, Gmail, Bitbucket, ClickUp), OAuth2/PKCE, webhook, sync, search, scheduled background sync
 packages/
   shared-types/      # 18 enums, event payloads, auth types
   shared-constants/  # Exchange name, ports, API prefix, pagination defaults
@@ -469,6 +469,15 @@ Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 | agent.token_rotated               | agent        | audit          |
 | agent.token_reuse_detected        | agent        | audit          |
 | agent.policy_violated             | agent        | audit          |
+| workspace.sync.run_started        | workspace    | audit          |
+| workspace.sync.run_completed      | workspace    | audit          |
+| workspace.sync.run_failed         | workspace    | audit          |
+| workspace.sync.stale_detected     | workspace    | audit          |
+| workspace.sync.manual_triggered   | workspace    | audit          |
+| workspace.sync.paused             | workspace    | audit          |
+| workspace.sync.resumed            | workspace    | audit          |
+| workspace.sync.rate_limited       | workspace    | audit          |
+| workspace.sync.dlq_sent           | workspace    | audit          |
 
 ---
 

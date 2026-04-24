@@ -167,6 +167,10 @@ export const queryKeys = {
     healthEvents: (id: string) =>
       [...queryKeys.workspaceConnectors.all, 'healthEvents', id] as const,
   },
+  workspaceSyncHealth: {
+    all: ['workspaceSyncHealth'] as const,
+    dashboard: () => [...queryKeys.workspaceSyncHealth.all, 'dashboard'] as const,
+  },
   workspaceObjects: {
     all: ['workspaceObjects'] as const,
     lists: () => [...queryKeys.workspaceObjects.all, 'list'] as const,

@@ -1,6 +1,11 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
-import { EventPattern } from '@claw/shared-types';
+import {
+  EventPattern,
+  type WorkspaceSyncManualTriggeredPayload,
+  type WorkspaceSyncPausedPayload,
+  type WorkspaceSyncResumedPayload,
+} from '@claw/shared-types';
 import { WorkspaceConnectorRepository } from '../repositories/workspace-connector.repository';
 import { WorkspaceAdapterFactory } from '../adapters/workspace-adapter.factory';
 import type { AdapterAppCredentials } from '../adapters/workspace-adapter.interface';
@@ -149,16 +154,93 @@ export class WorkspaceConnectorService {
     return this.healthManager.checkHealth(fullConnector);
   }
 
-  async triggerSync(id: string, userId: string, isDelta: boolean): Promise<SyncResult> {
+  async triggerSync(
+    id: string,
+    userId: string,
+    options: { delta: boolean; priority?: boolean; dryRun?: boolean },
+  ): Promise<SyncResult & { reusedInFlight?: boolean; reusedRunId?: string | null }> {
     const fullConnector = await this.getConnectorRaw(id, userId);
-    if (fullConnector.status === WorkspaceConnectorStatus.PENDING_AUTH) {
-      throw new BusinessException(
-        'workspace.connector.not_authorized',
-        'NOT_AUTHORIZED',
-        HttpStatus.CONFLICT,
-      );
+    this.assertSyncable(fullConnector);
+
+    const existing = await this.repository.findInFlightRun(id);
+    if (existing !== null) {
+      await this.publishManualTriggered(fullConnector, userId, options, existing.id);
+      return {
+        objectsFound: existing.objectsFound,
+        objectsSynced: existing.objectsSynced,
+        objectsFailed: existing.objectsFailed,
+        objects: [],
+        deltaTokenOut: existing.deltaTokenOut ?? undefined,
+        errorMessage: undefined,
+        reusedInFlight: true,
+        reusedRunId: existing.id,
+      };
     }
-    return this.syncManager.syncConnector(fullConnector, isDelta);
+
+    await this.publishManualTriggered(fullConnector, userId, options, null);
+    return this.syncManager.syncConnector(fullConnector, options.delta, {
+      triggeredBy: options.priority === true ? 'priority' : 'manual',
+      isDryRun: options.dryRun === true,
+      actorUserId: userId,
+    });
+  }
+
+  async updateCadence(
+    id: string,
+    userId: string,
+    intervalSeconds: number,
+  ): Promise<WorkspaceConnectorWithStats> {
+    await this.getConnectorRaw(id, userId);
+    await this.repository.updateCadence(id, intervalSeconds);
+    void this.publishEvent(EventPattern.WORKSPACE_CONNECTOR_UPDATED, {
+      connectorId: id,
+      changes: { syncIntervalSeconds: intervalSeconds },
+      userId,
+    });
+    return sanitizeConnector(await this.getConnectorRaw(id, userId));
+  }
+
+  async pauseConnector(
+    id: string,
+    userId: string,
+    reason: string | null,
+  ): Promise<WorkspaceConnectorWithStats> {
+    const connector = await this.getConnectorRaw(id, userId);
+    if (connector.status === WorkspaceConnectorStatus.PAUSED) {
+      return sanitizeConnector(connector);
+    }
+    await this.repository.markPaused(id, reason);
+    const payload: WorkspaceSyncPausedPayload = {
+      connectorId: id,
+      provider: connector.provider as WorkspaceProvider,
+      actorUserId: userId,
+      reason: 'user_requested',
+      timestamp: new Date().toISOString(),
+    };
+    await this.publishEvent(
+      EventPattern.WORKSPACE_SYNC_PAUSED,
+      payload as unknown as Record<string, unknown>,
+    );
+    return sanitizeConnector(await this.getConnectorRaw(id, userId));
+  }
+
+  async resumeConnector(id: string, userId: string): Promise<WorkspaceConnectorWithStats> {
+    const connector = await this.getConnectorRaw(id, userId);
+    if (connector.status !== WorkspaceConnectorStatus.PAUSED) {
+      return sanitizeConnector(connector);
+    }
+    await this.repository.markResumed(id);
+    const payload: WorkspaceSyncResumedPayload = {
+      connectorId: id,
+      provider: connector.provider as WorkspaceProvider,
+      actorUserId: userId,
+      timestamp: new Date().toISOString(),
+    };
+    await this.publishEvent(
+      EventPattern.WORKSPACE_SYNC_RESUMED,
+      payload as unknown as Record<string, unknown>,
+    );
+    return sanitizeConnector(await this.getConnectorRaw(id, userId));
   }
 
   async initOAuth(userId: string, dto: OAuthInitDto): Promise<OAuthInitResult> {
@@ -327,7 +409,10 @@ export class WorkspaceConnectorService {
     }
     if (input.baseUrl !== undefined) {
       try {
-        assertSafeOutboundUrl(input.baseUrl);
+        // Admin-supplied baseUrl on a self-hosted deployment may legitimately
+        // point at an internal host (self-hosted GitLab, Jira, Confluence).
+        // Cloud metadata endpoints remain blocked.
+        assertSafeOutboundUrl(input.baseUrl, { allowPrivateHosts: true });
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Unsafe URL';
         throw new BusinessException(message, 'UNSAFE_BASE_URL', HttpStatus.BAD_REQUEST);
@@ -387,5 +472,44 @@ export class WorkspaceConnectorService {
         `Failed to publish ${pattern}: ${error instanceof Error ? error.message : 'unknown'}`,
       );
     }
+  }
+
+  private assertSyncable(connector: WorkspaceConnectorWithStats): void {
+    if (connector.status === WorkspaceConnectorStatus.PENDING_AUTH) {
+      throw new BusinessException(
+        'workspace.connector.not_authorized',
+        'NOT_AUTHORIZED',
+        HttpStatus.CONFLICT,
+      );
+    }
+    if (connector.status === WorkspaceConnectorStatus.PAUSED) {
+      throw new BusinessException(
+        'workspace.connector.paused',
+        'CONNECTOR_PAUSED',
+        HttpStatus.CONFLICT,
+      );
+    }
+  }
+
+  private async publishManualTriggered(
+    connector: WorkspaceConnectorWithStats,
+    userId: string,
+    options: { priority?: boolean; dryRun?: boolean },
+    reusedRunId: string | null,
+  ): Promise<void> {
+    const payload: WorkspaceSyncManualTriggeredPayload = {
+      connectorId: connector.id,
+      provider: connector.provider as WorkspaceProvider,
+      actorUserId: userId,
+      priority: options.priority ?? false,
+      dryRun: options.dryRun ?? false,
+      reusedInFlight: reusedRunId !== null,
+      reusedRunId,
+      timestamp: new Date().toISOString(),
+    };
+    await this.publishEvent(
+      EventPattern.WORKSPACE_SYNC_MANUAL_TRIGGERED,
+      payload as unknown as Record<string, unknown>,
+    );
   }
 }

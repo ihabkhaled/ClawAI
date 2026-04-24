@@ -26,6 +26,9 @@ import {
   type ListWorkspaceConnectorsQueryDto,
   listWorkspaceConnectorsQuerySchema,
 } from '../dto/list-workspace-connectors-query.dto';
+import { type UpdateCadenceDto, updateCadenceSchema } from '../dto/update-cadence.dto';
+import { type PauseConnectorDto, pauseConnectorSchema } from '../dto/pause-connector.dto';
+import { type SyncNowQueryDto, syncNowQuerySchema } from '../dto/sync-now.dto';
 import type {
   HealthCheckResult,
   PaginatedWorkspaceConnectors,
@@ -98,9 +101,41 @@ export class WorkspaceConnectorController {
   async triggerSync(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
-    @Query('delta') delta: string,
+    @Query(new ZodValidationPipe(syncNowQuerySchema)) query: SyncNowQueryDto,
   ): Promise<SyncResult> {
-    return this.service.triggerSync(id, user.id, delta === 'true');
+    return this.service.triggerSync(id, user.id, {
+      delta: query.delta,
+      priority: query.priority,
+      dryRun: query.dryRun,
+    });
+  }
+
+  @Patch(':id/cadence')
+  async updateCadence(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateCadenceSchema)) dto: UpdateCadenceDto,
+  ): Promise<WorkspaceConnectorWithStats> {
+    return this.service.updateCadence(id, user.id, dto.syncIntervalSeconds);
+  }
+
+  @Post(':id/pause')
+  @HttpCode(HttpStatus.OK)
+  async pause(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(pauseConnectorSchema)) dto: PauseConnectorDto,
+  ): Promise<WorkspaceConnectorWithStats> {
+    return this.service.pauseConnector(id, user.id, dto.reason ?? null);
+  }
+
+  @Post(':id/resume')
+  @HttpCode(HttpStatus.OK)
+  async resume(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ): Promise<WorkspaceConnectorWithStats> {
+    return this.service.resumeConnector(id, user.id);
   }
 
   @Get(':id/sync-runs')

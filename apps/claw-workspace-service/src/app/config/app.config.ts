@@ -10,6 +10,22 @@ const appConfigSchema = z.object({
     .length(64, 'ENCRYPTION_KEY must be a 64-character hex string')
     .regex(/^[\da-fA-F]+$/, 'ENCRYPTION_KEY must be valid hex'),
   WORKSPACE_PORT: z.coerce.number().int().positive().default(4014),
+  // Stream 01 Phase 5 — scheduler
+  WORKSPACE_SCHEDULER_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
+  WORKSPACE_SCHEDULER_TICK_CRON: z.string().default('*/30 * * * * *'),
+  WORKSPACE_SYNC_STALE_DETECTOR_CRON: z.string().default('*/60 * * * * *'),
+  WORKSPACE_SYNC_STALE_MULTIPLIER: z.coerce.number().int().positive().default(3),
+  WORKSPACE_SYNC_DEFAULT_INTERVAL_SECONDS: z.coerce.number().int().positive().default(600),
+  WORKSPACE_SYNC_MAX_CONCURRENT_GLOBAL: z.coerce.number().int().positive().default(20),
+  WORKSPACE_SYNC_MAX_CONCURRENT_PER_PROVIDER: z.coerce.number().int().positive().default(5),
+  WORKSPACE_SYNC_MAX_CONCURRENT_PER_CONNECTOR: z.coerce.number().int().positive().default(1),
+  WORKSPACE_SYNC_RETRY_MAX_ATTEMPTS: z.coerce.number().int().positive().default(3),
+  WORKSPACE_SYNC_RETRY_BASE_MS: z.coerce.number().int().positive().default(1000),
+  WORKSPACE_SYNC_RETRY_JITTER_MS: z.coerce.number().int().nonnegative().default(500),
+  WORKSPACE_SYNC_DLQ_ROUTING_PREFIX: z.string().default('workspace.sync.dlq'),
   GITHUB_CLIENT_ID: z.string().default(''),
   GITHUB_CLIENT_SECRET: z.string().default(''),
   SLACK_CLIENT_ID: z.string().default(''),

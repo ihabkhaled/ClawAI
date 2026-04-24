@@ -37,10 +37,10 @@ export class GitHubAdapter implements WorkspaceAdapter {
     try {
       const response = await fetch(`${GITHUB_API_BASE}/user`, {
         headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/vnd.github+json',
-        'User-Agent': CLAW_USER_AGENT,
-      },
+          Authorization: `Bearer ${accessToken}`,
+          Accept: 'application/vnd.github+json',
+          'User-Agent': CLAW_USER_AGENT,
+        },
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
       });
       const latencyMs = Date.now() - start;
@@ -76,17 +76,25 @@ export class GitHubAdapter implements WorkspaceAdapter {
 
     const topRepos = repos.slice(0, GITHUB_SYNC_REPO_DEPTH);
     for (const repo of topRepos) {
-      const issues = await this.safeFetchIssues(accessToken, repo.full_name);
+      const issues = await this.safeFetchIssues(accessToken, repo.full_name, deltaToken);
       objects.push(...issues);
-      const prs = await this.safeFetchPulls(accessToken, repo.full_name);
+      const prs = await this.safeFetchPulls(accessToken, repo.full_name, deltaToken);
       objects.push(...prs);
     }
+
+    // Phase 5 delta: return max(updated_at) across repos+issues+prs; next tick
+    // passes this as `since=`. Issues/PRs APIs also honor `since` in ISO-8601.
+    const latestUpdated = objects
+      .map((obj) => obj.externalUpdatedAt?.toISOString())
+      .filter((value): value is string => value !== undefined)
+      .sort()
+      .at(-1);
 
     return {
       objectsFound: objects.length,
       objectsSynced: objects.length,
       objectsFailed: 0,
-      deltaTokenOut: new Date().toISOString(),
+      deltaTokenOut: latestUpdated ?? deltaToken ?? new Date().toISOString(),
       objects,
     };
   }
@@ -126,18 +134,24 @@ export class GitHubAdapter implements WorkspaceAdapter {
     };
   }
 
-  private async safeFetchIssues(accessToken: string, fullName: string): Promise<SyncedObject[]> {
+  private async safeFetchIssues(
+    accessToken: string,
+    fullName: string,
+    since?: string,
+  ): Promise<SyncedObject[]> {
     try {
-      const response = await fetch(
-        `${GITHUB_API_BASE}/repos/${fullName}/issues?state=all&per_page=${String(GITHUB_SYNC_ISSUES_PER_REPO)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            Accept: 'application/vnd.github+json',
-            'User-Agent': CLAW_USER_AGENT,
-          },
+      const qs = new URLSearchParams({
+        state: 'all',
+        per_page: String(GITHUB_SYNC_ISSUES_PER_REPO),
+        ...(since ? { since } : {}),
+      });
+      const response = await fetch(`${GITHUB_API_BASE}/repos/${fullName}/issues?${qs.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: 'application/vnd.github+json',
+          'User-Agent': CLAW_USER_AGENT,
         },
-      );
+      });
       if (!response.ok) {
         this.logger.warn(`issues fetch failed for ${fullName}: HTTP ${response.status}`);
         return [];
@@ -166,10 +180,15 @@ export class GitHubAdapter implements WorkspaceAdapter {
     }
   }
 
-  private async safeFetchPulls(accessToken: string, fullName: string): Promise<SyncedObject[]> {
+  private async safeFetchPulls(
+    accessToken: string,
+    fullName: string,
+    since?: string,
+  ): Promise<SyncedObject[]> {
     try {
+      // GitHub PRs API does not have `since`, but we can client-filter by updated_at.
       const response = await fetch(
-        `${GITHUB_API_BASE}/repos/${fullName}/pulls?state=all&per_page=${String(GITHUB_SYNC_PRS_PER_REPO)}`,
+        `${GITHUB_API_BASE}/repos/${fullName}/pulls?state=all&sort=updated&direction=desc&per_page=${String(GITHUB_SYNC_PRS_PER_REPO)}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -183,22 +202,25 @@ export class GitHubAdapter implements WorkspaceAdapter {
         return [];
       }
       const items = (await response.json()) as Array<GitHubPull>;
-      return items.map((pr) => ({
-        externalId: String(pr.id),
-        type: WorkspaceObjectType.PULL_REQUEST,
-        title: pr.title,
-        content: pr.body ?? undefined,
-        url: pr.html_url,
-        authorId: pr.user?.login,
-        metadata: {
-          fullName,
-          number: pr.number,
-          state: pr.state,
-          merged: pr.merged_at !== null,
-        },
-        externalCreatedAt: new Date(pr.created_at),
-        externalUpdatedAt: new Date(pr.updated_at),
-      }));
+      const sinceMs = since ? new Date(since).getTime() : 0;
+      return items
+        .filter((pr) => (sinceMs > 0 ? new Date(pr.updated_at).getTime() >= sinceMs : true))
+        .map((pr) => ({
+          externalId: String(pr.id),
+          type: WorkspaceObjectType.PULL_REQUEST,
+          title: pr.title,
+          content: pr.body ?? undefined,
+          url: pr.html_url,
+          authorId: pr.user?.login,
+          metadata: {
+            fullName,
+            number: pr.number,
+            state: pr.state,
+            merged: pr.merged_at !== null,
+          },
+          externalCreatedAt: new Date(pr.created_at),
+          externalUpdatedAt: new Date(pr.updated_at),
+        }));
     } catch (error) {
       this.logger.warn(`pulls fetch error for ${fullName}: ${String(error)}`);
       return [];
@@ -232,9 +254,12 @@ export class GitHubAdapter implements WorkspaceAdapter {
     });
     // GitHub is quirky: semantic errors (bad code, wrong secret) come back
     // as HTTP 200 with an error body, NOT 4xx. So inspect the body too.
-    const data = (await response.json().catch(() => null)) as
-      | { access_token?: string; scope?: string; error?: string; error_description?: string }
-      | null;
+    const data = (await response.json().catch(() => null)) as {
+      access_token?: string;
+      scope?: string;
+      error?: string;
+      error_description?: string;
+    } | null;
     if (!response.ok || data === null || data.error !== undefined || !data.access_token) {
       const reason = data?.error_description ?? data?.error ?? `HTTP ${response.status}`;
       throw new Error(`GitHub token exchange failed: ${reason}`);

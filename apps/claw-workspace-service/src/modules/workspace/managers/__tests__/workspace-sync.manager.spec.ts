@@ -1,4 +1,5 @@
 import { WorkspaceSyncManager } from '../workspace-sync.manager';
+import { AppConfig } from '../../../../app/config/app.config';
 import type { WorkspaceConnectorRepository } from '../../repositories/workspace-connector.repository';
 import type { WorkspaceAdapterFactory } from '../../adapters/workspace-adapter.factory';
 import type { OAuthTokenManager } from '../oauth-token.manager';
@@ -6,6 +7,35 @@ import type { WorkspaceObjectManager } from '../workspace-object.manager';
 import type { RabbitMQService } from '@claw/shared-rabbitmq';
 import type { WorkspaceConnector } from '../../../../generated/prisma';
 import { WorkspaceSyncStatus } from '../../../../common/enums/workspace-sync-status.enum';
+
+jest.spyOn(AppConfig, 'get').mockReturnValue({
+  WORKSPACE_DATABASE_URL: 'postgres://localhost/test',
+  REDIS_URL: 'redis://localhost:6379',
+  RABBITMQ_URL: 'amqp://localhost:5672',
+  JWT_SECRET: 'x'.repeat(32),
+  ENCRYPTION_KEY: 'a'.repeat(64),
+  WORKSPACE_PORT: 4014,
+  WORKSPACE_SCHEDULER_ENABLED: true,
+  WORKSPACE_SCHEDULER_TICK_CRON: '*/30 * * * * *',
+  WORKSPACE_SYNC_STALE_DETECTOR_CRON: '*/60 * * * * *',
+  WORKSPACE_SYNC_STALE_MULTIPLIER: 3,
+  WORKSPACE_SYNC_DEFAULT_INTERVAL_SECONDS: 600,
+  WORKSPACE_SYNC_MAX_CONCURRENT_GLOBAL: 20,
+  WORKSPACE_SYNC_MAX_CONCURRENT_PER_PROVIDER: 5,
+  WORKSPACE_SYNC_MAX_CONCURRENT_PER_CONNECTOR: 1,
+  WORKSPACE_SYNC_RETRY_MAX_ATTEMPTS: 3,
+  WORKSPACE_SYNC_RETRY_BASE_MS: 1,
+  WORKSPACE_SYNC_RETRY_JITTER_MS: 0,
+  WORKSPACE_SYNC_DLQ_ROUTING_PREFIX: 'workspace.sync.dlq',
+  GITHUB_CLIENT_ID: '',
+  GITHUB_CLIENT_SECRET: '',
+  SLACK_CLIENT_ID: '',
+  SLACK_CLIENT_SECRET: '',
+  JIRA_CLIENT_ID: '',
+  JIRA_CLIENT_SECRET: '',
+  GOOGLE_CLIENT_ID: '',
+  GOOGLE_CLIENT_SECRET: '',
+});
 
 const mockConnector = {
   id: 'c1',

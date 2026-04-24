@@ -31,7 +31,6 @@ export enum DownloadStatus {
 export enum CandidateStatusFilter {
   ALL = 'ALL',
   PENDING = 'PENDING',
-  APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
   IMPORTED = 'IMPORTED',
   DUPLICATE = 'DUPLICATE',

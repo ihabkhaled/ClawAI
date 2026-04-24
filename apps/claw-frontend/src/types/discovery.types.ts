@@ -218,20 +218,31 @@ export type CandidatesQueryResult = {
   isError: boolean;
 };
 
+export type MutationCallbacks<TData = unknown> = {
+  onSuccess?: (data: TData) => void;
+  onError?: (error: Error) => void;
+};
+
 export type ApproveCandidateMutationResult = {
-  mutate: (input: { id: string; data: ApproveCandidateRequest }) => void;
+  mutate: (
+    input: { id: string; data: ApproveCandidateRequest },
+    options?: MutationCallbacks<DiscoveryCandidate>,
+  ) => void;
   isPending: boolean;
   error: Error | null;
 };
 
 export type RejectCandidateMutationResult = {
-  mutate: (input: { id: string; data: RejectCandidateRequest }) => void;
+  mutate: (
+    input: { id: string; data: RejectCandidateRequest },
+    options?: MutationCallbacks<DiscoveryCandidate>,
+  ) => void;
   isPending: boolean;
   error: Error | null;
 };
 
 export type BulkApproveMutationResult = {
-  mutate: (data: BulkApproveRequest) => void;
+  mutate: (data: BulkApproveRequest, options?: MutationCallbacks<BulkApproveResponse>) => void;
   isPending: boolean;
   error: Error | null;
   lastResult: BulkApproveResponse | undefined;
