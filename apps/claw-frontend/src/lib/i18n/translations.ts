@@ -7,6 +7,7 @@ import { de } from './locales/de';
 import { en } from './locales/en';
 import { es } from './locales/es';
 import { fr } from './locales/fr';
+import { hi } from './locales/hi';
 import { it } from './locales/it';
 import { pt } from './locales/pt';
 import { ru } from './locales/ru';
@@ -20,6 +21,7 @@ const dictionaries: Record<Locale, TranslationDictionary> = {
   [Locale.ES]: es,
   [Locale.RU]: ru,
   [Locale.PT]: pt,
+  [Locale.HI]: hi,
 };
 
 /**

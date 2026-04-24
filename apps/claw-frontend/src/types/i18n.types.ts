@@ -38,6 +38,9 @@ export type TranslationDictionary = {
     brandName: string;
     brandVersion: string;
     select: string;
+    download: string;
+    noDataAvailable: string;
+    showingPage: string;
   };
   auth: {
     login: string;
@@ -56,6 +59,8 @@ export type TranslationDictionary = {
     signingIn: string;
     loginFailed: string;
     tagline: string;
+    authenticating: string;
+    emailPlaceholder: string;
   };
   nav: {
     dashboard: string;
@@ -88,6 +93,7 @@ export type TranslationDictionary = {
     settings: string;
     workspace: string;
     workspaceActions: string;
+    workspaceApprovals: string;
     workspaceSyncHealth: string;
     agent: string;
     agentTerminal: string;
@@ -227,6 +233,37 @@ export type TranslationDictionary = {
     selectOrStartTitle: string;
     selectOrStartDesc: string;
     untitled: string;
+    attachedFile: string;
+    beginningOfConversation: string;
+    composerPlaceholder: string;
+    currentAiProgress: string;
+    fileGenerationCancelled: string;
+    fileGenerationFailedRetry: string;
+    generationCancelled: string;
+    imageGenerationFailedRetry: string;
+    judge: string;
+    live: string;
+    loadingImage: string;
+    loadingMessages: string;
+    loadingMoreThreads: string;
+    loadingOlderMessages: string;
+    loadingThreads: string;
+    manyMemories: string;
+    modelThinking: string;
+    noMatchingThreads: string;
+    noMessagesYet: string;
+    noVisibleAnswer: string;
+    oneMemory: string;
+    open: string;
+    preparingDownload: string;
+    regenerate: string;
+    searching: string;
+    threadActions: string;
+    toggleProvenance: string;
+    tryAnotherModel: string;
+    tryingFallback: string;
+    verifyingWith: string;
+    visibleAiProgress: string;
   };
   connectors: {
     title: string;
@@ -283,6 +320,17 @@ export type TranslationDictionary = {
     oneModel: string;
     manyModels: string;
     updatedAt: string;
+    addConnectorDesc: string;
+    apiKeyPlaceholder: string;
+    apiKeyPlaceholderEdit: string;
+    baseUrlOptional: string;
+    baseUrlPlaceholder: string;
+    defaultLabel: string;
+    editConnectorDesc: string;
+    namePlaceholder: string;
+    regionPlaceholder: string;
+    saveFirstThenTest: string;
+    selectProvider: string;
   };
   memory: {
     title: string;
@@ -307,6 +355,10 @@ export type TranslationDictionary = {
     loadFailed: string;
     loadingMemories: string;
     addMemory: string;
+    contentPlaceholder: string;
+    createMemoryDesc: string;
+    editMemoryDesc: string;
+    source: string;
   };
   files: {
     title: string;
@@ -324,6 +376,16 @@ export type TranslationDictionary = {
     uploadFailed: string;
     loadFailed: string;
     loadingFiles: string;
+    allTypesAccepted: string;
+    chunkIndex: string;
+    chunksTitle: string;
+    dropFileHere: string;
+    dropOrClick: string;
+    fileFallback: string;
+    noChunks: string;
+    uploading: string;
+    uploadNewFile: string;
+    viewChunks: string;
   };
   context: {
     title: string;
@@ -364,6 +426,13 @@ export type TranslationDictionary = {
     fileIdPlaceholder: string;
     itemType: string;
     selectType: string;
+    createPackDesc: string;
+    creating: string;
+    descriptionOptional: string;
+    descriptionPlaceholder: string;
+    namePlaceholder: string;
+    scopeOptional: string;
+    scopePlaceholder: string;
   };
   routing: {
     title: string;
@@ -462,6 +531,13 @@ export type TranslationDictionary = {
     colRoles: string;
     noneRole: string;
     modelNamePlaceholder: string;
+    capabilities: string;
+    context: string;
+    lifecycle: string;
+    noSyncedModels: string;
+    streaming: string;
+    tools: string;
+    vision: string;
   };
   observability: {
     title: string;
@@ -495,6 +571,7 @@ export type TranslationDictionary = {
     totalTokens: string;
     requests: string;
     tokens: string;
+    noData: string;
   };
   audits: {
     title: string;
@@ -514,6 +591,7 @@ export type TranslationDictionary = {
     allActions: string;
     allSeverities: string;
     searchPlaceholder: string;
+    ipAddress: string;
   };
   admin: {
     title: string;
@@ -638,6 +716,12 @@ export type TranslationDictionary = {
     searchBrowserHelpers: string;
     searchBrowserScoreLabel: string;
     searchBrowserScoreTooltip: string;
+    cancelDownloadFailed: string;
+    downloadCancelled: string;
+    downloadStarted: string;
+    downloadStartFailed: string;
+    modelRemoved: string;
+    modelRemoveFailed: string;
   };
   replay: {
     title: string;
@@ -742,6 +826,8 @@ export type TranslationDictionary = {
     judgeVerified: string;
     judgeRevised: string;
     judgeEscalated: string;
+    modelsProcessing: string;
+    processingMessage: string;
   };
   consensus: {
     title: string;
@@ -1046,6 +1132,7 @@ export type TranslationDictionary = {
     enabled: string;
     disabled: string;
     deleteConfirm: string;
+    namePlaceholder: string;
   };
   workspaceObjects: {
     title: string;
@@ -1173,6 +1260,59 @@ export type TranslationDictionary = {
       paused: string;
     };
   };
+  aiActions: {
+    dialog: {
+      title: string;
+      description: string;
+      model_label: string;
+      generate: string;
+      resolving: string;
+      cancel: string;
+      resolution_mode: string;
+      resolution_primary: string;
+      resolution_fallback: string;
+    };
+  };
+  approvals: {
+    page: {
+      title: string;
+      description: string;
+      empty_title: string;
+      empty_description: string;
+      error_title: string;
+      error_description: string;
+    };
+    card: {
+      approve: string;
+      reject: string;
+      edit: string;
+      edited: string;
+      source_stale: string;
+      attribution_auto: string;
+      attribution_manual: string;
+    };
+    bulk: {
+      selected: string;
+      approve_all: string;
+      clear: string;
+    };
+    edit: {
+      title: string;
+      description: string;
+      payload_label: string;
+      reason_placeholder: string;
+      save: string;
+      cancel: string;
+      invalid_json: string;
+    };
+    reject: {
+      title: string;
+      description: string;
+      reason_placeholder: string;
+      confirm: string;
+      cancel: string;
+    };
+  };
   research: {
     toggle: {
       placeholder: string;
@@ -1212,6 +1352,7 @@ export type TranslationDictionary = {
         secret: string;
         actions: string;
       };
+      namePlaceholder: string;
     };
     runs: {
       title: string;
@@ -1367,6 +1508,7 @@ export type TranslationDictionary = {
       deniedBody: string;
       accountMismatchTitle: string;
       accountMismatchBody: string;
+      deviceNamePlaceholder: string;
     };
     rejectedByUser: string;
   };
@@ -1507,6 +1649,27 @@ export type TranslationDictionary = {
     endDate: string;
     fullTextSearch: string;
     searchAllFields: string;
+    avgLatency: string;
+    errors: string;
+    failedToLoadClient: string;
+    failedToLoadClientDesc: string;
+    failedToLoadServer: string;
+    failedToLoadServerDesc: string;
+    levelDistribution: string;
+    loadingClient: string;
+    loadingServer: string;
+    noActionData: string;
+    noClientLogs: string;
+    noClientLogsActivityDesc: string;
+    noComponentData: string;
+    noServerLogs: string;
+    noServerLogsActivityDesc: string;
+    noServiceData: string;
+    percentOfTotal: string;
+    topActions: string;
+    topComponents: string;
+    topServices: string;
+    totalLogs: string;
   };
 };
 

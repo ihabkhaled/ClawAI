@@ -10,11 +10,12 @@ export const RTL_LOCALES: ReadonlyArray<Locale> = [Locale.AR];
 
 export const SUPPORTED_LOCALES: ReadonlyArray<LocaleConfig> = [
   { locale: Locale.EN, label: 'English', dir: Direction.LTR },
-  { locale: Locale.AR, label: '\u0627\u0644\u0639\u0631\u0628\u064A\u0629', dir: Direction.RTL },
-  { locale: Locale.FR, label: 'Fran\u00E7ais', dir: Direction.LTR },
+  { locale: Locale.AR, label: 'العربية', dir: Direction.RTL },
+  { locale: Locale.FR, label: 'Français', dir: Direction.LTR },
   { locale: Locale.IT, label: 'Italiano', dir: Direction.LTR },
   { locale: Locale.DE, label: 'Deutsch', dir: Direction.LTR },
-  { locale: Locale.ES, label: 'Espa\u00F1ol', dir: Direction.LTR },
-  { locale: Locale.RU, label: '\u0420\u0443\u0441\u0441\u043A\u0438\u0439', dir: Direction.LTR },
-  { locale: Locale.PT, label: 'Portugu\u00EAs', dir: Direction.LTR },
+  { locale: Locale.ES, label: 'Español', dir: Direction.LTR },
+  { locale: Locale.RU, label: 'Русский', dir: Direction.LTR },
+  { locale: Locale.PT, label: 'Português', dir: Direction.LTR },
+  { locale: Locale.HI, label: 'हिन्दी', dir: Direction.LTR },
 ];
