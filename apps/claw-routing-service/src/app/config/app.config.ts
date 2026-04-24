@@ -16,6 +16,10 @@ const appConfigSchema = z.object({
     .default('true')
     .transform((value) => value.toLowerCase() === 'true'),
   OLLAMA_ROUTER_WARMUP_INTERVAL_MS: z.coerce.number().int().positive().default(120_000),
+  ROUTER_COMPACT_PROMPT: z
+    .string()
+    .default('true')
+    .transform((value) => value.toLowerCase() !== 'false'),
   ROUTING_LATENCY_EWMA_WEIGHT: z.coerce.number().min(0).max(1).default(0.7),
   ROUTING_PROVIDER_SLOW_THRESHOLD_MS: z.coerce.number().int().positive().default(15_000),
   ROUTING_PROVIDER_SLOW_STREAK: z.coerce.number().int().positive().default(3),

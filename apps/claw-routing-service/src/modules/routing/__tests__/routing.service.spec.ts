@@ -111,6 +111,17 @@ const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
   subscribe: jest.fn().mockResolvedValue(void 0),
 });
 
+const mockRouterEducationManager = (): Record<string, jest.Mock> => ({
+  calibrateDecision: jest
+    .fn()
+    .mockImplementation(async (decision) => ({ decision, changed: false })),
+  ingestExecutionOutcome: jest.fn().mockResolvedValue(void 0),
+  ingestFeedbackSignal: jest.fn().mockResolvedValue(void 0),
+  getLatestSnapshot: jest.fn().mockResolvedValue(null),
+  listModelProfiles: jest.fn().mockResolvedValue([]),
+  listTopicProfiles: jest.fn().mockResolvedValue([]),
+});
+
 describe('RoutingService', () => {
   let service: RoutingService;
   let policiesRepo: ReturnType<typeof mockPoliciesRepo>;
@@ -118,6 +129,7 @@ describe('RoutingService', () => {
   let routingManager: ReturnType<typeof mockRoutingManager>;
   let replayMgr: ReturnType<typeof mockReplayManager>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
+  let routerEducationManager: ReturnType<typeof mockRouterEducationManager>;
 
   beforeEach(() => {
     policiesRepo = mockPoliciesRepo();
@@ -125,9 +137,11 @@ describe('RoutingService', () => {
     routingManager = mockRoutingManager();
     replayMgr = mockReplayManager();
     rabbitMQ = mockRabbitMQ();
+    routerEducationManager = mockRouterEducationManager();
     const promptBuilder = {
       invalidateCache: jest.fn(),
       fetchInstalledModels: jest.fn().mockResolvedValue([]),
+      getInstalledModels: jest.fn().mockResolvedValue([]),
     };
     service = new RoutingService(
       policiesRepo as unknown as RoutingPoliciesRepository,
@@ -135,6 +149,7 @@ describe('RoutingService', () => {
       routingManager as unknown as RoutingManager,
       replayMgr as unknown as ReplayManager,
       {} as any,
+      routerEducationManager as any,
       rabbitMQ as unknown as RabbitMQService,
       promptBuilder as any,
     );
@@ -228,6 +243,7 @@ describe('RoutingService', () => {
       expect(result.selectedProvider).toBe('anthropic');
       expect(result.routingMode).toBe(RoutingMode.AUTO);
       expect(routingManager.evaluateRoute).toHaveBeenCalled();
+      expect(routerEducationManager.calibrateDecision).toHaveBeenCalled();
     });
 
     it('should pass routing mode to manager', async () => {
@@ -285,7 +301,7 @@ describe('RoutingService', () => {
     it('should subscribe to events on module init', async () => {
       await service.onModuleInit();
 
-      expect(rabbitMQ.subscribe).toHaveBeenCalledTimes(6);
+      expect(rabbitMQ.subscribe).toHaveBeenCalledTimes(7);
     });
   });
 });

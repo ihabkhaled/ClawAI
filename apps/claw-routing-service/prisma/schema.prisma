@@ -35,6 +35,26 @@ enum OutcomeLabel {
   UNCERTAIN
 }
 
+enum FeedbackValue {
+  POSITIVE
+  NEGATIVE
+}
+
+enum RoutingExecutionStatus {
+  SUCCEEDED
+  FAILED
+  DEGRADED
+  NO_EXECUTION_MODEL
+}
+
+enum JudgeOutcome {
+  VERIFIED
+  REVISED
+  ESCALATED
+  UNAVAILABLE
+  NONE
+}
+
 // ─── Models ──────────────────────────────────────────────
 
 model RoutingDecision {
@@ -52,13 +72,28 @@ model RoutingDecision {
   fallbackProvider  String?       @map("fallback_provider")
   fallbackModel     String?       @map("fallback_model")
   complexityClass   ComplexityClass? @map("complexity_class")
+  detectedCategory  String?       @map("detected_category")
+  secondaryCategory String?       @map("secondary_category")
+  matchCount        Int?          @map("match_count")
+  selectedExecutionPath String?   @map("selected_execution_path")
+  routeRoadmap      Json?         @map("route_roadmap")
+  modelInventorySnapshot Json?    @map("model_inventory_snapshot")
+  connectorHealthSnapshot Json?   @map("connector_health_snapshot")
+  capabilityMatchScore Decimal?   @map("capability_match_score") @db.Decimal(5, 4)
+  latencyScore      Decimal?      @map("latency_score") @db.Decimal(5, 4)
+  riskScore         Decimal?      @map("risk_score") @db.Decimal(5, 4)
+  uncertaintyScore  Decimal?      @map("uncertainty_score") @db.Decimal(5, 4)
   explanation       Json?
   routingDurationMs Int?          @map("routing_duration_ms")
   createdAt         DateTime      @default(now()) @map("created_at")
+  outcomes          RoutingOutcomeRecord[]
+  feedbackRecords   RoutingFeedbackRecord[]
 
   @@index([messageId])
   @@index([threadId])
   @@index([routingMode])
+  @@index([selectedProvider, selectedModel])
+  @@index([detectedCategory])
   @@index([createdAt])
   @@map("routing_decisions")
 }
@@ -129,4 +164,122 @@ model ReplayCase {
   @@index([outcomeLabel])
   @@index([isConfirmedRegression])
   @@map("replay_cases")
+}
+
+model RoutingOutcomeRecord {
+  id                   String                 @id @default(cuid())
+  routingDecisionId    String                 @map("routing_decision_id")
+  messageId            String?                @map("message_id")
+  assistantMessageId   String?                @map("assistant_message_id")
+  threadId             String                 @map("thread_id")
+  finalExecutionProvider String               @map("final_execution_provider")
+  finalExecutionModel  String                 @map("final_execution_model")
+  executionStatus      RoutingExecutionStatus @map("execution_status")
+  executionSuccess     Boolean                @default(true) @map("execution_success")
+  actualLatencyMs      Int?                   @map("actual_latency_ms")
+  actualCostEstimate   Decimal?               @map("actual_cost_estimate") @db.Decimal(12, 8)
+  finalStatus          String                 @default("completed") @map("final_status")
+  fallbackUsed         Boolean                @default(false) @map("fallback_used")
+  judgeOutcome         JudgeOutcome           @default(NONE) @map("judge_outcome")
+  judgeConfidence      Decimal?               @map("judge_confidence") @db.Decimal(5, 4)
+  criticScore          Decimal?               @map("critic_score") @db.Decimal(5, 4)
+  issueTags            String[]               @default([]) @map("issue_tags")
+  revised              Boolean                @default(false)
+  escalated            Boolean                @default(false)
+  followUpSignal       String?                @map("follow_up_signal")
+  createdAt            DateTime               @default(now()) @map("created_at")
+  updatedAt            DateTime               @updatedAt @map("updated_at")
+  routingDecision      RoutingDecision        @relation(fields: [routingDecisionId], references: [id], onDelete: Cascade)
+
+  @@unique([routingDecisionId])
+  @@index([threadId])
+  @@index([executionStatus])
+  @@index([judgeOutcome])
+  @@map("routing_outcome_records")
+}
+
+model RoutingFeedbackRecord {
+  id                String         @id @default(cuid())
+  routingDecisionId String?        @map("routing_decision_id")
+  messageId         String         @map("message_id")
+  threadId          String         @map("thread_id")
+  assistantMessageId String?       @map("assistant_message_id")
+  feedbackValue     FeedbackValue  @map("feedback_value")
+  source            String         @default("thumbs")
+  weight            Decimal        @default(1.0) @db.Decimal(6, 4)
+  taskFamily        String?        @map("task_family")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  routingDecision   RoutingDecision? @relation(fields: [routingDecisionId], references: [id], onDelete: SetNull)
+
+  @@index([routingDecisionId])
+  @@index([threadId])
+  @@index([feedbackValue])
+  @@map("routing_feedback_records")
+}
+
+model RouterModelProfile {
+  id                      String   @id @default(cuid())
+  provider                String
+  model                   String
+  taskFamily              String   @map("task_family")
+  topicKey                String   @map("topic_key")
+  routeCount              Int      @default(0) @map("route_count")
+  successRate             Decimal  @default(0) @map("success_rate") @db.Decimal(6, 4)
+  thumbsUpRate            Decimal  @default(0) @map("thumbs_up_rate") @db.Decimal(6, 4)
+  thumbsDownRate          Decimal  @default(0) @map("thumbs_down_rate") @db.Decimal(6, 4)
+  judgeVerifiedRate       Decimal  @default(0) @map("judge_verified_rate") @db.Decimal(6, 4)
+  judgeRevisedRate        Decimal  @default(0) @map("judge_revised_rate") @db.Decimal(6, 4)
+  judgeEscalatedRate      Decimal  @default(0) @map("judge_escalated_rate") @db.Decimal(6, 4)
+  averageLatencyMs        Int      @default(0) @map("average_latency_ms")
+  averageCostEstimate     Decimal  @default(0) @map("average_cost_estimate") @db.Decimal(12, 8)
+  fallbackSuccessRate     Decimal  @default(0) @map("fallback_success_rate") @db.Decimal(6, 4)
+  hallucinationRiskScore  Decimal  @default(0) @map("hallucination_risk_score") @db.Decimal(6, 4)
+  calibrationTrustScore   Decimal  @default(0) @map("calibration_trust_score") @db.Decimal(6, 4)
+  weightedSuccessScore    Decimal  @default(0) @map("weighted_success_score") @db.Decimal(6, 4)
+  weightedDissatisfactionScore Decimal @default(0) @map("weighted_dissatisfaction_score") @db.Decimal(6, 4)
+  sampleSize              Int      @default(0) @map("sample_size")
+  confidenceInProfile     Decimal  @default(0) @map("confidence_in_profile") @db.Decimal(6, 4)
+  lastUpdated             DateTime @default(now()) @map("last_updated")
+
+  @@unique([provider, model, taskFamily, topicKey])
+  @@index([taskFamily, topicKey])
+  @@index([weightedSuccessScore])
+  @@map("router_model_profiles")
+}
+
+model RouterTopicProfile {
+  id                      String   @id @default(cuid())
+  taskFamily              String   @map("task_family")
+  topicKey                String   @map("topic_key")
+  bestProvider            String?  @map("best_provider")
+  bestModel               String?  @map("best_model")
+  routeCount              Int      @default(0) @map("route_count")
+  successRate             Decimal  @default(0) @map("success_rate") @db.Decimal(6, 4)
+  thumbsUpRate            Decimal  @default(0) @map("thumbs_up_rate") @db.Decimal(6, 4)
+  thumbsDownRate          Decimal  @default(0) @map("thumbs_down_rate") @db.Decimal(6, 4)
+  judgeVerifiedRate       Decimal  @default(0) @map("judge_verified_rate") @db.Decimal(6, 4)
+  judgeEscalatedRate      Decimal  @default(0) @map("judge_escalated_rate") @db.Decimal(6, 4)
+  fallbackSuccessRate     Decimal  @default(0) @map("fallback_success_rate") @db.Decimal(6, 4)
+  weightedSuccessScore    Decimal  @default(0) @map("weighted_success_score") @db.Decimal(6, 4)
+  ambiguityScore          Decimal  @default(0) @map("ambiguity_score") @db.Decimal(6, 4)
+  confidenceInProfile     Decimal  @default(0) @map("confidence_in_profile") @db.Decimal(6, 4)
+  lastUpdated             DateTime @default(now()) @map("last_updated")
+
+  @@unique([taskFamily, topicKey])
+  @@index([weightedSuccessScore])
+  @@map("router_topic_profiles")
+}
+
+model RoutingCalibrationSnapshot {
+  id               String   @id @default(cuid())
+  version          String
+  windowDays       Int      @map("window_days")
+  summary          Json
+  promptHints      Json     @map("prompt_hints")
+  active           Boolean  @default(true)
+  generatedAt      DateTime @default(now()) @map("generated_at")
+
+  @@index([generatedAt])
+  @@index([active])
+  @@map("routing_calibration_snapshots")
 }

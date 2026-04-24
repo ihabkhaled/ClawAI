@@ -12,6 +12,7 @@ Create a routing policy.
 
 **Auth**: Bearer token
 **Request Body**:
+
 ```json
 {
   "name": "Prefer Local for Coding",
@@ -26,6 +27,7 @@ Create a routing policy.
 ```
 
 **Response 201**:
+
 ```json
 {
   "id": "clpol...",
@@ -40,6 +42,7 @@ Create a routing policy.
 ```
 
 **curl**:
+
 ```bash
 curl -X POST http://localhost:4000/api/v1/routing/policies \
   -H "Authorization: Bearer $TOKEN" \
@@ -55,6 +58,7 @@ List routing policies.
 
 **Auth**: Bearer token
 **Query Parameters**:
+
 - `page` (int, default: 1)
 - `limit` (int, default: 20, max: 100)
 - `routingMode` (enum) — filter by mode
@@ -101,29 +105,77 @@ Evaluate which provider/model should handle a message. Used for testing routing 
 
 **Auth**: Bearer token
 **Request Body**:
+
 ```json
 {
-  "content": "Write a Python function to sort a list",
-  "routingMode": "AUTO",
-  "forcedProvider": null,
-  "forcedModel": null
+  "messageContent": "Write a Python function to sort a list",
+  "threadId": "clthread123",
+  "routingMode": "AUTO"
 }
 ```
 
 **Response 200**:
+
 ```json
 {
-  "selectedProvider": "anthropic",
+  "selectedProvider": "ANTHROPIC",
   "selectedModel": "claude-sonnet-4",
   "routingMode": "AUTO",
   "confidence": 0.85,
   "reasonTags": ["coding", "python"],
+  "detectedCategory": "coding",
+  "selectedExecutionPath": "cloud-primary",
   "privacyClass": "cloud",
   "costClass": "medium",
   "fallbackProvider": "local-ollama",
   "fallbackModel": "qwen2.5-coder:7b"
 }
 ```
+
+---
+
+## Router Education
+
+### GET /routing/education/snapshot
+
+Returns the latest bounded router education snapshot used to smarten the AUTO prompt.
+
+**Auth**: Bearer token
+
+**Response 200**:
+
+```json
+{
+  "version": "router-education-2026-04-24T03:10:00.000Z",
+  "summary": {
+    "windowDays": 30,
+    "decisionsAnalyzed": 42,
+    "feedbackEvents": 8,
+    "outcomesAnalyzed": 36,
+    "topTaskFamilies": [],
+    "cautionModels": []
+  },
+  "promptHints": {
+    "bestModelsByTaskFamily": [],
+    "cautionModels": [],
+    "ambiguousTaskFamilies": []
+  }
+}
+```
+
+### GET /routing/education/model-profiles
+
+Returns learned model profiles. Optional query params:
+
+- `taskFamily`
+- `limit` (default `25`, max `100`)
+
+### GET /routing/education/topic-profiles
+
+Returns learned topic profiles. Optional query params:
+
+- `taskFamily`
+- `limit` (default `25`, max `100`)
 
 ---
 
@@ -135,10 +187,12 @@ Get routing decisions for a specific thread.
 
 **Auth**: Bearer token
 **Query Parameters**:
+
 - `page` (int, default: 1)
 - `limit` (int, default: 20)
 
 **Response 200**:
+
 ```json
 {
   "data": [
@@ -166,15 +220,15 @@ Get routing decisions for a specific thread.
 
 ## Routing Modes
 
-| Mode | Behavior |
-|------|----------|
-| `AUTO` | Dynamic: Ollama router + category detection + heuristic fallback |
-| `MANUAL_MODEL` | Uses forcedProvider + forcedModel from thread settings |
-| `LOCAL_ONLY` | Category-aware: coding -> LOCAL_CODING, reasoning -> LOCAL_REASONING |
-| `PRIVACY_FIRST` | Local if healthy, else Anthropic |
-| `LOW_LATENCY` | OpenAI gpt-4o-mini |
-| `HIGH_REASONING` | Anthropic claude-opus-4 |
-| `COST_SAVER` | Local if healthy, else cheapest cloud |
+| Mode             | Behavior                                                             |
+| ---------------- | -------------------------------------------------------------------- |
+| `AUTO`           | Dynamic: Ollama router + category detection + heuristic fallback     |
+| `MANUAL_MODEL`   | Uses forcedProvider + forcedModel from thread settings               |
+| `LOCAL_ONLY`     | Category-aware: coding -> LOCAL_CODING, reasoning -> LOCAL_REASONING |
+| `PRIVACY_FIRST`  | Local if healthy, else Anthropic                                     |
+| `LOW_LATENCY`    | OpenAI gpt-4o-mini                                                   |
+| `HIGH_REASONING` | Anthropic claude-opus-4                                              |
+| `COST_SAVER`     | Local if healthy, else cheapest cloud                                |
 
 ---
 
@@ -186,6 +240,7 @@ Re-run historical routing decisions against the current router configuration. Re
 
 **Auth**: Bearer token (ADMIN role required)
 **Request Body**:
+
 ```json
 {
   "startDate": "2026-04-01T00:00:00.000Z",
@@ -198,15 +253,16 @@ Re-run historical routing decisions against the current router configuration. Re
 
 All fields are optional. Without filters, replays the most recent 50 decisions.
 
-| Field | Type | Default | Description |
-| --- | --- | --- | --- |
-| `startDate` | ISO 8601 string | none | Start of date range filter |
-| `endDate` | ISO 8601 string | none | End of date range filter |
-| `routingMode` | RoutingMode enum | none | Filter by original routing mode |
-| `provider` | string | none | Filter by original selected provider |
-| `limit` | int (1-200) | 50 | Max decisions to replay |
+| Field         | Type             | Default | Description                          |
+| ------------- | ---------------- | ------- | ------------------------------------ |
+| `startDate`   | ISO 8601 string  | none    | Start of date range filter           |
+| `endDate`     | ISO 8601 string  | none    | End of date range filter             |
+| `routingMode` | RoutingMode enum | none    | Filter by original routing mode      |
+| `provider`    | string           | none    | Filter by original selected provider |
+| `limit`       | int (1-200)      | 50      | Max decisions to replay              |
 
 **Response 200**:
+
 ```json
 {
   "summary": {
@@ -237,10 +293,12 @@ All fields are optional. Without filters, replays the most recent 50 decisions.
 ```
 
 **Errors**:
+
 - `400 VALIDATION_ERROR` -- invalid date range or limit out of bounds
 - `403 FORBIDDEN` -- non-ADMIN user
 
 **curl**:
+
 ```bash
 curl -X POST http://localhost:4000/api/v1/routing/replay \
   -H "Authorization: Bearer $TOKEN" \

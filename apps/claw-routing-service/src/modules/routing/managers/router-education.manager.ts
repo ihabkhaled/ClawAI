@@ -1,0 +1,651 @@
+import { Injectable, Logger } from '@nestjs/common';
+import {
+  type FeedbackValue,
+  JudgeOutcome,
+  type RouterModelProfile,
+  type RouterTopicProfile,
+  RoutingExecutionStatus,
+} from '../../../generated/prisma';
+import {
+  CALIBRATION_BLEND,
+  EDUCATION_WINDOW_DAYS,
+  MIN_PROFILE_SAMPLE_SIZE,
+} from '../constants/routing-education.constants';
+import { RoutingEducationRepository } from '../repositories/routing-education.repository';
+import type {
+  AggregateBucket,
+  CreateRoutingFeedbackInput,
+  LearnedDecisionCalibration,
+  RouterModelProfileRecord,
+  RouterTopicProfileRecord,
+  RoutingCalibrationSummary,
+  RoutingCompletedEventPayload,
+  RoutingDecisionWithEducation,
+  RoutingEducationSnapshot,
+  RoutingFeedbackEventPayload,
+  RoutingPromptHintSnapshot,
+} from '../types/routing-education.types';
+import type { RoutingContext, RoutingDecisionResult } from '../types/routing.types';
+
+@Injectable()
+export class RouterEducationManager {
+  private readonly logger = new Logger(RouterEducationManager.name);
+
+  constructor(private readonly repository: RoutingEducationRepository) {}
+
+  async ingestExecutionOutcome(payload: RoutingCompletedEventPayload): Promise<void> {
+    const decision = await this.repository.findDecisionByMessageId(payload.messageId);
+    if (!decision) {
+      this.logger.warn(
+        `ingestExecutionOutcome: no decision found for message ${payload.messageId}`,
+      );
+      return;
+    }
+
+    const judgeOutcome = this.mapJudgeOutcome(payload.judgeDecision);
+    const issueTags = this.buildIssueTags(payload, judgeOutcome);
+    const executionSuccess = payload.executionSuccess ?? true;
+    const finalStatus = payload.finalStatus ?? (executionSuccess ? 'completed' : 'failed');
+
+    await this.repository.upsertOutcomeRecord({
+      routingDecisionId: decision.id,
+      messageId: payload.messageId,
+      assistantMessageId: payload.assistantMessageId ?? null,
+      threadId: payload.threadId,
+      finalExecutionProvider: payload.provider,
+      finalExecutionModel: payload.model,
+      executionStatus: executionSuccess
+        ? RoutingExecutionStatus.SUCCEEDED
+        : RoutingExecutionStatus.FAILED,
+      executionSuccess,
+      actualLatencyMs: payload.latencyMs ?? null,
+      finalStatus,
+      fallbackUsed: payload.usedFallback ?? false,
+      judgeOutcome,
+      judgeConfidence: payload.judgeConfidence ?? null,
+      criticScore: payload.criticScore ?? null,
+      issueTags,
+      revised: judgeOutcome === JudgeOutcome.REVISED,
+      escalated: judgeOutcome === JudgeOutcome.ESCALATED,
+      followUpSignal: payload.reRouted ? 're_routed' : null,
+    });
+
+    await this.rebuildCalibrationSnapshot();
+  }
+
+  async ingestFeedbackSignal(payload: RoutingFeedbackEventPayload): Promise<void> {
+    if (payload.feedback === null) {
+      return;
+    }
+
+    const decision =
+      (payload.routingMessageId
+        ? await this.repository.findDecisionByMessageId(payload.routingMessageId)
+        : null) ??
+      (await this.repository.findDecisionByAssistantMessageId(payload.messageId)) ??
+      (await this.repository.findDecisionByMessageId(payload.messageId));
+    const feedbackValue: FeedbackValue = payload.feedback === 'positive' ? 'POSITIVE' : 'NEGATIVE';
+    const taskFamily =
+      payload.detectedCategory ??
+      decision?.detectedCategory ??
+      decision?.secondaryCategory ??
+      'general';
+
+    const input: CreateRoutingFeedbackInput = {
+      routingDecisionId: decision?.id ?? null,
+      messageId: payload.messageId,
+      threadId: payload.threadId,
+      assistantMessageId: payload.messageId,
+      feedbackValue,
+      source: 'thumbs',
+      weight: feedbackValue === 'POSITIVE' ? 1 : 1.15,
+      taskFamily,
+    };
+
+    await this.repository.createFeedbackRecord(input);
+    await this.rebuildCalibrationSnapshot();
+  }
+
+  async rebuildCalibrationSnapshot(
+    windowDays = EDUCATION_WINDOW_DAYS,
+  ): Promise<RoutingEducationSnapshot> {
+    const decisions = await this.repository.findEducationWindow(windowDays);
+    const modelProfiles = this.computeModelProfiles(decisions);
+    const topicProfiles = this.computeTopicProfiles(modelProfiles);
+    const summary = this.buildSummary(windowDays, decisions, modelProfiles, topicProfiles);
+    const promptHints = this.buildPromptHints(modelProfiles, topicProfiles);
+
+    await this.repository.replaceModelProfiles(modelProfiles);
+    await this.repository.replaceTopicProfiles(topicProfiles);
+    const version = `calibration-${Date.now()}`;
+    await this.repository.createCalibrationSnapshot(
+      version,
+      summary as never,
+      promptHints as never,
+    );
+
+    return { version, summary, promptHints };
+  }
+
+  async getLatestSnapshot(): Promise<RoutingEducationSnapshot | null> {
+    const snapshot = await this.repository.getLatestCalibrationSnapshot();
+    if (!snapshot) {
+      return null;
+    }
+
+    return {
+      version: snapshot.version,
+      summary: snapshot.summary as RoutingCalibrationSummary,
+      promptHints: snapshot.promptHints as RoutingPromptHintSnapshot,
+    };
+  }
+
+  async listModelProfiles(taskFamily?: string, limit = 25): Promise<RouterModelProfileRecord[]> {
+    const profiles = await this.repository.listModelProfiles(taskFamily, limit);
+    return profiles.map((profile) => this.mapModelProfile(profile));
+  }
+
+  async listTopicProfiles(taskFamily?: string, limit = 25): Promise<RouterTopicProfileRecord[]> {
+    const profiles = await this.repository.listTopicProfiles(taskFamily, limit);
+    return profiles.map((profile) => this.mapTopicProfile(profile));
+  }
+
+  async calibrateDecision(
+    decision: RoutingDecisionResult,
+    context: RoutingContext,
+  ): Promise<LearnedDecisionCalibration> {
+    const taskFamily = decision.detectedCategory ?? 'general';
+    const currentProfile = await this.repository.findModelProfile(
+      decision.selectedProvider,
+      decision.selectedModel,
+      taskFamily,
+    );
+    const bestProfile = await this.repository.findBestModelProfile(taskFamily);
+
+    const calibrated: RoutingDecisionResult = { ...decision };
+    if (currentProfile) {
+      calibrated.confidence = this.clamp01(
+        decision.confidence * (1 - CALIBRATION_BLEND) +
+          Number(currentProfile.calibrationTrustScore) * CALIBRATION_BLEND,
+      );
+      calibrated.reasonTags = [...calibrated.reasonTags, 'profile_calibrated'];
+    }
+
+    if (
+      bestProfile &&
+      Number(bestProfile.sampleSize) >= MIN_PROFILE_SAMPLE_SIZE &&
+      taskFamily !== 'privacy' &&
+      taskFamily !== 'medical' &&
+      taskFamily !== 'legal' &&
+      !decision.selectedProvider.startsWith('IMAGE_') &&
+      decision.selectedProvider !== 'FILE_GENERATION' &&
+      decision.confidence < 0.88 &&
+      this.isProviderUsable(bestProfile.provider, context) &&
+      (decision.selectedProvider !== bestProfile.provider ||
+        decision.selectedModel !== bestProfile.model) &&
+      Number(bestProfile.weightedSuccessScore) -
+        (currentProfile ? Number(currentProfile.weightedSuccessScore) : 0.5) >
+        0.12
+    ) {
+      calibrated.selectedProvider = bestProfile.provider;
+      calibrated.selectedModel = bestProfile.model;
+      calibrated.confidence = this.clamp01(
+        Math.max(calibrated.confidence, Number(bestProfile.calibrationTrustScore)),
+      );
+      calibrated.reasonTags = [...calibrated.reasonTags, 'learned_profile_override'];
+
+      return { decision: calibrated, changed: true };
+    }
+
+    return { decision: calibrated, changed: calibrated !== decision };
+  }
+
+  private computeModelProfiles(
+    decisions: RoutingDecisionWithEducation[],
+  ): RouterModelProfileRecord[] {
+    const aggregates = new Map<string, AggregateBucket>();
+
+    for (const decision of decisions) {
+      const outcome = decision.outcomes[0] ?? null;
+      const feedbackRecords = decision.feedbackRecords;
+      const taskFamily = decision.detectedCategory ?? 'general';
+      const topicKey = decision.secondaryCategory ?? taskFamily;
+      const provider = outcome?.finalExecutionProvider ?? decision.selectedProvider;
+      const model = outcome?.finalExecutionModel ?? decision.selectedModel;
+      const freshness = this.computeFreshness(decision.createdAt);
+      const feedback = this.summarizeFeedback(feedbackRecords);
+
+      const bucketKey = `${provider}::${model}::${taskFamily}::${topicKey}`;
+      const bucket = aggregates.get(bucketKey) ?? {
+        provider,
+        model,
+        taskFamily,
+        topicKey,
+        routeCount: 0,
+        totalWeight: 0,
+        weightedSuccess: 0,
+        weightedDissatisfaction: 0,
+        thumbsUpWeight: 0,
+        thumbsDownWeight: 0,
+        judgeVerifiedWeight: 0,
+        judgeRevisedWeight: 0,
+        judgeEscalatedWeight: 0,
+        latencyWeightedSum: 0,
+        costWeightedSum: 0,
+        latencyWeight: 0,
+        costWeight: 0,
+        fallbackSuccessWeight: 0,
+        fallbackWeight: 0,
+        hallucinationWeight: 0,
+      };
+
+      const quality = this.computeWeightedQuality(
+        outcome,
+        feedback.positive,
+        feedback.negative,
+        freshness,
+      );
+      const dissatisfaction = this.computeWeightedDissatisfaction(
+        outcome,
+        feedback.negative,
+        freshness,
+      );
+
+      bucket.routeCount += 1;
+      bucket.totalWeight += freshness;
+      bucket.weightedSuccess += quality;
+      bucket.weightedDissatisfaction += dissatisfaction;
+      bucket.thumbsUpWeight += feedback.positive * freshness;
+      bucket.thumbsDownWeight += feedback.negative * freshness;
+      bucket.judgeVerifiedWeight +=
+        (outcome?.judgeOutcome === JudgeOutcome.VERIFIED ? 1 : 0) * freshness;
+      bucket.judgeRevisedWeight +=
+        (outcome?.judgeOutcome === JudgeOutcome.REVISED ? 1 : 0) * freshness;
+      bucket.judgeEscalatedWeight +=
+        (outcome?.judgeOutcome === JudgeOutcome.ESCALATED ? 1 : 0) * freshness;
+
+      if (typeof outcome?.actualLatencyMs === 'number') {
+        bucket.latencyWeightedSum += outcome.actualLatencyMs * freshness;
+        bucket.latencyWeight += freshness;
+      }
+
+      if (
+        typeof outcome?.actualCostEstimate === 'object' ||
+        typeof outcome?.actualCostEstimate === 'number'
+      ) {
+        bucket.costWeightedSum += Number(outcome.actualCostEstimate) * freshness;
+        bucket.costWeight += freshness;
+      }
+
+      if (outcome) {
+        bucket.fallbackWeight += freshness;
+        if (outcome.fallbackUsed === true && outcome.executionSuccess) {
+          bucket.fallbackSuccessWeight += freshness;
+        }
+        if (this.hasHallucinationMarker(outcome.issueTags)) {
+          bucket.hallucinationWeight += freshness;
+        }
+      }
+
+      aggregates.set(bucketKey, bucket);
+    }
+
+    return [...aggregates.values()].map((bucket) => {
+      const sampleSize = bucket.routeCount;
+      const smoothing = 5;
+      const prior = 0.55;
+      const smoothedSuccess =
+        (bucket.weightedSuccess + smoothing * prior) / Math.max(bucket.totalWeight + smoothing, 1);
+      const dissatRate = bucket.weightedDissatisfaction / Math.max(bucket.totalWeight, 1);
+      const hallucinationRisk = bucket.hallucinationWeight / Math.max(bucket.totalWeight, 1);
+      const confidenceInProfile = this.clamp01(
+        Math.min(1, sampleSize / 12) * (1 - hallucinationRisk * 0.6) * (1 - dissatRate * 0.3),
+      );
+
+      return {
+        provider: bucket.provider,
+        model: bucket.model,
+        taskFamily: bucket.taskFamily,
+        topicKey: bucket.topicKey,
+        routeCount: bucket.routeCount,
+        successRate: smoothedSuccess,
+        thumbsUpRate: bucket.thumbsUpWeight / Math.max(bucket.totalWeight, 1),
+        thumbsDownRate: bucket.thumbsDownWeight / Math.max(bucket.totalWeight, 1),
+        judgeVerifiedRate: bucket.judgeVerifiedWeight / Math.max(bucket.totalWeight, 1),
+        judgeRevisedRate: bucket.judgeRevisedWeight / Math.max(bucket.totalWeight, 1),
+        judgeEscalatedRate: bucket.judgeEscalatedWeight / Math.max(bucket.totalWeight, 1),
+        averageLatencyMs: Math.round(bucket.latencyWeightedSum / Math.max(bucket.latencyWeight, 1)),
+        averageCostEstimate: bucket.costWeightedSum / Math.max(bucket.costWeight, 1),
+        fallbackSuccessRate: bucket.fallbackSuccessWeight / Math.max(bucket.fallbackWeight, 1),
+        hallucinationRiskScore: hallucinationRisk,
+        calibrationTrustScore: this.clamp01(smoothedSuccess * 0.7 + confidenceInProfile * 0.3),
+        weightedSuccessScore: smoothedSuccess,
+        weightedDissatisfactionScore: dissatRate,
+        sampleSize,
+        confidenceInProfile,
+      };
+    });
+  }
+
+  private computeTopicProfiles(
+    modelProfiles: RouterModelProfileRecord[],
+  ): RouterTopicProfileRecord[] {
+    const grouped = new Map<string, RouterModelProfileRecord[]>();
+
+    for (const profile of modelProfiles) {
+      const key = `${profile.taskFamily}::${profile.topicKey}`;
+      const items = grouped.get(key) ?? [];
+      items.push(profile);
+      grouped.set(key, items);
+    }
+
+    return [...grouped.entries()].map(([key, items]) => {
+      const [taskFamily, topicKey] = key.split('::');
+      const best = [...items].sort(
+        (a, b) =>
+          b.weightedSuccessScore - a.weightedSuccessScore ||
+          b.confidenceInProfile - a.confidenceInProfile,
+      )[0];
+      const avgSuccess =
+        items.reduce((sum, item) => sum + item.weightedSuccessScore, 0) / Math.max(items.length, 1);
+      const ambiguityScore =
+        items.length > 1
+          ? this.clamp01(
+              Math.abs(
+                (items[0]?.weightedSuccessScore ?? 0) - (items[1]?.weightedSuccessScore ?? 0.5),
+              ) < 0.08
+                ? 0.8
+                : 0.2,
+            )
+          : 0;
+
+      return {
+        taskFamily: taskFamily ?? 'general',
+        topicKey: topicKey ?? 'general',
+        bestProvider: best?.provider ?? null,
+        bestModel: best?.model ?? null,
+        routeCount: items.reduce((sum, item) => sum + item.routeCount, 0),
+        successRate: avgSuccess,
+        thumbsUpRate:
+          items.reduce((sum, item) => sum + item.thumbsUpRate, 0) / Math.max(items.length, 1),
+        thumbsDownRate:
+          items.reduce((sum, item) => sum + item.thumbsDownRate, 0) / Math.max(items.length, 1),
+        judgeVerifiedRate:
+          items.reduce((sum, item) => sum + item.judgeVerifiedRate, 0) / Math.max(items.length, 1),
+        judgeEscalatedRate:
+          items.reduce((sum, item) => sum + item.judgeEscalatedRate, 0) / Math.max(items.length, 1),
+        fallbackSuccessRate:
+          items.reduce((sum, item) => sum + item.fallbackSuccessRate, 0) /
+          Math.max(items.length, 1),
+        weightedSuccessScore: best?.weightedSuccessScore ?? avgSuccess,
+        ambiguityScore,
+        confidenceInProfile:
+          items.reduce((sum, item) => sum + item.confidenceInProfile, 0) /
+          Math.max(items.length, 1),
+      };
+    });
+  }
+
+  private buildSummary(
+    windowDays: number,
+    decisions: RoutingDecisionWithEducation[],
+    modelProfiles: RouterModelProfileRecord[],
+    topicProfiles: RouterTopicProfileRecord[],
+  ): RoutingCalibrationSummary {
+    return {
+      windowDays,
+      decisionsAnalyzed: decisions.length,
+      feedbackEvents: decisions.reduce((sum, decision) => sum + decision.feedbackRecords.length, 0),
+      outcomesAnalyzed: decisions.reduce((sum, decision) => sum + decision.outcomes.length, 0),
+      topTaskFamilies: topicProfiles
+        .sort((a, b) => b.weightedSuccessScore - a.weightedSuccessScore)
+        .slice(0, 8)
+        .map((profile) => ({
+          taskFamily: profile.taskFamily,
+          weightedSuccessScore: profile.weightedSuccessScore,
+          bestProvider: profile.bestProvider,
+          bestModel: profile.bestModel,
+          confidenceInProfile: profile.confidenceInProfile,
+        })),
+      cautionModels: modelProfiles
+        .filter((profile) => profile.sampleSize >= MIN_PROFILE_SAMPLE_SIZE)
+        .sort((a, b) => b.weightedDissatisfactionScore - a.weightedDissatisfactionScore)
+        .slice(0, 8)
+        .map((profile) => ({
+          provider: profile.provider,
+          model: profile.model,
+          taskFamily: profile.taskFamily,
+          weightedDissatisfactionScore: profile.weightedDissatisfactionScore,
+          sampleSize: profile.sampleSize,
+        })),
+    };
+  }
+
+  private buildPromptHints(
+    modelProfiles: RouterModelProfileRecord[],
+    topicProfiles: RouterTopicProfileRecord[],
+  ): RoutingPromptHintSnapshot {
+    return {
+      bestModelsByTaskFamily: modelProfiles
+        .filter((profile) => profile.sampleSize >= MIN_PROFILE_SAMPLE_SIZE)
+        .sort(
+          (a, b) =>
+            b.weightedSuccessScore - a.weightedSuccessScore ||
+            b.confidenceInProfile - a.confidenceInProfile,
+        )
+        .slice(0, 12)
+        .map((profile) => ({
+          taskFamily: profile.taskFamily,
+          provider: profile.provider,
+          model: profile.model,
+          weightedSuccessScore: profile.weightedSuccessScore,
+          confidenceInProfile: profile.confidenceInProfile,
+        })),
+      cautionModels: modelProfiles
+        .filter((profile) => profile.sampleSize >= MIN_PROFILE_SAMPLE_SIZE)
+        .sort((a, b) => b.weightedDissatisfactionScore - a.weightedDissatisfactionScore)
+        .slice(0, 8)
+        .map((profile) => ({
+          provider: profile.provider,
+          model: profile.model,
+          taskFamily: profile.taskFamily,
+          weightedDissatisfactionScore: profile.weightedDissatisfactionScore,
+        })),
+      ambiguousTaskFamilies: topicProfiles
+        .filter((profile) => profile.ambiguityScore >= 0.5)
+        .sort((a, b) => b.ambiguityScore - a.ambiguityScore)
+        .slice(0, 8)
+        .map((profile) => ({
+          taskFamily: profile.taskFamily,
+          ambiguityScore: profile.ambiguityScore,
+          recommendation:
+            'Prefer a stronger general thinker or search-capable fallback when evidence is sparse.',
+        })),
+    };
+  }
+
+  private summarizeFeedback(records: RoutingDecisionWithEducation['feedbackRecords']) {
+    return records.reduce(
+      (acc, record) => {
+        if (record.feedbackValue === 'POSITIVE') {
+          acc.positive += Number(record.weight);
+        }
+        if (record.feedbackValue === 'NEGATIVE') {
+          acc.negative += Number(record.weight);
+        }
+        return acc;
+      },
+      { positive: 0, negative: 0 },
+    );
+  }
+
+  private computeFreshness(createdAt: Date): number {
+    const ageDays = Math.max(0, (Date.now() - createdAt.getTime()) / 86_400_000);
+    return 1 / (1 + ageDays / EDUCATION_WINDOW_DAYS);
+  }
+
+  private computeWeightedQuality(
+    outcome: RoutingDecisionWithEducation['outcomes'][number] | null,
+    thumbsUpWeight: number,
+    thumbsDownWeight: number,
+    freshness: number,
+  ): number {
+    let score = 0.5;
+    if (outcome?.executionSuccess === true) {
+      score += 0.22;
+    }
+    if (outcome?.judgeOutcome === JudgeOutcome.VERIFIED) {
+      score += 0.2;
+    }
+    if (outcome?.judgeOutcome === JudgeOutcome.REVISED) {
+      score -= 0.08;
+    }
+    if (outcome?.judgeOutcome === JudgeOutcome.ESCALATED) {
+      score -= 0.25;
+    }
+    score += Math.min(0.18, thumbsUpWeight * 0.18);
+    score -= Math.min(0.3, thumbsDownWeight * 0.22);
+    if (outcome?.fallbackUsed === true) {
+      score -= 0.05;
+    }
+    if (outcome && this.hasHallucinationMarker(outcome.issueTags)) {
+      score -= 0.18;
+    }
+    return this.clamp01(score) * freshness;
+  }
+
+  private computeWeightedDissatisfaction(
+    outcome: RoutingDecisionWithEducation['outcomes'][number] | null,
+    thumbsDownWeight: number,
+    freshness: number,
+  ): number {
+    let score = 0;
+    score += Math.min(0.45, thumbsDownWeight * 0.3);
+    if (outcome?.judgeOutcome === JudgeOutcome.REVISED) {
+      score += 0.15;
+    }
+    if (outcome?.judgeOutcome === JudgeOutcome.ESCALATED) {
+      score += 0.35;
+    }
+    if (outcome && this.hasHallucinationMarker(outcome.issueTags)) {
+      score += 0.25;
+    }
+    return this.clamp01(score) * freshness;
+  }
+
+  private buildIssueTags(
+    payload: RoutingCompletedEventPayload,
+    judgeOutcome: JudgeOutcome,
+  ): string[] {
+    const tags: string[] = [];
+    if (payload.executionSuccess === false) {
+      tags.push('execution_failed');
+    }
+    if (typeof payload.errorMessage === 'string' && payload.errorMessage.length > 0) {
+      tags.push('execution_error');
+    }
+    if (payload.reRouted === true) {
+      tags.push('re_routed');
+    }
+    if (judgeOutcome === JudgeOutcome.REVISED) {
+      tags.push('judge_revised');
+    }
+    if (judgeOutcome === JudgeOutcome.ESCALATED) {
+      tags.push('judge_escalated', 'hallucination_risk');
+    }
+    return tags;
+  }
+
+  private mapJudgeOutcome(value?: string): JudgeOutcome {
+    switch (value) {
+      case 'ACCEPT':
+      case 'VERIFIED':
+        return JudgeOutcome.VERIFIED;
+      case 'REVISE':
+      case 'REVISED':
+        return JudgeOutcome.REVISED;
+      case 'ESCALATE':
+      case 'ESCALATED':
+        return JudgeOutcome.ESCALATED;
+      case 'UNAVAILABLE':
+        return JudgeOutcome.UNAVAILABLE;
+      default:
+        return JudgeOutcome.NONE;
+    }
+  }
+
+  private hasHallucinationMarker(issueTags: string[]): boolean {
+    return issueTags.some((tag) =>
+      [
+        'hallucination',
+        'hallucination_risk',
+        'wrong_task_match',
+        'topic_drift',
+        'schema_invalid',
+      ].includes(tag),
+    );
+  }
+
+  private isProviderUsable(provider: string, context: RoutingContext): boolean {
+    if (provider === 'local-ollama') {
+      return context.runtimeHealth?.['OLLAMA'] ?? true;
+    }
+    return context.connectorHealth?.[provider] ?? false;
+  }
+
+  private clamp01(value: number): number {
+    return Math.max(0, Math.min(1, value));
+  }
+
+  private mapModelProfile(profile: RouterModelProfile): RouterModelProfileRecord {
+    return {
+      provider: profile.provider,
+      model: profile.model,
+      taskFamily: profile.taskFamily,
+      topicKey: profile.topicKey,
+      routeCount: profile.routeCount,
+      successRate: this.decimalToNumber(profile.successRate),
+      thumbsUpRate: this.decimalToNumber(profile.thumbsUpRate),
+      thumbsDownRate: this.decimalToNumber(profile.thumbsDownRate),
+      judgeVerifiedRate: this.decimalToNumber(profile.judgeVerifiedRate),
+      judgeRevisedRate: this.decimalToNumber(profile.judgeRevisedRate),
+      judgeEscalatedRate: this.decimalToNumber(profile.judgeEscalatedRate),
+      averageLatencyMs: profile.averageLatencyMs,
+      averageCostEstimate: this.decimalToNumber(profile.averageCostEstimate),
+      fallbackSuccessRate: this.decimalToNumber(profile.fallbackSuccessRate),
+      hallucinationRiskScore: this.decimalToNumber(profile.hallucinationRiskScore),
+      calibrationTrustScore: this.decimalToNumber(profile.calibrationTrustScore),
+      weightedSuccessScore: this.decimalToNumber(profile.weightedSuccessScore),
+      weightedDissatisfactionScore: this.decimalToNumber(profile.weightedDissatisfactionScore),
+      sampleSize: profile.sampleSize,
+      confidenceInProfile: this.decimalToNumber(profile.confidenceInProfile),
+    };
+  }
+
+  private mapTopicProfile(profile: RouterTopicProfile): RouterTopicProfileRecord {
+    return {
+      taskFamily: profile.taskFamily,
+      topicKey: profile.topicKey,
+      bestProvider: profile.bestProvider,
+      bestModel: profile.bestModel,
+      routeCount: profile.routeCount,
+      successRate: this.decimalToNumber(profile.successRate),
+      thumbsUpRate: this.decimalToNumber(profile.thumbsUpRate),
+      thumbsDownRate: this.decimalToNumber(profile.thumbsDownRate),
+      judgeVerifiedRate: this.decimalToNumber(profile.judgeVerifiedRate),
+      judgeEscalatedRate: this.decimalToNumber(profile.judgeEscalatedRate),
+      fallbackSuccessRate: this.decimalToNumber(profile.fallbackSuccessRate),
+      weightedSuccessScore: this.decimalToNumber(profile.weightedSuccessScore),
+      ambiguityScore: this.decimalToNumber(profile.ambiguityScore),
+      confidenceInProfile: this.decimalToNumber(profile.confidenceInProfile),
+    };
+  }
+
+  private decimalToNumber(value: { toNumber: () => number } | number): number {
+    if (typeof value === 'number') {
+      return value;
+    }
+
+    return value.toNumber();
+  }
+}

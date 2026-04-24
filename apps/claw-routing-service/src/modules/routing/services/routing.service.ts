@@ -15,6 +15,7 @@ import { RoutingManager } from '../managers/routing.manager';
 import { ReplayManager } from '../managers/replay.manager';
 import { AdaptiveLearningManager } from '../managers/adaptive-learning.manager';
 import { PromptBuilderManager } from '../managers/prompt-builder.manager';
+import { RouterEducationManager } from '../managers/router-education.manager';
 import { type CreatePolicyDto } from '../dto/create-policy.dto';
 import { type ReplayRoutingDto } from '../dto/replay-routing.dto';
 import { type UpdatePolicyDto } from '../dto/update-policy.dto';
@@ -36,6 +37,11 @@ import type {
 } from '../types/replay-run.types';
 import type { ProviderFailureStat, RecentFallback, RecoveryStats } from '../types/recovery.types';
 import type { AdaptiveLearningInsights } from '../types/adaptive-learning.types';
+import type {
+  RouterModelProfileRecord,
+  RouterTopicProfileRecord,
+  RoutingEducationSnapshot,
+} from '../types/routing-education.types';
 
 @Injectable()
 export class RoutingService implements OnModuleInit {
@@ -53,6 +59,7 @@ export class RoutingService implements OnModuleInit {
     private readonly routingManager: RoutingManager,
     private readonly replayManager: ReplayManager,
     private readonly adaptiveLearningManager: AdaptiveLearningManager,
+    private readonly routerEducationManager: RouterEducationManager,
     private readonly rabbitMQService: RabbitMQService,
     private readonly promptBuilder: PromptBuilderManager,
   ) {
@@ -149,7 +156,9 @@ export class RoutingService implements OnModuleInit {
       latencyPenaltyStepMs: config.latencyPenaltyStepMs,
     };
 
-    return this.routingManager.evaluateRoute(context);
+    const rawDecision = await this.routingManager.evaluateRoute(context);
+    const calibrated = await this.routerEducationManager.calibrateDecision(rawDecision, context);
+    return calibrated.decision;
   }
 
   async getDecisions(
@@ -217,6 +226,18 @@ export class RoutingService implements OnModuleInit {
     return this.adaptiveLearningManager.computeInsights(windowDays);
   }
 
+  async getRoutingEducationSnapshot(): Promise<RoutingEducationSnapshot | null> {
+    return this.routerEducationManager.getLatestSnapshot();
+  }
+
+  async getModelProfiles(taskFamily?: string, limit = 25): Promise<RouterModelProfileRecord[]> {
+    return this.routerEducationManager.listModelProfiles(taskFamily, limit);
+  }
+
+  async getTopicProfiles(taskFamily?: string, limit = 25): Promise<RouterTopicProfileRecord[]> {
+    return this.routerEducationManager.listTopicProfiles(taskFamily, limit);
+  }
+
   async getRecoveryStats(limit: number): Promise<RecoveryStats> {
     const raw = await this.decisionsRepository.getRecoveryStats(limit);
     const fallbackRate = raw.total > 0 ? raw.withFallback / raw.total : 0;
@@ -275,6 +296,10 @@ export class RoutingService implements OnModuleInit {
       this.handleMessageCompleted(data);
     });
 
+    await this.rabbitMQService.subscribe('message.feedback_set', async (data: unknown) => {
+      await this.handleMessageFeedbackSet(data);
+    });
+
     this.logger.log('Subscribed to routing events');
   }
 
@@ -296,9 +321,10 @@ export class RoutingService implements OnModuleInit {
       forcedProvider,
       forcedModel,
     );
-    const decision = await this.routingManager.evaluateRoute(context);
+    const rawDecision = await this.routingManager.evaluateRoute(context);
+    const calibrated = await this.routerEducationManager.calibrateDecision(rawDecision, context);
 
-    await this.storeAndPublishDecision(messageId, threadId, content, decision);
+    await this.storeAndPublishDecision(messageId, threadId, content, calibrated.decision);
   }
 
   private parseMessageCreatedPayload(payload: Record<string, unknown>): {
@@ -368,6 +394,13 @@ export class RoutingService implements OnModuleInit {
     decision: RoutingDecisionResult,
   ): Promise<void> {
     const fallback = decision.fallbackChain[0];
+    const modelInventorySnapshot = await this.promptBuilder.getInstalledModels();
+    const connectorHealthSnapshot = {
+      connectorHealth: { ...this.connectorHealthCache },
+      runtimeHealth: { ...this.runtimeHealthCache },
+      providerLatencyMs: { ...this.providerLatencyCache },
+      providerCircuitOpenUntil: this.getActiveProviderCircuits(),
+    };
 
     await this.decisionsRepository.create({
       messageId,
@@ -383,6 +416,23 @@ export class RoutingService implements OnModuleInit {
       fallbackProvider: fallback?.provider,
       fallbackModel: fallback?.model,
       complexityClass: decision.complexityClass as PrismaComplexityClass | undefined,
+      detectedCategory: decision.detectedCategory,
+      secondaryCategory: decision.secondaryCategory,
+      matchCount: decision.matchCount,
+      selectedExecutionPath: decision.selectedExecutionPath ?? decision.detectedCategory,
+      routeRoadmap: {
+        selectedProvider: decision.selectedProvider,
+        selectedModel: decision.selectedModel,
+        fallbackChain: decision.fallbackChain,
+        detectedCategory: decision.detectedCategory ?? null,
+        secondaryCategory: decision.secondaryCategory ?? null,
+      } as unknown as Prisma.InputJsonValue,
+      modelInventorySnapshot: modelInventorySnapshot as unknown as Prisma.InputJsonValue,
+      connectorHealthSnapshot: connectorHealthSnapshot as Prisma.InputJsonValue,
+      capabilityMatchScore: decision.capabilityMatchScore,
+      latencyScore: decision.latencyScore,
+      riskScore: decision.riskScore,
+      uncertaintyScore: decision.uncertaintyScore,
       explanation: decision.explanation as Prisma.InputJsonValue | undefined,
       routingDurationMs: decision.routingDurationMs,
     });
@@ -452,7 +502,7 @@ export class RoutingService implements OnModuleInit {
     const providerRaw = payload['provider'];
     const latencyRaw = payload['latencyMs'];
 
-    if (typeof providerRaw !== 'string' || typeof latencyRaw !== 'number' || latencyRaw <= 0) {
+    if (typeof providerRaw !== 'string' || typeof latencyRaw !== 'number' || latencyRaw < 0) {
       return;
     }
 
@@ -489,6 +539,55 @@ export class RoutingService implements OnModuleInit {
     }
 
     this.pruneExpiredProviderCircuits();
+
+    void this.routerEducationManager.ingestExecutionOutcome({
+      messageId: typeof payload['messageId'] === 'string' ? payload['messageId'] : '',
+      threadId: typeof payload['threadId'] === 'string' ? payload['threadId'] : '',
+      assistantMessageId:
+        typeof payload['assistantMessageId'] === 'string'
+          ? payload['assistantMessageId']
+          : undefined,
+      provider,
+      model: typeof payload['model'] === 'string' ? payload['model'] : '',
+      latencyMs,
+      executionSuccess: payload['executionSuccess'] === false ? false : true,
+      finalStatus: typeof payload['finalStatus'] === 'string' ? payload['finalStatus'] : undefined,
+      errorMessage:
+        typeof payload['errorMessage'] === 'string' ? payload['errorMessage'] : undefined,
+      usedFallback: payload['usedFallback'] === true,
+      judgeDecision:
+        typeof payload['judgeDecision'] === 'string' ? payload['judgeDecision'] : undefined,
+      judgeConfidence:
+        typeof payload['judgeConfidence'] === 'number' ? payload['judgeConfidence'] : undefined,
+      criticScore: typeof payload['criticScore'] === 'number' ? payload['criticScore'] : undefined,
+      reRouted: payload['reRouted'] === true,
+      detectedCategory:
+        typeof payload['detectedCategory'] === 'string' ? payload['detectedCategory'] : undefined,
+    });
+  }
+
+  private async handleMessageFeedbackSet(data: unknown): Promise<void> {
+    const payload = data as Record<string, unknown>;
+    const messageId = typeof payload['messageId'] === 'string' ? payload['messageId'] : '';
+    const threadId = typeof payload['threadId'] === 'string' ? payload['threadId'] : '';
+    const feedback =
+      payload['feedback'] === 'positive' || payload['feedback'] === 'negative'
+        ? payload['feedback']
+        : null;
+
+    if (messageId.length === 0 || threadId.length === 0 || feedback === null) {
+      return;
+    }
+
+    await this.routerEducationManager.ingestFeedbackSignal({
+      messageId,
+      threadId,
+      feedback,
+      provider: typeof payload['provider'] === 'string' ? payload['provider'] : undefined,
+      model: typeof payload['model'] === 'string' ? payload['model'] : undefined,
+      detectedCategory:
+        typeof payload['detectedCategory'] === 'string' ? payload['detectedCategory'] : undefined,
+    });
   }
 
   private pruneExpiredProviderCircuits(): void {

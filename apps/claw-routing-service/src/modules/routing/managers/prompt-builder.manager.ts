@@ -3,6 +3,7 @@ import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities';
 import { PROMPT_CACHE_TTL_MS, ROUTER_PROMPT_TEMPLATE } from '../constants/routing.constants';
 import { AdaptiveLearningManager } from './adaptive-learning.manager';
+import { RouterEducationManager } from './router-education.manager';
 import type { AdaptiveLearningInsights } from '../types/adaptive-learning.types';
 import type {
   CachedInsightsData,
@@ -11,6 +12,7 @@ import type {
   InstalledModelsResponse,
   RouterRoutingSignals,
 } from '../types/installed-model.types';
+import type { RoutingEducationSnapshot } from '../types/routing-education.types';
 
 @Injectable()
 export class PromptBuilderManager {
@@ -19,7 +21,10 @@ export class PromptBuilderManager {
   private cachedModels: InstalledModelInfo[] | null = null;
   private cachedInsights: CachedInsightsData | null = null;
 
-  constructor(private readonly adaptiveLearningManager?: AdaptiveLearningManager) {}
+  constructor(
+    private readonly adaptiveLearningManager?: AdaptiveLearningManager,
+    private readonly routerEducationManager?: RouterEducationManager,
+  ) {}
 
   async buildRouterPrompt(
     healthyProviders: string[],
@@ -28,7 +33,9 @@ export class PromptBuilderManager {
     this.logger.debug('buildRouterPrompt: generating dynamic prompt');
     const models = await this.getInstalledModels();
     const insights = await this.getAdaptiveInsights();
+    const educationSnapshot = await this.getRouterEducationSnapshot();
     const priorsSection = this.buildLearnedRoutingPriorsSection(insights);
+    const educationSection = this.buildRouterEducationSection(educationSnapshot);
     const connectorPriorsSection = this.buildConnectorPriorsSection(
       healthyProviders,
       routingSignals,
@@ -41,6 +48,7 @@ export class PromptBuilderManager {
         this.applyTemplateVariables(ROUTER_PROMPT_TEMPLATE, healthyProviders),
         models,
         priorsSection,
+        educationSection,
         connectorPriorsSection,
         routingSignals,
       );
@@ -53,6 +61,7 @@ export class PromptBuilderManager {
         this.applyTemplateVariables(cached, healthyProviders),
         models,
         priorsSection,
+        educationSection,
         connectorPriorsSection,
         routingSignals,
       );
@@ -64,6 +73,7 @@ export class PromptBuilderManager {
       this.applyTemplateVariables(dynamicPrompt, healthyProviders),
       models,
       priorsSection,
+      educationSection,
       connectorPriorsSection,
       routingSignals,
     );
@@ -140,7 +150,7 @@ export class PromptBuilderManager {
     );
     const grouped = this.groupModelsByCategory(filteredModels);
     const localSection = this.buildLocalModelsSection(grouped);
-    const useCompactPrompt = process.env.ROUTER_COMPACT_PROMPT !== 'false';
+    const useCompactPrompt = AppConfig.get().ROUTER_COMPACT_PROMPT;
     return useCompactPrompt
       ? this.buildCompactPromptTemplate(localSection)
       : this.buildFullPromptTemplate(localSection);
@@ -325,6 +335,7 @@ User message: {message}`;
     prompt: string,
     models: InstalledModelInfo[],
     priorsSection: string,
+    educationSection: string,
     connectorPriorsSection: string,
     routingSignals?: RouterRoutingSignals,
   ): string {
@@ -338,6 +349,7 @@ User message: {message}`;
       intelligenceSection,
       examplesSection,
       priorsSection,
+      educationSection,
       connectorPriorsSection,
       signalsSection,
     ].join('\n\n');
@@ -522,6 +534,52 @@ User message: {message}`;
     return lines.join('\n');
   }
 
+  private buildRouterEducationSection(snapshot: RoutingEducationSnapshot | null): string {
+    const lines: string[] = ['ROUTER EDUCATION SNAPSHOT (thumbs + judge + execution outcomes):'];
+
+    if (!snapshot) {
+      lines.push('- No education snapshot available yet.');
+      return lines.join('\n');
+    }
+
+    lines.push(
+      `- version=${snapshot.version} decisions=${snapshot.summary.decisionsAnalyzed} feedbackEvents=${snapshot.summary.feedbackEvents} outcomes=${snapshot.summary.outcomesAnalyzed}`,
+    );
+
+    if (snapshot.promptHints.bestModelsByTaskFamily.length > 0) {
+      lines.push('- Best task-family models:');
+      for (const hint of snapshot.promptHints.bestModelsByTaskFamily.slice(0, 8)) {
+        lines.push(
+          `  - ${hint.taskFamily}: ${hint.provider}/${hint.model} success=${hint.weightedSuccessScore.toFixed(2)} trust=${hint.confidenceInProfile.toFixed(2)}`,
+        );
+      }
+    }
+
+    if (snapshot.promptHints.cautionModels.length > 0) {
+      lines.push('- Caution models:');
+      for (const hint of snapshot.promptHints.cautionModels.slice(0, 6)) {
+        lines.push(
+          `  - ${hint.taskFamily}: avoid ${hint.provider}/${hint.model} when a stronger route is available (risk=${hint.weightedDissatisfactionScore.toFixed(2)})`,
+        );
+      }
+    }
+
+    if (snapshot.promptHints.ambiguousTaskFamilies.length > 0) {
+      lines.push('- Ambiguous families:');
+      for (const hint of snapshot.promptHints.ambiguousTaskFamilies.slice(0, 6)) {
+        lines.push(
+          `  - ${hint.taskFamily}: ambiguity=${hint.ambiguityScore.toFixed(2)} -> ${hint.recommendation}`,
+        );
+      }
+    }
+
+    lines.push(
+      '- Use learned priors as bounded hints. Do not overfit to tiny sample sizes or unhealthy providers.',
+    );
+
+    return lines.join('\n');
+  }
+
   private buildRoutingSignalsSection(routingSignals?: RouterRoutingSignals): string {
     const lines: string[] = ['ROUTING SIGNALS (runtime context):'];
 
@@ -657,6 +715,20 @@ User message: {message}`;
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`getAdaptiveInsights: failed - ${msg}`);
+      return null;
+    }
+  }
+
+  private async getRouterEducationSnapshot(): Promise<RoutingEducationSnapshot | null> {
+    if (!this.routerEducationManager) {
+      return null;
+    }
+
+    try {
+      return await this.routerEducationManager.getLatestSnapshot();
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(`getRouterEducationSnapshot: failed - ${msg}`);
       return null;
     }
   }

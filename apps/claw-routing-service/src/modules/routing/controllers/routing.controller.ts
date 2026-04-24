@@ -25,6 +25,11 @@ import type {
 } from '../types/replay-run.types';
 import type { RecoveryStats } from '../types/recovery.types';
 import type { AdaptiveLearningInsights } from '../types/adaptive-learning.types';
+import type {
+  RouterModelProfileRecord,
+  RouterTopicProfileRecord,
+  RoutingEducationSnapshot,
+} from '../types/routing-education.types';
 
 @Controller('routing')
 export class RoutingController {
@@ -127,6 +132,29 @@ export class RoutingController {
         ? Math.min(Math.max(Number.parseInt(windowDays, 10) || 30, 1), 90)
         : 30;
     return this.routingService.getAdaptiveInsights(days);
+  }
+
+  @Get('education/snapshot')
+  async getRoutingEducationSnapshot(): Promise<RoutingEducationSnapshot | null> {
+    return this.routingService.getRoutingEducationSnapshot();
+  }
+
+  @Get('education/model-profiles')
+  async getModelProfiles(
+    @Query('taskFamily') taskFamily?: string,
+    @Query('limit') limitStr?: string,
+  ): Promise<RouterModelProfileRecord[]> {
+    const limit = limitStr !== undefined ? Math.min(Number.parseInt(limitStr, 10) || 25, 100) : 25;
+    return this.routingService.getModelProfiles(taskFamily, limit);
+  }
+
+  @Get('education/topic-profiles')
+  async getTopicProfiles(
+    @Query('taskFamily') taskFamily?: string,
+    @Query('limit') limitStr?: string,
+  ): Promise<RouterTopicProfileRecord[]> {
+    const limit = limitStr !== undefined ? Math.min(Number.parseInt(limitStr, 10) || 25, 100) : 25;
+    return this.routingService.getTopicProfiles(taskFamily, limit);
   }
 
   @Get('recovery/stats')

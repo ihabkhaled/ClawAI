@@ -12,6 +12,8 @@
 
 The routing service decides which AI provider and model should handle each user message. It supports 7 routing modes, uses Ollama for intelligent AUTO routing, and maintains a history of routing decisions.
 
+The service now also owns router education artifacts: execution outcomes, thumbs-derived feedback records, learned model/topic profiles, and versioned calibration snapshots.
+
 ## Database Schema
 
 ### RoutingDecision
@@ -42,6 +44,16 @@ The routing service decides which AI provider and model should handle each user 
 | isActive    | Boolean     | Soft enable/disable               |
 | config      | Json        | Mode-specific configuration       |
 
+### Router Education Tables
+
+| Table                        | Purpose                                                           |
+| ---------------------------- | ----------------------------------------------------------------- |
+| `RoutingOutcomeRecord`       | Execution outcome history for routed messages                     |
+| `RoutingFeedbackRecord`      | Explicit thumbs feedback signals joined back to routing decisions |
+| `RouterModelProfile`         | Learned performance profile per provider/model/task family/topic  |
+| `RouterTopicProfile`         | Learned best-route summary per task family/topic                  |
+| `RoutingCalibrationSnapshot` | Versioned summary consumed by the router prompt                   |
+
 ## 7 Routing Modes
 
 | Mode           | Logic                                                                                               |
@@ -63,7 +75,7 @@ AUTO mode is the most complex. It follows a 6-stage pipeline where each stage ca
 3. **File generation detection** -- 7 exact phrases + 9 verbs x 18 format words = 162 combinations
 4. **Multimodal capability routing** _(SAR 2.0)_ -- detects audio/video/PDF/OCR/web-search/vision keywords; routes to best healthy cloud provider per capability priority (GEMINI first for most modalities); runs BEFORE category detection to prevent multimodal messages from incorrectly matching local categories
 5. **Category detection** -- 1650+ keywords across 33 capability classes; maps to LocalModelRole and finds installed model
-6. **Ollama router call** -- `PromptBuilderManager` builds dynamic prompt with installed models, adaptive insights, and learned priors; sends to router model (default: gemma3:4b) with temperature 0 and Zod-validated JSON response
+6. **Ollama router call** -- `PromptBuilderManager` builds dynamic prompt with installed models, adaptive insights, learned priors, and router education hints; sends to router model (default: gemma3:4b) with temperature 0 and Zod-validated JSON response
 7. **Heuristic fallback** -- if Ollama fails or returns an invalid response, falls back to cloud priority order or local
 
 ## Dynamic Prompt Builder
@@ -112,21 +124,26 @@ The `RoutingDecision` record stores `complexityClass`, a structured `explanation
 
 ## API Endpoints
 
-| Method | Path          | Description                                        |
-| ------ | ------------- | -------------------------------------------------- |
-| GET    | /policies     | List routing policies (paginated)                  |
-| POST   | /policies     | Create policy (ADMIN)                              |
-| PATCH  | /policies/:id | Update policy (ADMIN)                              |
-| DELETE | /policies/:id | Delete policy (ADMIN)                              |
-| GET    | /decisions    | List recent routing decisions                      |
-| POST   | /evaluate     | Evaluate routing for a message                     |
-| POST   | /replay       | Replay historical decisions against current router |
+| Method | Path                      | Description                                        |
+| ------ | ------------------------- | -------------------------------------------------- |
+| GET    | /policies                 | List routing policies (paginated)                  |
+| POST   | /policies                 | Create policy (ADMIN)                              |
+| PATCH  | /policies/:id             | Update policy (ADMIN)                              |
+| DELETE | /policies/:id             | Delete policy (ADMIN)                              |
+| GET    | /decisions                | List recent routing decisions                      |
+| POST   | /evaluate                 | Evaluate routing for a message                     |
+| POST   | /replay                   | Replay historical decisions against current router |
+| GET    | /education/snapshot       | Latest router education snapshot                   |
+| GET    | /education/model-profiles | Learned model profiles                             |
+| GET    | /education/topic-profiles | Learned topic profiles                             |
 
 ## Events
 
 | Event                    | Direction | Notes                               |
 | ------------------------ | --------- | ----------------------------------- |
 | message.created          | Subscribe | Triggers routing decision           |
+| message.completed        | Subscribe | Ingests execution outcomes          |
+| message.feedback_set     | Subscribe | Ingests thumbs learning signals     |
 | message.routed           | Publish   | Sends decision back to chat service |
 | routing.decision_made    | Publish   | Audit trail                         |
 | connector.synced         | Subscribe | Updates healthy provider list       |
@@ -150,6 +167,7 @@ CLOUD_MODEL_GEMINI_DEFAULT = 'gemini-2.5-flash'
 - **OllamaRouterManager** -- calls Ollama with the router prompt and parses the response
 - **PromptBuilderManager** -- builds dynamic router prompts based on installed models, telemetry, and replay-derived priors
 - **ReplayManager** -- re-runs historical routing decisions against the current router for comparison
+- **RouterEducationManager** -- ingests outcomes/feedback and computes bounded calibration profiles
 
 ---
 

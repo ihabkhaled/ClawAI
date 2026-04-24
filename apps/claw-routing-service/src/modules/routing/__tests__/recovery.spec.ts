@@ -37,6 +37,7 @@ describe('RoutingService.getRecoveryStats', () => {
       {} as any,
       {} as any,
       {} as any,
+      {} as any,
       {
         subscribe: jest.fn(),
         publish: jest.fn(),

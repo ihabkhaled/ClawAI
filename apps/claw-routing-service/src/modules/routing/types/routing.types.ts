@@ -41,6 +41,11 @@ export interface RoutingDecisionResult {
   estimatedCostPer1M?: number;
   latencySlaMs?: number;
   complexityClass?: ComplexityClassification['class'];
+  selectedExecutionPath?: string;
+  capabilityMatchScore?: number;
+  latencyScore?: number;
+  riskScore?: number;
+  uncertaintyScore?: number;
   explanation?: RoutingExplanation;
   routingDurationMs?: number;
   routerModel?: string | null;
@@ -103,6 +108,17 @@ export interface CreateDecisionData {
   fallbackProvider?: string;
   fallbackModel?: string;
   complexityClass?: PrismaComplexityClass;
+  detectedCategory?: string;
+  secondaryCategory?: string;
+  matchCount?: number;
+  selectedExecutionPath?: string;
+  routeRoadmap?: Prisma.InputJsonValue;
+  modelInventorySnapshot?: Prisma.InputJsonValue;
+  connectorHealthSnapshot?: Prisma.InputJsonValue;
+  capabilityMatchScore?: number;
+  latencyScore?: number;
+  riskScore?: number;
+  uncertaintyScore?: number;
   explanation?: Prisma.InputJsonValue;
   routingDurationMs?: number;
 }

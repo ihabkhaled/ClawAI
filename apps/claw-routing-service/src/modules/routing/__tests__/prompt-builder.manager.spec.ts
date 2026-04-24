@@ -1,3 +1,4 @@
+import { AppConfig } from '../../../app/config/app.config';
 import { PromptBuilderManager } from '../managers/prompt-builder.manager';
 
 describe('PromptBuilderManager', () => {
@@ -5,6 +6,9 @@ describe('PromptBuilderManager', () => {
 
   beforeEach(() => {
     manager = new PromptBuilderManager();
+    jest.spyOn(AppConfig, 'get').mockReturnValue({
+      ROUTER_COMPACT_PROMPT: true,
+    } as ReturnType<typeof AppConfig.get>);
   });
 
   afterEach(() => {
@@ -123,5 +127,60 @@ describe('PromptBuilderManager', () => {
     expect(prompt).toContain('ANTHROPIC: status=unhealthy');
     expect(prompt).toContain('OPENAI: status=healthy');
     expect(adaptiveLearningManager.computeInsights).toHaveBeenCalledWith(30);
+  });
+
+  it('adds router education snapshot hints when available', async () => {
+    const routerEducationManager = {
+      getLatestSnapshot: jest.fn().mockResolvedValue({
+        version: 'calibration-1',
+        summary: {
+          windowDays: 30,
+          decisionsAnalyzed: 42,
+          feedbackEvents: 10,
+          outcomesAnalyzed: 12,
+          topTaskFamilies: [],
+          cautionModels: [],
+        },
+        promptHints: {
+          bestModelsByTaskFamily: [
+            {
+              taskFamily: 'coding',
+              provider: 'ANTHROPIC',
+              model: 'claude-sonnet-4',
+              weightedSuccessScore: 0.91,
+              confidenceInProfile: 0.88,
+            },
+          ],
+          cautionModels: [
+            {
+              taskFamily: 'business',
+              provider: 'OPENAI',
+              model: 'gpt-4o-mini',
+              weightedDissatisfactionScore: 0.61,
+            },
+          ],
+          ambiguousTaskFamilies: [
+            {
+              taskFamily: 'compliance',
+              ambiguityScore: 0.72,
+              recommendation:
+                'Prefer a stronger general thinker or search-capable fallback when evidence is sparse.',
+            },
+          ],
+        },
+      }),
+    };
+    const managerWithEducation = new PromptBuilderManager(
+      undefined,
+      routerEducationManager as never,
+    );
+    jest.spyOn(managerWithEducation, 'fetchInstalledModels').mockResolvedValue([]);
+
+    const prompt = await managerWithEducation.buildRouterPrompt(['ANTHROPIC']);
+
+    expect(prompt).toContain('ROUTER EDUCATION SNAPSHOT');
+    expect(prompt).toContain('coding: ANTHROPIC/claude-sonnet-4');
+    expect(prompt).toContain('avoid OPENAI/gpt-4o-mini');
+    expect(prompt).toContain('Ambiguous families');
   });
 });

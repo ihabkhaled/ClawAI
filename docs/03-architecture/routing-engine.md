@@ -4,6 +4,8 @@
 
 The routing engine is the decision-making core of ClawAI. It determines which AI provider and model should handle each user message based on the routing mode, active policies, task characteristics, privacy requirements, and cost constraints. The engine lives in the routing-service (port 4004) and is triggered asynchronously via the `message.created` RabbitMQ event.
 
+The router education layer extends this engine with bounded feedback learning from thumbs signals, judge outcomes, execution outcomes, fallback behavior, and replay telemetry. That layer is documented in [router-education-feedback-learning.md](./router-education-feedback-learning.md).
+
 ---
 
 ## Routing Modes
@@ -91,7 +93,19 @@ If any of these stages match, the Ollama router is never called, saving 1-10 sec
 
 When no keyword match is found, the routing service sends a dynamically-built prompt to the Ollama router model. The prompt is constructed by `PromptBuilderManager` and includes only currently installed and healthy models.
 
-The prompt builder also adds learned routing priors from recent telemetry, connector-level weights, and replay summaries. That keeps the router honest on long-tail prompts without replacing the deterministic category and privacy gates.
+The prompt builder also adds learned routing priors from recent telemetry, connector-level weights, replay summaries, and the latest router education snapshot. That keeps the router honest on long-tail prompts without replacing the deterministic category and privacy gates.
+
+## Router Education Layer
+
+The router now maintains historical model/topic profiles built from:
+
+1. explicit message feedback (`thumbs up` / `thumbs down`)
+2. judge decisions and judge confidence
+3. execution success/failure
+4. latency and cost outcomes
+5. fallback success
+
+Those signals materialize into versioned calibration snapshots that the router can use as bounded priors. Learned priors can refine a route, but they cannot override privacy enforcement, router-only safety, or deterministic image/file routing.
 
 ### Zod Validation Schema
 

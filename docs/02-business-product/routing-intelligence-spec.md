@@ -4,6 +4,8 @@
 
 ClawAI's routing engine automatically selects the optimal AI provider and model for each user message. It analyzes task type, privacy requirements, cost constraints, and available models to make intelligent decisions. Users see full transparency into every routing decision.
 
+The current generation also adds bounded router education: thumbs signals, judge outcomes, execution outcomes, and fallback behavior are converted into historical priors that improve future routing quality while preserving route-only discipline and deterministic safety boundaries.
+
 ---
 
 ## 7 Routing Modes
@@ -16,6 +18,15 @@ The intelligent routing mode. A local Ollama model analyzes the user's message a
 - **Timeout**: 10 seconds (configurable via `OLLAMA_ROUTER_TIMEOUT_MS`)
 - **Fallback**: If Ollama times out or returns invalid output, deterministic heuristic rules are applied
 - **Dynamic prompt**: The router prompt is built dynamically based on installed models and adaptive insights, cached for 5 minutes
+- **Bounded learning**: Explicit feedback and judge outcomes update learned model/topic profiles and prompt hints, but do not self-edit code or bypass safety rules
+
+## Router Education Principles
+
+- The router never answers the user directly.
+- Learned priors adjust hints and calibration, not core truth.
+- Sparse data increases uncertainty instead of forcing a route change.
+- Historical success is discounted when provider health is degraded.
+- Router-only inventories still produce a structured no-execution-model issue.
 
 ```mermaid
 flowchart TD
@@ -39,6 +50,7 @@ User explicitly selects a provider and model. No routing intelligence applied. C
 ### LOCAL_ONLY
 
 All messages stay on local infrastructure. Routes to the category-appropriate local model:
+
 - Coding tasks -> LOCAL_CODING role model
 - Reasoning tasks -> LOCAL_REASONING role model
 - Default -> gemma3:4b
@@ -125,18 +137,18 @@ Languages, tools, frameworks, patterns, testing, Git, architecture. Includes: `c
 
 ## AUTO Mode Routing Rules (Priority Order)
 
-| Priority | Task | Routes To |
-| --- | --- | --- |
-| 1 | Image generation | IMAGE_GEMINI / gemini-2.5-flash-image |
-| 2 | File generation | FILE_GENERATION / auto |
-| 3 | Coding, debugging, code review | ANTHROPIC / claude-sonnet-4 |
-| 4 | Complex reasoning, architecture | ANTHROPIC / claude-opus-4 |
-| 5 | Image/video analysis, web content | GEMINI / gemini-2.5-flash |
-| 6 | Math, algorithms | DEEPSEEK / deepseek-chat or local phi3:mini |
-| 7 | Creative writing | OPENAI / gpt-4o-mini |
-| 8 | Simple Q&A, translations | local-ollama / gemma3:4b |
-| 9 | Data/file analysis | GEMINI / gemini-2.5-flash |
-| 10 | Privacy-sensitive | local-ollama / gemma3:4b (never cloud) |
+| Priority | Task                              | Routes To                                   |
+| -------- | --------------------------------- | ------------------------------------------- |
+| 1        | Image generation                  | IMAGE_GEMINI / gemini-2.5-flash-image       |
+| 2        | File generation                   | FILE_GENERATION / auto                      |
+| 3        | Coding, debugging, code review    | ANTHROPIC / claude-sonnet-4                 |
+| 4        | Complex reasoning, architecture   | ANTHROPIC / claude-opus-4                   |
+| 5        | Image/video analysis, web content | GEMINI / gemini-2.5-flash                   |
+| 6        | Math, algorithms                  | DEEPSEEK / deepseek-chat or local phi3:mini |
+| 7        | Creative writing                  | OPENAI / gpt-4o-mini                        |
+| 8        | Simple Q&A, translations          | local-ollama / gemma3:4b                    |
+| 9        | Data/file analysis                | GEMINI / gemini-2.5-flash                   |
+| 10       | Privacy-sensitive                 | local-ollama / gemma3:4b (never cloud)      |
 
 ---
 
@@ -154,15 +166,15 @@ Administrators create policies that override or constrain routing decisions.
 
 ### Condition Fields
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `messageLength` | number | Character count of user message |
-| `hasFiles` | boolean | Whether files are attached |
-| `fileCount` | number | Number of attached files |
-| `threadRoutingMode` | string | Current thread routing mode |
-| `userRole` | string | ADMIN, OPERATOR, or VIEWER |
-| `timeOfDay` | number | Hour (0-23) in server timezone |
-| `provider` | string | Specific provider name |
+| Field               | Type    | Description                     |
+| ------------------- | ------- | ------------------------------- |
+| `messageLength`     | number  | Character count of user message |
+| `hasFiles`          | boolean | Whether files are attached      |
+| `fileCount`         | number  | Number of attached files        |
+| `threadRoutingMode` | string  | Current thread routing mode     |
+| `userRole`          | string  | ADMIN, OPERATOR, or VIEWER      |
+| `timeOfDay`         | number  | Hour (0-23) in server timezone  |
+| `provider`          | string  | Specific provider name          |
 
 ### Policy Examples
 
@@ -176,18 +188,18 @@ Administrators create policies that override or constrain routing decisions.
 
 Every routing decision is persisted with full transparency data:
 
-| Field | Description |
-| --- | --- |
-| selectedProvider | The chosen provider |
-| selectedModel | The chosen model |
-| confidence | 0.0-1.0 score (green > 0.7, yellow > 0.4, red < 0.4) |
-| reasonTags | Why this selection (e.g., ["coding", "code_review"]) |
-| privacyClass | LOW, MEDIUM, or HIGH |
-| costClass | LOW, MEDIUM, or HIGH |
-| fallbackProvider/Model | Backup if primary fails |
-| heuristicUsed | Whether Ollama router was bypassed |
-| policyId | Which policy was applied, if any |
-| latencyMs | Time taken for the routing decision |
+| Field                  | Description                                          |
+| ---------------------- | ---------------------------------------------------- |
+| selectedProvider       | The chosen provider                                  |
+| selectedModel          | The chosen model                                     |
+| confidence             | 0.0-1.0 score (green > 0.7, yellow > 0.4, red < 0.4) |
+| reasonTags             | Why this selection (e.g., ["coding", "code_review"]) |
+| privacyClass           | LOW, MEDIUM, or HIGH                                 |
+| costClass              | LOW, MEDIUM, or HIGH                                 |
+| fallbackProvider/Model | Backup if primary fails                              |
+| heuristicUsed          | Whether Ollama router was bypassed                   |
+| policyId               | Which policy was applied, if any                     |
+| latencyMs              | Time taken for the routing decision                  |
 
 ---
 
@@ -211,14 +223,14 @@ Fallback triggers: HTTP timeout, 429 rate limit, 500/502/503 errors, network fai
 
 ## Confidence Scores
 
-| Source | Confidence Range |
-| --- | --- |
-| Ollama router (high match) | 0.80 - 0.99 |
-| Ollama router (uncertain) | 0.50 - 0.79 |
-| Heuristic (strong signal) | 0.60 - 0.75 |
-| Heuristic (weak signal) | 0.30 - 0.59 |
-| Default fallback | 0.20 |
-| MANUAL_MODEL | 1.00 |
+| Source                     | Confidence Range |
+| -------------------------- | ---------------- |
+| Ollama router (high match) | 0.80 - 0.99      |
+| Ollama router (uncertain)  | 0.50 - 0.79      |
+| Heuristic (strong signal)  | 0.60 - 0.75      |
+| Heuristic (weak signal)    | 0.30 - 0.59      |
+| Default fallback           | 0.20             |
+| MANUAL_MODEL               | 1.00             |
 
 ---
 
@@ -240,58 +252,58 @@ Each AI response message displays an expandable routing transparency badge showi
 
 The routing engine maps common task types to specific providers and models. This table documents all 50 known task-to-routing mappings across all routing modes.
 
-| # | Task Type | AUTO Route | LOCAL_ONLY Route | Privacy Route | Cost Route |
-| - | --------- | ---------- | ---------------- | ------------- | ---------- |
-| 1 | Write a function | Anthropic/claude-sonnet-4 | LOCAL_CODING model | local-ollama | local-ollama |
-| 2 | Debug code | Anthropic/claude-sonnet-4 | LOCAL_CODING model | local-ollama | local-ollama |
-| 3 | Code review | Anthropic/claude-sonnet-4 | LOCAL_CODING model | local-ollama | local-ollama |
-| 4 | Refactor code | Anthropic/claude-sonnet-4 | LOCAL_CODING model | local-ollama | local-ollama |
-| 5 | Write unit tests | Anthropic/claude-sonnet-4 | LOCAL_CODING model | local-ollama | local-ollama |
-| 6 | Design API | Anthropic/claude-sonnet-4 | LOCAL_CODING model | local-ollama | local-ollama |
-| 7 | Docker/K8s setup | Anthropic/claude-sonnet-4 | LOCAL_CODING model | local-ollama | local-ollama |
-| 8 | CI/CD pipeline | Anthropic/claude-sonnet-4 | LOCAL_CODING model | local-ollama | local-ollama |
-| 9 | SQL query | Anthropic/claude-sonnet-4 | LOCAL_CODING model | local-ollama | local-ollama |
-| 10 | Git workflow | Anthropic/claude-sonnet-4 | LOCAL_CODING model | local-ollama | local-ollama |
-| 11 | System architecture | Anthropic/claude-opus-4 | LOCAL_REASONING model | local-ollama | local-ollama |
-| 12 | Compare frameworks | Anthropic/claude-opus-4 | LOCAL_REASONING model | local-ollama | local-ollama |
-| 13 | Mathematical proof | DeepSeek/deepseek-chat | LOCAL_REASONING model | local-ollama | local-ollama |
-| 14 | Statistics problem | DeepSeek/deepseek-chat | LOCAL_REASONING model | local-ollama | local-ollama |
-| 15 | Algorithm design | DeepSeek/deepseek-chat | LOCAL_REASONING model | local-ollama | local-ollama |
-| 16 | Research a topic | Gemini/gemini-2.5-flash | LOCAL_THINKING model | local-ollama | local-ollama |
-| 17 | Deep investigation | Gemini/gemini-2.5-flash | LOCAL_THINKING model | local-ollama | local-ollama |
-| 18 | Pros and cons | Gemini/gemini-2.5-flash | LOCAL_THINKING model | local-ollama | local-ollama |
-| 19 | Generate image | IMAGE_GEMINI/gemini-2.5-flash-image | IMAGE_LOCAL/sdxl-turbo | local image | local image |
-| 20 | Draw portrait | IMAGE_GEMINI/gemini-2.5-flash-image | IMAGE_LOCAL/sdxl-turbo | local image | local image |
-| 21 | Design logo | IMAGE_GEMINI/gemini-2.5-flash-image | IMAGE_LOCAL/sdxl-turbo | local image | local image |
-| 22 | Export PDF | FILE_GENERATION/auto | LOCAL_FILE_GEN model | local-ollama | local-ollama |
-| 23 | Create CSV report | FILE_GENERATION/auto | LOCAL_FILE_GEN model | local-ollama | local-ollama |
-| 24 | Generate document | FILE_GENERATION/auto | LOCAL_FILE_GEN model | local-ollama | local-ollama |
-| 25 | Blog post | OpenAI/gpt-4o-mini | LOCAL_FALLBACK_CHAT | local-ollama | local-ollama |
-| 26 | Email draft | OpenAI/gpt-4o-mini | LOCAL_FALLBACK_CHAT | local-ollama | local-ollama |
-| 27 | Marketing copy | OpenAI/gpt-4o-mini | LOCAL_FALLBACK_CHAT | local-ollama | local-ollama |
-| 28 | Translate text | local-ollama/gemma3:4b | LOCAL_FALLBACK_CHAT | local-ollama | local-ollama |
-| 29 | Simple Q&A | local-ollama/gemma3:4b | gemma3:4b | local-ollama | local-ollama |
-| 30 | Greeting | local-ollama/gemma3:4b | gemma3:4b | local-ollama | local-ollama |
-| 31 | Analyze CSV data | Gemini/gemini-2.5-flash | LOCAL_REASONING model | local-ollama | local-ollama |
-| 32 | Parse JSON file | Gemini/gemini-2.5-flash | LOCAL_REASONING model | local-ollama | local-ollama |
-| 33 | Describe image | Gemini/gemini-2.5-flash | gemma3:4b | local-ollama | Gemini |
-| 34 | Vulnerability scan | Anthropic/claude-sonnet-4 | LOCAL_CODING model | local-ollama | local-ollama |
-| 35 | OWASP audit | Anthropic/claude-sonnet-4 | LOCAL_CODING model | local-ollama | local-ollama |
-| 36 | Review contract | Anthropic/claude-opus-4 | LOCAL_REASONING model | local-ollama | local-ollama |
-| 37 | GDPR compliance | Anthropic/claude-opus-4 | LOCAL_REASONING model | local-ollama | local-ollama |
-| 38 | Medical question | local-ollama (privacy) | LOCAL_REASONING model | local-ollama | local-ollama |
-| 39 | Patient data | local-ollama (privacy) | LOCAL_REASONING model | local-ollama | local-ollama |
-| 40 | Tax return | local-ollama (privacy) | gemma3:4b | local-ollama | local-ollama |
-| 41 | Financial analysis | local-ollama (privacy) | LOCAL_REASONING model | local-ollama | local-ollama |
-| 42 | Business proposal | FILE_GENERATION/auto | LOCAL_FILE_GEN model | local-ollama | local-ollama |
-| 43 | Pitch deck | FILE_GENERATION/auto | LOCAL_FILE_GEN model | local-ollama | local-ollama |
-| 44 | Sprint planning | OpenAI/gpt-4o-mini | LOCAL_FILE_GEN model | local-ollama | local-ollama |
-| 45 | Terraform config | Anthropic/claude-sonnet-4 | LOCAL_CODING model | local-ollama | local-ollama |
-| 46 | AWS architecture | Anthropic/claude-sonnet-4 | LOCAL_CODING model | local-ollama | local-ollama |
-| 47 | Data pipeline | Gemini/gemini-2.5-flash | LOCAL_REASONING model | local-ollama | local-ollama |
-| 48 | ETL workflow | Gemini/gemini-2.5-flash | LOCAL_REASONING model | local-ollama | local-ollama |
-| 49 | Screenplay | OpenAI/gpt-4o-mini | LOCAL_FALLBACK_CHAT | local-ollama | local-ollama |
-| 50 | General chat | OpenAI/gpt-4o-mini | gemma3:4b | local-ollama | local-ollama |
+| #   | Task Type           | AUTO Route                          | LOCAL_ONLY Route       | Privacy Route | Cost Route   |
+| --- | ------------------- | ----------------------------------- | ---------------------- | ------------- | ------------ |
+| 1   | Write a function    | Anthropic/claude-sonnet-4           | LOCAL_CODING model     | local-ollama  | local-ollama |
+| 2   | Debug code          | Anthropic/claude-sonnet-4           | LOCAL_CODING model     | local-ollama  | local-ollama |
+| 3   | Code review         | Anthropic/claude-sonnet-4           | LOCAL_CODING model     | local-ollama  | local-ollama |
+| 4   | Refactor code       | Anthropic/claude-sonnet-4           | LOCAL_CODING model     | local-ollama  | local-ollama |
+| 5   | Write unit tests    | Anthropic/claude-sonnet-4           | LOCAL_CODING model     | local-ollama  | local-ollama |
+| 6   | Design API          | Anthropic/claude-sonnet-4           | LOCAL_CODING model     | local-ollama  | local-ollama |
+| 7   | Docker/K8s setup    | Anthropic/claude-sonnet-4           | LOCAL_CODING model     | local-ollama  | local-ollama |
+| 8   | CI/CD pipeline      | Anthropic/claude-sonnet-4           | LOCAL_CODING model     | local-ollama  | local-ollama |
+| 9   | SQL query           | Anthropic/claude-sonnet-4           | LOCAL_CODING model     | local-ollama  | local-ollama |
+| 10  | Git workflow        | Anthropic/claude-sonnet-4           | LOCAL_CODING model     | local-ollama  | local-ollama |
+| 11  | System architecture | Anthropic/claude-opus-4             | LOCAL_REASONING model  | local-ollama  | local-ollama |
+| 12  | Compare frameworks  | Anthropic/claude-opus-4             | LOCAL_REASONING model  | local-ollama  | local-ollama |
+| 13  | Mathematical proof  | DeepSeek/deepseek-chat              | LOCAL_REASONING model  | local-ollama  | local-ollama |
+| 14  | Statistics problem  | DeepSeek/deepseek-chat              | LOCAL_REASONING model  | local-ollama  | local-ollama |
+| 15  | Algorithm design    | DeepSeek/deepseek-chat              | LOCAL_REASONING model  | local-ollama  | local-ollama |
+| 16  | Research a topic    | Gemini/gemini-2.5-flash             | LOCAL_THINKING model   | local-ollama  | local-ollama |
+| 17  | Deep investigation  | Gemini/gemini-2.5-flash             | LOCAL_THINKING model   | local-ollama  | local-ollama |
+| 18  | Pros and cons       | Gemini/gemini-2.5-flash             | LOCAL_THINKING model   | local-ollama  | local-ollama |
+| 19  | Generate image      | IMAGE_GEMINI/gemini-2.5-flash-image | IMAGE_LOCAL/sdxl-turbo | local image   | local image  |
+| 20  | Draw portrait       | IMAGE_GEMINI/gemini-2.5-flash-image | IMAGE_LOCAL/sdxl-turbo | local image   | local image  |
+| 21  | Design logo         | IMAGE_GEMINI/gemini-2.5-flash-image | IMAGE_LOCAL/sdxl-turbo | local image   | local image  |
+| 22  | Export PDF          | FILE_GENERATION/auto                | LOCAL_FILE_GEN model   | local-ollama  | local-ollama |
+| 23  | Create CSV report   | FILE_GENERATION/auto                | LOCAL_FILE_GEN model   | local-ollama  | local-ollama |
+| 24  | Generate document   | FILE_GENERATION/auto                | LOCAL_FILE_GEN model   | local-ollama  | local-ollama |
+| 25  | Blog post           | OpenAI/gpt-4o-mini                  | LOCAL_FALLBACK_CHAT    | local-ollama  | local-ollama |
+| 26  | Email draft         | OpenAI/gpt-4o-mini                  | LOCAL_FALLBACK_CHAT    | local-ollama  | local-ollama |
+| 27  | Marketing copy      | OpenAI/gpt-4o-mini                  | LOCAL_FALLBACK_CHAT    | local-ollama  | local-ollama |
+| 28  | Translate text      | local-ollama/gemma3:4b              | LOCAL_FALLBACK_CHAT    | local-ollama  | local-ollama |
+| 29  | Simple Q&A          | local-ollama/gemma3:4b              | gemma3:4b              | local-ollama  | local-ollama |
+| 30  | Greeting            | local-ollama/gemma3:4b              | gemma3:4b              | local-ollama  | local-ollama |
+| 31  | Analyze CSV data    | Gemini/gemini-2.5-flash             | LOCAL_REASONING model  | local-ollama  | local-ollama |
+| 32  | Parse JSON file     | Gemini/gemini-2.5-flash             | LOCAL_REASONING model  | local-ollama  | local-ollama |
+| 33  | Describe image      | Gemini/gemini-2.5-flash             | gemma3:4b              | local-ollama  | Gemini       |
+| 34  | Vulnerability scan  | Anthropic/claude-sonnet-4           | LOCAL_CODING model     | local-ollama  | local-ollama |
+| 35  | OWASP audit         | Anthropic/claude-sonnet-4           | LOCAL_CODING model     | local-ollama  | local-ollama |
+| 36  | Review contract     | Anthropic/claude-opus-4             | LOCAL_REASONING model  | local-ollama  | local-ollama |
+| 37  | GDPR compliance     | Anthropic/claude-opus-4             | LOCAL_REASONING model  | local-ollama  | local-ollama |
+| 38  | Medical question    | local-ollama (privacy)              | LOCAL_REASONING model  | local-ollama  | local-ollama |
+| 39  | Patient data        | local-ollama (privacy)              | LOCAL_REASONING model  | local-ollama  | local-ollama |
+| 40  | Tax return          | local-ollama (privacy)              | gemma3:4b              | local-ollama  | local-ollama |
+| 41  | Financial analysis  | local-ollama (privacy)              | LOCAL_REASONING model  | local-ollama  | local-ollama |
+| 42  | Business proposal   | FILE_GENERATION/auto                | LOCAL_FILE_GEN model   | local-ollama  | local-ollama |
+| 43  | Pitch deck          | FILE_GENERATION/auto                | LOCAL_FILE_GEN model   | local-ollama  | local-ollama |
+| 44  | Sprint planning     | OpenAI/gpt-4o-mini                  | LOCAL_FILE_GEN model   | local-ollama  | local-ollama |
+| 45  | Terraform config    | Anthropic/claude-sonnet-4           | LOCAL_CODING model     | local-ollama  | local-ollama |
+| 46  | AWS architecture    | Anthropic/claude-sonnet-4           | LOCAL_CODING model     | local-ollama  | local-ollama |
+| 47  | Data pipeline       | Gemini/gemini-2.5-flash             | LOCAL_REASONING model  | local-ollama  | local-ollama |
+| 48  | ETL workflow        | Gemini/gemini-2.5-flash             | LOCAL_REASONING model  | local-ollama  | local-ollama |
+| 49  | Screenplay          | OpenAI/gpt-4o-mini                  | LOCAL_FALLBACK_CHAT    | local-ollama  | local-ollama |
+| 50  | General chat        | OpenAI/gpt-4o-mini                  | gemma3:4b              | local-ollama  | local-ollama |
 
 ---
 
@@ -317,44 +329,44 @@ ClawAI's routing engine is a key differentiator. Unlike single-provider AI platf
 
 These are the business rules enforced by the routing engine:
 
-| # | Rule | Enforcement |
-| - | ---- | ----------- |
-| 1 | Privacy-sensitive content never leaves the machine | 30 privacy keywords force local routing, cloud fallbacks removed |
-| 2 | Image generation routes to the best available image model | Priority: Gemini > OpenAI DALL-E > Local SD |
-| 3 | File generation always uses FILE_GENERATION provider | Exact phrase + verb/format combo detection |
-| 4 | Coding tasks prefer Anthropic Claude | 100 coding keywords trigger Anthropic routing |
-| 5 | Complex reasoning uses the strongest model | Routes to claude-opus-4 or LOCAL_REASONING |
-| 6 | Simple queries stay local | Messages < 500 chars + local healthy = local routing |
-| 7 | Cost-saver mode never uses cloud when local is healthy | Local Ollama checked first, cloud only as fallback |
-| 8 | Routing policies override mode selection | Policies evaluated by priority, first match wins |
-| 9 | Every routing decision is persisted | RoutingDecision record created for every message |
-| 10 | Unhealthy providers are skipped | Connector health checked before selection |
-| 11 | Fallback chain always terminates at local | Local Ollama is the last resort in every chain |
-| 12 | Dynamic prompts reflect installed models and adaptive insights | PromptBuilderManager rebuilds prompt when models or priors change |
-| 13 | Prompt cache invalidated on model changes | MODEL_PULLED and MODEL_DELETED events clear cache; telemetry refresh updates priors on next build |
-| 14 | Router timeout prevents blocking | 10s timeout on Ollama router, configurable |
-| 15 | Zod validates router output | Invalid JSON from router triggers heuristic fallback |
-| 16 | Category detection runs before Ollama router | Avoids unnecessary LLM call for clear categories |
-| 17 | MANUAL_MODEL bypasses all intelligence | User choice is always respected, confidence 1.0 |
-| 18 | LOCAL_ONLY uses category-aware model selection | Coding tasks get coding model, not default |
-| 19 | Audit trail captures routing metadata | Reason tags, confidence, privacy/cost class recorded |
-| 20 | Fallback usage is reported to users | Frontend shows fallback indicator when primary fails |
+| #   | Rule                                                           | Enforcement                                                                                       |
+| --- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| 1   | Privacy-sensitive content never leaves the machine             | 30 privacy keywords force local routing, cloud fallbacks removed                                  |
+| 2   | Image generation routes to the best available image model      | Priority: Gemini > OpenAI DALL-E > Local SD                                                       |
+| 3   | File generation always uses FILE_GENERATION provider           | Exact phrase + verb/format combo detection                                                        |
+| 4   | Coding tasks prefer Anthropic Claude                           | 100 coding keywords trigger Anthropic routing                                                     |
+| 5   | Complex reasoning uses the strongest model                     | Routes to claude-opus-4 or LOCAL_REASONING                                                        |
+| 6   | Simple queries stay local                                      | Messages < 500 chars + local healthy = local routing                                              |
+| 7   | Cost-saver mode never uses cloud when local is healthy         | Local Ollama checked first, cloud only as fallback                                                |
+| 8   | Routing policies override mode selection                       | Policies evaluated by priority, first match wins                                                  |
+| 9   | Every routing decision is persisted                            | RoutingDecision record created for every message                                                  |
+| 10  | Unhealthy providers are skipped                                | Connector health checked before selection                                                         |
+| 11  | Fallback chain always terminates at local                      | Local Ollama is the last resort in every chain                                                    |
+| 12  | Dynamic prompts reflect installed models and adaptive insights | PromptBuilderManager rebuilds prompt when models or priors change                                 |
+| 13  | Prompt cache invalidated on model changes                      | MODEL_PULLED and MODEL_DELETED events clear cache; telemetry refresh updates priors on next build |
+| 14  | Router timeout prevents blocking                               | 10s timeout on Ollama router, configurable                                                        |
+| 15  | Zod validates router output                                    | Invalid JSON from router triggers heuristic fallback                                              |
+| 16  | Category detection runs before Ollama router                   | Avoids unnecessary LLM call for clear categories                                                  |
+| 17  | MANUAL_MODEL bypasses all intelligence                         | User choice is always respected, confidence 1.0                                                   |
+| 18  | LOCAL_ONLY uses category-aware model selection                 | Coding tasks get coding model, not default                                                        |
+| 19  | Audit trail captures routing metadata                          | Reason tags, confidence, privacy/cost class recorded                                              |
+| 20  | Fallback usage is reported to users                            | Frontend shows fallback indicator when primary fails                                              |
 
 ---
 
 ## KPI Targets and Achieved Results
 
-| KPI | Target | Achieved | Measurement |
-| --- | ------ | -------- | ----------- |
-| Routing accuracy (correct category) | > 93% | **99.1%** | 114/115 valid responses correctly routed in 150-prompt final validation |
-| Privacy enforcement | > 95% | **100%** | Zero privacy-sensitive messages sent to cloud across all validation rounds (medical, legal, finance, government, executive) |
-| Detection categories | 15 | **33** | Expanded from 15 to 33 capability classes for fine-grained routing |
-| Detection keywords | 300+ | **1650+** | Across 2274 lines of routing constants |
-| Catalog models | 30 | **115** | Across 13 domains (Ollama + ComfyUI) |
-| Routing latency (category detection) | < 5ms | < 5ms | Keyword-based detection runs in sub-millisecond time |
-| Routing latency (Ollama router) | < 100ms median | < 100ms median | Full Ollama router call (95th percentile < 10s) |
-| Fallback rate | < 15% | < 15% | Percentage of messages requiring fallback after primary failure |
-| User override rate | < 20% | < 20% | Percentage of messages where users switch to MANUAL_MODEL |
-| Confidence score distribution | > 0.7 for 80% of decisions | > 0.7 for 80%+ | High-confidence routing from strong keyword matches |
-| Cost savings vs. all-cloud | > 50% | > 50% | Local routing handles 60-70% of tasks at zero API cost |
-| Total experiments run | -- | **500+** | Across 5 iterative improvement rounds |
+| KPI                                  | Target                     | Achieved       | Measurement                                                                                                                 |
+| ------------------------------------ | -------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Routing accuracy (correct category)  | > 93%                      | **99.1%**      | 114/115 valid responses correctly routed in 150-prompt final validation                                                     |
+| Privacy enforcement                  | > 95%                      | **100%**       | Zero privacy-sensitive messages sent to cloud across all validation rounds (medical, legal, finance, government, executive) |
+| Detection categories                 | 15                         | **33**         | Expanded from 15 to 33 capability classes for fine-grained routing                                                          |
+| Detection keywords                   | 300+                       | **1650+**      | Across 2274 lines of routing constants                                                                                      |
+| Catalog models                       | 30                         | **115**        | Across 13 domains (Ollama + ComfyUI)                                                                                        |
+| Routing latency (category detection) | < 5ms                      | < 5ms          | Keyword-based detection runs in sub-millisecond time                                                                        |
+| Routing latency (Ollama router)      | < 100ms median             | < 100ms median | Full Ollama router call (95th percentile < 10s)                                                                             |
+| Fallback rate                        | < 15%                      | < 15%          | Percentage of messages requiring fallback after primary failure                                                             |
+| User override rate                   | < 20%                      | < 20%          | Percentage of messages where users switch to MANUAL_MODEL                                                                   |
+| Confidence score distribution        | > 0.7 for 80% of decisions | > 0.7 for 80%+ | High-confidence routing from strong keyword matches                                                                         |
+| Cost savings vs. all-cloud           | > 50%                      | > 50%          | Local routing handles 60-70% of tasks at zero API cost                                                                      |
+| Total experiments run                | --                         | **500+**       | Across 5 iterative improvement rounds                                                                                       |
