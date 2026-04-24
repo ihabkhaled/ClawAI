@@ -71,10 +71,121 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+  test:
+    name: Test (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: auth
+            workspace: claw-auth-service
+            prisma: true
+          - service: chat
+            workspace: claw-chat-service
+            prisma: true
+          - service: connector
+            workspace: claw-connector-service
+            prisma: true
+          - service: routing
+            workspace: claw-routing-service
+            prisma: true
+          - service: memory
+            workspace: claw-memory-service
+            prisma: true
+          - service: file
+            workspace: claw-file-service
+            prisma: true
+          - service: ollama
+            workspace: claw-ollama-service
+            prisma: true
+          - service: audit
+            workspace: claw-audit-service
+            prisma: false
+          - service: image
+            workspace: claw-image-service
+            prisma: true
+          - service: file-generation
+            workspace: claw-file-generation-service
+            prisma: true
+          - service: workspace
+            workspace: claw-workspace-service
+            prisma: true
+          - service: agent
+            workspace: claw-agent-service
+            prisma: true
+          - service: research
+            workspace: claw-research-service
+            prisma: true
+          - service: client-logs
+            workspace: claw-client-logs-service
+            prisma: false
+          - service: server-logs
+            workspace: claw-server-logs-service
+            prisma: false
+          - service: health
+            workspace: claw-health-service
+            prisma: false
+          - service: frontend
+            workspace: claw-frontend
+            prisma: false
+    env:
+      # Auth
+      JWT_SECRET: this_is_a_test_secret_that_is_32chars_long
+      ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      # Infrastructure (fake — unit tests mock all connections)
+      REDIS_URL: redis://localhost:6379
+      RABBITMQ_URL: amqp://guest:guest@localhost:5672
+      OLLAMA_BASE_URL: http://localhost:11434
+      # Inter-service URLs
+      FILE_SERVICE_URL: http://localhost:4006
+      CONNECTOR_SERVICE_URL: http://localhost:4003
+      # PostgreSQL — each service reads only its own var
+      AUTH_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+      CHAT_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+      CONNECTOR_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+      ROUTING_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+      MEMORY_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+      FILES_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+      OLLAMA_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+      IMAGE_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+      FILE_GENERATION_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+      WORKSPACE_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+      AGENT_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+      RESEARCH_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+      # MongoDB
+      AUDIT_MONGODB_URI: mongodb://localhost:27017/test
+      CLIENT_LOGS_MONGODB_URI: mongodb://localhost:27017/test
+      SERVER_LOGS_MONGODB_URI: mongodb://localhost:27017/test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build shared packages
+        run: |
+          cd packages/shared-types && npx tsc
+          cd ../shared-constants && npx tsc
+          cd ../shared-rabbitmq && npx tsc
+          cd ../shared-auth && npx tsc
+
+      - name: Generate Prisma client
+        if: matrix.prisma == true
+        run: cd apps/claw-${{ matrix.service }}-service && npx prisma generate
+
+      - name: Run tests
+        run: npm run test --workspace=${{ matrix.workspace }}
+
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [lint, typecheck]
+    needs: [lint, typecheck, test]
     steps:
       - uses: actions/checkout@v4
 
