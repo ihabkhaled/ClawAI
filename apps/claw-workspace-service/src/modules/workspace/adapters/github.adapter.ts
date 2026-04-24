@@ -230,11 +230,20 @@ export class GitHubAdapter implements WorkspaceAdapter {
   async exchangeCodeForTokens(
     code: string,
     redirectUri: string,
-    _codeVerifier: string | undefined,
+    codeVerifier: string | undefined,
     appCredentials: AdapterAppCredentials,
   ): Promise<OAuthTokenSet> {
     if (!appCredentials.clientId || !appCredentials.clientSecret) {
       throw new Error('GitHub OAuth requires clientId and clientSecret from provider app config');
+    }
+    const tokenBody: Record<string, string> = {
+      client_id: appCredentials.clientId,
+      client_secret: appCredentials.clientSecret,
+      code,
+      redirect_uri: redirectUri,
+    };
+    if (codeVerifier !== undefined) {
+      tokenBody['code_verifier'] = codeVerifier;
     }
     const response = await fetch(GITHUB_TOKEN_URL, {
       method: 'POST',
@@ -245,12 +254,7 @@ export class GitHubAdapter implements WorkspaceAdapter {
         // See https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
         'User-Agent': CLAW_USER_AGENT,
       },
-      body: JSON.stringify({
-        client_id: appCredentials.clientId,
-        client_secret: appCredentials.clientSecret,
-        code,
-        redirect_uri: redirectUri,
-      }),
+      body: JSON.stringify(tokenBody),
     });
     // GitHub is quirky: semantic errors (bad code, wrong secret) come back
     // as HTTP 200 with an error body, NOT 4xx. So inspect the body too.

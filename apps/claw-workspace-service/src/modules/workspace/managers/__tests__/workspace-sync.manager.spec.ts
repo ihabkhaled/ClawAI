@@ -2,7 +2,7 @@ import { WorkspaceSyncManager } from '../workspace-sync.manager';
 import { AppConfig } from '../../../../app/config/app.config';
 import type { WorkspaceConnectorRepository } from '../../repositories/workspace-connector.repository';
 import type { WorkspaceAdapterFactory } from '../../adapters/workspace-adapter.factory';
-import type { OAuthTokenManager } from '../oauth-token.manager';
+import type { TokenRefreshManager } from '../token-refresh.manager';
 import type { WorkspaceObjectManager } from '../workspace-object.manager';
 import type { RabbitMQService } from '@claw/shared-rabbitmq';
 import type { WorkspaceConnector } from '../../../../generated/prisma';
@@ -73,8 +73,8 @@ const mockRepo = {
 } as unknown as WorkspaceConnectorRepository;
 
 const mockTokenManager = {
-  decryptTokenSet: jest.fn().mockReturnValue({ accessToken: 'tok', scopes: [] }),
-} as unknown as OAuthTokenManager;
+  getValidAccessToken: jest.fn().mockResolvedValue('tok'),
+} as unknown as TokenRefreshManager;
 
 const mockObjectManager = {
   upsertBatch: jest.fn().mockResolvedValue(0),
@@ -89,6 +89,7 @@ describe('WorkspaceSyncManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (mockTokenManager.getValidAccessToken as jest.Mock).mockResolvedValue('tok');
     manager = new WorkspaceSyncManager(
       mockRepo,
       mockAdapterFactory,
@@ -156,16 +157,15 @@ describe('WorkspaceSyncManager', () => {
       );
     });
 
-    it('should use null accessToken when encryptedTokens is null', async () => {
-      const connectorNoTokens = { ...mockConnector, encryptedTokens: null };
+    it('should call getValidAccessToken for the connector before syncing', async () => {
       (mockAdapter.syncObjects as jest.Mock).mockResolvedValue({
         objectsFound: 0,
         objectsSynced: 0,
         objectsFailed: 0,
         objects: [],
       });
-      await manager.syncConnector(connectorNoTokens, false);
-      expect(mockTokenManager.decryptTokenSet).not.toHaveBeenCalled();
+      await manager.syncConnector(mockConnector, false);
+      expect(mockTokenManager.getValidAccessToken).toHaveBeenCalledWith(mockConnector);
     });
 
     it('should call objectManager.upsertBatch when objects are returned', async () => {

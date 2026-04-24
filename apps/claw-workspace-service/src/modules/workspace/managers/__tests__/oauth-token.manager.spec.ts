@@ -86,7 +86,7 @@ describe('OAuthTokenManager', () => {
   });
 
   describe('initOAuthFlow', () => {
-    it('should store state in Redis and return authorizationUrl with state', async () => {
+    it('should store state in Redis and return authorizationUrl with PKCE challenge by default', async () => {
       (mockRedis.set as jest.Mock).mockImplementation(() => Promise.resolve());
       const result = await manager.initOAuthFlow(
         'user1',
@@ -103,8 +103,43 @@ describe('OAuthTokenManager', () => {
         600,
       );
       expect(result.authorizationUrl).toContain('code_challenge');
+      expect(result.authorizationUrl).toContain('code_challenge_method=S256');
       expect(result.authorizationUrl).toContain('state=');
       expect(result.state).toBeDefined();
+    });
+
+    it('should NOT include code_challenge when pkce=false (e.g. Bitbucket)', async () => {
+      (mockRedis.set as jest.Mock).mockImplementation(() => Promise.resolve());
+      const result = await manager.initOAuthFlow(
+        'user1',
+        'BITBUCKET',
+        'app-config-2',
+        'https://app.test/cb',
+        'https://bitbucket.org/site/oauth2/authorize',
+        'bb-id',
+        ['repository'],
+        { pkce: false },
+      );
+      expect(result.authorizationUrl).not.toContain('code_challenge');
+      expect(result.authorizationUrl).not.toContain('code_challenge_method');
+      expect(result.authorizationUrl).toContain('state=');
+    });
+
+    it('should store verifier=undefined in state when pkce=false', async () => {
+      (mockRedis.set as jest.Mock).mockImplementation(() => Promise.resolve());
+      await manager.initOAuthFlow(
+        'user1',
+        'BITBUCKET',
+        'app-config-2',
+        'https://app.test/cb',
+        'https://bitbucket.org/site/oauth2/authorize',
+        'bb-id',
+        ['repository'],
+        { pkce: false },
+      );
+      const storedJson = (mockRedis.set as jest.Mock).mock.calls[0][1] as string;
+      const stored = JSON.parse(storedJson);
+      expect(stored.verifier).toBeUndefined();
     });
   });
 

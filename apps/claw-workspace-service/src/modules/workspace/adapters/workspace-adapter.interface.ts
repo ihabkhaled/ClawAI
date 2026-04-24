@@ -77,6 +77,13 @@ export interface WorkspaceAdapter {
 
   getDefaultScopes(): string[];
 
+  /**
+   * Whether this provider supports PKCE (code_challenge / code_verifier).
+   * Defaults to true. Providers that do NOT support PKCE (e.g. Bitbucket)
+   * must return false so the authorization URL is built without a challenge.
+   */
+  supportsPkce?(): boolean;
+
   // Optional write capability — only implemented by adapters that support write actions
   supportsWrite?(): boolean;
   executeWriteAction?(

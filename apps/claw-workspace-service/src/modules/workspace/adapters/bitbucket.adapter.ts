@@ -88,16 +88,18 @@ export class BitbucketAdapter implements WorkspaceAdapter {
 
   async exchangeCodeForTokens(
     code: string,
-    _redirectUri: string,
+    redirectUri: string,
     _codeVerifier: string | undefined,
     appCredentials: AdapterAppCredentials,
   ): Promise<OAuthTokenSet> {
     if (!appCredentials.clientId || !appCredentials.clientSecret) {
       throw new Error('Bitbucket OAuth requires clientId and clientSecret');
     }
+    // Bitbucket requires redirect_uri in the token body even though it uses Basic auth.
     const body = new URLSearchParams({
       grant_type: 'authorization_code',
       code,
+      redirect_uri: redirectUri,
     });
     const basic = Buffer.from(`${appCredentials.clientId}:${appCredentials.clientSecret}`).toString(
       'base64',
@@ -190,6 +192,11 @@ export class BitbucketAdapter implements WorkspaceAdapter {
       supportsWebhooks: true,
       objectTypes: ['REPOSITORY', 'PULL_REQUEST'],
     };
+  }
+
+  // Bitbucket OAuth2 does not support PKCE; sending code_challenge causes HTTP 400.
+  supportsPkce(): boolean {
+    return false;
   }
 
   getAuthorizationBaseUrl(): string {

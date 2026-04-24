@@ -28,10 +28,11 @@ export class OAuthTokenManager {
     authBaseUrl: string,
     clientId: string,
     scopes: string[],
+    options: { pkce: boolean } = { pkce: true },
   ): Promise<OAuthInitResult> {
     const state = generateOAuthState();
-    const verifier = generateCodeVerifier();
-    const challenge = generateCodeChallenge(verifier);
+    const verifier = options.pkce ? generateCodeVerifier() : undefined;
+    const challenge = verifier !== undefined ? generateCodeChallenge(verifier) : undefined;
 
     const stateData: OAuthStatePayload = {
       userId,
@@ -46,17 +47,22 @@ export class OAuthTokenManager {
       OAUTH_STATE_TTL_SECONDS,
     );
 
-    const params = new URLSearchParams({
+    const baseParams: Record<string, string> = {
       client_id: clientId,
       redirect_uri: redirectUri,
       response_type: 'code',
       scope: scopes.join(' '),
       state,
-      code_challenge: challenge,
-      code_challenge_method: 'S256',
-    });
+    };
+    if (challenge !== undefined) {
+      baseParams['code_challenge'] = challenge;
+      baseParams['code_challenge_method'] = 'S256';
+    }
 
-    return { authorizationUrl: `${authBaseUrl}?${params.toString()}`, state };
+    return {
+      authorizationUrl: `${authBaseUrl}?${new URLSearchParams(baseParams).toString()}`,
+      state,
+    };
   }
 
   async resolveOAuthState(state: string): Promise<OAuthStatePayload | null> {

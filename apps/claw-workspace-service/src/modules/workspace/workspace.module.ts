@@ -24,6 +24,7 @@ import { WorkspaceSearchInternalController } from './controllers/workspace-searc
 import { ConnectorActivationManager } from './managers/connector-activation.manager';
 import { OAuthTokenManager } from './managers/oauth-token.manager';
 import { StaleDetectorManager } from './managers/stale-detector.manager';
+import { TokenRefreshManager } from './managers/token-refresh.manager';
 import { WorkspaceHealthManager } from './managers/workspace-health.manager';
 import { WorkspaceObjectManager } from './managers/workspace-object.manager';
 import { WorkspaceSearchManager } from './managers/workspace-search.manager';
@@ -65,6 +66,7 @@ import { WorkspaceSearchService } from './services/workspace-search.service';
     ProviderAppConfigService,
     SyncHealthService,
     OAuthTokenManager,
+    TokenRefreshManager,
     WorkspaceHealthManager,
     WorkspaceSyncManager,
     WorkspaceSyncSchedulerManager,

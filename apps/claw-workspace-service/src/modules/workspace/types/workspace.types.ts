@@ -54,7 +54,7 @@ export type OAuthStatePayload = {
   provider: string;
   providerAppConfigId: string;
   redirectUri: string;
-  verifier: string;
+  verifier: string | undefined;
 };
 
 export type HealthCheckResult = {

@@ -284,6 +284,7 @@ export class WorkspaceConnectorService {
     }
     const adapter = this.adapterFactory.getAdapter(dto.provider);
     const scopes = dto.scopes.length > 0 ? dto.scopes : adapter.getDefaultScopes();
+    const pkce = adapter.supportsPkce?.() ?? true;
     return this.tokenManager.initOAuthFlow(
       userId,
       dto.provider,
@@ -292,6 +293,7 @@ export class WorkspaceConnectorService {
       adapter.getAuthorizationBaseUrl(),
       clientId,
       scopes,
+      { pkce },
     );
   }
 

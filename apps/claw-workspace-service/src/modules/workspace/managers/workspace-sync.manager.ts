@@ -12,7 +12,7 @@ import {
 
 import { WorkspaceConnectorRepository } from '../repositories/workspace-connector.repository';
 import { WorkspaceAdapterFactory } from '../adapters/workspace-adapter.factory';
-import { OAuthTokenManager } from './oauth-token.manager';
+import { TokenRefreshManager } from './token-refresh.manager';
 import { WorkspaceObjectManager } from './workspace-object.manager';
 import { WorkspaceSyncStatus } from '../../../common/enums/workspace-sync-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
@@ -34,7 +34,7 @@ export class WorkspaceSyncManager {
   constructor(
     private readonly repository: WorkspaceConnectorRepository,
     private readonly adapterFactory: WorkspaceAdapterFactory,
-    private readonly tokenManager: OAuthTokenManager,
+    private readonly tokenRefresh: TokenRefreshManager,
     private readonly objectManager: WorkspaceObjectManager,
     private readonly rabbitmq: RabbitMQService,
   ) {}
@@ -209,10 +209,7 @@ export class WorkspaceSyncManager {
     };
 
     const adapter = this.adapterFactory.getAdapter(connector.provider);
-    const tokens = connector.encryptedTokens
-      ? this.tokenManager.decryptTokenSet(connector.encryptedTokens)
-      : null;
-    const accessToken = tokens?.accessToken ?? '';
+    const accessToken = (await this.tokenRefresh.getValidAccessToken(connector)) ?? '';
     const deltaToken = isDelta ? (cursorIn ?? undefined) : undefined;
 
     let lastError: unknown;
