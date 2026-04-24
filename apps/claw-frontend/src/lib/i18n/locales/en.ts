@@ -1810,6 +1810,33 @@ export const en: TranslationDictionary = {
       extract_tasks: 'Extract Action Items',
     },
   },
+  confluence: {
+    page: {
+      title: 'Confluence',
+      description: 'Browse and manage synced Confluence pages.',
+      empty_title: 'No pages synced',
+      empty_description:
+        'No Confluence pages have been synced yet. Trigger a sync on your Confluence connector.',
+      error_title: 'Unable to load pages',
+      no_connector_title: 'No Confluence connector found',
+      no_connector_description:
+        'Connect a Confluence workspace in Workspace Connectors to start browsing pages.',
+    },
+    article: {
+      space: 'Space',
+      author: 'Author',
+      modified_by: 'Modified by',
+      version: 'Version',
+      labels: 'Labels',
+      parent: 'Parent',
+      open_page: 'Open in Confluence',
+    },
+    actions: {
+      summarize: 'Summarize',
+      extract_tasks: 'Extract Action Items',
+      write_comment: 'Write Comment',
+    },
+  },
   docs: {
     page: {
       title: 'Documents',

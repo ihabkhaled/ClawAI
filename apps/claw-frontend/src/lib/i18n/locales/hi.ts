@@ -1822,6 +1822,33 @@ export const hi: TranslationDictionary = {
       extract_tasks: 'कार्य निकालें',
     },
   },
+  confluence: {
+    page: {
+      title: 'Confluence',
+      description: 'सिंक किए गए Confluence पृष्ठ देखें और प्रबंधित करें।',
+      empty_title: 'कोई पृष्ठ सिंक नहीं हुए',
+      empty_description:
+        'अभी तक कोई Confluence पृष्ठ सिंक नहीं हुए। Confluence कनेक्टर पर सिंक चलाएं।',
+      error_title: 'पृष्ठ लोड नहीं हो सके',
+      no_connector_title: 'कोई Confluence कनेक्टर नहीं मिला',
+      no_connector_description:
+        'पृष्ठ देखने के लिए Workspace Connectors में Confluence workspace जोड़ें।',
+    },
+    article: {
+      space: 'स्पेस',
+      author: 'लेखक',
+      modified_by: 'संशोधित किया',
+      version: 'संस्करण',
+      labels: 'लेबल',
+      parent: 'मूल',
+      open_page: 'Confluence में खोलें',
+    },
+    actions: {
+      summarize: 'सारांश',
+      extract_tasks: 'कार्य निकालें',
+      write_comment: 'टिप्पणी लिखें',
+    },
+  },
   docs: {
     page: {
       title: 'दस्तावेज़',

@@ -1837,6 +1837,33 @@ export const ru: TranslationDictionary = {
       extract_tasks: 'Извлечь задачи',
     },
   },
+  confluence: {
+    page: {
+      title: 'Confluence',
+      description: 'Просматривайте и управляйте синхронизированными страницами Confluence.',
+      empty_title: 'Страницы не синхронизированы',
+      empty_description:
+        'Страницы Confluence ещё не синхронизированы. Запустите синхронизацию на коннекторе Confluence.',
+      error_title: 'Не удалось загрузить страницы',
+      no_connector_title: 'Коннектор Confluence не найден',
+      no_connector_description:
+        'Подключите Confluence в Workspace Connectors для просмотра страниц.',
+    },
+    article: {
+      space: 'Пространство',
+      author: 'Автор',
+      modified_by: 'Изменил',
+      version: 'Версия',
+      labels: 'Метки',
+      parent: 'Родитель',
+      open_page: 'Открыть в Confluence',
+    },
+    actions: {
+      summarize: 'Резюме',
+      extract_tasks: 'Извлечь задачи',
+      write_comment: 'Написать комментарий',
+    },
+  },
   docs: {
     page: {
       title: 'Документы',

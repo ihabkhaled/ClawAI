@@ -1787,6 +1787,31 @@ export type TranslationDictionary = {
       extract_tasks: string;
     };
   };
+  confluence: {
+    page: {
+      title: string;
+      description: string;
+      empty_title: string;
+      empty_description: string;
+      error_title: string;
+      no_connector_title: string;
+      no_connector_description: string;
+    };
+    article: {
+      space: string;
+      author: string;
+      modified_by: string;
+      version: string;
+      labels: string;
+      parent: string;
+      open_page: string;
+    };
+    actions: {
+      summarize: string;
+      extract_tasks: string;
+      write_comment: string;
+    };
+  };
   docs: {
     page: {
       title: string;

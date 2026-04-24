@@ -1804,6 +1804,33 @@ export const ar: TranslationDictionary = {
       extract_tasks: 'استخراج بنود العمل',
     },
   },
+  confluence: {
+    page: {
+      title: 'Confluence',
+      description: 'تصفح وإدارة صفحات Confluence المزامنة.',
+      empty_title: 'لا توجد صفحات مزامنة',
+      empty_description:
+        'لم تتم مزامنة أي صفحات Confluence بعد. قم بتشغيل مزامنة على موصل Confluence.',
+      error_title: 'تعذر تحميل الصفحات',
+      no_connector_title: 'لم يتم العثور على موصل Confluence',
+      no_connector_description:
+        'اربط مساحة عمل Confluence في موصلات مساحة العمل لبدء تصفح الصفحات.',
+    },
+    article: {
+      space: 'المساحة',
+      author: 'المؤلف',
+      modified_by: 'عدّله',
+      version: 'الإصدار',
+      labels: 'التسميات',
+      parent: 'الأصل',
+      open_page: 'فتح في Confluence',
+    },
+    actions: {
+      summarize: 'تلخيص',
+      extract_tasks: 'استخراج بنود العمل',
+      write_comment: 'كتابة تعليق',
+    },
+  },
   docs: {
     page: {
       title: 'المستندات',

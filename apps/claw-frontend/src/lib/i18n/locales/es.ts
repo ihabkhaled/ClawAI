@@ -1844,6 +1844,33 @@ export const es: TranslationDictionary = {
       extract_tasks: 'Extraer tareas',
     },
   },
+  confluence: {
+    page: {
+      title: 'Confluence',
+      description: 'Explora y gestiona páginas de Confluence sincronizadas.',
+      empty_title: 'No hay páginas sincronizadas',
+      empty_description:
+        'Aún no se han sincronizado páginas de Confluence. Inicia una sincronización en tu conector de Confluence.',
+      error_title: 'No se pudieron cargar las páginas',
+      no_connector_title: 'No se encontró conector de Confluence',
+      no_connector_description:
+        'Conecta un workspace de Confluence en Conectores de espacio de trabajo para explorar páginas.',
+    },
+    article: {
+      space: 'Espacio',
+      author: 'Autor',
+      modified_by: 'Modificado por',
+      version: 'Versión',
+      labels: 'Etiquetas',
+      parent: 'Padre',
+      open_page: 'Abrir en Confluence',
+    },
+    actions: {
+      summarize: 'Resumir',
+      extract_tasks: 'Extraer tareas',
+      write_comment: 'Escribir comentario',
+    },
+  },
   docs: {
     page: {
       title: 'Documentos',

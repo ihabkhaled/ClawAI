@@ -1839,6 +1839,33 @@ export const it: TranslationDictionary = {
       extract_tasks: 'Estrai attività',
     },
   },
+  confluence: {
+    page: {
+      title: 'Confluence',
+      description: 'Sfoglia e gestisci pagine Confluence sincronizzate.',
+      empty_title: 'Nessuna pagina sincronizzata',
+      empty_description:
+        'Nessuna pagina Confluence è stata sincronizzata. Avvia una sincronizzazione sul tuo connector Confluence.',
+      error_title: 'Impossibile caricare le pagine',
+      no_connector_title: 'Nessun connector Confluence trovato',
+      no_connector_description:
+        'Collega un workspace Confluence nei Connector Workspace per sfogliare le pagine.',
+    },
+    article: {
+      space: 'Spazio',
+      author: 'Autore',
+      modified_by: 'Modificato da',
+      version: 'Versione',
+      labels: 'Etichette',
+      parent: 'Genitore',
+      open_page: 'Apri in Confluence',
+    },
+    actions: {
+      summarize: 'Riassumi',
+      extract_tasks: 'Estrai attività',
+      write_comment: 'Scrivi commento',
+    },
+  },
   docs: {
     page: {
       title: 'Documenti',

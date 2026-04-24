@@ -38,6 +38,7 @@ import type {
   JudgeModelOption,
   VisibleProgressStage,
 } from './chat.types';
+import type { ConfluencePageMetadata } from './confluence.types';
 import type { Connector, ConnectorModel, CreateConnectorRequest } from './connector.types';
 import type { ConsensusMetadata, ConsensusModelBreakdown } from './consensus.types';
 import type { CreateContextPackItemRequest, CreateContextPackRequest } from './context-pack.types';
@@ -1249,6 +1250,36 @@ export type DocFileDialogProps = {
 
 export type DocsActionsBarProps = {
   doc: WorkspaceObject;
+  onAction: (kind: AiActionKind) => void;
+  isDraftPending: boolean;
+  t: TranslateFunction;
+};
+
+export type ConfluencePageRowProps = {
+  page: WorkspaceObject;
+  metadata: ConfluencePageMetadata;
+  onClick: () => void;
+  t: TranslateFunction;
+};
+
+export type ConfluencePageListProps = {
+  pages: WorkspaceObject[];
+  isLoading: boolean;
+  isError: boolean;
+  onSelectPage: (page: WorkspaceObject) => void;
+  t: TranslateFunction;
+};
+
+export type ConfluencePageDialogProps = {
+  page: WorkspaceObject | null;
+  open: boolean;
+  onClose: () => void;
+  onOpenAiAction: (kind: AiActionKind) => void;
+  t: TranslateFunction;
+};
+
+export type ConfluenceActionsBarProps = {
+  page: WorkspaceObject;
   onAction: (kind: AiActionKind) => void;
   isDraftPending: boolean;
   t: TranslateFunction;
