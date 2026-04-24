@@ -49,6 +49,7 @@ import type {
   EscalationChainSynthesisState,
   EscalationStepResult,
 } from './escalation-chain.types';
+import type { FigmaDesignMetadata } from './figma.types';
 import type { UploadedFile } from './file.types';
 import type { GmailMessageMetadata } from './gmail.types';
 import type { AggregatedHealth } from './health.types';
@@ -1280,6 +1281,36 @@ export type ConfluencePageDialogProps = {
 
 export type ConfluenceActionsBarProps = {
   page: WorkspaceObject;
+  onAction: (kind: AiActionKind) => void;
+  isDraftPending: boolean;
+  t: TranslateFunction;
+};
+
+export type FigmaDesignRowProps = {
+  design: WorkspaceObject;
+  metadata: FigmaDesignMetadata;
+  onClick: () => void;
+  t: TranslateFunction;
+};
+
+export type FigmaDesignListProps = {
+  designs: WorkspaceObject[];
+  isLoading: boolean;
+  isError: boolean;
+  onSelect: (design: WorkspaceObject) => void;
+  t: TranslateFunction;
+};
+
+export type FigmaDesignDialogProps = {
+  design: WorkspaceObject | null;
+  open: boolean;
+  onClose: () => void;
+  onOpenAiAction: (kind: AiActionKind) => void;
+  t: TranslateFunction;
+};
+
+export type FigmaActionsBarProps = {
+  design: WorkspaceObject;
   onAction: (kind: AiActionKind) => void;
   isDraftPending: boolean;
   t: TranslateFunction;

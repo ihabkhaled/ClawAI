@@ -1877,4 +1877,28 @@ export const hi: TranslationDictionary = {
       draft_email: 'ईमेल का मसौदा',
     },
   },
+  figma: {
+    page: {
+      title: 'Figma',
+      description: 'सिंक किए गए Figma डिज़ाइन फ़ाइलें ब्राउज़ और प्रबंधित करें।',
+      empty_title: 'कोई डिज़ाइन नहीं मिला',
+      empty_description: 'अभी तक कोई Figma डिज़ाइन फ़ाइल सिंक नहीं हुई है।',
+      error_title: 'डिज़ाइन लोड करने में विफल',
+      no_connector_title: 'Figma कनेक्ट नहीं है',
+      no_connector_description: 'डिज़ाइन ब्राउज़ करने के लिए अपना Figma वर्कस्पेस कनेक्ट करें।',
+    },
+    design: {
+      team: 'टीम',
+      project: 'प्रोजेक्ट',
+      modified_by: 'द्वारा संशोधित',
+      components: 'घटक',
+      open_in_figma: 'Figma में खोलें',
+      last_updated: 'अंतिम अपडेट',
+    },
+    actions: {
+      summarize: 'डिज़ाइन सारांश',
+      extract_components: 'घटक निकालें',
+      draft_spec: 'स्पेक तैयार करें',
+    },
+  },
 };

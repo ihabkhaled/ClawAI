@@ -1837,6 +1837,30 @@ export type TranslationDictionary = {
       draft_email: string;
     };
   };
+  figma: {
+    page: {
+      title: string;
+      description: string;
+      empty_title: string;
+      empty_description: string;
+      error_title: string;
+      no_connector_title: string;
+      no_connector_description: string;
+    };
+    design: {
+      team: string;
+      project: string;
+      modified_by: string;
+      components: string;
+      open_in_figma: string;
+      last_updated: string;
+    };
+    actions: {
+      summarize: string;
+      extract_components: string;
+      draft_spec: string;
+    };
+  };
 };
 
 export type TranslationNamespace = keyof TranslationDictionary;

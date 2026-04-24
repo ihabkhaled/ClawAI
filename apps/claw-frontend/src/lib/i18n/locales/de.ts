@@ -1900,4 +1900,28 @@ export const de: TranslationDictionary = {
       draft_email: 'E-Mail entwerfen',
     },
   },
+  figma: {
+    page: {
+      title: 'Figma',
+      description: 'Synchronisierte Figma-Designdateien durchsuchen und verwalten.',
+      empty_title: 'Keine Designs gefunden',
+      empty_description: 'Es wurden noch keine Figma-Designdateien synchronisiert.',
+      error_title: 'Designs konnten nicht geladen werden',
+      no_connector_title: 'Figma nicht verbunden',
+      no_connector_description: 'Verbinde deinen Figma-Arbeitsbereich, um Designs zu durchsuchen.',
+    },
+    design: {
+      team: 'Team',
+      project: 'Projekt',
+      modified_by: 'Geändert von',
+      components: 'Komponenten',
+      open_in_figma: 'In Figma öffnen',
+      last_updated: 'Zuletzt aktualisiert',
+    },
+    actions: {
+      summarize: 'Design zusammenfassen',
+      extract_components: 'Komponenten extrahieren',
+      draft_spec: 'Spezifikation entwerfen',
+    },
+  },
 };

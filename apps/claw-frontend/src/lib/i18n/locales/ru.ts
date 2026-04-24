@@ -1892,4 +1892,28 @@ export const ru: TranslationDictionary = {
       draft_email: 'Составить письмо',
     },
   },
+  figma: {
+    page: {
+      title: 'Figma',
+      description: 'Просмотр и управление синхронизированными файлами дизайна Figma.',
+      empty_title: 'Дизайны не найдены',
+      empty_description: 'Файлы дизайна Figma ещё не синхронизированы.',
+      error_title: 'Не удалось загрузить дизайны',
+      no_connector_title: 'Figma не подключена',
+      no_connector_description: 'Подключите рабочее пространство Figma для просмотра дизайнов.',
+    },
+    design: {
+      team: 'Команда',
+      project: 'Проект',
+      modified_by: 'Изменено',
+      components: 'Компоненты',
+      open_in_figma: 'Открыть в Figma',
+      last_updated: 'Последнее обновление',
+    },
+    actions: {
+      summarize: 'Резюме дизайна',
+      extract_components: 'Извлечь компоненты',
+      draft_spec: 'Составить спецификацию',
+    },
+  },
 };

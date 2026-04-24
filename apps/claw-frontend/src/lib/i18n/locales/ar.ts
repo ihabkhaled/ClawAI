@@ -1858,4 +1858,28 @@ export const ar: TranslationDictionary = {
       draft_email: 'صياغة بريد إلكتروني',
     },
   },
+  figma: {
+    page: {
+      title: 'فيغما',
+      description: 'تصفح وإدارة ملفات تصميم فيغما المتزامنة.',
+      empty_title: 'لا توجد تصاميم',
+      empty_description: 'لم يتم مزامنة أي ملفات تصميم فيغما بعد.',
+      error_title: 'فشل تحميل التصاميم',
+      no_connector_title: 'فيغما غير متصل',
+      no_connector_description: 'قم بتوصيل مساحة عمل فيغما لتصفح التصاميم.',
+    },
+    design: {
+      team: 'الفريق',
+      project: 'المشروع',
+      modified_by: 'عدّل بواسطة',
+      components: 'مكونات',
+      open_in_figma: 'فتح في فيغما',
+      last_updated: 'آخر تحديث',
+    },
+    actions: {
+      summarize: 'تلخيص التصميم',
+      extract_components: 'استخراج المكونات',
+      draft_spec: 'صياغة المواصفات',
+    },
+  },
 };
