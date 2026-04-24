@@ -19,6 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { CONTEXT_PACK_ITEM_TYPE_LABELS, CONTEXT_PACK_ITEM_TYPE_OPTIONS } from '@/constants';
 import type { ContextPackItemType } from '@/enums';
 import { useContextPackItemFormState } from '@/hooks/context-packs/use-context-pack-item-form-state';
+import { useTranslation } from '@/lib/i18n';
 import type { ContextPackItemFormProps } from '@/types';
 
 export function ContextPackItemForm({
@@ -27,6 +28,7 @@ export function ContextPackItemForm({
   onSubmit,
   isPending,
 }: ContextPackItemFormProps) {
+  const { t } = useTranslation();
   const {
     type,
     setType,
@@ -44,24 +46,22 @@ export function ContextPackItemForm({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Add Item</DialogTitle>
-          <DialogDescription>
-            Add a text note, instruction, or file reference to this context pack.
-          </DialogDescription>
+          <DialogTitle>{t('context.addItem')}</DialogTitle>
+          <DialogDescription>{t('context.addItemDesc')}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4">
           <div className="grid gap-2">
             <label htmlFor="item-type" className="text-sm font-medium">
-              Type
+              {t('context.itemType')}
             </label>
             <Select value={type} onValueChange={(value) => setType(value as ContextPackItemType)}>
               <SelectTrigger id="item-type">
-                <SelectValue placeholder="Select a type" />
+                <SelectValue placeholder={t('context.selectType')} />
               </SelectTrigger>
               <SelectContent>
-                {CONTEXT_PACK_ITEM_TYPE_OPTIONS.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {CONTEXT_PACK_ITEM_TYPE_LABELS[t]}
+                {CONTEXT_PACK_ITEM_TYPE_OPTIONS.map((optType) => (
+                  <SelectItem key={optType} value={optType}>
+                    {t(CONTEXT_PACK_ITEM_TYPE_LABELS[optType])}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -74,13 +74,13 @@ export function ContextPackItemForm({
           {isFileRef ? (
             <div className="grid gap-2">
               <label htmlFor="item-file-id" className="text-sm font-medium">
-                File ID
+                {t('context.fileId')}
               </label>
               <Input
                 id="item-file-id"
                 value={fileId}
                 onChange={(e) => setFileId(e.target.value)}
-                placeholder="Enter file ID"
+                placeholder={t('context.fileIdPlaceholder')}
               />
               {fieldErrors.fileId ? (
                 <p className="mt-1 text-sm text-destructive">{fieldErrors.fileId[0]}</p>
@@ -89,13 +89,13 @@ export function ContextPackItemForm({
           ) : (
             <div className="grid gap-2">
               <label htmlFor="item-content" className="text-sm font-medium">
-                Content
+                {t('context.content')}
               </label>
               <Textarea
                 id="item-content"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Enter the content..."
+                placeholder={t('context.contentPlaceholder')}
                 rows={4}
               />
               {fieldErrors.content ? (
@@ -106,10 +106,10 @@ export function ContextPackItemForm({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? 'Adding...' : 'Add Item'}
+              {isPending ? t('context.adding') : t('context.addItem')}
             </Button>
           </DialogFooter>
         </form>

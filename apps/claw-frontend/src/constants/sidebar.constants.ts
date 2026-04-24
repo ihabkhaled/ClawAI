@@ -78,6 +78,8 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
     children: [
       { labelKey: 'nav.workspaceAppConfigs', href: ROUTES.WORKSPACE_APP_CONFIGS, icon: KeyRound },
       { labelKey: 'nav.workspaceActions', href: ROUTES.WORKSPACE_ACTIONS, icon: CheckSquare },
+      { labelKey: 'nav.workspaceApprovals', href: ROUTES.WORKSPACE_APPROVALS, icon: CheckSquare },
+      { labelKey: 'nav.workspaceSyncHealth', href: ROUTES.WORKSPACE_SYNC_HEALTH, icon: Activity },
     ],
   },
   {

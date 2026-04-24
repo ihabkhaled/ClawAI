@@ -3,10 +3,12 @@ import { Activity, AlertTriangle, Clock, Server } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SERVER_LOG_STATS_TOP_SERVICES_LIMIT } from '@/constants';
+import { useTranslation } from '@/lib/i18n';
 import type { ServerLogsStatsProps } from '@/types';
 import { formatLogLatency, getLevelBadgeClass } from '@/utilities/log-stats.utility';
 
 export function ServerLogsStats({ stats }: ServerLogsStatsProps): React.ReactElement {
+  const { t } = useTranslation();
   const topServices = [...stats.byService]
     .sort((a, b) => b.count - a.count)
     .slice(0, SERVER_LOG_STATS_TOP_SERVICES_LIMIT);
@@ -16,7 +18,7 @@ export function ServerLogsStats({ stats }: ServerLogsStatsProps): React.ReactEle
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Logs</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('logs.totalLogs')}</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -26,7 +28,7 @@ export function ServerLogsStats({ stats }: ServerLogsStatsProps): React.ReactEle
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Errors</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('logs.errors')}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
@@ -35,7 +37,9 @@ export function ServerLogsStats({ stats }: ServerLogsStatsProps): React.ReactEle
             </p>
             {stats.total > 0 ? (
               <p className="text-xs text-muted-foreground">
-                {((stats.errorCount / stats.total) * 100).toFixed(1)}% of total
+                {t('logs.percentOfTotal', {
+                  pct: ((stats.errorCount / stats.total) * 100).toFixed(1),
+                })}
               </p>
             ) : null}
           </CardContent>
@@ -43,7 +47,7 @@ export function ServerLogsStats({ stats }: ServerLogsStatsProps): React.ReactEle
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Latency</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('logs.avgLatency')}</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -55,7 +59,7 @@ export function ServerLogsStats({ stats }: ServerLogsStatsProps): React.ReactEle
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Level Distribution</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('logs.levelDistribution')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
@@ -70,7 +74,7 @@ export function ServerLogsStats({ stats }: ServerLogsStatsProps): React.ReactEle
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-medium">Top Services</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('logs.topServices')}</CardTitle>
             <Server className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -82,7 +86,7 @@ export function ServerLogsStats({ stats }: ServerLogsStatsProps): React.ReactEle
                 </div>
               ))}
               {topServices.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No service data available</p>
+                <p className="text-sm text-muted-foreground">{t('logs.noServiceData')}</p>
               ) : null}
             </div>
           </CardContent>

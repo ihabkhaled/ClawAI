@@ -7,15 +7,17 @@ import { Topbar } from '@/components/layout/topbar';
 import { ComponentSize } from '@/enums';
 import { useAuthGuard } from '@/hooks/auth/use-auth-guard';
 import { usePreferenceBootstrap } from '@/hooks/settings/use-preference-bootstrap';
+import { useTranslation } from '@/lib/i18n';
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const { isReady } = useAuthGuard();
+  const { t } = useTranslation();
   usePreferenceBootstrap();
 
   if (!isReady) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <LoadingSpinner size={ComponentSize.LG} label="Authenticating..." />
+        <LoadingSpinner size={ComponentSize.LG} label={t('auth.authenticating')} />
       </div>
     );
   }

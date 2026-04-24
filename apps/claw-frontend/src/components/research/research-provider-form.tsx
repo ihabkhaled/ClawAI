@@ -68,7 +68,7 @@ export function ResearchProviderForm({
               id="rp-name"
               value={form.name}
               onChange={(e) => onSetField('name', e.target.value)}
-              placeholder="Tavily production"
+              placeholder={t('research.providers.namePlaceholder')}
             />
           </div>
           <div className="flex flex-col gap-1">

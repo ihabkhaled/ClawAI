@@ -6,6 +6,7 @@ import { ResearchToggle } from '@/components/chat/research-toggle';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useMessageComposerState } from '@/hooks/chat/use-message-composer-state';
+import { useTranslation } from '@/lib/i18n';
 import type { MessageComposerProps } from '@/types';
 
 export function MessageComposer({
@@ -14,6 +15,7 @@ export function MessageComposer({
   selectedModel,
   onModelChange,
 }: MessageComposerProps): React.ReactElement {
+  const { t } = useTranslation();
   const {
     content,
     validationError,
@@ -50,7 +52,7 @@ export function MessageComposer({
           value={content}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
+          placeholder={t('chat.composerPlaceholder')}
           className="h-full min-h-0 flex-1 resize-none"
           disabled={isPending}
         />
@@ -61,7 +63,7 @@ export function MessageComposer({
           disabled={isPending || !content.trim()}
         >
           <Send className="h-4 w-4" />
-          <span className="sr-only">Send message</span>
+          <span className="sr-only">{t('chat.sendMessage')}</span>
         </Button>
       </div>
       {validationError ? <p className="mt-1 text-sm text-destructive">{validationError}</p> : null}

@@ -9,6 +9,7 @@ import {
 
 import { THINKING_INDICATOR_LABEL } from '@/constants';
 import { FallbackFailureType, VisibleProgressStageStatus } from '@/enums';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { ThinkingIndicatorProps } from '@/types';
 
@@ -22,18 +23,19 @@ export function ThinkingIndicator({
   progressStages,
   currentStageLabel,
 }: ThinkingIndicatorProps) {
+  const { t } = useTranslation();
   const hasFallbacks = fallbackAttempts && fallbackAttempts.length > 0;
   const recentStages = progressStages?.slice(-6) ?? [];
 
   let statusLabel: string;
   if (judgeEvaluating) {
-    statusLabel = `Verifying with ${judgeModel ?? 'judge'}...`;
+    statusLabel = t('chat.verifyingWith', { model: judgeModel ?? t('chat.judge') });
   } else if (currentStageLabel) {
     statusLabel = currentStageLabel;
   } else if (hasFallbacks) {
-    statusLabel = 'Retrying with fallback...';
+    statusLabel = t('chat.fallbackRetrying');
   } else if (executingModel) {
-    statusLabel = `${executingModel} is thinking...`;
+    statusLabel = t('chat.modelThinking', { model: executingModel });
   } else {
     statusLabel = THINKING_INDICATOR_LABEL;
   }
@@ -60,13 +62,18 @@ export function ThinkingIndicator({
                 )}
                 <span>
                   {attempt.failedProvider}/{attempt.failedModel}{' '}
-                  {attempt.failureType === FallbackFailureType.QUALITY ? 'weak response' : 'failed'}
+                  {attempt.failureType === FallbackFailureType.QUALITY
+                    ? t('chat.weakResponse')
+                    : t('chat.providerFailed')}
                 </span>
                 {attempt.nextProvider ? (
                   <>
                     <ArrowRight className="h-3 w-3 shrink-0" />
                     <span>
-                      trying {attempt.nextProvider}/{attempt.nextModel}...
+                      {t('chat.tryingFallback', {
+                        provider: attempt.nextProvider,
+                        model: attempt.nextModel ?? '',
+                      })}
                     </span>
                   </>
                 ) : null}
@@ -84,18 +91,18 @@ export function ThinkingIndicator({
           <>
             <section
               className="w-full min-w-[18rem] max-w-xl overflow-hidden rounded-2xl border border-sky-500/25 bg-gradient-to-br from-sky-500/10 via-background to-emerald-500/10 shadow-sm"
-              aria-label={`Current AI progress: ${statusLabel}`}
+              aria-label={t('chat.currentAiProgress', { status: statusLabel })}
             >
               <div className="flex items-center justify-between gap-3 border-b border-border/60 px-3 py-2">
                 <div className="min-w-0">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-700 dark:text-sky-300">
-                    Visible AI progress
+                    {t('chat.visibleAiProgress')}
                   </div>
                   <div className="truncate text-sm font-medium text-foreground">{statusLabel}</div>
                 </div>
                 <div className="flex items-center gap-1.5 rounded-full bg-background/80 px-2 py-1 text-[11px] text-muted-foreground">
                   <CircleDot className="h-3 w-3 animate-pulse text-sky-500" />
-                  live
+                  {t('chat.live')}
                 </div>
               </div>
               {recentStages.length > 0 ? (

@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { ROUTING_MODE_LABELS } from '@/constants';
 import type { RoutingMode } from '@/enums';
 import { useToggle } from '@/hooks/common/use-toggle';
+import { useTranslation } from '@/lib/i18n';
 import type { MessageProvenanceProps } from '@/types';
 import { estimateCost, formatLatency } from '@/utilities';
 
 export function MessageProvenance({ message }: MessageProvenanceProps) {
+  const { t } = useTranslation();
   const { isOpen: isExpanded, toggle: toggleExpanded } = useToggle(false);
   const metadata = message.metadata as Record<string, unknown> | null;
   const routeRoadmap = metadata?.['routeRoadmap'] as
@@ -74,7 +76,7 @@ export function MessageProvenance({ message }: MessageProvenanceProps) {
         size="sm"
         className="h-6 gap-1 px-1.5 text-xs text-muted-foreground"
         onClick={toggleExpanded}
-        aria-label="Toggle message provenance"
+        aria-label={t('chat.toggleProvenance')}
       >
         <Info className="h-3 w-3" />
         {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}

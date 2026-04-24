@@ -4,6 +4,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { useServerLogStats } from '@/hooks/logs/use-server-log-stats';
+import { useTranslation } from '@/lib/i18n';
 import type { ServerLogsContentProps } from '@/types';
 
 import { ServerLogEntryRow } from './server-log-entry-row';
@@ -17,18 +18,19 @@ export function ServerLogsContent({
   isLoading,
   isError,
 }: ServerLogsContentProps): React.ReactElement {
+  const { t } = useTranslation();
   const { stats, isLoading: isStatsLoading } = useServerLogStats();
 
   if (isLoading) {
-    return <LoadingSpinner label="Loading server logs..." />;
+    return <LoadingSpinner label={t('logs.loadingServer')} />;
   }
 
   if (isError) {
     return (
       <EmptyState
         icon={Server}
-        title="Failed to load server logs"
-        description="Could not fetch server logs. Please try again later."
+        title={t('logs.failedToLoadServer')}
+        description={t('logs.failedToLoadServerDesc')}
       />
     );
   }
@@ -37,8 +39,8 @@ export function ServerLogsContent({
     return (
       <EmptyState
         icon={Server}
-        title="No server logs"
-        description="Server-side activity logs will appear here as services process requests."
+        title={t('logs.noServerLogs')}
+        description={t('logs.noServerLogsActivityDesc')}
       />
     );
   }
@@ -55,7 +57,11 @@ export function ServerLogsContent({
 
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Showing page {meta.page} of {meta.totalPages} ({meta.total} total)
+          {t('common.showingPage', {
+            page: String(meta.page),
+            totalPages: String(meta.totalPages),
+            total: String(meta.total),
+          })}
         </p>
         <div className="flex gap-2">
           <Button
@@ -64,7 +70,7 @@ export function ServerLogsContent({
             disabled={page <= 1}
             onClick={() => setPage(page - 1)}
           >
-            Previous
+            {t('common.previous')}
           </Button>
           <Button
             variant="outline"
@@ -72,7 +78,7 @@ export function ServerLogsContent({
             disabled={page >= meta.totalPages}
             onClick={() => setPage(page + 1)}
           >
-            Next
+            {t('common.next')}
           </Button>
         </div>
       </div>

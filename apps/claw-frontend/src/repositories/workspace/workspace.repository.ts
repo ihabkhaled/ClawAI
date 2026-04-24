@@ -1,7 +1,10 @@
 import { apiClient } from '../../services/shared/api-client';
 import type {
+  BulkApproveOutcome,
+  BulkApproveWorkspaceActionsRequest,
   CreateWorkspaceActionRequest,
   CreateWorkspaceConnectorRequest,
+  EditWorkspaceActionRequest,
   ListWorkspaceActionsQuery,
   ListWorkspaceConnectorsQuery,
   ListWorkspaceObjectsQuery,
@@ -205,5 +208,20 @@ export async function rejectWorkspaceAction(
   dto?: RejectWorkspaceActionRequest,
 ): Promise<WorkspaceAction> {
   const response = await apiClient.post<WorkspaceAction>(`${BASE}/actions/${id}/reject`, dto ?? {});
+  return response.data;
+}
+
+export async function editWorkspaceAction(
+  id: string,
+  dto: EditWorkspaceActionRequest,
+): Promise<WorkspaceAction> {
+  const response = await apiClient.patch<WorkspaceAction>(`${BASE}/actions/${id}`, dto);
+  return response.data;
+}
+
+export async function bulkApproveWorkspaceActions(
+  dto: BulkApproveWorkspaceActionsRequest,
+): Promise<BulkApproveOutcome> {
+  const response = await apiClient.post<BulkApproveOutcome>(`${BASE}/actions/bulk-approve`, dto);
   return response.data;
 }

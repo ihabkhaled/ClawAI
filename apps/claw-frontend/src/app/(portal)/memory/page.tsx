@@ -45,14 +45,9 @@ export default function MemoryPage() {
   if (isError) {
     return (
       <div className="flex h-full flex-col">
-        <PageHeader
-          title={t('memory.title')}
-          description={t('memory.description')}
-        />
+        <PageHeader title={t('memory.title')} description={t('memory.description')} />
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-sm text-destructive">
-            {error?.message ?? t('memory.loadFailed')}
-          </p>
+          <p className="text-sm text-destructive">{error?.message ?? t('memory.loadFailed')}</p>
         </div>
       </div>
     );
@@ -75,7 +70,7 @@ export default function MemoryPage() {
               <SelectContent>
                 {MEMORY_FILTER_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {t(opt.label)}
                   </SelectItem>
                 ))}
               </SelectContent>

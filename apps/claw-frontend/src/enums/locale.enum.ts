@@ -7,4 +7,5 @@ export enum Locale {
   ES = 'es',
   RU = 'ru',
   PT = 'pt',
+  HI = 'hi',
 }

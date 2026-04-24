@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MESSAGE_ROLE_LABELS, RE_ROUTE_REASON_LABELS } from '@/constants';
 import { MessageFeedback, MessageRole, RoutingMode } from '@/enums';
+import { useTranslation } from '@/lib/i18n';
 import { MarkdownRenderer } from '@/lib/markdown';
 import { cn } from '@/lib/utils';
 import type { MessageBubbleProps } from '@/types';
@@ -31,6 +32,7 @@ export function MessageBubble({
   onFeedback,
   onRegenerate,
 }: MessageBubbleProps) {
+  const { t } = useTranslation();
   const isUser = message.role === MessageRole.USER;
   const roleLabel = MESSAGE_ROLE_LABELS[message.role];
 
@@ -82,9 +84,7 @@ export function MessageBubble({
   const assistantContent = hasVisibleAssistantContent ? (
     <MarkdownRenderer content={message.content} />
   ) : (
-    <p className="whitespace-pre-wrap text-muted-foreground">
-      No visible final answer was produced for this reply. Regenerate to retry.
-    </p>
+    <p className="whitespace-pre-wrap text-muted-foreground">{t('chat.noVisibleAnswer')}</p>
   );
   const isReRouted = metadata?.['reRouted'] === true;
   const originalProvider =
@@ -184,7 +184,7 @@ export function MessageBubble({
                 className="gap-1 border-green-500/50 text-xs text-green-600 dark:text-green-400"
               >
                 <ShieldCheck className="h-3 w-3" />
-                Verified
+                {t('chat.judgeVerified')}
               </Badge>
             ) : null}
             {judgeDecision === 'REVISE' ? (
@@ -193,7 +193,7 @@ export function MessageBubble({
                 className="gap-1 border-amber-500/50 text-xs text-amber-600 dark:text-amber-400"
               >
                 <RefreshCw className="h-3 w-3" />
-                Revised
+                {t('chat.judgeRevised')}
               </Badge>
             ) : null}
             {judgeDecision === 'ESCALATE' ? (
@@ -202,13 +202,15 @@ export function MessageBubble({
                 className="gap-1 border-blue-500/50 text-xs text-blue-600 dark:text-blue-400"
               >
                 <ArrowUpCircle className="h-3 w-3" />
-                Escalated
+                {t('chat.judgeEscalated')}
               </Badge>
             ) : null}
             {memoryCount >= 0 ? (
               <Badge variant="secondary" className="gap-1 text-xs">
                 <Brain className="h-3 w-3" />
-                {memoryCount} {memoryCount === 1 ? 'memory' : 'memories'}
+                {memoryCount === 1
+                  ? t('chat.oneMemory', { count: memoryCount })
+                  : t('chat.manyMemories', { count: memoryCount })}
               </Badge>
             ) : null}
             {contextFileIds.length >= 0 ? (
@@ -235,7 +237,7 @@ export function MessageBubble({
                 size="sm"
                 className="h-7 w-7 p-0 text-muted-foreground"
                 onClick={() => onRegenerate(message.id)}
-                aria-label="Regenerate"
+                aria-label={t('chat.regenerate')}
               >
                 <RefreshCw className="h-3.5 w-3.5" />
               </Button>

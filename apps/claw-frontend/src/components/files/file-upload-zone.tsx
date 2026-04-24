@@ -1,6 +1,7 @@
 import { Upload } from 'lucide-react';
 
 import { useFileUploadZoneState } from '@/hooks/files/use-file-upload-zone-state';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { FileUploadZoneProps } from '@/types';
 
@@ -9,6 +10,7 @@ export function FileUploadZone({
   isUploading,
   validationError,
 }: FileUploadZoneProps) {
+  const { t } = useTranslation();
   const {
     isDragOver,
     inputRef,
@@ -40,9 +42,9 @@ export function FileUploadZone({
     >
       <Upload className="mb-3 h-8 w-8 text-muted-foreground" />
       <p className="text-sm font-medium">
-        {isUploading ? 'Uploading...' : 'Drop a file here or click to browse'}
+        {isUploading ? t('files.uploading') : t('files.dropOrClick')}
       </p>
-      <p className="mt-1 text-xs text-muted-foreground">All file types accepted (max 50 MB)</p>
+      <p className="mt-1 text-xs text-muted-foreground">{t('files.allTypesAccepted')}</p>
       {validationError ? <p className="mt-2 text-sm text-destructive">{validationError}</p> : null}
       <input
         ref={inputRef}

@@ -41,7 +41,7 @@ export function useInThreadCompare({
     onSuccess: async () => {
       showToast.success({
         title: t('compare.title'),
-        description: 'Models are processing. Results will appear below.',
+        description: t('compare.modelsProcessing'),
       });
       await queryClient.invalidateQueries({ queryKey: queryKeys.threads.all });
       await queryClient.invalidateQueries({

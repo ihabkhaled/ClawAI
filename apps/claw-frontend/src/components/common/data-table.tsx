@@ -8,20 +8,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useTranslation } from '@/lib/i18n';
 import type { DataTableColumn, DataTableProps } from '@/types';
 
 export type { DataTableColumn };
 
-export function DataTable<T>({
-  columns,
-  data,
-  keyExtractor,
-  emptyMessage = 'No data available.',
-}: DataTableProps<T>) {
+export function DataTable<T>({ columns, data, keyExtractor, emptyMessage }: DataTableProps<T>) {
+  const { t } = useTranslation();
   if (data.length === 0) {
     return (
       <div className="flex h-24 items-center justify-center rounded-md border text-sm text-muted-foreground">
-        {emptyMessage}
+        {emptyMessage ?? t('common.noDataAvailable')}
       </div>
     );
   }

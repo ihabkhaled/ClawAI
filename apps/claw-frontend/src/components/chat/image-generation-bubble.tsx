@@ -5,6 +5,7 @@ import { ImageGenerationStatus } from '@/enums';
 import { useAuthenticatedImage } from '@/hooks/chat/use-authenticated-image';
 import { useImageGenerationBubbleState } from '@/hooks/chat/use-image-generation-bubble-state';
 import { useImageGenerationListener } from '@/hooks/chat/use-image-generation-listener';
+import { useTranslation } from '@/lib/i18n';
 import { getImageStatusLabel, isInProgressImageStatus } from '@/utilities';
 
 export function ImageGenerationBubble({
@@ -16,6 +17,7 @@ export function ImageGenerationBubble({
   prompt: string;
   isAutoMode?: boolean;
 }) {
+  const { t } = useTranslation();
   const { activeGenId, handleRetry, handleRetryWithModel } = useImageGenerationBubbleState({
     generationId,
   });
@@ -49,14 +51,16 @@ export function ImageGenerationBubble({
       ) : null}
       {generation?.status === ImageGenerationStatus.CANCELLED ? (
         <div className="rounded-xl border border-border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Generation cancelled</div>
+          <div className="text-sm font-medium text-muted-foreground">
+            {t('chat.generationCancelled')}
+          </div>
         </div>
       ) : null}
       {generation?.status === ImageGenerationStatus.COMPLETED && blobUrl ? (
         <ImageCompletedState blobUrl={blobUrl} prompt={prompt} />
       ) : null}
       {generation?.status === ImageGenerationStatus.COMPLETED && !blobUrl ? (
-        <ImageLoadingState status="Loading image..." prompt={prompt} />
+        <ImageLoadingState status={t('chat.loadingImage')} prompt={prompt} />
       ) : null}
     </div>
   );

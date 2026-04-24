@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select';
 import { ALL_FILTER } from '@/constants';
 import { LogLevel } from '@/enums';
+import { useTranslation } from '@/lib/i18n';
 import type { ClientLogsTabProps } from '@/types';
 
 import { ClientLogsContent } from './client-logs-content';
@@ -40,6 +41,7 @@ export function ClientLogsTab({
   endDate,
   setEndDate,
 }: ClientLogsTabProps): React.ReactElement {
+  const { t } = useTranslation();
   return (
     <div>
       <div className="mb-4 flex flex-wrap gap-3">
@@ -48,10 +50,10 @@ export function ClientLogsTab({
           onValueChange={(v) => setLevelFilter(v === ALL_FILTER ? undefined : v)}
         >
           <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="All Levels" />
+            <SelectValue placeholder={t('logs.allLevels')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL_FILTER}>All Levels</SelectItem>
+            <SelectItem value={ALL_FILTER}>{t('logs.allLevels')}</SelectItem>
             {Object.values(LogLevel).map((level) => (
               <SelectItem key={level} value={level}>
                 {level}
@@ -61,35 +63,35 @@ export function ClientLogsTab({
         </Select>
 
         <Input
-          placeholder="Component..."
+          placeholder={t('logs.componentPlaceholder')}
           value={componentFilter}
           onChange={(e) => setComponentFilter(e.target.value)}
           className="w-[150px]"
         />
 
         <Input
-          placeholder="Action..."
+          placeholder={t('logs.actionPlaceholder')}
           value={actionFilter}
           onChange={(e) => setActionFilter(e.target.value)}
           className="w-[140px]"
         />
 
         <Input
-          placeholder="Route..."
+          placeholder={t('logs.routePlaceholder')}
           value={routeFilter}
           onChange={(e) => setRouteFilter(e.target.value)}
           className="w-[150px]"
         />
 
         <Input
-          placeholder="User ID..."
+          placeholder={t('logs.userIdPlaceholder')}
           value={userIdFilter}
           onChange={(e) => setUserIdFilter(e.target.value)}
           className="w-[150px]"
         />
 
         <Input
-          placeholder="Message contains..."
+          placeholder={t('logs.messageContainsPlaceholder')}
           value={messageContainsFilter}
           onChange={(e) => setMessageContainsFilter(e.target.value)}
           className="w-[180px]"
@@ -97,7 +99,7 @@ export function ClientLogsTab({
 
         <Input
           type="date"
-          placeholder="Start date"
+          placeholder={t('logs.startDate')}
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
           className="w-[150px]"
@@ -105,14 +107,14 @@ export function ClientLogsTab({
 
         <Input
           type="date"
-          placeholder="End date"
+          placeholder={t('logs.endDate')}
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
           className="w-[150px]"
         />
 
         <Input
-          placeholder="Full-text search..."
+          placeholder={t('logs.fullTextSearch')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full sm:w-[220px]"

@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/table';
 import { UserRole } from '@/enums';
 import { useUserTableState } from '@/hooks/admin/use-user-table-state';
+import { useTranslation } from '@/lib/i18n';
 import type { UserTableProps } from '@/types';
 
 export function UserTable({
@@ -29,11 +30,12 @@ export function UserTable({
   isDeactivatePending,
 }: UserTableProps) {
   const { editingUserId, setEditingUserId, handleRoleSelect } = useUserTableState();
+  const { t } = useTranslation();
 
   if (users.length === 0) {
     return (
       <div className="flex h-24 items-center justify-center rounded-md border text-sm text-muted-foreground">
-        No users found
+        {t('admin.noUsers')}
       </div>
     );
   }
@@ -43,12 +45,12 @@ export function UserTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Username</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Joined</TableHead>
-            <TableHead className="text-end">Actions</TableHead>
+            <TableHead>{t('admin.colUsername')}</TableHead>
+            <TableHead>{t('admin.colEmail')}</TableHead>
+            <TableHead>{t('admin.colRole')}</TableHead>
+            <TableHead>{t('admin.colStatus')}</TableHead>
+            <TableHead>{t('admin.colJoined')}</TableHead>
+            <TableHead className="text-end">{t('admin.colActions')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -68,9 +70,9 @@ export function UserTable({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
-                      <SelectItem value={UserRole.OPERATOR}>Operator</SelectItem>
-                      <SelectItem value={UserRole.VIEWER}>Viewer</SelectItem>
+                      <SelectItem value={UserRole.ADMIN}>{t('admin.roleAdmin')}</SelectItem>
+                      <SelectItem value={UserRole.OPERATOR}>{t('admin.roleOperator')}</SelectItem>
+                      <SelectItem value={UserRole.VIEWER}>{t('admin.roleViewer')}</SelectItem>
                     </SelectContent>
                   </Select>
                 ) : (
@@ -96,7 +98,7 @@ export function UserTable({
                   disabled={isDeactivatePending || isRoleChangePending || user.status !== 'ACTIVE'}
                   onClick={() => onDeactivate(user.id)}
                 >
-                  Deactivate
+                  {t('admin.deactivate')}
                 </Button>
               </TableCell>
             </TableRow>

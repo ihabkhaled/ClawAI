@@ -69,3 +69,7 @@ export {
   DiscoverySourceType,
   DownloadStatus,
 } from './discovery.enum';
+export { ActionGenerationMode } from './action-generation-mode.enum';
+export { FreshnessBand } from './freshness-band.enum';
+export { AiActionKind, AiActionMode, AiActionPrivacyClass } from './ai-action-kind.enum';
+export { AiActionLength, AiActionTone } from './ai-action-tone.enum';

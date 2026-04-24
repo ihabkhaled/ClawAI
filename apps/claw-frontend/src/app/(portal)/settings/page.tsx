@@ -52,9 +52,7 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">{t('settings.profile')}</CardTitle>
-            <CardDescription>
-              {t('settings.profileDescription')}
-            </CardDescription>
+            <CardDescription>{t('settings.profileDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -68,9 +66,7 @@ export default function SettingsPage() {
                 {t('settings.email')}
               </label>
               <Input id="settings-email" value={user?.email ?? ''} disabled readOnly />
-              <p className="text-xs text-muted-foreground">
-                {t('settings.emailReadOnly')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t('settings.emailReadOnly')}</p>
             </div>
             <div className="space-y-2">
               <label htmlFor="settings-role" className="text-sm font-medium">
@@ -86,14 +82,12 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">{t('settings.changePassword')}</CardTitle>
-            <CardDescription>
-              {t('settings.passwordRequirements')}
-            </CardDescription>
+            <CardDescription>{t('settings.passwordRequirements')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form
               onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}
-              className="space-y-4 max-w-sm"
+              className="max-w-sm space-y-4"
             >
               <div className="space-y-2">
                 <label htmlFor="current-password" className="text-sm font-medium">
@@ -177,7 +171,7 @@ export default function SettingsPage() {
               <SelectContent>
                 {LANGUAGE_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.nativeLabel} ({option.label})
+                    {option.nativeLabel} ({t(option.label)})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -209,7 +203,7 @@ export default function SettingsPage() {
                     className={cn('gap-2', isActive && 'pointer-events-none')}
                   >
                     {IconComponent ? <IconComponent className="h-4 w-4" /> : null}
-                    {option.label}
+                    {t(option.label)}
                   </Button>
                 );
               })}

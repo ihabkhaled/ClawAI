@@ -61,7 +61,7 @@ export function WorkspaceConnectorForm({
               id="workspace-connector-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="GitHub Workspace"
+              placeholder={t('workspaceConnectors.namePlaceholder')}
             />
             <p className="text-xs text-muted-foreground">{t('workspaceConnectors.nameHelp')}</p>
             {fieldErrors.name ? (

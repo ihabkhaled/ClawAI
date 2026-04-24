@@ -20,6 +20,14 @@ const { mockConnectSse, mockLogger } = vi.hoisted(() => ({
   },
 }));
 
+vi.mock('@/lib/i18n', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    locale: 'en',
+    dir: 'ltr',
+  }),
+}));
+
 vi.mock('@/utilities', () => ({
   connectSse: (...args: unknown[]) => mockConnectSse(...args),
   logger: mockLogger,

@@ -3,5 +3,6 @@ export enum WorkspaceConnectorStatus {
   DEGRADED = 'DEGRADED',
   DISCONNECTED = 'DISCONNECTED',
   PENDING_AUTH = 'PENDING_AUTH',
+  PAUSED = 'PAUSED',
   UNKNOWN = 'UNKNOWN',
 }

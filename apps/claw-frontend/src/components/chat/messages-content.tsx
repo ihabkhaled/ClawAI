@@ -1,6 +1,7 @@
 import { MessageBubble } from '@/components/chat/message-bubble';
 import { ThinkingIndicator } from '@/components/chat/thinking-indicator';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
+import { useTranslation } from '@/lib/i18n';
 import type { ChatMessage, MessagesContentProps } from '@/types';
 
 export function MessagesContent({
@@ -16,14 +17,15 @@ export function MessagesContent({
   onFeedback,
   onRegenerate,
 }: MessagesContentProps): React.ReactElement {
+  const { t } = useTranslation();
   if (isLoadingThread || isLoadingMessages) {
-    return <LoadingSpinner label="Loading messages..." />;
+    return <LoadingSpinner label={t('chat.loadingMessages')} />;
   }
 
   if (messages.length === 0) {
     return (
       <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-        No messages yet. Send a message to start the conversation.
+        {t('chat.noMessagesYet')}
       </div>
     );
   }

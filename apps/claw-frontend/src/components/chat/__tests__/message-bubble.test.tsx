@@ -37,6 +37,14 @@ vi.mock('@/lib/markdown', () => ({
   MarkdownRenderer: ({ content }: { content: string }) => <div>{content}</div>,
 }));
 
+vi.mock('@/lib/i18n', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    locale: 'en',
+    dir: 'ltr',
+  }),
+}));
+
 describe('MessageBubble', () => {
   it('renders a fallback message when assistant content is empty', () => {
     const message: ChatMessage = {
@@ -59,9 +67,7 @@ describe('MessageBubble', () => {
 
     render(<MessageBubble message={message} />);
 
-    expect(
-      screen.getByText('No visible final answer was produced for this reply. Regenerate to retry.'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('chat.noVisibleAnswer')).toBeInTheDocument();
   });
 
   it('renders the routed model and router path from metadata', () => {

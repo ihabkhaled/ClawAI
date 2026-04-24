@@ -18,9 +18,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { MEMORY_TYPE_LABELS, MEMORY_TYPE_OPTIONS } from '@/constants';
 import type { MemoryType } from '@/enums';
 import { useMemoryFormState } from '@/hooks/memory/use-memory-form-state';
+import { useTranslation } from '@/lib/i18n';
 import type { MemoryFormProps } from '@/types';
 
 export function MemoryForm({ open, onOpenChange, onSubmit, isPending, memory }: MemoryFormProps) {
+  const { t } = useTranslation();
   const {
     type,
     setType,
@@ -38,29 +40,27 @@ export function MemoryForm({ open, onOpenChange, onSubmit, isPending, memory }: 
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Memory' : 'Create Memory'}</DialogTitle>
+          <DialogTitle>{isEditing ? t('memory.editMemory') : t('memory.createMemory')}</DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? 'Update this memory record.'
-              : 'Add a new memory record to persist context across conversations.'}
+            {isEditing ? t('memory.editMemoryDesc') : t('memory.createMemoryDesc')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4">
           <div className="grid gap-2">
             <label htmlFor="memory-type" className="text-sm font-medium">
-              Type
+              {t('memory.type')}
             </label>
             <Select
               value={type ?? undefined}
               onValueChange={(value) => setType(value as MemoryType)}
             >
               <SelectTrigger id="memory-type">
-                <SelectValue placeholder="Select a type" />
+                <SelectValue placeholder={t('context.selectType')} />
               </SelectTrigger>
               <SelectContent>
-                {MEMORY_TYPE_OPTIONS.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {MEMORY_TYPE_LABELS[t]}
+                {MEMORY_TYPE_OPTIONS.map((optType) => (
+                  <SelectItem key={optType} value={optType}>
+                    {t(MEMORY_TYPE_LABELS[optType])}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -72,13 +72,13 @@ export function MemoryForm({ open, onOpenChange, onSubmit, isPending, memory }: 
 
           <div className="grid gap-2">
             <label htmlFor="memory-content" className="text-sm font-medium">
-              Content
+              {t('memory.content')}
             </label>
             <Textarea
               id="memory-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Enter the memory content..."
+              placeholder={t('memory.contentPlaceholder')}
               rows={4}
             />
             {fieldErrors.content ? (
@@ -88,7 +88,7 @@ export function MemoryForm({ open, onOpenChange, onSubmit, isPending, memory }: 
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isPending}>
               {isPending ? pendingLabel : submitLabel}

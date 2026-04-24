@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SEVERITY_COLORS } from '@/constants';
 import type { AuditSeverity } from '@/enums';
+import { useTranslation } from '@/lib/i18n';
 import type { AuditLog, AuditLogsContentProps, DataTableColumn } from '@/types';
 
 import { AuditDetailRow } from './audit-detail-row';
@@ -19,26 +20,27 @@ export function AuditLogsContent({
   isLoading,
   isError,
 }: AuditLogsContentProps): React.ReactElement {
+  const { t } = useTranslation();
   const columns: DataTableColumn<AuditLog>[] = [
     {
       key: 'timestamp',
-      header: 'Timestamp',
+      header: t('audits.timestamp'),
       render: (row) => new Date(row.createdAt).toLocaleString(),
       className: 'whitespace-nowrap',
     },
     {
       key: 'action',
-      header: 'Action',
+      header: t('audits.action'),
       render: (row) => <Badge variant="outline">{row.action}</Badge>,
     },
     {
       key: 'userId',
-      header: 'Actor',
+      header: t('audits.actor'),
       render: (row) => <span className="font-mono text-xs">{row.userId}</span>,
     },
     {
       key: 'entity',
-      header: 'Entity',
+      header: t('audits.entity'),
       render: (row) => (
         <span className="text-sm">
           {row.entityType ? `${row.entityType}` : '-'}
@@ -52,7 +54,7 @@ export function AuditLogsContent({
     },
     {
       key: 'severity',
-      header: 'Severity',
+      header: t('audits.severity'),
       render: (row) => (
         <Badge variant="outline" className={SEVERITY_COLORS[row.severity as AuditSeverity] ?? ''}>
           {row.severity}
@@ -61,30 +63,28 @@ export function AuditLogsContent({
     },
     {
       key: 'ipAddress',
-      header: 'IP Address',
+      header: t('audits.ipAddress'),
       render: (row) => (
-        <span className="font-mono text-xs text-muted-foreground">
-          {row.ipAddress ?? '-'}
-        </span>
+        <span className="font-mono text-xs text-muted-foreground">{row.ipAddress ?? '-'}</span>
       ),
     },
     {
       key: 'details',
-      header: 'Details',
+      header: t('audits.details'),
       render: (row) => <AuditDetailRow row={row} />,
     },
   ];
 
   if (isLoading) {
-    return <LoadingSpinner label="Loading audit logs..." />;
+    return <LoadingSpinner label={t('audits.loadingAudits')} />;
   }
 
   if (isError) {
     return (
       <EmptyState
         icon={Shield}
-        title="Failed to load audits"
-        description="Could not fetch audit logs. Please try again later."
+        title={t('audits.loadFailed')}
+        description={t('audits.loadFailedDesc')}
       />
     );
   }
@@ -93,8 +93,8 @@ export function AuditLogsContent({
     return (
       <EmptyState
         icon={Shield}
-        title="No audit entries"
-        description="Audit logs will appear here as users perform actions within the platform."
+        title={t('audits.noAudits')}
+        description={t('audits.noAuditsDesc')}
       />
     );
   }
@@ -105,12 +105,16 @@ export function AuditLogsContent({
         columns={columns}
         data={auditLogs}
         keyExtractor={(row) => row._id}
-        emptyMessage="No audit logs match your filters."
+        emptyMessage={t('audits.noMatchingAudits')}
       />
 
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Showing page {meta.page} of {meta.totalPages} ({meta.total} total)
+          {t('common.showingPage', {
+            page: String(meta.page),
+            totalPages: String(meta.totalPages),
+            total: String(meta.total),
+          })}
         </p>
         <div className="flex gap-2">
           <Button
@@ -119,7 +123,7 @@ export function AuditLogsContent({
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
           >
-            Previous
+            {t('common.previous')}
           </Button>
           <Button
             variant="outline"
@@ -127,7 +131,7 @@ export function AuditLogsContent({
             disabled={page >= meta.totalPages}
             onClick={() => setPage((p) => p + 1)}
           >
-            Next
+            {t('common.next')}
           </Button>
         </div>
       </div>

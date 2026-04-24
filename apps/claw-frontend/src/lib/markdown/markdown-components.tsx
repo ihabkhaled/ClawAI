@@ -2,7 +2,7 @@ import { Download } from 'lucide-react';
 import type { Components } from 'react-markdown';
 
 import { API_BASE_URL } from '@/constants';
-
+import { useTranslation } from '@/lib/i18n';
 
 function PreBlock({ children, ...props }: React.JSX.IntrinsicElements['pre']): React.JSX.Element {
   return (
@@ -144,6 +144,7 @@ function HorizontalRule(props: React.JSX.IntrinsicElements['hr']): React.JSX.Ele
 }
 
 function ImageBlock({ src, alt, ...props }: React.JSX.IntrinsicElements['img']): React.JSX.Element {
+  const { t } = useTranslation();
   const srcStr = typeof src === 'string' ? src : undefined;
   const resolvedSrc = srcStr?.startsWith('/api/')
     ? `${API_BASE_URL.replace('/api/v1', '')}${srcStr}`
@@ -165,7 +166,7 @@ function ImageBlock({ src, alt, ...props }: React.JSX.IntrinsicElements['img']):
             href={downloadUrl}
             download
             className="absolute end-2 top-2 rounded-md bg-background/80 p-1.5 opacity-0 transition-opacity group-hover:opacity-100"
-            title="Download image"
+            title={t('chat.downloadImage')}
           >
             <Download className="h-4 w-4" />
           </a>

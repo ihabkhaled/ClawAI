@@ -73,11 +73,11 @@ export function FileAttachmentPicker({
               disabled={isUploading}
             >
               <Plus className="h-3.5 w-3.5" />
-              {isUploading ? 'Uploading...' : 'Upload new file'}
+              {isUploading ? t('files.uploading') : t('files.uploadNewFile')}
             </Button>
             {dragOver ? (
               <div className="mt-2 rounded border-2 border-dashed border-primary bg-primary/5 p-3 text-center text-xs text-muted-foreground">
-                Drop file here
+                {t('files.dropFileHere')}
               </div>
             ) : null}
           </div>

@@ -1,5 +1,6 @@
 import { MessageSquare } from 'lucide-react';
 
+import { useTranslation } from '@/lib/i18n';
 import type { SearchResultsProps } from '@/types';
 import { formatRelativeDate } from '@/utilities';
 
@@ -8,13 +9,20 @@ export function SearchResults({
   threads,
   onSelect,
 }: SearchResultsProps): React.ReactElement {
+  const { t } = useTranslation();
   if (isLoading) {
-    return <div className="px-3 py-4 text-center text-sm text-muted-foreground">Searching...</div>;
+    return (
+      <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+        {t('chat.searching')}
+      </div>
+    );
   }
 
   if (threads.length === 0) {
     return (
-      <div className="px-3 py-4 text-center text-sm text-muted-foreground">No threads found</div>
+      <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+        {t('chat.globalSearchNoResults')}
+      </div>
     );
   }
 
@@ -29,7 +37,7 @@ export function SearchResults({
         >
           <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0 flex-1">
-            <div className="truncate font-medium">{thread.title ?? 'Untitled'}</div>
+            <div className="truncate font-medium">{thread.title ?? t('chat.untitled')}</div>
             <div className="text-xs text-muted-foreground">
               {formatRelativeDate(thread.updatedAt)}
               {thread._count?.messages !== undefined

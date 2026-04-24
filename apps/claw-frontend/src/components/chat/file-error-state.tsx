@@ -1,5 +1,6 @@
 import { RefreshCw, XCircle } from 'lucide-react';
 
+import { useTranslation } from '@/lib/i18n';
 import type { FileErrorStateProps } from '@/types';
 
 export function FileErrorState({
@@ -7,6 +8,7 @@ export function FileErrorState({
   error,
   onRetry,
 }: FileErrorStateProps): React.ReactElement {
+  const { t } = useTranslation();
   return (
     <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
       <div className="flex items-center gap-2">
@@ -14,7 +16,7 @@ export function FileErrorState({
         <span className="text-sm font-medium text-destructive">{status}</span>
       </div>
       <div className="mt-1 text-xs text-muted-foreground">
-        {error ?? 'File generation failed. Please try again.'}
+        {error ?? t('chat.fileGenerationFailedRetry')}
       </div>
       <button
         className="mt-3 flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs hover:bg-muted"
@@ -22,7 +24,7 @@ export function FileErrorState({
         type="button"
       >
         <RefreshCw className="h-3 w-3" />
-        Retry
+        {t('common.retry')}
       </button>
     </div>
   );

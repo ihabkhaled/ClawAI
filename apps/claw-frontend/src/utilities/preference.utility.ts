@@ -12,6 +12,7 @@ const LANGUAGE_TO_LOCALE_MAP: Record<UserLanguagePreference, Locale> = {
   [UserLanguagePreference.ES]: Locale.ES,
   [UserLanguagePreference.RU]: Locale.RU,
   [UserLanguagePreference.PT]: Locale.PT,
+  [UserLanguagePreference.HI]: Locale.HI,
 };
 
 const LOCALE_TO_LANGUAGE_MAP: Record<Locale, UserLanguagePreference> = {
@@ -23,6 +24,7 @@ const LOCALE_TO_LANGUAGE_MAP: Record<Locale, UserLanguagePreference> = {
   [Locale.ES]: UserLanguagePreference.ES,
   [Locale.RU]: UserLanguagePreference.RU,
   [Locale.PT]: UserLanguagePreference.PT,
+  [Locale.HI]: UserLanguagePreference.HI,
 };
 
 const APPEARANCE_TO_THEME_MAP: Record<UserAppearancePreference, Theme> = {

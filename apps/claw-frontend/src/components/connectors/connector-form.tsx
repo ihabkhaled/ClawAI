@@ -26,6 +26,7 @@ import {
 } from '@/constants';
 import { ConnectorAuthType, ConnectorProvider } from '@/enums';
 import { useConnectorFormState } from '@/hooks/connectors/use-connector-form-state';
+import { useTranslation } from '@/lib/i18n';
 import type { ConnectorFormProps } from '@/types';
 
 export function ConnectorForm({
@@ -35,6 +36,7 @@ export function ConnectorForm({
   isPending,
   connector,
 }: ConnectorFormProps) {
+  const { t } = useTranslation();
   const {
     name,
     setName,
@@ -61,25 +63,25 @@ export function ConnectorForm({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Connector' : 'Add Connector'}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? t('connectors.editConnector') : t('connectors.addConnector')}
+          </DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? 'Update your connector configuration.'
-              : 'Connect to an AI provider to access its models.'}
+            {isEditing ? t('connectors.editConnectorDesc') : t('connectors.addConnectorDesc')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4">
           <div className="grid gap-2">
             <label htmlFor="connector-name" className="text-sm font-medium">
-              Name
+              {t('connectors.name')}
             </label>
             <Input
               id="connector-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="My OpenAI Connector"
+              placeholder={t('connectors.namePlaceholder')}
             />
-            <FieldHint text="A friendly name to identify this connector in your dashboard." />
+            <FieldHint text={t('connectors.nameHelp')} />
             {fieldErrors.name ? (
               <p className="mt-1 text-sm text-destructive">{fieldErrors.name[0]}</p>
             ) : null}
@@ -87,7 +89,7 @@ export function ConnectorForm({
 
           <div className="grid gap-2">
             <label htmlFor="connector-provider" className="text-sm font-medium">
-              Provider
+              {t('connectors.provider')}
             </label>
             <Select
               value={provider ?? undefined}
@@ -95,7 +97,7 @@ export function ConnectorForm({
               disabled={isEditing}
             >
               <SelectTrigger id="connector-provider">
-                <SelectValue placeholder="Select a provider" />
+                <SelectValue placeholder={t('connectors.selectProvider')} />
               </SelectTrigger>
               <SelectContent>
                 {CONNECTOR_PROVIDER_OPTIONS.map((p) => (
@@ -105,7 +107,7 @@ export function ConnectorForm({
                 ))}
               </SelectContent>
             </Select>
-            <FieldHint text="The AI provider this connector will communicate with." />
+            <FieldHint text={t('connectors.providerHelp')} />
             {fieldErrors.provider ? (
               <p className="mt-1 text-sm text-destructive">{fieldErrors.provider[0]}</p>
             ) : null}
@@ -113,7 +115,7 @@ export function ConnectorForm({
 
           <div className="grid gap-2">
             <label htmlFor="connector-auth" className="text-sm font-medium">
-              Auth Type
+              {t('connectors.authType')}
             </label>
             <Select
               value={authType}
@@ -130,7 +132,7 @@ export function ConnectorForm({
                 ))}
               </SelectContent>
             </Select>
-            <FieldHint text="How to authenticate with the provider. Most providers use API Key." />
+            <FieldHint text={t('connectors.authTypeHelp')} />
             {fieldErrors.authType ? (
               <p className="mt-1 text-sm text-destructive">{fieldErrors.authType[0]}</p>
             ) : null}
@@ -139,16 +141,20 @@ export function ConnectorForm({
           {authType === ConnectorAuthType.API_KEY ? (
             <div className="grid gap-2">
               <label htmlFor="connector-api-key" className="text-sm font-medium">
-                API Key
+                {t('connectors.apiKey')}
               </label>
               <Input
                 id="connector-api-key"
                 type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder={isEditing ? 'Leave blank to keep current key' : 'sk-...'}
+                placeholder={
+                  isEditing
+                    ? t('connectors.apiKeyPlaceholderEdit')
+                    : t('connectors.apiKeyPlaceholder')
+                }
               />
-              <FieldHint text="Your secret API key from the provider. It will be encrypted at rest." />
+              <FieldHint text={t('connectors.apiKeyHelp')} />
               {fieldErrors.apiKey ? (
                 <p className="mt-1 text-sm text-destructive">{fieldErrors.apiKey[0]}</p>
               ) : null}
@@ -157,18 +163,19 @@ export function ConnectorForm({
 
           <div className="grid gap-2">
             <label htmlFor="connector-base-url" className="text-sm font-medium">
-              Base URL (optional)
+              {t('connectors.baseUrlOptional')}
             </label>
             <Input
               id="connector-base-url"
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
-              placeholder={defaultBaseUrl ?? 'https://api.example.com'}
+              placeholder={defaultBaseUrl ?? t('connectors.baseUrlPlaceholder')}
             />
-            <FieldHint text="Override the default API endpoint. Leave blank to use the provider default." />
+            <FieldHint text={t('connectors.baseUrlHelp')} />
             {defaultBaseUrl !== null ? (
               <p className="text-xs text-muted-foreground">
-                Default: <code className="rounded bg-muted px-1 py-0.5">{defaultBaseUrl}</code>
+                {t('connectors.defaultLabel')}{' '}
+                <code className="rounded bg-muted px-1 py-0.5">{defaultBaseUrl}</code>
               </p>
             ) : null}
             {fieldErrors.baseUrl ? (
@@ -179,15 +186,15 @@ export function ConnectorForm({
           {provider === ConnectorProvider.AWS_BEDROCK ? (
             <div className="grid gap-2">
               <label htmlFor="connector-region" className="text-sm font-medium">
-                Region
+                {t('connectors.region')}
               </label>
               <Input
                 id="connector-region"
                 value={region}
                 onChange={(e) => setRegion(e.target.value)}
-                placeholder="us-east-1"
+                placeholder={t('connectors.regionPlaceholder')}
               />
-              <FieldHint text="The AWS region where your Bedrock endpoint is deployed." />
+              <FieldHint text={t('connectors.regionHelp')} />
               {fieldErrors.region ? (
                 <p className="mt-1 text-sm text-destructive">{fieldErrors.region[0]}</p>
               ) : null}
@@ -197,15 +204,13 @@ export function ConnectorForm({
           {!isEditing ? (
             <div className="flex items-start gap-2 rounded-md border bg-muted/50 p-3 text-xs text-muted-foreground">
               <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              <span>
-                Save the connector first, then test the connection from the connectors list.
-              </span>
+              <span>{t('connectors.saveFirstThenTest')}</span>
             </div>
           ) : null}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isPending}>
               {isPending ? pendingLabel : submitLabel}

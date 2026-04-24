@@ -34,7 +34,7 @@ export default function DashboardPage() {
         {statCards.map((stat) => (
           <Card key={stat.label}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
+              <CardTitle className="text-sm font-medium">{t(stat.label)}</CardTitle>
               <stat.icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -52,13 +52,13 @@ export default function DashboardPage() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <action.icon className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-base">{action.label}</CardTitle>
+                  <CardTitle className="text-base">{t(action.label)}</CardTitle>
                 </div>
-                <CardDescription>{action.description}</CardDescription>
+                <CardDescription>{t(action.description)}</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button asChild variant="outline" className="w-full">
-                  <Link href={action.href}>{action.label}</Link>
+                  <Link href={action.href}>{t(action.label)}</Link>
                 </Button>
               </CardContent>
             </Card>

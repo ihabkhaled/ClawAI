@@ -3,10 +3,12 @@ import { Activity, AlertTriangle, Layers, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CLIENT_LOG_STATS_TOP_ITEMS_LIMIT } from '@/constants';
+import { useTranslation } from '@/lib/i18n';
 import type { ClientLogsStatsProps } from '@/types';
 import { getLevelBadgeClass } from '@/utilities/log-stats.utility';
 
 export function ClientLogsStats({ stats }: ClientLogsStatsProps): React.ReactElement {
+  const { t } = useTranslation();
   const topComponents = [...stats.topComponents]
     .sort((a, b) => b.count - a.count)
     .slice(0, CLIENT_LOG_STATS_TOP_ITEMS_LIMIT);
@@ -20,7 +22,7 @@ export function ClientLogsStats({ stats }: ClientLogsStatsProps): React.ReactEle
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Logs</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('logs.totalLogs')}</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -30,7 +32,7 @@ export function ClientLogsStats({ stats }: ClientLogsStatsProps): React.ReactEle
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Errors</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('logs.errors')}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
@@ -39,7 +41,9 @@ export function ClientLogsStats({ stats }: ClientLogsStatsProps): React.ReactEle
             </p>
             {stats.total > 0 ? (
               <p className="text-xs text-muted-foreground">
-                {((stats.errorCount / stats.total) * 100).toFixed(1)}% of total
+                {t('logs.percentOfTotal', {
+                  pct: ((stats.errorCount / stats.total) * 100).toFixed(1),
+                })}
               </p>
             ) : null}
           </CardContent>
@@ -49,7 +53,7 @@ export function ClientLogsStats({ stats }: ClientLogsStatsProps): React.ReactEle
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Level Distribution</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('logs.levelDistribution')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
@@ -64,7 +68,7 @@ export function ClientLogsStats({ stats }: ClientLogsStatsProps): React.ReactEle
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-medium">Top Components</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('logs.topComponents')}</CardTitle>
             <Layers className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -76,7 +80,7 @@ export function ClientLogsStats({ stats }: ClientLogsStatsProps): React.ReactEle
                 </div>
               ))}
               {topComponents.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No component data available</p>
+                <p className="text-sm text-muted-foreground">{t('logs.noComponentData')}</p>
               ) : null}
             </div>
           </CardContent>
@@ -84,7 +88,7 @@ export function ClientLogsStats({ stats }: ClientLogsStatsProps): React.ReactEle
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-medium">Top Actions</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('logs.topActions')}</CardTitle>
             <Zap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -96,7 +100,7 @@ export function ClientLogsStats({ stats }: ClientLogsStatsProps): React.ReactEle
                 </div>
               ))}
               {topActions.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No action data available</p>
+                <p className="text-sm text-muted-foreground">{t('logs.noActionData')}</p>
               ) : null}
             </div>
           </CardContent>

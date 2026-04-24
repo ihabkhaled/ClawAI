@@ -91,14 +91,9 @@ export default function RoutingPage(): React.ReactElement {
   if (isError) {
     return (
       <div className="flex h-full flex-col">
-        <PageHeader
-          title={t('routing.title')}
-          description={t('routing.description')}
-        />
+        <PageHeader title={t('routing.title')} description={t('routing.description')} />
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-sm text-destructive">
-            {error?.message ?? t('routing.loadFailed')}
-          </p>
+          <p className="text-sm text-destructive">{error?.message ?? t('routing.loadFailed')}</p>
         </div>
       </div>
     );
@@ -121,9 +116,7 @@ export default function RoutingPage(): React.ReactElement {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">{t('routing.defaultRoutingMode')}</CardTitle>
-            <CardDescription>
-              {t('routing.defaultRoutingModeDesc')}
-            </CardDescription>
+            <CardDescription>{t('routing.defaultRoutingModeDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -132,7 +125,7 @@ export default function RoutingPage(): React.ReactElement {
               </label>
               <Select defaultValue={RoutingMode.AUTO}>
                 <SelectTrigger id="routing-default-mode">
-                  <SelectValue placeholder="Select routing mode" />
+                  <SelectValue placeholder={t('routing.selectModePlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {ROUTING_MODE_OPTIONS.map((mode) => (

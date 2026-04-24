@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { API_BASE_URL, PROGRESS_EVENT_TYPES  } from '@/constants';
+import { API_BASE_URL, PROGRESS_EVENT_TYPES } from '@/constants';
 import { FallbackFailureType, StreamEventType, VisibleProgressStageStatus } from '@/enums';
+import { useTranslation } from '@/lib/i18n';
 import type {
   FallbackAttemptInfo,
   SseConnection,
@@ -11,6 +12,7 @@ import type {
 import { connectSse, logger } from '@/utilities';
 
 export function useChatStream(threadId: string, isActive: boolean) {
+  const { t } = useTranslation();
   const [fallbackAttempts, setFallbackAttempts] = useState<FallbackAttemptInfo[]>([]);
   const [streamError, setStreamError] = useState<string | null>(null);
   const [judgeEvaluating, setJudgeEvaluating] = useState(false);
@@ -149,7 +151,7 @@ export function useChatStream(threadId: string, isActive: boolean) {
               message: 'Stream error received',
               details: { threadId, error: parsed.error },
             });
-            setStreamError(parsed.error ?? 'All providers failed');
+            setStreamError(parsed.error ?? t('chat.allProvidersFailed'));
             upsertStage(parsed, VisibleProgressStageStatus.ERROR);
           }
         } catch {

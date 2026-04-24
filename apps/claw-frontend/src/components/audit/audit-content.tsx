@@ -108,7 +108,11 @@ export function AuditContent({
 
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Showing page {meta.page} of {meta.totalPages} ({meta.total} total)
+          {t('common.showingPage', {
+            page: String(meta.page),
+            totalPages: String(meta.totalPages),
+            total: String(meta.total),
+          })}
         </p>
         <div className="flex gap-2">
           <Button

@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 
 import { ThreadListItem } from '@/components/chat/thread-list-item';
+import { useTranslation } from '@/lib/i18n';
 import type { VirtualizedThreadListProps } from '@/types';
 
 export function VirtualizedThreadList({
@@ -19,6 +20,7 @@ export function VirtualizedThreadList({
   isArchivePending,
   search,
 }: VirtualizedThreadListProps): React.ReactElement {
+  const { t } = useTranslation();
   const itemContent = useCallback(
     (index: number): React.ReactElement => {
       const thread = threads[index];
@@ -45,7 +47,7 @@ export function VirtualizedThreadList({
       return (
         <div className="flex items-center justify-center py-3">
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-          <span className="ms-2 text-xs text-muted-foreground">Loading more threads...</span>
+          <span className="ms-2 text-xs text-muted-foreground">{t('chat.loadingMoreThreads')}</span>
         </div>
       );
     }
@@ -59,7 +61,7 @@ export function VirtualizedThreadList({
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        <span className="ms-2 text-sm text-muted-foreground">Loading threads...</span>
+        <span className="ms-2 text-sm text-muted-foreground">{t('chat.loadingThreads')}</span>
       </div>
     );
   }
@@ -67,7 +69,7 @@ export function VirtualizedThreadList({
   if (threads.length === 0) {
     return (
       <div className="py-8 text-center text-sm text-muted-foreground">
-        {search ? 'No threads match your search.' : 'No threads yet.'}
+        {search ? t('chat.noMatchingThreads') : t('chat.noThreads')}
       </div>
     );
   }

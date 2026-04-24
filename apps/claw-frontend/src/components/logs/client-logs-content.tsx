@@ -4,6 +4,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { useClientLogStats } from '@/hooks/logs/use-client-log-stats';
+import { useTranslation } from '@/lib/i18n';
 import type { ClientLogsContentProps } from '@/types';
 
 import { ClientLogEntryRow } from './client-log-entry-row';
@@ -17,18 +18,19 @@ export function ClientLogsContent({
   isLoading,
   isError,
 }: ClientLogsContentProps): React.ReactElement {
+  const { t } = useTranslation();
   const { stats, isLoading: isStatsLoading } = useClientLogStats();
 
   if (isLoading) {
-    return <LoadingSpinner label="Loading client logs..." />;
+    return <LoadingSpinner label={t('logs.loadingClient')} />;
   }
 
   if (isError) {
     return (
       <EmptyState
         icon={ScrollText}
-        title="Failed to load client logs"
-        description="Could not fetch client logs. Please try again later."
+        title={t('logs.failedToLoadClient')}
+        description={t('logs.failedToLoadClientDesc')}
       />
     );
   }
@@ -37,8 +39,8 @@ export function ClientLogsContent({
     return (
       <EmptyState
         icon={ScrollText}
-        title="No client logs"
-        description="Client-side activity logs will appear here as you interact with the application."
+        title={t('logs.noClientLogs')}
+        description={t('logs.noClientLogsActivityDesc')}
       />
     );
   }
@@ -55,7 +57,11 @@ export function ClientLogsContent({
 
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Showing page {meta.page} of {meta.totalPages} ({meta.total} total)
+          {t('common.showingPage', {
+            page: String(meta.page),
+            totalPages: String(meta.totalPages),
+            total: String(meta.total),
+          })}
         </p>
         <div className="flex gap-2">
           <Button
@@ -64,7 +70,7 @@ export function ClientLogsContent({
             disabled={page <= 1}
             onClick={() => setPage(page - 1)}
           >
-            Previous
+            {t('common.previous')}
           </Button>
           <Button
             variant="outline"
@@ -72,7 +78,7 @@ export function ClientLogsContent({
             disabled={page >= meta.totalPages}
             onClick={() => setPage(page + 1)}
           >
-            Next
+            {t('common.next')}
           </Button>
         </div>
       </div>

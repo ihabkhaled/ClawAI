@@ -47,14 +47,9 @@ export default function ContextPage() {
   if (isError) {
     return (
       <div className="flex h-full flex-col">
-        <PageHeader
-          title={t('context.title')}
-          description={t('context.description')}
-        />
+        <PageHeader title={t('context.title')} description={t('context.description')} />
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-sm text-destructive">
-            {error?.message ?? t('context.loadFailed')}
-          </p>
+          <p className="text-sm text-destructive">{error?.message ?? t('context.loadFailed')}</p>
         </div>
       </div>
     );
@@ -134,7 +129,7 @@ export default function ContextPage() {
                     <div className="min-w-0 flex-1">
                       <div className="mb-2 flex items-center gap-2">
                         <Badge variant="secondary" className="text-xs">
-                          {CONTEXT_PACK_ITEM_TYPE_LABELS[item.type as ContextPackItemType] ??
+                          {t(CONTEXT_PACK_ITEM_TYPE_LABELS[item.type as ContextPackItemType]) ??
                             item.type}
                         </Badge>
                         <span className="text-xs text-muted-foreground">#{item.sortOrder}</span>

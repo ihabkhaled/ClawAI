@@ -1,22 +1,16 @@
-"use client";
+'use client';
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Zap } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Zap } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { useLogin } from "@/hooks/auth/use-login";
-import { useTranslation } from "@/lib/i18n";
-import { loginSchema } from "@/lib/validation/login.schema";
-import type { LoginFormValues } from "@/lib/validation/login.schema";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { useLogin } from '@/hooks/auth/use-login';
+import { useTranslation } from '@/lib/i18n';
+import { loginSchema } from '@/lib/validation/login.schema';
+import type { LoginFormValues } from '@/lib/validation/login.schema';
 
 export default function LoginPage() {
   const { login, isPending, isError, error } = useLogin();
@@ -25,8 +19,8 @@ export default function LoginPage() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: '',
+      password: '',
     },
   });
 
@@ -42,47 +36,35 @@ export default function LoginPage() {
             <Zap className="h-6 w-6 text-primary-foreground" />
           </div>
           <h1 className="mt-4 text-2xl font-bold">{t('auth.welcomeTitle')}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t('auth.welcomeSubtitle')}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('auth.welcomeSubtitle')}</p>
         </div>
 
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="text-xl">{t('auth.loginTitle')}</CardTitle>
-            <CardDescription>
-              {t('auth.loginSubtitle')}
-            </CardDescription>
+            <CardDescription>{t('auth.loginSubtitle')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <label
-                  htmlFor="email"
-                  className="text-sm font-medium leading-none"
-                >
+                <label htmlFor="email" className="text-sm font-medium leading-none">
                   {t('auth.email')}
                 </label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder={t('auth.emailPlaceholder')}
                   autoComplete="email"
                   disabled={isPending}
-                  {...form.register("email")}
+                  {...form.register('email')}
                 />
                 {form.formState.errors.email ? (
-                  <p className="text-xs text-destructive">
-                    {form.formState.errors.email.message}
-                  </p>
+                  <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
                 ) : null}
               </div>
 
               <div className="space-y-2">
-                <label
-                  htmlFor="password"
-                  className="text-sm font-medium leading-none"
-                >
+                <label htmlFor="password" className="text-sm font-medium leading-none">
                   {t('auth.password')}
                 </label>
                 <Input
@@ -91,7 +73,7 @@ export default function LoginPage() {
                   placeholder={t('auth.passwordPlaceholder')}
                   autoComplete="current-password"
                   disabled={isPending}
-                  {...form.register("password")}
+                  {...form.register('password')}
                 />
                 {form.formState.errors.password ? (
                   <p className="text-xs text-destructive">
@@ -113,9 +95,7 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          {t('auth.tagline')}
-        </p>
+        <p className="mt-6 text-center text-xs text-muted-foreground">{t('auth.tagline')}</p>
       </div>
     </div>
   );

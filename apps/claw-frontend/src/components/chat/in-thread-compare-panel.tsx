@@ -86,8 +86,7 @@ export function InThreadComparePanel({
           <div className="flex items-center gap-2 rounded-md bg-muted p-3 text-sm">
             <CheckCircle className="h-4 w-4 text-green-500" />
             <span className="text-muted-foreground">
-              {t('compare.title')} — {String(selectedModels.length)} models processing. Results will
-              appear as messages below.
+              {t('compare.processingMessage', { count: selectedModels.length })}
             </span>
           </div>
         ) : null}

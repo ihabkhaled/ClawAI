@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PROVIDER_DISPLAY_NAMES, PROVIDER_ICON_COLORS, ROUTES } from '@/constants';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { ConnectorCardProps } from '@/types';
 import { formatShortDateTime } from '@/utilities';
@@ -25,8 +26,11 @@ export function ConnectorCard({
   isTestPending,
   isSyncPending,
 }: ConnectorCardProps) {
+  const { t } = useTranslation();
   const modelCount = connector._count?.models ?? 0;
-  const providerColor = PROVIDER_ICON_COLORS[connector.provider] ?? 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400';
+  const providerColor =
+    PROVIDER_ICON_COLORS[connector.provider] ??
+    'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400';
   const providerName = PROVIDER_DISPLAY_NAMES[connector.provider] ?? connector.provider;
 
   return (
@@ -51,28 +55,28 @@ export function ConnectorCard({
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <MoreVertical className="h-4 w-4" />
-              <span className="sr-only">Actions</span>
+              <span className="sr-only">{t('admin.colActions')}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => onTest(connector.id)} disabled={isTestPending}>
               <Activity className="me-2 h-4 w-4" />
-              Test Connection
+              {t('connectors.testConnection')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onSync(connector.id)} disabled={isSyncPending}>
               <RefreshCw className="me-2 h-4 w-4" />
-              Sync Models
+              {t('connectors.syncModels')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onEdit(connector)}>
               <Pencil className="me-2 h-4 w-4" />
-              Edit
+              {t('common.edit')}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onDelete(connector.id)}
               className="text-destructive focus:text-destructive"
             >
               <Trash2 className="me-2 h-4 w-4" />
-              Delete
+              {t('common.delete')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -82,19 +86,23 @@ export function ConnectorCard({
           <StatusBadge status={connector.status} />
           {connector.isEnabled ? (
             <Badge variant="secondary" className="text-xs">
-              Enabled
+              {t('connectors.enabled')}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-xs text-muted-foreground">
-              Disabled
+              {t('connectors.disabled')}
             </Badge>
           )}
         </div>
         <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
           <span>
-            {modelCount} {modelCount === 1 ? 'model' : 'models'}
+            {modelCount === 1
+              ? t('connectors.oneModel', { count: modelCount })
+              : t('connectors.manyModels', { count: modelCount })}
           </span>
-          <span>Updated {formatShortDateTime(connector.updatedAt)}</span>
+          <span>
+            {t('connectors.updatedAt', { date: formatShortDateTime(connector.updatedAt) })}
+          </span>
         </div>
       </CardContent>
     </Card>

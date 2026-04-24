@@ -80,7 +80,7 @@ export default function AgentTerminalPage(): React.ReactElement {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleReject(cmd.id, 'Rejected by user')}
+                      onClick={() => handleReject(cmd.id, t('agent.rejectedByUser'))}
                       className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
                     >
                       <XCircle className="size-3" />

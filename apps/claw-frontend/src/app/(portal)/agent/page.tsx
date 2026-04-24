@@ -120,7 +120,7 @@ export default function AgentPage(): React.ReactElement {
                   <button
                     type="button"
                     disabled={isCommandActionPending}
-                    onClick={() => handleReject(cmd.id, 'Rejected by user')}
+                    onClick={() => handleReject(cmd.id, t('agent.rejectedByUser'))}
                     className="rounded px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
                   >
                     {t('agent.reject')}

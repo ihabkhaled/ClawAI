@@ -1,18 +1,16 @@
 import { DataTable } from '@/components/common/data-table';
 import { Badge } from '@/components/ui/badge';
 import { LIFECYCLE_LABELS, PROVIDER_DISPLAY_NAMES } from '@/constants';
+import { useTranslation } from '@/lib/i18n';
 import type { ConnectorModel, DataTableColumn, ModelTableProps } from '@/types';
 import { formatContextTokens, getLifecycleBadgeVariant } from '@/utilities';
 
-export function ModelTable({
-  models,
-  showProvider = false,
-  emptyMessage = 'No models synced yet.',
-}: ModelTableProps) {
+export function ModelTable({ models, showProvider = false, emptyMessage }: ModelTableProps) {
+  const { t } = useTranslation();
   const columns: DataTableColumn<ConnectorModel>[] = [
     {
       key: 'displayName',
-      header: 'Model',
+      header: t('models.colModel'),
       render: (model) => (
         <div>
           <span className="font-medium">{model.displayName}</span>
@@ -25,7 +23,7 @@ export function ModelTable({
   if (showProvider) {
     columns.push({
       key: 'provider',
-      header: 'Provider',
+      header: t('connectors.provider'),
       render: (model) => (
         <span className="text-sm">{PROVIDER_DISPLAY_NAMES[model.provider] ?? model.provider}</span>
       ),
@@ -35,7 +33,7 @@ export function ModelTable({
   columns.push(
     {
       key: 'lifecycle',
-      header: 'Lifecycle',
+      header: t('models.lifecycle'),
       render: (model) => (
         <Badge variant={getLifecycleBadgeVariant(model.lifecycle)}>
           {LIFECYCLE_LABELS[model.lifecycle] ?? model.lifecycle}
@@ -44,22 +42,22 @@ export function ModelTable({
     },
     {
       key: 'capabilities',
-      header: 'Capabilities',
+      header: t('models.capabilities'),
       render: (model) => (
         <div className="flex flex-wrap gap-1">
           {model.supportsStreaming ? (
             <Badge variant="outline" className="text-xs">
-              Streaming
+              {t('models.streaming')}
             </Badge>
           ) : null}
           {model.supportsTools ? (
             <Badge variant="outline" className="text-xs">
-              Tools
+              {t('models.tools')}
             </Badge>
           ) : null}
           {model.supportsVision ? (
             <Badge variant="outline" className="text-xs">
-              Vision
+              {t('models.vision')}
             </Badge>
           ) : null}
         </div>
@@ -67,7 +65,7 @@ export function ModelTable({
     },
     {
       key: 'context',
-      header: 'Context',
+      header: t('models.context'),
       className: 'text-end',
       render: (model) => (
         <span className="text-sm text-muted-foreground">
@@ -82,7 +80,7 @@ export function ModelTable({
       columns={columns}
       data={models}
       keyExtractor={(model) => model.id}
-      emptyMessage={emptyMessage}
+      emptyMessage={emptyMessage ?? t('models.noSyncedModels')}
     />
   );
 }

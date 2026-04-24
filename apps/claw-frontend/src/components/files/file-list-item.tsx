@@ -3,14 +3,17 @@ import { ChevronDown, FileText, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { INGESTION_STATUS_LABELS, INGESTION_STATUS_COLORS } from '@/constants';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { FileListItemProps } from '@/types';
 import { formatFileSize, formatShortDateTime } from '@/utilities';
 
 export function FileListItem({ file, onDelete, onViewChunks, isDeletePending }: FileListItemProps) {
-  const statusLabel = INGESTION_STATUS_LABELS[file.ingestionStatus] ?? file.ingestionStatus;
+  const { t } = useTranslation();
+  const statusLabel = t(INGESTION_STATUS_LABELS[file.ingestionStatus] ?? file.ingestionStatus);
   const statusColor =
-    INGESTION_STATUS_COLORS[file.ingestionStatus] ?? 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-800';
+    INGESTION_STATUS_COLORS[file.ingestionStatus] ??
+    'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-800';
 
   return (
     <div className="flex items-center gap-4 rounded-lg border p-4">
@@ -35,7 +38,7 @@ export function FileListItem({ file, onDelete, onViewChunks, isDeletePending }: 
         onClick={() => onViewChunks(file.id)}
       >
         <ChevronDown className="h-4 w-4" />
-        <span className="sr-only">View chunks</span>
+        <span className="sr-only">{t('files.viewChunks')}</span>
       </Button>
       <Button
         variant="ghost"
@@ -45,7 +48,7 @@ export function FileListItem({ file, onDelete, onViewChunks, isDeletePending }: 
         disabled={isDeletePending}
       >
         <Trash2 className="h-4 w-4" />
-        <span className="sr-only">Delete file</span>
+        <span className="sr-only">{t('files.deleteFile')}</span>
       </Button>
     </div>
   );

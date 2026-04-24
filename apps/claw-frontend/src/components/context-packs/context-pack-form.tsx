@@ -10,9 +10,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useContextPackFormState } from '@/hooks/context-packs/use-context-pack-form-state';
+import { useTranslation } from '@/lib/i18n';
 import type { ContextPackFormProps } from '@/types';
 
 export function ContextPackForm({ open, onOpenChange, onSubmit, isPending }: ContextPackFormProps) {
+  const { t } = useTranslation();
   const {
     name,
     setName,
@@ -29,22 +31,22 @@ export function ContextPackForm({ open, onOpenChange, onSubmit, isPending }: Con
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Create Context Pack</DialogTitle>
+          <DialogTitle>{t('context.createPack')}</DialogTitle>
           <DialogDescription>
-            Create a new context pack to group instructions, notes, and file references for AI
+            {t('context.createPackDesc')}
             interactions.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4">
           <div className="grid gap-2">
             <label htmlFor="pack-name" className="text-sm font-medium">
-              Name
+              {t('context.name')}
             </label>
             <Input
               id="pack-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="My context pack"
+              placeholder={t('context.namePlaceholder')}
             />
             {fieldErrors.name ? (
               <p className="mt-1 text-sm text-destructive">{fieldErrors.name[0]}</p>
@@ -53,13 +55,13 @@ export function ContextPackForm({ open, onOpenChange, onSubmit, isPending }: Con
 
           <div className="grid gap-2">
             <label htmlFor="pack-description" className="text-sm font-medium">
-              Description (optional)
+              {t('context.descriptionOptional')}
             </label>
             <Textarea
               id="pack-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe what this pack is for..."
+              placeholder={t('context.descriptionPlaceholder')}
               rows={3}
             />
             {fieldErrors.description ? (
@@ -69,13 +71,13 @@ export function ContextPackForm({ open, onOpenChange, onSubmit, isPending }: Con
 
           <div className="grid gap-2">
             <label htmlFor="pack-scope" className="text-sm font-medium">
-              Scope (optional)
+              {t('context.scopeOptional')}
             </label>
             <Input
               id="pack-scope"
               value={scope}
               onChange={(e) => setScope(e.target.value)}
-              placeholder="e.g. global, project-specific"
+              placeholder={t('context.scopePlaceholder')}
             />
             {fieldErrors.scope ? (
               <p className="mt-1 text-sm text-destructive">{fieldErrors.scope[0]}</p>
@@ -84,10 +86,10 @@ export function ContextPackForm({ open, onOpenChange, onSubmit, isPending }: Con
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? 'Creating...' : 'Create Pack'}
+              {isPending ? t('context.creating') : t('context.createPack')}
             </Button>
           </DialogFooter>
         </form>

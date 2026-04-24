@@ -1,5 +1,6 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
 
+import type { ActionGenerationMode } from '../enums/action-generation-mode.enum';
 import type { WorkspaceActionStatus } from '../enums/workspace-action-status.enum';
 import type { WorkspaceActionType } from '../enums/workspace-action-type.enum';
 import type { WorkspaceConnectorStatus } from '../enums/workspace-connector-status.enum';
@@ -221,6 +222,22 @@ export type WorkspaceActionConnector = {
   id: string;
   name: string;
   provider: WorkspaceProvider;
+  status: WorkspaceConnectorStatus;
+};
+
+export type ActionGeneratedBy = {
+  provider: string;
+  model: string;
+  displayName: string;
+  mode: ActionGenerationMode;
+};
+
+export type ActionDraftRevision = {
+  version: number;
+  editedAt: string;
+  editedBy: string;
+  payload: Record<string, unknown>;
+  reason?: string;
 };
 
 export type WorkspaceAction = {
@@ -238,6 +255,11 @@ export type WorkspaceAction = {
   executedAt: string | null;
   expiresAt: string | null;
   reviewedBy: string | null;
+  generatedBy: ActionGeneratedBy | null;
+  draftHistory: ActionDraftRevision[];
+  sourceObjectId: string | null;
+  sourceFetchedAt: string | null;
+  bulkGroupId: string | null;
   connector: WorkspaceActionConnector;
 };
 
@@ -257,6 +279,22 @@ export type CreateWorkspaceActionRequest = {
 
 export type RejectWorkspaceActionRequest = {
   reason?: string;
+};
+
+export type EditWorkspaceActionRequest = {
+  payload: Record<string, unknown>;
+  editReason?: string;
+};
+
+export type BulkApproveWorkspaceActionsRequest = {
+  actionIds: string[];
+};
+
+export type BulkApproveOutcome = {
+  bulkGroupId: string;
+  approvedActionIds: string[];
+  blockedActionIds: string[];
+  blockedReasons: Record<string, string>;
 };
 
 export type ListWorkspaceActionsQuery = {

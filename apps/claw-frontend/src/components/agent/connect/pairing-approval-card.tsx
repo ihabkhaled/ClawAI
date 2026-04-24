@@ -32,7 +32,7 @@ export function PairingApprovalCard({
             id="device-name"
             value={deviceName}
             onChange={(event) => setDeviceName(event.target.value)}
-            placeholder="my-laptop"
+            placeholder={t('agent.connect.deviceNamePlaceholder')}
             disabled={isBusy}
           />
         </div>

@@ -570,3 +570,17 @@ export type {
   ConnectorDetailViewProps,
 } from './component.types';
 export type { ResearchProviderFormState, UseResearchProvidersPageReturn } from './hook.types';
+export type {
+  ModelChoice,
+  ModelChoiceOrAuto,
+  GeneratedBy,
+  AiActionOptions,
+  AiActionResult,
+  AiActionRequest,
+  UseAiActionResult,
+  AiActionDialogProps,
+  AutoRouterResolution,
+  ResolveAiActionRequest,
+  UseResolveAiActionResult,
+  UseAvailableModelsForActionResult,
+} from './ai-action.types';

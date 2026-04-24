@@ -5,14 +5,14 @@ export const MEMORY_TYPE_OPTIONS = Object.values(MemoryType);
 export const CONTEXT_PACK_ITEM_TYPE_OPTIONS = Object.values(ContextPackItemType);
 
 export const MEMORY_TYPE_LABELS: Record<MemoryType, string> = {
-  [MemoryType.SUMMARY]: 'Summary',
-  [MemoryType.FACT]: 'Fact',
-  [MemoryType.PREFERENCE]: 'Preference',
-  [MemoryType.INSTRUCTION]: 'Instruction',
+  [MemoryType.SUMMARY]: 'memory.typeSummary',
+  [MemoryType.FACT]: 'memory.typeFact',
+  [MemoryType.PREFERENCE]: 'memory.typePreference',
+  [MemoryType.INSTRUCTION]: 'memory.typeInstruction',
 };
 
 export const MEMORY_FILTER_OPTIONS = [
-  { value: MemoryFilterValue.ALL, label: 'All Types' },
+  { value: MemoryFilterValue.ALL, label: 'memory.filterAllTypes' },
   ...Object.values(MemoryType).map((t) => ({
     value: t,
     label: MEMORY_TYPE_LABELS[t],
@@ -31,10 +31,10 @@ export const MEMORY_TYPE_COLORS: Record<MemoryType, string> = {
 };
 
 export const INGESTION_STATUS_LABELS: Record<FileIngestionStatus, string> = {
-  [FileIngestionStatus.PENDING]: 'Pending',
-  [FileIngestionStatus.PROCESSING]: 'Processing',
-  [FileIngestionStatus.COMPLETED]: 'Completed',
-  [FileIngestionStatus.FAILED]: 'Failed',
+  [FileIngestionStatus.PENDING]: 'files.statusPending',
+  [FileIngestionStatus.PROCESSING]: 'files.statusProcessing',
+  [FileIngestionStatus.COMPLETED]: 'files.statusCompleted',
+  [FileIngestionStatus.FAILED]: 'files.statusFailed',
 };
 
 export const INGESTION_STATUS_COLORS: Record<FileIngestionStatus, string> = {
@@ -49,7 +49,7 @@ export const INGESTION_STATUS_COLORS: Record<FileIngestionStatus, string> = {
 };
 
 export const CONTEXT_PACK_ITEM_TYPE_LABELS: Record<ContextPackItemType, string> = {
-  [ContextPackItemType.NOTE]: 'Text Note',
-  [ContextPackItemType.INSTRUCTION]: 'Instruction',
-  [ContextPackItemType.FILE_REFERENCE]: 'File Reference',
+  [ContextPackItemType.NOTE]: 'context.typeNote',
+  [ContextPackItemType.INSTRUCTION]: 'context.typeInstruction',
+  [ContextPackItemType.FILE_REFERENCE]: 'context.typeFileReference',
 };

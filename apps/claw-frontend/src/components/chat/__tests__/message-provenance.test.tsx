@@ -1,9 +1,17 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { MessageProvenance } from '@/components/chat/message-provenance';
 import { MessageRole, RoutingMode } from '@/enums';
 import type { ChatMessage } from '@/types';
+
+vi.mock('@/lib/i18n', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    locale: 'en',
+    dir: 'ltr',
+  }),
+}));
 
 describe('MessageProvenance', () => {
   it('renders route metadata even when provider and token fields are empty', () => {
@@ -65,7 +73,7 @@ describe('MessageProvenance', () => {
 
     render(<MessageProvenance message={message} />);
 
-    fireEvent.click(screen.getByLabelText('Toggle message provenance'));
+    fireEvent.click(screen.getByLabelText('chat.toggleProvenance'));
 
     expect(screen.getByText('Router model:')).toBeInTheDocument();
     expect(screen.getByText('qwen3:1.7b')).toBeInTheDocument();

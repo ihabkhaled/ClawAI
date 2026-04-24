@@ -4,6 +4,7 @@ import { FileLoadingState } from '@/components/chat/file-loading-state';
 import { FileGenerationStatus } from '@/enums';
 import { useAuthenticatedImage } from '@/hooks/chat/use-authenticated-image';
 import { useFileGenerationListener } from '@/hooks/chat/use-file-generation-listener';
+import { useTranslation } from '@/lib/i18n';
 import { fileGenerationRepository } from '@/repositories/file-generation/file-generation.repository';
 import { getFileStatusLabel, isInProgressFileStatus } from '@/utilities';
 
@@ -14,6 +15,7 @@ export function FileGenerationBubble({
   generationId: string;
   prompt: string;
 }) {
+  const { t } = useTranslation();
   const generation = useFileGenerationListener(generationId);
   const firstAsset = generation?.assets?.[0];
   const blobUrl = useAuthenticatedImage(
@@ -39,7 +41,9 @@ export function FileGenerationBubble({
       ) : null}
       {generation?.status === FileGenerationStatus.CANCELLED ? (
         <div className="rounded-xl border border-border p-4">
-          <div className="text-sm font-medium text-muted-foreground">File generation cancelled</div>
+          <div className="text-sm font-medium text-muted-foreground">
+            {t('chat.fileGenerationCancelled')}
+          </div>
         </div>
       ) : null}
       {generation?.status === FileGenerationStatus.COMPLETED && firstAsset && blobUrl ? (
@@ -51,7 +55,7 @@ export function FileGenerationBubble({
         />
       ) : null}
       {generation?.status === FileGenerationStatus.COMPLETED && !blobUrl ? (
-        <FileLoadingState status="Preparing download..." prompt={prompt} />
+        <FileLoadingState status={t('chat.preparingDownload')} prompt={prompt} />
       ) : null}
     </div>
   );

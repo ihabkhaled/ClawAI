@@ -2,11 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/lib/i18n';
 import { filesRepository } from '@/repositories/files/files.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { FileChunksDialogProps } from '@/types';
 
 export function FileChunksDialog({ fileId, onClose }: FileChunksDialogProps) {
+  const { t } = useTranslation();
   const query = useQuery({
     queryKey: queryKeys.files.chunks(fileId ?? ''),
     queryFn: () => filesRepository.getFile(fileId ?? ''),
@@ -25,9 +27,7 @@ export function FileChunksDialog({ fileId, onClose }: FileChunksDialogProps) {
   );
 
   const emptyState = (
-    <p className="py-8 text-center text-sm text-muted-foreground">
-      No chunks available for this file.
-    </p>
+    <p className="py-8 text-center text-sm text-muted-foreground">{t('files.noChunks')}</p>
   );
 
   const chunksList = (
@@ -35,7 +35,7 @@ export function FileChunksDialog({ fileId, onClose }: FileChunksDialogProps) {
       {chunks.map((chunk) => (
         <div key={chunk.id} className="rounded-lg border p-3">
           <p className="mb-1 text-xs font-medium text-muted-foreground">
-            Chunk {chunk.chunkIndex + 1}
+            {t('files.chunkIndex', { index: chunk.chunkIndex + 1 })}
           </p>
           <p className="whitespace-pre-wrap text-sm">{chunk.content}</p>
         </div>
@@ -55,7 +55,10 @@ export function FileChunksDialog({ fileId, onClose }: FileChunksDialogProps) {
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[640px]">
         <DialogHeader>
           <DialogTitle>
-            {file?.filename ?? 'File'} - Chunks ({chunks.length})
+            {t('files.chunksTitle', {
+              filename: file?.filename ?? t('files.fileFallback'),
+              count: chunks.length,
+            })}
           </DialogTitle>
         </DialogHeader>
         {resolvedContent}

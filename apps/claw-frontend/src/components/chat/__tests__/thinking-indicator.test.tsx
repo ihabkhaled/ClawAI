@@ -1,8 +1,16 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { ThinkingIndicator } from '@/components/chat/thinking-indicator';
 import { StreamEventType, VisibleProgressActorType, VisibleProgressStageStatus } from '@/enums';
+
+vi.mock('@/lib/i18n', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    locale: 'en',
+    dir: 'ltr',
+  }),
+}));
 
 describe('ThinkingIndicator', () => {
   it('renders an explicit visible AI progress timeline instead of only generic thinking dots', () => {
@@ -33,9 +41,9 @@ describe('ThinkingIndicator', () => {
       />,
     );
 
-    expect(screen.getByText('Visible AI progress')).toBeInTheDocument();
+    expect(screen.getByText('chat.visibleAiProgress')).toBeInTheDocument();
     expect(screen.getAllByText('Evidence ready').length).toBeGreaterThan(0);
     expect(screen.getByText('Research workflow')).toBeInTheDocument();
-    expect(screen.getByLabelText('Current AI progress: Evidence ready')).toBeInTheDocument();
+    expect(screen.getByLabelText('chat.currentAiProgress')).toBeInTheDocument();
   });
 });

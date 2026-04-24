@@ -18,9 +18,11 @@ import {
 import { ROUTING_MODE_OPTIONS, ROUTING_MODE_LABELS } from '@/constants';
 import type { RoutingMode } from '@/enums';
 import { usePolicyFormState } from '@/hooks/routing/use-policy-form-state';
+import { useTranslation } from '@/lib/i18n';
 import type { PolicyFormProps } from '@/types';
 
 export function PolicyForm({ open, onOpenChange, onSubmit, isPending, policy }: PolicyFormProps) {
+  const { t } = useTranslation();
   const {
     name,
     setName,
@@ -41,23 +43,23 @@ export function PolicyForm({ open, onOpenChange, onSubmit, isPending, policy }: 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Policy' : 'Create Policy'}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? t('routing.editPolicy') : t('routing.createPolicy')}
+          </DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? 'Update the routing policy configuration.'
-              : 'Create a new routing policy to control request distribution.'}
+            {isEditing ? t('routing.editPolicyDesc') : t('routing.createPolicyDesc')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4">
           <div className="grid gap-2">
             <label htmlFor="policy-name" className="text-sm font-medium">
-              Name
+              {t('routing.name')}
             </label>
             <Input
               id="policy-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="My Routing Policy"
+              placeholder={t('routing.namePlaceholder')}
             />
             {fieldErrors.name ? (
               <p className="mt-1 text-sm text-destructive">{fieldErrors.name[0]}</p>
@@ -66,14 +68,14 @@ export function PolicyForm({ open, onOpenChange, onSubmit, isPending, policy }: 
 
           <div className="grid gap-2">
             <label htmlFor="policy-mode" className="text-sm font-medium">
-              Routing Mode
+              {t('routing.mode')}
             </label>
             <Select
               value={routingMode}
               onValueChange={(value) => setRoutingMode(value as RoutingMode)}
             >
               <SelectTrigger id="policy-mode">
-                <SelectValue placeholder="Select routing mode" />
+                <SelectValue placeholder={t('routing.selectModePlaceholder')} />
               </SelectTrigger>
               <SelectContent>
                 {ROUTING_MODE_OPTIONS.map((mode) => (
@@ -90,7 +92,7 @@ export function PolicyForm({ open, onOpenChange, onSubmit, isPending, policy }: 
 
           <div className="grid gap-2">
             <label htmlFor="policy-priority" className="text-sm font-medium">
-              Priority
+              {t('routing.priority')}
             </label>
             <Input
               id="policy-priority"
@@ -107,7 +109,7 @@ export function PolicyForm({ open, onOpenChange, onSubmit, isPending, policy }: 
 
           <div className="grid gap-2">
             <label htmlFor="policy-active" className="text-sm font-medium">
-              Status
+              {t('routing.status')}
             </label>
             <Select
               value={isActive ? 'active' : 'inactive'}
@@ -117,15 +119,15 @@ export function PolicyForm({ open, onOpenChange, onSubmit, isPending, policy }: 
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="active">{t('routing.active')}</SelectItem>
+                <SelectItem value="inactive">{t('routing.inactive')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isPending}>
               {isPending ? pendingLabel : submitLabel}

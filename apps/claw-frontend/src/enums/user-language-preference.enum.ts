@@ -7,4 +7,5 @@ export enum UserLanguagePreference {
   ES = 'ES',
   RU = 'RU',
   PT = 'PT',
+  HI = 'HI',
 }

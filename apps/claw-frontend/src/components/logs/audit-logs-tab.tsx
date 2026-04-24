@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select';
 import { ALL_FILTER } from '@/constants';
 import { AuditAction, AuditSeverity } from '@/enums';
+import { useTranslation } from '@/lib/i18n';
 import type { AuditLogsTabProps } from '@/types';
 
 import { AuditLogsContent } from './audit-logs-content';
@@ -34,6 +35,7 @@ export function AuditLogsTab({
   endDate,
   setEndDate,
 }: AuditLogsTabProps): React.ReactElement {
+  const { t } = useTranslation();
   return (
     <div>
       <div className="mb-4 flex flex-wrap gap-3">
@@ -42,10 +44,10 @@ export function AuditLogsTab({
           onValueChange={(v) => setAction(v === ALL_FILTER ? undefined : v)}
         >
           <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="All Actions" />
+            <SelectValue placeholder={t('logs.allActions')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL_FILTER}>All Actions</SelectItem>
+            <SelectItem value={ALL_FILTER}>{t('logs.allActions')}</SelectItem>
             {Object.values(AuditAction).map((a) => (
               <SelectItem key={a} value={a}>
                 {a}
@@ -59,10 +61,10 @@ export function AuditLogsTab({
           onValueChange={(v) => setSeverity(v === ALL_FILTER ? undefined : v)}
         >
           <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="All Severities" />
+            <SelectValue placeholder={t('logs.allSeverities')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL_FILTER}>All Severities</SelectItem>
+            <SelectItem value={ALL_FILTER}>{t('logs.allSeverities')}</SelectItem>
             {Object.values(AuditSeverity).map((s) => (
               <SelectItem key={s} value={s}>
                 {s}
@@ -72,7 +74,7 @@ export function AuditLogsTab({
         </Select>
 
         <Input
-          placeholder="Entity type..."
+          placeholder={t('logs.entityTypePlaceholder')}
           value={entityType}
           onChange={(e) => setEntityType(e.target.value)}
           className="w-[150px]"
@@ -80,7 +82,7 @@ export function AuditLogsTab({
 
         <Input
           type="date"
-          placeholder="Start date"
+          placeholder={t('logs.startDate')}
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
           className="w-[150px]"
@@ -88,14 +90,14 @@ export function AuditLogsTab({
 
         <Input
           type="date"
-          placeholder="End date"
+          placeholder={t('logs.endDate')}
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
           className="w-[150px]"
         />
 
         <Input
-          placeholder="Search across all fields..."
+          placeholder={t('logs.searchAllFields')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full sm:w-[250px]"

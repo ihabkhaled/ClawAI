@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ROUTES } from '@/constants';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { ThreadListItemProps } from '@/types';
 import { formatRelativeDate } from '@/utilities';
@@ -23,6 +24,7 @@ export function ThreadListItem({
   isPinPending,
   isArchivePending,
 }: ThreadListItemProps) {
+  const { t } = useTranslation();
   const messageCount = thread._count?.messages ?? 0;
   const hasActions = onPin !== undefined || onArchive !== undefined;
 
@@ -67,44 +69,38 @@ export function ThreadListItem({
                     e.preventDefault();
                     e.stopPropagation();
                   }}
-                  aria-label="Thread actions"
+                  aria-label={t('chat.threadActions')}
                 >
                   <MoreVertical className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
                 {onPin !== undefined ? (
-                  <DropdownMenuItem
-                    onClick={handlePin}
-                    disabled={isPinPending}
-                  >
+                  <DropdownMenuItem onClick={handlePin} disabled={isPinPending}>
                     {thread.isPinned ? (
                       <>
                         <PinOff className="me-2 h-4 w-4" />
-                        Unpin
+                        {t('chat.unpinThread')}
                       </>
                     ) : (
                       <>
                         <Pin className="me-2 h-4 w-4" />
-                        Pin
+                        {t('chat.pinThread')}
                       </>
                     )}
                   </DropdownMenuItem>
                 ) : null}
                 {onArchive !== undefined ? (
-                  <DropdownMenuItem
-                    onClick={handleArchive}
-                    disabled={isArchivePending}
-                  >
+                  <DropdownMenuItem onClick={handleArchive} disabled={isArchivePending}>
                     {thread.isArchived ? (
                       <>
                         <ArchiveRestore className="me-2 h-4 w-4" />
-                        Unarchive
+                        {t('chat.unarchiveThread')}
                       </>
                     ) : (
                       <>
                         <Archive className="me-2 h-4 w-4" />
-                        Archive
+                        {t('chat.archiveThread')}
                       </>
                     )}
                   </DropdownMenuItem>

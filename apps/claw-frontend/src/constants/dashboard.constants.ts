@@ -7,10 +7,10 @@ import { ROUTES } from './routes.constants';
 export const DASHBOARD_STALE_TIME_MS = 30_000;
 
 export const DASHBOARD_STAT_CARD_DEFAULTS: DashboardStatCard[] = [
-  { label: 'Total Threads', value: '-', icon: MessageSquare },
-  { label: 'Active Connectors', value: '-', icon: Plug },
-  { label: 'Local Models', value: '-', icon: Cpu },
-  { label: 'System Health', value: '-', icon: Activity },
+  { label: 'dashboard.totalThreads', value: '-', icon: MessageSquare },
+  { label: 'dashboard.activeConnectors', value: '-', icon: Plug },
+  { label: 'dashboard.localModels', value: '-', icon: Cpu },
+  { label: 'dashboard.systemHealth', value: '-', icon: Activity },
 ];
 
 /**
@@ -20,21 +20,21 @@ export const DASHBOARD_STAT_CARDS: DashboardStatCard[] = DASHBOARD_STAT_CARD_DEF
 
 export const DASHBOARD_QUICK_ACTIONS: DashboardQuickAction[] = [
   {
-    label: 'New Chat',
+    label: 'dashboard.newChatLabel',
     href: ROUTES.CHAT,
     icon: MessageSquare,
-    description: 'Start a new AI conversation thread',
+    description: 'dashboard.newChatDesc',
   },
   {
-    label: 'Manage Connectors',
+    label: 'dashboard.manageConnectorsLabel',
     href: ROUTES.CONNECTORS,
     icon: Plug,
-    description: 'Configure your AI provider connections',
+    description: 'dashboard.manageConnectorsDesc',
   },
   {
-    label: 'Routing Settings',
+    label: 'dashboard.routingSettingsLabel',
     href: ROUTES.ROUTING,
     icon: Settings,
-    description: 'Adjust model routing and fallback rules',
+    description: 'dashboard.routingSettingsDesc',
   },
 ];

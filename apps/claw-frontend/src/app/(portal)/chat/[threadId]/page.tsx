@@ -55,10 +55,10 @@ export default function ThreadDetailPage() {
   });
 
   if (!threadId) {
-    return <LoadingSpinner label="Loading thread..." />;
+    return <LoadingSpinner label={t('chat.loadingThread')} />;
   }
 
-  const title = thread?.title ?? 'Untitled';
+  const title = thread?.title ?? t('chat.untitled');
 
   return (
     <div className="flex h-full flex-col">
@@ -99,12 +99,12 @@ export default function ThreadDetailPage() {
             disabled={isDeleting}
           >
             <Trash2 className="h-4 w-4 sm:me-2" />
-            <span className="hidden sm:inline">Delete</span>
+            <span className="hidden sm:inline">{t('common.delete')}</span>
           </Button>
           <Button variant="outline" size="sm" className="min-h-11" asChild>
             <Link href={ROUTES.CHAT}>
               <ArrowLeft className="h-4 w-4 sm:me-2 rtl:rotate-180" />
-              <span className="hidden sm:inline">Back to threads</span>
+              <span className="hidden sm:inline">{t('chat.backToThreads')}</span>
             </Link>
           </Button>
         </div>
@@ -186,7 +186,7 @@ export default function ThreadDetailPage() {
           <div
             className="absolute inset-x-0 top-0 z-10 flex h-3 cursor-ns-resize items-center justify-center hover:bg-muted/50"
             onMouseDown={handleMouseDown}
-            aria-label="Resize message input"
+            aria-label={t('accessibility.resizeInput')}
           >
             <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
           </div>

@@ -1,8 +1,16 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ComponentSize } from '@/enums';
+
+vi.mock('@/lib/i18n', () => ({
+  useTranslation: () => ({
+    t: (key: string) => (key === 'common.loading' ? 'Loading...' : key),
+    locale: 'en',
+    dir: 'ltr',
+  }),
+}));
 
 describe('LoadingSpinner', () => {
   it('renders with default label "Loading..."', () => {
@@ -22,18 +30,12 @@ describe('LoadingSpinner', () => {
 
   it('has correct aria-label matching the label prop', () => {
     render(<LoadingSpinner label="Please wait" />);
-    expect(screen.getByRole('status')).toHaveAttribute(
-      'aria-label',
-      'Please wait',
-    );
+    expect(screen.getByRole('status')).toHaveAttribute('aria-label', 'Please wait');
   });
 
   it('has default aria-label "Loading..."', () => {
     render(<LoadingSpinner />);
-    expect(screen.getByRole('status')).toHaveAttribute(
-      'aria-label',
-      'Loading...',
-    );
+    expect(screen.getByRole('status')).toHaveAttribute('aria-label', 'Loading...');
   });
 
   it('renders with small size', () => {

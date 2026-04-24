@@ -60,7 +60,7 @@ export default function ChatPage() {
               size="icon"
               className="shrink-0"
               onClick={toggleShowArchived}
-              aria-label={showArchived ? 'Hide archived' : 'Show archived'}
+              aria-label={showArchived ? t('chat.hideArchived') : t('chat.showArchived')}
             >
               <Archive className="h-4 w-4" />
             </Button>
@@ -85,12 +85,12 @@ export default function ChatPage() {
         <div className="hidden flex-1 items-center justify-center rounded-lg border border-dashed md:flex">
           <EmptyState
             icon={MessageSquare}
-            title="Select a thread or start a new chat"
-            description="Choose an existing conversation from the sidebar or create a new one to interact with your configured AI models."
+            title={t('chat.selectOrStartTitle')}
+            description={t('chat.selectOrStartDesc')}
             action={
               <Button onClick={handleNewChat} disabled={isCreating}>
                 <Plus className="me-2 h-4 w-4" />
-                New Chat
+                {t('chat.newThread')}
               </Button>
             }
           />

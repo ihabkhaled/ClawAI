@@ -1,11 +1,13 @@
 import { Download, ExternalLink } from 'lucide-react';
 
+import { useTranslation } from '@/lib/i18n';
 import type { ImageCompletedStateProps } from '@/types';
 
 export function ImageCompletedState({
   blobUrl,
   prompt,
 }: ImageCompletedStateProps): React.ReactElement {
+  const { t } = useTranslation();
   return (
     <div className="rounded-xl border border-border p-3">
       <img alt={prompt} className="max-h-[512px] w-full rounded-lg object-cover" src={blobUrl} />
@@ -16,7 +18,7 @@ export function ImageCompletedState({
           href={blobUrl}
         >
           <Download className="h-3 w-3" />
-          Download
+          {t('common.download')}
         </a>
         <a
           className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs hover:bg-muted"
@@ -25,7 +27,7 @@ export function ImageCompletedState({
           target="_blank"
         >
           <ExternalLink className="h-3 w-3" />
-          Open
+          {t('chat.open')}
         </a>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { Download, FileText } from 'lucide-react';
 
+import { useTranslation } from '@/lib/i18n';
 import type { FileCompletedStateProps } from '@/types';
 import { formatFileSizeLabel } from '@/utilities';
 
@@ -9,6 +10,7 @@ export function FileCompletedState({
   format,
   sizeBytes,
 }: FileCompletedStateProps): React.ReactElement {
+  const { t } = useTranslation();
   const sizeLabel = sizeBytes ? formatFileSizeLabel(sizeBytes) : '';
 
   return (
@@ -30,7 +32,7 @@ export function FileCompletedState({
           href={blobUrl}
         >
           <Download className="h-3.5 w-3.5" />
-          Download
+          {t('common.download')}
         </a>
       </div>
     </div>

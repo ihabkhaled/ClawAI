@@ -63,14 +63,16 @@ export function VirtualizedMessages({
       return (
         <div className="flex items-center justify-center py-3">
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-          <span className="ms-2 text-xs text-muted-foreground">Loading older messages...</span>
+          <span className="ms-2 text-xs text-muted-foreground">
+            {t('chat.loadingOlderMessages')}
+          </span>
         </div>
       );
     }
     if (!hasPreviousPage) {
       return (
         <div className="flex items-center justify-center py-3 text-xs text-muted-foreground">
-          Beginning of conversation
+          {t('chat.beginningOfConversation')}
         </div>
       );
     }
@@ -112,13 +114,13 @@ export function VirtualizedMessages({
   }, [hasPreviousPage, isFetchingPreviousPage, onStartReached]);
 
   if (isLoading) {
-    return <LoadingSpinner label="Loading messages..." />;
+    return <LoadingSpinner label={t('chat.loadingMessages')} />;
   }
 
   if (messages.length === 0) {
     return (
       <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-        No messages yet. Send a message to start the conversation.
+        {t('chat.noMessagesYet')}
       </div>
     );
   }
