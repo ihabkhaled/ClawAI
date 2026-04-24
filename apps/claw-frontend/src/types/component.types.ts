@@ -71,6 +71,7 @@ import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './
 import type { ReplayBatchResult, ReplayResult } from './replay.types';
 import type { RoleMemberResult, RolePackResult } from './role-pack.types';
 import type { CreatePolicyRequest, RoutingDecision, RoutingPolicy } from './routing.types';
+import type { SlackMessageMetadata } from './slack.types';
 import type { PullRequestMetadata } from './source-control.types';
 import type { DecompositionResultState, SubTaskResult } from './task-decomposition.types';
 import type { UseVerifyResultState } from './verifier.types';
@@ -1187,6 +1188,36 @@ export type PullRequestDialogProps = {
 
 export type SourceControlActionsBarProps = {
   pr: WorkspaceObject;
+  onAction: (kind: AiActionKind) => void;
+  isDraftPending: boolean;
+  t: TranslateFunction;
+};
+
+export type SlackMessageRowProps = {
+  message: WorkspaceObject;
+  metadata: SlackMessageMetadata;
+  onClick: () => void;
+  t: TranslateFunction;
+};
+
+export type SlackMessageListProps = {
+  messages: WorkspaceObject[];
+  isLoading: boolean;
+  isError: boolean;
+  onSelectMessage: (msg: WorkspaceObject) => void;
+  t: TranslateFunction;
+};
+
+export type SlackMessageDialogProps = {
+  message: WorkspaceObject | null;
+  open: boolean;
+  onClose: () => void;
+  onOpenAiAction: (kind: AiActionKind) => void;
+  t: TranslateFunction;
+};
+
+export type SlackActionsBarProps = {
+  message: WorkspaceObject;
   onAction: (kind: AiActionKind) => void;
   isDraftPending: boolean;
   t: TranslateFunction;

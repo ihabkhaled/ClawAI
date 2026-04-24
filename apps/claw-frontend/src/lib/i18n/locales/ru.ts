@@ -1812,4 +1812,29 @@ export const ru: TranslationDictionary = {
       extract_tasks: 'Извлечь задачи',
     },
   },
+  slack: {
+    page: {
+      title: 'Slack',
+      description: 'Просматривайте и управляйте синхронизированными сообщениями Slack.',
+      empty_title: 'Сообщения не синхронизированы',
+      empty_description:
+        'Сообщения Slack ещё не синхронизированы. Запустите синхронизацию в коннекторе Slack.',
+      error_title: 'Не удалось загрузить сообщения',
+      no_connector_title: 'Коннектор Slack не найден',
+      no_connector_description: 'Подключите workspace Slack в Коннекторах Workspace.',
+    },
+    message: {
+      channel: 'Канал',
+      sender: 'От',
+      date: 'Дата',
+      thread_reply: 'Ответ в треде',
+      open_in_slack: 'Открыть в Slack',
+      reactions: 'Реакции',
+    },
+    actions: {
+      summarize: 'Резюме',
+      reply: 'Составить ответ',
+      extract_tasks: 'Извлечь задачи',
+    },
+  },
 };

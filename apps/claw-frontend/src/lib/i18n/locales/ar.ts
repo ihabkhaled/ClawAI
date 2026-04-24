@@ -1778,4 +1778,30 @@ export const ar: TranslationDictionary = {
       extract_tasks: 'استخراج المهام',
     },
   },
+  slack: {
+    page: {
+      title: 'Slack',
+      description: 'استعرض وأدر رسائل Slack المزامَنة.',
+      empty_title: 'لا توجد رسائل مزامَنة',
+      empty_description:
+        'لم تتم مزامنة أي رسائل Slack بعد. شغّل المزامنة على موصّل Slack لتحميل الرسائل.',
+      error_title: 'تعذّر تحميل الرسائل',
+      no_connector_title: 'لم يُعثر على موصّل Slack',
+      no_connector_description:
+        'قم بتوصيل مساحة عمل Slack في موصّلات مساحة العمل لبدء تصفح الرسائل.',
+    },
+    message: {
+      channel: 'القناة',
+      sender: 'من',
+      date: 'التاريخ',
+      thread_reply: 'رد على خيط',
+      open_in_slack: 'فتح في Slack',
+      reactions: 'التفاعلات',
+    },
+    actions: {
+      summarize: 'تلخيص',
+      reply: 'صياغة رد',
+      extract_tasks: 'استخراج بنود العمل',
+    },
+  },
 };

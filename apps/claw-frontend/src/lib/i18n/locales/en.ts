@@ -1784,4 +1784,30 @@ export const en: TranslationDictionary = {
       extract_tasks: 'Extract Tasks',
     },
   },
+  slack: {
+    page: {
+      title: 'Slack',
+      description: 'Browse and manage synced Slack messages.',
+      empty_title: 'No messages synced',
+      empty_description:
+        'No Slack messages have been synced yet. Trigger a sync on your Slack connector to load messages.',
+      error_title: 'Unable to load messages',
+      no_connector_title: 'No Slack connector found',
+      no_connector_description:
+        'Connect a Slack workspace in Workspace Connectors to start browsing messages.',
+    },
+    message: {
+      channel: 'Channel',
+      sender: 'From',
+      date: 'Date',
+      thread_reply: 'Thread reply',
+      open_in_slack: 'Open in Slack',
+      reactions: 'Reactions',
+    },
+    actions: {
+      summarize: 'Summarize',
+      reply: 'Draft Reply',
+      extract_tasks: 'Extract Action Items',
+    },
+  },
 };

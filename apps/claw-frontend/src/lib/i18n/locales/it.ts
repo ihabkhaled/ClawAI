@@ -1814,4 +1814,29 @@ export const it: TranslationDictionary = {
       extract_tasks: 'Estrai attività',
     },
   },
+  slack: {
+    page: {
+      title: 'Slack',
+      description: 'Sfoglia e gestisci i messaggi Slack sincronizzati.',
+      empty_title: 'Nessun messaggio sincronizzato',
+      empty_description:
+        'Nessun messaggio Slack è stato ancora sincronizzato. Avvia una sincronizzazione sul tuo connettore Slack.',
+      error_title: 'Impossibile caricare i messaggi',
+      no_connector_title: 'Nessun connettore Slack trovato',
+      no_connector_description: 'Collega un workspace Slack nei Connettori Workspace.',
+    },
+    message: {
+      channel: 'Canale',
+      sender: 'Da',
+      date: 'Data',
+      thread_reply: 'Risposta nel thread',
+      open_in_slack: 'Apri in Slack',
+      reactions: 'Reazioni',
+    },
+    actions: {
+      summarize: 'Riassumi',
+      reply: 'Bozza risposta',
+      extract_tasks: 'Estrai attività',
+    },
+  },
 };

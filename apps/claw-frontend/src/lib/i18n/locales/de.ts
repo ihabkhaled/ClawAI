@@ -1820,4 +1820,29 @@ export const de: TranslationDictionary = {
       extract_tasks: 'Aufgaben extrahieren',
     },
   },
+  slack: {
+    page: {
+      title: 'Slack',
+      description: 'Synchronisierte Slack-Nachrichten durchsuchen und verwalten.',
+      empty_title: 'Keine Nachrichten synchronisiert',
+      empty_description:
+        'Es wurden noch keine Slack-Nachrichten synchronisiert. Lösen Sie eine Synchronisierung am Slack-Connector aus.',
+      error_title: 'Nachrichten können nicht geladen werden',
+      no_connector_title: 'Kein Slack-Connector gefunden',
+      no_connector_description: 'Verbinden Sie einen Slack-Workspace in den Workspace-Connectors.',
+    },
+    message: {
+      channel: 'Kanal',
+      sender: 'Von',
+      date: 'Datum',
+      thread_reply: 'Thread-Antwort',
+      open_in_slack: 'In Slack öffnen',
+      reactions: 'Reaktionen',
+    },
+    actions: {
+      summarize: 'Zusammenfassen',
+      reply: 'Antwort entwerfen',
+      extract_tasks: 'Aufgaben extrahieren',
+    },
+  },
 };

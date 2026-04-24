@@ -1763,6 +1763,30 @@ export type TranslationDictionary = {
       extract_tasks: string;
     };
   };
+  slack: {
+    page: {
+      title: string;
+      description: string;
+      empty_title: string;
+      empty_description: string;
+      error_title: string;
+      no_connector_title: string;
+      no_connector_description: string;
+    };
+    message: {
+      channel: string;
+      sender: string;
+      date: string;
+      thread_reply: string;
+      open_in_slack: string;
+      reactions: string;
+    };
+    actions: {
+      summarize: string;
+      reply: string;
+      extract_tasks: string;
+    };
+  };
 };
 
 export type TranslationNamespace = keyof TranslationDictionary;

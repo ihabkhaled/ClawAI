@@ -1796,4 +1796,30 @@ export const hi: TranslationDictionary = {
       extract_tasks: 'कार्य निकालें',
     },
   },
+  slack: {
+    page: {
+      title: 'Slack',
+      description: 'सिंक किए गए Slack संदेश देखें और प्रबंधित करें।',
+      empty_title: 'कोई संदेश सिंक नहीं हुए',
+      empty_description:
+        'अभी तक कोई Slack संदेश सिंक नहीं हुए। संदेश लोड करने के लिए Slack कनेक्टर पर सिंक चलाएं।',
+      error_title: 'संदेश लोड नहीं हो सके',
+      no_connector_title: 'कोई Slack कनेक्टर नहीं मिला',
+      no_connector_description:
+        'संदेश देखने के लिए Workspace Connectors में Slack workspace जोड़ें।',
+    },
+    message: {
+      channel: 'चैनल',
+      sender: 'से',
+      date: 'तिथि',
+      thread_reply: 'थ्रेड उत्तर',
+      open_in_slack: 'Slack में खोलें',
+      reactions: 'प्रतिक्रियाएं',
+    },
+    actions: {
+      summarize: 'सारांश',
+      reply: 'उत्तर का मसौदा',
+      extract_tasks: 'कार्य निकालें',
+    },
+  },
 };
