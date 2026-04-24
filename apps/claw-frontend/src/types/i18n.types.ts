@@ -1730,6 +1730,39 @@ export type TranslationDictionary = {
       extract_tasks: string;
     };
   };
+  source_control: {
+    page: {
+      title: string;
+      description: string;
+      empty_title: string;
+      empty_description: string;
+      error_title: string;
+      no_connector_title: string;
+      no_connector_description: string;
+    };
+    pr: {
+      author: string;
+      source_branch: string;
+      target_branch: string;
+      reviewers: string;
+      additions: string;
+      deletions: string;
+      labels: string;
+      draft: string;
+      open_pr: string;
+      state_open: string;
+      state_closed: string;
+      state_merged: string;
+      review_approved: string;
+      review_changes: string;
+      review_pending: string;
+    };
+    actions: {
+      review: string;
+      summarize: string;
+      extract_tasks: string;
+    };
+  };
 };
 
 export type TranslationNamespace = keyof TranslationDictionary;

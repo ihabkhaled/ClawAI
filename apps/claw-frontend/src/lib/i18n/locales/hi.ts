@@ -1761,4 +1761,39 @@ export const hi: TranslationDictionary = {
       extract_tasks: 'कार्य निकालें',
     },
   },
+  source_control: {
+    page: {
+      title: 'सोर्स कंट्रोल',
+      description: 'GitHub, GitLab और Bitbucket से pull requests देखें।',
+      empty_title: 'कोई pull request सिंक नहीं हुई',
+      empty_description:
+        'अभी तक कोई pull request सिंक नहीं हुई। सोर्स कंट्रोल कनेक्टर पर सिंक चलाएं।',
+      error_title: 'Pull requests लोड नहीं हो सकीं',
+      no_connector_title: 'कोई सोर्स कंट्रोल कनेक्टर नहीं मिला',
+      no_connector_description:
+        'Pull requests देखने के लिए Workspace Connectors में GitHub, GitLab या Bitbucket जोड़ें।',
+    },
+    pr: {
+      author: 'लेखक',
+      source_branch: 'से',
+      target_branch: 'में',
+      reviewers: 'समीक्षक',
+      additions: 'जोड़',
+      deletions: 'हटाव',
+      labels: 'लेबल',
+      draft: 'मसौदा',
+      open_pr: 'PR खोलें',
+      state_open: 'खुला',
+      state_closed: 'बंद',
+      state_merged: 'मर्ज',
+      review_approved: 'स्वीकृत',
+      review_changes: 'बदलाव अनुरोध',
+      review_pending: 'समीक्षा बाकी',
+    },
+    actions: {
+      review: 'PR समीक्षा',
+      summarize: 'सारांश',
+      extract_tasks: 'कार्य निकालें',
+    },
+  },
 };

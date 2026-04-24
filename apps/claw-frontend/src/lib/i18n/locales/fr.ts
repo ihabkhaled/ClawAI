@@ -1789,4 +1789,39 @@ export const fr: TranslationDictionary = {
       extract_tasks: 'Extraire les tâches',
     },
   },
+  source_control: {
+    page: {
+      title: 'Contrôle de source',
+      description: 'Parcourez les pull requests de GitHub, GitLab et Bitbucket.',
+      empty_title: 'Aucune pull request synchronisée',
+      empty_description:
+        "Aucune pull request n'a encore été synchronisée. Déclenchez une synchronisation sur votre connecteur de contrôle de source.",
+      error_title: 'Impossible de charger les pull requests',
+      no_connector_title: 'Aucun connecteur de contrôle de source trouvé',
+      no_connector_description:
+        'Connectez GitHub, GitLab ou Bitbucket dans les Connecteurs Workspace.',
+    },
+    pr: {
+      author: 'Auteur',
+      source_branch: 'De',
+      target_branch: 'Vers',
+      reviewers: 'Réviseurs',
+      additions: 'Ajouts',
+      deletions: 'Suppressions',
+      labels: 'Étiquettes',
+      draft: 'Brouillon',
+      open_pr: 'Ouvrir la PR',
+      state_open: 'Ouvert',
+      state_closed: 'Fermé',
+      state_merged: 'Fusionné',
+      review_approved: 'Approuvé',
+      review_changes: 'Modifications demandées',
+      review_pending: 'Révision en attente',
+    },
+    actions: {
+      review: 'Réviser la PR',
+      summarize: 'Résumer',
+      extract_tasks: 'Extraire les tâches',
+    },
+  },
 };

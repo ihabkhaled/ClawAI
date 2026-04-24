@@ -71,6 +71,7 @@ import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './
 import type { ReplayBatchResult, ReplayResult } from './replay.types';
 import type { RoleMemberResult, RolePackResult } from './role-pack.types';
 import type { CreatePolicyRequest, RoutingDecision, RoutingPolicy } from './routing.types';
+import type { PullRequestMetadata } from './source-control.types';
 import type { DecompositionResultState, SubTaskResult } from './task-decomposition.types';
 import type { UseVerifyResultState } from './verifier.types';
 import type {
@@ -1156,6 +1157,36 @@ export type JiraTicketDialogProps = {
 
 export type JiraActionsBarProps = {
   ticket: WorkspaceObject;
+  onAction: (kind: AiActionKind) => void;
+  isDraftPending: boolean;
+  t: TranslateFunction;
+};
+
+export type PullRequestRowProps = {
+  pr: WorkspaceObject;
+  metadata: PullRequestMetadata;
+  onClick: () => void;
+  t: TranslateFunction;
+};
+
+export type PullRequestListProps = {
+  pullRequests: WorkspaceObject[];
+  isLoading: boolean;
+  isError: boolean;
+  onSelectPr: (pr: WorkspaceObject) => void;
+  t: TranslateFunction;
+};
+
+export type PullRequestDialogProps = {
+  pr: WorkspaceObject | null;
+  open: boolean;
+  onClose: () => void;
+  onOpenAiAction: (kind: AiActionKind) => void;
+  t: TranslateFunction;
+};
+
+export type SourceControlActionsBarProps = {
+  pr: WorkspaceObject;
   onAction: (kind: AiActionKind) => void;
   isDraftPending: boolean;
   t: TranslateFunction;

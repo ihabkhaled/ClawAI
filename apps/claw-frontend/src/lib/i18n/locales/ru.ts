@@ -1778,4 +1778,38 @@ export const ru: TranslationDictionary = {
       extract_tasks: 'Извлечь задачи',
     },
   },
+  source_control: {
+    page: {
+      title: 'Контроль версий',
+      description: 'Просматривайте pull request из GitHub, GitLab и Bitbucket.',
+      empty_title: 'Pull request не синхронизированы',
+      empty_description:
+        'Pull request ещё не синхронизированы. Запустите синхронизацию в коннекторе контроля версий.',
+      error_title: 'Не удалось загрузить pull request',
+      no_connector_title: 'Коннектор контроля версий не найден',
+      no_connector_description: 'Подключите GitHub, GitLab или Bitbucket в Коннекторах Workspace.',
+    },
+    pr: {
+      author: 'Автор',
+      source_branch: 'Из',
+      target_branch: 'В',
+      reviewers: 'Ревьюеры',
+      additions: 'Добавления',
+      deletions: 'Удаления',
+      labels: 'Метки',
+      draft: 'Черновик',
+      open_pr: 'Открыть PR',
+      state_open: 'Открыт',
+      state_closed: 'Закрыт',
+      state_merged: 'Слит',
+      review_approved: 'Одобрен',
+      review_changes: 'Запрошены изменения',
+      review_pending: 'Ожидает проверки',
+    },
+    actions: {
+      review: 'Проверить PR',
+      summarize: 'Резюме',
+      extract_tasks: 'Извлечь задачи',
+    },
+  },
 };

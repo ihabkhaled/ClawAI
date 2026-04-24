@@ -1743,4 +1743,39 @@ export const ar: TranslationDictionary = {
       extract_tasks: 'استخراج المهام',
     },
   },
+  source_control: {
+    page: {
+      title: 'التحكم بالمصادر',
+      description: 'تصفح طلبات السحب من GitHub وGitLab وBitbucket.',
+      empty_title: 'لا توجد طلبات سحب مزامَنة',
+      empty_description:
+        'لم تتم مزامنة أي طلبات سحب بعد. شغّل المزامنة على موصّل التحكم بالمصادر لتحميل طلبات السحب.',
+      error_title: 'تعذّر تحميل طلبات السحب',
+      no_connector_title: 'لم يُعثر على موصّل تحكم بالمصادر',
+      no_connector_description:
+        'قم بتوصيل GitHub أو GitLab أو Bitbucket في موصّلات مساحة العمل لبدء تصفح طلبات السحب.',
+    },
+    pr: {
+      author: 'المؤلف',
+      source_branch: 'من',
+      target_branch: 'إلى',
+      reviewers: 'المراجعون',
+      additions: 'الإضافات',
+      deletions: 'الحذف',
+      labels: 'التسميات',
+      draft: 'مسودة',
+      open_pr: 'فتح طلب السحب',
+      state_open: 'مفتوح',
+      state_closed: 'مغلق',
+      state_merged: 'مدمج',
+      review_approved: 'موافق عليه',
+      review_changes: 'تغييرات مطلوبة',
+      review_pending: 'في انتظار المراجعة',
+    },
+    actions: {
+      review: 'مراجعة طلب السحب',
+      summarize: 'تلخيص',
+      extract_tasks: 'استخراج المهام',
+    },
+  },
 };

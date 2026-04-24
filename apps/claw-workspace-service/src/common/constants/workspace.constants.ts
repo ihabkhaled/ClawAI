@@ -62,6 +62,15 @@ export const FIGMA_API_BASE = 'https://api.figma.com/v1';
 export const FIGMA_AUTH_URL = 'https://www.figma.com/oauth';
 export const FIGMA_TOKEN_URL = 'https://api.figma.com/v1/oauth/token';
 export const FIGMA_SYNC_PROJECTS_LIMIT = 30;
+export const FIGMA_DEFAULT_SCOPES = [
+  'file_content:read',
+  'file_metadata:read',
+  'projects:read',
+  'current_user:read',
+  'file_comments:read',
+  'webhooks:read',
+  'webhooks:write',
+];
 
 // ─── ClickUp adapter URLs ─────────────────────────────────────────────────────
 export const CLICKUP_API_BASE = 'https://api.clickup.com/api/v2';

@@ -1780,4 +1780,38 @@ export const it: TranslationDictionary = {
       extract_tasks: 'Estrai attività',
     },
   },
+  source_control: {
+    page: {
+      title: 'Controllo sorgente',
+      description: 'Sfoglia pull request da GitHub, GitLab e Bitbucket.',
+      empty_title: 'Nessuna pull request sincronizzata',
+      empty_description:
+        'Nessuna pull request è stata ancora sincronizzata. Avvia una sincronizzazione sul tuo connettore di controllo sorgente.',
+      error_title: 'Impossibile caricare le pull request',
+      no_connector_title: 'Nessun connettore di controllo sorgente trovato',
+      no_connector_description: 'Collega GitHub, GitLab o Bitbucket nei Connettori Workspace.',
+    },
+    pr: {
+      author: 'Autore',
+      source_branch: 'Da',
+      target_branch: 'In',
+      reviewers: 'Revisori',
+      additions: 'Aggiunte',
+      deletions: 'Eliminazioni',
+      labels: 'Etichette',
+      draft: 'Bozza',
+      open_pr: 'Apri PR',
+      state_open: 'Aperto',
+      state_closed: 'Chiuso',
+      state_merged: 'Unito',
+      review_approved: 'Approvato',
+      review_changes: 'Modifiche richieste',
+      review_pending: 'Revisione in sospeso',
+    },
+    actions: {
+      review: 'Revisiona PR',
+      summarize: 'Riassumi',
+      extract_tasks: 'Estrai attività',
+    },
+  },
 };

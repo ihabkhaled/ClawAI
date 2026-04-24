@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   FIGMA_API_BASE,
   FIGMA_AUTH_URL,
+  FIGMA_DEFAULT_SCOPES,
   FIGMA_SYNC_PROJECTS_LIMIT,
   FIGMA_TOKEN_URL,
   HEALTH_CHECK_TIMEOUT_MS,
@@ -202,7 +203,7 @@ export class FigmaAdapter implements WorkspaceAdapter {
   }
 
   getDefaultScopes(): string[] {
-    return ['file_read'];
+    return FIGMA_DEFAULT_SCOPES;
   }
 
   async fetchObjectDetails(
@@ -248,7 +249,7 @@ export class FigmaAdapter implements WorkspaceAdapter {
         data.expires_in !== undefined && data.expires_in !== null
           ? new Date(Date.now() + data.expires_in * 1000)
           : undefined,
-      scopes: ['file_read'],
+      scopes: FIGMA_DEFAULT_SCOPES,
     };
   }
 

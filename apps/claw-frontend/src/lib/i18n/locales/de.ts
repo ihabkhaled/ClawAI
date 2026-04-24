@@ -1785,4 +1785,39 @@ export const de: TranslationDictionary = {
       extract_tasks: 'Aufgaben extrahieren',
     },
   },
+  source_control: {
+    page: {
+      title: 'Quellcodeverwaltung',
+      description: 'Pull Requests von GitHub, GitLab und Bitbucket durchsuchen.',
+      empty_title: 'Keine Pull Requests synchronisiert',
+      empty_description:
+        'Es wurden noch keine Pull Requests synchronisiert. Lösen Sie eine Synchronisierung am Quellcodeverwaltungs-Connector aus.',
+      error_title: 'Pull Requests können nicht geladen werden',
+      no_connector_title: 'Kein Quellcodeverwaltungs-Connector gefunden',
+      no_connector_description:
+        'Verbinden Sie GitHub, GitLab oder Bitbucket in den Workspace-Connectors.',
+    },
+    pr: {
+      author: 'Autor',
+      source_branch: 'Von',
+      target_branch: 'In',
+      reviewers: 'Reviewer',
+      additions: 'Hinzufügungen',
+      deletions: 'Löschungen',
+      labels: 'Labels',
+      draft: 'Entwurf',
+      open_pr: 'PR öffnen',
+      state_open: 'Offen',
+      state_closed: 'Geschlossen',
+      state_merged: 'Gemergt',
+      review_approved: 'Genehmigt',
+      review_changes: 'Änderungen angefordert',
+      review_pending: 'Überprüfung ausstehend',
+    },
+    actions: {
+      review: 'PR überprüfen',
+      summarize: 'Zusammenfassen',
+      extract_tasks: 'Aufgaben extrahieren',
+    },
+  },
 };
