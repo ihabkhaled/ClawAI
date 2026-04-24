@@ -42,6 +42,7 @@ import type { Connector, ConnectorModel, CreateConnectorRequest } from './connec
 import type { ConsensusMetadata, ConsensusModelBreakdown } from './consensus.types';
 import type { CreateContextPackItemRequest, CreateContextPackRequest } from './context-pack.types';
 import type { CostEnsembleResult } from './cost-ensemble.types';
+import type { DocFileMetadata } from './docs.types';
 import type {
   EscalationChainStep,
   EscalationChainSynthesisState,
@@ -1218,6 +1219,36 @@ export type SlackMessageDialogProps = {
 
 export type SlackActionsBarProps = {
   message: WorkspaceObject;
+  onAction: (kind: AiActionKind) => void;
+  isDraftPending: boolean;
+  t: TranslateFunction;
+};
+
+export type DocFileRowProps = {
+  doc: WorkspaceObject;
+  metadata: DocFileMetadata;
+  onClick: () => void;
+  t: TranslateFunction;
+};
+
+export type DocFileListProps = {
+  docs: WorkspaceObject[];
+  isLoading: boolean;
+  isError: boolean;
+  onSelectDoc: (doc: WorkspaceObject) => void;
+  t: TranslateFunction;
+};
+
+export type DocFileDialogProps = {
+  doc: WorkspaceObject | null;
+  open: boolean;
+  onClose: () => void;
+  onOpenAiAction: (kind: AiActionKind) => void;
+  t: TranslateFunction;
+};
+
+export type DocsActionsBarProps = {
+  doc: WorkspaceObject;
   onAction: (kind: AiActionKind) => void;
   isDraftPending: boolean;
   t: TranslateFunction;

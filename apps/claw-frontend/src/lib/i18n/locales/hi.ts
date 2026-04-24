@@ -1822,4 +1822,32 @@ export const hi: TranslationDictionary = {
       extract_tasks: 'कार्य निकालें',
     },
   },
+  docs: {
+    page: {
+      title: 'दस्तावेज़',
+      description:
+        'Google Drive, OneDrive और SharePoint से सिंक किए गए दस्तावेज़ देखें और प्रबंधित करें।',
+      empty_title: 'कोई दस्तावेज़ सिंक नहीं हुए',
+      empty_description:
+        'अभी तक कोई दस्तावेज़ सिंक नहीं हुए। Drive या SharePoint कनेक्टर पर सिंक चलाएं।',
+      error_title: 'दस्तावेज़ लोड नहीं हो सके',
+      no_connector_title: 'कोई दस्तावेज़ कनेक्टर नहीं मिला',
+      no_connector_description:
+        'दस्तावेज़ देखने के लिए Workspace Connectors में Google Drive, OneDrive या SharePoint जोड़ें।',
+    },
+    file: {
+      owner: 'स्वामी',
+      modified_by: 'संशोधित किया',
+      size: 'आकार',
+      type: 'प्रकार',
+      open_file: 'फ़ाइल खोलें',
+      shared_with: 'साझा किया गया',
+      path: 'पथ',
+    },
+    actions: {
+      summarize: 'सारांश',
+      extract_tasks: 'कार्य निकालें',
+      draft_email: 'ईमेल का मसौदा',
+    },
+  },
 };

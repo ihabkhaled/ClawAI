@@ -1845,4 +1845,32 @@ export const de: TranslationDictionary = {
       extract_tasks: 'Aufgaben extrahieren',
     },
   },
+  docs: {
+    page: {
+      title: 'Dokumente',
+      description:
+        'Synchronisierte Dokumente aus Google Drive, OneDrive und SharePoint durchsuchen und verwalten.',
+      empty_title: 'Keine Dokumente synchronisiert',
+      empty_description:
+        'Es wurden noch keine Dokumente synchronisiert. Starten Sie eine Synchronisierung für Ihren Drive- oder SharePoint-Connector.',
+      error_title: 'Dokumente konnten nicht geladen werden',
+      no_connector_title: 'Kein Dokument-Connector gefunden',
+      no_connector_description:
+        'Verbinden Sie Google Drive, OneDrive oder SharePoint unter Workspace-Connectors, um Dokumente zu durchsuchen.',
+    },
+    file: {
+      owner: 'Besitzer',
+      modified_by: 'Geändert von',
+      size: 'Größe',
+      type: 'Typ',
+      open_file: 'Datei öffnen',
+      shared_with: 'Geteilt mit',
+      path: 'Pfad',
+    },
+    actions: {
+      summarize: 'Zusammenfassen',
+      extract_tasks: 'Aufgaben extrahieren',
+      draft_email: 'E-Mail entwerfen',
+    },
+  },
 };

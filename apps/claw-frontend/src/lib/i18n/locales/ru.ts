@@ -1837,4 +1837,32 @@ export const ru: TranslationDictionary = {
       extract_tasks: 'Извлечь задачи',
     },
   },
+  docs: {
+    page: {
+      title: 'Документы',
+      description:
+        'Просматривайте и управляйте синхронизированными документами из Google Drive, OneDrive и SharePoint.',
+      empty_title: 'Документы не синхронизированы',
+      empty_description:
+        'Документы ещё не синхронизированы. Запустите синхронизацию на коннекторе Drive или SharePoint.',
+      error_title: 'Не удалось загрузить документы',
+      no_connector_title: 'Коннектор документов не найден',
+      no_connector_description:
+        'Подключите Google Drive, OneDrive или SharePoint в Workspace Connectors для просмотра документов.',
+    },
+    file: {
+      owner: 'Владелец',
+      modified_by: 'Изменил',
+      size: 'Размер',
+      type: 'Тип',
+      open_file: 'Открыть файл',
+      shared_with: 'Поделился',
+      path: 'Путь',
+    },
+    actions: {
+      summarize: 'Резюме',
+      extract_tasks: 'Извлечь задачи',
+      draft_email: 'Составить письмо',
+    },
+  },
 };

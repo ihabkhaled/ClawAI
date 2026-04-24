@@ -1787,6 +1787,31 @@ export type TranslationDictionary = {
       extract_tasks: string;
     };
   };
+  docs: {
+    page: {
+      title: string;
+      description: string;
+      empty_title: string;
+      empty_description: string;
+      error_title: string;
+      no_connector_title: string;
+      no_connector_description: string;
+    };
+    file: {
+      owner: string;
+      modified_by: string;
+      size: string;
+      type: string;
+      open_file: string;
+      shared_with: string;
+      path: string;
+    };
+    actions: {
+      summarize: string;
+      extract_tasks: string;
+      draft_email: string;
+    };
+  };
 };
 
 export type TranslationNamespace = keyof TranslationDictionary;

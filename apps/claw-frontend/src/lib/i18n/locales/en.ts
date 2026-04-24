@@ -1810,4 +1810,32 @@ export const en: TranslationDictionary = {
       extract_tasks: 'Extract Action Items',
     },
   },
+  docs: {
+    page: {
+      title: 'Documents',
+      description:
+        'Browse and manage synced documents from Google Drive, OneDrive, and SharePoint.',
+      empty_title: 'No documents synced',
+      empty_description:
+        'No documents have been synced yet. Trigger a sync on your Drive or SharePoint connector.',
+      error_title: 'Unable to load documents',
+      no_connector_title: 'No document connector found',
+      no_connector_description:
+        'Connect Google Drive, OneDrive, or SharePoint in Workspace Connectors to start browsing documents.',
+    },
+    file: {
+      owner: 'Owner',
+      modified_by: 'Modified by',
+      size: 'Size',
+      type: 'Type',
+      open_file: 'Open file',
+      shared_with: 'Shared with',
+      path: 'Path',
+    },
+    actions: {
+      summarize: 'Summarize',
+      extract_tasks: 'Extract Action Items',
+      draft_email: 'Draft Email',
+    },
+  },
 };

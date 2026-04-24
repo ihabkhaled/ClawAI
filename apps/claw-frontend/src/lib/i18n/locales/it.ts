@@ -1839,4 +1839,32 @@ export const it: TranslationDictionary = {
       extract_tasks: 'Estrai attività',
     },
   },
+  docs: {
+    page: {
+      title: 'Documenti',
+      description:
+        'Sfoglia e gestisci documenti sincronizzati da Google Drive, OneDrive e SharePoint.',
+      empty_title: 'Nessun documento sincronizzato',
+      empty_description:
+        'Nessun documento è stato sincronizzato. Avvia una sincronizzazione sul tuo connector Drive o SharePoint.',
+      error_title: 'Impossibile caricare i documenti',
+      no_connector_title: 'Nessun connector documenti trovato',
+      no_connector_description:
+        'Collega Google Drive, OneDrive o SharePoint nei Connector Workspace per sfogliare i documenti.',
+    },
+    file: {
+      owner: 'Proprietario',
+      modified_by: 'Modificato da',
+      size: 'Dimensione',
+      type: 'Tipo',
+      open_file: 'Apri file',
+      shared_with: 'Condiviso con',
+      path: 'Percorso',
+    },
+    actions: {
+      summarize: 'Riassumi',
+      extract_tasks: 'Estrai attività',
+      draft_email: 'Bozza email',
+    },
+  },
 };

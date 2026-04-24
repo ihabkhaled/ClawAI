@@ -1804,4 +1804,31 @@ export const ar: TranslationDictionary = {
       extract_tasks: 'استخراج بنود العمل',
     },
   },
+  docs: {
+    page: {
+      title: 'المستندات',
+      description: 'تصفح وإدارة المستندات المزامنة من Google Drive وOneDrive وSharePoint.',
+      empty_title: 'لا توجد مستندات مزامنة',
+      empty_description:
+        'لم تتم مزامنة أي مستندات بعد. قم بتشغيل مزامنة على موصل Drive أو SharePoint.',
+      error_title: 'تعذر تحميل المستندات',
+      no_connector_title: 'لم يتم العثور على موصل مستندات',
+      no_connector_description:
+        'اربط Google Drive أو OneDrive أو SharePoint في موصلات مساحة العمل لبدء تصفح المستندات.',
+    },
+    file: {
+      owner: 'المالك',
+      modified_by: 'عدّله',
+      size: 'الحجم',
+      type: 'النوع',
+      open_file: 'فتح الملف',
+      shared_with: 'مشارك مع',
+      path: 'المسار',
+    },
+    actions: {
+      summarize: 'تلخيص',
+      extract_tasks: 'استخراج بنود العمل',
+      draft_email: 'صياغة بريد إلكتروني',
+    },
+  },
 };
