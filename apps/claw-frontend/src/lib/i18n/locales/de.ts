@@ -1722,4 +1722,34 @@ export const de: TranslationDictionary = {
     topServices: 'Top-Dienste',
     totalLogs: 'Gesamtzahl der Logs',
   },
+  gmail: {
+    page: {
+      title: 'Gmail',
+      description: 'Synchronisierte Gmail-Nachrichten durchsuchen und verwalten.',
+      empty_title: 'Keine E-Mails synchronisiert',
+      empty_description:
+        'Es wurden noch keine E-Mails synchronisiert. Starten Sie die Synchronisierung Ihres Gmail-Konnektors.',
+      error_title: 'E-Mails konnten nicht geladen werden',
+      no_connector_title: 'Kein Gmail-Konnektor gefunden',
+      no_connector_description:
+        'Verbinden Sie ein Gmail-Konto in den Workspace-Konnektoren, um Ihren Posteingang zu durchsuchen.',
+    },
+    message: {
+      from: 'Von',
+      to: 'An',
+      date: 'Datum',
+      subject: 'Betreff',
+      reply: 'Antworten',
+      open_in_gmail: 'In Gmail öffnen',
+      unread: 'Ungelesen',
+    },
+    actions: {
+      summarize: 'Zusammenfassen',
+      draft_reply: 'Antwort entwerfen',
+      extract_tasks: 'Aufgaben extrahieren',
+      send_email: 'E-Mail senden',
+      draft_sent: 'Entwurf erstellt — in Genehmigungen prüfen',
+      draft_failed: 'Entwurf konnte nicht erstellt werden',
+    },
+  },
 };

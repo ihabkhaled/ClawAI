@@ -1681,4 +1681,34 @@ export const ar: TranslationDictionary = {
     topServices: 'أهم الخدمات',
     totalLogs: 'إجمالي السجلات',
   },
+  gmail: {
+    page: {
+      title: 'Gmail',
+      description: 'تصفح وإدارة رسائل Gmail المزامَنة.',
+      empty_title: 'لا توجد رسائل بريد إلكتروني مزامَنة',
+      empty_description:
+        'لم تتم مزامنة أي رسائل بعد. قم بتشغيل المزامنة على موصل Gmail لتحميل الرسائل.',
+      error_title: 'تعذّر تحميل الرسائل',
+      no_connector_title: 'لم يُعثر على موصل Gmail',
+      no_connector_description:
+        'قم بتوصيل حساب Gmail في موصلات مساحة العمل لبدء تصفح بريدك الوارد.',
+    },
+    message: {
+      from: 'من',
+      to: 'إلى',
+      date: 'التاريخ',
+      subject: 'الموضوع',
+      reply: 'رد',
+      open_in_gmail: 'فتح في Gmail',
+      unread: 'غير مقروء',
+    },
+    actions: {
+      summarize: 'تلخيص',
+      draft_reply: 'صياغة رد',
+      extract_tasks: 'استخراج بنود العمل',
+      send_email: 'إرسال بريد إلكتروني',
+      draft_sent: 'تم إنشاء المسودة — راجعها في الموافقات',
+      draft_failed: 'فشل إنشاء المسودة',
+    },
+  },
 };

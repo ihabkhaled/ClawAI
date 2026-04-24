@@ -1671,6 +1671,34 @@ export type TranslationDictionary = {
     topServices: string;
     totalLogs: string;
   };
+  gmail: {
+    page: {
+      title: string;
+      description: string;
+      empty_title: string;
+      empty_description: string;
+      error_title: string;
+      no_connector_title: string;
+      no_connector_description: string;
+    };
+    message: {
+      from: string;
+      to: string;
+      date: string;
+      subject: string;
+      reply: string;
+      open_in_gmail: string;
+      unread: string;
+    };
+    actions: {
+      summarize: string;
+      draft_reply: string;
+      extract_tasks: string;
+      send_email: string;
+      draft_sent: string;
+      draft_failed: string;
+    };
+  };
 };
 
 export type TranslationNamespace = keyof TranslationDictionary;

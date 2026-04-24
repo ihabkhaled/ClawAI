@@ -1698,4 +1698,34 @@ export const hi: TranslationDictionary = {
     topServices: 'शीर्ष सेवाएँ',
     totalLogs: 'कुल लॉग',
   },
+  gmail: {
+    page: {
+      title: 'Gmail',
+      description: 'समन्वयित Gmail संदेशों को ब्राउज़ और प्रबंधित करें।',
+      empty_title: 'कोई ईमेल समन्वयित नहीं',
+      empty_description:
+        'अभी तक कोई ईमेल समन्वयित नहीं हुआ। संदेश लोड करने के लिए अपने Gmail कनेक्टर पर सिंक चलाएं।',
+      error_title: 'ईमेल लोड करने में असमर्थ',
+      no_connector_title: 'Gmail कनेक्टर नहीं मिला',
+      no_connector_description:
+        'अपना इनबॉक्स ब्राउज़ करने के लिए Workspace Connectors में Gmail खाता कनेक्ट करें।',
+    },
+    message: {
+      from: 'प्रेषक',
+      to: 'प्राप्तकर्ता',
+      date: 'तारीख',
+      subject: 'विषय',
+      reply: 'उत्तर दें',
+      open_in_gmail: 'Gmail में खोलें',
+      unread: 'अपठित',
+    },
+    actions: {
+      summarize: 'सारांश',
+      draft_reply: 'उत्तर का मसौदा',
+      extract_tasks: 'कार्य निकालें',
+      send_email: 'ईमेल भेजें',
+      draft_sent: 'मसौदा बनाया — Approvals में समीक्षा करें',
+      draft_failed: 'मसौदा बनाने में विफल',
+    },
+  },
 };

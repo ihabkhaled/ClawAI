@@ -1715,4 +1715,34 @@ export const ru: TranslationDictionary = {
     topServices: 'Топ сервисов',
     totalLogs: 'Всего записей',
   },
+  gmail: {
+    page: {
+      title: 'Gmail',
+      description: 'Просматривайте синхронизированные сообщения Gmail и управляйте ими.',
+      empty_title: 'Письма не синхронизированы',
+      empty_description:
+        'Ещё не синхронизировано ни одного письма. Запустите синхронизацию на вашем Gmail-коннекторе.',
+      error_title: 'Не удалось загрузить письма',
+      no_connector_title: 'Gmail-коннектор не найден',
+      no_connector_description:
+        'Подключите аккаунт Gmail в коннекторах рабочего пространства для просмотра входящих.',
+    },
+    message: {
+      from: 'От кого',
+      to: 'Кому',
+      date: 'Дата',
+      subject: 'Тема',
+      reply: 'Ответить',
+      open_in_gmail: 'Открыть в Gmail',
+      unread: 'Непрочитанное',
+    },
+    actions: {
+      summarize: 'Резюмировать',
+      draft_reply: 'Составить ответ',
+      extract_tasks: 'Извлечь задачи',
+      send_email: 'Отправить письмо',
+      draft_sent: 'Черновик создан — проверьте в разделе Согласований',
+      draft_failed: 'Не удалось создать черновик',
+    },
+  },
 };

@@ -1686,4 +1686,34 @@ export const en: TranslationDictionary = {
     topServices: 'Top services',
     totalLogs: 'Total logs',
   },
+  gmail: {
+    page: {
+      title: 'Gmail',
+      description: 'Browse and manage synced Gmail messages.',
+      empty_title: 'No emails synced',
+      empty_description:
+        'No emails have been synced yet. Trigger a sync on your Gmail connector to load messages.',
+      error_title: 'Unable to load emails',
+      no_connector_title: 'No Gmail connector found',
+      no_connector_description:
+        'Connect a Gmail account in Workspace Connectors to start browsing your inbox.',
+    },
+    message: {
+      from: 'From',
+      to: 'To',
+      date: 'Date',
+      subject: 'Subject',
+      reply: 'Reply',
+      open_in_gmail: 'Open in Gmail',
+      unread: 'Unread',
+    },
+    actions: {
+      summarize: 'Summarize',
+      draft_reply: 'Draft Reply',
+      extract_tasks: 'Extract Action Items',
+      send_email: 'Send Email',
+      draft_sent: 'Draft created — review in Approvals',
+      draft_failed: 'Failed to create draft',
+    },
+  },
 };

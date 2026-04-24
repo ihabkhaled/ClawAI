@@ -10,6 +10,7 @@ import type {
   ReplayOutcomeLabel,
   RoutingMode,
 } from '@/enums';
+import type { AiActionKind } from '@/enums/ai-action-kind.enum';
 import type { ConsensusConfidenceLevel } from '@/enums/consensus-confidence-level.enum';
 import type { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
@@ -47,6 +48,7 @@ import type {
   EscalationStepResult,
 } from './escalation-chain.types';
 import type { UploadedFile } from './file.types';
+import type { GmailMessageMetadata } from './gmail.types';
 import type { AggregatedHealth } from './health.types';
 import type {
   ClientLogEntry,
@@ -1095,5 +1097,35 @@ export type WorkspaceActionListProps = {
   onApprove: (id: string) => void;
   onReject: (action: WorkspaceAction) => void;
   isApproving: boolean;
+  t: TranslateFunction;
+};
+
+export type GmailMessageRowProps = {
+  message: WorkspaceObject;
+  metadata: GmailMessageMetadata;
+  onClick: () => void;
+  t: TranslateFunction;
+};
+
+export type GmailMessageListProps = {
+  messages: WorkspaceObject[];
+  isLoading: boolean;
+  isError: boolean;
+  onSelectMessage: (msg: WorkspaceObject) => void;
+  t: TranslateFunction;
+};
+
+export type GmailMessageDialogProps = {
+  message: WorkspaceObject | null;
+  open: boolean;
+  onClose: () => void;
+  onOpenAiAction: (kind: AiActionKind) => void;
+  t: TranslateFunction;
+};
+
+export type GmailActionsBarProps = {
+  message: WorkspaceObject;
+  onAction: (kind: AiActionKind) => void;
+  isDraftPending: boolean;
   t: TranslateFunction;
 };

@@ -1726,4 +1726,34 @@ export const fr: TranslationDictionary = {
     topServices: 'Services principaux',
     totalLogs: 'Total des journaux',
   },
+  gmail: {
+    page: {
+      title: 'Gmail',
+      description: 'Parcourez et gérez vos messages Gmail synchronisés.',
+      empty_title: 'Aucun e-mail synchronisé',
+      empty_description:
+        "Aucun e-mail n'a encore été synchronisé. Déclenchez une synchronisation sur votre connecteur Gmail.",
+      error_title: 'Impossible de charger les e-mails',
+      no_connector_title: 'Aucun connecteur Gmail trouvé',
+      no_connector_description:
+        "Connectez un compte Gmail dans les connecteurs d'espace de travail pour parcourir votre boîte de réception.",
+    },
+    message: {
+      from: 'De',
+      to: 'À',
+      date: 'Date',
+      subject: 'Objet',
+      reply: 'Répondre',
+      open_in_gmail: 'Ouvrir dans Gmail',
+      unread: 'Non lu',
+    },
+    actions: {
+      summarize: 'Résumer',
+      draft_reply: 'Rédiger une réponse',
+      extract_tasks: 'Extraire les tâches',
+      send_email: 'Envoyer un e-mail',
+      draft_sent: 'Brouillon créé — vérifiez dans Approbations',
+      draft_failed: 'Échec de la création du brouillon',
+    },
+  },
 };

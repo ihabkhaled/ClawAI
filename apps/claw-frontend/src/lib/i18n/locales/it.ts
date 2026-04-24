@@ -1717,4 +1717,34 @@ export const it: TranslationDictionary = {
     topServices: 'Servizi principali',
     totalLogs: 'Log totali',
   },
+  gmail: {
+    page: {
+      title: 'Gmail',
+      description: 'Sfoglia e gestisci i messaggi Gmail sincronizzati.',
+      empty_title: 'Nessuna email sincronizzata',
+      empty_description:
+        'Nessuna email è stata ancora sincronizzata. Avvia la sincronizzazione sul tuo connettore Gmail.',
+      error_title: 'Impossibile caricare le email',
+      no_connector_title: 'Nessun connettore Gmail trovato',
+      no_connector_description:
+        'Collega un account Gmail nei connettori dello spazio di lavoro per navigare nella tua posta in arrivo.',
+    },
+    message: {
+      from: 'Da',
+      to: 'A',
+      date: 'Data',
+      subject: 'Oggetto',
+      reply: 'Rispondi',
+      open_in_gmail: 'Apri in Gmail',
+      unread: 'Non letto',
+    },
+    actions: {
+      summarize: 'Riassumi',
+      draft_reply: 'Bozza risposta',
+      extract_tasks: 'Estrai attività',
+      send_email: 'Invia email',
+      draft_sent: 'Bozza creata — controlla in Approvazioni',
+      draft_failed: 'Creazione bozza fallita',
+    },
+  },
 };
