@@ -11,6 +11,7 @@ import {
   type RuntimeType,
 } from '../../generated/prisma';
 import { BusinessException, EntityNotFoundException } from '../../common/errors';
+import { ModelCapability } from '../../common/enums/model-capability.enum';
 import { type PaginatedResult } from '../../common/types';
 import { LocalModelsRepository } from './repositories/local-models.repository';
 import { RuntimeConfigsRepository } from './repositories/runtime-configs.repository';
@@ -156,12 +157,13 @@ export class OllamaService implements OnModuleInit {
   async getCatalog(
     query: ListCatalogQueryDto,
   ): Promise<PaginatedResult<CatalogEntryWithInstallStatus>> {
-    const onlySearchBrowser = query.capability === 'SEARCH_BROWSER';
+    const onlySearchBrowser = query.capability === ModelCapability.SEARCH_BROWSER;
     const filters = {
       category: query.category,
       runtime: query.runtime,
       downloadStatus: query.downloadStatus,
       search: query.search,
+      capability: onlySearchBrowser ? undefined : query.capability,
       onlySearchBrowser,
       searchBrowserMinScore: onlySearchBrowser ? (query.minScore ?? 0.5) : query.minScore,
     };

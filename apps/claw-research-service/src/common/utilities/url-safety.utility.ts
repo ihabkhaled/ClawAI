@@ -90,7 +90,12 @@ export function assertSafeOutboundUrl(rawUrl: string, options: UrlSafetyOptions 
   if (!ALLOWED_OUTBOUND_PROTOCOLS.has(parsed.protocol)) {
     throw new Error(`Unsupported protocol ${parsed.protocol} for ${rawUrl}`);
   }
-  if (isPrivateOrLoopbackHost(parsed.hostname)) {
+  // Cloud metadata endpoints are never legitimate targets — even on
+  // self-hosted deployments that otherwise allow private hosts.
+  if (parsed.hostname.toLowerCase() === AWS_METADATA_IP) {
+    throw new Error(`URL resolves to cloud-metadata endpoint: ${parsed.hostname}`);
+  }
+  if (options.allowPrivateHosts !== true && isPrivateOrLoopbackHost(parsed.hostname)) {
     throw new Error(`URL resolves to a private/loopback host: ${parsed.hostname}`);
   }
   if (

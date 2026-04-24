@@ -18,7 +18,9 @@ export class HttpFetchAdapter implements FetchAdapter {
 
   async fetchPage(request: FetchRequest): Promise<FetchResult> {
     const start = Date.now();
-    const parsed = assertSafeOutboundUrl(request.url);
+    // Self-hosted deployments may legitimately fetch internal resources
+    // (self-hosted search, internal docs). Cloud metadata endpoints stay blocked.
+    const parsed = assertSafeOutboundUrl(request.url, { allowPrivateHosts: true });
     const response = await fetch(parsed.href, {
       redirect: 'follow',
       signal: AbortSignal.timeout(request.timeoutMs ?? FETCH_DEFAULT_TIMEOUT_MS),
@@ -56,11 +58,11 @@ export class HttpFetchAdapter implements FetchAdapter {
     if (!chain) {
       return;
     }
-    // fetch() follows redirects automatically; we verify the final hostname
-    // ends up in a public namespace. The protocol allowlist is already
-    // enforced before the initial request.
+    // fetch() follows redirects automatically; we verify the final hostname.
+    // Private hosts are allowed (self-hosted); cloud metadata endpoint and
+    // unsupported protocols stay blocked by assertSafeOutboundUrl.
     try {
-      assertSafeOutboundUrl(response.url);
+      assertSafeOutboundUrl(response.url, { allowPrivateHosts: true });
     } catch (error) {
       this.logger.warn(`Fetch redirected to unsafe target ${response.url}`);
       throw error;

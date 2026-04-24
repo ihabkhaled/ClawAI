@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import {
+  CandidateStatus,
   DownloadStatus,
   type ModelCatalogEntry,
   ModelCategory,
+  type ModelDiscoveryCandidate,
   type Prisma,
   RuntimeType,
 } from '../../../generated/prisma';
@@ -14,6 +16,7 @@ import {
   resolveCatalogSourceUrl,
 } from '../utilities/catalog-reference.utility';
 import { DEPRECATED_DEFAULT_LOCAL_MODEL_KEYS } from '../constants/default-models.constants';
+import { CAPABILITY_MATCH } from '../constants/capability-mapping.constants';
 
 @Injectable()
 export class ModelCatalogRepository {
@@ -153,6 +156,30 @@ export class ModelCatalogRepository {
     });
   }
 
+  async findByNameTagRuntime(
+    name: string,
+    tag: string,
+    runtime: RuntimeType,
+  ): Promise<ModelCatalogEntry | null> {
+    return this.prisma.modelCatalogEntry.findUnique({
+      where: { name_tag_runtime: { name, tag, runtime } },
+    });
+  }
+
+  async createAdminEntryAndMarkImported(
+    createData: Prisma.ModelCatalogEntryCreateInput,
+    candidateId: string,
+  ): Promise<{ entry: ModelCatalogEntry; candidate: ModelDiscoveryCandidate }> {
+    return this.prisma.$transaction(async (tx) => {
+      const entry = await tx.modelCatalogEntry.create({ data: createData });
+      const candidate = await tx.modelDiscoveryCandidate.update({
+        where: { id: candidateId },
+        data: { status: CandidateStatus.IMPORTED, importedEntryId: entry.id },
+      });
+      return { entry, candidate };
+    });
+  }
+
   async findByHardwareProfile(
     profile: string,
     runtime: RuntimeType,
@@ -225,6 +252,13 @@ export class ModelCatalogRepository {
         { displayName: { contains: filters.search, mode: 'insensitive' } },
         { description: { contains: filters.search, mode: 'insensitive' } },
       ];
+    }
+
+    if (filters.capability !== undefined) {
+      // ModelCapability enum values don't match the raw strings in capabilities[].
+      // Look up the known synonyms for this capability and match any of them.
+      const matches = CAPABILITY_MATCH[filters.capability];
+      where.capabilities = { hasSome: [...matches] };
     }
 
     if (filters.onlySearchBrowser === true || filters.searchBrowserMinScore !== undefined) {

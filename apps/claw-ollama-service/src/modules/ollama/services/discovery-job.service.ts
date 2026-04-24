@@ -4,6 +4,7 @@ import {
   EntityNotFoundException,
 } from '../../../common/errors/business.exception';
 import {
+  CandidateStatus,
   DiscoveryRunStatus,
   type DiscoverySource,
   type ModelDiscoveryCandidate,
@@ -106,8 +107,8 @@ export class DiscoveryJobService {
     for (const id of input.candidateIds) {
       try {
         const result = await this.importManager.importCandidate({ candidateId: id });
-        if (result.candidate.status === 'IMPORTED') approved += 1;
-        else if (result.candidate.status === 'DUPLICATE') duplicates += 1;
+        if (result.candidate.status === CandidateStatus.IMPORTED) approved += 1;
+        else if (result.candidate.status === CandidateStatus.DUPLICATE) duplicates += 1;
       } catch (error: unknown) {
         this.logger.warn(
           `bulk approve failed for ${id}: ${error instanceof Error ? error.message : 'unknown'}`,

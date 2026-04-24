@@ -62,4 +62,21 @@ export class CatalogClassificationService {
       durationMs,
     };
   }
+
+  async reclassifySingle(entryId: string): Promise<void> {
+    const entry = await this.catalogRepository.findById(entryId);
+    if (entry === null) {
+      return;
+    }
+    const result = classifySearchBrowser({
+      name: entry.name,
+      displayName: entry.displayName,
+      description: entry.description,
+      parameterCount: entry.parameterCount,
+      category: entry.category,
+      capabilities: entry.capabilities,
+      downloadStatus: entry.downloadStatus,
+    });
+    await this.catalogRepository.updateSearchBrowserScore(entry.id, result.score, result.reasons);
+  }
 }

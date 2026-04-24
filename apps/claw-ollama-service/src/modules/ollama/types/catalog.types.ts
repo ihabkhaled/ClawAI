@@ -5,6 +5,7 @@ import type {
   PullJobStatus,
   RuntimeType,
 } from '../../../generated/prisma';
+import type { ModelCapability } from '../../../common/enums/model-capability.enum';
 
 export type CatalogEntryInput = {
   name: string;
@@ -34,6 +35,7 @@ export type CatalogFilters = {
   runtime?: RuntimeType;
   downloadStatus?: DownloadStatus;
   search?: string;
+  capability?: ModelCapability;
   searchBrowserMinScore?: number;
   onlySearchBrowser?: boolean;
 };
