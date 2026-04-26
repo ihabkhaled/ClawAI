@@ -6,16 +6,16 @@ import { VllmRuntimeAdapter } from './vllm-runtime.adapter';
 import { LlamaCppRuntimeAdapter } from './llamacpp-runtime.adapter';
 import { LocalAIRuntimeAdapter } from './localai-runtime.adapter';
 
-const adapters: Record<string, RuntimeAdapter> = {
-  [RuntimeType.OLLAMA]: new OllamaRuntimeAdapter(),
-  [RuntimeType.VLLM]: new VllmRuntimeAdapter(),
-  [RuntimeType.LLAMA_CPP]: new LlamaCppRuntimeAdapter(),
-  [RuntimeType.LOCAL_AI]: new LocalAIRuntimeAdapter(),
-  [RuntimeType.COMFYUI]: new ComfyUIRuntimeAdapter(),
-};
+const adapters = new Map<RuntimeType, RuntimeAdapter>([
+  [RuntimeType.OLLAMA, new OllamaRuntimeAdapter()],
+  [RuntimeType.VLLM, new VllmRuntimeAdapter()],
+  [RuntimeType.LLAMA_CPP, new LlamaCppRuntimeAdapter()],
+  [RuntimeType.LOCAL_AI, new LocalAIRuntimeAdapter()],
+  [RuntimeType.COMFYUI, new ComfyUIRuntimeAdapter()],
+]);
 
 export function getRuntimeAdapter(runtime: RuntimeType): RuntimeAdapter {
-  const adapter = adapters[runtime];
+  const adapter = adapters.get(runtime);
   if (!adapter) {
     throw new Error(`No adapter registered for runtime: ${runtime}`);
   }

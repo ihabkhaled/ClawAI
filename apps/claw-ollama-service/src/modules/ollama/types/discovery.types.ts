@@ -9,6 +9,7 @@ import type {
   ModelDiscoveryRun,
   RuntimeType,
 } from '../../../generated/prisma';
+import { type BusinessCategory } from '../../../common/enums/business-category.enum';
 
 export type DiscoverySourcePublic = DiscoverySource;
 
@@ -148,10 +149,10 @@ export type CreateCatalogEntryServiceInput = {
   name: string;
   tag: string;
   displayName: string;
-  category: import('../../../generated/prisma').ModelCategory;
+  category: ModelCategory;
   description: string | null;
   parameterCount: string | null;
-  runtime: import('../../../generated/prisma').RuntimeType;
+  runtime: RuntimeType;
   ollamaName: string | null;
   isRecommended: boolean;
   capabilities: string[];
@@ -176,8 +177,8 @@ export type ClassifierInput = {
 };
 
 export type ClassifierResult = {
-  category: import('../../../generated/prisma').ModelCategory;
-  businessCategories: import('../../../common/enums/business-category.enum').BusinessCategory[];
+  category: ModelCategory;
+  businessCategories: BusinessCategory[];
   confidence: number;
 };
 

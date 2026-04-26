@@ -28,12 +28,9 @@ function findFamilyEntry(name: string): (typeof FAMILY_TAXONOMY)[number] | null 
 }
 
 function matchKeywordsToCategory(signal: string): ModelCategory | null {
-  for (const keyword of Object.keys(KEYWORD_TO_CATEGORY)) {
-    if (signal.includes(keyword)) {
-      const value = KEYWORD_TO_CATEGORY[keyword];
-      if (value !== undefined) {
-        return value;
-      }
+  for (const [keyword, value] of Object.entries(KEYWORD_TO_CATEGORY)) {
+    if (signal.includes(keyword) && value !== undefined) {
+      return value;
     }
   }
   return null;
@@ -41,12 +38,9 @@ function matchKeywordsToCategory(signal: string): ModelCategory | null {
 
 function collectBusinessFromKeywords(signal: string): BusinessCategory[] {
   const matches: BusinessCategory[] = [];
-  for (const keyword of Object.keys(KEYWORD_TO_BUSINESS)) {
-    if (signal.includes(keyword)) {
-      const value = KEYWORD_TO_BUSINESS[keyword];
-      if (value !== undefined) {
-        matches.push(value);
-      }
+  for (const [keyword, value] of Object.entries(KEYWORD_TO_BUSINESS)) {
+    if (signal.includes(keyword) && value !== undefined) {
+      matches.push(value);
     }
   }
   return matches;
