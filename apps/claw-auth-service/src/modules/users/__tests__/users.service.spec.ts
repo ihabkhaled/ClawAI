@@ -168,6 +168,157 @@ describe('UsersService', () => {
       );
     });
   });
+
+  describe('create', () => {
+    it('rejects weak password with WEAK_PASSWORD code', async () => {
+      await expect(
+        service.create({
+          email: 'a@b.c',
+          username: 'a',
+          password: 'weak',
+          role: UserRole.OPERATOR,
+        } as never),
+      ).rejects.toMatchObject({ code: 'WEAK_PASSWORD' });
+    });
+
+    it('rejects duplicate email with DuplicateEntityException', async () => {
+      repository.findByEmail.mockResolvedValue(mockUser);
+      await expect(
+        service.create({
+          email: mockUser.email,
+          username: 'newname',
+          password: 'StrongPass1',
+          role: UserRole.OPERATOR,
+        } as never),
+      ).rejects.toThrow(DuplicateEntityException);
+    });
+
+    it('rejects duplicate username with DuplicateEntityException', async () => {
+      repository.findByEmail.mockResolvedValue(null);
+      repository.findByUsername.mockResolvedValue(mockUser);
+      await expect(
+        service.create({
+          email: 'new@b.c',
+          username: mockUser.username,
+          password: 'StrongPass1',
+          role: UserRole.OPERATOR,
+        } as never),
+      ).rejects.toThrow(DuplicateEntityException);
+    });
+
+    it('creates user, persists hash, and publishes USER_CREATED', async () => {
+      repository.findByEmail.mockResolvedValue(null);
+      repository.findByUsername.mockResolvedValue(null);
+      repository.create.mockResolvedValue({
+        ...mockUser,
+        id: 'new-1',
+        email: 'new@b.c',
+        username: 'newuser',
+        role: UserRole.OPERATOR,
+      });
+
+      const result = await service.create({
+        email: 'new@b.c',
+        username: 'newuser',
+        password: 'StrongPass1',
+        role: UserRole.OPERATOR,
+      } as never);
+
+      expect(result.id).toBe('new-1');
+      expect(repository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'new@b.c',
+          username: 'newuser',
+          role: UserRole.OPERATOR,
+          status: 'ACTIVE',
+        }),
+      );
+      const calledArgs = repository.create.mock.calls[0]?.[0];
+      expect(calledArgs.passwordHash).not.toBe('StrongPass1'); // must be hashed
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.USER_CREATED,
+        expect.objectContaining({ userId: 'new-1', email: 'new@b.c' }),
+      );
+    });
+  });
+
+  describe('findById', () => {
+    it('returns SafeUser when found', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      const result = await service.findById('user-1');
+      expect(result.id).toBe('user-1');
+      expect((result as unknown as Record<string, unknown>).passwordHash).toBeUndefined();
+    });
+
+    it('throws EntityNotFoundException when not found', async () => {
+      repository.findById.mockResolvedValue(null);
+      await expect(service.findById('nope')).rejects.toThrow(EntityNotFoundException);
+    });
+  });
+
+  describe('findAll', () => {
+    it('paginates results and computes totalPages', async () => {
+      repository.findAll.mockResolvedValue({ users: [mockUser], total: 25 });
+      const result = await service.findAll({
+        page: 2,
+        limit: 10,
+        search: 'foo',
+        role: UserRole.OPERATOR,
+        status: UserStatus.ACTIVE,
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+      } as never);
+      expect(result.meta.total).toBe(25);
+      expect(result.meta.page).toBe(2);
+      expect(result.meta.totalPages).toBe(3);
+      expect(repository.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 10, take: 10 }),
+      );
+    });
+  });
+
+  describe('updatePreferences', () => {
+    it('throws when user not found', async () => {
+      repository.findById.mockResolvedValue(null);
+      await expect(
+        service.updatePreferences('nope', { languagePreference: 'EN' as never }),
+      ).rejects.toThrow(EntityNotFoundException);
+    });
+
+    it('returns SafeUser on success', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      repository.updatePreferences.mockResolvedValue({
+        ...mockUser,
+        languagePreference: 'FR' as const,
+      });
+      const result = await service.updatePreferences('user-1', {
+        languagePreference: 'FR' as never,
+      });
+      expect(result.languagePreference).toBe('FR');
+    });
+  });
+
+  describe('changePassword', () => {
+    it('throws when user not found', async () => {
+      repository.findById.mockResolvedValue(null);
+      await expect(
+        service.changePassword('nope', { currentPassword: 'x', newPassword: 'StrongPass1' }),
+      ).rejects.toThrow(EntityNotFoundException);
+    });
+
+    it('throws when current password is wrong', async () => {
+      repository.findById.mockResolvedValue({
+        ...mockUser,
+        passwordHash: '$argon2id$v=19$m=65536,t=3,p=4$invalid$invalid',
+      });
+      await expect(
+        service.changePassword('user-1', {
+          currentPassword: 'wrong',
+          newPassword: 'StrongPass1',
+        }),
+      ).rejects.toThrow();
+    });
+  });
 });
 
 describe('Password Policy', () => {
