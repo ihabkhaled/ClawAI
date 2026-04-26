@@ -89,6 +89,7 @@ jobs:
           cd ../shared-constants && npx tsc
           cd ../shared-rabbitmq && npx tsc
           cd ../shared-auth && npx tsc
+          cd ../shared-utilities && npx tsc
 
       - name: Generate Prisma client
         if: matrix.prisma == true
@@ -172,6 +173,7 @@ jobs:
           cd ../shared-constants && npx tsc
           cd ../shared-rabbitmq && npx tsc
           cd ../shared-auth && npx tsc
+          cd ../shared-utilities && npx tsc
 
       - name: Generate Prisma client
         if: matrix.prisma == true
@@ -283,6 +285,7 @@ jobs:
           cd ../shared-constants && npx tsc
           cd ../shared-rabbitmq && npx tsc
           cd ../shared-auth && npx tsc
+          cd ../shared-utilities && npx tsc
 
       - name: Generate Prisma client
         if: matrix.prisma == true
@@ -316,6 +319,7 @@ jobs:
           cd ../shared-constants && npx tsc
           cd ../shared-rabbitmq && npx tsc
           cd ../shared-auth && npx tsc
+          cd ../shared-utilities && npx tsc
 
       - name: Generate Prisma clients
         run: |
