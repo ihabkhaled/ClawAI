@@ -1,7 +1,7 @@
-import { AuditsService } from "@modules/audits/services/audits.service";
-import { type AuditsRepository } from "@modules/audits/repositories/audits.repository";
+import { AuditsService } from '@modules/audits/services/audits.service';
+import { type AuditsRepository } from '@modules/audits/repositories/audits.repository';
 
-describe("AuditsService", () => {
+describe('AuditsService', () => {
   let service: AuditsService;
   let repository: jest.Mocked<AuditsRepository>;
 
@@ -17,24 +17,24 @@ describe("AuditsService", () => {
     service = new AuditsService(repository);
   });
 
-  describe("createAuditLog", () => {
-    it("should delegate to repository", async () => {
+  describe('createAuditLog', () => {
+    it('should delegate to repository', async () => {
       const input = {
-        userId: "user-1",
-        action: "LOGIN",
-        severity: "LOW",
+        userId: 'user-1',
+        action: 'LOGIN',
+        severity: 'LOW',
       };
-      repository.createAuditLog.mockResolvedValue({ _id: "audit-1", ...input } as never);
+      repository.createAuditLog.mockResolvedValue({ _id: 'audit-1', ...input } as never);
 
       const result = await service.createAuditLog(input);
       expect(repository.createAuditLog).toHaveBeenCalledWith(input);
-      expect(result).toEqual(expect.objectContaining({ _id: "audit-1" }));
+      expect(result).toEqual(expect.objectContaining({ _id: 'audit-1' }));
     });
   });
 
-  describe("getAuditLogs", () => {
-    it("should return paginated results", async () => {
-      repository.findAll.mockResolvedValue([{ _id: "1" }] as never);
+  describe('getAuditLogs', () => {
+    it('should return paginated results', async () => {
+      repository.findAll.mockResolvedValue([{ _id: '1' }] as never);
       repository.countAll.mockResolvedValue(1);
 
       const result = await service.getAuditLogs({ page: 1, limit: 10 });
@@ -46,7 +46,7 @@ describe("AuditsService", () => {
       expect(result.meta.totalPages).toBe(1);
     });
 
-    it("should calculate totalPages correctly", async () => {
+    it('should calculate totalPages correctly', async () => {
       repository.findAll.mockResolvedValue([] as never);
       repository.countAll.mockResolvedValue(25);
 
@@ -55,15 +55,15 @@ describe("AuditsService", () => {
     });
   });
 
-  describe("getAuditStats", () => {
-    it("should return aggregated stats", async () => {
+  describe('getAuditStats', () => {
+    it('should return aggregated stats', async () => {
       repository.aggregateByAction.mockResolvedValue([
-        { _id: "LOGIN", count: 10 },
-        { _id: "CREATE", count: 5 },
+        { _id: 'LOGIN', count: 10 },
+        { _id: 'CREATE', count: 5 },
       ]);
       repository.aggregateBySeverity.mockResolvedValue([
-        { _id: "LOW", count: 12 },
-        { _id: "HIGH", count: 3 },
+        { _id: 'LOW', count: 12 },
+        { _id: 'HIGH', count: 3 },
       ]);
       repository.countAll.mockResolvedValue(15);
 
@@ -72,6 +72,39 @@ describe("AuditsService", () => {
       expect(result.byAction).toHaveLength(2);
       expect(result.bySeverity).toHaveLength(2);
       expect(result.total).toBe(15);
+    });
+  });
+
+  describe('error paths', () => {
+    it('createAuditLog rethrows repository errors', async () => {
+      repository.createAuditLog.mockRejectedValue(new Error('mongo down'));
+      await expect(
+        service.createAuditLog({
+          userId: 'u1',
+          action: 'LOGIN',
+          severity: 'LOW',
+          entityType: 'User',
+        } as never),
+      ).rejects.toThrow('mongo down');
+    });
+
+    it('getAuditLogs rethrows repository errors', async () => {
+      repository.findAll.mockRejectedValue(new Error('query fail'));
+      repository.countAll.mockResolvedValue(0);
+      await expect(service.getAuditLogs({})).rejects.toThrow('query fail');
+    });
+
+    it('getAuditStats rethrows aggregation errors', async () => {
+      repository.aggregateByAction.mockRejectedValue(new Error('agg fail'));
+      await expect(service.getAuditStats()).rejects.toThrow('agg fail');
+    });
+
+    it('getAuditLogs uses defaults when page/limit are omitted', async () => {
+      repository.findAll.mockResolvedValue([] as never);
+      repository.countAll.mockResolvedValue(0);
+      const result = await service.getAuditLogs({});
+      expect(result.meta.page).toBe(1);
+      expect(result.meta.limit).toBe(20);
     });
   });
 });

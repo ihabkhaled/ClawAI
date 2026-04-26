@@ -1,7 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
-import { type FilterQuery, Model } from "mongoose";
-import { UsageLedger } from "../schemas/usage-ledger.schema";
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { type FilterQuery, Model } from 'mongoose';
+import { UsageLedger } from '../schemas/usage-ledger.schema';
 import type {
   CostSummaryResult,
   CreateUsageLedgerInput,
@@ -9,34 +9,39 @@ import type {
   ModelAggregation,
   ProviderAggregation,
   UsageLedgerFilters,
-} from "../types/audits.types";
-import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from "@common/constants";
+} from '../types/audits.types';
+import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '@common/constants';
 
 @Injectable()
 export class UsageLedgerRepository {
+  private readonly logger = new Logger(UsageLedgerRepository.name);
+
   constructor(
     @InjectModel(UsageLedger.name) private readonly usageLedgerModel: Model<UsageLedger>,
   ) {}
 
   async create(input: CreateUsageLedgerInput): Promise<UsageLedger> {
+    this.logger.debug(
+      `create: resource=${input.resourceType} action=${input.action} qty=${String(input.quantity)}`,
+    );
     const doc = new this.usageLedgerModel(input);
     return doc.save();
   }
 
   private buildUsageQuery(filters: UsageLedgerFilters): FilterQuery<UsageLedger> {
     const query: FilterQuery<UsageLedger> = {};
-    if (filters.userId) query["userId"] = filters.userId;
-    if (filters.resourceType) query["resourceType"] = filters.resourceType;
-    if (filters.action) query["action"] = filters.action;
-    if (filters.provider) query["metadata.provider"] = filters.provider;
-    if (filters.model) query["metadata.model"] = filters.model;
+    if (filters.userId) query['userId'] = filters.userId;
+    if (filters.resourceType) query['resourceType'] = filters.resourceType;
+    if (filters.action) query['action'] = filters.action;
+    if (filters.provider) query['metadata.provider'] = filters.provider;
+    if (filters.model) query['metadata.model'] = filters.model;
     if (filters.startDate || filters.endDate) {
-      query["createdAt"] = {};
+      query['createdAt'] = {};
       if (filters.startDate) {
-        (query["createdAt"] as Record<string, unknown>)["$gte"] = new Date(filters.startDate);
+        (query['createdAt'] as Record<string, unknown>)['$gte'] = new Date(filters.startDate);
       }
       if (filters.endDate) {
-        (query["createdAt"] as Record<string, unknown>)["$lte"] = new Date(filters.endDate);
+        (query['createdAt'] as Record<string, unknown>)['$lte'] = new Date(filters.endDate);
       }
     }
     return query;
@@ -48,12 +53,7 @@ export class UsageLedgerRepository {
     const skip = (page - 1) * limit;
     const query = this.buildUsageQuery(filters);
 
-    return this.usageLedgerModel
-      .find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .exec();
+    return this.usageLedgerModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).exec();
   }
 
   async countAll(filters: UsageLedgerFilters): Promise<number> {
@@ -65,15 +65,15 @@ export class UsageLedgerRepository {
     return this.usageLedgerModel.aggregate<ProviderAggregation>([
       {
         $group: {
-          _id: "$metadata.provider",
+          _id: '$metadata.provider',
           count: { $sum: 1 },
-          totalTokens: { $sum: "$quantity" },
+          totalTokens: { $sum: '$quantity' },
         },
       },
       {
         $project: {
           _id: 0,
-          provider: "$_id",
+          provider: '$_id',
           count: 1,
           totalTokens: 1,
         },
@@ -86,15 +86,15 @@ export class UsageLedgerRepository {
     return this.usageLedgerModel.aggregate<ModelAggregation>([
       {
         $group: {
-          _id: "$metadata.model",
+          _id: '$metadata.model',
           count: { $sum: 1 },
-          totalTokens: { $sum: "$quantity" },
+          totalTokens: { $sum: '$quantity' },
         },
       },
       {
         $project: {
           _id: 0,
-          model: "$_id",
+          model: '$_id',
           count: 1,
           totalTokens: 1,
         },
@@ -108,11 +108,11 @@ export class UsageLedgerRepository {
       {
         $group: {
           _id: null,
-          totalTokens: { $sum: "$quantity" },
+          totalTokens: { $sum: '$quantity' },
           totalRequests: { $sum: 1 },
           estimatedCost: {
             $sum: {
-              $multiply: ["$quantity", 0.000002],
+              $multiply: ['$quantity', 0.000002],
             },
           },
         },
@@ -131,31 +131,28 @@ export class UsageLedgerRepository {
 
   async aggregateLatencySummary(): Promise<LatencySummaryResult> {
     const result = await this.usageLedgerModel.aggregate<LatencySummaryResult>([
-      { $match: { "metadata.latencyMs": { $exists: true } } },
-      { $sort: { "metadata.latencyMs": 1 } },
+      { $match: { 'metadata.latencyMs': { $exists: true } } },
+      { $sort: { 'metadata.latencyMs': 1 } },
       {
         $group: {
           _id: null,
-          avgLatency: { $avg: "$metadata.latencyMs" },
-          latencies: { $push: "$metadata.latencyMs" },
+          avgLatency: { $avg: '$metadata.latencyMs' },
+          latencies: { $push: '$metadata.latencyMs' },
           totalRequests: { $sum: 1 },
         },
       },
       {
         $project: {
           _id: 0,
-          avgLatency: { $round: ["$avgLatency", 2] },
+          avgLatency: { $round: ['$avgLatency', 2] },
           totalRequests: 1,
           p50Latency: {
-            $arrayElemAt: [
-              "$latencies",
-              { $floor: { $multiply: [{ $size: "$latencies" }, 0.5] } },
-            ],
+            $arrayElemAt: ['$latencies', { $floor: { $multiply: [{ $size: '$latencies' }, 0.5] } }],
           },
           p95Latency: {
             $arrayElemAt: [
-              "$latencies",
-              { $floor: { $multiply: [{ $size: "$latencies" }, 0.95] } },
+              '$latencies',
+              { $floor: { $multiply: [{ $size: '$latencies' }, 0.95] } },
             ],
           },
         },
