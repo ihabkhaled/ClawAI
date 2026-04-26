@@ -21,23 +21,29 @@ export const generateWithGemini = async (
   const cleanBaseUrl = baseUrl.replace('/openai', '');
   let lastError: unknown = null;
 
-  logger.log(`generateWithGemini: starting — promptLen=${String(prompt.length)} hasReference=${String(Boolean(referenceImageBase64))}`);
+  logger.log(
+    `generateWithGemini: starting — promptLen=${String(prompt.length)} hasReference=${String(Boolean(referenceImageBase64))}`,
+  );
   // Build request parts: optional reference image + text prompt
   const requestParts: GeminiPart[] = [];
   let systemInstruction: string | undefined;
 
   if (referenceImageBase64 && referenceImageMimeType) {
-    logger.debug(`generateWithGemini: including reference image — mimeType=${referenceImageMimeType} base64Len=${String(referenceImageBase64.length)}`);
+    logger.debug(
+      `generateWithGemini: including reference image — mimeType=${referenceImageMimeType} base64Len=${String(referenceImageBase64.length)}`,
+    );
     // Include the reference image so Gemini can see it and generate similar
-    requestParts.push({
-      inlineData: {
-        mimeType: referenceImageMimeType,
-        data: referenceImageBase64,
+    requestParts.push(
+      {
+        inlineData: {
+          mimeType: referenceImageMimeType,
+          data: referenceImageBase64,
+        },
       },
-    });
-    requestParts.push({
-      text: `Look at the reference image above carefully. Generate a NEW image that closely reproduces the same visual appearance — matching the subject, composition, colors, lighting, style, textures, and mood as closely as possible.\n\nDetailed instructions:\n${prompt}`,
-    });
+      {
+        text: `Look at the reference image above carefully. Generate a NEW image that closely reproduces the same visual appearance — matching the subject, composition, colors, lighting, style, textures, and mood as closely as possible.\n\nDetailed instructions:\n${prompt}`,
+      },
+    );
     systemInstruction =
       'You are an image generation model. When a reference image is provided, your primary goal is to generate a new image that visually matches the reference as closely as possible. Preserve the same art style, color palette, composition, lighting, and subject matter. Only deviate from the reference where the user explicitly requests changes.';
     logger.log('generateWithGemini: including reference image in request');
@@ -47,7 +53,9 @@ export const generateWithGemini = async (
   }
 
   // Try each model
-  logger.debug(`generateWithGemini: trying ${String(IMAGE_CAPABLE_MODELS.length)} image-capable models`);
+  logger.debug(
+    `generateWithGemini: trying ${String(IMAGE_CAPABLE_MODELS.length)} image-capable models`,
+  );
   for (const geminiModel of IMAGE_CAPABLE_MODELS) {
     {
       const url = `${cleanBaseUrl}/models/${geminiModel}:generateContent?key=${apiKey}`;
@@ -63,11 +71,9 @@ export const generateWithGemini = async (
           requestBody.systemInstruction = { parts: [{ text: systemInstruction }] };
         }
 
-        const response = await httpPost<GeminiGenerateContentResponse>(
-          url,
-          requestBody,
-          { timeout: 120_000 },
-        );
+        const response = await httpPost<GeminiGenerateContentResponse>(url, requestBody, {
+          timeout: 120_000,
+        });
 
         const candidate = response.candidates?.[0];
         const parts = candidate?.content?.parts ?? [];
@@ -99,4 +105,3 @@ export const generateWithGemini = async (
 
   throw lastError ?? new Error('All Gemini image generation models failed');
 };
-

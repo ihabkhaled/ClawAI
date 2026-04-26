@@ -138,25 +138,51 @@ export class ImageGenerationService {
     provider?: string,
     model?: string,
   ): Promise<ImageGenerationRecord> {
-    this.logger.log(`retryWithAlternateModel: retrying generation ${generationId} with provider=${provider ?? 'auto'} model=${model ?? 'auto'}`);
+    this.logger.log(
+      `retryWithAlternateModel: retrying generation ${generationId} with provider=${provider ?? 'auto'} model=${model ?? 'auto'}`,
+    );
     const record = await this.getById(generationId);
+    const { targetProvider, targetModel } = this.resolveAlternateModel(record, provider, model);
+    const newRecord = await this.cloneAsAlternate(
+      record,
+      targetProvider,
+      targetModel,
+      generationId,
+    );
 
-    let targetProvider = provider;
-    let targetModel = model;
+    this.logger.log(
+      `image_generation.alternate id=${newRecord.id} from=${record.provider}/${record.model} to=${targetProvider}/${targetModel}`,
+    );
 
-    if (!targetProvider || !targetModel) {
-      const currentKey = `${record.provider}/${record.model}`;
-      const currentIdx = IMAGE_FALLBACK_CHAIN.findIndex(
-        (c) => `${c.provider}/${c.model}` === currentKey,
-      );
-      const next = IMAGE_FALLBACK_CHAIN[currentIdx + 1] ?? IMAGE_FALLBACK_CHAIN[0];
-      if (!next || `${next.provider}/${next.model}` === currentKey) {
-        throw new BusinessException('No alternate image model available', 'NO_ALTERNATE_MODEL');
-      }
-      targetProvider = next.provider;
-      targetModel = next.model;
+    void this.processJob(newRecord.id);
+    return newRecord;
+  }
+
+  private resolveAlternateModel(
+    record: ImageGenerationRecord,
+    provider?: string,
+    model?: string,
+  ): { targetProvider: string; targetModel: string } {
+    if (provider && model) {
+      return { targetProvider: provider, targetModel: model };
     }
+    const currentKey = `${record.provider}/${record.model}`;
+    const currentIdx = IMAGE_FALLBACK_CHAIN.findIndex(
+      (c) => `${c.provider}/${c.model}` === currentKey,
+    );
+    const next = IMAGE_FALLBACK_CHAIN[currentIdx + 1] ?? IMAGE_FALLBACK_CHAIN[0];
+    if (!next || `${next.provider}/${next.model}` === currentKey) {
+      throw new BusinessException('No alternate image model available', 'NO_ALTERNATE_MODEL');
+    }
+    return { targetProvider: next.provider, targetModel: next.model };
+  }
 
+  private async cloneAsAlternate(
+    record: ImageGenerationRecord,
+    targetProvider: string,
+    targetModel: string,
+    originalGenerationId: string,
+  ): Promise<ImageGenerationRecord> {
     const newRecord = await this.repository.create({
       userId: record.userId,
       threadId: record.threadId ?? undefined,
@@ -175,7 +201,7 @@ export class ImageGenerationService {
       generationId: newRecord.id,
       status: ImageGenerationStatus.QUEUED,
       payloadJson: {
-        alternateOf: generationId,
+        alternateOf: originalGenerationId,
         provider: targetProvider,
         model: targetModel,
       },
@@ -188,19 +214,13 @@ export class ImageGenerationService {
       model: targetModel,
     });
 
-    // Also notify the old generation's listeners about the new generation
+    // Notify the original generation's listeners about the new attempt
     this.eventsService.publish({
-      generationId,
+      generationId: originalGenerationId,
       status: 'QUEUED',
       provider: targetProvider,
       model: targetModel,
     });
-
-    this.logger.log(
-      `image_generation.alternate id=${newRecord.id} from=${record.provider}/${record.model} to=${targetProvider}/${targetModel}`,
-    );
-
-    void this.processJob(newRecord.id);
 
     return newRecord;
   }
@@ -217,19 +237,23 @@ export class ImageGenerationService {
       return;
     }
 
-    // Check if it failed — if so, auto-retry with next models in chain
     const result = await this.repository.findById(generationId);
     if (result?.status !== 'FAILED') {
       return;
     }
 
+    await this.runAutoFallbackChain(generationId, result);
+  }
+
+  private async runAutoFallbackChain(
+    originalGenerationId: string,
+    failedResult: ImageGenerationRecord,
+  ): Promise<void> {
     const maxRetries = 2;
-    let lastFailedKey = `${result.provider}/${result.model}`;
+    let lastFailedKey = `${failedResult.provider}/${failedResult.model}`;
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
-      const searchKey = lastFailedKey;
-      const idx = IMAGE_FALLBACK_CHAIN.findIndex((c) => `${c.provider}/${c.model}` === searchKey);
-      const next = IMAGE_FALLBACK_CHAIN[idx + 1];
+      const next = this.findNextFallback(lastFailedKey);
       if (!next) {
         break;
       }
@@ -238,33 +262,11 @@ export class ImageGenerationService {
         `Auto-fallback attempt ${String(attempt + 1)}: ${lastFailedKey} → ${next.provider}/${next.model}`,
       );
 
-      const fallbackRecord = await this.repository.create({
-        userId: result.userId,
-        threadId: result.threadId ?? undefined,
-        userMessageId: result.userMessageId ?? undefined,
-        assistantMessageId: result.assistantMessageId ?? undefined,
-        prompt: result.prompt,
-        provider: next.provider,
-        model: next.model,
-        width: result.width,
-        height: result.height,
-      });
-
-      this.eventsService.publish({
-        generationId: fallbackRecord.id,
-        status: 'QUEUED',
-        provider: next.provider,
-        model: next.model,
-      });
-
-      // Notify original generation listeners about the new attempt
-      this.eventsService.publish({
-        generationId,
-        status: 'QUEUED',
-        provider: next.provider,
-        model: next.model,
-      });
-
+      const fallbackRecord = await this.createFallbackRecord(
+        failedResult,
+        next,
+        originalGenerationId,
+      );
       await this.processJob(fallbackRecord.id);
 
       const fallbackResult = await this.repository.findById(fallbackRecord.id);
@@ -279,6 +281,45 @@ export class ImageGenerationService {
     }
 
     this.logger.warn('All auto-fallback attempts exhausted');
+  }
+
+  private findNextFallback(currentKey: string): { provider: string; model: string } | undefined {
+    const idx = IMAGE_FALLBACK_CHAIN.findIndex((c) => `${c.provider}/${c.model}` === currentKey);
+    return IMAGE_FALLBACK_CHAIN[idx + 1];
+  }
+
+  private async createFallbackRecord(
+    sourceResult: ImageGenerationRecord,
+    next: { provider: string; model: string },
+    originalGenerationId: string,
+  ): Promise<ImageGenerationRecord> {
+    const fallbackRecord = await this.repository.create({
+      userId: sourceResult.userId,
+      threadId: sourceResult.threadId ?? undefined,
+      userMessageId: sourceResult.userMessageId ?? undefined,
+      assistantMessageId: sourceResult.assistantMessageId ?? undefined,
+      prompt: sourceResult.prompt,
+      provider: next.provider,
+      model: next.model,
+      width: sourceResult.width,
+      height: sourceResult.height,
+    });
+
+    this.eventsService.publish({
+      generationId: fallbackRecord.id,
+      status: 'QUEUED',
+      provider: next.provider,
+      model: next.model,
+    });
+
+    this.eventsService.publish({
+      generationId: originalGenerationId,
+      status: 'QUEUED',
+      provider: next.provider,
+      model: next.model,
+    });
+
+    return fallbackRecord;
   }
 
   private async processJob(
@@ -299,125 +340,146 @@ export class ImageGenerationService {
     await this.transitionStatus(generationId, 'GENERATING', generation.provider, generation.model);
 
     try {
-      const result = await this.executionManager.execute({
-        prompt: generation.prompt,
-        provider: generation.provider,
-        model: generation.model,
-        userId: generation.userId,
-        width: generation.width,
-        height: generation.height,
-        quality: generation.quality ?? undefined,
-        style: generation.style ?? undefined,
+      await this.executeAndPersistGeneration(
+        generationId,
+        generation,
         referenceImageBase64,
         referenceImageMimeType,
-      });
-
-      await this.transitionStatus(
-        generationId,
-        'FINALIZING',
-        generation.provider,
-        generation.model,
       );
-
-      // Create asset record linking to the file service file
-      const downloadUrl = `/api/v1/files/download/${result.fileId}`;
-      const asset = await this.repository.createAsset({
-        generationId,
-        storageKey: result.fileId,
-        url: downloadUrl,
-        downloadUrl,
-        mimeType: 'image/png',
-        sizeBytes: undefined,
-      });
-
-      const completedGen = await this.repository.updateStatus(generationId, 'COMPLETED', {
-        revisedPrompt: result.revisedPrompt ?? undefined,
-        completedAt: new Date(),
-        latencyMs: result.latencyMs,
-      });
-
-      await this.repository.createEvent({
-        generationId,
-        status: 'COMPLETED',
-        payloadJson: {
-          assets: [
-            {
-              id: asset.id,
-              url: asset.url,
-              downloadUrl: asset.downloadUrl,
-              mimeType: asset.mimeType,
-              width: asset.width,
-              height: asset.height,
-              sizeBytes: asset.sizeBytes,
-            },
-          ],
-        },
-      });
-
-      this.eventsService.publish({
-        generationId,
-        status: 'COMPLETED',
-        provider: completedGen.provider,
-        model: completedGen.model,
-        assets: [
-          {
-            id: asset.id,
-            url: asset.url,
-            downloadUrl: asset.downloadUrl,
-            mimeType: asset.mimeType,
-            width: asset.width,
-            height: asset.height,
-            sizeBytes: asset.sizeBytes,
-          },
-        ],
-      });
-
-      void this.rabbitMQ.publish('image.generated', {
-        generationId,
-        userId: generation.userId,
-        threadId: generation.threadId,
-        provider: generation.provider,
-        model: generation.model,
-        fileId: result.fileId,
-        prompt: generation.prompt,
-        latencyMs: result.latencyMs,
-      });
-
-      this.logger.log(`image_generation.completed id=${generationId}`);
     } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`image_generation.failed id=${generationId}: ${errorMsg}`);
-
-      await this.repository.updateStatus(generationId, 'FAILED', {
-        errorCode: 'PROVIDER_FAILURE',
-        errorMessage: 'Image generation failed. Please try again.',
-        completedAt: new Date(),
-      });
-
-      await this.repository.createEvent({
-        generationId,
-        status: 'FAILED',
-        payloadJson: { errorCode: 'PROVIDER_FAILURE', errorMessage: errorMsg },
-      });
-
-      this.eventsService.publish({
-        generationId,
-        status: 'FAILED',
-        provider: generation.provider,
-        model: generation.model,
-        errorCode: 'PROVIDER_FAILURE',
-        errorMessage: 'Image generation failed. Please try again.',
-      });
-
-      void this.rabbitMQ.publish('image.failed', {
-        generationId,
-        userId: generation.userId,
-        provider: generation.provider,
-        model: generation.model,
-        prompt: generation.prompt,
-        errorMessage: errorMsg,
-      });
+      await this.handleProcessJobFailure(generationId, generation, error);
     }
+  }
+
+  private async executeAndPersistGeneration(
+    generationId: string,
+    generation: ImageGenerationRecord,
+    referenceImageBase64?: string,
+    referenceImageMimeType?: string,
+  ): Promise<void> {
+    const result = await this.executionManager.execute({
+      prompt: generation.prompt,
+      provider: generation.provider,
+      model: generation.model,
+      userId: generation.userId,
+      width: generation.width,
+      height: generation.height,
+      quality: generation.quality ?? undefined,
+      style: generation.style ?? undefined,
+      referenceImageBase64,
+      referenceImageMimeType,
+    });
+
+    await this.transitionStatus(generationId, 'FINALIZING', generation.provider, generation.model);
+
+    const downloadUrl = `/api/v1/files/download/${result.fileId}`;
+    const asset = await this.repository.createAsset({
+      generationId,
+      storageKey: result.fileId,
+      url: downloadUrl,
+      downloadUrl,
+      mimeType: 'image/png',
+      sizeBytes: undefined,
+    });
+
+    const completedGen = await this.repository.updateStatus(generationId, 'COMPLETED', {
+      revisedPrompt: result.revisedPrompt ?? undefined,
+      completedAt: new Date(),
+      latencyMs: result.latencyMs,
+    });
+
+    await this.publishCompletionEvents(generationId, generation, completedGen, asset, result);
+    this.logger.log(`image_generation.completed id=${generationId}`);
+  }
+
+  private async publishCompletionEvents(
+    generationId: string,
+    generation: ImageGenerationRecord,
+    completedGen: ImageGenerationRecord,
+    asset: {
+      id: string;
+      url: string;
+      downloadUrl: string;
+      mimeType: string;
+      width: number | null;
+      height: number | null;
+      sizeBytes: number | null;
+    },
+    result: { fileId: string; latencyMs: number },
+  ): Promise<void> {
+    const assetSummary = {
+      id: asset.id,
+      url: asset.url,
+      downloadUrl: asset.downloadUrl,
+      mimeType: asset.mimeType,
+      width: asset.width,
+      height: asset.height,
+      sizeBytes: asset.sizeBytes,
+    };
+
+    await this.repository.createEvent({
+      generationId,
+      status: 'COMPLETED',
+      payloadJson: { assets: [assetSummary] },
+    });
+
+    this.eventsService.publish({
+      generationId,
+      status: 'COMPLETED',
+      provider: completedGen.provider,
+      model: completedGen.model,
+      assets: [assetSummary],
+    });
+
+    void this.rabbitMQ.publish('image.generated', {
+      generationId,
+      userId: generation.userId,
+      threadId: generation.threadId,
+      provider: generation.provider,
+      model: generation.model,
+      fileId: result.fileId,
+      prompt: generation.prompt,
+      latencyMs: result.latencyMs,
+    });
+  }
+
+  private async handleProcessJobFailure(
+    generationId: string,
+    generation: ImageGenerationRecord,
+    error: unknown,
+  ): Promise<void> {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    this.logger.error(`image_generation.failed id=${generationId}: ${errorMsg}`);
+
+    await this.repository.updateStatus(generationId, 'FAILED', {
+      errorCode: 'PROVIDER_FAILURE',
+      errorMessage: 'Image generation failed. Please try again.',
+      completedAt: new Date(),
+    });
+
+    await this.repository.createEvent({
+      generationId,
+      status: 'FAILED',
+      payloadJson: { errorCode: 'PROVIDER_FAILURE', errorMessage: errorMsg },
+    });
+
+    this.eventsService.publish({
+      generationId,
+      status: 'FAILED',
+      provider: generation.provider,
+      model: generation.model,
+      errorCode: 'PROVIDER_FAILURE',
+      errorMessage: 'Image generation failed. Please try again.',
+    });
+
+    void this.rabbitMQ.publish('image.failed', {
+      generationId,
+      userId: generation.userId,
+      provider: generation.provider,
+      model: generation.model,
+      prompt: generation.prompt,
+      errorMessage: errorMsg,
+    });
   }
 
   private async transitionStatus(
