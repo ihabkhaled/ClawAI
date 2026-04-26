@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { type FilterQuery, Model, type SortOrder } from 'mongoose';
+import { type FilterQuery, Model, type SortOrder as MongooseSortOrder } from 'mongoose';
 import { ServerLog } from '../schemas/server-log.schema';
 import type {
   AggregationResult,
@@ -10,17 +10,22 @@ import type {
   TimeSeriesBucket,
 } from '../types/server-logs.types';
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '@common/constants';
+import { SortOrder } from '../../../common/enums/sort-order.enum';
 
 @Injectable()
 export class ServerLogsRepository {
+  private readonly logger = new Logger(ServerLogsRepository.name);
+
   constructor(@InjectModel(ServerLog.name) private readonly serverLogModel: Model<ServerLog>) {}
 
   async create(input: CreateServerLogInput): Promise<ServerLog> {
+    this.logger.debug(`create: level=${input.level} serviceName=${input.serviceName}`);
     const doc = new this.serverLogModel(input);
     return doc.save();
   }
 
   async createMany(inputs: CreateServerLogInput[]): Promise<number> {
+    this.logger.debug(`createMany: count=${String(inputs.length)}`);
     const result = await this.serverLogModel.insertMany(inputs, { ordered: false });
     return result.length;
   }
@@ -59,9 +64,7 @@ export class ServerLogsRepository {
       query['statusCode'] = filters.statusCode;
     }
     if (filters.statusCodeMin !== undefined || filters.statusCodeMax !== undefined) {
-      if (!query['statusCode']) {
-        query['statusCode'] = {};
-      }
+      query['statusCode'] ??= {};
       if (filters.statusCodeMin !== undefined) {
         (query['statusCode'] as Record<string, unknown>)['$gte'] = filters.statusCodeMin;
       }
@@ -125,12 +128,13 @@ export class ServerLogsRepository {
   }
 
   async findAll(filters: ServerLogFilters): Promise<ServerLog[]> {
+    this.logger.debug(`findAll: page=${String(filters.page)} limit=${String(filters.limit)}`);
     const page = filters.page ?? DEFAULT_PAGE;
     const limit = filters.limit ?? DEFAULT_PAGE_SIZE;
     const skip = (page - 1) * limit;
     const query = this.buildQuery(filters);
     const sortField = filters.sortBy ?? 'createdAt';
-    const sortDir: SortOrder = filters.sortOrder === 'asc' ? 1 : -1;
+    const sortDir: MongooseSortOrder = filters.sortOrder === SortOrder.ASC ? 1 : -1;
 
     return this.serverLogModel
       .find(query)

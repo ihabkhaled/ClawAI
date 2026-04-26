@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SortOrder } from '../../../common/enums/sort-order.enum';
 
 export const listServerLogsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
@@ -34,7 +35,7 @@ export const listServerLogsQuerySchema = z.object({
     .enum(['createdAt', 'latencyMs', 'level', 'serviceName'])
     .optional()
     .default('createdAt'),
-  sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
+  sortOrder: z.nativeEnum(SortOrder).optional().default(SortOrder.DESC),
   interval: z.coerce.number().int().min(1).max(1440).optional(),
 });
 

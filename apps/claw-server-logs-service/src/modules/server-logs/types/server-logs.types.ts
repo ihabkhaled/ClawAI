@@ -1,3 +1,5 @@
+import { type SortOrder } from '../../../common/enums/sort-order.enum';
+
 export interface CreateServerLogInput {
   level: string;
   message: string;
@@ -55,7 +57,7 @@ export interface ServerLogFilters {
   startDate?: string;
   endDate?: string;
   sortBy?: string;
-  sortOrder?: string;
+  sortOrder?: SortOrder;
   page?: number;
   limit?: number;
 }
