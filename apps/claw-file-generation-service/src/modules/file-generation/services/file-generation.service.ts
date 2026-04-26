@@ -119,98 +119,137 @@ export class FileGenerationService {
     await this.transitionStatus(generationId, 'CONVERTING', generation);
 
     try {
-      const content = generation.content ?? '';
-      const buffer = await this.executionManager.convert(content, generation.format);
-
-      await this.transitionStatus(generationId, 'FINALIZING', generation);
-
-      const filename =
-        generation.filename ?? this.executionManager.generateFilename(generation.format);
-      const fileId = await this.executionManager.storeFile({
-        userId: generation.userId,
-        filename,
-        format: generation.format,
-        buffer,
-      });
-
-      const downloadUrl = `/api/v1/files/download/${fileId}`;
-      const mimeType = FORMAT_TO_MIME_TYPE[generation.format] ?? 'application/octet-stream';
-
-      const asset = await this.repository.createAsset({
-        generationId,
-        storageKey: fileId,
-        url: downloadUrl,
-        downloadUrl,
-        mimeType,
-        sizeBytes: buffer.length,
-      });
-
-      await this.repository.updateStatus(generationId, FileGenerationStatus.COMPLETED, {
-        completedAt: new Date(),
-        latencyMs: Date.now() - generation.createdAt.getTime(),
-      });
-
-      await this.repository.createEvent({
-        generationId,
-        status: 'COMPLETED',
-        payloadJson: {
-          assets: [
-            {
-              id: asset.id,
-              url: asset.url,
-              downloadUrl: asset.downloadUrl,
-              mimeType: asset.mimeType,
-              sizeBytes: asset.sizeBytes,
-            },
-          ],
-        },
-      });
-
-      this.eventsService.publish({
-        generationId,
-        status: 'COMPLETED',
-        provider: generation.provider,
-        model: generation.model,
-        format: generation.format,
-        assets: [
-          {
-            id: asset.id,
-            url: asset.url,
-            downloadUrl: asset.downloadUrl,
-            mimeType: asset.mimeType,
-            sizeBytes: asset.sizeBytes,
-          },
-        ],
-      });
-
-      void this.rabbitMQ.publish('file.generated', {
-        generationId,
-        userId: generation.userId,
-        threadId: generation.threadId,
-        format: generation.format,
-        fileId,
-      });
-
-      this.logger.log(`file_generation.completed id=${generationId} format=${generation.format}`);
+      await this.runSuccessfulConversion(generationId, generation);
     } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`file_generation.failed id=${generationId}: ${errorMsg}`);
-
-      await this.repository.updateStatus(generationId, FileGenerationStatus.FAILED, {
-        errorCode: 'CONVERSION_FAILURE',
-        errorMessage: 'File generation failed. Please try again.',
-        completedAt: new Date(),
-      });
-
-      this.eventsService.publish({
-        generationId,
-        status: 'FAILED',
-        provider: generation.provider,
-        model: generation.model,
-        errorCode: 'CONVERSION_FAILURE',
-        errorMessage: 'File generation failed. Please try again.',
-      });
+      await this.handleProcessJobFailure(generationId, generation, error);
     }
+  }
+
+  private async runSuccessfulConversion(
+    generationId: string,
+    generation: FileGenerationRecord,
+  ): Promise<void> {
+    const buffer = await this.executionManager.convert(generation.content ?? '', generation.format);
+
+    await this.transitionStatus(generationId, 'FINALIZING', generation);
+
+    const fileId = await this.persistGeneratedFile(generation, buffer);
+    const asset = await this.persistGeneratedAsset(generationId, generation, fileId, buffer.length);
+
+    await this.repository.updateStatus(generationId, FileGenerationStatus.COMPLETED, {
+      completedAt: new Date(),
+      latencyMs: Date.now() - generation.createdAt.getTime(),
+    });
+
+    await this.publishCompletionEvents(generationId, generation, fileId, asset);
+
+    this.logger.log(`file_generation.completed id=${generationId} format=${generation.format}`);
+  }
+
+  private async persistGeneratedFile(
+    generation: FileGenerationRecord,
+    buffer: Buffer,
+  ): Promise<string> {
+    const filename =
+      generation.filename ?? this.executionManager.generateFilename(generation.format);
+    return this.executionManager.storeFile({
+      userId: generation.userId,
+      filename,
+      format: generation.format,
+      buffer,
+    });
+  }
+
+  private async persistGeneratedAsset(
+    generationId: string,
+    generation: FileGenerationRecord,
+    fileId: string,
+    sizeBytes: number,
+  ): Promise<{
+    id: string;
+    url: string;
+    downloadUrl: string;
+    mimeType: string;
+    sizeBytes: number | null;
+  }> {
+    const downloadUrl = `/api/v1/files/download/${fileId}`;
+    const mimeType = FORMAT_TO_MIME_TYPE[generation.format] ?? 'application/octet-stream';
+    return this.repository.createAsset({
+      generationId,
+      storageKey: fileId,
+      url: downloadUrl,
+      downloadUrl,
+      mimeType,
+      sizeBytes,
+    });
+  }
+
+  private async publishCompletionEvents(
+    generationId: string,
+    generation: FileGenerationRecord,
+    fileId: string,
+    asset: {
+      id: string;
+      url: string;
+      downloadUrl: string;
+      mimeType: string;
+      sizeBytes: number | null;
+    },
+  ): Promise<void> {
+    const assetSummary = {
+      id: asset.id,
+      url: asset.url,
+      downloadUrl: asset.downloadUrl,
+      mimeType: asset.mimeType,
+      sizeBytes: asset.sizeBytes,
+    };
+
+    await this.repository.createEvent({
+      generationId,
+      status: 'COMPLETED',
+      payloadJson: { assets: [assetSummary] },
+    });
+
+    this.eventsService.publish({
+      generationId,
+      status: 'COMPLETED',
+      provider: generation.provider,
+      model: generation.model,
+      format: generation.format,
+      assets: [assetSummary],
+    });
+
+    void this.rabbitMQ.publish('file.generated', {
+      generationId,
+      userId: generation.userId,
+      threadId: generation.threadId,
+      format: generation.format,
+      fileId,
+    });
+  }
+
+  private async handleProcessJobFailure(
+    generationId: string,
+    generation: FileGenerationRecord,
+    error: unknown,
+  ): Promise<void> {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    this.logger.error(`file_generation.failed id=${generationId}: ${errorMsg}`);
+
+    await this.repository.updateStatus(generationId, FileGenerationStatus.FAILED, {
+      errorCode: 'CONVERSION_FAILURE',
+      errorMessage: 'File generation failed. Please try again.',
+      completedAt: new Date(),
+    });
+
+    this.eventsService.publish({
+      generationId,
+      status: 'FAILED',
+      provider: generation.provider,
+      model: generation.model,
+      errorCode: 'CONVERSION_FAILURE',
+      errorMessage: 'File generation failed. Please try again.',
+    });
   }
 
   private async transitionStatus(
