@@ -29,7 +29,11 @@ export interface WorkspaceAdapter {
   healthCheck(accessToken: string, baseUrl?: string): Promise<HealthCheckResult>;
 
   /** Paginated sync of primary objects. */
-  syncObjects(accessToken: string, deltaToken?: string): Promise<SyncResult>;
+  syncObjects(
+    accessToken: string,
+    deltaToken?: string,
+    connectorMetadata?: Record<string, unknown>,
+  ): Promise<SyncResult>;
 
   /** OAuth2 authorization-code exchange. Takes per-call app credentials. */
   exchangeCodeForTokens(
@@ -83,6 +87,14 @@ export interface WorkspaceAdapter {
    * must return false so the authorization URL is built without a challenge.
    */
   supportsPkce?(): boolean;
+
+  /**
+   * Extra query parameters appended to the authorization URL.
+   * Use for provider-specific OAuth params not covered by the standard flow
+   * (e.g. Google requires access_type=offline + prompt=consent to return a
+   * refresh token on every authorization, not just the first one).
+   */
+  getExtraAuthParams?(): Record<string, string>;
 
   // Optional write capability — only implemented by adapters that support write actions
   supportsWrite?(): boolean;

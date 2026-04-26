@@ -287,15 +287,44 @@ export class BitbucketAdapter implements WorkspaceAdapter {
   }
 
   private async fetchUserRepositories(accessToken: string): Promise<BitbucketRepository[]> {
-    const response = await fetch(
-      `${BITBUCKET_API_BASE}/repositories?role=member&pagelen=${String(BITBUCKET_SYNC_REPO_LIMIT)}&sort=-updated_on`,
-      { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
-    );
-    if (!response.ok) {
-      throw new Error(`Bitbucket sync failed: HTTP ${response.status}`);
+    // GET /repositories?role=member is deprecated (410 Gone).
+    // Fetch workspaces first, then list repos per workspace.
+    const wsResponse = await fetch(`${BITBUCKET_API_BASE}/workspaces?pagelen=50`, {
+      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+    });
+    // 410 = account has no workspaces yet (new or unmigrated account)
+    if (wsResponse.status === 410) {
+      this.logger.warn(`Bitbucket account has no workspaces (410). Returning empty repo list.`);
+      return [];
     }
-    const page = (await response.json()) as BitbucketPaginated<BitbucketRepository>;
-    return page.values;
+    if (!wsResponse.ok) {
+      throw new Error(`Bitbucket workspaces fetch failed: HTTP ${wsResponse.status}`);
+    }
+    const wsData = (await wsResponse.json()) as BitbucketPaginated<{ slug: string }>;
+    const workspaceSlugs = wsData.values.map((w) => w.slug);
+    if (workspaceSlugs.length === 0) {
+      return [];
+    }
+    const allRepos: BitbucketRepository[] = [];
+    for (const slug of workspaceSlugs) {
+      const response = await fetch(
+        `${BITBUCKET_API_BASE}/repositories/${encodeURIComponent(slug)}?pagelen=${String(BITBUCKET_SYNC_REPO_LIMIT)}&sort=-updated_on`,
+        { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
+      );
+      if (!response.ok) {
+        const body = await response.text().catch(() => '');
+        this.logger.warn(
+          `Bitbucket repos fetch HTTP ${response.status} for workspace ${slug}: ${body.slice(0, 200)}`,
+        );
+        continue;
+      }
+      const page = (await response.json()) as BitbucketPaginated<BitbucketRepository>;
+      allRepos.push(...page.values);
+      if (allRepos.length >= BITBUCKET_SYNC_REPO_LIMIT) {
+        break;
+      }
+    }
+    return allRepos.slice(0, BITBUCKET_SYNC_REPO_LIMIT);
   }
 
   private mapRepoToSynced(repo: BitbucketRepository): SyncedObject {

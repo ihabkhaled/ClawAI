@@ -3,13 +3,13 @@ import type { ModelChoice } from '../types/ai-action.types';
 
 const LOCAL_FAST: ModelChoice = {
   provider: 'local-ollama',
-  model: 'gemma3:4b',
-  displayName: 'Gemma 3 4B (local)',
+  model: 'llama3.2:latest',
+  displayName: 'Llama 3.2 (local)',
 };
 const LOCAL_REASONING: ModelChoice = {
   provider: 'local-ollama',
-  model: 'phi4:14b',
-  displayName: 'Phi 4 14B (local reasoning)',
+  model: 'glm4:9b',
+  displayName: 'GLM4 9B (local reasoning)',
 };
 const CLOUD_ANTHROPIC_SONNET: ModelChoice = {
   provider: 'ANTHROPIC',

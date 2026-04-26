@@ -6,6 +6,11 @@ import { WorkspaceActionController } from './controllers/workspace-action.contro
 import { WorkspaceConnectorRepository } from '../workspace/repositories/workspace-connector.repository';
 import { WorkspaceAdapterFactory } from '../workspace/adapters/workspace-adapter.factory';
 import { OAuthTokenManager } from '../workspace/managers/oauth-token.manager';
+import { TokenRefreshManager } from '../workspace/managers/token-refresh.manager';
+import { ProviderAppConfigRepository } from '../workspace/repositories/provider-app-config.repository';
+import { ProviderDefinitionRepository } from '../workspace/repositories/provider-definition.repository';
+import { ProviderAppConfigService } from '../workspace/services/provider-app-config.service';
+import { ProviderRegistryService } from '../workspace/services/provider-registry.service';
 import { BitbucketAdapter } from '../workspace/adapters/bitbucket.adapter';
 import { ClickUpAdapter } from '../workspace/adapters/clickup.adapter';
 import { ConfluenceAdapter } from '../workspace/adapters/confluence.adapter';
@@ -28,6 +33,11 @@ import { SlackAdapter } from '../workspace/adapters/slack.adapter';
     WorkspaceActionService,
     WorkspaceAdapterFactory,
     OAuthTokenManager,
+    TokenRefreshManager,
+    ProviderAppConfigRepository,
+    ProviderDefinitionRepository,
+    ProviderAppConfigService,
+    ProviderRegistryService,
     GitHubAdapter,
     GitLabAdapter,
     BitbucketAdapter,

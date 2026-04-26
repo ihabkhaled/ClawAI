@@ -28,7 +28,7 @@ export class OAuthTokenManager {
     authBaseUrl: string,
     clientId: string,
     scopes: string[],
-    options: { pkce: boolean } = { pkce: true },
+    options: { pkce: boolean; extraParams?: Record<string, string> } = { pkce: true },
   ): Promise<OAuthInitResult> {
     const state = generateOAuthState();
     const verifier = options.pkce ? generateCodeVerifier() : undefined;
@@ -53,6 +53,7 @@ export class OAuthTokenManager {
       response_type: 'code',
       scope: scopes.join(' '),
       state,
+      ...(options.extraParams ?? {}),
     };
     if (challenge !== undefined) {
       baseParams['code_challenge'] = challenge;

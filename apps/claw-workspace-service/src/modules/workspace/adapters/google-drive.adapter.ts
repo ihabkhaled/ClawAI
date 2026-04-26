@@ -16,6 +16,7 @@ import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapte
 import type {
   AdapterCapabilities,
   HealthCheckResult,
+  LiveObjectDetails,
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
@@ -44,6 +45,8 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
           errorMessage: 'Unauthorized',
         };
       }
+      const body = await response.text().catch(() => '');
+      this.logger.warn(`Google Drive health check HTTP ${response.status}: ${body.slice(0, 500)}`);
       return {
         status: WorkspaceConnectorStatus.DEGRADED,
         latencyMs,
@@ -70,7 +73,9 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (!response.ok) {
-      throw new Error(`Google Drive sync failed: HTTP ${response.status}`);
+      const body = await response.text().catch(() => '');
+      this.logger.warn(`Google Drive sync HTTP ${response.status}: ${body.slice(0, 500)}`);
+      throw new Error(`Google Drive sync failed: HTTP ${response.status} — ${body.slice(0, 200)}`);
     }
     const data = (await response.json()) as {
       files: Array<{
@@ -243,6 +248,93 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
       'https://www.googleapis.com/auth/drive.readonly',
       'https://www.googleapis.com/auth/drive.file',
     ];
+  }
+
+  getExtraAuthParams(): Record<string, string> {
+    return { access_type: 'offline', prompt: 'consent' };
+  }
+
+  async fetchObjectDetails(
+    accessToken: string,
+    externalId: string,
+    _objectType: string,
+  ): Promise<LiveObjectDetails | null> {
+    const headers = { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' };
+    const metaResponse = await fetch(
+      `${GOOGLE_DRIVE_API_BASE}/files/${externalId}?fields=id,name,mimeType,webViewLink,webContentLink,owners,createdTime,modifiedTime,size,description`,
+      { headers, signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS) },
+    );
+    if (metaResponse.status === 404) return null;
+    if (!metaResponse.ok) {
+      throw new Error(`Google Drive fetchObjectDetails failed: HTTP ${metaResponse.status}`);
+    }
+    const file = (await metaResponse.json()) as {
+      id: string;
+      name: string;
+      mimeType: string;
+      webViewLink?: string;
+      webContentLink?: string;
+      owners?: Array<{ emailAddress: string }>;
+      createdTime?: string;
+      modifiedTime?: string;
+      size?: string;
+      description?: string;
+    };
+
+    const content = await this.fetchFileContent(accessToken, file.id, file.mimeType);
+    return {
+      externalId: file.id,
+      title: file.name,
+      content,
+      url: file.webViewLink ?? null,
+      authorId: file.owners?.[0]?.emailAddress ?? null,
+      externalCreatedAt: file.createdTime ? new Date(file.createdTime) : null,
+      externalUpdatedAt: file.modifiedTime ? new Date(file.modifiedTime) : null,
+      metadata: {
+        mimeType: file.mimeType,
+        webContentLink: file.webContentLink,
+        size: file.size,
+        description: file.description,
+      },
+    };
+  }
+
+  private async fetchFileContent(
+    accessToken: string,
+    fileId: string,
+    mimeType: string,
+  ): Promise<string | null> {
+    const headers = { Authorization: `Bearer ${accessToken}` };
+    const signal = AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS);
+    try {
+      if (mimeType === 'application/vnd.google-apps.document') {
+        const response = await fetch(
+          `${GOOGLE_DRIVE_API_BASE}/files/${fileId}/export?mimeType=text/plain`,
+          { headers, signal },
+        );
+        if (!response.ok) return null;
+        return (await response.text()).slice(0, 50_000);
+      }
+      if (mimeType === 'application/vnd.google-apps.spreadsheet') {
+        const response = await fetch(
+          `${GOOGLE_DRIVE_API_BASE}/files/${fileId}/export?mimeType=text/csv`,
+          { headers, signal },
+        );
+        if (!response.ok) return null;
+        return (await response.text()).slice(0, 50_000);
+      }
+      if (mimeType === 'text/plain') {
+        const response = await fetch(`${GOOGLE_DRIVE_API_BASE}/files/${fileId}?alt=media`, {
+          headers,
+          signal,
+        });
+        if (!response.ok) return null;
+        return (await response.text()).slice(0, 50_000);
+      }
+      return null;
+    } catch {
+      return null;
+    }
   }
 
   supportsWrite(): boolean {

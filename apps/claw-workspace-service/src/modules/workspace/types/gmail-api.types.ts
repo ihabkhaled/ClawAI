@@ -15,9 +15,10 @@ export type GmailHeader = {
 
 export type GmailMessagePart = {
   headers?: GmailHeader[];
-  body?: { data?: string };
+  body?: { data?: string; attachmentId?: string; size?: number };
   parts?: GmailMessagePart[];
   mimeType?: string;
+  filename?: string;
 };
 
 export type GmailMessage = {

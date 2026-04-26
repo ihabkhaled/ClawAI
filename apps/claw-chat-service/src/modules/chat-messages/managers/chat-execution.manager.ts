@@ -1324,9 +1324,10 @@ Your task:
   }
 
   private async fetchConnectorConfig(provider: string): Promise<ConnectorConfigResponse> {
-    this.logger.debug(`fetchConnectorConfig: fetching config for provider=${provider}`);
+    const normalizedProvider = provider.toUpperCase();
+    this.logger.debug(`fetchConnectorConfig: fetching config for provider=${normalizedProvider}`);
     const config = AppConfig.get();
-    const encodedProvider = encodeURIComponent(provider);
+    const encodedProvider = encodeURIComponent(normalizedProvider);
     const url = `${config.CONNECTOR_SERVICE_URL}/api/v1/internal/connectors/config?provider=${encodedProvider}`;
 
     const response = await httpRequest<ConnectorConfigResponse>({

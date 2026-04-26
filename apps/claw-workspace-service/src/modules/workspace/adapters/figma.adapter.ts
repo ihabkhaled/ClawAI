@@ -75,10 +75,14 @@ export class FigmaAdapter implements WorkspaceAdapter {
   async syncObjects(
     accessToken: string,
     _deltaToken?: string,
-    teamId?: string,
+    connectorMetadata?: Record<string, unknown>,
   ): Promise<SyncResult> {
     const objects: SyncedObject[] = [];
     let errorMessage: string | undefined;
+
+    const teamId =
+      typeof connectorMetadata?.['teamId'] === 'string' ? connectorMetadata['teamId'] : undefined;
+
     if (teamId !== undefined && teamId.length > 0) {
       try {
         const projects = await this.listTeamProjects(accessToken, teamId);
@@ -90,8 +94,28 @@ export class FigmaAdapter implements WorkspaceAdapter {
         errorMessage = error instanceof Error ? error.message : String(error);
       }
     } else {
-      errorMessage = 'Figma sync requires a teamId in connector metadata';
+      // No teamId configured — attempt to discover via /me endpoint.
+      const discoveredId = await this.discoverTeamId(accessToken);
+      if (discoveredId !== null) {
+        this.logger.log(`Figma: auto-discovered teamId=${discoveredId}`);
+        try {
+          const projects = await this.listTeamProjects(accessToken, discoveredId);
+          for (const project of projects.slice(0, FIGMA_SYNC_PROJECTS_LIMIT)) {
+            const files = await this.safeFetchProjectFiles(accessToken, project.id);
+            objects.push(...files.map((f) => this.mapFileToSynced(f, project)));
+          }
+        } catch (error) {
+          errorMessage = error instanceof Error ? error.message : String(error);
+        }
+      } else {
+        // No team discoverable — return 0 objects without hard error.
+        this.logger.warn(
+          'Figma: no teamId in connector metadata and none discoverable via API. ' +
+            'Set teamId in connector metadata to enable file sync.',
+        );
+      }
     }
+
     return {
       objectsFound: objects.length,
       objectsSynced: objects.length,
@@ -100,6 +124,29 @@ export class FigmaAdapter implements WorkspaceAdapter {
       errorMessage,
       objects,
     };
+  }
+
+  private async discoverTeamId(accessToken: string): Promise<string | null> {
+    try {
+      const response = await fetch(`${FIGMA_API_BASE}/me`, {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+        signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+      });
+      if (!response.ok) {
+        return null;
+      }
+      const data = (await response.json()) as {
+        id?: string;
+        teams?: Array<{ id: string; name: string }>;
+      };
+      // Enterprise accounts return teams; free accounts may not
+      if (Array.isArray(data.teams) && data.teams.length > 0 && data.teams[0] !== undefined) {
+        return data.teams[0].id;
+      }
+      return null;
+    } catch {
+      return null;
+    }
   }
 
   async exchangeCodeForTokens(
@@ -299,6 +346,10 @@ export class FigmaAdapter implements WorkspaceAdapter {
       },
       externalUpdatedAt: new Date(file.last_modified),
     };
+  }
+
+  supportsPkce(): boolean {
+    return false;
   }
 
   supportsWrite(): boolean {

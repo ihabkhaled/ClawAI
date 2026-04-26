@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ActionExecutionManager } from '../action-execution.manager';
 import { WorkspaceAdapterFactory } from '../../../workspace/adapters/workspace-adapter.factory';
-import { OAuthTokenManager } from '../../../workspace/managers/oauth-token.manager';
+import { TokenRefreshManager } from '../../../workspace/managers/token-refresh.manager';
 import { WorkspaceConnectorRepository } from '../../../workspace/repositories/workspace-connector.repository';
 import type { WorkspaceActionWithConnector } from '../../types/action.types';
 
@@ -15,7 +15,7 @@ const mockAdapterFactory = {
 };
 
 const mockTokenManager = {
-  decryptTokenSet: jest.fn().mockReturnValue({ accessToken: 'tok123', scopes: [] }),
+  getValidAccessToken: jest.fn().mockResolvedValue('tok123'),
 };
 
 const mockConnectorRepository = {
@@ -42,7 +42,7 @@ describe('ActionExecutionManager', () => {
       providers: [
         ActionExecutionManager,
         { provide: WorkspaceAdapterFactory, useValue: mockAdapterFactory },
-        { provide: OAuthTokenManager, useValue: mockTokenManager },
+        { provide: TokenRefreshManager, useValue: mockTokenManager },
         { provide: WorkspaceConnectorRepository, useValue: mockConnectorRepository },
       ],
     }).compile();
@@ -54,7 +54,7 @@ describe('ActionExecutionManager', () => {
   describe('execute', () => {
     it('should return success result when adapter executes successfully', async () => {
       mockConnectorRepository.findById.mockResolvedValue({ id: 'c1', encryptedTokens: 'enc' });
-      mockTokenManager.decryptTokenSet.mockReturnValue({ accessToken: 'tok', scopes: [] });
+      mockTokenManager.getValidAccessToken.mockResolvedValue('tok');
       mockAdapter.supportsWrite.mockReturnValue(true);
       mockAdapter.executeWriteAction.mockResolvedValue({
         success: true,

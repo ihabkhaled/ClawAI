@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { WorkspaceAdapterFactory } from '../../workspace/adapters/workspace-adapter.factory';
-import { OAuthTokenManager } from '../../workspace/managers/oauth-token.manager';
+import { TokenRefreshManager } from '../../workspace/managers/token-refresh.manager';
 import { WorkspaceConnectorRepository } from '../../workspace/repositories/workspace-connector.repository';
 import type { WorkspaceActionWithConnector } from '../types/action.types';
 import type { WriteActionResult } from '../../workspace/types/workspace.types';
@@ -11,7 +11,7 @@ export class ActionExecutionManager {
 
   constructor(
     private readonly adapterFactory: WorkspaceAdapterFactory,
-    private readonly tokenManager: OAuthTokenManager,
+    private readonly tokenRefresh: TokenRefreshManager,
     private readonly connectorRepository: WorkspaceConnectorRepository,
   ) {}
 
@@ -56,8 +56,7 @@ export class ActionExecutionManager {
       if (connector === null || connector.encryptedTokens === null) {
         return null;
       }
-      const tokens = this.tokenManager.decryptTokenSet(connector.encryptedTokens);
-      return tokens.accessToken;
+      return await this.tokenRefresh.getValidAccessToken(connector);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Token resolution failed';
       this.logger.warn(`Token resolution failed for connector ${connectorId}: ${message}`);

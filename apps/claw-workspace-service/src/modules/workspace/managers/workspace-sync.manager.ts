@@ -14,6 +14,7 @@ import { WorkspaceConnectorRepository } from '../repositories/workspace-connecto
 import { WorkspaceAdapterFactory } from '../adapters/workspace-adapter.factory';
 import { TokenRefreshManager } from './token-refresh.manager';
 import { WorkspaceObjectManager } from './workspace-object.manager';
+import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceSyncStatus } from '../../../common/enums/workspace-sync-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { WorkspaceProvider } from '../../../common/enums/workspace-provider.enum';
@@ -243,7 +244,8 @@ export class WorkspaceSyncManager {
     for (let attempt = 0; attempt < retryConfig.maxAttempts; attempt += 1) {
       attempts = attempt + 1;
       try {
-        const result = await adapter.syncObjects(accessToken, deltaToken);
+        const connectorMeta = (connector.metadata as Record<string, unknown> | null) ?? {};
+        const result = await adapter.syncObjects(accessToken, deltaToken, connectorMeta);
         return { result, attempts, errorClass: null };
       } catch (error) {
         lastError = error;
@@ -299,6 +301,8 @@ export class WorkspaceSyncManager {
     const patch = {
       lastSyncAt: new Date(),
       objectCount,
+      status: WorkspaceConnectorStatus.CONNECTED,
+      statusReason: null,
       ...(result.deltaTokenOut !== undefined ? { deltaToken: result.deltaTokenOut } : {}),
     };
     await this.repository.update(connector.id, patch);

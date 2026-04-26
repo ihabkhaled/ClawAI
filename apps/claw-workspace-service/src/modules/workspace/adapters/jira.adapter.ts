@@ -18,6 +18,7 @@ import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapte
 import type {
   AdapterCapabilities,
   HealthCheckResult,
+  LiveObjectDetails,
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
@@ -89,7 +90,7 @@ export class JiraAdapter implements WorkspaceAdapter {
     const searchParams = new URLSearchParams({
       jql,
       maxResults: '100',
-      fields: 'summary,assignee,created,updated',
+      fields: 'summary,assignee,created,updated,description,issuetype,priority,status,labels',
     });
     const searchUrl = `${apiBaseUrl}/search/jql?${searchParams.toString()}`;
     const issueResponse = await fetch(searchUrl, {
@@ -107,24 +108,41 @@ export class JiraAdapter implements WorkspaceAdapter {
         key: string;
         fields: {
           summary: string;
-          assignee?: { emailAddress?: string } | null;
+          assignee?: { emailAddress?: string; displayName?: string } | null;
           created: string;
           updated: string;
+          description?: unknown;
+          issuetype?: { name?: string };
+          priority?: { name?: string } | null;
+          status?: { name?: string };
+          labels?: string[];
         };
       }>;
       nextPageToken?: string;
       isLast?: boolean;
     };
-    const objects: SyncedObject[] = data.issues.map((issue) => ({
-      externalId: issue.id,
-      type: WorkspaceObjectType.TICKET,
-      title: `${issue.key}: ${issue.fields.summary}`,
-      authorId: issue.fields.assignee?.emailAddress,
-      // Prefer the browser-facing tenant URL over issue.self (which is the API URL).
-      url: `${site.url}/browse/${issue.key}`,
-      externalCreatedAt: new Date(issue.fields.created),
-      externalUpdatedAt: new Date(issue.fields.updated),
-    }));
+    const objects: SyncedObject[] = data.issues.map((issue) => {
+      const descText = this.extractAdfText(issue.fields.description).slice(0, 5_000);
+      return {
+        externalId: issue.id,
+        type: WorkspaceObjectType.TICKET,
+        title: `${issue.key}: ${issue.fields.summary}`,
+        content: descText.length > 0 ? descText : undefined,
+        authorId: issue.fields.assignee?.emailAddress,
+        // Prefer the browser-facing tenant URL over issue.self (which is the API URL).
+        url: `${site.url}/browse/${issue.key}`,
+        metadata: {
+          issueKey: issue.key,
+          issueType: issue.fields.issuetype?.name,
+          priority: issue.fields.priority?.name,
+          status: issue.fields.status?.name,
+          labels: issue.fields.labels ?? [],
+          assigneeDisplayName: issue.fields.assignee?.displayName,
+        },
+        externalCreatedAt: new Date(issue.fields.created),
+        externalUpdatedAt: new Date(issue.fields.updated),
+      };
+    });
     const latestUpdatedAt = objects
       .map((obj) => obj.externalUpdatedAt?.toISOString())
       .filter((value): value is string => value !== undefined)
@@ -266,6 +284,108 @@ export class JiraAdapter implements WorkspaceAdapter {
     });
   }
 
+  private extractAdfText(node: unknown): string {
+    if (node === null || node === undefined || typeof node !== 'object') return '';
+    const n = node as { type?: string; text?: string; content?: unknown[] };
+    if (n.type === 'text' && typeof n.text === 'string') return n.text;
+    if (!Array.isArray(n.content)) return '';
+    const childText = n.content.map((c) => this.extractAdfText(c)).join('');
+    const needsNewline =
+      n.type === 'paragraph' ||
+      n.type === 'heading' ||
+      n.type === 'blockquote' ||
+      n.type === 'listItem';
+    return needsNewline ? `${childText}\n` : childText;
+  }
+
+  async fetchObjectDetails(
+    accessToken: string,
+    externalId: string,
+    objectType: string,
+  ): Promise<LiveObjectDetails | null> {
+    if (objectType !== WorkspaceObjectType.TICKET) return null;
+    const resourcesResponse = await fetch(JIRA_API_RESOURCES, {
+      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+      signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+    });
+    if (!resourcesResponse.ok) return null;
+    const resources = (await resourcesResponse.json()) as Array<{ id: string; url: string }>;
+    const site = resources[0];
+    if (site === undefined) return null;
+    const baseUrl = `${JIRA_API_BASE}/ex/jira/${site.id}/rest/api/3`;
+
+    const issueResponse = await fetch(
+      `${baseUrl}/issue/${externalId}?fields=summary,description,issuetype,priority,status,labels,assignee,created,updated`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+        signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+      },
+    );
+    if (issueResponse.status === 404) return null;
+    if (!issueResponse.ok) {
+      throw new Error(`Jira fetchObjectDetails failed: HTTP ${issueResponse.status}`);
+    }
+    const issue = (await issueResponse.json()) as {
+      id: string;
+      key: string;
+      fields: {
+        summary: string;
+        description?: unknown;
+        issuetype?: { name?: string };
+        priority?: { name?: string } | null;
+        status?: { name?: string };
+        labels?: string[];
+        assignee?: { emailAddress?: string; displayName?: string } | null;
+        created: string;
+        updated: string;
+      };
+    };
+
+    const commentsResponse = await fetch(`${baseUrl}/issue/${externalId}/comment?maxResults=5`, {
+      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+      signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+    });
+    const commentsData = commentsResponse.ok
+      ? ((await commentsResponse.json()) as {
+          comments: Array<{
+            author?: { displayName?: string; emailAddress?: string };
+            body?: unknown;
+          }>;
+        })
+      : { comments: [] };
+
+    const description = this.extractAdfText(issue.fields.description).trim();
+    const commentLines = commentsData.comments.map((c) => {
+      const author = c.author?.displayName ?? c.author?.emailAddress ?? 'Unknown';
+      return `[${author}]: ${this.extractAdfText(c.body).trim()}`;
+    });
+    const content = [
+      description.length > 0 ? `Description:\n${description}` : '',
+      commentLines.length > 0 ? `Comments:\n${commentLines.join('\n')}` : '',
+    ]
+      .filter((s) => s.length > 0)
+      .join('\n\n')
+      .slice(0, 30_000);
+
+    return {
+      externalId: issue.id,
+      title: `${issue.key}: ${issue.fields.summary}`,
+      content: content.length > 0 ? content : null,
+      url: `${site.url}/browse/${issue.key}`,
+      authorId: issue.fields.assignee?.emailAddress ?? null,
+      externalCreatedAt: new Date(issue.fields.created),
+      externalUpdatedAt: new Date(issue.fields.updated),
+      metadata: {
+        issueKey: issue.key,
+        issueType: issue.fields.issuetype?.name,
+        priority: issue.fields.priority?.name,
+        status: issue.fields.status?.name,
+        labels: issue.fields.labels ?? [],
+        assigneeDisplayName: issue.fields.assignee?.displayName,
+      },
+    };
+  }
+
   getCapabilities(): AdapterCapabilities {
     return {
       supportsOAuth: true,
@@ -281,7 +401,7 @@ export class JiraAdapter implements WorkspaceAdapter {
   }
 
   getDefaultScopes(): string[] {
-    return ['read:jira-work', 'read:jira-user', 'offline_access'];
+    return ['read:jira-work', 'write:jira-work', 'read:jira-user', 'offline_access'];
   }
 
   supportsWrite(): boolean {

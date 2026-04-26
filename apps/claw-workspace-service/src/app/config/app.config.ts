@@ -36,7 +36,7 @@ const appConfigSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().default(''),
   OLLAMA_SERVICE_URL: z.string().min(1).default('http://ollama-service:4008'),
   CHAT_SERVICE_URL: z.string().min(1).default('http://chat-service:4002'),
-  AI_ACTION_LOCAL_MODEL: z.string().min(1).default('gemma3:4b'),
+  AI_ACTION_LOCAL_MODEL: z.string().min(1).default('llama3.2:latest'),
   AI_ACTION_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(120_000),
 });
 

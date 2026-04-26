@@ -20,6 +20,7 @@ import type {
   GmailHeader,
   GmailMessage,
   GmailMessageListResponse,
+  GmailMessagePart,
   GoogleTokenResponse,
 } from '../types/gmail-api.types';
 import type {
@@ -290,6 +291,10 @@ export class GmailAdapter implements WorkspaceAdapter {
     ];
   }
 
+  getExtraAuthParams(): Record<string, string> {
+    return { access_type: 'offline', prompt: 'consent' };
+  }
+
   async fetchObjectDetails(
     accessToken: string,
     externalId: string,
@@ -343,7 +348,7 @@ export class GmailAdapter implements WorkspaceAdapter {
 
   private async fetchMessage(accessToken: string, id: string): Promise<GmailMessage> {
     const response = await fetch(
-      `${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/messages/${id}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Subject&metadataHeaders=Date`,
+      `${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/messages/${id}?format=full`,
       { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
     );
     if (!response.ok) {
@@ -356,6 +361,39 @@ export class GmailAdapter implements WorkspaceAdapter {
     return (await response.json()) as GmailMessage;
   }
 
+  private extractBodyText(part: GmailMessagePart | undefined): string {
+    if (part === undefined) return '';
+    if (part.body?.data !== undefined) {
+      const raw = Buffer.from(part.body.data, 'base64url').toString('utf-8');
+      if (part.mimeType === 'text/plain') return raw.slice(0, 30_000);
+      if (part.mimeType === 'text/html') {
+        return raw
+          .replaceAll(/<[^>]+>/g, ' ')
+          .replaceAll(/\s{2,}/g, ' ')
+          .trim()
+          .slice(0, 30_000);
+      }
+    }
+    for (const p of part.parts ?? []) {
+      const text = this.extractBodyText(p);
+      if (text.length > 0) return text;
+    }
+    return '';
+  }
+
+  private extractAttachmentNames(part: GmailMessagePart | undefined): string[] {
+    if (part === undefined) return [];
+    const fromParts = (part.parts ?? []).flatMap((p) => this.extractAttachmentNames(p));
+    if (
+      part.filename !== undefined &&
+      part.filename.length > 0 &&
+      part.body?.attachmentId !== undefined
+    ) {
+      return [part.filename, ...fromParts];
+    }
+    return fromParts;
+  }
+
   private header(headers: GmailHeader[] | undefined, name: string): string | undefined {
     return headers?.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value;
   }
@@ -365,12 +403,14 @@ export class GmailAdapter implements WorkspaceAdapter {
     const subject = this.header(headers, 'Subject') ?? '(no subject)';
     const from = this.header(headers, 'From');
     const to = this.header(headers, 'To');
+    const cc = this.header(headers, 'Cc');
     const internal = message.internalDate ? new Date(Number(message.internalDate)) : undefined;
+    const bodyText = this.extractBodyText(message.payload);
     return {
       externalId: message.id,
       type: WorkspaceObjectType.EMAIL,
       title: subject,
-      content: message.snippet,
+      content: bodyText.length > 0 ? bodyText : (message.snippet ?? undefined),
       url: `https://mail.google.com/mail/u/0/#inbox/${message.threadId}`,
       authorId: from,
       metadata: {
@@ -378,6 +418,8 @@ export class GmailAdapter implements WorkspaceAdapter {
         labelIds: message.labelIds,
         from,
         to,
+        cc,
+        snippet: message.snippet,
       },
       externalCreatedAt: internal,
       externalUpdatedAt: internal,
@@ -389,11 +431,14 @@ export class GmailAdapter implements WorkspaceAdapter {
     const subject = this.header(headers, 'Subject') ?? '(no subject)';
     const from = this.header(headers, 'From');
     const to = this.header(headers, 'To');
+    const cc = this.header(headers, 'Cc');
     const internal = message.internalDate ? new Date(Number(message.internalDate)) : null;
+    const bodyText = this.extractBodyText(message.payload);
+    const attachments = this.extractAttachmentNames(message.payload);
     return {
       externalId: message.id,
       title: subject,
-      content: message.snippet ?? null,
+      content: bodyText.length > 0 ? bodyText : (message.snippet ?? null),
       url: `https://mail.google.com/mail/u/0/#inbox/${message.threadId}`,
       authorId: from ?? null,
       externalCreatedAt: internal,
@@ -403,6 +448,9 @@ export class GmailAdapter implements WorkspaceAdapter {
         labelIds: message.labelIds,
         from,
         to,
+        cc,
+        snippet: message.snippet,
+        attachments,
       },
     };
   }
