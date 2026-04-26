@@ -1,19 +1,14 @@
-import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios';
-import { Logger } from '@nestjs/common';
-import { DEFAULT_HTTP_TIMEOUT } from '../constants';
+import { type AxiosRequestConfig } from 'axios';
+import { httpGet as httpGetShared, httpPost as httpPostShared } from '@claw/shared-utilities';
 
-const logger = new Logger('HttpClient');
-
+/**
+ * Service-local typed wrapper around the shared axios HTTP client.
+ * Keeps the existing import surface (`@common/utilities`) while delegating
+ * the actual axios call to `@claw/shared-utilities` so the axios library
+ * is wrapped exactly once across the monorepo.
+ */
 export async function httpGet<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-  logger.debug(`httpGet: GET ${url}`);
-  const startTime = Date.now();
-  const response: AxiosResponse<T> = await axios.get(url, {
-    timeout: DEFAULT_HTTP_TIMEOUT,
-    ...config,
-  });
-  const durationMs = Date.now() - startTime;
-  logger.debug(`httpGet: GET ${url} completed — status=${String(response.status)} durationMs=${String(durationMs)}`);
-  return response.data;
+  return httpGetShared<T>(url, config);
 }
 
 export async function httpPost<T>(
@@ -21,13 +16,5 @@ export async function httpPost<T>(
   data?: unknown,
   config?: AxiosRequestConfig,
 ): Promise<T> {
-  logger.debug(`httpPost: POST ${url}`);
-  const startTime = Date.now();
-  const response: AxiosResponse<T> = await axios.post(url, data, {
-    timeout: DEFAULT_HTTP_TIMEOUT,
-    ...config,
-  });
-  const durationMs = Date.now() - startTime;
-  logger.debug(`httpPost: POST ${url} completed — status=${String(response.status)} durationMs=${String(durationMs)}`);
-  return response.data;
+  return httpPostShared<T>(url, data, config);
 }

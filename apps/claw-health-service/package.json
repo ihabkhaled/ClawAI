@@ -21,6 +21,7 @@
     "test:cov": "jest --coverage"
   },
   "dependencies": {
+    "@claw/shared-utilities": "*",
     "@nestjs/common": "^11.1.0",
     "@nestjs/core": "^11.1.0",
     "@nestjs/platform-express": "^11.1.0",

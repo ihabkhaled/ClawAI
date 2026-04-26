@@ -1,17 +1,22 @@
+import { type ServiceStatus } from '@claw/shared-types';
+import { type AggregatedHealthStatus } from '../enums/aggregated-health-status.enum';
+
 export interface ServiceHealthResult {
   name: string;
-  status: "up" | "down";
+  status: ServiceStatus;
   responseTimeMs: number | null;
   error: string | null;
 }
 
+export interface AggregatedHealthSummary {
+  total: number;
+  up: number;
+  down: number;
+}
+
 export interface AggregatedHealth {
-  status: "healthy" | "degraded" | "unhealthy";
+  status: AggregatedHealthStatus;
   timestamp: string;
   services: ServiceHealthResult[];
-  summary: {
-    total: number;
-    up: number;
-    down: number;
-  };
+  summary: AggregatedHealthSummary;
 }

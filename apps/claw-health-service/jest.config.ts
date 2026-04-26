@@ -14,20 +14,23 @@ const config: Config = {
     '!src/**/*.type.ts',
     '!src/**/*.types.ts',
     '!src/**/*.constants.ts',
+    '!src/**/*.enum.ts',
+    '!src/**/index.ts',
   ],
   coverageDirectory: './coverage',
   coverageThreshold: {
     global: {
-      branches: 70,
-      functions: 70,
-      lines: 70,
-      statements: 70,
+      branches: 80,
+      functions: 92,
+      lines: 92,
+      statements: 92,
     },
   },
   testEnvironment: 'node',
   testTimeout: 30_000,
   moduleNameMapper: {
     '@app/(.*)': '<rootDir>/src/app/$1',
+    '@common/(.*)': '<rootDir>/src/common/$1',
     '@modules/(.*)': '<rootDir>/src/modules/$1',
   },
 };
