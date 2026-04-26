@@ -2019,6 +2019,20 @@ const RAW_CATALOG_ENTRIES = [
   // ─── QWEN 3.6 (user-requested) — agentic coding + thinking preservation ───
   {
     name: 'qwen3.6',
+    tag: 'latest',
+    displayName: 'Qwen 3.6 (latest)',
+    category: 'CODING',
+    description:
+      'Next-gen Qwen 3.6 MoE specialized for agentic coding and thinking preservation. 256K context, vision-capable. Tracks the recommended default tag.',
+    sizeBytes: BigInt(24_000_000_000),
+    parameterCount: '35B',
+    runtime: 'OLLAMA',
+    ollamaName: 'qwen3.6:latest',
+    isRecommended: true,
+    capabilities: ['code_generation', 'reasoning', 'thinking', 'agentic', 'vision', 'long_context'],
+  },
+  {
+    name: 'qwen3.6',
     tag: '35b',
     displayName: 'Qwen 3.6 35B A3B (MoE)',
     category: 'CODING',
