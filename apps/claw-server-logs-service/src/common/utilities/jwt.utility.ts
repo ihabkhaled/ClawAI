@@ -1,13 +1,12 @@
-import * as jwt from 'jsonwebtoken';
-import { Logger } from '@nestjs/common';
-import type { JwtPayload } from '../types';
-import { JWT_ALGORITHM } from '../constants';
+import { verifyAccessToken as verifyAccessTokenGeneric } from '@claw/shared-utilities';
+import { type JwtPayload } from '../types';
 
-const logger = new Logger('JwtUtility');
-
+/**
+ * Service-local typed wrapper around the shared JWT verifier.
+ * Keeps the existing import surface (`@common/utilities`) while delegating
+ * the actual verification logic to `@claw/shared-utilities` so the JWT
+ * library is wrapped exactly once across the monorepo.
+ */
 export function verifyAccessToken(token: string, secret: string): JwtPayload {
-  logger.debug('verifyAccessToken: verifying access token');
-  const decoded = jwt.verify(token, secret, { algorithms: [JWT_ALGORITHM] }) as JwtPayload;
-  logger.debug(`verifyAccessToken: token verified for sub=${String(decoded.sub)}`);
-  return decoded;
+  return verifyAccessTokenGeneric<JwtPayload>(token, secret);
 }
