@@ -1753,6 +1753,152 @@ docs/
 - Don't claim 98% coverage if you skipped the manager's error path.
 - If something is incomplete, say so in plain English.
 
+### 21. Logging-coverage mindset (added 2026-04-26)
+
+- Every public method in a `*.service.ts`, `*.manager.ts`, `*.adapter.ts`, `*.utility.ts`, `*.repository.ts` MUST emit at least:
+  - `logger.debug(...)` on entry (with non-PII inputs only)
+  - `logger.error(...)` in every `catch` block (before rethrow or fallback)
+  - `logger.info(...)` for any side-effecting operation (DB write, HTTP call, RabbitMQ publish, file write)
+  - `logger.warn(...)` for any retry, fallback, or recoverable degraded path
+- A method with zero log statements is a delivery blocker and must be rejected in code review.
+- All logs ship automatically to MongoDB via the existing Pino → RabbitMQ `log.server` → `claw-server-logs-service` pipeline (TTL 30 days). NO additional plumbing required per service.
+- Never log secrets, tokens, passwords, refresh tokens, API keys, or full request/response bodies that may contain them. Pino redaction config is already in place — extend it, don't bypass it.
+- Use NestJS `Logger` (`private readonly logger = new Logger(MyClass.name)`). Never `console.log`. `console.warn` and `console.error` are tolerated only at top of `main.ts` for bootstrap errors.
+
+### 22. Test-coverage flagship mindset (added 2026-04-26)
+
+- Every microservice and the frontend MUST report **≥92 %** coverage on all four jest/vitest metrics: statements, branches, functions, lines.
+- Threshold is enforced via `coverageThreshold` in each `jest.config.ts` / `vitest.config.ts` and verified in CI by running `npm run test -- --coverage`.
+- Coverage is ratcheted, never lowered: if your change drops a service below its existing threshold, you fix the test gap before merging.
+- Test quality bar:
+  - No `.toBeDefined()`-only assertions (assert behaviour, not existence)
+  - No `xit`, `xdescribe`, `.skip()` (CI rejects)
+  - Mocks at boundaries only (DB, HTTP, RabbitMQ, ClamAV, Ollama). Never mock the unit under test.
+  - DTO fuzz tests for every Zod schema (valid + boundary + invalid + null/empty/overflow)
+  - Manager error-path tests required (every `catch` branch covered)
+- Tests live next to the code in `__tests__/`. Backend uses Jest (`.spec.ts`), frontend uses Vitest (`.test.ts` or `.spec.ts`).
+
+### 23. Shared-utilities-first mindset (added 2026-04-26)
+
+- Before writing a utility in `apps/<service>/src/common/utilities/`, search `packages/shared-utilities/`. If it exists there, IMPORT IT — never copy-paste.
+- If a utility lives identically in 2+ services, it is a bug. Move it to `packages/shared-utilities/` and replace per-service copies with imports.
+- Per-service utilities are reserved for service-specific glue. Anything domain-neutral (HTTP, JWT verification, crypto primitives, URL safety, regex helpers, retry policies, exponential backoff, time helpers, encoding helpers) lives in `packages/shared-utilities/`.
+- Cross-service constants live in `packages/shared-constants/`. Cross-service types live in `packages/shared-types/`. Cross-service utilities live in `packages/shared-utilities/`. The three packages cover types / values / functions respectively.
+
+### 24. Inline-extraction mindset (added 2026-04-26)
+
+- Zero inline declarations in any logic file (`*.service.ts`, `*.manager.ts`, `*.controller.ts`, `*.repository.ts`, `*.adapter.ts`, `*.utility.ts`, `*.guard.ts`, `*.filter.ts`, `*.pipe.ts`, `*.module.ts`, `*.interceptor.ts`):
+  - inline `type` / `interface` → `src/modules/<domain>/types/<name>.types.ts` (or `src/common/types/`)
+  - inline `enum` → `src/common/enums/<name>.enum.ts`
+  - inline `const` (top-level, non-Logger) → `src/common/constants/<name>.constants.ts` or `src/modules/<domain>/constants/<name>.constants.ts`
+  - standalone `function` declarations → `src/common/utilities/<name>.utility.ts`
+  - string-literal-union types (`'a' | 'b' | 'c'`) → enum in `src/common/enums/`
+  - `as unknown as X` casts → real types or refactor (banned by ESLint `no-restricted-syntax`)
+- Only exception: `private readonly logger = new Logger(MyClass.name)` inside NestJS classes (the standard NestJS pattern).
+- Index files (`src/types/index.ts`, `src/enums/index.ts`, `src/constants/index.ts`, `src/utilities/index.ts`, etc.) re-export everything for ergonomic imports.
+
+### 25. Method-size discipline mindset (added 2026-04-26)
+
+- Service method ceiling: **50 lines / complexity 10**. Hard error in Phase U.
+- Manager method ceiling: **80 lines / complexity 15**. Hard error in Phase U.
+- File ceiling: **500 lines** for all production files (excluding `*.constants.ts`, locale files, generated catalogs).
+- A method exceeding its ceiling MUST be split. Extraction targets:
+  - Validation logic → private helper
+  - Transformation logic → private helper or utility
+  - External-call orchestration → manager helper
+  - Pure computation → utility file (cross-service if reusable)
+- A file exceeding 500 lines MUST be split into multiple files in the same directory or extracted into sub-managers/sub-services.
+
 ---
 
-**These 20 mindsets are the default operating mode.** Any AI agent that does not follow them is doing it wrong. Any code reviewer seeing a violation should block the merge.
+**These 25 mindsets are the default operating mode.** Any AI agent that does not follow them is doing it wrong. Any code reviewer seeing a violation should block the merge.
+
+---
+
+## Codebase-Wide Refactor Standards (2026-04-26)
+
+This section codifies the rules introduced by the codebase-wide refactor (Phase B of `.claude/Integrations/refactor__PLAN.md`). Every future change MUST comply.
+
+### Banned patterns (ESLint enforced via `no-restricted-syntax`)
+
+- `as unknown as X` (use real types)
+- `console.log`, `console.debug`, `console.info`, `console.trace` (use NestJS `Logger`)
+- `let` at module scope (use `const` or move state into a class)
+- inline `interface`/`type`/`enum`/`function` in logic files (extract per rule 24 above)
+- string-literal union types (use enums per rule 23)
+
+### File-size thresholds
+
+| File class     | Soft (warn) | Hard (error in Phase U) |
+| -------------- | :---------: | :---------------------: |
+| Service method |  50 lines   |        50 lines         |
+| Manager method |  80 lines   |        80 lines         |
+| Service file   |  300 lines  |        500 lines        |
+| Manager file   |  500 lines  |        500 lines        |
+| Adapter file   |  500 lines  |        500 lines        |
+| Utility file   |  300 lines  |        300 lines        |
+
+### Coverage thresholds (per-service `jest.config.ts` / `vitest.config.ts`)
+
+```ts
+coverageThreshold: {
+  global: { statements: 92, branches: 92, functions: 92, lines: 92 }
+}
+```
+
+CI fails if any metric drops below 92 %. Do not lower the threshold to land a change.
+
+### Required logging signatures (per public method)
+
+```ts
+async doX(input: Input): Promise<Output> {
+  this.logger.debug(`doX: input=${safeStringify(input)}`);
+  try {
+    const result = await this.somethingThatMightFail(input);
+    this.logger.info(`doX: completed thingId=${result.id}`);
+    return result;
+  } catch (error) {
+    this.logger.error(`doX: failed — ${(error as Error).message}`);
+    throw error;
+  }
+}
+```
+
+`safeStringify` redacts known sensitive fields (token, password, apiKey, refreshToken, secret, authorization). Use `JSON.stringify` only when fields are guaranteed safe.
+
+### Cross-service utility location rule
+
+- `packages/shared-types/` — TypeScript types and event payloads shared by 2+ services
+- `packages/shared-constants/` — values shared by 2+ services
+- `packages/shared-utilities/` — functions shared by 2+ services (jwt-verifier, http-client, crypto, url-safety, retry-policy, etc.)
+- `packages/shared-rabbitmq/` — RabbitMQ module + service (already exists)
+- `packages/shared-auth/` — Auth guards/decorators (already exists)
+
+### Refactor execution recipe (per-service phase template)
+
+When refactoring an existing service:
+
+1. Read the service `CLAUDE.md` and existing source.
+2. Adopt shared-utilities — replace local `jwt`/`http-client`/`crypto` with imports from `@claw/shared-utilities`. Delete local copies.
+3. Extract every inline declaration per rule 24.
+4. Replace string-literal unions with enums.
+5. Split every method over the ceiling (rule 25). Extract helpers; reusable ones move to utility files.
+6. Enrich logging on every public method (rule 21).
+7. Backfill tests to ≥92 % coverage. DTO fuzz, error paths, boundary cases.
+8. Run gates: `npm run lint && npm run typecheck && npm run test -- --coverage && npm run build`. All green.
+9. Run `qa/test-<service>.sh`. 0 failures required.
+10. Rebuild Docker container. Scan logs for `UnhandledPromiseRejection|FATAL`. 0 hits.
+11. Update service `CLAUDE.md` if patterns changed; update `docs/04-backend/<service>.md` if architecture changed.
+12. Commit: `refactor(<service>): adopt shared-utilities, extract inline declarations, split long methods, enrich logging, backfill tests to 92%`.
+
+### Things to NEVER do (post-refactor)
+
+- Reintroduce a per-service `jwt.utility.ts` after dedup
+- Reintroduce inline `type`/`interface`/`enum`/`const` in logic files
+- Reintroduce string-literal unions for domain values
+- Skip logging in a public method ("the method is too small to need it" — there is no such method)
+- Lower a `coverageThreshold` to land a change
+- Reintroduce a method >50 lines (service) or >80 lines (manager)
+- Reintroduce a file >500 lines
+- Use `console.log` anywhere, ever (`console.warn`/`console.error` only in `main.ts` bootstrap)
+- Use `as unknown as X` to satisfy the type checker

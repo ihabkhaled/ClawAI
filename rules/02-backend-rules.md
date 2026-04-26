@@ -189,3 +189,76 @@ Registered in `apps/claw-health-service` at startup.
 8. Publishing events from a controller — publish from service after persistence
 9. Catching and swallowing errors in managers without storing an error record
 10. Storing localhost URLs for Docker services — use service name (`http://ollama:11434`)
+
+## Logging-Coverage Rule (added 2026-04-26)
+
+Every public method in `*.service.ts`, `*.manager.ts`, `*.adapter.ts`, `*.utility.ts`, `*.repository.ts` MUST emit:
+
+- `this.logger.debug(...)` on entry, with non-PII inputs
+- `this.logger.info(...)` for any side-effecting operation (DB write, HTTP call, RabbitMQ publish, file write)
+- `this.logger.warn(...)` for any retry, fallback, or recoverable degraded path
+- `this.logger.error(...)` in every `catch` block, BEFORE rethrow or fallback
+
+Reference template:
+
+```ts
+async doX(input: Input): Promise<Output> {
+  this.logger.debug(`doX: input=${safeStringify(input)}`);
+  try {
+    const result = await this.somethingThatMightFail(input);
+    this.logger.info(`doX: completed thingId=${result.id}`);
+    return result;
+  } catch (error) {
+    this.logger.error(`doX: failed — ${(error as Error).message}`);
+    throw error;
+  }
+}
+```
+
+NEVER log: secrets, tokens, passwords, refresh tokens, API keys, full request/response bodies. All logs auto-ship to MongoDB (`claw_server_logs`, TTL 30 days) via existing pipeline. See `rules/09-refactor-rules.md` (R4) for full standard.
+
+## Method-Size Discipline (added 2026-04-26)
+
+Hard ceilings (ESLint enforced as warning today, hard error in Phase U):
+
+| Layer                    |        Max lines        | Max complexity |
+| ------------------------ | :---------------------: | :------------: |
+| `*.service.ts` method    |           50            |       10       |
+| `*.manager.ts` method    |           80            |       15       |
+| `*.controller.ts` method | 3 (extract+call+return) |      n/a       |
+| `*.repository.ts` method |           30            |       10       |
+| `*.utility.ts` function  |           30            |       10       |
+
+Hard file ceilings:
+
+- Service / repository / utility files: 300 lines
+- Manager / adapter files: 500 lines
+- Constants / locale / generated files: unlimited
+
+A method or file exceeding its ceiling MUST be split. See `rules/09-refactor-rules.md` (R2, R3) for extraction targets.
+
+## Banned Patterns (added 2026-04-26)
+
+Banned in every backend logic file (ESLint `no-restricted-syntax`):
+
+- `as unknown as X` (use real types or refactor)
+- `console.log` / `console.debug` / `console.info` / `console.trace` (use NestJS `Logger`)
+- `let` at module scope (use `const` or move state into a class)
+- inline `interface` / `type` / `enum` / `function` (extract per `rules/09-refactor-rules.md` R1)
+- string-literal-union types (use enum from `src/common/enums/`)
+
+## Cross-Service Utility Rule (added 2026-04-26)
+
+Before writing a utility in `apps/<service>/src/common/utilities/`, check `packages/shared-utilities/`.
+
+If the utility lives identically in 2+ services, it MUST be in `packages/shared-utilities/`. Per-service copies are a delivery blocker.
+
+Cross-service ownership table:
+
+| Shared kind   | Package                      |
+| ------------- | ---------------------------- |
+| Functions     | `packages/shared-utilities/` |
+| Types         | `packages/shared-types/`     |
+| Constants     | `packages/shared-constants/` |
+| RabbitMQ glue | `packages/shared-rabbitmq/`  |
+| Auth glue     | `packages/shared-auth/`      |

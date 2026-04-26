@@ -16,6 +16,7 @@
 | Docker Operations          | `06-docker-toolkit.md`      | Container management, rebuild procedures, networking                 |
 | Prisma / Database Toolkit  | `07-database-toolkit.md`    | Migrations, seeding, query patterns, pgvector                        |
 | RabbitMQ Event Bus Toolkit | `08-event-bus-toolkit.md`   | Publishing events, consuming events, DLQ inspection                  |
+| Refactor Toolkit           | `09-refactor-toolkit.md`    | Per-service refactor: dedup, extraction, splits, logging, coverage   |
 
 ---
 

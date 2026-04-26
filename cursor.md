@@ -58,7 +58,7 @@ Do not deviate from those rules. Do not invent new patterns. Do not bypass tests
 4. **Use Cursor's inline chat (Cmd+K / Ctrl+K)** for small edits within a file — never for architectural changes.
 5. **Use Cursor's indexing** to find related code before editing. Do not grep-replace without reading.
 
-## The 20 mindsets (mirror of CLAUDE.md)
+## The 25 mindsets (mirror of CLAUDE.md)
 
 Every mindset in `CLAUDE.md` applies to Cursor identically:
 
@@ -72,7 +72,7 @@ Every mindset in `CLAUDE.md` applies to Cursor identically:
 8. Manual UI testing (real browser, golden path + edge cases)
 9. UAT (non-technical user workflow simulation)
 10. Bug-free (TypeScript error = blocker, failing test = blocker)
-11. Coverage (≥98% on new code)
+11. Coverage (≥92% per service, all four metrics)
 12. Wiring-everything (7 compose files, nginx, health, shared packages, CI, i18n, docs)
 13. No-missing-requirements (re-read request 3×, checklist every verb)
 14. Observability (structured logging, correlation IDs, auditable events)
@@ -82,6 +82,39 @@ Every mindset in `CLAUDE.md` applies to Cursor identically:
 18. Reversibility (prefer reversible actions, confirm before destructive)
 19. Least-code (delete more than add, no premature abstraction)
 20. Honest-status (never claim done when incomplete)
+21. **Logging-coverage** — every public method emits debug/info/warn/error per the rule (added 2026-04-26)
+22. **Test-coverage flagship** — ≥92% per service, ratcheted in CI (added 2026-04-26)
+23. **Shared-utilities-first** — search `packages/shared-utilities/` before writing a new utility (added 2026-04-26)
+24. **Inline-extraction** — zero inline `type`/`interface`/`enum`/`const`/`function` in logic files (added 2026-04-26)
+25. **Method-size discipline** — service ≤50 lines, manager ≤80 lines, file ≤500 lines (added 2026-04-26)
+
+## Refactor standards (2026-04-26)
+
+Banned patterns (ESLint enforced):
+
+- `as unknown as X` (use real types)
+- `console.log` / `console.debug` / `console.info` / `console.trace` (use NestJS Logger)
+- `let` at module scope
+- inline `interface`/`type`/`enum`/`function` in logic files
+- string-literal union types
+
+File-size thresholds (warn at 500, hard error in Phase U):
+
+- Service method ≤50 lines / complexity 10
+- Manager method ≤80 lines / complexity 15
+- All production files ≤500 lines
+
+Coverage threshold (per-service jest/vitest):
+
+```ts
+coverageThreshold: { global: { statements: 92, branches: 92, functions: 92, lines: 92 } }
+```
+
+Cross-service utility location:
+
+- types → `packages/shared-types/`
+- values → `packages/shared-constants/`
+- functions → `packages/shared-utilities/`
 
 ## Cursor editing conventions
 
@@ -109,3 +142,8 @@ Every mindset in `CLAUDE.md` applies to Cursor identically:
 - Disables ESLint rules
 - Adds a new service without wiring through all 7 compose files + nginx + health + shared packages
 - Claims "done" without QA script running
+- Reintroduces a per-service `jwt.utility.ts` after dedup (use `@claw/shared-utilities`)
+- Adds a public method without `logger.debug` entry + `logger.error` catch
+- Lowers a `coverageThreshold` to land a change
+- Uses `as unknown as X` to satisfy the type checker
+- Uses `console.log` anywhere

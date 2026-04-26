@@ -4,6 +4,8 @@
 
 This document defines what to check, where to check it, and when to check it for every feature and change in ClawAI. Logs, audit entries, events, and database state are first-class verification targets -- not afterthoughts. A feature is not verified until its observability trail is confirmed.
 
+> **Companion standard:** `LOGGING_COVERAGE_STANDARD.md` defines what every public method MUST emit (debug entry, info on side effects, warn on retries, error in catch). Read both — this file covers per-feature trail verification, the companion covers per-method emission.
+
 ---
 
 ## Observability Layers

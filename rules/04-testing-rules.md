@@ -12,7 +12,22 @@
 
 Write failing tests BEFORE writing the implementation code.
 
-**Coverage target: ≥ 95% on all new code.**
+**Coverage target (updated 2026-04-26): ≥ 92 % on every microservice and the frontend, all four jest/vitest metrics (statements, branches, functions, lines).** The 95 %-on-new-code rule still applies for new code added in a feature commit; the 92 % flagship is the per-service global floor enforced via CI.
+
+Per-service `jest.config.ts` MUST contain:
+
+```ts
+coverageThreshold: {
+  global: {
+    statements: 92,
+    branches: 92,
+    functions: 92,
+    lines: 92,
+  },
+},
+```
+
+CI runs `npm run test -- --coverage` and fails on any metric drop. Coverage is ratcheted only upward — never lower a threshold to land a change.
 
 Required test subjects:
 

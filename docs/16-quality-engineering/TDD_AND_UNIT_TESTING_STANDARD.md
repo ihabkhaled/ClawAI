@@ -501,6 +501,41 @@ Aim for:
 
 A 75% line coverage with 100% branch coverage and all AC scenarios tested is far better than 100% line coverage achieved by running the happy path through deeply nested code.
 
+### Mandatory Coverage Floor (added 2026-04-26)
+
+Every microservice and the frontend MUST report **≥92 %** on all four jest/vitest metrics: statements, branches, functions, lines. This is the flagship floor — branch coverage above the floor is the quality target.
+
+Per-service `jest.config.ts`:
+
+```ts
+coverageThreshold: {
+  global: {
+    statements: 92,
+    branches: 92,
+    functions: 92,
+    lines: 92,
+  },
+},
+```
+
+Frontend `vitest.config.ts`:
+
+```ts
+coverage: {
+  provider: 'v8',
+  thresholds: {
+    statements: 92,
+    branches: 92,
+    functions: 92,
+    lines: 92,
+  },
+}
+```
+
+CI runs `npm run test -- --coverage` and fails on any metric drop. **Coverage is ratcheted only upward** — never lower a threshold to land a change.
+
+A service below 92 % blocks delivery. The fix is more tests, not a lower threshold.
+
 ---
 
 ## Section 6: Test Naming Conventions
