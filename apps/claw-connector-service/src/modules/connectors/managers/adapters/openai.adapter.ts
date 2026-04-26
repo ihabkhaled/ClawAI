@@ -1,19 +1,19 @@
-import { Logger } from "@nestjs/common";
-import { ConnectorStatus, ModelLifecycle } from "../../../../generated/prisma";
-import { type HealthCheckResult, type NormalizedModel } from "../../types/connectors.types";
-import { type OpenAIModelsResponse } from "../../types/provider-api.types";
-import { httpGet } from "../../../../common/utilities/http.utility";
+import { Logger } from '@nestjs/common';
+import { ConnectorStatus, ModelLifecycle } from '../../../../generated/prisma';
+import { type HealthCheckResult, type NormalizedModel } from '../../types/connectors.types';
+import { type OpenAIModelsResponse } from '../../types/provider-api.types';
+import { httpGet } from '../../../../common/utilities/http.utility';
 import {
   type ConnectorConfig,
   type ProviderAdapter,
   type ProviderCapabilities,
-} from "../provider-adapter.interface";
+} from '../provider-adapter.interface';
 import {
-  OPENAI_DEFAULT_BASE_URL,
   OPENAI_CHAT_MODEL_PREFIXES,
-} from "../../constants/openai.constants";
+  OPENAI_DEFAULT_BASE_URL,
+} from '../../constants/openai.constants';
 
-const logger = new Logger("OpenAIAdapter");
+const logger = new Logger('OpenAIAdapter');
 
 export class OpenAIAdapter implements ProviderAdapter {
   private static isChatModel(modelId: string): boolean {
@@ -23,9 +23,9 @@ export class OpenAIAdapter implements ProviderAdapter {
 
   private static formatDisplayName(modelId: string): string {
     return modelId
-      .split("-")
+      .split('-')
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(" ");
+      .join(' ');
   }
 
   async healthCheck(config: ConnectorConfig): Promise<HealthCheckResult> {
@@ -49,7 +49,9 @@ export class OpenAIAdapter implements ProviderAdapter {
         return { status: ConnectorStatus.HEALTHY, latencyMs };
       }
 
-      logger.debug(`healthCheck: OpenAI returned error status=${String(response.status)} — latencyMs=${String(latencyMs)}`);
+      logger.debug(
+        `healthCheck: OpenAI returned error status=${String(response.status)} — latencyMs=${String(latencyMs)}`,
+      );
       return {
         status: ConnectorStatus.DOWN,
         latencyMs,
@@ -57,8 +59,11 @@ export class OpenAIAdapter implements ProviderAdapter {
       };
     } catch (error: unknown) {
       const latencyMs = Date.now() - start;
-      const errorMsg = error instanceof Error ? error.message : "Unknown error connecting to OpenAI";
-      logger.debug(`healthCheck: OpenAI connection failed — latencyMs=${String(latencyMs)} error=${errorMsg}`);
+      const errorMsg =
+        error instanceof Error ? error.message : 'Unknown error connecting to OpenAI';
+      logger.debug(
+        `healthCheck: OpenAI connection failed — latencyMs=${String(latencyMs)} error=${errorMsg}`,
+      );
       return {
         status: ConnectorStatus.DOWN,
         latencyMs,
@@ -85,23 +90,27 @@ export class OpenAIAdapter implements ProviderAdapter {
     }
 
     const models = response.data.data ?? [];
-    logger.debug(`syncModels: received ${String(models.length)} total models — filtering for chat models`);
+    logger.debug(
+      `syncModels: received ${String(models.length)} total models — filtering for chat models`,
+    );
 
     const chatModels = models.filter((model) => OpenAIAdapter.isChatModel(model.id));
-    logger.log(`syncModels: found ${String(chatModels.length)} chat models out of ${String(models.length)} total`);
+    logger.log(
+      `syncModels: found ${String(chatModels.length)} chat models out of ${String(models.length)} total`,
+    );
 
     return chatModels.map((model) => ({
-        modelKey: model.id,
-        displayName: OpenAIAdapter.formatDisplayName(model.id),
-        lifecycle: ModelLifecycle.ACTIVE,
-        capabilities: {
-          supportsStreaming: true,
-          supportsTools: true,
-          supportsVision: model.id.includes("vision") || model.id.startsWith("gpt-4"),
-          supportsAudio: false,
-          supportsStructuredOutput: true,
-        },
-      }));
+      modelKey: model.id,
+      displayName: OpenAIAdapter.formatDisplayName(model.id),
+      lifecycle: ModelLifecycle.ACTIVE,
+      capabilities: {
+        supportsStreaming: true,
+        supportsTools: true,
+        supportsVision: model.id.includes('vision') || model.id.startsWith('gpt-4'),
+        supportsAudio: false,
+        supportsStructuredOutput: true,
+      },
+    }));
   }
 
   getCapabilities(): ProviderCapabilities {

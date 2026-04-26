@@ -166,18 +166,12 @@ export class OllamaAdapter implements ProviderAdapter {
   private parseLibrarySlugs(html: string): string[] {
     const seen = new Set<string>();
     const slugs: string[] = [];
-    const regex = new RegExp(
-      OLLAMA_CATALOG_LIBRARY_LINK_REGEX.source,
-      OLLAMA_CATALOG_LIBRARY_LINK_REGEX.flags,
-    );
-    let match = regex.exec(html);
-    while (match !== null) {
+    for (const match of html.matchAll(OLLAMA_CATALOG_LIBRARY_LINK_REGEX)) {
       const slug = match[1];
       if (slug !== undefined && !seen.has(slug)) {
         seen.add(slug);
         slugs.push(slug);
       }
-      match = regex.exec(html);
     }
     return slugs;
   }

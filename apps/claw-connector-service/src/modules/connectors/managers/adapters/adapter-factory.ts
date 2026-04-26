@@ -8,18 +8,18 @@ import { DeepSeekAdapter } from './deepseek.adapter';
 import { GrokAdapter } from './grok.adapter';
 import { OllamaAdapter } from './ollama.adapter';
 
-const adapters: Record<string, ProviderAdapter> = {
-  [ConnectorProvider.OPENAI]: new OpenAIAdapter(),
-  [ConnectorProvider.ANTHROPIC]: new AnthropicAdapter(),
-  [ConnectorProvider.GEMINI]: new GeminiAdapter(),
-  [ConnectorProvider.AWS_BEDROCK]: new BedrockAdapter(),
-  [ConnectorProvider.DEEPSEEK]: new DeepSeekAdapter(),
-  [ConnectorProvider.GROK]: new GrokAdapter(),
-  [ConnectorProvider.OLLAMA]: new OllamaAdapter(),
-};
+const adapters = new Map<ConnectorProvider, ProviderAdapter>([
+  [ConnectorProvider.OPENAI, new OpenAIAdapter()],
+  [ConnectorProvider.ANTHROPIC, new AnthropicAdapter()],
+  [ConnectorProvider.GEMINI, new GeminiAdapter()],
+  [ConnectorProvider.AWS_BEDROCK, new BedrockAdapter()],
+  [ConnectorProvider.DEEPSEEK, new DeepSeekAdapter()],
+  [ConnectorProvider.GROK, new GrokAdapter()],
+  [ConnectorProvider.OLLAMA, new OllamaAdapter()],
+]);
 
 export function getAdapter(provider: ConnectorProvider): ProviderAdapter {
-  const adapter = adapters[provider];
+  const adapter = adapters.get(provider);
   if (!adapter) {
     throw new Error(`No adapter registered for provider: ${provider}`);
   }
