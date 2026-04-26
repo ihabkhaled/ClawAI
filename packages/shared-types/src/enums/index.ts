@@ -17,3 +17,4 @@ export { UserAppearancePreference } from './user-appearance-preference.enum';
 export { LogLevel } from './log-level.enum';
 export { WorkspaceProvider } from './workspace-provider.enum';
 export { WorkspaceConnectorStatus } from './workspace-connector-status.enum';
+export { HttpMethod } from './http-method.enum';

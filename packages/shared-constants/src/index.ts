@@ -46,3 +46,12 @@ export const API_PREFIX = 'api/v1';
 export const DEFAULT_PAGE = 1;
 export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
+
+// ---- HTTP Defaults (used by @claw/shared-utilities http-client) ----
+
+export const DEFAULT_HTTP_TIMEOUT = 30_000;
+export const LONG_HTTP_TIMEOUT = 120_000;
+
+// ---- JWT (used by @claw/shared-utilities jwt-verifier) ----
+
+export const JWT_ALGORITHM = 'HS256' as const;
