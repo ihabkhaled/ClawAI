@@ -75,3 +75,27 @@ export type RawGenerateResponse = {
   evalCount?: number;
   eval_count?: number;
 };
+
+export type CloudGenerateInput = {
+  chatServiceUrl: string;
+  provider: string;
+  model: string;
+  systemPrompt: string;
+  userPrompt: string;
+  timeoutMs: number;
+};
+
+export type CloudGenerateOutput = {
+  content: string;
+  inputTokens?: number;
+  outputTokens?: number;
+};
+
+export type ChatInternalResponse = {
+  content: string;
+  provider: string;
+  model: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  durationMs: number;
+};

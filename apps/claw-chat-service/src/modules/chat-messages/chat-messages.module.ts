@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ChatMessagesController } from './controllers/chat-messages.controller';
 import { ChatStreamController } from './controllers/chat-stream.controller';
+import { ChatInternalController } from './controllers/chat-internal.controller';
 import { ChatMessagesService } from './services/chat-messages.service';
 import { AnswerRepairManager } from './managers/answer-repair.manager';
 import { BestOfNManager } from './managers/best-of-n.manager';
@@ -23,7 +24,7 @@ import { ChatMessagesRepository } from './repositories/chat-messages.repository'
 import { ChatThreadsRepository } from '../chat-threads/repositories/chat-threads.repository';
 
 @Module({
-  controllers: [ChatMessagesController, ChatStreamController],
+  controllers: [ChatMessagesController, ChatStreamController, ChatInternalController],
   providers: [
     ChatMessagesService,
     AnswerRepairManager,

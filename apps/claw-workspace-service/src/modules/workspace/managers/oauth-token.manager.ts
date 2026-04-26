@@ -82,7 +82,11 @@ export class OAuthTokenManager {
   decryptTokenSet(encrypted: string): OAuthTokenSet {
     const config = AppConfig.get();
     const raw = decryptString(encrypted, config.ENCRYPTION_KEY);
-    return JSON.parse(raw) as OAuthTokenSet;
+    const parsed = JSON.parse(raw) as OAuthTokenSet & { expiresAt?: string | Date };
+    return {
+      ...parsed,
+      expiresAt: parsed.expiresAt !== undefined ? new Date(parsed.expiresAt) : undefined,
+    };
   }
 
   isTokenExpired(expiresAt?: Date): boolean {

@@ -2,8 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { AI_ACTION_FALLBACK_LOCAL_PROVIDER } from '../constants/ai-action-prompts.constants';
-import type { AiActionResult, ModelChoice, RunAiActionInput } from '../types/ai-action.types';
+import type {
+  AiActionResult,
+  CloudGenerateOutput,
+  ModelChoice,
+  RunAiActionInput,
+} from '../types/ai-action.types';
 import { buildAiActionPrompt, combineSystemAndUser } from '../utilities/ai-action-prompt.utility';
+import { callCloudGenerate } from '../utilities/cloud-generation-client.utility';
 import { callOllamaGenerate } from '../utilities/ollama-generation-client.utility';
 
 import { AutoRouterManager } from './auto-router.manager';
@@ -20,64 +26,55 @@ export class AiActionExecutionManager {
       privacyClass: input.privacyClass,
       preferredModel: input.preferredModel,
     });
-
-    const executable = this.pickExecutableLocalModel(resolution.primary, resolution.fallbackChain);
+    const primary = resolution.primary;
     const { systemPrompt, userPrompt } = buildAiActionPrompt(input.actionKind, input.context);
-    const prompt = combineSystemAndUser(systemPrompt, userPrompt);
-
-    const config = AppConfig.get();
     this.logger.log(
-      `run: action=${input.actionKind} model=${executable.model} provider=${executable.provider}`,
+      `run: action=${input.actionKind} provider=${primary.provider} model=${primary.model}`,
     );
-
     const started = Date.now();
-    const generation = await callOllamaGenerate({
-      baseUrl: config.OLLAMA_SERVICE_URL,
-      model: executable.model,
-      prompt,
-      timeoutMs: config.AI_ACTION_REQUEST_TIMEOUT_MS,
-    });
-    const durationMs = Date.now() - started;
-
+    const generation = await this.executeGeneration(primary, systemPrompt, userPrompt);
     return {
       content: generation.content,
       generatedBy: {
-        provider: executable.provider,
-        model: executable.model,
-        displayName: executable.displayName,
+        provider: primary.provider,
+        model: primary.model,
+        displayName: primary.displayName,
         mode: resolution.mode,
         fallbackChain: resolution.fallbackChain,
       },
-      durationMs,
-      inputTokens: generation.promptEvalCount,
-      outputTokens: generation.evalCount,
+      durationMs: Date.now() - started,
+      inputTokens: generation.inputTokens,
+      outputTokens: generation.outputTokens,
     };
   }
 
-  private pickExecutableLocalModel(
-    primary: ModelChoice,
-    fallbackChain: ModelChoice[],
-  ): ModelChoice {
-    if (primary.provider === AI_ACTION_FALLBACK_LOCAL_PROVIDER) {
-      return primary;
-    }
-    const localInFallback = fallbackChain.find(
-      (entry) => entry.provider === AI_ACTION_FALLBACK_LOCAL_PROVIDER,
-    );
-    if (localInFallback !== undefined) {
-      this.logger.log(
-        `pickExecutableLocalModel: primary provider=${primary.provider} is not executable via Ollama — using local fallback ${localInFallback.model}`,
-      );
-      return localInFallback;
-    }
+  private async executeGeneration(
+    model: ModelChoice,
+    systemPrompt: string,
+    userPrompt: string,
+  ): Promise<CloudGenerateOutput> {
     const config = AppConfig.get();
-    this.logger.log(
-      `pickExecutableLocalModel: no local model in chain — using configured default ${config.AI_ACTION_LOCAL_MODEL}`,
-    );
-    return {
-      provider: AI_ACTION_FALLBACK_LOCAL_PROVIDER,
-      model: config.AI_ACTION_LOCAL_MODEL,
-      displayName: `${config.AI_ACTION_LOCAL_MODEL} (local)`,
-    };
+    if (model.provider === AI_ACTION_FALLBACK_LOCAL_PROVIDER) {
+      const prompt = combineSystemAndUser(systemPrompt, userPrompt);
+      const result = await callOllamaGenerate({
+        baseUrl: config.OLLAMA_SERVICE_URL,
+        model: model.model,
+        prompt,
+        timeoutMs: config.AI_ACTION_REQUEST_TIMEOUT_MS,
+      });
+      return {
+        content: result.content,
+        inputTokens: result.promptEvalCount,
+        outputTokens: result.evalCount,
+      };
+    }
+    return callCloudGenerate({
+      chatServiceUrl: config.CHAT_SERVICE_URL,
+      provider: model.provider,
+      model: model.model,
+      systemPrompt,
+      userPrompt,
+      timeoutMs: config.AI_ACTION_REQUEST_TIMEOUT_MS,
+    });
   }
 }

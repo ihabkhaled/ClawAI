@@ -10,6 +10,7 @@ import {
 } from '../../../common/constants/workspace.constants';
 import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
 import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
+import { buildOAuthErrorMessage } from '../utilities/oauth-error.utility';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
 import type {
@@ -138,6 +139,9 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams(body).toString(),
     });
+    if (!response.ok) {
+      throw new Error(await buildOAuthErrorMessage('Google Drive', 'token exchange', response));
+    }
     const data = (await response.json()) as {
       access_token: string;
       refresh_token?: string;
@@ -175,6 +179,9 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body.toString(),
     });
+    if (!response.ok) {
+      throw new Error(await buildOAuthErrorMessage('Google Drive', 'token refresh', response));
+    }
     const data = (await response.json()) as { access_token: string; expires_in?: number };
     const expiresAt = data['expires_in']
       ? new Date(Date.now() + data['expires_in'] * 1000)

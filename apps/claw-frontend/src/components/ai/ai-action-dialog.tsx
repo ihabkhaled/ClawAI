@@ -12,6 +12,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { AiActionPrivacyClass } from '@/enums/ai-action-kind.enum';
 import { useAiActionDialog } from '@/hooks/ai-actions/use-ai-action-dialog';
 import type { AiActionDialogProps } from '@/types/ai-action.types';
@@ -52,29 +61,31 @@ export function AiActionDialog({
           </div>
 
           <div>
-            <label htmlFor="ai-action-model" className="mb-1 block text-sm font-medium">
-              {t('aiActions.dialog.model_label')}
-            </label>
-            <select
-              id="ai-action-model"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            <p className="mb-1 text-sm font-medium">{t('aiActions.dialog.model_label')}</p>
+            <Select
               value={ctrl.selectedKey}
-              onChange={(event) => ctrl.setSelectedKey(event.target.value)}
+              onValueChange={ctrl.setSelectedKey}
               disabled={ctrl.isLoadingModels || ctrl.isPending}
             >
-              {ctrl.groupedModels.map((group) => (
-                <optgroup key={group.provider} label={group.label}>
-                  {group.models.map((entry) => (
-                    <option
-                      key={`${entry.provider}::${entry.model}`}
-                      value={`${entry.provider}::${entry.model}`}
-                    >
-                      {entry.displayName}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ctrl.groupedModels.map((group) => (
+                  <SelectGroup key={group.provider}>
+                    <SelectLabel>{group.label}</SelectLabel>
+                    {group.models.map((entry) => (
+                      <SelectItem
+                        key={`${entry.provider}::${entry.model}`}
+                        value={`${entry.provider}::${entry.model}`}
+                      >
+                        {entry.displayName}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {ctrl.result !== null ? (

@@ -12,6 +12,7 @@ import {
 } from '../../../common/constants/workspace.constants';
 import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
 import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
+import { buildOAuthErrorMessage } from '../utilities/oauth-error.utility';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
 import type {
@@ -175,6 +176,9 @@ export class JiraAdapter implements WorkspaceAdapter {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
+    if (!response.ok) {
+      throw new Error(await buildOAuthErrorMessage('Jira', 'token exchange', response));
+    }
     const data = (await response.json()) as {
       access_token: string;
       refresh_token?: string;
@@ -212,6 +216,9 @@ export class JiraAdapter implements WorkspaceAdapter {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
+    if (!response.ok) {
+      throw new Error(await buildOAuthErrorMessage('Jira', 'token refresh', response));
+    }
     const data = (await response.json()) as {
       access_token: string;
       refresh_token?: string;
