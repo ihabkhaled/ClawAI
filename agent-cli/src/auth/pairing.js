@@ -26,7 +26,7 @@ function openBrowser(url) {
   const osName = getPlatform();
   const opener =
     osName === 'windows'
-      ? { cmd: 'cmd', args: ['/c', 'start', '', url] }
+      ? { cmd: 'explorer.exe', args: [url] }
       : osName === 'darwin'
         ? { cmd: 'open', args: ['--', url] }
         : { cmd: 'xdg-open', args: ['--', url] };
