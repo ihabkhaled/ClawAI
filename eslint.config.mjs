@@ -34,6 +34,25 @@ const banStringLiteralUnion = {
   message: 'Use an enum from common/enums/ instead of string literal unions.',
 };
 
+const banAsUnknownAsCast = {
+  selector:
+    'TSAsExpression > TSAsExpression > TSUnknownKeyword',
+  message:
+    'Do not use `as unknown as X` to bypass type checking. Define a proper type or refactor the code.',
+};
+
+const banConsoleCall = {
+  selector: 'CallExpression[callee.object.name="console"][callee.property.name=/^(log|debug|info|trace)$/]',
+  message:
+    'Use NestJS Logger (private readonly logger = new Logger(...)) instead of console.* calls. Logs are shipped to MongoDB via the Pino transport.',
+};
+
+const banLetAtModuleScope = {
+  selector: 'Program > VariableDeclaration[kind="let"]',
+  message:
+    'Module-scoped `let` is forbidden. Use `const` for immutable values or move state inside a class/function.',
+};
+
 const logicFileRestrictions = [
   banInlineInterface,
   banInlineTypeAlias,
@@ -42,6 +61,9 @@ const logicFileRestrictions = [
   banExportedTopLevelConst,
   banFunctionDeclaration,
   banStringLiteralUnion,
+  banAsUnknownAsCast,
+  banConsoleCall,
+  banLetAtModuleScope,
 ];
 
 export default tseslint.config(
@@ -177,6 +199,31 @@ export default tseslint.config(
           ignoreDeclarationSort: true,
         },
       ],
+
+      // ── File-size discipline (warn at 500 lines; hard target is per-file) ──
+      // Splits guidance: services <300 lines, managers <500 lines, adapters
+      // <500 lines, utilities <300 lines. Warning is informational; service-level
+      // overrides below promote service files to error at higher thresholds.
+      'max-lines': [
+        'warn',
+        { max: 500, skipBlankLines: true, skipComments: true },
+      ],
+
+      // ── Phase-U promotion targets (currently warn; promoted to error per
+      // service in Phases D-T once the service is clean, then root-level
+      // promotion in Phase U). DO NOT promote globally before per-service
+      // cleanup ships, otherwise CI breaks.
+      // Marked rules: consistent-type-imports, explicit-function-return-type,
+      // no-shadow, prefer-nullish-coalescing, prefer-optional-chain,
+      // unicorn/no-array-for-each, unicorn/no-useless-undefined,
+      // unicorn/prefer-ternary, unicorn/prefer-array-find/some/includes,
+      // unicorn/no-array-push-push, unicorn/prefer-spread,
+      // unicorn/prefer-string-replace-all, unicorn/prefer-at,
+      // security/detect-object-injection (with per-line justification),
+      // security/detect-non-literal-regexp, security/detect-unsafe-regex,
+      // security/detect-non-literal-fs-filename,
+      // security/detect-possible-timing-attacks,
+      // complexity (10/15), max-lines-per-function (50/80).
     },
   },
 
