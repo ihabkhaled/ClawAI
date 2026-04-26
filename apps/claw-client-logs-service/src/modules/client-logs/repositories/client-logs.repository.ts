@@ -1,85 +1,90 @@
-import { Injectable } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
-import { type FilterQuery, Model, type SortOrder } from "mongoose";
-import { ClientLog } from "../schemas/client-log.schema";
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { type FilterQuery, Model, type SortOrder as MongooseSortOrder } from 'mongoose';
+import { ClientLog } from '../schemas/client-log.schema';
 import type {
   AggregationResult,
   ClientLogFilters,
   CreateClientLogInput,
   DistinctValuesResult,
-} from "../types/client-logs.types";
-import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from "@common/constants";
+} from '../types/client-logs.types';
+import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '@common/constants';
+import { SortOrder } from '../../../common/enums/sort-order.enum';
 
 @Injectable()
 export class ClientLogsRepository {
-  constructor(
-    @InjectModel(ClientLog.name) private readonly clientLogModel: Model<ClientLog>,
-  ) {}
+  private readonly logger = new Logger(ClientLogsRepository.name);
+
+  constructor(@InjectModel(ClientLog.name) private readonly clientLogModel: Model<ClientLog>) {}
 
   async create(input: CreateClientLogInput): Promise<ClientLog> {
+    this.logger.debug(`create: level=${input.level} component=${input.component ?? 'none'}`);
     const doc = new this.clientLogModel(input);
-    return doc.save();
+    const saved = await doc.save();
+    this.logger.log(`create: persisted client-log id=${String(saved._id)}`);
+    return saved;
   }
 
   private buildQuery(filters: ClientLogFilters): FilterQuery<ClientLog> {
     const query: FilterQuery<ClientLog> = {};
 
     if (filters.level) {
-      query["level"] = { $regex: `^${filters.level}$`, $options: "i" };
+      query['level'] = { $regex: `^${filters.level}$`, $options: 'i' };
     }
     if (filters.component) {
-      query["component"] = filters.component;
+      query['component'] = filters.component;
     }
     if (filters.action) {
-      query["action"] = filters.action;
+      query['action'] = filters.action;
     }
     if (filters.route) {
-      query["route"] = filters.route;
+      query['route'] = filters.route;
     }
     if (filters.userId) {
-      query["userId"] = filters.userId;
+      query['userId'] = filters.userId;
     }
     if (filters.sessionId) {
-      query["sessionId"] = filters.sessionId;
+      query['sessionId'] = filters.sessionId;
     }
     if (filters.threadId) {
-      query["threadId"] = filters.threadId;
+      query['threadId'] = filters.threadId;
     }
     if (filters.connectorId) {
-      query["connectorId"] = filters.connectorId;
+      query['connectorId'] = filters.connectorId;
     }
     if (filters.requestId) {
-      query["requestId"] = filters.requestId;
+      query['requestId'] = filters.requestId;
     }
     if (filters.errorCode) {
-      query["errorCode"] = filters.errorCode;
+      query['errorCode'] = filters.errorCode;
     }
     if (filters.startDate ?? filters.endDate) {
-      query["createdAt"] = {};
+      query['createdAt'] = {};
       if (filters.startDate) {
-        (query["createdAt"] as Record<string, unknown>)["$gte"] = new Date(filters.startDate);
+        (query['createdAt'] as Record<string, unknown>)['$gte'] = new Date(filters.startDate);
       }
       if (filters.endDate) {
-        (query["createdAt"] as Record<string, unknown>)["$lte"] = new Date(filters.endDate);
+        (query['createdAt'] as Record<string, unknown>)['$lte'] = new Date(filters.endDate);
       }
     }
     if (filters.search) {
-      query["$text"] = { $search: filters.search };
+      query['$text'] = { $search: filters.search };
     }
     if (filters.messageContains) {
-      query["message"] = { $regex: filters.messageContains, $options: "i" };
+      query['message'] = { $regex: filters.messageContains, $options: 'i' };
     }
 
     return query;
   }
 
   async findAll(filters: ClientLogFilters): Promise<ClientLog[]> {
+    this.logger.debug(`findAll: page=${String(filters.page)} limit=${String(filters.limit)}`);
     const page = filters.page ?? DEFAULT_PAGE;
     const limit = filters.limit ?? DEFAULT_PAGE_SIZE;
     const skip = (page - 1) * limit;
     const query = this.buildQuery(filters);
-    const sortField = filters.sortBy ?? "createdAt";
-    const sortDir: SortOrder = filters.sortOrder === "asc" ? 1 : -1;
+    const sortField = filters.sortBy ?? 'createdAt';
+    const sortDir: MongooseSortOrder = filters.sortOrder === SortOrder.ASC ? 1 : -1;
 
     return this.clientLogModel
       .find(query)
@@ -90,53 +95,60 @@ export class ClientLogsRepository {
   }
 
   async countAll(filters: ClientLogFilters): Promise<number> {
+    this.logger.debug(`countAll: keys=${String(Object.keys(filters).length)}`);
     const query = this.buildQuery(filters);
     return this.clientLogModel.countDocuments(query).exec();
   }
 
   async getDistinctValues(field: string, filters: ClientLogFilters): Promise<DistinctValuesResult> {
+    this.logger.debug(`getDistinctValues: field=${field}`);
     const query = this.buildQuery(filters);
     const values = (await this.clientLogModel.distinct(field, query).exec()) as string[];
     return { field, values: values.slice(0, 200) };
   }
 
   async aggregateByLevel(): Promise<AggregationResult[]> {
+    this.logger.debug('aggregateByLevel: running aggregation');
     return this.clientLogModel.aggregate<AggregationResult>([
-      { $group: { _id: "$level", count: { $sum: 1 } } },
+      { $group: { _id: '$level', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]);
   }
 
   async aggregateByComponent(): Promise<AggregationResult[]> {
+    this.logger.debug('aggregateByComponent: running aggregation');
     return this.clientLogModel.aggregate<AggregationResult>([
       { $match: { component: { $ne: null } } },
-      { $group: { _id: "$component", count: { $sum: 1 } } },
+      { $group: { _id: '$component', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 20 },
     ]);
   }
 
   async aggregateByAction(): Promise<AggregationResult[]> {
+    this.logger.debug('aggregateByAction: running aggregation');
     return this.clientLogModel.aggregate<AggregationResult>([
       { $match: { action: { $ne: null } } },
-      { $group: { _id: "$action", count: { $sum: 1 } } },
+      { $group: { _id: '$action', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 20 },
     ]);
   }
 
   async aggregateByRoute(): Promise<AggregationResult[]> {
+    this.logger.debug('aggregateByRoute: running aggregation');
     return this.clientLogModel.aggregate<AggregationResult>([
       { $match: { route: { $ne: null } } },
-      { $group: { _id: "$route", count: { $sum: 1 } } },
+      { $group: { _id: '$route', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 20 },
     ]);
   }
 
   async getErrorCount(filters: ClientLogFilters): Promise<number> {
+    this.logger.debug('getErrorCount: counting error-level logs');
     const query = this.buildQuery(filters);
-    query["level"] = { $regex: "^error$", $options: "i" };
+    query['level'] = { $regex: '^error$', $options: 'i' };
     return this.clientLogModel.countDocuments(query).exec();
   }
 }

@@ -1,4 +1,5 @@
-import { z } from "zod";
+import { z } from 'zod';
+import { SortOrder } from '../../../common/enums/sort-order.enum';
 
 export const searchClientLogsSchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
@@ -17,11 +18,8 @@ export const searchClientLogsSchema = z.object({
   messageContains: z.string().max(500).optional(),
   startDate: z.string().max(50).optional(),
   endDate: z.string().max(50).optional(),
-  sortBy: z
-    .enum(["createdAt", "level", "component"])
-    .optional()
-    .default("createdAt"),
-  sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
+  sortBy: z.enum(['createdAt', 'level', 'component']).optional().default('createdAt'),
+  sortOrder: z.nativeEnum(SortOrder).optional().default(SortOrder.DESC),
 });
 
 export type SearchClientLogsDto = z.infer<typeof searchClientLogsSchema>;
