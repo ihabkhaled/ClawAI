@@ -1835,3 +1835,21 @@ CI fails if any metric drops below 92 %. Do not lower the threshold to land a ch
 - Reintroduce a file >500 lines
 - Use `console.log` anywhere, ever
 - Use `as unknown as X` to satisfy the type checker
+- **Add a new `packages/<name>` workspace without also adding `cd ../<name> && npx tsc` to ALL FOUR jobs in `.github/workflows/ci.yml`** (see CI Workflow Footgun below)
+
+### CI Workflow Footgun (added 2026-04-27)
+
+When adding a new package under `packages/`, you MUST update `.github/workflows/ci.yml` "Build shared packages" step in **all four jobs** (lint, typecheck, test, build):
+
+```yaml
+- name: Build shared packages
+  run: |
+    cd packages/shared-types && npx tsc
+    cd ../shared-constants && npx tsc
+    cd ../shared-rabbitmq && npx tsc
+    cd ../shared-auth && npx tsc
+    cd ../shared-utilities && npx tsc
+    cd ../<new-shared-package> && npx tsc
+```
+
+Local builds work because `node_modules/@claw/<pkg>` is a symlink + `dist/` is populated by the developer's `npm run build`. CI starts from a fresh checkout — consumers then fail with `Cannot find module '@claw/<pkg>'`. Cost a CI red after adding `@claw/shared-utilities` (fixed in commit `ad38ccf`). Don't repeat.

@@ -147,3 +147,21 @@ Cross-service utility location:
 - Lowers a `coverageThreshold` to land a change
 - Uses `as unknown as X` to satisfy the type checker
 - Uses `console.log` anywhere
+- Adds a new `packages/<name>/` workspace without also updating `.github/workflows/ci.yml` "Build shared packages" step in ALL FOUR jobs (lint / typecheck / test / build) — see CI Workflow Footgun below
+
+## CI Workflow Footgun (added 2026-04-27)
+
+When you add a new package under `packages/`, the CI workflow needs an extra `npx tsc` line to compile its `dist/` before consumer services typecheck. Local builds hide this because `node_modules/@claw/<pkg>` symlink + `dist/` are populated by `npm install` + `npm run build`. CI starts fresh and fails with `Cannot find module '@claw/<pkg>'` until the line is added.
+
+```yaml
+- name: Build shared packages
+  run: |
+    cd packages/shared-types && npx tsc
+    cd ../shared-constants && npx tsc
+    cd ../shared-rabbitmq && npx tsc
+    cd ../shared-auth && npx tsc
+    cd ../shared-utilities && npx tsc       # added 2026-04-26
+    cd ../<new-shared-package> && npx tsc   # MUST add for any new shared package
+```
+
+Update all four jobs (`lint`, `typecheck`, `test`, `build`) — they each have their own copy of the step.

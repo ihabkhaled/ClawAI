@@ -121,22 +121,45 @@ Every new service must be added to:
 
 3. **Build job matrix** — if service has a separate build step
 
+4. **Lint / Typecheck / Test matrix include** — every new service goes into the matrix `include:` block of all four jobs (lint, typecheck, test, build) with `service`, `workspace`, and `prisma: true|false` keys.
+
+### ⚠️ New shared package = CI workflow update (added 2026-04-26)
+
+When a new package is added under `packages/`, **all four jobs** in `.github/workflows/ci.yml` (lint, typecheck, test, build) have a "Build shared packages" step that compiles each package's `dist/` before service typecheck runs. This step MUST include the new package, otherwise consumer services fail with `Cannot find module '@claw/<new-package>'` even though the package is in `package-lock.json`.
+
+```yaml
+- name: Build shared packages
+  run: |
+    cd packages/shared-types && npx tsc
+    cd ../shared-constants && npx tsc
+    cd ../shared-rabbitmq && npx tsc
+    cd ../shared-auth && npx tsc
+    cd ../shared-utilities && npx tsc       # added Phase C-1
+    cd ../<new-shared-package> && npx tsc   # MUST add for any new shared package
+```
+
+**Why it bites:** local builds work because `node_modules/@claw/<pkg>` is a symlink populated by `npm install`, and `dist/` is created by the developer's local `npm run build`. CI starts from a fresh checkout where `dist/` doesn't exist — so `require('@claw/<new-pkg>')` resolves to a `main` path that doesn't exist on disk yet.
+
+**Verification rule:** after adding a new shared package, push to a feature branch and confirm all four CI jobs go green BEFORE merging to main.
+
 ---
 
 ## Shared Packages Rules
 
-| Package                     | When to update                                     |
-| --------------------------- | -------------------------------------------------- |
-| `packages/shared-types`     | New event patterns, new enums used across services |
-| `packages/shared-constants` | New service port, new service name constant        |
-| `packages/shared-rabbitmq`  | New RabbitMQ utility or connection pattern         |
-| `packages/shared-auth`      | New auth guard, new decorator, new role            |
+| Package                     | When to update                                                                                                                                                                                 |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/shared-types`     | New event patterns, new enums used across services                                                                                                                                             |
+| `packages/shared-constants` | New service port, new service name constant, JWT algorithm, HTTP timeouts                                                                                                                      |
+| `packages/shared-rabbitmq`  | New RabbitMQ utility or connection pattern                                                                                                                                                     |
+| `packages/shared-auth`      | New auth guard, new decorator, new role                                                                                                                                                        |
+| `packages/shared-utilities` | New cross-service function — JWT verifier, HTTP client, crypto, URL safety, retry policy, etc. **Search this package before writing a new utility in `apps/<service>/src/common/utilities/`.** |
 
 After updating a shared package:
 
 1. Increment version in package's `package.json`
 2. Rebuild ALL services that depend on it (full stop → rm → rmi → build cycle)
 3. Run `npm install` in monorepo root to update workspace links
+4. **Update `.github/workflows/ci.yml` "Build shared packages" step** if a new package was added (see footgun above)
 
 ---
 

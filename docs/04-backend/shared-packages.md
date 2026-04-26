@@ -1,6 +1,6 @@
 # Shared Packages Reference
 
-Complete reference for the 4 shared npm workspace packages used across all ClawAI backend services.
+Complete reference for the **5** shared npm workspace packages used across all ClawAI backend services. Updated 2026-04-26 with the addition of `shared-utilities`.
 
 ---
 
@@ -10,6 +10,7 @@ Complete reference for the 4 shared npm workspace packages used across all ClawA
 2. [shared-constants](#shared-constants)
 3. [shared-rabbitmq](#shared-rabbitmq)
 4. [shared-auth](#shared-auth)
+5. [shared-utilities](#shared-utilities) — added 2026-04-26
 
 ---
 
@@ -580,6 +581,95 @@ export class ExampleController {
 
 ---
 
+## shared-utilities
+
+**Package**: `@claw/shared-utilities`
+**Path**: `packages/shared-utilities/`
+**Added**: 2026-04-26 (Phase C-1 of the codebase-wide refactor)
+**Purpose**: Cross-service utility functions. The third "shape" alongside `shared-types` (types) and `shared-constants` (values) — this package owns _functions_ that 2+ services need. Eliminates per-service duplicates of the same wrapper code.
+
+### Sub-packages
+
+| Subdir            | Exports                                                                              | Wraps              | Notes                                                                                                                                                                                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------ | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `jwt/`            | `verifyAccessToken<TPayload>(token, secret): TPayload`                               | `jsonwebtoken`     | Generic over payload type — services pass their local `JwtPayload` (or import from `@claw/shared-types`). Uses `JWT_ALGORITHM` from `@claw/shared-constants`.                                                                            |
+| `http-client/`    | `httpRequest(options): Promise<HttpResponse<T>>` (fetch)                             | `globalThis.fetch` | Used by chat / memory / routing flavour. Takes `HttpRequestOptions` from `@claw/shared-types`.                                                                                                                                           |
+| `http-client/`    | `createHttpClient(config)`, `httpGet<T>(url, cfg?)`, `httpPost<T>(url, body?, cfg?)` | `axios`            | Used by image / ollama / file-gen / file / health flavour. Defaults to `DEFAULT_HTTP_TIMEOUT` from `@claw/shared-constants`.                                                                                                             |
+| `safe-stringify/` | `safeStringify(value): string`                                                       | `JSON.stringify`   | Recursively redacts `password`, `token`, `apiKey`, `apikey`, `refreshToken`, `accessToken`, `secret`, `authorization`, `cookie`, `clientSecret` before stringifying. Use in `logger.debug()` calls when input may contain auth material. |
+
+### Adoption status (per `@claw/shared-utilities` import)
+
+| Service         | JWT verifier                                                                                       | HTTP client                | crypto / url-safety |
+| --------------- | -------------------------------------------------------------------------------------------------- | -------------------------- | ------------------- |
+| auth            | ✅ `signAccessToken` + `signRefreshToken` are auth-local; `verifyAccessToken` delegates to shared. | n/a                        | ⏳ pending          |
+| chat            | ✅                                                                                                 | ⏳ pending                 | n/a                 |
+| connector       | ✅                                                                                                 | n/a                        | ⏳ pending          |
+| memory          | ✅                                                                                                 | ⏳ pending                 | n/a                 |
+| ollama          | ✅                                                                                                 | ⏳ pending                 | n/a                 |
+| routing         | ✅                                                                                                 | ⏳ pending                 | n/a                 |
+| image           | ✅                                                                                                 | ⏳ pending                 | n/a                 |
+| file-generation | ✅                                                                                                 | ⏳ pending                 | n/a                 |
+| file            | ✅                                                                                                 | n/a                        | n/a                 |
+| audit           | ✅                                                                                                 | n/a                        | n/a                 |
+| client-logs     | ✅                                                                                                 | n/a                        | n/a                 |
+| server-logs     | ✅                                                                                                 | n/a                        | n/a                 |
+| health          | n/a                                                                                                | ✅ axios wrapper redirects | n/a                 |
+| agent           | ❌ uses custom JWT (audience/issuer/scopes) — intentionally NOT deduped                            | n/a                        | n/a                 |
+| workspace       | ❌ no `jwt.utility.ts`                                                                             | n/a                        | ⏳ pending          |
+| research        | n/a                                                                                                | ⏳ pending                 | ⏳ pending          |
+
+### Wrapping pattern (per-service)
+
+When adopting `@claw/shared-utilities`, services keep a 4-line typed wrapper at `src/common/utilities/jwt.utility.ts` so every consumer (auth guards, etc.) keeps importing from `@common/utilities` — this avoids touching dozens of call sites:
+
+```ts
+// apps/<service>/src/common/utilities/jwt.utility.ts
+import { verifyAccessToken as verifyAccessTokenGeneric } from '@claw/shared-utilities';
+import { type JwtPayload } from '../types';
+
+export function verifyAccessToken(token: string, secret: string): JwtPayload {
+  return verifyAccessTokenGeneric<JwtPayload>(token, secret);
+}
+```
+
+The actual `jsonwebtoken` library call now lives **exactly once** in `packages/shared-utilities/src/jwt/jwt-verifier.utility.ts`. The per-service file is just a typing adapter.
+
+### Future planned utilities
+
+The package skeleton is designed to grow. Reserved sub-packages for future phases:
+
+- `crypto/` — AES-256-GCM encryption (currently duplicated in 4 services: auth / connector / research / workspace)
+- `url-safety/` — URL parsing + SSRF blocklists (currently duplicated in research + workspace)
+- `retry-policy/` — exponential backoff + jitter
+- `pkce/` — OAuth 2.1 PKCE helpers (currently in workspace only, but research will need it)
+
+### Adding to a new service
+
+1. Add to `apps/<service>/package.json` dependencies: `"@claw/shared-utilities": "*"`
+2. Run `npm install` from monorepo root.
+3. **Add to `.github/workflows/ci.yml` "Build shared packages" step** — see footgun below.
+4. Import from `@claw/shared-utilities` in code.
+
+### ⚠️ CI Footgun (added 2026-04-26)
+
+The CI workflow has a "Build shared packages" step that compiles each package's `dist/` before service typecheck/test/build runs. When a new shared package is added, **all four jobs** (lint / typecheck / test / build) must include the new compile line, otherwise consumer services fail with `Cannot find module '@claw/shared-utilities'` even though the package is in `package-lock.json`. Local builds work because `node_modules/@claw/<pkg>` symlink + `dist/` are populated by the developer's `npm run build`.
+
+The workflow step now reads:
+
+```yaml
+- name: Build shared packages
+  run: |
+    cd packages/shared-types && npx tsc
+    cd ../shared-constants && npx tsc
+    cd ../shared-rabbitmq && npx tsc
+    cd ../shared-auth && npx tsc
+    cd ../shared-utilities && npx tsc   # added 2026-04-26
+```
+
+This rule is now codified in `rules/05-infra-rules.md` and `rules/09-refactor-rules.md`.
+
+---
+
 ## Package Dependency Graph
 
 ```
@@ -593,9 +683,12 @@ shared-rabbitmq   (depends on shared-types, shared-constants)
   ^
   |
 shared-auth       (depends on shared-types)
+  ^
+  |
+shared-utilities  (depends on shared-types, shared-constants)  ← added 2026-04-26
 ```
 
-All 13 backend services depend on all 4 shared packages.
+All 14 backend services depend on `shared-types`, `shared-constants`, `shared-rabbitmq`, and `shared-auth`. **12** also depend on `shared-utilities` (after Phase C of the codebase-wide refactor); the remaining services adopt it in their per-service refactor phases.
 
 ### Build Order
 
@@ -604,4 +697,7 @@ When modifying shared packages, rebuild in dependency order:
 1. `shared-types` and `shared-constants` (independent, can build in parallel)
 2. `shared-auth` (depends on shared-types)
 3. `shared-rabbitmq` (depends on shared-types, shared-constants)
-4. All service packages (depend on all shared packages)
+4. **`shared-utilities`** (depends on shared-types, shared-constants)
+5. All service packages (depend on the shared packages above)
+
+The CI workflow `.github/workflows/ci.yml` enforces this order — if you add a new shared package, you MUST update the "Build shared packages" step in **all four** jobs (lint / typecheck / test / build).

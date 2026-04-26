@@ -1902,3 +1902,23 @@ When refactoring an existing service:
 - Reintroduce a file >500 lines
 - Use `console.log` anywhere, ever (`console.warn`/`console.error` only in `main.ts` bootstrap)
 - Use `as unknown as X` to satisfy the type checker
+- **Add a new `packages/<name>` workspace without also adding the corresponding `cd ../<name> && npx tsc` line to ALL FOUR jobs in `.github/workflows/ci.yml` "Build shared packages" step** (see CI Workflow Footgun below)
+
+### CI Workflow Footgun (added 2026-04-27)
+
+When adding a new package under `packages/`, you MUST update `.github/workflows/ci.yml` "Build shared packages" step in **all four jobs** (lint, typecheck, test, build):
+
+```yaml
+- name: Build shared packages
+  run: |
+    cd packages/shared-types && npx tsc
+    cd ../shared-constants && npx tsc
+    cd ../shared-rabbitmq && npx tsc
+    cd ../shared-auth && npx tsc
+    cd ../shared-utilities && npx tsc       # added Phase C-1 of refactor
+    cd ../<new-shared-package> && npx tsc   # MUST add for any new shared package
+```
+
+**Why it bites:** local builds work because `node_modules/@claw/<pkg>` is a symlink populated by `npm install`, and `dist/` is created by the developer's local `npm run build`. CI starts from a fresh checkout where `dist/` doesn't exist — consumer services fail with `Cannot find module '@claw/<pkg>'` even though `package-lock.json` lists the package.
+
+This footgun cost a CI red on the first commit after adding `@claw/shared-utilities` (caught and fixed in commit `ad38ccf`). Full rule in `rules/05-infra-rules.md` and `docs/04-backend/shared-packages.md`. Future agents: don't repeat.
