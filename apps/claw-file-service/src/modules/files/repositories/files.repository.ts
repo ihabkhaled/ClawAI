@@ -1,32 +1,27 @@
-import { Injectable } from "@nestjs/common";
-import { type File, type FileIngestionStatus, Prisma } from "../../../generated/prisma";
-import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
-import {
-  type CreateFileData,
-  type FileFilters,
-  type FileWithChunks,
-} from "../types/files.types";
+import { Injectable, Logger } from '@nestjs/common';
+import { type File, type FileIngestionStatus, Prisma } from '../../../generated/prisma';
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { type CreateFileData, type FileFilters, type FileWithChunks } from '../types/files.types';
 
 @Injectable()
 export class FilesRepository {
+  private readonly logger = new Logger(FilesRepository.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateFileData): Promise<File> {
+    this.logger.debug(`create: filename=${data.filename}`);
     return this.prisma.file.create({ data });
   }
 
   async findById(id: string): Promise<FileWithChunks | null> {
     return this.prisma.file.findUnique({
       where: { id },
-      include: { chunks: { orderBy: { chunkIndex: "asc" } } },
+      include: { chunks: { orderBy: { chunkIndex: 'asc' } } },
     });
   }
 
-  async findAll(
-    filters: FileFilters,
-    page: number,
-    limit: number,
-  ): Promise<File[]> {
+  async findAll(filters: FileFilters, page: number, limit: number): Promise<File[]> {
     const where = this.buildWhereClause(filters);
     const skip = (page - 1) * limit;
 
@@ -34,7 +29,7 @@ export class FilesRepository {
       where,
       skip,
       take: limit,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -64,7 +59,7 @@ export class FilesRepository {
     }
 
     if (filters.search) {
-      where.filename = { contains: filters.search, mode: "insensitive" };
+      where.filename = { contains: filters.search, mode: 'insensitive' };
     }
 
     return where;
