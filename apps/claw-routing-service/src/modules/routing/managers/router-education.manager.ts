@@ -464,7 +464,10 @@ export class RouterEducationManager {
     };
   }
 
-  private summarizeFeedback(records: RoutingDecisionWithEducation['feedbackRecords']) {
+  private summarizeFeedback(records: RoutingDecisionWithEducation['feedbackRecords']): {
+    positive: number;
+    negative: number;
+  } {
     return records.reduce(
       (acc, record) => {
         if (record.feedbackValue === 'POSITIVE') {

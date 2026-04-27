@@ -1,5 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { type Prisma } from '../../../generated/prisma';
+import {
+  type Prisma,
+  type RouterModelProfile,
+  type RouterTopicProfile,
+  type RoutingCalibrationSnapshot,
+  type RoutingFeedbackRecord,
+  type RoutingOutcomeRecord,
+} from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import type {
   CreateRoutingFeedbackInput,
@@ -43,7 +50,7 @@ export class RoutingEducationRepository {
     }) as Promise<RoutingDecisionWithEducation | null>;
   }
 
-  async upsertOutcomeRecord(input: CreateRoutingOutcomeInput) {
+  async upsertOutcomeRecord(input: CreateRoutingOutcomeInput): Promise<RoutingOutcomeRecord> {
     return this.prisma.routingOutcomeRecord.upsert({
       where: { routingDecisionId: input.routingDecisionId },
       create: {
@@ -90,7 +97,7 @@ export class RoutingEducationRepository {
     });
   }
 
-  async createFeedbackRecord(input: CreateRoutingFeedbackInput) {
+  async createFeedbackRecord(input: CreateRoutingFeedbackInput): Promise<RoutingFeedbackRecord> {
     return this.prisma.routingFeedbackRecord.create({
       data: {
         routingDecisionId: input.routingDecisionId ?? null,
@@ -153,7 +160,7 @@ export class RoutingEducationRepository {
     version: string,
     summary: Prisma.InputJsonValue,
     promptHints: Prisma.InputJsonValue,
-  ) {
+  ): Promise<RoutingCalibrationSnapshot> {
     await this.prisma.routingCalibrationSnapshot.updateMany({
       data: { active: false },
       where: { active: true },
@@ -170,14 +177,14 @@ export class RoutingEducationRepository {
     });
   }
 
-  async getLatestCalibrationSnapshot() {
+  async getLatestCalibrationSnapshot(): Promise<RoutingCalibrationSnapshot | null> {
     return this.prisma.routingCalibrationSnapshot.findFirst({
       where: { active: true },
       orderBy: { generatedAt: 'desc' },
     });
   }
 
-  async listModelProfiles(taskFamily?: string, limit = 25) {
+  async listModelProfiles(taskFamily?: string, limit = 25): Promise<RouterModelProfile[]> {
     return this.prisma.routerModelProfile.findMany({
       where: taskFamily ? { taskFamily } : undefined,
       orderBy: [{ weightedSuccessScore: 'desc' }, { confidenceInProfile: 'desc' }],
@@ -185,7 +192,7 @@ export class RoutingEducationRepository {
     });
   }
 
-  async listTopicProfiles(taskFamily?: string, limit = 25) {
+  async listTopicProfiles(taskFamily?: string, limit = 25): Promise<RouterTopicProfile[]> {
     return this.prisma.routerTopicProfile.findMany({
       where: taskFamily ? { taskFamily } : undefined,
       orderBy: [{ weightedSuccessScore: 'desc' }, { confidenceInProfile: 'desc' }],
@@ -193,14 +200,18 @@ export class RoutingEducationRepository {
     });
   }
 
-  async findBestModelProfile(taskFamily: string) {
+  async findBestModelProfile(taskFamily: string): Promise<RouterModelProfile | null> {
     return this.prisma.routerModelProfile.findFirst({
       where: { taskFamily },
       orderBy: [{ weightedSuccessScore: 'desc' }, { confidenceInProfile: 'desc' }],
     });
   }
 
-  async findModelProfile(provider: string, model: string, taskFamily: string) {
+  async findModelProfile(
+    provider: string,
+    model: string,
+    taskFamily: string,
+  ): Promise<RouterModelProfile | null> {
     return this.prisma.routerModelProfile.findFirst({
       where: { provider, model, taskFamily },
     });
