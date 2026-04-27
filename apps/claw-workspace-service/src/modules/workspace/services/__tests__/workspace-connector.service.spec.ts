@@ -9,6 +9,7 @@ import type { OAuthTokenManager } from '../../managers/oauth-token.manager';
 import type { WorkspaceHealthManager } from '../../managers/workspace-health.manager';
 import type { WorkspaceSyncManager } from '../../managers/workspace-sync.manager';
 import type { RabbitMQService } from '@claw/shared-rabbitmq';
+import type { ProviderAppConfigService } from '../provider-app-config.service';
 import { WorkspaceProvider } from '../../../../common/enums/workspace-provider.enum';
 import { WorkspacePermissionLevel } from '../../../../common/enums/workspace-permission-level.enum';
 
@@ -84,7 +85,7 @@ const mockProviderAppConfigs = {
     name: 'default',
   }),
   getDecryptedSecret: jest.fn().mockResolvedValue({ clientSecret: 'gh-secret' }),
-} as unknown as import('../provider-app-config.service').ProviderAppConfigService;
+} as unknown as ProviderAppConfigService;
 
 describe('WorkspaceConnectorService', () => {
   let service: WorkspaceConnectorService;
