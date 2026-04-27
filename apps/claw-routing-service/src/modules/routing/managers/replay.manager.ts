@@ -376,7 +376,7 @@ export class ReplayManager {
   }
 
   private getCostRank(cost: string): number {
-    return COST_RANK[cost] ?? 2;
+    return COST_RANK.get(cost) ?? 2;
   }
 
   private buildBatchResult(results: ReplayResult[]): ReplayBatchResult {
@@ -486,23 +486,45 @@ export class ReplayManager {
       createdAt: Date;
     } | null,
   ): ReplayRunSummary {
+    if (!run) {
+      return this.emptyRunSummary();
+    }
     return {
-      id: run?.id ?? '',
-      name: run?.name ?? null,
-      totalReplayed: run?.totalReplayed ?? 0,
-      changedCount: run?.changedCount ?? 0,
-      suspiciousCount: run?.suspiciousCount ?? 0,
-      avgConfOld: run ? Number(run.avgConfOld) : 0,
-      avgConfNew: run ? Number(run.avgConfNew) : 0,
-      avgImprovement: run ? Number(run.avgImprovement) : 0,
-      labelBreakdown: (run?.labelBreakdown ?? {
-        correctImprovement: 0,
-        badRegression: 0,
-        costWin: 0,
-        qualityWin: 0,
-        uncertain: 0,
-      }) as LabelBreakdown,
-      createdAt: run ? run.createdAt.toISOString() : new Date().toISOString(),
+      id: run.id,
+      name: run.name,
+      totalReplayed: run.totalReplayed,
+      changedCount: run.changedCount,
+      suspiciousCount: run.suspiciousCount,
+      avgConfOld: Number(run.avgConfOld),
+      avgConfNew: Number(run.avgConfNew),
+      avgImprovement: Number(run.avgImprovement),
+      labelBreakdown: (run.labelBreakdown ?? this.emptyLabelBreakdown()) as LabelBreakdown,
+      createdAt: run.createdAt.toISOString(),
+    };
+  }
+
+  private emptyRunSummary(): ReplayRunSummary {
+    return {
+      id: '',
+      name: null,
+      totalReplayed: 0,
+      changedCount: 0,
+      suspiciousCount: 0,
+      avgConfOld: 0,
+      avgConfNew: 0,
+      avgImprovement: 0,
+      labelBreakdown: this.emptyLabelBreakdown(),
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  private emptyLabelBreakdown(): LabelBreakdown {
+    return {
+      correctImprovement: 0,
+      badRegression: 0,
+      costWin: 0,
+      qualityWin: 0,
+      uncertain: 0,
     };
   }
 

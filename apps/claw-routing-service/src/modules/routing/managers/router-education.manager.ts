@@ -172,159 +172,224 @@ export class RouterEducationManager {
     }
 
     if (
-      bestProfile &&
-      Number(bestProfile.sampleSize) >= MIN_PROFILE_SAMPLE_SIZE &&
-      taskFamily !== 'privacy' &&
-      taskFamily !== 'medical' &&
-      taskFamily !== 'legal' &&
-      !decision.selectedProvider.startsWith('IMAGE_') &&
-      decision.selectedProvider !== 'FILE_GENERATION' &&
-      decision.confidence < 0.88 &&
-      this.isProviderUsable(bestProfile.provider, context) &&
-      (decision.selectedProvider !== bestProfile.provider ||
-        decision.selectedModel !== bestProfile.model) &&
-      Number(bestProfile.weightedSuccessScore) -
-        (currentProfile ? Number(currentProfile.weightedSuccessScore) : 0.5) >
-        0.12
+      this.shouldOverrideToBestProfile(decision, currentProfile, bestProfile, taskFamily, context)
     ) {
-      calibrated.selectedProvider = bestProfile.provider;
-      calibrated.selectedModel = bestProfile.model;
-      calibrated.confidence = this.clamp01(
-        Math.max(calibrated.confidence, Number(bestProfile.calibrationTrustScore)),
-      );
-      calibrated.reasonTags = [...calibrated.reasonTags, 'learned_profile_override'];
-
-      return { decision: calibrated, changed: true };
+      const profile = bestProfile;
+      if (profile) {
+        calibrated.selectedProvider = profile.provider;
+        calibrated.selectedModel = profile.model;
+        calibrated.confidence = this.clamp01(
+          Math.max(calibrated.confidence, Number(profile.calibrationTrustScore)),
+        );
+        calibrated.reasonTags = [...calibrated.reasonTags, 'learned_profile_override'];
+        return { decision: calibrated, changed: true };
+      }
     }
 
     return { decision: calibrated, changed: calibrated !== decision };
+  }
+
+  private shouldOverrideToBestProfile(
+    decision: RoutingDecisionResult,
+    currentProfile: RouterModelProfile | null,
+    bestProfile: RouterModelProfile | null,
+    taskFamily: string,
+    context: RoutingContext,
+  ): boolean {
+    if (!bestProfile) {
+      return false;
+    }
+    if (Number(bestProfile.sampleSize) < MIN_PROFILE_SAMPLE_SIZE) {
+      return false;
+    }
+    if (this.isPrivacyTaskFamily(taskFamily)) {
+      return false;
+    }
+    if (this.isImageOrFileProvider(decision.selectedProvider)) {
+      return false;
+    }
+    if (decision.confidence >= 0.88) {
+      return false;
+    }
+    if (!this.isProviderUsable(bestProfile.provider, context)) {
+      return false;
+    }
+    if (
+      decision.selectedProvider === bestProfile.provider &&
+      decision.selectedModel === bestProfile.model
+    ) {
+      return false;
+    }
+    const currentSuccess = currentProfile ? Number(currentProfile.weightedSuccessScore) : 0.5;
+    return Number(bestProfile.weightedSuccessScore) - currentSuccess > 0.12;
+  }
+
+  private isPrivacyTaskFamily(taskFamily: string): boolean {
+    return taskFamily === 'privacy' || taskFamily === 'medical' || taskFamily === 'legal';
+  }
+
+  private isImageOrFileProvider(provider: string): boolean {
+    return provider.startsWith('IMAGE_') || provider === 'FILE_GENERATION';
   }
 
   private computeModelProfiles(
     decisions: RoutingDecisionWithEducation[],
   ): RouterModelProfileRecord[] {
     const aggregates = new Map<string, AggregateBucket>();
-
     for (const decision of decisions) {
-      const outcome = decision.outcomes[0] ?? null;
-      const feedbackRecords = decision.feedbackRecords;
-      const taskFamily = decision.detectedCategory ?? 'general';
-      const topicKey = decision.secondaryCategory ?? taskFamily;
-      const provider = outcome?.finalExecutionProvider ?? decision.selectedProvider;
-      const model = outcome?.finalExecutionModel ?? decision.selectedModel;
-      const freshness = this.computeFreshness(decision.createdAt);
-      const feedback = this.summarizeFeedback(feedbackRecords);
-
-      const bucketKey = `${provider}::${model}::${taskFamily}::${topicKey}`;
-      const bucket = aggregates.get(bucketKey) ?? {
-        provider,
-        model,
-        taskFamily,
-        topicKey,
-        routeCount: 0,
-        totalWeight: 0,
-        weightedSuccess: 0,
-        weightedDissatisfaction: 0,
-        thumbsUpWeight: 0,
-        thumbsDownWeight: 0,
-        judgeVerifiedWeight: 0,
-        judgeRevisedWeight: 0,
-        judgeEscalatedWeight: 0,
-        latencyWeightedSum: 0,
-        costWeightedSum: 0,
-        latencyWeight: 0,
-        costWeight: 0,
-        fallbackSuccessWeight: 0,
-        fallbackWeight: 0,
-        hallucinationWeight: 0,
-      };
-
-      const quality = this.computeWeightedQuality(
-        outcome,
-        feedback.positive,
-        feedback.negative,
-        freshness,
-      );
-      const dissatisfaction = this.computeWeightedDissatisfaction(
-        outcome,
-        feedback.negative,
-        freshness,
-      );
-
-      bucket.routeCount += 1;
-      bucket.totalWeight += freshness;
-      bucket.weightedSuccess += quality;
-      bucket.weightedDissatisfaction += dissatisfaction;
-      bucket.thumbsUpWeight += feedback.positive * freshness;
-      bucket.thumbsDownWeight += feedback.negative * freshness;
-      bucket.judgeVerifiedWeight +=
-        (outcome?.judgeOutcome === JudgeOutcome.VERIFIED ? 1 : 0) * freshness;
-      bucket.judgeRevisedWeight +=
-        (outcome?.judgeOutcome === JudgeOutcome.REVISED ? 1 : 0) * freshness;
-      bucket.judgeEscalatedWeight +=
-        (outcome?.judgeOutcome === JudgeOutcome.ESCALATED ? 1 : 0) * freshness;
-
-      if (typeof outcome?.actualLatencyMs === 'number') {
-        bucket.latencyWeightedSum += outcome.actualLatencyMs * freshness;
-        bucket.latencyWeight += freshness;
-      }
-
-      if (
-        typeof outcome?.actualCostEstimate === 'object' ||
-        typeof outcome?.actualCostEstimate === 'number'
-      ) {
-        bucket.costWeightedSum += Number(outcome.actualCostEstimate) * freshness;
-        bucket.costWeight += freshness;
-      }
-
-      if (outcome) {
-        bucket.fallbackWeight += freshness;
-        if (outcome.fallbackUsed === true && outcome.executionSuccess) {
-          bucket.fallbackSuccessWeight += freshness;
-        }
-        if (this.hasHallucinationMarker(outcome.issueTags)) {
-          bucket.hallucinationWeight += freshness;
-        }
-      }
-
-      aggregates.set(bucketKey, bucket);
+      this.aggregateDecision(decision, aggregates);
     }
+    return [...aggregates.values()].map((bucket) => this.bucketToProfile(bucket));
+  }
 
-    return [...aggregates.values()].map((bucket) => {
-      const sampleSize = bucket.routeCount;
-      const smoothing = 5;
-      const prior = 0.55;
-      const smoothedSuccess =
-        (bucket.weightedSuccess + smoothing * prior) / Math.max(bucket.totalWeight + smoothing, 1);
-      const dissatRate = bucket.weightedDissatisfaction / Math.max(bucket.totalWeight, 1);
-      const hallucinationRisk = bucket.hallucinationWeight / Math.max(bucket.totalWeight, 1);
-      const confidenceInProfile = this.clamp01(
-        Math.min(1, sampleSize / 12) * (1 - hallucinationRisk * 0.6) * (1 - dissatRate * 0.3),
-      );
+  private aggregateDecision(
+    decision: RoutingDecisionWithEducation,
+    aggregates: Map<string, AggregateBucket>,
+  ): void {
+    const outcome = decision.outcomes[0] ?? null;
+    const taskFamily = decision.detectedCategory ?? 'general';
+    const topicKey = decision.secondaryCategory ?? taskFamily;
+    const provider = outcome?.finalExecutionProvider ?? decision.selectedProvider;
+    const model = outcome?.finalExecutionModel ?? decision.selectedModel;
+    const freshness = this.computeFreshness(decision.createdAt);
+    const feedback = this.summarizeFeedback(decision.feedbackRecords);
 
-      return {
-        provider: bucket.provider,
-        model: bucket.model,
-        taskFamily: bucket.taskFamily,
-        topicKey: bucket.topicKey,
-        routeCount: bucket.routeCount,
-        successRate: smoothedSuccess,
-        thumbsUpRate: bucket.thumbsUpWeight / Math.max(bucket.totalWeight, 1),
-        thumbsDownRate: bucket.thumbsDownWeight / Math.max(bucket.totalWeight, 1),
-        judgeVerifiedRate: bucket.judgeVerifiedWeight / Math.max(bucket.totalWeight, 1),
-        judgeRevisedRate: bucket.judgeRevisedWeight / Math.max(bucket.totalWeight, 1),
-        judgeEscalatedRate: bucket.judgeEscalatedWeight / Math.max(bucket.totalWeight, 1),
-        averageLatencyMs: Math.round(bucket.latencyWeightedSum / Math.max(bucket.latencyWeight, 1)),
-        averageCostEstimate: bucket.costWeightedSum / Math.max(bucket.costWeight, 1),
-        fallbackSuccessRate: bucket.fallbackSuccessWeight / Math.max(bucket.fallbackWeight, 1),
-        hallucinationRiskScore: hallucinationRisk,
-        calibrationTrustScore: this.clamp01(smoothedSuccess * 0.7 + confidenceInProfile * 0.3),
-        weightedSuccessScore: smoothedSuccess,
-        weightedDissatisfactionScore: dissatRate,
-        sampleSize,
-        confidenceInProfile,
-      };
-    });
+    const bucketKey = `${provider}::${model}::${taskFamily}::${topicKey}`;
+    const bucket =
+      aggregates.get(bucketKey) ?? this.createEmptyBucket(provider, model, taskFamily, topicKey);
+
+    bucket.routeCount += 1;
+    bucket.totalWeight += freshness;
+    bucket.weightedSuccess += this.computeWeightedQuality(
+      outcome,
+      feedback.positive,
+      feedback.negative,
+      freshness,
+    );
+    bucket.weightedDissatisfaction += this.computeWeightedDissatisfaction(
+      outcome,
+      feedback.negative,
+      freshness,
+    );
+    bucket.thumbsUpWeight += feedback.positive * freshness;
+    bucket.thumbsDownWeight += feedback.negative * freshness;
+    this.applyJudgeWeights(bucket, outcome, freshness);
+    this.applyLatencyAndCostWeights(bucket, outcome, freshness);
+    this.applyOutcomeWeights(bucket, outcome, freshness);
+
+    aggregates.set(bucketKey, bucket);
+  }
+
+  private createEmptyBucket(
+    provider: string,
+    model: string,
+    taskFamily: string,
+    topicKey: string,
+  ): AggregateBucket {
+    return {
+      provider,
+      model,
+      taskFamily,
+      topicKey,
+      routeCount: 0,
+      totalWeight: 0,
+      weightedSuccess: 0,
+      weightedDissatisfaction: 0,
+      thumbsUpWeight: 0,
+      thumbsDownWeight: 0,
+      judgeVerifiedWeight: 0,
+      judgeRevisedWeight: 0,
+      judgeEscalatedWeight: 0,
+      latencyWeightedSum: 0,
+      costWeightedSum: 0,
+      latencyWeight: 0,
+      costWeight: 0,
+      fallbackSuccessWeight: 0,
+      fallbackWeight: 0,
+      hallucinationWeight: 0,
+    };
+  }
+
+  private applyJudgeWeights(
+    bucket: AggregateBucket,
+    outcome: RoutingDecisionWithEducation['outcomes'][number] | null,
+    freshness: number,
+  ): void {
+    bucket.judgeVerifiedWeight +=
+      (outcome?.judgeOutcome === JudgeOutcome.VERIFIED ? 1 : 0) * freshness;
+    bucket.judgeRevisedWeight +=
+      (outcome?.judgeOutcome === JudgeOutcome.REVISED ? 1 : 0) * freshness;
+    bucket.judgeEscalatedWeight +=
+      (outcome?.judgeOutcome === JudgeOutcome.ESCALATED ? 1 : 0) * freshness;
+  }
+
+  private applyLatencyAndCostWeights(
+    bucket: AggregateBucket,
+    outcome: RoutingDecisionWithEducation['outcomes'][number] | null,
+    freshness: number,
+  ): void {
+    if (typeof outcome?.actualLatencyMs === 'number') {
+      bucket.latencyWeightedSum += outcome.actualLatencyMs * freshness;
+      bucket.latencyWeight += freshness;
+    }
+    const cost = outcome?.actualCostEstimate;
+    if (typeof cost === 'object' || typeof cost === 'number') {
+      bucket.costWeightedSum += Number(cost) * freshness;
+      bucket.costWeight += freshness;
+    }
+  }
+
+  private applyOutcomeWeights(
+    bucket: AggregateBucket,
+    outcome: RoutingDecisionWithEducation['outcomes'][number] | null,
+    freshness: number,
+  ): void {
+    if (!outcome) {
+      return;
+    }
+    bucket.fallbackWeight += freshness;
+    if (outcome.fallbackUsed === true && outcome.executionSuccess) {
+      bucket.fallbackSuccessWeight += freshness;
+    }
+    if (this.hasHallucinationMarker(outcome.issueTags)) {
+      bucket.hallucinationWeight += freshness;
+    }
+  }
+
+  private bucketToProfile(bucket: AggregateBucket): RouterModelProfileRecord {
+    const sampleSize = bucket.routeCount;
+    const smoothing = 5;
+    const prior = 0.55;
+    const smoothedSuccess =
+      (bucket.weightedSuccess + smoothing * prior) / Math.max(bucket.totalWeight + smoothing, 1);
+    const dissatRate = bucket.weightedDissatisfaction / Math.max(bucket.totalWeight, 1);
+    const hallucinationRisk = bucket.hallucinationWeight / Math.max(bucket.totalWeight, 1);
+    const confidenceInProfile = this.clamp01(
+      Math.min(1, sampleSize / 12) * (1 - hallucinationRisk * 0.6) * (1 - dissatRate * 0.3),
+    );
+
+    return {
+      provider: bucket.provider,
+      model: bucket.model,
+      taskFamily: bucket.taskFamily,
+      topicKey: bucket.topicKey,
+      routeCount: bucket.routeCount,
+      successRate: smoothedSuccess,
+      thumbsUpRate: bucket.thumbsUpWeight / Math.max(bucket.totalWeight, 1),
+      thumbsDownRate: bucket.thumbsDownWeight / Math.max(bucket.totalWeight, 1),
+      judgeVerifiedRate: bucket.judgeVerifiedWeight / Math.max(bucket.totalWeight, 1),
+      judgeRevisedRate: bucket.judgeRevisedWeight / Math.max(bucket.totalWeight, 1),
+      judgeEscalatedRate: bucket.judgeEscalatedWeight / Math.max(bucket.totalWeight, 1),
+      averageLatencyMs: Math.round(bucket.latencyWeightedSum / Math.max(bucket.latencyWeight, 1)),
+      averageCostEstimate: bucket.costWeightedSum / Math.max(bucket.costWeight, 1),
+      fallbackSuccessRate: bucket.fallbackSuccessWeight / Math.max(bucket.fallbackWeight, 1),
+      hallucinationRiskScore: hallucinationRisk,
+      calibrationTrustScore: this.clamp01(smoothedSuccess * 0.7 + confidenceInProfile * 0.3),
+      weightedSuccessScore: smoothedSuccess,
+      weightedDissatisfactionScore: dissatRate,
+      sampleSize,
+      confidenceInProfile,
+    };
   }
 
   private computeTopicProfiles(
@@ -593,7 +658,12 @@ export class RouterEducationManager {
     if (provider === 'local-ollama') {
       return context.runtimeHealth?.['OLLAMA'] ?? true;
     }
-    return context.connectorHealth?.[provider] ?? false;
+    const healthMap = context.connectorHealth;
+    if (!healthMap) {
+      return false;
+    }
+    const entry = Object.entries(healthMap).find(([name]) => name === provider);
+    return entry?.[1] ?? false;
   }
 
   private clamp01(value: number): number {

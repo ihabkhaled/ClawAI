@@ -9,6 +9,7 @@ import {
 } from '../../../generated/prisma';
 import { EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
+import { toInputJson } from '../../../common/utilities';
 import { RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
 import { RoutingDecisionsRepository } from '../repositories/routing-decisions.repository';
 import { RoutingManager } from '../managers/routing.manager';
@@ -38,6 +39,7 @@ import type {
 import type { ProviderFailureStat, RecentFallback, RecoveryStats } from '../types/recovery.types';
 import type { AdaptiveLearningInsights } from '../types/adaptive-learning.types';
 import type {
+  RouterFeedbackPolarity,
   RouterModelProfileRecord,
   RouterTopicProfileRecord,
   RoutingEducationSnapshot,
@@ -47,11 +49,11 @@ import type {
 export class RoutingService implements OnModuleInit {
   private readonly logger = new Logger(RoutingService.name);
   private readonly structuredLogger: StructuredLogger;
-  private connectorHealthCache: Record<string, boolean> = {};
-  private runtimeHealthCache: Record<string, boolean> = {};
-  private providerLatencyCache: Record<string, number> = {};
-  private providerSlowStreakCache: Record<string, number> = {};
-  private providerCircuitOpenUntilCache: Record<string, number> = {};
+  private readonly connectorHealthCache = new Map<string, boolean>();
+  private readonly runtimeHealthCache = new Map<string, boolean>();
+  private readonly providerLatencyCache = new Map<string, number>();
+  private readonly providerSlowStreakCache = new Map<string, number>();
+  private readonly providerCircuitOpenUntilCache = new Map<string, number>();
 
   constructor(
     private readonly policiesRepository: RoutingPoliciesRepository,
@@ -148,9 +150,9 @@ export class RoutingService implements OnModuleInit {
       userMode: dto.routingMode as RoutingMode | undefined,
       forcedModel: dto.forcedModel,
       forcedProvider: dto.forcedProvider,
-      connectorHealth: { ...this.connectorHealthCache },
-      runtimeHealth: { ...this.runtimeHealthCache },
-      providerLatencyMs: { ...this.providerLatencyCache },
+      connectorHealth: Object.fromEntries(this.connectorHealthCache),
+      runtimeHealth: Object.fromEntries(this.runtimeHealthCache),
+      providerLatencyMs: Object.fromEntries(this.providerLatencyCache),
       providerCircuitOpenUntil: this.getActiveProviderCircuits(),
       localDegradeLatencyMs: config.localDegradeLatencyMs,
       latencyPenaltyStepMs: config.latencyPenaltyStepMs,
@@ -378,9 +380,9 @@ export class RoutingService implements OnModuleInit {
       userMode: routingMode,
       forcedProvider,
       forcedModel,
-      connectorHealth: { ...this.connectorHealthCache },
-      runtimeHealth: { ...this.runtimeHealthCache },
-      providerLatencyMs: { ...this.providerLatencyCache },
+      connectorHealth: Object.fromEntries(this.connectorHealthCache),
+      runtimeHealth: Object.fromEntries(this.runtimeHealthCache),
+      providerLatencyMs: Object.fromEntries(this.providerLatencyCache),
       providerCircuitOpenUntil: this.getActiveProviderCircuits(),
       localDegradeLatencyMs: config.localDegradeLatencyMs,
       latencyPenaltyStepMs: config.latencyPenaltyStepMs,
@@ -395,12 +397,7 @@ export class RoutingService implements OnModuleInit {
   ): Promise<void> {
     const fallback = decision.fallbackChain[0];
     const modelInventorySnapshot = await this.promptBuilder.getInstalledModels();
-    const connectorHealthSnapshot = {
-      connectorHealth: { ...this.connectorHealthCache },
-      runtimeHealth: { ...this.runtimeHealthCache },
-      providerLatencyMs: { ...this.providerLatencyCache },
-      providerCircuitOpenUntil: this.getActiveProviderCircuits(),
-    };
+    const connectorHealthSnapshot = this.buildConnectorHealthSnapshot();
 
     await this.decisionsRepository.create({
       messageId,
@@ -420,14 +417,8 @@ export class RoutingService implements OnModuleInit {
       secondaryCategory: decision.secondaryCategory,
       matchCount: decision.matchCount,
       selectedExecutionPath: decision.selectedExecutionPath ?? decision.detectedCategory,
-      routeRoadmap: {
-        selectedProvider: decision.selectedProvider,
-        selectedModel: decision.selectedModel,
-        fallbackChain: decision.fallbackChain,
-        detectedCategory: decision.detectedCategory ?? null,
-        secondaryCategory: decision.secondaryCategory ?? null,
-      } as unknown as Prisma.InputJsonValue,
-      modelInventorySnapshot: modelInventorySnapshot as unknown as Prisma.InputJsonValue,
+      routeRoadmap: toInputJson(this.buildRouteRoadmap(decision)),
+      modelInventorySnapshot: toInputJson(modelInventorySnapshot),
       connectorHealthSnapshot: connectorHealthSnapshot as Prisma.InputJsonValue,
       capabilityMatchScore: decision.capabilityMatchScore,
       latencyScore: decision.latencyScore,
@@ -437,6 +428,45 @@ export class RoutingService implements OnModuleInit {
       routingDurationMs: decision.routingDurationMs,
     });
 
+    this.logRoutingDecision(messageId, threadId, decision);
+    this.publishMessageRoutedEvent(messageId, threadId, decision, fallback);
+  }
+
+  private buildConnectorHealthSnapshot(): {
+    connectorHealth: Record<string, boolean>;
+    runtimeHealth: Record<string, boolean>;
+    providerLatencyMs: Record<string, number>;
+    providerCircuitOpenUntil: Record<string, number>;
+  } {
+    return {
+      connectorHealth: Object.fromEntries(this.connectorHealthCache),
+      runtimeHealth: Object.fromEntries(this.runtimeHealthCache),
+      providerLatencyMs: Object.fromEntries(this.providerLatencyCache),
+      providerCircuitOpenUntil: this.getActiveProviderCircuits(),
+    };
+  }
+
+  private buildRouteRoadmap(decision: RoutingDecisionResult): {
+    selectedProvider: string;
+    selectedModel: string;
+    fallbackChain: RoutingDecisionResult['fallbackChain'];
+    detectedCategory: string | null;
+    secondaryCategory: string | null;
+  } {
+    return {
+      selectedProvider: decision.selectedProvider,
+      selectedModel: decision.selectedModel,
+      fallbackChain: decision.fallbackChain,
+      detectedCategory: decision.detectedCategory ?? null,
+      secondaryCategory: decision.secondaryCategory ?? null,
+    };
+  }
+
+  private logRoutingDecision(
+    messageId: string | undefined,
+    threadId: string,
+    decision: RoutingDecisionResult,
+  ): void {
     this.structuredLogger.logAction({
       level: LogLevel.INFO,
       message: `Routing decision: ${decision.selectedProvider}/${decision.selectedModel} (confidence: ${String(decision.confidence)})`,
@@ -452,7 +482,14 @@ export class RoutingService implements OnModuleInit {
         reasonTags: decision.reasonTags,
       },
     });
+  }
 
+  private publishMessageRoutedEvent(
+    messageId: string | undefined,
+    threadId: string,
+    decision: RoutingDecisionResult,
+    fallback: RoutingDecisionResult['fallbackChain'][number] | undefined,
+  ): void {
     void this.rabbitMQService.publish(EventPattern.MESSAGE_ROUTED, {
       messageId,
       threadId,
@@ -476,7 +513,7 @@ export class RoutingService implements OnModuleInit {
     if (provider && status) {
       const isHealthy = status === 'HEALTHY';
       this.logger.debug(`handleConnectorHealthChecked: provider=${provider} status=${status}`);
-      this.connectorHealthCache[provider] = isHealthy;
+      this.connectorHealthCache.set(provider, isHealthy);
     }
   }
 
@@ -486,7 +523,7 @@ export class RoutingService implements OnModuleInit {
 
     if (runtime) {
       this.logger.debug(`handleConnectorSynced: runtime=${runtime} marked healthy`);
-      this.runtimeHealthCache[runtime] = true;
+      this.runtimeHealthCache.set(runtime, true);
     }
     this.promptBuilder.invalidateCache();
   }
@@ -497,7 +534,6 @@ export class RoutingService implements OnModuleInit {
   }
 
   private handleMessageCompleted(data: unknown): void {
-    const config = this.getRuntimeRoutingConfig();
     const payload = data as Record<string, unknown>;
     const providerRaw = payload['provider'];
     const latencyRaw = payload['latencyMs'];
@@ -508,72 +544,113 @@ export class RoutingService implements OnModuleInit {
 
     const provider = this.normalizeProviderName(providerRaw);
     const latencyMs = Math.round(latencyRaw);
-    const prevLatency = this.providerLatencyCache[provider];
-    const weight = config.latencyEwmaWeight;
+    const config = this.getRuntimeRoutingConfig();
+
+    this.recordProviderLatency(provider, latencyMs, config.latencyEwmaWeight);
+    this.applyLatencyCircuit(provider, latencyMs, config);
+    this.pruneExpiredProviderCircuits();
+
+    void this.routerEducationManager.ingestExecutionOutcome(
+      this.buildExecutionOutcomePayload(payload, provider, latencyMs),
+    );
+  }
+
+  private recordProviderLatency(provider: string, latencyMs: number, weight: number): void {
+    const prevLatency = this.providerLatencyCache.get(provider);
     const nextLatency =
       typeof prevLatency === 'number'
         ? Math.round(prevLatency * weight + latencyMs * (1 - weight))
         : latencyMs;
-    this.providerLatencyCache[provider] = nextLatency;
+    this.providerLatencyCache.set(provider, nextLatency);
+  }
 
-    const threshold = config.providerSlowThresholdMs;
-    if (latencyMs >= threshold) {
-      const nextStreak = (this.providerSlowStreakCache[provider] ?? 0) + 1;
-      this.providerSlowStreakCache[provider] = nextStreak;
-
+  private applyLatencyCircuit(
+    provider: string,
+    latencyMs: number,
+    config: {
+      providerSlowThresholdMs: number;
+      providerSlowStreak: number;
+      providerCircuitOpenMs: number;
+    },
+  ): void {
+    if (latencyMs >= config.providerSlowThresholdMs) {
+      const nextStreak = (this.providerSlowStreakCache.get(provider) ?? 0) + 1;
+      this.providerSlowStreakCache.set(provider, nextStreak);
       if (nextStreak >= config.providerSlowStreak) {
-        const openUntil = Date.now() + config.providerCircuitOpenMs;
-        this.providerCircuitOpenUntilCache[provider] = openUntil;
-        this.providerSlowStreakCache[provider] = 0;
-        this.logger.warn(
-          `handleMessageCompleted: opening latency circuit for ${provider} until ${new Date(openUntil).toISOString()}`,
-        );
+        this.openLatencyCircuit(provider, config.providerCircuitOpenMs);
       }
-    } else {
-      this.providerSlowStreakCache[provider] = 0;
-      const openUntil = this.providerCircuitOpenUntilCache[provider];
-      if (typeof openUntil === 'number' && openUntil > Date.now()) {
-        this.removeProviderCircuit(provider);
-        this.logger.log(`handleMessageCompleted: closing latency circuit for ${provider}`);
-      }
+      return;
     }
+    this.providerSlowStreakCache.set(provider, 0);
+    const openUntil = this.providerCircuitOpenUntilCache.get(provider);
+    if (typeof openUntil === 'number' && openUntil > Date.now()) {
+      this.removeProviderCircuit(provider);
+      this.logger.log(`handleMessageCompleted: closing latency circuit for ${provider}`);
+    }
+  }
 
-    this.pruneExpiredProviderCircuits();
+  private openLatencyCircuit(provider: string, circuitOpenMs: number): void {
+    const openUntil = Date.now() + circuitOpenMs;
+    this.providerCircuitOpenUntilCache.set(provider, openUntil);
+    this.providerSlowStreakCache.set(provider, 0);
+    this.logger.warn(
+      `handleMessageCompleted: opening latency circuit for ${provider} until ${new Date(openUntil).toISOString()}`,
+    );
+  }
 
-    void this.routerEducationManager.ingestExecutionOutcome({
-      messageId: typeof payload['messageId'] === 'string' ? payload['messageId'] : '',
-      threadId: typeof payload['threadId'] === 'string' ? payload['threadId'] : '',
-      assistantMessageId:
-        typeof payload['assistantMessageId'] === 'string'
-          ? payload['assistantMessageId']
-          : undefined,
+  private buildExecutionOutcomePayload(
+    payload: Record<string, unknown>,
+    provider: string,
+    latencyMs: number,
+  ): {
+    messageId: string;
+    threadId: string;
+    assistantMessageId: string | undefined;
+    provider: string;
+    model: string;
+    latencyMs: number;
+    executionSuccess: boolean;
+    finalStatus: string | undefined;
+    errorMessage: string | undefined;
+    usedFallback: boolean;
+    judgeDecision: string | undefined;
+    judgeConfidence: number | undefined;
+    criticScore: number | undefined;
+    reRouted: boolean;
+    detectedCategory: string | undefined;
+  } {
+    return {
+      messageId: this.asString(payload['messageId']) ?? '',
+      threadId: this.asString(payload['threadId']) ?? '',
+      assistantMessageId: this.asString(payload['assistantMessageId']),
       provider,
-      model: typeof payload['model'] === 'string' ? payload['model'] : '',
+      model: this.asString(payload['model']) ?? '',
       latencyMs,
       executionSuccess: payload['executionSuccess'] === false ? false : true,
-      finalStatus: typeof payload['finalStatus'] === 'string' ? payload['finalStatus'] : undefined,
-      errorMessage:
-        typeof payload['errorMessage'] === 'string' ? payload['errorMessage'] : undefined,
+      finalStatus: this.asString(payload['finalStatus']),
+      errorMessage: this.asString(payload['errorMessage']),
       usedFallback: payload['usedFallback'] === true,
-      judgeDecision:
-        typeof payload['judgeDecision'] === 'string' ? payload['judgeDecision'] : undefined,
-      judgeConfidence:
-        typeof payload['judgeConfidence'] === 'number' ? payload['judgeConfidence'] : undefined,
-      criticScore: typeof payload['criticScore'] === 'number' ? payload['criticScore'] : undefined,
+      judgeDecision: this.asString(payload['judgeDecision']),
+      judgeConfidence: this.asNumber(payload['judgeConfidence']),
+      criticScore: this.asNumber(payload['criticScore']),
       reRouted: payload['reRouted'] === true,
-      detectedCategory:
-        typeof payload['detectedCategory'] === 'string' ? payload['detectedCategory'] : undefined,
-    });
+      detectedCategory: this.asString(payload['detectedCategory']),
+    };
+  }
+
+  private asString(value: unknown): string | undefined {
+    return typeof value === 'string' ? value : undefined;
+  }
+
+  private asNumber(value: unknown): number | undefined {
+    return typeof value === 'number' ? value : undefined;
   }
 
   private async handleMessageFeedbackSet(data: unknown): Promise<void> {
     const payload = data as Record<string, unknown>;
-    const messageId = typeof payload['messageId'] === 'string' ? payload['messageId'] : '';
-    const threadId = typeof payload['threadId'] === 'string' ? payload['threadId'] : '';
-    const feedback =
-      payload['feedback'] === 'positive' || payload['feedback'] === 'negative'
-        ? payload['feedback']
-        : null;
+    const messageId = this.asString(payload['messageId']) ?? '';
+    const threadId = this.asString(payload['threadId']) ?? '';
+    const feedback = this.asFeedback(payload['feedback']);
 
     if (messageId.length === 0 || threadId.length === 0 || feedback === null) {
       return;
@@ -583,23 +660,31 @@ export class RoutingService implements OnModuleInit {
       messageId,
       threadId,
       feedback,
-      provider: typeof payload['provider'] === 'string' ? payload['provider'] : undefined,
-      model: typeof payload['model'] === 'string' ? payload['model'] : undefined,
-      detectedCategory:
-        typeof payload['detectedCategory'] === 'string' ? payload['detectedCategory'] : undefined,
+      provider: this.asString(payload['provider']),
+      model: this.asString(payload['model']),
+      detectedCategory: this.asString(payload['detectedCategory']),
     });
+  }
+
+  private asFeedback(value: unknown): RouterFeedbackPolarity | null {
+    if (value === 'positive' || value === 'negative') {
+      return value;
+    }
+    return null;
   }
 
   private pruneExpiredProviderCircuits(): void {
     const now = Date.now();
-    this.providerCircuitOpenUntilCache = Object.fromEntries(
-      Object.entries(this.providerCircuitOpenUntilCache).filter(([, openUntil]) => openUntil > now),
-    ) as Record<string, number>;
+    for (const [name, openUntil] of this.providerCircuitOpenUntilCache) {
+      if (openUntil <= now) {
+        this.providerCircuitOpenUntilCache.delete(name);
+      }
+    }
   }
 
   private getActiveProviderCircuits(): Record<string, number> {
     this.pruneExpiredProviderCircuits();
-    return { ...this.providerCircuitOpenUntilCache };
+    return Object.fromEntries(this.providerCircuitOpenUntilCache);
   }
 
   private normalizeProviderName(provider: string): string {
@@ -611,9 +696,7 @@ export class RoutingService implements OnModuleInit {
   }
 
   private removeProviderCircuit(provider: string): void {
-    this.providerCircuitOpenUntilCache = Object.fromEntries(
-      Object.entries(this.providerCircuitOpenUntilCache).filter(([name]) => name !== provider),
-    ) as Record<string, number>;
+    this.providerCircuitOpenUntilCache.delete(provider);
   }
 
   private getRuntimeRoutingConfig(): {

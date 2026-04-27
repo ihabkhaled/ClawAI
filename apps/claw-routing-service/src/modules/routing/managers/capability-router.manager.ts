@@ -56,7 +56,7 @@ export class CapabilityRouterManager {
     capability: ModelCapability,
     context: RoutingContext,
   ): CapabilityRoutingResult | null {
-    const priority = CAPABILITY_PROVIDER_PRIORITY[capability] ?? [];
+    const priority = CAPABILITY_PROVIDER_PRIORITY.get(capability) ?? [];
 
     for (const providerName of priority) {
       if (!this.isProviderAvailable(providerName, context)) {
@@ -93,6 +93,7 @@ export class CapabilityRouterManager {
     if (!healthMap || Object.keys(healthMap).length === 0) {
       return true;
     }
-    return healthMap[provider] ?? false;
+    const entry = Object.entries(healthMap).find(([name]) => name === provider);
+    return entry?.[1] ?? false;
   }
 }

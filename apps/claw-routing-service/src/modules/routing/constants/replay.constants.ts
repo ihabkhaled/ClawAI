@@ -1,4 +1,9 @@
-export const COST_RANK: Record<string, number> = { free: 0, low: 1, medium: 2, high: 3 };
+export const COST_RANK: ReadonlyMap<string, number> = new Map<string, number>([
+  ['free', 0],
+  ['low', 1],
+  ['medium', 2],
+  ['high', 3],
+]);
 
 export const CONFIDENCE_IMPROVEMENT_THRESHOLD = 0.05;
 export const CONFIDENCE_QUALITY_WIN_THRESHOLD = 0.15;

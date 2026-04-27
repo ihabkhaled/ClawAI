@@ -13,7 +13,7 @@ export class RoutingDecisionsRepository {
     return this.prisma.routingDecision.create({
       data: {
         ...data,
-        confidence: data.confidence !== undefined ? data.confidence : null,
+        confidence: data.confidence ?? null,
       },
     });
   }

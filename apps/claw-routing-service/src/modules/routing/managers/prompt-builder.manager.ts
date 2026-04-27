@@ -1,10 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities';
+import { FULL_ROUTER_PROMPT_TEMPLATE } from '../constants/prompt-templates.constants';
 import { PROMPT_CACHE_TTL_MS, ROUTER_PROMPT_TEMPLATE } from '../constants/routing.constants';
 import { AdaptiveLearningManager } from './adaptive-learning.manager';
 import { RouterEducationManager } from './router-education.manager';
-import type { AdaptiveLearningInsights } from '../types/adaptive-learning.types';
+import type { AdaptiveLearningInsights, ProviderInsight } from '../types/adaptive-learning.types';
 import type {
   CachedInsightsData,
   CachedPromptData,
@@ -164,7 +165,7 @@ export class PromptBuilderManager {
     const groups = new Map<string, InstalledModelInfo[]>();
 
     for (const model of models) {
-      const category = model.category || 'general';
+      const category = model.category ?? 'general';
       const existing = groups.get(category) ?? [];
       existing.push(model);
       groups.set(category, existing);
@@ -221,107 +222,7 @@ User message: {message}`;
   }
 
   private buildFullPromptTemplate(localSection: string): string {
-    return `You are an intelligent AI routing engine. Analyze the user message and decide which AI provider and model is best suited to answer it.
-
-Available providers and models:
-
-${localSection}
-
-CLOUD MODELS (paid, internet required, higher quality):
-- OPENAI / gpt-4o-mini (fast, general purpose, good for summarization, chat, writing)
-- ANTHROPIC / claude-sonnet-4 (excellent coding, debugging, code review, technical analysis)
-- ANTHROPIC / claude-opus-4 (best for deep reasoning, complex analysis, architecture decisions)
-- GEMINI / gemini-2.5-flash (fast, multimodal, best for image/video, web search, YouTube, file analysis)
-
-IMAGE GENERATION MODELS (generate images from text prompts):
-- IMAGE_OPENAI / dall-e-3 (best quality, photorealistic images, DALL-E 3)
-- IMAGE_GEMINI / gemini-2.5-flash-image (Google Gemini 2.5 image generation)
-- IMAGE_LOCAL / sdxl-turbo (local Stable Diffusion, free, no internet, lower quality)
-
-Healthy providers: {healthyProviders}
-
-CAPABILITY CLASSES (33 categories - detect in this priority order):
-
-PRIVACY-SENSITIVE (MUST route to local-ollama - NEVER send to cloud):
-1. Privacy - personal data, PII, SSN, credit cards, passwords, secrets, confidential info
-2. Medical - clinical, patient, diagnosis, HIPAA, PHI, medication, health records
-3. Legal - contracts, NDA, compliance, GDPR, litigation, attorney-client privilege
-4. Finance - P&L, balance sheet, tax, portfolio, banking, credit, investment data
-5. Executive - board meetings, M&A, acquisitions, IPO, corporate governance, earnings
-6. Government - classified, intelligence, national security, defense, clearance, SIGINT
-
-SPECIALIZED ROUTING (use category-specific models when available):
-7. Coding - code, debug, refactor, APIs, testing, Git, frameworks -> LOCAL_CODING or ANTHROPIC
-8. Infrastructure - Terraform, Kubernetes, Docker, AWS, CI/CD, DevOps -> LOCAL_CODING or ANTHROPIC
-9. Security - vulnerabilities, penetration testing, OWASP, threat hunting, forensics -> LOCAL_CODING
-10. Data Analysis - datasets, ML, AI, NLP, statistics, visualization, ETL -> LOCAL_REASONING or GEMINI
-11. Reasoning - proofs, theorems, math, logic, step-by-step analysis -> LOCAL_REASONING or ANTHROPIC
-12. Research - literature review, methodology, surveys, academic papers -> LOCAL_REASONING or GEMINI
-13. Engineering - CAD, FEA, CFD, circuit design, manufacturing, automotive -> LOCAL_REASONING
-14. Science - chemistry, biology, physics, quantum mechanics, climate -> LOCAL_REASONING
-15. Real Estate - property, mortgage, appraisal, zoning, cap rate -> LOCAL_REASONING
-16. Thinking - deep research, compare-and-contrast, investigation, trade-offs -> LOCAL_THINKING or GEMINI
-
-FILE & IMAGE GENERATION:
-17. Image Generation - generate/create/draw images, photos, art, logos -> IMAGE_GEMINI or IMAGE_OPENAI
-18. File Generation - create/export PDF, CSV, DOCX, reports, documents -> FILE_GENERATION / auto
-
-BUSINESS & OPERATIONS (route to file generation or chat models):
-19. Business - KPIs, ROI, campaigns, market analysis, pitch decks -> LOCAL_FILE_GENERATION or OPENAI
-20. Operations - supply chain, lean, six sigma, SOP, procurement -> LOCAL_FILE_GENERATION
-21. HR - job descriptions, onboarding, performance reviews, talent -> LOCAL_FALLBACK_CHAT
-22. Sales - demos, POC, churn, battle cards, competitive positioning -> LOCAL_FALLBACK_CHAT
-23. Customer Support - helpdesk, tickets, knowledge base, SLA -> LOCAL_FALLBACK_CHAT
-
-CONTENT & COMMUNICATION:
-24. Creative Writing - blog posts, articles, poems, scripts, copywriting -> LOCAL_FALLBACK_CHAT or OPENAI
-25. Translation - translate, localize, i18n, multilingual -> LOCAL_FALLBACK_CHAT
-26. Video/Audio - video scripts, storyboards, editing, voiceover -> LOCAL_FALLBACK_CHAT
-27. Design - wireframes, mockups, Figma, design systems, UI/UX -> LOCAL_FALLBACK_CHAT
-28. Media - journalism, editorial, publishing, broadcasting, ad tech -> LOCAL_FALLBACK_CHAT
-29. Education - curriculum, lesson plans, pedagogy, LMS, assessments -> LOCAL_FALLBACK_CHAT
-
-DOMAIN-SPECIFIC:
-30. Logistics - freight, shipping, warehouse management, fleet, customs -> LOCAL_FALLBACK_CHAT
-31. Hospitality - hotel revenue, restaurant ops, event planning, tourism -> LOCAL_FALLBACK_CHAT
-32. Sustainability - ESG, carbon emissions, green building, circular economy -> LOCAL_FALLBACK_CHAT
-33. General Chat - greetings, small talk, quick facts, simple questions -> LOCAL_FALLBACK_CHAT
-
-ROUTING RULES (follow strictly, in priority order):
-
-1. IMAGE GENERATION (highest priority - detect these first):
-   - Any request to generate, create, draw, make, paint, render, design an image -> IMAGE_GEMINI / gemini-2.5-flash-image
-   - Art style keywords (photorealistic, watercolor, pixel art, etc.) -> IMAGE_GEMINI / gemini-2.5-flash-image
-
-2. FILE GENERATION:
-   - Create/generate/export/save a file/document/PDF/CSV/DOCX/report -> FILE_GENERATION / auto
-
-3. PRIVACY-SENSITIVE (categories 1-6 above):
-   - ALWAYS route to local-ollama - NEVER send to cloud providers
-   - Medical, legal, financial, executive, and government content is inherently private
-
-4. CATEGORY-SPECIFIC (categories 7-16 above):
-   - Use the best matching local model role if installed
-   - Fall back to cloud if no local model available
-
-5. GENERAL TEXT TASKS:
-   - Coding, debugging, code review -> ANTHROPIC / claude-sonnet-4
-   - Complex reasoning, architecture -> ANTHROPIC / claude-opus-4
-   - Math, algorithms -> DEEPSEEK / deepseek-chat or local reasoning
-   - Creative writing, marketing copy -> OPENAI / gpt-4o-mini
-   - Simple greetings, translations -> local-ollama / default
-   - Data analysis, file parsing -> GEMINI / gemini-2.5-flash
-
-GENERAL RULES:
-- ONLY route to healthy providers listed above
-- Prefer local models when quality is acceptable for the task
-- Use category-specific local models when available (coding model for code, reasoning model for math/logic)
-- If unsure or ambiguous -> GEMINI / gemini-2.5-flash (best general purpose)
-
-Respond with ONLY a JSON object (no markdown, no explanation):
-{{"provider":"...","model":"...","confidence":0.X,"reason":"brief reason"}}
-
-User message: {message}`;
+    return FULL_ROUTER_PROMPT_TEMPLATE.replace('{localSection}', localSection);
   }
 
   private applyTemplateVariables(template: string, healthyProviders: string[]): string {
@@ -419,8 +320,10 @@ User message: {message}`;
       return lines.join('\n');
     }
 
-    lines.push(`- windowDays=${insights.windowDays} totalDecisions=${insights.totalDecisions}`);
-    lines.push(`- avgConfidence=${insights.avgConfidence.toFixed(2)}`);
+    lines.push(
+      `- windowDays=${insights.windowDays} totalDecisions=${insights.totalDecisions}`,
+      `- avgConfidence=${insights.avgConfidence.toFixed(2)}`,
+    );
 
     if (insights.providerInsights.length > 0) {
       for (const provider of insights.providerInsights.slice(0, 6)) {
@@ -471,15 +374,15 @@ User message: {message}`;
     const providerInsights = new Map(
       insights?.providerInsights.map((provider) => [provider.provider, provider]) ?? [],
     );
+    const latencyMap = this.toRecordMap<number>(routingSignals?.providerLatencyMs);
+    const circuitMap = this.toRecordMap<number>(routingSignals?.providerCircuitOpenUntil);
     const now = Date.now();
 
     const providerNames = new Set<string>([
       ...healthyProviders,
-      ...(routingSignals?.providerLatencyMs ? Object.keys(routingSignals.providerLatencyMs) : []),
-      ...(routingSignals?.providerCircuitOpenUntil
-        ? Object.keys(routingSignals.providerCircuitOpenUntil)
-        : []),
-      ...(insights?.providerInsights.map((provider) => provider.provider) ?? []),
+      ...latencyMap.keys(),
+      ...circuitMap.keys(),
+      ...providerInsights.keys(),
     ]);
 
     if (providerNames.size === 0) {
@@ -487,51 +390,86 @@ User message: {message}`;
       return lines.join('\n');
     }
 
-    const rankedProviders = [...providerNames].sort((a, b) => {
-      const aInsight = providerInsights.get(a);
-      const bInsight = providerInsights.get(b);
-      const aWeight = aInsight
-        ? this.computeProviderLearnedWeight(aInsight.avgConfidence, aInsight.fallbackRate)
-        : -1;
-      const bWeight = bInsight
-        ? this.computeProviderLearnedWeight(bInsight.avgConfidence, bInsight.fallbackRate)
-        : -1;
-      return bWeight - aWeight || a.localeCompare(b);
-    });
-
-    for (const provider of rankedProviders.slice(0, 10)) {
-      const insight = providerInsights.get(provider);
-      const status = healthySet.has(provider)
-        ? 'healthy'
-        : (routingSignals?.providerCircuitOpenUntil?.[provider] &&
-            routingSignals.providerCircuitOpenUntil[provider] > now
-          ? 'circuit_open'
-          : 'unhealthy');
-      const latency = routingSignals?.providerLatencyMs?.[provider];
-      const circuitOpenUntil = routingSignals?.providerCircuitOpenUntil?.[provider];
-      const learnedWeight =
-        insight !== undefined
-          ? this.computeProviderLearnedWeight(insight.avgConfidence, insight.fallbackRate)
-          : null;
-      const topModes = insight?.topModes.length ? insight.topModes.join(', ') : 'n/a';
-      const fallbackRate = insight ? insight.fallbackRate.toFixed(2) : 'n/a';
-      const avgConfidence = insight ? insight.avgConfidence.toFixed(2) : 'n/a';
-      const latencyText = typeof latency === 'number' ? `${Math.round(latency)}ms` : 'n/a';
-      const circuitText =
-        typeof circuitOpenUntil === 'number' && circuitOpenUntil > now
-          ? new Date(circuitOpenUntil).toISOString()
-          : 'closed';
-
+    const ranked = this.rankConnectorProviders(providerNames, providerInsights);
+    for (const provider of ranked.slice(0, 10)) {
       lines.push(
-        `- ${provider}: status=${status} weight=${learnedWeight !== null ? learnedWeight.toFixed(2) : 'n/a'} avgConfidence=${avgConfidence} fallbackRate=${fallbackRate} latency=${latencyText} circuit=${circuitText} topModes=${topModes}`,
+        this.formatConnectorPriorRow(
+          provider,
+          healthySet,
+          providerInsights,
+          latencyMap,
+          circuitMap,
+          now,
+        ),
       );
     }
 
     lines.push(
       '- Prefer healthy connectors with the highest weight when several routes are valid.',
     );
-
     return lines.join('\n');
+  }
+
+  private toRecordMap<V>(record: Record<string, V> | undefined): Map<string, V> {
+    return new Map<string, V>(Object.entries(record ?? {}));
+  }
+
+  private rankConnectorProviders(
+    providerNames: Set<string>,
+    providerInsights: Map<string, ProviderInsight>,
+  ): string[] {
+    return [...providerNames].sort((a, b) => {
+      const aWeight = this.weightFromInsight(providerInsights.get(a));
+      const bWeight = this.weightFromInsight(providerInsights.get(b));
+      return bWeight - aWeight || a.localeCompare(b);
+    });
+  }
+
+  private weightFromInsight(insight: ProviderInsight | undefined): number {
+    return insight
+      ? this.computeProviderLearnedWeight(insight.avgConfidence, insight.fallbackRate)
+      : -1;
+  }
+
+  private formatConnectorPriorRow(
+    provider: string,
+    healthySet: Set<string>,
+    providerInsights: Map<string, ProviderInsight>,
+    latencyMap: Map<string, number>,
+    circuitMap: Map<string, number>,
+    now: number,
+  ): string {
+    const insight = providerInsights.get(provider);
+    const circuitOpenUntil = circuitMap.get(provider);
+    const latency = latencyMap.get(provider);
+    const status = this.computeConnectorStatus(provider, healthySet, circuitOpenUntil, now);
+    const weight = insight
+      ? this.computeProviderLearnedWeight(insight.avgConfidence, insight.fallbackRate).toFixed(2)
+      : 'n/a';
+    const topModes = insight?.topModes.length ? insight.topModes.join(', ') : 'n/a';
+    const fallbackRate = insight ? insight.fallbackRate.toFixed(2) : 'n/a';
+    const avgConfidence = insight ? insight.avgConfidence.toFixed(2) : 'n/a';
+    const latencyText = typeof latency === 'number' ? `${Math.round(latency)}ms` : 'n/a';
+    const circuitText =
+      typeof circuitOpenUntil === 'number' && circuitOpenUntil > now
+        ? new Date(circuitOpenUntil).toISOString()
+        : 'closed';
+    return `- ${provider}: status=${status} weight=${weight} avgConfidence=${avgConfidence} fallbackRate=${fallbackRate} latency=${latencyText} circuit=${circuitText} topModes=${topModes}`;
+  }
+
+  private computeConnectorStatus(
+    provider: string,
+    healthySet: Set<string>,
+    circuitOpenUntil: number | undefined,
+    now: number,
+  ): string {
+    if (healthySet.has(provider)) {
+      return 'healthy';
+    }
+    if (circuitOpenUntil !== undefined && circuitOpenUntil > now) {
+      return 'circuit_open';
+    }
+    return 'unhealthy';
   }
 
   private buildRouterEducationSection(snapshot: RoutingEducationSnapshot | null): string {
@@ -597,8 +535,6 @@ User message: {message}`;
 
     lines.push(
       `- latency penalty step ms: ${String(routingSignals.latencyPenaltyStepMs ?? 'n/a')}`,
-    );
-    lines.push(
       `- local degrade threshold ms: ${String(routingSignals.localDegradeLatencyMs ?? 'n/a')}`,
     );
 

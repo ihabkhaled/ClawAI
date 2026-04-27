@@ -144,10 +144,12 @@ export type RoutingEducationSnapshot = {
   promptHints: RoutingPromptHintSnapshot;
 };
 
+export type RouterFeedbackPolarity = 'positive' | 'negative';
+
 export type RoutingFeedbackEventPayload = {
   messageId: string;
   threadId: string;
-  feedback: 'positive' | 'negative' | null;
+  feedback: RouterFeedbackPolarity | null;
   routingMessageId?: string;
   provider?: string;
   model?: string;

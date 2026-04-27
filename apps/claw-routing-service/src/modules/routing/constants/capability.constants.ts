@@ -196,14 +196,15 @@ export const VISION_MODALITY_PATTERNS: string[] = [
 // ─── Capability routing priority ─────────────────────────────────────────────
 // When multiple providers support a capability, order determines preference.
 // First entry wins if healthy.
-export const CAPABILITY_PROVIDER_PRIORITY: Record<string, string[]> = {
-  [ModelCapability.AUDIO_INPUT]: ['GEMINI', 'OPENAI'],
-  [ModelCapability.VIDEO_INPUT]: ['GEMINI'],
-  [ModelCapability.PDF_INPUT]: ['GEMINI', 'ANTHROPIC', 'OPENAI'],
-  [ModelCapability.OCR]: ['GEMINI', 'ANTHROPIC', 'OPENAI'],
-  [ModelCapability.WEB_SEARCH]: ['GEMINI', 'OPENAI'],
-  [ModelCapability.IMAGE_INPUT]: ['GEMINI', 'ANTHROPIC', 'OPENAI', 'GROK', 'local-ollama'],
-  [ModelCapability.TOOL_CALLING]: ['ANTHROPIC', 'OPENAI', 'GEMINI', 'GROK'],
-  [ModelCapability.REASONING]: ['ANTHROPIC', 'DEEPSEEK', 'GROK'],
-  [ModelCapability.STRUCTURED_OUTPUT]: ['OPENAI', 'ANTHROPIC', 'GEMINI', 'GROK'],
-};
+export const CAPABILITY_PROVIDER_PRIORITY: ReadonlyMap<ModelCapability, readonly string[]> =
+  new Map<ModelCapability, readonly string[]>([
+    [ModelCapability.AUDIO_INPUT, ['GEMINI', 'OPENAI']],
+    [ModelCapability.VIDEO_INPUT, ['GEMINI']],
+    [ModelCapability.PDF_INPUT, ['GEMINI', 'ANTHROPIC', 'OPENAI']],
+    [ModelCapability.OCR, ['GEMINI', 'ANTHROPIC', 'OPENAI']],
+    [ModelCapability.WEB_SEARCH, ['GEMINI', 'OPENAI']],
+    [ModelCapability.IMAGE_INPUT, ['GEMINI', 'ANTHROPIC', 'OPENAI', 'GROK', 'local-ollama']],
+    [ModelCapability.TOOL_CALLING, ['ANTHROPIC', 'OPENAI', 'GEMINI', 'GROK']],
+    [ModelCapability.REASONING, ['ANTHROPIC', 'DEEPSEEK', 'GROK']],
+    [ModelCapability.STRUCTURED_OUTPUT, ['OPENAI', 'ANTHROPIC', 'GEMINI', 'GROK']],
+  ]);
