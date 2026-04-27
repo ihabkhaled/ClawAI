@@ -20,10 +20,10 @@ export function extractHtml(html: string, baseUrl: string | null = null): Extrac
   const title = titleMatch?.[1]?.trim() ?? null;
 
   const stripped = html.replaceAll(HTML_SCRIPT_STYLE_RE, ' ').replaceAll(HTML_TAG_RE, ' ');
-  const decoded = stripped.replaceAll(HTML_ENTITY_RE, (match, entity: string) => {
-    const value = HTML_ENTITY_MAP[entity];
-    return value ?? match;
-  });
+  const decoded = stripped.replaceAll(
+    HTML_ENTITY_RE,
+    (match, entity: string) => HTML_ENTITY_MAP.get(entity) ?? match,
+  );
   const text = decoded.replaceAll(HTML_WHITESPACE_RE, ' ').trim();
 
   const links = new Set<string>();

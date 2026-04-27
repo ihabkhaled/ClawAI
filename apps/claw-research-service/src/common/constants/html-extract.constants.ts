@@ -7,11 +7,11 @@ export const HTML_TITLE_RE = /<title[^>]*>([\s\S]*?)<\/title>/i;
 export const HTML_LINK_RE = /<a\b[^>]*href\s*=\s*["']([^"']+)["'][^>]*>/gi;
 export const HTML_ENTITY_RE = /&(lt|gt|amp|quot|#39|nbsp);/g;
 
-export const HTML_ENTITY_MAP: Record<string, string> = {
-  lt: '<',
-  gt: '>',
-  amp: '&',
-  quot: '"',
-  '#39': "'",
-  nbsp: ' ',
-};
+export const HTML_ENTITY_MAP: ReadonlyMap<string, string> = new Map<string, string>([
+  ['lt', '<'],
+  ['gt', '>'],
+  ['amp', '&'],
+  ['quot', '"'],
+  ['#39', "'"],
+  ['nbsp', ' '],
+]);

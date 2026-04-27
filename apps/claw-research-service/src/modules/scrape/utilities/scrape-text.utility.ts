@@ -7,9 +7,9 @@ import { SCRAPE_TAG_RE, SCRAPE_WS_RE } from '../constants/scrape-patterns.consta
  * concentrate on structure, not string hygiene.
  */
 export function decodeEntitiesAndStrip(raw: string): string {
-  const decoded = raw.replaceAll(HTML_ENTITY_RE, (match, entity: string) => {
-    const value = HTML_ENTITY_MAP[entity];
-    return value ?? match;
-  });
+  const decoded = raw.replaceAll(
+    HTML_ENTITY_RE,
+    (match, entity: string) => HTML_ENTITY_MAP.get(entity) ?? match,
+  );
   return decoded.replaceAll(SCRAPE_TAG_RE, ' ').replaceAll(SCRAPE_WS_RE, ' ').trim();
 }
