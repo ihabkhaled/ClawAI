@@ -34,7 +34,7 @@ export function EscalationChainBuilder({
 
           {chainModels.map((step, index) => (
             <div
-              key={index}
+              key={`${step.provider}/${step.model}/${String(index)}`}
               className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2"
             >
               <Badge variant="outline" className="shrink-0 text-xs">

@@ -77,7 +77,7 @@ export function VirtualizedMessages({
       );
     }
     return null;
-  }, [isFetchingPreviousPage, hasPreviousPage]);
+  }, [isFetchingPreviousPage, hasPreviousPage, t]);
 
   const footerContent = useCallback((): React.ReactElement | null => {
     if (isWaitingForResponse) {

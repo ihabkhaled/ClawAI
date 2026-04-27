@@ -73,7 +73,7 @@ export function EvidenceViewer({ bundle, t }: EvidenceViewerProps): React.ReactE
             <div className="mb-1 font-medium">{t('research.evidence.warnings')}</div>
             <ul className="list-inside list-disc space-y-1">
               {bundle.warnings.map((w, i) => (
-                <li key={i.toString()}>{w}</li>
+                <li key={`${w}-${i.toString()}`}>{w}</li>
               ))}
             </ul>
           </div>

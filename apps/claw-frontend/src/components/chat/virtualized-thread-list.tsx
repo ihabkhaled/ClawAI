@@ -55,7 +55,7 @@ export function VirtualizedThreadList({
       return null;
     }
     return null;
-  }, [isFetchingNextPage, hasNextPage, threads.length]);
+  }, [isFetchingNextPage, hasNextPage, threads.length, t]);
 
   if (isLoading) {
     return (

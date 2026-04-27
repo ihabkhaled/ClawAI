@@ -37,7 +37,7 @@ export function useParallelMessageGroup(messages: ChatMessage[]): {
     }
     const bestMsg = messages.find((m) => m.model === bestModel);
     return bestMsg?.id ?? null;
-  }, [messages]);
+  }, [messages, responses]);
 
   const openExpanded = (message: ChatMessage, isFastest: boolean): void => {
     setExpanded({ message, isFastest });

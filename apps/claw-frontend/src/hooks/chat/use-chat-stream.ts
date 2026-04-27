@@ -174,7 +174,7 @@ export function useChatStream(threadId: string, isActive: boolean) {
       connection.close();
       connectionRef.current = null;
     };
-  }, [threadId, isActive, resetStream, upsertStage]);
+  }, [threadId, isActive, resetStream, upsertStage, t]);
 
   // Clean up when no longer waiting
   useEffect(() => {

@@ -97,7 +97,7 @@ export const useThreadDetailPage = ({
       });
       regenerate(messageId);
     },
-    [regenerate],
+    [regenerate, threadId],
   );
 
   const handleFeedback = useCallback(
