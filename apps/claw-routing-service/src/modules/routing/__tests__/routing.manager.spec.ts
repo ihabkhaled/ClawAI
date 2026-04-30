@@ -3,6 +3,7 @@ import { type OllamaRouterManager } from '../managers/ollama-router.manager';
 import { type PromptBuilderManager } from '../managers/prompt-builder.manager';
 import { ComplexityClassifierManager } from '../managers/complexity-classifier.manager';
 import { CapabilityRouterManager } from '../managers/capability-router.manager';
+import { ImageDetectionManager } from '../managers/image-detection.manager';
 import { RoutingMode } from '../../../generated/prisma';
 import { ComplexityClass } from '../../../common/enums/complexity-class.enum';
 import { type RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
@@ -45,12 +46,14 @@ describe('RoutingManager', () => {
     // Use real managers (pure logic, no deps)
     const complexityClassifier = new ComplexityClassifierManager();
     const capabilityRouter = new CapabilityRouterManager();
+    const imageDetection = new ImageDetectionManager();
     manager = new RoutingManager(
       policiesRepo as unknown as RoutingPoliciesRepository,
       ollamaRouter as unknown as OllamaRouterManager,
       promptBuilder as unknown as PromptBuilderManager,
       complexityClassifier,
       capabilityRouter,
+      imageDetection,
     );
   });
 

@@ -7,6 +7,7 @@ import { OllamaRouterManager } from './ollama-router.manager';
 import { PromptBuilderManager } from './prompt-builder.manager';
 import { ComplexityClassifierManager } from './complexity-classifier.manager';
 import { CapabilityRouterManager } from './capability-router.manager';
+import { ImageDetectionManager } from './image-detection.manager';
 import type { ComplexityClassification } from '../types/complexity.types';
 import type { ExplanationFactor, RoutingExplanation } from '../types/explanation.types';
 import {
@@ -42,7 +43,6 @@ import {
   GOVERNMENT_KEYWORDS,
   HOSPITALITY_KEYWORDS,
   HR_KEYWORDS,
-  IMAGE_KEYWORDS,
   IMAGE_MODEL_DALLE3,
   IMAGE_MODEL_IMAGEN,
   IMAGE_MODEL_SD_LOCAL,
@@ -94,6 +94,7 @@ export class RoutingManager {
     private readonly promptBuilder: PromptBuilderManager,
     private readonly complexityClassifier: ComplexityClassifierManager,
     private readonly capabilityRouter: CapabilityRouterManager,
+    private readonly imageDetection: ImageDetectionManager,
   ) {}
 
   async evaluateRoute(context: RoutingContext): Promise<RoutingDecisionResult> {
@@ -746,143 +747,21 @@ export class RoutingManager {
   }
 
   private detectImageRequest(context: RoutingContext): RoutingDecisionResult | null {
-    this.logger.debug('detectImageRequest: scanning message for image keywords');
-    const lower = context.message.toLowerCase();
-
-    // Exact keyword match
-    const exactMatch = IMAGE_KEYWORDS.some((kw) => lower.includes(kw));
-
-    // Smart verb + image-word combo detection
-    const imageVerbs = [
-      'generate',
-      'create',
-      'draw',
-      'make',
-      'paint',
-      'render',
-      'design',
-      'produce',
-      'recreate',
-      'reproduce',
-      'remake',
-      'redo',
-    ];
-    const imageWords = [
-      'image',
-      'picture',
-      'photo',
-      'portrait',
-      'illustration',
-      'sketch',
-      'artwork',
-      'graphic',
-      'poster',
-      'banner',
-      'icon',
-      'logo',
-      'wallpaper',
-      'avatar',
-      'cartoon',
-      'anime',
-      'manga',
-      'comic',
-      'sticker',
-      'mascot',
-      'character',
-      'scene',
-      'landscape',
-      'cityscape',
-      'infographic',
-      'diagram',
-      'wireframe',
-      'mockup',
-      'thumbnail',
-      'cover',
-      'texture',
-      'pattern',
-      'meme',
-      'gif',
-    ];
-    const hasVerb = imageVerbs.some((v) => lower.includes(v));
-    const hasImageWord = imageWords.some((w) => lower.includes(w));
-    const comboMatch = hasVerb && hasImageWord;
-
-    // Strong image nouns that indicate visual output even without a verb
-    const strongImageNouns = [
-      'illustration',
-      'portrait',
-      'poster',
-      'logo',
-      'banner',
-      'sticker',
-      'mascot',
-      'wallpaper',
-      'avatar',
-      'icon',
-      'infographic',
-      'wireframe',
-      'mockup',
-      'thumbnail',
-      'cartoon',
-      'comic strip',
-      'manga',
-      'anime',
-    ];
-    const hasStrongNoun = strongImageNouns.some((n) => lower.includes(n));
-    // If prompt has a strong image noun + another image-related word, it is likely visual
-    const strongNounMatch = hasStrongNoun && (hasImageWord || hasVerb);
-
-    // Art style keywords that alone strongly indicate image generation
-    const artStyleIndicators = [
-      'photorealistic',
-      'watercolor',
-      'oil painting',
-      'impressionist',
-      'cyberpunk',
-      'pixel art',
-      'abstract art',
-      'digital art',
-      'concept art',
-      'fan art',
-      'line art',
-      'pop art',
-      'vintage poster',
-      'retro style',
-      'minimalist design',
-      'botanical illustration',
-      'still life',
-      'floor plan',
-      'anime style',
-      'comic strip',
-      'sticker design',
-    ];
-    const artStyleMatch = artStyleIndicators.some((s) => lower.includes(s));
-
-    // Reference-based phrases that imply image generation even without explicit image words
-    const referenceVerbs = ['recreate', 'reproduce', 'remake'];
-    const referenceMatch =
-      referenceVerbs.some((v) => lower.includes(v)) &&
-      (lower.includes('this') || lower.includes('attached'));
-
-    this.logger.debug(
-      `detectImageRequest: exactMatch=${String(exactMatch)} comboMatch=${String(comboMatch)} referenceMatch=${String(referenceMatch)} artStyleMatch=${String(artStyleMatch)}`,
-    );
-    if (!exactMatch && !comboMatch && !referenceMatch && !artStyleMatch && !strongNounMatch) {
-      this.logger.debug('detectImageRequest: no image request detected');
+    const detection = this.imageDetection.detect(context.message);
+    if (!detection.matched) {
       return null;
     }
-
     this.logger.log('detectImageRequest: image generation request detected via keyword heuristic');
+    return this.buildImageDecisionForBestProvider(context);
+  }
 
-    // Prefer Gemini for image generation, then OpenAI
+  private buildImageDecisionForBestProvider(context: RoutingContext): RoutingDecisionResult {
     if (this.isConnectorHealthy('GEMINI', context)) {
       return this.buildImageDecision(IMAGE_PROVIDER_GEMINI, IMAGE_MODEL_IMAGEN, context);
     }
     if (this.isConnectorHealthy('OPENAI', context)) {
       return this.buildImageDecision(IMAGE_PROVIDER_OPENAI, IMAGE_MODEL_DALLE3, context);
     }
-
-    // Fallback to local SD
     return this.buildImageDecision(IMAGE_PROVIDER_LOCAL, IMAGE_MODEL_SD_LOCAL, context);
   }
 

@@ -1,6 +1,7 @@
 import { RoutingMode } from '../../../generated/prisma';
 import { CapabilityRouterManager } from '../managers/capability-router.manager';
 import { ComplexityClassifierManager } from '../managers/complexity-classifier.manager';
+import { ImageDetectionManager } from '../managers/image-detection.manager';
 import { type OllamaRouterManager } from '../managers/ollama-router.manager';
 import { type PromptBuilderManager } from '../managers/prompt-builder.manager';
 import { RoutingManager } from '../managers/routing.manager';
@@ -28,6 +29,7 @@ describe('RoutingManager semantic guard', () => {
       promptBuilder as unknown as PromptBuilderManager,
       new ComplexityClassifierManager(),
       new CapabilityRouterManager(),
+      new ImageDetectionManager(),
     );
   });
 
