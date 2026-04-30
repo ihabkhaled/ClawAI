@@ -241,6 +241,13 @@ jobs:
             workspace: claw-frontend
             prisma: false
     env:
+      # vitest (claw-frontend) on Node v24 + tinypool 1.x exhausts the
+      # default ~4GB v8 heap during worker-pool teardown. All tests pass,
+      # but the post-run cleanup OOMs and the npm script exits 1. Bump
+      # the heap to 8GB for every test job — backend services unchanged
+      # (jest is well under 1GB) and only the frontend job actually
+      # benefits, but keeping it global avoids per-matrix divergence.
+      NODE_OPTIONS: --max-old-space-size=8192
       # Auth
       JWT_SECRET: this_is_a_test_secret_that_is_32chars_long
       ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef

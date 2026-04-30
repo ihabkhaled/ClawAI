@@ -10,6 +10,7 @@ RUN cd packages/shared-types && npm install --ignore-scripts 2>/dev/null || true
 RUN cd packages/shared-constants && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
 RUN cd packages/shared-rabbitmq && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
 RUN cd packages/shared-auth && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
+RUN cd packages/shared-utilities && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
 
 WORKDIR /app/apps/claw-file-generation-service
 RUN npm install --ignore-scripts 2>/dev/null || npm install --legacy-peer-deps --ignore-scripts 2>/dev/null || true

@@ -11,6 +11,11 @@ RUN cd /app && npm install --ignore-scripts && cd /app/apps/claw-client-logs-ser
 FROM base AS builder
 COPY --from=deps /app /app
 COPY apps/claw-client-logs-service/ .
+RUN cd /app/packages/shared-types && npx tsc \
+ && cd /app/packages/shared-constants && npx tsc \
+ && cd /app/packages/shared-rabbitmq && npx tsc \
+ && cd /app/packages/shared-auth && npx tsc \
+ && cd /app/packages/shared-utilities && npx tsc
 RUN npm run build
 
 FROM node:20-alpine AS runner
