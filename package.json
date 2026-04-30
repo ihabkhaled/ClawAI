@@ -52,6 +52,9 @@
   "overrides": {
     "@xmldom/xmldom": "^0.8.13",
     "follow-redirects": "^1.16.0",
-    "postcss": "^8.5.10"
+    "postcss": "^8.5.10",
+    "@angular-devkit/core": {
+      "rxjs": "^7.8.2"
+    }
   }
 }
