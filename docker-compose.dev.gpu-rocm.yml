@@ -1,0 +1,23 @@
+# AMD ROCm GPU passthrough overlay (dev) for claw-llamacpp-service.
+# Auto-loaded by ./scripts/claw.sh when /dev/kfd is detected on a Linux host.
+#
+# Requirements:
+#   - Linux only (ROCm container support)
+#   - AMD GPU with ROCm driver installed on host
+#   - Host user must have access to /dev/kfd and /dev/dri (video, render groups)
+
+services:
+  llamacpp-service:
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    group_add:
+      - video
+      - render
+    ipc: host
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      HSA_OVERRIDE_GFX_VERSION: '${HSA_OVERRIDE_GFX_VERSION:-}'

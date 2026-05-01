@@ -1,0 +1,24 @@
+# NVIDIA GPU passthrough overlay (dev) for claw-llamacpp-service.
+#
+# Auto-loaded by ./scripts/claw.sh when nvidia-smi is detected on the host.
+# Manual usage: docker compose -f docker-compose.dev.services.yml -f docker-compose.dev.gpu-nvidia.yml up -d llamacpp-service
+#
+# Requirements:
+#   - Linux: NVIDIA Container Toolkit installed
+#   - Windows: Docker Desktop with WSL 2 backend + GPU support enabled
+
+services:
+  llamacpp-service:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities:
+                - gpu
+                - compute
+                - utility
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility

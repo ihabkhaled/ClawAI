@@ -1,0 +1,18 @@
+# AMD ROCm GPU passthrough overlay (prod) for claw-llamacpp-service.
+# Auto-loaded by ./scripts/claw.sh --prod when /dev/kfd is detected.
+
+services:
+  llamacpp-service:
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    group_add:
+      - video
+      - render
+    ipc: host
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      HSA_OVERRIDE_GFX_VERSION: '${HSA_OVERRIDE_GFX_VERSION:-}'
