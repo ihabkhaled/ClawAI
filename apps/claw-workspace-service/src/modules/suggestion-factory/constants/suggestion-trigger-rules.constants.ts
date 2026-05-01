@@ -1,0 +1,61 @@
+import type { CreateTriggerRuleInput } from '../types/suggestion-factory.types';
+
+export const DEFAULT_TRIGGER_RULES: ReadonlyArray<
+  CreateTriggerRuleInput & { isSystemDefault: true }
+> = [
+  {
+    name: 'github-pr-large-opened',
+    description: 'When a GitHub PR with > 500 LOC is opened, draft a SUMMARIZE suggestion',
+    eventType: 'workspace.webhook.received',
+    providerRegex: '^GITHUB$',
+    contentRegex: '"action"\\s*:\\s*"opened"',
+    actionKindToSuggest: 'SUMMARIZE',
+    isActive: true,
+    priority: 500,
+    isSystemDefault: true,
+  },
+  {
+    name: 'jira-ticket-created',
+    description: 'When a Jira ticket is created, draft a SUMMARIZE suggestion',
+    eventType: 'workspace.webhook.received',
+    providerRegex: '^JIRA$',
+    contentRegex: '"webhookEvent"\\s*:\\s*"jira:issue_created"',
+    actionKindToSuggest: 'SUMMARIZE',
+    isActive: true,
+    priority: 400,
+    isSystemDefault: true,
+  },
+  {
+    name: 'slack-direct-message',
+    description: 'When a Slack DM arrives, draft a DRAFT (reply) suggestion',
+    eventType: 'workspace.webhook.received',
+    providerRegex: '^SLACK$',
+    contentRegex: '"channel_type"\\s*:\\s*"im"',
+    actionKindToSuggest: 'DRAFT',
+    isActive: true,
+    priority: 600,
+    isSystemDefault: true,
+  },
+  {
+    name: 'github-pr-stale-7d',
+    description: 'When a stale PR is detected (via scheduler), draft a COMMENT_PR nudge',
+    eventType: 'workspace.auto_suggest.tick.completed',
+    providerRegex: '^GITHUB$',
+    contentRegex: '.*',
+    actionKindToSuggest: 'COMMENT_PR',
+    isActive: true,
+    priority: 200,
+    isSystemDefault: true,
+  },
+  {
+    name: 'gitlab-mr-opened',
+    description: 'When a GitLab MR is opened, draft a SUMMARIZE suggestion',
+    eventType: 'workspace.webhook.received',
+    providerRegex: '^GITLAB$',
+    contentRegex: '"object_kind"\\s*:\\s*"merge_request"',
+    actionKindToSuggest: 'SUMMARIZE',
+    isActive: true,
+    priority: 400,
+    isSystemDefault: true,
+  },
+];
