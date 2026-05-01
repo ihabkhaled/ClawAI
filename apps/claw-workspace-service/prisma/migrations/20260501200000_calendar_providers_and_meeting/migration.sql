@@ -1,0 +1,4 @@
+-- Stream 23 — Calendar providers + MEETING object type
+ALTER TYPE "WorkspaceProvider" ADD VALUE IF NOT EXISTS 'GOOGLE_CALENDAR';
+ALTER TYPE "WorkspaceProvider" ADD VALUE IF NOT EXISTS 'OUTLOOK_CALENDAR';
+ALTER TYPE "WorkspaceObjectType" ADD VALUE IF NOT EXISTS 'MEETING';
