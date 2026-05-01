@@ -10,6 +10,7 @@ import { RouterEducationManager } from './managers/router-education.manager';
 import { ComplexityClassifierManager } from './managers/complexity-classifier.manager';
 import { CapabilityRouterManager } from './managers/capability-router.manager';
 import { ImageDetectionManager } from './managers/image-detection.manager';
+import { LlamacppHealthManager } from './managers/llamacpp-health.manager';
 import { RoutingPoliciesRepository } from './repositories/routing-policies.repository';
 import { RoutingDecisionsRepository } from './repositories/routing-decisions.repository';
 import { RoutingEducationRepository } from './repositories/routing-education.repository';
@@ -29,6 +30,7 @@ import { ReplayCasesRepository } from './repositories/replay-cases.repository';
     ComplexityClassifierManager,
     CapabilityRouterManager,
     ImageDetectionManager,
+    LlamacppHealthManager,
     RoutingPoliciesRepository,
     RoutingDecisionsRepository,
     RoutingEducationRepository,

@@ -17,6 +17,8 @@ import { ReplayManager } from '../managers/replay.manager';
 import { AdaptiveLearningManager } from '../managers/adaptive-learning.manager';
 import { PromptBuilderManager } from '../managers/prompt-builder.manager';
 import { RouterEducationManager } from '../managers/router-education.manager';
+import { LlamacppHealthManager } from '../managers/llamacpp-health.manager';
+import { LLAMACPP_RUNTIME } from '../constants/llamacpp.constants';
 import { type CreatePolicyDto } from '../dto/create-policy.dto';
 import { type ReplayRoutingDto } from '../dto/replay-routing.dto';
 import { type UpdatePolicyDto } from '../dto/update-policy.dto';
@@ -64,6 +66,7 @@ export class RoutingService implements OnModuleInit {
     private readonly routerEducationManager: RouterEducationManager,
     private readonly rabbitMQService: RabbitMQService,
     private readonly promptBuilder: PromptBuilderManager,
+    private readonly llamacppHealth: LlamacppHealthManager,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -144,6 +147,7 @@ export class RoutingService implements OnModuleInit {
     this.logger.log(
       `evaluateRoute: evaluating route for thread ${dto.threadId ?? 'none'} mode=${dto.routingMode ?? 'AUTO'}`,
     );
+    this.runtimeHealthCache.set(LLAMACPP_RUNTIME, this.llamacppHealth.isFrontierAvailable());
     const context: RoutingContext = {
       message: dto.messageContent,
       threadId: dto.threadId,
@@ -302,7 +306,25 @@ export class RoutingService implements OnModuleInit {
       await this.handleMessageFeedbackSet(data);
     });
 
+    await this.rabbitMQService.subscribe(EventPattern.LLAMACPP_MODEL_LOADED, async () => {
+      this.handleLlamacppRuntimeChanged('llamacpp.model.loaded', true);
+    });
+
+    await this.rabbitMQService.subscribe(EventPattern.LLAMACPP_MODEL_UNLOADED, async () => {
+      this.handleLlamacppRuntimeChanged('llamacpp.model.unloaded', false);
+    });
+
+    await this.rabbitMQService.subscribe(EventPattern.LLAMACPP_MODEL_CRASHED, async () => {
+      this.handleLlamacppRuntimeChanged('llamacpp.model.crashed', false);
+    });
+
     this.logger.log('Subscribed to routing events');
+  }
+
+  private handleLlamacppRuntimeChanged(event: string, healthy: boolean): void {
+    this.logger.log(`handleLlamacppRuntimeChanged: ${event} healthy=${String(healthy)}`);
+    this.runtimeHealthCache.set(LLAMACPP_RUNTIME, healthy);
+    this.promptBuilder.invalidateCache();
   }
 
   private async handleMessageCreated(data: unknown): Promise<void> {
@@ -374,6 +396,7 @@ export class RoutingService implements OnModuleInit {
     forcedModel: string | undefined,
   ): RoutingContext {
     const config = this.getRuntimeRoutingConfig();
+    this.runtimeHealthCache.set(LLAMACPP_RUNTIME, this.llamacppHealth.isFrontierAvailable());
     return {
       message: content,
       threadId,

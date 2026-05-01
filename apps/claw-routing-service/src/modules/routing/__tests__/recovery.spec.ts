@@ -43,6 +43,7 @@ describe('RoutingService.getRecoveryStats', () => {
         publish: jest.fn(),
       } as any,
       {} as any,
+      { isFrontierAvailable: () => false } as any,
     );
   });
 
