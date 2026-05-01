@@ -11,6 +11,7 @@ import {
 import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
 import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { buildOAuthErrorMessage } from '../utilities/oauth-error.utility';
+import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
@@ -30,6 +31,7 @@ import type {
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
+  WriteActionResult,
 } from '../types/workspace.types';
 
 @Injectable()
@@ -302,5 +304,118 @@ export class ClickUpAdapter implements WorkspaceAdapter {
       externalCreatedAt: new Date(Number(task.date_created)),
       externalUpdatedAt: new Date(Number(task.date_updated)),
     };
+  }
+
+  // ─── Stream 21: write actions ───────────────────────────
+
+  supportsWrite(): boolean {
+    return true;
+  }
+
+  async executeWriteAction(
+    accessToken: string,
+    actionType: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    try {
+      switch (actionType) {
+        case WorkspaceActionType.CREATE_CLICKUP_TASK:
+          return await this.createTask(accessToken, payload);
+        case WorkspaceActionType.UPDATE_CLICKUP_TASK:
+          return await this.updateTask(accessToken, payload);
+        case WorkspaceActionType.COMMENT_CLICKUP_TASK:
+          return await this.commentTask(accessToken, payload);
+        default:
+          return {
+            success: false,
+            errorMessage: `Action ${actionType} not supported by ClickUp adapter`,
+          };
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'unknown';
+      this.logger.warn(`ClickUp write ${actionType} failed: ${message}`);
+      return { success: false, errorMessage: message };
+    }
+  }
+
+  private async createTask(
+    token: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const listId = String(payload['listId'] ?? '');
+    const name = String(payload['name'] ?? '');
+    const description = (payload['description'] as string | undefined) ?? '';
+    const url = `${CLICKUP_API_BASE}/list/${encodeURIComponent(listId)}/task`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: token,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ name, description }),
+    });
+    return this.toClickUpResult(response);
+  }
+
+  private async updateTask(
+    token: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const taskId = String(payload['taskId'] ?? '');
+    const update: Record<string, unknown> = {};
+    if (typeof payload['name'] === 'string') {
+      update['name'] = payload['name'];
+    }
+    if (typeof payload['description'] === 'string') {
+      update['description'] = payload['description'];
+    }
+    if (typeof payload['status'] === 'string') {
+      update['status'] = payload['status'];
+    }
+    const url = `${CLICKUP_API_BASE}/task/${encodeURIComponent(taskId)}`;
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        Authorization: token,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(update),
+    });
+    return this.toClickUpResult(response);
+  }
+
+  private async commentTask(
+    token: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const taskId = String(payload['taskId'] ?? '');
+    const commentText = String(payload['commentText'] ?? '');
+    const url = `${CLICKUP_API_BASE}/task/${encodeURIComponent(taskId)}/comment`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: token,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ comment_text: commentText }),
+    });
+    return this.toClickUpResult(response);
+  }
+
+  private async toClickUpResult(response: Response): Promise<WriteActionResult> {
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      return {
+        success: false,
+        errorMessage: `ClickUp API ${String(response.status)} ${text.slice(0, 200)}`,
+      };
+    }
+    const json = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+    const externalId = typeof json['id'] === 'string' ? (json['id'] as string) : undefined;
+    const url = typeof json['url'] === 'string' ? (json['url'] as string) : undefined;
+    return { success: true, externalId, url };
   }
 }

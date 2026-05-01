@@ -6,9 +6,11 @@ import { FigmaAdapter } from './adapters/figma.adapter';
 import { GitHubAdapter } from './adapters/github.adapter';
 import { GitLabAdapter } from './adapters/gitlab.adapter';
 import { GmailAdapter } from './adapters/gmail.adapter';
+import { GoogleCalendarAdapter } from './adapters/google-calendar.adapter';
 import { GoogleDriveAdapter } from './adapters/google-drive.adapter';
 import { JiraAdapter } from './adapters/jira.adapter';
 import { OneDriveAdapter } from './adapters/onedrive.adapter';
+import { OutlookCalendarAdapter } from './adapters/outlook-calendar.adapter';
 import { SharePointAdapter } from './adapters/sharepoint.adapter';
 import { SlackAdapter } from './adapters/slack.adapter';
 import { WorkspaceAdapterFactory } from './adapters/workspace-adapter.factory';
@@ -90,6 +92,8 @@ import { WorkspaceSearchService } from './services/workspace-search.service';
     OneDriveAdapter,
     FigmaAdapter,
     ClickUpAdapter,
+    GoogleCalendarAdapter,
+    OutlookCalendarAdapter,
   ],
   exports: [
     WorkspaceConnectorService,

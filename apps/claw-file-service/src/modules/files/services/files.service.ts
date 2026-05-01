@@ -11,6 +11,7 @@ import { FileChunksRepository } from '../repositories/file-chunks.repository';
 import { FileSecurityManager } from '../managers/file-security.manager';
 import { type UploadFileDto } from '../dto/upload-file.dto';
 import { type ListFilesQueryDto } from '../dto/list-files-query.dto';
+import { type CreateInternalFileBody } from '../types/internal-file.types';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '../types/files.types';
 
 @Injectable()
@@ -23,6 +24,38 @@ export class FilesService {
     private readonly rabbitMQService: RabbitMQService,
     private readonly fileSecurityManager: FileSecurityManager,
   ) {}
+
+  /**
+   * Stream 22 — service-to-service upload entry-point used by
+   * claw-workspace-service for Gmail attachments. Runs the full
+   * FileSecurityManager pipeline (ClamAV + magic byte + extension blocklist).
+   */
+  async createInternalFile(body: CreateInternalFileBody): Promise<File> {
+    this.logger.log(
+      `createInternalFile: ingest "${body.filename}" mimeType=${body.mimeType} sourceObjectId=${body.sourceWorkspaceObjectId ?? 'none'}`,
+    );
+    this.validateMimeType(body.mimeType);
+    const buffer = Buffer.from(body.contentBase64, 'base64');
+    this.validateFileSize(buffer.length);
+    await this.runSecurityChecks(body.filename, body.mimeType, buffer);
+    const safeName = this.fileSecurityManager.getSanitizedFilename(body.filename);
+    const storagePath = saveFile(`${String(Date.now())}-${safeName}`, buffer);
+    const file = await this.filesRepository.create({
+      userId: body.userId,
+      filename: safeName,
+      mimeType: body.mimeType,
+      sizeBytes: buffer.length,
+      storagePath,
+      content: body.contentBase64,
+    });
+    void this.rabbitMQService.publish(EventPattern.FILE_UPLOADED, {
+      fileId: file.id,
+      userId: body.userId,
+      filename: file.filename,
+      timestamp: new Date().toISOString(),
+    });
+    return file;
+  }
 
   async uploadFile(userId: string, dto: UploadFileDto): Promise<File> {
     this.logger.log(

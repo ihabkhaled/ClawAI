@@ -15,6 +15,13 @@ import { HealthModule } from '../modules/health/health.module';
 import { WorkspaceModule } from '../modules/workspace/workspace.module';
 import { ActionsModule } from '../modules/actions/actions.module';
 import { AiActionsModule } from '../modules/ai-actions/ai-actions.module';
+import { WebhooksModule } from '../modules/webhooks/webhooks.module';
+import { AutoSuggestModule } from '../modules/auto-suggest/auto-suggest.module';
+import { SuggestionFactoryModule } from '../modules/suggestion-factory/suggestion-factory.module';
+import { LearningModule } from '../modules/learning/learning.module';
+import { InboxModule } from '../modules/inbox/inbox.module';
+import { DigestModule } from '../modules/digest/digest.module';
+import { TicketPlanningModule } from '../modules/ticket-planning/ticket-planning.module';
 
 @Module({
   imports: [
@@ -72,6 +79,13 @@ import { AiActionsModule } from '../modules/ai-actions/ai-actions.module';
     WorkspaceModule,
     ActionsModule,
     AiActionsModule,
+    WebhooksModule,
+    AutoSuggestModule,
+    SuggestionFactoryModule,
+    LearningModule,
+    InboxModule,
+    DigestModule,
+    TicketPlanningModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

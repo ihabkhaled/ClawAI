@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
+import { json, raw } from 'express';
 import { RabbitMQLoggerService, RabbitMQService } from '@claw/shared-rabbitmq';
 import { AppModule } from './app/app.module';
 import { AppConfig } from './app/config/app.config';
@@ -11,6 +12,15 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   app.useLogger(app.get(Logger));
   app.use(helmet());
+
+  // Webhook receiver needs the raw body for HMAC verification — apply raw
+  // parser only to webhook routes; everything else stays on JSON.
+  app.use(
+    /^\/api\/v1\/workspace\/webhooks\/.+/,
+    raw({ type: '*/*', limit: `${config.WEBHOOK_BODY_MAX_BYTES}b` }),
+  );
+  app.use(json({ limit: '10mb' }));
+
   app.setGlobalPrefix('api/v1');
 
   const corsOrigins = process.env['CORS_ORIGINS']?.split(',') ?? [

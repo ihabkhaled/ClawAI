@@ -13,6 +13,8 @@ const appConfigSchema = z.object({
     .string()
     .default('true')
     .transform((v) => v === 'true'),
+  // Stream 22 — service-to-service auth for /upload-internal + /download-internal
+  INTER_SERVICE_AUTH_TOKEN: z.string().min(32, 'INTER_SERVICE_AUTH_TOKEN must be at least 32 chars').default('change-me-inter-service-token-32-chars-min'),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

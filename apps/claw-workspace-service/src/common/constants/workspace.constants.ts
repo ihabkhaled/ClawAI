@@ -84,6 +84,15 @@ export const MICROSOFT_AUTH_URL = 'https://login.microsoftonline.com/common/oaut
 export const MICROSOFT_TOKEN_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
 export const MICROSOFT_ONEDRIVE_SYNC_LIMIT = 50;
 export const MICROSOFT_SHAREPOINT_SYNC_LIMIT = 50;
+// Microsoft Graph "simple upload" caps at 4 MB. Anything larger requires an
+// upload session (out of scope for v1; tracked as tech debt).
+export const MICROSOFT_GRAPH_SIMPLE_UPLOAD_MAX_BYTES = 4 * 1024 * 1024;
+
+// Stream 23 — Calendar (Google Calendar v3 + Microsoft Graph)
+export const GOOGLE_CALENDAR_API_BASE = 'https://www.googleapis.com/calendar/v3';
+export const CALENDAR_SYNC_LOOKBACK_DAYS = 7;
+export const CALENDAR_SYNC_LOOKAHEAD_DAYS = 14;
+export const CALENDAR_SYNC_MAX_EVENTS_PER_TICK = 100;
 
 // ─── Crypto utility constants ─────────────────────────────────────────────────
 export const AES_ALGORITHM = 'aes-256-gcm';

@@ -53,8 +53,54 @@ npm run migrate:dev  # Create and run migration
 ## Docker Rebuild Procedure
 
 ```bash
-docker compose -f docker-compose.dev.yml stop workspace-service
-docker compose -f docker-compose.dev.yml rm -f workspace-service
+./scripts/claw.sh stop workspace-service
+./scripts/claw.sh rm -f workspace-service
 docker rmi claw-workspace-service
-docker compose -f docker-compose.dev.yml up -d --build workspace-service
+./scripts/claw.sh up -d --build workspace-service
 ```
+
+## AI Action Approval Engine (Stream 10)
+
+The approval queue + risk-policy engine lives under `src/modules/ai-actions/`. Architecture: [`docs/03-architecture/ai-action-approval-flow.md`](../../docs/03-architecture/ai-action-approval-flow.md).
+
+### Key components
+
+| Layer | File | Responsibility |
+|---|---|---|
+| Manager | `managers/ai-action-risk-scorer.manager.ts` | PII regex + heuristic score (0–100) → risk label |
+| Manager | `managers/ai-action-policy-matcher.manager.ts` | DENY > AUTO_APPROVE > ALLOW resolution |
+| Manager | `managers/ai-action-approval.manager.ts` | `enqueueSuggestion()` orchestrator — single entry point for all callers |
+| Manager | `managers/ai-action-default-policy-seeder.manager.ts` | Boots 13 system policies (idempotent) |
+| Manager | `managers/ai-action-queue-expiry-sweeper.manager.ts` | Cron `0 */15 * * * *` + advisory lock; expires PENDING after 24h |
+| Service | `services/ai-action-policy.service.ts` | Admin CRUD on `AiActionPolicy` |
+| Service | `services/ai-action-approval-queue.service.ts` | approve/reject/edit/bulk |
+| Repository | `repositories/ai-action-policy.repository.ts` | data access; `findActive()` returns priority DESC |
+| Repository | `repositories/ai-action-approval-queue.repository.ts` | data access; `findExpired()` powers the sweeper |
+
+### Hard rules — never violate
+
+1. **IMPL_PROMPT never auto-approves.** `deny-impl-prompt-auto-approve` system policy enforces this at priority 999. Stream 41 depends on it.
+2. **DENY beats AUTO_APPROVE regardless of priority.** The matcher short-circuits on the first DENY hit.
+3. **Admin policy regexes pass through `compilePolicyPattern`** for ReDoS defence — never use `new RegExp(userInput)` directly.
+4. **System-default policies cannot be deleted via REST** (HTTP 409). Only DB direct manipulation can change them, and then they re-seed on next boot.
+5. **Bulk approve excludes CRITICAL rows.** `CRITICAL_RISK_REQUIRES_INDIVIDUAL_REVIEW` is the standard reason code.
+6. **Reason is required for HIGH/CRITICAL rejection** (≥10 chars) — Zod-validated at controller layer + guarded again in service.
+
+### Calling the engine from a new caller (future streams 12, 13)
+
+```typescript
+const result = await aiActionApprovalManager.enqueueSuggestion({
+  userId: user.id,
+  connectorId: connector.id,
+  actionKind: 'SUMMARIZE',
+  provider: WorkspaceProvider.JIRA,
+  draftPayload: { body: 'AI-drafted summary…' },
+  generatedBy: { provider: 'OPENAI', model: 'gpt-4o' },
+  sourceObjectId: ticketId,
+});
+// result.status ∈ { PENDING_APPROVAL, AUTO_APPROVED, DENIED }
+```
+
+### QA harness
+
+`qa/test-stream-10-approval-engine.sh` runs 18 live API + DB checks. Master harness `qa/test-workspace-automation-full.sh` chains it.

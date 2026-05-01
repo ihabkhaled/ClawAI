@@ -7,3 +7,6 @@ export { WorkspaceObjectLinkType } from './workspace-object-link-type.enum';
 export { WorkspaceActionType } from './workspace-action-type.enum';
 export { WorkspaceActionStatus } from './workspace-action-status.enum';
 export { WorkspaceErrorCode } from './workspace-error-code.enum';
+export { AiActionPolicyKind } from './ai-action-policy-kind.enum';
+export { AiActionRiskLabel } from './ai-action-risk-label.enum';
+export { AiActionQueueStatus } from './ai-action-queue-status.enum';

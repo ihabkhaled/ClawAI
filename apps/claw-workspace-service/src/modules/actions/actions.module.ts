@@ -18,9 +18,11 @@ import { FigmaAdapter } from '../workspace/adapters/figma.adapter';
 import { GitHubAdapter } from '../workspace/adapters/github.adapter';
 import { GitLabAdapter } from '../workspace/adapters/gitlab.adapter';
 import { GmailAdapter } from '../workspace/adapters/gmail.adapter';
+import { GoogleCalendarAdapter } from '../workspace/adapters/google-calendar.adapter';
 import { GoogleDriveAdapter } from '../workspace/adapters/google-drive.adapter';
 import { JiraAdapter } from '../workspace/adapters/jira.adapter';
 import { OneDriveAdapter } from '../workspace/adapters/onedrive.adapter';
+import { OutlookCalendarAdapter } from '../workspace/adapters/outlook-calendar.adapter';
 import { SharePointAdapter } from '../workspace/adapters/sharepoint.adapter';
 import { SlackAdapter } from '../workspace/adapters/slack.adapter';
 
@@ -50,6 +52,8 @@ import { SlackAdapter } from '../workspace/adapters/slack.adapter';
     OneDriveAdapter,
     FigmaAdapter,
     ClickUpAdapter,
+    GoogleCalendarAdapter,
+    OutlookCalendarAdapter,
   ],
 })
 export class ActionsModule {}

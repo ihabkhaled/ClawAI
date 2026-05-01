@@ -8,9 +8,11 @@ import { FigmaAdapter } from './figma.adapter';
 import { GitHubAdapter } from './github.adapter';
 import { GitLabAdapter } from './gitlab.adapter';
 import { GmailAdapter } from './gmail.adapter';
+import { GoogleCalendarAdapter } from './google-calendar.adapter';
 import { GoogleDriveAdapter } from './google-drive.adapter';
 import { JiraAdapter } from './jira.adapter';
 import { OneDriveAdapter } from './onedrive.adapter';
+import { OutlookCalendarAdapter } from './outlook-calendar.adapter';
 import { SharePointAdapter } from './sharepoint.adapter';
 import { SlackAdapter } from './slack.adapter';
 import type { WorkspaceAdapter } from './workspace-adapter.interface';
@@ -30,6 +32,8 @@ export class WorkspaceAdapterFactory {
     private readonly onedrive: OneDriveAdapter,
     private readonly figma: FigmaAdapter,
     private readonly clickup: ClickUpAdapter,
+    private readonly googleCalendar: GoogleCalendarAdapter,
+    private readonly outlookCalendar: OutlookCalendarAdapter,
   ) {}
 
   getAdapter(provider: WorkspaceProvider | string): WorkspaceAdapter {
@@ -59,6 +63,10 @@ export class WorkspaceAdapterFactory {
         return this.figma;
       case WorkspaceProvider.CLICKUP:
         return this.clickup;
+      case WorkspaceProvider.GOOGLE_CALENDAR:
+        return this.googleCalendar;
+      case WorkspaceProvider.OUTLOOK_CALENDAR:
+        return this.outlookCalendar;
       default:
         throw new BusinessException(
           'workspace.connector.unsupported_provider',

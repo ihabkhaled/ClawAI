@@ -4,14 +4,17 @@ import {
   HEALTH_CHECK_TIMEOUT_MS,
   MICROSOFT_AUTH_URL,
   MICROSOFT_GRAPH_API_BASE,
+  MICROSOFT_GRAPH_SIMPLE_UPLOAD_MAX_BYTES,
   MICROSOFT_SHAREPOINT_SYNC_LIMIT,
   MICROSOFT_TOKEN_URL,
   OAUTH_PROBE_INVALID_CODE,
   OAUTH_PROBE_INVALID_REDIRECT_URI,
 } from '../../../common/constants/workspace.constants';
+import { encodeGraphPath } from '../../../common/utilities/microsoft-graph-path.utility';
 import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
 import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { buildOAuthErrorMessage } from '../utilities/oauth-error.utility';
+import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
@@ -27,6 +30,7 @@ import type {
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
+  WriteActionResult,
 } from '../types/workspace.types';
 
 @Injectable()
@@ -268,5 +272,123 @@ export class SharePointAdapter implements WorkspaceAdapter {
       externalUpdatedAt: new Date(site.lastModifiedDateTime),
       metadata: { siteKind: 'sharepoint' },
     };
+  }
+
+  // ─── Stream 21: write actions ───────────────────────────
+
+  supportsWrite(): boolean {
+    return true;
+  }
+
+  async executeWriteAction(
+    accessToken: string,
+    actionType: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    try {
+      switch (actionType) {
+        case WorkspaceActionType.UPLOAD_SHAREPOINT:
+          return await this.uploadFile(accessToken, payload);
+        case WorkspaceActionType.CREATE_SHAREPOINT_LIST_ITEM:
+          return await this.createListItem(accessToken, payload);
+        case WorkspaceActionType.UPDATE_SHAREPOINT_LIST_ITEM:
+          return await this.updateListItem(accessToken, payload);
+        default:
+          return {
+            success: false,
+            errorMessage: `Action ${actionType} not supported by SharePoint adapter`,
+          };
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'unknown';
+      this.logger.warn(`SharePoint write ${actionType} failed: ${message}`);
+      return { success: false, errorMessage: message };
+    }
+  }
+
+  private async uploadFile(
+    token: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const siteId = String(payload['siteId'] ?? '');
+    const driveId = String(payload['driveId'] ?? '');
+    const parentFolderPath = String(payload['parentFolderPath'] ?? '');
+    const fileName = String(payload['fileName'] ?? '');
+    const contentBase64 = String(payload['contentBase64'] ?? '');
+    const mimeType = String(payload['mimeType'] ?? 'application/octet-stream');
+    const buf = Buffer.from(contentBase64, 'base64');
+    if (buf.length > MICROSOFT_GRAPH_SIMPLE_UPLOAD_MAX_BYTES) {
+      return {
+        success: false,
+        errorMessage: `FILE_TOO_LARGE_FOR_SIMPLE_UPLOAD (size=${String(buf.length)}, max=${String(MICROSOFT_GRAPH_SIMPLE_UPLOAD_MAX_BYTES)})`,
+      };
+    }
+    const fullPath = encodeGraphPath(`${parentFolderPath}/${fileName}`);
+    const url = `${MICROSOFT_GRAPH_API_BASE}/sites/${encodeURIComponent(siteId)}/drives/${encodeURIComponent(driveId)}/root:${fullPath}:/content`;
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': mimeType,
+        Accept: 'application/json',
+      },
+      body: buf,
+    });
+    return this.toGraphResult(response);
+  }
+
+  private async createListItem(
+    token: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const siteId = String(payload['siteId'] ?? '');
+    const listId = String(payload['listId'] ?? '');
+    const fields = (payload['fields'] as Record<string, unknown> | undefined) ?? {};
+    const url = `${MICROSOFT_GRAPH_API_BASE}/sites/${encodeURIComponent(siteId)}/lists/${encodeURIComponent(listId)}/items`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ fields }),
+    });
+    return this.toGraphResult(response);
+  }
+
+  private async updateListItem(
+    token: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const siteId = String(payload['siteId'] ?? '');
+    const listId = String(payload['listId'] ?? '');
+    const itemId = String(payload['itemId'] ?? '');
+    const fields = (payload['fields'] as Record<string, unknown> | undefined) ?? {};
+    const url = `${MICROSOFT_GRAPH_API_BASE}/sites/${encodeURIComponent(siteId)}/lists/${encodeURIComponent(listId)}/items/${encodeURIComponent(itemId)}/fields`;
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(fields),
+    });
+    return this.toGraphResult(response);
+  }
+
+  private async toGraphResult(response: Response): Promise<WriteActionResult> {
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      return {
+        success: false,
+        errorMessage: `Microsoft Graph ${String(response.status)} ${text.slice(0, 200)}`,
+      };
+    }
+    const json = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+    const externalId = typeof json['id'] === 'string' ? (json['id'] as string) : undefined;
+    const url = typeof json['webUrl'] === 'string' ? (json['webUrl'] as string) : undefined;
+    return { success: true, externalId, url };
   }
 }

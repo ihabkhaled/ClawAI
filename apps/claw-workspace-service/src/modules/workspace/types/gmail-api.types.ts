@@ -19,6 +19,7 @@ export type GmailMessagePart = {
   parts?: GmailMessagePart[];
   mimeType?: string;
   filename?: string;
+  partId?: string;
 };
 
 export type GmailMessage = {

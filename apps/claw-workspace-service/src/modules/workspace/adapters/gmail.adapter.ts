@@ -13,6 +13,9 @@ import {
 import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
 import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { buildOAuthErrorMessage } from '../utilities/oauth-error.utility';
+import { sanitiseHtml } from '../../../common/utilities/html-sanitiser.utility';
+import { uploadInternal } from '../../../common/utilities/file-service-client.utility';
+import { AppConfig } from '../../../app/config/app.config';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
@@ -525,5 +528,210 @@ export class GmailAdapter implements WorkspaceAdapter {
           : undefined,
       metadata: { threadId: data.threadId },
     };
+  }
+
+  // ─── Stream 22: HTML rendering + attachment extraction ──────────
+
+  /**
+   * Walk the Gmail MIME tree and return the first text/html part body, decoded.
+   * Returns null if the message has no HTML representation.
+   */
+  extractHtmlPart(part: GmailMessagePart | undefined): string | null {
+    if (part === undefined) return null;
+    if (part.mimeType === 'text/html' && part.body?.data !== undefined) {
+      return Buffer.from(part.body.data, 'base64url').toString('utf-8');
+    }
+    for (const child of part.parts ?? []) {
+      const html = this.extractHtmlPart(child);
+      if (html !== null) return html;
+    }
+    return null;
+  }
+
+  /**
+   * Walk the MIME tree and return the first text/plain part body, decoded.
+   */
+  extractTextPart(part: GmailMessagePart | undefined): string | null {
+    if (part === undefined) return null;
+    if (part.mimeType === 'text/plain' && part.body?.data !== undefined) {
+      return Buffer.from(part.body.data, 'base64url').toString('utf-8');
+    }
+    for (const child of part.parts ?? []) {
+      const text = this.extractTextPart(child);
+      if (text !== null) return text;
+    }
+    return null;
+  }
+
+  /**
+   * Flatten the MIME tree into a leaf-list. Used to enumerate attachments.
+   */
+  flattenParts(part: GmailMessagePart | undefined): GmailMessagePart[] {
+    if (part === undefined) return [];
+    if (part.parts === undefined || part.parts.length === 0) return [part];
+    return part.parts.flatMap((p) => this.flattenParts(p));
+  }
+
+  /**
+   * Persist Gmail attachments to claw-file-service via the service-token
+   * upload-internal endpoint. Returns the per-attachment refs that the caller
+   * stores on `WorkspaceObject.metadata.attachmentRefs`. Skips attachments
+   * larger than `WORKSPACE_GMAIL_MAX_ATTACHMENT_BYTES`.
+   */
+  async fetchAndPersistAttachments(input: {
+    accessToken: string;
+    messageId: string;
+    userId: string;
+    payload: GmailMessagePart | undefined;
+  }): Promise<Array<{
+    fileServiceFileId: string;
+    filename: string;
+    mimeType: string;
+    sizeBytes: number;
+    partId: string;
+    extractedText: string | null;
+  }>> {
+    const config = AppConfig.get();
+    if (!config.WORKSPACE_GMAIL_FETCH_ATTACHMENTS) return [];
+    if (input.payload === undefined) return [];
+    const refs: Array<{
+      fileServiceFileId: string;
+      filename: string;
+      mimeType: string;
+      sizeBytes: number;
+      partId: string;
+      extractedText: string | null;
+    }> = [];
+    for (const part of this.flattenParts(input.payload)) {
+      if (
+        part.body?.attachmentId === undefined ||
+        part.filename === undefined ||
+        part.filename.length === 0 ||
+        part.body.size === undefined
+      ) {
+        continue;
+      }
+      if (part.body.size > config.WORKSPACE_GMAIL_MAX_ATTACHMENT_BYTES) {
+        this.logger.warn(
+          `fetchAndPersistAttachments: skipping oversize attachment ${part.filename} (${String(part.body.size)} bytes)`,
+        );
+        continue;
+      }
+      try {
+        const data = await this.fetchAttachmentData(
+          input.accessToken,
+          input.messageId,
+          part.body.attachmentId,
+        );
+        const fileId = await uploadInternal({
+          userId: input.userId,
+          filename: part.filename,
+          mimeType: part.mimeType ?? 'application/octet-stream',
+          content: data,
+        });
+        // Stream 22.3 → 30 — extract text from common text-able types so the
+        // email's content field (which is the embedding source for Stream 30
+        // semantic search) carries the attachment text, not just the body.
+        const extractedText = this.extractAttachmentText(part.mimeType, part.filename, data);
+        refs.push({
+          fileServiceFileId: fileId,
+          filename: part.filename,
+          mimeType: part.mimeType ?? 'application/octet-stream',
+          sizeBytes: data.length,
+          partId: part.partId ?? '',
+          extractedText,
+        });
+      } catch (error) {
+        this.logger.warn(
+          `fetchAndPersistAttachments: failed for ${part.filename} — ${error instanceof Error ? error.message : 'unknown'}`,
+        );
+      }
+    }
+    return refs;
+  }
+
+  /**
+   * Build a "rich-rendered" metadata block for a Gmail message — sanitised HTML
+   * + plaintext + (optional) attachment refs. Caller stores this on
+   * `WorkspaceObject.metadata` alongside the existing fields.
+   */
+  async renderMessageRichMetadata(input: {
+    accessToken: string;
+    message: GmailMessage;
+    userId: string;
+  }): Promise<{
+    renderedHtml: string | null;
+    renderedText: string | null;
+    /** Stream 22.3 → 30: concatenated attachment text for inclusion in the
+     * indexable content of the parent EMAIL WorkspaceObject. */
+    indexableAttachmentText: string;
+    attachmentRefs: Array<{
+      fileServiceFileId: string;
+      filename: string;
+      mimeType: string;
+      sizeBytes: number;
+      partId: string;
+      extractedText: string | null;
+    }>;
+  }> {
+    const rawHtml = this.extractHtmlPart(input.message.payload);
+    const renderedHtml = rawHtml === null ? null : sanitiseHtml(rawHtml);
+    const renderedText = this.extractTextPart(input.message.payload);
+    const attachmentRefs = await this.fetchAndPersistAttachments({
+      accessToken: input.accessToken,
+      messageId: input.message.id,
+      userId: input.userId,
+      payload: input.message.payload,
+    });
+    const indexableAttachmentText = attachmentRefs
+      .filter((r): r is typeof r & { extractedText: string } => r.extractedText !== null)
+      .map((r) => `[${r.filename}]\n${r.extractedText}`)
+      .join('\n\n')
+      .slice(0, 20_000);
+    return { renderedHtml, renderedText, indexableAttachmentText, attachmentRefs };
+  }
+
+  /**
+   * Stream 22.3 — extract plain text from a Gmail attachment buffer for
+   * inclusion in the email's indexable content. Only handles text-decodable
+   * types here; binary types like PDF/DOCX route through file-service's
+   * existing text-extraction pipeline (deferred — beyond this bridge).
+   */
+  private extractAttachmentText(
+    mimeType: string | undefined,
+    filename: string,
+    data: Buffer,
+  ): string | null {
+    const TEXT_LIKE = /^text\/(plain|csv|markdown|x-markdown|html)$/i;
+    const NAME_LIKE = /\.(txt|md|csv|json|log|yaml|yml)$/i;
+    const isTextLike =
+      (mimeType !== undefined && TEXT_LIKE.test(mimeType)) || NAME_LIKE.test(filename);
+    if (!isTextLike) return null;
+    try {
+      return data.toString('utf-8').slice(0, 8_000);
+    } catch (error) {
+      this.logger.warn(`extractAttachmentText: failed for ${filename} — ${String(error)}`);
+      return null;
+    }
+  }
+
+  private async fetchAttachmentData(
+    accessToken: string,
+    messageId: string,
+    attachmentId: string,
+  ): Promise<Buffer> {
+    const url = `${GMAIL_API_BASE}/users/me/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(attachmentId)}`;
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+      signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS * 6),
+    });
+    if (!response.ok) {
+      throw new Error(`Gmail attachment fetch ${String(response.status)}`);
+    }
+    const body = (await response.json()) as { data?: string };
+    if (body.data === undefined) {
+      throw new Error('Gmail attachment fetch returned no data');
+    }
+    return Buffer.from(body.data, 'base64url');
   }
 }

@@ -15,6 +15,7 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 import { MemoryModule } from '../modules/memory/memory.module';
 import { ContextPacksModule } from '../modules/context-packs/context-packs.module';
+import { EmbeddingsModule } from '../modules/embeddings/embeddings.module';
 import { HealthModule } from '../modules/health/health.module';
 
 @Module({
@@ -55,6 +56,7 @@ import { HealthModule } from '../modules/health/health.module';
     RedisModule,
     MemoryModule,
     ContextPacksModule,
+    EmbeddingsModule,
     HealthModule,
     ThrottlerModule.forRoot([{
       ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),

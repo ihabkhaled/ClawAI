@@ -9,8 +9,10 @@ import { GitLabAdapter } from '../gitlab.adapter';
 import { GmailAdapter } from '../gmail.adapter';
 import { SlackAdapter } from '../slack.adapter';
 import { JiraAdapter } from '../jira.adapter';
+import { GoogleCalendarAdapter } from '../google-calendar.adapter';
 import { GoogleDriveAdapter } from '../google-drive.adapter';
 import { OneDriveAdapter } from '../onedrive.adapter';
+import { OutlookCalendarAdapter } from '../outlook-calendar.adapter';
 import { SharePointAdapter } from '../sharepoint.adapter';
 import { BusinessException } from '../../../../common/errors/business.exception';
 
@@ -28,6 +30,8 @@ describe('WorkspaceAdapterFactory', () => {
   const onedrive = new OneDriveAdapter();
   const figma = new FigmaAdapter();
   const clickup = new ClickUpAdapter();
+  const googleCalendar = new GoogleCalendarAdapter();
+  const outlookCalendar = new OutlookCalendarAdapter();
 
   beforeEach(() => {
     factory = new WorkspaceAdapterFactory(
@@ -43,6 +47,8 @@ describe('WorkspaceAdapterFactory', () => {
       onedrive,
       figma,
       clickup,
+      googleCalendar,
+      outlookCalendar,
     );
   });
 

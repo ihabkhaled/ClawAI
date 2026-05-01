@@ -5,6 +5,11 @@ export enum AiActionKind {
   JUDGE = 'JUDGE',
   REWRITE = 'REWRITE',
   EXTRACT = 'EXTRACT',
+  // Stream 41 — ticket planning + coding bridge
+  PLAN = 'PLAN',
+  DECOMPOSE = 'DECOMPOSE',
+  ESTIMATE = 'ESTIMATE',
+  IMPL_PROMPT = 'IMPL_PROMPT',
 }
 
 export enum AiActionPrivacyClass {

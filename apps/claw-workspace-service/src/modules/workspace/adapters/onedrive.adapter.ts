@@ -4,14 +4,17 @@ import {
   HEALTH_CHECK_TIMEOUT_MS,
   MICROSOFT_AUTH_URL,
   MICROSOFT_GRAPH_API_BASE,
+  MICROSOFT_GRAPH_SIMPLE_UPLOAD_MAX_BYTES,
   MICROSOFT_ONEDRIVE_SYNC_LIMIT,
   MICROSOFT_TOKEN_URL,
   OAUTH_PROBE_INVALID_CODE,
   OAUTH_PROBE_INVALID_REDIRECT_URI,
 } from '../../../common/constants/workspace.constants';
+import { encodeGraphPath } from '../../../common/utilities/microsoft-graph-path.utility';
 import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
 import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { buildOAuthErrorMessage } from '../utilities/oauth-error.utility';
+import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
@@ -27,6 +30,7 @@ import type {
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
+  WriteActionResult,
 } from '../types/workspace.types';
 
 @Injectable()
@@ -281,5 +285,115 @@ export class OneDriveAdapter implements WorkspaceAdapter {
         path: item.parentReference?.path,
       },
     };
+  }
+
+  // ─── Stream 21: write actions ───────────────────────────
+
+  supportsWrite(): boolean {
+    return true;
+  }
+
+  async executeWriteAction(
+    accessToken: string,
+    actionType: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    try {
+      switch (actionType) {
+        case WorkspaceActionType.UPLOAD_ONEDRIVE:
+          return await this.uploadFile(accessToken, payload);
+        case WorkspaceActionType.MOVE_ONEDRIVE:
+          return await this.moveFile(accessToken, payload);
+        default:
+          return {
+            success: false,
+            errorMessage: `Action ${actionType} not supported by OneDrive adapter`,
+          };
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'unknown';
+      this.logger.warn(`OneDrive write ${actionType} failed: ${message}`);
+      return { success: false, errorMessage: message };
+    }
+  }
+
+  private async uploadFile(
+    token: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const driveId = String(payload['driveId'] ?? '');
+    const parentFolderPath = String(payload['parentFolderPath'] ?? '');
+    const fileName = String(payload['fileName'] ?? '');
+    const contentBase64 = String(payload['contentBase64'] ?? '');
+    const mimeType = String(payload['mimeType'] ?? 'application/octet-stream');
+    const buf = Buffer.from(contentBase64, 'base64');
+    if (buf.length > MICROSOFT_GRAPH_SIMPLE_UPLOAD_MAX_BYTES) {
+      return {
+        success: false,
+        errorMessage: `FILE_TOO_LARGE_FOR_SIMPLE_UPLOAD (size=${String(buf.length)}, max=${String(MICROSOFT_GRAPH_SIMPLE_UPLOAD_MAX_BYTES)})`,
+      };
+    }
+    const fullPath = encodeGraphPath(`${parentFolderPath}/${fileName}`);
+    const url = `${MICROSOFT_GRAPH_API_BASE}/drives/${encodeURIComponent(driveId)}/root:${fullPath}:/content`;
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': mimeType,
+        Accept: 'application/json',
+      },
+      body: buf,
+    });
+    return this.toGraphResult(response);
+  }
+
+  private async moveFile(
+    token: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const driveId = String(payload['driveId'] ?? '');
+    const itemId = String(payload['itemId'] ?? '');
+    const targetParentFolderPath = String(payload['targetParentFolderPath'] ?? '');
+    const lookupUrl = `${MICROSOFT_GRAPH_API_BASE}/drives/${encodeURIComponent(driveId)}/root:${encodeGraphPath(targetParentFolderPath)}`;
+    const lookupResponse = await fetch(lookupUrl, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    if (!lookupResponse.ok) {
+      const text = await lookupResponse.text().catch(() => '');
+      return {
+        success: false,
+        errorMessage: `OneDrive target folder lookup ${String(lookupResponse.status)}: ${text.slice(0, 200)}`,
+      };
+    }
+    const lookupJson = (await lookupResponse.json()) as { id?: string };
+    const targetParentId = lookupJson.id;
+    if (targetParentId === undefined) {
+      return { success: false, errorMessage: 'OneDrive target folder missing id' };
+    }
+    const url = `${MICROSOFT_GRAPH_API_BASE}/drives/${encodeURIComponent(driveId)}/items/${encodeURIComponent(itemId)}`;
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ parentReference: { id: targetParentId } }),
+    });
+    return this.toGraphResult(response);
+  }
+
+  private async toGraphResult(response: Response): Promise<WriteActionResult> {
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      return {
+        success: false,
+        errorMessage: `Microsoft Graph ${String(response.status)} ${text.slice(0, 200)}`,
+      };
+    }
+    const json = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+    const externalId = typeof json['id'] === 'string' ? (json['id'] as string) : undefined;
+    const url = typeof json['webUrl'] === 'string' ? (json['webUrl'] as string) : undefined;
+    return { success: true, externalId, url };
   }
 }

@@ -20,6 +20,9 @@ export const FALLBACK_CADENCE_SECONDS: Record<WorkspaceProvider, number> = {
   [WorkspaceProvider.CONFLUENCE]: 600,
   [WorkspaceProvider.CLICKUP]: 600,
   [WorkspaceProvider.FIGMA]: 900,
+  // Stream 23 — Calendar (read-only, longer cadence is fine)
+  [WorkspaceProvider.GOOGLE_CALENDAR]: 600,
+  [WorkspaceProvider.OUTLOOK_CALENDAR]: 600,
 };
 
 export const FALLBACK_BACKFILL_WINDOW_DAYS = 30;

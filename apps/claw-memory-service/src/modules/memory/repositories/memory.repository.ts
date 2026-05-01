@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { type MemoryRecord, type MemoryType, Prisma } from "../../../generated/prisma";
+import { MemoryType, Prisma, type MemoryRecord } from "../../../generated/prisma";
 import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
 import {
   type CreateMemoryData,
@@ -49,6 +49,30 @@ export class MemoryRepository {
   async findEnabledByUserId(userId: string, limit: number): Promise<MemoryRecord[]> {
     return this.prisma.memoryRecord.findMany({
       where: { userId, isEnabled: true },
+      orderBy: { updatedAt: "desc" },
+      take: limit,
+    });
+  }
+
+  async findLearnedPreferences(
+    userId: string,
+    actionKindFilter: string | undefined,
+    limit: number,
+  ): Promise<MemoryRecord[]> {
+    const baseFilter = {
+      userId,
+      isEnabled: true,
+      type: MemoryType.PREFERENCE,
+    };
+    if (actionKindFilter !== undefined && actionKindFilter.length > 0) {
+      return this.prisma.memoryRecord.findMany({
+        where: { ...baseFilter, content: { contains: actionKindFilter, mode: "insensitive" } },
+        orderBy: { updatedAt: "desc" },
+        take: limit,
+      });
+    }
+    return this.prisma.memoryRecord.findMany({
+      where: baseFilter,
       orderBy: { updatedAt: "desc" },
       take: limit,
     });

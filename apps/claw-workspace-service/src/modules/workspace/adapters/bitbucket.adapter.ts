@@ -29,7 +29,9 @@ import type {
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
+  WriteActionResult,
 } from '../types/workspace.types';
+import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 
 @Injectable()
 export class BitbucketAdapter implements WorkspaceAdapter {
@@ -391,5 +393,113 @@ export class BitbucketAdapter implements WorkspaceAdapter {
       this.logger.warn(`Bitbucket PRs error for ${fullName}: ${String(error)}`);
       return [];
     }
+  }
+
+  // ─── Stream 20: write actions ───────────────────────────
+
+  supportsWrite(): boolean {
+    return true;
+  }
+
+  async executeWriteAction(
+    accessToken: string,
+    actionType: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    try {
+      switch (actionType) {
+        case WorkspaceActionType.CREATE_PR_COMMENT_BB:
+          return await this.createPrComment(accessToken, payload);
+        case WorkspaceActionType.APPROVE_PR_BB:
+          return await this.approvePr(accessToken, payload);
+        case WorkspaceActionType.CREATE_BITBUCKET_ISSUE:
+          return await this.createIssue(accessToken, payload);
+        default:
+          return {
+            success: false,
+            errorMessage: `Action ${actionType} not supported by Bitbucket adapter`,
+          };
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'unknown';
+      this.logger.warn(`Bitbucket write ${actionType} failed: ${message}`);
+      return { success: false, errorMessage: message };
+    }
+  }
+
+  private async createPrComment(
+    token: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const workspace = String(payload['workspace'] ?? '');
+    const repo = String(payload['repo'] ?? '');
+    const prId = String(payload['prId'] ?? '');
+    const body = String(payload['body'] ?? '');
+    const url = `https://api.bitbucket.org/2.0/repositories/${encodeURIComponent(workspace)}/${encodeURIComponent(repo)}/pullrequests/${encodeURIComponent(prId)}/comments`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ content: { raw: body } }),
+    });
+    return this.toResult(response);
+  }
+
+  private async approvePr(
+    token: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const workspace = String(payload['workspace'] ?? '');
+    const repo = String(payload['repo'] ?? '');
+    const prId = String(payload['prId'] ?? '');
+    const url = `https://api.bitbucket.org/2.0/repositories/${encodeURIComponent(workspace)}/${encodeURIComponent(repo)}/pullrequests/${encodeURIComponent(prId)}/approve`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return this.toResult(response);
+  }
+
+  private async createIssue(
+    token: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const workspace = String(payload['workspace'] ?? '');
+    const repo = String(payload['repo'] ?? '');
+    const title = String(payload['title'] ?? '');
+    const description = (payload['description'] as string | undefined) ?? '';
+    const url = `https://api.bitbucket.org/2.0/repositories/${encodeURIComponent(workspace)}/${encodeURIComponent(repo)}/issues`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ title, content: { raw: description } }),
+    });
+    return this.toResult(response);
+  }
+
+  private async toResult(response: Response): Promise<WriteActionResult> {
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      return {
+        success: false,
+        errorMessage: `Bitbucket API ${String(response.status)} ${text.slice(0, 200)}`,
+      };
+    }
+    const json = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+    const id = json['id'];
+    const links = json['links'] as Record<string, unknown> | undefined;
+    const html = links?.['html'] as Record<string, unknown> | undefined;
+    return {
+      success: true,
+      externalId: id === undefined ? undefined : String(id),
+      url: typeof html?.['href'] === 'string' ? (html['href'] as string) : undefined,
+    };
   }
 }

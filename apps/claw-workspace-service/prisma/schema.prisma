@@ -23,6 +23,8 @@ enum WorkspaceProvider {
   GMAIL
   MICROSOFT_SHAREPOINT
   MICROSOFT_ONEDRIVE
+  GOOGLE_CALENDAR
+  OUTLOOK_CALENDAR
 }
 
 enum WorkspaceProviderAuthMode {
@@ -78,6 +80,7 @@ enum WorkspaceObjectType {
   EMAIL
   MEETING_NOTE
   SPREADSHEET
+  MEETING
 }
 
 enum WorkspacePermissionLevel {
@@ -109,6 +112,24 @@ enum WorkspaceActionType {
   CREATE_USER_STORY_FROM_FIGMA
   CREATE_JIRA_FROM_FIGMA
   POST_FIGMA_COMMENT
+  // Stream 20 — GitLab/Bitbucket write actions
+  CREATE_MR_COMMENT
+  APPROVE_MR
+  CREATE_GITLAB_ISSUE
+  COMMENT_GITLAB_ISSUE
+  UPDATE_MR_DESCRIPTION
+  CREATE_PR_COMMENT_BB
+  APPROVE_PR_BB
+  CREATE_BITBUCKET_ISSUE
+  // Stream 21 — OneDrive/SharePoint/ClickUp write actions
+  UPLOAD_ONEDRIVE
+  MOVE_ONEDRIVE
+  UPLOAD_SHAREPOINT
+  CREATE_SHAREPOINT_LIST_ITEM
+  UPDATE_SHAREPOINT_LIST_ITEM
+  CREATE_CLICKUP_TASK
+  UPDATE_CLICKUP_TASK
+  COMMENT_CLICKUP_TASK
 }
 
 enum WorkspaceActionStatus {
@@ -120,6 +141,34 @@ enum WorkspaceActionStatus {
   FAILED
   EXPIRED
   EDITED
+}
+
+// ─── Stream 10: AI Action Approval Policy Engine ─────────
+
+enum AiActionPolicyKind {
+  DENY
+  ALLOW
+  AUTO_APPROVE
+}
+
+enum AiActionRiskLabel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AiActionQueueStatus {
+  PENDING_APPROVAL
+  AUTO_APPROVED
+  APPROVED
+  REJECTED
+  EXECUTING
+  EXECUTED
+  FAILED
+  EXPIRED
+  EDITED
+  DENIED
 }
 
 // ─── Models ──────────────────────────────────────────────
@@ -369,4 +418,240 @@ model WorkspaceObjectLink {
   @@index([sourceObjectId])
   @@index([targetObjectId])
   @@map("workspace_object_links")
+}
+
+// ─── Stream 10: AI Action Approval Policy Engine — Models ─
+
+model AiActionPolicy {
+  id                String              @id @default(cuid())
+  name              String              @unique
+  kind              AiActionPolicyKind
+  description       String?
+  providerRegex     String              @default(".*") @map("provider_regex")
+  actionKindRegex   String              @default(".*") @map("action_kind_regex")
+  riskMaxLabel      AiActionRiskLabel   @default(LOW) @map("risk_max_label")
+  riskMaxScore      Int                 @default(30) @map("risk_max_score")
+  priority          Int                 @default(0)
+  requireReason     Boolean             @default(false) @map("require_reason")
+  isActive          Boolean             @default(true) @map("is_active")
+  isSystemDefault   Boolean             @default(false) @map("is_system_default")
+  createdBy         String?             @map("created_by") @db.VarChar(128)
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+
+  queueEntries      AiActionApprovalQueue[]
+
+  @@index([isActive, priority])
+  @@index([kind])
+  @@map("ai_action_policies")
+}
+
+model AiActionApprovalQueue {
+  id                String              @id @default(cuid())
+  userId            String              @map("user_id") @db.VarChar(128)
+  connectorId       String?             @map("connector_id")
+  actionKind        String              @map("action_kind") @db.VarChar(64)
+  provider          WorkspaceProvider?
+  status            AiActionQueueStatus @default(PENDING_APPROVAL)
+  draftPayload      Json                @map("draft_payload")
+  editedPayload     Json?               @map("edited_payload")
+  riskLabel         AiActionRiskLabel   @default(LOW) @map("risk_label")
+  riskScore         Int                 @default(0) @map("risk_score")
+  riskReasons       Json                @default("[]") @map("risk_reasons")
+  matchedPolicyId   String?             @map("matched_policy_id")
+  matchedPolicyName String?             @map("matched_policy_name") @db.VarChar(256)
+  generatedBy       Json?               @map("generated_by")
+  sourceObjectId    String?             @map("source_object_id")
+  rejectionReason   String?             @map("rejection_reason") @db.VarChar(1000)
+  errorMessage      String?             @map("error_message") @db.VarChar(2000)
+  workspaceActionId String?             @unique @map("workspace_action_id")
+  expiresAt         DateTime?           @map("expires_at")
+  statusChangedAt   DateTime            @default(now()) @map("status_changed_at")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+
+  matchedPolicy     AiActionPolicy?     @relation(fields: [matchedPolicyId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([status, expiresAt])
+  @@index([connectorId])
+  @@index([createdAt])
+  @@map("ai_action_approval_queue")
+}
+
+// ─── Stream 11: Universal Webhook Receiver ───────────────
+
+model WebhookDelivery {
+  id              String              @id @default(cuid())
+  connectorId     String?             @map("connector_id")
+  provider        WorkspaceProvider
+  externalDeliveryId String?          @map("external_delivery_id") @db.VarChar(256)
+  eventType       String?             @map("event_type") @db.VarChar(128)
+  signatureValid  Boolean             @default(false) @map("signature_valid")
+  signature       String?             @db.VarChar(512)
+  rawPayload      Json                @map("raw_payload")
+  processedAt     DateTime?           @map("processed_at")
+  errorMessage    String?             @map("error_message") @db.VarChar(2000)
+  ipAddress       String?             @map("ip_address") @db.VarChar(64)
+  bodyBytes       Int                 @default(0) @map("body_bytes")
+  createdAt       DateTime            @default(now()) @map("created_at")
+
+  @@unique([provider, externalDeliveryId])
+  @@index([provider, createdAt])
+  @@index([signatureValid, createdAt])
+  @@index([connectorId])
+  @@map("webhook_deliveries")
+}
+
+// ─── Stream 12: Auto-Suggest Scheduler ───────────────────
+
+enum AutoSuggestRunStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model AutoSuggestRun {
+  id                  String                @id @default(cuid())
+  jobType             String                @map("job_type") @db.VarChar(64)
+  status              AutoSuggestRunStatus
+  startedAt           DateTime              @default(now()) @map("started_at")
+  completedAt         DateTime?             @map("completed_at")
+  candidateCount      Int                   @default(0) @map("candidate_count")
+  suggestionsCreated  Int                   @default(0) @map("suggestions_created")
+  durationMs          Int?                  @map("duration_ms")
+  errorMessage        String?               @map("error_message") @db.VarChar(2000)
+
+  @@index([jobType, startedAt])
+  @@index([status, startedAt])
+  @@map("auto_suggest_runs")
+}
+
+model SuggestionDeduplication {
+  id              String     @id @default(cuid())
+  userId          String     @map("user_id") @db.VarChar(128)
+  sourceObjectId  String     @map("source_object_id")
+  actionKind      String     @map("action_kind") @db.VarChar(64)
+  jobType         String?    @map("job_type") @db.VarChar(64)
+  suggestedAt     DateTime   @default(now()) @map("suggested_at")
+  expiresAt       DateTime   @map("expires_at")
+
+  @@unique([userId, sourceObjectId, actionKind])
+  @@index([expiresAt])
+  @@map("suggestion_deduplication")
+}
+
+// ─── Stream 13: Suggestion Factory ───────────────────────
+
+model SuggestionTriggerRule {
+  id                    String              @id @default(cuid())
+  name                  String              @unique
+  description           String?
+  eventType             String              @map("event_type") @db.VarChar(64)
+  providerRegex         String              @default(".*") @map("provider_regex")
+  contentRegex          String              @default(".*") @map("content_regex")
+  actionKindToSuggest   String              @map("action_kind_to_suggest") @db.VarChar(64)
+  isActive              Boolean             @default(true) @map("is_active")
+  isSystemDefault       Boolean             @default(false) @map("is_system_default")
+  priority              Int                 @default(0)
+  createdBy             String?             @map("created_by") @db.VarChar(128)
+  createdAt             DateTime            @default(now()) @map("created_at")
+  updatedAt             DateTime            @updatedAt @map("updated_at")
+
+  @@index([isActive, priority])
+  @@index([eventType])
+  @@map("suggestion_trigger_rules")
+}
+
+// ─── Stream 41: Ticket planning + coding bridge ──────────
+
+enum ImplPromptHandoffMode {
+  CHAT
+  AGENT
+  CLIPBOARD
+}
+
+enum ImplPromptHandoffStatus {
+  PENDING
+  DELIVERED
+  FAILED
+}
+
+model ImplPromptHandoff {
+  id                      String                  @id @default(cuid())
+  sourceQueueId           String                  @map("source_queue_id") @db.VarChar(128)
+  userId                  String                  @map("user_id") @db.VarChar(128)
+  mode                    ImplPromptHandoffMode
+  targetThreadId          String?                 @map("target_thread_id") @db.VarChar(128)
+  targetTerminalCommandId String?                 @map("target_terminal_command_id") @db.VarChar(128)
+  status                  ImplPromptHandoffStatus @default(PENDING)
+  errorMessage            String?                 @map("error_message") @db.Text
+  briefSnippet            String                  @map("brief_snippet") @db.VarChar(1024)
+  createdAt               DateTime                @default(now()) @map("created_at")
+  deliveredAt             DateTime?               @map("delivered_at")
+
+  @@index([userId])
+  @@index([sourceQueueId])
+  @@index([status])
+  @@map("impl_prompt_handoffs")
+}
+
+// ─── Stream 31: Daily / weekly digest dashboard ─────────
+
+enum DigestScope {
+  DAILY
+  WEEKLY
+}
+
+model DigestSnapshot {
+  id                      String      @id @default(cuid())
+  userId                  String      @map("user_id") @db.VarChar(128)
+  scope                   DigestScope
+  snapshotDate            DateTime    @map("snapshot_date") @db.Date
+  sections                Json        @default("{}")
+  actionItemSuggestionIds Json        @default("[]") @map("action_item_suggestion_ids")
+  generatedAt             DateTime    @default(now()) @map("generated_at")
+  modelUsed               String      @map("model_used") @db.VarChar(128)
+  durationMs              Int         @default(0) @map("duration_ms")
+  errorMessage            String?     @map("error_message") @db.Text
+
+  @@unique([userId, scope, snapshotDate])
+  @@index([userId, scope])
+  @@map("digest_snapshots")
+}
+
+model UserDigestPreference {
+  id              String   @id @default(cuid())
+  userId          String   @unique @map("user_id") @db.VarChar(128)
+  dailyEnabled    Boolean  @default(true) @map("daily_enabled")
+  weeklyEnabled   Boolean  @default(true) @map("weekly_enabled")
+  dailyHourLocal  Int      @default(8) @map("daily_hour_local") @db.SmallInt
+  weeklyDayOfWeek Int      @default(5) @map("weekly_day_of_week") @db.SmallInt
+  weeklyHourLocal Int      @default(8) @map("weekly_hour_local") @db.SmallInt
+  timezone        String   @default("UTC") @db.VarChar(64)
+  providers       Json     @default("[]")
+  lastDailyAt     DateTime? @map("last_daily_at")
+  lastWeeklyAt    DateTime? @map("last_weekly_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("user_digest_preferences")
+}
+
+// ─── Stream 32: Per-user automation preferences ──────────
+
+model UserAutomationPreference {
+  id                        String   @id @default(cuid())
+  userId                    String   @map("user_id") @db.VarChar(128)
+  actionKind                String   @map("action_kind") @db.VarChar(64)
+  isEnabled                 Boolean  @default(true) @map("is_enabled")
+  autoApproveBelowRiskScore Int?     @map("auto_approve_below_risk_score")
+  perDayBudget              Int?     @map("per_day_budget")
+  providers                 Json     @default("[]") @map("providers")
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, actionKind])
+  @@index([userId])
+  @@map("user_automation_preferences")
 }

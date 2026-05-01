@@ -14,6 +14,7 @@ export const SERVICE_URLS: Record<string, string> = {
   'workspace-service': 'http://workspace-service:4014/api/v1/health',
   'agent-service': 'http://agent-service:4015/api/v1/health',
   'research-service': 'http://research-service:4016/api/v1/health',
+  'llamacpp-service': 'http://llamacpp-service:4017/api/v1/health',
 };
 
 export const HEALTH_CHECK_TIMEOUT_MS = 5000;

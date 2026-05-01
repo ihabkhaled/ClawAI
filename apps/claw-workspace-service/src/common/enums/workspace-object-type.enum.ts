@@ -13,4 +13,6 @@ export enum WorkspaceObjectType {
   EMAIL = 'EMAIL',
   MEETING_NOTE = 'MEETING_NOTE',
   SPREADSHEET = 'SPREADSHEET',
+  // Stream 23 — Calendar
+  MEETING = 'MEETING',
 }

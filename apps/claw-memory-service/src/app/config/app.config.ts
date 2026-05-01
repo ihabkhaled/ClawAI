@@ -6,8 +6,13 @@ const appConfigSchema = z.object({
   RABBITMQ_URL: z.string().min(1, 'RABBITMQ_URL is required'),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   OLLAMA_SERVICE_URL: z.string().min(1).default('http://ollama-service:4008'),
+  OLLAMA_BASE_URL: z.string().min(1).default('http://ollama:11434'),
   MEMORY_EXTRACTION_MODEL: z.string().min(1).default('AUTO'),
   MEMORY_PORT: z.string().default('4005'),
+  // Stream 30 — embeddings + semantic search
+  EMBEDDING_MODEL: z.string().min(1).default('nomic-embed-text'),
+  EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().default(768),
+  SEARCH_TOP_K: z.coerce.number().int().positive().max(500).default(50),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

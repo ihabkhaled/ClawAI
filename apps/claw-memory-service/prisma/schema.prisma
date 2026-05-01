@@ -64,3 +64,25 @@ model ContextPackItem {
   @@index([sortOrder])
   @@map("context_pack_items")
 }
+
+// Stream 30 — Unified inbox + cross-provider semantic search.
+// One embedding row per (workspaceObjectId, contentHash). Cosine search
+// powered by pgvector ivfflat index on `embedding`.
+model WorkspaceObjectEmbedding {
+  id                String   @id @default(cuid())
+  workspaceObjectId String   @map("workspace_object_id") @db.VarChar(128)
+  userId            String   @map("user_id") @db.VarChar(128)
+  provider          String   @db.VarChar(64)
+  objectType        String   @map("object_type") @db.VarChar(64)
+  contentHash       String   @map("content_hash") @db.VarChar(64)
+  contentSnippet    String   @map("content_snippet") @db.VarChar(2048)
+  // pgvector — dimension matches nomic-embed-text default (768).
+  embedding         Unsupported("vector(768)")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@unique([workspaceObjectId, contentHash])
+  @@index([userId])
+  @@index([provider])
+  @@map("workspace_object_embeddings")
+}

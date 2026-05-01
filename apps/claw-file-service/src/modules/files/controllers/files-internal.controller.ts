@@ -1,10 +1,12 @@
-import { Body, Controller, Get, Param, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Res, UseGuards } from '@nestjs/common';
 import { type Response } from 'express';
 import { Public } from '../../../app/decorators/public.decorator';
-import { type FileChunk } from '../../../generated/prisma';
+import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
+import { type File, type FileChunk } from '../../../generated/prisma';
 import { FileChunksRepository } from '../repositories/file-chunks.repository';
 import { FilesRepository } from '../repositories/files.repository';
 import { FilesService } from '../services/files.service';
+import type { CreateInternalFileBody } from '../types/internal-file.types';
 
 @Controller('internal/files')
 export class FilesInternalController {
@@ -49,5 +51,37 @@ export class FilesInternalController {
     @Body() body: { userId: string; filename: string; mimeType: string; base64Data: string },
   ): Promise<{ fileId: string }> {
     return this.filesService.storeImage(body);
+  }
+
+  /**
+   * Stream 22 — internal upload endpoint used by claw-workspace-service to
+   * persist Gmail attachments. Auth via service-token shared secret. Runs the
+   * full FileSecurityManager pipeline (ClamAV + magic bytes + extension blocklist).
+   */
+  @Public()
+  @UseGuards(ServiceTokenGuard)
+  @Post('upload-internal')
+  @HttpCode(HttpStatus.CREATED)
+  async uploadInternal(@Body() body: CreateInternalFileBody): Promise<{ fileId: string }> {
+    const file = await this.filesService.createInternalFile(body);
+    return { fileId: file.id };
+  }
+
+  /**
+   * Stream 22 — internal download endpoint used by claw-workspace-service's
+   * attachment download proxy. Service-token guarded.
+   */
+  @Public()
+  @UseGuards(ServiceTokenGuard)
+  @Get('download-internal/:id')
+  async downloadInternal(@Param('id') id: string, @Res() res: Response): Promise<void> {
+    return this.filesService.downloadFilePublic(id, res);
+  }
+
+  @Public()
+  @UseGuards(ServiceTokenGuard)
+  @Get('metadata-internal/:id')
+  async metadataInternal(@Param('id') id: string): Promise<File | null> {
+    return this.filesRepository.findById(id);
   }
 }

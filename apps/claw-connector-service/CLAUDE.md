@@ -74,10 +74,10 @@ npm run prisma:generate  # Regenerate Prisma client
 When rebuilding this service (especially after shared package changes):
 
 ```bash
-docker compose -f docker-compose.dev.yml stop connector-service
-docker compose -f docker-compose.dev.yml rm -f connector-service
+./scripts/claw.sh stop connector-service
+./scripts/claw.sh rm -f connector-service
 docker rmi claw-connector-service
-docker compose -f docker-compose.dev.yml up -d --build connector-service
+./scripts/claw.sh up -d --build connector-service
 ```
 
 **NEVER skip steps.** See root CLAUDE.md for full explanation.
