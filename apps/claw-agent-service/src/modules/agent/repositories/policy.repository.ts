@@ -25,6 +25,26 @@ export class PolicyRepository {
     });
   }
 
+  /**
+   * Active policies that explicitly target the supplied capability class.
+   * Used by CapabilityRiskService.
+   *
+   * Legacy terminal-command policies (capabilityClass=null) are excluded —
+   * those live exclusively in the CommandRiskService path. The capability
+   * framework reads only class-tagged rows. See ADR-029.
+   */
+  async findActiveForCapabilityClass(
+    capabilityClass: string,
+  ): Promise<AccessPolicy[]> {
+    return this.prisma.accessPolicy.findMany({
+      where: {
+        isActive: true,
+        capabilityClass: capabilityClass as never,
+      },
+      orderBy: [{ priority: 'desc' }, { createdAt: 'asc' }],
+    });
+  }
+
   async findById(id: string): Promise<AccessPolicy | null> {
     return this.prisma.accessPolicy.findUnique({ where: { id } });
   }

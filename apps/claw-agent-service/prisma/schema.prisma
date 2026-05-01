@@ -78,6 +78,163 @@ enum ScheduledCommandStatus {
   DISABLED
 }
 
+// === Capability Framework (Stream 10 — flagship) ===
+//
+// Generalises the existing terminal-command approval flow into a unified
+// Capability layer that every later stream (filesystem, process, browser,
+// screen, clipboard, application, audio, recipe step) plugs into.
+// Existing TerminalCommand flow stays for back-compat; under dual-write
+// every new TerminalCommand also creates a CapabilityInvocation row whose
+// `metadata.legacyTerminalCommandId` references it.
+enum CapabilityClass {
+  TERMINAL
+  FILESYSTEM
+  PROCESS
+  BROWSER
+  SCREEN
+  CLIPBOARD
+  NOTIFICATION
+  APPLICATION
+  AUDIO
+  SYSTEM
+  RECIPE_STEP
+}
+
+enum CapabilityOperation {
+  // Generic + per-class subsets used. Names line up with the per-class
+  // capability provider operation files in agent-cli/src/capability-providers/.
+  READ
+  WRITE
+  APPEND
+  MOVE
+  DELETE
+  LIST
+  STAT
+  WATCH
+  SEARCH
+  DIFF
+  MKDIR
+  SPAWN
+  KILL
+  SIGNAL
+  SET_ENV
+  TAIL_OUTPUT
+  OPEN
+  NAVIGATE
+  CLICK
+  FILL
+  SCROLL
+  SCREENSHOT
+  EXTRACT_TEXT
+  UPLOAD_FILE
+  DOWNLOAD
+  NETWORK_TRACE
+  INTERCEPT
+  COOKIE_READ
+  COOKIE_CLEAR
+  SESSION_SAVE
+  SESSION_RESTORE
+  CAPTURE_FULL
+  CAPTURE_REGION
+  CAPTURE_WINDOW
+  OCR
+  COLOR_PICK
+  FIND_IMAGE
+  RECORD_VIDEO
+  COMPARE_REGIONS
+  GET_TEXT
+  SET_TEXT
+  GET_IMAGE
+  PUSH
+  POP
+  HISTORY
+  SHOW_TOAST
+  SHOW_MODAL
+  SHOW_TRAY
+  LAUNCH
+  ACTIVATE
+  QUIT
+  LIST_RUNNING
+  LIST_INSTALLED
+  SEND_KEYSTROKE
+  CLICK_ELEMENT
+  READ_ELEMENT
+  FIND_WINDOW
+  TRANSCRIBE_FILE
+  TRANSCRIBE_MIC
+  SYNTHESISE
+  PLAY
+  RECORD
+  NETWORK_INFO
+  DISK_USAGE
+  TIMEZONE
+  LOCK
+  SUSPEND
+  COMPOSITE
+}
+
+enum CapabilityBlastRadius {
+  NONE
+  SINGLE_RESOURCE
+  MANY_RESOURCES
+  USER_SCOPE
+  SYSTEM_SCOPE
+  EXTERNAL
+}
+
+enum CapabilityReversibility {
+  REVERSIBLE
+  COMPENSATABLE
+  IRREVERSIBLE
+}
+
+enum CapabilityInvocationStatus {
+  PENDING_APPROVAL
+  AUTO_APPROVED
+  APPROVED
+  EXECUTING
+  EXECUTED
+  FAILED
+  REJECTED
+  EXPIRED
+  CANCELLED
+  ROLLED_BACK
+  ROLLBACK_FAILED
+  DENIED
+}
+
+enum RecipeRunStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  TIMED_OUT
+}
+
+enum RecipeRunStepStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  SKIPPED
+}
+
+// Stream 40 — fleet admin
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+// Stream 42 — marketplace
+enum MarketplaceListingStatus {
+  DRAFT
+  PUBLISHED
+  HIDDEN
+  REMOVED
+}
+
 model AgentSession {
   id              String             @id @default(cuid())
   userId          String
@@ -250,25 +407,86 @@ model ScheduledCommand {
 }
 
 model AccessPolicy {
-  id          String     @id @default(cuid())
-  name        String
-  kind        PolicyKind
-  pattern     String
-  scope       String?
-  riskScore   Int        @default(0)
-  riskLabel   RiskLabel  @default(LOW)
-  description String?
-  priority    Int        @default(0)
-  isActive    Boolean    @default(true)
-  orgId       String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id                       String                 @id @default(cuid())
+  name                     String
+  kind                     PolicyKind
+  pattern                  String
+  scope                    String?
+  riskScore                Int                    @default(0)
+  riskLabel                RiskLabel              @default(LOW)
+  description              String?
+  priority                 Int                    @default(0)
+  isActive                 Boolean                @default(true)
+  orgId                    String?
+  // === Capability framework extensions (Stream 10) ===
+  // null capabilityClass = legacy terminal-command policy; non-null = new path.
+  capabilityClass          CapabilityClass?
+  capabilityOperation      CapabilityOperation?
+  targetMatcherJson        Json?
+  autoApproveMaxRiskScore  Int?
+  requireReason            Boolean                @default(false)
+  isSystemDefault          Boolean                @default(false)
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
 
-  commands TerminalCommand[]
+  commands     TerminalCommand[]
+  invocations  CapabilityInvocation[]
 
   @@index([kind, isActive, priority])
   @@index([orgId])
+  @@index([capabilityClass, capabilityOperation, isActive, priority])
   @@map("access_policies")
+}
+
+// CapabilityInvocation is the unified record for every approval-gated agent
+// action (Stream 10). For TERMINAL class it dual-writes alongside
+// TerminalCommand during a deprecation window controlled by
+// CAPABILITY_DEPRECATED_TERMINAL_COMMAND_DUAL_WRITE.
+model CapabilityInvocation {
+  id                    String                       @id @default(cuid())
+  userId                String
+  deviceId              String
+  recipeRunId           String?
+  parentInvocationId    String?
+  capabilityClass       CapabilityClass
+  capabilityOperation   CapabilityOperation
+  targetDescriptor      Json
+  requiredScopes        Json
+  blastRadius           CapabilityBlastRadius
+  reversibility         CapabilityReversibility
+  payload               Json
+  status                CapabilityInvocationStatus   @default(PENDING_APPROVAL)
+  riskScore             Int                          @default(0)
+  riskLabel             RiskLabel                    @default(LOW)
+  matchedPolicyId       String?
+  matchedPolicy         AccessPolicy?                @relation(fields: [matchedPolicyId], references: [id], onDelete: SetNull)
+  matchedPolicyName     String?
+  reviewedBy            String?
+  reviewedAt            DateTime?
+  rejectionReason       String?
+  expiresAt             DateTime
+  startedExecutingAt    DateTime?
+  completedAt           DateTime?
+  executionResult       Json?
+  executionError        String?
+  undoPlan              Json?
+  rolledBackAt          DateTime?
+  rollbackResult        Json?
+  rollbackError         String?
+  metadata              Json?
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+
+  parent   CapabilityInvocation?  @relation("CapabilityInvocationParent", fields: [parentInvocationId], references: [id], onDelete: SetNull)
+  children CapabilityInvocation[] @relation("CapabilityInvocationParent")
+
+  @@index([userId, status])
+  @@index([deviceId, status])
+  @@index([recipeRunId])
+  @@index([status, expiresAt])
+  @@index([capabilityClass, capabilityOperation])
+  @@index([matchedPolicyId])
+  @@map("capability_invocations")
 }
 
 model LocalRepo {
@@ -304,4 +522,155 @@ model FileWatchEvent {
   @@index([sessionId, createdAt])
   @@index([userId, createdAt])
   @@map("file_watch_events")
+}
+
+model Recipe {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  dsl         Json
+  isEnabled   Boolean  @default(true)
+  version     Int      @default(1)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  runs RecipeRun[]
+
+  @@unique([userId, name])
+  @@index([userId, isEnabled])
+  @@map("recipes")
+}
+
+model RecipeRun {
+  id          String          @id @default(cuid())
+  recipeId    String
+  recipe      Recipe          @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  userId      String
+  deviceId    String
+  status      RecipeRunStatus @default(PENDING)
+  params      Json
+  startedAt   DateTime?
+  completedAt DateTime?
+  errorMessage String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  steps RecipeRunStep[]
+
+  @@index([userId, status])
+  @@index([recipeId, createdAt])
+  @@index([status, startedAt])
+  @@map("recipe_runs")
+}
+
+model RecipeRunStep {
+  id              String              @id @default(cuid())
+  recipeRunId     String
+  run             RecipeRun           @relation(fields: [recipeRunId], references: [id], onDelete: Cascade)
+  stepId          String
+  stepIndex       Int
+  status          RecipeRunStepStatus @default(PENDING)
+  invocationId    String?
+  output          Json?
+  errorMessage    String?
+  metadata        Json?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@unique([recipeRunId, stepId])
+  @@index([recipeRunId, stepIndex])
+  @@map("recipe_run_steps")
+}
+
+// ============================================================================
+// Stream 40 — Multi-device fleet admin
+// ============================================================================
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  ssoEnabled Boolean @default(false)
+  ssoMetadataJson Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members OrganizationMember[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String           @id @default(cuid())
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  role           OrganizationRole @default(MEMBER)
+  createdAt      DateTime         @default(now())
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("organization_members")
+}
+
+// ============================================================================
+// Stream 41 — Activity memory (local-first; sync flag opt-in)
+// ============================================================================
+
+model ActivityMemoryEntry {
+  id           String   @id @default(cuid())
+  userId       String
+  deviceId     String
+  kind         String   // free-form classifier (e.g. 'capability_executed', 'shell_session', 'browser_focus')
+  summary      String   @db.Text
+  occurredAt   DateTime
+  syncedToCloud Boolean @default(false)
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  @@index([userId, occurredAt])
+  @@index([deviceId, occurredAt])
+  @@index([userId, kind, occurredAt])
+  @@map("activity_memory_entries")
+}
+
+// ============================================================================
+// Stream 42 — Recipe marketplace (Ed25519-signed)
+// ============================================================================
+
+model MarketplaceListing {
+  id              String                   @id @default(cuid())
+  publisherUserId String
+  recipeId        String?
+  name            String
+  description     String?                  @db.Text
+  dsl             Json
+  signaturePublicKey String                // Ed25519 public key (hex)
+  signature       String                   // Ed25519 signature over canonical(dsl) (hex)
+  signatureAlgorithm String                @default("ed25519")
+  status          MarketplaceListingStatus @default(DRAFT)
+  installs        Int                      @default(0)
+  metadata        Json?
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  @@unique([publisherUserId, name])
+  @@index([status, createdAt])
+  @@map("marketplace_listings")
+}
+
+model MarketplaceInstall {
+  id          String   @id @default(cuid())
+  listingId   String
+  userId      String
+  recipeId    String?  // populated after the install creates a local Recipe
+  installedAt DateTime @default(now())
+
+  @@unique([listingId, userId])
+  @@index([userId])
+  @@map("marketplace_installs")
 }

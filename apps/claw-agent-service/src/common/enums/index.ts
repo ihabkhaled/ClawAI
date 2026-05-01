@@ -1,4 +1,9 @@
 export { AgentSessionStatus } from './agent-session-status.enum';
+export { CapabilityBlastRadius } from './capability-blast-radius.enum';
+export { CapabilityClass } from './capability-class.enum';
+export { CapabilityInvocationStatus } from './capability-invocation-status.enum';
+export { CapabilityOperation } from './capability-operation.enum';
+export { CapabilityReversibility } from './capability-reversibility.enum';
 export { DeviceCodeError } from './device-code-error.enum';
 export { DeviceCodeStatus } from './device-code-status.enum';
 export { DeviceScope } from './device-scope.enum';

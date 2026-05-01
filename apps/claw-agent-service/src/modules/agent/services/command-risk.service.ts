@@ -1,4 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { CapabilityBlastRadius } from '../../../common/enums/capability-blast-radius.enum';
+import { CapabilityClass } from '../../../common/enums/capability-class.enum';
+import { CapabilityInvocationStatus } from '../../../common/enums/capability-invocation-status.enum';
+import { CapabilityOperation } from '../../../common/enums/capability-operation.enum';
+import { CapabilityReversibility } from '../../../common/enums/capability-reversibility.enum';
 import { PolicyKind } from '../../../common/enums/policy-kind.enum';
 import { RiskLabel } from '../../../common/enums/risk-label.enum';
 import {
@@ -13,7 +18,9 @@ import {
   RISK_SCORE_HIGH_THRESHOLD,
   RISK_SCORE_MEDIUM_THRESHOLD,
 } from '../../../common/constants/policy.constants';
+import { CAPABILITY_DUAL_WRITE_FLAG_ENV } from '../../../common/constants/capability.constants';
 import { compilePolicyPattern } from '../../../common/utilities/policy-regex.utility';
+import { CapabilityRiskService } from './capability-risk.service';
 import { PolicyRepository } from '../repositories/policy.repository';
 import type { AccessPolicy } from '../../../generated/prisma';
 import type { EvaluationAccumulator, RiskAssessment } from '../types/policy.types';
@@ -22,11 +29,66 @@ import type { EvaluationAccumulator, RiskAssessment } from '../types/policy.type
 export class CommandRiskService {
   private readonly logger = new Logger(CommandRiskService.name);
 
-  constructor(private readonly repo: PolicyRepository) {}
+  constructor(
+    private readonly repo: PolicyRepository,
+    private readonly capabilityRiskService: CapabilityRiskService,
+  ) {}
 
   async assess(command: string): Promise<RiskAssessment> {
     const policies = await this.repo.findActive();
-    return this.evaluate(command, policies);
+    const legacyResult = this.evaluate(command, policies);
+    if (this.dualWriteEnabled()) {
+      // Fire-and-forget parallel call; never block the legacy path on
+      // capability service errors. Divergence is logged for soak.
+      void this.compareAgainstCapabilityPath(command, legacyResult);
+    }
+    return legacyResult;
+  }
+
+  private legacyToCapabilityStatus(legacy: RiskAssessment): CapabilityInvocationStatus {
+    if (legacy.blockedByPolicy) {
+      return CapabilityInvocationStatus.DENIED;
+    }
+    if (legacy.autoApproved) {
+      return CapabilityInvocationStatus.AUTO_APPROVED;
+    }
+    return CapabilityInvocationStatus.PENDING_APPROVAL;
+  }
+
+  private dualWriteEnabled(): boolean {
+    const raw = process.env[CAPABILITY_DUAL_WRITE_FLAG_ENV];
+    if (raw === undefined || raw === '') {
+      return true; // default-on per CLAUDE.md
+    }
+    return raw.toLowerCase() !== 'false';
+  }
+
+  private async compareAgainstCapabilityPath(
+    command: string,
+    legacy: RiskAssessment,
+  ): Promise<void> {
+    try {
+      const capabilityResult = await this.capabilityRiskService.assess({
+        capabilityClass: CapabilityClass.TERMINAL,
+        capabilityOperation: CapabilityOperation.SPAWN,
+        targetDescriptor: { command },
+        payload: {},
+        blastRadius: CapabilityBlastRadius.USER_SCOPE,
+        reversibility: CapabilityReversibility.IRREVERSIBLE,
+        userId: 'dual-write-comparison',
+        deviceId: 'dual-write-comparison',
+      });
+      const legacyDecision = this.legacyToCapabilityStatus(legacy);
+      if (capabilityResult.status !== legacyDecision) {
+        this.logger.warn(
+          `[dual-write] divergence — command="${command.slice(0, 60)}" legacy=${legacyDecision} capability=${capabilityResult.status} legacyPolicy=${legacy.matchedPolicyName ?? 'none'} capabilityPolicy=${capabilityResult.matchedPolicyName ?? 'none'}`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `[dual-write] capability path errored: ${error instanceof Error ? error.message : 'unknown'}`,
+      );
+    }
   }
 
   private evaluate(command: string, policies: AccessPolicy[]): RiskAssessment {

@@ -4,3 +4,8 @@ export type {
   AuthenticatedUser,
   DeviceContext,
 } from './auth.types';
+export type {
+  RecipeExpressionContext,
+  RecipeParserCursor,
+  RecipeToken,
+} from './recipe-parser.types';
