@@ -6,6 +6,8 @@ import { UsageService } from './services/usage.service';
 import { AuditsRepository } from './repositories/audits.repository';
 import { UsageLedgerRepository } from './repositories/usage-ledger.repository';
 import { AuditEventManager } from './managers/audit-event.manager';
+import { AiActionAuditConsumer } from './consumers/ai-action.consumer';
+import { LlamacppAuditConsumer } from './consumers/llamacpp.consumer';
 import { WorkspaceActionAuditConsumer } from './consumers/workspace-action.consumer';
 import { WorkspaceSyncAuditConsumer } from './consumers/workspace-sync.consumer';
 import { AuditLog, AuditLogSchema } from './schemas/audit-log.schema';
@@ -27,6 +29,8 @@ import { UsageLedger, UsageLedgerSchema } from './schemas/usage-ledger.schema';
     AuditEventManager,
     WorkspaceSyncAuditConsumer,
     WorkspaceActionAuditConsumer,
+    AiActionAuditConsumer,
+    LlamacppAuditConsumer,
   ],
   exports: [AuditsService, UsageService],
 })

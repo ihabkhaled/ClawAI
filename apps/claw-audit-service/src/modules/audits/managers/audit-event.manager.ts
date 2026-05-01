@@ -1,6 +1,18 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import {
+  type CapabilityApprovedPayload,
+  type CapabilityAutoApprovedPayload,
+  type CapabilityCancelledPayload,
+  type CapabilityDeniedPayload,
+  type CapabilityExecutedPayload,
+  type CapabilityExecutingPayload,
+  type CapabilityExpiredPayload,
+  type CapabilityFailedPayload,
+  type CapabilityPolicyMatchedPayload,
+  type CapabilityProposedPayload,
+  type CapabilityRejectedPayload,
+  type CapabilityRolledBackPayload,
   type ConnectorCreatedPayload,
   type ConnectorDeletedPayload,
   type ConnectorHealthCheckedPayload,
@@ -65,6 +77,55 @@ export class AuditEventManager implements OnModuleInit {
       [
         EventPattern.MEMORY_EXTRACTED,
         (d) => this.handleMemoryExtracted(d as MemoryExtractedPayload),
+      ],
+      // === Desktop-agent capability framework (Stream 10) ===
+      [
+        EventPattern.AGENT_CAPABILITY_PROPOSED,
+        (d) => this.handleCapabilityProposed(d as CapabilityProposedPayload),
+      ],
+      [
+        EventPattern.AGENT_CAPABILITY_POLICY_MATCHED,
+        (d) => this.handleCapabilityPolicyMatched(d as CapabilityPolicyMatchedPayload),
+      ],
+      [
+        EventPattern.AGENT_CAPABILITY_AUTO_APPROVED,
+        (d) => this.handleCapabilityAutoApproved(d as CapabilityAutoApprovedPayload),
+      ],
+      [
+        EventPattern.AGENT_CAPABILITY_APPROVED,
+        (d) => this.handleCapabilityApproved(d as CapabilityApprovedPayload),
+      ],
+      [
+        EventPattern.AGENT_CAPABILITY_REJECTED,
+        (d) => this.handleCapabilityRejected(d as CapabilityRejectedPayload),
+      ],
+      [
+        EventPattern.AGENT_CAPABILITY_EXECUTING,
+        (d) => this.handleCapabilityExecuting(d as CapabilityExecutingPayload),
+      ],
+      [
+        EventPattern.AGENT_CAPABILITY_EXECUTED,
+        (d) => this.handleCapabilityExecuted(d as CapabilityExecutedPayload),
+      ],
+      [
+        EventPattern.AGENT_CAPABILITY_FAILED,
+        (d) => this.handleCapabilityFailed(d as CapabilityFailedPayload),
+      ],
+      [
+        EventPattern.AGENT_CAPABILITY_CANCELLED,
+        (d) => this.handleCapabilityCancelled(d as CapabilityCancelledPayload),
+      ],
+      [
+        EventPattern.AGENT_CAPABILITY_EXPIRED,
+        (d) => this.handleCapabilityExpired(d as CapabilityExpiredPayload),
+      ],
+      [
+        EventPattern.AGENT_CAPABILITY_ROLLED_BACK,
+        (d) => this.handleCapabilityRolledBack(d as CapabilityRolledBackPayload),
+      ],
+      [
+        EventPattern.AGENT_CAPABILITY_DENIED,
+        (d) => this.handleCapabilityDenied(d as CapabilityDeniedPayload),
       ],
     ];
 
@@ -256,6 +317,205 @@ export class AuditEventManager implements OnModuleInit {
         threadId: payload.threadId,
         type: payload.type,
         contentPreview: payload.content.slice(0, 100),
+      },
+    });
+  }
+
+  // ==================== Capability framework (Stream 10) ====================
+
+  async handleCapabilityProposed(payload: CapabilityProposedPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'CAPABILITY_PROPOSED',
+      entityType: 'capability_invocation',
+      entityId: payload.invocationId,
+      severity: 'LOW',
+      details: {
+        deviceId: payload.deviceId,
+        capabilityClass: payload.capabilityClass,
+        capabilityOperation: payload.capabilityOperation,
+        riskScore: payload.riskScore,
+        riskLabel: payload.riskLabel,
+        blastRadius: payload.blastRadius,
+        reversibility: payload.reversibility,
+        recipeRunId: payload.recipeRunId,
+      },
+    });
+  }
+
+  async handleCapabilityPolicyMatched(
+    payload: CapabilityPolicyMatchedPayload,
+  ): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'CAPABILITY_POLICY_MATCHED',
+      entityType: 'capability_invocation',
+      entityId: payload.invocationId,
+      severity: 'LOW',
+      details: {
+        matchedPolicyId: payload.matchedPolicyId,
+        matchedPolicyName: payload.matchedPolicyName,
+        matchedPolicyKind: payload.matchedPolicyKind,
+        riskScore: payload.riskScore,
+      },
+    });
+  }
+
+  async handleCapabilityAutoApproved(
+    payload: CapabilityAutoApprovedPayload,
+  ): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'CAPABILITY_AUTO_APPROVED',
+      entityType: 'capability_invocation',
+      entityId: payload.invocationId,
+      severity: 'LOW',
+      details: {
+        deviceId: payload.deviceId,
+        capabilityClass: payload.capabilityClass,
+        matchedPolicyName: payload.matchedPolicyName,
+      },
+    });
+  }
+
+  async handleCapabilityApproved(payload: CapabilityApprovedPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'CAPABILITY_APPROVED',
+      entityType: 'capability_invocation',
+      entityId: payload.invocationId,
+      severity: 'MEDIUM',
+      details: {
+        deviceId: payload.deviceId,
+        capabilityClass: payload.capabilityClass,
+        approverUserId: payload.approverUserId,
+      },
+    });
+  }
+
+  async handleCapabilityRejected(payload: CapabilityRejectedPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'CAPABILITY_REJECTED',
+      entityType: 'capability_invocation',
+      entityId: payload.invocationId,
+      severity: 'MEDIUM',
+      details: {
+        deviceId: payload.deviceId,
+        capabilityClass: payload.capabilityClass,
+        reviewerUserId: payload.reviewerUserId,
+        reason: payload.reason,
+      },
+    });
+  }
+
+  async handleCapabilityExecuting(payload: CapabilityExecutingPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'CAPABILITY_EXECUTING',
+      entityType: 'capability_invocation',
+      entityId: payload.invocationId,
+      severity: 'LOW',
+      details: {
+        deviceId: payload.deviceId,
+        capabilityClass: payload.capabilityClass,
+        capabilityOperation: payload.capabilityOperation,
+      },
+    });
+  }
+
+  async handleCapabilityExecuted(payload: CapabilityExecutedPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'CAPABILITY_EXECUTED',
+      entityType: 'capability_invocation',
+      entityId: payload.invocationId,
+      severity: 'LOW',
+      details: {
+        deviceId: payload.deviceId,
+        capabilityClass: payload.capabilityClass,
+        capabilityOperation: payload.capabilityOperation,
+        durationMs: payload.durationMs,
+        resultSummary: payload.resultSummary,
+      },
+    });
+  }
+
+  async handleCapabilityFailed(payload: CapabilityFailedPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'CAPABILITY_FAILED',
+      entityType: 'capability_invocation',
+      entityId: payload.invocationId,
+      severity: 'HIGH',
+      details: {
+        deviceId: payload.deviceId,
+        capabilityClass: payload.capabilityClass,
+        capabilityOperation: payload.capabilityOperation,
+        errorMessage: payload.errorMessage,
+      },
+    });
+  }
+
+  async handleCapabilityCancelled(payload: CapabilityCancelledPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'CAPABILITY_CANCELLED',
+      entityType: 'capability_invocation',
+      entityId: payload.invocationId,
+      severity: 'LOW',
+      details: {
+        deviceId: payload.deviceId,
+        capabilityClass: payload.capabilityClass,
+        cancelledByUserId: payload.cancelledByUserId,
+      },
+    });
+  }
+
+  async handleCapabilityExpired(payload: CapabilityExpiredPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId ?? 'system',
+      action: 'CAPABILITY_EXPIRED',
+      entityType: 'capability_invocation',
+      entityId: payload.invocationId,
+      severity: 'LOW',
+      details: {
+        deviceId: payload.deviceId,
+        capabilityClass: payload.capabilityClass,
+      },
+    });
+  }
+
+  async handleCapabilityRolledBack(payload: CapabilityRolledBackPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'CAPABILITY_ROLLED_BACK',
+      entityType: 'capability_invocation',
+      entityId: payload.invocationId,
+      severity: payload.partial ? 'MEDIUM' : 'LOW',
+      details: {
+        deviceId: payload.deviceId,
+        capabilityClass: payload.capabilityClass,
+        partial: payload.partial,
+        rollbackError: payload.rollbackError,
+      },
+    });
+  }
+
+  async handleCapabilityDenied(payload: CapabilityDeniedPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'CAPABILITY_DENIED',
+      entityType: 'capability_invocation',
+      entityId: payload.invocationId,
+      severity: 'HIGH',
+      details: {
+        deviceId: payload.deviceId,
+        capabilityClass: payload.capabilityClass,
+        capabilityOperation: payload.capabilityOperation,
+        matchedPolicyId: payload.matchedPolicyId,
+        matchedPolicyName: payload.matchedPolicyName,
+        reason: payload.reason,
       },
     });
   }
