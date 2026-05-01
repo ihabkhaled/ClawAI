@@ -152,6 +152,7 @@ describe('RoutingService', () => {
       routerEducationManager as any,
       rabbitMQ as unknown as RabbitMQService,
       promptBuilder as any,
+      { isFrontierAvailable: () => false } as any,
     );
   });
 
@@ -301,7 +302,7 @@ describe('RoutingService', () => {
     it('should subscribe to events on module init', async () => {
       await service.onModuleInit();
 
-      expect(rabbitMQ.subscribe).toHaveBeenCalledTimes(7);
+      expect(rabbitMQ.subscribe).toHaveBeenCalledTimes(10);
     });
   });
 });

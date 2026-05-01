@@ -6,6 +6,7 @@ import type { ConnectorModel } from '@/types';
 
 const mockUseAllModels = vi.fn();
 const mockUseLocalModels = vi.fn();
+const mockUseFrontierCatalog = vi.fn();
 
 vi.mock('@/hooks/connectors/use-all-models', () => ({
   useAllModels: () => mockUseAllModels(),
@@ -13,6 +14,10 @@ vi.mock('@/hooks/connectors/use-all-models', () => ({
 
 vi.mock('@/hooks/ollama/use-local-models', () => ({
   useLocalModels: () => mockUseLocalModels(),
+}));
+
+vi.mock('@/hooks/local-frontier/use-frontier-catalog', () => ({
+  useFrontierCatalog: () => mockUseFrontierCatalog(),
 }));
 
 describe('useAvailableModels', () => {
@@ -56,6 +61,11 @@ describe('useAvailableModels', () => {
           category: null,
         },
       ],
+      isLoading: false,
+    });
+
+    mockUseFrontierCatalog.mockReturnValue({
+      data: { data: [] },
       isLoading: false,
     });
   });

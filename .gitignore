@@ -68,3 +68,4 @@ tmp/qa-run.log
 qa-run.log
 
 apps/claw-frontend/scripts/
+!apps/claw-frontend/scripts/run-vitest.cjs
