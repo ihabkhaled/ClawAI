@@ -1,5 +1,23 @@
 export { EventPattern } from './event-patterns';
 export type {
+  BaseCapabilityEventPayload,
+  CapabilityClassValue,
+  CapabilityRiskLabelValue,
+  CapabilityProposedPayload,
+  CapabilityPolicyMatchedPayload,
+  CapabilityAutoApprovedPayload,
+  CapabilityApprovedPayload,
+  CapabilityRejectedPayload,
+  CapabilityExecutingPayload,
+  CapabilityExecutedPayload,
+  CapabilityFailedPayload,
+  CapabilityCancelledPayload,
+  CapabilityExpiredPayload,
+  CapabilityRolledBackPayload,
+  CapabilityDeniedPayload,
+  CapabilityEventPayload,
+} from './capability-events.types';
+export type {
   BaseEventPayload,
   WorkspaceConnectorCreatedPayload,
   WorkspaceConnectorUpdatedPayload,

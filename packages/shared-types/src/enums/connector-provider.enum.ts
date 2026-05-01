@@ -6,4 +6,5 @@ export enum ConnectorProvider {
   DEEPSEEK = 'DEEPSEEK',
   OLLAMA = 'OLLAMA',
   GROK = 'GROK',
+  LLAMACPP = 'LLAMACPP',
 }
