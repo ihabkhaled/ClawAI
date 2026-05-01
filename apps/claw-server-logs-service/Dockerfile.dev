@@ -12,5 +12,8 @@ RUN cd /app/packages/shared-types && npx tsc \
  && cd /app/packages/shared-utilities && npx tsc
 COPY apps/claw-server-logs-service/ .
 EXPOSE 4011
-ENV NODE_OPTIONS="--max-old-space-size=1024"
+# 2 GB heap. Server-logs is the firehose consumer for log.server events from
+# every backend. With prefetch back-pressure now applied at the shared-rabbitmq
+# layer this is more headroom than necessary, but kept as a safety margin.
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 CMD ["npm", "run", "dev"]

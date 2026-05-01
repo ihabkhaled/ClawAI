@@ -7,6 +7,7 @@ import { RABBITMQ_MODULE_OPTIONS, type RabbitMQModuleOptions, type PendingSubscr
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 5000;
 const MESSAGE_TTL_MS = 86_400_000; // 24 hours
+const DEFAULT_PREFETCH_COUNT = 50;
 
 @Injectable()
 export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
@@ -38,7 +39,14 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       this.connection = await amqplib.connect(this.options.url);
       this.channel = await this.connection.createChannel();
       await this.channel.assertExchange(this.exchangeName, 'topic', { durable: true });
-      this.logger.log(`Connected to RabbitMQ, exchange: ${this.exchangeName}`);
+      // Cap unacked-in-flight messages per consumer. Without this RabbitMQ delivers
+      // the entire queue at once and high-volume consumers (server-logs ingesting
+      // log.server from 16 services) blow their heap before MongoDB drains.
+      const prefetchCount = this.options.prefetchCount ?? DEFAULT_PREFETCH_COUNT;
+      await this.channel.prefetch(prefetchCount);
+      this.logger.log(
+        `Connected to RabbitMQ, exchange: ${this.exchangeName}, prefetch: ${String(prefetchCount)}`,
+      );
 
       await this.replayPendingSubscriptions();
 
