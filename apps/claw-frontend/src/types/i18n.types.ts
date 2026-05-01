@@ -78,6 +78,7 @@ export type TranslationDictionary = {
     connectors: string;
     models: string;
     modelCatalog: string;
+    modelLocalFrontier: string;
     localModels: string;
     routing: string;
     replayLab: string;
@@ -98,6 +99,8 @@ export type TranslationDictionary = {
     agent: string;
     agentTerminal: string;
     agentRepos: string;
+    agentCapabilities: string;
+    agentActivity: string;
     discovery: string;
     workspaceProviders: string;
     workspaceAppConfigs: string;
@@ -112,6 +115,13 @@ export type TranslationDictionary = {
     researchProviders: string;
     researchRuns: string;
     research: string;
+    workspaceInbox: string;
+    workspaceSemanticSearch: string;
+    workspaceDigest: string;
+    workspaceAutomationPreferences: string;
+    workspaceImplHandoffs: string;
+    adminAiActionPolicies: string;
+    adminSuggestionRules: string;
   };
   chat: {
     newThread: string;
@@ -367,6 +377,11 @@ export type TranslationDictionary = {
     createMemoryDesc: string;
     editMemoryDesc: string;
     source: string;
+    typeSummary: string;
+    typeFact: string;
+    typePreference: string;
+    typeInstruction: string;
+    filterAllTypes: string;
   };
   files: {
     title: string;
@@ -394,6 +409,10 @@ export type TranslationDictionary = {
     uploading: string;
     uploadNewFile: string;
     viewChunks: string;
+    statusPending: string;
+    statusProcessing: string;
+    statusCompleted: string;
+    statusFailed: string;
   };
   context: {
     title: string;
@@ -441,6 +460,9 @@ export type TranslationDictionary = {
     namePlaceholder: string;
     scopeOptional: string;
     scopePlaceholder: string;
+    typeNote: string;
+    typeInstruction: string;
+    typeFileReference: string;
   };
   routing: {
     title: string;
@@ -674,6 +696,18 @@ export type TranslationDictionary = {
       scopesHeading: string;
       revokedBanner: string;
     };
+    langEnglish: string;
+    langArabic: string;
+    langFrench: string;
+    langItalian: string;
+    langGerman: string;
+    langSpanish: string;
+    langRussian: string;
+    langPortuguese: string;
+    langHindi: string;
+    appearanceSystem: string;
+    appearanceLight: string;
+    appearanceDark: string;
   };
   dashboard: {
     title: string;
@@ -693,6 +727,12 @@ export type TranslationDictionary = {
     servicesOperational: string;
     responseTimeMs: string;
     unreachable: string;
+    newChatLabel: string;
+    newChatDesc: string;
+    manageConnectorsLabel: string;
+    manageConnectorsDesc: string;
+    routingSettingsLabel: string;
+    routingSettingsDesc: string;
   };
   catalog: {
     title: string;
@@ -1141,6 +1181,7 @@ export type TranslationDictionary = {
     disabled: string;
     deleteConfirm: string;
     namePlaceholder: string;
+    paused: string;
   };
   workspaceObjects: {
     title: string;
@@ -1326,6 +1367,146 @@ export type TranslationDictionary = {
       cancel: string;
     };
   };
+  automationPreferences: {
+    page: {
+      title: string;
+      description: string;
+      loading: string;
+      error: string;
+      empty: string;
+    };
+    row: {
+      enabled: string;
+      disabled: string;
+      toggleAria: string;
+      autoApproveBelowRisk: string;
+      autoApproveDisabled: string;
+      autoApproveAt: string;
+      perDayBudget: string;
+      perDayBudgetPlaceholder: string;
+      clear: string;
+    };
+  };
+  inbox: {
+    page: {
+      title: string;
+      description: string;
+      loading: string;
+      loadingMore: string;
+      loadMore: string;
+      empty: string;
+      error: string;
+    };
+    filter: {
+      providers: string;
+      types: string;
+      needsAttention: string;
+      hasSuggestion: string;
+      reset: string;
+    };
+    row: {
+      needsAttention: string;
+      hasSuggestion: string;
+      mark: string;
+      unmark: string;
+      openExternal: string;
+    };
+  };
+  search: {
+    page: {
+      title: string;
+      description: string;
+      placeholder: string;
+      submit: string;
+      searching: string;
+      reset: string;
+      local: string;
+      noResults: string;
+      error: string;
+    };
+  };
+  digest: {
+    page: {
+      title: string;
+      description: string;
+      loading: string;
+      error: string;
+      noTodayDigest: string;
+      today: string;
+      history: string;
+      generatedAt: string;
+      sectionsCount: string;
+      triggerDaily: string;
+      triggerWeekly: string;
+      triggering: string;
+      preferenceHint: string;
+    };
+    section: {
+      highlights: string;
+      actionItems: string;
+    };
+  };
+  adminAutomation: {
+    policies: {
+      title: string;
+      description: string;
+      loading: string;
+      error: string;
+      empty: string;
+      systemDefault: string;
+      priority: string;
+      providerRegex: string;
+      actionKindRegex: string;
+      riskCeiling: string;
+      delete: string;
+      cannotDelete: string;
+      toggleActive: string;
+    };
+    rules: {
+      title: string;
+      description: string;
+      loading: string;
+      error: string;
+      empty: string;
+      systemDefault: string;
+      priority: string;
+      eventType: string;
+      actionKind: string;
+      providerRegex: string;
+      contentRegex: string;
+      delete: string;
+      cannotDelete: string;
+      toggleActive: string;
+    };
+  };
+  implHandoff: {
+    page: {
+      title: string;
+      description: string;
+      loading: string;
+      error: string;
+      empty: string;
+      openThread: string;
+    };
+    picker: {
+      title: string;
+      description: string;
+      cancel: string;
+      CHAT: { hint: string };
+      AGENT: { hint: string };
+      CLIPBOARD: { hint: string };
+    };
+  };
+  learned: {
+    panel: {
+      title: string;
+      subtitle: string;
+      description: string;
+      loading: string;
+      error: string;
+      empty: string;
+    };
+  };
   research: {
     toggle: {
       placeholder: string;
@@ -1422,6 +1603,9 @@ export type TranslationDictionary = {
     requestedAt: string;
     reviewedAt: string;
     executedAt: string;
+    approved: string;
+    expired: string;
+    edited: string;
   };
   workspaceProviders: {
     catalog: {
@@ -1501,6 +1685,19 @@ export type TranslationDictionary = {
     noReposDesc: string;
     terminal: string;
     terminalDesc: string;
+    capabilities: string;
+    capabilitiesDesc: string;
+    capabilityClass: string;
+    capabilityOperation: string;
+    blastRadius: string;
+    reversibility: string;
+    riskScore: string;
+    matchedPolicy: string;
+    activity: string;
+    activityDesc: string;
+    autoApproved: string;
+    denied: string;
+    rolledBack: string;
     repos: string;
     reposDesc: string;
     pendingCommands: string;
@@ -1707,6 +1904,14 @@ export type TranslationDictionary = {
       reply: string;
       open_in_gmail: string;
       unread: string;
+      attachments: string;
+      download: string;
+      htmlIframeTitle: string;
+      toggleHtml: string;
+      showHtml: string;
+      toggleImages: string;
+      loadImages: string;
+      imagesBlocked: string;
     };
     actions: {
       summarize: string;
@@ -1897,6 +2102,127 @@ export type TranslationDictionary = {
       summarize_all: string;
       extract_requirements: string;
       draft_prd: string;
+    };
+  };
+  localFrontier: {
+    title: string;
+    subtitle: string;
+    loading: string;
+    catalogEmpty: string;
+    catalogError: string;
+    contextLength: string;
+    requiresRamGb: string;
+    sourceLink: string;
+    actions: {
+      download: string;
+      load: string;
+      unload: string;
+      deleteWeights: string;
+      configure: string;
+    };
+    download: {
+      start: string;
+      cancel: string;
+      retry: string;
+    };
+    compat: {
+      fits: string;
+      warns: string;
+      refuses: string;
+    };
+    qualityTier: {
+      survival: string;
+      balanced: string;
+      best: string;
+    };
+    preflight: {
+      RAM_INSUFFICIENT: string;
+      DISK_INSUFFICIENT: string;
+      GPU_INSUFFICIENT: string;
+      BINARY_NOT_INSTALLED: string;
+      RUNTIME_INCOMPATIBLE: string;
+    };
+    override: {
+      warning: string;
+      confirmTypeSize: string;
+    };
+    delete: {
+      confirm: string;
+      confirmTypePrompt: string;
+    };
+    hardware: {
+      title: string;
+      subtitle: string;
+      refresh: string;
+      ram: string;
+      disk: string;
+      cpu: string;
+      gpu: string;
+      binary: string;
+      cores: string;
+      noGpu: string;
+      notInstalled: string;
+      loadedModel: string;
+      noLoadedModel: string;
+    };
+    filters: {
+      category: string;
+      qualityTier: string;
+      compatibleOnly: string;
+      refreshCatalog: string;
+      refreshing: string;
+      allCategories: string;
+      allTiers: string;
+      categoryCoding: string;
+      categoryReasoning: string;
+      categoryThinking: string;
+      categoryGeneral: string;
+      categoryFileGen: string;
+    };
+    downloads: {
+      title: string;
+      empty: string;
+      cancel: string;
+      retry: string;
+      remove: string;
+      status: string;
+      bytes: string;
+      files: string;
+      rate: string;
+      eta: string;
+      unknown: string;
+    };
+    deleteDialog: {
+      title: string;
+      description: string;
+      promptLabel: string;
+      placeholder: string;
+      cancel: string;
+      confirm: string;
+      warning: string;
+    };
+    overrideDialog: {
+      title: string;
+      description: string;
+      reasonsTitle: string;
+      cancel: string;
+      proceed: string;
+    };
+    configDialog: {
+      title: string;
+      description: string;
+      ngpuLayers: string;
+      ngpuLayersHint: string;
+      ctxSize: string;
+      ctxSizeHint: string;
+      threads: string;
+      threadsHint: string;
+      cpuMoe: string;
+      cpuMoeHint: string;
+      customArgs: string;
+      customArgsHint: string;
+      cancel: string;
+      save: string;
     };
   };
 };
