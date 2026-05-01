@@ -8,7 +8,13 @@
     "claw-agent": "./src/bin/claw-agent.js"
   },
   "scripts": {
-    "start": "node src/bin/claw-agent.js"
+    "start": "node src/bin/claw-agent.js",
+    "smoke": "node src/capability-providers/__smoke__/providers.smoke.mjs",
+    "smoke:activity": "node src/activity-memory/__smoke__/local-store.smoke.mjs",
+    "tauri:install:unix": "bash src-tauri/scripts/install-toolchain.sh",
+    "tauri:install:windows": "powershell -ExecutionPolicy Bypass -File src-tauri/scripts/install-toolchain.ps1",
+    "tauri:dev": "cd src-tauri && cargo tauri dev",
+    "tauri:build": "cd src-tauri && cargo tauri build"
   },
   "dependencies": {
     "chokidar": "^3.6.0"

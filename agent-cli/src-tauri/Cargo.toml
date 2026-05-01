@@ -1,0 +1,31 @@
+[package]
+name = "claw-agent-tray"
+version = "2.1.0"
+description = "ClawAI desktop agent system tray + global hotkey + command palette"
+authors = ["ClawAI"]
+license = "UNLICENSED"
+edition = "2021"
+rust-version = "1.75"
+
+[lib]
+name = "claw_agent_tray_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "macos-private-api"] }
+tauri-plugin-shell = "2"
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-os = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", features = ["json"] }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "ClawAgent",
+  "version": "2.1.0",
+  "identifier": "com.clawai.agent",
+  "build": {
+    "frontendDist": "../src-tauri/ui",
+    "devUrl": "http://localhost:1420"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "ClawAgent",
+        "width": 800,
+        "height": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "transparent": false,
+        "decorations": true,
+        "alwaysOnTop": false,
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' http://localhost:4000 ws://localhost:4000"
+    },
+    "trayIcon": {
+      "id": "claw-agent-tray",
+      "iconPath": "icons/tray.png",
+      "menuOnLeftClick": true,
+      "tooltip": "ClawAgent — capability invocations, recipes, activity"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": { "minimumSystemVersion": "10.15" },
+    "windows": { "wix": { "language": ["en-US"] } },
+    "linux": { "deb": { "depends": ["libwebkit2gtk-4.1-0"] } }
+  },
+  "plugins": {
+    "globalShortcut": { "enabled": true },
+    "notification": { "enabled": true },
+    "clipboard-manager": { "enabled": true },
+    "shell": { "enabled": true }
+  }
+}

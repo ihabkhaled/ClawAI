@@ -13,6 +13,10 @@ import { GlobalExceptionFilter } from './filters/global-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { HealthModule } from '../modules/health/health.module';
 import { AgentModule } from '../modules/agent/agent.module';
+import { RecipesModule } from '../modules/recipes/recipes.module';
+import { ActivityMemoryModule } from '../modules/activity-memory/activity-memory.module';
+import { FleetModule } from '../modules/fleet/fleet.module';
+import { MarketplaceModule } from '../modules/marketplace/marketplace.module';
 
 @Module({
   imports: [
@@ -66,6 +70,10 @@ import { AgentModule } from '../modules/agent/agent.module';
     RedisModule,
     HealthModule,
     AgentModule,
+    RecipesModule,
+    ActivityMemoryModule,
+    FleetModule,
+    MarketplaceModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
