@@ -1,0 +1,50 @@
+export enum FrontierLoadStatus {
+  UNLOADED = 'UNLOADED',
+  LOADING = 'LOADING',
+  READY = 'READY',
+  CRASHED = 'CRASHED',
+  FAILED = 'FAILED',
+}
+
+export enum FrontierDownloadStatus {
+  AVAILABLE = 'AVAILABLE',
+  PULLING = 'PULLING',
+  READY = 'READY',
+  ERROR = 'ERROR',
+}
+
+export enum FrontierPullJobStatus {
+  PENDING = 'PENDING',
+  RUNNING = 'RUNNING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum FrontierQualityTier {
+  SURVIVAL = 'SURVIVAL',
+  BALANCED = 'BALANCED',
+  BEST = 'BEST',
+}
+
+export enum FrontierModelCategory {
+  CODING = 'CODING',
+  REASONING = 'REASONING',
+  THINKING = 'THINKING',
+  GENERAL = 'GENERAL',
+  FILE_GENERATION = 'FILE_GENERATION',
+}
+
+export enum HardwareCompat {
+  FITS = 'FITS',
+  WARNS = 'WARNS',
+  REFUSES = 'REFUSES',
+}
+
+export enum PreflightReasonCode {
+  RAM_INSUFFICIENT = 'RAM_INSUFFICIENT',
+  DISK_INSUFFICIENT = 'DISK_INSUFFICIENT',
+  GPU_INSUFFICIENT = 'GPU_INSUFFICIENT',
+  BINARY_NOT_INSTALLED = 'BINARY_NOT_INSTALLED',
+  RUNTIME_INCOMPATIBLE = 'RUNTIME_INCOMPATIBLE',
+}
