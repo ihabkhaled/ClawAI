@@ -2,6 +2,10 @@ export const OLLAMA_PROVIDER = 'local-ollama';
 
 export const OLLAMA_CONNECTOR_PROVIDER = 'OLLAMA';
 
+export const LLAMACPP_PROVIDER = 'local-llamacpp';
+
+export const LLAMACPP_CONNECTOR_PROVIDER = 'LLAMACPP';
+
 export const IMAGE_PROVIDER_PREFIX = 'IMAGE_';
 
 export const FILE_GENERATION_PROVIDER = 'FILE_GENERATION';
@@ -23,4 +27,7 @@ export const PROVIDER_BASE_URLS: Record<string, string> = {
   ANTHROPIC: 'https://api.anthropic.com/v1',
   GROK: 'https://api.x.ai/v1',
   OLLAMA: 'https://ollama.com/api',
+  // LLAMACPP entries are reached via callLlamacpp() using LLAMACPP_SERVICE_URL,
+  // not via the cloud provider base-URL flow. Listed here for documentation symmetry.
+  LLAMACPP: 'http://llamacpp-service:4017/api/v1/v1',
 };

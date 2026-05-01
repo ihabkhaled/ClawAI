@@ -1,0 +1,7 @@
+export enum ModelCategory {
+  CODING = 'CODING',
+  REASONING = 'REASONING',
+  THINKING = 'THINKING',
+  GENERAL = 'GENERAL',
+  FILE_GENERATION = 'FILE_GENERATION',
+}

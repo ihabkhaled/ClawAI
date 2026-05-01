@@ -8,6 +8,7 @@ const appConfigSchema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
 
   OLLAMA_SERVICE_URL: z.string().min(1).default('http://ollama-service:4008'),
+  LLAMACPP_SERVICE_URL: z.string().min(1).default('http://llamacpp-service:4017'),
   CONNECTOR_SERVICE_URL: z.string().min(1).default('http://connector-service:4003'),
   MEMORY_SERVICE_URL: z.string().min(1).default('http://memory-service:4005'),
   FILE_SERVICE_URL: z.string().min(1).default('http://file-service:4006'),

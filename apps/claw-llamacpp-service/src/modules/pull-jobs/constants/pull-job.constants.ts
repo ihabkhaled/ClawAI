@@ -1,0 +1,5 @@
+export const PROGRESS_DB_THROTTLE_MS = 5000;
+export const DOWNLOAD_RETRY_MAX = 5;
+export const DOWNLOAD_RETRY_BASE_MS = 2000;
+export const DOWNLOAD_CHUNK_BYTES = 64 * 1024;
+export const DISK_HEADROOM_FACTOR = 1.05;

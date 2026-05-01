@@ -1,0 +1,176 @@
+// Prisma schema for claw-llamacpp-service
+// Local Frontier LLM runtime — catalog, downloads, lifecycle, inference, hardware.
+// All 6 models from architecture doc section 2.
+
+datasource db {
+  provider = "postgresql"
+  url      = env("LLAMACPP_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+enum ModelCategory {
+  CODING
+  REASONING
+  THINKING
+  GENERAL
+  FILE_GENERATION
+}
+
+enum DownloadStatus {
+  AVAILABLE
+  PULLING
+  READY
+  ERROR
+}
+
+enum LoadStatus {
+  UNLOADED
+  LOADING
+  READY
+  CRASHED
+  FAILED
+}
+
+enum PullJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum QualityTier {
+  SURVIVAL
+  BALANCED
+  BEST
+}
+
+model FrontierCatalogEntry {
+  id                   String         @id @default(uuid())
+  name                 String
+  tag                  String
+  displayName          String
+  category             ModelCategory
+  description          String         @db.Text
+  parameterCount       String
+  totalParamsB         Int
+  activeParamsB        Int
+  contextLength        Int
+  capabilities         String[]
+  license              String
+  huggingfaceRepo      String
+  filePattern          String
+  manifestSha256       String?
+  fileSizeBytes        BigInt
+  requiredRamGb        Int
+  recommendedRamGb     Int
+  requiredDiskGb       Int
+  recommendedGpuVramGb Int
+  isRecommended        Boolean        @default(false)
+  qualityTier          QualityTier    @default(BALANCED)
+  sourceUrl            String
+  chatTemplate         String?
+  available            Boolean        @default(true)
+
+  downloadStatus       DownloadStatus @default(AVAILABLE)
+  loadStatus           LoadStatus     @default(UNLOADED)
+
+  pullJobs             PullJob[]
+  loadEvents           ModelLoadEvent[]
+  runtimeConfig        RuntimeConfig?
+
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  @@unique([name, tag])
+  @@index([category, isRecommended])
+}
+
+model PullJob {
+  id              String                @id @default(uuid())
+  modelId         String
+  model           FrontierCatalogEntry  @relation(fields: [modelId], references: [id])
+  status          PullJobStatus         @default(PENDING)
+  totalBytes      BigInt
+  downloadedBytes BigInt                @default(0)
+  totalFiles      Int
+  completedFiles  Int                   @default(0)
+  currentFile     String?
+  reasonCode      String?
+  errorMessage    String?               @db.Text
+  startedAt       DateTime              @default(now())
+  completedAt     DateTime?
+  initiatedByUser String?
+
+  @@index([status, startedAt])
+  @@index([modelId])
+}
+
+model ModelLoadEvent {
+  id           String                @id @default(uuid())
+  modelId      String
+  model        FrontierCatalogEntry  @relation(fields: [modelId], references: [id])
+  eventType    String
+  pid          Int?
+  port         Int?
+  errorMessage String?               @db.Text
+  occurredAt   DateTime              @default(now())
+
+  @@index([modelId, occurredAt])
+}
+
+model RuntimeConfig {
+  id            String                @id @default(uuid())
+  modelId       String                @unique
+  model         FrontierCatalogEntry  @relation(fields: [modelId], references: [id])
+  nGpuLayers    Int?
+  ctxSize       Int                   @default(8192)
+  cpuMoe        Boolean               @default(false)
+  threads       Int?
+  customArgs    String?               @db.Text
+  updatedAt     DateTime              @updatedAt
+}
+
+model HardwareSnapshot {
+  id            String   @id @default(uuid())
+  totalRamGb    Int
+  freeRamGb     Int
+  totalDiskGb   Int
+  freeDiskGb    Int
+  cpuCores      Int
+  platform      String
+  gpus          Json
+  gpuBackend    String
+  capturedAt    DateTime @default(now())
+
+  @@index([capturedAt])
+}
+
+model BinaryRelease {
+  id            String   @id @default(uuid())
+  version       String
+  platform      String
+  archiveUrl    String
+  archiveSha256 String
+  binaryPath    String
+  installedAt   DateTime @default(now())
+  isActive      Boolean  @default(false)
+
+  @@unique([version, platform])
+}
+
+model PreflightOverrideAudit {
+  id               String   @id @default(uuid())
+  userId           String?
+  modelId          String
+  modelName        String
+  reasons          String[]
+  hardwareSnapshot Json
+  occurredAt       DateTime @default(now())
+
+  @@index([modelId, occurredAt])
+}

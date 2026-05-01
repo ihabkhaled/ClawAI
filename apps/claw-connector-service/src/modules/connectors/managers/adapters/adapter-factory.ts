@@ -7,6 +7,7 @@ import { BedrockAdapter } from './bedrock.adapter';
 import { DeepSeekAdapter } from './deepseek.adapter';
 import { GrokAdapter } from './grok.adapter';
 import { OllamaAdapter } from './ollama.adapter';
+import { LlamacppAdapter } from './llamacpp.adapter';
 
 const adapters = new Map<ConnectorProvider, ProviderAdapter>([
   [ConnectorProvider.OPENAI, new OpenAIAdapter()],
@@ -16,6 +17,7 @@ const adapters = new Map<ConnectorProvider, ProviderAdapter>([
   [ConnectorProvider.DEEPSEEK, new DeepSeekAdapter()],
   [ConnectorProvider.GROK, new GrokAdapter()],
   [ConnectorProvider.OLLAMA, new OllamaAdapter()],
+  [ConnectorProvider.LLAMACPP, new LlamacppAdapter()],
 ]);
 
 export function getAdapter(provider: ConnectorProvider): ProviderAdapter {

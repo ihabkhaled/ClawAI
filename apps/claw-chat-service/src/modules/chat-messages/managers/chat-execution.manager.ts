@@ -6,6 +6,8 @@ import { BusinessException } from '../../../common/errors';
 import {
   FILE_GENERATION_PROVIDER,
   IMAGE_PROVIDER_PREFIX,
+  LLAMACPP_CONNECTOR_PROVIDER,
+  LLAMACPP_PROVIDER,
   LOCAL_ONLY_ROUTING_MODES,
   OLLAMA_CONNECTOR_PROVIDER,
   OLLAMA_PROVIDER,
@@ -564,6 +566,20 @@ export class ChatExecutionManager implements OnModuleInit {
         executionOptions,
       );
     }
+    if (provider === LLAMACPP_PROVIDER || provider === LLAMACPP_CONNECTOR_PROVIDER) {
+      this.logger.debug(
+        `callProvider: routing to llama.cpp frontier runtime (provider=${provider}) for model=${model}`,
+      );
+      return this.callLlamacpp(
+        provider,
+        model,
+        context,
+        startTime,
+        usedFallback,
+        threadSettings,
+        executionOptions,
+      );
+    }
     this.logger.debug('callProvider: routing to cloud provider');
     return this.callCloudProvider(
       provider,
@@ -722,6 +738,45 @@ export class ChatExecutionManager implements OnModuleInit {
       finishReason: response.data.done ? 'stop' : 'incomplete',
       usedFallback,
     };
+  }
+
+  private async callLlamacpp(
+    provider: string,
+    model: string,
+    context: AssembledContext,
+    startTime: number,
+    usedFallback: boolean,
+    threadSettings?: ThreadSettings,
+    executionOptions?: ExecutionOptions,
+  ): Promise<LlmResponse> {
+    this.logger.log(`callLlamacpp: provider=${provider} model=${model}`);
+    const config = AppConfig.get();
+    const requestBody = this.buildChatRequestBody(model, context, threadSettings, executionOptions);
+    const url = `${config.LLAMACPP_SERVICE_URL}/api/v1/v1/chat/completions`;
+    this.logger.debug(`callLlamacpp: POST ${url}`);
+    const response = await httpRequest<OpenAiChatResponse>({
+      url,
+      method: 'POST',
+      body: requestBody,
+      timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
+    });
+
+    if (!response.ok) {
+      const errorMessage = this.extractHttpErrorMessage(
+        response.data,
+        `llama.cpp service returned status ${String(response.status)}`,
+      );
+      this.logger.error(
+        `callLlamacpp: llama.cpp returned error status=${String(response.status)} message=${errorMessage}`,
+      );
+      throw new BusinessException(errorMessage, 'LLAMACPP_REQUEST_FAILED');
+    }
+
+    const result = this.parseCloudResponse(response.data, provider, model, startTime, usedFallback);
+    this.logger.log(
+      `callLlamacpp: completed model=${model} latencyMs=${String(result.latencyMs)} inputTokens=${String(result.inputTokens ?? 0)} outputTokens=${String(result.outputTokens ?? 0)}`,
+    );
+    return result;
   }
 
   private async callCloudProvider(
