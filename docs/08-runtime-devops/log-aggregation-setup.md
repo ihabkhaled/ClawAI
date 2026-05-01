@@ -246,7 +246,7 @@ For real-time debugging, Docker container logs are available:
 
 ```bash
 # Follow logs for a service
-docker compose -f docker-compose.dev.yml logs -f chat-service
+./scripts/claw.sh logs -f chat-service
 
 # Last 100 lines
 docker compose logs --tail=100 routing-service

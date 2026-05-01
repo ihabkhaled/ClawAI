@@ -94,10 +94,10 @@ npx tsx prisma/seed-catalog.ts  # Seed model catalog
 When rebuilding this service (especially after shared package changes):
 
 ```bash
-docker compose -f docker-compose.dev.yml stop ollama-service
-docker compose -f docker-compose.dev.yml rm -f ollama-service
+./scripts/claw.sh stop ollama-service
+./scripts/claw.sh rm -f ollama-service
 docker rmi claw-ollama-service
-docker compose -f docker-compose.dev.yml up -d --build ollama-service
+./scripts/claw.sh up -d --build ollama-service
 ```
 
 **NEVER skip steps.** See root CLAUDE.md for full explanation.

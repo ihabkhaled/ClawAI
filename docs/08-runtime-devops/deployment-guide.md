@@ -26,10 +26,10 @@ cp .env.example .env
 # Edit .env with your values
 
 # 3. Start everything
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh up -d
 
 # 4. Wait for services to be healthy (~2-5 minutes first run)
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 
 # 5. Access the application
 # Frontend: http://localhost:3000
@@ -203,7 +203,7 @@ Returns status for each service (HEALTHY, DEGRADED, UNHEALTHY) with response tim
 
 ```bash
 # Check all container statuses
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 
 # Resource usage
 docker stats
@@ -299,5 +299,5 @@ docker exec -it claw-chat-service npx prisma migrate deploy
 docker volume prune
 
 # Remove all ClawAI volumes (DESTRUCTIVE)
-docker compose -f docker-compose.dev.yml down -v
+./scripts/claw.sh down -v
 ```

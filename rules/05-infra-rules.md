@@ -32,10 +32,10 @@ When rebuilding after shared package changes or dependency changes:
 
 ```bash
 # ALWAYS follow this exact 4-step sequence:
-docker compose -f docker-compose.dev.yml stop <service>
-docker compose -f docker-compose.dev.yml rm -f <service>
+./scripts/claw.sh stop <service>
+./scripts/claw.sh rm -f <service>
 docker rmi claw-<service>
-docker compose -f docker-compose.dev.yml up -d --build <service>
+./scripts/claw.sh up -d --build <service>
 ```
 
 **NEVER skip steps.** Just restarting or `--build` alone leaves stale compiled code.

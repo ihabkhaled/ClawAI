@@ -70,10 +70,10 @@ npm run prisma:generate  # Regenerate Prisma client
 When rebuilding this service (especially after shared package changes):
 
 ```bash
-docker compose -f docker-compose.dev.yml stop image-service
-docker compose -f docker-compose.dev.yml rm -f image-service
+./scripts/claw.sh stop image-service
+./scripts/claw.sh rm -f image-service
 docker rmi claw-image-service
-docker compose -f docker-compose.dev.yml up -d --build image-service
+./scripts/claw.sh up -d --build image-service
 ```
 
 **NEVER skip steps.** See root CLAUDE.md for full explanation.

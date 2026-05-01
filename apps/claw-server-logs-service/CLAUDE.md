@@ -62,10 +62,10 @@ npm run test             # Unit tests
 When rebuilding this service (especially after shared package changes):
 
 ```bash
-docker compose -f docker-compose.dev.yml stop server-logs-service
-docker compose -f docker-compose.dev.yml rm -f server-logs-service
+./scripts/claw.sh stop server-logs-service
+./scripts/claw.sh rm -f server-logs-service
 docker rmi claw-server-logs-service
-docker compose -f docker-compose.dev.yml up -d --build server-logs-service
+./scripts/claw.sh up -d --build server-logs-service
 ```
 
 **NEVER skip steps.** See root CLAUDE.md for full explanation.

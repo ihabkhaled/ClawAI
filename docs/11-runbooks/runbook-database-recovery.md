@@ -22,10 +22,10 @@ ClawAI uses 9 PostgreSQL databases and 1 MongoDB instance (3 databases). Each se
 
 ```bash
 # Identify the postgres container
-docker compose -f docker-compose.dev.yml ps | grep postgres
+./scripts/claw.sh ps | grep postgres
 
 # Backup using pg_dump
-docker compose -f docker-compose.dev.yml exec postgres-chat \
+./scripts/claw.sh exec postgres-chat \
   pg_dump -U claw_chat_user claw_chat > backup_chat_$(date +%Y%m%d_%H%M%S).sql
 ```
 
@@ -52,7 +52,7 @@ declare -A DBS=(
 for container in "${!DBS[@]}"; do
   IFS=':' read -r db user <<< "${DBS[$container]}"
   echo "Backing up $db..."
-  docker compose -f docker-compose.dev.yml exec -T "$container" \
+  ./scripts/claw.sh exec -T "$container" \
     pg_dump -U "$user" "$db" > "$BACKUP_DIR/${db}.sql"
 done
 echo "Backups saved to $BACKUP_DIR"
@@ -62,20 +62,20 @@ echo "Backups saved to $BACKUP_DIR"
 
 ```bash
 # Stop the service that uses the database
-docker compose -f docker-compose.dev.yml stop chat-service
+./scripts/claw.sh stop chat-service
 
 # Drop and recreate the database
-docker compose -f docker-compose.dev.yml exec postgres-chat \
+./scripts/claw.sh exec postgres-chat \
   psql -U claw_chat_user -d postgres -c "DROP DATABASE IF EXISTS claw_chat;"
-docker compose -f docker-compose.dev.yml exec postgres-chat \
+./scripts/claw.sh exec postgres-chat \
   psql -U claw_chat_user -d postgres -c "CREATE DATABASE claw_chat OWNER claw_chat_user;"
 
 # Restore from backup
-docker compose -f docker-compose.dev.yml exec -T postgres-chat \
+./scripts/claw.sh exec -T postgres-chat \
   psql -U claw_chat_user claw_chat < backup_chat_20250101_120000.sql
 
 # Restart the service
-docker compose -f docker-compose.dev.yml start chat-service
+./scripts/claw.sh start chat-service
 ```
 
 ### Prisma Migration Rollback
@@ -84,18 +84,18 @@ If a migration caused issues:
 
 ```bash
 # Check current migration status
-docker compose -f docker-compose.dev.yml exec chat-service \
+./scripts/claw.sh exec chat-service \
   npx prisma migrate status
 
 # List applied migrations
-docker compose -f docker-compose.dev.yml exec chat-service \
+./scripts/claw.sh exec chat-service \
   npx prisma migrate status --schema=prisma/schema.prisma
 
 # Mark a migration as rolled back (manual SQL required)
 # 1. Write the reverse SQL
 # 2. Execute it against the database
 # 3. Delete the migration record from _prisma_migrations table:
-docker compose -f docker-compose.dev.yml exec postgres-chat \
+./scripts/claw.sh exec postgres-chat \
   psql -U claw_chat_user claw_chat -c \
   "DELETE FROM _prisma_migrations WHERE migration_name = '20250101120000_problematic_migration';"
 
@@ -115,12 +115,12 @@ docker compose -f docker-compose.dev.yml exec postgres-chat \
 
 ```bash
 # Backup all MongoDB databases
-docker compose -f docker-compose.dev.yml exec mongodb \
+./scripts/claw.sh exec mongodb \
   mongodump --username claw_user --password "$MONGO_PASSWORD" \
   --authenticationDatabase admin --out /tmp/mongodump
 
 # Copy to host
-docker compose -f docker-compose.dev.yml cp \
+./scripts/claw.sh cp \
   mongodb:/tmp/mongodump ./backups/mongodump_$(date +%Y%m%d)
 ```
 
@@ -128,16 +128,16 @@ docker compose -f docker-compose.dev.yml cp \
 
 ```bash
 # Copy backup to container
-docker compose -f docker-compose.dev.yml cp \
+./scripts/claw.sh cp \
   ./backups/mongodump_20250101 mongodb:/tmp/mongodump
 
 # Restore
-docker compose -f docker-compose.dev.yml exec mongodb \
+./scripts/claw.sh exec mongodb \
   mongorestore --username claw_user --password "$MONGO_PASSWORD" \
   --authenticationDatabase admin /tmp/mongodump
 
 # Restart affected services
-docker compose -f docker-compose.dev.yml restart audit-service client-logs-service server-logs-service
+./scripts/claw.sh restart audit-service client-logs-service server-logs-service
 ```
 
 ## Data Volume Management
@@ -170,16 +170,16 @@ If you need to start fresh (destroys all data):
 
 ```bash
 # Stop everything
-docker compose -f docker-compose.dev.yml down
+./scripts/claw.sh down
 
 # Remove all volumes
-docker compose -f docker-compose.dev.yml down -v
+./scripts/claw.sh down -v
 
 # Start fresh
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh up -d
 
 # Re-run seeds
-docker compose -f docker-compose.dev.yml exec ollama-service npx tsx prisma/seed-catalog.ts
+./scripts/claw.sh exec ollama-service npx tsx prisma/seed-catalog.ts
 ```
 
 ## Prevention

@@ -9,10 +9,10 @@
 E2E tests require the full development environment running:
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh up -d
 
 # Wait for all services to be healthy
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 # All should show (healthy)
 ```
 
@@ -336,7 +336,7 @@ Before releasing, manually verify these flows:
 ### Check Service Logs
 
 ```bash
-docker compose -f docker-compose.dev.yml logs --since 5m chat-service routing-service
+./scripts/claw.sh logs --since 5m chat-service routing-service
 ```
 
 ### Check Database State

@@ -200,7 +200,7 @@ Used for real-time streaming:
 Single Docker Compose file (`docker-compose.dev.yml`): 33 containers including all services, databases, message broker, cache, local AI runtime, and file scanning support.
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh up -d
 ```
 
 ### Production

@@ -10,7 +10,7 @@ Integration tests verify that ClawAI's 13 microservices communicate correctly th
 
 ## Prerequisites
 
-- Full Docker Compose stack running: `docker compose -f docker-compose.dev.yml up -d`
+- Full Docker Compose stack running: `./scripts/claw.sh up -d`
 - All 13 services healthy: `curl http://localhost:4000/api/v1/health`
 - RabbitMQ management UI accessible: `http://localhost:15672` (guest/guest or configured credentials)
 - Valid JWT token obtained via `POST http://localhost:4000/api/v1/auth/login`
@@ -36,13 +36,13 @@ curl -X POST http://localhost:4000/api/v1/chat-messages \
   -d '{"threadId": "<thread-id>", "content": "Write a Python function to sort a list"}'
 
 # 2. Check routing-service logs for consumption
-docker compose -f docker-compose.dev.yml logs routing-service --since 30s | grep "message.created"
+./scripts/claw.sh logs routing-service --since 30s | grep "message.created"
 
 # 3. Check routing-service logs for decision
-docker compose -f docker-compose.dev.yml logs routing-service --since 30s | grep "message.routed"
+./scripts/claw.sh logs routing-service --since 30s | grep "message.routed"
 
 # 4. Check chat-service logs for consumption of routed event
-docker compose -f docker-compose.dev.yml logs chat-service --since 30s | grep "message.routed"
+./scripts/claw.sh logs chat-service --since 30s | grep "message.routed"
 
 # 5. Verify routing decision stored in routing DB
 # (Direct DB query or via API)
@@ -74,7 +74,7 @@ curl -X POST http://localhost:4000/api/v1/chat-messages \
 sleep 10
 
 # 3. Check audit-service logs
-docker compose -f docker-compose.dev.yml logs audit-service --since 60s | grep "message.completed"
+./scripts/claw.sh logs audit-service --since 60s | grep "message.completed"
 
 # 4. Verify audit log entry
 curl "http://localhost:4000/api/v1/audits?action=message.completed&entityId=<thread-id>" \
@@ -108,7 +108,7 @@ curl -X POST http://localhost:4000/api/v1/chat-messages \
 sleep 30
 
 # 3. Check memory-service logs
-docker compose -f docker-compose.dev.yml logs memory-service --since 60s | grep "memory.extracted"
+./scripts/claw.sh logs memory-service --since 60s | grep "memory.extracted"
 
 # 4. Verify memory records created
 curl "http://localhost:4000/api/v1/memories" \
@@ -134,10 +134,10 @@ curl -X POST "http://localhost:4000/api/v1/connectors/<connector-id>/sync" \
   -H "Authorization: Bearer $TOKEN"
 
 # 2. Check connector-service logs
-docker compose -f docker-compose.dev.yml logs connector-service --since 30s | grep "connector.synced"
+./scripts/claw.sh logs connector-service --since 30s | grep "connector.synced"
 
 # 3. Check routing-service logs for consumption
-docker compose -f docker-compose.dev.yml logs routing-service --since 30s | grep "connector.synced"
+./scripts/claw.sh logs routing-service --since 30s | grep "connector.synced"
 ```
 
 **Assertions:**
@@ -157,7 +157,7 @@ curl -X POST http://localhost:4000/api/v1/connectors \
   -d '{"name": "Test Connector", "provider": "OPENAI", "config": {"apiKey": "sk-test-key"}}'
 
 # 2. Check audit-service logs
-docker compose -f docker-compose.dev.yml logs audit-service --since 30s | grep "connector.created"
+./scripts/claw.sh logs audit-service --since 30s | grep "connector.created"
 
 # 3. Verify audit log
 curl "http://localhost:4000/api/v1/audits?action=connector.created" \
@@ -206,7 +206,7 @@ curl -u guest:guest http://localhost:15672/api/queues/%2F/ | jq '.[] | {name, me
 
 ```bash
 # Stop audit service
-docker compose -f docker-compose.dev.yml stop audit-service
+./scripts/claw.sh stop audit-service
 
 # Send a message (triggers message.completed -> audit)
 curl -X POST http://localhost:4000/api/v1/chat-messages \
@@ -221,7 +221,7 @@ sleep 45
 curl -u guest:guest "http://localhost:15672/api/queues/%2F/" | jq '.[] | select(.name | contains("dlq")) | {name, messages}'
 
 # Restart audit service
-docker compose -f docker-compose.dev.yml start audit-service
+./scripts/claw.sh start audit-service
 ```
 
 **Assertions:**
@@ -281,7 +281,7 @@ curl -X POST http://localhost:4000/api/v1/chat-messages \
   -d '{"threadId": "<thread-id>", "content": "Test cache invalidation"}'
 
 # 4. Verify from routing-service logs that cache was invalidated
-docker compose -f docker-compose.dev.yml logs routing-service --since 60s | grep -i "cache"
+./scripts/claw.sh logs routing-service --since 60s | grep -i "cache"
 ```
 
 **Assertions:**
@@ -295,8 +295,8 @@ docker compose -f docker-compose.dev.yml logs routing-service --since 60s | grep
 
 ```bash
 # Check Redis keys and TTLs
-docker compose -f docker-compose.dev.yml exec redis redis-cli KEYS "*"
-docker compose -f docker-compose.dev.yml exec redis redis-cli TTL "<key>"
+./scripts/claw.sh exec redis redis-cli KEYS "*"
+./scripts/claw.sh exec redis redis-cli TTL "<key>"
 ```
 
 **Assertions:**
@@ -334,19 +334,19 @@ After executing a full message flow, query each database and verify:
 
 ```bash
 # Chat DB -- message stored
-docker compose -f docker-compose.dev.yml exec chat-db \
+./scripts/claw.sh exec chat-db \
   psql -U claw -d claw_chat -c "SELECT id, role, provider, model FROM \"ChatMessage\" ORDER BY \"createdAt\" DESC LIMIT 5;"
 
 # Routing DB -- decision stored
-docker compose -f docker-compose.dev.yml exec routing-db \
+./scripts/claw.sh exec routing-db \
   psql -U claw -d claw_routing -c "SELECT id, \"selectedProvider\", \"selectedModel\", confidence FROM \"RoutingDecision\" ORDER BY \"createdAt\" DESC LIMIT 5;"
 
 # Audit DB -- audit log stored
-docker compose -f docker-compose.dev.yml exec mongo \
+./scripts/claw.sh exec mongo \
   mongosh claw_audit --eval "db.auditlogs.find().sort({createdAt: -1}).limit(5).pretty()"
 
 # Memory DB -- extraction stored (if applicable)
-docker compose -f docker-compose.dev.yml exec memory-db \
+./scripts/claw.sh exec memory-db \
   psql -U claw -d claw_memory -c "SELECT id, type, content FROM \"MemoryRecord\" ORDER BY \"createdAt\" DESC LIMIT 5;"
 ```
 
@@ -410,7 +410,7 @@ curl -N -H "Authorization: Bearer $TOKEN" \
 
 ```bash
 # Verify SSE-specific nginx config is active
-docker compose -f docker-compose.dev.yml exec nginx cat /etc/nginx/nginx.conf | grep -A5 "proxy_buffering off"
+./scripts/claw.sh exec nginx cat /etc/nginx/nginx.conf | grep -A5 "proxy_buffering off"
 ```
 
 **Assertions:**
@@ -620,7 +620,7 @@ done
 
 | Tool                   | Purpose                                         | Access                                                                       |
 | ---------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------- |
-| Docker Compose logs    | Service-level log inspection                    | `docker compose -f docker-compose.dev.yml logs <service> --since <duration>` |
+| Docker Compose logs    | Service-level log inspection                    | `./scripts/claw.sh logs <service> --since <duration>` |
 | RabbitMQ Management UI | Queue inspection, message rates, DLQ monitoring | `http://localhost:15672`                                                     |
 | Direct service calls   | Bypass nginx to isolate service issues          | `http://localhost:<port>/api/v1/...`                                         |
 | Redis CLI              | Cache key inspection                            | `docker compose exec redis redis-cli`                                        |

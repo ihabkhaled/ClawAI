@@ -47,7 +47,7 @@ bash scripts/setup.sh
 # Or manually: copy .env.example to .env
 
 # 3. Start all containers (infrastructure + services)
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh up -d
 
 # 4. Wait for services to start (~60 seconds), then verify
 curl http://localhost:4000/api/v1/health
@@ -195,9 +195,9 @@ claw/
 | `npm run test:e2e`                                           | Run end-to-end tests (Playwright)        |
 | `npm run format`                                             | Format code with Prettier                |
 | `npm run clean`                                              | Remove build artifacts and node_modules  |
-| `docker compose -f docker-compose.dev.yml up -d`             | Start the full dev stack                 |
-| `docker compose -f docker-compose.dev.yml down`              | Stop the full dev stack                  |
-| `docker compose -f docker-compose.dev.yml logs -f <service>` | Tail logs for a specific container       |
+| `./scripts/claw.sh up -d`             | Start the full dev stack                 |
+| `./scripts/claw.sh down`              | Stop the full dev stack                  |
+| `./scripts/claw.sh logs -f <service>` | Tail logs for a specific container       |
 
 ---
 

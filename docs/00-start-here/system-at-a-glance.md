@@ -228,7 +228,7 @@ The full development environment runs 33 containers:
 **Startup command:**
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh up -d
 ```
 
 **Management script:**

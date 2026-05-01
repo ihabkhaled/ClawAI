@@ -114,12 +114,12 @@ Select-String -Path 'scripts/install.ps1' -Pattern 'NEW_VARIABLE_NAME'
 
 ```bash
 # New service starts and is healthy
-docker compose -f docker-compose.dev.yml up -d <new-service>
-docker compose -f docker-compose.dev.yml ps <new-service>
+./scripts/claw.sh up -d <new-service>
+./scripts/claw.sh ps <new-service>
 # STATUS column must show: (healthy)
 
 # New service logs show no startup errors
-docker compose -f docker-compose.dev.yml logs <new-service> --tail 30
+./scripts/claw.sh logs <new-service> --tail 30
 ```
 
 **SEVERITY IF MISSED:** Service does not run in dev. Other services that depend on it fail. The entire feature is untestable in the dev environment.
@@ -197,7 +197,7 @@ grep 'AUTO_PULL_MODELS\|ollama\|comfyui' docker-compose.dev.ollama.yml
 
 ```bash
 # Test Nginx config syntax
-docker compose -f docker-compose.dev.yml exec nginx nginx -t
+./scripts/claw.sh exec nginx nginx -t
 # Must return: configuration file /etc/nginx/nginx.conf test is successful
 
 # Test the new route from outside the container
@@ -357,8 +357,8 @@ ls prisma/migrations/
 # New migration folder with timestamp must appear
 
 # Verify the migration applies cleanly in a fresh container
-docker compose -f docker-compose.dev.yml restart claw-routing-service
-docker compose -f docker-compose.dev.yml logs claw-routing-service --tail 20
+./scripts/claw.sh restart claw-routing-service
+./scripts/claw.sh logs claw-routing-service --tail 20
 # Must show: "All migrations have been successfully applied."
 
 # Verify Prisma client was regenerated
@@ -409,7 +409,7 @@ npx tsx prisma/seed-catalog.ts
 # Must complete without errors
 
 # Verify the seed data was inserted
-docker compose -f docker-compose.dev.yml exec claw-pg-ollama \
+./scripts/claw.sh exec claw-pg-ollama \
   psql -U $PG_OLLAMA_USER -d claw_ollama -c "SELECT name FROM catalog_models LIMIT 5;"
 # Must return the new model entries
 ```

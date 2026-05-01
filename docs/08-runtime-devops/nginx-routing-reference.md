@@ -338,7 +338,7 @@ To add a new service route:
 
 3. Restart nginx:
    ```bash
-   docker compose -f docker-compose.dev.yml restart nginx
+   ./scripts/claw.sh restart nginx
    ```
 
 4. Verify:

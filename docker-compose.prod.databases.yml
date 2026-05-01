@@ -258,6 +258,26 @@ services:
     networks:
       - claw-network
 
+  pg-llamacpp:
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-llamacpp
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_LLAMACPP_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_LLAMACPP_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_LLAMACPP_DB:-claw_llamacpp}
+    ports:
+      - '${PG_LLAMACPP_PORT:-5440}:5432'
+    volumes:
+      - pg-llamacpp-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_LLAMACPP_USER:-claw} -d ${PG_LLAMACPP_DB:-claw_llamacpp}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
   # ---------------------------------------------------------------------------
   # PostgreSQL (File Generation Service)
   # ---------------------------------------------------------------------------
@@ -394,6 +414,8 @@ volumes:
   pg-research-data:
     driver: local
   pg-agent-data:
+    driver: local
+  pg-llamacpp-data:
     driver: local
   pg-file-generations-data:
     driver: local

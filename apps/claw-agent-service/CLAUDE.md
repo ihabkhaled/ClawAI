@@ -73,7 +73,48 @@ npm run migrate:dev # Create and run migration
 
 ## Docker Rebuild Procedure
 
-docker compose -f docker-compose.dev.yml stop agent-service
-docker compose -f docker-compose.dev.yml rm -f agent-service
+./scripts/claw.sh stop agent-service
+./scripts/claw.sh rm -f agent-service
 docker rmi claw-agent-service
-docker compose -f docker-compose.dev.yml up -d --build agent-service
+./scripts/claw.sh up -d --build agent-service
+
+## Capability Framework (Phase E flagship — added 2026-04-26)
+
+In progress; backbone files landed in this session, full implementation tracked in `docs/15-ai-context/desktop-agent-flagship-implementation-progress.md`.
+
+Files added so far:
+- `prisma/schema.prisma` — `CapabilityInvocation` model + 5 new enums + `AccessPolicy` extensions (additive)
+- `prisma/migrations/20260501053343_add_capability_invocation_unify_policy/migration.sql` — applied to `claw-pg-agent` on 2026-05-01
+- `src/common/enums/capability-{class,operation,blast-radius,reversibility,invocation-status}.enum.ts`
+- `src/common/constants/capability.constants.ts` — risk weights, thresholds, expiry/timeout defaults, dual-write env flag
+- `src/common/constants/capability-policy.constants.ts` — 18 default `AccessPolicy` seeds for FILESYSTEM + PROCESS + catch-all (more added per stream)
+- `src/common/types/recipe-parser.types.ts` — RecipeToken / RecipeParserCursor / RecipeExpressionContext extracted types
+- `src/modules/agent/types/capability.types.ts` — CapabilityDescriptor, RiskAssessment, UndoPlan, Lineage, PaginatedCapabilities
+- `src/modules/agent/services/capability-risk.service.ts` + `capability.service.ts` + `command-risk.service.ts` (dual-write)
+- `src/modules/agent/managers/capability-approval.manager.ts` + `capability-expiry-sweeper.manager.ts`
+- `src/modules/agent/repositories/capability-invocation.repository.ts`
+- `src/modules/agent/controllers/capability.controller.ts` + `capability-cli.controller.ts`
+- `src/modules/agent/dto/{propose,complete,list-capabilities-query,reject,cancel,rollback}-capability.dto.ts`
+- `src/modules/agent/services/__tests__/capability-risk.service.spec.ts` — 16 unit tests, all green
+- `src/modules/recipes/dto/recipe-dsl.dto.ts` — Zod schema for recipe DSL
+- `src/modules/recipes/types/recipe.types.ts`
+- `src/common/utilities/recipe-expression.utility.ts` — safe expression evaluator (NOT eval / vm)
+- `src/common/constants/recipe.constants.ts`
+
+Existing terminal-command flow unchanged. Dual-write to CapabilityInvocation gated by env `CAPABILITY_DEPRECATED_TERMINAL_COMMAND_DUAL_WRITE` (default true) — flip to false after 4-week soak.
+
+Stream 10 status: **landed and validated end-to-end**. Migration applied, typecheck/lint/test green, Docker rebuilt and healthy, `qa/test-stream-10-capability-framework.sh` 28/28 passing.
+
+Stream 11 status: **FILESYSTEM CLI provider landed** (`agent-cli/src/capability-providers/filesystem/index.js`). 8 operations + traversal protection + undoPlan capture. Smoke-tested locally; cross-OS smoke against real hardware deferred.
+
+Stream 12 status: **PROCESS CLI provider landed** (`agent-cli/src/capability-providers/process/index.js`). 4 operations + cross-OS process listing via `tasklist`/`ps`. Smoke-tested locally.
+
+Stream 13 status: **Recipe CRUD landed** — Recipe / RecipeRun / RecipeRunStep schema, `recipes/` NestJS module (controller + service + repo + 8 unit tests), `qa/test-stream-13-recipes-crud.sh` 16/16 passing. Recipe RUNNER orchestration deferred (event-driven design needs review).
+
+Remaining for next sessions:
+
+1. Cross-OS smoke of the agent-cli capability-runner + FS/PROCESS providers against paired real devices.
+2. Stream 13 — recipe runner orchestration manager.
+3. Streams 20–24 capability providers (browser/screen/clipboard/application/audio).
+4. Stream 30 Tauri shell; 31–32 UX; 40–42 fleet/intelligence/marketplace; 50 QA harness; 60 runbooks.
+

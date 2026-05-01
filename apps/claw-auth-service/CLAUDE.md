@@ -70,10 +70,10 @@ npm run prisma:generate  # Regenerate Prisma client
 When rebuilding this service (especially after shared package changes):
 
 ```bash
-docker compose -f docker-compose.dev.yml stop auth-service
-docker compose -f docker-compose.dev.yml rm -f auth-service
+./scripts/claw.sh stop auth-service
+./scripts/claw.sh rm -f auth-service
 docker rmi claw-auth-service
-docker compose -f docker-compose.dev.yml up -d --build auth-service
+./scripts/claw.sh up -d --build auth-service
 ```
 
 **NEVER skip steps.** See root CLAUDE.md for full explanation.

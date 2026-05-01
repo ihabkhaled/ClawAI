@@ -42,7 +42,7 @@ The keyword detection layer runs before the LLM router. Verify it is matching co
 
 ```bash
 # Check routing service logs for keyword matches
-docker compose -f docker-compose.dev.yml logs --tail=100 routing-service | grep -i "keyword\|category\|detected"
+./scripts/claw.sh logs --tail=100 routing-service | grep -i "keyword\|category\|detected"
 ```
 
 ### 4. Check the Dynamic Router Prompt
@@ -51,7 +51,7 @@ The router prompt is built dynamically from installed models:
 
 ```bash
 # Check what models the router knows about
-docker compose -f docker-compose.dev.yml logs --tail=50 routing-service | grep -i "prompt\|installed\|model"
+./scripts/claw.sh logs --tail=50 routing-service | grep -i "prompt\|installed\|model"
 ```
 
 ### 5. Check Adaptive Insights
@@ -85,7 +85,7 @@ If no model has the `LOCAL_CODING` role assigned, coding tasks cannot be routed 
    apps/claw-routing-service/src/modules/routing/constants/routing.constants.ts
    ```
 2. Add missing keywords. Example: if "deploy" triggers coding but should not, remove it. If "terraform" should trigger coding but does not, add it.
-3. Restart routing-service: `docker compose -f docker-compose.dev.yml restart routing-service`
+3. Restart routing-service: `./scripts/claw.sh restart routing-service`
 
 ### Privacy-Sensitive Content Sent to Cloud
 

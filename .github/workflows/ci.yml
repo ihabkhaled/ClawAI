@@ -60,6 +60,9 @@ jobs:
           - service: research
             workspace: claw-research-service
             prisma: true
+          - service: llamacpp
+            workspace: claw-llamacpp-service
+            prisma: true
           - service: client-logs
             workspace: claw-client-logs-service
             prisma: false
@@ -143,6 +146,9 @@ jobs:
             prisma: true
           - service: research
             workspace: claw-research-service
+            prisma: true
+          - service: llamacpp
+            workspace: claw-llamacpp-service
             prisma: true
           - service: client-logs
             workspace: claw-client-logs-service
@@ -228,6 +234,9 @@ jobs:
           - service: research
             workspace: claw-research-service
             prisma: true
+          - service: llamacpp
+            workspace: claw-llamacpp-service
+            prisma: true
           - service: client-logs
             workspace: claw-client-logs-service
             prisma: false
@@ -271,6 +280,9 @@ jobs:
       WORKSPACE_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
       AGENT_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
       RESEARCH_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+      LLAMACPP_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+      LLAMACPP_SERVICE_URL: http://localhost:4017
+      LLAMACPP_DATA_PATH: /tmp/llamacpp-test
       # MongoDB
       AUDIT_MONGODB_URI: mongodb://localhost:27017/test
       CLIENT_LOGS_MONGODB_URI: mongodb://localhost:27017/test
@@ -330,7 +342,7 @@ jobs:
 
       - name: Generate Prisma clients
         run: |
-          for svc in auth chat connector routing memory file ollama image file-generation workspace agent research; do
+          for svc in auth chat connector routing memory file ollama image file-generation workspace agent research llamacpp; do
             cd apps/claw-${svc}-service && npx prisma generate && cd ../..
           done
 

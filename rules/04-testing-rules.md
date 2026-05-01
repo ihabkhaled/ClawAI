@@ -118,7 +118,7 @@ DB_COUNT=$(docker exec claw-connectors-db psql -U claw_user -d claw_connectors \
 [ "$DB_COUNT" -eq 1 ] && echo "PASS: DB record created" || echo "FAIL: DB record not found"
 
 # ─── SECTION N: DOCKER LOG CHECK ──────────────────────────────────────────────
-ERROR_COUNT=$(docker compose -f docker-compose.dev.yml logs connector-service \
+ERROR_COUNT=$(./scripts/claw.sh logs connector-service \
   --tail=200 2>/dev/null | grep -cE "UnhandledPromiseRejection|FATAL")
 [ "$ERROR_COUNT" -eq 0 ] && echo "PASS: No critical errors" || echo "FAIL: $ERROR_COUNT errors found"
 
@@ -255,7 +255,7 @@ Verify:
 At the end of every QA session:
 
 ```bash
-docker compose -f docker-compose.dev.yml logs <service> --tail=200 2>/dev/null | \
+./scripts/claw.sh logs <service> --tail=200 2>/dev/null | \
   grep -E "UnhandledPromiseRejection|FATAL|Cannot read properties of undefined"
 ```
 

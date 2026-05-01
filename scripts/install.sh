@@ -22,6 +22,9 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
 ENV_FILE="$PROJECT_ROOT/.env"
 
+# ─── Compose files (split layout — claw.sh is the canonical entrypoint) ─────
+COMPOSE_FILES="-f docker-compose.dev.databases.yml -f docker-compose.dev.services.yml -f docker-compose.dev.ollama.yml"
+
 # ─── Banner ──────────────────────────────────────────────────────────────────
 echo ""
 printf "${BOLD}${CYAN}"
@@ -128,7 +131,7 @@ detect_gpu() {
 }
 
 resolve_compose_tasks() {
-  docker compose -f docker-compose.dev.yml config --format json 2>/dev/null | node -e '
+  docker compose $COMPOSE_FILES config --format json 2>/dev/null | node -e '
 const fs = require("fs");
 const raw = fs.readFileSync(0, "utf8").trim();
 if (!raw) process.exit(0);
@@ -460,6 +463,11 @@ PG_RESEARCH_PASSWORD=${DB_PASSWORD}
 PG_RESEARCH_DB=claw_research
 PG_RESEARCH_PORT=5452
 
+PG_LLAMACPP_USER=claw
+PG_LLAMACPP_PASSWORD=${DB_PASSWORD}
+PG_LLAMACPP_DB=claw_llamacpp
+PG_LLAMACPP_PORT=5440
+
 # =============================================================================
 # MongoDB
 # =============================================================================
@@ -548,6 +556,7 @@ FILE_GENERATION_SERVICE_URL=http://file-generation-service:4013
 WORKSPACE_SERVICE_URL=http://workspace-service:4014
 AGENT_SERVICE_URL=http://agent-service:4015
 RESEARCH_SERVICE_URL=http://research-service:4016
+LLAMACPP_SERVICE_URL=http://llamacpp-service:4017
 
 # =============================================================================
 # Per-Service Ports
@@ -568,6 +577,7 @@ FILE_GENERATION_PORT=4013
 WORKSPACE_PORT=4014
 AGENT_PORT=4015
 RESEARCH_PORT=4016
+LLAMACPP_PORT=4017
 
 # Workspace scheduled sync (Stream 01 Phase 5)
 WORKSPACE_SCHEDULER_ENABLED=true
@@ -614,6 +624,21 @@ FILE_GENERATION_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-file-generation
 WORKSPACE_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-workspace:5432/claw_workspace?schema=public
 AGENT_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-agent:5432/claw_agent?schema=public
 RESEARCH_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-research:5432/claw_research?schema=public
+LLAMACPP_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-llamacpp:5432/claw_llamacpp?schema=public
+
+# claw-llamacpp-service (Local Frontier LLM runtime)
+LLAMACPP_DATA_PATH=./data/llamacpp
+LLAMACPP_BINARY_VERSION=b4123
+LLAMACPP_GPU_BACKEND=auto
+LLAMACPP_DEFAULT_CTX_SIZE=8192
+LLAMACPP_AUTO_INSTALL_BINARY=true
+LLAMACPP_PREFLIGHT_OVERRIDE_ALLOWED=true
+LLAMACPP_LOAD_TIMEOUT_MS=600000
+LLAMACPP_BIND_HOST=127.0.0.1
+LLAMACPP_PROCESS_PORT_MIN=48500
+LLAMACPP_PROCESS_PORT_MAX=48999
+HUGGINGFACE_TOKEN=
+HUGGINGFACE_API_BASE=https://huggingface.co
 
 STABLE_DIFFUSION_URL=http://stable-diffusion:17860
 COMFYUI_BASE_URL=http://comfyui:8188
@@ -627,6 +652,12 @@ DISCOVERY_AUTO_APPROVE_CONFIDENCE=0.85
 CLAMAV_HOST=clamav
 CLAMAV_PORT=3310
 CLAMAV_ENABLED=true
+
+# Workspace AI Action Approval Engine (Stream 10)
+AI_ACTION_QUEUE_EXPIRY_HOURS=24
+AI_ACTION_RISK_AUTO_APPROVE_MAX=30
+AI_ACTION_QUEUE_EXPIRY_SWEEP_CRON=0 */15 * * * *
+AI_ACTION_QUEUE_EXPIRY_BATCH_LIMIT=100
 
 AUDIT_MONGODB_URI=mongodb://claw:${MONGO_PASS}@mongodb:27017/claw_audit?authSource=admin
 CLIENT_LOGS_MONGODB_URI=mongodb://claw:${MONGO_PASS}@mongodb:27017/claw_client_logs?authSource=admin
@@ -660,7 +691,7 @@ echo ""
 ask "Start Claw? [Y/n]: "
 read -r start_answer
 if [[ "$start_answer" == "n" || "$start_answer" == "N" ]]; then
-  info "Aborted. Run 'docker compose -f docker-compose.dev.yml up -d' when ready."
+  info "Aborted. Run 'docker compose $COMPOSE_FILES up -d' when ready."
   exit 0
 fi
 echo ""
@@ -692,11 +723,11 @@ if [ "$TOTAL_TASKS" -gt 0 ]; then
     if [ "$TASK_PHASE" = "download" ]; then
       DOWNLOAD_COUNT=$((DOWNLOAD_COUNT + 1))
       info "[$PROGRESS%] Downloading $TASK_NAME ($TASK_DETAIL) [$TASK_INDEX/$TOTAL_TASKS]"
-      docker compose -f docker-compose.dev.yml pull "$TASK_NAME"
+      docker compose $COMPOSE_FILES pull "$TASK_NAME"
     else
       BUILD_COUNT=$((BUILD_COUNT + 1))
       info "[$PROGRESS%] Building $TASK_NAME ($TASK_DETAIL) [$TASK_INDEX/$TOTAL_TASKS]"
-      docker compose -f docker-compose.dev.yml build --progress plain "$TASK_NAME"
+      docker compose $COMPOSE_FILES build --progress plain "$TASK_NAME"
     fi
   done
 
@@ -704,14 +735,14 @@ if [ "$TOTAL_TASKS" -gt 0 ]; then
 else
   warn "Could not resolve Docker progress plan; falling back to the legacy startup path"
   info "Pulling Docker images (this may take a few minutes on first run)..."
-  docker compose -f docker-compose.dev.yml pull
+  docker compose $COMPOSE_FILES pull
 
   info "Building and starting containers..."
-  docker compose -f docker-compose.dev.yml up -d --build
+  docker compose $COMPOSE_FILES up -d --build
 fi
 
 info "[90%] Finalizing containers..."
-docker compose -f docker-compose.dev.yml up -d --no-build
+docker compose $COMPOSE_FILES up -d --no-build
 
 echo ""
 info "Waiting for services to become healthy..."
@@ -720,10 +751,10 @@ info "Waiting for services to become healthy..."
 MAX_WAIT=180
 ELAPSED=0
 INTERVAL=5
-TOTAL_SERVICES=$(docker compose -f docker-compose.dev.yml config --services 2>/dev/null | awk 'END {print NR+0}')
+TOTAL_SERVICES=$(docker compose $COMPOSE_FILES config --services 2>/dev/null | awk 'END {print NR+0}')
 
 while [ $ELAPSED -lt $MAX_WAIT ]; do
-  HEALTHY=$(docker compose -f docker-compose.dev.yml ps 2>/dev/null | grep -c "(healthy)" || echo "0")
+  HEALTHY=$(docker compose $COMPOSE_FILES ps 2>/dev/null | grep -c "(healthy)" || echo "0")
   PROGRESS=$((90 + (ELAPSED * 10 / MAX_WAIT)))
   if [ "$PROGRESS" -gt 99 ]; then
     PROGRESS=99
@@ -732,7 +763,7 @@ while [ $ELAPSED -lt $MAX_WAIT ]; do
   info "[$PROGRESS%] Finalizing containers: $HEALTHY/$TOTAL_SERVICES healthy"
 
   # Check if auth-service is healthy (key indicator — it depends on DB + runs seed)
-  if docker compose -f docker-compose.dev.yml ps auth-service 2>/dev/null | grep -q "(healthy)"; then
+  if docker compose $COMPOSE_FILES ps auth-service 2>/dev/null | grep -q "(healthy)"; then
     break
   fi
 
@@ -745,7 +776,7 @@ echo ""
 echo ""
 
 # Final status
-UNHEALTHY=$(docker compose -f docker-compose.dev.yml ps 2>/dev/null | grep -c "unhealthy" || echo "0")
+UNHEALTHY=$(docker compose $COMPOSE_FILES ps 2>/dev/null | grep -c "unhealthy" || echo "0")
 
 if [ "$UNHEALTHY" -eq 0 ]; then
   echo "${GREEN}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -755,7 +786,7 @@ else
   echo "${YELLOW}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
   echo "${YELLOW}${BOLD}  Claw started with $UNHEALTHY unhealthy container(s)${NC}"
   echo "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-  warn "Check logs: docker compose -f docker-compose.dev.yml logs <service>"
+  warn "Check logs: docker compose $COMPOSE_FILES logs <service>"
 fi
 
 echo ""

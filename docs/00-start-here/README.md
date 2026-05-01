@@ -98,3 +98,20 @@ Each layer assumes you've read the layers above it. If something in a service gu
 The `CLAUDE.md` file in the project root is the authoritative reference for coding rules, architecture patterns, and the mandatory change checklist. When the system changes, `CLAUDE.md` is updated first, and these docs follow.
 
 Every pull request that changes architecture, adds a service, or modifies a public API should include a documentation update. The mandatory change checklist in `CLAUDE.md` item 7 enforces this.
+
+---
+
+## Desktop Agent Flagship (added 2026-04-26)
+
+The desktop-agent flagship initiative pushes the existing claw-agent-service from Phase A–D (terminal commands + scheduling) into a full **operate-all-OS-work assistant** with 9 new capability classes, recipes, marketplace, and fleet admin. Plan and stream prompts at `plan-prompts/clawai_desktop_agent_flagship/`.
+
+| Document | Purpose |
+|---|---|
+| [Vision](../02-business-product/desktop-agent-vision.md) | Personas, market position, success metrics, 12-risk register |
+| [Feature Catalog](../02-business-product/desktop-agent-feature-catalog.md) | ~134 features across 9 categories with MoSCoW + cross-OS test cost |
+| [User Stories & UAT](../10-uat-acceptance/desktop-agent-uat.md) | ~79 Gherkin stories incl. 6 adversarial scenarios for marketplace |
+| [ADR-029](../13-adr/ADR-029-capability-framework-and-policy-generalisation.md) | Capability framework + AccessPolicy generalisation |
+| [ADR-030](../13-adr/ADR-030-filesystem-capability.md) | Filesystem provider design |
+| [ADR-031](../13-adr/ADR-031-process-capability.md) | Process management provider design |
+| [ADR-032](../13-adr/ADR-032-recipe-engine-architecture.md) | Recipe DSL + DAG runner + safe expression evaluator |
+

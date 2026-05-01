@@ -62,7 +62,7 @@ The installer creates the `.env` file, sets up databases, runs Prisma migrations
 ## Step 3: Start Everything
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh up -d
 ```
 
 This starts 33 containers: 15 backend services, frontend, Nginx, 11 PostgreSQL databases, MongoDB, Redis, RabbitMQ, Ollama, and ClamAV.
@@ -100,9 +100,9 @@ Password: ClawAdmin123!
 
 | Command                                                         | What It Does                |
 | --------------------------------------------------------------- | --------------------------- |
-| `docker compose -f docker-compose.dev.yml up -d`                | Start all containers        |
-| `docker compose -f docker-compose.dev.yml down`                 | Stop all containers         |
-| `docker compose -f docker-compose.dev.yml logs -f chat-service` | Follow logs for one service |
+| `./scripts/claw.sh up -d`                | Start all containers        |
+| `./scripts/claw.sh down`                 | Stop all containers         |
+| `./scripts/claw.sh logs -f chat-service` | Follow logs for one service |
 | `./scripts/claw.sh status`                                      | Check all service health    |
 | `./scripts/claw.sh logs`                                        | Tail all service logs       |
 
@@ -300,7 +300,7 @@ Another process is using one of the service ports (3000, 4000-4015). Kill it or 
 If a migration fails during container startup, the container will crash-loop. Fix the migration, then rebuild:
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d --build <service-name>
+./scripts/claw.sh up -d --build <service-name>
 ```
 
 ### RabbitMQ connection refused
@@ -308,7 +308,7 @@ docker compose -f docker-compose.dev.yml up -d --build <service-name>
 RabbitMQ takes 10-20 seconds to start. Services retry automatically, but if it persists, check:
 
 ```bash
-docker compose -f docker-compose.dev.yml logs rabbitmq
+./scripts/claw.sh logs rabbitmq
 ```
 
 ### Ollama models not pulling
@@ -316,8 +316,8 @@ docker compose -f docker-compose.dev.yml logs rabbitmq
 The ollama runtime may auto-pull models on startup. This requires disk space and a working internet connection. Check progress:
 
 ```bash
-docker compose -f docker-compose.dev.yml logs -f ollama
-docker compose -f docker-compose.dev.yml logs -f ollama-service
+./scripts/claw.sh logs -f ollama
+./scripts/claw.sh logs -f ollama-service
 ```
 
 ### Workspace OAuth flow fails
@@ -337,7 +337,7 @@ Check that:
 After changing code in `packages/shared-*`, dependent services need to be restarted:
 
 ```bash
-docker compose -f docker-compose.dev.yml restart chat-service routing-service workspace-service agent-service
+./scripts/claw.sh restart chat-service routing-service workspace-service agent-service
 ```
 
 ### "Cannot find module" after pulling changes

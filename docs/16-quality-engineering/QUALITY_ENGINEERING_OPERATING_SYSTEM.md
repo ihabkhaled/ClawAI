@@ -392,17 +392,17 @@ curl -s -X POST http://localhost:400X/api/v1/your-endpoint \
 
 ```bash
 # Check service logs for errors
-docker compose -f docker-compose.dev.yml logs chat-service --since 5m | grep -i error
+./scripts/claw.sh logs chat-service --since 5m | grep -i error
 
 # Check all service logs
-docker compose -f docker-compose.dev.yml logs --since 5m | grep -i error
+./scripts/claw.sh logs --since 5m | grep -i error
 ```
 
 ### E8. Targeted DB Check
 
 ```bash
 # Connect to the service's database
-docker compose -f docker-compose.dev.yml exec pg-chat psql -U claw -d claw_chat
+./scripts/claw.sh exec pg-chat psql -U claw -d claw_chat
 
 # Verify the record was created/updated
 SELECT * FROM "ChatThread" WHERE id = 'xxx' ORDER BY "createdAt" DESC LIMIT 5;
@@ -489,10 +489,10 @@ Verify the entire system works together:
 curl http://localhost:4000/api/v1/health | jq .
 
 # All containers running
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 
 # No restart loops
-docker compose -f docker-compose.dev.yml ps | grep -i restarting
+./scripts/claw.sh ps | grep -i restarting
 ```
 
 ### F9. UAT (User Acceptance Testing)
@@ -589,10 +589,10 @@ Continue the bug loop until:
 curl http://localhost:4000/api/v1/health | jq .
 
 # No containers in restart loop
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 
 # No error logs in the last 10 minutes
-docker compose -f docker-compose.dev.yml logs --since 10m 2>&1 | grep -c "ERROR"
+./scripts/claw.sh logs --since 10m 2>&1 | grep -c "ERROR"
 ```
 
 ### H2. Infrastructure Verification

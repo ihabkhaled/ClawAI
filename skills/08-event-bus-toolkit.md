@@ -226,16 +226,16 @@ curl -s -u admin:admin -X POST \
 
 ```bash
 # Verify publisher sent event
-docker compose -f docker-compose.dev.yml logs connector-service --tail=50 | \
+./scripts/claw.sh logs connector-service --tail=50 | \
   grep "Published event\|connector.synced"
 
 # Verify consumer received event
-docker compose -f docker-compose.dev.yml logs routing-service --tail=50 | \
+./scripts/claw.sh logs routing-service --tail=50 | \
   grep "handleConnectorSynced\|Received event"
 
 # Verify event correlation (trace by correlationId)
 CORRELATION="some-uuid"
-docker compose -f docker-compose.dev.yml logs --tail=500 | \
+./scripts/claw.sh logs --tail=500 | \
   grep "$CORRELATION"
 ```
 

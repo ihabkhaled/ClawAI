@@ -24,7 +24,7 @@ curl -s http://localhost:4000/api/v1/ollama/pull-jobs \
 ### 2. Check Ollama Service Logs
 
 ```bash
-docker compose -f docker-compose.dev.yml logs --tail=50 ollama-service
+./scripts/claw.sh logs --tail=50 ollama-service
 ```
 
 Look for:
@@ -36,7 +36,7 @@ Look for:
 ### 3. Check Ollama Runtime Logs
 
 ```bash
-docker compose -f docker-compose.dev.yml logs --tail=50 ollama
+./scripts/claw.sh logs --tail=50 ollama
 ```
 
 Look for:
@@ -52,14 +52,14 @@ Look for:
 docker system df
 
 # Ollama model storage
-docker compose -f docker-compose.dev.yml exec ollama du -sh /root/.ollama/models/
+./scripts/claw.sh exec ollama du -sh /root/.ollama/models/
 ```
 
 ### 5. Check Network Connectivity
 
 ```bash
 # From the Ollama container, can it reach the registry?
-docker compose -f docker-compose.dev.yml exec ollama \
+./scripts/claw.sh exec ollama \
   curl -s -o /dev/null -w "%{http_code}" https://registry.ollama.ai/v2/
 ```
 
@@ -79,7 +79,7 @@ curl -X POST http://localhost:4000/api/v1/ollama/catalog/<id>/pull \
 If retries fail:
 ```bash
 # Clear partial download and retry
-docker compose -f docker-compose.dev.yml exec ollama \
+./scripts/claw.sh exec ollama \
   ollama rm <model-name> 2>/dev/null
 # Then retry from the UI
 ```
@@ -94,7 +94,7 @@ docker compose -f docker-compose.dev.yml exec ollama \
 docker system df -v
 
 # Remove unused models
-docker compose -f docker-compose.dev.yml exec ollama ollama rm <unused-model>
+./scripts/claw.sh exec ollama ollama rm <unused-model>
 
 # Remove unused Docker images
 docker image prune -f
@@ -120,10 +120,10 @@ Model sizes to plan for:
 **Fix**:
 ```bash
 # Check Ollama container
-docker compose -f docker-compose.dev.yml ps ollama
+./scripts/claw.sh ps ollama
 
 # Restart Ollama
-docker compose -f docker-compose.dev.yml restart ollama
+./scripts/claw.sh restart ollama
 
 # Wait for health check
 sleep 10
@@ -151,10 +151,10 @@ curl -X DELETE http://localhost:4000/api/v1/ollama/pull-jobs/<job-id> \
   -H "Authorization: Bearer $TOKEN"
 
 # Check if Ollama is actually still downloading
-docker compose -f docker-compose.dev.yml exec ollama ollama ps
+./scripts/claw.sh exec ollama ollama ps
 
 # Restart ollama-service to clean up stale state
-docker compose -f docker-compose.dev.yml restart ollama-service
+./scripts/claw.sh restart ollama-service
 
 # Retry the pull
 ```
@@ -180,7 +180,7 @@ If the API-based pull keeps failing, try pulling directly:
 
 ```bash
 # Shell into the Ollama container
-docker compose -f docker-compose.dev.yml exec ollama bash
+./scripts/claw.sh exec ollama bash
 
 # Pull directly
 ollama pull gemma3:4b
@@ -193,7 +193,7 @@ Then sync the database:
 
 ```bash
 # Restart ollama-service to trigger model sync
-docker compose -f docker-compose.dev.yml restart ollama-service
+./scripts/claw.sh restart ollama-service
 ```
 
 ## Prevention

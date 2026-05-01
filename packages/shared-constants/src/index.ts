@@ -19,6 +19,7 @@ export const FILE_GENERATION_SERVICE_PORT = 4013;
 export const WORKSPACE_SERVICE_PORT = 4014;
 export const AGENT_SERVICE_PORT = 4015;
 export const RESEARCH_SERVICE_PORT = 4016;
+export const LLAMACPP_SERVICE_PORT = 4017;
 
 // ---- Service Names ----
 
@@ -36,6 +37,7 @@ export const FILE_GENERATION_SERVICE = 'file-generation-service';
 export const WORKSPACE_SERVICE = 'workspace-service';
 export const AGENT_SERVICE = 'agent-service';
 export const RESEARCH_SERVICE = 'research-service';
+export const LLAMACPP_SERVICE = 'llamacpp-service';
 
 // ---- API ----
 

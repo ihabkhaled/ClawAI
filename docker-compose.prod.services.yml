@@ -339,6 +339,29 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  # Llamacpp Service (Local Frontier — Phase 1+)
+  # ---------------------------------------------------------------------------
+  llamacpp-service:
+    build:
+      context: .
+      dockerfile: apps/claw-llamacpp-service/Dockerfile
+    container_name: claw-llamacpp-service
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '4017:4017'
+    volumes:
+      - llamacpp-data:/var/lib/claw/llamacpp
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4017/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   # File Generation Service
   # ---------------------------------------------------------------------------
   file-generation-service:
@@ -385,6 +408,8 @@ services:
 
 volumes:
   file-storage-data:
+    driver: local
+  llamacpp-data:
     driver: local
 
 networks:

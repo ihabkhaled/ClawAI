@@ -63,7 +63,7 @@ npm run typecheck && npm run lint && npm run test && npm run build
 
 ```bash
 curl -s http://localhost:4003/health | jq .
-docker compose -f docker-compose.dev.yml ps connector-service
+./scripts/claw.sh ps connector-service
 ```
 
 ### Get auth token for API testing
@@ -78,6 +78,6 @@ echo $TOKEN
 ### Tail service logs
 
 ```bash
-docker compose -f docker-compose.dev.yml logs -f chat-service
-docker compose -f docker-compose.dev.yml logs connector-service --tail=50
+./scripts/claw.sh logs -f chat-service
+./scripts/claw.sh logs connector-service --tail=50
 ```

@@ -321,7 +321,7 @@ THREAD=$(curl -s -X POST http://localhost:4000/api/v1/chat-threads \
 THREAD_ID=$(echo $THREAD | jq -r '.id')
 
 # Verify in database
-docker compose -f docker-compose.dev.yml exec pg-chat \
+./scripts/claw.sh exec pg-chat \
   psql -U claw -d claw_chat -c \
   "SELECT id, title, \"routingMode\", \"userId\" FROM \"ChatThread\" WHERE id = '$THREAD_ID';"
 ```
@@ -350,7 +350,7 @@ MESSAGE=$(curl -s -X POST http://localhost:4000/api/v1/chat-messages \
 MESSAGE_ID=$(echo $MESSAGE | jq -r '.id')
 
 # Verify foreign key
-docker compose -f docker-compose.dev.yml exec pg-chat \
+./scripts/claw.sh exec pg-chat \
   psql -U claw -d claw_chat -c \
   "SELECT id, \"threadId\" FROM \"ChatMessage\" WHERE id = '$MESSAGE_ID';"
 # threadId must match the created thread
@@ -498,7 +498,7 @@ wait
 
 ```bash
 # Stop a dependency
-docker compose -f docker-compose.dev.yml stop ollama-service
+./scripts/claw.sh stop ollama-service
 
 # Test an endpoint that depends on it
 curl -s -X POST http://localhost:4000/api/v1/chat-messages \
@@ -508,14 +508,14 @@ curl -s -X POST http://localhost:4000/api/v1/chat-messages \
 # Expected: Graceful error (503 or 500 with clear message), not a hang or crash
 
 # Restart
-docker compose -f docker-compose.dev.yml start ollama-service
+./scripts/claw.sh start ollama-service
 ```
 
 ### 8.2 Database Connection Lost
 
 ```bash
 # Stop the database
-docker compose -f docker-compose.dev.yml stop pg-chat
+./scripts/claw.sh stop pg-chat
 
 # Test
 curl -s -X GET http://localhost:4000/api/v1/chat-threads \
@@ -523,14 +523,14 @@ curl -s -X GET http://localhost:4000/api/v1/chat-threads \
 # Expected: 500 with "database connection error" type message, not a crash
 
 # Restart
-docker compose -f docker-compose.dev.yml start pg-chat
+./scripts/claw.sh start pg-chat
 ```
 
 ### 8.3 RabbitMQ Down
 
 ```bash
 # Stop RabbitMQ
-docker compose -f docker-compose.dev.yml stop rabbitmq
+./scripts/claw.sh stop rabbitmq
 
 # Test message send (depends on RabbitMQ for event publishing)
 curl -s -X POST http://localhost:4000/api/v1/chat-messages \
@@ -541,7 +541,7 @@ curl -s -X POST http://localhost:4000/api/v1/chat-messages \
 # Document actual behavior: does the service queue events? fail fast? retry?
 
 # Restart
-docker compose -f docker-compose.dev.yml start rabbitmq
+./scripts/claw.sh start rabbitmq
 ```
 
 ---
@@ -718,7 +718,7 @@ STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
 echo "Status: $STATUS (expected: 404)"
 
 echo "=== Test 11: DB verification ==="
-docker compose -f docker-compose.dev.yml exec pg-chat \
+./scripts/claw.sh exec pg-chat \
   psql -U claw -d claw_chat -t -c \
   "SELECT count(*) FROM \"ChatThread\" WHERE id = '$THREAD_ID';"
 # Expected: 0 (deleted)

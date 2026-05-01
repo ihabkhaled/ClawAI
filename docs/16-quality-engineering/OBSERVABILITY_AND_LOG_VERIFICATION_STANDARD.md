@@ -118,7 +118,7 @@ ClawAI produces observable output at six layers. Every significant action should
 
 1. Open the Docker logs for the target service:
    ```bash
-   docker compose -f docker-compose.dev.yml logs -f <service-name> --since 1m
+   ./scripts/claw.sh logs -f <service-name> --since 1m
    ```
 2. Verify the request was received (look for the endpoint path and HTTP method in the log).
 3. Verify no unhandled exceptions.
@@ -129,7 +129,7 @@ ClawAI produces observable output at six layers. Every significant action should
 
 1. **Check audit log** -- for audited actions, verify an entry exists in the MongoDB audit collection:
    ```bash
-   docker compose -f docker-compose.dev.yml exec mongodb mongosh --eval "
+   ./scripts/claw.sh exec mongodb mongosh --eval "
      use claw_audit;
      db.auditlogs.find().sort({createdAt: -1}).limit(5).pretty();
    "
@@ -137,7 +137,7 @@ ClawAI produces observable output at six layers. Every significant action should
 2. **Check the database** -- verify the record was created/updated/deleted in the correct service database:
    ```bash
    # PostgreSQL example (chat service)
-   docker compose -f docker-compose.dev.yml exec pg-chat psql -U claw -d claw_chat -c "
+   ./scripts/claw.sh exec pg-chat psql -U claw -d claw_chat -c "
      SELECT id, role, content, provider, model FROM chat_messages ORDER BY created_at DESC LIMIT 5;
    "
    ```
@@ -157,16 +157,16 @@ Example verification for `message.completed` event:
 
 ```bash
 # 1. Chat service published the event
-docker compose -f docker-compose.dev.yml logs chat-service --since 1m | grep "message.completed"
+./scripts/claw.sh logs chat-service --since 1m | grep "message.completed"
 
 # 2. Audit service consumed it
-docker compose -f docker-compose.dev.yml logs audit-service --since 1m | grep "message.completed"
+./scripts/claw.sh logs audit-service --since 1m | grep "message.completed"
 
 # 3. Memory service consumed it (for extraction)
-docker compose -f docker-compose.dev.yml logs memory-service --since 1m | grep "message.completed"
+./scripts/claw.sh logs memory-service --since 1m | grep "message.completed"
 
 # 4. Audit entry was created
-docker compose -f docker-compose.dev.yml exec mongodb mongosh --eval "
+./scripts/claw.sh exec mongodb mongosh --eval "
   use claw_audit;
   db.auditlogs.find({action: 'message.completed'}).sort({createdAt: -1}).limit(1).pretty();
 "
@@ -176,7 +176,7 @@ docker compose -f docker-compose.dev.yml exec mongodb mongosh --eval "
 
 1. **Check the structured error log** in Docker:
    ```bash
-   docker compose -f docker-compose.dev.yml logs <service> --since 1m | grep -i "error\|exception\|fail"
+   ./scripts/claw.sh logs <service> --since 1m | grep -i "error\|exception\|fail"
    ```
 2. Verify the error log includes:
    - Request ID (`X-Request-ID` or `requestId` field).
@@ -190,7 +190,7 @@ docker compose -f docker-compose.dev.yml exec mongodb mongosh --eval "
 
 1. **No "Cannot set headers after they are sent to the client"** -- this is the most common SSE bug. Check Docker logs:
    ```bash
-   docker compose -f docker-compose.dev.yml logs <service> --since 1m | grep "Cannot set headers"
+   ./scripts/claw.sh logs <service> --since 1m | grep "Cannot set headers"
    ```
 2. **No pino-http autoLogging conflict** -- verify the SSE endpoint is excluded from autoLogging.
 3. **Events are reaching the client** -- check the browser Network tab for the SSE request. The "EventStream" tab should show incoming events.
@@ -224,7 +224,7 @@ Verify redaction is working:
 
 ```bash
 # This should NOT show any raw tokens
-docker compose -f docker-compose.dev.yml logs auth-service --since 5m | grep -i "eyJ\|Bearer\|password\|apiKey\|secret"
+./scripts/claw.sh logs auth-service --since 5m | grep -i "eyJ\|Bearer\|password\|apiKey\|secret"
 ```
 
 ### Structured Log Format
@@ -375,13 +375,13 @@ Connect to the service's database:
 
 ```bash
 # Chat service database
-docker compose -f docker-compose.dev.yml exec pg-chat psql -U claw -d claw_chat
+./scripts/claw.sh exec pg-chat psql -U claw -d claw_chat
 
 # Auth service database
-docker compose -f docker-compose.dev.yml exec pg-auth psql -U claw -d claw_auth
+./scripts/claw.sh exec pg-auth psql -U claw -d claw_auth
 
 # Connector service database
-docker compose -f docker-compose.dev.yml exec pg-connectors psql -U claw -d claw_connectors
+./scripts/claw.sh exec pg-connectors psql -U claw -d claw_connectors
 ```
 
 **Checklist for every record:**
@@ -400,7 +400,7 @@ docker compose -f docker-compose.dev.yml exec pg-connectors psql -U claw -d claw
 Connect to MongoDB:
 
 ```bash
-docker compose -f docker-compose.dev.yml exec mongodb mongosh
+./scripts/claw.sh exec mongodb mongosh
 ```
 
 ```javascript
@@ -490,19 +490,19 @@ For the full message flow (the most complex event chain):
 
 ```bash
 # Follow logs for a specific service (real-time)
-docker compose -f docker-compose.dev.yml logs -f <service-name>
+./scripts/claw.sh logs -f <service-name>
 
 # Last 1 minute of logs
-docker compose -f docker-compose.dev.yml logs <service-name> --since 1m
+./scripts/claw.sh logs <service-name> --since 1m
 
 # Last 50 lines
-docker compose -f docker-compose.dev.yml logs <service-name> --tail 50
+./scripts/claw.sh logs <service-name> --tail 50
 
 # All services (noisy, use sparingly)
-docker compose -f docker-compose.dev.yml logs --since 30s
+./scripts/claw.sh logs --since 30s
 
 # Filter for errors only
-docker compose -f docker-compose.dev.yml logs <service-name> --since 5m 2>&1 | grep -i "error\|exception\|fail"
+./scripts/claw.sh logs <service-name> --since 5m 2>&1 | grep -i "error\|exception\|fail"
 ```
 
 ### MongoDB Compass

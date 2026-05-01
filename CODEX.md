@@ -93,7 +93,7 @@ docs/                # 11 architecture audit documents
 2. **`.env`** — fill the new variable with a working dev value
 3. **`scripts/install.sh`** — add the variable to the generated .env block
 4. **`scripts/install.ps1`** — same for Windows PowerShell installer
-5. **ALL Docker compose files** — `docker-compose.dev.yml`, `docker-compose.yml` (prod), `docker-compose.dev.ollama.yml`, `docker-compose.prod.ollama.yml`, and any split compose files — if new service, port, volume, database, or AI runtime dependency
+5. **ALL Docker compose files** — the split compose files (`docker-compose.dev.{databases,services,ollama}.yml` + `docker-compose.prod.*` mirrors + `docker-compose.{dev,prod}.gpu-{nvidia,rocm,vulkan}.yml` overlays) — if new service, port, volume, database, or AI runtime dependency
 6. **i18n locale files** — if any new user-facing text (ALL 8 locales: en, ar, de, es, fr, it, pt, ru)
 7. **Architecture docs** (`docs/`) — if the change affects documented architecture
 8. **Prisma migrations** — if any schema change (`npx prisma migrate dev --name <name>`)
@@ -815,16 +815,16 @@ After completing any implementation, confirm ALL are done:
 
 ```bash
 # 1. Stop the container
-docker compose -f docker-compose.dev.yml stop <service-name>
+./scripts/claw.sh stop <service-name>
 
 # 2. Remove the container
-docker compose -f docker-compose.dev.yml rm -f <service-name>
+./scripts/claw.sh rm -f <service-name>
 
 # 3. Remove the image
 docker rmi <image-name>
 
 # 4. Rebuild and start
-docker compose -f docker-compose.dev.yml up -d --build <service-name>
+./scripts/claw.sh up -d --build <service-name>
 ```
 
 **NEVER skip steps.** Just restarting or using `--build` alone leaves stale compiled code, cached layers, and old `node_modules`. When a shared package (`shared-rabbitmq`, `shared-types`, `shared-constants`, `shared-auth`) is modified, ALL dependent service containers must go through the full stop → rm → rmi → build cycle.
@@ -832,7 +832,7 @@ docker compose -f docker-compose.dev.yml up -d --build <service-name>
 ## Docker Compose
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d    # Full dev environment (~22 containers)
+./scripts/claw.sh up -d    # Full dev environment (~22 containers)
 ./scripts/claw.sh up                              # Via management script
 ./scripts/claw.sh --prod up                       # Production mode
 ```
@@ -966,9 +966,9 @@ npm run lint               # Lint all
 npm run typecheck          # TypeScript check all
 npm run build              # Build all
 npm run test               # Test all
-docker compose -f docker-compose.dev.yml up -d   # Start dev
-docker compose -f docker-compose.dev.yml down     # Stop
-docker compose -f docker-compose.dev.yml logs -f chat-service  # Follow logs
+./scripts/claw.sh up -d   # Start dev
+./scripts/claw.sh down     # Stop
+./scripts/claw.sh logs -f chat-service  # Follow logs
 ./scripts/claw.sh status   # Check all service status
 ```
 
@@ -1130,7 +1130,7 @@ Check and update ALL of these:
 2. **`.env`** — fill the new variable with a working dev value
 3. **`scripts/install.sh`** — add the variable to the generated .env block
 4. **`scripts/install.ps1`** — same for Windows PowerShell installer
-5. **ALL Docker compose files** — `docker-compose.dev.yml`, `docker-compose.yml` (prod), `docker-compose.dev.ollama.yml`, `docker-compose.prod.ollama.yml`, and any split compose files — if new service, port, volume, database, or AI runtime dependency
+5. **ALL Docker compose files** — the split compose files (`docker-compose.dev.{databases,services,ollama}.yml` + `docker-compose.prod.*` mirrors + `docker-compose.{dev,prod}.gpu-{nvidia,rocm,vulkan}.yml` overlays) — if new service, port, volume, database, or AI runtime dependency
 6. **`infra/nginx/nginx.conf`** — add upstream + location block for the new service (SSE routes need `proxy_buffering off`)
 7. **`packages/shared-constants`** — add service port and service name constants
 8. **`packages/shared-types`** — add new event patterns if the service publishes events
@@ -1163,8 +1163,8 @@ npm run test
 npm run build
 
 # 5. Docker — restart affected services and verify healthy
-docker compose -f docker-compose.dev.yml restart <service-name>
-docker compose -f docker-compose.dev.yml ps <service-name>  # must show (healthy)
+./scripts/claw.sh restart <service-name>
+./scripts/claw.sh ps <service-name>  # must show (healthy)
 ```
 
 **NEVER skip pre-commit hooks.** The pre-commit hook runs 5 steps:
@@ -1228,7 +1228,7 @@ Verify:
 #### Docker Log Check (Required at End of Every Script)
 
 ```bash
-ERROR_COUNT=$(docker compose -f docker-compose.dev.yml logs <service> --tail=200 2>/dev/null | \
+ERROR_COUNT=$(./scripts/claw.sh logs <service> --tail=200 2>/dev/null | \
   grep -cE "UnhandledPromiseRejection|FATAL|Cannot read properties of undefined")
 [ "$ERROR_COUNT" -eq 0 ] || echo "FAIL: $ERROR_COUNT critical errors found"
 ```

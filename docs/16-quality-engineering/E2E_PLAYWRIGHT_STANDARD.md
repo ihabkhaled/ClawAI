@@ -51,7 +51,7 @@ export default defineConfig({
 
 ### Environment Requirements
 
-- Full Docker Compose stack running (`docker compose -f docker-compose.dev.yml up -d`)
+- Full Docker Compose stack running (`./scripts/claw.sh up -d`)
 - Frontend running on `http://localhost:3000` (either Docker or `npm run dev` in `apps/claw-frontend`)
 - All 13 services healthy
 - Seeded admin user: `admin@claw.ai` / `admin123` (or as configured in `.env`)
@@ -614,7 +614,7 @@ e2e:
   steps:
     - uses: actions/checkout@v4
     - name: Start Docker Compose
-      run: docker compose -f docker-compose.dev.yml up -d --wait
+      run: ./scripts/claw.sh up -d --wait
     - name: Wait for services
       run: |
         for i in $(seq 1 60); do

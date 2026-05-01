@@ -22,6 +22,9 @@ $ProjectRoot = Split-Path -Parent $ScriptDir
 Set-Location $ProjectRoot
 $envFile = Join-Path $ProjectRoot ".env"
 
+# --- Compose files (split layout — claw.sh is the canonical entrypoint) ---
+$ComposeFiles = "-f docker-compose.dev.databases.yml -f docker-compose.dev.services.yml -f docker-compose.dev.ollama.yml"
+
 # --- Banner ---
 Write-Host ""
 Write-Host @"
@@ -140,7 +143,7 @@ function Get-GpuInfo {
 }
 
 function Get-ComposeTasks {
-    $configJson = docker compose -f docker-compose.dev.yml config --format json 2>$null
+    $configJson = docker compose $ComposeFiles config --format json 2>$null
     if ($LASTEXITCODE -ne 0 -or -not $configJson) {
         return @()
     }
@@ -510,6 +513,11 @@ PG_RESEARCH_PASSWORD=$dbPassword
 PG_RESEARCH_DB=claw_research
 PG_RESEARCH_PORT=5452
 
+PG_LLAMACPP_USER=claw
+PG_LLAMACPP_PASSWORD=$dbPassword
+PG_LLAMACPP_DB=claw_llamacpp
+PG_LLAMACPP_PORT=5440
+
 # =============================================================================
 # MongoDB
 # =============================================================================
@@ -598,6 +606,7 @@ FILE_GENERATION_SERVICE_URL=http://file-generation-service:4013
 WORKSPACE_SERVICE_URL=http://workspace-service:4014
 AGENT_SERVICE_URL=http://agent-service:4015
 RESEARCH_SERVICE_URL=http://research-service:4016
+LLAMACPP_SERVICE_URL=http://llamacpp-service:4017
 
 # =============================================================================
 # Per-Service Ports
@@ -618,6 +627,7 @@ FILE_GENERATION_PORT=4013
 WORKSPACE_PORT=4014
 AGENT_PORT=4015
 RESEARCH_PORT=4016
+LLAMACPP_PORT=4017
 
 # Workspace scheduled sync (Stream 01 Phase 5)
 WORKSPACE_SCHEDULER_ENABLED=true
@@ -664,6 +674,21 @@ FILE_GENERATION_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-file-generation
 WORKSPACE_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-workspace:5432/claw_workspace?schema=public
 AGENT_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-agent:5432/claw_agent?schema=public
 RESEARCH_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-research:5432/claw_research?schema=public
+LLAMACPP_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-llamacpp:5432/claw_llamacpp?schema=public
+
+# claw-llamacpp-service (Local Frontier LLM runtime)
+LLAMACPP_DATA_PATH=./data/llamacpp
+LLAMACPP_BINARY_VERSION=b4123
+LLAMACPP_GPU_BACKEND=auto
+LLAMACPP_DEFAULT_CTX_SIZE=8192
+LLAMACPP_AUTO_INSTALL_BINARY=true
+LLAMACPP_PREFLIGHT_OVERRIDE_ALLOWED=true
+LLAMACPP_LOAD_TIMEOUT_MS=600000
+LLAMACPP_BIND_HOST=127.0.0.1
+LLAMACPP_PROCESS_PORT_MIN=48500
+LLAMACPP_PROCESS_PORT_MAX=48999
+HUGGINGFACE_TOKEN=
+HUGGINGFACE_API_BASE=https://huggingface.co
 
 STABLE_DIFFUSION_URL=http://stable-diffusion:17860
 COMFYUI_BASE_URL=http://comfyui:8188
@@ -677,6 +702,12 @@ DISCOVERY_AUTO_APPROVE_CONFIDENCE=0.85
 CLAMAV_HOST=clamav
 CLAMAV_PORT=3310
 CLAMAV_ENABLED=true
+
+# Workspace AI Action Approval Engine (Stream 10)
+AI_ACTION_QUEUE_EXPIRY_HOURS=24
+AI_ACTION_RISK_AUTO_APPROVE_MAX=30
+AI_ACTION_QUEUE_EXPIRY_SWEEP_CRON=0 */15 * * * *
+AI_ACTION_QUEUE_EXPIRY_BATCH_LIMIT=100
 
 AUDIT_MONGODB_URI=mongodb://claw:$($mongoPass)@mongodb:27017/claw_audit?authSource=admin
 CLIENT_LOGS_MONGODB_URI=mongodb://claw:$($mongoPass)@mongodb:27017/claw_client_logs?authSource=admin
@@ -714,7 +745,7 @@ Write-Host ""
 Write-Ask "Start Claw? [Y/n]: "
 $startAnswer = Read-Host
 if ($startAnswer -eq "n" -or $startAnswer -eq "N") {
-    Write-Info "Aborted. Run 'docker compose -f docker-compose.dev.yml up -d' when ready."
+    Write-Info "Aborted. Run 'docker compose $ComposeFiles up -d' when ready."
     exit 0
 }
 Write-Host ""
@@ -740,11 +771,11 @@ if ($totalTasks -gt 0) {
         if ($task.Phase -eq "download") {
             $downloadCount++
             Write-Info ("[{0,3}%] Downloading {1} ({2}) [{3}/{4}]" -f $progress, $task.Name, $task.Detail, ($index + 1), $totalTasks)
-            docker compose -f docker-compose.dev.yml pull $task.Name
+            docker compose $ComposeFiles pull $task.Name
         } else {
             $buildCount++
             Write-Info ("[{0,3}%] Building {1} ({2}) [{3}/{4}]" -f $progress, $task.Name, $task.Detail, ($index + 1), $totalTasks)
-            docker compose -f docker-compose.dev.yml build --progress plain $task.Name
+            docker compose $ComposeFiles build --progress plain $task.Name
         }
     }
 
@@ -752,14 +783,14 @@ if ($totalTasks -gt 0) {
 } else {
     Write-Warn "Could not resolve Docker progress plan; falling back to the legacy startup path"
     Write-Info "Pulling Docker images (this may take a few minutes on first run)..."
-    docker compose -f docker-compose.dev.yml pull
+    docker compose $ComposeFiles pull
 
     Write-Info "Building and starting containers..."
-    docker compose -f docker-compose.dev.yml up -d --build
+    docker compose $ComposeFiles up -d --build
 }
 
 Write-Info "[90%] Finalizing containers..."
-docker compose -f docker-compose.dev.yml up -d --no-build
+docker compose $ComposeFiles up -d --no-build
 
 Write-Host ""
 Write-Info "Waiting for services to become healthy..."
@@ -767,15 +798,15 @@ Write-Info "Waiting for services to become healthy..."
 $maxWait = 180
 $elapsed = 0
 $interval = 5
-$totalServices = @(docker compose -f docker-compose.dev.yml config --services 2>$null).Count
+$totalServices = @(docker compose $ComposeFiles config --services 2>$null).Count
 
 while ($elapsed -lt $maxWait) {
-    $status = docker compose -f docker-compose.dev.yml ps auth-service 2>$null
+    $status = docker compose $ComposeFiles ps auth-service 2>$null
     if ($status -match "\(healthy\)") { break }
 
     $progress = 90 + [Math]::Floor(($elapsed * 10) / $maxWait)
     if ($progress -gt 99) { $progress = 99 }
-    $healthy = (docker compose -f docker-compose.dev.yml ps 2>$null | Select-String "healthy").Count
+    $healthy = (docker compose $ComposeFiles ps 2>$null | Select-String "healthy").Count
     Write-Info ("[{0,3}%] Finalizing containers: {1}/{2} healthy" -f $progress, $healthy, $totalServices)
     Start-Sleep -Seconds $interval
     $elapsed += $interval
@@ -786,7 +817,7 @@ Write-Host ""
 Write-Host ""
 
 # Final status
-$unhealthy = (docker compose -f docker-compose.dev.yml ps 2>$null | Select-String "unhealthy").Count
+$unhealthy = (docker compose $ComposeFiles ps 2>$null | Select-String "unhealthy").Count
 
 if ($unhealthy -eq 0) {
     Write-Host ("=" * 64) -ForegroundColor Green
@@ -796,7 +827,7 @@ if ($unhealthy -eq 0) {
     Write-Host ("=" * 64) -ForegroundColor Yellow
     Write-Host "  Claw started with $unhealthy unhealthy container(s)" -ForegroundColor Yellow
     Write-Host ("=" * 64) -ForegroundColor Yellow
-    Write-Warn "Check logs: docker compose -f docker-compose.dev.yml logs <service>"
+    Write-Warn "Check logs: docker compose $ComposeFiles logs <service>"
 }
 
 Write-Host ""

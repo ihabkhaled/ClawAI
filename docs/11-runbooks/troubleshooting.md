@@ -11,7 +11,7 @@
 
 ```bash
 # Check container status
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 
 # Check logs for the failing service
 docker logs claw-auth-service --tail=200
@@ -29,7 +29,7 @@ docker inspect --format='{{.State.Health.Status}}' claw-rabbitmq
 **Database not ready**: The service started before its PostgreSQL instance was healthy. Restart the service:
 
 ```bash
-docker compose -f docker-compose.dev.yml restart auth-service
+./scripts/claw.sh restart auth-service
 ```
 
 **Prisma migration failure**: Check if the migration failed during startup. View the entrypoint logs:
@@ -45,7 +45,7 @@ docker logs claw-auth-service 2>&1 | grep -i "prisma\|migration\|error"
 **Node modules out of date**: Rebuild the container:
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d --build auth-service
+./scripts/claw.sh up -d --build auth-service
 ```
 
 ---
@@ -62,7 +62,7 @@ docker compose -f docker-compose.dev.yml up -d --build auth-service
 
 ```bash
 # Check if the database container is running
-docker compose -f docker-compose.dev.yml ps pg-auth
+./scripts/claw.sh ps pg-auth
 
 # Test connection from inside the service container
 docker exec -it claw-auth-service sh -c "wget -qO- http://pg-auth:5432 || echo 'Connection test complete'"
@@ -88,11 +88,11 @@ AUTH_DATABASE_URL=postgresql://claw:claw_secret@localhost:5441/claw_auth?schema=
 **Volume corruption**: Remove the database volume and let it recreate:
 
 ```bash
-docker compose -f docker-compose.dev.yml stop pg-auth
+./scripts/claw.sh stop pg-auth
 docker volume rm $(docker volume ls -q | grep pg-auth-data)
-docker compose -f docker-compose.dev.yml up -d pg-auth
+./scripts/claw.sh up -d pg-auth
 # Wait for healthy, then restart the service
-docker compose -f docker-compose.dev.yml restart auth-service
+./scripts/claw.sh restart auth-service
 ```
 
 ---
@@ -128,7 +128,7 @@ docker exec -it claw-rabbitmq rabbitmqctl list_queues
 **Exchange not created**: The `claw.events` topic exchange is created by the first service that connects. If all services started before RabbitMQ was ready, restart them:
 
 ```bash
-docker compose -f docker-compose.dev.yml restart auth-service chat-service connector-service routing-service memory-service
+./scripts/claw.sh restart auth-service chat-service connector-service routing-service memory-service
 ```
 
 **Dead Letter Queue filling up**: Check the DLQ in the management UI. Messages in the DLQ indicate consumer errors. Check the consuming service's logs.
@@ -381,7 +381,7 @@ docker inspect claw-ollama | grep -i oom
 **Model pulled but not synced**: The ollama-service syncs models to its database on startup. Restart the ollama-service to trigger a re-sync:
 
 ```bash
-docker compose -f docker-compose.dev.yml restart ollama-service
+./scripts/claw.sh restart ollama-service
 ```
 
 ---

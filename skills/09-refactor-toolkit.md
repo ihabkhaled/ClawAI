@@ -173,16 +173,16 @@ bash qa/test-<service>.sh
 ### Step 10 — Rebuild Docker container and scan logs
 
 ```bash
-docker compose -f docker-compose.dev.yml stop <service>
-docker compose -f docker-compose.dev.yml rm -f <service>
+./scripts/claw.sh stop <service>
+./scripts/claw.sh rm -f <service>
 docker rmi claw-<service>-service
-docker compose -f docker-compose.dev.yml up -d --build <service>
+./scripts/claw.sh up -d --build <service>
 
 # Wait for healthy
-docker compose -f docker-compose.dev.yml ps <service>
+./scripts/claw.sh ps <service>
 
 # Scan logs for errors
-docker compose -f docker-compose.dev.yml logs <service> --tail=200 | \
+./scripts/claw.sh logs <service> --tail=200 | \
   grep -cE "UnhandledPromiseRejection|FATAL|Cannot read properties of undefined"
 # Must be 0
 ```

@@ -45,7 +45,7 @@ chmod +x scripts/install.sh
 3. Generate `.env` file from `.env.example` with default development values
 4. Build shared packages (shared-types, shared-constants, shared-rabbitmq, shared-auth)
 5. Generate Prisma clients for all services
-6. Start Docker containers via `docker compose -f docker-compose.dev.yml up -d`
+6. Start Docker containers via `./scripts/claw.sh up -d`
 7. Wait for health checks to pass
 8. Display access URLs
 
@@ -212,7 +212,7 @@ FILE_GENERATION_PORT=4013
 - [ ] `.env` file created from `.env.example`
 - [ ] JWT_SECRET generated (64 hex chars): `openssl rand -hex 32`
 - [ ] ENCRYPTION_KEY generated (64 hex chars): `openssl rand -hex 32`
-- [ ] Docker containers started: `docker compose -f docker-compose.dev.yml up -d`
+- [ ] Docker containers started: `./scripts/claw.sh up -d`
 - [ ] Wait for health checks (~2-5 minutes)
 - [ ] Frontend accessible at http://localhost:3000
 - [ ] Login with admin credentials from `.env`
@@ -252,7 +252,7 @@ FILE_GENERATION_PORT=4013
 
 ```bash
 # Check all containers are healthy
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 
 # Check aggregated health
 curl http://localhost:4000/api/v1/health

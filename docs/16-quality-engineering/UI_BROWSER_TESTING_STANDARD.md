@@ -33,7 +33,7 @@ Prepare test accounts for each role:
 Keep a terminal open with frontend container logs:
 
 ```bash
-docker compose -f docker-compose.dev.yml logs -f frontend
+./scripts/claw.sh logs -f frontend
 ```
 
 Watch for SSR errors, hydration mismatches, and build warnings.
@@ -174,7 +174,7 @@ The console should show ZERO errors and ZERO warnings on a fully working page. A
 ### 4.1 Frontend Container Logs
 
 ```bash
-docker compose -f docker-compose.dev.yml logs -f frontend --since 5m
+./scripts/claw.sh logs -f frontend --since 5m
 ```
 
 Watch for:
@@ -188,10 +188,10 @@ Watch for:
 
 ```bash
 # All services
-docker compose -f docker-compose.dev.yml logs --since 5m 2>&1 | grep -i error
+./scripts/claw.sh logs --since 5m 2>&1 | grep -i error
 
 # Specific service
-docker compose -f docker-compose.dev.yml logs chat-service --since 5m
+./scripts/claw.sh logs chat-service --since 5m
 ```
 
 After every browser action that triggers an API call, check the corresponding service log for errors.
@@ -522,23 +522,23 @@ After a mutation (create, update, delete):
 
 ```bash
 # Frontend logs
-docker compose -f docker-compose.dev.yml logs -f frontend
+./scripts/claw.sh logs -f frontend
 
 # All service logs
-docker compose -f docker-compose.dev.yml logs --since 5m
+./scripts/claw.sh logs --since 5m
 
 # Service health
 curl http://localhost:4000/api/v1/health | jq .
 
 # Restart frontend
-docker compose -f docker-compose.dev.yml restart frontend
+./scripts/claw.sh restart frontend
 ```
 
 ### Database Verification
 
 ```bash
 # Connect to a service's database
-docker compose -f docker-compose.dev.yml exec pg-chat psql -U claw -d claw_chat
+./scripts/claw.sh exec pg-chat psql -U claw -d claw_chat
 
 # Quick queries
 \dt                          -- List tables

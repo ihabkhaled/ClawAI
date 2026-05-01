@@ -64,10 +64,10 @@ npm run test             # Unit tests
 When rebuilding this service (especially after shared package changes):
 
 ```bash
-docker compose -f docker-compose.dev.yml stop audit-service
-docker compose -f docker-compose.dev.yml rm -f audit-service
+./scripts/claw.sh stop audit-service
+./scripts/claw.sh rm -f audit-service
 docker rmi claw-audit-service
-docker compose -f docker-compose.dev.yml up -d --build audit-service
+./scripts/claw.sh up -d --build audit-service
 ```
 
 **NEVER skip steps.** See root CLAUDE.md for full explanation.

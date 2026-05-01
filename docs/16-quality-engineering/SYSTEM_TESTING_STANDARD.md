@@ -97,7 +97,7 @@ fi
 ### 2.1 Container Status
 
 ```bash
-docker compose -f docker-compose.dev.yml ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
+./scripts/claw.sh ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
 ```
 
 **Assertions:**
@@ -111,10 +111,10 @@ docker compose -f docker-compose.dev.yml ps --format "table {{.Name}}\t{{.Status
 
 ```bash
 # Check restart counts
-docker compose -f docker-compose.dev.yml ps --format "{{.Name}}: {{.Status}}" | grep -i restart
+./scripts/claw.sh ps --format "{{.Name}}: {{.Status}}" | grep -i restart
 
 # Check for containers that restarted in the last 5 minutes
-docker compose -f docker-compose.dev.yml ps --format "{{.Name}} {{.Status}}" | while read name status; do
+./scripts/claw.sh ps --format "{{.Name}} {{.Status}}" | while read name status; do
   RESTARTS=$(docker inspect --format='{{.RestartCount}}' "$name" 2>/dev/null)
   if [ "$RESTARTS" -gt 0 ] 2>/dev/null; then
     echo "WARNING: $name has restarted $RESTARTS times"
@@ -132,7 +132,7 @@ done
 
 ```bash
 # Check Docker healthcheck status for each container
-docker compose -f docker-compose.dev.yml ps --format "{{.Name}}: {{.Health}}" | sort
+./scripts/claw.sh ps --format "{{.Name}}: {{.Health}}" | sort
 ```
 
 **Assertions:**
@@ -228,7 +228,7 @@ check_route GET /api/v1/file-generations 200 auth
 
 ```bash
 # Extract and verify SSE-related nginx config
-docker compose -f docker-compose.dev.yml exec nginx cat /etc/nginx/nginx.conf | \
+./scripts/claw.sh exec nginx cat /etc/nginx/nginx.conf | \
   grep -A 10 "stream\|progress\|sse" | head -50
 ```
 
@@ -244,7 +244,7 @@ docker compose -f docker-compose.dev.yml exec nginx cat /etc/nginx/nginx.conf | 
 ### 3.3 Nginx Error Log Check
 
 ```bash
-docker compose -f docker-compose.dev.yml logs nginx --since 5m 2>&1 | grep -i "error\|warn" | head -20
+./scripts/claw.sh logs nginx --since 5m 2>&1 | grep -i "error\|warn" | head -20
 ```
 
 **Assertions:**
@@ -283,7 +283,7 @@ Phase 4: Frontend
 # Check that all Prisma migrations are applied
 for service in auth chat connector routing memory file ollama image file-generation; do
   echo "=== $service ==="
-  docker compose -f docker-compose.dev.yml exec ${service}-service npx prisma migrate status 2>&1 | tail -3
+  ./scripts/claw.sh exec ${service}-service npx prisma migrate status 2>&1 | tail -3
 done
 ```
 
@@ -335,12 +335,12 @@ for service in auth-service chat-service connector-service routing-service memor
                file-service audit-service ollama-service health-service client-logs-service \
                server-logs-service image-service file-generation-service; do
   echo -n "Restarting $service... "
-  docker compose -f docker-compose.dev.yml restart "$service"
+  ./scripts/claw.sh restart "$service"
 
   # Wait up to 60 seconds for healthy
   for i in $(seq 1 12); do
     sleep 5
-    HEALTH=$(docker compose -f docker-compose.dev.yml ps "$service" --format "{{.Health}}" 2>/dev/null)
+    HEALTH=$(./scripts/claw.sh ps "$service" --format "{{.Health}}" 2>/dev/null)
     if [ "$HEALTH" = "healthy" ]; then
       echo "recovered in $((i * 5))s"
       break
@@ -363,16 +363,16 @@ done
 
 ```bash
 # Restart Redis
-docker compose -f docker-compose.dev.yml restart redis
+./scripts/claw.sh restart redis
 sleep 10
 # Verify services reconnect
-docker compose -f docker-compose.dev.yml logs --since 30s | grep -i "redis\|reconnect"
+./scripts/claw.sh logs --since 30s | grep -i "redis\|reconnect"
 
 # Restart RabbitMQ
-docker compose -f docker-compose.dev.yml restart rabbitmq
+./scripts/claw.sh restart rabbitmq
 sleep 30
 # Verify services reconnect
-docker compose -f docker-compose.dev.yml logs --since 60s | grep -i "rabbitmq\|amqp\|reconnect"
+./scripts/claw.sh logs --since 60s | grep -i "rabbitmq\|amqp\|reconnect"
 ```
 
 **Assertions:**
@@ -391,7 +391,7 @@ docker compose -f docker-compose.dev.yml logs --since 60s | grep -i "rabbitmq\|a
 # For each PostgreSQL service, verify schema matches Prisma model
 for service in auth chat connector routing memory file ollama image file-generation; do
   echo "=== $service ==="
-  docker compose -f docker-compose.dev.yml exec ${service}-service npx prisma validate 2>&1
+  ./scripts/claw.sh exec ${service}-service npx prisma validate 2>&1
 done
 ```
 
@@ -399,7 +399,7 @@ done
 
 ```bash
 # Example: verify no messages reference non-existent threads
-docker compose -f docker-compose.dev.yml exec chat-db \
+./scripts/claw.sh exec chat-db \
   psql -U claw -d claw_chat -c "
     SELECT COUNT(*) as orphaned_messages
     FROM \"ChatMessage\" m
@@ -425,7 +425,7 @@ Log storms indicate a service is in a failure loop, logging the same error thous
 echo "=== Log Storm Detection (last 5 minutes) ==="
 
 # Count error lines per service
-docker compose -f docker-compose.dev.yml logs --since 5m 2>&1 | \
+./scripts/claw.sh logs --since 5m 2>&1 | \
   grep -i "error\|exception\|fatal" | \
   awk -F'|' '{print $1}' | \
   sort | uniq -c | sort -rn | head -20
@@ -434,7 +434,7 @@ echo ""
 echo "=== Repeated Error Patterns ==="
 
 # Find the most repeated error messages
-docker compose -f docker-compose.dev.yml logs --since 5m 2>&1 | \
+./scripts/claw.sh logs --since 5m 2>&1 | \
   grep -i "error" | \
   sed 's/[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}//g' | \
   sort | uniq -c | sort -rn | head -10
@@ -554,11 +554,11 @@ curl -s -u guest:guest http://localhost:15672/api/connections | jq '.[].name' | 
 
 ```bash
 # Ping
-docker compose -f docker-compose.dev.yml exec redis redis-cli PING
+./scripts/claw.sh exec redis redis-cli PING
 # Expected: PONG
 
 # Info (memory, connected clients, keys)
-docker compose -f docker-compose.dev.yml exec redis redis-cli INFO | grep -E "used_memory_human|connected_clients|db0|evicted_keys"
+./scripts/claw.sh exec redis redis-cli INFO | grep -E "used_memory_human|connected_clients|db0|evicted_keys"
 ```
 
 **Assertions:**
@@ -575,7 +575,7 @@ docker compose -f docker-compose.dev.yml exec redis redis-cli INFO | grep -E "us
 ### 11.1 SSE Configuration Audit
 
 ```bash
-docker compose -f docker-compose.dev.yml exec nginx cat /etc/nginx/nginx.conf
+./scripts/claw.sh exec nginx cat /etc/nginx/nginx.conf
 ```
 
 Verify every SSE endpoint has these directives:
@@ -662,7 +662,7 @@ echo "=== Port Conflict Detection ==="
 EXPECTED_PORTS=(3000 4000 4001 4002 4003 4004 4005 4006 4007 4008 4009 4010 4011 4012 4013 5432 27017 6379 5672 15672 11434)
 
 for port in "${EXPECTED_PORTS[@]}"; do
-  COUNT=$(docker compose -f docker-compose.dev.yml ps --format "{{.Ports}}" | grep -c ":$port->" 2>/dev/null || echo 0)
+  COUNT=$(./scripts/claw.sh ps --format "{{.Ports}}" | grep -c ":$port->" 2>/dev/null || echo 0)
   if [ "$COUNT" -gt 1 ]; then
     echo "  [CONFLICT] Port $port is mapped by $COUNT containers"
   elif [ "$COUNT" -eq 0 ]; then
@@ -728,7 +728,7 @@ check "File-generation service (4013)" "curl -sf http://localhost:4013/api/v1/he
 
 # Infrastructure
 check "RabbitMQ management" "curl -sf -u guest:guest http://localhost:15672/api/overview"
-check "Redis PING" "docker compose -f docker-compose.dev.yml exec -T redis redis-cli PING | grep PONG"
+check "Redis PING" "./scripts/claw.sh exec -T redis redis-cli PING | grep PONG"
 check "Ollama API" "curl -sf http://localhost:11434/api/tags"
 
 # Auth
@@ -748,9 +748,9 @@ exit $FAIL
 
 | Tool              | Command                                                                      | Purpose                         |
 | ----------------- | ---------------------------------------------------------------------------- | ------------------------------- |
-| Container status  | `docker compose -f docker-compose.dev.yml ps`                                | Check all container states      |
-| Service logs      | `docker compose -f docker-compose.dev.yml logs <service> --since <duration>` | Inspect service output          |
-| All logs (recent) | `docker compose -f docker-compose.dev.yml logs --since 5m`                   | Broad error scan                |
+| Container status  | `./scripts/claw.sh ps`                                | Check all container states      |
+| Service logs      | `./scripts/claw.sh logs <service> --since <duration>` | Inspect service output          |
+| All logs (recent) | `./scripts/claw.sh logs --since 5m`                   | Broad error scan                |
 | Resource usage    | `docker stats --no-stream`                                                   | CPU/memory per container        |
 | RabbitMQ UI       | `http://localhost:15672`                                                     | Queue inspection, message rates |
 | Redis CLI         | `docker compose exec redis redis-cli`                                        | Cache key inspection            |

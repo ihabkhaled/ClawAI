@@ -8,19 +8,19 @@
 
 ```bash
 # Start full dev environment (all 22+ containers)
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh up -d
 
 # Start specific services
-docker compose -f docker-compose.dev.yml up -d chat-service connector-service
+./scripts/claw.sh up -d chat-service connector-service
 
 # Stop all services
-docker compose -f docker-compose.dev.yml down
+./scripts/claw.sh down
 
 # Stop without removing volumes (preserves DB data)
-docker compose -f docker-compose.dev.yml stop
+./scripts/claw.sh stop
 
 # Check status of all containers
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 
 # Alternative via management script
 ./scripts/claw.sh up
@@ -36,16 +36,16 @@ docker compose -f docker-compose.dev.yml ps
 
 ```bash
 # STEP 1: Stop the container
-docker compose -f docker-compose.dev.yml stop <service-name>
+./scripts/claw.sh stop <service-name>
 
 # STEP 2: Remove the container
-docker compose -f docker-compose.dev.yml rm -f <service-name>
+./scripts/claw.sh rm -f <service-name>
 
 # STEP 3: Remove the image
 docker rmi claw-<service-name>
 
 # STEP 4: Rebuild and start
-docker compose -f docker-compose.dev.yml up -d --build <service-name>
+./scripts/claw.sh up -d --build <service-name>
 ```
 
 NEVER skip steps. Never use `--build` alone without removing the old container and image first.
@@ -72,9 +72,9 @@ Rebuild ALL services that depend on them:
 
 ```bash
 # Rebuild all services (nuclear option)
-docker compose -f docker-compose.dev.yml down
+./scripts/claw.sh down
 docker rmi $(docker images "claw-*" -q)
-docker compose -f docker-compose.dev.yml up -d --build
+./scripts/claw.sh up -d --build
 ```
 
 ---
@@ -83,20 +83,20 @@ docker compose -f docker-compose.dev.yml up -d --build
 
 ```bash
 # Follow logs in real-time
-docker compose -f docker-compose.dev.yml logs -f chat-service
+./scripts/claw.sh logs -f chat-service
 
 # Last N lines
-docker compose -f docker-compose.dev.yml logs --tail=50 connector-service
+./scripts/claw.sh logs --tail=50 connector-service
 
 # Logs since N minutes ago
-docker compose -f docker-compose.dev.yml logs --since="5m" routing-service
+./scripts/claw.sh logs --since="5m" routing-service
 
 # Search for errors
-docker compose -f docker-compose.dev.yml logs connector-service --tail=200 | \
+./scripts/claw.sh logs connector-service --tail=200 | \
   grep -E "ERROR|FATAL|UnhandledPromiseRejection"
 
 # Multiple services
-docker compose -f docker-compose.dev.yml logs chat-service routing-service --tail=30
+./scripts/claw.sh logs chat-service routing-service --tail=30
 ```
 
 ---

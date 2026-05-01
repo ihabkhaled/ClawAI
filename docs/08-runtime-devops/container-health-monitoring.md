@@ -178,7 +178,7 @@ The `/observability` page in the frontend displays this data in a dashboard with
 
 ```bash
 # All container statuses
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 
 # Specific container health details
 docker inspect --format='{{json .State.Health}}' claw-chat-service | jq
@@ -265,10 +265,10 @@ After a system reboot, Docker volumes persist but containers need to start fresh
 
 ```bash
 # Start in dependency order (Docker handles this automatically)
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh up -d
 
 # Wait for health checks
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 # Repeat until all show (healthy)
 ```
 

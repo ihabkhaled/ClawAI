@@ -36,6 +36,7 @@ apps/
   claw-agent-service/           # Port 4015, PG claw_agent — desktop agent sessions, terminal command approval, repo tracking, file events
   claw-research-service/        # Port 4016, PG claw_research — dynamic search/fetch/scrape/clone + evidence orchestration (Tavily, SearXNG, Ollama Web)
   claw-workspace-service/       # Port 4014, PG claw_workspace — workspace connectors (GitHub, GitLab, Jira, Slack, Drive, OneDrive, SharePoint, Confluence, Figma, Gmail, Bitbucket, ClickUp), OAuth2/PKCE, webhook, sync, search, scheduled background sync
+  claw-llamacpp-service/        # Port 4017, PG claw_llamacpp — Local Frontier LLMs (Kimi K2, GLM-5.1, DeepSeek V3.2/V4) via vanilla llama.cpp; binary lifecycle, HF pull jobs (SSE), single-resident process supervisor, OpenAI-compatible inference proxy, hardware preflight
 packages/
   shared-types/      # 18 enums, event payloads, auth types
   shared-constants/  # Exchange name, ports, API prefix, pagination defaults
@@ -64,7 +65,7 @@ docs/                # 11 architecture audit documents
 2. **`.env`** — fill the new variable with a working dev value
 3. **`scripts/install.sh`** — add the variable to the generated .env block
 4. **`scripts/install.ps1`** — same for Windows PowerShell installer
-5. **ALL Docker compose files** — `docker-compose.dev.yml`, `docker-compose.yml` (prod), `docker-compose.dev.ollama.yml`, `docker-compose.prod.ollama.yml`, and any split compose files — if new service, port, volume, database, or AI runtime dependency
+5. **ALL split Docker compose files** — `docker-compose.dev.{databases,services,ollama}.yml`, `docker-compose.prod.{databases,services,ollama}.yml`, plus the per-vendor GPU overlays (`gpu-nvidia`, `gpu-rocm`, `gpu-vulkan` × dev/prod) if your service needs GPU passthrough — if new service, port, volume, database, or AI runtime dependency
 6. **i18n locale files** — if any new user-facing text (ALL 8 locales: en, ar, de, es, fr, it, pt, ru)
 7. **Architecture docs** (`docs/`) — if the change affects documented architecture
 8. **Prisma migrations** — if any schema change (`npx prisma migrate dev --name <name>`)
@@ -469,6 +470,18 @@ Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 | agent.token_rotated               | agent        | audit          |
 | agent.token_reuse_detected        | agent        | audit          |
 | agent.policy_violated             | agent        | audit          |
+| agent.capability.proposed         | agent        | audit          |
+| agent.capability.policy_matched   | agent        | audit          |
+| agent.capability.auto_approved    | agent        | audit, capability-runner |
+| agent.capability.approved         | agent        | audit, capability-runner |
+| agent.capability.rejected         | agent        | audit          |
+| agent.capability.executing        | agent        | audit          |
+| agent.capability.executed         | agent        | audit          |
+| agent.capability.failed           | agent        | audit          |
+| agent.capability.cancelled        | agent        | audit          |
+| agent.capability.expired          | agent        | audit          |
+| agent.capability.rolled_back      | agent        | audit          |
+| agent.capability.denied           | agent        | audit          |
 | workspace.sync.run_started        | workspace    | audit          |
 | workspace.sync.run_completed      | workspace    | audit          |
 | workspace.sync.run_failed         | workspace    | audit          |
@@ -478,6 +491,17 @@ Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 | workspace.sync.resumed            | workspace    | audit          |
 | workspace.sync.rate_limited       | workspace    | audit          |
 | workspace.sync.dlq_sent           | workspace    | audit          |
+| llamacpp.binary.installed         | llamacpp     | audit          |
+| llamacpp.binary.updated           | llamacpp     | audit          |
+| llamacpp.pull.started             | llamacpp     | audit          |
+| llamacpp.pull.progress            | llamacpp     | audit          |
+| llamacpp.pull.completed           | llamacpp     | audit          |
+| llamacpp.pull.failed              | llamacpp     | audit          |
+| llamacpp.model.loaded             | llamacpp     | audit, routing |
+| llamacpp.model.unloaded           | llamacpp     | audit, routing |
+| llamacpp.model.crashed            | llamacpp     | audit, routing |
+| llamacpp.weights.deleted          | llamacpp     | audit          |
+| llamacpp.preflight.overridden     | llamacpp     | audit          |
 
 ---
 
@@ -712,6 +736,7 @@ Failed checks → HTTP 422 with reason codes. Filenames sanitized before storage
 | /api/v1/file-generations | file-gen:4013    | File export (PDF/DOCX/CSV/etc.)                      |
 | /api/v1/agent/\*         | agent:4015       | Sessions, terminal commands, repos, file events      |
 | /api/v1/research/\*      | research:4016    | Dynamic search providers + search runs (Phase 1)     |
+| /api/v1/llamacpp/\*      | llamacpp:4017    | Local Frontier — catalog, pull jobs (SSE), models, inference (SSE), hardware, runtime, health |
 
 ---
 
@@ -839,28 +864,43 @@ After completing any implementation, confirm ALL are done:
 **When rebuilding a Docker container (especially after shared package changes), ALWAYS follow this exact sequence:**
 
 ```bash
+# Use the split compose files via shorthand variable (or just call ./scripts/claw.sh services:rebuild)
+COMPOSE="-f docker-compose.dev.databases.yml -f docker-compose.dev.services.yml -f docker-compose.dev.ollama.yml"
+
 # 1. Stop the container
-docker compose -f docker-compose.dev.yml stop <service-name>
+docker compose $COMPOSE stop <service-name>
 
 # 2. Remove the container
-docker compose -f docker-compose.dev.yml rm -f <service-name>
+docker compose $COMPOSE rm -f <service-name>
 
 # 3. Remove the image
 docker rmi <image-name>
 
 # 4. Rebuild and start
-docker compose -f docker-compose.dev.yml up -d --build <service-name>
+docker compose $COMPOSE up -d --build <service-name>
+
+# Or, simpler:
+./scripts/claw.sh services:rebuild
 ```
 
 **NEVER skip steps.** Just restarting or using `--build` alone leaves stale compiled code, cached layers, and old `node_modules`. When a shared package (`shared-rabbitmq`, `shared-types`, `shared-constants`, `shared-auth`) is modified, ALL dependent service containers must go through the full stop → rm → rmi → build cycle.
 
-## Docker Compose
+## Docker Compose — `claw.sh` is THE entrypoint
+
+**Single command, auto-detects GPU (NVIDIA / AMD ROCm / Intel-Vulkan / Apple-Metal warn):**
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d    # Full dev environment (~22 containers)
-./scripts/claw.sh up                              # Via management script
-./scripts/claw.sh --prod up                       # Production mode
+./scripts/claw.sh up                              # Dev (default), all services + auto-GPU
+./scripts/claw.sh --prod up                       # Production, all services + auto-GPU
+./scripts/claw.sh down                            # Stop all
+./scripts/claw.sh status                          # Show all groups
+./scripts/claw.sh gpu                             # Probe GPU detection only (no startup)
 ```
+
+`claw.sh` orchestrates the split compose files (`docker-compose.dev.{databases,services,ollama}.yml`)
+and conditionally layers a per-vendor GPU overlay (`docker-compose.dev.gpu-{nvidia,rocm,vulkan}.yml`)
+when the host has the corresponding GPU. It is the **only** supported way to start the stack —
+do not invoke `docker compose -f …` directly.
 
 All services use `env_file: .env` from root. Single `.env` file for everything.
 
@@ -991,9 +1031,9 @@ npm run lint               # Lint all
 npm run typecheck          # TypeScript check all
 npm run build              # Build all
 npm run test               # Test all
-docker compose -f docker-compose.dev.yml up -d   # Start dev
-docker compose -f docker-compose.dev.yml down     # Stop
-docker compose -f docker-compose.dev.yml logs -f chat-service  # Follow logs
+./scripts/claw.sh up                              # Start dev (auto-GPU)
+./scripts/claw.sh down                            # Stop
+./scripts/claw.sh logs chat-service               # Follow logs for one service
 ./scripts/claw.sh status   # Check all service status
 ```
 
@@ -1155,7 +1195,7 @@ Check and update ALL of these:
 2. **`.env`** — fill the new variable with a working dev value
 3. **`scripts/install.sh`** — add the variable to the generated .env block
 4. **`scripts/install.ps1`** — same for Windows PowerShell installer
-5. **ALL Docker compose files** — `docker-compose.dev.yml`, `docker-compose.yml` (prod), `docker-compose.dev.ollama.yml`, `docker-compose.prod.ollama.yml`, and any split compose files — if new service, port, volume, database, or AI runtime dependency
+5. **ALL split Docker compose files** — `docker-compose.dev.{databases,services,ollama}.yml`, `docker-compose.prod.{databases,services,ollama}.yml`, plus the per-vendor GPU overlays (`gpu-nvidia`, `gpu-rocm`, `gpu-vulkan` × dev/prod) if your service needs GPU passthrough — if new service, port, volume, database, or AI runtime dependency
 6. **`infra/nginx/nginx.conf`** — add upstream + location block for the new service (SSE routes need `proxy_buffering off`)
 7. **`packages/shared-constants`** — add service port and service name constants
 8. **`packages/shared-types`** — add new event patterns if the service publishes events
@@ -1188,8 +1228,8 @@ npm run test
 npm run build
 
 # 5. Docker — restart affected services and verify healthy
-docker compose -f docker-compose.dev.yml restart <service-name>
-docker compose -f docker-compose.dev.yml ps <service-name>  # must show (healthy)
+./scripts/claw.sh services:rebuild                                 # rebuild + start affected service
+./scripts/claw.sh status                                            # all groups; must show (healthy)
 ```
 
 **NEVER skip pre-commit hooks.** The pre-commit hook runs 5 steps:
@@ -1253,7 +1293,7 @@ Verify:
 #### Docker Log Check (Required at End of Every Script)
 
 ```bash
-ERROR_COUNT=$(docker compose -f docker-compose.dev.yml logs <service> --tail=200 2>/dev/null | \
+ERROR_COUNT=$(./scripts/claw.sh logs <service> 2>&1 | head -200 | \
   grep -cE "UnhandledPromiseRejection|FATAL|Cannot read properties of undefined")
 [ "$ERROR_COUNT" -eq 0 ] || echo "FAIL: $ERROR_COUNT critical errors found"
 ```
@@ -1434,21 +1474,22 @@ Full standards live in `docs/16-quality-engineering/`:
 
 ## How to Add a New Backend Service
 
-> **MANDATORY DOCKER RULE — NEVER SKIP**: Every new service and every new database MUST be added to ALL 7 compose files simultaneously, in the same commit. No exceptions. The 7 files are:
+> **MANDATORY DOCKER RULE — NEVER SKIP**: Every new service and every new database MUST be added to the relevant split compose files simultaneously, in the same commit. No exceptions. The split files are:
 >
-> 1. `docker-compose.dev.yml` — dev all-in-one
-> 2. `docker-compose.yml` — prod all-in-one
-> 3. `docker-compose.dev.databases.yml` — dev split: databases only
-> 4. `docker-compose.dev.services.yml` — dev split: services only
-> 5. `docker-compose.prod.databases.yml` — prod split: databases only
-> 6. `docker-compose.prod.services.yml` — prod split: services only
-> 7. `docker-compose.dev.ollama.yml` / `docker-compose.prod.ollama.yml` — only if service depends on Ollama
+> 1. `docker-compose.dev.databases.yml` — dev: databases only
+> 2. `docker-compose.dev.services.yml` — dev: services only
+> 3. `docker-compose.prod.databases.yml` — prod: databases only
+> 4. `docker-compose.prod.services.yml` — prod: services only
+> 5. `docker-compose.dev.ollama.yml` / `docker-compose.prod.ollama.yml` — only if service depends on Ollama
+> 6. `docker-compose.dev.gpu-{nvidia,rocm,vulkan}.yml` / `docker-compose.prod.gpu-{nvidia,rocm,vulkan}.yml` — only if service needs GPU passthrough (per-vendor overlay; auto-loaded by `claw.sh`)
 >
-> **Databases** go into files 1, 2, 3, 5 (all-in-one + database split files).
-> **Services** go into files 1, 2, 4, 6 (all-in-one + service split files).
+> **Databases** go into files 1 and 3.
+> **Services** go into files 2 and 4.
 > **Volumes** must be declared in every file that defines the corresponding service or database.
 >
-> If you add a DB to only one file and not the others, the split-file deployment will fail with "container not found". This has burned us before.
+> The legacy "all-in-one" files (`docker-compose.dev.yml`, `docker-compose.yml`) have been **removed**. The canonical entrypoint is `./scripts/claw.sh up` — it stitches the split files and applies the right GPU overlay for the host.
+>
+> If you add a DB to only one file and not the others, deployment will fail with "container not found".
 
 1. **Copy boilerplate** from closest existing service (e.g., `claw-ollama-service`)
 2. **Create PostgreSQL database** in ALL Docker compose files — see mandatory rule above
@@ -1922,3 +1963,44 @@ When adding a new package under `packages/`, you MUST update `.github/workflows/
 **Why it bites:** local builds work because `node_modules/@claw/<pkg>` is a symlink populated by `npm install`, and `dist/` is created by the developer's local `npm run build`. CI starts from a fresh checkout where `dist/` doesn't exist — consumer services fail with `Cannot find module '@claw/<pkg>'` even though `package-lock.json` lists the package.
 
 This footgun cost a CI red on the first commit after adding `@claw/shared-utilities` (caught and fixed in commit `ad38ccf`). Full rule in `rules/05-infra-rules.md` and `docs/04-backend/shared-packages.md`. Future agents: don't repeat.
+
+---
+
+## Desktop Agent Flagship — Capability Framework (added 2026-04-26)
+
+The desktop agent (claw-agent-service) is being expanded from terminal commands to a full **capability framework** that covers filesystem, process, browser, screen, clipboard, application, audio, and recipe-step actions through a single approval / risk / audit pipeline. See:
+
+- Plan pack: `plan-prompts/clawai_desktop_agent_flagship/` (21 self-contained Sonnet prompts)
+- Implementation progress: `docs/15-ai-context/desktop-agent-flagship-implementation-progress.md`
+- Vision: `docs/02-business-product/desktop-agent-vision.md`
+- Catalog: `docs/02-business-product/desktop-agent-feature-catalog.md` (~134 features)
+- UAT: `docs/10-uat-acceptance/desktop-agent-uat.md` (~79 stories incl. 6 adversarial)
+- ADRs: 029 (capability framework), 030 (filesystem), 031 (process), 032 (recipes)
+
+### What this changed
+
+- **New table `CapabilityInvocation`** (apps/claw-agent-service/prisma/schema.prisma) is the unified record for every approval-gated agent action across all classes. 12-state lifecycle including `ROLLED_BACK` and `ROLLBACK_FAILED`.
+- **5 new enums** in `apps/claw-agent-service/src/common/enums/`: CapabilityClass, CapabilityOperation, CapabilityBlastRadius, CapabilityReversibility, CapabilityInvocationStatus.
+- **`AccessPolicy` extended additively** with `capabilityClass`, `capabilityOperation`, `targetMatcherJson`, `autoApproveMaxRiskScore`, `requireReason`, `isSystemDefault`. Existing terminal-command policies stay valid (null capabilityClass = legacy).
+- **Default policy seeds** at `apps/claw-agent-service/src/common/constants/capability-policy.constants.ts` — 18 system defaults today (10 filesystem + 8 process + 1 catch-all), more appended per stream as classes ship.
+- **12 new RabbitMQ events** (table above) consumed by audit-service.
+- **Recipe DSL** at `apps/claw-agent-service/src/modules/recipes/dto/recipe-dsl.dto.ts` with safe expression evaluator at `apps/claw-agent-service/src/common/utilities/recipe-expression.utility.ts` — handwritten 500-LOC parser, NO eval / vm / new Function, supports only `$params.x`, `$steps.id.output.path`, comparison, boolean ops, `~=` regex match.
+
+### What has landed end-to-end (2026-05-01)
+
+- **Stream 10**: full backend (controllers/services/managers/repos/migration/policy seeds), CLI capability-runner with TERMINAL provider stub, frontend types/repository/hooks, audit-service consumer for 12 capability events, dual-write window from CommandRiskService. Live QA `qa/test-stream-10-capability-framework.sh`: 28/28.
+- **Stream 11**: FILESYSTEM CLI provider (`agent-cli/src/capability-providers/filesystem/index.js`) — 8 ops (READ/WRITE/APPEND/MOVE/COPY/DELETE/LIST/STAT) with absolute-path validation, traversal rejection, undoPlan capture, smoke 17/17.
+- **Stream 12**: PROCESS CLI provider (`agent-cli/src/capability-providers/process/index.js`) — 4 ops (SPAWN/KILL/LIST/INSPECT) with absolute-binary-path validation, signal allow-list, cross-OS process listing.
+- **Stream 13 (CRUD half)**: Recipe + RecipeRun + RecipeRunStep schema, `recipes/` NestJS module with full CRUD (controller / service / repo / DTOs), 8 unit tests, live QA `qa/test-stream-13-recipes-crud.sh`: 16/16.
+
+### What still needs implementation
+
+Stream 13 RUNNER (event-driven step DAG executor) and streams 20-42 (browser, screen, clipboard, application, audio capability providers; Tauri shell; UX dashboards; fleet admin; activity memory; marketplace), plus stream 50 master QA harness and stream 60 runbooks. Defer-list with reasons in the master plan doc.
+
+### Hard rules added (desktop-agent-specific blockers)
+
+8. Every new capability MUST have a DeviceScope, ≥1 default AccessPolicy, and a RabbitMQ event consumed by audit. No silently allowed actions.
+9. Every CLI-side capability MUST have manual cross-OS evidence captured to `.claude/Integrations/cross-os-evidence/<date>-<stream>-<os>.md`.
+10. Every irreversible capability MUST record `metadata.noUndoReason` text OR a typed `undoPlan` in the CapabilityInvocation row at completion time.
+11. Local-first-by-default: activity memory, OCR results, screenshot blobs stay on the user's machine unless an explicit per-record cloud-sync flag is flipped.
+

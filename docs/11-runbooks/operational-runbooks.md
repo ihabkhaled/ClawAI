@@ -210,7 +210,7 @@ Rotating the JWT secret invalidates ALL existing access tokens and refresh token
 3. **Restart all backend services**
 
    ```bash
-   docker compose -f docker-compose.dev.yml restart auth-service chat-service connector-service routing-service memory-service file-service audit-service ollama-service health-service client-logs-service server-logs-service image-service
+   ./scripts/claw.sh restart auth-service chat-service connector-service routing-service memory-service file-service audit-service ollama-service health-service client-logs-service server-logs-service image-service
    ```
 
 4. **Clear expired sessions (optional)**
@@ -261,7 +261,7 @@ This is a high-risk operation. Incorrect execution will make all connector API k
 4. **Restart the connector service**
 
    ```bash
-   docker compose -f docker-compose.dev.yml restart connector-service
+   ./scripts/claw.sh restart connector-service
    ```
 
 5. **Re-create or update each connector** with its API key, which will be encrypted with the new key.
@@ -275,7 +275,7 @@ This is a high-risk operation. Incorrect execution will make all connector API k
 ClawAI services are stateless (state is in databases and RabbitMQ) and can be scaled horizontally. In Docker Compose:
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d --scale chat-service=3
+./scripts/claw.sh up -d --scale chat-service=3
 ```
 
 When scaling, consider:
@@ -347,7 +347,7 @@ docker exec -it claw-mongodb mongosh --eval "db.runCommand('ping')" --quiet
 curl http://localhost:11434/api/tags
 
 # Docker container status
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 docker stats --no-stream
 ```
 
@@ -419,10 +419,10 @@ Determine the blast radius:
 
 ```bash
 # If a service is causing cascading failures, stop it
-docker compose -f docker-compose.dev.yml stop <service>
+./scripts/claw.sh stop <service>
 
 # Check if dependent services recover
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 ```
 
 ### 4. Diagnose
@@ -444,10 +444,10 @@ Apply the fix (restart, rollback, configuration change, code fix).
 
 ```bash
 # Restart
-docker compose -f docker-compose.dev.yml restart <service>
+./scripts/claw.sh restart <service>
 
 # Rebuild and restart
-docker compose -f docker-compose.dev.yml up -d --build <service>
+./scripts/claw.sh up -d --build <service>
 ```
 
 ### 6. Verify

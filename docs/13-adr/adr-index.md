@@ -322,3 +322,15 @@ Use the `fetch` API with `ReadableStream` to consume SSE streams instead of the 
 | 008 | Nginx reverse proxy         | Accepted | Single entry point, SSE support           |
 | 009 | npm workspaces monorepo     | Accepted | Shared code, atomic changes               |
 | 010 | fetch-based SSE             | Accepted | Auth header support                       |
+| 018 | Universal webhook receiver  | Accepted | One signed entry-point per provider       |
+| 019 | Auto-suggest scheduler      | Accepted | Cron + advisory locks across replicas     |
+| 020 | Suggestion factory pipeline | Accepted | Single entry-point for events → queue     |
+| 021 | Write-action adapter pattern| Accepted | Uniform `executeWriteAction` per adapter  |
+| 022 | HTML email sanitisation     | Accepted | DOMPurify + iframe sandbox; service-token /upload-internal |
+| 023 | Calendar providers          | Accepted | GoogleCalendar + OutlookCalendar adapters; MEETING object |
+| 024 | Inbox + pgvector search     | Accepted | Cross-provider inbox + memory-service embeddings table |
+| 025 | Digest dashboard            | Accepted | Hourly cron + advisory lock + Intl.DateTimeFormat tz match |
+| 026 | User-pref intersection      | Accepted | Most-restrictive-wins (admin > user)      |
+| 027 | Memory learning loop        | Accepted | Heuristic v1; LLM classifier v1.x         |
+| 028 | IMPL_PROMPT handoff         | Accepted | Workspace ↔ chat/agent bridge with secret scanner |
+| 029 | Capability framework        | Accepted | Generalises agent + workspace approvals   |

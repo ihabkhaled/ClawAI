@@ -136,7 +136,7 @@ Decrypt on read:  when making API calls to cloud providers
 
 4. **Restart connector-service**:
    ```bash
-   docker compose -f docker-compose.dev.yml restart connector-service
+   ./scripts/claw.sh restart connector-service
    ```
 
 5. **Verify**: Test a connector connection to confirm decryption works with the new key.

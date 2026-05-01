@@ -386,6 +386,30 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  llamacpp-service:
+    build:
+      context: .
+      dockerfile: apps/claw-llamacpp-service/Dockerfile.dev
+    container_name: claw-llamacpp-service
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '4017:4017'
+    volumes:
+      - ./apps/claw-llamacpp-service/src:/app/apps/claw-llamacpp-service/src
+      - ./apps/claw-llamacpp-service/prisma:/app/apps/claw-llamacpp-service/prisma
+      - llamacpp-data:/var/lib/claw/llamacpp
+    command: ['./docker-entrypoint.dev.sh']
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4017/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   file-generation-service:
     build:
       context: .
@@ -430,6 +454,7 @@ services:
 
 volumes:
   file-storage-data:
+  llamacpp-data:
 
 networks:
   claw-network:

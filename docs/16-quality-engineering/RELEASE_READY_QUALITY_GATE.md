@@ -119,7 +119,7 @@ npm run build
 ### B1: All Docker Containers Healthy
 
 ```bash
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 ```
 
 **Pass criteria:** Every container shows status `(healthy)`. No containers in `(unhealthy)`, `restarting`, or `exited` state.

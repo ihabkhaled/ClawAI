@@ -72,10 +72,10 @@ Shared packages (`packages/shared-*`) are NOT mounted as volumes. They are copie
 # 1. Make changes in packages/shared-types (or other shared package)
 
 # 2. Rebuild the affected services
-docker compose -f docker-compose.dev.yml up -d --build chat-service routing-service
+./scripts/claw.sh up -d --build chat-service routing-service
 
 # OR rebuild all services
-docker compose -f docker-compose.dev.yml up -d --build
+./scripts/claw.sh up -d --build
 ```
 
 **Build order matters** for shared packages:
@@ -103,7 +103,7 @@ npx prisma migrate dev --name add_new_field
 
 # 3. The migration file is created in prisma/migrations/
 # 4. Rebuild the container to apply
-docker compose -f docker-compose.dev.yml up -d --build chat-service
+./scripts/claw.sh up -d --build chat-service
 ```
 
 ### Automatic Migration on Container Start
@@ -137,7 +137,7 @@ Nothing to do. `node --watch` auto-restarts.
 ### "I added a new npm dependency"
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d --build <service-name>
+./scripts/claw.sh up -d --build <service-name>
 ```
 
 ### "I changed a Prisma schema"
@@ -147,31 +147,31 @@ docker compose -f docker-compose.dev.yml up -d --build <service-name>
 cd apps/claw-<service> && npx prisma migrate dev --name description
 
 # Rebuild container to apply
-docker compose -f docker-compose.dev.yml up -d --build <service-name>
+./scripts/claw.sh up -d --build <service-name>
 ```
 
 ### "I changed an environment variable"
 
 ```bash
-docker compose -f docker-compose.dev.yml restart <service-name>
+./scripts/claw.sh restart <service-name>
 ```
 
 ### "I changed the nginx config"
 
 ```bash
-docker compose -f docker-compose.dev.yml restart nginx
+./scripts/claw.sh restart nginx
 ```
 
 ### "I changed a shared package"
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d --build <all-affected-services>
+./scripts/claw.sh up -d --build <all-affected-services>
 ```
 
 ### "I changed a Docker Compose file"
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh up -d
 # Docker detects config changes and recreates affected containers
 ```
 
@@ -179,7 +179,7 @@ docker compose -f docker-compose.dev.yml up -d
 
 ```bash
 # Full rebuild required
-docker compose -f docker-compose.dev.yml up -d --build
+./scripts/claw.sh up -d --build
 ```
 
 ---

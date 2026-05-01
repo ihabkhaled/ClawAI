@@ -64,7 +64,7 @@ cp .env.example .env
 # Edit .env: set JWT_SECRET, ENCRYPTION_KEY, ADMIN_PASSWORD, and any provider/OAuth credentials
 
 # 3. Start all containers
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh up -d
 
 # 4. Verify health
 curl http://localhost:4000/api/v1/health
@@ -155,13 +155,13 @@ openssl rand -hex 32
 ## Step 2: Start All Services
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh up -d
 ```
 
 Wait for all containers to become healthy (this may take 30-60 seconds on first run, longer if Ollama pulls models or ClamAV refreshes signatures):
 
 ```bash
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 ```
 
 All 35 containers should show status `running` or `healthy`.
@@ -251,7 +251,7 @@ For active development on a specific service, you can run it outside Docker whil
 Start only the databases, Redis, RabbitMQ, Ollama, ClamAV, and Nginx:
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d \
+./scripts/claw.sh up -d \
   pg-auth pg-chat pg-connector pg-routing pg-memory pg-files pg-ollama \
   pg-images pg-file-generations pg-agent pg-research pg-workspace \
   mongodb redis rabbitmq ollama clamav nginx
@@ -308,7 +308,7 @@ Each service reads the root `.env` file for service URLs and database connection
 The development stack includes the Ollama runtime by default:
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d ollama ollama-service
+./scripts/claw.sh up -d ollama ollama-service
 ```
 
 This starts the Ollama container on port `11434`.
@@ -432,15 +432,15 @@ Typical flow:
 
 ### Port Conflicts
 
-If any ports are already in use, update the corresponding port mappings in `docker-compose.dev.yml` and the relevant `.env` variables.
+If any ports are already in use, update the corresponding port mappings in the split compose files (`docker-compose.dev.databases.yml` for databases, `docker-compose.dev.services.yml` for services) and the relevant `.env` variables.
 
 ### Container Fails to Start
 
 Check the logs for the specific container:
 
 ```bash
-docker compose -f docker-compose.dev.yml logs claw-auth-service
-docker compose -f docker-compose.dev.yml logs claw-pg-auth
+./scripts/claw.sh logs claw-auth-service
+./scripts/claw.sh logs claw-pg-auth
 ```
 
 ### Database Connection Issues
@@ -448,7 +448,7 @@ docker compose -f docker-compose.dev.yml logs claw-pg-auth
 Ensure the relevant PostgreSQL container is running and healthy:
 
 ```bash
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 ```
 
 ### RabbitMQ Connection Refused
@@ -456,7 +456,7 @@ docker compose -f docker-compose.dev.yml ps
 RabbitMQ can take 15-30 seconds to fully start. Check its status:
 
 ```bash
-docker compose -f docker-compose.dev.yml logs claw-rabbitmq
+./scripts/claw.sh logs claw-rabbitmq
 ```
 
 Services will retry RabbitMQ connections automatically.
@@ -487,8 +487,8 @@ sudo usermod -aG docker $USER
 To reset everything and start fresh:
 
 ```bash
-docker compose -f docker-compose.dev.yml down -v
+./scripts/claw.sh down -v
 npm run clean
 npm install
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh up -d
 ```

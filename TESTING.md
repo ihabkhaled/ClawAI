@@ -124,7 +124,7 @@ Verify: row counts changed as expected, sensitive columns stored encrypted, dele
 At the end of every QA run:
 
 ```bash
-docker compose -f docker-compose.dev.yml logs <service> --tail=200 2>/dev/null | \
+./scripts/claw.sh logs <service> --tail=200 2>/dev/null | \
   grep -cE "UnhandledPromiseRejection|FATAL|Cannot read properties of undefined"
 ```
 

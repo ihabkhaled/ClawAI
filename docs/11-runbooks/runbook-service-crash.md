@@ -13,10 +13,10 @@
 
 ```bash
 # See all containers and their states
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 
 # Check specific service
-docker compose -f docker-compose.dev.yml ps chat-service
+./scripts/claw.sh ps chat-service
 ```
 
 Look for:
@@ -28,13 +28,13 @@ Look for:
 
 ```bash
 # Last 100 lines of a specific service
-docker compose -f docker-compose.dev.yml logs --tail=100 chat-service
+./scripts/claw.sh logs --tail=100 chat-service
 
 # Follow logs in real time
-docker compose -f docker-compose.dev.yml logs -f chat-service
+./scripts/claw.sh logs -f chat-service
 
 # Logs since a specific time
-docker compose -f docker-compose.dev.yml logs --since 5m chat-service
+./scripts/claw.sh logs --since 5m chat-service
 ```
 
 Look for:
@@ -48,13 +48,13 @@ Look for:
 
 ```bash
 # Is the database running?
-docker compose -f docker-compose.dev.yml ps postgres-chat
+./scripts/claw.sh ps postgres-chat
 
 # Is RabbitMQ running?
-docker compose -f docker-compose.dev.yml ps rabbitmq
+./scripts/claw.sh ps rabbitmq
 
 # Is Redis running?
-docker compose -f docker-compose.dev.yml ps redis
+./scripts/claw.sh ps redis
 ```
 
 ### 4. Check Resource Usage
@@ -74,21 +74,21 @@ docker system df
 For code-related crashes or transient failures:
 
 ```bash
-docker compose -f docker-compose.dev.yml restart chat-service
+./scripts/claw.sh restart chat-service
 ```
 
 Wait 10-15 seconds, then verify:
 
 ```bash
-docker compose -f docker-compose.dev.yml ps chat-service
+./scripts/claw.sh ps chat-service
 # Should show "Up" and "(healthy)"
 ```
 
 ### Restart with Fresh Logs
 
 ```bash
-docker compose -f docker-compose.dev.yml restart chat-service
-docker compose -f docker-compose.dev.yml logs -f chat-service
+./scripts/claw.sh restart chat-service
+./scripts/claw.sh logs -f chat-service
 ```
 
 Watch for successful startup messages:
@@ -101,7 +101,7 @@ Watch for successful startup messages:
 If `package.json` or `Dockerfile` changed:
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d --build chat-service
+./scripts/claw.sh up -d --build chat-service
 ```
 
 ### Database Migration Issue
@@ -110,10 +110,10 @@ If the crash is caused by a schema mismatch:
 
 ```bash
 # Check migration status
-docker compose -f docker-compose.dev.yml exec chat-service npx prisma migrate status
+./scripts/claw.sh exec chat-service npx prisma migrate status
 
 # Run pending migrations
-docker compose -f docker-compose.dev.yml exec chat-service npx prisma migrate deploy
+./scripts/claw.sh exec chat-service npx prisma migrate deploy
 ```
 
 ### OOM Kill Recovery
@@ -128,15 +128,15 @@ If `docker stats` shows high memory usage:
        limits:
          memory: 1G
    ```
-3. Restart: `docker compose -f docker-compose.dev.yml up -d chat-service`
+3. Restart: `./scripts/claw.sh up -d chat-service`
 
 ### Nuclear Option (Full Stack Restart)
 
 If multiple services are affected:
 
 ```bash
-docker compose -f docker-compose.dev.yml down
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh down
+./scripts/claw.sh up -d
 ```
 
 This restarts everything. Databases retain data (volumes persist). Services take 30-60 seconds to become healthy.

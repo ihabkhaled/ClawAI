@@ -8,7 +8,7 @@ Last updated: 2026-04-09
 
 ## General Instructions
 
-1. **Environment**: Run all tests against the full Docker Compose dev environment (`docker compose -f docker-compose.dev.yml up -d`).
+1. **Environment**: Run all tests against the full Docker Compose dev environment (`./scripts/claw.sh up -d`).
 2. **Accounts**: Use the seeded admin account (credentials in `.env`: ADMIN_EMAIL, ADMIN_PASSWORD). Create additional Operator and Viewer accounts for RBAC testing.
 3. **Browser**: Test in Chrome (latest) as primary. Cross-check critical flows in Firefox and Safari.
 4. **Evidence**: For each scenario, capture a screenshot or API response as proof of pass/fail.

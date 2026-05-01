@@ -39,10 +39,10 @@ No per-provider env keys — secrets are stored encrypted in `search_providers.e
 ## Docker Rebuild
 
 ```bash
-docker compose -f docker-compose.dev.yml stop research-service
-docker compose -f docker-compose.dev.yml rm -f research-service
+./scripts/claw.sh stop research-service
+./scripts/claw.sh rm -f research-service
 docker rmi claw-research-service
-docker compose -f docker-compose.dev.yml up -d --build research-service
+./scripts/claw.sh up -d --build research-service
 ```
 
 ## API (Phase 1)

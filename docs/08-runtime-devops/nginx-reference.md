@@ -305,7 +305,7 @@ This means Nginx is the last infrastructure component to start, ensuring all rou
 1. Edit `infra/nginx/nginx.conf`
 2. Restart the nginx container:
    ```bash
-   docker compose -f docker-compose.dev.yml restart nginx
+   ./scripts/claw.sh restart nginx
    ```
 3. Verify routes work:
    ```bash

@@ -210,7 +210,7 @@ cd apps/claw-<name>-service && npm run build
 cd apps/claw-<name>-service && npx prisma migrate dev --name init
 
 # 3. Start the service
-docker compose -f docker-compose.dev.yml up -d --build claw-<name>-service
+./scripts/claw.sh up -d --build claw-<name>-service
 
 # 4. Check health
 curl http://localhost:40XX/health
@@ -219,7 +219,7 @@ curl http://localhost:40XX/health
 curl http://localhost:4000/api/v1/<name>/health
 
 # 6. Check logs
-docker compose -f docker-compose.dev.yml logs claw-<name>-service --tail=50
+./scripts/claw.sh logs claw-<name>-service --tail=50
 
 # 7. Full quality suite
 cd apps/claw-<name>-service && npm run typecheck && npm run lint && npm run test

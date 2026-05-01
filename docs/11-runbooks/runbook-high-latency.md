@@ -29,7 +29,7 @@ time curl -s -o /dev/null -w "%{time_total}" http://localhost:4002/api/v1/chat-t
   -H "Authorization: Bearer $TOKEN"
 
 # Check database latency
-docker compose -f docker-compose.dev.yml exec postgres-chat \
+./scripts/claw.sh exec postgres-chat \
   psql -U claw_chat_user claw_chat -c "SELECT 1;" -t
 ```
 
@@ -71,7 +71,7 @@ Red flags:
 docker stats --no-stream ollama
 
 # Check which model is loaded
-docker compose -f docker-compose.dev.yml exec ollama ollama ps
+./scripts/claw.sh exec ollama ollama ps
 
 # Time a direct generation request
 time curl -s http://localhost:11434/api/generate \
@@ -93,12 +93,12 @@ time curl -s http://localhost:11434/api/generate \
 **Diagnosis**:
 ```bash
 # Check active connections
-docker compose -f docker-compose.dev.yml exec postgres-chat \
+./scripts/claw.sh exec postgres-chat \
   psql -U claw_chat_user claw_chat -c \
   "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';"
 
 # Check waiting connections
-docker compose -f docker-compose.dev.yml exec postgres-chat \
+./scripts/claw.sh exec postgres-chat \
   psql -U claw_chat_user claw_chat -c \
   "SELECT count(*) FROM pg_stat_activity WHERE wait_event IS NOT NULL;"
 ```
@@ -126,7 +126,7 @@ docker compose -f docker-compose.dev.yml exec postgres-chat \
 **Diagnosis**:
 ```bash
 # Check chat-service logs for context assembly timing
-docker compose -f docker-compose.dev.yml logs --tail=100 chat-service | grep -i "context\|assembly\|fetch"
+./scripts/claw.sh logs --tail=100 chat-service | grep -i "context\|assembly\|fetch"
 ```
 
 **Fixes**:
@@ -183,7 +183,7 @@ If the difference is >500ms, check Nginx configuration:
 
 ```bash
 # Check Nginx error log
-docker compose -f docker-compose.dev.yml logs --tail=50 nginx
+./scripts/claw.sh logs --tail=50 nginx
 ```
 
 **Fixes**:

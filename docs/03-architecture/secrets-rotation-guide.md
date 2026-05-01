@@ -41,7 +41,7 @@ This guide covers procedures for rotating all secrets in the ClawAI platform. Re
 
 3. Restart ALL backend services (all verify JWT signatures):
    ```bash
-   docker compose -f docker-compose.dev.yml restart
+   ./scripts/claw.sh restart
    ```
 
 4. **Effect**: All existing access tokens are immediately invalidated. Users' next request receives 401 and must re-login. Refresh tokens also fail since sessions reference the old secret.
@@ -75,7 +75,7 @@ This guide covers procedures for rotating all secrets in the ClawAI platform. Re
 
 4. Restart connector-service:
    ```bash
-   docker compose -f docker-compose.dev.yml restart connector-service
+   ./scripts/claw.sh restart connector-service
    ```
 
 5. Verify: Test a connector connection to confirm decryption works.
@@ -112,7 +112,7 @@ This guide covers procedures for rotating all secrets in the ClawAI platform. Re
 
 4. Restart affected services:
    ```bash
-   docker compose -f docker-compose.dev.yml restart auth-service chat-service connector-service routing-service memory-service file-service ollama-service image-service file-generation-service
+   ./scripts/claw.sh restart auth-service chat-service connector-service routing-service memory-service file-service ollama-service image-service file-generation-service
    ```
 
 **Recommended frequency**: Every 180 days.
@@ -139,7 +139,7 @@ This guide covers procedures for rotating all secrets in the ClawAI platform. Re
 
 4. Restart affected services:
    ```bash
-   docker compose -f docker-compose.dev.yml restart audit-service client-logs-service server-logs-service
+   ./scripts/claw.sh restart audit-service client-logs-service server-logs-service
    ```
 
 **Recommended frequency**: Every 180 days.
@@ -165,7 +165,7 @@ This guide covers procedures for rotating all secrets in the ClawAI platform. Re
 
 3. Restart all services:
    ```bash
-   docker compose -f docker-compose.dev.yml restart
+   ./scripts/claw.sh restart
    ```
 
 **Recommended frequency**: Every 180 days.

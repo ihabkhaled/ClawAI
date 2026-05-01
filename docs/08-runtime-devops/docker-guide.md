@@ -61,13 +61,13 @@ All containers share the `claw-network` bridge network and read environment vari
 
 ```bash
 # Start everything
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh up -d
 
 # Stop everything
-docker compose -f docker-compose.dev.yml down
+./scripts/claw.sh down
 
 # Stop and remove volumes (DESTRUCTIVE - deletes all data)
-docker compose -f docker-compose.dev.yml down -v
+./scripts/claw.sh down -v
 ```
 
 ### Using the Management Script
@@ -92,13 +92,13 @@ The `scripts/claw.sh` script provides granular control with separate compose fil
 
 ```bash
 # Rebuild and start a single service
-docker compose -f docker-compose.dev.yml up -d --build chat-service
+./scripts/claw.sh up -d --build chat-service
 
 # Start only infrastructure (databases, Redis, RabbitMQ)
-docker compose -f docker-compose.dev.yml up -d pg-auth pg-chat pg-connector pg-routing pg-memory pg-files pg-ollama pg-images pg-file-generations mongodb redis rabbitmq
+./scripts/claw.sh up -d pg-auth pg-chat pg-connector pg-routing pg-memory pg-files pg-ollama pg-images pg-file-generations mongodb redis rabbitmq
 
 # Restart a single service
-docker compose -f docker-compose.dev.yml restart auth-service
+./scripts/claw.sh restart auth-service
 ```
 
 ---
@@ -187,7 +187,7 @@ Nginx mounts its config read-only:
 docker volume ls | grep claw
 
 # Remove all volumes (DESTRUCTIVE)
-docker compose -f docker-compose.dev.yml down -v
+./scripts/claw.sh down -v
 
 # Remove a specific volume
 docker volume rm docker-compose-dev_pg-auth-data
@@ -202,7 +202,7 @@ docker volume rm docker-compose-dev_pg-auth-data
 | Source code (`src/`)  | Auto-detected by `node --watch` (backend) or Turbopack (frontend) | None     |
 | Prisma schema         | Rebuild container (`prisma migrate deploy` runs in entrypoint)    | ~30s     |
 | `package.json` deps   | Rebuild container (`docker compose up -d --build <service>`)      | ~60s     |
-| Docker Compose config | `docker compose -f docker-compose.dev.yml up -d` (recreate)       | ~10s     |
+| Docker Compose config | `./scripts/claw.sh up -d` (recreate)       | ~10s     |
 | `.env` values         | Restart containers (`docker compose restart <service>`)           | ~5s      |
 | Shared packages       | Rebuild shared package, then restart dependent services           | ~30s     |
 | Nginx config          | Restart nginx (`docker compose restart nginx`)                    | ~2s      |
@@ -222,20 +222,20 @@ docker volume rm docker-compose-dev_pg-auth-data
 
 ```bash
 # Follow logs for a specific service
-docker compose -f docker-compose.dev.yml logs -f chat-service
+./scripts/claw.sh logs -f chat-service
 
 # Follow logs for multiple services
-docker compose -f docker-compose.dev.yml logs -f auth-service chat-service routing-service
+./scripts/claw.sh logs -f auth-service chat-service routing-service
 
 # Last 100 lines from a service
-docker compose -f docker-compose.dev.yml logs --tail=100 ollama-service
+./scripts/claw.sh logs --tail=100 ollama-service
 
 # All service logs (very verbose)
-docker compose -f docker-compose.dev.yml logs -f
+./scripts/claw.sh logs -f
 
 # View logs for infrastructure
-docker compose -f docker-compose.dev.yml logs -f rabbitmq
-docker compose -f docker-compose.dev.yml logs -f pg-auth
+./scripts/claw.sh logs -f rabbitmq
+./scripts/claw.sh logs -f pg-auth
 
 # Using docker directly
 docker logs claw-chat-service --tail=50 -f
@@ -247,18 +247,18 @@ docker logs claw-chat-service --tail=50 -f
 
 ```bash
 # Rebuild a single service (no cache)
-docker compose -f docker-compose.dev.yml build --no-cache auth-service
-docker compose -f docker-compose.dev.yml up -d auth-service
+./scripts/claw.sh build --no-cache auth-service
+./scripts/claw.sh up -d auth-service
 
 # Rebuild and restart in one command
-docker compose -f docker-compose.dev.yml up -d --build auth-service
+./scripts/claw.sh up -d --build auth-service
 
 # Rebuild all services
-docker compose -f docker-compose.dev.yml build --no-cache
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh build --no-cache
+./scripts/claw.sh up -d
 
 # Force recreate without rebuild (useful for env changes)
-docker compose -f docker-compose.dev.yml up -d --force-recreate auth-service
+./scripts/claw.sh up -d --force-recreate auth-service
 ```
 
 ---
@@ -345,8 +345,8 @@ netstat -ano | findstr :4001
 
 1. Check logs: `docker logs claw-<service> --tail=100`
 2. Common causes: database not ready, missing env vars, Prisma migration failure
-3. Ensure infrastructure is healthy: `docker compose -f docker-compose.dev.yml ps`
-4. Try rebuilding: `docker compose -f docker-compose.dev.yml up -d --build <service>`
+3. Ensure infrastructure is healthy: `./scripts/claw.sh ps`
+4. Try rebuilding: `./scripts/claw.sh up -d --build <service>`
 
 ### Health Check Failures
 
@@ -354,7 +354,7 @@ netstat -ano | findstr :4001
 
 **Solution**:
 
-1. Check which services are unhealthy: `docker compose -f docker-compose.dev.yml ps`
+1. Check which services are unhealthy: `./scripts/claw.sh ps`
 2. Inspect health check output: `docker inspect --format='{{json .State.Health}}' claw-auth-service`
 3. Start period is 45s for services; wait for initial startup to complete
 
@@ -376,13 +376,13 @@ docker logs claw-ollama -f
 
 ```bash
 # Stop the container
-docker compose -f docker-compose.dev.yml stop pg-auth
+./scripts/claw.sh stop pg-auth
 
 # Remove the volume
 docker volume rm docker-compose-dev_pg-auth-data
 
 # Restart (will recreate from scratch; run prisma migrate)
-docker compose -f docker-compose.dev.yml up -d pg-auth auth-service
+./scripts/claw.sh up -d pg-auth auth-service
 ```
 
 ### Out of Disk Space
@@ -409,5 +409,5 @@ docker volume prune
 **Solution**: Shared packages are copied at build time, not mounted. Rebuild the affected service:
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d --build <service>
+./scripts/claw.sh up -d --build <service>
 ```

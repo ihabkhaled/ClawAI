@@ -48,10 +48,10 @@ npm run test             # Unit tests
 When rebuilding this service (especially after shared package changes):
 
 ```bash
-docker compose -f docker-compose.dev.yml stop health-service
-docker compose -f docker-compose.dev.yml rm -f health-service
+./scripts/claw.sh stop health-service
+./scripts/claw.sh rm -f health-service
 docker rmi claw-health-service
-docker compose -f docker-compose.dev.yml up -d --build health-service
+./scripts/claw.sh up -d --build health-service
 ```
 
 **NEVER skip steps.** See root CLAUDE.md for full explanation.

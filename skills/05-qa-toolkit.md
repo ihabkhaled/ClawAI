@@ -182,7 +182,7 @@ echo ""
 echo "=== DOCKER LOGS ==="
 
 for SERVICE in <service>-service; do
-  ERROR_COUNT=$(docker compose -f docker-compose.dev.yml logs "claw-$SERVICE" \
+  ERROR_COUNT=$(./scripts/claw.sh logs "claw-$SERVICE" \
     --tail=200 2>/dev/null | \
     grep -cE "UnhandledPromiseRejection|FATAL|Cannot read properties of undefined" || echo "0")
   run_test "$SERVICE has no critical errors" "$ERROR_COUNT" "0"

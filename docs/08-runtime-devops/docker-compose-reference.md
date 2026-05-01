@@ -23,7 +23,7 @@ ClawAI has 8 Docker Compose files for different environments and configurations:
 
 **Single file** (`docker-compose.dev.yml`): Simplest approach. One command starts everything:
 ```bash
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh up -d
 ```
 
 **Split mode** (`claw.sh`): The management script uses separate compose files for databases, services, and Ollama. This allows starting/stopping each layer independently:
@@ -210,25 +210,25 @@ Layer 4: Frontend (depends on nginx being started)
 
 ```bash
 # Start everything (dev)
-docker compose -f docker-compose.dev.yml up -d
+./scripts/claw.sh up -d
 
 # Stop everything
-docker compose -f docker-compose.dev.yml down
+./scripts/claw.sh down
 
 # Stop and delete all data
-docker compose -f docker-compose.dev.yml down -v
+./scripts/claw.sh down -v
 
 # Restart a single service
-docker compose -f docker-compose.dev.yml restart chat-service
+./scripts/claw.sh restart chat-service
 
 # Rebuild and restart a single service
-docker compose -f docker-compose.dev.yml up -d --build chat-service
+./scripts/claw.sh up -d --build chat-service
 
 # View logs
-docker compose -f docker-compose.dev.yml logs -f chat-service
+./scripts/claw.sh logs -f chat-service
 
 # Check status
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 
 # Start with management script
 ./scripts/claw.sh up

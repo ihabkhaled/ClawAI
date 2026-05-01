@@ -19,20 +19,20 @@
 
 ```bash
 # Follow logs for a specific service
-docker compose -f docker-compose.dev.yml logs -f chat-service
+./scripts/claw.sh logs -f chat-service
 
 # Get last 100 lines
-docker compose -f docker-compose.dev.yml logs chat-service --tail=100
+./scripts/claw.sh logs chat-service --tail=100
 
 # Check for critical errors
-docker compose -f docker-compose.dev.yml logs chat-service --tail=200 | \
+./scripts/claw.sh logs chat-service --tail=200 | \
   grep -E "ERROR|FATAL|UnhandledPromiseRejection|Cannot read"
 
 # Check all services at once (last 20 lines each)
-docker compose -f docker-compose.dev.yml logs --tail=20
+./scripts/claw.sh logs --tail=20
 
 # Check logs since a specific time
-docker compose -f docker-compose.dev.yml logs --since="5m" connector-service
+./scripts/claw.sh logs --since="5m" connector-service
 ```
 
 ---
@@ -187,23 +187,23 @@ docker exec claw-db-chat psql -U claw_user -d claw_chat \
   -tAc "SELECT id, role, content, createdAt FROM \"ChatMessage\" ORDER BY createdAt DESC LIMIT 3;"
 
 # 2. Was message.created published?
-docker compose -f docker-compose.dev.yml logs chat-service --tail=50 | \
+./scripts/claw.sh logs chat-service --tail=50 | \
   grep "message.created\|Published event"
 
 # 3. Did routing service receive it?
-docker compose -f docker-compose.dev.yml logs routing-service --tail=50 | \
+./scripts/claw.sh logs routing-service --tail=50 | \
   grep "handleMessageCreated\|selectedProvider"
 
 # 4. Was message.routed published?
-docker compose -f docker-compose.dev.yml logs routing-service --tail=50 | \
+./scripts/claw.sh logs routing-service --tail=50 | \
   grep "message.routed\|Published"
 
 # 5. Did chat service receive routing?
-docker compose -f docker-compose.dev.yml logs chat-service --tail=50 | \
+./scripts/claw.sh logs chat-service --tail=50 | \
   grep "handleMessageRouted\|callProvider\|OLLAMA"
 
 # 6. Did the LLM call succeed?
-docker compose -f docker-compose.dev.yml logs chat-service --tail=50 | \
+./scripts/claw.sh logs chat-service --tail=50 | \
   grep "callOllama\|callAnthropic\|callOpenAI\|provider.*error"
 
 # 7. Was ASSISTANT message stored?
@@ -217,7 +217,7 @@ docker exec claw-db-chat psql -U claw_user -d claw_chat \
 
 ```bash
 # Check all service health status
-docker compose -f docker-compose.dev.yml ps
+./scripts/claw.sh ps
 
 # Check specific service health
 docker inspect claw-chat-service | jq '.[0].State.Health'

@@ -376,7 +376,7 @@ Before starting UAT, verify the environment is ready:
 
 | #   | Check                                 | Command                                           |
 | --- | ------------------------------------- | ------------------------------------------------- |
-| 1   | All containers running                | `docker compose -f docker-compose.dev.yml ps`     |
+| 1   | All containers running                | `./scripts/claw.sh ps`     |
 | 2   | All services healthy                  | `curl http://localhost:4000/api/v1/health`        |
 | 3   | Admin user exists                     | Login at http://localhost:3000/login              |
 | 4   | At least one connector configured     | Check /connectors page                            |
