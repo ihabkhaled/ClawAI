@@ -47,6 +47,34 @@ export const AI_ACTION_PROMPTS: Record<AiActionKind, PromptTemplate> = {
       'Preserve all facts and intent. Output only the rewritten text.',
     userPrefix: 'Rewrite the following content:\n\n',
   },
+  [AiActionKind.PLAN]: {
+    system:
+      'You are a senior technical product manager. Produce an ordered execution plan for the ticket. ' +
+      'Output markdown with sections: ## Goals, ## Plan (numbered steps with rationale), ## Risks. Be concrete.',
+    userPrefix: 'Produce an execution plan for the following ticket:\n\n',
+  },
+  [AiActionKind.DECOMPOSE]: {
+    system:
+      'You are a senior tech lead. Decompose the ticket into 3-12 actionable subtasks. ' +
+      'Output a JSON object: {"rationale": string, "subtasks": [{"title": string, "descriptionDraft": string, ' +
+      '"estimateTshirt": "XS"|"S"|"M"|"L"|"XL", "estimateConfidence": number, "dependencies": string[]}]}. ' +
+      'Output JSON only, no prose.',
+    userPrefix: 'Decompose the following ticket into subtasks (return JSON only):\n\n',
+  },
+  [AiActionKind.ESTIMATE]: {
+    system:
+      'You are a senior tech lead. Estimate the ticket using t-shirt sizes XS|S|M|L|XL with a confidence 0..1. ' +
+      'Output JSON: {"estimateTshirt": "...", "estimateConfidence": 0.8, "rationale": "..."}. JSON only.',
+    userPrefix: 'Estimate the following ticket (return JSON only):\n\n',
+  },
+  [AiActionKind.IMPL_PROMPT]: {
+    system:
+      'You are a senior engineer. Produce a coding brief that another engineer or AI agent can pick up cold. ' +
+      'Output JSON: {"brief": string (markdown), "acceptanceCriteria": string[], "suggestedFiles": string[], ' +
+      '"suggestedCommitFormat": string, "languageHints": string[]}. JSON only. The brief MUST NOT contain ' +
+      'secrets, tokens, API keys, or passwords from the source content.',
+    userPrefix: 'Produce an implementation brief for the following ticket (return JSON only):\n\n',
+  },
 };
 
 export const AI_ACTION_MAX_CONTEXT_CHARS = 60_000;

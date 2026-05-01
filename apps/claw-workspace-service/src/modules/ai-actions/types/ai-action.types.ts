@@ -99,3 +99,17 @@ export type ChatInternalResponse = {
   outputTokens?: number;
   durationMs: number;
 };
+
+export type RunAiActionEnvelope =
+  | { mode: 'EXECUTED'; execution: AiActionResult }
+  | {
+      mode: 'QUEUED';
+      queue: {
+        queueId: string;
+        status: string;
+        riskScore: number;
+        riskLabel: string;
+        matchedPolicyId: string | null;
+        matchedPolicyName: string | null;
+      };
+    };

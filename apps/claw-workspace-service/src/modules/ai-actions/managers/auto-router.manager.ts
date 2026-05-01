@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import {
   AiActionKind,
@@ -6,26 +6,28 @@ import {
   AiActionPrivacyClass,
 } from '../../../common/enums/ai-action-kind.enum';
 import {
-  AI_ACTION_DEFAULT_ROUTES,
-  LOCAL_FALLBACK_CHAIN,
+  AI_ACTION_CAPABILITY_HINTS,
+  AI_ACTION_PREFERS_LOCAL,
 } from '../constants/ai-action-routes.constants';
 import type { AutoRouterResolution, ModelChoice } from '../types/ai-action.types';
 
+import { ModelCatalogResolverManager } from './model-catalog-resolver.manager';
+
 @Injectable()
 export class AutoRouterManager {
-  /**
-   * Resolves a model selection into a concrete primary + fallback chain.
-   * - If `preferredModel` is supplied: returns MANUAL mode with the preferred
-   *   model as primary; fallback chain is empty (manual pick == user's choice
-   *   is law).
-   * - Else: returns AUTO mode using the per-action-kind default route. If
-   *   privacyClass is PRIVATE, the chain is filtered to local-only models.
-   */
-  resolve(input: {
+  private readonly logger = new Logger(AutoRouterManager.name);
+
+  constructor(private readonly resolver: ModelCatalogResolverManager) {}
+
+  // Resolves a model selection into a concrete primary + fallback chain.
+  //   preferredModel  → MANUAL mode, that model is primary, no fallback
+  //   privacy=PRIVATE → AUTO mode, local-first; cloud entries stripped
+  //   else            → AUTO mode, resolver picks based on action kind hints
+  async resolve(input: {
     actionKind: AiActionKind;
     privacyClass: AiActionPrivacyClass;
     preferredModel?: ModelChoice;
-  }): AutoRouterResolution {
+  }): Promise<AutoRouterResolution> {
     if (input.preferredModel !== undefined) {
       return {
         mode: AiActionMode.MANUAL,
@@ -33,29 +35,33 @@ export class AutoRouterManager {
         fallbackChain: [],
       };
     }
-
-    const base = AI_ACTION_DEFAULT_ROUTES[input.actionKind];
-    const chain =
-      input.privacyClass === AiActionPrivacyClass.PRIVATE ? this.filterLocalOnly(base) : base;
-
-    const primary = chain[0];
-    if (primary === undefined) {
-      // Privacy-class locked us out of everything — fall back to local-only
-      // chain hard-coded in constants.
-      const fallback = LOCAL_FALLBACK_CHAIN[0];
-      if (fallback === undefined) {
-        throw new Error('AutoRouterManager: no models available after filtering');
-      }
-      return {
-        mode: AiActionMode.AUTO,
-        primary: fallback,
-        fallbackChain: LOCAL_FALLBACK_CHAIN.slice(1),
-      };
+    const preferLocal =
+      input.privacyClass === AiActionPrivacyClass.PRIVATE ||
+      AI_ACTION_PREFERS_LOCAL[input.actionKind];
+    const hints = AI_ACTION_CAPABILITY_HINTS[input.actionKind];
+    const defaults = await this.resolver.resolveDefaults({ preferLocal, capabilityHints: hints });
+    if (defaults.primary === null) {
+      throw new Error('AutoRouterManager: no installed local model and no connected cloud provider');
+    }
+    const fallbackChain =
+      input.privacyClass === AiActionPrivacyClass.PRIVATE
+        ? this.filterLocalOnly(defaults.fallbackChain)
+        : defaults.fallbackChain;
+    if (
+      input.privacyClass === AiActionPrivacyClass.PRIVATE &&
+      defaults.primary.provider !== 'local-ollama'
+    ) {
+      this.logger.warn(
+        `auto-router: privacy=PRIVATE but no local model available — refusing cloud fallback`,
+      );
+      throw new Error(
+        'AutoRouterManager: privacy=PRIVATE requires an installed local model; none found',
+      );
     }
     return {
       mode: AiActionMode.AUTO,
-      primary,
-      fallbackChain: chain.slice(1),
+      primary: defaults.primary,
+      fallbackChain,
     };
   }
 

@@ -1,43 +1,36 @@
 import { AiActionKind } from '../../../common/enums/ai-action-kind.enum';
-import type { ModelChoice } from '../types/ai-action.types';
 
-const LOCAL_FAST: ModelChoice = {
-  provider: 'local-ollama',
-  model: 'llama3.2:latest',
-  displayName: 'Llama 3.2 (local)',
-};
-const LOCAL_REASONING: ModelChoice = {
-  provider: 'local-ollama',
-  model: 'glm4:9b',
-  displayName: 'GLM4 9B (local reasoning)',
-};
-const CLOUD_ANTHROPIC_SONNET: ModelChoice = {
-  provider: 'ANTHROPIC',
-  model: 'claude-sonnet-4-6',
-  displayName: 'Claude Sonnet 4.6',
-};
-const CLOUD_OPENAI_MINI: ModelChoice = {
-  provider: 'OPENAI',
-  model: 'gpt-4o-mini',
-  displayName: 'GPT-4o mini',
-};
-const CLOUD_GEMINI_FLASH: ModelChoice = {
-  provider: 'GEMINI',
-  model: 'gemini-2.5-flash',
-  displayName: 'Gemini 2.5 Flash',
+// Capability hints per action kind. The resolver scores installed local models
+// and connected cloud models against these hints to pick the best concrete
+// primary + fallback chain at runtime — no static model names baked in.
+export const AI_ACTION_CAPABILITY_HINTS: Record<AiActionKind, string[]> = {
+  [AiActionKind.SUMMARIZE]: ['structured_output', 'long_context', 'general'],
+  [AiActionKind.DRAFT]: ['creative_writing', 'instruction_following', 'general'],
+  [AiActionKind.COMPARE]: ['reasoning', 'structured_reasoning', 'analysis'],
+  [AiActionKind.JUDGE]: ['reasoning', 'structured_reasoning', 'analysis'],
+  [AiActionKind.REWRITE]: ['creative_writing', 'instruction_following'],
+  [AiActionKind.EXTRACT]: ['structured_output', 'json', 'extraction'],
+  // Stream 41 — ticket planning + coding bridge
+  [AiActionKind.PLAN]: ['thinking', 'reasoning', 'planning', 'long_context'],
+  [AiActionKind.DECOMPOSE]: ['reasoning', 'structured_output', 'json', 'planning'],
+  [AiActionKind.ESTIMATE]: ['reasoning', 'structured_output', 'json'],
+  [AiActionKind.IMPL_PROMPT]: ['coding', 'reasoning', 'structured_output', 'long_context'],
 };
 
-/**
- * Default AUTO primary + fallback chain per action kind.
- * Privacy class PRIVATE forces local-only (see AutoRouterManager).
- */
-export const AI_ACTION_DEFAULT_ROUTES: Record<AiActionKind, ModelChoice[]> = {
-  [AiActionKind.SUMMARIZE]: [LOCAL_FAST, CLOUD_GEMINI_FLASH, CLOUD_OPENAI_MINI],
-  [AiActionKind.DRAFT]: [CLOUD_ANTHROPIC_SONNET, CLOUD_OPENAI_MINI, LOCAL_FAST],
-  [AiActionKind.COMPARE]: [CLOUD_ANTHROPIC_SONNET, CLOUD_OPENAI_MINI, CLOUD_GEMINI_FLASH],
-  [AiActionKind.JUDGE]: [CLOUD_ANTHROPIC_SONNET, LOCAL_REASONING, CLOUD_OPENAI_MINI],
-  [AiActionKind.REWRITE]: [LOCAL_FAST, CLOUD_OPENAI_MINI, CLOUD_ANTHROPIC_SONNET],
-  [AiActionKind.EXTRACT]: [CLOUD_GEMINI_FLASH, LOCAL_FAST, CLOUD_OPENAI_MINI],
+// True when an action kind should prefer a local model when one is installed,
+// even if cloud connectors are healthy. Privacy-sensitive action kinds are
+// always evaluated under privacy-first rules; this map is for non-privacy
+// preference shaping.
+export const AI_ACTION_PREFERS_LOCAL: Record<AiActionKind, boolean> = {
+  [AiActionKind.SUMMARIZE]: true,
+  [AiActionKind.DRAFT]: false,
+  [AiActionKind.COMPARE]: false,
+  [AiActionKind.JUDGE]: false,
+  [AiActionKind.REWRITE]: true,
+  [AiActionKind.EXTRACT]: true,
+  // Stream 41
+  [AiActionKind.PLAN]: false,
+  [AiActionKind.DECOMPOSE]: false,
+  [AiActionKind.ESTIMATE]: true,
+  [AiActionKind.IMPL_PROMPT]: false,
 };
-
-export const LOCAL_FALLBACK_CHAIN: ModelChoice[] = [LOCAL_FAST, LOCAL_REASONING];

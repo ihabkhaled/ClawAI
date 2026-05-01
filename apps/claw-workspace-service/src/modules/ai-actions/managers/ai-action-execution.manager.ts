@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { AI_ACTION_FALLBACK_LOCAL_PROVIDER } from '../constants/ai-action-prompts.constants';
-import { LOCAL_FALLBACK_CHAIN } from '../constants/ai-action-routes.constants';
 import type {
   AiActionResult,
   CloudGenerateOutput,
@@ -14,29 +13,26 @@ import { callCloudGenerate } from '../utilities/cloud-generation-client.utility'
 import { callOllamaGenerate } from '../utilities/ollama-generation-client.utility';
 
 import { AutoRouterManager } from './auto-router.manager';
+import { ModelCatalogResolverManager } from './model-catalog-resolver.manager';
 
 @Injectable()
 export class AiActionExecutionManager {
   private readonly logger = new Logger(AiActionExecutionManager.name);
 
-  constructor(private readonly router: AutoRouterManager) {}
+  constructor(
+    private readonly router: AutoRouterManager,
+    private readonly resolver: ModelCatalogResolverManager,
+  ) {}
 
   async run(input: RunAiActionInput): Promise<AiActionResult> {
-    const resolution = this.router.resolve({
+    const resolution = await this.router.resolve({
       actionKind: input.actionKind,
       privacyClass: input.privacyClass,
       preferredModel: input.preferredModel,
     });
     const { systemPrompt, userPrompt } = buildAiActionPrompt(input.actionKind, input.context);
     const started = Date.now();
-
-    // Build deduplicated attempt list: primary → declared fallbacks → local safety net
-    const chain = [resolution.primary, ...resolution.fallbackChain];
-    const localSafeNet = LOCAL_FALLBACK_CHAIN.filter(
-      (m) => !chain.some((c) => c.provider === m.provider && c.model === m.model),
-    );
-    const modelsToTry = [...chain, ...localSafeNet];
-
+    const modelsToTry = await this.buildAttemptChain(resolution.primary, resolution.fallbackChain);
     let lastError: Error | undefined;
     for (const model of modelsToTry) {
       try {
@@ -64,8 +60,29 @@ export class AiActionExecutionManager {
         );
       }
     }
-
     throw lastError ?? new Error('All models in fallback chain exhausted');
+  }
+
+  private async buildAttemptChain(
+    primary: ModelChoice,
+    declaredFallbacks: ModelChoice[],
+  ): Promise<ModelChoice[]> {
+    const chain = [primary, ...declaredFallbacks];
+    const safetyNet = await this.resolver.resolveDefaults({ preferLocal: true });
+    const additions: ModelChoice[] = [];
+    if (safetyNet.primary !== null && !this.alreadyInChain(chain, safetyNet.primary)) {
+      additions.push(safetyNet.primary);
+    }
+    for (const candidate of safetyNet.fallbackChain) {
+      if (!this.alreadyInChain([...chain, ...additions], candidate)) {
+        additions.push(candidate);
+      }
+    }
+    return [...chain, ...additions];
+  }
+
+  private alreadyInChain(chain: ModelChoice[], candidate: ModelChoice): boolean {
+    return chain.some((c) => c.provider === candidate.provider && c.model === candidate.model);
   }
 
   private async executeGeneration(

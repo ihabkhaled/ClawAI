@@ -4,21 +4,33 @@ import {
   AiActionPrivacyClass,
 } from '../../../../common/enums/ai-action-kind.enum';
 import { AutoRouterManager } from '../auto-router.manager';
+import type { ModelChoice } from '../../types/ai-action.types';
+
+const localFast: ModelChoice = {
+  provider: 'local-ollama',
+  model: 'llama3.2:latest',
+  displayName: 'llama3.2 (local)',
+};
+const cloudAnthropic: ModelChoice = {
+  provider: 'ANTHROPIC',
+  model: 'claude-sonnet-4-6',
+  displayName: 'Claude Sonnet 4.6',
+};
 
 describe('AutoRouterManager', () => {
-  let manager: AutoRouterManager;
-
-  beforeEach(() => {
-    manager = new AutoRouterManager();
+  const makeResolver = (
+    primary: ModelChoice | null,
+    fallbackChain: ModelChoice[] = [],
+  ): { resolveDefaults: jest.Mock; invalidate: jest.Mock } => ({
+    resolveDefaults: jest.fn().mockResolvedValue({ primary, fallbackChain }),
+    invalidate: jest.fn(),
   });
 
-  it('returns MANUAL mode when a preferred model is provided', () => {
-    const preferred = {
-      provider: 'OPENAI',
-      model: 'gpt-4o',
-      displayName: 'GPT-4o',
-    };
-    const result = manager.resolve({
+  it('returns MANUAL mode when a preferred model is provided', async () => {
+    const preferred = { provider: 'OPENAI', model: 'gpt-4o', displayName: 'GPT-4o' };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const manager = new AutoRouterManager(makeResolver(localFast) as any);
+    const result = await manager.resolve({
       actionKind: AiActionKind.DRAFT,
       privacyClass: AiActionPrivacyClass.PUBLIC,
       preferredModel: preferred,
@@ -28,26 +40,22 @@ describe('AutoRouterManager', () => {
     expect(result.fallbackChain).toEqual([]);
   });
 
-  it('returns AUTO mode with default route for SUMMARIZE', () => {
-    const result = manager.resolve({
+  it('returns AUTO mode using resolved primary when local is available', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const manager = new AutoRouterManager(makeResolver(localFast, [cloudAnthropic]) as any);
+    const result = await manager.resolve({
       actionKind: AiActionKind.SUMMARIZE,
       privacyClass: AiActionPrivacyClass.INTERNAL,
     });
     expect(result.mode).toBe(AiActionMode.AUTO);
     expect(result.primary.provider).toBe('local-ollama');
-    expect(result.fallbackChain.length).toBeGreaterThan(0);
+    expect(result.fallbackChain).toContainEqual(cloudAnthropic);
   });
 
-  it('returns AUTO mode with Anthropic primary for DRAFT', () => {
-    const result = manager.resolve({
-      actionKind: AiActionKind.DRAFT,
-      privacyClass: AiActionPrivacyClass.INTERNAL,
-    });
-    expect(result.primary.provider).toBe('ANTHROPIC');
-  });
-
-  it('filters PRIVATE class to local-only models', () => {
-    const result = manager.resolve({
+  it('PRIVATE filters cloud entries from fallback chain', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const manager = new AutoRouterManager(makeResolver(localFast, [cloudAnthropic]) as any);
+    const result = await manager.resolve({
       actionKind: AiActionKind.DRAFT,
       privacyClass: AiActionPrivacyClass.PRIVATE,
     });
@@ -57,7 +65,31 @@ describe('AutoRouterManager', () => {
     }
   });
 
-  it('covers all 6 action kinds with non-empty chains', () => {
+  it('PRIVATE refuses cloud-only chain (no local installed)', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const manager = new AutoRouterManager(makeResolver(cloudAnthropic, []) as any);
+    await expect(
+      manager.resolve({
+        actionKind: AiActionKind.DRAFT,
+        privacyClass: AiActionPrivacyClass.PRIVATE,
+      }),
+    ).rejects.toThrow('privacy=PRIVATE requires an installed local model');
+  });
+
+  it('throws when neither local nor cloud is available', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const manager = new AutoRouterManager(makeResolver(null, []) as any);
+    await expect(
+      manager.resolve({
+        actionKind: AiActionKind.SUMMARIZE,
+        privacyClass: AiActionPrivacyClass.INTERNAL,
+      }),
+    ).rejects.toThrow('no installed local model');
+  });
+
+  it('covers all 6 action kinds', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const manager = new AutoRouterManager(makeResolver(localFast, [cloudAnthropic]) as any);
     const kinds = [
       AiActionKind.SUMMARIZE,
       AiActionKind.DRAFT,
@@ -67,22 +99,12 @@ describe('AutoRouterManager', () => {
       AiActionKind.EXTRACT,
     ];
     for (const kind of kinds) {
-      const result = manager.resolve({
+      const result = await manager.resolve({
         actionKind: kind,
         privacyClass: AiActionPrivacyClass.INTERNAL,
       });
       expect(result.primary).toBeDefined();
       expect(result.primary.model.length).toBeGreaterThan(0);
     }
-  });
-
-  it('handles PRIVATE on action kind with no local primary gracefully', () => {
-    const result = manager.resolve({
-      actionKind: AiActionKind.COMPARE,
-      privacyClass: AiActionPrivacyClass.PRIVATE,
-    });
-    // COMPARE default chain has no local-ollama entries; should fall back to
-    // the LOCAL_FALLBACK_CHAIN constant.
-    expect(result.primary.provider).toBe('local-ollama');
   });
 });

@@ -1,17 +1,30 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Query } from '@nestjs/common';
+import { CurrentUser } from '@claw/shared-auth';
 
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
+import { AiActionApprovalManager } from '../managers/ai-action-approval.manager';
 import { AiActionExecutionManager } from '../managers/ai-action-execution.manager';
 import { AutoRouterManager } from '../managers/auto-router.manager';
 import { type ResolveAiActionDto, resolveAiActionSchema } from '../dto/resolve-ai-action.dto';
-import { type RunAiActionDto, runAiActionSchema } from '../dto/run-ai-action.dto';
-import type { AiActionResult, AutoRouterResolution } from '../types/ai-action.types';
+import {
+  type RunAiActionDto,
+  type RunAiActionQueryDto,
+  runAiActionQuerySchema,
+  runAiActionSchema,
+} from '../dto/run-ai-action.dto';
+import type {
+  AiActionResult,
+  AutoRouterResolution,
+  RunAiActionEnvelope,
+} from '../types/ai-action.types';
+import type { AuthenticatedUser } from '../../../common/types/auth.types';
 
 @Controller('workspace/ai-actions')
 export class AiActionController {
   constructor(
     private readonly router: AutoRouterManager,
     private readonly execution: AiActionExecutionManager,
+    private readonly approval: AiActionApprovalManager,
   ) {}
 
   @Post('resolve')
@@ -29,8 +42,34 @@ export class AiActionController {
   @Post('run')
   @HttpCode(HttpStatus.OK)
   async run(
+    @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(runAiActionSchema)) dto: RunAiActionDto,
-  ): Promise<AiActionResult> {
+    @Query(new ZodValidationPipe(runAiActionQuerySchema)) query: RunAiActionQueryDto,
+  ): Promise<RunAiActionEnvelope> {
+    return this.runOrQueue(user, dto, query);
+  }
+
+  private async runOrQueue(
+    user: AuthenticatedUser,
+    dto: RunAiActionDto,
+    query: RunAiActionQueryDto,
+  ): Promise<RunAiActionEnvelope> {
+    if (query.execute === 'immediate') {
+      const result = await this.executeNow(dto);
+      return { mode: 'EXECUTED', execution: result };
+    }
+    const enqueue = await this.approval.enqueueSuggestion({
+      userId: user.id,
+      connectorId: dto.connectorId ?? null,
+      provider: dto.provider ?? null,
+      actionKind: dto.actionKind,
+      draftPayload: { context: dto.context },
+      sourceObjectId: dto.sourceObjectId ?? null,
+    });
+    return { mode: 'QUEUED', queue: enqueue };
+  }
+
+  private async executeNow(dto: RunAiActionDto): Promise<AiActionResult> {
     return this.execution.run({
       actionKind: dto.actionKind,
       privacyClass: dto.privacyClass,
