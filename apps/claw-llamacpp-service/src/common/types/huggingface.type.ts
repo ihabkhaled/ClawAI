@@ -10,3 +10,11 @@ export interface HFRepoInfo {
   tags: string[];
   license: string | null;
 }
+
+export interface HFTreeEntry {
+  type: 'file' | 'directory';
+  path: string;
+  size?: number;
+  oid?: string;
+  lfs?: { sha256?: string; size?: number };
+}

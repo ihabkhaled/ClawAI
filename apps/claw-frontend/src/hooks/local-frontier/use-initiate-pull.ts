@@ -4,12 +4,8 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 
 import { localFrontierRepository } from '@/repositories/local-frontier/local-frontier.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
+import type { InitiatePullArgs } from '@/types/local-frontier-mutations.types';
 import type { PullJobCreateResult } from '@/types/local-frontier.types';
-
-interface InitiatePullArgs {
-  modelId: string;
-  overrideHardwareGate: boolean;
-}
 
 export function useInitiatePull(): UseMutationResult<PullJobCreateResult, Error, InitiatePullArgs> {
   const queryClient = useQueryClient();

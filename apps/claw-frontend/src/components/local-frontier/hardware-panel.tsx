@@ -3,24 +3,9 @@
 import { Cpu, HardDrive, MemoryStick, Power, RefreshCw, Server } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import type { HardwarePanelLabels } from '@/types/local-frontier-ui.types';
-import type {
-  HardwareSnapshot,
-  LoadedModel,
-  RuntimeInfo,
-} from '@/types/local-frontier.types';
+import type { HardwarePanelProps } from '@/types/local-frontier-ui.types';
 
 import { HardwareStat } from './hardware-stat';
-
-interface HardwarePanelProps {
-  hardware: HardwareSnapshot | undefined;
-  runtime: RuntimeInfo | undefined;
-  loaded: LoadedModel | null;
-  isRefreshing: boolean;
-  onRefresh: () => void;
-  onUnloadCurrent: () => void;
-  labels: HardwarePanelLabels;
-}
 
 export function HardwarePanel({
   hardware,
@@ -57,10 +42,7 @@ export function HardwarePanel({
           disabled={isRefreshing}
           aria-label={labels.refresh}
         >
-          <RefreshCw
-            className={`size-3 ${isRefreshing ? 'animate-spin' : ''}`}
-            aria-hidden
-          />
+          <RefreshCw className={`size-3 ${isRefreshing ? 'animate-spin' : ''}`} aria-hidden />
           {labels.refresh}
         </Button>
       </header>

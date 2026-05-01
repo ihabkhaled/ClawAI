@@ -101,3 +101,15 @@ export type CancelCapabilityRequest = {
 export type RollbackCapabilityRequest = {
   reason?: string;
 };
+
+export type UseAgentCapabilitiesPageReturn = {
+  pending: CapabilityInvocation[];
+  recent: CapabilityInvocation[];
+  isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+  handleApprove: (id: string) => void;
+  handleReject: (id: string, reason: string) => void;
+  handleCancel: (id: string) => void;
+  isApproving: boolean;
+};

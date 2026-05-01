@@ -4,13 +4,7 @@ import { Public } from '@claw/shared-auth';
 import { ChatThreadsRepository } from '../repositories/chat-threads.repository';
 import { ChatMessagesRepository } from '../../chat-messages/repositories/chat-messages.repository';
 import { MessageRole } from '../../../generated/prisma';
-
-type SeedThreadInput = {
-  userId: string;
-  systemPrompt?: string;
-  initialUserMessage: string;
-  title?: string;
-};
+import { type SeedThreadInput } from '../types/chat-threads.types';
 
 @Controller('internal/chat')
 export class ChatThreadsInternalController {

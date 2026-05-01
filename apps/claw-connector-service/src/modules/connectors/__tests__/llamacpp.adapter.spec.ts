@@ -1,11 +1,10 @@
 import { LlamacppAdapter } from '../managers/adapters/llamacpp.adapter';
 import { ConnectorStatus, ModelLifecycle } from '../../../generated/prisma';
+import { httpGet } from '../../../common/utilities/http.utility';
 
 jest.mock('../../../common/utilities/http.utility', () => ({
   httpGet: jest.fn(),
 }));
-
-import { httpGet } from '../../../common/utilities/http.utility';
 
 const mockedHttpGet = httpGet as unknown as jest.Mock;
 

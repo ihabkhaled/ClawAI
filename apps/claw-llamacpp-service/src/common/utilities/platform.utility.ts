@@ -71,14 +71,18 @@ function buildPlatformKey(
   archNorm: 'x64' | 'arm64',
   gpu: GpuBackend,
 ): string {
-  const osLabel = osNorm === 'win32' ? 'win' : osNorm === 'darwin' ? 'darwin' : 'linux';
-  const gpuLabel =
-    gpu === GpuBackend.CUDA
-      ? 'cuda12'
-      : gpu === GpuBackend.ROCM
-        ? 'rocm'
-        : gpu === GpuBackend.METAL
-          ? 'metal'
-          : gpu.toLowerCase();
-  return `${osLabel}-${archNorm}-${gpuLabel}`;
+  return `${pickOsLabel(osNorm)}-${archNorm}-${pickGpuLabel(gpu)}`;
+}
+
+function pickOsLabel(osNorm: 'linux' | 'darwin' | 'win32'): string {
+  if (osNorm === 'win32') return 'win';
+  if (osNorm === 'darwin') return 'darwin';
+  return 'linux';
+}
+
+function pickGpuLabel(gpu: GpuBackend): string {
+  if (gpu === GpuBackend.CUDA) return 'cuda12';
+  if (gpu === GpuBackend.ROCM) return 'rocm';
+  if (gpu === GpuBackend.METAL) return 'metal';
+  return gpu.toLowerCase();
 }

@@ -12,19 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import type { DeleteWeightsDialogLabels } from '@/types/local-frontier-ui.types';
-import type { FrontierCatalogEntry } from '@/types/local-frontier.types';
-
-interface DeleteWeightsDialogProps {
-  open: boolean;
-  entry: FrontierCatalogEntry | null;
-  inputValue: string;
-  isPending: boolean;
-  onInputChange: (value: string) => void;
-  onCancel: () => void;
-  onConfirm: () => void;
-  labels: DeleteWeightsDialogLabels;
-}
+import type { DeleteWeightsDialogProps } from '@/types/local-frontier-ui.types';
 
 export function DeleteWeightsDialog({
   open,

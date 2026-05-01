@@ -48,7 +48,7 @@ describe('useChatStream', () => {
     mockConnectSse.mockImplementation((_url: string, options: ConnectOptions): SseConnection => {
       capturedOptions = options;
       return {
-        close: closeSpy,
+        close: closeSpy as () => void,
       };
     });
   });

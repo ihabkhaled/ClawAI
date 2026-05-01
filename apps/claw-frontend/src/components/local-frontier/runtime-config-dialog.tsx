@@ -14,19 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import type { RuntimeConfigDraft, RuntimeConfigDialogLabels  } from '@/types/local-frontier-ui.types';
-import type { LoadedModel } from '@/types/local-frontier.types';
-
-interface RuntimeConfigDialogProps {
-  open: boolean;
-  loaded: LoadedModel | null;
-  draft: RuntimeConfigDraft;
-  isPending: boolean;
-  onChange: (draft: RuntimeConfigDraft) => void;
-  onCancel: () => void;
-  onSave: () => void;
-  labels: RuntimeConfigDialogLabels;
-}
+import type { RuntimeConfigDialogProps } from '@/types/local-frontier-ui.types';
 
 export function RuntimeConfigDialog({
   open,

@@ -9,23 +9,12 @@ import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { CapabilityInvocationStatus } from '@/enums';
+import {
+  TERMINAL_BAD_STATUSES as TERMINAL_BAD,
+  TERMINAL_OK_STATUSES as TERMINAL_OK,
+} from '@/constants/agent-activity.constants';
 import { useAgentCapabilitiesPage } from '@/hooks/agent/use-agent-capabilities-page';
 import { useTranslation } from '@/lib/i18n';
-
-const TERMINAL_OK = new Set<CapabilityInvocationStatus>([
-  CapabilityInvocationStatus.EXECUTED,
-  CapabilityInvocationStatus.AUTO_APPROVED,
-]);
-
-const TERMINAL_BAD = new Set<CapabilityInvocationStatus>([
-  CapabilityInvocationStatus.FAILED,
-  CapabilityInvocationStatus.DENIED,
-  CapabilityInvocationStatus.REJECTED,
-  CapabilityInvocationStatus.EXPIRED,
-  CapabilityInvocationStatus.CANCELLED,
-  CapabilityInvocationStatus.ROLLBACK_FAILED,
-]);
 
 export default function AgentActivityPage(): ReactElement {
   const { t } = useTranslation();

@@ -3,9 +3,9 @@ import * as path from 'node:path';
 import { Logger } from '@nestjs/common';
 import { type GpuInfo } from '../types';
 
-const logger = new Logger('Dri');
+import { DRI_DIR } from '../constants/hardware-detect.constants';
 
-const DRI_DIR = '/dev/dri';
+const logger = new Logger('Dri');
 
 /**
  * Detects GPUs reachable via Linux DRI render nodes (/dev/dri/renderD*).

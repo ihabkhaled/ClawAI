@@ -1,13 +1,13 @@
 import { Logger } from '@nestjs/common';
 import { execFileSafe } from './process-runner.utility';
+import { NVIDIA_SMI_QUERY } from '../constants/hardware-detect.constants';
 import { type GpuInfo } from '../types';
 
 const logger = new Logger('NvidiaSmi');
-const NVIDIA_QUERY = ['--query-gpu=name,memory.total,driver_version', '--format=csv,noheader,nounits'];
 
 export async function detectNvidiaGpus(): Promise<GpuInfo[]> {
   logger.debug('detectNvidiaGpus: invoking nvidia-smi');
-  const result = await execFileSafe('nvidia-smi', NVIDIA_QUERY, 5000);
+  const result = await execFileSafe('nvidia-smi', NVIDIA_SMI_QUERY, 5000);
   if (result.exitCode !== 0) {
     logger.debug(`detectNvidiaGpus: nvidia-smi unavailable (exit=${String(result.exitCode)})`);
     return [];

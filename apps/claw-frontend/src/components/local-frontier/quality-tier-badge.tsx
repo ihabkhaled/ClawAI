@@ -1,13 +1,8 @@
 'use client';
 
 import { QUALITY_TIER_BADGE } from '@/constants/local-frontier.constants';
-import { type FrontierQualityTier } from '@/enums/local-frontier.enum';
 import { cn } from '@/lib/utils';
-
-interface QualityTierBadgeProps {
-  tier: FrontierQualityTier;
-  label: string;
-}
+import type { QualityTierBadgeProps } from '@/types/local-frontier-ui.types';
 
 export function QualityTierBadge({ tier, label }: QualityTierBadgeProps): React.ReactElement {
   const tone = QUALITY_TIER_BADGE[tier] ?? QUALITY_TIER_BADGE['BALANCED'];

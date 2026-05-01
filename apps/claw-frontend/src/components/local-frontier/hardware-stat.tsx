@@ -1,12 +1,6 @@
 'use client';
 
-import type { LucideIcon } from 'lucide-react';
-
-interface HardwareStatProps {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-}
+import type { HardwareStatProps } from '@/types/local-frontier-ui.types';
 
 export function HardwareStat({ icon: Icon, label, value }: HardwareStatProps): React.ReactElement {
   return (

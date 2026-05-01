@@ -152,21 +152,24 @@ export default function LocalFrontierCatalogPage(): React.ReactElement {
         labels={drawerLabels}
       />
 
-      {ctrl.isLoading ? (
+      {ctrl.isLoading && (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden />
           <span className="ml-2 text-sm text-muted-foreground">{t('localFrontier.loading')}</span>
         </div>
-      ) : ctrl.isError ? (
+      )}
+      {!ctrl.isLoading && ctrl.isError && (
         <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
           {t('localFrontier.catalogError')}
         </p>
-      ) : ctrl.entries.length === 0 ? (
+      )}
+      {!ctrl.isLoading && !ctrl.isError && ctrl.entries.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
           <Cpu className="size-8" aria-hidden />
           <p className="text-sm">{t('localFrontier.catalogEmpty')}</p>
         </div>
-      ) : (
+      )}
+      {!ctrl.isLoading && !ctrl.isError && ctrl.entries.length > 0 && (
         <CatalogGrid
           entries={ctrl.entries}
           compatByEntry={ctrl.compatByEntry}

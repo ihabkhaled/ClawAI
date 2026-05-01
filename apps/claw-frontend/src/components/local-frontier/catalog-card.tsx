@@ -8,38 +8,15 @@ import {
   FrontierLoadStatus,
   HardwareCompat,
 } from '@/enums/local-frontier.enum';
-import { type CompatChipMeta, type FrontierCatalogEntry } from '@/types/local-frontier.types';
-import { formatBytes } from '@/utilities/local-frontier-compat.utility';
+import type { CatalogCardProps } from '@/types/local-frontier-ui.types';
+import {
+  formatBytes,
+  pickCompatLabel,
+  pickTierLabel,
+} from '@/utilities/local-frontier-compat.utility';
 
 import { HardwareCompatChip } from './hardware-compat-chip';
 import { QualityTierBadge } from './quality-tier-badge';
-
-interface CatalogCardProps {
-  entry: FrontierCatalogEntry;
-  compat: CompatChipMeta;
-  onPullClick: (entry: FrontierCatalogEntry) => void;
-  onLoadClick: (entry: FrontierCatalogEntry) => void;
-  onUnloadClick: (entry: FrontierCatalogEntry) => void;
-  onDeleteClick: (entry: FrontierCatalogEntry) => void;
-  onConfigureClick: (entry: FrontierCatalogEntry) => void;
-  isPullPending: boolean;
-  labels: {
-    download: string;
-    load: string;
-    unload: string;
-    deleteWeights: string;
-    configure: string;
-    fits: string;
-    warns: string;
-    refuses: string;
-    survival: string;
-    balanced: string;
-    best: string;
-    sourceLink: string;
-    contextLength: string;
-    requiresRamGb: string;
-  };
-}
 
 export function CatalogCard({
   entry,
@@ -52,18 +29,8 @@ export function CatalogCard({
   isPullPending,
   labels,
 }: CatalogCardProps): React.ReactElement {
-  const compatLabel =
-    compat.chip === HardwareCompat.FITS
-      ? labels.fits
-      : (compat.chip === HardwareCompat.REFUSES
-        ? labels.refuses
-        : labels.warns);
-  const tierLabel =
-    entry.qualityTier === 'SURVIVAL'
-      ? labels.survival
-      : (entry.qualityTier === 'BEST'
-        ? labels.best
-        : labels.balanced);
+  const compatLabel = pickCompatLabel(compat.chip, labels);
+  const tierLabel = pickTierLabel(entry.qualityTier, labels);
 
   const downloadable = entry.downloadStatus === FrontierDownloadStatus.AVAILABLE;
   const isDownloaded = entry.downloadStatus === FrontierDownloadStatus.READY;
@@ -81,7 +48,7 @@ export function CatalogCard({
         </div>
         <QualityTierBadge tier={entry.qualityTier} label={tierLabel} />
       </div>
-      <p className="text-sm text-muted-foreground line-clamp-2">{entry.description}</p>
+      <p className="line-clamp-2 text-sm text-muted-foreground">{entry.description}</p>
       <div className="flex flex-wrap items-center gap-2">
         <HardwareCompatChip chip={compat.chip} label={compatLabel} />
         <span className="text-xs text-muted-foreground">

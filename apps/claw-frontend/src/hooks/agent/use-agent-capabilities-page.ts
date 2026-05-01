@@ -1,5 +1,5 @@
 import { CapabilityInvocationStatus } from '../../enums';
-import type { CapabilityInvocation } from '../../types/capability.types';
+import type { UseAgentCapabilitiesPageReturn } from '../../types/capability.types';
 
 import {
   useApproveCapability,
@@ -7,19 +7,6 @@ import {
   useRejectCapability,
 } from './use-capability-mutations';
 import { useCapabilityQueue } from './use-capability-queue';
-
-
-type UseAgentCapabilitiesPageReturn = {
-  pending: CapabilityInvocation[];
-  recent: CapabilityInvocation[];
-  isLoading: boolean;
-  isError: boolean;
-  error: unknown;
-  handleApprove: (id: string) => void;
-  handleReject: (id: string, reason: string) => void;
-  handleCancel: (id: string) => void;
-  isApproving: boolean;
-};
 
 export function useAgentCapabilitiesPage(): UseAgentCapabilitiesPageReturn {
   const { data, isLoading, isError, error } = useCapabilityQueue({ page: 1, pageSize: 50 });

@@ -2,16 +2,9 @@
 
 import { CloudDownload } from 'lucide-react';
 
-import type { DownloadJobView, DownloadsDrawerLabels } from '@/types/local-frontier-ui.types';
+import type { DownloadsDrawerProps } from '@/types/local-frontier-ui.types';
 
 import { DownloadJobRow } from './download-job-row';
-
-interface DownloadsDrawerProps {
-  views: DownloadJobView[];
-  onCancel: (jobId: string) => void;
-  onRetry: (jobId: string) => void;
-  labels: DownloadsDrawerLabels;
-}
 
 export function DownloadsDrawer({
   views,

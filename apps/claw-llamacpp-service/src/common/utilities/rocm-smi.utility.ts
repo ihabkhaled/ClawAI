@@ -1,11 +1,10 @@
 import * as fs from 'node:fs';
 import { Logger } from '@nestjs/common';
 import { execFileSafe } from './process-runner.utility';
+import { ROCM_SMI_QUERY as ROCM_QUERY } from '../constants/hardware-detect.constants';
 import { type GpuInfo } from '../types';
 
 const logger = new Logger('RocmSmi');
-
-const ROCM_QUERY = ['--showproductname', '--showmeminfo', 'vram', '--csv'];
 
 export async function detectRocmGpus(): Promise<GpuInfo[]> {
   logger.debug('detectRocmGpus: probing ROCm');

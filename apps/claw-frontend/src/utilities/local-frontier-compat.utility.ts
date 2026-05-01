@@ -1,3 +1,5 @@
+import { ShieldAlert, ShieldCheck, ShieldX, type LucideIcon } from 'lucide-react';
+
 import { HardwareCompat, PreflightReasonCode } from '@/enums/local-frontier.enum';
 import type {
   CompatChipMeta,
@@ -51,4 +53,40 @@ export function formatPercent(downloaded: number, total: number): number {
     return 0;
   }
   return Math.min(100, Math.floor((downloaded / total) * 100));
+}
+
+export function pickCompatIcon(chip: HardwareCompat): LucideIcon {
+  if (chip === HardwareCompat.FITS) {
+    return ShieldCheck;
+  }
+  if (chip === HardwareCompat.REFUSES) {
+    return ShieldX;
+  }
+  return ShieldAlert;
+}
+
+export function pickCompatLabel(
+  chip: HardwareCompat,
+  labels: { fits: string; refuses: string; warns: string },
+): string {
+  if (chip === HardwareCompat.FITS) {
+    return labels.fits;
+  }
+  if (chip === HardwareCompat.REFUSES) {
+    return labels.refuses;
+  }
+  return labels.warns;
+}
+
+export function pickTierLabel(
+  tier: FrontierCatalogEntry['qualityTier'],
+  labels: { survival: string; balanced: string; best: string },
+): string {
+  if (tier === 'SURVIVAL') {
+    return labels.survival;
+  }
+  if (tier === 'BEST') {
+    return labels.best;
+  }
+  return labels.balanced;
 }

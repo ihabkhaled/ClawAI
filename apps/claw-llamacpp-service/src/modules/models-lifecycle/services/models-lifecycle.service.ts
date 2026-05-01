@@ -44,7 +44,7 @@ export class ModelsLifecycleService implements OnApplicationBootstrap {
       const { rows } = await this.catalogRepo.list({ limit: 200 });
       for (const row of rows) {
         if (row.loadStatus === LoadStatus.READY || row.loadStatus === LoadStatus.LOADING) {
-          // eslint-disable-next-line no-await-in-loop
+           
           await this.catalogRepo.updateLoadStatus(row.id, LoadStatus.UNLOADED);
         }
       }
@@ -123,7 +123,7 @@ export class ModelsLifecycleService implements OnApplicationBootstrap {
       );
     }
     const current = this.supervisor.getCurrent();
-    if (current && current.modelId === modelId) {
+    if (current?.modelId === modelId) {
       throw new BusinessException(
         'Unload model before deleting weights',
         'MODEL_RESIDENT',
@@ -188,7 +188,11 @@ export class ModelsLifecycleService implements OnApplicationBootstrap {
         eventType: LoadEventType.FAILED,
         errorMessage: 'Health-check timeout',
       });
-      throw new BusinessException('Model load timed out', 'MODEL_LOAD_TIMEOUT', HttpStatus.GATEWAY_TIMEOUT);
+      throw new BusinessException(
+        'Model load timed out',
+        'MODEL_LOAD_TIMEOUT',
+        HttpStatus.GATEWAY_TIMEOUT,
+      );
     }
 
     this.supervisor.attach({
@@ -275,8 +279,8 @@ export class ModelsLifecycleService implements OnApplicationBootstrap {
       } catch {
         // not ready yet
       }
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => setTimeout(resolve, interval));
+      const sleepMs = interval;
+      await new Promise((resolve) => setTimeout(resolve, sleepMs));
       if (Date.now() - start > LLAMA_HEALTH_BACKOFF_AFTER_MS) {
         interval = Math.min(interval * 2, 5000);
       }
@@ -288,10 +292,10 @@ export class ModelsLifecycleService implements OnApplicationBootstrap {
     const start = Date.now();
     while (Date.now() - start < timeoutMs) {
       const current = this.supervisor.getCurrent();
-      if (!current || current.child.exitCode !== null) {
+      if (current?.child.exitCode !== null) {
         return true;
       }
-      // eslint-disable-next-line no-await-in-loop
+       
       await new Promise((resolve) => setTimeout(resolve, 200));
     }
     return false;

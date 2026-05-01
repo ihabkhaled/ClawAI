@@ -1,3 +1,6 @@
+import { HardwareCompat } from '@/enums/local-frontier.enum';
+import type { CompatChipMeta } from '@/types/local-frontier.types';
+
 export const POLL_INTERVAL_MS = 2000;
 export const SSE_RECONNECT_MAX = 3;
 export const SSE_RECONNECT_BACKOFF_MS = 2000;
@@ -38,3 +41,8 @@ export const QUALITY_TIER_BADGE: Readonly<Record<string, string>> = Object.freez
 });
 
 export const LOCAL_FRONTIER_API_BASE = '/api/v1/llamacpp';
+
+export const FALLBACK_COMPAT: CompatChipMeta = Object.freeze({
+  chip: HardwareCompat.WARNS,
+  reasons: [],
+}) as CompatChipMeta;

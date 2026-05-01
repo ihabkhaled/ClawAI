@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import type {
   FrontierModelCategory,
   FrontierQualityTier,
+  HardwareCompat,
 } from '@/enums/local-frontier.enum';
 import type { useTranslation } from '@/lib/i18n';
 import type {
@@ -168,4 +169,127 @@ export interface LocalFrontierPageController {
   handleConfigureClick: (entry: FrontierCatalogEntry) => void;
   handleConfigureCancel: () => void;
   handleConfigureSave: () => void;
+}
+
+export interface CatalogCardProps {
+  entry: FrontierCatalogEntry;
+  compat: CompatChipMeta;
+  onPullClick: (entry: FrontierCatalogEntry) => void;
+  onLoadClick: (entry: FrontierCatalogEntry) => void;
+  onUnloadClick: (entry: FrontierCatalogEntry) => void;
+  onDeleteClick: (entry: FrontierCatalogEntry) => void;
+  onConfigureClick: (entry: FrontierCatalogEntry) => void;
+  isPullPending: boolean;
+  labels: {
+    download: string;
+    load: string;
+    unload: string;
+    deleteWeights: string;
+    configure: string;
+    fits: string;
+    warns: string;
+    refuses: string;
+    survival: string;
+    balanced: string;
+    best: string;
+    sourceLink: string;
+    contextLength: string;
+    requiresRamGb: string;
+  };
+}
+
+export interface CatalogGridProps {
+  entries: FrontierCatalogEntry[];
+  compatByEntry: Map<string, CompatChipMeta>;
+  onPullClick: (entry: FrontierCatalogEntry) => void;
+  onLoadClick: (entry: FrontierCatalogEntry) => void;
+  onUnloadClick: (entry: FrontierCatalogEntry) => void;
+  onDeleteClick: (entry: FrontierCatalogEntry) => void;
+  onConfigureClick: (entry: FrontierCatalogEntry) => void;
+  isPullPending: boolean;
+  labels: CatalogCardProps['labels'];
+}
+
+export interface DeleteWeightsDialogProps {
+  open: boolean;
+  entry: FrontierCatalogEntry | null;
+  inputValue: string;
+  isPending: boolean;
+  onInputChange: (value: string) => void;
+  onCancel: () => void;
+  onConfirm: () => void;
+  labels: DeleteWeightsDialogLabels;
+}
+
+export interface DownloadJobRowProps {
+  view: DownloadJobView;
+  onCancel: (jobId: string) => void;
+  onRetry: (jobId: string) => void;
+  labels: DownloadsDrawerLabels;
+}
+
+export interface DownloadsDrawerProps {
+  views: DownloadJobView[];
+  onCancel: (jobId: string) => void;
+  onRetry: (jobId: string) => void;
+  labels: DownloadsDrawerLabels;
+}
+
+export interface FilterBarProps {
+  category: FrontierModelCategory | undefined;
+  qualityTier: FrontierQualityTier | undefined;
+  compatibleOnly: boolean;
+  isRefreshing: boolean;
+  onCategoryChange: (value: FrontierModelCategory | undefined) => void;
+  onQualityTierChange: (value: FrontierQualityTier | undefined) => void;
+  onCompatibleOnlyChange: (value: boolean) => void;
+  onRefreshCatalog: () => void;
+  labels: FilterBarLabels;
+}
+
+export interface HardwareCompatChipProps {
+  chip: HardwareCompat;
+  label: string;
+}
+
+export interface HardwarePanelProps {
+  hardware: HardwareSnapshot | undefined;
+  runtime: RuntimeInfo | undefined;
+  loaded: LoadedModel | null;
+  isRefreshing: boolean;
+  onRefresh: () => void;
+  onUnloadCurrent: () => void;
+  labels: HardwarePanelLabels;
+}
+
+export interface HardwareStatProps {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}
+
+export interface OverridePromptDialogProps {
+  open: boolean;
+  entry: FrontierCatalogEntry | null;
+  compat: CompatChipMeta | null;
+  isPending: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+  labels: OverridePromptLabels;
+}
+
+export interface QualityTierBadgeProps {
+  tier: FrontierQualityTier;
+  label: string;
+}
+
+export interface RuntimeConfigDialogProps {
+  open: boolean;
+  loaded: LoadedModel | null;
+  draft: RuntimeConfigDraft;
+  isPending: boolean;
+  onChange: (draft: RuntimeConfigDraft) => void;
+  onCancel: () => void;
+  onSave: () => void;
+  labels: RuntimeConfigDialogLabels;
 }

@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { request } from 'undici';
-import { type HFFile, type HFRepoInfo } from '../types/huggingface.type';
+import { type HFFile, type HFRepoInfo, type HFTreeEntry } from '../types/huggingface.type';
 
 const logger = new Logger('HuggingFaceClient');
 
@@ -36,7 +36,11 @@ export class HuggingFaceClient {
     logger.debug(`getRepoInfo: ${repo}`);
     try {
       const url = `${this.apiBase}/api/models/${repo}`;
-      const data = await this.fetchJson<{ id?: string; tags?: string[]; cardData?: { license?: string } }>(url);
+      const data = await this.fetchJson<{
+        id?: string;
+        tags?: string[];
+        cardData?: { license?: string };
+      }>(url);
       return {
         id: data.id ?? repo,
         tags: data.tags ?? [],
@@ -78,12 +82,4 @@ export class HuggingFaceClient {
     }
     return JSON.parse(text) as T;
   }
-}
-
-interface HFTreeEntry {
-  type: 'file' | 'directory';
-  path: string;
-  size?: number;
-  oid?: string;
-  lfs?: { sha256?: string; size?: number };
 }

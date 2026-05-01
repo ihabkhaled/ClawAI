@@ -1,23 +1,9 @@
 'use client';
 
-import { HardwareCompat } from '@/enums/local-frontier.enum';
-import { type CompatChipMeta, type FrontierCatalogEntry } from '@/types/local-frontier.types';
+import { FALLBACK_COMPAT } from '@/constants/local-frontier.constants';
+import type { CatalogGridProps } from '@/types/local-frontier-ui.types';
 
 import { CatalogCard } from './catalog-card';
-
-const FALLBACK_COMPAT: CompatChipMeta = { chip: HardwareCompat.WARNS, reasons: [] };
-
-interface CatalogGridProps {
-  entries: FrontierCatalogEntry[];
-  compatByEntry: Map<string, CompatChipMeta>;
-  onPullClick: (entry: FrontierCatalogEntry) => void;
-  onLoadClick: (entry: FrontierCatalogEntry) => void;
-  onUnloadClick: (entry: FrontierCatalogEntry) => void;
-  onDeleteClick: (entry: FrontierCatalogEntry) => void;
-  onConfigureClick: (entry: FrontierCatalogEntry) => void;
-  isPullPending: boolean;
-  labels: React.ComponentProps<typeof CatalogCard>['labels'];
-}
 
 export function CatalogGrid({
   entries,

@@ -5,18 +5,8 @@ import { Loader2, RotateCw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { FrontierPullJobStatus } from '@/enums/local-frontier.enum';
-import type {
-  DownloadJobView,
-  DownloadsDrawerLabels,
-} from '@/types/local-frontier-ui.types';
+import type { DownloadJobRowProps } from '@/types/local-frontier-ui.types';
 import { formatBytes, formatPercent } from '@/utilities/local-frontier-compat.utility';
-
-interface DownloadJobRowProps {
-  view: DownloadJobView;
-  onCancel: (jobId: string) => void;
-  onRetry: (jobId: string) => void;
-  labels: DownloadsDrawerLabels;
-}
 
 export function DownloadJobRow({
   view,
@@ -45,9 +35,7 @@ export function DownloadJobRow({
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-foreground">{displayName}</p>
-          <p className="truncate text-xs text-muted-foreground">
-            {currentFile ?? labels.unknown}
-          </p>
+          <p className="truncate text-xs text-muted-foreground">{currentFile ?? labels.unknown}</p>
         </div>
         <div className="flex items-center gap-2">
           {isActive ? <Loader2 className="size-3 animate-spin text-primary" aria-hidden /> : null}
@@ -61,7 +49,8 @@ export function DownloadJobRow({
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
         <span>
-          {labels.bytes}: {formatBytes(Number(downloaded))} / {formatBytes(Number(total))} ({percent}
+          {labels.bytes}: {formatBytes(Number(downloaded))} / {formatBytes(Number(total))} (
+          {percent}
           %)
         </span>
         <span>

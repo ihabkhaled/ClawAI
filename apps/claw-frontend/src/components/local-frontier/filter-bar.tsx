@@ -12,23 +12,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ALL_FILTER_VALUE } from '@/constants/local-frontier.constants';
-import {
-  FrontierModelCategory,
-  FrontierQualityTier,
-} from '@/enums/local-frontier.enum';
-import type { FilterBarLabels } from '@/types/local-frontier-ui.types';
-
-interface FilterBarProps {
-  category: FrontierModelCategory | undefined;
-  qualityTier: FrontierQualityTier | undefined;
-  compatibleOnly: boolean;
-  isRefreshing: boolean;
-  onCategoryChange: (value: FrontierModelCategory | undefined) => void;
-  onQualityTierChange: (value: FrontierQualityTier | undefined) => void;
-  onCompatibleOnlyChange: (value: boolean) => void;
-  onRefreshCatalog: () => void;
-  labels: FilterBarLabels;
-}
+import { FrontierModelCategory, FrontierQualityTier } from '@/enums/local-frontier.enum';
+import type { FilterBarProps } from '@/types/local-frontier-ui.types';
 
 export function FilterBar({
   category,
@@ -83,9 +68,7 @@ export function FilterBar({
         <Select
           value={qualityTier ?? ALL_FILTER_VALUE}
           onValueChange={(val) =>
-            onQualityTierChange(
-              val === ALL_FILTER_VALUE ? undefined : (val as FrontierQualityTier),
-            )
+            onQualityTierChange(val === ALL_FILTER_VALUE ? undefined : (val as FrontierQualityTier))
           }
         >
           <SelectTrigger id="lf-tier" className="h-9">
@@ -117,10 +100,7 @@ export function FilterBar({
           disabled={isRefreshing}
           aria-label={labels.refreshCatalog}
         >
-          <RefreshCw
-            className={`size-3 ${isRefreshing ? 'animate-spin' : ''}`}
-            aria-hidden
-          />
+          <RefreshCw className={`size-3 ${isRefreshing ? 'animate-spin' : ''}`} aria-hidden />
           {isRefreshing ? labels.refreshing : labels.refreshCatalog}
         </Button>
       </div>

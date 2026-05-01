@@ -11,18 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { OverridePromptLabels } from '@/types/local-frontier-ui.types';
-import type { FrontierCatalogEntry, CompatChipMeta  } from '@/types/local-frontier.types';
-
-interface OverridePromptDialogProps {
-  open: boolean;
-  entry: FrontierCatalogEntry | null;
-  compat: CompatChipMeta | null;
-  isPending: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
-  labels: OverridePromptLabels;
-}
+import type { OverridePromptDialogProps } from '@/types/local-frontier-ui.types';
 
 export function OverridePromptDialog({
   open,

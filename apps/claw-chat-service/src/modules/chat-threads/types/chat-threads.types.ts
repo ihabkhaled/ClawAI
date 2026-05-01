@@ -39,3 +39,10 @@ export interface ThreadFilters {
 export interface ThreadWithMessageCount extends ChatThread {
   _count: { messages: number };
 }
+
+export type SeedThreadInput = {
+  userId: string;
+  systemPrompt?: string;
+  initialUserMessage: string;
+  title?: string;
+};
