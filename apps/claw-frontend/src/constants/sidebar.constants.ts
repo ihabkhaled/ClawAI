@@ -35,6 +35,12 @@ import {
   Hash,
   FileText,
   Figma,
+  Inbox,
+  Sparkles,
+  Newspaper,
+  SlidersHorizontal,
+  Send,
+  ScrollIcon,
 } from 'lucide-react';
 
 import { ROUTES } from './routes.constants';
@@ -82,8 +88,25 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
     icon: Workflow,
     children: [
       { labelKey: 'nav.workspaceAppConfigs', href: ROUTES.WORKSPACE_APP_CONFIGS, icon: KeyRound },
+      { labelKey: 'nav.workspaceInbox', href: ROUTES.WORKSPACE_INBOX, icon: Inbox },
+      {
+        labelKey: 'nav.workspaceSemanticSearch',
+        href: ROUTES.WORKSPACE_SEMANTIC_SEARCH,
+        icon: Sparkles,
+      },
+      { labelKey: 'nav.workspaceDigest', href: ROUTES.WORKSPACE_DIGEST, icon: Newspaper },
       { labelKey: 'nav.workspaceActions', href: ROUTES.WORKSPACE_ACTIONS, icon: CheckSquare },
       { labelKey: 'nav.workspaceApprovals', href: ROUTES.WORKSPACE_APPROVALS, icon: CheckSquare },
+      {
+        labelKey: 'nav.workspaceAutomationPreferences',
+        href: ROUTES.WORKSPACE_AUTOMATION_PREFERENCES,
+        icon: SlidersHorizontal,
+      },
+      {
+        labelKey: 'nav.workspaceImplHandoffs',
+        href: ROUTES.WORKSPACE_IMPL_HANDOFFS,
+        icon: Send,
+      },
       { labelKey: 'nav.workspaceSyncHealth', href: ROUTES.WORKSPACE_SYNC_HEALTH, icon: Activity },
       { labelKey: 'nav.workspaceGmail', href: ROUTES.WORKSPACE_GMAIL, icon: Mail },
       { labelKey: 'nav.workspaceJira', href: ROUTES.WORKSPACE_JIRA, icon: ListTodo },
@@ -105,6 +128,8 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
     icon: Bot,
     children: [
       { labelKey: 'nav.agentTerminal', href: ROUTES.AGENT_TERMINAL, icon: Terminal },
+      { labelKey: 'nav.agentCapabilities', href: ROUTES.AGENT_CAPABILITIES, icon: Shield },
+      { labelKey: 'nav.agentActivity', href: ROUTES.AGENT_ACTIVITY, icon: Activity },
       { labelKey: 'nav.agentRepos', href: ROUTES.AGENT_REPOS, icon: GitBranch },
     ],
   },
@@ -115,6 +140,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
     children: [
       { labelKey: 'nav.modelCatalog', href: ROUTES.MODELS_CATALOG, icon: Store },
       { labelKey: 'nav.discovery', href: ROUTES.MODELS_DISCOVERY, icon: Radar },
+      { labelKey: 'nav.modelLocalFrontier', href: ROUTES.MODELS_LOCAL_FRONTIER, icon: Cpu },
     ],
   },
   {
@@ -133,5 +159,22 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
   { labelKey: 'nav.audits', href: ROUTES.AUDITS, icon: Shield },
   { labelKey: 'nav.logs', href: ROUTES.LOGS, icon: ScrollText },
   { labelKey: 'nav.observability', href: ROUTES.OBSERVABILITY, icon: Activity },
+  {
+    labelKey: 'nav.admin',
+    href: ROUTES.ADMIN,
+    icon: ShieldCheck,
+    children: [
+      {
+        labelKey: 'nav.adminAiActionPolicies',
+        href: ROUTES.ADMIN_AI_ACTION_POLICIES,
+        icon: ScrollIcon,
+      },
+      {
+        labelKey: 'nav.adminSuggestionRules',
+        href: ROUTES.ADMIN_SUGGESTION_RULES,
+        icon: ScrollIcon,
+      },
+    ],
+  },
   { labelKey: 'nav.settings', href: ROUTES.SETTINGS, icon: Settings },
 ];

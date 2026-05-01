@@ -1,4 +1,6 @@
-import { ExternalLink } from 'lucide-react';
+'use client';
+
+import { ExternalLink, ImageIcon, Type } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -8,10 +10,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
+import { useGmailMessageView } from '@/hooks/workspace/gmail/use-gmail-message-view';
 import type { GmailMessageDialogProps } from '@/types/component.types';
-import { extractGmailMetadata } from '@/utilities/gmail.utility';
+import {
+  clientStripImages,
+  extractGmailMetadata,
+  extractGmailRichMetadata,
+} from '@/utilities/gmail.utility';
 
 import { GmailActionsBar } from './gmail-actions-bar';
+import { GmailAttachmentList } from './gmail-attachment-list';
 
 export function GmailMessageDialog({
   message,
@@ -21,11 +30,37 @@ export function GmailMessageDialog({
   t,
 }: GmailMessageDialogProps): React.ReactElement {
   const metadata = message !== null ? extractGmailMetadata(message.metadata) : null;
+  const rich = message !== null ? extractGmailRichMetadata(message.metadata) : null;
+  const view = useGmailMessageView({ hasHtml: rich?.renderedHtml !== null && rich?.renderedHtml !== undefined });
+
+  const renderBody = (): React.ReactElement => {
+    if (rich?.renderedHtml !== null && rich?.renderedHtml !== undefined && view.showHtml) {
+      const html = view.loadImages ? rich.renderedHtml : clientStripImages(rich.renderedHtml);
+      return (
+        <iframe
+          srcDoc={html}
+          sandbox="allow-same-origin"
+          className="h-[60vh] w-full rounded-md border border-border bg-white"
+          title={t('gmail.message.htmlIframeTitle')}
+        />
+      );
+    }
+    const plainText =
+      (rich?.renderedText !== null && rich?.renderedText !== undefined ? rich.renderedText : null) ??
+      (message?.content !== null && message?.content !== undefined ? message.content : null) ??
+      metadata?.snippet ??
+      '';
+    return (
+      <pre className="max-h-[60vh] overflow-auto rounded-md border border-border bg-muted/30 p-4 text-sm leading-relaxed whitespace-pre-wrap">
+        {plainText}
+      </pre>
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={(v) => (!v ? onClose() : undefined)}>
       <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
-        {message !== null && metadata !== null ? (
+        {message !== null && metadata !== null && rich !== null ? (
           <>
             <DialogHeader>
               <DialogTitle className="pr-6 text-base">
@@ -53,11 +88,39 @@ export function GmailMessageDialog({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="rounded-md border border-border bg-muted/30 p-4 text-sm leading-relaxed">
-              {message.content !== null && message.content.length > 0
-                ? message.content
-                : metadata.snippet}
-            </div>
+            {rich.renderedHtml !== null ? (
+              <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/30 p-2 text-xs">
+                <label className="flex items-center gap-2">
+                  <Type className="size-3.5" aria-hidden />
+                  <Switch
+                    checked={view.showHtml}
+                    onCheckedChange={view.setShowHtml}
+                    aria-label={t('gmail.message.toggleHtml')}
+                  />
+                  <span>{t('gmail.message.showHtml')}</span>
+                </label>
+                {view.showHtml ? (
+                  <label className="flex items-center gap-2">
+                    <ImageIcon className="size-3.5" aria-hidden />
+                    <Switch
+                      checked={view.loadImages}
+                      onCheckedChange={view.setLoadImages}
+                      aria-label={t('gmail.message.toggleImages')}
+                    />
+                    <span>{t('gmail.message.loadImages')}</span>
+                  </label>
+                ) : null}
+                {!view.loadImages && view.showHtml ? (
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {t('gmail.message.imagesBlocked')}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+
+            {renderBody()}
+
+            <GmailAttachmentList attachments={rich.attachmentRefs} t={t} />
 
             <div className="flex items-center justify-between gap-2">
               <GmailActionsBar

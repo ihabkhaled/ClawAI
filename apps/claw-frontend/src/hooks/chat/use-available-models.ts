@@ -1,18 +1,22 @@
 import { useMemo } from 'react';
 
+import { FrontierDownloadStatus } from '@/enums/local-frontier.enum';
 import { useAllModels } from '@/hooks/connectors/use-all-models';
+import { useFrontierCatalog } from '@/hooks/local-frontier/use-frontier-catalog';
 import { useLocalModels } from '@/hooks/ollama/use-local-models';
 import type { GroupedModels, ModelSelection } from '@/types';
 import { getLocalModelSpecificationLabels } from '@/utilities';
 
 const PROVIDER_LABELS: Record<string, string> = {
   'local-ollama': 'Ollama (Local)',
+  'local-llamacpp': 'llama.cpp Frontier (Local)',
   OLLAMA: 'Ollama (Connector)',
   OPENAI: 'OpenAI',
   ANTHROPIC: 'Anthropic',
   GEMINI: 'Google Gemini',
   DEEPSEEK: 'DeepSeek',
   AWS_BEDROCK: 'AWS Bedrock',
+  LLAMACPP: 'llama.cpp (Connector)',
   IMAGE_OPENAI: 'OpenAI (Image)',
   IMAGE_GEMINI: 'Gemini (Image)',
   IMAGE_LOCAL: 'Local (Image)',
@@ -24,10 +28,28 @@ export function useAvailableModels(): {
 } {
   const { models, isLoading: isLoadingCloud } = useAllModels();
   const { models: localModels, isLoading: isLoadingLocal } = useLocalModels();
+  const frontierQuery = useFrontierCatalog({ limit: 100 });
+  const frontierEntries = frontierQuery.data?.data ?? [];
 
   const groupedModels = useMemo((): GroupedModels[] => {
     const groups = new Map<string, ModelSelection[]>();
     const localModelNames = new Set<string>();
+
+    // Add local Frontier (llama.cpp) models that are downloaded locally.
+    for (const entry of frontierEntries) {
+      if (entry.downloadStatus !== FrontierDownloadStatus.READY) {
+        continue;
+      }
+      const provider = 'local-llamacpp';
+      const fullModelName = `${entry.name}:${entry.tag}`;
+      const existing = groups.get(provider) ?? [];
+      existing.push({
+        provider,
+        model: fullModelName,
+        displayName: `${entry.displayName} (${entry.parameterCount})`,
+      });
+      groups.set(provider, existing);
+    }
 
     // Add local Ollama models first.
     for (const model of localModels) {
@@ -103,14 +125,20 @@ export function useAvailableModels(): {
       if (b.provider === 'local-ollama') {
         return 1;
       }
+      if (a.provider === 'local-llamacpp') {
+        return -1;
+      }
+      if (b.provider === 'local-llamacpp') {
+        return 1;
+      }
       return a.label.localeCompare(b.label);
     });
 
     return result;
-  }, [models, localModels]);
+  }, [models, localModels, frontierEntries]);
 
   return {
     groupedModels,
-    isLoading: isLoadingCloud || isLoadingLocal,
+    isLoading: isLoadingCloud || isLoadingLocal || frontierQuery.isLoading,
   };
 }

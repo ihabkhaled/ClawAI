@@ -13,4 +13,5 @@ export enum WorkspaceObjectType {
   EMAIL = 'EMAIL',
   MEETING_NOTE = 'MEETING_NOTE',
   SPREADSHEET = 'SPREADSHEET',
+  MEETING = 'MEETING',
 }

@@ -171,6 +171,44 @@ export const queryKeys = {
     all: ['workspaceSyncHealth'] as const,
     dashboard: () => [...queryKeys.workspaceSyncHealth.all, 'dashboard'] as const,
   },
+  automationPreferences: {
+    all: ['automationPreferences'] as const,
+    list: () => [...queryKeys.automationPreferences.all, 'list'] as const,
+  },
+  workspaceInbox: {
+    all: ['workspaceInbox'] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.workspaceInbox.all, 'list', filters] as const,
+  },
+  workspaceSemanticSearch: {
+    all: ['workspaceSemanticSearch'] as const,
+    query: (q: string) => [...queryKeys.workspaceSemanticSearch.all, q] as const,
+  },
+  workspaceDigest: {
+    all: ['workspaceDigest'] as const,
+    today: () => [...queryKeys.workspaceDigest.all, 'today'] as const,
+    list: (scope: string) => [...queryKeys.workspaceDigest.all, 'list', scope] as const,
+    preferences: () => [...queryKeys.workspaceDigest.all, 'preferences'] as const,
+  },
+  implHandoffs: {
+    all: ['implHandoffs'] as const,
+    list: (status: string | undefined) =>
+      [...queryKeys.implHandoffs.all, 'list', status ?? 'all'] as const,
+    detail: (id: string) => [...queryKeys.implHandoffs.all, 'detail', id] as const,
+  },
+  aiActionPolicies: {
+    all: ['aiActionPolicies'] as const,
+    list: () => [...queryKeys.aiActionPolicies.all, 'list'] as const,
+  },
+  suggestionRules: {
+    all: ['suggestionRules'] as const,
+    list: () => [...queryKeys.suggestionRules.all, 'list'] as const,
+  },
+  learnedPreferences: {
+    all: ['learnedPreferences'] as const,
+    list: (actionKind: string | undefined) =>
+      [...queryKeys.learnedPreferences.all, 'list', actionKind ?? 'all'] as const,
+  },
   workspaceObjects: {
     all: ['workspaceObjects'] as const,
     lists: () => [...queryKeys.workspaceObjects.all, 'list'] as const,
@@ -214,6 +252,13 @@ export const queryKeys = {
     list: (filters: Record<string, unknown>) =>
       [...queryKeys.agentEvents.lists(), filters] as const,
   },
+  agentCapabilities: {
+    all: ['agentCapabilities'] as const,
+    lists: () => [...queryKeys.agentCapabilities.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.agentCapabilities.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.agentCapabilities.all, 'detail', id] as const,
+  },
   devices: {
     all: ['devices'] as const,
     lists: () => [...queryKeys.devices.all, 'list'] as const,
@@ -229,5 +274,15 @@ export const queryKeys = {
     all: ['researchRuns'] as const,
     list: (limit: number) => ['researchRuns', 'list', limit] as const,
     detail: (id: string) => ['researchRuns', 'detail', id] as const,
+  },
+  localFrontier: {
+    catalog: (filters: Record<string, unknown>) =>
+      ['local-frontier', 'catalog', filters] as const,
+    catalogEntry: (id: string) => ['local-frontier', 'catalog', id] as const,
+    pullJobs: () => ['local-frontier', 'pull-jobs'] as const,
+    pullJob: (id: string) => ['local-frontier', 'pull-job', id] as const,
+    hardware: () => ['local-frontier', 'hardware'] as const,
+    loadedModel: () => ['local-frontier', 'loaded-model'] as const,
+    runtimeInfo: () => ['local-frontier', 'runtime-info'] as const,
   },
 } as const;

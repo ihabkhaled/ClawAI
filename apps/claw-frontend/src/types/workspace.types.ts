@@ -1,6 +1,7 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
 
 import type { ActionGenerationMode } from '../enums/action-generation-mode.enum';
+import type { RiskLabel } from '../enums/risk-label.enum';
 import type { WorkspaceActionStatus } from '../enums/workspace-action-status.enum';
 import type { WorkspaceActionType } from '../enums/workspace-action-type.enum';
 import type { WorkspaceConnectorStatus } from '../enums/workspace-connector-status.enum';
@@ -240,6 +241,10 @@ export type ActionDraftRevision = {
   reason?: string;
 };
 
+// Stream 10 — alias to the existing RiskLabel enum for AI-action contexts.
+// Identical underlying values; the alias makes call-sites self-documenting.
+export type AiActionRiskLabel = RiskLabel;
+
 export type WorkspaceAction = {
   id: string;
   userId: string;
@@ -261,6 +266,10 @@ export type WorkspaceAction = {
   sourceFetchedAt: string | null;
   bulkGroupId: string | null;
   connector: WorkspaceActionConnector;
+  // Stream 10/40 — risk surface (optional; backend populates when known)
+  riskScore?: number | null;
+  riskLabel?: AiActionRiskLabel | null;
+  matchedPolicyName?: string | null;
 };
 
 export type PaginatedWorkspaceActions = {

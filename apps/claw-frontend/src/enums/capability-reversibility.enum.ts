@@ -1,0 +1,5 @@
+export enum CapabilityReversibility {
+  REVERSIBLE = 'REVERSIBLE',
+  COMPENSATABLE = 'COMPENSATABLE',
+  IRREVERSIBLE = 'IRREVERSIBLE',
+}

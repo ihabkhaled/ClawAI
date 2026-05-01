@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { RiskBadge } from '@/components/workspace/risk-badge';
 import { ActionGenerationMode } from '@/enums/action-generation-mode.enum';
 import { WorkspaceActionStatus } from '@/enums/workspace-action-status.enum';
 import type { WorkspaceConnectorStatus } from '@/enums/workspace-connector-status.enum';
@@ -37,6 +38,13 @@ export function ApprovalCard({
             <span className="text-xs text-muted-foreground">
               {action.connector.provider} · {action.connector.name}
             </span>
+            {action.riskLabel !== undefined && action.riskLabel !== null ? (
+              <RiskBadge
+                label={action.riskLabel}
+                score={action.riskScore}
+                matchedPolicyName={action.matchedPolicyName}
+              />
+            ) : null}
             {isEdited ? (
               <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-xs text-amber-500">
                 {t('approvals.card.edited', { version: String(version) })}

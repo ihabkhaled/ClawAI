@@ -73,3 +73,8 @@ export { ActionGenerationMode } from './action-generation-mode.enum';
 export { FreshnessBand } from './freshness-band.enum';
 export { AiActionKind, AiActionMode, AiActionPrivacyClass } from './ai-action-kind.enum';
 export { AiActionLength, AiActionTone } from './ai-action-tone.enum';
+export { CapabilityBlastRadius } from './capability-blast-radius.enum';
+export { CapabilityClass } from './capability-class.enum';
+export { CapabilityInvocationStatus } from './capability-invocation-status.enum';
+export { CapabilityOperation } from './capability-operation.enum';
+export { CapabilityReversibility } from './capability-reversibility.enum';

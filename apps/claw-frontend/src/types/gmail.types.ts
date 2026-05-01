@@ -1,6 +1,7 @@
 import type { AiActionKind } from '../enums/ai-action-kind.enum';
 import type { WorkspaceActionType } from '../enums/workspace-action-type.enum';
 
+import type { TranslateFunction } from './i18n.types';
 import type { WorkspaceConnector, WorkspaceObject } from './workspace.types';
 
 export type GmailMessageMetadata = {
@@ -11,6 +12,19 @@ export type GmailMessageMetadata = {
   labelIds: string[];
   isUnread: boolean;
   snippet: string;
+};
+
+export type GmailAttachmentRef = {
+  fileServiceFileId: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+};
+
+export type GmailRichMetadata = {
+  renderedHtml: string | null;
+  renderedText: string | null;
+  attachmentRefs: GmailAttachmentRef[];
 };
 
 export type UseGmailPageResult = {
@@ -26,4 +40,18 @@ export type UseGmailPageResult = {
   handleCloseAiAction: () => void;
   handleCreateAction: (actionType: WorkspaceActionType, payload: Record<string, unknown>) => void;
   isDraftPending: boolean;
+};
+
+
+export type UseGmailMessageViewResult = {
+  showHtml: boolean;
+  setShowHtml: (next: boolean) => void;
+  loadImages: boolean;
+  setLoadImages: (next: boolean) => void;
+};
+
+
+export type GmailAttachmentListProps = {
+  attachments: GmailAttachmentRef[];
+  t: TranslateFunction;
 };

@@ -8,6 +8,7 @@ export const ROUTES = {
   MODELS: '/models',
   MODELS_CATALOG: '/models/catalog',
   MODELS_DISCOVERY: '/models/discovery',
+  MODELS_LOCAL_FRONTIER: '/models/local-frontier',
   ROUTING: '/routing',
   CHAT_COMPARE: '/chat/compare',
   CHAT_CONSENSUS: '/chat/consensus',
@@ -47,9 +48,18 @@ export const ROUTES = {
   WORKSPACE_CONFLUENCE: '/workspace/confluence',
   WORKSPACE_FIGMA: '/workspace/figma',
   WORKSPACE_WORKFLOWS: '/workspace/workflows',
+  WORKSPACE_INBOX: '/workspace/inbox',
+  WORKSPACE_SEMANTIC_SEARCH: '/workspace/semantic-search',
+  WORKSPACE_DIGEST: '/workspace/digest',
+  WORKSPACE_AUTOMATION_PREFERENCES: '/workspace/automation-preferences',
+  WORKSPACE_IMPL_HANDOFFS: '/workspace/impl-handoffs',
+  ADMIN_AI_ACTION_POLICIES: '/admin/ai-action-policies',
+  ADMIN_SUGGESTION_RULES: '/admin/suggestion-rules',
   AGENT: '/agent',
   AGENT_TERMINAL: '/agent/terminal',
   AGENT_REPOS: '/agent/repos',
+  AGENT_CAPABILITIES: '/agent/capabilities',
+  AGENT_ACTIVITY: '/agent/activity',
 } as const;
 
 export const PUBLIC_ROUTES = [ROUTES.LOGIN] as const;
