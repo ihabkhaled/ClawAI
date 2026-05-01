@@ -1930,4 +1930,48 @@ export const en: TranslationDictionary = {
       draft_prd: 'Draft PRD',
     },
   },
+  localFrontier: {
+    title: 'Local Frontier Models',
+    subtitle: 'Run frontier open-weight LLMs (Kimi K2, GLM-5.1, DeepSeek V3.2/V4) entirely on this machine.',
+    loading: 'Loading frontier catalog…',
+    catalogEmpty: 'No frontier models match your filters.',
+    catalogError: 'Failed to load frontier catalog. Check that claw-llamacpp-service is running.',
+    contextLength: 'tokens context',
+    requiresRamGb: 'GB RAM',
+    sourceLink: 'HuggingFace',
+    actions: {
+      load: 'Load',
+      unload: 'Unload',
+    },
+    download: {
+      start: 'Download',
+      cancel: 'Cancel',
+      retry: 'Retry',
+    },
+    compat: {
+      fits: 'Fits your hardware',
+      warns: 'Tight on hardware',
+      refuses: 'Insufficient hardware',
+    },
+    qualityTier: {
+      survival: 'Survival',
+      balanced: 'Balanced',
+      best: 'Best',
+    },
+    preflight: {
+      RAM_INSUFFICIENT: 'Not enough RAM for this model.',
+      DISK_INSUFFICIENT: 'Not enough free disk space (cannot be overridden).',
+      GPU_INSUFFICIENT: 'No compatible GPU detected.',
+      BINARY_NOT_INSTALLED: 'llama-server binary is not yet installed.',
+      RUNTIME_INCOMPATIBLE: 'Installed runtime cannot run this model.',
+    },
+    override: {
+      warning: 'Your hardware is below requirements. Override only if you understand the risk.',
+      confirmTypeSize: 'Type the model size in GB to confirm override:',
+    },
+    delete: {
+      confirm: 'Delete weights?',
+      confirmTypePrompt: 'Type the model name (e.g. glm-5.1:Q4_K_M) to confirm deletion.',
+    },
+  },
 };

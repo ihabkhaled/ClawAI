@@ -1942,4 +1942,33 @@ export const hi: TranslationDictionary = {
       draft_prd: 'PRD तैयार करें',
     },
   },
+  localFrontier: {
+    title: 'स्थानीय फ्रंटियर मॉडल',
+    subtitle: 'फ्रंटियर ओपन-वेट LLMs (Kimi K2, GLM-5.1, DeepSeek V3.2/V4) पूरी तरह से स्थानीय रूप से चलाएँ।',
+    loading: 'कैटलॉग लोड हो रहा है…',
+    catalogEmpty: 'कोई मॉडल फ़िल्टर से मेल नहीं खाता।',
+    catalogError: 'कैटलॉग लोड नहीं हुआ। claw-llamacpp-service चालू है या नहीं जाँचें।',
+    contextLength: 'टोकन कॉन्टेक्स्ट',
+    requiresRamGb: 'GB RAM',
+    sourceLink: 'HuggingFace',
+    actions: { load: 'लोड', unload: 'अनलोड' },
+    download: { start: 'डाउनलोड', cancel: 'रद्द', retry: 'पुनः प्रयास' },
+    compat: { fits: 'आपके हार्डवेयर के अनुकूल', warns: 'सीमित हार्डवेयर', refuses: 'अपर्याप्त हार्डवेयर' },
+    qualityTier: { survival: 'सर्वाइवल', balanced: 'संतुलित', best: 'सर्वश्रेष्ठ' },
+    preflight: {
+      RAM_INSUFFICIENT: 'इस मॉडल के लिए RAM पर्याप्त नहीं है।',
+      DISK_INSUFFICIENT: 'पर्याप्त डिस्क स्थान नहीं (ओवरराइड संभव नहीं)।',
+      GPU_INSUFFICIENT: 'कोई संगत GPU नहीं मिला।',
+      BINARY_NOT_INSTALLED: 'llama-server बाइनरी अभी स्थापित नहीं है।',
+      RUNTIME_INCOMPATIBLE: 'स्थापित रनटाइम इस मॉडल को नहीं चला सकता।',
+    },
+    override: {
+      warning: 'आपका हार्डवेयर आवश्यकताओं से कम है। केवल जोखिम समझकर ओवरराइड करें।',
+      confirmTypeSize: 'ओवरराइड की पुष्टि के लिए मॉडल आकार GB में लिखें:',
+    },
+    delete: {
+      confirm: 'वज़न हटाएँ?',
+      confirmTypePrompt: 'पुष्टि के लिए मॉडल नाम (जैसे glm-5.1:Q4_K_M) टाइप करें।',
+    },
+  },
 };

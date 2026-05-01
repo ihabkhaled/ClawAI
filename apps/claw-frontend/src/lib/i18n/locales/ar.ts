@@ -1923,4 +1923,33 @@ export const ar: TranslationDictionary = {
       draft_prd: 'صياغة وثيقة المتطلبات',
     },
   },
+  localFrontier: {
+    title: 'النماذج المحلية المتقدمة',
+    subtitle: 'تشغيل نماذج LLM المفتوحة (Kimi K2، GLM-5.1، DeepSeek V3.2/V4) محليًا.',
+    loading: 'جارٍ تحميل الكتالوج…',
+    catalogEmpty: 'لا توجد نماذج تطابق عوامل التصفية.',
+    catalogError: 'تعذّر تحميل الكتالوج. تأكّد من تشغيل claw-llamacpp-service.',
+    contextLength: 'رمز سياق',
+    requiresRamGb: 'جيجابايت ذاكرة',
+    sourceLink: 'هاجينج فيس',
+    actions: { load: 'تحميل', unload: 'تفريغ' },
+    download: { start: 'تنزيل', cancel: 'إلغاء', retry: 'إعادة المحاولة' },
+    compat: { fits: 'مناسب لأجهزتك', warns: 'حدود الذاكرة', refuses: 'الأجهزة غير كافية' },
+    qualityTier: { survival: 'الحد الأدنى', balanced: 'متوازن', best: 'أفضل' },
+    preflight: {
+      RAM_INSUFFICIENT: 'الذاكرة غير كافية لهذا النموذج.',
+      DISK_INSUFFICIENT: 'مساحة القرص غير كافية (لا يمكن التجاوز).',
+      GPU_INSUFFICIENT: 'لم يتم اكتشاف وحدة معالجة رسومية مناسبة.',
+      BINARY_NOT_INSTALLED: 'لم يتم تثبيت ثنائي llama-server بعد.',
+      RUNTIME_INCOMPATIBLE: 'البرامج المثبتة غير متوافقة مع هذا النموذج.',
+    },
+    override: {
+      warning: 'الأجهزة لديك أقل من المتطلبات. لا تتجاوز إلا إذا كنت تفهم المخاطر.',
+      confirmTypeSize: 'اكتب حجم النموذج بالجيجابايت لتأكيد التجاوز:',
+    },
+    delete: {
+      confirm: 'حذف الأوزان؟',
+      confirmTypePrompt: 'اكتب اسم النموذج (مثل glm-5.1:Q4_K_M) لتأكيد الحذف.',
+    },
+  },
 };

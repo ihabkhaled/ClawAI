@@ -1957,4 +1957,33 @@ export const ru: TranslationDictionary = {
       draft_prd: 'Составить PRD',
     },
   },
+  localFrontier: {
+    title: 'Локальные frontier-модели',
+    subtitle: 'Запускайте frontier-LLM с открытыми весами (Kimi K2, GLM-5.1, DeepSeek V3.2/V4) полностью локально.',
+    loading: 'Загрузка каталога…',
+    catalogEmpty: 'Ни одна модель не соответствует фильтрам.',
+    catalogError: 'Не удалось загрузить каталог. Проверьте claw-llamacpp-service.',
+    contextLength: 'токенов контекста',
+    requiresRamGb: 'ГБ ОЗУ',
+    sourceLink: 'HuggingFace',
+    actions: { load: 'Загрузить', unload: 'Выгрузить' },
+    download: { start: 'Скачать', cancel: 'Отмена', retry: 'Повторить' },
+    compat: { fits: 'Подходит под оборудование', warns: 'Граничное оборудование', refuses: 'Недостаточно оборудования' },
+    qualityTier: { survival: 'Выживание', balanced: 'Сбалансированно', best: 'Лучшее' },
+    preflight: {
+      RAM_INSUFFICIENT: 'Недостаточно ОЗУ для этой модели.',
+      DISK_INSUFFICIENT: 'Недостаточно места на диске (нельзя обойти).',
+      GPU_INSUFFICIENT: 'Совместимый GPU не обнаружен.',
+      BINARY_NOT_INSTALLED: 'Бинарник llama-server ещё не установлен.',
+      RUNTIME_INCOMPATIBLE: 'Установленная среда не может запустить эту модель.',
+    },
+    override: {
+      warning: 'Оборудование ниже требований. Обходите проверку только если понимаете риск.',
+      confirmTypeSize: 'Введите размер модели в ГБ для подтверждения обхода:',
+    },
+    delete: {
+      confirm: 'Удалить веса?',
+      confirmTypePrompt: 'Введите имя модели (например glm-5.1:Q4_K_M) для подтверждения удаления.',
+    },
+  },
 };

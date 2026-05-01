@@ -1964,4 +1964,33 @@ export const es: TranslationDictionary = {
       draft_prd: 'Redactar PRD',
     },
   },
+  localFrontier: {
+    title: 'Modelos Frontier locales',
+    subtitle: 'Ejecute LLMs frontier de pesos abiertos (Kimi K2, GLM-5.1, DeepSeek V3.2/V4) localmente.',
+    loading: 'Cargando catálogo…',
+    catalogEmpty: 'Ningún modelo coincide con los filtros.',
+    catalogError: 'No se pudo cargar el catálogo. Verifique claw-llamacpp-service.',
+    contextLength: 'tokens de contexto',
+    requiresRamGb: 'GB RAM',
+    sourceLink: 'HuggingFace',
+    actions: { load: 'Cargar', unload: 'Descargar' },
+    download: { start: 'Descargar', cancel: 'Cancelar', retry: 'Reintentar' },
+    compat: { fits: 'Compatible con su hardware', warns: 'Hardware ajustado', refuses: 'Hardware insuficiente' },
+    qualityTier: { survival: 'Supervivencia', balanced: 'Equilibrado', best: 'Mejor' },
+    preflight: {
+      RAM_INSUFFICIENT: 'Memoria RAM insuficiente para este modelo.',
+      DISK_INSUFFICIENT: 'Espacio en disco insuficiente (no se puede anular).',
+      GPU_INSUFFICIENT: 'No se detectó una GPU compatible.',
+      BINARY_NOT_INSTALLED: 'El binario llama-server aún no está instalado.',
+      RUNTIME_INCOMPATIBLE: 'El runtime instalado no puede ejecutar este modelo.',
+    },
+    override: {
+      warning: 'Su hardware está por debajo de los requisitos. Anule solo si entiende el riesgo.',
+      confirmTypeSize: 'Escriba el tamaño del modelo en GB para confirmar la anulación:',
+    },
+    delete: {
+      confirm: '¿Eliminar pesos?',
+      confirmTypePrompt: 'Escriba el nombre del modelo (p. ej. glm-5.1:Q4_K_M) para confirmar.',
+    },
+  },
 };
