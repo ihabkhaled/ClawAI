@@ -91,4 +91,114 @@ describe('useAvailableModels', () => {
       }),
     ]);
   });
+
+  describe('local-llamacpp frontier integration', () => {
+    it('includes only READY frontier entries under local-llamacpp group', () => {
+      mockUseFrontierCatalog.mockReturnValue({
+        data: {
+          data: [
+            {
+              id: 'a',
+              name: 'glm-5.1',
+              tag: 'Q4_K_M',
+              displayName: 'GLM-5.1',
+              parameterCount: '754B',
+              downloadStatus: 'READY',
+            },
+            {
+              id: 'b',
+              name: 'kimi-k2',
+              tag: 'Q3_K_M',
+              displayName: 'Kimi K2',
+              parameterCount: '1T',
+              downloadStatus: 'AVAILABLE',
+            },
+            {
+              id: 'c',
+              name: 'deepseek-v3.2',
+              tag: 'Q4_K_M',
+              displayName: 'DeepSeek V3.2',
+              parameterCount: '671B',
+              downloadStatus: 'PULLING',
+            },
+          ],
+        },
+        isLoading: false,
+      });
+
+      const { result } = renderHook(() => useAvailableModels());
+      const frontierGroup = result.current.groupedModels.find(
+        (g) => g.provider === 'local-llamacpp',
+      );
+
+      expect(frontierGroup).toBeDefined();
+      expect(frontierGroup?.label).toBe('llama.cpp Frontier (Local)');
+      expect(frontierGroup?.models).toHaveLength(1);
+      expect(frontierGroup?.models[0]).toEqual(
+        expect.objectContaining({
+          provider: 'local-llamacpp',
+          model: 'glm-5.1:Q4_K_M',
+          displayName: 'GLM-5.1 (754B)',
+        }),
+      );
+    });
+
+    it('omits local-llamacpp group when no frontier entries are READY', () => {
+      mockUseFrontierCatalog.mockReturnValue({
+        data: {
+          data: [
+            {
+              id: 'a',
+              name: 'glm-5.1',
+              tag: 'Q4_K_M',
+              displayName: 'GLM-5.1',
+              parameterCount: '754B',
+              downloadStatus: 'AVAILABLE',
+            },
+          ],
+        },
+        isLoading: false,
+      });
+
+      const { result } = renderHook(() => useAvailableModels());
+      expect(
+        result.current.groupedModels.find((g) => g.provider === 'local-llamacpp'),
+      ).toBeUndefined();
+    });
+
+    it('sorts local-ollama first, then local-llamacpp, then alphabetical cloud groups', () => {
+      mockUseFrontierCatalog.mockReturnValue({
+        data: {
+          data: [
+            {
+              id: 'a',
+              name: 'glm-5.1',
+              tag: 'Q4_K_M',
+              displayName: 'GLM-5.1',
+              parameterCount: '754B',
+              downloadStatus: 'READY',
+            },
+          ],
+        },
+        isLoading: false,
+      });
+
+      const { result } = renderHook(() => useAvailableModels());
+      const order = result.current.groupedModels.map((g) => g.provider);
+
+      const localOllamaIdx = order.indexOf('local-ollama');
+      const localFrontierIdx = order.indexOf('local-llamacpp');
+      const ollamaCloudIdx = order.indexOf('OLLAMA');
+
+      expect(localOllamaIdx).toBeGreaterThanOrEqual(0);
+      expect(localFrontierIdx).toBeGreaterThan(localOllamaIdx);
+      expect(ollamaCloudIdx).toBeGreaterThan(localFrontierIdx);
+    });
+
+    it('reflects loading state from frontier query', () => {
+      mockUseFrontierCatalog.mockReturnValue({ data: undefined, isLoading: true });
+      const { result } = renderHook(() => useAvailableModels());
+      expect(result.current.isLoading).toBe(true);
+    });
+  });
 });

@@ -132,3 +132,7 @@ After completing any implementation task on this service, produce:
 4. **Infrastructure changes** (env vars, Docker, Nginx, CI)
 5. **Known gaps or follow-up items**
 6. **Evidence**: typecheck output, lint output, test output
+
+## Llamacpp runtime health
+
+`LlamacppHealthManager` (`src/modules/routing/managers/llamacpp-health.manager.ts`) polls `${LLAMACPP_SERVICE_URL}/api/v1/health` every 30 s and subscribes to `llamacpp.model.{loaded,unloaded,crashed}` events. Populates `runtimeHealthCache.set(LLAMACPP_RUNTIME, ...)` consumed by `RoutingManager.isRuntimeHealthy()` for fallback decisions. NEVER call the manager directly from a controller — use the cache via `RoutingService.evaluateRoute()`. Uses the existing `httpRequest` utility (do NOT add `undici` as a dep here).

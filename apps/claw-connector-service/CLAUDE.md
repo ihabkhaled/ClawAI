@@ -136,3 +136,11 @@ After completing any implementation task on this service, produce:
 4. **Infrastructure changes** (env vars, Docker, Nginx, CI)
 5. **Known gaps or follow-up items**
 6. **Evidence**: typecheck output, lint output, test output
+
+## LLAMACPP provider
+
+`LLAMACPP` is registered as a `ConnectorProvider` enum value (shared-types + Prisma migration `20260501000000_add_llamacpp_provider`). `LlamacppAdapter` (`src/modules/connectors/managers/adapters/llamacpp.adapter.ts`) calls `claw-llamacpp-service` directly:
+
+- `healthCheck` → `GET ${baseUrl}/health` — HEALTHY when `binary.installed=true`, DEGRADED when binary missing, DOWN on non-200/network error.
+- `syncModels` → `GET ${baseUrl}/catalog?downloadStatus=READY&limit=100` — maps each row to `NormalizedModel` with per-model `supportsTools`/`supportsVision` derived from `entry.capabilities`.
+- Default `baseUrl` is `http://llamacpp-service:4017/api/v1` — users can override per connector. Adapter doesn't require an API key.

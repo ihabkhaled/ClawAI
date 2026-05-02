@@ -126,3 +126,16 @@ After completing any implementation task on this service, produce:
 4. **Infrastructure changes** (env vars, Docker, Nginx, CI)
 5. **Known gaps or follow-up items**
 6. **Evidence**: typecheck output, lint output, test output
+
+## Llamacpp event consumption
+
+`LlamacppAuditConsumer` (`src/modules/audits/consumers/llamacpp.consumer.ts`) subscribes to all 11 `LLAMACPP_*` event patterns published by `claw-llamacpp-service`:
+
+- `binary.installed` (LOW), `binary.updated` (MEDIUM)
+- `pull.started` (LOW), `pull.completed` (LOW), `pull.failed` (HIGH)
+- `pull.progress` — **intentionally suppressed** (high-frequency event; final outcome is captured by `completed`/`failed`)
+- `model.loaded` (LOW), `model.unloaded` (LOW), `model.crashed` (HIGH)
+- `weights.deleted` (HIGH)
+- `preflight.overridden` (MEDIUM, captures `userId` from payload — never `'system'`)
+
+All rows written under `entityType = LLAMACPP_AUDIT_ENTITY_TYPE = 'llamacpp_model'`. Wired in `audits.module.ts`.

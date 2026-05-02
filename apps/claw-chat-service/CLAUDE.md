@@ -133,3 +133,7 @@ After completing any implementation task on this service, produce:
 4. **Infrastructure changes** (env vars, Docker, Nginx, CI)
 5. **Known gaps or follow-up items**
 6. **Evidence**: typecheck output, lint output, test output
+
+## Llamacpp execution dispatch
+
+`ChatExecutionManager.callLlamacpp()` (`src/modules/chat-messages/managers/chat-execution.manager.ts`) handles BOTH `local-llamacpp` (frontend ModelSelector option) and `LLAMACPP` (registered connector) provider strings. POSTs to `${LLAMACPP_SERVICE_URL}/api/v1/v1/chat/completions` (the OpenAI-compatible passthrough). Bypasses `resolveProviderConfig` — no API key needed. Errors with code `LLAMACPP_REQUEST_FAILED` on non-2xx. `LLAMACPP_SERVICE_URL` Zod-required in `app.config.ts` (default `http://llamacpp-service:4017`).

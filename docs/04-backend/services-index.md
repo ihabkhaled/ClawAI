@@ -779,6 +779,52 @@ Backend for the local desktop agent runtime. Manages CLI sessions, human-approve
 
 ---
 
+### 16. Llamacpp Service
+
+**Purpose**: Manages **frontier open-weight LLMs** (Kimi K2.6 1T, GLM-5.1 754B, DeepSeek V3.2/V4) that exceed Ollama's practical envelope. Provides "click to download, click to chat" UX for models in the 70 B – 1.4 T parameter range, gated by hardware preflight.
+
+**Codename**: Local Frontier · **Port**: 4017 · **Database**: PostgreSQL `claw_llamacpp` (5440) · **Volume**: `llamacpp-data`
+
+**Modules** (7):
+
+- `binary` — auto-installs `llama-server` via dynamic GitHub-API resolution (`https://api.github.com/repos/ggml-org/llama.cpp/releases/latest`); per-platform asset patterns pick the right `tar.gz`/`zip` for `linux-x64-{cpu,cuda12,rocm,vulkan}` / `win-x64-{cpu,cuda12,cuda13,vulkan}` / `darwin-{arm64-metal,x64-cpu}`. Self-heals across upstream renames.
+- `catalog` — 12 entries: 3 dev-class (`phi-4-mini` Q4, `qwen3-coder` Q4, `llama-3.3` IQ2_XS) + 9 frontier-class (Kimi/GLM/DeepSeek variants). Browseable via `/api/v1/catalog`.
+- `pull-jobs` — multi-shard HuggingFace download with resume from `.partial`, 5× exponential-backoff retry, per-file SHA-256 verify, SSE progress stream at `/pull-jobs/:id/progress`.
+- `models-lifecycle` — single-resident model supervisor; `async-mutex` guards load/unload; spawns `llama-server` on `127.0.0.1:[48500-48999]` random port; `OnApplicationBootstrap` clears stale READY/LOADING rows.
+- `inference` — `@Public` OpenAI-compatible proxy at `/api/v1/v1/chat/completions` (SSE-aware); forwards to spawned `llama-server` child process.
+- `hardware` — cross-vendor GPU detection (NVIDIA via `nvidia-smi`, AMD via `/dev/kfd` + `rocm-smi`, Intel/Vulkan via `/dev/dri/render*`); preflight gate refuses pulls when DISK_INSUFFICIENT (non-overridable), warns + allows override on RAM/GPU.
+- `health` — DB + binary + active-model rollup at `/api/v1/health`.
+
+**Cross-service integration**:
+
+- **Connector service**: `LLAMACPP` enum value + `LlamacppAdapter` (`/managers/adapters/llamacpp.adapter.ts`) lets users register the service as a connector and sync READY models.
+- **Chat service**: `callLlamacpp` dispatch in `ChatExecutionManager` routes both `local-llamacpp` and `LLAMACPP` selected providers to `${LLAMACPP_SERVICE_URL}/api/v1/v1/chat/completions`.
+- **Routing service**: `LlamacppHealthManager` polls `/api/v1/health` every 30 s; subscribes to `llamacpp.model.{loaded,unloaded,crashed}` events to update `runtimeHealth['LLAMACPP']` for fallback decisions.
+- **Audit service**: `LlamacppAuditConsumer` subscribes to all 11 `LLAMACPP_*` event patterns; writes audit rows under `entityType='llamacpp_model'`. Progress events are intentionally suppressed (high frequency); summary captured on COMPLETED/FAILED.
+- **Frontend**: `/models/local-frontier` page with hardware panel, filter bar, downloads drawer (live SSE), 3 dialogs (delete, override, runtime config). `local-llamacpp` group appears in chat ModelSelector once a model is READY.
+
+**Events Published** (11):
+
+- `llamacpp.binary.installed`, `llamacpp.binary.updated`
+- `llamacpp.pull.started`, `llamacpp.pull.progress`, `llamacpp.pull.completed`, `llamacpp.pull.failed`
+- `llamacpp.model.loaded`, `llamacpp.model.unloaded`, `llamacpp.model.crashed`
+- `llamacpp.weights.deleted`
+- `llamacpp.preflight.overridden`
+
+**Dependencies**:
+
+- PostgreSQL `claw_llamacpp` -- catalog, pull jobs, runtime config, hardware snapshots, binary releases, preflight overrides
+- `llamacpp-data` Docker volume -- binary at `/data/llamacpp/bin/llama-server`, weights at `/data/llamacpp/models/<name>/<tag>/`
+- HuggingFace API + GitHub Releases API (binary install + manifest enrichment)
+- RabbitMQ -- 11 published events
+- Auth Service -- JWT auth via shared-auth (inference endpoints are `@Public` for service-to-service calls)
+
+**GPU passthrough**: Auto-detected by `./scripts/claw.sh up`; layers the matching overlay (`docker-compose.dev.gpu-{nvidia,rocm,vulkan}.yml`) when the host has the corresponding GPU. macOS warns (Docker can't access Metal). Run `./scripts/claw.sh gpu` to probe without starting anything.
+
+**Health Endpoint**: `GET /api/v1/health` -- returns binary install state, active loaded model, DB status.
+
+---
+
 ## Event Bus Summary
 
 All events flow through the `claw.events` topic exchange on RabbitMQ with durable queues, 3 retries with exponential backoff, and dead-letter queues.

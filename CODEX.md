@@ -829,13 +829,34 @@ docker rmi <image-name>
 
 **NEVER skip steps.** Just restarting or using `--build` alone leaves stale compiled code, cached layers, and old `node_modules`. When a shared package (`shared-rabbitmq`, `shared-types`, `shared-constants`, `shared-auth`) is modified, ALL dependent service containers must go through the full stop → rm → rmi → build cycle.
 
-## Docker Compose
+## Docker Compose — `claw.sh` is THE entrypoint
+
+**Single command, auto-detects GPU (NVIDIA / AMD ROCm / Intel-Vulkan / Apple-Metal warn):**
 
 ```bash
-./scripts/claw.sh up -d    # Full dev environment (~22 containers)
-./scripts/claw.sh up                              # Via management script
-./scripts/claw.sh --prod up                       # Production mode
+./scripts/claw.sh up                              # Dev (default), all services + auto-GPU
+./scripts/claw.sh --prod up                       # Production, all services + auto-GPU
+./scripts/claw.sh down                            # Stop all
+./scripts/claw.sh status                          # Show all groups
+./scripts/claw.sh gpu                             # Probe GPU detection only (no startup)
 ```
+
+`claw.sh` orchestrates the split compose files (`docker-compose.dev.{databases,services,ollama}.yml`)
+and conditionally layers a per-vendor GPU overlay (`docker-compose.dev.gpu-{nvidia,rocm,vulkan}.yml`)
+when the host has the corresponding GPU. It is the **only** supported way to start the stack —
+do not invoke `docker compose -f …` directly.
+
+### Per-vendor GPU overlay matrix
+
+| Host GPU                          | Probe                     | Overlay file applied                       | Container gets                                                                      |
+| --------------------------------- | ------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------- |
+| NVIDIA (Linux/WSL2/Win)           | `nvidia-smi -L` succeeds  | `docker-compose.{dev,prod}.gpu-nvidia.yml` | `deploy.resources.reservations.devices.driver=nvidia`, `NVIDIA_VISIBLE_DEVICES=all` |
+| AMD ROCm (Linux only)             | `/dev/kfd` exists         | `docker-compose.{dev,prod}.gpu-rocm.yml`   | `devices: [/dev/kfd, /dev/dri]`, `group_add: [video, render]`, `ipc: host`          |
+| Intel iGPU / Arc / Vulkan (Linux) | `/dev/dri/render*` exists | `docker-compose.{dev,prod}.gpu-vulkan.yml` | `devices: [/dev/dri]`, `group_add: [video, render]`                                 |
+| Apple Silicon Metal               | `uname -s = Darwin`       | (none — warns)                             | CPU-only inside container; run `claw-llamacpp-service` natively for Metal           |
+| None                              | (no probe matches)        | (none)                                     | CPU-only                                                                            |
+
+The `claw-llamacpp-service` `BinaryInstallerManager` queries the GitHub API for the latest llama.cpp release on every container start and matches the right archive per platform key (e.g. `linux-x64-cuda12` → `llama-{TAG}-bin-ubuntu-cuda-*-x64.tar.gz`, `linux-x64-rocm` → `llama-{TAG}-bin-ubuntu-rocm-*-x64.tar.gz`). When you flip GPU passthrough on, the next `claw.sh up` will both expose the GPU to the container AND auto-pull the matching binary build.
 
 All services use `env_file: .env` from root. Single `.env` file for everything.
 

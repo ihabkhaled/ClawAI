@@ -290,3 +290,12 @@ After completing any frontend implementation:
 4. **i18n keys added** (count per locale)
 5. **Evidence**: typecheck output, lint output, test output
 6. **Known gaps or follow-up items**
+
+## Local Frontier (llama.cpp) page
+
+Route: `/models/local-frontier`. Sidebar nav entry: `nav.modelLocalFrontier`. Page composition:
+
+- Controller hook: `useLocalFrontierCatalogPage` (`src/hooks/local-frontier/use-local-frontier-catalog-page.ts`) — composes 14 sub-hooks (catalog, hardware, runtime info, loaded model, pull jobs, initiate/cancel/retry pull, refresh catalog/hardware, load/unload/delete model, update runtime config, SSE progress).
+- Components: `HardwarePanel`, `FilterBar`, `DownloadsDrawer` (with live SSE progress via `usePullProgressSse`), 3 dialogs (`DeleteWeightsDialog`, `OverridePromptDialog`, `RuntimeConfigDialog`).
+- Chat ModelSelector (`useAvailableModels`) shows `local-llamacpp` group with READY frontier models, sorted right after `local-ollama` group.
+- All ~80 new strings added to all 9 locales (`en/ar/de/es/fr/hi/it/pt/ru`).

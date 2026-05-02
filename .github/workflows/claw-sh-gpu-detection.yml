@@ -1,0 +1,181 @@
+name: claw.sh GPU Detection
+
+# Validates the cross-platform GPU probe in scripts/claw.sh by simulating each
+# GPU vendor scenario on a Linux runner and asserting the right overlay is picked.
+# Cannot test against real hardware in CI; instead we fake the host artifacts:
+#   - NVIDIA: shim `nvidia-smi -L` to print a fake GPU
+#   - ROCm:   create /dev/kfd as a regular file (probe only checks existence)
+#   - Vulkan: create /dev/dri/renderD128 as a regular file
+#   - none:   no setup
+# macOS path is exercised on the macos-latest runner where Docker/Metal aren't
+# available — we only assert that claw.sh prints the metal-host-only warning.
+
+on:
+  push:
+    paths:
+      - 'scripts/claw.sh'
+      - 'docker-compose.dev.gpu-*.yml'
+      - 'docker-compose.prod.gpu-*.yml'
+      - '.github/workflows/claw-sh-gpu-detection.yml'
+  pull_request:
+    paths:
+      - 'scripts/claw.sh'
+      - 'docker-compose.dev.gpu-*.yml'
+      - 'docker-compose.prod.gpu-*.yml'
+      - '.github/workflows/claw-sh-gpu-detection.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  detection-linux:
+    name: Linux ${{ matrix.scenario.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario:
+          - name: nvidia
+            expect_vendor: nvidia
+            expect_overlay: docker-compose.dev.gpu-nvidia.yml
+          - name: rocm
+            expect_vendor: rocm
+            expect_overlay: docker-compose.dev.gpu-rocm.yml
+          - name: vulkan
+            expect_vendor: vulkan
+            expect_overlay: docker-compose.dev.gpu-vulkan.yml
+          - name: none
+            expect_vendor: none
+            expect_overlay: ''
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Stub host artifacts for ${{ matrix.scenario.name }} probe
+        run: |
+          set -euo pipefail
+          STUB_BIN="$RUNNER_TEMP/stub-bin"
+          mkdir -p "$STUB_BIN"
+          echo "$STUB_BIN" >> "$GITHUB_PATH"
+
+          # Real nvidia-smi may exist on GitHub runners with GPUs; mask it so
+          # only the `nvidia` scenario sees it succeed.
+          if [ "${{ matrix.scenario.name }}" = "nvidia" ]; then
+            cat > "$STUB_BIN/nvidia-smi" <<'EOF'
+          #!/bin/bash
+          if [ "$1" = "-L" ]; then
+            echo "GPU 0: NVIDIA Test (UUID: GPU-CI-FAKE)"
+            exit 0
+          fi
+          if [ "$1" = "--query-gpu=name" ]; then
+            echo "NVIDIA Test"
+            exit 0
+          fi
+          exit 0
+          EOF
+            chmod +x "$STUB_BIN/nvidia-smi"
+          else
+            # A 'fail' shim so any real binary on PATH is overridden.
+            cat > "$STUB_BIN/nvidia-smi" <<'EOF'
+          #!/bin/bash
+          exit 1
+          EOF
+            chmod +x "$STUB_BIN/nvidia-smi"
+          fi
+
+          # ROCm probe checks for /dev/kfd existence + /dev/dri directory.
+          if [ "${{ matrix.scenario.name }}" = "rocm" ]; then
+            sudo touch /dev/kfd
+            sudo mkdir -p /dev/dri
+          fi
+
+          # Vulkan probe checks for /dev/dri/render* glob.
+          if [ "${{ matrix.scenario.name }}" = "vulkan" ]; then
+            sudo mkdir -p /dev/dri
+            sudo touch /dev/dri/renderD128
+          fi
+
+          # none: ensure no kfd / no render nodes exist.
+          if [ "${{ matrix.scenario.name }}" = "none" ]; then
+            sudo rm -f /dev/kfd /dev/dri/renderD* 2>/dev/null || true
+          fi
+
+      - name: Run claw.sh gpu probe
+        id: probe
+        run: |
+          set -euo pipefail
+          OUTPUT=$(bash scripts/claw.sh gpu 2>&1)
+          echo "$OUTPUT"
+          # Capture for the assertion step
+          {
+            echo "output<<EOF"
+            echo "$OUTPUT"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Assert detection matches expected vendor
+        env:
+          PROBE_OUTPUT: ${{ steps.probe.outputs.output }}
+          EXPECT_VENDOR: ${{ matrix.scenario.expect_vendor }}
+          EXPECT_OVERLAY: ${{ matrix.scenario.expect_overlay }}
+        run: |
+          set -euo pipefail
+          if ! echo "$PROBE_OUTPUT" | grep -q "GPU vendor: $EXPECT_VENDOR"; then
+            echo "::error::Expected 'GPU vendor: $EXPECT_VENDOR' in claw.sh output"
+            echo "Actual:"
+            echo "$PROBE_OUTPUT"
+            exit 1
+          fi
+          if [ -n "$EXPECT_OVERLAY" ]; then
+            if ! echo "$PROBE_OUTPUT" | grep -q "$EXPECT_OVERLAY"; then
+              echo "::error::Expected overlay '$EXPECT_OVERLAY' in claw.sh output"
+              exit 1
+            fi
+          else
+            # 'none' scenario — assert no overlay printed
+            if echo "$PROBE_OUTPUT" | grep -qE "GPU overlay: -f"; then
+              echo "::error::Expected NO overlay for 'none' scenario, but one was emitted"
+              exit 1
+            fi
+          fi
+          echo "✓ scenario=${{ matrix.scenario.name }} matched: vendor=$EXPECT_VENDOR overlay=$EXPECT_OVERLAY"
+
+      - name: Validate overlay compose file merges with services file
+        if: matrix.scenario.expect_overlay != ''
+        run: |
+          set -euo pipefail
+          docker compose \
+            -f docker-compose.dev.services.yml \
+            -f "${{ matrix.scenario.expect_overlay }}" \
+            config --services | grep -q "^llamacpp-service$"
+          echo "✓ overlay merges cleanly into the llamacpp-service definition"
+
+  detection-macos:
+    name: macOS Apple-Silicon warn path
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Run claw.sh gpu probe on Darwin
+        id: probe
+        run: |
+          OUTPUT=$(bash scripts/claw.sh gpu 2>&1)
+          echo "$OUTPUT"
+          {
+            echo "output<<EOF"
+            echo "$OUTPUT"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+      - name: Assert macOS warning is emitted
+        env:
+          PROBE_OUTPUT: ${{ steps.probe.outputs.output }}
+        run: |
+          set -euo pipefail
+          if ! echo "$PROBE_OUTPUT" | grep -qE "macOS detected.*Metal"; then
+            echo "::error::Expected macOS Metal warning in claw.sh output"
+            exit 1
+          fi
+          if ! echo "$PROBE_OUTPUT" | grep -q "GPU vendor: metal-host-only"; then
+            echo "::error::Expected vendor=metal-host-only on Darwin"
+            exit 1
+          fi
+          echo "✓ macOS path emits Metal warning + vendor=metal-host-only"

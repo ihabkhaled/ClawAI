@@ -630,4 +630,139 @@ describe('ChatExecutionManager', () => {
     expect(result.content).toBe('Here is a stronger answer.');
     expect(judgeManager.buildMetadata).toHaveBeenCalledTimes(1);
   });
+
+  describe('LLAMACPP frontier dispatch', () => {
+    beforeEach(() => {
+      AppConfig.get.mockReturnValue({
+        OLLAMA_SERVICE_URL: 'http://ollama:4008',
+        OLLAMA_GENERATE_TIMEOUT_MS: 10_000,
+        CONNECTOR_SERVICE_URL: 'http://connector:4011',
+        FILE_GENERATION_SERVICE_URL: 'http://file-generation:4013',
+        LLAMACPP_SERVICE_URL: 'http://llamacpp-service:4017',
+      });
+    });
+
+    it('routes provider="local-llamacpp" to llamacpp-service inference endpoint', async () => {
+      const context = makeContext('Hello frontier model');
+      httpRequest.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: {
+          id: 'chatcmpl-llama-1',
+          choices: [
+            {
+              index: 0,
+              message: { role: 'assistant', content: 'Hello back from llama.cpp' },
+              finish_reason: 'stop',
+            },
+          ],
+          usage: { prompt_tokens: 8, completion_tokens: 6 },
+        },
+      });
+
+      const result = await manager.execute(
+        {
+          messageId: 'msg-llama-1',
+          threadId: 'thread-1',
+          selectedProvider: 'local-llamacpp',
+          selectedModel: 'glm-5.1:Q4_K_M',
+          routingMode: 'MANUAL_MODEL',
+          timestamp: new Date().toISOString(),
+        },
+        context,
+      );
+
+      expect(result.content).toBe('Hello back from llama.cpp');
+      expect(result.provider).toBe('local-llamacpp');
+      expect(result.model).toBe('glm-5.1:Q4_K_M');
+
+      const url = httpRequest.mock.calls[0][0].url as string;
+      expect(url).toBe('http://llamacpp-service:4017/api/v1/v1/chat/completions');
+    });
+
+    it('routes provider="LLAMACPP" connector to llamacpp-service inference endpoint', async () => {
+      const context = makeContext('via connector');
+      httpRequest.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: {
+          id: 'chatcmpl-llama-2',
+          choices: [
+            {
+              index: 0,
+              message: { role: 'assistant', content: 'response' },
+              finish_reason: 'stop',
+            },
+          ],
+        },
+      });
+
+      const result = await manager.execute(
+        {
+          messageId: 'msg-llama-2',
+          threadId: 'thread-1',
+          selectedProvider: 'LLAMACPP',
+          selectedModel: 'kimi-k2:Q3_K',
+          routingMode: 'MANUAL_MODEL',
+          timestamp: new Date().toISOString(),
+        },
+        context,
+      );
+
+      expect(result.content).toBe('response');
+      const url = httpRequest.mock.calls[0][0].url as string;
+      expect(url).toContain('/api/v1/v1/chat/completions');
+    });
+
+    it('throws LLAMACPP_REQUEST_FAILED when llamacpp returns non-2xx', async () => {
+      const context = makeContext('frontier prompt');
+      httpRequest.mockResolvedValue({
+        ok: false,
+        status: 503,
+        data: { code: 'NO_MODEL_LOADED', message: 'No model loaded' },
+      });
+
+      await expect(
+        manager.execute(
+          {
+            messageId: 'msg-llama-3',
+            threadId: 'thread-1',
+            selectedProvider: 'local-llamacpp',
+            selectedModel: 'glm-5.1:Q4_K_M',
+            routingMode: 'MANUAL_MODEL',
+            timestamp: new Date().toISOString(),
+          },
+          context,
+        ),
+      ).rejects.toThrow(/No model loaded|LLAMACPP_REQUEST_FAILED|llama\.cpp/);
+    });
+
+    it('does NOT call connector-service for LLAMACPP (no API key needed)', async () => {
+      const context = makeContext('hi');
+      httpRequest.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: {
+          choices: [
+            { index: 0, message: { role: 'assistant', content: 'ok' }, finish_reason: 'stop' },
+          ],
+        },
+      });
+
+      await manager.execute(
+        {
+          messageId: 'msg-llama-4',
+          threadId: 'thread-1',
+          selectedProvider: 'local-llamacpp',
+          selectedModel: 'glm-5.1:Q4_K_M',
+          routingMode: 'MANUAL_MODEL',
+          timestamp: new Date().toISOString(),
+        },
+        context,
+      );
+
+      const calls = httpRequest.mock.calls.map((call) => call[0].url as string);
+      expect(calls.some((url) => url.includes('/connectors/config'))).toBe(false);
+    });
+  });
 });
