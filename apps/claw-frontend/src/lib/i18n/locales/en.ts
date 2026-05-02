@@ -121,6 +121,7 @@ export const en: TranslationDictionary = {
     workspaceImplHandoffs: 'Coding Handoffs',
     adminAiActionPolicies: 'AI Action Policies',
     adminSuggestionRules: 'Suggestion Rules',
+    adminWebhookDeliveries: 'Webhook Deliveries',
   },
   chat: {
     newThread: 'New Chat',
@@ -2232,6 +2233,30 @@ export const en: TranslationDictionary = {
       cannotDelete: 'System defaults cannot be deleted',
       toggleActive: 'Toggle active',
     },
+  },
+  adminWebhooks: {
+    page: {
+      title: 'Webhook Deliveries',
+      description: 'Inspect and replay incoming webhook deliveries from your providers.',
+      loading: 'Loading deliveries…',
+      error: 'Failed to load webhook deliveries.',
+      empty: 'No webhook deliveries match your filters.',
+    },
+    filter: {
+      providerPlaceholder: 'Filter by provider (e.g. GITHUB)',
+      connectorPlaceholder: 'Filter by connector ID',
+    },
+    row: {
+      deliveryId: 'Delivery ID',
+      connector: 'Connector',
+      bytes: 'Body bytes',
+    },
+    status: {
+      accepted: 'Accepted',
+      rejected: 'Rejected',
+      idempotent: 'Idempotent',
+    },
+    replay: 'Replay',
   },
   implHandoff: {
     page: {

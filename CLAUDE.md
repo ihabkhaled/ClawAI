@@ -368,12 +368,57 @@ Page (.tsx) → Controller Hook (useX) → Service → Repository/API
 
 ### i18n Rules
 
-- 8 languages: EN, AR, DE, ES, FR, IT, PT, RU (Arabic is RTL)
+- 9 languages: EN, AR, DE, ES, FR, HI, IT, PT, RU (Arabic is RTL)
 - ALL user-facing text must use `t('key')` from `useTranslation()`
 - NEVER hardcode text in components
-- Locale files: `src/lib/i18n/locales/{en,ar,de,es,fr,it,pt,ru}.ts`
-- When adding new text: add to ALL 8 locale files
+- Locale files: `src/lib/i18n/locales/{en,ar,de,es,fr,hi,it,pt,ru}.ts`
+- When adding new text: add to ALL 9 locale files
 - Type-safe keys defined in `src/types/i18n.types.ts`
+
+#### NEVER leak English into non-English locales
+
+When adding a new i18n key, you MUST write a real, native translation
+for every locale — `ar`, `de`, `es`, `fr`, `hi`, `it`, `pt`, `ru`. Do
+NOT copy the English string into the other locale files as a
+placeholder. The user reads `de.ts` expecting German; copying English
+ships an English UI to a German user.
+
+This is a recurring failure mode that has been corrected three times
+in this codebase (commits documented in the i18n catch-up batches).
+Past mistakes:
+
+- `dashboard.newChatLabel = 'New Chat'` was added to all 9 locale
+  files identically. The German user saw "New Chat" instead of
+  "Neuer Chat".
+- `inbox.page.title = 'Workspace Inbox'` shipped identically to
+  all 9 locales. The Arabic user saw English text in an RTL UI.
+- 1131 entries across 8 non-EN locales had `value === enValue`
+  silently — caught only by an explicit audit script, not by
+  typecheck.
+
+Required practice when introducing new i18n keys:
+
+1. Add to `en.ts` first with the real English copy.
+2. Translate to each of the 8 other locales **into that target
+   language**, not English. Use a translation table or call out
+   to a translator if a string is technical.
+3. Loanwords that are genuinely identical in target languages
+   (brand names like `Confluence` / `GitHub`, technical jargon
+   like `Story Points`, units like `GB`/`ms`, placeholder-only
+   strings like `{ms}ms`) ARE acceptable as identical values —
+   but you must KNOW that this is the case for that specific
+   word in that specific language. "I don't know what `Filter`
+   is in Italian" → look it up (`Filtro`), do not copy `Filter`.
+4. Run the audit script before committing:
+   `node tools/audit-untranslated-i18n.cjs` — it flags every
+   non-EN entry whose value matches the EN value, minus the
+   exempt set. The pre-merge bar is: every flagged entry is
+   either a real translation or a documented exempt loanword.
+
+If you are an AI assistant adding i18n keys: assume the user
+will spot-check at least one non-English locale by switching
+the UI language. Test in `de` or `ar` before declaring done —
+a 3-second language toggle is the cheapest way to catch this.
 
 ### Frontend Key Rules Summary
 
@@ -901,6 +946,18 @@ docker compose $COMPOSE up -d --build <service-name>
 and conditionally layers a per-vendor GPU overlay (`docker-compose.dev.gpu-{nvidia,rocm,vulkan}.yml`)
 when the host has the corresponding GPU. It is the **only** supported way to start the stack —
 do not invoke `docker compose -f …` directly.
+
+### Per-vendor GPU overlay matrix
+
+| Host GPU | Probe | Overlay file applied | Container gets |
+|---|---|---|---|
+| NVIDIA (Linux/WSL2/Win) | `nvidia-smi -L` succeeds | `docker-compose.{dev,prod}.gpu-nvidia.yml` | `deploy.resources.reservations.devices.driver=nvidia`, `NVIDIA_VISIBLE_DEVICES=all` |
+| AMD ROCm (Linux only) | `/dev/kfd` exists | `docker-compose.{dev,prod}.gpu-rocm.yml` | `devices: [/dev/kfd, /dev/dri]`, `group_add: [video, render]`, `ipc: host` |
+| Intel iGPU / Arc / Vulkan (Linux) | `/dev/dri/render*` exists | `docker-compose.{dev,prod}.gpu-vulkan.yml` | `devices: [/dev/dri]`, `group_add: [video, render]` |
+| Apple Silicon Metal | `uname -s = Darwin` | (none — warns) | CPU-only inside container; run `claw-llamacpp-service` natively for Metal |
+| None | (no probe matches) | (none) | CPU-only |
+
+The `BinaryInstallerManager` queries the GitHub API for the latest llama.cpp release on every container start and matches the right archive per platform key (e.g. `linux-x64-cuda12` → `llama-{TAG}-bin-ubuntu-cuda-*-x64.tar.gz`, `linux-x64-rocm` → `llama-{TAG}-bin-ubuntu-rocm-*-x64.tar.gz`). When you flip GPU passthrough on, the next `claw.sh up` will both expose the GPU to the container AND auto-pull the matching binary build.
 
 All services use `env_file: .env` from root. Single `.env` file for everything.
 

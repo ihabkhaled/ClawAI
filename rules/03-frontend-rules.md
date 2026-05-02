@@ -79,19 +79,44 @@ useState/useRef → Component-level local state only
 ## i18n Rules
 
 ```
-1. ALL user-facing text uses t('key') from useTranslation()
-2. NEVER hardcode text strings in components or pages
-3. Add new keys to ALL 8 locale files:
-   - src/lib/i18n/locales/en.ts
-   - src/lib/i18n/locales/ar.ts (RTL)
-   - src/lib/i18n/locales/de.ts
-   - src/lib/i18n/locales/es.ts
-   - src/lib/i18n/locales/fr.ts
-   - src/lib/i18n/locales/it.ts
-   - src/lib/i18n/locales/pt.ts
-   - src/lib/i18n/locales/ru.ts
-4. Type-safe keys defined in src/types/i18n.types.ts
-5. Arabic RTL support — no hardcoded LTR layout assumptions
+1.  ALL user-facing text uses t('key') from useTranslation()
+2.  NEVER hardcode text strings in components or pages
+3.  Add new keys to ALL 9 locale files:
+    - src/lib/i18n/locales/en.ts
+    - src/lib/i18n/locales/ar.ts (RTL)
+    - src/lib/i18n/locales/de.ts
+    - src/lib/i18n/locales/es.ts
+    - src/lib/i18n/locales/fr.ts
+    - src/lib/i18n/locales/hi.ts
+    - src/lib/i18n/locales/it.ts
+    - src/lib/i18n/locales/pt.ts
+    - src/lib/i18n/locales/ru.ts
+4.  Type-safe keys defined in src/types/i18n.types.ts
+5.  Arabic RTL support — no hardcoded LTR layout assumptions
+
+ABSOLUTE RULE — NEVER LEAK ENGLISH INTO NON-EN LOCALES
+======================================================
+6.  When you add a new key, you MUST write a real, native translation
+    in every non-EN locale. Copying the English string into ar.ts /
+    de.ts / etc. as a "stub" or "placeholder" is FORBIDDEN.
+7.  This rule is for AI assistants and humans alike. The user reads
+    de.ts expecting German; copying English ships an English UI to
+    a German user.
+8.  If you genuinely don't know the translation for a string in a
+    target language, look it up. "I don't know what 'Filter' is in
+    Italian" → look it up (Filtro), don't copy 'Filter'.
+9.  Loanwords (Confluence, GitHub, Story Points), unit acronyms (GB,
+    ms), and placeholder-only strings ({ms}ms) MAY remain identical
+    across languages — but only when you KNOW the target language
+    accepts the loanword.
+10. Run `node tools/audit-untranslated-i18n.cjs` before committing
+    new i18n keys. The audit lists every non-EN entry whose value
+    matches the EN value (minus the exempt set). Every flagged
+    entry must be either a real translation or a documented loanword.
+11. Manual smoke test before declaring done: switch the UI language
+    to `de` or `ar` and confirm the new strings render in the right
+    language. A 3-second language toggle catches every English-leak
+    this rule is designed to prevent.
 ```
 
 ## Styling Rules
