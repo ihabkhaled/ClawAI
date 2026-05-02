@@ -375,6 +375,19 @@ Page (.tsx) → Controller Hook (useX) → Service → Repository/API
 - When adding new text: add to ALL 9 locale files
 - Type-safe keys defined in `src/types/i18n.types.ts`
 
+#### `i18n.types.ts` MUST be committed alongside every locale change
+
+The TranslationDictionary type in
+`apps/claw-frontend/src/types/i18n.types.ts` is the schema every
+locale file conforms to. If you add a new key to any locale `.ts`
+file, you MUST also update `i18n.types.ts` in the SAME commit. If
+you skip the type, the next typecheck fails for everyone — the
+locale files become provably wrong at the type level even though
+they look fine to a reader.
+
+This is non-negotiable: i18n.types.ts and locales/*.ts are one
+atomic change. Never push one without the other.
+
 #### NEVER leak English into non-English locales
 
 When adding a new i18n key, you MUST write a real, native translation

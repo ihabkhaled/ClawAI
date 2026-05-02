@@ -122,6 +122,7 @@ export type TranslationDictionary = {
     workspaceImplHandoffs: string;
     adminAiActionPolicies: string;
     adminSuggestionRules: string;
+    adminWebhookDeliveries: string;
   };
   chat: {
     newThread: string;
@@ -1478,6 +1479,30 @@ export type TranslationDictionary = {
       cannotDelete: string;
       toggleActive: string;
     };
+  };
+  adminWebhooks: {
+    page: {
+      title: string;
+      description: string;
+      loading: string;
+      error: string;
+      empty: string;
+    };
+    filter: {
+      providerPlaceholder: string;
+      connectorPlaceholder: string;
+    };
+    row: {
+      deliveryId: string;
+      connector: string;
+      bytes: string;
+    };
+    status: {
+      accepted: string;
+      rejected: string;
+      idempotent: string;
+    };
+    replay: string;
   };
   implHandoff: {
     page: {

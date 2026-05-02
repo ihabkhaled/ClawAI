@@ -94,6 +94,15 @@ useState/useRef → Component-level local state only
 4.  Type-safe keys defined in src/types/i18n.types.ts
 5.  Arabic RTL support — no hardcoded LTR layout assumptions
 
+ABSOLUTE RULE — i18n.types.ts TRAVELS WITH LOCALES
+==================================================
+6a. src/types/i18n.types.ts MUST be updated and committed in the
+    SAME commit as any change to src/lib/i18n/locales/*.ts.
+    The TranslationDictionary type IS the schema every locale
+    conforms to. If you add a key to a locale without updating the
+    type, typecheck fails everywhere. Never push locale changes
+    without the matching type change — they are one atomic unit.
+
 ABSOLUTE RULE — NEVER LEAK ENGLISH INTO NON-EN LOCALES
 ======================================================
 6.  When you add a new key, you MUST write a real, native translation
