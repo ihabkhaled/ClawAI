@@ -100,6 +100,9 @@ export const es: TranslationDictionary = {
     agentRepos: 'Repositorios',
     agentCapabilities: 'Capacidades',
     agentActivity: 'Actividad',
+    agentRecipes: 'Recetas',
+    agentMarketplace: 'Mercado',
+    agentActivityMemory: 'Memoria de Actividad',
     discovery: 'Descubrimiento de modelos',
     workspaceProviders: 'Proveedores',
     workspaceAppConfigs: 'Configuraciones de apps',
@@ -1618,7 +1621,8 @@ export const es: TranslationDictionary = {
     terminal: 'Comandos de terminal',
     terminalDesc: 'Aprueba o rechaza los comandos de terminal solicitados por el agente.',
     capabilities: 'Cola de capacidades',
-    capabilitiesDesc: 'Aprueba o rechaza invocaciones de capacidades en sistema de archivos, procesos, navegador y otras clases.',
+    capabilitiesDesc:
+      'Aprueba o rechaza invocaciones de capacidades en sistema de archivos, procesos, navegador y otras clases.',
     capabilityClass: 'Clase',
     capabilityOperation: 'Operación',
     blastRadius: 'Radio de impacto',
@@ -1630,6 +1634,26 @@ export const es: TranslationDictionary = {
     autoApproved: 'Aprobado automáticamente',
     denied: 'Denegado',
     rolledBack: 'Revertido',
+    recipes: 'Recetas',
+    recipesDesc: 'Automatizaciones multipaso que encadenan invocaciones de capacidades.',
+    noRecipes: 'Aún no hay recetas',
+    noRecipesDesc: 'Crea una receta para automatizar flujos de trabajo multipaso.',
+    recipeRunDetail: 'Detalle de Ejecución',
+    recipeRunDetailDesc: 'Progreso en vivo de la ejecución de una receta.',
+    runStatus: 'Estado de Ejecución',
+    cancelRun: 'Cancelar Ejecución',
+    steps: 'Pasos',
+    marketplace: 'Mercado de Recetas',
+    marketplaceDesc: 'Explora e instala recetas firmadas publicadas por la comunidad.',
+    noListings: 'Aún no hay listados',
+    noListingsDesc: 'Cuando los publicadores envíen recetas firmadas, aparecerán aquí.',
+    install: 'Instalar',
+    activityMemory: 'Memoria de Actividad',
+    activityMemoryDesc:
+      'Entradas de actividad sincronizadas en la nube optadas desde tus dispositivos.',
+    noActivity: 'Aún no hay entradas de actividad',
+    noActivityDesc:
+      'La actividad registrada en tus dispositivos solo aparece aquí tras optar por sincronización.',
     repos: 'Repositorios',
     reposDesc: 'repositorios detectados',
     pendingCommands: 'Comandos pendientes',
@@ -2051,9 +2075,22 @@ export const es: TranslationDictionary = {
       draft_prd: 'Redactar PRD',
     },
   },
+  gpuBadge: {
+    cpuOnly: 'Solo CPU',
+    noGpu: 'Sin GPU detectada — haga clic para ver modelos locales',
+    vendor: {
+      nvidia: 'NVIDIA',
+      amd: 'AMD ROCm',
+      metal: 'Metal',
+      intel: 'Intel/Vulkan',
+      unknown: 'GPU',
+      cpu: 'CPU',
+    },
+  },
   localFrontier: {
     title: 'Modelos Frontier locales',
-    subtitle: 'Ejecute LLMs frontier de pesos abiertos (Kimi K2, GLM-5.1, DeepSeek V3.2/V4) localmente.',
+    subtitle:
+      'Ejecute LLMs frontier de pesos abiertos (Kimi K2, GLM-5.1, DeepSeek V3.2/V4) localmente.',
     loading: 'Cargando catálogo…',
     catalogEmpty: 'Ningún modelo coincide con los filtros.',
     catalogError: 'No se pudo cargar el catálogo. Verifique claw-llamacpp-service.',
@@ -2068,7 +2105,11 @@ export const es: TranslationDictionary = {
       configure: 'Configurar runtime',
     },
     download: { start: 'Descargar', cancel: 'Cancelar', retry: 'Reintentar' },
-    compat: { fits: 'Compatible con su hardware', warns: 'Hardware ajustado', refuses: 'Hardware insuficiente' },
+    compat: {
+      fits: 'Compatible con su hardware',
+      warns: 'Hardware ajustado',
+      refuses: 'Hardware insuficiente',
+    },
     qualityTier: { survival: 'Supervivencia', balanced: 'Equilibrado', best: 'Mejor' },
     preflight: {
       RAM_INSUFFICIENT: 'Memoria RAM insuficiente para este modelo.',
@@ -2190,7 +2231,8 @@ export const es: TranslationDictionary = {
   search: {
     page: {
       title: 'Búsqueda semántica',
-      description: 'Busca en todos tus objetos del workspace — embeddings locales que preservan privacidad.',
+      description:
+        'Busca en todos tus objetos del workspace — embeddings locales que preservan privacidad.',
       placeholder: 'Type a natural-language question…',
       submit: 'Buscar',
       searching: 'Buscando…',
@@ -2207,7 +2249,7 @@ export const es: TranslationDictionary = {
       loading: 'Cargando resumen…',
       error: 'No se pudo cargar el resumen.',
       noTodayDigest: 'Aún no hay resumen para hoy. Genera uno o espera al cron.',
-      today: "Resumen de hoy",
+      today: 'Resumen de hoy',
       history: 'Resúmenes anteriores',
       generatedAt: 'Generado {ts}',
       sectionsCount: '{n} sections',
@@ -2301,13 +2343,13 @@ export const es: TranslationDictionary = {
   },
   learned: {
     panel: {
-      title: "Lo que hemos aprendido",
+      title: 'Lo que hemos aprendido',
       subtitle: '{count} preferences',
       description:
         'Patterns derived from your approve / reject / edit decisions. Used to personalise future suggestions.',
       loading: 'Cargando…',
       error: 'No se pudieron cargar las preferencias.',
-      empty: "Aprenderemos de tus aprobaciones — aún no hay preferencias.",
+      empty: 'Aprenderemos de tus aprobaciones — aún no hay preferencias.',
     },
   },
 };

@@ -5,12 +5,14 @@ import { EventPattern } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
 import { AiActionQueueStatus } from '../../../common/enums/ai-action-queue-status.enum';
 import type { Prisma } from '../../../generated/prisma';
+import { AUTO_DENY_REASON } from '../constants/ai-action-policy.constants';
 import { AiActionApprovalQueueRepository } from '../repositories/ai-action-approval-queue.repository';
 import { AutomationPreferenceRepository } from '../repositories/automation-preference.repository';
 import type {
   EnqueueSuggestionInput,
   EnqueueSuggestionResult,
   PolicyMatchResult,
+  PreferenceOutcome,
   RiskAssessment,
 } from '../types/ai-action-policy.types';
 
@@ -37,7 +39,7 @@ export class AiActionApprovalManager {
       risk,
     });
     const baseStatus = this.resolveStatus(policyMatch);
-    const status = await this.applyUserPreference(input, risk, baseStatus);
+    const { status, autoDenyReason } = await this.applyUserPreference(input, risk, baseStatus);
     const expiresAt = this.computeExpiry(status);
     const row = await this.queueRepo.create({
       userId: input.userId,
@@ -52,11 +54,10 @@ export class AiActionApprovalManager {
       matchedPolicyId: policyMatch.matchedPolicy?.id ?? null,
       matchedPolicyName: policyMatch.matchedPolicy?.name ?? null,
       generatedBy:
-        input.generatedBy === undefined
-          ? undefined
-          : (input.generatedBy as Prisma.InputJsonValue),
+        input.generatedBy === undefined ? undefined : (input.generatedBy as Prisma.InputJsonValue),
       sourceObjectId: input.sourceObjectId ?? null,
       expiresAt,
+      rejectionReason: autoDenyReason,
     });
     this.publishLifecycleEvents(row.id, status, input, risk, policyMatch);
     return {
@@ -76,29 +77,60 @@ export class AiActionApprovalManager {
   }
 
   /**
-   * Stream 32 — apply user-preference intersection (most-restrictive-wins):
+   * Stream 32 + 12.6 + 32.4 — apply user-preference intersection
+   * (most-restrictive-wins):
    *  - Policy DENIED stays DENIED (admin policy is the floor).
    *  - User isEnabled=false → DENIED regardless of policy.
+   *  - User providers[] non-empty AND input.provider not listed → DENIED (32.4 kill-switch).
+   *  - User perDayBudget set AND today's count ≥ budget → DENIED (12.6 budget cap).
    *  - Policy AUTO_APPROVED but user.autoApproveBelowRiskScore < risk.riskScore → downgrade to PENDING_APPROVAL.
    */
   private async applyUserPreference(
     input: EnqueueSuggestionInput,
     risk: RiskAssessment,
     base: AiActionQueueStatus,
-  ): Promise<AiActionQueueStatus> {
+  ): Promise<PreferenceOutcome> {
     if (base === AiActionQueueStatus.DENIED) {
-      return base;
+      return { status: base, autoDenyReason: null };
     }
     try {
       const pref = await this.preferenceRepo.findOne(input.userId, input.actionKind);
       if (pref === null) {
-        return base;
+        return { status: base, autoDenyReason: null };
       }
       if (!pref.isEnabled) {
         this.logger.debug(
           `applyUserPreference: user ${input.userId} disabled ${input.actionKind} → DENIED`,
         );
-        return AiActionQueueStatus.DENIED;
+        return {
+          status: AiActionQueueStatus.DENIED,
+          autoDenyReason: AUTO_DENY_REASON.USER_DISABLED,
+        };
+      }
+      const providers = Array.isArray(pref.providers) ? (pref.providers as string[]) : [];
+      if (providers.length > 0 && input.provider !== null && !providers.includes(input.provider)) {
+        this.logger.debug(
+          `applyUserPreference: provider ${input.provider} not in user's allowed list ${JSON.stringify(providers)} → DENIED`,
+        );
+        return {
+          status: AiActionQueueStatus.DENIED,
+          autoDenyReason: AUTO_DENY_REASON.PROVIDER_DISABLED,
+        };
+      }
+      if (pref.perDayBudget !== null) {
+        const todayCount = await this.preferenceRepo.countTodayForBudget(
+          input.userId,
+          input.actionKind,
+        );
+        if (todayCount >= pref.perDayBudget) {
+          this.logger.debug(
+            `applyUserPreference: today's count ${String(todayCount)} >= budget ${String(pref.perDayBudget)} → DENIED`,
+          );
+          return {
+            status: AiActionQueueStatus.DENIED,
+            autoDenyReason: AUTO_DENY_REASON.BUDGET_EXCEEDED,
+          };
+        }
       }
       if (
         base === AiActionQueueStatus.AUTO_APPROVED &&
@@ -108,14 +140,14 @@ export class AiActionApprovalManager {
         this.logger.debug(
           `applyUserPreference: risk ${String(risk.riskScore)} > user threshold ${String(pref.autoApproveBelowRiskScore)} → downgrade to PENDING_APPROVAL`,
         );
-        return AiActionQueueStatus.PENDING_APPROVAL;
+        return { status: AiActionQueueStatus.PENDING_APPROVAL, autoDenyReason: null };
       }
-      return base;
+      return { status: base, autoDenyReason: null };
     } catch (error) {
       this.logger.warn(
         `applyUserPreference failed — falling back to policy-only status — ${error instanceof Error ? error.message : 'unknown'}`,
       );
-      return base;
+      return { status: base, autoDenyReason: null };
     }
   }
 

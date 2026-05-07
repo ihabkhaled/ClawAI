@@ -2,7 +2,12 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { Injectable, Logger } from '@nestjs/common';
 import { request } from 'undici';
-import { computeSha256, detectPlatform, extractArchive, getDiskSpace } from '../../../common/utilities';
+import {
+  computeSha256,
+  detectPlatform,
+  extractArchive,
+  getDiskSpace,
+} from '../../../common/utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { BinaryReleaseRepository } from '../repositories/binary-release.repository';
 import {
@@ -37,7 +42,7 @@ export class BinaryInstallerManager {
     }
 
     const existing = await this.releaseRepo.findActive(platform.key);
-    if (existing && existing.version === release.tag) {
+    if (existing?.version === release.tag) {
       const onDisk = await this.binaryExists(existing.binaryPath);
       if (onDisk) {
         this.logger.log(
@@ -56,6 +61,13 @@ export class BinaryInstallerManager {
   }
 
   private async resolveRelease(platformKey: string): Promise<ResolvedBinaryRelease | null> {
+    if (AppConfig.get().LLAMACPP_FORCE_PINNED_BINARY) {
+      this.logger.log(
+        `resolveRelease: LLAMACPP_FORCE_PINNED_BINARY=true — skipping dynamic GitHub lookup`,
+      );
+      return this.resolvePinnedRelease(platformKey);
+    }
+
     try {
       const dynamic = await this.fetchLatestRelease(platformKey);
       if (dynamic) {
@@ -70,6 +82,10 @@ export class BinaryInstallerManager {
       );
     }
 
+    return this.resolvePinnedRelease(platformKey);
+  }
+
+  private resolvePinnedRelease(platformKey: string): ResolvedBinaryRelease | null {
     const pinned = BINARY_RELEASES[platformKey];
     if (!pinned) {
       return null;
@@ -83,9 +99,7 @@ export class BinaryInstallerManager {
     };
   }
 
-  private async fetchLatestRelease(
-    platformKey: string,
-  ): Promise<ResolvedBinaryRelease | null> {
+  private async fetchLatestRelease(platformKey: string): Promise<ResolvedBinaryRelease | null> {
     this.logger.debug(`fetchLatestRelease: GET ${LATEST_LLAMACPP_RELEASE_API_URL}`);
     const response = await request(LATEST_LLAMACPP_RELEASE_API_URL, {
       method: 'GET',
@@ -116,10 +130,7 @@ export class BinaryInstallerManager {
     };
   }
 
-  private pickAsset(
-    assets: GithubReleaseAsset[],
-    platformKey: string,
-  ): GithubReleaseAsset | null {
+  private pickAsset(assets: GithubReleaseAsset[], platformKey: string): GithubReleaseAsset | null {
     const patterns = PLATFORM_ASSET_PATTERNS[platformKey] ?? [];
     for (const pattern of patterns) {
       const match = assets.find((asset) => pattern.test(asset.name));
@@ -155,7 +166,7 @@ export class BinaryInstallerManager {
       await extractArchive(archivePath, binDir);
       const resolvedBinaryPath = await this.locateBinary(binDir, release.binaryName);
       if (process.platform !== 'win32') {
-        await fs.promises.chmod(resolvedBinaryPath, 0o755).catch(() => undefined);
+        await fs.promises.chmod(resolvedBinaryPath, 0o755).catch(() => {});
       }
       await this.releaseRepo.upsertActive({
         version: release.tag,
@@ -164,12 +175,10 @@ export class BinaryInstallerManager {
         archiveSha256: '',
         binaryPath: resolvedBinaryPath,
       });
-      this.logger.log(
-        `install: ${platformKey} v${release.tag} installed at ${resolvedBinaryPath}`,
-      );
+      this.logger.log(`install: ${platformKey} v${release.tag} installed at ${resolvedBinaryPath}`);
       return { binaryPath: resolvedBinaryPath, version: release.tag, platform: platformKey };
     } finally {
-      await fs.promises.rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
+      await fs.promises.rm(tempDir, { recursive: true, force: true }).catch(() => {});
     }
   }
 

@@ -101,6 +101,9 @@ export type TranslationDictionary = {
     agentRepos: string;
     agentCapabilities: string;
     agentActivity: string;
+    agentRecipes: string;
+    agentMarketplace: string;
+    agentActivityMemory: string;
     discovery: string;
     workspaceProviders: string;
     workspaceAppConfigs: string;
@@ -1723,6 +1726,24 @@ export type TranslationDictionary = {
     autoApproved: string;
     denied: string;
     rolledBack: string;
+    recipes: string;
+    recipesDesc: string;
+    noRecipes: string;
+    noRecipesDesc: string;
+    recipeRunDetail: string;
+    recipeRunDetailDesc: string;
+    runStatus: string;
+    cancelRun: string;
+    steps: string;
+    marketplace: string;
+    marketplaceDesc: string;
+    noListings: string;
+    noListingsDesc: string;
+    install: string;
+    activityMemory: string;
+    activityMemoryDesc: string;
+    noActivity: string;
+    noActivityDesc: string;
     repos: string;
     reposDesc: string;
     pendingCommands: string;
@@ -2127,6 +2148,18 @@ export type TranslationDictionary = {
       summarize_all: string;
       extract_requirements: string;
       draft_prd: string;
+    };
+  };
+  gpuBadge: {
+    cpuOnly: string;
+    noGpu: string;
+    vendor: {
+      nvidia: string;
+      amd: string;
+      metal: string;
+      intel: string;
+      unknown: string;
+      cpu: string;
     };
   };
   localFrontier: {

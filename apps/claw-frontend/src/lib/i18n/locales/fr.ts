@@ -100,6 +100,9 @@ export const fr: TranslationDictionary = {
     agentRepos: 'Dépôts',
     agentCapabilities: 'Capacités',
     agentActivity: 'Activité',
+    agentRecipes: 'Recettes',
+    agentMarketplace: 'Marché',
+    agentActivityMemory: "Mémoire d'activité",
     discovery: 'Découverte de modèles',
     workspaceProviders: 'Fournisseurs',
     workspaceAppConfigs: "Configurations d'applications",
@@ -1420,9 +1423,9 @@ export const fr: TranslationDictionary = {
   },
   automationPreferences: {
     page: {
-      title: 'Préférences d\'automatisation',
+      title: "Préférences d'automatisation",
       description:
-        'Contrôles par type d\'action. Le plus restrictif gagne : la politique admin est le socle ; vos préférences ne peuvent que la durcir.',
+        "Contrôles par type d'action. Le plus restrictif gagne : la politique admin est le socle ; vos préférences ne peuvent que la durcir.",
       loading: 'Chargement des préférences…',
       error: 'Impossible de charger les préférences. Essayez d’actualiser.',
       empty: 'Aucun type d’action disponible.',
@@ -1624,7 +1627,8 @@ export const fr: TranslationDictionary = {
     terminal: 'Commandes de terminal',
     terminalDesc: "Approuvez ou rejetez les commandes de terminal demandées par l'agent.",
     capabilities: 'File des capacités',
-    capabilitiesDesc: "Approuvez ou rejetez les appels de capacités sur le système de fichiers, les processus, le navigateur et d'autres classes.",
+    capabilitiesDesc:
+      "Approuvez ou rejetez les appels de capacités sur le système de fichiers, les processus, le navigateur et d'autres classes.",
     capabilityClass: 'Classe',
     capabilityOperation: 'Opération',
     blastRadius: "Rayon d'impact",
@@ -1632,10 +1636,30 @@ export const fr: TranslationDictionary = {
     riskScore: 'Score de risque',
     matchedPolicy: 'Politique correspondante',
     activity: "Activité de l'agent",
-    activityDesc: "Capacités récentes et exécutions de recettes sur tous vos appareils.",
+    activityDesc: 'Capacités récentes et exécutions de recettes sur tous vos appareils.',
     autoApproved: 'Approuvé automatiquement',
     denied: 'Refusé',
     rolledBack: 'Annulé',
+    recipes: 'Recettes',
+    recipesDesc: 'Automatisations multi-étapes qui enchaînent des appels de capacités.',
+    noRecipes: 'Aucune recette pour le moment',
+    noRecipesDesc: 'Créez une recette pour automatiser des flux multi-étapes.',
+    recipeRunDetail: "Détail d'exécution",
+    recipeRunDetailDesc: "Progression en direct de l'exécution d'une recette.",
+    runStatus: "Statut d'exécution",
+    cancelRun: "Annuler l'exécution",
+    steps: 'Étapes',
+    marketplace: 'Marché de Recettes',
+    marketplaceDesc: 'Parcourez et installez des recettes signées publiées par la communauté.',
+    noListings: 'Aucune annonce pour le moment',
+    noListingsDesc: 'Lorsque des éditeurs publient des recettes signées, elles apparaissent ici.',
+    install: 'Installer',
+    activityMemory: "Mémoire d'activité",
+    activityMemoryDesc:
+      "Entrées d'activité synchronisées dans le cloud depuis vos appareils (opt-in).",
+    noActivity: "Aucune entrée d'activité pour le moment",
+    noActivityDesc:
+      "L'activité enregistrée sur vos appareils n'apparaît ici qu'après opt-in à la sync cloud.",
     repos: 'Dépôts',
     reposDesc: 'dépôts détectés',
     pendingCommands: 'Commandes en attente',
@@ -2057,9 +2081,22 @@ export const fr: TranslationDictionary = {
       draft_prd: 'Rédiger le PRD',
     },
   },
+  gpuBadge: {
+    cpuOnly: 'CPU uniquement',
+    noGpu: 'Aucun GPU détecté — cliquez pour voir les modèles locaux',
+    vendor: {
+      nvidia: 'NVIDIA',
+      amd: 'AMD ROCm',
+      metal: 'Metal',
+      intel: 'Intel/Vulkan',
+      unknown: 'GPU',
+      cpu: 'CPU',
+    },
+  },
   localFrontier: {
     title: 'Modèles Frontier locaux',
-    subtitle: 'Exécutez localement des LLM frontier à poids ouverts (Kimi K2, GLM-5.1, DeepSeek V3.2/V4).',
+    subtitle:
+      'Exécutez localement des LLM frontier à poids ouverts (Kimi K2, GLM-5.1, DeepSeek V3.2/V4).',
     loading: 'Chargement du catalogue…',
     catalogEmpty: 'Aucun modèle ne correspond aux filtres.',
     catalogError: 'Échec du chargement du catalogue. Vérifiez claw-llamacpp-service.',
@@ -2074,17 +2111,22 @@ export const fr: TranslationDictionary = {
       configure: 'Configurer le runtime',
     },
     download: { start: 'Télécharger', cancel: 'Annuler', retry: 'Réessayer' },
-    compat: { fits: 'Compatible avec votre matériel', warns: 'Matériel limité', refuses: 'Matériel insuffisant' },
+    compat: {
+      fits: 'Compatible avec votre matériel',
+      warns: 'Matériel limité',
+      refuses: 'Matériel insuffisant',
+    },
     qualityTier: { survival: 'Survie', balanced: 'Équilibré', best: 'Meilleur' },
     preflight: {
       RAM_INSUFFICIENT: 'Mémoire vive insuffisante pour ce modèle.',
       DISK_INSUFFICIENT: 'Espace disque insuffisant (non remplaçable).',
       GPU_INSUFFICIENT: 'Aucun GPU compatible détecté.',
-      BINARY_NOT_INSTALLED: 'Le binaire llama-server n\'est pas encore installé.',
+      BINARY_NOT_INSTALLED: "Le binaire llama-server n'est pas encore installé.",
       RUNTIME_INCOMPATIBLE: 'Le runtime installé ne peut pas exécuter ce modèle.',
     },
     override: {
-      warning: 'Votre matériel est en dessous des exigences. Outrepassez uniquement si vous comprenez le risque.',
+      warning:
+        'Votre matériel est en dessous des exigences. Outrepassez uniquement si vous comprenez le risque.',
       confirmTypeSize: 'Saisissez la taille du modèle en Go pour confirmer :',
     },
     delete: {
@@ -2196,7 +2238,8 @@ export const fr: TranslationDictionary = {
   search: {
     page: {
       title: 'Recherche sémantique',
-      description: 'Recherche sur tous vos objets — embeddings locaux respectueux de la vie privée.',
+      description:
+        'Recherche sur tous vos objets — embeddings locaux respectueux de la vie privée.',
       placeholder: 'Type a natural-language question…',
       submit: 'Rechercher',
       searching: 'Recherche…',
@@ -2213,7 +2256,7 @@ export const fr: TranslationDictionary = {
       loading: 'Chargement du récap…',
       error: 'Impossible de charger le récap.',
       noTodayDigest: 'Pas encore de récap aujourd’hui. Déclenchez ou attendez le cron.',
-      today: "Récap d’aujourd’hui",
+      today: 'Récap d’aujourd’hui',
       history: 'Récap précédents',
       generatedAt: 'Généré {ts}',
       sectionsCount: '{n} sections',
@@ -2253,8 +2296,8 @@ export const fr: TranslationDictionary = {
       empty: 'Aucune règle configurée.',
       systemDefault: 'Par défaut système',
       priority: 'Priorité {p}',
-      eventType: 'Type d\'événement',
-      actionKind: 'Type d\'action',
+      eventType: "Type d'événement",
+      actionKind: "Type d'action",
       providerRegex: 'Regex de fournisseur',
       contentRegex: 'Regex de contenu',
       delete: 'Supprimer',
@@ -2307,13 +2350,13 @@ export const fr: TranslationDictionary = {
   },
   learned: {
     panel: {
-      title: "Ce que nous avons appris",
+      title: 'Ce que nous avons appris',
       subtitle: '{count} preferences',
       description:
         'Patterns derived from your approve / reject / edit decisions. Used to personalise future suggestions.',
       loading: 'Chargement…',
       error: 'Impossible de charger les préférences.',
-      empty: "Nous apprendrons de vos approbations — pas encore de préférences.",
+      empty: 'Nous apprendrons de vos approbations — pas encore de préférences.',
     },
   },
 };

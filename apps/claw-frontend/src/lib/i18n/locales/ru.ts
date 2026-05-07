@@ -100,6 +100,9 @@ export const ru: TranslationDictionary = {
     agentRepos: 'Репозитории',
     agentCapabilities: 'Возможности',
     agentActivity: 'Активность',
+    agentRecipes: 'Рецепты',
+    agentMarketplace: 'Магазин',
+    agentActivityMemory: 'Память активности',
     discovery: 'Обнаружение моделей',
     workspaceProviders: 'Провайдеры',
     workspaceAppConfigs: 'Конфигурации приложений',
@@ -1614,7 +1617,8 @@ export const ru: TranslationDictionary = {
     terminal: 'Команды терминала',
     terminalDesc: 'Согласовывайте или отклоняйте команды терминала, запрошенные агентом.',
     capabilities: 'Очередь возможностей',
-    capabilitiesDesc: 'Согласовывайте или отклоняйте вызовы возможностей в файловой системе, процессах, браузере и других классах.',
+    capabilitiesDesc:
+      'Согласовывайте или отклоняйте вызовы возможностей в файловой системе, процессах, браузере и других классах.',
     capabilityClass: 'Класс',
     capabilityOperation: 'Операция',
     blastRadius: 'Радиус воздействия',
@@ -1626,6 +1630,25 @@ export const ru: TranslationDictionary = {
     autoApproved: 'Авто-одобрено',
     denied: 'Отклонено',
     rolledBack: 'Откачено',
+    recipes: 'Рецепты',
+    recipesDesc: 'Многошаговые автоматизации, связывающие вызовы возможностей в цепочки.',
+    noRecipes: 'Пока нет рецептов',
+    noRecipesDesc: 'Создайте рецепт, чтобы автоматизировать многошаговые рабочие процессы.',
+    recipeRunDetail: 'Детали запуска',
+    recipeRunDetailDesc: 'Живой прогресс запуска рецепта.',
+    runStatus: 'Статус запуска',
+    cancelRun: 'Отменить запуск',
+    steps: 'Шаги',
+    marketplace: 'Магазин рецептов',
+    marketplaceDesc: 'Просмотр и установка подписанных рецептов от сообщества.',
+    noListings: 'Пока нет объявлений',
+    noListingsDesc: 'Когда издатели публикуют подписанные рецепты, они появляются здесь.',
+    install: 'Установить',
+    activityMemory: 'Память активности',
+    activityMemoryDesc: 'Записи активности, синхронизированные в облаке с ваших устройств.',
+    noActivity: 'Пока нет записей активности',
+    noActivityDesc:
+      'Активность с ваших устройств появляется здесь только после opt-in облачной синхронизации.',
     repos: 'Репозитории',
     reposDesc: 'обнаружено репозиториев',
     pendingCommands: 'Ожидающие команды',
@@ -2044,9 +2067,22 @@ export const ru: TranslationDictionary = {
       draft_prd: 'Составить PRD',
     },
   },
+  gpuBadge: {
+    cpuOnly: 'Только CPU',
+    noGpu: 'GPU не обнаружен — нажмите, чтобы увидеть локальные модели',
+    vendor: {
+      nvidia: 'NVIDIA',
+      amd: 'AMD ROCm',
+      metal: 'Metal',
+      intel: 'Intel/Vulkan',
+      unknown: 'GPU',
+      cpu: 'CPU',
+    },
+  },
   localFrontier: {
     title: 'Локальные frontier-модели',
-    subtitle: 'Запускайте frontier-LLM с открытыми весами (Kimi K2, GLM-5.1, DeepSeek V3.2/V4) полностью локально.',
+    subtitle:
+      'Запускайте frontier-LLM с открытыми весами (Kimi K2, GLM-5.1, DeepSeek V3.2/V4) полностью локально.',
     loading: 'Загрузка каталога…',
     catalogEmpty: 'Ни одна модель не соответствует фильтрам.',
     catalogError: 'Не удалось загрузить каталог. Проверьте claw-llamacpp-service.',
@@ -2061,7 +2097,11 @@ export const ru: TranslationDictionary = {
       configure: 'Настроить рантайм',
     },
     download: { start: 'Скачать', cancel: 'Отмена', retry: 'Повторить' },
-    compat: { fits: 'Подходит под оборудование', warns: 'Граничное оборудование', refuses: 'Недостаточно оборудования' },
+    compat: {
+      fits: 'Подходит под оборудование',
+      warns: 'Граничное оборудование',
+      refuses: 'Недостаточно оборудования',
+    },
     qualityTier: { survival: 'Выживание', balanced: 'Сбалансированно', best: 'Лучшее' },
     preflight: {
       RAM_INSUFFICIENT: 'Недостаточно ОЗУ для этой модели.',
@@ -2200,7 +2240,7 @@ export const ru: TranslationDictionary = {
       loading: 'Загрузка сводки…',
       error: 'Не удалось загрузить сводку.',
       noTodayDigest: 'Сводки на сегодня нет. Запустите вручную или ждите крон.',
-      today: "Сводка за сегодня",
+      today: 'Сводка за сегодня',
       history: 'Предыдущие сводки',
       generatedAt: 'Создано {ts}',
       sectionsCount: '{n} sections',
@@ -2252,7 +2292,8 @@ export const ru: TranslationDictionary = {
   adminWebhooks: {
     page: {
       title: 'Доставки вебхуков',
-      description: 'Просматривайте и воспроизводите входящие доставки вебхуков от ваших провайдеров.',
+      description:
+        'Просматривайте и воспроизводите входящие доставки вебхуков от ваших провайдеров.',
       loading: 'Загрузка доставок…',
       error: 'Не удалось загрузить доставки вебхуков.',
       empty: 'Нет доставок, соответствующих фильтрам.',
@@ -2294,13 +2335,13 @@ export const ru: TranslationDictionary = {
   },
   learned: {
     panel: {
-      title: "Что мы узнали",
+      title: 'Что мы узнали',
       subtitle: '{count} preferences',
       description:
         'Patterns derived from your approve / reject / edit decisions. Used to personalise future suggestions.',
       loading: 'Загрузка…',
       error: 'Не удалось загрузить настройки.',
-      empty: "Учимся на ваших одобрениях — настроек пока нет.",
+      empty: 'Учимся на ваших одобрениях — настроек пока нет.',
     },
   },
 };

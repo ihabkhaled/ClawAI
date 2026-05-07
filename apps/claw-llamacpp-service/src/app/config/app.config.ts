@@ -12,6 +12,13 @@ const appConfigSchema = z.object({
     .string()
     .default('true')
     .transform((value) => value.toLowerCase() === 'true'),
+  // When true, BinaryInstallerManager skips the dynamic GitHub-API resolver
+  // and uses the static BINARY_RELEASES map only. Use for prod reproducibility
+  // when you need a specific pinned version + real SHA-256 verification.
+  LLAMACPP_FORCE_PINNED_BINARY: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
   LLAMACPP_PREFLIGHT_OVERRIDE_ALLOWED: z
     .string()
     .default('true')

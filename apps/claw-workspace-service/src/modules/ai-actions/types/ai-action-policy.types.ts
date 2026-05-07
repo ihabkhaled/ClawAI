@@ -3,9 +3,15 @@ import type { AiActionQueueStatus } from '../../../common/enums/ai-action-queue-
 import type { AiActionRiskLabel } from '../../../common/enums/ai-action-risk-label.enum';
 import type { WorkspaceProvider } from '../../../common/enums/workspace-provider.enum';
 import type { AiActionApprovalQueue, AiActionPolicy, Prisma } from '../../../generated/prisma';
+import type { AutoDenyReason } from '../constants/ai-action-policy.constants';
 
 export type AiActionPolicyWriteInput = Omit<AiActionPolicy, 'id' | 'createdAt' | 'updatedAt'>;
 export type AiActionPolicyMutableFields = Omit<AiActionPolicyWriteInput, 'name'>;
+
+export interface PreferenceOutcome {
+  status: AiActionQueueStatus;
+  autoDenyReason: AutoDenyReason | null;
+}
 
 export type AiActionPolicySnapshot = {
   id: string;
@@ -108,6 +114,13 @@ export type CreateQueueRowInput = {
   generatedBy: Prisma.InputJsonValue | undefined;
   sourceObjectId: string | null;
   expiresAt: Date | null;
+  /**
+   * Stream 12.6 / 32.4 v1.1 — when the row is auto-DENIED at enqueue time
+   * (budget exceeded, provider disabled, user opted out), we record the
+   * machine-readable reason in `rejectionReason`. The UI surfaces it
+   * alongside the existing human-typed rejection reasons.
+   */
+  rejectionReason?: string | null;
 };
 
 export type ListQueueFilters = {

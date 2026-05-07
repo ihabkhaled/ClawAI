@@ -9,6 +9,7 @@ import { useSidebarController } from '@/hooks/layout/use-sidebar-controller';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
+import { GpuBadge } from './gpu-badge';
 import { SidebarNavItem } from './sidebar-nav-item';
 
 export function Sidebar() {
@@ -55,10 +56,11 @@ export function Sidebar() {
           ))}
         </nav>
         <Separator />
-        <div className="px-4 py-3">
+        <div className="flex items-center justify-between gap-2 px-4 py-3">
           <p className="text-xs text-muted-foreground">
             {t('common.brandVersion', { version: '0.1.0' })}
           </p>
+          <GpuBadge />
         </div>
       </aside>
     </>

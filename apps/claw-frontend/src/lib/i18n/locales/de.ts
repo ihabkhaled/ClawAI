@@ -100,6 +100,9 @@ export const de: TranslationDictionary = {
     agentRepos: 'Repositories',
     agentCapabilities: 'Fähigkeiten',
     agentActivity: 'Aktivität',
+    agentRecipes: 'Rezepte',
+    agentMarketplace: 'Marktplatz',
+    agentActivityMemory: 'Aktivitäts-Memory',
     discovery: 'Modell-Discovery',
     workspaceProviders: 'Provider',
     workspaceAppConfigs: 'App-Konfigurationen',
@@ -1620,7 +1623,8 @@ export const de: TranslationDictionary = {
     terminal: 'Terminal-Befehle',
     terminalDesc: 'Vom Agent angeforderte Terminal-Befehle genehmigen oder ablehnen.',
     capabilities: 'Capability-Warteschlange',
-    capabilitiesDesc: 'Capability-Aufrufe für Dateisystem, Prozess, Browser und weitere Klassen genehmigen oder ablehnen.',
+    capabilitiesDesc:
+      'Capability-Aufrufe für Dateisystem, Prozess, Browser und weitere Klassen genehmigen oder ablehnen.',
     capabilityClass: 'Klasse',
     capabilityOperation: 'Operation',
     blastRadius: 'Auswirkungsbereich',
@@ -1632,6 +1636,25 @@ export const de: TranslationDictionary = {
     autoApproved: 'Automatisch genehmigt',
     denied: 'Abgelehnt',
     rolledBack: 'Zurückgesetzt',
+    recipes: 'Rezepte',
+    recipesDesc: 'Mehrstufige Automatisierungen, die Capability-Aufrufe miteinander verketten.',
+    noRecipes: 'Noch keine Rezepte',
+    noRecipesDesc: 'Erstelle ein Rezept, um mehrstufige Abläufe zu automatisieren.',
+    recipeRunDetail: 'Lauf-Detail',
+    recipeRunDetailDesc: 'Live-Fortschritt eines Rezeptlaufs.',
+    runStatus: 'Lauf-Status',
+    cancelRun: 'Lauf abbrechen',
+    steps: 'Schritte',
+    marketplace: 'Rezept-Marktplatz',
+    marketplaceDesc: 'Durchsuche und installiere signierte Rezepte aus der Community.',
+    noListings: 'Noch keine Einträge',
+    noListingsDesc: 'Sobald Verlage signierte Rezepte veröffentlichen, erscheinen sie hier.',
+    install: 'Installieren',
+    activityMemory: 'Aktivitäts-Memory',
+    activityMemoryDesc:
+      'Aus deinen Geräten in die Cloud synchronisierte Aktivitätseinträge (opt-in).',
+    noActivity: 'Noch keine Aktivität',
+    noActivityDesc: 'Aktivität von deinen Geräten erscheint hier erst nach Cloud-Sync-Opt-in.',
     repos: 'Repositories',
     reposDesc: 'Repositories erkannt',
     pendingCommands: 'Ausstehende Befehle',
@@ -2052,6 +2075,18 @@ export const de: TranslationDictionary = {
       draft_prd: 'PRD entwerfen',
     },
   },
+  gpuBadge: {
+    cpuOnly: 'Nur CPU',
+    noGpu: 'Keine GPU erkannt — klicken zum Anzeigen lokaler Modelle',
+    vendor: {
+      nvidia: 'NVIDIA',
+      amd: 'AMD ROCm',
+      metal: 'Metal',
+      intel: 'Intel/Vulkan',
+      unknown: 'GPU',
+      cpu: 'CPU',
+    },
+  },
   localFrontier: {
     title: 'Lokale Frontier-Modelle',
     subtitle: 'Frontier-LLMs (Kimi K2, GLM-5.1, DeepSeek V3.2/V4) komplett lokal ausführen.',
@@ -2135,7 +2170,8 @@ export const de: TranslationDictionary = {
       placeholder: 'modell:tag',
       cancel: 'Abbrechen',
       confirm: 'Gewichte löschen',
-      warning: 'Nicht rückgängig zu machen. Sie müssen erneut herunterladen, um das Modell wieder zu nutzen.',
+      warning:
+        'Nicht rückgängig zu machen. Sie müssen erneut herunterladen, um das Modell wieder zu nutzen.',
     },
     overrideDialog: {
       title: 'Hardware-Preflight überschreiben?',
@@ -2204,11 +2240,12 @@ export const de: TranslationDictionary = {
   digest: {
     page: {
       title: 'Zusammenfassung',
-      description: 'Ihr morgendlicher Überblick: Was hat sich in allen verbundenen Workspaces geändert.',
+      description:
+        'Ihr morgendlicher Überblick: Was hat sich in allen verbundenen Workspaces geändert.',
       loading: 'Zusammenfassung wird geladen…',
       error: 'Zusammenfassung konnte nicht geladen werden.',
       noTodayDigest: 'Heute noch keine Zusammenfassung. Auslösen oder auf den Cron warten.',
-      today: "Heutige Zusammenfassung",
+      today: 'Heutige Zusammenfassung',
       history: 'Vorherige Zusammenfassungen',
       generatedAt: 'Erstellt {ts}',
       sectionsCount: '{n} sections',
@@ -2302,13 +2339,13 @@ export const de: TranslationDictionary = {
   },
   learned: {
     panel: {
-      title: "Was wir gelernt haben",
+      title: 'Was wir gelernt haben',
       subtitle: '{count} preferences',
       description:
         'Patterns derived from your approve / reject / edit decisions. Used to personalise future suggestions.',
       loading: 'Wird geladen…',
       error: 'Einstellungen konnten nicht geladen werden.',
-      empty: "Wir lernen aus Ihren Genehmigungen — noch keine Präferenzen.",
+      empty: 'Wir lernen aus Ihren Genehmigungen — noch keine Präferenzen.',
     },
   },
 };
