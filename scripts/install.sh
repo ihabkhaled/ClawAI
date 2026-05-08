@@ -23,7 +23,10 @@ cd "$PROJECT_ROOT"
 ENV_FILE="$PROJECT_ROOT/.env"
 
 # ─── Compose files (split layout — claw.sh is the canonical entrypoint) ─────
-COMPOSE_FILES="-f docker-compose.dev.databases.yml -f docker-compose.dev.services.yml -f docker-compose.dev.ollama.yml"
+BASE_COMPOSE_FILES="-f docker-compose.dev.databases.yml -f docker-compose.dev.services.yml -f docker-compose.dev.ollama.yml"
+NVIDIA_SERVICE_GPU_FILE="docker-compose.dev.gpu-nvidia.yml"
+NVIDIA_OLLAMA_GPU_FILE="docker-compose.dev.ollama.gpu-nvidia.yml"
+COMPOSE_FILES="$BASE_COMPOSE_FILES"
 
 # ─── Banner ──────────────────────────────────────────────────────────────────
 echo ""
@@ -138,6 +141,7 @@ if (!raw) process.exit(0);
 
 const cfg = JSON.parse(raw);
 const services = cfg.services || {};
+const projectName = cfg.name || "clawai";
 const downloads = [];
 const builds = [];
 
@@ -151,7 +155,8 @@ for (const [name, svc] of Object.entries(services)) {
     const build = svc.build;
     const context = typeof build === "string" ? build : (build.context || ".");
     const dockerfile = typeof build === "object" && build.dockerfile ? build.dockerfile : "Dockerfile";
-    builds.push({ name, detail: `context=${context} dockerfile=${dockerfile}` });
+    const image = svc.image || `${projectName}-${name}:latest`;
+    builds.push({ name, detail: `context=${context} dockerfile=${dockerfile}`, image });
   }
 }
 
@@ -160,9 +165,27 @@ for (const task of downloads) {
 }
 
 for (const task of builds) {
-  console.log(`build|${task.name}|${task.detail}`);
+  console.log(`build|${task.name}|${task.detail}|${task.image}`);
 }
 '
+}
+
+ensure_docker_network() {
+  local network_name="claw-network"
+
+  if docker network inspect "$network_name" >/dev/null 2>&1; then
+    ok "Docker network $network_name already exists"
+    return 0
+  fi
+
+  info "Creating Docker network $network_name"
+  docker network create "$network_name" >/dev/null
+  ok "Docker network $network_name created"
+}
+
+docker_image_exists() {
+  local image_name="$1"
+  [ -n "$image_name" ] && docker image inspect "$image_name" >/dev/null 2>&1
 }
 
 # ─── Step 1: Check prerequisites ────────────────────────────────────────────
@@ -358,6 +381,16 @@ if GPU_INFO="$(detect_gpu)"; then
   esac
 else
   info "No supported GPU detected — Ollama will use CPU mode"
+fi
+
+if [ "$USE_GPU" = "true" ]; then
+  if [ -f "$NVIDIA_SERVICE_GPU_FILE" ] && [ -f "$NVIDIA_OLLAMA_GPU_FILE" ]; then
+    COMPOSE_FILES="$BASE_COMPOSE_FILES -f $NVIDIA_SERVICE_GPU_FILE -f $NVIDIA_OLLAMA_GPU_FILE"
+  else
+    warn "NVIDIA GPU overlays are missing — continuing in CPU mode"
+    USE_GPU="false"
+    GPU_STATUS="NVIDIA GPU detected: $GPU_NAME (GPU overlays missing; CPU mode selected)"
+  fi
 fi
 echo ""
 
@@ -700,6 +733,8 @@ echo ""
 echo "${BOLD}Step 7/7: Starting Claw${NC}"
 echo ""
 
+ensure_docker_network
+
 info "Fetching Docker progress plan..."
 COMPOSE_TASKS=()
 if COMPOSE_TASKS_RAW="$(resolve_compose_tasks)"; then
@@ -713,11 +748,12 @@ TOTAL_TASKS=${#COMPOSE_TASKS[@]}
 if [ "$TOTAL_TASKS" -gt 0 ]; then
   DOWNLOAD_COUNT=0
   BUILD_COUNT=0
+  CACHED_BUILD_COUNT=0
   TASK_INDEX=0
 
   for TASK in "${COMPOSE_TASKS[@]}"; do
     TASK_INDEX=$((TASK_INDEX + 1))
-    IFS='|' read -r TASK_PHASE TASK_NAME TASK_DETAIL <<< "$TASK"
+    IFS='|' read -r TASK_PHASE TASK_NAME TASK_DETAIL TASK_IMAGE <<< "$TASK"
     PROGRESS=$((5 + (((TASK_INDEX - 1) * 80) / TOTAL_TASKS)))
 
     if [ "$TASK_PHASE" = "download" ]; then
@@ -725,20 +761,26 @@ if [ "$TOTAL_TASKS" -gt 0 ]; then
       info "[$PROGRESS%] Downloading $TASK_NAME ($TASK_DETAIL) [$TASK_INDEX/$TOTAL_TASKS]"
       docker compose $COMPOSE_FILES pull "$TASK_NAME"
     else
+      if docker_image_exists "$TASK_IMAGE"; then
+        CACHED_BUILD_COUNT=$((CACHED_BUILD_COUNT + 1))
+        info "[$PROGRESS%] Using existing image for $TASK_NAME ($TASK_IMAGE) [$TASK_INDEX/$TOTAL_TASKS]"
+        continue
+      fi
+
       BUILD_COUNT=$((BUILD_COUNT + 1))
       info "[$PROGRESS%] Building $TASK_NAME ($TASK_DETAIL) [$TASK_INDEX/$TOTAL_TASKS]"
       docker compose $COMPOSE_FILES build --progress plain "$TASK_NAME"
     fi
   done
 
-  ok "Docker progress plan: $DOWNLOAD_COUNT downloads, $BUILD_COUNT builds"
+  ok "Docker progress plan: $DOWNLOAD_COUNT downloads, $BUILD_COUNT builds, $CACHED_BUILD_COUNT cached builds"
 else
   warn "Could not resolve Docker progress plan; falling back to the legacy startup path"
   info "Pulling Docker images (this may take a few minutes on first run)..."
   docker compose $COMPOSE_FILES pull
 
-  info "Building and starting containers..."
-  docker compose $COMPOSE_FILES up -d --build
+  info "Starting containers without rebuilding..."
+  docker compose $COMPOSE_FILES up -d --no-build
 fi
 
 info "[90%] Finalizing containers..."

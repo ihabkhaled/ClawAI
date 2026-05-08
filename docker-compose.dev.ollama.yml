@@ -12,7 +12,6 @@ services:
     image: ollama/ollama:latest
     container_name: claw-ollama
     restart: unless-stopped
-    gpus: all
     ports:
       - '11434:11434'
     volumes:
@@ -88,13 +87,6 @@ services:
       - sd-models-data:/opt/stable-diffusion-webui/models
     environment:
       - COMMANDLINE_ARGS=--api --listen
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
     healthcheck:
       test:
         ['CMD-SHELL', 'wget -qO- http://localhost:17860/sdapi/v1/sd-models 2>/dev/null || exit 1']

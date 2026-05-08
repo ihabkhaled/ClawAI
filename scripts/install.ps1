@@ -23,7 +23,10 @@ Set-Location $ProjectRoot
 $envFile = Join-Path $ProjectRoot ".env"
 
 # --- Compose files (split layout — claw.sh is the canonical entrypoint) ---
-$ComposeFiles = "-f docker-compose.dev.databases.yml -f docker-compose.dev.services.yml -f docker-compose.dev.ollama.yml"
+$BaseComposeFiles = "-f docker-compose.dev.databases.yml -f docker-compose.dev.services.yml -f docker-compose.dev.ollama.yml"
+$NvidiaServiceGpuFile = "docker-compose.dev.gpu-nvidia.yml"
+$NvidiaOllamaGpuFile = "docker-compose.dev.ollama.gpu-nvidia.yml"
+$ComposeFiles = $BaseComposeFiles
 
 # --- Banner ---
 Write-Host ""
@@ -160,6 +163,7 @@ function Get-ComposeTasks {
 
     $downloads = @()
     $builds = @()
+    $projectName = if ($config.name) { $config.name } else { "clawai" }
 
     foreach ($property in $config.services.PSObject.Properties) {
         $name = $property.Name
@@ -182,16 +186,49 @@ function Get-ComposeTasks {
                 $context = if ($svc.build.context) { $svc.build.context } else { "." }
                 $dockerfile = if ($svc.build.dockerfile) { $svc.build.dockerfile } else { "Dockerfile" }
             }
+            $image = if ($svc.image) { $svc.image } else { "${projectName}-${name}:latest" }
 
             $builds += [pscustomobject]@{
                 Phase  = "build"
                 Name   = $name
                 Detail = "context=$context dockerfile=$dockerfile"
+                Image  = $image
             }
         }
     }
 
     return @($downloads + $builds)
+}
+
+function Ensure-DockerNetwork {
+    $networkName = "claw-network"
+
+    try {
+        docker network inspect $networkName 2>$null | Out-Null
+        Write-Ok "Docker network $networkName already exists"
+        return
+    } catch {
+        # Missing network is expected on a first install.
+    }
+
+    Write-Info "Creating Docker network $networkName"
+    docker network create $networkName | Out-Null
+    Write-Ok "Docker network $networkName created"
+}
+
+function Test-DockerImageExists {
+    param([string]$ImageName)
+
+    if (-not $ImageName) {
+        return $false
+    }
+
+    try {
+        docker image inspect $ImageName 2>$null | Out-Null
+        return $true
+    } catch {
+        return $false
+    }
 }
 
 function Test-PortAvailable {
@@ -404,6 +441,17 @@ try {
     }
 } catch {
     Write-Info "No supported GPU detected - Ollama will use CPU mode"
+}
+
+if ($useGpu) {
+    if ((Test-Path $NvidiaServiceGpuFile) -and (Test-Path $NvidiaOllamaGpuFile)) {
+        $ComposeFiles = "$BaseComposeFiles -f $NvidiaServiceGpuFile -f $NvidiaOllamaGpuFile"
+    } else {
+        Write-Warn "NVIDIA GPU overlays are missing - continuing in CPU mode"
+        $useGpu = $false
+        $gpuName = if ($gpuInfo -and $gpuInfo.Name) { $gpuInfo.Name } else { "unknown NVIDIA GPU" }
+        $gpuStatus = "NVIDIA GPU detected: $gpuName (GPU overlays missing; CPU mode selected)"
+    }
 }
 Write-Host ""
 
@@ -756,6 +804,8 @@ Write-Host ""
 Write-Host "Step 7/7: Starting Claw" -ForegroundColor White
 Write-Host ""
 
+Ensure-DockerNetwork
+
 Write-Info "Fetching Docker progress plan..."
 $composeTasks = @(Get-ComposeTasks)
 $totalTasks = $composeTasks.Count
@@ -763,6 +813,7 @@ $totalTasks = $composeTasks.Count
 if ($totalTasks -gt 0) {
     $downloadCount = 0
     $buildCount = 0
+    $cachedBuildCount = 0
 
     for ($index = 0; $index -lt $totalTasks; $index++) {
         $task = $composeTasks[$index]
@@ -773,20 +824,26 @@ if ($totalTasks -gt 0) {
             Write-Info ("[{0,3}%] Downloading {1} ({2}) [{3}/{4}]" -f $progress, $task.Name, $task.Detail, ($index + 1), $totalTasks)
             docker compose $ComposeFiles pull $task.Name
         } else {
+            if (Test-DockerImageExists -ImageName $task.Image) {
+                $cachedBuildCount++
+                Write-Info ("[{0,3}%] Using existing image for {1} ({2}) [{3}/{4}]" -f $progress, $task.Name, $task.Image, ($index + 1), $totalTasks)
+                continue
+            }
+
             $buildCount++
             Write-Info ("[{0,3}%] Building {1} ({2}) [{3}/{4}]" -f $progress, $task.Name, $task.Detail, ($index + 1), $totalTasks)
             docker compose $ComposeFiles build --progress plain $task.Name
         }
     }
 
-    Write-Ok "Docker progress plan: $downloadCount downloads, $buildCount builds"
+    Write-Ok "Docker progress plan: $downloadCount downloads, $buildCount builds, $cachedBuildCount cached builds"
 } else {
     Write-Warn "Could not resolve Docker progress plan; falling back to the legacy startup path"
     Write-Info "Pulling Docker images (this may take a few minutes on first run)..."
     docker compose $ComposeFiles pull
 
-    Write-Info "Building and starting containers..."
-    docker compose $ComposeFiles up -d --build
+    Write-Info "Starting containers without rebuilding..."
+    docker compose $ComposeFiles up -d --no-build
 }
 
 Write-Info "[90%] Finalizing containers..."

@@ -1,0 +1,20 @@
+# NVIDIA GPU passthrough overlay (dev) for Ollama image runtimes.
+#
+# Auto-loaded only when NVIDIA GPU mode is explicitly enabled.
+#
+# Requirements:
+#   - Linux: NVIDIA Container Toolkit installed
+#   - Windows: Docker Desktop with WSL 2 backend + GPU support enabled
+
+services:
+  ollama:
+    gpus: all
+
+  stable-diffusion:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

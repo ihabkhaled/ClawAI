@@ -40,6 +40,7 @@ if [ "$MODE" = "prod" ]; then
   SVC_FILE="$PROJECT_ROOT/docker-compose.prod.services.yml"
   OLLAMA_FILE="$PROJECT_ROOT/docker-compose.prod.ollama.yml"
   GPU_NVIDIA_FILE="$PROJECT_ROOT/docker-compose.prod.gpu-nvidia.yml"
+  OLLAMA_GPU_NVIDIA_FILE="$PROJECT_ROOT/docker-compose.prod.ollama.gpu-nvidia.yml"
   GPU_ROCM_FILE="$PROJECT_ROOT/docker-compose.prod.gpu-rocm.yml"
   GPU_VULKAN_FILE="$PROJECT_ROOT/docker-compose.prod.gpu-vulkan.yml"
 else
@@ -47,6 +48,7 @@ else
   SVC_FILE="$PROJECT_ROOT/docker-compose.dev.services.yml"
   OLLAMA_FILE="$PROJECT_ROOT/docker-compose.dev.ollama.yml"
   GPU_NVIDIA_FILE="$PROJECT_ROOT/docker-compose.dev.gpu-nvidia.yml"
+  OLLAMA_GPU_NVIDIA_FILE="$PROJECT_ROOT/docker-compose.dev.ollama.gpu-nvidia.yml"
   GPU_ROCM_FILE="$PROJECT_ROOT/docker-compose.dev.gpu-rocm.yml"
   GPU_VULKAN_FILE="$PROJECT_ROOT/docker-compose.dev.gpu-vulkan.yml"
 fi
@@ -55,6 +57,7 @@ fi
 # Cross-platform GPU detection
 # -----------------------------------------------------------------------------
 GPU_OVERLAY=""
+OLLAMA_GPU_OVERLAY=""
 GPU_VENDOR="none"
 
 detect_gpu() {
@@ -75,6 +78,9 @@ detect_gpu() {
     if [ -f "$GPU_NVIDIA_FILE" ]; then
       GPU_VENDOR="nvidia"
       GPU_OVERLAY="-f $GPU_NVIDIA_FILE"
+      if [ -f "$OLLAMA_GPU_NVIDIA_FILE" ]; then
+        OLLAMA_GPU_OVERLAY="-f $OLLAMA_GPU_NVIDIA_FILE"
+      fi
       local gpu_name
       gpu_name="$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1 | tr -d '\r')"
       echo "✓ NVIDIA GPU detected ($gpu_name) — enabling CUDA passthrough" >&2
@@ -115,10 +121,20 @@ build_svc_compose_flags() {
   fi
 }
 
+# Compose-merged file flags for the Ollama group (with optional NVIDIA GPU overlay).
+build_ollama_compose_flags() {
+  if [ -n "$OLLAMA_GPU_OVERLAY" ]; then
+    echo "-f $OLLAMA_FILE $OLLAMA_GPU_OVERLAY"
+  else
+    echo "-f $OLLAMA_FILE"
+  fi
+}
+
 case "$1" in
   up)
     detect_gpu
     SVC_FLAGS=$(build_svc_compose_flags)
+    OLLAMA_FLAGS=$(build_ollama_compose_flags)
     echo "Starting all ClawAI services ($MODE mode, gpu=$GPU_VENDOR)..."
     docker compose -f "$DB_FILE" up -d
     echo "Waiting for databases to become healthy..."
@@ -126,15 +142,18 @@ case "$1" in
     # shellcheck disable=SC2086
     docker compose $SVC_FLAGS up -d
     echo "Starting Ollama runtime..."
-    docker compose -f "$OLLAMA_FILE" up -d
+    # shellcheck disable=SC2086
+    docker compose $OLLAMA_FLAGS up -d
     echo "All services started."
     ;;
   down)
     echo "Stopping all ClawAI services ($MODE mode)..."
     SVC_FLAGS=$(build_svc_compose_flags)
+    OLLAMA_FLAGS=$(build_ollama_compose_flags)
     # shellcheck disable=SC2086
     docker compose $SVC_FLAGS down
-    docker compose -f "$OLLAMA_FILE" down
+    # shellcheck disable=SC2086
+    docker compose $OLLAMA_FLAGS down
     docker compose -f "$DB_FILE" down
     echo "All services stopped."
     ;;
@@ -167,16 +186,22 @@ case "$1" in
     docker compose $SVC_FLAGS up -d --build
     ;;
   ollama:up)
+    detect_gpu
+    OLLAMA_FLAGS=$(build_ollama_compose_flags)
     echo "Starting Ollama runtime ($MODE mode)..."
-    docker compose -f "$OLLAMA_FILE" up -d
+    # shellcheck disable=SC2086
+    docker compose $OLLAMA_FLAGS up -d
     ;;
   ollama:down)
+    OLLAMA_FLAGS=$(build_ollama_compose_flags)
     echo "Stopping Ollama runtime ($MODE mode)..."
-    docker compose -f "$OLLAMA_FILE" down
+    # shellcheck disable=SC2086
+    docker compose $OLLAMA_FLAGS down
     ;;
   status)
     detect_gpu
     SVC_FLAGS=$(build_svc_compose_flags)
+    OLLAMA_FLAGS=$(build_ollama_compose_flags)
     echo "=== ClawAI Status ($MODE mode, gpu=$GPU_VENDOR) ==="
     echo ""
     echo "--- Databases + Infrastructure ---"
@@ -187,7 +212,8 @@ case "$1" in
     docker compose $SVC_FLAGS ps
     echo ""
     echo "--- Ollama Runtime ---"
-    docker compose -f "$OLLAMA_FILE" ps
+    # shellcheck disable=SC2086
+    docker compose $OLLAMA_FLAGS ps
     ;;
   gpu)
     # Diagnostic: show what GPU detection finds without starting anything.
