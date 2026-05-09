@@ -287,6 +287,13 @@ jobs:
       AUDIT_MONGODB_URI: mongodb://localhost:27017/test
       CLIENT_LOGS_MONGODB_URI: mongodb://localhost:27017/test
       SERVER_LOGS_MONGODB_URI: mongodb://localhost:27017/test
+      # Workspace runtime gates (Phase E close-out, 2026-05-02)
+      # These all have Zod defaults; the explicit values here mirror prod and
+      # ensure the spec env-fixture types match without relying on defaults.
+      WORKSPACE_SUGGESTION_FACTORY_RATE_PER_HOUR: '100'
+      WEBHOOK_CONNECTOR_REQUESTS_PER_MINUTE: '60'
+      AUTO_SUGGEST_INBOX_REPLY_CRON: '0 */15 * * * *'
+      AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS: '48'
     steps:
       - uses: actions/checkout@v4
 

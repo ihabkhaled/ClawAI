@@ -1009,6 +1009,11 @@ Single root `.env` (copy from `.env.example`). Groups:
 - Image: STABLE_DIFFUSION_URL, IMAGE_SERVICE_URL, IMAGE_PORT, IMAGE_DATABASE_URL
 - ComfyUI: COMFYUI_BASE_URL, COMFYUI_PORT
 - Model Catalog: AUTO_PULL_MODELS (space-separated list of models to auto-pull on Docker startup)
+- Workspace runtime gates (Phase E close-out, 2026-05-02):
+  - WORKSPACE_SUGGESTION_FACTORY_RATE_PER_HOUR (default 100) — per-event-type cap on suggestion-factory enqueue rate (Stream 13.3, in-memory sliding window)
+  - WEBHOOK_CONNECTOR_REQUESTS_PER_MINUTE (default 60) — per-connector cap on incoming webhook delivery rate (Stream 11.4, in-memory sliding window; over-cap returns RATE_LIMITED rejection)
+  - AUTO_SUGGEST_INBOX_REPLY_CRON (default `0 */15 * * * *`) — cron for the Gmail INBOX_REPLY collector that emits DRAFT candidates (Stream 12.2)
+  - AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS (default 48) — how far back to scan Gmail messages for inbox-reply candidates
 
 ---
 

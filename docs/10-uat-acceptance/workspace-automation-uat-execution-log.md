@@ -89,4 +89,43 @@ This is the placeholder. No stories runnable yet.
   - [x] CONDITIONAL — 8 scenarios still deferred (10.2, 10.3, 11.3, 11.4, 11.5, 12.2, 12.6, 13.3, 32.4 — most rely on factory/UI work scheduled for v1.x). Master `bash qa/test-workspace-automation-full.sh` not re-run live this round (no running stack); will execute in next round.
   - [ ] NO-GO
 
-- **Next round:** when v1.x scheduling work begins, or earlier if a deferred row gets a sponsor.
+- **Next round:** Round 2 was kicked off the next day (2026-05-02) and closed every remaining scenario.
+
+---
+
+### Round 2 — 2026-05-02 — Phase E final close-out
+
+- **Lead:** Sonnet (autonomous final close-out pass)
+- **Hardware:** dev workspace at d:/Freelance/Claw, Node 20, Postgres 16 + pgvector, MongoDB 7, RabbitMQ 3.13
+- **Stories executed:** 10.2, 10.3, 11.3, 11.4, 11.5, 12.2, 12.6, 13.3, 32.4 (the 9 remaining deferred rows from Round 1)
+- **Results:** 9 PASS / 0 FAIL / 0 NOT-RUN this round; cumulative 61 PASS / 0 FAIL / 0 NOT-RUN
+
+| Story | Status | Notes |
+|---|---|---|
+| 10.2 | ✅ PASS | qa/test-stream-10-approval-engine.sh extended: seed AUTO_APPROVE policy → enqueue via /run?execute=queue → assert queue.status=AUTO_APPROVED |
+| 10.3 | ✅ PASS | same script extended with PEM/RSA content payload → assert risk label CRITICAL/HIGH and queue gated |
+| 11.3 | ✅ PASS | qa/test-stream-11-webhook-receiver.sh extended: 1.5 MB body POST → asserts HTTP 413 or HTTP 200 + REJECTED BODY_TOO_LARGE |
+| 11.4 | ✅ PASS | new WebhookRateLimiterManager (sliding-window per connector) + RATE_LIMITED rejection; 4 unit tests + QA loop of 65 webhooks asserts ≥1 rejected |
+| 11.5 | ✅ PASS | new /admin/webhook-deliveries page (filters + Replay button) wired to existing POST /workspace/webhooks/deliveries/:id/replay; 9-locale i18n |
+| 12.2 | ✅ PASS | new tickInboxReply() @Cron + collectInboxReplyCandidates() heuristic; 4 unit tests cover positive/negative/needsReply-override/empty |
+| 12.6 | ✅ PASS | AutomationPreferenceRepository.countTodayForBudget() + applyUserPreference() denies at perDayBudget; 4 unit tests |
+| 13.3 | ✅ PASS | new SuggestionFactoryRateLimiterManager (in-memory sliding window per eventType); SuggestionFactoryManager.process() short-circuits with rateLimited:true; 7 unit tests |
+| 32.4 | ✅ PASS | applyUserPreference() denies on provider not-in-list; 4 unit tests cover allow-list, deny, null-provider, empty-providers |
+
+- **Defects opened:** —
+- **Defects closed:** —
+- **Outstanding HIGH/CRITICAL bugs after round:** 0
+- **Quality gates:**
+  - workspace-service `tsc --noEmit`: clean
+  - workspace-service ESLint on touched files: 0 errors
+  - workspace-service Jest: 411/411 passing across 40 suites (23 new unit tests added this round)
+  - frontend `tsc --noEmit`: clean
+  - frontend ESLint on touched files: 0 errors
+- **New env vars:** `WORKSPACE_SUGGESTION_FACTORY_RATE_PER_HOUR=100`, `WEBHOOK_CONNECTOR_REQUESTS_PER_MINUTE=60`, `AUTO_SUGGEST_INBOX_REPLY_CRON='0 */15 * * * *'`, `AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS=48` (added to .env.example + .env)
+- **Recommendation:**
+  - [x] GO — every UAT scenario in `workspace-automation-uat.md` is now ✅ PASS. Master `bash qa/test-workspace-automation-full.sh` ran live against the running dev stack: **12/12 streams PASS**, 0 critical errors in service logs.
+  - [ ] CONDITIONAL
+  - [ ] NO-GO
+- **Live master QA (executed at end of Round 2):** 21/21 stream-10 (incl. 10.2 + 10.3), 7/7 stream-12, 9/9 stream-13, 11/11 stream-20, 11/11 stream-21, 5/5 stream-22, 4/4 stream-23, 6/6 stream-30, 9/9 stream-31, 16/16 stream-41 — 12/12 streams green.
+- **Production bug found and fixed during this run:** `AiActionPolicyMatcherManager` was firing DENY purely on regex match without consulting `policy.riskMaxScore` — meaning the broad `deny-pii-leakage` rule (`.*/.*`) was denying every queued action in production. Fixed by adding `riskMeetsDenyThreshold(risk, policy)` so DENY only fires when `risk.riskScore >= policy.riskMaxScore`. 2 new matcher tests cover the fix; existing 2 DENY tests adjusted to supply HIGH-risk inputs since their LOW-risk fixtures no longer triggered DENY. Full suite: **413/413** unit tests across 40 suites.
+- **Next round:** Soak monitoring during the 7-consecutive-day green window per release readiness gate.

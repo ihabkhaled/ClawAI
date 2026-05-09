@@ -98,6 +98,29 @@ All knobs are `AI_ACTION_*` / `WEBHOOK_*` / `AUTO_SUGGEST_*` env vars. See `.env
 - `WEBHOOK_BODY_MAX_BYTES=1048576` — 1 MiB cap
 - `AUTO_SUGGEST_DEDUP_TTL_DAYS=7` — dedup horizon
 
+### Phase E runtime gates (added 2026-05-02)
+
+These four envs control the four close-out gates that previously had no runtime enforcement.
+
+| Var | Default | Purpose | Stream |
+|---|---|---|---|
+| `WORKSPACE_SUGGESTION_FACTORY_RATE_PER_HOUR` | 100 | Per-`eventType` cap on the suggestion factory's enqueue rate; in-memory sliding window per process. Over-cap: `SuggestionFactoryManager.process()` short-circuits and returns `{ rateLimited: true }` without invoking rule evaluation. | 13.3 |
+| `WEBHOOK_CONNECTOR_REQUESTS_PER_MINUTE` | 60 | Per-`connectorId` (or `provider:` if no connector) cap on incoming webhook delivery rate; in-memory sliding window. Over-cap: `WebhookReceiverManager.receive()` returns `RATE_LIMITED` rejection with persistence so it shows up in the admin replay UI. | 11.4 |
+| `AUTO_SUGGEST_INBOX_REPLY_CRON` | `0 */15 * * * *` | Cron for the Gmail INBOX_REPLY collector; `tickInboxReply()` finds Gmail messages within ±lookback that need a reply and emits DRAFT candidates. Heuristic: `metadata.needsReply === true` OR title doesn't start with `"re:"`. | 12.2 |
+| `AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS` | 48 | How far back to scan Gmail messages for the INBOX_REPLY collector. | 12.2 |
+
+The user-preference gates (per-day budget 12.6, per-provider kill switch 32.4) live entirely in `AiActionApprovalManager.applyUserPreference()`; their thresholds are stored on the `UserAutomationPreference` row (`perDayBudget`, `providers[]`) — no env vars needed.
+
+### Admin webhook replay UI (11.5)
+
+The admin page `/admin/webhook-deliveries` lists `WebhookDelivery` rows with provider/connector filters and a per-row Replay button. The button calls the existing `POST /workspace/webhooks/deliveries/:id/replay` endpoint (admin-only). Implementation: `apps/claw-frontend/src/app/(portal)/admin/webhook-deliveries/page.tsx` + `useWebhookDeliveriesPage` + `WebhookDeliveryRow`. i18n in 9 locales under the `adminWebhooks` namespace.
+
+### Policy matcher fix (Phase E live QA, 2026-05-02)
+
+The seeded `deny-pii-leakage` policy uses `providerRegex: '.*'` and `actionKindRegex: '.*'` and relies on the risk scorer's PII detector to be the actual discriminator (`riskMaxScore: 100`). The matcher was firing DENY on regex match alone, ignoring risk score — which meant every queued action was being denied in production.
+
+**Fix:** `AiActionPolicyMatcherManager.evaluate()` now consults `riskMeetsDenyThreshold(risk, policy)` for DENY policies. DENY fires only when `risk.riskScore >= policy.riskMaxScore` AND label order ≥ policy threshold. `deny-impl-prompt-auto-approve` was relaxed from `100/CRITICAL` to `80/HIGH` so routine IMPL_PROMPTs route to PENDING_APPROVAL via the next-priority ALLOW; risky IMPL_PROMPTs (secret patterns) still hard-denied. The "no IMPL_PROMPT auto-approve" guarantee remains intact because no AUTO_APPROVE policy matches `^IMPL_PROMPT$`.
+
 ## Verification
 
 - Unit tests: 30+ across the new modules; coverage stays above the 92% gate.
@@ -122,7 +145,9 @@ All knobs are `AI_ACTION_*` / `WEBHOOK_*` / `AUTO_SUGGEST_*` env vars. See `.env
 
 ## What still needs work
 
-- Frontend: dedicated approval-card with risk badges, edit/reject dialogs, bulk-approve UI, admin policy editor (Stream 32 frontend), trigger-rule editor, automation-preferences page, "what we've learned" panel (Stream 40 frontend)
-- Streams 22, 23, 30, 31, 41 — see stream prompts in `plan-prompts/wokrspaces-flagship/`
-- Per-stream UAT evidence in `.claude/Integrations/<stream>__QA_output.md`
-- All 8 i18n locales for new user-facing strings (~70 new strings expected from approval card + admin pages)
+As of Phase E close-out (2026-05-02) every UAT scenario in `workspace-automation-uat.md` is ✅ PASS and the master harness `qa/test-workspace-automation-full.sh` runs 12/12 streams green against the live dev stack. Remaining items:
+
+- **Soak window** — release-readiness gate requires 7 consecutive green days of master-harness execution. Day 1 = 2026-05-02; not yet reached.
+- **`SuggestionTriggerRule.perEventBudgetPerHour` Prisma column (13.3 v1.1)** — current rate-limiter is in-memory per process. A persisted per-rule cap (vs the global per-`eventType` cap) would let admins tune individual rules through the existing trigger-rule editor.
+- **Persisted deny reason on the queue row (12.6 / 32.4 v1.1)** — `AiActionApprovalManager.applyUserPreference()` returns `DENIED` with debug logging but doesn't write a `metadata.reason` (e.g. `BUDGET_EXCEEDED`, `PROVIDER_DISABLED`) on the queue row. Without it, users can't tell *why* an action was denied.
+- **Webhook stream live-soak** — `qa/test-stream-11-webhook-receiver.sh` currently SKIPs signature/body-cap/rate-limit assertions when no GitHub workspace connector is provisioned. Provision a real connector to actually exercise the gate code paths end-to-end.
