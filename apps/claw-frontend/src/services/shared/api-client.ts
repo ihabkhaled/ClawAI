@@ -1,5 +1,5 @@
 import { httpClient } from '@/lib/http-client';
-import type { ApiResponse } from '@/types';
+import type { ApiClientRequestOptions, ApiResponse } from '@/types';
 
 export class ApiClientError extends Error {
   status: number;
@@ -12,15 +12,6 @@ export class ApiClientError extends Error {
     this.errors = params.errors;
   }
 }
-
-// Per-call request options. Mainly used by long-running endpoints (LLM
-// generation) that can blow past the global 30s axios timeout. Pass
-// `timeout: 0` to disable the client-side cutoff entirely so the request
-// resolves whenever the backend (or nginx) terminates it.
-export type ApiClientRequestOptions = {
-  timeout?: number;
-  signal?: AbortSignal;
-};
 
 export const apiClient = {
   async get<T>(path: string, params?: Record<string, string>): Promise<ApiResponse<T>> {

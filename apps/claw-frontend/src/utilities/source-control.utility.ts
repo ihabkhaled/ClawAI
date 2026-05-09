@@ -46,7 +46,9 @@ export function dedupeWorkspaceObjectsByProviderAndExternalId(
     }
     const a = obj.externalUpdatedAt ?? '';
     const b = existing.externalUpdatedAt ?? '';
-    if (a > b) seen.set(key, obj);
+    if (a > b) {
+      seen.set(key, obj);
+    }
   }
   return Array.from(seen.values());
 }
