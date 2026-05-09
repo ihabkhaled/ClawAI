@@ -187,6 +187,17 @@ function resolvePath(segments: string[], ctx: RecipeExpressionContext): unknown 
     if (cursor === null || cursor === undefined || typeof cursor !== 'object') {
       return undefined;
     }
+    // Block prototype-chain walks. Path resolution must only see own
+    // enumerable properties of the explicit context, not inherited
+    // members like __proto__, constructor, prototype, hasOwnProperty.
+    if (
+      segment === '__proto__' ||
+      segment === 'constructor' ||
+      segment === 'prototype' ||
+      !Object.prototype.hasOwnProperty.call(cursor, segment)
+    ) {
+      return undefined;
+    }
     cursor = (cursor as Record<string, unknown>)[segment];
   }
   return cursor;

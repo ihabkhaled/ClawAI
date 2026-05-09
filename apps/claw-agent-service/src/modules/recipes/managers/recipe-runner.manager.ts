@@ -298,6 +298,17 @@ export class RecipeRunnerManager {
       this.logger.log(
         `proposeStep: runId=${run.id} stepId=${dslStep.id} invocationId=${proposal.id} status=${proposal.status}`,
       );
+      // If the proposal was synchronously denied (matched a DENY policy),
+      // route through on_error directly rather than waiting for the
+      // capability event — the event may have already fired before the
+      // step row's invocationId was bound, in which case the consumer
+      // couldn't find the step.
+      if (proposal.status === CapabilityInvocationStatus.DENIED) {
+        await this.handleStepFailure(
+          stepRow,
+          `capability denied by policy: ${proposal.matchedPolicyName ?? 'unknown'}`,
+        );
+      }
     } catch (error) {
       this.logger.error(
         `proposeStep: failed to propose stepId=${dslStep.id}: ${(error as Error).message}`,

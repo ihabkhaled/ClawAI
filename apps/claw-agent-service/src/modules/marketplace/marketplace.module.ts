@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { PrismaModule } from '../../infrastructure/database/prisma/prisma.module';
+import { RecipesModule } from '../recipes/recipes.module';
 import { MarketplaceController } from './controllers/marketplace.controller';
 import { MarketplaceRepository } from './repositories/marketplace.repository';
 import { MarketplaceService } from './services/marketplace.service';
@@ -20,7 +21,7 @@ import { MarketplaceService } from './services/marketplace.service';
  * was leaked).
  */
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, RecipesModule],
   controllers: [MarketplaceController],
   providers: [MarketplaceRepository, MarketplaceService],
   exports: [MarketplaceService],

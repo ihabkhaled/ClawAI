@@ -35,14 +35,28 @@ export class PolicyRepository {
    */
   async findActiveForCapabilityClass(
     capabilityClass: string,
+    orgIds: string[] = [],
   ): Promise<AccessPolicy[]> {
     return this.prisma.accessPolicy.findMany({
       where: {
         isActive: true,
         capabilityClass: capabilityClass as never,
+        OR: [{ orgId: null }, { orgId: { in: orgIds } }],
       },
       orderBy: [{ priority: 'desc' }, { createdAt: 'asc' }],
     });
+  }
+
+  /**
+   * Resolve the orgs a user is a member of. Used by the risk service to
+   * scope policy lookups (Stream 40 RBAC).
+   */
+  async findOrgIdsForUser(userId: string): Promise<string[]> {
+    const memberships = await this.prisma.organizationMember.findMany({
+      where: { userId },
+      select: { organizationId: true },
+    });
+    return memberships.map((m) => m.organizationId);
   }
 
   async findById(id: string): Promise<AccessPolicy | null> {

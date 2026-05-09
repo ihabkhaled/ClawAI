@@ -50,11 +50,16 @@ const logger = new Logger('SandboxRunner');
 export function staticAnalyse(dsl: RecipeDsl): StaticAnalysisFinding[] {
   const findings: StaticAnalysisFinding[] = [];
   for (const step of dsl.steps) {
-    const targetStr = JSON.stringify(step.target);
-    const payloadStr = step.payload === undefined ? '' : JSON.stringify(step.payload);
+    // Collect raw string leaves rather than JSON-stringifying the
+    // whole object — JSON.stringify doubles backslashes, which
+    // breaks regex matchers that expect single-backslash Windows paths.
+    const targetStrings = collectStrings(step.target);
+    const payloadStrings =
+      step.payload === undefined ? [] : collectStrings(step.payload);
+    const allStrings = [...targetStrings, ...payloadStrings];
     if (step.capabilityClass === 'FILESYSTEM') {
       for (const pat of BANNED_FS_PATH_PATTERNS) {
-        if (pat.test(targetStr)) {
+        if (allStrings.some((s) => pat.test(s))) {
           findings.push({
             stepId: step.id,
             severity: 'high',
@@ -66,7 +71,7 @@ export function staticAnalyse(dsl: RecipeDsl): StaticAnalysisFinding[] {
     }
     if (step.capabilityClass === 'TERMINAL') {
       for (const pat of BANNED_TERMINAL_PATTERNS) {
-        if (pat.test(targetStr) || pat.test(payloadStr)) {
+        if (allStrings.some((s) => pat.test(s))) {
           findings.push({
             stepId: step.id,
             severity: 'critical',
@@ -78,7 +83,7 @@ export function staticAnalyse(dsl: RecipeDsl): StaticAnalysisFinding[] {
     }
     if (step.capabilityClass === 'BROWSER') {
       for (const pat of BANNED_BROWSER_DOMAINS) {
-        if (pat.test(targetStr)) {
+        if (allStrings.some((s) => pat.test(s))) {
           findings.push({
             stepId: step.id,
             severity: 'high',
@@ -90,6 +95,29 @@ export function staticAnalyse(dsl: RecipeDsl): StaticAnalysisFinding[] {
     }
   }
   return findings;
+}
+
+/**
+ * Recursively walk a value and collect every string leaf. Used by the
+ * static analyser so banned-pattern regexes match against raw user
+ * paths/URLs rather than JSON-encoded blobs (where backslashes get
+ * doubled and break Windows-path checks).
+ */
+function collectStrings(value: unknown): string[] {
+  const out: string[] = [];
+  function walk(v: unknown): void {
+    if (typeof v === 'string') {
+      out.push(v);
+    } else if (Array.isArray(v)) {
+      for (const x of v) walk(x);
+    } else if (v !== null && typeof v === 'object') {
+      for (const k of Object.keys(v as Record<string, unknown>)) {
+        walk((v as Record<string, unknown>)[k]);
+      }
+    }
+  }
+  walk(value);
+  return out;
 }
 
 export async function dryRunInWorker(

@@ -8,6 +8,7 @@ import { CapabilityInvocationStatus } from '../../../common/enums/capability-inv
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
 import { CapabilityInvocationRepository } from '../repositories/capability-invocation.repository';
+import { PolicyRepository } from '../repositories/policy.repository';
 import { CapabilityRiskService } from '../services/capability-risk.service';
 import { Prisma, type CapabilityInvocation } from '../../../generated/prisma';
 import type { CompleteCapabilityDto } from '../dto/complete-capability.dto';
@@ -50,6 +51,7 @@ export class CapabilityApprovalManager {
 
   constructor(
     private readonly repo: CapabilityInvocationRepository,
+    private readonly policyRepo: PolicyRepository,
     private readonly riskService: CapabilityRiskService,
     private readonly rabbitMQ: RabbitMQService,
   ) {}
@@ -60,7 +62,10 @@ export class CapabilityApprovalManager {
   ): Promise<CapabilityProposalResult> {
     const deviceAge = await this.repo.deviceAgeDays(dto.deviceId);
     const userClassCount = await this.repo.countForUserClass(userId, dto.capabilityClass);
-    const assessment = await this.riskService.assess(this.toAssessmentInput(userId, dto, deviceAge, userClassCount));
+    const orgIds = await this.policyRepo.findOrgIdsForUser(userId);
+    const assessment = await this.riskService.assess(
+      this.toAssessmentInput(userId, dto, deviceAge, userClassCount, orgIds),
+    );
     const expiresAt = new Date(Date.now() + CAPABILITY_QUEUE_EXPIRY_MINUTES_DEFAULT * 60 * 1000);
     const created = await this.repo.create(this.toCreateInput(userId, dto, assessment, expiresAt));
     void this.publishProposalEvents(created, assessment.status);
@@ -245,6 +250,7 @@ export class CapabilityApprovalManager {
     dto: ProposeCapabilityDto,
     deviceAgeDays: number | null,
     userInvocationsThisClassCount: number,
+    orgIds: string[],
   ): RiskAssessmentInput {
     return {
       capabilityClass: dto.capabilityClass,
@@ -257,6 +263,7 @@ export class CapabilityApprovalManager {
       deviceId: dto.deviceId,
       deviceAgeDays: deviceAgeDays ?? undefined,
       userInvocationsThisClassCount,
+      orgIds,
     };
   }
 

@@ -59,8 +59,10 @@ export class CapabilityRiskService {
   constructor(private readonly policyRepo: PolicyRepository) {}
 
   async assess(input: RiskAssessmentInput): Promise<RiskAssessmentResult> {
+    const orgIds = input.orgIds ?? [];
     const policies = await this.policyRepo.findActiveForCapabilityClass(
       input.capabilityClass,
+      orgIds,
     );
     return this.evaluate(input, policies);
   }

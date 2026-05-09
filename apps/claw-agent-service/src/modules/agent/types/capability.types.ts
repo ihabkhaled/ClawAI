@@ -52,6 +52,7 @@ export type RiskAssessmentInput = {
   // Optional context computed by caller
   deviceAgeDays?: number;
   userInvocationsThisClassCount?: number;
+  orgIds?: string[]; // Stream 40 RBAC: orgs the user is a member of
 };
 
 export type RiskAssessmentResult = {

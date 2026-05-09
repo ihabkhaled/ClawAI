@@ -3,6 +3,7 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
 import { MarketplaceRepository } from '../repositories/marketplace.repository';
+import { RecipeService } from '../../recipes/services/recipe.service';
 import { dslFromJson } from '../../recipes/utilities/dsl-cast.utility';
 import { sandboxAnalyse } from '../utilities/sandbox-runner.utility';
 import {
@@ -18,7 +19,10 @@ import type { SandboxResult } from '../types/sandbox.types';
 export class MarketplaceService {
   private readonly logger = new Logger(MarketplaceService.name);
 
-  constructor(private readonly repo: MarketplaceRepository) {}
+  constructor(
+    private readonly repo: MarketplaceRepository,
+    private readonly recipeService: RecipeService,
+  ) {}
 
   async publish(userId: string, dto: PublishListingDto): Promise<MarketplaceListing> {
     this.logger.debug(`publish: userId=${userId} name=${dto.name}`);
@@ -88,9 +92,28 @@ export class MarketplaceService {
         },
       );
     }
+    // Materialise as a Recipe row in the user's library so they can run it.
+    const dsl = dslFromJson(listing.dsl);
+    const recipeName = `${listing.name} (marketplace)`;
+    const recipe = await this.recipeService
+      .create(userId, {
+        name: recipeName,
+        description: listing.description ?? `Installed from marketplace listing ${listingId}`,
+        dsl,
+        isEnabled: true,
+        metadata: { marketplaceListingId: listingId },
+      })
+      .catch((error) => {
+        this.logger.warn(
+          `install: recipe create failed for ${listingId}: ${(error as Error).message}`,
+        );
+        return null;
+      });
     await this.repo.incrementInstalls(listingId);
-    await this.repo.recordInstall(listingId, userId, null);
-    this.logger.log(`install: listing ${listingId} by user ${userId} sandbox=OK`);
+    await this.repo.recordInstall(listingId, userId, recipe?.id ?? null);
+    this.logger.log(
+      `install: listing ${listingId} by user ${userId} sandbox=OK recipeId=${recipe?.id ?? 'none'}`,
+    );
     return listing;
   }
 
