@@ -93,7 +93,7 @@ export function AiActionDialog({
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>
                   {t('aiActions.dialog.generated_by', {
-                    model: ctrl.result.generatedBy.displayName,
+                    model: ctrl.result.generatedBy?.displayName ?? '—',
                   })}
                 </span>
                 <Button

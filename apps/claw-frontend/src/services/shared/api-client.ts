@@ -1,5 +1,5 @@
 import { httpClient } from '@/lib/http-client';
-import type { ApiResponse } from '@/types';
+import type { ApiClientRequestOptions, ApiResponse } from '@/types';
 
 export class ApiClientError extends Error {
   status: number;
@@ -23,9 +23,16 @@ export const apiClient = {
     }
   },
 
-  async post<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
+  async post<T>(
+    path: string,
+    body?: unknown,
+    options?: ApiClientRequestOptions,
+  ): Promise<ApiResponse<T>> {
     try {
-      const response = await httpClient.post<T>(path, body);
+      const response = await httpClient.post<T>(path, body, {
+        timeout: options?.timeout,
+        signal: options?.signal,
+      });
       return { data: response.data, status: response.status };
     } catch (error) {
       throw toApiClientError(error);

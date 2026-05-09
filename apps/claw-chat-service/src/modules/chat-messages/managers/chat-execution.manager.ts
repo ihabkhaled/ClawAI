@@ -601,20 +601,38 @@ export class ChatExecutionManager implements OnModuleInit {
   ): Promise<InternalGenerateResponse> {
     const config = AppConfig.get();
     const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
-    const body: OpenAiChatRequest = {
-      model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      stream: false,
-    };
-    if (maxTokens !== undefined) {
-      body.max_tokens = Math.min(maxTokens, HARD_MAX_OUTPUT_TOKENS);
-    }
+    const isOllamaConnector = provider === OLLAMA_CONNECTOR_PROVIDER;
+    // Cloud Ollama (and any other provider routed through the OLLAMA
+    // connector) speaks the *native* Ollama chat API at `/api/chat`, not
+    // the OpenAI-compat path. resolveOllamaConnectorBaseUrl already pins
+    // baseUrl to end with `/api`, so the URL here is `${baseUrl}/chat`.
+    // Body is the native Ollama shape (`options.num_predict` instead of
+    // OpenAI's top-level `max_tokens`); response shape is also native.
+    const url = isOllamaConnector ? `${baseUrl}/chat` : `${baseUrl}/chat/completions`;
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ];
+    const body: OpenAiChatRequest | OllamaChatRequest = isOllamaConnector
+      ? {
+          model,
+          messages,
+          stream: false,
+          ...(maxTokens === undefined
+            ? {}
+            : { options: { num_predict: Math.min(maxTokens, HARD_MAX_OUTPUT_TOKENS) } }),
+        }
+      : {
+          model,
+          messages,
+          stream: false,
+          ...(maxTokens === undefined
+            ? {}
+            : { max_tokens: Math.min(maxTokens, HARD_MAX_OUTPUT_TOKENS) }),
+        };
     const startTime = Date.now();
-    const response = await httpRequest<OpenAiChatResponse>({
-      url: `${baseUrl}/chat/completions`,
+    const response = await httpRequest<OpenAiChatResponse | OllamaChatResponse>({
+      url,
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}` },
       body,
@@ -629,13 +647,21 @@ export class ChatExecutionManager implements OnModuleInit {
         'CLOUD_PROVIDER_REQUEST_FAILED',
       );
     }
-    const parsed = this.parseCloudResponse(
-      response.data as OpenAiChatResponse,
-      provider,
-      model,
-      startTime,
-      false,
-    );
+    const parsed = isOllamaConnector
+      ? this.parseOllamaChatResponse(
+          response.data as OllamaChatResponse,
+          provider,
+          model,
+          startTime,
+          false,
+        )
+      : this.parseCloudResponse(
+          response.data as OpenAiChatResponse,
+          provider,
+          model,
+          startTime,
+          false,
+        );
     return {
       content: parsed.content,
       provider: parsed.provider,
