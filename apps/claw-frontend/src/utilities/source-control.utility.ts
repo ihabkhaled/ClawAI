@@ -1,5 +1,6 @@
 import type { TranslateFunction } from '../types/i18n.types';
 import type { PullRequestMetadata } from '../types/source-control.types';
+import type { WorkspaceObject } from '../types/workspace.types';
 
 function resolveStringField(
   metadata: Record<string, unknown>,
@@ -23,6 +24,31 @@ export function getPrStateLabel(state: string, t: TranslateFunction): string {
     return t('source_control.pr.state_closed');
   }
   return t('source_control.pr.state_open');
+}
+
+/**
+ * Dedupe `WorkspaceObject` rows by `(provider, externalId)`. Multiple
+ * connectors can sync the same upstream PR/issue and end up writing one row
+ * each (the rows are unique by `(connector_id, external_id)` in Postgres),
+ * so the unfiltered list query naturally returns N copies. We keep whichever
+ * copy has the most recent `externalUpdatedAt`.
+ */
+export function dedupeWorkspaceObjectsByProviderAndExternalId(
+  objects: WorkspaceObject[],
+): WorkspaceObject[] {
+  const seen = new Map<string, WorkspaceObject>();
+  for (const obj of objects) {
+    const key = `${obj.provider}:${obj.externalId}`;
+    const existing = seen.get(key);
+    if (existing === undefined) {
+      seen.set(key, obj);
+      continue;
+    }
+    const a = obj.externalUpdatedAt ?? '';
+    const b = existing.externalUpdatedAt ?? '';
+    if (a > b) seen.set(key, obj);
+  }
+  return Array.from(seen.values());
 }
 
 export function extractPrMetadata(metadata: Record<string, unknown>): PullRequestMetadata {

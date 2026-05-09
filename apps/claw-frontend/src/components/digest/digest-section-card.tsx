@@ -19,8 +19,8 @@ export function DigestSectionCard({ section, t }: DigestSectionCardProps): React
             {t('digest.section.highlights')}
           </span>
           <ul className="ml-4 list-disc space-y-1 text-xs text-muted-foreground">
-            {section.highlights.map((h) => (
-              <li key={h}>{h}</li>
+            {section.highlights.map((h, i) => (
+              <li key={`${i}-${h}`}>{h}</li>
             ))}
           </ul>
         </div>
