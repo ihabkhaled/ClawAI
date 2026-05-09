@@ -29,6 +29,9 @@ export class WebhookReceiverManager {
     headers: Record<string, string | string[] | undefined>,
     ipAddress: string | null,
   ): Promise<WebhookReceiveResult> {
+    if (!Buffer.isBuffer(rawBody)) {
+      throw new TypeError('webhook receive(): rawBody must be a Buffer');
+    }
     const config = AppConfig.get();
     if (rawBody.length > config.WEBHOOK_BODY_MAX_BYTES) {
       return this.persistRejection(
