@@ -554,6 +554,11 @@ model SuggestionTriggerRule {
   isActive              Boolean             @default(true) @map("is_active")
   isSystemDefault       Boolean             @default(false) @map("is_system_default")
   priority              Int                 @default(0)
+  // Stream 13.3 v1.1 — per-rule cap on the number of times THIS rule may
+  // enqueue suggestions per hour. null = unbounded (rely on the global
+  // per-eventType limiter). Read by SuggestionFactoryRateLimiterManager
+  // in addition to the env-driven global cap.
+  perRuleBudgetPerHour  Int?                @map("per_rule_budget_per_hour")
   createdBy             String?             @map("created_by") @db.VarChar(128)
   createdAt             DateTime            @default(now()) @map("created_at")
   updatedAt             DateTime            @updatedAt @map("updated_at")

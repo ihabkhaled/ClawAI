@@ -22,6 +22,10 @@ export const WEBHOOK_REJECTION_CODES = {
   BODY_TOO_LARGE: 'BODY_TOO_LARGE',
   UNSUPPORTED_PROVIDER: 'UNSUPPORTED_PROVIDER',
   MALFORMED_BODY: 'MALFORMED_BODY',
+  RATE_LIMITED: 'RATE_LIMITED',
 } as const;
 
 export const WEBHOOK_PROVIDER_DISPLAY_LIMIT = 50;
+
+// Stream 11.4 — sliding-window granularity for the per-connector rate limiter.
+export const WEBHOOK_RATE_LIMITER_WINDOW_MS = 60 * 1000;

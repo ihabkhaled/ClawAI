@@ -13,6 +13,7 @@ export type FactoryProcessResult = {
   matchedRules: number;
   enqueuedCount: number;
   skippedCount: number;
+  rateLimited?: boolean;
 };
 
 export type CreateTriggerRuleInput = {
@@ -24,6 +25,8 @@ export type CreateTriggerRuleInput = {
   actionKindToSuggest: string;
   isActive: boolean;
   priority: number;
+  /** Stream 13.3 v1.1 — per-rule per-hour cap (null/undefined = unbounded). */
+  perRuleBudgetPerHour?: number | null;
 };
 
 export type UpdateTriggerRuleInput = Partial<Omit<CreateTriggerRuleInput, 'name'>>;

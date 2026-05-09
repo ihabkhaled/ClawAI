@@ -4,11 +4,13 @@ import { EventPattern } from '@claw/shared-types';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { WorkspaceProvider } from '../../../common/enums/workspace-provider.enum';
+import type { Prisma } from '../../../generated/prisma';
 import { WEBHOOK_REJECTION_CODES } from '../constants/webhook-receiver.constants';
 import { WebhookDeliveryRepository } from '../repositories/webhook-delivery.repository';
 import type { WebhookReceiveResult } from '../types/webhook-manager.types';
 import { findVerifier } from '../utilities/webhook-signature-verifiers.utility';
-import type { Prisma } from '../../../generated/prisma';
+
+import { WebhookRateLimiterManager } from './webhook-rate-limiter.manager';
 
 @Injectable()
 export class WebhookReceiverManager {
@@ -17,6 +19,7 @@ export class WebhookReceiverManager {
   constructor(
     private readonly repo: WebhookDeliveryRepository,
     private readonly rabbitmq: RabbitMQService,
+    private readonly rateLimiter: WebhookRateLimiterManager,
   ) {}
 
   async receive(
@@ -34,6 +37,16 @@ export class WebhookReceiverManager {
         rawBody,
         ipAddress,
         WEBHOOK_REJECTION_CODES.BODY_TOO_LARGE,
+      );
+    }
+    const rateLimitKey = connectorId ?? `provider:${provider}`;
+    if (!this.rateLimiter.tryReserve(rateLimitKey)) {
+      return this.persistRejection(
+        provider,
+        connectorId,
+        rawBody,
+        ipAddress,
+        WEBHOOK_REJECTION_CODES.RATE_LIMITED,
       );
     }
     const verifier = findVerifier(provider);

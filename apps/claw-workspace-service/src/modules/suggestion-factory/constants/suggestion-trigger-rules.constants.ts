@@ -1,5 +1,8 @@
 import type { CreateTriggerRuleInput } from '../types/suggestion-factory.types';
 
+// Stream 13.3 — sliding-window granularity for the per-event-type budget cap.
+export const SUGGESTION_FACTORY_RATE_LIMITER_WINDOW_MS = 60 * 60 * 1000;
+
 export const DEFAULT_TRIGGER_RULES: ReadonlyArray<
   CreateTriggerRuleInput & { isSystemDefault: true }
 > = [

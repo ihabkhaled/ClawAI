@@ -10,6 +10,7 @@ import {
   AUTO_SUGGEST_LOCK_NAMESPACE_PREFIX,
   AUTO_SUGGEST_RECENT_TICKET_LOOKBACK_DAYS,
   AUTO_SUGGEST_STALE_PR_AGE_DAYS,
+  INBOX_REPLY_NEEDS_ATTENTION_KEY,
   MEETING_NOTES_SCAN_LOOKBACK_HOURS,
   MEETING_NOTES_TRANSCRIPT_KEYWORDS,
   MEETING_NOTES_TRANSCRIPT_WINDOW_HOURS,
@@ -59,6 +60,19 @@ export class AutoSuggestSchedulerManager {
     await this.orchestrator.runJob('MEETING_NOTES_SCAN', () => this.collectMeetingNotesCandidates());
   }
 
+  @Cron(AppConfig.get().AUTO_SUGGEST_INBOX_REPLY_CRON, {
+    name: 'workspace.auto_suggest.inbox_reply',
+  })
+  async tickInboxReply(): Promise<void> {
+    if (!AppConfig.get().AUTO_SUGGEST_ENABLED) return;
+    const lockHeld = await tryAcquireAdvisoryLock(
+      this.prisma,
+      `${AUTO_SUGGEST_LOCK_NAMESPACE_PREFIX}.inbox_reply`,
+    );
+    if (!lockHeld) return;
+    await this.orchestrator.runJob('INBOX_REPLY', () => this.collectInboxReplyCandidates());
+  }
+
   // Manual trigger entry point used by admin endpoint.
   async triggerNow(jobType: AutoSuggestJobType): Promise<void> {
     if (jobType === 'JIRA_TICKET_SUMMARY') {
@@ -73,9 +87,69 @@ export class AutoSuggestSchedulerManager {
       await this.orchestrator.runJob(jobType, () => this.collectMeetingNotesCandidates());
       return;
     }
-    // INBOX_REPLY etc. — not yet implemented in v1; the orchestrator records
-    // a no-op run so observability still captures the trigger.
+    if (jobType === 'INBOX_REPLY') {
+      await this.orchestrator.runJob(jobType, () => this.collectInboxReplyCandidates());
+      return;
+    }
+    // Unknown jobType — emit a no-op run so observability still captures the trigger.
     await this.orchestrator.runJob(jobType, async () => []);
+  }
+
+  // Stream 12.2 — find Gmail messages from the last AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS
+  // that look like they need a reply. Heuristic: richMetadata.needsReply === true
+  // OR the title doesn't start with "re:" (fresh inbound, not a thread reply).
+  // Emit one DRAFT candidate per match.
+  private async collectInboxReplyCandidates(): Promise<CandidateSuggestion[]> {
+    const lookbackHours = AppConfig.get().AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS;
+    const cutoff = new Date(Date.now() - lookbackHours * 60 * 60 * 1000);
+    const messages = await this.prisma.workspaceObject.findMany({
+      where: {
+        provider: WorkspaceProvider.GMAIL,
+        type: 'MESSAGE',
+        externalUpdatedAt: { gte: cutoff },
+      },
+      take: AUTO_SUGGEST_CANDIDATE_BATCH_SIZE,
+      select: {
+        id: true,
+        userId: true,
+        connectorId: true,
+        externalId: true,
+        title: true,
+        provider: true,
+        metadata: true,
+        externalUpdatedAt: true,
+      },
+      orderBy: { externalUpdatedAt: 'desc' },
+    });
+    if (messages.length === 0) return [];
+    const candidates: CandidateSuggestion[] = [];
+    for (const msg of messages) {
+      const metadata = (msg.metadata ?? {}) as Record<string, unknown>;
+      const needsReplyFlag =
+        Object.prototype.hasOwnProperty.call(metadata, INBOX_REPLY_NEEDS_ATTENTION_KEY) &&
+        metadata[INBOX_REPLY_NEEDS_ATTENTION_KEY] === true;
+      const title = (msg.title ?? '').trim();
+      const looksLikeReply = title.toLowerCase().startsWith('re:');
+      if (!needsReplyFlag && looksLikeReply) {
+        // Already a thread reply; skip — it's not the user's turn to write back.
+        continue;
+      }
+      candidates.push({
+        userId: msg.userId,
+        connectorId: msg.connectorId,
+        provider: WorkspaceProvider.GMAIL,
+        actionKind: 'DRAFT',
+        sourceObjectId: msg.id,
+        draftPayload: {
+          messageObjectId: msg.id,
+          messageTitle: msg.title,
+          context: `Draft a reply to: ${msg.title ?? '(no subject)'}`,
+          privacyClass: 'INTERNAL',
+        },
+        generatedBy: { jobType: 'INBOX_REPLY' },
+      });
+    }
+    return candidates;
   }
 
   // Stream 23.2/23.3 — find MEETING objects whose end fell in the last

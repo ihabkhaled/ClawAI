@@ -16,3 +16,9 @@ export const AUTO_SUGGEST_SUPPORTED_JOB_TYPES: ReadonlyArray<AutoSuggestJobType>
 export const MEETING_NOTES_SCAN_LOOKBACK_HOURS = 6;
 export const MEETING_NOTES_TRANSCRIPT_WINDOW_HOURS = 1;
 export const MEETING_NOTES_TRANSCRIPT_KEYWORDS = ['transcript', 'notes', 'recording', 'meeting'];
+
+// Stream 12.2 — Gmail INBOX_REPLY collector
+export const INBOX_REPLY_REPLY_KEYWORDS = ['re:', 'reply', 'replied'];
+// Treat a Gmail message as "needs-reply" when its richMetadata.needsReply === true
+// OR when the subject does NOT start with "re:" (i.e. a fresh inbound, not a thread reply).
+export const INBOX_REPLY_NEEDS_ATTENTION_KEY = 'needsReply';

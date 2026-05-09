@@ -20,6 +20,23 @@ export class AutomationPreferenceRepository {
     });
   }
 
+  /**
+   * Stream 32/12.6 — count auto-suggested approval-queue rows created TODAY
+   * (UTC) for a (user, actionKind). Used by AiActionApprovalManager to enforce
+   * the user's `perDayBudget` cap before enqueueing a new suggestion.
+   */
+  async countTodayForBudget(userId: string, actionKind: string): Promise<number> {
+    const startOfTodayUtc = new Date();
+    startOfTodayUtc.setUTCHours(0, 0, 0, 0);
+    return this.prisma.aiActionApprovalQueue.count({
+      where: {
+        userId,
+        actionKind,
+        createdAt: { gte: startOfTodayUtc },
+      },
+    });
+  }
+
   async upsert(
     userId: string,
     actionKind: string,

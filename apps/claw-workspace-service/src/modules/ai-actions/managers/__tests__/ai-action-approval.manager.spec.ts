@@ -1,6 +1,7 @@
 import { AiActionPolicyKind } from '../../../../common/enums/ai-action-policy-kind.enum';
 import { AiActionQueueStatus } from '../../../../common/enums/ai-action-queue-status.enum';
 import { AiActionRiskLabel } from '../../../../common/enums/ai-action-risk-label.enum';
+import { WorkspaceProvider } from '../../../../common/enums/workspace-provider.enum';
 import { AiActionApprovalManager } from '../ai-action-approval.manager';
 
 beforeAll(() => {
@@ -76,9 +77,21 @@ describe('AiActionApprovalManager', () => {
     pref: {
       isEnabled: boolean;
       autoApproveBelowRiskScore: number | null;
+      perDayBudget?: number | null;
+      providers?: string[];
     } | null = null,
-  ): { findOne: jest.Mock } => ({
-    findOne: jest.fn().mockResolvedValue(pref),
+    todayCount = 0,
+  ): { findOne: jest.Mock; countTodayForBudget: jest.Mock } => ({
+    findOne: jest.fn().mockResolvedValue(
+      pref === null
+        ? null
+        : {
+            ...pref,
+            perDayBudget: pref.perDayBudget ?? null,
+            providers: pref.providers ?? [],
+          },
+    ),
+    countTodayForBudget: jest.fn().mockResolvedValue(todayCount),
   });
 
   const baseInput = {
@@ -230,5 +243,195 @@ describe('AiActionApprovalManager', () => {
     );
     const result = await manager.enqueueSuggestion(baseInput);
     expect(result.status).toBe(AiActionQueueStatus.DENIED);
+  });
+
+  // Stream 12.6 — per-user/day budget cap
+  describe('per-user perDayBudget cap (12.6)', () => {
+    it('enqueues normally when today count < budget', async () => {
+      const manager = new AiActionApprovalManager(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeQueueRepo() as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makePrefRepo({ isEnabled: true, autoApproveBelowRiskScore: 50, perDayBudget: 10 }, 3) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRabbit() as any,
+      );
+      const result = await manager.enqueueSuggestion(baseInput);
+      expect(result.status).toBe(AiActionQueueStatus.AUTO_APPROVED);
+    });
+
+    it('DENIES when today count == budget', async () => {
+      const manager = new AiActionApprovalManager(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeQueueRepo() as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makePrefRepo({ isEnabled: true, autoApproveBelowRiskScore: 50, perDayBudget: 5 }, 5) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRabbit() as any,
+      );
+      const result = await manager.enqueueSuggestion(baseInput);
+      expect(result.status).toBe(AiActionQueueStatus.DENIED);
+    });
+
+    it('DENIES when today count > budget', async () => {
+      const manager = new AiActionApprovalManager(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeMatcher('PENDING_APPROVAL', null) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeQueueRepo() as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makePrefRepo({ isEnabled: true, autoApproveBelowRiskScore: null, perDayBudget: 5 }, 9) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRabbit() as any,
+      );
+      const result = await manager.enqueueSuggestion(baseInput);
+      expect(result.status).toBe(AiActionQueueStatus.DENIED);
+    });
+
+    it('budget=null means unbounded — does not deny', async () => {
+      const manager = new AiActionApprovalManager(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeQueueRepo() as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makePrefRepo({ isEnabled: true, autoApproveBelowRiskScore: 50, perDayBudget: null }, 9999) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRabbit() as any,
+      );
+      const result = await manager.enqueueSuggestion(baseInput);
+      expect(result.status).toBe(AiActionQueueStatus.AUTO_APPROVED);
+    });
+  });
+
+  // Stream 32.4 — per-provider runtime kill switch
+  describe('per-provider kill switch (32.4)', () => {
+    it('passes when provider is in user allow-list', async () => {
+      const manager = new AiActionApprovalManager(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeQueueRepo() as any,
+        makePrefRepo({
+          isEnabled: true,
+          autoApproveBelowRiskScore: 50,
+          providers: ['GITHUB', 'GMAIL'],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        }) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRabbit() as any,
+      );
+      const result = await manager.enqueueSuggestion({
+        ...baseInput,
+        provider: WorkspaceProvider.GITHUB,
+      });
+      expect(result.status).toBe(AiActionQueueStatus.AUTO_APPROVED);
+    });
+
+    it('DENIES when provider is NOT in user allow-list', async () => {
+      const manager = new AiActionApprovalManager(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeQueueRepo() as any,
+        makePrefRepo({
+          isEnabled: true,
+          autoApproveBelowRiskScore: 50,
+          providers: ['GITHUB'],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        }) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRabbit() as any,
+      );
+      const result = await manager.enqueueSuggestion({
+        ...baseInput,
+        provider: WorkspaceProvider.JIRA,
+      });
+      expect(result.status).toBe(AiActionQueueStatus.DENIED);
+    });
+
+    it('null provider always passes (per-provider gate is provider-scoped only)', async () => {
+      const manager = new AiActionApprovalManager(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeQueueRepo() as any,
+        makePrefRepo({
+          isEnabled: true,
+          autoApproveBelowRiskScore: 50,
+          providers: ['GITHUB'],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        }) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRabbit() as any,
+      );
+      const result = await manager.enqueueSuggestion({ ...baseInput, provider: null });
+      expect(result.status).toBe(AiActionQueueStatus.AUTO_APPROVED);
+    });
+
+    it('persists rejectionReason=PROVIDER_DISABLED when denying on provider mismatch', async () => {
+      const queueRepo = makeQueueRepo();
+      const manager = new AiActionApprovalManager(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        queueRepo as any,
+        makePrefRepo({
+          isEnabled: true,
+          autoApproveBelowRiskScore: 50,
+          providers: ['GITHUB'],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        }) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRabbit() as any,
+      );
+      await manager.enqueueSuggestion({ ...baseInput, provider: WorkspaceProvider.JIRA });
+      const row = queueRepo.create.mock.calls[0]?.[0] as { rejectionReason: string };
+      expect(row.rejectionReason).toBe('PROVIDER_DISABLED');
+    });
+
+    it('empty providers[] means unrestricted', async () => {
+      const manager = new AiActionApprovalManager(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeQueueRepo() as any,
+        makePrefRepo({
+          isEnabled: true,
+          autoApproveBelowRiskScore: 50,
+          providers: [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        }) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makeRabbit() as any,
+      );
+      const result = await manager.enqueueSuggestion({
+        ...baseInput,
+        provider: WorkspaceProvider.JIRA,
+      });
+      expect(result.status).toBe(AiActionQueueStatus.AUTO_APPROVED);
+    });
   });
 });

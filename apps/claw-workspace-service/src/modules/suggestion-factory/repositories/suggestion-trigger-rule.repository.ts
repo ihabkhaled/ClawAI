@@ -72,6 +72,7 @@ export class SuggestionTriggerRuleRepository {
         priority: input.priority,
         isSystemDefault: false,
         createdBy,
+        perRuleBudgetPerHour: input.perRuleBudgetPerHour ?? null,
       },
     });
   }
@@ -89,6 +90,9 @@ export class SuggestionTriggerRuleRepository {
           : {}),
         ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
         ...(input.priority !== undefined ? { priority: input.priority } : {}),
+        ...(input.perRuleBudgetPerHour !== undefined
+          ? { perRuleBudgetPerHour: input.perRuleBudgetPerHour }
+          : {}),
       },
     });
   }

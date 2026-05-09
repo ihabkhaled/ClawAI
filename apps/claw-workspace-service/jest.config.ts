@@ -7,6 +7,7 @@ const config: Config = {
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
+  setupFiles: ['<rootDir>/jest.setup.ts'],
   // html-sanitiser.utility.spec.ts loads isomorphic-dompurify which transitively
   // pulls in 5+ ESM-only deps (cssstyle, @asamuzakjp/css-color, @exodus/bytes,
   // jsdom). Jest's CJS loader cannot parse them. The sanitiser itself is now

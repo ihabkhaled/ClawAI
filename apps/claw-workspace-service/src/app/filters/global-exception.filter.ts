@@ -46,7 +46,24 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         message = exception.message;
       }
     } else if (exception instanceof Error) {
-      this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
+      // Express body-parser PayloadTooLargeError (and similar middleware
+      // errors) carry HTTP status info as a `status`/`statusCode` property.
+      // Without this branch they bubble up as 500 — masking real 413s.
+      const errLike = exception as Error & {
+        status?: number;
+        statusCode?: number;
+        type?: string;
+      };
+      const middlewareStatus = errLike.statusCode ?? errLike.status;
+      if (typeof middlewareStatus === 'number' && middlewareStatus >= 400 && middlewareStatus < 600) {
+        status = middlewareStatus;
+        message = exception.message;
+        if (typeof errLike.type === 'string') {
+          code = errLike.type;
+        }
+      } else {
+        this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
+      }
     } else {
       this.logger.error('Unknown exception thrown', String(exception));
     }

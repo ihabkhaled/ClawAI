@@ -37,7 +37,15 @@ export class AiActionPolicyMatcherManager {
       if (!this.fieldMatches(policy.providerRegex, input.provider ?? '')) continue;
       if (!this.fieldMatches(policy.actionKindRegex, input.actionKind)) continue;
       if (policy.kind === AiActionPolicyKind.DENY) {
-        return this.deniedResult(this.toSnapshot(policy));
+        // A DENY policy fires only when the assessed risk meets or exceeds the
+        // policy's risk threshold. Without this gate, broad regex DENY rules
+        // (e.g. `deny-pii-leakage` with `.*/.*` providerRegex/actionKindRegex)
+        // would block every action, never letting the risk scorer's PII
+        // detector be the actual discriminator.
+        if (this.riskMeetsDenyThreshold(input.risk, policy)) {
+          return this.deniedResult(this.toSnapshot(policy));
+        }
+        continue;
       }
       if (
         policy.kind === AiActionPolicyKind.AUTO_APPROVE &&
@@ -50,6 +58,19 @@ export class AiActionPolicyMatcherManager {
       }
     }
     return this.combineMatches(firstAutoApprove, firstAllow);
+  }
+
+  /**
+   * DENY policies use `riskMaxLabel`/`riskMaxScore` as the *minimum* risk that
+   * triggers denial, mirroring how AUTO_APPROVE uses them as a *maximum*. So
+   * `deny-pii-leakage` with `riskMaxScore: 100` denies only when the risk
+   * scorer has flagged content at score ≥ 100 (PII pattern matched).
+   */
+  private riskMeetsDenyThreshold(risk: RiskAssessment, policy: AiActionPolicy): boolean {
+    const riskLabelOrder = RISK_LEVEL_ORDER[risk.riskLabel];
+    const policyLabelOrder = RISK_LEVEL_ORDER[policy.riskMaxLabel as AiActionRiskLabel];
+    if (riskLabelOrder < policyLabelOrder) return false;
+    return risk.riskScore >= policy.riskMaxScore;
   }
 
   private combineMatches(

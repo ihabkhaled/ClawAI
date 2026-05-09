@@ -31,14 +31,20 @@ export const DEFAULT_AI_ACTION_POLICIES: DefaultAiActionPolicy[] = [
     requireReason: false,
   },
   {
+    // IMPL_PROMPT is never AUTO_APPROVED because there is no AUTO_APPROVE policy
+    // matching `^IMPL_PROMPT$` in the seed; the policy matcher returns ALLOW
+    // (PENDING_APPROVAL) by default. This rule additionally hard-denies IMPL_PROMPT
+    // when the risk scorer has flagged it (secret pattern, high score) so it never
+    // even reaches the queue for human review — the secret scanner is the
+    // discriminator, this policy enforces the deny-floor on top.
     name: 'deny-impl-prompt-auto-approve',
     kind: AiActionPolicyKind.DENY,
     description:
-      'IMPL_PROMPT actions are NEVER auto-approved regardless of policy — hard guard for stream 41',
+      'IMPL_PROMPT drafts that the risk scorer flags HIGH+ (secret patterns) are hard-denied; otherwise IMPL_PROMPT routes to PENDING_APPROVAL via the default ALLOW chain',
     providerRegex: '.*',
     actionKindRegex: '^IMPL_PROMPT$',
-    riskMaxLabel: AiActionRiskLabel.CRITICAL,
-    riskMaxScore: 100,
+    riskMaxLabel: AiActionRiskLabel.HIGH,
+    riskMaxScore: 80,
     priority: 999,
     requireReason: false,
   },
@@ -201,6 +207,17 @@ export const RISK_LEVEL_ORDER: Record<AiActionRiskLabel, number> = {
 export const RISK_SCORE_CRITICAL_THRESHOLD = 85;
 export const RISK_SCORE_HIGH_THRESHOLD = 60;
 export const RISK_SCORE_MEDIUM_THRESHOLD = 30;
+
+// Stream 12.6 / 32.4 v1.1 — machine-readable reason codes recorded on the
+// queue row when AiActionApprovalManager auto-denies the suggestion.
+// Surfaced in the UI alongside the existing free-text rejectionReason.
+export const AUTO_DENY_REASON = {
+  USER_DISABLED: 'USER_DISABLED',
+  PROVIDER_DISABLED: 'PROVIDER_DISABLED',
+  BUDGET_EXCEEDED: 'BUDGET_EXCEEDED',
+} as const;
+
+export type AutoDenyReason = (typeof AUTO_DENY_REASON)[keyof typeof AUTO_DENY_REASON];
 
 export const HEURISTIC_BASE_SCORE = 5;
 export const HEURISTIC_EXTERNAL_DOMAIN_SCORE = 25;

@@ -84,6 +84,13 @@ const appConfigSchema = z.object({
   AGENT_SERVICE_URL: z.string().min(1).default('http://agent-service:4015'),
   IMPL_PROMPT_HANDOFF_DEFAULT_MODE: z.enum(['CHAT', 'AGENT', 'CLIPBOARD']).default('CHAT'),
   IMPL_PROMPT_PLAN_MAX_SUBTASKS: z.coerce.number().int().positive().max(50).default(12),
+  // Stream 13.3 — per-event-type budget cap on the suggestion factory
+  WORKSPACE_SUGGESTION_FACTORY_RATE_PER_HOUR: z.coerce.number().int().positive().default(100),
+  // Stream 11.4 — per-connector webhook rate limit
+  WEBHOOK_CONNECTOR_REQUESTS_PER_MINUTE: z.coerce.number().int().positive().default(60),
+  // Stream 12.2 — Gmail INBOX_REPLY auto-suggest
+  AUTO_SUGGEST_INBOX_REPLY_CRON: z.string().default('0 */15 * * * *'),
+  AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS: z.coerce.number().int().positive().default(48),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

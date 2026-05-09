@@ -18,6 +18,8 @@ export const createTriggerRuleSchema = z
     actionKindToSuggest: z.string().min(1).max(64),
     isActive: z.boolean().default(true),
     priority: z.number().int().min(0).max(10000).default(0),
+    // Stream 13.3 v1.1 — null/omitted = unbounded (rely on global env cap).
+    perRuleBudgetPerHour: z.number().int().min(1).max(100_000).nullable().optional(),
   })
   .strict();
 

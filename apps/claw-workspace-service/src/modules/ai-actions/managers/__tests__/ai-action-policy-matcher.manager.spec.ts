@@ -27,7 +27,7 @@ describe('AiActionPolicyMatcherManager', () => {
     findActive: jest.fn().mockResolvedValue(policies),
   });
 
-  it('returns DENIED when DENY policy matches', async () => {
+  it('returns DENIED when DENY policy matches and risk meets the deny threshold', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const repo: any = makeRepo([makePolicy({ kind: AiActionPolicyKind.DENY, name: 'deny-pii' })]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,6 +35,7 @@ describe('AiActionPolicyMatcherManager', () => {
     const result = await manager.match({
       provider: 'GMAIL',
       actionKind: 'DRAFT',
+      // Default `riskMaxScore: 30` (set in makePolicy override). 50 ≥ 30 → fires.
       risk: { riskScore: 50, riskLabel: AiActionRiskLabel.MEDIUM, reasons: [] },
     });
     expect(result.decision).toBe('DENIED');
@@ -115,7 +116,7 @@ describe('AiActionPolicyMatcherManager', () => {
     expect(result.matchedPolicy).toBeNull();
   });
 
-  it('DENY always wins over AUTO_APPROVE regardless of priority', async () => {
+  it('DENY wins over AUTO_APPROVE when risk meets the deny threshold', async () => {
     const policies = [
       makePolicy({ kind: AiActionPolicyKind.AUTO_APPROVE, name: 'auto', priority: 1000 }),
       makePolicy({ kind: AiActionPolicyKind.DENY, name: 'deny', priority: 100 }),
@@ -125,12 +126,13 @@ describe('AiActionPolicyMatcherManager', () => {
     const result = await manager.match({
       provider: 'GMAIL',
       actionKind: 'DRAFT',
-      risk: { riskScore: 10, riskLabel: AiActionRiskLabel.LOW, reasons: [] },
+      // Risk is HIGH/95, default deny threshold is LOW/30 — deny fires.
+      risk: { riskScore: 95, riskLabel: AiActionRiskLabel.HIGH, reasons: [] },
     });
     expect(result.decision).toBe('DENIED');
   });
 
-  it('DENY at higher priority short-circuits AUTO_APPROVE', async () => {
+  it('DENY at higher priority short-circuits AUTO_APPROVE when risk meets threshold', async () => {
     const policies = [
       makePolicy({
         kind: AiActionPolicyKind.DENY,
@@ -148,8 +150,70 @@ describe('AiActionPolicyMatcherManager', () => {
     const result = await manager.match({
       provider: 'GMAIL',
       actionKind: 'DRAFT',
-      risk: { riskScore: 10, riskLabel: AiActionRiskLabel.LOW, reasons: [] },
+      risk: { riskScore: 95, riskLabel: AiActionRiskLabel.HIGH, reasons: [] },
     });
     expect(result.decision).toBe('DENIED');
+  });
+
+  // Phase E close-out (10.2) — broad DENY rules with `.*/.*` no longer block
+  // every action; they fire only when the risk scorer has flagged the payload
+  // at the deny threshold or above.
+  it('broad DENY (.*/.* providerRegex/actionKindRegex) does NOT fire on low-risk content', async () => {
+    const policies = [
+      makePolicy({
+        kind: AiActionPolicyKind.DENY,
+        name: 'deny-pii-leakage',
+        providerRegex: '.*',
+        actionKindRegex: '.*',
+        riskMaxLabel: AiActionRiskLabel.CRITICAL,
+        riskMaxScore: 100,
+        priority: 1000,
+      }),
+      makePolicy({
+        kind: AiActionPolicyKind.AUTO_APPROVE,
+        name: 'auto-summarize',
+        actionKindRegex: '^SUMMARIZE$',
+        priority: 400,
+      }),
+    ];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const manager = new AiActionPolicyMatcherManager(makeRepo(policies) as any);
+    const result = await manager.match({
+      provider: 'JIRA',
+      actionKind: 'SUMMARIZE',
+      risk: { riskScore: 10, riskLabel: AiActionRiskLabel.LOW, reasons: [] },
+    });
+    expect(result.decision).toBe('AUTO_APPROVE');
+    expect(result.matchedPolicy?.name).toBe('auto-summarize');
+  });
+
+  it('broad DENY DOES fire when risk score reaches its threshold', async () => {
+    const policies = [
+      makePolicy({
+        kind: AiActionPolicyKind.DENY,
+        name: 'deny-pii-leakage',
+        providerRegex: '.*',
+        actionKindRegex: '.*',
+        riskMaxLabel: AiActionRiskLabel.CRITICAL,
+        riskMaxScore: 100,
+        priority: 1000,
+      }),
+      makePolicy({
+        kind: AiActionPolicyKind.AUTO_APPROVE,
+        name: 'auto-summarize',
+        actionKindRegex: '^SUMMARIZE$',
+        priority: 400,
+      }),
+    ];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const manager = new AiActionPolicyMatcherManager(makeRepo(policies) as any);
+    const result = await manager.match({
+      provider: 'JIRA',
+      actionKind: 'SUMMARIZE',
+      // PII pattern matched → score 100 → deny threshold met.
+      risk: { riskScore: 100, riskLabel: AiActionRiskLabel.CRITICAL, reasons: ['aws-key'] },
+    });
+    expect(result.decision).toBe('DENIED');
+    expect(result.matchedPolicy?.name).toBe('deny-pii-leakage');
   });
 });

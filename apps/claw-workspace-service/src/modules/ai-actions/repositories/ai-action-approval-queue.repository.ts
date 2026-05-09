@@ -30,6 +30,7 @@ export class AiActionApprovalQueueRepository {
         sourceObjectId: input.sourceObjectId,
         expiresAt: input.expiresAt,
         statusChangedAt: new Date(),
+        rejectionReason: input.rejectionReason ?? null,
       },
     });
   }
