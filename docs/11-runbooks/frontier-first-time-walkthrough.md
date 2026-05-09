@@ -10,20 +10,139 @@
 
 ## Pre-flight (one-time, ~10 min)
 
-### 1. Enable Docker Desktop GPU support (NVIDIA hosts)
+### 1. Enable GPU passthrough for your hardware
 
-| Platform | Action                                                                                                                                                                                                          |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Windows  | Settings → General → "Use WSL 2 based engine" ✓<br>Settings → Resources → WSL Integration → enable for your distro<br>Settings → Features in development → "Use NVIDIA GPU support" ✓<br>Restart Docker Desktop |
-| Linux    | Install [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html), then `sudo systemctl restart docker`                                                  |
-| macOS    | Skip — Docker on macOS can't access Apple Silicon Metal. The container will run CPU-only. For Metal GPU, run `claw-llamacpp-service` natively (outside Docker).                                                 |
+`claw.sh up` auto-detects what GPU you have and applies the matching overlay
+(`docker-compose.{dev,prod}.gpu-{nvidia,rocm,vulkan}.yml`). But each vendor
+needs **one-time host setup** before Docker can see the device. Pick the
+section that matches your machine and follow it once.
 
-Verify on the host:
+#### 1a. NVIDIA on Linux (native Docker, not Docker Desktop)
 
 ```bash
+# Install NVIDIA Container Toolkit (Ubuntu / Debian shown):
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | \
+  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+# Sanity check (host):
 nvidia-smi -L
-# → GPU 0: NVIDIA GeForce RTX 2060 SUPER (UUID: GPU-...)
+# Sanity check (container):
+docker run --rm --gpus all nvidia/cuda:12.4.0-base-ubuntu22.04 nvidia-smi -L
 ```
+
+Full upstream guide: <https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html>
+
+#### 1b. NVIDIA on Windows (Docker Desktop, WSL2)
+
+1. **Docker Desktop → Settings → General** → "Use WSL 2 based engine" ✓
+2. **Settings → Resources → WSL Integration** → enable for your default distro
+3. **Settings → Features in development** → "Use NVIDIA GPU support" ✓
+4. Quit and restart Docker Desktop completely
+5. Sanity check from PowerShell or the WSL distro:
+   ```powershell
+   nvidia-smi -L
+   docker run --rm --gpus all nvidia/cuda:12.4.0-base-ubuntu22.04 nvidia-smi -L
+   ```
+
+If `nvidia-smi -L` fails on the Windows host, install the latest NVIDIA Studio or Game Ready driver — Docker uses the host driver via WDDM passthrough, no separate WSL driver needed.
+
+#### 1c. NVIDIA in pure WSL2 (no Docker Desktop, e.g. wsl-distrod)
+
+Same as section 1a (Linux native), but the WSL2 distro must also have CUDA-WSL drivers installed:
+
+```bash
+# Inside WSL2:
+sudo apt-get install -y nvidia-cuda-toolkit
+nvidia-smi -L  # should print the host's GPU
+```
+
+#### 1d. AMD ROCm on Linux
+
+ROCm container support requires the host to have ROCm drivers installed AND your user must be in the `video` and `render` groups.
+
+```bash
+# Install ROCm (Ubuntu 22.04 example — adjust for your distro):
+wget https://repo.radeon.com/amdgpu-install/6.2/ubuntu/jammy/amdgpu-install_6.2.60200-1_all.deb
+sudo apt install -y ./amdgpu-install_6.2.60200-1_all.deb
+sudo amdgpu-install --usecase=rocm,hip,mllib --no-dkms
+sudo usermod -aG video,render "$USER"
+# Log out and back in for the group changes to take effect.
+
+# Sanity check (host):
+rocm-smi
+ls /dev/kfd /dev/dri/render*
+# Sanity check (container, after `claw.sh up` loads the rocm overlay):
+docker compose -f docker-compose.dev.services.yml -f docker-compose.dev.gpu-rocm.yml \
+  exec llamacpp-service rocm-smi
+```
+
+Optional: if your specific GPU isn't auto-detected by ROCm, set the GFX override before `claw.sh up`:
+
+```bash
+export HSA_OVERRIDE_GFX_VERSION=10.3.0   # example for older RDNA cards
+./scripts/claw.sh up
+```
+
+Docker Desktop on Windows does NOT support AMD ROCm passthrough today — for AMD GPUs use a native Linux host or WSL2 with [WSL2-ROCm preview](https://rocm.docs.amd.com/projects/install-on-windows/) (currently experimental).
+
+#### 1e. Intel iGPU / Intel Arc / generic Vulkan on Linux
+
+Intel and other render-node-based GPUs work via `/dev/dri` passthrough. Most Linux distros ship the kernel driver out of the box.
+
+```bash
+# Sanity check the render node exists on the host:
+ls /dev/dri/
+# Should show: card0  renderD128  (or higher numbers)
+
+# For Intel Arc, install compute runtime (Ubuntu shown):
+sudo apt-get install -y intel-opencl-icd intel-level-zero-gpu level-zero
+sudo usermod -aG video,render "$USER"
+# Log out and back in.
+
+# Sanity check (container, after `claw.sh up` loads the vulkan overlay):
+docker compose -f docker-compose.dev.services.yml -f docker-compose.dev.gpu-vulkan.yml \
+  exec llamacpp-service ls /dev/dri/
+```
+
+Intel iGPUs only — no extra packages needed beyond your distro defaults; just add yourself to the `video` and `render` groups.
+
+#### 1f. Apple Silicon Metal (macOS)
+
+**Docker on macOS cannot access Apple Silicon Metal**, regardless of any setting. The Linux VM that Docker Desktop runs on is hardware-virtualized and the GPU is not exposed across the boundary. Two paths:
+
+- **CPU-only inside Docker (default)** — `claw.sh up` will warn `macOS detected — Docker can't access Apple Silicon Metal. llamacpp-service will run CPU-only inside the container.` Inference still works, just on CPU.
+- **Native Metal (recommended for real perf)** — install Node + Postgres + RabbitMQ + Redis on the host, run `claw-llamacpp-service` directly with `npm run start:dev` from `apps/claw-llamacpp-service/`. The dynamic resolver will pick `darwin-arm64-metal` and download the Metal-accelerated `llama-server` binary. Then run the rest of the stack in Docker as usual.
+
+Intel-Mac (`darwin-x64-cpu`) follows the same CPU-only path; there is no Metal acceleration on Intel Macs.
+
+#### 1g. No GPU / unsupported vendor
+
+`claw.sh up` will print `ℹ No GPU detected on host — running CPU-only` and skip all overlays. Inference still works on the dev-class catalog entries (phi-4-mini Q4 will run at ~5-10 tok/s on a modern CPU).
+
+#### Verify auto-detection picked the right vendor
+
+After completing the host setup, run:
+
+```bash
+./scripts/claw.sh gpu
+```
+
+Expected outputs:
+
+| Setup                 | Output                                                                                        |
+| --------------------- | --------------------------------------------------------------------------------------------- |
+| NVIDIA (any platform) | `✓ NVIDIA GPU detected (<model>) — enabling CUDA passthrough` + `GPU vendor: nvidia`          |
+| AMD ROCm (Linux)      | `✓ AMD ROCm GPU detected — enabling ROCm passthrough` + `GPU vendor: rocm`                    |
+| Intel/Vulkan (Linux)  | `✓ Intel/Vulkan-capable GPU detected — enabling /dev/dri passthrough` + `GPU vendor: vulkan`  |
+| Apple Silicon         | `ℹ macOS detected — Docker can't access Apple Silicon Metal.` + `GPU vendor: metal-host-only` |
+| No GPU                | `ℹ No GPU detected on host — running CPU-only` + `GPU vendor: none`                           |
+
+If `claw.sh gpu` reports `none` but you have a GPU, the host setup above isn't complete — recheck the relevant section.
 
 ### 2. Bring up the stack
 
@@ -56,7 +175,19 @@ Expected:
 }
 ```
 
-If `platform` says `linux-x64-cpu` instead of `linux-x64-cuda12`, GPU passthrough isn't reaching the container — recheck step 1 and run `./scripts/claw.sh services:rebuild` to force the container to re-detect with the GPU available.
+The `platform` field reflects what the service-side `detectGpuBackend()`
+saw inside the container. Expected values per host setup:
+
+| Host setup                                | Expected `platform`   |
+| ----------------------------------------- | --------------------- |
+| NVIDIA passthrough working                | `linux-x64-cuda12`    |
+| AMD ROCm passthrough working              | `linux-x64-rocm`      |
+| Intel/Vulkan passthrough working          | `linux-x64-vulkan`    |
+| Apple Silicon (native, not Docker)        | `darwin-arm64-metal`  |
+| Linux no GPU / Docker without passthrough | `linux-x64-cpu`       |
+| Windows native (not Docker)               | `win-x64-cuda12` etc. |
+
+If the service is running in Docker on a GPU host but reports `linux-x64-cpu`, GPU passthrough isn't reaching the container — recheck step 1 for your vendor and run `./scripts/claw.sh services:rebuild` to force the container to re-detect with the GPU available.
 
 ### 4. Verify the catalog is seeded
 
