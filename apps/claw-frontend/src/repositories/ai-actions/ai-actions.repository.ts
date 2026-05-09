@@ -33,9 +33,15 @@ type RunAiActionEnvelope =
   | { mode: 'QUEUED'; queue: { queueId: string; status: string } };
 
 export async function runAiAction(request: RunAiActionBody): Promise<AiActionResult> {
+  // LLM generation can take well over the 30s default axios timeout (slow
+  // local Ollama models routinely sit at 60-120s). Pass `timeout: 0` to
+  // disable the client-side cutoff — the backend's
+  // AI_ACTION_REQUEST_TIMEOUT_MS (default 300s) and nginx proxy_read_timeout
+  // bound the upper end. Frontend just waits for whichever fires first.
   const response = await apiClient.post<RunAiActionEnvelope>(
     `${BASE}/run?execute=immediate`,
     request,
+    { timeout: 0 },
   );
   if (response.data.mode === 'EXECUTED') {
     return response.data.execution;

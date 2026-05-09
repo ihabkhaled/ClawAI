@@ -13,6 +13,15 @@ export class ApiClientError extends Error {
   }
 }
 
+// Per-call request options. Mainly used by long-running endpoints (LLM
+// generation) that can blow past the global 30s axios timeout. Pass
+// `timeout: 0` to disable the client-side cutoff entirely so the request
+// resolves whenever the backend (or nginx) terminates it.
+export type ApiClientRequestOptions = {
+  timeout?: number;
+  signal?: AbortSignal;
+};
+
 export const apiClient = {
   async get<T>(path: string, params?: Record<string, string>): Promise<ApiResponse<T>> {
     try {
@@ -23,9 +32,16 @@ export const apiClient = {
     }
   },
 
-  async post<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
+  async post<T>(
+    path: string,
+    body?: unknown,
+    options?: ApiClientRequestOptions,
+  ): Promise<ApiResponse<T>> {
     try {
-      const response = await httpClient.post<T>(path, body);
+      const response = await httpClient.post<T>(path, body, {
+        timeout: options?.timeout,
+        signal: options?.signal,
+      });
       return { data: response.data, status: response.status };
     } catch (error) {
       throw toApiClientError(error);
