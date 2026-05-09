@@ -48,6 +48,7 @@
     "@nestjs/common": "^11.1.18",
     "@nestjs/core": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",
+    "better-sqlite3": "^12.9.0",
     "rxjs": "^7.8.2"
   },
   "overrides": {

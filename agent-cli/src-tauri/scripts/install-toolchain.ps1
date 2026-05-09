@@ -28,6 +28,22 @@ function Install-TauriCli {
   cargo install tauri-cli --version '^2' --locked
 }
 
+function Ensure-MsvcBuildTools {
+  # cargo tauri build on Windows needs the MSVC linker. Visual Studio Build
+  # Tools ship the standalone version. This is a ~3 GB install that requires
+  # GUI confirmation; the script only prompts/launches the installer.
+  $cl = Get-Command cl.exe -ErrorAction SilentlyContinue
+  if ($null -ne $cl) {
+    Write-Host "MSVC build tools detected" -ForegroundColor Green
+    return
+  }
+  Write-Host "MSVC build tools missing — launching the official installer..." -ForegroundColor Yellow
+  $bt = "$env:TEMP\vs_BuildTools.exe"
+  Invoke-WebRequest -Uri 'https://aka.ms/vs/17/release/vs_BuildTools.exe' -OutFile $bt
+  & $bt --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --quiet --wait
+  Write-Host "After install completes, restart this PowerShell session and rerun the script." -ForegroundColor Yellow
+}
+
 function Ensure-WebView2 {
   $webView2Key = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}'
   if (Test-Path $webView2Key) {
@@ -42,6 +58,7 @@ function Ensure-WebView2 {
 
 Write-Host "Installing Tauri toolchain on Windows..."
 Ensure-WebView2
+Ensure-MsvcBuildTools
 Install-Rustup
 Install-TauriCli
 Write-Host ""

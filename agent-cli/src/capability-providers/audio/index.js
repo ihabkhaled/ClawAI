@@ -54,14 +54,18 @@ export const audioProvider = {
 async function transcribeOp(target) {
   const audioPath = requireAbsolutePath(target?.audioPath, 'audioPath');
   const language = typeof target?.language === 'string' ? target.language : 'en';
-  await assertBinary('whisper', 'STT');
+  const whisperBin = process.env.WHISPER_CLI_PATH ?? 'whisper-cli';
+  await assertBinary(whisperBin, 'STT');
+  const modelPath = process.env.WHISPER_MODEL_PATH;
+  if (typeof modelPath !== 'string' || modelPath.length === 0) {
+    throw new Error(
+      'AUDIO.TRANSCRIBE: set WHISPER_MODEL_PATH to a downloaded ggml model (e.g. ggml-base.en.bin from huggingface.co/ggerganov/whisper.cpp)',
+    );
+  }
   const dir = await mkdtemp(join(tmpdir(), 'claw-stt-'));
   try {
-    // whisper-cpp: `whisper-cli -m model.bin -f input.wav -of out -otxt`
-    // We assume the user has set up a default model; the binary respects
-    // WHISPER_MODEL_PATH or falls back to the bundled tiny.en model.
     await execAsync(
-      `whisper-cli -m ${process.env.WHISPER_MODEL_PATH ?? '${HOME}/whisper-models/ggml-base.en.bin'} -f ${quote(audioPath)} -l ${quote(language)} -of ${quote(join(dir, 'out'))} -otxt`,
+      `${quote(whisperBin)} -m ${quote(modelPath)} -f ${quote(audioPath)} -l ${quote(language)} -of ${quote(join(dir, 'out'))} -otxt`,
       { maxBuffer: AUDIO_MAX_BYTES },
     );
     const text = await readFile(join(dir, 'out.txt'), 'utf8');
@@ -80,14 +84,15 @@ async function synthesizeOp(target, payload) {
     throw new Error(`AUDIO.SYNTHESIZE: payload.text required (1..${String(AUDIO_MAX_TEXT_CHARS)})`);
   }
   const voicePath = requireAbsolutePath(target?.voicePath, 'voicePath');
-  await assertBinary('piper', 'TTS');
+  const piperBin = process.env.PIPER_BIN_PATH ?? 'piper';
+  await assertBinary(piperBin, 'TTS');
   const dir = await mkdtemp(join(tmpdir(), 'claw-tts-'));
   try {
     const inputTxt = join(dir, 'in.txt');
     const outputWav = join(dir, 'out.wav');
     await writeFile(inputTxt, text, 'utf8');
     await execAsync(
-      `piper --model ${quote(voicePath)} --output_file ${quote(outputWav)} < ${quote(inputTxt)}`,
+      `${quote(piperBin)} --model ${quote(voicePath)} --output_file ${quote(outputWav)} < ${quote(inputTxt)}`,
       { maxBuffer: AUDIO_MAX_BYTES },
     );
     const audio = await readFile(outputWav);
@@ -107,15 +112,15 @@ async function synthesizeOp(target, payload) {
   }
 }
 
-async function assertBinary(name, label) {
+async function assertBinary(binPath, label) {
   try {
-    await execAsync(`${name} --help`, { timeout: 5_000 });
+    await execAsync(`${quote(binPath)} --help`, { timeout: 5_000 });
   } catch {
     throw new Error(
-      `AUDIO.${label}: '${name}' binary not found on PATH. Install: ` +
-        (name === 'whisper'
-          ? "macOS 'brew install whisper-cpp' / Linux 'apt-get install whisper-cpp' / Windows 'scoop install whisper-cpp'"
-          : 'see https://github.com/rhasspy/piper#installation'),
+      `AUDIO.${label}: binary at '${binPath}' not runnable. Install: ` +
+        (label === 'STT'
+          ? "macOS 'brew install whisper-cpp' / Linux 'apt-get install whisper-cpp' / Windows: download from https://github.com/ggml-org/whisper.cpp/releases (whisper-bin-x64.zip), extract, set WHISPER_CLI_PATH"
+          : "Download from https://github.com/rhasspy/piper/releases (piper_<os>_<arch>.zip), extract, set PIPER_BIN_PATH"),
     );
   }
 }

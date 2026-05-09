@@ -13,14 +13,21 @@
     "smoke:activity": "node src/activity-memory/__smoke__/local-store.smoke.mjs",
     "tauri:install:unix": "bash src-tauri/scripts/install-toolchain.sh",
     "tauri:install:windows": "powershell -ExecutionPolicy Bypass -File src-tauri/scripts/install-toolchain.ps1",
-    "tauri:dev": "cd src-tauri && cargo tauri dev",
-    "tauri:build": "cd src-tauri && cargo tauri build"
+    "tauri": "tauri",
+    "tauri:info": "tauri info",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
-    "chokidar": "^3.6.0"
+    "@nut-tree-fork/nut-js": "^4.2.6",
+    "chokidar": "^3.6.0",
+    "playwright": "^1.59.1"
   },
   "engines": {
     "node": ">=20"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.0"
+  }
 }

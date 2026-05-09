@@ -21,6 +21,7 @@
 import { request } from '../api/client.js';
 import * as log from '../utils/logger.js';
 import { providerRegistry } from '../capability-providers/index.js';
+import * as activity from '../activity-memory/local-store.js';
 
 const POLL_INTERVAL_MS = 3_000;
 const POLL_BACKOFF_ON_ERROR_MS = 10_000;
@@ -72,6 +73,7 @@ async function executeOne(invocation) {
       undoPlan: result.undoPlan,
       noUndoReason: result.noUndoReason,
     });
+    void recordActivity(invocation, 'success', null);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'unknown';
     log.warn(`Capability ${invocation.id} failed: ${message}`);
@@ -79,6 +81,26 @@ async function executeOne(invocation) {
       success: false,
       errorMessage: message,
     });
+    void recordActivity(invocation, 'failure', message);
+  }
+}
+
+async function recordActivity(invocation, outcome, errorMessage) {
+  try {
+    await activity.recordEntry({
+      kind: `capability_${invocation.capabilityClass.toLowerCase()}_${outcome}`,
+      summary: `${invocation.capabilityClass}.${invocation.capabilityOperation} ${outcome}`,
+      occurredAt: new Date(),
+      syncedToCloud: false,
+      metadata: {
+        invocationId: invocation.id,
+        target: invocation.targetDescriptor,
+        errorMessage,
+      },
+    });
+  } catch (err) {
+    // Activity logging is best-effort; failures must never break the runner.
+    log.warn(`Activity record failed: ${err instanceof Error ? err.message : 'unknown'}`);
   }
 }
 

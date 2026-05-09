@@ -33,14 +33,22 @@ let cachedNut = null;
 
 async function getNut() {
   if (cachedNut !== null) return cachedNut;
+  // Try the community fork first (original @nut-tree/nut-js was unpublished),
+  // then fall back to the original namespace if a private mirror exists.
+  try {
+    cachedNut = await import('@nut-tree-fork/nut-js');
+    return cachedNut;
+  } catch {
+    /* try alternate */
+  }
   try {
     cachedNut = await import('@nut-tree/nut-js');
+    return cachedNut;
   } catch (error) {
     throw new Error(
-      `APPLICATION provider requires @nut-tree/nut-js. Install with: npm i @nut-tree/nut-js -w agent-cli. Detail: ${(error && error.message) || 'module not found'}`,
+      `APPLICATION provider requires nut-js. Install with: npm i @nut-tree-fork/nut-js -w agent-cli (community fork). Detail: ${(error && error.message) || 'module not found'}`,
     );
   }
-  return cachedNut;
 }
 
 export const applicationProvider = {
