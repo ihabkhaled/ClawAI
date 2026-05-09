@@ -7,6 +7,7 @@ import { ApprovalBulkBar } from '@/components/workspace/approval-bulk-bar';
 import { ApprovalEditDialog } from '@/components/workspace/approval-edit-dialog';
 import { ApprovalRejectDialog } from '@/components/workspace/approval-reject-dialog';
 import { ApprovalsContent } from '@/components/workspace/approvals-content';
+import { CapabilityInvocationsSection } from '@/components/workspace/capability-invocations-section';
 import { useApprovalsPage } from '@/hooks/workspace/use-approvals-page';
 import { useTranslation } from '@/lib/i18n';
 
@@ -44,6 +45,8 @@ export default function WorkspaceApprovalsPage(): ReactElement {
         isPending={isActing}
         t={t}
       />
+
+      <CapabilityInvocationsSection />
 
       <ApprovalsContent
         isLoading={isLoading}

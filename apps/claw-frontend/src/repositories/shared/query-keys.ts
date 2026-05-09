@@ -209,6 +209,11 @@ export const queryKeys = {
     list: (actionKind: string | undefined) =>
       [...queryKeys.learnedPreferences.all, 'list', actionKind ?? 'all'] as const,
   },
+  webhookDeliveries: {
+    all: ['webhookDeliveries'] as const,
+    list: (filter: Record<string, unknown>) =>
+      [...queryKeys.webhookDeliveries.all, 'list', filter] as const,
+  },
   workspaceObjects: {
     all: ['workspaceObjects'] as const,
     lists: () => [...queryKeys.workspaceObjects.all, 'list'] as const,
@@ -258,6 +263,35 @@ export const queryKeys = {
     list: (filters: Record<string, unknown>) =>
       [...queryKeys.agentCapabilities.lists(), filters] as const,
     detail: (id: string) => [...queryKeys.agentCapabilities.all, 'detail', id] as const,
+  },
+  agentRecipes: {
+    all: ['agentRecipes'] as const,
+    lists: () => [...queryKeys.agentRecipes.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.agentRecipes.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.agentRecipes.all, 'detail', id] as const,
+    runs: (recipeId: string) => [...queryKeys.agentRecipes.all, 'runs', recipeId] as const,
+  },
+  agentRecipeRuns: {
+    all: ['agentRecipeRuns'] as const,
+    detail: (id: string) => [...queryKeys.agentRecipeRuns.all, 'detail', id] as const,
+  },
+  agentMarketplace: {
+    all: ['agentMarketplace'] as const,
+    lists: () => [...queryKeys.agentMarketplace.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.agentMarketplace.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.agentMarketplace.all, 'detail', id] as const,
+  },
+  agentActivityMemory: {
+    all: ['agentActivityMemory'] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.agentActivityMemory.all, 'list', filters] as const,
+  },
+  agentOrganizations: {
+    all: ['agentOrganizations'] as const,
+    lists: () => [...queryKeys.agentOrganizations.all, 'list'] as const,
+    members: (orgId: string) => [...queryKeys.agentOrganizations.all, 'members', orgId] as const,
   },
   devices: {
     all: ['devices'] as const,

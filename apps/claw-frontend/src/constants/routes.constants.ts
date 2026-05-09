@@ -55,11 +55,16 @@ export const ROUTES = {
   WORKSPACE_IMPL_HANDOFFS: '/workspace/impl-handoffs',
   ADMIN_AI_ACTION_POLICIES: '/admin/ai-action-policies',
   ADMIN_SUGGESTION_RULES: '/admin/suggestion-rules',
+  ADMIN_WEBHOOK_DELIVERIES: '/admin/webhook-deliveries',
   AGENT: '/agent',
   AGENT_TERMINAL: '/agent/terminal',
   AGENT_REPOS: '/agent/repos',
   AGENT_CAPABILITIES: '/agent/capabilities',
   AGENT_ACTIVITY: '/agent/activity',
+  AGENT_RECIPES: '/agent/recipes',
+  AGENT_RECIPE_RUN: (runId: string) => `/agent/recipe-runs/${runId}` as const,
+  AGENT_MARKETPLACE: '/agent/marketplace',
+  AGENT_ACTIVITY_MEMORY: '/agent/activity-memory',
 } as const;
 
 export const PUBLIC_ROUTES = [ROUTES.LOGIN] as const;

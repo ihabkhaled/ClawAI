@@ -129,7 +129,10 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
     children: [
       { labelKey: 'nav.agentTerminal', href: ROUTES.AGENT_TERMINAL, icon: Terminal },
       { labelKey: 'nav.agentCapabilities', href: ROUTES.AGENT_CAPABILITIES, icon: Shield },
+      { labelKey: 'nav.agentRecipes', href: ROUTES.AGENT_RECIPES, icon: ListTodo },
+      { labelKey: 'nav.agentMarketplace', href: ROUTES.AGENT_MARKETPLACE, icon: Store },
       { labelKey: 'nav.agentActivity', href: ROUTES.AGENT_ACTIVITY, icon: Activity },
+      { labelKey: 'nav.agentActivityMemory', href: ROUTES.AGENT_ACTIVITY_MEMORY, icon: Brain },
       { labelKey: 'nav.agentRepos', href: ROUTES.AGENT_REPOS, icon: GitBranch },
     ],
   },
@@ -172,6 +175,11 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
       {
         labelKey: 'nav.adminSuggestionRules',
         href: ROUTES.ADMIN_SUGGESTION_RULES,
+        icon: ScrollIcon,
+      },
+      {
+        labelKey: 'nav.adminWebhookDeliveries',
+        href: ROUTES.ADMIN_WEBHOOK_DELIVERIES,
         icon: ScrollIcon,
       },
     ],
