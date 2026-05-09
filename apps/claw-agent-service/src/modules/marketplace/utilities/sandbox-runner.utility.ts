@@ -216,7 +216,7 @@ export async function dryRunInWorker(
         durationMs: Date.now() - startedAt,
         staticFindings: [],
         runtimeFindings: [],
-        error: err.message,
+        error: err instanceof Error ? err.message : String(err),
       });
     });
   });
