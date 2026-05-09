@@ -136,6 +136,8 @@ async function ocrOp() {
 }
 
 function quote(s) {
-  // Naive shell quoting — paths come from mkdtemp which gives safe names.
-  return `"${s.replace(/"/g, '\\"')}"`;
+  // Escape backslashes first, then double-quotes — order matters: if you do
+  // it the other way round, the `\` you inserted to escape `"` gets escaped
+  // again and the whole string ends up unquoted.
+  return `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 }
