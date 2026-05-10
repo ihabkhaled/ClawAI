@@ -14,7 +14,7 @@ import {
 } from '../types/parallel.types';
 import { type ThreadSettings } from '../types/execution.types';
 import { type AssembledContext } from '../types/context.types';
-import { type ChatThread } from '../../../generated/prisma';
+import { type ChatThread, type Prisma } from '../../../generated/prisma';
 import { AppConfig } from '../../../app/config/app.config';
 import { type JudgeRefereeResult, type JudgeReviewPayload } from '../types/judge-referee.types';
 
@@ -472,82 +472,104 @@ export class ParallelExecutionManager {
       this.chatMessagesRepository.create({
         threadId,
         role: 'ASSISTANT',
-        content:
-          response.status === 'completed'
-            ? response.content
-            : `Error: ${response.errorMessage ?? 'Unknown error'}`,
+        content: this.buildParallelMessageContent(response),
         provider: response.provider,
         model: response.model,
         inputTokens: response.inputTokens ?? undefined,
         outputTokens: response.outputTokens ?? undefined,
         latencyMs: response.latencyMs,
         usedFallback: false,
-        metadata: {
-          parallelExecution: true,
+        metadata: this.buildParallelMessageMetadata(
+          response,
           parallelGroupId,
-          status: response.status,
-          judgeEnabled: response.judgeEnabled === true,
-          judgeModel: response.judgeModel ?? null,
-          judgeDisplayName: response.judgeDisplayName ?? response.judgeModel ?? null,
-          judgeState: response.judgeState ?? CompareJudgeState.NONE,
-          judgeErrorState: response.judgeErrorState ?? null,
-          judgeDialogAvailable: response.judgeDialogAvailable === true,
-          ...(response.judgeReview ? { judgeReview: response.judgeReview } : {}),
-          routeRoadmap: {
-            routingMode: 'MANUAL_MODEL',
-            routerModel: null,
-            selectedProvider: response.provider,
-            selectedModel: response.model,
-            finalProvider: response.provider,
-            finalModel: response.model,
-            finalDisplayName: response.model,
-            steps: [
-              {
-                stage: 'tool',
-                provider: 'parallel',
-                model: 'parallel',
-                displayName: 'Parallel compare',
-                description: `Model finished with status ${response.status}`,
-              },
-              {
-                stage: 'execution',
-                provider: response.provider,
-                model: response.model,
-                displayName: response.model,
-              },
-            ],
-          },
-          progressSummary: [
-            {
-              label: 'Request accepted',
-              description: 'Parallel comparison was queued.',
-              actorType: 'request',
-              actorName: 'Claw',
-              status: 'completed',
-            },
-            {
-              label: 'Launching comparison',
-              description: 'The model finished its parallel run.',
-              actorType: 'system',
-              actorName: 'Parallel compare',
-              status: response.status === 'completed' ? 'completed' : 'error',
-            },
-            {
-              label: response.status === 'completed' ? 'Response complete' : 'Response failed',
-              description:
-                response.status === 'completed'
-                  ? 'Parallel response saved to the thread.'
-                  : (response.errorMessage ?? 'Parallel execution failed'),
-              actorType: 'model',
-              actorName: `${response.provider} / ${response.model}`,
-              status: response.status === 'completed' ? 'completed' : 'error',
-            },
-          ],
-        },
+        ) as Prisma.InputJsonValue,
       }),
     );
-
     await Promise.all(storePromises);
+  }
+
+  private buildParallelMessageContent(response: ParallelModelResponse): string {
+    return response.status === 'completed'
+      ? response.content
+      : `Error: ${response.errorMessage ?? 'Unknown error'}`;
+  }
+
+  private buildParallelMessageMetadata(
+    response: ParallelModelResponse,
+    parallelGroupId: string,
+  ): Record<string, unknown> {
+    return {
+      parallelExecution: true,
+      parallelGroupId,
+      status: response.status,
+      judgeEnabled: response.judgeEnabled === true,
+      judgeModel: response.judgeModel ?? null,
+      judgeDisplayName: response.judgeDisplayName ?? response.judgeModel ?? null,
+      judgeState: response.judgeState ?? CompareJudgeState.NONE,
+      judgeErrorState: response.judgeErrorState ?? null,
+      judgeDialogAvailable: response.judgeDialogAvailable === true,
+      ...(response.judgeReview ? { judgeReview: response.judgeReview } : {}),
+      routeRoadmap: this.buildParallelRouteRoadmap(response),
+      progressSummary: this.buildParallelProgressSummary(response),
+    };
+  }
+
+  private buildParallelRouteRoadmap(response: ParallelModelResponse): Record<string, unknown> {
+    return {
+      routingMode: 'MANUAL_MODEL',
+      routerModel: null,
+      selectedProvider: response.provider,
+      selectedModel: response.model,
+      finalProvider: response.provider,
+      finalModel: response.model,
+      finalDisplayName: response.model,
+      steps: [
+        {
+          stage: 'tool',
+          provider: 'parallel',
+          model: 'parallel',
+          displayName: 'Parallel compare',
+          description: `Model finished with status ${response.status}`,
+        },
+        {
+          stage: 'execution',
+          provider: response.provider,
+          model: response.model,
+          displayName: response.model,
+        },
+      ],
+    };
+  }
+
+  private buildParallelProgressSummary(
+    response: ParallelModelResponse,
+  ): Array<Record<string, unknown>> {
+    const completed = response.status === 'completed';
+    return [
+      {
+        label: 'Request accepted',
+        description: 'Parallel comparison was queued.',
+        actorType: 'request',
+        actorName: 'Claw',
+        status: 'completed',
+      },
+      {
+        label: 'Launching comparison',
+        description: 'The model finished its parallel run.',
+        actorType: 'system',
+        actorName: 'Parallel compare',
+        status: completed ? 'completed' : 'error',
+      },
+      {
+        label: completed ? 'Response complete' : 'Response failed',
+        description: completed
+          ? 'Parallel response saved to the thread.'
+          : (response.errorMessage ?? 'Parallel execution failed'),
+        actorType: 'model',
+        actorName: `${response.provider} / ${response.model}`,
+        status: completed ? 'completed' : 'error',
+      },
+    ];
   }
 
   private buildTimedOutResponse(provider: string, model: string): ParallelModelResponse {

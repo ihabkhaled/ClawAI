@@ -10,9 +10,9 @@ import * as httpClientModule from '../common/utilities/http-client.utility';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
 
 jest.mock('../modules/chat-messages/managers/verifier.manager', () => {
-  const actual = jest.requireActual<
-    typeof import('../modules/chat-messages/managers/verifier.manager')
-  >('../modules/chat-messages/managers/verifier.manager');
+  const actual = jest.requireActual<{ VerifierManager: typeof VerifierManager }>(
+    '../modules/chat-messages/managers/verifier.manager',
+  );
   return actual;
 });
 

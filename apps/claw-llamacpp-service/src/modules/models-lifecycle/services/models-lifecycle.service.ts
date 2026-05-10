@@ -21,6 +21,7 @@ import {
 import {
   type LoadedModelSnapshot,
   type RuntimeConfig,
+  type SpawnedLlamaServer,
   type UpdateRuntimeConfigPayload,
 } from '../types/process.types';
 
@@ -44,7 +45,6 @@ export class ModelsLifecycleService implements OnApplicationBootstrap {
       const { rows } = await this.catalogRepo.list({ limit: 200 });
       for (const row of rows) {
         if (row.loadStatus === LoadStatus.READY || row.loadStatus === LoadStatus.LOADING) {
-           
           await this.catalogRepo.updateLoadStatus(row.id, LoadStatus.UNLOADED);
         }
       }
@@ -142,59 +142,20 @@ export class ModelsLifecycleService implements OnApplicationBootstrap {
   }
 
   private async loadInner(modelId: string): Promise<LoadedModelSnapshot> {
-    const entry = await this.catalogRepo.findById(modelId);
-    if (!entry) {
-      throw new EntityNotFoundException('FrontierCatalogEntry', modelId);
-    }
-    if (entry.downloadStatus !== DownloadStatus.READY) {
-      throw new BusinessException(
-        'Model weights not ready',
-        'MODEL_NOT_READY',
-        HttpStatus.CONFLICT,
-      );
-    }
-
-    const current = this.supervisor.getCurrent();
-    if (current) {
-      if (current.modelId === modelId) {
-        return {
-          id: entry.id,
-          name: entry.name,
-          tag: entry.tag,
-          loadStatus: LoadStatus.READY,
-          port: current.port,
-          pid: current.pid,
-        };
-      }
+    const entry = await this.requireReadyEntry(modelId);
+    const reused = this.tryReuseCurrent(entry, modelId);
+    if (reused) return reused;
+    if (this.supervisor.getCurrent()) {
       await this.unloadInner();
     }
-
     await this.catalogRepo.updateLoadStatus(modelId, LoadStatus.LOADING);
     await this.loadEvents.record({ modelId, eventType: LoadEventType.LOAD_REQUESTED });
-
     const config = await this.runtimeConfig.resolve(modelId);
     const spawned = await this.launcher.spawn(entry, config);
     const ready = await this.waitForReady(spawned.port);
-
     if (!ready) {
-      try {
-        spawned.child.kill('SIGKILL');
-      } catch {
-        // ignore
-      }
-      await this.catalogRepo.updateLoadStatus(modelId, LoadStatus.FAILED);
-      await this.loadEvents.record({
-        modelId,
-        eventType: LoadEventType.FAILED,
-        errorMessage: 'Health-check timeout',
-      });
-      throw new BusinessException(
-        'Model load timed out',
-        'MODEL_LOAD_TIMEOUT',
-        HttpStatus.GATEWAY_TIMEOUT,
-      );
+      await this.handleLoadTimeout(modelId, spawned);
     }
-
     this.supervisor.attach({
       modelId,
       pid: spawned.pid,
@@ -223,6 +184,60 @@ export class ModelsLifecycleService implements OnApplicationBootstrap {
       port: spawned.port,
       pid: spawned.pid,
     };
+  }
+
+  private async requireReadyEntry(
+    modelId: string,
+  ): Promise<NonNullable<Awaited<ReturnType<typeof this.catalogRepo.findById>>>> {
+    const entry = await this.catalogRepo.findById(modelId);
+    if (!entry) {
+      throw new EntityNotFoundException('FrontierCatalogEntry', modelId);
+    }
+    if (entry.downloadStatus !== DownloadStatus.READY) {
+      throw new BusinessException(
+        'Model weights not ready',
+        'MODEL_NOT_READY',
+        HttpStatus.CONFLICT,
+      );
+    }
+    return entry;
+  }
+
+  private tryReuseCurrent(
+    entry: { id: string; name: string; tag: string },
+    modelId: string,
+  ): LoadedModelSnapshot | null {
+    const current = this.supervisor.getCurrent();
+    if (current?.modelId === modelId) {
+      return {
+        id: entry.id,
+        name: entry.name,
+        tag: entry.tag,
+        loadStatus: LoadStatus.READY,
+        port: current.port,
+        pid: current.pid,
+      };
+    }
+    return null;
+  }
+
+  private async handleLoadTimeout(modelId: string, spawned: SpawnedLlamaServer): Promise<never> {
+    try {
+      spawned.child.kill('SIGKILL');
+    } catch {
+      // ignore
+    }
+    await this.catalogRepo.updateLoadStatus(modelId, LoadStatus.FAILED);
+    await this.loadEvents.record({
+      modelId,
+      eventType: LoadEventType.FAILED,
+      errorMessage: 'Health-check timeout',
+    });
+    throw new BusinessException(
+      'Model load timed out',
+      'MODEL_LOAD_TIMEOUT',
+      HttpStatus.GATEWAY_TIMEOUT,
+    );
   }
 
   private async unloadInner(): Promise<void> {
@@ -295,7 +310,7 @@ export class ModelsLifecycleService implements OnApplicationBootstrap {
       if (current?.child.exitCode !== null) {
         return true;
       }
-       
+
       await new Promise((resolve) => setTimeout(resolve, 200));
     }
     return false;

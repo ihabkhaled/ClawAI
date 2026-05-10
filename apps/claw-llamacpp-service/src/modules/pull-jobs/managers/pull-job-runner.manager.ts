@@ -40,85 +40,20 @@ export class PullJobRunnerManager {
     this.logger.log(`run: starting job ${jobId}`);
     const controller = new AbortController();
     this.cancellations.set(jobId, controller);
-
     try {
-      const job = await this.jobsRepo.findById(jobId);
-      if (!job) {
-        this.logger.error(`run: job ${jobId} not found`);
-        return;
-      }
-      const entry = await this.catalogRepo.findById(job.modelId);
-      if (!entry) {
-        await this.markFailed(jobId, PullReasonCode.UNKNOWN, 'Catalog entry not found');
-        return;
-      }
-
-      await this.jobsRepo.updateStatus(jobId, PullJobStatus.RUNNING);
-      await this.catalogRepo.updateDownloadStatus(entry.id, DownloadStatus.PULLING);
-      this.emitProgress(job, PullJobStatus.RUNNING);
-
-      const client = new HuggingFaceClient(
-        AppConfig.get().HUGGINGFACE_API_BASE,
-        AppConfig.get().HUGGINGFACE_TOKEN,
+      const prepared = await this.prepareJob(jobId);
+      if (prepared === null) return;
+      const { job, entry, client, files, modelDir } = prepared;
+      const downloadedBytes = await this.downloadAllFiles(
+        jobId,
+        job,
+        entry,
+        client,
+        files,
+        modelDir,
+        controller,
       );
-      const pattern = this.compilePattern(entry.filePattern);
-      const files = await client.listFiles(entry.huggingfaceRepo, pattern);
-      if (files.length === 0) {
-        await this.markFailed(jobId, PullReasonCode.HF_UNAVAILABLE, 'No matching files in HF repo');
-        return;
-      }
-
-      const dataPath = AppConfig.get().LLAMACPP_DATA_PATH;
-      const modelDir = resolveSafePath(dataPath, path.join('models', entry.name, entry.tag));
-      await fs.promises.mkdir(modelDir, { recursive: true });
-
-      let downloadedBytes = 0n;
-      let completedFiles = 0;
-      for (const file of files) {
-        if (controller.signal.aborted) {
-          await this.markCancelled(jobId);
-          return;
-        }
-        const target = resolveSafePath(modelDir, path.basename(file.name));
-        const bytes = await this.downloadOneFile(
-          client,
-          entry.huggingfaceRepo,
-          file.name,
-          target,
-          controller.signal,
-        );
-        downloadedBytes += bytes;
-        if (file.sha256) {
-          const ok = await this.verifyFileSha(target, file.sha256);
-          if (!ok) {
-            await this.markFailed(
-              jobId,
-              PullReasonCode.SHA_MISMATCH,
-              `SHA mismatch on ${file.name}`,
-            );
-            return;
-          }
-        }
-        completedFiles++;
-        await this.jobsRepo.updateProgress(jobId, {
-          downloadedBytes,
-          completedFiles,
-          currentFile: file.name,
-        });
-        this.emitProgress(
-          { ...job, downloadedBytes, completedFiles, currentFile: file.name },
-          PullJobStatus.RUNNING,
-        );
-        this.events.pullProgress({
-          jobId,
-          modelId: entry.id,
-          downloadedBytes,
-          totalBytes: job.totalBytes,
-          completedFiles,
-          totalFiles: files.length,
-        });
-      }
-
+      if (downloadedBytes === null) return;
       await this.markCompleted(jobId, entry.id, downloadedBytes);
     } catch (error) {
       this.logger.error(`run: ${jobId} failed — ${(error as Error).message}`);
@@ -126,6 +61,93 @@ export class PullJobRunnerManager {
     } finally {
       this.cancellations.delete(jobId);
     }
+  }
+
+  private async prepareJob(jobId: string): Promise<{
+    job: NonNullable<Awaited<ReturnType<PullJobsRepository['findById']>>>;
+    entry: NonNullable<Awaited<ReturnType<CatalogRepository['findById']>>>;
+    client: HuggingFaceClient;
+    files: Awaited<ReturnType<HuggingFaceClient['listFiles']>>;
+    modelDir: string;
+  } | null> {
+    const job = await this.jobsRepo.findById(jobId);
+    if (!job) {
+      this.logger.error(`run: job ${jobId} not found`);
+      return null;
+    }
+    const entry = await this.catalogRepo.findById(job.modelId);
+    if (!entry) {
+      await this.markFailed(jobId, PullReasonCode.UNKNOWN, 'Catalog entry not found');
+      return null;
+    }
+    await this.jobsRepo.updateStatus(jobId, PullJobStatus.RUNNING);
+    await this.catalogRepo.updateDownloadStatus(entry.id, DownloadStatus.PULLING);
+    this.emitProgress(job, PullJobStatus.RUNNING);
+    const client = new HuggingFaceClient(
+      AppConfig.get().HUGGINGFACE_API_BASE,
+      AppConfig.get().HUGGINGFACE_TOKEN,
+    );
+    const pattern = this.compilePattern(entry.filePattern);
+    const files = await client.listFiles(entry.huggingfaceRepo, pattern);
+    if (files.length === 0) {
+      await this.markFailed(jobId, PullReasonCode.HF_UNAVAILABLE, 'No matching files in HF repo');
+      return null;
+    }
+    const dataPath = AppConfig.get().LLAMACPP_DATA_PATH;
+    const modelDir = resolveSafePath(dataPath, path.join('models', entry.name, entry.tag));
+    await fs.promises.mkdir(modelDir, { recursive: true });
+    return { job, entry, client, files, modelDir };
+  }
+
+  private async downloadAllFiles(
+    jobId: string,
+    job: NonNullable<Awaited<ReturnType<PullJobsRepository['findById']>>>,
+    entry: NonNullable<Awaited<ReturnType<CatalogRepository['findById']>>>,
+    client: HuggingFaceClient,
+    files: Awaited<ReturnType<HuggingFaceClient['listFiles']>>,
+    modelDir: string,
+    controller: AbortController,
+  ): Promise<bigint | null> {
+    let downloadedBytes = 0n;
+    let completedFiles = 0;
+    for (const file of files) {
+      if (controller.signal.aborted) {
+        await this.markCancelled(jobId);
+        return null;
+      }
+      const target = resolveSafePath(modelDir, path.basename(file.name));
+      const bytes = await this.downloadOneFile(
+        client,
+        entry.huggingfaceRepo,
+        file.name,
+        target,
+        controller.signal,
+      );
+      downloadedBytes += bytes;
+      if (file.sha256 && !(await this.verifyFileSha(target, file.sha256))) {
+        await this.markFailed(jobId, PullReasonCode.SHA_MISMATCH, `SHA mismatch on ${file.name}`);
+        return null;
+      }
+      completedFiles++;
+      await this.jobsRepo.updateProgress(jobId, {
+        downloadedBytes,
+        completedFiles,
+        currentFile: file.name,
+      });
+      this.emitProgress(
+        { ...job, downloadedBytes, completedFiles, currentFile: file.name },
+        PullJobStatus.RUNNING,
+      );
+      this.events.pullProgress({
+        jobId,
+        modelId: entry.id,
+        downloadedBytes,
+        totalBytes: job.totalBytes,
+        completedFiles,
+        totalFiles: files.length,
+      });
+    }
+    return downloadedBytes;
   }
 
   private async downloadOneFile(

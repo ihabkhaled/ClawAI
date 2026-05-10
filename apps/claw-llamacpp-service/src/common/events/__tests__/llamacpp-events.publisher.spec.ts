@@ -2,7 +2,7 @@ import { LlamacppEventsPublisher } from '../llamacpp-events.publisher';
 import { PreflightReason, PullReasonCode } from '../../enums';
 
 describe('LlamacppEventsPublisher', () => {
-  const makeRabbit = () => ({ publish: jest.fn().mockResolvedValue(undefined) });
+  const makeRabbit = () => ({ publish: jest.fn().mockImplementation(async () => {}) });
 
   function build(): { publisher: LlamacppEventsPublisher; rabbit: ReturnType<typeof makeRabbit> } {
     const rabbit = makeRabbit();
@@ -22,7 +22,11 @@ describe('LlamacppEventsPublisher', () => {
 
   it('publishes binary.updated with previousVersion', () => {
     const { publisher, rabbit } = build();
-    publisher.binaryUpdated({ version: 'b8995', previousVersion: 'b8994', platform: 'linux-x64-cpu' });
+    publisher.binaryUpdated({
+      version: 'b8995',
+      previousVersion: 'b8994',
+      platform: 'linux-x64-cpu',
+    });
     expect(rabbit.publish).toHaveBeenCalledWith(
       'llamacpp.binary.updated',
       expect.objectContaining({ previousVersion: 'b8994' }),
@@ -121,7 +125,11 @@ describe('LlamacppEventsPublisher', () => {
   });
 
   it('swallows publish errors without throwing (logs only)', () => {
-    const rabbit = { publish: jest.fn().mockImplementation(() => { throw new Error('amqp down'); }) };
+    const rabbit = {
+      publish: jest.fn().mockImplementation(() => {
+        throw new Error('amqp down');
+      }),
+    };
     const publisher = new LlamacppEventsPublisher(rabbit as any);
     expect(() => publisher.weightsDeleted({ modelId: 'm', modelName: 'x:y' })).not.toThrow();
   });

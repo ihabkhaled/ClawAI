@@ -11,9 +11,9 @@ import * as httpClientModule from '../common/utilities/http-client.utility';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
 
 jest.mock('../modules/chat-messages/managers/best-of-n.manager', () => {
-  const actual = jest.requireActual<
-    typeof import('../modules/chat-messages/managers/best-of-n.manager')
-  >('../modules/chat-messages/managers/best-of-n.manager');
+  const actual = jest.requireActual<{ BestOfNManager: typeof BestOfNManager }>(
+    '../modules/chat-messages/managers/best-of-n.manager',
+  );
   return actual;
 });
 
@@ -265,10 +265,10 @@ describe('BestOfNManager', () => {
         {
           ...messagesRepo,
           create: createMock,
-        } as unknown as import('../modules/chat-messages/repositories/chat-messages.repository').ChatMessagesRepository,
-        threadsRepo as unknown as import('../modules/chat-threads/repositories/chat-threads.repository').ChatThreadsRepository,
-        streamService as unknown as import('../modules/chat-messages/services/chat-stream.service').ChatStreamService,
-        qualityManager as unknown as import('../modules/chat-messages/managers/quality-check.manager').QualityCheckManager,
+        } as unknown as ChatMessagesRepository,
+        threadsRepo as unknown as ChatThreadsRepository,
+        streamService as unknown as ChatStreamService,
+        qualityManager as unknown as QualityCheckManager,
       );
       await isolatedManager.executeInBackground('thread-err', 'prompt', 2);
       expect(createMock).toHaveBeenCalledWith(
@@ -316,10 +316,10 @@ describe('BestOfNManager', () => {
         {
           ...messagesRepo,
           create: createMock,
-        } as unknown as import('../modules/chat-messages/repositories/chat-messages.repository').ChatMessagesRepository,
-        threadsRepo as unknown as import('../modules/chat-threads/repositories/chat-threads.repository').ChatThreadsRepository,
-        streamService as unknown as import('../modules/chat-messages/services/chat-stream.service').ChatStreamService,
-        qualityManager as unknown as import('../modules/chat-messages/managers/quality-check.manager').QualityCheckManager,
+        } as unknown as ChatMessagesRepository,
+        threadsRepo as unknown as ChatThreadsRepository,
+        streamService as unknown as ChatStreamService,
+        qualityManager as unknown as QualityCheckManager,
       );
       await expect(
         isolatedManager.executeInBackground('thread-double-fail', 'prompt', 2),

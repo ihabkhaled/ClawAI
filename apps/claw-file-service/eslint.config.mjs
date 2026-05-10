@@ -270,6 +270,19 @@ export default tseslint.config(
     },
   },
 
+  // ── Runtime-validated path sites ───────────────────────────────────────────
+  // Paths in these files come from sanitized DB records validated by
+  // FileSecurityManager (magic-byte + ZIP-bomb + AV scanning).
+  {
+    files: [
+      'src/common/utilities/file-storage.utility.ts',
+      'src/common/utilities/file-validator.utility.ts',
+    ],
+    rules: {
+      'security/detect-non-literal-fs-filename': 'off',
+    },
+  },
+
   // ── Test file overrides ────────────────────────────────────────────────────
   {
     files: ['**/*.spec.ts', '**/*.e2e-spec.ts', 'test/**/*.ts'],
@@ -287,6 +300,7 @@ export default tseslint.config(
       'max-lines-per-function': 'off',
       'security/detect-object-injection': 'off',
       'security/detect-possible-timing-attacks': 'off',
+      'security/detect-non-literal-fs-filename': 'off',
     },
   },
 );

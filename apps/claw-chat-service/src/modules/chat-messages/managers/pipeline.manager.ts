@@ -18,7 +18,7 @@ import type { PipelineMessageDto } from '../dto/pipeline-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { PipelineResponse, PipelineStage, PipelineStageResult } from '../types/pipeline.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
-import { type RoutingMode } from '../../../generated/prisma';
+import { type Prisma, type RoutingMode } from '../../../generated/prisma';
 
 /**
  * Runs a multi-stage specialist pipeline (analyze → reason → format by default,
@@ -99,61 +99,12 @@ export class PipelineManager {
         model: resolvedModel,
         latencyMs: Date.now() - startTime,
         usedFallback: false,
-        metadata: {
-          pipeline: true,
-          template: dto.template,
-          stages: stageResults,
-          stageCount: stageResults.length,
-          modelSelection: resolvedSelection,
-          routeRoadmap: {
-            routingMode: resolvedSelection.modelSelectionMode,
-            routerModel: null,
-            selectedProvider:
-              resolvedSelection.requestedProvider ?? resolvedSelection.actualProvider,
-            selectedModel: resolvedSelection.requestedModel ?? resolvedModel,
-            finalProvider: resolvedSelection.actualProvider,
-            finalModel: resolvedModel,
-            finalDisplayName: resolvedModel,
-            steps: [
-              {
-                stage: 'tool',
-                provider: 'pipeline',
-                model: dto.template,
-                displayName: 'Pipeline workflow',
-                description: `${String(stageResults.length)} stages completed`,
-              },
-              {
-                stage: 'execution',
-                provider: 'local-ollama',
-                model: resolvedModel,
-                displayName: resolvedModel,
-              },
-            ],
-          },
-          progressSummary: [
-            {
-              label: 'Request accepted',
-              description: 'Pipeline execution was queued.',
-              actorType: 'request',
-              actorName: 'Claw',
-              status: 'completed',
-            },
-            {
-              label: 'Running pipeline',
-              description: `${String(stageResults.length)} stages completed.`,
-              actorType: 'system',
-              actorName: 'Pipeline workflow',
-              status: 'completed',
-            },
-            {
-              label: 'Response complete',
-              description: 'Pipeline result saved to the thread.',
-              actorType: 'model',
-              actorName: `local-ollama / ${resolvedModel}`,
-              status: 'completed',
-            },
-          ],
-        },
+        metadata: this.buildPipelineMetadata(
+          dto,
+          resolvedSelection,
+          resolvedModel,
+          stageResults,
+        ) as Prisma.InputJsonValue,
       });
 
       this.chatStreamService.emitCompletion(threadId, 'local-ollama', resolvedModel);
@@ -168,6 +119,68 @@ export class PipelineManager {
         this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
       }
     }
+  }
+
+  private buildPipelineMetadata(
+    dto: PipelineMessageDto,
+    resolvedSelection: AdvancedModelSelectionResolution,
+    resolvedModel: string,
+    stageResults: Array<{ output: string }>,
+  ): Record<string, unknown> {
+    return {
+      pipeline: true,
+      template: dto.template,
+      stages: stageResults,
+      stageCount: stageResults.length,
+      modelSelection: resolvedSelection,
+      routeRoadmap: {
+        routingMode: resolvedSelection.modelSelectionMode,
+        routerModel: null,
+        selectedProvider: resolvedSelection.requestedProvider ?? resolvedSelection.actualProvider,
+        selectedModel: resolvedSelection.requestedModel ?? resolvedModel,
+        finalProvider: resolvedSelection.actualProvider,
+        finalModel: resolvedModel,
+        finalDisplayName: resolvedModel,
+        steps: [
+          {
+            stage: 'tool',
+            provider: 'pipeline',
+            model: dto.template,
+            displayName: 'Pipeline workflow',
+            description: `${String(stageResults.length)} stages completed`,
+          },
+          {
+            stage: 'execution',
+            provider: 'local-ollama',
+            model: resolvedModel,
+            displayName: resolvedModel,
+          },
+        ],
+      },
+      progressSummary: [
+        {
+          label: 'Request accepted',
+          description: 'Pipeline execution was queued.',
+          actorType: 'request',
+          actorName: 'Claw',
+          status: 'completed',
+        },
+        {
+          label: 'Running pipeline',
+          description: `${String(stageResults.length)} stages completed.`,
+          actorType: 'system',
+          actorName: 'Pipeline workflow',
+          status: 'completed',
+        },
+        {
+          label: 'Response complete',
+          description: 'Pipeline result saved to the thread.',
+          actorType: 'model',
+          actorName: `local-ollama / ${resolvedModel}`,
+          status: 'completed',
+        },
+      ],
+    };
   }
 
   private async resolveStages(

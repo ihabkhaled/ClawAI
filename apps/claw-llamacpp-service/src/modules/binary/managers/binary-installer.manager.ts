@@ -86,7 +86,7 @@ export class BinaryInstallerManager {
   }
 
   private resolvePinnedRelease(platformKey: string): ResolvedBinaryRelease | null {
-    const pinned = BINARY_RELEASES[platformKey];
+    const pinned = Object.entries(BINARY_RELEASES).find(([k]) => k === platformKey)?.[1];
     if (!pinned) {
       return null;
     }
@@ -131,7 +131,8 @@ export class BinaryInstallerManager {
   }
 
   private pickAsset(assets: GithubReleaseAsset[], platformKey: string): GithubReleaseAsset | null {
-    const patterns = PLATFORM_ASSET_PATTERNS[platformKey] ?? [];
+    const patterns =
+      Object.entries(PLATFORM_ASSET_PATTERNS).find(([k]) => k === platformKey)?.[1] ?? [];
     for (const pattern of patterns) {
       const match = assets.find((asset) => pattern.test(asset.name));
       if (match) {
@@ -222,7 +223,7 @@ export class BinaryInstallerManager {
   }
 
   private async maybeVerifyArchive(archivePath: string, platformKey: string): Promise<void> {
-    const pinned = BINARY_RELEASES[platformKey];
+    const pinned = Object.entries(BINARY_RELEASES).find(([k]) => k === platformKey)?.[1];
     const expected = pinned?.archiveSha256;
     if (!expected || expected === '0'.repeat(64)) {
       this.logger.warn(

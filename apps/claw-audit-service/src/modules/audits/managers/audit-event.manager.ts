@@ -43,7 +43,18 @@ export class AuditEventManager implements OnModuleInit {
   }
 
   private async subscribeAll(): Promise<void> {
-    const subscriptions: Array<[string, (data: unknown) => Promise<void>]> = [
+    const subscriptions = [
+      ...this.coreEventSubscriptions(),
+      ...this.capabilityEventSubscriptions(),
+    ];
+    for (const [pattern, handler] of subscriptions) {
+      await this.rabbitMQService.subscribe(pattern, handler);
+      this.logger.log(`Subscribed to event: ${pattern}`);
+    }
+  }
+
+  private coreEventSubscriptions(): Array<[string, (data: unknown) => Promise<void>]> {
+    return [
       [EventPattern.USER_LOGIN, (d) => this.handleUserLogin(d as UserLoginPayload)],
       [EventPattern.USER_LOGOUT, (d) => this.handleUserLogout(d as UserLogoutPayload)],
       [
@@ -78,7 +89,12 @@ export class AuditEventManager implements OnModuleInit {
         EventPattern.MEMORY_EXTRACTED,
         (d) => this.handleMemoryExtracted(d as MemoryExtractedPayload),
       ],
-      // === Desktop-agent capability framework (Stream 10) ===
+    ];
+  }
+
+  // === Desktop-agent capability framework (Stream 10) ===
+  private capabilityEventSubscriptions(): Array<[string, (data: unknown) => Promise<void>]> {
+    return [
       [
         EventPattern.AGENT_CAPABILITY_PROPOSED,
         (d) => this.handleCapabilityProposed(d as CapabilityProposedPayload),
@@ -128,11 +144,6 @@ export class AuditEventManager implements OnModuleInit {
         (d) => this.handleCapabilityDenied(d as CapabilityDeniedPayload),
       ],
     ];
-
-    for (const [pattern, handler] of subscriptions) {
-      await this.rabbitMQService.subscribe(pattern, handler);
-      this.logger.log(`Subscribed to event: ${pattern}`);
-    }
   }
 
   async handleEvent(eventPattern: string, payload: unknown): Promise<void> {
@@ -271,7 +282,9 @@ export class AuditEventManager implements OnModuleInit {
   }
 
   async handleMessageCompleted(payload: MessageCompletedPayload): Promise<void> {
-    this.logger.debug(`handleMessageCompleted: recording for message ${payload.messageId} provider=${payload.provider ?? 'unknown'}`);
+    this.logger.debug(
+      `handleMessageCompleted: recording for message ${payload.messageId} provider=${payload.provider ?? 'unknown'}`,
+    );
     await this.auditsService.createAuditLog({
       userId: 'system',
       action: 'ACCESS',
@@ -343,9 +356,7 @@ export class AuditEventManager implements OnModuleInit {
     });
   }
 
-  async handleCapabilityPolicyMatched(
-    payload: CapabilityPolicyMatchedPayload,
-  ): Promise<void> {
+  async handleCapabilityPolicyMatched(payload: CapabilityPolicyMatchedPayload): Promise<void> {
     await this.auditsService.createAuditLog({
       userId: payload.userId,
       action: 'CAPABILITY_POLICY_MATCHED',
@@ -361,9 +372,7 @@ export class AuditEventManager implements OnModuleInit {
     });
   }
 
-  async handleCapabilityAutoApproved(
-    payload: CapabilityAutoApprovedPayload,
-  ): Promise<void> {
+  async handleCapabilityAutoApproved(payload: CapabilityAutoApprovedPayload): Promise<void> {
     await this.auditsService.createAuditLog({
       userId: payload.userId,
       action: 'CAPABILITY_AUTO_APPROVED',

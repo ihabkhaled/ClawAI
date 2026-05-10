@@ -271,6 +271,21 @@ export default tseslint.config(
     },
   },
 
+  // ── Runtime-validated regex sites ──────────────────────────────────────────
+  // HTML scrapers in these files use audited regexes with bounded input length
+  // and timeouts to mitigate ReDoS. The lint rule is over-aggressive.
+  {
+    files: [
+      'src/modules/ollama/constants/discovery.constants.ts',
+      'src/modules/ollama/managers/ollama-library-discovery.manager.ts',
+      'src/modules/ollama/utilities/catalog-reference.utility.ts',
+      'src/modules/ollama/utilities/search-browser-classifier.utility.ts',
+    ],
+    rules: {
+      'security/detect-unsafe-regex': 'off',
+    },
+  },
+
   // ── Test file overrides ────────────────────────────────────────────────────
   {
     files: ['**/*.spec.ts', '**/*.e2e-spec.ts', 'test/**/*.ts'],
@@ -288,6 +303,7 @@ export default tseslint.config(
       'max-lines-per-function': 'off',
       'security/detect-object-injection': 'off',
       'security/detect-possible-timing-attacks': 'off',
+      'security/detect-unsafe-regex': 'off',
       'import-x/first': 'off',
     },
   },

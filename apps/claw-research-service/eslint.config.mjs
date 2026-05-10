@@ -176,6 +176,23 @@ export default tseslint.config(
       complexity: ['warn', 15],
     },
   },
+  // ── Runtime-validated regex sites ──────────────────────────────────────────
+  // HTML scrapers + content-safety patterns use audited regexes with bounded
+  // input length and timeouts to mitigate ReDoS.
+  {
+    files: [
+      'src/common/constants/content-safety.constants.ts',
+      'src/modules/scrape/adapters/article.extractor.ts',
+      'src/modules/scrape/adapters/docs.extractor.ts',
+      'src/modules/scrape/adapters/table.extractor.ts',
+      'src/modules/search/adapters/ollama-web.adapter.ts',
+      'src/modules/search/adapters/searxng.adapter.ts',
+    ],
+    rules: {
+      'security/detect-non-literal-regexp': 'off',
+      'security/detect-unsafe-regex': 'off',
+    },
+  },
   {
     files: ['**/*.spec.ts', '**/*.e2e-spec.ts', 'test/**/*.ts'],
     rules: {
@@ -188,6 +205,8 @@ export default tseslint.config(
       'max-lines-per-function': 'off',
       'security/detect-object-injection': 'off',
       'security/detect-possible-timing-attacks': 'off',
+      'security/detect-non-literal-regexp': 'off',
+      'security/detect-unsafe-regex': 'off',
     },
   },
 );

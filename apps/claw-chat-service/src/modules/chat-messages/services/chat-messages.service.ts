@@ -508,28 +508,42 @@ export class ChatMessagesService implements OnModuleInit {
         latestUserMetadata,
       );
     } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : 'All providers failed';
-      const failureLatencyMs = Math.max(1, Date.now() - startedAt);
-      this.logger.error(
-        `handleMessageRouted: failed for message ${payload.messageId} - ${errorMsg}`,
-      );
-      const errorMessage = await this.storeErrorResponse(payload, errorMsg);
-      this.publishMessageCompleted(
+      await this.handleMessageRoutedFailure(
+        error,
         payload,
-        errorMessage,
-        {
-          content: errorMessage.content,
-          provider: errorMessage.provider ?? payload.selectedProvider,
-          model: errorMessage.model ?? payload.selectedModel,
-          latencyMs: failureLatencyMs,
-          usedFallback: true,
-        },
         thread,
         chronologicalMessages,
-        { executionSuccess: false, finalStatus: 'failed', errorMessage: errorMsg },
+        startedAt,
       );
       throw error;
     }
+  }
+
+  private async handleMessageRoutedFailure(
+    error: unknown,
+    payload: MessageRoutedData,
+    thread: ChatThread | null,
+    chronologicalMessages: ChatMessage[],
+    startedAt: number,
+  ): Promise<void> {
+    const errorMsg = error instanceof Error ? error.message : 'All providers failed';
+    const failureLatencyMs = Math.max(1, Date.now() - startedAt);
+    this.logger.error(`handleMessageRouted: failed for message ${payload.messageId} - ${errorMsg}`);
+    const errorMessage = await this.storeErrorResponse(payload, errorMsg);
+    this.publishMessageCompleted(
+      payload,
+      errorMessage,
+      {
+        content: errorMessage.content,
+        provider: errorMessage.provider ?? payload.selectedProvider,
+        model: errorMessage.model ?? payload.selectedModel,
+        latencyMs: failureLatencyMs,
+        usedFallback: true,
+      },
+      thread,
+      chronologicalMessages,
+      { executionSuccess: false, finalStatus: 'failed', errorMessage: errorMsg },
+    );
   }
 
   private applyFollowUpOverrides(

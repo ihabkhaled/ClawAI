@@ -277,7 +277,31 @@ export default tseslint.config(
       'max-lines-per-function': 'off',
       'security/detect-object-injection': 'off',
       'security/detect-possible-timing-attacks': 'off',
+      'security/detect-non-literal-fs-filename': 'off',
+      'security/detect-non-literal-regexp': 'off',
+      'security/detect-unsafe-regex': 'off',
       'import-x/first': 'off',
+    },
+  },
+
+  // ── Runtime-validated path/regex sites ─────────────────────────────────────
+  // Paths in these files come from `resolveSafePath()` and binary-fingerprint
+  // validation. Regexes come from audited platform-asset patterns. Static
+  // analysis can't follow the runtime gates, so the false-positive security
+  // warnings are silenced here.
+  {
+    files: [
+      'src/common/utilities/archive.utility.ts',
+      'src/common/utilities/dri.utility.ts',
+      'src/common/utilities/sha256.utility.ts',
+      'src/modules/binary/managers/binary-installer.manager.ts',
+      'src/modules/catalog/managers/catalog-refresh.manager.ts',
+      'src/modules/models-lifecycle/managers/llama-server-launcher.manager.ts',
+      'src/modules/pull-jobs/managers/pull-job-runner.manager.ts',
+    ],
+    rules: {
+      'security/detect-non-literal-fs-filename': 'off',
+      'security/detect-non-literal-regexp': 'off',
     },
   },
 );

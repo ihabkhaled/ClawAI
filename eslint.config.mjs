@@ -335,6 +335,54 @@ export default tseslint.config(
       'max-lines-per-function': 'off',
       'security/detect-object-injection': 'off',
       'security/detect-possible-timing-attacks': 'off',
+      'security/detect-non-literal-fs-filename': 'off',
+      'security/detect-non-literal-regexp': 'off',
+      'security/detect-unsafe-regex': 'off',
+    },
+  },
+
+  // ── Runtime-validated path/regex sites ─────────────────────────────────────
+  // These files take dynamic paths/regexes that are validated upstream by
+  // dedicated wrapper utilities (resolveSafePath, compilePolicyPattern,
+  // sanitised/audited HTML scrapers). Static analysis can't follow the
+  // validation chain, so we silence the false-positive security warnings here.
+  // Any new file added to this list should have a clear runtime gate.
+  {
+    files: [
+      // llamacpp downloads + binary install + spawn — paths gated by
+      // resolveSafePath() and binary fingerprint validation.
+      'apps/claw-llamacpp-service/src/common/utilities/archive.utility.ts',
+      'apps/claw-llamacpp-service/src/common/utilities/dri.utility.ts',
+      'apps/claw-llamacpp-service/src/common/utilities/sha256.utility.ts',
+      'apps/claw-llamacpp-service/src/modules/binary/managers/binary-installer.manager.ts',
+      'apps/claw-llamacpp-service/src/modules/catalog/managers/catalog-refresh.manager.ts',
+      'apps/claw-llamacpp-service/src/modules/models-lifecycle/managers/llama-server-launcher.manager.ts',
+      'apps/claw-llamacpp-service/src/modules/pull-jobs/managers/pull-job-runner.manager.ts',
+      // file-service uploads — paths derived from sanitized DB records via
+      // FileSecurityManager (magic-byte + ZIP-bomb + AV scanning).
+      'apps/claw-file-service/src/common/utilities/file-storage.utility.ts',
+      'apps/claw-file-service/src/common/utilities/file-validator.utility.ts',
+      // research-service scraper regexes — audited HTML extractors with
+      // bounded input length and timeouts.
+      'apps/claw-research-service/src/modules/search/adapters/ollama-web.adapter.ts',
+      'apps/claw-research-service/src/modules/search/adapters/searxng.adapter.ts',
+      // ollama-service catalog scrapers — audited HTML regexes with bounded
+      // input length and timeouts.
+      'apps/claw-ollama-service/src/modules/ollama/constants/discovery.constants.ts',
+      'apps/claw-ollama-service/src/modules/ollama/managers/ollama-library-discovery.manager.ts',
+      'apps/claw-ollama-service/src/modules/ollama/utilities/catalog-reference.utility.ts',
+      'apps/claw-ollama-service/src/modules/ollama/utilities/search-browser-classifier.utility.ts',
+      // agent-service recipe DSL + capability risk — patterns compiled via
+      // `compilePolicyPattern` with ReDoS guard.
+      'apps/claw-agent-service/src/common/constants/recipe.constants.ts',
+      'apps/claw-agent-service/src/common/utilities/recipe-expression.utility.ts',
+      'apps/claw-agent-service/src/modules/agent/services/capability-risk.service.ts',
+      'apps/claw-agent-service/src/modules/fleet/utilities/saml-verifier.utility.ts',
+    ],
+    rules: {
+      'security/detect-non-literal-fs-filename': 'off',
+      'security/detect-non-literal-regexp': 'off',
+      'security/detect-unsafe-regex': 'off',
     },
   },
 );

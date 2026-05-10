@@ -20,19 +20,45 @@ export class AdvancedModuleModelSelectionService {
     const requestedProvider = selection.requestedProvider?.trim();
     const requestedDisplayName = selection.requestedDisplayName?.trim();
     const selectedModelSource = selection.selectedModelSource ?? null;
-
     if (!requestedModel || requestedModel === 'AUTO') {
-      return {
-        modelSelectionMode: ModelSelectionMode.AUTO,
-        requestedProvider: requestedProvider ?? null,
-        requestedModel: null,
-        requestedDisplayName: requestedDisplayName ?? null,
+      return this.buildAutoResolution(
+        requestedProvider,
+        requestedDisplayName,
         selectedModelSource,
-        actualProvider: 'local-ollama',
-        actualModel: await this.resolveFallbackModel(fallbackModel),
-      };
+        fallbackModel,
+      );
     }
+    this.assertManualSelectionUsable(requestedProvider);
+    await this.assertModelInstalled(requestedModel);
+    return {
+      modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
+      requestedProvider: requestedProvider ?? 'local-ollama',
+      requestedModel,
+      requestedDisplayName: requestedDisplayName ?? requestedModel,
+      selectedModelSource: selectedModelSource ?? 'LOCAL',
+      actualProvider: 'local-ollama',
+      actualModel: requestedModel,
+    };
+  }
 
+  private async buildAutoResolution(
+    requestedProvider: string | undefined,
+    requestedDisplayName: string | undefined,
+    selectedModelSource: AdvancedModelSelectionInput['selectedModelSource'] | null,
+    fallbackModel: string,
+  ): Promise<AdvancedModelSelectionResolution> {
+    return {
+      modelSelectionMode: ModelSelectionMode.AUTO,
+      requestedProvider: requestedProvider ?? null,
+      requestedModel: null,
+      requestedDisplayName: requestedDisplayName ?? null,
+      selectedModelSource: selectedModelSource ?? null,
+      actualProvider: 'local-ollama',
+      actualModel: await this.resolveFallbackModel(fallbackModel),
+    };
+  }
+
+  private assertManualSelectionUsable(requestedProvider: string | undefined): void {
     if (
       requestedProvider &&
       requestedProvider.length > 0 &&
@@ -43,7 +69,9 @@ export class AdvancedModuleModelSelectionService {
         'ADVANCED_MODULE_MODEL_PROVIDER_UNSUPPORTED',
       );
     }
+  }
 
+  private async assertModelInstalled(requestedModel: string): Promise<void> {
     const installedModels = await this.localModelSelection.listInstalledModelNames();
     if (!installedModels.includes(requestedModel)) {
       throw new BusinessException(
@@ -51,16 +79,6 @@ export class AdvancedModuleModelSelectionService {
         'ADVANCED_MODULE_MODEL_UNAVAILABLE',
       );
     }
-
-    return {
-      modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
-      requestedProvider: requestedProvider ?? 'local-ollama',
-      requestedModel,
-      requestedDisplayName: requestedDisplayName ?? requestedModel,
-      selectedModelSource: selectedModelSource ?? 'LOCAL',
-      actualProvider: 'local-ollama',
-      actualModel: requestedModel,
-    };
   }
 
   private async resolveFallbackModel(fallbackModel: string): Promise<string> {

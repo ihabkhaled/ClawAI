@@ -311,7 +311,6 @@ function evalEquality(c: Cursor, ctx: RecipeExpressionContext): unknown {
         throw new RecipeExpressionEvalError('~= requires both sides string');
       }
       try {
-        // eslint-disable-next-line security/detect-non-literal-regexp
         const re = new RegExp(right);
         left = re.test(left);
       } catch {

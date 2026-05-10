@@ -468,75 +468,10 @@ export class JudgeRefereeManager {
 
   parseJudgeOutput(content: string): ParsedJudgeVerdict {
     try {
-      let jsonStr = content.trim();
-
-      // Strip markdown code block if present
-      const codeBlockMatch = /```(?:json)?\s*([\s\S]*?)```/.exec(jsonStr);
-      if (codeBlockMatch?.[1]) {
-        jsonStr = codeBlockMatch[1].trim();
-      }
-
-      // Extract JSON object from the string
-      const jsonMatch = /\{[\s\S]*\}/.exec(jsonStr);
-      if (!jsonMatch) {
-        const plainVerdict = this.parseJudgePlainTextOutput(content);
-        if (plainVerdict) {
-          return plainVerdict;
-        }
-        throw new Error('No JSON object found');
-      }
-
-      const parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
+      const parsed = this.extractJudgeJsonOrThrow(content);
       const decision = parsed['decision'];
-      const summary = parsed['summary'];
-      const reasoning = parsed['reasoning'];
-      const confidence = parsed['confidence'];
-      const response = parsed['response'];
-      const responseType = parsed['responseType'];
-      const recommendedChangesRaw = parsed['recommendedChanges'];
-
-      if (
-        decision !== JudgeDecision.ACCEPT &&
-        decision !== JudgeDecision.REVISE &&
-        decision !== JudgeDecision.ESCALATE
-      ) {
-        throw new Error(`Invalid decision: ${String(decision)}`);
-      }
-
-      const resolvedResponseType: JudgeResponseType =
-        responseType === 'summary' ||
-        responseType === 'revised_answer' ||
-        responseType === 'escalated_answer' ||
-        responseType === 'verification_note'
-          ? responseType
-          : (decision === JudgeDecision.ESCALATE
-            ? 'escalated_answer'
-            : 'verification_note');
-
-      return {
-        decision,
-        summary:
-          typeof summary === 'string' && summary.trim().length > 0
-            ? summary
-            : 'The judge completed a review of the answer.',
-        reasoning: typeof reasoning === 'string' ? reasoning : 'No reasoning provided',
-        confidence:
-          typeof confidence === 'number'
-            ? Math.max(0, Math.min(1, confidence))
-            : JUDGE_CONFIDENCE_THRESHOLD,
-        response:
-          typeof response === 'string' && response.trim().length > 0
-            ? response
-            : (decision === JudgeDecision.ESCALATE
-              ? 'A stronger answer is required for this request.'
-              : 'The answer passed review.'),
-        responseType: resolvedResponseType,
-        recommendedChanges: Array.isArray(recommendedChangesRaw)
-          ? recommendedChangesRaw.filter(
-              (change): change is string => typeof change === 'string' && change.trim().length > 0,
-            )
-          : [],
-      };
+      this.assertValidDecision(decision);
+      return this.buildParsedVerdict(parsed, decision as JudgeDecision);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Parse error';
       this.logger.warn(`parseJudgeOutput: failed to parse — ${msg}. Defaulting to ACCEPT.`);
@@ -556,6 +491,80 @@ export class JudgeRefereeManager {
         fallbackState: 'failed',
       };
     }
+  }
+
+  private extractJudgeJsonOrThrow(content: string): Record<string, unknown> {
+    let jsonStr = content.trim();
+    const codeBlockMatch = /```(?:json)?\s*([\s\S]*?)```/.exec(jsonStr);
+    if (codeBlockMatch?.[1]) {
+      jsonStr = codeBlockMatch[1].trim();
+    }
+    const jsonMatch = /\{[\s\S]*\}/.exec(jsonStr);
+    if (!jsonMatch) {
+      throw new Error('No JSON object found');
+    }
+    return JSON.parse(jsonMatch[0]) as Record<string, unknown>;
+  }
+
+  private assertValidDecision(decision: unknown): void {
+    if (
+      decision !== JudgeDecision.ACCEPT &&
+      decision !== JudgeDecision.REVISE &&
+      decision !== JudgeDecision.ESCALATE
+    ) {
+      throw new Error(`Invalid decision: ${String(decision)}`);
+    }
+  }
+
+  private buildParsedVerdict(
+    parsed: Record<string, unknown>,
+    decision: JudgeDecision,
+  ): ParsedJudgeVerdict {
+    const summary = parsed['summary'];
+    const reasoning = parsed['reasoning'];
+    const confidence = parsed['confidence'];
+    const response = parsed['response'];
+    const responseType = parsed['responseType'];
+    const recommendedChangesRaw = parsed['recommendedChanges'];
+    return {
+      decision,
+      summary:
+        typeof summary === 'string' && summary.trim().length > 0
+          ? summary
+          : 'The judge completed a review of the answer.',
+      reasoning: typeof reasoning === 'string' ? reasoning : 'No reasoning provided',
+      confidence:
+        typeof confidence === 'number'
+          ? Math.max(0, Math.min(1, confidence))
+          : JUDGE_CONFIDENCE_THRESHOLD,
+      response:
+        typeof response === 'string' && response.trim().length > 0
+          ? response
+          : (decision === JudgeDecision.ESCALATE
+            ? 'A stronger answer is required for this request.'
+            : 'The answer passed review.'),
+      responseType: this.resolveJudgeResponseType(responseType, decision),
+      recommendedChanges: Array.isArray(recommendedChangesRaw)
+        ? recommendedChangesRaw.filter(
+            (change): change is string => typeof change === 'string' && change.trim().length > 0,
+          )
+        : [],
+    };
+  }
+
+  private resolveJudgeResponseType(
+    responseType: unknown,
+    decision: JudgeDecision,
+  ): JudgeResponseType {
+    if (
+      responseType === 'summary' ||
+      responseType === 'revised_answer' ||
+      responseType === 'escalated_answer' ||
+      responseType === 'verification_note'
+    ) {
+      return responseType;
+    }
+    return decision === JudgeDecision.ESCALATE ? 'escalated_answer' : 'verification_note';
   }
 
   private parseCriticOutput(content: string): { feedback: string[]; score: number } {

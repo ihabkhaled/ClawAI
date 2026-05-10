@@ -23,7 +23,7 @@ import type {
   TaskDecompositionResponse,
 } from '../types/task-decomposition.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
-import { type RoutingMode } from '../../../generated/prisma';
+import { type Prisma, type RoutingMode } from '../../../generated/prisma';
 
 @Injectable()
 export class TaskDecompositionManager {
@@ -93,59 +93,11 @@ export class TaskDecompositionManager {
         model: resolvedModel,
         latencyMs: Date.now() - startTime,
         usedFallback: false,
-        metadata: {
-          decomposed: true,
-          subTasks: subTaskResults,
-          modelSelection: resolvedSelection,
-          routeRoadmap: {
-            routingMode: resolvedSelection.modelSelectionMode,
-            routerModel: null,
-            selectedProvider:
-              resolvedSelection.requestedProvider ?? resolvedSelection.actualProvider,
-            selectedModel: resolvedSelection.requestedModel ?? resolvedModel,
-            finalProvider: resolvedSelection.actualProvider,
-            finalModel: resolvedModel,
-            finalDisplayName: resolvedModel,
-            steps: [
-              {
-                stage: 'tool',
-                provider: 'decompose',
-                model: 'task-decomposition',
-                displayName: 'Task decomposition',
-                description: `${String(subTaskResults.length)} sub-task results merged`,
-              },
-              {
-                stage: 'execution',
-                provider: 'local-ollama',
-                model: resolvedModel,
-                displayName: resolvedModel,
-              },
-            ],
-          },
-          progressSummary: [
-            {
-              label: 'Request accepted',
-              description: 'Task decomposition was queued.',
-              actorType: 'request',
-              actorName: 'Claw',
-              status: 'completed',
-            },
-            {
-              label: 'Executing sub-tasks',
-              description: `${String(subTaskResults.length)} sub-tasks completed.`,
-              actorType: 'system',
-              actorName: 'Task decomposition',
-              status: 'completed',
-            },
-            {
-              label: 'Response complete',
-              description: 'Merged result saved to the thread.',
-              actorType: 'model',
-              actorName: `local-ollama / ${resolvedModel}`,
-              status: 'completed',
-            },
-          ],
-        },
+        metadata: this.buildDecomposeMetadata(
+          resolvedSelection,
+          resolvedModel,
+          subTaskResults,
+        ) as Prisma.InputJsonValue,
       });
 
       this.chatStreamService.emitCompletion(threadId, 'local-ollama', resolvedModel);
@@ -160,6 +112,65 @@ export class TaskDecompositionManager {
         this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
       }
     }
+  }
+
+  private buildDecomposeMetadata(
+    resolvedSelection: AdvancedModelSelectionResolution,
+    resolvedModel: string,
+    subTaskResults: Array<unknown>,
+  ): Record<string, unknown> {
+    return {
+      decomposed: true,
+      subTasks: subTaskResults,
+      modelSelection: resolvedSelection,
+      routeRoadmap: {
+        routingMode: resolvedSelection.modelSelectionMode,
+        routerModel: null,
+        selectedProvider: resolvedSelection.requestedProvider ?? resolvedSelection.actualProvider,
+        selectedModel: resolvedSelection.requestedModel ?? resolvedModel,
+        finalProvider: resolvedSelection.actualProvider,
+        finalModel: resolvedModel,
+        finalDisplayName: resolvedModel,
+        steps: [
+          {
+            stage: 'tool',
+            provider: 'decompose',
+            model: 'task-decomposition',
+            displayName: 'Task decomposition',
+            description: `${String(subTaskResults.length)} sub-task results merged`,
+          },
+          {
+            stage: 'execution',
+            provider: 'local-ollama',
+            model: resolvedModel,
+            displayName: resolvedModel,
+          },
+        ],
+      },
+      progressSummary: [
+        {
+          label: 'Request accepted',
+          description: 'Task decomposition was queued.',
+          actorType: 'request',
+          actorName: 'Claw',
+          status: 'completed',
+        },
+        {
+          label: 'Executing sub-tasks',
+          description: `${String(subTaskResults.length)} sub-tasks completed.`,
+          actorType: 'system',
+          actorName: 'Task decomposition',
+          status: 'completed',
+        },
+        {
+          label: 'Response complete',
+          description: 'Merged result saved to the thread.',
+          actorType: 'model',
+          actorName: `local-ollama / ${resolvedModel}`,
+          status: 'completed',
+        },
+      ],
+    };
   }
 
   private async decomposeContent(
