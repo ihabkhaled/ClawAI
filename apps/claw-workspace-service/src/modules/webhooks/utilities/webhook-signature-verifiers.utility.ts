@@ -185,16 +185,14 @@ function buildFigmaVerifier(): WebhookSignatureVerifier {
 let verifierCache: Map<WorkspaceProvider, WebhookSignatureVerifier> | null = null;
 
 function getVerifiers(): Map<WorkspaceProvider, WebhookSignatureVerifier> {
-  if (verifierCache === null) {
-    verifierCache = new Map<WorkspaceProvider, WebhookSignatureVerifier>([
-      [WorkspaceProvider.GITHUB, buildGithubVerifier()],
-      [WorkspaceProvider.GITLAB, buildGitlabVerifier()],
-      [WorkspaceProvider.BITBUCKET, buildBitbucketVerifier()],
-      [WorkspaceProvider.SLACK, buildSlackVerifier()],
-      [WorkspaceProvider.JIRA, buildJiraVerifier()],
-      [WorkspaceProvider.FIGMA, buildFigmaVerifier()],
-    ]);
-  }
+  verifierCache ??= new Map<WorkspaceProvider, WebhookSignatureVerifier>([
+    [WorkspaceProvider.GITHUB, buildGithubVerifier()],
+    [WorkspaceProvider.GITLAB, buildGitlabVerifier()],
+    [WorkspaceProvider.BITBUCKET, buildBitbucketVerifier()],
+    [WorkspaceProvider.SLACK, buildSlackVerifier()],
+    [WorkspaceProvider.JIRA, buildJiraVerifier()],
+    [WorkspaceProvider.FIGMA, buildFigmaVerifier()],
+  ]);
   return verifierCache;
 }
 

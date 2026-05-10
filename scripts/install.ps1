@@ -246,7 +246,7 @@ function Test-PortAvailable {
 # =============================================================================
 # Step 1: Check prerequisites
 # =============================================================================
-Write-Host "Step 1/7: Checking prerequisites" -ForegroundColor White
+Write-Host "Step 1/8: Checking prerequisites" -ForegroundColor White
 Write-Host ""
 
 $missing = 0
@@ -313,7 +313,7 @@ Write-Host ""
 # =============================================================================
 # Step 2: Check port availability
 # =============================================================================
-Write-Host "Step 2/7: Checking port availability" -ForegroundColor White
+Write-Host "Step 2/8: Checking port availability" -ForegroundColor White
 Write-Host ""
 
 Test-PortAvailable 3000 "Frontend"
@@ -326,7 +326,7 @@ Write-Host ""
 # =============================================================================
 # Step 3: Generate secrets
 # =============================================================================
-Write-Host "Step 3/7: Generating secrets" -ForegroundColor White
+Write-Host "Step 3/8: Generating secrets" -ForegroundColor White
 Write-Host ""
 
 $jwtSecret = New-SecretB64
@@ -345,7 +345,7 @@ Write-Host ""
 # =============================================================================
 # Step 4: Admin configuration
 # =============================================================================
-Write-Host "Step 4/7: Admin configuration" -ForegroundColor White
+Write-Host "Step 4/8: Admin configuration" -ForegroundColor White
 Write-Host ""
 
 $adminEmail = "admin@claw.local"
@@ -392,7 +392,7 @@ Write-Host ""
 # =============================================================================
 # Step 5: GPU / Ollama detection
 # =============================================================================
-Write-Host "Step 5/7: Ollama & GPU detection" -ForegroundColor White
+Write-Host "Step 5/8: Ollama & GPU detection" -ForegroundColor White
 Write-Host ""
 
 $useGpu = $false
@@ -458,7 +458,7 @@ Write-Host ""
 # =============================================================================
 # Step 6: Generate .env
 # =============================================================================
-Write-Host "Step 6/7: Generating .env file" -ForegroundColor White
+Write-Host "Step 6/8: Generating .env file" -ForegroundColor White
 Write-Host ""
 
 $skipEnv = $false
@@ -725,8 +725,12 @@ RESEARCH_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-research:5432/claw_res
 LLAMACPP_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-llamacpp:5432/claw_llamacpp?schema=public
 
 # claw-llamacpp-service (Local Frontier LLM runtime)
-LLAMACPP_DATA_PATH=./data/llamacpp
-LLAMACPP_BINARY_VERSION=b4123
+# Path matches the `llamacpp-data` Docker named volume so binary + weights
+# survive container rebuilds across Linux/macOS/Windows hosts.
+LLAMACPP_DATA_PATH=/var/lib/claw/llamacpp
+# Auto-updated by BinaryInstallerManager when GitHub API is reachable; the
+# pinned fallback below is the version live-tested in 2026-05-09 QA.
+LLAMACPP_BINARY_VERSION=b9095
 LLAMACPP_GPU_BACKEND=auto
 LLAMACPP_DEFAULT_CTX_SIZE=8192
 LLAMACPP_AUTO_INSTALL_BINARY=true
@@ -806,9 +810,54 @@ if ($startAnswer -eq "n" -or $startAnswer -eq "N") {
 Write-Host ""
 
 # =============================================================================
-# Step 7: Launch
+# Step 7: Desktop-agent native tooling (optional)
 # =============================================================================
-Write-Host "Step 7/7: Starting Claw" -ForegroundColor White
+Write-Host "Step 7/8: Desktop-agent native tooling" -ForegroundColor White
+Write-Host ""
+Write-Info "The desktop agent uses native binaries for OCR / STT / TTS / browser / GUI automation."
+Write-Info "This step installs: Tesseract, ffmpeg, whisper-cli + base.en model, Piper, Playwright Chromium, Rust + Tauri CLI."
+Write-Info "It is idempotent - components already present are skipped."
+Write-Host ""
+Write-Ask "Install desktop-agent native tooling now? [Y/n]: "
+$toolingAnswer = Read-Host
+if ($toolingAnswer -ne "n" -and $toolingAnswer -ne "N") {
+    $toolingScript = Join-Path $PSScriptRoot "install-agent-tooling.ps1"
+    if (Test-Path $toolingScript) {
+        try {
+            & powershell -NoProfile -ExecutionPolicy Bypass -File $toolingScript
+        } catch {
+            Write-Warn "Some agent-tooling components failed; rerun scripts\install-agent-tooling.ps1 later."
+        }
+
+        # Merge env hints into .env
+        $hintsFile = Join-Path $ProjectRoot ".env.agent-tooling"
+        if ((Test-Path $hintsFile) -and ((Get-Item $hintsFile).Length -gt 0)) {
+            Write-Info "Merging tooling env hints into .env"
+            $hints = Get-Content $hintsFile | Where-Object { $_ -match '^[A-Z_]+=' }
+            $envContent = if (Test-Path $envFile) { Get-Content $envFile } else { @() }
+            foreach ($hint in $hints) {
+                $key = ($hint -split '=', 2)[0]
+                $existing = $envContent | Select-String -Pattern "^$key="
+                if ($existing) {
+                    $envContent = $envContent -replace "^$key=.*", $hint
+                } else {
+                    $envContent += $hint
+                }
+            }
+            $envContent | Set-Content -Path $envFile -Encoding utf8
+        }
+    } else {
+        Write-Warn "scripts\install-agent-tooling.ps1 not found"
+    }
+} else {
+    Write-Info "Skipped. You can run scripts\install-agent-tooling.ps1 anytime."
+}
+Write-Host ""
+
+# =============================================================================
+# Step 8: Launch
+# =============================================================================
+Write-Host "Step 8/8: Starting Claw" -ForegroundColor White
 Write-Host ""
 
 Ensure-DockerNetwork

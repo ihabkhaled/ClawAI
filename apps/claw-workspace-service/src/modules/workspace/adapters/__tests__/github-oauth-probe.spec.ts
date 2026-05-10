@@ -1,5 +1,6 @@
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
 import { GitHubAdapter } from '../github.adapter';
+import { GitHubWriteActionsHelper } from '../github-write-actions.helper';
 
 describe('GitHubAdapter.validateOAuthAppConfig', () => {
   const originalFetch = globalThis.fetch;
@@ -8,7 +9,7 @@ describe('GitHubAdapter.validateOAuthAppConfig', () => {
     jest.restoreAllMocks();
   });
 
-  const adapter = new GitHubAdapter();
+  const adapter = new GitHubAdapter(new GitHubWriteActionsHelper());
   const creds = { clientId: 'test-id', clientSecret: 'test-secret' };
 
   it('returns CONNECTED on bad_verification_code (client accepted)', async () => {

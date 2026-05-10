@@ -1,4 +1,5 @@
 import { GitHubAdapter } from '../github.adapter';
+import { GitHubWriteActionsHelper } from '../github-write-actions.helper';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
 import { AppConfig } from '../../../../app/config/app.config';
 
@@ -73,7 +74,7 @@ describe('GitHubAdapter', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    adapter = new GitHubAdapter();
+    adapter = new GitHubAdapter(new GitHubWriteActionsHelper());
   });
 
   describe('healthCheck', () => {

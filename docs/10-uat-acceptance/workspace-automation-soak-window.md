@@ -48,7 +48,7 @@ If on any day a stream fails or new critical errors land in service logs:
 
 - Real GitHub-webhook signature/replay/body-cap/rate-limit live cases — currently SKIPped by stream 11 because no `WorkspaceConnector` row of provider `GITHUB` and status `CONNECTED` is provisioned in dev. To unblock: complete OAuth flow at `/workspace/providers` for GitHub, then re-run stream 11 — the SKIPs flip to live assertions automatically.
 - Browser-side rendering of the new pages (`/admin/webhook-deliveries`, `/admin/ai-action-policies`, `/admin/suggestion-rules`, `/workspace/inbox`, `/workspace/semantic-search`, `/workspace/digest`, `/workspace/impl-handoffs`, `LearnedPreferencesPanel`, rewritten `GmailMessageDialog`). Recommend a one-time visual UAT on day 1 of soak.
-- Real Frontier-LLM end-to-end pull/load/inference — separate `claw-llamacpp-service` flagship; awaits operator with GPU + bandwidth.
+- Real Frontier-LLM end-to-end pull/load/inference — **CLOSED 2026-05-10**: Phi-4-mini Q4_K_M (2.49 GB) pulled from HuggingFace in 9 minutes, loaded via `POST /models/:id/load` (pid 719, port 48603), and answered `"what is 2+2?"` → `"Four."` (3 tokens, 16.4 tok/s on CPU, b9095 backend). Required Dockerfile flip Alpine→Debian + 6 other fixes — see `.claude/Integrations/llamacpp__QA_output.md`.
 
 ## Sign-off
 

@@ -7,7 +7,7 @@ export const IMPL_HANDOFF_HTTP_TIMEOUT_MS = 15_000;
 export const SECRET_PATTERNS = [
   /AKIA[0-9A-Z]{16}/, // AWS access key id
   /aws_secret_access_key\s*=\s*[A-Za-z0-9/+=]{40}/i,
-  /-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----/,
+  /-----BEGIN (?:RSA )?PRIVATE KEY-----/,
   /sk-[A-Za-z0-9]{20,}/, // OpenAI / Anthropic style
   /ghp_[A-Za-z0-9]{30,}/, // GitHub PAT
   /ghs_[A-Za-z0-9]{30,}/,

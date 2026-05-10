@@ -49,18 +49,20 @@ export class SyncHealthService {
       },
     });
 
-    const runStats = (await this.prisma.workspaceSyncRun.groupBy({
+    const runStatsRaw: unknown = await this.prisma.workspaceSyncRun.groupBy({
       by: ['connectorId', 'status'],
       where: { startedAt: { gte: since } },
       _count: true,
       _avg: { durationMs: true },
-    })) as unknown as RunStatRow[];
+    });
+    const runStats = runStatsRaw as RunStatRow[];
 
-    const activeRuns = (await this.prisma.workspaceSyncRun.groupBy({
+    const activeRunsRaw: unknown = await this.prisma.workspaceSyncRun.groupBy({
       by: ['connectorId'],
       where: { status: 'RUNNING' },
       _count: true,
-    })) as unknown as ActiveRunRow[];
+    });
+    const activeRuns = activeRunsRaw as ActiveRunRow[];
 
     const connectorHealth = connectors.map((connector) =>
       this.projectConnector(connector as SyncHealthConnectorProjection, runStats, activeRuns),

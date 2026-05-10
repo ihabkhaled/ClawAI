@@ -173,7 +173,7 @@ export class ProviderAppConfigService {
     authMode: WorkspaceProviderAuthMode,
     validateSecrets: boolean,
   ): void {
-    const schema = definition.configSchema as unknown as ProviderConfigSchema;
+    const schema = definition.configSchema as ProviderConfigSchema;
     if (schema === null || typeof schema !== 'object' || !Array.isArray(schema.fields)) {
       throw new BusinessException(
         `Provider ${definition.provider} has an invalid config schema`,
@@ -208,30 +208,42 @@ export class ProviderAppConfigService {
       return;
     }
     const value = field.secret ? secretConfig[field.key] : publicConfig[field.key];
-    if (value === undefined || value === null || value === '') {
-      if (field.required) {
-        throw new BusinessException(
-          `Field "${field.key}" is required for provider ${provider}`,
-          'REQUIRED_FIELD_MISSING',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
+    if (this.isFieldEmpty(value)) {
+      this.assertNotRequired(field, provider);
       return;
     }
     if (field.type === 'url' && typeof value === 'string') {
-      try {
-        // Provider app config URLs (OAuth endpoints, custom server URLs) are
-        // admin-controlled — allow self-hosted internal hosts; keep cloud
-        // metadata endpoint blocked.
-        assertSafeOutboundUrl(value, { allowPrivateHosts: true });
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : 'Invalid URL';
-        throw new BusinessException(
-          `Field "${field.key}" must be a safe URL: ${message}`,
-          'UNSAFE_URL_FIELD',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
+      this.assertSafeUrlField(field.key, value);
+    }
+  }
+
+  private isFieldEmpty(value: unknown): boolean {
+    return value === undefined || value === null || value === '';
+  }
+
+  private assertNotRequired(field: ProviderConfigField, provider: WorkspaceProvider): void {
+    if (field.required) {
+      throw new BusinessException(
+        `Field "${field.key}" is required for provider ${provider}`,
+        'REQUIRED_FIELD_MISSING',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  private assertSafeUrlField(fieldKey: string, value: string): void {
+    try {
+      // Provider app config URLs (OAuth endpoints, custom server URLs) are
+      // admin-controlled — allow self-hosted internal hosts; keep cloud
+      // metadata endpoint blocked.
+      assertSafeOutboundUrl(value, { allowPrivateHosts: true });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Invalid URL';
+      throw new BusinessException(
+        `Field "${fieldKey}" must be a safe URL: ${message}`,
+        'UNSAFE_URL_FIELD',
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 

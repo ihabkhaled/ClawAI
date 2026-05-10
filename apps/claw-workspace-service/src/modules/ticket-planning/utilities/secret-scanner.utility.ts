@@ -1,9 +1,7 @@
 import { SECRET_PATTERNS } from '../constants/ticket-planning.constants';
+import type { SecretScanResult } from '../types/secret-scanner.types';
 
-export type SecretScanResult = {
-  hasSecret: boolean;
-  matchedPatternIndex: number | null;
-};
+export type { SecretScanResult } from '../types/secret-scanner.types';
 
 /**
  * Stream 41 — defence-in-depth scan over an IMPL_PROMPT body before handoff.

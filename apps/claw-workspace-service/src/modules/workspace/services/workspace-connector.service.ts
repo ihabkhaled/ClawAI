@@ -40,6 +40,7 @@ import type {
   SyncResult,
   WorkspaceConnectorWithStats,
 } from '../types/workspace.types';
+import type { ProviderAppConfigPublic } from '../types/provider-config.types';
 import type { WorkspaceProvider } from '../../../common/enums/workspace-provider.enum';
 
 @Injectable()
@@ -238,15 +239,41 @@ export class WorkspaceConnectorService {
   }
 
   async initOAuth(userId: string, dto: OAuthInitDto): Promise<OAuthInitResult> {
-    if (!OAUTH_PROVIDERS.has(dto.provider)) {
+    this.assertOAuthSupported(dto.provider);
+    const appConfig = await this.providerAppConfigs.getById(dto.providerAppConfigId);
+    this.assertOAuthAppConfigUsable(appConfig, dto.provider);
+    const clientId = this.requireClientId(appConfig);
+    const adapter = this.adapterFactory.getAdapter(dto.provider);
+    const scopes = dto.scopes.length > 0 ? dto.scopes : adapter.getDefaultScopes();
+    const pkce = adapter.supportsPkce?.() ?? true;
+    const extraParams = adapter.getExtraAuthParams?.() ?? {};
+    return this.tokenManager.initOAuthFlow(
+      userId,
+      dto.provider,
+      appConfig.id,
+      dto.redirectUri,
+      adapter.getAuthorizationBaseUrl(),
+      clientId,
+      scopes,
+      { pkce, extraParams },
+    );
+  }
+
+  private assertOAuthSupported(provider: WorkspaceProvider): void {
+    if (!OAUTH_PROVIDERS.has(provider)) {
       throw new BusinessException(
         'workspace.oauth.provider_not_supported',
         'OAUTH_NOT_SUPPORTED',
         HttpStatus.BAD_REQUEST,
       );
     }
-    const appConfig = await this.providerAppConfigs.getById(dto.providerAppConfigId);
-    if (appConfig.provider !== dto.provider) {
+  }
+
+  private assertOAuthAppConfigUsable(
+    appConfig: ProviderAppConfigPublic,
+    requestedProvider: WorkspaceProvider,
+  ): void {
+    if (appConfig.provider !== requestedProvider) {
       throw new BusinessException(
         'Provider app config does not match requested provider',
         'PROVIDER_APP_CONFIG_MISMATCH',
@@ -267,6 +294,9 @@ export class WorkspaceConnectorService {
         HttpStatus.BAD_REQUEST,
       );
     }
+  }
+
+  private requireClientId(appConfig: ProviderAppConfigPublic): string {
     const publicConfig = appConfig.publicConfig as Record<string, unknown>;
     const clientId = typeof publicConfig['clientId'] === 'string' ? publicConfig['clientId'] : '';
     if (clientId.length === 0) {
@@ -276,63 +306,17 @@ export class WorkspaceConnectorService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    const adapter = this.adapterFactory.getAdapter(dto.provider);
-    const scopes = dto.scopes.length > 0 ? dto.scopes : adapter.getDefaultScopes();
-    const pkce = adapter.supportsPkce?.() ?? true;
-    const extraParams = adapter.getExtraAuthParams?.() ?? {};
-    return this.tokenManager.initOAuthFlow(
-      userId,
-      dto.provider,
-      appConfig.id,
-      dto.redirectUri,
-      adapter.getAuthorizationBaseUrl(),
-      clientId,
-      scopes,
-      { pkce, extraParams },
-    );
+    return clientId;
   }
 
   async handleOAuthCallback(
     userId: string,
     dto: OAuthCallbackDto,
   ): Promise<WorkspaceConnectorWithStats> {
-    const stateData = await this.tokenManager.resolveOAuthState(dto.state);
-    if (stateData?.userId !== userId) {
-      throw new BusinessException(
-        'workspace.oauth.invalid_state',
-        'INVALID_OAUTH_STATE',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    const appConfig = await this.providerAppConfigs.getById(stateData.providerAppConfigId);
-    if (appConfig.status !== WorkspaceProviderAppConfigStatus.READY) {
-      throw new BusinessException(
-        'The selected provider app config is no longer READY',
-        'PROVIDER_APP_CONFIG_NOT_READY',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    const adapterCreds = await this.buildAdapterCredentials(stateData.providerAppConfigId);
-    const adapter = this.adapterFactory.getAdapter(stateData.provider);
-    let tokens;
-    try {
-      tokens = await adapter.exchangeCodeForTokens(
-        dto.code,
-        dto.redirectUri,
-        stateData.verifier,
-        adapterCreds,
-      );
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Token exchange failed';
-      this.logger.warn(`OAuth exchange failed for ${stateData.provider}: ${message}`);
-      throw new BusinessException(
-        message,
-        WorkspaceErrorCode.OAUTH_EXCHANGE_FAILED,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    const stateData = await this.requireOAuthState(dto.state, userId);
+    const appConfig = await this.requireReadyAppConfig(stateData.providerAppConfigId);
+    const tokens = await this.exchangeOAuthTokens(stateData, dto);
     const encryptedTokens = this.tokenManager.encryptTokenSet(tokens);
-
     const connector = await this.repository.create({
       userId,
       name: `${stateData.provider} — ${appConfig.name}`,
@@ -354,6 +338,61 @@ export class WorkspaceConnectorService {
       userId,
     });
     return sanitizeConnector(await this.getConnectorRaw(connector.id, userId));
+  }
+
+  private async requireOAuthState(
+    state: string,
+    userId: string,
+  ): Promise<NonNullable<Awaited<ReturnType<OAuthTokenManager['resolveOAuthState']>>>> {
+    const stateData = await this.tokenManager.resolveOAuthState(state);
+    if (stateData?.userId !== userId) {
+      throw new BusinessException(
+        'workspace.oauth.invalid_state',
+        'INVALID_OAUTH_STATE',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return stateData;
+  }
+
+  private async requireReadyAppConfig(
+    providerAppConfigId: string,
+  ): Promise<ProviderAppConfigPublic> {
+    const appConfig = await this.providerAppConfigs.getById(providerAppConfigId);
+    if (appConfig.status !== WorkspaceProviderAppConfigStatus.READY) {
+      throw new BusinessException(
+        'The selected provider app config is no longer READY',
+        'PROVIDER_APP_CONFIG_NOT_READY',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return appConfig;
+  }
+
+  private async exchangeOAuthTokens(
+    stateData: NonNullable<Awaited<ReturnType<OAuthTokenManager['resolveOAuthState']>>>,
+    dto: OAuthCallbackDto,
+  ): Promise<
+    Awaited<ReturnType<ReturnType<WorkspaceAdapterFactory['getAdapter']>['exchangeCodeForTokens']>>
+  > {
+    const adapterCreds = await this.buildAdapterCredentials(stateData.providerAppConfigId);
+    const adapter = this.adapterFactory.getAdapter(stateData.provider);
+    try {
+      return await adapter.exchangeCodeForTokens(
+        dto.code,
+        dto.redirectUri,
+        stateData.verifier,
+        adapterCreds,
+      );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Token exchange failed';
+      this.logger.warn(`OAuth exchange failed for ${stateData.provider}: ${message}`);
+      throw new BusinessException(
+        message,
+        WorkspaceErrorCode.OAUTH_EXCHANGE_FAILED,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
   /**

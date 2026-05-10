@@ -43,61 +43,90 @@ export class ContextAssemblyManager {
     fileIds?: string[],
     research?: ResearchOptions,
   ): Promise<AssembledContext> {
-    this.logger.log(
-      `assemble: starting for user ${userId} with ${String(threadMessages.length)} messages, ${String(contextPackIds?.length ?? 0)} packs, ${String(fileIds?.length ?? 0)} files, research=${research?.mode ?? 'OFF'}`,
-    );
-    this.logger.debug(`assemble: slicing to last ${String(THREAD_CONTEXT_LIMIT)} messages`);
+    this.logStartAssemble(userId, threadMessages, contextPackIds, fileIds, research);
     const recentMessages = threadMessages.slice(-THREAD_CONTEXT_LIMIT);
-    this.logger.debug(`assemble: using ${String(recentMessages.length)} recent messages`);
-
     const lastUserContent = recentMessages.at(-1)?.content ?? '';
     const skipExpensiveContext = this.shouldSkipExpensiveContext(lastUserContent, fileIds ?? []);
-    this.logger.debug(
-      `assemble: context shortcut=${String(skipExpensiveContext)} for last user content length=${String(lastUserContent.length)}`,
-    );
-    this.logger.debug(
-      'assemble: fetching memories, context packs, file contents, workspace context, and research evidence in parallel',
-    );
-    const lastUserMessage = recentMessages.at(-1);
-    const [memories, contextPackItems, fileContents, workspaceCitations, researchRun] =
-      await Promise.all([
-        skipExpensiveContext ? Promise.resolve([]) : this.fetchMemories(userId),
-        skipExpensiveContext
-          ? Promise.resolve([])
-          : this.fetchContextPackItems(contextPackIds ?? []),
-        this.fetchFileContents(fileIds ?? []),
-        skipExpensiveContext
-          ? Promise.resolve([])
-          : this.fetchWorkspaceContext(userId, lastUserContent),
-        this.fetchResearchEvidence(userId, lastUserContent, research, lastUserMessage),
-      ]);
-
-    const researchEvidence = this.extractEvidenceCitations(researchRun);
-    const researchWarnings =
-      researchRun?.bundle && 'warnings' in researchRun.bundle
-        ? (researchRun.bundle.warnings ?? [])
-        : [];
+    const fetched = await this.fetchAssembledInputs({
+      userId,
+      lastUserContent,
+      skipExpensiveContext,
+      contextPackIds,
+      fileIds,
+      research,
+      lastUserMessage: recentMessages.at(-1),
+    });
+    const researchEvidence = this.extractEvidenceCitations(fetched.researchRun);
+    const researchWarnings = this.extractResearchWarnings(fetched.researchRun);
     const tokenBudget = threadSettings?.maxTokens ?? 4096;
-    this.logger.debug(
-      `assemble: tokenBudget=${String(tokenBudget)} systemPrompt=${threadSettings?.systemPrompt ? 'present' : 'none'}`,
-    );
-    this.logger.log(
-      `assemble: completed - ${String(memories.length)} memories, ${String(contextPackItems.length)} pack items, ${String(fileContents.length)} files, ${String(workspaceCitations.length)} workspace citations, ${String(researchEvidence.length)} research items, ${String(recentMessages.length)} messages`,
-    );
-
     return {
       userId,
       systemPrompt: threadSettings?.systemPrompt ?? null,
       threadMessages: recentMessages,
-      memories,
-      contextPackItems,
-      fileContents,
-      workspaceCitations,
+      memories: fetched.memories,
+      contextPackItems: fetched.contextPackItems,
+      fileContents: fetched.fileContents,
+      workspaceCitations: fetched.workspaceCitations,
       researchEvidence,
-      researchRunId: researchRun?.id ?? null,
+      researchRunId: fetched.researchRun?.id ?? null,
       researchWarnings,
       tokenBudget,
     };
+  }
+
+  private logStartAssemble(
+    userId: string,
+    threadMessages: ChatMessage[],
+    contextPackIds: string[] | undefined,
+    fileIds: string[] | undefined,
+    research: ResearchOptions | undefined,
+  ): void {
+    this.logger.log(
+      `assemble: starting for user ${userId} with ${String(threadMessages.length)} messages, ${String(contextPackIds?.length ?? 0)} packs, ${String(fileIds?.length ?? 0)} files, research=${research?.mode ?? 'OFF'}`,
+    );
+  }
+
+  private extractResearchWarnings(run: ResearchRunResponse | null): string[] {
+    const bundle = run?.bundle;
+    if (bundle === undefined || bundle === null || !('warnings' in bundle)) {
+      return [];
+    }
+    return (bundle.warnings as string[] | undefined) ?? [];
+  }
+
+  private async fetchAssembledInputs(args: {
+    userId: string;
+    lastUserContent: string;
+    skipExpensiveContext: boolean;
+    contextPackIds: string[] | undefined;
+    fileIds: string[] | undefined;
+    research: ResearchOptions | undefined;
+    lastUserMessage: ChatMessage | undefined;
+  }): Promise<{
+    memories: AssembledContext['memories'];
+    contextPackItems: AssembledContext['contextPackItems'];
+    fileContents: AssembledContext['fileContents'];
+    workspaceCitations: AssembledContext['workspaceCitations'];
+    researchRun: ResearchRunResponse | null;
+  }> {
+    const [memories, contextPackItems, fileContents, workspaceCitations, researchRun] =
+      await Promise.all([
+        args.skipExpensiveContext ? Promise.resolve([]) : this.fetchMemories(args.userId),
+        args.skipExpensiveContext
+          ? Promise.resolve([])
+          : this.fetchContextPackItems(args.contextPackIds ?? []),
+        this.fetchFileContents(args.fileIds ?? []),
+        args.skipExpensiveContext
+          ? Promise.resolve([])
+          : this.fetchWorkspaceContext(args.userId, args.lastUserContent),
+        this.fetchResearchEvidence(
+          args.userId,
+          args.lastUserContent,
+          args.research,
+          args.lastUserMessage,
+        ),
+      ]);
+    return { memories, contextPackItems, fileContents, workspaceCitations, researchRun };
   }
 
   private async fetchResearchEvidence(
@@ -141,7 +170,7 @@ export class ContextAssemblyManager {
     message: ChatMessage | undefined,
   ): ResearchRunResponse | null {
     if (
-      message === undefined ||
+      message?.metadata === undefined ||
       message.metadata === null ||
       typeof message.metadata !== 'object'
     ) {
@@ -188,10 +217,6 @@ export class ContextAssemblyManager {
   }
 
   buildPromptString(context: AssembledContext): string {
-    this.logger.debug('buildPromptString: starting prompt assembly');
-    const parts: string[] = [];
-    const hasResearchContext =
-      context.researchEvidence.length > 0 || context.researchWarnings.length > 0;
     const currentIntent = this.extractCurrentIntent(context.threadMessages);
     const relevantMessages = this.filterThreadMessagesForIntent(
       context.threadMessages,
@@ -202,75 +227,23 @@ export class ContextAssemblyManager {
       context.workspaceCitations,
       currentIntent,
     );
-
+    const parts: string[] = [];
     if (context.systemPrompt) {
-      this.logger.debug(
-        `buildPromptString: adding system prompt (${String(context.systemPrompt.length)} chars)`,
-      );
       parts.push(`SYSTEM: ${context.systemPrompt}`);
     }
-
-    if (hasResearchContext) {
-      this.logger.debug(
-        `buildPromptString: adding research context with ${String(context.researchEvidence.length)} evidence items and ${String(context.researchWarnings.length)} warnings`,
-      );
+    if (context.researchEvidence.length > 0 || context.researchWarnings.length > 0) {
       parts.push(this.formatResearchBlock(context));
     }
-
-    if (context.fileContents.length > 0) {
-      this.logger.debug(
-        `buildPromptString: adding ${String(context.fileContents.length)} file contents`,
-      );
-      for (const file of context.fileContents) {
-        this.logger.debug(`buildPromptString: decoding file "${file.filename}" (${file.mimeType})`);
-        const decoded = this.decodeFileContent(file);
-        parts.push(
-          `ATTACHED FILE "${file.filename}" (use this to answer the user's questions):\n${decoded}`,
-        );
-      }
-    }
-
-    this.logger.debug(
-      `buildPromptString: adding ${String(relevantMessages.length)} filtered thread messages`,
+    parts.push(
+      ...this.formatFileBlocks(context.fileContents),
+      ...this.formatMessageLines(relevantMessages),
     );
-    for (const msg of relevantMessages) {
-      parts.push(`${msg.role}: ${msg.content}`);
-    }
-
-    if (relevantWorkspaceCitations.length > 0) {
-      this.logger.debug(
-        `buildPromptString: adding ${String(relevantWorkspaceCitations.length)} workspace citations`,
-      );
-      const citationBlock = relevantWorkspaceCitations
-        .map((c) => {
-          const lines = [`[${c.type}/${c.provider}] ${c.title}`];
-          if (c.snippet) lines.push(c.snippet);
-          if (c.url) lines.push(`URL: ${c.url}`);
-          return lines.join('\n');
-        })
-        .join('\n\n');
-      parts.push(`WORKSPACE CONTEXT (relevant documents and issues):\n${citationBlock}`);
-    }
-
-    if (context.contextPackItems.length > 0) {
-      this.logger.debug(
-        `buildPromptString: adding ${String(context.contextPackItems.length)} context pack items`,
-      );
-      const packBlock = context.contextPackItems
-        .map((item) => item.content ?? '')
-        .filter((c) => c.length > 0)
-        .join('\n');
-      if (packBlock) {
-        parts.push(`CONTEXT PACK:\n${packBlock}`);
-      }
-    }
-
-    if (relevantMemories.length > 0) {
-      this.logger.debug(`buildPromptString: adding ${String(relevantMemories.length)} memories`);
-      const memoryBlock = relevantMemories.map((m) => `[${m.type}] ${m.content}`).join('\n');
-      parts.push(`USER CONTEXT (memories):\n${memoryBlock}`);
-    }
-
+    const workspaceBlock = this.formatWorkspaceCitations(relevantWorkspaceCitations);
+    if (workspaceBlock) parts.push(workspaceBlock);
+    const packBlock = this.formatContextPackBlock(context.contextPackItems);
+    if (packBlock) parts.push(packBlock);
+    const memoryBlock = this.formatMemoryBlock(relevantMemories);
+    if (memoryBlock) parts.push(memoryBlock);
     const fullPrompt = parts.join('\n\n');
     this.logger.debug(
       `buildPromptString: full prompt assembled — ${String(fullPrompt.length)} chars, truncating to budget=${String(context.tokenBudget)}`,
@@ -278,11 +251,48 @@ export class ContextAssemblyManager {
     return this.truncateToTokenBudget(fullPrompt, context.tokenBudget);
   }
 
+  private formatFileBlocks(fileContents: AssembledContext['fileContents']): string[] {
+    return fileContents.map(
+      (file) =>
+        `ATTACHED FILE "${file.filename}" (use this to answer the user's questions):\n${this.decodeFileContent(file)}`,
+    );
+  }
+
+  private formatMessageLines(messages: AssembledContext['threadMessages']): string[] {
+    return messages.map((msg) => `${msg.role}: ${msg.content}`);
+  }
+
+  private formatWorkspaceCitations(
+    citations: AssembledContext['workspaceCitations'],
+  ): string | null {
+    if (citations.length === 0) return null;
+    const block = citations
+      .map((c) => {
+        const lines = [`[${c.type}/${c.provider}] ${c.title}`];
+        if (c.snippet) lines.push(c.snippet);
+        if (c.url) lines.push(`URL: ${c.url}`);
+        return lines.join('\n');
+      })
+      .join('\n\n');
+    return `WORKSPACE CONTEXT (relevant documents and issues):\n${block}`;
+  }
+
+  private formatContextPackBlock(items: AssembledContext['contextPackItems']): string | null {
+    if (items.length === 0) return null;
+    const block = items
+      .map((item) => item.content ?? '')
+      .filter((c) => c.length > 0)
+      .join('\n');
+    return block ? `CONTEXT PACK:\n${block}` : null;
+  }
+
+  private formatMemoryBlock(memories: AssembledContext['memories']): string | null {
+    if (memories.length === 0) return null;
+    const block = memories.map((m) => `[${m.type}] ${m.content}`).join('\n');
+    return `USER CONTEXT (memories):\n${block}`;
+  }
+
   buildChatMessages(context: AssembledContext): OpenAiChatMessage[] {
-    this.logger.debug('buildChatMessages: starting chat message assembly');
-    const messages: OpenAiChatMessage[] = [];
-    const hasResearchContext =
-      context.researchEvidence.length > 0 || context.researchWarnings.length > 0;
     const currentIntent = this.extractCurrentIntent(context.threadMessages);
     const relevantMessages = this.filterThreadMessagesForIntent(
       context.threadMessages,
@@ -293,39 +303,42 @@ export class ContextAssemblyManager {
       context.workspaceCitations,
       currentIntent,
     );
-
-    const systemParts: string[] = [];
-
-    if (context.systemPrompt) {
-      this.logger.debug('buildChatMessages: adding system prompt');
-      systemParts.push(context.systemPrompt);
+    const systemParts = this.buildSystemMessageParts(
+      context,
+      relevantMemories,
+      relevantWorkspaceCitations,
+    );
+    const messages: OpenAiChatMessage[] = [];
+    if (systemParts.length > 0) {
+      messages.push({ role: 'system', content: systemParts.join('\n\n') });
     }
-
-    if (relevantMemories.length > 0) {
-      this.logger.debug(
-        `buildChatMessages: adding ${String(relevantMemories.length)} memories to system`,
-      );
-      const memoryBlock = relevantMemories.map((m) => `[${m.type}] ${m.content}`).join('\n');
-      systemParts.push(`User context (memories):\n${memoryBlock}`);
-    }
-
-    if (context.contextPackItems.length > 0) {
-      this.logger.debug(
-        `buildChatMessages: adding ${String(context.contextPackItems.length)} context pack items to system`,
-      );
-      const packBlock = context.contextPackItems
-        .map((item) => item.content ?? '')
-        .filter((c) => c.length > 0)
-        .join('\n');
-      if (packBlock) {
-        systemParts.push(`Context pack:\n${packBlock}`);
+    const imageFiles = context.fileContents.filter((f) => this.isImageFile(f));
+    for (const msg of relevantMessages) {
+      const role = this.mapRole(msg.role);
+      const isLastUser = role === 'user' && msg === relevantMessages.at(-1);
+      if (isLastUser && imageFiles.length > 0) {
+        messages.push({ role, content: this.buildMultimodalUserParts(msg.content, imageFiles) });
+      } else {
+        messages.push({ role, content: msg.content });
       }
     }
+    return messages;
+  }
 
+  private buildSystemMessageParts(
+    context: AssembledContext,
+    relevantMemories: AssembledContext['memories'],
+    relevantWorkspaceCitations: AssembledContext['workspaceCitations'],
+  ): string[] {
+    const parts: string[] = [];
+    if (context.systemPrompt) parts.push(context.systemPrompt);
+    if (relevantMemories.length > 0) {
+      const block = relevantMemories.map((m) => `[${m.type}] ${m.content}`).join('\n');
+      parts.push(`User context (memories):\n${block}`);
+    }
+    const packBlock = this.formatContextPackBlock(context.contextPackItems);
+    if (packBlock) parts.push(packBlock.replace('CONTEXT PACK:', 'Context pack:'));
     if (relevantWorkspaceCitations.length > 0) {
-      this.logger.debug(
-        `buildChatMessages: adding ${String(relevantWorkspaceCitations.length)} workspace citations to system`,
-      );
       const citationBlock = relevantWorkspaceCitations
         .map((c) => {
           const lines = [`[${c.type}/${c.provider}] ${c.title}`];
@@ -334,69 +347,34 @@ export class ContextAssemblyManager {
           return lines.join('\n');
         })
         .join('\n\n');
-      systemParts.push(`Workspace context (relevant documents and issues):\n${citationBlock}`);
+      parts.push(`Workspace context (relevant documents and issues):\n${citationBlock}`);
     }
-
-    if (hasResearchContext) {
-      this.logger.debug(
-        `buildChatMessages: adding research context with ${String(context.researchEvidence.length)} evidence items and ${String(context.researchWarnings.length)} warnings to system`,
-      );
-      systemParts.push(this.formatResearchBlock(context));
+    if (context.researchEvidence.length > 0 || context.researchWarnings.length > 0) {
+      parts.push(this.formatResearchBlock(context));
     }
-
-    // Add text-based files to system prompt
     const textFiles = context.fileContents.filter((f) => !this.isImageFile(f));
-    this.logger.debug(
-      `buildChatMessages: adding ${String(textFiles.length)} text files to system prompt`,
-    );
     for (const file of textFiles) {
-      this.logger.debug(`buildChatMessages: decoding text file "${file.filename}"`);
-      const decoded = this.decodeFileContent(file);
-      systemParts.push(
-        `The user has attached file "${file.filename}". Use this content to answer their questions:\n\n${decoded}`,
+      parts.push(
+        `The user has attached file "${file.filename}". Use this content to answer their questions:\n\n${this.decodeFileContent(file)}`,
       );
     }
+    return parts;
+  }
 
-    if (systemParts.length > 0) {
-      this.logger.debug(
-        `buildChatMessages: system message built with ${String(systemParts.length)} parts`,
-      );
-      messages.push({ role: 'system', content: systemParts.join('\n\n') });
-    }
-
-    // Collect image files for multimodal injection into the last user message
-    const imageFiles = context.fileContents.filter((f) => this.isImageFile(f));
-    this.logger.debug(
-      `buildChatMessages: found ${String(imageFiles.length)} image files for multimodal injection`,
-    );
-
-    for (const msg of relevantMessages) {
-      const role = this.mapRole(msg.role);
-
-      // If this is the last user message AND we have image attachments,
-      // build multimodal content (text + images)
-      const isLastUser = role === 'user' && msg === relevantMessages.at(-1);
-      if (isLastUser && imageFiles.length > 0) {
-        this.logger.debug(
-          `buildChatMessages: building multimodal last user message with ${String(imageFiles.length)} images`,
-        );
-        const parts: OpenAiContentPart[] = [{ type: 'text', text: msg.content }];
-        for (const img of imageFiles) {
-          if (img.content) {
-            parts.push({
-              type: 'image_url',
-              image_url: { url: `data:${img.mimeType};base64,${img.content}` },
-            });
-          }
-        }
-        messages.push({ role, content: parts });
-      } else {
-        messages.push({ role, content: msg.content });
+  private buildMultimodalUserParts(
+    text: string,
+    imageFiles: AssembledContext['fileContents'],
+  ): OpenAiContentPart[] {
+    const parts: OpenAiContentPart[] = [{ type: 'text', text }];
+    for (const img of imageFiles) {
+      if (img.content) {
+        parts.push({
+          type: 'image_url',
+          image_url: { url: `data:${img.mimeType};base64,${img.content}` },
+        });
       }
     }
-
-    this.logger.debug(`buildChatMessages: assembled ${String(messages.length)} total messages`);
-    return messages;
+    return parts;
   }
 
   private isImageFile(file: FileContentResponse): boolean {

@@ -1,26 +1,12 @@
 import { Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../app/config/app.config';
+import { FILE_SERVICE_HTTP_TIMEOUT_MS } from '../constants/file-service-client.constants';
+import type { FileServiceMetadata, UploadInternalInput } from '../types/file-service-client.types';
+
+export type { FileServiceMetadata, UploadInternalInput } from '../types/file-service-client.types';
 
 const logger = new Logger('FileServiceClient');
-
-const FILE_SERVICE_HTTP_TIMEOUT_MS = 15_000;
-
-export type UploadInternalInput = {
-  userId: string;
-  filename: string;
-  mimeType: string;
-  content: Buffer;
-  sourceWorkspaceObjectId?: string;
-};
-
-export type FileServiceMetadata = {
-  id: string;
-  userId: string;
-  filename: string;
-  mimeType: string;
-  sizeBytes: number;
-};
 
 /**
  * Stream 22 — service-to-service client for claw-file-service. Uses the
@@ -49,7 +35,9 @@ export async function uploadInternal(input: UploadInternalInput): Promise<string
   });
   if (!response.ok) {
     const text = await response.text().catch(() => '');
-    throw new Error(`file-service upload-internal ${String(response.status)}: ${text.slice(0, 200)}`);
+    throw new Error(
+      `file-service upload-internal ${String(response.status)}: ${text.slice(0, 200)}`,
+    );
   }
   const json = (await response.json()) as { fileId?: string };
   if (json.fileId === undefined) {

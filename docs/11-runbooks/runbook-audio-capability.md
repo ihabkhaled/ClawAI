@@ -4,12 +4,14 @@ Provider at `agent-cli/src/capability-providers/audio/index.js` shells out to `w
 
 ## Operations
 
-| Op | Target | Behavior |
-|---|---|---|
-| `TRANSCRIBE` | `{audioPath, language?}` | Runs whisper-cli, returns `{text, language}` |
+| Op           | Target                   | Behavior                                                           |
+| ------------ | ------------------------ | ------------------------------------------------------------------ |
+| `TRANSCRIBE` | `{audioPath, language?}` | Runs whisper-cli, returns `{text, language}`                       |
 | `SYNTHESIZE` | `{voicePath}` + `{text}` | Runs piper, returns `{contentBase64, mimeType: 'audio/wav', size}` |
 
 ## Required setup
+
+> **Easy mode**: run `bash scripts/install-agent-tooling.sh` (Linux/macOS) or `powershell -ExecutionPolicy Bypass -File scripts/install-agent-tooling.ps1` (Windows). It auto-installs whisper-cli + base.en model + Piper and writes `WHISPER_CLI_PATH`/`WHISPER_MODEL_PATH`/`PIPER_BIN_PATH` to `.env.agent-tooling` (merged into your `.env` by `scripts/install.sh`/`install.ps1`).
 
 ### whisper.cpp (STT)
 
@@ -51,6 +53,7 @@ Per CLAUDE.md hard rule #11, audio data must never leave the device unless `rout
 ### "AUDIO.STT: 'whisper-cli' binary not runnable"
 
 The provider runs `<binPath> --help` to verify before transcribing. If this fails:
+
 - Check `WHISPER_CLI_PATH` points to the actual binary (not the `whisper.cpp` repo dir)
 - On Linux, ensure executable bit: `chmod +x whisper-cli`
 

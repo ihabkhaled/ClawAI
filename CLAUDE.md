@@ -36,7 +36,7 @@ apps/
   claw-agent-service/           # Port 4015, PG claw_agent — desktop agent sessions, terminal command approval, repo tracking, file events
   claw-research-service/        # Port 4016, PG claw_research — dynamic search/fetch/scrape/clone + evidence orchestration (Tavily, SearXNG, Ollama Web)
   claw-workspace-service/       # Port 4014, PG claw_workspace — workspace connectors (GitHub, GitLab, Jira, Slack, Drive, OneDrive, SharePoint, Confluence, Figma, Gmail, Bitbucket, ClickUp), OAuth2/PKCE, webhook, sync, search, scheduled background sync
-  claw-llamacpp-service/        # Port 4017, PG claw_llamacpp — Local Frontier LLMs (Kimi K2, GLM-5.1, DeepSeek V3.2/V4) via vanilla llama.cpp; binary lifecycle, HF pull jobs (SSE), single-resident process supervisor, OpenAI-compatible inference proxy, hardware preflight
+  claw-llamacpp-service/        # Port 4017, PG claw_llamacpp — Local Frontier LLMs (Kimi K2, GLM-5.1, DeepSeek V3.2/V4) via vanilla llama.cpp; binary lifecycle, HF pull jobs (SSE), single-resident process supervisor, OpenAI-compatible inference proxy, hardware preflight. **Base image MUST be Debian (`node:20-bookworm-slim`)** because llama.cpp release binaries are glibc-linked and won't run on Alpine even with gcompat (missing `__res_init`, `pthread_cond_clockwait`, `__wmemcpy_chk`). `LLAMACPP_DATA_PATH` MUST point inside the `llamacpp-data` named volume (`/var/lib/claw/llamacpp` by default) so the auto-installed binary + downloaded model weights survive rebuilds.
 packages/
   shared-types/      # 18 enums, event payloads, auth types
   shared-constants/  # Exchange name, ports, API prefix, pagination defaults
@@ -385,7 +385,7 @@ you skip the type, the next typecheck fails for everyone — the
 locale files become provably wrong at the type level even though
 they look fine to a reader.
 
-This is non-negotiable: i18n.types.ts and locales/*.ts are one
+This is non-negotiable: i18n.types.ts and locales/\*.ts are one
 atomic change. Never push one without the other.
 
 #### NEVER leak English into non-English locales
@@ -503,63 +503,63 @@ a 3-second language toggle is the cheapest way to catch this.
 
 Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 
-| Event                             | Publisher    | Consumers      |
-| --------------------------------- | ------------ | -------------- |
-| message.created                   | chat         | routing        |
-| message.routed                    | routing      | chat           |
-| message.completed                 | chat         | audit, memory  |
-| thread.created                    | chat         | —              |
-| user.login/logout                 | auth         | audit          |
-| connector.created/updated/deleted | connector    | audit          |
-| connector.synced                  | connector    | audit, routing |
-| connector.health_checked          | connector    | audit, routing |
-| routing.decision_made             | routing      | audit          |
-| memory.extracted                  | memory       | audit          |
-| file.uploaded/chunked             | file         | —              |
-| log.server                        | all services | server-logs    |
-| image.generated                   | image        | audit          |
-| image.failed                      | image        | audit          |
-| file.generated                    | file-gen     | audit          |
-| file_generation.failed            | file-gen     | audit          |
-| agent.session.connected           | agent        | audit          |
-| agent.session.disconnected        | agent        | audit          |
-| agent.device_paired               | agent        | audit          |
-| agent.device_revoked              | agent        | audit          |
-| agent.token_rotated               | agent        | audit          |
-| agent.token_reuse_detected        | agent        | audit          |
-| agent.policy_violated             | agent        | audit          |
-| agent.capability.proposed         | agent        | audit          |
-| agent.capability.policy_matched   | agent        | audit          |
+| Event                             | Publisher    | Consumers                |
+| --------------------------------- | ------------ | ------------------------ |
+| message.created                   | chat         | routing                  |
+| message.routed                    | routing      | chat                     |
+| message.completed                 | chat         | audit, memory            |
+| thread.created                    | chat         | —                        |
+| user.login/logout                 | auth         | audit                    |
+| connector.created/updated/deleted | connector    | audit                    |
+| connector.synced                  | connector    | audit, routing           |
+| connector.health_checked          | connector    | audit, routing           |
+| routing.decision_made             | routing      | audit                    |
+| memory.extracted                  | memory       | audit                    |
+| file.uploaded/chunked             | file         | —                        |
+| log.server                        | all services | server-logs              |
+| image.generated                   | image        | audit                    |
+| image.failed                      | image        | audit                    |
+| file.generated                    | file-gen     | audit                    |
+| file_generation.failed            | file-gen     | audit                    |
+| agent.session.connected           | agent        | audit                    |
+| agent.session.disconnected        | agent        | audit                    |
+| agent.device_paired               | agent        | audit                    |
+| agent.device_revoked              | agent        | audit                    |
+| agent.token_rotated               | agent        | audit                    |
+| agent.token_reuse_detected        | agent        | audit                    |
+| agent.policy_violated             | agent        | audit                    |
+| agent.capability.proposed         | agent        | audit                    |
+| agent.capability.policy_matched   | agent        | audit                    |
 | agent.capability.auto_approved    | agent        | audit, capability-runner |
 | agent.capability.approved         | agent        | audit, capability-runner |
-| agent.capability.rejected         | agent        | audit          |
-| agent.capability.executing        | agent        | audit          |
-| agent.capability.executed         | agent        | audit          |
-| agent.capability.failed           | agent        | audit          |
-| agent.capability.cancelled        | agent        | audit          |
-| agent.capability.expired          | agent        | audit          |
-| agent.capability.rolled_back      | agent        | audit          |
-| agent.capability.denied           | agent        | audit          |
-| workspace.sync.run_started        | workspace    | audit          |
-| workspace.sync.run_completed      | workspace    | audit          |
-| workspace.sync.run_failed         | workspace    | audit          |
-| workspace.sync.stale_detected     | workspace    | audit          |
-| workspace.sync.manual_triggered   | workspace    | audit          |
-| workspace.sync.paused             | workspace    | audit          |
-| workspace.sync.resumed            | workspace    | audit          |
-| workspace.sync.rate_limited       | workspace    | audit          |
-| workspace.sync.dlq_sent           | workspace    | audit          |
-| llamacpp.binary.installed         | llamacpp     | audit          |
-| llamacpp.binary.updated           | llamacpp     | audit          |
-| llamacpp.pull.started             | llamacpp     | audit          |
-| llamacpp.pull.progress            | llamacpp     | audit          |
-| llamacpp.pull.completed           | llamacpp     | audit          |
-| llamacpp.pull.failed              | llamacpp     | audit          |
-| llamacpp.model.loaded             | llamacpp     | audit, routing |
-| llamacpp.model.unloaded           | llamacpp     | audit, routing |
-| llamacpp.model.crashed            | llamacpp     | audit, routing |
-| llamacpp.weights.deleted          | llamacpp     | audit          |
-| llamacpp.preflight.overridden     | llamacpp     | audit          |
+| agent.capability.rejected         | agent        | audit                    |
+| agent.capability.executing        | agent        | audit                    |
+| agent.capability.executed         | agent        | audit                    |
+| agent.capability.failed           | agent        | audit                    |
+| agent.capability.cancelled        | agent        | audit                    |
+| agent.capability.expired          | agent        | audit                    |
+| agent.capability.rolled_back      | agent        | audit                    |
+| agent.capability.denied           | agent        | audit                    |
+| workspace.sync.run_started        | workspace    | audit                    |
+| workspace.sync.run_completed      | workspace    | audit                    |
+| workspace.sync.run_failed         | workspace    | audit                    |
+| workspace.sync.stale_detected     | workspace    | audit                    |
+| workspace.sync.manual_triggered   | workspace    | audit                    |
+| workspace.sync.paused             | workspace    | audit                    |
+| workspace.sync.resumed            | workspace    | audit                    |
+| workspace.sync.rate_limited       | workspace    | audit                    |
+| workspace.sync.dlq_sent           | workspace    | audit                    |
+| llamacpp.binary.installed         | llamacpp     | audit                    |
+| llamacpp.binary.updated           | llamacpp     | audit                    |
+| llamacpp.pull.started             | llamacpp     | audit                    |
+| llamacpp.pull.progress            | llamacpp     | audit                    |
+| llamacpp.pull.completed           | llamacpp     | audit                    |
+| llamacpp.pull.failed              | llamacpp     | audit                    |
+| llamacpp.model.loaded             | llamacpp     | audit, routing           |
+| llamacpp.model.unloaded           | llamacpp     | audit, routing           |
+| llamacpp.model.crashed            | llamacpp     | audit, routing           |
+| llamacpp.weights.deleted          | llamacpp     | audit                    |
+| llamacpp.preflight.overridden     | llamacpp     | audit                    |
 
 ---
 
@@ -773,27 +773,27 @@ Failed checks → HTTP 422 with reason codes. Filenames sanitized before storage
 
 ## Nginx Route Map (port 4000 → services)
 
-| Frontend Path            | Backend Service  | Notes                                                |
-| ------------------------ | ---------------- | ---------------------------------------------------- |
-| /api/v1/auth/\*          | auth:4001        | Login, refresh, logout, me                           |
-| /api/v1/users/\*         | auth:4001        | User CRUD (admin)                                    |
-| /api/v1/chat-threads/\*  | chat:4002        | Thread CRUD                                          |
-| /api/v1/chat-messages/\* | chat:4002        | Message CRUD, feedback, regenerate, parallel compare |
-| /api/v1/connectors/\*    | connector:4003   | Connector CRUD, test, sync                           |
-| /api/v1/routing/\*       | routing:4004     | Policies, decisions, evaluate, replay                |
-| /api/v1/memories/\*      | memory:4005      | Memory CRUD                                          |
-| /api/v1/context-packs/\* | memory:4005      | Context pack CRUD                                    |
-| /api/v1/files/\*         | file:4006        | Upload, list, chunks                                 |
-| /api/v1/audits/\*        | audit:4007       | Audit logs                                           |
-| /api/v1/usage/\*         | audit:4007       | Usage statistics                                     |
-| /api/v1/ollama/\*        | ollama:4008      | Models, pull, generate                               |
-| /api/v1/health           | health:4009      | Aggregated health                                    |
-| /api/v1/client-logs      | client-logs:4010 | Frontend log ingestion                               |
-| /api/v1/server-logs      | server-logs:4011 | Backend log viewer                                   |
-| /api/v1/images           | image:4012       | Image generation                                     |
-| /api/v1/file-generations | file-gen:4013    | File export (PDF/DOCX/CSV/etc.)                      |
-| /api/v1/agent/\*         | agent:4015       | Sessions, terminal commands, repos, file events      |
-| /api/v1/research/\*      | research:4016    | Dynamic search providers + search runs (Phase 1)     |
+| Frontend Path            | Backend Service  | Notes                                                                                         |
+| ------------------------ | ---------------- | --------------------------------------------------------------------------------------------- |
+| /api/v1/auth/\*          | auth:4001        | Login, refresh, logout, me                                                                    |
+| /api/v1/users/\*         | auth:4001        | User CRUD (admin)                                                                             |
+| /api/v1/chat-threads/\*  | chat:4002        | Thread CRUD                                                                                   |
+| /api/v1/chat-messages/\* | chat:4002        | Message CRUD, feedback, regenerate, parallel compare                                          |
+| /api/v1/connectors/\*    | connector:4003   | Connector CRUD, test, sync                                                                    |
+| /api/v1/routing/\*       | routing:4004     | Policies, decisions, evaluate, replay                                                         |
+| /api/v1/memories/\*      | memory:4005      | Memory CRUD                                                                                   |
+| /api/v1/context-packs/\* | memory:4005      | Context pack CRUD                                                                             |
+| /api/v1/files/\*         | file:4006        | Upload, list, chunks                                                                          |
+| /api/v1/audits/\*        | audit:4007       | Audit logs                                                                                    |
+| /api/v1/usage/\*         | audit:4007       | Usage statistics                                                                              |
+| /api/v1/ollama/\*        | ollama:4008      | Models, pull, generate                                                                        |
+| /api/v1/health           | health:4009      | Aggregated health                                                                             |
+| /api/v1/client-logs      | client-logs:4010 | Frontend log ingestion                                                                        |
+| /api/v1/server-logs      | server-logs:4011 | Backend log viewer                                                                            |
+| /api/v1/images           | image:4012       | Image generation                                                                              |
+| /api/v1/file-generations | file-gen:4013    | File export (PDF/DOCX/CSV/etc.)                                                               |
+| /api/v1/agent/\*         | agent:4015       | Sessions, terminal commands, repos, file events                                               |
+| /api/v1/research/\*      | research:4016    | Dynamic search providers + search runs (Phase 1)                                              |
 | /api/v1/llamacpp/\*      | llamacpp:4017    | Local Frontier — catalog, pull jobs (SSE), models, inference (SSE), hardware, runtime, health |
 
 ---
@@ -962,13 +962,13 @@ do not invoke `docker compose -f …` directly.
 
 ### Per-vendor GPU overlay matrix
 
-| Host GPU | Probe | Overlay file applied | Container gets |
-|---|---|---|---|
-| NVIDIA (Linux/WSL2/Win) | `nvidia-smi -L` succeeds | `docker-compose.{dev,prod}.gpu-nvidia.yml` | `deploy.resources.reservations.devices.driver=nvidia`, `NVIDIA_VISIBLE_DEVICES=all` |
-| AMD ROCm (Linux only) | `/dev/kfd` exists | `docker-compose.{dev,prod}.gpu-rocm.yml` | `devices: [/dev/kfd, /dev/dri]`, `group_add: [video, render]`, `ipc: host` |
-| Intel iGPU / Arc / Vulkan (Linux) | `/dev/dri/render*` exists | `docker-compose.{dev,prod}.gpu-vulkan.yml` | `devices: [/dev/dri]`, `group_add: [video, render]` |
-| Apple Silicon Metal | `uname -s = Darwin` | (none — warns) | CPU-only inside container; run `claw-llamacpp-service` natively for Metal |
-| None | (no probe matches) | (none) | CPU-only |
+| Host GPU                          | Probe                     | Overlay file applied                       | Container gets                                                                      |
+| --------------------------------- | ------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------- |
+| NVIDIA (Linux/WSL2/Win)           | `nvidia-smi -L` succeeds  | `docker-compose.{dev,prod}.gpu-nvidia.yml` | `deploy.resources.reservations.devices.driver=nvidia`, `NVIDIA_VISIBLE_DEVICES=all` |
+| AMD ROCm (Linux only)             | `/dev/kfd` exists         | `docker-compose.{dev,prod}.gpu-rocm.yml`   | `devices: [/dev/kfd, /dev/dri]`, `group_add: [video, render]`, `ipc: host`          |
+| Intel iGPU / Arc / Vulkan (Linux) | `/dev/dri/render*` exists | `docker-compose.{dev,prod}.gpu-vulkan.yml` | `devices: [/dev/dri]`, `group_add: [video, render]`                                 |
+| Apple Silicon Metal               | `uname -s = Darwin`       | (none — warns)                             | CPU-only inside container; run `claw-llamacpp-service` natively for Metal           |
+| None                              | (no probe matches)        | (none)                                     | CPU-only                                                                            |
 
 The `BinaryInstallerManager` queries the GitHub API for the latest llama.cpp release on every container start and matches the right archive per platform key (e.g. `linux-x64-cuda12` → `llama-{TAG}-bin-ubuntu-cuda-*-x64.tar.gz`, `linux-x64-rocm` → `llama-{TAG}-bin-ubuntu-rocm-*-x64.tar.gz`). When you flip GPU passthrough on, the next `claw.sh up` will both expose the GPU to the container AND auto-pull the matching binary build.
 
@@ -2078,4 +2078,3 @@ Stream 13 RUNNER (event-driven step DAG executor) and streams 20-42 (browser, sc
 9. Every CLI-side capability MUST have manual cross-OS evidence captured to `.claude/Integrations/cross-os-evidence/<date>-<stream>-<os>.md`.
 10. Every irreversible capability MUST record `metadata.noUndoReason` text OR a typed `undoPlan` in the CapabilityInvocation row at completion time.
 11. Local-first-by-default: activity memory, OCR results, screenshot blobs stay on the user's machine unless an explicit per-record cloud-sync flag is flipped.
-

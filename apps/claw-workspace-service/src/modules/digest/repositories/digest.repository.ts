@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import type { DigestScope, DigestSnapshot, Prisma, UserDigestPreference } from '../../../generated/prisma';
+import type {
+  DigestScope,
+  DigestSnapshot,
+  Prisma,
+  UserDigestPreference,
+} from '../../../generated/prisma';
 
 @Injectable()
 export class DigestRepository {
@@ -67,7 +72,7 @@ export class DigestRepository {
   async linkActionItemSuggestions(snapshotId: string, queueIds: string[]): Promise<void> {
     await this.prisma.digestSnapshot.update({
       where: { id: snapshotId },
-      data: { actionItemSuggestionIds: queueIds as unknown as Prisma.InputJsonValue },
+      data: { actionItemSuggestionIds: queueIds as Prisma.InputJsonValue },
     });
   }
 
@@ -86,8 +91,7 @@ export class DigestRepository {
         weeklyHourLocal: typeof data.weeklyHourLocal === 'number' ? data.weeklyHourLocal : 8,
         timezone: typeof data.timezone === 'string' ? data.timezone : 'UTC',
         providers:
-          (data.providers as Prisma.InputJsonValue | undefined) ??
-          ([] as Prisma.InputJsonValue),
+          (data.providers as Prisma.InputJsonValue | undefined) ?? ([] as Prisma.InputJsonValue),
       },
       update: data,
     });

@@ -40,9 +40,7 @@ export class DigestOrchestratorManager {
         await this.runForScope('WEEKLY');
       }
     } catch (error) {
-      this.logger.error(
-        `tick: failed — ${error instanceof Error ? error.message : 'unknown'}`,
-      );
+      this.logger.error(`tick: failed — ${error instanceof Error ? error.message : 'unknown'}`);
     }
   }
 
@@ -63,7 +61,8 @@ export class DigestOrchestratorManager {
     if (snapshot.errorMessage !== null) {
       return;
     }
-    const sections = (snapshot.sections ?? []) as unknown as DigestSection[];
+    const sectionsRaw: unknown = snapshot.sections ?? [];
+    const sections = sectionsRaw as DigestSection[];
     if (!Array.isArray(sections) || sections.length === 0) {
       return;
     }
@@ -88,7 +87,13 @@ export class DigestOrchestratorManager {
     const now = new Date();
     let processed = 0;
     for (const pref of candidates) {
-      if (!this.matchesLocalHour(pref.timezone, scope === 'DAILY' ? pref.dailyHourLocal : pref.weeklyHourLocal, now)) {
+      if (
+        !this.matchesLocalHour(
+          pref.timezone,
+          scope === 'DAILY' ? pref.dailyHourLocal : pref.weeklyHourLocal,
+          now,
+        )
+      ) {
         continue;
       }
       try {
@@ -104,7 +109,9 @@ export class DigestOrchestratorManager {
         );
       }
     }
-    this.logger.log(`runForScope: ${scope} processed=${String(processed)} candidates=${String(candidates.length)}`);
+    this.logger.log(
+      `runForScope: ${scope} processed=${String(processed)} candidates=${String(candidates.length)}`,
+    );
   }
 
   private matchesLocalHour(timezone: string, targetHour: number, at: Date): boolean {

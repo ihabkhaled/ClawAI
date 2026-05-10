@@ -32,53 +32,23 @@ export class WebhookReceiverManager {
     if (!Buffer.isBuffer(rawBody)) {
       throw new TypeError('webhook receive(): rawBody must be a Buffer');
     }
-    const config = AppConfig.get();
-    if (rawBody.length > config.WEBHOOK_BODY_MAX_BYTES) {
-      return this.persistRejection(
-        provider,
-        connectorId,
-        rawBody,
-        ipAddress,
-        WEBHOOK_REJECTION_CODES.BODY_TOO_LARGE,
-      );
+    const preflight = await this.runPreflight(provider, connectorId, rawBody, ipAddress);
+    if (preflight !== null) {
+      return preflight;
     }
-    const rateLimitKey = connectorId ?? `provider:${provider}`;
-    if (!this.rateLimiter.tryReserve(rateLimitKey)) {
-      return this.persistRejection(
-        provider,
-        connectorId,
-        rawBody,
-        ipAddress,
-        WEBHOOK_REJECTION_CODES.RATE_LIMITED,
-      );
+    const verification = await this.runVerification(
+      provider,
+      connectorId,
+      rawBody,
+      headers,
+      ipAddress,
+    );
+    if (verification.kind === 'rejected') {
+      return verification.result;
     }
-    const verifier = findVerifier(provider);
-    if (verifier === null) {
-      return this.persistRejection(
-        provider,
-        connectorId,
-        rawBody,
-        ipAddress,
-        WEBHOOK_REJECTION_CODES.UNSUPPORTED_PROVIDER,
-      );
-    }
-    const secret = this.secretFor(provider);
-    const verification = verifier.verify({ rawBody, headers }, secret);
-    if (!verification.signatureValid) {
-      return this.persistRejection(
-        provider,
-        connectorId,
-        rawBody,
-        ipAddress,
-        verification.reason ?? WEBHOOK_REJECTION_CODES.SIGNATURE_INVALID,
-        verification.signature,
-      );
-    }
-    if (verification.externalDeliveryId !== null) {
-      const dup = await this.repo.findByExternalId(provider, verification.externalDeliveryId);
-      if (dup !== null) {
-        return { status: 'IDEMPOTENT', deliveryId: dup.id, signatureValid: true };
-      }
+    const dedup = await this.checkDuplicate(provider, verification.externalDeliveryId);
+    if (dedup !== null) {
+      return dedup;
     }
     const parsedBody = this.parseJson(rawBody);
     if (parsedBody === null) {
@@ -102,8 +72,103 @@ export class WebhookReceiverManager {
       ipAddress,
       bodyBytes: rawBody.length,
     });
-    await this.publishReceived(row.id, provider, connectorId, verification, parsedBody);
+    await this.publishReceived(
+      row.id,
+      provider,
+      connectorId,
+      {
+        externalDeliveryId: verification.externalDeliveryId,
+        eventType: verification.eventType,
+      },
+      parsedBody,
+    );
     return { status: 'ACCEPTED', deliveryId: row.id, signatureValid: true };
+  }
+
+  private async runPreflight(
+    provider: WorkspaceProvider,
+    connectorId: string | null,
+    rawBody: Buffer,
+    ipAddress: string | null,
+  ): Promise<WebhookReceiveResult | null> {
+    const config = AppConfig.get();
+    if (rawBody.length > config.WEBHOOK_BODY_MAX_BYTES) {
+      return this.persistRejection(
+        provider,
+        connectorId,
+        rawBody,
+        ipAddress,
+        WEBHOOK_REJECTION_CODES.BODY_TOO_LARGE,
+      );
+    }
+    const rateLimitKey = connectorId ?? `provider:${provider}`;
+    if (!this.rateLimiter.tryReserve(rateLimitKey)) {
+      return this.persistRejection(
+        provider,
+        connectorId,
+        rawBody,
+        ipAddress,
+        WEBHOOK_REJECTION_CODES.RATE_LIMITED,
+      );
+    }
+    return null;
+  }
+
+  private async runVerification(
+    provider: WorkspaceProvider,
+    connectorId: string | null,
+    rawBody: Buffer,
+    headers: Record<string, string | string[] | undefined>,
+    ipAddress: string | null,
+  ): Promise<
+    | { kind: 'rejected'; result: WebhookReceiveResult }
+    | {
+        kind: 'verified';
+        externalDeliveryId: string | null;
+        eventType: string | null;
+        signature: string | null;
+      }
+  > {
+    const verifier = findVerifier(provider);
+    if (verifier === null) {
+      const result = await this.persistRejection(
+        provider,
+        connectorId,
+        rawBody,
+        ipAddress,
+        WEBHOOK_REJECTION_CODES.UNSUPPORTED_PROVIDER,
+      );
+      return { kind: 'rejected', result };
+    }
+    const secret = this.secretFor(provider);
+    const verification = verifier.verify({ rawBody, headers }, secret);
+    if (!verification.signatureValid) {
+      const result = await this.persistRejection(
+        provider,
+        connectorId,
+        rawBody,
+        ipAddress,
+        verification.reason ?? WEBHOOK_REJECTION_CODES.SIGNATURE_INVALID,
+        verification.signature,
+      );
+      return { kind: 'rejected', result };
+    }
+    return {
+      kind: 'verified',
+      externalDeliveryId: verification.externalDeliveryId,
+      eventType: verification.eventType,
+      signature: verification.signature,
+    };
+  }
+
+  private async checkDuplicate(
+    provider: WorkspaceProvider,
+    externalDeliveryId: string | null,
+  ): Promise<WebhookReceiveResult | null> {
+    if (externalDeliveryId === null) return null;
+    const dup = await this.repo.findByExternalId(provider, externalDeliveryId);
+    if (dup === null) return null;
+    return { status: 'IDEMPOTENT', deliveryId: dup.id, signatureValid: true };
   }
 
   async replay(deliveryId: string): Promise<{ deliveryId: string }> {

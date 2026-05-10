@@ -11,11 +11,11 @@ import {
   HEALTH_CHECK_TIMEOUT_MS,
   OAUTH_PROBE_INVALID_CODE,
   OAUTH_PROBE_INVALID_REDIRECT_URI,
-  WRITE_EXECUTION_TIMEOUT_MS,
 } from '../../../common/constants/workspace.constants';
 import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
 import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
+import { GitHubWriteActionsHelper } from './github-write-actions.helper';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
 import type { GitHubIssue, GitHubPull, GitHubRepo } from '../types/github-api.types';
 import type {
@@ -31,6 +31,8 @@ import type {
 @Injectable()
 export class GitHubAdapter implements WorkspaceAdapter {
   private readonly logger = new Logger(GitHubAdapter.name);
+
+  constructor(private readonly writeActions: GitHubWriteActionsHelper) {}
 
   async healthCheck(accessToken: string, _baseUrl?: string): Promise<HealthCheckResult> {
     const start = Date.now();
@@ -342,155 +344,7 @@ export class GitHubAdapter implements WorkspaceAdapter {
     actionType: string,
     payload: Record<string, unknown>,
   ): Promise<WriteActionResult> {
-    const headers = {
-      Authorization: `Bearer ${accessToken}`,
-      Accept: 'application/vnd.github+json',
-      'Content-Type': 'application/json',
-      'User-Agent': CLAW_USER_AGENT,
-    };
-    const signal = AbortSignal.timeout(WRITE_EXECUTION_TIMEOUT_MS);
-
-    if (actionType === 'CREATE_ISSUE') {
-      const owner = payload['owner'] as string;
-      const repo = payload['repo'] as string;
-      const response = await fetch(`${GITHUB_API_BASE}/repos/${owner}/${repo}/issues`, {
-        method: 'POST',
-        headers,
-        signal,
-        body: JSON.stringify({
-          title: payload['title'],
-          body: payload['body'],
-          labels: payload['labels'] ?? [],
-        }),
-      });
-      if (!response.ok) {
-        return { success: false, errorMessage: `GitHub API error: HTTP ${response.status}` };
-      }
-      const issue = (await response.json()) as { number: number; html_url: string };
-      return { success: true, externalId: String(issue.number), url: issue.html_url };
-    }
-
-    if (actionType === 'CREATE_ISSUE_COMMENT') {
-      const owner = payload['owner'] as string;
-      const repo = payload['repo'] as string;
-      const issueNumber = payload['issueNumber'] as number;
-      const response = await fetch(
-        `${GITHUB_API_BASE}/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
-        {
-          method: 'POST',
-          headers,
-          signal,
-          body: JSON.stringify({ body: payload['body'] }),
-        },
-      );
-      if (!response.ok) {
-        return { success: false, errorMessage: `GitHub API error: HTTP ${response.status}` };
-      }
-      const comment = (await response.json()) as { id: number; html_url: string };
-      return { success: true, externalId: String(comment.id), url: comment.html_url };
-    }
-
-    if (actionType === 'CREATE_PR_DESCRIPTION') {
-      const owner = payload['owner'] as string;
-      const repo = payload['repo'] as string;
-      const pullNumber = payload['pullNumber'] as number;
-      const response = await fetch(
-        `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}`,
-        {
-          method: 'PATCH',
-          headers,
-          signal,
-          body: JSON.stringify({ body: payload['body'] }),
-        },
-      );
-      if (!response.ok) {
-        return { success: false, errorMessage: `GitHub API error: HTTP ${response.status}` };
-      }
-      const pr = (await response.json()) as { number: number; html_url: string };
-      return { success: true, externalId: String(pr.number), url: pr.html_url };
-    }
-
-    if (actionType === 'COMMENT_PR') {
-      const owner = payload['owner'] as string;
-      const repo = payload['repo'] as string;
-      const pullNumber = payload['pullNumber'] as number;
-      const response = await fetch(
-        `${GITHUB_API_BASE}/repos/${owner}/${repo}/issues/${pullNumber}/comments`,
-        {
-          method: 'POST',
-          headers,
-          signal,
-          body: JSON.stringify({ body: payload['body'] }),
-        },
-      );
-      if (!response.ok) {
-        return { success: false, errorMessage: `GitHub API error: HTTP ${response.status}` };
-      }
-      const comment = (await response.json()) as { id: number; html_url: string };
-      return { success: true, externalId: String(comment.id), url: comment.html_url };
-    }
-
-    if (actionType === 'APPROVE_PR') {
-      const owner = payload['owner'] as string;
-      const repo = payload['repo'] as string;
-      const pullNumber = payload['pullNumber'] as number;
-      const response = await fetch(
-        `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}/reviews`,
-        {
-          method: 'POST',
-          headers,
-          signal,
-          body: JSON.stringify({
-            event: 'APPROVE',
-            body:
-              typeof payload['body'] === 'string'
-                ? payload['body']
-                : 'Approved via ClawAI multi-judge quorum',
-          }),
-        },
-      );
-      if (!response.ok) {
-        return { success: false, errorMessage: `GitHub API error: HTTP ${response.status}` };
-      }
-      const review = (await response.json()) as { id: number; html_url: string };
-      return { success: true, externalId: String(review.id), url: review.html_url };
-    }
-
-    if (actionType === 'ADD_PR_SUGGESTION') {
-      const owner = payload['owner'] as string;
-      const repo = payload['repo'] as string;
-      const pullNumber = payload['pullNumber'] as number;
-      const commitId = payload['commitId'] as string;
-      const path = payload['path'] as string;
-      const line = payload['line'] as number;
-      const suggestion = payload['suggestion'] as string;
-      const body = `\`\`\`suggestion\n${suggestion}\n\`\`\``;
-      const response = await fetch(
-        `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}/comments`,
-        {
-          method: 'POST',
-          headers,
-          signal,
-          body: JSON.stringify({
-            commit_id: commitId,
-            path,
-            line,
-            body,
-            side: 'RIGHT',
-          }),
-        },
-      );
-      if (!response.ok) {
-        return { success: false, errorMessage: `GitHub API error: HTTP ${response.status}` };
-      }
-      const comment = (await response.json()) as { id: number; html_url: string };
-      return { success: true, externalId: String(comment.id), url: comment.html_url };
-    }
-
-    return {
-      success: false,
-      errorMessage: `GitHub adapter: unsupported action type ${actionType}`,
-    };
+    return this.writeActions.execute(accessToken, actionType, payload);
   }
 
   async fetchObjectDetails(

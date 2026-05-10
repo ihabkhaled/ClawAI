@@ -1,0 +1,1 @@
+export const FILE_SERVICE_HTTP_TIMEOUT_MS = 15_000;

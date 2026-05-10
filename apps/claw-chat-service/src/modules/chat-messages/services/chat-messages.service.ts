@@ -2,7 +2,14 @@ import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import { EventPattern, LogLevel } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
-import { runResearch } from '../../../common/utilities';
+import { recordGet, runResearch } from '../../../common/utilities';
+import {
+  FILE_FOLLOW_UP_PREFIXES,
+  IMAGE_FOLLOW_UP_PREFIXES,
+  IMAGE_INTENT_PHRASES,
+  SHORT_FOLLOW_UP_EXACT_MATCHES,
+  SHORT_FOLLOW_UP_MAX_LENGTH,
+} from '../constants/follow-up-detection.constants';
 import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
@@ -54,6 +61,7 @@ import { type RolePackMessageDto } from '../dto/role-pack-message.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
 import { type ChatMessage, type ChatThread, Prisma, RoutingMode } from '../../../generated/prisma';
+import type { AssembledContext } from '../types/context.types';
 
 @Injectable()
 export class ChatMessagesService implements OnModuleInit {
@@ -372,48 +380,62 @@ export class ChatMessagesService implements OnModuleInit {
     if (!message) {
       throw new EntityNotFoundException('ChatMessage', messageId);
     }
-
     const thread = await this.chatThreadsRepository.findById(message.threadId);
     if (!thread) {
       throw new EntityNotFoundException('ChatThread', message.threadId);
     }
     this.validateOwnership(thread, userId);
-
     const updated = await this.chatMessagesRepository.updateFeedback(messageId, feedback);
-    const metadata =
-      updated.metadata !== null && typeof updated.metadata === 'object'
-        ? (updated.metadata as Record<string, unknown>)
-        : null;
-    const judgeDecision =
-      typeof metadata?.['judgeDecision'] === 'string' ? metadata['judgeDecision'] : undefined;
-    const judgeConfidence =
-      typeof metadata?.['judgeConfidence'] === 'number' ? metadata['judgeConfidence'] : undefined;
-    const routingMessageId =
-      typeof metadata?.['sourceMessageId'] === 'string' ? metadata['sourceMessageId'] : undefined;
-    const routeRoadmap =
-      metadata?.['routeRoadmap'] !== null && typeof metadata?.['routeRoadmap'] === 'object'
-        ? (metadata['routeRoadmap'] as Record<string, unknown>)
-        : null;
-    const detectedCategory =
-      typeof routeRoadmap?.['selectedExecutionPath'] === 'string'
-        ? routeRoadmap['selectedExecutionPath']
-        : undefined;
-    void this.rabbitMQService.publish(EventPattern.MESSAGE_FEEDBACK_SET, {
+    void this.rabbitMQService.publish(
+      EventPattern.MESSAGE_FEEDBACK_SET,
+      this.buildFeedbackEvent(updated, feedback),
+    );
+    this.logger.log(`setFeedback: completed for message ${messageId}`);
+    return updated;
+  }
+
+  private buildFeedbackEvent(
+    updated: ChatMessage,
+    feedback: string | null,
+  ): Record<string, unknown> {
+    const metadata = this.readMetadata(updated.metadata);
+    const routeRoadmap = this.readNestedObject(metadata, 'routeRoadmap');
+    return {
       messageId: updated.id,
       threadId: updated.threadId,
       feedback,
-      routingMessageId,
+      routingMessageId: this.readMetaString(metadata, 'sourceMessageId'),
       provider: updated.provider ?? undefined,
       model: updated.model ?? undefined,
       routingMode: updated.routingMode ?? undefined,
       routerModel: updated.routerModel ?? null,
-      judgeDecision,
-      judgeConfidence,
-      detectedCategory,
+      judgeDecision: this.readMetaString(metadata, 'judgeDecision'),
+      judgeConfidence: this.readMetaNumber(metadata, 'judgeConfidence'),
+      detectedCategory: this.readMetaString(routeRoadmap, 'selectedExecutionPath'),
       timestamp: new Date().toISOString(),
-    });
-    this.logger.log(`setFeedback: completed for message ${messageId}`);
-    return updated;
+    };
+  }
+
+  private readNestedObject(
+    source: Record<string, unknown> | null,
+    key: string,
+  ): Record<string, unknown> | null {
+    const value = recordGet(source, key);
+    return value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+  }
+
+  private readMetaString(source: Record<string, unknown> | null, key: string): string | undefined {
+    const value = recordGet(source, key);
+    return typeof value === 'string' ? value : undefined;
+  }
+
+  private readMetaNumber(source: Record<string, unknown> | null, key: string): number | undefined {
+    const value = recordGet(source, key);
+    return typeof value === 'number' ? value : undefined;
+  }
+
+  private readMetadata(value: unknown): Record<string, unknown> | null {
+    return value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : null;
   }
 
   async regenerateMessage(id: string, userId: string): Promise<ChatMessage> {
@@ -462,35 +484,11 @@ export class ChatMessagesService implements OnModuleInit {
       this.chatMessagesRepository.findRecentByThreadId(payload.threadId, 20),
       this.chatThreadsRepository.findById(payload.threadId),
     ]);
-
     const chronologicalMessages = [...threadMessages].reverse();
     const threadSettings = this.extractThreadSettings(thread);
     const fileIds = this.extractFileIdsFromMessages(chronologicalMessages);
     const latestUserMetadata = this.extractLatestUserMetadata(chronologicalMessages);
-
-    // Context-aware follow-up detection:
-    // If user says "again"/"one more" and the last message was image/file generation,
-    // override routing to re-trigger the same generation type
-    let effectivePayload = this.detectImageFollowUp(payload, thread, chronologicalMessages);
-    effectivePayload = this.detectFileGenerationFollowUp(
-      effectivePayload,
-      thread,
-      chronologicalMessages,
-    );
-
-    // Attachment-aware image generation detection:
-    // If user attached IMAGE files and text implies "similar/recreate/like this",
-    // override to IMAGE_GEMINI even if router didn't detect it
-    effectivePayload = this.detectImageFromAttachment(effectivePayload, chronologicalMessages);
-
-    // Inject judge-referee config from thread settings
-    if (thread?.judgeEnabled) {
-      effectivePayload = { ...effectivePayload, judgeEnabled: true };
-    }
-
-    this.logger.debug(
-      `handleMessageRouted: assembling context with ${String(chronologicalMessages.length)} messages, fileIds=${String(fileIds?.length ?? 0)}`,
-    );
+    const effectivePayload = this.applyFollowUpOverrides(payload, thread, chronologicalMessages);
     const context = await this.contextAssemblyManager.assemble(
       thread?.userId ?? 'system',
       chronologicalMessages,
@@ -498,40 +496,16 @@ export class ChatMessagesService implements OnModuleInit {
       thread?.contextPackIds ?? undefined,
       fileIds,
     );
-
-    this.logger.debug(
-      `handleMessageRouted: calling LLM execution for ${effectivePayload.selectedProvider}/${effectivePayload.selectedModel}`,
-    );
     try {
-      const llmResponse = await this.chatExecutionManager.execute(
+      await this.runLlmAndStore(
         effectivePayload,
+        payload,
         context,
         threadSettings,
-      );
-      const contextMetadata = {
-        memoryCount: context.memories.length,
-        fileIds: fileIds ?? [],
-      };
-      const assistantMessage = await this.storeAssistantResponse(
-        payload,
-        llmResponse,
-        contextMetadata,
-        latestUserMetadata,
-      );
-      await this.updateThreadAfterResponse(payload.threadId, llmResponse);
-
-      this.chatStreamService.emitCompletion(
-        payload.threadId,
-        llmResponse.provider,
-        llmResponse.model,
-      );
-      this.logAssistantResponse(payload, llmResponse);
-      this.publishMessageCompleted(
-        payload,
-        assistantMessage,
-        llmResponse,
+        fileIds,
         thread,
         chronologicalMessages,
+        latestUserMetadata,
       );
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'All providers failed';
@@ -552,14 +526,69 @@ export class ChatMessagesService implements OnModuleInit {
         },
         thread,
         chronologicalMessages,
-        {
-          executionSuccess: false,
-          finalStatus: 'failed',
-          errorMessage: errorMsg,
-        },
+        { executionSuccess: false, finalStatus: 'failed', errorMessage: errorMsg },
       );
       throw error;
     }
+  }
+
+  private applyFollowUpOverrides(
+    payload: MessageRoutedData,
+    thread: ChatThread | null,
+    chronologicalMessages: ChatMessage[],
+  ): MessageRoutedData {
+    let effectivePayload = this.detectImageFollowUp(payload, thread, chronologicalMessages);
+    effectivePayload = this.detectFileGenerationFollowUp(
+      effectivePayload,
+      thread,
+      chronologicalMessages,
+    );
+    effectivePayload = this.detectImageFromAttachment(effectivePayload, chronologicalMessages);
+    if (thread?.judgeEnabled) {
+      effectivePayload = { ...effectivePayload, judgeEnabled: true };
+    }
+    return effectivePayload;
+  }
+
+  private async runLlmAndStore(
+    effectivePayload: MessageRoutedData,
+    originalPayload: MessageRoutedData,
+    context: AssembledContext,
+    threadSettings: ThreadSettings | undefined,
+    fileIds: string[] | undefined,
+    thread: ChatThread | null,
+    chronologicalMessages: ChatMessage[],
+    latestUserMetadata: Record<string, unknown> | null,
+  ): Promise<void> {
+    this.logger.debug(
+      `runLlmAndStore: calling LLM execution for ${effectivePayload.selectedProvider}/${effectivePayload.selectedModel}`,
+    );
+    const llmResponse = await this.chatExecutionManager.execute(
+      effectivePayload,
+      context,
+      threadSettings,
+    );
+    const contextMetadata = { memoryCount: context.memories.length, fileIds: fileIds ?? [] };
+    const assistantMessage = await this.storeAssistantResponse(
+      originalPayload,
+      llmResponse,
+      contextMetadata,
+      latestUserMetadata,
+    );
+    await this.updateThreadAfterResponse(originalPayload.threadId, llmResponse);
+    this.chatStreamService.emitCompletion(
+      originalPayload.threadId,
+      llmResponse.provider,
+      llmResponse.model,
+    );
+    this.logAssistantResponse(originalPayload, llmResponse);
+    this.publishMessageCompleted(
+      originalPayload,
+      assistantMessage,
+      llmResponse,
+      thread,
+      chronologicalMessages,
+    );
   }
 
   private async subscribeToEvents(): Promise<void> {
@@ -571,64 +600,65 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   private async onMessageRouted(data: unknown): Promise<void> {
+    const parsed = this.parseMessageRoutedPayload(data);
+    if (parsed === null) {
+      this.logger.warn('Received message.routed with missing required fields');
+      return;
+    }
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Received routed message for ${parsed.messageId} via ${parsed.selectedProvider}/${parsed.selectedModel}`,
+      action: 'message_routed_received',
+      service: ChatMessagesService.name,
+      messageId: parsed.messageId,
+      threadId: parsed.threadId,
+      provider: parsed.selectedProvider,
+      model: parsed.selectedModel,
+    });
+    try {
+      await this.handleMessageRouted(parsed);
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(
+        `Failed to handle message.routed for message ${parsed.messageId}: ${errorMsg}`,
+      );
+      this.structuredLogger.logAction({
+        level: LogLevel.ERROR,
+        message: `Failed to handle message.routed for message ${parsed.messageId}`,
+        action: 'message_routed_error',
+        service: ChatMessagesService.name,
+        messageId: parsed.messageId,
+        threadId: parsed.threadId,
+        errorMessage: errorMsg,
+      });
+    }
+  }
+
+  private parseMessageRoutedPayload(data: unknown): MessageRoutedData | null {
     const payload = data as Record<string, unknown>;
     const messageId = payload['messageId'] as string | undefined;
     const threadId = payload['threadId'] as string | undefined;
     const selectedProvider = payload['selectedProvider'] as string | undefined;
     const selectedModel = payload['selectedModel'] as string | undefined;
     const routingMode = payload['routingMode'] as string | undefined;
-    const routerModel = payload['routerModel'] as string | null | undefined;
-    const fallbackProvider = payload['fallbackProvider'] as string | undefined;
-    const fallbackModel = payload['fallbackModel'] as string | undefined;
-    const fallbackChain = payload['fallbackChain'] as
-      | Array<{ provider: string; model: string }>
-      | undefined;
-    const timestamp = payload['timestamp'] as string | undefined;
-    const detectedCategory = payload['detectedCategory'] as string | undefined;
-
     if (!messageId || !threadId || !selectedProvider || !selectedModel || !routingMode) {
-      this.logger.warn('Received message.routed with missing required fields');
-      return;
+      return null;
     }
-
-    this.structuredLogger.logAction({
-      level: LogLevel.INFO,
-      message: `Received routed message for ${messageId} via ${selectedProvider}/${selectedModel}`,
-      action: 'message_routed_received',
-      service: ChatMessagesService.name,
+    return {
       messageId,
       threadId,
-      provider: selectedProvider,
-      model: selectedModel,
-    });
-
-    try {
-      await this.handleMessageRouted({
-        messageId,
-        threadId,
-        selectedProvider,
-        selectedModel,
-        routingMode,
-        routerModel: routerModel ?? null,
-        fallbackProvider,
-        fallbackModel,
-        fallbackChain,
-        timestamp: timestamp ?? new Date().toISOString(),
-        detectedCategory,
-      });
-    } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to handle message.routed for message ${messageId}: ${errorMsg}`);
-      this.structuredLogger.logAction({
-        level: LogLevel.ERROR,
-        message: `Failed to handle message.routed for message ${messageId}`,
-        action: 'message_routed_error',
-        service: ChatMessagesService.name,
-        messageId,
-        threadId,
-        errorMessage: errorMsg,
-      });
-    }
+      selectedProvider,
+      selectedModel,
+      routingMode,
+      routerModel: (payload['routerModel'] as string | null | undefined) ?? null,
+      fallbackProvider: payload['fallbackProvider'] as string | undefined,
+      fallbackModel: payload['fallbackModel'] as string | undefined,
+      fallbackChain: payload['fallbackChain'] as
+        | Array<{ provider: string; model: string }>
+        | undefined,
+      timestamp: (payload['timestamp'] as string | undefined) ?? new Date().toISOString(),
+      detectedCategory: payload['detectedCategory'] as string | undefined,
+    };
   }
 
   private extractThreadSettings(thread: ChatThread | null): ThreadSettings | undefined {
@@ -683,75 +713,18 @@ export class ChatMessagesService implements OnModuleInit {
     const storedContent = hasVisibleContent
       ? llmResponse.content
       : 'Warning: no visible final answer was produced for this reply. Please regenerate to retry.';
-    const requestedModelDisplayName =
-      typeof latestUserMetadata?.['modelDisplayName'] === 'string'
-        ? latestUserMetadata['modelDisplayName']
-        : null;
-    const finalDisplayName = llmResponse.model;
     const researchSummary = this.extractResearchSummary(latestUserMetadata);
     const progressSummary = this.buildStoredProgressSummary(payload, llmResponse, researchSummary);
-    const routeRoadmap: RouteRoadmap = {
-      routingMode: payload.routingMode,
-      routerModel: payload.routerModel ?? null,
-      selectedProvider: payload.selectedProvider,
-      selectedModel: payload.selectedModel,
-      finalProvider: llmResponse.provider,
-      finalModel: llmResponse.model,
-      finalDisplayName,
-      steps:
-        payload.routingMode === 'AUTO' && payload.routerModel
-          ? [
-              {
-                stage: 'router',
-                provider: 'local-ollama',
-                model: payload.routerModel,
-                displayName: payload.routerModel,
-              },
-              {
-                stage: 'decision',
-                provider: payload.selectedProvider,
-                model: payload.selectedModel,
-              },
-              ...(researchSummary !== null
-                ? [
-                    {
-                      stage: 'research' as const,
-                      provider: 'research-service',
-                      model: researchSummary.workflow,
-                      displayName: 'Research workflow',
-                      description: `${String(researchSummary.itemCount)} evidence items collected`,
-                    },
-                  ]
-                : []),
-              {
-                stage: 'execution',
-                provider: llmResponse.provider,
-                model: llmResponse.model,
-                displayName: finalDisplayName,
-              },
-            ]
-          : [
-              ...(researchSummary !== null
-                ? [
-                    {
-                      stage: 'research' as const,
-                      provider: 'research-service',
-                      model: researchSummary.workflow,
-                      displayName: 'Research workflow',
-                      description: `${String(researchSummary.itemCount)} evidence items collected`,
-                    },
-                  ]
-                : []),
-              {
-                stage: 'execution',
-                provider: llmResponse.provider,
-                model: llmResponse.model,
-                displayName: finalDisplayName,
-              },
-            ],
-      research: researchSummary,
-    };
-
+    const routeRoadmap = this.buildRouteRoadmap(payload, llmResponse, researchSummary);
+    const metadata = this.buildAssistantMetadata({
+      payload,
+      llmResponse,
+      contextMetadata,
+      latestUserMetadata,
+      hasVisibleContent,
+      routeRoadmap,
+      progressSummary,
+    });
     return this.chatMessagesRepository.create({
       threadId: payload.threadId,
       role: 'ASSISTANT',
@@ -764,41 +737,156 @@ export class ChatMessagesService implements OnModuleInit {
       outputTokens: llmResponse.outputTokens,
       latencyMs: llmResponse.latencyMs,
       usedFallback: llmResponse.usedFallback,
-      metadata: {
-        ...(contextMetadata
-          ? { memoryCount: contextMetadata.memoryCount, fileIds: contextMetadata.fileIds }
-          : {}),
-        ...(this.extractPersistedResearch(latestUserMetadata) !== null
-          ? { research: this.extractPersistedResearch(latestUserMetadata) }
-          : {}),
-        ...(llmResponse.imageGenerationId
-          ? { type: 'image_generation', generationId: llmResponse.imageGenerationId }
-          : {}),
-        ...(llmResponse.fileGenerationId
-          ? { type: 'file_generation', generationId: llmResponse.fileGenerationId }
-          : {}),
-        sourceMessageId: payload.messageId,
-        ...(llmResponse.reRouted
-          ? {
-              reRouted: true,
-              originalProvider: llmResponse.originalProvider,
-              originalModel: llmResponse.originalModel,
-              originalScore: llmResponse.originalScore,
-              reRouteAttempts: llmResponse.reRouteAttempts,
-              reRouteReasons: llmResponse.reRouteReasons,
-            }
-          : {}),
-        ...(llmResponse.fastPathUsed ? { fastPathUsed: true } : {}),
-        ...(llmResponse.fastPathEscalated ? { fastPathEscalated: true } : {}),
-        ...(llmResponse.executionPath ? { executionPath: llmResponse.executionPath } : {}),
-        ...(llmResponse.targetLatencyMs ? { targetLatencyMs: llmResponse.targetLatencyMs } : {}),
-        ...(!hasVisibleContent ? { emptyContent: true } : {}),
-        ...(requestedModelDisplayName ? { requestedModelDisplayName } : {}),
-        routeRoadmap,
-        progressSummary,
-        ...(llmResponse.judgeRefereeMetadata ?? {}),
-      } as Prisma.InputJsonValue,
+      metadata: metadata as Prisma.InputJsonValue,
     });
+  }
+
+  private buildRouteRoadmap(
+    payload: MessageRoutedData,
+    llmResponse: LlmResponse,
+    researchSummary: ResearchExecutionSummary | null,
+  ): RouteRoadmap {
+    return {
+      routingMode: payload.routingMode,
+      routerModel: payload.routerModel ?? null,
+      selectedProvider: payload.selectedProvider,
+      selectedModel: payload.selectedModel,
+      finalProvider: llmResponse.provider,
+      finalModel: llmResponse.model,
+      finalDisplayName: llmResponse.model,
+      steps: this.buildRouteRoadmapSteps(payload, llmResponse, researchSummary),
+      research: researchSummary,
+    };
+  }
+
+  private buildRouteRoadmapSteps(
+    payload: MessageRoutedData,
+    llmResponse: LlmResponse,
+    researchSummary: ResearchExecutionSummary | null,
+  ): RouteRoadmap['steps'] {
+    const researchStep: RouteRoadmap['steps'] =
+      researchSummary !== null
+        ? [
+            {
+              stage: 'research' as const,
+              provider: 'research-service',
+              model: researchSummary.workflow,
+              displayName: 'Research workflow',
+              description: `${String(researchSummary.itemCount)} evidence items collected`,
+            },
+          ]
+        : [];
+    const executionStep = {
+      stage: 'execution' as const,
+      provider: llmResponse.provider,
+      model: llmResponse.model,
+      displayName: llmResponse.model,
+    };
+    if (payload.routingMode === 'AUTO' && payload.routerModel) {
+      return [
+        {
+          stage: 'router' as const,
+          provider: 'local-ollama',
+          model: payload.routerModel,
+          displayName: payload.routerModel,
+        },
+        {
+          stage: 'decision' as const,
+          provider: payload.selectedProvider,
+          model: payload.selectedModel,
+        },
+        ...researchStep,
+        executionStep,
+      ];
+    }
+    return [...researchStep, executionStep];
+  }
+
+  private buildAssistantMetadata(args: {
+    payload: MessageRoutedData;
+    llmResponse: LlmResponse;
+    contextMetadata?: { memoryCount: number; fileIds: string[] };
+    latestUserMetadata?: Record<string, unknown> | null;
+    hasVisibleContent: boolean;
+    routeRoadmap: RouteRoadmap;
+    progressSummary: StoredProgressSummaryStep[];
+  }): Record<string, unknown> {
+    const {
+      payload,
+      llmResponse,
+      contextMetadata,
+      latestUserMetadata,
+      hasVisibleContent,
+      routeRoadmap,
+      progressSummary,
+    } = args;
+    return {
+      ...this.buildContextMetaPart(contextMetadata),
+      ...this.buildResearchMetaPart(latestUserMetadata),
+      ...this.buildGenerationMetaPart(llmResponse),
+      sourceMessageId: payload.messageId,
+      ...this.buildReRouteMetaPart(llmResponse),
+      ...this.buildFastPathMetaPart(llmResponse),
+      ...(!hasVisibleContent ? { emptyContent: true } : {}),
+      ...this.buildDisplayNameMetaPart(latestUserMetadata),
+      routeRoadmap,
+      progressSummary,
+      ...(llmResponse.judgeRefereeMetadata ?? {}),
+    };
+  }
+
+  private buildContextMetaPart(
+    contextMetadata: { memoryCount: number; fileIds: string[] } | undefined,
+  ): Record<string, unknown> {
+    if (!contextMetadata) return {};
+    return { memoryCount: contextMetadata.memoryCount, fileIds: contextMetadata.fileIds };
+  }
+
+  private buildResearchMetaPart(
+    latestUserMetadata: Record<string, unknown> | null | undefined,
+  ): Record<string, unknown> {
+    const persistedResearch = this.extractPersistedResearch(latestUserMetadata);
+    return persistedResearch !== null ? { research: persistedResearch } : {};
+  }
+
+  private buildGenerationMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
+    if (llmResponse.imageGenerationId) {
+      return { type: 'image_generation', generationId: llmResponse.imageGenerationId };
+    }
+    if (llmResponse.fileGenerationId) {
+      return { type: 'file_generation', generationId: llmResponse.fileGenerationId };
+    }
+    return {};
+  }
+
+  private buildReRouteMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
+    if (!llmResponse.reRouted) return {};
+    return {
+      reRouted: true,
+      originalProvider: llmResponse.originalProvider,
+      originalModel: llmResponse.originalModel,
+      originalScore: llmResponse.originalScore,
+      reRouteAttempts: llmResponse.reRouteAttempts,
+      reRouteReasons: llmResponse.reRouteReasons,
+    };
+  }
+
+  private buildFastPathMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
+    return {
+      ...(llmResponse.fastPathUsed ? { fastPathUsed: true } : {}),
+      ...(llmResponse.fastPathEscalated ? { fastPathEscalated: true } : {}),
+      ...(llmResponse.executionPath ? { executionPath: llmResponse.executionPath } : {}),
+      ...(llmResponse.targetLatencyMs ? { targetLatencyMs: llmResponse.targetLatencyMs } : {}),
+    };
+  }
+
+  private buildDisplayNameMetaPart(
+    latestUserMetadata: Record<string, unknown> | null | undefined,
+  ): Record<string, unknown> {
+    const value = recordGet(latestUserMetadata ?? null, 'modelDisplayName');
+    return typeof value === 'string' && value.length > 0
+      ? { requestedModelDisplayName: value }
+      : {};
   }
 
   private buildStoredProgressSummary(
@@ -806,99 +894,116 @@ export class ChatMessagesService implements OnModuleInit {
     llmResponse: LlmResponse,
     researchSummary: ResearchExecutionSummary | null,
   ): StoredProgressSummaryStep[] {
-    const steps: StoredProgressSummaryStep[] = [
-      {
-        label: 'Request accepted',
-        description: 'Claw received your message and queued execution.',
-        actorType: 'request',
-        actorName: 'Claw',
-        status: 'completed',
-      },
-    ];
-
+    const modelActor = `${llmResponse.provider} / ${llmResponse.model}`;
+    const steps: StoredProgressSummaryStep[] = [this.buildRequestAcceptedStep()];
     if (payload.routingMode === 'AUTO') {
-      steps.push({
-        label: 'Routing request',
-        description: 'The router selected the execution path for this message.',
-        actorType: 'router',
-        actorName: payload.routerModel ?? 'Auto router',
-        status: 'completed',
-      });
+      steps.push(this.buildRoutingStep(payload.routerModel));
     }
-
     if (researchSummary !== null) {
-      steps.push({
-        label: 'Gathering evidence',
-        description: `${String(researchSummary.itemCount)} evidence items collected with ${researchSummary.toolsUsed.join(', ') || 'research tools'}.`,
-        actorType: 'system',
-        actorName: 'Research workflow',
-        status: 'completed',
-      });
+      steps.push(this.buildResearchStep(researchSummary));
     }
+    steps.push(this.buildModelSelectedStep(llmResponse, modelActor));
+    if (llmResponse.judgeRefereeMetadata !== undefined) {
+      steps.push(this.buildJudgeStep(llmResponse.judgeRefereeMetadata));
+    }
+    steps.push(this.buildResponseCompleteStep(modelActor));
+    return steps;
+  }
 
-    steps.push({
+  private buildRequestAcceptedStep(): StoredProgressSummaryStep {
+    return {
+      label: 'Request accepted',
+      description: 'Claw received your message and queued execution.',
+      actorType: 'request',
+      actorName: 'Claw',
+      status: 'completed',
+    };
+  }
+
+  private buildRoutingStep(routerModel: string | null | undefined): StoredProgressSummaryStep {
+    return {
+      label: 'Routing request',
+      description: 'The router selected the execution path for this message.',
+      actorType: 'router',
+      actorName: routerModel ?? 'Auto router',
+      status: 'completed',
+    };
+  }
+
+  private buildResearchStep(researchSummary: ResearchExecutionSummary): StoredProgressSummaryStep {
+    return {
+      label: 'Gathering evidence',
+      description: `${String(researchSummary.itemCount)} evidence items collected with ${researchSummary.toolsUsed.join(', ') || 'research tools'}.`,
+      actorType: 'system',
+      actorName: 'Research workflow',
+      status: 'completed',
+    };
+  }
+
+  private buildModelSelectedStep(
+    llmResponse: LlmResponse,
+    modelActor: string,
+  ): StoredProgressSummaryStep {
+    return {
       label: 'Model selected',
       description: `${llmResponse.provider}/${llmResponse.model} prepared the response.`,
       actorType: 'model',
-      actorName: `${llmResponse.provider} / ${llmResponse.model}`,
+      actorName: modelActor,
       status: 'completed',
-    });
+    };
+  }
 
-    if (llmResponse.judgeRefereeMetadata !== undefined) {
-      steps.push({
-        label: 'Verifying answer',
-        description: `Judge decision: ${llmResponse.judgeRefereeMetadata.judgeDecision}.`,
-        actorType: 'judge',
-        actorName: llmResponse.judgeRefereeMetadata.judgeModel,
-        status: 'completed',
-      });
-    }
+  private buildJudgeStep(
+    judge: NonNullable<LlmResponse['judgeRefereeMetadata']>,
+  ): StoredProgressSummaryStep {
+    return {
+      label: 'Verifying answer',
+      description: `Judge decision: ${judge.judgeDecision}.`,
+      actorType: 'judge',
+      actorName: judge.judgeModel,
+      status: 'completed',
+    };
+  }
 
-    steps.push({
+  private buildResponseCompleteStep(modelActor: string): StoredProgressSummaryStep {
+    return {
       label: 'Response complete',
       description: 'The final answer was stored successfully.',
       actorType: 'model',
-      actorName: `${llmResponse.provider} / ${llmResponse.model}`,
+      actorName: modelActor,
       status: 'completed',
-    });
-
-    return steps;
+    };
   }
 
   private extractResearchSummary(
     latestUserMetadata?: Record<string, unknown> | null,
   ): ResearchExecutionSummary | null {
-    const research = latestUserMetadata?.['research'];
-    if (research === null || typeof research !== 'object') {
+    const researchRecord = this.readNestedObject(latestUserMetadata ?? null, 'research');
+    if (researchRecord === null) {
       return null;
     }
-
-    const researchRecord = research as Record<string, unknown>;
-    const bundle = researchRecord['bundle'];
-    if (bundle === null || typeof bundle !== 'object') {
+    const bundleRecord = this.readNestedObject(researchRecord, 'bundle');
+    if (bundleRecord === null) {
       return null;
     }
-
-    const bundleRecord = bundle as Record<string, unknown>;
-    const toolsUsed = Array.isArray(bundleRecord['toolsUsed'])
-      ? bundleRecord['toolsUsed'].filter((tool): tool is string => typeof tool === 'string')
-      : [];
-    const helperModels = Array.isArray(bundleRecord['helperModels'])
-      ? bundleRecord['helperModels'].filter((model): model is string => typeof model === 'string')
-      : [];
-    const itemCount = Array.isArray(bundleRecord['items']) ? bundleRecord['items'].length : 0;
-    const warningCount = Array.isArray(bundleRecord['warnings'])
-      ? bundleRecord['warnings'].length
-      : 0;
-
     return {
-      runId: typeof researchRecord['runId'] === 'string' ? researchRecord['runId'] : 'unknown',
-      workflow: typeof researchRecord['mode'] === 'string' ? researchRecord['mode'] : 'unknown',
-      toolsUsed,
-      helperModels,
-      itemCount,
-      warningCount,
+      runId: this.readMetaString(researchRecord, 'runId') ?? 'unknown',
+      workflow: this.readMetaString(researchRecord, 'mode') ?? 'unknown',
+      toolsUsed: this.readStringArray(bundleRecord, 'toolsUsed'),
+      helperModels: this.readStringArray(bundleRecord, 'helperModels'),
+      itemCount: this.readArrayLength(bundleRecord, 'items'),
+      warningCount: this.readArrayLength(bundleRecord, 'warnings'),
     };
+  }
+
+  private readStringArray(source: Record<string, unknown>, key: string): string[] {
+    const value = recordGet(source, key);
+    return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
+  }
+
+  private readArrayLength(source: Record<string, unknown>, key: string): number {
+    const value = recordGet(source, key);
+    return Array.isArray(value) ? value.length : 0;
   }
 
   private extractPersistedResearch(
@@ -1006,28 +1111,32 @@ export class ChatMessagesService implements OnModuleInit {
       finalStatus: outcomeOverrides?.finalStatus ?? 'completed',
       ...(outcomeOverrides?.errorMessage ? { errorMessage: outcomeOverrides.errorMessage } : {}),
       ...(payload.routerModel ? { routerModel: payload.routerModel } : {}),
-      ...(llmResponse.executionPath ? { executionPath: llmResponse.executionPath } : {}),
-      ...(llmResponse.targetLatencyMs ? { targetLatencyMs: llmResponse.targetLatencyMs } : {}),
-      ...(llmResponse.fastPathUsed ? { fastPathUsed: true } : {}),
-      ...(llmResponse.fastPathEscalated ? { fastPathEscalated: true } : {}),
-      ...(llmResponse.reRouted
-        ? {
-            reRouted: true,
-            originalProvider: llmResponse.originalProvider,
-            originalModel: llmResponse.originalModel,
-            reRouteAttempts: llmResponse.reRouteAttempts,
-          }
-        : {}),
-      ...(llmResponse.judgeRefereeMetadata
-        ? {
-            judgeDecision: llmResponse.judgeRefereeMetadata.judgeDecision,
-            criticModel: llmResponse.judgeRefereeMetadata.criticModel,
-            judgeModel: llmResponse.judgeRefereeMetadata.judgeModel,
-            criticScore: llmResponse.judgeRefereeMetadata.criticScore,
-            judgeConfidence: llmResponse.judgeRefereeMetadata.judgeConfidence,
-          }
-        : {}),
+      ...this.buildFastPathMetaPart(llmResponse),
+      ...this.buildPublishReRoutePart(llmResponse),
+      ...this.buildPublishJudgePart(llmResponse),
     });
+  }
+
+  private buildPublishReRoutePart(llmResponse: LlmResponse): Record<string, unknown> {
+    if (!llmResponse.reRouted) return {};
+    return {
+      reRouted: true,
+      originalProvider: llmResponse.originalProvider,
+      originalModel: llmResponse.originalModel,
+      reRouteAttempts: llmResponse.reRouteAttempts,
+    };
+  }
+
+  private buildPublishJudgePart(llmResponse: LlmResponse): Record<string, unknown> {
+    const judge = llmResponse.judgeRefereeMetadata;
+    if (judge === undefined) return {};
+    return {
+      judgeDecision: judge.judgeDecision,
+      criticModel: judge.criticModel,
+      judgeModel: judge.judgeModel,
+      criticScore: judge.criticScore,
+      judgeConfidence: judge.judgeConfidence,
+    };
   }
 
   private async getThreadForMessage(threadId: string, userId: string): Promise<ChatThread> {
@@ -1122,66 +1231,34 @@ export class ChatMessagesService implements OnModuleInit {
     }
   }
 
+  private extractLatestUserText(messages: ChatMessage[]): string | null {
+    const lastUser = [...messages].reverse().find((m) => m.role === 'USER');
+    return lastUser ? lastUser.content.toLowerCase().trim() : null;
+  }
+
+  private matchesFollowUp(lower: string, prefixes: ReadonlyArray<string>): boolean {
+    if (lower.length >= SHORT_FOLLOW_UP_MAX_LENGTH) return false;
+    if (SHORT_FOLLOW_UP_EXACT_MATCHES.includes(lower)) return true;
+    return prefixes.some((prefix) => lower.startsWith(prefix));
+  }
+
   private detectImageFollowUp(
     payload: MessageRoutedData,
     thread: ChatThread | null,
     messages: ChatMessage[],
   ): MessageRoutedData {
-    // Only override AUTO routing — don't interfere with manual model selection
-    if (payload.routingMode !== 'AUTO') {
+    const lastProvider = this.extractImageFollowUpTarget(payload, thread, messages);
+    if (lastProvider === null) {
       return payload;
     }
-
-    // Already routed to image provider — no override needed
-    if (payload.selectedProvider.startsWith('IMAGE_')) {
-      return payload;
-    }
-
-    // Check if thread's last interaction was image generation
-    const lastProvider = thread?.lastProvider;
-    if (!lastProvider?.startsWith('IMAGE_')) {
-      return payload;
-    }
-
-    // Check if user's message is a short follow-up
-    const lastUserMsg = [...messages].reverse().find((m) => m.role === 'USER');
-    if (!lastUserMsg) {
-      return payload;
-    }
-
-    const lower = lastUserMsg.content.toLowerCase().trim();
-    const isFollowUp =
-      lower.length < 100 &&
-      (lower === 'again' ||
-        lower === 'one more' ||
-        lower === 'another one' ||
-        lower === 'do it again' ||
-        lower === 'retry' ||
-        lower === 'regenerate' ||
-        lower === 'redo' ||
-        lower === 'more' ||
-        lower.startsWith('another') ||
-        lower.startsWith('one more') ||
-        lower.startsWith('do another') ||
-        lower.startsWith('make another') ||
-        lower.startsWith('generate another') ||
-        lower.startsWith('create another'));
-
-    if (!isFollowUp) {
-      return payload;
-    }
-
-    // Find the original image prompt from the last image generation message
+    const lower = this.extractLatestUserText(messages) ?? '';
     const lastImageMsg = [...messages].reverse().find((m) => {
       const meta = m.metadata as Record<string, unknown> | null;
       return meta?.['type'] === 'image_generation';
     });
-
-    // Override routing to use the same image provider
     this.logger.log(
       `Context follow-up detected: "${lower}" → re-routing to ${lastProvider}/${thread?.lastModel ?? 'default'}`,
     );
-
     return {
       ...payload,
       selectedProvider: lastProvider,
@@ -1192,131 +1269,57 @@ export class ChatMessagesService implements OnModuleInit {
     };
   }
 
+  private extractImageFollowUpTarget(
+    payload: MessageRoutedData,
+    thread: ChatThread | null,
+    messages: ChatMessage[],
+  ): string | null {
+    if (payload.routingMode !== 'AUTO') return null;
+    if (payload.selectedProvider.startsWith('IMAGE_')) return null;
+    const lastProvider = thread?.lastProvider;
+    if (!lastProvider?.startsWith('IMAGE_')) return null;
+    const lower = this.extractLatestUserText(messages);
+    if (lower === null || !this.matchesFollowUp(lower, IMAGE_FOLLOW_UP_PREFIXES)) {
+      return null;
+    }
+    return lastProvider;
+  }
+
   private detectFileGenerationFollowUp(
     payload: MessageRoutedData,
     _thread: ChatThread | null,
     messages: ChatMessage[],
   ): MessageRoutedData {
-    if (payload.routingMode !== 'AUTO') {
-      return payload;
-    }
-    if (payload.selectedProvider === 'FILE_GENERATION') {
-      return payload;
-    }
-
-    // Check if last assistant message was file generation
+    if (payload.routingMode !== 'AUTO') return payload;
+    if (payload.selectedProvider === 'FILE_GENERATION') return payload;
     const lastAssistant = [...messages].reverse().find((m) => m.role === 'ASSISTANT');
     const meta = lastAssistant?.metadata as Record<string, unknown> | null;
-    if (meta?.['type'] !== 'file_generation') {
+    if (meta?.['type'] !== 'file_generation') return payload;
+    const lower = this.extractLatestUserText(messages);
+    if (lower === null || !this.matchesFollowUp(lower, FILE_FOLLOW_UP_PREFIXES)) {
       return payload;
     }
-
-    // Check for short follow-up
-    const lastUser = [...messages].reverse().find((m) => m.role === 'USER');
-    if (!lastUser) {
-      return payload;
-    }
-    const lower = lastUser.content.toLowerCase().trim();
-    const isFollowUp =
-      lower.length < 100 &&
-      (lower === 'again' ||
-        lower === 'one more' ||
-        lower === 'another one' ||
-        lower === 'do it again' ||
-        lower === 'retry' ||
-        lower === 'regenerate' ||
-        lower === 'redo' ||
-        lower === 'more' ||
-        lower.startsWith('another') ||
-        lower.startsWith('one more') ||
-        lower.startsWith('do another'));
-
-    if (!isFollowUp) {
-      return payload;
-    }
-
     this.logger.log(
       `File generation follow-up detected: "${lower}" → re-routing to FILE_GENERATION`,
     );
-
-    return {
-      ...payload,
-      selectedProvider: 'FILE_GENERATION',
-      selectedModel: 'auto',
-    };
+    return { ...payload, selectedProvider: 'FILE_GENERATION', selectedModel: 'auto' };
   }
 
   private detectImageFromAttachment(
     payload: MessageRoutedData,
     messages: ChatMessage[],
   ): MessageRoutedData {
-    // Already routed to image generation
-    if (payload.selectedProvider.startsWith('IMAGE_')) {
-      return payload;
-    }
-
-    // Check if the latest user message has image attachments
+    if (payload.selectedProvider.startsWith('IMAGE_')) return payload;
     const lastUser = [...messages].reverse().find((m) => m.role === 'USER');
-    if (!lastUser) {
-      return payload;
-    }
-
+    if (!lastUser) return payload;
     const meta = lastUser.metadata as Record<string, unknown> | null;
     const fileIds = Array.isArray(meta?.['fileIds']) ? (meta['fileIds'] as string[]) : [];
-    if (fileIds.length === 0) {
-      return payload;
-    }
-
-    // Check if the user's text implies they want image generation from the attachment
+    if (fileIds.length === 0) return payload;
     const lower = lastUser.content.toLowerCase();
-    const imageIntentPhrases = [
-      'similar',
-      'like this',
-      'recreate',
-      'reproduce',
-      'copy',
-      'same style',
-      'identical',
-      'match',
-      'imitate',
-      'version of this',
-      'based on this',
-      'inspired by',
-      'variation',
-      'modify this',
-      'edit this',
-      'change this',
-      'transform this',
-      'convert this',
-      'make this',
-      'redo this',
-      'similar to this',
-      'like the attached',
-      'same as this',
-      'generate from this',
-      'create from this',
-      'remake',
-      'generate similar',
-      'create similar',
-      'generate like',
-      'looks like this',
-      'style of this',
-      'another like this',
-      'one more like',
-      'same kind',
-      'same type',
-      'replicate',
-    ];
-
-    const hasImageIntent = imageIntentPhrases.some((p) => lower.includes(p));
-    if (!hasImageIntent) {
-      return payload;
-    }
-
+    if (!IMAGE_INTENT_PHRASES.some((p) => lower.includes(p))) return payload;
     this.logger.log(
       `Image-from-attachment detected: "${lower.slice(0, 50)}" with ${String(fileIds.length)} files → overriding to IMAGE_GEMINI`,
     );
-
     return {
       ...payload,
       selectedProvider: 'IMAGE_GEMINI',

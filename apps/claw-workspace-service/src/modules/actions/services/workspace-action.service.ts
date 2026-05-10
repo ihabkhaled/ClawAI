@@ -180,7 +180,7 @@ export class WorkspaceActionService {
     const edited = await this.repository.update(id, {
       payload: dto.payload as Prisma.InputJsonValue,
       status: WorkspaceActionStatus.EDITED,
-      draftHistory: history as unknown as Prisma.InputJsonValue,
+      draftHistory: history as Prisma.InputJsonValue,
     });
 
     const payload: WorkspaceActionEditedPayload = {
@@ -194,10 +194,7 @@ export class WorkspaceActionService {
       newVersion: history.length,
       timestamp: new Date().toISOString(),
     };
-    void this.publishEvent(
-      EventPattern.WORKSPACE_ACTION_EDITED,
-      payload as unknown as Record<string, unknown>,
-    );
+    void this.publishEvent(EventPattern.WORKSPACE_ACTION_EDITED, { ...payload });
 
     return edited;
   }
@@ -241,10 +238,7 @@ export class WorkspaceActionService {
       total: approvedIds.length,
       timestamp: new Date().toISOString(),
     };
-    void this.publishEvent(
-      EventPattern.WORKSPACE_ACTION_BULK_APPROVED,
-      payload as unknown as Record<string, unknown>,
-    );
+    void this.publishEvent(EventPattern.WORKSPACE_ACTION_BULK_APPROVED, { ...payload });
 
     return {
       bulkGroupId,
@@ -291,10 +285,7 @@ export class WorkspaceActionService {
       reason: `Connector is ${status} — resolve before approving writes`,
       timestamp: new Date().toISOString(),
     };
-    await this.publishEvent(
-      EventPattern.WORKSPACE_ACTION_STALE_BLOCKED,
-      payload as unknown as Record<string, unknown>,
-    );
+    await this.publishEvent(EventPattern.WORKSPACE_ACTION_STALE_BLOCKED, { ...payload });
     throw new BusinessException(
       'workspace.action.source_stale',
       'SOURCE_STALE',
@@ -336,7 +327,7 @@ export class WorkspaceActionService {
   private readDraftHistory(action: WorkspaceActionWithConnector): ActionDraftRevision[] {
     const raw = action.draftHistory;
     if (Array.isArray(raw)) {
-      return raw as unknown as ActionDraftRevision[];
+      return raw as ActionDraftRevision[];
     }
     return [];
   }

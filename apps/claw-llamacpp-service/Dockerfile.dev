@@ -1,5 +1,25 @@
-FROM node:20-alpine
-RUN apk add --no-cache openssl curl tar unzip
+# llama-server (the upstream `linux-x64-cpu` / `linux-x64-cuda*` / `linux-x64-rocm`
+# binaries from ggml-org/llama.cpp releases) is built against glibc and pulls
+# in glibc-only symbols (__res_init, pthread_cond_clockwait, __wmemcpy_chk).
+# Alpine + musl + gcompat is NOT enough — must use a glibc-based base.
+# See .claude/Integrations/llamacpp__QA_output.md for the full investigation.
+FROM node:20-bookworm-slim
+
+# Pinned packages match what the entrypoint + binary-installer need at runtime:
+#   - openssl, curl, ca-certificates: HF + GitHub release downloads
+#   - tar, xz-utils, unzip: extract llama.cpp release archives (.tar.gz / .zip)
+#   - libgomp1: OpenMP runtime that several llama.cpp builds dlopen for threading
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+       openssl \
+       curl \
+       ca-certificates \
+       tar \
+       xz-utils \
+       unzip \
+       libgomp1 \
+  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 COPY package.json ./package.json

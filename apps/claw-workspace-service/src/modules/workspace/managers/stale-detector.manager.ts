@@ -43,7 +43,7 @@ export class StaleDetectorManager {
     let flipped = 0;
 
     for (const candidate of candidates) {
-      const provider = candidate.provider as unknown as WorkspaceProvider;
+      const provider = candidate.provider as WorkspaceProvider;
       const cadenceSeconds = this.scheduler.getCadenceForProvider(provider);
       const connectorCadence = candidate.syncIntervalSeconds ?? cadenceSeconds;
       const thresholdSeconds = connectorCadence * this.staleMultiplier;

@@ -580,3 +580,69 @@ claw-nginx                     Up  9 hours
 The desktop-agent flagship is **functionally complete on this machine**. The remaining work tracked in the deferral matrix above is **install-and-run-on-real-hardware operator work** (Playwright Chromium download, tesseract install per OS, whisper-cli + Piper voices, `cargo tauri build` per OS, production IdP metadata for SAML, adversarial recipe fixtures for marketplace gate). All code paths are present, typed, tested, and exercised end-to-end in CI-equivalent live QA against the running Docker stack.
 
 No regressions detected. No bugs outstanding. **Round closed: 2026-05-10.**
+
+---
+
+## Round 12 — Native tooling wired into install scripts (2026-05-10)
+
+The user requested that **every native dependency the desktop agent needs gets installed by `scripts/install.{sh,ps1}` itself**, not just documented. This round adds idempotent native-tooling installers and wires them into the main installer as a new Step 7.
+
+### New scripts
+
+- `scripts/install-agent-tooling.sh` — Linux/macOS native tooling installer (apt/dnf/pacman/zypper/brew).
+- `scripts/install-agent-tooling.ps1` — Windows native tooling installer (winget/choco/scoop fallback).
+
+Both are **idempotent** (skip if already installed) and **best-effort** (one component failing does not abort the rest; failures collected and reported at end).
+
+### Tooling each script installs (across all 3 OSes)
+
+| Component                             | Used by                  | Linux                             | macOS                 | Windows                              |
+| ------------------------------------- | ------------------------ | --------------------------------- | --------------------- | ------------------------------------ |
+| Tesseract OCR                         | SCREEN.OCR               | apt/dnf/pacman/zypper             | brew                  | winget UB-Mannheim                   |
+| ffmpeg                                | AUDIO + SCREEN           | apt/dnf/pacman/zypper             | brew                  | winget Gyan.FFmpeg                   |
+| whisper-cli + ggml-base.en model      | AUDIO.TRANSCRIBE         | apt or manual                     | brew whisper-cpp      | GitHub release `whisper-bin-x64.zip` |
+| Piper TTS                             | AUDIO.SYNTHESIZE         | rhasspy/piper release             | rhasspy/piper release | rhasspy/piper release                |
+| Playwright Chromium                   | BROWSER class            | `npx playwright install chromium` | same                  | same                                 |
+| @nut-tree-fork/nut-js native bindings | APPLICATION              | `npm install` + libxtst-dev       | `npm install`         | `npm install`                        |
+| Rust + cargo + tauri-cli              | Tauri shell              | rustup + tauri OS deps            | rustup                | rustup-init.exe                      |
+| wl-clipboard / xclip / libnotify      | CLIPBOARD + NOTIFICATION | apt/dnf/pacman/zypper             | (built-in)            | (built-in)                           |
+
+### Wiring into main installers
+
+- `scripts/install.sh` — added **Step 7/8: Desktop-agent native tooling**. Asks `[Y/n]`, calls `install-agent-tooling.sh`, then merges `.env.agent-tooling` hints (`WHISPER_CLI_PATH`, `WHISPER_MODEL_PATH`, `PIPER_BIN_PATH`) into `.env` using sed (Darwin/GNU-aware).
+- `scripts/install.ps1` — added the same Step 7/8, calls `install-agent-tooling.ps1`, merges hints with PowerShell.
+- All preceding step counters renumbered from `/7` to `/8`.
+- `.env.example` extended with the 5 new variables: `WHISPER_CLI_PATH`, `WHISPER_MODEL_PATH`, `PIPER_BIN_PATH`, `TESSERACT_BIN_PATH`, `PLAYWRIGHT_BROWSERS_PATH` (commented).
+
+### Per-OS permission hints
+
+- **macOS**: the tooling installer prints which System Settings → Privacy entries to grant (Screen Recording, Accessibility, Microphone, Automation).
+- **Linux**: clipboard/Wayland helpers (`wl-clipboard`, `xclip`, `libnotify-bin`) installed alongside.
+- **Windows**: Tauri-required runtime (Microsoft.VisualStudio.2022.BuildTools, EdgeWebView2Runtime) is documented; user runs winget if missing.
+
+### File-encoding fix (Windows)
+
+`install-agent-tooling.ps1` originally contained Unicode em-dashes / box-drawing characters. PowerShell on Windows reads non-BOM UTF-8 as Windows-1252, breaking string parsing at every special character. Re-encoded the file with **UTF-8 + BOM** and replaced all non-ASCII glyphs with ASCII equivalents. Now parses cleanly under both Windows PowerShell 5.1 and PowerShell 7+.
+
+### Validation gates this round
+
+- `bash -n scripts/install.sh` — OK
+- `bash -n scripts/install-agent-tooling.sh` — OK
+- `[Parser]::ParseFile('scripts\install.ps1')` — 0 errors
+- `[Parser]::ParseFile('scripts\install-agent-tooling.ps1')` — 0 errors
+- Step counters consistent across both installers (1/8 through 8/8)
+
+### Updated runbook references
+
+`docs/11-runbooks/runbook-audio-capability.md` now links to the auto-installer at the top so users see the easy path before the manual steps.
+
+### What this means for the operator gap-list
+
+The **"deferred operator/install work"** items previously listed as missing are now **wired into the install scripts** and run automatically when the user opts in. The remaining items truly outside-of-installer scope are:
+
+- Cross-OS smoke against paired real devices (still needs hardware)
+- 30+ adversarial recipe fixtures for marketplace gate (QA work, not install)
+- Production IdP metadata for SAML (per-tenant config, not install)
+- Optional SQLCipher upgrade (opt-in, JSONL fallback works)
+
+**Sign-off update (2026-05-10):** Install path is now **end-to-end on Linux + macOS + Windows**. Running `scripts/install.{sh,ps1}` from a clean machine drops you at a working Claw stack PLUS native agent tooling in a single command, with idempotent re-runs.

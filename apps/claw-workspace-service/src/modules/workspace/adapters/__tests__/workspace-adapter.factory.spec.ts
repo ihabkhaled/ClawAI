@@ -5,7 +5,9 @@ import { ClickUpAdapter } from '../clickup.adapter';
 import { ConfluenceAdapter } from '../confluence.adapter';
 import { FigmaAdapter } from '../figma.adapter';
 import { GitHubAdapter } from '../github.adapter';
+import { GitHubWriteActionsHelper } from '../github-write-actions.helper';
 import { GitLabAdapter } from '../gitlab.adapter';
+import { GitLabWriteActionsHelper } from '../gitlab-write-actions.helper';
 import { GmailAdapter } from '../gmail.adapter';
 import { SlackAdapter } from '../slack.adapter';
 import { JiraAdapter } from '../jira.adapter';
@@ -18,8 +20,8 @@ import { BusinessException } from '../../../../common/errors/business.exception'
 
 describe('WorkspaceAdapterFactory', () => {
   let factory: WorkspaceAdapterFactory;
-  const github = new GitHubAdapter();
-  const gitlab = new GitLabAdapter();
+  const github = new GitHubAdapter(new GitHubWriteActionsHelper());
+  const gitlab = new GitLabAdapter(new GitLabWriteActionsHelper());
   const bitbucket = new BitbucketAdapter();
   const slack = new SlackAdapter();
   const jira = new JiraAdapter();

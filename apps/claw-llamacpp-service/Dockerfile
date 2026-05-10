@@ -1,5 +1,12 @@
-FROM node:20-alpine AS base
-RUN apk add --no-cache openssl
+# Production multi-stage build for claw-llamacpp-service.
+#
+# IMPORTANT: must use a glibc-based image (Debian) NOT Alpine.
+# llama-server (downloaded at runtime from ggml-org/llama.cpp GitHub releases)
+# is glibc-linked and references symbols (__res_init, pthread_cond_clockwait,
+# __wmemcpy_chk) that musl + gcompat cannot satisfy. See
+# .claude/Integrations/llamacpp__QA_output.md for the diagnosis.
+FROM node:20-bookworm-slim AS base
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/apps/claw-llamacpp-service
 
 FROM base AS deps
@@ -20,12 +27,23 @@ RUN npx prisma generate
 RUN npm run build
 RUN cp -r src/generated dist/generated 2>/dev/null || true
 
-FROM node:20-alpine AS runner
-RUN apk add --no-cache openssl curl tar unzip
+# Final stage MUST also be Debian-glibc so the downloaded llama-server can run.
+# Runtime apt deps are the same set the dev image needs to extract release
+# archives + dlopen the OpenMP runtime.
+FROM node:20-bookworm-slim AS runner
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+       openssl \
+       curl \
+       ca-certificates \
+       tar \
+       xz-utils \
+       unzip \
+       libgomp1 \
+  && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 WORKDIR /app
-RUN addgroup --system --gid 1001 nestjs
-RUN adduser --system --uid 1001 nestjs
+RUN groupadd --system --gid 1001 nestjs && useradd --system --uid 1001 --gid 1001 nestjs
 COPY --from=builder /app/apps/claw-llamacpp-service/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/claw-llamacpp-service/package.json ./package.json

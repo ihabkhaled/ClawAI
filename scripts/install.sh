@@ -189,7 +189,7 @@ docker_image_exists() {
 }
 
 # ─── Step 1: Check prerequisites ────────────────────────────────────────────
-echo "${BOLD}Step 1/7: Checking prerequisites${NC}"
+echo "${BOLD}Step 1/8: Checking prerequisites${NC}"
 echo ""
 
 MISSING=0
@@ -252,7 +252,7 @@ fi
 echo ""
 
 # ─── Step 2: Check port availability ────────────────────────────────────────
-echo "${BOLD}Step 2/7: Checking port availability${NC}"
+echo "${BOLD}Step 2/8: Checking port availability${NC}"
 echo ""
 
 check_port() {
@@ -272,7 +272,7 @@ check_port 27018 "MongoDB"
 echo ""
 
 # ─── Step 3: Generate secrets ────────────────────────────────────────────────
-echo "${BOLD}Step 3/7: Generating secrets${NC}"
+echo "${BOLD}Step 3/8: Generating secrets${NC}"
 echo ""
 
 JWT_SECRET=$(gen_secret_b64)
@@ -289,7 +289,7 @@ ok "Admin password generated"
 echo ""
 
 # ─── Step 4: Admin configuration ────────────────────────────────────────────
-echo "${BOLD}Step 4/7: Admin configuration${NC}"
+echo "${BOLD}Step 4/8: Admin configuration${NC}"
 echo ""
 
 ADMIN_EMAIL="admin@claw.local"
@@ -334,7 +334,7 @@ fi
 echo ""
 
 # ─── Step 5: GPU / Ollama detection ─────────────────────────────────────────
-echo "${BOLD}Step 5/7: Ollama & GPU detection${NC}"
+echo "${BOLD}Step 5/8: Ollama & GPU detection${NC}"
 echo ""
 
 USE_GPU="false"
@@ -395,7 +395,7 @@ fi
 echo ""
 
 # ─── Step 6: Generate .env ──────────────────────────────────────────────────
-echo "${BOLD}Step 6/7: Generating .env file${NC}"
+echo "${BOLD}Step 6/8: Generating .env file${NC}"
 echo ""
 
 SKIP_ENV=false
@@ -660,8 +660,12 @@ RESEARCH_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-research:5432/claw_res
 LLAMACPP_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-llamacpp:5432/claw_llamacpp?schema=public
 
 # claw-llamacpp-service (Local Frontier LLM runtime)
-LLAMACPP_DATA_PATH=./data/llamacpp
-LLAMACPP_BINARY_VERSION=b4123
+# Path matches the `llamacpp-data` Docker named volume so binary + weights
+# survive container rebuilds across Linux/macOS/Windows hosts.
+LLAMACPP_DATA_PATH=/var/lib/claw/llamacpp
+# Auto-updated by BinaryInstallerManager when GitHub API is reachable; the
+# pinned fallback below is the version live-tested in 2026-05-09 QA.
+LLAMACPP_BINARY_VERSION=b9095
 LLAMACPP_GPU_BACKEND=auto
 LLAMACPP_DEFAULT_CTX_SIZE=8192
 LLAMACPP_AUTO_INSTALL_BINARY=true
@@ -736,8 +740,47 @@ if [[ "$start_answer" == "n" || "$start_answer" == "N" ]]; then
 fi
 echo ""
 
-# ─── Step 7: Launch ─────────────────────────────────────────────────────────
-echo "${BOLD}Step 7/7: Starting Claw${NC}"
+# ─── Step 7: Desktop-agent native tooling (optional) ────────────────────────
+echo "${BOLD}Step 7/8: Desktop-agent native tooling${NC}"
+echo ""
+info "The desktop agent uses native binaries for OCR / STT / TTS / browser / GUI automation."
+info "This step installs: Tesseract, ffmpeg, whisper-cli + base.en model, Piper, Playwright Chromium, Rust + Tauri CLI."
+info "It is idempotent — components already present are skipped."
+echo ""
+ask "Install desktop-agent native tooling now? [Y/n]: "
+read -r tooling_answer
+if [[ "$tooling_answer" != "n" && "$tooling_answer" != "N" ]]; then
+  if [ -x "$SCRIPT_DIR/install-agent-tooling.sh" ]; then
+    bash "$SCRIPT_DIR/install-agent-tooling.sh" || warn "Some agent-tooling components failed; rerun scripts/install-agent-tooling.sh later."
+  else
+    warn "scripts/install-agent-tooling.sh not found or not executable"
+  fi
+
+  # Append any env hints produced by the tooling installer (WHISPER_MODEL_PATH / PIPER_BIN_PATH)
+  if [ -s "$PROJECT_ROOT/.env.agent-tooling" ]; then
+    info "Merging tooling env hints into .env"
+    while IFS= read -r line; do
+      [ -z "$line" ] && continue
+      key="${line%%=*}"
+      if grep -q "^${key}=" "$ENV_FILE" 2>/dev/null; then
+        # Replace existing line
+        if [[ "$(uname -s)" == "Darwin" ]]; then
+          sed -i '' "s|^${key}=.*|${line}|" "$ENV_FILE"
+        else
+          sed -i "s|^${key}=.*|${line}|" "$ENV_FILE"
+        fi
+      else
+        echo "$line" >> "$ENV_FILE"
+      fi
+    done < "$PROJECT_ROOT/.env.agent-tooling"
+  fi
+else
+  info "Skipped. You can run scripts/install-agent-tooling.sh anytime."
+fi
+echo ""
+
+# ─── Step 8: Launch ─────────────────────────────────────────────────────────
+echo "${BOLD}Step 8/8: Starting Claw${NC}"
 echo ""
 
 ensure_docker_network

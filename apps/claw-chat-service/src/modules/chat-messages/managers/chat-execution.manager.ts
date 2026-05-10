@@ -681,9 +681,6 @@ export class ChatExecutionManager implements OnModuleInit {
       );
     }
     if (provider === OLLAMA_CONNECTOR_PROVIDER) {
-      this.logger.debug(
-        `callProvider: routing Ollama connector model through cloud transport for model=${model}`,
-      );
       return this.callCloudProvider(
         provider,
         this.normalizeCloudOllamaModel(model),
@@ -695,9 +692,6 @@ export class ChatExecutionManager implements OnModuleInit {
       );
     }
     if (provider === OLLAMA_PROVIDER) {
-      this.logger.debug(
-        `callProvider: routing to local Ollama runtime (provider=${provider}) for model=${model}`,
-      );
       return this.callOllama(
         model,
         context,
@@ -708,9 +702,6 @@ export class ChatExecutionManager implements OnModuleInit {
       );
     }
     if (provider === LLAMACPP_PROVIDER || provider === LLAMACPP_CONNECTOR_PROVIDER) {
-      this.logger.debug(
-        `callProvider: routing to llama.cpp frontier runtime (provider=${provider}) for model=${model}`,
-      );
       return this.callLlamacpp(
         provider,
         model,
@@ -824,6 +815,40 @@ export class ChatExecutionManager implements OnModuleInit {
     const resolvedModel = await this.resolveModel(model);
     this.logger.log(`callOllama: calling model=${resolvedModel}`);
     const config = AppConfig.get();
+    const requestBody = this.buildOllamaRequest(
+      resolvedModel,
+      context,
+      threadSettings,
+      executionOptions,
+      model,
+    );
+    const response = await httpRequest<OllamaGenerateResponse>({
+      url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
+      method: 'POST',
+      body: requestBody,
+      timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
+    });
+    if (!response.ok) {
+      const errorMessage = this.extractHttpErrorMessage(
+        response.data,
+        `Ollama service returned status ${String(response.status)}`,
+      );
+      this.logger.error(
+        `callOllama: Ollama returned error status=${String(response.status)} message=${errorMessage}`,
+      );
+      throw new BusinessException(errorMessage, 'OLLAMA_REQUEST_FAILED');
+    }
+    return this.buildOllamaResponse(response.data, startTime, usedFallback);
+  }
+
+  private buildOllamaRequest(
+    resolvedModel: string,
+    context: AssembledContext,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions | undefined,
+    originalModel: string,
+  ): OllamaGenerateRequest {
+    const config = AppConfig.get();
     this.logger.debug('callOllama: building prompt string from context');
     const prompt = this.contextAssembly.buildPromptString(context);
     const constrainedPrompt =
@@ -831,19 +856,15 @@ export class ChatExecutionManager implements OnModuleInit {
         ? this.applyShortResponseConstraint(prompt)
         : prompt;
     this.logger.debug(`callOllama: prompt built — length=${String(prompt.length)} chars`);
-
-    // Extract base64 images for Ollama's multimodal support
-    this.logger.debug('callOllama: extracting image files for multimodal support');
     const imageFiles = context.fileContents.filter((f) => f.mimeType.startsWith('image/'));
     const images = imageFiles
       .map((f) => f.content)
       .filter((c): c is string => c !== null && c.length > 0);
     this.logger.debug(`callOllama: found ${String(images.length)} images for multimodal input`);
-
     const maxOutputTokens =
       executionOptions?.maxOutputTokens ??
-      this.resolveMaxOutputTokens('AUTO', threadSettings, false, model);
-    const requestBody: OllamaGenerateRequest = {
+      this.resolveMaxOutputTokens('AUTO', threadSettings, false, originalModel);
+    return {
       model: resolvedModel,
       prompt: constrainedPrompt,
       stream: false,
@@ -855,36 +876,21 @@ export class ChatExecutionManager implements OnModuleInit {
       },
       ...(images.length > 0 ? { images } : {}),
     };
+  }
 
-    this.logger.debug(
-      `callOllama: sending request to Ollama service at ${config.OLLAMA_SERVICE_URL}`,
-    );
-    const response = await httpRequest<OllamaGenerateResponse>({
-      url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
-      method: 'POST',
-      body: requestBody,
-      timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
-    });
-
-    if (!response.ok) {
-      const errorMessage = this.extractHttpErrorMessage(
-        response.data,
-        `Ollama service returned status ${String(response.status)}`,
-      );
-      this.logger.error(
-        `callOllama: Ollama returned error status=${String(response.status)} message=${errorMessage}`,
-      );
-      throw new BusinessException(errorMessage, 'OLLAMA_REQUEST_FAILED');
-    }
-
+  private buildOllamaResponse(
+    data: OllamaGenerateResponse,
+    startTime: number,
+    usedFallback: boolean,
+  ): LlmResponse {
     const latencyMs = Date.now() - startTime;
-    const thinkingLength = response.data.thinking?.length ?? 0;
+    const thinkingLength = data.thinking?.length ?? 0;
     this.logger.debug(
-      `callOllama: response received — done=${String(response.data.done)} responseLen=${String(response.data.response.length)}`,
+      `callOllama: response received — done=${String(data.done)} responseLen=${String(data.response.length)}`,
     );
-    if (response.data.response.trim().length === 0) {
+    if (data.response.trim().length === 0) {
       this.logger.warn(
-        `callOllama: model=${response.data.model} returned no visible answer (thinkingLen=${String(thinkingLength)})`,
+        `callOllama: model=${data.model} returned no visible answer (thinkingLen=${String(thinkingLength)})`,
       );
       throw new BusinessException(
         'Local model returned no visible answer',
@@ -892,17 +898,16 @@ export class ChatExecutionManager implements OnModuleInit {
       );
     }
     this.logger.log(
-      `callOllama: completed model=${response.data.model} latencyMs=${String(latencyMs)} inputTokens=${String(response.data.promptEvalCount ?? 0)} outputTokens=${String(response.data.evalCount ?? 0)}`,
+      `callOllama: completed model=${data.model} latencyMs=${String(latencyMs)} inputTokens=${String(data.promptEvalCount ?? 0)} outputTokens=${String(data.evalCount ?? 0)}`,
     );
-
     return {
-      content: response.data.response,
+      content: data.response,
       provider: OLLAMA_PROVIDER,
-      model: response.data.model,
-      inputTokens: response.data.promptEvalCount ?? undefined,
-      outputTokens: response.data.evalCount ?? undefined,
+      model: data.model,
+      inputTokens: data.promptEvalCount ?? undefined,
+      outputTokens: data.evalCount ?? undefined,
       latencyMs,
-      finishReason: response.data.done ? 'stop' : 'incomplete',
+      finishReason: data.done ? 'stop' : 'incomplete',
       usedFallback,
     };
   }
@@ -1283,35 +1288,63 @@ export class ChatExecutionManager implements OnModuleInit {
     threadSettings?: ThreadSettings,
   ): Promise<LlmResponse> {
     this.logger.log('callFileGenerationService: starting file generation');
-    const config = AppConfig.get();
-    this.logger.debug('callFileGenerationService: extracting last user message');
     const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
     const prompt = lastUserMsg?.content ?? 'generate a file';
-    this.logger.debug(`callFileGenerationService: prompt length=${String(prompt.length)}`);
     const format = this.detectFileFormat(prompt);
-    this.logger.debug(`callFileGenerationService: detected format=${format}`);
-    const fileExecutionOptions = this.buildFileGenerationExecutionOptions(threadSettings);
+    this.logger.debug(
+      `callFileGenerationService: prompt length=${String(prompt.length)} format=${format}`,
+    );
+    const { contentResponse, contentFallbackUsed } = await this.runFileContentPhase(
+      context,
+      format,
+      startTime,
+      usedFallback,
+      threadSettings,
+    );
+    const fileContent = this.stripCodeBlockWrapper(contentResponse.content);
+    const generationId = await this.dispatchFileGeneration(
+      prompt,
+      fileContent,
+      format,
+      contentResponse,
+      context.userId,
+    );
+    const latencyMs = Date.now() - startTime;
+    this.logger.log(
+      `callFileGenerationService: completed format=${format} generationId=${generationId} latencyMs=${String(latencyMs)}`,
+    );
+    return {
+      content: `Generating ${format.toLowerCase()} file...`,
+      provider: FILE_GENERATION_PROVIDER,
+      model: 'auto',
+      latencyMs,
+      finishReason: 'stop',
+      usedFallback: usedFallback || contentFallbackUsed,
+      fileGenerationId: generationId,
+    };
+  }
 
-    // Phase 1: Call LLM for content with file-generation-specific system prompt
-    this.logger.debug('callFileGenerationService: Phase 1 — picking content provider');
+  private async runFileContentPhase(
+    context: AssembledContext,
+    format: string,
+    startTime: number,
+    usedFallback: boolean,
+    threadSettings: ThreadSettings | undefined,
+  ): Promise<{ contentResponse: LlmResponse; contentFallbackUsed: boolean }> {
+    const fileExecutionOptions = this.buildFileGenerationExecutionOptions(threadSettings);
     const fileContext: AssembledContext = {
       ...context,
       systemPrompt: `You are a file content generator. The user wants to create a ${format} file. Generate ONLY the raw content for the file — no explanations, no markdown code blocks, no "here is your file" preamble. Output the actual content that should go inside the file. For PDF/DOCX, use markdown formatting (headers, bullets, paragraphs). For CSV, output header row + data rows. For JSON, output valid JSON. For TXT, output plain text. For HTML, output HTML. For MD, output markdown.`,
     };
-    this.logger.debug('callFileGenerationService: building content provider candidate chain');
+    const contentCandidates = await this.buildFileContentProviderCandidates();
     let contentResponse: LlmResponse | null = null;
     let contentFallbackUsed = false;
     let lastContentError: unknown = null;
-    const contentCandidates = await this.buildFileContentProviderCandidates();
-
     for (let index = 0; index < contentCandidates.length; index++) {
       const candidate = contentCandidates.at(index);
-      if (!candidate) {
-        continue;
-      }
-
+      if (!candidate) continue;
       this.logger.debug(
-        `callFileGenerationService: trying content provider ${String(index + 1)}/${String(contentCandidates.length)} - ${candidate.provider}/${candidate.model}`,
+        `runFileContentPhase: trying content provider ${String(index + 1)}/${String(contentCandidates.length)} - ${candidate.provider}/${candidate.model}`,
       );
       try {
         contentResponse = await this.callProvider(
@@ -1330,11 +1363,10 @@ export class ChatExecutionManager implements OnModuleInit {
         lastContentError = error;
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         this.logger.warn(
-          `callFileGenerationService: content provider ${candidate.provider}/${candidate.model} failed: ${errorMessage}`,
+          `runFileContentPhase: content provider ${candidate.provider}/${candidate.model} failed: ${errorMessage}`,
         );
       }
     }
-
     if (contentResponse === null) {
       throw (
         lastContentError ??
@@ -1344,25 +1376,26 @@ export class ChatExecutionManager implements OnModuleInit {
         )
       );
     }
-    this.logger.debug(
-      `callFileGenerationService: Phase 1 complete — contentLen=${String(contentResponse.content.length)}`,
-    );
+    return { contentResponse, contentFallbackUsed };
+  }
 
-    // Phase 2: Send content to file-generation-service for conversion
-    // Strip markdown code block wrappers if present
-    this.logger.debug(
-      'callFileGenerationService: Phase 2 — stripping code block wrappers if present',
-    );
-    let fileContent = contentResponse.content;
-    const codeBlockMatch = /^```\w*\n([\s\S]*?)```$/m.exec(fileContent.trim());
+  private stripCodeBlockWrapper(content: string): string {
+    const codeBlockMatch = /^```\w*\n([\s\S]*?)```$/m.exec(content.trim());
     if (codeBlockMatch?.[1]) {
-      this.logger.debug('callFileGenerationService: stripped markdown code block wrapper');
-      fileContent = codeBlockMatch[1].trim();
+      this.logger.debug('stripCodeBlockWrapper: stripped markdown code block wrapper');
+      return codeBlockMatch[1].trim();
     }
+    return content;
+  }
 
-    this.logger.debug(
-      `callFileGenerationService: sending content to file-generation-service (contentLen=${String(fileContent.length)})`,
-    );
+  private async dispatchFileGeneration(
+    prompt: string,
+    fileContent: string,
+    format: string,
+    contentResponse: LlmResponse,
+    userId: string,
+  ): Promise<string> {
+    const config = AppConfig.get();
     const response = await httpRequest<FileGenerateResponse>({
       url: `${config.FILE_GENERATION_SERVICE_URL}/api/v1/internal/file-generations/generate`,
       method: 'POST',
@@ -1372,34 +1405,20 @@ export class ChatExecutionManager implements OnModuleInit {
         format,
         provider: contentResponse.provider,
         model: contentResponse.model,
-        userId: context.userId,
+        userId,
       },
       timeoutMs: 30_000,
     });
-
     if (!response.ok) {
       this.logger.error(
-        `callFileGenerationService: file-gen service returned error status=${String(response.status)}`,
+        `dispatchFileGeneration: file-gen service returned error status=${String(response.status)}`,
       );
       throw new BusinessException(
         `File generation service returned status ${String(response.status)}`,
         'FILE_GENERATION_SERVICE_REQUEST_FAILED',
       );
     }
-
-    const latencyMs = Date.now() - startTime;
-    this.logger.log(
-      `callFileGenerationService: completed format=${format} generationId=${response.data.generationId} latencyMs=${String(latencyMs)}`,
-    );
-    return {
-      content: `Generating ${format.toLowerCase()} file\u2026`,
-      provider: FILE_GENERATION_PROVIDER,
-      model: 'auto',
-      latencyMs,
-      finishReason: 'stop',
-      usedFallback: usedFallback || contentFallbackUsed,
-      fileGenerationId: response.data.generationId,
-    };
+    return response.data.generationId;
   }
 
   private buildFileGenerationExecutionOptions(threadSettings?: ThreadSettings): ExecutionOptions {
