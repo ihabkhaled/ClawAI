@@ -27,6 +27,11 @@ import {
   type OpenAiChatResponse,
   type ThreadSettings,
 } from '../types/execution.types';
+import type {
+  CandidateOutcome,
+  ExecutionMetadata,
+  RunCandidateArgs,
+} from '../types/execution-outcome.types';
 import type { JudgeRefereeConfig, JudgeRefereeResult } from '../types/judge-referee.types';
 import type { InternalGenerateResponse } from '../types/internal-generate.types';
 import { type AssembledContext } from '../types/context.types';
@@ -89,12 +94,11 @@ export class ChatExecutionManager implements OnModuleInit {
     const userPrompt = this.extractUserPrompt(context);
     const executionOptions = this.resolveExecutionOptions(payload, userPrompt, threadSettings);
     const executionContext = this.buildExecutionContext(context, executionOptions.fastPathEnabled);
-    let fastPathEscalated = false;
-
     this.logger.debug(`execute: built candidate chain with ${String(candidates.length)} providers`);
     this.logger.debug(
       `execute: options fastPath=${String(executionOptions.fastPathEnabled)} maxOutputTokens=${String(executionOptions.maxOutputTokens)}`,
     );
+
     let lastError: unknown = null;
     let reRouteAttempt = 0;
     let reRouteReasons: string[] = [];
@@ -104,202 +108,339 @@ export class ChatExecutionManager implements OnModuleInit {
       if (!candidate) {
         continue;
       }
-
       this.logger.debug(
         `execute: trying candidate ${String(i + 1)}/${String(candidates.length)} - ${candidate.provider}/${candidate.model}`,
       );
-      try {
-        this.chatStreamService.emitProviderSelected(
-          payload.threadId,
-          candidate.provider,
-          candidate.model,
-        );
-        this.chatStreamService.emitResponseStreaming(
-          payload.threadId,
-          candidate.provider,
-          candidate.model,
-        );
-        const stopProgressHeartbeat = this.chatStreamService.startResponseProgressHeartbeat(
-          payload.threadId,
-          candidate.provider,
-          candidate.model,
-        );
-        let response: LlmResponse;
-        try {
-          response = await this.callProvider(
-            candidate.provider,
-            candidate.model,
-            executionContext,
-            startTime,
-            i > 0,
-            threadSettings,
-            payload.routingMode,
-            executionOptions,
-          );
-        } finally {
-          stopProgressHeartbeat();
-        }
-
-        let finalProviderResponse = response;
-        if (
-          executionOptions.fastPathEnabled &&
-          !this.isGenerationResponse(response) &&
-          this.shouldEscalateFastPathResponse(response.content)
-        ) {
-          this.logger.debug(
-            `execute: escalating fast path to full path for message ${payload.messageId}`,
-          );
-          const escalatedExecutionOptions: ExecutionOptions = {
-            fastPathEnabled: false,
-            maxOutputTokens: this.resolveMaxOutputTokens(
-              payload.routingMode,
-              threadSettings,
-              false,
-              payload.selectedModel,
-            ),
-            applyShortResponseConstraint: false,
-          };
-          finalProviderResponse = await this.callProvider(
-            candidate.provider,
-            candidate.model,
-            context,
-            startTime,
-            i > 0,
-            threadSettings,
-            payload.routingMode,
-            escalatedExecutionOptions,
-          );
-          fastPathEscalated = true;
-        }
-
-        // Skip quality check for image/file generation responses
-        if (this.isGenerationResponse(finalProviderResponse)) {
-          return {
-            ...finalProviderResponse,
-            fastPathUsed: executionOptions.fastPathEnabled,
-            fastPathEscalated,
-            executionPath: fastPathEscalated
-              ? 'fast_escalated'
-              : (executionOptions.fastPathEnabled
-                ? 'fast'
-                : 'standard'),
-            targetLatencyMs: executionOptions.fastPathEnabled
-              ? FAST_PATH_TARGET_LATENCY_MS
-              : STANDARD_TARGET_LATENCY_MS,
-          };
-        }
-
-        let finalResponse = finalProviderResponse;
-        let qualityScore = 1;
-
-        if (!executionOptions.fastPathEnabled) {
-          const recentAssistantContents = context.threadMessages
-            .filter((message) => message.role === 'ASSISTANT')
-            .slice(-3)
-            .map((message) => message.content);
-          const qualityResult = this.qualityCheckManager.checkResponseQuality(
-            response.content,
-            userPrompt,
-            threadSettings,
-            recentAssistantContents,
-          );
-          qualityScore = qualityResult.score;
-          const reRouteDecision = this.qualityCheckManager.shouldReRoute(
-            qualityResult,
-            reRouteAttempt,
-            threadSettings,
-          );
-
-          if (reRouteDecision.shouldReRoute && i < candidates.length - 1) {
-            const nextCandidate = candidates[i + 1];
-            this.logger.warn(
-              `Weak response detected from ${candidate.provider}/${candidate.model} (score: ${String(qualityResult.score.toFixed(2))}). Reasons: ${qualityResult.reasons.join(', ')}. Escalating to ${nextCandidate?.provider ?? 'next'}/${nextCandidate?.model ?? 'next'}.`,
-            );
-            this.chatStreamService.emitFallbackAttempt(payload.threadId, {
-              failedProvider: candidate.provider,
-              failedModel: candidate.model,
-              error: `Weak response (score: ${String(qualityResult.score.toFixed(2))}): ${qualityResult.reasons.join(', ')}`,
-              attempt: reRouteAttempt + 1,
-              totalCandidates: candidates.length,
-              nextProvider: nextCandidate?.provider,
-              nextModel: nextCandidate?.model,
-            });
-            reRouteReasons = [...reRouteReasons, ...qualityResult.reasons];
-            reRouteAttempt++;
-            continue;
-          }
-
-          if (reRouteAttempt > 0) {
-            finalResponse = this.addReRouteMetadata(
-              response,
-              payload,
-              qualityScore,
-              reRouteAttempt,
-              reRouteReasons,
-            );
-          }
-        }
-
-        // Judge-and-Referee pipeline: critic evaluates, judge decides
-        const judgeResult = await this.runJudgeRefereePipeline(
-          finalResponse,
-          context,
-          payload,
-          threadSettings,
-          executionOptions.fastPathEnabled,
-        );
-        if (judgeResult) {
-          const judgedResponse =
-            judgeResult.escalatedResponse ?? judgeResult.revisedResponse ?? finalResponse;
-          return {
-            ...judgedResponse,
-            judgeRefereeMetadata: this.judgeRefereeManager.buildMetadata(judgeResult),
-            fastPathUsed: executionOptions.fastPathEnabled,
-            fastPathEscalated,
-            executionPath: fastPathEscalated
-              ? 'fast_escalated'
-              : (executionOptions.fastPathEnabled
-                ? 'fast'
-                : 'standard'),
-            targetLatencyMs: executionOptions.fastPathEnabled
-              ? FAST_PATH_TARGET_LATENCY_MS
-              : STANDARD_TARGET_LATENCY_MS,
-          };
-        }
-
-        return {
-          ...finalResponse,
-          fastPathUsed: executionOptions.fastPathEnabled,
-          fastPathEscalated,
-          executionPath: fastPathEscalated
-            ? 'fast_escalated'
-            : (executionOptions.fastPathEnabled
-              ? 'fast'
-              : 'standard'),
-          targetLatencyMs: executionOptions.fastPathEnabled
-            ? FAST_PATH_TARGET_LATENCY_MS
-            : STANDARD_TARGET_LATENCY_MS,
-        };
-      } catch (error: unknown) {
-        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-        this.logger.warn(
-          `Provider ${candidate.provider}/${candidate.model} failed (attempt ${String(i + 1)}/${String(candidates.length)}): ${errorMsg}`,
-        );
-        lastError = error;
-
-        const nextCandidate = candidates[i + 1];
-        this.chatStreamService.emitFallbackAttempt(payload.threadId, {
-          failedProvider: candidate.provider,
-          failedModel: candidate.model,
-          error: errorMsg,
-          attempt: i + 1,
-          totalCandidates: candidates.length,
-          nextProvider: nextCandidate?.provider,
-          nextModel: nextCandidate?.model,
-        });
+      const outcome = await this.runCandidate({
+        candidate,
+        candidateIndex: i,
+        candidates,
+        payload,
+        context,
+        executionContext,
+        executionOptions,
+        threadSettings,
+        startTime,
+        userPrompt,
+        reRouteAttempt,
+        reRouteReasons,
+      });
+      if (outcome.kind === 'success') {
+        return outcome.response;
       }
+      if (outcome.kind === 'reRoute') {
+        reRouteReasons = [...reRouteReasons, ...outcome.reasons];
+        reRouteAttempt++;
+        continue;
+      }
+      lastError = outcome.error;
     }
 
+    return this.failExecution(payload, lastError);
+  }
+
+  private async runCandidate(args: RunCandidateArgs): Promise<CandidateOutcome> {
+    try {
+      return await this.runCandidateInner(args);
+    } catch (error: unknown) {
+      this.emitCandidateFailure(
+        error,
+        args.candidate,
+        args.candidateIndex,
+        args.candidates,
+        args.payload,
+      );
+      return { kind: 'failure', error };
+    }
+  }
+
+  private async runCandidateInner(args: RunCandidateArgs): Promise<CandidateOutcome> {
+    const response = await this.invokeProviderWithProgress(
+      args.candidate,
+      args.executionContext,
+      args.startTime,
+      args.candidateIndex,
+      args.threadSettings,
+      args.payload,
+      args.executionOptions,
+    );
+    const escalation = await this.maybeEscalateFastPath(
+      response,
+      args.candidate,
+      args.context,
+      args.payload,
+      args.executionOptions,
+      args.threadSettings,
+      args.startTime,
+      args.candidateIndex,
+    );
+    const finalProviderResponse = escalation.response;
+    const fastPathEscalated = escalation.escalated;
+
+    if (this.isGenerationResponse(finalProviderResponse)) {
+      return {
+        kind: 'success',
+        response: {
+          ...finalProviderResponse,
+          ...this.buildExecutionMetadata(args.executionOptions, fastPathEscalated),
+        },
+      };
+    }
+
+    const qualityOutcome = this.evaluateQuality({
+      response,
+      finalProviderResponse,
+      candidate: args.candidate,
+      candidates: args.candidates,
+      candidateIndex: args.candidateIndex,
+      payload: args.payload,
+      context: args.context,
+      executionOptions: args.executionOptions,
+      threadSettings: args.threadSettings,
+      userPrompt: args.userPrompt,
+      reRouteAttempt: args.reRouteAttempt,
+      reRouteReasons: args.reRouteReasons,
+    });
+    if (qualityOutcome.kind === 'reRoute') {
+      return qualityOutcome;
+    }
+    return this.finalizeWithJudge(
+      qualityOutcome.response,
+      args.context,
+      args.payload,
+      args.threadSettings,
+      args.executionOptions,
+      fastPathEscalated,
+    );
+  }
+
+  private async invokeProviderWithProgress(
+    candidate: { provider: string; model: string },
+    executionContext: AssembledContext,
+    startTime: number,
+    candidateIndex: number,
+    threadSettings: ThreadSettings | undefined,
+    payload: MessageRoutedData,
+    executionOptions: ExecutionOptions,
+  ): Promise<LlmResponse> {
+    this.chatStreamService.emitProviderSelected(
+      payload.threadId,
+      candidate.provider,
+      candidate.model,
+    );
+    this.chatStreamService.emitResponseStreaming(
+      payload.threadId,
+      candidate.provider,
+      candidate.model,
+    );
+    const stopProgressHeartbeat = this.chatStreamService.startResponseProgressHeartbeat(
+      payload.threadId,
+      candidate.provider,
+      candidate.model,
+    );
+    try {
+      return await this.callProvider(
+        candidate.provider,
+        candidate.model,
+        executionContext,
+        startTime,
+        candidateIndex > 0,
+        threadSettings,
+        payload.routingMode,
+        executionOptions,
+      );
+    } finally {
+      stopProgressHeartbeat();
+    }
+  }
+
+  private async maybeEscalateFastPath(
+    response: LlmResponse,
+    candidate: { provider: string; model: string },
+    context: AssembledContext,
+    payload: MessageRoutedData,
+    executionOptions: ExecutionOptions,
+    threadSettings: ThreadSettings | undefined,
+    startTime: number,
+    candidateIndex: number,
+  ): Promise<{ response: LlmResponse; escalated: boolean }> {
+    if (
+      !executionOptions.fastPathEnabled ||
+      this.isGenerationResponse(response) ||
+      !this.shouldEscalateFastPathResponse(response.content)
+    ) {
+      return { response, escalated: false };
+    }
+    this.logger.debug(
+      `execute: escalating fast path to full path for message ${payload.messageId}`,
+    );
+    const escalatedExecutionOptions: ExecutionOptions = {
+      fastPathEnabled: false,
+      maxOutputTokens: this.resolveMaxOutputTokens(
+        payload.routingMode,
+        threadSettings,
+        false,
+        payload.selectedModel,
+      ),
+      applyShortResponseConstraint: false,
+    };
+    const escalated = await this.callProvider(
+      candidate.provider,
+      candidate.model,
+      context,
+      startTime,
+      candidateIndex > 0,
+      threadSettings,
+      payload.routingMode,
+      escalatedExecutionOptions,
+    );
+    return { response: escalated, escalated: true };
+  }
+
+  private evaluateQuality(args: {
+    response: LlmResponse;
+    finalProviderResponse: LlmResponse;
+    candidate: { provider: string; model: string };
+    candidates: Array<{ provider: string; model: string }>;
+    candidateIndex: number;
+    payload: MessageRoutedData;
+    context: AssembledContext;
+    executionOptions: ExecutionOptions;
+    threadSettings: ThreadSettings | undefined;
+    userPrompt: string;
+    reRouteAttempt: number;
+    reRouteReasons: string[];
+  }): { kind: 'reRoute'; reasons: string[] } | { kind: 'pass'; response: LlmResponse } {
+    if (args.executionOptions.fastPathEnabled) {
+      return { kind: 'pass', response: args.finalProviderResponse };
+    }
+    const recentAssistantContents = args.context.threadMessages
+      .filter((message) => message.role === 'ASSISTANT')
+      .slice(-3)
+      .map((message) => message.content);
+    const qualityResult = this.qualityCheckManager.checkResponseQuality(
+      args.response.content,
+      args.userPrompt,
+      args.threadSettings,
+      recentAssistantContents,
+    );
+    const reRouteDecision = this.qualityCheckManager.shouldReRoute(
+      qualityResult,
+      args.reRouteAttempt,
+      args.threadSettings,
+    );
+
+    if (reRouteDecision.shouldReRoute && args.candidateIndex < args.candidates.length - 1) {
+      const nextCandidate = args.candidates.at(args.candidateIndex + 1);
+      this.logger.warn(
+        `Weak response detected from ${args.candidate.provider}/${args.candidate.model} (score: ${String(qualityResult.score.toFixed(2))}). Reasons: ${qualityResult.reasons.join(', ')}. Escalating to ${nextCandidate?.provider ?? 'next'}/${nextCandidate?.model ?? 'next'}.`,
+      );
+      this.chatStreamService.emitFallbackAttempt(args.payload.threadId, {
+        failedProvider: args.candidate.provider,
+        failedModel: args.candidate.model,
+        error: `Weak response (score: ${String(qualityResult.score.toFixed(2))}): ${qualityResult.reasons.join(', ')}`,
+        attempt: args.reRouteAttempt + 1,
+        totalCandidates: args.candidates.length,
+        nextProvider: nextCandidate?.provider,
+        nextModel: nextCandidate?.model,
+      });
+      return { kind: 'reRoute', reasons: qualityResult.reasons };
+    }
+
+    if (args.reRouteAttempt > 0) {
+      return {
+        kind: 'pass',
+        response: this.addReRouteMetadata(
+          args.response,
+          args.payload,
+          qualityResult.score,
+          args.reRouteAttempt,
+          args.reRouteReasons,
+        ),
+      };
+    }
+    return { kind: 'pass', response: args.finalProviderResponse };
+  }
+
+  private async finalizeWithJudge(
+    finalResponse: LlmResponse,
+    context: AssembledContext,
+    payload: MessageRoutedData,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions,
+    fastPathEscalated: boolean,
+  ): Promise<{ kind: 'success'; response: LlmResponse }> {
+    const judgeResult = await this.runJudgeRefereePipeline(
+      finalResponse,
+      context,
+      payload,
+      threadSettings,
+      executionOptions.fastPathEnabled,
+    );
+    if (judgeResult) {
+      const judgedResponse =
+        judgeResult.escalatedResponse ?? judgeResult.revisedResponse ?? finalResponse;
+      return {
+        kind: 'success',
+        response: {
+          ...judgedResponse,
+          judgeRefereeMetadata: this.judgeRefereeManager.buildMetadata(judgeResult),
+          ...this.buildExecutionMetadata(executionOptions, fastPathEscalated),
+        },
+      };
+    }
+    return {
+      kind: 'success',
+      response: {
+        ...finalResponse,
+        ...this.buildExecutionMetadata(executionOptions, fastPathEscalated),
+      },
+    };
+  }
+
+  private buildExecutionMetadata(
+    executionOptions: ExecutionOptions,
+    fastPathEscalated: boolean,
+  ): ExecutionMetadata {
+    const executionPath: ExecutionMetadata['executionPath'] = fastPathEscalated
+      ? 'fast_escalated'
+      : (executionOptions.fastPathEnabled
+        ? 'fast'
+        : 'standard');
+    return {
+      fastPathUsed: executionOptions.fastPathEnabled,
+      fastPathEscalated,
+      executionPath,
+      targetLatencyMs: executionOptions.fastPathEnabled
+        ? FAST_PATH_TARGET_LATENCY_MS
+        : STANDARD_TARGET_LATENCY_MS,
+    };
+  }
+
+  private emitCandidateFailure(
+    error: unknown,
+    candidate: { provider: string; model: string },
+    candidateIndex: number,
+    candidates: Array<{ provider: string; model: string }>,
+    payload: MessageRoutedData,
+  ): void {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    this.logger.warn(
+      `Provider ${candidate.provider}/${candidate.model} failed (attempt ${String(candidateIndex + 1)}/${String(candidates.length)}): ${errorMsg}`,
+    );
+    const nextCandidate = candidates.at(candidateIndex + 1);
+    this.chatStreamService.emitFallbackAttempt(payload.threadId, {
+      failedProvider: candidate.provider,
+      failedModel: candidate.model,
+      error: errorMsg,
+      attempt: candidateIndex + 1,
+      totalCandidates: candidates.length,
+      nextProvider: nextCandidate?.provider,
+      nextModel: nextCandidate?.model,
+    });
+  }
+
+  private failExecution(payload: MessageRoutedData, lastError: unknown): never {
     const finalError =
       lastError ??
       new BusinessException(

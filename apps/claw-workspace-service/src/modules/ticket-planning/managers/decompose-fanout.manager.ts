@@ -28,7 +28,7 @@ export class DecomposeFanoutManager {
     const queueEntry = await this.prisma.aiActionApprovalQueue.findUnique({
       where: { id: input.queueId },
     });
-    if (queueEntry === null || queueEntry.userId !== input.userId) {
+    if (queueEntry?.userId !== input.userId) {
       throw new BusinessException(
         'workspace.decompose.queueNotFound',
         'AI_ACTION_QUEUE_NOT_FOUND',
@@ -51,7 +51,7 @@ export class DecomposeFanoutManager {
     }
     const draftPayload = (queueEntry.editedPayload ?? queueEntry.draftPayload) as Prisma.JsonValue;
     const parsed = this.parseDraft(draftPayload);
-    if (parsed === null || parsed.subtasks === undefined) {
+    if (parsed?.subtasks === undefined) {
       throw new BusinessException(
         'workspace.decompose.malformed',
         'DECOMPOSE_PAYLOAD_MALFORMED',
@@ -69,10 +69,7 @@ export class DecomposeFanoutManager {
           userId: input.userId,
           connectorId: queueEntry.connectorId,
           actionKind: 'CREATE_TICKET',
-          provider:
-            queueEntry.provider !== null
-              ? (queueEntry.provider as unknown as WorkspaceProvider)
-              : null,
+          provider: queueEntry.provider as WorkspaceProvider | null,
           draftPayload: {
             title: subtask.title,
             description: subtask.descriptionDraft,

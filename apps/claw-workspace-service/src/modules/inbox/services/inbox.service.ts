@@ -19,7 +19,10 @@ export class InboxService {
    * id DESC for tie-breaks. Cursor format: `<isoDate>__<id>`.
    */
   async list(filter: InboxFilter): Promise<InboxPage> {
-    const limit = Math.max(1, Math.min(INBOX_MAX_PAGE_SIZE, filter.limit ?? INBOX_DEFAULT_PAGE_SIZE));
+    const limit = Math.max(
+      1,
+      Math.min(INBOX_MAX_PAGE_SIZE, filter.limit ?? INBOX_DEFAULT_PAGE_SIZE),
+    );
     this.logger.debug(
       `list: userId=${filter.userId} providers=${(filter.providers ?? []).join(',')} types=${(filter.types ?? []).join(',')} limit=${String(limit)}`,
     );
@@ -79,12 +82,14 @@ export class InboxService {
     objectId: string,
     needsAttention: boolean,
   ): Promise<{ updated: boolean }> {
-    this.logger.log(`setNeedsAttention: userId=${userId} id=${objectId} → ${String(needsAttention)}`);
+    this.logger.log(
+      `setNeedsAttention: userId=${userId} id=${objectId} → ${String(needsAttention)}`,
+    );
     const existing = await this.prisma.workspaceObject.findUnique({
       where: { id: objectId },
       select: { userId: true, metadata: true },
     });
-    if (existing === null || existing.userId !== userId) {
+    if (existing?.userId !== userId) {
       return { updated: false };
     }
     const meta = (existing.metadata ?? {}) as Record<string, unknown>;

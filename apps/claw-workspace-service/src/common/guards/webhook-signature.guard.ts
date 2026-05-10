@@ -36,7 +36,7 @@ export class WebhookSignatureGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<WebhookGuardRequest>();
     const body = this.resolveRawBody(request);
     const secret = this.resolveSecret(request);
-    if (secret === undefined) {
+    if (typeof secret !== 'string') {
       throw new BusinessException(
         'Webhook secret is not configured for this request',
         'WEBHOOK_SECRET_MISSING',
@@ -87,9 +87,13 @@ export class WebhookSignatureGuard implements CanActivate {
   }
 
   private header(request: WebhookGuardRequest, name: string): string | undefined {
-    const value = request.headers[name.toLowerCase()] ?? request.headers[name];
+    const lower = name.toLowerCase();
+    const headers = request.headers as Record<string, unknown>;
+    const value =
+      Object.entries(headers).find(([k]) => k === lower)?.[1] ??
+      Object.entries(headers).find(([k]) => k === name)?.[1];
     if (Array.isArray(value)) {
-      return value[0];
+      return value.at(0);
     }
     return typeof value === 'string' ? value : undefined;
   }

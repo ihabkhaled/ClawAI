@@ -70,11 +70,8 @@ export class WorkspaceSyncSchedulerManager implements OnModuleInit {
   }
 
   getCadenceForProvider(provider: WorkspaceProvider): number {
-    return (
-      this.cadenceCache.get(provider) ??
-      FALLBACK_CADENCE_SECONDS[provider] ??
-      this.fallbackIntervalSeconds
-    );
+    const fallback = Object.entries(FALLBACK_CADENCE_SECONDS).find(([k]) => k === provider)?.[1];
+    return this.cadenceCache.get(provider) ?? fallback ?? this.fallbackIntervalSeconds;
   }
 
   async reloadCadenceCache(): Promise<void> {
@@ -122,7 +119,7 @@ export class WorkspaceSyncSchedulerManager implements OnModuleInit {
           {
             id: candidate.id,
             userId: candidate.userId,
-            provider: candidate.provider as unknown as WorkspaceProvider,
+            provider: candidate.provider as WorkspaceProvider,
             syncIntervalSeconds: candidate.syncIntervalSeconds,
             lastSyncAt: candidate.lastSyncAt,
             lastTickAt: candidate.lastTickAt,

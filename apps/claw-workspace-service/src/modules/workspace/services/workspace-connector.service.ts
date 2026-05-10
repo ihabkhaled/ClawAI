@@ -217,10 +217,7 @@ export class WorkspaceConnectorService {
       reason: 'user_requested',
       timestamp: new Date().toISOString(),
     };
-    await this.publishEvent(
-      EventPattern.WORKSPACE_SYNC_PAUSED,
-      payload as unknown as Record<string, unknown>,
-    );
+    await this.publishEvent(EventPattern.WORKSPACE_SYNC_PAUSED, { ...payload });
     return sanitizeConnector(await this.getConnectorRaw(id, userId));
   }
 
@@ -236,10 +233,7 @@ export class WorkspaceConnectorService {
       actorUserId: userId,
       timestamp: new Date().toISOString(),
     };
-    await this.publishEvent(
-      EventPattern.WORKSPACE_SYNC_RESUMED,
-      payload as unknown as Record<string, unknown>,
-    );
+    await this.publishEvent(EventPattern.WORKSPACE_SYNC_RESUMED, { ...payload });
     return sanitizeConnector(await this.getConnectorRaw(id, userId));
   }
 
@@ -435,7 +429,7 @@ export class WorkspaceConnectorService {
     const secrets = (await this.providerAppConfigs.getDecryptedSecret(providerAppConfigId)) ?? {};
 
     const readString = (source: Record<string, unknown>, key: string): string | undefined => {
-      const value = source[key];
+      const value = Object.entries(source).find(([k]) => k === key)?.[1];
       return typeof value === 'string' && value.length > 0 ? value : undefined;
     };
 
@@ -510,9 +504,6 @@ export class WorkspaceConnectorService {
       reusedRunId,
       timestamp: new Date().toISOString(),
     };
-    await this.publishEvent(
-      EventPattern.WORKSPACE_SYNC_MANUAL_TRIGGERED,
-      payload as unknown as Record<string, unknown>,
-    );
+    await this.publishEvent(EventPattern.WORKSPACE_SYNC_MANUAL_TRIGGERED, { ...payload });
   }
 }
