@@ -15,6 +15,9 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 import { HealthModule } from '../modules/health/health.module';
 import { RoutingModule } from '../modules/routing/routing.module';
+import { ClassifierModule } from '../modules/classifier/classifier.module';
+import { RouterModelsModule } from '../modules/router-models/router-models.module';
+import { TaxonomyModule } from '../modules/taxonomy/taxonomy.module';
 
 @Module({
   imports: [
@@ -54,10 +57,15 @@ import { RoutingModule } from '../modules/routing/routing.module';
     RedisModule,
     HealthModule,
     RoutingModule,
-    ThrottlerModule.forRoot([{
-      ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
-      limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
-    }]),
+    RouterModelsModule,
+    TaxonomyModule,
+    ClassifierModule,
+    ThrottlerModule.forRoot([
+      {
+        ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
+        limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
+      },
+    ]),
   ],
   providers: [
     {

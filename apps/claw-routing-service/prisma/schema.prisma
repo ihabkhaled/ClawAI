@@ -55,39 +55,130 @@ enum JudgeOutcome {
   NONE
 }
 
+// ─── Smart Router Flagship — Phase 1: Model Intelligence Registry ───
+
+enum ModelLifecycle {
+  ACTIVE
+  PREVIEW
+  DEPRECATED
+  DISABLED
+  REMOVED
+}
+
+enum CostConfidence {
+  EXACT
+  ESTIMATED
+  UNKNOWN
+}
+
+enum CostClass {
+  FREE
+  CHEAP
+  STANDARD
+  PREMIUM
+  ULTRA
+}
+
+enum LatencyClass {
+  REALTIME
+  FAST
+  MEDIUM
+  SLOW
+  HEAVY
+}
+
+enum QualityTier {
+  S
+  A
+  B
+  C
+  D
+}
+
+enum PrivacyClass {
+  PUBLIC_OK
+  CLOUD_PERMITTED
+  LOCAL_PREFERRED
+  LOCAL_ONLY
+}
+
+enum ModalityKind {
+  TEXT
+  CODE
+  IMAGE_INPUT
+  IMAGE_OUTPUT
+  AUDIO_INPUT
+  AUDIO_OUTPUT
+  VIDEO_INPUT
+  VIDEO_OUTPUT
+  FILE_INPUT
+  PDF_INPUT
+  SPREADSHEET_INPUT
+  WEB_INPUT
+  YOUTUBE_INPUT
+  STRUCTURED_OUTPUT
+  TOOL_CALLING
+  STREAMING
+  EMBEDDING
+}
+
+enum DomainTag {
+  GENERAL
+  CODING
+  MEDICAL
+  LEGAL
+  FINANCE
+  MARKETING
+  EDUCATION
+  CREATIVE_WRITING
+  RESEARCH
+  MECHANICAL
+  AUTOMOTIVE
+  BIOLOGY
+  CHEMISTRY
+  PHYSICS
+  MULTIMEDIA
+  BUSINESS
+  HR
+  SALES
+  TRANSLATION
+  MENTAL_HEALTH
+  LITERATURE
+}
+
 // ─── Models ──────────────────────────────────────────────
 
 model RoutingDecision {
-  id               String      @id @default(cuid())
-  messageId        String?     @map("message_id")
-  threadId         String      @map("thread_id")
-  messageContent   String?     @map("message_content")
-  selectedProvider String      @map("selected_provider")
-  selectedModel    String      @map("selected_model")
-  routingMode      RoutingMode @map("routing_mode")
-  confidence       Decimal?    @db.Decimal(5, 4)
-  reasonTags       String[]    @map("reason_tags")
-  privacyClass     String?     @map("privacy_class")
-  costClass        String?     @map("cost_class")
-  fallbackProvider  String?       @map("fallback_provider")
-  fallbackModel     String?       @map("fallback_model")
-  complexityClass   ComplexityClass? @map("complexity_class")
-  detectedCategory  String?       @map("detected_category")
-  secondaryCategory String?       @map("secondary_category")
-  matchCount        Int?          @map("match_count")
-  selectedExecutionPath String?   @map("selected_execution_path")
-  routeRoadmap      Json?         @map("route_roadmap")
-  modelInventorySnapshot Json?    @map("model_inventory_snapshot")
-  connectorHealthSnapshot Json?   @map("connector_health_snapshot")
-  capabilityMatchScore Decimal?   @map("capability_match_score") @db.Decimal(5, 4)
-  latencyScore      Decimal?      @map("latency_score") @db.Decimal(5, 4)
-  riskScore         Decimal?      @map("risk_score") @db.Decimal(5, 4)
-  uncertaintyScore  Decimal?      @map("uncertainty_score") @db.Decimal(5, 4)
-  explanation       Json?
-  routingDurationMs Int?          @map("routing_duration_ms")
-  createdAt         DateTime      @default(now()) @map("created_at")
-  outcomes          RoutingOutcomeRecord[]
-  feedbackRecords   RoutingFeedbackRecord[]
+  id                      String                  @id @default(cuid())
+  messageId               String?                 @map("message_id")
+  threadId                String                  @map("thread_id")
+  messageContent          String?                 @map("message_content")
+  selectedProvider        String                  @map("selected_provider")
+  selectedModel           String                  @map("selected_model")
+  routingMode             RoutingMode             @map("routing_mode")
+  confidence              Decimal?                @db.Decimal(5, 4)
+  reasonTags              String[]                @map("reason_tags")
+  privacyClass            String?                 @map("privacy_class")
+  costClass               String?                 @map("cost_class")
+  fallbackProvider        String?                 @map("fallback_provider")
+  fallbackModel           String?                 @map("fallback_model")
+  complexityClass         ComplexityClass?        @map("complexity_class")
+  detectedCategory        String?                 @map("detected_category")
+  secondaryCategory       String?                 @map("secondary_category")
+  matchCount              Int?                    @map("match_count")
+  selectedExecutionPath   String?                 @map("selected_execution_path")
+  routeRoadmap            Json?                   @map("route_roadmap")
+  modelInventorySnapshot  Json?                   @map("model_inventory_snapshot")
+  connectorHealthSnapshot Json?                   @map("connector_health_snapshot")
+  capabilityMatchScore    Decimal?                @map("capability_match_score") @db.Decimal(5, 4)
+  latencyScore            Decimal?                @map("latency_score") @db.Decimal(5, 4)
+  riskScore               Decimal?                @map("risk_score") @db.Decimal(5, 4)
+  uncertaintyScore        Decimal?                @map("uncertainty_score") @db.Decimal(5, 4)
+  explanation             Json?
+  routingDurationMs       Int?                    @map("routing_duration_ms")
+  createdAt               DateTime                @default(now()) @map("created_at")
+  outcomes                RoutingOutcomeRecord[]
+  feedbackRecords         RoutingFeedbackRecord[]
 
   @@index([messageId])
   @@index([threadId])
@@ -167,29 +258,29 @@ model ReplayCase {
 }
 
 model RoutingOutcomeRecord {
-  id                   String                 @id @default(cuid())
-  routingDecisionId    String                 @map("routing_decision_id")
-  messageId            String?                @map("message_id")
-  assistantMessageId   String?                @map("assistant_message_id")
-  threadId             String                 @map("thread_id")
-  finalExecutionProvider String               @map("final_execution_provider")
-  finalExecutionModel  String                 @map("final_execution_model")
-  executionStatus      RoutingExecutionStatus @map("execution_status")
-  executionSuccess     Boolean                @default(true) @map("execution_success")
-  actualLatencyMs      Int?                   @map("actual_latency_ms")
-  actualCostEstimate   Decimal?               @map("actual_cost_estimate") @db.Decimal(12, 8)
-  finalStatus          String                 @default("completed") @map("final_status")
-  fallbackUsed         Boolean                @default(false) @map("fallback_used")
-  judgeOutcome         JudgeOutcome           @default(NONE) @map("judge_outcome")
-  judgeConfidence      Decimal?               @map("judge_confidence") @db.Decimal(5, 4)
-  criticScore          Decimal?               @map("critic_score") @db.Decimal(5, 4)
-  issueTags            String[]               @default([]) @map("issue_tags")
-  revised              Boolean                @default(false)
-  escalated            Boolean                @default(false)
-  followUpSignal       String?                @map("follow_up_signal")
-  createdAt            DateTime               @default(now()) @map("created_at")
-  updatedAt            DateTime               @updatedAt @map("updated_at")
-  routingDecision      RoutingDecision        @relation(fields: [routingDecisionId], references: [id], onDelete: Cascade)
+  id                     String                 @id @default(cuid())
+  routingDecisionId      String                 @map("routing_decision_id")
+  messageId              String?                @map("message_id")
+  assistantMessageId     String?                @map("assistant_message_id")
+  threadId               String                 @map("thread_id")
+  finalExecutionProvider String                 @map("final_execution_provider")
+  finalExecutionModel    String                 @map("final_execution_model")
+  executionStatus        RoutingExecutionStatus @map("execution_status")
+  executionSuccess       Boolean                @default(true) @map("execution_success")
+  actualLatencyMs        Int?                   @map("actual_latency_ms")
+  actualCostEstimate     Decimal?               @map("actual_cost_estimate") @db.Decimal(12, 8)
+  finalStatus            String                 @default("completed") @map("final_status")
+  fallbackUsed           Boolean                @default(false) @map("fallback_used")
+  judgeOutcome           JudgeOutcome           @default(NONE) @map("judge_outcome")
+  judgeConfidence        Decimal?               @map("judge_confidence") @db.Decimal(5, 4)
+  criticScore            Decimal?               @map("critic_score") @db.Decimal(5, 4)
+  issueTags              String[]               @default([]) @map("issue_tags")
+  revised                Boolean                @default(false)
+  escalated              Boolean                @default(false)
+  followUpSignal         String?                @map("follow_up_signal")
+  createdAt              DateTime               @default(now()) @map("created_at")
+  updatedAt              DateTime               @updatedAt @map("updated_at")
+  routingDecision        RoutingDecision        @relation(fields: [routingDecisionId], references: [id], onDelete: Cascade)
 
   @@unique([routingDecisionId])
   @@index([threadId])
@@ -199,17 +290,17 @@ model RoutingOutcomeRecord {
 }
 
 model RoutingFeedbackRecord {
-  id                String         @id @default(cuid())
-  routingDecisionId String?        @map("routing_decision_id")
-  messageId         String         @map("message_id")
-  threadId          String         @map("thread_id")
-  assistantMessageId String?       @map("assistant_message_id")
-  feedbackValue     FeedbackValue  @map("feedback_value")
-  source            String         @default("thumbs")
-  weight            Decimal        @default(1.0) @db.Decimal(6, 4)
-  taskFamily        String?        @map("task_family")
-  createdAt         DateTime       @default(now()) @map("created_at")
-  routingDecision   RoutingDecision? @relation(fields: [routingDecisionId], references: [id], onDelete: SetNull)
+  id                 String           @id @default(cuid())
+  routingDecisionId  String?          @map("routing_decision_id")
+  messageId          String           @map("message_id")
+  threadId           String           @map("thread_id")
+  assistantMessageId String?          @map("assistant_message_id")
+  feedbackValue      FeedbackValue    @map("feedback_value")
+  source             String           @default("thumbs")
+  weight             Decimal          @default(1.0) @db.Decimal(6, 4)
+  taskFamily         String?          @map("task_family")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  routingDecision    RoutingDecision? @relation(fields: [routingDecisionId], references: [id], onDelete: SetNull)
 
   @@index([routingDecisionId])
   @@index([threadId])
@@ -218,28 +309,28 @@ model RoutingFeedbackRecord {
 }
 
 model RouterModelProfile {
-  id                      String   @id @default(cuid())
-  provider                String
-  model                   String
-  taskFamily              String   @map("task_family")
-  topicKey                String   @map("topic_key")
-  routeCount              Int      @default(0) @map("route_count")
-  successRate             Decimal  @default(0) @map("success_rate") @db.Decimal(6, 4)
-  thumbsUpRate            Decimal  @default(0) @map("thumbs_up_rate") @db.Decimal(6, 4)
-  thumbsDownRate          Decimal  @default(0) @map("thumbs_down_rate") @db.Decimal(6, 4)
-  judgeVerifiedRate       Decimal  @default(0) @map("judge_verified_rate") @db.Decimal(6, 4)
-  judgeRevisedRate        Decimal  @default(0) @map("judge_revised_rate") @db.Decimal(6, 4)
-  judgeEscalatedRate      Decimal  @default(0) @map("judge_escalated_rate") @db.Decimal(6, 4)
-  averageLatencyMs        Int      @default(0) @map("average_latency_ms")
-  averageCostEstimate     Decimal  @default(0) @map("average_cost_estimate") @db.Decimal(12, 8)
-  fallbackSuccessRate     Decimal  @default(0) @map("fallback_success_rate") @db.Decimal(6, 4)
-  hallucinationRiskScore  Decimal  @default(0) @map("hallucination_risk_score") @db.Decimal(6, 4)
-  calibrationTrustScore   Decimal  @default(0) @map("calibration_trust_score") @db.Decimal(6, 4)
-  weightedSuccessScore    Decimal  @default(0) @map("weighted_success_score") @db.Decimal(6, 4)
-  weightedDissatisfactionScore Decimal @default(0) @map("weighted_dissatisfaction_score") @db.Decimal(6, 4)
-  sampleSize              Int      @default(0) @map("sample_size")
-  confidenceInProfile     Decimal  @default(0) @map("confidence_in_profile") @db.Decimal(6, 4)
-  lastUpdated             DateTime @default(now()) @map("last_updated")
+  id                           String   @id @default(cuid())
+  provider                     String
+  model                        String
+  taskFamily                   String   @map("task_family")
+  topicKey                     String   @map("topic_key")
+  routeCount                   Int      @default(0) @map("route_count")
+  successRate                  Decimal  @default(0) @map("success_rate") @db.Decimal(6, 4)
+  thumbsUpRate                 Decimal  @default(0) @map("thumbs_up_rate") @db.Decimal(6, 4)
+  thumbsDownRate               Decimal  @default(0) @map("thumbs_down_rate") @db.Decimal(6, 4)
+  judgeVerifiedRate            Decimal  @default(0) @map("judge_verified_rate") @db.Decimal(6, 4)
+  judgeRevisedRate             Decimal  @default(0) @map("judge_revised_rate") @db.Decimal(6, 4)
+  judgeEscalatedRate           Decimal  @default(0) @map("judge_escalated_rate") @db.Decimal(6, 4)
+  averageLatencyMs             Int      @default(0) @map("average_latency_ms")
+  averageCostEstimate          Decimal  @default(0) @map("average_cost_estimate") @db.Decimal(12, 8)
+  fallbackSuccessRate          Decimal  @default(0) @map("fallback_success_rate") @db.Decimal(6, 4)
+  hallucinationRiskScore       Decimal  @default(0) @map("hallucination_risk_score") @db.Decimal(6, 4)
+  calibrationTrustScore        Decimal  @default(0) @map("calibration_trust_score") @db.Decimal(6, 4)
+  weightedSuccessScore         Decimal  @default(0) @map("weighted_success_score") @db.Decimal(6, 4)
+  weightedDissatisfactionScore Decimal  @default(0) @map("weighted_dissatisfaction_score") @db.Decimal(6, 4)
+  sampleSize                   Int      @default(0) @map("sample_size")
+  confidenceInProfile          Decimal  @default(0) @map("confidence_in_profile") @db.Decimal(6, 4)
+  lastUpdated                  DateTime @default(now()) @map("last_updated")
 
   @@unique([provider, model, taskFamily, topicKey])
   @@index([taskFamily, topicKey])
@@ -248,22 +339,22 @@ model RouterModelProfile {
 }
 
 model RouterTopicProfile {
-  id                      String   @id @default(cuid())
-  taskFamily              String   @map("task_family")
-  topicKey                String   @map("topic_key")
-  bestProvider            String?  @map("best_provider")
-  bestModel               String?  @map("best_model")
-  routeCount              Int      @default(0) @map("route_count")
-  successRate             Decimal  @default(0) @map("success_rate") @db.Decimal(6, 4)
-  thumbsUpRate            Decimal  @default(0) @map("thumbs_up_rate") @db.Decimal(6, 4)
-  thumbsDownRate          Decimal  @default(0) @map("thumbs_down_rate") @db.Decimal(6, 4)
-  judgeVerifiedRate       Decimal  @default(0) @map("judge_verified_rate") @db.Decimal(6, 4)
-  judgeEscalatedRate      Decimal  @default(0) @map("judge_escalated_rate") @db.Decimal(6, 4)
-  fallbackSuccessRate     Decimal  @default(0) @map("fallback_success_rate") @db.Decimal(6, 4)
-  weightedSuccessScore    Decimal  @default(0) @map("weighted_success_score") @db.Decimal(6, 4)
-  ambiguityScore          Decimal  @default(0) @map("ambiguity_score") @db.Decimal(6, 4)
-  confidenceInProfile     Decimal  @default(0) @map("confidence_in_profile") @db.Decimal(6, 4)
-  lastUpdated             DateTime @default(now()) @map("last_updated")
+  id                   String   @id @default(cuid())
+  taskFamily           String   @map("task_family")
+  topicKey             String   @map("topic_key")
+  bestProvider         String?  @map("best_provider")
+  bestModel            String?  @map("best_model")
+  routeCount           Int      @default(0) @map("route_count")
+  successRate          Decimal  @default(0) @map("success_rate") @db.Decimal(6, 4)
+  thumbsUpRate         Decimal  @default(0) @map("thumbs_up_rate") @db.Decimal(6, 4)
+  thumbsDownRate       Decimal  @default(0) @map("thumbs_down_rate") @db.Decimal(6, 4)
+  judgeVerifiedRate    Decimal  @default(0) @map("judge_verified_rate") @db.Decimal(6, 4)
+  judgeEscalatedRate   Decimal  @default(0) @map("judge_escalated_rate") @db.Decimal(6, 4)
+  fallbackSuccessRate  Decimal  @default(0) @map("fallback_success_rate") @db.Decimal(6, 4)
+  weightedSuccessScore Decimal  @default(0) @map("weighted_success_score") @db.Decimal(6, 4)
+  ambiguityScore       Decimal  @default(0) @map("ambiguity_score") @db.Decimal(6, 4)
+  confidenceInProfile  Decimal  @default(0) @map("confidence_in_profile") @db.Decimal(6, 4)
+  lastUpdated          DateTime @default(now()) @map("last_updated")
 
   @@unique([taskFamily, topicKey])
   @@index([weightedSuccessScore])
@@ -271,15 +362,116 @@ model RouterTopicProfile {
 }
 
 model RoutingCalibrationSnapshot {
-  id               String   @id @default(cuid())
-  version          String
-  windowDays       Int      @map("window_days")
-  summary          Json
-  promptHints      Json     @map("prompt_hints")
-  active           Boolean  @default(true)
-  generatedAt      DateTime @default(now()) @map("generated_at")
+  id          String   @id @default(cuid())
+  version     String
+  windowDays  Int      @map("window_days")
+  summary     Json
+  promptHints Json     @map("prompt_hints")
+  active      Boolean  @default(true)
+  generatedAt DateTime @default(now()) @map("generated_at")
 
   @@index([generatedAt])
   @@index([active])
   @@map("routing_calibration_snapshots")
+}
+
+// ─── Smart Router Flagship — Model Intelligence Registry ───
+
+/// Canonical registry of every model the router knows.
+/// Distinct from the existing `RouterModelProfile` table which tracks per-task
+/// learned metrics (per (provider,model,taskFamily,topicKey)). The registry
+/// records identity, capabilities, economics, and lifecycle — one row per model.
+model RouterModelRegistry {
+  id                  String         @id @default(cuid())
+  // identity
+  provider            String // "OPENAI" | "ANTHROPIC" | "GEMINI" | "GROK" | "BEDROCK" | "DEEPSEEK" | "OLLAMA" | "LLAMACPP" | ...
+  modelKey            String         @map("model_key") // wire-name e.g. "gpt-4o-2024-11-20"
+  displayName         String         @map("display_name")
+  family              String?
+  connectorId         String?        @map("connector_id") // for cloud models — id from connector-service
+  runtimeId           String?        @map("runtime_id") // for local models — id from ollama/llamacpp service
+  // classification flags
+  isLocal             Boolean        @default(false) @map("is_local")
+  isRouterOnly        Boolean        @default(false) @map("is_router_only")
+  isExecutionCapable  Boolean        @default(true) @map("is_execution_capable")
+  lifecycle           ModelLifecycle @default(ACTIVE)
+  // capabilities
+  modalitiesIn        ModalityKind[] @default([]) @map("modalities_in")
+  modalitiesOut       ModalityKind[] @default([]) @map("modalities_out")
+  contextWindowTokens Int?           @map("context_window_tokens")
+  maxOutputTokens     Int?           @map("max_output_tokens")
+  domainTags          DomainTag[]    @default([]) @map("domain_tags")
+  notRecommendedFor   DomainTag[]    @default([]) @map("not_recommended_for")
+  // economics
+  inputCostPer1M      Decimal?       @map("input_cost_per_1m") @db.Decimal(12, 6)
+  outputCostPer1M     Decimal?       @map("output_cost_per_1m") @db.Decimal(12, 6)
+  costConfidence      CostConfidence @default(UNKNOWN) @map("cost_confidence")
+  costClass           CostClass?     @map("cost_class")
+  // performance (rolled from telemetry)
+  latencyP50Ms        Int?           @map("latency_p50_ms")
+  latencyP95Ms        Int?           @map("latency_p95_ms")
+  latencyClass        LatencyClass?  @map("latency_class")
+  // quality / safety
+  qualityTier         QualityTier    @default(B) @map("quality_tier")
+  hallucinationRisk   Decimal?       @map("hallucination_risk") @db.Decimal(4, 3)
+  judgeSuitability    Boolean        @default(false) @map("judge_suitability")
+  searchSuitability   Boolean        @default(false) @map("search_suitability")
+  fallbackSuitability Boolean        @default(true) @map("fallback_suitability")
+  // privacy
+  privacySupport      PrivacyClass   @default(CLOUD_PERMITTED) @map("privacy_support")
+  // metadata
+  metadataSource      String         @default("seed") @map("metadata_source") // seed | connector_sync | ollama_sync | llamacpp_sync | admin_override | learned
+  externalCardUrl     String?        @map("external_card_url")
+  notes               String?
+  // bookkeeping
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+  lastSyncedAt        DateTime?      @map("last_synced_at")
+
+  overrides RouterAdminOverride[]
+
+  @@unique([provider, modelKey])
+  @@index([provider])
+  @@index([lifecycle])
+  @@index([isExecutionCapable, lifecycle])
+  @@index([isRouterOnly])
+  @@map("router_model_registry")
+}
+
+/// Phase 2: Domain/Career/Major Taxonomy. One row per professional role.
+/// Routes use this to map (prompt → role → expected domain + privacy default).
+model TaxonomyRole {
+  id             String       @id @default(cuid())
+  roleKey        String       @unique @map("role_key")
+  displayName    String       @map("display_name")
+  industryKey    String       @map("industry_key")
+  domainKey      DomainTag    @map("domain_key")
+  capabilities   String[]     @default([])
+  privacyDefault PrivacyClass @default(CLOUD_PERMITTED) @map("privacy_default")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@index([industryKey])
+  @@index([domainKey])
+  @@map("taxonomy_roles")
+}
+
+/// Per-(profile, fieldName) admin override that survives upstream sync.
+/// Sync workers MUST skip writing fields that have an active override.
+model RouterAdminOverride {
+  id         String   @id @default(cuid())
+  profileId  String   @map("profile_id")
+  fieldName  String   @map("field_name")
+  fieldValue Json     @map("field_value")
+  reason     String?
+  setBy      String   @map("set_by")
+  setAt      DateTime @default(now()) @map("set_at")
+  isActive   Boolean  @default(true) @map("is_active")
+
+  profile RouterModelRegistry @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, fieldName])
+  @@index([profileId])
+  @@index([isActive])
+  @@map("router_admin_overrides")
 }
