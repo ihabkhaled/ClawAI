@@ -1,6 +1,6 @@
 import {
-  PATH_PREFIX_REGEX,
   ESCAPED_PREFIX_REGEX,
+  PATH_PREFIX_REGEX,
 } from '../../../common/constants/recipe.constants';
 import { resolveRecipePath } from '../../../common/utilities/recipe-expression.utility';
 import type { RecipeExpressionContext } from '../../../common/types/recipe-parser.types';
@@ -30,11 +30,9 @@ function walk(value: unknown, ctx: RecipeExpressionContext): unknown {
     return value.map((v) => walk(v, ctx));
   }
   if (value !== null && typeof value === 'object') {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      out[k] = walk(v, ctx);
-    }
-    return out;
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, walk(v, ctx)]),
+    );
   }
   return value;
 }

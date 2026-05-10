@@ -29,7 +29,7 @@ export function useAvailableModels(): {
   const { models, isLoading: isLoadingCloud } = useAllModels();
   const { models: localModels, isLoading: isLoadingLocal } = useLocalModels();
   const frontierQuery = useFrontierCatalog({ limit: 100 });
-  const frontierEntries = frontierQuery.data?.data ?? [];
+  const frontierEntries = useMemo(() => frontierQuery.data?.data ?? [], [frontierQuery.data?.data]);
 
   const groupedModels = useMemo((): GroupedModels[] => {
     const groups = new Map<string, ModelSelection[]>();

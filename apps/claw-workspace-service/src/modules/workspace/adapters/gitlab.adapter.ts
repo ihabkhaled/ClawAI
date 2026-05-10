@@ -552,10 +552,7 @@ export class GitLabAdapter implements WorkspaceAdapter {
     return this.toResult(response, ['id', 'web_url']);
   }
 
-  private async toResult(
-    response: Response,
-    idFields: string[],
-  ): Promise<WriteActionResult> {
+  private async toResult(response: Response, idFields: string[]): Promise<WriteActionResult> {
     if (!response.ok) {
       const text = await response.text().catch(() => '');
       return {
@@ -564,11 +561,15 @@ export class GitLabAdapter implements WorkspaceAdapter {
       };
     }
     const json = (await response.json().catch(() => ({}))) as Record<string, unknown>;
-    const externalId = idFields.map((f) => json[f]).find((v) => v !== undefined);
+    const jsonEntries = Object.entries(json);
+    const externalId = idFields
+      .map((f) => jsonEntries.find(([k]) => k === f)?.[1])
+      .find((v) => v !== undefined);
+    const webUrl = jsonEntries.find(([k]) => k === 'web_url')?.[1];
     return {
       success: true,
       externalId: externalId === undefined ? undefined : String(externalId),
-      url: typeof json['web_url'] === 'string' ? (json['web_url'] as string) : undefined,
+      url: typeof webUrl === 'string' ? webUrl : undefined,
     };
   }
 }

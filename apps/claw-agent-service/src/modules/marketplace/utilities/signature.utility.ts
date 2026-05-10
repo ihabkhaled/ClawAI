@@ -84,11 +84,8 @@ function sortKeys(value: unknown): unknown {
   if (Array.isArray(value)) return value.map((v) => sortKeys(v));
   if (value === null || typeof value !== 'object') return value;
   const obj = value as Record<string, unknown>;
-  const sorted: Record<string, unknown> = {};
-  for (const k of Object.keys(obj).sort()) {
-    sorted[k] = sortKeys(obj[k]);
-  }
-  return sorted;
+  const entries = Object.entries(obj).sort(([a], [b]) => (a < b ? -1 : (a > b ? 1 : 0)));
+  return Object.fromEntries(entries.map(([k, v]) => [k, sortKeys(v)]));
 }
 
 function publicKeyToJwk(publicKeyHex: string): JwkKey {

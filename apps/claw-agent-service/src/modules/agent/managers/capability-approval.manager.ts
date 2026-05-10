@@ -10,7 +10,7 @@ import { EntityNotFoundException } from '../../../common/errors/entity-not-found
 import { CapabilityInvocationRepository } from '../repositories/capability-invocation.repository';
 import { PolicyRepository } from '../repositories/policy.repository';
 import { CapabilityRiskService } from '../services/capability-risk.service';
-import { Prisma, type CapabilityInvocation } from '../../../generated/prisma';
+import { type CapabilityInvocation, Prisma } from '../../../generated/prisma';
 import type { CompleteCapabilityDto } from '../dto/complete-capability.dto';
 import type { ProposeCapabilityDto } from '../dto/propose-capability.dto';
 import type {
@@ -56,10 +56,7 @@ export class CapabilityApprovalManager {
     private readonly rabbitMQ: RabbitMQService,
   ) {}
 
-  async propose(
-    userId: string,
-    dto: ProposeCapabilityDto,
-  ): Promise<CapabilityProposalResult> {
+  async propose(userId: string, dto: ProposeCapabilityDto): Promise<CapabilityProposalResult> {
     const deviceAge = await this.repo.deviceAgeDays(dto.deviceId);
     const userClassCount = await this.repo.countForUserClass(userId, dto.capabilityClass);
     const orgIds = await this.policyRepo.findOrgIdsForUser(userId);
@@ -95,7 +92,10 @@ export class CapabilityApprovalManager {
       reviewedBy: approverUserId,
       reviewedAt: new Date(),
     });
-    void this.publishEvent(EventPattern.AGENT_CAPABILITY_APPROVED, this.basePayload(updated, { approverUserId }));
+    void this.publishEvent(
+      EventPattern.AGENT_CAPABILITY_APPROVED,
+      this.basePayload(updated, { approverUserId }),
+    );
     return updated;
   }
 
@@ -119,7 +119,10 @@ export class CapabilityApprovalManager {
       reviewedAt: new Date(),
       rejectionReason: reason,
     });
-    void this.publishEvent(EventPattern.AGENT_CAPABILITY_REJECTED, this.basePayload(updated, { reviewerUserId, reason }));
+    void this.publishEvent(
+      EventPattern.AGENT_CAPABILITY_REJECTED,
+      this.basePayload(updated, { reviewerUserId, reason }),
+    );
     return updated;
   }
 
@@ -136,7 +139,10 @@ export class CapabilityApprovalManager {
     const updated = await this.repo.update(invocationId, {
       status: CapabilityInvocationStatus.CANCELLED,
     });
-    void this.publishEvent(EventPattern.AGENT_CAPABILITY_CANCELLED, this.basePayload(updated, { cancelledByUserId: userId }));
+    void this.publishEvent(
+      EventPattern.AGENT_CAPABILITY_CANCELLED,
+      this.basePayload(updated, { cancelledByUserId: userId }),
+    );
     return updated;
   }
 
@@ -164,9 +170,7 @@ export class CapabilityApprovalManager {
         { current: inv.status },
       );
     }
-    return dto.success
-      ? this.completeSuccess(inv, dto)
-      : this.completeFailure(inv, dto);
+    return dto.success ? this.completeSuccess(inv, dto) : this.completeFailure(inv, dto);
   }
 
   async rollback(invocationId: string, userId: string): Promise<CapabilityInvocation> {
@@ -192,7 +196,10 @@ export class CapabilityApprovalManager {
       status: CapabilityInvocationStatus.ROLLED_BACK,
       rolledBackAt: new Date(),
     });
-    void this.publishEvent(EventPattern.AGENT_CAPABILITY_ROLLED_BACK, this.basePayload(updated, { partial: false }));
+    void this.publishEvent(
+      EventPattern.AGENT_CAPABILITY_ROLLED_BACK,
+      this.basePayload(updated, { partial: false }),
+    );
     return updated;
   }
 
@@ -212,16 +219,20 @@ export class CapabilityApprovalManager {
       status: CapabilityInvocationStatus.EXECUTED,
       completedAt: new Date(),
       executionResult: (dto.result ?? {}) as Prisma.InputJsonValue,
-      undoPlan: dto.undoPlan === undefined
-        ? Prisma.JsonNull
-        : (dto.undoPlan as Prisma.InputJsonValue),
-      metadata: dto.noUndoReason === undefined
-        ? ((inv.metadata ?? {}) as Prisma.InputJsonValue)
-        : ({ ...((inv.metadata ?? {}) as Record<string, unknown>), noUndoReason: dto.noUndoReason } as Prisma.InputJsonValue),
+      undoPlan:
+        dto.undoPlan === undefined ? Prisma.JsonNull : (dto.undoPlan as Prisma.InputJsonValue),
+      metadata:
+        dto.noUndoReason === undefined
+          ? ((inv.metadata ?? {}) as Prisma.InputJsonValue)
+          : ({
+              ...((inv.metadata ?? {}) as Record<string, unknown>),
+              noUndoReason: dto.noUndoReason,
+            } as Prisma.InputJsonValue),
     });
-    const durationMs = updated.completedAt !== null && updated.startedExecutingAt !== null
-      ? updated.completedAt.getTime() - updated.startedExecutingAt.getTime()
-      : 0;
+    const durationMs =
+      updated.completedAt !== null && updated.startedExecutingAt !== null
+        ? updated.completedAt.getTime() - updated.startedExecutingAt.getTime()
+        : 0;
     void this.publishEvent(
       EventPattern.AGENT_CAPABILITY_EXECUTED,
       this.basePayload(updated, { durationMs }),
@@ -277,7 +288,10 @@ export class CapabilityApprovalManager {
       userId,
       deviceId: dto.deviceId,
       recipeRunId: dto.recipeRunId ?? null,
-      parent: dto.parentInvocationId === undefined ? undefined : { connect: { id: dto.parentInvocationId } },
+      parent:
+        dto.parentInvocationId === undefined
+          ? undefined
+          : { connect: { id: dto.parentInvocationId } },
       capabilityClass: dto.capabilityClass,
       capabilityOperation: dto.capabilityOperation,
       targetDescriptor: dto.targetDescriptor as Prisma.InputJsonValue,
@@ -288,9 +302,10 @@ export class CapabilityApprovalManager {
       status: assessment.status,
       riskScore: assessment.riskScore,
       riskLabel: assessment.riskLabel as Prisma.CapabilityInvocationCreateInput['riskLabel'],
-      matchedPolicy: assessment.matchedPolicyId === null
-        ? undefined
-        : { connect: { id: assessment.matchedPolicyId } },
+      matchedPolicy:
+        assessment.matchedPolicyId === null
+          ? undefined
+          : { connect: { id: assessment.matchedPolicyId } },
       matchedPolicyName: assessment.matchedPolicyName,
       expiresAt,
       metadata: (dto.metadata ?? {}) as Prisma.InputJsonValue,
@@ -333,15 +348,21 @@ export class CapabilityApprovalManager {
       });
     }
     if (status === CapabilityInvocationStatus.AUTO_APPROVED) {
-      await this.publishEvent(EventPattern.AGENT_CAPABILITY_AUTO_APPROVED, this.basePayload(inv, {
-        matchedPolicyName: inv.matchedPolicyName ?? '',
-      }));
+      await this.publishEvent(
+        EventPattern.AGENT_CAPABILITY_AUTO_APPROVED,
+        this.basePayload(inv, {
+          matchedPolicyName: inv.matchedPolicyName ?? '',
+        }),
+      );
     } else if (status === CapabilityInvocationStatus.DENIED) {
-      await this.publishEvent(EventPattern.AGENT_CAPABILITY_DENIED, this.basePayload(inv, {
-        matchedPolicyId: inv.matchedPolicyId ?? '',
-        matchedPolicyName: inv.matchedPolicyName ?? '',
-        reason: 'policy_match_deny',
-      }));
+      await this.publishEvent(
+        EventPattern.AGENT_CAPABILITY_DENIED,
+        this.basePayload(inv, {
+          matchedPolicyId: inv.matchedPolicyId ?? '',
+          matchedPolicyName: inv.matchedPolicyName ?? '',
+          reason: 'policy_match_deny',
+        }),
+      );
     }
   }
 

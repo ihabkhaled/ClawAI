@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "commonjs",
+    "module": "nodenext",
     "lib": ["ES2022"],
     "outDir": "./dist",
     "rootDir": "./src",
@@ -25,8 +25,7 @@
     "allowUnreachableCode": false,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
-    "ignoreDeprecations": "6.0",
+    "moduleResolution": "nodenext",
     "typeRoots": ["../../node_modules/@types", "./node_modules/@types"],
     "types": ["jest", "node"],
     "resolveJsonModule": true,
@@ -36,14 +35,7 @@
     "emitDecoratorMetadata": true,
     "declaration": true,
     "sourceMap": true,
-    "removeComments": false,
-    "baseUrl": "./src",
-    "paths": {
-      "@app/*": ["app/*"],
-      "@common/*": ["common/*"],
-      "@infrastructure/*": ["infrastructure/*"],
-      "@modules/*": ["modules/*"]
-    }
+    "removeComments": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "test"]

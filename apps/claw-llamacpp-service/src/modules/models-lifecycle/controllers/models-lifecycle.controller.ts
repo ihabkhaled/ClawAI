@@ -10,7 +10,6 @@ import {
   Put,
   Query,
   Res,
-  UsePipes,
 } from '@nestjs/common';
 import { type Response } from 'express';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -18,8 +17,8 @@ import { Roles } from '../../../app/decorators/roles.decorator';
 import { UserRole } from '../../../common/enums';
 import {
   type DeleteWeightsDto,
-  UpdateRuntimeConfigSchema,
   type UpdateRuntimeConfigDto,
+  UpdateRuntimeConfigSchema,
 } from '../dto/runtime-config.dto';
 import { ModelsLifecycleService } from '../services/models-lifecycle.service';
 import { type LoadedModelSnapshot, type RuntimeConfig } from '../types/process.types';
@@ -53,10 +52,9 @@ export class ModelsLifecycleController {
 
   @Roles(UserRole.ADMIN, UserRole.OPERATOR)
   @Put(':id/config')
-  @UsePipes(new ZodValidationPipe(UpdateRuntimeConfigSchema))
   updateConfig(
     @Param('id') id: string,
-    @Body() body: UpdateRuntimeConfigDto,
+    @Body(new ZodValidationPipe(UpdateRuntimeConfigSchema)) body: UpdateRuntimeConfigDto,
   ): Promise<RuntimeConfig> {
     return this.lifecycle.updateConfig(id, body);
   }

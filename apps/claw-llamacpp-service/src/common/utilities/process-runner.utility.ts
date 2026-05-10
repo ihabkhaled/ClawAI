@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess, type SpawnOptions } from 'node:child_process';
+import { type ChildProcess, spawn, type SpawnOptions } from 'node:child_process';
 import { Logger } from '@nestjs/common';
 import { type ExecResult } from '../types/exec-result.type';
 

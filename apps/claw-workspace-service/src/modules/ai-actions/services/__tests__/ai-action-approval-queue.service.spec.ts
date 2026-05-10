@@ -32,7 +32,7 @@ describe('AiActionApprovalQueueService', () => {
   });
 
   const makeRabbit = (): { publish: jest.Mock } => ({
-    publish: jest.fn().mockResolvedValue(undefined),
+    publish: jest.fn().mockImplementation(async () => {}),
   });
 
   it('approve transitions PENDING → APPROVED', async () => {
@@ -40,12 +40,7 @@ describe('AiActionApprovalQueueService', () => {
       findById: jest.fn().mockResolvedValue(makeRow()),
       updateStatus: jest.fn().mockResolvedValue(makeRow({ status: AiActionQueueStatus.APPROVED })),
     });
-    const service = new AiActionApprovalQueueService(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      repo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      makeRabbit() as any,
-    );
+    const service = new AiActionApprovalQueueService(repo as any, makeRabbit() as any);
     const result = await service.approve({ queueId: 'q1', userId: 'u1' });
     expect(result.status).toBe(AiActionQueueStatus.APPROVED);
     expect(repo['updateStatus']).toHaveBeenCalledWith('q1', AiActionQueueStatus.APPROVED);
@@ -55,12 +50,7 @@ describe('AiActionApprovalQueueService', () => {
     const repo = makeRepo({
       findById: jest.fn().mockResolvedValue(makeRow({ status: AiActionQueueStatus.EXECUTED })),
     });
-    const service = new AiActionApprovalQueueService(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      repo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      makeRabbit() as any,
-    );
+    const service = new AiActionApprovalQueueService(repo as any, makeRabbit() as any);
     await expect(service.approve({ queueId: 'q1', userId: 'u1' })).rejects.toBeInstanceOf(
       BadRequestException,
     );
@@ -70,12 +60,7 @@ describe('AiActionApprovalQueueService', () => {
     const repo = makeRepo({
       findById: jest.fn().mockResolvedValue(makeRow({ userId: 'someone-else' })),
     });
-    const service = new AiActionApprovalQueueService(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      repo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      makeRabbit() as any,
-    );
+    const service = new AiActionApprovalQueueService(repo as any, makeRabbit() as any);
     await expect(service.approve({ queueId: 'q1', userId: 'u1' })).rejects.toBeInstanceOf(
       ForbiddenException,
     );
@@ -83,12 +68,7 @@ describe('AiActionApprovalQueueService', () => {
 
   it('approve 404 on missing row', async () => {
     const repo = makeRepo({ findById: jest.fn().mockResolvedValue(null) });
-    const service = new AiActionApprovalQueueService(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      repo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      makeRabbit() as any,
-    );
+    const service = new AiActionApprovalQueueService(repo as any, makeRabbit() as any);
     await expect(service.approve({ queueId: 'qX', userId: 'u1' })).rejects.toBeInstanceOf(
       NotFoundException,
     );
@@ -98,12 +78,7 @@ describe('AiActionApprovalQueueService', () => {
     const repo = makeRepo({
       findById: jest.fn().mockResolvedValue(makeRow({ riskLabel: AiActionRiskLabel.HIGH })),
     });
-    const service = new AiActionApprovalQueueService(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      repo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      makeRabbit() as any,
-    );
+    const service = new AiActionApprovalQueueService(repo as any, makeRabbit() as any);
     await expect(
       service.reject({ queueId: 'q1', userId: 'u1', reason: 'short' }),
     ).rejects.toBeInstanceOf(BadRequestException);
@@ -114,12 +89,7 @@ describe('AiActionApprovalQueueService', () => {
       findById: jest.fn().mockResolvedValue(makeRow({ riskLabel: AiActionRiskLabel.LOW })),
       updateStatus: jest.fn().mockResolvedValue(makeRow({ status: AiActionQueueStatus.REJECTED })),
     });
-    const service = new AiActionApprovalQueueService(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      repo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      makeRabbit() as any,
-    );
+    const service = new AiActionApprovalQueueService(repo as any, makeRabbit() as any);
     const result = await service.reject({ queueId: 'q1', userId: 'u1', reason: 'no' });
     expect(result.status).toBe(AiActionQueueStatus.REJECTED);
   });
@@ -129,12 +99,7 @@ describe('AiActionApprovalQueueService', () => {
       findById: jest.fn().mockResolvedValue(makeRow()),
       updateStatus: jest.fn().mockResolvedValue(makeRow({ status: AiActionQueueStatus.APPROVED })),
     });
-    const service = new AiActionApprovalQueueService(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      repo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      makeRabbit() as any,
-    );
+    const service = new AiActionApprovalQueueService(repo as any, makeRabbit() as any);
     await service.editAndApprove({
       queueId: 'q1',
       userId: 'u1',
@@ -150,17 +115,13 @@ describe('AiActionApprovalQueueService', () => {
   it('bulkApprove rejects CRITICAL items', async () => {
     const repo = makeRepo({
       findByIdAndUser: jest.fn((id: string) => {
-        if (id === 'q-crit') return Promise.resolve(makeRow({ id, riskLabel: AiActionRiskLabel.CRITICAL }));
+        if (id === 'q-crit')
+          return Promise.resolve(makeRow({ id, riskLabel: AiActionRiskLabel.CRITICAL }));
         return Promise.resolve(makeRow({ id }));
       }),
       updateStatus: jest.fn().mockResolvedValue(makeRow({ status: AiActionQueueStatus.APPROVED })),
     });
-    const service = new AiActionApprovalQueueService(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      repo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      makeRabbit() as any,
-    );
+    const service = new AiActionApprovalQueueService(repo as any, makeRabbit() as any);
     const result = await service.bulkApprove({
       userId: 'u1',
       queueIds: ['q1', 'q-crit', 'q3'],
@@ -178,12 +139,7 @@ describe('AiActionApprovalQueueService', () => {
       }),
       updateStatus: jest.fn().mockResolvedValue(makeRow()),
     });
-    const service = new AiActionApprovalQueueService(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      repo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      makeRabbit() as any,
-    );
+    const service = new AiActionApprovalQueueService(repo as any, makeRabbit() as any);
     const result = await service.bulkApprove({ userId: 'u1', queueIds: ['q1', 'q-missing'] });
     expect(result.rejectedIds).toEqual(['q-missing']);
     expect(result.reasons['q-missing']).toBe('NOT_FOUND');

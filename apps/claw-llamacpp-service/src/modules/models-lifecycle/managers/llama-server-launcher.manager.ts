@@ -1,3 +1,4 @@
+import { readdirSync } from 'node:fs';
 import * as net from 'node:net';
 import * as path from 'node:path';
 import { Injectable, Logger } from '@nestjs/common';
@@ -5,10 +6,7 @@ import { resolveSafePath, spawnDetached } from '../../../common/utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { type CatalogEntry } from '../../catalog/types/catalog.types';
 import { BinaryService } from '../../binary/services/binary.service';
-import {
-  ALLOWED_CUSTOM_ARGS,
-  FORBIDDEN_ARG_TOKENS,
-} from '../constants/launcher.constants';
+import { ALLOWED_CUSTOM_ARGS, FORBIDDEN_ARG_TOKENS } from '../constants/launcher.constants';
 import { type RuntimeConfig, type SpawnedLlamaServer } from '../types/process.types';
 
 @Injectable()
@@ -31,8 +29,14 @@ export class LlamaServerLauncherManager {
     const port = await this.allocatePort();
     args.push('--port', String(port));
 
-    this.logger.log(`spawn: argv=${args.join(' ')} port=${port}`);
-    const child = spawnDetached(status.path, args, {
+    // status.path can be relative (e.g. `data/llamacpp/bin/llama-server`); Node
+    // child_process.spawn does NOT resolve relative paths via $PATH or cwd
+    // reliably across all kernels — pass an absolute path.
+    const binaryAbsPath = path.isAbsolute(status.path)
+      ? status.path
+      : path.resolve(process.cwd(), status.path);
+    this.logger.log(`spawn: argv=${args.join(' ')} port=${port} bin=${binaryAbsPath}`);
+    const child = spawnDetached(binaryAbsPath, args, {
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 
@@ -83,7 +87,25 @@ export class LlamaServerLauncherManager {
   }
 
   private firstGgufPath(dir: string): string {
-    return path.join(dir, '*.gguf');
+    // child_process.spawn does NOT expand glob patterns (no shell). Resolve
+    // the actual first .gguf file in `dir` and return its absolute path.
+    let entries: string[];
+    try {
+      entries = readdirSync(dir);
+    } catch (error) {
+      this.logger.error(
+        `firstGgufPath: could not read model dir ${dir} — ${
+          error instanceof Error ? error.message : 'unknown'
+        }`,
+      );
+      throw new Error(`No .gguf file found in ${dir}: directory unreadable`);
+    }
+    const ggufs = entries.filter((f) => f.toLowerCase().endsWith('.gguf')).sort();
+    const first = ggufs[0];
+    if (first === undefined) {
+      throw new Error(`No .gguf file found in ${dir}`);
+    }
+    return path.join(dir, first);
   }
 
   private parseCustomArgs(raw: string): string[] {
@@ -94,8 +116,8 @@ export class LlamaServerLauncherManager {
     const tokens = raw.split(/\s+/).filter((token) => token.length > 0);
     const safe: string[] = [];
     for (let i = 0; i < tokens.length; i++) {
-      const token = tokens[i];
-      if (!token || !token.startsWith('--')) {
+      const token = tokens.at(i);
+      if (!token?.startsWith('--')) {
         if (token) {
           safe.push(token);
         }
@@ -121,7 +143,7 @@ export class LlamaServerLauncherManager {
     const max = config.LLAMACPP_PROCESS_PORT_MAX;
     for (let attempt = 0; attempt < 50; attempt++) {
       const port = min + Math.floor(Math.random() * (max - min));
-      // eslint-disable-next-line no-await-in-loop
+
       const free = await this.isPortFree(port);
       if (free) {
         return port;

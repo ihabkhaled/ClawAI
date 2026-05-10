@@ -1,11 +1,11 @@
-import { Injectable } from "@nestjs/common";
-import { MemoryType, Prisma, type MemoryRecord } from "../../../generated/prisma";
-import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
+import { Injectable } from '@nestjs/common';
+import { type MemoryRecord, MemoryType, Prisma } from '../../../generated/prisma';
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import {
   type CreateMemoryData,
   type MemoryFilters,
   type UpdateMemoryData,
-} from "../types/memory.types";
+} from '../types/memory.types';
 
 @Injectable()
 export class MemoryRepository {
@@ -19,11 +19,7 @@ export class MemoryRepository {
     return this.prisma.memoryRecord.findUnique({ where: { id } });
   }
 
-  async findAll(
-    filters: MemoryFilters,
-    page: number,
-    limit: number,
-  ): Promise<MemoryRecord[]> {
+  async findAll(filters: MemoryFilters, page: number, limit: number): Promise<MemoryRecord[]> {
     const where = this.buildWhereClause(filters);
     const skip = (page - 1) * limit;
 
@@ -31,7 +27,7 @@ export class MemoryRepository {
       where,
       skip,
       take: limit,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -49,7 +45,7 @@ export class MemoryRepository {
   async findEnabledByUserId(userId: string, limit: number): Promise<MemoryRecord[]> {
     return this.prisma.memoryRecord.findMany({
       where: { userId, isEnabled: true },
-      orderBy: { updatedAt: "desc" },
+      orderBy: { updatedAt: 'desc' },
       take: limit,
     });
   }
@@ -66,14 +62,14 @@ export class MemoryRepository {
     };
     if (actionKindFilter !== undefined && actionKindFilter.length > 0) {
       return this.prisma.memoryRecord.findMany({
-        where: { ...baseFilter, content: { contains: actionKindFilter, mode: "insensitive" } },
-        orderBy: { updatedAt: "desc" },
+        where: { ...baseFilter, content: { contains: actionKindFilter, mode: 'insensitive' } },
+        orderBy: { updatedAt: 'desc' },
         take: limit,
       });
     }
     return this.prisma.memoryRecord.findMany({
       where: baseFilter,
-      orderBy: { updatedAt: "desc" },
+      orderBy: { updatedAt: 'desc' },
       take: limit,
     });
   }
@@ -83,7 +79,7 @@ export class MemoryRepository {
       where: {
         userId,
         type,
-        content: { contains: content.slice(0, 100), mode: "insensitive" },
+        content: { contains: content.slice(0, 100), mode: 'insensitive' },
       },
     });
     return existing !== null;
@@ -108,7 +104,7 @@ export class MemoryRepository {
     }
 
     if (filters.search) {
-      where.content = { contains: filters.search, mode: "insensitive" };
+      where.content = { contains: filters.search, mode: 'insensitive' };
     }
 
     return where;

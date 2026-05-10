@@ -13,14 +13,14 @@ beforeAll(() => {
 });
 
 describe('AiActionApprovalManager', () => {
-  const makeRiskScorer = (
-    score: number,
-    label: AiActionRiskLabel,
-  ): { assess: jest.Mock } => ({
+  const makeRiskScorer = (score: number, label: AiActionRiskLabel): { assess: jest.Mock } => ({
     assess: jest.fn().mockReturnValue({ riskScore: score, riskLabel: label, reasons: [] }),
   });
 
-  const decisionKindMap: Record<'AUTO_APPROVE' | 'PENDING_APPROVAL' | 'DENIED', AiActionPolicyKind> = {
+  const decisionKindMap: Record<
+    'AUTO_APPROVE' | 'PENDING_APPROVAL' | 'DENIED',
+    AiActionPolicyKind
+  > = {
     AUTO_APPROVE: AiActionPolicyKind.AUTO_APPROVE,
     DENIED: AiActionPolicyKind.DENY,
     PENDING_APPROVAL: AiActionPolicyKind.ALLOW,
@@ -70,7 +70,7 @@ describe('AiActionApprovalManager', () => {
   });
 
   const makeRabbit = (): { publish: jest.Mock } => ({
-    publish: jest.fn().mockResolvedValue(undefined),
+    publish: jest.fn().mockImplementation(async () => {}),
   });
 
   const makePrefRepo = (
@@ -105,15 +105,10 @@ describe('AiActionApprovalManager', () => {
   it('enqueues AUTO_APPROVED status when policy matches AUTO_APPROVE', async () => {
     const queueRepo = makeQueueRepo();
     const manager = new AiActionApprovalManager(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       queueRepo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makePrefRepo() as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeRabbit() as any,
     );
     const result = await manager.enqueueSuggestion(baseInput);
@@ -126,15 +121,10 @@ describe('AiActionApprovalManager', () => {
   it('enqueues PENDING_APPROVAL with future expiresAt by default', async () => {
     const queueRepo = makeQueueRepo();
     const manager = new AiActionApprovalManager(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeRiskScorer(50, AiActionRiskLabel.MEDIUM) as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeMatcher('PENDING_APPROVAL', 'allow-default') as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       queueRepo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makePrefRepo() as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeRabbit() as any,
     );
     const result = await manager.enqueueSuggestion(baseInput);
@@ -148,15 +138,10 @@ describe('AiActionApprovalManager', () => {
     const queueRepo = makeQueueRepo();
     const rabbit = makeRabbit();
     const manager = new AiActionApprovalManager(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeRiskScorer(95, AiActionRiskLabel.CRITICAL) as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeMatcher('DENIED', 'deny-pii') as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       queueRepo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makePrefRepo() as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       rabbit as any,
     );
     const result = await manager.enqueueSuggestion(baseInput);
@@ -174,15 +159,10 @@ describe('AiActionApprovalManager', () => {
   it('publishes pending_approval event on PENDING status', async () => {
     const rabbit = makeRabbit();
     const manager = new AiActionApprovalManager(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeRiskScorer(50, AiActionRiskLabel.MEDIUM) as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeMatcher('PENDING_APPROVAL', null) as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeQueueRepo() as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makePrefRepo() as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       rabbit as any,
     );
     await manager.enqueueSuggestion(baseInput);
@@ -194,15 +174,10 @@ describe('AiActionApprovalManager', () => {
   it('user-pref disabled forces DENIED even when policy allows AUTO_APPROVE', async () => {
     const queueRepo = makeQueueRepo();
     const manager = new AiActionApprovalManager(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       queueRepo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makePrefRepo({ isEnabled: false, autoApproveBelowRiskScore: 100 }) as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeRabbit() as any,
     );
     const result = await manager.enqueueSuggestion(baseInput);
@@ -212,15 +187,10 @@ describe('AiActionApprovalManager', () => {
   it('user threshold below risk downgrades AUTO_APPROVED to PENDING_APPROVAL', async () => {
     const queueRepo = makeQueueRepo();
     const manager = new AiActionApprovalManager(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeRiskScorer(50, AiActionRiskLabel.MEDIUM) as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       queueRepo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makePrefRepo({ isEnabled: true, autoApproveBelowRiskScore: 30 }) as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeRabbit() as any,
     );
     const result = await manager.enqueueSuggestion(baseInput);
@@ -230,15 +200,10 @@ describe('AiActionApprovalManager', () => {
   it('policy DENIED is preserved regardless of user preference', async () => {
     const queueRepo = makeQueueRepo();
     const manager = new AiActionApprovalManager(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeRiskScorer(95, AiActionRiskLabel.CRITICAL) as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeMatcher('DENIED', 'deny-pii') as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       queueRepo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makePrefRepo({ isEnabled: true, autoApproveBelowRiskScore: 100 }) as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeRabbit() as any,
     );
     const result = await manager.enqueueSuggestion(baseInput);
@@ -249,15 +214,13 @@ describe('AiActionApprovalManager', () => {
   describe('per-user perDayBudget cap (12.6)', () => {
     it('enqueues normally when today count < budget', async () => {
       const manager = new AiActionApprovalManager(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeQueueRepo() as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        makePrefRepo({ isEnabled: true, autoApproveBelowRiskScore: 50, perDayBudget: 10 }, 3) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makePrefRepo(
+          { isEnabled: true, autoApproveBelowRiskScore: 50, perDayBudget: 10 },
+          3,
+        ) as any,
         makeRabbit() as any,
       );
       const result = await manager.enqueueSuggestion(baseInput);
@@ -266,15 +229,10 @@ describe('AiActionApprovalManager', () => {
 
     it('DENIES when today count == budget', async () => {
       const manager = new AiActionApprovalManager(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeQueueRepo() as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makePrefRepo({ isEnabled: true, autoApproveBelowRiskScore: 50, perDayBudget: 5 }, 5) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeRabbit() as any,
       );
       const result = await manager.enqueueSuggestion(baseInput);
@@ -283,15 +241,13 @@ describe('AiActionApprovalManager', () => {
 
     it('DENIES when today count > budget', async () => {
       const manager = new AiActionApprovalManager(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeMatcher('PENDING_APPROVAL', null) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeQueueRepo() as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        makePrefRepo({ isEnabled: true, autoApproveBelowRiskScore: null, perDayBudget: 5 }, 9) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makePrefRepo(
+          { isEnabled: true, autoApproveBelowRiskScore: null, perDayBudget: 5 },
+          9,
+        ) as any,
         makeRabbit() as any,
       );
       const result = await manager.enqueueSuggestion(baseInput);
@@ -300,15 +256,13 @@ describe('AiActionApprovalManager', () => {
 
     it('budget=null means unbounded — does not deny', async () => {
       const manager = new AiActionApprovalManager(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeQueueRepo() as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        makePrefRepo({ isEnabled: true, autoApproveBelowRiskScore: 50, perDayBudget: null }, 9999) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        makePrefRepo(
+          { isEnabled: true, autoApproveBelowRiskScore: 50, perDayBudget: null },
+          9999,
+        ) as any,
         makeRabbit() as any,
       );
       const result = await manager.enqueueSuggestion(baseInput);
@@ -320,19 +274,14 @@ describe('AiActionApprovalManager', () => {
   describe('per-provider kill switch (32.4)', () => {
     it('passes when provider is in user allow-list', async () => {
       const manager = new AiActionApprovalManager(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeQueueRepo() as any,
         makePrefRepo({
           isEnabled: true,
           autoApproveBelowRiskScore: 50,
           providers: ['GITHUB', 'GMAIL'],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         }) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeRabbit() as any,
       );
       const result = await manager.enqueueSuggestion({
@@ -344,19 +293,14 @@ describe('AiActionApprovalManager', () => {
 
     it('DENIES when provider is NOT in user allow-list', async () => {
       const manager = new AiActionApprovalManager(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeQueueRepo() as any,
         makePrefRepo({
           isEnabled: true,
           autoApproveBelowRiskScore: 50,
           providers: ['GITHUB'],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         }) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeRabbit() as any,
       );
       const result = await manager.enqueueSuggestion({
@@ -368,19 +312,14 @@ describe('AiActionApprovalManager', () => {
 
     it('null provider always passes (per-provider gate is provider-scoped only)', async () => {
       const manager = new AiActionApprovalManager(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeQueueRepo() as any,
         makePrefRepo({
           isEnabled: true,
           autoApproveBelowRiskScore: 50,
           providers: ['GITHUB'],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         }) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeRabbit() as any,
       );
       const result = await manager.enqueueSuggestion({ ...baseInput, provider: null });
@@ -390,19 +329,14 @@ describe('AiActionApprovalManager', () => {
     it('persists rejectionReason=PROVIDER_DISABLED when denying on provider mismatch', async () => {
       const queueRepo = makeQueueRepo();
       const manager = new AiActionApprovalManager(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         queueRepo as any,
         makePrefRepo({
           isEnabled: true,
           autoApproveBelowRiskScore: 50,
           providers: ['GITHUB'],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         }) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeRabbit() as any,
       );
       await manager.enqueueSuggestion({ ...baseInput, provider: WorkspaceProvider.JIRA });
@@ -412,19 +346,14 @@ describe('AiActionApprovalManager', () => {
 
     it('empty providers[] means unrestricted', async () => {
       const manager = new AiActionApprovalManager(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeRiskScorer(10, AiActionRiskLabel.LOW) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeQueueRepo() as any,
         makePrefRepo({
           isEnabled: true,
           autoApproveBelowRiskScore: 50,
           providers: [],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         }) as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         makeRabbit() as any,
       );
       const result = await manager.enqueueSuggestion({

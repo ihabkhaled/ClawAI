@@ -56,7 +56,8 @@ export class CommandRiskService {
   }
 
   private dualWriteEnabled(): boolean {
-    const raw = process.env[CAPABILITY_DUAL_WRITE_FLAG_ENV];
+    const entry = Object.entries(process.env).find(([k]) => k === CAPABILITY_DUAL_WRITE_FLAG_ENV);
+    const raw = entry?.[1];
     if (raw === undefined || raw === '') {
       return true; // default-on per CLAUDE.md
     }

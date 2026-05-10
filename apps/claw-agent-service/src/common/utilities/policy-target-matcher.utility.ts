@@ -43,10 +43,7 @@ export function matchesCapabilityTarget(
   }
 }
 
-function matchesFilesystem(
-  matcher: Record<string, unknown>,
-  input: RiskAssessmentInput,
-): boolean {
+function matchesFilesystem(matcher: Record<string, unknown>, input: RiskAssessmentInput): boolean {
   const path = readString(input.targetDescriptor, 'path');
   if (path === undefined) {
     return matchesGeneric(matcher, input);
@@ -61,15 +58,12 @@ function matchesFilesystem(
   }
   if (matcher['payloadFlag'] !== undefined) {
     const flagName = String(matcher['payloadFlag']);
-    return Boolean((input.payload as Record<string, unknown>)[flagName]);
+    return Boolean(readUnknown(input.payload as Record<string, unknown>, flagName));
   }
   return matchesGeneric(matcher, input);
 }
 
-function matchesProcess(
-  matcher: Record<string, unknown>,
-  input: RiskAssessmentInput,
-): boolean {
+function matchesProcess(matcher: Record<string, unknown>, input: RiskAssessmentInput): boolean {
   if (matcher['pidRange'] !== undefined) {
     const range = matcher['pidRange'] as [number, number];
     const pid = readNumber(input.targetDescriptor, 'pid');
@@ -79,9 +73,10 @@ function matchesProcess(
     return true;
   }
   if (matcher['binaryNameRegex'] !== undefined) {
-    const binary = readString(input.targetDescriptor, 'binaryName')
-      ?? readString(input.targetDescriptor, 'binary')
-      ?? readString(input.targetDescriptor, 'command');
+    const binary =
+      readString(input.targetDescriptor, 'binaryName') ??
+      readString(input.targetDescriptor, 'binary') ??
+      readString(input.targetDescriptor, 'command');
     if (binary === undefined) {
       return false;
     }
@@ -97,10 +92,7 @@ function matchesProcess(
   return matchesGeneric(matcher, input);
 }
 
-function matchesBrowser(
-  matcher: Record<string, unknown>,
-  input: RiskAssessmentInput,
-): boolean {
+function matchesBrowser(matcher: Record<string, unknown>, input: RiskAssessmentInput): boolean {
   const url = readString(input.targetDescriptor, 'url');
   if (url === undefined) {
     return matchesGeneric(matcher, input);
@@ -119,10 +111,7 @@ function matchesBrowser(
   return matchesGeneric(matcher, input);
 }
 
-function matchesScreen(
-  matcher: Record<string, unknown>,
-  input: RiskAssessmentInput,
-): boolean {
+function matchesScreen(matcher: Record<string, unknown>, input: RiskAssessmentInput): boolean {
   if (matcher['activeAppDenyRegex'] !== undefined) {
     const app = readString(input.targetDescriptor, 'activeApp');
     if (app === undefined) {
@@ -136,28 +125,23 @@ function matchesScreen(
   return matchesGeneric(matcher, input);
 }
 
-function matchesClipboard(
-  matcher: Record<string, unknown>,
-  input: RiskAssessmentInput,
-): boolean {
+function matchesClipboard(matcher: Record<string, unknown>, input: RiskAssessmentInput): boolean {
   if (matcher['payloadFlag'] !== undefined) {
     const flag = String(matcher['payloadFlag']);
-    return Boolean(input.payload[flag]);
+    return Boolean(readUnknown(input.payload, flag));
   }
   return matchesGeneric(matcher, input);
 }
 
-function matchesApplication(
-  matcher: Record<string, unknown>,
-  input: RiskAssessmentInput,
-): boolean {
+function matchesApplication(matcher: Record<string, unknown>, input: RiskAssessmentInput): boolean {
   if (matcher['binaryNameRegex'] !== undefined) {
     const binary = readString(input.targetDescriptor, 'binaryName');
     return binary !== undefined && safeRegexTest(String(matcher['binaryNameRegex']), binary);
   }
   if (matcher['windowTitleRegex'] !== undefined) {
-    const title = readString(input.targetDescriptor, 'windowTitleRegex')
-      ?? readString(input.targetDescriptor, 'windowTitle');
+    const title =
+      readString(input.targetDescriptor, 'windowTitleRegex') ??
+      readString(input.targetDescriptor, 'windowTitle');
     if (input.capabilityOperation === CapabilityOperation.SEND_KEYSTROKE && title === undefined) {
       // Mandatory for keystroke ops — absence trips the deny rule
       return false;
@@ -167,10 +151,7 @@ function matchesApplication(
   return matchesGeneric(matcher, input);
 }
 
-function matchesAudio(
-  matcher: Record<string, unknown>,
-  input: RiskAssessmentInput,
-): boolean {
+function matchesAudio(matcher: Record<string, unknown>, input: RiskAssessmentInput): boolean {
   if (matcher['routesToCloud'] === true) {
     return input.payload['routeToCloud'] === true;
   }
@@ -185,10 +166,7 @@ function matchesAudio(
   return matchesGeneric(matcher, input);
 }
 
-function matchesGeneric(
-  matcher: Record<string, unknown>,
-  input: RiskAssessmentInput,
-): boolean {
+function matchesGeneric(matcher: Record<string, unknown>, input: RiskAssessmentInput): boolean {
   if (matcher['contentRegex'] !== undefined) {
     const haystack = `${JSON.stringify(input.targetDescriptor)}${JSON.stringify(input.payload)}`;
     return safeRegexTest(String(matcher['contentRegex']), haystack);
@@ -204,21 +182,23 @@ function matchesGeneric(
   return Object.keys(matcher).length === 0;
 }
 
+function readUnknown(o: Record<string, unknown>, key: string): unknown {
+  const entry = Object.entries(o).find(([k]) => k === key);
+  return entry?.[1];
+}
+
 function readString(o: Record<string, unknown>, key: string): string | undefined {
-  const v = o[key];
+  const v = readUnknown(o, key);
   return typeof v === 'string' ? v : undefined;
 }
 
 function readNumber(o: Record<string, unknown>, key: string): number | undefined {
-  const v = o[key];
+  const v = readUnknown(o, key);
   return typeof v === 'number' ? v : undefined;
 }
 
-function readStringArray(
-  o: Record<string, unknown>,
-  key: string,
-): string[] | undefined {
-  const v = o[key];
+function readStringArray(o: Record<string, unknown>, key: string): string[] | undefined {
+  const v = readUnknown(o, key);
   return Array.isArray(v) && v.every((x) => typeof x === 'string') ? (v as string[]) : undefined;
 }
 

@@ -34,12 +34,12 @@ export function buildPredecessors(dsl: RecipeDsl): Map<string, Set<string>> {
   // If prev declared on_success (even an empty array), the author has
   // signalled they are managing dependencies explicitly — respect it.
   for (let i = 1; i < dsl.steps.length; i += 1) {
-    const step = dsl.steps[i];
-    const prev = dsl.steps[i - 1];
+    const step = dsl.steps.at(i);
+    const prev = dsl.steps.at(i - 1);
     if (step === undefined || prev === undefined) continue;
     if (prev.on_success !== undefined) continue;
     const stepPredecessors = predecessors.get(step.id);
-    if (stepPredecessors !== undefined && stepPredecessors.size === 0) {
+    if (stepPredecessors?.size === 0) {
       stepPredecessors.add(prev.id);
     }
   }

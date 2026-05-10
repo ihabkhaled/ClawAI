@@ -167,7 +167,7 @@ Return ONLY the repaired answer. Do not explain what you changed. Do not add pre
       [RepairType.FACTUALITY]:
         '- FACTUALITY: Identify and correct factual errors, hallucinations, or incorrect claims',
     };
-    return instructions[repairType];
+    return Object.entries(instructions).find(([k]) => k === repairType)?.[1] ?? '';
   }
 
   private async resolveThreadId(userId: string, dto: RepairMessageDto): Promise<string> {

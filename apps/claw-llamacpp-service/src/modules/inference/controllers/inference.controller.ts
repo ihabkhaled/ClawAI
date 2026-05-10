@@ -4,10 +4,7 @@ import { type Request, type Response } from 'express';
 import { Public } from '../../../app/decorators/public.decorator';
 import { SkipLogging } from '../../../app/decorators/skip-logging.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
-import {
-  ChatCompletionSchema,
-  type ChatCompletionDto,
-} from '../dto/chat-completion.dto';
+import { type ChatCompletionDto, ChatCompletionSchema } from '../dto/chat-completion.dto';
 import { InferenceProxyManager } from '../managers/inference-proxy.manager';
 import { InferenceService } from '../services/inference.service';
 

@@ -240,7 +240,7 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
       if (result.status === 'fulfilled') {
         return result.value;
       }
-      const subTask = subTasks[index];
+      const subTask = subTasks.at(index);
       return {
         title: subTask?.title ?? 'Unknown',
         instruction: subTask?.instruction ?? '',

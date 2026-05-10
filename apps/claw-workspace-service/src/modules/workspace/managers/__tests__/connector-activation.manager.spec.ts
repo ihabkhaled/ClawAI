@@ -39,8 +39,8 @@ describe('ConnectorActivationManager', () => {
 
   beforeEach(() => {
     repo = { findById: jest.fn() };
-    syncManager = { syncConnector: jest.fn().mockResolvedValue(undefined) };
-    rabbit = { subscribe: jest.fn().mockResolvedValue(undefined) };
+    syncManager = { syncConnector: jest.fn().mockImplementation(async () => {}) };
+    rabbit = { subscribe: jest.fn().mockImplementation(async () => {}) };
     manager = new ConnectorActivationManager(
       repo as unknown as WorkspaceConnectorRepository,
       syncManager as unknown as WorkspaceSyncManager,

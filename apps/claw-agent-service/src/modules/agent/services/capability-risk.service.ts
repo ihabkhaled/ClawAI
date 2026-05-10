@@ -21,10 +21,7 @@ import { RiskLabel } from '../../../common/enums/risk-label.enum';
 import { matchesCapabilityTarget } from '../../../common/utilities/policy-target-matcher.utility';
 import { PolicyRepository } from '../repositories/policy.repository';
 import type { AccessPolicy } from '../../../generated/prisma';
-import type {
-  RiskAssessmentInput,
-  RiskAssessmentResult,
-} from '../types/capability.types';
+import type { RiskAssessmentInput, RiskAssessmentResult } from '../types/capability.types';
 
 /**
  * Stream 10 — generalised risk + policy engine for ALL capability
@@ -67,10 +64,7 @@ export class CapabilityRiskService {
     return this.evaluate(input, policies);
   }
 
-  private evaluate(
-    input: RiskAssessmentInput,
-    policies: AccessPolicy[],
-  ): RiskAssessmentResult {
+  private evaluate(input: RiskAssessmentInput, policies: AccessPolicy[]): RiskAssessmentResult {
     const reasons: string[] = [];
     const baseScore = this.computeHeuristicRiskScore(input, reasons);
     const matched = this.matchFirstPolicy(input, policies, reasons);
@@ -92,58 +86,76 @@ export class CapabilityRiskService {
    * reversibility, secret/PII detection on stringified payload, and
    * device/user familiarity.
    */
-  private computeHeuristicRiskScore(
-    input: RiskAssessmentInput,
-    reasons: string[],
-  ): number {
+  private computeHeuristicRiskScore(input: RiskAssessmentInput, reasons: string[]): number {
     let score = 5; // base
-    if (input.blastRadius === CapabilityBlastRadius.SYSTEM_SCOPE) {
-      score += RISK_WEIGHT_BLAST_SYSTEM;
+    score += this.scoreBlastRadius(input.blastRadius, reasons);
+    score += this.scoreReversibility(input.reversibility, reasons);
+    score += this.scoreContentPatterns(input, reasons);
+    score += this.scoreFamiliarity(input, reasons);
+    return Math.min(score, 100);
+  }
+
+  private scoreBlastRadius(blast: CapabilityBlastRadius, reasons: string[]): number {
+    if (blast === CapabilityBlastRadius.SYSTEM_SCOPE) {
       reasons.push('blast=SYSTEM_SCOPE');
-    } else if (
-      input.blastRadius === CapabilityBlastRadius.USER_SCOPE ||
-      input.blastRadius === CapabilityBlastRadius.EXTERNAL
-    ) {
-      score += RISK_WEIGHT_BLAST_USER_OR_EXTERNAL;
-      reasons.push(`blast=${input.blastRadius}`);
+      return RISK_WEIGHT_BLAST_SYSTEM;
     }
-    if (input.reversibility === CapabilityReversibility.IRREVERSIBLE) {
-      score += RISK_WEIGHT_REVERSIBILITY_IRREVERSIBLE;
+    if (blast === CapabilityBlastRadius.USER_SCOPE || blast === CapabilityBlastRadius.EXTERNAL) {
+      reasons.push(`blast=${blast}`);
+      return RISK_WEIGHT_BLAST_USER_OR_EXTERNAL;
+    }
+    return 0;
+  }
+
+  private scoreReversibility(rev: CapabilityReversibility, reasons: string[]): number {
+    if (rev === CapabilityReversibility.IRREVERSIBLE) {
       reasons.push('reversibility=IRREVERSIBLE');
-    } else if (input.reversibility === CapabilityReversibility.COMPENSATABLE) {
-      score += RISK_WEIGHT_REVERSIBILITY_COMPENSATABLE;
-      reasons.push('reversibility=COMPENSATABLE');
+      return RISK_WEIGHT_REVERSIBILITY_IRREVERSIBLE;
     }
+    if (rev === CapabilityReversibility.COMPENSATABLE) {
+      reasons.push('reversibility=COMPENSATABLE');
+      return RISK_WEIGHT_REVERSIBILITY_COMPENSATABLE;
+    }
+    return 0;
+  }
+
+  private scoreContentPatterns(input: RiskAssessmentInput, reasons: string[]): number {
     const haystack = `${JSON.stringify(input.targetDescriptor)}${JSON.stringify(input.payload)}`;
-    score += this.scanPatterns(
-      haystack,
-      CapabilityRiskService.SECRET_PATTERNS,
-      RISK_WEIGHT_PER_SECRET_PATTERN,
-      reasons,
-      'secret_pattern',
+    return (
+      this.scanPatterns(
+        haystack,
+        CapabilityRiskService.SECRET_PATTERNS,
+        RISK_WEIGHT_PER_SECRET_PATTERN,
+        reasons,
+        'secret_pattern',
+      ) +
+      this.scanPatterns(
+        haystack,
+        CapabilityRiskService.PII_PATTERNS,
+        RISK_WEIGHT_PER_PII_PATTERN,
+        reasons,
+        'pii_pattern',
+      )
     );
-    score += this.scanPatterns(
-      haystack,
-      CapabilityRiskService.PII_PATTERNS,
-      RISK_WEIGHT_PER_PII_PATTERN,
-      reasons,
-      'pii_pattern',
-    );
+  }
+
+  private scoreFamiliarity(input: RiskAssessmentInput, reasons: string[]): number {
+    let extra = 0;
     if (
       input.deviceAgeDays !== undefined &&
       input.deviceAgeDays < RISK_NEW_DEVICE_AGE_DAYS_THRESHOLD
     ) {
-      score += RISK_WEIGHT_NEW_DEVICE;
+      extra += RISK_WEIGHT_NEW_DEVICE;
       reasons.push('device<7d');
     }
     if (
       input.userInvocationsThisClassCount !== undefined &&
       input.userInvocationsThisClassCount < RISK_NEW_USER_THIS_CLASS_COUNT_THRESHOLD
     ) {
-      score += RISK_WEIGHT_NEW_USER_THIS_CLASS;
+      extra += RISK_WEIGHT_NEW_USER_THIS_CLASS;
       reasons.push('user_new_to_class');
     }
-    return Math.min(score, 100);
+    return extra;
   }
 
   private scanPatterns(
@@ -234,10 +246,7 @@ export class CapabilityRiskService {
     return RiskLabel.CRITICAL;
   }
 
-  private decideStatus(
-    matched: AccessPolicy | null,
-    score: number,
-  ): CapabilityInvocationStatus {
+  private decideStatus(matched: AccessPolicy | null, score: number): CapabilityInvocationStatus {
     if (matched === null) {
       return CapabilityInvocationStatus.PENDING_APPROVAL;
     }

@@ -15,10 +15,7 @@ import type {
   LocalFrontierPageController,
   RuntimeConfigDraft,
 } from '@/types/local-frontier-ui.types';
-import type {
-  CompatChipMeta,
-  FrontierCatalogEntry,
-} from '@/types/local-frontier.types';
+import type { CompatChipMeta, FrontierCatalogEntry } from '@/types/local-frontier.types';
 import { classifyCompat } from '@/utilities/local-frontier-compat.utility';
 
 import { useCancelPull } from './use-cancel-pull';
@@ -35,7 +32,6 @@ import { useRefreshHardware } from './use-refresh-hardware';
 import { useRetryPull } from './use-retry-pull';
 import { useRuntimeInfo } from './use-runtime-info';
 import { useUpdateRuntimeConfig } from './use-update-runtime-config';
-
 
 export function useLocalFrontierCatalogPage(): LocalFrontierPageController {
   const { t } = useTranslation();
@@ -72,12 +68,11 @@ export function useLocalFrontierCatalogPage(): LocalFrontierPageController {
   const remove = useDeleteWeights();
   const updateConfig = useUpdateRuntimeConfig();
 
-  const entries = catalogQuery.data?.data ?? [];
-  const pullJobs = jobsQuery.data?.rows ?? [];
+  const entries = useMemo(() => catalogQuery.data?.data ?? [], [catalogQuery.data?.data]);
+  const pullJobs = useMemo(() => jobsQuery.data?.rows ?? [], [jobsQuery.data?.rows]);
   const activeJob = pullJobs.find(
     (job) =>
-      job.status === FrontierPullJobStatus.RUNNING ||
-      job.status === FrontierPullJobStatus.PENDING,
+      job.status === FrontierPullJobStatus.RUNNING || job.status === FrontierPullJobStatus.PENDING,
   );
   const liveProgress = usePullProgressSse(activeJob?.id ?? null);
 

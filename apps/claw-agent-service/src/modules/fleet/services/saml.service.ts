@@ -31,39 +31,15 @@ export class SamlService {
     organizationSlug: string,
     dto: SamlCallbackDto,
   ): Promise<{ nameId: string; orgId: string; attributes: { name: string; values: string[] }[] }> {
-    if (organizationSlug !== dto.organizationSlug) {
-      throw new BusinessException(
-        'agent.fleet.slug_mismatch',
-        'SAML_SLUG_MISMATCH',
-        HttpStatus.BAD_REQUEST,
-        { pathSlug: organizationSlug, bodySlug: dto.organizationSlug },
-      );
-    }
-    const org = await this.orgRepo.findBySlug(organizationSlug);
-    if (org === null) {
-      throw new EntityNotFoundException('Organization', organizationSlug);
-    }
-    if (!org.ssoEnabled) {
-      throw new BusinessException(
-        'agent.fleet.sso_disabled',
-        'SSO_DISABLED',
-        HttpStatus.FORBIDDEN,
-        { slug: organizationSlug },
-      );
-    }
-    const meta = (org.ssoMetadataJson as Prisma.JsonValue) as OrgSsoMetadata | null;
-    if (meta === null) {
-      throw new BusinessException(
-        'agent.fleet.sso_not_configured',
-        'SSO_NOT_CONFIGURED',
-        HttpStatus.PRECONDITION_FAILED,
-        { slug: organizationSlug },
-      );
-    }
+    this.assertSlugMatch(organizationSlug, dto.organizationSlug);
+    const org = await this.loadEnabledOrg(organizationSlug);
+    const meta = this.requireSsoMetadata(org.ssoMetadataJson as Prisma.JsonValue, organizationSlug);
     const parsed = parseSamlResponse(dto.SAMLResponse);
     const result: SamlVerificationResult = verifySamlSignature(parsed, meta.expectedIssuer);
     if (!result.ok) {
-      this.logger.warn(`handleCallback: SAML verification failed slug=${organizationSlug} reason=${result.reason}`);
+      this.logger.warn(
+        `handleCallback: SAML verification failed slug=${organizationSlug} reason=${result.reason}`,
+      );
       throw new BusinessException(
         'agent.fleet.saml_verification_failed',
         'SAML_VERIFICATION_FAILED',
@@ -72,10 +48,48 @@ export class SamlService {
       );
     }
     this.logger.log(`handleCallback: SAML verified for ${result.nameId} in ${organizationSlug}`);
-    return {
-      nameId: result.nameId,
-      orgId: org.id,
-      attributes: result.attributes,
-    };
+    return { nameId: result.nameId, orgId: org.id, attributes: result.attributes };
+  }
+
+  private assertSlugMatch(pathSlug: string, bodySlug: string): void {
+    if (pathSlug !== bodySlug) {
+      throw new BusinessException(
+        'agent.fleet.slug_mismatch',
+        'SAML_SLUG_MISMATCH',
+        HttpStatus.BAD_REQUEST,
+        { pathSlug, bodySlug },
+      );
+    }
+  }
+
+  private async loadEnabledOrg(
+    slug: string,
+  ): Promise<NonNullable<Awaited<ReturnType<OrganizationRepository['findBySlug']>>>> {
+    const org = await this.orgRepo.findBySlug(slug);
+    if (org === null) {
+      throw new EntityNotFoundException('Organization', slug);
+    }
+    if (!org.ssoEnabled) {
+      throw new BusinessException(
+        'agent.fleet.sso_disabled',
+        'SSO_DISABLED',
+        HttpStatus.FORBIDDEN,
+        { slug },
+      );
+    }
+    return org;
+  }
+
+  private requireSsoMetadata(metadataJson: Prisma.JsonValue, slug: string): OrgSsoMetadata {
+    const meta = metadataJson as OrgSsoMetadata | null;
+    if (meta === null) {
+      throw new BusinessException(
+        'agent.fleet.sso_not_configured',
+        'SSO_NOT_CONFIGURED',
+        HttpStatus.PRECONDITION_FAILED,
+        { slug },
+      );
+    }
+    return meta;
   }
 }

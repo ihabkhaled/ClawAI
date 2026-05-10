@@ -273,39 +273,70 @@ export class OllamaService implements OnModuleInit {
     // Key by "name:tag" — this is what Ollama returns after pulling (runtime is always OLLAMA here)
     const installedMap = new Map(installed.map((m) => [`${m.name}:${m.tag}`, m]));
 
-    return Promise.all(
-      entries.map(async (entry) => {
-        const metadata = await this.catalogRemoteMetadataService.getMetadata(entry);
-        await this.syncCatalogSourceUrl(entry, metadata.sourceUrl);
-        // Use ollamaName for matching (e.g. "gemma3:4b", "mistral-small3:7b")
-        // catalog tag may differ from Ollama tag (e.g. "7b-routing" vs "7b")
-        const catalogModelKey = entry.ollamaName ?? `${entry.name}:${entry.tag}`;
-        const ollamaKey = metadata.resolvedOllamaName ?? catalogModelKey;
-        // If ollamaName has no colon it has no explicit tag — also try with ":latest" fallback
-        const installedModel =
-          installedMap.get(ollamaKey) ??
-          (!ollamaKey.includes(':') ? (installedMap.get(`${ollamaKey}:latest`) ?? null) : null);
-        const runtimeSizeBytes = installedModel?.sizeBytes ?? null;
+    return Promise.all(entries.map((entry) => this.enrichCatalogEntry(entry, installedMap)));
+  }
 
-        const pullJob =
-          (await this.pullJobsRepository.findLatestByModelName(ollamaKey)) ??
-          (ollamaKey !== catalogModelKey
-            ? await this.pullJobsRepository.findLatestByModelName(catalogModelKey)
-            : null);
+  private async enrichCatalogEntry(
+    entry: ModelCatalogEntry,
+    installedMap: Map<string, LocalModel>,
+  ): Promise<CatalogEntryWithInstallStatus> {
+    const metadata = await this.catalogRemoteMetadataService.getMetadata(entry);
+    await this.syncCatalogSourceUrl(entry, metadata.sourceUrl);
+    const catalogModelKey = entry.ollamaName ?? `${entry.name}:${entry.tag}`;
+    const ollamaKey = metadata.resolvedOllamaName ?? catalogModelKey;
+    const installedModel = this.findInstalledModel(installedMap, ollamaKey);
+    const pullJob = await this.findRelevantPullJob(ollamaKey, catalogModelKey);
+    return this.buildEnrichedEntry(entry, metadata, installedModel, pullJob);
+  }
 
-        return {
-          ...entry,
-          sourceUrl: metadata.sourceUrl ?? enrichCatalogEntryReference(entry).sourceUrl,
-          sizeBytes: metadata.sizeBytes ?? runtimeSizeBytes,
-          isAvailable: metadata.isAvailable,
-          isDownloadable: metadata.isDownloadable,
-          availabilityError: metadata.availabilityError,
-          isInstalled: installedModel !== null,
-          installedModelId: installedModel?.id ?? null,
-          pullJobStatus: pullJob?.status ?? null,
-        };
-      }),
-    );
+  private buildEnrichedEntry(
+    entry: ModelCatalogEntry,
+    metadata: {
+      sourceUrl: string | null;
+      sizeBytes: bigint | null;
+      isAvailable: boolean;
+      isDownloadable: boolean;
+      availabilityError: string | null;
+    },
+    installedModel: LocalModel | null,
+    pullJob: PullJob | null,
+  ): CatalogEntryWithInstallStatus {
+    return {
+      ...entry,
+      sourceUrl: metadata.sourceUrl ?? enrichCatalogEntryReference(entry).sourceUrl,
+      sizeBytes: metadata.sizeBytes ?? installedModel?.sizeBytes ?? null,
+      isAvailable: metadata.isAvailable,
+      isDownloadable: metadata.isDownloadable,
+      availabilityError: metadata.availabilityError,
+      isInstalled: installedModel !== null,
+      installedModelId: installedModel?.id ?? null,
+      pullJobStatus: pullJob?.status ?? null,
+    };
+  }
+
+  private findInstalledModel(
+    installedMap: Map<string, LocalModel>,
+    ollamaKey: string,
+  ): LocalModel | null {
+    const direct = installedMap.get(ollamaKey);
+    if (direct) {
+      return direct;
+    }
+    if (!ollamaKey.includes(':')) {
+      return installedMap.get(`${ollamaKey}:latest`) ?? null;
+    }
+    return null;
+  }
+
+  private async findRelevantPullJob(
+    ollamaKey: string,
+    catalogModelKey: string,
+  ): Promise<PullJob | null> {
+    const direct = await this.pullJobsRepository.findLatestByModelName(ollamaKey);
+    if (direct || ollamaKey === catalogModelKey) {
+      return direct;
+    }
+    return this.pullJobsRepository.findLatestByModelName(catalogModelKey);
   }
 
   private async syncCatalogSourceUrl(

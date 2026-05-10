@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
 
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -17,7 +9,11 @@ import {
   createOrganizationSchema,
 } from '../dto/organization.dto';
 import { OrganizationRepository } from '../repositories/organization.repository';
-import { OrganizationRole, type Organization, type OrganizationMember } from '../../../generated/prisma';
+import {
+  type Organization,
+  type OrganizationMember,
+  OrganizationRole,
+} from '../../../generated/prisma';
 import type { AuthenticatedUser } from '../../../common/types/auth.types';
 
 @Controller('agent/organizations')

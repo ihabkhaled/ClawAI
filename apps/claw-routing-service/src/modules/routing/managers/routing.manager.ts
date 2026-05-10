@@ -2,12 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { LocalModelRole } from '@claw/shared-types';
 import { RoutingMode } from '../../../generated/prisma';
 import { ComplexityClass } from '../../../common/enums/complexity-class.enum';
+import { recordGet } from '../../../common/utilities';
 import { RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
 import { OllamaRouterManager } from './ollama-router.manager';
 import { PromptBuilderManager } from './prompt-builder.manager';
 import { ComplexityClassifierManager } from './complexity-classifier.manager';
 import { CapabilityRouterManager } from './capability-router.manager';
 import { ImageDetectionManager } from './image-detection.manager';
+import { PROVIDER_INFERENCE_RULES } from '../constants/provider-inference.constants';
+import type { ProviderInferenceRule } from '../types/provider-inference.types';
 import type { ComplexityClassification } from '../types/complexity.types';
 import type { ExplanationFactor, RoutingExplanation } from '../types/explanation.types';
 import {
@@ -20,7 +23,6 @@ import {
   CLOUD_MODEL_GROK_DEFAULT,
   CLOUD_MODEL_REASONING,
   CLOUD_PROVIDER_ANTHROPIC,
-  CLOUD_PROVIDER_DEEPSEEK,
   CLOUD_PROVIDER_GEMINI,
   CLOUD_PROVIDER_GROK,
   CLOUD_PROVIDER_OPENAI,
@@ -77,6 +79,8 @@ import {
 import type { InstalledModelInfo } from '../types/installed-model.types';
 import {
   type FallbackEntry,
+  type HeuristicState,
+  type ModeHandler,
   type MultiIntentResult,
   type RouterDecisionSnapshot,
   type RoutingContext,
@@ -116,36 +120,42 @@ export class RoutingManager {
     this.logger.log(
       `doEvaluate: starting for thread ${context.threadId ?? 'none'}, userMode=${context.userMode ?? 'AUTO'}, complexity=${context.complexity?.class ?? 'unknown'}`,
     );
+    const mode = await this.resolveRoutingMode(context);
+    return this.dispatchByMode(mode, context);
+  }
+
+  private async resolveRoutingMode(context: RoutingContext): Promise<RoutingMode> {
     const explicitUserMode =
       context.userMode !== undefined &&
       context.userMode !== null &&
       context.userMode !== RoutingMode.AUTO;
-
-    // Check active policies for overrides
     const policies = explicitUserMode ? [] : await this.policiesRepository.findActivePolicies();
     const policyOverride = explicitUserMode ? null : this.applyPolicies(policies, context);
     const mode = policyOverride ?? context.userMode ?? RoutingMode.AUTO;
     this.logger.debug(
       `doEvaluate: resolved mode=${mode} (policyOverride=${policyOverride ?? 'none'})`,
     );
+    return mode;
+  }
 
-    switch (mode) {
-      case RoutingMode.MANUAL_MODEL:
-        return this.handleManualModel(context);
-      case RoutingMode.LOCAL_ONLY:
-        return this.handleLocalOnly(context);
-      case RoutingMode.PRIVACY_FIRST:
-        return this.handlePrivacyFirst(context);
-      case RoutingMode.LOW_LATENCY:
-        return this.handleLowLatency(context);
-      case RoutingMode.HIGH_REASONING:
-        return this.handleHighReasoning(context);
-      case RoutingMode.COST_SAVER:
-        return this.handleCostSaver(context);
-      case RoutingMode.AUTO:
-      default:
-        return this.handleAuto(context);
-    }
+  private dispatchByMode(
+    mode: RoutingMode,
+    context: RoutingContext,
+  ): Promise<RoutingDecisionResult> | RoutingDecisionResult {
+    const handler = this.modeHandlers.get(mode);
+    return handler ? handler(context) : this.handleAuto(context);
+  }
+
+  private get modeHandlers(): ReadonlyMap<RoutingMode, ModeHandler> {
+    const handlers = new Map<RoutingMode, ModeHandler>();
+    handlers.set(RoutingMode.MANUAL_MODEL, (ctx) => this.handleManualModel(ctx));
+    handlers.set(RoutingMode.LOCAL_ONLY, (ctx) => this.handleLocalOnly(ctx));
+    handlers.set(RoutingMode.PRIVACY_FIRST, (ctx) => this.handlePrivacyFirst(ctx));
+    handlers.set(RoutingMode.LOW_LATENCY, (ctx) => this.handleLowLatency(ctx));
+    handlers.set(RoutingMode.HIGH_REASONING, (ctx) => this.handleHighReasoning(ctx));
+    handlers.set(RoutingMode.COST_SAVER, (ctx) => this.handleCostSaver(ctx));
+    handlers.set(RoutingMode.AUTO, (ctx) => this.handleAuto(ctx));
+    return handlers;
   }
 
   buildFallbackChain(
@@ -377,108 +387,22 @@ export class RoutingManager {
     this.logger.debug('handleAuto: starting AUTO routing');
     const localEnforcementDomain = this.detectLocalEnforcementDomain(context.message);
 
-    // Privacy check FIRST — force local if sensitive content detected
-    if (this.detectPrivacySensitive(context.message)) {
-      this.logger.log('handleAuto: privacy-sensitive content detected — forcing local routing');
-      this.logger.debug('handleAuto: local enforcement deferred until after Ollama router');
-    }
+    this.logSensitiveContentDetections(context.message);
 
-    // Medical and legal content is inherently sensitive — force local
-    if (this.detectMedicalRequest(context.message)) {
-      this.logger.log('handleAuto: medical content detected — forcing local routing');
-      this.logger.debug('handleAuto: local enforcement deferred until after Ollama router');
-    }
-    if (this.detectLegalRequest(context.message)) {
-      this.logger.log('handleAuto: legal content detected — forcing local routing');
-      this.logger.debug('handleAuto: local enforcement deferred until after Ollama router');
-    }
-    if (this.detectFinanceRequest(context.message)) {
-      this.logger.log('handleAuto: financial content detected — forcing local routing');
-      this.logger.debug('handleAuto: local enforcement deferred until after Ollama router');
-    }
-    if (this.detectExecutiveRequest(context.message)) {
-      this.logger.log('handleAuto: executive content detected — forcing local routing');
-      this.logger.debug('handleAuto: local enforcement deferred until after Ollama router');
-    }
-    if (this.detectGovernmentRequest(context.message)) {
-      this.logger.log(
-        'handleAuto: government/intelligence content detected — forcing local routing',
-      );
-      this.logger.debug('handleAuto: local enforcement deferred until after Ollama router');
-    }
-
-    // Detect image requests early (before Ollama router, which may misclassify)
-    this.logger.debug('handleAuto: checking for image generation request');
-    const imageResult = this.detectImageRequest(context);
-    if (imageResult && !localEnforcementDomain) {
-      this.logger.log('handleAuto: image generation request detected — routing to image provider');
-      return imageResult;
-    }
-
-    this.logger.debug('handleAuto: checking for file generation request');
-    const fileResult = this.detectFileGenerationRequest(context);
-    if (fileResult && !localEnforcementDomain) {
-      this.logger.log(
-        'handleAuto: file generation request detected — routing to file-gen provider',
-      );
-      return fileResult;
-    }
-
-    // Multimodal capability routing — must run before category detection so that
-    // audio/video/OCR/web-search messages are not incorrectly claimed by local categories
-    const capabilityResult = this.capabilityRouter.route(context);
-    if (capabilityResult && !localEnforcementDomain) {
-      this.logger.log(
-        `handleAuto: capability routing → ${capabilityResult.provider}/${capabilityResult.model} (${capabilityResult.capability})`,
-      );
-      const primary = { provider: capabilityResult.provider, model: capabilityResult.model };
-      return {
-        selectedProvider: capabilityResult.provider,
-        selectedModel: capabilityResult.model,
-        routingMode: RoutingMode.AUTO,
-        confidence: 0.88,
-        reasonTags: ['auto', 'multimodal', capabilityResult.reason],
-        privacyClass: 'cloud',
-        costClass: 'medium',
-        detectedCategory: capabilityResult.capability.toLowerCase(),
-        fallbackChain: this.buildFallbackChain(primary, context),
-      };
-    }
-
-    // Try Ollama-assisted routing first
-    this.logger.debug('handleAuto: attempting Ollama-assisted routing');
-    const ollamaDecision = await this.ollamaRouter.route(context);
-    if (ollamaDecision) {
-      this.logger.log(
-        `handleAuto: Ollama router decided ${ollamaDecision.provider}/${ollamaDecision.model} (confidence=${String(ollamaDecision.confidence)})`,
-      );
-      if (this.shouldRejectRouterSelection(context.message, ollamaDecision)) {
-        this.logger.warn(
-          `handleAuto: rejecting semantically invalid Ollama route ${ollamaDecision.provider}/${ollamaDecision.model} for message="${context.message.slice(0, 80)}"`,
-        );
-      } else {
-        const enforcedLocal = Boolean(localEnforcementDomain);
-        const selectedProvider = enforcedLocal ? LOCAL_PROVIDER : ollamaDecision.provider;
-        const selectedModel = enforcedLocal ? LOCAL_MODEL_DEFAULT : ollamaDecision.model;
-        const primary = { provider: selectedProvider, model: selectedModel };
-        const reasonTags = ['auto', 'ollama_router', ollamaDecision.reason];
-        if (enforcedLocal && localEnforcementDomain) {
-          reasonTags.push('privacy_enforced', 'local_only', localEnforcementDomain);
-        }
-
-        return {
-          selectedProvider,
-          selectedModel,
-          routingMode: RoutingMode.AUTO,
-          confidence: ollamaDecision.confidence,
-          reasonTags,
-          privacyClass: selectedProvider === LOCAL_PROVIDER ? 'local' : 'cloud',
-          costClass: selectedProvider === LOCAL_PROVIDER ? 'free' : 'medium',
-          detectedCategory: localEnforcementDomain?.replace('domain_', ''),
-          fallbackChain: this.buildFallbackChain(primary, context),
-          routerModel: ollamaDecision.routerModel,
-        };
+    if (!localEnforcementDomain) {
+      const earlyContent = this.tryImageOrFileGeneration(context);
+      if (earlyContent) {
+        return earlyContent;
       }
+      const capabilityResult = this.tryCapabilityRouting(context);
+      if (capabilityResult) {
+        return capabilityResult;
+      }
+    }
+
+    const ollamaResult = await this.tryOllamaAssistedRouting(context, localEnforcementDomain);
+    if (ollamaResult) {
+      return ollamaResult;
     }
 
     if (localEnforcementDomain) {
@@ -488,16 +412,110 @@ export class RoutingManager {
       return this.buildLocalPrivacyDecision(context, localEnforcementDomain);
     }
 
-    // Check category-specific local model routing after the router has had first refusal.
     const categoryResult = await this.detectCategoryRoute(context);
     if (categoryResult) {
       this.logger.log('handleAuto: category-specific local model matched');
       return categoryResult;
     }
 
-    // Fallback to heuristic routing
     this.logger.debug('handleAuto: Ollama router unavailable, using heuristic fallback');
     return this.handleAutoHeuristic(context);
+  }
+
+  private logSensitiveContentDetections(message: string): void {
+    const detections: Array<[boolean, string]> = [
+      [this.detectPrivacySensitive(message), 'privacy-sensitive content'],
+      [this.detectMedicalRequest(message), 'medical content'],
+      [this.detectLegalRequest(message), 'legal content'],
+      [this.detectFinanceRequest(message), 'financial content'],
+      [this.detectExecutiveRequest(message), 'executive content'],
+      [this.detectGovernmentRequest(message), 'government/intelligence content'],
+    ];
+    for (const [matched, label] of detections) {
+      if (matched) {
+        this.logger.log(`handleAuto: ${label} detected — forcing local routing`);
+      }
+    }
+  }
+
+  private tryImageOrFileGeneration(context: RoutingContext): RoutingDecisionResult | null {
+    this.logger.debug('handleAuto: checking for image generation request');
+    const imageResult = this.detectImageRequest(context);
+    if (imageResult) {
+      this.logger.log('handleAuto: image generation request detected — routing to image provider');
+      return imageResult;
+    }
+    this.logger.debug('handleAuto: checking for file generation request');
+    const fileResult = this.detectFileGenerationRequest(context);
+    if (fileResult) {
+      this.logger.log(
+        'handleAuto: file generation request detected — routing to file-gen provider',
+      );
+      return fileResult;
+    }
+    return null;
+  }
+
+  private tryCapabilityRouting(context: RoutingContext): RoutingDecisionResult | null {
+    const capabilityResult = this.capabilityRouter.route(context);
+    if (!capabilityResult) {
+      return null;
+    }
+    this.logger.log(
+      `handleAuto: capability routing → ${capabilityResult.provider}/${capabilityResult.model} (${capabilityResult.capability})`,
+    );
+    const primary = { provider: capabilityResult.provider, model: capabilityResult.model };
+    return {
+      selectedProvider: capabilityResult.provider,
+      selectedModel: capabilityResult.model,
+      routingMode: RoutingMode.AUTO,
+      confidence: 0.88,
+      reasonTags: ['auto', 'multimodal', capabilityResult.reason],
+      privacyClass: 'cloud',
+      costClass: 'medium',
+      detectedCategory: capabilityResult.capability.toLowerCase(),
+      fallbackChain: this.buildFallbackChain(primary, context),
+    };
+  }
+
+  private async tryOllamaAssistedRouting(
+    context: RoutingContext,
+    localEnforcementDomain: string | null,
+  ): Promise<RoutingDecisionResult | null> {
+    this.logger.debug('handleAuto: attempting Ollama-assisted routing');
+    const ollamaDecision = await this.ollamaRouter.route(context);
+    if (!ollamaDecision) {
+      return null;
+    }
+    this.logger.log(
+      `handleAuto: Ollama router decided ${ollamaDecision.provider}/${ollamaDecision.model} (confidence=${String(ollamaDecision.confidence)})`,
+    );
+    if (this.shouldRejectRouterSelection(context.message, ollamaDecision)) {
+      this.logger.warn(
+        `handleAuto: rejecting semantically invalid Ollama route ${ollamaDecision.provider}/${ollamaDecision.model} for message="${context.message.slice(0, 80)}"`,
+      );
+      return null;
+    }
+    const enforcedLocal = Boolean(localEnforcementDomain);
+    const selectedProvider = enforcedLocal ? LOCAL_PROVIDER : ollamaDecision.provider;
+    const selectedModel = enforcedLocal ? LOCAL_MODEL_DEFAULT : ollamaDecision.model;
+    const primary = { provider: selectedProvider, model: selectedModel };
+    const reasonTags = ['auto', 'ollama_router', ollamaDecision.reason];
+    if (enforcedLocal && localEnforcementDomain) {
+      reasonTags.push('privacy_enforced', 'local_only', localEnforcementDomain);
+    }
+    return {
+      selectedProvider,
+      selectedModel,
+      routingMode: RoutingMode.AUTO,
+      confidence: ollamaDecision.confidence,
+      reasonTags,
+      privacyClass: selectedProvider === LOCAL_PROVIDER ? 'local' : 'cloud',
+      costClass: selectedProvider === LOCAL_PROVIDER ? 'free' : 'medium',
+      detectedCategory: localEnforcementDomain?.replace('domain_', ''),
+      fallbackChain: this.buildFallbackChain(primary, context),
+      routerModel: ollamaDecision.routerModel,
+    };
   }
 
   private detectLocalEnforcementDomain(message: string): string | null {
@@ -524,51 +542,31 @@ export class RoutingManager {
 
   private async handleAutoHeuristic(context: RoutingContext): Promise<RoutingDecisionResult> {
     this.logger.debug('handleAutoHeuristic: starting heuristic-based routing');
-    // Check for image/file generation requests first
-    const imageResult = this.detectImageRequest(context);
-    if (imageResult) {
-      this.logger.debug('handleAutoHeuristic: image request detected via heuristic');
-      return imageResult;
-    }
 
-    const fileResult = this.detectFileGenerationRequest(context);
-    if (fileResult) {
-      this.logger.debug('handleAutoHeuristic: file generation request detected via heuristic');
-      return fileResult;
+    const earlyContent = this.tryImageOrFileGeneration(context);
+    if (earlyContent) {
+      return earlyContent;
     }
-
-    // Multimodal capability routing — audio, video, PDF, OCR, web search, vision
-    const capabilityResult = this.capabilityRouter.route(context);
+    const capabilityResult = this.tryCapabilityRouting(context);
     if (capabilityResult) {
-      this.logger.log(
-        `handleAutoHeuristic: capability routing → ${capabilityResult.provider}/${capabilityResult.model} (${capabilityResult.capability})`,
-      );
-      const primary = { provider: capabilityResult.provider, model: capabilityResult.model };
-      return {
-        selectedProvider: capabilityResult.provider,
-        selectedModel: capabilityResult.model,
-        routingMode: RoutingMode.AUTO,
-        confidence: 0.88,
-        reasonTags: ['auto', 'multimodal', capabilityResult.reason],
-        privacyClass: 'cloud',
-        costClass: 'medium',
-        detectedCategory: capabilityResult.capability.toLowerCase(),
-        fallbackChain: this.buildFallbackChain(primary, context),
-      };
+      return capabilityResult;
     }
-
-    // Check category-specific local model routing in heuristic path
     const categoryResult = await this.detectCategoryRoute(context);
     if (categoryResult) {
       this.logger.debug('handleAutoHeuristic: category-specific local model matched');
       return categoryResult;
     }
 
+    const heuristicState = await this.computeHeuristicState(context);
+    return this.applyHeuristicRules(context, heuristicState);
+  }
+
+  private async computeHeuristicState(context: RoutingContext): Promise<HeuristicState> {
     const localHealthy = this.isRuntimeHealthy('OLLAMA', context);
     const messageLength = context.message.length;
     const complexity = context.complexity;
     const canPreferGenericLocal = await this.canPreferGenericLocal(context);
-    const localLatencyMs = context.providerLatencyMs?.[LOCAL_PROVIDER] ?? null;
+    const localLatencyMs = recordGet(context.providerLatencyMs, LOCAL_PROVIDER) ?? null;
     this.logger.debug(
       `handleAutoHeuristic: localHealthy=${String(localHealthy)} messageLength=${String(messageLength)} complexity=${complexity?.class ?? 'unclassified'} canPreferGenericLocal=${String(canPreferGenericLocal)} localLatencyMs=${String(localLatencyMs ?? 'n/a')}`,
     );
@@ -582,105 +580,139 @@ export class RoutingManager {
       localLatencyMs !== null &&
       localLatencyMs >= (context.localDegradeLatencyMs ?? 18_000) &&
       bestAvailable !== null;
+    return {
+      localHealthy,
+      messageLength,
+      complexity,
+      canPreferGenericLocal,
+      cloudPriority,
+      bestAvailable,
+      localLikelySlow,
+    };
+  }
 
-    // SAR2: EXPERT complexity → prefer high-reasoning cloud model when available
-    if (
-      complexity?.class === ComplexityClass.EXPERT &&
-      this.isConnectorHealthy(CLOUD_PROVIDER_ANTHROPIC, context)
-    ) {
-      this.logger.log('handleAutoHeuristic: EXPERT complexity — routing to high-reasoning cloud');
-      const primary = { provider: CLOUD_PROVIDER_ANTHROPIC, model: CLOUD_MODEL_REASONING };
-      return {
-        selectedProvider: CLOUD_PROVIDER_ANTHROPIC,
-        selectedModel: CLOUD_MODEL_REASONING,
-        routingMode: RoutingMode.AUTO,
-        confidence: 0.82,
-        reasonTags: ['auto', 'expert_complexity', 'high_reasoning_cloud'],
-        privacyClass: 'cloud',
-        costClass: 'high',
-        fallbackChain: this.buildFallbackChain(primary, context),
-        estimatedCostPer1M: this.estimateProviderCost(CLOUD_PROVIDER_ANTHROPIC),
-      };
+  private applyHeuristicRules(
+    context: RoutingContext,
+    state: HeuristicState,
+  ): RoutingDecisionResult {
+    const expertResult = this.tryExpertComplexityRoute(context, state);
+    if (expertResult) {
+      return expertResult;
     }
+    const localResult = this.tryLocalPreferredRoute(context, state);
+    if (localResult) {
+      return localResult;
+    }
+    const cloudResult = this.tryCloudRoute(context, state);
+    if (cloudResult) {
+      return cloudResult;
+    }
+    return this.buildUltimateLocalFallback();
+  }
 
-    // SAR2: SIMPLE complexity + local available → prefer local immediately
+  private tryExpertComplexityRoute(
+    context: RoutingContext,
+    state: HeuristicState,
+  ): RoutingDecisionResult | null {
     if (
-      complexity?.class === ComplexityClass.SIMPLE &&
-      localHealthy &&
-      canPreferGenericLocal &&
-      !localLikelySlow
+      state.complexity?.class !== ComplexityClass.EXPERT ||
+      !this.isConnectorHealthy(CLOUD_PROVIDER_ANTHROPIC, context)
     ) {
+      return null;
+    }
+    this.logger.log('handleAutoHeuristic: EXPERT complexity — routing to high-reasoning cloud');
+    const primary = { provider: CLOUD_PROVIDER_ANTHROPIC, model: CLOUD_MODEL_REASONING };
+    return {
+      selectedProvider: CLOUD_PROVIDER_ANTHROPIC,
+      selectedModel: CLOUD_MODEL_REASONING,
+      routingMode: RoutingMode.AUTO,
+      confidence: 0.82,
+      reasonTags: ['auto', 'expert_complexity', 'high_reasoning_cloud'],
+      privacyClass: 'cloud',
+      costClass: 'high',
+      fallbackChain: this.buildFallbackChain(primary, context),
+      estimatedCostPer1M: this.estimateProviderCost(CLOUD_PROVIDER_ANTHROPIC),
+    };
+  }
+
+  private tryLocalPreferredRoute(
+    context: RoutingContext,
+    state: HeuristicState,
+  ): RoutingDecisionResult | null {
+    if (!state.localHealthy || !state.canPreferGenericLocal || state.localLikelySlow) {
+      return null;
+    }
+    const isSimple = state.complexity?.class === ComplexityClass.SIMPLE;
+    const isShort = state.messageLength < 500;
+    if (!isSimple && !isShort) {
+      return null;
+    }
+    if (isSimple) {
       this.logger.log('handleAutoHeuristic: SIMPLE complexity + local available — routing local');
-      const primary = { provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT };
-      return {
-        selectedProvider: LOCAL_PROVIDER,
-        selectedModel: LOCAL_MODEL_DEFAULT,
-        routingMode: RoutingMode.AUTO,
-        confidence: CONFIDENCE_HEURISTIC_FALLBACK,
-        reasonTags: ['auto', 'simple_complexity', 'local_preferred'],
-        privacyClass: 'local',
-        costClass: 'free',
-        fallbackChain: this.buildFallbackChain(primary, context),
-        estimatedCostPer1M: 0,
-      };
-    }
-
-    // Prefer local for short messages if Ollama is available
-    if (localHealthy && messageLength < 500 && canPreferGenericLocal && !localLikelySlow) {
+    } else {
       this.logger.debug('handleAutoHeuristic: short message + local available — using local');
-      const primary = { provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT };
-      return {
-        selectedProvider: LOCAL_PROVIDER,
-        selectedModel: LOCAL_MODEL_DEFAULT,
-        routingMode: RoutingMode.AUTO,
-        confidence: CONFIDENCE_HEURISTIC_FALLBACK,
-        reasonTags: ['auto', 'short_message', 'local_available'],
-        privacyClass: 'local',
-        costClass: 'free',
-        fallbackChain: this.buildFallbackChain(primary, context),
-      };
     }
+    const primary = { provider: LOCAL_PROVIDER, model: LOCAL_MODEL_DEFAULT };
+    const reasonTags = isSimple
+      ? ['auto', 'simple_complexity', 'local_preferred']
+      : ['auto', 'short_message', 'local_available'];
+    return {
+      selectedProvider: LOCAL_PROVIDER,
+      selectedModel: LOCAL_MODEL_DEFAULT,
+      routingMode: RoutingMode.AUTO,
+      confidence: CONFIDENCE_HEURISTIC_FALLBACK,
+      reasonTags,
+      privacyClass: 'local',
+      costClass: 'free',
+      fallbackChain: this.buildFallbackChain(primary, context),
+      estimatedCostPer1M: 0,
+    };
+  }
 
-    if (bestAvailable) {
+  private tryCloudRoute(
+    context: RoutingContext,
+    state: HeuristicState,
+  ): RoutingDecisionResult | null {
+    if (state.bestAvailable) {
       this.logger.debug(
-        `handleAutoHeuristic: best available cloud=${bestAvailable.provider}/${bestAvailable.model}`,
+        `handleAutoHeuristic: best available cloud=${state.bestAvailable.provider}/${state.bestAvailable.model}`,
       );
       return {
-        selectedProvider: bestAvailable.provider,
-        selectedModel: bestAvailable.model,
+        selectedProvider: state.bestAvailable.provider,
+        selectedModel: state.bestAvailable.model,
         routingMode: RoutingMode.AUTO,
-        confidence: localLikelySlow ? 0.8 : 0.75,
+        confidence: state.localLikelySlow ? 0.8 : 0.75,
         reasonTags: [
           'auto',
           'cloud_preferred',
           'connector_available',
-          ...(localLikelySlow ? ['latency_aware', 'local_slow'] : ['latency_aware']),
+          ...(state.localLikelySlow ? ['latency_aware', 'local_slow'] : ['latency_aware']),
         ],
         privacyClass: 'cloud',
         costClass: 'medium',
-        fallbackChain: this.buildFallbackChain(bestAvailable, context),
+        fallbackChain: this.buildFallbackChain(state.bestAvailable, context),
       };
     }
-
-    // No connector marked healthy — still try the first configured one as a best-effort
-    const firstCloud = cloudPriority[0];
-    if (firstCloud) {
-      this.logger.debug(
-        `handleAutoHeuristic: no healthy connector — best-effort with ${firstCloud.provider}`,
-      );
-      return {
-        selectedProvider: firstCloud.provider,
-        selectedModel: firstCloud.model,
-        routingMode: RoutingMode.AUTO,
-        confidence: 0.5,
-        reasonTags: ['auto', 'cloud_preferred', 'no_healthy_connector'],
-        privacyClass: 'cloud',
-        costClass: 'medium',
-        fallbackChain: this.buildFallbackChain(firstCloud, context),
-      };
+    const firstCloud = state.cloudPriority[0];
+    if (!firstCloud) {
+      return null;
     }
+    this.logger.debug(
+      `handleAutoHeuristic: no healthy connector — best-effort with ${firstCloud.provider}`,
+    );
+    return {
+      selectedProvider: firstCloud.provider,
+      selectedModel: firstCloud.model,
+      routingMode: RoutingMode.AUTO,
+      confidence: 0.5,
+      reasonTags: ['auto', 'cloud_preferred', 'no_healthy_connector'],
+      privacyClass: 'cloud',
+      costClass: 'medium',
+      fallbackChain: this.buildFallbackChain(firstCloud, context),
+    };
+  }
 
-    // Ultimate fallback — local
+  private buildUltimateLocalFallback(): RoutingDecisionResult {
     this.logger.debug('handleAutoHeuristic: no cloud available — ultimate fallback to local');
     return {
       selectedProvider: LOCAL_PROVIDER,
@@ -698,52 +730,19 @@ export class RoutingManager {
     this.logger.debug(`inferProvider: inferring provider for model="${model}"`);
     const lower = model.toLowerCase().replace(/^models\//, '');
 
-    // Image generation models
-    if (lower.includes('dall-e') || lower.includes('dalle')) {
-      return IMAGE_PROVIDER_OPENAI;
-    }
-    if (lower.includes('imagen')) {
-      return IMAGE_PROVIDER_GEMINI;
-    }
-    if (
-      lower.includes('sdxl') ||
-      lower.includes('stable-diffusion') ||
-      lower.includes('sd-turbo')
-    ) {
-      return IMAGE_PROVIDER_LOCAL;
-    }
-
-    if (lower.startsWith('claude') || lower.includes('anthropic')) {
-      return CLOUD_PROVIDER_ANTHROPIC;
-    }
-    if (
-      lower.startsWith('gpt') ||
-      lower.includes('openai') ||
-      lower.startsWith('o1-') ||
-      lower.startsWith('o3-') ||
-      lower.startsWith('o4-')
-    ) {
-      return CLOUD_PROVIDER_OPENAI;
-    }
-    if (lower.includes('gemini')) {
-      return CLOUD_PROVIDER_GEMINI;
-    }
-    if (lower.includes('deepseek')) {
-      return CLOUD_PROVIDER_DEEPSEEK;
-    }
-    if (lower.startsWith('grok')) {
-      return CLOUD_PROVIDER_GROK;
-    }
-    if (
-      lower.includes('llama') ||
-      lower.includes('mistral') ||
-      lower.includes('phi') ||
-      lower.includes('qwen') ||
-      lower.includes('qwen')
-    ) {
-      return LOCAL_PROVIDER;
+    for (const rule of PROVIDER_INFERENCE_RULES) {
+      if (this.matchesProviderRule(lower, rule)) {
+        return rule.provider;
+      }
     }
     return CLOUD_PROVIDER_ANTHROPIC;
+  }
+
+  private matchesProviderRule(lower: string, rule: ProviderInferenceRule): boolean {
+    if (rule.startsWith?.some((p) => lower.startsWith(p))) {
+      return true;
+    }
+    return rule.includes?.some((p) => lower.includes(p)) ?? false;
   }
 
   private detectImageRequest(context: RoutingContext): RoutingDecisionResult | null {
@@ -1055,7 +1054,8 @@ export class RoutingManager {
     );
 
     const category = detectedDomain?.replace('domain_', '') ?? 'general';
-    const latencySlaMs = CATEGORY_LATENCY_SLA_MS[category] ?? CATEGORY_LATENCY_SLA_MS['general'];
+    const latencySlaMs =
+      recordGet(CATEGORY_LATENCY_SLA_MS, category) ?? recordGet(CATEGORY_LATENCY_SLA_MS, 'general');
 
     return {
       selectedProvider: LOCAL_PROVIDER,
@@ -1197,7 +1197,7 @@ export class RoutingManager {
       creative_writing: LocalModelRole.LOCAL_FALLBACK_CHAT,
     };
 
-    return roleMap[category] ?? null;
+    return recordGet(roleMap, category) ?? null;
   }
 
   private async findModelForRole(role: LocalModelRole): Promise<InstalledModelInfo | null> {
@@ -1250,7 +1250,8 @@ export class RoutingManager {
     reasonTags: string[],
   ): RoutingDecisionResult | null {
     const category = multiIntent.primary;
-    const latencySlaMs = CATEGORY_LATENCY_SLA_MS[category] ?? CATEGORY_LATENCY_SLA_MS['general'];
+    const latencySlaMs =
+      recordGet(CATEGORY_LATENCY_SLA_MS, category) ?? recordGet(CATEGORY_LATENCY_SLA_MS, 'general');
     const hasCodingSignal = this.detectCodingRequest(context.message);
     const hasReasoningSignal =
       this.detectReasoningRequest(context.message) || this.detectThinkingRequest(context.message);
@@ -1405,7 +1406,7 @@ export class RoutingManager {
     let bestLatency = Number.POSITIVE_INFINITY;
 
     for (const candidate of candidates) {
-      const value = latencyMap[candidate];
+      const value = recordGet(latencyMap, candidate);
       if (typeof value === 'number' && value > 0 && value < bestLatency) {
         bestLatency = value;
       }
@@ -1427,7 +1428,7 @@ export class RoutingManager {
     const now = Date.now();
     const candidates = this.getProviderMetricCandidates(provider);
     return candidates.some((candidate) => {
-      const openUntil = circuitMap[candidate];
+      const openUntil = recordGet(circuitMap, candidate);
       return typeof openUntil === 'number' && openUntil > now;
     });
   }
@@ -1454,7 +1455,7 @@ export class RoutingManager {
     }
 
     // If no health data exists, assume healthy (best-effort — same as connectors)
-    const healthy = context.runtimeHealth?.[runtime] ?? true;
+    const healthy = recordGet(context.runtimeHealth, runtime) ?? true;
     this.logger.debug(`isRuntimeHealthy: runtime=${runtime} healthy=${String(healthy)}`);
     return healthy;
   }
@@ -1474,7 +1475,7 @@ export class RoutingManager {
       return false;
     }
 
-    const healthy = healthMap[provider] ?? false;
+    const healthy = recordGet(healthMap, provider) ?? false;
     this.logger.debug(`isConnectorHealthy: provider=${provider} healthy=${String(healthy)}`);
     return healthy;
   }
@@ -1510,7 +1511,7 @@ export class RoutingManager {
   }
 
   estimateProviderCost(provider: string): number {
-    const costs = PROVIDER_COST_PER_1M_TOKENS[provider];
+    const costs = recordGet(PROVIDER_COST_PER_1M_TOKENS, provider);
     if (!costs) {
       return 0;
     }

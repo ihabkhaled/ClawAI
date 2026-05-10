@@ -54,8 +54,7 @@ export function staticAnalyse(dsl: RecipeDsl): StaticAnalysisFinding[] {
     // whole object — JSON.stringify doubles backslashes, which
     // breaks regex matchers that expect single-backslash Windows paths.
     const targetStrings = collectStrings(step.target);
-    const payloadStrings =
-      step.payload === undefined ? [] : collectStrings(step.payload);
+    const payloadStrings = step.payload === undefined ? [] : collectStrings(step.payload);
     const allStrings = [...targetStrings, ...payloadStrings];
     if (step.capabilityClass === 'FILESYSTEM') {
       for (const pat of BANNED_FS_PATH_PATTERNS) {
@@ -111,8 +110,8 @@ function collectStrings(value: unknown): string[] {
     } else if (Array.isArray(v)) {
       for (const x of v) walk(x);
     } else if (v !== null && typeof v === 'object') {
-      for (const k of Object.keys(v as Record<string, unknown>)) {
-        walk((v as Record<string, unknown>)[k]);
+      for (const [, leaf] of Object.entries(v as Record<string, unknown>)) {
+        walk(leaf);
       }
     }
   }
@@ -194,19 +193,22 @@ export async function dryRunInWorker(
         error: 'wall_clock_timeout',
       });
     }, wallClockMs);
-    worker.on('message', (msg: { ok: boolean; findings?: StaticAnalysisFinding[]; error?: string }) => {
-      if (resolved) return;
-      resolved = true;
-      clearTimeout(killTimer);
-      void worker.terminate();
-      resolve({
-        status: msg.ok ? 'OK' : 'ERROR',
-        durationMs: Date.now() - startedAt,
-        staticFindings: [],
-        runtimeFindings: msg.findings ?? [],
-        error: msg.error,
-      });
-    });
+    worker.on(
+      'message',
+      (msg: { ok: boolean; findings?: StaticAnalysisFinding[]; error?: string }) => {
+        if (resolved) return;
+        resolved = true;
+        clearTimeout(killTimer);
+        void worker.terminate();
+        resolve({
+          status: msg.ok ? 'OK' : 'ERROR',
+          durationMs: Date.now() - startedAt,
+          staticFindings: [],
+          runtimeFindings: msg.findings ?? [],
+          error: msg.error,
+        });
+      },
+    );
     worker.on('error', (err) => {
       if (resolved) return;
       resolved = true;

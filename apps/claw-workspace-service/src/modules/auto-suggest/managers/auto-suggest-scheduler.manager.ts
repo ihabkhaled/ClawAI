@@ -29,7 +29,10 @@ export class AutoSuggestSchedulerManager {
   @Cron(AppConfig.get().AUTO_SUGGEST_JIRA_CRON, { name: 'workspace.auto_suggest.jira' })
   async tickJira(): Promise<void> {
     if (!AppConfig.get().AUTO_SUGGEST_ENABLED) return;
-    const lockHeld = await tryAcquireAdvisoryLock(this.prisma, `${AUTO_SUGGEST_LOCK_NAMESPACE_PREFIX}.jira`);
+    const lockHeld = await tryAcquireAdvisoryLock(
+      this.prisma,
+      `${AUTO_SUGGEST_LOCK_NAMESPACE_PREFIX}.jira`,
+    );
     if (!lockHeld) return;
     await this.orchestrator.runJob('JIRA_TICKET_SUMMARY', () => this.collectJiraCandidates());
   }
@@ -57,7 +60,9 @@ export class AutoSuggestSchedulerManager {
       `${AUTO_SUGGEST_LOCK_NAMESPACE_PREFIX}.meeting_notes`,
     );
     if (!lockHeld) return;
-    await this.orchestrator.runJob('MEETING_NOTES_SCAN', () => this.collectMeetingNotesCandidates());
+    await this.orchestrator.runJob('MEETING_NOTES_SCAN', () =>
+      this.collectMeetingNotesCandidates(),
+    );
   }
 
   @Cron(AppConfig.get().AUTO_SUGGEST_INBOX_REPLY_CRON, {
@@ -125,9 +130,10 @@ export class AutoSuggestSchedulerManager {
     const candidates: CandidateSuggestion[] = [];
     for (const msg of messages) {
       const metadata = (msg.metadata ?? {}) as Record<string, unknown>;
-      const needsReplyFlag =
-        Object.prototype.hasOwnProperty.call(metadata, INBOX_REPLY_NEEDS_ATTENTION_KEY) &&
-        metadata[INBOX_REPLY_NEEDS_ATTENTION_KEY] === true;
+      const needsReplyEntry = Object.entries(metadata).find(
+        ([k]) => k === INBOX_REPLY_NEEDS_ATTENTION_KEY,
+      );
+      const needsReplyFlag = needsReplyEntry?.[1] === true;
       const title = (msg.title ?? '').trim();
       const looksLikeReply = title.toLowerCase().startsWith('re:');
       if (!needsReplyFlag && looksLikeReply) {
@@ -221,7 +227,9 @@ export class AutoSuggestSchedulerManager {
   // a future iteration; this MVP wires the cron path end-to-end against
   // existing data.
   private async collectJiraCandidates(): Promise<CandidateSuggestion[]> {
-    const cutoff = new Date(Date.now() - AUTO_SUGGEST_RECENT_TICKET_LOOKBACK_DAYS * 24 * 60 * 60 * 1000);
+    const cutoff = new Date(
+      Date.now() - AUTO_SUGGEST_RECENT_TICKET_LOOKBACK_DAYS * 24 * 60 * 60 * 1000,
+    );
     const objects = await this.prisma.workspaceObject.findMany({
       where: {
         provider: 'JIRA',

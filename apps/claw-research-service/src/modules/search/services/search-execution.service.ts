@@ -1,14 +1,18 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 
-import { SEARCH_DEFAULT_MAX_RESULTS } from '../../../common/constants/search.constants';
+import {
+  DEFAULT_PROVIDER_SCORES,
+  FETCH_EXTRACT_PROVIDER_SCORES,
+  SEARCH_DEFAULT_MAX_RESULTS,
+} from '../../../common/constants/search.constants';
 import { ProviderSelectionMode } from '../../../common/enums/provider-selection-mode.enum';
 import { ResearchErrorCode } from '../../../common/enums/research-error-code.enum';
 import { SearchRunStatus } from '../../../common/enums/search-run-status.enum';
-import { SearchProviderKind } from '../../../common/enums/search-provider-kind.enum';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
 import { DomainPolicyOutcome } from '../../fetch/enums/domain-policy-outcome.enum';
 import { evaluateDomainPolicy } from '../../fetch/utilities/domain-policy.utility';
+import { toInputJson } from '../../../common/utilities/prisma-json.utility';
 import { SearchAdapterFactory } from '../adapters/search-adapter.factory';
 import { SearchProviderRepository } from '../repositories/search-provider.repository';
 import { SearchRunRepository } from '../repositories/search-run.repository';
@@ -43,47 +47,18 @@ export class SearchExecutionService {
     const warnings: string[] = [];
     const attemptedProviders: string[] = [];
     try {
-      let lastError: string | null = null;
-      for (const provider of selection.candidates) {
-        attemptedProviders.push(provider.name);
-        try {
-          const adapter = this.adapterFactory.getAdapter(provider.kind);
-          const context = this.providerService.buildContext(provider);
-          const response = await adapter.search(
-            { query: dto.query, maxResults, filters: dto.filters },
-            context,
-          );
-          const filteredResults = this.applyDomainPolicy(response.results, provider);
-          if (provider.id !== selection.primary.id) {
-            await this.runRepository.update(run.id, {
-              provider: { connect: { id: provider.id } },
-            });
-          }
-          if (attemptedProviders.length > 1) {
-            warnings.push(
-              `Fallback chain used: ${attemptedProviders.slice(0, -1).join(' -> ')} -> ${provider.name}`,
-            );
-          }
-          await this.completeRun(run, filteredResults, response.latencyMs);
-          return {
-            runId: run.id,
-            providerId: provider.id,
-            providerName: provider.name,
-            providerKind: provider.kind,
-            selectionMode: selection.mode,
-            fallbackUsed: attemptedProviders.length > 1,
-            attemptedProviders,
-            query: dto.query,
-            results: filteredResults,
-            latencyMs: response.latencyMs,
-            warnings: [...(response.warnings ?? []), ...warnings],
-          };
-        } catch (error) {
-          lastError = error instanceof Error ? error.message : 'Unknown error';
-          warnings.push(`Provider ${provider.name} failed: ${lastError}`);
-        }
+      const result = await this.executeWithFallbackChain(
+        selection,
+        run,
+        dto,
+        maxResults,
+        attemptedProviders,
+        warnings,
+      );
+      if (result) {
+        return result;
       }
-      const message = lastError ?? 'Unknown error';
+      const message = warnings.at(-1) ?? 'Unknown error';
       this.logger.warn(`Search failed for run ${run.id}: ${message}`);
       await this.failRun(run, message);
       throw new BusinessException(
@@ -96,20 +71,106 @@ export class SearchExecutionService {
       if (error instanceof BusinessException) {
         throw error;
       }
+      return this.buildEmptyResult(run, selection, dto.query, attemptedProviders, warnings);
+    }
+  }
+
+  private async executeWithFallbackChain(
+    selection: {
+      primary: SearchProvider;
+      candidates: SearchProvider[];
+      mode: ProviderSelectionMode;
+    },
+    run: SearchRun,
+    dto: ExecuteSearchDto,
+    maxResults: number,
+    attemptedProviders: string[],
+    warnings: string[],
+  ): Promise<SearchExecutionResult | null> {
+    for (const provider of selection.candidates) {
+      attemptedProviders.push(provider.name);
+      const result = await this.tryProvider(
+        provider,
+        run,
+        dto,
+        maxResults,
+        selection,
+        attemptedProviders,
+        warnings,
+      );
+      if (result) {
+        return result;
+      }
+    }
+    return null;
+  }
+
+  private async tryProvider(
+    provider: SearchProvider,
+    run: SearchRun,
+    dto: ExecuteSearchDto,
+    maxResults: number,
+    selection: { primary: SearchProvider; mode: ProviderSelectionMode },
+    attemptedProviders: string[],
+    warnings: string[],
+  ): Promise<SearchExecutionResult | null> {
+    try {
+      const adapter = this.adapterFactory.getAdapter(provider.kind);
+      const context = this.providerService.buildContext(provider);
+      const response = await adapter.search(
+        { query: dto.query, maxResults, filters: dto.filters },
+        context,
+      );
+      const filteredResults = this.applyDomainPolicy(response.results, provider);
+      if (provider.id !== selection.primary.id) {
+        await this.runRepository.update(run.id, { provider: { connect: { id: provider.id } } });
+      }
+      if (attemptedProviders.length > 1) {
+        warnings.push(
+          `Fallback chain used: ${attemptedProviders.slice(0, -1).join(' -> ')} -> ${provider.name}`,
+        );
+      }
+      await this.completeRun(run, filteredResults, response.latencyMs);
       return {
         runId: run.id,
-        providerId: selection.primary.id,
-        providerName: selection.primary.name,
-        providerKind: selection.primary.kind,
+        providerId: provider.id,
+        providerName: provider.name,
+        providerKind: provider.kind,
         selectionMode: selection.mode,
         fallbackUsed: attemptedProviders.length > 1,
         attemptedProviders,
         query: dto.query,
-        results: [],
-        latencyMs: 0,
-        warnings,
+        results: filteredResults,
+        latencyMs: response.latencyMs,
+        warnings: [...(response.warnings ?? []), ...warnings],
       };
+    } catch (error) {
+      const lastError = error instanceof Error ? error.message : 'Unknown error';
+      warnings.push(`Provider ${provider.name} failed: ${lastError}`);
+      return null;
     }
+  }
+
+  private buildEmptyResult(
+    run: SearchRun,
+    selection: { primary: SearchProvider; mode: ProviderSelectionMode },
+    query: string,
+    attemptedProviders: string[],
+    warnings: string[],
+  ): SearchExecutionResult {
+    return {
+      runId: run.id,
+      providerId: selection.primary.id,
+      providerName: selection.primary.name,
+      providerKind: selection.primary.kind,
+      selectionMode: selection.mode,
+      fallbackUsed: attemptedProviders.length > 1,
+      attemptedProviders,
+      query,
+      results: [],
+      latencyMs: 0,
+      warnings,
+    };
   }
 
   async getRun(id: string, userId: string): Promise<SearchRun> {
@@ -166,48 +227,17 @@ export class SearchExecutionService {
   }
 
   private scoreProvider(kind: string, filters?: Record<string, unknown>): number {
-    const workflow =
-      typeof filters?.['researchWorkflow'] === 'string' ? filters['researchWorkflow'] : '';
+    const workflow = this.extractWorkflow(filters);
+    const isFetchExtract = workflow.includes('FETCH') || workflow.includes('EXTRACT');
+    const scoreMap = isFetchExtract ? FETCH_EXTRACT_PROVIDER_SCORES : DEFAULT_PROVIDER_SCORES;
+    return scoreMap.get(kind) ?? 10;
+  }
 
-    if (workflow.includes('FETCH') || workflow.includes('EXTRACT')) {
-      switch (kind) {
-        case SearchProviderKind.FIRECRAWL:
-          return 100;
-        case SearchProviderKind.EXA:
-          return 90;
-        case SearchProviderKind.BRAVE:
-          return 80;
-        case SearchProviderKind.TAVILY:
-          return 70;
-        case SearchProviderKind.SERPAPI:
-          return 60;
-        case SearchProviderKind.SEARXNG:
-          return 50;
-        case SearchProviderKind.OLLAMA_WEB:
-          return 40;
-        default:
-          return 10;
-      }
-    }
-
-    switch (kind) {
-      case SearchProviderKind.EXA:
-        return 100;
-      case SearchProviderKind.BRAVE:
-        return 90;
-      case SearchProviderKind.TAVILY:
-        return 80;
-      case SearchProviderKind.SERPAPI:
-        return 70;
-      case SearchProviderKind.FIRECRAWL:
-        return 65;
-      case SearchProviderKind.SEARXNG:
-        return 60;
-      case SearchProviderKind.OLLAMA_WEB:
-        return 50;
-      default:
-        return 10;
-    }
+  private extractWorkflow(filters?: Record<string, unknown>): string {
+    const value = filters
+      ? Object.entries(filters).find(([k]) => k === 'researchWorkflow')?.[1]
+      : undefined;
+    return typeof value === 'string' ? value : '';
   }
 
   private assertEnabled(provider: SearchProvider): void {
@@ -240,7 +270,7 @@ export class SearchExecutionService {
     await this.runRepository.update(run.id, {
       status: SearchRunStatus.COMPLETED,
       resultCount: results.length,
-      results: results as unknown as Prisma.InputJsonValue,
+      results: toInputJson(results),
       latencyMs,
       completedAt: new Date(),
     });

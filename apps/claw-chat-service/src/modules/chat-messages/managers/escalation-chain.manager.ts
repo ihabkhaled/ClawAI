@@ -106,7 +106,7 @@ export class EscalationChainManager {
     const stepResults: EscalationStepResult[] = [];
 
     for (let i = 0; i < chain.length; i++) {
-      const step = chain[i];
+      const step = chain.at(i);
       if (!step) {
         continue;
       }

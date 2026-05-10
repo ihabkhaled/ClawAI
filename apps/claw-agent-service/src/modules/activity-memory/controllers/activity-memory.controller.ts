@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
 
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -17,7 +9,7 @@ import {
   recordActivitySchema,
 } from '../dto/record-activity.dto';
 import { ActivityMemoryRepository } from '../repositories/activity-memory.repository';
-import { Prisma, type ActivityMemoryEntry } from '../../../generated/prisma';
+import { type ActivityMemoryEntry, Prisma } from '../../../generated/prisma';
 import type { AuthenticatedUser } from '../../../common/types/auth.types';
 
 @Controller('agent/activity-memory')

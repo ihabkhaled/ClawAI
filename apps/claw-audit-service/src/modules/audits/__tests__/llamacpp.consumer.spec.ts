@@ -8,7 +8,7 @@ describe('LlamacppAuditConsumer', () => {
     rabbit: { subscribe: jest.Mock };
   } {
     const audits = { createAuditLog: jest.fn().mockResolvedValue({}) };
-    const rabbit = { subscribe: jest.fn().mockResolvedValue(undefined) };
+    const rabbit = { subscribe: jest.fn().mockImplementation(async () => {}) };
     const consumer = new LlamacppAuditConsumer(rabbit as any, audits as any);
     return { consumer, audits, rabbit };
   }

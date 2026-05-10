@@ -96,7 +96,7 @@ export class CostEnsembleManager {
         content: best,
         provider: resolvedSelection.actualProvider,
         model: resolvedSelection.actualModel,
-        latencyMs: candidates[selectedIndex]?.latencyMs ?? 0,
+        latencyMs: candidates.at(selectedIndex)?.latencyMs ?? 0,
         usedFallback: false,
         routingMode:
           resolvedSelection.modelSelectionMode === 'MANUAL_MODEL'
@@ -296,7 +296,7 @@ export class CostEnsembleManager {
     let bestScore = -1;
 
     for (let i = 0; i < candidates.length; i++) {
-      const candidate = candidates[i];
+      const candidate = candidates.at(i);
       if (!candidate) {
         continue;
       }
@@ -307,7 +307,7 @@ export class CostEnsembleManager {
       }
     }
 
-    const bestCandidate = candidates[bestIndex];
+    const bestCandidate = candidates.at(bestIndex);
     if (!bestCandidate) {
       throw new Error('Failed to select best candidate');
     }

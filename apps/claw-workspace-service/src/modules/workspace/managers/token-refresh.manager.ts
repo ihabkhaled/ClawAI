@@ -110,7 +110,7 @@ export class TokenRefreshManager {
       (await this.providerAppConfigs.getDecryptedSecret(connector.providerAppConfigId)) ?? {};
 
     const readString = (src: Record<string, unknown>, key: string): string | undefined => {
-      const v = src[key];
+      const v = Object.entries(src).find(([k]) => k === key)?.[1];
       return typeof v === 'string' && v.length > 0 ? v : undefined;
     };
 

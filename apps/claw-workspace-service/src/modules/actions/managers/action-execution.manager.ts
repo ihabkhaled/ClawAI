@@ -53,7 +53,7 @@ export class ActionExecutionManager {
   private async resolveAccessToken(connectorId: string): Promise<string | null> {
     try {
       const connector = await this.connectorRepository.findById(connectorId);
-      if (connector === null || connector.encryptedTokens === null) {
+      if (connector?.encryptedTokens === null || connector === null) {
         return null;
       }
       return await this.tokenRefresh.getValidAccessToken(connector);

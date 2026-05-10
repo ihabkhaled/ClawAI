@@ -11,8 +11,8 @@ import type {
   InstalledLocalModel,
   InstalledLocalModelsResponse,
   ModelCatalogCache,
-  ResolveDefaultsInput,
   ResolvedDefaults,
+  ResolveDefaultsInput,
   ResolvedModelCatalog,
 } from '../types/model-catalog.types';
 import type { ModelChoice } from '../types/ai-action.types';
@@ -82,7 +82,9 @@ export class ModelCatalogResolverManager {
         try {
           const response = await this.fetchWithTimeout(`${base}?provider=${provider}`);
           if (!response.ok) return;
-          const config = (await response.json()) as { models?: { modelKey: string; displayName: string; capabilities?: string[] }[] };
+          const config = (await response.json()) as {
+            models?: { modelKey: string; displayName: string; capabilities?: string[] }[];
+          };
           if (config.models === undefined || config.models.length === 0) return;
           results.push({
             provider,
@@ -167,10 +169,7 @@ export class ModelCatalogResolverManager {
     };
   }
 
-  private prependLocal(
-    local: ModelChoice | null,
-    cloudChain: ModelChoice[],
-  ): ResolvedDefaults {
+  private prependLocal(local: ModelChoice | null, cloudChain: ModelChoice[]): ResolvedDefaults {
     if (local !== null) {
       return { primary: local, fallbackChain: cloudChain };
     }
@@ -181,10 +180,7 @@ export class ModelCatalogResolverManager {
     return { primary: LOCAL_LAST_RESORT_MODEL, fallbackChain: [] };
   }
 
-  private prependCloud(
-    local: ModelChoice | null,
-    cloudChain: ModelChoice[],
-  ): ResolvedDefaults {
+  private prependCloud(local: ModelChoice | null, cloudChain: ModelChoice[]): ResolvedDefaults {
     const cloudHead = cloudChain[0];
     if (cloudHead !== undefined) {
       const tail = local === null ? cloudChain.slice(1) : [...cloudChain.slice(1), local];

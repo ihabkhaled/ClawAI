@@ -193,7 +193,7 @@ export class QualityCheckManager {
     let repeated = 0;
 
     for (let i = 0; i < words.length - 2; i++) {
-      const trigram = `${words[i] ?? ''} ${words[i + 1] ?? ''} ${words[i + 2] ?? ''}`;
+      const trigram = `${words.at(i) ?? ''} ${words.at(i + 1) ?? ''} ${words.at(i + 2) ?? ''}`;
       if (trigrams.has(trigram)) {
         repeated++;
       }

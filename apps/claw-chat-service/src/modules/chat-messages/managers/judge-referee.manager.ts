@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { OLLAMA_PROVIDER } from '../../../common/constants';
 import { JudgeDecision } from '../../../common/enums';
+import { recordGet } from '../../../common/utilities';
 import {
   CRITIC_CLOUD_MODELS,
   CRITIC_LOCAL_MODEL,
@@ -386,16 +387,15 @@ export class JudgeRefereeManager {
   }
 
   private buildCriticPrompt(category: string | undefined): string {
+    const generic = recordGet(CRITIC_SYSTEM_PROMPTS, 'generic') ?? '';
     if (!category) {
-      return CRITIC_SYSTEM_PROMPTS['generic'] ?? '';
+      return generic;
     }
-
     const complianceCategories = new Set(['medical', 'legal', 'finance']);
     if (complianceCategories.has(category)) {
-      return CRITIC_SYSTEM_PROMPTS['compliance'] ?? '';
+      return recordGet(CRITIC_SYSTEM_PROMPTS, 'compliance') ?? '';
     }
-
-    return CRITIC_SYSTEM_PROMPTS[category] ?? CRITIC_SYSTEM_PROMPTS['generic'] ?? '';
+    return recordGet(CRITIC_SYSTEM_PROMPTS, category) ?? generic;
   }
 
   private parseJudgePlainTextOutput(content: string): ParsedJudgeVerdict | null {

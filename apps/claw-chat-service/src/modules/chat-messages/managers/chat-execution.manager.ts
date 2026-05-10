@@ -1,7 +1,7 @@
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { LocalModelRole } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
-import { httpRequest } from '../../../common/utilities';
+import { httpRequest, recordGet } from '../../../common/utilities';
 import { BusinessException } from '../../../common/errors';
 import {
   FILE_GENERATION_PROVIDER,
@@ -27,7 +27,7 @@ import {
   type OpenAiChatResponse,
   type ThreadSettings,
 } from '../types/execution.types';
-import type { JudgeRefereeConfig } from '../types/judge-referee.types';
+import type { JudgeRefereeConfig, JudgeRefereeResult } from '../types/judge-referee.types';
 import type { InternalGenerateResponse } from '../types/internal-generate.types';
 import { type AssembledContext } from '../types/context.types';
 import { ContextAssemblyManager } from './context-assembly.manager';
@@ -466,7 +466,7 @@ export class ChatExecutionManager implements OnModuleInit {
     payload: MessageRoutedData,
     threadSettings?: ThreadSettings,
     fastPathEnabled = false,
-  ): Promise<import('../types/judge-referee.types').JudgeRefereeResult | null> {
+  ): Promise<JudgeRefereeResult | null> {
     if (fastPathEnabled && !payload.judgeEnabled) {
       this.logger.debug(
         `runJudgeRefereePipeline: skipped for fast path message ${payload.messageId}`,
@@ -878,10 +878,11 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.debug(`resolveProviderConfig: connector config received for ${provider}`);
     const providerBaseUrls = PROVIDER_BASE_URLS as Readonly<Record<string, string>>;
     const connectorBaseUrl = connectorConfig.baseUrl?.trim() ?? '';
+    const defaultBaseUrl = recordGet(providerBaseUrls, provider) ?? '';
     const baseUrl =
       provider === OLLAMA_CONNECTOR_PROVIDER
-        ? this.resolveOllamaConnectorBaseUrl(connectorBaseUrl, providerBaseUrls[provider] ?? '')
-        : (connectorConfig.baseUrl ?? providerBaseUrls[provider] ?? '');
+        ? this.resolveOllamaConnectorBaseUrl(connectorBaseUrl, defaultBaseUrl)
+        : (connectorConfig.baseUrl ?? defaultBaseUrl);
 
     if (!baseUrl) {
       this.logger.error(`resolveProviderConfig: no base URL for provider ${provider}`);
@@ -1163,7 +1164,7 @@ export class ChatExecutionManager implements OnModuleInit {
     const contentCandidates = await this.buildFileContentProviderCandidates();
 
     for (let index = 0; index < contentCandidates.length; index++) {
-      const candidate = contentCandidates[index];
+      const candidate = contentCandidates.at(index);
       if (!candidate) {
         continue;
       }

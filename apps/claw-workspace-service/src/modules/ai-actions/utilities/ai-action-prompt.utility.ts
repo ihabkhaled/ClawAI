@@ -9,7 +9,9 @@ export function buildAiActionPrompt(
   actionKind: AiActionKind,
   context: string,
 ): BuiltAiActionPrompt {
-  const template = AI_ACTION_PROMPTS[actionKind];
+  const template =
+    Object.entries(AI_ACTION_PROMPTS).find(([k]) => k === actionKind)?.[1] ??
+    AI_ACTION_PROMPTS.SUMMARIZE;
   const trimmed =
     context.length > AI_ACTION_MAX_CONTEXT_CHARS
       ? `${context.slice(0, AI_ACTION_MAX_CONTEXT_CHARS)}\n\n[...truncated for length]`

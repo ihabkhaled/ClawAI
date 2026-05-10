@@ -60,12 +60,9 @@ export class RecipeRunnerManager {
       throw new EntityNotFoundException('Recipe', recipeId);
     }
     if (!recipe.isEnabled) {
-      throw new BusinessException(
-        'agent.recipe.disabled',
-        'RECIPE_DISABLED',
-        HttpStatus.CONFLICT,
-        { recipeId },
-      );
+      throw new BusinessException('agent.recipe.disabled', 'RECIPE_DISABLED', HttpStatus.CONFLICT, {
+        recipeId,
+      });
     }
     const dsl = dslFromJson(recipe.dsl);
     this.validateParams(dsl, dto.params);
@@ -126,15 +123,13 @@ export class RecipeRunnerManager {
       `onStepInvocationTerminated: stepId=${step.stepId} invocationId=${invocationId} status=${String(terminalStatus)}`,
     );
     const isSuccess = terminalStatus === CapabilityInvocationStatus.EXECUTED;
-    if (isSuccess) {
-      await this.runRepo.updateStep(step.id, {
-        status: 'SUCCEEDED',
-        output: (output ?? {}) as Prisma.InputJsonValue,
-        completedAt: new Date(),
-      });
-    } else {
-      await this.handleStepFailure(step, errorMessage ?? `invocation ${String(terminalStatus)}`);
-    }
+    await (isSuccess
+      ? this.runRepo.updateStep(step.id, {
+          status: 'SUCCEEDED',
+          output: (output ?? {}) as Prisma.InputJsonValue,
+          completedAt: new Date(),
+        })
+      : this.handleStepFailure(step, errorMessage ?? `invocation ${String(terminalStatus)}`));
     await this.advance(step.recipeRunId);
   }
 
@@ -183,7 +178,9 @@ export class RecipeRunnerManager {
         status: anyFailed ? 'FAILED' : 'SUCCEEDED',
         completedAt: new Date(),
       });
-      this.logger.log(`advance: run ${runId} reached terminal — ${anyFailed ? 'FAILED' : 'SUCCEEDED'}`);
+      this.logger.log(
+        `advance: run ${runId} reached terminal — ${anyFailed ? 'FAILED' : 'SUCCEEDED'}`,
+      );
       return;
     }
 
@@ -259,7 +256,9 @@ export class RecipeRunnerManager {
       const result = evaluateRecipeExpression(when, ctx);
       return Boolean(result);
     } catch (error) {
-      this.logger.warn(`evaluateWhen: '${when}' threw — treating as false: ${(error as Error).message}`);
+      this.logger.warn(
+        `evaluateWhen: '${when}' threw — treating as false: ${(error as Error).message}`,
+      );
       return false;
     }
   }
@@ -359,7 +358,10 @@ export class RecipeRunnerManager {
     const md = this.metadata(stepRow);
     const attempt = (md.attempt ?? 0) + 1;
     if (attempt > retry.maxAttempts) {
-      await this.markStepFailed(stepRow, `retry exhausted after ${String(attempt - 1)}: ${errorMessage}`);
+      await this.markStepFailed(
+        stepRow,
+        `retry exhausted after ${String(attempt - 1)}: ${errorMessage}`,
+      );
       await this.failRun(stepRow.recipeRunId, errorMessage);
       return;
     }

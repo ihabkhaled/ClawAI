@@ -1,4 +1,11 @@
-import { PreflightReason, GpuBackend, ModelCategory, QualityTier, DownloadStatus, LoadStatus } from '../../../common/enums';
+import {
+  DownloadStatus,
+  GpuBackend,
+  LoadStatus,
+  ModelCategory,
+  PreflightReason,
+  QualityTier,
+} from '../../../common/enums';
 import { PreflightValidatorManager } from '../managers/preflight-validator.manager';
 import { type CatalogEntry } from '../../catalog/types/catalog.types';
 import { type HardwareSnapshot } from '../types/hardware.types';

@@ -100,7 +100,7 @@ export class AiActionExecutionManager {
     if (modelsToTry.length === 1) {
       return `${modelsToTry[0]?.provider}/${modelsToTry[0]?.model}: ${upstream}`;
     }
-    return `All ${String(modelsToTry.length)} models failed. Last error from ${modelsToTry[modelsToTry.length - 1]?.provider}/${modelsToTry[modelsToTry.length - 1]?.model}: ${upstream}`;
+    return `All ${String(modelsToTry.length)} models failed. Last error from ${modelsToTry.at(-1)?.provider}/${modelsToTry.at(-1)?.model}: ${upstream}`;
   }
 
   private async buildAttemptChain(

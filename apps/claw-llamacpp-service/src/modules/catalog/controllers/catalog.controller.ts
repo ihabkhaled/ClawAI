@@ -1,22 +1,9 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Post,
-  Query,
-  UsePipes,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import { Roles } from '../../../app/decorators/roles.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { UserRole } from '../../../common/enums';
 import { CatalogService } from '../services/catalog.service';
-import {
-  CatalogQuerySchema,
-  type CatalogQueryDto,
-} from '../dto/catalog-query.dto';
+import { type CatalogQueryDto, CatalogQuerySchema } from '../dto/catalog-query.dto';
 import { type CatalogEntry, type CatalogListResult } from '../types/catalog.types';
 
 @Controller('catalog')
@@ -24,8 +11,9 @@ export class CatalogController {
   constructor(private readonly catalogService: CatalogService) {}
 
   @Get()
-  @UsePipes(new ZodValidationPipe(CatalogQuerySchema))
-  list(@Query() query: CatalogQueryDto): Promise<CatalogListResult> {
+  list(
+    @Query(new ZodValidationPipe(CatalogQuerySchema)) query: CatalogQueryDto,
+  ): Promise<CatalogListResult> {
     return this.catalogService.list(query);
   }
 

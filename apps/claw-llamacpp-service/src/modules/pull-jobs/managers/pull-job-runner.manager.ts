@@ -2,11 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { Injectable, Logger } from '@nestjs/common';
 import { request } from 'undici';
-import {
-  HuggingFaceClient,
-  computeSha256,
-  resolveSafePath,
-} from '../../../common/utilities';
+import { computeSha256, HuggingFaceClient, resolveSafePath } from '../../../common/utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { DownloadStatus, PullJobStatus, PullReasonCode } from '../../../common/enums';
 import { LlamacppEventsPublisher } from '../../../common/events/llamacpp-events.publisher';
@@ -84,12 +80,22 @@ export class PullJobRunnerManager {
           return;
         }
         const target = resolveSafePath(modelDir, path.basename(file.name));
-        const bytes = await this.downloadOneFile(client, entry.huggingfaceRepo, file.name, target, controller.signal);
+        const bytes = await this.downloadOneFile(
+          client,
+          entry.huggingfaceRepo,
+          file.name,
+          target,
+          controller.signal,
+        );
         downloadedBytes += bytes;
         if (file.sha256) {
           const ok = await this.verifyFileSha(target, file.sha256);
           if (!ok) {
-            await this.markFailed(jobId, PullReasonCode.SHA_MISMATCH, `SHA mismatch on ${file.name}`);
+            await this.markFailed(
+              jobId,
+              PullReasonCode.SHA_MISMATCH,
+              `SHA mismatch on ${file.name}`,
+            );
             return;
           }
         }
@@ -99,7 +105,10 @@ export class PullJobRunnerManager {
           completedFiles,
           currentFile: file.name,
         });
-        this.emitProgress({ ...job, downloadedBytes, completedFiles, currentFile: file.name }, PullJobStatus.RUNNING);
+        this.emitProgress(
+          { ...job, downloadedBytes, completedFiles, currentFile: file.name },
+          PullJobStatus.RUNNING,
+        );
         this.events.pullProgress({
           jobId,
           modelId: entry.id,
@@ -140,7 +149,9 @@ export class PullJobRunnerManager {
           throw error;
         }
         const delay = DOWNLOAD_RETRY_BASE_MS * Math.pow(2, attempt - 1);
-        this.logger.warn(`downloadOneFile: retry ${attempt}/${DOWNLOAD_RETRY_MAX} after ${delay}ms`);
+        this.logger.warn(
+          `downloadOneFile: retry ${attempt}/${DOWNLOAD_RETRY_MAX} after ${delay}ms`,
+        );
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
@@ -230,7 +241,10 @@ export class PullJobRunnerManager {
       if (event) {
         await this.catalogRepo.updateDownloadStatus(event.id, DownloadStatus.ERROR);
       }
-      this.emitProgress({ ...job, reasonCode: reason, errorMessage: message }, PullJobStatus.FAILED);
+      this.emitProgress(
+        { ...job, reasonCode: reason, errorMessage: message },
+        PullJobStatus.FAILED,
+      );
       this.events.pullFailed({
         jobId,
         modelId: job.modelId,
@@ -247,15 +261,18 @@ export class PullJobRunnerManager {
     });
     const job = await this.jobsRepo.findById(jobId);
     if (job) {
-      this.emitProgress({ ...job, reasonCode: PullReasonCode.USER_CANCELLED }, PullJobStatus.CANCELLED);
+      this.emitProgress(
+        { ...job, reasonCode: PullReasonCode.USER_CANCELLED },
+        PullJobStatus.CANCELLED,
+      );
     }
   }
 
   private compilePattern(filePattern: string): RegExp {
     const escaped = filePattern
-      .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-      .replace(/\*/g, '.*')
-      .replace(/\?/g, '.');
+      .replaceAll(/[.+^${}()|[\]\\]/g, '\\$&')
+      .replaceAll('*', '.*')
+      .replaceAll('?', '.');
     return new RegExp(escaped, 'i');
   }
 

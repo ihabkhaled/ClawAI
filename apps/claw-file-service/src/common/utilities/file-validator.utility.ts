@@ -46,7 +46,9 @@ export function sanitizeFilename(filename: string): string {
 }
 
 export function validateMagicBytes(buffer: Buffer, declaredMimeType: string): FileValidationResult {
-  const expectedSignatures = MIME_TO_MAGIC_BYTES[declaredMimeType];
+  const expectedSignatures = Object.entries(MIME_TO_MAGIC_BYTES).find(
+    ([k]) => k === declaredMimeType,
+  )?.[1];
   if (!expectedSignatures) {
     logger.debug(`validateMagicBytes: no signature check for ${declaredMimeType}`);
     return { valid: true, reason: 'no_signature_check' };

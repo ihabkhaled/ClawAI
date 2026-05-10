@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
+import { recordGet } from '../../../common/utilities/record-lookup.utility';
 import {
   DEFAULT_ROLE_PACK_MODEL,
   ROLE_PACK_TIMEOUT_MS,
@@ -69,7 +70,7 @@ export class RolePackManager {
     const startTime = Date.now();
     try {
       const resolvedSelection = selection ?? (await this.buildAutoSelection());
-      const members = ROLE_PACKS[pack] ?? [];
+      const members = recordGet(ROLE_PACKS, pack) ?? [];
       const config = AppConfig.get();
       const resolvedMembers = await this.resolveMembers(members, resolvedSelection);
       const results = await this.runAllMembers(resolvedMembers, content, config.OLLAMA_SERVICE_URL);
@@ -128,9 +129,10 @@ export class RolePackManager {
       }
       const msg = result.reason instanceof Error ? result.reason.message : 'Role failed';
       this.logger.warn(`runAllMembers: member ${String(index)} failed — ${msg}`);
+      const member = members.at(index);
       return {
-        role: members[index]?.role ?? `role-${String(index)}`,
-        model: members[index]?.model ?? fallbackModel,
+        role: member?.role ?? `role-${String(index)}`,
+        model: member?.model ?? fallbackModel,
         output: 'Role failed',
         latencyMs: 0,
       };
@@ -188,7 +190,7 @@ export class RolePackManager {
   }
 
   private selectBestOutput(results: RoleMemberResult[], pack: string): string {
-    const members = ROLE_PACKS[pack] ?? [];
+    const members = recordGet(ROLE_PACKS, pack) ?? [];
     const lastMember = members.at(-1);
 
     if (lastMember) {

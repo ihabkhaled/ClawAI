@@ -6,11 +6,8 @@ import { MarketplaceRepository } from '../repositories/marketplace.repository';
 import { RecipeService } from '../../recipes/services/recipe.service';
 import { dslFromJson } from '../../recipes/utilities/dsl-cast.utility';
 import { sandboxAnalyse } from '../utilities/sandbox-runner.utility';
-import {
-  canonicaliseDsl,
-  verifyRecipeDslSignature,
-} from '../utilities/signature.utility';
-import { Prisma, type MarketplaceListing } from '../../../generated/prisma';
+import { canonicaliseDsl, verifyRecipeDslSignature } from '../utilities/signature.utility';
+import { type MarketplaceListing, Prisma } from '../../../generated/prisma';
 import type { ListListingsQueryDto, PublishListingDto } from '../dto/publish-listing.dto';
 import type { PaginatedListings } from '../types/marketplace.types';
 import type { SandboxResult } from '../types/sandbox.types';

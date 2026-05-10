@@ -28,7 +28,7 @@ describe('AutoRouterManager', () => {
 
   it('returns MANUAL mode when a preferred model is provided', async () => {
     const preferred = { provider: 'OPENAI', model: 'gpt-4o', displayName: 'GPT-4o' };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const manager = new AutoRouterManager(makeResolver(localFast) as any);
     const result = await manager.resolve({
       actionKind: AiActionKind.DRAFT,
@@ -41,7 +41,6 @@ describe('AutoRouterManager', () => {
   });
 
   it('returns AUTO mode using resolved primary when local is available', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const manager = new AutoRouterManager(makeResolver(localFast, [cloudAnthropic]) as any);
     const result = await manager.resolve({
       actionKind: AiActionKind.SUMMARIZE,
@@ -53,7 +52,6 @@ describe('AutoRouterManager', () => {
   });
 
   it('PRIVATE filters cloud entries from fallback chain', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const manager = new AutoRouterManager(makeResolver(localFast, [cloudAnthropic]) as any);
     const result = await manager.resolve({
       actionKind: AiActionKind.DRAFT,
@@ -66,7 +64,6 @@ describe('AutoRouterManager', () => {
   });
 
   it('PRIVATE refuses cloud-only chain (no local installed)', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const manager = new AutoRouterManager(makeResolver(cloudAnthropic, []) as any);
     await expect(
       manager.resolve({
@@ -77,7 +74,6 @@ describe('AutoRouterManager', () => {
   });
 
   it('throws when neither local nor cloud is available', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const manager = new AutoRouterManager(makeResolver(null, []) as any);
     await expect(
       manager.resolve({
@@ -88,7 +84,6 @@ describe('AutoRouterManager', () => {
   });
 
   it('covers all 6 action kinds', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const manager = new AutoRouterManager(makeResolver(localFast, [cloudAnthropic]) as any);
     const kinds = [
       AiActionKind.SUMMARIZE,

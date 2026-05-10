@@ -13,7 +13,10 @@ export class CatalogRefreshManager {
 
   async refreshAll(entries: CatalogEntry[]): Promise<{ refreshed: number; failed: number }> {
     this.logger.log(`refreshAll: refreshing ${entries.length} entries`);
-    const client = new HuggingFaceClient(AppConfig.get().HUGGINGFACE_API_BASE, AppConfig.get().HUGGINGFACE_TOKEN);
+    const client = new HuggingFaceClient(
+      AppConfig.get().HUGGINGFACE_API_BASE,
+      AppConfig.get().HUGGINGFACE_TOKEN,
+    );
     let refreshed = 0;
     let failed = 0;
     const concurrency = 5;
@@ -58,16 +61,18 @@ export class CatalogRefreshManager {
         `refreshEntry: ${entry.name}:${entry.tag} bytes=${totalBytes} files=${files.length}`,
       );
     } catch (error) {
-      this.logger.error(`refreshEntry: ${entry.name}:${entry.tag} failed — ${(error as Error).message}`);
+      this.logger.error(
+        `refreshEntry: ${entry.name}:${entry.tag} failed — ${(error as Error).message}`,
+      );
       throw error;
     }
   }
 
   private compilePattern(filePattern: string): RegExp {
     const escaped = filePattern
-      .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-      .replace(/\*/g, '.*')
-      .replace(/\?/g, '.');
+      .replaceAll(/[.+^${}()|[\]\\]/g, '\\$&')
+      .replaceAll('*', '.*')
+      .replaceAll('?', '.');
     return new RegExp(escaped, 'i');
   }
 }

@@ -118,7 +118,7 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
             title: item.title,
             url: item.url,
             snippet: item.content ?? null,
-            raw: item as unknown as Record<string, unknown>,
+            raw: { ...item } as Record<string, unknown>,
           })),
           request.maxResults,
         ),
@@ -337,7 +337,11 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
   private buildQueryPhrases(terms: string[]): string[] {
     const phrases: string[] = [];
     for (let index = 0; index < terms.length - 1; index += 1) {
-      phrases.push(`${terms[index]} ${terms[index + 1]}`);
+      const current = terms.at(index);
+      const next = terms.at(index + 1);
+      if (current !== undefined && next !== undefined) {
+        phrases.push(`${current} ${next}`);
+      }
     }
     return phrases;
   }

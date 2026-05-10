@@ -9,20 +9,19 @@ import {
   Post,
   Query,
   Sse,
-  UsePipes,
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
-import { type Observable, defer, EMPTY, switchMap } from 'rxjs';
+import { defer, EMPTY, type Observable, switchMap } from 'rxjs';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { Public } from '../../../app/decorators/public.decorator';
 import { SkipLogging } from '../../../app/decorators/skip-logging.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { type AuthenticatedUser } from '../../../common/types';
 import {
-  InitiatePullSchema,
   type InitiatePullDto,
-  ListPullJobsQuerySchema,
+  InitiatePullSchema,
   type ListPullJobsQueryDto,
+  ListPullJobsQuerySchema,
 } from '../dto/initiate-pull.dto';
 import { PullJobProgressEmitterManager } from '../managers/pull-job-progress-emitter.manager';
 import { PullJobsService } from '../services/pull-jobs.service';
@@ -40,10 +39,9 @@ export class PullJobsController {
   ) {}
 
   @Post('catalog/:id/pull')
-  @UsePipes(new ZodValidationPipe(InitiatePullSchema))
   initiate(
     @Param('id') id: string,
-    @Body() body: InitiatePullDto,
+    @Body(new ZodValidationPipe(InitiatePullSchema)) body: InitiatePullDto,
     @CurrentUser() user: AuthenticatedUser | undefined,
   ): Promise<PullJobCreateResult> {
     return this.pullJobsService.create({
@@ -54,8 +52,9 @@ export class PullJobsController {
   }
 
   @Get('pull-jobs')
-  @UsePipes(new ZodValidationPipe(ListPullJobsQuerySchema))
-  list(@Query() query: ListPullJobsQueryDto): Promise<{ rows: PullJob[]; total: number }> {
+  list(
+    @Query(new ZodValidationPipe(ListPullJobsQuerySchema)) query: ListPullJobsQueryDto,
+  ): Promise<{ rows: PullJob[]; total: number }> {
     return this.pullJobsService.list(query);
   }
 

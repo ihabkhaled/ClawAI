@@ -23,8 +23,8 @@ import { Logger } from '@nestjs/common';
 
 import { RECIPE_PATH_REGEX } from '../constants/recipe.constants';
 import type {
-  RecipeExpressionContext,
   RecipeParserCursor as Cursor,
+  RecipeExpressionContext,
   RecipeToken as Token,
 } from '../types/recipe-parser.types';
 
@@ -42,7 +42,7 @@ function tokenise(src: string): Token[] {
   const tokens: Token[] = [];
   let i = 0;
   while (i < src.length) {
-    const c = src[i];
+    const c = src.at(i);
     if (c === undefined) {
       break;
     }
@@ -77,7 +77,7 @@ function tokenise(src: string): Token[] {
     if (c >= '0' && c <= '9') {
       let j = i;
       while (j < src.length) {
-        const ch = src[j];
+        const ch = src.at(j);
         if (ch === undefined) {
           break;
         }
@@ -180,7 +180,7 @@ function resolvePath(segments: string[], ctx: RecipeExpressionContext): unknown 
   const root = segments[0] === 'params' ? ctx.params : ctx.steps;
   let cursor: unknown = root;
   for (let s = 1; s < segments.length; s += 1) {
-    const segment = segments[s];
+    const segment = segments.at(s);
     if (segment === undefined) {
       return undefined;
     }
@@ -198,7 +198,8 @@ function resolvePath(segments: string[], ctx: RecipeExpressionContext): unknown 
     ) {
       return undefined;
     }
-    cursor = (cursor as Record<string, unknown>)[segment];
+    const entry = Object.entries(cursor as Record<string, unknown>).find(([k]) => k === segment);
+    cursor = entry?.[1];
   }
   return cursor;
 }
@@ -238,7 +239,7 @@ function evalUnary(c: Cursor, ctx: RecipeExpressionContext): unknown {
     consume(c);
     const value = evalOr(c, ctx);
     const close = consume(c);
-    if (close === undefined || close.kind !== 'PAREN' || close.value !== ')') {
+    if (close?.kind !== 'PAREN' || close.value !== ')') {
       throw new RecipeExpressionParseError('Missing closing paren');
     }
     return value;
@@ -266,7 +267,7 @@ function evalCompare(c: Cursor, ctx: RecipeExpressionContext): unknown {
   let left = evalUnary(c, ctx);
   while (true) {
     const t = nextToken(c);
-    if (t === undefined || t.kind !== 'OPERATOR') {
+    if (t?.kind !== 'OPERATOR') {
       return left;
     }
     if (t.op !== '>' && t.op !== '>=' && t.op !== '<' && t.op !== '<=') {
@@ -293,7 +294,7 @@ function evalEquality(c: Cursor, ctx: RecipeExpressionContext): unknown {
   let left = evalCompare(c, ctx);
   while (true) {
     const t = nextToken(c);
-    if (t === undefined || t.kind !== 'OPERATOR') {
+    if (t?.kind !== 'OPERATOR') {
       return left;
     }
     if (t.op !== '==' && t.op !== '!=' && t.op !== '===' && t.op !== '!==' && t.op !== '~=') {
@@ -324,7 +325,7 @@ function evalAnd(c: Cursor, ctx: RecipeExpressionContext): unknown {
   let left = evalEquality(c, ctx);
   while (true) {
     const t = nextToken(c);
-    if (t === undefined || t.kind !== 'OPERATOR' || t.op !== '&&') {
+    if (t?.kind !== 'OPERATOR' || t.op !== '&&') {
       return left;
     }
     consume(c);
@@ -337,7 +338,7 @@ function evalOr(c: Cursor, ctx: RecipeExpressionContext): unknown {
   let left = evalAnd(c, ctx);
   while (true) {
     const t = nextToken(c);
-    if (t === undefined || t.kind !== 'OPERATOR' || t.op !== '||') {
+    if (t?.kind !== 'OPERATOR' || t.op !== '||') {
       return left;
     }
     consume(c);
@@ -375,7 +376,9 @@ export function evaluateRecipeExpression(
  */
 export function resolveRecipePath(source: string, context: RecipeExpressionContext): unknown {
   const trimmed = source.trim();
-  const match = trimmed.match(/^\$(params|steps)\.[a-zA-Z_][a-zA-Z0-9_-]*(\.[a-zA-Z_][a-zA-Z0-9_-]*|\.\d+)*$/);
+  const match = trimmed.match(
+    /^\$(params|steps)\.[a-zA-Z_][a-zA-Z0-9_-]*(\.[a-zA-Z_][a-zA-Z0-9_-]*|\.\d+)*$/,
+  );
   if (match === null) {
     return undefined;
   }

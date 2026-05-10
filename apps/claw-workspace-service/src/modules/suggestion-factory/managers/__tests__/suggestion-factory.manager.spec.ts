@@ -25,7 +25,7 @@ describe('SuggestionFactoryManager — rate limiter integration (13.3)', () => {
     enqueueSuggestion: jest.fn().mockResolvedValue({ queueId: 'q1' }),
   });
   const makeRabbit = (): { publish: jest.Mock } => ({
-    publish: jest.fn().mockResolvedValue(undefined),
+    publish: jest.fn().mockImplementation(async () => {}),
   });
   const makeAlwaysAllow = (): { tryReserve: jest.Mock } => ({
     tryReserve: jest.fn().mockReturnValue(true),
@@ -54,13 +54,9 @@ describe('SuggestionFactoryManager — rate limiter integration (13.3)', () => {
     ]);
     const approval = makeApproval();
     const manager = new SuggestionFactoryManager(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       approval as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeRabbit() as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeAlwaysDeny() as any,
     );
     const result = await manager.process(baseEvent);
@@ -75,13 +71,9 @@ describe('SuggestionFactoryManager — rate limiter integration (13.3)', () => {
     const repo = makeRuleRepo([]);
     const approval = makeApproval();
     const manager = new SuggestionFactoryManager(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       approval as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeRabbit() as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeAlwaysAllow() as any,
     );
     const result = await manager.process(baseEvent);
@@ -115,13 +107,9 @@ describe('SuggestionFactoryManager — rate limiter integration (13.3)', () => {
       tryReserveForRule: jest.fn().mockReturnValue(false), // rule-level cap hit
     };
     const manager = new SuggestionFactoryManager(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       repo as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       approval as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeRabbit() as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       limiter as any,
     );
     const result = await manager.process(baseEvent);

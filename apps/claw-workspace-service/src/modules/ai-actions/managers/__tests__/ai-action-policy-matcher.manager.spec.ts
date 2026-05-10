@@ -28,9 +28,8 @@ describe('AiActionPolicyMatcherManager', () => {
   });
 
   it('returns DENIED when DENY policy matches and risk meets the deny threshold', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const repo: any = makeRepo([makePolicy({ kind: AiActionPolicyKind.DENY, name: 'deny-pii' })]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const manager = new AiActionPolicyMatcherManager(repo as any);
     const result = await manager.match({
       provider: 'GMAIL',
@@ -52,7 +51,7 @@ describe('AiActionPolicyMatcherManager', () => {
       }),
       makePolicy({ kind: AiActionPolicyKind.ALLOW, name: 'fallback', priority: 100 }),
     ];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const manager = new AiActionPolicyMatcherManager(makeRepo(policies) as any);
     const result = await manager.match({
       provider: 'JIRA',
@@ -75,7 +74,7 @@ describe('AiActionPolicyMatcherManager', () => {
       }),
       makePolicy({ kind: AiActionPolicyKind.ALLOW, name: 'fallback', priority: 100 }),
     ];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const manager = new AiActionPolicyMatcherManager(makeRepo(policies) as any);
     const result = await manager.match({
       provider: 'JIRA',
@@ -87,7 +86,6 @@ describe('AiActionPolicyMatcherManager', () => {
   });
 
   it('returns null match when no policies apply', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const manager = new AiActionPolicyMatcherManager(makeRepo([]) as any);
     const result = await manager.match({
       provider: 'GMAIL',
@@ -105,7 +103,7 @@ describe('AiActionPolicyMatcherManager', () => {
         providerRegex: '^GITHUB$',
       }),
     ];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const manager = new AiActionPolicyMatcherManager(makeRepo(policies) as any);
     const result = await manager.match({
       provider: 'JIRA',
@@ -121,7 +119,7 @@ describe('AiActionPolicyMatcherManager', () => {
       makePolicy({ kind: AiActionPolicyKind.AUTO_APPROVE, name: 'auto', priority: 1000 }),
       makePolicy({ kind: AiActionPolicyKind.DENY, name: 'deny', priority: 100 }),
     ];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const manager = new AiActionPolicyMatcherManager(makeRepo(policies) as any);
     const result = await manager.match({
       provider: 'GMAIL',
@@ -145,7 +143,7 @@ describe('AiActionPolicyMatcherManager', () => {
         priority: 500,
       }),
     ];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const manager = new AiActionPolicyMatcherManager(makeRepo(policies) as any);
     const result = await manager.match({
       provider: 'GMAIL',
@@ -176,7 +174,7 @@ describe('AiActionPolicyMatcherManager', () => {
         priority: 400,
       }),
     ];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const manager = new AiActionPolicyMatcherManager(makeRepo(policies) as any);
     const result = await manager.match({
       provider: 'JIRA',
@@ -205,7 +203,7 @@ describe('AiActionPolicyMatcherManager', () => {
         priority: 400,
       }),
     ];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const manager = new AiActionPolicyMatcherManager(makeRepo(policies) as any);
     const result = await manager.match({
       provider: 'JIRA',

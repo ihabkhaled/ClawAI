@@ -143,6 +143,20 @@ export interface RouterDecisionSnapshot {
   reason: string;
 }
 
+export interface HeuristicState {
+  localHealthy: boolean;
+  messageLength: number;
+  complexity: ComplexityClassification | undefined;
+  canPreferGenericLocal: boolean;
+  cloudPriority: FallbackEntry[];
+  bestAvailable: FallbackEntry | null;
+  localLikelySlow: boolean;
+}
+
+export type ModeHandler = (
+  ctx: RoutingContext,
+) => Promise<RoutingDecisionResult> | RoutingDecisionResult;
+
 export type { RoutingDecision, RoutingPolicy, RoutingMode };
 export type { ComplexityClassification } from './complexity.types';
 export type { RoutingExplanation, ExplanationFactor, RejectedEntry } from './explanation.types';

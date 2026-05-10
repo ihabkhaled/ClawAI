@@ -52,9 +52,8 @@ describe('AutoSuggestSchedulerManager.collectInboxReplyCandidates (12.2)', () =>
       },
     ]);
     const manager = new AutoSuggestSchedulerManager(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       prisma as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       orchestrator as any,
     );
     await manager.triggerNow('INBOX_REPLY');
@@ -83,9 +82,8 @@ describe('AutoSuggestSchedulerManager.collectInboxReplyCandidates (12.2)', () =>
       },
     ]);
     const manager = new AutoSuggestSchedulerManager(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       prisma as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       orchestrator as any,
     );
     await manager.triggerNow('INBOX_REPLY');
@@ -108,9 +106,8 @@ describe('AutoSuggestSchedulerManager.collectInboxReplyCandidates (12.2)', () =>
       },
     ]);
     const manager = new AutoSuggestSchedulerManager(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       prisma as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       orchestrator as any,
     );
     await manager.triggerNow('INBOX_REPLY');
@@ -123,9 +120,8 @@ describe('AutoSuggestSchedulerManager.collectInboxReplyCandidates (12.2)', () =>
     const orchestrator = makeOrchestrator();
     const prisma = makePrisma([]);
     const manager = new AutoSuggestSchedulerManager(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       prisma as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       orchestrator as any,
     );
     await manager.triggerNow('INBOX_REPLY');

@@ -1,9 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 
 import { AppConfig } from '../config/app.config';
 import { constantTimeEqual } from '../../common/utilities/constant-time-equal.utility';
@@ -17,9 +12,11 @@ import { constantTimeEqual } from '../../common/utilities/constant-time-equal.ut
 @Injectable()
 export class ServiceTokenGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest<{ headers: Record<string, string | undefined> }>();
+    const request = context
+      .switchToHttp()
+      .getRequest<{ headers: Record<string, string | undefined> }>();
     const header = request.headers?.['authorization'];
-    if (header === undefined || !header.startsWith('Service ')) {
+    if (!header?.startsWith('Service ')) {
       throw new UnauthorizedException('Service token required');
     }
     const provided = header.slice('Service '.length);

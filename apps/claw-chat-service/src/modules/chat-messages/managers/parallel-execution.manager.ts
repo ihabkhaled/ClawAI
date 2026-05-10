@@ -173,7 +173,7 @@ export class ParallelExecutionManager {
         return result.value;
       }
 
-      const target = models[index];
+      const target = models.at(index);
       return this.buildFailedResponse(
         target?.provider ?? 'unknown',
         target?.model ?? 'unknown',

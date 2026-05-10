@@ -9,6 +9,10 @@ import { JudgeDecision } from '../../../common/enums';
 
 jest.mock('../../../common/utilities', () => ({
   httpRequest: jest.fn(),
+  recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
+    if (!record) return undefined;
+    return Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined;
+  },
 }));
 jest.mock('../../../app/config/app.config');
 
