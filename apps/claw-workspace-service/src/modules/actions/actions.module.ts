@@ -16,8 +16,11 @@ import { ClickUpAdapter } from '../workspace/adapters/clickup.adapter';
 import { ConfluenceAdapter } from '../workspace/adapters/confluence.adapter';
 import { FigmaAdapter } from '../workspace/adapters/figma.adapter';
 import { GitHubAdapter } from '../workspace/adapters/github.adapter';
+import { GitHubWriteActionsHelper } from '../workspace/adapters/github-write-actions.helper';
 import { GitLabAdapter } from '../workspace/adapters/gitlab.adapter';
+import { GitLabWriteActionsHelper } from '../workspace/adapters/gitlab-write-actions.helper';
 import { GmailAdapter } from '../workspace/adapters/gmail.adapter';
+import { GmailAttachmentHelper } from '../workspace/adapters/gmail-attachment.helper';
 import { GoogleCalendarAdapter } from '../workspace/adapters/google-calendar.adapter';
 import { GoogleDriveAdapter } from '../workspace/adapters/google-drive.adapter';
 import { JiraAdapter } from '../workspace/adapters/jira.adapter';
@@ -41,13 +44,16 @@ import { SlackAdapter } from '../workspace/adapters/slack.adapter';
     ProviderAppConfigService,
     ProviderRegistryService,
     GitHubAdapter,
+    GitHubWriteActionsHelper,
     GitLabAdapter,
+    GitLabWriteActionsHelper,
     BitbucketAdapter,
     SlackAdapter,
     JiraAdapter,
     ConfluenceAdapter,
     GoogleDriveAdapter,
     GmailAdapter,
+    GmailAttachmentHelper,
     SharePointAdapter,
     OneDriveAdapter,
     FigmaAdapter,
