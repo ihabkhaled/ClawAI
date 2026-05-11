@@ -438,6 +438,22 @@ model RouterModelRegistry {
   @@map("router_model_registry")
 }
 
+/// Phase 12: Circuit-breaker state per provider/runtime scope.
+/// Survives container restarts so a flapping provider doesn't reset on
+/// every redeploy. State transitions are managed by CircuitBreakerManager.
+model RouterCircuitBreaker {
+  id               String    @id @default(cuid())
+  scope            String    @unique
+  state            String
+  failureCount     Int       @default(0) @map("failure_count")
+  openedAt         DateTime? @map("opened_at")
+  lastTransitionAt DateTime  @default(now()) @map("last_transition_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@map("router_circuit_breakers")
+}
+
 /// Phase 2: Domain/Career/Major Taxonomy. One row per professional role.
 /// Routes use this to map (prompt → role → expected domain + privacy default).
 model TaxonomyRole {

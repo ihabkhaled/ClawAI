@@ -16,6 +16,8 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { HealthModule } from '../modules/health/health.module';
 import { RoutingModule } from '../modules/routing/routing.module';
 import { ClassifierModule } from '../modules/classifier/classifier.module';
+import { ReliabilityModule } from '../modules/reliability/reliability.module';
+import { RouteEvaluatorModule } from '../modules/route-evaluator/route-evaluator.module';
 import { RouterModelsModule } from '../modules/router-models/router-models.module';
 import { ScoringModule } from '../modules/scoring/scoring.module';
 import { TaxonomyModule } from '../modules/taxonomy/taxonomy.module';
@@ -62,6 +64,8 @@ import { TaxonomyModule } from '../modules/taxonomy/taxonomy.module';
     TaxonomyModule,
     ClassifierModule,
     ScoringModule,
+    ReliabilityModule,
+    RouteEvaluatorModule,
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),

@@ -1,0 +1,266 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import { RoutingMode } from '../../../generated/prisma';
+import { ClassifierManager } from '../../classifier/managers/classifier.manager';
+import { CircuitBreakerManager } from '../../reliability/managers/circuit-breaker.manager';
+import { RouterModelRegistryRepository } from '../../router-models/repositories/router-model-registry.repository';
+import { DEFAULT_POLICY_WEIGHTS } from '../../scoring/constants/scoring.constants';
+import { ScoringEngineManager } from '../../scoring/managers/scoring-engine.manager';
+import { type ScoringCandidate, type ScoringInput } from '../../scoring/types/scoring.types';
+import { routingDecisionV2Schema } from '../schemas/routing-decision-v2.schema';
+import {
+  type EvaluateInputV2,
+  type NoExecutionModelIssue,
+  type RoutingDecisionV2,
+} from '../types/route-evaluator.types';
+import { applyRouteOnlyContract } from '../utilities/route-only-guard.utility';
+import { runtimeTypeOf } from '../utilities/runtime-type.utility';
+
+@Injectable()
+export class RouteEvaluatorManager {
+  private readonly logger = new Logger(RouteEvaluatorManager.name);
+
+  constructor(
+    private readonly classifier: ClassifierManager,
+    private readonly registryRepo: RouterModelRegistryRepository,
+    private readonly scorer: ScoringEngineManager,
+    private readonly circuit: CircuitBreakerManager,
+  ) {}
+
+  async evaluate(input: EvaluateInputV2): Promise<RoutingDecisionV2> {
+    this.logger.debug(`evaluate length=${input.messageContent.length}`);
+
+    const classification = this.classifier.classify({
+      messageContent: input.messageContent,
+      attachedFileMimeTypes: input.attachedFileMimeTypes,
+    });
+
+    const mode = input.routingMode ?? RoutingMode.AUTO;
+    const policyId = input.policyId ?? 'default';
+
+    if (mode === RoutingMode.MANUAL_MODEL) {
+      return this.handleManualMode(input, classification, policyId);
+    }
+
+    const { items } = await this.registryRepo.list({ skip: 0, take: 200 });
+    const eligible = applyRouteOnlyContract(items);
+
+    if (eligible.length === 0) {
+      return this.buildNoExecutionModelDecision(classification, mode, policyId, {
+        code: 'NO_HEALTHY_EXECUTION_MODEL',
+        explanation: 'No execution-capable, non-router-only, active model exists in the registry.',
+        suggestedAction: 'Sync the registry from connector/ollama/llamacpp services or install at least one model.',
+      });
+    }
+
+    const candidates = await this.toScoringCandidates(eligible);
+
+    const weights = DEFAULT_POLICY_WEIGHTS[mode];
+    const scoring: ScoringInput = {
+      classification: {
+        domain: classification.domain,
+        secondaryDomain: classification.secondaryDomain,
+        modalityIn: classification.modalityIn,
+        modalityOut: classification.modalityOut,
+        riskLevel: classification.riskLevel,
+        privacyClass: classification.privacyClass,
+        confidence: classification.confidence,
+      },
+      policy: { policyId, weights },
+      candidates,
+    };
+    const scored = this.scorer.score(scoring);
+
+    if (scored.ranked.length === 0) {
+      return this.buildNoExecutionModelDecision(classification, mode, policyId, {
+        code: 'NO_PRIVACY_COMPLIANT_MODEL',
+        explanation: 'All candidate models were rejected by hard filters (router-only, privacy mismatch, or circuit open).',
+        suggestedAction: 'Relax privacy class, reset open circuits, or install a local model.',
+      });
+    }
+
+    const winner = scored.ranked[0]!;
+    const winnerProfile = eligible.find((p) => p.id === winner.profileId);
+    if (winnerProfile === undefined) {
+      throw new Error(`Winner profileId=${winner.profileId} not in eligible set; this is a bug`);
+    }
+
+    const fallbackChain = scored.ranked.slice(1, 4).map((s) => {
+      const profile = eligible.find((p) => p.id === s.profileId);
+      return {
+        profileId: s.profileId,
+        provider: profile?.provider ?? 'UNKNOWN',
+        modelKey: profile?.modelKey ?? 'UNKNOWN',
+        reason: `score=${s.totalScore.toFixed(3)}`,
+      };
+    });
+
+    const decision: RoutingDecisionV2 = {
+      decisionId: randomUUID(),
+      selectedProfileId: winnerProfile.id,
+      selectedProvider: winnerProfile.provider,
+      selectedModel: winnerProfile.modelKey,
+      runtimeType: runtimeTypeOf(winnerProfile),
+      routingMode: mode,
+      confidence: Number(Math.min(winner.totalScore, classification.confidence).toFixed(3)),
+      classification: {
+        domain: classification.domain,
+        secondaryDomain: classification.secondaryDomain,
+        taskFamily: classification.taskFamily,
+        modalityIn: classification.modalityIn,
+        modalityOut: classification.modalityOut,
+        riskLevel: classification.riskLevel,
+        privacyClass: classification.privacyClass,
+        confidence: classification.confidence,
+      },
+      reasonTags: [
+        ...classification.reasonTags,
+        `winner_score=${winner.totalScore.toFixed(3)}`,
+        `winning_dims=${winner.winningDimensions.join(',')}`,
+      ],
+      scoreBreakdown: input.debug === true ? winner.breakdown : null,
+      candidates:
+        input.debug === true
+          ? scored.ranked.slice(0, 5).map((s) => ({ profileId: s.profileId, totalScore: s.totalScore }))
+          : null,
+      costClass: winnerProfile.costClass,
+      latencyClass: winnerProfile.latencyClass,
+      fallbackChain,
+      policyApplied: { policyId, mode },
+      noExecutionModelIssue: null,
+    };
+
+    return this.validate(decision);
+  }
+
+  private async handleManualMode(
+    input: EvaluateInputV2,
+    classification: ReturnType<ClassifierManager['classify']>,
+    policyId: string,
+  ): Promise<RoutingDecisionV2> {
+    if (input.forcedProvider === undefined || input.forcedModel === undefined) {
+      return this.buildNoExecutionModelDecision(classification, RoutingMode.MANUAL_MODEL, policyId, {
+        code: 'MANUAL_SELECTION_INVALID',
+        explanation: 'MANUAL_MODEL routing requires forcedProvider and forcedModel.',
+        suggestedAction: 'Set forcedProvider and forcedModel in the evaluate request.',
+      });
+    }
+    const profile = await this.registryRepo.findByProviderAndModelKey(
+      input.forcedProvider,
+      input.forcedModel,
+    );
+    if (profile === null || profile.isRouterOnly || !profile.isExecutionCapable) {
+      return this.buildNoExecutionModelDecision(classification, RoutingMode.MANUAL_MODEL, policyId, {
+        code: 'MANUAL_SELECTION_INVALID',
+        explanation: `Provider/model ${input.forcedProvider}/${input.forcedModel} is not a valid execution candidate.`,
+        suggestedAction: 'Check spelling, lifecycle, and isRouterOnly flag.',
+      });
+    }
+    const cb = await this.circuit.getState(profile.provider);
+    if (!cb.isAvailable) {
+      return this.buildNoExecutionModelDecision(classification, RoutingMode.MANUAL_MODEL, policyId, {
+        code: 'NO_HEALTHY_EXECUTION_MODEL',
+        explanation: `Provider ${profile.provider} circuit breaker is OPEN.`,
+        suggestedAction: 'Reset the circuit breaker or pick another provider.',
+      });
+    }
+    const decision: RoutingDecisionV2 = {
+      decisionId: randomUUID(),
+      selectedProfileId: profile.id,
+      selectedProvider: profile.provider,
+      selectedModel: profile.modelKey,
+      runtimeType: runtimeTypeOf(profile),
+      routingMode: RoutingMode.MANUAL_MODEL,
+      confidence: 1,
+      classification: {
+        domain: classification.domain,
+        secondaryDomain: classification.secondaryDomain,
+        taskFamily: classification.taskFamily,
+        modalityIn: classification.modalityIn,
+        modalityOut: classification.modalityOut,
+        riskLevel: classification.riskLevel,
+        privacyClass: classification.privacyClass,
+        confidence: classification.confidence,
+      },
+      reasonTags: ['manual_selection', ...classification.reasonTags],
+      scoreBreakdown: null,
+      candidates: null,
+      costClass: profile.costClass,
+      latencyClass: profile.latencyClass,
+      fallbackChain: [],
+      policyApplied: { policyId, mode: RoutingMode.MANUAL_MODEL },
+      noExecutionModelIssue: null,
+    };
+    return this.validate(decision);
+  }
+
+  private async toScoringCandidates(
+    profiles: Awaited<ReturnType<RouterModelRegistryRepository['list']>>['items'],
+  ): Promise<ScoringCandidate[]> {
+    const out: ScoringCandidate[] = [];
+    for (const profile of profiles) {
+      const cb = await this.circuit.getState(profile.provider);
+      out.push({
+        profile,
+        health: {
+          isHealthy: cb.isAvailable,
+          circuitOpen: !cb.isAvailable,
+          successRateLast24h: null,
+        },
+        learnedSuccessRate: null,
+        judgeTrust: null,
+        fallbackReliability: null,
+      });
+    }
+    return out;
+  }
+
+  private buildNoExecutionModelDecision(
+    classification: ReturnType<ClassifierManager['classify']>,
+    mode: RoutingMode,
+    policyId: string,
+    issue: NoExecutionModelIssue,
+  ): RoutingDecisionV2 {
+    this.logger.warn(`buildNoExecutionModelDecision code=${issue.code}`);
+    const decision: RoutingDecisionV2 = {
+      decisionId: randomUUID(),
+      selectedProfileId: null,
+      selectedProvider: null,
+      selectedModel: null,
+      runtimeType: 'UNKNOWN',
+      routingMode: mode,
+      confidence: 0,
+      classification: {
+        domain: classification.domain,
+        secondaryDomain: classification.secondaryDomain,
+        taskFamily: classification.taskFamily,
+        modalityIn: classification.modalityIn,
+        modalityOut: classification.modalityOut,
+        riskLevel: classification.riskLevel,
+        privacyClass: classification.privacyClass,
+        confidence: classification.confidence,
+      },
+      reasonTags: [...classification.reasonTags, `no_execution:${issue.code}`],
+      scoreBreakdown: null,
+      candidates: null,
+      costClass: null,
+      latencyClass: null,
+      fallbackChain: [],
+      policyApplied: { policyId, mode },
+      noExecutionModelIssue: issue,
+    };
+    return this.validate(decision);
+  }
+
+  private validate(decision: RoutingDecisionV2): RoutingDecisionV2 {
+    const parsed = routingDecisionV2Schema.safeParse(decision);
+    if (!parsed.success) {
+      this.logger.error(`RoutingDecisionV2 schema validation failed: ${parsed.error.message}`);
+      throw new Error(`RoutingDecisionV2 schema validation failed: ${parsed.error.message}`);
+    }
+    // The schema validates shape + ranges; dimension keys come from our scoring
+    // engine and are always valid ScoreDimension values. Return the original
+    // typed object so downstream consumers keep the narrow union type.
+    return decision;
+  }
+}

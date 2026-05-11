@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 
@@ -173,7 +173,9 @@ export class WebhookReceiverManager {
 
   async replay(deliveryId: string): Promise<{ deliveryId: string }> {
     const row = await this.repo.findById(deliveryId);
-    if (row === null) throw new Error(`webhook delivery ${deliveryId} not found`);
+    if (row === null) {
+      throw new NotFoundException({ messageKey: 'WEBHOOK_DELIVERY_NOT_FOUND' });
+    }
     await this.publish(EventPattern.WORKSPACE_WEBHOOK_REPLAYED, {
       deliveryId: row.id,
       provider: row.provider,

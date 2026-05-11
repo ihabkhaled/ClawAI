@@ -22,6 +22,10 @@ export class SuggestionTriggerRuleRepository {
     return this.prisma.suggestionTriggerRule.findUnique({ where: { name } });
   }
 
+  async findById(id: string): Promise<SuggestionTriggerRule | null> {
+    return this.prisma.suggestionTriggerRule.findUnique({ where: { id } });
+  }
+
   async listAll(): Promise<SuggestionTriggerRule[]> {
     return this.prisma.suggestionTriggerRule.findMany({
       orderBy: [{ priority: 'desc' }, { name: 'asc' }],

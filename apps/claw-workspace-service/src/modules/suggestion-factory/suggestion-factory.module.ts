@@ -8,12 +8,14 @@ import { SuggestionFactoryRateLimiterManager } from './managers/suggestion-facto
 import { SuggestionFactoryManager } from './managers/suggestion-factory.manager';
 import { TriggerRuleSeederManager } from './managers/trigger-rule-seeder.manager';
 import { SuggestionTriggerRuleRepository } from './repositories/suggestion-trigger-rule.repository';
+import { SuggestionTriggerRuleService } from './services/suggestion-trigger-rule.service';
 
 @Module({
   imports: [AiActionsModule],
   controllers: [TriggerRuleController],
   providers: [
     SuggestionTriggerRuleRepository,
+    SuggestionTriggerRuleService,
     SuggestionFactoryManager,
     SuggestionFactoryRateLimiterManager,
     TriggerRuleSeederManager,
