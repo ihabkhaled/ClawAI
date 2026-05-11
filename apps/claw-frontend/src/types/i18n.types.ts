@@ -1451,6 +1451,7 @@ export type TranslationDictionary = {
     };
   };
   adminAutomation: {
+    dismiss: string;
     policies: {
       title: string;
       description: string;
@@ -1465,6 +1466,22 @@ export type TranslationDictionary = {
       delete: string;
       cannotDelete: string;
       toggleActive: string;
+      toggleSucceeded: string;
+      toggleFailed: string;
+      deleteSucceeded: string;
+      deleteFailed: string;
+      mutationError: string;
+      kindLabel: {
+        DENY: string;
+        ALLOW: string;
+        AUTO_APPROVE: string;
+      };
+      riskLabel: {
+        LOW: string;
+        MEDIUM: string;
+        HIGH: string;
+        CRITICAL: string;
+      };
     };
     rules: {
       title: string;
@@ -1481,6 +1498,11 @@ export type TranslationDictionary = {
       delete: string;
       cannotDelete: string;
       toggleActive: string;
+      toggleSucceeded: string;
+      toggleFailed: string;
+      deleteSucceeded: string;
+      deleteFailed: string;
+      mutationError: string;
     };
   };
   adminWebhooks: {
@@ -1494,11 +1516,17 @@ export type TranslationDictionary = {
     filter: {
       providerPlaceholder: string;
       connectorPlaceholder: string;
+      signaturePlaceholder: string;
+      signatureAny: string;
+      signatureValid: string;
+      signatureInvalid: string;
+      clear: string;
     };
     row: {
       deliveryId: string;
       connector: string;
       bytes: string;
+      processedAt: string;
     };
     status: {
       accepted: string;
@@ -1506,6 +1534,9 @@ export type TranslationDictionary = {
       idempotent: string;
     };
     replay: string;
+    replaying: string;
+    replaySucceeded: string;
+    replayFailed: string;
   };
   implHandoff: {
     page: {

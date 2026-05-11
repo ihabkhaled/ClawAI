@@ -2264,10 +2264,11 @@ export const es: TranslationDictionary = {
     },
   },
   adminAutomation: {
+    dismiss: 'Descartar',
     policies: {
       title: 'Políticas de acciones de IA',
       description:
-        'Default-strict approval rules. System defaults can be deactivated but not deleted.',
+        'Reglas de aprobación estrictas por defecto. Los valores predeterminados del sistema pueden desactivarse pero no eliminarse.',
       loading: 'Cargando políticas…',
       error: 'No se pudieron cargar las políticas.',
       empty: 'Aún no hay políticas configuradas.',
@@ -2279,11 +2280,27 @@ export const es: TranslationDictionary = {
       delete: 'Eliminar',
       cannotDelete: 'Los predeterminados del sistema no se pueden eliminar',
       toggleActive: 'Alternar activo',
+      toggleSucceeded: 'Política actualizada.',
+      toggleFailed: 'No se pudo actualizar la política.',
+      deleteSucceeded: 'Política eliminada.',
+      deleteFailed: 'No se pudo eliminar la política.',
+      mutationError: 'Se produjo un error al actualizar la política.',
+      kindLabel: {
+        DENY: 'Denegar',
+        ALLOW: 'Permitir',
+        AUTO_APPROVE: 'Aprobar automáticamente',
+      },
+      riskLabel: {
+        LOW: 'Bajo',
+        MEDIUM: 'Medio',
+        HIGH: 'Alto',
+        CRITICAL: 'Crítico',
+      },
     },
     rules: {
       title: 'Reglas de activación de sugerencias',
       description:
-        'Rules that turn raw provider events into draft suggestions. Edit, deactivate, or delete.',
+        'Reglas que convierten eventos brutos del proveedor en sugerencias de borrador. Edita, desactiva o elimina.',
       loading: 'Cargando reglas…',
       error: 'No se pudieron cargar las reglas.',
       empty: 'Aún no hay reglas configuradas.',
@@ -2296,6 +2313,11 @@ export const es: TranslationDictionary = {
       delete: 'Eliminar',
       cannotDelete: 'Los predeterminados del sistema no se pueden eliminar',
       toggleActive: 'Alternar activo',
+      toggleSucceeded: 'Regla actualizada.',
+      toggleFailed: 'No se pudo actualizar la regla.',
+      deleteSucceeded: 'Regla eliminada.',
+      deleteFailed: 'No se pudo eliminar la regla.',
+      mutationError: 'Se produjo un error al actualizar la regla.',
     },
   },
   adminWebhooks: {
@@ -2309,11 +2331,17 @@ export const es: TranslationDictionary = {
     filter: {
       providerPlaceholder: 'Filtrar por proveedor (p. ej. GITHUB)',
       connectorPlaceholder: 'Filtrar por ID de conector',
+      signaturePlaceholder: 'Estado de firma',
+      signatureAny: 'Cualquier firma',
+      signatureValid: 'Firma válida',
+      signatureInvalid: 'Firma inválida',
+      clear: 'Limpiar filtros',
     },
     row: {
       deliveryId: 'ID de entrega',
       connector: 'Conector',
       bytes: 'Bytes del cuerpo',
+      processedAt: 'Procesado en',
     },
     status: {
       accepted: 'Aceptado',
@@ -2321,6 +2349,9 @@ export const es: TranslationDictionary = {
       idempotent: 'Idempotente',
     },
     replay: 'Reproducir',
+    replaying: 'Reproduciendo…',
+    replaySucceeded: 'Entrega de webhook reproducida.',
+    replayFailed: 'No se pudo reproducir la entrega de webhook.',
   },
   implHandoff: {
     page: {

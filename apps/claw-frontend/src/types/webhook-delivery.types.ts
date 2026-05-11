@@ -13,14 +13,14 @@ export type WebhookDelivery = {
   errorMessage: string | null;
   ipAddress: string | null;
   bodyBytes: number;
-  receivedAt: string;
+  createdAt: string;
   processedAt: string | null;
 };
 
 export type WebhookDeliveryFilter = {
   provider?: string;
   connectorId?: string;
-  status?: WebhookDeliveryStatus;
+  signatureValid?: boolean;
 };
 
 export type ListWebhookDeliveriesQuery = WebhookDeliveryFilter & {
@@ -42,5 +42,14 @@ export type UseWebhookDeliveriesPageResult = {
   filter: WebhookDeliveryFilter;
   setFilter: (next: WebhookDeliveryFilter) => void;
   isReplaying: boolean;
+  replayingId: string | null;
   onReplay: (id: string) => void;
+  mutationError: Error | null;
+  clearMutationError: () => void;
+};
+
+export type WebhookDeliveryStatusInfo = {
+  status: WebhookDeliveryStatus;
+  styleClass: string;
+  labelKey: string;
 };

@@ -4,7 +4,7 @@ export { getConfidenceLabel, getConfidenceClass } from './confidence.utility';
 export { formatBytes } from './format-bytes.utility';
 export { getLevelBadgeClass, formatLogLatency } from './log-stats.utility';
 export { formatDuration, formatSpeed } from './format-duration.utility';
-export { formatDate } from './date.utility';
+export { formatDate, formatOptionalIsoDate, formatDateTimeSafe } from './date.utility';
 export { getHealthStatusColor } from './health-status.utility';
 export {
   formatRelativeDate,

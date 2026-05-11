@@ -17,6 +17,7 @@ import { HealthModule } from '../modules/health/health.module';
 import { RoutingModule } from '../modules/routing/routing.module';
 import { ClassifierModule } from '../modules/classifier/classifier.module';
 import { RouterModelsModule } from '../modules/router-models/router-models.module';
+import { ScoringModule } from '../modules/scoring/scoring.module';
 import { TaxonomyModule } from '../modules/taxonomy/taxonomy.module';
 
 @Module({
@@ -60,6 +61,7 @@ import { TaxonomyModule } from '../modules/taxonomy/taxonomy.module';
     RouterModelsModule,
     TaxonomyModule,
     ClassifierModule,
+    ScoringModule,
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),

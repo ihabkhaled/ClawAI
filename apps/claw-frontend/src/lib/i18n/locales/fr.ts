@@ -2271,10 +2271,11 @@ export const fr: TranslationDictionary = {
     },
   },
   adminAutomation: {
+    dismiss: 'Ignorer',
     policies: {
       title: 'Politiques d’actions IA',
       description:
-        'Default-strict approval rules. System defaults can be deactivated but not deleted.',
+        'Règles d’approbation strictes par défaut. Les valeurs par défaut du système peuvent être désactivées mais pas supprimées.',
       loading: 'Chargement des politiques…',
       error: 'Impossible de charger les politiques.',
       empty: 'Aucune politique configurée.',
@@ -2286,11 +2287,27 @@ export const fr: TranslationDictionary = {
       delete: 'Supprimer',
       cannotDelete: 'Les valeurs par défaut système ne peuvent pas être supprimées',
       toggleActive: 'Basculer actif',
+      toggleSucceeded: 'Politique mise à jour.',
+      toggleFailed: 'Impossible de mettre à jour la politique.',
+      deleteSucceeded: 'Politique supprimée.',
+      deleteFailed: 'Impossible de supprimer la politique.',
+      mutationError: 'Une erreur s’est produite lors de la mise à jour de la politique.',
+      kindLabel: {
+        DENY: 'Refuser',
+        ALLOW: 'Autoriser',
+        AUTO_APPROVE: 'Auto-approuver',
+      },
+      riskLabel: {
+        LOW: 'Faible',
+        MEDIUM: 'Moyen',
+        HIGH: 'Élevé',
+        CRITICAL: 'Critique',
+      },
     },
     rules: {
       title: 'Règles de déclenchement',
       description:
-        'Rules that turn raw provider events into draft suggestions. Edit, deactivate, or delete.',
+        'Règles qui transforment les événements bruts du fournisseur en suggestions de brouillon. Modifier, désactiver ou supprimer.',
       loading: 'Chargement des règles…',
       error: 'Impossible de charger les règles.',
       empty: 'Aucune règle configurée.',
@@ -2303,6 +2320,11 @@ export const fr: TranslationDictionary = {
       delete: 'Supprimer',
       cannotDelete: 'Les valeurs par défaut système ne peuvent pas être supprimées',
       toggleActive: 'Basculer actif',
+      toggleSucceeded: 'Règle mise à jour.',
+      toggleFailed: 'Impossible de mettre à jour la règle.',
+      deleteSucceeded: 'Règle supprimée.',
+      deleteFailed: 'Impossible de supprimer la règle.',
+      mutationError: 'Une erreur s’est produite lors de la mise à jour de la règle.',
     },
   },
   adminWebhooks: {
@@ -2316,11 +2338,17 @@ export const fr: TranslationDictionary = {
     filter: {
       providerPlaceholder: 'Filtrer par fournisseur (ex. GITHUB)',
       connectorPlaceholder: 'Filtrer par ID de connecteur',
+      signaturePlaceholder: 'Statut de signature',
+      signatureAny: 'Toute signature',
+      signatureValid: 'Signature valide',
+      signatureInvalid: 'Signature invalide',
+      clear: 'Effacer les filtres',
     },
     row: {
       deliveryId: 'ID de livraison',
       connector: 'Connecteur',
       bytes: 'Octets du corps',
+      processedAt: 'Traité le',
     },
     status: {
       accepted: 'Accepté',
@@ -2328,6 +2356,9 @@ export const fr: TranslationDictionary = {
       idempotent: 'Idempotent',
     },
     replay: 'Rejouer',
+    replaying: 'Relecture…',
+    replaySucceeded: 'Livraison du webhook rejouée.',
+    replayFailed: 'Impossible de rejouer la livraison du webhook.',
   },
   implHandoff: {
     page: {

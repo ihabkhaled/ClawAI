@@ -4,6 +4,8 @@ import type { ReactElement } from 'react';
 
 import { Button } from '@/components/ui/button';
 import type { WebhookDeliveryRowProps } from '@/types/webhook-delivery.types';
+import { formatDateTimeSafe } from '@/utilities';
+import { getWebhookDeliveryStatusInfo } from '@/utilities/webhook-delivery.utility';
 
 export function WebhookDeliveryRow({
   delivery,
@@ -11,15 +13,8 @@ export function WebhookDeliveryRow({
   isReplaying,
   t,
 }: WebhookDeliveryRowProps): ReactElement {
-  let statusStyle = 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400';
-  let statusLabel: string = t('adminWebhooks.status.idempotent');
-  if (delivery.signatureValid && delivery.errorMessage === null) {
-    statusStyle = 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
-    statusLabel = t('adminWebhooks.status.accepted');
-  } else if (delivery.errorMessage !== null) {
-    statusStyle = 'border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400';
-    statusLabel = t('adminWebhooks.status.rejected');
-  }
+  const statusInfo = getWebhookDeliveryStatusInfo(delivery);
+  const statusLabel = t(statusInfo.labelKey);
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3">
       <div className="flex items-center gap-2">
@@ -27,19 +22,23 @@ export function WebhookDeliveryRow({
           {delivery.provider}
         </span>
         <span
-          className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${statusStyle}`}
+          className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${statusInfo.styleClass}`}
+          aria-label={statusLabel}
         >
           {statusLabel}
         </span>
         <span className="text-xs text-muted-foreground">{delivery.eventType ?? '—'}</span>
         <span className="ml-auto text-xs text-muted-foreground">
-          {new Date(delivery.receivedAt).toLocaleString()}
+          {formatDateTimeSafe(delivery.createdAt)}
         </span>
       </div>
       <div className="grid gap-1 text-xs text-muted-foreground md:grid-cols-3">
         <div>
-          <span className="font-semibold text-foreground">{t('adminWebhooks.row.deliveryId')}</span>:{' '}
-          <code className="rounded bg-muted px-1">{delivery.externalDeliveryId ?? delivery.id}</code>
+          <span className="font-semibold text-foreground">{t('adminWebhooks.row.deliveryId')}</span>
+          :{' '}
+          <code className="rounded bg-muted px-1">
+            {delivery.externalDeliveryId ?? delivery.id}
+          </code>
         </div>
         <div>
           <span className="font-semibold text-foreground">{t('adminWebhooks.row.connector')}</span>:{' '}
@@ -50,7 +49,15 @@ export function WebhookDeliveryRow({
           {delivery.bodyBytes}
         </div>
       </div>
-      {delivery.errorMessage !== null ? (
+      {delivery.processedAt !== null ? (
+        <div className="text-xs text-muted-foreground">
+          <span className="font-semibold text-foreground">
+            {t('adminWebhooks.row.processedAt')}
+          </span>
+          : {formatDateTimeSafe(delivery.processedAt)}
+        </div>
+      ) : null}
+      {delivery.errorMessage !== null && delivery.errorMessage !== '' ? (
         <p className="rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1 text-xs text-destructive">
           {delivery.errorMessage}
         </p>
@@ -62,8 +69,10 @@ export function WebhookDeliveryRow({
           variant="outline"
           onClick={() => onReplay(delivery.id)}
           disabled={isReplaying}
+          aria-label={t('adminWebhooks.replay')}
+          aria-busy={isReplaying}
         >
-          {t('adminWebhooks.replay')}
+          {isReplaying ? t('adminWebhooks.replaying') : t('adminWebhooks.replay')}
         </Button>
       </div>
     </div>

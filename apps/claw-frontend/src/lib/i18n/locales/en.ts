@@ -2236,6 +2236,7 @@ export const en: TranslationDictionary = {
     },
   },
   adminAutomation: {
+    dismiss: 'Dismiss',
     policies: {
       title: 'AI Action Policies',
       description:
@@ -2251,6 +2252,22 @@ export const en: TranslationDictionary = {
       delete: 'Delete',
       cannotDelete: 'System defaults cannot be deleted',
       toggleActive: 'Toggle active',
+      toggleSucceeded: 'Policy updated.',
+      toggleFailed: 'Could not update policy.',
+      deleteSucceeded: 'Policy deleted.',
+      deleteFailed: 'Could not delete policy.',
+      mutationError: 'An error occurred while updating the policy.',
+      kindLabel: {
+        DENY: 'Deny',
+        ALLOW: 'Allow',
+        AUTO_APPROVE: 'Auto-approve',
+      },
+      riskLabel: {
+        LOW: 'Low',
+        MEDIUM: 'Medium',
+        HIGH: 'High',
+        CRITICAL: 'Critical',
+      },
     },
     rules: {
       title: 'Suggestion Trigger Rules',
@@ -2268,6 +2285,11 @@ export const en: TranslationDictionary = {
       delete: 'Delete',
       cannotDelete: 'System defaults cannot be deleted',
       toggleActive: 'Toggle active',
+      toggleSucceeded: 'Rule updated.',
+      toggleFailed: 'Could not update rule.',
+      deleteSucceeded: 'Rule deleted.',
+      deleteFailed: 'Could not delete rule.',
+      mutationError: 'An error occurred while updating the rule.',
     },
   },
   adminWebhooks: {
@@ -2281,11 +2303,17 @@ export const en: TranslationDictionary = {
     filter: {
       providerPlaceholder: 'Filter by provider (e.g. GITHUB)',
       connectorPlaceholder: 'Filter by connector ID',
+      signaturePlaceholder: 'Signature status',
+      signatureAny: 'Any signature',
+      signatureValid: 'Valid signature',
+      signatureInvalid: 'Invalid signature',
+      clear: 'Clear filters',
     },
     row: {
       deliveryId: 'Delivery ID',
       connector: 'Connector',
       bytes: 'Body bytes',
+      processedAt: 'Processed at',
     },
     status: {
       accepted: 'Accepted',
@@ -2293,6 +2321,9 @@ export const en: TranslationDictionary = {
       idempotent: 'Idempotent',
     },
     replay: 'Replay',
+    replaying: 'Replaying…',
+    replaySucceeded: 'Webhook delivery replayed.',
+    replayFailed: 'Could not replay webhook delivery.',
   },
   implHandoff: {
     page: {

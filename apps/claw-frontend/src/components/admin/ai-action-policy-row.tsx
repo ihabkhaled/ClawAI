@@ -4,8 +4,10 @@ import type { ReactElement } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { AiActionPolicyKind } from '@/enums/ai-action-policy-kind.enum';
+import { POLICY_KIND_STYLES } from '@/constants/admin-automation.constants';
+import { WORKSPACE_RISK_LABEL_STYLES } from '@/constants/workspace-risk-badge.constants';
 import type { AiActionPolicyRowProps } from '@/types/ai-action-policy.types';
+import type { AiActionRiskLabel } from '@/types/workspace.types';
 
 export function AiActionPolicyRow({
   policy,
@@ -14,31 +16,33 @@ export function AiActionPolicyRow({
   isMutating,
   t,
 }: AiActionPolicyRowProps): ReactElement {
-  let kindStyle = 'border-border bg-muted/40';
-  if (policy.kind === AiActionPolicyKind.DENY) {
-    kindStyle = 'border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400';
-  } else if (policy.kind === AiActionPolicyKind.AUTO_APPROVE) {
-    kindStyle = 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
-  }
+  const kindStyle = POLICY_KIND_STYLES[policy.kind];
+  const kindLabel = t(`adminAutomation.policies.kindLabel.${policy.kind}`);
+  const riskLabelKey = policy.riskMaxLabel as AiActionRiskLabel;
+  const riskBadgeStyle = WORKSPACE_RISK_LABEL_STYLES[riskLabelKey];
+  const riskLabelText = t(`adminAutomation.policies.riskLabel.${policy.riskMaxLabel}`);
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3">
       <div className="flex items-center gap-2">
-        <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${kindStyle}`}>
-          {policy.kind}
+        <span
+          className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${kindStyle}`}
+          aria-label={kindLabel}
+        >
+          {kindLabel}
         </span>
         <span className="text-sm font-semibold">{policy.name}</span>
         {policy.isSystemDefault ? (
           <span className="rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-0.5 text-xs text-blue-600 dark:text-blue-400">
-            {t('admin.policies.systemDefault')}
+            {t('adminAutomation.policies.systemDefault')}
           </span>
         ) : null}
         <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-          <span>{t('admin.policies.priority', { p: String(policy.priority) })}</span>
+          <span>{t('adminAutomation.policies.priority', { p: String(policy.priority) })}</span>
           <Switch
             checked={policy.isActive}
             onCheckedChange={(next) => onToggleActive(policy.id, next)}
             disabled={isMutating}
-            aria-label={t('admin.policies.toggleActive')}
+            aria-label={t('adminAutomation.policies.toggleActive')}
           />
         </span>
       </div>
@@ -47,22 +51,39 @@ export function AiActionPolicyRow({
       ) : null}
       <div className="grid gap-1 text-xs text-muted-foreground md:grid-cols-3">
         <div>
-          <span className="font-semibold text-foreground">{t('admin.policies.providerRegex')}</span>:{' '}
-          <code className="rounded bg-muted px-1">{policy.providerRegex}</code>
+          <span className="font-semibold text-foreground">
+            {t('adminAutomation.policies.providerRegex')}
+          </span>
+          : <code className="rounded bg-muted px-1">{policy.providerRegex}</code>
         </div>
         <div>
-          <span className="font-semibold text-foreground">{t('admin.policies.actionKindRegex')}</span>:{' '}
-          <code className="rounded bg-muted px-1">{policy.actionKindRegex}</code>
+          <span className="font-semibold text-foreground">
+            {t('adminAutomation.policies.actionKindRegex')}
+          </span>
+          : <code className="rounded bg-muted px-1">{policy.actionKindRegex}</code>
         </div>
-        <div>
-          <span className="font-semibold text-foreground">{t('admin.policies.riskCeiling')}</span>:{' '}
-          {policy.riskMaxLabel} ≤ {policy.riskMaxScore}
+        <div className="flex items-center gap-1">
+          <span className="font-semibold text-foreground">
+            {t('adminAutomation.policies.riskCeiling')}
+          </span>
+          :{' '}
+          <span className={`rounded-full border px-2 py-0.5 ${riskBadgeStyle}`}>
+            {riskLabelText}
+          </span>
+          <span>≤ {policy.riskMaxScore}</span>
         </div>
       </div>
       <div className="flex items-center gap-2">
         {policy.isSystemDefault ? (
-          <Button type="button" size="sm" variant="ghost" disabled title={t('admin.policies.cannotDelete')}>
-            {t('admin.policies.delete')}
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled
+            title={t('adminAutomation.policies.cannotDelete')}
+            aria-label={t('adminAutomation.policies.cannotDelete')}
+          >
+            {t('adminAutomation.policies.delete')}
           </Button>
         ) : (
           <Button
@@ -71,8 +92,9 @@ export function AiActionPolicyRow({
             variant="destructive"
             onClick={() => onDelete(policy.id)}
             disabled={isMutating}
+            aria-label={t('adminAutomation.policies.delete')}
           >
-            {t('admin.policies.delete')}
+            {t('adminAutomation.policies.delete')}
           </Button>
         )}
       </div>

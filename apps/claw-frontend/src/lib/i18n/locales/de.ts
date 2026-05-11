@@ -2260,10 +2260,11 @@ export const de: TranslationDictionary = {
     },
   },
   adminAutomation: {
+    dismiss: 'Schließen',
     policies: {
       title: 'KI-Aktionsrichtlinien',
       description:
-        'Default-strict approval rules. System defaults can be deactivated but not deleted.',
+        'Standardmäßig strenge Freigaberegeln. Systemstandards können deaktiviert, aber nicht gelöscht werden.',
       loading: 'Richtlinien werden geladen…',
       error: 'Richtlinien konnten nicht geladen werden.',
       empty: 'Noch keine Richtlinien konfiguriert.',
@@ -2275,11 +2276,27 @@ export const de: TranslationDictionary = {
       delete: 'Löschen',
       cannotDelete: 'Systemstandards können nicht gelöscht werden',
       toggleActive: 'Aktiv umschalten',
+      toggleSucceeded: 'Richtlinie aktualisiert.',
+      toggleFailed: 'Richtlinie konnte nicht aktualisiert werden.',
+      deleteSucceeded: 'Richtlinie gelöscht.',
+      deleteFailed: 'Richtlinie konnte nicht gelöscht werden.',
+      mutationError: 'Beim Aktualisieren der Richtlinie ist ein Fehler aufgetreten.',
+      kindLabel: {
+        DENY: 'Ablehnen',
+        ALLOW: 'Erlauben',
+        AUTO_APPROVE: 'Automatisch genehmigen',
+      },
+      riskLabel: {
+        LOW: 'Niedrig',
+        MEDIUM: 'Mittel',
+        HIGH: 'Hoch',
+        CRITICAL: 'Kritisch',
+      },
     },
     rules: {
       title: 'Vorschlags-Triggerregeln',
       description:
-        'Rules that turn raw provider events into draft suggestions. Edit, deactivate, or delete.',
+        'Regeln, die rohe Anbieterereignisse in Vorschlagsentwürfe umwandeln. Bearbeiten, deaktivieren oder löschen.',
       loading: 'Regeln werden geladen…',
       error: 'Regeln konnten nicht geladen werden.',
       empty: 'Noch keine Regeln konfiguriert.',
@@ -2292,6 +2309,11 @@ export const de: TranslationDictionary = {
       delete: 'Löschen',
       cannotDelete: 'Systemstandards können nicht gelöscht werden',
       toggleActive: 'Aktiv umschalten',
+      toggleSucceeded: 'Regel aktualisiert.',
+      toggleFailed: 'Regel konnte nicht aktualisiert werden.',
+      deleteSucceeded: 'Regel gelöscht.',
+      deleteFailed: 'Regel konnte nicht gelöscht werden.',
+      mutationError: 'Beim Aktualisieren der Regel ist ein Fehler aufgetreten.',
     },
   },
   adminWebhooks: {
@@ -2305,11 +2327,17 @@ export const de: TranslationDictionary = {
     filter: {
       providerPlaceholder: 'Nach Anbieter filtern (z. B. GITHUB)',
       connectorPlaceholder: 'Nach Connector-ID filtern',
+      signaturePlaceholder: 'Signaturstatus',
+      signatureAny: 'Beliebige Signatur',
+      signatureValid: 'Gültige Signatur',
+      signatureInvalid: 'Ungültige Signatur',
+      clear: 'Filter zurücksetzen',
     },
     row: {
       deliveryId: 'Liefer-ID',
       connector: 'Connector',
       bytes: 'Body-Bytes',
+      processedAt: 'Verarbeitet am',
     },
     status: {
       accepted: 'Akzeptiert',
@@ -2317,6 +2345,9 @@ export const de: TranslationDictionary = {
       idempotent: 'Idempotent',
     },
     replay: 'Erneut zustellen',
+    replaying: 'Wird erneut zugestellt…',
+    replaySucceeded: 'Webhook-Auslieferung erneut zugestellt.',
+    replayFailed: 'Webhook-Auslieferung konnte nicht erneut zugestellt werden.',
   },
   implHandoff: {
     page: {

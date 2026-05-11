@@ -14,3 +14,14 @@ export function formatOptionalIsoDate(iso: string | null): string {
   }
   return new Date(iso).toLocaleString();
 }
+
+export function formatDateTimeSafe(iso: string | null | undefined, fallback = '—'): string {
+  if (iso === null || iso === undefined || iso === '') {
+    return fallback;
+  }
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return fallback;
+  }
+  return date.toLocaleString();
+}

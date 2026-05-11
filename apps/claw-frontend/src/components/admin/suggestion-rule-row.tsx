@@ -19,16 +19,16 @@ export function SuggestionRuleRow({
         <span className="text-sm font-semibold">{rule.name}</span>
         {rule.isSystemDefault ? (
           <span className="rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-0.5 text-xs text-blue-600 dark:text-blue-400">
-            {t('admin.rules.systemDefault')}
+            {t('adminAutomation.rules.systemDefault')}
           </span>
         ) : null}
         <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-          <span>{t('admin.rules.priority', { p: String(rule.priority) })}</span>
+          <span>{t('adminAutomation.rules.priority', { p: String(rule.priority) })}</span>
           <Switch
             checked={rule.isActive}
             onCheckedChange={(next) => onToggleActive(rule.id, next)}
             disabled={isMutating}
-            aria-label={t('admin.rules.toggleActive')}
+            aria-label={t('adminAutomation.rules.toggleActive')}
           />
         </span>
       </div>
@@ -37,26 +37,41 @@ export function SuggestionRuleRow({
       ) : null}
       <div className="grid gap-1 text-xs text-muted-foreground md:grid-cols-2">
         <div>
-          <span className="font-semibold text-foreground">{t('admin.rules.eventType')}</span>:{' '}
-          <code className="rounded bg-muted px-1">{rule.eventType}</code>
+          <span className="font-semibold text-foreground">
+            {t('adminAutomation.rules.eventType')}
+          </span>
+          : <code className="rounded bg-muted px-1">{rule.eventType}</code>
         </div>
         <div>
-          <span className="font-semibold text-foreground">{t('admin.rules.actionKind')}</span>:{' '}
-          <code className="rounded bg-muted px-1">{rule.actionKindToSuggest}</code>
+          <span className="font-semibold text-foreground">
+            {t('adminAutomation.rules.actionKind')}
+          </span>
+          : <code className="rounded bg-muted px-1">{rule.actionKindToSuggest}</code>
         </div>
         <div>
-          <span className="font-semibold text-foreground">{t('admin.rules.providerRegex')}</span>:{' '}
-          <code className="rounded bg-muted px-1">{rule.providerRegex}</code>
+          <span className="font-semibold text-foreground">
+            {t('adminAutomation.rules.providerRegex')}
+          </span>
+          : <code className="rounded bg-muted px-1">{rule.providerRegex}</code>
         </div>
         <div>
-          <span className="font-semibold text-foreground">{t('admin.rules.contentRegex')}</span>:{' '}
-          <code className="rounded bg-muted px-1">{rule.contentRegex}</code>
+          <span className="font-semibold text-foreground">
+            {t('adminAutomation.rules.contentRegex')}
+          </span>
+          : <code className="rounded bg-muted px-1">{rule.contentRegex}</code>
         </div>
       </div>
       <div className="flex items-center gap-2">
         {rule.isSystemDefault ? (
-          <Button type="button" size="sm" variant="ghost" disabled title={t('admin.rules.cannotDelete')}>
-            {t('admin.rules.delete')}
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled
+            title={t('adminAutomation.rules.cannotDelete')}
+            aria-label={t('adminAutomation.rules.cannotDelete')}
+          >
+            {t('adminAutomation.rules.delete')}
           </Button>
         ) : (
           <Button
@@ -65,8 +80,9 @@ export function SuggestionRuleRow({
             variant="destructive"
             onClick={() => onDelete(rule.id)}
             disabled={isMutating}
+            aria-label={t('adminAutomation.rules.delete')}
           >
-            {t('admin.rules.delete')}
+            {t('adminAutomation.rules.delete')}
           </Button>
         )}
       </div>

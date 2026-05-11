@@ -2214,10 +2214,11 @@ export const ar: TranslationDictionary = {
     },
   },
   adminAutomation: {
+    dismiss: 'تجاهل',
     policies: {
       title: 'سياسات إجراءات الذكاء الاصطناعي',
       description:
-        'Default-strict approval rules. System defaults can be deactivated but not deleted.',
+        'قواعد موافقة صارمة افتراضيًا. يمكن تعطيل الإعدادات الافتراضية للنظام ولكن لا يمكن حذفها.',
       loading: 'جارٍ تحميل السياسات…',
       error: 'تعذّر تحميل السياسات.',
       empty: 'لم يتم تكوين أي سياسات بعد.',
@@ -2229,11 +2230,26 @@ export const ar: TranslationDictionary = {
       delete: 'حذف',
       cannotDelete: 'لا يمكن حذف الإعدادات الافتراضية للنظام',
       toggleActive: 'تبديل النشاط',
+      toggleSucceeded: 'تم تحديث السياسة.',
+      toggleFailed: 'تعذّر تحديث السياسة.',
+      deleteSucceeded: 'تم حذف السياسة.',
+      deleteFailed: 'تعذّر حذف السياسة.',
+      mutationError: 'حدث خطأ أثناء تحديث السياسة.',
+      kindLabel: {
+        DENY: 'رفض',
+        ALLOW: 'سماح',
+        AUTO_APPROVE: 'موافقة تلقائية',
+      },
+      riskLabel: {
+        LOW: 'منخفض',
+        MEDIUM: 'متوسط',
+        HIGH: 'مرتفع',
+        CRITICAL: 'حرج',
+      },
     },
     rules: {
       title: 'قواعد تشغيل الاقتراحات',
-      description:
-        'Rules that turn raw provider events into draft suggestions. Edit, deactivate, or delete.',
+      description: 'قواعد تحوّل أحداث المزوّد الخام إلى اقتراحات مسودة. حرّر أو عطّل أو احذف.',
       loading: 'جارٍ تحميل القواعد…',
       error: 'تعذّر تحميل القواعد.',
       empty: 'لم يتم تكوين أي قواعد بعد.',
@@ -2246,6 +2262,11 @@ export const ar: TranslationDictionary = {
       delete: 'حذف',
       cannotDelete: 'لا يمكن حذف الإعدادات الافتراضية للنظام',
       toggleActive: 'تبديل النشاط',
+      toggleSucceeded: 'تم تحديث القاعدة.',
+      toggleFailed: 'تعذّر تحديث القاعدة.',
+      deleteSucceeded: 'تم حذف القاعدة.',
+      deleteFailed: 'تعذّر حذف القاعدة.',
+      mutationError: 'حدث خطأ أثناء تحديث القاعدة.',
     },
   },
   adminWebhooks: {
@@ -2259,11 +2280,17 @@ export const ar: TranslationDictionary = {
     filter: {
       providerPlaceholder: 'تصفية حسب الموفر (مثل GITHUB)',
       connectorPlaceholder: 'تصفية حسب معرف الموصل',
+      signaturePlaceholder: 'حالة التوقيع',
+      signatureAny: 'أي توقيع',
+      signatureValid: 'توقيع صالح',
+      signatureInvalid: 'توقيع غير صالح',
+      clear: 'مسح المرشحات',
     },
     row: {
       deliveryId: 'معرف التسليم',
       connector: 'الموصل',
       bytes: 'بايتات الجسم',
+      processedAt: 'تمت المعالجة في',
     },
     status: {
       accepted: 'مقبول',
@@ -2271,6 +2298,9 @@ export const ar: TranslationDictionary = {
       idempotent: 'متماثل',
     },
     replay: 'إعادة التشغيل',
+    replaying: 'جارٍ إعادة التشغيل…',
+    replaySucceeded: 'تم إعادة تشغيل تسليم الويب هوك.',
+    replayFailed: 'تعذّر إعادة تشغيل تسليم الويب هوك.',
   },
   implHandoff: {
     page: {

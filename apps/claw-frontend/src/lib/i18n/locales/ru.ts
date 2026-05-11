@@ -2255,10 +2255,11 @@ export const ru: TranslationDictionary = {
     },
   },
   adminAutomation: {
+    dismiss: 'Закрыть',
     policies: {
       title: 'Политики действий ИИ',
       description:
-        'Default-strict approval rules. System defaults can be deactivated but not deleted.',
+        'Строгие правила одобрения по умолчанию. Системные настройки по умолчанию можно отключить, но нельзя удалить.',
       loading: 'Загрузка политик…',
       error: 'Не удалось загрузить политики.',
       empty: 'Политики ещё не настроены.',
@@ -2270,11 +2271,27 @@ export const ru: TranslationDictionary = {
       delete: 'Удалить',
       cannotDelete: 'Системные значения нельзя удалить',
       toggleActive: 'Переключить активность',
+      toggleSucceeded: 'Политика обновлена.',
+      toggleFailed: 'Не удалось обновить политику.',
+      deleteSucceeded: 'Политика удалена.',
+      deleteFailed: 'Не удалось удалить политику.',
+      mutationError: 'Произошла ошибка при обновлении политики.',
+      kindLabel: {
+        DENY: 'Отказать',
+        ALLOW: 'Разрешить',
+        AUTO_APPROVE: 'Авто-одобрение',
+      },
+      riskLabel: {
+        LOW: 'Низкий',
+        MEDIUM: 'Средний',
+        HIGH: 'Высокий',
+        CRITICAL: 'Критический',
+      },
     },
     rules: {
       title: 'Правила запуска',
       description:
-        'Rules that turn raw provider events into draft suggestions. Edit, deactivate, or delete.',
+        'Правила, превращающие необработанные события провайдера в черновые предложения. Редактируйте, отключайте или удаляйте.',
       loading: 'Загрузка правил…',
       error: 'Не удалось загрузить правила.',
       empty: 'Правила ещё не настроены.',
@@ -2287,6 +2304,11 @@ export const ru: TranslationDictionary = {
       delete: 'Удалить',
       cannotDelete: 'Системные значения нельзя удалить',
       toggleActive: 'Переключить активность',
+      toggleSucceeded: 'Правило обновлено.',
+      toggleFailed: 'Не удалось обновить правило.',
+      deleteSucceeded: 'Правило удалено.',
+      deleteFailed: 'Не удалось удалить правило.',
+      mutationError: 'Произошла ошибка при обновлении правила.',
     },
   },
   adminWebhooks: {
@@ -2301,11 +2323,17 @@ export const ru: TranslationDictionary = {
     filter: {
       providerPlaceholder: 'Фильтр по провайдеру (например, GITHUB)',
       connectorPlaceholder: 'Фильтр по ID коннектора',
+      signaturePlaceholder: 'Состояние подписи',
+      signatureAny: 'Любая подпись',
+      signatureValid: 'Действительная подпись',
+      signatureInvalid: 'Недействительная подпись',
+      clear: 'Очистить фильтры',
     },
     row: {
       deliveryId: 'ID доставки',
       connector: 'Коннектор',
       bytes: 'Байты тела',
+      processedAt: 'Обработано в',
     },
     status: {
       accepted: 'Принято',
@@ -2313,6 +2341,9 @@ export const ru: TranslationDictionary = {
       idempotent: 'Идемпотентно',
     },
     replay: 'Воспроизвести',
+    replaying: 'Повторная отправка…',
+    replaySucceeded: 'Доставка вебхука повторена.',
+    replayFailed: 'Не удалось повторить доставку вебхука.',
   },
   implHandoff: {
     page: {

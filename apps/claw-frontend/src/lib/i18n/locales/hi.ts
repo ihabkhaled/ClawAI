@@ -2240,10 +2240,11 @@ export const hi: TranslationDictionary = {
     },
   },
   adminAutomation: {
+    dismiss: 'खारिज करें',
     policies: {
       title: 'AI एक्शन नीतियाँ',
       description:
-        'Default-strict approval rules. System defaults can be deactivated but not deleted.',
+        'डिफ़ॉल्ट रूप से सख्त अनुमोदन नियम। सिस्टम डिफ़ॉल्ट को निष्क्रिय किया जा सकता है लेकिन हटाया नहीं जा सकता।',
       loading: 'नीतियाँ लोड हो रही हैं…',
       error: 'नीतियाँ लोड नहीं हो सकीं।',
       empty: 'अभी कोई नीति कॉन्फ़िगर नहीं।',
@@ -2255,11 +2256,27 @@ export const hi: TranslationDictionary = {
       delete: 'हटाएँ',
       cannotDelete: 'सिस्टम डिफ़ॉल्ट हटाए नहीं जा सकते',
       toggleActive: 'सक्रिय टॉगल करें',
+      toggleSucceeded: 'नीति अपडेट की गई।',
+      toggleFailed: 'नीति अपडेट नहीं हो सकी।',
+      deleteSucceeded: 'नीति हटा दी गई।',
+      deleteFailed: 'नीति हटाई नहीं जा सकी।',
+      mutationError: 'नीति अपडेट करते समय त्रुटि हुई।',
+      kindLabel: {
+        DENY: 'अस्वीकार करें',
+        ALLOW: 'अनुमति दें',
+        AUTO_APPROVE: 'स्वतः अनुमोदन',
+      },
+      riskLabel: {
+        LOW: 'कम',
+        MEDIUM: 'मध्यम',
+        HIGH: 'उच्च',
+        CRITICAL: 'गंभीर',
+      },
     },
     rules: {
       title: 'सुझाव ट्रिगर नियम',
       description:
-        'Rules that turn raw provider events into draft suggestions. Edit, deactivate, or delete.',
+        'ऐसे नियम जो प्रदाता की कच्ची घटनाओं को मसौदा सुझावों में बदल देते हैं। संपादित करें, निष्क्रिय करें या हटाएँ।',
       loading: 'नियम लोड हो रहे हैं…',
       error: 'नियम लोड नहीं हो सके।',
       empty: 'अभी कोई नियम कॉन्फ़िगर नहीं।',
@@ -2272,6 +2289,11 @@ export const hi: TranslationDictionary = {
       delete: 'हटाएँ',
       cannotDelete: 'सिस्टम डिफ़ॉल्ट हटाए नहीं जा सकते',
       toggleActive: 'सक्रिय टॉगल करें',
+      toggleSucceeded: 'नियम अपडेट किया गया।',
+      toggleFailed: 'नियम अपडेट नहीं हो सका।',
+      deleteSucceeded: 'नियम हटा दिया गया।',
+      deleteFailed: 'नियम हटाया नहीं जा सका।',
+      mutationError: 'नियम अपडेट करते समय त्रुटि हुई।',
     },
   },
   adminWebhooks: {
@@ -2285,11 +2307,17 @@ export const hi: TranslationDictionary = {
     filter: {
       providerPlaceholder: 'प्रदाता द्वारा फ़िल्टर करें (जैसे GITHUB)',
       connectorPlaceholder: 'कनेक्टर आईडी द्वारा फ़िल्टर करें',
+      signaturePlaceholder: 'हस्ताक्षर स्थिति',
+      signatureAny: 'कोई भी हस्ताक्षर',
+      signatureValid: 'मान्य हस्ताक्षर',
+      signatureInvalid: 'अमान्य हस्ताक्षर',
+      clear: 'फ़िल्टर साफ़ करें',
     },
     row: {
       deliveryId: 'डिलीवरी आईडी',
       connector: 'कनेक्टर',
       bytes: 'बॉडी बाइट्स',
+      processedAt: 'संसाधित किया गया',
     },
     status: {
       accepted: 'स्वीकृत',
@@ -2297,6 +2325,9 @@ export const hi: TranslationDictionary = {
       idempotent: 'इडिम्पोटेंट',
     },
     replay: 'पुनःचालन',
+    replaying: 'पुनः चलाया जा रहा है…',
+    replaySucceeded: 'वेबहुक डिलीवरी फिर से चलाई गई।',
+    replayFailed: 'वेबहुक डिलीवरी पुनः नहीं चलाई जा सकी।',
   },
   implHandoff: {
     page: {
