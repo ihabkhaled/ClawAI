@@ -4,6 +4,7 @@ import { EventPattern } from '@claw/shared-types';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { AiActionQueueStatus } from '../../../common/enums/ai-action-queue-status.enum';
+import { AiActionRiskLabel } from '../../../common/enums/ai-action-risk-label.enum';
 import type { Prisma } from '../../../generated/prisma';
 import { AUTO_DENY_REASON } from '../constants/ai-action-policy.constants';
 import { AiActionApprovalQueueRepository } from '../repositories/ai-action-approval-queue.repository';
@@ -18,6 +19,7 @@ import type {
 
 import { AiActionPolicyMatcherManager } from './ai-action-policy-matcher.manager';
 import { AiActionRiskScorerManager } from './ai-action-risk-scorer.manager';
+import { AiActionUserRateLimiterManager } from './ai-action-user-rate-limiter.manager';
 
 @Injectable()
 export class AiActionApprovalManager {
@@ -29,9 +31,19 @@ export class AiActionApprovalManager {
     private readonly queueRepo: AiActionApprovalQueueRepository,
     private readonly preferenceRepo: AutomationPreferenceRepository,
     private readonly rabbitmq: RabbitMQService,
+    private readonly userRateLimiter: AiActionUserRateLimiterManager,
   ) {}
 
   async enqueueSuggestion(input: EnqueueSuggestionInput): Promise<EnqueueSuggestionResult> {
+    // v3 round 2 — per-user burst rate limiter (Prompt 12). Runs FIRST so a
+    // rate-limited user doesn't pay the cost of risk scoring + policy
+    // matching. Returns a synthetic DENIED row so the UI can show the user
+    // why their action was dropped.
+    const gate = this.userRateLimiter.tryReserve(input.userId);
+    if (!gate.allowed) {
+      return this.persistRateLimitedRow(input, gate.reason);
+    }
+
     const risk = this.riskScorer.assess(input.draftPayload);
     const policyMatch = await this.policyMatcher.match({
       provider: input.provider,
@@ -155,6 +167,59 @@ export class AiActionApprovalManager {
     if (status !== AiActionQueueStatus.PENDING_APPROVAL) return null;
     const hours = AppConfig.get().AI_ACTION_QUEUE_EXPIRY_HOURS;
     return new Date(Date.now() + hours * 60 * 60 * 1000);
+  }
+
+  // v3 round 2 — emit a DENIED row + event when the per-user rate limiter
+  // refuses an enqueue. Bypasses risk scoring (we never looked at the
+  // payload) and stores a zero risk score with the synthetic reason code.
+  private async persistRateLimitedRow(
+    input: EnqueueSuggestionInput,
+    reason: string,
+  ): Promise<EnqueueSuggestionResult> {
+    const row = await this.queueRepo.create({
+      userId: input.userId,
+      connectorId: input.connectorId,
+      actionKind: input.actionKind,
+      provider: input.provider,
+      status: AiActionQueueStatus.DENIED,
+      draftPayload: input.draftPayload as Prisma.InputJsonValue,
+      riskLabel: AiActionRiskLabel.LOW,
+      riskScore: 0,
+      riskReasons: [] as unknown as Prisma.InputJsonValue,
+      matchedPolicyId: null,
+      matchedPolicyName: null,
+      generatedBy:
+        input.generatedBy === undefined ? undefined : (input.generatedBy as Prisma.InputJsonValue),
+      sourceObjectId: input.sourceObjectId ?? null,
+      expiresAt: null,
+      rejectionReason: AUTO_DENY_REASON.RATE_LIMITED_USER,
+    });
+    void this.publishOrLog(EventPattern.AI_ACTION_DENIED, {
+      queueId: row.id,
+      userId: input.userId,
+      connectorId: input.connectorId,
+      provider: input.provider,
+      actionKind: input.actionKind,
+      riskScore: 0,
+      riskLabel: AiActionRiskLabel.LOW,
+      matchedPolicyId: null,
+      matchedPolicyName: null,
+      sourceObjectId: input.sourceObjectId ?? null,
+      reason: AUTO_DENY_REASON.RATE_LIMITED_USER,
+      reasonCode: reason,
+      occurredAt: new Date().toISOString(),
+    });
+    this.logger.warn(
+      `enqueueSuggestion rate-limited user=${input.userId} reason=${reason} queueId=${row.id}`,
+    );
+    return {
+      queueId: row.id,
+      status: AiActionQueueStatus.DENIED,
+      riskScore: 0,
+      riskLabel: AiActionRiskLabel.LOW,
+      matchedPolicyId: null,
+      matchedPolicyName: null,
+    };
   }
 
   private publishLifecycleEvents(

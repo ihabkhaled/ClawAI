@@ -215,9 +215,16 @@ export const AUTO_DENY_REASON = {
   USER_DISABLED: 'USER_DISABLED',
   PROVIDER_DISABLED: 'PROVIDER_DISABLED',
   BUDGET_EXCEEDED: 'BUDGET_EXCEEDED',
+  // v3 round 2 (2026-05-12) — per-user burst rate limiter
+  RATE_LIMITED_USER: 'RATE_LIMITED_USER',
 } as const;
 
 export type AutoDenyReason = (typeof AUTO_DENY_REASON)[keyof typeof AUTO_DENY_REASON];
+
+// v3 round 2 — multi-model PR/MR review cost guardrail. 5 was picked because
+// it matches the most popular peer-review board size; bigger is rarely worth
+// the cost increase.
+export const MULTI_MODEL_REVIEW_REVIEWER_CAP = 5;
 
 export const HEURISTIC_BASE_SCORE = 5;
 export const HEURISTIC_EXTERNAL_DOMAIN_SCORE = 25;

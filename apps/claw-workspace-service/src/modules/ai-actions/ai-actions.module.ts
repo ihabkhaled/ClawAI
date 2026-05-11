@@ -10,8 +10,10 @@ import { AiActionExecutionManager } from './managers/ai-action-execution.manager
 import { AiActionPolicyMatcherManager } from './managers/ai-action-policy-matcher.manager';
 import { AiActionQueueExpirySweeperManager } from './managers/ai-action-queue-expiry-sweeper.manager';
 import { AiActionRiskScorerManager } from './managers/ai-action-risk-scorer.manager';
+import { AiActionUserRateLimiterManager } from './managers/ai-action-user-rate-limiter.manager';
 import { AutoRouterManager } from './managers/auto-router.manager';
 import { ModelCatalogResolverManager } from './managers/model-catalog-resolver.manager';
+import { MultiModelReviewOrchestratorManager } from './managers/multi-model-review-orchestrator.manager';
 import { AiActionApprovalQueueRepository } from './repositories/ai-action-approval-queue.repository';
 import { AiActionPolicyRepository } from './repositories/ai-action-policy.repository';
 import { AutomationPreferenceRepository } from './repositories/automation-preference.repository';
@@ -30,7 +32,9 @@ import { AutomationPreferenceService } from './services/automation-preference.se
     ModelCatalogResolverManager,
     AutoRouterManager,
     AiActionExecutionManager,
+    MultiModelReviewOrchestratorManager,
     AiActionRiskScorerManager,
+    AiActionUserRateLimiterManager,
     AiActionPolicyMatcherManager,
     AiActionApprovalManager,
     AiActionDefaultPolicySeederManager,
@@ -49,6 +53,7 @@ import { AutomationPreferenceService } from './services/automation-preference.se
     AiActionRiskScorerManager,
     AiActionPolicyMatcherManager,
     ModelCatalogResolverManager,
+    MultiModelReviewOrchestratorManager,
     AutomationPreferenceService,
     AutomationPreferenceRepository,
   ],

@@ -122,6 +122,8 @@ enum WorkspaceActionType {
   CREATE_PR_COMMENT_BB
   APPROVE_PR_BB
   CREATE_BITBUCKET_ISSUE
+  // v3 round 2 (2026-05-12) — line-level GitLab MR discussion
+  ADD_MR_SUGGESTION
   // Stream 21 — OneDrive/SharePoint/ClickUp write actions
   UPLOAD_ONEDRIVE
   MOVE_ONEDRIVE

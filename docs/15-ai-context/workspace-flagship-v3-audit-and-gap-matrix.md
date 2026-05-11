@@ -283,3 +283,110 @@ sweep, every restarted service comes up healthy.
 - 11 Cross-workspace automation chains (DAG executor for workspace events)
 - 12 Workspace-scoped RBAC (per-connector permissions), per-user rate limits
 - 14 Playwright E2E for inbox + approval queue + digest
+
+---
+
+## Continued — 2026-05-12 round 3 (same session)
+
+Three more v3 gaps closed in the same session. Validation: 21/21 live API
+checks (approval engine) + 468 workspace-service unit tests (+ 19 new) + 0
+typecheck/lint errors.
+
+### Closed gap D — GitLab `ADD_MR_SUGGESTION` (Prompt 04)
+
+Mirrors GitHub's `ADD_PR_SUGGESTION`. Anchors a `\`\`\`suggestion` fenced
+block to a specific (newPath, newLine) in the MR diff so the maintainer can
+click "Apply suggestion" in the GitLab UI.
+
+- New enum value `WorkspaceActionType.ADD_MR_SUGGESTION` in both the TS enum
+  and the Prisma enum + forward migration
+  `prisma/migrations/20260512000000_add_mr_suggestion_action_type/`.
+- New helper method `GitLabWriteActionsHelper.addMrSuggestion()` posts to
+  `POST /projects/:id/merge_requests/:iid/discussions` with the GitLab
+  `position` object (`base_sha`, `start_sha`, `head_sha`, `old_path`,
+  `new_path`, `position_type=text`, `new_line`, optional `old_line`).
+- 6 unit tests (`gitlab-add-mr-suggestion.spec.ts`): happy path, custom
+  oldPath rename, missing-required-fields rejection, non-positive newLine
+  rejection, GitLab API error surfacing, self-hosted baseUrl resolution.
+
+The approval-queue → ActionExecutionManager → GitLabAdapter pipeline routes
+`ADD_MR_SUGGESTION` through the same gates as `CREATE_MR_COMMENT`.
+
+### Closed gap E — Per-user burst rate limiter on AI actions (Prompt 12)
+
+The existing `AutomationPreference.perDayBudget` is a daily check — a stuck
+loop can blow through 1000 actions in 60 seconds without tripping it. This
+limiter is the burst floor underneath the daily budget.
+
+- New manager `AiActionUserRateLimiterManager` with two sliding-window
+  counters per user (per-minute + per-hour). Lazy janitor drops empty
+  buckets every N reservations so an idle workspace doesn't accumulate.
+- New env vars `AI_ACTION_PER_USER_RATE_PER_MIN` (default 20) and
+  `AI_ACTION_PER_USER_RATE_PER_HOUR` (default 300), both bounded by Zod.
+- `AiActionApprovalManager.enqueueSuggestion()` now calls the limiter
+  **first** — rate-limited users never pay the cost of risk scoring or
+  policy matching. A synthetic DENIED row is written with
+  `rejectionReason='RATE_LIMITED_USER'` + `reasonCode='PER_MINUTE'|'PER_HOUR'`,
+  and the `AI_ACTION_DENIED` event still fires so the UI shows the user
+  why their action was dropped.
+- New `AUTO_DENY_REASON.RATE_LIMITED_USER` constant.
+- 5 standalone limiter tests + 2 integration tests on the approval
+  manager: blocks at per-minute cap, blocks with `PER_HOUR` when minute
+  cap is high, isolates buckets per user, recovers after window slides,
+  resets cleanly. Approval manager: limiter blocks → DENIED row + event,
+  limiter allows → passes through to risk scoring. Existing 16 approval
+  tests updated to thread the new constructor arg via `makeLimiter()`.
+
+### Closed gap F — Multi-model PR review with judge synthesis (Prompt 04)
+
+The first half of multi-model PR review: code path now exists for "ask N
+reviewer models the same review prompt in parallel, then optionally have a
+judge model synthesise a single recommendation".
+
+- New types in `multi-model-review.types.ts`: `ReviewerModelRef`,
+  `MultiModelReviewInput`, `ReviewerOutcome`, `JudgeOutcome`,
+  `MultiModelReviewResult`.
+- New manager `MultiModelReviewOrchestratorManager.run()`:
+  - hard cap of 5 reviewer models (`MULTI_MODEL_REVIEW_REVIEWER_CAP`)
+  - `Promise.allSettled` so one slow/failing reviewer never blocks the rest
+  - reuses the JUDGE action prompt for each reviewer pass
+  - judge pass concatenates every successful reviewer's verdict with
+    section headers and a "Consensus / Disagreements / Final Recommendation"
+    system prompt
+  - skips judge pass automatically when no reviewer succeeded
+- 8 unit tests covering: parallel reviewer dispatch with labels,
+  one-reviewer-fails-others-succeed, judge synthesis happy path, judge
+  skipped when all reviewers failed, 5-reviewer cap, empty content
+  rejection, empty reviewer list rejection, judge failure surfacing
+  without losing reviewer outputs.
+- Wired into `AiActionsModule` providers + exports so any caller in the
+  workspace service can inject it. Caller side (PR/MR review controller
+  endpoint, downloadable bundle) is the next polish; the orchestrator is
+  the foundation.
+
+### Validation evidence (round 3)
+
+| Check | Result |
+|---|---|
+| workspace-service unit tests | **468 / 468** (was 447; +19 new) |
+| workspace-service typecheck | 0 errors |
+| workspace-service lint | 0 errors |
+| `qa/test-stream-10-approval-engine.sh` | **21 / 21 PASS** |
+| Container health | workspace + audit + auth + agent all healthy |
+| Docker logs | 0 `UnhandledPromiseRejection` / `FATAL` |
+
+**Cumulative for this multi-round session: 7 v3 gaps closed
+(03/06/12/13 round 1 + 04/12/04 round 2 + 12-rate-limit/04-judge/04-MR-suggestion
+round 3), 35 new unit tests, 86 live API/DB checks, 0 regressions.**
+
+### What's still open
+
+- 04 final polish: downloadable PR review bundle, side/start_line targeting
+  for split-diff comments (GitHub side: already supports `side`; just needs
+  a `start_line` payload field), GitLab MR `position_type='image'` support
+- 06 Gmail: WATCH push notifications, signature/template library, anti-loop
+- 08 Drive/OneDrive/SharePoint frontend viewers
+- 09 Confluence + Figma deep integration
+- 11 Cross-workspace automation chains (DAG)
+- 12 Workspace-scoped RBAC (per-connector), policy-change UI surface
+- 14 Playwright E2E for inbox + approval queue + digest

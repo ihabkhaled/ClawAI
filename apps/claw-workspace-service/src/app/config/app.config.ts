@@ -44,6 +44,11 @@ const appConfigSchema = z.object({
   AI_ACTION_RISK_AUTO_APPROVE_MAX: z.coerce.number().int().min(0).max(100).default(30),
   AI_ACTION_QUEUE_EXPIRY_SWEEP_CRON: z.string().default('0 */15 * * * *'),
   AI_ACTION_QUEUE_EXPIRY_BATCH_LIMIT: z.coerce.number().int().positive().max(1000).default(100),
+  // v3 round 2 — per-user burst rate limit on enqueueSuggestion (Prompt 12).
+  // Per-min catches stuck-loop bots; per-hour catches sustained mis-use that
+  // slips past per-min. Both are best-effort in-memory sliding windows.
+  AI_ACTION_PER_USER_RATE_PER_MIN: z.coerce.number().int().positive().max(10_000).default(20),
+  AI_ACTION_PER_USER_RATE_PER_HOUR: z.coerce.number().int().positive().max(100_000).default(300),
   // Stream 11 — webhook receiver
   WEBHOOK_BODY_MAX_BYTES: z.coerce.number().int().positive().default(1_048_576),
   WEBHOOK_REPLAY_WINDOW_MINUTES: z.coerce.number().int().positive().default(30),

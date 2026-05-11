@@ -28,6 +28,9 @@ export enum WorkspaceActionType {
   CREATE_GITLAB_ISSUE = 'CREATE_GITLAB_ISSUE',
   COMMENT_GITLAB_ISSUE = 'COMMENT_GITLAB_ISSUE',
   UPDATE_MR_DESCRIPTION = 'UPDATE_MR_DESCRIPTION',
+  // v3 round 2 (2026-05-12) — line-level GitLab MR discussion thread
+  // (mirrors GitHub's ADD_PR_SUGGESTION)
+  ADD_MR_SUGGESTION = 'ADD_MR_SUGGESTION',
   // Stream 20 — Bitbucket write actions
   CREATE_PR_COMMENT_BB = 'CREATE_PR_COMMENT_BB',
   APPROVE_PR_BB = 'APPROVE_PR_BB',

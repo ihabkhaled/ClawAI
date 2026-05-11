@@ -26,6 +26,8 @@ export class GitLabWriteActionsHelper {
           return await this.commentGitlabIssue(api, accessToken, payload);
         case WorkspaceActionType.UPDATE_MR_DESCRIPTION:
           return await this.updateMrDescription(api, accessToken, payload);
+        case WorkspaceActionType.ADD_MR_SUGGESTION:
+          return await this.addMrSuggestion(api, accessToken, payload);
         default:
           return {
             success: false,
@@ -144,6 +146,70 @@ export class GitLabWriteActionsHelper {
       body: JSON.stringify({ description }),
     });
     return this.toResult(response, ['id', 'web_url']);
+  }
+
+  // Line-level review suggestion via GitLab's discussion thread API.
+  // Mirrors GitHub's ADD_PR_SUGGESTION: anchors a ```suggestion fenced block
+  // to a specific (new_line, path) in the MR diff so the maintainer can click
+  // "Apply suggestion" in the GitLab UI.
+  //
+  // Required payload fields: projectId, iid, baseSha, startSha, headSha,
+  //   newPath, newLine, suggestion (the replacement code).
+  // Optional:                oldPath, oldLine (defaults to newPath/newLine).
+  private async addMrSuggestion(
+    api: string,
+    token: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const projectId = String(payload['projectId'] ?? '');
+    const iid = String(payload['iid'] ?? '');
+    const baseSha = String(payload['baseSha'] ?? '');
+    const startSha = String(payload['startSha'] ?? '');
+    const headSha = String(payload['headSha'] ?? '');
+    const newPath = String(payload['newPath'] ?? '');
+    const newLine = Number(payload['newLine'] ?? 0);
+    const oldPath = String(payload['oldPath'] ?? newPath);
+    const oldLine =
+      payload['oldLine'] !== undefined ? Number(payload['oldLine']) : undefined;
+    const suggestion = String(payload['suggestion'] ?? '');
+    if (
+      projectId.length === 0 ||
+      iid.length === 0 ||
+      baseSha.length === 0 ||
+      startSha.length === 0 ||
+      headSha.length === 0 ||
+      newPath.length === 0 ||
+      newLine <= 0 ||
+      suggestion.length === 0
+    ) {
+      return {
+        success: false,
+        errorMessage:
+          'ADD_MR_SUGGESTION requires {projectId, iid, baseSha, startSha, headSha, newPath, newLine, suggestion}',
+      };
+    }
+    const body = `\`\`\`suggestion\n${suggestion}\n\`\`\``;
+    const position = {
+      base_sha: baseSha,
+      start_sha: startSha,
+      head_sha: headSha,
+      old_path: oldPath,
+      new_path: newPath,
+      position_type: 'text',
+      new_line: newLine,
+      ...(oldLine !== undefined ? { old_line: oldLine } : {}),
+    };
+    const url = `${api}/projects/${encodeURIComponent(projectId)}/merge_requests/${encodeURIComponent(iid)}/discussions`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ body, position }),
+    });
+    return this.toResult(response, ['id']);
   }
 
   private async toResult(response: Response, idFields: string[]): Promise<WriteActionResult> {

@@ -73,6 +73,13 @@ describe('AiActionApprovalManager', () => {
     publish: jest.fn().mockImplementation(async () => {}),
   });
 
+  const makeLimiter = (
+    allowed = true,
+    reason = 'PER_MINUTE',
+  ): { tryReserve: jest.Mock } => ({
+    tryReserve: jest.fn().mockReturnValue(allowed ? { allowed: true } : { allowed: false, reason }),
+  });
+
   const makePrefRepo = (
     pref: {
       isEnabled: boolean;
@@ -110,6 +117,7 @@ describe('AiActionApprovalManager', () => {
       queueRepo as any,
       makePrefRepo() as any,
       makeRabbit() as any,
+      makeLimiter() as any,
     );
     const result = await manager.enqueueSuggestion(baseInput);
     expect(result.status).toBe(AiActionQueueStatus.AUTO_APPROVED);
@@ -126,6 +134,7 @@ describe('AiActionApprovalManager', () => {
       queueRepo as any,
       makePrefRepo() as any,
       makeRabbit() as any,
+      makeLimiter() as any,
     );
     const result = await manager.enqueueSuggestion(baseInput);
     expect(result.status).toBe(AiActionQueueStatus.PENDING_APPROVAL);
@@ -143,6 +152,7 @@ describe('AiActionApprovalManager', () => {
       queueRepo as any,
       makePrefRepo() as any,
       rabbit as any,
+      makeLimiter() as any,
     );
     const result = await manager.enqueueSuggestion(baseInput);
     expect(result.status).toBe(AiActionQueueStatus.DENIED);
@@ -164,6 +174,7 @@ describe('AiActionApprovalManager', () => {
       makeQueueRepo() as any,
       makePrefRepo() as any,
       rabbit as any,
+      makeLimiter() as any,
     );
     await manager.enqueueSuggestion(baseInput);
     await new Promise((r) => setImmediate(r));
@@ -179,6 +190,7 @@ describe('AiActionApprovalManager', () => {
       queueRepo as any,
       makePrefRepo({ isEnabled: false, autoApproveBelowRiskScore: 100 }) as any,
       makeRabbit() as any,
+      makeLimiter() as any,
     );
     const result = await manager.enqueueSuggestion(baseInput);
     expect(result.status).toBe(AiActionQueueStatus.DENIED);
@@ -192,6 +204,7 @@ describe('AiActionApprovalManager', () => {
       queueRepo as any,
       makePrefRepo({ isEnabled: true, autoApproveBelowRiskScore: 30 }) as any,
       makeRabbit() as any,
+      makeLimiter() as any,
     );
     const result = await manager.enqueueSuggestion(baseInput);
     expect(result.status).toBe(AiActionQueueStatus.PENDING_APPROVAL);
@@ -205,6 +218,7 @@ describe('AiActionApprovalManager', () => {
       queueRepo as any,
       makePrefRepo({ isEnabled: true, autoApproveBelowRiskScore: 100 }) as any,
       makeRabbit() as any,
+      makeLimiter() as any,
     );
     const result = await manager.enqueueSuggestion(baseInput);
     expect(result.status).toBe(AiActionQueueStatus.DENIED);
@@ -222,6 +236,7 @@ describe('AiActionApprovalManager', () => {
           3,
         ) as any,
         makeRabbit() as any,
+        makeLimiter() as any,
       );
       const result = await manager.enqueueSuggestion(baseInput);
       expect(result.status).toBe(AiActionQueueStatus.AUTO_APPROVED);
@@ -234,6 +249,7 @@ describe('AiActionApprovalManager', () => {
         makeQueueRepo() as any,
         makePrefRepo({ isEnabled: true, autoApproveBelowRiskScore: 50, perDayBudget: 5 }, 5) as any,
         makeRabbit() as any,
+        makeLimiter() as any,
       );
       const result = await manager.enqueueSuggestion(baseInput);
       expect(result.status).toBe(AiActionQueueStatus.DENIED);
@@ -249,6 +265,7 @@ describe('AiActionApprovalManager', () => {
           9,
         ) as any,
         makeRabbit() as any,
+        makeLimiter() as any,
       );
       const result = await manager.enqueueSuggestion(baseInput);
       expect(result.status).toBe(AiActionQueueStatus.DENIED);
@@ -264,6 +281,7 @@ describe('AiActionApprovalManager', () => {
           9999,
         ) as any,
         makeRabbit() as any,
+        makeLimiter() as any,
       );
       const result = await manager.enqueueSuggestion(baseInput);
       expect(result.status).toBe(AiActionQueueStatus.AUTO_APPROVED);
@@ -283,6 +301,7 @@ describe('AiActionApprovalManager', () => {
           providers: ['GITHUB', 'GMAIL'],
         }) as any,
         makeRabbit() as any,
+        makeLimiter() as any,
       );
       const result = await manager.enqueueSuggestion({
         ...baseInput,
@@ -302,6 +321,7 @@ describe('AiActionApprovalManager', () => {
           providers: ['GITHUB'],
         }) as any,
         makeRabbit() as any,
+        makeLimiter() as any,
       );
       const result = await manager.enqueueSuggestion({
         ...baseInput,
@@ -321,6 +341,7 @@ describe('AiActionApprovalManager', () => {
           providers: ['GITHUB'],
         }) as any,
         makeRabbit() as any,
+        makeLimiter() as any,
       );
       const result = await manager.enqueueSuggestion({ ...baseInput, provider: null });
       expect(result.status).toBe(AiActionQueueStatus.AUTO_APPROVED);
@@ -338,6 +359,7 @@ describe('AiActionApprovalManager', () => {
           providers: ['GITHUB'],
         }) as any,
         makeRabbit() as any,
+        makeLimiter() as any,
       );
       await manager.enqueueSuggestion({ ...baseInput, provider: WorkspaceProvider.JIRA });
       const row = queueRepo.create.mock.calls[0]?.[0] as { rejectionReason: string };
@@ -355,12 +377,68 @@ describe('AiActionApprovalManager', () => {
           providers: [],
         }) as any,
         makeRabbit() as any,
+        makeLimiter() as any,
       );
       const result = await manager.enqueueSuggestion({
         ...baseInput,
         provider: WorkspaceProvider.JIRA,
       });
       expect(result.status).toBe(AiActionQueueStatus.AUTO_APPROVED);
+    });
+  });
+
+  // v3 round 2 (2026-05-12) — Prompt 12: per-user burst rate limiter
+  describe('per-user rate limiter (Prompt 12)', () => {
+    it('returns DENIED + rejectionReason=RATE_LIMITED_USER when limiter blocks', async () => {
+      const queueRepo = makeQueueRepo();
+      const rabbit = makeRabbit();
+      const riskScorer = makeRiskScorer(10, AiActionRiskLabel.LOW);
+      const matcher = makeMatcher('AUTO_APPROVE', 'auto-summarize');
+      const manager = new AiActionApprovalManager(
+        riskScorer as any,
+        matcher as any,
+        queueRepo as any,
+        makePrefRepo() as any,
+        rabbit as any,
+        makeLimiter(false, 'PER_MINUTE') as any,
+      );
+      const result = await manager.enqueueSuggestion(baseInput);
+      expect(result.status).toBe(AiActionQueueStatus.DENIED);
+      expect(result.riskScore).toBe(0);
+      // Limiter runs FIRST — risk scorer + matcher are never invoked.
+      expect(riskScorer.assess).not.toHaveBeenCalled();
+      expect(matcher.match).not.toHaveBeenCalled();
+      // Row written with the synthetic reason code.
+      expect(queueRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: AiActionQueueStatus.DENIED,
+          rejectionReason: 'RATE_LIMITED_USER',
+          riskScore: 0,
+        }),
+      );
+      // Event fan-out includes the denial pattern with reasonCode.
+      await new Promise((r) => setImmediate(r));
+      const deniedCall = rabbit.publish.mock.calls.find((c) => c[0] === 'ai_action.denied');
+      expect(deniedCall).toBeDefined();
+      expect(deniedCall?.[1]).toMatchObject({
+        reason: 'RATE_LIMITED_USER',
+        reasonCode: 'PER_MINUTE',
+      });
+    });
+
+    it('passes through to risk scoring when limiter allows', async () => {
+      const queueRepo = makeQueueRepo();
+      const riskScorer = makeRiskScorer(10, AiActionRiskLabel.LOW);
+      const manager = new AiActionApprovalManager(
+        riskScorer as any,
+        makeMatcher('AUTO_APPROVE', 'auto-summarize') as any,
+        queueRepo as any,
+        makePrefRepo() as any,
+        makeRabbit() as any,
+        makeLimiter(true) as any,
+      );
+      await manager.enqueueSuggestion(baseInput);
+      expect(riskScorer.assess).toHaveBeenCalledTimes(1);
     });
   });
 });
