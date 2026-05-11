@@ -454,6 +454,32 @@ model RouterModelRegistry {
   @@map("router_model_registry")
 }
 
+/// Phase 10: Learned-score table. Per-(profile, domain, taskFamily) success
+/// metrics that the scoring engine reads to nudge ranking. Separate from
+/// RouterModelRegistry so manual admin overrides stay clean and learning
+/// can be bounded/rolled back without touching the canonical registry.
+model RouterLearnedScore {
+  id                String   @id @default(cuid())
+  profileKey        String   @map("profile_key")
+  domain            DomainTag
+  taskFamily        String   @map("task_family")
+  successRate       Decimal  @default(0.6) @map("success_rate") @db.Decimal(6, 4)
+  feedbackPositive  Int      @default(0) @map("feedback_positive")
+  feedbackNegative  Int      @default(0) @map("feedback_negative")
+  judgeVerified     Int      @default(0) @map("judge_verified")
+  judgeRevised      Int      @default(0) @map("judge_revised")
+  judgeEscalated    Int      @default(0) @map("judge_escalated")
+  fallbackTriggered Int      @default(0) @map("fallback_triggered")
+  totalRoutes       Int      @default(0) @map("total_routes")
+  lastUpdatedAt     DateTime @default(now()) @map("last_updated_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@unique([profileKey, domain, taskFamily])
+  @@index([profileKey])
+  @@index([domain])
+  @@map("router_learned_scores")
+}
+
 /// Phase 9: Router workflows. Multi-step pipelines the router can choose
 /// instead of (or in addition to) a single LLM model.
 model RouterWorkflow {

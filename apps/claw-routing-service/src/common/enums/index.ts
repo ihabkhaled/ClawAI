@@ -5,3 +5,4 @@ export { ComplexityClass } from './complexity-class.enum';
 export { ModelCapability } from './model-capability.enum';
 export { RiskLevel, RiskTier } from './risk-level.enum';
 export { CircuitBreakerState } from './circuit-breaker-state.enum';
+export { FeedbackSignal } from './feedback-signal.enum';
