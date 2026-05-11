@@ -2,9 +2,13 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 
 import { AuditsService } from '../services/audits.service';
-import type { AiActionAuditEvent } from '../types/ai-action-audit.types';
+import type {
+  AiActionAuditEvent,
+  AiActionPolicyAuditEvent,
+} from '../types/ai-action-audit.types';
 import {
   AI_ACTION_EVENT_HANDLERS,
+  AI_ACTION_POLICY_EVENT_HANDLERS,
   resolveSeverity,
 } from '../constants/ai-action-audit.constants';
 
@@ -23,6 +27,44 @@ export class AiActionAuditConsumer implements OnModuleInit {
         this.handle(entry.action, raw as AiActionAuditEvent),
       );
       this.logger.log(`Subscribed to event: ${entry.pattern}`);
+    }
+    for (const entry of AI_ACTION_POLICY_EVENT_HANDLERS) {
+      await this.rabbitmq.subscribe(entry.pattern, (raw) =>
+        this.handlePolicyEvent(entry.action, entry.defaultSeverity, raw as AiActionPolicyAuditEvent),
+      );
+      this.logger.log(`Subscribed to event: ${entry.pattern}`);
+    }
+  }
+
+  async handlePolicyEvent(
+    action: string,
+    severity: string,
+    payload: AiActionPolicyAuditEvent,
+  ): Promise<void> {
+    try {
+      await this.audits.createAuditLog({
+        userId: payload.actorUserId,
+        action,
+        entityType: 'ai_action_policy',
+        entityId: payload.policyId,
+        severity,
+        details: {
+          policyName: payload.policyName,
+          kind: payload.kind,
+          priority: payload.priority,
+          isActive: payload.isActive,
+          isSystemDefault: payload.isSystemDefault,
+          before: payload.before,
+          after: payload.after,
+          at: payload.at,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `failed to persist policy audit for ${action} policyId=${payload.policyId} — ${
+          error instanceof Error ? error.message : 'unknown'
+        }`,
+      );
     }
   }
 

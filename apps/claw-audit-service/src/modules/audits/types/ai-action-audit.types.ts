@@ -21,3 +21,16 @@ export type AiActionAuditEventHandlerEntry = {
   action: string;
   defaultSeverity: string;
 };
+
+export type AiActionPolicyAuditEvent = {
+  policyId: string;
+  policyName: string;
+  kind: string;
+  priority: number;
+  isActive: boolean;
+  isSystemDefault: boolean;
+  actorUserId: string;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  at: string;
+};

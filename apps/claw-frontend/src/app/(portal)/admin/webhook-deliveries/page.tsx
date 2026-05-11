@@ -4,14 +4,49 @@ import type { ReactElement } from 'react';
 
 import { WebhookDeliveryRow } from '@/components/admin/webhook-delivery-row';
 import { PageHeader } from '@/components/common/page-header';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  SIGNATURE_FILTER_ANY,
+  SIGNATURE_FILTER_INVALID,
+  SIGNATURE_FILTER_VALID,
+} from '@/constants/admin-webhooks.constants';
 import { useWebhookDeliveriesPage } from '@/hooks/admin/use-webhook-deliveries';
 import { useTranslation } from '@/lib/i18n';
 
 export default function AdminWebhookDeliveriesPage(): ReactElement {
   const { t } = useTranslation();
-  const { deliveries, isLoading, isError, error, filter, setFilter, isReplaying, onReplay } =
-    useWebhookDeliveriesPage();
+  const {
+    deliveries,
+    isLoading,
+    isError,
+    error,
+    filter,
+    setFilter,
+    replayingId,
+    onReplay,
+    mutationError,
+    clearMutationError,
+  } = useWebhookDeliveriesPage();
+
+  const hasFilters =
+    (filter.provider !== undefined && filter.provider.length > 0) ||
+    (filter.connectorId !== undefined && filter.connectorId.length > 0) ||
+    filter.signatureValid !== undefined;
+
+  let signatureSelectValue: string = SIGNATURE_FILTER_ANY;
+  if (filter.signatureValid === true) {
+    signatureSelectValue = SIGNATURE_FILTER_VALID;
+  } else if (filter.signatureValid === false) {
+    signatureSelectValue = SIGNATURE_FILTER_INVALID;
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -35,6 +70,47 @@ export default function AdminWebhookDeliveriesPage(): ReactElement {
           aria-label={t('adminWebhooks.filter.connectorPlaceholder')}
           className="max-w-xs"
         />
+        <Select
+          value={signatureSelectValue}
+          onValueChange={(value: string) => {
+            if (value === SIGNATURE_FILTER_VALID) {
+              setFilter({ ...filter, signatureValid: true });
+            } else if (value === SIGNATURE_FILTER_INVALID) {
+              setFilter({ ...filter, signatureValid: false });
+            } else {
+              setFilter({ ...filter, signatureValid: undefined });
+            }
+          }}
+        >
+          <SelectTrigger
+            className="max-w-xs"
+            aria-label={t('adminWebhooks.filter.signaturePlaceholder')}
+          >
+            <SelectValue placeholder={t('adminWebhooks.filter.signaturePlaceholder')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={SIGNATURE_FILTER_ANY}>
+              {t('adminWebhooks.filter.signatureAny')}
+            </SelectItem>
+            <SelectItem value={SIGNATURE_FILTER_VALID}>
+              {t('adminWebhooks.filter.signatureValid')}
+            </SelectItem>
+            <SelectItem value={SIGNATURE_FILTER_INVALID}>
+              {t('adminWebhooks.filter.signatureInvalid')}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+        {hasFilters ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => setFilter({})}
+            aria-label={t('adminWebhooks.filter.clear')}
+          >
+            {t('adminWebhooks.filter.clear')}
+          </Button>
+        ) : null}
       </div>
 
       {isLoading ? (
@@ -42,9 +118,30 @@ export default function AdminWebhookDeliveriesPage(): ReactElement {
       ) : null}
 
       {isError ? (
-        <p className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <p
+          className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+          role="alert"
+        >
           {error?.message ?? t('adminWebhooks.page.error')}
         </p>
+      ) : null}
+
+      {mutationError !== null ? (
+        <div
+          className="flex items-center justify-between gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+          role="alert"
+        >
+          <span>{mutationError.message || t('adminWebhooks.replayFailed')}</span>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={clearMutationError}
+            aria-label={t('adminAutomation.dismiss')}
+          >
+            {t('adminAutomation.dismiss')}
+          </Button>
+        </div>
       ) : null}
 
       {!isLoading && !isError && deliveries.length === 0 ? (
@@ -60,7 +157,7 @@ export default function AdminWebhookDeliveriesPage(): ReactElement {
               key={d.id}
               delivery={d}
               onReplay={onReplay}
-              isReplaying={isReplaying}
+              isReplaying={replayingId === d.id}
               t={t}
             />
           ))}

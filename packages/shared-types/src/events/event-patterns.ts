@@ -98,6 +98,10 @@ export enum EventPattern {
   AI_ACTION_DENIED = 'ai_action.denied',
   AI_ACTION_EXPIRED = 'ai_action.expired',
   AI_ACTION_EDITED = 'ai_action.edited',
+  // Stream 02 (v3 polish, 2026-05-11) — admin policy CRUD audit trail
+  AI_ACTION_POLICY_CREATED = 'ai_action.policy.created',
+  AI_ACTION_POLICY_UPDATED = 'ai_action.policy.updated',
+  AI_ACTION_POLICY_DELETED = 'ai_action.policy.deleted',
   // === Workspace Automation Stream 11 — Webhook Receiver ===
   WORKSPACE_WEBHOOK_RECEIVED = 'workspace.webhook.received',
   WORKSPACE_WEBHOOK_REJECTED = 'workspace.webhook.rejected',

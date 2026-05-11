@@ -180,3 +180,106 @@ v2) is **validated end-to-end** on the current `main` branch:
 - 14 — Master regression matrix + Playwright E2E (existing harness covers ~80%)
 
 Each of these is a self-contained next-session workstream.
+
+---
+
+## Continued — 2026-05-11 round 2 (same session, gaps closed)
+
+Three of the PARTIAL gaps now closed in-session. Validation: 65 live API/DB
+checks pass + 447 workspace-service unit tests + 0 typecheck/lint errors.
+
+### Closed gap A — Gmail `CREATE_DRAFT` (Prompt 06)
+
+User can now have AI suggest a draft and have it saved to Gmail as a draft
+(not sent) until human review.
+
+- New enum value `WorkspaceActionType.CREATE_DRAFT` in
+  `apps/claw-workspace-service/src/common/enums/workspace-action-type.enum.ts`
+- New Prisma enum value + migration
+  `prisma/migrations/20260511000000_add_create_draft_action_type/`
+- New adapter method `GmailAdapter.createDraft()` that posts to
+  `POST /gmail/v1/users/me/drafts` and returns `{ draftId, messageId, threadId }`
+  metadata plus a `#drafts` URL the user can click to review
+- New unit test suite
+  `apps/claw-workspace-service/src/modules/workspace/adapters/__tests__/gmail-create-draft.spec.ts`
+  (6/6 PASS): happy path, missing-thread fallback URL, missing-fields rejection,
+  Gmail-API-error surfacing, threadId-pass-through (reply-as-draft), unknown
+  action type.
+
+Existing approval-queue + risk-policy pipeline routes CREATE_DRAFT through the
+same gates as SEND_EMAIL — no separate auto-approve rule needed, the default
+ALLOW policy at LOW risk handles it.
+
+### Closed gap B — AI-action policy CRUD audit log (Prompt 12)
+
+Every admin policy create/update/delete now writes a row to
+`audit_logs.entityType='ai_action_policy'` in MongoDB with the actor's userId
+and full before/after snapshots.
+
+- 3 new RabbitMQ event patterns in `packages/shared-types/src/events/event-patterns.ts`:
+  `AI_ACTION_POLICY_CREATED`, `AI_ACTION_POLICY_UPDATED`, `AI_ACTION_POLICY_DELETED`
+- `AiActionPolicyService` now takes `RabbitMQService` in its constructor;
+  `create/update/deleteById` all publish their event fire-and-forget after the
+  DB write succeeds. Publish failures log WARN but do not block the admin call.
+- `AiActionPolicyController` passes the authenticated user's id into
+  `service.update()` and `service.deleteById()` so `actorUserId` is captured.
+- Audit-service consumer extended: new `AI_ACTION_POLICY_EVENT_HANDLERS` list
+  + new `handlePolicyEvent()` method that writes the row with
+  `entityType=ai_action_policy`, severity LOW/MEDIUM/HIGH per pattern, full
+  before/after JSON in `details`.
+- 4 new unit tests in
+  `apps/claw-workspace-service/src/modules/ai-actions/services/__tests__/ai-action-policy.service.spec.ts`
+  cover the 3 audit-event publishes (create/update/delete) plus the existing
+  CRUD behavior — 15/15 PASS.
+- Live verified via `qa/test-stream-10-approval-engine.sh` (21/21 PASS) +
+  direct `db.audit_logs.find({entityType:'ai_action_policy'}).limit(5)`
+  which returns rows with `before`, `after`, `policyName`, `actorUserId`.
+
+### Closed gap C — Workspace pricing tier proposal (Prompt 13)
+
+`docs/02-business-product/workspace-flagship-pricing-tiers.md`:
+4-tier ladder (Free / Pro / Team / Enterprise), per-tier limits (active
+connectors, workspace objects, AI actions/mo, recipes, parallel models,
+inbox search corpus, audit retention), upgrade triggers, runtime-enforcement
+hook list (gateway, workspace service, AI actions, recipe runner, inbox/
+digest, audit retention TTL), explicit "what is Free forever" carve-outs,
+post-launch revisit points. Sized for product owner review — not yet a
+public marketing page.
+
+### Infrastructure side-effect — TS 6 beta deprecation sweep
+
+Several services' Docker containers had TypeScript 6.0.0-beta installed
+(via fresh npm install during prior rebuilds). TS 6 treats `baseUrl` and
+`moduleResolution=node10` deprecation warnings as errors, blocking container
+startup on restart. Added `"ignoreDeprecations": "6.0"` to all 13
+`apps/*/tsconfig.build.json` files. Containers that only had
+`tsconfig.json` already carry the option there; agent-service and
+research-service got the updated tsconfig.json copied into them. After the
+sweep, every restarted service comes up healthy.
+
+### Validation evidence (continued round)
+
+| Check | Result |
+|---|---|
+| workspace-service unit tests | **447 / 447** (was 438; +9 new) |
+| workspace-service typecheck | 0 errors |
+| workspace-service lint | 0 errors (1 pre-existing warning in unrelated file) |
+| `qa/test-stream-10-approval-engine.sh` | **21 / 21 PASS** |
+| `qa/test-stream-10-capability-framework.sh` | **28 / 28 PASS** |
+| `qa/test-stream-13-recipes-crud.sh` | **16 / 16 PASS** |
+| Mongo audit_logs.ai_action_policy rows | written end-to-end with before/after |
+| Docker logs | 0 `UnhandledPromiseRejection` / `FATAL` |
+
+**Total this round: 65 live API/DB checks + 9 new unit tests, all green.**
+
+### What's still open (next sessions)
+
+- 04 PR review polish: GitLab MR full discussion thread, multi-model
+  reviewer+judge orchestration, downloadable PR review bundle
+- 06 Gmail polish: Gmail WATCH push notifications, auto-thread stitching,
+  signature/template library, anti-loop heuristics
+- 08 Drive/OneDrive/SharePoint frontend viewers
+- 09 Confluence + Figma deep integration
+- 11 Cross-workspace automation chains (DAG executor for workspace events)
+- 12 Workspace-scoped RBAC (per-connector permissions), per-user rate limits
+- 14 Playwright E2E for inbox + approval queue + digest

@@ -4,6 +4,7 @@ import { RoutingMode } from '../../../generated/prisma';
 import { ClassifierManager } from '../../classifier/managers/classifier.manager';
 import { CircuitBreakerManager } from '../../reliability/managers/circuit-breaker.manager';
 import { RouterModelRegistryRepository } from '../../router-models/repositories/router-model-registry.repository';
+import { type RouterModelRegistryRecord } from '../../router-models/types/router-model-registry.types';
 import { DEFAULT_POLICY_WEIGHTS } from '../../scoring/constants/scoring.constants';
 import { ScoringEngineManager } from '../../scoring/managers/scoring-engine.manager';
 import { type ScoringCandidate, type ScoringInput } from '../../scoring/types/scoring.types';
@@ -49,7 +50,8 @@ export class RouteEvaluatorManager {
       return this.buildNoExecutionModelDecision(classification, mode, policyId, {
         code: 'NO_HEALTHY_EXECUTION_MODEL',
         explanation: 'No execution-capable, non-router-only, active model exists in the registry.',
-        suggestedAction: 'Sync the registry from connector/ollama/llamacpp services or install at least one model.',
+        suggestedAction:
+          'Sync the registry from connector/ollama/llamacpp services or install at least one model.',
       });
     }
 
@@ -74,18 +76,38 @@ export class RouteEvaluatorManager {
     if (scored.ranked.length === 0) {
       return this.buildNoExecutionModelDecision(classification, mode, policyId, {
         code: 'NO_PRIVACY_COMPLIANT_MODEL',
-        explanation: 'All candidate models were rejected by hard filters (router-only, privacy mismatch, or circuit open).',
+        explanation:
+          'All candidate models were rejected by hard filters (router-only, privacy mismatch, or circuit open).',
         suggestedAction: 'Relax privacy class, reset open circuits, or install a local model.',
       });
     }
 
-    const winner = scored.ranked[0]!;
+    const [winner] = scored.ranked;
+    if (winner === undefined) {
+      throw new Error('scored.ranked unexpectedly empty after non-empty check');
+    }
     const winnerProfile = eligible.find((p) => p.id === winner.profileId);
     if (winnerProfile === undefined) {
       throw new Error(`Winner profileId=${winner.profileId} not in eligible set; this is a bug`);
     }
+    const decision = this.buildSuccessDecision(
+      winner,
+      winnerProfile,
+      scored.ranked,
+      eligible,
+      classification,
+      mode,
+      policyId,
+      input.debug === true,
+    );
+    return this.validate(decision);
+  }
 
-    const fallbackChain = scored.ranked.slice(1, 4).map((s) => {
+  private buildFallbackChain(
+    rankedTail: ReturnType<ScoringEngineManager['score']>['ranked'],
+    eligible: RouterModelRegistryRecord[],
+  ): RoutingDecisionV2['fallbackChain'] {
+    return rankedTail.slice(1, 4).map((s) => {
       const profile = eligible.find((p) => p.id === s.profileId);
       return {
         profileId: s.profileId,
@@ -94,8 +116,19 @@ export class RouteEvaluatorManager {
         reason: `score=${s.totalScore.toFixed(3)}`,
       };
     });
+  }
 
-    const decision: RoutingDecisionV2 = {
+  private buildSuccessDecision(
+    winner: ReturnType<ScoringEngineManager['score']>['ranked'][number],
+    winnerProfile: RouterModelRegistryRecord,
+    ranked: ReturnType<ScoringEngineManager['score']>['ranked'],
+    eligible: RouterModelRegistryRecord[],
+    classification: ReturnType<ClassifierManager['classify']>,
+    mode: RoutingMode,
+    policyId: string,
+    debug: boolean,
+  ): RoutingDecisionV2 {
+    return {
       decisionId: randomUUID(),
       selectedProfileId: winnerProfile.id,
       selectedProvider: winnerProfile.provider,
@@ -103,34 +136,37 @@ export class RouteEvaluatorManager {
       runtimeType: runtimeTypeOf(winnerProfile),
       routingMode: mode,
       confidence: Number(Math.min(winner.totalScore, classification.confidence).toFixed(3)),
-      classification: {
-        domain: classification.domain,
-        secondaryDomain: classification.secondaryDomain,
-        taskFamily: classification.taskFamily,
-        modalityIn: classification.modalityIn,
-        modalityOut: classification.modalityOut,
-        riskLevel: classification.riskLevel,
-        privacyClass: classification.privacyClass,
-        confidence: classification.confidence,
-      },
+      classification: this.classificationToV2(classification),
       reasonTags: [
         ...classification.reasonTags,
         `winner_score=${winner.totalScore.toFixed(3)}`,
         `winning_dims=${winner.winningDimensions.join(',')}`,
       ],
-      scoreBreakdown: input.debug === true ? winner.breakdown : null,
-      candidates:
-        input.debug === true
-          ? scored.ranked.slice(0, 5).map((s) => ({ profileId: s.profileId, totalScore: s.totalScore }))
-          : null,
+      scoreBreakdown: debug ? winner.breakdown : null,
+      candidates: debug
+        ? ranked.slice(0, 5).map((s) => ({ profileId: s.profileId, totalScore: s.totalScore }))
+        : null,
       costClass: winnerProfile.costClass,
       latencyClass: winnerProfile.latencyClass,
-      fallbackChain,
+      fallbackChain: this.buildFallbackChain(ranked, eligible),
       policyApplied: { policyId, mode },
       noExecutionModelIssue: null,
     };
+  }
 
-    return this.validate(decision);
+  private classificationToV2(
+    c: ReturnType<ClassifierManager['classify']>,
+  ): RoutingDecisionV2['classification'] {
+    return {
+      domain: c.domain,
+      secondaryDomain: c.secondaryDomain,
+      taskFamily: c.taskFamily,
+      modalityIn: c.modalityIn,
+      modalityOut: c.modalityOut,
+      riskLevel: c.riskLevel,
+      privacyClass: c.privacyClass,
+      confidence: c.confidence,
+    };
   }
 
   private async handleManualMode(
@@ -139,30 +175,45 @@ export class RouteEvaluatorManager {
     policyId: string,
   ): Promise<RoutingDecisionV2> {
     if (input.forcedProvider === undefined || input.forcedModel === undefined) {
-      return this.buildNoExecutionModelDecision(classification, RoutingMode.MANUAL_MODEL, policyId, {
-        code: 'MANUAL_SELECTION_INVALID',
-        explanation: 'MANUAL_MODEL routing requires forcedProvider and forcedModel.',
-        suggestedAction: 'Set forcedProvider and forcedModel in the evaluate request.',
-      });
+      return this.buildNoExecutionModelDecision(
+        classification,
+        RoutingMode.MANUAL_MODEL,
+        policyId,
+        {
+          code: 'MANUAL_SELECTION_INVALID',
+          explanation: 'MANUAL_MODEL routing requires forcedProvider and forcedModel.',
+          suggestedAction: 'Set forcedProvider and forcedModel in the evaluate request.',
+        },
+      );
     }
     const profile = await this.registryRepo.findByProviderAndModelKey(
       input.forcedProvider,
       input.forcedModel,
     );
     if (profile === null || profile.isRouterOnly || !profile.isExecutionCapable) {
-      return this.buildNoExecutionModelDecision(classification, RoutingMode.MANUAL_MODEL, policyId, {
-        code: 'MANUAL_SELECTION_INVALID',
-        explanation: `Provider/model ${input.forcedProvider}/${input.forcedModel} is not a valid execution candidate.`,
-        suggestedAction: 'Check spelling, lifecycle, and isRouterOnly flag.',
-      });
+      return this.buildNoExecutionModelDecision(
+        classification,
+        RoutingMode.MANUAL_MODEL,
+        policyId,
+        {
+          code: 'MANUAL_SELECTION_INVALID',
+          explanation: `Provider/model ${input.forcedProvider}/${input.forcedModel} is not a valid execution candidate.`,
+          suggestedAction: 'Check spelling, lifecycle, and isRouterOnly flag.',
+        },
+      );
     }
     const cb = await this.circuit.getState(profile.provider);
     if (!cb.isAvailable) {
-      return this.buildNoExecutionModelDecision(classification, RoutingMode.MANUAL_MODEL, policyId, {
-        code: 'NO_HEALTHY_EXECUTION_MODEL',
-        explanation: `Provider ${profile.provider} circuit breaker is OPEN.`,
-        suggestedAction: 'Reset the circuit breaker or pick another provider.',
-      });
+      return this.buildNoExecutionModelDecision(
+        classification,
+        RoutingMode.MANUAL_MODEL,
+        policyId,
+        {
+          code: 'NO_HEALTHY_EXECUTION_MODEL',
+          explanation: `Provider ${profile.provider} circuit breaker is OPEN.`,
+          suggestedAction: 'Reset the circuit breaker or pick another provider.',
+        },
+      );
     }
     const decision: RoutingDecisionV2 = {
       decisionId: randomUUID(),

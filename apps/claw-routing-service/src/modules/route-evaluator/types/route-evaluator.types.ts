@@ -47,6 +47,8 @@ export type NoExecutionModelIssue = {
   suggestedAction: string;
 };
 
+export type RuntimeType = 'CLOUD' | 'OLLAMA' | 'LLAMACPP' | 'UNKNOWN';
+
 export type RoutingDecisionV2 = {
   decisionId: string;
   selectedProfileId: string | null;

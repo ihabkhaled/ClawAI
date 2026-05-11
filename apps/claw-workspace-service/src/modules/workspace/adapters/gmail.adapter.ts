@@ -429,9 +429,74 @@ export class GmailAdapter implements WorkspaceAdapter {
     if (actionType === 'SEND_EMAIL' || actionType === 'REPLY_EMAIL') {
       return this.sendEmail(accessToken, payload, actionType === 'REPLY_EMAIL');
     }
+    if (actionType === 'CREATE_DRAFT') {
+      return this.createDraft(accessToken, payload);
+    }
     return {
       success: false,
       errorMessage: `Gmail adapter: unsupported action type ${actionType}`,
+    };
+  }
+
+  private async createDraft(
+    accessToken: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const to = typeof payload['to'] === 'string' ? payload['to'] : null;
+    const subject = typeof payload['subject'] === 'string' ? payload['subject'] : null;
+    const body = typeof payload['body'] === 'string' ? payload['body'] : null;
+    const threadId =
+      typeof payload['threadId'] === 'string' ? (payload['threadId'] as string) : undefined;
+    if (to === null || subject === null || body === null) {
+      return {
+        success: false,
+        errorMessage: 'Gmail createDraft requires {to, subject, body} fields in payload',
+      };
+    }
+
+    const rfc822 = [
+      `To: ${to}`,
+      `Subject: ${subject}`,
+      'Content-Type: text/plain; charset=utf-8',
+      'MIME-Version: 1.0',
+      '',
+      body,
+    ].join('\r\n');
+    const raw = Buffer.from(rfc822, 'utf-8').toString('base64url');
+
+    const response = await fetch(`${GMAIL_API_BASE}/users/${GMAIL_USER_ENDPOINT}/drafts`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: { raw, ...(threadId !== undefined ? { threadId } : {}) },
+      }),
+    });
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      return {
+        success: false,
+        errorMessage: `Gmail createDraft failed: HTTP ${String(response.status)} ${errorText.slice(0, 200)}`,
+      };
+    }
+    const data = (await response.json()) as {
+      id?: string;
+      message?: { id?: string; threadId?: string };
+    };
+    return {
+      success: true,
+      externalId: data.id,
+      url:
+        data.message?.threadId !== undefined
+          ? `https://mail.google.com/mail/u/0/#drafts/${data.message.threadId}`
+          : 'https://mail.google.com/mail/u/0/#drafts',
+      metadata: {
+        draftId: data.id,
+        messageId: data.message?.id,
+        threadId: data.message?.threadId,
+      },
     };
   }
 

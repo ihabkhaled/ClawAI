@@ -55,16 +55,20 @@ export class AiActionPolicyController {
   @HttpCode(HttpStatus.OK)
   @Roles(UserRole.ADMIN)
   async update(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateAiActionPolicySchema)) dto: UpdateAiActionPolicyDto,
   ): Promise<AiActionPolicy> {
-    return this.service.update(id, dto);
+    return this.service.update(id, dto, user.id);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Roles(UserRole.ADMIN)
-  async remove(@Param('id') id: string): Promise<void> {
-    await this.service.deleteById(id);
+  async remove(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ): Promise<void> {
+    await this.service.deleteById(id, user.id);
   }
 }

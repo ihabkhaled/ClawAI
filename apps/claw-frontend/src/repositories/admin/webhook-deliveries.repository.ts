@@ -16,8 +16,8 @@ export async function listWebhookDeliveries(
   if (query.connectorId !== undefined && query.connectorId.length > 0) {
     params.set('connectorId', query.connectorId);
   }
-  if (query.status !== undefined) {
-    params.set('status', query.status);
+  if (query.signatureValid !== undefined) {
+    params.set('signatureValid', query.signatureValid ? 'true' : 'false');
   }
   if (query.limit !== undefined) {
     params.set('limit', String(query.limit));

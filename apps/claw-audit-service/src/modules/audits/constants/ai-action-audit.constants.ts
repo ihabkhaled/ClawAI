@@ -50,6 +50,27 @@ export const AI_ACTION_EVENT_HANDLERS: AiActionAuditEventHandlerEntry[] = [
   },
 ];
 
+// v3 round (2026-05-11) — admin policy CRUD audit trail. Separate from
+// AI_ACTION_EVENT_HANDLERS because the event payload shape is different
+// (policy CRUD vs queue lifecycle).
+export const AI_ACTION_POLICY_EVENT_HANDLERS: AiActionAuditEventHandlerEntry[] = [
+  {
+    pattern: EventPattern.AI_ACTION_POLICY_CREATED,
+    action: 'AI_ACTION_POLICY_CREATED',
+    defaultSeverity: 'MEDIUM',
+  },
+  {
+    pattern: EventPattern.AI_ACTION_POLICY_UPDATED,
+    action: 'AI_ACTION_POLICY_UPDATED',
+    defaultSeverity: 'MEDIUM',
+  },
+  {
+    pattern: EventPattern.AI_ACTION_POLICY_DELETED,
+    action: 'AI_ACTION_POLICY_DELETED',
+    defaultSeverity: 'HIGH',
+  },
+];
+
 const RISK_TO_SEVERITY = new Map<string, string>([
   ['LOW', 'LOW'],
   ['MEDIUM', 'MEDIUM'],

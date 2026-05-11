@@ -46,6 +46,7 @@ export type SuggestionTriggerRule = {
   isActive: boolean;
   isSystemDefault: boolean;
   priority: number;
+  perRuleBudgetPerHour: number | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -59,6 +60,7 @@ export type CreateSuggestionTriggerRuleRequest = {
   actionKindToSuggest: string;
   priority?: number;
   isActive?: boolean;
+  perRuleBudgetPerHour?: number | null;
 };
 
 export type UpdateSuggestionTriggerRuleRequest = Partial<
@@ -71,6 +73,9 @@ export type AdminPolicyPageRenderProps = {
   isError: boolean;
   error: Error | null;
   isMutating: boolean;
+  pendingId: string | null;
+  mutationError: Error | null;
+  clearMutationError: () => void;
   onTogglePolicyActive: (id: string, next: boolean) => void;
   onDeletePolicy: (id: string) => void;
   t: TranslateFunction;
@@ -82,6 +87,9 @@ export type AdminRulesPageRenderProps = {
   isError: boolean;
   error: Error | null;
   isMutating: boolean;
+  pendingId: string | null;
+  mutationError: Error | null;
+  clearMutationError: () => void;
   onToggleRuleActive: (id: string, next: boolean) => void;
   onDeleteRule: (id: string) => void;
   t: TranslateFunction;

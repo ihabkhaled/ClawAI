@@ -1,0 +1,7 @@
+export const WEBHOOK_FILTER_DEBOUNCE_MS = 250;
+
+export const WEBHOOK_FETCH_LIMIT = 50;
+
+export const SIGNATURE_FILTER_ANY = 'ANY';
+export const SIGNATURE_FILTER_VALID = 'VALID';
+export const SIGNATURE_FILTER_INVALID = 'INVALID';

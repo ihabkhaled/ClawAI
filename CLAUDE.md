@@ -408,6 +408,11 @@ Past mistakes:
 - 1131 entries across 8 non-EN locales had `value === enValue`
   silently — caught only by an explicit audit script, not by
   typecheck.
+- `adminAutomation.policies.description` and
+  `adminAutomation.rules.description` shipped to all 8 non-EN
+  locales as English placeholders for the entire ai-action-
+  policies and suggestion-rules admin pages. Caught 2026-05-10
+  during an end-to-end admin audit, not by typecheck.
 
 Required practice when introducing new i18n keys:
 
@@ -433,6 +438,34 @@ will spot-check at least one non-English locale by switching
 the UI language. Test in `de` or `ar` before declaring done —
 a 3-second language toggle is the cheapest way to catch this.
 
+#### `t()` is NOT type-safe against `TranslationDictionary`
+
+The `useTranslation()` hook returns `t: (key: string, params?) => string`.
+The first parameter is plain `string`, NOT `keyof TranslationDictionary`.
+That means TypeScript will **never** flag a call like
+`t('admin.policies.title')` when the actual key in the dictionary is
+`adminAutomation.policies.title`. At runtime the literal key string
+gets rendered to the user as-is.
+
+This bit hard on 2026-05-10: the entire `/admin/ai-action-policies`
+and `/admin/suggestion-rules` pages rendered raw `admin.policies.X`
+and `admin.rules.X` strings because the FE called those keys but the
+locale dictionaries declared them under `adminAutomation.*`.
+Typecheck was green, lint was green, tests were green. Only a
+browser visit caught it.
+
+Mitigations (in priority order):
+
+1. **Co-locate the i18n type schema and the page that uses it.** When
+   you add a t() call, immediately check that key chain exists in
+   `i18n.types.ts`. The 30-second cost beats a 30-minute audit.
+2. **Spot-check at least one non-EN locale visually** after changes
+   that add new t() calls. If a raw key like `admin.policies.title`
+   slips through, you'll see it instantly in the UI.
+3. **Long-term:** make `t()` generic over `TranslationDictionary` so
+   `t('non.existent.key')` becomes a typecheck error. Filed as
+   technical debt; rolling out across the codebase needs a sweep.
+
 ### Frontend Key Rules Summary
 
 - No `any` types anywhere
@@ -442,6 +475,24 @@ a 3-second language toggle is the cheapest way to catch this.
 - All new pages need loading, empty, and error states
 - All new API calls go through repositories
 - TSX files contain only render composition — ZERO business logic
+- **FE type field names MUST mirror BE DTO/Prisma field names verbatim.**
+  Renaming `createdAt` → `receivedAt` on the FE type silently breaks date
+  rendering because `new Date(undefined).toLocaleString() === "Invalid Date"`
+  — and typecheck won't catch it because the FE type is internally consistent.
+  Bit us on `WebhookDelivery` (2026-05-10). If you need a friendlier label,
+  rename only in the UI string, not the type.
+- **When the BE Zod schema is `.strict()`, the FE filter type must be the
+  exact intersection of accepted keys — not a superset.** A "dead" filter
+  field like `status` on `WebhookDeliveryFilter` will 400 the whole request
+  the moment some future caller sets it.
+- **Every `useMutation` must have `onError` + a user-visible surfacing
+  path.** Default pattern: `onError` calls `showToast.apiError(err, t('…'))`
+  AND records the error to a local `mutationError` state shown as a
+  dismissable banner. Silent mutation failure is a delivery blocker.
+- **Per-row mutation state is the default, not a polish item.** A single
+  `isMutating: boolean` on the page disables every row in the list when
+  one row is updating. Use a `pendingId: string \| null` from the hook and
+  derive `isMutating={pendingId === row.id}` per row.
 
 ---
 
