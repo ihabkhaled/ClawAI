@@ -122,6 +122,22 @@ enum ModalityKind {
   EMBEDDING
 }
 
+enum WorkflowKind {
+  DIRECT_LLM
+  SEARCH_FIRST
+  EXTRACT_FIRST
+  PDF_EXTRACTION
+  YOUTUBE_TRANSCRIPT
+  IMAGE_ANALYSIS
+  IMAGE_GENERATION
+  VIDEO_ANALYSIS
+  AUDIO_TRANSCRIBE
+  FILE_GENERATION
+  CODE_REVIEW
+  COMPARE_ENSEMBLE
+  JUDGE_PIPELINE
+}
+
 enum DomainTag {
   GENERAL
   CODING
@@ -436,6 +452,24 @@ model RouterModelRegistry {
   @@index([isExecutionCapable, lifecycle])
   @@index([isRouterOnly])
   @@map("router_model_registry")
+}
+
+/// Phase 9: Router workflows. Multi-step pipelines the router can choose
+/// instead of (or in addition to) a single LLM model.
+model RouterWorkflow {
+  id               String       @id @default(cuid())
+  workflowKey      String       @unique @map("workflow_key")
+  kind             WorkflowKind
+  displayName      String       @map("display_name")
+  description      String?
+  steps            Json
+  defaultModelTier String       @default("A") @map("default_model_tier")
+  isEnabled        Boolean      @default(true) @map("is_enabled")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  @@index([kind])
+  @@map("router_workflows")
 }
 
 /// Phase 12: Circuit-breaker state per provider/runtime scope.

@@ -21,6 +21,7 @@ import { RouteEvaluatorModule } from '../modules/route-evaluator/route-evaluator
 import { RouterModelsModule } from '../modules/router-models/router-models.module';
 import { ScoringModule } from '../modules/scoring/scoring.module';
 import { TaxonomyModule } from '../modules/taxonomy/taxonomy.module';
+import { WorkflowsModule } from '../modules/workflows/workflows.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { TaxonomyModule } from '../modules/taxonomy/taxonomy.module';
     ScoringModule,
     ReliabilityModule,
     RouteEvaluatorModule,
+    WorkflowsModule,
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
