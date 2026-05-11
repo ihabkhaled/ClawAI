@@ -1,0 +1,48 @@
+import { z } from 'zod';
+import {
+  CostClass,
+  CostConfidence,
+  DomainTag,
+  LatencyClass,
+  ModalityKind,
+  ModelLifecycle,
+  PrivacyClass,
+  QualityTier,
+} from '../../../generated/prisma';
+
+export const createRouterModelSchema = z.object({
+  provider: z.string().min(1).max(64),
+  modelKey: z.string().min(1).max(200),
+  displayName: z.string().min(1).max(200),
+  family: z.string().min(1).max(100).optional(),
+  connectorId: z.string().min(1).max(100).optional(),
+  runtimeId: z.string().min(1).max(100).optional(),
+  isLocal: z.boolean().default(false),
+  isRouterOnly: z.boolean().default(false),
+  isExecutionCapable: z.boolean().default(true),
+  lifecycle: z.nativeEnum(ModelLifecycle).default(ModelLifecycle.ACTIVE),
+  modalitiesIn: z.array(z.nativeEnum(ModalityKind)).max(20).default([]),
+  modalitiesOut: z.array(z.nativeEnum(ModalityKind)).max(20).default([]),
+  contextWindowTokens: z.number().int().min(0).max(100_000_000).optional(),
+  maxOutputTokens: z.number().int().min(0).max(10_000_000).optional(),
+  domainTags: z.array(z.nativeEnum(DomainTag)).max(50).default([]),
+  notRecommendedFor: z.array(z.nativeEnum(DomainTag)).max(50).default([]),
+  inputCostPer1M: z.number().min(0).max(1_000_000).optional(),
+  outputCostPer1M: z.number().min(0).max(1_000_000).optional(),
+  costConfidence: z.nativeEnum(CostConfidence).default(CostConfidence.UNKNOWN),
+  costClass: z.nativeEnum(CostClass).optional(),
+  latencyP50Ms: z.number().int().min(0).max(600_000).optional(),
+  latencyP95Ms: z.number().int().min(0).max(600_000).optional(),
+  latencyClass: z.nativeEnum(LatencyClass).optional(),
+  qualityTier: z.nativeEnum(QualityTier).default(QualityTier.B),
+  hallucinationRisk: z.number().min(0).max(1).optional(),
+  judgeSuitability: z.boolean().default(false),
+  searchSuitability: z.boolean().default(false),
+  fallbackSuitability: z.boolean().default(true),
+  privacySupport: z.nativeEnum(PrivacyClass).default(PrivacyClass.CLOUD_PERMITTED),
+  metadataSource: z.string().min(1).max(50).default('manual'),
+  externalCardUrl: z.string().url().max(500).optional(),
+  notes: z.string().max(2000).optional(),
+});
+
+export type CreateRouterModelDto = z.infer<typeof createRouterModelSchema>;

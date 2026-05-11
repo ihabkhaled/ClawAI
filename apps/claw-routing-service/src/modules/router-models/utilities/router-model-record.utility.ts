@@ -1,0 +1,43 @@
+import { type RouterModelRegistry as PrismaRouterModelRegistry } from '../../../generated/prisma';
+import { type RouterModelRegistryRecord } from '../types/router-model-registry.types';
+
+export function mapPrismaToRecord(row: PrismaRouterModelRegistry): RouterModelRegistryRecord {
+  return {
+    id: row.id,
+    provider: row.provider,
+    modelKey: row.modelKey,
+    displayName: row.displayName,
+    family: row.family,
+    connectorId: row.connectorId,
+    runtimeId: row.runtimeId,
+    isLocal: row.isLocal,
+    isRouterOnly: row.isRouterOnly,
+    isExecutionCapable: row.isExecutionCapable,
+    lifecycle: row.lifecycle,
+    modalitiesIn: row.modalitiesIn,
+    modalitiesOut: row.modalitiesOut,
+    contextWindowTokens: row.contextWindowTokens,
+    maxOutputTokens: row.maxOutputTokens,
+    domainTags: row.domainTags,
+    notRecommendedFor: row.notRecommendedFor,
+    inputCostPer1M: row.inputCostPer1M === null ? null : row.inputCostPer1M.toString(),
+    outputCostPer1M: row.outputCostPer1M === null ? null : row.outputCostPer1M.toString(),
+    costConfidence: row.costConfidence,
+    costClass: row.costClass,
+    latencyP50Ms: row.latencyP50Ms,
+    latencyP95Ms: row.latencyP95Ms,
+    latencyClass: row.latencyClass,
+    qualityTier: row.qualityTier,
+    hallucinationRisk: row.hallucinationRisk === null ? null : row.hallucinationRisk.toString(),
+    judgeSuitability: row.judgeSuitability,
+    searchSuitability: row.searchSuitability,
+    fallbackSuitability: row.fallbackSuitability,
+    privacySupport: row.privacySupport,
+    metadataSource: row.metadataSource,
+    externalCardUrl: row.externalCardUrl,
+    notes: row.notes,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    lastSyncedAt: row.lastSyncedAt,
+  };
+}
