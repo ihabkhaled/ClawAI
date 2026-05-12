@@ -37,6 +37,6 @@ import { ReplayCasesRepository } from './repositories/replay-cases.repository';
     ReplayRunsRepository,
     ReplayCasesRepository,
   ],
-  exports: [RoutingService],
+  exports: [RoutingService, RoutingPoliciesRepository],
 })
 export class RoutingModule {}

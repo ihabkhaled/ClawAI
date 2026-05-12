@@ -1,13 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { RoutingMode } from '../../../generated/prisma';
 import { ClassifierManager } from '../../classifier/managers/classifier.manager';
 import { CircuitBreakerManager } from '../../reliability/managers/circuit-breaker.manager';
 import { RouterModelRegistryRepository } from '../../router-models/repositories/router-model-registry.repository';
 import { type RouterModelRegistryRecord } from '../../router-models/types/router-model-registry.types';
-import { DEFAULT_POLICY_WEIGHTS } from '../../scoring/constants/scoring.constants';
+import { RoutingPoliciesRepository } from '../../routing/repositories/routing-policies.repository';
 import { ScoringEngineManager } from '../../scoring/managers/scoring-engine.manager';
 import { type ScoringCandidate, type ScoringInput } from '../../scoring/types/scoring.types';
+import { resolvePolicyWeights } from '../../scoring/utilities/policy-weights-resolver.utility';
 import { routingDecisionV2Schema } from '../schemas/routing-decision-v2.schema';
 import {
   type EvaluateInputV2,
@@ -26,6 +27,7 @@ export class RouteEvaluatorManager {
     private readonly registryRepo: RouterModelRegistryRepository,
     private readonly scorer: ScoringEngineManager,
     private readonly circuit: CircuitBreakerManager,
+    @Optional() private readonly policiesRepo?: RoutingPoliciesRepository,
   ) {}
 
   async evaluate(input: EvaluateInputV2): Promise<RoutingDecisionV2> {
@@ -57,7 +59,7 @@ export class RouteEvaluatorManager {
 
     const candidates = await this.toScoringCandidates(eligible);
 
-    const weights = DEFAULT_POLICY_WEIGHTS[mode];
+    const weights = await this.resolveWeights(mode, input.policyId);
     const scoring: ScoringInput = {
       classification: {
         domain: classification.domain,
@@ -167,6 +169,25 @@ export class RouteEvaluatorManager {
       privacyClass: c.privacyClass,
       confidence: c.confidence,
     };
+  }
+
+  private async resolveWeights(
+    mode: RoutingMode,
+    policyId: string | undefined,
+  ): Promise<ReturnType<typeof resolvePolicyWeights>> {
+    if (policyId === undefined || this.policiesRepo === undefined) {
+      return resolvePolicyWeights(mode, null);
+    }
+    try {
+      const policy = await this.policiesRepo.findById(policyId);
+      const config = policy?.config as Record<string, unknown> | null | undefined;
+      return resolvePolicyWeights(mode, config ?? null);
+    } catch (error) {
+      this.logger.warn(
+        `resolveWeights(policyId=${policyId}) failed (${(error as Error).message}); using defaults`,
+      );
+      return resolvePolicyWeights(mode, null);
+    }
   }
 
   private async handleManualMode(
