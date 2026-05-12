@@ -11,6 +11,8 @@ import {
 import { WorkspaceActionRepository } from '../repositories/workspace-action.repository';
 import { ActionExecutionManager } from '../managers/action-execution.manager';
 import { WorkspaceConnectorRepository } from '../../workspace/repositories/workspace-connector.repository';
+import { ConnectorAction } from '../../connector-access/enums/connector-action.enum';
+import { ConnectorAccessService } from '../../connector-access/services/connector-access.service';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
 import { WorkspaceActionStatus } from '../../../common/enums/workspace-action-status.enum';
@@ -56,6 +58,7 @@ export class WorkspaceActionService {
     private readonly connectorRepository: WorkspaceConnectorRepository,
     private readonly executionManager: ActionExecutionManager,
     private readonly rabbitMQ: RabbitMQService,
+    private readonly accessService: ConnectorAccessService,
   ) {}
 
   async createDraft(
@@ -66,7 +69,15 @@ export class WorkspaceActionService {
     if (connector === null) {
       throw new EntityNotFoundException('WorkspaceConnector', dto.connectorId);
     }
-    if (connector.userId !== userId) {
+    // v3 round 6 — replace the ad-hoc owner check with the per-connector
+    // RBAC service. Owner always passes; explicit grantees with
+    // AI_ACTIONS or FULL also pass. Anyone else gets 403.
+    const canPropose = await this.accessService.can(
+      userId,
+      connector.id,
+      ConnectorAction.PROPOSE_AI_ACTION,
+    );
+    if (!canPropose) {
       throw new BusinessException('workspace.action.forbidden', 'FORBIDDEN', HttpStatus.FORBIDDEN);
     }
     const needsWrite =

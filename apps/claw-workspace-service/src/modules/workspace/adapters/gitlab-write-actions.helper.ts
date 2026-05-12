@@ -28,6 +28,8 @@ export class GitLabWriteActionsHelper {
           return await this.updateMrDescription(api, accessToken, payload);
         case WorkspaceActionType.ADD_MR_SUGGESTION:
           return await this.addMrSuggestion(api, accessToken, payload);
+        case WorkspaceActionType.ADD_MR_IMAGE_COMMENT:
+          return await this.addMrImageComment(api, accessToken, payload);
         default:
           return {
             success: false,
@@ -198,6 +200,77 @@ export class GitLabWriteActionsHelper {
       position_type: 'text',
       new_line: newLine,
       ...(oldLine !== undefined ? { old_line: oldLine } : {}),
+    };
+    const url = `${api}/projects/${encodeURIComponent(projectId)}/merge_requests/${encodeURIComponent(iid)}/discussions`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ body, position }),
+    });
+    return this.toResult(response, ['id']);
+  }
+
+  // v3 round 6 (2026-05-12) — image-anchored MR comment.
+  // GitLab supports two `position_type` values on /discussions: `text`
+  // (line-anchored, see addMrSuggestion above) and `image` (pixel-
+  // anchored on an image diff). This helper handles the image case so
+  // a reviewer can leave a comment on a specific point of a screenshot
+  // or design file the MR added.
+  //
+  // Required payload: projectId, iid, baseSha, startSha, headSha,
+  //   newPath, body, x, y, width, height.
+  // Optional:         oldPath (defaults to newPath).
+  private async addMrImageComment(
+    api: string,
+    token: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    const projectId = String(payload['projectId'] ?? '');
+    const iid = String(payload['iid'] ?? '');
+    const baseSha = String(payload['baseSha'] ?? '');
+    const startSha = String(payload['startSha'] ?? '');
+    const headSha = String(payload['headSha'] ?? '');
+    const newPath = String(payload['newPath'] ?? '');
+    const oldPath = String(payload['oldPath'] ?? newPath);
+    const body = String(payload['body'] ?? '');
+    const x = Number(payload['x'] ?? -1);
+    const y = Number(payload['y'] ?? -1);
+    const width = Number(payload['width'] ?? 0);
+    const height = Number(payload['height'] ?? 0);
+    if (
+      projectId.length === 0 ||
+      iid.length === 0 ||
+      baseSha.length === 0 ||
+      startSha.length === 0 ||
+      headSha.length === 0 ||
+      newPath.length === 0 ||
+      body.length === 0 ||
+      x < 0 ||
+      y < 0 ||
+      width <= 0 ||
+      height <= 0
+    ) {
+      return {
+        success: false,
+        errorMessage:
+          'ADD_MR_IMAGE_COMMENT requires {projectId, iid, baseSha, startSha, headSha, newPath, body, x, y, width, height}',
+      };
+    }
+    const position = {
+      base_sha: baseSha,
+      start_sha: startSha,
+      head_sha: headSha,
+      old_path: oldPath,
+      new_path: newPath,
+      position_type: 'image',
+      x,
+      y,
+      width,
+      height,
     };
     const url = `${api}/projects/${encodeURIComponent(projectId)}/merge_requests/${encodeURIComponent(iid)}/discussions`;
     const response = await fetch(url, {

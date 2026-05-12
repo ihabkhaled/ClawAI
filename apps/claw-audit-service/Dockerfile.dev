@@ -11,5 +11,6 @@ RUN cd /app/packages/shared-types && npx tsc \
  && cd /app/packages/shared-auth && npx tsc \
  && cd /app/packages/shared-utilities && npx tsc
 COPY apps/claw-audit-service/ .
+RUN chmod +x docker-entrypoint.dev.sh 2>/dev/null || true
 EXPOSE 4007
-CMD ["npm", "run", "dev"]
+CMD ["./docker-entrypoint.dev.sh"]

@@ -9,6 +9,7 @@ import { BusinessException } from '../../../../common/errors/business.exception'
 import { EntityNotFoundException } from '../../../../common/errors/entity-not-found.exception';
 import { WorkspaceActionStatus } from '../../../../common/enums/workspace-action-status.enum';
 import { WorkspacePermissionLevel } from '../../../../common/enums/workspace-permission-level.enum';
+import { ConnectorAccessService } from '../../../connector-access/services/connector-access.service';
 
 const mockActionRepository = {
   create: jest.fn(),
@@ -55,6 +56,12 @@ const makeAction = (overrides = {}) => ({
 describe('WorkspaceActionService', () => {
   let service: WorkspaceActionService;
 
+  // v3 round 6 — mocked access service. Default: every call passes
+  // (matches the legacy owner-check semantics). Individual tests override.
+  const mockAccessService = {
+    can: jest.fn().mockResolvedValue(true),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -63,11 +70,13 @@ describe('WorkspaceActionService', () => {
         { provide: WorkspaceConnectorRepository, useValue: mockConnectorRepository },
         { provide: ActionExecutionManager, useValue: mockExecutionManager },
         { provide: RabbitMQService, useValue: mockRabbitMQ },
+        { provide: ConnectorAccessService, useValue: mockAccessService },
       ],
     }).compile();
 
     service = module.get<WorkspaceActionService>(WorkspaceActionService);
     jest.clearAllMocks();
+    mockAccessService.can.mockResolvedValue(true);
   });
 
   describe('createDraft', () => {
@@ -102,8 +111,9 @@ describe('WorkspaceActionService', () => {
       ).rejects.toThrow(EntityNotFoundException);
     });
 
-    it('should throw 403 when connector belongs to different user', async () => {
+    it('should throw 403 when access service denies (not owner, no grant)', async () => {
       mockConnectorRepository.findById.mockResolvedValue(makeConnector({ userId: 'other' }));
+      mockAccessService.can.mockResolvedValue(false);
 
       await expect(
         service.createDraft('u1', {
@@ -113,6 +123,29 @@ describe('WorkspaceActionService', () => {
           expiresInHours: 24,
         }),
       ).rejects.toThrow(BusinessException);
+    });
+
+    // v3 round 6 — granted user can create even when not owner
+    it('should allow when access service approves (granted user)', async () => {
+      mockConnectorRepository.findById.mockResolvedValue(makeConnector({ userId: 'other' }));
+      mockAccessService.can.mockResolvedValue(true);
+      mockActionRepository.create.mockResolvedValue({ id: 'a1' });
+      mockActionRepository.findById.mockResolvedValue(makeAction());
+
+      await expect(
+        service.createDraft('u1', {
+          connectorId: 'c1',
+          actionType: 'CREATE_ISSUE' as any,
+          payload: { x: 1 },
+          expiresInHours: 24,
+        }),
+      ).resolves.toBeDefined();
+      // Confirm the access service was asked the right question
+      expect(mockAccessService.can).toHaveBeenCalledWith(
+        'u1',
+        'c1',
+        'PROPOSE_AI_ACTION',
+      );
     });
 
     it('should throw 403 when connector is READ-only', async () => {

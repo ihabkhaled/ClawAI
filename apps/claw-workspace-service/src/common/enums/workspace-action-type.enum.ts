@@ -31,6 +31,9 @@ export enum WorkspaceActionType {
   // v3 round 2 (2026-05-12) — line-level GitLab MR discussion thread
   // (mirrors GitHub's ADD_PR_SUGGESTION)
   ADD_MR_SUGGESTION = 'ADD_MR_SUGGESTION',
+  // v3 round 6 (2026-05-12) — image-anchored comment on a GitLab MR
+  // diff (position_type='image' instead of 'text')
+  ADD_MR_IMAGE_COMMENT = 'ADD_MR_IMAGE_COMMENT',
   // Stream 20 — Bitbucket write actions
   CREATE_PR_COMMENT_BB = 'CREATE_PR_COMMENT_BB',
   APPROVE_PR_BB = 'APPROVE_PR_BB',

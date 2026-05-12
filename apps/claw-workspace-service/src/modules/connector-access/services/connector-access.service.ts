@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 
 import { WorkspaceConnectorRepository } from '../../workspace/repositories/workspace-connector.repository';
 import { ConnectorAccessSource } from '../enums/connector-access-source.enum';
@@ -71,6 +71,20 @@ export class ConnectorAccessService {
     return false;
   }
 
+  // v3 round 6 — throws ForbiddenException when the caller can't even
+  // VIEW the connector, otherwise returns the grant list. Encapsulates
+  // the access check so the controller stays throw-free.
+  async listGrantsAsViewer(
+    userId: string,
+    connectorId: string,
+  ): Promise<WorkspaceConnectorGrant[]> {
+    const canView = await this.can(userId, connectorId, ConnectorAction.VIEW);
+    if (!canView) {
+      throw new ForbiddenException({ messageKey: 'CONNECTOR_ACCESS_DENIED' });
+    }
+    return this.grantRepo.listForConnector(connectorId);
+  }
+
   async grant(
     connectorId: string,
     granteeUserId: string,
@@ -79,7 +93,7 @@ export class ConnectorAccessService {
   ): Promise<WorkspaceConnectorGrant> {
     const owned = await this.can(grantedBy, connectorId, ConnectorAction.MANAGE_GRANTS);
     if (!owned) {
-      throw new Error('Only the connector owner can manage grants');
+      throw new ForbiddenException({ messageKey: 'CONNECTOR_GRANT_FORBIDDEN' });
     }
     this.logger.log(
       `grant: connector=${connectorId} grantee=${granteeUserId} level=${level} by=${grantedBy}`,
@@ -90,7 +104,7 @@ export class ConnectorAccessService {
   async revoke(connectorId: string, granteeUserId: string, revokedBy: string): Promise<void> {
     const owned = await this.can(revokedBy, connectorId, ConnectorAction.MANAGE_GRANTS);
     if (!owned) {
-      throw new Error('Only the connector owner can manage grants');
+      throw new ForbiddenException({ messageKey: 'CONNECTOR_GRANT_FORBIDDEN' });
     }
     this.logger.log(`revoke: connector=${connectorId} grantee=${granteeUserId} by=${revokedBy}`);
     await this.grantRepo.deleteOne(connectorId, granteeUserId);

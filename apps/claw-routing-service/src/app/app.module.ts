@@ -22,6 +22,7 @@ import { ReliabilityModule } from '../modules/reliability/reliability.module';
 import { RouteEvaluatorModule } from '../modules/route-evaluator/route-evaluator.module';
 import { RouterModelsModule } from '../modules/router-models/router-models.module';
 import { ScoringModule } from '../modules/scoring/scoring.module';
+import { SyncModule } from '../modules/sync/sync.module';
 import { TaxonomyModule } from '../modules/taxonomy/taxonomy.module';
 import { WorkflowsModule } from '../modules/workflows/workflows.module';
 
@@ -72,6 +73,7 @@ import { WorkflowsModule } from '../modules/workflows/workflows.module';
     WorkflowsModule,
     LearningLoopModule,
     ObservabilityModule,
+    SyncModule,
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),

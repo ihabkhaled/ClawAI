@@ -120,7 +120,7 @@ describe('ConnectorAccessService', () => {
       const { svc } = makeService({ connector: { userId: 'someone-else' } });
       await expect(
         svc.grant('c1', 'grantee', 'not-the-owner', WorkspaceConnectorAccessLevel.AI_ACTIONS),
-      ).rejects.toThrow('Only the connector owner');
+      ).rejects.toThrow(/forbidden|FORBIDDEN/i);
     });
 
     it('owner can grant — calls repo.upsert with the right args', async () => {
@@ -137,7 +137,7 @@ describe('ConnectorAccessService', () => {
     it('only the owner can revoke', async () => {
       const { svc } = makeService({ connector: { userId: 'someone-else' } });
       await expect(svc.revoke('c1', 'alice', 'not-the-owner')).rejects.toThrow(
-        'Only the connector owner',
+        /forbidden|FORBIDDEN/i,
       );
     });
 
@@ -145,6 +145,46 @@ describe('ConnectorAccessService', () => {
       const { svc, grantRepo } = makeService({ connector: { userId: 'owner' } });
       await svc.revoke('c1', 'alice', 'owner');
       expect(grantRepo.deleteOne).toHaveBeenCalledWith('c1', 'alice');
+    });
+  });
+
+  // v3 round 6 — Prompt 12 wiring polish: listGrantsAsViewer
+  describe('listGrantsAsViewer', () => {
+    const makeWithGrantList = (
+      overrides: { connector?: unknown; grant?: unknown },
+      grants: unknown[],
+    ): ConnectorAccessService => {
+      const connectorRepo = { findById: jest.fn().mockResolvedValue(overrides.connector ?? null) };
+      const grantRepo = {
+        findForUserConnector: jest.fn().mockResolvedValue(overrides.grant ?? null),
+        listForConnector: jest.fn().mockResolvedValue(grants),
+      };
+      return new ConnectorAccessService(connectorRepo as any, grantRepo as any);
+    };
+
+    it('returns grant list when caller is the owner', async () => {
+      const svc = makeWithGrantList({ connector: { userId: 'owner' } }, [{ id: 'g1' }]);
+      const result = await svc.listGrantsAsViewer('owner', 'c1');
+      expect(result).toHaveLength(1);
+    });
+
+    it('returns grant list when caller has a GRANT (any level)', async () => {
+      const svc = makeWithGrantList(
+        {
+          connector: { userId: 'someone-else' },
+          grant: { accessLevel: WorkspaceConnectorAccessLevel.READ_ONLY },
+        },
+        [{ id: 'g1' }, { id: 'g2' }],
+      );
+      const result = await svc.listGrantsAsViewer('grantee', 'c1');
+      expect(result).toHaveLength(2);
+    });
+
+    it('throws ForbiddenException when caller has no access', async () => {
+      const svc = makeWithGrantList({ connector: { userId: 'someone-else' } }, []);
+      await expect(svc.listGrantsAsViewer('outsider', 'c1')).rejects.toThrow(
+        /forbidden|FORBIDDEN/i,
+      );
     });
   });
 });

@@ -609,3 +609,118 @@ production code and warrants its own pass with a full regression run.
   and connector-sync paths (replace ad-hoc owner checks)
 - 12 IP allowlist + policy-change UI surface
 - 14 Playwright E2E
+
+---
+
+## Continued — 2026-05-12 round 6 (same session)
+
+Three more v3 polish items closed in the same session. Validation: live
+endpoint smoke (5/5 PASS) + 530 workspace-service unit tests (+9 new) +
+21/21 approval-engine QA + 0 typecheck/lint errors.
+
+### Closed gap N — `ConnectorGrantController` HTTP endpoints (Prompt 12)
+
+The grant/revoke surface from round 5 is now exposed at:
+
+- `GET    /workspace/connectors/:connectorId/grants` — list grants
+  (viewer must have at least READ_ONLY access; 403 otherwise)
+- `POST   /workspace/connectors/:connectorId/grants` — owner-only grant
+  upsert; 403 for non-owners
+- `DELETE /workspace/connectors/:connectorId/grants/:granteeUserId` —
+  owner-only revoke; 403 for non-owners
+
+The controller is 3-line per-method per the architecture rule. All
+ForbiddenException-throwing logic lives in the service (new
+`listGrantsAsViewer()` method) so the controller itself never throws.
+
+Service tweak: `grant()` / `revoke()` and `listGrantsAsViewer()` now
+throw `ForbiddenException({ messageKey: 'CONNECTOR_GRANT_FORBIDDEN' })`
+instead of a generic `Error`, so `GlobalExceptionFilter` returns 403
+with a clean payload.
+
+Live smoke (5/5 PASS):
+- GET grants on a non-existent connector → 403
+- POST grant with valid body but not-owner → 403
+- POST grant missing accessLevel → 400 with field-level Zod error
+- POST grant with invalid enum (`SUPERUSER`) → 400 listing valid values
+- GET grants without JWT → 401
+
+3 new unit tests cover `listGrantsAsViewer` (owner, grantee, outsider).
+
+### Closed gap O — Wire `ConnectorAccessService` into `WorkspaceActionService.create` (Prompt 12)
+
+The legacy `connector.userId !== userId → 403` check in
+`WorkspaceActionService.createDraft` is replaced with a call to
+`accessService.can(userId, connectorId, ConnectorAction.PROPOSE_AI_ACTION)`.
+
+This means:
+
+- **Owner**: passes (unchanged behaviour).
+- **Grantee with `AI_ACTIONS` or `FULL`**: can now propose AI-driven
+  write actions on a connector they don't own.
+- **Grantee with `READ_ONLY`**: blocked (expected — they can only view).
+- **No access**: blocked (unchanged behaviour).
+
+The `permissionLevel WRITE/ADMIN` check on the connector itself is
+untouched — that's about the upstream provider's own scope, separate
+from claw-side RBAC.
+
+Existing test "should throw 403 when connector belongs to different
+user" was renamed and rewired to drive the new access service mock.
+Added a positive test that confirms a grantee can create when
+`can()` returns true, and that the service is asked the
+`PROPOSE_AI_ACTION` question.
+
+ActionsModule now provides `ConnectorAccessService` +
+`ConnectorGrantRepository` so the DI graph resolves end-to-end.
+
+Stream 10 approval QA regression: **21/21 PASS** — no regression on the
+existing owner-only path.
+
+### Closed gap P — GitLab MR `position_type='image'` support (Prompt 04 final)
+
+`ADD_MR_IMAGE_COMMENT` action — image-anchored comments on GitLab MR
+diffs (e.g., a reviewer leaves "move this 20px left" pinned to a point
+on a screenshot in the diff).
+
+- New `WorkspaceActionType.ADD_MR_IMAGE_COMMENT` (TS + Prisma + forward
+  migration `20260512300000`).
+- New `GitLabWriteActionsHelper.addMrImageComment()` posts to
+  `/projects/:id/merge_requests/:iid/discussions` with `position_type:
+  'image'` and `x`, `y`, `width`, `height` (vs. `new_line`/`old_line`
+  for the text variant).
+- 5 unit tests: happy path with x/y/width/height, rejection on missing
+  coords, rejection on empty body, rename support via `oldPath`, GitLab
+  API error surfacing.
+
+This completes the 04 line-level review story: GitHub `start_line` +
+`start_side` (round 4), GitLab `ADD_MR_SUGGESTION` (round 3) +
+`ADD_MR_IMAGE_COMMENT` (this round), plus the multi-model judge
+orchestrator (round 3) + markdown bundle (round 5).
+
+### Validation evidence (round 6)
+
+| Check | Result |
+|---|---|
+| workspace-service unit tests | **530 / 530** (was 521; +9 new) |
+| workspace-service typecheck | 0 errors |
+| workspace-service lint | 0 errors |
+| `qa/test-stream-10-approval-engine.sh` | **21 / 21 PASS** (no regression from access-service wiring) |
+| Live `/workspace/connectors/:id/grants` smoke | 5/5 PASS (403/403/400/400/401) |
+| Container health | workspace + audit + auth + agent all healthy |
+| Docker logs | 0 `UnhandledPromiseRejection` / `FATAL` |
+
+**Cumulative for this multi-round session (rounds 1-6): 17 v3 gaps closed,
+97 new unit tests, ~119 live API/DB checks, 0 regressions.**
+
+### What's still open
+
+- 06 Gmail: WATCH push notifications (Pub/Sub topic + history-scan
+  consumer), template library
+- 06 Frontend: signature management UI
+- 08 Drive/OneDrive/SharePoint frontend viewers
+- 09 Confluence + Figma deep integration
+- 11 Cross-workspace automation chains (DAG)
+- 12 Per-grantee scoping for connector-sync paths (currently still
+  owner-only on sync), IP allowlist, policy-change UI surface
+- 14 Playwright E2E
