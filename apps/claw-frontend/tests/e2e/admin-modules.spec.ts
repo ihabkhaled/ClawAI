@@ -1,10 +1,10 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 // Admin credentials from .env. Required for these tests to run.
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'admin@claw.local';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'ClawAdmin123!';
 
-async function login(page: import('@playwright/test').Page): Promise<void> {
+async function login(page: Page): Promise<void> {
   await page.goto('/login');
   await page.getByLabel(/email/i).fill(ADMIN_EMAIL);
   await page.getByLabel(/password/i).fill(ADMIN_PASSWORD);
@@ -14,9 +14,7 @@ async function login(page: import('@playwright/test').Page): Promise<void> {
 }
 
 test.describe('Admin modules', () => {
-  test('ai-action-policies: page loads with translated content + Add button', async ({
-    page,
-  }) => {
+  test('ai-action-policies: page loads with translated content + Add button', async ({ page }) => {
     await login(page);
     await page.goto('/admin/ai-action-policies');
 
@@ -47,9 +45,9 @@ test.describe('Admin modules', () => {
   test('suggestion-rules: page loads with translated content + Add button', async ({ page }) => {
     await login(page);
     await page.goto('/admin/suggestion-rules');
-    await expect(
-      page.getByRole('heading', { name: /Suggestion Trigger Rules/ }),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: /Suggestion Trigger Rules/ })).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByRole('button', { name: /Add rule/ })).toBeVisible();
     await expect(page.getByText('admin.rules.title')).toHaveCount(0);
   });
@@ -57,13 +55,11 @@ test.describe('Admin modules', () => {
   test('webhook-deliveries: page loads with filters + status select', async ({ page }) => {
     await login(page);
     await page.goto('/admin/webhook-deliveries');
-    await expect(
-      page.getByRole('heading', { name: /Webhook Deliveries/ }),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: /Webhook Deliveries/ })).toBeVisible({
+      timeout: 15_000,
+    });
     // Filter inputs present.
-    await expect(
-      page.getByPlaceholder(/Filter by provider/),
-    ).toBeVisible();
+    await expect(page.getByPlaceholder(/Filter by provider/)).toBeVisible();
     // Date column should never render the literal "Invalid Date" string.
     await expect(page.getByText('Invalid Date')).toHaveCount(0);
   });
