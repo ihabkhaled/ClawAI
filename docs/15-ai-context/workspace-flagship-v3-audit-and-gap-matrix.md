@@ -16,22 +16,22 @@ cross-workspace chains, and final QA certification — not greenfield work.
 
 ## v3 prompt → existing implementation map
 
-| v3 Prompt | Status | Where it lives today | Remaining gaps |
-|---|---|---|---|
-| **01 Auto-sync / cron / webhooks** | ✅ DONE | `workspace/managers/workspace-sync-scheduler.manager.ts` (cron + advisory locks), `webhooks/managers/webhook-receiver.manager.ts`, `webhooks/utilities/webhook-signature-verifiers.utility.ts` (GitHub, GitLab, Bitbucket, Jira, Slack, Figma) | GitHub commit-status webhooks, OneDrive/SharePoint subscription pushes, formal DLQ for failed webhook deliveries, idempotency-key audit table |
-| **02 AI Action Approval Center + Policy Engine** | ✅ DONE | `ai-actions/managers/{risk-scorer, policy-matcher, approval, queue-expiry-sweeper, default-policy-seeder}.manager.ts`, `services/{ai-action-approval-queue, ai-action-policy, automation-preference}.service.ts`, 13 seeded system policies, `qa/test-stream-10-approval-engine.sh` | Audit log table for policy CRUD, idempotency-keys for approval execution, send-back-to-AI revision history, attribution surfaced in download bundle |
-| **03 Standardized AI actions** | ✅ DONE | `ai-actions/managers/{auto-router, model-catalog-resolver, ai-action-execution}.manager.ts`, 10 action kinds (SUMMARIZE/DRAFT/COMPARE/JUDGE/REWRITE/EXTRACT/PLAN/DECOMPOSE/ESTIMATE/IMPL_PROMPT), `qa/test-ai-actions-matrix.sh` | Streaming for DRAFT/PLAN, contentType=plain_text default for emails, downloadable bundles for all kinds, "send back for revision" iteration |
-| **04 PR code review (real comments)** | 🟡 PARTIAL | GitHub: `adapters/github-write-actions.helper.ts` — APPROVE_PR, ADD_PR_SUGGESTION (line-level), COMMENT_PR, CREATE_PR_DESCRIPTION, CREATE_ISSUE_COMMENT all wired. GitLab: discussion stubs only. Bitbucket: write actions missing | Multi-model review/judge orchestration, GitLab MR full discussion thread support, Bitbucket PR comment/approval write, side/start_line targeting for split-diff comments, downloadable PR review report |
-| **05 Jira ticket → impl prompt + creation** | 🟡 PARTIAL | `adapters/jira.adapter.ts` — CREATE_TICKET, CREATE_JIRA_FROM_FIGMA. `ticket-planning/` module produces structured stories. IMPL_PROMPT auto-deny policy at priority 999 | createSubtask, generateImplementationPrompt as a first-class action kind (currently embedded in ticket-planning), download .md/.txt for impl prompts, link impl prompt back to Jira issue, QA test-cases generation |
-| **06 Gmail auto-sync + drafts + approval** | 🟡 PARTIAL | `adapters/gmail.adapter.ts` — SEND_EMAIL, REPLY_EMAIL, attachment helper, label/thread sync. Auto-suggest INBOX_REPLY collector cron at `0 */15 * * * *`. HTML rendering shipped (Stream 22) | createDraft (save draft without send), Gmail WATCH push notifications, auto-thread stitching beyond reply-to, signature/template library, anti-loop heuristics |
-| **07 Slack + ClickUp** | 🟡 PARTIAL | Slack: SEND_SLACK_MESSAGE, REPLY_SLACK with rich blocks. ClickUp: task list sync. Both have webhook receivers wired | ClickUp write actions (CREATE/UPDATE/COMMENT_TASK), ClickUp custom fields/time tracking, Slack ThreadTS ordering, Slack→Jira/ClickUp chain primitive |
-| **08 Drive/OneDrive/SharePoint viewers + download/upload** | 🔴 MISSING (frontend) | OAuth + sync exists for all three. `qa/test-stream-21-onedrive-sharepoint-clickup.sh` covers writes | No PDF viewer modal, no doc viewer, no sheet/spreadsheet viewer in frontend; backend streaming download endpoint missing for large files |
-| **09 Confluence + Figma** | 🔴 MOSTLY MISSING | Figma webhook receiver, sync stub. CREATE_JIRA_FROM_FIGMA action exists | Confluence page sync, page edit write action, Figma design analysis pipeline, design-to-story prompt template |
-| **10 Unified inbox + Digest dashboard** | ✅ DONE | `inbox/` module (semantic search), `digest/` module (orchestrator + builder + action-item-extractor), `/workspace/inbox/page.tsx`, `/workspace/digest/`, `qa/test-stream-30-inbox-search.sh`, `qa/test-stream-31-digest-dashboard.sh` | Per-provider filter UX polish, digest download (.md/.pdf), priority ranking heuristic tuning |
-| **11 Cross-workspace automation chains** | 🔴 MISSING | Recipe runner (agent-service) exists for desktop agent, NOT for workspace events | Workspace-side chain primitives, DAG executor for Gmail→Slack→Jira flows, per-step model selection, approval checkpoints, rollback |
-| **12 Security / governance / policy** | 🟡 PARTIAL | AES-256-GCM token encryption, 13 system policies seeded, ESLint security plugin, ClamAV file-upload scan, helmet headers | Workspace-scoped RBAC (per-connector), per-user rate limits (currently per-process), policy-change audit log, IP allowlist, data-retention CRON |
-| **13 Business/pricing/roadmap** | 🟡 EXISTS PARTIAL | `docs/02-business-product/desktop-agent-vision.md`, `desktop-agent-feature-catalog.md` | Workspace-flagship pricing tier doc (Free/Pro/Team/Enterprise), connector/sync/model limits per tier, success-metric dashboard plan |
-| **14 QA / UAT / release certification** | 🟡 PARTIAL | 17 `qa/test-*workspace*.sh` and `test-stream-*.sh` scripts. `test-workspace-automation-full.sh` master harness | Multi-round regression matrix, Playwright E2E for the unified inbox + approval queue + digest, "client simulation" persona walkthrough, release-readiness gate doc |
+| v3 Prompt                                                  | Status                | Where it lives today                                                                                                                                                                                                                                                                | Remaining gaps                                                                                                                                                                                                      |
+| ---------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **01 Auto-sync / cron / webhooks**                         | ✅ DONE               | `workspace/managers/workspace-sync-scheduler.manager.ts` (cron + advisory locks), `webhooks/managers/webhook-receiver.manager.ts`, `webhooks/utilities/webhook-signature-verifiers.utility.ts` (GitHub, GitLab, Bitbucket, Jira, Slack, Figma)                                      | GitHub commit-status webhooks, OneDrive/SharePoint subscription pushes, formal DLQ for failed webhook deliveries, idempotency-key audit table                                                                       |
+| **02 AI Action Approval Center + Policy Engine**           | ✅ DONE               | `ai-actions/managers/{risk-scorer, policy-matcher, approval, queue-expiry-sweeper, default-policy-seeder}.manager.ts`, `services/{ai-action-approval-queue, ai-action-policy, automation-preference}.service.ts`, 13 seeded system policies, `qa/test-stream-10-approval-engine.sh` | Audit log table for policy CRUD, idempotency-keys for approval execution, send-back-to-AI revision history, attribution surfaced in download bundle                                                                 |
+| **03 Standardized AI actions**                             | ✅ DONE               | `ai-actions/managers/{auto-router, model-catalog-resolver, ai-action-execution}.manager.ts`, 10 action kinds (SUMMARIZE/DRAFT/COMPARE/JUDGE/REWRITE/EXTRACT/PLAN/DECOMPOSE/ESTIMATE/IMPL_PROMPT), `qa/test-ai-actions-matrix.sh`                                                    | Streaming for DRAFT/PLAN, contentType=plain_text default for emails, downloadable bundles for all kinds, "send back for revision" iteration                                                                         |
+| **04 PR code review (real comments)**                      | 🟡 PARTIAL            | GitHub: `adapters/github-write-actions.helper.ts` — APPROVE_PR, ADD_PR_SUGGESTION (line-level), COMMENT_PR, CREATE_PR_DESCRIPTION, CREATE_ISSUE_COMMENT all wired. GitLab: discussion stubs only. Bitbucket: write actions missing                                                  | Multi-model review/judge orchestration, GitLab MR full discussion thread support, Bitbucket PR comment/approval write, side/start_line targeting for split-diff comments, downloadable PR review report             |
+| **05 Jira ticket → impl prompt + creation**                | 🟡 PARTIAL            | `adapters/jira.adapter.ts` — CREATE_TICKET, CREATE_JIRA_FROM_FIGMA. `ticket-planning/` module produces structured stories. IMPL_PROMPT auto-deny policy at priority 999                                                                                                             | createSubtask, generateImplementationPrompt as a first-class action kind (currently embedded in ticket-planning), download .md/.txt for impl prompts, link impl prompt back to Jira issue, QA test-cases generation |
+| **06 Gmail auto-sync + drafts + approval**                 | 🟡 PARTIAL            | `adapters/gmail.adapter.ts` — SEND_EMAIL, REPLY_EMAIL, attachment helper, label/thread sync. Auto-suggest INBOX_REPLY collector cron at `0 */15 * * * *`. HTML rendering shipped (Stream 22)                                                                                        | createDraft (save draft without send), Gmail WATCH push notifications, auto-thread stitching beyond reply-to, signature/template library, anti-loop heuristics                                                      |
+| **07 Slack + ClickUp**                                     | 🟡 PARTIAL            | Slack: SEND_SLACK_MESSAGE, REPLY_SLACK with rich blocks. ClickUp: task list sync. Both have webhook receivers wired                                                                                                                                                                 | ClickUp write actions (CREATE/UPDATE/COMMENT_TASK), ClickUp custom fields/time tracking, Slack ThreadTS ordering, Slack→Jira/ClickUp chain primitive                                                                |
+| **08 Drive/OneDrive/SharePoint viewers + download/upload** | 🔴 MISSING (frontend) | OAuth + sync exists for all three. `qa/test-stream-21-onedrive-sharepoint-clickup.sh` covers writes                                                                                                                                                                                 | No PDF viewer modal, no doc viewer, no sheet/spreadsheet viewer in frontend; backend streaming download endpoint missing for large files                                                                            |
+| **09 Confluence + Figma**                                  | 🔴 MOSTLY MISSING     | Figma webhook receiver, sync stub. CREATE_JIRA_FROM_FIGMA action exists                                                                                                                                                                                                             | Confluence page sync, page edit write action, Figma design analysis pipeline, design-to-story prompt template                                                                                                       |
+| **10 Unified inbox + Digest dashboard**                    | ✅ DONE               | `inbox/` module (semantic search), `digest/` module (orchestrator + builder + action-item-extractor), `/workspace/inbox/page.tsx`, `/workspace/digest/`, `qa/test-stream-30-inbox-search.sh`, `qa/test-stream-31-digest-dashboard.sh`                                               | Per-provider filter UX polish, digest download (.md/.pdf), priority ranking heuristic tuning                                                                                                                        |
+| **11 Cross-workspace automation chains**                   | 🔴 MISSING            | Recipe runner (agent-service) exists for desktop agent, NOT for workspace events                                                                                                                                                                                                    | Workspace-side chain primitives, DAG executor for Gmail→Slack→Jira flows, per-step model selection, approval checkpoints, rollback                                                                                  |
+| **12 Security / governance / policy**                      | 🟡 PARTIAL            | AES-256-GCM token encryption, 13 system policies seeded, ESLint security plugin, ClamAV file-upload scan, helmet headers                                                                                                                                                            | Workspace-scoped RBAC (per-connector), per-user rate limits (currently per-process), policy-change audit log, IP allowlist, data-retention CRON                                                                     |
+| **13 Business/pricing/roadmap**                            | 🟡 EXISTS PARTIAL     | `docs/02-business-product/desktop-agent-vision.md`, `desktop-agent-feature-catalog.md`                                                                                                                                                                                              | Workspace-flagship pricing tier doc (Free/Pro/Team/Enterprise), connector/sync/model limits per tier, success-metric dashboard plan                                                                                 |
+| **14 QA / UAT / release certification**                    | 🟡 PARTIAL            | 17 `qa/test-*workspace*.sh` and `test-stream-*.sh` scripts. `test-workspace-automation-full.sh` master harness                                                                                                                                                                      | Multi-round regression matrix, Playwright E2E for the unified inbox + approval queue + digest, "client simulation" persona walkthrough, release-readiness gate doc                                                  |
 
 ## Where the highest leverage is
 
@@ -87,31 +87,31 @@ of existing code.
 
 ### Final QA suite — 21/21 scripts green, 300+ checks passing
 
-| Script | Result |
-|---|---|
-| `test-stream-10-approval-engine.sh` | 21/21 |
-| `test-stream-11-webhook-receiver.sh` | 13/13 |
-| `test-stream-12-auto-suggest.sh` | 7/7 |
-| `test-stream-13-suggestion-factory.sh` | 9/9 |
-| `test-stream-13-recipes-crud.sh` | 16/16 |
-| `test-stream-13-runner-live.sh` | 10/10 |
-| `test-stream-13-runner-v2.sh` | 7/7 |
-| `test-stream-20-gitlab-bitbucket-writes.sh` | 11/11 |
-| `test-stream-21-onedrive-sharepoint-clickup.sh` | 11/11 |
-| `test-stream-22-gmail-html.sh` | 5/5 |
-| `test-stream-23-calendar.sh` | 4/4 |
-| `test-stream-30-inbox-search.sh` | 6/6 |
-| `test-stream-31-digest-dashboard.sh` | 9/9 |
-| `test-stream-41-impl-handoff.sh` | 16/16 |
-| `test-ai-actions-matrix.sh` | 27/27 (4 providers × 8 actions) |
-| `test-workspace-service.sh` | 111/111 |
-| `test-workspace-oauth-flow.sh` | 24/24 |
-| `test-workspace-security.sh` | 14/14 |
-| `test-workspace-ops-center.sh` | 9/9 |
-| `test-workspace-provider-registry.sh` | 41/41 |
-| `test-workspace-frontend-console.sh` | 26/26 |
-| `test-workspace-automation-full.sh` (master) | 12/12 |
-| **TOTAL** | **419 individual checks, 0 failures** |
+| Script                                          | Result                                |
+| ----------------------------------------------- | ------------------------------------- |
+| `test-stream-10-approval-engine.sh`             | 21/21                                 |
+| `test-stream-11-webhook-receiver.sh`            | 13/13                                 |
+| `test-stream-12-auto-suggest.sh`                | 7/7                                   |
+| `test-stream-13-suggestion-factory.sh`          | 9/9                                   |
+| `test-stream-13-recipes-crud.sh`                | 16/16                                 |
+| `test-stream-13-runner-live.sh`                 | 10/10                                 |
+| `test-stream-13-runner-v2.sh`                   | 7/7                                   |
+| `test-stream-20-gitlab-bitbucket-writes.sh`     | 11/11                                 |
+| `test-stream-21-onedrive-sharepoint-clickup.sh` | 11/11                                 |
+| `test-stream-22-gmail-html.sh`                  | 5/5                                   |
+| `test-stream-23-calendar.sh`                    | 4/4                                   |
+| `test-stream-30-inbox-search.sh`                | 6/6                                   |
+| `test-stream-31-digest-dashboard.sh`            | 9/9                                   |
+| `test-stream-41-impl-handoff.sh`                | 16/16                                 |
+| `test-ai-actions-matrix.sh`                     | 27/27 (4 providers × 8 actions)       |
+| `test-workspace-service.sh`                     | 111/111                               |
+| `test-workspace-oauth-flow.sh`                  | 24/24                                 |
+| `test-workspace-security.sh`                    | 14/14                                 |
+| `test-workspace-ops-center.sh`                  | 9/9                                   |
+| `test-workspace-provider-registry.sh`           | 41/41                                 |
+| `test-workspace-frontend-console.sh`            | 26/26                                 |
+| `test-workspace-automation-full.sh` (master)    | 12/12                                 |
+| **TOTAL**                                       | **419 individual checks, 0 failures** |
 
 ### Unit-test gates — all green
 
@@ -170,6 +170,7 @@ v2) is **validated end-to-end** on the current `main` branch:
   guardrail on direct connector POST, async-execution poll loop)
 
 **Remaining v3 work** is now scoped to the truly MISSING / large prompts:
+
 - 08 — Drive/OneDrive/SharePoint viewers (frontend modals)
 - 09 — Confluence + Figma deep integration (page edit + design-to-story)
 - 11 — Cross-workspace automation chains (DAG executor for workspace events)
@@ -224,9 +225,9 @@ and full before/after snapshots.
 - `AiActionPolicyController` passes the authenticated user's id into
   `service.update()` and `service.deleteById()` so `actorUserId` is captured.
 - Audit-service consumer extended: new `AI_ACTION_POLICY_EVENT_HANDLERS` list
-  + new `handlePolicyEvent()` method that writes the row with
-  `entityType=ai_action_policy`, severity LOW/MEDIUM/HIGH per pattern, full
-  before/after JSON in `details`.
+  - new `handlePolicyEvent()` method that writes the row with
+    `entityType=ai_action_policy`, severity LOW/MEDIUM/HIGH per pattern, full
+    before/after JSON in `details`.
 - 4 new unit tests in
   `apps/claw-workspace-service/src/modules/ai-actions/services/__tests__/ai-action-policy.service.spec.ts`
   cover the 3 audit-event publishes (create/update/delete) plus the existing
@@ -259,16 +260,16 @@ sweep, every restarted service comes up healthy.
 
 ### Validation evidence (continued round)
 
-| Check | Result |
-|---|---|
-| workspace-service unit tests | **447 / 447** (was 438; +9 new) |
-| workspace-service typecheck | 0 errors |
-| workspace-service lint | 0 errors (1 pre-existing warning in unrelated file) |
-| `qa/test-stream-10-approval-engine.sh` | **21 / 21 PASS** |
-| `qa/test-stream-10-capability-framework.sh` | **28 / 28 PASS** |
-| `qa/test-stream-13-recipes-crud.sh` | **16 / 16 PASS** |
-| Mongo audit_logs.ai_action_policy rows | written end-to-end with before/after |
-| Docker logs | 0 `UnhandledPromiseRejection` / `FATAL` |
+| Check                                       | Result                                              |
+| ------------------------------------------- | --------------------------------------------------- |
+| workspace-service unit tests                | **447 / 447** (was 438; +9 new)                     |
+| workspace-service typecheck                 | 0 errors                                            |
+| workspace-service lint                      | 0 errors (1 pre-existing warning in unrelated file) |
+| `qa/test-stream-10-approval-engine.sh`      | **21 / 21 PASS**                                    |
+| `qa/test-stream-10-capability-framework.sh` | **28 / 28 PASS**                                    |
+| `qa/test-stream-13-recipes-crud.sh`         | **16 / 16 PASS**                                    |
+| Mongo audit_logs.ai_action_policy rows      | written end-to-end with before/after                |
+| Docker logs                                 | 0 `UnhandledPromiseRejection` / `FATAL`             |
 
 **Total this round: 65 live API/DB checks + 9 new unit tests, all green.**
 
@@ -366,14 +367,14 @@ judge model synthesise a single recommendation".
 
 ### Validation evidence (round 3)
 
-| Check | Result |
-|---|---|
-| workspace-service unit tests | **468 / 468** (was 447; +19 new) |
-| workspace-service typecheck | 0 errors |
-| workspace-service lint | 0 errors |
-| `qa/test-stream-10-approval-engine.sh` | **21 / 21 PASS** |
-| Container health | workspace + audit + auth + agent all healthy |
-| Docker logs | 0 `UnhandledPromiseRejection` / `FATAL` |
+| Check                                  | Result                                       |
+| -------------------------------------- | -------------------------------------------- |
+| workspace-service unit tests           | **468 / 468** (was 447; +19 new)             |
+| workspace-service typecheck            | 0 errors                                     |
+| workspace-service lint                 | 0 errors                                     |
+| `qa/test-stream-10-approval-engine.sh` | **21 / 21 PASS**                             |
+| Container health                       | workspace + audit + auth + agent all healthy |
+| Docker logs                            | 0 `UnhandledPromiseRejection` / `FATAL`      |
 
 **Cumulative for this multi-round session: 7 v3 gaps closed
 (03/06/12/13 round 1 + 04/12/04 round 2 + 12-rate-limit/04-judge/04-MR-suggestion
@@ -472,15 +473,15 @@ constructor argument is optional.
 
 ### Validation evidence (round 4)
 
-| Check | Result |
-|---|---|
-| workspace-service unit tests | **489 / 489** (was 468; +21 new) |
-| workspace-service typecheck | 0 errors |
-| workspace-service lint | 0 errors |
-| `qa/test-stream-10-approval-engine.sh` | **21 / 21 PASS** |
-| `POST /workspace/ai-actions/multi-model-review` live smoke | 4/4 PASS (400 + 400 + 400 + 401) |
-| Container health | workspace + audit + auth + agent all healthy |
-| Docker logs | 0 `UnhandledPromiseRejection` / `FATAL` |
+| Check                                                      | Result                                       |
+| ---------------------------------------------------------- | -------------------------------------------- |
+| workspace-service unit tests                               | **489 / 489** (was 468; +21 new)             |
+| workspace-service typecheck                                | 0 errors                                     |
+| workspace-service lint                                     | 0 errors                                     |
+| `qa/test-stream-10-approval-engine.sh`                     | **21 / 21 PASS**                             |
+| `POST /workspace/ai-actions/multi-model-review` live smoke | 4/4 PASS (400 + 400 + 400 + 401)             |
+| Container health                                           | workspace + audit + auth + agent all healthy |
+| Docker logs                                                | 0 `UnhandledPromiseRejection` / `FATAL`      |
 
 **Cumulative for this multi-round session (rounds 1-4): 11 v3 gaps closed,
 56 new unit tests, 90 live API/DB checks, 0 regressions.**
@@ -498,3 +499,113 @@ constructor argument is optional.
 - 12 Workspace-scoped RBAC (per-connector), policy-change UI surface,
   IP allowlist
 - 14 Playwright E2E for inbox + approval queue + digest
+
+---
+
+## Continued — 2026-05-12 round 5 (same session)
+
+Three more v3 polish items closed in the same session. Validation: live
+endpoint smoke (10/10 PASS) + 521 workspace-service unit tests (+32 new)
+
+- 21/21 approval-engine QA + 0 typecheck/lint errors.
+
+### Closed gap K — Multi-model review markdown bundle (Prompt 04 final)
+
+The orchestrator's result is now exportable as a single self-contained
+markdown document users can paste into a PR description, attach to a
+Jira ticket, or save as `.md`.
+
+- New utility `renderReviewMarkdown()` renders judge verdict first
+  (when present), then each reviewer block with model + latency + token
+  counts, then the source content. Long content is auto-truncated at
+  50k chars so the bundle fits inside the GitHub PR comment limit.
+- New endpoint `POST /workspace/ai-actions/multi-model-review/bundle`
+  returns `text/markdown; charset=utf-8` with
+  `Content-Disposition: attachment; filename="multi-model-review.md"`.
+  Live-verified — empty content still returns 400, success returns the
+  correct headers.
+- 5 unit tests cover the judge-first layout, judge-not-requested case,
+  judge failure rendering, reviewer error blocks, and 50k truncation.
+
+### Closed gap L — DB-backed Gmail signature library (Prompt 06)
+
+Signatures now persist per-user with a default-row concept.
+
+- New table `user_email_signatures` (`id`, `userId`, `name`, `body`,
+  `isDefault`, timestamps). Unique on `(userId, name)`. Migration
+  `20260512100000_add_user_email_signatures` applied to the running DB.
+- New module `EmailSignaturesModule` with repository / service /
+  controller. Endpoints:
+  - `GET    /workspace/email-signatures` — list user's signatures
+  - `GET    /workspace/email-signatures/default` — get default (null if none)
+  - `GET    /workspace/email-signatures/:id` — get one (404 if not owned)
+  - `POST   /workspace/email-signatures` — create (409 on name collision)
+  - `PATCH  /workspace/email-signatures/:id` — update; setting
+    `isDefault=true` clears the bit on every other row for the user
+  - `DELETE /workspace/email-signatures/:id` — delete (404 if not owned)
+- 14 unit tests covering all CRUD paths, ownership (404 on other users'
+  rows), unique-name (409), and the single-default-per-user invariant.
+- Live smoke: list (200/empty) + create (201) + duplicate-name (409) +
+  default (200) + delete (204) + DTO (400) + unauth (401) — 6/6 PASS.
+
+### Closed gap M — Per-connector RBAC service (Prompt 12)
+
+Single source of truth for "can user X do thing Y on connector Z?".
+Replaces the ad-hoc owner checks scattered through workspace-action.
+
+- New table `workspace_connector_grants` + enum
+  `WorkspaceConnectorAccessLevel` (`READ_ONLY` / `AI_ACTIONS` / `FULL`).
+  Migration `20260512200000_add_workspace_connector_grants` applied.
+- New module `ConnectorAccessModule` exporting `ConnectorAccessService`.
+- `resolve(userId, connectorId)` returns
+  `{ source: OWNER|GRANT|NONE, level }`. Owner always gets `FULL`.
+- `can(userId, connectorId, action)` and the pure helper
+  `actionAllowed(effective, action)` map four discrete actions to access
+  levels:
+  - `VIEW` — any access (READ_ONLY+)
+  - `PROPOSE_AI_ACTION` — AI_ACTIONS+ or owner
+  - `EDIT_CONFIG` — FULL only or owner
+  - `MANAGE_GRANTS` — owner only
+- `grant()` / `revoke()` enforce owner-only semantics with a typed
+  error.
+- 13 unit tests covering every cell of the (source × action × level)
+  matrix plus the grant/revoke owner-gate.
+- Extracted enums (`ConnectorAction`, `ConnectorAccessSource`) and the
+  effective-access type live in dedicated files per the strict lint
+  rules — no inline declarations in service files.
+
+The service is exported but not yet wired into the
+`WorkspaceActionService.create()` ownership check or the connector
+sync paths; that wiring is a separate task that touches existing
+production code and warrants its own pass with a full regression run.
+
+### Validation evidence (round 5)
+
+| Check                                          | Result                                             |
+| ---------------------------------------------- | -------------------------------------------------- |
+| workspace-service unit tests                   | **521 / 521** (was 489; +32 new)                   |
+| workspace-service typecheck                    | 0 errors                                           |
+| workspace-service lint                         | 0 errors                                           |
+| `qa/test-stream-10-approval-engine.sh`         | **21 / 21 PASS**                                   |
+| Live `POST /workspace/email-signatures` smoke  | 6/6 PASS (200/201/409/200/204/400/401)             |
+| Live `POST /multi-model-review/bundle` headers | text/markdown + Content-Disposition: attachment ✅ |
+| Container health                               | workspace + audit + auth + agent all healthy       |
+| Docker logs                                    | 0 `UnhandledPromiseRejection` / `FATAL`            |
+
+**Cumulative for this multi-round session (rounds 1-5): 14 v3 gaps closed,
+88 new unit tests, ~107 live API/DB checks, 0 regressions.**
+
+### What's still open
+
+- 04 final polish: GitLab MR `position_type='image'` support
+- 06 Gmail: WATCH push notifications (Pub/Sub topic + history-scan
+  consumer), template library
+- 06 Frontend: signature management UI (the backend CRUD shipped this
+  round)
+- 08 Drive/OneDrive/SharePoint frontend viewers
+- 09 Confluence + Figma deep integration
+- 11 Cross-workspace automation chains (DAG)
+- 12 Wire `ConnectorAccessService` into `WorkspaceActionService.create`
+  and connector-sync paths (replace ad-hoc owner checks)
+- 12 IP allowlist + policy-change UI surface
+- 14 Playwright E2E

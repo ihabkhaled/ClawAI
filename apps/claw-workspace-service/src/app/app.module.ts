@@ -22,6 +22,8 @@ import { LearningModule } from '../modules/learning/learning.module';
 import { InboxModule } from '../modules/inbox/inbox.module';
 import { DigestModule } from '../modules/digest/digest.module';
 import { TicketPlanningModule } from '../modules/ticket-planning/ticket-planning.module';
+import { EmailSignaturesModule } from '../modules/email-signatures/email-signatures.module';
+import { ConnectorAccessModule } from '../modules/connector-access/connector-access.module';
 
 @Module({
   imports: [
@@ -86,6 +88,8 @@ import { TicketPlanningModule } from '../modules/ticket-planning/ticket-planning
     InboxModule,
     DigestModule,
     TicketPlanningModule,
+    EmailSignaturesModule,
+    ConnectorAccessModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

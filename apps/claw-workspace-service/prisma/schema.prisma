@@ -663,3 +663,51 @@ model UserAutomationPreference {
   @@index([userId])
   @@map("user_automation_preferences")
 }
+
+// v3 round 5 (2026-05-12) — Prompt 06 polish: per-user Gmail signature
+// library. Callers reference a row by id when composing a send/draft;
+// the Gmail adapter appends the body with the RFC 3676 separator. One
+// row per user can be flagged isDefault — picked up automatically when
+// the caller doesn't supply a signature id.
+model UserEmailSignature {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id") @db.VarChar(128)
+  name      String   @db.VarChar(120)
+  body      String   @db.Text
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("user_email_signatures")
+}
+
+// v3 round 5 (2026-05-12) — Prompt 12 polish: per-connector RBAC. The
+// connector owner (WorkspaceConnector.userId) always has full access.
+// Grants below let the owner share a connector with another user at a
+// specific scope — e.g. share a Jira connector with a teammate but only
+// allow them to queue AI suggestions, not see raw tokens or sync state.
+//
+// Access is the union of (owner-of-connector) ∪ (grantee-with-row-here).
+// Lookups are by (userId, connectorId) — both indexed.
+enum WorkspaceConnectorAccessLevel {
+  READ_ONLY        // can view object list + run AI actions read-only kinds
+  AI_ACTIONS       // READ_ONLY + can submit write-action proposals into the approval queue
+  FULL             // AI_ACTIONS + can edit connector config, rotate tokens
+}
+
+model WorkspaceConnectorGrant {
+  id          String                        @id @default(cuid())
+  connectorId String                        @map("connector_id")
+  userId      String                        @map("user_id") @db.VarChar(128)
+  grantedBy   String                        @map("granted_by") @db.VarChar(128)
+  accessLevel WorkspaceConnectorAccessLevel @default(AI_ACTIONS) @map("access_level")
+  createdAt   DateTime                      @default(now()) @map("created_at")
+  updatedAt   DateTime                      @updatedAt @map("updated_at")
+
+  @@unique([connectorId, userId])
+  @@index([userId])
+  @@index([connectorId])
+  @@map("workspace_connector_grants")
+}
