@@ -14,6 +14,7 @@ import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
 import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { buildOAuthErrorMessage } from '../utilities/oauth-error.utility';
 import { extractAttachmentNames, extractBodyText, header } from './gmail-message-parts.utility';
+import { GmailComposeHelper } from './gmail-compose.helper';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
@@ -35,6 +36,10 @@ import type {
 @Injectable()
 export class GmailAdapter implements WorkspaceAdapter {
   private readonly logger = new Logger(GmailAdapter.name);
+
+  // v3 round 4 — anti-loop + signature helper. Optional so existing tests
+  // that `new GmailAdapter()` keep working; production injects it via Nest.
+  constructor(private readonly compose?: GmailComposeHelper) {}
 
   async healthCheck(accessToken: string): Promise<HealthCheckResult> {
     const start = Date.now();
@@ -444,15 +449,21 @@ export class GmailAdapter implements WorkspaceAdapter {
   ): Promise<WriteActionResult> {
     const to = typeof payload['to'] === 'string' ? payload['to'] : null;
     const subject = typeof payload['subject'] === 'string' ? payload['subject'] : null;
-    const body = typeof payload['body'] === 'string' ? payload['body'] : null;
+    const rawBody = typeof payload['body'] === 'string' ? payload['body'] : null;
     const threadId =
       typeof payload['threadId'] === 'string' ? (payload['threadId'] as string) : undefined;
-    if (to === null || subject === null || body === null) {
+    if (to === null || subject === null || rawBody === null) {
       return {
         success: false,
         errorMessage: 'Gmail createDraft requires {to, subject, body} fields in payload',
       };
     }
+
+    const composed = this.composeCheck(payload, { to, subject, body: rawBody, threadId });
+    if (!composed.allowed) {
+      return { success: false, errorMessage: composed.errorMessage };
+    }
+    const body = composed.body;
 
     const rfc822 = [
       `To: ${to}`,
@@ -507,19 +518,28 @@ export class GmailAdapter implements WorkspaceAdapter {
   ): Promise<WriteActionResult> {
     const to = typeof payload['to'] === 'string' ? payload['to'] : null;
     const subject = typeof payload['subject'] === 'string' ? payload['subject'] : null;
-    const body = typeof payload['body'] === 'string' ? payload['body'] : null;
+    const rawBody = typeof payload['body'] === 'string' ? payload['body'] : null;
     const threadId =
       isReply && typeof payload['threadId'] === 'string' ? payload['threadId'] : undefined;
-    if (to === null || subject === null || body === null) {
+    if (to === null || subject === null || rawBody === null) {
       return {
         success: false,
         errorMessage: 'Gmail send requires {to, subject, body} fields in payload',
       };
     }
 
+    const composed = this.composeCheck(payload, { to, subject, body: rawBody, threadId });
+    if (!composed.allowed) {
+      return { success: false, errorMessage: composed.errorMessage };
+    }
+    const body = composed.body;
+
     const rfc822 = [
       `To: ${to}`,
       `Subject: ${subject}`,
+      ...(isReply && typeof payload['inReplyTo'] === 'string'
+        ? [`In-Reply-To: ${payload['inReplyTo'] as string}`, `References: ${payload['inReplyTo'] as string}`]
+        : []),
       'Content-Type: text/plain; charset=utf-8',
       'MIME-Version: 1.0',
       '',
@@ -556,4 +576,34 @@ export class GmailAdapter implements WorkspaceAdapter {
 
   // ─── Stream 22: HTML rendering + attachment extraction ──────────
   // Delegated to GmailAttachmentHelper (gmail-attachment.helper.ts).
+
+  // v3 round 4 — anti-loop + signature pass. Skipped when the helper is
+  // not injected (legacy direct-ctor callers in tests).
+  private composeCheck(
+    payload: Record<string, unknown>,
+    ctx: { to: string; subject: string; body: string; threadId?: string },
+  ): { allowed: true; body: string } | { allowed: false; errorMessage: string } {
+    if (this.compose === undefined) return { allowed: true, body: ctx.body };
+    const userId = typeof payload['_userId'] === 'string' ? (payload['_userId'] as string) : 'anon';
+    const inReplyTo =
+      typeof payload['inReplyTo'] === 'string' ? (payload['inReplyTo'] as string) : undefined;
+    const signature =
+      typeof payload['signature'] === 'string' ? (payload['signature'] as string) : undefined;
+    const decision = this.compose.evaluate(userId, {
+      to: ctx.to,
+      subject: ctx.subject,
+      body: ctx.body,
+      threadId: ctx.threadId,
+      inReplyTo,
+      signature,
+    });
+    if (!decision.allowed) {
+      this.logger.warn(`composeCheck: blocked reason=${decision.reason} detail=${decision.detail}`);
+      return {
+        allowed: false,
+        errorMessage: `Gmail compose blocked: ${decision.reason} — ${decision.detail}`,
+      };
+    }
+    return { allowed: true, body: decision.body };
+  }
 }

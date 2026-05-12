@@ -109,4 +109,42 @@ describe('GmailAdapter.executeWriteAction — CREATE_DRAFT', () => {
     expect(result.success).toBe(false);
     expect(result.errorMessage).toContain('unsupported action type NOPE');
   });
+
+  // v3 round 4 — anti-loop integration: when the compose helper is wired
+  // in and blocks the send, the adapter MUST NOT call Gmail.
+  it('honors compose helper anti-loop rejection without calling Gmail', async () => {
+    const { GmailComposeHelper } = await import('../gmail-compose.helper');
+    const composeHelper = new GmailComposeHelper();
+    const wiredAdapter = new GmailAdapter(composeHelper);
+    const result = await wiredAdapter.executeWriteAction('token', 'CREATE_DRAFT', {
+      to: 'no-reply@notifications.example.com',
+      subject: 'Hi',
+      body: 'x',
+    });
+    expect(result.success).toBe(false);
+    expect(result.errorMessage).toContain('TO_IS_MAILER_DAEMON');
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('compose helper appends signature into the RFC822 raw body', async () => {
+    const { GmailComposeHelper } = await import('../gmail-compose.helper');
+    const composeHelper = new GmailComposeHelper();
+    const wiredAdapter = new GmailAdapter(composeHelper);
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'd1', message: { id: 'm1', threadId: 'tx' } }),
+    });
+    await wiredAdapter.executeWriteAction('token', 'CREATE_DRAFT', {
+      to: 'colleague@example.com',
+      subject: 'Hi',
+      body: 'hello',
+      signature: 'Best,\nAlice',
+    });
+    const sent = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body) as {
+      message: { raw: string };
+    };
+    const decoded = Buffer.from(sent.message.raw, 'base64url').toString('utf-8');
+    expect(decoded).toContain('Best,');
+    expect(decoded).toContain('-- '); // RFC 3676 separator
+  });
 });

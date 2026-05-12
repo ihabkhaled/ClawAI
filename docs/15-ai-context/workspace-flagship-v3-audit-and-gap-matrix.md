@@ -390,3 +390,111 @@ round 3), 35 new unit tests, 86 live API/DB checks, 0 regressions.**
 - 11 Cross-workspace automation chains (DAG)
 - 12 Workspace-scoped RBAC (per-connector), policy-change UI surface
 - 14 Playwright E2E for inbox + approval queue + digest
+
+---
+
+## Continued — 2026-05-12 round 4 (same session)
+
+Four more v3 polish items closed in the same session. Validation: live
+endpoint smoke (4/4 PASS) + 489 workspace-service unit tests (+21 new) +
+21/21 approval-engine QA + 0 typecheck/lint errors.
+
+### Closed gap G — Multi-model PR review controller endpoint (Prompt 04)
+
+The orchestrator manager shipped in round 3 now has an HTTP entry point.
+
+- New endpoint `POST /workspace/ai-actions/multi-model-review` on the
+  existing `AiActionController`. Validated by Zod schema
+  `multiModelReviewRequestSchema` (1-5 reviewer models, 1-200k char body,
+  optional judge model, optional timeout capped at 5 min/reviewer).
+- Live verified (no real models needed for these checks): empty
+  `reviewerModels` → 400, empty `content` → 400, 6+ reviewers → 400,
+  missing JWT → 401. All four return the expected error shape.
+
+### Closed gap H — GitHub `start_line` / `start_side` for split-diff (Prompt 04)
+
+GitHub `ADD_PR_SUGGESTION` now supports multi-line spans and the LEFT
+(deleted) side of a hunk.
+
+- Optional payload fields `startLine`, `side` (default RIGHT), `startSide`.
+  When `startLine` is set the comment spans `startLine..line` per GitHub's
+  pull-review-comment API.
+- 4 unit tests verify the default single-line RIGHT path, multi-line span,
+  LEFT-side deleted-line targeting, and GitHub API error surfacing.
+
+### Closed gap I — Gmail signature append (Prompt 06)
+
+When the caller supplies a `signature` field, the Gmail adapter appends
+it to the RFC822 body with the RFC 3676 §4.3 separator (`\n\n-- \n`).
+Idempotent — won't double the separator if the body already includes one.
+
+### Closed gap J — Gmail anti-loop heuristic (Prompt 06)
+
+A new `GmailComposeHelper` sits between the approval queue and the Gmail
+adapter, blocking three classes of mailer-loop:
+
+- **SUBJECT_LOOP**: any subject with 5+ `Re:` prefixes (also recognises
+  localized `Sv:`, `Aw:`, `Antw:`, `Rs:`).
+- **TO_IS_MAILER_DAEMON**: recipient matches a `mailer-daemon@`,
+  `no-reply@`, `bounces@`, `postmaster@` etc. pattern (case-insensitive).
+- **DUPLICATE_WITHIN_WINDOW**: same user replied to the same
+  `In-Reply-To` / `threadId` (or `to+subject` when no thread context)
+  within the last 10 minutes. Per-user bucketing; bounded LRU cap of 5000
+  keys with lazy prune.
+
+Plumbed into both `sendEmail` and `createDraft`. The adapter passes
+`payload._userId` through (injected by `ActionExecutionManager` from the
+`WorkspaceAction.userId`) so dedup is per-user, not global. When blocked,
+the adapter returns `{success: false}` with a structured
+`Gmail compose blocked: <reason> — <detail>` message — Gmail itself is
+never called.
+
+`In-Reply-To` and `References` headers are now also written into the
+RFC822 send body when the caller provides `payload.inReplyTo`, so Gmail
+threads the reply correctly upstream.
+
+- 15 standalone helper tests (signature append, all 3 anti-loop classes,
+  user isolation, key fallback, reset).
+- 2 adapter integration tests confirm the wired adapter (a) refuses to
+  call `global.fetch` when the helper blocks, and (b) the appended
+  signature appears in the decoded RFC822 raw body.
+- Total Gmail spec count for this feature: 22 (8 in `gmail-create-draft`,
+  14 in `gmail-compose.helper`).
+
+### Public adapter signature compatibility
+
+The `WorkspaceAdapter.executeWriteAction(token, action, payload)` contract
+is unchanged. Internal context (`_userId`, `_actionId`) is added to the
+payload by `ActionExecutionManager` under `_`-prefixed keys; any adapter
+that ignores them keeps working. Direct test callers that
+`new GmailAdapter()` without injecting the helper also still work — the
+constructor argument is optional.
+
+### Validation evidence (round 4)
+
+| Check | Result |
+|---|---|
+| workspace-service unit tests | **489 / 489** (was 468; +21 new) |
+| workspace-service typecheck | 0 errors |
+| workspace-service lint | 0 errors |
+| `qa/test-stream-10-approval-engine.sh` | **21 / 21 PASS** |
+| `POST /workspace/ai-actions/multi-model-review` live smoke | 4/4 PASS (400 + 400 + 400 + 401) |
+| Container health | workspace + audit + auth + agent all healthy |
+| Docker logs | 0 `UnhandledPromiseRejection` / `FATAL` |
+
+**Cumulative for this multi-round session (rounds 1-4): 11 v3 gaps closed,
+56 new unit tests, 90 live API/DB checks, 0 regressions.**
+
+### What's still open
+
+- 04 final polish: downloadable PR review bundle (markdown), GitLab MR
+  `position_type='image'` support
+- 06 Gmail: WATCH push notifications (Pub/Sub topic + history scan
+  consumer), DB-backed signature library CRUD with per-user defaults,
+  template library
+- 08 Drive/OneDrive/SharePoint frontend viewers (PDF + doc + sheet modals)
+- 09 Confluence + Figma deep integration
+- 11 Cross-workspace automation chains (DAG executor for workspace events)
+- 12 Workspace-scoped RBAC (per-connector), policy-change UI surface,
+  IP allowlist
+- 14 Playwright E2E for inbox + approval queue + digest

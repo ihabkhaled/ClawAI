@@ -5,6 +5,11 @@ import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { AiActionApprovalManager } from '../managers/ai-action-approval.manager';
 import { AiActionExecutionManager } from '../managers/ai-action-execution.manager';
 import { AutoRouterManager } from '../managers/auto-router.manager';
+import { MultiModelReviewOrchestratorManager } from '../managers/multi-model-review-orchestrator.manager';
+import {
+  type MultiModelReviewRequestDto,
+  multiModelReviewRequestSchema,
+} from '../dto/multi-model-review.dto';
 import { type ResolveAiActionDto, resolveAiActionSchema } from '../dto/resolve-ai-action.dto';
 import {
   type RunAiActionDto,
@@ -12,6 +17,7 @@ import {
   runAiActionQuerySchema,
   runAiActionSchema,
 } from '../dto/run-ai-action.dto';
+import type { MultiModelReviewResult } from '../types/multi-model-review.types';
 import type {
   AiActionResult,
   AutoRouterResolution,
@@ -25,6 +31,7 @@ export class AiActionController {
     private readonly router: AutoRouterManager,
     private readonly execution: AiActionExecutionManager,
     private readonly approval: AiActionApprovalManager,
+    private readonly multiModelReview: MultiModelReviewOrchestratorManager,
   ) {}
 
   @Post('resolve')
@@ -47,6 +54,14 @@ export class AiActionController {
     @Query(new ZodValidationPipe(runAiActionQuerySchema)) query: RunAiActionQueryDto,
   ): Promise<RunAiActionEnvelope> {
     return this.runOrQueue(user, dto, query);
+  }
+
+  @Post('multi-model-review')
+  @HttpCode(HttpStatus.OK)
+  async multiModelReviewEndpoint(
+    @Body(new ZodValidationPipe(multiModelReviewRequestSchema)) dto: MultiModelReviewRequestDto,
+  ): Promise<MultiModelReviewResult> {
+    return this.multiModelReview.run(dto);
   }
 
   private async runOrQueue(

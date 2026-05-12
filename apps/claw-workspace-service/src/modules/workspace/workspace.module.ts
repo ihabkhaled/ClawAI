@@ -9,6 +9,7 @@ import { GitLabAdapter } from './adapters/gitlab.adapter';
 import { GitLabWriteActionsHelper } from './adapters/gitlab-write-actions.helper';
 import { GmailAdapter } from './adapters/gmail.adapter';
 import { GmailAttachmentHelper } from './adapters/gmail-attachment.helper';
+import { GmailComposeHelper } from './adapters/gmail-compose.helper';
 import { GoogleCalendarAdapter } from './adapters/google-calendar.adapter';
 import { GoogleDriveAdapter } from './adapters/google-drive.adapter';
 import { JiraAdapter } from './adapters/jira.adapter';
@@ -94,6 +95,7 @@ import { WorkspaceSearchService } from './services/workspace-search.service';
     GoogleDriveAdapter,
     GmailAdapter,
     GmailAttachmentHelper,
+    GmailComposeHelper,
     SharePointAdapter,
     OneDriveAdapter,
     FigmaAdapter,

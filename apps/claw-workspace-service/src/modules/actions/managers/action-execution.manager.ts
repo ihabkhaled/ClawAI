@@ -38,11 +38,15 @@ export class ActionExecutionManager {
       };
     }
     try {
-      return await adapter.executeWriteAction(
-        accessToken,
-        action.actionType,
-        action.payload as Record<string, unknown>,
-      );
+      // v3 round 4 — inject internal context fields under `_` prefix so
+      // adapters (e.g. GmailAdapter for anti-loop dedup) can access the
+      // calling userId without changing the public adapter signature.
+      const payloadWithContext = {
+        ...(action.payload as Record<string, unknown>),
+        _userId: action.userId,
+        _actionId: action.id,
+      };
+      return await adapter.executeWriteAction(accessToken, action.actionType, payloadWithContext);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown execution error';
       this.logger.error(`Write action ${action.id} failed: ${message}`);

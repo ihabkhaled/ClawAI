@@ -180,20 +180,32 @@ export class GitHubWriteActionsHelper {
     const path = payload['path'] as string;
     const line = payload['line'] as number;
     const suggestion = payload['suggestion'] as string;
+    // v3 round 4 (2026-05-12) — Prompt 04 polish: optional multi-line
+    // split-diff targeting. When `startLine` is set, the comment spans
+    // lines `startLine..line`. Optional `side`/`startSide` (LEFT|RIGHT)
+    // let the caller anchor to the deleted or added side of a hunk.
+    const startLine =
+      typeof payload['startLine'] === 'number' ? (payload['startLine'] as number) : undefined;
+    const side = typeof payload['side'] === 'string' ? (payload['side'] as string) : 'RIGHT';
+    const startSide =
+      typeof payload['startSide'] === 'string' ? (payload['startSide'] as string) : undefined;
     const body = `\`\`\`suggestion\n${suggestion}\n\`\`\``;
+    const requestBody: Record<string, unknown> = {
+      commit_id: commitId,
+      path,
+      line,
+      body,
+      side,
+    };
+    if (startLine !== undefined) requestBody['start_line'] = startLine;
+    if (startSide !== undefined) requestBody['start_side'] = startSide;
     const response = await fetch(
       `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}/comments`,
       {
         method: 'POST',
         headers: this.buildHeaders(accessToken),
         signal: AbortSignal.timeout(WRITE_EXECUTION_TIMEOUT_MS),
-        body: JSON.stringify({
-          commit_id: commitId,
-          path,
-          line,
-          body,
-          side: 'RIGHT',
-        }),
+        body: JSON.stringify(requestBody),
       },
     );
     if (!response.ok) {
