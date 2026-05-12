@@ -12,6 +12,7 @@ import type { AiActionRiskLabel } from '@/types/workspace.types';
 export function AiActionPolicyRow({
   policy,
   onToggleActive,
+  onEdit,
   onDelete,
   isMutating,
   t,
@@ -74,6 +75,16 @@ export function AiActionPolicyRow({
         </div>
       </div>
       <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => onEdit(policy)}
+          disabled={isMutating}
+          aria-label={t('adminAutomation.policies.editPolicy')}
+        >
+          {t('common.edit')}
+        </Button>
         {policy.isSystemDefault ? (
           <Button
             type="button"

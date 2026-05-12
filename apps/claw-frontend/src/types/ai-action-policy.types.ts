@@ -1,3 +1,4 @@
+import type { AdminFormMode } from '../enums/admin-form-mode.enum';
 import type { AiActionPolicyKind } from '../enums/ai-action-policy-kind.enum';
 import type { RiskLabel } from '../enums/risk-label.enum';
 
@@ -76,8 +77,22 @@ export type AdminPolicyPageRenderProps = {
   pendingId: string | null;
   mutationError: Error | null;
   clearMutationError: () => void;
+  isCreating: boolean;
+  onCreatePolicy: (payload: CreateAiActionPolicyRequest) => Promise<AiActionPolicy | null>;
+  onUpdatePolicy: (
+    id: string,
+    payload: UpdateAiActionPolicyRequest,
+  ) => Promise<AiActionPolicy | null>;
   onTogglePolicyActive: (id: string, next: boolean) => void;
   onDeletePolicy: (id: string) => void;
+  onRetry: () => void;
+  dialogOpen: boolean;
+  setDialogOpen: (open: boolean) => void;
+  editing: AiActionPolicy | null;
+  openCreate: () => void;
+  openEdit: (policy: AiActionPolicy) => void;
+  submitCreate: (payload: CreateAiActionPolicyRequest) => void;
+  submitUpdate: (payload: UpdateAiActionPolicyRequest) => void;
   t: TranslateFunction;
 };
 
@@ -90,14 +105,31 @@ export type AdminRulesPageRenderProps = {
   pendingId: string | null;
   mutationError: Error | null;
   clearMutationError: () => void;
+  isCreating: boolean;
+  onCreateRule: (
+    payload: CreateSuggestionTriggerRuleRequest,
+  ) => Promise<SuggestionTriggerRule | null>;
+  onUpdateRule: (
+    id: string,
+    payload: UpdateSuggestionTriggerRuleRequest,
+  ) => Promise<SuggestionTriggerRule | null>;
   onToggleRuleActive: (id: string, next: boolean) => void;
   onDeleteRule: (id: string) => void;
+  onRetry: () => void;
+  dialogOpen: boolean;
+  setDialogOpen: (open: boolean) => void;
+  editing: SuggestionTriggerRule | null;
+  openCreate: () => void;
+  openEdit: (rule: SuggestionTriggerRule) => void;
+  submitCreate: (payload: CreateSuggestionTriggerRuleRequest) => void;
+  submitUpdate: (payload: UpdateSuggestionTriggerRuleRequest) => void;
   t: TranslateFunction;
 };
 
 export type AiActionPolicyRowProps = {
   policy: AiActionPolicy;
   onToggleActive: (id: string, next: boolean) => void;
+  onEdit: (policy: AiActionPolicy) => void;
   onDelete: (id: string) => void;
   isMutating: boolean;
   t: TranslateFunction;
@@ -106,6 +138,7 @@ export type AiActionPolicyRowProps = {
 export type SuggestionRuleRowProps = {
   rule: SuggestionTriggerRule;
   onToggleActive: (id: string, next: boolean) => void;
+  onEdit: (rule: SuggestionTriggerRule) => void;
   onDelete: (id: string) => void;
   isMutating: boolean;
   t: TranslateFunction;
@@ -113,3 +146,27 @@ export type SuggestionRuleRowProps = {
 
 export type UseAiActionPoliciesPageResult = Omit<AdminPolicyPageRenderProps, 't'>;
 export type UseSuggestionRulesPageResult = Omit<AdminRulesPageRenderProps, 't'>;
+
+export type PolicyFormDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  mode: AdminFormMode;
+  initial: AiActionPolicy | null;
+  onSubmitCreate: (payload: CreateAiActionPolicyRequest) => void;
+  onSubmitUpdate: (payload: UpdateAiActionPolicyRequest) => void;
+  isSubmitting: boolean;
+  submitErrorMessage: string | null;
+  t: TranslateFunction;
+};
+
+export type RuleFormDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  mode: AdminFormMode;
+  initial: SuggestionTriggerRule | null;
+  onSubmitCreate: (payload: CreateSuggestionTriggerRuleRequest) => void;
+  onSubmitUpdate: (payload: UpdateSuggestionTriggerRuleRequest) => void;
+  isSubmitting: boolean;
+  submitErrorMessage: string | null;
+  t: TranslateFunction;
+};

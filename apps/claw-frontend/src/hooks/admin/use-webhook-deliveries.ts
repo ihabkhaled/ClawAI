@@ -72,6 +72,10 @@ export function useWebhookDeliveriesPage(): UseWebhookDeliveriesPageResult {
     setMutationError(null);
   }, []);
 
+  const onRetry = useCallback((): void => {
+    void query.refetch();
+  }, [query]);
+
   const deliveries: WebhookDelivery[] = query.data ?? [];
 
   return {
@@ -86,5 +90,6 @@ export function useWebhookDeliveriesPage(): UseWebhookDeliveriesPageResult {
     onReplay,
     mutationError,
     clearMutationError,
+    onRetry,
   };
 }

@@ -33,6 +33,7 @@ describe('AiActionPolicyRow', () => {
       <AiActionPolicyRow
         policy={makePolicy()}
         onToggleActive={vi.fn()}
+        onEdit={vi.fn()}
         onDelete={vi.fn()}
         isMutating={false}
         t={(key) => key}
@@ -49,6 +50,7 @@ describe('AiActionPolicyRow', () => {
       <AiActionPolicyRow
         policy={makePolicy({ isSystemDefault: true })}
         onToggleActive={vi.fn()}
+        onEdit={vi.fn()}
         onDelete={vi.fn()}
         isMutating={false}
         t={(key) => key}
@@ -62,6 +64,7 @@ describe('AiActionPolicyRow', () => {
       <AiActionPolicyRow
         policy={makePolicy({ isSystemDefault: true })}
         onToggleActive={vi.fn()}
+        onEdit={vi.fn()}
         onDelete={vi.fn()}
         isMutating={false}
         t={(key) => key}
@@ -80,6 +83,7 @@ describe('AiActionPolicyRow', () => {
       <AiActionPolicyRow
         policy={makePolicy({ isSystemDefault: false, id: 'p2' })}
         onToggleActive={vi.fn()}
+        onEdit={vi.fn()}
         onDelete={onDelete}
         isMutating={false}
         t={(key) => key}
@@ -94,6 +98,7 @@ describe('AiActionPolicyRow', () => {
       <AiActionPolicyRow
         policy={makePolicy({ isSystemDefault: false })}
         onToggleActive={vi.fn()}
+        onEdit={vi.fn()}
         onDelete={vi.fn()}
         isMutating
         t={(key) => key}

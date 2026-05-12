@@ -1,5 +1,19 @@
 import { AiActionPolicyKind } from '@/enums/ai-action-policy-kind.enum';
+import { RiskLabel } from '@/enums/risk-label.enum';
 import { WebhookDeliveryStatus } from '@/enums/webhook-delivery-status.enum';
+
+export const POLICY_KIND_OPTIONS: readonly AiActionPolicyKind[] = [
+  AiActionPolicyKind.DENY,
+  AiActionPolicyKind.ALLOW,
+  AiActionPolicyKind.AUTO_APPROVE,
+];
+
+export const RISK_LABEL_OPTIONS: readonly RiskLabel[] = [
+  RiskLabel.LOW,
+  RiskLabel.MEDIUM,
+  RiskLabel.HIGH,
+  RiskLabel.CRITICAL,
+];
 
 /**
  * Stream 10/13 — Visual styling for AiActionPolicy.kind badges in the admin

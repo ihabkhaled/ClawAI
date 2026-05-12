@@ -46,6 +46,7 @@ export type UseWebhookDeliveriesPageResult = {
   onReplay: (id: string) => void;
   mutationError: Error | null;
   clearMutationError: () => void;
+  onRetry: () => void;
 };
 
 export type WebhookDeliveryStatusInfo = {

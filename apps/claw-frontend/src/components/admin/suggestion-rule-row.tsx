@@ -9,6 +9,7 @@ import type { SuggestionRuleRowProps } from '@/types/ai-action-policy.types';
 export function SuggestionRuleRow({
   rule,
   onToggleActive,
+  onEdit,
   onDelete,
   isMutating,
   t,
@@ -62,6 +63,16 @@ export function SuggestionRuleRow({
         </div>
       </div>
       <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => onEdit(rule)}
+          disabled={isMutating}
+          aria-label={t('adminAutomation.rules.editRule')}
+        >
+          {t('common.edit')}
+        </Button>
         {rule.isSystemDefault ? (
           <Button
             type="button"

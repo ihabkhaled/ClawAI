@@ -30,6 +30,7 @@ describe('SuggestionRuleRow', () => {
       <SuggestionRuleRow
         rule={makeRule()}
         onToggleActive={vi.fn()}
+        onEdit={vi.fn()}
         onDelete={vi.fn()}
         isMutating={false}
         t={(key) => key}
@@ -46,6 +47,7 @@ describe('SuggestionRuleRow', () => {
       <SuggestionRuleRow
         rule={makeRule({ isSystemDefault: true })}
         onToggleActive={vi.fn()}
+        onEdit={vi.fn()}
         onDelete={vi.fn()}
         isMutating={false}
         t={(key) => key}
@@ -59,6 +61,7 @@ describe('SuggestionRuleRow', () => {
       <SuggestionRuleRow
         rule={makeRule({ isSystemDefault: true })}
         onToggleActive={vi.fn()}
+        onEdit={vi.fn()}
         onDelete={vi.fn()}
         isMutating={false}
         t={(key) => key}
@@ -77,6 +80,7 @@ describe('SuggestionRuleRow', () => {
       <SuggestionRuleRow
         rule={makeRule({ isSystemDefault: false, id: 'r2' })}
         onToggleActive={vi.fn()}
+        onEdit={vi.fn()}
         onDelete={onDelete}
         isMutating={false}
         t={(key) => key}

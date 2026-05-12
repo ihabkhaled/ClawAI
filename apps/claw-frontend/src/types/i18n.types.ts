@@ -526,6 +526,24 @@ export type TranslationDictionary = {
     selectModePlaceholder: string;
     editPolicyDesc: string;
     createPolicyDesc: string;
+    models: {
+      title: string;
+      description: string;
+      updateSucceeded: string;
+      updateFailed: string;
+      overrideCleared: string;
+      overrideClearFailed: string;
+      softDeleteSucceeded: string;
+      softDeleteFailed: string;
+      columnProvider: string;
+      columnModelKey: string;
+      columnLifecycle: string;
+      columnQuality: string;
+      columnCost: string;
+      columnLatency: string;
+      filterByProvider: string;
+      filterByLifecycle: string;
+    };
   };
   models: {
     title: string;
@@ -1452,6 +1470,7 @@ export type TranslationDictionary = {
   };
   adminAutomation: {
     dismiss: string;
+    retry: string;
     policies: {
       title: string;
       description: string;
@@ -1471,6 +1490,26 @@ export type TranslationDictionary = {
       deleteSucceeded: string;
       deleteFailed: string;
       mutationError: string;
+      addPolicy: string;
+      editPolicy: string;
+      createTitle: string;
+      editTitle: string;
+      createDescription: string;
+      editDescription: string;
+      createSucceeded: string;
+      createFailed: string;
+      updateSucceeded: string;
+      updateFailed: string;
+      submit: string;
+      submitting: string;
+      nameLabel: string;
+      nameHelp: string;
+      descriptionLabel: string;
+      kindFieldLabel: string;
+      requireReasonLabel: string;
+      isActiveLabel: string;
+      riskMaxScoreLabel: string;
+      priorityLabel: string;
       kindLabel: {
         DENY: string;
         ALLOW: string;
@@ -1503,6 +1542,25 @@ export type TranslationDictionary = {
       deleteSucceeded: string;
       deleteFailed: string;
       mutationError: string;
+      addRule: string;
+      editRule: string;
+      createTitle: string;
+      editTitle: string;
+      createDescription: string;
+      editDescription: string;
+      createSucceeded: string;
+      createFailed: string;
+      updateSucceeded: string;
+      updateFailed: string;
+      submit: string;
+      submitting: string;
+      nameLabel: string;
+      nameHelp: string;
+      descriptionLabel: string;
+      eventTypeHelp: string;
+      actionKindHelp: string;
+      isActiveLabel: string;
+      priorityLabel: string;
     };
   };
   adminWebhooks: {

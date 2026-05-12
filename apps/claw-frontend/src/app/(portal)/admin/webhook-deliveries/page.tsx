@@ -34,6 +34,7 @@ export default function AdminWebhookDeliveriesPage(): ReactElement {
     onReplay,
     mutationError,
     clearMutationError,
+    onRetry,
   } = useWebhookDeliveriesPage();
 
   const hasFilters =
@@ -118,12 +119,21 @@ export default function AdminWebhookDeliveriesPage(): ReactElement {
       ) : null}
 
       {isError ? (
-        <p
-          className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+        <div
+          className="flex items-center justify-between gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
           role="alert"
         >
-          {error?.message ?? t('adminWebhooks.page.error')}
-        </p>
+          <span>{error?.message ?? t('adminWebhooks.page.error')}</span>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={onRetry}
+            aria-label={t('adminAutomation.retry')}
+          >
+            {t('adminAutomation.retry')}
+          </Button>
+        </div>
       ) : null}
 
       {mutationError !== null ? (

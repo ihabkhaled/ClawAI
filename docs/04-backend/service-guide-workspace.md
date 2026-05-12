@@ -112,6 +112,41 @@ Stores graph-style relationships between synced workspace objects.
 | `POST` | `/api/v1/workspace/actions/:id/approve` | Approve action      |
 | `POST` | `/api/v1/workspace/actions/:id/reject`  | Reject action       |
 
+### AI action policies (admin)
+
+The approval engine routes every draft through a `priority`-ordered chain of
+policies. System-defaults seed on boot and cannot be deleted via REST.
+
+| Method   | Path                                       | Purpose                                                                 |
+| -------- | ------------------------------------------ | ----------------------------------------------------------------------- |
+| `GET`    | `/api/v1/workspace/ai-actions/policies`    | List policies (ordered by `priority` DESC, then `name` ASC)             |
+| `GET`    | `/api/v1/workspace/ai-actions/policies/:id`| Get one policy — `404 POLICY_NOT_FOUND` when missing                    |
+| `POST`   | `/api/v1/workspace/ai-actions/policies`    | Create policy — `409 POLICY_NAME_TAKEN` on duplicate `name`             |
+| `PATCH`  | `/api/v1/workspace/ai-actions/policies/:id`| Partial update (the `name` field is omitted)                            |
+| `DELETE` | `/api/v1/workspace/ai-actions/policies/:id`| Delete — `409 POLICY_SYSTEM_DEFAULT_PROTECTED` on system defaults       |
+
+Auth: `GET` requires `ADMIN` or `OPERATOR`; mutations require `ADMIN`.
+
+### Suggestion trigger rules (admin)
+
+| Method   | Path                                       | Purpose                                                                |
+| -------- | ------------------------------------------ | ---------------------------------------------------------------------- |
+| `GET`    | `/api/v1/workspace/suggestion-rules`       | List rules (ordered by `priority` DESC, then `name` ASC)               |
+| `POST`   | `/api/v1/workspace/suggestion-rules`       | Create rule — `409 RULE_NAME_TAKEN` on duplicate `name`                |
+| `PATCH`  | `/api/v1/workspace/suggestion-rules/:id`   | Partial update — `404 RULE_NOT_FOUND` when missing                     |
+| `DELETE` | `/api/v1/workspace/suggestion-rules/:id`   | Delete — `404 RULE_NOT_FOUND` if missing, `409 RULE_SYSTEM_DEFAULT_PROTECTED` for system defaults |
+
+Auth: `GET` requires `ADMIN` or `OPERATOR`; mutations require `ADMIN`.
+
+### Webhook deliveries (admin)
+
+| Method | Path                                                    | Purpose                                                                                          |
+| ------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `GET`  | `/api/v1/workspace/webhooks/deliveries`                 | List deliveries. Query (strict Zod): `provider`, `signatureValid` (`'true' \| 'false'`), `connectorId`, `limit` (1-100, default 30), `cursor`. Unknown query params return `400`. |
+| `POST` | `/api/v1/workspace/webhooks/deliveries/:id/replay`      | Replay — `404 WEBHOOK_DELIVERY_NOT_FOUND` when missing                                           |
+
+Auth: `GET` requires `ADMIN` or `OPERATOR`; replay requires `ADMIN`.
+
 ---
 
 ## Important Request Shapes

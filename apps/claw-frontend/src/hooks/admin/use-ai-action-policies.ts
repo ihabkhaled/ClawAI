@@ -3,12 +3,18 @@ import { useCallback, useState } from 'react';
 
 import { useTranslation } from '@/lib/i18n';
 import {
+  createAiActionPolicy,
   deleteAiActionPolicy,
   listAiActionPolicies,
   updateAiActionPolicy,
 } from '@/repositories/admin/ai-action-policies.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
-import type { AiActionPolicy, UseAiActionPoliciesPageResult } from '@/types/ai-action-policy.types';
+import type {
+  AiActionPolicy,
+  CreateAiActionPolicyRequest,
+  UpdateAiActionPolicyRequest,
+  UseAiActionPoliciesPageResult,
+} from '@/types/ai-action-policy.types';
 import { showToast } from '@/utilities';
 
 export function useAiActionPoliciesPage(): UseAiActionPoliciesPageResult {
@@ -24,19 +30,19 @@ export function useAiActionPoliciesPage(): UseAiActionPoliciesPageResult {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (params: { id: string; isActive: boolean }) =>
-      updateAiActionPolicy(params.id, { isActive: params.isActive }),
-    onMutate: (params: { id: string; isActive: boolean }) => {
+    mutationFn: (params: { id: string; payload: UpdateAiActionPolicyRequest }) =>
+      updateAiActionPolicy(params.id, params.payload),
+    onMutate: (params: { id: string; payload: UpdateAiActionPolicyRequest }) => {
       setPendingId(params.id);
       setMutationError(null);
     },
     onSuccess: () => {
-      showToast.success({ description: t('adminAutomation.policies.toggleSucceeded') });
+      showToast.success({ description: t('adminAutomation.policies.updateSucceeded') });
       void queryClient.invalidateQueries({ queryKey: queryKeys.aiActionPolicies.list() });
     },
     onError: (err: Error) => {
       setMutationError(err);
-      showToast.apiError(err, t('adminAutomation.policies.toggleFailed'));
+      showToast.apiError(err, t('adminAutomation.policies.updateFailed'));
     },
     onSettled: () => {
       setPendingId(null);
@@ -62,12 +68,45 @@ export function useAiActionPoliciesPage(): UseAiActionPoliciesPageResult {
     },
   });
 
+  const createMutation = useMutation({
+    mutationFn: (payload: CreateAiActionPolicyRequest) => createAiActionPolicy(payload),
+    onMutate: () => {
+      setMutationError(null);
+    },
+    onSuccess: () => {
+      showToast.success({ description: t('adminAutomation.policies.createSucceeded') });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.aiActionPolicies.list() });
+    },
+    onError: (err: Error) => {
+      setMutationError(err);
+      showToast.apiError(err, t('adminAutomation.policies.createFailed'));
+    },
+  });
+
   const onTogglePolicyActive = useCallback(
     (id: string, next: boolean): void => {
-      void updateMutation.mutateAsync({ id, isActive: next }).catch(() => {
+      void updateMutation.mutateAsync({ id, payload: { isActive: next } }).catch(() => {
         // surfaced via onError
       });
     },
+    [updateMutation],
+  );
+
+  const onCreatePolicy = useCallback(
+    (payload: CreateAiActionPolicyRequest): Promise<AiActionPolicy | null> =>
+      createMutation
+        .mutateAsync(payload)
+        .then((p) => p)
+        .catch(() => null),
+    [createMutation],
+  );
+
+  const onUpdatePolicy = useCallback(
+    (id: string, payload: UpdateAiActionPolicyRequest): Promise<AiActionPolicy | null> =>
+      updateMutation
+        .mutateAsync({ id, payload })
+        .then((p) => p)
+        .catch(() => null),
     [updateMutation],
   );
 
@@ -84,6 +123,57 @@ export function useAiActionPoliciesPage(): UseAiActionPoliciesPageResult {
     setMutationError(null);
   }, []);
 
+  const onRetry = useCallback((): void => {
+    void query.refetch();
+  }, [query]);
+
+  const [dialogOpen, setDialogOpenInternal] = useState<boolean>(false);
+  const [editing, setEditing] = useState<AiActionPolicy | null>(null);
+
+  const setDialogOpen = useCallback((open: boolean): void => {
+    setDialogOpenInternal(open);
+    if (!open) {
+      setEditing(null);
+    }
+  }, []);
+
+  const openCreate = useCallback((): void => {
+    setEditing(null);
+    setDialogOpenInternal(true);
+  }, []);
+
+  const openEdit = useCallback((policy: AiActionPolicy): void => {
+    setEditing(policy);
+    setDialogOpenInternal(true);
+  }, []);
+
+  const submitCreate = useCallback(
+    (payload: CreateAiActionPolicyRequest): void => {
+      void onCreatePolicy(payload).then((created) => {
+        if (created !== null) {
+          setDialogOpenInternal(false);
+          setEditing(null);
+        }
+      });
+    },
+    [onCreatePolicy],
+  );
+
+  const submitUpdate = useCallback(
+    (payload: UpdateAiActionPolicyRequest): void => {
+      if (editing === null) {
+        return;
+      }
+      void onUpdatePolicy(editing.id, payload).then((updated) => {
+        if (updated !== null) {
+          setDialogOpenInternal(false);
+          setEditing(null);
+        }
+      });
+    },
+    [editing, onUpdatePolicy],
+  );
+
   const policies: AiActionPolicy[] = query.data ?? [];
 
   return {
@@ -91,11 +181,22 @@ export function useAiActionPoliciesPage(): UseAiActionPoliciesPageResult {
     isLoading: query.isLoading,
     isError: query.isError,
     error: (query.error as Error | null) ?? null,
-    isMutating: updateMutation.isPending || deleteMutation.isPending,
+    isMutating: updateMutation.isPending || deleteMutation.isPending || createMutation.isPending,
     pendingId,
     mutationError,
     clearMutationError,
+    isCreating: createMutation.isPending,
+    onCreatePolicy,
+    onUpdatePolicy,
     onTogglePolicyActive,
     onDeletePolicy,
+    onRetry,
+    dialogOpen,
+    setDialogOpen,
+    editing,
+    openCreate,
+    openEdit,
+    submitCreate,
+    submitUpdate,
   };
 }
