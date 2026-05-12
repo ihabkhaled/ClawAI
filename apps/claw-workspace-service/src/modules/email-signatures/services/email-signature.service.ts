@@ -17,7 +17,7 @@ export class EmailSignatureService {
 
   async getOwn(userId: string, id: string): Promise<UserEmailSignature> {
     const row = await this.repo.findById(id);
-    if (row === null || row.userId !== userId) {
+    if (row?.userId !== userId) {
       throw new NotFoundException({ messageKey: 'SIGNATURE_NOT_FOUND' });
     }
     return row;

@@ -16,58 +16,55 @@ export function renderReviewMarkdown(input: {
   const generatedAt = (input.generatedAt ?? new Date()).toISOString();
   const lines: string[] = [];
 
-  lines.push(`# ${input.title}`);
-  lines.push('');
-  lines.push(`_Generated ${generatedAt} by ClawAI multi-model review._`);
-  lines.push('');
+  lines.push(
+    `# ${input.title}`,
+    '',
+    `_Generated ${generatedAt} by ClawAI multi-model review._`,
+    '',
+  );
 
   // Status header — at-a-glance summary
   const ok = input.result.reviewers.filter((r) => r.success).length;
   const total = input.result.reviewers.length;
   const judgeStatus = renderJudgeStatus(input.result);
-  lines.push('## Summary');
-  lines.push('');
-  lines.push(`- Reviewers: **${String(ok)}/${String(total)}** succeeded`);
-  lines.push(`- Judge: ${judgeStatus}`);
-  lines.push('');
+  lines.push('## Summary', '');
+  lines.push(
+    `- Reviewers: **${String(ok)}/${String(total)}** succeeded`,
+    `- Judge: ${judgeStatus}`,
+    '',
+  );
 
   // The judge verdict goes FIRST when present — that's what the user wants
   // to see in the rendered PR comment. Reviewers follow as supporting
   // evidence.
   if (input.result.judge !== null && input.result.judge.success) {
-    lines.push('## Judge verdict');
-    lines.push('');
+    lines.push('## Judge verdict', '');
     lines.push(
       `> Model: \`${input.result.judge.label}\` · ${String(input.result.judge.latencyMs)}ms`,
+      '',
+      input.result.judge.content ?? '_(empty)_',
+      '',
     );
-    lines.push('');
-    lines.push(input.result.judge.content ?? '_(empty)_');
-    lines.push('');
   } else if (input.result.judge !== null && !input.result.judge.success) {
-    lines.push('## Judge pass failed');
-    lines.push('');
-    lines.push(`> Model: \`${input.result.judge.label}\``);
-    lines.push('');
-    lines.push('```');
-    lines.push(input.result.judge.errorMessage ?? 'unknown');
-    lines.push('```');
-    lines.push('');
+    lines.push(
+      '## Judge pass failed',
+      '',
+      `> Model: \`${input.result.judge.label}\``,
+      '',
+      '```',
+      input.result.judge.errorMessage ?? 'unknown',
+      '```',
+      '',
+    );
   }
 
-  lines.push('## Reviewer verdicts');
-  lines.push('');
+  lines.push('## Reviewer verdicts', '');
   for (const [idx, r] of input.result.reviewers.entries()) {
-    lines.push(`### Reviewer ${String(idx + 1)} — ${r.label}`);
-    lines.push('');
-    lines.push(...renderReviewerBlock(r));
-    lines.push('');
+    lines.push(`### Reviewer ${String(idx + 1)} — ${r.label}`, '');
+    lines.push(...renderReviewerBlock(r), '');
   }
 
-  lines.push('---');
-  lines.push('');
-  lines.push('## Source content reviewed');
-  lines.push('');
-  lines.push('```');
+  lines.push('---', '', '## Source content reviewed', '', '```');
   // Defensively trim huge diffs so the bundle stays under typical PR
   // comment limits (GitHub: 65536 chars). The full content stays in the
   // approval queue row.
@@ -75,9 +72,7 @@ export function renderReviewMarkdown(input: {
     input.content.length > 50_000
       ? `${input.content.slice(0, 50_000)}\n... [truncated]`
       : input.content;
-  lines.push(trimmed);
-  lines.push('```');
-  lines.push('');
+  lines.push(trimmed, '```', '');
 
   return lines.join('\n');
 }
