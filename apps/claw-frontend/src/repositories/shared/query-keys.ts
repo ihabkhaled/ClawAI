@@ -214,6 +214,13 @@ export const queryKeys = {
     list: (filter: Record<string, unknown>) =>
       [...queryKeys.webhookDeliveries.all, 'list', filter] as const,
   },
+  routerModels: {
+    all: ['routerModels'] as const,
+    list: (filter: Record<string, unknown>) =>
+      [...queryKeys.routerModels.all, 'list', filter] as const,
+    detail: (id: string) => [...queryKeys.routerModels.all, 'detail', id] as const,
+    overrides: (id: string) => [...queryKeys.routerModels.all, 'overrides', id] as const,
+  },
   workspaceObjects: {
     all: ['workspaceObjects'] as const,
     lists: () => [...queryKeys.workspaceObjects.all, 'list'] as const,
@@ -310,8 +317,7 @@ export const queryKeys = {
     detail: (id: string) => ['researchRuns', 'detail', id] as const,
   },
   localFrontier: {
-    catalog: (filters: Record<string, unknown>) =>
-      ['local-frontier', 'catalog', filters] as const,
+    catalog: (filters: Record<string, unknown>) => ['local-frontier', 'catalog', filters] as const,
     catalogEntry: (id: string) => ['local-frontier', 'catalog', id] as const,
     pullJobs: () => ['local-frontier', 'pull-jobs'] as const,
     pullJob: (id: string) => ['local-frontier', 'pull-job', id] as const,

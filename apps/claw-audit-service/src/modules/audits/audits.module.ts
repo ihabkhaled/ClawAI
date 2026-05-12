@@ -8,6 +8,7 @@ import { UsageLedgerRepository } from './repositories/usage-ledger.repository';
 import { AuditEventManager } from './managers/audit-event.manager';
 import { AiActionAuditConsumer } from './consumers/ai-action.consumer';
 import { LlamacppAuditConsumer } from './consumers/llamacpp.consumer';
+import { RoutingAuditConsumer } from './consumers/routing.consumer';
 import { WorkspaceActionAuditConsumer } from './consumers/workspace-action.consumer';
 import { WorkspaceSyncAuditConsumer } from './consumers/workspace-sync.consumer';
 import { AuditLog, AuditLogSchema } from './schemas/audit-log.schema';
@@ -31,6 +32,7 @@ import { UsageLedger, UsageLedgerSchema } from './schemas/usage-ledger.schema';
     WorkspaceActionAuditConsumer,
     AiActionAuditConsumer,
     LlamacppAuditConsumer,
+    RoutingAuditConsumer,
   ],
   exports: [AuditsService, UsageService],
 })

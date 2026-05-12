@@ -114,4 +114,14 @@ export enum EventPattern {
   WORKSPACE_SUGGESTION_FACTORY_PROCESSED = 'workspace.suggestion.factory_processed',
   // === Workspace Automation Stream 40 — Memory Learning Loop ===
   MEMORY_PREFERENCE_UPSERTED = 'memory.preference.upserted',
+  // === Smart Router Flagship (Phases 1, 7, 10, 12) ===
+  ROUTING_PROFILE_CREATED = 'routing.profile.created',
+  ROUTING_PROFILE_UPDATED = 'routing.profile.updated',
+  ROUTING_PROFILE_LIFECYCLE_CHANGED = 'routing.profile.lifecycle_changed',
+  ROUTING_POLICY_CHANGED = 'routing.policy.changed',
+  ROUTING_LEARNED_SCORE_UPDATED = 'routing.learned_score.updated',
+  ROUTING_NO_EXECUTION_MODEL = 'routing.no_execution_model',
+  ROUTING_CIRCUIT_BREAKER_OPENED = 'routing.circuit_breaker.opened',
+  ROUTING_CIRCUIT_BREAKER_CLOSED = 'routing.circuit_breaker.closed',
+  ROUTING_CIRCUIT_BREAKER_HALF_OPEN = 'routing.circuit_breaker.half_open',
 }

@@ -1,4 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { EventPattern } from '@claw/shared-types';
+import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { type ModelLifecycle, type Prisma } from '../../../generated/prisma';
 import { OVERRIDE_MANAGED_FIELDS } from '../constants/router-models.constants';
 import { type CreateRouterModelDto } from '../dto/create-router-model.dto';
@@ -18,12 +20,19 @@ export class RouterModelRegistryManager {
   constructor(
     private readonly registryRepo: RouterModelRegistryRepository,
     private readonly overrideRepo: RouterAdminOverrideRepository,
+    @Optional() private readonly rabbitMQ?: RabbitMQService,
   ) {}
 
   async createProfile(dto: CreateRouterModelDto): Promise<RouterModelRegistryRecord> {
     this.logger.debug(`createProfile provider=${dto.provider} modelKey=${dto.modelKey}`);
     const data = this.dtoToCreateInput(dto);
-    return this.registryRepo.create(data);
+    const record = await this.registryRepo.create(data);
+    void this.safePublish(EventPattern.ROUTING_PROFILE_CREATED, {
+      profileId: record.id,
+      provider: record.provider,
+      modelKey: record.modelKey,
+    });
+    return record;
   }
 
   async updateProfile(
@@ -34,7 +43,13 @@ export class RouterModelRegistryManager {
     this.logger.debug(`updateProfile id=${id} actingUserId=${actingUserId}`);
     const data = dtoToUpdateInput(dto);
     await this.recordOverridesForChangedFields(id, dto, actingUserId);
-    return this.registryRepo.update(id, data);
+    const record = await this.registryRepo.update(id, data);
+    void this.safePublish(EventPattern.ROUTING_PROFILE_UPDATED, {
+      profileId: id,
+      actingUserId,
+      changedFields: Object.keys(data),
+    });
+    return record;
   }
 
   private async recordOverridesForChangedFields(
@@ -78,7 +93,21 @@ export class RouterModelRegistryManager {
 
   async transitionLifecycle(id: string, next: ModelLifecycle): Promise<RouterModelRegistryRecord> {
     this.logger.log(`transitionLifecycle id=${id} -> ${next}`);
-    return this.registryRepo.update(id, { lifecycle: next });
+    const record = await this.registryRepo.update(id, { lifecycle: next });
+    void this.safePublish(EventPattern.ROUTING_PROFILE_LIFECYCLE_CHANGED, {
+      profileId: id,
+      lifecycle: next,
+    });
+    return record;
+  }
+
+  private async safePublish(pattern: EventPattern, payload: unknown): Promise<void> {
+    if (this.rabbitMQ === undefined) return;
+    try {
+      await this.rabbitMQ.publish(pattern, payload);
+    } catch (error) {
+      this.logger.warn(`event publish failed pattern=${pattern}: ${(error as Error).message}`);
+    }
   }
 
   private dtoToCreateInput(dto: CreateRouterModelDto): Prisma.RouterModelRegistryCreateInput {

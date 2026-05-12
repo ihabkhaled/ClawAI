@@ -1,4 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { EventPattern } from '@claw/shared-types';
+import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { CircuitBreakerState } from '../../../common/enums';
 import {
   CB_FAILURE_THRESHOLD,
@@ -12,7 +14,10 @@ import { type CircuitBreakerRecord, type CircuitBreakerSnapshot } from '../types
 export class CircuitBreakerManager {
   private readonly logger = new Logger(CircuitBreakerManager.name);
 
-  constructor(private readonly repo: CircuitBreakerRepository) {}
+  constructor(
+    private readonly repo: CircuitBreakerRepository,
+    @Optional() private readonly rabbitMQ?: RabbitMQService,
+  ) {}
 
   async getState(scope: string, now: Date = new Date()): Promise<CircuitBreakerSnapshot> {
     const record = await this.repo.findByScope(scope);
@@ -57,6 +62,11 @@ export class CircuitBreakerManager {
 
     if (newFailureCount >= CB_FAILURE_THRESHOLD) {
       const saved = await this.repo.upsert(scope, CircuitBreakerState.OPEN, newFailureCount, now);
+      void this.safePublish(EventPattern.ROUTING_CIRCUIT_BREAKER_OPENED, {
+        scope,
+        failureCount: newFailureCount,
+        openedAt: now.toISOString(),
+      });
       return this.toSnapshot(saved);
     }
 
@@ -76,13 +86,32 @@ export class CircuitBreakerManager {
       };
     }
     const saved = await this.repo.upsert(scope, CircuitBreakerState.CLOSED, 0, null);
+    if (existing.state !== CircuitBreakerState.CLOSED) {
+      void this.safePublish(EventPattern.ROUTING_CIRCUIT_BREAKER_CLOSED, {
+        scope,
+        priorState: existing.state,
+      });
+    }
     return this.toSnapshot(saved);
   }
 
   async manualReset(scope: string): Promise<CircuitBreakerSnapshot> {
     this.logger.log(`manualReset scope=${scope}`);
     const saved = await this.repo.upsert(scope, CircuitBreakerState.CLOSED, 0, null);
+    void this.safePublish(EventPattern.ROUTING_CIRCUIT_BREAKER_CLOSED, {
+      scope,
+      priorState: 'MANUAL_RESET',
+    });
     return this.toSnapshot(saved);
+  }
+
+  private async safePublish(pattern: EventPattern, payload: unknown): Promise<void> {
+    if (this.rabbitMQ === undefined) return;
+    try {
+      await this.rabbitMQ.publish(pattern, payload);
+    } catch (error) {
+      this.logger.warn(`event publish failed pattern=${pattern}: ${(error as Error).message}`);
+    }
   }
 
   async listAll(): Promise<CircuitBreakerSnapshot[]> {

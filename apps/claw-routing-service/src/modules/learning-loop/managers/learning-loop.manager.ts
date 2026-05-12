@@ -1,4 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { EventPattern } from '@claw/shared-types';
+import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { FeedbackSignal } from '../../../common/enums';
 import {
   DEFAULT_SUCCESS_RATE,
@@ -21,7 +23,10 @@ import { boundedAdjust } from '../utilities/bounded-adjust.utility';
 export class LearningLoopManager {
   private readonly logger = new Logger(LearningLoopManager.name);
 
-  constructor(private readonly repo: LearnedScoreRepository) {}
+  constructor(
+    private readonly repo: LearnedScoreRepository,
+    @Optional() private readonly rabbitMQ?: RabbitMQService,
+  ) {}
 
   async recordFeedback(input: RecordFeedbackInput): Promise<LearnedScoreRecord> {
     this.logger.debug(
@@ -32,13 +37,30 @@ export class LearningLoopManager {
     const delta = this.deltaFor(input.signal);
     const nextRate = boundedAdjust(currentRate, delta);
     const counterField = this.counterFor(input.signal);
-    return this.repo.upsert({
+    const result = await this.repo.upsert({
       profileKey: input.profileKey,
       domain: input.domain,
       taskFamily: input.taskFamily,
       successRate: nextRate,
       counterField,
     });
+    void this.safePublish(EventPattern.ROUTING_LEARNED_SCORE_UPDATED, {
+      profileKey: input.profileKey,
+      domain: input.domain,
+      taskFamily: input.taskFamily,
+      signal: input.signal,
+      successRate: nextRate,
+    });
+    return result;
+  }
+
+  private async safePublish(pattern: EventPattern, payload: unknown): Promise<void> {
+    if (this.rabbitMQ === undefined) return;
+    try {
+      await this.rabbitMQ.publish(pattern, payload);
+    } catch (error) {
+      this.logger.warn(`event publish failed pattern=${pattern}: ${(error as Error).message}`);
+    }
   }
 
   async getRollingScore(
