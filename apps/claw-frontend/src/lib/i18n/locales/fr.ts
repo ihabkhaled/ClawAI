@@ -1472,6 +1472,25 @@ export const fr: TranslationDictionary = {
       clear: 'Effacer',
     },
   },
+  connectorGrants: {
+    title: 'Partage',
+    description:
+      'Partagez ce connecteur avec d’autres utilisateurs. Le propriétaire a toujours un accès complet ; les bénéficiaires voient le niveau d’accès que vous choisissez.',
+    loading: 'Chargement des accès…',
+    error: 'Impossible de charger les accès.',
+    empty: 'Aucun accès pour l\'instant. Ce connecteur n\'est accessible qu\'à vous.',
+    granteeUserIdLabel: 'ID utilisateur du bénéficiaire',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'Niveau d\'accès',
+    grant: 'Accorder l\'accès',
+    granting: 'Octroi en cours…',
+    revoke: 'Révoquer',
+    revoking: 'Révocation…',
+    grantedBy: 'accordé par',
+    levelReadOnly: 'Lecture seule',
+    levelAiActions: 'Actions IA',
+    levelFull: 'Complet',
+  },
   emailSignatures: {
     page: {
       title: 'Signatures e-mail',

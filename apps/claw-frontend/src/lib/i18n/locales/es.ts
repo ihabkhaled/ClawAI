@@ -1466,6 +1466,25 @@ export const es: TranslationDictionary = {
       clear: 'Limpiar',
     },
   },
+  connectorGrants: {
+    title: 'Compartir',
+    description:
+      'Comparte este conector con otros usuarios. El propietario siempre tiene acceso completo; los destinatarios ven el nivel de acceso que elijas.',
+    loading: 'Cargando permisos…',
+    error: 'No se pudieron cargar los permisos.',
+    empty: 'Aún no hay permisos. Este conector solo es accesible para ti.',
+    granteeUserIdLabel: 'ID de usuario destinatario',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'Nivel de acceso',
+    grant: 'Otorgar acceso',
+    granting: 'Otorgando…',
+    revoke: 'Revocar',
+    revoking: 'Revocando…',
+    grantedBy: 'otorgado por',
+    levelReadOnly: 'Solo lectura',
+    levelAiActions: 'Acciones de IA',
+    levelFull: 'Completo',
+  },
   emailSignatures: {
     page: {
       title: 'Firmas de correo electrónico',

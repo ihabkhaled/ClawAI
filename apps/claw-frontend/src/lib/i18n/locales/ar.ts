@@ -1432,6 +1432,25 @@ export const ar: TranslationDictionary = {
       clear: 'مسح',
     },
   },
+  connectorGrants: {
+    title: 'المشاركة',
+    description:
+      'شارك هذا الموصل مع مستخدمين آخرين. المالك لديه دائمًا وصول كامل؛ يرى المستفيدون مستوى الوصول الذي تختاره.',
+    loading: 'جارٍ تحميل الصلاحيات…',
+    error: 'تعذر تحميل الصلاحيات.',
+    empty: 'لا توجد صلاحيات بعد. هذا الموصل متاح لك فقط.',
+    granteeUserIdLabel: 'معرف مستخدم المستفيد',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'مستوى الوصول',
+    grant: 'منح الوصول',
+    granting: 'جارٍ المنح…',
+    revoke: 'إلغاء',
+    revoking: 'جارٍ الإلغاء…',
+    grantedBy: 'مُمنوح من قبل',
+    levelReadOnly: 'قراءة فقط',
+    levelAiActions: 'إجراءات الذكاء الاصطناعي',
+    levelFull: 'كامل',
+  },
   emailSignatures: {
     page: {
       title: 'تواقيع البريد الإلكتروني',

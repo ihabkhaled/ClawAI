@@ -1436,6 +1436,25 @@ export const en: TranslationDictionary = {
       clear: 'Clear',
     },
   },
+  connectorGrants: {
+    title: 'Sharing',
+    description:
+      'Share this connector with other users. Owner always has full access; grantees see the access level you pick.',
+    loading: 'Loading grants…',
+    error: 'Could not load grants.',
+    empty: 'No grants yet. This connector is only accessible to you.',
+    granteeUserIdLabel: 'Grantee user ID',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'Access level',
+    grant: 'Grant access',
+    granting: 'Granting…',
+    revoke: 'Revoke',
+    revoking: 'Revoking…',
+    grantedBy: 'granted by',
+    levelReadOnly: 'Read only',
+    levelAiActions: 'AI actions',
+    levelFull: 'Full',
+  },
   emailSignatures: {
     page: {
       title: 'Email Signatures',

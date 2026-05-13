@@ -1465,6 +1465,25 @@ export const it: TranslationDictionary = {
       clear: 'Cancella',
     },
   },
+  connectorGrants: {
+    title: 'Condivisione',
+    description:
+      'Condividi questo connettore con altri utenti. Il proprietario ha sempre accesso completo; i destinatari vedono il livello di accesso scelto.',
+    loading: 'Caricamento autorizzazioni…',
+    error: 'Impossibile caricare le autorizzazioni.',
+    empty: 'Ancora nessuna autorizzazione. Questo connettore è accessibile solo a te.',
+    granteeUserIdLabel: 'ID utente destinatario',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'Livello di accesso',
+    grant: 'Concedi accesso',
+    granting: 'Concessione…',
+    revoke: 'Revoca',
+    revoking: 'Revoca in corso…',
+    grantedBy: 'concesso da',
+    levelReadOnly: 'Sola lettura',
+    levelAiActions: 'Azioni IA',
+    levelFull: 'Completo',
+  },
   emailSignatures: {
     page: {
       title: 'Firme e-mail',

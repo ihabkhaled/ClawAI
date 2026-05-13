@@ -40,6 +40,8 @@ import { WorkspaceSyncSchedulerManager } from './managers/workspace-sync-schedul
 import { ProviderAppConfigRepository } from './repositories/provider-app-config.repository';
 import { ProviderDefinitionRepository } from './repositories/provider-definition.repository';
 import { SyncCadenceRepository } from './repositories/sync-cadence.repository';
+import { ConnectorGrantRepository } from '../connector-access/repositories/connector-grant.repository';
+import { ConnectorAccessService } from '../connector-access/services/connector-access.service';
 import { WorkspaceConnectorRepository } from './repositories/workspace-connector.repository';
 import { WorkspaceObjectRepository } from './repositories/workspace-object.repository';
 import { ProviderAppConfigService } from './services/provider-app-config.service';
@@ -66,6 +68,8 @@ import { WorkspaceSearchService } from './services/workspace-search.service';
     ProviderDefinitionRepository,
     ProviderAppConfigRepository,
     SyncCadenceRepository,
+    ConnectorAccessService,
+    ConnectorGrantRepository,
     WorkspaceConnectorService,
     WorkspaceObjectService,
     WorkspaceSearchService,

@@ -1419,6 +1419,24 @@ export type TranslationDictionary = {
       clear: string;
     };
   };
+  connectorGrants: {
+    title: string;
+    description: string;
+    loading: string;
+    error: string;
+    empty: string;
+    granteeUserIdLabel: string;
+    granteeUserIdPlaceholder: string;
+    accessLevelLabel: string;
+    grant: string;
+    granting: string;
+    revoke: string;
+    revoking: string;
+    grantedBy: string;
+    levelReadOnly: string;
+    levelAiActions: string;
+    levelFull: string;
+  };
   emailSignatures: {
     page: {
       title: string;

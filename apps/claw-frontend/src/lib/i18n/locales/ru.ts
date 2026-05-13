@@ -1462,6 +1462,25 @@ export const ru: TranslationDictionary = {
       clear: 'Очистить',
     },
   },
+  connectorGrants: {
+    title: 'Доступ',
+    description:
+      'Поделитесь этим коннектором с другими пользователями. Владелец всегда имеет полный доступ; получатели видят выбранный вами уровень доступа.',
+    loading: 'Загрузка прав…',
+    error: 'Не удалось загрузить права.',
+    empty: 'Прав пока нет. Этот коннектор доступен только вам.',
+    granteeUserIdLabel: 'ID пользователя-получателя',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'Уровень доступа',
+    grant: 'Предоставить доступ',
+    granting: 'Предоставление…',
+    revoke: 'Отозвать',
+    revoking: 'Отзыв…',
+    grantedBy: 'предоставлено',
+    levelReadOnly: 'Только чтение',
+    levelAiActions: 'AI-действия',
+    levelFull: 'Полный',
+  },
   emailSignatures: {
     page: {
       title: 'Подписи писем',

@@ -1,6 +1,8 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
+import { ConnectorAction } from '../../connector-access/enums/connector-action.enum';
+import { ConnectorAccessService } from '../../connector-access/services/connector-access.service';
 import { WorkspaceObjectRepository } from '../repositories/workspace-object.repository';
 import { WorkspaceConnectorRepository } from '../repositories/workspace-connector.repository';
 import { WorkspaceAdapterFactory } from '../adapters/workspace-adapter.factory';
@@ -28,6 +30,7 @@ export class WorkspaceObjectService {
     private readonly connectorRepository: WorkspaceConnectorRepository,
     private readonly adapterFactory: WorkspaceAdapterFactory,
     private readonly tokenManager: OAuthTokenManager,
+    private readonly accessService: ConnectorAccessService,
   ) {}
 
   async listObjects(
@@ -39,16 +42,30 @@ export class WorkspaceObjectService {
       if (connector === null) {
         throw new EntityNotFoundException('WorkspaceConnector', query.connectorId);
       }
-      if (connector.userId !== userId) {
+      // v3 round 8 — viewing objects is gated by VIEW access (owner +
+      // any grant tier passes). For granted users the repo call drops
+      // the userId filter because the access service has already
+      // authorized the read.
+      const canView = await this.accessService.can(userId, connector.id, ConnectorAction.VIEW);
+      if (!canView) {
         throw new BusinessException(
           'workspace.connector.forbidden',
           'FORBIDDEN',
           HttpStatus.FORBIDDEN,
         );
       }
-      return this.objectRepository.findByConnectorId(
+      const isOwner = connector.userId === userId;
+      if (isOwner) {
+        return this.objectRepository.findByConnectorId(
+          query.connectorId,
+          userId,
+          query.page,
+          query.limit,
+          query.type,
+        );
+      }
+      return this.objectRepository.findByConnectorIdForAuthorizedUser(
         query.connectorId,
-        userId,
         query.page,
         query.limit,
         query.type,
@@ -165,11 +182,16 @@ export class WorkspaceObjectService {
   }
 
   private async assertOwnedConnector(connectorId: string, userId: string): Promise<void> {
+    // v3 round 8 — renamed for honesty: this no longer asserts ownership,
+    // it asserts VIEW access (owner or any grant level). The legacy name
+    // is preserved so call sites don't churn. Sync-triggering helpers
+    // remain owner-only via WorkspaceConnectorService's ad-hoc check.
     const connector = await this.connectorRepository.findById(connectorId);
     if (connector === null) {
       throw new EntityNotFoundException('WorkspaceConnector', connectorId);
     }
-    if (connector.userId !== userId) {
+    const canView = await this.accessService.can(userId, connectorId, ConnectorAction.VIEW);
+    if (!canView) {
       throw new BusinessException(
         'workspace.connector.forbidden',
         'FORBIDDEN',

@@ -1469,6 +1469,25 @@ export const de: TranslationDictionary = {
       clear: 'Leeren',
     },
   },
+  connectorGrants: {
+    title: 'Freigabe',
+    description:
+      'Geben Sie diesen Connector für andere Benutzer frei. Der Eigentümer hat immer Vollzugriff; Empfänger sehen die von Ihnen gewählte Zugriffsstufe.',
+    loading: 'Berechtigungen werden geladen …',
+    error: 'Berechtigungen konnten nicht geladen werden.',
+    empty: 'Noch keine Berechtigungen. Dieser Connector ist nur für Sie zugänglich.',
+    granteeUserIdLabel: 'Benutzer-ID des Empfängers',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'Zugriffsebene',
+    grant: 'Zugriff gewähren',
+    granting: 'Wird gewährt …',
+    revoke: 'Widerrufen',
+    revoking: 'Wird widerrufen …',
+    grantedBy: 'gewährt von',
+    levelReadOnly: 'Nur Lesen',
+    levelAiActions: 'KI-Aktionen',
+    levelFull: 'Vollzugriff',
+  },
   emailSignatures: {
     page: {
       title: 'E-Mail-Signaturen',

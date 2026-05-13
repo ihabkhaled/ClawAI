@@ -1447,6 +1447,25 @@ export const hi: TranslationDictionary = {
       clear: 'साफ़ करें',
     },
   },
+  connectorGrants: {
+    title: 'साझाकरण',
+    description:
+      'इस कनेक्टर को अन्य उपयोगकर्ताओं के साथ साझा करें। मालिक के पास हमेशा पूर्ण पहुंच होती है; अधिकृत उपयोगकर्ताओं को आपका चुना हुआ स्तर दिखता है।',
+    loading: 'अनुदान लोड हो रहे हैं…',
+    error: 'अनुदान लोड नहीं हो सके।',
+    empty: 'अभी तक कोई अनुदान नहीं। यह कनेक्टर केवल आपके लिए सुलभ है।',
+    granteeUserIdLabel: 'ग्रहीता यूज़र ID',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'पहुंच स्तर',
+    grant: 'पहुंच दें',
+    granting: 'दिया जा रहा है…',
+    revoke: 'रद्द करें',
+    revoking: 'रद्द हो रहा है…',
+    grantedBy: 'दिया गया',
+    levelReadOnly: 'केवल पढ़ने योग्य',
+    levelAiActions: 'AI क्रियाएँ',
+    levelFull: 'पूर्ण',
+  },
   emailSignatures: {
     page: {
       title: 'ईमेल हस्ताक्षर',

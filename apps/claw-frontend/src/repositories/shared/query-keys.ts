@@ -329,4 +329,8 @@ export const queryKeys = {
     all: ['emailSignatures'] as const,
     list: () => ['emailSignatures', 'list'] as const,
   },
+  connectorGrants: {
+    all: ['connectorGrants'] as const,
+    list: (connectorId: string) => ['connectorGrants', 'list', connectorId] as const,
+  },
 } as const;
