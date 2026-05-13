@@ -49,7 +49,7 @@ jobs:
             expect_vendor: none
             expect_overlay: ''
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Stub host artifacts for ${{ matrix.scenario.name }} probe
         run: |
@@ -154,7 +154,7 @@ jobs:
     name: macOS Apple-Silicon warn path
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Run claw.sh gpu probe on Darwin
         id: probe
         run: |
