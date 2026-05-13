@@ -34,7 +34,7 @@
     "@nestjs/throttler": "^6.5.0",
     "@prisma/client": "^5.22.0",
     "amqplib": "^0.10.4",
-    "axios": "^1.7.0",
+    "axios": "^1.16.1",
     "csv-stringify": "^6.5.0",
     "docx": "^9.0.0",
     "helmet": "^8.1.0",
@@ -42,7 +42,7 @@
     "jsonwebtoken": "^9.0.2",
     "markdown-it": "^14.1.0",
     "nestjs-pino": "^4.1.0",
-    "pdfkit": "^0.15.0",
+    "pdfkit": "^0.18.0",
     "pino": "^9.4.0",
     "pino-http": "^10.3.0",
     "pino-pretty": "^11.2.0",
@@ -62,7 +62,7 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/markdown-it": "^14.1.0",
     "@types/node": "^22.7.0",
-    "@types/pdfkit": "^0.13.0",
+    "@types/pdfkit": "^0.17.6",
     "eslint": "^9.11.0",
     "eslint-plugin-import-x": "^4.3.0",
     "eslint-plugin-security": "^3.0.1",
@@ -72,6 +72,6 @@
     "ts-jest": "^29.2.0",
     "ts-node": "^10.9.2",
     "typescript": "6.0.0-beta",
-    "typescript-eslint": "^8.7.0"
+    "typescript-eslint": "^8.59.3"
   }
 }
