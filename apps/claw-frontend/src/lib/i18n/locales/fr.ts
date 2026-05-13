@@ -121,6 +121,7 @@ export const fr: TranslationDictionary = {
     workspaceSemanticSearch: 'Recherche sémantique',
     workspaceDigest: 'Récap',
     workspaceAutomationPreferences: 'Préférences d’automatisation',
+    workspaceEmailSignatures: 'Signatures e-mail',
     workspaceImplHandoffs: 'Remises de code',
     adminAiActionPolicies: 'Politiques d’actions IA',
     adminSuggestionRules: 'Règles de suggestion',
@@ -538,6 +539,16 @@ export const fr: TranslationDictionary = {
     editPolicyDesc: 'Mettez à jour la configuration de la politique de routage.',
     createPolicyDesc:
       'Créez une nouvelle politique de routage pour contrôler la distribution des requêtes.',
+    weightsJsonLabel: 'Poids de notation (JSON, optionnel)',
+    weightsJsonPlaceholder: '{"capability": 0.2, "domain": 0.1, ...}',
+    weightsJsonHelp:
+      'Optionnel. Remplace les poids par défaut du mode. Doit inclure les 14 dimensions et leur somme doit être égale à 1,0.',
+    weightsJsonError: {
+      invalidJson: 'Le JSON de poids n’est pas un JSON valide.',
+      notAnObject: 'Les poids doivent être un objet JSON.',
+      missingDimension: 'Le JSON de poids doit inclure chaque dimension sous forme de nombre.',
+      sumNotOne: 'Les poids doivent totaliser 1,0 (±0,001).',
+    },
     models: {
       title: 'Registre des modèles',
       description:
@@ -1459,6 +1470,33 @@ export const fr: TranslationDictionary = {
       perDayBudget: 'Plafond quotidien',
       perDayBudgetPlaceholder: 'unlimited',
       clear: 'Effacer',
+    },
+  },
+  emailSignatures: {
+    page: {
+      title: 'Signatures e-mail',
+      description:
+        "Gérez les signatures ajoutées aux e-mails rédigés par l'IA. Marquez-en une comme par défaut pour qu'elle soit utilisée automatiquement.",
+      loading: 'Chargement des signatures…',
+      error: 'Impossible de charger les signatures. Actualisez la page.',
+      empty: "Aucune signature pour l'instant. Créez-en une pour commencer.",
+      create: 'Nouvelle signature',
+      edit: 'Modifier',
+      delete: 'Supprimer',
+      deleting: 'Suppression…',
+      defaultBadge: 'Par défaut',
+    },
+    dialog: {
+      createTitle: 'Créer une signature',
+      editTitle: 'Modifier la signature',
+      nameLabel: 'Nom',
+      namePlaceholder: 'Signature professionnelle',
+      bodyLabel: 'Contenu',
+      bodyPlaceholder: 'Cordialement,\nAlice\nVP Ingénierie · Example Inc.',
+      defaultLabel: 'Utiliser par défaut',
+      save: 'Enregistrer',
+      saving: 'Enregistrement…',
+      cancel: 'Annuler',
     },
   },
   research: {

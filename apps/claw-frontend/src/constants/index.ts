@@ -46,6 +46,8 @@ export {
   MODEL_ROLES,
   POLICY_FORM_DEFAULTS,
   CONFIDENCE_THRESHOLDS,
+  POLICY_WEIGHT_DIMENSIONS,
+  POLICY_WEIGHTS_SUM_TOLERANCE,
 } from './routing.constants';
 export { LANGUAGE_OPTIONS, APPEARANCE_OPTIONS } from './preferences.constants';
 export {

@@ -121,6 +121,7 @@ export const ru: TranslationDictionary = {
     workspaceSemanticSearch: 'Семантический поиск',
     workspaceDigest: 'Сводка',
     workspaceAutomationPreferences: 'Настройки автоматизации',
+    workspaceEmailSignatures: 'Подписи писем',
     workspaceImplHandoffs: 'Передача кода',
     adminAiActionPolicies: 'Политики действий ИИ',
     adminSuggestionRules: 'Правила предложений',
@@ -536,6 +537,16 @@ export const ru: TranslationDictionary = {
     editPolicyDesc: 'Обновить конфигурацию политики маршрутизации.',
     createPolicyDesc:
       'Создать новую политику маршрутизации для управления распределением запросов.',
+    weightsJsonLabel: 'Весовые коэффициенты (JSON, необязательно)',
+    weightsJsonPlaceholder: '{"capability": 0.2, "domain": 0.1, ...}',
+    weightsJsonHelp:
+      'Необязательно. Переопределяет веса по умолчанию для режима. Должны быть указаны все 14 измерений с суммой 1,0.',
+    weightsJsonError: {
+      invalidJson: 'JSON весов не является корректным JSON.',
+      notAnObject: 'Веса должны быть объектом JSON.',
+      missingDimension: 'JSON весов должен содержать каждое измерение как число.',
+      sumNotOne: 'Сумма весов должна равняться 1,0 (±0,001).',
+    },
     models: {
       title: 'Реестр моделей',
       description:
@@ -1449,6 +1460,33 @@ export const ru: TranslationDictionary = {
       perDayBudget: 'Дневной лимит',
       perDayBudgetPlaceholder: 'unlimited',
       clear: 'Очистить',
+    },
+  },
+  emailSignatures: {
+    page: {
+      title: 'Подписи писем',
+      description:
+        'Управляйте подписями, добавляемыми к письмам, составленным ИИ. Отметьте одну как основную для автоматического использования.',
+      loading: 'Загрузка подписей…',
+      error: 'Не удалось загрузить подписи. Обновите страницу.',
+      empty: 'Подписей пока нет. Создайте, чтобы начать.',
+      create: 'Новая подпись',
+      edit: 'Изменить',
+      delete: 'Удалить',
+      deleting: 'Удаление…',
+      defaultBadge: 'Основная',
+    },
+    dialog: {
+      createTitle: 'Создать подпись',
+      editTitle: 'Изменить подпись',
+      nameLabel: 'Название',
+      namePlaceholder: 'Рабочая подпись',
+      bodyLabel: 'Содержимое',
+      bodyPlaceholder: 'С уважением,\nAlice\nВП по инженерии · Example Inc.',
+      defaultLabel: 'Использовать как основную',
+      save: 'Сохранить',
+      saving: 'Сохранение…',
+      cancel: 'Отмена',
     },
   },
   research: {

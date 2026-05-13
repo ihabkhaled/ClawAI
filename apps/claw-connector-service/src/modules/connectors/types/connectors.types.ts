@@ -90,3 +90,20 @@ export interface ConnectorConfigResult {
   baseUrl?: string;
   region?: string;
 }
+
+export interface UpstreamModelSnapshotEntry {
+  provider: string;
+  modelKey: string;
+  displayName: string;
+  family?: string;
+  isLocal?: boolean;
+  modalitiesIn?: string[];
+  modalitiesOut?: string[];
+  contextWindowTokens?: number;
+  maxOutputTokens?: number;
+}
+
+export interface ConnectorModelsSnapshotResult {
+  models: UpstreamModelSnapshotEntry[];
+  generatedAt: string;
+}

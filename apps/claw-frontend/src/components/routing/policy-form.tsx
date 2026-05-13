@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { ROUTING_MODE_OPTIONS, ROUTING_MODE_LABELS } from '@/constants';
 import type { RoutingMode } from '@/enums';
 import { usePolicyFormState } from '@/hooks/routing/use-policy-form-state';
@@ -32,6 +33,9 @@ export function PolicyForm({ open, onOpenChange, onSubmit, isPending, policy }: 
     setPriority,
     isActive,
     setIsActive,
+    weightsJsonText,
+    setWeightsJsonText,
+    weightsJsonError,
     fieldErrors,
     isEditing,
     pendingLabel,
@@ -123,6 +127,24 @@ export function PolicyForm({ open, onOpenChange, onSubmit, isPending, policy }: 
                 <SelectItem value="inactive">{t('routing.inactive')}</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <label htmlFor="policy-weights-json" className="text-sm font-medium">
+              {t('routing.weightsJsonLabel')}
+            </label>
+            <Textarea
+              id="policy-weights-json"
+              value={weightsJsonText}
+              onChange={(e) => setWeightsJsonText(e.target.value)}
+              placeholder={t('routing.weightsJsonPlaceholder')}
+              className="font-mono text-xs"
+              rows={10}
+            />
+            <p className="text-xs text-muted-foreground">{t('routing.weightsJsonHelp')}</p>
+            {weightsJsonError ? (
+              <p className="mt-1 text-sm text-destructive">{t(weightsJsonError)}</p>
+            ) : null}
           </div>
 
           <DialogFooter>

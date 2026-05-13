@@ -121,6 +121,7 @@ export const en: TranslationDictionary = {
     workspaceSemanticSearch: 'Semantic Search',
     workspaceDigest: 'Digest',
     workspaceAutomationPreferences: 'Automation Preferences',
+    workspaceEmailSignatures: 'Email Signatures',
     workspaceImplHandoffs: 'Coding Handoffs',
     adminAiActionPolicies: 'AI Action Policies',
     adminSuggestionRules: 'Suggestion Rules',
@@ -529,6 +530,16 @@ export const en: TranslationDictionary = {
     selectModePlaceholder: 'Select routing mode',
     editPolicyDesc: 'Update the routing policy configuration.',
     createPolicyDesc: 'Create a new routing policy to control request distribution.',
+    weightsJsonLabel: 'Score Weights (JSON, optional)',
+    weightsJsonPlaceholder: '{"capability": 0.2, "domain": 0.1, ...}',
+    weightsJsonHelp:
+      'Optional. Override the per-mode default scoring weights. Must include all 14 dimensions and sum to 1.0.',
+    weightsJsonError: {
+      invalidJson: 'Weights JSON is not valid JSON.',
+      notAnObject: 'Weights must be a JSON object.',
+      missingDimension: 'Weights JSON must include every dimension as a number.',
+      sumNotOne: 'Weights must sum to 1.0 (±0.001).',
+    },
     models: {
       title: 'Model Registry',
       description:
@@ -1423,6 +1434,33 @@ export const en: TranslationDictionary = {
       perDayBudget: 'Per-day cap',
       perDayBudgetPlaceholder: 'unlimited',
       clear: 'Clear',
+    },
+  },
+  emailSignatures: {
+    page: {
+      title: 'Email Signatures',
+      description:
+        'Manage signatures appended to AI-drafted emails. Mark one as default so it is used automatically.',
+      loading: 'Loading signatures…',
+      error: 'Could not load signatures. Try refreshing.',
+      empty: 'No signatures yet. Create one to get started.',
+      create: 'New signature',
+      edit: 'Edit',
+      delete: 'Delete',
+      deleting: 'Deleting…',
+      defaultBadge: 'Default',
+    },
+    dialog: {
+      createTitle: 'Create signature',
+      editTitle: 'Edit signature',
+      nameLabel: 'Name',
+      namePlaceholder: 'Work signature',
+      bodyLabel: 'Body',
+      bodyPlaceholder: 'Best,\nAlice\nVP Engineering · Example Inc.',
+      defaultLabel: 'Use as default',
+      save: 'Save',
+      saving: 'Saving…',
+      cancel: 'Cancel',
     },
   },
   research: {

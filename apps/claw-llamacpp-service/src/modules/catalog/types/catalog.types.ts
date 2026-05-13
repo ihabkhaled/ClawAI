@@ -50,3 +50,19 @@ export interface CatalogListResult {
   total: number;
   nextCursor: string | null;
 }
+
+export interface RoutingSnapshotEntry {
+  provider: string;
+  modelKey: string;
+  displayName: string;
+  family?: string;
+  isLocal: boolean;
+  modalitiesIn: string[];
+  modalitiesOut: string[];
+  contextWindowTokens?: number;
+}
+
+export interface RoutingSnapshotResult {
+  models: RoutingSnapshotEntry[];
+  generatedAt: string;
+}

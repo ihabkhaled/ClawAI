@@ -121,6 +121,7 @@ export const es: TranslationDictionary = {
     workspaceSemanticSearch: 'Búsqueda semántica',
     workspaceDigest: 'Resumen',
     workspaceAutomationPreferences: 'Preferencias de automatización',
+    workspaceEmailSignatures: 'Firmas de correo',
     workspaceImplHandoffs: 'Entregas de código',
     adminAiActionPolicies: 'Políticas de acciones de IA',
     adminSuggestionRules: 'Reglas de sugerencia',
@@ -535,6 +536,16 @@ export const es: TranslationDictionary = {
     editPolicyDesc: 'Actualiza la configuración de la política de enrutamiento.',
     createPolicyDesc:
       'Crea una nueva política de enrutamiento para controlar la distribución de solicitudes.',
+    weightsJsonLabel: 'Pesos de puntuación (JSON, opcional)',
+    weightsJsonPlaceholder: '{"capability": 0.2, "domain": 0.1, ...}',
+    weightsJsonHelp:
+      'Opcional. Sobrescribe los pesos predeterminados por modo. Debe incluir las 14 dimensiones y sumar 1,0.',
+    weightsJsonError: {
+      invalidJson: 'El JSON de pesos no es JSON válido.',
+      notAnObject: 'Los pesos deben ser un objeto JSON.',
+      missingDimension: 'El JSON de pesos debe incluir cada dimensión como número.',
+      sumNotOne: 'Los pesos deben sumar 1,0 (±0,001).',
+    },
     models: {
       title: 'Registro de modelos',
       description:
@@ -1453,6 +1464,33 @@ export const es: TranslationDictionary = {
       perDayBudget: 'Límite diario',
       perDayBudgetPlaceholder: 'unlimited',
       clear: 'Limpiar',
+    },
+  },
+  emailSignatures: {
+    page: {
+      title: 'Firmas de correo electrónico',
+      description:
+        'Gestiona las firmas que se añaden a los correos redactados por IA. Marca una como predeterminada para usarla automáticamente.',
+      loading: 'Cargando firmas…',
+      error: 'No se pudieron cargar las firmas. Actualiza la página.',
+      empty: 'Aún no hay firmas. Crea una para comenzar.',
+      create: 'Nueva firma',
+      edit: 'Editar',
+      delete: 'Eliminar',
+      deleting: 'Eliminando…',
+      defaultBadge: 'Predeterminada',
+    },
+    dialog: {
+      createTitle: 'Crear firma',
+      editTitle: 'Editar firma',
+      nameLabel: 'Nombre',
+      namePlaceholder: 'Firma de trabajo',
+      bodyLabel: 'Contenido',
+      bodyPlaceholder: 'Saludos,\nAlice\nVP de Ingeniería · Example Inc.',
+      defaultLabel: 'Usar como predeterminada',
+      save: 'Guardar',
+      saving: 'Guardando…',
+      cancel: 'Cancelar',
     },
   },
   research: {

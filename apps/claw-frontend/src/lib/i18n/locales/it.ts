@@ -121,6 +121,7 @@ export const it: TranslationDictionary = {
     workspaceSemanticSearch: 'Ricerca semantica',
     workspaceDigest: 'Sintesi',
     workspaceAutomationPreferences: 'Preferenze automazione',
+    workspaceEmailSignatures: 'Firme e-mail',
     workspaceImplHandoffs: 'Passaggi di codice',
     adminAiActionPolicies: 'Policy azioni IA',
     adminSuggestionRules: 'Regole suggerimenti',
@@ -536,6 +537,16 @@ export const it: TranslationDictionary = {
     editPolicyDesc: 'Aggiorna la configurazione della policy di routing.',
     createPolicyDesc:
       'Crea una nuova policy di routing per controllare la distribuzione delle richieste.',
+    weightsJsonLabel: 'Pesi di punteggio (JSON, opzionale)',
+    weightsJsonPlaceholder: '{"capability": 0.2, "domain": 0.1, ...}',
+    weightsJsonHelp:
+      'Opzionale. Sovrascrive i pesi predefiniti per modalità. Deve includere tutte le 14 dimensioni e la somma deve essere 1,0.',
+    weightsJsonError: {
+      invalidJson: 'Il JSON dei pesi non è un JSON valido.',
+      notAnObject: 'I pesi devono essere un oggetto JSON.',
+      missingDimension: 'Il JSON dei pesi deve includere ogni dimensione come numero.',
+      sumNotOne: 'La somma dei pesi deve essere 1,0 (±0,001).',
+    },
     models: {
       title: 'Registro dei modelli',
       description:
@@ -1452,6 +1463,33 @@ export const it: TranslationDictionary = {
       perDayBudget: 'Limite giornaliero',
       perDayBudgetPlaceholder: 'unlimited',
       clear: 'Cancella',
+    },
+  },
+  emailSignatures: {
+    page: {
+      title: 'Firme e-mail',
+      description:
+        "Gestisci le firme aggiunte alle e-mail redatte dall'IA. Imposta una come predefinita per usarla automaticamente.",
+      loading: 'Caricamento firme…',
+      error: 'Impossibile caricare le firme. Aggiorna la pagina.',
+      empty: 'Ancora nessuna firma. Creane una per iniziare.',
+      create: 'Nuova firma',
+      edit: 'Modifica',
+      delete: 'Elimina',
+      deleting: 'Eliminazione…',
+      defaultBadge: 'Predefinita',
+    },
+    dialog: {
+      createTitle: 'Crea firma',
+      editTitle: 'Modifica firma',
+      nameLabel: 'Nome',
+      namePlaceholder: 'Firma di lavoro',
+      bodyLabel: 'Contenuto',
+      bodyPlaceholder: 'Cordiali saluti,\nAlice\nVP Ingegneria · Example Inc.',
+      defaultLabel: 'Usa come predefinita',
+      save: 'Salva',
+      saving: 'Salvataggio…',
+      cancel: 'Annulla',
     },
   },
   research: {

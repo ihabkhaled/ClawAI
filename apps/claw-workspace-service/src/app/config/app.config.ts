@@ -49,6 +49,10 @@ const appConfigSchema = z.object({
   // slips past per-min. Both are best-effort in-memory sliding windows.
   AI_ACTION_PER_USER_RATE_PER_MIN: z.coerce.number().int().positive().max(10_000).default(20),
   AI_ACTION_PER_USER_RATE_PER_HOUR: z.coerce.number().int().positive().max(100_000).default(300),
+  // v3 round 7 — Prompt 12 polish: comma-separated allowlist of client
+  // IPs allowed to hit admin endpoints. Empty (default) means disabled.
+  // Useful when running workspace-service behind a fixed VPN exit.
+  ADMIN_IP_ALLOWLIST: z.string().default(''),
   // Stream 11 — webhook receiver
   WEBHOOK_BODY_MAX_BYTES: z.coerce.number().int().positive().default(1_048_576),
   WEBHOOK_REPLAY_WINDOW_MINUTES: z.coerce.number().int().positive().default(30),

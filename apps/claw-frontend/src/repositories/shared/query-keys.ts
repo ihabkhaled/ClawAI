@@ -325,4 +325,8 @@ export const queryKeys = {
     loadedModel: () => ['local-frontier', 'loaded-model'] as const,
     runtimeInfo: () => ['local-frontier', 'runtime-info'] as const,
   },
+  emailSignatures: {
+    all: ['emailSignatures'] as const,
+    list: () => ['emailSignatures', 'list'] as const,
+  },
 } as const;

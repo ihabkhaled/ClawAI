@@ -122,6 +122,7 @@ export type TranslationDictionary = {
     workspaceSemanticSearch: string;
     workspaceDigest: string;
     workspaceAutomationPreferences: string;
+    workspaceEmailSignatures: string;
     workspaceImplHandoffs: string;
     adminAiActionPolicies: string;
     adminSuggestionRules: string;
@@ -526,6 +527,15 @@ export type TranslationDictionary = {
     selectModePlaceholder: string;
     editPolicyDesc: string;
     createPolicyDesc: string;
+    weightsJsonLabel: string;
+    weightsJsonPlaceholder: string;
+    weightsJsonHelp: string;
+    weightsJsonError: {
+      invalidJson: string;
+      notAnObject: string;
+      missingDimension: string;
+      sumNotOne: string;
+    };
     models: {
       title: string;
       description: string;
@@ -1407,6 +1417,32 @@ export type TranslationDictionary = {
       perDayBudget: string;
       perDayBudgetPlaceholder: string;
       clear: string;
+    };
+  };
+  emailSignatures: {
+    page: {
+      title: string;
+      description: string;
+      loading: string;
+      error: string;
+      empty: string;
+      create: string;
+      edit: string;
+      delete: string;
+      deleting: string;
+      defaultBadge: string;
+    };
+    dialog: {
+      createTitle: string;
+      editTitle: string;
+      nameLabel: string;
+      namePlaceholder: string;
+      bodyLabel: string;
+      bodyPlaceholder: string;
+      defaultLabel: string;
+      save: string;
+      saving: string;
+      cancel: string;
     };
   };
   inbox: {

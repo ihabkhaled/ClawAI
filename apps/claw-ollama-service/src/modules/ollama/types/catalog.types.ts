@@ -64,3 +64,19 @@ export type InstalledModelInfo = {
 export type InstalledModelsApiResponse = {
   models: InstalledModelInfo[];
 };
+
+export type RoutingSnapshotEntry = {
+  provider: string;
+  modelKey: string;
+  displayName: string;
+  family?: string;
+  isLocal: boolean;
+  modalitiesIn: string[];
+  modalitiesOut: string[];
+  contextWindowTokens?: number;
+};
+
+export type RoutingSnapshotResponse = {
+  models: RoutingSnapshotEntry[];
+  generatedAt: string;
+};

@@ -121,6 +121,7 @@ export const pt: TranslationDictionary = {
     workspaceSemanticSearch: 'Busca semântica',
     workspaceDigest: 'Resumo',
     workspaceAutomationPreferences: 'Preferências de automação',
+    workspaceEmailSignatures: 'Assinaturas de e-mail',
     workspaceImplHandoffs: 'Entregas de código',
     adminAiActionPolicies: 'Políticas de ação IA',
     adminSuggestionRules: 'Regras de sugestão',
@@ -536,6 +537,16 @@ export const pt: TranslationDictionary = {
     editPolicyDesc: 'Atualize a configuração da política de roteamento.',
     createPolicyDesc:
       'Crie uma nova política de roteamento para controlar a distribuição de requisições.',
+    weightsJsonLabel: 'Pesos de pontuação (JSON, opcional)',
+    weightsJsonPlaceholder: '{"capability": 0.2, "domain": 0.1, ...}',
+    weightsJsonHelp:
+      'Opcional. Sobrescreve os pesos padrão por modo. Deve incluir todas as 14 dimensões e somar 1,0.',
+    weightsJsonError: {
+      invalidJson: 'O JSON de pesos não é um JSON válido.',
+      notAnObject: 'Os pesos devem ser um objeto JSON.',
+      missingDimension: 'O JSON de pesos deve incluir cada dimensão como número.',
+      sumNotOne: 'Os pesos devem somar 1,0 (±0,001).',
+    },
     models: {
       title: 'Registro de modelos',
       description:
@@ -1443,6 +1454,33 @@ export const pt: TranslationDictionary = {
       perDayBudget: 'Limite diário',
       perDayBudgetPlaceholder: 'unlimited',
       clear: 'Limpar',
+    },
+  },
+  emailSignatures: {
+    page: {
+      title: 'Assinaturas de e-mail',
+      description:
+        'Gerencie as assinaturas adicionadas a e-mails redigidos por IA. Marque uma como padrão para uso automático.',
+      loading: 'Carregando assinaturas…',
+      error: 'Não foi possível carregar as assinaturas. Atualize a página.',
+      empty: 'Ainda não há assinaturas. Crie uma para começar.',
+      create: 'Nova assinatura',
+      edit: 'Editar',
+      delete: 'Excluir',
+      deleting: 'Excluindo…',
+      defaultBadge: 'Padrão',
+    },
+    dialog: {
+      createTitle: 'Criar assinatura',
+      editTitle: 'Editar assinatura',
+      nameLabel: 'Nome',
+      namePlaceholder: 'Assinatura profissional',
+      bodyLabel: 'Conteúdo',
+      bodyPlaceholder: 'Atenciosamente,\nAlice\nVP de Engenharia · Example Inc.',
+      defaultLabel: 'Usar como padrão',
+      save: 'Salvar',
+      saving: 'Salvando…',
+      cancel: 'Cancelar',
     },
   },
   research: {

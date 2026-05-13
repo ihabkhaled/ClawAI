@@ -121,6 +121,7 @@ export const de: TranslationDictionary = {
     workspaceSemanticSearch: 'Semantische Suche',
     workspaceDigest: 'Zusammenfassung',
     workspaceAutomationPreferences: 'Automatisierungseinstellungen',
+    workspaceEmailSignatures: 'E-Mail-Signaturen',
     workspaceImplHandoffs: 'Coding-Übergaben',
     adminAiActionPolicies: 'KI-Aktionsrichtlinien',
     adminSuggestionRules: 'Vorschlagsregeln',
@@ -537,6 +538,16 @@ export const de: TranslationDictionary = {
     selectModePlaceholder: 'Routing-Modus auswählen',
     editPolicyDesc: 'Konfiguration der Routing-Richtlinie aktualisieren.',
     createPolicyDesc: 'Eine neue Routing-Richtlinie zur Steuerung der Anfrageverteilung erstellen.',
+    weightsJsonLabel: 'Bewertungsgewichte (JSON, optional)',
+    weightsJsonPlaceholder: '{"capability": 0.2, "domain": 0.1, ...}',
+    weightsJsonHelp:
+      'Optional. Überschreibt die modus-spezifischen Standardgewichte. Muss alle 14 Dimensionen enthalten und in Summe 1,0 ergeben.',
+    weightsJsonError: {
+      invalidJson: 'Gewichte-JSON ist kein gültiges JSON.',
+      notAnObject: 'Gewichte müssen ein JSON-Objekt sein.',
+      missingDimension: 'Gewichte-JSON muss jede Dimension als Zahl enthalten.',
+      sumNotOne: 'Die Gewichte müssen in Summe 1,0 ergeben (±0,001).',
+    },
     models: {
       title: 'Modellregister',
       description:
@@ -1456,6 +1467,33 @@ export const de: TranslationDictionary = {
       perDayBudget: 'Tageslimit',
       perDayBudgetPlaceholder: 'unlimited',
       clear: 'Leeren',
+    },
+  },
+  emailSignatures: {
+    page: {
+      title: 'E-Mail-Signaturen',
+      description:
+        'Verwalten Sie Signaturen, die an KI-verfasste E-Mails angehängt werden. Markieren Sie eine als Standard, damit sie automatisch verwendet wird.',
+      loading: 'Signaturen werden geladen…',
+      error: 'Signaturen konnten nicht geladen werden. Aktualisieren Sie die Seite.',
+      empty: 'Noch keine Signaturen. Erstellen Sie eine, um zu beginnen.',
+      create: 'Neue Signatur',
+      edit: 'Bearbeiten',
+      delete: 'Löschen',
+      deleting: 'Wird gelöscht…',
+      defaultBadge: 'Standard',
+    },
+    dialog: {
+      createTitle: 'Signatur erstellen',
+      editTitle: 'Signatur bearbeiten',
+      nameLabel: 'Name',
+      namePlaceholder: 'Arbeitssignatur',
+      bodyLabel: 'Text',
+      bodyPlaceholder: 'Mit freundlichen Grüßen,\nAlice\nVP Engineering · Example Inc.',
+      defaultLabel: 'Als Standard verwenden',
+      save: 'Speichern',
+      saving: 'Wird gespeichert…',
+      cancel: 'Abbrechen',
     },
   },
   research: {

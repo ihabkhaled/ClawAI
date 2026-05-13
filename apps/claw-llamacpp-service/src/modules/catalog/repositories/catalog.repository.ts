@@ -46,9 +46,20 @@ export class CatalogRepository {
     return row ? this.toDomain(row) : null;
   }
 
+  async findAllReadyForRouting(): Promise<CatalogEntry[]> {
+    const rows = await this.prisma.frontierCatalogEntry.findMany({
+      where: { downloadStatus: 'READY', available: true },
+      orderBy: [{ name: 'asc' }, { tag: 'asc' }],
+    });
+    return rows.map((row) => this.toDomain(row));
+  }
+
   async updateDownloadStatus(id: string, status: DownloadStatus): Promise<void> {
     this.logger.log(`updateDownloadStatus: ${id} → ${status}`);
-    await this.prisma.frontierCatalogEntry.update({ where: { id }, data: { downloadStatus: status } });
+    await this.prisma.frontierCatalogEntry.update({
+      where: { id },
+      data: { downloadStatus: status },
+    });
   }
 
   async updateLoadStatus(id: string, status: LoadStatus): Promise<void> {

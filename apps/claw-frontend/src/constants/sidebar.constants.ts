@@ -103,6 +103,11 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
         icon: SlidersHorizontal,
       },
       {
+        labelKey: 'nav.workspaceEmailSignatures',
+        href: ROUTES.WORKSPACE_EMAIL_SIGNATURES,
+        icon: Mail,
+      },
+      {
         labelKey: 'nav.workspaceImplHandoffs',
         href: ROUTES.WORKSPACE_IMPL_HANDOFFS,
         icon: Send,

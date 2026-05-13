@@ -117,4 +117,17 @@ export class ConnectorModelsRepository {
   async countByConnectorId(connectorId: string): Promise<number> {
     return this.prisma.connectorModel.count({ where: { connectorId } });
   }
+
+  async findAllForSnapshot(): Promise<
+    Array<ConnectorModel & { connector: { status: string; isEnabled: boolean } }>
+  > {
+    return this.prisma.connectorModel.findMany({
+      where: {
+        connector: { isEnabled: true },
+        lifecycle: 'ACTIVE',
+      },
+      include: { connector: { select: { status: true, isEnabled: true } } },
+      orderBy: [{ provider: 'asc' }, { displayName: 'asc' }],
+    }) as Promise<Array<ConnectorModel & { connector: { status: string; isEnabled: boolean } }>>;
+  }
 }

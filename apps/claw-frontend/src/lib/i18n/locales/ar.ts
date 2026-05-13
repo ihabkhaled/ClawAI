@@ -121,6 +121,7 @@ export const ar: TranslationDictionary = {
     workspaceSemanticSearch: 'البحث الدلالي',
     workspaceDigest: 'الموجز',
     workspaceAutomationPreferences: 'تفضيلات الأتمتة',
+    workspaceEmailSignatures: 'تواقيع البريد الإلكتروني',
     workspaceImplHandoffs: 'تسليمات البرمجة',
     adminAiActionPolicies: 'سياسات إجراءات الذكاء الاصطناعي',
     adminSuggestionRules: 'قواعد الاقتراحات',
@@ -527,6 +528,16 @@ export const ar: TranslationDictionary = {
     selectModePlaceholder: 'اختر وضع التوجيه',
     editPolicyDesc: 'تحديث تهيئة سياسة التوجيه.',
     createPolicyDesc: 'إنشاء سياسة توجيه جديدة للتحكم في توزيع الطلبات.',
+    weightsJsonLabel: 'أوزان التقييم (JSON، اختياري)',
+    weightsJsonPlaceholder: '{"capability": 0.2, "domain": 0.1, ...}',
+    weightsJsonHelp:
+      'اختياري. يتجاوز الأوزان الافتراضية للوضع. يجب أن يشمل الأبعاد الـ14 جميعها وأن يكون مجموعها 1.0.',
+    weightsJsonError: {
+      invalidJson: 'JSON الأوزان غير صالح.',
+      notAnObject: 'يجب أن تكون الأوزان كائن JSON.',
+      missingDimension: 'يجب أن يتضمن JSON الأوزان كل بُعد كرقم.',
+      sumNotOne: 'يجب أن يكون مجموع الأوزان 1.0 (±0.001).',
+    },
     models: {
       title: 'سجل النماذج',
       description:
@@ -1419,6 +1430,33 @@ export const ar: TranslationDictionary = {
       perDayBudget: 'حد يومي',
       perDayBudgetPlaceholder: 'unlimited',
       clear: 'مسح',
+    },
+  },
+  emailSignatures: {
+    page: {
+      title: 'تواقيع البريد الإلكتروني',
+      description:
+        'إدارة التواقيع المرفقة برسائل البريد الإلكتروني التي يصيغها الذكاء الاصطناعي. اجعل توقيعًا افتراضيًا ليُستخدم تلقائيًا.',
+      loading: 'جارٍ تحميل التواقيع…',
+      error: 'تعذر تحميل التواقيع. حاول تحديث الصفحة.',
+      empty: 'لا توجد تواقيع بعد. أنشئ توقيعًا للبدء.',
+      create: 'توقيع جديد',
+      edit: 'تعديل',
+      delete: 'حذف',
+      deleting: 'جارٍ الحذف…',
+      defaultBadge: 'افتراضي',
+    },
+    dialog: {
+      createTitle: 'إنشاء توقيع',
+      editTitle: 'تعديل التوقيع',
+      nameLabel: 'الاسم',
+      namePlaceholder: 'توقيع العمل',
+      bodyLabel: 'المحتوى',
+      bodyPlaceholder: 'مع تحياتي،\nعلي\nنائب الرئيس للهندسة · شركة مثال',
+      defaultLabel: 'استخدام كافتراضي',
+      save: 'حفظ',
+      saving: 'جارٍ الحفظ…',
+      cancel: 'إلغاء',
     },
   },
   research: {

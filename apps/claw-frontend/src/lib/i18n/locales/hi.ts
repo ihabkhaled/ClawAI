@@ -121,6 +121,7 @@ export const hi: TranslationDictionary = {
     workspaceSemanticSearch: 'सेमांटिक खोज',
     workspaceDigest: 'डाइजेस्ट',
     workspaceAutomationPreferences: 'स्वचालन प्राथमिकताएँ',
+    workspaceEmailSignatures: 'ईमेल हस्ताक्षर',
     workspaceImplHandoffs: 'कोडिंग हैंडऑफ़',
     adminAiActionPolicies: 'AI एक्शन नीतियाँ',
     adminSuggestionRules: 'सुझाव नियम',
@@ -532,6 +533,16 @@ export const hi: TranslationDictionary = {
     selectModePlaceholder: 'रूटिंग मोड चुनें',
     editPolicyDesc: 'रूटिंग नीति कॉन्फ़िगरेशन अद्यतन करें।',
     createPolicyDesc: 'अनुरोध वितरण नियंत्रित करने के लिए एक नई रूटिंग नीति बनाएं।',
+    weightsJsonLabel: 'स्कोर भार (JSON, वैकल्पिक)',
+    weightsJsonPlaceholder: '{"capability": 0.2, "domain": 0.1, ...}',
+    weightsJsonHelp:
+      'वैकल्पिक। मोड-वार डिफ़ॉल्ट भार को ओवरराइड करता है। सभी 14 आयाम शामिल होने चाहिए और कुल 1.0 के बराबर होना चाहिए।',
+    weightsJsonError: {
+      invalidJson: 'भार का JSON मान्य JSON नहीं है।',
+      notAnObject: 'भार एक JSON ऑब्जेक्ट होना चाहिए।',
+      missingDimension: 'भार JSON में हर आयाम संख्या के रूप में होना चाहिए।',
+      sumNotOne: 'भार का योग 1.0 (±0.001) होना चाहिए।',
+    },
     models: {
       title: 'मॉडल रजिस्ट्री',
       description:
@@ -1434,6 +1445,33 @@ export const hi: TranslationDictionary = {
       perDayBudget: 'दैनिक सीमा',
       perDayBudgetPlaceholder: 'unlimited',
       clear: 'साफ़ करें',
+    },
+  },
+  emailSignatures: {
+    page: {
+      title: 'ईमेल हस्ताक्षर',
+      description:
+        'AI द्वारा लिखे गए ईमेल में जोड़े जाने वाले हस्ताक्षर प्रबंधित करें। डिफ़ॉल्ट चुनें ताकि यह स्वचालित रूप से उपयोग हो।',
+      loading: 'हस्ताक्षर लोड हो रहे हैं…',
+      error: 'हस्ताक्षर लोड नहीं हो सके। पेज रिफ्रेश करें।',
+      empty: 'अभी तक कोई हस्ताक्षर नहीं। शुरू करने के लिए एक बनाएं।',
+      create: 'नया हस्ताक्षर',
+      edit: 'संपादित करें',
+      delete: 'हटाएं',
+      deleting: 'हटाया जा रहा है…',
+      defaultBadge: 'डिफ़ॉल्ट',
+    },
+    dialog: {
+      createTitle: 'हस्ताक्षर बनाएं',
+      editTitle: 'हस्ताक्षर संपादित करें',
+      nameLabel: 'नाम',
+      namePlaceholder: 'कार्य हस्ताक्षर',
+      bodyLabel: 'सामग्री',
+      bodyPlaceholder: 'सादर,\nAlice\nइंजीनियरिंग के VP · Example Inc.',
+      defaultLabel: 'डिफ़ॉल्ट के रूप में उपयोग करें',
+      save: 'सहेजें',
+      saving: 'सहेजा जा रहा है…',
+      cancel: 'रद्द करें',
     },
   },
   research: {

@@ -37,3 +37,22 @@ export const CONFIDENCE_THRESHOLDS = {
   MEDIUM: 0.5,
   LOW: 0,
 };
+
+export const POLICY_WEIGHT_DIMENSIONS = [
+  'capability',
+  'domain',
+  'role',
+  'modality',
+  'cost',
+  'latency',
+  'health',
+  'privacy',
+  'learnedSuccess',
+  'judgeTrust',
+  'contextFit',
+  'uncertaintyPenalty',
+  'riskPenalty',
+  'fallbackReliability',
+] as const;
+
+export const POLICY_WEIGHTS_SUM_TOLERANCE = 0.001;

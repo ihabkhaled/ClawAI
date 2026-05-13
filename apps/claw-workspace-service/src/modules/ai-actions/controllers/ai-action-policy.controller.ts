@@ -8,10 +8,12 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { CurrentUser, Roles } from '@claw/shared-auth';
 import { UserRole } from '@claw/shared-types';
 
+import { AdminIpAllowlistGuard } from '../../../common/guards/admin-ip-allowlist.guard';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import {
   type CreateAiActionPolicyDto,
@@ -24,6 +26,7 @@ import type { AuthenticatedUser } from '../../../common/types/auth.types';
 import type { AiActionPolicy } from '../../../generated/prisma';
 
 @Controller('workspace/ai-actions/policies')
+@UseGuards(AdminIpAllowlistGuard)
 export class AiActionPolicyController {
   constructor(private readonly service: AiActionPolicyService) {}
 

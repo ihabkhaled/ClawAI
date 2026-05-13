@@ -72,6 +72,7 @@ jest.spyOn(AppConfig, 'get').mockReturnValue({
   AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS: 48,
   AI_ACTION_PER_USER_RATE_PER_MIN: 1000,
   AI_ACTION_PER_USER_RATE_PER_HOUR: 10000,
+  ADMIN_IP_ALLOWLIST: '',
 });
 
 const mockConnector = {

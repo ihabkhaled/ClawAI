@@ -154,6 +154,9 @@ export type PolicyFormStateReturn = {
   setPriority: (value: number) => void;
   isActive: boolean;
   setIsActive: (value: boolean) => void;
+  weightsJsonText: string;
+  setWeightsJsonText: (value: string) => void;
+  weightsJsonError: string | null;
   fieldErrors: FormFieldErrors;
   isEditing: boolean;
   pendingLabel: string;
