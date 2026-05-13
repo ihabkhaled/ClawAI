@@ -7,18 +7,22 @@ COPY package.json package-lock.json ./
 COPY packages/ ./packages/
 COPY apps/claw-audit-service/ ./apps/claw-audit-service/
 
-# Build shared packages first so the service can import their dist/.
-RUN cd packages/shared-types && npm install --ignore-scripts && npx tsc
-RUN cd packages/shared-constants && npm install --ignore-scripts && npx tsc
-RUN cd packages/shared-rabbitmq && npm install --ignore-scripts && npx tsc
-RUN cd packages/shared-auth && npm install --ignore-scripts && npx tsc
-RUN cd packages/shared-utilities && npm install --ignore-scripts && npx tsc
-
-# Install service dependencies. Root package.json declares
+# Install everything at workspace root so transitive types (express,
+# @types/*, etc.) needed by shared packages are hoisted to /app/node_modules.
+# Root package.json declares
 # `overrides: { "@nestjs/schematics": { "typescript": "6.0.0-beta" } }`
-# so npm reconciles the peer constraint without --legacy-peer-deps.
-WORKDIR /app/apps/claw-audit-service
+# which reconciles the peer constraint at lock-file level — no
+# --legacy-peer-deps required.
 RUN npm install --ignore-scripts
+
+# Build shared packages.
+RUN cd packages/shared-types && npx tsc \
+ && cd ../shared-constants && npx tsc \
+ && cd ../shared-rabbitmq && npx tsc \
+ && cd ../shared-auth && npx tsc \
+ && cd ../shared-utilities && npx tsc
+
+WORKDIR /app/apps/claw-audit-service
 RUN chmod +x docker-entrypoint.dev.sh 2>/dev/null || true
 
 EXPOSE 4007
