@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:26-alpine AS base
 RUN apk add --no-cache openssl
 WORKDIR /app/apps/claw-chat-service
 
@@ -20,7 +20,7 @@ RUN npx prisma generate
 RUN npm run build
 RUN cp -r src/generated dist/generated 2>/dev/null || true
 
-FROM node:20-alpine AS runner
+FROM node:26-alpine AS runner
 RUN apk add --no-cache openssl
 ENV NODE_ENV=production
 WORKDIR /app
