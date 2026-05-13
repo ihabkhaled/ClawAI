@@ -17,6 +17,6 @@
     "@nestjs/core": "^11.1.0",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/express": "^5.0.0",
-    "typescript": "6.0.0-beta"
+    "typescript": "6.0.3"
   }
 }
