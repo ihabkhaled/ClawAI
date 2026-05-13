@@ -55,20 +55,24 @@ export default function WorkspaceDigestPage(): ReactElement {
         </p>
       ) : null}
 
-      {!isLoading && today === null ? (
+      {!isLoading && (today === null || today === undefined) ? (
         <p className="rounded-lg border border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
           {t('digest.page.noTodayDigest')}
         </p>
       ) : null}
 
-      {today !== null ? (
+      {today !== null && today !== undefined ? (
         <div className="flex flex-col gap-3">
           <h2 className="text-lg font-semibold">{t('digest.page.today')}</h2>
-          <span className="text-xs text-muted-foreground">
-            {t('digest.page.generatedAt', { ts: new Date(today.generatedAt).toLocaleString() })}
-          </span>
+          {today.generatedAt !== undefined && today.generatedAt !== null ? (
+            <span className="text-xs text-muted-foreground">
+              {t('digest.page.generatedAt', {
+                ts: new Date(today.generatedAt).toLocaleString(),
+              })}
+            </span>
+          ) : null}
           <div className="grid gap-3 md:grid-cols-2">
-            {today.sections.map((section) => (
+            {(today.sections ?? []).map((section) => (
               <DigestSectionCard key={section.provider} section={section} t={t} />
             ))}
           </div>
@@ -86,7 +90,9 @@ export default function WorkspaceDigestPage(): ReactElement {
               >
                 <span>{h.snapshotDate}</span>
                 <span className="text-xs text-muted-foreground">
-                  {t('digest.page.sectionsCount', { n: String(h.sections.length) })}
+                  {t('digest.page.sectionsCount', {
+                    n: String((h.sections ?? []).length),
+                  })}
                 </span>
               </li>
             ))}

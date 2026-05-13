@@ -10,7 +10,18 @@ const BASE = '/workspace/digests';
 
 export async function getTodayDigest(): Promise<DigestSnapshotPayload | null> {
   const response = await apiClient.get<DigestSnapshotPayload | null>(`${BASE}/today`);
-  return response.data;
+  // The BE returns HTTP 200 with an empty body when no digest exists for today.
+  // The fetch client surfaces that as undefined or an empty value — normalise to
+  // null so the page's `today === null` empty-state branch fires.
+  const data = response.data;
+  if (data === undefined || data === null) {
+    return null;
+  }
+  // Guard against partial payloads (missing `sections`) — treat as no-digest too.
+  if (typeof data !== 'object' || !Array.isArray((data as { sections?: unknown }).sections)) {
+    return null;
+  }
+  return data;
 }
 
 export async function listDigests(
