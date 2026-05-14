@@ -3,6 +3,7 @@ import { BitbucketAdapter } from './adapters/bitbucket.adapter';
 import { ClickUpAdapter } from './adapters/clickup.adapter';
 import { ConfluenceAdapter } from './adapters/confluence.adapter';
 import { FigmaAdapter } from './adapters/figma.adapter';
+import { FigmaDesignAnalyzerHelper } from './adapters/figma-design-analyzer.helper';
 import { GitHubAdapter } from './adapters/github.adapter';
 import { GitHubWriteActionsHelper } from './adapters/github-write-actions.helper';
 import { GitLabAdapter } from './adapters/gitlab.adapter';
@@ -27,6 +28,7 @@ import { WorkspaceObjectController } from './controllers/workspace-object.contro
 import { WorkspaceProviderRegistryController } from './controllers/workspace-provider-registry.controller';
 import { WorkspaceSearchController } from './controllers/workspace-search.controller';
 import { WorkspaceSearchInternalController } from './controllers/workspace-search-internal.controller';
+import { FigmaDesignController } from './controllers/figma-design.controller';
 import { ConnectorActivationManager } from './managers/connector-activation.manager';
 import { OAuthTokenManager } from './managers/oauth-token.manager';
 import { OrphanSyncRecoveryManager } from './managers/orphan-sync-recovery.manager';
@@ -47,6 +49,7 @@ import { WorkspaceObjectRepository } from './repositories/workspace-object.repos
 import { ProviderAppConfigService } from './services/provider-app-config.service';
 import { ProviderRegistryService } from './services/provider-registry.service';
 import { SyncHealthService } from './services/sync-health.service';
+import { FigmaDesignService } from './services/figma-design.service';
 import { WorkspaceConnectorService } from './services/workspace-connector.service';
 import { WorkspaceObjectService } from './services/workspace-object.service';
 import { WorkspaceSearchService } from './services/workspace-search.service';
@@ -61,6 +64,7 @@ import { WorkspaceSearchService } from './services/workspace-search.service';
     WorkspaceSearchInternalController,
     SyncHealthController,
     SyncHealthInternalController,
+    FigmaDesignController,
   ],
   providers: [
     WorkspaceConnectorRepository,
@@ -76,6 +80,8 @@ import { WorkspaceSearchService } from './services/workspace-search.service';
     ProviderRegistryService,
     ProviderAppConfigService,
     SyncHealthService,
+    FigmaDesignService,
+    FigmaDesignAnalyzerHelper,
     OAuthTokenManager,
     TokenRefreshManager,
     WorkspaceHealthManager,
