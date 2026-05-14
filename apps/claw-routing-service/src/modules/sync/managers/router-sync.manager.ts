@@ -1,4 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { RabbitMQService } from '@claw/shared-rabbitmq';
+import { EventPattern } from '@claw/shared-types';
 import { ModelLifecycle, type Prisma } from '../../../generated/prisma';
 import { RouterModelRegistryRepository } from '../../router-models/repositories/router-model-registry.repository';
 import { RouterModelRegistryManager } from '../../router-models/managers/router-model-registry.manager';
@@ -17,6 +19,7 @@ export class RouterSyncManager {
   constructor(
     private readonly registryRepo: RouterModelRegistryRepository,
     private readonly registryManager: RouterModelRegistryManager,
+    @Optional() private readonly rabbitMQ?: RabbitMQService,
   ) {}
 
   async syncAll(): Promise<SyncRunResult> {
@@ -58,13 +61,36 @@ export class RouterSyncManager {
       `syncAll: finished in ${durationMs}ms — upstream=${totals.upstreamCount} upserted=${totals.upsertedCount} skipped=${totals.skippedCount}`,
     );
 
-    return {
+    const result: SyncRunResult = {
       runStartedAt: startedAt.toISOString(),
       runFinishedAt: finishedAt.toISOString(),
       durationMs,
       totals,
       perProvider,
     };
+    await this.publishSyncCompleted(result);
+    return result;
+  }
+
+  private async publishSyncCompleted(result: SyncRunResult): Promise<void> {
+    if (this.rabbitMQ === undefined) return;
+    try {
+      await this.rabbitMQ.publish(EventPattern.ROUTING_MODELS_SYNCED, {
+        runStartedAt: result.runStartedAt,
+        runFinishedAt: result.runFinishedAt,
+        durationMs: result.durationMs,
+        totals: result.totals,
+        perProvider: result.perProvider.map((p) => ({
+          provider: p.provider,
+          status: p.status,
+          upstreamCount: p.upstreamCount,
+          upsertedCount: p.upsertedCount,
+          skippedCount: p.skippedCount,
+        })),
+      });
+    } catch (error) {
+      this.logger.warn(`publishSyncCompleted: event publish failed — ${(error as Error).message}`);
+    }
   }
 
   private async syncOne(source: string, url: string): Promise<SyncProviderResult> {

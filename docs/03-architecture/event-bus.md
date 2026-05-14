@@ -271,6 +271,23 @@ Published after every routing decision for analytics.
 
 ---
 
+### routing.models.synced
+
+Published after a router model-knowledge sync run finishes. See [routing-model-sync.md](./routing-model-sync.md).
+
+| Field           | Type   | Description                                                  |
+| --------------- | ------ | ------------------------------------------------------------ |
+| `runStartedAt`  | string | ISO timestamp the sync run began                             |
+| `runFinishedAt` | string | ISO timestamp the sync run finished                          |
+| `durationMs`    | number | Total run duration                                           |
+| `totals`        | object | `{ upstreamCount, upsertedCount, skippedCount }`             |
+| `perProvider`   | array  | Per-source `{ provider, status, upstream/upserted/skipped }` |
+
+**Publisher**: routing-service
+**Consumers**: audit-service
+
+---
+
 ### memory.extracted
 
 Published after memories are extracted from a completed message.
@@ -488,20 +505,19 @@ Logger utility that publishes `log.server` events:
 Added 2026-04-26 as part of the desktop-agent capability framework
 generalisation. Audit-service auto-subscribes to all 12 events.
 
-| Event pattern | Publisher | Consumers | Purpose |
-|---|---|---|---|
-| `agent.capability.proposed` | claw-agent-service | audit | Capability invocation drafted; risk + class + target visible |
-| `agent.capability.policy_matched` | claw-agent-service | audit | Risk service decided ALLOW / DENY / AUTO_APPROVE |
-| `agent.capability.auto_approved` | claw-agent-service | audit, capability-runner | Skipped human approval per policy |
-| `agent.capability.approved` | claw-agent-service | audit, capability-runner | Human approved |
-| `agent.capability.rejected` | claw-agent-service | audit | Human rejected with reason |
-| `agent.capability.executing` | claw-agent-service | audit | CLI started executing |
-| `agent.capability.executed` | claw-agent-service | audit | Completed successfully with result |
-| `agent.capability.failed` | claw-agent-service | audit | Execution errored |
-| `agent.capability.cancelled` | claw-agent-service | audit | User cancelled mid-execute |
-| `agent.capability.expired` | claw-agent-service | audit | PENDING beyond expiresAt |
-| `agent.capability.rolled_back` | claw-agent-service | audit | Rollback executed (full or partial) |
-| `agent.capability.denied` | claw-agent-service | audit | Risk service blocked at draft time |
+| Event pattern                     | Publisher          | Consumers                | Purpose                                                      |
+| --------------------------------- | ------------------ | ------------------------ | ------------------------------------------------------------ |
+| `agent.capability.proposed`       | claw-agent-service | audit                    | Capability invocation drafted; risk + class + target visible |
+| `agent.capability.policy_matched` | claw-agent-service | audit                    | Risk service decided ALLOW / DENY / AUTO_APPROVE             |
+| `agent.capability.auto_approved`  | claw-agent-service | audit, capability-runner | Skipped human approval per policy                            |
+| `agent.capability.approved`       | claw-agent-service | audit, capability-runner | Human approved                                               |
+| `agent.capability.rejected`       | claw-agent-service | audit                    | Human rejected with reason                                   |
+| `agent.capability.executing`      | claw-agent-service | audit                    | CLI started executing                                        |
+| `agent.capability.executed`       | claw-agent-service | audit                    | Completed successfully with result                           |
+| `agent.capability.failed`         | claw-agent-service | audit                    | Execution errored                                            |
+| `agent.capability.cancelled`      | claw-agent-service | audit                    | User cancelled mid-execute                                   |
+| `agent.capability.expired`        | claw-agent-service | audit                    | PENDING beyond expiresAt                                     |
+| `agent.capability.rolled_back`    | claw-agent-service | audit                    | Rollback executed (full or partial)                          |
+| `agent.capability.denied`         | claw-agent-service | audit                    | Risk service blocked at draft time                           |
 
 Payload types: `packages/shared-types/src/events/capability-events.types.ts`.
-

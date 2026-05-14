@@ -685,6 +685,26 @@ model UserEmailSignature {
   @@map("user_email_signatures")
 }
 
+// v3 round 9 (2026-05-14) — Prompt 06 polish: per-user email template
+// library. Unlike a signature (body-only, appended), a template carries
+// both a subject and a body and is the *starting point* of an
+// AI-drafted or hand-written email. {{placeholder}} tokens in the body
+// are resolved by the caller (or left for the AI action to fill).
+model UserEmailTemplate {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id") @db.VarChar(128)
+  name      String   @db.VarChar(120)
+  subject   String   @db.VarChar(500)
+  body      String   @db.Text
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("user_email_templates")
+}
+
 // v3 round 5 (2026-05-12) — Prompt 12 polish: per-connector RBAC. The
 // connector owner (WorkspaceConnector.userId) always has full access.
 // Grants below let the owner share a connector with another user at a

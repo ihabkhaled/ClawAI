@@ -123,6 +123,7 @@ export type TranslationDictionary = {
     workspaceDigest: string;
     workspaceAutomationPreferences: string;
     workspaceEmailSignatures: string;
+    workspaceEmailTemplates: string;
     workspaceImplHandoffs: string;
     adminAiActionPolicies: string;
     adminSuggestionRules: string;
@@ -1455,6 +1456,35 @@ export type TranslationDictionary = {
       editTitle: string;
       nameLabel: string;
       namePlaceholder: string;
+      bodyLabel: string;
+      bodyPlaceholder: string;
+      defaultLabel: string;
+      save: string;
+      saving: string;
+      cancel: string;
+    };
+  };
+  emailTemplates: {
+    page: {
+      title: string;
+      description: string;
+      loading: string;
+      error: string;
+      empty: string;
+      create: string;
+      edit: string;
+      delete: string;
+      deleting: string;
+      defaultBadge: string;
+      subjectLabel: string;
+    };
+    dialog: {
+      createTitle: string;
+      editTitle: string;
+      nameLabel: string;
+      namePlaceholder: string;
+      subjectLabel: string;
+      subjectPlaceholder: string;
       bodyLabel: string;
       bodyPlaceholder: string;
       defaultLabel: string;

@@ -108,6 +108,11 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
         icon: Mail,
       },
       {
+        labelKey: 'nav.workspaceEmailTemplates',
+        href: ROUTES.WORKSPACE_EMAIL_TEMPLATES,
+        icon: Mail,
+      },
+      {
         labelKey: 'nav.workspaceImplHandoffs',
         href: ROUTES.WORKSPACE_IMPL_HANDOFFS,
         icon: Send,
