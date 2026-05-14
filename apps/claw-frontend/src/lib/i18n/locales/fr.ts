@@ -2341,7 +2341,15 @@ export const fr: TranslationDictionary = {
       mark: 'Marquer pour attention',
       unmark: 'Effacer attention',
       openExternal: 'Ouvrir',
+      viewFile: 'Voir le fichier',
     },
+  },
+  fileViewer: {
+    loading: 'Chargement du fichier…',
+    error: 'Impossible de charger ce fichier.',
+    unsupported: 'Aperçu indisponible pour ce type de fichier. Utilisez Télécharger pour l\'ouvrir en local.',
+    download: 'Télécharger',
+    close: 'Fermer',
   },
   search: {
     page: {

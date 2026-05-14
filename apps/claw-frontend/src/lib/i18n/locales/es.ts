@@ -2334,7 +2334,15 @@ export const es: TranslationDictionary = {
       mark: 'Marcar como atención',
       unmark: 'Quitar atención',
       openExternal: 'Abrir',
+      viewFile: 'Ver archivo',
     },
+  },
+  fileViewer: {
+    loading: 'Cargando archivo…',
+    error: 'No se pudo cargar este archivo.',
+    unsupported: 'No hay vista previa disponible para este tipo de archivo. Usa Descargar para abrirlo localmente.',
+    download: 'Descargar',
+    close: 'Cerrar',
   },
   search: {
     page: {

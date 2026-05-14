@@ -25,6 +25,7 @@ import type {
 } from '../types/microsoft-graph.types';
 import type {
   AdapterCapabilities,
+  FileContentStream,
   HealthCheckResult,
   LiveObjectDetails,
   OAuthTokenSet,
@@ -224,6 +225,32 @@ export class OneDriveAdapter implements WorkspaceAdapter {
     }
     const item = (await response.json()) as GraphDriveItem;
     return this.mapItemToLive(item);
+  }
+
+  // v3 round 11 (Prompt 08) — stream a OneDrive file's raw bytes via the
+  // Graph /content endpoint (which 302-redirects to a pre-authed CDN URL;
+  // fetch follows the redirect automatically).
+  async downloadFileContent(
+    accessToken: string,
+    externalId: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<FileContentStream | null> {
+    const name = typeof metadata?.['name'] === 'string' ? metadata['name'] : externalId;
+    const response = await fetch(
+      `${MICROSOFT_GRAPH_API_BASE}/me/drive/items/${encodeURIComponent(externalId)}/content`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    if (response.status === 404) return null;
+    if (!response.ok || response.body === null) {
+      throw new Error(`OneDrive downloadFileContent failed: HTTP ${String(response.status)}`);
+    }
+    const contentLength = response.headers.get('content-length');
+    return {
+      filename: name,
+      mimeType: response.headers.get('content-type') ?? 'application/octet-stream',
+      sizeBytes: contentLength !== null ? Number(contentLength) : null,
+      body: response.body,
+    };
   }
 
   private normalizeTokenResponse(data: MicrosoftTokenResponse): OAuthTokenSet {

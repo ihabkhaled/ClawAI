@@ -2285,7 +2285,15 @@ export const ar: TranslationDictionary = {
       mark: 'وضع علامة تحتاج اهتمامًا',
       unmark: 'إزالة علامة الاهتمام',
       openExternal: 'فتح',
+      viewFile: 'عرض الملف',
     },
+  },
+  fileViewer: {
+    loading: 'جارٍ تحميل الملف…',
+    error: 'تعذر تحميل هذا الملف.',
+    unsupported: 'المعاينة غير متاحة لهذا النوع من الملفات. استخدم التنزيل لفتحه محليًا.',
+    download: 'تنزيل',
+    close: 'إغلاق',
   },
   search: {
     page: {

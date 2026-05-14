@@ -1,5 +1,6 @@
 import type {
   AdapterCapabilities,
+  FileContentStream,
   HealthCheckResult,
   LiveObjectDetails,
   OAuthTokenSet,
@@ -8,7 +9,7 @@ import type {
   WriteActionResult,
 } from '../types/workspace.types';
 
-export type { LiveObjectDetails, SyncedObject };
+export type { FileContentStream, LiveObjectDetails, SyncedObject };
 
 /**
  * Credentials passed per-call, resolved at runtime from
@@ -116,4 +117,17 @@ export interface WorkspaceAdapter {
     objectType: string,
     metadata?: Record<string, unknown>,
   ): Promise<LiveObjectDetails | null>;
+
+  /**
+   * v3 round 11 (2026-05-14) — Prompt 08: stream a file's raw bytes from
+   * the provider. Implemented by file-backed providers (Google Drive,
+   * OneDrive, SharePoint). The service layer pipes the result straight
+   * to the HTTP response so large files never buffer fully in memory.
+   * `null` means the file no longer exists upstream (404/gone).
+   */
+  downloadFileContent?(
+    accessToken: string,
+    externalId: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<FileContentStream | null>;
 }

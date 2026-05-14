@@ -1516,7 +1516,15 @@ export type TranslationDictionary = {
       mark: string;
       unmark: string;
       openExternal: string;
+      viewFile: string;
     };
+  };
+  fileViewer: {
+    loading: string;
+    error: string;
+    unsupported: string;
+    download: string;
+    close: string;
   };
   search: {
     page: {

@@ -2326,7 +2326,15 @@ export const it: TranslationDictionary = {
       mark: 'Segna come urgente',
       unmark: 'Rimuovi urgenza',
       openExternal: 'Apri',
+      viewFile: 'Visualizza file',
     },
+  },
+  fileViewer: {
+    loading: 'Caricamento file…',
+    error: 'Impossibile caricare questo file.',
+    unsupported: 'Anteprima non disponibile per questo tipo di file. Usa Scarica per aprirlo in locale.',
+    download: 'Scarica',
+    close: 'Chiudi',
   },
   search: {
     page: {

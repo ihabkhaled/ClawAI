@@ -20,3 +20,11 @@ export const INBOX_TYPE_FILTER_OPTIONS: WorkspaceObjectType[] = [
   WorkspaceObjectType.ISSUE,
   WorkspaceObjectType.MEETING,
 ];
+
+// v3 round 11 (Prompt 08) — object types whose raw content can be
+// streamed + previewed via the file viewer modal. An inbox row only
+// shows the "View file" action when its type is in this set.
+export const INBOX_VIEWABLE_OBJECT_TYPES: ReadonlySet<string> = new Set<string>([
+  WorkspaceObjectType.FILE,
+  WorkspaceObjectType.DOCUMENT,
+]);

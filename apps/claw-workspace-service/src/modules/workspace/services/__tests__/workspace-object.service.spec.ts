@@ -12,6 +12,7 @@ const mockObjectRepository = {
   findByConnectorIdForAuthorizedUser: jest.fn(),
   findAllByUserId: jest.fn(),
   findById: jest.fn(),
+  findByIdForAuthorizedUser: jest.fn(),
   upsert: jest.fn(),
 } as unknown as WorkspaceObjectRepository;
 
@@ -256,6 +257,101 @@ describe('WorkspaceObjectService', () => {
       });
       (mockAccessService.can as jest.Mock).mockResolvedValue(false);
       await expect(service.listHealthEvents('conn1', 'user1', 10)).rejects.toBeInstanceOf(
+        BusinessException,
+      );
+    });
+  });
+
+  // v3 round 11 (Prompt 08) — file content download
+  describe('downloadObjectContent', () => {
+    const fileStream = {
+      filename: 'report.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 1024,
+      body: {} as ReadableStream<Uint8Array>,
+    };
+
+    it('streams content for an authorized user', async () => {
+      (mockObjectRepository.findByIdForAuthorizedUser as jest.Mock).mockResolvedValue({
+        id: 'obj1',
+        connectorId: 'conn1',
+        externalId: 'file-abc',
+        metadata: { name: 'report.pdf' },
+      });
+      (mockAccessService.can as jest.Mock).mockResolvedValue(true);
+      (mockConnectorRepository.findById as jest.Mock).mockResolvedValue({
+        id: 'conn1',
+        provider: 'GOOGLE_DRIVE',
+        encryptedTokens: 'enc',
+      });
+      (mockTokenManager.decryptTokenSet as jest.Mock).mockReturnValue({ accessToken: 'tok' });
+      const downloadFileContent = jest.fn().mockResolvedValue(fileStream);
+      (mockAdapterFactory.getAdapter as jest.Mock).mockReturnValue({ downloadFileContent });
+
+      const result = await service.downloadObjectContent('obj1', 'user1');
+      expect(result).toEqual(fileStream);
+      expect(downloadFileContent).toHaveBeenCalledWith('tok', 'file-abc', {
+        name: 'report.pdf',
+      });
+    });
+
+    it('404s when the object does not exist', async () => {
+      (mockObjectRepository.findByIdForAuthorizedUser as jest.Mock).mockResolvedValue(null);
+      await expect(service.downloadObjectContent('missing', 'user1')).rejects.toBeInstanceOf(
+        EntityNotFoundException,
+      );
+    });
+
+    it('403s when the access service denies', async () => {
+      (mockObjectRepository.findByIdForAuthorizedUser as jest.Mock).mockResolvedValue({
+        id: 'obj1',
+        connectorId: 'conn1',
+        externalId: 'file-abc',
+        metadata: {},
+      });
+      (mockAccessService.can as jest.Mock).mockResolvedValue(false);
+      await expect(service.downloadObjectContent('obj1', 'user1')).rejects.toBeInstanceOf(
+        BusinessException,
+      );
+    });
+
+    it('501s when the adapter has no downloadFileContent implementation', async () => {
+      (mockObjectRepository.findByIdForAuthorizedUser as jest.Mock).mockResolvedValue({
+        id: 'obj1',
+        connectorId: 'conn1',
+        externalId: 'file-abc',
+        metadata: {},
+      });
+      (mockAccessService.can as jest.Mock).mockResolvedValue(true);
+      (mockConnectorRepository.findById as jest.Mock).mockResolvedValue({
+        id: 'conn1',
+        provider: 'SLACK',
+        encryptedTokens: 'enc',
+      });
+      (mockAdapterFactory.getAdapter as jest.Mock).mockReturnValue({});
+      await expect(service.downloadObjectContent('obj1', 'user1')).rejects.toBeInstanceOf(
+        BusinessException,
+      );
+    });
+
+    it('410s when the provider reports the file is gone', async () => {
+      (mockObjectRepository.findByIdForAuthorizedUser as jest.Mock).mockResolvedValue({
+        id: 'obj1',
+        connectorId: 'conn1',
+        externalId: 'file-abc',
+        metadata: {},
+      });
+      (mockAccessService.can as jest.Mock).mockResolvedValue(true);
+      (mockConnectorRepository.findById as jest.Mock).mockResolvedValue({
+        id: 'conn1',
+        provider: 'GOOGLE_DRIVE',
+        encryptedTokens: 'enc',
+      });
+      (mockTokenManager.decryptTokenSet as jest.Mock).mockReturnValue({ accessToken: 'tok' });
+      (mockAdapterFactory.getAdapter as jest.Mock).mockReturnValue({
+        downloadFileContent: jest.fn().mockResolvedValue(null),
+      });
+      await expect(service.downloadObjectContent('obj1', 'user1')).rejects.toBeInstanceOf(
         BusinessException,
       );
     });

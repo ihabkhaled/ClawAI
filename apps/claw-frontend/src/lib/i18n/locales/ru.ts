@@ -2326,7 +2326,15 @@ export const ru: TranslationDictionary = {
       mark: 'Отметить для внимания',
       unmark: 'Снять отметку',
       openExternal: 'Открыть',
+      viewFile: 'Открыть файл',
     },
+  },
+  fileViewer: {
+    loading: 'Загрузка файла…',
+    error: 'Не удалось загрузить этот файл.',
+    unsupported: 'Предпросмотр недоступен для этого типа файла. Используйте «Скачать», чтобы открыть его локально.',
+    download: 'Скачать',
+    close: 'Закрыть',
   },
   search: {
     page: {

@@ -2320,7 +2320,15 @@ export const pt: TranslationDictionary = {
       mark: 'Marcar como urgente',
       unmark: 'Remover urgência',
       openExternal: 'Abrir',
+      viewFile: 'Ver arquivo',
     },
+  },
+  fileViewer: {
+    loading: 'Carregando arquivo…',
+    error: 'Não foi possível carregar este arquivo.',
+    unsupported: 'Pré-visualização indisponível para este tipo de arquivo. Use Baixar para abri-lo localmente.',
+    download: 'Baixar',
+    close: 'Fechar',
   },
   search: {
     page: {

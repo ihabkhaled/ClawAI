@@ -2307,7 +2307,15 @@ export const en: TranslationDictionary = {
       mark: 'Mark needs attention',
       unmark: 'Clear attention',
       openExternal: 'Open',
+      viewFile: 'View file',
     },
+  },
+  fileViewer: {
+    loading: 'Loading file…',
+    error: 'Could not load this file.',
+    unsupported: 'Preview not available for this file type. Use Download to open it locally.',
+    download: 'Download',
+    close: 'Close',
   },
   search: {
     page: {

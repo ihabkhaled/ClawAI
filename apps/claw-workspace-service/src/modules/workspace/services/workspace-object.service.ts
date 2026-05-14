@@ -15,6 +15,7 @@ import type {
   WorkspaceSyncRun,
 } from '../../../generated/prisma';
 import type {
+  FileContentStream,
   LiveObjectDetails,
   PaginatedWorkspaceObjects,
   WorkspaceObjectWithLinks,
@@ -112,6 +113,54 @@ export class WorkspaceObjectService {
       throw new EntityNotFoundException('WorkspaceObject', id);
     }
     return obj;
+  }
+
+  // v3 round 11 (Prompt 08) — stream a file-backed object's raw bytes
+  // from the provider. Authorizes via ConnectorAccessService (VIEW) so
+  // both the owner and any grantee can download. Returns the
+  // FileContentStream descriptor — the controller pipes `body` straight
+  // to the HTTP response.
+  async downloadObjectContent(id: string, userId: string): Promise<FileContentStream> {
+    const obj = await this.objectRepository.findByIdForAuthorizedUser(id);
+    if (obj === null) {
+      throw new EntityNotFoundException('WorkspaceObject', id);
+    }
+    const canView = await this.accessService.can(
+      userId,
+      obj.connectorId,
+      ConnectorAction.VIEW,
+    );
+    if (!canView) {
+      throw new BusinessException(
+        'workspace.connector.forbidden',
+        'FORBIDDEN',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    const connector = await this.loadConnectedConnector(obj.connectorId);
+    const adapter = this.adapterFactory.getAdapter(connector.provider as WorkspaceProvider);
+    if (adapter.downloadFileContent === undefined) {
+      throw new BusinessException(
+        'workspace.object.download.unsupported',
+        'ADAPTER_DOWNLOAD_UNSUPPORTED',
+        HttpStatus.NOT_IMPLEMENTED,
+      );
+    }
+    const tokens = this.tokenManager.decryptTokenSet(connector.encryptedTokens);
+    const stream = await adapter.downloadFileContent(
+      tokens.accessToken,
+      obj.externalId,
+      (obj.metadata ?? {}) as Record<string, unknown>,
+    );
+    if (stream === null) {
+      this.logger.warn(`Object ${obj.id} content gone upstream (${obj.externalId})`);
+      throw new BusinessException(
+        'workspace.object.download.gone',
+        'OBJECT_GONE',
+        HttpStatus.GONE,
+      );
+    }
+    return stream;
   }
 
   private async loadConnectedConnector(

@@ -2311,7 +2311,15 @@ export const hi: TranslationDictionary = {
       mark: 'ध्यान देने के रूप में चिह्नित करें',
       unmark: 'ध्यान साफ़ करें',
       openExternal: 'खोलें',
+      viewFile: 'फ़ाइल देखें',
     },
+  },
+  fileViewer: {
+    loading: 'फ़ाइल लोड हो रही है…',
+    error: 'यह फ़ाइल लोड नहीं हो सकी।',
+    unsupported: 'इस फ़ाइल प्रकार के लिए पूर्वावलोकन उपलब्ध नहीं है। इसे स्थानीय रूप से खोलने के लिए डाउनलोड का उपयोग करें।',
+    download: 'डाउनलोड',
+    close: 'बंद करें',
   },
   search: {
     page: {

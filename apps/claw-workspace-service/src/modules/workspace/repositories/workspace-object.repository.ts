@@ -106,6 +106,16 @@ export class WorkspaceObjectRepository {
     });
   }
 
+  // v3 round 11 — id-only lookup (no userId filter). For grantee callers
+  // where ConnectorAccessService has already authorized access to the
+  // object's connector. Caller MUST run the access check first.
+  async findByIdForAuthorizedUser(id: string): Promise<WorkspaceObject | null> {
+    return this.prisma.workspaceObject.findUnique({
+      where: { id },
+      include: { sourceLinks: true },
+    });
+  }
+
   async countByConnectorId(connectorId: string): Promise<number> {
     return this.prisma.workspaceObject.count({ where: { connectorId } });
   }

@@ -2330,7 +2330,15 @@ export const de: TranslationDictionary = {
       mark: 'Aufmerksamkeit markieren',
       unmark: 'Markierung entfernen',
       openExternal: 'Öffnen',
+      viewFile: 'Datei ansehen',
     },
+  },
+  fileViewer: {
+    loading: 'Datei wird geladen…',
+    error: 'Diese Datei konnte nicht geladen werden.',
+    unsupported: 'Für diesen Dateityp ist keine Vorschau verfügbar. Nutzen Sie Herunterladen, um sie lokal zu öffnen.',
+    download: 'Herunterladen',
+    close: 'Schließen',
   },
   search: {
     page: {

@@ -15,6 +15,7 @@ import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
 import type {
   AdapterCapabilities,
+  FileContentStream,
   HealthCheckResult,
   LiveObjectDetails,
   OAuthTokenSet,
@@ -335,6 +336,50 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
     } catch {
       return null;
     }
+  }
+
+  // v3 round 11 (Prompt 08) — stream a Drive file's raw bytes. Google
+  // Docs/Sheets/Slides are exported to a portable format (PDF / CSV);
+  // binary files are streamed as-is via ?alt=media.
+  async downloadFileContent(
+    accessToken: string,
+    externalId: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<FileContentStream | null> {
+    const headers = { Authorization: `Bearer ${accessToken}` };
+    const mimeType = typeof metadata?.['mimeType'] === 'string' ? metadata['mimeType'] : '';
+    const name = typeof metadata?.['name'] === 'string' ? metadata['name'] : externalId;
+
+    // Google-native docs cannot be downloaded directly — export them.
+    const exportMap: Record<string, { mime: string; ext: string }> = {
+      'application/vnd.google-apps.document': {
+        mime: 'application/pdf',
+        ext: '.pdf',
+      },
+      'application/vnd.google-apps.spreadsheet': { mime: 'text/csv', ext: '.csv' },
+      'application/vnd.google-apps.presentation': {
+        mime: 'application/pdf',
+        ext: '.pdf',
+      },
+    };
+    const exportTarget = exportMap[mimeType];
+    const url =
+      exportTarget !== undefined
+        ? `${GOOGLE_DRIVE_API_BASE}/files/${encodeURIComponent(externalId)}/export?mimeType=${encodeURIComponent(exportTarget.mime)}`
+        : `${GOOGLE_DRIVE_API_BASE}/files/${encodeURIComponent(externalId)}?alt=media`;
+
+    const response = await fetch(url, { headers });
+    if (response.status === 404) return null;
+    if (!response.ok || response.body === null) {
+      throw new Error(`Google Drive downloadFileContent failed: HTTP ${String(response.status)}`);
+    }
+    const contentLength = response.headers.get('content-length');
+    return {
+      filename: exportTarget !== undefined ? `${name}${exportTarget.ext}` : name,
+      mimeType: exportTarget?.mime ?? response.headers.get('content-type') ?? 'application/octet-stream',
+      sizeBytes: contentLength !== null ? Number(contentLength) : null,
+      body: response.body,
+    };
   }
 
   supportsWrite(): boolean {
