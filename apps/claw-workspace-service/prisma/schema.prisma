@@ -733,3 +733,93 @@ model WorkspaceConnectorGrant {
   @@index([connectorId])
   @@map("workspace_connector_grants")
 }
+
+// v3 round 12 (2026-05-14) — Prompt 11: cross-workspace automation
+// chains. A chain is an ordered list of workspace-action steps —
+// e.g. "create Jira ticket" → "post Slack message" referencing the new
+// ticket's key. Each step's payload may contain {{steps.N.output.field}}
+// placeholders that the executor resolves from prior step outputs.
+//
+// The executor is SEQUENTIAL (step 1 → 2 → 3); a step can read any
+// earlier step's output. A true parallel DAG is a future enhancement —
+// sequential covers the Gmail→Slack→Jira use case named in the v3 plan.
+enum WorkspaceChainRunStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum WorkspaceChainStepStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  SKIPPED
+}
+
+model WorkspaceChain {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id") @db.VarChar(128)
+  name        String   @db.VarChar(160)
+  description String?  @db.Text
+  // The chain DSL: { steps: [{ id, connectorId, actionType, payload }] }.
+  // Validated by a Zod schema at the controller layer.
+  dsl         Json
+  isEnabled   Boolean  @default(true) @map("is_enabled")
+  version     Int      @default(1)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  runs WorkspaceChainRun[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("workspace_chains")
+}
+
+model WorkspaceChainRun {
+  id        String                  @id @default(cuid())
+  chainId   String                  @map("chain_id")
+  userId    String                  @map("user_id") @db.VarChar(128)
+  status    WorkspaceChainRunStatus @default(PENDING)
+  // Snapshot of the chain DSL at run time so edits to the chain don't
+  // retroactively change a historical run.
+  dslSnapshot Json                  @map("dsl_snapshot")
+  error     String?                 @db.Text
+  startedAt DateTime?               @map("started_at")
+  finishedAt DateTime?              @map("finished_at")
+  createdAt DateTime                @default(now()) @map("created_at")
+  updatedAt DateTime                @updatedAt @map("updated_at")
+
+  chain WorkspaceChain          @relation(fields: [chainId], references: [id], onDelete: Cascade)
+  steps WorkspaceChainRunStep[]
+
+  @@index([chainId])
+  @@index([userId])
+  @@map("workspace_chain_runs")
+}
+
+model WorkspaceChainRunStep {
+  id          String                   @id @default(cuid())
+  runId       String                   @map("run_id")
+  // The step id from the DSL — placeholders reference this.
+  stepId      String                   @map("step_id") @db.VarChar(120)
+  stepIndex   Int                      @map("step_index")
+  connectorId String                   @map("connector_id")
+  actionType  String                   @map("action_type") @db.VarChar(64)
+  status      WorkspaceChainStepStatus @default(PENDING)
+  // Resolved payload (placeholders substituted) actually sent to the
+  // adapter, plus the adapter's WriteActionResult output.
+  resolvedPayload Json?                @map("resolved_payload")
+  output      Json?
+  error       String?                  @db.Text
+  startedAt   DateTime?                @map("started_at")
+  finishedAt  DateTime?                @map("finished_at")
+  createdAt   DateTime                 @default(now()) @map("created_at")
+
+  run WorkspaceChainRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@map("workspace_chain_run_steps")
+}
