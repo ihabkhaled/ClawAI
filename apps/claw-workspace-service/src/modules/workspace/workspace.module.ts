@@ -3,6 +3,7 @@ import { BitbucketAdapter } from './adapters/bitbucket.adapter';
 import { ClickUpAdapter } from './adapters/clickup.adapter';
 import { ConfluenceAdapter } from './adapters/confluence.adapter';
 import { FigmaAdapter } from './adapters/figma.adapter';
+import { FigmaDesignAnalyzerHelper } from './adapters/figma-design-analyzer.helper';
 import { GitHubAdapter } from './adapters/github.adapter';
 import { GitHubWriteActionsHelper } from './adapters/github-write-actions.helper';
 import { GitLabAdapter } from './adapters/gitlab.adapter';
@@ -27,6 +28,7 @@ import { WorkspaceObjectController } from './controllers/workspace-object.contro
 import { WorkspaceProviderRegistryController } from './controllers/workspace-provider-registry.controller';
 import { WorkspaceSearchController } from './controllers/workspace-search.controller';
 import { WorkspaceSearchInternalController } from './controllers/workspace-search-internal.controller';
+import { FigmaDesignController } from './controllers/figma-design.controller';
 import { ConnectorActivationManager } from './managers/connector-activation.manager';
 import { OAuthTokenManager } from './managers/oauth-token.manager';
 import { OrphanSyncRecoveryManager } from './managers/orphan-sync-recovery.manager';
@@ -40,11 +42,14 @@ import { WorkspaceSyncSchedulerManager } from './managers/workspace-sync-schedul
 import { ProviderAppConfigRepository } from './repositories/provider-app-config.repository';
 import { ProviderDefinitionRepository } from './repositories/provider-definition.repository';
 import { SyncCadenceRepository } from './repositories/sync-cadence.repository';
+import { ConnectorGrantRepository } from '../connector-access/repositories/connector-grant.repository';
+import { ConnectorAccessService } from '../connector-access/services/connector-access.service';
 import { WorkspaceConnectorRepository } from './repositories/workspace-connector.repository';
 import { WorkspaceObjectRepository } from './repositories/workspace-object.repository';
 import { ProviderAppConfigService } from './services/provider-app-config.service';
 import { ProviderRegistryService } from './services/provider-registry.service';
 import { SyncHealthService } from './services/sync-health.service';
+import { FigmaDesignService } from './services/figma-design.service';
 import { WorkspaceConnectorService } from './services/workspace-connector.service';
 import { WorkspaceObjectService } from './services/workspace-object.service';
 import { WorkspaceSearchService } from './services/workspace-search.service';
@@ -59,6 +64,7 @@ import { WorkspaceSearchService } from './services/workspace-search.service';
     WorkspaceSearchInternalController,
     SyncHealthController,
     SyncHealthInternalController,
+    FigmaDesignController,
   ],
   providers: [
     WorkspaceConnectorRepository,
@@ -66,12 +72,16 @@ import { WorkspaceSearchService } from './services/workspace-search.service';
     ProviderDefinitionRepository,
     ProviderAppConfigRepository,
     SyncCadenceRepository,
+    ConnectorAccessService,
+    ConnectorGrantRepository,
     WorkspaceConnectorService,
     WorkspaceObjectService,
     WorkspaceSearchService,
     ProviderRegistryService,
     ProviderAppConfigService,
     SyncHealthService,
+    FigmaDesignService,
+    FigmaDesignAnalyzerHelper,
     OAuthTokenManager,
     TokenRefreshManager,
     WorkspaceHealthManager,

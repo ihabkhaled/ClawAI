@@ -122,6 +122,7 @@ export const es: TranslationDictionary = {
     workspaceDigest: 'Resumen',
     workspaceAutomationPreferences: 'Preferencias de automatización',
     workspaceEmailSignatures: 'Firmas de correo',
+    workspaceEmailTemplates: 'Plantillas de correo',
     workspaceImplHandoffs: 'Entregas de código',
     adminAiActionPolicies: 'Políticas de acciones de IA',
     adminSuggestionRules: 'Reglas de sugerencia',
@@ -1466,6 +1467,25 @@ export const es: TranslationDictionary = {
       clear: 'Limpiar',
     },
   },
+  connectorGrants: {
+    title: 'Compartir',
+    description:
+      'Comparte este conector con otros usuarios. El propietario siempre tiene acceso completo; los destinatarios ven el nivel de acceso que elijas.',
+    loading: 'Cargando permisos…',
+    error: 'No se pudieron cargar los permisos.',
+    empty: 'Aún no hay permisos. Este conector solo es accesible para ti.',
+    granteeUserIdLabel: 'ID de usuario destinatario',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'Nivel de acceso',
+    grant: 'Otorgar acceso',
+    granting: 'Otorgando…',
+    revoke: 'Revocar',
+    revoking: 'Revocando…',
+    grantedBy: 'otorgado por',
+    levelReadOnly: 'Solo lectura',
+    levelAiActions: 'Acciones de IA',
+    levelFull: 'Completo',
+  },
   emailSignatures: {
     page: {
       title: 'Firmas de correo electrónico',
@@ -2259,6 +2279,37 @@ export const es: TranslationDictionary = {
     },
   },
 
+  emailTemplates: {
+    page: {
+      title: 'Plantillas de correo electrónico',
+      description:
+        'Puntos de partida reutilizables (asunto + cuerpo) para correos redactados por IA. Los {{placeholders}} se rellenan al usar la plantilla.',
+      loading: 'Cargando plantillas…',
+      error: 'No se pudieron cargar las plantillas. Actualiza la página.',
+      empty: 'Aún no hay plantillas. Crea una para comenzar.',
+      create: 'Nueva plantilla',
+      edit: 'Editar',
+      delete: 'Eliminar',
+      deleting: 'Eliminando…',
+      defaultBadge: 'Predeterminada',
+      subjectLabel: 'Asunto',
+    },
+    dialog: {
+      createTitle: 'Crear plantilla',
+      editTitle: 'Editar plantilla',
+      nameLabel: 'Nombre',
+      namePlaceholder: 'Correo de seguimiento',
+      subjectLabel: 'Asunto',
+      subjectPlaceholder: 'Seguimiento sobre {{topic}}',
+      bodyLabel: 'Cuerpo',
+      bodyPlaceholder: 'Hola {{name}},\n\nVolviendo al tema de {{topic}}…',
+      defaultLabel: 'Usar como predeterminada',
+      save: 'Guardar',
+      saving: 'Guardando…',
+      cancel: 'Cancelar',
+    },
+  },
+
   inbox: {
     page: {
       title: 'Bandeja del espacio de trabajo',
@@ -2283,7 +2334,15 @@ export const es: TranslationDictionary = {
       mark: 'Marcar como atención',
       unmark: 'Quitar atención',
       openExternal: 'Abrir',
+      viewFile: 'Ver archivo',
     },
+  },
+  fileViewer: {
+    loading: 'Cargando archivo…',
+    error: 'No se pudo cargar este archivo.',
+    unsupported: 'No hay vista previa disponible para este tipo de archivo. Usa Descargar para abrirlo localmente.',
+    download: 'Descargar',
+    close: 'Cerrar',
   },
   search: {
     page: {

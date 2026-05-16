@@ -23,7 +23,9 @@ import { InboxModule } from '../modules/inbox/inbox.module';
 import { DigestModule } from '../modules/digest/digest.module';
 import { TicketPlanningModule } from '../modules/ticket-planning/ticket-planning.module';
 import { EmailSignaturesModule } from '../modules/email-signatures/email-signatures.module';
+import { EmailTemplatesModule } from '../modules/email-templates/email-templates.module';
 import { ConnectorAccessModule } from '../modules/connector-access/connector-access.module';
+import { ChainsModule } from '../modules/chains/chains.module';
 
 @Module({
   imports: [
@@ -89,7 +91,9 @@ import { ConnectorAccessModule } from '../modules/connector-access/connector-acc
     DigestModule,
     TicketPlanningModule,
     EmailSignaturesModule,
+    EmailTemplatesModule,
     ConnectorAccessModule,
+    ChainsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

@@ -53,6 +53,7 @@ export const ROUTES = {
   WORKSPACE_DIGEST: '/workspace/digest',
   WORKSPACE_AUTOMATION_PREFERENCES: '/workspace/automation-preferences',
   WORKSPACE_EMAIL_SIGNATURES: '/workspace/email-signatures',
+  WORKSPACE_EMAIL_TEMPLATES: '/workspace/email-templates',
   WORKSPACE_IMPL_HANDOFFS: '/workspace/impl-handoffs',
   ADMIN_AI_ACTION_POLICIES: '/admin/ai-action-policies',
   ADMIN_SUGGESTION_RULES: '/admin/suggestion-rules',

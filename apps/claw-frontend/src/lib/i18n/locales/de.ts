@@ -122,6 +122,7 @@ export const de: TranslationDictionary = {
     workspaceDigest: 'Zusammenfassung',
     workspaceAutomationPreferences: 'Automatisierungseinstellungen',
     workspaceEmailSignatures: 'E-Mail-Signaturen',
+    workspaceEmailTemplates: 'E-Mail-Vorlagen',
     workspaceImplHandoffs: 'Coding-Übergaben',
     adminAiActionPolicies: 'KI-Aktionsrichtlinien',
     adminSuggestionRules: 'Vorschlagsregeln',
@@ -1469,6 +1470,25 @@ export const de: TranslationDictionary = {
       clear: 'Leeren',
     },
   },
+  connectorGrants: {
+    title: 'Freigabe',
+    description:
+      'Geben Sie diesen Connector für andere Benutzer frei. Der Eigentümer hat immer Vollzugriff; Empfänger sehen die von Ihnen gewählte Zugriffsstufe.',
+    loading: 'Berechtigungen werden geladen …',
+    error: 'Berechtigungen konnten nicht geladen werden.',
+    empty: 'Noch keine Berechtigungen. Dieser Connector ist nur für Sie zugänglich.',
+    granteeUserIdLabel: 'Benutzer-ID des Empfängers',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'Zugriffsebene',
+    grant: 'Zugriff gewähren',
+    granting: 'Wird gewährt …',
+    revoke: 'Widerrufen',
+    revoking: 'Wird widerrufen …',
+    grantedBy: 'gewährt von',
+    levelReadOnly: 'Nur Lesen',
+    levelAiActions: 'KI-Aktionen',
+    levelFull: 'Vollzugriff',
+  },
   emailSignatures: {
     page: {
       title: 'E-Mail-Signaturen',
@@ -2255,6 +2275,37 @@ export const de: TranslationDictionary = {
     },
   },
 
+  emailTemplates: {
+    page: {
+      title: 'E-Mail-Vorlagen',
+      description:
+        'Wiederverwendbare Betreff- und Textbausteine für KI-verfasste E-Mails. {{placeholders}} werden beim Verwenden der Vorlage gefüllt.',
+      loading: 'Vorlagen werden geladen…',
+      error: 'Vorlagen konnten nicht geladen werden. Aktualisieren Sie die Seite.',
+      empty: 'Noch keine Vorlagen. Erstellen Sie eine, um zu beginnen.',
+      create: 'Neue Vorlage',
+      edit: 'Bearbeiten',
+      delete: 'Löschen',
+      deleting: 'Wird gelöscht…',
+      defaultBadge: 'Standard',
+      subjectLabel: 'Betreff',
+    },
+    dialog: {
+      createTitle: 'Vorlage erstellen',
+      editTitle: 'Vorlage bearbeiten',
+      nameLabel: 'Name',
+      namePlaceholder: 'Follow-up-E-Mail',
+      subjectLabel: 'Betreff',
+      subjectPlaceholder: 'Nachfassen zu {{topic}}',
+      bodyLabel: 'Text',
+      bodyPlaceholder: 'Hallo {{name}},\n\nich melde mich noch einmal zu {{topic}}…',
+      defaultLabel: 'Als Standard verwenden',
+      save: 'Speichern',
+      saving: 'Wird gespeichert…',
+      cancel: 'Abbrechen',
+    },
+  },
+
   inbox: {
     page: {
       title: 'Arbeitsbereich-Posteingang',
@@ -2279,7 +2330,15 @@ export const de: TranslationDictionary = {
       mark: 'Aufmerksamkeit markieren',
       unmark: 'Markierung entfernen',
       openExternal: 'Öffnen',
+      viewFile: 'Datei ansehen',
     },
+  },
+  fileViewer: {
+    loading: 'Datei wird geladen…',
+    error: 'Diese Datei konnte nicht geladen werden.',
+    unsupported: 'Für diesen Dateityp ist keine Vorschau verfügbar. Nutzen Sie Herunterladen, um sie lokal zu öffnen.',
+    download: 'Herunterladen',
+    close: 'Schließen',
   },
   search: {
     page: {

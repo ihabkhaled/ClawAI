@@ -122,6 +122,7 @@ export const en: TranslationDictionary = {
     workspaceDigest: 'Digest',
     workspaceAutomationPreferences: 'Automation Preferences',
     workspaceEmailSignatures: 'Email Signatures',
+    workspaceEmailTemplates: 'Email Templates',
     workspaceImplHandoffs: 'Coding Handoffs',
     adminAiActionPolicies: 'AI Action Policies',
     adminSuggestionRules: 'Suggestion Rules',
@@ -1436,6 +1437,25 @@ export const en: TranslationDictionary = {
       clear: 'Clear',
     },
   },
+  connectorGrants: {
+    title: 'Sharing',
+    description:
+      'Share this connector with other users. Owner always has full access; grantees see the access level you pick.',
+    loading: 'Loading grants…',
+    error: 'Could not load grants.',
+    empty: 'No grants yet. This connector is only accessible to you.',
+    granteeUserIdLabel: 'Grantee user ID',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'Access level',
+    grant: 'Grant access',
+    granting: 'Granting…',
+    revoke: 'Revoke',
+    revoking: 'Revoking…',
+    grantedBy: 'granted by',
+    levelReadOnly: 'Read only',
+    levelAiActions: 'AI actions',
+    levelFull: 'Full',
+  },
   emailSignatures: {
     page: {
       title: 'Email Signatures',
@@ -2232,6 +2252,37 @@ export const en: TranslationDictionary = {
     },
   },
 
+  emailTemplates: {
+    page: {
+      title: 'Email Templates',
+      description:
+        'Reusable subject + body starting points for AI-drafted emails. {{placeholders}} are filled in when the template is used.',
+      loading: 'Loading templates…',
+      error: 'Could not load templates. Try refreshing.',
+      empty: 'No templates yet. Create one to get started.',
+      create: 'New template',
+      edit: 'Edit',
+      delete: 'Delete',
+      deleting: 'Deleting…',
+      defaultBadge: 'Default',
+      subjectLabel: 'Subject',
+    },
+    dialog: {
+      createTitle: 'Create template',
+      editTitle: 'Edit template',
+      nameLabel: 'Name',
+      namePlaceholder: 'Follow-up email',
+      subjectLabel: 'Subject',
+      subjectPlaceholder: 'Following up on {{topic}}',
+      bodyLabel: 'Body',
+      bodyPlaceholder: 'Hi {{name}},\n\nJust circling back on {{topic}}…',
+      defaultLabel: 'Use as default',
+      save: 'Save',
+      saving: 'Saving…',
+      cancel: 'Cancel',
+    },
+  },
+
   inbox: {
     page: {
       title: 'Workspace Inbox',
@@ -2256,7 +2307,15 @@ export const en: TranslationDictionary = {
       mark: 'Mark needs attention',
       unmark: 'Clear attention',
       openExternal: 'Open',
+      viewFile: 'View file',
     },
+  },
+  fileViewer: {
+    loading: 'Loading file…',
+    error: 'Could not load this file.',
+    unsupported: 'Preview not available for this file type. Use Download to open it locally.',
+    download: 'Download',
+    close: 'Close',
   },
   search: {
     page: {

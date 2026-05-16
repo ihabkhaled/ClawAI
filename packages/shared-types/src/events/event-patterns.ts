@@ -124,4 +124,6 @@ export enum EventPattern {
   ROUTING_CIRCUIT_BREAKER_OPENED = 'routing.circuit_breaker.opened',
   ROUTING_CIRCUIT_BREAKER_CLOSED = 'routing.circuit_breaker.closed',
   ROUTING_CIRCUIT_BREAKER_HALF_OPEN = 'routing.circuit_breaker.half_open',
+  // === Smart Router Flagship (Phase 6 — model knowledge sync) ===
+  ROUTING_MODELS_SYNCED = 'routing.models.synced',
 }

@@ -122,6 +122,7 @@ export const ar: TranslationDictionary = {
     workspaceDigest: 'الموجز',
     workspaceAutomationPreferences: 'تفضيلات الأتمتة',
     workspaceEmailSignatures: 'تواقيع البريد الإلكتروني',
+    workspaceEmailTemplates: 'قوالب البريد الإلكتروني',
     workspaceImplHandoffs: 'تسليمات البرمجة',
     adminAiActionPolicies: 'سياسات إجراءات الذكاء الاصطناعي',
     adminSuggestionRules: 'قواعد الاقتراحات',
@@ -1432,6 +1433,25 @@ export const ar: TranslationDictionary = {
       clear: 'مسح',
     },
   },
+  connectorGrants: {
+    title: 'المشاركة',
+    description:
+      'شارك هذا الموصل مع مستخدمين آخرين. المالك لديه دائمًا وصول كامل؛ يرى المستفيدون مستوى الوصول الذي تختاره.',
+    loading: 'جارٍ تحميل الصلاحيات…',
+    error: 'تعذر تحميل الصلاحيات.',
+    empty: 'لا توجد صلاحيات بعد. هذا الموصل متاح لك فقط.',
+    granteeUserIdLabel: 'معرف مستخدم المستفيد',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'مستوى الوصول',
+    grant: 'منح الوصول',
+    granting: 'جارٍ المنح…',
+    revoke: 'إلغاء',
+    revoking: 'جارٍ الإلغاء…',
+    grantedBy: 'مُمنوح من قبل',
+    levelReadOnly: 'قراءة فقط',
+    levelAiActions: 'إجراءات الذكاء الاصطناعي',
+    levelFull: 'كامل',
+  },
   emailSignatures: {
     page: {
       title: 'تواقيع البريد الإلكتروني',
@@ -2210,6 +2230,37 @@ export const ar: TranslationDictionary = {
     },
   },
 
+  emailTemplates: {
+    page: {
+      title: 'قوالب البريد الإلكتروني',
+      description:
+        'نقاط بداية قابلة لإعادة الاستخدام (موضوع + نص) لرسائل البريد التي يصيغها الذكاء الاصطناعي. تُملأ {{placeholders}} عند استخدام القالب.',
+      loading: 'جارٍ تحميل القوالب…',
+      error: 'تعذر تحميل القوالب. حاول تحديث الصفحة.',
+      empty: 'لا توجد قوالب بعد. أنشئ قالبًا للبدء.',
+      create: 'قالب جديد',
+      edit: 'تعديل',
+      delete: 'حذف',
+      deleting: 'جارٍ الحذف…',
+      defaultBadge: 'افتراضي',
+      subjectLabel: 'الموضوع',
+    },
+    dialog: {
+      createTitle: 'إنشاء قالب',
+      editTitle: 'تعديل القالب',
+      nameLabel: 'الاسم',
+      namePlaceholder: 'بريد المتابعة',
+      subjectLabel: 'الموضوع',
+      subjectPlaceholder: 'متابعة بخصوص {{topic}}',
+      bodyLabel: 'النص',
+      bodyPlaceholder: 'مرحبًا {{name}}،\n\nأتواصل معك مجددًا بخصوص {{topic}}…',
+      defaultLabel: 'استخدام كافتراضي',
+      save: 'حفظ',
+      saving: 'جارٍ الحفظ…',
+      cancel: 'إلغاء',
+    },
+  },
+
   inbox: {
     page: {
       title: 'صندوق وارد مساحة العمل',
@@ -2234,7 +2285,15 @@ export const ar: TranslationDictionary = {
       mark: 'وضع علامة تحتاج اهتمامًا',
       unmark: 'إزالة علامة الاهتمام',
       openExternal: 'فتح',
+      viewFile: 'عرض الملف',
     },
+  },
+  fileViewer: {
+    loading: 'جارٍ تحميل الملف…',
+    error: 'تعذر تحميل هذا الملف.',
+    unsupported: 'المعاينة غير متاحة لهذا النوع من الملفات. استخدم التنزيل لفتحه محليًا.',
+    download: 'تنزيل',
+    close: 'إغلاق',
   },
   search: {
     page: {

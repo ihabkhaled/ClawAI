@@ -25,6 +25,7 @@ import type {
 } from '../types/microsoft-graph.types';
 import type {
   AdapterCapabilities,
+  FileContentStream,
   HealthCheckResult,
   LiveObjectDetails,
   OAuthTokenSet,
@@ -222,6 +223,39 @@ export class SharePointAdapter implements WorkspaceAdapter {
     }
     const site = (await response.json()) as GraphSite;
     return this.mapSiteToLive(site);
+  }
+
+  // v3 round 11 (Prompt 08) — stream a SharePoint document-library file.
+  // SharePoint files live inside a drive on a site, so the caller must
+  // supply `driveId` in the object metadata; `externalId` is the
+  // driveItem id. Returns null when either is missing or the item 404s.
+  async downloadFileContent(
+    accessToken: string,
+    externalId: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<FileContentStream | null> {
+    const driveId = typeof metadata?.['driveId'] === 'string' ? metadata['driveId'] : '';
+    if (driveId.length === 0) {
+      // No drive context — can't resolve the file. Caller surfaces this
+      // as a 404 rather than guessing.
+      return null;
+    }
+    const name = typeof metadata?.['name'] === 'string' ? metadata['name'] : externalId;
+    const response = await fetch(
+      `${MICROSOFT_GRAPH_API_BASE}/drives/${encodeURIComponent(driveId)}/items/${encodeURIComponent(externalId)}/content`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    if (response.status === 404) return null;
+    if (!response.ok || response.body === null) {
+      throw new Error(`SharePoint downloadFileContent failed: HTTP ${String(response.status)}`);
+    }
+    const contentLength = response.headers.get('content-length');
+    return {
+      filename: name,
+      mimeType: response.headers.get('content-type') ?? 'application/octet-stream',
+      sizeBytes: contentLength !== null ? Number(contentLength) : null,
+      body: response.body,
+    };
   }
 
   private normalizeTokenResponse(data: MicrosoftTokenResponse): OAuthTokenSet {

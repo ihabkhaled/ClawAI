@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:26-alpine AS base
 RUN apk add --no-cache openssl
 WORKDIR /app/apps/claw-client-logs-service
 
@@ -18,7 +18,7 @@ RUN cd /app/packages/shared-types && npx tsc \
  && cd /app/packages/shared-utilities && npx tsc
 RUN npm run build
 
-FROM node:20-alpine AS runner
+FROM node:26-alpine AS runner
 ENV NODE_ENV=production
 WORKDIR /app
 RUN addgroup --system --gid 1001 nestjs

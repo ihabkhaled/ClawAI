@@ -3,7 +3,7 @@
 # in glibc-only symbols (__res_init, pthread_cond_clockwait, __wmemcpy_chk).
 # Alpine + musl + gcompat is NOT enough — must use a glibc-based base.
 # See .claude/Integrations/llamacpp__QA_output.md for the full investigation.
-FROM node:20-bookworm-slim
+FROM node:26-bookworm-slim
 
 # Pinned packages match what the entrypoint + binary-installer need at runtime:
 #   - openssl, curl, ca-certificates: HF + GitHub release downloads

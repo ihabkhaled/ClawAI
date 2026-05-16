@@ -1,6 +1,8 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
+import { ConnectorAction } from '../../connector-access/enums/connector-action.enum';
+import { ConnectorAccessService } from '../../connector-access/services/connector-access.service';
 import { WorkspaceObjectRepository } from '../repositories/workspace-object.repository';
 import { WorkspaceConnectorRepository } from '../repositories/workspace-connector.repository';
 import { WorkspaceAdapterFactory } from '../adapters/workspace-adapter.factory';
@@ -13,6 +15,7 @@ import type {
   WorkspaceSyncRun,
 } from '../../../generated/prisma';
 import type {
+  FileContentStream,
   LiveObjectDetails,
   PaginatedWorkspaceObjects,
   WorkspaceObjectWithLinks,
@@ -28,6 +31,7 @@ export class WorkspaceObjectService {
     private readonly connectorRepository: WorkspaceConnectorRepository,
     private readonly adapterFactory: WorkspaceAdapterFactory,
     private readonly tokenManager: OAuthTokenManager,
+    private readonly accessService: ConnectorAccessService,
   ) {}
 
   async listObjects(
@@ -39,16 +43,30 @@ export class WorkspaceObjectService {
       if (connector === null) {
         throw new EntityNotFoundException('WorkspaceConnector', query.connectorId);
       }
-      if (connector.userId !== userId) {
+      // v3 round 8 — viewing objects is gated by VIEW access (owner +
+      // any grant tier passes). For granted users the repo call drops
+      // the userId filter because the access service has already
+      // authorized the read.
+      const canView = await this.accessService.can(userId, connector.id, ConnectorAction.VIEW);
+      if (!canView) {
         throw new BusinessException(
           'workspace.connector.forbidden',
           'FORBIDDEN',
           HttpStatus.FORBIDDEN,
         );
       }
-      return this.objectRepository.findByConnectorId(
+      const isOwner = connector.userId === userId;
+      if (isOwner) {
+        return this.objectRepository.findByConnectorId(
+          query.connectorId,
+          userId,
+          query.page,
+          query.limit,
+          query.type,
+        );
+      }
+      return this.objectRepository.findByConnectorIdForAuthorizedUser(
         query.connectorId,
-        userId,
         query.page,
         query.limit,
         query.type,
@@ -95,6 +113,54 @@ export class WorkspaceObjectService {
       throw new EntityNotFoundException('WorkspaceObject', id);
     }
     return obj;
+  }
+
+  // v3 round 11 (Prompt 08) — stream a file-backed object's raw bytes
+  // from the provider. Authorizes via ConnectorAccessService (VIEW) so
+  // both the owner and any grantee can download. Returns the
+  // FileContentStream descriptor — the controller pipes `body` straight
+  // to the HTTP response.
+  async downloadObjectContent(id: string, userId: string): Promise<FileContentStream> {
+    const obj = await this.objectRepository.findByIdForAuthorizedUser(id);
+    if (obj === null) {
+      throw new EntityNotFoundException('WorkspaceObject', id);
+    }
+    const canView = await this.accessService.can(
+      userId,
+      obj.connectorId,
+      ConnectorAction.VIEW,
+    );
+    if (!canView) {
+      throw new BusinessException(
+        'workspace.connector.forbidden',
+        'FORBIDDEN',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    const connector = await this.loadConnectedConnector(obj.connectorId);
+    const adapter = this.adapterFactory.getAdapter(connector.provider as WorkspaceProvider);
+    if (adapter.downloadFileContent === undefined) {
+      throw new BusinessException(
+        'workspace.object.download.unsupported',
+        'ADAPTER_DOWNLOAD_UNSUPPORTED',
+        HttpStatus.NOT_IMPLEMENTED,
+      );
+    }
+    const tokens = this.tokenManager.decryptTokenSet(connector.encryptedTokens);
+    const stream = await adapter.downloadFileContent(
+      tokens.accessToken,
+      obj.externalId,
+      (obj.metadata ?? {}) as Record<string, unknown>,
+    );
+    if (stream === null) {
+      this.logger.warn(`Object ${obj.id} content gone upstream (${obj.externalId})`);
+      throw new BusinessException(
+        'workspace.object.download.gone',
+        'OBJECT_GONE',
+        HttpStatus.GONE,
+      );
+    }
+    return stream;
   }
 
   private async loadConnectedConnector(
@@ -165,11 +231,16 @@ export class WorkspaceObjectService {
   }
 
   private async assertOwnedConnector(connectorId: string, userId: string): Promise<void> {
+    // v3 round 8 — renamed for honesty: this no longer asserts ownership,
+    // it asserts VIEW access (owner or any grant level). The legacy name
+    // is preserved so call sites don't churn. Sync-triggering helpers
+    // remain owner-only via WorkspaceConnectorService's ad-hoc check.
     const connector = await this.connectorRepository.findById(connectorId);
     if (connector === null) {
       throw new EntityNotFoundException('WorkspaceConnector', connectorId);
     }
-    if (connector.userId !== userId) {
+    const canView = await this.accessService.can(userId, connectorId, ConnectorAction.VIEW);
+    if (!canView) {
       throw new BusinessException(
         'workspace.connector.forbidden',
         'FORBIDDEN',

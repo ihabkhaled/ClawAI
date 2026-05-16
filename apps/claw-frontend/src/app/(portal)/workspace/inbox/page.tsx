@@ -3,6 +3,7 @@
 import type { ReactElement } from 'react';
 
 import { PageHeader } from '@/components/common/page-header';
+import { FileViewerModal } from '@/components/file-viewer/file-viewer-modal';
 import { InboxFilterBar } from '@/components/inbox/inbox-filter-bar';
 import { InboxRow } from '@/components/inbox/inbox-row';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ export default function WorkspaceInboxPage(): ReactElement {
     isLoadingMore,
     toggleNeedsAttention,
     isUpdating,
+    fileViewer,
   } = useInboxPage();
 
   return (
@@ -57,6 +59,7 @@ export default function WorkspaceInboxPage(): ReactElement {
               key={item.id}
               item={item}
               onToggleNeedsAttention={toggleNeedsAttention}
+              onViewFile={fileViewer.open}
               isUpdating={isUpdating}
               t={t}
             />
@@ -70,6 +73,24 @@ export default function WorkspaceInboxPage(): ReactElement {
           ) : null}
         </div>
       ) : null}
+
+      <FileViewerModal
+        openObjectId={fileViewer.openObjectId}
+        title={fileViewer.title}
+        content={fileViewer.content}
+        textPreview={fileViewer.textPreview}
+        renderKind={fileViewer.renderKind}
+        isLoading={fileViewer.isLoading}
+        error={fileViewer.error}
+        onClose={fileViewer.close}
+        labels={{
+          loading: t('fileViewer.loading'),
+          error: t('fileViewer.error'),
+          unsupported: t('fileViewer.unsupported'),
+          download: t('fileViewer.download'),
+          close: t('fileViewer.close'),
+        }}
+      />
     </div>
   );
 }
