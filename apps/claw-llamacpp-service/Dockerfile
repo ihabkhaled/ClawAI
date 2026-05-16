@@ -5,7 +5,7 @@
 # is glibc-linked and references symbols (__res_init, pthread_cond_clockwait,
 # __wmemcpy_chk) that musl + gcompat cannot satisfy. See
 # .claude/Integrations/llamacpp__QA_output.md for the diagnosis.
-FROM node:20-bookworm-slim AS base
+FROM node:26-bookworm-slim AS base
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/apps/claw-llamacpp-service
 
@@ -30,7 +30,7 @@ RUN cp -r src/generated dist/generated 2>/dev/null || true
 # Final stage MUST also be Debian-glibc so the downloaded llama-server can run.
 # Runtime apt deps are the same set the dev image needs to extract release
 # archives + dlopen the OpenMP runtime.
-FROM node:20-bookworm-slim AS runner
+FROM node:26-bookworm-slim AS runner
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
        openssl \
