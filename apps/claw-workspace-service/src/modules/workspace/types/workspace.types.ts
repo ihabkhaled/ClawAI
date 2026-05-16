@@ -160,3 +160,19 @@ export type LiveObjectDetails = {
   externalUpdatedAt: Date | null;
   metadata: Record<string, unknown>;
 };
+
+/**
+ * v3 round 11 (2026-05-14) — Prompt 08: a streamable file payload from a
+ * file-backed provider (Google Drive / OneDrive / SharePoint). `body` is
+ * a web ReadableStream so the controller can pipe it straight to the
+ * HTTP response without buffering the whole file in memory.
+ */
+export type FileContentStream = {
+  filename: string;
+  mimeType: string;
+  // Total size in bytes when the provider reports it; null when unknown
+  // (e.g. chunked transfer). The controller sets Content-Length only when
+  // this is non-null.
+  sizeBytes: number | null;
+  body: ReadableStream<Uint8Array>;
+};

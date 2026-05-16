@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
+import { ConnectorGrantsCard } from '@/components/connector-grants/connector-grants-card';
 import { Button } from '@/components/ui/button';
 import { ConnectorDetailView } from '@/components/workspace/connector-detail-view';
 import { useConnectorDetailPage } from '@/hooks/workspace/use-connector-detail-page';
@@ -40,21 +41,44 @@ export default function WorkspaceConnectorDetailPage(): React.ReactElement {
       ) : null}
 
       {!ctrl.isLoading && !ctrl.isError && ctrl.connector !== undefined ? (
-        <ConnectorDetailView
-          connector={ctrl.connector}
-          syncRuns={ctrl.syncRuns}
-          healthEvents={ctrl.healthEvents}
-          recentObjects={ctrl.recentObjects}
-          isSyncing={ctrl.isSyncing}
-          isCheckingHealth={ctrl.isCheckingHealth}
-          isDeleting={ctrl.isDeleting}
-          isAskingAi={ctrl.isAskingAi}
-          onSync={ctrl.onSync}
-          onHealthCheck={ctrl.onHealthCheck}
-          onDelete={ctrl.onDelete}
-          onAskAi={ctrl.onAskAi}
-          t={ctrl.t}
-        />
+        <>
+          <ConnectorDetailView
+            connector={ctrl.connector}
+            syncRuns={ctrl.syncRuns}
+            healthEvents={ctrl.healthEvents}
+            recentObjects={ctrl.recentObjects}
+            isSyncing={ctrl.isSyncing}
+            isCheckingHealth={ctrl.isCheckingHealth}
+            isDeleting={ctrl.isDeleting}
+            isAskingAi={ctrl.isAskingAi}
+            onSync={ctrl.onSync}
+            onHealthCheck={ctrl.onHealthCheck}
+            onDelete={ctrl.onDelete}
+            onAskAi={ctrl.onAskAi}
+            t={ctrl.t}
+          />
+          <ConnectorGrantsCard
+            connectorId={ctrl.connector.id}
+            labels={{
+              title: ctrl.t('connectorGrants.title'),
+              description: ctrl.t('connectorGrants.description'),
+              loading: ctrl.t('connectorGrants.loading'),
+              error: ctrl.t('connectorGrants.error'),
+              empty: ctrl.t('connectorGrants.empty'),
+              granteeUserIdLabel: ctrl.t('connectorGrants.granteeUserIdLabel'),
+              granteeUserIdPlaceholder: ctrl.t('connectorGrants.granteeUserIdPlaceholder'),
+              accessLevelLabel: ctrl.t('connectorGrants.accessLevelLabel'),
+              grant: ctrl.t('connectorGrants.grant'),
+              granting: ctrl.t('connectorGrants.granting'),
+              revoke: ctrl.t('connectorGrants.revoke'),
+              revoking: ctrl.t('connectorGrants.revoking'),
+              grantedBy: ctrl.t('connectorGrants.grantedBy'),
+              levelReadOnly: ctrl.t('connectorGrants.levelReadOnly'),
+              levelAiActions: ctrl.t('connectorGrants.levelAiActions'),
+              levelFull: ctrl.t('connectorGrants.levelFull'),
+            }}
+          />
+        </>
       ) : null}
     </div>
   );

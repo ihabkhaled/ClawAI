@@ -122,6 +122,7 @@ export const it: TranslationDictionary = {
     workspaceDigest: 'Sintesi',
     workspaceAutomationPreferences: 'Preferenze automazione',
     workspaceEmailSignatures: 'Firme e-mail',
+    workspaceEmailTemplates: 'Modelli e-mail',
     workspaceImplHandoffs: 'Passaggi di codice',
     adminAiActionPolicies: 'Policy azioni IA',
     adminSuggestionRules: 'Regole suggerimenti',
@@ -1465,6 +1466,25 @@ export const it: TranslationDictionary = {
       clear: 'Cancella',
     },
   },
+  connectorGrants: {
+    title: 'Condivisione',
+    description:
+      'Condividi questo connettore con altri utenti. Il proprietario ha sempre accesso completo; i destinatari vedono il livello di accesso scelto.',
+    loading: 'Caricamento autorizzazioni…',
+    error: 'Impossibile caricare le autorizzazioni.',
+    empty: 'Ancora nessuna autorizzazione. Questo connettore è accessibile solo a te.',
+    granteeUserIdLabel: 'ID utente destinatario',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'Livello di accesso',
+    grant: 'Concedi accesso',
+    granting: 'Concessione…',
+    revoke: 'Revoca',
+    revoking: 'Revoca in corso…',
+    grantedBy: 'concesso da',
+    levelReadOnly: 'Sola lettura',
+    levelAiActions: 'Azioni IA',
+    levelFull: 'Completo',
+  },
   emailSignatures: {
     page: {
       title: 'Firme e-mail',
@@ -2251,6 +2271,37 @@ export const it: TranslationDictionary = {
     },
   },
 
+  emailTemplates: {
+    page: {
+      title: 'Modelli e-mail',
+      description:
+        'Punti di partenza riutilizzabili (oggetto + corpo) per e-mail redatte dall\'IA. I {{placeholders}} vengono compilati all\'uso del modello.',
+      loading: 'Caricamento modelli…',
+      error: 'Impossibile caricare i modelli. Aggiorna la pagina.',
+      empty: 'Ancora nessun modello. Creane uno per iniziare.',
+      create: 'Nuovo modello',
+      edit: 'Modifica',
+      delete: 'Elimina',
+      deleting: 'Eliminazione…',
+      defaultBadge: 'Predefinito',
+      subjectLabel: 'Oggetto',
+    },
+    dialog: {
+      createTitle: 'Crea modello',
+      editTitle: 'Modifica modello',
+      nameLabel: 'Nome',
+      namePlaceholder: 'E-mail di follow-up',
+      subjectLabel: 'Oggetto',
+      subjectPlaceholder: 'Aggiornamento su {{topic}}',
+      bodyLabel: 'Corpo',
+      bodyPlaceholder: 'Ciao {{name}},\n\nTorno a scriverti riguardo a {{topic}}…',
+      defaultLabel: 'Usa come predefinito',
+      save: 'Salva',
+      saving: 'Salvataggio…',
+      cancel: 'Annulla',
+    },
+  },
+
   inbox: {
     page: {
       title: 'Posta in arrivo area di lavoro',
@@ -2275,7 +2326,15 @@ export const it: TranslationDictionary = {
       mark: 'Segna come urgente',
       unmark: 'Rimuovi urgenza',
       openExternal: 'Apri',
+      viewFile: 'Visualizza file',
     },
+  },
+  fileViewer: {
+    loading: 'Caricamento file…',
+    error: 'Impossibile caricare questo file.',
+    unsupported: 'Anteprima non disponibile per questo tipo di file. Usa Scarica per aprirlo in locale.',
+    download: 'Scarica',
+    close: 'Chiudi',
   },
   search: {
     page: {

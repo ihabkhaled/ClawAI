@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:26-alpine
 WORKDIR /app/apps/claw-health-service
 COPY package.json /app/package.json
 COPY packages/ /app/packages/

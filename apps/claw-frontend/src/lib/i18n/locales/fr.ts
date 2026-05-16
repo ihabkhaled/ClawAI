@@ -122,6 +122,7 @@ export const fr: TranslationDictionary = {
     workspaceDigest: 'Récap',
     workspaceAutomationPreferences: 'Préférences d’automatisation',
     workspaceEmailSignatures: 'Signatures e-mail',
+    workspaceEmailTemplates: 'Modèles d’e-mail',
     workspaceImplHandoffs: 'Remises de code',
     adminAiActionPolicies: 'Politiques d’actions IA',
     adminSuggestionRules: 'Règles de suggestion',
@@ -1472,6 +1473,25 @@ export const fr: TranslationDictionary = {
       clear: 'Effacer',
     },
   },
+  connectorGrants: {
+    title: 'Partage',
+    description:
+      'Partagez ce connecteur avec d’autres utilisateurs. Le propriétaire a toujours un accès complet ; les bénéficiaires voient le niveau d’accès que vous choisissez.',
+    loading: 'Chargement des accès…',
+    error: 'Impossible de charger les accès.',
+    empty: 'Aucun accès pour l\'instant. Ce connecteur n\'est accessible qu\'à vous.',
+    granteeUserIdLabel: 'ID utilisateur du bénéficiaire',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'Niveau d\'accès',
+    grant: 'Accorder l\'accès',
+    granting: 'Octroi en cours…',
+    revoke: 'Révoquer',
+    revoking: 'Révocation…',
+    grantedBy: 'accordé par',
+    levelReadOnly: 'Lecture seule',
+    levelAiActions: 'Actions IA',
+    levelFull: 'Complet',
+  },
   emailSignatures: {
     page: {
       title: 'Signatures e-mail',
@@ -2266,6 +2286,37 @@ export const fr: TranslationDictionary = {
     },
   },
 
+  emailTemplates: {
+    page: {
+      title: 'Modèles d’e-mail',
+      description:
+        'Points de départ réutilisables (objet + corps) pour les e-mails rédigés par l\'IA. Les {{placeholders}} sont remplis lors de l\'utilisation du modèle.',
+      loading: 'Chargement des modèles…',
+      error: 'Impossible de charger les modèles. Actualisez la page.',
+      empty: 'Aucun modèle pour l\'instant. Créez-en un pour commencer.',
+      create: 'Nouveau modèle',
+      edit: 'Modifier',
+      delete: 'Supprimer',
+      deleting: 'Suppression…',
+      defaultBadge: 'Par défaut',
+      subjectLabel: 'Objet',
+    },
+    dialog: {
+      createTitle: 'Créer un modèle',
+      editTitle: 'Modifier le modèle',
+      nameLabel: 'Nom',
+      namePlaceholder: 'E-mail de relance',
+      subjectLabel: 'Objet',
+      subjectPlaceholder: 'Suivi concernant {{topic}}',
+      bodyLabel: 'Corps',
+      bodyPlaceholder: 'Bonjour {{name}},\n\nJe reviens vers vous au sujet de {{topic}}…',
+      defaultLabel: 'Utiliser par défaut',
+      save: 'Enregistrer',
+      saving: 'Enregistrement…',
+      cancel: 'Annuler',
+    },
+  },
+
   inbox: {
     page: {
       title: 'Boîte de l’espace de travail',
@@ -2290,7 +2341,15 @@ export const fr: TranslationDictionary = {
       mark: 'Marquer pour attention',
       unmark: 'Effacer attention',
       openExternal: 'Ouvrir',
+      viewFile: 'Voir le fichier',
     },
+  },
+  fileViewer: {
+    loading: 'Chargement du fichier…',
+    error: 'Impossible de charger ce fichier.',
+    unsupported: 'Aperçu indisponible pour ce type de fichier. Utilisez Télécharger pour l\'ouvrir en local.',
+    download: 'Télécharger',
+    close: 'Fermer',
   },
   search: {
     page: {

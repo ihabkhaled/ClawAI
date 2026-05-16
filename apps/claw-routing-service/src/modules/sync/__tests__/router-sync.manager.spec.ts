@@ -1,4 +1,6 @@
 import { Test, type TestingModule } from '@nestjs/testing';
+import { RabbitMQService } from '@claw/shared-rabbitmq';
+import { EventPattern } from '@claw/shared-types';
 import { RouterModelRegistryManager } from '../../router-models/managers/router-model-registry.manager';
 import { RouterModelRegistryRepository } from '../../router-models/repositories/router-model-registry.repository';
 import { RouterSyncManager } from '../managers/router-sync.manager';
@@ -21,6 +23,7 @@ describe('RouterSyncManager', () => {
   let manager: RouterSyncManager;
   let registryRepo: jest.Mocked<RouterModelRegistryRepository>;
   let registryManager: jest.Mocked<RouterModelRegistryManager>;
+  let rabbitMQ: jest.Mocked<RabbitMQService>;
 
   beforeEach(async () => {
     registryRepo = {
@@ -30,12 +33,16 @@ describe('RouterSyncManager', () => {
     registryManager = {
       getProtectedFieldNames: jest.fn().mockResolvedValue(new Set<string>()),
     } as unknown as jest.Mocked<RouterModelRegistryManager>;
+    rabbitMQ = {
+      publish: jest.fn(() => Promise.resolve()),
+    } as unknown as jest.Mocked<RabbitMQService>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RouterSyncManager,
         { provide: RouterModelRegistryRepository, useValue: registryRepo },
         { provide: RouterModelRegistryManager, useValue: registryManager },
+        { provide: RabbitMQService, useValue: rabbitMQ },
       ],
     }).compile();
     manager = module.get<RouterSyncManager>(RouterSyncManager);
@@ -95,5 +102,29 @@ describe('RouterSyncManager', () => {
     expect(updatePayload).not.toHaveProperty('outputCostPer1M');
     expect(updatePayload).not.toHaveProperty('qualityTier');
     expect(updatePayload.displayName).toBe('GPT-4o (upstream)');
+  });
+
+  it('publishes ROUTING_MODELS_SYNCED with totals after a sync run', async () => {
+    globalThis.fetch = mock200([
+      { provider: 'OPENAI', modelKey: 'gpt-4o', displayName: 'GPT-4o' },
+    ]) as unknown as typeof fetch;
+
+    await manager.syncAll();
+    expect(rabbitMQ.publish).toHaveBeenCalledWith(
+      EventPattern.ROUTING_MODELS_SYNCED,
+      expect.objectContaining({
+        totals: expect.objectContaining({ upsertedCount: expect.any(Number) }),
+        perProvider: expect.any(Array),
+      }),
+    );
+  });
+
+  it('does not throw when the event publish fails', async () => {
+    rabbitMQ.publish.mockRejectedValueOnce(new Error('broker down'));
+    globalThis.fetch = mock200([
+      { provider: 'OPENAI', modelKey: 'gpt-4o', displayName: 'GPT-4o' },
+    ]) as unknown as typeof fetch;
+
+    await expect(manager.syncAll()).resolves.toBeDefined();
   });
 });

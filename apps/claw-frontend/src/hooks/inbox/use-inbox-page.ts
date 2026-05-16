@@ -2,6 +2,7 @@ import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-q
 import { useCallback, useState } from 'react';
 
 import { INBOX_DEFAULT_PAGE_LIMIT } from '@/constants/inbox.constants';
+import { useFileViewer } from '@/hooks/file-viewer/use-file-viewer';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import {
   listInbox,
@@ -68,6 +69,11 @@ export function useInboxPage(): UseInboxPageResult {
     }
   }, [query]);
 
+  // v3 round 11 — composed file-viewer sub-controller. The inbox page is
+  // a single-controller-hook page; composing useFileViewer here keeps
+  // that rule intact while letting inbox rows open the viewer.
+  const fileViewer = useFileViewer();
+
   return {
     items,
     isLoading: query.isLoading,
@@ -80,5 +86,6 @@ export function useInboxPage(): UseInboxPageResult {
     isLoadingMore: query.isFetchingNextPage,
     toggleNeedsAttention,
     isUpdating: mutation.isPending,
+    fileViewer,
   };
 }

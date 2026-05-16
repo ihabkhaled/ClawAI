@@ -122,6 +122,7 @@ export const ru: TranslationDictionary = {
     workspaceDigest: 'Сводка',
     workspaceAutomationPreferences: 'Настройки автоматизации',
     workspaceEmailSignatures: 'Подписи писем',
+    workspaceEmailTemplates: 'Шаблоны писем',
     workspaceImplHandoffs: 'Передача кода',
     adminAiActionPolicies: 'Политики действий ИИ',
     adminSuggestionRules: 'Правила предложений',
@@ -1462,6 +1463,25 @@ export const ru: TranslationDictionary = {
       clear: 'Очистить',
     },
   },
+  connectorGrants: {
+    title: 'Доступ',
+    description:
+      'Поделитесь этим коннектором с другими пользователями. Владелец всегда имеет полный доступ; получатели видят выбранный вами уровень доступа.',
+    loading: 'Загрузка прав…',
+    error: 'Не удалось загрузить права.',
+    empty: 'Прав пока нет. Этот коннектор доступен только вам.',
+    granteeUserIdLabel: 'ID пользователя-получателя',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'Уровень доступа',
+    grant: 'Предоставить доступ',
+    granting: 'Предоставление…',
+    revoke: 'Отозвать',
+    revoking: 'Отзыв…',
+    grantedBy: 'предоставлено',
+    levelReadOnly: 'Только чтение',
+    levelAiActions: 'AI-действия',
+    levelFull: 'Полный',
+  },
   emailSignatures: {
     page: {
       title: 'Подписи писем',
@@ -2251,6 +2271,37 @@ export const ru: TranslationDictionary = {
     },
   },
 
+  emailTemplates: {
+    page: {
+      title: 'Шаблоны писем',
+      description:
+        'Многоразовые заготовки (тема + текст) для писем, составленных ИИ. {{placeholders}} заполняются при использовании шаблона.',
+      loading: 'Загрузка шаблонов…',
+      error: 'Не удалось загрузить шаблоны. Обновите страницу.',
+      empty: 'Шаблонов пока нет. Создайте, чтобы начать.',
+      create: 'Новый шаблон',
+      edit: 'Изменить',
+      delete: 'Удалить',
+      deleting: 'Удаление…',
+      defaultBadge: 'Основной',
+      subjectLabel: 'Тема',
+    },
+    dialog: {
+      createTitle: 'Создать шаблон',
+      editTitle: 'Изменить шаблон',
+      nameLabel: 'Название',
+      namePlaceholder: 'Письмо-напоминание',
+      subjectLabel: 'Тема',
+      subjectPlaceholder: 'Напоминание по {{topic}}',
+      bodyLabel: 'Текст',
+      bodyPlaceholder: 'Здравствуйте, {{name}}!\n\nВозвращаюсь к теме {{topic}}…',
+      defaultLabel: 'Использовать как основной',
+      save: 'Сохранить',
+      saving: 'Сохранение…',
+      cancel: 'Отмена',
+    },
+  },
+
   inbox: {
     page: {
       title: 'Входящие рабочего пространства',
@@ -2275,7 +2326,15 @@ export const ru: TranslationDictionary = {
       mark: 'Отметить для внимания',
       unmark: 'Снять отметку',
       openExternal: 'Открыть',
+      viewFile: 'Открыть файл',
     },
+  },
+  fileViewer: {
+    loading: 'Загрузка файла…',
+    error: 'Не удалось загрузить этот файл.',
+    unsupported: 'Предпросмотр недоступен для этого типа файла. Используйте «Скачать», чтобы открыть его локально.',
+    download: 'Скачать',
+    close: 'Закрыть',
   },
   search: {
     page: {

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 
 import {
   FIGMA_API_BASE,
@@ -15,10 +15,13 @@ import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { buildOAuthErrorMessage } from '../utilities/oauth-error.utility';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
+import { FigmaDesignAnalyzerHelper } from './figma-design-analyzer.helper';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
 import type {
+  FigmaDesignAnalysis,
   FigmaFile,
   FigmaFileDetailsResponse,
+  FigmaFileTreeResponse,
   FigmaProjectFilesResponse,
   FigmaProjectsResponse,
   FigmaTeamProject,
@@ -37,6 +40,27 @@ import type {
 @Injectable()
 export class FigmaAdapter implements WorkspaceAdapter {
   private readonly logger = new Logger(FigmaAdapter.name);
+
+  // v3 round 10 — @Optional so modules that register FigmaAdapter without
+  // also registering FigmaDesignAnalyzerHelper (e.g. ActionsModule) still
+  // boot, and existing `new FigmaAdapter()` test callers keep working.
+  constructor(@Optional() private readonly designAnalyzer?: FigmaDesignAnalyzerHelper) {}
+
+  // v3 round 10 (Prompt 09) — design analysis pipeline. Pulls the full
+  // Figma file tree and flattens it into an AI-ready summary a
+  // design-to-story action can turn into user stories.
+  async analyzeDesign(accessToken: string, fileKey: string): Promise<FigmaDesignAnalysis> {
+    const response = await fetch(`${FIGMA_API_BASE}/files/${encodeURIComponent(fileKey)}`, {
+      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+      signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+    });
+    if (!response.ok) {
+      throw new Error(`Figma analyzeDesign failed: HTTP ${String(response.status)}`);
+    }
+    const tree = (await response.json()) as FigmaFileTreeResponse;
+    const analyzer = this.designAnalyzer ?? new FigmaDesignAnalyzerHelper();
+    return analyzer.analyze(fileKey, tree);
+  }
 
   async healthCheck(accessToken: string): Promise<HealthCheckResult> {
     const start = Date.now();

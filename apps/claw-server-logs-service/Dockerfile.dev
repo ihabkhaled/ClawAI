@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:26-alpine
 RUN apk add --no-cache openssl
 WORKDIR /app/apps/claw-server-logs-service
 COPY package.json /app/package.json

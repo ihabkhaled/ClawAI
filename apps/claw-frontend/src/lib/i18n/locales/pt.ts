@@ -122,6 +122,7 @@ export const pt: TranslationDictionary = {
     workspaceDigest: 'Resumo',
     workspaceAutomationPreferences: 'Preferências de automação',
     workspaceEmailSignatures: 'Assinaturas de e-mail',
+    workspaceEmailTemplates: 'Modelos de e-mail',
     workspaceImplHandoffs: 'Entregas de código',
     adminAiActionPolicies: 'Políticas de ação IA',
     adminSuggestionRules: 'Regras de sugestão',
@@ -1456,6 +1457,25 @@ export const pt: TranslationDictionary = {
       clear: 'Limpar',
     },
   },
+  connectorGrants: {
+    title: 'Compartilhamento',
+    description:
+      'Compartilhe este conector com outros usuários. O proprietário sempre tem acesso total; os destinatários veem o nível de acesso que você escolher.',
+    loading: 'Carregando permissões…',
+    error: 'Não foi possível carregar as permissões.',
+    empty: 'Ainda não há permissões. Este conector é acessível apenas para você.',
+    granteeUserIdLabel: 'ID do usuário destinatário',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'Nível de acesso',
+    grant: 'Conceder acesso',
+    granting: 'Concedendo…',
+    revoke: 'Revogar',
+    revoking: 'Revogando…',
+    grantedBy: 'concedido por',
+    levelReadOnly: 'Somente leitura',
+    levelAiActions: 'Ações de IA',
+    levelFull: 'Completo',
+  },
   emailSignatures: {
     page: {
       title: 'Assinaturas de e-mail',
@@ -2245,6 +2265,37 @@ export const pt: TranslationDictionary = {
     },
   },
 
+  emailTemplates: {
+    page: {
+      title: 'Modelos de e-mail',
+      description:
+        'Pontos de partida reutilizáveis (assunto + corpo) para e-mails redigidos por IA. Os {{placeholders}} são preenchidos ao usar o modelo.',
+      loading: 'Carregando modelos…',
+      error: 'Não foi possível carregar os modelos. Atualize a página.',
+      empty: 'Ainda não há modelos. Crie um para começar.',
+      create: 'Novo modelo',
+      edit: 'Editar',
+      delete: 'Excluir',
+      deleting: 'Excluindo…',
+      defaultBadge: 'Padrão',
+      subjectLabel: 'Assunto',
+    },
+    dialog: {
+      createTitle: 'Criar modelo',
+      editTitle: 'Editar modelo',
+      nameLabel: 'Nome',
+      namePlaceholder: 'E-mail de acompanhamento',
+      subjectLabel: 'Assunto',
+      subjectPlaceholder: 'Acompanhamento sobre {{topic}}',
+      bodyLabel: 'Corpo',
+      bodyPlaceholder: 'Olá {{name}},\n\nRetomando o assunto de {{topic}}…',
+      defaultLabel: 'Usar como padrão',
+      save: 'Salvar',
+      saving: 'Salvando…',
+      cancel: 'Cancelar',
+    },
+  },
+
   inbox: {
     page: {
       title: 'Caixa de entrada do espaço',
@@ -2269,7 +2320,15 @@ export const pt: TranslationDictionary = {
       mark: 'Marcar como urgente',
       unmark: 'Remover urgência',
       openExternal: 'Abrir',
+      viewFile: 'Ver arquivo',
     },
+  },
+  fileViewer: {
+    loading: 'Carregando arquivo…',
+    error: 'Não foi possível carregar este arquivo.',
+    unsupported: 'Pré-visualização indisponível para este tipo de arquivo. Use Baixar para abri-lo localmente.',
+    download: 'Baixar',
+    close: 'Fechar',
   },
   search: {
     page: {

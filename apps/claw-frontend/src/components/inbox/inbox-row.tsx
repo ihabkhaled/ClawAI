@@ -3,14 +3,17 @@
 import type { ReactElement } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { INBOX_VIEWABLE_OBJECT_TYPES } from '@/constants/inbox.constants';
 import type { InboxRowProps } from '@/types/workspace-inbox.types';
 
 export function InboxRow({
   item,
   onToggleNeedsAttention,
+  onViewFile,
   isUpdating,
   t,
 }: InboxRowProps): ReactElement {
+  const isViewable = INBOX_VIEWABLE_OBJECT_TYPES.has(item.type);
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3">
       <div className="flex items-center gap-2">
@@ -64,6 +67,16 @@ export function InboxRow({
               {t('inbox.row.openExternal')}
             </Button>
           </a>
+        ) : null}
+        {isViewable ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => onViewFile(item.id, item.title)}
+          >
+            {t('inbox.row.viewFile')}
+          </Button>
         ) : null}
       </div>
     </div>

@@ -34,6 +34,7 @@ export class RoutingAuditConsumer implements OnModuleInit {
         'ROUTING_CIRCUIT_BREAKER_HALF_OPEN',
         'MEDIUM',
       ],
+      [EventPattern.ROUTING_MODELS_SYNCED, 'ROUTING_MODELS_SYNCED', 'LOW'],
     ];
     for (const [pattern, action, severity] of entries) {
       await this.rabbitmq.subscribe(pattern, async (raw: unknown) => {

@@ -122,6 +122,7 @@ export const hi: TranslationDictionary = {
     workspaceDigest: 'डाइजेस्ट',
     workspaceAutomationPreferences: 'स्वचालन प्राथमिकताएँ',
     workspaceEmailSignatures: 'ईमेल हस्ताक्षर',
+    workspaceEmailTemplates: 'ईमेल टेम्पलेट',
     workspaceImplHandoffs: 'कोडिंग हैंडऑफ़',
     adminAiActionPolicies: 'AI एक्शन नीतियाँ',
     adminSuggestionRules: 'सुझाव नियम',
@@ -1447,6 +1448,25 @@ export const hi: TranslationDictionary = {
       clear: 'साफ़ करें',
     },
   },
+  connectorGrants: {
+    title: 'साझाकरण',
+    description:
+      'इस कनेक्टर को अन्य उपयोगकर्ताओं के साथ साझा करें। मालिक के पास हमेशा पूर्ण पहुंच होती है; अधिकृत उपयोगकर्ताओं को आपका चुना हुआ स्तर दिखता है।',
+    loading: 'अनुदान लोड हो रहे हैं…',
+    error: 'अनुदान लोड नहीं हो सके।',
+    empty: 'अभी तक कोई अनुदान नहीं। यह कनेक्टर केवल आपके लिए सुलभ है।',
+    granteeUserIdLabel: 'ग्रहीता यूज़र ID',
+    granteeUserIdPlaceholder: 'cmnkgdc2c00009w92riuztmmd',
+    accessLevelLabel: 'पहुंच स्तर',
+    grant: 'पहुंच दें',
+    granting: 'दिया जा रहा है…',
+    revoke: 'रद्द करें',
+    revoking: 'रद्द हो रहा है…',
+    grantedBy: 'दिया गया',
+    levelReadOnly: 'केवल पढ़ने योग्य',
+    levelAiActions: 'AI क्रियाएँ',
+    levelFull: 'पूर्ण',
+  },
   emailSignatures: {
     page: {
       title: 'ईमेल हस्ताक्षर',
@@ -2236,6 +2256,37 @@ export const hi: TranslationDictionary = {
     },
   },
 
+  emailTemplates: {
+    page: {
+      title: 'ईमेल टेम्पलेट',
+      description:
+        'AI द्वारा लिखे गए ईमेल के लिए पुन: प्रयोज्य विषय + मुख्य भाग। टेम्पलेट उपयोग करते समय {{placeholders}} भर दिए जाते हैं।',
+      loading: 'टेम्पलेट लोड हो रहे हैं…',
+      error: 'टेम्पलेट लोड नहीं हो सके। पेज रिफ्रेश करें।',
+      empty: 'अभी तक कोई टेम्पलेट नहीं। शुरू करने के लिए एक बनाएं।',
+      create: 'नया टेम्पलेट',
+      edit: 'संपादित करें',
+      delete: 'हटाएं',
+      deleting: 'हटाया जा रहा है…',
+      defaultBadge: 'डिफ़ॉल्ट',
+      subjectLabel: 'विषय',
+    },
+    dialog: {
+      createTitle: 'टेम्पलेट बनाएं',
+      editTitle: 'टेम्पलेट संपादित करें',
+      nameLabel: 'नाम',
+      namePlaceholder: 'फ़ॉलो-अप ईमेल',
+      subjectLabel: 'विषय',
+      subjectPlaceholder: '{{topic}} के बारे में फ़ॉलो-अप',
+      bodyLabel: 'मुख्य भाग',
+      bodyPlaceholder: 'नमस्ते {{name}},\n\n{{topic}} के बारे में फिर से संपर्क कर रहा हूँ…',
+      defaultLabel: 'डिफ़ॉल्ट के रूप में उपयोग करें',
+      save: 'सहेजें',
+      saving: 'सहेजा जा रहा है…',
+      cancel: 'रद्द करें',
+    },
+  },
+
   inbox: {
     page: {
       title: 'कार्यक्षेत्र इनबॉक्स',
@@ -2260,7 +2311,15 @@ export const hi: TranslationDictionary = {
       mark: 'ध्यान देने के रूप में चिह्नित करें',
       unmark: 'ध्यान साफ़ करें',
       openExternal: 'खोलें',
+      viewFile: 'फ़ाइल देखें',
     },
+  },
+  fileViewer: {
+    loading: 'फ़ाइल लोड हो रही है…',
+    error: 'यह फ़ाइल लोड नहीं हो सकी।',
+    unsupported: 'इस फ़ाइल प्रकार के लिए पूर्वावलोकन उपलब्ध नहीं है। इसे स्थानीय रूप से खोलने के लिए डाउनलोड का उपयोग करें।',
+    download: 'डाउनलोड',
+    close: 'बंद करें',
   },
   search: {
     page: {

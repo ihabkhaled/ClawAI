@@ -51,6 +51,32 @@ export class WorkspaceObjectRepository {
     return { data, total, page, pageSize };
   }
 
+  // v3 round 8 — connector-only filter (no userId scoping). For grantee
+  // callers where ConnectorAccessService.can(...VIEW) has already
+  // authorized the request. Caller MUST run the access check first;
+  // this method intentionally trusts its inputs.
+  async findByConnectorIdForAuthorizedUser(
+    connectorId: string,
+    page: number,
+    pageSize: number,
+    type?: string,
+  ): Promise<PaginatedWorkspaceObjects> {
+    const where: Prisma.WorkspaceObjectWhereInput = { connectorId };
+    if (type !== undefined) {
+      where.type = type as WorkspaceObject['type'];
+    }
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.workspaceObject.findMany({
+        where,
+        orderBy: { externalUpdatedAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.workspaceObject.count({ where }),
+    ]);
+    return { data, total, page, pageSize };
+  }
+
   async findAllByUserId(
     userId: string,
     page: number,
@@ -76,6 +102,16 @@ export class WorkspaceObjectRepository {
   async findById(id: string, userId: string): Promise<WorkspaceObject | null> {
     return this.prisma.workspaceObject.findFirst({
       where: { id, userId },
+      include: { sourceLinks: true },
+    });
+  }
+
+  // v3 round 11 — id-only lookup (no userId filter). For grantee callers
+  // where ConnectorAccessService has already authorized access to the
+  // object's connector. Caller MUST run the access check first.
+  async findByIdForAuthorizedUser(id: string): Promise<WorkspaceObject | null> {
+    return this.prisma.workspaceObject.findUnique({
+      where: { id },
       include: { sourceLinks: true },
     });
   }

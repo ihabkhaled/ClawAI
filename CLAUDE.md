@@ -611,6 +611,7 @@ Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 | llamacpp.model.crashed            | llamacpp     | audit, routing           |
 | llamacpp.weights.deleted          | llamacpp     | audit                    |
 | llamacpp.preflight.overridden     | llamacpp     | audit                    |
+| routing.models.synced             | routing      | audit                    |
 
 ---
 
