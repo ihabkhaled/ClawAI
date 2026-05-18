@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@nestjs/common": "^11.1.0",
-    "@nestjs/core": "^11.1.0",
+    "@nestjs/core": "^11.1.21",
     "@types/amqplib": "^0.10.5",
     "typescript": "6.0.3"
   }

@@ -30,7 +30,7 @@
     "@claw/shared-rabbitmq": "*",
     "@claw/shared-types": "*",
     "@nestjs/common": "^11.1.0",
-    "@nestjs/core": "^11.1.0",
+    "@nestjs/core": "^11.1.21",
     "@nestjs/platform-express": "^11.1.0",
     "@nestjs/schedule": "^6.1.3",
     "@nestjs/throttler": "^6.5.0",
