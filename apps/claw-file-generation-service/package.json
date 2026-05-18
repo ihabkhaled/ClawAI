@@ -44,7 +44,7 @@
     "nestjs-pino": "^4.1.0",
     "pdfkit": "^0.18.0",
     "pino": "^9.4.0",
-    "pino-http": "^10.3.0",
+    "pino-http": "^11.0.0",
     "pino-pretty": "^11.2.0",
     "prisma": "^5.22.0",
     "reflect-metadata": "^0.2.2",
