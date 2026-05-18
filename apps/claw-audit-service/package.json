@@ -31,7 +31,7 @@
     "@nestjs/mongoose": "^11.0.0",
     "@nestjs/platform-express": "^11.1.0",
     "@nestjs/throttler": "^6.5.0",
-    "amqplib": "^0.10.4",
+    "amqplib": "^2.0.1",
     "helmet": "^8.1.0",
     "ioredis": "^5.4.0",
     "jsonwebtoken": "^9.0.2",
