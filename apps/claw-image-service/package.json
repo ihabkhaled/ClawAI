@@ -28,7 +28,7 @@
     "@claw/shared-types": "*",
     "@claw/shared-utilities": "*",
     "@nestjs/common": "^11.1.0",
-    "@nestjs/core": "^11.1.0",
+    "@nestjs/core": "^11.1.21",
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/platform-express": "^11.1.0",
     "@nestjs/throttler": "^6.5.0",
@@ -42,7 +42,7 @@
     "pino": "^9.4.0",
     "pino-http": "^10.3.0",
     "pino-pretty": "^11.2.0",
-    "prisma": "^5.22.0",
+    "prisma": "^7.8.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "zod": "^3.23.0"
