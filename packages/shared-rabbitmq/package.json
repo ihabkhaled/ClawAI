@@ -11,7 +11,7 @@
   "dependencies": {
     "@claw/shared-constants": "*",
     "@claw/shared-types": "*",
-    "amqplib": "^0.10.4",
+    "amqplib": "^2.0.1",
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
