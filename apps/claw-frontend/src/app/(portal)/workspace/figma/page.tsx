@@ -1,6 +1,6 @@
 'use client';
 
-import { Figma } from 'lucide-react';
+import { Frame as Figma } from 'lucide-react';
 import type { ReactElement } from 'react';
 
 import { AiActionDialog } from '@/components/ai/ai-action-dialog';

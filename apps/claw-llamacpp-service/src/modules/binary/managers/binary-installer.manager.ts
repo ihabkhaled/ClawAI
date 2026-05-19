@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { Injectable, Logger } from '@nestjs/common';
-import { request } from 'undici';
+import { Agent, interceptors, request } from 'undici';
 import {
   computeSha256,
   detectPlatform,
@@ -204,11 +204,13 @@ export class BinaryInstallerManager {
 
   private async downloadArchive(url: string, destPath: string): Promise<void> {
     this.logger.log(`downloadArchive: ${url} → ${destPath}`);
-    const response = await request(url, {
-      method: 'GET',
+    const dispatcher = new Agent({
       headersTimeout: 30_000,
       bodyTimeout: BINARY_DOWNLOAD_TIMEOUT_MS,
-      maxRedirections: 5,
+    }).compose(interceptors.redirect({ maxRedirections: 5 }));
+    const response = await request(url, {
+      method: 'GET',
+      dispatcher,
     });
     if (response.statusCode >= 400) {
       throw new Error(`Binary download failed: HTTP ${response.statusCode}`);

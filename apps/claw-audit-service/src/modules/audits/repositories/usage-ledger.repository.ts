@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { type FilterQuery, Model } from 'mongoose';
+import { Model, type QueryFilter } from 'mongoose';
 import { UsageLedger } from '../schemas/usage-ledger.schema';
 import type {
   CostSummaryResult,
@@ -28,8 +28,8 @@ export class UsageLedgerRepository {
     return doc.save();
   }
 
-  private buildUsageQuery(filters: UsageLedgerFilters): FilterQuery<UsageLedger> {
-    const query: FilterQuery<UsageLedger> = {};
+  private buildUsageQuery(filters: UsageLedgerFilters): QueryFilter<UsageLedger> {
+    const query: QueryFilter<UsageLedger> = {};
     if (filters.userId) query['userId'] = filters.userId;
     if (filters.resourceType) query['resourceType'] = filters.resourceType;
     if (filters.action) query['action'] = filters.action;

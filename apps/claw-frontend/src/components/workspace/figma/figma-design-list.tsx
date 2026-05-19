@@ -1,4 +1,4 @@
-import { Figma } from 'lucide-react';
+import { Frame as Figma } from 'lucide-react';
 
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';

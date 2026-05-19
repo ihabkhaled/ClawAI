@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { type FilterQuery, Model } from 'mongoose';
+import { Model, type QueryFilter } from 'mongoose';
 import { AuditLog } from '../schemas/audit-log.schema';
 import type {
   AggregationResult,
@@ -21,8 +21,8 @@ export class AuditsRepository {
     return doc.save();
   }
 
-  private buildAuditQuery(filters: AuditLogFilters): FilterQuery<AuditLog> {
-    const query: FilterQuery<AuditLog> = {};
+  private buildAuditQuery(filters: AuditLogFilters): QueryFilter<AuditLog> {
+    const query: QueryFilter<AuditLog> = {};
     if (filters.userId) query['userId'] = filters.userId;
     if (filters.action) query['action'] = filters.action;
     if (filters.entityType) query['entityType'] = filters.entityType;

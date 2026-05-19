@@ -98,7 +98,7 @@ export class LlamaServerLauncherManager {
           error instanceof Error ? error.message : 'unknown'
         }`,
       );
-      throw new Error(`No .gguf file found in ${dir}: directory unreadable`);
+      throw new Error(`No .gguf file found in ${dir}: directory unreadable`, { cause: error });
     }
     const ggufs = entries.filter((f) => f.toLowerCase().endsWith('.gguf')).sort();
     const first = ggufs[0];

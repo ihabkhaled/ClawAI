@@ -12,16 +12,13 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./tests/setup.ts'],
+    exclude: ['**/node_modules/**', '**/dist/**', '**/tests/e2e/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       thresholds: { branches: 60, functions: 60, lines: 60, statements: 60 },
       exclude: ['src/components/ui/**', 'node_modules', '.next', 'tests'],
     },
-  },
-  esbuild: {
-    jsx: 'automatic',
-    jsxImportSource: 'react',
   },
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },

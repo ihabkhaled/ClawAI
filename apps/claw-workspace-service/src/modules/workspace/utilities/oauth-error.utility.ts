@@ -4,7 +4,7 @@ export async function buildOAuthErrorMessage(
   response: Response,
 ): Promise<string> {
   const status = response.status;
-  let bodyText = '';
+  let bodyText: string;
   try {
     bodyText = await response.text();
   } catch {

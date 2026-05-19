@@ -1629,7 +1629,7 @@ Your task:
     if (normalized.endsWith('/v1')) {
       return normalized.replace(/\/v1$/, '/api');
     }
-    let hostname = '';
+    let hostname: string;
     try {
       const withScheme = normalized.startsWith('http') ? normalized : `https://${normalized}`;
       hostname = new URL(withScheme).hostname;

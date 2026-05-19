@@ -94,7 +94,7 @@ export class TokenRefreshManager {
         statusReason: message.slice(0, 500),
       });
 
-      throw new Error(`workspace.token_refresh_failed: ${message}`);
+      throw new Error(`workspace.token_refresh_failed: ${message}`, { cause: error });
     } finally {
       await this.tokenManager.releaseRefreshLock(connector.id);
     }

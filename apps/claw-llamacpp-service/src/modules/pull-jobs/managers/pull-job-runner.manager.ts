@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { Injectable, Logger } from '@nestjs/common';
-import { request } from 'undici';
+import { Agent, interceptors, request } from 'undici';
 import { computeSha256, HuggingFaceClient, resolveSafePath } from '../../../common/utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { DownloadStatus, PullJobStatus, PullReasonCode } from '../../../common/enums';
@@ -196,12 +196,14 @@ export class PullJobRunnerManager {
     }
 
     const headers = client.buildHeaders(resumeFrom);
+    const dispatcher = new Agent({ bodyTimeout: 0 }).compose(
+      interceptors.redirect({ maxRedirections: 5 }),
+    );
     const response = await request(url, {
       method: 'GET',
       headers,
       signal,
-      maxRedirections: 5,
-      bodyTimeout: 0,
+      dispatcher,
     });
     if (response.statusCode >= 400 && response.statusCode !== 416) {
       throw new Error(`HTTP ${response.statusCode} downloading ${url}`);

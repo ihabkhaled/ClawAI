@@ -34,7 +34,7 @@ import {
   ListTodo,
   Hash,
   FileText,
-  Figma,
+  Frame as Figma,
   Inbox,
   Sparkles,
   Newspaper,

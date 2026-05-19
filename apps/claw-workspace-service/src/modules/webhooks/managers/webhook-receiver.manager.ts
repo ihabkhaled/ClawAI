@@ -32,7 +32,8 @@ export class WebhookReceiverManager {
     if (!Buffer.isBuffer(rawBody)) {
       throw new TypeError('webhook receive(): rawBody must be a Buffer');
     }
-    const preflight = await this.runPreflight(provider, connectorId, rawBody, ipAddress);
+    const bodyBytes = rawBody.length;
+    const preflight = await this.runPreflight(provider, connectorId, rawBody, bodyBytes, ipAddress);
     if (preflight !== null) {
       return preflight;
     }
@@ -40,6 +41,7 @@ export class WebhookReceiverManager {
       provider,
       connectorId,
       rawBody,
+      bodyBytes,
       headers,
       ipAddress,
     );
@@ -56,6 +58,7 @@ export class WebhookReceiverManager {
         provider,
         connectorId,
         rawBody,
+        bodyBytes,
         ipAddress,
         WEBHOOK_REJECTION_CODES.MALFORMED_BODY,
       );
@@ -70,7 +73,7 @@ export class WebhookReceiverManager {
       rawPayload: parsedBody as Prisma.InputJsonValue,
       errorMessage: null,
       ipAddress,
-      bodyBytes: rawBody.length,
+      bodyBytes,
     });
     await this.publishReceived(
       row.id,
@@ -89,14 +92,16 @@ export class WebhookReceiverManager {
     provider: WorkspaceProvider,
     connectorId: string | null,
     rawBody: Buffer,
+    bodyBytes: number,
     ipAddress: string | null,
   ): Promise<WebhookReceiveResult | null> {
     const config = AppConfig.get();
-    if (rawBody.length > config.WEBHOOK_BODY_MAX_BYTES) {
+    if (bodyBytes > config.WEBHOOK_BODY_MAX_BYTES) {
       return this.persistRejection(
         provider,
         connectorId,
         rawBody,
+        bodyBytes,
         ipAddress,
         WEBHOOK_REJECTION_CODES.BODY_TOO_LARGE,
       );
@@ -107,6 +112,7 @@ export class WebhookReceiverManager {
         provider,
         connectorId,
         rawBody,
+        bodyBytes,
         ipAddress,
         WEBHOOK_REJECTION_CODES.RATE_LIMITED,
       );
@@ -118,6 +124,7 @@ export class WebhookReceiverManager {
     provider: WorkspaceProvider,
     connectorId: string | null,
     rawBody: Buffer,
+    bodyBytes: number,
     headers: Record<string, string | string[] | undefined>,
     ipAddress: string | null,
   ): Promise<
@@ -135,6 +142,7 @@ export class WebhookReceiverManager {
         provider,
         connectorId,
         rawBody,
+        bodyBytes,
         ipAddress,
         WEBHOOK_REJECTION_CODES.UNSUPPORTED_PROVIDER,
       );
@@ -147,6 +155,7 @@ export class WebhookReceiverManager {
         provider,
         connectorId,
         rawBody,
+        bodyBytes,
         ipAddress,
         verification.reason ?? WEBHOOK_REJECTION_CODES.SIGNATURE_INVALID,
         verification.signature,
@@ -192,6 +201,7 @@ export class WebhookReceiverManager {
     provider: WorkspaceProvider,
     connectorId: string | null,
     rawBody: Buffer,
+    bodyBytes: number,
     ipAddress: string | null,
     reasonCode: string,
     signature: string | null = null,
@@ -207,7 +217,7 @@ export class WebhookReceiverManager {
       rawPayload: parsedBody as Prisma.InputJsonValue,
       errorMessage: reasonCode,
       ipAddress,
-      bodyBytes: rawBody.length,
+      bodyBytes,
     });
     await this.publish(EventPattern.WORKSPACE_WEBHOOK_REJECTED, {
       deliveryId: row.id,

@@ -118,7 +118,7 @@ export class OllamaAdapter implements ProviderAdapter {
       return OLLAMA_CLOUD_API_BASE_URL;
     }
 
-    let hostname = '';
+    let hostname: string;
     try {
       const withScheme = normalized.startsWith('http') ? normalized : `https://${normalized}`;
       hostname = new URL(withScheme).hostname;

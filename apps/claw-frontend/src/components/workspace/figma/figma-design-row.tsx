@@ -1,4 +1,4 @@
-import { Figma } from 'lucide-react';
+import { Frame as Figma } from 'lucide-react';
 
 import type { FigmaDesignRowProps } from '@/types/component.types';
 

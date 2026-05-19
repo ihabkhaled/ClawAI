@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { type FilterQuery, Model, type SortOrder as MongooseSortOrder } from 'mongoose';
+import { Model, type SortOrder as MongooseSortOrder, type QueryFilter } from 'mongoose';
 import { ServerLog } from '../schemas/server-log.schema';
 import type {
   AggregationResult,
@@ -30,8 +30,8 @@ export class ServerLogsRepository {
     return result.length;
   }
 
-  private buildQuery(filters: ServerLogFilters): FilterQuery<ServerLog> {
-    const query: FilterQuery<ServerLog> = {};
+  private buildQuery(filters: ServerLogFilters): QueryFilter<ServerLog> {
+    const query: QueryFilter<ServerLog> = {};
 
     if (filters.level) {
       query['level'] = { $regex: `^${filters.level}$`, $options: 'i' };
