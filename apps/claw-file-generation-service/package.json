@@ -28,7 +28,7 @@
     "@claw/shared-types": "*",
     "@claw/shared-utilities": "*",
     "@nestjs/common": "^11.1.0",
-    "@nestjs/core": "^11.1.0",
+    "@nestjs/core": "^11.1.21",
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/platform-express": "^11.1.0",
     "@nestjs/throttler": "^6.5.0",
