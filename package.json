@@ -32,12 +32,13 @@
     "lint-staged": "lint-staged"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.13.0"
   },
   "license": "MIT",
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^21.0.1",
+    "@typescript/native-preview": "^7.0.0-dev.20260421.2",
     "eslint": "^9.39.4",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",

@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
+import { CatalogModule } from '../catalog/catalog.module';
 import { ModelsLifecycleModule } from '../models-lifecycle/models-lifecycle.module';
 import { InferenceController } from './controllers/inference.controller';
 import { InferenceProxyManager } from './managers/inference-proxy.manager';
 import { InferenceService } from './services/inference.service';
 
 @Module({
-  imports: [ModelsLifecycleModule],
+  imports: [ModelsLifecycleModule, CatalogModule],
   controllers: [InferenceController],
   providers: [InferenceService, InferenceProxyManager],
   exports: [InferenceService],

@@ -25,7 +25,7 @@ export class InferenceController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    const { port } = this.inferenceService.assertReady();
+    const { port } = await this.inferenceService.ensureReady(body.model);
     await this.proxy.proxyChat(req, res, port, body);
   }
 
@@ -39,7 +39,7 @@ export class InferenceController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    const { port } = this.inferenceService.assertReady();
+    const { port } = await this.inferenceService.ensureReady(body.model);
     await this.proxy.proxyChat(req, res, port, body);
   }
 }
