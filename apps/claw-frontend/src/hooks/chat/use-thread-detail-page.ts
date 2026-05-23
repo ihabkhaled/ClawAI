@@ -62,6 +62,12 @@ export const useThreadDetailPage = ({
           researchMode: research?.mode ?? 'OFF',
         },
       });
+      // Flip the waiting state immediately so the ThinkingIndicator appears
+      // before the POST round-trip completes — otherwise the user sees no
+      // feedback for 200–500ms after clicking Send. The mutation's onSuccess
+      // still fires startWaitingForResponse() (which is idempotent) and
+      // refreshes the message list.
+      startWaitingForResponse();
       sendMessage({
         threadId,
         content,
@@ -84,7 +90,7 @@ export const useThreadDetailPage = ({
           : {}),
       });
     },
-    [threadId, sendMessage],
+    [threadId, sendMessage, startWaitingForResponse],
   );
 
   const handleRegenerate = useCallback(
