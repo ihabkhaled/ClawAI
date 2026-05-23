@@ -1,3 +1,16 @@
+// Register path aliases at runtime (replaces the build-time path rewrite step).
+// Must run before any other @app/* @common/* @infrastructure/* @modules/* import.
+import { register as registerTsConfigPaths } from 'tsconfig-paths';
+registerTsConfigPaths({
+  baseUrl: __dirname,
+  paths: {
+    '@app/*': ['app/*'],
+    '@common/*': ['common/*'],
+    '@infrastructure/*': ['infrastructure/*'],
+    '@modules/*': ['modules/*'],
+  },
+});
+
 import { NestFactory } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
@@ -37,7 +50,8 @@ async function bootstrap(): Promise<void> {
     // RabbitMQ not available — continue with pino only
   }
 
-  await app.listen(config.CHAT_PORT);
+  app.enableShutdownHooks();
+  await app.listen(config.CHAT_PORT, '0.0.0.0');
 }
 
 void bootstrap();

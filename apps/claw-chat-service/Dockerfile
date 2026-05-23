@@ -1,5 +1,8 @@
-FROM node:26-alpine AS base
-RUN apk add --no-cache openssl
+FROM node:26-bookworm-slim AS base
+# Debian base (not Alpine) — @typescript/native-preview ships glibc-linked
+# binaries with no musl variant. Alpine would fail to load tsgo.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/apps/claw-chat-service
 
 FROM base AS deps
@@ -17,11 +20,12 @@ RUN cd /app/packages/shared-types && npx tsc \
  && cd /app/packages/shared-auth && npx tsc \
  && cd /app/packages/shared-utilities && npx tsc
 RUN npx prisma generate
+# npm run build = tsgo -p tsconfig.build.json && node scripts/rewrite-paths.mjs dist && node scripts/copy-assets.mjs
 RUN npm run build
-RUN cp -r src/generated dist/generated 2>/dev/null || true
 
-FROM node:26-alpine AS runner
-RUN apk add --no-cache openssl
+FROM node:26-bookworm-slim AS runner
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates wget \
+  && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 WORKDIR /app
 RUN addgroup --system --gid 1001 nestjs
