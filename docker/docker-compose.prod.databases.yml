@@ -9,7 +9,7 @@
 #
 # Usage:
 #   docker compose -f docker-compose.prod.databases.yml up -d
-#   ./scripts/claw.sh --prod db:up
+#   ../scripts/claw.sh --prod db:up
 # =============================================================================
 
 services:
@@ -271,7 +271,8 @@ services:
     volumes:
       - pg-llamacpp-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PG_LLAMACPP_USER:-claw} -d ${PG_LLAMACPP_DB:-claw_llamacpp}']
+      test:
+        ['CMD-SHELL', 'pg_isready -U ${PG_LLAMACPP_USER:-claw} -d ${PG_LLAMACPP_DB:-claw_llamacpp}']
       interval: 10s
       timeout: 5s
       retries: 5

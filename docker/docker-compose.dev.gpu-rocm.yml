@@ -1,5 +1,5 @@
 # AMD ROCm GPU passthrough overlay (dev) for claw-llamacpp-service.
-# Auto-loaded by ./scripts/claw.sh when /dev/kfd is detected on a Linux host.
+# Auto-loaded by ../scripts/claw.sh when /dev/kfd is detected on a Linux host.
 #
 # Requirements:
 #   - Linux only (ROCm container support)

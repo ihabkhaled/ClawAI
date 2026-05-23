@@ -1,5 +1,5 @@
 # Intel/generic Vulkan GPU passthrough overlay (dev) for claw-llamacpp-service.
-# Auto-loaded by ./scripts/claw.sh when /dev/dri/render* is detected and no NVIDIA/ROCm.
+# Auto-loaded by ../scripts/claw.sh when /dev/dri/render* is detected and no NVIDIA/ROCm.
 #
 # Suitable for:
 #   - Intel Arc / iGPUs with Vulkan support

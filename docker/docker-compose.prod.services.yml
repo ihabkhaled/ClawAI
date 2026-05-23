@@ -1,11 +1,222 @@
-# docker-compose.services.yml — Backend microservices + Frontend + Nginx
-# Usage: docker compose -f docker-compose.services.yml up -d
-# Usage: ./scripts/claw.sh services:up
-# Requires: docker-compose.databases.yml running first (claw-network must exist)
+# =============================================================================
+# docker-compose.prod.services.yml — Production Backend & Frontend Services
+# =============================================================================
+# Contains: All NestJS microservices, Nginx reverse proxy, Next.js frontend
+# Requires: docker-compose.prod.databases.yml running first (claw-network must exist)
+# Uses production Dockerfiles (not Dockerfile.dev), no source volume mounts.
+#
 # All services read environment variables from the root .env file.
 # Copy .env.example to .env before running.
+#
+# Usage:
+#   docker compose -f docker-compose.prod.services.yml up -d
+#   ../scripts/claw.sh --prod services:up
+# =============================================================================
 
 services:
+  # ---------------------------------------------------------------------------
+  # Microservices
+  # ---------------------------------------------------------------------------
+  auth-service:
+    build:
+      context: ..
+      dockerfile: apps/claw-auth-service/Dockerfile
+    container_name: claw-auth-service
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - '4001:4001'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4001/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  chat-service:
+    build:
+      context: ..
+      dockerfile: apps/claw-chat-service/Dockerfile
+    container_name: claw-chat-service
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - '4002:4002'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4002/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  connector-service:
+    build:
+      context: ..
+      dockerfile: apps/claw-connector-service/Dockerfile
+    container_name: claw-connector-service
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - '4003:4003'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4003/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  routing-service:
+    build:
+      context: ..
+      dockerfile: apps/claw-routing-service/Dockerfile
+    container_name: claw-routing-service
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - '4004:4004'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4004/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  memory-service:
+    build:
+      context: ..
+      dockerfile: apps/claw-memory-service/Dockerfile
+    container_name: claw-memory-service
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - '4005:4005'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4005/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  file-service:
+    build:
+      context: ..
+      dockerfile: apps/claw-file-service/Dockerfile
+    container_name: claw-file-service
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - '4006:4006'
+    volumes:
+      - file-storage-data:/data/files
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4006/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  audit-service:
+    build:
+      context: ..
+      dockerfile: apps/claw-audit-service/Dockerfile
+    container_name: claw-audit-service
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - '4007:4007'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4007/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  ollama-service:
+    build:
+      context: ..
+      dockerfile: apps/claw-ollama-service/Dockerfile
+    container_name: claw-ollama-service
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - '4008:4008'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4008/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  client-logs-service:
+    build:
+      context: ..
+      dockerfile: apps/claw-client-logs-service/Dockerfile
+    container_name: claw-client-logs-service
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - '4010:4010'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4010/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  server-logs-service:
+    build:
+      context: ..
+      dockerfile: apps/claw-server-logs-service/Dockerfile
+    container_name: claw-server-logs-service
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - '4011:4011'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4011/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
+  health-service:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: claw-health-service
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - '4009:4009'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4009/api/v1/health || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - claw-network
+
   # ---------------------------------------------------------------------------
   # Nginx Reverse Proxy
   # ---------------------------------------------------------------------------
@@ -16,7 +227,7 @@ services:
     ports:
       - '4000:80'
     volumes:
-      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       auth-service:
         condition: service_healthy
@@ -44,263 +255,17 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
-  # Backend Microservices (DEV mode — hot-reload via volume mounts)
-  # ---------------------------------------------------------------------------
-  auth-service:
-    build:
-      context: .
-      dockerfile: apps/claw-auth-service/Dockerfile.dev
-    container_name: claw-auth-service
-    restart: unless-stopped
-    env_file: .env
-    ports:
-      - '4001:4001'
-    volumes:
-      - ./apps/claw-auth-service/src:/app/apps/claw-auth-service/src
-      - ./apps/claw-auth-service/prisma:/app/apps/claw-auth-service/prisma
-    command: ['./docker-entrypoint.dev.sh']
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4001/api/v1/health || exit 1']
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 45s
-    networks:
-      - claw-network
-
-  chat-service:
-    build:
-      context: .
-      dockerfile: apps/claw-chat-service/Dockerfile.dev
-    container_name: claw-chat-service
-    restart: unless-stopped
-    env_file: .env
-    ports:
-      - '4002:4002'
-    volumes:
-      - ./apps/claw-chat-service/src:/app/apps/claw-chat-service/src
-      - ./apps/claw-chat-service/prisma:/app/apps/claw-chat-service/prisma
-    command: ['./docker-entrypoint.dev.sh']
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4002/api/v1/health || exit 1']
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 45s
-    networks:
-      - claw-network
-
-  connector-service:
-    build:
-      context: .
-      dockerfile: apps/claw-connector-service/Dockerfile.dev
-    container_name: claw-connector-service
-    restart: unless-stopped
-    env_file: .env
-    ports:
-      - '4003:4003'
-    volumes:
-      - ./apps/claw-connector-service/src:/app/apps/claw-connector-service/src
-      - ./apps/claw-connector-service/prisma:/app/apps/claw-connector-service/prisma
-    command: ['./docker-entrypoint.dev.sh']
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4003/api/v1/health || exit 1']
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 45s
-    networks:
-      - claw-network
-
-  routing-service:
-    build:
-      context: .
-      dockerfile: apps/claw-routing-service/Dockerfile.dev
-    container_name: claw-routing-service
-    restart: unless-stopped
-    env_file: .env
-    ports:
-      - '4004:4004'
-    volumes:
-      - ./apps/claw-routing-service/src:/app/apps/claw-routing-service/src
-      - ./apps/claw-routing-service/prisma:/app/apps/claw-routing-service/prisma
-    command: ['./docker-entrypoint.dev.sh']
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4004/api/v1/health || exit 1']
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 45s
-    networks:
-      - claw-network
-
-  memory-service:
-    build:
-      context: .
-      dockerfile: apps/claw-memory-service/Dockerfile.dev
-    container_name: claw-memory-service
-    restart: unless-stopped
-    env_file: .env
-    ports:
-      - '4005:4005'
-    volumes:
-      - ./apps/claw-memory-service/src:/app/apps/claw-memory-service/src
-      - ./apps/claw-memory-service/prisma:/app/apps/claw-memory-service/prisma
-    command: ['./docker-entrypoint.dev.sh']
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4005/api/v1/health || exit 1']
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 45s
-    networks:
-      - claw-network
-
-  file-service:
-    build:
-      context: .
-      dockerfile: apps/claw-file-service/Dockerfile.dev
-    container_name: claw-file-service
-    restart: unless-stopped
-    env_file: .env
-    ports:
-      - '4006:4006'
-    volumes:
-      - ./apps/claw-file-service/src:/app/apps/claw-file-service/src
-      - ./apps/claw-file-service/prisma:/app/apps/claw-file-service/prisma
-      - file-storage-data:/data/files
-    command: ['./docker-entrypoint.dev.sh']
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4006/api/v1/health || exit 1']
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 45s
-    networks:
-      - claw-network
-
-  audit-service:
-    build:
-      context: .
-      dockerfile: apps/claw-audit-service/Dockerfile.dev
-    container_name: claw-audit-service
-    restart: unless-stopped
-    env_file: .env
-    ports:
-      - '4007:4007'
-    volumes:
-      - ./apps/claw-audit-service/src:/app/apps/claw-audit-service/src
-    command: npm run dev
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4007/api/v1/health || exit 1']
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 45s
-    networks:
-      - claw-network
-
-  ollama-service:
-    build:
-      context: .
-      dockerfile: apps/claw-ollama-service/Dockerfile.dev
-    container_name: claw-ollama-service
-    restart: unless-stopped
-    env_file: .env
-    ports:
-      - '4008:4008'
-    volumes:
-      - ./apps/claw-ollama-service/src:/app/apps/claw-ollama-service/src
-      - ./apps/claw-ollama-service/prisma:/app/apps/claw-ollama-service/prisma
-    command: ['./docker-entrypoint.dev.sh']
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4008/api/v1/health || exit 1']
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 45s
-    networks:
-      - claw-network
-
-  client-logs-service:
-    build:
-      context: .
-      dockerfile: apps/claw-client-logs-service/Dockerfile.dev
-    container_name: claw-client-logs-service
-    restart: unless-stopped
-    env_file: .env
-    ports:
-      - '4010:4010'
-    volumes:
-      - ./apps/claw-client-logs-service/src:/app/apps/claw-client-logs-service/src
-    command: npm run dev
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4010/api/v1/health || exit 1']
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 45s
-    networks:
-      - claw-network
-
-  server-logs-service:
-    build:
-      context: .
-      dockerfile: apps/claw-server-logs-service/Dockerfile.dev
-    container_name: claw-server-logs-service
-    restart: unless-stopped
-    env_file: .env
-    ports:
-      - '4011:4011'
-    volumes:
-      - ./apps/claw-server-logs-service/src:/app/apps/claw-server-logs-service/src
-    command: npm run dev
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4011/api/v1/health || exit 1']
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 45s
-    networks:
-      - claw-network
-
-  health-service:
-    build:
-      context: .
-      dockerfile: apps/claw-health-service/Dockerfile.dev
-    container_name: claw-health-service
-    restart: unless-stopped
-    env_file: .env
-    ports:
-      - '4009:4009'
-    volumes:
-      - ./apps/claw-health-service/src:/app/apps/claw-health-service/src
-    command: npm run dev
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4009/api/v1/health || exit 1']
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 45s
-    networks:
-      - claw-network
-
-  # ---------------------------------------------------------------------------
-  # Image Service (DEV mode)
+  # Image Service
   # ---------------------------------------------------------------------------
   image-service:
     build:
-      context: .
-      dockerfile: apps/claw-image-service/Dockerfile.dev
+      context: ..
+      dockerfile: apps/claw-image-service/Dockerfile
     container_name: claw-image-service
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     ports:
       - '4012:4012'
-    volumes:
-      - ./apps/claw-image-service/src:/app/apps/claw-image-service/src
-      - ./apps/claw-image-service/prisma:/app/apps/claw-image-service/prisma
-    command: ['./docker-entrypoint.dev.sh']
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://localhost:4012/api/v1/health || exit 1']
       interval: 15s
@@ -311,21 +276,17 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
-  # Workspace Service (DEV mode)
+  # Workspace Service
   # ---------------------------------------------------------------------------
   workspace-service:
     build:
-      context: .
-      dockerfile: apps/claw-workspace-service/Dockerfile.dev
+      context: ..
+      dockerfile: apps/claw-workspace-service/Dockerfile
     container_name: claw-workspace-service
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     ports:
       - '4014:4014'
-    volumes:
-      - ./apps/claw-workspace-service/src:/app/apps/claw-workspace-service/src
-      - ./apps/claw-workspace-service/prisma:/app/apps/claw-workspace-service/prisma
-    command: ['./docker-entrypoint.dev.sh']
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://localhost:4014/api/v1/health || exit 1']
       interval: 15s
@@ -336,21 +297,17 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
-  # Agent Service (DEV mode)
+  # Agent Service
   # ---------------------------------------------------------------------------
   agent-service:
     build:
-      context: .
-      dockerfile: apps/claw-agent-service/Dockerfile.dev
+      context: ..
+      dockerfile: apps/claw-agent-service/Dockerfile
     container_name: claw-agent-service
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     ports:
       - '4015:4015'
-    volumes:
-      - ./apps/claw-agent-service/src:/app/apps/claw-agent-service/src
-      - ./apps/claw-agent-service/prisma:/app/apps/claw-agent-service/prisma
-    command: ['./docker-entrypoint.dev.sh']
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://localhost:4015/api/v1/health || exit 1']
       interval: 15s
@@ -361,21 +318,17 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
-  # Research Service (DEV mode)
+  # Research Service
   # ---------------------------------------------------------------------------
   research-service:
     build:
-      context: .
+      context: ..
       dockerfile: apps/claw-research-service/Dockerfile.dev
     container_name: claw-research-service
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     ports:
       - '4016:4016'
-    volumes:
-      - ./apps/claw-research-service/src:/app/apps/claw-research-service/src
-      - ./apps/claw-research-service/prisma:/app/apps/claw-research-service/prisma
-    command: ['./docker-entrypoint.dev.sh']
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://localhost:4016/api/v1/health || exit 1']
       interval: 15s
@@ -386,20 +339,19 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  # Llamacpp Service (Local Frontier — Phase 1+)
+  # ---------------------------------------------------------------------------
   llamacpp-service:
     build:
-      context: .
-      dockerfile: apps/claw-llamacpp-service/Dockerfile.dev
+      context: ..
+      dockerfile: apps/claw-llamacpp-service/Dockerfile
     container_name: claw-llamacpp-service
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     ports:
       - '4017:4017'
     volumes:
-      - ./apps/claw-llamacpp-service/src:/app/apps/claw-llamacpp-service/src
-      - ./apps/claw-llamacpp-service/prisma:/app/apps/claw-llamacpp-service/prisma
       - llamacpp-data:/var/lib/claw/llamacpp
-    command: ['./docker-entrypoint.dev.sh']
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://localhost:4017/api/v1/health || exit 1']
       interval: 15s
@@ -410,19 +362,17 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  # File Generation Service
+  # ---------------------------------------------------------------------------
   file-generation-service:
     build:
-      context: .
-      dockerfile: apps/claw-file-generation-service/Dockerfile.dev
+      context: ..
+      dockerfile: apps/claw-file-generation-service/Dockerfile
     container_name: claw-file-generation-service
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     ports:
       - '4013:4013'
-    volumes:
-      - ./apps/claw-file-generation-service/src:/app/apps/claw-file-generation-service/src
-      - ./apps/claw-file-generation-service/prisma:/app/apps/claw-file-generation-service/prisma
-    command: ['./docker-entrypoint.dev.sh']
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://localhost:4013/api/v1/health || exit 1']
       interval: 15s
@@ -432,29 +382,35 @@ services:
     networks:
       - claw-network
 
+  # Frontend
   # ---------------------------------------------------------------------------
   frontend:
     build:
-      context: ./apps/claw-frontend
-      dockerfile: Dockerfile.dev
+      context: ../apps/claw-frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
     container_name: claw-frontend
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     ports:
-      - '3000:3000'
-    volumes:
-      - ./apps/claw-frontend/src:/app/src
-      - ./apps/claw-frontend/public:/app/public
-    command: npm run dev
+      - '${FRONTEND_PORT:-3000}:3000'
     depends_on:
-      nginx:
-        condition: service_started
+      - nginx
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000 || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
     networks:
       - claw-network
 
 volumes:
   file-storage-data:
+    driver: local
   llamacpp-data:
+    driver: local
 
 networks:
   claw-network:

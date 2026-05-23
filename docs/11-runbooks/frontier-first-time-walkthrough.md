@@ -13,7 +13,7 @@
 ### 1. Enable GPU passthrough for your hardware
 
 `claw.sh up` auto-detects what GPU you have and applies the matching overlay
-(`docker-compose.{dev,prod}.gpu-{nvidia,rocm,vulkan}.yml`). But each vendor
+(`docker/docker-compose.{dev,prod}.gpu-{nvidia,rocm,vulkan}.yml`). But each vendor
 needs **one-time host setup** before Docker can see the device. Pick the
 section that matches your machine and follow it once.
 
@@ -77,7 +77,7 @@ sudo usermod -aG video,render "$USER"
 rocm-smi
 ls /dev/kfd /dev/dri/render*
 # Sanity check (container, after `claw.sh up` loads the rocm overlay):
-docker compose -f docker-compose.dev.services.yml -f docker-compose.dev.gpu-rocm.yml \
+docker compose -f docker/docker-compose.dev.services.yml -f docker/docker-compose.dev.gpu-rocm.yml \
   exec llamacpp-service rocm-smi
 ```
 
@@ -105,7 +105,7 @@ sudo usermod -aG video,render "$USER"
 # Log out and back in.
 
 # Sanity check (container, after `claw.sh up` loads the vulkan overlay):
-docker compose -f docker-compose.dev.services.yml -f docker-compose.dev.gpu-vulkan.yml \
+docker compose -f docker/docker-compose.dev.services.yml -f docker/docker-compose.dev.gpu-vulkan.yml \
   exec llamacpp-service ls /dev/dri/
 ```
 
@@ -192,7 +192,7 @@ If the service is running in Docker on a GPU host but reports `linux-x64-cpu`, G
 ### 4. Verify the catalog is seeded
 
 ```bash
-docker compose -f docker-compose.dev.databases.yml exec -T pg-llamacpp \
+docker compose -f docker/docker-compose.dev.databases.yml exec -T pg-llamacpp \
   psql -U claw -d claw_llamacpp -tAc \
   'SELECT name, tag, "requiredRamGb", "recommendedGpuVramGb"
      FROM "FrontierCatalogEntry"
@@ -214,7 +214,7 @@ kimi-k2-thinking | INT4       | 256 | 24
 If the table is empty, seed it:
 
 ```bash
-docker compose -f docker-compose.dev.services.yml exec -T llamacpp-service npm run seed:catalog
+docker compose -f docker/docker-compose.dev.services.yml exec -T llamacpp-service npm run seed:catalog
 ```
 
 ---
@@ -298,7 +298,7 @@ The service spawns `llama-server` on a random port in `[48500, 48999]`, polls `/
 Verify the spawned process inside the container:
 
 ```bash
-docker compose -f docker-compose.dev.services.yml exec -T llamacpp-service \
+docker compose -f docker/docker-compose.dev.services.yml exec -T llamacpp-service \
   sh -c 'ps aux | grep -i llama-server | grep -v grep'
 # Should show one llama-server process bound to 127.0.0.1:48xxx
 ```

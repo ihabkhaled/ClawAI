@@ -20,6 +20,7 @@
 ```
 
 Look for:
+
 - **Exited (1)**: Application error (bad code, unhandled exception)
 - **Exited (137)**: OOM killed (out of memory)
 - **Restarting**: Crash loop (failing on startup repeatedly)
@@ -38,6 +39,7 @@ Look for:
 ```
 
 Look for:
+
 - `Error: listen EADDRINUSE` -- port conflict
 - `Error: connect ECONNREFUSED` -- dependency not ready
 - `PrismaClientInitializationError` -- database connection failed
@@ -92,6 +94,7 @@ Wait 10-15 seconds, then verify:
 ```
 
 Watch for successful startup messages:
+
 - `Nest application successfully started`
 - `Connected to database`
 - `RabbitMQ connection established`
@@ -121,7 +124,7 @@ If the crash is caused by a schema mismatch:
 If `docker stats` shows high memory usage:
 
 1. Check for memory leaks in the service code (common: unclosed streams, growing arrays)
-2. Increase container memory limit in `docker-compose.dev.yml`:
+2. Increase container memory limit in `docker/docker-compose.dev.yml`:
    ```yaml
    deploy:
      resources:

@@ -202,7 +202,7 @@ docker volume rm docker-compose-dev_pg-auth-data
 | Source code (`src/`)  | Auto-detected by `node --watch` (backend) or Turbopack (frontend) | None     |
 | Prisma schema         | Rebuild container (`prisma migrate deploy` runs in entrypoint)    | ~30s     |
 | `package.json` deps   | Rebuild container (`docker compose up -d --build <service>`)      | ~60s     |
-| Docker Compose config | `./scripts/claw.sh up -d` (recreate)       | ~10s     |
+| Docker Compose config | `./scripts/claw.sh up -d` (recreate)                              | ~10s     |
 | `.env` values         | Restart containers (`docker compose restart <service>`)           | ~5s      |
 | Shared packages       | Rebuild shared package, then restart dependent services           | ~30s     |
 | Nginx config          | Restart nginx (`docker compose restart nginx`)                    | ~2s      |
@@ -265,7 +265,7 @@ docker logs claw-chat-service --tail=50 -f
 
 ## Network Topology
 
-All containers are connected to the `claw-network` bridge network. Services communicate using Docker DNS hostnames that match the service name in `docker-compose.dev.yml`:
+All containers are connected to the `claw-network` bridge network. Services communicate using Docker DNS hostnames that match the service name in `docker/docker-compose.dev.yml`:
 
 ```
 claw-network (bridge)

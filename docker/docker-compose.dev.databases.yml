@@ -1,6 +1,6 @@
 # docker-compose.databases.yml — Databases + Infrastructure
 # Usage: docker compose -f docker-compose.databases.yml up -d
-# Usage: ./scripts/claw.sh db:up
+# Usage: ../scripts/claw.sh db:up
 # Reads environment variables from the root .env file.
 # Copy .env.example to .env before running.
 
@@ -266,7 +266,8 @@ services:
     volumes:
       - pg-llamacpp-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PG_LLAMACPP_USER:-claw} -d ${PG_LLAMACPP_DB:-claw_llamacpp}']
+      test:
+        ['CMD-SHELL', 'pg_isready -U ${PG_LLAMACPP_USER:-claw} -d ${PG_LLAMACPP_DB:-claw_llamacpp}']
       interval: 10s
       timeout: 5s
       retries: 5

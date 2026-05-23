@@ -23,9 +23,9 @@ Set-Location $ProjectRoot
 $envFile = Join-Path $ProjectRoot ".env"
 
 # --- Compose files (split layout — claw.sh is the canonical entrypoint) ---
-$BaseComposeFiles = "-f docker-compose.dev.databases.yml -f docker-compose.dev.services.yml -f docker-compose.dev.ollama.yml"
-$NvidiaServiceGpuFile = "docker-compose.dev.gpu-nvidia.yml"
-$NvidiaOllamaGpuFile = "docker-compose.dev.ollama.gpu-nvidia.yml"
+$BaseComposeFiles = "-f docker/docker-compose.dev.databases.yml -f docker/docker-compose.dev.services.yml -f docker/docker-compose.dev.ollama.yml"
+$NvidiaServiceGpuFile = "docker/docker-compose.dev.gpu-nvidia.yml"
+$NvidiaOllamaGpuFile = "docker/docker-compose.dev.ollama.gpu-nvidia.yml"
 $ComposeFiles = $BaseComposeFiles
 
 # --- Banner ---

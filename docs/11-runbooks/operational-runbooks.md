@@ -84,7 +84,7 @@ Adding a new microservice to the ClawAI platform.
 
    PostgreSQL:
    - Create `prisma/schema.prisma` with the data model
-   - Add PG container to `docker-compose.dev.yml`
+   - Add PG container to `docker/docker-compose.dev.yml`
    - Add `PG_<NAME>_USER`, `PG_<NAME>_PASSWORD`, `PG_<NAME>_DB`, `PG_<NAME>_PORT` to `.env.example` and `.env`
    - Add `<NAME>_DATABASE_URL` to `.env.example` and `.env`
    - Add named volume for the database
@@ -94,7 +94,7 @@ Adding a new microservice to the ClawAI platform.
 
 4. **Add to Docker Compose**
 
-   Add the service container to `docker-compose.dev.yml`:
+   Add the service container to `docker/docker-compose.dev.yml`:
    - Build context and Dockerfile
    - Port mapping
    - Volume mounts (src/ and prisma/ if applicable)
@@ -286,7 +286,7 @@ When scaling, consider:
 
 ### Vertical Scaling
 
-Adjust container resource limits in `docker-compose.dev.yml`:
+Adjust container resource limits in `docker/docker-compose.dev.yml`:
 
 ```yaml
 services:

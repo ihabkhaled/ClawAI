@@ -23,9 +23,9 @@ cd "$PROJECT_ROOT"
 ENV_FILE="$PROJECT_ROOT/.env"
 
 # ─── Compose files (split layout — claw.sh is the canonical entrypoint) ─────
-BASE_COMPOSE_FILES="-f docker-compose.dev.databases.yml -f docker-compose.dev.services.yml -f docker-compose.dev.ollama.yml"
-NVIDIA_SERVICE_GPU_FILE="docker-compose.dev.gpu-nvidia.yml"
-NVIDIA_OLLAMA_GPU_FILE="docker-compose.dev.ollama.gpu-nvidia.yml"
+BASE_COMPOSE_FILES="-f docker/docker-compose.dev.databases.yml -f docker/docker-compose.dev.services.yml -f docker/docker-compose.dev.ollama.yml"
+NVIDIA_SERVICE_GPU_FILE="docker/docker-compose.dev.gpu-nvidia.yml"
+NVIDIA_OLLAMA_GPU_FILE="docker/docker-compose.dev.ollama.gpu-nvidia.yml"
 COMPOSE_FILES="$BASE_COMPOSE_FILES"
 
 # ─── Banner ──────────────────────────────────────────────────────────────────

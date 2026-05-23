@@ -1,11 +1,16 @@
-# docker-compose.ollama.yml — Ollama LLM Runtime
-# Usage: docker compose -f docker-compose.ollama.yml up -d
-# Usage: ./scripts/claw.sh ollama:up
-# Auto-pulls qwen3:1.7b on first start for routing.
-# Requires: docker-compose.databases.yml running first (claw-network must exist)
+# =============================================================================
+# docker-compose.prod.ollama.yml — Production Ollama LLM Runtime
+# =============================================================================
+# Contains: Ollama runtime with auto-pull of qwen3:1.7b
+# Requires: docker-compose.prod.databases.yml running first (claw-network must exist)
 #
 # Reads environment variables from the root .env file.
 # Copy .env.example to .env before running.
+#
+# Usage:
+#   docker compose -f docker-compose.prod.ollama.yml up -d
+#   ../scripts/claw.sh --prod ollama:up
+# =============================================================================
 
 services:
   ollama:
@@ -97,32 +102,9 @@ services:
     networks:
       - claw-network
 
-  # ---------------------------------------------------------------------------
-  # ComfyUI (Local Image Generation — FLUX, SD 3.5, SDXL-Lightning)
-  # ---------------------------------------------------------------------------
-  comfyui:
-    image: ghcr.io/ai-dock/comfyui:latest
-    container_name: claw-comfyui
-    restart: unless-stopped
-    ports:
-      - '${COMFYUI_PORT:-8188}:8188'
-    volumes:
-      - comfyui-models-data:/opt/ComfyUI/models
-    environment:
-      - CLI_ARGS=--listen 0.0.0.0
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:8188/system_stats 2>/dev/null || exit 1']
-      interval: 30s
-      timeout: 15s
-      retries: 5
-      start_period: 120s
-    networks:
-      - claw-network
-
 volumes:
   ollama-data:
   sd-models-data:
-  comfyui-models-data:
 
 networks:
   claw-network:

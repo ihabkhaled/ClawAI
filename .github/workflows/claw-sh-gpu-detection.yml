@@ -14,14 +14,14 @@ on:
   push:
     paths:
       - 'scripts/claw.sh'
-      - 'docker-compose.dev.gpu-*.yml'
-      - 'docker-compose.prod.gpu-*.yml'
+      - 'docker/docker-compose.dev.gpu-*.yml'
+      - 'docker/docker-compose.prod.gpu-*.yml'
       - '.github/workflows/claw-sh-gpu-detection.yml'
   pull_request:
     paths:
       - 'scripts/claw.sh'
-      - 'docker-compose.dev.gpu-*.yml'
-      - 'docker-compose.prod.gpu-*.yml'
+      - 'docker/docker-compose.dev.gpu-*.yml'
+      - 'docker/docker-compose.prod.gpu-*.yml'
       - '.github/workflows/claw-sh-gpu-detection.yml'
   workflow_dispatch:
 
@@ -38,13 +38,13 @@ jobs:
         scenario:
           - name: nvidia
             expect_vendor: nvidia
-            expect_overlay: docker-compose.dev.gpu-nvidia.yml
+            expect_overlay: docker/docker-compose.dev.gpu-nvidia.yml
           - name: rocm
             expect_vendor: rocm
-            expect_overlay: docker-compose.dev.gpu-rocm.yml
+            expect_overlay: docker/docker-compose.dev.gpu-rocm.yml
           - name: vulkan
             expect_vendor: vulkan
-            expect_overlay: docker-compose.dev.gpu-vulkan.yml
+            expect_overlay: docker/docker-compose.dev.gpu-vulkan.yml
           - name: none
             expect_vendor: none
             expect_overlay: ''
@@ -145,7 +145,7 @@ jobs:
         run: |
           set -euo pipefail
           docker compose \
-            -f docker-compose.dev.services.yml \
+            -f docker/docker-compose.dev.services.yml \
             -f "${{ matrix.scenario.expect_overlay }}" \
             config --services | grep -q "^llamacpp-service$"
           echo "✓ overlay merges cleanly into the llamacpp-service definition"

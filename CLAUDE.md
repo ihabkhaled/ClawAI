@@ -65,7 +65,7 @@ docs/                # 11 architecture audit documents
 2. **`.env`** — fill the new variable with a working dev value
 3. **`scripts/install.sh`** — add the variable to the generated .env block
 4. **`scripts/install.ps1`** — same for Windows PowerShell installer
-5. **ALL split Docker compose files** — `docker-compose.dev.{databases,services,ollama}.yml`, `docker-compose.prod.{databases,services,ollama}.yml`, plus the per-vendor GPU overlays (`gpu-nvidia`, `gpu-rocm`, `gpu-vulkan` × dev/prod) if your service needs GPU passthrough — if new service, port, volume, database, or AI runtime dependency
+5. **ALL split Docker compose files** — `docker/docker-compose.dev.{databases,services,ollama}.yml`, `docker/docker-compose.prod.{databases,services,ollama}.yml`, plus the per-vendor GPU overlays (`gpu-nvidia`, `gpu-rocm`, `gpu-vulkan` × dev/prod) if your service needs GPU passthrough — if new service, port, volume, database, or AI runtime dependency
 6. **i18n locale files** — if any new user-facing text (ALL 8 locales: en, ar, de, es, fr, it, pt, ru)
 7. **Architecture docs** (`docs/`) — if the change affects documented architecture
 8. **Prisma migrations** — if any schema change (`npx prisma migrate dev --name <name>`)
@@ -975,7 +975,7 @@ After completing any implementation, confirm ALL are done:
 
 ```bash
 # Use the split compose files via shorthand variable (or just call ./scripts/claw.sh services:rebuild)
-COMPOSE="-f docker-compose.dev.databases.yml -f docker-compose.dev.services.yml -f docker-compose.dev.ollama.yml"
+COMPOSE="-f docker/docker-compose.dev.databases.yml -f docker/docker-compose.dev.services.yml -f docker/docker-compose.dev.ollama.yml"
 
 # 1. Stop the container
 docker compose $COMPOSE stop <service-name>
@@ -1007,20 +1007,20 @@ docker compose $COMPOSE up -d --build <service-name>
 ./scripts/claw.sh gpu                             # Probe GPU detection only (no startup)
 ```
 
-`claw.sh` orchestrates the split compose files (`docker-compose.dev.{databases,services,ollama}.yml`)
-and conditionally layers a per-vendor GPU overlay (`docker-compose.dev.gpu-{nvidia,rocm,vulkan}.yml`)
+`claw.sh` orchestrates the split compose files (`docker/docker-compose.dev.{databases,services,ollama}.yml`)
+and conditionally layers a per-vendor GPU overlay (`docker/docker-compose.dev.gpu-{nvidia,rocm,vulkan}.yml`)
 when the host has the corresponding GPU. It is the **only** supported way to start the stack —
 do not invoke `docker compose -f …` directly.
 
 ### Per-vendor GPU overlay matrix
 
-| Host GPU                          | Probe                     | Overlay file applied                       | Container gets                                                                      |
-| --------------------------------- | ------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------- |
-| NVIDIA (Linux/WSL2/Win)           | `nvidia-smi -L` succeeds  | `docker-compose.{dev,prod}.gpu-nvidia.yml` | `deploy.resources.reservations.devices.driver=nvidia`, `NVIDIA_VISIBLE_DEVICES=all` |
-| AMD ROCm (Linux only)             | `/dev/kfd` exists         | `docker-compose.{dev,prod}.gpu-rocm.yml`   | `devices: [/dev/kfd, /dev/dri]`, `group_add: [video, render]`, `ipc: host`          |
-| Intel iGPU / Arc / Vulkan (Linux) | `/dev/dri/render*` exists | `docker-compose.{dev,prod}.gpu-vulkan.yml` | `devices: [/dev/dri]`, `group_add: [video, render]`                                 |
-| Apple Silicon Metal               | `uname -s = Darwin`       | (none — warns)                             | CPU-only inside container; run `claw-llamacpp-service` natively for Metal           |
-| None                              | (no probe matches)        | (none)                                     | CPU-only                                                                            |
+| Host GPU                          | Probe                     | Overlay file applied                              | Container gets                                                                      |
+| --------------------------------- | ------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| NVIDIA (Linux/WSL2/Win)           | `nvidia-smi -L` succeeds  | `docker/docker-compose.{dev,prod}.gpu-nvidia.yml` | `deploy.resources.reservations.devices.driver=nvidia`, `NVIDIA_VISIBLE_DEVICES=all` |
+| AMD ROCm (Linux only)             | `/dev/kfd` exists         | `docker/docker-compose.{dev,prod}.gpu-rocm.yml`   | `devices: [/dev/kfd, /dev/dri]`, `group_add: [video, render]`, `ipc: host`          |
+| Intel iGPU / Arc / Vulkan (Linux) | `/dev/dri/render*` exists | `docker/docker-compose.{dev,prod}.gpu-vulkan.yml` | `devices: [/dev/dri]`, `group_add: [video, render]`                                 |
+| Apple Silicon Metal               | `uname -s = Darwin`       | (none — warns)                                    | CPU-only inside container; run `claw-llamacpp-service` natively for Metal           |
+| None                              | (no probe matches)        | (none)                                            | CPU-only                                                                            |
 
 The `BinaryInstallerManager` queries the GitHub API for the latest llama.cpp release on every container start and matches the right archive per platform key (e.g. `linux-x64-cuda12` → `llama-{TAG}-bin-ubuntu-cuda-*-x64.tar.gz`, `linux-x64-rocm` → `llama-{TAG}-bin-ubuntu-rocm-*-x64.tar.gz`). When you flip GPU passthrough on, the next `claw.sh up` will both expose the GPU to the container AND auto-pull the matching binary build.
 
@@ -1322,7 +1322,7 @@ Check and update ALL of these:
 2. **`.env`** — fill the new variable with a working dev value
 3. **`scripts/install.sh`** — add the variable to the generated .env block
 4. **`scripts/install.ps1`** — same for Windows PowerShell installer
-5. **ALL split Docker compose files** — `docker-compose.dev.{databases,services,ollama}.yml`, `docker-compose.prod.{databases,services,ollama}.yml`, plus the per-vendor GPU overlays (`gpu-nvidia`, `gpu-rocm`, `gpu-vulkan` × dev/prod) if your service needs GPU passthrough — if new service, port, volume, database, or AI runtime dependency
+5. **ALL split Docker compose files** — `docker/docker-compose.dev.{databases,services,ollama}.yml`, `docker/docker-compose.prod.{databases,services,ollama}.yml`, plus the per-vendor GPU overlays (`gpu-nvidia`, `gpu-rocm`, `gpu-vulkan` × dev/prod) if your service needs GPU passthrough — if new service, port, volume, database, or AI runtime dependency
 6. **`infra/nginx/nginx.conf`** — add upstream + location block for the new service (SSE routes need `proxy_buffering off`)
 7. **`packages/shared-constants`** — add service port and service name constants
 8. **`packages/shared-types`** — add new event patterns if the service publishes events
@@ -1603,18 +1603,18 @@ Full standards live in `docs/16-quality-engineering/`:
 
 > **MANDATORY DOCKER RULE — NEVER SKIP**: Every new service and every new database MUST be added to the relevant split compose files simultaneously, in the same commit. No exceptions. The split files are:
 >
-> 1. `docker-compose.dev.databases.yml` — dev: databases only
-> 2. `docker-compose.dev.services.yml` — dev: services only
-> 3. `docker-compose.prod.databases.yml` — prod: databases only
-> 4. `docker-compose.prod.services.yml` — prod: services only
-> 5. `docker-compose.dev.ollama.yml` / `docker-compose.prod.ollama.yml` — only if service depends on Ollama
-> 6. `docker-compose.dev.gpu-{nvidia,rocm,vulkan}.yml` / `docker-compose.prod.gpu-{nvidia,rocm,vulkan}.yml` — only if service needs GPU passthrough (per-vendor overlay; auto-loaded by `claw.sh`)
+> 1. `docker/docker-compose.dev.databases.yml` — dev: databases only
+> 2. `docker/docker-compose.dev.services.yml` — dev: services only
+> 3. `docker/docker-compose.prod.databases.yml` — prod: databases only
+> 4. `docker/docker-compose.prod.services.yml` — prod: services only
+> 5. `docker/docker-compose.dev.ollama.yml` / `docker/docker-compose.prod.ollama.yml` — only if service depends on Ollama
+> 6. `docker/docker-compose.dev.gpu-{nvidia,rocm,vulkan}.yml` / `docker/docker-compose.prod.gpu-{nvidia,rocm,vulkan}.yml` — only if service needs GPU passthrough (per-vendor overlay; auto-loaded by `claw.sh`)
 >
 > **Databases** go into files 1 and 3.
 > **Services** go into files 2 and 4.
 > **Volumes** must be declared in every file that defines the corresponding service or database.
 >
-> The legacy "all-in-one" files (`docker-compose.dev.yml`, `docker-compose.yml`) have been **removed**. The canonical entrypoint is `./scripts/claw.sh up` — it stitches the split files and applies the right GPU overlay for the host.
+> The legacy "all-in-one" files (`docker/docker-compose.dev.yml`, `docker/docker-compose.yml`) have been **removed**. The canonical entrypoint is `./scripts/claw.sh up` — it stitches the split files and applies the right GPU overlay for the host.
 >
 > If you add a DB to only one file and not the others, deployment will fail with "container not found".
 

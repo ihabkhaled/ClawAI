@@ -422,8 +422,8 @@ A rollback is initiated when any of these conditions occur in production after d
 
 ```bash
 # Step 1: Revert to the previous Docker image
-docker compose -f docker-compose.yml stop <service-name>
-docker compose -f docker-compose.yml rm -f <service-name>
+docker compose -f docker/docker-compose.yml stop <service-name>
+docker compose -f docker/docker-compose.yml rm -f <service-name>
 
 # Step 2: Pull the previous image (tag the previous build before deploying)
 docker pull <image-name>:<previous-tag>
@@ -432,10 +432,10 @@ docker pull <image-name>:<previous-tag>
 # (this is why images must be tagged with version before deploy)
 
 # Step 4: Start the previous image
-docker compose -f docker-compose.yml up -d <service-name>
+docker compose -f docker/docker-compose.yml up -d <service-name>
 
 # Step 5: Verify service is healthy
-docker compose -f docker-compose.yml ps <service-name>
+docker compose -f docker/docker-compose.yml ps <service-name>
 # Must show (healthy)
 
 # Step 6: If a DB migration was applied — a rollback migration is required
@@ -533,7 +533,7 @@ Run within 5 minutes of deploying:
 
 ```bash
 # 1. Check all services are healthy
-docker compose -f docker-compose.yml ps | grep -v "healthy"
+docker compose -f docker/docker-compose.yml ps | grep -v "healthy"
 # Output must be empty (all services healthy)
 
 # 2. Check aggregated health endpoint
@@ -547,11 +547,11 @@ curl -s -o /dev/null -w "%{http_code}" \
 # Must return 200 (or expected status), NOT 404 or 500
 
 # 4. Check service logs for errors
-docker compose -f docker-compose.yml logs <service-name> --since 5m | grep -i "error\|exception\|failed"
+docker compose -f docker/docker-compose.yml logs <service-name> --since 5m | grep -i "error\|exception\|failed"
 # Must return nothing (no errors)
 
 # 5. Check Nginx logs for unexpected 5xx
-docker compose -f docker-compose.yml logs nginx --since 5m | grep " 5[0-9][0-9] "
+docker compose -f docker/docker-compose.yml logs nginx --since 5m | grep " 5[0-9][0-9] "
 # Must return nothing
 ```
 

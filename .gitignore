@@ -12,9 +12,11 @@ qa/
 
 # Build output
 dist/
+dist-tsgo/
 build/
 .next/
 out/
+*.log
 
 # Prisma generated client (regenerated from schema)
 **/src/generated/

@@ -250,7 +250,7 @@ apps/claw-frontend/
 | Looking for...        | Location                                    |
 | --------------------- | ------------------------------------------- |
 | Nginx route mappings  | `infra/nginx/nginx.conf`                    |
-| Docker services       | `docker-compose.dev.yml` (root)             |
+| Docker services       | `docker/docker-compose.dev.yml` (root)      |
 | Environment variables | `.env.example` (root)                       |
 | Setup scripts         | `scripts/install.sh`, `scripts/install.ps1` |
 | Management script     | `scripts/claw.sh`                           |

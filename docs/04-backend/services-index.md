@@ -819,7 +819,7 @@ Backend for the local desktop agent runtime. Manages CLI sessions, human-approve
 - RabbitMQ -- 11 published events
 - Auth Service -- JWT auth via shared-auth (inference endpoints are `@Public` for service-to-service calls)
 
-**GPU passthrough**: Auto-detected by `./scripts/claw.sh up`; layers the matching overlay (`docker-compose.dev.gpu-{nvidia,rocm,vulkan}.yml`) when the host has the corresponding GPU. macOS warns (Docker can't access Metal). Run `./scripts/claw.sh gpu` to probe without starting anything.
+**GPU passthrough**: Auto-detected by `./scripts/claw.sh up`; layers the matching overlay (`docker/docker-compose.dev.gpu-{nvidia,rocm,vulkan}.yml`) when the host has the corresponding GPU. macOS warns (Docker can't access Metal). Run `./scripts/claw.sh gpu` to probe without starting anything.
 
 **Health Endpoint**: `GET /api/v1/health` -- returns binary install state, active loaded model, DB status.
 

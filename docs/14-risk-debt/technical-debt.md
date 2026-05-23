@@ -158,7 +158,7 @@ Last updated: 2026-04-09
 ### TD-015: Single RabbitMQ Instance
 
 - **Severity**: Medium
-- **Location**: `docker-compose.dev.yml`
+- **Location**: `docker/docker-compose.dev.yml`
 - **Detail**: RabbitMQ runs as a single instance. No clustering, no mirrored queues.
 - **Impact**: RabbitMQ crash stops all async communication. Messages in transit are lost.
 - **Recommendation**: For production: deploy RabbitMQ cluster (minimum 3 nodes) with quorum queues. Configure publisher confirms and consumer acknowledgments (already implemented). Add a monitoring dashboard (management plugin is enabled).

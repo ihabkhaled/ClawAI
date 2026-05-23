@@ -98,7 +98,7 @@ Select-String -Path 'scripts/install.ps1' -Pattern 'NEW_VARIABLE_NAME'
 
 ---
 
-### Item 5: `docker-compose.dev.yml`
+### Item 5: `docker/docker-compose.dev.yml`
 
 **WHAT:** The primary development Docker Compose file. Defines all 22 dev containers.
 
@@ -128,27 +128,27 @@ Select-String -Path 'scripts/install.ps1' -Pattern 'NEW_VARIABLE_NAME'
 
 ---
 
-### Item 6: `docker-compose.yml` (Production)
+### Item 6: `docker/docker-compose.yml` (Production)
 
-**WHAT:** The production Docker Compose file. Mirrors `docker-compose.dev.yml` but with production image references and no dev-only settings.
+**WHAT:** The production Docker Compose file. Mirrors `docker/docker-compose.dev.yml` but with production image references and no dev-only settings.
 
 **WHEN:** Same triggers as Item 5.
 
 **HOW TO VERIFY:**
 
 ```bash
-docker compose -f docker-compose.yml config --quiet
+docker compose -f docker/docker-compose.yml config --quiet
 # Must exit 0 (valid compose config)
 # Inspect new service block matches dev config (minus dev-only settings)
 ```
 
 **SEVERITY IF MISSED:** Production deployment missing the service. The feature that works in dev does not exist in prod. First production deployment after the feature ships will break.
 
-**Common mistake:** Updating only `docker-compose.dev.yml` and shipping. Production deployment then has a different service topology from dev.
+**Common mistake:** Updating only `docker/docker-compose.dev.yml` and shipping. Production deployment then has a different service topology from dev.
 
 ---
 
-### Item 7: `docker-compose.dev.ollama.yml`
+### Item 7: `docker/docker-compose.dev.ollama.yml`
 
 **WHAT:** The dev Compose file that adds the Ollama AI runtime (port 11434) and related model containers.
 
@@ -170,7 +170,7 @@ grep 'AUTO_PULL_MODELS\|ollama\|comfyui' docker-compose.dev.ollama.yml
 
 ---
 
-### Item 8: `docker-compose.prod.ollama.yml`
+### Item 8: `docker/docker-compose.prod.ollama.yml`
 
 **WHAT:** The production variant of the Ollama Compose file.
 
@@ -527,25 +527,25 @@ grep 'NEW_VARIABLE_NAME' CLAUDE.md
 
 For each item, the reviewer must confirm the following before approving a PR:
 
-| Item                      | Evidence Required                                                |
-| ------------------------- | ---------------------------------------------------------------- |
-| `.env.example`            | Diff shows new variable with placeholder value                   |
-| `.env`                    | Dev value confirmed present (not shown in PR — verified locally) |
-| `install.sh`              | Diff shows variable in .env generation block                     |
-| `install.ps1`             | Diff shows variable in .env generation block                     |
-| `docker-compose.dev.yml`  | New service block present; `docker ps` shows (healthy)           |
-| `docker-compose.yml`      | New service block matches dev config                             |
-| `docker-compose.*.ollama` | If applicable: model/variable present                            |
-| `nginx.conf`              | `nginx -t` passes; endpoint returns non-404 from port 4000       |
-| Health service            | `/api/v1/health` response includes new service                   |
-| `shared-constants`        | `npm run typecheck` 0 errors; new constant visible in diff       |
-| `shared-types`            | `npm run typecheck` 0 errors; new type/pattern visible in diff   |
-| `ci.yml`                  | CI pipeline green; new service in Prisma generate step           |
-| Prisma migration          | Migration file in diff; migration applies on fresh container     |
-| Seed files                | Seed runs without error; data visible in DB via psql             |
-| i18n (all 8)              | All 8 locale files in diff; `npm run typecheck` 0 errors         |
-| Frontend types            | `npm run typecheck` 0 errors on frontend workspace               |
-| Root `CLAUDE.md`          | New service/endpoint/var/pattern visible in diff                 |
+| Item                             | Evidence Required                                                |
+| -------------------------------- | ---------------------------------------------------------------- |
+| `.env.example`                   | Diff shows new variable with placeholder value                   |
+| `.env`                           | Dev value confirmed present (not shown in PR — verified locally) |
+| `install.sh`                     | Diff shows variable in .env generation block                     |
+| `install.ps1`                    | Diff shows variable in .env generation block                     |
+| `docker/docker-compose.dev.yml`  | New service block present; `docker ps` shows (healthy)           |
+| `docker/docker-compose.yml`      | New service block matches dev config                             |
+| `docker/docker-compose.*.ollama` | If applicable: model/variable present                            |
+| `nginx.conf`                     | `nginx -t` passes; endpoint returns non-404 from port 4000       |
+| Health service                   | `/api/v1/health` response includes new service                   |
+| `shared-constants`               | `npm run typecheck` 0 errors; new constant visible in diff       |
+| `shared-types`                   | `npm run typecheck` 0 errors; new type/pattern visible in diff   |
+| `ci.yml`                         | CI pipeline green; new service in Prisma generate step           |
+| Prisma migration                 | Migration file in diff; migration applies on fresh container     |
+| Seed files                       | Seed runs without error; data visible in DB via psql             |
+| i18n (all 8)                     | All 8 locale files in diff; `npm run typecheck` 0 errors         |
+| Frontend types                   | `npm run typecheck` 0 errors on frontend workspace               |
+| Root `CLAUDE.md`                 | New service/endpoint/var/pattern visible in diff                 |
 
 ---
 
@@ -557,7 +557,7 @@ These are the items most frequently missed in ClawAI development. Treat them as 
 
 2. **Prisma migration committed but not the migration file.** Running `prisma migrate dev` generates the file locally but it must be committed. Check `git status` for `prisma/migrations/`.
 
-3. **New env variable in service code but not in `docker-compose.dev.yml` `environment:` block.** The service reads from `.env` via `env_file:` but some variables need explicit override. Confirm with `docker compose config` that the variable resolves.
+3. **New env variable in service code but not in `docker/docker-compose.dev.yml` `environment:` block.** The service reads from `.env` via `env_file:` but some variables need explicit override. Confirm with `docker compose config` that the variable resolves.
 
 4. **Frontend type not updated when backend DTO field added.** The API call compiles but the new field is missing. Add a TypeScript test that exercises the full request/response type.
 

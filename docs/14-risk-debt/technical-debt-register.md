@@ -10,20 +10,20 @@ Last updated: 2026-04-11
 
 ## Severity Scale
 
-| Level | Meaning |
-| --- | --- |
-| Critical | Blocks production readiness or poses active security risk |
-| High | Significant quality or maintenance concern; address before GA |
-| Medium | Noticeable issue; plan for next quarter |
-| Low | Minor improvement; address opportunistically |
+| Level    | Meaning                                                       |
+| -------- | ------------------------------------------------------------- |
+| Critical | Blocks production readiness or poses active security risk     |
+| High     | Significant quality or maintenance concern; address before GA |
+| Medium   | Noticeable issue; plan for next quarter                       |
+| Low      | Minor improvement; address opportunistically                  |
 
 ## Effort Scale
 
-| Level | Meaning |
-| --- | --- |
-| Low | < 1 day |
-| Medium | 1-3 days |
-| High | 3-5 days |
+| Level     | Meaning   |
+| --------- | --------- |
+| Low       | < 1 day   |
+| Medium    | 1-3 days  |
+| High      | 3-5 days  |
 | Very High | 1-2 weeks |
 
 ---
@@ -176,7 +176,7 @@ Last updated: 2026-04-11
 
 - **Severity**: Medium
 - **Effort**: High
-- **Location**: `docker-compose.dev.yml`
+- **Location**: `docker/docker-compose.dev.yml`
 - **Detail**: No clustering, no mirrored queues.
 - **Impact**: RabbitMQ crash stops all async communication.
 - **Remediation**: 3-node cluster with quorum queues. Publisher confirms (already done).
@@ -234,10 +234,10 @@ Last updated: 2026-04-11
 
 ## Priority Matrix
 
-| Priority | Items | Action |
-| --- | --- | --- |
-| **Immediate** | TD-017 | Implement automated backups this week |
-| **Next Sprint** | TD-008, TD-014, TD-001, TD-003, TD-005, TD-011 | Schedule for next iteration |
-| **Planned** | TD-002, TD-010, TD-012, TD-013, TD-015, TD-016, TD-020, TD-006, TD-007 | Add to backlog |
-| **Conditional** | TD-009 | Implement with TD-008 |
-| **Opportunistic** | TD-004, TD-018, TD-019 | Fix when touching related code |
+| Priority          | Items                                                                  | Action                                |
+| ----------------- | ---------------------------------------------------------------------- | ------------------------------------- |
+| **Immediate**     | TD-017                                                                 | Implement automated backups this week |
+| **Next Sprint**   | TD-008, TD-014, TD-001, TD-003, TD-005, TD-011                         | Schedule for next iteration           |
+| **Planned**       | TD-002, TD-010, TD-012, TD-013, TD-015, TD-016, TD-020, TD-006, TD-007 | Add to backlog                        |
+| **Conditional**   | TD-009                                                                 | Implement with TD-008                 |
+| **Opportunistic** | TD-004, TD-018, TD-019                                                 | Fix when touching related code        |

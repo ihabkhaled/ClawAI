@@ -338,10 +338,10 @@ Files to check:
 
 **Pass criteria:** If any service, port, volume, or database was added or changed:
 
-- [ ] `docker-compose.dev.yml` updated.
-- [ ] `docker-compose.yml` (production) updated.
-- [ ] `docker-compose.dev.ollama.yml` updated.
-- [ ] `docker-compose.prod.ollama.yml` updated.
+- [ ] `docker/docker-compose.dev.yml` updated.
+- [ ] `docker/docker-compose.yml` (production) updated.
+- [ ] `docker/docker-compose.dev.ollama.yml` updated.
+- [ ] `docker/docker-compose.prod.ollama.yml` updated.
 
 ### F3: Nginx Configuration
 

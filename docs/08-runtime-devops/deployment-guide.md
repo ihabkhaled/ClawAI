@@ -8,12 +8,12 @@
 
 ### Prerequisites
 
-| Software     | Version | Purpose                        |
-| ------------ | ------- | ------------------------------ |
-| Node.js      | >= 20   | Running services locally       |
-| Docker       | >= 24   | Container runtime              |
-| Docker Compose | >= 2  | Container orchestration        |
-| Git          | >= 2.40 | Version control                |
+| Software       | Version | Purpose                  |
+| -------------- | ------- | ------------------------ |
+| Node.js        | >= 20   | Running services locally |
+| Docker         | >= 24   | Container runtime        |
+| Docker Compose | >= 2    | Container orchestration  |
+| Git            | >= 2.40 | Version control          |
 
 ### Quick Start (Docker)
 
@@ -48,6 +48,7 @@ cp .env.example .env
 ```
 
 The install scripts:
+
 1. Check prerequisites (Node.js, Docker, Docker Compose)
 2. Install npm dependencies
 3. Generate a `.env` file with default values
@@ -70,7 +71,7 @@ The install scripts:
 
 ```bash
 # Single file
-docker compose -f docker-compose.yml up -d
+docker compose -f docker/docker-compose.yml up -d
 
 # Or via management script
 ./scripts/claw.sh --prod up
@@ -78,16 +79,16 @@ docker compose -f docker-compose.yml up -d
 
 ### Key Differences from Dev
 
-| Aspect              | Development                      | Production                      |
-| ------------------- | -------------------------------- | ------------------------------- |
-| Dockerfile          | `Dockerfile.dev`                 | `Dockerfile`                    |
-| Source mounts        | Yes (hot reload)                | No (baked into image)           |
-| Dependencies        | All (dev + prod)                 | Production only                 |
-| Next.js             | Turbopack dev server             | Optimized static build          |
-| Port exposure       | All ports to host                | Only nginx (4000)               |
-| Restart policy      | `unless-stopped`                 | `always`                        |
-| NODE_ENV            | `development`                    | `production`                    |
-| Source maps          | Enabled                         | Disabled                        |
+| Aspect         | Development          | Production             |
+| -------------- | -------------------- | ---------------------- |
+| Dockerfile     | `Dockerfile.dev`     | `Dockerfile`           |
+| Source mounts  | Yes (hot reload)     | No (baked into image)  |
+| Dependencies   | All (dev + prod)     | Production only        |
+| Next.js        | Turbopack dev server | Optimized static build |
+| Port exposure  | All ports to host    | Only nginx (4000)      |
+| Restart policy | `unless-stopped`     | `always`               |
+| NODE_ENV       | `development`        | `production`           |
+| Source maps    | Enabled              | Disabled               |
 
 ### Production Environment Variables
 
@@ -144,6 +145,7 @@ server {
 ```
 
 Mount certificates in Docker Compose:
+
 ```yaml
 volumes:
   - ./ssl/fullchain.pem:/etc/nginx/ssl/fullchain.pem:ro
@@ -163,10 +165,11 @@ Use Cloudflare, AWS ALB, or Traefik in front of Nginx for SSL termination. This 
 Backend services are stateless and can be scaled horizontally:
 
 ```bash
-docker compose -f docker-compose.yml up -d --scale chat-service=3
+docker compose -f docker/docker-compose.yml up -d --scale chat-service=3
 ```
 
 Update Nginx to load-balance:
+
 ```nginx
 upstream chat-backend {
     server chat-service-1:4002;

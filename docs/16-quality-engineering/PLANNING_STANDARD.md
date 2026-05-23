@@ -81,34 +81,34 @@ Why:  The current runReplay() method is 140 lines, violates the complexity limit
 
 Before writing code, fill every row of this table. A row marked "N/A" is a positive assertion that this area is unaffected. Do not leave rows blank.
 
-| Area                        | Impacted? | Specific Files / Items Affected                                           |
-| --------------------------- | --------- | ------------------------------------------------------------------------- |
-| **Backend services**        |           | Which of the 13 services? (claw-routing-service, claw-chat-service, etc.) |
-| **Frontend pages**          |           | Which pages in `src/app/(portal)/`?                                       |
-| **Frontend components**     |           | Which files in `src/components/<feature>/`?                               |
-| **Frontend hooks**          |           | Which files in `src/hooks/<domain>/`?                                     |
-| **Database schemas**        |           | Which Prisma model? Which DB (claw_routing, claw_chat, etc.)?             |
-| **Prisma migrations**       |           | Migration name, affected columns/tables                                   |
-| **Seed files**              |           | Which seed file? What default data?                                       |
-| **RabbitMQ events**         |           | New event patterns? Changed payloads? New consumers?                      |
-| **API endpoints**           |           | New or modified routes? HTTP method + path                                |
-| **Shared packages**         |           | shared-types, shared-constants, shared-rabbitmq, shared-auth              |
-| **Environment variables**   |           | New/renamed/removed vars? Which services consume them?                    |
-| **Docker compose (dev)**    |           | `docker-compose.dev.yml` — new service, port, volume, depends_on?         |
-| **Docker compose (prod)**   |           | `docker-compose.yml` — same                                               |
-| **Docker compose (ollama)** |           | `docker-compose.dev.ollama.yml`, `docker-compose.prod.ollama.yml`         |
-| **Nginx config**            |           | New upstream block? New location block? SSE route?                        |
-| **Health service**          |           | `apps/claw-health-service` — new service URL registered?                  |
-| **CI pipeline**             |           | `.github/workflows/ci.yml` — Prisma generate loop? Test env vars?         |
-| **i18n locales**            |           | New translation keys? All 8 locales: en, ar, de, es, fr, it, pt, ru       |
-| **Frontend types**          |           | `src/types/<domain>.types.ts` — synced with backend DTO changes?          |
-| **Frontend enums**          |           | `src/enums/index.ts` — new enum exported?                                 |
-| **Frontend constants**      |           | `src/constants/<name>.constants.ts` — new constants?                      |
-| **Frontend repository**     |           | `src/repositories/<domain>/` — new API calls?                             |
-| **Query keys**              |           | `src/repositories/shared/query-keys.ts` — new keys?                       |
-| **Root CLAUDE.md**          |           | New services, env vars, patterns, or rules?                               |
-| **Service CLAUDE.md**       |           | `apps/<service>/CLAUDE.md` — service-specific changes documented?         |
-| **Architecture docs**       |           | `docs/` — does architecture change?                                       |
+| Area                        | Impacted? | Specific Files / Items Affected                                                 |
+| --------------------------- | --------- | ------------------------------------------------------------------------------- |
+| **Backend services**        |           | Which of the 13 services? (claw-routing-service, claw-chat-service, etc.)       |
+| **Frontend pages**          |           | Which pages in `src/app/(portal)/`?                                             |
+| **Frontend components**     |           | Which files in `src/components/<feature>/`?                                     |
+| **Frontend hooks**          |           | Which files in `src/hooks/<domain>/`?                                           |
+| **Database schemas**        |           | Which Prisma model? Which DB (claw_routing, claw_chat, etc.)?                   |
+| **Prisma migrations**       |           | Migration name, affected columns/tables                                         |
+| **Seed files**              |           | Which seed file? What default data?                                             |
+| **RabbitMQ events**         |           | New event patterns? Changed payloads? New consumers?                            |
+| **API endpoints**           |           | New or modified routes? HTTP method + path                                      |
+| **Shared packages**         |           | shared-types, shared-constants, shared-rabbitmq, shared-auth                    |
+| **Environment variables**   |           | New/renamed/removed vars? Which services consume them?                          |
+| **Docker compose (dev)**    |           | `docker/docker-compose.dev.yml` — new service, port, volume, depends_on?        |
+| **Docker compose (prod)**   |           | `docker/docker-compose.yml` — same                                              |
+| **Docker compose (ollama)** |           | `docker/docker-compose.dev.ollama.yml`, `docker/docker-compose.prod.ollama.yml` |
+| **Nginx config**            |           | New upstream block? New location block? SSE route?                              |
+| **Health service**          |           | `apps/claw-health-service` — new service URL registered?                        |
+| **CI pipeline**             |           | `.github/workflows/ci.yml` — Prisma generate loop? Test env vars?               |
+| **i18n locales**            |           | New translation keys? All 8 locales: en, ar, de, es, fr, it, pt, ru             |
+| **Frontend types**          |           | `src/types/<domain>.types.ts` — synced with backend DTO changes?                |
+| **Frontend enums**          |           | `src/enums/index.ts` — new enum exported?                                       |
+| **Frontend constants**      |           | `src/constants/<name>.constants.ts` — new constants?                            |
+| **Frontend repository**     |           | `src/repositories/<domain>/` — new API calls?                                   |
+| **Query keys**              |           | `src/repositories/shared/query-keys.ts` — new keys?                             |
+| **Root CLAUDE.md**          |           | New services, env vars, patterns, or rules?                                     |
+| **Service CLAUDE.md**       |           | `apps/<service>/CLAUDE.md` — service-specific changes documented?               |
+| **Architecture docs**       |           | `docs/` — does architecture change?                                             |
 
 **Completed example (Replay Lab pagination):**
 

@@ -1,5 +1,5 @@
 # Intel/generic Vulkan GPU passthrough overlay (prod) for claw-llamacpp-service.
-# Auto-loaded by ./scripts/claw.sh --prod when /dev/dri/render* is detected.
+# Auto-loaded by ../scripts/claw.sh --prod when /dev/dri/render* is detected.
 
 services:
   llamacpp-service:

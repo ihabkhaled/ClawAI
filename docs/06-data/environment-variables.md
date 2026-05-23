@@ -332,44 +332,43 @@ When adding a new environment variable, update ALL of these locations:
 4. `scripts/install.ps1` -- add to the Windows installer
 5. `CLAUDE.md` -- add to the environment variables section
 6. Service `AppConfig` (Zod schema) -- validate the variable
-7. `docker-compose.dev.yml` -- if the variable needs container-level access
+7. `docker/docker-compose.dev.yml` -- if the variable needs container-level access
 8. This document -- add to the appropriate category
 
 ## Desktop-Agent Flagship — Capability Framework (Stream 10)
 
 Added 2026-04-26.
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `CAPABILITY_QUEUE_EXPIRY_MINUTES` | `60` | A `PENDING_APPROVAL` capability invocation auto-transitions to `EXPIRED` after this many minutes. |
-| `CAPABILITY_RISK_AUTO_APPROVE_MAX` | `25` | Default cap above which AUTO_APPROVE policies do NOT auto-approve, regardless of policy match. Per-policy `autoApproveMaxRiskScore` overrides. |
-| `CAPABILITY_DEPRECATED_TERMINAL_COMMAND_DUAL_WRITE` | `true` | When true, every legacy TerminalCommand also writes a parallel CapabilityInvocation row. Flip to false after 4-week soak. |
-| `CAPABILITY_EXPIRY_SWEEPER_CRON` | `*/5 * * * *` | Cron expression for the expiry sweeper. |
+| Variable                                            | Default       | Purpose                                                                                                                                        |
+| --------------------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CAPABILITY_QUEUE_EXPIRY_MINUTES`                   | `60`          | A `PENDING_APPROVAL` capability invocation auto-transitions to `EXPIRED` after this many minutes.                                              |
+| `CAPABILITY_RISK_AUTO_APPROVE_MAX`                  | `25`          | Default cap above which AUTO_APPROVE policies do NOT auto-approve, regardless of policy match. Per-policy `autoApproveMaxRiskScore` overrides. |
+| `CAPABILITY_DEPRECATED_TERMINAL_COMMAND_DUAL_WRITE` | `true`        | When true, every legacy TerminalCommand also writes a parallel CapabilityInvocation row. Flip to false after 4-week soak.                      |
+| `CAPABILITY_EXPIRY_SWEEPER_CRON`                    | `*/5 * * * *` | Cron expression for the expiry sweeper.                                                                                                        |
 
 ## Desktop-Agent Flagship — Filesystem (Stream 11)
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `FS_DEFAULT_ALLOW_GLOBS` | `~/Documents/**,~/Downloads/**,~/Desktop/**,~/Pictures/**,~/Videos/**,~/Music/**` | Comma-separated allow-globs for fs read/write. |
-| `FS_DEFAULT_DENY_GLOBS` | `**/.ssh/**,**/.aws/**,**/.kube/**,**/credentials*,**/.env*,/etc/**,/sys/**,/proc/**,/boot/**,C:/Windows/**,C:/Program Files/**,C:/Program Files (x86)/**` | Comma-separated deny-globs. |
-| `FS_MAX_READ_BYTES_PREVIEW` | `1048576` | Max bytes returned in fs-preview endpoint. |
-| `FS_USE_TRASH_FOR_DELETE` | `true` | When true, `fs.delete` defaults to OS trash. Permanent delete requires `payload.permanent=true`. |
-| `FS_MAX_WATCH_DEPTH` | `5` | Max recursion depth for `fs.watch`. |
+| Variable                    | Default                                                                                                                                                    | Purpose                                                                                          |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `FS_DEFAULT_ALLOW_GLOBS`    | `~/Documents/**,~/Downloads/**,~/Desktop/**,~/Pictures/**,~/Videos/**,~/Music/**`                                                                          | Comma-separated allow-globs for fs read/write.                                                   |
+| `FS_DEFAULT_DENY_GLOBS`     | `**/.ssh/**,**/.aws/**,**/.kube/**,**/credentials*,**/.env*,/etc/**,/sys/**,/proc/**,/boot/**,C:/Windows/**,C:/Program Files/**,C:/Program Files (x86)/**` | Comma-separated deny-globs.                                                                      |
+| `FS_MAX_READ_BYTES_PREVIEW` | `1048576`                                                                                                                                                  | Max bytes returned in fs-preview endpoint.                                                       |
+| `FS_USE_TRASH_FOR_DELETE`   | `true`                                                                                                                                                     | When true, `fs.delete` defaults to OS trash. Permanent delete requires `payload.permanent=true`. |
+| `FS_MAX_WATCH_DEPTH`        | `5`                                                                                                                                                        | Max recursion depth for `fs.watch`.                                                              |
 
 ## Desktop-Agent Flagship — Process Management (Stream 12)
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `PROCESS_KILL_GRACE_SECONDS` | `5` | Time between SIGTERM and SIGKILL on `process.kill`. |
-| `PROCESS_DEFAULT_DENY_BINARIES` | `init,systemd,launchd,services.exe,wininit.exe,csrss.exe,smss.exe,kernel*,kthreadd,sshd,gpg-agent,ssh-agent` | Comma-separated binary names that are never killable. |
-| `PROCESS_TAIL_BUFFER_BYTES` | `65536` | Per-stream (stdout/stderr) ring-buffer size for `process.tail-output`. |
+| Variable                        | Default                                                                                                      | Purpose                                                                |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `PROCESS_KILL_GRACE_SECONDS`    | `5`                                                                                                          | Time between SIGTERM and SIGKILL on `process.kill`.                    |
+| `PROCESS_DEFAULT_DENY_BINARIES` | `init,systemd,launchd,services.exe,wininit.exe,csrss.exe,smss.exe,kernel*,kthreadd,sshd,gpg-agent,ssh-agent` | Comma-separated binary names that are never killable.                  |
+| `PROCESS_TAIL_BUFFER_BYTES`     | `65536`                                                                                                      | Per-stream (stdout/stderr) ring-buffer size for `process.tail-output`. |
 
 ## Desktop-Agent Flagship — Recipe Engine (Stream 13)
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `RECIPE_MAX_STEPS_PER_RUN` | `100` | Hard cap on steps per recipe. |
-| `RECIPE_MAX_PARALLEL_STEPS` | `5` | Concurrency cap within a `parallel_group`. |
-| `RECIPE_DEFAULT_STEP_TIMEOUT_MS` | `60000` | Per-step wall-clock cap. |
-| `RECIPE_RUN_HARD_WALL_CLOCK_MS` | `600000` | Per-run wall-clock cap (10min). |
-
+| Variable                         | Default  | Purpose                                    |
+| -------------------------------- | -------- | ------------------------------------------ |
+| `RECIPE_MAX_STEPS_PER_RUN`       | `100`    | Hard cap on steps per recipe.              |
+| `RECIPE_MAX_PARALLEL_STEPS`      | `5`      | Concurrency cap within a `parallel_group`. |
+| `RECIPE_DEFAULT_STEP_TIMEOUT_MS` | `60000`  | Per-step wall-clock cap.                   |
+| `RECIPE_RUN_HARD_WALL_CLOCK_MS`  | `600000` | Per-run wall-clock cap (10min).            |

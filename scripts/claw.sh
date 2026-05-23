@@ -36,21 +36,21 @@ set -- "${ARGS[@]}"
 
 # Compose files for this mode
 if [ "$MODE" = "prod" ]; then
-  DB_FILE="$PROJECT_ROOT/docker-compose.prod.databases.yml"
-  SVC_FILE="$PROJECT_ROOT/docker-compose.prod.services.yml"
-  OLLAMA_FILE="$PROJECT_ROOT/docker-compose.prod.ollama.yml"
-  GPU_NVIDIA_FILE="$PROJECT_ROOT/docker-compose.prod.gpu-nvidia.yml"
-  OLLAMA_GPU_NVIDIA_FILE="$PROJECT_ROOT/docker-compose.prod.ollama.gpu-nvidia.yml"
-  GPU_ROCM_FILE="$PROJECT_ROOT/docker-compose.prod.gpu-rocm.yml"
-  GPU_VULKAN_FILE="$PROJECT_ROOT/docker-compose.prod.gpu-vulkan.yml"
+  DB_FILE="$PROJECT_ROOT/docker/docker-compose.prod.databases.yml"
+  SVC_FILE="$PROJECT_ROOT/docker/docker-compose.prod.services.yml"
+  OLLAMA_FILE="$PROJECT_ROOT/docker/docker-compose.prod.ollama.yml"
+  GPU_NVIDIA_FILE="$PROJECT_ROOT/docker/docker-compose.prod.gpu-nvidia.yml"
+  OLLAMA_GPU_NVIDIA_FILE="$PROJECT_ROOT/docker/docker-compose.prod.ollama.gpu-nvidia.yml"
+  GPU_ROCM_FILE="$PROJECT_ROOT/docker/docker-compose.prod.gpu-rocm.yml"
+  GPU_VULKAN_FILE="$PROJECT_ROOT/docker/docker-compose.prod.gpu-vulkan.yml"
 else
-  DB_FILE="$PROJECT_ROOT/docker-compose.dev.databases.yml"
-  SVC_FILE="$PROJECT_ROOT/docker-compose.dev.services.yml"
-  OLLAMA_FILE="$PROJECT_ROOT/docker-compose.dev.ollama.yml"
-  GPU_NVIDIA_FILE="$PROJECT_ROOT/docker-compose.dev.gpu-nvidia.yml"
-  OLLAMA_GPU_NVIDIA_FILE="$PROJECT_ROOT/docker-compose.dev.ollama.gpu-nvidia.yml"
-  GPU_ROCM_FILE="$PROJECT_ROOT/docker-compose.dev.gpu-rocm.yml"
-  GPU_VULKAN_FILE="$PROJECT_ROOT/docker-compose.dev.gpu-vulkan.yml"
+  DB_FILE="$PROJECT_ROOT/docker/docker-compose.dev.databases.yml"
+  SVC_FILE="$PROJECT_ROOT/docker/docker-compose.dev.services.yml"
+  OLLAMA_FILE="$PROJECT_ROOT/docker/docker-compose.dev.ollama.yml"
+  GPU_NVIDIA_FILE="$PROJECT_ROOT/docker/docker-compose.dev.gpu-nvidia.yml"
+  OLLAMA_GPU_NVIDIA_FILE="$PROJECT_ROOT/docker/docker-compose.dev.ollama.gpu-nvidia.yml"
+  GPU_ROCM_FILE="$PROJECT_ROOT/docker/docker-compose.dev.gpu-rocm.yml"
+  GPU_VULKAN_FILE="$PROJECT_ROOT/docker/docker-compose.dev.gpu-vulkan.yml"
 fi
 
 # -----------------------------------------------------------------------------
@@ -136,14 +136,14 @@ case "$1" in
     SVC_FLAGS=$(build_svc_compose_flags)
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
     echo "Starting all ClawAI services ($MODE mode, gpu=$GPU_VENDOR)..."
-    docker compose -f "$DB_FILE" up -d
+    docker compose -p claw -f "$DB_FILE" up -d
     echo "Waiting for databases to become healthy..."
     sleep 10
     # shellcheck disable=SC2086
-    docker compose $SVC_FLAGS up -d
+    docker compose -p claw $SVC_FLAGS up -d
     echo "Starting Ollama runtime..."
     # shellcheck disable=SC2086
-    docker compose $OLLAMA_FLAGS up -d
+    docker compose -p claw $OLLAMA_FLAGS up -d
     echo "All services started."
     ;;
   down)
@@ -151,52 +151,52 @@ case "$1" in
     SVC_FLAGS=$(build_svc_compose_flags)
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
     # shellcheck disable=SC2086
-    docker compose $SVC_FLAGS down
+    docker compose -p claw $SVC_FLAGS down
     # shellcheck disable=SC2086
-    docker compose $OLLAMA_FLAGS down
-    docker compose -f "$DB_FILE" down
+    docker compose -p claw $OLLAMA_FLAGS down
+    docker compose -p claw -f "$DB_FILE" down
     echo "All services stopped."
     ;;
   db:up)
     echo "Starting databases + infrastructure ($MODE mode)..."
-    docker compose -f "$DB_FILE" up -d
+    docker compose -p claw -f "$DB_FILE" up -d
     ;;
   db:down)
     echo "Stopping databases + infrastructure ($MODE mode)..."
-    docker compose -f "$DB_FILE" down
+    docker compose -p claw -f "$DB_FILE" down
     ;;
   services:up)
     detect_gpu
     SVC_FLAGS=$(build_svc_compose_flags)
     echo "Starting backend + frontend services ($MODE mode, gpu=$GPU_VENDOR)..."
     # shellcheck disable=SC2086
-    docker compose $SVC_FLAGS up -d
+    docker compose -p claw $SVC_FLAGS up -d
     ;;
   services:down)
     SVC_FLAGS=$(build_svc_compose_flags)
     echo "Stopping backend + frontend services ($MODE mode)..."
     # shellcheck disable=SC2086
-    docker compose $SVC_FLAGS down
+    docker compose -p claw $SVC_FLAGS down
     ;;
   services:rebuild)
     detect_gpu
     SVC_FLAGS=$(build_svc_compose_flags)
     echo "Rebuilding and starting backend + frontend services ($MODE mode, gpu=$GPU_VENDOR)..."
     # shellcheck disable=SC2086
-    docker compose $SVC_FLAGS up -d --build
+    docker compose -p claw $SVC_FLAGS up -d --build
     ;;
   ollama:up)
     detect_gpu
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
     echo "Starting Ollama runtime ($MODE mode)..."
     # shellcheck disable=SC2086
-    docker compose $OLLAMA_FLAGS up -d
+    docker compose -p claw $OLLAMA_FLAGS up -d
     ;;
   ollama:down)
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
     echo "Stopping Ollama runtime ($MODE mode)..."
     # shellcheck disable=SC2086
-    docker compose $OLLAMA_FLAGS down
+    docker compose -p claw $OLLAMA_FLAGS down
     ;;
   status)
     detect_gpu
@@ -205,15 +205,15 @@ case "$1" in
     echo "=== ClawAI Status ($MODE mode, gpu=$GPU_VENDOR) ==="
     echo ""
     echo "--- Databases + Infrastructure ---"
-    docker compose -f "$DB_FILE" ps
+    docker compose -p claw -f "$DB_FILE" ps
     echo ""
     echo "--- Backend + Frontend Services ---"
     # shellcheck disable=SC2086
-    docker compose $SVC_FLAGS ps
+    docker compose -p claw $SVC_FLAGS ps
     echo ""
     echo "--- Ollama Runtime ---"
     # shellcheck disable=SC2086
-    docker compose $OLLAMA_FLAGS ps
+    docker compose -p claw $OLLAMA_FLAGS ps
     ;;
   gpu)
     # Diagnostic: show what GPU detection finds without starting anything.
@@ -227,10 +227,10 @@ case "$1" in
     SVC_FLAGS=$(build_svc_compose_flags)
     if [ -n "$2" ]; then
       # shellcheck disable=SC2086
-      docker compose $SVC_FLAGS -f "$DB_FILE" -f "$OLLAMA_FILE" logs -f "$2"
+      docker compose -p claw $SVC_FLAGS -f "$DB_FILE" -f "$OLLAMA_FILE" logs -f "$2"
     else
       # shellcheck disable=SC2086
-      docker compose $SVC_FLAGS logs -f
+      docker compose -p claw $SVC_FLAGS logs -f
     fi
     ;;
   *)

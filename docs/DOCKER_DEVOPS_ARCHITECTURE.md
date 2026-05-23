@@ -2,54 +2,58 @@
 
 ## Overview
 
-Claw runs as a fully Dockerized development environment with ~24 containers orchestrated by a single `docker-compose.yml` (620 lines). Automated install scripts handle first-time setup on both Linux/macOS (bash) and Windows (PowerShell).
+Claw runs as a fully Dockerized development environment with ~24 containers orchestrated by a single `docker/docker-compose.yml` (620 lines). Automated install scripts handle first-time setup on both Linux/macOS (bash) and Windows (PowerShell).
 
 ---
 
 ## Container Inventory
 
 ### Infrastructure (11 containers)
-| Container | Image | Port | Health Check |
-|---|---|---|---|
-| pg-auth | pgvector/pgvector:pg16 | 5441 | pg_isready |
-| pg-chat | pgvector/pgvector:pg16 | 5442 | pg_isready |
-| pg-connector | pgvector/pgvector:pg16 | 5443 | pg_isready |
-| pg-routing | pgvector/pgvector:pg16 | 5444 | pg_isready |
-| pg-memory | pgvector/pgvector:pg16 | 5445 | pg_isready |
-| pg-files | pgvector/pgvector:pg16 | 5446 | pg_isready |
-| mongodb | mongo | 27017 | mongosh eval |
-| redis | redis | 6379 | redis-cli ping |
-| rabbitmq | rabbitmq:management | 5672/15672 | rabbitmq-diagnostics |
-| nginx | nginx | 80 | curl localhost |
-| ollama | ollama/ollama (profile: local-ai) | 11434 | GPU-aware |
+
+| Container    | Image                             | Port       | Health Check         |
+| ------------ | --------------------------------- | ---------- | -------------------- |
+| pg-auth      | pgvector/pgvector:pg16            | 5441       | pg_isready           |
+| pg-chat      | pgvector/pgvector:pg16            | 5442       | pg_isready           |
+| pg-connector | pgvector/pgvector:pg16            | 5443       | pg_isready           |
+| pg-routing   | pgvector/pgvector:pg16            | 5444       | pg_isready           |
+| pg-memory    | pgvector/pgvector:pg16            | 5445       | pg_isready           |
+| pg-files     | pgvector/pgvector:pg16            | 5446       | pg_isready           |
+| mongodb      | mongo                             | 27017      | mongosh eval         |
+| redis        | redis                             | 6379       | redis-cli ping       |
+| rabbitmq     | rabbitmq:management               | 5672/15672 | rabbitmq-diagnostics |
+| nginx        | nginx                             | 80         | curl localhost       |
+| ollama       | ollama/ollama (profile: local-ai) | 11434      | GPU-aware            |
 
 ### Application Services (11+ containers)
-| Container | Port | Database | Hot Reload |
-|---|---|---|---|
-| auth-service | 4001 | pg-auth | node --watch |
-| chat-service | 4002 | pg-chat | node --watch |
-| connector-service | 4003 | pg-connector | node --watch |
-| routing-service | 4004 | pg-routing | node --watch |
-| memory-service | 4005 | pg-memory | node --watch |
-| file-service | 4006 | pg-files | node --watch |
-| audit-service | 4007 | mongodb | node --watch |
-| ollama-service | 4008 | none | node --watch |
-| health-service | 4009 | none (aggregator) | node --watch |
-| client-logs-service | 4010 | mongodb | node --watch |
-| server-logs-service | 4011 | mongodb | node --watch |
-| frontend | 3000 | none | next dev |
+
+| Container           | Port | Database          | Hot Reload   |
+| ------------------- | ---- | ----------------- | ------------ |
+| auth-service        | 4001 | pg-auth           | node --watch |
+| chat-service        | 4002 | pg-chat           | node --watch |
+| connector-service   | 4003 | pg-connector      | node --watch |
+| routing-service     | 4004 | pg-routing        | node --watch |
+| memory-service      | 4005 | pg-memory         | node --watch |
+| file-service        | 4006 | pg-files          | node --watch |
+| audit-service       | 4007 | mongodb           | node --watch |
+| ollama-service      | 4008 | none              | node --watch |
+| health-service      | 4009 | none (aggregator) | node --watch |
+| client-logs-service | 4010 | mongodb           | node --watch |
+| server-logs-service | 4011 | mongodb           | node --watch |
+| frontend            | 3000 | none              | next dev     |
 
 ---
 
 ## Environment Management
 
 ### Single Root `.env`
+
 - All services read from a single root `.env` file
 - `.env.example` at root defines all variables with defaults
 - Per-service `.env.example` files have been deleted (consolidated)
 - Docker Compose uses `${VAR:-default}` pattern for all env vars
 
 ### Variable Categories
+
 - `PG_*` — PostgreSQL credentials per service (user, password, db, port)
 - `MONGO_*` — MongoDB connection details
 - `REDIS_*` — Redis connection details
@@ -63,14 +67,16 @@ Claw runs as a fully Dockerized development environment with ~24 containers orch
 ## Install Automation
 
 ### Scripts
-| Script | Platform | Purpose |
-|---|---|---|
-| `scripts/install.sh` | Linux/macOS | Full first-time setup |
-| `scripts/install.ps1` | Windows | Full first-time setup |
-| `scripts/setup.sh` | Linux/macOS | Environment setup |
-| `scripts/claw.sh` | Linux/macOS | CLI management tool |
+
+| Script                | Platform    | Purpose               |
+| --------------------- | ----------- | --------------------- |
+| `scripts/install.sh`  | Linux/macOS | Full first-time setup |
+| `scripts/install.ps1` | Windows     | Full first-time setup |
+| `scripts/setup.sh`    | Linux/macOS | Environment setup     |
+| `scripts/claw.sh`     | Linux/macOS | CLI management tool   |
 
 ### What Install Scripts Do
+
 1. Check prerequisites (Docker, Node.js, npm)
 2. Copy `.env.example` to `.env` if not present
 3. Generate secure random secrets (JWT, encryption keys)
@@ -85,6 +91,7 @@ Claw runs as a fully Dockerized development environment with ~24 containers orch
 ## Health Checks
 
 Every container has a Docker health check:
+
 - **PostgreSQL**: `pg_isready -U $user -d $db` (10s interval, 5 retries)
 - **MongoDB**: `mongosh --eval 'db.runCommand("ping")'`
 - **Redis**: `redis-cli ping`
@@ -116,6 +123,7 @@ Health checks enforce startup order via `depends_on` with `condition: service_he
 ## CI/CD Pipeline (GitHub Actions)
 
 ### Current Workflow (`ci.yml`)
+
 ```
 Trigger: push/PR to main, develop
 Concurrency: cancel-in-progress per branch
@@ -128,6 +136,7 @@ Jobs:
 ```
 
 ### CI Steps Pattern (repeated across jobs)
+
 1. Checkout code
 2. Setup Node 20 with npm cache
 3. `npm ci --ignore-scripts`
@@ -166,16 +175,16 @@ Jobs:
 
 ## Sync/Restart/Rebuild Matrix
 
-| Scenario | Command | Downtime |
-|---|---|---|
-| Code change (any service) | Automatic (node --watch) | 0 — hot reload |
-| New npm dependency | `docker compose restart <service>` | ~5s |
-| Prisma schema change | `docker compose restart <service>` | ~10s (migration runs) |
-| New environment variable | `docker compose up -d` | ~5s |
-| Docker Compose change | `docker compose up -d --build` | ~30s |
-| Shared package change | Rebuild + restart dependent services | ~20s |
-| Full rebuild | `docker compose down && docker compose up -d` | ~2min |
-| Infrastructure only | `docker compose up -d pg-auth redis rabbitmq...` | N/A |
+| Scenario                  | Command                                          | Downtime              |
+| ------------------------- | ------------------------------------------------ | --------------------- |
+| Code change (any service) | Automatic (node --watch)                         | 0 — hot reload        |
+| New npm dependency        | `docker compose restart <service>`               | ~5s                   |
+| Prisma schema change      | `docker compose restart <service>`               | ~10s (migration runs) |
+| New environment variable  | `docker compose up -d`                           | ~5s                   |
+| Docker Compose change     | `docker compose up -d --build`                   | ~30s                  |
+| Shared package change     | Rebuild + restart dependent services             | ~20s                  |
+| Full rebuild              | `docker compose down && docker compose up -d`    | ~2min                 |
+| Infrastructure only       | `docker compose up -d pg-auth redis rabbitmq...` | N/A                   |
 
 ---
 
@@ -195,20 +204,21 @@ Jobs:
 
 ## Signs Docker Is Lying — Checklist
 
-| # | Check | Status | Notes |
-|---|---|---|---|
-| 1 | Does `docker compose up -d` bring up ALL services? | YES | All containers start and health-check |
-| 2 | Do health checks actually verify service readiness? | YES | pg_isready, redis-cli ping, HTTP /health |
-| 3 | Can a new developer set up the project in < 10 minutes? | YES | Install scripts automate everything |
-| 4 | Does hot reload actually work? | YES | node --watch + volume mounts |
-| 5 | Are database migrations applied automatically? | YES | Prisma migrate deploy in entrypoint |
-| 6 | Can you run the full test suite in CI? | PARTIAL | Tests run but failures are tolerated, no integration tests |
-| 7 | Can you deploy to production from this setup? | NO | No production Dockerfiles, no deploy pipeline |
-| 8 | Are secrets properly managed? | NO | Plain text in .env file |
-| 9 | Can you scale any service independently? | NO | No resource limits, no scaling config |
-| 10 | Is there a disaster recovery plan? | NO | No backups, no volume snapshot strategy |
+| #   | Check                                                   | Status  | Notes                                                      |
+| --- | ------------------------------------------------------- | ------- | ---------------------------------------------------------- |
+| 1   | Does `docker compose up -d` bring up ALL services?      | YES     | All containers start and health-check                      |
+| 2   | Do health checks actually verify service readiness?     | YES     | pg_isready, redis-cli ping, HTTP /health                   |
+| 3   | Can a new developer set up the project in < 10 minutes? | YES     | Install scripts automate everything                        |
+| 4   | Does hot reload actually work?                          | YES     | node --watch + volume mounts                               |
+| 5   | Are database migrations applied automatically?          | YES     | Prisma migrate deploy in entrypoint                        |
+| 6   | Can you run the full test suite in CI?                  | PARTIAL | Tests run but failures are tolerated, no integration tests |
+| 7   | Can you deploy to production from this setup?           | NO      | No production Dockerfiles, no deploy pipeline              |
+| 8   | Are secrets properly managed?                           | NO      | Plain text in .env file                                    |
+| 9   | Can you scale any service independently?                | NO      | No resource limits, no scaling config                      |
+| 10  | Is there a disaster recovery plan?                      | NO      | No backups, no volume snapshot strategy                    |
 
 ### Verdict
+
 Docker/DevOps is **excellent for development, absent for production**. The dev experience is polished — install scripts, hot reload, auto-migration, health checks. But there is no path from development to production: no production images, no deployment pipeline, no secret management, no backup strategy.
 
 ---
