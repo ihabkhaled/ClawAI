@@ -1,6 +1,14 @@
 // Register path aliases at runtime (replaces the build-time path rewrite step).
 // Must run before any other @app/* @common/* @infrastructure/* @modules/* import.
 import { register as registerTsConfigPaths } from 'tsconfig-paths';
+
+import { NestFactory } from '@nestjs/core';
+import { Logger } from 'nestjs-pino';
+import helmet from 'helmet';
+import { RabbitMQLoggerService, RabbitMQService } from '@claw/shared-rabbitmq';
+import { AppModule } from './app/app.module';
+import { AppConfig } from './app/config/app.config';
+
 registerTsConfigPaths({
   baseUrl: __dirname,
   paths: {
@@ -10,13 +18,6 @@ registerTsConfigPaths({
     '@modules/*': ['modules/*'],
   },
 });
-
-import { NestFactory } from '@nestjs/core';
-import { Logger } from 'nestjs-pino';
-import helmet from 'helmet';
-import { RabbitMQLoggerService, RabbitMQService } from '@claw/shared-rabbitmq';
-import { AppModule } from './app/app.module';
-import { AppConfig } from './app/config/app.config';
 
 async function bootstrap(): Promise<void> {
   const config = AppConfig.validate();
