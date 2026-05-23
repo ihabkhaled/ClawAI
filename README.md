@@ -166,13 +166,15 @@ claw/
 │   ├── claw-image-service/           # Image generation service (:4012)
 │   ├── claw-file-generation-service/ # File generation service (:4013)
 │   ├── claw-agent-service/           # Local agent runtime backend (:4015)
+│   ├── claw-workspace-service/       # Workspace grounding and actions (:4014)
 │   ├── claw-research-service/        # Dynamic search and evidence orchestration (:4016)
-│   └── claw-workspace-service/       # Workspace grounding and actions (:4017)
+│   └── claw-llamacpp-service/        # Frontier open-weight LLMs via llama.cpp (:4017)
 ├── packages/
 │   ├── shared-types/                 # @claw/shared-types
 │   ├── shared-constants/             # @claw/shared-constants
 │   ├── shared-rabbitmq/              # @claw/shared-rabbitmq
-│   └── shared-auth/                  # @claw/shared-auth
+│   ├── shared-auth/                  # @claw/shared-auth
+│   └── shared-utilities/             # @claw/shared-utilities
 ├── docs/                             # Documentation and ADRs
 ├── infra/                            # Docker, nginx, and deployment configs
 ├── scripts/                          # Development and operations scripts
