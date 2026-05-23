@@ -73,7 +73,7 @@ Every mindset in `CLAUDE.md` applies to Cursor identically:
 9. UAT (non-technical user workflow simulation)
 10. Bug-free (TypeScript error = blocker, failing test = blocker)
 11. Coverage (≥92% per service, all four metrics)
-12. Wiring-everything (7 compose files, nginx, health, shared packages, CI, i18n, docs)
+12. Wiring-everything (split compose files in `docker/`, nginx, health, shared packages, CI, i18n, docs)
 13. No-missing-requirements (re-read request 3×, checklist every verb)
 14. Observability (structured logging, correlation IDs, auditable events)
 15. Idempotency (re-runnable QA, additive migrations)
@@ -140,7 +140,7 @@ Cross-service utility location:
 - Uses string literal unions where enums exist
 - Skips i18n for user-facing text
 - Disables ESLint rules
-- Adds a new service without wiring through all 7 compose files + nginx + health + shared packages
+- Adds a new service without wiring through all split compose files in `docker/` + nginx + health + shared packages
 - Claims "done" without QA script running
 - Reintroduces a per-service `jwt.utility.ts` after dedup (use `@claw/shared-utilities`)
 - Adds a public method without `logger.debug` entry + `logger.error` catch

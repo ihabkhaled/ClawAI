@@ -36,7 +36,7 @@ claw/
 │   ├── shared-constants/           # @claw/shared-constants
 │   ├── shared-rabbitmq/            # @claw/shared-rabbitmq
 │   └── shared-auth/                # @claw/shared-auth
-├── docker-compose.yml
+├── docker/                          # All docker-compose.{dev,prod}.*.yml split files
 └── package.json
 ```
 
@@ -138,7 +138,7 @@ Add the port to `packages/shared-constants` and document it. Follow the existing
 ### 3. Add Database (if needed)
 
 If the service needs its own database:
-- Add a new PostgreSQL (or MongoDB) service to `docker-compose.yml`
+- Add a new PostgreSQL (or MongoDB) service to `docker/docker-compose.dev.databases.yml` and `docker/docker-compose.prod.databases.yml`
 - Assign the next available host port (5447+ for PostgreSQL)
 - Add connection variables to `.env.example`
 
@@ -159,7 +159,7 @@ If the service publishes or consumes events:
 
 ### 7. Update Docker Compose
 
-Add the service container to `docker-compose.yml` with proper dependencies, health checks, and network configuration.
+Add the service container to `docker/docker-compose.dev.services.yml` and `docker/docker-compose.prod.services.yml` with proper dependencies, health checks, and network configuration. If the service needs GPU passthrough, also add it to the matching `docker/docker-compose.{dev,prod}.gpu-{nvidia,rocm,vulkan}.yml` overlays.
 
 ### 8. Update Documentation
 

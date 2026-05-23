@@ -80,7 +80,7 @@ docs/                # 11 architecture audit documents
 
 ## Key Versions
 
-- Node >= 20, NestJS 10.4, Next.js 16.2, React 19.2, Prisma 5.22, Zod 3.24, TypeScript 5.6+
+- Node >= 22.13, NestJS 11.1, Next.js 16.2, React 19.2, Prisma 6.19, Zod 3.24, TypeScript 6.0+
 - ESLint 9 (flat config), Prettier 3.8, Jest (backend), Vitest (frontend), Playwright (E2E)
 
 ---
@@ -93,7 +93,7 @@ docs/                # 11 architecture audit documents
 2. **`.env`** — fill the new variable with a working dev value
 3. **`scripts/install.sh`** — add the variable to the generated .env block
 4. **`scripts/install.ps1`** — same for Windows PowerShell installer
-5. **ALL Docker compose files** — the split compose files (`docker-compose.dev.{databases,services,ollama}.yml` + `docker-compose.prod.*` mirrors + `docker-compose.{dev,prod}.gpu-{nvidia,rocm,vulkan}.yml` overlays) — if new service, port, volume, database, or AI runtime dependency
+5. **ALL Docker compose files** — the split compose files (`docker/docker-compose.dev.{databases,services,ollama}.yml` + `docker/docker-compose.prod.*` mirrors + `docker/docker-compose.{dev,prod}.gpu-{nvidia,rocm,vulkan}.yml` overlays) — if new service, port, volume, database, or AI runtime dependency
 6. **i18n locale files** — if any new user-facing text (ALL 8 locales: en, ar, de, es, fr, it, pt, ru)
 7. **Architecture docs** (`docs/`) — if the change affects documented architecture
 8. **Prisma migrations** — if any schema change (`npx prisma migrate dev --name <name>`)
@@ -841,8 +841,8 @@ docker rmi <image-name>
 ./scripts/claw.sh gpu                             # Probe GPU detection only (no startup)
 ```
 
-`claw.sh` orchestrates the split compose files (`docker-compose.dev.{databases,services,ollama}.yml`)
-and conditionally layers a per-vendor GPU overlay (`docker-compose.dev.gpu-{nvidia,rocm,vulkan}.yml`)
+`claw.sh` orchestrates the split compose files (`docker/docker-compose.dev.{databases,services,ollama}.yml`)
+and conditionally layers a per-vendor GPU overlay (`docker/docker-compose.dev.gpu-{nvidia,rocm,vulkan}.yml`)
 when the host has the corresponding GPU. It is the **only** supported way to start the stack —
 do not invoke `docker compose -f …` directly.
 
@@ -850,9 +850,9 @@ do not invoke `docker compose -f …` directly.
 
 | Host GPU                          | Probe                     | Overlay file applied                       | Container gets                                                                      |
 | --------------------------------- | ------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------- |
-| NVIDIA (Linux/WSL2/Win)           | `nvidia-smi -L` succeeds  | `docker-compose.{dev,prod}.gpu-nvidia.yml` | `deploy.resources.reservations.devices.driver=nvidia`, `NVIDIA_VISIBLE_DEVICES=all` |
-| AMD ROCm (Linux only)             | `/dev/kfd` exists         | `docker-compose.{dev,prod}.gpu-rocm.yml`   | `devices: [/dev/kfd, /dev/dri]`, `group_add: [video, render]`, `ipc: host`          |
-| Intel iGPU / Arc / Vulkan (Linux) | `/dev/dri/render*` exists | `docker-compose.{dev,prod}.gpu-vulkan.yml` | `devices: [/dev/dri]`, `group_add: [video, render]`                                 |
+| NVIDIA (Linux/WSL2/Win)           | `nvidia-smi -L` succeeds  | `docker/docker-compose.{dev,prod}.gpu-nvidia.yml` | `deploy.resources.reservations.devices.driver=nvidia`, `NVIDIA_VISIBLE_DEVICES=all` |
+| AMD ROCm (Linux only)             | `/dev/kfd` exists         | `docker/docker-compose.{dev,prod}.gpu-rocm.yml`   | `devices: [/dev/kfd, /dev/dri]`, `group_add: [video, render]`, `ipc: host`          |
+| Intel iGPU / Arc / Vulkan (Linux) | `/dev/dri/render*` exists | `docker/docker-compose.{dev,prod}.gpu-vulkan.yml` | `devices: [/dev/dri]`, `group_add: [video, render]`                                 |
 | Apple Silicon Metal               | `uname -s = Darwin`       | (none — warns)                             | CPU-only inside container; run `claw-llamacpp-service` natively for Metal           |
 | None                              | (no probe matches)        | (none)                                     | CPU-only                                                                            |
 
@@ -1151,7 +1151,7 @@ Check and update ALL of these:
 2. **`.env`** — fill the new variable with a working dev value
 3. **`scripts/install.sh`** — add the variable to the generated .env block
 4. **`scripts/install.ps1`** — same for Windows PowerShell installer
-5. **ALL Docker compose files** — the split compose files (`docker-compose.dev.{databases,services,ollama}.yml` + `docker-compose.prod.*` mirrors + `docker-compose.{dev,prod}.gpu-{nvidia,rocm,vulkan}.yml` overlays) — if new service, port, volume, database, or AI runtime dependency
+5. **ALL Docker compose files** — the split compose files (`docker/docker-compose.dev.{databases,services,ollama}.yml` + `docker/docker-compose.prod.*` mirrors + `docker/docker-compose.{dev,prod}.gpu-{nvidia,rocm,vulkan}.yml` overlays) — if new service, port, volume, database, or AI runtime dependency
 6. **`infra/nginx/nginx.conf`** — add upstream + location block for the new service (SSE routes need `proxy_buffering off`)
 7. **`packages/shared-constants`** — add service port and service name constants
 8. **`packages/shared-types`** — add new event patterns if the service publishes events
@@ -1430,21 +1430,22 @@ Full standards live in `docs/16-quality-engineering/`:
 
 ## How to Add a New Backend Service
 
-> **MANDATORY DOCKER RULE — NEVER SKIP**: Every new service and every new database MUST be added to ALL 7 compose files simultaneously, in the same commit. No exceptions. The 7 files are:
+> **MANDATORY DOCKER RULE — NEVER SKIP**: Every new service and every new database MUST be added to the relevant split compose files in `docker/` simultaneously, in the same commit. No exceptions. The split files are:
 >
-> 1. `docker-compose.dev.yml` — dev all-in-one
-> 2. `docker-compose.yml` — prod all-in-one
-> 3. `docker-compose.dev.databases.yml` — dev split: databases only
-> 4. `docker-compose.dev.services.yml` — dev split: services only
-> 5. `docker-compose.prod.databases.yml` — prod split: databases only
-> 6. `docker-compose.prod.services.yml` — prod split: services only
-> 7. `docker-compose.dev.ollama.yml` / `docker-compose.prod.ollama.yml` — only if service depends on Ollama
+> 1. `docker/docker-compose.dev.databases.yml` — dev: databases only
+> 2. `docker/docker-compose.dev.services.yml` — dev: services only
+> 3. `docker/docker-compose.prod.databases.yml` — prod: databases only
+> 4. `docker/docker-compose.prod.services.yml` — prod: services only
+> 5. `docker/docker-compose.dev.ollama.yml` / `docker/docker-compose.prod.ollama.yml` — only if service depends on Ollama
+> 6. `docker/docker-compose.dev.gpu-{nvidia,rocm,vulkan}.yml` + the matching `prod` overlays — only if service needs GPU passthrough
 >
-> **Databases** go into files 1, 2, 3, 5 (all-in-one + database split files).
-> **Services** go into files 1, 2, 4, 6 (all-in-one + service split files).
+> **Databases** go into files 1 and 3.
+> **Services** go into files 2 and 4.
 > **Volumes** must be declared in every file that defines the corresponding service or database.
 >
-> If you add a DB to only one file and not the others, the split-file deployment will fail with "container not found". This has burned us before.
+> The legacy "all-in-one" files (`docker-compose.dev.yml`, `docker-compose.yml`) have been **removed**. The canonical entrypoint is `./scripts/claw.sh up` — it stitches the split files and applies the right GPU overlay for the host.
+>
+> If you add a DB to only one file and not the others, deployment will fail with "container not found".
 
 1. **Copy boilerplate** from closest existing service (e.g., `claw-ollama-service`)
 2. **Create PostgreSQL database** in ALL Docker compose files — see mandatory rule above

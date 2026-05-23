@@ -6,13 +6,13 @@ Complete guide to setting up Claw for local development.
 
 ## Prerequisites
 
-| Requirement    | Minimum Version | Notes                           |
-| -------------- | --------------- | ------------------------------- |
-| Node.js        | 20.0.0          | LTS recommended                 |
-| npm            | 10.0.0          | Ships with Node 20+             |
-| Docker         | 24.0.0          | Docker Desktop or Docker Engine |
-| Docker Compose | 2.20.0          | Included with Docker Desktop    |
-| Git            | 2.40.0          | For cloning the repository      |
+| Requirement    | Minimum Version | Notes                                                              |
+| -------------- | --------------- | ------------------------------------------------------------------ |
+| Node.js        | 22.13.0         | Required by undici 8 + frontier toolchain — LTS 22 or 24 supported |
+| npm            | 10.0.0          | Ships with Node 22+                                                |
+| Docker         | 24.0.0          | Docker Desktop or Docker Engine                                    |
+| Docker Compose | 2.20.0          | Included with Docker Desktop                                       |
+| Git            | 2.40.0          | For cloning the repository                                         |
 
 Optional:
 
@@ -41,7 +41,7 @@ powershell -ExecutionPolicy Bypass -File scripts\install.ps1
 
 The script will:
 
-- Check that Docker, Node.js 20+, and Git are installed
+- Check that Docker, Node.js 22+, and Git are installed
 - Generate secure random secrets (JWT, encryption key, database passwords)
 - Prompt for admin email/password (with sensible defaults)
 - Create a fully configured `.env` file
@@ -432,7 +432,7 @@ Typical flow:
 
 ### Port Conflicts
 
-If any ports are already in use, update the corresponding port mappings in the split compose files (`docker-compose.dev.databases.yml` for databases, `docker-compose.dev.services.yml` for services) and the relevant `.env` variables.
+If any ports are already in use, update the corresponding port mappings in the split compose files (`docker/docker-compose.dev.databases.yml` for databases, `docker/docker-compose.dev.services.yml` for services) and the relevant `.env` variables.
 
 ### Container Fails to Start
 
