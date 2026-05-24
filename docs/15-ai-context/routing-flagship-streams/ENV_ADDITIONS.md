@@ -1,0 +1,130 @@
+# Environment Variables — Flagship Additions
+
+Block to copy into `.env.example`, `.env`, `scripts/install.sh`, `scripts/install.ps1`. All flags default to `false` / `0` so the production hot path is unchanged until each stream is activated.
+
+```bash
+# =============================================================================
+# Routing Flagship — feature flags (one per stream)
+# =============================================================================
+# All disabled by default. Flip to true / non-zero to activate a stream.
+# Streams have hard dependencies — see docs/15-ai-context/routing-flagship-streams/00-master-plan.md
+
+# R.1 — Close learning loop
+ROUTING_R1_LEARNED_BIAS_ENABLED=false
+ROUTING_R1_LEARNED_BIAS_WEIGHT_MAX=0.3
+ROUTING_R1_MIN_SAMPLE_SIZE=10
+ROUTING_R1_STICKY_THREAD_ROUTE_ENABLED=false
+ROUTING_R1_PREFER_SAME_FAMILY=false
+ROUTING_R1_CONFIDENCE_CALIBRATION_ENABLED=false
+ROUTING_R1_CONFIDENCE_CALIBRATION_WINDOW_DAYS=30
+
+# R.1/R.3 — v2 evaluator canary
+ROUTING_V2_PRIMARY_ENABLED=false
+ROUTING_V2_CANARY_PERCENT=0
+ROUTING_V2_ROLLBACK_SWITCH=true
+ROUTING_V2_REGRESSION_THRESHOLD_PERCENT=1
+ROUTING_V2_COST_INCREASE_THRESHOLD_PERCENT=10
+ROUTING_V2_CONFIDENCE_DROP_THRESHOLD=0.1
+ROUTING_V2_FAILURE_RATE_THRESHOLD_PERCENT=2
+
+# R.2 — Multimodal intent detection
+ROUTING_R2_MODALITY_DETECTION_ENABLED=false
+ROUTING_R2_YOUTUBE_DETECTION_ENABLED=false
+ROUTING_R2_PDF_DETECTION_ENABLED=false
+ROUTING_R2_VIDEO_DETECTION_ENABLED=false
+ROUTING_R2_AUDIO_DETECTION_ENABLED=false
+ROUTING_R2_SPREADSHEET_DETECTION_ENABLED=false
+ROUTING_R2_URL_DETECTION_ENABLED=false
+ROUTING_R2_TOOL_CALLING_FILTER_ENABLED=false
+ROUTING_R2_STREAMING_FILTER_ENABLED=false
+ROUTING_R2_EMBEDDING_ROUTING_ENABLED=false
+
+# R.3 — Workflow orchestrator live workflows
+ROUTING_R3_WORKFLOWS_ENABLED=false
+ROUTING_R3_WORKFLOW_DIRECT_LLM_ENABLED=true              # default workflow — always on
+ROUTING_R3_WORKFLOW_SEARCH_FIRST_ENABLED=false
+ROUTING_R3_WORKFLOW_EXTRACT_FIRST_ENABLED=false
+ROUTING_R3_WORKFLOW_PDF_EXTRACTION_ENABLED=false
+ROUTING_R3_WORKFLOW_YOUTUBE_TRANSCRIPT_ENABLED=false
+ROUTING_R3_WORKFLOW_IMAGE_ANALYSIS_ENABLED=false
+ROUTING_R3_WORKFLOW_IMAGE_GENERATION_ENABLED=true        # already wired
+ROUTING_R3_WORKFLOW_VIDEO_ANALYSIS_ENABLED=false
+ROUTING_R3_WORKFLOW_AUDIO_TRANSCRIBE_ENABLED=false
+ROUTING_R3_WORKFLOW_FILE_GENERATION_ENABLED=true         # already wired
+ROUTING_R3_WORKFLOW_CODE_REVIEW_ENABLED=false
+ROUTING_R3_WORKFLOW_COMPARE_ENSEMBLE_ENABLED=false
+ROUTING_R3_WORKFLOW_JUDGE_PIPELINE_ENABLED=false
+
+# R.4 — Cost budget intelligence
+ROUTING_R4_COST_BUDGET_ENABLED=false
+ROUTING_R4_DEFAULT_USER_MONTHLY_CAP_USD=0                # 0 = no default cap
+ROUTING_R4_DEFAULT_ORG_MONTHLY_CAP_USD=0
+ROUTING_R4_BUDGET_WARN_AT_PERCENT=80
+ROUTING_R4_FORCE_LOCAL_WHEN_OVER_BUDGET=true
+ROUTING_R4_FREE_TIER_AWARENESS_ENABLED=false             # blocked on connector-service work
+
+# R.5 — Operator playground + transparency
+ROUTING_R5_PLAYGROUND_ENABLED=false
+ROUTING_R5_EXPLANATION_IN_CHAT_ENABLED=false
+ROUTING_R5_TAXONOMY_ADMIN_UI_ENABLED=false
+ROUTING_R5_CIRCUIT_BREAKER_DASHBOARD_ENABLED=false
+
+# R.6 — Multi-tenant fleet routing
+ROUTING_R6_MULTI_TENANT_ENABLED=false
+ROUTING_R6_ORG_PROVIDER_RULES_ENABLED=false
+ROUTING_R6_ORG_RATE_LIMIT_ENABLED=false
+
+# R.7 — i18n non-English routing
+ROUTING_R7_LANGUAGE_DETECTION_ENABLED=false
+ROUTING_R7_LANGUAGE_AWARE_MODEL_SELECTION_ENABLED=false
+ROUTING_R7_CODE_MIXED_DETECTION_ENABLED=false
+ROUTING_R7_ARABIC_RTL_HINT_ENABLED=false
+ROUTING_R7_SUPPORTED_LOCALES=en,ar,de,es,fr,it,pt,ru
+
+# R.8 — Advanced routing intelligence (each sub-feature gated)
+ROUTING_R8_PROMPT_LENGTH_FILTER_ENABLED=false
+ROUTING_R8_LATENCY_CIRCUIT_BREAKER_ENABLED=false
+ROUTING_R8_LATENCY_CIRCUIT_THRESHOLD_MS=15000
+ROUTING_R8_MID_STREAM_SWITCH_ENABLED=false
+ROUTING_R8_MID_STREAM_FIRST_CHUNK_MAX_MS=5000
+ROUTING_R8_FINE_TUNE_PREFERENCE_ENABLED=false
+ROUTING_R8_REGION_AWARE_ROUTING_ENABLED=false
+ROUTING_R8_MULTI_INTENT_SPLITTER_ENABLED=false
+ROUTING_R8_EMBEDDING_ROUTING_ENABLED=false
+ROUTING_R8_CONSENSUS_MODE_ENABLED=false
+ROUTING_R8_COST_QUALITY_SLIDER_ENABLED=false
+
+# R.9 — Quality + reliability hardening
+ROUTING_R9_REGRESSION_SUITE_ENABLED=false                # CI flag
+ROUTING_R9_DRIFT_DETECTION_ENABLED=false
+ROUTING_R9_DRIFT_ALERT_THRESHOLD_PERCENT=2
+ROUTING_R9_CALIBRATION_SNAPSHOT_CRON="0 4 * * *"
+```
+
+## Activation order (matches dependency graph)
+
+```
+1. ROUTING_R1_LEARNED_BIAS_ENABLED=true
+2. ROUTING_V2_PRIMARY_ENABLED=true + ROUTING_V2_CANARY_PERCENT=5
+3. ROUTING_R3_WORKFLOWS_ENABLED=true (per-workflow flags individually)
+4. ROUTING_R2_MODALITY_DETECTION_ENABLED=true + per-modality flags
+5. ROUTING_R4_COST_BUDGET_ENABLED=true
+6. ROUTING_R5_* (no production risk — safe to enable in any order)
+7. ROUTING_R7_LANGUAGE_DETECTION_ENABLED=true
+8. ROUTING_R6_MULTI_TENANT_ENABLED=true (after auth-service org work)
+9. ROUTING_R8_* (per sub-feature)
+10. ROUTING_R9_* (CI/ops flags — enable in CI first)
+```
+
+## Rollback
+
+```bash
+# Disable a stream instantly:
+sed -i 's/ROUTING_R1_LEARNED_BIAS_ENABLED=true/ROUTING_R1_LEARNED_BIAS_ENABLED=false/' .env
+./scripts/claw.sh restart routing-service
+# < 10 seconds, no DB migration needed.
+```
+
+## Reading flags
+
+All flags MUST be read via `AppConfig` (Zod-validated). NEVER `process.env.ROUTING_*` directly. See `apps/claw-routing-service/src/app/config/app.config.ts` for the existing pattern.
