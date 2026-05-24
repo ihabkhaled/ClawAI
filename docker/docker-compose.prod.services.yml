@@ -425,7 +425,7 @@ services:
       context: ../apps/claw-frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://localhost/api/v1}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
     container_name: claw-frontend
     restart: unless-stopped
     env_file: ../.env
@@ -436,7 +436,7 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000 || exit 1']
+      test: ['CMD-SHELL', 'wget -qO- http://claw.local:3000 || exit 1']
       interval: 15s
       timeout: 10s
       retries: 5

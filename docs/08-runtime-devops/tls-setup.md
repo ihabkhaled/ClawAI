@@ -55,9 +55,9 @@ store write. Subsequent runs need no admin.
 After install:
 
 ```bash
-# Browser: open https://localhost — expect green-lock, no warning
+# Browser: open https://claw.local — expect green-lock, no warning
 # CLI:
-curl -sS https://localhost/api/v1/health
+curl -sS https://claw.local/api/v1/health
 # {"status":"ok",...}
 
 # Inter-service trust (from inside any service container):
@@ -112,10 +112,10 @@ the new service will fail TLS verification.
 
 Once TLS is live, your OAuth callback URLs become:
 
-- Google: `https://localhost/api/v1/workspace/oauth/google/callback`
-- Slack: `https://localhost/api/v1/workspace/oauth/slack/callback`
-- Atlassian: `https://localhost/api/v1/workspace/oauth/jira/callback`
-- GitHub: `https://localhost/api/v1/workspace/oauth/github/callback`
+- Google: `https://claw.local/api/v1/workspace/oauth/google/callback`
+- Slack: `https://claw.local/api/v1/workspace/oauth/slack/callback`
+- Atlassian: `https://claw.local/api/v1/workspace/oauth/jira/callback`
+- GitHub: `https://claw.local/api/v1/workspace/oauth/github/callback`
 
 You still need to register these manually in each provider's developer
 console — there's no API for that. Most providers (Google in particular)
@@ -125,16 +125,16 @@ flows that previously required ngrok.
 ## Webhooks (NOT solved by this)
 
 Provider webhooks (GitHub `push`, Slack `event_callback`, Jira
-`webhook`) still cannot reach `https://localhost` because the
+`webhook`) still cannot reach `https://claw.local` because the
 provider's server doesn't trust your local CA. For webhook testing
 use a tunnel:
 
 ```bash
 # ngrok
-ngrok http https://localhost:443
+ngrok http https://claw.local:443
 
 # or cloudflared
-cloudflared tunnel --url https://localhost
+cloudflared tunnel --url https://claw.local
 ```
 
 This isn't a regression — webhooks never worked locally before TLS

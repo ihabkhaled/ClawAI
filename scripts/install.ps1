@@ -513,7 +513,7 @@ if (-not $skipEnv) {
 
 # --- General ---
 NODE_ENV=development
-CORS_ORIGINS=https://localhost,https://localhost:3000,http://localhost:3000,http://localhost:4000,http://localhost
+CORS_ORIGINS=https://claw.local,https://claw.local:3000
 
 # --- TLS / SSL (mkcert-managed — see scripts/install-tls.ps1) ---
 # Containers always look here. The leaf cert + private key + root CA are
@@ -639,9 +639,9 @@ ADMIN_PASSWORD=$adminPass
 # =============================================================================
 # Frontend
 # =============================================================================
-NEXT_PUBLIC_API_URL=https://localhost/api/v1
+NEXT_PUBLIC_API_URL=
 NEXT_PUBLIC_APP_NAME=Claw
-NEXT_PUBLIC_APP_URL=https://localhost
+NEXT_PUBLIC_APP_URL=https://claw.local
 FRONTEND_PORT=3000
 
 # =============================================================================
@@ -815,8 +815,8 @@ Write-Host ("=" * 64) -ForegroundColor Cyan
 Write-Host "  Configuration Summary" -ForegroundColor White
 Write-Host ("=" * 64) -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  Frontend:          https://localhost"
-Write-Host "  API Gateway:       https://localhost/api/v1"
+Write-Host "  Frontend:          https://claw.local"
+Write-Host "  API Gateway:       https://claw.local"
 Write-Host "  RabbitMQ UI:       http://localhost:15672"
 Write-Host ""
 Write-Host "  Admin email:       $adminEmail"
@@ -974,8 +974,8 @@ if ($unhealthy -eq 0) {
 }
 
 Write-Host ""
-Write-Host "  Open Claw:         https://localhost" -ForegroundColor White
-Write-Host "  API Gateway:       https://localhost/api/v1" -ForegroundColor White
+Write-Host "  Open Claw:         https://claw.local" -ForegroundColor White
+Write-Host "  API Gateway:       https://claw.local" -ForegroundColor White
 Write-Host "  RabbitMQ UI:       http://localhost:15672" -ForegroundColor White
 Write-Host ""
 Write-Host "  Admin login:" -ForegroundColor White

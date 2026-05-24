@@ -60,7 +60,7 @@ Service bootstrap:
 Nginx:
 
 - Listens on **443** for TLS and **80** for redirect-only (HTTP→HTTPS
-  301 to catch bookmarked `http://localhost:4000` URLs)
+  301 to catch bookmarked `http://claw.local:4000` URLs)
 - `proxy_ssl_trusted_certificate` + `proxy_ssl_verify on` enforces cert
   verification on the upstream hop to each backend service
 - Every `proxy_pass` upstream rewritten from `http://service:port` to
@@ -126,13 +126,13 @@ backend service directly bypassing nginx.
   is still required for inbound webhook testing — this isn't a
   regression vs. the pre-TLS state.
 - The OAuth provider's callback URL still needs to be registered
-  manually in each provider console as `https://localhost/...` —
+  manually in each provider console as `https://claw.local/...` —
   no script can automate cross-vendor console writes.
 
 ## Verification
 
-- Browser visit to `https://localhost` shows green-lock and no warning
-- `curl -sS https://localhost/api/v1/health` returns 200 without
+- Browser visit to `https://claw.local` shows green-lock and no warning
+- `curl -sS https://claw.local/api/v1/health` returns 200 without
   `--insecure`
 - `docker exec claw-chat-service curl https://auth-service:4001/api/v1/health`
   returns 200 (inter-service trust verified)

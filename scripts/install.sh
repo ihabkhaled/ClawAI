@@ -444,7 +444,7 @@ if [ "$SKIP_ENV" != "true" ]; then
 
 # --- General ---
 NODE_ENV=development
-CORS_ORIGINS=https://localhost,https://localhost:3000,http://localhost:3000,http://localhost:4000,http://localhost
+CORS_ORIGINS=https://claw.local,https://claw.local:3000
 
 # --- TLS / SSL (mkcert-managed — see scripts/install-tls.sh) ---
 # Containers always look here. The leaf cert + private key + root CA are
@@ -570,9 +570,9 @@ ADMIN_PASSWORD=${ADMIN_PASS}
 # =============================================================================
 # Frontend
 # =============================================================================
-NEXT_PUBLIC_API_URL=https://localhost/api/v1
+NEXT_PUBLIC_API_URL=
 NEXT_PUBLIC_APP_NAME=Claw
-NEXT_PUBLIC_APP_URL=https://localhost
+NEXT_PUBLIC_APP_URL=https://claw.local
 FRONTEND_PORT=3000
 
 # =============================================================================
@@ -743,8 +743,8 @@ echo "${BOLD}${CYAN}━━━━━━━━━━━━━━━━━━━━
 echo "${BOLD}  Configuration Summary${NC}"
 echo "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "  Frontend:          https://localhost"
-echo "  API Gateway:       https://localhost/api/v1"
+echo "  Frontend:          https://claw.local"
+echo "  API Gateway:       https://claw.local"
 echo "  RabbitMQ UI:       http://localhost:15672"
 echo ""
 echo "  Admin email:       ${ADMIN_EMAIL}"
@@ -908,8 +908,8 @@ else
 fi
 
 echo ""
-echo "  ${BOLD}Open Claw:${NC}         https://localhost"
-echo "  ${BOLD}API Gateway:${NC}       https://localhost/api/v1"
+echo "  ${BOLD}Open Claw:${NC}         https://claw.local"
+echo "  ${BOLD}API Gateway:${NC}       https://claw.local"
 echo "  ${BOLD}RabbitMQ UI:${NC}       http://localhost:15672  (claw / ${RABBIT_PASS})"
 echo ""
 echo "  ${BOLD}Admin login:${NC}"

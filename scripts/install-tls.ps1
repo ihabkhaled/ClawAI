@@ -1,14 +1,24 @@
 # =============================================================================
 # Claw — Local TLS / SSL Cert Generator (Windows)
 # -----------------------------------------------------------------------------
-# Installs mkcert via winget or choco (silent), trusts the local root CA
-# in LocalMachine + CurrentUser stores, and issues a single wildcard leaf
-# cert covering localhost + every internal Docker hostname.
+# Two-tier strategy — picks whichever works without user interaction:
 #
-# Self-elevates to admin once for `mkcert -install` (writes to LocalMachine
-# cert store). Subsequent runs no-op the install step.
+#   Tier 1 — mkcert (browser-trusted): installs mkcert via winget/choco/
+#            direct-binary, runs `mkcert -install` (self-elevates ONCE for
+#            LocalMachine cert store), issues a leaf cert covering localhost
+#            + every internal docker hostname + the claw.local alias.
 #
-# Called automatically by scripts/install.ps1 — never prompts.
+#   Tier 2 — openssl self-signed (fallback): if mkcert install fails OR
+#            admin elevation is declined, generates a self-signed leaf cert
+#            via a one-shot `docker run alpine openssl ...`. Browser shows
+#            a one-time "Not Secure" warning but inter-service TLS works.
+#
+# Hosts file: appends `127.0.0.1 claw.local` to
+# %SystemRoot%\System32\drivers\etc\hosts (idempotent, self-elevates if not
+# already admin — silent if writeable, asks once otherwise).
+#
+# Idempotent. Forced on by scripts/install.ps1 — never prompts the user
+# beyond the (optional) UAC popup.
 # =============================================================================
 $ErrorActionPreference = 'Stop'
 
@@ -26,10 +36,8 @@ if (-not (Test-Path $CertsDir)) {
     New-Item -ItemType Directory -Path $CertsDir | Out-Null
 }
 
-# Every internal docker hostname that any service (or nginx) might present.
-# Keep in sync with docker-compose service names — re-run install-tls.ps1
-# whenever a new service is added so its hostname becomes a SAN.
-$Hosts = @(
+# Every internal docker hostname + the claw.local alias.
+$HostsArr = @(
     'localhost', '127.0.0.1', '::1', 'claw.local', '*.claw.local',
     'nginx',
     'auth-service', 'chat-service', 'connector-service', 'routing-service',
@@ -39,91 +47,218 @@ $Hosts = @(
     'agent-service', 'research-service', 'llamacpp-service'
 )
 
-# ─── Install mkcert if needed ─────────────────────────────────────────────
-function Install-Mkcert {
+$IsAdmin = ([Security.Principal.WindowsPrincipal] `
+            [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+                [Security.Principal.WindowsBuiltInRole]::Administrator)
+
+# ─── Tier 1: try mkcert ────────────────────────────────────────────────────
+function Try-InstallMkcert {
+    if (Get-Command mkcert -ErrorAction SilentlyContinue) { return $true }
+
     if (Get-Command winget -ErrorAction SilentlyContinue) {
         Write-Tls 'Installing mkcert via winget'
-        winget install --id FiloSottile.mkcert -e --silent `
-                       --accept-source-agreements --accept-package-agreements | Out-Null
-        return
+        try {
+            winget install --id FiloSottile.mkcert -e --silent `
+                           --accept-source-agreements --accept-package-agreements `
+                           --disable-interactivity 2>&1 | Out-Null
+        } catch { }
+        # winget often needs a PATH refresh
+        $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
+                    [Environment]::GetEnvironmentVariable('Path', 'User')
+        if (Get-Command mkcert -ErrorAction SilentlyContinue) { return $true }
     }
+
     if (Get-Command choco -ErrorAction SilentlyContinue) {
         Write-Tls 'Installing mkcert via Chocolatey'
-        choco install mkcert -y --no-progress | Out-Null
-        return
+        try { choco install mkcert -y --no-progress 2>&1 | Out-Null } catch { }
+        if (Get-Command mkcert -ErrorAction SilentlyContinue) { return $true }
     }
-    # Fallback: download binary directly to a user-writable location and add
-    # to user PATH for this session + persist for future sessions.
-    Write-Tls 'winget/choco unavailable — downloading mkcert binary directly'
+
+    Write-Tls 'Downloading mkcert binary directly (no package manager)'
     $InstallDir = Join-Path $env:LOCALAPPDATA 'Programs\mkcert'
     if (-not (Test-Path $InstallDir)) {
         New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
     }
     $BinPath = Join-Path $InstallDir 'mkcert.exe'
-    Invoke-WebRequest -UseBasicParsing `
-        -Uri 'https://dl.filippo.io/mkcert/latest?for=windows/amd64' `
-        -OutFile $BinPath
-    $env:Path = "$InstallDir;$env:Path"
-    # Persist for future shells too.
-    [Environment]::SetEnvironmentVariable(
-        'Path',
-        ([Environment]::GetEnvironmentVariable('Path','User') + ";$InstallDir"),
-        'User')
+    try {
+        Invoke-WebRequest -UseBasicParsing `
+            -Uri 'https://dl.filippo.io/mkcert/latest?for=windows/amd64' `
+            -OutFile $BinPath -ErrorAction Stop
+        $env:Path = "$InstallDir;$env:Path"
+        [Environment]::SetEnvironmentVariable(
+            'Path',
+            ([Environment]::GetEnvironmentVariable('Path','User') + ";$InstallDir"),
+            'User')
+        return [bool] (Get-Command mkcert -ErrorAction SilentlyContinue)
+    } catch {
+        return $false
+    }
 }
 
-if (-not (Get-Command mkcert -ErrorAction SilentlyContinue)) {
-    Install-Mkcert
-}
-if (-not (Get-Command mkcert -ErrorAction SilentlyContinue)) {
-    Write-TlsFail 'mkcert install failed. Install manually: https://github.com/FiloSottile/mkcert'
-    exit 1
-}
-$MkcertVer = (& mkcert -version 2>$null)
-Write-TlsOk "mkcert installed ($MkcertVer)"
+function Try-MkcertCertIssue {
+    # Trust the root CA (idempotent). Needs admin for LocalMachine store.
+    if (-not $IsAdmin) {
+        Write-Tls 'Requesting admin elevation for mkcert -install (one-time)'
+        try {
+            $proc = Start-Process powershell -Verb runAs `
+                -ArgumentList @('-NoProfile','-NonInteractive','-Command','mkcert -install') `
+                -PassThru -Wait -WindowStyle Hidden
+            if ($proc.ExitCode -ne 0) { return $false }
+        } catch {
+            return $false
+        }
+    } else {
+        try { & mkcert -install 2>&1 | Out-Null } catch { return $false }
+    }
 
-# ─── Trust the local CA (admin elevation needed once) ─────────────────────
-# mkcert -install is idempotent: it no-ops if the CA is already trusted, so
-# we can run it every install without re-prompting for UAC after the first.
-$IsAdmin = ([Security.Principal.WindowsPrincipal]`
-    [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
-    [Security.Principal.WindowsBuiltInRole]::Administrator)
+    Push-Location $CertsDir
+    try {
+        & mkcert -cert-file claw.crt -key-file claw.key @HostsArr 2>&1 | Out-Null
+    } finally {
+        Pop-Location
+    }
+    $rootCaDir = (& mkcert -CAROOT 2>$null)
+    $rootCaSrc = Join-Path $rootCaDir 'rootCA.pem'
+    if (Test-Path $rootCaSrc) {
+        Copy-Item -Force $rootCaSrc (Join-Path $CertsDir 'rootCA.pem')
+    }
+    return (Test-Path (Join-Path $CertsDir 'claw.crt'))
+}
 
-if (-not $IsAdmin) {
-    Write-Tls 'Requesting admin elevation for mkcert -install (one-time)'
-    $Args = @('-NoProfile', '-NonInteractive', '-Command', 'mkcert -install')
-    $Proc = Start-Process powershell -Verb runAs -ArgumentList $Args -PassThru -Wait
-    if ($Proc.ExitCode -ne 0) {
-        Write-TlsFail "mkcert -install failed (elevation declined or error). Run as admin: mkcert -install"
-        exit 1
+# ─── Tier 2: openssl via docker (no install, no admin) ────────────────────
+function Generate-SelfSignedViaDocker {
+    if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+        return $false
+    }
+    Write-Tls 'Generating self-signed cert via docker openssl (no admin needed)'
+
+    $sanLines = @()
+    $dnsIdx = 0
+    foreach ($h in $HostsArr) {
+        if ($h -eq '127.0.0.1') { $sanLines += 'IP.1 = 127.0.0.1' }
+        elseif ($h -eq '::1')   { $sanLines += 'IP.2 = ::1' }
+        else                    { $dnsIdx += 1; $sanLines += "DNS.$dnsIdx = $h" }
+    }
+
+    $cnf = @'
+[req]
+default_bits = 4096
+prompt = no
+default_md = sha256
+distinguished_name = dn
+req_extensions = req_ext
+x509_extensions = v3_ca
+
+[dn]
+CN = ClawAI Local Dev CA
+O  = ClawAI Local
+C  = US
+
+[req_ext]
+subjectAltName = @alt_names
+
+[v3_ca]
+basicConstraints = critical, CA:TRUE
+keyUsage = critical, digitalSignature, keyCertSign, cRLSign
+subjectAltName = @alt_names
+
+[alt_names]
+'@ + "`n" + ($sanLines -join "`n") + "`n"
+
+    Set-Content -LiteralPath (Join-Path $CertsDir 'openssl.cnf') -Value $cnf -Encoding ASCII
+
+    try {
+        docker run --rm `
+            -v "${CertsDir}:/certs" `
+            -w /certs `
+            alpine:3.20 sh -c "apk add --no-cache openssl >/dev/null 2>&1 && openssl req -x509 -nodes -newkey rsa:4096 -days 825 -keyout claw.key -out claw.crt -config openssl.cnf -extensions v3_ca >/dev/null 2>&1 && cp claw.crt rootCA.pem" 2>&1 | Out-Null
+        Remove-Item -Force (Join-Path $CertsDir 'openssl.cnf') -ErrorAction SilentlyContinue
+        return (Test-Path (Join-Path $CertsDir 'claw.crt'))
+    } catch {
+        return $false
+    }
+}
+
+# ─── Hosts file: claw.local 127.0.0.1 (idempotent) ────────────────────────
+function Ensure-HostsEntry {
+    $hostsFile = "$env:SystemRoot\System32\drivers\etc\hosts"
+    if (-not (Test-Path $hostsFile)) {
+        Write-TlsWarn "hosts file not found at $hostsFile"
+        return
+    }
+    $content = Get-Content -LiteralPath $hostsFile -Raw -ErrorAction SilentlyContinue
+    if ($content -match '(?m)^\s*[^#]*\bclaw\.local\b') {
+        Write-TlsOk 'claw.local already in hosts file'
+        return
+    }
+
+    $entry = "`r`n127.0.0.1 claw.local"
+    if ($IsAdmin) {
+        try {
+            Add-Content -LiteralPath $hostsFile -Value $entry -Encoding ASCII -ErrorAction Stop
+            Write-TlsOk 'claw.local added to hosts file'
+        } catch {
+            Write-TlsWarn "Could not write hosts file: $($_.Exception.Message)"
+            Write-TlsWarn "Add manually:  127.0.0.1 claw.local"
+        }
+        return
+    }
+
+    # Not admin — self-elevate JUST for the hosts file write.
+    Write-Tls 'Requesting admin elevation to add claw.local to hosts file'
+    $cmd = "Add-Content -LiteralPath '$hostsFile' -Value '$entry' -Encoding ASCII"
+    try {
+        $proc = Start-Process powershell -Verb runAs `
+            -ArgumentList @('-NoProfile','-NonInteractive','-Command', $cmd) `
+            -PassThru -Wait -WindowStyle Hidden
+        if ($proc.ExitCode -eq 0) {
+            Write-TlsOk 'claw.local added to hosts file'
+        } else {
+            Write-TlsWarn 'Elevation declined or write failed — add manually: 127.0.0.1 claw.local'
+        }
+    } catch {
+        Write-TlsWarn 'Could not elevate — add manually: 127.0.0.1 claw.local'
+    }
+}
+
+# =============================================================================
+# Run Tier 1 → fall back to Tier 2
+# =============================================================================
+$UsedMkcert = $false
+
+if (Try-InstallMkcert) {
+    $ver = (& mkcert -version 2>$null)
+    Write-TlsOk "mkcert installed ($ver)"
+    if (Try-MkcertCertIssue) {
+        $UsedMkcert = $true
+        Write-TlsOk 'Browser-trusted cert issued via mkcert'
+    } else {
+        Write-TlsWarn 'mkcert -install or cert issuance failed — falling back to openssl'
     }
 } else {
-    & mkcert -install | Out-Null
+    Write-TlsWarn 'mkcert install failed — falling back to openssl self-signed'
 }
-Write-TlsOk 'Local root CA trusted in OS / browser trust stores'
 
-# ─── Issue the wildcard leaf cert ──────────────────────────────────────────
-Write-Tls "Issuing leaf cert for $($Hosts.Count) hostnames"
-Push-Location $CertsDir
-try {
-    & mkcert -cert-file claw.crt -key-file claw.key @Hosts | Out-Null
-} finally {
-    Pop-Location
+if (-not $UsedMkcert) {
+    if (Generate-SelfSignedViaDocker) {
+        Write-TlsOk "Self-signed cert issued via openssl (browser will show one-time warning)"
+    } else {
+        Write-TlsFail 'Both cert generators failed. Install mkcert manually OR ensure Docker is running.'
+        exit 1
+    }
 }
-Write-TlsOk 'Leaf cert written: certs/claw.crt + certs/claw.key'
 
-# ─── Copy rootCA.pem so containers can NODE_EXTRA_CA_CERTS it ─────────────
-$RootCaDir = (& mkcert -CAROOT 2>$null)
-$RootCaSrc = Join-Path $RootCaDir 'rootCA.pem'
-if (Test-Path $RootCaSrc) {
-    Copy-Item -Force $RootCaSrc (Join-Path $CertsDir 'rootCA.pem')
-    Write-TlsOk 'Root CA copied: certs/rootCA.pem'
-} else {
-    Write-TlsWarn 'Could not locate mkcert root CA — node services may fail to verify HTTPS'
-}
+Ensure-HostsEntry
 
 Write-Host ''
 Write-Host 'TLS install complete.' -ForegroundColor Green
+if ($UsedMkcert) {
+    Write-Host '  Cert type:         mkcert (browser-trusted, no warning)'
+} else {
+    Write-Host "  Cert type:         openssl self-signed (one-time 'Not Secure' click-through)"
+}
 Write-Host '  certs/claw.crt     leaf cert (mounted into every container)'
 Write-Host '  certs/claw.key     leaf private key (mounted read-only)'
-Write-Host '  certs/rootCA.pem   local CA — used as NODE_EXTRA_CA_CERTS'
+Write-Host '  certs/rootCA.pem   root CA — used as NODE_EXTRA_CA_CERTS'
+Write-Host '  hosts entry:       127.0.0.1 claw.local (try: https://claw.local)'
 Write-Host ''
