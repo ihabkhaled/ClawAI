@@ -62,7 +62,14 @@ import type {
   ServerLogsTabProps,
   ServerLogStats,
 } from './log.types';
-import type { CreateMemoryRequest, MemoryRecord } from './memory.types';
+import type {
+  ApproveSuggestionRequest,
+  CreateMemoryRequest,
+  MemoryAuditLog,
+  MemoryRecord,
+  MemorySuggestion,
+  RejectSuggestionRequest,
+} from './memory.types';
 import type {
   ParallelModelResponse,
   ParallelModelTarget,
@@ -559,6 +566,20 @@ export type MemoryFormProps = {
   onSubmit: (data: CreateMemoryRequest) => void;
   isPending: boolean;
   memory?: MemoryRecord | null;
+};
+
+// === Memory V2 ===
+export type SuggestionsListProps = {
+  suggestions: MemorySuggestion[];
+  isLoading: boolean;
+  isPending: boolean;
+  onApprove: (id: string, data?: ApproveSuggestionRequest) => void;
+  onReject: (id: string, data?: RejectSuggestionRequest) => void;
+};
+
+export type AuditListProps = {
+  entries: MemoryAuditLog[];
+  isLoading: boolean;
 };
 
 // ─── Observability component props ──────────────────────────────────────────

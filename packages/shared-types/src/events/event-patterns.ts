@@ -126,4 +126,26 @@ export enum EventPattern {
   ROUTING_CIRCUIT_BREAKER_HALF_OPEN = 'routing.circuit_breaker.half_open',
   // === Smart Router Flagship (Phase 6 — model knowledge sync) ===
   ROUTING_MODELS_SYNCED = 'routing.models.synced',
+  // === Memory V2 Flagship (suggestion queue, scopes, sensitivity, audit, usage) ===
+  MEMORY_SUGGESTED = 'memory.suggested',
+  MEMORY_APPROVED = 'memory.approved',
+  MEMORY_REJECTED = 'memory.rejected',
+  MEMORY_USED = 'memory.used',
+  MEMORY_FORGOTTEN = 'memory.forgotten',
+  MEMORY_PAUSED = 'memory.paused',
+  MEMORY_REDACTED = 'memory.redacted',
+  // === Context V2 Flagship (scopes, versions, usage, attachments, sharing) ===
+  CONTEXT_PACK_CREATED = 'context_pack.created',
+  CONTEXT_PACK_UPDATED = 'context_pack.updated',
+  CONTEXT_PACK_DELETED = 'context_pack.deleted',
+  CONTEXT_PACK_ATTACHED = 'context_pack.attached',
+  CONTEXT_PACK_DETACHED = 'context_pack.detached',
+  CONTEXT_PACK_USED = 'context_pack.used',
+  CONTEXT_PACK_VERSION_CREATED = 'context_pack.version_created',
+  CONTEXT_PACK_VERSION_REVERTED = 'context_pack.version_reverted',
+  CONTEXT_PACK_SHARED = 'context_pack.shared',
+  // === Memory + Context Integration V2 (receipts + thread toggles) ===
+  CONTEXT_RECEIPT_WRITTEN = 'context.receipt_written',
+  CHAT_THREAD_MEMORY_TOGGLED = 'chat_thread.memory_toggled',
+  CHAT_THREAD_CONTEXT_TOGGLED = 'chat_thread.context_toggled',
 }

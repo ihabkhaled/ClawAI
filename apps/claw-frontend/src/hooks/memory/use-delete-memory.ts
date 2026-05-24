@@ -11,11 +11,20 @@ export function useDeleteMemory() {
 
   const mutation = useMutation({
     mutationFn: (id: string) => {
-      logger.info({ component: 'memory', action: 'delete-memory', message: 'Deleting memory', details: { memoryId: id } });
-      return memoryRepository.deleteMemory(id);
+      logger.info({
+        component: 'memory',
+        action: 'delete-memory',
+        message: 'Forgetting memory',
+        details: { memoryId: id },
+      });
+      return memoryRepository.deleteMemory(id, true);
     },
     onSuccess: () => {
-      logger.info({ component: 'memory', action: 'delete-memory-success', message: 'Memory deleted' });
+      logger.info({
+        component: 'memory',
+        action: 'delete-memory-success',
+        message: 'Memory deleted',
+      });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.memory.lists(),
       });

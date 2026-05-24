@@ -1,6 +1,10 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
-import { type ContextPack, type ContextPackItem } from '../../../generated/prisma';
+import {
+  type ContextPack,
+  type ContextPackItem,
+  ContextPackItemType,
+} from '../../../generated/prisma';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
 import { ContextPacksRepository } from '../repositories/context-packs.repository';
@@ -9,6 +13,7 @@ import { type UpdateContextPackDto } from '../dto/update-context-pack.dto';
 import { type AddContextPackItemDto } from '../dto/add-context-pack-item.dto';
 import { type ContextPackWithItems } from '../types/context-packs.types';
 import { CONTEXT_PACK_UPDATED_EVENT } from '../constants/context-packs.constants';
+import { parsePausedUntil } from '../../../common/utilities/date-coerce.utility';
 
 @Injectable()
 export class ContextPacksService {
@@ -20,21 +25,28 @@ export class ContextPacksService {
   ) {}
 
   async createContextPack(userId: string, dto: CreateContextPackDto): Promise<ContextPack> {
-    this.logger.log(`createContextPack: creating pack "${dto.name}" for user ${userId}`);
+    this.logger.log(`createContextPack: pack="${dto.name}" userId=${userId}`);
     const pack = await this.contextPacksRepository.create({
       userId,
+      ownerUserId: userId,
       name: dto.name,
       description: dto.description,
       scope: dto.scope,
+      scopeRef: dto.scopeRef,
+      legacyScope: dto.legacyScope,
+      tags: dto.tags,
+      visibility: dto.visibility,
+      color: dto.color,
+      icon: dto.icon,
+      templateId: dto.templateId,
+      pinned: dto.pinned,
     });
-
     void this.rabbitMQService.publish(CONTEXT_PACK_UPDATED_EVENT, {
       contextPackId: pack.id,
       userId,
       action: 'created',
       timestamp: new Date().toISOString(),
     });
-
     return pack;
   }
 
@@ -45,12 +57,10 @@ export class ContextPacksService {
     search?: string,
   ): Promise<PaginatedResult<ContextPack>> {
     const filters = { userId, search };
-
     const [packs, total] = await Promise.all([
       this.contextPacksRepository.findAll(filters, page, limit),
       this.contextPacksRepository.countAll(filters),
     ]);
-
     return {
       data: packs,
       meta: {
@@ -81,40 +91,42 @@ export class ContextPacksService {
       throw new EntityNotFoundException('ContextPack', id);
     }
     this.validateOwnership(pack, userId);
-
     const updated = await this.contextPacksRepository.update(id, {
       name: dto.name,
       description: dto.description,
       scope: dto.scope,
+      scopeRef: dto.scopeRef === undefined ? undefined : dto.scopeRef,
+      tags: dto.tags,
+      visibility: dto.visibility,
+      isEnabled: dto.isEnabled,
+      pausedUntil: parsePausedUntil(dto.pausedUntil),
+      pinned: dto.pinned,
+      color: dto.color,
+      icon: dto.icon,
     });
-
     void this.rabbitMQService.publish(CONTEXT_PACK_UPDATED_EVENT, {
       contextPackId: id,
       userId,
       action: 'updated',
       timestamp: new Date().toISOString(),
     });
-
     return updated;
   }
 
   async deleteContextPack(id: string, userId: string): Promise<ContextPack> {
-    this.logger.log(`deleteContextPack: deleting pack ${id}`);
+    this.logger.log(`deleteContextPack: id=${id}`);
     const pack = await this.contextPacksRepository.findById(id);
     if (!pack) {
       throw new EntityNotFoundException('ContextPack', id);
     }
     this.validateOwnership(pack, userId);
-
     const deleted = await this.contextPacksRepository.delete(id);
-
     void this.rabbitMQService.publish(CONTEXT_PACK_UPDATED_EVENT, {
       contextPackId: id,
       userId,
       action: 'deleted',
       timestamp: new Date().toISOString(),
     });
-
     return deleted;
   }
 
@@ -123,28 +135,31 @@ export class ContextPacksService {
     userId: string,
     dto: AddContextPackItemDto,
   ): Promise<ContextPackItem> {
-    this.logger.log(`addItem: adding item type=${dto.type} to pack ${contextPackId}`);
     const pack = await this.contextPacksRepository.findById(contextPackId);
     if (!pack) {
       throw new EntityNotFoundException('ContextPack', contextPackId);
     }
     this.validateOwnership(pack, userId);
-
+    const itemType = this.resolveItemType(dto.itemType, dto.type);
     const item = await this.contextPacksRepository.addItem({
       contextPackId,
-      type: dto.type,
+      itemType,
+      legacyType: dto.type,
       content: dto.content,
       fileId: dto.fileId,
+      url: dto.url,
+      memoryRefId: dto.memoryRefId,
       sortOrder: dto.sortOrder,
+      isEnabled: dto.isEnabled,
+      pinned: dto.pinned,
+      tokenCountEstimate: dto.content ? Math.ceil(dto.content.length / 4) : 0,
     });
-
     void this.rabbitMQService.publish(CONTEXT_PACK_UPDATED_EVENT, {
       contextPackId,
       userId,
       action: 'item_added',
       timestamp: new Date().toISOString(),
     });
-
     return item;
   }
 
@@ -153,22 +168,18 @@ export class ContextPacksService {
     itemId: string,
     userId: string,
   ): Promise<ContextPackItem> {
-    this.logger.log(`removeItem: removing item ${itemId} from pack ${contextPackId}`);
     const pack = await this.contextPacksRepository.findById(contextPackId);
     if (!pack) {
       throw new EntityNotFoundException('ContextPack', contextPackId);
     }
     this.validateOwnership(pack, userId);
-
     const removed = await this.contextPacksRepository.removeItem(itemId);
-
     void this.rabbitMQService.publish(CONTEXT_PACK_UPDATED_EVENT, {
       contextPackId,
       userId,
       action: 'item_removed',
       timestamp: new Date().toISOString(),
     });
-
     return removed;
   }
 
@@ -184,5 +195,20 @@ export class ContextPacksService {
         HttpStatus.FORBIDDEN,
       );
     }
+  }
+
+  private resolveItemType(
+    explicit: ContextPackItemType | undefined,
+    legacy: string | undefined,
+  ): ContextPackItemType {
+    if (explicit !== undefined) return explicit;
+    if (legacy === undefined) return ContextPackItemType.TEXT;
+    const lower = legacy.toLowerCase();
+    if (lower.startsWith('file')) return ContextPackItemType.FILE;
+    if (lower.startsWith('url')) return ContextPackItemType.URL;
+    if (lower.startsWith('markdown')) return ContextPackItemType.MARKDOWN;
+    if (lower.startsWith('snippet') || lower.startsWith('code')) return ContextPackItemType.SNIPPET;
+    if (lower.startsWith('memory')) return ContextPackItemType.MEMORY_REF;
+    return ContextPackItemType.TEXT;
   }
 }

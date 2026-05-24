@@ -71,11 +71,11 @@ describe('ContextPacksRepository', () => {
     expect(args.where.name).toEqual({ contains: 'pack', mode: 'insensitive' });
   });
 
-  it('update delegates to prisma', async () => {
+  it('update delegates to prisma and auto-increments version (V2)', async () => {
     await repository.update('cp1', { name: 'renamed' });
     expect(prismaMock.contextPack.update).toHaveBeenCalledWith({
       where: { id: 'cp1' },
-      data: { name: 'renamed' },
+      data: { name: 'renamed', version: { increment: 1 } },
     });
   });
 

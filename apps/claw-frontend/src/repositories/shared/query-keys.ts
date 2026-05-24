@@ -79,6 +79,13 @@ export const queryKeys = {
     lists: () => [...queryKeys.memory.all, 'list'] as const,
     list: (filters: Record<string, unknown>) => [...queryKeys.memory.lists(), filters] as const,
     detail: (id: string) => [...queryKeys.memory.all, 'detail', id] as const,
+    search: (query: string) => [...queryKeys.memory.all, 'search', query] as const,
+    audit: (memoryId: string) => [...queryKeys.memory.all, 'audit', memoryId] as const,
+    auditAll: () => [...queryKeys.memory.all, 'audit', 'all'] as const,
+    usage: (memoryId: string) => [...queryKeys.memory.all, 'usage', memoryId] as const,
+    suggestions: (filters: Record<string, unknown>) =>
+      [...queryKeys.memory.all, 'suggestions', filters] as const,
+    preferences: () => [...queryKeys.memory.all, 'preferences'] as const,
   },
   contextPacks: {
     all: ['contextPacks'] as const,

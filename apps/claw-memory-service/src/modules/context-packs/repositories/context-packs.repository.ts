@@ -1,49 +1,74 @@
-import { Injectable } from "@nestjs/common";
-import { type ContextPack, type ContextPackItem, Prisma } from "../../../generated/prisma";
-import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
+import { Injectable } from '@nestjs/common';
+import { type ContextPack, type ContextPackItem, Prisma } from '../../../generated/prisma';
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import {
   type AddContextPackItemData,
   type ContextPackFilters,
   type ContextPackWithItems,
   type CreateContextPackData,
   type UpdateContextPackData,
-} from "../types/context-packs.types";
+  type UpdateContextPackItemData,
+} from '../types/context-packs.types';
 
 @Injectable()
 export class ContextPacksRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateContextPackData): Promise<ContextPack> {
-    return this.prisma.contextPack.create({ data });
+    return this.prisma.contextPack.create({
+      data: {
+        userId: data.userId,
+        ownerUserId: data.ownerUserId ?? data.userId,
+        name: data.name,
+        description: data.description,
+        scope: data.scope,
+        scopeRef: data.scopeRef,
+        legacyScope: data.legacyScope,
+        tags: data.tags ?? undefined,
+        visibility: data.visibility,
+        color: data.color,
+        icon: data.icon,
+        templateId: data.templateId,
+        pinned: data.pinned,
+      },
+    });
   }
 
   async findById(id: string): Promise<ContextPackWithItems | null> {
     return this.prisma.contextPack.findUnique({
       where: { id },
-      include: { items: { orderBy: { sortOrder: "asc" } } },
+      include: { items: { orderBy: { sortOrder: 'asc' } } },
     });
   }
 
-  async findAll(
-    filters: ContextPackFilters,
-    page: number,
-    limit: number,
-  ): Promise<ContextPack[]> {
+  async findAll(filters: ContextPackFilters, page: number, limit: number): Promise<ContextPack[]> {
     const where = this.buildWhereClause(filters);
     const skip = (page - 1) * limit;
-
     return this.prisma.contextPack.findMany({
       where,
       skip,
       take: limit,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
   async update(id: string, data: UpdateContextPackData): Promise<ContextPack> {
     return this.prisma.contextPack.update({
       where: { id },
-      data,
+      data: {
+        ...(data.name !== undefined ? { name: data.name } : {}),
+        ...(data.description !== undefined ? { description: data.description } : {}),
+        ...(data.scope !== undefined ? { scope: data.scope } : {}),
+        ...(data.scopeRef !== undefined ? { scopeRef: data.scopeRef } : {}),
+        ...(data.tags !== undefined ? { tags: data.tags } : {}),
+        ...(data.visibility !== undefined ? { visibility: data.visibility } : {}),
+        ...(data.isEnabled !== undefined ? { isEnabled: data.isEnabled } : {}),
+        ...(data.pausedUntil !== undefined ? { pausedUntil: data.pausedUntil } : {}),
+        ...(data.pinned !== undefined ? { pinned: data.pinned } : {}),
+        ...(data.color !== undefined ? { color: data.color } : {}),
+        ...(data.icon !== undefined ? { icon: data.icon } : {}),
+        version: { increment: 1 },
+      },
     });
   }
 
@@ -56,8 +81,55 @@ export class ContextPacksRepository {
     return this.prisma.contextPack.count({ where });
   }
 
+  async findAttachmentsForScope(
+    scope: ContextPackFilters['scope'],
+    scopeRef: string,
+    limit = 50,
+  ): Promise<ContextPack[]> {
+    if (scope === undefined) return [];
+    return this.prisma.contextPack.findMany({
+      where: {
+        attachments: { some: { scope, scopeRef, isActive: true } },
+      },
+      take: limit,
+    });
+  }
+
   async addItem(data: AddContextPackItemData): Promise<ContextPackItem> {
-    return this.prisma.contextPackItem.create({ data });
+    return this.prisma.contextPackItem.create({
+      data: {
+        contextPackId: data.contextPackId,
+        itemType: data.itemType,
+        legacyType: data.legacyType,
+        content: data.content,
+        fileId: data.fileId,
+        url: data.url,
+        memoryRefId: data.memoryRefId,
+        sortOrder: data.sortOrder ?? 0,
+        isEnabled: data.isEnabled,
+        pinned: data.pinned,
+        tokenCountEstimate: data.tokenCountEstimate,
+      },
+    });
+  }
+
+  async updateItem(id: string, data: UpdateContextPackItemData): Promise<ContextPackItem> {
+    return this.prisma.contextPackItem.update({
+      where: { id },
+      data: {
+        ...(data.itemType !== undefined ? { itemType: data.itemType } : {}),
+        ...(data.content !== undefined ? { content: data.content } : {}),
+        ...(data.fileId !== undefined ? { fileId: data.fileId } : {}),
+        ...(data.url !== undefined ? { url: data.url } : {}),
+        ...(data.memoryRefId !== undefined ? { memoryRefId: data.memoryRefId } : {}),
+        ...(data.sortOrder !== undefined ? { sortOrder: data.sortOrder } : {}),
+        ...(data.isEnabled !== undefined ? { isEnabled: data.isEnabled } : {}),
+        ...(data.pinned !== undefined ? { pinned: data.pinned } : {}),
+        ...(data.tokenCountEstimate !== undefined
+          ? { tokenCountEstimate: data.tokenCountEstimate }
+          : {}),
+      },
+    });
   }
 
   async removeItem(id: string): Promise<ContextPackItem> {
@@ -75,14 +147,14 @@ export class ContextPacksRepository {
   }
 
   private buildWhereClause(filters: ContextPackFilters): Prisma.ContextPackWhereInput {
-    const where: Prisma.ContextPackWhereInput = {
-      userId: filters.userId,
-    };
-
+    const where: Prisma.ContextPackWhereInput = { userId: filters.userId };
     if (filters.search) {
-      where.name = { contains: filters.search, mode: "insensitive" };
+      where.name = { contains: filters.search, mode: 'insensitive' };
     }
-
+    if (filters.scope !== undefined) where.scope = filters.scope;
+    if (filters.scopeRef !== undefined) where.scopeRef = filters.scopeRef;
+    if (filters.visibility !== undefined) where.visibility = filters.visibility;
+    if (filters.enabledOnly) where.isEnabled = true;
     return where;
   }
 }

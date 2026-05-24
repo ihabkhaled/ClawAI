@@ -89,6 +89,14 @@ export type {
   UpdateMemoryParams,
   MemoryFormStateParams,
   MemoryFormStateReturn,
+  MemorySuggestion,
+  MemoryAuditLog,
+  MemoryUsageEntry,
+  MemoryPreference,
+  UpsertMemoryPreferenceRequest,
+  ApproveSuggestionRequest,
+  RejectSuggestionRequest,
+  BulkApproveResult,
 } from './memory.types';
 export type {
   ContextPack,
@@ -112,12 +120,7 @@ export type {
   DashboardPageResult,
 } from './dashboard.types';
 export type { ServiceHealthResult, AggregatedHealth } from './health.types';
-export type {
-  ApiRequestConfig,
-  ApiResponse,
-  ApiError,
-  ApiClientRequestOptions,
-} from './api.types';
+export type { ApiRequestConfig, ApiResponse, ApiError, ApiClientRequestOptions } from './api.types';
 export type {
   AuthStoreState,
   AuthStoreActions,

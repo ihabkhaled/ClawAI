@@ -87,11 +87,15 @@ describe('MemoryRepository', () => {
     expect(prismaMock.memoryRecord.delete).toHaveBeenCalledWith({ where: { id: 'm1' } });
   });
 
-  it('findEnabledByUserId queries enabled-only with desc updatedAt and limit', async () => {
+  it('findEnabledByUserId queries enabled-only with the V2 pause-aware filter', async () => {
     await repository.findEnabledByUserId('u1', 25);
     const args = prismaMock.memoryRecord.findMany.mock.calls[0][0];
-    expect(args.where).toEqual({ userId: 'u1', isEnabled: true });
-    expect(args.orderBy).toEqual({ updatedAt: 'desc' });
+    expect(args.where.userId).toBe('u1');
+    expect(args.where.isEnabled).toBe(true);
+    // V2 (ADR-034): pause filter applied as OR on pausedUntil
+    expect(Array.isArray(args.where.OR)).toBe(true);
+    // V2: pinned items lifted first; updatedAt desc as secondary
+    expect(args.orderBy).toEqual([{ pinned: 'desc' }, { updatedAt: 'desc' }]);
     expect(args.take).toBe(25);
   });
 

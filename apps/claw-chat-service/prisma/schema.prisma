@@ -48,6 +48,9 @@ model ChatThread {
   judgeModel        String?  @map("judge_model")
   qualityThreshold  Float?   @map("quality_threshold")
   maxReRouteAttempts Int?    @map("max_reroute_attempts")
+  // === Integration V2 — per-thread memory/context switches ===
+  useMemory    Boolean     @default(true) @map("use_memory")
+  useContext   Boolean     @default(true) @map("use_context")
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
 
@@ -56,6 +59,19 @@ model ChatThread {
   @@index([userId])
   @@index([createdAt])
   @@map("chat_threads")
+}
+
+model ChatMessageContextReceipt {
+  id          String   @id @default(cuid())
+  messageId   String   @unique @map("message_id")
+  threadId    String   @map("thread_id")
+  userId      String   @map("user_id")
+  payloadJson Json     @map("payload_json")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([threadId])
+  @@index([userId, createdAt])
+  @@map("chat_message_context_receipts")
 }
 
 model ChatMessage {

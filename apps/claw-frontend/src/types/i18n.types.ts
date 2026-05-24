@@ -388,6 +388,35 @@ export type TranslationDictionary = {
     typePreference: string;
     typeInstruction: string;
     filterAllTypes: string;
+    // === Memory V2 ===
+    tabSaved: string;
+    tabSuggestions: string;
+    tabAudit: string;
+    searchPlaceholder: string;
+    filterAllScopes: string;
+    filterAllSources: string;
+    filterAllSensitivities: string;
+    scopeUser: string;
+    scopeThread: string;
+    scopeWorkspace: string;
+    scopeProject: string;
+    sourceUserManual: string;
+    sourceAiExtracted: string;
+    sourceAutomation: string;
+    sourceImported: string;
+    sensitivityNormal: string;
+    sensitivitySensitive: string;
+    sensitivityRedacted: string;
+    loadingSuggestions: string;
+    loadingAudit: string;
+    noSuggestions: string;
+    noAudit: string;
+    auditNoMemoryId: string;
+    approveSuggestion: string;
+    rejectSuggestion: string;
+    rejectAndSuppress: string;
+    suggestionConfidence: string;
+    suggestionReason: string;
   };
   files: {
     title: string;

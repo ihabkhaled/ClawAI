@@ -3,8 +3,13 @@ import {
   type AuditSeverity,
   type ConnectorProvider,
   type ConnectorStatus,
+  type ContextPackScope,
   type FileIngestionStatus,
   type LogLevel,
+  type MemoryAuditAction,
+  type MemoryScope,
+  type MemorySensitivity,
+  type MemorySuggestionStatus,
   type MemoryType,
   type RoutingMode,
   type UserRole,
@@ -184,6 +189,147 @@ export interface MemoryExtractedPayload extends BaseEventPayload {
   type: MemoryType;
   content: string;
 }
+
+export interface MemorySuggestedPayload extends BaseEventPayload {
+  suggestionId: string;
+  userId: string;
+  type: MemoryType;
+  confidence: number;
+  sensitivity: MemorySensitivity;
+  sourceThreadId: string | null;
+  sourceMessageId: string | null;
+}
+
+export interface MemoryApprovedPayload extends BaseEventPayload {
+  memoryId: string;
+  suggestionId: string | null;
+  userId: string;
+  automated: boolean;
+}
+
+export interface MemoryRejectedPayload extends BaseEventPayload {
+  suggestionId: string;
+  userId: string;
+  reason: string | null;
+  suppressSimilar: boolean;
+}
+
+export interface MemoryUsedPayload extends BaseEventPayload {
+  memoryId: string;
+  userId: string;
+  threadId: string;
+  messageId: string;
+  score: number;
+}
+
+export interface MemoryForgottenPayload extends BaseEventPayload {
+  memoryId: string;
+  userId: string;
+  reason: string | null;
+}
+
+export interface MemoryPausedPayload extends BaseEventPayload {
+  memoryId: string | null;
+  userId: string;
+  scope: MemoryScope;
+  pausedUntil: string | null;
+}
+
+export interface MemoryRedactedPayload extends BaseEventPayload {
+  memoryId: string;
+  userId: string;
+  reason: string;
+}
+
+// ---- Context Pack Events ----
+
+export interface ContextPackCreatedPayload extends BaseEventPayload {
+  contextPackId: string;
+  userId: string;
+  scope: ContextPackScope;
+  visibility: string;
+}
+
+export interface ContextPackUpdatedPayload extends BaseEventPayload {
+  contextPackId: string;
+  userId: string;
+  version: number;
+}
+
+export interface ContextPackDeletedPayload extends BaseEventPayload {
+  contextPackId: string;
+  userId: string;
+}
+
+export interface ContextPackAttachedPayload extends BaseEventPayload {
+  contextPackId: string;
+  userId: string;
+  scope: ContextPackScope;
+  scopeRef: string;
+}
+
+export interface ContextPackDetachedPayload extends BaseEventPayload {
+  contextPackId: string;
+  userId: string;
+  scope: ContextPackScope;
+  scopeRef: string;
+}
+
+export interface ContextPackUsedPayload extends BaseEventPayload {
+  contextPackId: string;
+  userId: string;
+  threadId: string;
+  messageId: string;
+  itemIdsUsed: string[];
+  score: number | null;
+}
+
+export interface ContextPackVersionCreatedPayload extends BaseEventPayload {
+  contextPackId: string;
+  userId: string;
+  version: number;
+  summary: string | null;
+}
+
+export interface ContextPackVersionRevertedPayload extends BaseEventPayload {
+  contextPackId: string;
+  userId: string;
+  fromVersion: number;
+  toVersion: number;
+}
+
+export interface ContextPackSharedPayload extends BaseEventPayload {
+  contextPackId: string;
+  userId: string;
+  visibility: string;
+}
+
+// ---- Memory + Context Integration V2 Events ----
+
+export interface ContextReceiptWrittenPayload extends BaseEventPayload {
+  messageId: string;
+  threadId: string;
+  userId: string;
+  memoryCount: number;
+  packItemCount: number;
+  tokenBudgetUsed: number;
+}
+
+export interface ChatThreadMemoryToggledPayload extends BaseEventPayload {
+  threadId: string;
+  userId: string;
+  useMemory: boolean;
+}
+
+export interface ChatThreadContextToggledPayload extends BaseEventPayload {
+  threadId: string;
+  userId: string;
+  useContext: boolean;
+}
+
+// Re-export to keep MemoryAuditAction reachable from the same module entry.
+export type MemoryAuditActionTag = MemoryAuditAction;
+export type MemorySuggestionStatusTag = MemorySuggestionStatus;
 
 // ---- Audit Events ----
 
@@ -572,4 +718,23 @@ export type EventPayload =
   | AgentTokenReuseDetectedPayload
   | AgentPolicyViolatedPayload
   | AgentCommandCancelledPayload
-  | AgentCommandStreamedPayload;
+  | AgentCommandStreamedPayload
+  | MemorySuggestedPayload
+  | MemoryApprovedPayload
+  | MemoryRejectedPayload
+  | MemoryUsedPayload
+  | MemoryForgottenPayload
+  | MemoryPausedPayload
+  | MemoryRedactedPayload
+  | ContextPackCreatedPayload
+  | ContextPackUpdatedPayload
+  | ContextPackDeletedPayload
+  | ContextPackAttachedPayload
+  | ContextPackDetachedPayload
+  | ContextPackUsedPayload
+  | ContextPackVersionCreatedPayload
+  | ContextPackVersionRevertedPayload
+  | ContextPackSharedPayload
+  | ContextReceiptWrittenPayload
+  | ChatThreadMemoryToggledPayload
+  | ChatThreadContextToggledPayload;
