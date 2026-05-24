@@ -1,6 +1,8 @@
 # NVIDIA GPU passthrough overlay (prod) for claw-llamacpp-service.
 # Auto-loaded by ../scripts/claw.sh --prod when nvidia-smi is detected.
 
+name: claw
+
 services:
   llamacpp-service:
     deploy:

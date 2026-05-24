@@ -4,6 +4,8 @@
 # Reads environment variables from the root .env file.
 # Copy .env.example to .env before running.
 
+name: claw
+
 services:
   # ---------------------------------------------------------------------------
   # PostgreSQL Instances (one per relational service)

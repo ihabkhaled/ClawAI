@@ -5,6 +5,8 @@
 #   - Intel Arc / iGPUs with Vulkan support
 #   - Any Linux GPU exposing a render node under /dev/dri
 
+name: claw
+
 services:
   llamacpp-service:
     devices:

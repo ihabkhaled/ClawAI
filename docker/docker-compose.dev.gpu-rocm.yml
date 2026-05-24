@@ -6,6 +6,8 @@
 #   - AMD GPU with ROCm driver installed on host
 #   - Host user must have access to /dev/kfd and /dev/dri (video, render groups)
 
+name: claw
+
 services:
   llamacpp-service:
     devices:

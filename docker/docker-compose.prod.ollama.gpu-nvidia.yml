@@ -6,6 +6,8 @@
 #   - Linux: NVIDIA Container Toolkit installed
 #   - Windows: Docker Desktop with WSL 2 backend + GPU support enabled
 
+name: claw
+
 services:
   ollama:
     gpus: all

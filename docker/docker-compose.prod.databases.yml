@@ -12,6 +12,8 @@
 #   ../scripts/claw.sh --prod db:up
 # =============================================================================
 
+name: claw
+
 services:
   # ---------------------------------------------------------------------------
   # PostgreSQL Instances (one per service that needs relational storage)

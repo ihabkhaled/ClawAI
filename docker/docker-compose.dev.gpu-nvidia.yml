@@ -7,6 +7,8 @@
 #   - Linux: NVIDIA Container Toolkit installed
 #   - Windows: Docker Desktop with WSL 2 backend + GPU support enabled
 
+name: claw
+
 services:
   llamacpp-service:
     deploy:

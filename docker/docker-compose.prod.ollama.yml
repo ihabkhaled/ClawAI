@@ -12,6 +12,8 @@
 #   ../scripts/claw.sh --prod ollama:up
 # =============================================================================
 
+name: claw
+
 services:
   ollama:
     image: ollama/ollama:latest

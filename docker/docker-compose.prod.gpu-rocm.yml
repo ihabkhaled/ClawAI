@@ -1,6 +1,8 @@
 # AMD ROCm GPU passthrough overlay (prod) for claw-llamacpp-service.
 # Auto-loaded by ../scripts/claw.sh --prod when /dev/kfd is detected.
 
+name: claw
+
 services:
   llamacpp-service:
     devices:
