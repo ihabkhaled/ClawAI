@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import * as fs from 'node:fs';
 import { type NestExpressApplication } from '@nestjs/platform-express';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
@@ -15,8 +16,6 @@ function resolveHttpsOptions(): { cert: Buffer; key: Buffer } | undefined {
     return undefined;
   }
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require, unicorn/prefer-module
-    const fs = require('node:fs');
     return { cert: fs.readFileSync(certPath), key: fs.readFileSync(keyPath) };
   } catch (error) {
     process.stderr.write(`[https-bootstrap] cert read failed: ${error instanceof Error ? error.message : String(error)} — HTTP fallback\n`);
