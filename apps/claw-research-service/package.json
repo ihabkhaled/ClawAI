@@ -29,6 +29,7 @@
     "@claw/shared-constants": "*",
     "@claw/shared-rabbitmq": "*",
     "@claw/shared-types": "*",
+    "@claw/shared-utilities": "*",
     "@nestjs/common": "^11.1.0",
     "@nestjs/core": "^11.1.21",
     "@nestjs/platform-express": "^11.1.0",

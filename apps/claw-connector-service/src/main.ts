@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { resolveHttpsOptions } from '@claw/shared-utilities';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
 import { RabbitMQLoggerService, RabbitMQService } from '@claw/shared-rabbitmq';
@@ -10,6 +11,7 @@ async function bootstrap(): Promise<void> {
 
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
+    httpsOptions: resolveHttpsOptions(),
   });
 
   app.useLogger(app.get(Logger));

@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { resolveHttpsOptions } from '@claw/shared-utilities';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
@@ -7,7 +8,7 @@ import { AppModule } from './app/app.module';
 import { AppConfig } from './app/config/app.config';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true, httpsOptions: resolveHttpsOptions() });
   app.useLogger(app.get(Logger));
   app.use(helmet());
   // Allow large file uploads (base64-encoded in JSON body, up to 75MB)

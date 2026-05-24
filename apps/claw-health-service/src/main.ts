@@ -1,10 +1,11 @@
 import { NestFactory } from '@nestjs/core';
+import { resolveHttpsOptions } from '@claw/shared-utilities';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
 import { AppModule } from './app/app.module';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, httpsOptions: resolveHttpsOptions() });
   app.useLogger(app.get(Logger));
   app.use(helmet());
   app.setGlobalPrefix('api/v1');
