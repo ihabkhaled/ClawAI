@@ -28,8 +28,10 @@ services:
     env_file: ../.env
     ports:
       - '4001:4001'
+    volumes:
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4001/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4001/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 5
@@ -46,8 +48,10 @@ services:
     env_file: ../.env
     ports:
       - '4002:4002'
+    volumes:
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4002/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4002/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 5
@@ -64,8 +68,10 @@ services:
     env_file: ../.env
     ports:
       - '4003:4003'
+    volumes:
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4003/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4003/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 5
@@ -82,8 +88,10 @@ services:
     env_file: ../.env
     ports:
       - '4004:4004'
+    volumes:
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4004/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4004/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 5
@@ -100,8 +108,10 @@ services:
     env_file: ../.env
     ports:
       - '4005:4005'
+    volumes:
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4005/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4005/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 5
@@ -120,8 +130,9 @@ services:
       - '4006:4006'
     volumes:
       - file-storage-data:/data/files
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4006/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4006/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 5
@@ -138,8 +149,10 @@ services:
     env_file: ../.env
     ports:
       - '4007:4007'
+    volumes:
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4007/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4007/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 5
@@ -156,8 +169,10 @@ services:
     env_file: ../.env
     ports:
       - '4008:4008'
+    volumes:
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4008/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4008/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 5
@@ -174,8 +189,10 @@ services:
     env_file: ../.env
     ports:
       - '4010:4010'
+    volumes:
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4010/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4010/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 5
@@ -192,8 +209,10 @@ services:
     env_file: ../.env
     ports:
       - '4011:4011'
+    volumes:
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4011/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4011/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 5
@@ -210,8 +229,10 @@ services:
     env_file: ../.env
     ports:
       - '4009:4009'
+    volumes:
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4009/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4009/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 5
@@ -228,8 +249,10 @@ services:
     restart: unless-stopped
     ports:
       - '4000:80'
+      - '443:443'
     volumes:
       - ../infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../certs:/etc/nginx/certs:ro
     depends_on:
       auth-service:
         condition: service_healthy
@@ -268,8 +291,10 @@ services:
     env_file: ../.env
     ports:
       - '4012:4012'
+    volumes:
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4012/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4012/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -289,8 +314,10 @@ services:
     env_file: ../.env
     ports:
       - '4014:4014'
+    volumes:
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4014/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4014/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -310,8 +337,10 @@ services:
     env_file: ../.env
     ports:
       - '4015:4015'
+    volumes:
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4015/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4015/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -331,8 +360,10 @@ services:
     env_file: ../.env
     ports:
       - '4016:4016'
+    volumes:
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4016/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4016/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -354,8 +385,9 @@ services:
       - '4017:4017'
     volumes:
       - llamacpp-data:/var/lib/claw/llamacpp
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4017/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4017/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -375,8 +407,10 @@ services:
     env_file: ../.env
     ports:
       - '4013:4013'
+    volumes:
+      - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4013/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4013/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -399,6 +433,8 @@ services:
       - '${FRONTEND_PORT:-3000}:3000'
     depends_on:
       - nginx
+    volumes:
+      - ../certs:/certs:ro
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://localhost:3000 || exit 1']
       interval: 15s

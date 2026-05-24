@@ -17,8 +17,10 @@ services:
     restart: unless-stopped
     ports:
       - '4000:80'
+      - '443:443'
     volumes:
       - ../infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../certs:/etc/nginx/certs:ro
     depends_on:
       auth-service:
         condition: service_healthy
@@ -60,9 +62,10 @@ services:
     volumes:
       - ../apps/claw-auth-service/src:/app/apps/claw-auth-service/src
       - ../apps/claw-auth-service/prisma:/app/apps/claw-auth-service/prisma
+      - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4001/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4001/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -82,9 +85,10 @@ services:
     volumes:
       - ../apps/claw-chat-service/src:/app/apps/claw-chat-service/src
       - ../apps/claw-chat-service/prisma:/app/apps/claw-chat-service/prisma
+      - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4002/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4002/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -104,9 +108,10 @@ services:
     volumes:
       - ../apps/claw-connector-service/src:/app/apps/claw-connector-service/src
       - ../apps/claw-connector-service/prisma:/app/apps/claw-connector-service/prisma
+      - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4003/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4003/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -126,9 +131,10 @@ services:
     volumes:
       - ../apps/claw-routing-service/src:/app/apps/claw-routing-service/src
       - ../apps/claw-routing-service/prisma:/app/apps/claw-routing-service/prisma
+      - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4004/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4004/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -148,9 +154,10 @@ services:
     volumes:
       - ../apps/claw-memory-service/src:/app/apps/claw-memory-service/src
       - ../apps/claw-memory-service/prisma:/app/apps/claw-memory-service/prisma
+      - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4005/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4005/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -171,9 +178,10 @@ services:
       - ../apps/claw-file-service/src:/app/apps/claw-file-service/src
       - ../apps/claw-file-service/prisma:/app/apps/claw-file-service/prisma
       - file-storage-data:/data/files
+      - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4006/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4006/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -192,9 +200,10 @@ services:
       - '4007:4007'
     volumes:
       - ../apps/claw-audit-service/src:/app/apps/claw-audit-service/src
+      - ../certs:/certs:ro
     command: npm run dev
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4007/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4007/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -214,9 +223,10 @@ services:
     volumes:
       - ../apps/claw-ollama-service/src:/app/apps/claw-ollama-service/src
       - ../apps/claw-ollama-service/prisma:/app/apps/claw-ollama-service/prisma
+      - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4008/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4008/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -235,9 +245,10 @@ services:
       - '4010:4010'
     volumes:
       - ../apps/claw-client-logs-service/src:/app/apps/claw-client-logs-service/src
+      - ../certs:/certs:ro
     command: npm run dev
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4010/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4010/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -256,9 +267,10 @@ services:
       - '4011:4011'
     volumes:
       - ../apps/claw-server-logs-service/src:/app/apps/claw-server-logs-service/src
+      - ../certs:/certs:ro
     command: npm run dev
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4011/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4011/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -277,9 +289,10 @@ services:
       - '4009:4009'
     volumes:
       - ../apps/claw-health-service/src:/app/apps/claw-health-service/src
+      - ../certs:/certs:ro
     command: npm run dev
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4009/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4009/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -302,9 +315,10 @@ services:
     volumes:
       - ../apps/claw-image-service/src:/app/apps/claw-image-service/src
       - ../apps/claw-image-service/prisma:/app/apps/claw-image-service/prisma
+      - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4012/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4012/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -327,9 +341,10 @@ services:
     volumes:
       - ../apps/claw-workspace-service/src:/app/apps/claw-workspace-service/src
       - ../apps/claw-workspace-service/prisma:/app/apps/claw-workspace-service/prisma
+      - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4014/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4014/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -352,9 +367,10 @@ services:
     volumes:
       - ../apps/claw-agent-service/src:/app/apps/claw-agent-service/src
       - ../apps/claw-agent-service/prisma:/app/apps/claw-agent-service/prisma
+      - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4015/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4015/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -377,9 +393,10 @@ services:
     volumes:
       - ../apps/claw-research-service/src:/app/apps/claw-research-service/src
       - ../apps/claw-research-service/prisma:/app/apps/claw-research-service/prisma
+      - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4016/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4016/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -401,9 +418,10 @@ services:
       - ../apps/claw-llamacpp-service/src:/app/apps/claw-llamacpp-service/src
       - ../apps/claw-llamacpp-service/prisma:/app/apps/claw-llamacpp-service/prisma
       - llamacpp-data:/var/lib/claw/llamacpp
+      - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4017/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4017/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -424,9 +442,10 @@ services:
     volumes:
       - ../apps/claw-file-generation-service/src:/app/apps/claw-file-generation-service/src
       - ../apps/claw-file-generation-service/prisma:/app/apps/claw-file-generation-service/prisma
+      - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:4013/api/v1/health || exit 1']
+      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4013/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
@@ -447,6 +466,7 @@ services:
     volumes:
       - ../apps/claw-frontend/src:/app/src
       - ../apps/claw-frontend/public:/app/public
+      - ../certs:/certs:ro
     command: npm run dev
     depends_on:
       nginx:
