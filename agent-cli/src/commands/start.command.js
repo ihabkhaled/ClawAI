@@ -4,6 +4,7 @@ import { request, ApiError } from '../api/client.js';
 import { readSecrets } from '../auth/auth-store.js';
 import { AGENT_VERSION } from '../auth/pairing.js';
 import { getPlatform } from '../config/paths.js';
+import { runCloudSyncLoop } from '../runtime/cloud-sync.js';
 import { runWithStream } from '../runtime/spawn-manager.js';
 import * as log from '../utils/logger.js';
 
@@ -168,6 +169,22 @@ export async function runStart(flags) {
   };
   process.on('SIGINT', () => void shutdown());
   process.on('SIGTERM', () => void shutdown());
+
+  // V2 Stream 05 — spawn the activity-memory cloud sync loop alongside
+  // the legacy poll. No-op unless CLAW_ACTIVITY_CLOUD_SYNC=true.
+  const cloudSyncController = new AbortController();
+  void runCloudSyncLoop({ stopSignal: cloudSyncController.signal, deviceId: session.sessionId });
+  const originalShutdown = shutdown;
+  // wrap shutdown to also abort the cloud-sync controller
+  const wrappedShutdown = async () => {
+    cloudSyncController.abort();
+    await originalShutdown();
+  };
+  process.removeAllListeners('SIGINT');
+  process.removeAllListeners('SIGTERM');
+  process.on('SIGINT', () => void wrappedShutdown());
+  process.on('SIGTERM', () => void wrappedShutdown());
+
   while (running) {
     try {
       await pollAndRunCommands(session.sessionId);

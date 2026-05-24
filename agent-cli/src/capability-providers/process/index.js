@@ -27,6 +27,7 @@ import { isAbsolute, normalize } from 'node:path';
 import { promisify } from 'node:util';
 
 import { getPlatform } from '../../config/paths.js';
+import { dep, osFamily, probeHealthy, whichBinary } from '../probe-helpers.js';
 
 const execAsync = promisify(exec);
 
@@ -35,6 +36,29 @@ const PROCESS_LIST_MAX_ENTRIES = 2_000;
 const PROCESS_OUTPUT_CAP_BYTES = 64 * 1024;
 
 export const processProvider = {
+  async probe() {
+    const isWin = getPlatform() === 'windows';
+    const listerName = isWin ? 'tasklist' : 'ps';
+    const listerInstalled = await whichBinary(listerName);
+    const dependencies = [
+      dep({
+        name: listerName,
+        installed: listerInstalled,
+        required: true,
+        fix: listerInstalled
+          ? null
+          : isWin
+            ? 'tasklist ships with Windows — check %SystemRoot%\\System32\\tasklist.exe'
+            : 'ps ships with every POSIX OS — check /bin/ps or /usr/bin/ps',
+      }),
+    ];
+    return {
+      class: 'PROCESS',
+      healthy: probeHealthy(dependencies),
+      dependencies,
+      notes: `LIST/INSPECT via ${listerName} on ${osFamily()}`,
+    };
+  },
   async execute({ operation, target, payload }) {
     switch (operation) {
       case 'SPAWN':

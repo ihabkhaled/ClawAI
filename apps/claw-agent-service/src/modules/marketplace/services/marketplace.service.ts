@@ -7,7 +7,11 @@ import { RecipeService } from '../../recipes/services/recipe.service';
 import { dslFromJson } from '../../recipes/utilities/dsl-cast.utility';
 import { sandboxAnalyse } from '../utilities/sandbox-runner.utility';
 import { canonicaliseDsl, verifyRecipeDslSignature } from '../utilities/signature.utility';
-import { type MarketplaceListing, Prisma } from '../../../generated/prisma';
+import {
+  type MarketplaceListing,
+  type MarketplaceListingStatus,
+  Prisma,
+} from '../../../generated/prisma';
 import type { ListListingsQueryDto, PublishListingDto } from '../dto/publish-listing.dto';
 import type { PaginatedListings } from '../types/marketplace.types';
 import type { SandboxResult } from '../types/sandbox.types';
@@ -55,6 +59,32 @@ export class MarketplaceService {
       throw new EntityNotFoundException('MarketplaceListing', id);
     }
     return listing;
+  }
+
+  // V2 Stream 06 — publisher portal: listings owned by a user.
+  async listForPublisher(
+    publisherUserId: string,
+    page: number,
+    pageSize: number,
+  ): Promise<PaginatedListings> {
+    this.logger.debug(`listForPublisher: publisherUserId=${publisherUserId}`);
+    const result = await this.repo.listForPublisher(publisherUserId, page, pageSize);
+    return { ...result, page, pageSize };
+  }
+
+  // V2 Stream 06 — publisher portal: change a listing's status (hide / republish).
+  // Only the publisher who owns the row may change it.
+  async setStatus(
+    listingId: string,
+    publisherUserId: string,
+    status: MarketplaceListingStatus,
+  ): Promise<MarketplaceListing> {
+    this.logger.log(`setStatus: listingId=${listingId} status=${status}`);
+    const updated = await this.repo.setListingStatus(listingId, publisherUserId, status);
+    if (updated === null) {
+      throw new EntityNotFoundException('MarketplaceListing', listingId);
+    }
+    return updated;
   }
 
   /**

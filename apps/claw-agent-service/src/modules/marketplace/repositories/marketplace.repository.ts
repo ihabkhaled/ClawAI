@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import type { MarketplaceListing, Prisma } from '../../../generated/prisma';
+import type {
+  MarketplaceListing,
+  MarketplaceListingStatus,
+  Prisma,
+} from '../../../generated/prisma';
 import type { ListListingsQueryDto } from '../dto/publish-listing.dto';
 import type { PaginatedListings } from '../types/marketplace.types';
 
@@ -50,5 +54,38 @@ export class MarketplaceRepository {
       create: { listingId, userId, recipeId },
       update: { recipeId },
     });
+  }
+
+  // V2 Stream 06 — publisher portal: listings owned by a user.
+  async listForPublisher(
+    publisherUserId: string,
+    page: number,
+    pageSize: number,
+  ): Promise<{ data: MarketplaceListing[]; total: number }> {
+    const where: Prisma.MarketplaceListingWhereInput = { publisherUserId };
+    const [data, total] = await Promise.all([
+      this.prisma.marketplaceListing.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.marketplaceListing.count({ where }),
+    ]);
+    return { data, total };
+  }
+
+  // V2 Stream 06 — publisher unpublish (sets status=HIDDEN, keeps installs intact).
+  async setListingStatus(
+    id: string,
+    publisherUserId: string,
+    status: MarketplaceListingStatus,
+  ): Promise<MarketplaceListing | null> {
+    const row = await this.prisma.marketplaceListing.updateMany({
+      where: { id, publisherUserId },
+      data: { status },
+    });
+    if (row.count === 0) return null;
+    return this.findListingById(id);
   }
 }

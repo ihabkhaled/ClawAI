@@ -19,16 +19,18 @@ import { filesystemProvider } from './filesystem/index.js';
 import { notificationProvider } from './notification/index.js';
 import { processProvider } from './process/index.js';
 import { screenProvider } from './screen/index.js';
+import { systemProvider } from './system/index.js';
 import { terminalProvider } from './terminal/index.js';
 
 export const providerRegistry = new Map([
   ['TERMINAL', terminalProvider],         // Stream 10 — full
   ['FILESYSTEM', filesystemProvider],     // Stream 11 — full
   ['PROCESS', processProvider],           // Stream 12 — full
-  ['BROWSER', browserProvider],           // Stream 20 — scaffold
-  ['SCREEN', screenProvider],             // Stream 21 — scaffold
-  ['CLIPBOARD', clipboardProvider],       // Stream 22 — minimal (text only)
+  ['BROWSER', browserProvider],           // Stream 20 — full (lazy Playwright)
+  ['SCREEN', screenProvider],             // Stream 21 — full (capture + tesseract OCR)
+  ['CLIPBOARD', clipboardProvider],       // Stream 22 — text + READ_IMAGE/WRITE_IMAGE
   ['NOTIFICATION', notificationProvider], // Stream 22 — minimal
-  ['APPLICATION', applicationProvider],   // Stream 23 — scaffold
-  ['AUDIO', audioProvider],               // Stream 24 — scaffold
+  ['APPLICATION', applicationProvider],   // Stream 23 — full (nut-tree)
+  ['AUDIO', audioProvider],               // Stream 24 — full (whisper + piper)
+  ['SYSTEM', systemProvider],             // V2 Stream 09 — LOCK/SUSPEND/NETWORK_INFO/DISK_USAGE/TIMEZONE
 ]);

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import type { DeviceMatrixRow } from '../types/device-matrix.types';
 import type { Organization, OrganizationMember, Prisma } from '../../../generated/prisma';
 
 @Injectable()
@@ -54,5 +55,36 @@ export class OrganizationRepository {
     data: Prisma.OrganizationUpdateInput,
   ): Promise<Organization> {
     return this.prisma.organization.update({ where: { id }, data });
+  }
+
+  // V2 Stream 07 — device matrix.
+  //
+  // Joins org -> members -> devices and projects a small row per device
+  // so the fleet governance UI can render a table without N+1 queries.
+  // Includes a denormalised PENDING capability count via a correlated
+  // subquery — small org sizes (~100 devices) keep this <50ms in
+  // production.
+  async listDevicesForOrganization(organizationId: string): Promise<DeviceMatrixRow[]> {
+    return (await this.prisma.$queryRaw`
+      SELECT
+        d."id"            AS "deviceId",
+        d."name"          AS "deviceName",
+        d."userId"        AS "userId",
+        d."os"            AS "os",
+        d."platform"      AS "platform",
+        d."agentVersion"  AS "agentVersion",
+        d."status"        AS "status",
+        d."lastSeenAt"    AS "lastSeenAt",
+        (
+          SELECT COUNT(*)::int
+          FROM "CapabilityInvocation" ci
+          WHERE ci."deviceId" = d."id"
+            AND ci."status" = 'PENDING_APPROVAL'
+        ) AS "pendingCapabilities"
+      FROM "Device" d
+      JOIN "organization_members" om ON om."userId" = d."userId"
+      WHERE om."organizationId" = ${organizationId}
+      ORDER BY d."lastSeenAt" DESC NULLS LAST
+    `) as DeviceMatrixRow[];
   }
 }

@@ -22,6 +22,8 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_os::init())
+        // V2 Stream 04 / Stream 10 — auto-update plumbing
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             commands::get_pending_capabilities,
             commands::approve_capability,
@@ -31,6 +33,15 @@ pub fn run() {
         .setup(|app| {
             tray::install(app)?;
             hotkey::install(app)?;
+            // V2 Stream 04 — schedule a background updater check 60s after
+            // boot so the user is not blocked at startup. Check cadence
+            // and channel (stable/beta/canary) is controlled by
+            // tauri.conf.json.bundle.updater.
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+                let _ = updater::check_and_install_with_handle(&handle).await;
+            });
             Ok(())
         })
         .run(tauri::generate_context!())
@@ -44,3 +55,4 @@ fn main() {
 mod commands;
 mod hotkey;
 mod tray;
+mod updater;

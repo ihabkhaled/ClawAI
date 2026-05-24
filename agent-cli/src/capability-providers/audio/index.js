@@ -33,12 +33,46 @@ import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { promisify } from 'node:util';
 
+import { dep, osFamily, probeHealthy, whichBinary } from '../probe-helpers.js';
+
 const execAsync = promisify(exec);
 
 const AUDIO_MAX_BYTES = 32 * 1024 * 1024; // 32 MB
 const AUDIO_MAX_TEXT_CHARS = 50_000;
 
 export const audioProvider = {
+  async probe() {
+    const whisperBin = process.env.WHISPER_CLI_PATH ?? 'whisper-cli';
+    const piperBin = process.env.PIPER_BIN_PATH ?? 'piper';
+    const whisperOk = await whichBinary(whisperBin);
+    const piperOk = await whichBinary(piperBin);
+    const dependencies = [
+      dep({
+        name: whisperBin,
+        installed: whisperOk,
+        required: false,
+        notes: 'Required only for TRANSCRIBE operation',
+        fix: whisperOk
+          ? null
+          : 'macOS: brew install whisper-cpp; Linux: build from source; Windows: download release from ggerganov/whisper.cpp',
+      }),
+      dep({
+        name: piperBin,
+        installed: piperOk,
+        required: false,
+        notes: 'Required only for SYNTHESIZE operation',
+        fix: piperOk
+          ? null
+          : 'Download from https://github.com/rhasspy/piper/releases — set PIPER_BIN_PATH env var if not on PATH',
+      }),
+    ];
+    return {
+      class: 'AUDIO',
+      healthy: probeHealthy(dependencies),
+      dependencies,
+      notes: `${osFamily()} — STT via whisper, TTS via Piper; both binaries optional. Voice models must also be downloaded.`,
+    };
+  },
   async execute({ operation, target, payload }) {
     switch (operation) {
       case 'TRANSCRIBE':

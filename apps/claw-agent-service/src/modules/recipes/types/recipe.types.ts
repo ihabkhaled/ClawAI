@@ -48,33 +48,8 @@ export type RecipeDsl = {
   steps: RecipeStep[];
 };
 
-export type RecipeRunStatus =
-  | 'PENDING'
-  | 'RUNNING'
-  | 'COMPLETED'
-  | 'FAILED'
-  | 'CANCELLED'
-  | 'ROLLED_BACK'
-  | 'ROLLBACK_PARTIAL';
-
-export type RecipeStepRecord = {
-  stepId: string;
-  invocationId: string | null;
-  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'SKIPPED';
-  startedAt?: string;
-  completedAt?: string;
-  output?: Record<string, unknown>;
-  errorMessage?: string;
-  attempt: number;
-};
-
-export type RecipeRunSummary = {
-  id: string;
-  recipeId: string;
-  runByUserId: string;
-  status: RecipeRunStatus;
-  parameters: Record<string, unknown>;
-  steps: RecipeStepRecord[];
-  startedAt: string;
-  completedAt?: string;
-};
+// Run + step status enums are owned by Prisma (`RecipeRunStatus`,
+// `RecipeRunStepStatus` in schema.prisma). Import them from
+// `src/generated/prisma` — do NOT redeclare here. Earlier local aliases
+// drifted (used `COMPLETED`/`ROLLED_BACK` vs Prisma's `SUCCEEDED`/`TIMED_OUT`)
+// and were deleted 2026-05-24.

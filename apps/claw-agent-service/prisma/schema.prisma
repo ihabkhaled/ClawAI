@@ -227,6 +227,14 @@ enum OrganizationRole {
   MEMBER
 }
 
+// V2 Stream 05 — activity-driven suggestion lifecycle
+enum AgentSuggestionStatus {
+  PENDING
+  ACCEPTED
+  DISMISSED
+  EXPIRED
+}
+
 // Stream 42 — marketplace
 enum MarketplaceListingStatus {
   DRAFT
@@ -551,6 +559,12 @@ model RecipeRun {
   deviceId    String
   status      RecipeRunStatus @default(PENDING)
   params      Json
+  // V2 Stream 01 — dryRun runs propose-and-skip every step instead of
+  // actually invoking the capability framework. Step rows are still
+  // created so the visual builder's preview UI can show the resolved
+  // target/payload for each step. metadata.dryRun=true is set on the
+  // run itself and on each step row.
+  dryRun      Boolean         @default(false)
   startedAt   DateTime?
   completedAt DateTime?
   errorMessage String?
@@ -636,6 +650,32 @@ model ActivityMemoryEntry {
   @@index([deviceId, occurredAt])
   @@index([userId, kind, occurredAt])
   @@map("activity_memory_entries")
+}
+
+// V2 Stream 05 — activity-driven suggestions.
+//
+// AgentSuggestionManager scans activity_memory_entries on a cron and
+// emits a row here whenever a (userId, kind) pair crosses an
+// occurrence threshold in the rolling 7-day window. The frontend lists
+// PENDING rows and the user accepts (creating a real Recipe) or
+// dismisses them. EXPIRED rows are swept after 14 days untouched.
+model AgentSuggestion {
+  id                    String                @id @default(cuid())
+  userId                String
+  kind                  String                // mirrors ActivityMemoryEntry.kind
+  summary               String                @db.Text
+  occurrencesLast7d     Int
+  sourceActivityIds     Json                  // array of cuid strings, capped at 50
+  suggestedRecipeDsl    Json?                 // optional pre-rendered DSL the user can accept
+  status                AgentSuggestionStatus @default(PENDING)
+  reviewedAt            DateTime?
+  reviewedByUserId      String?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  @@unique([userId, kind, status])
+  @@index([userId, status, createdAt])
+  @@map("agent_suggestions")
 }
 
 // ============================================================================

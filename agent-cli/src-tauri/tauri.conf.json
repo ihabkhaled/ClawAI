@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "ClawAgent",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "identifier": "com.clawai.agent",
   "build": {
     "frontendDist": "../src-tauri/ui",
@@ -48,6 +48,15 @@
     "globalShortcut": { "enabled": true },
     "notification": { "enabled": true },
     "clipboard-manager": { "enabled": true },
-    "shell": { "enabled": true }
+    "shell": { "enabled": true },
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://releases.clawai.dev/desktop/{{target}}/{{arch}}/{{current_version}}/{{channel}}"
+      ],
+      "dialog": false,
+      "windows": { "installMode": "passive" },
+      "pubkey": "REPLACE_WITH_REAL_PUBKEY_AT_RELEASE_TIME"
+    }
   }
 }

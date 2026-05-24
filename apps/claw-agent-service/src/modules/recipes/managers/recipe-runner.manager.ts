@@ -73,6 +73,7 @@ export class RecipeRunnerManager {
       deviceId: dto.deviceId,
       status: 'RUNNING',
       params: dto.params as Prisma.InputJsonValue,
+      dryRun: dto.dryRun,
       startedAt: new Date(),
     });
     await this.seedSteps(run.id, dsl);
@@ -248,7 +249,33 @@ export class RecipeRunnerManager {
       return ProcessStepResult.SKIPPED;
     }
     await this.proposeStep(run, recipe, dsl, ctx, stepRow, dslStep);
+    // Dry-run synchronously completes the step inside proposeStep —
+    // return SKIPPED so the outer advance() loop re-checks readiness
+    // and propagates the synthesised output to downstream steps.
+    if (run.dryRun) {
+      return ProcessStepResult.SKIPPED;
+    }
     return ProcessStepResult.PROPOSED;
+  }
+
+  private async completeDryRunStep(
+    stepRow: RecipeRunStep,
+    target: Record<string, unknown>,
+    payload: Record<string, unknown>,
+  ): Promise<void> {
+    const md = this.metadata(stepRow);
+    const dryOutput = { dryRun: true, target, payload };
+    await this.runRepo.updateStep(stepRow.id, {
+      status: 'SUCCEEDED',
+      output: dryOutput as Prisma.InputJsonValue,
+      startedAt: new Date(),
+      completedAt: new Date(),
+      errorMessage: null,
+    });
+    await this.runRepo.updateStepMetadata(stepRow.id, { ...md, dryRun: true });
+    this.logger.log(
+      `completeDryRunStep: stepId=${stepRow.stepId} stepIndex=${String(stepRow.stepIndex)} synthesised output (no CapabilityInvocation created)`,
+    );
   }
 
   private evaluateWhen(when: string, ctx: RecipeExpressionContext): boolean {
@@ -273,6 +300,10 @@ export class RecipeRunnerManager {
   ): Promise<void> {
     const target = resolvePlaceholders(dslStep.target, ctx) as Record<string, unknown>;
     const payload = resolvePlaceholders(dslStep.payload ?? {}, ctx) as Record<string, unknown>;
+    if (run.dryRun) {
+      await this.completeDryRunStep(stepRow, target, payload);
+      return;
+    }
     try {
       const proposal = await this.approvalManager.propose(run.userId, {
         deviceId: run.deviceId,

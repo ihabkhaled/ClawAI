@@ -30,6 +30,7 @@ import { MarketplaceModule } from '../modules/marketplace/marketplace.module';
         autoLogging: true,
         redact: {
           paths: [
+            // Phase A — auth + pairing
             'req.headers.authorization',
             'req.body.password',
             'req.body.refreshToken',
@@ -43,6 +44,39 @@ import { MarketplaceModule } from '../modules/marketplace/marketplace.module';
             'res.body.pairingCode',
             'res.body.tokens.refreshToken',
             'res.body.tokens.accessToken',
+            // V2 Stream 11 — capability framework. The propose body
+            // carries arbitrary target/payload — both may contain
+            // credentials supplied by the user (BROWSER fill of a
+            // password field, FILESYSTEM write of an SSH key, etc.).
+            // Wildcards catch all top-level keys named password,
+            // token, secret, apiKey, privateKey, etc.
+            'req.body.target.password',
+            'req.body.target.token',
+            'req.body.target.secret',
+            'req.body.target.apiKey',
+            'req.body.target.privateKey',
+            'req.body.target.contentBase64',
+            'req.body.payload.password',
+            'req.body.payload.token',
+            'req.body.payload.secret',
+            'req.body.payload.apiKey',
+            'req.body.payload.privateKey',
+            'req.body.payload.contentBase64',
+            'req.body.dsl.steps[*].target.password',
+            'req.body.dsl.steps[*].target.token',
+            'req.body.dsl.steps[*].payload.password',
+            'req.body.dsl.steps[*].payload.token',
+            'req.body.dsl.steps[*].payload.contentBase64',
+            // Capability completion: output may include secrets the
+            // provider read off the user's machine (FILESYSTEM.READ on
+            // ~/.aws/credentials, BROWSER.EXTRACT of a logged-in page).
+            'req.body.result.password',
+            'req.body.result.token',
+            'req.body.result.contentBase64',
+            // SAML assertions
+            'req.body.SAMLResponse',
+            // Marketplace signatures (not secret per se, but noisy)
+            'req.body.signature',
           ],
           censor: '[REDACTED]',
         },

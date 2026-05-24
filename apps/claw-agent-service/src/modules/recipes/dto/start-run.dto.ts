@@ -10,6 +10,16 @@ import { z } from 'zod';
 export const startRunSchema = z.object({
   deviceId: z.string().cuid(),
   params: z.record(z.string(), z.unknown()).default({}),
+  /**
+   * V2 Stream 01e — when true, the runner walks the DAG, resolves
+   * `$params` and `$steps.<id>.output` placeholders, and marks every
+   * step SUCCEEDED with a synthesised output of
+   * `{ dryRun: true, target, payload }` instead of calling
+   * CapabilityApprovalManager.propose. The run itself ends as
+   * SUCCEEDED with errorMessage=null and metadata recorded by the
+   * caller. No CapabilityInvocation is ever created.
+   */
+  dryRun: z.boolean().optional().default(false),
 });
 
 export type StartRunDto = z.infer<typeof startRunSchema>;

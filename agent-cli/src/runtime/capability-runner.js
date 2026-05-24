@@ -66,6 +66,13 @@ async function executeOne(invocation) {
       target: invocation.targetDescriptor,
       payload: invocation.payload,
       invocationId: invocation.id,
+      // V2 Stream 02 — pass recipeRunId so providers that need
+      // per-recipe isolation (BROWSER profile dir, etc.) can scope.
+      // Falls back to null for ad-hoc, non-recipe invocations.
+      recipeRunId:
+        typeof invocation.recipeRunId === 'string' && invocation.recipeRunId.length > 0
+          ? invocation.recipeRunId
+          : null,
     });
     await postComplete(invocation.id, {
       success: true,

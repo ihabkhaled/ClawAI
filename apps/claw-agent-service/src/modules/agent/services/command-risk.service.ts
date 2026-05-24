@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { CapabilityBlastRadius } from '../../../common/enums/capability-blast-radius.enum';
 import { CapabilityClass } from '../../../common/enums/capability-class.enum';
 import { CapabilityInvocationStatus } from '../../../common/enums/capability-invocation-status.enum';
@@ -18,21 +18,38 @@ import {
   RISK_SCORE_HIGH_THRESHOLD,
   RISK_SCORE_MEDIUM_THRESHOLD,
 } from '../../../common/constants/policy.constants';
-import { CAPABILITY_DUAL_WRITE_FLAG_ENV } from '../../../common/constants/capability.constants';
+import {
+  CAPABILITY_DUAL_WRITE_FLAG_ENV,
+  DUAL_WRITE_COMMAND_PREVIEW_LENGTH,
+} from '../../../common/constants/capability.constants';
 import { compilePolicyPattern } from '../../../common/utilities/policy-regex.utility';
+import { CapabilityDualWriteMetricsService } from './capability-dual-write-metrics.service';
 import { CapabilityRiskService } from './capability-risk.service';
 import { PolicyRepository } from '../repositories/policy.repository';
 import type { AccessPolicy } from '../../../generated/prisma';
 import type { EvaluationAccumulator, RiskAssessment } from '../types/policy.types';
 
 @Injectable()
-export class CommandRiskService {
+export class CommandRiskService implements OnModuleInit {
   private readonly logger = new Logger(CommandRiskService.name);
 
   constructor(
     private readonly repo: PolicyRepository,
     private readonly capabilityRiskService: CapabilityRiskService,
+    private readonly metrics: CapabilityDualWriteMetricsService,
   ) {}
+
+  onModuleInit(): void {
+    if (this.dualWriteEnabled()) {
+      this.logger.warn(
+        `[deprecation] ${CAPABILITY_DUAL_WRITE_FLAG_ENV}=true — legacy CommandRiskService dual-writes to CapabilityRiskService for soak. Monitor GET /api/v1/agent/capability/dual-write-status; flip to false once retirementReady=true on every replica for 7 consecutive days. See docs/15-ai-context/desktop-agent-dual-write-retirement.md.`,
+      );
+    } else {
+      this.logger.log(
+        `[deprecation] ${CAPABILITY_DUAL_WRITE_FLAG_ENV}=false — legacy dual-write retired; capability framework is authoritative.`,
+      );
+    }
+  }
 
   async assess(command: string): Promise<RiskAssessment> {
     const policies = await this.repo.findActive();
@@ -68,6 +85,7 @@ export class CommandRiskService {
     command: string,
     legacy: RiskAssessment,
   ): Promise<void> {
+    const commandPreview = command.slice(0, DUAL_WRITE_COMMAND_PREVIEW_LENGTH);
     try {
       const capabilityResult = await this.capabilityRiskService.assess({
         capabilityClass: CapabilityClass.TERMINAL,
@@ -79,15 +97,17 @@ export class CommandRiskService {
         userId: 'dual-write-comparison',
         deviceId: 'dual-write-comparison',
       });
-      const legacyDecision = this.legacyToCapabilityStatus(legacy);
-      if (capabilityResult.status !== legacyDecision) {
-        this.logger.warn(
-          `[dual-write] divergence — command="${command.slice(0, 60)}" legacy=${legacyDecision} capability=${capabilityResult.status} legacyPolicy=${legacy.matchedPolicyName ?? 'none'} capabilityPolicy=${capabilityResult.matchedPolicyName ?? 'none'}`,
-        );
-      }
+      this.metrics.recordDecision({
+        commandPreview,
+        legacyDecision: this.legacyToCapabilityStatus(legacy),
+        capabilityDecision: capabilityResult.status,
+        legacyPolicyName: legacy.matchedPolicyName ?? null,
+        capabilityPolicyName: capabilityResult.matchedPolicyName ?? null,
+      });
     } catch (error) {
-      this.logger.warn(
-        `[dual-write] capability path errored: ${error instanceof Error ? error.message : 'unknown'}`,
+      this.metrics.recordCapabilityPathError(
+        commandPreview,
+        error instanceof Error ? error.message : 'unknown',
       );
     }
   }

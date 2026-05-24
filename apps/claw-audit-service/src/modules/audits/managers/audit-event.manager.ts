@@ -1,6 +1,13 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import {
+  type AgentDevicePairedPayload,
+  type AgentDeviceRevokedPayload,
+  type AgentPolicyViolatedPayload,
+  type AgentSessionConnectedPayload,
+  type AgentSessionDisconnectedPayload,
+  type AgentTokenReuseDetectedPayload,
+  type AgentTokenRotatedPayload,
   type CapabilityApprovedPayload,
   type CapabilityAutoApprovedPayload,
   type CapabilityCancelledPayload,
@@ -45,12 +52,51 @@ export class AuditEventManager implements OnModuleInit {
   private async subscribeAll(): Promise<void> {
     const subscriptions = [
       ...this.coreEventSubscriptions(),
+      ...this.agentLifecycleEventSubscriptions(),
       ...this.capabilityEventSubscriptions(),
     ];
     for (const [pattern, handler] of subscriptions) {
       await this.rabbitMQService.subscribe(pattern, handler);
       this.logger.log(`Subscribed to event: ${pattern}`);
     }
+  }
+
+  // === Desktop-agent lifecycle events (V2 Stream 01c — added 2026-05-24) ===
+  // These 7 patterns were published by claw-agent-service since Phase A
+  // but had no audit consumer until V2 Stream 01. Without them, session/
+  // device/token/policy actions never reached the audit Mongo collection
+  // even though they were emitted on the bus.
+  private agentLifecycleEventSubscriptions(): Array<[string, (data: unknown) => Promise<void>]> {
+    return [
+      [
+        EventPattern.AGENT_SESSION_CONNECTED,
+        (d) => this.handleAgentSessionConnected(d as AgentSessionConnectedPayload),
+      ],
+      [
+        EventPattern.AGENT_SESSION_DISCONNECTED,
+        (d) => this.handleAgentSessionDisconnected(d as AgentSessionDisconnectedPayload),
+      ],
+      [
+        EventPattern.AGENT_DEVICE_PAIRED,
+        (d) => this.handleAgentDevicePaired(d as AgentDevicePairedPayload),
+      ],
+      [
+        EventPattern.AGENT_DEVICE_REVOKED,
+        (d) => this.handleAgentDeviceRevoked(d as AgentDeviceRevokedPayload),
+      ],
+      [
+        EventPattern.AGENT_TOKEN_ROTATED,
+        (d) => this.handleAgentTokenRotated(d as AgentTokenRotatedPayload),
+      ],
+      [
+        EventPattern.AGENT_TOKEN_REUSE_DETECTED,
+        (d) => this.handleAgentTokenReuseDetected(d as AgentTokenReuseDetectedPayload),
+      ],
+      [
+        EventPattern.AGENT_POLICY_VIOLATED,
+        (d) => this.handleAgentPolicyViolated(d as AgentPolicyViolatedPayload),
+      ],
+    ];
   }
 
   private coreEventSubscriptions(): Array<[string, (data: unknown) => Promise<void>]> {
@@ -525,6 +571,110 @@ export class AuditEventManager implements OnModuleInit {
         matchedPolicyId: payload.matchedPolicyId,
         matchedPolicyName: payload.matchedPolicyName,
         reason: payload.reason,
+      },
+    });
+  }
+
+  // ==================== Agent lifecycle (V2 Stream 01c) ====================
+
+  async handleAgentSessionConnected(payload: AgentSessionConnectedPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'AGENT_SESSION_CONNECTED',
+      entityType: 'agent_session',
+      entityId: payload.sessionId,
+      severity: 'LOW',
+      details: {
+        deviceId: payload.deviceId,
+      },
+    });
+  }
+
+  async handleAgentSessionDisconnected(payload: AgentSessionDisconnectedPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'AGENT_SESSION_DISCONNECTED',
+      entityType: 'agent_session',
+      entityId: payload.sessionId,
+      severity: 'LOW',
+      details: {},
+    });
+  }
+
+  async handleAgentDevicePaired(payload: AgentDevicePairedPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'AGENT_DEVICE_PAIRED',
+      entityType: 'agent_device',
+      entityId: payload.deviceId,
+      severity: 'MEDIUM',
+      details: {
+        hostname: payload.hostname,
+        os: payload.os,
+        platform: payload.platform,
+        agentVersion: payload.agentVersion,
+        scopes: payload.scopes,
+      },
+    });
+  }
+
+  async handleAgentDeviceRevoked(payload: AgentDeviceRevokedPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'AGENT_DEVICE_REVOKED',
+      entityType: 'agent_device',
+      entityId: payload.deviceId,
+      // Revocation triggered by reuse detection is HIGH; user-initiated revoke is MEDIUM.
+      severity: payload.reason === 'refresh_reuse_detected' ? 'HIGH' : 'MEDIUM',
+      details: {
+        reason: payload.reason,
+        revokedByUserId: payload.revokedByUserId,
+      },
+    });
+  }
+
+  async handleAgentTokenRotated(payload: AgentTokenRotatedPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'AGENT_TOKEN_ROTATED',
+      entityType: 'agent_device',
+      entityId: payload.deviceId,
+      severity: 'LOW',
+      details: {
+        oldJti: payload.oldJti,
+        newJti: payload.newJti,
+        ipAddress: payload.ipAddress,
+      },
+    });
+  }
+
+  async handleAgentTokenReuseDetected(payload: AgentTokenReuseDetectedPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'AGENT_TOKEN_REUSE_DETECTED',
+      entityType: 'agent_device',
+      entityId: payload.deviceId,
+      severity: 'CRITICAL',
+      details: {
+        presentedJti: payload.presentedJti,
+        ipAddress: payload.ipAddress,
+      },
+    });
+  }
+
+  async handleAgentPolicyViolated(payload: AgentPolicyViolatedPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'AGENT_POLICY_VIOLATED',
+      entityType: 'agent_command',
+      entityId: payload.commandId,
+      severity: 'HIGH',
+      details: {
+        sessionId: payload.sessionId,
+        matchedPolicyId: payload.matchedPolicyId,
+        matchedPolicyName: payload.matchedPolicyName,
+        riskScore: payload.riskScore,
+        riskLabel: payload.riskLabel,
       },
     });
   }
