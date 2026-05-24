@@ -1,14 +1,16 @@
 'use client';
 
-import { Cpu, Loader2 } from 'lucide-react';
+import { Cpu, Loader2, Sparkles } from 'lucide-react';
 
 import { CatalogGrid } from '@/components/local-frontier/catalog-grid';
 import { DeleteWeightsDialog } from '@/components/local-frontier/delete-weights-dialog';
 import { DownloadsDrawer } from '@/components/local-frontier/downloads-drawer';
 import { FilterBar } from '@/components/local-frontier/filter-bar';
 import { HardwarePanel } from '@/components/local-frontier/hardware-panel';
+import { HfSearchDialog } from '@/components/local-frontier/hf-search-dialog';
 import { OverridePromptDialog } from '@/components/local-frontier/override-prompt-dialog';
 import { RuntimeConfigDialog } from '@/components/local-frontier/runtime-config-dialog';
+import { Button } from '@/components/ui/button';
 import { useLocalFrontierCatalogPage } from '@/hooks/local-frontier/use-local-frontier-catalog-page';
 
 export default function LocalFrontierCatalogPage(): React.ReactElement {
@@ -118,9 +120,15 @@ export default function LocalFrontierCatalogPage(): React.ReactElement {
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
-      <header>
-        <h1 className="text-2xl font-bold text-foreground">{t('localFrontier.title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('localFrontier.subtitle')}</p>
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">{t('localFrontier.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('localFrontier.subtitle')}</p>
+        </div>
+        <Button variant="outline" onClick={ctrl.openHfDialog}>
+          <Sparkles className="size-4" aria-hidden />
+          Browse HuggingFace
+        </Button>
       </header>
 
       <HardwarePanel
@@ -214,6 +222,8 @@ export default function LocalFrontierCatalogPage(): React.ReactElement {
         onSave={ctrl.handleConfigureSave}
         labels={configLabels}
       />
+
+      <HfSearchDialog open={ctrl.hfDialogOpen} onOpenChange={ctrl.setHfDialogOpen} />
     </div>
   );
 }

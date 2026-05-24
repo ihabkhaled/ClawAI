@@ -3,6 +3,7 @@ import { ModelCategory, QualityTier } from '../../../common/enums';
 import { EntityNotFoundException } from '../../../common/errors';
 import { CatalogRepository } from '../repositories/catalog.repository';
 import { CatalogRefreshManager } from '../managers/catalog-refresh.manager';
+import { HfAutoSyncManager } from '../managers/hf-auto-sync.manager';
 import { HfDiscoveryManager } from '../managers/hf-discovery.manager';
 import {
   type HfAddRequestDto,
@@ -13,6 +14,7 @@ import {
   type CatalogListFilters,
   type CatalogListResult,
 } from '../types/catalog.types';
+import { type HfAutoSyncReport } from '../types/hf-auto-sync.types';
 import {
   type HfModelDetails,
   type HfModelSummary,
@@ -26,7 +28,12 @@ export class CatalogService {
     private readonly repo: CatalogRepository,
     private readonly refreshManager: CatalogRefreshManager,
     private readonly hfDiscovery: HfDiscoveryManager,
+    private readonly hfAutoSync: HfAutoSyncManager,
   ) {}
+
+  async triggerHfAutoSync(): Promise<HfAutoSyncReport> {
+    return this.hfAutoSync.runOnce();
+  }
 
   async list(filters: CatalogListFilters): Promise<CatalogListResult> {
     this.logger.debug(`list: filters=${JSON.stringify(filters)}`);

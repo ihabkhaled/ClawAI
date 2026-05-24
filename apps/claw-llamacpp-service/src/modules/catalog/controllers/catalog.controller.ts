@@ -11,6 +11,7 @@ import {
   HfSearchQuerySchema,
 } from '../dto/hf-search.dto';
 import { type CatalogEntry, type CatalogListResult } from '../types/catalog.types';
+import { type HfAutoSyncReport } from '../types/hf-auto-sync.types';
 import { type HfModelDetails, type HfModelSummary } from '../types/hf-search.types';
 
 @Controller('catalog')
@@ -58,5 +59,12 @@ export class CatalogController {
   @HttpCode(HttpStatus.ACCEPTED)
   refresh(@Body() _body: unknown): Promise<{ refreshed: number; failed: number }> {
     return this.catalogService.refresh();
+  }
+
+  @Roles(UserRole.ADMIN, UserRole.OPERATOR)
+  @Post('hf-auto-sync')
+  @HttpCode(HttpStatus.ACCEPTED)
+  triggerHfAutoSync(@Body() _body: unknown): Promise<HfAutoSyncReport> {
+    return this.catalogService.triggerHfAutoSync();
   }
 }

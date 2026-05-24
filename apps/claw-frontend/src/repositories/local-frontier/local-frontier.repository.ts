@@ -18,6 +18,7 @@ import type {
   RuntimeInfo,
   UpdateRuntimeConfigPayload,
 } from '@/types/local-frontier.types';
+import type { CancelPullResult } from '@/types/pull-job-cancel.types';
 
 export const localFrontierRepository = {
   async listCatalog(filters: FrontierCatalogFilters): Promise<FrontierCatalogList> {
@@ -72,10 +73,8 @@ export const localFrontierRepository = {
     return response.data;
   },
 
-  async cancelPull(id: string): Promise<{ id: string; status: 'CANCELLED' | 'DISMISSED' }> {
-    const response = await apiClient.delete<{ id: string; status: 'CANCELLED' | 'DISMISSED' }>(
-      `/llamacpp/pull-jobs/${id}`,
-    );
+  async cancelPull(id: string): Promise<CancelPullResult> {
+    const response = await apiClient.delete<CancelPullResult>(`/llamacpp/pull-jobs/${id}`);
     return response.data;
   },
 

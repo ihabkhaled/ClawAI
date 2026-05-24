@@ -4,8 +4,7 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 
 import { localFrontierRepository } from '@/repositories/local-frontier/local-frontier.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
-
-type CancelPullResult = { id: string; status: 'CANCELLED' | 'DISMISSED' };
+import type { CancelPullResult } from '@/types/pull-job-cancel.types';
 
 export function useCancelPull(): UseMutationResult<CancelPullResult, Error, string> {
   const queryClient = useQueryClient();

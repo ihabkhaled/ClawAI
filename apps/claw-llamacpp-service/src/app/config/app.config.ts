@@ -29,6 +29,16 @@ const appConfigSchema = z.object({
   LLAMACPP_PROCESS_PORT_MAX: z.coerce.number().default(48_999),
   HUGGINGFACE_TOKEN: z.string().optional(),
   HUGGINGFACE_API_BASE: z.string().default('https://huggingface.co'),
+  // HF auto-sync settings — discovers top trending GGUF models and adds them
+  // to the FrontierCatalogEntry table. Runs on bootstrap + on this cron.
+  HF_AUTO_SYNC_ENABLED: z
+    .string()
+    .default('true')
+    .transform((value) => value.toLowerCase() === 'true'),
+  HF_AUTO_SYNC_CRON: z.string().default('0 0 4 * * *'),
+  HF_AUTO_SYNC_TRENDING_LIMIT: z.coerce.number().int().min(0).max(200).default(40),
+  HF_AUTO_SYNC_DOWNLOADS_LIMIT: z.coerce.number().int().min(0).max(200).default(40),
+  HF_AUTO_SYNC_LIKES_LIMIT: z.coerce.number().int().min(0).max(200).default(40),
   RABBITMQ_URL: z.string().min(1, 'RABBITMQ_URL is required'),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
 });
