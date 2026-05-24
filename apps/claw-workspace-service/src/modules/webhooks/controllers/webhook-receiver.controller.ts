@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   Headers,
@@ -40,10 +41,21 @@ export class WebhookReceiverController {
     @Headers() headers: Record<string, string | string[] | undefined>,
     @Req() req: Request,
   ): Promise<WebhookReceiveResult> {
+    const requestBody = req.body;
+    let rawBody: Buffer;
+
+    if (Buffer.isBuffer(requestBody)) {
+      rawBody = requestBody;
+    } else if (typeof requestBody === 'string') {
+      rawBody = Buffer.from(requestBody, 'utf8');
+    } else {
+      throw new BadRequestException('Webhook body must be a raw buffer or string');
+    }
+
     return this.receiver.receive(
       parseWebhookProvider(providerRaw),
       connectorId === '_' ? null : connectorId,
-      Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body)),
+      rawBody,
       headers,
       (req.headers['x-forwarded-for'] as string | undefined) ?? req.ip ?? null,
     );
