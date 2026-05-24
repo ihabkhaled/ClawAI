@@ -89,6 +89,14 @@ export type {
   UpdateMemoryParams,
   MemoryFormStateParams,
   MemoryFormStateReturn,
+  MemorySuggestion,
+  MemoryAuditLog,
+  MemoryUsageEntry,
+  MemoryPreference,
+  UpsertMemoryPreferenceRequest,
+  ApproveSuggestionRequest,
+  RejectSuggestionRequest,
+  BulkApproveResult,
 } from './memory.types';
 export type {
   ContextPack,
@@ -103,6 +111,25 @@ export type {
   ContextPackItemFormStateParams,
   ContextPackItemFormStateReturn,
 } from './context-pack.types';
+export type {
+  ContextPackVersion,
+  VersionedItemSnapshot,
+  VersionDiff,
+  VersionDiffItem,
+  ContextPackTemplate,
+  CloneTemplateRequest,
+  ContextPackExportPayload,
+  ContextPackImportResult,
+  MemoryImportResult,
+} from './context-pack-v2.types';
+export type {
+  ContextReceipt,
+  RetrievalBundle,
+  RetrievalMemoryEntry,
+  RetrievalPackEntry,
+  RetrievalReasonValue,
+  PreviewContextRequest,
+} from './context-receipt.types';
 export type { UploadedFile, FileChunk, FileWithChunks, UploadFileRequest } from './file.types';
 export type {
   DashboardStats,
@@ -112,12 +139,7 @@ export type {
   DashboardPageResult,
 } from './dashboard.types';
 export type { ServiceHealthResult, AggregatedHealth } from './health.types';
-export type {
-  ApiRequestConfig,
-  ApiResponse,
-  ApiError,
-  ApiClientRequestOptions,
-} from './api.types';
+export type { ApiRequestConfig, ApiResponse, ApiError, ApiClientRequestOptions } from './api.types';
 export type {
   AuthStoreState,
   AuthStoreActions,

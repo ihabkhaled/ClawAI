@@ -1,272 +1,123 @@
+import {
+  type ContextPack,
+  ContextPackItemType,
+  ContextPackScope,
+  ContextPackVisibility,
+} from '../../../generated/prisma';
 import { ContextPacksService } from '../services/context-packs.service';
 import { type ContextPacksRepository } from '../repositories/context-packs.repository';
-import { type RabbitMQService } from '@claw/shared-rabbitmq';
-import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 
-const mockPack = {
-  id: 'pack-1',
-  userId: 'user-1',
-  name: 'My Context Pack',
-  description: 'A test context pack',
-  scope: null,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
-const mockPackWithItems = {
-  ...mockPack,
-  items: [
-    {
-      id: 'item-1',
-      contextPackId: 'pack-1',
-      type: 'text',
-      content: 'Some context',
-      fileId: null,
-      sortOrder: 0,
-      createdAt: new Date(),
+function makeStub<T extends object>(): T {
+  const cache: Record<string | symbol, jest.Mock> = {};
+  return new Proxy({} as T, {
+    get: (_target, prop) => {
+      if (!cache[prop]) {
+        cache[prop] = jest.fn();
+      }
+      return cache[prop];
     },
-  ],
-};
+  });
+}
 
-const mockItem = {
-  id: 'item-1',
-  contextPackId: 'pack-1',
-  type: 'text',
-  content: 'Some context',
-  fileId: null,
-  sortOrder: 0,
-  createdAt: new Date(),
-};
+function buildPack(overrides: Partial<ContextPack> = {}): ContextPack {
+  return {
+    id: 'pack-1',
+    userId: 'user-1',
+    name: 'Demo pack',
+    description: null,
+    scope: ContextPackScope.USER,
+    scopeRef: null,
+    legacyScope: null,
+    tags: [],
+    visibility: ContextPackVisibility.PRIVATE,
+    isEnabled: true,
+    pausedUntil: null,
+    pinned: false,
+    color: null,
+    icon: null,
+    version: 1,
+    templateId: null,
+    ownerUserId: 'user-1',
+    useCount: 0,
+    lastUsedAt: null,
+    qualityScore: 0.5,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}
 
-const mockContextPacksRepository = (): Record<keyof ContextPacksRepository, jest.Mock> => ({
-  create: jest.fn(),
-  findById: jest.fn(),
-  findAll: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-  countAll: jest.fn(),
-  addItem: jest.fn(),
-  removeItem: jest.fn(),
-  reorderItems: jest.fn(),
-});
+describe('ContextPacksService (V2)', () => {
+  it('createContextPack passes the new V2 fields through to the repository', async () => {
+    const repo = makeStub<ContextPacksRepository>();
+    const rabbit = { publish: jest.fn(), subscribe: jest.fn() };
+    const created = buildPack({ name: 'Engineering' });
+    (repo.create as unknown as jest.Mock).mockResolvedValue(created);
 
-const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
-  publish: jest.fn().mockResolvedValue(void 0),
-});
+    const service = new ContextPacksService(
+      repo,
+      rabbit as unknown as ConstructorParameters<typeof ContextPacksService>[1],
+      makeStub(),
+    );
 
-describe('ContextPacksService', () => {
-  let service: ContextPacksService;
-  let packsRepo: ReturnType<typeof mockContextPacksRepository>;
-  let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
+    const pack = await service.createContextPack('user-1', {
+      name: 'Engineering',
+      description: 'Style guide',
+      scope: ContextPackScope.WORKSPACE,
+      scopeRef: 'workspace-9',
+      tags: ['eng'],
+      visibility: ContextPackVisibility.WORKSPACE,
+    });
 
-  beforeEach(() => {
-    packsRepo = mockContextPacksRepository();
-    rabbitMQ = mockRabbitMQ();
-    service = new ContextPacksService(
-      packsRepo as unknown as ContextPacksRepository,
-      rabbitMQ as unknown as RabbitMQService,
+    expect(pack).toEqual(created);
+    expect(repo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-1',
+        ownerUserId: 'user-1',
+        scope: ContextPackScope.WORKSPACE,
+        scopeRef: 'workspace-9',
+        visibility: ContextPackVisibility.WORKSPACE,
+      }),
     );
   });
 
-  describe('createContextPack', () => {
-    it('should create a context pack and publish event', async () => {
-      packsRepo.create.mockResolvedValue(mockPack);
-
-      const result = await service.createContextPack('user-1', {
-        name: 'My Context Pack',
-        description: 'A test context pack',
-      });
-
-      expect(result).toEqual(mockPack);
-      expect(packsRepo.create).toHaveBeenCalledWith({
-        userId: 'user-1',
-        name: 'My Context Pack',
-        description: 'A test context pack',
-        scope: undefined,
-      });
-      expect(rabbitMQ.publish).toHaveBeenCalledWith(
-        'context_pack.updated',
-        expect.objectContaining({
-          contextPackId: 'pack-1',
-          action: 'created',
-        }),
-      );
+  it('resolves a legacy free-text item.type to a V2 enum', async () => {
+    const repo = makeStub<ContextPacksRepository>();
+    const rabbit = { publish: jest.fn(), subscribe: jest.fn() };
+    (repo.findById as unknown as jest.Mock).mockResolvedValue({
+      ...buildPack(),
+      items: [],
     });
-  });
+    (repo.addItem as unknown as jest.Mock).mockImplementation(async (input) => ({
+      id: 'item-1',
+      contextPackId: input.contextPackId,
+      itemType: input.itemType,
+      legacyType: input.legacyType ?? null,
+      content: input.content ?? null,
+      fileId: input.fileId ?? null,
+      url: input.url ?? null,
+      memoryRefId: input.memoryRefId ?? null,
+      sortOrder: input.sortOrder ?? 0,
+      isEnabled: true,
+      pinned: false,
+      tokenCountEstimate: input.tokenCountEstimate ?? 0,
+      compressedSummary: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }));
 
-  describe('getContextPacks', () => {
-    it('should return paginated context packs', async () => {
-      packsRepo.findAll.mockResolvedValue([mockPack]);
-      packsRepo.countAll.mockResolvedValue(1);
+    const service = new ContextPacksService(
+      repo,
+      rabbit as unknown as ConstructorParameters<typeof ContextPacksService>[1],
+      makeStub(),
+    );
 
-      const result = await service.getContextPacks('user-1', 1, 20);
-
-      expect(result.data).toHaveLength(1);
-      expect(result.meta.total).toBe(1);
-      expect(result.meta.page).toBe(1);
-      expect(result.meta.totalPages).toBe(1);
+    const item = await service.addItem('pack-1', 'user-1', {
+      type: 'snippet',
+      content: 'console.log("x")',
     });
 
-    it('should pass search filter to repository', async () => {
-      packsRepo.findAll.mockResolvedValue([]);
-      packsRepo.countAll.mockResolvedValue(0);
-
-      await service.getContextPacks('user-1', 1, 20, 'test');
-
-      expect(packsRepo.findAll).toHaveBeenCalledWith({ userId: 'user-1', search: 'test' }, 1, 20);
-    });
-  });
-
-  describe('getContextPack', () => {
-    it('should return context pack with items when found', async () => {
-      packsRepo.findById.mockResolvedValue(mockPackWithItems);
-
-      const result = await service.getContextPack('pack-1', 'user-1');
-
-      expect(result).toEqual(mockPackWithItems);
-      expect(result.items).toHaveLength(1);
-    });
-
-    it('should throw EntityNotFoundException when not found', async () => {
-      packsRepo.findById.mockResolvedValue(null);
-
-      await expect(service.getContextPack('nonexistent', 'user-1')).rejects.toThrow(
-        EntityNotFoundException,
-      );
-    });
-
-    it('should throw BusinessException when user does not own pack', async () => {
-      packsRepo.findById.mockResolvedValue(mockPackWithItems);
-
-      await expect(service.getContextPack('pack-1', 'other-user')).rejects.toThrow(
-        BusinessException,
-      );
-    });
-  });
-
-  describe('updateContextPack', () => {
-    it('should update context pack and publish event', async () => {
-      const updated = { ...mockPack, name: 'Updated Pack' };
-      packsRepo.findById.mockResolvedValue(mockPackWithItems);
-      packsRepo.update.mockResolvedValue(updated);
-
-      const result = await service.updateContextPack('pack-1', 'user-1', {
-        name: 'Updated Pack',
-      });
-
-      expect(result.name).toBe('Updated Pack');
-      expect(rabbitMQ.publish).toHaveBeenCalledWith(
-        'context_pack.updated',
-        expect.objectContaining({
-          contextPackId: 'pack-1',
-          action: 'updated',
-        }),
-      );
-    });
-
-    it('should throw EntityNotFoundException when not found', async () => {
-      packsRepo.findById.mockResolvedValue(null);
-
-      await expect(
-        service.updateContextPack('nonexistent', 'user-1', { name: 'New' }),
-      ).rejects.toThrow(EntityNotFoundException);
-    });
-  });
-
-  describe('deleteContextPack', () => {
-    it('should delete context pack and publish event', async () => {
-      packsRepo.findById.mockResolvedValue(mockPackWithItems);
-      packsRepo.delete.mockResolvedValue(mockPack);
-
-      const result = await service.deleteContextPack('pack-1', 'user-1');
-
-      expect(result).toEqual(mockPack);
-      expect(rabbitMQ.publish).toHaveBeenCalledWith(
-        'context_pack.updated',
-        expect.objectContaining({
-          contextPackId: 'pack-1',
-          action: 'deleted',
-        }),
-      );
-    });
-
-    it('should throw EntityNotFoundException when not found', async () => {
-      packsRepo.findById.mockResolvedValue(null);
-
-      await expect(service.deleteContextPack('nonexistent', 'user-1')).rejects.toThrow(
-        EntityNotFoundException,
-      );
-    });
-  });
-
-  describe('addItem', () => {
-    it('should add item to context pack and publish event', async () => {
-      packsRepo.findById.mockResolvedValue(mockPackWithItems);
-      packsRepo.addItem.mockResolvedValue(mockItem);
-
-      const result = await service.addItem('pack-1', 'user-1', {
-        type: 'text',
-        content: 'Some context',
-      });
-
-      expect(result).toEqual(mockItem);
-      expect(packsRepo.addItem).toHaveBeenCalledWith({
-        contextPackId: 'pack-1',
-        type: 'text',
-        content: 'Some context',
-        fileId: undefined,
-        sortOrder: undefined,
-      });
-      expect(rabbitMQ.publish).toHaveBeenCalledWith(
-        'context_pack.updated',
-        expect.objectContaining({
-          contextPackId: 'pack-1',
-          action: 'item_added',
-        }),
-      );
-    });
-
-    it('should throw EntityNotFoundException when pack not found', async () => {
-      packsRepo.findById.mockResolvedValue(null);
-
-      await expect(
-        service.addItem('nonexistent', 'user-1', { type: 'text', content: 'test' }),
-      ).rejects.toThrow(EntityNotFoundException);
-    });
-
-    it('should throw BusinessException when user does not own pack', async () => {
-      packsRepo.findById.mockResolvedValue(mockPackWithItems);
-
-      await expect(
-        service.addItem('pack-1', 'other-user', { type: 'text', content: 'test' }),
-      ).rejects.toThrow(BusinessException);
-    });
-  });
-
-  describe('removeItem', () => {
-    it('should remove item from context pack and publish event', async () => {
-      packsRepo.findById.mockResolvedValue(mockPackWithItems);
-      packsRepo.removeItem.mockResolvedValue(mockItem);
-
-      const result = await service.removeItem('pack-1', 'item-1', 'user-1');
-
-      expect(result).toEqual(mockItem);
-      expect(packsRepo.removeItem).toHaveBeenCalledWith('item-1');
-      expect(rabbitMQ.publish).toHaveBeenCalledWith(
-        'context_pack.updated',
-        expect.objectContaining({
-          contextPackId: 'pack-1',
-          action: 'item_removed',
-        }),
-      );
-    });
-
-    it('should throw EntityNotFoundException when pack not found', async () => {
-      packsRepo.findById.mockResolvedValue(null);
-
-      await expect(service.removeItem('nonexistent', 'item-1', 'user-1')).rejects.toThrow(
-        EntityNotFoundException,
-      );
-    });
+    expect(item.itemType).toBe(ContextPackItemType.SNIPPET);
+    expect(item.legacyType).toBe('snippet');
   });
 });

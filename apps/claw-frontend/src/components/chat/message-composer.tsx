@@ -2,6 +2,7 @@ import { Send } from 'lucide-react';
 
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ModelSelector } from '@/components/chat/model-selector';
+import { PreviewContextButton } from '@/components/chat/preview-context-button';
 import { ResearchToggle } from '@/components/chat/research-toggle';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,6 +15,7 @@ export function MessageComposer({
   isPending,
   selectedModel,
   onModelChange,
+  threadId,
 }: MessageComposerProps): React.ReactElement {
   const { t } = useTranslation();
   const {
@@ -46,6 +48,7 @@ export function MessageComposer({
           onChange={setResearch}
           disabled={isPending}
         />
+        {threadId ? <PreviewContextButton threadId={threadId} draft={content} /> : null}
       </div>
       <div className="flex min-h-0 flex-1 gap-2">
         <Textarea

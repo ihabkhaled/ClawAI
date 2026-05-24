@@ -18,9 +18,39 @@ This is the Memory microservice for the Claw platform. It owns memory records an
 
 ## Tables Owned
 
-- `memory_records`
-- `context_packs`
-- `context_pack_items`
+- `memory_records` (V2: + scope/scopeRef/tags/category/priority/confidence/source/sensitivity/retentionPolicy/expiresAt/pinned/pausedUntil/qualityScore/useCount/lastUsedAt/provenanceJson)
+- `memory_suggestions` (V2 — suggestion queue gated by user approval / auto-approve threshold)
+- `memory_usages` (V2 — per-message retrieval telemetry)
+- `memory_audit_logs` (V2 — survives memory row deletion; one row per CRUD/use/approve/reject action)
+- `memory_preferences` (V2 — per-user pausedAll, autoApproveThreshold, defaultRetention, defaultExpiresInDays, redactByDefault)
+- `context_packs` (V2: + scope enum/scopeRef/legacyScope/tags/visibility/isEnabled/pausedUntil/pinned/color/icon/version/templateId/ownerUserId/useCount/lastUsedAt/qualityScore)
+- `context_pack_items` (V2: + itemType enum/legacyType/url/memoryRefId/isEnabled/pinned/tokenCountEstimate/compressedSummary)
+- `context_pack_versions` (V2 — immutable history of pack edits; pruned at CONTEXT_VERSION_RETENTION_COUNT)
+- `context_pack_usages` (V2 — per-message pack retrieval log)
+- `context_pack_attachments` (V2 — many-to-many between packs and scope+scopeRef)
+- `context_pack_templates` (V2 — system + user-created templates)
+
+## V2 Modules Layout
+
+```
+src/modules/
+  memory/                     # Memory CRUD + retrieval + extraction (existing, extended)
+  memory-suggestions/         # NEW: suggestion queue (approve / reject / bulk / dismiss)
+  memory-preferences/         # NEW: per-user pausedAll / autoApproveThreshold / defaults
+  memory-audit/               # NEW: per-memory + per-user audit timeline
+  memory-usage/               # NEW: usage telemetry queries
+  context-packs/              # Existing, extended for scopes / visibility / attachments / versions
+  embeddings/                 # Existing — backs workspace + (future) pack/memory embeddings
+```
+
+The retrieval endpoint `POST /internal/memories/retrieve` is the canonical entry point for chat-service. It returns a `RetrievalBundle` (shared-types) with scope-filtered + sensitivity-sanitized memories and pack items. `POST /internal/memories/record-usage` writes the corresponding `memory_usages` rows and emits `MEMORY_USED` events.
+
+## V2 Sensitivity Rules (non-negotiable)
+
+- `MemorySensitivityManager.classify(content)` runs on EVERY new memory before persistence (manual create and auto-extract).
+- Hits for `aws_access_key`, `aws_secret_key`, `private_key_block`, `jwt`, `ssn_us`, `credit_card`, `google_api_key`, `github_token`, `openai_key` → verdict `REDACTED`, content is masked to `XX*****YYYY` before write.
+- Soft hints (`password`, `salary`, `medical`, …) → verdict `SENSITIVE` with confidence < 1.
+- Auto-approve from the suggestion queue ONLY fires for verdict `NORMAL` AND confidence ≥ `memory_preferences.autoApproveThreshold` (default 0.85).
 
 ## All Standard Backend Rules Apply
 

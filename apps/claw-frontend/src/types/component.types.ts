@@ -62,7 +62,14 @@ import type {
   ServerLogsTabProps,
   ServerLogStats,
 } from './log.types';
-import type { CreateMemoryRequest, MemoryRecord } from './memory.types';
+import type {
+  ApproveSuggestionRequest,
+  CreateMemoryRequest,
+  MemoryAuditLog,
+  MemoryRecord,
+  MemorySuggestion,
+  RejectSuggestionRequest,
+} from './memory.types';
 import type {
   ParallelModelResponse,
   ParallelModelTarget,
@@ -221,6 +228,11 @@ export type ThreadSettingsProps = {
   onQualityThresholdChange: (value: number) => void;
   maxReRouteAttempts: number;
   onMaxReRouteAttemptsChange: (value: number) => void;
+  // Integration V2 — per-thread toggles
+  useMemory: boolean;
+  onUseMemoryChange: (value: boolean) => void;
+  useContext: boolean;
+  onUseContextChange: (value: boolean) => void;
   onSave: () => void;
   isPending: boolean;
 };
@@ -311,6 +323,7 @@ export type MessageComposerProps = {
   isPending: boolean;
   selectedModel: ModelSelection | null;
   onModelChange: (model: ModelSelection | null) => void;
+  threadId?: string | null;
 };
 
 export type ResearchToggleProps = {
@@ -559,6 +572,20 @@ export type MemoryFormProps = {
   onSubmit: (data: CreateMemoryRequest) => void;
   isPending: boolean;
   memory?: MemoryRecord | null;
+};
+
+// === Memory V2 ===
+export type SuggestionsListProps = {
+  suggestions: MemorySuggestion[];
+  isLoading: boolean;
+  isPending: boolean;
+  onApprove: (id: string, data?: ApproveSuggestionRequest) => void;
+  onReject: (id: string, data?: RejectSuggestionRequest) => void;
+};
+
+export type AuditListProps = {
+  entries: MemoryAuditLog[];
+  isLoading: boolean;
 };
 
 // ─── Observability component props ──────────────────────────────────────────

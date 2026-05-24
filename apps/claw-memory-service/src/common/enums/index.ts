@@ -1,2 +1,12 @@
-export { UserRole } from "./user-role.enum";
-export { HealthCheckStatus, ServiceStatus } from "./health-status.enum";
+export { UserRole } from './user-role.enum';
+export { HealthCheckStatus, ServiceStatus } from './health-status.enum';
+export { MemoryScope } from './memory-scope.enum';
+export { MemorySource } from './memory-source.enum';
+export { MemorySensitivity } from './memory-sensitivity.enum';
+export { MemoryRetention } from './memory-retention.enum';
+export { MemorySuggestionStatus } from './memory-suggestion-status.enum';
+export { MemoryAuditAction } from './memory-audit-action.enum';
+export { ContextPackScope } from './context-pack-scope.enum';
+export { ContextPackItemType } from './context-pack-item-type.enum';
+export { ContextPackVisibility } from './context-pack-visibility.enum';
+export { RetrievalReason } from './retrieval-reason.enum';

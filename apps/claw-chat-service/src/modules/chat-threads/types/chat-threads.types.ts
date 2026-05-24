@@ -27,6 +27,8 @@ export interface UpdateThreadData {
   contextPackIds?: string[];
   judgeEnabled?: boolean;
   judgeModel?: string | null;
+  useMemory?: boolean;
+  useContext?: boolean;
 }
 
 export interface ThreadFilters {

@@ -24,7 +24,7 @@ apps/
   claw-chat-service/        # Port 4002, PG claw_chat   — threads, messages, context assembly, execution
   claw-connector-service/   # Port 4003, PG claw_connectors — 7 providers (OpenAI, Anthropic, Gemini, Bedrock, DeepSeek, Ollama, Grok), health, model sync
   claw-routing-service/     # Port 4004, PG claw_routing — 7 modes, Ollama-assisted AUTO, policies
-  claw-memory-service/      # Port 4005, PG claw_memory  — memory CRUD, extraction, context packs
+  claw-memory-service/      # Port 4005, PG claw_memory  — memory CRUD + suggestion queue, extraction, sensitivity classifier, retrieval bundle, audit, usage telemetry, preferences, context packs (scopes, versions, attachments, templates)
   claw-file-service/        # Port 4006, PG claw_files   — upload, chunking (JSON/CSV/MD/text)
   claw-audit-service/       # Port 4007, MongoDB         — 10 audit events, usage ledger
   claw-ollama-service/      # Port 4008, PG claw_ollama  — model management, roles, generation
@@ -507,9 +507,10 @@ Mitigations (in priority order):
 
 ### Chat (PostgreSQL)
 
-- `ChatThread` — userId, title, routingMode, preferredProvider/Model, contextPackIds[], systemPrompt, temperature, maxTokens
+- `ChatThread` — userId, title, routingMode, preferredProvider/Model, contextPackIds[], systemPrompt, temperature, maxTokens, **V2 Integration**: useMemory, useContext (per-thread toggles)
 - `ChatMessage` — threadId, role, content, provider, model, routingMode, inputTokens, outputTokens, latencyMs, feedback, metadata(JSON)
 - `MessageAttachment` — messageId, fileId, type
+- `ChatMessageContextReceipt` (**V2 Integration**) — messageId UNIQUE, threadId, userId, payloadJson (RetrievalBundle: memories, packItems, assemblyOrder, tokenBudget, warnings), createdAt — backs "why was this used?"
 
 ### Connectors (PostgreSQL)
 
@@ -524,9 +525,17 @@ Mitigations (in priority order):
 
 ### Memory (PostgreSQL + pgvector)
 
-- `MemoryRecord` — userId, type (FACT/PREFERENCE/INSTRUCTION/SUMMARY), content, sourceThreadId/MessageId, isEnabled
-- `ContextPack` — name, description, scope
-- `ContextPackItem` — type, content, fileId, sortOrder
+- `MemoryRecord` — userId, type (FACT/PREFERENCE/INSTRUCTION/SUMMARY), content, sourceThreadId/MessageId, isEnabled, **V2**: scope (USER/THREAD/WORKSPACE/PROJECT), scopeRef, tags, category, priority, confidence, source (USER_MANUAL/AI_EXTRACTED/AUTOMATION_LEARNING/IMPORTED), sensitivity (NORMAL/SENSITIVE/REDACTED), retentionPolicy (PERMANENT/EXPIRING/AUTO_DECAY), expiresAt, pinned, pausedUntil, qualityScore, useCount, lastUsedAt, provenanceJson
+- `MemorySuggestion` (**V2**) — userId, type, content, confidence, sensitivity, reason, status (PENDING/APPROVED/REJECTED/AUTO_APPROVED/DISMISSED/EXPIRED), decidedAt, decidedBy, resultingMemoryId, sourceThreadId/MessageId
+- `MemoryUsage` (**V2**) — memoryId, userId, threadId, messageId, score, reason
+- `MemoryAuditLog` (**V2**) — memoryId (nullable; row outlives deletion), userId, action (CREATED/UPDATED/DELETED/USED/APPROVED/REJECTED/TOGGLED/PAUSED/RESUMED/REDACTED/IMPORTED/EXPORTED), actor, details
+- `MemoryPreference` (**V2**) — userId, pausedAll, autoApproveThreshold (default 0.85), defaultRetention, defaultExpiresInDays, redactByDefault
+- `ContextPack` — name, description, scope, **V2**: scope (USER/WORKSPACE/PROJECT/THREAD enum), scopeRef, legacyScope (free-text back-compat), tags, visibility (PRIVATE/WORKSPACE/PUBLIC), isEnabled, pausedUntil, pinned, color, icon, version, templateId, ownerUserId, useCount, lastUsedAt, qualityScore
+- `ContextPackItem` — type, content, fileId, sortOrder, **V2**: itemType (TEXT/FILE/URL/MARKDOWN/SNIPPET/MEMORY_REF), legacyType, url, memoryRefId, isEnabled, pinned, tokenCountEstimate, compressedSummary
+- `ContextPackVersion` (**V2**) — packId, version, payloadJson, summary, changedBy, createdAt (immutable history, pruned at 20 per pack)
+- `ContextPackUsage` (**V2**) — packId, userId, threadId, messageId, itemIdsUsed[], score
+- `ContextPackAttachment` (**V2**) — packId, scope, scopeRef, attachedBy, isActive
+- `ContextPackTemplate` (**V2**) — name, description, category, isSystem, payloadJson
 
 ### Files (PostgreSQL)
 
@@ -567,6 +576,25 @@ Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 | connector.health_checked          | connector    | audit, routing           |
 | routing.decision_made             | routing      | audit                    |
 | memory.extracted                  | memory       | audit                    |
+| memory.suggested                  | memory       | audit                    |
+| memory.approved                   | memory       | audit                    |
+| memory.rejected                   | memory       | audit                    |
+| memory.used                       | memory       | audit                    |
+| memory.forgotten                  | memory       | audit                    |
+| memory.paused                     | memory       | audit                    |
+| memory.redacted                   | memory       | audit                    |
+| context_pack.created              | memory       | audit                    |
+| context_pack.updated              | memory       | audit                    |
+| context_pack.deleted              | memory       | audit                    |
+| context_pack.attached             | memory       | audit                    |
+| context_pack.detached             | memory       | audit                    |
+| context_pack.used                 | memory       | audit                    |
+| context_pack.version_created      | memory       | audit                    |
+| context_pack.version_reverted     | memory       | audit                    |
+| context_pack.shared               | memory       | audit                    |
+| context.receipt_written           | chat         | audit                    |
+| chat_thread.memory_toggled        | chat         | audit                    |
+| chat_thread.context_toggled       | chat         | audit                    |
 | file.uploaded/chunked             | file         | —                        |
 | log.server                        | all services | server-logs              |
 | image.generated                   | image        | audit                    |
@@ -1074,6 +1102,21 @@ Single root `.env` (copy from `.env.example`). Groups:
   - WEBHOOK_CONNECTOR_REQUESTS_PER_MINUTE (default 60) — per-connector cap on incoming webhook delivery rate (Stream 11.4, in-memory sliding window; over-cap returns RATE_LIMITED rejection)
   - AUTO_SUGGEST_INBOX_REPLY_CRON (default `0 */15 * * * *`) — cron for the Gmail INBOX_REPLY collector that emits DRAFT candidates (Stream 12.2)
   - AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS (default 48) — how far back to scan Gmail messages for inbox-reply candidates
+- Memory + Context V2 Flagship (2026-05-24, ADRs 033–038, docs/03-architecture/memory-context-integration.md):
+  - MEMORY_V2_ENABLED (default true) — master flag for the V2 control center; v1 endpoints stay live regardless
+  - CONTEXT_V2_ENABLED (default true)
+  - RETRIEVAL_V2_ENABLED (default true) — gates the unified `POST /internal/memories/retrieve` endpoint
+  - MEMORY_SENSITIVITY_MODEL (default `gemma3:4b`) — ambiguous-case sensitivity classifier (regex pre-filter ships in V2; Ollama call is a follow-up enhancement)
+  - MEMORY_EMBEDDING_MODEL / CONTEXT_EMBEDDING_MODEL (default `nomic-embed-text`)
+  - CONTEXT_COMPRESSION_MODEL (default `gemma3:4b`)
+  - MEMORY_AUTO_APPROVE_DEFAULT (default 0.85) — per-user `memory_preferences.autoApproveThreshold` default; only fires for sensitivity=NORMAL
+  - MEMORY_RETENTION_SWEEP_INTERVAL_MS (default 3600000) — hourly retention sweep
+  - MEMORY_SUGGESTION_TTL_DAYS (default 30) — auto-expire pending suggestions
+  - CONTEXT_VERSION_RETENTION_COUNT (default 20) — versions kept per pack
+  - CONTEXT_TOKEN_ESTIMATOR_MODE (default `char/4`)
+  - RETRIEVAL_MEMORY_SEMANTIC_BUDGET (default 5) — top-K memories per retrieval
+  - RETRIEVAL_CONTEXT_SEMANTIC_BUDGET (default 12) — top-K pack items per retrieval
+  - RETRIEVAL_TOKEN_GUARD_PCT (default 0.4) — fraction of token budget memory+context may consume
 
 ---
 

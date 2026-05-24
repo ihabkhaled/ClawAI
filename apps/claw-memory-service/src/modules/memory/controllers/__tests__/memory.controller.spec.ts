@@ -53,9 +53,9 @@ describe('MemoryController', () => {
     expect(serviceMock.updateMemory).toHaveBeenCalledWith('m1', 'u1', { content: 'new' });
   });
 
-  it('remove forwards id and user.id', async () => {
-    await controller.remove('m1', user as never);
-    expect(serviceMock.deleteMemory).toHaveBeenCalledWith('m1', 'u1');
+  it('remove forwards id, user.id and confirm flag', async () => {
+    await controller.remove('m1', user as never, 'FORGET');
+    expect(serviceMock.deleteMemory).toHaveBeenCalledWith('m1', 'u1', true);
   });
 
   it('toggle forwards id and user.id', async () => {

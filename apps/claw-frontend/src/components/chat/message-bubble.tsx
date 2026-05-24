@@ -9,6 +9,7 @@ import {
   ThumbsUp,
 } from 'lucide-react';
 
+import { ContextReceiptButton } from '@/components/chat/context-receipt-button';
 import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
 import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble';
 import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
@@ -231,6 +232,7 @@ export function MessageBubble({
         ) : null}
         {!isUser ? (
           <div className="flex items-center gap-1">
+            <ContextReceiptButton messageId={message.id} />
             {onRegenerate ? (
               <Button
                 variant="ghost"

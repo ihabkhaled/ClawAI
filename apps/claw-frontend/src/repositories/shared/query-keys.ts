@@ -79,11 +79,30 @@ export const queryKeys = {
     lists: () => [...queryKeys.memory.all, 'list'] as const,
     list: (filters: Record<string, unknown>) => [...queryKeys.memory.lists(), filters] as const,
     detail: (id: string) => [...queryKeys.memory.all, 'detail', id] as const,
+    search: (query: string) => [...queryKeys.memory.all, 'search', query] as const,
+    audit: (memoryId: string) => [...queryKeys.memory.all, 'audit', memoryId] as const,
+    auditAll: () => [...queryKeys.memory.all, 'audit', 'all'] as const,
+    usage: (memoryId: string) => [...queryKeys.memory.all, 'usage', memoryId] as const,
+    suggestions: (filters: Record<string, unknown>) =>
+      [...queryKeys.memory.all, 'suggestions', filters] as const,
+    preferences: () => [...queryKeys.memory.all, 'preferences'] as const,
   },
   contextPacks: {
     all: ['contextPacks'] as const,
     lists: () => [...queryKeys.contextPacks.all, 'list'] as const,
     detail: (id: string) => [...queryKeys.contextPacks.all, 'detail', id] as const,
+    versions: (id: string) => [...queryKeys.contextPacks.all, 'versions', id] as const,
+    versionDiff: (id: string, fromV: number, toV: number) =>
+      [...queryKeys.contextPacks.all, 'diff', id, fromV, toV] as const,
+    templates: (category?: string) =>
+      [...queryKeys.contextPacks.all, 'templates', category ?? 'all'] as const,
+  },
+  contextReceipts: {
+    all: ['contextReceipts'] as const,
+    byMessage: (messageId: string) =>
+      [...queryKeys.contextReceipts.all, 'message', messageId] as const,
+    preview: (threadId: string, draftHash: string) =>
+      [...queryKeys.contextReceipts.all, 'preview', threadId, draftHash] as const,
   },
   files: {
     all: ['files'] as const,

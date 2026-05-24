@@ -13,6 +13,8 @@ const appConfigSchema = z.object({
   EMBEDDING_MODEL: z.string().min(1).default('nomic-embed-text'),
   EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().default(768),
   SEARCH_TOP_K: z.coerce.number().int().positive().max(500).default(50),
+  // Memory V2 — sensitivity classifier (ambiguous-case fallback)
+  MEMORY_SENSITIVITY_MODEL: z.string().min(1).default('gemma3:4b'),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

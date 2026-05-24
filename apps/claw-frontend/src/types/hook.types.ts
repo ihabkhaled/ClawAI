@@ -173,6 +173,10 @@ export type UseThreadSettingsReturn = {
   setQualityThreshold: (value: number) => void;
   maxReRouteAttempts: number;
   setMaxReRouteAttempts: (value: number) => void;
+  useMemory: boolean;
+  setUseMemory: (value: boolean) => void;
+  useContext: boolean;
+  setUseContext: (value: boolean) => void;
   handleSave: () => void;
   isPending: boolean;
 };

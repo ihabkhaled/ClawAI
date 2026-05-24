@@ -16,6 +16,8 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { HealthModule } from '../modules/health/health.module';
 import { ChatThreadsModule } from '../modules/chat-threads/chat-threads.module';
 import { ChatMessagesModule } from '../modules/chat-messages/chat-messages.module';
+import { ContextReceiptsModule } from '../modules/context-receipts/context-receipts.module';
+import { ContextPreviewModule } from '../modules/context-preview/context-preview.module';
 
 @Module({
   imports: [
@@ -61,6 +63,8 @@ import { ChatMessagesModule } from '../modules/chat-messages/chat-messages.modul
     HealthModule,
     ChatThreadsModule,
     ChatMessagesModule,
+    ContextReceiptsModule,
+    ContextPreviewModule,
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),

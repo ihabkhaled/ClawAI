@@ -28,6 +28,9 @@ export const updateThreadSchema = z.object({
   judgeModel: z.string().max(255).optional().nullable(),
   qualityThreshold: z.number().min(0).max(1).optional().nullable(),
   maxReRouteAttempts: z.number().int().min(0).max(5).optional().nullable(),
+  // Integration V2 — per-thread memory + context toggles
+  useMemory: z.boolean().optional(),
+  useContext: z.boolean().optional(),
 });
 
 export type UpdateThreadDto = z.infer<typeof updateThreadSchema>;

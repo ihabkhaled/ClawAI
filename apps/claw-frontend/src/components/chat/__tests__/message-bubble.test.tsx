@@ -33,6 +33,10 @@ vi.mock('@/components/chat/routing-transparency', () => ({
   RoutingTransparency: () => <div>routing</div>,
 }));
 
+vi.mock('@/components/chat/context-receipt-button', () => ({
+  ContextReceiptButton: () => <div>context-receipt</div>,
+}));
+
 vi.mock('@/lib/markdown', () => ({
   MarkdownRenderer: ({ content }: { content: string }) => <div>{content}</div>,
 }));

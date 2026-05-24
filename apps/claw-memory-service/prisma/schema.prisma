@@ -17,6 +17,78 @@ enum MemoryType {
   INSTRUCTION
 }
 
+enum MemoryScope {
+  USER
+  THREAD
+  WORKSPACE
+  PROJECT
+}
+
+enum MemorySource {
+  USER_MANUAL
+  AI_EXTRACTED
+  AUTOMATION_LEARNING
+  IMPORTED
+}
+
+enum MemorySensitivity {
+  NORMAL
+  SENSITIVE
+  REDACTED
+}
+
+enum MemoryRetention {
+  PERMANENT
+  EXPIRING
+  AUTO_DECAY
+}
+
+enum MemorySuggestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  AUTO_APPROVED
+  DISMISSED
+  EXPIRED
+}
+
+enum MemoryAuditAction {
+  CREATED
+  UPDATED
+  DELETED
+  USED
+  APPROVED
+  REJECTED
+  TOGGLED
+  PAUSED
+  RESUMED
+  REDACTED
+  IMPORTED
+  EXPORTED
+}
+
+enum ContextPackScope {
+  USER
+  WORKSPACE
+  PROJECT
+  THREAD
+}
+
+enum ContextPackItemType {
+  TEXT
+  FILE
+  URL
+  MARKDOWN
+  SNIPPET
+  MEMORY_REF
+}
+
+enum ContextPackVisibility {
+  PRIVATE
+  WORKSPACE
+  PUBLIC
+}
+
 model MemoryRecord {
   id              String     @id @default(cuid())
   userId          String     @map("user_id")
@@ -25,44 +97,225 @@ model MemoryRecord {
   sourceThreadId  String?    @map("source_thread_id")
   sourceMessageId String?    @map("source_message_id")
   isEnabled       Boolean    @default(true) @map("is_enabled")
-  createdAt       DateTime   @default(now()) @map("created_at")
-  updatedAt       DateTime   @updatedAt @map("updated_at")
+  // === Memory V2 additions ===
+  scope           MemoryScope       @default(USER)
+  scopeRef        String?           @map("scope_ref")
+  tags            String[]          @default([])
+  category        String?
+  priority        Int               @default(50)
+  confidence      Float             @default(1.0)
+  source          MemorySource      @default(USER_MANUAL)
+  sensitivity     MemorySensitivity @default(NORMAL)
+  retentionPolicy MemoryRetention   @default(PERMANENT) @map("retention_policy")
+  expiresAt       DateTime?         @map("expires_at")
+  pinned          Boolean           @default(false)
+  pausedUntil     DateTime?         @map("paused_until")
+  qualityScore    Float             @default(0.5) @map("quality_score")
+  useCount        Int               @default(0)   @map("use_count")
+  lastUsedAt      DateTime?         @map("last_used_at")
+  provenanceJson  Json?             @map("provenance_json")
+  embedding       Unsupported("vector(768)")?
+  embeddedAt      DateTime?         @map("embedded_at")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
 
   @@index([userId])
   @@index([type])
   @@index([isEnabled])
+  @@index([scope, scopeRef])
+  @@index([userId, scope, isEnabled, updatedAt])
+  @@index([expiresAt])
   @@map("memory_records")
 }
 
-model ContextPack {
-  id          String   @id @default(cuid())
-  userId      String   @map("user_id")
-  name        String
-  description String?
-  scope       String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+model MemorySuggestion {
+  id                String                 @id @default(cuid())
+  userId            String                 @map("user_id")
+  type              MemoryType
+  content           String
+  sourceThreadId    String?                @map("source_thread_id")
+  sourceMessageId   String?                @map("source_message_id")
+  confidence        Float
+  sensitivity       MemorySensitivity      @default(NORMAL)
+  reason            String?
+  status            MemorySuggestionStatus @default(PENDING)
+  decidedAt         DateTime?              @map("decided_at")
+  decidedBy         String?                @map("decided_by")
+  resultingMemoryId String?                @map("resulting_memory_id")
+  createdAt         DateTime               @default(now()) @map("created_at")
 
-  items ContextPackItem[]
+  @@index([userId, status])
+  @@index([createdAt])
+  @@map("memory_suggestions")
+}
+
+model MemoryUsage {
+  id        String   @id @default(cuid())
+  memoryId  String   @map("memory_id")
+  userId    String   @map("user_id")
+  threadId  String   @map("thread_id")
+  messageId String   @map("message_id")
+  score     Float
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([memoryId])
+  @@index([userId, createdAt])
+  @@index([threadId])
+  @@index([messageId])
+  @@map("memory_usages")
+}
+
+model MemoryAuditLog {
+  id        String            @id @default(cuid())
+  memoryId  String?           @map("memory_id")
+  userId    String            @map("user_id")
+  action    MemoryAuditAction
+  actor     String
+  details   Json?
+  createdAt DateTime          @default(now()) @map("created_at")
+
+  @@index([memoryId])
+  @@index([userId, createdAt])
+  @@map("memory_audit_logs")
+}
+
+model MemoryPreference {
+  userId               String           @id @map("user_id")
+  pausedAll            Boolean          @default(false) @map("paused_all")
+  autoApproveThreshold Float            @default(0.85) @map("auto_approve_threshold")
+  defaultRetention     MemoryRetention  @default(PERMANENT) @map("default_retention")
+  defaultExpiresInDays Int?             @map("default_expires_in_days")
+  redactByDefault      Boolean          @default(true) @map("redact_by_default")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+
+  @@map("memory_preferences")
+}
+
+model ContextPack {
+  id            String                @id @default(cuid())
+  userId        String                @map("user_id")
+  name          String
+  description   String?
+  // === Context V2 additions ===
+  scope         ContextPackScope      @default(USER)
+  scopeRef      String?               @map("scope_ref")
+  legacyScope   String?               @map("legacy_scope")
+  tags          String[]              @default([])
+  visibility    ContextPackVisibility @default(PRIVATE)
+  isEnabled     Boolean               @default(true) @map("is_enabled")
+  pausedUntil   DateTime?             @map("paused_until")
+  pinned        Boolean               @default(false)
+  color         String?
+  icon          String?
+  version       Int                   @default(1)
+  templateId    String?               @map("template_id")
+  ownerUserId   String                @map("owner_user_id")
+  useCount      Int                   @default(0) @map("use_count")
+  lastUsedAt    DateTime?             @map("last_used_at")
+  qualityScore  Float                 @default(0.5) @map("quality_score")
+  createdAt     DateTime              @default(now()) @map("created_at")
+  updatedAt     DateTime              @updatedAt @map("updated_at")
+
+  items       ContextPackItem[]
+  versions    ContextPackVersion[]
+  usages      ContextPackUsage[]
+  attachments ContextPackAttachment[]
 
   @@index([userId])
+  @@index([scope, scopeRef])
+  @@index([visibility])
   @@map("context_packs")
 }
 
 model ContextPackItem {
-  id            String   @id @default(cuid())
-  contextPackId String   @map("context_pack_id")
-  type          String
-  content       String?
-  fileId        String?  @map("file_id")
-  sortOrder     Int      @default(0) @map("sort_order")
-  createdAt     DateTime @default(now()) @map("created_at")
+  id                 String              @id @default(cuid())
+  contextPackId      String              @map("context_pack_id")
+  itemType           ContextPackItemType @default(TEXT) @map("item_type")
+  legacyType         String?             @map("legacy_type")
+  content            String?
+  fileId             String?             @map("file_id")
+  url                String?
+  memoryRefId        String?             @map("memory_ref_id")
+  sortOrder          Int                 @default(0) @map("sort_order")
+  isEnabled          Boolean             @default(true) @map("is_enabled")
+  pinned             Boolean             @default(false)
+  tokenCountEstimate Int                 @default(0) @map("token_count_estimate")
+  compressedSummary  String?             @map("compressed_summary")
+  embedding          Unsupported("vector(768)")?
+  embeddedAt         DateTime?           @map("embedded_at")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
 
   contextPack ContextPack @relation(fields: [contextPackId], references: [id], onDelete: Cascade)
 
   @@index([contextPackId])
   @@index([sortOrder])
+  @@index([isEnabled])
   @@map("context_pack_items")
+}
+
+model ContextPackVersion {
+  id            String   @id @default(cuid())
+  contextPackId String   @map("context_pack_id")
+  version       Int
+  payloadJson   Json     @map("payload_json")
+  summary       String?
+  changedBy     String   @map("changed_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  contextPack ContextPack @relation(fields: [contextPackId], references: [id], onDelete: Cascade)
+
+  @@unique([contextPackId, version])
+  @@index([contextPackId, createdAt])
+  @@map("context_pack_versions")
+}
+
+model ContextPackUsage {
+  id            String   @id @default(cuid())
+  contextPackId String   @map("context_pack_id")
+  userId        String   @map("user_id")
+  threadId      String   @map("thread_id")
+  messageId     String   @map("message_id")
+  itemIdsUsed   String[] @map("item_ids_used")
+  score         Float?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  contextPack ContextPack @relation(fields: [contextPackId], references: [id], onDelete: Cascade)
+
+  @@index([contextPackId, createdAt])
+  @@index([threadId])
+  @@map("context_pack_usages")
+}
+
+model ContextPackAttachment {
+  id            String           @id @default(cuid())
+  contextPackId String           @map("context_pack_id")
+  scope         ContextPackScope
+  scopeRef      String           @map("scope_ref")
+  attachedBy    String           @map("attached_by")
+  isActive      Boolean          @default(true) @map("is_active")
+  attachedAt    DateTime         @default(now()) @map("attached_at")
+
+  contextPack ContextPack @relation(fields: [contextPackId], references: [id], onDelete: Cascade)
+
+  @@unique([contextPackId, scope, scopeRef])
+  @@index([scope, scopeRef])
+  @@map("context_pack_attachments")
+}
+
+model ContextPackTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String
+  isSystem    Boolean  @default(false) @map("is_system")
+  payloadJson Json     @map("payload_json")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([category])
+  @@index([isSystem])
+  @@map("context_pack_templates")
 }
 
 // Stream 30 — Unified inbox + cross-provider semantic search.

@@ -591,6 +591,25 @@ OLLAMA_KV_CACHE_TYPE=q8_0
 MEMORY_EXTRACTION_MODEL=AUTO
 
 # =============================================================================
+# Memory + Context V2 Flagship
+# =============================================================================
+MEMORY_V2_ENABLED=true
+CONTEXT_V2_ENABLED=true
+RETRIEVAL_V2_ENABLED=true
+MEMORY_SENSITIVITY_MODEL=gemma3:4b
+MEMORY_EMBEDDING_MODEL=nomic-embed-text
+CONTEXT_EMBEDDING_MODEL=nomic-embed-text
+CONTEXT_COMPRESSION_MODEL=gemma3:4b
+MEMORY_AUTO_APPROVE_DEFAULT=0.85
+MEMORY_RETENTION_SWEEP_INTERVAL_MS=3600000
+MEMORY_SUGGESTION_TTL_DAYS=30
+CONTEXT_VERSION_RETENTION_COUNT=20
+CONTEXT_TOKEN_ESTIMATOR_MODE=char/4
+RETRIEVAL_MEMORY_SEMANTIC_BUDGET=5
+RETRIEVAL_CONTEXT_SEMANTIC_BUDGET=12
+RETRIEVAL_TOKEN_GUARD_PCT=0.4
+
+# =============================================================================
 # File Service
 # =============================================================================
 FILE_STORAGE_PATH=/data/files

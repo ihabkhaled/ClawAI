@@ -30,6 +30,9 @@ export type ChatThread = {
   judgeModel: string | null;
   qualityThreshold: number | null;
   maxReRouteAttempts: number | null;
+  // Integration V2 — per-thread toggles
+  useMemory: boolean;
+  useContext: boolean;
   createdAt: string;
   updatedAt: string;
   _count?: { messages: number };
@@ -106,6 +109,9 @@ export type UpdateThreadRequest = {
   judgeModel?: string | null;
   qualityThreshold?: number | null;
   maxReRouteAttempts?: number | null;
+  // Integration V2 — per-thread toggles
+  useMemory?: boolean;
+  useContext?: boolean;
 };
 export type CreateMessageRequest = {
   threadId: string;

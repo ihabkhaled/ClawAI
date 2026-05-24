@@ -1,0 +1,8 @@
+export enum MemorySuggestionStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  AUTO_APPROVED = 'AUTO_APPROVED',
+  DISMISSED = 'DISMISSED',
+  EXPIRED = 'EXPIRED',
+}
