@@ -1170,17 +1170,45 @@ export class ChatMessagesService implements OnModuleInit {
     forcedProvider: string | undefined;
     forcedModel: string | undefined;
   } {
-    const effectiveRoutingMode = dto.routingMode ?? thread.routingMode;
-    const forcedProvider =
-      effectiveRoutingMode === RoutingMode.MANUAL_MODEL
-        ? (dto.provider ?? thread.preferredProvider ?? undefined)
-        : undefined;
-    const forcedModel =
-      effectiveRoutingMode === RoutingMode.MANUAL_MODEL
-        ? (dto.model ?? thread.preferredModel ?? undefined)
-        : undefined;
+    const inheritedMode = dto.routingMode ?? thread.routingMode;
 
-    return { effectiveRoutingMode, forcedProvider, forcedModel };
+    if (inheritedMode !== RoutingMode.MANUAL_MODEL) {
+      return {
+        effectiveRoutingMode: inheritedMode,
+        forcedProvider: undefined,
+        forcedModel: undefined,
+      };
+    }
+
+    // MANUAL_MODEL: pick the explicit DTO selection, then the thread's
+    // preferredProvider/Model, then fall back to the thread's lastProvider/Model
+    // so the thread "remembers" what the user chose most recently.
+    const forcedProvider =
+      dto.provider ?? thread.preferredProvider ?? thread.lastProvider ?? undefined;
+    const forcedModel =
+      dto.model ?? thread.preferredModel ?? thread.lastModel ?? undefined;
+
+    // If MANUAL_MODEL ends up with nothing to force (no DTO, no preferred,
+    // no last), downgrade to AUTO instead of letting the routing service
+    // silently substitute a hardcoded cloud default (which was the source of
+    // the "Connector 'ANTHROPIC' not found" bug when no ANTHROPIC connector
+    // is configured).
+    if (forcedProvider === undefined && forcedModel === undefined) {
+      this.logger.warn(
+        `resolveRoutingParams: thread ${thread.id} requested MANUAL_MODEL but has no DTO/preferred/last selection — downgrading to AUTO`,
+      );
+      return {
+        effectiveRoutingMode: RoutingMode.AUTO,
+        forcedProvider: undefined,
+        forcedModel: undefined,
+      };
+    }
+
+    return {
+      effectiveRoutingMode: RoutingMode.MANUAL_MODEL,
+      forcedProvider,
+      forcedModel,
+    };
   }
 
   private buildMessageMetadata(

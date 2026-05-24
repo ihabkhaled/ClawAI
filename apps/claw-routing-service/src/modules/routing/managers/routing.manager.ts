@@ -240,8 +240,22 @@ export class RoutingManager {
     return chain;
   }
 
-  private handleManualModel(context: RoutingContext): RoutingDecisionResult {
-    const model = context.forcedModel ?? CLOUD_MODEL_DEFAULT;
+  private async handleManualModel(
+    context: RoutingContext,
+  ): Promise<RoutingDecisionResult> {
+    // MANUAL_MODEL means "the user chose this exact provider+model". If the
+    // caller forgot to populate either, do NOT silently substitute a hardcoded
+    // cloud default (`claude-sonnet-4`) — that surfaced as "Connector
+    // 'ANTHROPIC' not found" for users without an Anthropic connector
+    // configured. Fall through to AUTO so the router actually picks something
+    // appropriate for the message + connector availability.
+    if (!context.forcedModel) {
+      this.logger.warn(
+        `handleManualModel: MANUAL_MODEL with no forcedModel — falling through to AUTO (forcedProvider=${context.forcedProvider ?? 'none'})`,
+      );
+      return this.handleAuto(context);
+    }
+    const model = context.forcedModel;
     const provider = context.forcedProvider ?? this.inferProvider(model);
     this.logger.debug(`handleManualModel: forced provider=${provider} model=${model}`);
     const primary = { provider, model };
