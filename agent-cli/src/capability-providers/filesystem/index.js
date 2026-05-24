@@ -38,6 +38,8 @@ import {
 } from 'node:fs/promises';
 import { dirname, isAbsolute, normalize } from 'node:path';
 
+import { dep, osFamily, probeHealthy } from '../probe-helpers.js';
+
 const FS_READ_MAX_BYTES = 32 * 1024 * 1024; // 32 MB
 const FS_WRITE_MAX_BYTES = 32 * 1024 * 1024;
 const FS_PATH_MAX_LENGTH = 4096;
@@ -45,6 +47,20 @@ const FS_LIST_MAX_ENTRIES = 5_000;
 const FS_UNDO_CAPTURE_MAX_BYTES = 5 * 1024 * 1024; // never inline >5MB into undoPlan
 
 export const filesystemProvider = {
+  async probe() {
+    // FILESYSTEM has no external dependencies — it uses node:fs and is
+    // always available. Probe still emits a healthy row so the doctor
+    // table shows the class as covered.
+    const dependencies = [
+      dep({ name: 'node:fs/promises', installed: true, required: true }),
+    ];
+    return {
+      class: 'FILESYSTEM',
+      healthy: probeHealthy(dependencies),
+      dependencies,
+      notes: `OS family: ${osFamily()} — undoPlan capture capped at 5MB`,
+    };
+  },
   async execute({ operation, target, payload }) {
     const path = validatePath(target?.path);
     switch (operation) {

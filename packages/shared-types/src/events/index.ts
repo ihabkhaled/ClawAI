@@ -1,5 +1,16 @@
 export { EventPattern } from './event-patterns';
 export type {
+  AgentEventTimestamp,
+  AgentSessionConnectedPayload,
+  AgentSessionDisconnectedPayload,
+  AgentDevicePairedPayload,
+  AgentDeviceRevokedPayload,
+  AgentTokenRotatedPayload,
+  AgentTokenReuseDetectedPayload,
+  AgentPolicyViolatedPayload,
+  AgentLifecycleEventPayload,
+} from './agent-lifecycle-events.types';
+export type {
   BaseCapabilityEventPayload,
   CapabilityClassValue,
   CapabilityRiskLabelValue,

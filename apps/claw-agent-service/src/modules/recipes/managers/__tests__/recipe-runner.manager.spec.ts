@@ -44,7 +44,7 @@ function fakeRecipe(): Recipe {
   } as Recipe;
 }
 
-function fakeRun(): RecipeRun {
+function fakeRun(overrides: Partial<RecipeRun> = {}): RecipeRun {
   return {
     id: 'run1',
     recipeId: 'r1',
@@ -52,11 +52,13 @@ function fakeRun(): RecipeRun {
     deviceId: 'd1',
     status: 'RUNNING',
     params: { inputPath: '/home/u/Documents/x.txt' },
+    dryRun: false,
     startedAt: new Date(),
     completedAt: null,
     errorMessage: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    ...overrides,
   } as RecipeRun;
 }
 
@@ -100,6 +102,7 @@ function fakeRunRepo(): jest.Mocked<RecipeRunRepository> {
     findStepsForRun: jest.fn(),
     updateRun: jest.fn(),
     updateStep: jest.fn(),
+    updateStepMetadata: jest.fn(),
     listRunsForRecipe: jest.fn(),
   } as unknown as jest.Mocked<RecipeRunRepository>;
 }
@@ -164,8 +167,66 @@ describe('RecipeRunnerManager', () => {
 
     it('throws 404 when recipe not found', async () => {
       const runner = new RecipeRunnerManager(fakeRecipeRepo(null), fakeRunRepo(), fakeApproval());
-      await expect(runner.start('u1', 'missing', { deviceId: 'd1', params: {} })).rejects.toThrow(
-        EntityNotFoundException,
+      await expect(
+        runner.start('u1', 'missing', { deviceId: 'd1', params: {}, dryRun: false }),
+      ).rejects.toThrow(EntityNotFoundException);
+    });
+
+    // V2 Stream 01e — dry-run path
+    it('skips CapabilityApprovalManager.propose and synthesises step outputs when dryRun=true', async () => {
+      const recipeRepo = fakeRecipeRepo(fakeRecipe());
+      const runRepo = fakeRunRepo();
+      const approval = fakeApproval();
+      const run = fakeRun({ dryRun: true });
+      const step1 = fakeStep(1);
+      const step2 = fakeStep(2);
+      runRepo.createRun.mockResolvedValue(run);
+      runRepo.createSteps.mockResolvedValue({ count: 2 });
+      // simulate the runner re-checking readiness — after step1 SUCCEEDED,
+      // step2 becomes ready with $steps.s1.output.contentBase64 missing
+      // (dry-run synth output is the descriptor, not the real content).
+      runRepo.findStepsForRun
+        .mockResolvedValueOnce([step1, step2])
+        .mockResolvedValueOnce([
+          { ...step1, status: 'SUCCEEDED', output: { dryRun: true, target: {}, payload: {} } },
+          step2,
+        ])
+        .mockResolvedValueOnce([
+          { ...step1, status: 'SUCCEEDED', output: { dryRun: true, target: {}, payload: {} } },
+          { ...step2, status: 'SUCCEEDED', output: { dryRun: true, target: {}, payload: {} } },
+        ]);
+      runRepo.findRunByIdInternal.mockResolvedValue({
+        ...run,
+        steps: [step1, step2],
+      } as never);
+
+      const runner = new RecipeRunnerManager(recipeRepo, runRepo, approval);
+      const dto: StartRunDto = {
+        deviceId: 'd1',
+        params: { inputPath: '/home/u/Documents/x.txt' },
+        dryRun: true,
+      };
+
+      await runner.start('u1', 'r1', dto);
+      await new Promise((r) => setImmediate(r));
+
+      expect(approval.propose).not.toHaveBeenCalled();
+      // Step 1 should be marked SUCCEEDED synchronously
+      expect(runRepo.updateStep).toHaveBeenCalledWith(
+        step1.id,
+        expect.objectContaining({
+          status: 'SUCCEEDED',
+          output: expect.objectContaining({ dryRun: true }),
+        }),
+      );
+      // Step metadata should have dryRun=true so audit trail is clear
+      expect(runRepo.updateStepMetadata).toHaveBeenCalledWith(
+        step1.id,
+        expect.objectContaining({ dryRun: true }),
+      );
+      // Run row should be created with dryRun=true
+      expect(runRepo.createRun).toHaveBeenCalledWith(
+        expect.objectContaining({ dryRun: true }),
       );
     });
   });

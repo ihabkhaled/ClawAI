@@ -32,12 +32,58 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 
 import { getPlatform } from '../../config/paths.js';
+import { dep, osFamily, probeHealthy, whichBinary } from '../probe-helpers.js';
 
 const execAsync = promisify(exec);
 
 const SCREEN_MAX_BYTES = 16 * 1024 * 1024; // 16 MB
 
 export const screenProvider = {
+  async probe() {
+    const family = osFamily();
+    const captureBin =
+      family === 'macos'
+        ? 'screencapture'
+        : family === 'windows'
+          ? 'powershell'
+          : await whichBinary('grim')
+            ? 'grim'
+            : 'import';
+    const captureInstalled =
+      family === 'windows' ? true : await whichBinary(captureBin);
+    const tesseractInstalled = await whichBinary('tesseract');
+    const dependencies = [
+      dep({
+        name: captureBin,
+        installed: captureInstalled,
+        required: true,
+        fix: captureInstalled
+          ? null
+          : family === 'linux'
+            ? 'apt-get install grim (Wayland) OR imagemagick (X11 — provides `import`)'
+            : `Install ${captureBin} for ${family}`,
+      }),
+      dep({
+        name: 'tesseract',
+        installed: tesseractInstalled,
+        required: false,
+        notes: 'Required only for OCR operation',
+        fix: tesseractInstalled
+          ? null
+          : family === 'macos'
+            ? 'brew install tesseract'
+            : family === 'windows'
+              ? 'choco install tesseract'
+              : 'apt-get install tesseract-ocr',
+      }),
+    ];
+    return {
+      class: 'SCREEN',
+      healthy: probeHealthy(dependencies),
+      dependencies,
+      notes: `${family} capture via ${captureBin}; OCR optional`,
+    };
+  },
   async execute({ operation }) {
     switch (operation) {
       case 'CAPTURE_FULLSCREEN':

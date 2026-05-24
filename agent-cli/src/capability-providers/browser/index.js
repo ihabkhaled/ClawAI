@@ -27,12 +27,20 @@
 import { resolve as resolvePath } from 'node:path';
 import { homedir } from 'node:os';
 
+import { canDynamicallyImport, dep, osFamily, probeHealthy } from '../probe-helpers.js';
+
 const BROWSER_PROFILE_DIR = resolvePath(homedir(), '.claw-agent', 'browser-profile');
+const BROWSER_RECIPE_PROFILE_ROOT = resolvePath(homedir(), '.claw-agent', 'recipe-browser-profiles');
 
-let cachedBrowser = null;
+// V2 Stream 02 — per-recipe browser profile isolation. Each recipe run
+// gets its own persistent context directory so cookies/localStorage
+// from recipe A never leak into recipe B (Stream 02 ask). The
+// "default" / orphan-invocation profile remains BROWSER_PROFILE_DIR
+// for ad-hoc CLI invocations not tied to a recipe.
+const cachedBrowsers = new Map();
 
-async function getBrowser() {
-  if (cachedBrowser !== null) return cachedBrowser;
+async function getBrowser(profileKey) {
+  if (cachedBrowsers.has(profileKey)) return cachedBrowsers.get(profileKey);
   let playwright;
   try {
     playwright = await import('playwright');
@@ -41,16 +49,43 @@ async function getBrowser() {
       `BROWSER provider requires the 'playwright' package. Install it with: npm i playwright && npx playwright install chromium. Original error: ${(error && error.message) ?? 'module not found'}`,
     );
   }
-  cachedBrowser = await playwright.chromium.launchPersistentContext(BROWSER_PROFILE_DIR, {
+  const profileDir =
+    profileKey === 'default'
+      ? BROWSER_PROFILE_DIR
+      : resolvePath(BROWSER_RECIPE_PROFILE_ROOT, profileKey);
+  const browser = await playwright.chromium.launchPersistentContext(profileDir, {
     headless: false,
     viewport: { width: 1280, height: 720 },
   });
-  return cachedBrowser;
+  cachedBrowsers.set(profileKey, browser);
+  return browser;
 }
 
 export const browserProvider = {
-  async execute({ operation, target, payload }) {
-    const browser = await getBrowser();
+  async probe() {
+    const hasPlaywright = await canDynamicallyImport('playwright');
+    const dependencies = [
+      dep({
+        name: 'playwright (npm)',
+        installed: hasPlaywright,
+        required: true,
+        fix: hasPlaywright ? null : 'npm i playwright -w agent-cli && npx playwright install chromium',
+      }),
+    ];
+    return {
+      class: 'BROWSER',
+      healthy: probeHealthy(dependencies),
+      dependencies,
+      notes: `Profile dir: ${BROWSER_PROFILE_DIR} (${osFamily()}). chromium binary verified at first NAVIGATE call.`,
+    };
+  },
+  async execute({ operation, target, payload, recipeRunId }) {
+    // V2 Stream 02 — per-recipe profile isolation. recipeRunId comes
+    // from the backend pending-capability payload (added in Stream 03);
+    // ad-hoc CLI invocations land in the 'default' profile.
+    const profileKey =
+      typeof recipeRunId === 'string' && recipeRunId.length > 0 ? recipeRunId : 'default';
+    const browser = await getBrowser(profileKey);
     const page = await browser.newPage();
     try {
       switch (operation) {

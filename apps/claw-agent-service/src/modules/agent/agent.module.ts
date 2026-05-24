@@ -11,6 +11,7 @@ import { AgentCommandStreamController } from './controllers/agent-command-stream
 import { AgentScheduledCommandController } from './controllers/agent-scheduled-command.controller';
 import { CapabilityController } from './controllers/capability.controller';
 import { CapabilityCliController } from './controllers/capability-cli.controller';
+import { CapabilityStreamController } from './controllers/capability-stream.controller';
 import { AgentTerminalInternalController } from './controllers/agent-terminal-internal.controller';
 import { AgentSessionService } from './services/agent-session.service';
 import { AgentCommandService } from './services/agent-command.service';
@@ -24,6 +25,8 @@ import { TokenService } from './services/token.service';
 import { RevocationCacheService } from './services/revocation-cache.service';
 import { PolicyService } from './services/policy.service';
 import { CommandRiskService } from './services/command-risk.service';
+import { CapabilityDualWriteMetricsService } from './services/capability-dual-write-metrics.service';
+import { CapabilityEventBusService } from './services/capability-event-bus.service';
 import { CapabilityRiskService } from './services/capability-risk.service';
 import { CapabilityService } from './services/capability.service';
 import { CommandStreamService } from './services/command-stream.service';
@@ -65,6 +68,7 @@ import { CompatAgentGuard } from '../../common/guards/compat-agent.guard';
     AgentScheduledCommandController,
     CapabilityController,
     CapabilityCliController,
+    CapabilityStreamController,
     AgentTerminalInternalController,
   ],
   providers: [
@@ -80,6 +84,8 @@ import { CompatAgentGuard } from '../../common/guards/compat-agent.guard';
     RevocationCacheService,
     PolicyService,
     CommandRiskService,
+    CapabilityDualWriteMetricsService,
+    CapabilityEventBusService,
     CapabilityRiskService,
     CapabilityService,
     CommandStreamService,

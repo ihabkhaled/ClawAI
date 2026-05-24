@@ -51,4 +51,37 @@ export class MarketplaceRepository {
       update: { recipeId },
     });
   }
+
+  // V2 Stream 06 — publisher portal: listings owned by a user.
+  async listForPublisher(
+    publisherUserId: string,
+    page: number,
+    pageSize: number,
+  ): Promise<{ data: MarketplaceListing[]; total: number }> {
+    const where: Prisma.MarketplaceListingWhereInput = { publisherUserId };
+    const [data, total] = await Promise.all([
+      this.prisma.marketplaceListing.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.marketplaceListing.count({ where }),
+    ]);
+    return { data, total };
+  }
+
+  // V2 Stream 06 — publisher unpublish (sets status=HIDDEN, keeps installs intact).
+  async setListingStatus(
+    id: string,
+    publisherUserId: string,
+    status: 'PUBLISHED' | 'HIDDEN' | 'DRAFT',
+  ): Promise<MarketplaceListing | null> {
+    const row = await this.prisma.marketplaceListing.updateMany({
+      where: { id, publisherUserId },
+      data: { status },
+    });
+    if (row.count === 0) return null;
+    return this.findListingById(id);
+  }
 }

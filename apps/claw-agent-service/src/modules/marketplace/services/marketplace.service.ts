@@ -57,6 +57,32 @@ export class MarketplaceService {
     return listing;
   }
 
+  // V2 Stream 06 — publisher portal: listings owned by a user.
+  async listForPublisher(
+    publisherUserId: string,
+    page: number,
+    pageSize: number,
+  ): Promise<PaginatedListings> {
+    this.logger.debug(`listForPublisher: publisherUserId=${publisherUserId}`);
+    const result = await this.repo.listForPublisher(publisherUserId, page, pageSize);
+    return { ...result, page, pageSize };
+  }
+
+  // V2 Stream 06 — publisher portal: change a listing's status (hide / republish).
+  // Only the publisher who owns the row may change it.
+  async setStatus(
+    listingId: string,
+    publisherUserId: string,
+    status: 'PUBLISHED' | 'HIDDEN' | 'DRAFT',
+  ): Promise<MarketplaceListing> {
+    this.logger.info(`setStatus: listingId=${listingId} status=${status}`);
+    const updated = await this.repo.setListingStatus(listingId, publisherUserId, status);
+    if (updated === null) {
+      throw new EntityNotFoundException('MarketplaceListing', listingId);
+    }
+    return updated;
+  }
+
   /**
    * Re-verifies the listing's signature on every install (defense in
    * depth — the row in the DB could in theory be tampered with by

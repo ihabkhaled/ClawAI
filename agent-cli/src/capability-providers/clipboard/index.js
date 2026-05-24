@@ -20,12 +20,41 @@ import { Buffer } from 'node:buffer';
 import { promisify } from 'node:util';
 
 import { getPlatform } from '../../config/paths.js';
+import { dep, osFamily, probeHealthy, whichBinary } from '../probe-helpers.js';
 
 const execAsync = promisify(exec);
 
 const CLIPBOARD_MAX_BYTES = 1 * 1024 * 1024; // 1 MB cap
 
 export const clipboardProvider = {
+  async probe() {
+    const family = osFamily();
+    const dependencies = [];
+    if (family === 'macos') {
+      const ok = await whichBinary('pbcopy');
+      dependencies.push(dep({ name: 'pbcopy/pbpaste', installed: ok, required: true,
+        fix: ok ? null : 'ships with macOS — check $PATH' }));
+    } else if (family === 'windows') {
+      dependencies.push(dep({ name: 'powershell Set-Clipboard', installed: true, required: true }));
+    } else {
+      // Linux — try wl-copy first (Wayland), fall back to xclip (X11)
+      const hasWlCopy = await whichBinary('wl-copy');
+      const hasXclip = await whichBinary('xclip');
+      const ok = hasWlCopy || hasXclip;
+      dependencies.push(dep({
+        name: hasWlCopy ? 'wl-copy (Wayland)' : hasXclip ? 'xclip (X11)' : 'wl-copy or xclip',
+        installed: ok,
+        required: true,
+        fix: ok ? null : 'apt-get install wl-clipboard (Wayland) OR xclip (X11)',
+      }));
+    }
+    return {
+      class: 'CLIPBOARD',
+      healthy: probeHealthy(dependencies),
+      dependencies,
+      notes: `${family} text clipboard only — image clipboard returns typed not-implemented on Windows`,
+    };
+  },
   async execute({ operation, payload }) {
     switch (operation) {
       case 'READ':

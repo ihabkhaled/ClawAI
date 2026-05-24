@@ -15,6 +15,7 @@
 import { spawn } from 'node:child_process';
 
 import { getPlatform } from '../../config/paths.js';
+import { dep, osFamily, probeHealthy, whichBinary } from '../probe-helpers.js';
 
 const DEFAULT_TIMEOUT_MS = 300_000;
 const STDOUT_MAX_BYTES = 64 * 1024;
@@ -27,6 +28,24 @@ function getShell() {
 }
 
 export const terminalProvider = {
+  async probe() {
+    const shell = getPlatform() === 'windows' ? 'cmd.exe' : '/bin/sh';
+    const present = await whichBinary(shell);
+    const dependencies = [
+      dep({
+        name: shell,
+        installed: present,
+        required: true,
+        fix: present ? null : `Shell ${shell} not found on PATH — verify your OS install`,
+      }),
+    ];
+    return {
+      class: 'TERMINAL',
+      healthy: probeHealthy(dependencies),
+      dependencies,
+      notes: `OS family detected: ${osFamily()}`,
+    };
+  },
   async execute({ operation, target, payload }) {
     if (operation !== 'SPAWN') {
       throw new Error(`TERMINAL provider received unsupported operation: ${operation}`);

@@ -12,6 +12,10 @@ import { CurrentUser } from '@claw/shared-auth';
 
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import {
+  type BulkApproveCapabilityDto,
+  bulkApproveCapabilitySchema,
+} from '../dto/bulk-approve-capability.dto';
+import {
   type CancelCapabilityDto,
   cancelCapabilitySchema,
 } from '../dto/cancel-capability.dto';
@@ -31,9 +35,12 @@ import {
   type RollbackCapabilityDto,
   rollbackCapabilitySchema,
 } from '../dto/rollback-capability.dto';
+import { CapabilityDualWriteMetricsService } from '../services/capability-dual-write-metrics.service';
 import { CapabilityService } from '../services/capability.service';
 import type { AuthenticatedUser } from '../../../common/types/auth.types';
 import type { CapabilityInvocation } from '../../../generated/prisma';
+import type { CapabilityDualWriteStatus } from '../types/capability-dual-write.types';
+import type { BulkApproveResult } from '../types/capability-stream.types';
 import type {
   CapabilityProposalResult,
   PaginatedCapabilities,
@@ -45,7 +52,28 @@ import type {
  */
 @Controller('agent/capabilities')
 export class CapabilityController {
-  constructor(private readonly service: CapabilityService) {}
+  constructor(
+    private readonly service: CapabilityService,
+    private readonly dualWriteMetrics: CapabilityDualWriteMetricsService,
+  ) {}
+
+  @Get('dual-write-status')
+  dualWriteStatus(): CapabilityDualWriteStatus {
+    return this.dualWriteMetrics.status();
+  }
+
+  // V2 Stream 08 — bulk approval. Declared BEFORE @Post(':id/approve')
+  // because "bulk-approve" is a literal path; without explicit ordering
+  // NestJS would treat it as an id param value. Cap is 100 per request
+  // (enforced in DTO).
+  @Post('bulk-approve')
+  @HttpCode(HttpStatus.OK)
+  async bulkApprove(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(bulkApproveCapabilitySchema)) dto: BulkApproveCapabilityDto,
+  ): Promise<BulkApproveResult> {
+    return this.service.bulkApprove(user.id, dto.invocationIds);
+  }
 
   @Post()
   async propose(

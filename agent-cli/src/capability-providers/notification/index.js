@@ -18,6 +18,7 @@ import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 
 import { getPlatform } from '../../config/paths.js';
+import { dep, osFamily, probeHealthy, whichBinary } from '../probe-helpers.js';
 
 const execAsync = promisify(exec);
 
@@ -25,6 +26,30 @@ const NOTIFY_TITLE_MAX = 200;
 const NOTIFY_BODY_MAX = 2000;
 
 export const notificationProvider = {
+  async probe() {
+    const family = osFamily();
+    const binary =
+      family === 'macos' ? 'osascript' : family === 'windows' ? 'powershell' : 'notify-send';
+    const installed = await whichBinary(binary);
+    const dependencies = [
+      dep({
+        name: binary,
+        installed,
+        required: true,
+        fix: installed
+          ? null
+          : family === 'linux'
+            ? 'apt-get install libnotify-bin'
+            : `Install ${binary} for ${family}`,
+      }),
+    ];
+    return {
+      class: 'NOTIFICATION',
+      healthy: probeHealthy(dependencies),
+      dependencies,
+      notes: `${family} native notification via ${binary}`,
+    };
+  },
   async execute({ operation, payload }) {
     if (operation !== 'NOTIFY') {
       throw new Error(`NOTIFICATION provider received unsupported operation: ${operation}`);

@@ -8,9 +8,22 @@ import { runDevices } from '../commands/devices.command.js';
 import { runConfig } from '../commands/config.command.js';
 import { runRegister } from '../commands/register.command.js';
 import { runStart } from '../commands/start.command.js';
+import { runRunRecipe } from '../commands/run-recipe.command.js';
 import * as log from '../utils/logger.js';
 
-const VERSION = '2.1.0-phase-b';
+const VERSION = '2.2.0-desktop-agent-v2';
+
+function setOrAppend(flags, key, value) {
+  // V2 Stream 03 — repeated flags (e.g. --param k=v --param j=w) are
+  // collected into an array so commands like `run-recipe` can take
+  // multiple values for the same flag.
+  if (Object.prototype.hasOwnProperty.call(flags, key)) {
+    const existing = flags[key];
+    flags[key] = Array.isArray(existing) ? [...existing, value] : [existing, value];
+  } else {
+    flags[key] = value;
+  }
+}
 
 function parseArgs(argv) {
   const [, , command, ...rest] = argv;
@@ -21,9 +34,9 @@ function parseArgs(argv) {
     if (arg.startsWith('--')) {
       const eq = arg.indexOf('=');
       if (eq !== -1) {
-        flags[arg.slice(0, eq)] = arg.slice(eq + 1);
+        setOrAppend(flags, arg.slice(0, eq), arg.slice(eq + 1));
       } else if (rest[i + 1] !== undefined && !rest[i + 1].startsWith('--')) {
-        flags[arg] = rest[i + 1];
+        setOrAppend(flags, arg, rest[i + 1]);
         i += 1;
       } else {
         flags[arg] = true;
@@ -53,6 +66,12 @@ Commands:
   status          Show login status
   start           Attach a session and run the command + file-watch loop
                     --no-watch       Disable the filesystem watcher
+  run-recipe <id> [V2] Run a recipe from CLI without the web UI
+                    --device <id>    Override device (default: this device)
+                    --param k=v      Pass to recipe params (repeatable)
+                    --dry-run        Propose+skip every step, no real ops
+                    --watch          Poll until terminal, exit with run status
+                    --json           Machine-readable output
   devices         List devices for your account
                     --revoke <id>    Revoke a device
                     --rename <id>    Rename a device (followed by new name)
@@ -95,6 +114,9 @@ async function main() {
       break;
     case 'start':
       await runStart(flags);
+      break;
+    case 'run-recipe':
+      await runRunRecipe(flags, positional);
       break;
     case 'devices':
       await runDevices(flags, positional);

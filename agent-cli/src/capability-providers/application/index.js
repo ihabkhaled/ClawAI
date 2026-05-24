@@ -26,6 +26,8 @@
 import { spawn } from 'node:child_process';
 import { Buffer } from 'node:buffer';
 
+import { canDynamicallyImport, dep, osFamily, probeHealthy } from '../probe-helpers.js';
+
 const APP_TIMEOUT_MS = 30_000;
 const KEYS_MAX_LEN = 4096;
 
@@ -52,6 +54,28 @@ async function getNut() {
 }
 
 export const applicationProvider = {
+  async probe() {
+    const hasFork = await canDynamicallyImport('@nut-tree-fork/nut-js');
+    const hasOriginal = hasFork ? false : await canDynamicallyImport('@nut-tree/nut-js');
+    const installed = hasFork || hasOriginal;
+    const name = hasFork ? '@nut-tree-fork/nut-js' : hasOriginal ? '@nut-tree/nut-js' : 'nut-tree';
+    const dependencies = [
+      dep({
+        name,
+        installed,
+        required: true,
+        fix: installed
+          ? null
+          : 'npm i @nut-tree-fork/nut-js -w agent-cli (the original @nut-tree/nut-js is unpublished — use the community fork)',
+      }),
+    ];
+    return {
+      class: 'APPLICATION',
+      healthy: probeHealthy(dependencies),
+      dependencies,
+      notes: `${osFamily()} — UIA via nut-js (~70 MB native bindings per OS)`,
+    };
+  },
   async execute({ operation, target, payload }) {
     switch (operation) {
       case 'LAUNCH':

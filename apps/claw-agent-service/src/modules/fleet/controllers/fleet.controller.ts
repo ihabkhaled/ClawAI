@@ -15,6 +15,7 @@ import {
   OrganizationRole,
 } from '../../../generated/prisma';
 import type { AuthenticatedUser } from '../../../common/types/auth.types';
+import type { DeviceMatrixRow } from '../types/device-matrix.types';
 
 @Controller('agent/organizations')
 export class FleetController {
@@ -47,6 +48,14 @@ export class FleetController {
   @Get(':id/members')
   async listMembers(@Param('id') id: string): Promise<OrganizationMember[]> {
     return this.repo.listMembers(id);
+  }
+
+  // V2 Stream 07 — device matrix for fleet governance.
+  // Returns every device owned by a member of this organization,
+  // including last-seen + pending capability count for triage.
+  @Get(':id/devices')
+  async listDevices(@Param('id') id: string): Promise<DeviceMatrixRow[]> {
+    return this.repo.listDevicesForOrganization(id);
   }
 
   @Post(':id/members')

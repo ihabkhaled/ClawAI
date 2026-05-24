@@ -86,6 +86,8 @@ export type RecipeRun = {
   deviceId: string;
   status: RecipeRunStatus;
   params: Record<string, unknown>;
+  // V2 Stream 01e — true when this run is a dry-run (no real capabilities invoked)
+  dryRun: boolean;
   startedAt: string | null;
   completedAt: string | null;
   errorMessage: string | null;
@@ -114,6 +116,15 @@ export type RecipeRunDetail = RecipeRun & { steps: RecipeRunStep[] };
 export type StartRunRequest = {
   deviceId: string;
   params?: Record<string, unknown>;
+  /**
+   * V2 Stream 01e — dry-run mode. When true, the backend runner walks
+   * the DAG, resolves $params and $steps.<id>.output placeholders,
+   * and marks every step SUCCEEDED with a synthesised output
+   * `{ dryRun: true, target, payload }` instead of calling the
+   * capability framework. No CapabilityInvocation rows are created.
+   * Default: false (real run).
+   */
+  dryRun?: boolean;
 };
 
 export type ListRunsQuery = {

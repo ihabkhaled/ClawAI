@@ -59,3 +59,15 @@ export const CAPABILITY_EXPIRY_SWEEP_INTERVAL_MS = 5 * 60 * 1000;
  */
 export const CAPABILITY_DUAL_WRITE_FLAG_ENV =
   'CAPABILITY_DEPRECATED_TERMINAL_COMMAND_DUAL_WRITE';
+
+/**
+ * V2 Stream 01 — dual-write metrics defaults.
+ *
+ * RECENT_DIVERGENCE_RING_SIZE bounds the in-memory rolling list of
+ * divergence rows. MIN_DECISIONS_BEFORE_RETIREMENT is the floor that
+ * keeps `retirementReady` from going true after just a handful of
+ * decisions in the soak window.
+ */
+export const DUAL_WRITE_RECENT_DIVERGENCE_RING_SIZE = 50;
+export const DUAL_WRITE_MIN_DECISIONS_BEFORE_RETIREMENT = 500;
+export const DUAL_WRITE_COMMAND_PREVIEW_LENGTH = 60;
