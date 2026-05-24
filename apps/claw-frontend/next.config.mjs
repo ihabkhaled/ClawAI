@@ -3,6 +3,13 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   output: 'standalone',
+  // Next.js dev server (turbopack) rejects HMR WebSocket connections
+  // whose Host header isn't an explicitly trusted dev origin. Without
+  // this list, `wss://claw.local/_next/webpack-hmr` fails repeatedly
+  // and React hydration can stall waiting for HMR handshake on the
+  // first navigation, producing an "infinite loading" UX.
+  // localhost stays in the list so dev access via either host works.
+  allowedDevOrigins: ['claw.local', 'localhost', '127.0.0.1', '*.claw.local'],
   // The `typescript` package is aliased to `@typescript/native-preview` (TS 7),
   // which ships only the `tsgo` CLI and does NOT expose the TypeScript
   // compiler API that Next.js's built-in type-check step requires. SWC handles
