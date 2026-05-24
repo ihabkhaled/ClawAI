@@ -1,14 +1,7 @@
 // SCAFFOLD: stream R.1 (01-r1-learning-loop)
 // Pure utility — extracts the bias math out of the manager for unit testability.
 
-import type { CandidateModel } from '../types/learned-bias.types';
-
-export type LearnedSignal = {
-  provider: string;
-  model: string;
-  scoreDelta: number;
-  sampleSize: number;
-};
+import type { CandidateModel, LearnedSignal } from '../types/learned-bias.types';
 
 export function applyLearnedBias(
   _candidates: CandidateModel[],

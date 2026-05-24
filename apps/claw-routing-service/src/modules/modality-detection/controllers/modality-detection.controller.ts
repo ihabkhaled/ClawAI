@@ -2,9 +2,8 @@
 
 import { Body, Controller, Post } from '@nestjs/common';
 
-import { detectModalitySchema } from '../dto/detect-modality.dto';
+import { detectModalitySchema, type DetectModalityDto } from '../dto/detect-modality.dto';
 import { ModalityDetectionService } from '../services/modality-detection.service';
-import type { DetectModalityDto } from '../dto/detect-modality.dto';
 import type { ModalityDetectionResult } from '../types/modality-detection.types';
 
 @Controller('routing/detect-modality')

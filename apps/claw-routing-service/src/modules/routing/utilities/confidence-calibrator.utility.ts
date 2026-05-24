@@ -1,18 +1,7 @@
 // SCAFFOLD: stream R.1 (01-r1-learning-loop)
 // Rolling 30-day hit-rate calibration for routing-signal confidence constants.
 
-export type CalibrationSignal =
-  | 'EXACT_KEYWORD'
-  | 'VERB_NOUN_COMBO'
-  | 'CATEGORY_KEYWORD'
-  | 'HEURISTIC_FALLBACK'
-  | 'PRIVACY_ENFORCED';
-
-export type CalibrationSample = {
-  signal: CalibrationSignal;
-  wasCorrect: boolean;
-  occurredAt: Date;
-};
+import type { CalibrationSample, CalibrationSignal } from '../types/calibration.types';
 
 export function calibrateConfidence(
   _signal: CalibrationSignal,

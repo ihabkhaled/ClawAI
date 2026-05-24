@@ -29,3 +29,12 @@ export type BiasOutput = {
   candidates: CandidateModel[];
   appliedBias: AppliedBiasMetadata;
 };
+
+// Per-utility input shape (moved out of learned-bias-applier.utility.ts
+// to satisfy the no-inline-type-alias rule for utility files).
+export type LearnedSignal = {
+  provider: string;
+  model: string;
+  scoreDelta: number;
+  sampleSize: number;
+};

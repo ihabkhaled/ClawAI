@@ -7,6 +7,7 @@ export class SpendTrackerManager {
   private readonly logger = new Logger(SpendTrackerManager.name);
 
   async incrementSpend(_userId: string, _orgId: string | undefined, _amountUsd: number): Promise<void> {
+    this.logger.warn('SpendTrackerManager.incrementSpend: SCAFFOLD-R4 only');
     throw new Error('SCAFFOLD-R4 — SpendTrackerManager.incrementSpend not implemented');
   }
 }

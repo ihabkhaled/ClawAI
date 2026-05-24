@@ -23,3 +23,30 @@ export type ModalityDetectionResult = {
   urlMetadata: DetectedUrl[];
   fallback?: { reason: string; tag: string };
 };
+
+// Per-manager partial result types — extracted to avoid inline string-literal
+// unions inside Pick<>, which the routing-service eslint config bans in
+// logic files.
+export type UrlIntentResult = Pick<
+  ModalityDetectionResult,
+  'detectedModalities' | 'urlMetadata' | 'workflowHint' | 'reasonTags'
+>;
+
+export type AttachmentIntentResult = Pick<
+  ModalityDetectionResult,
+  'detectedModalities' | 'fileMetadata' | 'workflowHint' | 'reasonTags'
+>;
+
+export type ToolCallingIntentResult = {
+  needsToolCalling: boolean;
+  reasonTag?: string;
+};
+
+export type StreamingIntentResult = {
+  needsStreaming: boolean;
+};
+
+export type EmbeddingIntentResult = {
+  isEmbeddingTask: boolean;
+  reasonTag?: string;
+};
