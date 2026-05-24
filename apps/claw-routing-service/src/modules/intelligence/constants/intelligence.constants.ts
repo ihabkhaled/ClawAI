@@ -1,0 +1,10 @@
+// SCAFFOLD: stream R.8 (09-r8-advanced-intelligence)
+
+export const PROMPT_LENGTH_HEADROOM_FACTOR = 1.2;
+export const LATENCY_CIRCUIT_ROLLING_WINDOW_MS = 5 * 60 * 1000;
+export const LATENCY_CIRCUIT_MIN_SAMPLES = 20;
+export const MID_STREAM_KILL_GRACE_MS = 500;
+export const CONSENSUS_MIN_MODELS = 3;
+export const CONSENSUS_AGREEMENT_THRESHOLD = 0.7;
+export const COST_QUALITY_SLIDER_DEFAULT = 0.5;
+export const FINE_TUNE_BIAS_WEIGHT_MAX = 0.3;
