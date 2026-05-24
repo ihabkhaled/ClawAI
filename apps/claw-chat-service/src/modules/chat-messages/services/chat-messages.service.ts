@@ -1180,22 +1180,18 @@ export class ChatMessagesService implements OnModuleInit {
       };
     }
 
-    // MANUAL_MODEL: pick the explicit DTO selection, then the thread's
-    // preferredProvider/Model, then fall back to the thread's lastProvider/Model
-    // so the thread "remembers" what the user chose most recently.
-    const forcedProvider =
-      dto.provider ?? thread.preferredProvider ?? thread.lastProvider ?? undefined;
-    const forcedModel =
-      dto.model ?? thread.preferredModel ?? thread.lastModel ?? undefined;
+    // MANUAL_MODEL only honors EXPLICIT user intent: the DTO selection for
+    // this message, or the thread's preferredProvider/Model (an explicit
+    // per-thread choice). lastProvider/lastModel is NOT user intent — it is
+    // just whatever was used most recently, often a stale specialty model
+    // (e.g. medgemma1.5) that doesn't match the next prompt. If neither
+    // explicit source is set, downgrade to AUTO so the router decides.
+    const forcedProvider = dto.provider ?? thread.preferredProvider ?? undefined;
+    const forcedModel = dto.model ?? thread.preferredModel ?? undefined;
 
-    // If MANUAL_MODEL ends up with nothing to force (no DTO, no preferred,
-    // no last), downgrade to AUTO instead of letting the routing service
-    // silently substitute a hardcoded cloud default (which was the source of
-    // the "Connector 'ANTHROPIC' not found" bug when no ANTHROPIC connector
-    // is configured).
     if (forcedProvider === undefined && forcedModel === undefined) {
       this.logger.warn(
-        `resolveRoutingParams: thread ${thread.id} requested MANUAL_MODEL but has no DTO/preferred/last selection — downgrading to AUTO`,
+        `resolveRoutingParams: thread ${thread.id} requested MANUAL_MODEL but has no DTO/preferred selection — downgrading to AUTO (lastProvider/lastModel intentionally ignored)`,
       );
       return {
         effectiveRoutingMode: RoutingMode.AUTO,
