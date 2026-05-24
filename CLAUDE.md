@@ -80,6 +80,7 @@ docs/                # 11 architecture audit documents
 16. **`packages/shared-types`** — add new event patterns if the service publishes events
 17. **Health service** (`apps/claw-health-service`) — add the new service URL to health check list
 18. **`apps/claw-frontend`** — update model selectors, types, hooks, and components if user-facing
+19. **`scripts/install-tls.sh` + `scripts/install-tls.ps1`** — append the new service's docker hostname to the `HOSTS` array so the next `install-tls` run reissues the leaf cert with that SAN. Without this, inter-service HTTPS calls into the new service fail TLS verification with `Hostname/IP doesn't match certificate`. See `docs/08-runtime-devops/tls-setup.md`.
 
 **Never skip any of these.** A feature is incomplete if any of these are missing.
 
@@ -807,6 +808,13 @@ Active policies (sorted by priority) can override the mode.
 - AES-256-GCM encryption for connector API keys
 - Pino log redaction (authorization, password, refreshToken, apiKey, token, secret)
 - X-Request-ID correlation from frontend to backend
+- **End-to-end local TLS via mkcert** (see `docs/08-runtime-devops/tls-setup.md`):
+  browser → nginx :443 → every backend service is HTTPS, with cert
+  verification at every hop. Forced on by `scripts/install.{sh,ps1}` Step 6/9
+  — no user prompt. `resolveHttpsOptions()` from `@claw/shared-utilities`
+  reads `HTTPS_CERT_PATH` / `HTTPS_KEY_PATH` and gracefully falls back to
+  HTTP if certs are missing. `NODE_EXTRA_CA_CERTS=/certs/rootCA.pem` makes
+  node's global fetch trust the local CA for inter-service hops.
 
 ### File Upload Security (FileSecurityManager)
 
@@ -823,7 +831,7 @@ Failed checks → HTTP 422 with reason codes. Filenames sanitized before storage
 
 ---
 
-## Nginx Route Map (port 4000 → services)
+## Nginx Route Map (port 443 HTTPS → services, port 4000 → 301 → 443)
 
 | Frontend Path            | Backend Service  | Notes                                                                                         |
 | ------------------------ | ---------------- | --------------------------------------------------------------------------------------------- |
@@ -1336,6 +1344,7 @@ Check and update ALL of these:
 16. **Frontend types** — sync `src/types/` with backend DTO/schema changes
 17. **`CLAUDE.md`** — if adding new services, env vars, patterns, or rules
 18. **`apps/claw-frontend`** — update model selectors, types, hooks, and components if user-facing
+19. **`scripts/install-tls.{sh,ps1}`** — append the new service's docker hostname to the `HOSTS` array so the next `install-tls` run reissues the leaf cert with that SAN
 
 **Never skip any of these.** A feature is incomplete if any of these are missing.
 
