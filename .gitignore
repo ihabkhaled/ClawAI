@@ -59,6 +59,15 @@ file-storage-data/
 # Reference zip files
 *.zip
 
+# TLS / SSL — local mkcert-issued certs and CA private key.
+# The leaf cert + root CA are per-developer; rerunning scripts/install-tls.sh
+# regenerates them. Never commit private keys.
+certs/
+*.pem
+*.crt
+*.key
+!apps/claw-frontend/public/**/*.key
+
 # Misc
 *.tsbuildinfo
 .turbo/
