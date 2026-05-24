@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import type { MarketplaceListing, Prisma } from '../../../generated/prisma';
+import type {
+  MarketplaceListing,
+  MarketplaceListingStatus,
+  Prisma,
+} from '../../../generated/prisma';
 import type { ListListingsQueryDto } from '../dto/publish-listing.dto';
 import type { PaginatedListings } from '../types/marketplace.types';
 
@@ -75,7 +79,7 @@ export class MarketplaceRepository {
   async setListingStatus(
     id: string,
     publisherUserId: string,
-    status: 'PUBLISHED' | 'HIDDEN' | 'DRAFT',
+    status: MarketplaceListingStatus,
   ): Promise<MarketplaceListing | null> {
     const row = await this.prisma.marketplaceListing.updateMany({
       where: { id, publisherUserId },

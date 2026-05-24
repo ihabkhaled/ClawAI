@@ -2,10 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import {
-  SUGGESTION_PENDING_TTL_DAYS,
   SUGGESTION_LOOKBACK_DAYS,
+  SUGGESTION_PENDING_TTL_DAYS,
 } from '../constants/suggestion.constants';
-import type { SuggestionGroupCount } from '../types/suggestion.types';
+import type {
+  AgentSuggestionUpsertData,
+  SuggestionGroupCount,
+} from '../types/suggestion.types';
 import type {
   AgentSuggestion,
   AgentSuggestionStatus,
@@ -26,7 +29,7 @@ export class AgentSuggestionRepository {
   async upsertPending(
     userId: string,
     kind: string,
-    data: Omit<Prisma.AgentSuggestionUncheckedCreateInput, 'userId' | 'kind' | 'status'>,
+    data: AgentSuggestionUpsertData,
   ): Promise<AgentSuggestion> {
     this.logger.debug(`upsertPending: userId=${userId} kind=${kind}`);
     return this.prisma.agentSuggestion.upsert({
@@ -74,7 +77,7 @@ export class AgentSuggestionRepository {
     userId: string,
     status: AgentSuggestionStatus,
   ): Promise<AgentSuggestion> {
-    this.logger.info(`setStatus: id=${id} userId=${userId} status=${status}`);
+    this.logger.log(`setStatus: id=${id} userId=${userId} status=${status}`);
     return this.prisma.agentSuggestion.update({
       where: { id },
       data: { status, reviewedAt: new Date(), reviewedByUserId: userId },
@@ -91,7 +94,7 @@ export class AgentSuggestionRepository {
       where: { status: 'PENDING', createdAt: { lt: cutoff } },
       data: { status: 'EXPIRED', reviewedAt: new Date() },
     });
-    this.logger.info(`sweepExpired: ${String(result.count)} PENDING → EXPIRED`);
+    this.logger.log(`sweepExpired: ${String(result.count)} PENDING → EXPIRED`);
     return result.count;
   }
 

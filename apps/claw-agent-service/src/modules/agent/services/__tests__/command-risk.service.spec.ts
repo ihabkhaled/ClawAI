@@ -2,8 +2,8 @@ import { CapabilityInvocationStatus } from '../../../../common/enums/capability-
 import { PolicyKind } from '../../../../common/enums/policy-kind.enum';
 import { RiskLabel } from '../../../../common/enums/risk-label.enum';
 import { CapabilityDualWriteMetricsService } from '../capability-dual-write-metrics.service';
-import { CapabilityRiskService } from '../capability-risk.service';
 import { CommandRiskService } from '../command-risk.service';
+import type { CapabilityRiskService } from '../capability-risk.service';
 import type { AccessPolicy } from '../../../../generated/prisma';
 import type { PolicyRepository } from '../../repositories/policy.repository';
 

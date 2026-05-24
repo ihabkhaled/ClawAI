@@ -7,7 +7,11 @@ import { RecipeService } from '../../recipes/services/recipe.service';
 import { dslFromJson } from '../../recipes/utilities/dsl-cast.utility';
 import { sandboxAnalyse } from '../utilities/sandbox-runner.utility';
 import { canonicaliseDsl, verifyRecipeDslSignature } from '../utilities/signature.utility';
-import { type MarketplaceListing, Prisma } from '../../../generated/prisma';
+import {
+  type MarketplaceListing,
+  type MarketplaceListingStatus,
+  Prisma,
+} from '../../../generated/prisma';
 import type { ListListingsQueryDto, PublishListingDto } from '../dto/publish-listing.dto';
 import type { PaginatedListings } from '../types/marketplace.types';
 import type { SandboxResult } from '../types/sandbox.types';
@@ -73,9 +77,9 @@ export class MarketplaceService {
   async setStatus(
     listingId: string,
     publisherUserId: string,
-    status: 'PUBLISHED' | 'HIDDEN' | 'DRAFT',
+    status: MarketplaceListingStatus,
   ): Promise<MarketplaceListing> {
-    this.logger.info(`setStatus: listingId=${listingId} status=${status}`);
+    this.logger.log(`setStatus: listingId=${listingId} status=${status}`);
     const updated = await this.repo.setListingStatus(listingId, publisherUserId, status);
     if (updated === null) {
       throw new EntityNotFoundException('MarketplaceListing', listingId);

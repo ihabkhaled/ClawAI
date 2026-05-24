@@ -102,7 +102,7 @@ export class CapabilityService {
         });
       }
     }
-    this.logger.info(
+    this.logger.log(
       `bulkApprove: ok=${String(approved.length)} failed=${String(failed.length)}`,
     );
     return { approved, failed };

@@ -6,7 +6,7 @@ import {
   SUGGESTION_SCAN_CRON,
 } from '../constants/suggestion.constants';
 import { AgentSuggestionRepository } from '../repositories/agent-suggestion.repository';
-import type { Prisma } from '../../../generated/prisma';
+import { Prisma } from '../../../generated/prisma';
 
 /**
  * V2 Stream 05 — AgentSuggestionManager.
@@ -32,7 +32,7 @@ export class AgentSuggestionManager {
     try {
       const groups = await this.repo.scanActivityGroups();
       const eligible = groups.filter((g) => g.occurrences >= SUGGESTION_MIN_OCCURRENCES);
-      this.logger.info(
+      this.logger.log(
         `scanAndEmit: groups=${String(groups.length)} eligible=${String(eligible.length)}`,
       );
       for (const group of eligible) {
@@ -40,8 +40,12 @@ export class AgentSuggestionManager {
           await this.repo.upsertPending(group.userId, group.kind, {
             summary: this.makeSummary(group.kind, group.latestSummary, group.occurrences),
             occurrencesLast7d: group.occurrences,
-            sourceActivityIds: group.sampleIds as unknown as Prisma.InputJsonValue,
-            suggestedRecipeDsl: null,
+            // sampleIds is string[]; Prisma's InputJsonValue accepts arrays
+            // of strings directly. No cast needed.
+            sourceActivityIds: group.sampleIds,
+            // Prisma JSON nullable fields require Prisma.JsonNull (not
+            // bare null) to write a SQL NULL.
+            suggestedRecipeDsl: Prisma.JsonNull,
           });
         } catch (err) {
           this.logger.error(
@@ -51,7 +55,7 @@ export class AgentSuggestionManager {
       }
       const swept = await this.repo.sweepExpired();
       if (swept > 0) {
-        this.logger.info(`scanAndEmit: ${String(swept)} stale PENDING expired`);
+        this.logger.log(`scanAndEmit: ${String(swept)} stale PENDING expired`);
       }
     } catch (err) {
       this.logger.error(`scanAndEmit: failed — ${(err as Error).message}`);
