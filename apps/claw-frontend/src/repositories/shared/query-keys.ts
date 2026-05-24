@@ -324,6 +324,8 @@ export const queryKeys = {
     hardware: () => ['local-frontier', 'hardware'] as const,
     loadedModel: () => ['local-frontier', 'loaded-model'] as const,
     runtimeInfo: () => ['local-frontier', 'runtime-info'] as const,
+    hfSearch: (query: Record<string, unknown>) => ['local-frontier', 'hf-search', query] as const,
+    hfDetails: (repo: string) => ['local-frontier', 'hf-details', repo] as const,
   },
   emailSignatures: {
     all: ['emailSignatures'] as const,

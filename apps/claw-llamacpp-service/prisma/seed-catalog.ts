@@ -40,9 +40,9 @@ const ENTRIES: SeedEntry[] = [
   // They exist so contributors can validate the full pull → load → inference
   // pipeline end-to-end without renting an H100.
   {
-    name: 'qwen3-coder',
+    name: 'qwen2.5-coder',
     tag: 'Q4_K_M',
-    displayName: 'Qwen3-Coder 7B (Q4_K_M, dev-class)',
+    displayName: 'Qwen2.5-Coder 7B Instruct (Q4_K_M, dev-class)',
     category: 'CODING',
     description:
       'Compact 7B coding model from Alibaba. Validates the pipeline on entry-level GPUs (~6 GB VRAM).',
@@ -52,8 +52,8 @@ const ENTRIES: SeedEntry[] = [
     contextLength: 32_768,
     capabilities: ['code_generation'],
     license: 'Apache-2.0',
-    huggingfaceRepo: 'unsloth/Qwen3-Coder-7B-GGUF',
-    filePattern: '*Q4_K_M*.gguf',
+    huggingfaceRepo: 'Qwen/Qwen2.5-Coder-7B-Instruct-GGUF',
+    filePattern: '*q4_k_m*.gguf',
     fileSizeBytes: 5n * 1_073_741_824n,
     requiredRamGb: 8,
     recommendedRamGb: 16,
@@ -61,7 +61,7 @@ const ENTRIES: SeedEntry[] = [
     recommendedGpuVramGb: 6,
     isRecommended: true,
     qualityTier: 'BALANCED',
-    sourceUrl: 'https://huggingface.co/unsloth/Qwen3-Coder-7B-GGUF',
+    sourceUrl: 'https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF',
     chatTemplate: null,
   },
   {

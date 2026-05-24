@@ -1,6 +1,11 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
-import { DownloadStatus, PullJobStatus, PullReasonCode } from '../../../common/enums';
+import {
+  DownloadStatus,
+  PullJobCancelOutcome,
+  PullJobStatus,
+  PullReasonCode,
+} from '../../../common/enums';
 import { LlamacppEventsPublisher } from '../../../common/events/llamacpp-events.publisher';
 import { CatalogRepository } from '../../catalog/repositories/catalog.repository';
 import { HardwareService } from '../../hardware/services/hardware.service';
@@ -9,6 +14,7 @@ import { PullJobsRepository } from '../repositories/pull-jobs.repository';
 import { PullJobRunnerManager } from '../managers/pull-job-runner.manager';
 import {
   type PullJob,
+  type PullJobCancelResult,
   type PullJobCreatePayload,
   type PullJobCreateResult,
 } from '../types/pull-job.types';
@@ -99,28 +105,29 @@ export class PullJobsService {
     return this.repo.list(filters);
   }
 
-  async cancel(id: string): Promise<PullJob> {
+  async cancel(id: string): Promise<PullJobCancelResult> {
     this.logger.log(`cancel: ${id}`);
     const job = await this.findById(id);
-    if (job.status !== PullJobStatus.PENDING && job.status !== PullJobStatus.RUNNING) {
-      throw new BusinessException(
-        'Only PENDING or RUNNING jobs can be cancelled',
-        'PULL_JOB_NOT_CANCELLABLE',
-        HttpStatus.CONFLICT,
-      );
+    const isActive =
+      job.status === PullJobStatus.PENDING || job.status === PullJobStatus.RUNNING;
+    if (isActive) {
+      this.runner.cancel(id);
+      await this.repo.updateStatus(id, PullJobStatus.CANCELLED, {
+        reasonCode: PullReasonCode.USER_CANCELLED,
+        completedAt: new Date(),
+      });
+      this.events.pullFailed({
+        jobId: id,
+        modelId: job.modelId,
+        reasonCode: PullReasonCode.USER_CANCELLED,
+        errorMessage: 'Cancelled by user',
+      });
+      return { id, status: PullJobCancelOutcome.CANCELLED };
     }
-    this.runner.cancel(id);
-    await this.repo.updateStatus(id, PullJobStatus.CANCELLED, {
-      reasonCode: PullReasonCode.USER_CANCELLED,
-      completedAt: new Date(),
-    });
-    this.events.pullFailed({
-      jobId: id,
-      modelId: job.modelId,
-      reasonCode: PullReasonCode.USER_CANCELLED,
-      errorMessage: 'Cancelled by user',
-    });
-    return this.findById(id);
+    // Terminal job (FAILED/COMPLETED/CANCELLED) — hard-delete the row so the
+    // UI can dismiss it from the downloads drawer.
+    await this.repo.deleteById(id);
+    return { id, status: PullJobCancelOutcome.DISMISSED };
   }
 
   async retry(id: string): Promise<PullJobCreateResult> {

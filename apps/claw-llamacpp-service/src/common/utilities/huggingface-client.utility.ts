@@ -78,6 +78,16 @@ export class HuggingFaceClient {
     const text = await response.body.text();
     if (response.statusCode >= 400) {
       logger.error(`fetchJson: ${url} → ${response.statusCode}`);
+      // HuggingFace returns 401 for both gated repos AND non-existent repos.
+      // Rewrite the message so users know what likely happened.
+      if (response.statusCode === 401) {
+        const hint = this.token
+          ? 'The repository may be gated, private, or your HUGGINGFACE_TOKEN may lack access.'
+          : 'The repository may not exist on HuggingFace, or it is gated/private and requires HUGGINGFACE_TOKEN to be set.';
+        throw new Error(
+          `HuggingFace returned 401 for ${url}. ${hint} Raw: ${text.slice(0, 160)}`,
+        );
+      }
       throw new Error(`HuggingFace request failed (${response.statusCode}): ${text.slice(0, 200)}`);
     }
     return JSON.parse(text) as T;

@@ -4,9 +4,10 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 
 import { localFrontierRepository } from '@/repositories/local-frontier/local-frontier.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
-import type { PullJob } from '@/types/local-frontier.types';
 
-export function useCancelPull(): UseMutationResult<PullJob, Error, string> {
+type CancelPullResult = { id: string; status: 'CANCELLED' | 'DISMISSED' };
+
+export function useCancelPull(): UseMutationResult<CancelPullResult, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => localFrontierRepository.cancelPull(id),

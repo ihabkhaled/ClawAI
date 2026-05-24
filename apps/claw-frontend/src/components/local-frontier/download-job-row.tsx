@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, RotateCw, X } from 'lucide-react';
+import { Loader2, RotateCw, Trash2, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -28,6 +28,7 @@ export function DownloadJobRow({
     status === FrontierPullJobStatus.PENDING || status === FrontierPullJobStatus.RUNNING;
   const canRetry =
     status === FrontierPullJobStatus.FAILED || status === FrontierPullJobStatus.CANCELLED;
+  const canDismiss = !isActive;
   const displayName = entry ? `${entry.displayName}` : job.modelId.slice(0, 8);
 
   return (
@@ -86,6 +87,12 @@ export function DownloadJobRow({
           <Button size="sm" variant="outline" onClick={() => onRetry(job.id)}>
             <RotateCw className="size-3" aria-hidden />
             {labels.retry}
+          </Button>
+        ) : null}
+        {canDismiss ? (
+          <Button size="sm" variant="outline" onClick={() => onCancel(job.id)}>
+            <Trash2 className="size-3" aria-hidden />
+            {labels.remove}
           </Button>
         ) : null}
       </div>
