@@ -246,7 +246,7 @@ function Test-PortAvailable {
 # =============================================================================
 # Step 1: Check prerequisites
 # =============================================================================
-Write-Host "Step 1/8: Checking prerequisites" -ForegroundColor White
+Write-Host "Step 1/9: Checking prerequisites" -ForegroundColor White
 Write-Host ""
 
 $missing = 0
@@ -313,7 +313,7 @@ Write-Host ""
 # =============================================================================
 # Step 2: Check port availability
 # =============================================================================
-Write-Host "Step 2/8: Checking port availability" -ForegroundColor White
+Write-Host "Step 2/9: Checking port availability" -ForegroundColor White
 Write-Host ""
 
 Test-PortAvailable 3000 "Frontend"
@@ -326,7 +326,7 @@ Write-Host ""
 # =============================================================================
 # Step 3: Generate secrets
 # =============================================================================
-Write-Host "Step 3/8: Generating secrets" -ForegroundColor White
+Write-Host "Step 3/9: Generating secrets" -ForegroundColor White
 Write-Host ""
 
 $jwtSecret = New-SecretB64
@@ -345,7 +345,7 @@ Write-Host ""
 # =============================================================================
 # Step 4: Admin configuration
 # =============================================================================
-Write-Host "Step 4/8: Admin configuration" -ForegroundColor White
+Write-Host "Step 4/9: Admin configuration" -ForegroundColor White
 Write-Host ""
 
 $adminEmail = "admin@claw.local"
@@ -392,7 +392,7 @@ Write-Host ""
 # =============================================================================
 # Step 5: GPU / Ollama detection
 # =============================================================================
-Write-Host "Step 5/8: Ollama & GPU detection" -ForegroundColor White
+Write-Host "Step 5/9: Ollama & GPU detection" -ForegroundColor White
 Write-Host ""
 
 $useGpu = $false
@@ -456,9 +456,30 @@ if ($useGpu) {
 Write-Host ""
 
 # =============================================================================
-# Step 6: Generate .env
+# Step 6: Local TLS / SSL certificates (forced — no prompt)
 # =============================================================================
-Write-Host "Step 6/8: Generating .env file" -ForegroundColor White
+Write-Host "Step 6/9: Installing local TLS certificates" -ForegroundColor White
+Write-Host ""
+
+$installTlsScript = Join-Path $ScriptDir 'install-tls.ps1'
+if (Test-Path $installTlsScript) {
+    try {
+        & powershell -ExecutionPolicy Bypass -NoProfile -File $installTlsScript
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warn "TLS install returned exit $LASTEXITCODE — services will fall back to HTTP. See docs/08-runtime-devops/tls-setup.md."
+        }
+    } catch {
+        Write-Warn "TLS install failed: $($_.Exception.Message). Services will fall back to HTTP."
+    }
+} else {
+    Write-Warn "scripts/install-tls.ps1 missing — skipping TLS setup."
+}
+Write-Host ""
+
+# =============================================================================
+# Step 7: Generate .env
+# =============================================================================
+Write-Host "Step 7/9: Generating .env file" -ForegroundColor White
 Write-Host ""
 
 $skipEnv = $false
@@ -812,7 +833,7 @@ Write-Host ""
 # =============================================================================
 # Step 7: Desktop-agent native tooling (optional)
 # =============================================================================
-Write-Host "Step 7/8: Desktop-agent native tooling" -ForegroundColor White
+Write-Host "Step 8/9: Desktop-agent native tooling" -ForegroundColor White
 Write-Host ""
 Write-Info "The desktop agent uses native binaries for OCR / STT / TTS / browser / GUI automation."
 Write-Info "This step installs: Tesseract, ffmpeg, whisper-cli + base.en model, Piper, Playwright Chromium, Rust + Tauri CLI."
@@ -857,7 +878,7 @@ Write-Host ""
 # =============================================================================
 # Step 8: Launch
 # =============================================================================
-Write-Host "Step 8/8: Starting Claw" -ForegroundColor White
+Write-Host "Step 9/9: Starting Claw" -ForegroundColor White
 Write-Host ""
 
 Ensure-DockerNetwork

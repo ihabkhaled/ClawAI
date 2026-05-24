@@ -189,7 +189,7 @@ docker_image_exists() {
 }
 
 # ─── Step 1: Check prerequisites ────────────────────────────────────────────
-echo "${BOLD}Step 1/8: Checking prerequisites${NC}"
+echo "${BOLD}Step 1/9: Checking prerequisites${NC}"
 echo ""
 
 MISSING=0
@@ -252,7 +252,7 @@ fi
 echo ""
 
 # ─── Step 2: Check port availability ────────────────────────────────────────
-echo "${BOLD}Step 2/8: Checking port availability${NC}"
+echo "${BOLD}Step 2/9: Checking port availability${NC}"
 echo ""
 
 check_port() {
@@ -272,7 +272,7 @@ check_port 27018 "MongoDB"
 echo ""
 
 # ─── Step 3: Generate secrets ────────────────────────────────────────────────
-echo "${BOLD}Step 3/8: Generating secrets${NC}"
+echo "${BOLD}Step 3/9: Generating secrets${NC}"
 echo ""
 
 JWT_SECRET=$(gen_secret_b64)
@@ -289,7 +289,7 @@ ok "Admin password generated"
 echo ""
 
 # ─── Step 4: Admin configuration ────────────────────────────────────────────
-echo "${BOLD}Step 4/8: Admin configuration${NC}"
+echo "${BOLD}Step 4/9: Admin configuration${NC}"
 echo ""
 
 ADMIN_EMAIL="admin@claw.local"
@@ -334,7 +334,7 @@ fi
 echo ""
 
 # ─── Step 5: GPU / Ollama detection ─────────────────────────────────────────
-echo "${BOLD}Step 5/8: Ollama & GPU detection${NC}"
+echo "${BOLD}Step 5/9: Ollama & GPU detection${NC}"
 echo ""
 
 USE_GPU="false"
@@ -394,8 +394,25 @@ if [ "$USE_GPU" = "true" ]; then
 fi
 echo ""
 
-# ─── Step 6: Generate .env ──────────────────────────────────────────────────
-echo "${BOLD}Step 6/8: Generating .env file${NC}"
+# ─── Step 6: Local TLS / SSL certificates (forced — no prompt) ──────────────
+echo "${BOLD}Step 6/9: Installing local TLS certificates${NC}"
+echo ""
+
+if [ -x "$SCRIPT_DIR/install-tls.sh" ]; then
+  if bash "$SCRIPT_DIR/install-tls.sh"; then
+    ok "TLS install complete"
+  else
+    warn "TLS install failed — services will fall back to HTTP. See docs/08-runtime-devops/tls-setup.md"
+  fi
+elif [ -f "$SCRIPT_DIR/install-tls.sh" ]; then
+  warn "scripts/install-tls.sh is not executable — run: chmod +x scripts/install-tls.sh"
+else
+  warn "scripts/install-tls.sh missing — skipping TLS setup"
+fi
+echo ""
+
+# ─── Step 7: Generate .env ──────────────────────────────────────────────────
+echo "${BOLD}Step 7/9: Generating .env file${NC}"
 echo ""
 
 SKIP_ENV=false
@@ -741,7 +758,7 @@ fi
 echo ""
 
 # ─── Step 7: Desktop-agent native tooling (optional) ────────────────────────
-echo "${BOLD}Step 7/8: Desktop-agent native tooling${NC}"
+echo "${BOLD}Step 8/9: Desktop-agent native tooling${NC}"
 echo ""
 info "The desktop agent uses native binaries for OCR / STT / TTS / browser / GUI automation."
 info "This step installs: Tesseract, ffmpeg, whisper-cli + base.en model, Piper, Playwright Chromium, Rust + Tauri CLI."
@@ -780,7 +797,7 @@ fi
 echo ""
 
 # ─── Step 8: Launch ─────────────────────────────────────────────────────────
-echo "${BOLD}Step 8/8: Starting Claw${NC}"
+echo "${BOLD}Step 9/9: Starting Claw${NC}"
 echo ""
 
 ensure_docker_network
