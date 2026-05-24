@@ -1170,17 +1170,41 @@ export class ChatMessagesService implements OnModuleInit {
     forcedProvider: string | undefined;
     forcedModel: string | undefined;
   } {
-    const effectiveRoutingMode = dto.routingMode ?? thread.routingMode;
-    const forcedProvider =
-      effectiveRoutingMode === RoutingMode.MANUAL_MODEL
-        ? (dto.provider ?? thread.preferredProvider ?? undefined)
-        : undefined;
-    const forcedModel =
-      effectiveRoutingMode === RoutingMode.MANUAL_MODEL
-        ? (dto.model ?? thread.preferredModel ?? undefined)
-        : undefined;
+    const inheritedMode = dto.routingMode ?? thread.routingMode;
 
-    return { effectiveRoutingMode, forcedProvider, forcedModel };
+    if (inheritedMode !== RoutingMode.MANUAL_MODEL) {
+      return {
+        effectiveRoutingMode: inheritedMode,
+        forcedProvider: undefined,
+        forcedModel: undefined,
+      };
+    }
+
+    // MANUAL_MODEL only honors EXPLICIT user intent: the DTO selection for
+    // this message, or the thread's preferredProvider/Model (an explicit
+    // per-thread choice). lastProvider/lastModel is NOT user intent — it is
+    // just whatever was used most recently, often a stale specialty model
+    // (e.g. medgemma1.5) that doesn't match the next prompt. If neither
+    // explicit source is set, downgrade to AUTO so the router decides.
+    const forcedProvider = dto.provider ?? thread.preferredProvider ?? undefined;
+    const forcedModel = dto.model ?? thread.preferredModel ?? undefined;
+
+    if (forcedProvider === undefined && forcedModel === undefined) {
+      this.logger.warn(
+        `resolveRoutingParams: thread ${thread.id} requested MANUAL_MODEL but has no DTO/preferred selection — downgrading to AUTO (lastProvider/lastModel intentionally ignored)`,
+      );
+      return {
+        effectiveRoutingMode: RoutingMode.AUTO,
+        forcedProvider: undefined,
+        forcedModel: undefined,
+      };
+    }
+
+    return {
+      effectiveRoutingMode: RoutingMode.MANUAL_MODEL,
+      forcedProvider,
+      forcedModel,
+    };
   }
 
   private buildMessageMetadata(

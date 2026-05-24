@@ -27,6 +27,7 @@ import { PullJobProgressEmitterManager } from '../managers/pull-job-progress-emi
 import { PullJobsService } from '../services/pull-jobs.service';
 import {
   type PullJob,
+  type PullJobCancelResult,
   type PullJobCreateResult,
   type PullJobProgressEvent,
 } from '../types/pull-job.types';
@@ -65,7 +66,7 @@ export class PullJobsController {
 
   @Delete('pull-jobs/:id')
   @HttpCode(HttpStatus.OK)
-  cancel(@Param('id') id: string): Promise<PullJob> {
+  cancel(@Param('id') id: string): Promise<PullJobCancelResult> {
     return this.pullJobsService.cancel(id);
   }
 

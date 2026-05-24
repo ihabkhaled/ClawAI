@@ -240,8 +240,20 @@ export class RoutingManager {
     return chain;
   }
 
-  private handleManualModel(context: RoutingContext): RoutingDecisionResult {
-    const model = context.forcedModel ?? CLOUD_MODEL_DEFAULT;
+  private async handleManualModel(context: RoutingContext): Promise<RoutingDecisionResult> {
+    // MANUAL_MODEL means "the user chose this exact provider+model". If the
+    // caller forgot to populate either, do NOT silently substitute a hardcoded
+    // cloud default (`claude-sonnet-4`) — that surfaced as "Connector
+    // 'ANTHROPIC' not found" for users without an Anthropic connector
+    // configured. Fall through to AUTO so the router actually picks something
+    // appropriate for the message + connector availability.
+    if (!context.forcedModel) {
+      this.logger.warn(
+        `handleManualModel: MANUAL_MODEL with no forcedModel — falling through to AUTO (forcedProvider=${context.forcedProvider ?? 'none'})`,
+      );
+      return this.handleAuto(context);
+    }
+    const model = context.forcedModel;
     const provider = context.forcedProvider ?? this.inferProvider(model);
     this.logger.debug(`handleManualModel: forced provider=${provider} model=${model}`);
     const primary = { provider, model };
@@ -1077,8 +1089,23 @@ export class RoutingManager {
   private async detectCategoryRoute(
     context: RoutingContext,
   ): Promise<RoutingDecisionResult | null> {
-    if (!this.isRuntimeHealthy('OLLAMA', context)) {
-      return null;
+    // NOTE: previously this method early-returned when isRuntimeHealthy('OLLAMA')
+    // was false. That gate is too strict: an Ollama-assisted *router* model
+    // timeout flags the whole runtime unhealthy, even though the actual
+    // coding / reasoning / etc. chat models on the same Ollama are fine.
+    // The result was that the category-aware routing (coding → LOCAL_CODING,
+    // medical → LOCAL_REASONING, etc.) was bypassed and we fell through to a
+    // hardcoded cloud "best-effort" pick (ANTHROPIC/claude-sonnet-4) that
+    // doesn't exist on installs without an Anthropic connector. We now still
+    // attempt category routing; if the chosen role has no installed model
+    // (findModelForRole returns null) the existing fall-through logic kicks
+    // in and the heuristic path runs as before — preserving the cloud
+    // best-effort path for installs that genuinely have no local models.
+    const ollamaRuntimeHealthy = this.isRuntimeHealthy('OLLAMA', context);
+    if (!ollamaRuntimeHealthy) {
+      this.logger.warn(
+        'detectCategoryRoute: Ollama runtime flagged unhealthy — still attempting category routing (chat models may be reachable even if router model timed out)',
+      );
     }
 
     const multiIntent = this.resolveMultipleCategories(context.message);

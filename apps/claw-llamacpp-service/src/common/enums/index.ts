@@ -9,3 +9,5 @@ export { GpuBackend } from './gpu-backend.enum';
 export { PreflightReason } from './preflight-reason.enum';
 export { PullReasonCode } from './pull-reason-code.enum';
 export { LoadEventType } from './load-event-type.enum';
+export { PullJobCancelOutcome } from './pull-job-cancel-outcome.enum';
+export { HfAutoSyncOutcomeStatus, HfAutoSyncTrigger } from './hf-auto-sync-trigger.enum';

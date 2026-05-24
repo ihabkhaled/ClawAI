@@ -60,6 +60,11 @@ export class PullJobsRepository {
     return { rows: rows.map((row) => this.toDomain(row)), total };
   }
 
+  async deleteById(id: string): Promise<void> {
+    this.logger.log(`deleteById: ${id}`);
+    await this.prisma.pullJob.delete({ where: { id } });
+  }
+
   async updateStatus(
     id: string,
     status: PullJobStatus,

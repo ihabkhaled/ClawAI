@@ -169,6 +169,9 @@ export interface LocalFrontierPageController {
   handleConfigureClick: (entry: FrontierCatalogEntry) => void;
   handleConfigureCancel: () => void;
   handleConfigureSave: () => void;
+  hfDialogOpen: boolean;
+  setHfDialogOpen: (open: boolean) => void;
+  openHfDialog: () => void;
 }
 
 export interface CatalogCardProps {

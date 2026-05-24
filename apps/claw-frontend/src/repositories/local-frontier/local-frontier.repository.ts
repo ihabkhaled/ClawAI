@@ -1,5 +1,12 @@
 import { apiClient } from '@/services/shared/api-client';
 import type {
+  HfImportRequest,
+  HfImportResponse,
+  HfModelDetails,
+  HfModelSummary,
+  HfSearchQuery,
+} from '@/types/hf-search.types';
+import type {
   FrontierCatalogEntry,
   FrontierCatalogFilters,
   FrontierCatalogList,
@@ -11,6 +18,7 @@ import type {
   RuntimeInfo,
   UpdateRuntimeConfigPayload,
 } from '@/types/local-frontier.types';
+import type { CancelPullResult } from '@/types/pull-job-cancel.types';
 
 export const localFrontierRepository = {
   async listCatalog(filters: FrontierCatalogFilters): Promise<FrontierCatalogList> {
@@ -65,8 +73,8 @@ export const localFrontierRepository = {
     return response.data;
   },
 
-  async cancelPull(id: string): Promise<PullJob> {
-    const response = await apiClient.delete<PullJob>(`/llamacpp/pull-jobs/${id}`);
+  async cancelPull(id: string): Promise<CancelPullResult> {
+    const response = await apiClient.delete<CancelPullResult>(`/llamacpp/pull-jobs/${id}`);
     return response.data;
   },
 
@@ -122,6 +130,31 @@ export const localFrontierRepository = {
 
   async getRuntimeInfo(): Promise<RuntimeInfo> {
     const response = await apiClient.get<RuntimeInfo>('/llamacpp/runtime/info');
+    return response.data;
+  },
+
+  async searchHuggingFace(query: HfSearchQuery): Promise<HfModelSummary[]> {
+    const params: Record<string, string> = {};
+    if (query.q !== undefined && query.q.length > 0) {
+      params['q'] = query.q;
+    }
+    if (query.sort) {
+      params['sort'] = query.sort;
+    }
+    if (query.limit !== undefined) {
+      params['limit'] = String(query.limit);
+    }
+    const response = await apiClient.get<HfModelSummary[]>('/llamacpp/catalog/hf-search', params);
+    return response.data;
+  },
+
+  async getHuggingFaceDetails(repo: string): Promise<HfModelDetails> {
+    const response = await apiClient.get<HfModelDetails>(`/llamacpp/catalog/hf-models/${repo}`);
+    return response.data;
+  },
+
+  async importFromHuggingFace(payload: HfImportRequest): Promise<HfImportResponse> {
+    const response = await apiClient.post<HfImportResponse>('/llamacpp/catalog/hf-import', payload);
     return response.data;
   },
 };

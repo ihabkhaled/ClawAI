@@ -54,6 +54,45 @@ export class CatalogRepository {
     return rows.map((row) => this.toDomain(row));
   }
 
+  async createImported(payload: {
+    name: string;
+    tag: string;
+    displayName: string;
+    category: ModelCategory;
+    description: string;
+    parameterCount: string;
+    totalParamsB: number;
+    activeParamsB: number;
+    contextLength: number;
+    capabilities: string[];
+    license: string;
+    huggingfaceRepo: string;
+    filePattern: string;
+    fileSizeBytes: bigint;
+    requiredRamGb: number;
+    recommendedRamGb: number;
+    requiredDiskGb: number;
+    recommendedGpuVramGb: number;
+    qualityTier: QualityTier;
+    sourceUrl: string;
+  }): Promise<CatalogEntry> {
+    this.logger.log(`createImported: ${payload.name}:${payload.tag} ← ${payload.huggingfaceRepo}`);
+    const row = await this.prisma.frontierCatalogEntry.upsert({
+      where: { name_tag: { name: payload.name, tag: payload.tag } },
+      create: { ...payload, isRecommended: false, available: true },
+      update: {
+        displayName: payload.displayName,
+        description: payload.description,
+        huggingfaceRepo: payload.huggingfaceRepo,
+        filePattern: payload.filePattern,
+        fileSizeBytes: payload.fileSizeBytes,
+        sourceUrl: payload.sourceUrl,
+        available: true,
+      },
+    });
+    return this.toDomain(row);
+  }
+
   async updateDownloadStatus(id: string, status: DownloadStatus): Promise<void> {
     this.logger.log(`updateDownloadStatus: ${id} → ${status}`);
     await this.prisma.frontierCatalogEntry.update({

@@ -48,6 +48,8 @@ export function useLocalFrontierCatalogPage(): LocalFrontierPageController {
   const [configEntry, setConfigEntry] = useState<FrontierCatalogEntry | null>(null);
   const [configDraft, setConfigDraft] = useState<RuntimeConfigDraft>(DEFAULT_RUNTIME_CONFIG_DRAFT);
 
+  const [hfDialogOpen, setHfDialogOpen] = useState<boolean>(false);
+
   const filters = useMemo(
     () => ({ category, qualityTier, compatibleOnly, limit: 50 }),
     [category, qualityTier, compatibleOnly],
@@ -211,5 +213,8 @@ export function useLocalFrontierCatalogPage(): LocalFrontierPageController {
       setConfigEntry(null);
     },
     handleConfigureSave,
+    hfDialogOpen,
+    setHfDialogOpen,
+    openHfDialog: (): void => setHfDialogOpen(true),
   };
 }

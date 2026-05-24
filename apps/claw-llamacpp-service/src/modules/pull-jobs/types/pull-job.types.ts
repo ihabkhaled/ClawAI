@@ -1,4 +1,4 @@
-import { type PullJobStatus } from '../../../common/enums';
+import { type PullJobCancelOutcome, type PullJobStatus } from '../../../common/enums';
 
 export interface PullJob {
   id: string;
@@ -39,4 +39,9 @@ export interface PullJobCreatePayload {
 export interface PullJobCreateResult {
   jobId: string;
   sseUrl: string;
+}
+
+export interface PullJobCancelResult {
+  id: string;
+  status: PullJobCancelOutcome;
 }
