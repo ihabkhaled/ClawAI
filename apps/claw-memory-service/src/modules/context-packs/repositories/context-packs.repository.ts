@@ -9,6 +9,7 @@ import {
   type UpdateContextPackData,
   type UpdateContextPackItemData,
 } from '../types/context-packs.types';
+import type { ContextPackItemEmbeddingHit } from '../types/context-pack-embedding.types';
 
 @Injectable()
 export class ContextPacksRepository {
@@ -144,6 +145,47 @@ export class ContextPacksRepository {
       }),
     );
     await this.prisma.$transaction(updates);
+  }
+
+  async upsertItemEmbedding(itemId: string, vector: number[]): Promise<void> {
+    const literal = this.toVectorLiteral(vector);
+    await this.prisma.$executeRawUnsafe(
+      `UPDATE "context_pack_items"
+         SET "embedding" = $1::vector, "embedded_at" = NOW()
+       WHERE "id" = $2`,
+      literal,
+      itemId,
+    );
+  }
+
+  async cosineSearchItems(
+    packIds: string[],
+    vector: number[],
+    topK: number,
+  ): Promise<ContextPackItemEmbeddingHit[]> {
+    if (packIds.length === 0) {
+      return [];
+    }
+    const literal = this.toVectorLiteral(vector);
+    const placeholders = packIds.map((_, i) => `$${String(i + 3)}`).join(',');
+    return this.prisma.$queryRawUnsafe<ContextPackItemEmbeddingHit[]>(
+      `SELECT "id" as "itemId",
+              "context_pack_id" as "contextPackId",
+              1 - ("embedding" <=> $1::vector) as "score"
+       FROM "context_pack_items"
+       WHERE "is_enabled" = true
+         AND "embedding" IS NOT NULL
+         AND "context_pack_id" IN (${placeholders})
+       ORDER BY "embedding" <=> $1::vector
+       LIMIT $2`,
+      literal,
+      topK,
+      ...packIds,
+    );
+  }
+
+  private toVectorLiteral(vector: number[]): string {
+    return `[${vector.map((n) => n.toString()).join(',')}]`;
   }
 
   private buildWhereClause(filters: ContextPackFilters): Prisma.ContextPackWhereInput {

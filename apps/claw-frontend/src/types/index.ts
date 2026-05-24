@@ -111,6 +111,25 @@ export type {
   ContextPackItemFormStateParams,
   ContextPackItemFormStateReturn,
 } from './context-pack.types';
+export type {
+  ContextPackVersion,
+  VersionedItemSnapshot,
+  VersionDiff,
+  VersionDiffItem,
+  ContextPackTemplate,
+  CloneTemplateRequest,
+  ContextPackExportPayload,
+  ContextPackImportResult,
+  MemoryImportResult,
+} from './context-pack-v2.types';
+export type {
+  ContextReceipt,
+  RetrievalBundle,
+  RetrievalMemoryEntry,
+  RetrievalPackEntry,
+  RetrievalReasonValue,
+  PreviewContextRequest,
+} from './context-receipt.types';
 export type { UploadedFile, FileChunk, FileWithChunks, UploadFileRequest } from './file.types';
 export type {
   DashboardStats,

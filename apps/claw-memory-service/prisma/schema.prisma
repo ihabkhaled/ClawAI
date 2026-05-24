@@ -114,6 +114,8 @@ model MemoryRecord {
   useCount        Int               @default(0)   @map("use_count")
   lastUsedAt      DateTime?         @map("last_used_at")
   provenanceJson  Json?             @map("provenance_json")
+  embedding       Unsupported("vector(768)")?
+  embeddedAt      DateTime?         @map("embedded_at")
   createdAt       DateTime          @default(now()) @map("created_at")
   updatedAt       DateTime          @updatedAt @map("updated_at")
 
@@ -240,6 +242,8 @@ model ContextPackItem {
   pinned             Boolean             @default(false)
   tokenCountEstimate Int                 @default(0) @map("token_count_estimate")
   compressedSummary  String?             @map("compressed_summary")
+  embedding          Unsupported("vector(768)")?
+  embeddedAt         DateTime?           @map("embedded_at")
   createdAt          DateTime            @default(now()) @map("created_at")
   updatedAt          DateTime            @updatedAt @map("updated_at")
 

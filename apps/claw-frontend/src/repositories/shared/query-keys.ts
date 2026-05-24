@@ -91,6 +91,18 @@ export const queryKeys = {
     all: ['contextPacks'] as const,
     lists: () => [...queryKeys.contextPacks.all, 'list'] as const,
     detail: (id: string) => [...queryKeys.contextPacks.all, 'detail', id] as const,
+    versions: (id: string) => [...queryKeys.contextPacks.all, 'versions', id] as const,
+    versionDiff: (id: string, fromV: number, toV: number) =>
+      [...queryKeys.contextPacks.all, 'diff', id, fromV, toV] as const,
+    templates: (category?: string) =>
+      [...queryKeys.contextPacks.all, 'templates', category ?? 'all'] as const,
+  },
+  contextReceipts: {
+    all: ['contextReceipts'] as const,
+    byMessage: (messageId: string) =>
+      [...queryKeys.contextReceipts.all, 'message', messageId] as const,
+    preview: (threadId: string, draftHash: string) =>
+      [...queryKeys.contextReceipts.all, 'preview', threadId, draftHash] as const,
   },
   files: {
     all: ['files'] as const,

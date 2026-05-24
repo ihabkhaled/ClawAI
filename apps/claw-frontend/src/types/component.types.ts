@@ -228,6 +228,11 @@ export type ThreadSettingsProps = {
   onQualityThresholdChange: (value: number) => void;
   maxReRouteAttempts: number;
   onMaxReRouteAttemptsChange: (value: number) => void;
+  // Integration V2 — per-thread toggles
+  useMemory: boolean;
+  onUseMemoryChange: (value: boolean) => void;
+  useContext: boolean;
+  onUseContextChange: (value: boolean) => void;
   onSave: () => void;
   isPending: boolean;
 };
@@ -318,6 +323,7 @@ export type MessageComposerProps = {
   isPending: boolean;
   selectedModel: ModelSelection | null;
   onModelChange: (model: ModelSelection | null) => void;
+  threadId?: string | null;
 };
 
 export type ResearchToggleProps = {

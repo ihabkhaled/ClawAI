@@ -7,6 +7,7 @@ import {
 } from '../../../generated/prisma';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
+import { ContextPackEmbeddingManager } from '../managers/context-pack-embedding.manager';
 import { ContextPacksRepository } from '../repositories/context-packs.repository';
 import { type CreateContextPackDto } from '../dto/create-context-pack.dto';
 import { type UpdateContextPackDto } from '../dto/update-context-pack.dto';
@@ -22,6 +23,7 @@ export class ContextPacksService {
   constructor(
     private readonly contextPacksRepository: ContextPacksRepository,
     private readonly rabbitMQService: RabbitMQService,
+    private readonly embeddingManager: ContextPackEmbeddingManager,
   ) {}
 
   async createContextPack(userId: string, dto: CreateContextPackDto): Promise<ContextPack> {
@@ -160,6 +162,10 @@ export class ContextPacksService {
       action: 'item_added',
       timestamp: new Date().toISOString(),
     });
+    // Fire-and-forget embedding — failure is logged inside the manager.
+    if (dto.content && dto.content.length > 0) {
+      void this.embeddingManager.embedItem(item.id, dto.content);
+    }
     return item;
   }
 

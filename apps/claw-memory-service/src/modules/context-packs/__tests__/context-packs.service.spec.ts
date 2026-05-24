@@ -57,6 +57,7 @@ describe('ContextPacksService (V2)', () => {
     const service = new ContextPacksService(
       repo,
       rabbit as unknown as ConstructorParameters<typeof ContextPacksService>[1],
+      makeStub(),
     );
 
     const pack = await service.createContextPack('user-1', {
@@ -108,6 +109,7 @@ describe('ContextPacksService (V2)', () => {
     const service = new ContextPacksService(
       repo,
       rabbit as unknown as ConstructorParameters<typeof ContextPacksService>[1],
+      makeStub(),
     );
 
     const item = await service.addItem('pack-1', 'user-1', {

@@ -22,6 +22,8 @@ export { MemoryRetention } from './memory-retention.enum';
 export { MemorySuggestionStatus } from './memory-suggestion-status.enum';
 export { MemoryAuditAction } from './memory-audit-action.enum';
 export { MemoryTab } from './memory-tab.enum';
+export { RetrievalReason } from './retrieval-reason.enum';
+export { VersionDiffStatus } from './version-diff-status.enum';
 export { BadgeVariant } from './badge-variant.enum';
 export { ConnectorAuthType } from './connector-auth-type.enum';
 export { ModelLifecycle } from './model-lifecycle.enum';

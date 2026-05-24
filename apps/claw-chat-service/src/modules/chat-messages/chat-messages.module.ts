@@ -22,8 +22,10 @@ import { AdvancedModuleModelSelectionService } from './services/advanced-module-
 import { LocalModelSelectionService } from './services/local-model-selection.service';
 import { ChatMessagesRepository } from './repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../chat-threads/repositories/chat-threads.repository';
+import { ContextReceiptsModule } from '../context-receipts/context-receipts.module';
 
 @Module({
+  imports: [ContextReceiptsModule],
   controllers: [ChatMessagesController, ChatStreamController, ChatInternalController],
   providers: [
     ChatMessagesService,

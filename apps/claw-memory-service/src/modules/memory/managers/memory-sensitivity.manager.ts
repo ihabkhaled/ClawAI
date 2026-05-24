@@ -4,7 +4,16 @@ import {
   SENSITIVITY_PRE_FILTER_PATTERNS,
   SENSITIVITY_SOFT_HINTS,
 } from '../../../common/constants/memory-sensitivity.constants';
+import {
+  SENSITIVITY_CLASSIFIER_MAX_INPUT,
+  SENSITIVITY_CLASSIFIER_PROMPT,
+  SENSITIVITY_CLASSIFIER_TIMEOUT_MS,
+} from '../../../common/constants/sensitivity-classifier.constants';
+import { AppConfig } from '../../../app/config/app.config';
+import { httpRequest } from '../../../common/utilities/http-client.utility';
+import { classifierResponseSchema } from '../constants/sensitivity-classifier.constants';
 import type { SensitivityVerdict } from '../types/memory-sensitivity.types';
+import type { OllamaGenerateResponse } from '../types/memory.types';
 
 export type { SensitivityVerdict };
 
@@ -41,6 +50,76 @@ export class MemorySensitivityManager {
       verdict: MemorySensitivity.NORMAL,
       confidence: 1,
       reason: null,
+      redactedPreview: null,
+    };
+  }
+
+  /**
+   * Memory V2 — Ollama-backed verdict for content the regex pre-filter passes
+   * as NORMAL. Returns the regex result if anything fails so persistence stays
+   * unblocked.
+   */
+  async classifyWithOllama(content: string): Promise<SensitivityVerdict> {
+    const regex = this.classify(content);
+    if (regex.verdict !== MemorySensitivity.NORMAL) {
+      return regex;
+    }
+    if (content.trim().length === 0) {
+      return regex;
+    }
+    try {
+      const config = AppConfig.get();
+      const prompt = SENSITIVITY_CLASSIFIER_PROMPT.replace(
+        '{content}',
+        content.slice(0, SENSITIVITY_CLASSIFIER_MAX_INPUT),
+      );
+      const response = await httpRequest<OllamaGenerateResponse>({
+        url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
+        method: 'POST',
+        body: {
+          model: config.MEMORY_SENSITIVITY_MODEL,
+          prompt,
+          stream: false,
+          options: { temperature: 0, num_predict: 120 },
+        },
+        timeoutMs: SENSITIVITY_CLASSIFIER_TIMEOUT_MS,
+      });
+      if (!response.ok) {
+        this.logger.warn(
+          `classifyWithOllama: status=${String(response.status)} — falling back to NORMAL`,
+        );
+        return regex;
+      }
+      return this.parseClassifierResponse(response.data.response, regex);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'unknown';
+      this.logger.warn(`classifyWithOllama: failed — ${msg}`);
+      return regex;
+    }
+  }
+
+  private parseClassifierResponse(raw: string, fallback: SensitivityVerdict): SensitivityVerdict {
+    const jsonMatch = raw.match(/\{[\s\S]*?\}/);
+    if (!jsonMatch) {
+      return fallback;
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch {
+      return fallback;
+    }
+    const validated = classifierResponseSchema.safeParse(parsed);
+    if (!validated.success) {
+      return fallback;
+    }
+    if (validated.data.verdict === 'NORMAL') {
+      return fallback;
+    }
+    return {
+      verdict: validated.data.verdict as MemorySensitivity,
+      confidence: validated.data.confidence,
+      reason: validated.data.reason.length > 0 ? validated.data.reason : 'ollama_classifier',
       redactedPreview: null,
     };
   }

@@ -13,6 +13,8 @@ import {
 import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
+import { ContextReceiptService } from '../../context-receipts/services/context-receipt.service';
+import { receiptFromAssembledContext } from '../../../common/utilities/receipt-from-context.utility';
 import { ChatExecutionManager } from '../managers/chat-execution.manager';
 import { ContextAssemblyManager } from '../managers/context-assembly.manager';
 import { ConsensusExecutionManager } from '../managers/consensus-execution.manager';
@@ -85,6 +87,7 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly rolePackManager: RolePackManager,
     private readonly chatStreamService: ChatStreamService,
     private readonly rabbitMQService: RabbitMQService,
+    private readonly contextReceiptService: ContextReceiptService,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -589,6 +592,18 @@ export class ChatMessagesService implements OnModuleInit {
       contextMetadata,
       latestUserMetadata,
     );
+    // Integration V2 — persist the "why was this used?" receipt asynchronously.
+    void this.contextReceiptService
+      .write(
+        assistantMessage.id,
+        originalPayload.threadId,
+        thread?.userId ?? 'system',
+        receiptFromAssembledContext(context, llmResponse.inputTokens ?? 0),
+      )
+      .catch((error: unknown) => {
+        const msg = error instanceof Error ? error.message : 'unknown';
+        this.logger.warn(`runLlmAndStore: receipt write failed — ${msg}`);
+      });
     await this.updateThreadAfterResponse(originalPayload.threadId, llmResponse);
     this.chatStreamService.emitCompletion(
       originalPayload.threadId,

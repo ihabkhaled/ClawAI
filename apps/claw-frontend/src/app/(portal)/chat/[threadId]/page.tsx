@@ -152,6 +152,10 @@ export default function ThreadDetailPage() {
             onQualityThresholdChange={threadSettings.setQualityThreshold}
             maxReRouteAttempts={threadSettings.maxReRouteAttempts}
             onMaxReRouteAttemptsChange={threadSettings.setMaxReRouteAttempts}
+            useMemory={threadSettings.useMemory}
+            onUseMemoryChange={threadSettings.setUseMemory}
+            useContext={threadSettings.useContext}
+            onUseContextChange={threadSettings.setUseContext}
             onSave={threadSettings.handleSave}
             isPending={threadSettings.isPending}
           />
@@ -196,6 +200,7 @@ export default function ThreadDetailPage() {
               isPending={isSending}
               selectedModel={threadSettings.selectedModel}
               onModelChange={threadSettings.handleModelChange}
+              threadId={threadId}
             />
           </div>
         </div>

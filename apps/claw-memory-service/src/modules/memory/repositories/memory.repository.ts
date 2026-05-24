@@ -6,6 +6,10 @@ import {
   type MemoryFilters,
   type UpdateMemoryData,
 } from '../types/memory.types';
+import type {
+  MemoryEmbeddingSearchResult,
+  ScopedRetrievalFilter,
+} from '../types/memory-embedding.types';
 
 @Injectable()
 export class MemoryRepository {
@@ -176,6 +180,57 @@ export class MemoryRepository {
       orderBy: [{ pinned: 'desc' }, { priority: 'desc' }, { updatedAt: 'desc' }],
       take: limit,
     });
+  }
+
+  async upsertEmbedding(memoryId: string, vector: number[]): Promise<void> {
+    const literal = this.toVectorLiteral(vector);
+    await this.prisma.$executeRawUnsafe(
+      `UPDATE "memory_records"
+         SET "embedding" = $1::vector, "embedded_at" = NOW()
+       WHERE "id" = $2`,
+      literal,
+      memoryId,
+    );
+  }
+
+  async cosineSearch(
+    filter: ScopedRetrievalFilter,
+    vector: number[],
+    topK: number,
+  ): Promise<MemoryEmbeddingSearchResult[]> {
+    const literal = this.toVectorLiteral(vector);
+    const conditions = [
+      '"user_id" = $2',
+      '"is_enabled" = true',
+      '"embedding" IS NOT NULL',
+      '("paused_until" IS NULL OR "paused_until" < NOW())',
+      '("expires_at" IS NULL OR "expires_at" > NOW())',
+    ];
+    const scopeClauses: string[] = [`"scope" = 'USER'`];
+    const params: unknown[] = [literal, filter.userId, topK];
+    let paramIndex = 4;
+    const addScope = (scopeKey: string, ref: string | undefined): void => {
+      if (ref === undefined) return;
+      scopeClauses.push(`("scope" = '${scopeKey}' AND "scope_ref" = $${String(paramIndex)})`);
+      params.push(ref);
+      paramIndex += 1;
+    };
+    addScope('THREAD', filter.threadId);
+    addScope('WORKSPACE', filter.workspaceId);
+    addScope('PROJECT', filter.projectId);
+    conditions.push(`(${scopeClauses.join(' OR ')})`);
+    const sql = `
+      SELECT "id" as "memoryId",
+             1 - ("embedding" <=> $1::vector) as "score"
+      FROM "memory_records"
+      WHERE ${conditions.join(' AND ')}
+      ORDER BY "embedding" <=> $1::vector
+      LIMIT $3`;
+    return this.prisma.$queryRawUnsafe<MemoryEmbeddingSearchResult[]>(sql, ...params);
+  }
+
+  private toVectorLiteral(vector: number[]): string {
+    return `[${vector.map((n) => n.toString()).join(',')}]`;
   }
 
   private buildWhereClause(filters: MemoryFilters): Prisma.MemoryRecordWhereInput {

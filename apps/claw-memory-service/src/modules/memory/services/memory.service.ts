@@ -15,6 +15,7 @@ import { MemoryAuditService } from '../../memory-audit/services/memory-audit.ser
 import { MemoryPreferenceService } from '../../memory-preferences/services/memory-preference.service';
 import { MemorySuggestionRepository } from '../../memory-suggestions/repositories/memory-suggestion.repository';
 import { MemoryRepository } from '../repositories/memory.repository';
+import { MemoryEmbeddingManager } from '../managers/memory-embedding.manager';
 import { MemoryExtractionManager } from '../managers/memory-extraction.manager';
 import { MemorySensitivityManager } from '../managers/memory-sensitivity.manager';
 import { type CreateMemoryDto } from '../dto/create-memory.dto';
@@ -30,6 +31,7 @@ export class MemoryService implements OnModuleInit {
     private readonly memoryRepository: MemoryRepository,
     private readonly memoryExtractionManager: MemoryExtractionManager,
     private readonly sensitivityManager: MemorySensitivityManager,
+    private readonly embeddingManager: MemoryEmbeddingManager,
     private readonly suggestionRepository: MemorySuggestionRepository,
     private readonly auditService: MemoryAuditService,
     private readonly preferenceService: MemoryPreferenceService,
@@ -105,6 +107,9 @@ export class MemoryService implements OnModuleInit {
     await this.recordAudit(userId, memory.id, MemoryAuditAction.CREATED, {
       source: memory.source,
     });
+    // Fire-and-forget embedding; failure is logged inside the manager and is
+    // non-blocking on the create response.
+    void this.embeddingManager.embedOne(memory.id, memory.content);
     void this.rabbitMQService.publish(EventPattern.MEMORY_EXTRACTED, {
       memoryId: memory.id,
       userId,
@@ -177,6 +182,10 @@ export class MemoryService implements OnModuleInit {
       pausedUntil: parseOptionalDate(dto.pausedUntil),
     });
     await this.recordAudit(userId, id, MemoryAuditAction.UPDATED, { fields: Object.keys(dto) });
+    if (dto.content !== undefined && dto.content !== memory.content) {
+      // Content changed → re-embed.
+      void this.embeddingManager.embedOne(updated.id, updated.content);
+    }
     return updated;
   }
 
@@ -276,7 +285,9 @@ export class MemoryService implements OnModuleInit {
     );
     if (extracted.length === 0) return;
     for (const memory of extracted) {
-      const sensitivity = this.sensitivityManager.classify(memory.content);
+      // Use the Ollama-backed classifier here — extraction runs offline and
+      // can afford the extra latency for the ambiguous-case verdict.
+      const sensitivity = await this.sensitivityManager.classifyWithOllama(memory.content);
       const isDuplicate = await this.memoryRepository.existsSimilar(
         userId,
         memory.type,

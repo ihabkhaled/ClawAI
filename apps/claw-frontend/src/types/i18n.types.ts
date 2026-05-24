@@ -288,6 +288,42 @@ export type TranslationDictionary = {
     tryingFallback: string;
     verifyingWith: string;
     visibleAiProgress: string;
+    // Integration V2 — thread-settings toggles
+    useMemoryLabel: string;
+    useMemoryDescription: string;
+    useContextLabel: string;
+    useContextDescription: string;
+  };
+  receipt: {
+    openLabel: string;
+    contextUsed: string;
+    dialogTitle: string;
+    dialogDescription: string;
+    loading: string;
+    notAvailable: string;
+    memoriesCount: string;
+    packItemsCount: string;
+    tokenBudget: string;
+    memoriesHeading: string;
+    packItemsHeading: string;
+    warningsHeading: string;
+    scoreLabel: string;
+    pinnedBadge: string;
+    redactedPlaceholder: string;
+  };
+  preview: {
+    openLabel: string;
+    dialogTitle: string;
+    dialogDescription: string;
+    loading: string;
+    failed: string;
+    empty: string;
+    memoryCount: string;
+    packCount: string;
+    tokenBudget: string;
+    memoriesHeading: string;
+    packItemsHeading: string;
+    redactedPlaceholder: string;
   };
   connectors: {
     title: string;

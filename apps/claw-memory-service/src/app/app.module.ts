@@ -15,6 +15,10 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 import { MemoryModule } from '../modules/memory/memory.module';
 import { ContextPacksModule } from '../modules/context-packs/context-packs.module';
+import { ContextPackVersionsModule } from '../modules/context-pack-versions/context-pack-versions.module';
+import { ContextPackTemplatesModule } from '../modules/context-pack-templates/context-pack-templates.module';
+import { ContextPackPortableModule } from '../modules/context-pack-portable/context-pack-portable.module';
+import { MemoryPortableModule } from '../modules/memory-portable/memory-portable.module';
 import { EmbeddingsModule } from '../modules/embeddings/embeddings.module';
 import { HealthModule } from '../modules/health/health.module';
 
@@ -56,12 +60,18 @@ import { HealthModule } from '../modules/health/health.module';
     RedisModule,
     MemoryModule,
     ContextPacksModule,
+    ContextPackVersionsModule,
+    ContextPackTemplatesModule,
+    ContextPackPortableModule,
+    MemoryPortableModule,
     EmbeddingsModule,
     HealthModule,
-    ThrottlerModule.forRoot([{
-      ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
-      limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
+        limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
+      },
+    ]),
   ],
   providers: [
     {

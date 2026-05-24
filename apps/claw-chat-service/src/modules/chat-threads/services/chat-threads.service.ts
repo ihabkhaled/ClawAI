@@ -1,5 +1,6 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
+import { EventPattern } from '@claw/shared-types';
 import { ChatThreadsRepository } from '../repositories/chat-threads.repository';
 import { ChatMessagesRepository } from '../../chat-messages/repositories/chat-messages.repository';
 import { type CreateThreadDto } from '../dto/create-thread.dto';
@@ -97,7 +98,7 @@ export class ChatThreadsService {
     }
     this.validateOwnership(thread, userId);
 
-    return this.chatThreadsRepository.update(id, {
+    const updated = await this.chatThreadsRepository.update(id, {
       title: dto.title,
       isPinned: dto.isPinned,
       isArchived: dto.isArchived,
@@ -110,7 +111,26 @@ export class ChatThreadsService {
       contextPackIds: dto.contextPackIds,
       judgeEnabled: dto.judgeEnabled,
       judgeModel: dto.judgeModel,
+      useMemory: dto.useMemory,
+      useContext: dto.useContext,
     });
+    if (dto.useMemory !== undefined && dto.useMemory !== thread.useMemory) {
+      void this.rabbitMQService.publish(EventPattern.CHAT_THREAD_MEMORY_TOGGLED, {
+        threadId: id,
+        userId,
+        useMemory: dto.useMemory,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    if (dto.useContext !== undefined && dto.useContext !== thread.useContext) {
+      void this.rabbitMQService.publish(EventPattern.CHAT_THREAD_CONTEXT_TOGGLED, {
+        threadId: id,
+        userId,
+        useContext: dto.useContext,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    return updated;
   }
 
   async deleteThread(id: string, userId: string): Promise<ChatThread> {

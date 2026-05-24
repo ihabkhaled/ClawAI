@@ -9,6 +9,7 @@ import {
 } from '../../../generated/prisma';
 import { MemoryService } from '../services/memory.service';
 import { type MemoryRepository } from '../repositories/memory.repository';
+import { type MemoryEmbeddingManager } from '../managers/memory-embedding.manager';
 import { type MemoryExtractionManager } from '../managers/memory-extraction.manager';
 import { MemorySensitivityManager } from '../managers/memory-sensitivity.manager';
 import { type MemorySuggestionRepository } from '../../memory-suggestions/repositories/memory-suggestion.repository';
@@ -53,6 +54,7 @@ function buildMemoryRecord(overrides: Partial<MemoryRecord> = {}): MemoryRecord 
     useCount: 0,
     lastUsedAt: null,
     provenanceJson: null,
+    embeddedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -63,6 +65,7 @@ describe('MemoryService (V2)', () => {
   let memoryRepo: MemoryRepository;
   let extraction: MemoryExtractionManager;
   let sensitivity: MemorySensitivityManager;
+  let embeddingManager: MemoryEmbeddingManager;
   let suggestionRepo: MemorySuggestionRepository;
   let auditService: MemoryAuditService;
   let preferenceService: MemoryPreferenceService;
@@ -73,6 +76,7 @@ describe('MemoryService (V2)', () => {
     memoryRepo = makeStub<MemoryRepository>();
     extraction = makeStub<MemoryExtractionManager>();
     sensitivity = new MemorySensitivityManager();
+    embeddingManager = makeStub<MemoryEmbeddingManager>();
     suggestionRepo = makeStub<MemorySuggestionRepository>();
     auditService = makeStub<MemoryAuditService>();
     preferenceService = makeStub<MemoryPreferenceService>();
@@ -81,10 +85,11 @@ describe('MemoryService (V2)', () => {
       memoryRepo,
       extraction,
       sensitivity,
+      embeddingManager,
       suggestionRepo,
       auditService,
       preferenceService,
-      rabbit as unknown as ConstructorParameters<typeof MemoryService>[6],
+      rabbit as unknown as ConstructorParameters<typeof MemoryService>[7],
     );
   });
 

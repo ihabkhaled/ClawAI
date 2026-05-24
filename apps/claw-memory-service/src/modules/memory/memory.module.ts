@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
+import { ContextPacksModule } from '../context-packs/context-packs.module';
 import { MemoryController } from './controllers/memory.controller';
 import { MemoryInternalController } from './controllers/memory-internal.controller';
 import { MemoryRetrievalController } from './controllers/memory-retrieval.controller';
 import { MemoryService } from './services/memory.service';
 import { MemoryRetrievalService } from './services/memory-retrieval.service';
+import { MemoryEmbeddingManager } from './managers/memory-embedding.manager';
 import { MemoryExtractionManager } from './managers/memory-extraction.manager';
 import { MemorySensitivityManager } from './managers/memory-sensitivity.manager';
 import { MemoryRepository } from './repositories/memory.repository';
@@ -21,6 +23,7 @@ import { MemoryPreferenceService } from '../memory-preferences/services/memory-p
 import { MemoryPreferencesController } from '../memory-preferences/controllers/memory-preferences.controller';
 
 @Module({
+  imports: [ContextPacksModule],
   controllers: [
     MemoryController,
     MemoryInternalController,
@@ -35,6 +38,7 @@ import { MemoryPreferencesController } from '../memory-preferences/controllers/m
     MemoryRetrievalService,
     MemoryExtractionManager,
     MemorySensitivityManager,
+    MemoryEmbeddingManager,
     MemoryRepository,
     MemorySuggestionRepository,
     MemorySuggestionService,

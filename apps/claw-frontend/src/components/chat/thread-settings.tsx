@@ -36,6 +36,10 @@ export function ThreadSettings({
   onQualityThresholdChange,
   maxReRouteAttempts,
   onMaxReRouteAttemptsChange,
+  useMemory,
+  onUseMemoryChange,
+  useContext,
+  onUseContextChange,
   onSave,
   isPending,
 }: ThreadSettingsProps): React.ReactElement {
@@ -187,6 +191,30 @@ export function ThreadSettings({
             max={5}
             value={String(maxReRouteAttempts)}
             onChange={(e) => onMaxReRouteAttemptsChange(Number(e.target.value))}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <label className="text-sm font-medium">{t('chat.useMemoryLabel')}</label>
+            <p className="text-xs text-muted-foreground">{t('chat.useMemoryDescription')}</p>
+          </div>
+          <Switch
+            checked={useMemory}
+            onCheckedChange={onUseMemoryChange}
+            aria-label={t('chat.useMemoryLabel')}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <label className="text-sm font-medium">{t('chat.useContextLabel')}</label>
+            <p className="text-xs text-muted-foreground">{t('chat.useContextDescription')}</p>
+          </div>
+          <Switch
+            checked={useContext}
+            onCheckedChange={onUseContextChange}
+            aria-label={t('chat.useContextLabel')}
           />
         </div>
 

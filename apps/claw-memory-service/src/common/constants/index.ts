@@ -16,3 +16,8 @@ export {
   MEMORY_RETRIEVAL_MAX,
   CONTEXT_RETRIEVAL_MAX,
 } from './memory-retrieval.constants';
+export {
+  SENSITIVITY_CLASSIFIER_MAX_INPUT,
+  SENSITIVITY_CLASSIFIER_PROMPT,
+  SENSITIVITY_CLASSIFIER_TIMEOUT_MS,
+} from './sensitivity-classifier.constants';

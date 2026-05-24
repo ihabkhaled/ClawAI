@@ -126,6 +126,9 @@ describe('ChatMessagesService', () => {
         emitCompletion: jest.fn(),
       } as unknown as ChatStreamService,
       rabbitMQ as unknown as RabbitMQService,
+      { write: jest.fn(), getByMessageId: jest.fn() } as unknown as ConstructorParameters<
+        typeof ChatMessagesService
+      >[16],
     );
   });
 
@@ -324,6 +327,9 @@ describe('ChatMessagesService', () => {
           emitCompletion: jest.fn(),
         } as unknown as ChatStreamService,
         rabbitMQ as unknown as RabbitMQService,
+        { write: jest.fn(), getByMessageId: jest.fn() } as unknown as ConstructorParameters<
+          typeof ChatMessagesService
+        >[16],
       );
 
       const result = await localService.executeVerify('user-1', {
