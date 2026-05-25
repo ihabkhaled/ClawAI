@@ -13,7 +13,7 @@
     "@claw/shared-types": "*"
   },
   "devDependencies": {
-    "@nestjs/common": "^11.1.0",
+    "@nestjs/common": "^11.1.24",
     "@nestjs/core": "^11.1.21",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/express": "^5.0.0",
