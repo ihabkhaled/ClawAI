@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("IMAGE_DATABASE_URL")
 }
 
 enum ImageGenerationStatus {

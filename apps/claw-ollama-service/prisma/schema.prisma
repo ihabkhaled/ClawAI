@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("OLLAMA_DATABASE_URL")
 }
 
 enum LocalModelRole {

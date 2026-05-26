@@ -4,7 +4,6 @@
 
 datasource db {
   provider = "postgresql"
-  url      = env("LLAMACPP_DATABASE_URL")
 }
 
 generator client {
