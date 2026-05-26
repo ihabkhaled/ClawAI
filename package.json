@@ -64,6 +64,9 @@
     },
     "@nestjs/schematics": {
       "typescript": "^6.0.0-beta"
+    },
+    "@prisma/client": {
+      "typescript": "*"
     }
   }
 }
