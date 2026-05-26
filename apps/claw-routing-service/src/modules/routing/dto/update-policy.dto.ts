@@ -9,7 +9,7 @@ export const updatePolicySchema = z.object({
     .optional(),
   routingMode: z.nativeEnum(RoutingMode).optional(),
   priority: z.number().int().min(0).max(1000).optional(),
-  config: z.record(z.unknown()).optional(),
+  config: z.record(z.string(), z.unknown()).optional(),
   isActive: z.boolean().optional(),
 });
 

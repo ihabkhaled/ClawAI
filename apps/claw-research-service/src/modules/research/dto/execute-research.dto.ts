@@ -19,7 +19,7 @@ export const executeResearchSchema = z.object({
   maxResults: z.number().int().min(1).max(SEARCH_MAX_MAX_RESULTS).optional(),
   /** Evidence bundle mode — "detailed" or "compressed". */
   mode: z.enum(['detailed', 'compressed']).optional(),
-  filters: z.record(z.unknown()).optional(),
+  filters: z.record(z.string(), z.unknown()).optional(),
   /**
    * Scrape profile applied by SEARCH_FETCH_EXTRACT. Defaults to ARTICLE.
    * Ignored by other workflows.

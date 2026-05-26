@@ -9,7 +9,7 @@ export const generateSchema = z.object({
   stream: z.boolean().optional(),
   think: z.boolean().optional(),
   images: z.array(z.string().max(20_000_000)).max(10).optional(),
-  options: z.record(z.unknown()).optional(),
+  options: z.record(z.string(), z.unknown()).optional(),
   keepAlive: z.string().min(1).max(32).optional(),
   keep_alive: z.string().min(1).max(32).optional(),
 });

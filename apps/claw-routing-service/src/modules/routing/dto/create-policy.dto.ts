@@ -8,7 +8,7 @@ export const createPolicySchema = z.object({
     .max(255, "Name must be at most 255 characters"),
   routingMode: z.nativeEnum(RoutingMode),
   priority: z.number().int().min(0).max(1000),
-  config: z.record(z.unknown()),
+  config: z.record(z.string(), z.unknown()),
 });
 
 export type CreatePolicyDto = z.infer<typeof createPolicySchema>;

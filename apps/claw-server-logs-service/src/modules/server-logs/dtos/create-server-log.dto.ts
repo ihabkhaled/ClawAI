@@ -25,7 +25,7 @@ export const createServerLogSchema = z.object({
   errorCode: z.string().max(200).optional(),
   errorMessage: z.string().max(5000).optional(),
   errorStack: z.string().max(10_000).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type CreateServerLogDto = z.infer<typeof createServerLogSchema>;

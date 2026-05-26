@@ -12,14 +12,10 @@ export const createConnectorSchema = z.object({
     .min(1, 'Connector name is required')
     .max(100, 'Connector name must be at most 100 characters'),
   provider: z.enum(connectorProviderValues, {
-    errorMap: (): { message: string } => ({
-      message: 'Please select a valid provider',
-    }),
+    error: 'Please select a valid provider',
   }),
   authType: z.enum(authTypeValues, {
-    errorMap: (): { message: string } => ({
-      message: 'Please select a valid auth type',
-    }),
+    error: 'Please select a valid auth type',
   }),
   apiKey: z.string().max(500, 'API key must be at most 500 characters').optional(),
   baseUrl: z

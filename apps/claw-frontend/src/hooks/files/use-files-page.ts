@@ -27,7 +27,7 @@ export function useFilesPage() {
 
       const result = uploadFileSchema.safeParse(metadata);
       if (!result.success) {
-        setFileValidationError(result.error.errors[0]?.message ?? 'Invalid file');
+        setFileValidationError(result.error.issues[0]?.message ?? 'Invalid file');
         return;
       }
 

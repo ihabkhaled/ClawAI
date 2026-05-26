@@ -50,7 +50,8 @@
     "@nestjs/core": "^11.1.21",
     "@nestjs/platform-express": "^11.1.18",
     "better-sqlite3": "^12.10.0",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "zod": "^4.4.3"
   },
   "overrides": {
     "@xmldom/xmldom": "^0.8.13",

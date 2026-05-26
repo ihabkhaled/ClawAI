@@ -71,6 +71,7 @@ const BASE_CFG = {
   AI_ACTION_PER_USER_RATE_PER_MIN: 1000,
   AI_ACTION_PER_USER_RATE_PER_HOUR: 10000,
   ADMIN_IP_ALLOWLIST: '',
+    CLAW_HOSTNAME: 'claw.local',
 };
 
 jest.spyOn(AppConfig, 'get').mockReturnValue(BASE_CFG);

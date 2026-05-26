@@ -11,7 +11,7 @@ export const executeSearchSchema = z.object({
   providerId: z.string().min(1).max(64).optional(),
   query: z.string().min(SEARCH_MIN_QUERY_LENGTH).max(SEARCH_MAX_QUERY_LENGTH),
   maxResults: z.number().int().min(1).max(SEARCH_MAX_MAX_RESULTS).optional(),
-  filters: z.record(z.unknown()).optional(),
+  filters: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type ExecuteSearchDto = z.infer<typeof executeSearchSchema>;
