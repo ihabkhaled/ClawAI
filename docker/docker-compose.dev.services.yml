@@ -421,7 +421,10 @@ services:
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4017/api/v1/health || exit 1']
+      # llamacpp-service runs on node:26-bookworm-slim which ships curl but
+      # not wget (other services use Alpine which has busybox wget). Use
+      # curl -k so the self-signed TLS cert doesn't fail verification.
+      test: ['CMD-SHELL', 'curl -kfs https://localhost:4017/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10

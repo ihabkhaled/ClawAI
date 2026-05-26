@@ -387,7 +387,9 @@ services:
       - llamacpp-data:/var/lib/claw/llamacpp
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4017/api/v1/health || exit 1']
+      # llamacpp-service runs on node:26-bookworm-slim which ships curl
+      # but not wget. -k skips TLS verify so the self-signed cert passes.
+      test: ['CMD-SHELL', 'curl -kfs https://localhost:4017/api/v1/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10
