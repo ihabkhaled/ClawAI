@@ -211,6 +211,53 @@ case "$1" in
     docker compose -p claw -f "$DB_FILE" down
     echo "All services stopped."
     ;;
+  reset:credentials)
+    # Recovery path for the "Authentication failed" / "ACCESS-REFUSED PLAIN"
+    # cascade that hits when .env has been regenerated but the database
+    # volumes still hold the OLD passwords. Wipes ONLY credential-bearing
+    # volumes (postgres + mongo + rabbitmq). Spares file uploads, model
+    # weights, vector index data, redis state, and cert material.
+    if [ "${CLAW_FORCE:-0}" != "1" ]; then
+      echo "This will WIPE every Claw postgres database (auth, chat, connector,"
+      echo "routing, memory, files, ollama, images, file-generations, workspace,"
+      echo "agent, research, llamacpp), MongoDB, and RabbitMQ state. All other"
+      echo "data volumes (file uploads, model weights, redis, certs) are kept."
+      echo ""
+      printf "Type RESET to confirm: "
+      read -r CONFIRM
+      if [ "$CONFIRM" != "RESET" ]; then
+        echo "Aborted."
+        exit 1
+      fi
+    fi
+    echo "Stopping all claw containers (force, with volume detach)..."
+    docker ps -aq --filter "name=claw-" | xargs -r docker rm -f -v >/dev/null 2>&1 || true
+    sleep 2
+    echo "Removing credential-bearing volumes..."
+    for vol in \
+      claw_mongo-data \
+      claw_rabbitmq-data \
+      claw_pg-auth-data \
+      claw_pg-chat-data \
+      claw_pg-connector-data \
+      claw_pg-routing-data \
+      claw_pg-memory-data \
+      claw_pg-files-data \
+      claw_pg-ollama-data \
+      claw_pg-images-data \
+      claw_pg-file-generations-data \
+      claw_pg-workspace-data \
+      claw_pg-agent-data \
+      claw_pg-research-data \
+      claw_pg-llamacpp-data \
+    ; do
+      if docker volume inspect "$vol" >/dev/null 2>&1; then
+        docker volume rm "$vol" >/dev/null 2>&1 && echo "  removed: $vol" || echo "  FAILED: $vol (still attached?)"
+      fi
+    done
+    echo ""
+    echo "Done. Next:  ./scripts/claw.sh up"
+    ;;
   db:up)
     preflight_up
     ensure_network
