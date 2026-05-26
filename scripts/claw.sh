@@ -22,6 +22,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
 
+# When compose is invoked with `-f` pointing into a subdirectory (docker/),
+# it stops looking for `.env` in the project root automatically. Without an
+# explicit `--env-file`, `${VAR:-default}` interpolations inside the compose
+# YAML silently fall back to defaults — every DB ends up with the literal
+# `claw_secret` password instead of the random one in .env, and the rest of
+# the stack can't authenticate. Pass --env-file on every compose call.
+ENV_FILE_FLAG=""
+if [ -f "$PROJECT_ROOT/.env" ]; then
+  ENV_FILE_FLAG="--env-file $PROJECT_ROOT/.env"
+fi
+
 MODE="${CLAW_ENV:-dev}"
 
 ARGS=()
@@ -190,14 +201,14 @@ case "$1" in
     SVC_FLAGS=$(build_svc_compose_flags)
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
     echo "Starting all ClawAI services ($MODE mode, gpu=$GPU_VENDOR)..."
-    docker compose -p claw -f "$DB_FILE" up -d
+    docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" up -d
     echo "Waiting for databases to become healthy..."
     sleep 10
     # shellcheck disable=SC2086
-    docker compose -p claw $SVC_FLAGS up -d
+    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS up -d
     echo "Starting Ollama runtime..."
     # shellcheck disable=SC2086
-    docker compose -p claw $OLLAMA_FLAGS up -d
+    docker compose $ENV_FILE_FLAG -p claw $OLLAMA_FLAGS up -d
     echo "All services started."
     ;;
   down)
@@ -205,10 +216,10 @@ case "$1" in
     SVC_FLAGS=$(build_svc_compose_flags)
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
     # shellcheck disable=SC2086
-    docker compose -p claw $SVC_FLAGS down
+    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS down
     # shellcheck disable=SC2086
-    docker compose -p claw $OLLAMA_FLAGS down
-    docker compose -p claw -f "$DB_FILE" down
+    docker compose $ENV_FILE_FLAG -p claw $OLLAMA_FLAGS down
+    docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" down
     echo "All services stopped."
     ;;
   reset:credentials)
@@ -262,11 +273,11 @@ case "$1" in
     preflight_up
     ensure_network
     echo "Starting databases + infrastructure ($MODE mode)..."
-    docker compose -p claw -f "$DB_FILE" up -d
+    docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" up -d
     ;;
   db:down)
     echo "Stopping databases + infrastructure ($MODE mode)..."
-    docker compose -p claw -f "$DB_FILE" down
+    docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" down
     ;;
   services:up)
     preflight_up
@@ -275,13 +286,13 @@ case "$1" in
     SVC_FLAGS=$(build_svc_compose_flags)
     echo "Starting backend + frontend services ($MODE mode, gpu=$GPU_VENDOR)..."
     # shellcheck disable=SC2086
-    docker compose -p claw $SVC_FLAGS up -d
+    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS up -d
     ;;
   services:down)
     SVC_FLAGS=$(build_svc_compose_flags)
     echo "Stopping backend + frontend services ($MODE mode)..."
     # shellcheck disable=SC2086
-    docker compose -p claw $SVC_FLAGS down
+    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS down
     ;;
   services:rebuild)
     preflight_up
@@ -295,10 +306,10 @@ case "$1" in
     # invocation passes no service list so every service in the stitched
     # compose files is included.
     # shellcheck disable=SC2086
-    docker compose -p claw $SVC_FLAGS build --progress plain
+    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS build --progress plain
     echo "Starting backend + frontend services..."
     # shellcheck disable=SC2086
-    docker compose -p claw $SVC_FLAGS up -d --no-build
+    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS up -d --no-build
     ;;
   ollama:up)
     detect_gpu
@@ -306,13 +317,13 @@ case "$1" in
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
     echo "Starting Ollama runtime ($MODE mode)..."
     # shellcheck disable=SC2086
-    docker compose -p claw $OLLAMA_FLAGS up -d
+    docker compose $ENV_FILE_FLAG -p claw $OLLAMA_FLAGS up -d
     ;;
   ollama:down)
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
     echo "Stopping Ollama runtime ($MODE mode)..."
     # shellcheck disable=SC2086
-    docker compose -p claw $OLLAMA_FLAGS down
+    docker compose $ENV_FILE_FLAG -p claw $OLLAMA_FLAGS down
     ;;
   status)
     detect_gpu
@@ -321,15 +332,15 @@ case "$1" in
     echo "=== ClawAI Status ($MODE mode, gpu=$GPU_VENDOR) ==="
     echo ""
     echo "--- Databases + Infrastructure ---"
-    docker compose -p claw -f "$DB_FILE" ps
+    docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" ps
     echo ""
     echo "--- Backend + Frontend Services ---"
     # shellcheck disable=SC2086
-    docker compose -p claw $SVC_FLAGS ps
+    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS ps
     echo ""
     echo "--- Ollama Runtime ---"
     # shellcheck disable=SC2086
-    docker compose -p claw $OLLAMA_FLAGS ps
+    docker compose $ENV_FILE_FLAG -p claw $OLLAMA_FLAGS ps
     ;;
   gpu)
     # Diagnostic: show what GPU detection finds without starting anything.
@@ -343,10 +354,10 @@ case "$1" in
     SVC_FLAGS=$(build_svc_compose_flags)
     if [ -n "$2" ]; then
       # shellcheck disable=SC2086
-      docker compose -p claw $SVC_FLAGS -f "$DB_FILE" -f "$OLLAMA_FILE" logs -f "$2"
+      docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS -f "$DB_FILE" -f "$OLLAMA_FILE" logs -f "$2"
     else
       # shellcheck disable=SC2086
-      docker compose -p claw $SVC_FLAGS logs -f
+      docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS logs -f
     fi
     ;;
   *)
