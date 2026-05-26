@@ -436,7 +436,7 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://claw.local:3000 || exit 1']
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000 || exit 1']
       interval: 15s
       timeout: 10s
       retries: 5

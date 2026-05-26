@@ -88,7 +88,8 @@ export class AiActionRiskScorerManager {
 
   private looksInternal(email: string): boolean {
     const lower = email.toLowerCase();
-    const internalSuffixes = ['@claw.local', '@claw.ai', '@internal'];
+    const configuredHost = (process.env['CLAW_HOSTNAME'] ?? 'claw.local').toLowerCase();
+    const internalSuffixes = [`@${configuredHost}`, '@claw.local', '@claw.ai', '@internal'];
     return internalSuffixes.some((suffix) => lower.endsWith(suffix));
   }
 
