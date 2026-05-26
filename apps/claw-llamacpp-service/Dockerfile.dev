@@ -23,6 +23,7 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY package.json ./package.json
+COPY .npmrc ./.npmrc
 COPY packages/ ./packages/
 COPY apps/claw-llamacpp-service/ ./apps/claw-llamacpp-service/
 

@@ -3,6 +3,7 @@ RUN apk add --no-cache openssl
 WORKDIR /app
 
 COPY package.json ./package.json
+COPY .npmrc ./.npmrc
 COPY packages/ ./packages/
 COPY apps/claw-file-generation-service/ ./apps/claw-file-generation-service/
 

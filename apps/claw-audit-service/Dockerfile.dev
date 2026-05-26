@@ -3,7 +3,7 @@ RUN apk add --no-cache openssl
 WORKDIR /app
 
 # Copy entire monorepo structure for workspace resolution.
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 COPY packages/ ./packages/
 COPY apps/claw-audit-service/ ./apps/claw-audit-service/
 

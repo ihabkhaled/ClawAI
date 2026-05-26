@@ -4,6 +4,7 @@ WORKDIR /app
 
 # Copy entire monorepo structure for workspace resolution
 COPY package.json ./package.json
+COPY .npmrc ./.npmrc
 COPY packages/ ./packages/
 COPY apps/claw-ollama-service/ ./apps/claw-ollama-service/
 
