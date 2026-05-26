@@ -88,10 +88,16 @@ services:
     volumes:
       - sd-models-data:/opt/stable-diffusion-webui/models
     environment:
-      - COMMANDLINE_ARGS=--api --listen
+      # --skip-torch-cuda-test --use-cpu all lets SD start when GPU isn't
+      # passed through to the container (Docker Desktop without NVIDIA
+      # Container Toolkit, or no GPU at all). Inference is slow without
+      # GPU; ComfyUI is the primary local image-gen path. When NVIDIA
+      # passthrough is configured (via the ollama.gpu-nvidia overlay) the
+      # GPU is automatically used and these flags are inert.
+      - COMMANDLINE_ARGS=--api --listen --skip-torch-cuda-test --use-cpu all
     healthcheck:
       test:
-        ['CMD-SHELL', 'wget -qO- http://localhost:17860/sdapi/v1/sd-models 2>/dev/null || exit 1']
+        ['CMD-SHELL', 'wget -qO- http://localhost:7860/sdapi/v1/sd-models 2>/dev/null || exit 1']
       interval: 30s
       timeout: 15s
       retries: 10
