@@ -2,9 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import * as fs from 'node:fs';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
-// NOTE: server-logs-service must NOT use RabbitMQLoggerService — it IS the
-// log consumer. Using it here creates a feedback loop (receives log → logs
-// about receiving → publishes log → receives again → OOM).
+// NOTE: server-logs-service must NOT use RabbitMQLoggerService â€” it IS the
+// log consumer. Using it here creates a feedback loop (receives log â†’ logs
+// about receiving â†’ publishes log â†’ receives again â†’ OOM).
 import { AppModule } from './app/app.module';
 import { AppConfig } from './app/config/app.config';
 
@@ -19,7 +19,7 @@ function resolveHttpsOptions(): { cert: Buffer; key: Buffer } | undefined {
   try {
     return { cert: fs.readFileSync(certPath), key: fs.readFileSync(keyPath) };
   } catch (error) {
-    process.stderr.write(`[https-bootstrap] cert read failed: ${error instanceof Error ? error.message : String(error)} — HTTP fallback\n`);
+    process.stderr.write(`[https-bootstrap] cert read failed: ${error instanceof Error ? error.message : String(error)} â€” HTTP fallback\n`);
     return undefined;
   }
 }
@@ -29,8 +29,9 @@ async function bootstrap(): Promise<void> {
   app.useLogger(app.get(Logger));
   app.use(helmet());
   app.setGlobalPrefix('api/v1');
+  const clawHost = process.env['CLAW_HOSTNAME'] ?? 'claw.local';
   const corsOrigins = process.env['CORS_ORIGINS']?.split(',') ?? [
-    'https://claw.local','https://claw.local:3000',
+    `https://${clawHost}`,`https://${clawHost}:3000`,
   ];
   app.enableCors({
     origin: corsOrigins,
