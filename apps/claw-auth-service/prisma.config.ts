@@ -1,11 +1,20 @@
 // Prisma 7 moved the datasource URL out of schema.prisma. This file feeds
 // `prisma migrate` / `prisma db push` with the connection string at CLI time.
-// Runtime PrismaClient gets the URL via `datasourceUrl` in PrismaService.
+// Runtime PrismaClient gets the URL via the driver adapter in PrismaService.
+//
+// `migrations.seed` is also required in Prisma 7 — the old
+// `"prisma": { "seed": ... }` field in package.json is silently ignored
+// in v7 (`⚠️ No seed command configured`), and the admin user never gets
+// inserted on first start. Login then returns 401 INVALID_CREDENTIALS
+// because there's literally no user in the auth DB.
 import { defineConfig } from 'prisma/config';
 
 export default defineConfig({
   schema: './prisma/schema.prisma',
   datasource: {
     url: process.env['AUTH_DATABASE_URL'] ?? '',
+  },
+  migrations: {
+    seed: 'ts-node --compiler-options {"module":"CommonJS"} prisma/seed.ts',
   },
 });
