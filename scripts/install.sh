@@ -308,6 +308,54 @@ ok "Hostname: $CLAW_HOSTNAME"
 ok "Base URL: $CLAW_BASE_URL"
 echo ""
 
+# ─── Step 2c: Volume-vs-env consistency check ───────────────────────────────
+# Postgres / Mongo / RabbitMQ named volumes are initialised with the password
+# in .env on FIRST start. On subsequent starts the container demands the SAME
+# password — even if .env now contains a different one. This bites hard when:
+#   - User wipes .env between attempts (re-runs install.sh) but keeps volumes
+#   - User runs install.sh on a machine where a previous attempt left volumes
+#   - User restored .env from a backup that doesn't match the volume data
+# Symptom: every backend service crashes with `Authentication failed` on
+# Mongo, `ACCESS-REFUSED PLAIN` on RabbitMQ, and `password authentication
+# failed for user "claw"` on Postgres.
+EXISTING_VOLUMES="$(docker volume ls -q 2>/dev/null | grep -E '^claw[_-]|claw-pg-|claw-mongo|claw-rabbit' || true)"
+if [ ! -f "$ENV_FILE" ] && [ -n "$EXISTING_VOLUMES" ]; then
+  echo ""
+  fail "Found existing claw-* docker volumes from a previous install, but no .env file."
+  echo ""
+  echo "  The volumes hold the OLD credentials. If install.sh generates fresh ones,"
+  echo "  every backend service will crash with Auth/ACCESS-REFUSED errors."
+  echo ""
+  echo "  Pick one:"
+  echo "    A) Wipe the stale volumes and start fresh (DATA LOSS):"
+  echo "         docker volume rm \$(docker volume ls -q | grep -E '^claw[_-]|claw-pg-|claw-mongo|claw-rabbit')"
+  echo "    B) Restore the .env file from your previous install (it has the matching passwords)."
+  echo ""
+  if [ -t 0 ]; then
+    ask "Wipe volumes and continue? (type WIPE to confirm, anything else aborts): "
+    read -r WIPE_CONFIRM
+    if [ "$WIPE_CONFIRM" = "WIPE" ]; then
+      info "Stopping any running claw containers..."
+      docker ps -q --filter "name=claw-" | xargs -r docker stop >/dev/null 2>&1 || true
+      docker ps -aq --filter "name=claw-" | xargs -r docker rm -f >/dev/null 2>&1 || true
+      info "Removing stale volumes..."
+      echo "$EXISTING_VOLUMES" | xargs -r docker volume rm >/dev/null 2>&1 || true
+      ok "Stale volumes removed — proceeding with fresh secrets"
+    else
+      fail "Aborted. Restore .env or wipe volumes manually, then re-run."
+      exit 1
+    fi
+  else
+    fail "Non-interactive run can't safely choose. Set CLAW_WIPE_VOLUMES=1 to wipe, or restore .env."
+    if [ "${CLAW_WIPE_VOLUMES:-0}" != "1" ]; then exit 1; fi
+    docker ps -q --filter "name=claw-" | xargs -r docker stop >/dev/null 2>&1 || true
+    docker ps -aq --filter "name=claw-" | xargs -r docker rm -f >/dev/null 2>&1 || true
+    echo "$EXISTING_VOLUMES" | xargs -r docker volume rm >/dev/null 2>&1 || true
+    ok "Stale volumes removed (CLAW_WIPE_VOLUMES=1)"
+  fi
+  echo ""
+fi
+
 # ─── Step 3: Generate secrets ────────────────────────────────────────────────
 echo "${BOLD}Step 3/9: Generating secrets${NC}"
 echo ""
@@ -483,16 +531,37 @@ echo "${BOLD}Step 6/9: Installing local TLS certificates${NC}"
 echo ""
 
 if [ -x "$SCRIPT_DIR/install-tls.sh" ]; then
-  if bash "$SCRIPT_DIR/install-tls.sh"; then
-    ok "TLS install complete"
-  else
-    warn "TLS install failed — services will fall back to HTTP. See docs/08-runtime-devops/tls-setup.md"
-  fi
+  bash "$SCRIPT_DIR/install-tls.sh" || true   # don't propagate exit; we verify by file presence below
 elif [ -f "$SCRIPT_DIR/install-tls.sh" ]; then
-  warn "scripts/install-tls.sh is not executable — run: chmod +x scripts/install-tls.sh"
+  warn "scripts/install-tls.sh is not executable — running with bash"
+  bash "$SCRIPT_DIR/install-tls.sh" || true
 else
   warn "scripts/install-tls.sh missing — skipping TLS setup"
 fi
+
+# Hard gate: nginx and every backend service expects certs/claw.crt at startup.
+# If both mkcert (Tier 1) and the openssl-via-docker fallback (Tier 2) failed,
+# bring-up will restart-loop with "cannot load certificate ... BIO_new_file()".
+# Better to fail here with an actionable message than silently break compose.
+if [ ! -f "$PROJECT_ROOT/certs/claw.crt" ] || [ ! -f "$PROJECT_ROOT/certs/claw.key" ]; then
+  echo ""
+  fail "TLS install did not produce certs/claw.crt + certs/claw.key."
+  echo ""
+  echo "  Without these, nginx restart-loops with"
+  echo "    'cannot load certificate \"/etc/nginx/certs/claw.crt\"'"
+  echo "  and every backend service falls back to HTTP, breaking the dev stack."
+  echo ""
+  echo "  Recovery (pick one):"
+  echo "    1) Install mkcert and re-run: brew install mkcert  (mac)"
+  echo "                                   apt install mkcert  (debian)"
+  echo "       then re-run: bash scripts/install.sh"
+  echo "    2) Generate self-signed certs via docker (needs Docker running):"
+  echo "         bash scripts/install-tls.sh"
+  echo "    3) See docs/08-runtime-devops/tls-setup.md for manual cert generation."
+  echo ""
+  exit 1
+fi
+ok "TLS certs present at certs/claw.crt"
 echo ""
 
 # ─── Step 7: Generate .env ──────────────────────────────────────────────────
