@@ -112,6 +112,16 @@ detect_gpu() {
   echo "ℹ No GPU detected on host — running CPU-only" >&2
 }
 
+# Ensure the shared docker network exists before any `up` command.
+# Compose files declare claw-network as external, so we own its lifecycle here.
+# Idempotent: no-op if the network already exists.
+ensure_network() {
+  if ! docker network inspect claw-network >/dev/null 2>&1; then
+    echo "Creating shared docker network: claw-network"
+    docker network create claw-network >/dev/null
+  fi
+}
+
 # Compose-merged file flags for the services group (with optional GPU overlay).
 build_svc_compose_flags() {
   if [ -n "$GPU_OVERLAY" ]; then
@@ -133,6 +143,7 @@ build_ollama_compose_flags() {
 case "$1" in
   up)
     detect_gpu
+    ensure_network
     SVC_FLAGS=$(build_svc_compose_flags)
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
     echo "Starting all ClawAI services ($MODE mode, gpu=$GPU_VENDOR)..."
@@ -158,6 +169,7 @@ case "$1" in
     echo "All services stopped."
     ;;
   db:up)
+    ensure_network
     echo "Starting databases + infrastructure ($MODE mode)..."
     docker compose -p claw -f "$DB_FILE" up -d
     ;;
@@ -167,6 +179,7 @@ case "$1" in
     ;;
   services:up)
     detect_gpu
+    ensure_network
     SVC_FLAGS=$(build_svc_compose_flags)
     echo "Starting backend + frontend services ($MODE mode, gpu=$GPU_VENDOR)..."
     # shellcheck disable=SC2086
@@ -180,6 +193,7 @@ case "$1" in
     ;;
   services:rebuild)
     detect_gpu
+    ensure_network
     SVC_FLAGS=$(build_svc_compose_flags)
     echo "Rebuilding and starting backend + frontend services ($MODE mode, gpu=$GPU_VENDOR)..."
     # shellcheck disable=SC2086
@@ -187,6 +201,7 @@ case "$1" in
     ;;
   ollama:up)
     detect_gpu
+    ensure_network
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
     echo "Starting Ollama runtime ($MODE mode)..."
     # shellcheck disable=SC2086

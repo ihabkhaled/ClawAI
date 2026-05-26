@@ -17,7 +17,7 @@ function resolveHttpsOptions(): { cert: Buffer; key: Buffer } | undefined {
   try {
     return { cert: fs.readFileSync(certPath), key: fs.readFileSync(keyPath) };
   } catch (error) {
-    process.stderr.write(`[https-bootstrap] cert read failed: ${error instanceof Error ? error.message : String(error)} — HTTP fallback\n`);
+    process.stderr.write(`[https-bootstrap] cert read failed: ${error instanceof Error ? error.message : String(error)} â€” HTTP fallback\n`);
     return undefined;
   }
 }
@@ -27,8 +27,9 @@ async function bootstrap(): Promise<void> {
   app.useLogger(app.get(Logger));
   app.use(helmet());
   app.setGlobalPrefix('api/v1');
+  const clawHost = process.env['CLAW_HOSTNAME'] ?? 'claw.local';
   const corsOrigins = process.env['CORS_ORIGINS']?.split(',') ?? [
-    'https://claw.local','https://claw.local:3000',
+    `https://${clawHost}`,`https://${clawHost}:3000`,
   ];
   app.enableCors({
     origin: corsOrigins,
@@ -42,7 +43,7 @@ async function bootstrap(): Promise<void> {
     rabbitLogger.setRabbitMQ(rabbitMQ, 'file-generation-service');
     app.useLogger(rabbitLogger);
   } catch {
-    // RabbitMQ not available — continue with pino only
+    // RabbitMQ not available â€” continue with pino only
   }
 
   await app.listen(AppConfig.get().FILE_GENERATION_PORT);
