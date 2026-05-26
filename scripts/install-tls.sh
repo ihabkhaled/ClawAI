@@ -7,7 +7,8 @@
 #   Tier 1 — mkcert (browser-trusted): installs mkcert via brew/apt/binary,
 #            installs a local root CA into the OS trust store, issues a leaf
 #            cert covering localhost + every internal docker hostname + the
-#            claw.local alias. Browser shows green-lock automatically.
+#            user-configured CLAW_HOSTNAME (default claw.local, can be a
+#            domain or bare IP). Browser shows green-lock automatically.
 #
 #   Tier 2 — openssl self-signed (fallback): if mkcert install fails for any
 #            reason, generates a self-signed leaf cert via a one-shot
@@ -15,8 +16,12 @@
 #            "Not Secure" warning but inter-service TLS works fully via
 #            NODE_EXTRA_CA_CERTS.
 #
-# Hosts file: appends `127.0.0.1 claw.local` to /etc/hosts (idempotent).
-# Requires sudo for the hosts file write — script offers it, never demands.
+# Hosts file: appends `127.0.0.1 ${CLAW_HOSTNAME}` to /etc/hosts (idempotent;
+# skipped when CLAW_HOSTNAME is an IP address). Requires sudo for the hosts
+# file write — script offers it, never demands.
+#
+# Hostname source: CLAW_HOSTNAME env var → .env file → claw.local default.
+# Re-run any time you change CLAW_HOSTNAME in .env to reissue the cert.
 #
 # Idempotent. Forced on by scripts/install.sh — never prompts the user.
 # =============================================================================
@@ -32,17 +37,41 @@ fail()  { printf "${RED}[TLS]${NC}   %s\n" "$1"; }
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CERTS_DIR="$PROJECT_ROOT/certs"
+ENV_FILE="$PROJECT_ROOT/.env"
 mkdir -p "$CERTS_DIR"
 
-# Every internal docker hostname that any service (or nginx) might present.
-# Keep in sync with docker-compose service names — re-run install-tls.sh
-# whenever a new service is added so its hostname becomes a SAN.
+# ─── Resolve the public hostname ────────────────────────────────────────────
+# Precedence: CLAW_HOSTNAME env var → .env file → claw.local default.
+# install.sh exports CLAW_HOSTNAME before invoking us; standalone re-runs
+# read it from .env so the cert always tracks whatever the app is serving.
+resolve_hostname() {
+  if [ -n "${CLAW_HOSTNAME:-}" ]; then
+    echo "$CLAW_HOSTNAME"
+    return
+  fi
+  if [ -f "$ENV_FILE" ]; then
+    local from_env
+    from_env="$(awk -F= '/^CLAW_HOSTNAME=/ {sub(/^[^=]*=/, "", $0); print; exit}' "$ENV_FILE")"
+    if [ -n "$from_env" ]; then echo "$from_env"; return; fi
+  fi
+  echo "claw.local"
+}
+
+CLAW_HOSTNAME="$(resolve_hostname)"
+
+# IPv4-shaped check (e.g. 192.168.1.50 vs. claw.local / claw.example.com)
+is_ipv4() {
+  [[ "$1" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]
+}
+
+# Every internal docker hostname that any service (or nginx) might present,
+# plus the user-configured public hostname (and its wildcard form for
+# domains). Re-run this script whenever a new service is added so its
+# hostname becomes a SAN.
 HOSTS=(
   localhost
   127.0.0.1
   ::1
-  claw.local
-  "*.claw.local"
   nginx
   auth-service
   chat-service
@@ -62,6 +91,15 @@ HOSTS=(
   research-service
   llamacpp-service
 )
+
+# Append the user-configured hostname. mkcert handles both DNS names and
+# IP-shaped SANs natively — no special-casing required for the cert call.
+HOSTS+=("$CLAW_HOSTNAME")
+if ! is_ipv4 "$CLAW_HOSTNAME"; then
+  HOSTS+=("*.${CLAW_HOSTNAME}")
+fi
+
+info "Cert will cover: $CLAW_HOSTNAME (and ${#HOSTS[@]} other SANs)"
 
 # ─── Tier 1: try mkcert ────────────────────────────────────────────────────
 OS_KIND="$(uname -s)"
@@ -159,18 +197,26 @@ EOF
   rm -f "$CERTS_DIR/openssl.cnf"
 }
 
-# ─── Hosts file: claw.local 127.0.0.1 (idempotent) ────────────────────────
+# ─── Hosts file: CLAW_HOSTNAME → 127.0.0.1 (idempotent) ───────────────────
+# Skipped when CLAW_HOSTNAME is an IPv4 address (no resolution needed) or
+# when the entry already exists.
 ensure_hosts_entry() {
   local hosts_file="/etc/hosts"
-  if grep -qE "^[^#]*\bclaw\.local\b" "$hosts_file" 2>/dev/null; then
-    ok "claw.local already in /etc/hosts"
+  if is_ipv4 "$CLAW_HOSTNAME"; then
+    ok "Hostname is an IP ($CLAW_HOSTNAME) — no /etc/hosts entry needed"
     return 0
   fi
-  info "Adding claw.local → 127.0.0.1 to /etc/hosts (sudo required)"
-  if echo "127.0.0.1 claw.local" | sudo tee -a "$hosts_file" >/dev/null 2>&1; then
-    ok "claw.local added to /etc/hosts"
+  local escaped
+  escaped="$(printf '%s\n' "$CLAW_HOSTNAME" | sed 's/[][\.*^$/]/\\&/g')"
+  if grep -qE "^[^#]*\b${escaped}\b" "$hosts_file" 2>/dev/null; then
+    ok "$CLAW_HOSTNAME already in /etc/hosts"
+    return 0
+  fi
+  info "Adding $CLAW_HOSTNAME → 127.0.0.1 to /etc/hosts (sudo required)"
+  if echo "127.0.0.1 $CLAW_HOSTNAME" | sudo tee -a "$hosts_file" >/dev/null 2>&1; then
+    ok "$CLAW_HOSTNAME added to /etc/hosts"
   else
-    warn "Could not write /etc/hosts — add manually:  127.0.0.1 claw.local"
+    warn "Could not write /etc/hosts — add manually:  127.0.0.1 $CLAW_HOSTNAME"
   fi
 }
 
@@ -219,5 +265,9 @@ fi
 echo "  certs/claw.crt     leaf cert (mounted into every container)"
 echo "  certs/claw.key     leaf private key (mounted read-only)"
 echo "  certs/rootCA.pem   root CA — used as NODE_EXTRA_CA_CERTS"
-echo "  hosts entry:       127.0.0.1 claw.local (try: https://claw.local)"
+if is_ipv4 "$CLAW_HOSTNAME"; then
+  echo "  hosts entry:       (skipped — IP) try: https://$CLAW_HOSTNAME"
+else
+  echo "  hosts entry:       127.0.0.1 $CLAW_HOSTNAME (try: https://$CLAW_HOSTNAME)"
+fi
 echo ""

@@ -13,6 +13,8 @@ import { Public, Roles } from '@claw/shared-auth';
 import { UserRole } from '@claw/shared-types';
 import type { Request } from 'express';
 
+import { RawWebhookBody } from '../../../app/decorators/raw-webhook-body.decorator';
+import { RawWebhookBodyPipe } from '../../../app/pipes/raw-webhook-body.pipe';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import {
   type ListWebhookDeliveriesQueryDto,
@@ -38,12 +40,13 @@ export class WebhookReceiverController {
     @Param('provider') providerRaw: string,
     @Param('connectorId') connectorId: string,
     @Headers() headers: Record<string, string | string[] | undefined>,
+    @RawWebhookBody(RawWebhookBodyPipe) rawBody: Buffer,
     @Req() req: Request,
   ): Promise<WebhookReceiveResult> {
     return this.receiver.receive(
       parseWebhookProvider(providerRaw),
       connectorId === '_' ? null : connectorId,
-      Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body)),
+      rawBody,
       headers,
       (req.headers['x-forwarded-for'] as string | undefined) ?? req.ip ?? null,
     );
