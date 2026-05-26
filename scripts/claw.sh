@@ -122,6 +122,48 @@ ensure_network() {
   fi
 }
 
+# Preflight checks for any `up`-style command. Catches the two most common
+# server-side failures BEFORE compose runs and burns the user 60s of pointless
+# container starts that crash with cryptic messages:
+#   1. No .env at the project root  → compose can't interpolate ${PG_*_PASSWORD}
+#      and every postgres container starts with the default `claw_secret`,
+#      which then fails to match the per-service DATABASE_URL.
+#   2. Missing certs                → every backend service crashes at boot with
+#      `ENOENT: no such file or directory, open '/certs/claw.crt'`.
+# A WARNING is enough — we still let the user proceed in case they know what
+# they are doing — but we exit early on missing .env because there's nothing
+# useful that can happen without it.
+preflight_up() {
+  local fatal=0
+  if [ ! -f "$PROJECT_ROOT/.env" ]; then
+    echo ""
+    echo "ERROR: $PROJECT_ROOT/.env is missing."
+    echo "       docker compose needs it to interpolate every PG_*_PASSWORD,"
+    echo "       MONGO_PASSWORD, JWT_SECRET, etc. Without it, services start"
+    echo "       with stale fallback values and the postgres password mismatch"
+    echo "       will reject every connection."
+    echo ""
+    echo "Run one of:"
+    echo "   ./scripts/install.sh          # interactive, generates fresh secrets"
+    echo "   ./scripts/setup.sh            # quick path: copies .env.example → .env"
+    echo ""
+    fatal=1
+  fi
+  if [ ! -f "$PROJECT_ROOT/certs/claw.crt" ] || \
+     [ ! -f "$PROJECT_ROOT/certs/claw.key" ] || \
+     [ ! -f "$PROJECT_ROOT/certs/rootCA.pem" ]; then
+    echo ""
+    echo "WARNING: $PROJECT_ROOT/certs is missing one or more of claw.crt / claw.key / rootCA.pem."
+    echo "         Every backend service mounts ./certs:/certs:ro and will fall back to"
+    echo "         HTTP (with a noisy startup warning) instead of HTTPS."
+    echo "         Generate them with: ./scripts/install-tls.sh"
+    echo ""
+  fi
+  if [ "$fatal" -ne 0 ]; then
+    exit 1
+  fi
+}
+
 # Compose-merged file flags for the services group (with optional GPU overlay).
 build_svc_compose_flags() {
   if [ -n "$GPU_OVERLAY" ]; then
@@ -142,6 +184,7 @@ build_ollama_compose_flags() {
 
 case "$1" in
   up)
+    preflight_up
     detect_gpu
     ensure_network
     SVC_FLAGS=$(build_svc_compose_flags)
@@ -169,6 +212,7 @@ case "$1" in
     echo "All services stopped."
     ;;
   db:up)
+    preflight_up
     ensure_network
     echo "Starting databases + infrastructure ($MODE mode)..."
     docker compose -p claw -f "$DB_FILE" up -d
@@ -178,6 +222,7 @@ case "$1" in
     docker compose -p claw -f "$DB_FILE" down
     ;;
   services:up)
+    preflight_up
     detect_gpu
     ensure_network
     SVC_FLAGS=$(build_svc_compose_flags)
@@ -192,6 +237,7 @@ case "$1" in
     docker compose -p claw $SVC_FLAGS down
     ;;
   services:rebuild)
+    preflight_up
     detect_gpu
     ensure_network
     SVC_FLAGS=$(build_svc_compose_flags)

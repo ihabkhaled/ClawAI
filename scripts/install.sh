@@ -332,6 +332,44 @@ ok "Database passwords generated"
 ok "Admin password generated"
 ok "Inter-service auth token generated (${#INTER_SERVICE_AUTH_TOKEN} hex chars)"
 ok "Workspace webhook secrets generated (6 providers)"
+
+# ─── Preserve infrastructure secrets from an existing .env ───────────────────
+# Postgres / Mongo named-volumes are initialised with the first password they
+# ever see. If we generate fresh secrets on a re-run and overwrite .env, the
+# data dirs keep the OLD password and every service crashes with
+#   `password authentication failed for user "claw"`
+# To avoid that footgun, we read the previous secrets (if .env exists) and
+# REUSE them. The freshly-generated values above are kept only when there is
+# no .env on disk yet, or when the user later explicitly chooses to wipe and
+# regenerate. If the user wants new secrets they MUST also wipe the docker
+# volumes (the script warns about this in Step 7).
+if [ -f "$ENV_FILE" ]; then
+  PREV_DB_PASSWORD="$(get_env_value "PG_AUTH_PASSWORD" "$ENV_FILE")"
+  PREV_MONGO_PASS="$(get_env_value "MONGO_PASSWORD" "$ENV_FILE")"
+  PREV_RABBIT_PASS="$(get_env_value "RABBITMQ_PASSWORD" "$ENV_FILE")"
+  PREV_JWT_SECRET="$(get_env_value "JWT_SECRET" "$ENV_FILE")"
+  PREV_ENCRYPTION_KEY="$(get_env_value "ENCRYPTION_KEY" "$ENV_FILE")"
+  if [ -n "$PREV_DB_PASSWORD" ]; then
+    DB_PASSWORD="$PREV_DB_PASSWORD"
+    ok "Preserved PG_*_PASSWORD from existing .env (postgres volumes already use this)"
+  fi
+  if [ -n "$PREV_MONGO_PASS" ]; then
+    MONGO_PASS="$PREV_MONGO_PASS"
+    ok "Preserved MONGO_PASSWORD from existing .env"
+  fi
+  if [ -n "$PREV_RABBIT_PASS" ]; then
+    RABBIT_PASS="$PREV_RABBIT_PASS"
+    ok "Preserved RABBITMQ_PASSWORD from existing .env"
+  fi
+  if [ -n "$PREV_JWT_SECRET" ]; then
+    JWT_SECRET="$PREV_JWT_SECRET"
+    ok "Preserved JWT_SECRET from existing .env (invalidating it would log out every user)"
+  fi
+  if [ -n "$PREV_ENCRYPTION_KEY" ]; then
+    ENCRYPTION_KEY="$PREV_ENCRYPTION_KEY"
+    ok "Preserved ENCRYPTION_KEY from existing .env (changing it would invalidate stored connector secrets)"
+  fi
+fi
 echo ""
 
 # ─── Step 4: Admin configuration ────────────────────────────────────────────
@@ -461,6 +499,31 @@ echo ""
 echo "${BOLD}Step 7/9: Generating .env file${NC}"
 echo ""
 
+# Detect the dangerous scenario where .env is missing (so we generated fresh
+# DB_PASSWORD this run) but Postgres named-volumes from a previous install
+# still exist — those volumes were initialised with the OLD password and will
+# reject every service connection. Offer to wipe them so the new secrets stick.
+if [ ! -f "$ENV_FILE" ] && command -v docker >/dev/null 2>&1; then
+  STALE_VOLUMES="$(docker volume ls --format '{{.Name}}' 2>/dev/null | grep -E '^claw_pg-|^claw_mongo|^claw_rabbitmq' || true)"
+  if [ -n "$STALE_VOLUMES" ]; then
+    warn "Detected $(echo "$STALE_VOLUMES" | wc -l | tr -d ' ') existing data volume(s) from a previous install:"
+    while IFS= read -r v; do echo "    - $v"; done <<<"$STALE_VOLUMES"
+    warn "Your .env is missing, so fresh secrets were just generated. Those secrets"
+    warn "will NOT match the passwords baked into the volumes above. Every service"
+    warn "will fail with 'password authentication failed for user \"claw\"'."
+    ask "Wipe these volumes so the new secrets work? Type 'WIPE' to confirm: "
+    read -r confirm_wipe
+    if [ "$confirm_wipe" = "WIPE" ]; then
+      while IFS= read -r v; do
+        docker volume rm "$v" >/dev/null 2>&1 && ok "Removed $v" || warn "Could not remove $v (still in use?)"
+      done <<<"$STALE_VOLUMES"
+    else
+      warn "Volumes kept. Restore the prior .env (or its DB_PASSWORD) before continuing"
+      warn "or re-run with 'WIPE' to clear the data."
+    fi
+  fi
+fi
+
 SKIP_ENV=false
 
 if [ -f "$ENV_FILE" ]; then
@@ -469,6 +532,10 @@ if [ -f "$ENV_FILE" ]; then
     SKIP_ENV=true
   else
     warn "Existing .env file found"
+    info "Note: infrastructure secrets (DB / Mongo / RabbitMQ / JWT / ENCRYPTION_KEY)"
+    info "      are PRESERVED from the existing .env regardless of your answer below"
+    info "      so docker volumes keep working. Only admin/hostname/webhook secrets"
+    info "      are rewritten on overwrite."
     ask "Overwrite it with the recreated credentials? [y/N]: "
     read -r overwrite
     if [[ "$overwrite" != "y" && "$overwrite" != "Y" ]]; then

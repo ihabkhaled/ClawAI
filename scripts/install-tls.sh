@@ -185,16 +185,32 @@ $(i=0; for h in "${HOSTS[@]}"; do
 done)
 EOF
 
+  # Capture stderr to a temp file so we can replay it if the docker run fails.
+  # The original `>/dev/null 2>&1` mask hid every failure mode (missing docker
+  # rights, alpine pull failed, openssl config typo, …) and made
+  # install.sh proceed past a silently-broken TLS step.
+  local docker_stderr
+  docker_stderr="$(mktemp)"
+  local rc=0
   docker run --rm -v "$CERTS_DIR:/certs" -w /certs alpine:3.20 sh -c '
+    set -e
     apk add --no-cache openssl >/dev/null 2>&1
     openssl req -x509 -nodes -newkey rsa:4096 -days 825 \
       -keyout claw.key -out claw.crt \
-      -config openssl.cnf -extensions v3_ca >/dev/null 2>&1
+      -config openssl.cnf -extensions v3_ca
     cp claw.crt rootCA.pem
     chmod 644 claw.crt rootCA.pem
     chmod 600 claw.key
-  ' >/dev/null 2>&1
+  ' 2>"$docker_stderr" >/dev/null || rc=$?
   rm -f "$CERTS_DIR/openssl.cnf"
+  if [ "$rc" -ne 0 ]; then
+    fail "openssl cert generation failed (exit $rc). Output below:"
+    cat "$docker_stderr" >&2 || true
+    rm -f "$docker_stderr"
+    return 1
+  fi
+  rm -f "$docker_stderr"
+  return 0
 }
 
 # ─── Hosts file: CLAW_HOSTNAME → 127.0.0.1 (idempotent) ───────────────────
@@ -227,21 +243,32 @@ USED_MKCERT=0
 
 if try_mkcert && command -v mkcert >/dev/null 2>&1; then
   ok "mkcert installed ($(mkcert -version 2>/dev/null || echo 'unknown'))"
-  if mkcert -install >/dev/null 2>&1; then
+  mkcert_install_log="$(mktemp)"
+  if mkcert -install >"$mkcert_install_log" 2>&1; then
     ok "Local root CA trusted in OS / browser trust stores"
+    mkcert_leaf_log="$(mktemp)"
+    leaf_rc=0
     (
       cd "$CERTS_DIR"
-      mkcert -cert-file claw.crt -key-file claw.key "${HOSTS[@]}" >/dev/null 2>&1
-    )
-    ROOT_CA_DIR="$(mkcert -CAROOT 2>/dev/null)"
-    if [ -n "$ROOT_CA_DIR" ] && [ -f "$ROOT_CA_DIR/rootCA.pem" ]; then
-      cp -f "$ROOT_CA_DIR/rootCA.pem" "$CERTS_DIR/rootCA.pem"
+      mkcert -cert-file claw.crt -key-file claw.key "${HOSTS[@]}"
+    ) >"$mkcert_leaf_log" 2>&1 || leaf_rc=$?
+    if [ "$leaf_rc" -eq 0 ] && [ -f "$CERTS_DIR/claw.crt" ] && [ -f "$CERTS_DIR/claw.key" ]; then
+      ROOT_CA_DIR="$(mkcert -CAROOT 2>/dev/null)"
+      if [ -n "$ROOT_CA_DIR" ] && [ -f "$ROOT_CA_DIR/rootCA.pem" ]; then
+        cp -f "$ROOT_CA_DIR/rootCA.pem" "$CERTS_DIR/rootCA.pem"
+      fi
+      USED_MKCERT=1
+      ok "Browser-trusted cert issued via mkcert"
+    else
+      warn "mkcert leaf-cert issuance failed (rc=$leaf_rc) — falling back to openssl. Output:"
+      cat "$mkcert_leaf_log" >&2 || true
     fi
-    USED_MKCERT=1
-    ok "Browser-trusted cert issued via mkcert"
+    rm -f "$mkcert_leaf_log"
   else
-    warn "mkcert -install failed — falling back to openssl self-signed"
+    warn "mkcert -install failed — falling back to openssl self-signed. Output:"
+    cat "$mkcert_install_log" >&2 || true
   fi
+  rm -f "$mkcert_install_log"
 fi
 
 if [ "$USED_MKCERT" -eq 0 ]; then
@@ -252,6 +279,17 @@ if [ "$USED_MKCERT" -eq 0 ]; then
     exit 1
   fi
 fi
+
+# Final assertion: cert files MUST exist at the paths the containers mount.
+# If either generator silently produced no output, this is where we surface it
+# so install.sh doesn't move on with a half-broken TLS state.
+for required in claw.crt claw.key rootCA.pem; do
+  if [ ! -f "$CERTS_DIR/$required" ]; then
+    fail "$CERTS_DIR/$required is missing after cert generation — install.sh should not proceed."
+    fail "Run scripts/install-tls.sh manually and inspect the output."
+    exit 1
+  fi
+done
 
 ensure_hosts_entry
 
