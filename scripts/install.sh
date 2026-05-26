@@ -940,32 +940,64 @@ fi
 TOTAL_TASKS=${#COMPOSE_TASKS[@]}
 
 if [ "$TOTAL_TASKS" -gt 0 ]; then
-  DOWNLOAD_COUNT=0
-  BUILD_COUNT=0
-  CACHED_BUILD_COUNT=0
-  TASK_INDEX=0
+  # Two-phase plan: collect all download / build / cached tasks, then run a
+  # SINGLE `docker compose pull` and a SINGLE `docker compose build` so Compose
+  # parallelises across services (default behaviour since v2). The old
+  # one-service-at-a-time loop serialised work that Compose was happy to do
+  # concurrently.
+  DOWNLOAD_NAMES=()
+  DOWNLOAD_DETAILS=()
+  BUILD_NAMES=()
+  BUILD_DETAILS=()
+  CACHED_NAMES=()
+  CACHED_IMAGES=()
 
   for TASK in "${COMPOSE_TASKS[@]}"; do
-    TASK_INDEX=$((TASK_INDEX + 1))
     IFS='|' read -r TASK_PHASE TASK_NAME TASK_DETAIL TASK_IMAGE <<< "$TASK"
-    PROGRESS=$((5 + (((TASK_INDEX - 1) * 80) / TOTAL_TASKS)))
-
     if [ "$TASK_PHASE" = "download" ]; then
-      DOWNLOAD_COUNT=$((DOWNLOAD_COUNT + 1))
-      info "[$PROGRESS%] Downloading $TASK_NAME ($TASK_DETAIL) [$TASK_INDEX/$TOTAL_TASKS]"
-      docker compose $COMPOSE_FILES pull "$TASK_NAME"
+      DOWNLOAD_NAMES+=("$TASK_NAME")
+      DOWNLOAD_DETAILS+=("$TASK_NAME ($TASK_DETAIL)")
     else
       if docker_image_exists "$TASK_IMAGE"; then
-        CACHED_BUILD_COUNT=$((CACHED_BUILD_COUNT + 1))
-        info "[$PROGRESS%] Using existing image for $TASK_NAME ($TASK_IMAGE) [$TASK_INDEX/$TOTAL_TASKS]"
-        continue
+        CACHED_NAMES+=("$TASK_NAME")
+        CACHED_IMAGES+=("$TASK_NAME ($TASK_IMAGE)")
+      else
+        BUILD_NAMES+=("$TASK_NAME")
+        BUILD_DETAILS+=("$TASK_NAME ($TASK_DETAIL)")
       fi
-
-      BUILD_COUNT=$((BUILD_COUNT + 1))
-      info "[$PROGRESS%] Building $TASK_NAME ($TASK_DETAIL) [$TASK_INDEX/$TOTAL_TASKS]"
-      docker compose $COMPOSE_FILES build --progress plain "$TASK_NAME"
     fi
   done
+
+  DOWNLOAD_COUNT=${#DOWNLOAD_NAMES[@]}
+  BUILD_COUNT=${#BUILD_NAMES[@]}
+  CACHED_BUILD_COUNT=${#CACHED_NAMES[@]}
+
+  info "Docker plan: $DOWNLOAD_COUNT pull, $BUILD_COUNT build, $CACHED_BUILD_COUNT cached"
+
+  if [ "$DOWNLOAD_COUNT" -gt 0 ]; then
+    info "[10%] Pulling $DOWNLOAD_COUNT image(s) in parallel:"
+    for entry in "${DOWNLOAD_DETAILS[@]}"; do
+      info "  - $entry"
+    done
+    docker compose $COMPOSE_FILES pull "${DOWNLOAD_NAMES[@]}"
+  fi
+
+  if [ "$CACHED_BUILD_COUNT" -gt 0 ]; then
+    info "[40%] Reusing $CACHED_BUILD_COUNT cached image(s):"
+    for entry in "${CACHED_IMAGES[@]}"; do
+      info "  - $entry"
+    done
+  fi
+
+  if [ "$BUILD_COUNT" -gt 0 ]; then
+    info "[50%] Building $BUILD_COUNT service(s) in parallel:"
+    for entry in "${BUILD_DETAILS[@]}"; do
+      info "  - $entry"
+    done
+    # Docker Compose v2 builds services concurrently when given multiple names.
+    # `--progress plain` keeps per-service log lines visible while they run.
+    docker compose $COMPOSE_FILES build --progress plain "${BUILD_NAMES[@]}"
+  fi
 
   ok "Docker progress plan: $DOWNLOAD_COUNT downloads, $BUILD_COUNT builds, $CACHED_BUILD_COUNT cached builds"
 else

@@ -1020,29 +1020,67 @@ $composeTasks = @(Get-ComposeTasks)
 $totalTasks = $composeTasks.Count
 
 if ($totalTasks -gt 0) {
-    $downloadCount = 0
-    $buildCount = 0
-    $cachedBuildCount = 0
+    # Two-phase plan (mirrors install.sh): collect all download / build /
+    # cached tasks, then run a SINGLE `docker compose pull` and a SINGLE
+    # `docker compose build` so Compose parallelises across services
+    # (default behaviour since v2). The old one-service-at-a-time loop
+    # serialised work that Compose was happy to do concurrently.
+    $downloadNames = New-Object System.Collections.Generic.List[string]
+    $downloadDetails = New-Object System.Collections.Generic.List[string]
+    $buildNames = New-Object System.Collections.Generic.List[string]
+    $buildDetails = New-Object System.Collections.Generic.List[string]
+    $cachedNames = New-Object System.Collections.Generic.List[string]
+    $cachedImages = New-Object System.Collections.Generic.List[string]
 
-    for ($index = 0; $index -lt $totalTasks; $index++) {
-        $task = $composeTasks[$index]
-        $progress = 5 + [Math]::Floor((($index) * 80) / [Math]::Max($totalTasks, 1))
-
+    foreach ($task in $composeTasks) {
         if ($task.Phase -eq "download") {
-            $downloadCount++
-            Write-Info ("[{0,3}%] Downloading {1} ({2}) [{3}/{4}]" -f $progress, $task.Name, $task.Detail, ($index + 1), $totalTasks)
-            docker compose $ComposeFiles pull $task.Name
+            $downloadNames.Add($task.Name) | Out-Null
+            $downloadDetails.Add("$($task.Name) ($($task.Detail))") | Out-Null
         } else {
             if (Test-DockerImageExists -ImageName $task.Image) {
-                $cachedBuildCount++
-                Write-Info ("[{0,3}%] Using existing image for {1} ({2}) [{3}/{4}]" -f $progress, $task.Name, $task.Image, ($index + 1), $totalTasks)
-                continue
+                $cachedNames.Add($task.Name) | Out-Null
+                $cachedImages.Add("$($task.Name) ($($task.Image))") | Out-Null
+            } else {
+                $buildNames.Add($task.Name) | Out-Null
+                $buildDetails.Add("$($task.Name) ($($task.Detail))") | Out-Null
             }
-
-            $buildCount++
-            Write-Info ("[{0,3}%] Building {1} ({2}) [{3}/{4}]" -f $progress, $task.Name, $task.Detail, ($index + 1), $totalTasks)
-            docker compose $ComposeFiles build --progress plain $task.Name
         }
+    }
+
+    $downloadCount = $downloadNames.Count
+    $buildCount = $buildNames.Count
+    $cachedBuildCount = $cachedNames.Count
+
+    Write-Info "Docker plan: $downloadCount pull, $buildCount build, $cachedBuildCount cached"
+
+    if ($downloadCount -gt 0) {
+        Write-Info "[10%] Pulling $downloadCount image(s) in parallel:"
+        foreach ($entry in $downloadDetails) {
+            Write-Info "  - $entry"
+        }
+        # PowerShell auto-flattens array variables when passed to a native
+        # command, so a single `pull svc1 svc2 svc3` invocation lets Compose
+        # parallelise pulls across services.
+        $downloadArgs = $downloadNames.ToArray()
+        docker compose $ComposeFiles pull $downloadArgs
+    }
+
+    if ($cachedBuildCount -gt 0) {
+        Write-Info "[40%] Reusing $cachedBuildCount cached image(s):"
+        foreach ($entry in $cachedImages) {
+            Write-Info "  - $entry"
+        }
+    }
+
+    if ($buildCount -gt 0) {
+        Write-Info "[50%] Building $buildCount service(s) in parallel:"
+        foreach ($entry in $buildDetails) {
+            Write-Info "  - $entry"
+        }
+        # Docker Compose v2 builds services concurrently when given multiple
+        # names. `--progress plain` keeps per-service log lines visible.
+        $buildArgs = $buildNames.ToArray()
+        docker compose $ComposeFiles build --progress plain $buildArgs
     }
 
     Write-Ok "Docker progress plan: $downloadCount downloads, $buildCount builds, $cachedBuildCount cached builds"

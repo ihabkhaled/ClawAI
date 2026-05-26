@@ -334,9 +334,72 @@ jobs:
         run: npm run test --workspace=${{ matrix.workspace }}
 
   build:
-    name: Build
+    name: Build (${{ matrix.service }})
     runs-on: ubuntu-latest
     needs: [lint, typecheck, test]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: auth
+            workspace: claw-auth-service
+            prisma: true
+          - service: chat
+            workspace: claw-chat-service
+            prisma: true
+          - service: connector
+            workspace: claw-connector-service
+            prisma: true
+          - service: routing
+            workspace: claw-routing-service
+            prisma: true
+          - service: memory
+            workspace: claw-memory-service
+            prisma: true
+          - service: file
+            workspace: claw-file-service
+            prisma: true
+          - service: ollama
+            workspace: claw-ollama-service
+            prisma: true
+          - service: audit
+            workspace: claw-audit-service
+            prisma: false
+          - service: image
+            workspace: claw-image-service
+            prisma: true
+          - service: file-generation
+            workspace: claw-file-generation-service
+            prisma: true
+          - service: workspace
+            workspace: claw-workspace-service
+            prisma: true
+          - service: agent
+            workspace: claw-agent-service
+            prisma: true
+          - service: research
+            workspace: claw-research-service
+            prisma: true
+          - service: llamacpp
+            workspace: claw-llamacpp-service
+            prisma: true
+          - service: client-logs
+            workspace: claw-client-logs-service
+            prisma: false
+          - service: server-logs
+            workspace: claw-server-logs-service
+            prisma: false
+          - service: health
+            workspace: claw-health-service
+            prisma: false
+          - service: frontend
+            workspace: claw-frontend
+            prisma: false
+    env:
+      # next build (claw-frontend) hits the same v8-heap ceiling that
+      # the test job documents. Apply globally for parity — backend
+      # builds are small and don't notice.
+      NODE_OPTIONS: --max-old-space-size=8192
     steps:
       - uses: actions/checkout@v6
 
@@ -359,11 +422,9 @@ jobs:
           cd ../shared-auth && npx tsc
           cd ../shared-utilities && npx tsc
 
-      - name: Generate Prisma clients
-        run: |
-          for svc in auth chat connector routing memory file ollama image file-generation workspace agent research llamacpp; do
-            cd apps/claw-${svc}-service && npx prisma generate && cd ../..
-          done
+      - name: Generate Prisma client
+        if: matrix.prisma == true
+        run: cd apps/claw-${{ matrix.service }}-service && npx prisma generate
 
-      - name: Build all services
-        run: npm run build
+      - name: Build
+        run: npm run build --workspace=${{ matrix.workspace }}

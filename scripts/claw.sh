@@ -195,9 +195,17 @@ case "$1" in
     detect_gpu
     ensure_network
     SVC_FLAGS=$(build_svc_compose_flags)
-    echo "Rebuilding and starting backend + frontend services ($MODE mode, gpu=$GPU_VENDOR)..."
+    echo "Building backend + frontend services in parallel ($MODE mode, gpu=$GPU_VENDOR)..."
+    # Split into explicit build + up so progress for the parallel build phase
+    # is unambiguous and not interleaved with the container-start phase.
+    # Docker Compose v2 builds across services concurrently by default; this
+    # invocation passes no service list so every service in the stitched
+    # compose files is included.
     # shellcheck disable=SC2086
-    docker compose -p claw $SVC_FLAGS up -d --build
+    docker compose -p claw $SVC_FLAGS build --progress plain
+    echo "Starting backend + frontend services..."
+    # shellcheck disable=SC2086
+    docker compose -p claw $SVC_FLAGS up -d --no-build
     ;;
   ollama:up)
     detect_gpu
