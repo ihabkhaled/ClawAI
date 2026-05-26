@@ -1,11 +1,21 @@
+import { PrismaPg } from "@prisma/adapter-pg";
+
 import { PrismaClient } from "../src/generated/prisma";
 import { hashPassword } from "../src/common/utilities/hashing.utility";
 
-const DEFAULT_ADMIN_EMAIL = "admin@claw.local";
-const DEFAULT_ADMIN_USERNAME = "admin";
-const DEFAULT_ADMIN_PASSWORD = "ClawAdmin123!";
+// Prefer .env overrides; fall back to safe defaults for first-run dev installs.
+const DEFAULT_ADMIN_EMAIL = process.env["ADMIN_EMAIL"] ?? "admin@claw.local";
+const DEFAULT_ADMIN_USERNAME = process.env["ADMIN_USERNAME"] ?? "admin";
+const DEFAULT_ADMIN_PASSWORD = process.env["ADMIN_PASSWORD"] ?? "ClawAdmin123!";
 
-const prisma = new PrismaClient();
+// Prisma 7 dropped support for `new PrismaClient()` with no args — every
+// client must be wired through a driver adapter (or Accelerate). Mirror the
+// runtime PrismaService here so `prisma db seed` works on a fresh install.
+const connectionString = process.env["AUTH_DATABASE_URL"];
+if (!connectionString) {
+  throw new Error("AUTH_DATABASE_URL must be set when running prisma db seed");
+}
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 
 async function seed(): Promise<void> {
   const existingCount = await prisma.user.count();
