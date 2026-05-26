@@ -6,16 +6,20 @@
 #   Tier 1 — mkcert (browser-trusted): installs mkcert via winget/choco/
 #            direct-binary, runs `mkcert -install` (self-elevates ONCE for
 #            LocalMachine cert store), issues a leaf cert covering localhost
-#            + every internal docker hostname + the claw.local alias.
+#            + every internal docker hostname + the user-configured
+#            CLAW_HOSTNAME (default claw.local, can be a domain or bare IP).
 #
 #   Tier 2 — openssl self-signed (fallback): if mkcert install fails OR
 #            admin elevation is declined, generates a self-signed leaf cert
 #            via a one-shot `docker run alpine openssl ...`. Browser shows
 #            a one-time "Not Secure" warning but inter-service TLS works.
 #
-# Hosts file: appends `127.0.0.1 claw.local` to
-# %SystemRoot%\System32\drivers\etc\hosts (idempotent, self-elevates if not
-# already admin — silent if writeable, asks once otherwise).
+# Hosts file: appends `127.0.0.1 ${CLAW_HOSTNAME}` to
+# %SystemRoot%\System32\drivers\etc\hosts (idempotent; skipped when
+# CLAW_HOSTNAME is an IP; self-elevates if not already admin).
+#
+# Hostname source: $env:CLAW_HOSTNAME -> .env file -> claw.local default.
+# Re-run any time you change CLAW_HOSTNAME in .env to reissue the cert.
 #
 # Idempotent. Forced on by scripts/install.ps1 — never prompts the user
 # beyond the (optional) UAC popup.
@@ -32,13 +36,39 @@ function Write-TlsFail($msg) { Write-Tls $msg 'Red' }
 $ScriptDir   = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Split-Path -Parent $ScriptDir
 $CertsDir    = Join-Path $ProjectRoot 'certs'
+$EnvFile     = Join-Path $ProjectRoot '.env'
 if (-not (Test-Path $CertsDir)) {
     New-Item -ItemType Directory -Path $CertsDir | Out-Null
 }
 
-# Every internal docker hostname + the claw.local alias.
+# ─── Resolve the public hostname ────────────────────────────────────────────
+# Precedence: CLAW_HOSTNAME env var -> .env file -> claw.local default.
+# install.ps1 sets $env:CLAW_HOSTNAME before invoking us; standalone re-runs
+# read it from .env so the cert always tracks whatever the app is serving.
+function Get-ClawHostname {
+    if ($env:CLAW_HOSTNAME) { return $env:CLAW_HOSTNAME }
+    if (Test-Path $EnvFile) {
+        foreach ($line in Get-Content -LiteralPath $EnvFile) {
+            if ($line -match '^CLAW_HOSTNAME=(.+)$') {
+                return $Matches[1].Trim()
+            }
+        }
+    }
+    return 'claw.local'
+}
+
+$ClawHostname = Get-ClawHostname
+
+function Test-IsIpv4 {
+    param([string]$Value)
+    return ($Value -match '^(\d{1,3}\.){3}\d{1,3}$')
+}
+
+# Every internal docker hostname that any service (or nginx) might present,
+# plus the user-configured public hostname. The wildcard form is only
+# included for DNS-shaped hostnames (skipped for bare IPs).
 $HostsArr = @(
-    'localhost', '127.0.0.1', '::1', 'claw.local', '*.claw.local',
+    'localhost', '127.0.0.1', '::1',
     'nginx',
     'auth-service', 'chat-service', 'connector-service', 'routing-service',
     'memory-service', 'file-service', 'audit-service', 'ollama-service',
@@ -46,6 +76,12 @@ $HostsArr = @(
     'image-service', 'file-generation-service', 'workspace-service',
     'agent-service', 'research-service', 'llamacpp-service'
 )
+$HostsArr += $ClawHostname
+if (-not (Test-IsIpv4 $ClawHostname)) {
+    $HostsArr += "*.$ClawHostname"
+}
+
+Write-Tls "Cert will cover: $ClawHostname (and $($HostsArr.Count) other SANs)"
 
 $IsAdmin = ([Security.Principal.WindowsPrincipal] `
             [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
@@ -179,45 +215,51 @@ subjectAltName = @alt_names
     }
 }
 
-# ─── Hosts file: claw.local 127.0.0.1 (idempotent) ────────────────────────
+# ─── Hosts file: CLAW_HOSTNAME -> 127.0.0.1 (idempotent) ──────────────────
+# Skipped when CLAW_HOSTNAME is an IPv4 address (no resolution needed).
 function Ensure-HostsEntry {
+    if (Test-IsIpv4 $ClawHostname) {
+        Write-TlsOk "Hostname is an IP ($ClawHostname) - no hosts file entry needed"
+        return
+    }
     $hostsFile = "$env:SystemRoot\System32\drivers\etc\hosts"
     if (-not (Test-Path $hostsFile)) {
         Write-TlsWarn "hosts file not found at $hostsFile"
         return
     }
+    $escaped = [Regex]::Escape($ClawHostname)
     $content = Get-Content -LiteralPath $hostsFile -Raw -ErrorAction SilentlyContinue
-    if ($content -match '(?m)^\s*[^#]*\bclaw\.local\b') {
-        Write-TlsOk 'claw.local already in hosts file'
+    if ($content -match "(?m)^\s*[^#]*\b$escaped\b") {
+        Write-TlsOk "$ClawHostname already in hosts file"
         return
     }
 
-    $entry = "`r`n127.0.0.1 claw.local"
+    $entry = "`r`n127.0.0.1 $ClawHostname"
     if ($IsAdmin) {
         try {
             Add-Content -LiteralPath $hostsFile -Value $entry -Encoding ASCII -ErrorAction Stop
-            Write-TlsOk 'claw.local added to hosts file'
+            Write-TlsOk "$ClawHostname added to hosts file"
         } catch {
             Write-TlsWarn "Could not write hosts file: $($_.Exception.Message)"
-            Write-TlsWarn "Add manually:  127.0.0.1 claw.local"
+            Write-TlsWarn "Add manually:  127.0.0.1 $ClawHostname"
         }
         return
     }
 
     # Not admin — self-elevate JUST for the hosts file write.
-    Write-Tls 'Requesting admin elevation to add claw.local to hosts file'
+    Write-Tls "Requesting admin elevation to add $ClawHostname to hosts file"
     $cmd = "Add-Content -LiteralPath '$hostsFile' -Value '$entry' -Encoding ASCII"
     try {
         $proc = Start-Process powershell -Verb runAs `
             -ArgumentList @('-NoProfile','-NonInteractive','-Command', $cmd) `
             -PassThru -Wait -WindowStyle Hidden
         if ($proc.ExitCode -eq 0) {
-            Write-TlsOk 'claw.local added to hosts file'
+            Write-TlsOk "$ClawHostname added to hosts file"
         } else {
-            Write-TlsWarn 'Elevation declined or write failed — add manually: 127.0.0.1 claw.local'
+            Write-TlsWarn "Elevation declined or write failed - add manually: 127.0.0.1 $ClawHostname"
         }
     } catch {
-        Write-TlsWarn 'Could not elevate — add manually: 127.0.0.1 claw.local'
+        Write-TlsWarn "Could not elevate - add manually: 127.0.0.1 $ClawHostname"
     }
 }
 
@@ -260,5 +302,9 @@ if ($UsedMkcert) {
 Write-Host '  certs/claw.crt     leaf cert (mounted into every container)'
 Write-Host '  certs/claw.key     leaf private key (mounted read-only)'
 Write-Host '  certs/rootCA.pem   root CA — used as NODE_EXTRA_CA_CERTS'
-Write-Host '  hosts entry:       127.0.0.1 claw.local (try: https://claw.local)'
+if (Test-IsIpv4 $ClawHostname) {
+    Write-Host "  hosts entry:       (skipped - IP) try: https://$ClawHostname"
+} else {
+    Write-Host "  hosts entry:       127.0.0.1 $ClawHostname (try: https://$ClawHostname)"
+}
 Write-Host ''
