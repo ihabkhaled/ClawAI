@@ -27,7 +27,7 @@ export const createMemorySchema = z.object({
   retentionPolicy: z.nativeEnum(MemoryRetention).optional(),
   expiresAt: z.string().datetime().optional(),
   pinned: z.boolean().optional(),
-  provenanceJson: z.record(z.unknown()).optional(),
+  provenanceJson: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type CreateMemoryDto = z.infer<typeof createMemorySchema>;

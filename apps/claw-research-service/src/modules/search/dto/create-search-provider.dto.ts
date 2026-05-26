@@ -8,8 +8,8 @@ export const createSearchProviderSchema = z.object({
   description: z.string().max(500).optional(),
   baseUrl: z.string().url().max(500),
   /** Secret config blob. Typically `{ apiKey: "..." }` or `{ username, password }`. */
-  secretConfig: z.record(z.string().max(4096)).optional(),
-  publicConfig: z.record(z.unknown()).optional(),
+  secretConfig: z.record(z.string(), z.string().max(4096)).optional(),
+  publicConfig: z.record(z.string(), z.unknown()).optional(),
   enabled: z.boolean().optional(),
   priority: z.number().int().min(0).max(1000).optional(),
   allowlistDomains: z.array(z.string().max(256)).max(50).optional(),

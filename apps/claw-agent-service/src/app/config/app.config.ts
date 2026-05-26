@@ -11,6 +11,7 @@ const appConfigSchema = z.object({
     .regex(/^[\da-fA-F]+$/, 'ENCRYPTION_KEY must be valid hex'),
   AGENT_PORT: z.coerce.number().int().positive().default(4015),
   NODE_ENV: z.string().default('development'),
+  CLAW_HOSTNAME: z.string().min(1).default('claw.local'),
   CORS_ORIGINS: z.string().default('https://claw.local'),
   THROTTLE_TTL: z.coerce.number().int().positive().default(60_000),
   THROTTLE_LIMIT: z.coerce.number().int().positive().default(100),

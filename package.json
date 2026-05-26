@@ -36,21 +36,22 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@commitlint/cli": "^20.5.0",
+    "@commitlint/cli": "^21.0.1",
     "@commitlint/config-conventional": "^21.0.1",
     "@typescript/native-preview": "^7.0.0-dev.20260421.2",
     "eslint": "^9.39.4",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.7"
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.18",
+    "@nestjs/common": "^11.1.24",
     "@nestjs/core": "^11.1.21",
     "@nestjs/platform-express": "^11.1.18",
     "better-sqlite3": "^12.10.0",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "zod": "^4.4.3"
   },
   "overrides": {
     "@xmldom/xmldom": "^0.8.13",

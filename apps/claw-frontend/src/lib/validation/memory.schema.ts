@@ -6,9 +6,7 @@ const memoryTypeValues = Object.values(MemoryType) as [string, ...string[]];
 
 export const createMemorySchema = z.object({
   type: z.enum(memoryTypeValues, {
-    errorMap: (): { message: string } => ({
-      message: 'Please select a valid memory type',
-    }),
+    error: 'Please select a valid memory type',
   }),
   content: z
     .string()

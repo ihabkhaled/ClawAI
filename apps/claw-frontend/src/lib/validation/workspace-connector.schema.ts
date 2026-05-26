@@ -11,14 +11,10 @@ export const createWorkspaceConnectorSchema = z.object({
     .min(1, 'Connector name is required')
     .max(100, 'Connector name must be at most 100 characters'),
   provider: z.nativeEnum(WorkspaceProvider, {
-    errorMap: (): { message: string } => ({
-      message: 'Please select a valid workspace provider',
-    }),
+    error: 'Please select a valid workspace provider',
   }),
   permissionLevel: z.nativeEnum(WorkspacePermissionLevel, {
-    errorMap: (): { message: string } => ({
-      message: 'Please select a valid permission level',
-    }),
+    error: 'Please select a valid permission level',
   }),
 });
 

@@ -29,9 +29,9 @@ export const useMessageComposerState = ({
         component: 'chat',
         action: 'validation-error',
         message: 'Message validation failed',
-        details: { error: result.error.errors[0]?.message },
+        details: { error: result.error.issues[0]?.message },
       });
-      setValidationError(result.error.errors[0]?.message ?? 'Invalid message');
+      setValidationError(result.error.issues[0]?.message ?? 'Invalid message');
       return false;
     }
     setValidationError(null);

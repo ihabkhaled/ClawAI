@@ -25,7 +25,8 @@ async function bootstrap(): Promise<void> {
   app.useLogger(app.get(Logger));
   app.use(helmet());
   app.setGlobalPrefix('api/v1');
-  const corsOrigins = process.env['CORS_ORIGINS']?.split(',') ?? ['https://claw.local', 'https://claw.local:3000', 'https://claw.local'];
+  const clawHost = process.env['CLAW_HOSTNAME'] ?? 'claw.local';
+  const corsOrigins = process.env['CORS_ORIGINS']?.split(',') ?? [`https://${clawHost}`, `https://${clawHost}:3000`];
   app.enableCors({ origin: corsOrigins, credentials: true, methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'] });
   await app.listen(process.env['HEALTH_PORT'] ?? 4009);
 }

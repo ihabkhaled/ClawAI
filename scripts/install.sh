@@ -271,6 +271,43 @@ check_port 6380 "Redis"
 check_port 27018 "MongoDB"
 echo ""
 
+# ─── Step 2b: Hostname / public URL ─────────────────────────────────────────
+echo "${BOLD}Step 2b/9: Hostname${NC}"
+echo ""
+echo "  The host your Claw instance will be reachable at from a browser."
+echo "  Local install:   claw.local   (recommended — install-tls adds it to /etc/hosts)"
+echo "  Server/VM:       claw.example.com, app.intranet, or a bare IP like 192.168.1.50"
+echo ""
+
+EXISTING_HOSTNAME=""
+if [ -f "$ENV_FILE" ]; then
+  EXISTING_HOSTNAME="$(get_env_value "CLAW_HOSTNAME" "$ENV_FILE")"
+fi
+DEFAULT_HOSTNAME="${CLAW_HOSTNAME:-${EXISTING_HOSTNAME:-claw.local}}"
+
+if [ -t 0 ] && [ -z "${CLAW_HOSTNAME:-}" ]; then
+  ask "Hostname [default: $DEFAULT_HOSTNAME]: "
+  read -r CLAW_HOSTNAME_INPUT
+  CLAW_HOSTNAME="${CLAW_HOSTNAME_INPUT:-$DEFAULT_HOSTNAME}"
+else
+  CLAW_HOSTNAME="${CLAW_HOSTNAME:-$DEFAULT_HOSTNAME}"
+fi
+
+# Basic sanity check — no spaces, no protocol prefix, non-empty
+if [[ -z "$CLAW_HOSTNAME" || "$CLAW_HOSTNAME" =~ [[:space:]] || "$CLAW_HOSTNAME" =~ ^https?:// ]]; then
+  fail "Invalid hostname '$CLAW_HOSTNAME'. Use a bare host (e.g. claw.local, app.example.com, or 10.0.0.5)."
+  exit 1
+fi
+
+# Derived URLs (single source of truth — every other reference points back here)
+CLAW_BASE_URL="https://${CLAW_HOSTNAME}"
+CORS_ORIGINS_VALUE="https://${CLAW_HOSTNAME},https://${CLAW_HOSTNAME}:3000"
+export CLAW_HOSTNAME
+
+ok "Hostname: $CLAW_HOSTNAME"
+ok "Base URL: $CLAW_BASE_URL"
+echo ""
+
 # ─── Step 3: Generate secrets ────────────────────────────────────────────────
 echo "${BOLD}Step 3/9: Generating secrets${NC}"
 echo ""
@@ -281,18 +318,27 @@ DB_PASSWORD=$(gen_password)
 MONGO_PASS=$(gen_password)
 RABBIT_PASS=$(gen_password)
 ADMIN_PASS=$(gen_password)
+INTER_SERVICE_AUTH_TOKEN=$(gen_secret_hex)
+GITHUB_WEBHOOK_SECRET=$(gen_secret_hex)
+GITLAB_WEBHOOK_SECRET=$(gen_secret_hex)
+SLACK_SIGNING_SECRET=$(gen_secret_hex)
+JIRA_WEBHOOK_SECRET=$(gen_secret_hex)
+BITBUCKET_WEBHOOK_SECRET=$(gen_secret_hex)
+FIGMA_WEBHOOK_SECRET=$(gen_secret_hex)
 
 ok "JWT secret generated (${#JWT_SECRET} chars)"
 ok "Encryption key generated (${#ENCRYPTION_KEY} hex chars)"
 ok "Database passwords generated"
 ok "Admin password generated"
+ok "Inter-service auth token generated (${#INTER_SERVICE_AUTH_TOKEN} hex chars)"
+ok "Workspace webhook secrets generated (6 providers)"
 echo ""
 
 # ─── Step 4: Admin configuration ────────────────────────────────────────────
 echo "${BOLD}Step 4/9: Admin configuration${NC}"
 echo ""
 
-ADMIN_EMAIL="admin@claw.local"
+ADMIN_EMAIL="admin@claw.local"   # kept stable regardless of CLAW_HOSTNAME so admin login works on IP-hosted instances
 ADMIN_USERNAME="claw-admin"
 REUSE_EXISTING_ADMIN="false"
 EXISTING_ADMIN_EMAIL=""
@@ -444,7 +490,11 @@ if [ "$SKIP_ENV" != "true" ]; then
 
 # --- General ---
 NODE_ENV=development
-CORS_ORIGINS=https://claw.local,https://claw.local:3000
+
+# --- Hostname / Public URL (single source of truth) ---
+# Change CLAW_HOSTNAME and re-run scripts/install-tls.sh to reissue the TLS cert.
+CLAW_HOSTNAME=${CLAW_HOSTNAME}
+CORS_ORIGINS=${CORS_ORIGINS_VALUE}
 
 # --- TLS / SSL (mkcert-managed — see scripts/install-tls.sh) ---
 # Containers always look here. The leaf cert + private key + root CA are
@@ -572,7 +622,7 @@ ADMIN_PASSWORD=${ADMIN_PASS}
 # =============================================================================
 NEXT_PUBLIC_API_URL=
 NEXT_PUBLIC_APP_NAME=Claw
-NEXT_PUBLIC_APP_URL=https://claw.local
+NEXT_PUBLIC_APP_URL=${CLAW_BASE_URL}
 FRONTEND_PORT=3000
 
 # =============================================================================
@@ -687,6 +737,33 @@ JIRA_CLIENT_SECRET=
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 
+# Workspace webhook signing secrets (per provider). Used to verify inbound
+# webhook payloads — auto-generated above; rotate via UI or by re-running
+# scripts/install.sh.
+GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
+GITLAB_WEBHOOK_SECRET=${GITLAB_WEBHOOK_SECRET}
+SLACK_SIGNING_SECRET=${SLACK_SIGNING_SECRET}
+JIRA_WEBHOOK_SECRET=${JIRA_WEBHOOK_SECRET}
+BITBUCKET_WEBHOOK_SECRET=${BITBUCKET_WEBHOOK_SECRET}
+FIGMA_WEBHOOK_SECRET=${FIGMA_WEBHOOK_SECRET}
+
+# Stream 22 — service-to-service auth (file-service /upload-internal + /download-internal)
+INTER_SERVICE_AUTH_TOKEN=${INTER_SERVICE_AUTH_TOKEN}
+
+# Stream 22 — Gmail HTML rendering + attachments
+WORKSPACE_GMAIL_FETCH_ATTACHMENTS=true
+WORKSPACE_GMAIL_MAX_ATTACHMENT_BYTES=26214400
+
+# Desktop Agent capability framework (Stream 10 + V2 Stream 01 closeout)
+# CAPABILITY_DEPRECATED_TERMINAL_COMMAND_DUAL_WRITE controls whether
+# CommandRiskService also calls CapabilityRiskService for the
+# terminal-command soak window. Default-on while the divergence-count
+# (GET /api/v1/agent/capability/dual-write-status) is non-zero; flip to
+# `false` once the divergence rate has been zero for 7 consecutive days.
+# See docs/15-ai-context/desktop-agent-dual-write-retirement.md for the
+# retirement plan and post-flip rollback instructions.
+CAPABILITY_DEPRECATED_TERMINAL_COMMAND_DUAL_WRITE=true
+
 # =============================================================================
 # Per-Service Database URLs
 # =============================================================================
@@ -736,6 +813,14 @@ CLAMAV_HOST=clamav
 CLAMAV_PORT=3310
 CLAMAV_ENABLED=true
 
+# Workspace AI Actions — dynamic model resolution
+# Model selection is dynamic — resolved at runtime from connected connectors
+# (claw-connector-service) and installed Ollama models (claw-ollama-service).
+# DO NOT pin a specific local model here; the system resolves the best
+# available model per action kind based on what's actually present.
+AI_ACTION_REQUEST_TIMEOUT_MS=300000
+AI_ACTION_MODEL_RESOLVER_TTL_SECONDS=300
+
 # Workspace AI Action Approval Engine (Stream 10)
 AI_ACTION_QUEUE_EXPIRY_HOURS=24
 AI_ACTION_RISK_AUTO_APPROVE_MAX=30
@@ -751,6 +836,19 @@ AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS=48
 AUDIT_MONGODB_URI=mongodb://claw:${MONGO_PASS}@mongodb:27017/claw_audit?authSource=admin
 CLIENT_LOGS_MONGODB_URI=mongodb://claw:${MONGO_PASS}@mongodb:27017/claw_client_logs?authSource=admin
 SERVER_LOGS_MONGODB_URI=mongodb://claw:${MONGO_PASS}@mongodb:27017/claw_server_logs?authSource=admin
+
+# =============================================================================
+# Desktop Agent — native capability tooling (populated by install-agent-tooling)
+# =============================================================================
+# Set automatically by scripts/install-agent-tooling.{sh,ps1} when the binaries
+# are downloaded. Leave blank to use whatever's on PATH.
+#   AUDIO.TRANSCRIBE — whisper.cpp + ggml model
+WHISPER_CLI_PATH=
+WHISPER_MODEL_PATH=
+#   AUDIO.SYNTHESIZE — Piper binary
+PIPER_BIN_PATH=
+#   SCREEN.OCR — tesseract is auto-detected on PATH; override here if needed
+TESSERACT_BIN_PATH=
 ENVEOF
 
   ok ".env file generated"
@@ -762,8 +860,9 @@ echo "${BOLD}${CYAN}━━━━━━━━━━━━━━━━━━━━
 echo "${BOLD}  Configuration Summary${NC}"
 echo "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "  Frontend:          https://claw.local"
-echo "  API Gateway:       https://claw.local"
+echo "  Hostname:          ${CLAW_HOSTNAME}"
+echo "  Frontend:          ${CLAW_BASE_URL}"
+echo "  API Gateway:       ${CLAW_BASE_URL}"
 echo "  RabbitMQ UI:       http://localhost:15672"
 echo ""
 echo "  Admin email:       ${ADMIN_EMAIL}"
@@ -927,8 +1026,8 @@ else
 fi
 
 echo ""
-echo "  ${BOLD}Open Claw:${NC}         https://claw.local"
-echo "  ${BOLD}API Gateway:${NC}       https://claw.local"
+echo "  ${BOLD}Open Claw:${NC}         ${CLAW_BASE_URL}"
+echo "  ${BOLD}API Gateway:${NC}       ${CLAW_BASE_URL}"
 echo "  ${BOLD}RabbitMQ UI:${NC}       http://localhost:15672  (claw / ${RABBIT_PASS})"
 echo ""
 echo "  ${BOLD}Admin login:${NC}"

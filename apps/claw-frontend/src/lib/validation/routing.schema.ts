@@ -10,9 +10,7 @@ export const createRoutingPolicySchema = z.object({
     .min(1, 'Policy name is required')
     .max(255, 'Name must be at most 255 characters'),
   routingMode: z.enum(routingModeValues, {
-    errorMap: (): { message: string } => ({
-      message: 'Please select a valid routing mode',
-    }),
+    error: 'Please select a valid routing mode',
   }),
   priority: z
     .number()
