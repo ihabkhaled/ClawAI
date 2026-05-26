@@ -324,6 +324,48 @@ Test-PortAvailable 27018 "MongoDB"
 Write-Host ""
 
 # =============================================================================
+# Step 2b: Hostname / public URL
+# =============================================================================
+Write-Host "Step 2b/9: Hostname" -ForegroundColor White
+Write-Host ""
+Write-Host "  The host your Claw instance will be reachable at from a browser."
+Write-Host "  Local install:   claw.local   (recommended - install-tls adds it to hosts file)"
+Write-Host "  Server/VM:       claw.example.com, app.intranet, or a bare IP like 192.168.1.50"
+Write-Host ""
+
+$existingHostname = $null
+if (Test-Path $envFile) {
+    $existingHostname = Get-EnvValue -Path $envFile -Key "CLAW_HOSTNAME"
+}
+$defaultHostname = if ($env:CLAW_HOSTNAME) { $env:CLAW_HOSTNAME } elseif ($existingHostname) { $existingHostname } else { "claw.local" }
+
+if (-not $env:CLAW_HOSTNAME -and [Environment]::UserInteractive) {
+    Write-Ask "Hostname [default: $defaultHostname]: "
+    $hostnameInput = Read-Host
+    if ([string]::IsNullOrWhiteSpace($hostnameInput)) {
+        $clawHostname = $defaultHostname
+    } else {
+        $clawHostname = $hostnameInput.Trim()
+    }
+} else {
+    $clawHostname = if ($env:CLAW_HOSTNAME) { $env:CLAW_HOSTNAME } else { $defaultHostname }
+}
+
+if ([string]::IsNullOrWhiteSpace($clawHostname) -or $clawHostname -match '\s' -or $clawHostname -match '^https?://') {
+    Write-Fail "Invalid hostname '$clawHostname'. Use a bare host (e.g. claw.local, app.example.com, or 10.0.0.5)."
+    exit 1
+}
+
+# Derived URLs (single source of truth)
+$clawBaseUrl = "https://$clawHostname"
+$corsOriginsValue = "https://$clawHostname,https://${clawHostname}:3000"
+$env:CLAW_HOSTNAME = $clawHostname
+
+Write-Ok "Hostname: $clawHostname"
+Write-Ok "Base URL: $clawBaseUrl"
+Write-Host ""
+
+# =============================================================================
 # Step 3: Generate secrets
 # =============================================================================
 Write-Host "Step 3/9: Generating secrets" -ForegroundColor White
@@ -335,11 +377,20 @@ $dbPassword = New-Password
 $mongoPass = New-Password
 $rabbitPass = New-Password
 $adminPass = New-Password
+$interServiceToken = New-SecretHex
+$githubWebhookSecret = New-SecretHex
+$gitlabWebhookSecret = New-SecretHex
+$slackSigningSecret = New-SecretHex
+$jiraWebhookSecret = New-SecretHex
+$bitbucketWebhookSecret = New-SecretHex
+$figmaWebhookSecret = New-SecretHex
 
 Write-Ok "JWT secret generated ($($jwtSecret.Length) chars)"
 Write-Ok "Encryption key generated ($($encryptionKey.Length) hex chars)"
 Write-Ok "Database passwords generated"
 Write-Ok "Admin password generated"
+Write-Ok "Inter-service auth token generated ($($interServiceToken.Length) hex chars)"
+Write-Ok "Workspace webhook secrets generated (6 providers)"
 Write-Host ""
 
 # =============================================================================
@@ -348,7 +399,7 @@ Write-Host ""
 Write-Host "Step 4/9: Admin configuration" -ForegroundColor White
 Write-Host ""
 
-$adminEmail = "admin@claw.local"
+$adminEmail = "admin@claw.local"   # kept stable regardless of CLAW_HOSTNAME so admin login works on IP-hosted instances
 $adminUsername = "claw-admin"
 $reuseExistingAdmin = $false
 $existingAdminEmail = $null
@@ -513,7 +564,11 @@ if (-not $skipEnv) {
 
 # --- General ---
 NODE_ENV=development
-CORS_ORIGINS=https://claw.local,https://claw.local:3000
+
+# --- Hostname / Public URL (single source of truth) ---
+# Change CLAW_HOSTNAME and re-run scripts/install-tls.ps1 to reissue the TLS cert.
+CLAW_HOSTNAME=$clawHostname
+CORS_ORIGINS=$corsOriginsValue
 
 # --- TLS / SSL (mkcert-managed — see scripts/install-tls.ps1) ---
 # Containers always look here. The leaf cert + private key + root CA are
@@ -641,7 +696,7 @@ ADMIN_PASSWORD=$adminPass
 # =============================================================================
 NEXT_PUBLIC_API_URL=
 NEXT_PUBLIC_APP_NAME=Claw
-NEXT_PUBLIC_APP_URL=https://claw.local
+NEXT_PUBLIC_APP_URL=$clawBaseUrl
 FRONTEND_PORT=3000
 
 # =============================================================================
@@ -756,6 +811,33 @@ JIRA_CLIENT_SECRET=
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 
+# Workspace webhook signing secrets (per provider). Used to verify inbound
+# webhook payloads — auto-generated above; rotate via UI or by re-running
+# scripts/install.ps1.
+GITHUB_WEBHOOK_SECRET=$githubWebhookSecret
+GITLAB_WEBHOOK_SECRET=$gitlabWebhookSecret
+SLACK_SIGNING_SECRET=$slackSigningSecret
+JIRA_WEBHOOK_SECRET=$jiraWebhookSecret
+BITBUCKET_WEBHOOK_SECRET=$bitbucketWebhookSecret
+FIGMA_WEBHOOK_SECRET=$figmaWebhookSecret
+
+# Stream 22 — service-to-service auth (file-service /upload-internal + /download-internal)
+INTER_SERVICE_AUTH_TOKEN=$interServiceToken
+
+# Stream 22 — Gmail HTML rendering + attachments
+WORKSPACE_GMAIL_FETCH_ATTACHMENTS=true
+WORKSPACE_GMAIL_MAX_ATTACHMENT_BYTES=26214400
+
+# Desktop Agent capability framework (Stream 10 + V2 Stream 01 closeout)
+# CAPABILITY_DEPRECATED_TERMINAL_COMMAND_DUAL_WRITE controls whether
+# CommandRiskService also calls CapabilityRiskService for the
+# terminal-command soak window. Default-on while the divergence-count
+# (GET /api/v1/agent/capability/dual-write-status) is non-zero; flip to
+# ``false`` once the divergence rate has been zero for 7 consecutive days.
+# See docs/15-ai-context/desktop-agent-dual-write-retirement.md for the
+# retirement plan and post-flip rollback instructions.
+CAPABILITY_DEPRECATED_TERMINAL_COMMAND_DUAL_WRITE=true
+
 # =============================================================================
 # Per-Service Database URLs
 # =============================================================================
@@ -805,6 +887,14 @@ CLAMAV_HOST=clamav
 CLAMAV_PORT=3310
 CLAMAV_ENABLED=true
 
+# Workspace AI Actions — dynamic model resolution
+# Model selection is dynamic — resolved at runtime from connected connectors
+# (claw-connector-service) and installed Ollama models (claw-ollama-service).
+# DO NOT pin a specific local model here; the system resolves the best
+# available model per action kind based on what's actually present.
+AI_ACTION_REQUEST_TIMEOUT_MS=300000
+AI_ACTION_MODEL_RESOLVER_TTL_SECONDS=300
+
 # Workspace AI Action Approval Engine (Stream 10)
 AI_ACTION_QUEUE_EXPIRY_HOURS=24
 AI_ACTION_RISK_AUTO_APPROVE_MAX=30
@@ -820,6 +910,19 @@ AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS=48
 AUDIT_MONGODB_URI=mongodb://claw:$($mongoPass)@mongodb:27017/claw_audit?authSource=admin
 CLIENT_LOGS_MONGODB_URI=mongodb://claw:$($mongoPass)@mongodb:27017/claw_client_logs?authSource=admin
 SERVER_LOGS_MONGODB_URI=mongodb://claw:$($mongoPass)@mongodb:27017/claw_server_logs?authSource=admin
+
+# =============================================================================
+# Desktop Agent — native capability tooling (populated by install-agent-tooling)
+# =============================================================================
+# Set automatically by scripts/install-agent-tooling.{sh,ps1} when the binaries
+# are downloaded. Leave blank to use whatever's on PATH.
+#   AUDIO.TRANSCRIBE — whisper.cpp + ggml model
+WHISPER_CLI_PATH=
+WHISPER_MODEL_PATH=
+#   AUDIO.SYNTHESIZE — Piper binary
+PIPER_BIN_PATH=
+#   SCREEN.OCR — tesseract is auto-detected on PATH; override here if needed
+TESSERACT_BIN_PATH=
 "@
 
     Set-Content -Path $envFile -Value $envContent -Encoding UTF8
@@ -834,8 +937,9 @@ Write-Host ("=" * 64) -ForegroundColor Cyan
 Write-Host "  Configuration Summary" -ForegroundColor White
 Write-Host ("=" * 64) -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  Frontend:          https://claw.local"
-Write-Host "  API Gateway:       https://claw.local"
+Write-Host "  Hostname:          $clawHostname"
+Write-Host "  Frontend:          $clawBaseUrl"
+Write-Host "  API Gateway:       $clawBaseUrl"
 Write-Host "  RabbitMQ UI:       http://localhost:15672"
 Write-Host ""
 Write-Host "  Admin email:       $adminEmail"
@@ -993,8 +1097,8 @@ if ($unhealthy -eq 0) {
 }
 
 Write-Host ""
-Write-Host "  Open Claw:         https://claw.local" -ForegroundColor White
-Write-Host "  API Gateway:       https://claw.local" -ForegroundColor White
+Write-Host "  Open Claw:         $clawBaseUrl" -ForegroundColor White
+Write-Host "  API Gateway:       $clawBaseUrl" -ForegroundColor White
 Write-Host "  RabbitMQ UI:       http://localhost:15672" -ForegroundColor White
 Write-Host ""
 Write-Host "  Admin login:" -ForegroundColor White
