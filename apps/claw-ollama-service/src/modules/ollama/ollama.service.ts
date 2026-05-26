@@ -54,14 +54,38 @@ export class OllamaService implements OnModuleInit {
     await this.ensureDefaultRouterModel();
   }
 
-  /** Sync installed models from Ollama runtime into the database on startup */
+  /** Sync installed models from Ollama runtime into the database on startup.
+   *
+   *  Retries a handful of times with backoff because on a `claw.sh up` cold
+   *  start the ollama-service container may boot before the `ollama` host
+   *  entry is published into Docker DNS — the first call fails with
+   *  EAI_AGAIN. Without retries, the local_models table stays empty
+   *  forever, `LocalModelSelectionService` then can't resolve a default
+   *  chat model, and AUTO routing falls through to a literal "AUTO" model
+   *  name that Ollama rejects with 502.
+   */
   private async syncModelsFromRuntime(): Promise<void> {
-    try {
-      const runtimeModels = await this.ollamaManager.syncFromRuntime();
-      this.logger.log(`Synced ${String(runtimeModels)} models from Ollama runtime`);
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.warn(`Failed to sync models from Ollama runtime: ${msg}`);
+    const attempts = 8;
+    const baseDelayMs = 2000;
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      try {
+        const runtimeModels = await this.ollamaManager.syncFromRuntime();
+        this.logger.log(`Synced ${String(runtimeModels)} models from Ollama runtime`);
+        return;
+      } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : 'Unknown error';
+        if (attempt === attempts) {
+          this.logger.warn(
+            `Failed to sync models from Ollama runtime after ${String(attempts)} attempts: ${msg}`,
+          );
+          return;
+        }
+        const wait = baseDelayMs * attempt;
+        this.logger.warn(
+          `Sync attempt ${String(attempt)}/${String(attempts)} failed (${msg}) — retrying in ${String(wait)}ms`,
+        );
+        await new Promise<void>((resolve) => setTimeout(resolve, wait));
+      }
     }
   }
 
