@@ -413,5 +413,5 @@ volumes:
 
 networks:
   claw-network:
-    driver: bridge
+    external: true
     name: claw-network

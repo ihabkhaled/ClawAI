@@ -100,6 +100,9 @@ const appConfigSchema = z.object({
   // Stream 12.2 — Gmail INBOX_REPLY auto-suggest
   AUTO_SUGGEST_INBOX_REPLY_CRON: z.string().default('0 */15 * * * *'),
   AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS: z.coerce.number().int().positive().default(48),
+  // Public hostname used to classify "internal" recipients in the AI action
+  // risk scorer. Falls back to claw.local so dev environments behave the same.
+  CLAW_HOSTNAME: z.string().min(1).default('claw.local'),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;
