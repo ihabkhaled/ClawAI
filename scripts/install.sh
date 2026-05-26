@@ -335,11 +335,35 @@ if [ ! -f "$ENV_FILE" ] && [ -n "$EXISTING_VOLUMES" ]; then
     ask "Wipe volumes and continue? (type WIPE to confirm, anything else aborts): "
     read -r WIPE_CONFIRM
     if [ "$WIPE_CONFIRM" = "WIPE" ]; then
-      info "Stopping any running claw containers..."
-      docker ps -q --filter "name=claw-" | xargs -r docker stop >/dev/null 2>&1 || true
-      docker ps -aq --filter "name=claw-" | xargs -r docker rm -f >/dev/null 2>&1 || true
+      info "Stopping any running claw containers (waiting for full stop)..."
+      docker ps -q --filter "name=claw-" | xargs -r docker stop --time 30 >/dev/null 2>&1 || true
+      docker ps -aq --filter "name=claw-" | xargs -r docker rm -f -v >/dev/null 2>&1 || true
+      # Wait for the docker daemon to release volume mounts (race condition:
+      # `rm -f` returns before vfs unmount finishes on some hosts).
+      sleep 2
       info "Removing stale volumes..."
-      echo "$EXISTING_VOLUMES" | xargs -r docker volume rm >/dev/null 2>&1 || true
+      # Capture failures and retry once — `docker volume rm` rejects volumes
+      # that are still attached, even after container rm. A second pass after
+      # a short sleep catches the stragglers without continuing silently.
+      FAILED_VOLUMES=""
+      for vol in $EXISTING_VOLUMES; do
+        if ! docker volume rm "$vol" >/dev/null 2>&1; then
+          FAILED_VOLUMES="$FAILED_VOLUMES $vol"
+        fi
+      done
+      if [ -n "$FAILED_VOLUMES" ]; then
+        warn "First-pass volume removal left:$FAILED_VOLUMES — retrying after 5s"
+        sleep 5
+        for vol in $FAILED_VOLUMES; do
+          docker rm -f "$(docker ps -aq --filter "volume=$vol")" >/dev/null 2>&1 || true
+          if ! docker volume rm "$vol" >/dev/null 2>&1; then
+            fail "Could not remove $vol. Run manually:"
+            echo "    docker rm -f \$(docker ps -aq --filter 'volume=$vol')"
+            echo "    docker volume rm $vol"
+            exit 1
+          fi
+        done
+      fi
       ok "Stale volumes removed — proceeding with fresh secrets"
     else
       fail "Aborted. Restore .env or wipe volumes manually, then re-run."
