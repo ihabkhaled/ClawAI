@@ -35,8 +35,10 @@ export const queryKeys = {
     decisions: {
       all: ['routing', 'decisions'] as const,
       byThread: (threadId: string) => [...queryKeys.routing.decisions.all, threadId] as const,
+      detail: (id: string) => [...queryKeys.routing.decisions.all, 'detail', id] as const,
     },
     recovery: (limit: number) => ['routing', 'recovery', limit] as const,
+    playgroundSemantic: ['routing', 'playground', 'semantic'] as const,
   },
   localModels: {
     all: ['localModels'] as const,

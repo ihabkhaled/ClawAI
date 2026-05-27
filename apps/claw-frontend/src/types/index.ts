@@ -63,6 +63,36 @@ export type {
   PolicyFormStateReturn,
 } from './routing.types';
 export type {
+  AnalyzeSemanticRequest,
+  SemanticAnalysisStatus,
+  SemanticIntentAnalysis,
+  SemanticIntentAnalysisRecord,
+  SemanticModalityKind,
+  SemanticPrivacyClass,
+  SemanticRiskLevel,
+} from './semantic-analysis.types';
+export type {
+  RoutingDecisionConnectorHealthSnapshot,
+  RoutingDecisionDetail,
+  RoutingDecisionFallbackEntry,
+  RoutingDecisionRouteRoadmap,
+} from './routing-decision-detail.types';
+export type {
+  DecisionDetailDrawerProps,
+  ThreadContextInspectorProps,
+  WhyThisModelPanelProps,
+} from './why-this-model-component.types';
+export type { WhyThisModelRowProps } from './why-this-model-row.types';
+export type { DecisionDetailSectionsProps } from './decision-detail-sections.types';
+export type { RoutingPlaygroundSemanticResultProps } from './routing-playground-result.types';
+export type { DecisionSemanticSectionProps } from './decision-semantic-section.types';
+export type {
+  AnalyzeSemanticVariables,
+  RoutingPlaygroundFormState,
+  RoutingPlaygroundPageReturn,
+  RoutingPlaygroundTab,
+} from './routing-playground.types';
+export type {
   AuditLog,
   UsageEntry,
   AuditStats,

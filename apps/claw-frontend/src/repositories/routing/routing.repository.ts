@@ -1,6 +1,7 @@
 import { apiClient } from '@/services/shared/api-client';
 import type {
   AdaptiveLearningInsights,
+  AnalyzeSemanticRequest,
   CreatePolicyRequest,
   DecisionsListResponse,
   EvaluateRouteRequest,
@@ -14,8 +15,10 @@ import type {
   ReplayRunsListResponse,
   RecoveryStats,
   ReviewCaseRequest,
+  RoutingDecisionDetail,
   RoutingPolicy,
   RunComparisonResult,
+  SemanticIntentAnalysisRecord,
   UpdatePolicyRequest,
 } from '@/types';
 
@@ -115,6 +118,21 @@ export const routingRepository = {
   async getAdaptiveInsights(windowDays: number): Promise<AdaptiveLearningInsights> {
     const response = await apiClient.get<AdaptiveLearningInsights>(
       `/routing/adaptive-insights?windowDays=${String(windowDays)}`,
+    );
+    return response.data;
+  },
+
+  async getDecisionDetail(id: string): Promise<RoutingDecisionDetail> {
+    const response = await apiClient.get<RoutingDecisionDetail>(
+      `/routing/decisions/detail/${id}`,
+    );
+    return response.data;
+  },
+
+  async analyzeSemantic(payload: AnalyzeSemanticRequest): Promise<SemanticIntentAnalysisRecord> {
+    const response = await apiClient.post<SemanticIntentAnalysisRecord>(
+      '/routing/playground/analyze-semantic',
+      payload,
     );
     return response.data;
   },

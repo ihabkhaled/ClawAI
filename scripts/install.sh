@@ -861,6 +861,8 @@ ADMIN_PASSWORD=${ADMIN_PASS}
 NEXT_PUBLIC_API_URL=
 NEXT_PUBLIC_APP_NAME=Claw
 NEXT_PUBLIC_APP_URL=${CLAW_BASE_URL}
+# Phase 8 UI transparency — dev-only Thread Context Inspector toggle.
+NEXT_PUBLIC_ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED=false
 FRONTEND_PORT=3000
 
 # =============================================================================

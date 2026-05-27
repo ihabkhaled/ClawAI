@@ -42,15 +42,32 @@ export class SemanticIntentAnalyzerManager {
   // Runs the analyzer end-to-end. Always returns a record — failures
   // surface in the `status` field rather than throwing.
   async analyze(input: SemanticIntentAnalyzerInput): Promise<SemanticIntentAnalysisRecord> {
+    return this.runAnalyze(input, false);
+  }
+
+  // Phase 8 playground entrypoint — bypasses the
+  // ROUTING_SEMANTIC_ANALYZER_ENABLED flag so the operator can diagnose
+  // the analyzer regardless of the prod rollout state. Behaviour is
+  // otherwise identical to `analyze` — still never throws.
+  async analyzeWithForceEnabled(
+    input: SemanticIntentAnalyzerInput,
+  ): Promise<SemanticIntentAnalysisRecord> {
+    return this.runAnalyze(input, true);
+  }
+
+  private async runAnalyze(
+    input: SemanticIntentAnalyzerInput,
+    force: boolean,
+  ): Promise<SemanticIntentAnalysisRecord> {
     const start = Date.now();
     const config = AppConfig.get();
 
-    if (!config.ROUTING_SEMANTIC_ANALYZER_ENABLED) {
+    if (!force && !config.ROUTING_SEMANTIC_ANALYZER_ENABLED) {
       return this.buildSkipped('SKIPPED_FLAG_DISABLED', config.OLLAMA_ROUTER_MODEL, start);
     }
 
     this.logger.debug(
-      `analyze: starting for thread=${input.threadId} routingMode=${input.routingMode} signals=${String(input.keywordSignals.length)}`,
+      `analyze: starting for thread=${input.threadId} routingMode=${input.routingMode} signals=${String(input.keywordSignals.length)} force=${String(force)}`,
     );
 
     const userPrompt = this.buildUserPrompt(input);

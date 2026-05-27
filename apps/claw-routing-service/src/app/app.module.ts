@@ -18,6 +18,7 @@ import { RoutingModule } from '../modules/routing/routing.module';
 import { ClassifierModule } from '../modules/classifier/classifier.module';
 import { LearningLoopModule } from '../modules/learning-loop/learning-loop.module';
 import { ObservabilityModule } from '../modules/observability/observability.module';
+import { PlaygroundModule } from '../modules/playground/playground.module';
 import { ReliabilityModule } from '../modules/reliability/reliability.module';
 import { RouteEvaluatorModule } from '../modules/route-evaluator/route-evaluator.module';
 import { RouterModelsModule } from '../modules/router-models/router-models.module';
@@ -73,6 +74,7 @@ import { WorkflowsModule } from '../modules/workflows/workflows.module';
     WorkflowsModule,
     LearningLoopModule,
     ObservabilityModule,
+    PlaygroundModule,
     SyncModule,
     ThrottlerModule.forRoot([
       {

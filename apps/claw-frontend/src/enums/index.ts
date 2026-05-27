@@ -90,3 +90,8 @@ export { CapabilityClass } from './capability-class.enum';
 export { CapabilityInvocationStatus } from './capability-invocation-status.enum';
 export { CapabilityOperation } from './capability-operation.enum';
 export { CapabilityReversibility } from './capability-reversibility.enum';
+export { SemanticAnalysisStatusEnum } from './semantic-analysis-status.enum';
+export { SemanticMessageRoleEnum } from './semantic-message-role.enum';
+export { SemanticModalityKindEnum } from './semantic-modality-kind.enum';
+export { SemanticPrivacyClassEnum } from './semantic-privacy-class.enum';
+export { SemanticRiskLevelEnum } from './semantic-risk-level.enum';
