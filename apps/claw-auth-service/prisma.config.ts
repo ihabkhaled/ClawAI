@@ -15,6 +15,10 @@ export default defineConfig({
     url: process.env['AUTH_DATABASE_URL'] ?? '',
   },
   migrations: {
-    seed: 'ts-node --compiler-options {"module":"CommonJS"} prisma/seed.ts',
+    // Plain `node` (not ts-node) so it runs in production images that don't
+    // ship the src/ tree. The script reads PrismaClient from dist/, which
+    // exists in both dev (built by entrypoint) and prod (built by
+    // Dockerfile). See prisma/seed.js for the rationale.
+    seed: 'node prisma/seed.js',
   },
 });
