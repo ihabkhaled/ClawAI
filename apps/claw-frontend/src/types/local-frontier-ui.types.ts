@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 
 import type {
+  FrontierLoadStatus,
   FrontierModelCategory,
   FrontierQualityTier,
   HardwareCompat,
@@ -31,6 +32,11 @@ export interface HardwarePanelLabels {
   loadedModel: string;
   noLoadedModel: string;
   unload: string;
+  activeModel: string;
+  noActiveModel: string;
+  noLoadedModelDescription: string;
+  deactivate: string;
+  deactivateHint: string;
 }
 
 export interface FilterBarLabels {
@@ -62,6 +68,9 @@ export interface DownloadsDrawerLabels {
   files: string;
   rate: string;
   eta: string;
+  elapsed: string;
+  percent: string;
+  preparing: string;
   unknown: string;
 }
 
@@ -174,6 +183,37 @@ export interface LocalFrontierPageController {
   openHfDialog: () => void;
 }
 
+export interface CatalogCardLabels {
+  download: string;
+  load: string;
+  unload: string;
+  activate: string;
+  activateHint: string;
+  deactivate: string;
+  deactivateHint: string;
+  loading: string;
+  deleteWeights: string;
+  configure: string;
+  fits: string;
+  warns: string;
+  refuses: string;
+  survival: string;
+  balanced: string;
+  best: string;
+  sourceLink: string;
+  contextLength: string;
+  requiresRamGb: string;
+  requiresVramGb: string;
+  activeBadge: string;
+  activeBadgeHint: string;
+  idleBadge: string;
+  idleBadgeHint: string;
+  loadingBadge: string;
+  crashedBadge: string;
+  crashedBadgeHint: string;
+  notActiveHelp: string;
+}
+
 export interface CatalogCardProps {
   entry: FrontierCatalogEntry;
   compat: CompatChipMeta;
@@ -183,22 +223,23 @@ export interface CatalogCardProps {
   onDeleteClick: (entry: FrontierCatalogEntry) => void;
   onConfigureClick: (entry: FrontierCatalogEntry) => void;
   isPullPending: boolean;
-  labels: {
-    download: string;
-    load: string;
-    unload: string;
-    deleteWeights: string;
-    configure: string;
-    fits: string;
-    warns: string;
-    refuses: string;
-    survival: string;
-    balanced: string;
-    best: string;
-    sourceLink: string;
-    contextLength: string;
-    requiresRamGb: string;
-  };
+  labels: CatalogCardLabels;
+}
+
+export interface ModelStatusBadgeLabels {
+  active: string;
+  activeHint: string;
+  idle: string;
+  idleHint: string;
+  loading: string;
+  crashed: string;
+  crashedHint: string;
+}
+
+export interface ModelStatusBadgeProps {
+  loadStatus: FrontierLoadStatus;
+  isDownloaded: boolean;
+  labels: ModelStatusBadgeLabels;
 }
 
 export interface CatalogGridProps {

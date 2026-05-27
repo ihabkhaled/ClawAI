@@ -2191,13 +2191,34 @@ export const ar: TranslationDictionary = {
     catalogError: 'تعذّر تحميل الكتالوج. تأكّد من تشغيل claw-llamacpp-service.',
     contextLength: 'رمز سياق',
     requiresRamGb: 'جيجابايت ذاكرة',
+    requiresVramGb: 'جيجابايت VRAM',
     sourceLink: 'هاجينج فيس',
+    browseHuggingFace: 'تصفح HuggingFace',
     actions: {
       download: 'تنزيل',
       load: 'تحميل',
       unload: 'تفريغ',
+      activate: 'تفعيل',
+      activateHint:
+        'يبدأ خادم النموذج. يستهلك الذاكرة (وذاكرة GPU عند توفّرها). مطلوب قبل أن يردّ هذا النموذج على رسائل المحادثة.',
+      deactivate: 'إلغاء التفعيل',
+      deactivateHint:
+        'يحرّر الذاكرة. يبقى النموذج منزَّلًا ويمكن إعادة تفعيله في أي وقت.',
+      loading: 'جارٍ التفعيل…',
       deleteWeights: 'حذف الأوزان',
       configure: 'إعدادات التشغيل',
+    },
+    status: {
+      active: 'مُفعَّل — يعالج رسائل المحادثة',
+      activeHint: 'هذا النموذج محمَّل في الذاكرة ويعالج رسائل المحادثة المحلية حاليًا.',
+      idle: 'خامل — غير محمَّل',
+      idleHint:
+        'الأوزان موجودة على القرص لكن النموذج غير محمَّل. فعِّله لكي يستطيع الردّ على رسائل المحادثة.',
+      loading: 'جارٍ التفعيل…',
+      crashed: 'انهيار',
+      crashedHint: 'انتهت عملية النموذج بشكل غير متوقّع. أعِد المحاولة بتفعيله من جديد.',
+      notActiveHelp:
+        'لماذا لا يستخدم المحادثة هذا النموذج؟ فعِّله لتحميله في الذاكرة؛ يمكن لنموذج محلي واحد فقط أن يكون مُفعَّلًا في الوقت ذاته.',
     },
     download: { start: 'تنزيل', cancel: 'إلغاء', retry: 'إعادة المحاولة' },
     compat: { fits: 'مناسب لأجهزتك', warns: 'حدود الذاكرة', refuses: 'الأجهزة غير كافية' },
@@ -2231,6 +2252,9 @@ export const ar: TranslationDictionary = {
       notInstalled: 'غير مثبَّت',
       loadedModel: 'النموذج المحمَّل',
       noLoadedModel: 'لا شيء محمَّل',
+      activeModel: 'النموذج المُفعَّل',
+      noActiveModel: 'لا يوجد نموذج مُفعَّل',
+      noLoadedModelDescription: 'فعِّل نموذجًا أدناه لتمكين المحادثة المحلية.',
     },
     filters: {
       category: 'الفئة',
@@ -2257,6 +2281,9 @@ export const ar: TranslationDictionary = {
       files: 'الملفات',
       rate: 'السرعة',
       eta: 'الوقت المتبقي',
+      elapsed: 'المنقضي',
+      percent: 'مكتمل',
+      preparing: 'جارٍ تحضير التنزيل…',
       unknown: 'جارٍ التحضير…',
     },
     deleteDialog: {

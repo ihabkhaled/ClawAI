@@ -2213,13 +2213,34 @@ export const hi: TranslationDictionary = {
     catalogError: 'कैटलॉग लोड नहीं हुआ। claw-llamacpp-service चालू है या नहीं जाँचें।',
     contextLength: 'टोकन कॉन्टेक्स्ट',
     requiresRamGb: 'GB RAM',
+    requiresVramGb: 'GB VRAM',
     sourceLink: 'HuggingFace',
+    browseHuggingFace: 'HuggingFace ब्राउज़ करें',
     actions: {
       download: 'डाउनलोड',
       load: 'लोड',
       unload: 'अनलोड',
+      activate: 'सक्रिय करें',
+      activateHint:
+        'मॉडल सर्वर शुरू करता है। RAM (और उपलब्ध होने पर VRAM) का उपयोग करता है। चैट संदेशों का उत्तर देने से पहले आवश्यक।',
+      deactivate: 'निष्क्रिय करें',
+      deactivateHint:
+        'मेमोरी मुक्त करता है। मॉडल डाउनलोड बना रहता है; आप कभी भी पुनः सक्रिय कर सकते हैं।',
+      loading: 'सक्रिय किया जा रहा है…',
       deleteWeights: 'वज़न हटाएँ',
       configure: 'रनटाइम कॉन्फ़िगर',
+    },
+    status: {
+      active: 'सक्रिय — चैट ट्रैफ़िक संभाल रहा है',
+      activeHint: 'यह मॉडल मेमोरी में लोड है और अभी स्थानीय चैट का जवाब दे रहा है।',
+      idle: 'निष्क्रिय — मेमोरी में नहीं',
+      idleHint:
+        'वज़न डिस्क पर हैं लेकिन मॉडल लोड नहीं है। चैट का जवाब देने के लिए इसे सक्रिय करें।',
+      loading: 'सक्रिय किया जा रहा है…',
+      crashed: 'क्रैश',
+      crashedHint: 'मॉडल प्रक्रिया अप्रत्याशित रूप से बंद हो गई। फिर से सक्रिय करने का प्रयास करें।',
+      notActiveHelp:
+        'मेरा चैट इस मॉडल का उपयोग क्यों नहीं कर रहा है? इसे मेमोरी में लोड करने के लिए सक्रिय करें; एक समय में केवल एक स्थानीय फ्रंटियर मॉडल सक्रिय हो सकता है।',
     },
     download: { start: 'डाउनलोड', cancel: 'रद्द', retry: 'पुनः प्रयास' },
     compat: {
@@ -2257,6 +2278,9 @@ export const hi: TranslationDictionary = {
       notInstalled: 'स्थापित नहीं',
       loadedModel: 'लोड किया गया मॉडल',
       noLoadedModel: 'कोई लोड नहीं',
+      activeModel: 'सक्रिय मॉडल',
+      noActiveModel: 'कोई मॉडल सक्रिय नहीं',
+      noLoadedModelDescription: 'स्थानीय चैट सक्षम करने के लिए नीचे एक मॉडल सक्रिय करें।',
     },
     filters: {
       category: 'श्रेणी',
@@ -2283,6 +2307,9 @@ export const hi: TranslationDictionary = {
       files: 'फ़ाइलें',
       rate: 'दर',
       eta: 'ETA',
+      elapsed: 'बीता समय',
+      percent: 'पूरा',
+      preparing: 'डाउनलोड तैयार किया जा रहा है…',
       unknown: 'तैयारी…',
     },
     deleteDialog: {

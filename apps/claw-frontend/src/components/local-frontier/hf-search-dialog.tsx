@@ -110,6 +110,7 @@ export function HfSearchDialog({ open, onOpenChange }: HfSearchDialogProps): Rea
               void ctrl.submitImport();
             }}
             disabled={!ctrl.selectedRepo || ctrl.isImporting || ctrl.isLoadingDetails}
+            className="gap-1.5"
           >
             {ctrl.isImporting ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
             {ctrl.isImporting ? 'Importing…' : 'Import to catalog'}

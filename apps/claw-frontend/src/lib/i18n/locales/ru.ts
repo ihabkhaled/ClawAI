@@ -2230,13 +2230,34 @@ export const ru: TranslationDictionary = {
     catalogError: 'Не удалось загрузить каталог. Проверьте claw-llamacpp-service.',
     contextLength: 'токенов контекста',
     requiresRamGb: 'ГБ ОЗУ',
+    requiresVramGb: 'ГБ VRAM',
     sourceLink: 'HuggingFace',
+    browseHuggingFace: 'Открыть HuggingFace',
     actions: {
       download: 'Скачать',
       load: 'Загрузить',
       unload: 'Выгрузить',
+      activate: 'Активировать',
+      activateHint:
+        'Запускает сервер модели. Использует ОЗУ (и VRAM, если есть). Необходимо, чтобы модель могла отвечать на сообщения чата.',
+      deactivate: 'Деактивировать',
+      deactivateHint:
+        'Освобождает память. Модель остаётся скачанной; вы можете снова активировать её в любой момент.',
+      loading: 'Активация…',
       deleteWeights: 'Удалить веса',
       configure: 'Настроить рантайм',
+    },
+    status: {
+      active: 'Активна — обрабатывает чат',
+      activeHint: 'Эта модель загружена в память и сейчас обрабатывает локальный чат.',
+      idle: 'Простаивает — не в памяти',
+      idleHint:
+        'Веса на диске, но модель не загружена. Активируйте её, чтобы она могла отвечать в чате.',
+      loading: 'Активация…',
+      crashed: 'Сбой',
+      crashedHint: 'Процесс модели неожиданно завершился. Попробуйте активировать снова.',
+      notActiveHelp:
+        'Почему чат не использует эту модель? Активируйте её, чтобы загрузить в память; одновременно может быть активна только одна локальная frontier-модель.',
     },
     download: { start: 'Скачать', cancel: 'Отмена', retry: 'Повторить' },
     compat: {
@@ -2274,6 +2295,9 @@ export const ru: TranslationDictionary = {
       notInstalled: 'Не установлен',
       loadedModel: 'Загруженная модель',
       noLoadedModel: 'Ничего не загружено',
+      activeModel: 'Активная модель',
+      noActiveModel: 'Нет активной модели',
+      noLoadedModelDescription: 'Активируйте модель ниже, чтобы включить локальный чат.',
     },
     filters: {
       category: 'Категория',
@@ -2300,6 +2324,9 @@ export const ru: TranslationDictionary = {
       files: 'Файлы',
       rate: 'Скорость',
       eta: 'Расч. время',
+      elapsed: 'Прошло',
+      percent: 'готово',
+      preparing: 'Подготовка загрузки…',
       unknown: 'Подготовка…',
     },
     deleteDialog: {
