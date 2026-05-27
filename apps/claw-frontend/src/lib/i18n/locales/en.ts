@@ -2201,13 +2201,33 @@ export const en: TranslationDictionary = {
     catalogError: 'Failed to load frontier catalog. Check that claw-llamacpp-service is running.',
     contextLength: 'tokens context',
     requiresRamGb: 'GB RAM',
+    requiresVramGb: 'GB VRAM',
     sourceLink: 'HuggingFace',
+    browseHuggingFace: 'Browse HuggingFace',
     actions: {
       download: 'Download',
       load: 'Load',
       unload: 'Unload',
+      activate: 'Activate',
+      activateHint:
+        'Starts the model server. Uses RAM and (if available) VRAM. Required before this model can answer chat messages.',
+      deactivate: 'Deactivate',
+      deactivateHint: 'Frees memory. Model stays downloaded; you can reactivate any time.',
+      loading: 'Activating…',
       deleteWeights: 'Delete weights',
       configure: 'Configure runtime',
+    },
+    status: {
+      active: 'Active — receiving chat traffic',
+      activeHint: 'This model is loaded and is currently handling local chat traffic.',
+      idle: 'Idle — not in memory',
+      idleHint:
+        'Weights are on disk but the model is not loaded. Activate it before it can answer chat messages.',
+      loading: 'Activating…',
+      crashed: 'Crashed',
+      crashedHint: 'The model process exited unexpectedly. Try activating again.',
+      notActiveHelp:
+        "Why isn't my chat using this model? Activate it to load it into memory; only one local frontier model can be active at a time.",
     },
     download: {
       start: 'Download',
@@ -2253,6 +2273,9 @@ export const en: TranslationDictionary = {
       notInstalled: 'Not installed',
       loadedModel: 'Loaded model',
       noLoadedModel: 'None loaded',
+      activeModel: 'Active model',
+      noActiveModel: 'No model active',
+      noLoadedModelDescription: 'Activate a model below to enable local chat.',
     },
     filters: {
       category: 'Category',
@@ -2279,6 +2302,9 @@ export const en: TranslationDictionary = {
       files: 'Files',
       rate: 'Rate',
       eta: 'ETA',
+      elapsed: 'Elapsed',
+      percent: 'done',
+      preparing: 'Preparing download…',
       unknown: 'Preparing…',
     },
     deleteDialog: {

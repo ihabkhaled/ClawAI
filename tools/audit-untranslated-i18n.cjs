@@ -75,7 +75,7 @@ function isExempt(key, value) {
   if (/^[\w.-]+@[\w.-]+\.\w+$/.test(value)) return true;
   if (EXEMPT_VALUES.has(value)) return true;
   if (/Placeholder$/i.test(key.split('.').pop() ?? '')) return true;
-  if (/(brandVersion|sourceLink|requiresRamGb)$/.test(key)) return true;
+  if (/(brandVersion|sourceLink|requiresRamGb|requiresVramGb)$/.test(key)) return true;
   return false;
 }
 

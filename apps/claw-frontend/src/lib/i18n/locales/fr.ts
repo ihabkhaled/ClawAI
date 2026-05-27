@@ -2243,13 +2243,34 @@ export const fr: TranslationDictionary = {
     catalogError: 'Échec du chargement du catalogue. Vérifiez claw-llamacpp-service.',
     contextLength: 'tokens de contexte',
     requiresRamGb: 'Go RAM',
+    requiresVramGb: 'Go VRAM',
     sourceLink: 'HuggingFace',
+    browseHuggingFace: 'Parcourir HuggingFace',
     actions: {
       download: 'Télécharger',
       load: 'Charger',
       unload: 'Décharger',
+      activate: 'Activer',
+      activateHint:
+        'Démarre le serveur du modèle. Consomme de la RAM (et de la VRAM si disponible). Requis avant que ce modèle puisse répondre aux messages de chat.',
+      deactivate: 'Désactiver',
+      deactivateHint:
+        'Libère la mémoire. Le modèle reste téléchargé ; vous pouvez le réactiver à tout moment.',
+      loading: 'Activation…',
       deleteWeights: 'Supprimer les poids',
       configure: 'Configurer le runtime',
+    },
+    status: {
+      active: 'Actif — gère le trafic de chat',
+      activeHint: 'Ce modèle est chargé en mémoire et gère actuellement le chat local.',
+      idle: 'Inactif — pas en mémoire',
+      idleHint:
+        'Les poids sont sur disque mais le modèle n’est pas chargé. Activez-le pour qu’il puisse répondre au chat.',
+      loading: 'Activation…',
+      crashed: 'Planté',
+      crashedHint: 'Le processus du modèle s’est arrêté de façon inattendue. Réessayez de l’activer.',
+      notActiveHelp:
+        'Pourquoi le chat n’utilise-t-il pas ce modèle ? Activez-le pour le charger en mémoire ; un seul modèle frontier local peut être actif à la fois.',
     },
     download: { start: 'Télécharger', cancel: 'Annuler', retry: 'Réessayer' },
     compat: {
@@ -2288,6 +2309,9 @@ export const fr: TranslationDictionary = {
       notInstalled: 'Non installé',
       loadedModel: 'Modèle chargé',
       noLoadedModel: 'Aucun chargé',
+      activeModel: 'Modèle actif',
+      noActiveModel: 'Aucun modèle actif',
+      noLoadedModelDescription: 'Activez un modèle ci-dessous pour activer le chat local.',
     },
     filters: {
       category: 'Catégorie',
@@ -2314,6 +2338,9 @@ export const fr: TranslationDictionary = {
       files: 'Fichiers',
       rate: 'Débit',
       eta: 'ETA',
+      elapsed: 'Écoulé',
+      percent: 'terminé',
+      preparing: 'Préparation du téléchargement…',
       unknown: 'Préparation…',
     },
     deleteDialog: {

@@ -99,6 +99,7 @@ export function FilterBar({
           onClick={onRefreshCatalog}
           disabled={isRefreshing}
           aria-label={labels.refreshCatalog}
+          className="gap-1.5"
         >
           <RefreshCw className={`size-3 ${isRefreshing ? 'animate-spin' : ''}`} aria-hidden />
           {isRefreshing ? labels.refreshing : labels.refreshCatalog}

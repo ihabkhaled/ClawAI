@@ -2236,13 +2236,35 @@ export const de: TranslationDictionary = {
     catalogError: 'Katalog konnte nicht geladen werden. Prüfen Sie claw-llamacpp-service.',
     contextLength: 'Token Kontext',
     requiresRamGb: 'GB RAM',
+    requiresVramGb: 'GB VRAM',
     sourceLink: 'HuggingFace',
+    browseHuggingFace: 'HuggingFace durchsuchen',
     actions: {
       download: 'Herunterladen',
       load: 'Laden',
       unload: 'Entladen',
+      activate: 'Aktivieren',
+      activateHint:
+        'Startet den Modell-Server. Belegt RAM (und falls vorhanden VRAM). Erforderlich, bevor dieses Modell Chat-Anfragen beantworten kann.',
+      deactivate: 'Deaktivieren',
+      deactivateHint:
+        'Gibt Arbeitsspeicher frei. Das Modell bleibt heruntergeladen und kann jederzeit wieder aktiviert werden.',
+      loading: 'Wird aktiviert…',
       deleteWeights: 'Gewichte löschen',
       configure: 'Runtime konfigurieren',
+    },
+    status: {
+      active: 'Aktiv — verarbeitet Chat-Anfragen',
+      activeHint: 'Dieses Modell ist geladen und verarbeitet aktuell lokale Chat-Anfragen.',
+      idle: 'Inaktiv — nicht im Speicher',
+      idleHint:
+        'Die Gewichte liegen auf der Festplatte, aber das Modell ist nicht geladen. Aktivieren Sie es, damit es Chat-Anfragen beantworten kann.',
+      loading: 'Wird aktiviert…',
+      crashed: 'Abgestürzt',
+      crashedHint:
+        'Der Modellprozess wurde unerwartet beendet. Versuchen Sie, ihn erneut zu aktivieren.',
+      notActiveHelp:
+        'Warum nutzt mein Chat dieses Modell nicht? Aktivieren Sie es, um es in den Speicher zu laden; es kann immer nur ein lokales Frontier-Modell gleichzeitig aktiv sein.',
     },
     download: { start: 'Herunterladen', cancel: 'Abbrechen', retry: 'Erneut versuchen' },
     compat: { fits: 'Passt zur Hardware', warns: 'Knapp', refuses: 'Hardware unzureichend' },
@@ -2276,6 +2298,10 @@ export const de: TranslationDictionary = {
       notInstalled: 'Nicht installiert',
       loadedModel: 'Geladenes Modell',
       noLoadedModel: 'Keines geladen',
+      activeModel: 'Aktives Modell',
+      noActiveModel: 'Kein Modell aktiv',
+      noLoadedModelDescription:
+        'Aktivieren Sie ein Modell unten, um den lokalen Chat zu ermöglichen.',
     },
     filters: {
       category: 'Kategorie',
@@ -2302,6 +2328,9 @@ export const de: TranslationDictionary = {
       files: 'Dateien',
       rate: 'Rate',
       eta: 'ETA',
+      elapsed: 'Vergangen',
+      percent: 'fertig',
+      preparing: 'Download wird vorbereitet…',
       unknown: 'Wird vorbereitet…',
     },
     deleteDialog: {

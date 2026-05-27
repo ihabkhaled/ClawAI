@@ -2416,13 +2416,30 @@ export type TranslationDictionary = {
     catalogError: string;
     contextLength: string;
     requiresRamGb: string;
+    requiresVramGb: string;
     sourceLink: string;
+    browseHuggingFace: string;
     actions: {
       download: string;
       load: string;
       unload: string;
+      activate: string;
+      activateHint: string;
+      deactivate: string;
+      deactivateHint: string;
+      loading: string;
       deleteWeights: string;
       configure: string;
+    };
+    status: {
+      active: string;
+      activeHint: string;
+      idle: string;
+      idleHint: string;
+      loading: string;
+      crashed: string;
+      crashedHint: string;
+      notActiveHelp: string;
     };
     download: {
       start: string;
@@ -2468,6 +2485,9 @@ export type TranslationDictionary = {
       notInstalled: string;
       loadedModel: string;
       noLoadedModel: string;
+      activeModel: string;
+      noActiveModel: string;
+      noLoadedModelDescription: string;
     };
     filters: {
       category: string;
@@ -2494,6 +2514,9 @@ export type TranslationDictionary = {
       files: string;
       rate: string;
       eta: string;
+      elapsed: string;
+      percent: string;
+      preparing: string;
       unknown: string;
     };
     deleteDialog: {

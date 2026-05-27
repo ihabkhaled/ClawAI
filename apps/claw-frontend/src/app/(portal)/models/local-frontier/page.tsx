@@ -21,6 +21,11 @@ export default function LocalFrontierCatalogPage(): React.ReactElement {
     download: t('localFrontier.actions.download'),
     load: t('localFrontier.actions.load'),
     unload: t('localFrontier.actions.unload'),
+    activate: t('localFrontier.actions.activate'),
+    activateHint: t('localFrontier.actions.activateHint'),
+    deactivate: t('localFrontier.actions.deactivate'),
+    deactivateHint: t('localFrontier.actions.deactivateHint'),
+    loading: t('localFrontier.actions.loading'),
     deleteWeights: t('localFrontier.actions.deleteWeights'),
     configure: t('localFrontier.actions.configure'),
     fits: t('localFrontier.compat.fits'),
@@ -32,6 +37,15 @@ export default function LocalFrontierCatalogPage(): React.ReactElement {
     sourceLink: t('localFrontier.sourceLink'),
     contextLength: t('localFrontier.contextLength'),
     requiresRamGb: t('localFrontier.requiresRamGb'),
+    requiresVramGb: t('localFrontier.requiresVramGb'),
+    activeBadge: t('localFrontier.status.active'),
+    activeBadgeHint: t('localFrontier.status.activeHint'),
+    idleBadge: t('localFrontier.status.idle'),
+    idleBadgeHint: t('localFrontier.status.idleHint'),
+    loadingBadge: t('localFrontier.status.loading'),
+    crashedBadge: t('localFrontier.status.crashed'),
+    crashedBadgeHint: t('localFrontier.status.crashedHint'),
+    notActiveHelp: t('localFrontier.status.notActiveHelp'),
   };
 
   const hardwareLabels = {
@@ -49,6 +63,11 @@ export default function LocalFrontierCatalogPage(): React.ReactElement {
     loadedModel: t('localFrontier.hardware.loadedModel'),
     noLoadedModel: t('localFrontier.hardware.noLoadedModel'),
     unload: t('localFrontier.actions.unload'),
+    activeModel: t('localFrontier.hardware.activeModel'),
+    noActiveModel: t('localFrontier.hardware.noActiveModel'),
+    noLoadedModelDescription: t('localFrontier.hardware.noLoadedModelDescription'),
+    deactivate: t('localFrontier.actions.deactivate'),
+    deactivateHint: t('localFrontier.actions.deactivateHint'),
   };
 
   const filterLabels = {
@@ -80,6 +99,9 @@ export default function LocalFrontierCatalogPage(): React.ReactElement {
     files: t('localFrontier.downloads.files'),
     rate: t('localFrontier.downloads.rate'),
     eta: t('localFrontier.downloads.eta'),
+    elapsed: t('localFrontier.downloads.elapsed'),
+    percent: t('localFrontier.downloads.percent'),
+    preparing: t('localFrontier.downloads.preparing'),
     unknown: t('localFrontier.downloads.unknown'),
   };
 
@@ -125,9 +147,9 @@ export default function LocalFrontierCatalogPage(): React.ReactElement {
           <h1 className="text-2xl font-bold text-foreground">{t('localFrontier.title')}</h1>
           <p className="text-sm text-muted-foreground">{t('localFrontier.subtitle')}</p>
         </div>
-        <Button variant="outline" onClick={ctrl.openHfDialog}>
+        <Button variant="outline" onClick={ctrl.openHfDialog} className="gap-1.5">
           <Sparkles className="size-4" aria-hidden />
-          Browse HuggingFace
+          {t('localFrontier.browseHuggingFace')}
         </Button>
       </header>
 
@@ -161,9 +183,9 @@ export default function LocalFrontierCatalogPage(): React.ReactElement {
       />
 
       {ctrl.isLoading && (
-        <div className="flex items-center justify-center py-8">
+        <div className="flex items-center justify-center gap-2 py-8">
           <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden />
-          <span className="ml-2 text-sm text-muted-foreground">{t('localFrontier.loading')}</span>
+          <span className="text-sm text-muted-foreground">{t('localFrontier.loading')}</span>
         </div>
       )}
       {!ctrl.isLoading && ctrl.isError && (

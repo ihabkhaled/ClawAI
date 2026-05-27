@@ -2229,13 +2229,34 @@ export const it: TranslationDictionary = {
     catalogError: 'Caricamento del catalogo fallito. Verifica claw-llamacpp-service.',
     contextLength: 'token contesto',
     requiresRamGb: 'GB RAM',
+    requiresVramGb: 'GB VRAM',
     sourceLink: 'HuggingFace',
+    browseHuggingFace: 'Esplora HuggingFace',
     actions: {
       download: 'Scarica',
       load: 'Carica',
       unload: 'Scarica',
+      activate: 'Attiva',
+      activateHint:
+        'Avvia il server del modello. Usa RAM (e VRAM se disponibile). Necessario perché questo modello possa rispondere ai messaggi di chat.',
+      deactivate: 'Disattiva',
+      deactivateHint:
+        'Libera la memoria. Il modello rimane scaricato; puoi riattivarlo in qualsiasi momento.',
+      loading: 'Attivazione…',
       deleteWeights: 'Elimina pesi',
       configure: 'Configura runtime',
+    },
+    status: {
+      active: 'Attivo — sta gestendo la chat',
+      activeHint: 'Questo modello è caricato in memoria e sta gestendo la chat locale.',
+      idle: 'Inattivo — non in memoria',
+      idleHint:
+        'I pesi sono su disco ma il modello non è caricato. Attivalo perché possa rispondere alla chat.',
+      loading: 'Attivazione…',
+      crashed: 'Bloccato',
+      crashedHint: 'Il processo del modello si è interrotto inaspettatamente. Riprova ad attivarlo.',
+      notActiveHelp:
+        'Perché la chat non sta usando questo modello? Attivalo per caricarlo in memoria; solo un modello frontier locale può essere attivo alla volta.',
     },
     download: { start: 'Scarica', cancel: 'Annulla', retry: 'Riprova' },
     compat: {
@@ -2273,6 +2294,9 @@ export const it: TranslationDictionary = {
       notInstalled: 'Non installato',
       loadedModel: 'Modello caricato',
       noLoadedModel: 'Nessuno caricato',
+      activeModel: 'Modello attivo',
+      noActiveModel: 'Nessun modello attivo',
+      noLoadedModelDescription: 'Attiva un modello qui sotto per abilitare la chat locale.',
     },
     filters: {
       category: 'Categoria',
@@ -2299,6 +2323,9 @@ export const it: TranslationDictionary = {
       files: 'File',
       rate: 'Velocità',
       eta: 'ETA',
+      elapsed: 'Trascorso',
+      percent: 'completato',
+      preparing: 'Preparazione del download…',
       unknown: 'Preparazione…',
     },
     deleteDialog: {

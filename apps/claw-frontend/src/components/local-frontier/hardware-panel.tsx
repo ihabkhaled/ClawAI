@@ -41,6 +41,7 @@ export function HardwarePanel({
           onClick={onRefresh}
           disabled={isRefreshing}
           aria-label={labels.refresh}
+          className="gap-1.5"
         >
           <RefreshCw className={`size-3 ${isRefreshing ? 'animate-spin' : ''}`} aria-hidden />
           {labels.refresh}
@@ -55,7 +56,13 @@ export function HardwarePanel({
         <HardwareStat icon={Server} label={labels.binary} value={binaryValue} />
       </div>
 
-      <div className="flex items-center justify-between gap-3 rounded-md border border-dashed border-border bg-background/50 p-3">
+      <div
+        className={`flex items-center justify-between gap-3 rounded-md border p-3 ${
+          loaded
+            ? 'border-emerald-500/30 bg-emerald-500/5'
+            : 'border-dashed border-border bg-background/50'
+        }`}
+      >
         <div className="flex items-center gap-2">
           <Power
             className={`size-4 ${loaded ? 'text-emerald-500' : 'text-muted-foreground'}`}
@@ -63,17 +70,23 @@ export function HardwarePanel({
           />
           <div className="flex flex-col">
             <span className="text-xs uppercase tracking-wide text-muted-foreground">
-              {labels.loadedModel}
+              {loaded ? labels.activeModel : labels.noActiveModel}
             </span>
             <span className="text-sm font-medium text-foreground">
-              {loaded ? `${loaded.name}:${loaded.tag}` : labels.noLoadedModel}
+              {loaded ? `${loaded.name}:${loaded.tag}` : labels.noLoadedModelDescription}
             </span>
           </div>
         </div>
         {loaded ? (
-          <Button size="sm" variant="outline" onClick={onUnloadCurrent}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onUnloadCurrent}
+            title={labels.deactivateHint}
+            className="gap-1.5"
+          >
             <Power className="size-3" aria-hidden />
-            {labels.unload}
+            {labels.deactivate}
           </Button>
         ) : null}
       </div>
