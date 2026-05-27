@@ -7,8 +7,14 @@ scripts/routing-experiments.sh
 scripts/experiment-results.json
 scripts/qa-test-workspace.sh
 
-# QA test scripts and evidence (never committed)
-qa/
+# QA test scripts and evidence (never committed) — use qa/* so the
+# directory itself stays traversable and we can re-include specific
+# subdirs below.
+qa/*
+# Exception: routing regression suite is the permanent flagship corpus
+# tracked under qa/routing-regression/ per docs/03-architecture/
+# semantic-router-flagship-plan.md §10.
+!qa/routing-regression/
 
 # Build output
 dist/

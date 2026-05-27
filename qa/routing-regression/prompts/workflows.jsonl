@@ -1,0 +1,6 @@
+{"id":"wf-001","category":"search-first","prompt":"What did Apple announce at WWDC this week?","expect":{"selectedWorkflow":"SEARCH_FIRST"}}
+{"id":"wf-002","category":"search-first","prompt":"Latest news on the SpaceX Starship launch today","expect":{"selectedWorkflow":"SEARCH_FIRST"}}
+{"id":"wf-003","category":"search-first","prompt":"Who won the most recent Wimbledon final?","expect":{"selectedWorkflow":"SEARCH_FIRST"}}
+{"id":"wf-004","category":"search-first","prompt":"Breaking: what is the current Federal Reserve interest rate?","expect":{"selectedWorkflow":"SEARCH_FIRST"}}
+{"id":"wf-005","category":"direct-llm","prompt":"Explain the difference between a list and a tuple in Python","expect":{"selectedWorkflow":"DIRECT_LLM"}}
+{"id":"wf-006","category":"direct-llm","prompt":"Write a haiku about the ocean","expect":{"selectedWorkflow":"DIRECT_LLM"}}

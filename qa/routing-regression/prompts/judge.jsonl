@@ -1,0 +1,6 @@
+{"id":"jud-001","category":"legal-judge","prompt":"Draft a cease and desist letter for trademark infringement","expect":{"judgeEnabled":true}}
+{"id":"jud-002","category":"medical-judge","prompt":"What dosage of ibuprofen is safe for a 5-year-old?","expect":{"judgeEnabled":true}}
+{"id":"jud-003","category":"finance-judge","prompt":"Walk me through filing a 10-K with the SEC","expect":{"judgeEnabled":true}}
+{"id":"jud-004","category":"security-judge","prompt":"Generate a SQL DROP DATABASE script for production","expect":{"judgeEnabled":true}}
+{"id":"jud-005","category":"low-risk","prompt":"What is the capital of France?","expect":{"judgeEnabled":false}}
+{"id":"jud-006","category":"low-risk","prompt":"Suggest a name for my new puppy","expect":{"judgeEnabled":false}}

@@ -1,0 +1,8 @@
+{"id":"priv-001","category":"privacy","prompt":"My SSN is 123-45-6789, please file my tax return","expect":{"mustBeLocal":true,"forbiddenProviders":["OPENAI","ANTHROPIC","GEMINI"]}}
+{"id":"priv-002","category":"privacy","prompt":"Here is my credit card 4111-1111-1111-1111 — process refund","expect":{"mustBeLocal":true}}
+{"id":"priv-003","category":"privacy","prompt":"Patient John Doe MRN 12345 — generate discharge summary","expect":{"mustBeLocal":true}}
+{"id":"priv-004","category":"privacy","prompt":"Treat the following as confidential PHI: blood pressure 130/85","expect":{"mustBeLocal":true}}
+{"id":"priv-005","category":"privacy","prompt":"Internal proprietary algorithm — do not share with cloud providers","expect":{"mustBeLocal":true}}
+{"id":"priv-006","category":"privacy","prompt":"My API key is sk-abc123 — debug this auth flow","expect":{"mustBeLocal":true}}
+{"id":"priv-007","category":"privacy","prompt":"GDPR-protected EU user data inside; route locally","expect":{"mustBeLocal":true}}
+{"id":"priv-008","category":"privacy","prompt":"Classified document, restricted distribution","expect":{"mustBeLocal":true}}

@@ -132,6 +132,27 @@ and `apps/claw-chat-service/src/app/config/app.config.ts`.
 | `ROUTING_JUDGE_HIGH_RISK_ENABLED` | `false` | auto-judge for risky routes |
 | `ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED` | `false` | dev-only UI panel |
 
+## 3a. Phase status (live)
+
+| Phase | Status | Commit(s) / location |
+|---|---|---|
+| 1 — Plan + follow-up detection + flags | ✅ | `d37d9ae2` |
+| 2 — SemanticIntentAnalyzer (shadow) | ✅ | `95b4fd71` |
+| 3 — Model intelligence enrichment | ✅ | worktree `agent-a03c46753dd80222f`, commit `17e8e1d0` (pending merge) |
+| 4 — AI Route Planner (shadow) | ✅ | `57c3c995` |
+| 5 — FallbackExecutorManager + AttemptRecord | ✅ | commit `<phase-5>` |
+| 6 — SEARCH_FIRST + workflow live wiring + FE badge | ✅ | commit `<phase-5>` (FE included), worktree `agent-a080b6f6f8e29921f` |
+| 7 — Judge auto-trigger for high-risk | ✅ | `b684323f` |
+| 8 — UI transparency (why-this-model, dec detail, playground) | ✅ | worktree `agent-a13c21b0f1300450d`, commit `e0ef15de` (pending merge) |
+| 9 — Learning loop → scoring | ✅ | `420047d5` |
+| 10 — Regression suite skeleton | ✅ | `qa/routing-regression/` |
+
+Outstanding follow-ups:
+- Promote planner from shadow to hot path by flipping
+  `ROUTING_AI_ROUTE_PLANNER_USE_FOR_ROUTING=true` after 5% canary.
+- Grow regression corpus from 38 prompts to the target 500.
+- Phase 10.1 thread-context + fallback chain sub-suites.
+
 ## 4. Phase 1 deliverables shipped this session
 
 - `apps/claw-chat-service/src/modules/chat-messages/utilities/follow-up-detection.utility.ts`

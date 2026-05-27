@@ -1,0 +1,14 @@
+{"id":"dom-001","category":"coding","prompt":"Write a TypeScript function that flattens a nested array","expect":{"detectedCategory":"CODING"}}
+{"id":"dom-002","category":"coding","prompt":"Refactor this Python class to use dataclasses","expect":{"detectedCategory":"CODING"}}
+{"id":"dom-003","category":"coding","prompt":"Why does my npm install fail with EACCES?","expect":{"detectedCategory":"CODING"}}
+{"id":"dom-004","category":"reasoning","prompt":"Walk me through the steps of solving a Bayesian inference problem","expect":{"detectedCategory":"REASONING"}}
+{"id":"dom-005","category":"reasoning","prompt":"Compare the trade-offs between event sourcing and CRUD","expect":{"detectedCategory":"REASONING"}}
+{"id":"dom-006","category":"creative","prompt":"Write a short poem about autumn leaves","expect":{"detectedCategory":"CREATIVE"}}
+{"id":"dom-007","category":"creative","prompt":"Suggest a name for a coffee shop with a vintage vibe","expect":{"detectedCategory":"CREATIVE"}}
+{"id":"dom-008","category":"translation","prompt":"Translate this paragraph from English to Japanese","expect":{"detectedCategory":"TRANSLATION"}}
+{"id":"dom-009","category":"summarization","prompt":"Summarize the key points of this 5-page document","expect":{"detectedCategory":"SUMMARIZATION"}}
+{"id":"dom-010","category":"math","prompt":"What is the integral of x^2 * sin(x) dx from 0 to pi?","expect":{"detectedCategory":"MATH"}}
+{"id":"dom-011","category":"file-gen","prompt":"Generate a PDF invoice for client Acme Corp","expect":{"detectedCategory":"FILE_GENERATION"}}
+{"id":"dom-012","category":"image-gen","prompt":"Create a photo of a sunset over snow-capped mountains","expect":{"detectedCategory":"IMAGE_GENERATION"}}
+{"id":"dom-013","category":"general","prompt":"Hello, how are you today?","expect":{"detectedCategory":"GENERAL"}}
+{"id":"dom-014","category":"general","prompt":"What's the difference between an ostrich and an emu?","expect":{"detectedCategory":"GENERAL"}}
