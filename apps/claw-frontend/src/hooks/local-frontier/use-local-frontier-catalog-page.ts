@@ -74,7 +74,9 @@ export function useLocalFrontierCatalogPage(): LocalFrontierPageController {
   const pullJobs = useMemo(() => jobsQuery.data?.rows ?? [], [jobsQuery.data?.rows]);
   const activeJob = pullJobs.find(
     (job) =>
-      job.status === FrontierPullJobStatus.RUNNING || job.status === FrontierPullJobStatus.PENDING,
+      job.status === FrontierPullJobStatus.RUNNING ||
+      job.status === FrontierPullJobStatus.PENDING ||
+      job.status === FrontierPullJobStatus.INSTALLING,
   );
   const liveProgress = usePullProgressSse(activeJob?.id ?? null);
 

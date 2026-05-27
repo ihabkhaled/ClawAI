@@ -62,6 +62,11 @@ export interface DownloadsDrawerLabels {
   files: string;
   rate: string;
   eta: string;
+  elapsed: string;
+  installing: string;
+  installingStepLabel: string;
+  retryingLabel: string;
+  resumedLabel: string;
   unknown: string;
 }
 

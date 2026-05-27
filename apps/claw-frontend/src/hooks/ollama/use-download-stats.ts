@@ -10,7 +10,9 @@ export function useDownloadStats(jobs: PullJobResponse[]): Map<string, DownloadS
   const lastEtaTime = useRef<Map<string, number>>(new Map());
   const [, setTick] = useState(0);
 
-  const hasActive = jobs.some((j) => j.status === 'IN_PROGRESS' || j.status === 'PENDING');
+  const hasActive = jobs.some(
+    (j) => j.status === 'IN_PROGRESS' || j.status === 'PENDING' || j.status === 'INSTALLING',
+  );
 
   useEffect(() => {
     if (!hasActive) {
@@ -22,7 +24,7 @@ export function useDownloadStats(jobs: PullJobResponse[]): Map<string, DownloadS
 
   useEffect(() => {
     for (const job of jobs) {
-      if (job.status !== 'IN_PROGRESS' && job.status !== 'PENDING') {
+      if (job.status !== 'IN_PROGRESS' && job.status !== 'PENDING' && job.status !== 'INSTALLING') {
         snapshots.current.delete(job.id);
         speeds.current.delete(job.id);
         lastEta.current.delete(job.id);
@@ -76,7 +78,7 @@ export function useDownloadStats(jobs: PullJobResponse[]): Map<string, DownloadS
   const now = Date.now();
 
   for (const job of jobs) {
-    if (job.status !== 'IN_PROGRESS' && job.status !== 'PENDING') {
+    if (job.status !== 'IN_PROGRESS' && job.status !== 'PENDING' && job.status !== 'INSTALLING') {
       continue;
     }
 

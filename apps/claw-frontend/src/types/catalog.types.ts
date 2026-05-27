@@ -42,9 +42,13 @@ export type PullJobResponse = {
   modelName: string;
   runtime: string;
   status: string;
+  phase?: string;
   progress: number | null;
   totalBytes: number | null;
   downloadedBytes: number | null;
+  installStep?: string | null;
+  installAttempts?: number;
+  retryAttempts?: number;
   errorMessage: string | null;
   startedAt: string;
   completedAt: string | null;

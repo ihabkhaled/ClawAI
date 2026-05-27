@@ -4,8 +4,9 @@ import { Loader2, RotateCw, Trash2, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { FrontierPullJobStatus } from '@/enums/local-frontier.enum';
+import { FrontierPullJobPhase, FrontierPullJobStatus } from '@/enums/local-frontier.enum';
 import type { DownloadJobRowProps } from '@/types/local-frontier-ui.types';
+import { formatDuration, formatSpeed } from '@/utilities/format-duration.utility';
 import { formatBytes, formatPercent } from '@/utilities/local-frontier-compat.utility';
 
 export function DownloadJobRow({
@@ -19,13 +20,25 @@ export function DownloadJobRow({
   const total = progress?.totalBytes ?? job.totalBytes;
   const percent = formatPercent(downloaded, total);
   const status = progress?.status ?? job.status;
+  const phase = progress?.phase ?? job.phase ?? FrontierPullJobPhase.DOWNLOADING;
   const currentFile = progress?.currentFile ?? job.currentFile;
-  const mbps = progress?.mbps ?? 0;
+  const speedBytesPerSec = progress?.speedBytesPerSec ?? 0;
   const eta = progress?.etaSeconds;
+  const elapsedMs =
+    progress?.elapsedMs ??
+    (job.startedAt ? Date.now() - new Date(job.startedAt).getTime() : 0);
+  const retryAttempts = progress?.retryAttempts ?? job.retryAttempts ?? 0;
+  const installStep = progress?.installStep ?? job.installStep;
   const errorMessage = progress?.errorMessage ?? job.errorMessage;
 
+  const isInstalling =
+    status === FrontierPullJobStatus.INSTALLING ||
+    phase === FrontierPullJobPhase.INSTALLING ||
+    phase === FrontierPullJobPhase.FINALIZING;
   const isActive =
-    status === FrontierPullJobStatus.PENDING || status === FrontierPullJobStatus.RUNNING;
+    status === FrontierPullJobStatus.PENDING ||
+    status === FrontierPullJobStatus.RUNNING ||
+    isInstalling;
   const canRetry =
     status === FrontierPullJobStatus.FAILED || status === FrontierPullJobStatus.CANCELLED;
   const canDismiss = !isActive;
@@ -36,7 +49,11 @@ export function DownloadJobRow({
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-foreground">{displayName}</p>
-          <p className="truncate text-xs text-muted-foreground">{currentFile ?? labels.unknown}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {isInstalling
+              ? `${labels.installing}${installStep ? ` — ${installStep}` : ''}`
+              : currentFile ?? labels.unknown}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {isActive ? <Loader2 className="size-3 animate-spin text-primary" aria-hidden /> : null}
@@ -46,29 +63,52 @@ export function DownloadJobRow({
         </div>
       </div>
 
-      <Progress value={percent} className="h-2" />
+      <Progress value={isInstalling ? 100 : percent} className="h-2" />
 
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-        <span>
-          {labels.bytes}: {formatBytes(Number(downloaded))} / {formatBytes(Number(total))} (
-          {percent}
-          %)
-        </span>
-        <span>
-          {labels.files}: {progress?.completedFiles ?? job.completedFiles} /{' '}
-          {progress?.totalFiles ?? job.totalFiles}
-        </span>
-        {mbps > 0 ? (
+      {isInstalling ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          <span>{labels.installingStepLabel}</span>
+          {installStep ? <span className="font-mono text-foreground">{installStep}</span> : null}
+          {elapsedMs > 0 ? (
+            <span>
+              {formatDuration(elapsedMs)} {labels.elapsed}
+            </span>
+          ) : null}
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
           <span>
-            {labels.rate}: {mbps.toFixed(1)} MB/s
+            {labels.bytes}: {formatBytes(Number(downloaded))} / {formatBytes(Number(total))} (
+            {percent}
+            %)
           </span>
-        ) : null}
-        {typeof eta === 'number' && eta > 0 ? (
           <span>
-            {labels.eta}: {eta}s
+            {labels.files}: {progress?.completedFiles ?? job.completedFiles} /{' '}
+            {progress?.totalFiles ?? job.totalFiles}
           </span>
-        ) : null}
-      </div>
+          {speedBytesPerSec > 0 ? (
+            <span>
+              {labels.rate}: {formatSpeed(speedBytesPerSec)}
+            </span>
+          ) : null}
+          {typeof eta === 'number' && eta > 0 ? (
+            <span>
+              {labels.eta}: {formatDuration(eta * 1000)}
+            </span>
+          ) : null}
+          {elapsedMs > 0 ? (
+            <span>
+              {formatDuration(elapsedMs)} {labels.elapsed}
+            </span>
+          ) : null}
+          {retryAttempts > 0 ? (
+            <span className="text-amber-500">
+              {labels.retryingLabel}: {retryAttempts}
+            </span>
+          ) : null}
+          {job.resumedAt ? <span className="text-blue-500">{labels.resumedLabel}</span> : null}
+        </div>
+      )}
 
       {errorMessage ? (
         <p className="rounded-sm bg-destructive/10 px-2 py-1 text-xs text-destructive">

@@ -151,6 +151,63 @@ describe('sse.utility', () => {
     expect(onError).not.toHaveBeenCalled();
   });
 
+  it('auto-reconnects after a transport error when reconnect=true', async () => {
+    let attempts = 0;
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      attempts++;
+      if (attempts < 2) {
+        return new Response(null, { status: 502 });
+      }
+      return new Response(createMockStream(['data: {"ok":true}\n\n']), { status: 200 });
+    });
+
+    const onMessage = vi.fn();
+    const onReconnect = vi.fn();
+    const connection = connectSse(
+      'http://localhost/stream',
+      { onMessage, onError: vi.fn(), onReconnect },
+      { reconnect: true },
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(onMessage).toHaveBeenCalled();
+        expect(onReconnect).toHaveBeenCalled();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(fetchSpy.mock.calls.length).toBeGreaterThanOrEqual(2);
+    connection.close();
+  });
+
+  it('does not reconnect when reconnect=false', async () => {
+    let attempts = 0;
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      attempts++;
+      return new Response(null, { status: 502 });
+    });
+
+    const onError = vi.fn();
+    const connection = connectSse(
+      'http://localhost/stream',
+      { onMessage: vi.fn(), onError },
+      { reconnect: false },
+    );
+
+    await vi.waitFor(() => {
+      expect(onError).toHaveBeenCalled();
+    });
+
+    // Give time for any unexpected reconnect attempts.
+    await new Promise((r) => {
+      setTimeout(r, 200);
+    });
+
+    expect(attempts).toBe(1);
+    connection.close();
+  });
+
   it('handles chunked SSE data split across multiple reads', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(createMockStream(['data: {"type', '":"done"}\n\n']), { status: 200 }),

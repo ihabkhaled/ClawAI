@@ -80,6 +80,11 @@ export default function LocalFrontierCatalogPage(): React.ReactElement {
     files: t('localFrontier.downloads.files'),
     rate: t('localFrontier.downloads.rate'),
     eta: t('localFrontier.downloads.eta'),
+    elapsed: t('localFrontier.downloads.elapsed'),
+    installing: t('localFrontier.downloads.installing'),
+    installingStepLabel: t('localFrontier.downloads.installingStep'),
+    retryingLabel: t('localFrontier.downloads.retrying'),
+    resumedLabel: t('localFrontier.downloads.resumed'),
     unknown: t('localFrontier.downloads.unknown'),
   };
 

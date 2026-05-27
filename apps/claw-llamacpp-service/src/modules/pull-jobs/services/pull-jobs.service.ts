@@ -109,7 +109,9 @@ export class PullJobsService {
     this.logger.log(`cancel: ${id}`);
     const job = await this.findById(id);
     const isActive =
-      job.status === PullJobStatus.PENDING || job.status === PullJobStatus.RUNNING;
+      job.status === PullJobStatus.PENDING ||
+      job.status === PullJobStatus.RUNNING ||
+      job.status === PullJobStatus.INSTALLING;
     if (isActive) {
       this.runner.cancel(id);
       await this.repo.updateStatus(id, PullJobStatus.CANCELLED, {

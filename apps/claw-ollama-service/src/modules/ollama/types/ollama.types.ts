@@ -4,6 +4,7 @@ import {
   type LocalModelRoleAssignment,
   type ModelCategory,
   type PullJob,
+  type PullJobPhase,
   type PullJobStatus,
   type RuntimeType,
 } from '../../../generated/prisma';
@@ -82,17 +83,21 @@ export interface CreatePullJobData {
   modelName: string;
   runtime: RuntimeType;
   status?: PullJobStatus;
+  phase?: PullJobPhase;
   totalBytes?: bigint | null;
   downloadedBytes?: bigint | null;
 }
 
 export interface UpdatePullJobData {
   status?: PullJobStatus;
+  phase?: PullJobPhase;
   progress?: number | null;
   totalBytes?: bigint | null;
   downloadedBytes?: bigint | null;
+  installStep?: string | null;
   errorMessage?: string | null;
   completedAt?: Date | null;
+  lastProgressAt?: Date | null;
 }
 
 export interface CreateRoleAssignmentData {
@@ -131,4 +136,5 @@ export type {
   RuntimeType,
   LocalModelRole,
   PullJobStatus,
+  PullJobPhase,
 };

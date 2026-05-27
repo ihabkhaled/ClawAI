@@ -48,8 +48,17 @@ enum ModelCategory {
 enum PullJobStatus {
   PENDING
   IN_PROGRESS
+  INSTALLING
   COMPLETED
   FAILED
+}
+
+enum PullJobPhase {
+  QUEUED
+  DOWNLOADING
+  INSTALLING
+  FINALIZING
+  DONE
 }
 
 enum DiscoverySourceType {
@@ -125,9 +134,15 @@ model PullJob {
   modelName       String        @map("model_name")
   runtime         RuntimeType
   status          PullJobStatus @default(PENDING)
+  phase           PullJobPhase  @default(QUEUED)
   progress        Int?
   totalBytes      BigInt?       @map("total_bytes")
   downloadedBytes BigInt?       @map("downloaded_bytes")
+  installStep     String?       @map("install_step")
+  installAttempts Int           @default(0) @map("install_attempts")
+  retryAttempts   Int           @default(0) @map("retry_attempts")
+  resumedAt       DateTime?     @map("resumed_at")
+  lastProgressAt  DateTime?     @map("last_progress_at")
   errorMessage    String?       @map("error_message")
   startedAt       DateTime      @default(now()) @map("started_at")
   completedAt     DateTime?     @map("completed_at")

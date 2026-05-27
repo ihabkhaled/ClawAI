@@ -1,5 +1,6 @@
 import { type AxiosInstance, createHttpClient } from '@common/utilities';
 import { AppConfig } from '../../../../app/config/app.config';
+import { PullJobPhase } from '../../../../common/enums';
 import {
   OLLAMA_API_DELETE,
   OLLAMA_API_GENERATE,
@@ -21,6 +22,7 @@ import type {
   OllamaTagsResponse,
 } from '../../types/ollama-adapters.types';
 import type { PullProgressCallback } from '../../types/pull-progress.types';
+import { INSTALL_PHASE_STATUS_KEYWORDS } from '../../constants/pull-resilience.constants';
 
 export class OllamaRuntimeAdapter implements RuntimeAdapter {
   private readonly client: AxiosInstance;
@@ -197,6 +199,7 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
       const total = data.total ?? 0;
       const completed = data.completed ?? 0;
       const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+      const phase = this.classifyPhase(data.status);
 
       onProgress({
         status: data.status,
@@ -204,12 +207,31 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
         total: data.total,
         completed: data.completed,
         percentage,
+        phase,
+        installStep: phase === PullJobPhase.INSTALLING ? data.status : undefined,
       });
     } catch {
       // Skip malformed JSON lines
     }
 
     return null;
+  }
+
+  private classifyPhase(status: string | undefined): PullJobPhase {
+    if (!status) {
+      return PullJobPhase.DOWNLOADING;
+    }
+    const lower = status.toLowerCase();
+    if (lower === 'success') {
+      return PullJobPhase.DONE;
+    }
+    if (INSTALL_PHASE_STATUS_KEYWORDS.some((keyword) => lower.startsWith(keyword))) {
+      return PullJobPhase.INSTALLING;
+    }
+    if (lower.includes('pulling') || lower.includes('downloading')) {
+      return PullJobPhase.DOWNLOADING;
+    }
+    return PullJobPhase.DOWNLOADING;
   }
 
   private mapModel(m: OllamaModelDetail): LocalModelInfo {

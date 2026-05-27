@@ -1,5 +1,11 @@
-export const PROGRESS_DB_THROTTLE_MS = 5000;
-export const DOWNLOAD_RETRY_MAX = 5;
-export const DOWNLOAD_RETRY_BASE_MS = 2000;
+export const PROGRESS_DB_THROTTLE_MS = 1000;
+export const PROGRESS_SSE_THROTTLE_MS = 500;
+export const DOWNLOAD_RETRY_MAX = 10;
+export const DOWNLOAD_RETRY_BASE_MS = 1000;
+export const DOWNLOAD_RETRY_MAX_BACKOFF_MS = 30_000;
 export const DOWNLOAD_CHUNK_BYTES = 64 * 1024;
 export const DISK_HEADROOM_FACTOR = 1.05;
+export const INSTALL_RETRY_MAX = 5;
+export const INSTALL_RETRY_BASE_MS = 2000;
+export const SPEED_SMOOTHING_ALPHA = 0.3;
+export const RESUME_STALE_THRESHOLD_MS = 30_000;

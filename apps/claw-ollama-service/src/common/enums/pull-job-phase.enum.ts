@@ -1,0 +1,7 @@
+export enum PullJobPhase {
+  QUEUED = 'QUEUED',
+  DOWNLOADING = 'DOWNLOADING',
+  INSTALLING = 'INSTALLING',
+  FINALIZING = 'FINALIZING',
+  DONE = 'DONE',
+}

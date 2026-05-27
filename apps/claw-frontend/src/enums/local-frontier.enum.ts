@@ -16,9 +16,18 @@ export enum FrontierDownloadStatus {
 export enum FrontierPullJobStatus {
   PENDING = 'PENDING',
   RUNNING = 'RUNNING',
+  INSTALLING = 'INSTALLING',
   COMPLETED = 'COMPLETED',
   FAILED = 'FAILED',
   CANCELLED = 'CANCELLED',
+}
+
+export enum FrontierPullJobPhase {
+  QUEUED = 'QUEUED',
+  DOWNLOADING = 'DOWNLOADING',
+  INSTALLING = 'INSTALLING',
+  FINALIZING = 'FINALIZING',
+  DONE = 'DONE',
 }
 
 export enum FrontierQualityTier {

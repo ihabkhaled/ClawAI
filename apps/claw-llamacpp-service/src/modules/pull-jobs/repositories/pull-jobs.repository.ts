@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { type PullJob as PrismaPullJobRow } from '../../../generated/prisma';
-import { PullJobStatus } from '../../../common/enums';
+import { PullJobPhase, PullJobStatus } from '../../../common/enums';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { type PullJob } from '../types/pull-job.types';
 
@@ -21,6 +21,7 @@ export class PullJobsRepository {
       data: {
         modelId: payload.modelId,
         status: PullJobStatus.PENDING,
+        phase: PullJobPhase.QUEUED,
         totalBytes: payload.totalBytes,
         totalFiles: payload.totalFiles,
         initiatedByUser: payload.initiatedByUser ?? null,
@@ -36,10 +37,23 @@ export class PullJobsRepository {
 
   async findActiveForModel(modelId: string): Promise<PullJob | null> {
     const row = await this.prisma.pullJob.findFirst({
-      where: { modelId, status: { in: [PullJobStatus.PENDING, PullJobStatus.RUNNING] } },
+      where: {
+        modelId,
+        status: { in: [PullJobStatus.PENDING, PullJobStatus.RUNNING, PullJobStatus.INSTALLING] },
+      },
       orderBy: { startedAt: 'desc' },
     });
     return row ? this.toDomain(row) : null;
+  }
+
+  async findAllResumable(): Promise<PullJob[]> {
+    const rows = await this.prisma.pullJob.findMany({
+      where: {
+        status: { in: [PullJobStatus.PENDING, PullJobStatus.RUNNING, PullJobStatus.INSTALLING] },
+      },
+      orderBy: { startedAt: 'asc' },
+    });
+    return rows.map((row) => this.toDomain(row));
   }
 
   async list(filters: { status?: PullJobStatus; modelId?: string; limit?: number }): Promise<{
@@ -68,17 +82,35 @@ export class PullJobsRepository {
   async updateStatus(
     id: string,
     status: PullJobStatus,
-    extra?: { reasonCode?: string; errorMessage?: string; completedAt?: Date | null },
+    extra?: {
+      phase?: PullJobPhase;
+      reasonCode?: string;
+      errorMessage?: string;
+      completedAt?: Date | null;
+    },
   ): Promise<void> {
-    this.logger.log(`updateStatus: ${id} → ${status}`);
+    this.logger.log(`updateStatus: ${id} → ${status}${extra?.phase ? ` phase=${extra.phase}` : ''}`);
     await this.prisma.pullJob.update({
       where: { id },
       data: {
         status,
+        phase: extra?.phase ?? undefined,
         reasonCode: extra?.reasonCode ?? null,
         errorMessage: extra?.errorMessage ?? null,
         completedAt: extra?.completedAt ?? null,
       },
+    });
+  }
+
+  async updatePhase(
+    id: string,
+    phase: PullJobPhase,
+    installStep: string | null = null,
+  ): Promise<void> {
+    this.logger.log(`updatePhase: ${id} → ${phase}${installStep ? ` step=${installStep}` : ''}`);
+    await this.prisma.pullJob.update({
+      where: { id },
+      data: { phase, installStep },
     });
   }
 
@@ -88,7 +120,33 @@ export class PullJobsRepository {
   ): Promise<void> {
     await this.prisma.pullJob.update({
       where: { id },
-      data: payload,
+      data: {
+        downloadedBytes: payload.downloadedBytes,
+        completedFiles: payload.completedFiles,
+        currentFile: payload.currentFile,
+        lastProgressAt: new Date(),
+      },
+    });
+  }
+
+  async incrementRetryAttempts(id: string): Promise<void> {
+    await this.prisma.pullJob.update({
+      where: { id },
+      data: { retryAttempts: { increment: 1 } },
+    });
+  }
+
+  async incrementInstallAttempts(id: string): Promise<void> {
+    await this.prisma.pullJob.update({
+      where: { id },
+      data: { installAttempts: { increment: 1 } },
+    });
+  }
+
+  async markResumed(id: string): Promise<void> {
+    await this.prisma.pullJob.update({
+      where: { id },
+      data: { resumedAt: new Date() },
     });
   }
 
@@ -97,11 +155,17 @@ export class PullJobsRepository {
       id: row.id,
       modelId: row.modelId,
       status: row.status as PullJobStatus,
+      phase: row.phase as PullJobPhase,
       totalBytes: row.totalBytes,
       downloadedBytes: row.downloadedBytes,
       totalFiles: row.totalFiles,
       completedFiles: row.completedFiles,
       currentFile: row.currentFile,
+      installStep: row.installStep,
+      installAttempts: row.installAttempts,
+      retryAttempts: row.retryAttempts,
+      resumedAt: row.resumedAt,
+      lastProgressAt: row.lastProgressAt,
       reasonCode: row.reasonCode,
       errorMessage: row.errorMessage,
       startedAt: row.startedAt,

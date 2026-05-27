@@ -853,6 +853,8 @@ export type TranslationDictionary = {
     recommended: string;
     noModels: string;
     activeDownloads: string;
+    installing: string;
+    retrying: string;
     parameterCount: string;
     modelSize: string;
     capabilities: string;
@@ -2494,6 +2496,11 @@ export type TranslationDictionary = {
       files: string;
       rate: string;
       eta: string;
+      elapsed: string;
+      installing: string;
+      installingStep: string;
+      retrying: string;
+      resumed: string;
       unknown: string;
     };
     deleteDialog: {

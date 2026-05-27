@@ -74,10 +74,25 @@ const mockRoleAssignmentsRepo = (): Partial<
 });
 
 const mockPullJobsRepo = (): Partial<Record<keyof PullJobsRepository, jest.Mock>> => ({
-  create: jest.fn().mockResolvedValue({ id: 'job-1', status: PullJobStatus.IN_PROGRESS }),
+  create: jest.fn().mockResolvedValue({
+    id: 'job-1',
+    status: PullJobStatus.IN_PROGRESS,
+    startedAt: new Date(),
+    downloadedBytes: 0n,
+  }),
   update: jest.fn().mockResolvedValue({ id: 'job-1', status: PullJobStatus.COMPLETED }),
+  findById: jest.fn().mockResolvedValue({
+    id: 'job-1',
+    status: PullJobStatus.IN_PROGRESS,
+    startedAt: new Date(),
+    downloadedBytes: 0n,
+  }),
   findActiveByModelName: jest.fn().mockResolvedValue(null),
+  findAllResumable: jest.fn().mockResolvedValue([]),
   deleteOlderByModelName: jest.fn().mockResolvedValue(0),
+  incrementRetryAttempts: jest.fn().mockResolvedValue(undefined),
+  incrementInstallAttempts: jest.fn().mockResolvedValue(undefined),
+  markResumed: jest.fn().mockResolvedValue(undefined),
 });
 
 const mockRuntimeConfigsRepo = (): Partial<Record<keyof RuntimeConfigsRepository, jest.Mock>> => ({
@@ -202,6 +217,7 @@ describe('OllamaManager', () => {
 
   describe('pullModelFromCatalog', () => {
     it('should fail the job when the runtime does not list the catalog model after pull', async () => {
+      jest.useFakeTimers();
       mockRuntimeAdapter.listModels.mockResolvedValue([]);
 
       await manager.pullModelFromCatalog({
@@ -215,7 +231,12 @@ describe('OllamaManager', () => {
         category: null,
       } as never);
 
-      await new Promise((resolve) => setImmediate(resolve));
+      // Install retries use exponential backoff up to 5 attempts: 2+4+8+16+32 = 62s
+      // Advance fake timers to skip those waits.
+      for (let i = 0; i < 5; i++) {
+        await jest.advanceTimersByTimeAsync(60_000);
+        await Promise.resolve();
+      }
 
       expect(localModelsRepo.upsertByNameTagRuntime).not.toHaveBeenCalled();
       expect(pullJobsRepo.update).toHaveBeenCalledWith(
@@ -225,6 +246,7 @@ describe('OllamaManager', () => {
           errorMessage: 'Model glm5.1:latest was not found in the runtime after pull',
         }),
       );
+      jest.useRealTimers();
     });
   });
 
