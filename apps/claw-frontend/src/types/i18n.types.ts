@@ -84,6 +84,7 @@ export type TranslationDictionary = {
     replayLab: string;
     recoveryLab: string;
     adaptiveInsights: string;
+    routingPlayground: string;
     memory: string;
     context: string;
     files: string;
@@ -2581,6 +2582,102 @@ export type TranslationDictionary = {
       customArgsHint: string;
       cancel: string;
       save: string;
+    };
+  };
+  whyThisModel: {
+    toggle: string;
+    selectedModel: string;
+    workflow: string;
+    confidence: string;
+    costClass: string;
+    latencyClass: string;
+    routingMode: string;
+    fallbackUsed: string;
+    judgeUsed: string;
+    memoriesUsed: string;
+    contextPacks: string;
+    reasonSummary: string;
+    moreDetails: string;
+  };
+  decisionDetail: {
+    title: string;
+    description: string;
+    loading: string;
+    loadFailed: string;
+    noDecisionId: string;
+    sections: {
+      decision: string;
+      semanticAnalysis: string;
+      keywordSignals: string;
+      candidates: string;
+      health: string;
+    };
+    field: {
+      provider: string;
+      model: string;
+      mode: string;
+      confidence: string;
+      privacyClass: string;
+      costClass: string;
+      duration: string;
+      reasonTags: string;
+      detectedCategory: string;
+      secondaryCategory: string;
+      matchCount: string;
+    };
+    candidates: {
+      primary: string;
+      fallback: string;
+      noFallback: string;
+    };
+    semantic: {
+      notRun: string;
+      failed: string;
+    };
+    health: {
+      noData: string;
+    };
+  };
+  threadContextInspector: {
+    debugBadge: string;
+    openLabel: string;
+    title: string;
+    description: string;
+    loading: string;
+    loadFailed: string;
+    noReceipt: string;
+    fieldMemories: string;
+    fieldPackItems: string;
+    fieldTokensUsed: string;
+    fieldAssemblyOrder: string;
+  };
+  routingPlayground: {
+    title: string;
+    description: string;
+    tab: {
+      semantic: string;
+    };
+    form: {
+      messageLabel: string;
+      messagePlaceholder: string;
+      routingModeLabel: string;
+      runSemantic: string;
+      reset: string;
+      running: string;
+      error: string;
+      emptyHint: string;
+    };
+    result: {
+      title: string;
+      routerModel: string;
+      attempts: string;
+      duration: string;
+      noAnalysis: string;
+      primaryIntent: string;
+      taskType: string;
+      risk: string;
+      privacy: string;
+      confidence: string;
     };
   };
 };

@@ -23,6 +23,8 @@ export const ROUTES = {
   ROUTING_REPLAY: '/routing/replay',
   ROUTING_RECOVERY: '/routing/recovery',
   ROUTING_ADAPTIVE_INSIGHTS: '/routing/adaptive-insights',
+  ROUTING_PLAYGROUND: '/routing/playground',
+  ROUTING_DECISION_DETAIL: (id: string) => `/routing/decisions/${id}`,
   MEMORY: '/memory',
   CONTEXT: '/context',
   FILES: '/files',

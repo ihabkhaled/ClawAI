@@ -79,3 +79,4 @@ export { getProviderPlaceholder } from './research-toggle-display.utility';
 export { stringifyPayload, isConnectorStale } from './approval-card.utility';
 export { serializeApprovalPayload } from './approval-edit.utility';
 export { parsePolicyWeightsJson, formatPolicyWeightsJson } from './policy-weights.utility';
+export { prettyJson, toMarkdownJsonBlock } from './json-pretty.utility';

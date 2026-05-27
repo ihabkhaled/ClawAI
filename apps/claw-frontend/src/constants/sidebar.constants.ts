@@ -164,6 +164,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
       { labelKey: 'nav.replayLab', href: ROUTES.ROUTING_REPLAY, icon: FlaskConical },
       { labelKey: 'nav.recoveryLab', href: ROUTES.ROUTING_RECOVERY, icon: Activity },
       { labelKey: 'nav.adaptiveInsights', href: ROUTES.ROUTING_ADAPTIVE_INSIGHTS, icon: Brain },
+      { labelKey: 'nav.routingPlayground', href: ROUTES.ROUTING_PLAYGROUND, icon: FlaskConical },
     ],
   },
   { labelKey: 'nav.memory', href: ROUTES.MEMORY, icon: Brain },

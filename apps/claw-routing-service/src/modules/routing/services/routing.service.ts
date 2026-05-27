@@ -187,6 +187,17 @@ export class RoutingService implements OnModuleInit {
     return withWorkflow;
   }
 
+  // Phase 8 UI transparency — fetches a single decision row by id for the
+  // FE detail drawer. The drawer renders semanticAnalysis, candidates,
+  // health snapshot, etc. — all already persisted columns.
+  async getDecisionDetail(id: string): Promise<RoutingDecision> {
+    const decision = await this.decisionsRepository.findById(id);
+    if (!decision) {
+      throw new EntityNotFoundException('RoutingDecision', id);
+    }
+    return decision;
+  }
+
   async getDecisions(
     threadId: string,
     page: number,

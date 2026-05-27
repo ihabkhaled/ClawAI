@@ -175,4 +175,13 @@ export class RoutingController {
       Number.parseInt(limit, 10) || 20,
     );
   }
+
+  // Phase 8 UI transparency — feeds the FE decision detail drawer. The
+  // `detail/` prefix keeps the route unambiguous against the existing
+  // `decisions/:threadId` thread-scoped lookup which historically uses a
+  // bare threadId at this position.
+  @Get('decisions/detail/:id')
+  async getDecisionDetail(@Param('id') id: string): Promise<RoutingDecision> {
+    return this.routingService.getDecisionDetail(id);
+  }
 }

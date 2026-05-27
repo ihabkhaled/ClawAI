@@ -17,6 +17,8 @@ import { MessageAttachments } from '@/components/chat/message-attachments';
 import { MessageProvenance } from '@/components/chat/message-provenance';
 import { ResearchRunDetails } from '@/components/chat/research-run-details';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
+import { ThreadContextInspector } from '@/components/chat/thread-context-inspector';
+import { WhyThisModelPanel } from '@/components/chat/why-this-model-panel';
 import { WorkflowBadge } from '@/components/chat/workflow-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -297,6 +299,8 @@ export function MessageBubble({
             ) : null}
           </div>
         ) : null}
+        {!isUser ? <WhyThisModelPanel message={message} /> : null}
+        {!isUser ? <ThreadContextInspector messageId={message.id} /> : null}
         {!isUser && judgeDecision ? <JudgeRefereeDetails message={message} /> : null}
         {!isUser ? <ResearchRunDetails message={message} /> : null}
         {!isUser ? <MessageProvenance message={message} /> : null}

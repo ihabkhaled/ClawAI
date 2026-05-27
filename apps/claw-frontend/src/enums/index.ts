@@ -92,3 +92,8 @@ export { CapabilityOperation } from './capability-operation.enum';
 export { CapabilityReversibility } from './capability-reversibility.enum';
 export { WorkflowKind } from './workflow-kind.enum';
 export { WorkflowBadgeVariant } from './workflow-badge-variant.enum';
+export { SemanticAnalysisStatusEnum } from './semantic-analysis-status.enum';
+export { SemanticMessageRoleEnum } from './semantic-message-role.enum';
+export { SemanticModalityKindEnum } from './semantic-modality-kind.enum';
+export { SemanticPrivacyClassEnum } from './semantic-privacy-class.enum';
+export { SemanticRiskLevelEnum } from './semantic-risk-level.enum';
