@@ -212,21 +212,6 @@ else
   MISSING=1
 fi
 
-# Node.js
-if command -v node &>/dev/null; then
-  NODE_VER=$(node --version | tr -d 'v')
-  NODE_MAJOR=$(echo "$NODE_VER" | cut -d. -f1)
-  if [ "$NODE_MAJOR" -ge 20 ]; then
-    ok "Node.js $NODE_VER"
-  else
-    fail "Node.js $NODE_VER found but >= 20 required — https://nodejs.org"
-    MISSING=1
-  fi
-else
-  fail "Node.js not found — install from https://nodejs.org (v20+)"
-  MISSING=1
-fi
-
 # Git
 if command -v git &>/dev/null; then
   GIT_VER=$(git --version | grep -oE '[0-9]+\.[0-9]+' | head -1)

@@ -270,21 +270,6 @@ try {
     $missing++
 }
 
-# Node.js
-try {
-    $nodeVer = (node --version 2>$null) -replace 'v', ''
-    $nodeMajor = [int]($nodeVer.Split('.')[0])
-    if ($nodeMajor -ge 20) {
-        Write-Ok "Node.js $nodeVer"
-    } else {
-        Write-Fail "Node.js $nodeVer found but >= 20 required - https://nodejs.org"
-        $missing++
-    }
-} catch {
-    Write-Fail "Node.js not found - install from https://nodejs.org (v20+)"
-    $missing++
-}
-
 # Git
 try {
     $gitVer = (git --version 2>$null) -replace 'git version\s+', ''
