@@ -522,12 +522,14 @@ volumes:
     driver: local
   llamacpp-data:
     driver: local
-  # Defined in docker-compose.prod.ollama.yml — referenced here as `external`
-  # so claw-ollama-service can mount it read-write and write HuggingFace
-  # model weights into ComfyUI's models tree.
+  # Shared with claw-comfyui (defined in docker-compose.prod.ollama.yml).
+  # Declared here as a normal named volume rather than `external: true`
+  # because docker-compose merges multi-file volume definitions — both
+  # files must agree on the shape. `external: true` requires the volume
+  # to already exist when *any* compose file is processed, which fails
+  # on fresh installs before comfyui has run once.
   comfyui-models-data:
-    external: true
-    name: claw_comfyui-models-data
+    driver: local
 
 networks:
   claw-network:
