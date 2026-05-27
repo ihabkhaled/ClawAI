@@ -33,7 +33,11 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4001/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4001/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -53,7 +57,11 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4002/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4002/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -73,7 +81,11 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4003/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4003/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -93,7 +105,11 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4004/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4004/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -113,7 +129,11 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4005/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4005/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -134,7 +154,11 @@ services:
       - file-storage-data:/data/files
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4006/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4006/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -154,7 +178,11 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4007/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4007/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -173,8 +201,17 @@ services:
       - '4008:4008'
     volumes:
       - ../certs:/certs:ro
+      # Shared with claw-comfyui — the ComfyUI runtime adapter writes
+      # HuggingFace-downloaded weights into this volume so ComfyUI can pick
+      # them up on the next /object_info refresh. Mount is read-write because
+      # the adapter creates files; ComfyUI itself never writes here at runtime.
+      - comfyui-models-data:/var/lib/claw/comfyui-models
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4008/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4008/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -194,7 +231,11 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4010/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4010/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -214,7 +255,11 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4011/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4011/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -234,7 +279,11 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4009/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4009/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -296,7 +345,11 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4012/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4012/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -319,7 +372,11 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4014/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4014/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -342,7 +399,11 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4015/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4015/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -365,7 +426,11 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4016/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4016/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -414,7 +479,11 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4013/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4013/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -453,6 +522,12 @@ volumes:
     driver: local
   llamacpp-data:
     driver: local
+  # Defined in docker-compose.prod.ollama.yml — referenced here as `external`
+  # so claw-ollama-service can mount it read-write and write HuggingFace
+  # model weights into ComfyUI's models tree.
+  comfyui-models-data:
+    external: true
+    name: claw_comfyui-models-data
 
 networks:
   claw-network:

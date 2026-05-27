@@ -117,9 +117,40 @@ services:
     networks:
       - claw-network
 
+  # ---------------------------------------------------------------------------
+  # ComfyUI (Local Image Generation — FLUX, SD 3.5, SDXL-Lightning, SDXL Turbo)
+  # ---------------------------------------------------------------------------
+  # The ollama-service container ALSO mounts `comfyui-models-data` (read-write)
+  # so it can drop HuggingFace-downloaded weights into ComfyUI's models tree.
+  # See claw-ollama-service entry in docker-compose.prod.services.yml.
+  comfyui:
+    image: ghcr.io/ai-dock/comfyui:latest
+    container_name: claw-comfyui
+    restart: unless-stopped
+    ports:
+      - '${COMFYUI_PORT:-8188}:8188'
+    volumes:
+      - comfyui-models-data:/opt/ComfyUI/models
+    environment:
+      - CLI_ARGS=--listen 0.0.0.0
+      # ai-dock wraps its services in a Caddy auth proxy by default. Disable it
+      # because port 8188 is only reachable over the internal claw-network and
+      # every request from claw-ollama-service / claw-image-service hits the
+      # API directly.
+      - WEB_ENABLE_AUTH=false
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:8188/system_stats 2>/dev/null || exit 1']
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    networks:
+      - claw-network
+
 volumes:
   ollama-data:
   sd-models-data:
+  comfyui-models-data:
 
 networks:
   claw-network:

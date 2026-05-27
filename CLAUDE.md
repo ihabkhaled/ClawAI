@@ -704,7 +704,7 @@ Users browse and download models from the built-in catalog at `/models/catalog`.
 | ---------------- | ----------------------------------------------------------------------------------------------------------- | -------------- |
 | Coding           | Qwen 2.5 Coder 32B/14B/7B, DeepSeek Coder V2 16B, Qwen3-Coder-Next 32B, Devstral 2 24B, Devstral Small 2 7B | Ollama         |
 | File Generation  | Qwen 3 7B/14B, Llama 3.3 8B/70B, Mistral Small 3 7B/24B, Phi-4 14B, Gemma 3 9B/27B, Command R+ 104B         | Ollama         |
-| Image Generation | FLUX.2 Dev, FLUX.1 Schnell, SD 3.5, SDXL-Lightning, Z-Image-Turbo, Kandinsky 3.1, Playground v2.5           | ComfyUI        |
+| Image Generation | SDXL 1.0 Base (recommended), SDXL Turbo, SD 1.5, SD 3.5 Large (Comfy-Org FP8 repack), FLUX.1 Schnell (FP8)  | ComfyUI        |
 | Routing          | Qwen 3 0.6B/1.7B, Phi-4-mini 3.8B, SmolLM2 360M/1.7B, Gemma 3 1B/4B, Gemma 4 E2B, TinyLlama 1.1B            | Ollama         |
 | Reasoning        | DeepSeek R1 0528/32B/14B/7B/70B, QwQ 32B/72B, Phi-4 14B, Phi-4-mini Reasoning, DeepSeek R1 0528             | Ollama         |
 | Thinking         | GLM-5.1, GLM-5, GLM-5-Turbo, GLM-4.7 Thinking, DeepSeek V3.2/V3.1, Gemma 4 31B/26B, Qwen3 80B/235B, Llama 4 | Ollama         |
@@ -1095,7 +1095,7 @@ Single root `.env` (copy from `.env.example`). Groups:
 - Per-service ports: \*\_PORT (12 entries)
 - Per-service database URLs: _\_DATABASE_URL/_\_MONGODB_URI (11 entries)
 - Image: STABLE_DIFFUSION_URL, IMAGE_SERVICE_URL, IMAGE_PORT, IMAGE_DATABASE_URL
-- ComfyUI: COMFYUI_BASE_URL, COMFYUI_PORT
+- ComfyUI: COMFYUI_BASE_URL, COMFYUI_PORT, COMFYUI_MODELS_PATH (path inside ollama-service where the shared `comfyui-models-data` volume is mounted so the ComfyUI runtime adapter can drop HuggingFace-downloaded weights for ComfyUI to pick up)
 - Model Catalog: AUTO_PULL_MODELS (space-separated list of models to auto-pull on Docker startup)
 - Workspace runtime gates (Phase E close-out, 2026-05-02):
   - WORKSPACE_SUGGESTION_FACTORY_RATE_PER_HOUR (default 100) — per-event-type cap on suggestion-factory enqueue rate (Stream 13.3, in-memory sliding window)

@@ -7,10 +7,12 @@ import {
   OLLAMA_PUBLIC_BASE_URL,
   OLLAMA_REGISTRY_BASE_URL,
 } from '../constants/catalog.constants';
+import { getComfyUIDownloadDescriptor } from '../constants/comfyui-downloads.constants';
 import {
   type CatalogRemoteMetadata,
   type CatalogRemoteMetadataCacheEntry,
-  type OllamaManifestLookupResult, type OllamaRegistryManifest 
+  type OllamaManifestLookupResult,
+  type OllamaRegistryManifest,
 } from '../types/ollama-registry.types';
 import {
   buildOllamaSlugCandidates,
@@ -56,6 +58,9 @@ export class CatalogRemoteMetadataService {
   }
 
   private async fetchMetadata(entry: ModelCatalogEntry): Promise<CatalogRemoteMetadata> {
+    if (entry.runtime === RuntimeType.COMFYUI) {
+      return this.createComfyUiMetadata(entry);
+    }
     if (entry.runtime !== RuntimeType.OLLAMA || entry.ollamaName === null) {
       return this.createNonOllamaMetadata(entry);
     }
@@ -177,6 +182,39 @@ export class CatalogRemoteMetadataService {
       isDownloadable: false,
       sizeBytes: null,
       resolvedOllamaName: null,
+      availabilityError: null,
+    };
+  }
+
+  // ComfyUI entries are downloadable iff they have a matching descriptor in
+  // the ComfyUI download registry (constants/comfyui-downloads.constants.ts).
+  // We deliberately DON'T HEAD-check the HuggingFace URL here — HF rate-limits
+  // unauthenticated HEAD requests and this metadata path is called on every
+  // catalog list. The registry is the source of truth; HEAD verification is
+  // done in `qa/test-image-gen-catalog.sh` and at pull time.
+  private createComfyUiMetadata(entry: ModelCatalogEntry): CatalogRemoteMetadata {
+    const sourceUrl = resolveCatalogSourceUrl(entry);
+    const descriptor = getComfyUIDownloadDescriptor(entry.name, entry.tag);
+    if (descriptor === undefined) {
+      return {
+        sourceUrl,
+        isAvailable: sourceUrl !== null,
+        isDownloadable: false,
+        sizeBytes: null,
+        resolvedOllamaName: null,
+        availabilityError: 'ComfyUI download recipe not registered',
+      };
+    }
+    return {
+      sourceUrl: sourceUrl ?? descriptor.url,
+      isAvailable: true,
+      isDownloadable: true,
+      sizeBytes: entry.sizeBytes,
+      // We piggy-back on `resolvedOllamaName` to carry the ComfyUI catalog
+      // key (`name:tag`) through to the runtime adapter — the adapter then
+      // looks up the descriptor from the registry. This avoids changing
+      // every consumer of `CatalogRemoteMetadata`.
+      resolvedOllamaName: `${entry.name}:${entry.tag}`,
       availabilityError: null,
     };
   }

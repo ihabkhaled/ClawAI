@@ -144,71 +144,91 @@ const RAW_CATALOG_ENTRIES = [
     capabilities: ['multilingual', 'content_writing', 'structured_output'],
   },
 
-  // ─── IMAGE GENERATION (5 models) ────────────────────────────────────
+  // ─── IMAGE GENERATION (5 working ComfyUI models) ────────────────────
+  // Source URLs come from the COMFYUI_DOWNLOAD_REGISTRY (see
+  // constants/comfyui-downloads.constants.ts). Every entry here MUST have a
+  // matching registry entry keyed by `${name}:${tag}` — otherwise it will be
+  // surfaced in the UI as `isDownloadable=false`. Add new entries to the
+  // registry FIRST, then list them here.
+  //
+  // Hardware: all five are CPU-capable via ai-dock/comfyui but slow (~30–
+  // 120 s/image at 512×512). On Blackwell GPUs (RTX 50-series), ComfyUI
+  // currently runs CPU-only because the ai-dock image ships PyTorch built
+  // for SM ≤ 9.0 — see comments in docker-compose.dev.ollama.gpu-nvidia.yml.
   {
-    name: 'flux.2-dev',
-    tag: 'latest',
-    displayName: 'FLUX.2 Dev',
+    name: 'sdxl-base',
+    tag: '1.0',
+    displayName: 'Stable Diffusion XL 1.0 Base',
     category: 'IMAGE_GENERATION',
-    description: 'Most photorealistic open-source image model in 2026. 12B parameters.',
-    sizeBytes: BigInt(25_769_803_776),
-    parameterCount: '12B',
+    description:
+      'Stability AI SDXL 1.0 base — high-quality photorealistic and artistic generation at 1024×1024. The most reliable open-weight baseline.',
+    sizeBytes: BigInt(6_938_078_362),
+    parameterCount: '3.5B',
     runtime: 'COMFYUI',
     ollamaName: null,
+    sourceUrl: 'https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0',
     isRecommended: true,
     capabilities: ['photorealistic', 'text_to_image', 'high_quality'],
   },
   {
-    name: 'flux.1-schnell',
+    name: 'sdxl-turbo',
     tag: 'latest',
-    displayName: 'FLUX.1 Schnell',
+    displayName: 'SDXL Turbo (FP16)',
     category: 'IMAGE_GENERATION',
-    description: 'Fast variant (1-4 steps), free for local use.',
-    sizeBytes: BigInt(12_884_901_888),
-    parameterCount: '12B',
+    description:
+      'Stability AI distilled SDXL — 1-step generation, real-time capable. FP16 weights load on most modern GPUs and CPUs.',
+    sizeBytes: BigInt(6_938_092_058),
+    parameterCount: '3.5B',
     runtime: 'COMFYUI',
     ollamaName: null,
+    sourceUrl: 'https://huggingface.co/stabilityai/sdxl-turbo',
     isRecommended: false,
-    capabilities: ['fast_generation', 'text_to_image'],
+    capabilities: ['ultra_fast', 'text_to_image', 'realtime', '1_step'],
   },
   {
-    name: 'sd-3.5',
+    name: 'sd-1.5',
     tag: 'latest',
-    displayName: 'Stable Diffusion 3.5',
+    displayName: 'Stable Diffusion 1.5',
     category: 'IMAGE_GENERATION',
-    description: 'Stability AI flagship. Great quality/speed ratio.',
-    sizeBytes: BigInt(8_589_934_592),
+    description:
+      'RunwayML Stable Diffusion 1.5 — smallest reliable baseline (4 GB). 512×512 native. Best when VRAM is tight or only CPU is available.',
+    sizeBytes: BigInt(4_265_146_304),
+    parameterCount: '860M',
+    runtime: 'COMFYUI',
+    ollamaName: null,
+    sourceUrl: 'https://huggingface.co/runwayml/stable-diffusion-v1-5',
+    isRecommended: false,
+    capabilities: ['text_to_image', 'lightweight', 'image_to_image'],
+  },
+  {
+    name: 'sd-3.5-large',
+    tag: 'latest',
+    displayName: 'Stable Diffusion 3.5 Large (FP8)',
+    category: 'IMAGE_GENERATION',
+    description:
+      'Stability AI SD 3.5 Large MMDiT (Comfy-Org FP8 repack) — strong text rendering, prompt adherence, ungated download. Stability AI flagship weights at ~8 GB.',
+    sizeBytes: BigInt(8_226_001_280),
     parameterCount: '8B',
     runtime: 'COMFYUI',
     ollamaName: null,
+    sourceUrl: 'https://huggingface.co/Comfy-Org/stable-diffusion-3.5-fp8',
     isRecommended: false,
-    capabilities: ['text_to_image', 'image_to_image', 'inpainting'],
+    capabilities: ['text_to_image', 'high_quality', 'text_rendering'],
   },
   {
-    name: 'sdxl-lightning',
+    name: 'flux.1-schnell',
     tag: 'latest',
-    displayName: 'SDXL-Lightning',
+    displayName: 'FLUX.1 Schnell (FP8)',
     category: 'IMAGE_GENERATION',
-    description: 'Ultra-fast (1-4 step generation), real-time capable.',
-    sizeBytes: BigInt(8_589_934_592),
-    parameterCount: '6.6B',
+    description:
+      'Black Forest Labs FLUX.1 Schnell — Apache-2.0 licensed, 1-4 steps to high-quality images. FP8 build runs on 10 GB VRAM via Comfy-Org repack.',
+    sizeBytes: BigInt(17_245_532_466),
+    parameterCount: '12B',
     runtime: 'COMFYUI',
     ollamaName: null,
+    sourceUrl: 'https://huggingface.co/Comfy-Org/flux1-schnell',
     isRecommended: false,
-    capabilities: ['ultra_fast', 'text_to_image', 'realtime'],
-  },
-  {
-    name: 'z-image-turbo',
-    tag: 'latest',
-    displayName: 'Z-Image-Turbo',
-    category: 'IMAGE_GENERATION',
-    description: 'Matches larger models. Apache 2.0, bilingual text rendering.',
-    sizeBytes: BigInt(6_442_450_944),
-    parameterCount: '~6B',
-    runtime: 'COMFYUI',
-    ollamaName: null,
-    isRecommended: false,
-    capabilities: ['text_to_image', 'bilingual_text', 'fast_generation'],
+    capabilities: ['fast_generation', 'text_to_image', 'high_quality'],
   },
 
   // ─── ROUTING (5 models) ─────────────────────────────────────────────
@@ -1339,46 +1359,19 @@ const RAW_CATALOG_ENTRIES = [
     capabilities: ['pentest', 'exploit_analysis', 'ctf'],
   },
 
-  // ─── CREATIVE / DESIGN (3 models) ─────────────────────────────────
-  {
-    name: 'stable-diffusion-xl',
-    tag: 'turbo',
-    displayName: 'SDXL Turbo',
-    category: 'IMAGE_GENERATION',
-    description: 'Ultra-fast SDXL variant. 1-step generation for real-time image creation.',
-    sizeBytes: BigInt(6_500_000_000),
-    parameterCount: '6.6B',
-    runtime: 'COMFYUI',
-    ollamaName: null,
-    isRecommended: false,
-    capabilities: ['ultra_fast', 'text_to_image', 'realtime', '1_step'],
-  },
-  {
-    name: 'kandinsky',
-    tag: '3.1',
-    displayName: 'Kandinsky 3.1',
-    category: 'IMAGE_GENERATION',
-    description: 'Multilingual image generation with strong text rendering.',
-    sizeBytes: BigInt(8_000_000_000),
-    parameterCount: '~8B',
-    runtime: 'COMFYUI',
-    ollamaName: null,
-    isRecommended: false,
-    capabilities: ['multilingual_image', 'text_rendering', 'artistic'],
-  },
-  {
-    name: 'playground-v2.5',
-    tag: 'latest',
-    displayName: 'Playground v2.5',
-    category: 'IMAGE_GENERATION',
-    description: 'High-quality image generation with excellent aesthetics.',
-    sizeBytes: BigInt(7_000_000_000),
-    parameterCount: '~7B',
-    runtime: 'COMFYUI',
-    ollamaName: null,
-    isRecommended: false,
-    capabilities: ['high_quality', 'aesthetic', 'photorealistic'],
-  },
+  // ─── CREATIVE / DESIGN (placeholder) ──────────────────────────────
+  // The three legacy IMAGE_GENERATION entries that previously lived here
+  // (`stable-diffusion-xl:turbo`, `kandinsky:3.1`, `playground-v2.5:latest`)
+  // were removed in 2026-05-27 because:
+  //   • `stable-diffusion-xl:turbo` duplicated `sdxl-turbo:latest` above and
+  //     was not in the ComfyUI download registry.
+  //   • Kandinsky 3.1 has no single-file safetensors checkpoint that
+  //     ComfyUI's CheckpointLoaderSimple can load — it ships as multiple
+  //     diffusers shards. Re-add it only when we bundle a custom workflow.
+  //   • Playground v2.5 is gated on HuggingFace (requires acceptance of a
+  //     non-commercial license) — surfacing it would 401 on download.
+  // The five working catalog entries live in the IMAGE GENERATION block
+  // earlier in this file. Add new entries there, not here.
 
   // ─── TRANSLATION / MULTILINGUAL (3 models) ────────────────────────
   {
