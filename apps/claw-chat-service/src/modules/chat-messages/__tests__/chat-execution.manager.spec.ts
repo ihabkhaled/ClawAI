@@ -11,9 +11,8 @@ import { JudgeDecision } from '../../../common/enums';
 // num_predict === 112 which broke the moment we raised the AUTO cap to
 // stop truncating compare-mode responses mid-word.
 import {
-  AUTO_MAX_OUTPUT_TOKENS,
-  DEFAULT_MAX_OUTPUT_TOKENS,
   FAST_PATH_MAX_OUTPUT_TOKENS,
+  HARD_MAX_OUTPUT_TOKENS,
 } from '../constants/execution-fast-path.constants';
 
 jest.mock('../../../common/utilities', () => ({
@@ -187,7 +186,11 @@ describe('ChatExecutionManager', () => {
       options: { num_predict: number };
     };
     expect(requestBody.think).toBe(false);
-    expect(requestBody.options.num_predict).toBe(AUTO_MAX_OUTPUT_TOKENS);
+    // AUTO without fast-path no longer applies a default num_predict cap
+    // — the manager passes `undefined` so the model decides when to stop
+    // and the adapter omits the field. Only an explicit thread.maxTokens
+    // setting reintroduces a cap (bounded by HARD_MAX_OUTPUT_TOKENS).
+    expect(requestBody.options.num_predict).toBeUndefined();
   });
 
   it('caps cloud max_tokens and injects short constraint in fast AUTO mode', async () => {
@@ -424,7 +427,8 @@ describe('ChatExecutionManager', () => {
       options: { num_predict: number };
     };
     expect(ollamaBody.model).toBe('qwen3:7b');
-    expect(ollamaBody.options.num_predict).toBe(DEFAULT_MAX_OUTPUT_TOKENS);
+    // file-gen path uses the HARD cap when thread.maxTokens is undefined.
+    expect(ollamaBody.options.num_predict).toBe(HARD_MAX_OUTPUT_TOKENS);
 
     const fileGenerationBody = httpRequest.mock.calls[1][0].body as {
       provider: string;
@@ -503,7 +507,7 @@ describe('ChatExecutionManager', () => {
       options: { num_predict: number };
     };
     expect(retryOllamaBody.model).toBe('llama3.3:8b');
-    expect(retryOllamaBody.options.num_predict).toBe(DEFAULT_MAX_OUTPUT_TOKENS);
+    expect(retryOllamaBody.options.num_predict).toBe(HARD_MAX_OUTPUT_TOKENS);
 
     const fileGenerationBody = httpRequest.mock.calls[2][0].body as {
       provider: string;

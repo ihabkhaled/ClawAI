@@ -41,7 +41,6 @@ import { JudgeRefereeManager } from './judge-referee.manager';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import {
-  AUTO_MAX_OUTPUT_TOKENS,
   DEFAULT_MAX_OUTPUT_TOKENS,
   FAST_PATH_COMPLEXITY_PATTERN,
   FAST_PATH_CONTEXT_MAX_CITATIONS,
@@ -560,15 +559,24 @@ export class ChatExecutionManager implements OnModuleInit {
     threadSettings: ThreadSettings | undefined,
     fastPathEnabled: boolean,
     model: string,
-  ): number {
-    let routeCap = DEFAULT_MAX_OUTPUT_TOKENS;
-    if (routingMode === 'AUTO' || model === 'AUTO') {
-      routeCap = fastPathEnabled ? FAST_PATH_MAX_OUTPUT_TOKENS : AUTO_MAX_OUTPUT_TOKENS;
+  ): number | undefined {
+    // Explicit user setting wins, capped at the HARD ceiling so a typo
+    // in the UI can't ask the provider for 10M tokens.
+    if (threadSettings?.maxTokens !== null && threadSettings?.maxTokens !== undefined) {
+      const bounded = Math.min(threadSettings.maxTokens, HARD_MAX_OUTPUT_TOKENS);
+      return Math.max(MIN_OUTPUT_TOKENS, bounded);
     }
-
-    const requestedMaxTokens = threadSettings?.maxTokens ?? routeCap;
-    const bounded = Math.min(requestedMaxTokens, routeCap, HARD_MAX_OUTPUT_TOKENS);
-    return Math.max(MIN_OUTPUT_TOKENS, bounded);
+    // AUTO + fast-path: keep small responses fast for trivial prompts.
+    if ((routingMode === 'AUTO' || model === 'AUTO') && fastPathEnabled) {
+      return FAST_PATH_MAX_OUTPUT_TOKENS;
+    }
+    // Default behavior: return `undefined` so we do NOT send a
+    // max_tokens / num_predict to the provider. The model picks its
+    // own stop token and produces a complete answer. Previously we
+    // were always capping to DEFAULT_MAX_OUTPUT_TOKENS / AUTO_MAX
+    // which truncated substantive answers mid-word (visible in
+    // parallel-compare where every model returned exactly 112 tokens).
+    return undefined;
   }
 
   private shouldEscalateFastPathResponse(content: string): boolean {
