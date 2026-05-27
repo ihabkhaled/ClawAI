@@ -1158,14 +1158,18 @@ if ($totalTasks -gt 0) {
 } else {
     Write-Warn "Could not resolve Docker progress plan; falling back to the legacy startup path"
     Write-Info "Pulling Docker images (this may take a few minutes on first run)..."
-    docker compose --env-file $envFile $ComposeFiles pull
-
-    Write-Info "Starting containers without rebuilding..."
-    docker compose --env-file $envFile $ComposeFiles up -d --no-build
+    docker compose --env-file $envFile $ComposeFiles pull --ignore-pull-failures
+    Write-Info "Building any service images that aren't on the registry..."
+    docker compose --env-file $envFile $ComposeFiles build
+    Write-Info "Starting containers..."
+    docker compose --env-file $envFile $ComposeFiles up -d
 }
 
+# Final reconcile pass. DO NOT pass --no-build: in prod mode every backend
+# service is `build:`-only (no image in any registry); if any service was
+# skipped earlier, --no-build hard-fails with "No such image: claw-<svc>:latest".
 Write-Info "[90%] Finalizing containers..."
-docker compose --env-file $envFile $ComposeFiles up -d --no-build
+docker compose --env-file $envFile $ComposeFiles up -d
 
 Write-Host ""
 Write-Info "Waiting for services to become healthy..."
