@@ -3,6 +3,7 @@ WORKDIR /app/apps/claw-health-service
 
 FROM base AS deps
 COPY package.json /app/package.json
+COPY .npmrc /app/.npmrc
 COPY packages/ /app/packages/
 COPY apps/claw-health-service/package.json ./package.json
 RUN cd /app && npm install --ignore-scripts && cd /app/apps/claw-health-service && npm install --ignore-scripts 2>/dev/null || true

@@ -4,6 +4,7 @@ WORKDIR /app/apps/claw-file-generation-service
 
 FROM base AS deps
 COPY package.json /app/package.json
+COPY .npmrc /app/.npmrc
 COPY packages/ /app/packages/
 COPY apps/claw-file-generation-service/package.json ./package.json
 RUN cd /app && npm install --ignore-scripts && cd /app/apps/claw-file-generation-service && npm install --ignore-scripts 2>/dev/null || true
