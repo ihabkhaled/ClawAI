@@ -106,14 +106,14 @@ describe('ChatExecutionManager', () => {
       qualityManager as unknown as QualityCheckManager,
       judgeManager as unknown as JudgeRefereeManager,
       streamService as unknown as ChatStreamService,
-      // Phase 6 — SearchFirstManager. Not exercised in this suite so a
-      // no-op stub (run/search return empty payloads) keeps tests focused
-      // on the execution path while satisfying the constructor signature.
+      // Phase 6 — SearchFirstManager. Default mock returns "not applied"
+      // so tests that don't set selectedWorkflow=SEARCH_FIRST keep their
+      // existing behaviour.
       {
-        run: jest.fn().mockResolvedValue({ snippet: '', sources: [] }),
-        search: jest.fn().mockResolvedValue({ snippet: '', sources: [] }),
-        injectIntoSystemPrompt: jest.fn().mockImplementation((sys) => sys),
-        buildSearchBlock: jest.fn().mockReturnValue(''),
+        run: jest.fn().mockImplementation(async (_q: string, ctx: unknown) => ({
+          context: ctx,
+          outcome: { applied: false, results: [], runId: null, warning: null },
+        })),
       } as any,
       localModelSelection as unknown as LocalModelSelectionService,
     );
