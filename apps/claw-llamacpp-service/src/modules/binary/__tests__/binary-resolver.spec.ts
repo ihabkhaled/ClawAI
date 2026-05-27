@@ -34,7 +34,11 @@ describe('PLATFORM_ASSET_PATTERNS — dynamic asset matching', () => {
   const cases: Array<[string, string]> = [
     ['linux-x64-cpu', 'llama-b8994-bin-ubuntu-x64.tar.gz'],
     ['linux-x64-vulkan', 'llama-b8994-bin-ubuntu-vulkan-x64.tar.gz'],
-    ['linux-x64-cuda12', 'llama-b8994-bin-ubuntu-x64.tar.gz'],
+    // Linux NVIDIA: upstream stopped publishing CUDA prebuilts mid-2024,
+    // so the resolver prefers the Vulkan binary (NVIDIA's Vulkan ICD works
+    // in containers when NVIDIA_DRIVER_CAPABILITIES=...graphics). CPU is
+    // the last-resort fallback when even Vulkan is absent.
+    ['linux-x64-cuda12', 'llama-b8994-bin-ubuntu-vulkan-x64.tar.gz'],
     ['linux-x64-rocm', 'llama-b8994-bin-ubuntu-rocm-7.2-x64.tar.gz'],
     ['linux-arm64-cpu', 'llama-b8994-bin-ubuntu-arm64.tar.gz'],
     ['linux-arm64-vulkan', 'llama-b8994-bin-ubuntu-vulkan-arm64.tar.gz'],
