@@ -98,6 +98,12 @@ services:
       # configured (via the ollama.gpu-nvidia overlay) the GPU is
       # automatically used and these flags are inert.
       - COMMANDLINE_ARGS=--api --listen --skip-torch-cuda-test --use-cpu all
+      # ai-dock wraps SD in a Caddy auth-proxy on port 7860 by default.
+      # Without this flag every API call from claw-image-service gets a
+      # 302 redirect to /login (and the adapter sees an empty error,
+      # silently failing image generation). Auth isn't useful here —
+      # port 7860 is only reachable over the internal claw-network.
+      - WEB_ENABLE_AUTH=false
     healthcheck:
       test:
         ['CMD-SHELL', 'wget -qO- http://localhost:7860/sdapi/v1/sd-models 2>/dev/null || exit 1']
