@@ -20,6 +20,7 @@ import { RouterEducationManager } from '../managers/router-education.manager';
 import { LlamacppHealthManager } from '../managers/llamacpp-health.manager';
 import { AIRoutePlannerManager } from '../../intelligence/managers/ai-route-planner.manager';
 import { SemanticIntentAnalyzerManager } from '../../intelligence/managers/semantic-intent-analyzer.manager';
+import { detectHighRisk } from '../utilities/high-risk-detector.utility';
 import type {
   AIRoutePlannerInput,
   PlannerCandidate,
@@ -511,7 +512,7 @@ export class RoutingService implements OnModuleInit {
     });
 
     this.logRoutingDecision(messageId, threadId, decision);
-    this.publishMessageRoutedEvent(messageId, threadId, decision, fallback);
+    this.publishMessageRoutedEvent(messageId, threadId, decision, fallback, messageContent);
 
     // Phase 2 shadow — fire-and-forget. Analyzer runs in the background,
     // patches semantic_analysis on the decision row when done. Failures
@@ -727,7 +728,9 @@ export class RoutingService implements OnModuleInit {
     threadId: string,
     decision: RoutingDecisionResult,
     fallback: RoutingDecisionResult['fallbackChain'][number] | undefined,
+    messageContent: string,
   ): void {
+    const judgeEnabled = this.shouldAutoTriggerJudge(messageContent);
     void this.rabbitMQService.publish(EventPattern.MESSAGE_ROUTED, {
       messageId,
       threadId,
@@ -739,6 +742,11 @@ export class RoutingService implements OnModuleInit {
       fallbackModel: fallback?.model,
       fallbackChain: decision.fallbackChain,
       detectedCategory: decision.detectedCategory,
+      // Phase 7 — auto-trigger judge for high-risk domains. Only fires
+      // when ROUTING_JUDGE_HIGH_RISK_ENABLED=true; otherwise stays
+      // undefined and the chat-service falls back to its own
+      // category-based heuristic.
+      judgeEnabled,
       // Phase 6 — workflow live wiring. Consumers (chat-service) can act
       // on this to swap in SEARCH_FIRST execution; null means the v1
       // hot path is in effect and DIRECT_LLM is assumed downstream.
@@ -746,6 +754,25 @@ export class RoutingService implements OnModuleInit {
       workflowReason: decision.workflowReason ?? null,
       timestamp: new Date().toISOString(),
     });
+  }
+
+  // Phase 7 — returns true if the message warrants an auto-judge based
+  // on keyword match or (when the analyzer is enabled hot-path) the
+  // analyzer's riskLevel. Returns undefined when the flag is off so
+  // downstream chat-service keeps using its existing category heuristic
+  // (no change in behaviour for v1 users).
+  private shouldAutoTriggerJudge(messageContent: string): boolean | undefined {
+    const config = AppConfig.get();
+    if (!config.ROUTING_JUDGE_HIGH_RISK_ENABLED) {
+      return undefined;
+    }
+    const signal = detectHighRisk(messageContent, null);
+    if (signal.isHighRisk) {
+      this.logger.log(
+        `shouldAutoTriggerJudge: high-risk detected matchedKeywords=[${signal.matchedKeywords.slice(0, 5).join(', ')}]`,
+      );
+    }
+    return signal.isHighRisk;
   }
 
   private handleConnectorHealthChecked(data: unknown): void {
