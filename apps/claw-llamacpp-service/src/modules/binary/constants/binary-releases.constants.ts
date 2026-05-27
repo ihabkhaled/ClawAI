@@ -24,12 +24,20 @@ export const LATEST_LLAMACPP_RELEASE_API_URL =
 export const PLATFORM_ASSET_PATTERNS: Readonly<Record<string, RegExp[]>> = Object.freeze({
   'linux-x64-cpu': [/^llama-.*-bin-ubuntu-x64\.tar\.gz$/, /^llama-.*-bin-ubuntu-cpu-x64\.tar\.gz$/],
   'linux-x64-vulkan': [/^llama-.*-bin-ubuntu-vulkan-x64\.tar\.gz$/],
+  // Upstream stopped publishing Linux CUDA prebuilts in mid-2024 (CUDA
+  // toolchain matrix got too painful — they shifted to source builds or
+  // SYCL/Vulkan). On NVIDIA hosts we fall back to the Vulkan binary,
+  // which uses NVIDIA's Vulkan ICD via nvidia-container-toolkit (requires
+  // NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics). CPU is the
+  // last-resort if even Vulkan isn't published in a given release.
   'linux-x64-cuda12': [
     /^llama-.*-bin-ubuntu-cuda.*x64\.tar\.gz$/,
+    /^llama-.*-bin-ubuntu-vulkan-x64\.tar\.gz$/,
     /^llama-.*-bin-ubuntu-x64\.tar\.gz$/,
   ],
   'linux-x64-rocm': [
     /^llama-.*-bin-ubuntu-rocm.*x64\.tar\.gz$/,
+    /^llama-.*-bin-ubuntu-vulkan-x64\.tar\.gz$/,
     /^llama-.*-bin-ubuntu-x64\.tar\.gz$/,
   ],
   'linux-arm64-cpu': [/^llama-.*-bin-ubuntu-arm64\.tar\.gz$/],

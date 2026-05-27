@@ -47,7 +47,13 @@ RUN apt-get update \
        unzip \
        libgomp1 \
        util-linux \
+       libvulkan1 \
+       mesa-vulkan-drivers \
   && rm -rf /var/lib/apt/lists/*
+# libvulkan1 + mesa-vulkan-drivers let the Linux Vulkan llama-server build
+# load NVIDIA / AMD Vulkan ICDs at runtime. On NVIDIA hosts the ICD is
+# mounted by nvidia-container-toolkit when NVIDIA_DRIVER_CAPABILITIES
+# includes `graphics`. mesa-vulkan-drivers covers AMD/Intel iGPU paths.
 ENV NODE_ENV=production
 WORKDIR /app
 RUN groupadd --system --gid 1001 nestjs && useradd --system --uid 1001 --gid 1001 nestjs

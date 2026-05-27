@@ -17,4 +17,8 @@ services:
                 - utility
     environment:
       NVIDIA_VISIBLE_DEVICES: all
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      # `graphics` is required so nvidia-container-toolkit mounts NVIDIA's
+      # Vulkan ICD into the container. llama.cpp's Linux Vulkan binary is
+      # how we get GPU acceleration on NVIDIA without a Linux CUDA prebuilt
+      # (upstream stopped publishing those — see binary-releases.constants).
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility,graphics
