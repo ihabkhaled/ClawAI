@@ -22,7 +22,7 @@ import { CompareJudgeState, ParallelModelStatus } from '@/enums';
 import { useParallelMessageGroup } from '@/hooks/chat/use-parallel-message-group';
 import { MarkdownRenderer } from '@/lib/markdown';
 import type { ParallelMessageGroupProps } from '@/types';
-import { formatLatency, getParallelColClass } from '@/utilities';
+import { cn, formatLatency, getParallelColClass } from '@/utilities';
 
 export function ParallelMessageGroup({
   messages,
@@ -56,8 +56,11 @@ export function ParallelMessageGroup({
           const isFastest = msg.id === fastestId;
           const isBest = bestDiffersFromFastest && msg.id === bestId;
           const providerModel = [msg.provider, msg.model].filter(Boolean).join(' / ');
-          const preview = msg.content.slice(0, 180);
-          const hasMore = msg.content.length > 180;
+          // Show the full response; the "Expand" button now zooms to a
+          // full-screen modal, but the in-thread card no longer truncates
+          // — comparing models is impossible if you can only see 180
+          // chars of each. The card itself scrolls vertically up to
+          // ~24rem so very long responses stay laid out side-by-side.
           const judgeState = response.judgeState ?? CompareJudgeState.NONE;
           const judgeReview = response.judgeReview;
           const hasJudgeDetails = judgeReview?.judgeDialogAvailable === true;
@@ -175,10 +178,14 @@ export function ParallelMessageGroup({
                 </div>
               </div>
 
-              <p className="line-clamp-4 text-sm text-foreground">
-                {preview}
-                {hasMore ? '…' : ''}
-              </p>
+              <div
+                className={cn(
+                  'prose prose-sm dark:prose-invert max-w-none',
+                  'max-h-96 overflow-y-auto pe-1',
+                )}
+              >
+                <MarkdownRenderer content={msg.content} />
+              </div>
 
               {hasJudgeDetails ? (
                 <div className="pt-1">
@@ -186,17 +193,15 @@ export function ParallelMessageGroup({
                 </div>
               ) : null}
 
-              {hasMore ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 self-end px-2 text-xs"
-                  onClick={() => openExpanded(msg, isFastest)}
-                >
-                  <Expand className="me-1 h-3 w-3" />
-                  {t('compare.expand')}
-                </Button>
-              ) : null}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 self-end gap-1.5 px-2 text-xs"
+                onClick={() => openExpanded(msg, isFastest)}
+              >
+                <Expand className="h-3 w-3" />
+                {t('compare.expand')}
+              </Button>
             </div>
           );
         })}
@@ -204,8 +209,8 @@ export function ParallelMessageGroup({
 
       {expanded ? (
         <Dialog open onOpenChange={closeExpanded}>
-          <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
-            <DialogHeader>
+          <DialogContent className="max-h-[92vh] w-[min(96vw,72rem)] max-w-none overflow-hidden p-0">
+            <DialogHeader className="border-b border-border px-6 py-4">
               <DialogTitle className="flex items-center gap-2">
                 {expanded.isFastest ? <Zap className="h-4 w-4 text-green-500" /> : null}
                 {expanded.message.id === bestId && bestDiffersFromFastest ? (
@@ -214,7 +219,7 @@ export function ParallelMessageGroup({
                 {[expanded.message.provider, expanded.message.model].filter(Boolean).join(' / ')}
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-3">
+            <div className="space-y-3 overflow-y-auto px-6 py-4">
               {expanded.message.latencyMs !== null ? (
                 <div className="flex gap-3 text-xs text-muted-foreground">
                   <span>
@@ -229,7 +234,9 @@ export function ParallelMessageGroup({
                   ) : null}
                 </div>
               ) : null}
-              <MarkdownRenderer content={expanded.message.content} />
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <MarkdownRenderer content={expanded.message.content} />
+              </div>
             </div>
           </DialogContent>
         </Dialog>
