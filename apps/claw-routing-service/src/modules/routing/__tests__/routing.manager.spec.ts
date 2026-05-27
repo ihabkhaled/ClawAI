@@ -349,8 +349,14 @@ describe('RoutingManager', () => {
         expectedTag: 'category_business',
       },
       {
+        // Previously asserted `secondary_operations` because the substring
+        // matcher false-positive'd "procurement" → "ROC" (a DATA_ANALYSIS
+        // keyword), which became the primary and bumped operations to
+        // secondary. After matchKeyword switched to word boundaries that
+        // false positive is gone — the prompt now matches OPERATIONS only,
+        // so operations is the (sole, primary) category.
         message: 'draft a procurement SOP for warehouse reorder approvals',
-        expectedTag: 'secondary_operations',
+        expectedTag: 'category_operations',
       },
       {
         message: 'create an HR onboarding plan for a new engineering hire',
