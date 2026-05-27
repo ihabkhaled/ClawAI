@@ -223,7 +223,7 @@ services:
   health-service:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: apps/claw-health-service/Dockerfile
     container_name: claw-health-service
     restart: unless-stopped
     env_file: ../.env
@@ -354,7 +354,7 @@ services:
   research-service:
     build:
       context: ..
-      dockerfile: apps/claw-research-service/Dockerfile.dev
+      dockerfile: apps/claw-research-service/Dockerfile
     container_name: claw-research-service
     restart: unless-stopped
     env_file: ../.env
