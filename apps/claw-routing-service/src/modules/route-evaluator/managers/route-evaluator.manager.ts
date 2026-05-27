@@ -1,7 +1,9 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { RoutingMode } from '../../../generated/prisma';
+import { AppConfig } from '../../../app/config/app.config';
+import { DomainTag, RoutingMode } from '../../../generated/prisma';
 import { ClassifierManager } from '../../classifier/managers/classifier.manager';
+import { LearningLoopManager } from '../../learning-loop/managers/learning-loop.manager';
 import { CircuitBreakerManager } from '../../reliability/managers/circuit-breaker.manager';
 import { RouterModelRegistryRepository } from '../../router-models/repositories/router-model-registry.repository';
 import { type RouterModelRegistryRecord } from '../../router-models/types/router-model-registry.types';
@@ -28,6 +30,10 @@ export class RouteEvaluatorManager {
     private readonly scorer: ScoringEngineManager,
     private readonly circuit: CircuitBreakerManager,
     @Optional() private readonly policiesRepo?: RoutingPoliciesRepository,
+    // Phase 9 — Optional so existing tests that build the manager
+    // with just the required deps keep working. When unset, the
+    // learnedSuccess dimension defaults to neutral (0.6).
+    @Optional() private readonly learningLoop?: LearningLoopManager,
   ) {}
 
   async evaluate(input: EvaluateInputV2): Promise<RoutingDecisionV2> {
@@ -57,7 +63,7 @@ export class RouteEvaluatorManager {
       });
     }
 
-    const candidates = await this.toScoringCandidates(eligible);
+    const candidates = await this.toScoringCandidates(eligible, classification.domain);
 
     const weights = await this.resolveWeights(mode, input.policyId);
     const scoring: ScoringInput = {
@@ -268,10 +274,15 @@ export class RouteEvaluatorManager {
 
   private async toScoringCandidates(
     profiles: Awaited<ReturnType<RouterModelRegistryRepository['list']>>['items'],
+    domain: DomainTag,
   ): Promise<ScoringCandidate[]> {
+    const learningEnabled = this.isLearningLoopEnabled();
     const out: ScoringCandidate[] = [];
     for (const profile of profiles) {
       const cb = await this.circuit.getState(profile.provider);
+      const learnedSuccessRate = learningEnabled
+        ? await this.fetchLearnedScore(profile, domain)
+        : null;
       out.push({
         profile,
         health: {
@@ -279,12 +290,50 @@ export class RouteEvaluatorManager {
           circuitOpen: !cb.isAvailable,
           successRateLast24h: null,
         },
-        learnedSuccessRate: null,
+        learnedSuccessRate,
         judgeTrust: null,
         fallbackReliability: null,
       });
     }
     return out;
+  }
+
+  // Phase 9 — defensive AppConfig read. Test harnesses that don't
+  // bootstrap the env (smoke spec) get learningEnabled=false instead
+  // of a thrown Zod validation error. In production, AppConfig is
+  // validated at bootstrap so this never throws.
+  private isLearningLoopEnabled(): boolean {
+    if (this.learningLoop === undefined) {
+      return false;
+    }
+    try {
+      return AppConfig.get().ROUTING_LEARNING_LOOP_INTEGRATED_ENABLED;
+    } catch {
+      return false;
+    }
+  }
+
+  // Phase 9 — pulls the rolling learned success rate from the learning
+  // loop. Returns null on any failure (DB unreachable, repo throws) so
+  // the scoring engine falls back to the neutral 0.6 default — never
+  // poisons routing with a stale or partial score.
+  private async fetchLearnedScore(
+    profile: RouterModelRegistryRecord,
+    domain: DomainTag,
+  ): Promise<number | null> {
+    if (this.learningLoop === undefined) {
+      return null;
+    }
+    try {
+      const profileKey = `${profile.provider}/${profile.modelKey}`;
+      const score = await this.learningLoop.getRollingScore(profileKey, domain, 'default');
+      return score;
+    } catch (error) {
+      this.logger.warn(
+        `fetchLearnedScore: failed for ${profile.provider}/${profile.modelKey} — ${(error as Error).message}`,
+      );
+      return null;
+    }
   }
 
   private buildNoExecutionModelDecision(

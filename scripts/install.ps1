@@ -1008,6 +1008,8 @@ ROUTING_FALLBACK_ATTEMPTS_ENABLED=false
 ROUTING_MAX_FALLBACK_ATTEMPTS=3
 # Phase 7 - Auto-judge for high-risk routes
 ROUTING_JUDGE_HIGH_RISK_ENABLED=false
+# Phase 9 - Learning loop integrated into scoring (live learnedSuccess)
+ROUTING_LEARNING_LOOP_INTEGRATED_ENABLED=false
 # Phase 8 - Dev-only context inspector panel
 ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED=false
 

@@ -59,6 +59,13 @@ const appConfigSchema = z.object({
     .string()
     .default('false')
     .transform((value) => value.toLowerCase() === 'true'),
+  // Phase 9 — wire LearningLoopManager.getRollingScore into the scoring
+  // engine's `learnedSuccess` dimension. When false the dimension stays
+  // at the neutral 0.6 default and route decisions ignore feedback.
+  ROUTING_LEARNING_LOOP_INTEGRATED_ENABLED: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
   ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED: z
     .string()
     .default('false')

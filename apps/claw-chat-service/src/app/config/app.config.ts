@@ -41,6 +41,10 @@ const appConfigSchema = z.object({
     .string()
     .default('false')
     .transform((value) => value.toLowerCase() === 'true'),
+  ROUTING_LEARNING_LOOP_INTEGRATED_ENABLED: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
   ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED: z
     .string()
     .default('false')

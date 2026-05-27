@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ClassifierModule } from '../classifier/classifier.module';
+import { LearningLoopModule } from '../learning-loop/learning-loop.module';
 import { ReliabilityModule } from '../reliability/reliability.module';
 import { RouterModelsModule } from '../router-models/router-models.module';
 import { RoutingModule } from '../routing/routing.module';
@@ -10,7 +11,14 @@ import { RouteEvaluatorManager } from './managers/route-evaluator.manager';
 import { RouteEvaluatorService } from './services/route-evaluator.service';
 
 @Module({
-  imports: [ClassifierModule, ReliabilityModule, RouterModelsModule, RoutingModule, ScoringModule],
+  imports: [
+    ClassifierModule,
+    LearningLoopModule,
+    ReliabilityModule,
+    RouterModelsModule,
+    RoutingModule,
+    ScoringModule,
+  ],
   controllers: [RouteEvaluatorController, EvaluateShadowController],
   providers: [RouteEvaluatorService, RouteEvaluatorManager],
   exports: [RouteEvaluatorService, RouteEvaluatorManager],
