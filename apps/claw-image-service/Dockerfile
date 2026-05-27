@@ -28,7 +28,7 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nestjs
 RUN adduser --system --uid 1001 nestjs
 COPY --from=builder /app/apps/claw-image-service/dist ./dist
-COPY --from=builder /app/apps/claw-image-service/node_modules ./node_modules
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/claw-image-service/package.json ./package.json
 COPY --from=builder /app/apps/claw-image-service/prisma ./prisma
 COPY --from=builder /app/packages /app/packages
