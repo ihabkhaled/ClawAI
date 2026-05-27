@@ -20,6 +20,31 @@ const appConfigSchema = z.object({
   OLLAMA_GENERATE_TIMEOUT_MS: z.coerce.number().default(300_000),
   OLLAMA_KEEP_ALIVE: z.string().min(1).default('20m'),
   CHAT_PORT: z.coerce.number().int().positive().default(4002),
+
+  // ─── Semantic Router Flagship feature flags consumed by chat-service ─────
+  // See docs/03-architecture/semantic-router-flagship-plan.md. Defaults
+  // preserve current behavior — flip to advance a phase.
+  ROUTING_THREAD_CONTEXT_INJECTION_ENABLED: z
+    .string()
+    .default('true')
+    .transform((value) => value.toLowerCase() === 'true'),
+  ROUTING_FOLLOW_UP_DETECTION_ENABLED: z
+    .string()
+    .default('true')
+    .transform((value) => value.toLowerCase() === 'true'),
+  ROUTING_FALLBACK_ATTEMPTS_ENABLED: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
+  ROUTING_MAX_FALLBACK_ATTEMPTS: z.coerce.number().int().positive().max(10).default(3),
+  ROUTING_JUDGE_HIGH_RISK_ENABLED: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
+  ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

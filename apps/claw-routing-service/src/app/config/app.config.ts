@@ -28,6 +28,41 @@ const appConfigSchema = z.object({
   ROUTING_LATENCY_PENALTY_STEP_MS: z.coerce.number().int().positive().default(6_000),
 
   ROUTING_PORT: z.coerce.number().int().positive().default(4004),
+
+  // ─── Semantic Router Flagship feature flags ──────────────────────────────
+  // See docs/03-architecture/semantic-router-flagship-plan.md for the
+  // phased rollout. Defaults preserve current v1 hot-path behavior; flip
+  // each flag to `true` (or raise the canary percent) to advance a phase.
+  ROUTING_SEMANTIC_ANALYZER_ENABLED: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
+  ROUTING_SEMANTIC_ANALYZER_USE_FOR_ROUTING: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
+  ROUTING_AI_ROUTE_PLANNER_ENABLED: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
+  ROUTING_AI_ROUTE_PLANNER_USE_FOR_ROUTING: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
+  ROUTING_V2_CANARY_PERCENT: z.coerce.number().int().min(0).max(100).default(0),
+  ROUTING_FALLBACK_ATTEMPTS_ENABLED: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
+  ROUTING_MAX_FALLBACK_ATTEMPTS: z.coerce.number().int().positive().max(10).default(3),
+  ROUTING_JUDGE_HIGH_RISK_ENABLED: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
+  ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;
