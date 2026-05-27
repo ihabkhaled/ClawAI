@@ -988,6 +988,29 @@ WEBHOOK_CONNECTOR_REQUESTS_PER_MINUTE=60
 AUTO_SUGGEST_INBOX_REPLY_CRON=0 */15 * * * *
 AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS=48
 
+# =============================================================================
+# Semantic Router Flagship - phased rollout flags
+# See docs/03-architecture/semantic-router-flagship-plan.md
+# Defaults preserve the current v1 hot path; flip to advance a phase.
+# =============================================================================
+# Phase 2 - Semantic Intent Analyzer
+ROUTING_SEMANTIC_ANALYZER_ENABLED=false
+ROUTING_SEMANTIC_ANALYZER_USE_FOR_ROUTING=false
+# Phase 4 - AI Route Planner
+ROUTING_AI_ROUTE_PLANNER_ENABLED=false
+ROUTING_AI_ROUTE_PLANNER_USE_FOR_ROUTING=false
+ROUTING_V2_CANARY_PERCENT=0
+# Phase 1 - Thread Context + Follow-up detection (on by default)
+ROUTING_THREAD_CONTEXT_INJECTION_ENABLED=true
+ROUTING_FOLLOW_UP_DETECTION_ENABLED=true
+# Phase 5 - Formal 3-attempt Fallback Executor
+ROUTING_FALLBACK_ATTEMPTS_ENABLED=false
+ROUTING_MAX_FALLBACK_ATTEMPTS=3
+# Phase 7 - Auto-judge for high-risk routes
+ROUTING_JUDGE_HIGH_RISK_ENABLED=false
+# Phase 8 - Dev-only context inspector panel
+ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED=false
+
 AUDIT_MONGODB_URI=mongodb://claw:$($mongoPass)@mongodb:27017/claw_audit?authSource=admin
 CLIENT_LOGS_MONGODB_URI=mongodb://claw:$($mongoPass)@mongodb:27017/claw_client_logs?authSource=admin
 SERVER_LOGS_MONGODB_URI=mongodb://claw:$($mongoPass)@mongodb:27017/claw_server_logs?authSource=admin
