@@ -46,6 +46,34 @@ export type RouterModelRegistryRecord = {
   createdAt: Date;
   updatedAt: Date;
   lastSyncedAt: Date | null;
+  // Semantic Router Flagship — Phase 3: enrichment fields
+  supportsStreaming: boolean | null;
+  supportsTools: boolean | null;
+  supportsStructuredOutput: boolean | null;
+  supportsVision: boolean | null;
+  supportsAudioInput: boolean | null;
+  supportsAudioOutput: boolean | null;
+  supportsVideoInput: boolean | null;
+  supportsFileInput: boolean | null;
+  supportsEmbeddings: boolean | null;
+  supportsLongContext: boolean | null;
+  maxContextTokens: number | null;
+  maxOutputTokensIntel: number | null;
+  domainStrengths: string[];
+  roleStrengths: string[];
+  weakDomains: string[];
+  bestFor: string[];
+  avoidFor: string[];
+  languageStrengths: string[];
+  qualityTierLabel: string | null;
+  costClassLabel: string | null;
+  costConfidenceLabel: string | null;
+  estimatedInputCostPer1M: number | null;
+  estimatedOutputCostPer1M: number | null;
+  latencyClassLabel: string | null;
+  privacyClassLabel: string | null;
+  adminOverrideJson: Record<string, unknown> | null;
+  lastEnrichedAt: Date | null;
 };
 
 export type RouterAdminOverrideRecord = {

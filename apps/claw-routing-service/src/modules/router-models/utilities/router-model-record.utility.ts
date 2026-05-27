@@ -39,5 +39,36 @@ export function mapPrismaToRecord(row: PrismaRouterModelRegistry): RouterModelRe
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     lastSyncedAt: row.lastSyncedAt,
+    // Phase 3 enrichment
+    supportsStreaming: row.supportsStreaming,
+    supportsTools: row.supportsTools,
+    supportsStructuredOutput: row.supportsStructuredOutput,
+    supportsVision: row.supportsVision,
+    supportsAudioInput: row.supportsAudioInput,
+    supportsAudioOutput: row.supportsAudioOutput,
+    supportsVideoInput: row.supportsVideoInput,
+    supportsFileInput: row.supportsFileInput,
+    supportsEmbeddings: row.supportsEmbeddings,
+    supportsLongContext: row.supportsLongContext,
+    maxContextTokens: row.maxContextTokens,
+    maxOutputTokensIntel: row.maxOutputTokensIntel,
+    domainStrengths: row.domainStrengths,
+    roleStrengths: row.roleStrengths,
+    weakDomains: row.weakDomains,
+    bestFor: row.bestFor,
+    avoidFor: row.avoidFor,
+    languageStrengths: row.languageStrengths,
+    qualityTierLabel: row.qualityTierLabel,
+    costClassLabel: row.costClassLabel,
+    costConfidenceLabel: row.costConfidenceLabel,
+    estimatedInputCostPer1M: row.estimatedInputCostPer1M,
+    estimatedOutputCostPer1M: row.estimatedOutputCostPer1M,
+    latencyClassLabel: row.latencyClassLabel,
+    privacyClassLabel: row.privacyClassLabel,
+    adminOverrideJson:
+      row.adminOverrideJson === null
+        ? null
+        : (row.adminOverrideJson as Record<string, unknown>),
+    lastEnrichedAt: row.lastEnrichedAt,
   };
 }

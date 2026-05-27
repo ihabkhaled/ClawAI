@@ -1,9 +1,14 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
-import { ModelLifecycle, type Prisma } from '../../../generated/prisma';
 import { RouterModelRegistryRepository } from '../../router-models/repositories/router-model-registry.repository';
 import { RouterModelRegistryManager } from '../../router-models/managers/router-model-registry.manager';
+import { type ModelIntelligenceEnrichment } from '../../router-models/types/model-intelligence.types';
+import {
+  lookupCuratedCloudEnrichment,
+  lookupLocalFamilyEnrichment,
+  mergeEnrichmentRespectingOverrides,
+} from '../../router-models/utilities/model-intelligence-merge.utility';
 import { UPSTREAM_SNAPSHOT_ENDPOINTS } from '../constants/sync.constants';
 import {
   type SyncProviderResult,
@@ -11,6 +16,11 @@ import {
   type UpstreamModelSnapshot,
 } from '../types/sync.types';
 import { fetchSnapshot } from '../utilities/snapshot-fetcher.utility';
+import {
+  buildCreateInput,
+  buildUpdateInput,
+  enrichmentEntries,
+} from '../utilities/upsert-input-builder.utility';
 
 @Injectable()
 export class RouterSyncManager {
@@ -24,7 +34,7 @@ export class RouterSyncManager {
 
   async syncAll(): Promise<SyncRunResult> {
     const startedAt = new Date();
-    this.logger.log(`syncAll: started at ${startedAt.toISOString()}`);
+    this.logger.debug(`syncAll: started at ${startedAt.toISOString()}`);
 
     const baseConnector = this.serviceBaseUrl(
       'CONNECTOR_SERVICE_URL',
@@ -94,6 +104,7 @@ export class RouterSyncManager {
   }
 
   private async syncOne(source: string, url: string): Promise<SyncProviderResult> {
+    this.logger.debug(`syncOne: source=${source} url=${url}`);
     const outcome = await fetchSnapshot(url);
     if (outcome.status === 'UPSTREAM_404') {
       return {
@@ -106,6 +117,7 @@ export class RouterSyncManager {
       };
     }
     if (outcome.status === 'UPSTREAM_ERROR') {
+      this.logger.warn(`syncOne(${source}): upstream error — ${outcome.message}`);
       return {
         provider: source,
         source: url,
@@ -136,7 +148,17 @@ export class RouterSyncManager {
           existing === null
             ? new Set<string>()
             : await this.registryManager.getProtectedFieldNames(existing.id);
-        const upsertInput = this.toUpsertInput(upstream, protectedFields);
+        const intelligenceOverrideKeys =
+          existing?.adminOverrideJson === null || existing?.adminOverrideJson === undefined
+            ? new Set<string>()
+            : new Set<string>(Object.keys(existing.adminOverrideJson));
+        const enrichment = this.resolveEnrichment(upstream, existing);
+        const filteredEnrichment = mergeEnrichmentRespectingOverrides(
+          {},
+          enrichment,
+          intelligenceOverrideKeys,
+        );
+        const upsertInput = this.toUpsertInput(upstream, protectedFields, filteredEnrichment);
         await this.registryRepo.upsert(
           upstream.provider,
           upstream.modelKey,
@@ -161,48 +183,41 @@ export class RouterSyncManager {
     };
   }
 
+  /// Phase 3: Resolves the enrichment block to apply to this row. Priority
+  /// (highest wins): explicit `snapshot.intelligence` → curated cloud table
+  /// → local-family heuristic (matched against family / modelKey for local
+  /// models) → existing adminOverrideJson (so a row pinned by an admin
+  /// keeps its pins even when no upstream source has anything to say) →
+  /// empty. `adminOverrideJson` is enforced separately by the caller via
+  /// `mergeEnrichmentRespectingOverrides`.
+  private resolveEnrichment(
+    upstream: UpstreamModelSnapshot,
+    existing: { adminOverrideJson: Record<string, unknown> | null } | null,
+  ): ModelIntelligenceEnrichment {
+    if (upstream.intelligence !== undefined) return upstream.intelligence;
+    if (upstream.isLocal === true) {
+      const local = lookupLocalFamilyEnrichment(upstream.family ?? upstream.modelKey);
+      if (local !== undefined) return local;
+    }
+    const curated = lookupCuratedCloudEnrichment(upstream.provider, upstream.modelKey);
+    if (curated !== undefined) return curated;
+    if (existing?.adminOverrideJson !== null && existing?.adminOverrideJson !== undefined) {
+      return existing.adminOverrideJson as ModelIntelligenceEnrichment;
+    }
+    return {};
+  }
+
   private toUpsertInput(
     upstream: UpstreamModelSnapshot,
     protectedFields: ReadonlySet<string>,
+    enrichment: ModelIntelligenceEnrichment,
   ): {
-    create: Prisma.RouterModelRegistryCreateInput;
-    update: Prisma.RouterModelRegistryUpdateInput;
+    create: ReturnType<typeof buildCreateInput>;
+    update: ReturnType<typeof buildUpdateInput>;
   } {
-    const create: Prisma.RouterModelRegistryCreateInput = {
-      provider: upstream.provider,
-      modelKey: upstream.modelKey,
-      displayName: upstream.displayName,
-      family: upstream.family ?? null,
-      isLocal: upstream.isLocal ?? false,
-      lifecycle: ModelLifecycle.ACTIVE,
-      modalitiesIn: upstream.modalitiesIn ?? [],
-      modalitiesOut: upstream.modalitiesOut ?? [],
-      contextWindowTokens: upstream.contextWindowTokens ?? null,
-      maxOutputTokens: upstream.maxOutputTokens ?? null,
-      inputCostPer1M: upstream.inputCostPer1M ?? null,
-      outputCostPer1M: upstream.outputCostPer1M ?? null,
-      ...(upstream.qualityTier !== undefined ? { qualityTier: upstream.qualityTier } : {}),
-      ...(upstream.privacySupport !== undefined ? { privacySupport: upstream.privacySupport } : {}),
-    };
-    const update: Prisma.RouterModelRegistryUpdateInput = {};
-    if (!protectedFields.has('displayName')) update.displayName = upstream.displayName;
-    if (!protectedFields.has('family')) update.family = upstream.family ?? null;
-    if (!protectedFields.has('modalitiesIn')) update.modalitiesIn = upstream.modalitiesIn ?? [];
-    if (!protectedFields.has('modalitiesOut')) update.modalitiesOut = upstream.modalitiesOut ?? [];
-    if (!protectedFields.has('contextWindowTokens'))
-      update.contextWindowTokens = upstream.contextWindowTokens ?? null;
-    if (!protectedFields.has('maxOutputTokens'))
-      update.maxOutputTokens = upstream.maxOutputTokens ?? null;
-    if (!protectedFields.has('inputCostPer1M'))
-      update.inputCostPer1M = upstream.inputCostPer1M ?? null;
-    if (!protectedFields.has('outputCostPer1M'))
-      update.outputCostPer1M = upstream.outputCostPer1M ?? null;
-    if (upstream.qualityTier !== undefined && !protectedFields.has('qualityTier')) {
-      update.qualityTier = upstream.qualityTier;
-    }
-    if (upstream.privacySupport !== undefined && !protectedFields.has('privacySupport')) {
-      update.privacySupport = upstream.privacySupport;
-    }
+    const entries = enrichmentEntries(enrichment);
+    const create = buildCreateInput(upstream, entries);
+    const update = buildUpdateInput(upstream, protectedFields, entries);
     return { create, update };
   }
 
