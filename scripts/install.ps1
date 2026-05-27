@@ -9,7 +9,8 @@
 # =============================================================================
 param(
     [switch]$Dev,
-    [switch]$Prod
+    [switch]$Prod,
+    [switch]$NoGpu
 )
 
 $ErrorActionPreference = "Stop"
@@ -526,14 +527,23 @@ try {
 
         switch ($gpuInfo.Vendor) {
             "nvidia" {
-                Write-Ask "Enable GPU-accelerated Ollama? [Y/n]: "
-                $gpuAnswer = Read-Host
-                if ($gpuAnswer -ne "n" -and $gpuAnswer -ne "N") {
-                    $useGpu = $true
-                    Write-Ok "GPU Ollama enabled"
-                    $gpuStatus = "NVIDIA GPU detected: $($gpuInfo.Name) (GPU mode enabled)"
+                # Auto-enable when an NVIDIA card is present + the docker
+                # nvidia runtime is available. Asking Y/n here was a footgun
+                # — users hit Enter without reading and got CPU mode silently.
+                # Override with -NoGpu for CPU-only on a GPU host.
+                if ($NoGpu) {
+                    $gpuStatus = "NVIDIA GPU detected: $($gpuInfo.Name) (-NoGpu set; CPU mode)"
                 } else {
-                    $gpuStatus = "NVIDIA GPU detected: $($gpuInfo.Name) (CPU mode selected)"
+                    $dockerInfo = docker info 2>$null | Out-String
+                    if ($dockerInfo -match "Runtimes:.*nvidia") {
+                        $useGpu = $true
+                        Write-Ok "NVIDIA GPU detected: $($gpuInfo.Name) - enabling CUDA passthrough"
+                        $gpuStatus = "NVIDIA GPU detected: $($gpuInfo.Name) (GPU mode enabled)"
+                    } else {
+                        Write-Warn "NVIDIA GPU detected but docker has no 'nvidia' runtime."
+                        Write-Warn "Install nvidia-container-toolkit and restart docker, then re-run install."
+                        $gpuStatus = "NVIDIA GPU detected: $($gpuInfo.Name) (nvidia-container-toolkit missing; CPU mode)"
+                    }
                 }
             }
             "amd" {

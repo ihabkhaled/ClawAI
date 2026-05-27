@@ -33,6 +33,10 @@ RUN cp -r src/generated dist/generated 2>/dev/null || true
 # Runtime apt deps are the same set the dev image needs to extract release
 # archives + dlopen the OpenMP runtime.
 FROM node:26-bookworm-slim AS runner
+# util-linux gives us `runuser` which the entrypoint uses to drop privileges
+# from root to nestjs after fixing volume ownership. Pre-installed on
+# bookworm-slim base; explicit `apt-get install util-linux` is belt-and-
+# suspenders so future base-image slimming doesn't break the entrypoint.
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
        openssl \
@@ -42,10 +46,18 @@ RUN apt-get update \
        xz-utils \
        unzip \
        libgomp1 \
+       util-linux \
   && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 WORKDIR /app
 RUN groupadd --system --gid 1001 nestjs && useradd --system --uid 1001 --gid 1001 nestjs
+# Pre-create the llamacpp data tree with nestjs ownership so brand-new
+# named volumes inherit it on first mount (docker copies image-side
+# directory contents + ownership into an empty volume). Existing
+# volumes that already have root ownership are fixed by the entrypoint.
+RUN mkdir -p /var/lib/claw/llamacpp/bin /var/lib/claw/llamacpp/models \
+             /var/lib/claw/llamacpp/tmp /var/lib/claw/llamacpp/cache \
+  && chown -R nestjs:nestjs /var/lib/claw
 COPY --from=builder /app/apps/claw-llamacpp-service/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/claw-llamacpp-service/package.json ./package.json
@@ -53,7 +65,10 @@ COPY --from=builder /app/apps/claw-llamacpp-service/prisma ./prisma
 COPY --from=builder /app/apps/claw-llamacpp-service/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/packages /app/packages
 COPY scripts/docker-entrypoint.prod.sh /app/docker-entrypoint.prod.sh
-RUN chmod +x /app/docker-entrypoint.prod.sh
-USER nestjs
+COPY apps/claw-llamacpp-service/docker-entrypoint.prod.sh /app/docker-entrypoint.llamacpp.sh
+RUN chmod +x /app/docker-entrypoint.prod.sh /app/docker-entrypoint.llamacpp.sh
+# Stay root here — the llamacpp wrapper entrypoint chowns the data volume
+# (which docker creates as root) and then exec's runuser to drop to nestjs
+# before NestJS boots. See docker-entrypoint.prod.sh for the full rationale.
 EXPOSE 4017
-CMD ["sh", "/app/docker-entrypoint.prod.sh"]
+CMD ["sh", "/app/docker-entrypoint.llamacpp.sh"]

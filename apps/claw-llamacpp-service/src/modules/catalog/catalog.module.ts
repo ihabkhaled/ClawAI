@@ -6,12 +6,14 @@ import { HfAutoSyncManager } from './managers/hf-auto-sync.manager';
 import { HfDiscoveryManager } from './managers/hf-discovery.manager';
 import { RoutingSnapshotManager } from './managers/routing-snapshot.manager';
 import { CatalogRepository } from './repositories/catalog.repository';
+import { CatalogBootstrapService } from './services/catalog-bootstrap.service';
 import { CatalogService } from './services/catalog.service';
 
 @Module({
   controllers: [CatalogController, CatalogInternalController],
   providers: [
     CatalogService,
+    CatalogBootstrapService,
     CatalogRepository,
     CatalogRefreshManager,
     HfDiscoveryManager,

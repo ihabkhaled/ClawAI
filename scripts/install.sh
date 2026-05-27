@@ -14,10 +14,12 @@ set -euo pipefail
 # ─── Mode selection (dev vs prod) ───────────────────────────────────────────
 # Parse --dev / --prod from args; fall back to CLAW_MODE env var; default dev.
 CLAW_MODE_ARG=""
+DISABLE_GPU="false"
 for arg in "$@"; do
   case "$arg" in
-    --prod) CLAW_MODE_ARG="prod" ;;
-    --dev)  CLAW_MODE_ARG="dev"  ;;
+    --prod)   CLAW_MODE_ARG="prod" ;;
+    --dev)    CLAW_MODE_ARG="dev"  ;;
+    --no-gpu) DISABLE_GPU="true"   ;;
   esac
 done
 CLAW_MODE="${CLAW_MODE_ARG:-${CLAW_MODE:-}}"
@@ -572,14 +574,22 @@ if GPU_INFO="$(detect_gpu)"; then
 
   case "$GPU_VENDOR" in
     nvidia)
-      ask "Enable GPU-accelerated Ollama? [Y/n]: "
-      read -r gpu_answer
-      if [[ "$gpu_answer" != "n" && "$gpu_answer" != "N" ]]; then
+      # Auto-enable when an NVIDIA card is present + nvidia-container-toolkit
+      # is installed. Asking Y/n here was a footgun — users hit Enter without
+      # reading, got CPU mode silently, then wondered why llamacpp said
+      # `linux-x64-cpu` and binary downloads tried to write 22 GB of weights
+      # without GPU acceleration. Override with --no-gpu if you really want
+      # CPU-only on a GPU host.
+      if [ "$DISABLE_GPU" = "true" ]; then
+        GPU_STATUS="NVIDIA GPU detected: $GPU_NAME (--no-gpu flag set; CPU mode)"
+      elif docker info 2>/dev/null | grep -q "Runtimes:.*nvidia"; then
         USE_GPU="true"
-        ok "GPU Ollama enabled"
+        ok "NVIDIA GPU detected: $GPU_NAME — enabling CUDA passthrough"
         GPU_STATUS="NVIDIA GPU detected: $GPU_NAME (GPU mode enabled)"
       else
-        GPU_STATUS="NVIDIA GPU detected: $GPU_NAME (CPU mode selected)"
+        warn "NVIDIA GPU detected but docker has no 'nvidia' runtime."
+        warn "Install nvidia-container-toolkit and restart docker, then re-run install.sh."
+        GPU_STATUS="NVIDIA GPU detected: $GPU_NAME (nvidia-container-toolkit missing; CPU mode)"
       fi
       ;;
     amd)
