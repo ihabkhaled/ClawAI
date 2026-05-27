@@ -109,7 +109,7 @@ describe('RouteEvaluatorManager — Phase 9 learning loop integration', () => {
       } as any)
       .catch(() => undefined);
 
-    const scoringInput = scorer.score?.mock.calls[0]?.[0];
+    const scoringInput = ((scorer.score as unknown) as jest.Mock).mock.calls[0]?.[0];
     expect(scoringInput.candidates[0].learnedSuccessRate).toBeNull();
     expect(scoringInput.candidates[1].learnedSuccessRate).toBeNull();
     expect(learningLoop.getRollingScore).not.toHaveBeenCalled();
@@ -140,7 +140,7 @@ describe('RouteEvaluatorManager — Phase 9 learning loop integration', () => {
       } as any)
       .catch(() => undefined);
 
-    const scoringInput = scorer.score?.mock.calls[0]?.[0];
+    const scoringInput = ((scorer.score as unknown) as jest.Mock).mock.calls[0]?.[0];
     expect(scoringInput.candidates[0].learnedSuccessRate).toBe(0.87);
     expect(learningLoop.getRollingScore).toHaveBeenCalledWith(
       'OPENAI/gpt-4o',
@@ -175,7 +175,7 @@ describe('RouteEvaluatorManager — Phase 9 learning loop integration', () => {
       } as any)
       .catch(() => undefined);
 
-    const scoringInput = scorer.score?.mock.calls[0]?.[0];
+    const scoringInput = ((scorer.score as unknown) as jest.Mock).mock.calls[0]?.[0];
     expect(scoringInput.candidates[0].learnedSuccessRate).toBeNull();
   });
 
@@ -202,7 +202,7 @@ describe('RouteEvaluatorManager — Phase 9 learning loop integration', () => {
       } as any)
       .catch(() => undefined);
 
-    const scoringInput = scorer.score?.mock.calls[0]?.[0];
+    const scoringInput = ((scorer.score as unknown) as jest.Mock).mock.calls[0]?.[0];
     expect(scoringInput.candidates[0].learnedSuccessRate).toBeNull();
   });
 });
