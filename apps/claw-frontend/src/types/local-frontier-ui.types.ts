@@ -55,6 +55,8 @@ export interface FilterBarLabels {
   tierSurvival: string;
   tierBalanced: string;
   tierBest: string;
+  searchLabel: string;
+  searchPlaceholder: string;
 }
 
 export interface DownloadsDrawerLabels {
@@ -144,6 +146,8 @@ export interface LocalFrontierPageController {
   category: FrontierModelCategory | undefined;
   qualityTier: FrontierQualityTier | undefined;
   compatibleOnly: boolean;
+  searchInput: string;
+  setSearchInput: (value: string) => void;
   setCategory: (value: FrontierModelCategory | undefined) => void;
   setQualityTier: (value: FrontierQualityTier | undefined) => void;
   setCompatibleOnly: (value: boolean) => void;
@@ -283,10 +287,12 @@ export interface FilterBarProps {
   category: FrontierModelCategory | undefined;
   qualityTier: FrontierQualityTier | undefined;
   compatibleOnly: boolean;
+  searchInput: string;
   isRefreshing: boolean;
   onCategoryChange: (value: FrontierModelCategory | undefined) => void;
   onQualityTierChange: (value: FrontierQualityTier | undefined) => void;
   onCompatibleOnlyChange: (value: boolean) => void;
+  onSearchChange: (value: string) => void;
   onRefreshCatalog: () => void;
   labels: FilterBarLabels;
 }

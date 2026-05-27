@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ModelCategory, QualityTier } from '../../../common/enums';
+import { CATALOG_SEARCH_MAX_LENGTH } from '../constants/catalog-search.constants';
 
 export const CatalogQuerySchema = z.object({
   category: z.nativeEnum(ModelCategory).optional(),
@@ -10,6 +11,7 @@ export const CatalogQuerySchema = z.object({
     .transform((value) => value?.toLowerCase() === 'true'),
   limit: z.coerce.number().min(1).max(100).optional().default(50),
   cursor: z.string().max(200).optional(),
+  search: z.string().trim().max(CATALOG_SEARCH_MAX_LENGTH).optional(),
 });
 
 export type CatalogQueryDto = z.infer<typeof CatalogQuerySchema>;

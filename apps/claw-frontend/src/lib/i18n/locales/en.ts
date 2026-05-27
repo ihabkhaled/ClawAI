@@ -2290,6 +2290,23 @@ export const en: TranslationDictionary = {
       categoryThinking: 'Thinking',
       categoryGeneral: 'General',
       categoryFileGen: 'File generation',
+      searchLabel: 'Search',
+      searchPlaceholder: 'Search by model name…',
+      resultsCount: '{count} of {total} models',
+    },
+    hfSearch: {
+      openButton: 'Browse HuggingFace',
+      title: 'Browse HuggingFace GGUF models',
+      description:
+        'Live search across HuggingFace. Pick a quantization, choose a category, and import the model into the local frontier catalog.',
+      searchPlaceholder: 'Search HuggingFace (leave blank for top trending)',
+      sortPlaceholder: 'Sort by',
+      loadMore: 'Load more',
+      loadingMore: 'Loading more…',
+      resultsCount: '{count} results loaded',
+      close: 'Close',
+      importButton: 'Import to catalog',
+      importing: 'Importing…',
     },
     downloads: {
       title: 'Active downloads',

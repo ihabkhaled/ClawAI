@@ -2312,6 +2312,23 @@ export const ru: TranslationDictionary = {
       categoryThinking: 'Мышление',
       categoryGeneral: 'Общий',
       categoryFileGen: 'Генерация файлов',
+      searchLabel: 'Поиск',
+      searchPlaceholder: 'Поиск по имени модели…',
+      resultsCount: '{count} из {total} моделей',
+    },
+    hfSearch: {
+      openButton: 'Обзор HuggingFace',
+      title: 'Обзор моделей GGUF на HuggingFace',
+      description:
+        'Живой поиск на HuggingFace. Выберите квантование и категорию, чтобы импортировать модель в локальный каталог local frontier.',
+      searchPlaceholder: 'Поиск на HuggingFace (оставьте пустым для популярных)',
+      sortPlaceholder: 'Сортировать по',
+      loadMore: 'Загрузить ещё',
+      loadingMore: 'Загрузка…',
+      resultsCount: 'Загружено результатов: {count}',
+      close: 'Закрыть',
+      importButton: 'Импортировать в каталог',
+      importing: 'Импортирование…',
     },
     downloads: {
       title: 'Активные загрузки',

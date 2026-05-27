@@ -43,6 +43,7 @@ export interface CatalogListFilters {
   compatibleOnly?: boolean;
   limit?: number;
   cursor?: string;
+  search?: string;
 }
 
 export interface CatalogListResult {

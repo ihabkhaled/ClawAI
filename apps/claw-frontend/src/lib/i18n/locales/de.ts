@@ -2316,6 +2316,23 @@ export const de: TranslationDictionary = {
       categoryThinking: 'Denken',
       categoryGeneral: 'Allgemein',
       categoryFileGen: 'Dateigenerierung',
+      searchLabel: 'Suche',
+      searchPlaceholder: 'Nach Modellnamen suchen…',
+      resultsCount: '{count} von {total} Modellen',
+    },
+    hfSearch: {
+      openButton: 'HuggingFace durchsuchen',
+      title: 'HuggingFace GGUF-Modelle durchsuchen',
+      description:
+        'Live-Suche in HuggingFace. Wähle eine Quantisierung und eine Kategorie, um das Modell in den Local-Frontier-Katalog zu importieren.',
+      searchPlaceholder: 'HuggingFace durchsuchen (leer lassen für Top-Trends)',
+      sortPlaceholder: 'Sortieren nach',
+      loadMore: 'Mehr laden',
+      loadingMore: 'Wird geladen…',
+      resultsCount: '{count} Ergebnisse geladen',
+      close: 'Schließen',
+      importButton: 'In Katalog importieren',
+      importing: 'Wird importiert…',
     },
     downloads: {
       title: 'Aktive Downloads',

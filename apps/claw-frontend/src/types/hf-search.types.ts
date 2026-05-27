@@ -33,7 +33,18 @@ export interface HfModelDetails extends HfModelSummary {
 export interface HfSearchQuery {
   q?: string;
   sort?: HfSearchSort;
+  page?: number;
   limit?: number;
+}
+
+export interface UseHfSearchResult {
+  data: HfModelSummary[];
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  fetchNextPage: () => void;
 }
 
 export interface HfImportRequest {
@@ -56,6 +67,12 @@ export interface HfResultsListProps {
   error: Error | null;
   selectedRepo: string | null;
   onSelect: (repo: string) => void;
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  onLoadMore: () => void;
+  loadMoreLabel: string;
+  loadingMoreLabel: string;
+  resultsCountLabel: string;
 }
 
 export interface HfDetailsPanelProps {
@@ -83,6 +100,9 @@ export interface HfSearchDialogController {
   results: HfModelSummary[];
   isLoadingResults: boolean;
   resultsError: Error | null;
+  hasMoreResults: boolean;
+  isLoadingMoreResults: boolean;
+  loadMoreResults: () => void;
   selectedRepo: string | null;
   selectRepo: (repo: string | null) => void;
   details: HfModelDetails | undefined;

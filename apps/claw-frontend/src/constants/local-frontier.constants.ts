@@ -42,6 +42,11 @@ export const QUALITY_TIER_BADGE: Readonly<Record<string, string>> = Object.freez
 
 export const LOCAL_FRONTIER_API_BASE = '/api/v1/llamacpp';
 
+// Debounce window for the catalog search input.
+export const LOCAL_FRONTIER_SEARCH_DEBOUNCE_MS = 300;
+// Hard cap matching the backend Zod schema (CATALOG_SEARCH_MAX_LENGTH).
+export const LOCAL_FRONTIER_SEARCH_MAX_LENGTH = 200;
+
 export const FALLBACK_COMPAT: CompatChipMeta = Object.freeze({
   chip: HardwareCompat.WARNS,
   reasons: [],

@@ -2311,6 +2311,23 @@ export const it: TranslationDictionary = {
       categoryThinking: 'Pensiero',
       categoryGeneral: 'Generale',
       categoryFileGen: 'Generazione file',
+      searchLabel: 'Cerca',
+      searchPlaceholder: 'Cerca per nome del modello…',
+      resultsCount: '{count} di {total} modelli',
+    },
+    hfSearch: {
+      openButton: 'Esplora HuggingFace',
+      title: 'Esplora i modelli GGUF di HuggingFace',
+      description:
+        'Ricerca live su HuggingFace. Scegli una quantizzazione e una categoria per importare il modello nel catalogo local frontier.',
+      searchPlaceholder: 'Cerca su HuggingFace (lascia vuoto per i più popolari)',
+      sortPlaceholder: 'Ordina per',
+      loadMore: 'Carica altri',
+      loadingMore: 'Caricamento…',
+      resultsCount: '{count} risultati caricati',
+      close: 'Chiudi',
+      importButton: 'Importa nel catalogo',
+      importing: 'Importazione…',
     },
     downloads: {
       title: 'Download attivi',
