@@ -1,4 +1,5 @@
 import { type ModalityKind, type PrivacyClass, type QualityTier } from '../../../generated/prisma';
+import { type ModelIntelligenceEnrichment } from '../../router-models/types/model-intelligence.types';
 
 export type UpstreamModelSnapshot = {
   provider: string;
@@ -14,6 +15,11 @@ export type UpstreamModelSnapshot = {
   outputCostPer1M?: number;
   qualityTier?: QualityTier;
   privacySupport?: PrivacyClass;
+  // Phase 3: optional richer intelligence block. Sync sources that can
+  // provide it (llamacpp catalog, advanced connector controllers) include
+  // it directly; otherwise the sync manager falls back to the curated cloud
+  // table + local family heuristics.
+  intelligence?: ModelIntelligenceEnrichment;
 };
 
 export type SyncProviderResult = {

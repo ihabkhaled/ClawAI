@@ -137,4 +137,20 @@ export class RouterModelRegistryRepository {
     });
     return mapPrismaToRecord(row);
   }
+
+  /// Phase 3: applies an intelligence enrichment to a row, marking
+  /// `lastEnrichedAt = now()`. Sync workers call this with curated /
+  /// heuristic blocks; the admin endpoint calls it with a sanitized PATCH
+  /// payload. The caller is responsible for stripping protected keys.
+  async patchIntelligence(
+    id: string,
+    enrichment: Prisma.RouterModelRegistryUpdateInput,
+  ): Promise<RouterModelRegistryRecord> {
+    this.logger.log(`patchIntelligence id=${id}`);
+    const row = await this.prisma.routerModelRegistry.update({
+      where: { id },
+      data: { ...enrichment, lastEnrichedAt: new Date() },
+    });
+    return mapPrismaToRecord(row);
+  }
 }

@@ -443,6 +443,53 @@ model RouterModelRegistry {
   metadataSource      String         @default("seed") @map("metadata_source") // seed | connector_sync | ollama_sync | llamacpp_sync | admin_override | learned
   externalCardUrl     String?        @map("external_card_url")
   notes               String?
+  // ─── Semantic Router Flagship — Phase 3: Model Intelligence enrichment ───
+  // All fields below are additive and nullable / default-falsy. They surface
+  // richer capability / cost / latency / domain metadata for the AI Route
+  // Planner (Phase 4), Fallback Executor (Phase 5), and Learning Loop
+  // (Phase 9). They MUST stay backwards compatible — the v1 hot path does
+  // not read any of them.
+  //
+  // Capability flags. Unknown capability = NULL (NOT false). The planner
+  // treats null as "do not assume; do not select for high-risk".
+  supportsStreaming         Boolean?  @default(false) @map("supports_streaming")
+  supportsTools             Boolean?  @default(false) @map("supports_tools")
+  supportsStructuredOutput  Boolean?  @default(false) @map("supports_structured_output")
+  supportsVision            Boolean?  @default(false) @map("supports_vision")
+  supportsAudioInput        Boolean?  @default(false) @map("supports_audio_input")
+  supportsAudioOutput       Boolean?  @default(false) @map("supports_audio_output")
+  supportsVideoInput        Boolean?  @default(false) @map("supports_video_input")
+  supportsFileInput         Boolean?  @default(false) @map("supports_file_input")
+  supportsEmbeddings        Boolean?  @default(false) @map("supports_embeddings")
+  supportsLongContext       Boolean?  @default(false) @map("supports_long_context")
+  // Token ceilings as exposed by upstream cards (already covered by
+  // contextWindowTokens/maxOutputTokens above — these aliases let the
+  // intelligence shape stay 1:1 with §6.1 of the flagship prompt).
+  maxContextTokens          Int?      @map("max_context_tokens")
+  maxOutputTokensIntel      Int?      @map("max_output_tokens_intel")
+  // Domain / role guidance for the planner. String arrays so future
+  // taxonomy additions don't require a new migration.
+  domainStrengths           String[]  @default([]) @map("domain_strengths")
+  roleStrengths             String[]  @default([]) @map("role_strengths")
+  weakDomains               String[]  @default([]) @map("weak_domains")
+  bestFor                   String[]  @default([]) @map("best_for")
+  avoidFor                  String[]  @default([]) @map("avoid_for")
+  languageStrengths         String[]  @default([]) @map("language_strengths")
+  // Quality / cost / latency / privacy as STRING tier labels separate from
+  // the existing typed enum columns. This keeps the canonical enum columns
+  // untouched while giving the planner a free-form override hook.
+  qualityTierLabel          String?   @map("quality_tier_label") // "BASIC" | "STANDARD" | "PRO" | "FRONTIER"
+  costClassLabel            String?   @map("cost_class_label")   // "FREE" | "LOW" | "MEDIUM" | "HIGH" | "PREMIUM"
+  costConfidenceLabel       String?   @map("cost_confidence_label") // "EXACT" | "ESTIMATED" | "UNKNOWN"
+  estimatedInputCostPer1M   Float?    @map("estimated_input_cost_per_1m")
+  estimatedOutputCostPer1M  Float?    @map("estimated_output_cost_per_1m")
+  latencyClassLabel         String?   @map("latency_class_label") // "FAST" | "MEDIUM" | "SLOW"
+  privacyClassLabel         String?   @map("privacy_class_label") // "local" | "cloud"
+  // adminOverrideJson is the "freeze" block. Sync passes MUST NOT overwrite
+  // any key present here. See `ModelIntelligenceService.applyOverrides()`
+  // and `RouterSyncManager.applySnapshot()`.
+  adminOverrideJson         Json?     @map("admin_override_json")
+  lastEnrichedAt            DateTime? @map("last_enriched_at")
   // bookkeeping
   createdAt           DateTime       @default(now()) @map("created_at")
   updatedAt           DateTime       @updatedAt @map("updated_at")
