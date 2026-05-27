@@ -200,7 +200,12 @@ EOF
       -config openssl.cnf -extensions v3_ca
     cp claw.crt rootCA.pem
     chmod 644 claw.crt rootCA.pem
-    chmod 600 claw.key
+    # 0644 (not 0600) on the key because every prod backend container
+    # runs as a non-root user (nestjs uid 1001) and bind-mounts certs/
+    # read-only. A 0600 root-owned key fails with EACCES inside the
+    # container — the service then falls back to HTTP, but the
+    # healthcheck still hits HTTPS and the container goes unhealthy.
+    chmod 644 claw.key
   ' 2>"$docker_stderr" >/dev/null || rc=$?
   rm -f "$CERTS_DIR/openssl.cnf"
   if [ "$rc" -ne 0 ]; then
@@ -257,6 +262,11 @@ if try_mkcert && command -v mkcert >/dev/null 2>&1; then
       if [ -n "$ROOT_CA_DIR" ] && [ -f "$ROOT_CA_DIR/rootCA.pem" ]; then
         cp -f "$ROOT_CA_DIR/rootCA.pem" "$CERTS_DIR/rootCA.pem"
       fi
+      # mkcert writes the key 0600 by default. Loosen to 0644 so the
+      # non-root user inside every prod container (nestjs uid 1001) can
+      # read it; otherwise services log EACCES and fall back to HTTP
+      # while the healthcheck keeps hitting HTTPS → unhealthy.
+      chmod 644 "$CERTS_DIR/claw.crt" "$CERTS_DIR/claw.key" "$CERTS_DIR/rootCA.pem" 2>/dev/null || true
       USED_MKCERT=1
       ok "Browser-trusted cert issued via mkcert"
     else

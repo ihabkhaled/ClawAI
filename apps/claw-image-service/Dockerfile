@@ -19,6 +19,7 @@ RUN cd /app/packages/shared-types && npx tsc \
  && cd /app/packages/shared-utilities && npx tsc
 RUN npx prisma generate
 RUN npm run build
+RUN mkdir -p dist/generated && cp -r src/generated/prisma dist/generated/prisma
 RUN cp -r src/generated dist/generated 2>/dev/null || true
 
 FROM node:26-alpine AS runner

@@ -23,6 +23,7 @@ RUN cd /app/packages/shared-types && npx tsc \
 RUN npx prisma generate
 # npm run build = tsgo -p tsconfig.build.json && node scripts/rewrite-paths.mjs dist && node scripts/copy-assets.mjs
 RUN npm run build
+RUN mkdir -p dist/generated && cp -r src/generated/prisma dist/generated/prisma
 
 FROM node:26-bookworm-slim AS runner
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates wget \
