@@ -2271,6 +2271,23 @@ export const hi: TranslationDictionary = {
       categoryThinking: 'सोच',
       categoryGeneral: 'सामान्य',
       categoryFileGen: 'फ़ाइल जनरेशन',
+      searchLabel: 'खोज',
+      searchPlaceholder: 'मॉडल नाम से खोजें…',
+      resultsCount: '{total} में से {count} मॉडल',
+    },
+    hfSearch: {
+      openButton: 'HuggingFace ब्राउज़ करें',
+      title: 'HuggingFace GGUF मॉडल ब्राउज़ करें',
+      description:
+        'HuggingFace पर लाइव खोज। एक क्वांटाइज़ेशन और श्रेणी चुनें और मॉडल को स्थानीय फ्रंटियर कैटलॉग में आयात करें।',
+      searchPlaceholder: 'HuggingFace पर खोजें (शीर्ष ट्रेंडिंग के लिए खाली छोड़ें)',
+      sortPlaceholder: 'क्रमबद्ध करें',
+      loadMore: 'और लोड करें',
+      loadingMore: 'लोड हो रहा है…',
+      resultsCount: '{count} परिणाम लोड किए गए',
+      close: 'बंद करें',
+      importButton: 'कैटलॉग में आयात करें',
+      importing: 'आयात हो रहा है…',
     },
     downloads: {
       title: 'सक्रिय डाउनलोड',

@@ -31,6 +31,9 @@ export function useHfSearchDialog(open: boolean): HfSearchDialogController {
   );
   const detailsQuery = useHfDetails(open ? selectedRepo : null);
   const importMutation = useHfImport();
+  const loadMore = useCallback((): void => {
+    searchQuery.fetchNextPage();
+  }, [searchQuery]);
 
   // When detail loads with a recommended quant, default the picker to it.
   useEffect(() => {
@@ -74,9 +77,12 @@ export function useHfSearchDialog(open: boolean): HfSearchDialogController {
     setQuery,
     sort,
     setSort,
-    results: searchQuery.data ?? [],
+    results: searchQuery.data,
     isLoadingResults: searchQuery.isLoading,
     resultsError: searchQuery.error ?? null,
+    hasMoreResults: searchQuery.hasNextPage,
+    isLoadingMoreResults: searchQuery.isFetchingNextPage,
+    loadMoreResults: loadMore,
     selectedRepo,
     selectRepo,
     details: detailsQuery.data,

@@ -2245,6 +2245,23 @@ export const ar: TranslationDictionary = {
       categoryThinking: 'تفكير',
       categoryGeneral: 'عام',
       categoryFileGen: 'إنشاء ملفات',
+      searchLabel: 'بحث',
+      searchPlaceholder: 'ابحث باسم النموذج…',
+      resultsCount: '{count} من أصل {total} نموذجاً',
+    },
+    hfSearch: {
+      openButton: 'استعراض HuggingFace',
+      title: 'استعراض نماذج GGUF على HuggingFace',
+      description:
+        'بحث مباشر عبر HuggingFace. اختر مستوى التكميم والفئة لاستيراد النموذج إلى كتالوج النماذج المحلية.',
+      searchPlaceholder: 'ابحث في HuggingFace (اتركه فارغاً لعرض الأكثر رواجاً)',
+      sortPlaceholder: 'الفرز حسب',
+      loadMore: 'تحميل المزيد',
+      loadingMore: 'جارٍ التحميل…',
+      resultsCount: 'تم تحميل {count} نتيجة',
+      close: 'إغلاق',
+      importButton: 'استيراد إلى الكتالوج',
+      importing: 'جارٍ الاستيراد…',
     },
     downloads: {
       title: 'التنزيلات النشطة',

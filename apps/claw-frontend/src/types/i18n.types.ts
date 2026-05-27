@@ -2482,6 +2482,22 @@ export type TranslationDictionary = {
       categoryThinking: string;
       categoryGeneral: string;
       categoryFileGen: string;
+      searchLabel: string;
+      searchPlaceholder: string;
+      resultsCount: string;
+    };
+    hfSearch: {
+      openButton: string;
+      title: string;
+      description: string;
+      searchPlaceholder: string;
+      sortPlaceholder: string;
+      loadMore: string;
+      loadingMore: string;
+      resultsCount: string;
+      close: string;
+      importButton: string;
+      importing: string;
     };
     downloads: {
       title: string;

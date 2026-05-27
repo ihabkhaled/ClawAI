@@ -67,6 +67,8 @@ export default function LocalFrontierCatalogPage(): React.ReactElement {
     tierSurvival: t('localFrontier.qualityTier.survival'),
     tierBalanced: t('localFrontier.qualityTier.balanced'),
     tierBest: t('localFrontier.qualityTier.best'),
+    searchLabel: t('localFrontier.filters.searchLabel'),
+    searchPlaceholder: t('localFrontier.filters.searchPlaceholder'),
   };
 
   const drawerLabels = {
@@ -127,7 +129,7 @@ export default function LocalFrontierCatalogPage(): React.ReactElement {
         </div>
         <Button variant="outline" onClick={ctrl.openHfDialog}>
           <Sparkles className="size-4" aria-hidden />
-          Browse HuggingFace
+          {t('localFrontier.hfSearch.openButton')}
         </Button>
       </header>
 
@@ -145,13 +147,24 @@ export default function LocalFrontierCatalogPage(): React.ReactElement {
         category={ctrl.category}
         qualityTier={ctrl.qualityTier}
         compatibleOnly={ctrl.compatibleOnly}
+        searchInput={ctrl.searchInput}
         isRefreshing={ctrl.isRefreshingCatalog}
         onCategoryChange={ctrl.setCategory}
         onQualityTierChange={ctrl.setQualityTier}
         onCompatibleOnlyChange={ctrl.setCompatibleOnly}
+        onSearchChange={ctrl.setSearchInput}
         onRefreshCatalog={ctrl.handleRefreshCatalog}
         labels={filterLabels}
       />
+
+      {!ctrl.isLoading && !ctrl.isError ? (
+        <p className="px-1 text-xs text-muted-foreground">
+          {t('localFrontier.filters.resultsCount', {
+            count: ctrl.entries.length,
+            total: ctrl.total,
+          })}
+        </p>
+      ) : null}
 
       <DownloadsDrawer
         views={ctrl.downloadViews}

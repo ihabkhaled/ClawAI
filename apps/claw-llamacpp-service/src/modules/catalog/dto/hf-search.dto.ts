@@ -3,7 +3,10 @@ import { z } from 'zod';
 export const HfSearchQuerySchema = z.object({
   q: z.string().trim().max(200).optional(),
   sort: z.enum(['trending', 'downloads', 'likes', 'lastModified']).optional(),
-  limit: z.coerce.number().int().min(1).max(50).default(20).optional(),
+  // Page-based pagination. Each click of "Load more" on the FE bumps page by 1.
+  // skip = (page - 1) * limit; backend forwards skip to the HuggingFace API.
+  page: z.coerce.number().int().min(1).max(50).default(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20).optional(),
 });
 
 export type HfSearchQueryDto = z.infer<typeof HfSearchQuerySchema>;

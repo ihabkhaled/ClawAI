@@ -38,6 +38,9 @@ export const localFrontierRepository = {
     if (filters.cursor) {
       params['cursor'] = filters.cursor;
     }
+    if (filters.search !== undefined && filters.search.length > 0) {
+      params['search'] = filters.search;
+    }
     const response = await apiClient.get<FrontierCatalogList>('/llamacpp/catalog', params);
     return response.data;
   },
@@ -140,6 +143,9 @@ export const localFrontierRepository = {
     }
     if (query.sort) {
       params['sort'] = query.sort;
+    }
+    if (query.page !== undefined) {
+      params['page'] = String(query.page);
     }
     if (query.limit !== undefined) {
       params['limit'] = String(query.limit);

@@ -2,13 +2,17 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-import { DEFAULT_RUNTIME_CONFIG_DRAFT } from '@/constants/local-frontier.constants';
+import {
+  DEFAULT_RUNTIME_CONFIG_DRAFT,
+  LOCAL_FRONTIER_SEARCH_DEBOUNCE_MS,
+} from '@/constants/local-frontier.constants';
 import {
   FrontierPullJobStatus,
   HardwareCompat,
   type FrontierModelCategory,
   type FrontierQualityTier,
 } from '@/enums/local-frontier.enum';
+import { useDebounce } from '@/hooks/common/use-debounce';
 import { useTranslation } from '@/lib/i18n';
 import type {
   DownloadJobView,
@@ -38,6 +42,8 @@ export function useLocalFrontierCatalogPage(): LocalFrontierPageController {
   const [category, setCategory] = useState<FrontierModelCategory | undefined>();
   const [qualityTier, setQualityTier] = useState<FrontierQualityTier | undefined>();
   const [compatibleOnly, setCompatibleOnly] = useState<boolean>(false);
+  const [searchInput, setSearchInput] = useState<string>('');
+  const debouncedSearch = useDebounce(searchInput, LOCAL_FRONTIER_SEARCH_DEBOUNCE_MS);
 
   const [deleteEntry, setDeleteEntry] = useState<FrontierCatalogEntry | null>(null);
   const [deleteInputValue, setDeleteInputValue] = useState<string>('');
@@ -50,9 +56,16 @@ export function useLocalFrontierCatalogPage(): LocalFrontierPageController {
 
   const [hfDialogOpen, setHfDialogOpen] = useState<boolean>(false);
 
+  const trimmedSearch = debouncedSearch.trim();
   const filters = useMemo(
-    () => ({ category, qualityTier, compatibleOnly, limit: 50 }),
-    [category, qualityTier, compatibleOnly],
+    () => ({
+      category,
+      qualityTier,
+      compatibleOnly,
+      limit: 50,
+      ...(trimmedSearch.length > 0 ? { search: trimmedSearch } : {}),
+    }),
+    [category, qualityTier, compatibleOnly, trimmedSearch],
   );
 
   const catalogQuery = useFrontierCatalog(filters);
@@ -167,6 +180,8 @@ export function useLocalFrontierCatalogPage(): LocalFrontierPageController {
     category,
     qualityTier,
     compatibleOnly,
+    searchInput,
+    setSearchInput,
     setCategory,
     setQualityTier,
     setCompatibleOnly,

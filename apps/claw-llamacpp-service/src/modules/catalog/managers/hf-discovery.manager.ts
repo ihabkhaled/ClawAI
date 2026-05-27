@@ -29,7 +29,12 @@ export class HfDiscoveryManager {
   private readonly logger = new Logger(HfDiscoveryManager.name);
 
   async search(query: HfSearchQueryDto): Promise<HfModelSummary[]> {
-    this.logger.debug(`search: q="${query.q ?? '(none)'}" sort=${query.sort ?? 'trending'}`);
+    const page = query.page ?? 1;
+    const limit = query.limit ?? HF_DEFAULT_SEARCH_LIMIT;
+    const skip = (page - 1) * limit;
+    this.logger.debug(
+      `search: q="${query.q ?? '(none)'}" sort=${query.sort ?? 'trending'} page=${page} limit=${limit} skip=${skip}`,
+    );
     const config = AppConfig.get();
     const params = new URLSearchParams();
     if (query.q && query.q.length > 0) {
@@ -45,7 +50,11 @@ export class HfDiscoveryManager {
       params.set('sort', 'trendingScore');
       params.set('direction', '-1');
     }
-    params.set('limit', String(query.limit ?? HF_DEFAULT_SEARCH_LIMIT));
+    params.set('limit', String(limit));
+    if (skip > 0) {
+      // HuggingFace's /api/models endpoint accepts ?skip=<N> for offset pagination.
+      params.set('skip', String(skip));
+    }
     const url = `${config.HUGGINGFACE_API_BASE}/api/models?${params.toString()}`;
     const items = await this.fetchJson<HfApiModelListItem[]>(url);
     return items

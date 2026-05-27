@@ -2295,6 +2295,23 @@ export const es: TranslationDictionary = {
       categoryThinking: 'Pensamiento',
       categoryGeneral: 'General',
       categoryFileGen: 'Generación de archivos',
+      searchLabel: 'Buscar',
+      searchPlaceholder: 'Buscar por nombre de modelo…',
+      resultsCount: '{count} de {total} modelos',
+    },
+    hfSearch: {
+      openButton: 'Explorar HuggingFace',
+      title: 'Explorar modelos GGUF de HuggingFace',
+      description:
+        'Búsqueda en vivo en HuggingFace. Elige una cuantización y una categoría para importar el modelo al catálogo local frontier.',
+      searchPlaceholder: 'Buscar en HuggingFace (déjalo vacío para los más populares)',
+      sortPlaceholder: 'Ordenar por',
+      loadMore: 'Cargar más',
+      loadingMore: 'Cargando más…',
+      resultsCount: '{count} resultados cargados',
+      close: 'Cerrar',
+      importButton: 'Importar al catálogo',
+      importing: 'Importando…',
     },
     downloads: {
       title: 'Descargas activas',

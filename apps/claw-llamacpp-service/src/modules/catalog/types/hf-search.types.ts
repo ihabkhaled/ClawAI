@@ -24,6 +24,7 @@ export interface HfModelDetails extends HfModelSummary {
 export interface HfSearchQuery {
   q?: string;
   sort?: 'trending' | 'downloads' | 'likes' | 'lastModified';
+  page?: number;
   limit?: number;
 }
 

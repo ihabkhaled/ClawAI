@@ -117,13 +117,38 @@ export class CatalogRepository {
     category?: ModelCategory;
     qualityTier?: QualityTier;
     available?: boolean;
+    OR?: Array<
+      | { name: { contains: string; mode: 'insensitive' } }
+      | { displayName: { contains: string; mode: 'insensitive' } }
+      | { tag: { contains: string; mode: 'insensitive' } }
+      | { description: { contains: string; mode: 'insensitive' } }
+    >;
   } {
-    const where: { category?: ModelCategory; qualityTier?: QualityTier; available?: boolean } = {};
+    const where: {
+      category?: ModelCategory;
+      qualityTier?: QualityTier;
+      available?: boolean;
+      OR?: Array<
+        | { name: { contains: string; mode: 'insensitive' } }
+        | { displayName: { contains: string; mode: 'insensitive' } }
+        | { tag: { contains: string; mode: 'insensitive' } }
+        | { description: { contains: string; mode: 'insensitive' } }
+      >;
+    } = {};
     if (filters.category) {
       where.category = filters.category;
     }
     if (filters.qualityTier) {
       where.qualityTier = filters.qualityTier;
+    }
+    if (filters.search !== undefined && filters.search.length > 0) {
+      const term = filters.search;
+      where.OR = [
+        { name: { contains: term, mode: 'insensitive' } },
+        { displayName: { contains: term, mode: 'insensitive' } },
+        { tag: { contains: term, mode: 'insensitive' } },
+        { description: { contains: term, mode: 'insensitive' } },
+      ];
     }
     where.available = true;
     return where;
