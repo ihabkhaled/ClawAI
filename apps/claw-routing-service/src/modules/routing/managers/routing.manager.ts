@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { LocalModelRole } from '@claw/shared-types';
 import { RoutingMode } from '../../../generated/prisma';
 import { ComplexityClass } from '../../../common/enums/complexity-class.enum';
-import { recordGet } from '../../../common/utilities';
+import { matchKeyword, recordGet } from '../../../common/utilities';
 import { RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
 import { OllamaRouterManager } from './ollama-router.manager';
 import { PromptBuilderManager } from './prompt-builder.manager';
@@ -844,153 +844,123 @@ export class RoutingManager {
   }
 
   detectCodingRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return CODING_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, CODING_KEYWORDS);
   }
 
   detectReasoningRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return REASONING_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, REASONING_KEYWORDS);
   }
 
   detectThinkingRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return THINKING_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, THINKING_KEYWORDS);
   }
 
   detectInfrastructureRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return INFRASTRUCTURE_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, INFRASTRUCTURE_KEYWORDS);
   }
 
   detectDataAnalysisRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return DATA_ANALYSIS_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, DATA_ANALYSIS_KEYWORDS);
   }
 
   detectBusinessRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return BUSINESS_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, BUSINESS_KEYWORDS);
   }
 
   detectCreativeWritingRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return CREATIVE_WRITING_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, CREATIVE_WRITING_KEYWORDS);
   }
 
   detectSecurityRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return SECURITY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, SECURITY_KEYWORDS);
   }
 
   detectMedicalRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return MEDICAL_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, MEDICAL_KEYWORDS);
   }
 
   detectLegalRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return LEGAL_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, LEGAL_KEYWORDS);
   }
 
   detectTranslationRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return TRANSLATION_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, TRANSLATION_KEYWORDS);
   }
 
   detectHRRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return HR_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, HR_KEYWORDS);
   }
 
   detectFinanceRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return FINANCE_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, FINANCE_KEYWORDS);
   }
 
   detectOperationsRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return OPERATIONS_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, OPERATIONS_KEYWORDS);
   }
 
   detectSalesRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return SALES_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, SALES_KEYWORDS);
   }
 
   detectRealEstateRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return REAL_ESTATE_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, REAL_ESTATE_KEYWORDS);
   }
 
   detectEducationRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return EDUCATION_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, EDUCATION_KEYWORDS);
   }
 
   detectCustomerSupportRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return CUSTOMER_SUPPORT_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, CUSTOMER_SUPPORT_KEYWORDS);
   }
 
   detectVideoAudioRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return VIDEO_AUDIO_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, VIDEO_AUDIO_KEYWORDS);
   }
 
   detectDesignRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return DESIGN_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, DESIGN_KEYWORDS);
   }
 
   detectResearchRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return RESEARCH_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, RESEARCH_KEYWORDS);
   }
 
   detectExecutiveRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return EXECUTIVE_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, EXECUTIVE_KEYWORDS);
   }
 
   detectEngineeringRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return ENGINEERING_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, ENGINEERING_KEYWORDS);
   }
 
   detectScienceRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return SCIENCE_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, SCIENCE_KEYWORDS);
   }
 
   detectGovernmentRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return GOVERNMENT_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, GOVERNMENT_KEYWORDS);
   }
 
   detectLogisticsRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return LOGISTICS_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, LOGISTICS_KEYWORDS);
   }
 
   detectHospitalityRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return HOSPITALITY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, HOSPITALITY_KEYWORDS);
   }
 
   detectMediaRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return MEDIA_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, MEDIA_KEYWORDS);
   }
 
   detectSustainabilityRequest(message: string): boolean {
-    const lower = message.toLowerCase();
-    return SUSTAINABILITY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, SUSTAINABILITY_KEYWORDS);
   }
 
   detectPrivacySensitive(message: string): boolean {
-    const lower = message.toLowerCase();
-    return PRIVACY_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    return matchKeyword(message, PRIVACY_KEYWORDS);
   }
 
   private buildExplanation(
