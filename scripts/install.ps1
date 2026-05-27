@@ -1,12 +1,31 @@
 # =============================================================================
 # Claw - Automated Install Script (Windows PowerShell)
 # =============================================================================
-# Usage: powershell -ExecutionPolicy Bypass -File scripts\install.ps1
+# Usage:
+#   powershell -ExecutionPolicy Bypass -File scripts\install.ps1            # interactive
+#   powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Prod      # force prod
+#   powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Dev       # force dev
+#   $env:CLAW_MODE='prod'; powershell -ExecutionPolicy Bypass -File scripts\install.ps1
 # =============================================================================
+param(
+    [switch]$Dev,
+    [switch]$Prod
+)
 
 $ErrorActionPreference = "Stop"
 if ($PSVersionTable.PSVersion.Major -ge 7) {
     $PSNativeCommandUseErrorActionPreference = $true
+}
+
+# --- Mode selection (dev vs prod) ---
+# Resolution: -Prod / -Dev > $env:CLAW_MODE > prompt > default 'dev'.
+$ClawMode = ''
+if ($Prod) {
+    $ClawMode = 'prod'
+} elseif ($Dev) {
+    $ClawMode = 'dev'
+} elseif ($env:CLAW_MODE) {
+    $ClawMode = $env:CLAW_MODE.ToLowerInvariant()
 }
 
 # --- Colors ---
@@ -22,11 +41,26 @@ $ProjectRoot = Split-Path -Parent $ScriptDir
 Set-Location $ProjectRoot
 $envFile = Join-Path $ProjectRoot ".env"
 
-# --- Compose files (split layout — claw.sh is the canonical entrypoint) ---
-$BaseComposeFiles = "-f docker/docker-compose.dev.databases.yml -f docker/docker-compose.dev.services.yml -f docker/docker-compose.dev.ollama.yml"
-$NvidiaServiceGpuFile = "docker/docker-compose.dev.gpu-nvidia.yml"
-$NvidiaOllamaGpuFile = "docker/docker-compose.dev.ollama.gpu-nvidia.yml"
-$ComposeFiles = $BaseComposeFiles
+# --- Compose files (resolved AFTER mode prompt below) ---
+$BaseComposeFiles = ''
+$NvidiaServiceGpuFile = ''
+$NvidiaOllamaGpuFile = ''
+$ComposeFiles = ''
+
+# Picks dev vs prod compose files based on $ClawMode. Called once the
+# user's choice is known (flag, env var, prompt, or carried .env).
+function Apply-ModeComposePaths {
+    if ($script:ClawMode -eq 'prod') {
+        $script:BaseComposeFiles = '-f docker/docker-compose.prod.databases.yml -f docker/docker-compose.prod.services.yml -f docker/docker-compose.prod.ollama.yml'
+        $script:NvidiaServiceGpuFile = 'docker/docker-compose.prod.gpu-nvidia.yml'
+        $script:NvidiaOllamaGpuFile = 'docker/docker-compose.prod.ollama.gpu-nvidia.yml'
+    } else {
+        $script:BaseComposeFiles = '-f docker/docker-compose.dev.databases.yml -f docker/docker-compose.dev.services.yml -f docker/docker-compose.dev.ollama.yml'
+        $script:NvidiaServiceGpuFile = 'docker/docker-compose.dev.gpu-nvidia.yml'
+        $script:NvidiaOllamaGpuFile = 'docker/docker-compose.dev.ollama.gpu-nvidia.yml'
+    }
+    $script:ComposeFiles = $script:BaseComposeFiles
+}
 
 # --- Banner ---
 Write-Host ""
@@ -146,7 +180,7 @@ function Get-GpuInfo {
 }
 
 function Get-ComposeTasks {
-    $configJson = docker compose $ComposeFiles config --format json 2>$null
+    $configJson = docker compose --env-file $envFile $ComposeFiles config --format json 2>$null
     if ($LASTEXITCODE -ne 0 -or -not $configJson) {
         return @()
     }
@@ -293,6 +327,57 @@ if ($missing -gt 0) {
     Write-Fail "Missing prerequisites. Please install them and re-run this script."
     exit 1
 }
+Write-Host ""
+
+# =============================================================================
+# Step 1b: Choose dev or prod
+# =============================================================================
+Write-Host "Step 1b/9: Deployment mode" -ForegroundColor White
+Write-Host ""
+Write-Host "  dev   Source bind-mounts, hot reload, dev-friendly defaults."
+Write-Host "        Use when actively developing on this machine."
+Write-Host "  prod  Standalone images, no source mounts, production Dockerfiles."
+Write-Host "        Use for VM / server / cloudflare-tunnel deployments."
+Write-Host ""
+
+# Carry over the mode from .env on re-runs.
+if (-not $ClawMode -and (Test-Path $envFile)) {
+    $carriedNodeEnv = Get-EnvValue -Path $envFile -Key 'NODE_ENV'
+    switch ($carriedNodeEnv) {
+        'production'  { $ClawMode = 'prod' }
+        'development' { $ClawMode = 'dev'  }
+    }
+}
+
+if (-not $ClawMode) {
+    if ([Environment]::UserInteractive) {
+        Write-Ask 'Mode [dev/prod] (default: dev): '
+        $modeInput = Read-Host
+        $modeInput = if ([string]::IsNullOrWhiteSpace($modeInput)) { 'dev' } else { $modeInput.ToLowerInvariant() }
+        switch ($modeInput) {
+            { $_ -in 'prod','production' }       { $ClawMode = 'prod' }
+            { $_ -in 'dev','development','' }    { $ClawMode = 'dev'  }
+            default {
+                Write-Fail "Unknown mode '$modeInput'. Expected 'dev' or 'prod'."
+                exit 1
+            }
+        }
+    } else {
+        $ClawMode = 'dev'
+        Write-Info "Non-interactive run - defaulting to dev. Override with -Prod or `$env:CLAW_MODE='prod'."
+    }
+}
+
+Apply-ModeComposePaths
+
+if ($ClawMode -eq 'prod') {
+    $NodeEnvValue = 'production'
+    Write-Ok "Mode: production (compose files: docker/docker-compose.prod.*.yml)"
+} else {
+    $NodeEnvValue = 'development'
+    Write-Ok "Mode: development (compose files: docker/docker-compose.dev.*.yml)"
+}
+$env:CLAW_MODE = $ClawMode
 Write-Host ""
 
 # =============================================================================
@@ -548,7 +633,7 @@ if (-not $skipEnv) {
 # =============================================================================
 
 # --- General ---
-NODE_ENV=development
+NODE_ENV=$NodeEnvValue
 
 # --- Hostname / Public URL (single source of truth) ---
 # Change CLAW_HOSTNAME and re-run scripts/install-tls.ps1 to reissue the TLS cert.
@@ -922,6 +1007,7 @@ Write-Host ("=" * 64) -ForegroundColor Cyan
 Write-Host "  Configuration Summary" -ForegroundColor White
 Write-Host ("=" * 64) -ForegroundColor Cyan
 Write-Host ""
+Write-Host "  Mode:              $ClawMode ($NodeEnvValue)"
 Write-Host "  Hostname:          $clawHostname"
 Write-Host "  Frontend:          $clawBaseUrl"
 Write-Host "  API Gateway:       $clawBaseUrl"
@@ -942,7 +1028,7 @@ Write-Host ""
 Write-Ask "Start Claw? [Y/n]: "
 $startAnswer = Read-Host
 if ($startAnswer -eq "n" -or $startAnswer -eq "N") {
-    Write-Info "Aborted. Run 'docker compose $ComposeFiles up -d' when ready."
+    Write-Info "Aborted. Run 'docker compose --env-file $envFile $ComposeFiles up -d' when ready."
     exit 0
 }
 Write-Host ""
@@ -1047,7 +1133,7 @@ if ($totalTasks -gt 0) {
         # command, so a single `pull svc1 svc2 svc3` invocation lets Compose
         # parallelise pulls across services.
         $downloadArgs = $downloadNames.ToArray()
-        docker compose $ComposeFiles pull $downloadArgs
+        docker compose --env-file $envFile $ComposeFiles pull $downloadArgs
     }
 
     if ($cachedBuildCount -gt 0) {
@@ -1065,21 +1151,21 @@ if ($totalTasks -gt 0) {
         # Docker Compose v2 builds services concurrently when given multiple
         # names. `--progress plain` keeps per-service log lines visible.
         $buildArgs = $buildNames.ToArray()
-        docker compose $ComposeFiles build --progress plain $buildArgs
+        docker compose --env-file $envFile $ComposeFiles build --progress plain $buildArgs
     }
 
     Write-Ok "Docker progress plan: $downloadCount downloads, $buildCount builds, $cachedBuildCount cached builds"
 } else {
     Write-Warn "Could not resolve Docker progress plan; falling back to the legacy startup path"
     Write-Info "Pulling Docker images (this may take a few minutes on first run)..."
-    docker compose $ComposeFiles pull
+    docker compose --env-file $envFile $ComposeFiles pull
 
     Write-Info "Starting containers without rebuilding..."
-    docker compose $ComposeFiles up -d --no-build
+    docker compose --env-file $envFile $ComposeFiles up -d --no-build
 }
 
 Write-Info "[90%] Finalizing containers..."
-docker compose $ComposeFiles up -d --no-build
+docker compose --env-file $envFile $ComposeFiles up -d --no-build
 
 Write-Host ""
 Write-Info "Waiting for services to become healthy..."
@@ -1087,15 +1173,15 @@ Write-Info "Waiting for services to become healthy..."
 $maxWait = 180
 $elapsed = 0
 $interval = 5
-$totalServices = @(docker compose $ComposeFiles config --services 2>$null).Count
+$totalServices = @(docker compose --env-file $envFile $ComposeFiles config --services 2>$null).Count
 
 while ($elapsed -lt $maxWait) {
-    $status = docker compose $ComposeFiles ps auth-service 2>$null
+    $status = docker compose --env-file $envFile $ComposeFiles ps auth-service 2>$null
     if ($status -match "\(healthy\)") { break }
 
     $progress = 90 + [Math]::Floor(($elapsed * 10) / $maxWait)
     if ($progress -gt 99) { $progress = 99 }
-    $healthy = (docker compose $ComposeFiles ps 2>$null | Select-String "healthy").Count
+    $healthy = (docker compose --env-file $envFile $ComposeFiles ps 2>$null | Select-String "healthy").Count
     Write-Info ("[{0,3}%] Finalizing containers: {1}/{2} healthy" -f $progress, $healthy, $totalServices)
     Start-Sleep -Seconds $interval
     $elapsed += $interval
@@ -1106,7 +1192,7 @@ Write-Host ""
 Write-Host ""
 
 # Final status
-$unhealthy = (docker compose $ComposeFiles ps 2>$null | Select-String "unhealthy").Count
+$unhealthy = (docker compose --env-file $envFile $ComposeFiles ps 2>$null | Select-String "unhealthy").Count
 
 if ($unhealthy -eq 0) {
     Write-Host ("=" * 64) -ForegroundColor Green
@@ -1116,7 +1202,7 @@ if ($unhealthy -eq 0) {
     Write-Host ("=" * 64) -ForegroundColor Yellow
     Write-Host "  Claw started with $unhealthy unhealthy container(s)" -ForegroundColor Yellow
     Write-Host ("=" * 64) -ForegroundColor Yellow
-    Write-Warn "Check logs: docker compose $ComposeFiles logs <service>"
+    Write-Warn "Check logs: docker compose --env-file $envFile $ComposeFiles logs <service>"
 }
 
 Write-Host ""
@@ -1129,8 +1215,9 @@ Write-Host "    Email:           $adminEmail"
 Write-Host "    Password:        stored in .env"
 Write-Host "  GPU:               $gpuStatus" -ForegroundColor White
 Write-Host ""
+$clawFlag = if ($ClawMode -eq 'prod') { ' --prod' } else { '' }
 Write-Host "  Useful commands:" -ForegroundColor White
-Write-Host "    .\scripts\claw.sh status        Check service status"
-Write-Host "    .\scripts\claw.sh logs <name>   Follow service logs"
-Write-Host "    .\scripts\claw.sh down          Stop everything"
+Write-Host "    .\scripts\claw.sh$clawFlag status        Check service status"
+Write-Host "    .\scripts\claw.sh$clawFlag logs <name>   Follow service logs"
+Write-Host "    .\scripts\claw.sh$clawFlag down          Stop everything"
 Write-Host ""
