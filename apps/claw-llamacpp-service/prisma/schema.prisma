@@ -37,9 +37,18 @@ enum LoadStatus {
 enum PullJobStatus {
   PENDING
   RUNNING
+  INSTALLING
   COMPLETED
   FAILED
   CANCELLED
+}
+
+enum PullJobPhase {
+  QUEUED
+  DOWNLOADING
+  INSTALLING
+  FINALIZING
+  DONE
 }
 
 enum QualityTier {
@@ -94,11 +103,17 @@ model PullJob {
   modelId         String
   model           FrontierCatalogEntry  @relation(fields: [modelId], references: [id])
   status          PullJobStatus         @default(PENDING)
+  phase           PullJobPhase          @default(QUEUED)
   totalBytes      BigInt
   downloadedBytes BigInt                @default(0)
   totalFiles      Int
   completedFiles  Int                   @default(0)
   currentFile     String?
+  installStep     String?
+  installAttempts Int                   @default(0)
+  retryAttempts   Int                   @default(0)
+  resumedAt       DateTime?
+  lastProgressAt  DateTime?
   reasonCode      String?
   errorMessage    String?               @db.Text
   startedAt       DateTime              @default(now())

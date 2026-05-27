@@ -1,0 +1,3 @@
+export const SSE_RECONNECT_BASE_MS = 1000;
+export const SSE_RECONNECT_MAX_BACKOFF_MS = 15_000;
+export const SSE_RECONNECT_MAX_ATTEMPTS = 10;

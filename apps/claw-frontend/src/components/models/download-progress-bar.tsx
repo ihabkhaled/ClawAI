@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -14,7 +14,9 @@ export function DownloadProgressBar({
   t,
 }: DownloadProgressBarProps) {
   const progressValue = job.progress ?? 0;
-  const canCancel = job.status === 'PENDING' || job.status === 'IN_PROGRESS';
+  const canCancel = job.status === 'PENDING' || job.status === 'IN_PROGRESS' || job.status === 'INSTALLING';
+  const isInstalling = job.status === 'INSTALLING' || job.phase === 'INSTALLING' || job.phase === 'FINALIZING';
+  const retryAttempts = job.retryAttempts ?? 0;
 
   return (
     <div className="flex items-center gap-3 rounded-md border p-3">
@@ -22,25 +24,43 @@ export function DownloadProgressBar({
         <div className="mb-1 flex items-center justify-between text-sm">
           <span className="truncate font-medium">{job.modelName}</span>
           <div className="flex shrink-0 items-center gap-2 text-muted-foreground">
-            {stats && stats.speedBytesPerSec > 0 ? (
+            {!isInstalling && stats && stats.speedBytesPerSec > 0 ? (
               <span className="text-xs">{formatSpeed(stats.speedBytesPerSec)}</span>
+            ) : null}
+            {isInstalling ? (
+              <Loader2 className="size-3 animate-spin text-primary" aria-hidden />
             ) : null}
             <span>{PULL_JOB_STATUS_LABELS[job.status] ?? job.status}</span>
           </div>
         </div>
-        <Progress value={progressValue} className="h-2" />
-        <div className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-muted-foreground">
-          <span>{Math.round(progressValue)}%</span>
-          {job.downloadedBytes !== null && job.totalBytes !== null ? (
-            <span>
-              {formatBytes(job.downloadedBytes)} / {formatBytes(job.totalBytes)}
-            </span>
-          ) : null}
-          {stats ? <span>{formatDuration(stats.elapsedMs)} elapsed</span> : null}
-          {stats && stats.estimatedRemainingMs !== null ? (
-            <span>~{formatDuration(stats.estimatedRemainingMs)} left</span>
-          ) : null}
-        </div>
+        <Progress value={isInstalling ? 100 : progressValue} className="h-2" />
+        {isInstalling ? (
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-muted-foreground">
+            <span className="text-primary">{t('catalog.installing')}</span>
+            {job.installStep ? (
+              <span className="font-mono">{job.installStep}</span>
+            ) : null}
+            {stats ? <span>{formatDuration(stats.elapsedMs)} elapsed</span> : null}
+          </div>
+        ) : (
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-muted-foreground">
+            <span>{Math.round(progressValue)}%</span>
+            {job.downloadedBytes !== null && job.totalBytes !== null ? (
+              <span>
+                {formatBytes(job.downloadedBytes)} / {formatBytes(job.totalBytes)}
+              </span>
+            ) : null}
+            {stats ? <span>{formatDuration(stats.elapsedMs)} elapsed</span> : null}
+            {stats && stats.estimatedRemainingMs !== null ? (
+              <span>~{formatDuration(stats.estimatedRemainingMs)} left</span>
+            ) : null}
+            {retryAttempts > 0 ? (
+              <span className="text-amber-500">
+                {t('catalog.retrying')}: {retryAttempts}
+              </span>
+            ) : null}
+          </div>
+        )}
       </div>
       {canCancel ? (
         <Button

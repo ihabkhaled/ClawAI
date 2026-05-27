@@ -21,6 +21,7 @@ export const MODEL_CATEGORIES = [
 export const PULL_JOB_STATUS_LABELS: Record<string, string> = {
   PENDING: 'Pending',
   IN_PROGRESS: 'Downloading...',
+  INSTALLING: 'Installing...',
   COMPLETED: 'Installed',
   FAILED: 'Failed',
 };

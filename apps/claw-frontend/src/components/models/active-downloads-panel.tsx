@@ -12,7 +12,9 @@ export function ActiveDownloadsPanel({
   isCancelPending,
   t,
 }: ActiveDownloadsPanelProps) {
-  const activeJobs = jobs.filter((j) => j.status === 'PENDING' || j.status === 'IN_PROGRESS');
+  const activeJobs = jobs.filter(
+    (j) => j.status === 'PENDING' || j.status === 'IN_PROGRESS' || j.status === 'INSTALLING',
+  );
 
   const seen = new Set<string>();
   const dedupedJobs = activeJobs.filter((j) => {

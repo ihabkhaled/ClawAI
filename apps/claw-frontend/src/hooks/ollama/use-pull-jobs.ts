@@ -20,7 +20,9 @@ export function usePullJobs() {
   });
 
   const jobs = query.data ?? [];
-  const hasActiveJobs = jobs.some((j) => j.status === 'PENDING' || j.status === 'IN_PROGRESS');
+  const hasActiveJobs = jobs.some(
+    (j) => j.status === 'PENDING' || j.status === 'IN_PROGRESS' || j.status === 'INSTALLING',
+  );
 
   return {
     pullJobs: jobs,

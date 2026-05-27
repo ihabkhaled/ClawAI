@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { type Subject } from 'rxjs';
 import { SseChannel } from '../../../common/utilities';
 import { type SseEvent } from '../../../common/types';
+import { PullJobStatus } from '../../../common/enums';
 import { type PullJobProgressEvent } from '../types/pull-job.types';
 
 @Injectable()
@@ -46,6 +47,10 @@ export class PullJobProgressEmitterManager {
   }
 
   private isTerminal(event: PullJobProgressEvent): boolean {
-    return event.status === 'COMPLETED' || event.status === 'FAILED' || event.status === 'CANCELLED';
+    return (
+      event.status === PullJobStatus.COMPLETED ||
+      event.status === PullJobStatus.FAILED ||
+      event.status === PullJobStatus.CANCELLED
+    );
   }
 }

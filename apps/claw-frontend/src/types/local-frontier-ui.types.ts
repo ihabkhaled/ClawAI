@@ -73,6 +73,10 @@ export interface DownloadsDrawerLabels {
   elapsed: string;
   percent: string;
   preparing: string;
+  installing: string;
+  installingStepLabel: string;
+  retryingLabel: string;
+  resumedLabel: string;
   unknown: string;
 }
 

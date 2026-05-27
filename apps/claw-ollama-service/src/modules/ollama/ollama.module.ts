@@ -8,6 +8,7 @@ import { CandidateImportManager } from './managers/candidate-import.manager';
 import { DiscoveryManager } from './managers/discovery.manager';
 import { ModelEnrichmentManager } from './managers/model-enrichment.manager';
 import { OllamaLibraryDiscoveryManager } from './managers/ollama-library-discovery.manager';
+import { PullJobResumeManager } from './managers/pull-job-resume.manager';
 import { RoutingSnapshotManager } from './managers/routing-snapshot.manager';
 import { LocalModelsRepository } from './repositories/local-models.repository';
 import { RoleAssignmentsRepository } from './repositories/role-assignments.repository';
@@ -34,6 +35,7 @@ import { HardwarePackService } from './services/hardware-pack.service';
     DiscoveryManager,
     ModelEnrichmentManager,
     OllamaLibraryDiscoveryManager,
+    PullJobResumeManager,
     RoutingSnapshotManager,
     LocalModelsRepository,
     RoleAssignmentsRepository,

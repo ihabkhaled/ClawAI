@@ -3,6 +3,7 @@ export { HealthCheckStatus, ServiceStatus } from './health-status.enum';
 export { DownloadStatus } from './download-status.enum';
 export { LoadStatus } from './load-status.enum';
 export { PullJobStatus } from './pull-job-status.enum';
+export { PullJobPhase } from './pull-job-phase.enum';
 export { ModelCategory } from './model-category.enum';
 export { QualityTier } from './quality-tier.enum';
 export { GpuBackend } from './gpu-backend.enum';

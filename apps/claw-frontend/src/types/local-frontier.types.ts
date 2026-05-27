@@ -2,6 +2,7 @@ import {
   type FrontierDownloadStatus,
   type FrontierLoadStatus,
   type FrontierModelCategory,
+  type FrontierPullJobPhase,
   type FrontierPullJobStatus,
   type FrontierQualityTier,
   type HardwareCompat,
@@ -74,11 +75,17 @@ export interface PullJob {
   id: string;
   modelId: string;
   status: FrontierPullJobStatus;
+  phase: FrontierPullJobPhase;
   totalBytes: number;
   downloadedBytes: number;
   totalFiles: number;
   completedFiles: number;
   currentFile: string | null;
+  installStep: string | null;
+  installAttempts: number;
+  retryAttempts: number;
+  resumedAt: string | null;
+  lastProgressAt: string | null;
   reasonCode: string | null;
   errorMessage: string | null;
   startedAt: string;
@@ -88,13 +95,19 @@ export interface PullJob {
 export interface PullJobProgressEvent {
   jobId: string;
   status: FrontierPullJobStatus;
+  phase: FrontierPullJobPhase;
   bytesDownloaded: number;
   totalBytes: number;
   completedFiles: number;
   totalFiles: number;
   currentFile: string | null;
+  installStep: string | null;
+  installAttempts: number;
+  retryAttempts: number;
   mbps: number;
+  speedBytesPerSec: number;
   etaSeconds: number | null;
+  elapsedMs: number;
   reasonCode: string | null;
   errorMessage: string | null;
 }

@@ -6,12 +6,22 @@ import {
   type RuntimeConfig,
   RuntimeType,
 } from '../../../generated/prisma';
+import { PullJobPhase } from '../../../common/enums';
 import { LocalModelsRepository } from '../repositories/local-models.repository';
 import { RoleAssignmentsRepository } from '../repositories/role-assignments.repository';
 import { PullJobsRepository } from '../repositories/pull-jobs.repository';
 import { RuntimeConfigsRepository } from '../repositories/runtime-configs.repository';
 import { DEPRECATED_DEFAULT_LOCAL_MODEL_KEYS } from '../constants/default-models.constants';
 import { COMFYUI_DEFAULT_FAMILY } from '../constants/comfyui.constants';
+import {
+  INSTALL_RETRY_BASE_MS,
+  INSTALL_RETRY_MAX,
+  PROGRESS_DB_THROTTLE_MS,
+  PROGRESS_SSE_THROTTLE_MS,
+  PULL_RETRY_BASE_MS,
+  PULL_RETRY_MAX,
+  PULL_RETRY_MAX_BACKOFF_MS,
+} from '../constants/pull-resilience.constants';
 import { getRuntimeAdapter } from './adapters/runtime-adapter-factory';
 import { OllamaRuntimeAdapter } from './adapters/ollama-runtime.adapter';
 import { BusinessException } from '../../../common/errors';
@@ -25,13 +35,16 @@ import {
   type RuntimeAdapter,
   type RuntimeHealth,
 } from '../types/ollama.types';
-import type { PullProgressEvent } from '../types/pull-progress.types';
+import type { PullProgressBase, PullProgressEvent } from '../types/pull-progress.types';
+import { type DownloadStatsState } from '../types/download-stats.types';
+import { createStatsState, tickStats } from '../utilities/download-stats.utility';
 
 @Injectable()
 export class OllamaManager {
   private readonly logger = new Logger(OllamaManager.name);
 
   private readonly pullProgressSubjects = new Map<string, Subject<PullProgressEvent>>();
+  private readonly activePullJobs = new Set<string>();
 
   constructor(
     private readonly localModelsRepository: LocalModelsRepository,
@@ -39,6 +52,10 @@ export class OllamaManager {
     private readonly pullJobsRepository: PullJobsRepository,
     private readonly runtimeConfigsRepository: RuntimeConfigsRepository,
   ) {}
+
+  isPullJobRunning(jobId: string): boolean {
+    return this.activePullJobs.has(jobId);
+  }
 
   async listInstalledModels(runtime?: RuntimeType): Promise<LocalModel[]> {
     this.logger.debug(`listInstalledModels: listing models — runtime=${runtime ?? 'all'}`);
@@ -133,14 +150,31 @@ export class OllamaManager {
       modelName: modelFullName,
       runtime: catalogEntry.runtime,
       status: PullJobStatus.IN_PROGRESS,
+      phase: PullJobPhase.DOWNLOADING,
     });
 
     const subject = new Subject<PullProgressEvent>();
     this.pullProgressSubjects.set(pullJob.id, subject);
 
-    void this.executeCatalogPull(catalogEntry, pullJob.id, modelFullName, subject);
+    void this.executeCatalogPull(catalogEntry, pullJob.id, modelFullName, subject, false);
 
     return { pullJobId: pullJob.id };
+  }
+
+  async resumeCatalogPull(
+    catalogEntry: ModelCatalogEntry,
+    pullJobId: string,
+    modelFullName: string,
+  ): Promise<void> {
+    if (this.activePullJobs.has(pullJobId)) {
+      this.logger.warn(`resumeCatalogPull: ${pullJobId} already running, skipping`);
+      return;
+    }
+    this.logger.log(`resumeCatalogPull: resuming ${pullJobId} for ${modelFullName}`);
+    await this.pullJobsRepository.markResumed(pullJobId);
+    const subject = new Subject<PullProgressEvent>();
+    this.pullProgressSubjects.set(pullJobId, subject);
+    void this.executeCatalogPull(catalogEntry, pullJobId, modelFullName, subject, true);
   }
 
   private async executeCatalogPull(
@@ -148,24 +182,36 @@ export class OllamaManager {
     pullJobId: string,
     modelFullName: string,
     subject: Subject<PullProgressEvent>,
+    isResume: boolean,
   ): Promise<void> {
+    this.activePullJobs.add(pullJobId);
     try {
       const adapter = getRuntimeAdapter(catalogEntry.runtime);
 
-      await (adapter instanceof OllamaRuntimeAdapter
-        ? this.pullWithProgressTracking(adapter, modelFullName, pullJobId, subject)
-        : adapter.pullModel(modelFullName));
+      if (adapter instanceof OllamaRuntimeAdapter) {
+        await this.runOllamaPullWithRetries(adapter, modelFullName, pullJobId, subject, isResume);
+      } else {
+        await adapter.pullModel(modelFullName);
+      }
 
-      // ComfyUI catalog pulls don't have a 1:1 catalog-key ↔ runtime-model
-      // mapping (the runtime stores files on disk, the catalog key drives
-      // routing/policies), so we synthesize the LocalModelInfo from the
-      // catalog entry rather than scanning the runtime.
-      const installedModel =
-        catalogEntry.runtime === RuntimeType.COMFYUI
-          ? this.buildComfyUiInstalledModelInfo(catalogEntry)
-          : await this.resolveInstalledModelInfo(adapter, modelFullName);
-      await this.upsertModelFromCatalog(catalogEntry, installedModel);
+      // installCatalogModel wraps resolution + DB upsert in a retry loop
+      // (agent #1's INSTALL_RETRY_MAX) and is ComfyUI-aware (synthesizes
+      // LocalModelInfo from the catalog entry instead of querying the
+      // runtime, because the ComfyUI registry has no 1:1 model entry).
+      const installedModel = await this.installCatalogModel(
+        catalogEntry,
+        pullJobId,
+        adapter,
+        modelFullName,
+        subject,
+      );
       await this.completePullJob(pullJobId);
+      this.emitPhase(subject, pullJobId, PullJobPhase.DONE, {
+        status: 'success',
+        percentage: 100,
+        total: Number(installedModel.sizeBytes ?? 0n),
+        completed: Number(installedModel.sizeBytes ?? 0n),
+      });
       await this.pullJobsRepository.deleteOlderByModelName(modelFullName, pullJobId);
       subject.complete();
     } catch (error: unknown) {
@@ -173,6 +219,38 @@ export class OllamaManager {
       subject.error(error);
     } finally {
       this.pullProgressSubjects.delete(pullJobId);
+      this.activePullJobs.delete(pullJobId);
+    }
+  }
+
+  private async runOllamaPullWithRetries(
+    adapter: OllamaRuntimeAdapter,
+    modelFullName: string,
+    pullJobId: string,
+    subject: Subject<PullProgressEvent>,
+    isResume: boolean,
+  ): Promise<void> {
+    let attempt = 0;
+    while (attempt < PULL_RETRY_MAX) {
+      try {
+        await this.pullWithProgressTracking(adapter, modelFullName, pullJobId, subject);
+        return;
+      } catch (error) {
+        attempt++;
+        const errMsg = error instanceof Error ? error.message : 'unknown';
+        await this.pullJobsRepository.incrementRetryAttempts(pullJobId);
+        if (attempt >= PULL_RETRY_MAX) {
+          throw error;
+        }
+        const delay = Math.min(
+          PULL_RETRY_BASE_MS * Math.pow(2, attempt - 1),
+          PULL_RETRY_MAX_BACKOFF_MS,
+        );
+        this.logger.warn(
+          `runOllamaPullWithRetries: ${pullJobId} attempt ${attempt}/${PULL_RETRY_MAX} after ${delay}ms — ${errMsg}${isResume ? ' (resume)' : ''}`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
     }
   }
 
@@ -193,13 +271,137 @@ export class OllamaManager {
     pullJobId: string,
     subject: Subject<PullProgressEvent>,
   ): Promise<void> {
+    const job = await this.pullJobsRepository.findById(pullJobId);
+    const startedAtMs = job?.startedAt.getTime() ?? Date.now();
+    const initialBytes = Number(job?.downloadedBytes ?? 0n);
+    const stats: DownloadStatsState = createStatsState(initialBytes, startedAtMs);
+    let lastDbWrite = 0;
+    let lastSseEmit = 0;
+    let lastPhase: PullJobPhase = PullJobPhase.DOWNLOADING;
+
     await adapter.pullModelWithProgress(modelFullName, (event) => {
-      subject.next(event);
-      void this.pullJobsRepository.update(pullJobId, {
-        progress: event.percentage,
-        totalBytes: event.total !== undefined ? BigInt(event.total) : null,
-        downloadedBytes: event.completed !== undefined ? BigInt(event.completed) : null,
+      const total = event.total ?? 0;
+      const completed = event.completed ?? 0;
+      const now = Date.now();
+      const snap = tickStats(stats, completed, total, startedAtMs, now);
+      const phase = event.phase ?? PullJobPhase.DOWNLOADING;
+
+      // On phase transition emit immediately + persist
+      const phaseChanged = phase !== lastPhase;
+      if (phaseChanged) {
+        lastPhase = phase;
+        const newStatus =
+          phase === PullJobPhase.INSTALLING || phase === PullJobPhase.FINALIZING
+            ? PullJobStatus.INSTALLING
+            : PullJobStatus.IN_PROGRESS;
+        void this.pullJobsRepository.update(pullJobId, {
+          phase,
+          status: newStatus,
+          installStep: phase === PullJobPhase.INSTALLING ? event.status : null,
+          lastProgressAt: new Date(),
+        });
+        subject.next({
+          ...event,
+          phase,
+          installStep: event.installStep,
+          speedBytesPerSec: snap.speedBytesPerSec,
+          mbps: snap.mbps,
+          etaSeconds: snap.etaSeconds,
+          elapsedMs: snap.elapsedMs,
+        });
+        return;
+      }
+
+      // Throttled DB write
+      if (now - lastDbWrite > PROGRESS_DB_THROTTLE_MS) {
+        lastDbWrite = now;
+        void this.pullJobsRepository.update(pullJobId, {
+          progress: event.percentage,
+          totalBytes: event.total !== undefined ? BigInt(event.total) : null,
+          downloadedBytes: event.completed !== undefined ? BigInt(event.completed) : null,
+          phase,
+          lastProgressAt: new Date(),
+        });
+      }
+      // Throttled SSE emit
+      if (now - lastSseEmit > PROGRESS_SSE_THROTTLE_MS) {
+        lastSseEmit = now;
+        subject.next({
+          ...event,
+          phase,
+          speedBytesPerSec: snap.speedBytesPerSec,
+          mbps: snap.mbps,
+          etaSeconds: snap.etaSeconds,
+          elapsedMs: snap.elapsedMs,
+        });
+      }
+    });
+  }
+
+  private async installCatalogModel(
+    catalogEntry: ModelCatalogEntry,
+    pullJobId: string,
+    adapter: RuntimeAdapter,
+    modelFullName: string,
+    subject: Subject<PullProgressEvent>,
+  ): Promise<LocalModelInfo> {
+    // Switch to INSTALLING status if not already (covers non-Ollama adapters where
+    // we didn't see install-phase keywords in the stream).
+    const currentJob = await this.pullJobsRepository.findById(pullJobId);
+    if (currentJob && currentJob.status !== PullJobStatus.INSTALLING) {
+      await this.pullJobsRepository.update(pullJobId, {
+        status: PullJobStatus.INSTALLING,
+        phase: PullJobPhase.INSTALLING,
+        installStep: 'registering-model',
       });
+    }
+    this.emitPhase(subject, pullJobId, PullJobPhase.INSTALLING, {
+      status: 'registering-model',
+      percentage: 100,
+    });
+
+    let attempt = 0;
+    let lastError: unknown;
+    while (attempt < INSTALL_RETRY_MAX) {
+      try {
+        // ComfyUI catalog pulls don't surface via the runtime's "list models"
+        // RPC (weights are dropped into the models/ tree on disk, and the
+        // catalog key drives routing/policies, not the runtime registry).
+        // Synthesize the LocalModelInfo from the catalog row instead of
+        // scanning the runtime.
+        const installedModel =
+          catalogEntry.runtime === RuntimeType.COMFYUI
+            ? this.buildComfyUiInstalledModelInfo(catalogEntry)
+            : await this.resolveInstalledModelInfo(adapter, modelFullName);
+        await this.upsertModelFromCatalog(catalogEntry, installedModel);
+        return installedModel;
+      } catch (error) {
+        lastError = error;
+        attempt++;
+        await this.pullJobsRepository.incrementInstallAttempts(pullJobId);
+        if (attempt >= INSTALL_RETRY_MAX) {
+          break;
+        }
+        const delay = INSTALL_RETRY_BASE_MS * Math.pow(2, attempt - 1);
+        this.logger.warn(
+          `installCatalogModel: ${pullJobId} install attempt ${attempt}/${INSTALL_RETRY_MAX} after ${delay}ms — ${(error as Error).message}`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+    throw lastError ?? new Error('Install retries exhausted');
+  }
+
+  private emitPhase(
+    subject: Subject<PullProgressEvent>,
+    _jobId: string,
+    phase: PullJobPhase,
+    base: PullProgressBase,
+  ): void {
+    subject.next({
+      ...base,
+      phase,
+      installStep: phase === PullJobPhase.INSTALLING ? base.status : undefined,
     });
   }
 
@@ -244,6 +446,7 @@ export class OllamaManager {
   private async completePullJob(pullJobId: string): Promise<void> {
     await this.pullJobsRepository.update(pullJobId, {
       status: PullJobStatus.COMPLETED,
+      phase: PullJobPhase.DONE,
       progress: 100,
       completedAt: new Date(),
     });
@@ -255,6 +458,7 @@ export class OllamaManager {
 
     await this.pullJobsRepository.update(pullJobId, {
       status: PullJobStatus.FAILED,
+      phase: PullJobPhase.DONE,
       errorMessage,
       completedAt: new Date(),
     });

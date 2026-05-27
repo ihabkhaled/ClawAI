@@ -37,9 +37,18 @@ export class PullJobsRepository {
     return this.prisma.pullJob.findFirst({
       where: {
         modelName,
-        status: { in: ['PENDING', 'IN_PROGRESS'] },
+        status: { in: ['PENDING', 'IN_PROGRESS', 'INSTALLING'] },
       },
       orderBy: { startedAt: 'desc' },
+    });
+  }
+
+  async findAllResumable(): Promise<PullJob[]> {
+    return this.prisma.pullJob.findMany({
+      where: {
+        status: { in: ['PENDING', 'IN_PROGRESS', 'INSTALLING'] },
+      },
+      orderBy: { startedAt: 'asc' },
     });
   }
 
@@ -59,6 +68,27 @@ export class PullJobsRepository {
     return this.prisma.pullJob.findFirst({
       where: { modelName },
       orderBy: { startedAt: 'desc' },
+    });
+  }
+
+  async incrementRetryAttempts(id: string): Promise<void> {
+    await this.prisma.pullJob.update({
+      where: { id },
+      data: { retryAttempts: { increment: 1 } },
+    });
+  }
+
+  async incrementInstallAttempts(id: string): Promise<void> {
+    await this.prisma.pullJob.update({
+      where: { id },
+      data: { installAttempts: { increment: 1 } },
+    });
+  }
+
+  async markResumed(id: string): Promise<void> {
+    await this.prisma.pullJob.update({
+      where: { id },
+      data: { resumedAt: new Date() },
     });
   }
 }
