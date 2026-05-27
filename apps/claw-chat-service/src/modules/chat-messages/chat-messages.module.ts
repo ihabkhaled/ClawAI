@@ -10,6 +10,7 @@ import { ChatExecutionManager } from './managers/chat-execution.manager';
 import { ConsensusExecutionManager } from './managers/consensus-execution.manager';
 import { ContextAssemblyManager } from './managers/context-assembly.manager';
 import { EscalationChainManager } from './managers/escalation-chain.manager';
+import { FallbackExecutorManager } from './managers/fallback-executor.manager';
 import { ParallelExecutionManager } from './managers/parallel-execution.manager';
 import { QualityCheckManager } from './managers/quality-check.manager';
 import { JudgeRefereeManager } from './managers/judge-referee.manager';
@@ -37,6 +38,7 @@ import { ContextReceiptsModule } from '../context-receipts/context-receipts.modu
     ConsensusExecutionManager,
     ContextAssemblyManager,
     EscalationChainManager,
+    FallbackExecutorManager,
     ParallelExecutionManager,
     QualityCheckManager,
     JudgeRefereeManager,

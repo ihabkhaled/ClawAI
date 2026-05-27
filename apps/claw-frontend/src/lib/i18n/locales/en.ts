@@ -295,6 +295,14 @@ export const en: TranslationDictionary = {
     useMemoryDescription: 'When off, no memories are injected into the prompt.',
     useContextLabel: 'Use context packs in this thread',
     useContextDescription: 'When off, attached packs are ignored.',
+    workflow: {
+      searchFirst: 'Search-first',
+      direct: 'Direct',
+      unavailable: 'Workflow not yet available: {workflow}',
+      tooltipSearchFirst: 'ClawAI searched the web before answering.',
+      tooltipDirect: 'ClawAI answered directly from the model.',
+      searchDegraded: 'Tried to search but degraded to direct answer.',
+    },
   },
   receipt: {
     openLabel: 'Show what the AI used',

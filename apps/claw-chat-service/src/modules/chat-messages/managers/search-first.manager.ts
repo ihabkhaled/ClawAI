@@ -153,7 +153,7 @@ export class SearchFirstManager {
       '--- SEARCH RESULTS ---',
     ];
     for (let i = 0; i < results.length; i++) {
-      const result = results[i];
+      const result = results.at(i);
       if (!result) {
         continue;
       }

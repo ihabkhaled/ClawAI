@@ -297,6 +297,14 @@ export const fr: TranslationDictionary = {
     useMemoryDescription: "Lorsque désactivé, aucune mémoire n'est injectée dans l'invite.",
     useContextLabel: 'Utiliser les paquets de contexte dans cette conversation',
     useContextDescription: 'Lorsque désactivé, les paquets attachés sont ignorés.',
+    workflow: {
+      searchFirst: "Recherche d'abord",
+      direct: 'Direct',
+      unavailable: 'Flux de travail non encore disponible : {workflow}',
+      tooltipSearchFirst: 'ClawAI a effectué une recherche web avant de répondre.',
+      tooltipDirect: 'ClawAI a répondu directement à partir du modèle.',
+      searchDegraded: 'Tentative de recherche échouée, repli sur une réponse directe.',
+    },
   },
   receipt: {
     openLabel: "Voir ce que l'IA a utilisé",

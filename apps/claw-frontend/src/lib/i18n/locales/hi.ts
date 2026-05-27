@@ -296,6 +296,14 @@ export const hi: TranslationDictionary = {
     useMemoryDescription: 'बंद होने पर, प्रॉम्प्ट में कोई मेमोरी इंजेक्ट नहीं की जाती।',
     useContextLabel: 'इस वार्तालाप में संदर्भ पैक उपयोग करें',
     useContextDescription: 'बंद होने पर, संलग्न पैक अनदेखा कर दिए जाते हैं।',
+    workflow: {
+      searchFirst: 'पहले खोजें',
+      direct: 'सीधा',
+      unavailable: 'वर्कफ़्लो अभी उपलब्ध नहीं: {workflow}',
+      tooltipSearchFirst: 'उत्तर देने से पहले ClawAI ने वेब पर खोज की।',
+      tooltipDirect: 'ClawAI ने सीधे मॉडल से उत्तर दिया।',
+      searchDegraded: 'खोज की कोशिश की लेकिन सीधे उत्तर पर वापस आना पड़ा।',
+    },
   },
   receipt: {
     openLabel: 'दिखाएँ कि AI ने क्या उपयोग किया',

@@ -296,6 +296,14 @@ export const ru: TranslationDictionary = {
     useMemoryDescription: 'Когда выключено, никакие воспоминания не вставляются в запрос.',
     useContextLabel: 'Использовать пакеты контекста в этом разговоре',
     useContextDescription: 'Когда выключено, прикреплённые пакеты игнорируются.',
+    workflow: {
+      searchFirst: 'Поиск сначала',
+      direct: 'Прямой',
+      unavailable: 'Рабочий процесс пока недоступен: {workflow}',
+      tooltipSearchFirst: 'ClawAI выполнил поиск в интернете перед ответом.',
+      tooltipDirect: 'ClawAI ответил напрямую из модели.',
+      searchDegraded: 'Попытка поиска не удалась, переключение на прямой ответ.',
+    },
   },
   receipt: {
     openLabel: 'Показать, что использовал ИИ',

@@ -612,3 +612,7 @@ export type {
   UseResolveAiActionResult,
   UseAvailableModelsForActionResult,
 } from './ai-action.types';
+export type {
+  WorkflowBadgeProps,
+  SearchFirstOutcomeMetadata,
+} from './workflow.types';

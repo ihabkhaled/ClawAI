@@ -298,6 +298,14 @@ export const de: TranslationDictionary = {
     useMemoryDescription: 'Wenn deaktiviert, werden keine Erinnerungen in den Prompt eingefügt.',
     useContextLabel: 'Kontextpakete in diesem Gespräch verwenden',
     useContextDescription: 'Wenn deaktiviert, werden angehängte Pakete ignoriert.',
+    workflow: {
+      searchFirst: 'Suche zuerst',
+      direct: 'Direkt',
+      unavailable: 'Workflow noch nicht verfügbar: {workflow}',
+      tooltipSearchFirst: 'ClawAI hat das Web durchsucht, bevor es geantwortet hat.',
+      tooltipDirect: 'ClawAI hat direkt aus dem Modell geantwortet.',
+      searchDegraded: 'Suche versucht, aber auf direkte Antwort zurückgefallen.',
+    },
   },
   receipt: {
     openLabel: 'Zeige, was die KI verwendet hat',

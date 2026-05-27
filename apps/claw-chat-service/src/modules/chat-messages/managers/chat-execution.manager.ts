@@ -32,6 +32,7 @@ import type {
   ExecutionMetadata,
   RunCandidateArgs,
 } from '../types/execution-outcome.types';
+import type { AttemptRecord } from '../types/fallback-executor.types';
 import type { JudgeRefereeConfig, JudgeRefereeResult } from '../types/judge-referee.types';
 import type { InternalGenerateResponse } from '../types/internal-generate.types';
 import { type AssembledContext } from '../types/context.types';
@@ -113,6 +114,10 @@ export class ChatExecutionManager implements OnModuleInit {
     let lastError: unknown = null;
     let reRouteAttempt = 0;
     let reRouteReasons: string[] = [];
+    // Phase 5 — collect per-attempt observability so the FE developer
+    // drawer can render "Attempt 1: OpenAI/gpt-4o failed (timeout, 8.1s)
+    // → Attempt 2: Anthropic/claude-sonnet-4 succeeded (2.4s, q=0.92)".
+    const attempts: AttemptRecord[] = [];
 
     for (let i = 0; i < candidates.length; i++) {
       const candidate = candidates.at(i);
@@ -122,6 +127,8 @@ export class ChatExecutionManager implements OnModuleInit {
       this.logger.debug(
         `execute: trying candidate ${String(i + 1)}/${String(candidates.length)} - ${candidate.provider}/${candidate.model}`,
       );
+      const attemptStartedAt = new Date().toISOString();
+      const attemptStartMs = Date.now();
       const outcome = await this.runCandidate({
         candidate,
         candidateIndex: i,
@@ -136,8 +143,15 @@ export class ChatExecutionManager implements OnModuleInit {
         reRouteAttempt,
         reRouteReasons,
       });
+      attempts.push(
+        this.buildAttemptRecord(candidate, i, attemptStartedAt, attemptStartMs, outcome),
+      );
       if (outcome.kind === 'success') {
-        return this.stampWorkflowMetadata(outcome.response, payload, searchOutcome);
+        return this.stampWorkflowMetadata(
+          { ...outcome.response, attempts },
+          payload,
+          searchOutcome,
+        );
       }
       if (outcome.kind === 'reRoute') {
         reRouteReasons = [...reRouteReasons, ...outcome.reasons];
@@ -147,7 +161,53 @@ export class ChatExecutionManager implements OnModuleInit {
       lastError = outcome.error;
     }
 
-    return this.failExecution(payload, lastError);
+    return this.failExecution(payload, lastError, attempts);
+  }
+
+  // Phase 5 — converts the existing CandidateOutcome union into the
+  // shared AttemptRecord shape so the FE drawer + (eventually) the
+  // RoutingDecision row can render a uniform per-attempt log.
+  private buildAttemptRecord(
+    candidate: { provider: string; model: string },
+    index: number,
+    startedAt: string,
+    startMs: number,
+    outcome: CandidateOutcome,
+  ): AttemptRecord {
+    const durationMs = Date.now() - startMs;
+    if (outcome.kind === 'success') {
+      return {
+        attemptIndex: index,
+        provider: candidate.provider,
+        model: candidate.model,
+        startedAt,
+        durationMs,
+        status: 'SUCCESS',
+        qualityScore: null,
+      };
+    }
+    if (outcome.kind === 'reRoute') {
+      return {
+        attemptIndex: index,
+        provider: candidate.provider,
+        model: candidate.model,
+        startedAt,
+        durationMs,
+        status: 'RE_ROUTE',
+        qualityReasons: outcome.reasons,
+        qualityScore: null,
+      };
+    }
+    return {
+      attemptIndex: index,
+      provider: candidate.provider,
+      model: candidate.model,
+      startedAt,
+      durationMs,
+      status: 'FAILURE',
+      qualityScore: null,
+      errorMessage: (outcome.error as Error | undefined)?.message ?? null,
+    };
   }
 
   // Phase 6 — stamps workflow + search-first telemetry onto every
@@ -476,7 +536,11 @@ export class ChatExecutionManager implements OnModuleInit {
     });
   }
 
-  private failExecution(payload: MessageRoutedData, lastError: unknown): never {
+  private failExecution(
+    payload: MessageRoutedData,
+    lastError: unknown,
+    attempts: AttemptRecord[],
+  ): never {
     const finalError =
       lastError ??
       new BusinessException(
@@ -485,6 +549,12 @@ export class ChatExecutionManager implements OnModuleInit {
       );
     const finalErrorMsg = finalError instanceof Error ? finalError.message : 'All providers failed';
     this.chatStreamService.emitError(payload.threadId, finalErrorMsg);
+    // Phase 5 — surface the per-attempt log on the error so callers
+    // (chat-messages.service / SSE listeners) can render the developer
+    // drawer even on full chain exhaustion.
+    if (finalError instanceof BusinessException && attempts.length > 0) {
+      (finalError as BusinessException & { attempts?: AttemptRecord[] }).attempts = attempts;
+    }
     throw finalError;
   }
 

@@ -293,6 +293,15 @@ export type TranslationDictionary = {
     useMemoryDescription: string;
     useContextLabel: string;
     useContextDescription: string;
+    // Phase 6 — workflow live wiring badge
+    workflow: {
+      searchFirst: string;
+      direct: string;
+      unavailable: string;
+      tooltipSearchFirst: string;
+      tooltipDirect: string;
+      searchDegraded: string;
+    };
   };
   receipt: {
     openLabel: string;

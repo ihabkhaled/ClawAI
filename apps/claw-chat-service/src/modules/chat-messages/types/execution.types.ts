@@ -1,3 +1,4 @@
+import type { AttemptRecord } from './fallback-executor.types';
 import type { JudgeRefereeMetadata } from './judge-referee.types';
 
 export type RouteRoadmapStep = {
@@ -93,6 +94,10 @@ export type LlmResponse = {
     runId: string | null;
     warning: string | null;
   };
+  // Phase 5 — per-attempt records (provider/model/duration/status/error)
+  // for the FE developer drawer. Empty array when the message succeeded
+  // on the very first try with no quality re-route.
+  attempts?: AttemptRecord[];
 };
 
 export type OllamaGenerateRequest = {

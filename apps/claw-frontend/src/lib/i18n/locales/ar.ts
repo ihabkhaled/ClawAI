@@ -293,6 +293,14 @@ export const ar: TranslationDictionary = {
     useMemoryDescription: 'عند الإيقاف، لن يتم إدخال أي ذكريات في الموجه.',
     useContextLabel: 'استخدام حزم السياق في هذه المحادثة',
     useContextDescription: 'عند الإيقاف، يتم تجاهل الحزم المرفقة.',
+    workflow: {
+      searchFirst: 'البحث أولاً',
+      direct: 'مباشر',
+      unavailable: 'سير العمل غير متاح بعد: {workflow}',
+      tooltipSearchFirst: 'بحث ClawAI في الويب قبل الإجابة.',
+      tooltipDirect: 'أجاب ClawAI مباشرة من النموذج.',
+      searchDegraded: 'حاولنا البحث ولكن تراجعنا إلى إجابة مباشرة.',
+    },
   },
   receipt: {
     openLabel: 'إظهار ما استخدمه الذكاء الاصطناعي',

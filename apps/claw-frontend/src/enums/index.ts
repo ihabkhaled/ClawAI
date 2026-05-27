@@ -90,3 +90,5 @@ export { CapabilityClass } from './capability-class.enum';
 export { CapabilityInvocationStatus } from './capability-invocation-status.enum';
 export { CapabilityOperation } from './capability-operation.enum';
 export { CapabilityReversibility } from './capability-reversibility.enum';
+export { WorkflowKind } from './workflow-kind.enum';
+export { WorkflowBadgeVariant } from './workflow-badge-variant.enum';

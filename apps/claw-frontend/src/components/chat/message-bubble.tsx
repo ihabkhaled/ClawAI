@@ -17,6 +17,7 @@ import { MessageAttachments } from '@/components/chat/message-attachments';
 import { MessageProvenance } from '@/components/chat/message-provenance';
 import { ResearchRunDetails } from '@/components/chat/research-run-details';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
+import { WorkflowBadge } from '@/components/chat/workflow-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MESSAGE_ROLE_LABELS, RE_ROUTE_REASON_LABELS } from '@/constants';
@@ -99,6 +100,21 @@ export function MessageBubble({
     : [];
   const judgeReview = getJudgeReviewFromMessage(message);
   const judgeDecision = judgeReview?.judgeDecision ?? null;
+  // Phase 6 — workflow live wiring. Backwards-compatible: legacy messages
+  // (pre-Phase 6) have `metadata.workflow === undefined`, in which case
+  // the badge renders nothing.
+  const workflow = typeof metadata?.['workflow'] === 'string' ? metadata['workflow'] : null;
+  const workflowReason =
+    typeof metadata?.['workflowReason'] === 'string' ? metadata['workflowReason'] : null;
+  const searchFirstMeta =
+    typeof metadata?.['searchFirst'] === 'object' && metadata['searchFirst'] !== null
+      ? (metadata['searchFirst'] as {
+          applied: boolean;
+          resultCount: number;
+          runId: string | null;
+          warning: string | null;
+        })
+      : undefined;
 
   const handleFeedback = (value: MessageFeedback): void => {
     if (!onFeedback) {
@@ -158,6 +174,11 @@ export function MessageBubble({
                 {researchBadgeLabel}
               </Badge>
             ) : null}
+            <WorkflowBadge
+              workflow={workflow}
+              reason={workflowReason}
+              searchFirst={searchFirstMeta}
+            />
             {isReRouted && originalProvider && originalModel ? (
               <Badge
                 variant="outline"
