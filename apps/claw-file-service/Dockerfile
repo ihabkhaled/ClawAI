@@ -23,11 +23,18 @@ RUN mkdir -p dist/generated && cp -r src/generated/prisma dist/generated/prisma
 RUN cp -r src/generated dist/generated 2>/dev/null || true
 
 FROM node:26-alpine AS runner
-RUN apk add --no-cache openssl
+# su-exec is alpine's tiny setuid helper (10 KB). The wrapper entrypoint
+# uses it to drop from root to nestjs after chowning the upload volume.
+RUN apk add --no-cache openssl su-exec
 ENV NODE_ENV=production
 WORKDIR /app
 RUN addgroup --system --gid 1001 nestjs
 RUN adduser --system --uid 1001 nestjs
+# Pre-create the upload tree with nestjs ownership so brand-new
+# named volumes inherit it on first mount (docker copies image-side
+# directory contents + ownership into an empty volume). Existing
+# volumes that already have root ownership are fixed by the entrypoint.
+RUN mkdir -p /data/files && chown -R nestjs:nestjs /data
 COPY --from=builder /app/apps/claw-file-service/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/claw-file-service/package.json ./package.json
@@ -35,7 +42,10 @@ COPY --from=builder /app/apps/claw-file-service/prisma ./prisma
 COPY --from=builder /app/apps/claw-file-service/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/packages /app/packages
 COPY scripts/docker-entrypoint.prod.sh /app/docker-entrypoint.prod.sh
-RUN chmod +x /app/docker-entrypoint.prod.sh
-USER nestjs
+COPY apps/claw-file-service/docker-entrypoint.prod.sh /app/docker-entrypoint.file.sh
+RUN chmod +x /app/docker-entrypoint.prod.sh /app/docker-entrypoint.file.sh
+# Stay root — the file wrapper entrypoint chowns the upload volume
+# (which docker creates as root) and then exec's su-exec to drop to
+# nestjs before NestJS boots. See docker-entrypoint.prod.sh for rationale.
 EXPOSE 4006
-CMD ["sh", "/app/docker-entrypoint.prod.sh"]
+CMD ["sh", "/app/docker-entrypoint.file.sh"]
