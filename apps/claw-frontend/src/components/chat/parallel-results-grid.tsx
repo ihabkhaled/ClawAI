@@ -4,8 +4,6 @@ import {
   AlertTriangle,
   ArrowUpCircle,
   CheckCircle,
-  ChevronDown,
-  ChevronUp,
   Clock,
   Info,
   MinusCircle,
@@ -18,9 +16,7 @@ import {
 
 import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { PARALLEL_CONTENT_PREVIEW_LENGTH } from '@/constants';
 import { CompareJudgeState, ParallelModelStatus } from '@/enums';
 import { useParallelResultsGrid } from '@/hooks/chat/use-parallel-results-grid';
 import { MarkdownRenderer } from '@/lib/markdown';
@@ -28,8 +24,7 @@ import type { ParallelResultsGridProps } from '@/types';
 import { cn, formatLatency, getParallelColClass } from '@/utilities';
 
 export function ParallelResultsGrid({ messages, t }: ParallelResultsGridProps): React.ReactElement {
-  const { responses, fastestModel, bestModel, expandedIds, toggleExpanded } =
-    useParallelResultsGrid(messages);
+  const { responses, fastestModel, bestModel } = useParallelResultsGrid(messages);
 
   if (messages.length === 0) {
     return (
@@ -47,8 +42,6 @@ export function ParallelResultsGrid({ messages, t }: ParallelResultsGridProps): 
         const isTimeout = r.status === ParallelModelStatus.TIMEOUT;
         const isFastest = isCompleted && r.model === fastestModel;
         const isBest = isCompleted && r.model === bestModel && bestModel !== fastestModel;
-        const isExpanded = expandedIds.has(r.model);
-        const needsTruncation = r.content.length > PARALLEL_CONTENT_PREVIEW_LENGTH;
         const totalTokens = (r.inputTokens ?? 0) + (r.outputTokens ?? 0);
         const judgeState = r.judgeState ?? CompareJudgeState.NONE;
         const judgeReview = r.judgeReview;
@@ -165,39 +158,20 @@ export function ParallelResultsGrid({ messages, t }: ParallelResultsGridProps): 
               ) : null}
               {!isFailed && r.content.length > 0 ? (
                 <div className="prose prose-sm dark:prose-invert max-w-none">
-                  {isExpanded || !needsTruncation ? (
-                    <MarkdownRenderer content={r.content} />
-                  ) : (
-                    <p className="text-sm text-foreground">
-                      {r.content.slice(0, PARALLEL_CONTENT_PREVIEW_LENGTH)}...
-                    </p>
-                  )}
+                  {/*
+                   * Compare mode renders the full response unconditionally —
+                   * truncating to PARALLEL_CONTENT_PREVIEW_LENGTH (was 300
+                   * chars) defeated the whole purpose of side-by-side
+                   * comparison. The card scrolls on its own and the user
+                   * can scroll/select the full text directly.
+                   */}
+                  <MarkdownRenderer content={r.content} />
                 </div>
               ) : null}
               {hasJudgeDetails && r.message ? (
                 <div className="mt-4 border-t border-border/60 pt-3">
                   <JudgeRefereeDetails message={r.message} />
                 </div>
-              ) : null}
-              {needsTruncation ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="mt-2 h-7 px-2 text-xs"
-                  onClick={() => toggleExpanded(r.model)}
-                >
-                  {isExpanded ? (
-                    <>
-                      <ChevronUp className="me-1 h-3 w-3" />
-                      {t('compare.showLess')}
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="me-1 h-3 w-3" />
-                      {t('compare.showMore')}
-                    </>
-                  )}
-                </Button>
               ) : null}
             </CardContent>
           </Card>
