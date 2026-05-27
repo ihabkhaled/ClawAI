@@ -6,6 +6,7 @@ import type {
   RuntimeType,
 } from '../../../generated/prisma';
 import type { ModelCapability } from '../../../common/enums/model-capability.enum';
+import type { ComfyUIDownloadDescriptor } from './comfyui.types';
 
 export type CatalogEntryInput = {
   name: string;
@@ -22,6 +23,9 @@ export type CatalogEntryInput = {
   capabilities: readonly string[];
   businessCategories?: readonly string[];
   hardwareProfiles?: readonly string[];
+  // Only set for COMFYUI runtime entries — tells the ComfyUIRuntimeAdapter
+  // exactly where to fetch the weights from and where to drop them on disk.
+  comfyuiDownload?: ComfyUIDownloadDescriptor;
 };
 
 export type PreparedCatalogEntryInput = CatalogEntryInput & {

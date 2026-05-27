@@ -123,4 +123,42 @@ describe('CatalogRemoteMetadataService', () => {
     expect(metadata.isDownloadable).toBe(false);
     expect(metadata.sizeBytes).toBeNull();
   });
+
+  it('marks COMFYUI entries with a registered descriptor as downloadable', async () => {
+    const service = new CatalogRemoteMetadataService();
+
+    const metadata = await service.getMetadata(
+      createCatalogEntry({
+        runtime: RuntimeType.COMFYUI,
+        ollamaName: null,
+        name: 'sdxl-base',
+        tag: '1.0',
+        category: ModelCategory.IMAGE_GENERATION,
+        sourceUrl: 'https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0',
+      }),
+    );
+
+    expect(metadata.isAvailable).toBe(true);
+    expect(metadata.isDownloadable).toBe(true);
+    expect(metadata.resolvedOllamaName).toBe('sdxl-base:1.0');
+    expect(metadata.availabilityError).toBeNull();
+    expect(getMock).not.toHaveBeenCalled();
+  });
+
+  it('marks COMFYUI entries without a registered descriptor as not downloadable', async () => {
+    const service = new CatalogRemoteMetadataService();
+
+    const metadata = await service.getMetadata(
+      createCatalogEntry({
+        runtime: RuntimeType.COMFYUI,
+        ollamaName: null,
+        name: 'nonexistent-image-model',
+        tag: 'latest',
+        category: ModelCategory.IMAGE_GENERATION,
+      }),
+    );
+
+    expect(metadata.isDownloadable).toBe(false);
+    expect(metadata.availabilityError).toBe('ComfyUI download recipe not registered');
+  });
 });

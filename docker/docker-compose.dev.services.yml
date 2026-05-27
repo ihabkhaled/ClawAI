@@ -65,7 +65,11 @@ services:
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4001/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4001/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -88,7 +92,11 @@ services:
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4002/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4002/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -111,7 +119,11 @@ services:
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4003/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4003/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -134,7 +146,11 @@ services:
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4004/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4004/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -157,7 +173,11 @@ services:
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4005/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4005/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -181,7 +201,11 @@ services:
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4006/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4006/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -203,7 +227,11 @@ services:
       - ../certs:/certs:ro
     command: npm run dev
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4007/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4007/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -224,9 +252,18 @@ services:
       - ../apps/claw-ollama-service/src:/app/apps/claw-ollama-service/src
       - ../apps/claw-ollama-service/prisma:/app/apps/claw-ollama-service/prisma
       - ../certs:/certs:ro
+      # Shared with claw-comfyui — the ComfyUI runtime adapter writes
+      # HuggingFace-downloaded weights into this volume so ComfyUI can pick
+      # them up on the next /object_info refresh. Mount is read-write because
+      # the adapter creates files; ComfyUI itself never writes here at runtime.
+      - comfyui-models-data:/var/lib/claw/comfyui-models
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4008/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4008/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -248,7 +285,11 @@ services:
       - ../certs:/certs:ro
     command: npm run dev
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4010/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4010/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -270,7 +311,11 @@ services:
       - ../certs:/certs:ro
     command: npm run dev
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4011/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4011/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -292,7 +337,11 @@ services:
       - ../certs:/certs:ro
     command: npm run dev
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4009/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4009/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -318,7 +367,11 @@ services:
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4012/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4012/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -344,7 +397,11 @@ services:
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4014/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4014/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -370,7 +427,11 @@ services:
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4015/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4015/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -396,7 +457,11 @@ services:
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4016/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4016/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -448,7 +513,11 @@ services:
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-check-certificate -qO- https://localhost:4013/api/v1/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4013/api/v1/health || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -480,6 +549,12 @@ services:
 volumes:
   file-storage-data:
   llamacpp-data:
+  # Defined in docker-compose.dev.ollama.yml — referenced here as `external`
+  # so claw-ollama-service can mount it read-write and write HuggingFace
+  # model weights into ComfyUI's models tree.
+  comfyui-models-data:
+    external: true
+    name: claw_comfyui-models-data
 
 networks:
   claw-network:

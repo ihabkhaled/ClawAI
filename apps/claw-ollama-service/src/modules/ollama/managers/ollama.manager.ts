@@ -11,6 +11,7 @@ import { RoleAssignmentsRepository } from '../repositories/role-assignments.repo
 import { PullJobsRepository } from '../repositories/pull-jobs.repository';
 import { RuntimeConfigsRepository } from '../repositories/runtime-configs.repository';
 import { DEPRECATED_DEFAULT_LOCAL_MODEL_KEYS } from '../constants/default-models.constants';
+import { COMFYUI_DEFAULT_FAMILY } from '../constants/comfyui.constants';
 import { getRuntimeAdapter } from './adapters/runtime-adapter-factory';
 import { OllamaRuntimeAdapter } from './adapters/ollama-runtime.adapter';
 import { BusinessException } from '../../../common/errors';
@@ -155,7 +156,14 @@ export class OllamaManager {
         ? this.pullWithProgressTracking(adapter, modelFullName, pullJobId, subject)
         : adapter.pullModel(modelFullName));
 
-      const installedModel = await this.resolveInstalledModelInfo(adapter, modelFullName);
+      // ComfyUI catalog pulls don't have a 1:1 catalog-key ↔ runtime-model
+      // mapping (the runtime stores files on disk, the catalog key drives
+      // routing/policies), so we synthesize the LocalModelInfo from the
+      // catalog entry rather than scanning the runtime.
+      const installedModel =
+        catalogEntry.runtime === RuntimeType.COMFYUI
+          ? this.buildComfyUiInstalledModelInfo(catalogEntry)
+          : await this.resolveInstalledModelInfo(adapter, modelFullName);
       await this.upsertModelFromCatalog(catalogEntry, installedModel);
       await this.completePullJob(pullJobId);
       await this.pullJobsRepository.deleteOlderByModelName(modelFullName, pullJobId);
@@ -166,6 +174,17 @@ export class OllamaManager {
     } finally {
       this.pullProgressSubjects.delete(pullJobId);
     }
+  }
+
+  private buildComfyUiInstalledModelInfo(catalogEntry: ModelCatalogEntry): LocalModelInfo {
+    return {
+      name: catalogEntry.name,
+      tag: catalogEntry.tag,
+      sizeBytes: catalogEntry.sizeBytes ?? null,
+      family: COMFYUI_DEFAULT_FAMILY,
+      parameters: catalogEntry.parameterCount,
+      quantization: null,
+    };
   }
 
   private async pullWithProgressTracking(
