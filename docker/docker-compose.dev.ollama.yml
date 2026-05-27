@@ -127,7 +127,13 @@ services:
     volumes:
       - comfyui-models-data:/opt/ComfyUI/models
     environment:
-      - CLI_ARGS=--listen 0.0.0.0
+      # `--cpu` forces ComfyUI to skip CUDA init. Without it ai-dock's startup
+      # crashes with "Found no NVIDIA driver" when the container has no GPU
+      # passthrough — and we intentionally don't pass through the RTX 5090
+      # because Blackwell (SM 12.0) is incompatible with the SM<=9.0 PyTorch
+      # bundled in the latest ai-dock image (same Blackwell issue as SD).
+      # Re-evaluate when ai-dock republishes with PyTorch 2.7+/CUDA 12.8+.
+      - CLI_ARGS=--listen 0.0.0.0 --cpu
       # ai-dock wraps its services in a Caddy auth proxy by default. Disable it
       # because port 8188 is only reachable over the internal claw-network and
       # every request from claw-ollama-service / claw-image-service hits the
