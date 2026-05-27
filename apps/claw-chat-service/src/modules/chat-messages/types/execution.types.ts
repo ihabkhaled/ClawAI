@@ -51,6 +51,11 @@ export type MessageRoutedData = {
   timestamp: string;
   detectedCategory?: string;
   judgeEnabled?: boolean;
+  // Phase 6 — workflow live wiring. Null when the routing-service was
+  // built before Phase 6, so consumers MUST tolerate `undefined` and
+  // fall back to DIRECT_LLM execution (backward compatible).
+  selectedWorkflow?: string | null;
+  workflowReason?: string | null;
 };
 
 export type LlmResponse = {
@@ -75,6 +80,19 @@ export type LlmResponse = {
   fastPathEscalated?: boolean;
   executionPath?: 'fast' | 'standard' | 'fast_escalated';
   targetLatencyMs?: number;
+  // Phase 6 — workflow live wiring. Set on every assistant response so the
+  // FE can render the workflow badge ("Search-first" / "Direct"). Null when
+  // the routing decision did NOT carry a workflow selection (legacy / v1).
+  workflow?: string | null;
+  workflowReason?: string | null;
+  // Set only when SEARCH_FIRST attempted to run; carries the outcome
+  // (applied, fallback reason, result count, runId for trace).
+  searchFirst?: {
+    applied: boolean;
+    resultCount: number;
+    runId: string | null;
+    warning: string | null;
+  };
 };
 
 export type OllamaGenerateRequest = {

@@ -17,6 +17,7 @@ import { VerifierManager } from './managers/verifier.manager';
 import { PipelineManager } from './managers/pipeline.manager';
 import { CostEnsembleManager } from './managers/cost-ensemble.manager';
 import { RolePackManager } from './managers/role-pack.manager';
+import { SearchFirstManager } from './managers/search-first.manager';
 import { ChatStreamService } from './services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from './services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from './services/local-model-selection.service';
@@ -43,6 +44,7 @@ import { ContextReceiptsModule } from '../context-receipts/context-receipts.modu
     PipelineManager,
     CostEnsembleManager,
     RolePackManager,
+    SearchFirstManager,
     ChatStreamService,
     AdvancedModuleModelSelectionService,
     LocalModelSelectionService,

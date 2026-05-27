@@ -4,9 +4,11 @@ import {
   type RoutingDecision,
   type RoutingMode,
   type RoutingPolicy,
+  type WorkflowKind,
 } from '../../../generated/prisma';
 import type { ComplexityClassification } from './complexity.types';
 import type { RoutingExplanation } from './explanation.types';
+import type { WorkflowAvailability } from '../../workflows/types/live-workflow-selector.types';
 
 export interface RoutingContext {
   message: string;
@@ -49,6 +51,11 @@ export interface RoutingDecisionResult {
   explanation?: RoutingExplanation;
   routingDurationMs?: number;
   routerModel?: string | null;
+  // Phase 6 — workflow live wiring. Optional/null preserves the v1 hot
+  // path: existing consumers that don't read this field keep working.
+  selectedWorkflow?: WorkflowKind | null;
+  workflowReason?: string | null;
+  workflowAlternatives?: WorkflowAvailability[];
 }
 
 export type MultiIntentResult = {
@@ -121,6 +128,9 @@ export interface CreateDecisionData {
   uncertaintyScore?: number;
   explanation?: Prisma.InputJsonValue;
   routingDurationMs?: number;
+  // Phase 6 — workflow live wiring. Nullable; v1 hot path unaffected.
+  selectedWorkflow?: WorkflowKind | null;
+  workflowReason?: string | null;
 }
 
 export type OllamaGenerateResponse = {

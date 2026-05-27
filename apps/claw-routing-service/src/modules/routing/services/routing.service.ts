@@ -18,8 +18,17 @@ import { AdaptiveLearningManager } from '../managers/adaptive-learning.manager';
 import { PromptBuilderManager } from '../managers/prompt-builder.manager';
 import { RouterEducationManager } from '../managers/router-education.manager';
 import { LlamacppHealthManager } from '../managers/llamacpp-health.manager';
+import { AIRoutePlannerManager } from '../../intelligence/managers/ai-route-planner.manager';
 import { SemanticIntentAnalyzerManager } from '../../intelligence/managers/semantic-intent-analyzer.manager';
-import type { SemanticIntentAnalyzerInput } from '../../intelligence/types/semantic-intent-analysis.types';
+import type {
+  AIRoutePlannerInput,
+  PlannerCandidate,
+} from '../../intelligence/types/ai-route-plan.types';
+import type {
+  SemanticIntentAnalysis,
+  SemanticIntentAnalyzerInput,
+} from '../../intelligence/types/semantic-intent-analysis.types';
+import { LiveWorkflowSelectorManager } from '../../workflows/managers/live-workflow-selector.manager';
 import { LLAMACPP_RUNTIME } from '../constants/llamacpp.constants';
 import { type CreatePolicyDto } from '../dto/create-policy.dto';
 import { type ReplayRoutingDto } from '../dto/replay-routing.dto';
@@ -70,6 +79,8 @@ export class RoutingService implements OnModuleInit {
     private readonly promptBuilder: PromptBuilderManager,
     private readonly llamacppHealth: LlamacppHealthManager,
     private readonly semanticAnalyzer: SemanticIntentAnalyzerManager,
+    private readonly aiRoutePlanner: AIRoutePlannerManager,
+    private readonly liveWorkflowSelector: LiveWorkflowSelectorManager,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -167,7 +178,12 @@ export class RoutingService implements OnModuleInit {
 
     const rawDecision = await this.routingManager.evaluateRoute(context);
     const calibrated = await this.routerEducationManager.calibrateDecision(rawDecision, context);
-    return calibrated.decision;
+    const withWorkflow = this.attachWorkflowSelection(
+      calibrated.decision,
+      dto.messageContent,
+      (dto.routingMode as RoutingMode | undefined) ?? calibrated.decision.routingMode,
+    );
+    return withWorkflow;
   }
 
   async getDecisions(
@@ -350,8 +366,13 @@ export class RoutingService implements OnModuleInit {
     );
     const rawDecision = await this.routingManager.evaluateRoute(context);
     const calibrated = await this.routerEducationManager.calibrateDecision(rawDecision, context);
+    const decisionWithWorkflow = this.attachWorkflowSelection(
+      calibrated.decision,
+      content,
+      routingMode ?? calibrated.decision.routingMode,
+    );
 
-    await this.storeAndPublishDecision(messageId, threadId, content, calibrated.decision);
+    await this.storeAndPublishDecision(messageId, threadId, content, decisionWithWorkflow);
   }
 
   private parseMessageCreatedPayload(payload: Record<string, unknown>): {
@@ -415,6 +436,39 @@ export class RoutingService implements OnModuleInit {
     };
   }
 
+  // Phase 6 — wraps the routing decision with a live workflow selection.
+  // Pure / cheap; the heavy lift is in the keyword regex which matchKeyword
+  // already caches. Safe to call on every routing decision.
+  private attachWorkflowSelection(
+    decision: RoutingDecisionResult,
+    message: string,
+    routingMode: RoutingMode,
+  ): RoutingDecisionResult {
+    try {
+      const selection = this.liveWorkflowSelector.selectWorkflow({
+        message,
+        routingMode,
+        semanticIntent: null,
+        keywordSignals: [],
+        attachmentMimeTypes: [],
+      });
+      return {
+        ...decision,
+        selectedWorkflow: selection.kind,
+        workflowReason: selection.reason,
+        workflowAlternatives: selection.alternatives,
+      };
+    } catch (error) {
+      // Workflow selection is additive — failing here must NEVER block
+      // routing. Fall back to the decision as-is and log so the failure
+      // is visible in ops dashboards.
+      this.logger.error(
+        `attachWorkflowSelection: failed — ${(error as Error).message}`,
+      );
+      return decision;
+    }
+  }
+
   private async storeAndPublishDecision(
     messageId: string | undefined,
     threadId: string,
@@ -452,6 +506,8 @@ export class RoutingService implements OnModuleInit {
       uncertaintyScore: decision.uncertaintyScore,
       explanation: decision.explanation as Prisma.InputJsonValue | undefined,
       routingDurationMs: decision.routingDurationMs,
+      selectedWorkflow: decision.selectedWorkflow ?? null,
+      workflowReason: decision.workflowReason ?? null,
     });
 
     this.logRoutingDecision(messageId, threadId, decision);
@@ -462,6 +518,14 @@ export class RoutingService implements OnModuleInit {
     // are recorded in the same column with status != SUCCESS so we can
     // monitor analyzer quality without blocking the hot path.
     void this.runSemanticAnalysisShadow(messageId, threadId, messageContent, decision);
+
+    // Phase 4 shadow — fire-and-forget. Planner runs AFTER the analyzer so
+    // it can read the SemanticIntentAnalysis row. We wait 12s (analyzer
+    // p95 + headroom) then read the decision row to pick up whatever the
+    // analyzer wrote. If the analyzer was disabled / failed we skip with
+    // SKIPPED_NO_ANALYSIS — the planner needs the analyzer's intent
+    // signals to produce a meaningful pick.
+    void this.runAiRoutePlannerShadow(messageId, threadId, messageContent, decision);
   }
 
   private async runSemanticAnalysisShadow(
@@ -508,6 +572,102 @@ export class RoutingService implements OnModuleInit {
         `runSemanticAnalysisShadow: failed for messageId=${messageId} — ${(error as Error).message}`,
       );
     }
+  }
+
+  // Phase 4 — chained shadow. Runs AFTER the analyzer so the planner can
+  // read the SemanticIntentAnalysis as input. We wait 12s (analyzer p95 +
+  // headroom) then re-fetch the decision row to pick up whatever the
+  // analyzer wrote. If no analysis exists (flag off / analyzer failed /
+  // no messageId), we skip with SKIPPED_NO_ANALYSIS so dashboards can
+  // distinguish "analyzer down" from "planner down".
+  private async runAiRoutePlannerShadow(
+    messageId: string | undefined,
+    threadId: string,
+    messageContent: string,
+    decision: RoutingDecisionResult,
+  ): Promise<void> {
+    if (!messageId) {
+      return;
+    }
+    const config = AppConfig.get();
+    if (!config.ROUTING_AI_ROUTE_PLANNER_ENABLED) {
+      return;
+    }
+    try {
+      // Wait for the analyzer shadow to finish before reading the row.
+      // 12s = analyzer p95 (~8s) + headroom. If the analyzer is faster the
+      // planner still picks up its output; if slower we accept null and
+      // skip with SKIPPED_NO_ANALYSIS so we don't block on each other.
+      await new Promise((resolve) => setTimeout(resolve, 12_000));
+
+      const row = await this.decisionsRepository.findFirstByMessageId(messageId);
+      const semanticIntent = this.extractSemanticIntent(row?.semanticAnalysis);
+
+      const input: AIRoutePlannerInput = {
+        threadId,
+        message: messageContent,
+        routingMode: decision.routingMode,
+        semanticIntent,
+        candidates: this.buildPlannerCandidates(decision),
+      };
+      const record = await this.aiRoutePlanner.plan(input);
+      await this.decisionsRepository.updateAiRoutePlanByMessageId(
+        messageId,
+        record as unknown as Prisma.InputJsonValue,
+      );
+      this.logger.debug(
+        `runAiRoutePlannerShadow: stored plan status=${record.status} for messageId=${messageId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `runAiRoutePlannerShadow: failed for messageId=${messageId} — ${(error as Error).message}`,
+      );
+    }
+  }
+
+  // Extracts the SemanticIntentAnalysis (or null) from the persisted
+  // SemanticIntentAnalysisRecord JSON column. The column stores the full
+  // record (status + analysis + metadata); the planner only needs the
+  // analysis payload.
+  private extractSemanticIntent(
+    semanticAnalysisColumn: unknown,
+  ): SemanticIntentAnalysis | null {
+    if (
+      semanticAnalysisColumn === null ||
+      typeof semanticAnalysisColumn !== 'object'
+    ) {
+      return null;
+    }
+    const record = semanticAnalysisColumn as { analysis?: SemanticIntentAnalysis | null };
+    return record.analysis ?? null;
+  }
+
+  // Builds the candidate list the planner will see. Phase 4 keeps this
+  // minimal — primary + fallback chain from the calibrated decision.
+  // Phase 3 (model intelligence enrichment) will replace this with a
+  // full provider/model registry snapshot, but the shape stays stable.
+  private buildPlannerCandidates(decision: RoutingDecisionResult): PlannerCandidate[] {
+    const seen = new Set<string>();
+    const candidates: PlannerCandidate[] = [];
+    const push = (provider: string, model: string): void => {
+      const key = `${provider}::${model}`;
+      if (seen.has(key)) {
+        return;
+      }
+      seen.add(key);
+      candidates.push({
+        provider,
+        model,
+        isAvailable: true,
+        isRouterOnly: false,
+        isExecutionModel: true,
+      });
+    };
+    push(decision.selectedProvider, decision.selectedModel);
+    for (const entry of decision.fallbackChain ?? []) {
+      push(entry.provider, entry.model);
+    }
+    return candidates;
   }
 
   private buildConnectorHealthSnapshot(): {
@@ -579,6 +739,11 @@ export class RoutingService implements OnModuleInit {
       fallbackModel: fallback?.model,
       fallbackChain: decision.fallbackChain,
       detectedCategory: decision.detectedCategory,
+      // Phase 6 — workflow live wiring. Consumers (chat-service) can act
+      // on this to swap in SEARCH_FIRST execution; null means the v1
+      // hot path is in effect and DIRECT_LLM is assumed downstream.
+      selectedWorkflow: decision.selectedWorkflow ?? null,
+      workflowReason: decision.workflowReason ?? null,
       timestamp: new Date().toISOString(),
     });
   }

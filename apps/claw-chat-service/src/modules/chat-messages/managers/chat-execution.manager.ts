@@ -38,6 +38,9 @@ import { type AssembledContext } from '../types/context.types';
 import { ContextAssemblyManager } from './context-assembly.manager';
 import { QualityCheckManager } from './quality-check.manager';
 import { JudgeRefereeManager } from './judge-referee.manager';
+import { SearchFirstManager } from './search-first.manager';
+import { WORKFLOW_KIND_SEARCH_FIRST } from '../constants/search-first.constants';
+import type { SearchFirstOutcome } from '../types/search-first.types';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import {
@@ -70,6 +73,7 @@ export class ChatExecutionManager implements OnModuleInit {
     private readonly qualityCheckManager: QualityCheckManager,
     private readonly judgeRefereeManager: JudgeRefereeManager,
     private readonly chatStreamService: ChatStreamService,
+    private readonly searchFirstManager: SearchFirstManager,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
@@ -92,7 +96,15 @@ export class ChatExecutionManager implements OnModuleInit {
     const candidates = this.buildCandidateChain(payload, payload.routingMode);
     const userPrompt = this.extractUserPrompt(context);
     const executionOptions = this.resolveExecutionOptions(payload, userPrompt, threadSettings);
-    const executionContext = this.buildExecutionContext(context, executionOptions.fastPathEnabled);
+    const baseExecutionContext = this.buildExecutionContext(
+      context,
+      executionOptions.fastPathEnabled,
+    );
+    const { executionContext, searchOutcome } = await this.maybeRunSearchFirst(
+      payload,
+      baseExecutionContext,
+      userPrompt,
+    );
     this.logger.debug(`execute: built candidate chain with ${String(candidates.length)} providers`);
     this.logger.debug(
       `execute: options fastPath=${String(executionOptions.fastPathEnabled)} maxOutputTokens=${String(executionOptions.maxOutputTokens)}`,
@@ -125,7 +137,7 @@ export class ChatExecutionManager implements OnModuleInit {
         reRouteReasons,
       });
       if (outcome.kind === 'success') {
-        return outcome.response;
+        return this.stampWorkflowMetadata(outcome.response, payload, searchOutcome);
       }
       if (outcome.kind === 'reRoute') {
         reRouteReasons = [...reRouteReasons, ...outcome.reasons];
@@ -136,6 +148,31 @@ export class ChatExecutionManager implements OnModuleInit {
     }
 
     return this.failExecution(payload, lastError);
+  }
+
+  // Phase 6 — stamps workflow + search-first telemetry onto every
+  // successful response so the FE can show the workflow badge and the
+  // SEARCH_FIRST outcome banner without re-querying anything.
+  private stampWorkflowMetadata(
+    response: LlmResponse,
+    payload: MessageRoutedData,
+    searchOutcome: SearchFirstOutcome | null,
+  ): LlmResponse {
+    return {
+      ...response,
+      workflow: payload.selectedWorkflow ?? null,
+      workflowReason: payload.workflowReason ?? null,
+      ...(searchOutcome === null
+        ? {}
+        : {
+            searchFirst: {
+              applied: searchOutcome.applied,
+              resultCount: searchOutcome.results.length,
+              runId: searchOutcome.runId,
+              warning: searchOutcome.warning,
+            },
+          }),
+    };
   }
 
   private async runCandidate(args: RunCandidateArgs): Promise<CandidateOutcome> {
@@ -603,6 +640,28 @@ export class ChatExecutionManager implements OnModuleInit {
       workspaceCitations: context.workspaceCitations.slice(0, FAST_PATH_CONTEXT_MAX_CITATIONS),
       tokenBudget: Math.min(context.tokenBudget, FAST_PATH_CONTEXT_TOKEN_BUDGET),
     };
+  }
+
+  // Phase 6 — SEARCH_FIRST execution. Activated only when the routing
+  // decision explicitly selected SEARCH_FIRST. Search-service failures
+  // ALWAYS degrade gracefully: returns the original context plus an
+  // outcome record explaining why search did not apply.
+  private async maybeRunSearchFirst(
+    payload: MessageRoutedData,
+    executionContext: AssembledContext,
+    userPrompt: string,
+  ): Promise<{ executionContext: AssembledContext; searchOutcome: SearchFirstOutcome | null }> {
+    if (payload.selectedWorkflow !== WORKFLOW_KIND_SEARCH_FIRST) {
+      return { executionContext, searchOutcome: null };
+    }
+    this.logger.log(
+      `maybeRunSearchFirst: SEARCH_FIRST workflow active for message ${payload.messageId}`,
+    );
+    const { context: enriched, outcome } = await this.searchFirstManager.run(
+      userPrompt,
+      executionContext,
+    );
+    return { executionContext: enriched, searchOutcome: outcome };
   }
 
   private applyShortResponseConstraint(prompt: string): string {

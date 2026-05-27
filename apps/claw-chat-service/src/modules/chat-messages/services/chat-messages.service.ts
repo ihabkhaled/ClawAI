@@ -687,6 +687,10 @@ export class ChatMessagesService implements OnModuleInit {
         | undefined,
       timestamp: (payload['timestamp'] as string | undefined) ?? new Date().toISOString(),
       detectedCategory: payload['detectedCategory'] as string | undefined,
+      // Phase 6 — workflow live wiring. Routing-service v1 didn't emit
+      // these, so undefined is normal and means "execute DIRECT_LLM".
+      selectedWorkflow: (payload['selectedWorkflow'] as string | null | undefined) ?? null,
+      workflowReason: (payload['workflowReason'] as string | null | undefined) ?? null,
     };
   }
 
@@ -856,11 +860,33 @@ export class ChatMessagesService implements OnModuleInit {
       sourceMessageId: payload.messageId,
       ...this.buildReRouteMetaPart(llmResponse),
       ...this.buildFastPathMetaPart(llmResponse),
+      ...this.buildWorkflowMetaPart(llmResponse, payload),
       ...(!hasVisibleContent ? { emptyContent: true } : {}),
       ...this.buildDisplayNameMetaPart(latestUserMetadata),
       routeRoadmap,
       progressSummary,
       ...(llmResponse.judgeRefereeMetadata ?? {}),
+    };
+  }
+
+  // Phase 6 — persists workflow + search-first outcome on the assistant
+  // message so the FE can render the workflow badge after a page refresh
+  // without re-querying the routing service.
+  private buildWorkflowMetaPart(
+    llmResponse: LlmResponse,
+    payload: MessageRoutedData,
+  ): Record<string, unknown> {
+    const workflow = llmResponse.workflow ?? payload.selectedWorkflow ?? null;
+    const workflowReason = llmResponse.workflowReason ?? payload.workflowReason ?? null;
+    if (workflow === null && llmResponse.searchFirst === undefined) {
+      return {};
+    }
+    return {
+      ...(workflow === null ? {} : { workflow }),
+      ...(workflowReason === null ? {} : { workflowReason }),
+      ...(llmResponse.searchFirst === undefined
+        ? {}
+        : { searchFirst: llmResponse.searchFirst }),
     };
   }
 

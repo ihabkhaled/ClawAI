@@ -46,6 +46,10 @@ describe('RoutingService.getRecoveryStats', () => {
       { isFrontierAvailable: () => false } as any,
       // Phase 2 — SemanticIntentAnalyzerManager; not exercised here.
       { analyze: jest.fn() } as any,
+      // Phase 4 — AIRoutePlannerManager; not exercised here.
+      { plan: jest.fn() } as any,
+      // Phase 6 — LiveWorkflowSelectorManager; not exercised here.
+      { selectWorkflow: jest.fn() } as any,
     );
   });
 

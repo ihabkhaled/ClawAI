@@ -155,6 +155,18 @@ describe('RoutingService', () => {
       { isFrontierAvailable: () => false } as any,
       // Phase 2 — SemanticIntentAnalyzerManager; not exercised here.
       { analyze: jest.fn() } as any,
+      // Phase 4 — AIRoutePlannerManager; not exercised here.
+      { plan: jest.fn() } as any,
+      // Phase 6 — LiveWorkflowSelectorManager. selectWorkflow returns the
+      // canonical DIRECT_LLM selection so any downstream code that checks
+      // the workflow gets a sane default in tests that don't care.
+      {
+        selectWorkflow: jest.fn().mockReturnValue({
+          kind: 'DIRECT_LLM',
+          reason: 'default_direct',
+          alternatives: [],
+        }),
+      } as any,
     );
   });
 

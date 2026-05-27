@@ -35,6 +35,28 @@ export class RoutingDecisionsRepository {
     });
   }
 
+  // Phase 4 shadow update — same pattern as Phase 2 but for the
+  // AIRoutePlannerManager output.
+  async updateAiRoutePlanByMessageId(
+    messageId: string,
+    payload: Prisma.InputJsonValue,
+  ): Promise<void> {
+    await this.prisma.routingDecision.updateMany({
+      where: { messageId },
+      data: { aiRoutePlan: payload },
+    });
+  }
+
+  // Phase 4 helper — the planner shadow needs to read the analyzer
+  // output (chained shadow) so we fetch the most recent decision row
+  // for this messageId. Returns null when no row exists yet.
+  async findFirstByMessageId(messageId: string): Promise<RoutingDecision | null> {
+    return this.prisma.routingDecision.findFirst({
+      where: { messageId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async findByThreadId(threadId: string, page: number, limit: number): Promise<RoutingDecision[]> {
     const skip = (page - 1) * limit;
     return this.prisma.routingDecision.findMany({

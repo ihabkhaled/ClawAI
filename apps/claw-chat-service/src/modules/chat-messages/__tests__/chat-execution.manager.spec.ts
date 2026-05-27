@@ -106,6 +106,15 @@ describe('ChatExecutionManager', () => {
       qualityManager as unknown as QualityCheckManager,
       judgeManager as unknown as JudgeRefereeManager,
       streamService as unknown as ChatStreamService,
+      // Phase 6 — SearchFirstManager. Not exercised in this suite so a
+      // no-op stub (run/search return empty payloads) keeps tests focused
+      // on the execution path while satisfying the constructor signature.
+      {
+        run: jest.fn().mockResolvedValue({ snippet: '', sources: [] }),
+        search: jest.fn().mockResolvedValue({ snippet: '', sources: [] }),
+        injectIntoSystemPrompt: jest.fn().mockImplementation((sys) => sys),
+        buildSearchBlock: jest.fn().mockReturnValue(''),
+      } as any,
       localModelSelection as unknown as LocalModelSelectionService,
     );
   });

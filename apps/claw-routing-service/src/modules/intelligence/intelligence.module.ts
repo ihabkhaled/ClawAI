@@ -3,6 +3,7 @@
 
 import { Module } from '@nestjs/common';
 
+import { AIRoutePlannerManager } from './managers/ai-route-planner.manager';
 import { ConsensusModeManager } from './managers/consensus-mode.manager';
 import { CostQualitySliderManager } from './managers/cost-quality-slider.manager';
 import { EmbeddingRouterManager } from './managers/embedding-router.manager';
@@ -26,6 +27,7 @@ import { SemanticIntentAnalyzerManager } from './managers/semantic-intent-analyz
     ConsensusModeManager,
     CostQualitySliderManager,
     SemanticIntentAnalyzerManager,
+    AIRoutePlannerManager,
   ],
   exports: [
     PromptLengthGuardManager,
@@ -38,6 +40,7 @@ import { SemanticIntentAnalyzerManager } from './managers/semantic-intent-analyz
     ConsensusModeManager,
     CostQualitySliderManager,
     SemanticIntentAnalyzerManager,
+    AIRoutePlannerManager,
   ],
 })
 export class IntelligenceModule {}

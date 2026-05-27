@@ -196,6 +196,16 @@ model RoutingDecision {
   // ROUTING_SEMANTIC_ANALYZER_ENABLED=true. Phase 4 promotes this to
   // an input for the AI Route Planner; until then it's observe-only.
   semanticAnalysis        Json?                   @map("semantic_analysis")
+  // Semantic Router Flagship Phase 4 — shadow-mode planner output. Chained
+  // after semanticAnalysis (uses it as input). Stored AIRoutePlanRecord
+  // including status, plan, validationIssues, attempts, durationMs.
+  aiRoutePlan             Json?                   @map("ai_route_plan")
+  // Semantic Router Flagship Phase 6 — live workflow wiring. Optional so
+  // the v1 hot path keeps writing rows when the wiring is disabled.
+  // Today only DIRECT_LLM + SEARCH_FIRST are LIVE; the rest are surfaced
+  // through `selectedWorkflow=NULL` plus the workflowReason string.
+  selectedWorkflow        WorkflowKind?           @map("selected_workflow")
+  workflowReason          String?                 @map("workflow_reason")
   createdAt               DateTime                @default(now()) @map("created_at")
   outcomes                RoutingOutcomeRecord[]
   feedbackRecords         RoutingFeedbackRecord[]
@@ -206,6 +216,7 @@ model RoutingDecision {
   @@index([selectedProvider, selectedModel])
   @@index([detectedCategory])
   @@index([createdAt])
+  @@index([selectedWorkflow])
   @@map("routing_decisions")
 }
 
