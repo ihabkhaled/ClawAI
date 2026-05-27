@@ -22,6 +22,19 @@ export class RoutingDecisionsRepository {
     return this.prisma.routingDecision.findUnique({ where: { id } });
   }
 
+  // Phase 2 shadow update — patches the JSON column after the analyzer
+  // finishes async. Uses messageId because the routing decision row may
+  // not be createdyet when the analyzer finishes (race-safe).
+  async updateSemanticAnalysisByMessageId(
+    messageId: string,
+    payload: Prisma.InputJsonValue,
+  ): Promise<void> {
+    await this.prisma.routingDecision.updateMany({
+      where: { messageId },
+      data: { semanticAnalysis: payload },
+    });
+  }
+
   async findByThreadId(threadId: string, page: number, limit: number): Promise<RoutingDecision[]> {
     const skip = (page - 1) * limit;
     return this.prisma.routingDecision.findMany({

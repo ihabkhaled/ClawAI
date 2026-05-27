@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { IntelligenceModule } from '../intelligence/intelligence.module';
 import { RoutingController } from './controllers/routing.controller';
 import { RoutingService } from './services/routing.service';
 import { RoutingManager } from './managers/routing.manager';
@@ -18,6 +19,7 @@ import { ReplayRunsRepository } from './repositories/replay-runs.repository';
 import { ReplayCasesRepository } from './repositories/replay-cases.repository';
 
 @Module({
+  imports: [IntelligenceModule],
   controllers: [RoutingController],
   providers: [
     RoutingService,

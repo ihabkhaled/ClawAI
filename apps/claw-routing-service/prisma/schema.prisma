@@ -191,6 +191,11 @@ model RoutingDecision {
   uncertaintyScore        Decimal?                @map("uncertainty_score") @db.Decimal(5, 4)
   explanation             Json?
   routingDurationMs       Int?                    @map("routing_duration_ms")
+  // Semantic Router Flagship Phase 2 — shadow-mode analyzer output.
+  // Populated async by SemanticIntentAnalyzerManager when
+  // ROUTING_SEMANTIC_ANALYZER_ENABLED=true. Phase 4 promotes this to
+  // an input for the AI Route Planner; until then it's observe-only.
+  semanticAnalysis        Json?                   @map("semantic_analysis")
   createdAt               DateTime                @default(now()) @map("created_at")
   outcomes                RoutingOutcomeRecord[]
   feedbackRecords         RoutingFeedbackRecord[]

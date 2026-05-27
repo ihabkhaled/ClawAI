@@ -18,6 +18,8 @@ import { AdaptiveLearningManager } from '../managers/adaptive-learning.manager';
 import { PromptBuilderManager } from '../managers/prompt-builder.manager';
 import { RouterEducationManager } from '../managers/router-education.manager';
 import { LlamacppHealthManager } from '../managers/llamacpp-health.manager';
+import { SemanticIntentAnalyzerManager } from '../../intelligence/managers/semantic-intent-analyzer.manager';
+import type { SemanticIntentAnalyzerInput } from '../../intelligence/types/semantic-intent-analysis.types';
 import { LLAMACPP_RUNTIME } from '../constants/llamacpp.constants';
 import { type CreatePolicyDto } from '../dto/create-policy.dto';
 import { type ReplayRoutingDto } from '../dto/replay-routing.dto';
@@ -67,6 +69,7 @@ export class RoutingService implements OnModuleInit {
     private readonly rabbitMQService: RabbitMQService,
     private readonly promptBuilder: PromptBuilderManager,
     private readonly llamacppHealth: LlamacppHealthManager,
+    private readonly semanticAnalyzer: SemanticIntentAnalyzerManager,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -453,6 +456,58 @@ export class RoutingService implements OnModuleInit {
 
     this.logRoutingDecision(messageId, threadId, decision);
     this.publishMessageRoutedEvent(messageId, threadId, decision, fallback);
+
+    // Phase 2 shadow — fire-and-forget. Analyzer runs in the background,
+    // patches semantic_analysis on the decision row when done. Failures
+    // are recorded in the same column with status != SUCCESS so we can
+    // monitor analyzer quality without blocking the hot path.
+    void this.runSemanticAnalysisShadow(messageId, threadId, messageContent, decision);
+  }
+
+  private async runSemanticAnalysisShadow(
+    messageId: string | undefined,
+    threadId: string,
+    messageContent: string,
+    decision: RoutingDecisionResult,
+  ): Promise<void> {
+    if (!messageId) {
+      // Without a messageId we have no way to correlate the analysis row
+      // back to the decision later. Skip silently — Phase 4 hot-path
+      // invocation will fix this when it runs analyzer pre-decision.
+      return;
+    }
+    const config = AppConfig.get();
+    if (!config.ROUTING_SEMANTIC_ANALYZER_ENABLED) {
+      return;
+    }
+    try {
+      const input: SemanticIntentAnalyzerInput = {
+        threadId,
+        message: messageContent,
+        routingMode: decision.routingMode,
+        // Phase 2 has no cross-service thread history fetch yet — Phase 3
+        // adds that via a chat-service RPC. For now the analyzer works
+        // off message + signals only; reasoningSummary will note the
+        // missing context.
+        keywordSignals: decision.detectedCategory
+          ? [{ category: decision.detectedCategory, matchedTerms: [], confidenceBoost: 0.5 }]
+          : [],
+      };
+      const record = await this.semanticAnalyzer.analyze(input);
+      await this.decisionsRepository.updateSemanticAnalysisByMessageId(
+        messageId,
+        record as unknown as Prisma.InputJsonValue,
+      );
+      this.logger.debug(
+        `runSemanticAnalysisShadow: stored analysis status=${record.status} for messageId=${messageId}`,
+      );
+    } catch (error) {
+      // Shadow path: never propagate, never retry beyond the analyzer's
+      // own retry. Log and move on so the hot path stays healthy.
+      this.logger.error(
+        `runSemanticAnalysisShadow: failed for messageId=${messageId} — ${(error as Error).message}`,
+      );
+    }
   }
 
   private buildConnectorHealthSnapshot(): {

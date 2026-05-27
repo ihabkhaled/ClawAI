@@ -153,6 +153,8 @@ describe('RoutingService', () => {
       rabbitMQ as unknown as RabbitMQService,
       promptBuilder as any,
       { isFrontierAvailable: () => false } as any,
+      // Phase 2 — SemanticIntentAnalyzerManager; not exercised here.
+      { analyze: jest.fn() } as any,
     );
   });
 

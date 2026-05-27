@@ -44,6 +44,8 @@ describe('RoutingService.getRecoveryStats', () => {
       } as any,
       {} as any,
       { isFrontierAvailable: () => false } as any,
+      // Phase 2 — SemanticIntentAnalyzerManager; not exercised here.
+      { analyze: jest.fn() } as any,
     );
   });
 

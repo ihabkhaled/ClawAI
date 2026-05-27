@@ -12,6 +12,7 @@ import { MidStreamSwitcherManager } from './managers/mid-stream-switcher.manager
 import { MultiIntentSplitterManager } from './managers/multi-intent-splitter.manager';
 import { PromptLengthGuardManager } from './managers/prompt-length-guard.manager';
 import { RegionRouterManager } from './managers/region-router.manager';
+import { SemanticIntentAnalyzerManager } from './managers/semantic-intent-analyzer.manager';
 
 @Module({
   providers: [
@@ -24,6 +25,7 @@ import { RegionRouterManager } from './managers/region-router.manager';
     EmbeddingRouterManager,
     ConsensusModeManager,
     CostQualitySliderManager,
+    SemanticIntentAnalyzerManager,
   ],
   exports: [
     PromptLengthGuardManager,
@@ -35,6 +37,7 @@ import { RegionRouterManager } from './managers/region-router.manager';
     EmbeddingRouterManager,
     ConsensusModeManager,
     CostQualitySliderManager,
+    SemanticIntentAnalyzerManager,
   ],
 })
 export class IntelligenceModule {}
