@@ -20,3 +20,10 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+    environment:
+      # Override the base CPU-mode args when a GPU is present. Without
+      # this, SD keeps --use-cpu / --no-half / --precision full set by
+      # the base compose file and ignores the GPU entirely. Keep --api
+      # --listen so the HTTP API stays reachable on 7860.
+      - COMMANDLINE_ARGS=--api --listen
+      - WEB_ENABLE_AUTH=false

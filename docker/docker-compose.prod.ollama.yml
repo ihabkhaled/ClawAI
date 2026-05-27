@@ -93,11 +93,14 @@ services:
     volumes:
       - sd-models-data:/opt/stable-diffusion-webui/models
     environment:
-      # --skip-torch-cuda-test --use-cpu all lets SD start when GPU isn't
-      # passed through to the container. When NVIDIA passthrough is
-      # configured (via the ollama.gpu-nvidia overlay) the GPU is
-      # automatically used and these flags are inert.
-      - COMMANDLINE_ARGS=--api --listen --skip-torch-cuda-test --use-cpu all
+      # CPU-mode flags: --skip-torch-cuda-test --use-cpu all lets SD start
+      # without a GPU, and --no-half --precision full forces FP32 because
+      # SDXL Turbo weights are FP16 and CPU torch can't mix
+      # `c10::Half` bias with FP32 input — generation crashes with
+      # `Input type (float) and bias type (c10::Half) should be the same`.
+      # The NVIDIA overlay (docker-compose.prod.ollama.gpu-nvidia.yml)
+      # overrides this to drop the CPU flags when a GPU is available.
+      - COMMANDLINE_ARGS=--api --listen --skip-torch-cuda-test --use-cpu all --no-half --precision full
       # ai-dock wraps SD in a Caddy auth-proxy on port 7860 by default.
       # Without this flag every API call from claw-image-service gets a
       # 302 redirect to /login (and the adapter sees an empty error,
