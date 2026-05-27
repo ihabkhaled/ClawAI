@@ -2,9 +2,25 @@
 # =============================================================================
 # Claw — Automated Install Script (Linux / macOS)
 # =============================================================================
-# Usage: bash scripts/install.sh
+# Usage:
+#   bash scripts/install.sh                          # interactive — asks dev/prod
+#   bash scripts/install.sh --prod                   # force production stack
+#   bash scripts/install.sh --dev                    # force development stack
+#   CLAW_MODE=prod bash scripts/install.sh           # env-var equivalent
+#   CLAW_MODE=dev  bash scripts/install.sh
 # =============================================================================
 set -euo pipefail
+
+# ─── Mode selection (dev vs prod) ───────────────────────────────────────────
+# Parse --dev / --prod from args; fall back to CLAW_MODE env var; default dev.
+CLAW_MODE_ARG=""
+for arg in "$@"; do
+  case "$arg" in
+    --prod) CLAW_MODE_ARG="prod" ;;
+    --dev)  CLAW_MODE_ARG="dev"  ;;
+  esac
+done
+CLAW_MODE="${CLAW_MODE_ARG:-${CLAW_MODE:-}}"
 
 # ─── Colors ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
@@ -22,11 +38,28 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
 ENV_FILE="$PROJECT_ROOT/.env"
 
-# ─── Compose files (split layout — claw.sh is the canonical entrypoint) ─────
-BASE_COMPOSE_FILES="-f docker/docker-compose.dev.databases.yml -f docker/docker-compose.dev.services.yml -f docker/docker-compose.dev.ollama.yml"
-NVIDIA_SERVICE_GPU_FILE="docker/docker-compose.dev.gpu-nvidia.yml"
-NVIDIA_OLLAMA_GPU_FILE="docker/docker-compose.dev.ollama.gpu-nvidia.yml"
-COMPOSE_FILES="$BASE_COMPOSE_FILES"
+# ─── Compose files (resolved AFTER mode prompt below) ───────────────────────
+# Placeholders so later sections compile; actual values are set once we know
+# whether the user picked dev or prod.
+BASE_COMPOSE_FILES=""
+NVIDIA_SERVICE_GPU_FILE=""
+NVIDIA_OLLAMA_GPU_FILE=""
+COMPOSE_FILES=""
+
+# Picks dev vs prod compose files based on $CLAW_MODE. Called once we have
+# the user's choice (interactive or via flag/env).
+apply_mode_compose_paths() {
+  if [ "$CLAW_MODE" = "prod" ]; then
+    BASE_COMPOSE_FILES="-f docker/docker-compose.prod.databases.yml -f docker/docker-compose.prod.services.yml -f docker/docker-compose.prod.ollama.yml"
+    NVIDIA_SERVICE_GPU_FILE="docker/docker-compose.prod.gpu-nvidia.yml"
+    NVIDIA_OLLAMA_GPU_FILE="docker/docker-compose.prod.ollama.gpu-nvidia.yml"
+  else
+    BASE_COMPOSE_FILES="-f docker/docker-compose.dev.databases.yml -f docker/docker-compose.dev.services.yml -f docker/docker-compose.dev.ollama.yml"
+    NVIDIA_SERVICE_GPU_FILE="docker/docker-compose.dev.gpu-nvidia.yml"
+    NVIDIA_OLLAMA_GPU_FILE="docker/docker-compose.dev.ollama.gpu-nvidia.yml"
+  fi
+  COMPOSE_FILES="$BASE_COMPOSE_FILES"
+}
 
 # ─── Banner ──────────────────────────────────────────────────────────────────
 echo ""
@@ -134,7 +167,7 @@ detect_gpu() {
 }
 
 resolve_compose_tasks() {
-  docker compose $COMPOSE_FILES config --format json 2>/dev/null | node -e '
+  docker compose --env-file "$ENV_FILE" $COMPOSE_FILES config --format json 2>/dev/null | node -e '
 const fs = require("fs");
 const raw = fs.readFileSync(0, "utf8").trim();
 if (!raw) process.exit(0);
@@ -234,6 +267,56 @@ if [ "$MISSING" -ne 0 ]; then
   fail "Missing prerequisites. Please install them and re-run this script."
   exit 1
 fi
+echo ""
+
+# ─── Step 1b: Choose dev or prod ────────────────────────────────────────────
+echo "${BOLD}Step 1b/9: Deployment mode${NC}"
+echo ""
+echo "  ${BOLD}dev${NC}   Source bind-mounts, hot reload, dev-friendly defaults."
+echo "        Use when actively developing on this machine."
+echo "  ${BOLD}prod${NC}  Standalone images, no source mounts, production Dockerfiles."
+echo "        Use for VM / server / cloudflare-tunnel deployments."
+echo ""
+
+# Carry over the mode from .env on re-runs so the user doesn't have to type
+# it again. If neither flag/env/.env provides a value, default to dev.
+if [ -z "$CLAW_MODE" ] && [ -f "$ENV_FILE" ]; then
+  CARRIED_NODE_ENV="$(get_env_value "NODE_ENV" "$ENV_FILE")"
+  case "$CARRIED_NODE_ENV" in
+    production)  CLAW_MODE="prod" ;;
+    development) CLAW_MODE="dev"  ;;
+  esac
+fi
+
+if [ -z "$CLAW_MODE" ]; then
+  if [ -t 0 ]; then
+    ask "Mode [dev/prod] (default: dev): "
+    read -r MODE_INPUT
+    MODE_INPUT="$(echo "${MODE_INPUT:-dev}" | tr '[:upper:]' '[:lower:]')"
+    case "$MODE_INPUT" in
+      prod|production) CLAW_MODE="prod" ;;
+      dev|development|"") CLAW_MODE="dev" ;;
+      *)
+        fail "Unknown mode '$MODE_INPUT'. Expected 'dev' or 'prod'."
+        exit 1
+        ;;
+    esac
+  else
+    CLAW_MODE="dev"  # non-interactive default
+    info "Non-interactive run — defaulting to dev. Override with --prod or CLAW_MODE=prod."
+  fi
+fi
+
+apply_mode_compose_paths
+
+if [ "$CLAW_MODE" = "prod" ]; then
+  NODE_ENV_VALUE="production"
+  ok "Mode: ${BOLD}production${NC} (compose files: docker/docker-compose.prod.*.yml)"
+else
+  NODE_ENV_VALUE="development"
+  ok "Mode: ${BOLD}development${NC} (compose files: docker/docker-compose.dev.*.yml)"
+fi
+export CLAW_MODE NODE_ENV_VALUE
 echo ""
 
 # ─── Step 2: Check port availability ────────────────────────────────────────
@@ -634,7 +717,7 @@ if [ "$SKIP_ENV" != "true" ]; then
 # =============================================================================
 
 # --- General ---
-NODE_ENV=development
+NODE_ENV=${NODE_ENV_VALUE}
 
 # --- Hostname / Public URL (single source of truth) ---
 # Change CLAW_HOSTNAME and re-run scripts/install-tls.sh to reissue the TLS cert.
@@ -1005,6 +1088,7 @@ echo "${BOLD}${CYAN}━━━━━━━━━━━━━━━━━━━━
 echo "${BOLD}  Configuration Summary${NC}"
 echo "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
+echo "  Mode:              ${CLAW_MODE} (${NODE_ENV_VALUE})"
 echo "  Hostname:          ${CLAW_HOSTNAME}"
 echo "  Frontend:          ${CLAW_BASE_URL}"
 echo "  API Gateway:       ${CLAW_BASE_URL}"
@@ -1024,7 +1108,7 @@ echo ""
 ask "Start Claw? [Y/n]: "
 read -r start_answer
 if [[ "$start_answer" == "n" || "$start_answer" == "N" ]]; then
-  info "Aborted. Run 'docker compose $COMPOSE_FILES up -d' when ready."
+  info "Aborted. Run 'docker compose --env-file "$ENV_FILE" $COMPOSE_FILES up -d' when ready."
   exit 0
 fi
 echo ""
@@ -1124,7 +1208,7 @@ if [ "$TOTAL_TASKS" -gt 0 ]; then
     for entry in "${DOWNLOAD_DETAILS[@]}"; do
       info "  - $entry"
     done
-    docker compose $COMPOSE_FILES pull "${DOWNLOAD_NAMES[@]}"
+    docker compose --env-file "$ENV_FILE" $COMPOSE_FILES pull "${DOWNLOAD_NAMES[@]}"
   fi
 
   if [ "$CACHED_BUILD_COUNT" -gt 0 ]; then
@@ -1141,21 +1225,21 @@ if [ "$TOTAL_TASKS" -gt 0 ]; then
     done
     # Docker Compose v2 builds services concurrently when given multiple names.
     # `--progress plain` keeps per-service log lines visible while they run.
-    docker compose $COMPOSE_FILES build --progress plain "${BUILD_NAMES[@]}"
+    docker compose --env-file "$ENV_FILE" $COMPOSE_FILES build --progress plain "${BUILD_NAMES[@]}"
   fi
 
   ok "Docker progress plan: $DOWNLOAD_COUNT downloads, $BUILD_COUNT builds, $CACHED_BUILD_COUNT cached builds"
 else
   warn "Could not resolve Docker progress plan; falling back to the legacy startup path"
   info "Pulling Docker images (this may take a few minutes on first run)..."
-  docker compose $COMPOSE_FILES pull
+  docker compose --env-file "$ENV_FILE" $COMPOSE_FILES pull
 
   info "Starting containers without rebuilding..."
-  docker compose $COMPOSE_FILES up -d --no-build
+  docker compose --env-file "$ENV_FILE" $COMPOSE_FILES up -d --no-build
 fi
 
 info "[90%] Finalizing containers..."
-docker compose $COMPOSE_FILES up -d --no-build
+docker compose --env-file "$ENV_FILE" $COMPOSE_FILES up -d --no-build
 
 echo ""
 info "Waiting for services to become healthy..."
@@ -1164,10 +1248,10 @@ info "Waiting for services to become healthy..."
 MAX_WAIT=180
 ELAPSED=0
 INTERVAL=5
-TOTAL_SERVICES=$(docker compose $COMPOSE_FILES config --services 2>/dev/null | awk 'END {print NR+0}')
+TOTAL_SERVICES=$(docker compose --env-file "$ENV_FILE" $COMPOSE_FILES config --services 2>/dev/null | awk 'END {print NR+0}')
 
 while [ $ELAPSED -lt $MAX_WAIT ]; do
-  HEALTHY=$(docker compose $COMPOSE_FILES ps 2>/dev/null | grep -c "(healthy)" || echo "0")
+  HEALTHY=$(docker compose --env-file "$ENV_FILE" $COMPOSE_FILES ps 2>/dev/null | grep -c "(healthy)" || echo "0")
   PROGRESS=$((90 + (ELAPSED * 10 / MAX_WAIT)))
   if [ "$PROGRESS" -gt 99 ]; then
     PROGRESS=99
@@ -1176,7 +1260,7 @@ while [ $ELAPSED -lt $MAX_WAIT ]; do
   info "[$PROGRESS%] Finalizing containers: $HEALTHY/$TOTAL_SERVICES healthy"
 
   # Check if auth-service is healthy (key indicator — it depends on DB + runs seed)
-  if docker compose $COMPOSE_FILES ps auth-service 2>/dev/null | grep -q "(healthy)"; then
+  if docker compose --env-file "$ENV_FILE" $COMPOSE_FILES ps auth-service 2>/dev/null | grep -q "(healthy)"; then
     break
   fi
 
@@ -1189,7 +1273,7 @@ echo ""
 echo ""
 
 # Final status
-UNHEALTHY=$(docker compose $COMPOSE_FILES ps 2>/dev/null | grep -c "unhealthy" || echo "0")
+UNHEALTHY=$(docker compose --env-file "$ENV_FILE" $COMPOSE_FILES ps 2>/dev/null | grep -c "unhealthy" || echo "0")
 
 if [ "$UNHEALTHY" -eq 0 ]; then
   echo "${GREEN}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -1199,7 +1283,7 @@ else
   echo "${YELLOW}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
   echo "${YELLOW}${BOLD}  Claw started with $UNHEALTHY unhealthy container(s)${NC}"
   echo "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-  warn "Check logs: docker compose $COMPOSE_FILES logs <service>"
+  warn "Check logs: docker compose --env-file "$ENV_FILE" $COMPOSE_FILES logs <service>"
 fi
 
 echo ""
@@ -1211,8 +1295,12 @@ echo "  ${BOLD}Admin login:${NC}"
 echo "    Email:           ${ADMIN_EMAIL}"
 echo "    Password:        ${ADMIN_PASS}"
 echo ""
+# Show mode-aware claw.sh commands so users don't accidentally invoke the
+# default dev mode against a production install.
+CLAW_FLAG=""
+if [ "$CLAW_MODE" = "prod" ]; then CLAW_FLAG=" --prod"; fi
 echo "  ${BOLD}Useful commands:${NC}"
-echo "    ./scripts/claw.sh status        Check service status"
-echo "    ./scripts/claw.sh logs <name>   Follow service logs"
-echo "    ./scripts/claw.sh down          Stop everything"
+echo "    ./scripts/claw.sh${CLAW_FLAG} status        Check service status"
+echo "    ./scripts/claw.sh${CLAW_FLAG} logs <name>   Follow service logs"
+echo "    ./scripts/claw.sh${CLAW_FLAG} down          Stop everything"
 echo ""
