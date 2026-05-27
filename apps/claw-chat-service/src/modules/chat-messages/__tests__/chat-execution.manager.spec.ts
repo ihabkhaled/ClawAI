@@ -6,6 +6,15 @@ import type { ChatStreamService } from '../services/chat-stream.service';
 import type { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type { AssembledContext } from '../types/context.types';
 import { JudgeDecision } from '../../../common/enums';
+// Import the live caps so the test moves with the constants rather than
+// pinning brittle numeric literals — previously the test asserted
+// num_predict === 112 which broke the moment we raised the AUTO cap to
+// stop truncating compare-mode responses mid-word.
+import {
+  AUTO_MAX_OUTPUT_TOKENS,
+  DEFAULT_MAX_OUTPUT_TOKENS,
+  FAST_PATH_MAX_OUTPUT_TOKENS,
+} from '../constants/execution-fast-path.constants';
 
 jest.mock('../../../common/utilities', () => ({
   httpRequest: jest.fn(),
@@ -138,7 +147,7 @@ describe('ChatExecutionManager', () => {
       prompt: string;
     };
     expect(requestBody.think).toBe(false);
-    expect(requestBody.options.num_predict).toBe(72);
+    expect(requestBody.options.num_predict).toBe(FAST_PATH_MAX_OUTPUT_TOKENS);
     expect(requestBody.prompt).toContain('Respond briefly in 2-4 sentences');
   });
 
@@ -178,7 +187,7 @@ describe('ChatExecutionManager', () => {
       options: { num_predict: number };
     };
     expect(requestBody.think).toBe(false);
-    expect(requestBody.options.num_predict).toBe(112);
+    expect(requestBody.options.num_predict).toBe(AUTO_MAX_OUTPUT_TOKENS);
   });
 
   it('caps cloud max_tokens and injects short constraint in fast AUTO mode', async () => {
@@ -415,7 +424,7 @@ describe('ChatExecutionManager', () => {
       options: { num_predict: number };
     };
     expect(ollamaBody.model).toBe('qwen3:7b');
-    expect(ollamaBody.options.num_predict).toBe(512);
+    expect(ollamaBody.options.num_predict).toBe(DEFAULT_MAX_OUTPUT_TOKENS);
 
     const fileGenerationBody = httpRequest.mock.calls[1][0].body as {
       provider: string;
@@ -494,7 +503,7 @@ describe('ChatExecutionManager', () => {
       options: { num_predict: number };
     };
     expect(retryOllamaBody.model).toBe('llama3.3:8b');
-    expect(retryOllamaBody.options.num_predict).toBe(512);
+    expect(retryOllamaBody.options.num_predict).toBe(DEFAULT_MAX_OUTPUT_TOKENS);
 
     const fileGenerationBody = httpRequest.mock.calls[2][0].body as {
       provider: string;

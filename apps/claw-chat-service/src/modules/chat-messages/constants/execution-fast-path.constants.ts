@@ -1,7 +1,15 @@
-export const FAST_PATH_MAX_OUTPUT_TOKENS = 72;
-export const AUTO_MAX_OUTPUT_TOKENS = 112;
-export const DEFAULT_MAX_OUTPUT_TOKENS = 256;
-export const HARD_MAX_OUTPUT_TOKENS = 512;
+// These caps were originally tuned for sub-second replies on tiny CPU
+// models (72/112 tokens ≈ 2-3 short sentences). On real hardware with
+// real models the constraint is invisible to the user except as
+// mid-sentence truncation — every parallel-compare response returned
+// exactly 112 outputTokens and ended mid-word, which made the compare
+// grid useless ("can't see the full response").
+// New defaults give every layer room for a substantive answer while
+// still bounding runaway generation via the hard ceiling.
+export const FAST_PATH_MAX_OUTPUT_TOKENS = 512;
+export const AUTO_MAX_OUTPUT_TOKENS = 2048;
+export const DEFAULT_MAX_OUTPUT_TOKENS = 4096;
+export const HARD_MAX_OUTPUT_TOKENS = 16384;
 export const MIN_OUTPUT_TOKENS = 24;
 export const FAST_PATH_MAX_PROMPT_CHARS = 220;
 export const FAST_PATH_MAX_PROMPT_WORDS = 36;
