@@ -32,7 +32,10 @@ COPY --from=builder /app/apps/claw-connector-service/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/claw-connector-service/package.json ./package.json
 COPY --from=builder /app/apps/claw-connector-service/prisma ./prisma
+COPY --from=builder /app/apps/claw-connector-service/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/packages /app/packages
+COPY scripts/docker-entrypoint.prod.sh /app/docker-entrypoint.prod.sh
+RUN chmod +x /app/docker-entrypoint.prod.sh
 USER nestjs
 EXPOSE 4003
-CMD ["node", "dist/main.js"]
+CMD ["sh", "/app/docker-entrypoint.prod.sh"]

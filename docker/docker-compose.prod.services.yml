@@ -26,6 +26,8 @@ services:
     container_name: claw-auth-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      SEED_ON_START: 'true'
     ports:
       - '4001:4001'
     volumes:
