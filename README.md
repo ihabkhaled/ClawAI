@@ -20,7 +20,7 @@ Claw is an open-source platform for orchestrating AI models across multiple prov
 - **Multi-provider routing** -- OpenAI, Anthropic, Google Gemini, AWS Bedrock, DeepSeek, xAI, and local models via Ollama
 - **Intelligent model routing** -- A local judge model selects the best provider/model for each request based on task characteristics, connector health, and learned priors from routing telemetry and replay data
 - **Local-first architecture** -- Run entirely on your own hardware with Ollama; cloud providers are optional
-- **Microservices backend** -- 16 independent NestJS services with fault isolation and independent scaling
+- **Microservices backend** -- 17 independent NestJS services with fault isolation and independent scaling
 - **Secure secret management** -- Connector API keys encrypted at rest with AES-256-GCM
 - **Chat interface** -- Threaded conversations with full message history
 - **Memory and context packs** -- Persistent memory and embeddings for contextual conversations
@@ -32,7 +32,7 @@ Claw is an open-source platform for orchestrating AI models across multiple prov
 - **Image and file generation** -- Dedicated services for image output and downloadable document/file generation
 - **Operational visibility** -- Aggregated health, audit logging, usage ledgers, client logs, and server logs
 - **Role-based access control** -- Admin, operator, and viewer roles with JWT authentication
-- **Monorepo structure** -- Frontend, 16 backend services, and 4 shared packages using npm workspaces
+- **Monorepo structure** -- Frontend, 17 backend services, and 5 shared packages using npm workspaces
 
 ---
 

@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Grew from 9 to 17 backend services** — added Client Logs (:4010), Server
+  Logs (:4011), Image (:4012), File Generation (:4013), Workspace (:4014),
+  Agent (:4015), Research (:4016), and Llamacpp (:4017) services.
+- **5th shared package** `@claw/shared-utilities` (jwt, http-client, crypto,
+  retry, safe-stringify, …). All 5 shared packages now have their own
+  lint/test/build/typecheck and are first-class CI matrix entries.
+- **13 PostgreSQL instances** (up from 6) for database-per-service isolation;
+  pgvector on the memory DB. MongoDB now backs 3 log/audit databases.
+- New navigation docs: build-system (tsgo), port-service-map, end-to-end
+  data flow, and a runbooks index.
+
+### Changed
+
+- **TypeScript toolchain migrated to tsgo** (`@typescript/native-preview`) +
+  `tsc-alias`, replacing `tsc` / `nest build` across all 17 services and 5
+  shared packages (build, dev watch, typecheck).
+- **Docker base image `node:26-alpine` → `node:26-bookworm-slim`** (glibc is
+  required for the tsgo and llama.cpp release binaries).
+- **CI** is now 4 jobs (lint / typecheck / test / build), each a ~23-entry
+  matrix (17 services + frontend + 5 shared packages).
+- **i18n expanded to 9 locales** (added Hindi `hi`).
+- Repo root slimmed: docs relocated to `docs/`, community-health files to
+  `.github/`; only `README.md`, `LICENSE`, and the AI-agent guides remain.
+
+### Fixed
+
+- Frontend vitest OOM eliminated at its root (an unstable `useTranslation`
+  mock caused an infinite render loop); the `run-vitest.cjs` wrapper was
+  removed and `test` is now plain `vitest run`.
+
+---
+
 ## [0.2.0] - 2026-04-04
 
 ### Phase 2: Microservices Restructure

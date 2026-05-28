@@ -12,7 +12,7 @@ Thank you for your interest in contributing to Claw. This guide will help you ge
 
 3. **Read the project rules** in [CLAUDE.md](../CLAUDE.md) -- these are the coding standards enforced across the project.
 
-4. **Understand the architecture**: Claw uses a microservices architecture with 9 backend services, 4 shared packages, and a Next.js frontend. See [ADR-004](../docs/adrs/004-microservices-architecture.md) for the architectural rationale.
+4. **Understand the architecture**: Claw uses a microservices architecture with 17 backend services, 5 shared packages, and a Next.js frontend. See [ADR-004](../docs/adrs/004-microservices-architecture.md) for the architectural rationale.
 
 ---
 
@@ -21,22 +21,34 @@ Thank you for your interest in contributing to Claw. This guide will help you ge
 ```
 claw/
 ├── apps/
-│   ├── claw-frontend/              # Next.js frontend
-│   ├── claw-auth-service/          # Auth microservice (:4001)
-│   ├── claw-chat-service/          # Chat microservice (:4002)
-│   ├── claw-connector-service/     # Connector microservice (:4003)
-│   ├── claw-routing-service/       # Routing microservice (:4004)
-│   ├── claw-memory-service/        # Memory microservice (:4005)
-│   ├── claw-file-service/          # File microservice (:4006)
-│   ├── claw-audit-service/         # Audit microservice (:4007)
-│   ├── claw-ollama-service/        # Ollama proxy microservice (:4008)
-│   └── claw-health-service/        # Health aggregator microservice (:4009)
+│   ├── claw-frontend/                # Next.js frontend (:3000)
+│   ├── claw-auth-service/            # Auth (:4001)
+│   ├── claw-chat-service/            # Chat (:4002)
+│   ├── claw-connector-service/       # Connector (:4003)
+│   ├── claw-routing-service/         # Routing (:4004)
+│   ├── claw-memory-service/          # Memory (:4005, pgvector)
+│   ├── claw-file-service/            # File (:4006)
+│   ├── claw-audit-service/           # Audit (:4007, MongoDB)
+│   ├── claw-ollama-service/          # Ollama (:4008)
+│   ├── claw-health-service/          # Health aggregator (:4009)
+│   ├── claw-client-logs-service/     # Client logs (:4010, MongoDB)
+│   ├── claw-server-logs-service/     # Server logs (:4011, MongoDB)
+│   ├── claw-image-service/           # Image generation (:4012)
+│   ├── claw-file-generation-service/ # File export (:4013)
+│   ├── claw-workspace-service/       # Workspace connectors (:4014)
+│   ├── claw-agent-service/           # Desktop agent (:4015)
+│   ├── claw-research-service/        # Research (:4016)
+│   └── claw-llamacpp-service/        # Local frontier LLMs (:4017)
 ├── packages/
-│   ├── shared-types/               # @claw/shared-types
-│   ├── shared-constants/           # @claw/shared-constants
-│   ├── shared-rabbitmq/            # @claw/shared-rabbitmq
-│   └── shared-auth/                # @claw/shared-auth
-├── docker/                          # All docker-compose.{dev,prod}.*.yml split files
+│   ├── shared-types/                 # @claw/shared-types
+│   ├── shared-constants/             # @claw/shared-constants
+│   ├── shared-rabbitmq/              # @claw/shared-rabbitmq
+│   ├── shared-auth/                  # @claw/shared-auth
+│   └── shared-utilities/             # @claw/shared-utilities
+├── docker/                            # Split docker-compose.{dev,prod}.*.yml files
+├── rules/                             # Authoritative engineering rules (read first)
+├── skills/                            # Operational runbooks / toolkits
+├── docs/                              # Full documentation
 └── package.json
 ```
 
@@ -72,22 +84,30 @@ Branch naming conventions:
 ### 3. Start the Development Environment
 
 ```bash
-# Start all infrastructure containers
-docker compose up -d
-
 # Install dependencies (all workspaces)
 npm install
 
-# Build shared packages (required before running services)
-npm run build -w packages/shared-types
-npm run build -w packages/shared-constants
-npm run build -w packages/shared-rabbitmq
-npm run build -w packages/shared-auth
+# Start the whole stack (infra + all services, auto-detects GPU).
+# claw.sh is THE entrypoint -- never call `docker compose` directly
+# (the legacy root compose file was removed; compose lives under docker/).
+./scripts/claw.sh up
 
-# Run the service you are working on
-npm run dev:auth    # or dev:chat, dev:routing, etc.
+# Build the 5 shared packages locally with tsgo (services also build them
+# in-container on startup):
+npm run build -w packages/shared-types -w packages/shared-constants \
+              -w packages/shared-rabbitmq -w packages/shared-auth \
+              -w packages/shared-utilities
+
+# Follow one service's logs
+./scripts/claw.sh logs chat-service
+
+# Frontend dev server (run on the host, outside Docker)
 npm run dev:frontend
 ```
+
+Services compile with **tsgo** (`@typescript/native-preview`) + `tsc-alias`,
+not `tsc`/`nest build` -- see
+[docs/08-runtime-devops/build-system.md](../docs/08-runtime-devops/build-system.md).
 
 ### 4. Make Your Changes
 
@@ -135,14 +155,14 @@ Follow the structure of an existing service (e.g., `claw-auth-service`) as a tem
 
 ### 2. Assign a Port
 
-Add the port to `packages/shared-constants` and document it. Follow the existing port sequence (4001-4009).
+Add the port to `packages/shared-constants` and document it. Follow the existing port sequence (4001-4017).
 
 ### 3. Add Database (if needed)
 
 If the service needs its own database:
 
 - Add a new PostgreSQL (or MongoDB) service to `docker/docker-compose.dev.databases.yml` and `docker/docker-compose.prod.databases.yml`
-- Assign the next available host port (5447+ for PostgreSQL)
+- Assign the next available host port (PostgreSQL range 5440-5452)
 - Add connection variables to `.env.example`
 
 ### 4. Register with Nginx
@@ -167,20 +187,25 @@ Add the service container to `docker/docker-compose.dev.services.yml` and `docke
 
 ### 8. Update Documentation
 
-Update `README.md`, `INSTALL.md`, `ENVIRONMENT_VARIABLES.md`, and any other affected docs.
+Update `README.md`, `docs/00-start-here/installation.md`, `docs/06-data/environment-variables.md`, and any other affected docs.
 
 ---
 
 ## Shared Packages Workflow
 
-The 4 shared packages under `packages/` are consumed by all microservices:
+The 5 shared packages under `packages/` are consumed by all microservices:
 
-| Package                  | Purpose                                  |
-| ------------------------ | ---------------------------------------- |
-| `@claw/shared-types`     | Enums, TypeScript types, event contracts |
-| `@claw/shared-constants` | Service ports, names, exchange config    |
-| `@claw/shared-rabbitmq`  | NestJS RabbitMQ module wrapper           |
-| `@claw/shared-auth`      | JWT guard and role decorators            |
+| Package                  | Purpose                                               |
+| ------------------------ | ----------------------------------------------------- |
+| `@claw/shared-types`     | Enums, TypeScript types, event contracts              |
+| `@claw/shared-constants` | Service ports, names, exchange config                 |
+| `@claw/shared-rabbitmq`  | NestJS RabbitMQ module wrapper                        |
+| `@claw/shared-auth`      | JWT guard and role decorators                         |
+| `@claw/shared-utilities` | jwt, http-client, crypto, retry, safe-stringify, etc. |
+
+Each shared package has its own `lint` / `test` / `build` / `typecheck`
+scripts and is a first-class CI matrix entry. They build with **tsgo**
+(`npm run build -w packages/<name>` = `tsgo -p tsconfig.build.json`).
 
 ### Making Changes to Shared Packages
 
@@ -197,47 +222,41 @@ The 4 shared packages under `packages/` are consumed by all microservices:
 3. Add the package to the root `package.json` workspaces array.
 4. Run `npm install` from the root to link the new package.
 5. Add the package as a dependency in consuming services' `package.json`.
+6. **Add it to the "Build shared packages" step in ALL FOUR CI jobs**
+   (`.github/workflows/ci.yml`): `cd packages/<name> && npx tsgo -p tsconfig.build.json`.
+   Skipping this fails CI with `Cannot find module '@claw/<name>'`.
 
 ---
 
-## Docker Compose Workflow
+## Docker Workflow
 
-### Starting Everything
+`scripts/claw.sh` is the **only** supported entrypoint. It stitches the split
+compose files under `docker/` and auto-applies the right GPU overlay
+(NVIDIA / ROCm / Vulkan). Never invoke `docker compose -f …` directly.
+
+### Starting / stopping everything
 
 ```bash
-docker compose up -d
+./scripts/claw.sh up        # dev (default), all services + auto-GPU
+./scripts/claw.sh --prod up # production
+./scripts/claw.sh down      # stop all
+./scripts/claw.sh status    # health of all groups
 ```
 
-### Rebuilding a Single Service
-
-After changing code in a service:
+### Rebuilding after code / dependency changes
 
 ```bash
-docker compose build claw-auth-service
-docker compose up -d claw-auth-service
+./scripts/claw.sh services:rebuild   # full stop -> rm -> rmi -> build cycle
 ```
 
-### Viewing Logs
+For a quick code-only refresh, services hot-reload via `node --watch` on
+`dist/` (tsgo + tsc-alias watchers). Only rebuild when dependencies or the
+Prisma schema change.
+
+### Viewing logs
 
 ```bash
-# All services
-docker compose logs -f
-
-# Specific service
-docker compose logs -f claw-auth-service
-
-# Infrastructure
-docker compose logs -f claw-rabbitmq
-```
-
-### Resetting
-
-```bash
-# Stop and remove all containers and volumes
-docker compose down -v
-
-# Rebuild everything
-docker compose up -d --build
+./scripts/claw.sh logs chat-service   # follow one service
 ```
 
 ---
