@@ -1,5 +1,9 @@
-FROM node:26-alpine AS base
-RUN apk add --no-cache openssl
+FROM node:26-bookworm-slim AS base
+# Debian base (not Alpine) — @typescript/native-preview ships glibc-linked
+# binaries with no musl variant. The builder runs tsgo, so every stage
+# (and the runner, for native-module ABI compatibility) must be glibc.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/apps/claw-audit-service
 
 FROM base AS deps
@@ -12,14 +16,16 @@ RUN cd /app && npm install --ignore-scripts && cd /app/apps/claw-audit-service &
 FROM base AS builder
 COPY --from=deps /app /app
 COPY apps/claw-audit-service/ .
-RUN cd /app/packages/shared-types && npx tsc \
- && cd /app/packages/shared-constants && npx tsc \
- && cd /app/packages/shared-rabbitmq && npx tsc \
- && cd /app/packages/shared-auth && npx tsc \
- && cd /app/packages/shared-utilities && npx tsc
+RUN cd /app/packages/shared-types && npx tsgo \
+ && cd /app/packages/shared-constants && npx tsgo \
+ && cd /app/packages/shared-rabbitmq && npx tsgo \
+ && cd /app/packages/shared-auth && npx tsgo \
+ && cd /app/packages/shared-utilities && npx tsgo
 RUN npm run build
 
-FROM node:26-alpine AS runner
+FROM node:26-bookworm-slim AS runner
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates wget \
+  && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 WORKDIR /app
 RUN addgroup --system --gid 1001 nestjs

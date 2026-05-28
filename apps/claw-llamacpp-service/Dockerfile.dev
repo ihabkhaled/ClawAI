@@ -1,42 +1,32 @@
-# llama-server (the upstream `linux-x64-cpu` / `linux-x64-cuda*` / `linux-x64-rocm`
-# binaries from ggml-org/llama.cpp releases) is built against glibc and pulls
-# in glibc-only symbols (__res_init, pthread_cond_clockwait, __wmemcpy_chk).
-# Alpine + musl + gcompat is NOT enough — must use a glibc-based base.
-# See .claude/Integrations/llamacpp__QA_output.md for the full investigation.
 FROM node:26-bookworm-slim
-
-# Pinned packages match what the entrypoint + binary-installer need at runtime:
-#   - openssl, curl, ca-certificates: HF + GitHub release downloads
-#   - tar, xz-utils, unzip: extract llama.cpp release archives (.tar.gz / .zip)
-#   - libgomp1: OpenMP runtime that several llama.cpp builds dlopen for threading
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
-       openssl \
-       curl \
-       ca-certificates \
-       tar \
-       xz-utils \
-       unzip \
-       libgomp1 \
+# Debian base (not Alpine) — @typescript/native-preview ships glibc-linked
+# binaries with no musl variant. Alpine would fail to load tsgo.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl curl ca-certificates wget tar xz-utils unzip libgomp1 \
   && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
+# Copy entire monorepo structure for workspace resolution
 COPY package.json ./package.json
 COPY .npmrc ./.npmrc
 COPY packages/ ./packages/
 COPY apps/claw-llamacpp-service/ ./apps/claw-llamacpp-service/
 
-RUN cd packages/shared-types && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
-RUN cd packages/shared-constants && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
-RUN cd packages/shared-rabbitmq && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
-RUN cd packages/shared-auth && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
-RUN cd packages/shared-utilities && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
+# Install workspace deps FIRST so all @types/* are hoisted at root AND all
+# @claw/* workspace packages get symlinked into /app/node_modules. Also pulls
+# @typescript/native-preview-linux-x64 (glibc binary) via the typescript alias.
+WORKDIR /app
+RUN npm install --ignore-scripts
+
+# Compile shared packages with workspace-hoisted types available
+RUN cd packages/shared-types && npx tsgo
+RUN cd packages/shared-constants && npx tsgo
+RUN cd packages/shared-rabbitmq && npx tsgo
+RUN cd packages/shared-auth && npx tsgo
+RUN cd packages/shared-utilities && npx tsgo
 
 WORKDIR /app/apps/claw-llamacpp-service
-RUN npm install --ignore-scripts 2>/dev/null || npm install --legacy-peer-deps --ignore-scripts 2>/dev/null || true
-RUN npx prisma generate 2>/dev/null || true
-RUN chmod +x docker-entrypoint.dev.sh 2>/dev/null || true
+RUN npx prisma generate
+RUN chmod +x docker-entrypoint.dev.sh
 
 EXPOSE 4017
 CMD ["./docker-entrypoint.dev.sh"]

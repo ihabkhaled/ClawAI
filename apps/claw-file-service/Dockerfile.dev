@@ -1,5 +1,8 @@
-FROM node:26-alpine
-RUN apk add --no-cache openssl
+FROM node:26-bookworm-slim
+# Debian base (not Alpine) — @typescript/native-preview ships glibc-linked
+# binaries with no musl variant. Alpine would fail to load tsgo.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates wget \
+  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Copy entire monorepo structure for workspace resolution
@@ -8,18 +11,22 @@ COPY .npmrc ./.npmrc
 COPY packages/ ./packages/
 COPY apps/claw-file-service/ ./apps/claw-file-service/
 
-# Build shared packages first
-RUN cd packages/shared-types && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
-RUN cd packages/shared-constants && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
-RUN cd packages/shared-rabbitmq && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
-RUN cd packages/shared-auth && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
-RUN cd packages/shared-utilities && npm install --ignore-scripts 2>/dev/null || true && npx tsc 2>/dev/null || true
+# Install workspace deps FIRST so all @types/* are hoisted at root AND all
+# @claw/* workspace packages get symlinked into /app/node_modules. Also pulls
+# @typescript/native-preview-linux-x64 (glibc binary) via the typescript alias.
+WORKDIR /app
+RUN npm install --ignore-scripts
 
-# Install service dependencies with workspace resolution
+# Compile shared packages with workspace-hoisted types available
+RUN cd packages/shared-types && npx tsgo
+RUN cd packages/shared-constants && npx tsgo
+RUN cd packages/shared-rabbitmq && npx tsgo
+RUN cd packages/shared-auth && npx tsgo
+RUN cd packages/shared-utilities && npx tsgo
+
 WORKDIR /app/apps/claw-file-service
-RUN npm install --ignore-scripts 2>/dev/null || npm install --legacy-peer-deps --ignore-scripts 2>/dev/null || true
-RUN npx prisma generate 2>/dev/null || true
-RUN chmod +x docker-entrypoint.dev.sh 2>/dev/null || true
+RUN npx prisma generate
+RUN chmod +x docker-entrypoint.dev.sh
 
 EXPOSE 4006
 CMD ["./docker-entrypoint.dev.sh"]

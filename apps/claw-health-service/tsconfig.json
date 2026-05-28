@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "commonjs",
+    "module": "Node16",
     "lib": ["ES2022"],
     "outDir": "./dist",
     "rootDir": "./src",
@@ -21,12 +21,11 @@
     "allowUnusedLabels": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "isolatedModules": true,
+    "isolatedModules": false,
     "allowUnreachableCode": false,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
-    "ignoreDeprecations": "6.0",
+    "moduleResolution": "Node16",
     "typeRoots": ["../../node_modules/@types", "./node_modules/@types"],
     "types": ["jest", "node"],
     "resolveJsonModule": true,
@@ -37,11 +36,10 @@
     "declaration": true,
     "sourceMap": true,
     "removeComments": false,
-    "baseUrl": "./src",
     "paths": {
-      "@app/*": ["app/*"],
-      "@common/*": ["common/*"],
-      "@modules/*": ["modules/*"]
+      "@app/*": ["./src/app/*"],
+      "@common/*": ["./src/common/*"],
+      "@modules/*": ["./src/modules/*"]
     }
   },
   "include": ["src/**/*"],

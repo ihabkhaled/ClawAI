@@ -1,4 +1,5 @@
 import { GmailAdapter } from '../gmail.adapter';
+import { GmailComposeHelper } from '../gmail-compose.helper';
 
 global.fetch = jest.fn();
 
@@ -113,7 +114,6 @@ describe('GmailAdapter.executeWriteAction — CREATE_DRAFT', () => {
   // v3 round 4 — anti-loop integration: when the compose helper is wired
   // in and blocks the send, the adapter MUST NOT call Gmail.
   it('honors compose helper anti-loop rejection without calling Gmail', async () => {
-    const { GmailComposeHelper } = await import('../gmail-compose.helper');
     const composeHelper = new GmailComposeHelper();
     const wiredAdapter = new GmailAdapter(composeHelper);
     const result = await wiredAdapter.executeWriteAction('token', 'CREATE_DRAFT', {
@@ -127,7 +127,6 @@ describe('GmailAdapter.executeWriteAction — CREATE_DRAFT', () => {
   });
 
   it('compose helper appends signature into the RFC822 raw body', async () => {
-    const { GmailComposeHelper } = await import('../gmail-compose.helper');
     const composeHelper = new GmailComposeHelper();
     const wiredAdapter = new GmailAdapter(composeHelper);
     (global.fetch as jest.Mock).mockResolvedValue({

@@ -21,11 +21,11 @@ WORKDIR /app
 RUN npm install --ignore-scripts
 
 # Now compile shared packages with workspace-hoisted types available
-RUN cd packages/shared-types && npx tsc
-RUN cd packages/shared-constants && npx tsc
-RUN cd packages/shared-rabbitmq && npx tsc
-RUN cd packages/shared-auth && npx tsc
-RUN cd packages/shared-utilities && npx tsc
+RUN cd packages/shared-types && npx tsgo
+RUN cd packages/shared-constants && npx tsgo
+RUN cd packages/shared-rabbitmq && npx tsgo
+RUN cd packages/shared-auth && npx tsgo
+RUN cd packages/shared-utilities && npx tsgo
 
 WORKDIR /app/apps/claw-chat-service
 RUN npx prisma generate

@@ -8,8 +8,8 @@
 #   EACCES: permission denied, open '/data/files/<timestamp>-<uuid>.png'
 #
 # We start as root, fix ownership of the upload dir, then drop privileges
-# via su-exec (alpine's tiny setuid binary, lighter than gosu/runuser) and
-# hand off to the generic Prisma-aware entrypoint.
+# via `runuser` (util-linux, the bookworm-native equivalent of alpine's
+# su-exec) and hand off to the generic Prisma-aware entrypoint.
 
 set -e
 
@@ -20,4 +20,4 @@ chown -R nestjs:nestjs "$STORAGE_PATH"
 
 echo "[file-entrypoint] storage path ${STORAGE_PATH} ready (owner=nestjs:nestjs)"
 
-exec su-exec nestjs /app/docker-entrypoint.prod.sh
+exec runuser -u nestjs -- /app/docker-entrypoint.prod.sh

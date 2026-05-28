@@ -1,29 +1,31 @@
-FROM node:26-alpine
-RUN apk add --no-cache openssl
+FROM node:26-bookworm-slim
+# Debian base (not Alpine) — @typescript/native-preview ships glibc-linked
+# binaries with no musl variant. Alpine would fail to load tsgo.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates wget \
+  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
-# Copy entire monorepo structure for workspace resolution.
-COPY package.json package-lock.json .npmrc ./
+# Copy entire monorepo structure for workspace resolution
+COPY package.json ./package.json
+COPY .npmrc ./.npmrc
 COPY packages/ ./packages/
 COPY apps/claw-audit-service/ ./apps/claw-audit-service/
 
-# Install everything at workspace root so transitive types (express,
-# @types/*, etc.) needed by shared packages are hoisted to /app/node_modules.
-# Root package.json declares
-# `overrides: { "@nestjs/schematics": { "typescript": "6.0.0-beta" } }`
-# which reconciles the peer constraint at lock-file level — no
-# --legacy-peer-deps required.
+# Install workspace deps FIRST so all @types/* are hoisted at root AND all
+# @claw/* workspace packages get symlinked into /app/node_modules. Also pulls
+# @typescript/native-preview-linux-x64 (glibc binary) via the typescript alias.
+WORKDIR /app
 RUN npm install --ignore-scripts
 
-# Build shared packages.
-RUN cd packages/shared-types && npx tsc \
- && cd ../shared-constants && npx tsc \
- && cd ../shared-rabbitmq && npx tsc \
- && cd ../shared-auth && npx tsc \
- && cd ../shared-utilities && npx tsc
+# Compile shared packages with workspace-hoisted types available
+RUN cd packages/shared-types && npx tsgo
+RUN cd packages/shared-constants && npx tsgo
+RUN cd packages/shared-rabbitmq && npx tsgo
+RUN cd packages/shared-auth && npx tsgo
+RUN cd packages/shared-utilities && npx tsgo
 
 WORKDIR /app/apps/claw-audit-service
-RUN chmod +x docker-entrypoint.dev.sh 2>/dev/null || true
+RUN chmod +x docker-entrypoint.dev.sh
 
 EXPOSE 4007
 CMD ["./docker-entrypoint.dev.sh"]

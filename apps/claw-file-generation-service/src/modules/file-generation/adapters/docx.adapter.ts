@@ -1,8 +1,10 @@
-import { Document, HeadingLevel, Packer, Paragraph, TextRun } from 'docx';
+import type { DocxApi, DocxElement } from '../types/docx.types';
 
 export const convertToDocx = async (content: string): Promise<Buffer> => {
+  const docx: unknown = await import('docx');
+  const { Document, HeadingLevel, Packer, Paragraph, TextRun } = docx as DocxApi;
   const lines = content.split('\n');
-  const paragraphs: Paragraph[] = [];
+  const paragraphs: DocxElement[] = [];
 
   for (const line of lines) {
     const trimmed = line.trimStart();

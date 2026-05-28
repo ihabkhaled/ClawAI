@@ -1,20 +1,33 @@
-FROM node:26-alpine
-RUN apk add --no-cache openssl
+FROM node:26-bookworm-slim
+# Debian base (not Alpine) — @typescript/native-preview ships glibc-linked
+# binaries with no musl variant. Alpine would fail to load tsgo.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates wget \
+  && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+
+# Copy entire monorepo structure for workspace resolution
+COPY package.json ./package.json
+COPY .npmrc ./.npmrc
+COPY packages/ ./packages/
+COPY apps/claw-server-logs-service/ ./apps/claw-server-logs-service/
+
+# Install workspace deps FIRST so all @types/* are hoisted at root AND all
+# @claw/* workspace packages get symlinked into /app/node_modules. Also pulls
+# @typescript/native-preview-linux-x64 (glibc binary) via the typescript alias.
+WORKDIR /app
+RUN npm install --ignore-scripts
+
+# Compile shared packages with workspace-hoisted types available
+RUN cd packages/shared-types && npx tsgo
+RUN cd packages/shared-constants && npx tsgo
+RUN cd packages/shared-rabbitmq && npx tsgo
+RUN cd packages/shared-auth && npx tsgo
+RUN cd packages/shared-utilities && npx tsgo
+
 WORKDIR /app/apps/claw-server-logs-service
-COPY package.json /app/package.json
-COPY .npmrc /app/.npmrc
-COPY packages/ /app/packages/
-COPY apps/claw-server-logs-service/package.json ./package.json
-RUN cd /app && npm install --ignore-scripts && cd /app/apps/claw-server-logs-service && npm install --ignore-scripts 2>/dev/null || true
-RUN cd /app/packages/shared-types && npx tsc \
- && cd /app/packages/shared-constants && npx tsc \
- && cd /app/packages/shared-rabbitmq && npx tsc \
- && cd /app/packages/shared-auth && npx tsc \
- && cd /app/packages/shared-utilities && npx tsc
-COPY apps/claw-server-logs-service/ .
-EXPOSE 4011
-# 2 GB heap. Server-logs is the firehose consumer for log.server events from
-# every backend. With prefetch back-pressure now applied at the shared-rabbitmq
-# layer this is more headroom than necessary, but kept as a safety margin.
+RUN chmod +x docker-entrypoint.dev.sh
+
 ENV NODE_OPTIONS="--max-old-space-size=2048"
-CMD ["npm", "run", "dev"]
+
+EXPOSE 4011
+CMD ["./docker-entrypoint.dev.sh"]

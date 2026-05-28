@@ -4,11 +4,8 @@ echo "Generating Prisma client..."
 npx prisma generate 2>/dev/null || true
 echo "Running database migrations..."
 npx prisma migrate deploy 2>&1 || echo "Migration skipped or failed (will retry on next restart)"
-echo "Initial build..."
-npx nest build 2>&1 || { echo "Build failed, retrying..."; npx tsc; }
-echo "Copying generated client to dist..."
-rm -rf dist/generated
+echo "Copying generated Prisma client to dist..."
 mkdir -p dist/generated
 cp -r src/generated/prisma dist/generated/prisma 2>/dev/null || true
-echo "Starting dev server (nest start --watch)..."
-exec npx nest start --watch
+echo "Starting dev server (tsgo --watch + tsc-alias --watch + nodemon)..."
+exec npm run dev

@@ -5,10 +5,11 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "build": "tsc"
+    "typecheck": "tsgo --noEmit",
+    "build": "tsgo"
   },
   "devDependencies": {
-    "typescript": "6.0.3"
+    "@typescript/native-preview": "^7.0.0-dev.20260421.2",
+    "typescript": "npm:@typescript/native-preview@beta"
   }
 }

@@ -91,11 +91,11 @@ jobs:
 
       - name: Build shared packages
         run: |
-          cd packages/shared-types && npx tsc
-          cd ../shared-constants && npx tsc
-          cd ../shared-rabbitmq && npx tsc
-          cd ../shared-auth && npx tsc
-          cd ../shared-utilities && npx tsc
+          cd packages/shared-types && npx tsgo
+          cd ../shared-constants && npx tsgo
+          cd ../shared-rabbitmq && npx tsgo
+          cd ../shared-auth && npx tsgo
+          cd ../shared-utilities && npx tsgo
 
       - name: Generate Prisma client
         if: matrix.prisma == true
@@ -181,11 +181,11 @@ jobs:
 
       - name: Build shared packages
         run: |
-          cd packages/shared-types && npx tsc
-          cd ../shared-constants && npx tsc
-          cd ../shared-rabbitmq && npx tsc
-          cd ../shared-auth && npx tsc
-          cd ../shared-utilities && npx tsc
+          cd packages/shared-types && npx tsgo
+          cd ../shared-constants && npx tsgo
+          cd ../shared-rabbitmq && npx tsgo
+          cd ../shared-auth && npx tsgo
+          cd ../shared-utilities && npx tsgo
 
       - name: Generate Prisma client
         if: matrix.prisma == true
@@ -316,11 +316,11 @@ jobs:
 
       - name: Build shared packages
         run: |
-          cd packages/shared-types && npx tsc
-          cd ../shared-constants && npx tsc
-          cd ../shared-rabbitmq && npx tsc
-          cd ../shared-auth && npx tsc
-          cd ../shared-utilities && npx tsc
+          cd packages/shared-types && npx tsgo
+          cd ../shared-constants && npx tsgo
+          cd ../shared-rabbitmq && npx tsgo
+          cd ../shared-auth && npx tsgo
+          cd ../shared-utilities && npx tsgo
 
       - name: Generate Prisma client
         if: matrix.prisma == true
@@ -416,11 +416,11 @@ jobs:
 
       - name: Build shared packages
         run: |
-          cd packages/shared-types && npx tsc
-          cd ../shared-constants && npx tsc
-          cd ../shared-rabbitmq && npx tsc
-          cd ../shared-auth && npx tsc
-          cd ../shared-utilities && npx tsc
+          cd packages/shared-types && npx tsgo
+          cd ../shared-constants && npx tsgo
+          cd ../shared-rabbitmq && npx tsgo
+          cd ../shared-auth && npx tsgo
+          cd ../shared-utilities && npx tsgo
 
       - name: Generate Prisma client
         if: matrix.prisma == true

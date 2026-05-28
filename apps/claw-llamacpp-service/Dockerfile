@@ -19,11 +19,11 @@ RUN cd /app && npm install --ignore-scripts && cd /app/apps/claw-llamacpp-servic
 FROM base AS builder
 COPY --from=deps /app /app
 COPY apps/claw-llamacpp-service/ .
-RUN cd /app/packages/shared-types && npx tsc \
- && cd /app/packages/shared-constants && npx tsc \
- && cd /app/packages/shared-rabbitmq && npx tsc \
- && cd /app/packages/shared-auth && npx tsc \
- && cd /app/packages/shared-utilities && npx tsc
+RUN cd /app/packages/shared-types && npx tsgo \
+ && cd /app/packages/shared-constants && npx tsgo \
+ && cd /app/packages/shared-rabbitmq && npx tsgo \
+ && cd /app/packages/shared-auth && npx tsgo \
+ && cd /app/packages/shared-utilities && npx tsgo
 RUN npx prisma generate
 RUN npm run build
 RUN mkdir -p dist/generated && cp -r src/generated/prisma dist/generated/prisma
