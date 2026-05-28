@@ -14,6 +14,7 @@ import { GlobalExceptionFilter } from './filters/global-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 import { AuthModule } from '../modules/auth/auth.module';
+import { RolesModule } from '../modules/roles/roles.module';
 import { UsersModule } from '../modules/users/users.module';
 import { HealthModule } from '../modules/health/health.module';
 
@@ -54,12 +55,15 @@ import { HealthModule } from '../modules/health/health.module';
     PrismaModule,
     RedisModule,
     AuthModule,
+    RolesModule,
     UsersModule,
     HealthModule,
-    ThrottlerModule.forRoot([{
-      ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
-      limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
+        limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
+      },
+    ]),
   ],
   providers: [
     {

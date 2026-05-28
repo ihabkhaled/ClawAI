@@ -1,8 +1,13 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { RabbitMQService, StructuredLogger } from "@claw/shared-rabbitmq";
-import { EventPattern, LogLevel } from "@claw/shared-types";
-import { AuthManager } from "../managers/auth.manager";
-import { type LoginResult, type RefreshResult, type UserProfile } from "../types/auth.types";
+import { Injectable, Logger } from '@nestjs/common';
+import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
+import { EventPattern, LogLevel } from '@claw/shared-types';
+import { AuthManager } from '../managers/auth.manager';
+import {
+  type LoginResult,
+  type RefreshResult,
+  type RegisterResult,
+  type UserProfile,
+} from '../types/auth.types';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +24,36 @@ export class AuthService {
       EventPattern.LOG_SERVER,
       AuthService.name,
     );
+  }
+
+  async register(email: string, password: string): Promise<RegisterResult> {
+    this.logger.log(`register: attempting registration for email=${email}`);
+    try {
+      const result = await this.authManager.register(email, password);
+      this.structuredLogger.logAction({
+        level: LogLevel.INFO,
+        message: `User registered: ${result.user.email}`,
+        action: 'register_success',
+        service: AuthService.name,
+        userId: result.user.id,
+      });
+      await this.rabbitMQService.publish(EventPattern.USER_CREATED, {
+        userId: result.user.id,
+        email: result.user.email,
+        role: result.user.role,
+        timestamp: new Date().toISOString(),
+      });
+      return result;
+    } catch (error: unknown) {
+      this.structuredLogger.logAction({
+        level: LogLevel.WARN,
+        message: `Registration failed for email: ${email}`,
+        action: 'register_failed',
+        service: AuthService.name,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
+      throw error;
+    }
   }
 
   async login(email: string, password: string): Promise<LoginResult> {

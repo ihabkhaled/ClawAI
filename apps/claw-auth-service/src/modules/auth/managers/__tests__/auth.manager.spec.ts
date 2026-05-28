@@ -1,5 +1,6 @@
 import { AuthManager } from '../auth.manager';
 import { type AuthRepository } from '../../repositories/auth.repository';
+import { type RolesService } from '../../../roles/services/roles.service';
 import { UserRole, UserStatus } from '../../../../common/enums';
 import {
   AccountSuspendedException,
@@ -11,6 +12,7 @@ import * as utilities from '@common/utilities';
 // Mock the utilities module (the @common/utilities alias)
 jest.mock('@common/utilities', () => ({
   verifyPassword: jest.fn(),
+  hashPassword: jest.fn().mockResolvedValue('hashed-password'),
   signAccessToken: jest.fn().mockReturnValue('mock-access-token'),
   signRefreshToken: jest.fn().mockReturnValue('mock-refresh-token'),
 }));
@@ -42,7 +44,9 @@ const mockUser = {
 
 const mockRepository = (): Record<keyof AuthRepository, jest.Mock> => ({
   findUserByEmail: jest.fn(),
+  findUserByUsername: jest.fn(),
   findUserById: jest.fn(),
+  createUser: jest.fn(),
   createSession: jest.fn().mockResolvedValue({ id: 'session-1' }),
   findSessionByRefreshToken: jest.fn(),
   deleteSession: jest.fn().mockResolvedValue(void 0),
@@ -50,18 +54,85 @@ const mockRepository = (): Record<keyof AuthRepository, jest.Mock> => ({
   deleteExpiredSessions: jest.fn().mockResolvedValue(0),
 });
 
+// RolesService is consulted for permission resolution + default role id.
+const mockRolesService = (): {
+  resolvePermissionsForUser: jest.Mock;
+  resolvePermissionsBySlug: jest.Mock;
+  getDefaultUserRoleId: jest.Mock;
+} => ({
+  resolvePermissionsForUser: jest.fn().mockResolvedValue([]),
+  resolvePermissionsBySlug: jest.fn().mockResolvedValue([]),
+  getDefaultUserRoleId: jest.fn().mockResolvedValue('role-user'),
+});
+
 describe('AuthManager', () => {
   let manager: AuthManager;
   let repository: ReturnType<typeof mockRepository>;
+  let rolesService: ReturnType<typeof mockRolesService>;
 
   beforeEach(() => {
     repository = mockRepository();
-    manager = new AuthManager(repository as unknown as AuthRepository);
+    rolesService = mockRolesService();
+    manager = new AuthManager(
+      repository as unknown as AuthRepository,
+      rolesService as unknown as RolesService,
+    );
     jest.clearAllMocks();
     // Re-set defaults after clearAllMocks
     repository.createSession.mockResolvedValue({ id: 'session-1' });
     repository.deleteSession.mockResolvedValue(void 0);
     repository.deleteSessionsByUserId.mockResolvedValue(void 0);
+  });
+
+  describe('register', () => {
+    it('creates a USER, status ACTIVE, on the default role and returns tokens', async () => {
+      repository.findUserByEmail.mockResolvedValue(null);
+      repository.findUserByUsername.mockResolvedValue(null);
+      repository.createUser.mockResolvedValue({
+        ...mockUser,
+        id: 'new-user',
+        email: 'new@example.com',
+        username: 'new',
+        role: UserRole.USER,
+        roleId: 'role-user',
+      });
+      rolesService.resolvePermissionsForUser.mockResolvedValue(['CHAT_USE']);
+
+      const result = await manager.register('new@example.com', 'Str0ng!Pass');
+
+      expect(result.tokens.accessToken).toBe('mock-access-token');
+      expect(result.user.email).toBe('new@example.com');
+      expect(result.user.role).toBe(UserRole.USER);
+      expect(result.user.permissions).toEqual(['CHAT_USE']);
+      const created = repository.createUser.mock.calls[0]?.[0];
+      expect(created.role).toBe(UserRole.USER);
+      expect(created.status).toBe(UserStatus.ACTIVE);
+      expect(created.roleRef).toEqual({ connect: { id: 'role-user' } });
+    });
+
+    it('rejects a duplicate email', async () => {
+      repository.findUserByEmail.mockResolvedValue(mockUser);
+      await expect(manager.register('test@example.com', 'Str0ng!Pass')).rejects.toThrow(
+        /already exists/i,
+      );
+      expect(repository.createUser).not.toHaveBeenCalled();
+    });
+
+    it('rejects a weak password before touching the DB', async () => {
+      await expect(manager.register('new@example.com', 'weak')).rejects.toThrow();
+      expect(repository.findUserByEmail).not.toHaveBeenCalled();
+    });
+
+    it('de-duplicates the derived username when the base is taken', async () => {
+      repository.findUserByEmail.mockResolvedValue(null);
+      repository.findUserByUsername.mockResolvedValueOnce(mockUser).mockResolvedValueOnce(null);
+      repository.createUser.mockResolvedValue({ ...mockUser, role: UserRole.USER });
+
+      await manager.register('taken@example.com', 'Str0ng!Pass');
+
+      const created = repository.createUser.mock.calls[0]?.[0];
+      expect(created.username).toBe('taken1');
+    });
   });
 
   describe('login', () => {

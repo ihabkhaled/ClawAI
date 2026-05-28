@@ -1,10 +1,12 @@
-import { Module } from "@nestjs/common";
-import { AuthController } from "./controllers/auth.controller";
-import { AuthService } from "./services/auth.service";
-import { AuthManager } from "./managers/auth.manager";
-import { AuthRepository } from "./repositories/auth.repository";
+import { Module } from '@nestjs/common';
+import { AuthController } from './controllers/auth.controller';
+import { AuthService } from './services/auth.service';
+import { AuthManager } from './managers/auth.manager';
+import { AuthRepository } from './repositories/auth.repository';
+import { RolesModule } from '../roles/roles.module';
 
 @Module({
+  imports: [RolesModule],
   controllers: [AuthController],
   providers: [AuthService, AuthManager, AuthRepository],
   exports: [AuthService],

@@ -1,6 +1,6 @@
-import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
-import { Session, User } from "../../../generated/prisma";
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { Prisma, Session, User } from '../../../generated/prisma';
 
 @Injectable()
 export class AuthRepository {
@@ -10,8 +10,16 @@ export class AuthRepository {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
+  async findUserByUsername(username: string): Promise<User | null> {
+    return this.prisma.user.findUnique({ where: { username } });
+  }
+
   async findUserById(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { id } });
+  }
+
+  async createUser(data: Prisma.UserCreateInput): Promise<User> {
+    return this.prisma.user.create({ data });
   }
 
   async createSession(data: {
