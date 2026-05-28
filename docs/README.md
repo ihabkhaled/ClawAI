@@ -6,9 +6,9 @@
 
 ## Quick Start by Role
 
-| Role              | Start Here                                                    | Then Read                                                                                                             |
-| ----------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **New Engineer**  | [Onboarding (5 min)](00-start-here/onboarding-5-minutes.md)   | [System at a Glance](00-start-here/system-at-a-glance.md) -> [Backend Services](04-backend/services-index.md)         |
+| Role              | Start Here                                                    | Then Read                                                                                                              |
+| ----------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **New Engineer**  | [Onboarding (5 min)](00-start-here/onboarding-5-minutes.md)   | [System at a Glance](00-start-here/system-at-a-glance.md) -> [Backend Services](04-backend/services-index.md)          |
 | **Product Owner** | [Product Vision](01-executive-context/product-vision.md)      | [Feature Inventory](02-business-product/feature-inventory.md) -> [User Journeys](02-business-product/user-journeys.md) |
 | **QA / Tester**   | [Testing Strategy](09-testing/testing-strategy.md)            | [UAT Guide](10-uat-acceptance/uat-guide.md) -> [API Reference](12-reference/api-reference.md)                          |
 | **DevOps**        | [Docker Guide](08-runtime-devops/docker-guide.md)             | [Nginx Reference](08-runtime-devops/nginx-reference.md) -> [Troubleshooting](11-runbooks/troubleshooting.md)           |
@@ -29,37 +29,38 @@
 
 ### Layer B: Business & Product Context
 
-| Document                                                       | Purpose                                                 |
-| -------------------------------------------------------------- | ------------------------------------------------------- |
-| [Product Vision](01-executive-context/product-vision.md)       | Mission, goals, KPIs, positioning                       |
-| [Business Overview](01-executive-context/business-overview.md) | Problem, market, personas, business rules, glossary     |
-| [User Personas](02-business-product/user-personas.md)          | 5 personas with workflows and RBAC mapping              |
+| Document                                                       | Purpose                                                      |
+| -------------------------------------------------------------- | ------------------------------------------------------------ |
+| [Product Vision](01-executive-context/product-vision.md)       | Mission, goals, KPIs, positioning                            |
+| [Business Overview](01-executive-context/business-overview.md) | Problem, market, personas, business rules, glossary          |
+| [User Personas](02-business-product/user-personas.md)          | 5 personas with workflows and RBAC mapping                   |
 | [Feature Inventory](02-business-product/feature-inventory.md)  | Current feature domains with stories and acceptance criteria |
-| [User Journeys](02-business-product/user-journeys.md)          | End-to-end user journeys with error paths               |
+| [User Journeys](02-business-product/user-journeys.md)          | End-to-end user journeys with error paths                    |
 
 ### Layer C: Technical Architecture
 
-| Document                                                          | Purpose                                                 |
-| ----------------------------------------------------------------- | ------------------------------------------------------- |
-| [System Architecture](03-architecture/system-architecture.md)     | Context diagram, containers, principles, data ownership |
-| [System Overview](03-architecture/system-overview.md)             | Runtime topology, storage, and communication patterns   |
-| [Message Flow](03-architecture/message-flow.md)                   | End-to-end message lifecycle with sequence diagram      |
-| [Routing Engine](03-architecture/routing-engine.md)               | 7 routing modes, AUTO deep-dive, policies, fallback     |
-| [Event Bus](03-architecture/event-bus.md)                         | RabbitMQ topology, all events, DLQ, retry strategy      |
-| [Security Architecture](03-architecture/security-architecture.md) | JWT, RBAC, encryption, threat model                     |
+| Document                                                          | Purpose                                                                     |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [System Architecture](03-architecture/system-architecture.md)     | Context diagram, containers, principles, data ownership                     |
+| [System Overview](03-architecture/system-overview.md)             | Runtime topology, storage, and communication patterns                       |
+| [Message Flow](03-architecture/message-flow.md)                   | End-to-end message lifecycle with sequence diagram                          |
+| [End-to-End Data Flow](03-architecture/end-to-end-data-flow.md)   | A message's journey across services/RabbitMQ/SSE; cross-service bug tracing |
+| [Routing Engine](03-architecture/routing-engine.md)               | 7 routing modes, AUTO deep-dive, policies, fallback                         |
+| [Event Bus](03-architecture/event-bus.md)                         | RabbitMQ topology, all events, DLQ, retry strategy                          |
+| [Security Architecture](03-architecture/security-architecture.md) | JWT, RBAC, encryption, threat model                                         |
 
 ### Layer D: Backend & Frontend
 
-| Document                                                      | Purpose                                                        |
-| ------------------------------------------------------------- | -------------------------------------------------------------- |
-| [Services Index](04-backend/services-index.md)                | All 15 services: ports, DBs, controllers, events, dependencies |
-| [Controllers Reference](04-backend/controllers-reference.md)  | Every route across all services                                |
-| [Backend Coding Standards](04-backend/coding-standards.md)    | Layer rules, ESLint, extraction, error handling                |
-| [Shared Packages](04-backend/shared-packages.md)              | shared-types, shared-constants, shared-rabbitmq, shared-auth   |
-| [Workspace Service Guide](04-backend/service-guide-workspace.md) | Workspace sync, search, actions, OAuth                      |
-| [Agent Service Guide](04-backend/service-guide-agent.md)      | Local agent sessions, approvals, repos, file events            |
-| [Frontend Architecture](05-frontend/frontend-architecture.md) | Page->Hook->Service->Repo pattern, state management, i18n      |
-| [Frontend Coding Standards](05-frontend/coding-standards.md)  | Component/hook/query patterns                                  |
+| Document                                                         | Purpose                                                        |
+| ---------------------------------------------------------------- | -------------------------------------------------------------- |
+| [Services Index](04-backend/services-index.md)                   | All 15 services: ports, DBs, controllers, events, dependencies |
+| [Controllers Reference](04-backend/controllers-reference.md)     | Every route across all services                                |
+| [Backend Coding Standards](04-backend/coding-standards.md)       | Layer rules, ESLint, extraction, error handling                |
+| [Shared Packages](04-backend/shared-packages.md)                 | shared-types, shared-constants, shared-rabbitmq, shared-auth   |
+| [Workspace Service Guide](04-backend/service-guide-workspace.md) | Workspace sync, search, actions, OAuth                         |
+| [Agent Service Guide](04-backend/service-guide-agent.md)         | Local agent sessions, approvals, repos, file events            |
+| [Frontend Architecture](05-frontend/frontend-architecture.md)    | Page->Hook->Service->Repo pattern, state management, i18n      |
+| [Frontend Coding Standards](05-frontend/coding-standards.md)     | Component/hook/query patterns                                  |
 
 ### Layer E: Data & Integrations
 
@@ -71,32 +72,36 @@
 
 ### Layer F: DevOps, Testing & Operations
 
-| Document                                                        | Purpose                                                   |
-| --------------------------------------------------------------- | --------------------------------------------------------- |
-| [Docker Guide](08-runtime-devops/docker-guide.md)               | 33-container dev stack, hot reload, startup order, troubleshooting |
-| [CI/CD Pipeline](08-runtime-devops/cicd-pipeline.md)            | GitHub Actions, pre-commit hooks, quality gates           |
-| [Nginx Reference](08-runtime-devops/nginx-reference.md)         | Route mappings, SSE config, security headers              |
-| [Testing Strategy](09-testing/testing-strategy.md)              | Test pyramid, inventory, commands, coverage               |
-| [UAT Guide](10-uat-acceptance/uat-guide.md)                     | End-to-end test scenarios                                 |
-| [Business Acceptance](10-uat-acceptance/business-acceptance.md) | Per-feature checklists, go-live criteria, rollback plan   |
-| [Troubleshooting](11-runbooks/troubleshooting.md)               | Problem categories with solutions                         |
-| [Operational Runbooks](11-runbooks/operational-runbooks.md)     | Procedures: add provider, backup, rotate secrets, etc.    |
+| Document                                                        | Purpose                                                    |
+| --------------------------------------------------------------- | ---------------------------------------------------------- |
+| [Build System (tsgo)](08-runtime-devops/build-system.md)        | tsgo + tsc-alias toolchain, scripts, tsconfig, CI, gotchas |
+| [Docker Guide](08-runtime-devops/docker-guide.md)               | Dev stack, hot reload, startup order, troubleshooting      |
+| [CI/CD Pipeline](08-runtime-devops/cicd-pipeline.md)            | GitHub Actions (4 jobs x 23 matrix), pre-commit hooks      |
+| [Nginx Reference](08-runtime-devops/nginx-reference.md)         | Route mappings, SSE config, security headers               |
+| [Port & Service Map](08-runtime-devops/port-service-map.md)     | Every process: port, datastore, prisma yes/no              |
+| [Testing Strategy](09-testing/testing-strategy.md)              | Test pyramid, inventory, commands, coverage                |
+| [Testing Overview](09-testing/testing-overview.md)              | T1-T7 mandate, QA scripts, DTO fuzz, DB/log verification   |
+| [UAT Guide](10-uat-acceptance/uat-guide.md)                     | End-to-end test scenarios                                  |
+| [Business Acceptance](10-uat-acceptance/business-acceptance.md) | Per-feature checklists, go-live criteria, rollback plan    |
+| [Runbooks Index](11-runbooks/README.md)                         | Symptom -> runbook decision tree (30 runbooks)             |
+| [Troubleshooting](11-runbooks/troubleshooting.md)               | Problem categories with solutions                          |
+| [Operational Runbooks](11-runbooks/operational-runbooks.md)     | Procedures: add provider, backup, rotate secrets, etc.     |
 
 ### Layer G: Reference
 
-| Document                                                    | Purpose                                      |
-| ----------------------------------------------------------- | -------------------------------------------- |
-| [API Reference](12-reference/api-reference.md)              | Every endpoint: method, path, schema, errors |
-| [Chat API Reference](12-reference/api-reference-chat.md)    | Chat routes including orchestration modes    |
-| [Workspace API Reference](12-reference/api-reference-workspace.md) | Workspace routes and examples           |
-| [Agent API Reference](12-reference/api-reference-agent.md)  | Agent routes and approval flow               |
-| [Health API Reference](12-reference/api-reference-health.md) | Aggregated and per-service health          |
-| [Error Catalog](12-reference/error-catalog.md)              | Error codes with retry guidance              |
-| [ADR Index](13-adr/adr-index.md)                            | Architecture decisions with rationale        |
-| [Technical Debt](14-risk-debt/technical-debt.md)            | Debt items with severity and prioritization  |
-| [Risk Register](14-risk-debt/risk-register.md)              | Risks with scores and mitigations            |
-| [AI Context Pack](15-ai-context/ai-context-pack.md)         | Optimized for AI coding agents               |
-| [Codebase Navigation](15-ai-context/codebase-navigation.md) | Where to find everything                     |
+| Document                                                           | Purpose                                      |
+| ------------------------------------------------------------------ | -------------------------------------------- |
+| [API Reference](12-reference/api-reference.md)                     | Every endpoint: method, path, schema, errors |
+| [Chat API Reference](12-reference/api-reference-chat.md)           | Chat routes including orchestration modes    |
+| [Workspace API Reference](12-reference/api-reference-workspace.md) | Workspace routes and examples                |
+| [Agent API Reference](12-reference/api-reference-agent.md)         | Agent routes and approval flow               |
+| [Health API Reference](12-reference/api-reference-health.md)       | Aggregated and per-service health            |
+| [Error Catalog](12-reference/error-catalog.md)                     | Error codes with retry guidance              |
+| [ADR Index](13-adr/adr-index.md)                                   | Architecture decisions with rationale        |
+| [Technical Debt](14-risk-debt/technical-debt.md)                   | Debt items with severity and prioritization  |
+| [Risk Register](14-risk-debt/risk-register.md)                     | Risks with scores and mitigations            |
+| [AI Context Pack](15-ai-context/ai-context-pack.md)                | Optimized for AI coding agents               |
+| [Codebase Navigation](15-ai-context/codebase-navigation.md)        | Where to find everything                     |
 
 ---
 
