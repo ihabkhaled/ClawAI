@@ -1177,6 +1177,20 @@ export class ChatMessagesService implements OnModuleInit {
       ...this.buildPublishReRoutePart(llmResponse),
       ...this.buildPublishJudgePart(llmResponse),
     });
+
+    // Phase C: record actual token usage to the quota ledger (fail-soft). This
+    // is what advances the daily counter that QuotaGuard checks on the next
+    // request. Skipped for image/file generation responses (no token usage).
+    if (thread?.userId && !llmResponse.imageGenerationId && !llmResponse.fileGenerationId) {
+      void this.accessControlService.recordUsage({
+        userId: thread.userId,
+        planId: null,
+        inputTokens: llmResponse.inputTokens ?? 0,
+        outputTokens: llmResponse.outputTokens ?? 0,
+        provider: llmResponse.provider,
+        model: llmResponse.model,
+      });
+    }
   }
 
   private buildPublishReRoutePart(llmResponse: LlmResponse): Record<string, unknown> {
