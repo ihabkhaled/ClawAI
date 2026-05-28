@@ -53,7 +53,7 @@ Authentication and authorization are security-critical. Any change requires:
 
 ### 1.5 Every Shared Component Change
 
-Changes to files in `packages/shared-types`, `packages/shared-constants`, `packages/shared-rabbitmq`, or `packages/shared-auth` affect all 13 services. Requires:
+Changes to files in `packages/shared-types`, `packages/shared-constants`, `packages/shared-rabbitmq`, or `packages/shared-auth` affect all 17 services. Requires:
 
 - **Full system regression** (smoke test all services)
 - Rebuild all dependent services
@@ -61,9 +61,9 @@ Changes to files in `packages/shared-types`, `packages/shared-constants`, `packa
 
 ### 1.6 Every i18n Change
 
-- Spot-check all 8 locales (EN, AR, DE, ES, FR, IT, PT, RU)
+- Spot-check all 9 locales (EN, AR, DE, ES, FR, HI, IT, PT, RU)
 - Verify Arabic (RTL) layout is not broken
-- Verify new keys exist in all 8 locale files
+- Verify new keys exist in all 9 locale files
 - Verify no missing translation warnings in browser console
 
 ### 1.7 Every Docker/Nginx Change
@@ -436,7 +436,7 @@ When a regression test fails:
 | Connector CRUD    | All CRUD operations + sync + health                             |
 | Model catalog     | Browse, filter, download, cancel                                |
 | SSE streams       | Chat, pull progress, image progress                             |
-| i18n              | All 8 locales have complete translations (no missing keys)      |
+| i18n              | All 9 locales have complete translations (no missing keys)      |
 | Error handling    | Every user-facing error shows a message (no silent failures)    |
 | Data persistence  | Every mutation survives page refresh                            |
 

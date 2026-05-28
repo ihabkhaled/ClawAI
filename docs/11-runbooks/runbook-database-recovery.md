@@ -2,21 +2,21 @@
 
 ## Overview
 
-ClawAI uses 9 PostgreSQL databases and 1 MongoDB instance (3 databases). Each service owns its database. This runbook covers backup, restore, and migration rollback procedures.
+ClawAI uses 13 PostgreSQL databases and 1 MongoDB instance (3 databases). Each service owns its database. This runbook covers backup, restore, and migration rollback procedures.
 
 ## PostgreSQL Databases
 
-| Database          | Service    | Contains                           |
-| ----------------- | ---------- | ---------------------------------- |
-| claw_auth         | auth       | Users, sessions, settings          |
-| claw_chat         | chat       | Threads, messages, attachments     |
-| claw_connectors   | connector  | Connectors, models, health events  |
-| claw_routing      | routing    | Decisions, policies                |
-| claw_memory       | memory     | Memory records, context packs      |
-| claw_files        | file       | File metadata, chunks              |
-| claw_ollama       | ollama     | Local models, pull jobs, catalog   |
-| claw_images       | image      | Image generation records           |
-| claw_file_gen     | file-gen   | File generation records            |
+| Database        | Service   | Contains                          |
+| --------------- | --------- | --------------------------------- |
+| claw_auth       | auth      | Users, sessions, settings         |
+| claw_chat       | chat      | Threads, messages, attachments    |
+| claw_connectors | connector | Connectors, models, health events |
+| claw_routing    | routing   | Decisions, policies               |
+| claw_memory     | memory    | Memory records, context packs     |
+| claw_files      | file      | File metadata, chunks             |
+| claw_ollama     | ollama    | Local models, pull jobs, catalog  |
+| claw_images     | image     | Image generation records          |
+| claw_file_gen   | file-gen  | File generation records           |
 
 ### Backup a Single Database
 
@@ -105,11 +105,11 @@ If a migration caused issues:
 
 ## MongoDB Databases
 
-| Database  | Service      | Contains                    |
-| --------- | ------------ | --------------------------- |
-| claw_audit| audit        | Audit logs, usage ledger    |
-| claw_logs | client-logs  | Frontend logs (TTL 30d)     |
-| claw_logs | server-logs  | Backend logs (TTL 30d)      |
+| Database   | Service     | Contains                 |
+| ---------- | ----------- | ------------------------ |
+| claw_audit | audit       | Audit logs, usage ledger |
+| claw_logs  | client-logs | Frontend logs (TTL 30d)  |
+| claw_logs  | server-logs | Backend logs (TTL 30d)   |
 
 ### Backup MongoDB
 

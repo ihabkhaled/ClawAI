@@ -163,7 +163,7 @@ apps/claw-frontend/
       <name>.store.ts
     lib/                            # Third-party library configuration
       i18n/
-        locales/                    # 8 locale files
+        locales/                    # 9 locale files
           en.ts                     # English (source of truth)
           ar.ts                     # Arabic (RTL)
           de.ts                     # German

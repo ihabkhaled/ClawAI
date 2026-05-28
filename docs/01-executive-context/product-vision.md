@@ -74,7 +74,7 @@ Organizations today face a fragmented AI landscape:
 
 6. **Self-hosted and portable.** The entire platform runs on a single machine with Docker Compose. No cloud dependencies required (Ollama provides local AI capability).
 
-7. **Multi-language accessibility.** The interface must be fully localized in 8 languages with RTL support for Arabic.
+7. **Multi-language accessibility.** The interface must be fully localized in 9 languages with RTL support for Arabic.
 
 ### Non-Goals
 
@@ -101,7 +101,7 @@ Organizations today face a fragmented AI landscape:
 | **Cost reduction**        | >= 30% reduction vs. using a single premium provider | Usage ledger comparison (local vs. cloud) |
 | **Onboarding time**       | New engineer productive in < 1 day                   | Time from clone to first merged PR        |
 | **Audit completeness**    | 100% of AI interactions have audit records           | Audit log count vs. message count         |
-| **Localization coverage** | 100% of user-facing text in all 8 languages          | i18n key coverage report                  |
+| **Localization coverage** | 100% of user-facing text in all 9 languages          | i18n key coverage report                  |
 
 ---
 
@@ -118,7 +118,7 @@ Organizations today face a fragmented AI landscape:
 | **Deployment**     | Cloud-hosted SaaS          | Self-hosted, single Docker Compose                                   |
 | **Audit**          | Minimal or none            | Full audit trail with usage analytics                                |
 | **Access control** | Single user or basic teams | RBAC with 3 roles (Admin, Operator, Viewer)                          |
-| **Localization**   | English only or limited    | 8 languages including RTL Arabic                                     |
+| **Localization**   | English only or limited    | 9 languages including RTL Arabic                                     |
 | **Transparency**   | Black box                  | Routing confidence, reason tags, cost/privacy class on every message |
 
 ### Strategic Position

@@ -2,7 +2,7 @@
 
 ## What Is ClawAI?
 
-ClawAI is a local-first AI orchestration platform that routes conversations to the best AI provider automatically. It now runs 15 NestJS backend services behind a Next.js frontend, supports 7 routing modes (from fully automatic to privacy-first), adds advanced orchestration workflows, and keeps sensitive data local via Ollama. Three roles (Admin, Operator, Viewer), eight languages, full audit trail, workspace grounding, and local agent-assisted workflows are all part of the active platform.
+ClawAI is a local-first AI orchestration platform that routes conversations to the best AI provider automatically. It now runs 17 NestJS backend services behind a Next.js frontend, supports 7 routing modes (from fully automatic to privacy-first), adds advanced orchestration workflows, and keeps sensitive data local via Ollama. Three roles (Admin, Operator, Viewer), eight languages, full audit trail, workspace grounding, and local agent-assisted workflows are all part of the active platform.
 
 ---
 
@@ -64,14 +64,14 @@ ClawAI is a local-first AI orchestration platform that routes conversations to t
 
 The docs follow a layered structure, from broad context down to operational detail:
 
-| Layer                      | Directory                              | Purpose                                                                         |
-| -------------------------- | -------------------------------------- | ------------------------------------------------------------------------------- |
-| **A -- Start Here**        | `00-start-here/`                       | Orientation. Where everyone begins. Index, overview, onboarding.                |
-| **B -- Executive Context** | `01-executive-context/`                | The "why." Product vision, business rules, personas, glossary.                  |
-| **C -- Architecture**      | `03-architecture/`                     | The "how at a high level." System design, data flow, security model, event bus. |
-| **D -- Backend**           | `04-backend/`                          | The "how in detail." One doc per service plus cross-service references.          |
-| **E -- Frontend**          | `05-frontend/`                         | UI architecture, component catalog, state management, i18n.                     |
-| **F -- Data & Runtime**    | `06-data/`, `08-runtime-devops/`       | Data topology, env vars, Docker, Nginx, startup, troubleshooting.               |
+| Layer                      | Directory                        | Purpose                                                                         |
+| -------------------------- | -------------------------------- | ------------------------------------------------------------------------------- |
+| **A -- Start Here**        | `00-start-here/`                 | Orientation. Where everyone begins. Index, overview, onboarding.                |
+| **B -- Executive Context** | `01-executive-context/`          | The "why." Product vision, business rules, personas, glossary.                  |
+| **C -- Architecture**      | `03-architecture/`               | The "how at a high level." System design, data flow, security model, event bus. |
+| **D -- Backend**           | `04-backend/`                    | The "how in detail." One doc per service plus cross-service references.         |
+| **E -- Frontend**          | `05-frontend/`                   | UI architecture, component catalog, state management, i18n.                     |
+| **F -- Data & Runtime**    | `06-data/`, `08-runtime-devops/` | Data topology, env vars, Docker, Nginx, startup, troubleshooting.               |
 
 Each layer assumes you've read the layers above it. If something in a service guide doesn't make sense, check the architecture docs. If the architecture doesn't make sense, check the executive context.
 
@@ -105,13 +105,12 @@ Every pull request that changes architecture, adds a service, or modifies a publ
 
 The desktop-agent flagship initiative pushes the existing claw-agent-service from Phase A–D (terminal commands + scheduling) into a full **operate-all-OS-work assistant** with 9 new capability classes, recipes, marketplace, and fleet admin. Plan and stream prompts at `plan-prompts/clawai_desktop_agent_flagship/`.
 
-| Document | Purpose |
-|---|---|
-| [Vision](../02-business-product/desktop-agent-vision.md) | Personas, market position, success metrics, 12-risk register |
-| [Feature Catalog](../02-business-product/desktop-agent-feature-catalog.md) | ~134 features across 9 categories with MoSCoW + cross-OS test cost |
-| [User Stories & UAT](../10-uat-acceptance/desktop-agent-uat.md) | ~79 Gherkin stories incl. 6 adversarial scenarios for marketplace |
-| [ADR-029](../13-adr/ADR-029-capability-framework-and-policy-generalisation.md) | Capability framework + AccessPolicy generalisation |
-| [ADR-030](../13-adr/ADR-030-filesystem-capability.md) | Filesystem provider design |
-| [ADR-031](../13-adr/ADR-031-process-capability.md) | Process management provider design |
-| [ADR-032](../13-adr/ADR-032-recipe-engine-architecture.md) | Recipe DSL + DAG runner + safe expression evaluator |
-
+| Document                                                                       | Purpose                                                            |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| [Vision](../02-business-product/desktop-agent-vision.md)                       | Personas, market position, success metrics, 12-risk register       |
+| [Feature Catalog](../02-business-product/desktop-agent-feature-catalog.md)     | ~134 features across 9 categories with MoSCoW + cross-OS test cost |
+| [User Stories & UAT](../10-uat-acceptance/desktop-agent-uat.md)                | ~79 Gherkin stories incl. 6 adversarial scenarios for marketplace  |
+| [ADR-029](../13-adr/ADR-029-capability-framework-and-policy-generalisation.md) | Capability framework + AccessPolicy generalisation                 |
+| [ADR-030](../13-adr/ADR-030-filesystem-capability.md)                          | Filesystem provider design                                         |
+| [ADR-031](../13-adr/ADR-031-process-capability.md)                             | Process management provider design                                 |
+| [ADR-032](../13-adr/ADR-032-recipe-engine-architecture.md)                     | Recipe DSL + DAG runner + safe expression evaluator                |

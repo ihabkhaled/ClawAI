@@ -2,7 +2,7 @@
 
 ## Overview
 
-ClawAI implements defense-in-depth security across all 13 microservices and the frontend. Security is enforced at every layer: network (Nginx, CORS), transport (HTTPS), authentication (JWT), authorization (RBAC), input validation (Zod), data protection (AES-256-GCM encryption, log redaction), and runtime hardening (Helmet, rate limiting).
+ClawAI implements defense-in-depth security across all 17 microservices and the frontend. Security is enforced at every layer: network (Nginx, CORS), transport (HTTPS), authentication (JWT), authorization (RBAC), input validation (Zod), data protection (AES-256-GCM encryption, log redaction), and runtime hardening (Helmet, rate limiting).
 
 ---
 
@@ -288,7 +288,7 @@ Configurable via:
 ### Implementation
 
 - Uses `@nestjs/throttler` module
-- Applied globally to all 13 services
+- Applied globally to all 17 services
 - Tracks requests by IP address
 - Returns `429 Too Many Requests` when limit is exceeded
 - Response includes `Retry-After` header
@@ -309,7 +309,7 @@ Critical endpoints can have tighter limits:
 
 ## Security Headers (Helmet)
 
-All 13 NestJS services use Helmet middleware to set security-related HTTP headers.
+All 17 NestJS services use Helmet middleware to set security-related HTTP headers.
 
 ### Headers Set
 

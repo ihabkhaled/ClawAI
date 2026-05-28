@@ -167,7 +167,7 @@ Last updated: 2026-04-11
 
 - **Severity**: High
 - **Effort**: High
-- **Location**: All 13 services (Docker Compose)
+- **Location**: All 17 services (Docker Compose)
 - **Detail**: Each service is a single container. No horizontal scaling or load balancing.
 - **Impact**: Single failure causes feature outage. Cannot handle traffic spikes.
 - **Remediation**: Health check-based restart policies. Kubernetes migration plan. PgBouncer for connection pooling.

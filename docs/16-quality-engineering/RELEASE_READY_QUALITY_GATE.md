@@ -31,7 +31,7 @@ These are the four automated quality checks that run in CI and as pre-commit hoo
 npm run typecheck
 ```
 
-**Pass criteria:** Zero errors across all workspaces (frontend + 13 backend services + 3 shared packages).
+**Pass criteria:** Zero errors across all workspaces (frontend + 17 backend services + 3 shared packages).
 
 **What this catches:**
 
@@ -76,7 +76,7 @@ npm run lint
 npm run test
 ```
 
-**Pass criteria:** All tests pass (312+ tests across 9 services and frontend). Zero failures, zero skipped tests (unless pre-existing and documented).
+**Pass criteria:** All tests pass (312+ tests across 17 services and frontend). Zero failures, zero skipped tests (unless pre-existing and documented).
 
 **What this catches:**
 
@@ -367,7 +367,7 @@ Files to check:
 
 **Pass criteria:** If any new user-facing text was added:
 
-- [ ] All 8 locale files updated: `en.ts`, `ar.ts`, `de.ts`, `es.ts`, `fr.ts`, `it.ts`, `pt.ts`, `ru.ts`.
+- [ ] All 9 locale files updated: `en.ts`, `ar.ts`, `de.ts`, `es.ts`, `fr.ts`, `it.ts`, `pt.ts`, `ru.ts`.
 - [ ] Translation keys added to `src/types/i18n.types.ts`.
 
 ---
@@ -409,7 +409,7 @@ CATEGORY F: CONFIGURATION COMPLETENESS
 [ ] F3: Nginx configuration
 [ ] F4: CI pipeline
 [ ] F5: Shared packages
-[ ] F6: i18n locales (all 8 languages)
+[ ] F6: i18n locales (all 9 languages)
 
 RELEASE DECISION:  [ ] APPROVED  /  [ ] BLOCKED
 Blocking reason(s): _______________________________________________

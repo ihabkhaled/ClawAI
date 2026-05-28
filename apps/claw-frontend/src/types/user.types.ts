@@ -1,4 +1,10 @@
-import type { UserAppearancePreference, UserLanguagePreference, UserRole, UserStatus } from '@/enums';
+import type {
+  Permission,
+  UserAppearancePreference,
+  UserLanguagePreference,
+  UserRole,
+  UserStatus,
+} from '@/enums';
 
 export type User = {
   id: string;
@@ -18,6 +24,9 @@ export type UserProfile = {
   email: string;
   username: string;
   role: UserRole;
+  // DB-resolved effective permissions from the backend (optional for
+  // back-compat with any cached pre-flagship session).
+  permissions?: Permission[];
   mustChangePassword: boolean;
   languagePreference: UserLanguagePreference;
   appearancePreference: UserAppearancePreference;

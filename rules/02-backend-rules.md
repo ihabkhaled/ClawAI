@@ -1,6 +1,6 @@
 # ClawAI — Backend Architecture Rules
 
-> Applies to all 13 NestJS services. Read alongside the service-specific CLAUDE.md.
+> Applies to all 17 NestJS services. Read alongside the service-specific CLAUDE.md.
 
 ## Layer Boundaries
 

@@ -1,6 +1,6 @@
 # ClawAI Documentation Hub
 
-> **Local-first AI orchestration platform** -- 15 NestJS backend services + Next.js frontend + 11 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama + ClamAV
+> **Local-first AI orchestration platform** -- 17 NestJS backend services + Next.js frontend + 13 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama + ClamAV
 
 ---
 
@@ -53,7 +53,7 @@
 
 | Document                                                         | Purpose                                                        |
 | ---------------------------------------------------------------- | -------------------------------------------------------------- |
-| [Services Index](04-backend/services-index.md)                   | All 15 services: ports, DBs, controllers, events, dependencies |
+| [Services Index](04-backend/services-index.md)                   | All 17 services: ports, DBs, controllers, events, dependencies |
 | [Controllers Reference](04-backend/controllers-reference.md)     | Every route across all services                                |
 | [Backend Coding Standards](04-backend/coding-standards.md)       | Layer rules, ESLint, extraction, error handling                |
 | [Shared Packages](04-backend/shared-packages.md)                 | shared-types, shared-constants, shared-rabbitmq, shared-auth   |
@@ -114,7 +114,7 @@ These docs now reflect the latest additions to the active platform surface:
 - advanced chat orchestration endpoints including `parallel`, `consensus`, `escalation-chain`, `repair`, `decompose`, `best-of-n`, `cost-ensemble`, `verify`, `role-pack`, and `pipeline`
 - routing replay and judge/referee flows for continuous quality tuning
 - adaptive routing priors derived from telemetry and replay data
-- expanded runtime topology with 11 PostgreSQL databases and the full 33-container dev stack
+- expanded runtime topology with 13 PostgreSQL databases and the full 33-container dev stack
 
 ---
 

@@ -69,7 +69,7 @@ Last updated: 2026-04-09
 | --- | ----------------------------------------- | ----------------------------------------------------------------- | ------ |
 | 1   | All user actions create audit records     | Login, message send, connector change all appear in audit log     |        |
 | 2   | Usage tracking captures token consumption | Token counts per provider/model visible in usage dashboard        |        |
-| 3   | Health dashboard shows all service status | All 13 services show health; unhealthy service highlighted        |        |
+| 3   | Health dashboard shows all service status | All 17 services show health; unhealthy service highlighted        |        |
 | 4   | Logs searchable by service, level, time   | Filter logs by each dimension; results match filters              |        |
 | 5   | Audit logs retained indefinitely          | Verify no TTL on audit collection; logs from 30+ days ago present |        |
 
@@ -77,7 +77,7 @@ Last updated: 2026-04-09
 
 | #   | Criterion                           | Pass Condition                                        | Status |
 | --- | ----------------------------------- | ----------------------------------------------------- | ------ |
-| 1   | All 8 languages complete            | Switch to each language; no untranslated keys visible |        |
+| 1   | All 9 languages complete            | Switch to each language; no untranslated keys visible |        |
 | 2   | Arabic RTL layout correct           | Full RTL mirroring; text alignment; sidebar position  |        |
 | 3   | Language preference persists        | Set language; reload; language unchanged              |        |
 | 4   | Date/number formatting locale-aware | Dates and numbers formatted per selected locale       |        |
@@ -125,7 +125,7 @@ Last updated: 2026-04-09
 | Seed data                 | Admin user created on first startup                        |        |
 | Ollama models             | 5 default models pull successfully on startup              |        |
 | Nginx routes              | All 20+ route mappings tested and functional               |        |
-| Health checks             | All 13 services report healthy within 2 minutes of startup |        |
+| Health checks             | All 17 services report healthy within 2 minutes of startup |        |
 
 ### 3.2 Monitoring Readiness
 
@@ -213,7 +213,7 @@ Maintain a list of known issues with workarounds that support staff can referenc
 ### 5.2 Launch Day (T-0)
 
 - [ ] Fresh deployment from clean state verified
-- [ ] All 13 services healthy
+- [ ] All 17 services healthy
 - [ ] All database migrations applied successfully
 - [ ] Admin can log in
 - [ ] Sample chat message succeeds (local + cloud)
@@ -262,7 +262,7 @@ For systemic issues affecting multiple services:
 4. Checkout the previous known-good git tag/commit.
 5. Rebuild all containers: `docker compose build --no-cache`.
 6. Start all services: `docker compose up -d`.
-7. Verify all 13 services healthy.
+7. Verify all 17 services healthy.
 8. Verify data integrity (spot-check recent threads, users, connectors).
 9. Notify users of service restoration.
 

@@ -14,14 +14,15 @@ import {
 } from '@/enums';
 
 describe('UserRole enum', () => {
-  it('has ADMIN, OPERATOR, and VIEWER members', () => {
+  it('has ADMIN, USER, OPERATOR, and VIEWER members', () => {
     expect(UserRole.ADMIN).toBe('ADMIN');
+    expect(UserRole.USER).toBe('USER');
     expect(UserRole.OPERATOR).toBe('OPERATOR');
     expect(UserRole.VIEWER).toBe('VIEWER');
   });
 
-  it('has exactly 3 members', () => {
-    expect(Object.keys(UserRole)).toHaveLength(3);
+  it('has exactly 4 members', () => {
+    expect(Object.keys(UserRole)).toHaveLength(4);
   });
 });
 

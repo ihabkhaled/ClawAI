@@ -306,16 +306,16 @@ Inter-service HTTP calls use the `*_SERVICE_URL` environment variables (e.g., `C
 
 ### Per-Component Estimates
 
-| Component           | RAM Usage | Disk Usage |
-| ------------------- | --------- | ---------- |
-| 9 PostgreSQL (idle) | ~1.8 GB   | ~500 MB    |
-| MongoDB             | ~300 MB   | ~100 MB    |
-| Redis               | ~50 MB    | ~10 MB     |
-| RabbitMQ            | ~200 MB   | ~50 MB     |
-| Ollama (5 models)   | ~2-6 GB   | ~10 GB     |
-| 13 NestJS services  | ~2.6 GB   | ~500 MB    |
-| Nginx               | ~10 MB    | ~5 MB      |
-| Next.js frontend    | ~500 MB   | ~300 MB    |
+| Component            | RAM Usage | Disk Usage |
+| -------------------- | --------- | ---------- |
+| 13 PostgreSQL (idle) | ~1.8 GB   | ~500 MB    |
+| MongoDB              | ~300 MB   | ~100 MB    |
+| Redis                | ~50 MB    | ~10 MB     |
+| RabbitMQ             | ~200 MB   | ~50 MB     |
+| Ollama (5 models)    | ~2-6 GB   | ~10 GB     |
+| 17 NestJS services   | ~2.6 GB   | ~500 MB    |
+| Nginx                | ~10 MB    | ~5 MB      |
+| Next.js frontend     | ~500 MB   | ~300 MB    |
 
 Ollama is the largest consumer. Model sizes: gemma3:4b (3.3 GB), llama3.2:3b (2.0 GB), phi3:mini (2.2 GB), gemma2:2b (1.6 GB), tinyllama (637 MB). Models are pulled on first startup and cached in the `ollama-data` volume.
 

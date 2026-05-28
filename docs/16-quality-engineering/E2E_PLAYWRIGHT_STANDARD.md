@@ -53,7 +53,7 @@ export default defineConfig({
 
 - Full Docker Compose stack running (`./scripts/claw.sh up -d`)
 - Frontend running on `http://localhost:3000` (either Docker or `npm run dev` in `apps/claw-frontend`)
-- All 13 services healthy
+- All 17 services healthy
 - Seeded admin user: `admin@claw.ai` / `admin123` (or as configured in `.env`)
 - At least one connector configured (Gemini recommended -- the only configured provider)
 - At least one Ollama model pulled (gemma3:4b minimum)

@@ -441,7 +441,7 @@ Open `http://localhost:15672` in a browser. Default credentials: `guest` / `gues
 
 | Tab         | What to Verify                                                            |
 | ----------- | ------------------------------------------------------------------------- |
-| Overview    | Connection count matches expected services (13 services + management)     |
+| Overview    | Connection count matches expected services (17 services + management)     |
 | Connections | Each service has an active connection                                     |
 | Channels    | No blocked channels                                                       |
 | Exchanges   | `claw.events` exchange exists, type: topic, durable: true                 |

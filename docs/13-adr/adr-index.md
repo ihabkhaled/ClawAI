@@ -37,7 +37,7 @@ Split the backend into 13 independently deployable NestJS microservices, each ow
 
 - **Positive**: Independent deployability; each service can be updated, scaled, or restarted without affecting others. Clear ownership boundaries. Different databases per service prevent coupling. Failure isolation -- a crash in the audit service does not affect chat.
 - **Positive**: Teams can work on different services in parallel without merge conflicts.
-- **Negative**: Operational complexity -- 13 services to monitor, deploy, and debug. Distributed tracing needed (X-Request-ID implemented).
+- **Negative**: Operational complexity -- 17 services to monitor, deploy, and debug. Distributed tracing needed (X-Request-ID implemented).
 - **Negative**: Network overhead for inter-service communication. Context assembly requires HTTP calls to memory and file services.
 - **Negative**: Development environment requires Docker Compose with 22+ containers.
 
@@ -232,7 +232,7 @@ Use Server-Sent Events (SSE) for streaming AI responses from the chat service to
 
 ### Context
 
-With 13 backend services on different ports, the frontend cannot manage connections to each individually. We need a single entry point that routes requests to the correct service based on URL path.
+With 17 backend services on different ports, the frontend cannot manage connections to each individually. We need a single entry point that routes requests to the correct service based on URL path.
 
 ### Decision
 
@@ -264,7 +264,7 @@ Configure Nginx with SSE support (proxy_buffering off, chunked transfer encoding
 
 ### Context
 
-ClawAI has 13 backend services, 1 frontend, and 4 shared packages that all need to share enums, types, and utilities. Options: polyrepo (each service in its own repository), monorepo with Turborepo/Nx, or monorepo with npm workspaces.
+ClawAI has 17 backend services, 1 frontend, and 5 shared packages that all need to share enums, types, and utilities. Options: polyrepo (each service in its own repository), monorepo with Turborepo/Nx, or monorepo with npm workspaces.
 
 ### Decision
 
@@ -312,7 +312,7 @@ Use the `fetch` API with `ReadableStream` to consume SSE streams instead of the 
 
 | ID  | Decision                     | Status   | Key Driver                                                 |
 | --- | ---------------------------- | -------- | ---------------------------------------------------------- |
-| 001 | Microservices (13 services)  | Accepted | Failure isolation, independent deployment                  |
+| 001 | Microservices (17 services)  | Accepted | Failure isolation, independent deployment                  |
 | 002 | PostgreSQL per service       | Accepted | Data isolation, independent schemas                        |
 | 003 | RabbitMQ for async           | Accepted | Reliability, retry/DLQ, decoupling                         |
 | 004 | Ollama local AI              | Accepted | Privacy, cost, routing independence                        |

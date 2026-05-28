@@ -9,6 +9,7 @@
 ## How to use this doc
 
 Each story has:
+
 - **Feature-ID link** — cross-reference to catalog
 - **Persona** — P1 (IC engineer), P2 (Tech PM), P3 (Founder/Exec), Admin
 - **Story sentence** — As-a / I-want / so-that
@@ -50,6 +51,7 @@ Fixtures live in `apps/claw-workspace-service/src/__tests__/fixtures/` and are s
 - **So that** I can trust the system before relaxing controls
 
 **Gherkin happy path**
+
 ```
 Given a freshly seeded ClawAI install with the 13 default AiActionPolicies
 When the auto-suggest scheduler produces a SUMMARIZE suggestion for a Jira ticket
@@ -58,6 +60,7 @@ And no execution event fires until a user clicks Approve
 ```
 
 **Gherkin error path**
+
 ```
 Given a suggestion is PENDING_APPROVAL and 25 hours have passed
 When the expiry sweeper runs
@@ -67,6 +70,7 @@ And an audit log row records action=SUGGESTION_EXPIRED
 ```
 
 **Demo (≤30 s)**
+
 1. (5s) Open `/workspace/approvals`
 2. (5s) See suggestion card with `riskLabel=LOW`, `matchedPolicy="default-strict-summarize"`
 3. (10s) Click Approve → green check + execution event in audit log
@@ -75,6 +79,7 @@ And an audit log row records action=SUGGESTION_EXPIRED
 
 **Fixtures:** `sample-jira.json` (5 stale tickets), `sample-policies.json`
 **DB changes:**
+
 - INSERT into `AiActionApprovalQueue` (status=PENDING_APPROVAL → APPROVED → EXECUTED)
 - INSERT into `AuditLog` (3 rows)
 
@@ -87,6 +92,7 @@ And an audit log row records action=SUGGESTION_EXPIRED
 - **So that** trusted automation runs without manual touch
 
 **Gherkin happy path**
+
 ```
 Given an AiActionPolicy named "draft-summary-only" with kind=AUTO_APPROVE, riskMaxLabel=LOW, actionKindRegex="^SUMMARIZE$"
 And a Jira ticket with 12 comments arrives via webhook
@@ -97,6 +103,7 @@ And audit log records action=AUTO_APPROVED with policyId
 ```
 
 **Gherkin error path**
+
 ```
 Given the same policy
 And a SUMMARIZE suggestion with riskScore=70 (HIGH)
@@ -106,6 +113,7 @@ And status stays PENDING_APPROVAL
 ```
 
 **Demo (≤30 s)**
+
 1. (5s) Admin opens `/workspace/automation-settings`
 2. (5s) Toggle "Auto-approve SUMMARIZE for internal-only" ON
 3. (10s) Trigger a sample Jira summary → returns AUTO_APPROVED in audit log
@@ -124,6 +132,7 @@ And status stays PENDING_APPROVAL
 - **So that** customer-facing communication is never AI-generated without review
 
 **Gherkin happy path**
+
 ```
 Given a Gmail message arrives whose draft would target an external domain not in the allowlist
 When SuggestionFactory drafts a REPLY action
@@ -134,6 +143,7 @@ And no row exists in execution events
 ```
 
 **Demo (≤30 s)**
+
 1. (5s) Admin connects test Gmail account with planted external-domain email containing CC#
 2. (5s) Trigger inbox scheduler manually
 3. (10s) Open audit log → see `DENIED reason=PII_DETECTED`
@@ -152,6 +162,7 @@ And no row exists in execution events
 - **So that** I correct tone/details without rejecting
 
 **Gherkin happy path**
+
 ```
 Given a PENDING_APPROVAL Slack reply suggestion with body "Got it, will follow up tomorrow"
 When the user clicks Edit, changes body to "Got it. I'll get back to you Monday with details.", and Approves
@@ -162,6 +173,7 @@ And audit log records action=EDITED_AND_APPROVED with diff
 ```
 
 **Demo (≤30 s)**
+
 1. (5s) Open approval card
 2. (5s) Click Edit → dialog opens with original draft
 3. (10s) Modify text → click Approve
@@ -180,6 +192,7 @@ And audit log records action=EDITED_AND_APPROVED with diff
 - **So that** I can clear my queue in seconds during morning triage
 
 **Gherkin happy path**
+
 ```
 Given 8 PENDING_APPROVAL suggestions of mixed action kinds
 When the user selects 5 (excluding 1 with riskLabel=HIGH and 1 with riskLabel=CRITICAL)
@@ -190,6 +203,7 @@ And the unselected 3 remain PENDING_APPROVAL
 ```
 
 **Gherkin error path**
+
 ```
 Given the user accidentally includes a CRITICAL suggestion in the selection
 When Bulk Approve is clicked
@@ -198,6 +212,7 @@ And the remaining 4 still process
 ```
 
 **Demo (≤30 s)**
+
 1. (5s) Open queue with 8 suggestions
 2. (5s) Select-all then unselect 2 reds
 3. (10s) Click Bulk Approve → progress indicator
@@ -216,6 +231,7 @@ And the remaining 4 still process
 - **So that** the system learns why we rejected it
 
 **Gherkin happy path**
+
 ```
 Given a HIGH-risk REPLY suggestion
 When the user clicks Reject
@@ -227,6 +243,7 @@ And memory-service receives an event for stream 40 learning
 ```
 
 **Demo (≤30 s)**
+
 1. (5s) Click Reject on HIGH card
 2. (5s) Dialog appears with required text
 3. (10s) Try blank → blocked. Type "Wrong customer context" → enabled
@@ -244,6 +261,7 @@ And memory-service receives an event for stream 40 learning
 - **So that** I customise auto-approval per action class
 
 **Gherkin happy path**
+
 ```
 Given an admin
 When POST /workspace/ai-actions/policies with valid body { name, kind=AUTO_APPROVE, providerRegex="^github$", actionKindRegex="^COMMENT_PR$", riskMaxLabel=LOW }
@@ -252,6 +270,7 @@ And future COMMENT_PR suggestions for github with risk≤LOW auto-approve
 ```
 
 **Gherkin error path**
+
 ```
 Given a non-admin user
 When POST /workspace/ai-actions/policies
@@ -273,6 +292,7 @@ Then 400 with messageKey=POLICY_REGEX_UNSAFE
 - **So that** I can audit decisions
 
 **Gherkin happy path**
+
 ```
 Given any suggestion lifecycle (PENDING → APPROVED → EXECUTING → EXECUTED) or (PENDING → REJECTED)
 Then each transition produces exactly one audit log row with userId/policyId/risk fields
@@ -291,6 +311,7 @@ Then each transition produces exactly one audit log row with userId/policyId/ris
 - **So that** spoofed events are rejected
 
 **Gherkin happy path**
+
 ```
 Given a connected GitHub connector with secret X
 When POST /api/v1/workspace/webhooks/github/<connectorId> with valid X-Hub-Signature-256
@@ -300,6 +321,7 @@ And RabbitMQ event `workspace.webhook.received` published
 ```
 
 **Gherkin error path**
+
 ```
 When POST with wrong signature
 Then 401
@@ -308,6 +330,7 @@ And event `workspace.webhook.rejected` published
 ```
 
 **Demo (≤30 s)**
+
 1. (5s) Connect test GitHub repo with webhook URL
 2. (5s) Push a commit
 3. (10s) See `WebhookDelivery` row in `/workspace/webhook-deliveries` admin page
@@ -325,6 +348,7 @@ And event `workspace.webhook.rejected` published
 - **So that** retries don't double-fire
 
 **Gherkin happy path**
+
 ```
 Given GitHub webhook with deliveryId="abc-123"
 When the same delivery arrives twice within REPLAY_WINDOW_MINUTES
@@ -375,6 +399,7 @@ And new `WebhookDelivery.processedAt` is set
 - **So that** running 2 workspace-service containers doesn't double-fire
 
 **Gherkin happy path**
+
 ```
 Given two workspace-service containers
 When AUTO_SUGGEST_INBOX_CRON fires at 00:00
@@ -392,6 +417,7 @@ And exactly one set of `workspace.auto_suggest.tick.*` events publishes
 - **I want** Gmail messages I haven't replied to in 24h to get reply drafts
 
 **Gherkin happy path**
+
 ```
 Given a Gmail message older than 24h with no draft sent
 When the inbox cron runs
@@ -401,6 +427,7 @@ And risk-classifier marks as MED if external domain
 ```
 
 **Demo (≤30 s)**
+
 1. (5s) Connect test Gmail
 2. (5s) Wait/trigger scheduler
 3. (10s) See queue card for unanswered email
@@ -591,6 +618,7 @@ And audit row records DOWNLOAD
 ```
 
 **Gherkin error path**
+
 ```
 Given a planted EICAR test virus attachment
 When download requested
@@ -901,6 +929,7 @@ And only AFTER agent reviewer approves does the terminal session start
 ```
 
 **Gherkin error path**
+
 ```
 Given no paired Device
 When user clicks "Send to Agent"
@@ -945,22 +974,22 @@ And no thread/terminal/clipboard receives it
 
 ## Stream-by-stream story count
 
-| Stream | Stories produced | Target (per prompt 02) | Met? |
-|---|---|---|---|
-| 10 | 8 | 6-8 | ✅ |
-| 11 | 5 | 4-5 | ✅ |
-| 12 | 6 | 5-6 | ✅ |
-| 13 | 3 | 3-4 | ✅ |
-| 20 | 4 | 4 | ✅ |
-| 21 | 3 | 3 | ✅ |
-| 22 | 5 | 5 | ✅ |
-| 23 | 4 | 4 | ✅ |
-| 30 | 4 | 4 | ✅ |
-| 31 | 4 | 4 | ✅ |
-| 32 | 4 | 4 | ✅ |
-| 40 | 3 | 3 | ✅ |
-| 41 | 8 | (added) | ✅ |
-| **Total** | **61** | **40-60** | ✅ |
+| Stream    | Stories produced | Target (per prompt 02) | Met? |
+| --------- | ---------------- | ---------------------- | ---- |
+| 10        | 8                | 6-8                    | ✅   |
+| 11        | 5                | 4-5                    | ✅   |
+| 12        | 6                | 5-6                    | ✅   |
+| 13        | 3                | 3-4                    | ✅   |
+| 20        | 4                | 4                      | ✅   |
+| 21        | 3                | 3                      | ✅   |
+| 22        | 5                | 5                      | ✅   |
+| 23        | 4                | 4                      | ✅   |
+| 30        | 4                | 4                      | ✅   |
+| 31        | 4                | 4                      | ✅   |
+| 32        | 4                | 4                      | ✅   |
+| 40        | 3                | 3                      | ✅   |
+| 41        | 8                | (added)                | ✅   |
+| **Total** | **61**           | **40-60**              | ✅   |
 
 ---
 
@@ -968,7 +997,7 @@ And no thread/terminal/clipboard receives it
 
 Beyond per-story Gherkin, every stream MUST also satisfy:
 
-- All new UI text exists in 8 i18n locales (en, ar, de, es, fr, it, pt, ru)
+- All new UI text exists in 9 i18n locales (en, ar, de, es, fr, hi, it, pt, ru)
 - Dark mode visually correct (no white flashes, contrast OK)
 - RTL Arabic mirrors layout correctly
 - Mobile 375×812 responsive
@@ -998,6 +1027,7 @@ If demo > 30 s, story is too big — split it.
 ## UAT execution rounds
 
 Stream 50 maintains `docs/10-uat-acceptance/workspace-automation-uat-execution-log.md` with:
+
 - Date of each round
 - Tester (UAT Lead + 1 non-technical reviewer)
 - Per-story result: PASS / FAIL / NOT-RUN

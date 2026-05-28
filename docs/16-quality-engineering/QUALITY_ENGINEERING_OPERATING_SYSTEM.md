@@ -50,7 +50,7 @@ For every feature or bug, explicitly enumerate:
 
 | Dimension                 | What to Check                                                                                    |
 | ------------------------- | ------------------------------------------------------------------------------------------------ |
-| **Backend services**      | Which of the 13 services are touched? List by name (e.g., claw-chat-service, claw-file-service). |
+| **Backend services**      | Which of the 17 services are touched? List by name (e.g., claw-chat-service, claw-file-service). |
 | **Frontend pages**        | Which pages in `src/app/(portal)/` are affected?                                                 |
 | **Frontend components**   | Which components in `src/components/` change?                                                    |
 | **Database schemas**      | Any Prisma schema or MongoDB collection changes? Which DB (claw_chat, claw_files, etc.)?         |
@@ -61,7 +61,7 @@ For every feature or bug, explicitly enumerate:
 | **Docker compose**        | New containers, volumes, ports, depends_on, healthchecks? All 4 compose files.                   |
 | **Nginx config**          | New upstream, location block, SSE route?                                                         |
 | **CI pipeline**           | New service in Prisma generate loop? New test env vars?                                          |
-| **i18n locales**          | New user-facing text? All 8 locales (en, ar, de, es, fr, it, pt, ru).                            |
+| **i18n locales**          | New user-facing text? All 9 locales (en, ar, de, es, fr, hi, it, pt, ru).                        |
 | **Documentation**         | CLAUDE.md, docs/ folder, service-specific docs?                                                  |
 | **Seed data**             | New default records (catalog entries, routing policies, admin user data)?                        |
 
@@ -216,7 +216,7 @@ For every endpoint that accepts input:
 ### C8. i18n Compliance
 
 - [ ] No hardcoded user-facing text in components
-- [ ] All new text added to all 8 locale files (en, ar, de, es, fr, it, pt, ru)
+- [ ] All new text added to all 9 locale files (en, ar, de, es, fr, hi, it, pt, ru)
 - [ ] Keys defined in `src/types/i18n.types.ts`
 - [ ] `t('key')` used in every component rendering user text
 
@@ -585,7 +585,7 @@ Continue the bug loop until:
 ### H1. Service Health
 
 ```bash
-# All 13 services + infrastructure healthy
+# All 17 services + infrastructure healthy
 curl http://localhost:4000/api/v1/health | jq .
 
 # No containers in restart loop

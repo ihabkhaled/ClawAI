@@ -20,20 +20,20 @@ Types and enums shared across all backend services. This is the most widely impo
 
 **Enums:**
 
-| Enum               | Values                                                           | Used By            |
-| ------------------ | ---------------------------------------------------------------- | ------------------ |
-| `Provider`         | OPENAI, ANTHROPIC, GEMINI, DEEPSEEK, LOCAL_OLLAMA                | All services       |
-| `RoutingMode`      | AUTO, MANUAL_MODEL, LOCAL_ONLY, PRIVACY_FIRST, LOW_LATENCY, etc. | chat, routing      |
-| `ConnectorStatus`  | ACTIVE, INACTIVE, ERROR                                          | connector          |
-| `ModelLifecycle`   | ACTIVE, DEPRECATED, RETIRED                                      | connector, routing |
-| `AuditAction`      | 10 actions (LOGIN, LOGOUT, MESSAGE_SENT, etc.)                   | audit, all         |
-| `MessageRole`      | USER, ASSISTANT, SYSTEM                                          | chat               |
-| `MemoryType`       | FACT, PREFERENCE, INSTRUCTION, SUMMARY                           | memory             |
-| `FileIngestionStatus` | PENDING, PROCESSING, COMPLETED, FAILED                        | file               |
-| `ModelRole`        | ROUTER, LOCAL_FALLBACK_CHAT, LOCAL_CODING, etc.                  | ollama, routing    |
-| `CatalogCategory`  | CODING, REASONING, THINKING, FILE_GENERATION, etc.              | ollama, routing    |
-| `ModelRuntime`     | OLLAMA, COMFYUI                                                  | ollama, image      |
-| `ImageProvider`    | OPENAI, GEMINI, STABLE_DIFFUSION, COMFYUI                       | image              |
+| Enum                  | Values                                                           | Used By            |
+| --------------------- | ---------------------------------------------------------------- | ------------------ |
+| `Provider`            | OPENAI, ANTHROPIC, GEMINI, DEEPSEEK, LOCAL_OLLAMA                | All services       |
+| `RoutingMode`         | AUTO, MANUAL_MODEL, LOCAL_ONLY, PRIVACY_FIRST, LOW_LATENCY, etc. | chat, routing      |
+| `ConnectorStatus`     | ACTIVE, INACTIVE, ERROR                                          | connector          |
+| `ModelLifecycle`      | ACTIVE, DEPRECATED, RETIRED                                      | connector, routing |
+| `AuditAction`         | 10 actions (LOGIN, LOGOUT, MESSAGE_SENT, etc.)                   | audit, all         |
+| `MessageRole`         | USER, ASSISTANT, SYSTEM                                          | chat               |
+| `MemoryType`          | FACT, PREFERENCE, INSTRUCTION, SUMMARY                           | memory             |
+| `FileIngestionStatus` | PENDING, PROCESSING, COMPLETED, FAILED                           | file               |
+| `ModelRole`           | ROUTER, LOCAL_FALLBACK_CHAT, LOCAL_CODING, etc.                  | ollama, routing    |
+| `CatalogCategory`     | CODING, REASONING, THINKING, FILE_GENERATION, etc.               | ollama, routing    |
+| `ModelRuntime`        | OLLAMA, COMFYUI                                                  | ollama, image      |
+| `ImageProvider`       | OPENAI, GEMINI, STABLE_DIFFUSION, COMFYUI                        | image              |
 
 **Event Patterns:**
 
@@ -80,14 +80,14 @@ Scalar constants shared across services.
 
 ### Exports
 
-| Constant               | Value            | Purpose                      |
-| ---------------------- | ---------------- | ---------------------------- |
-| `EXCHANGE_NAME`        | `claw.events`    | RabbitMQ exchange name       |
-| `API_PREFIX`           | `api/v1`         | URL prefix for all endpoints |
-| `DEFAULT_PAGE_SIZE`    | `20`             | Pagination default           |
-| `MAX_PAGE_SIZE`        | `100`            | Pagination maximum           |
-| Service port constants | `4001`-`4013`    | Per-service port numbers     |
-| Service name constants | String identifiers| For logging and health checks|
+| Constant               | Value              | Purpose                       |
+| ---------------------- | ------------------ | ----------------------------- |
+| `EXCHANGE_NAME`        | `claw.events`      | RabbitMQ exchange name        |
+| `API_PREFIX`           | `api/v1`           | URL prefix for all endpoints  |
+| `DEFAULT_PAGE_SIZE`    | `20`               | Pagination default            |
+| `MAX_PAGE_SIZE`        | `100`              | Pagination maximum            |
+| Service port constants | `4001`-`4013`      | Per-service port numbers      |
+| Service name constants | String identifiers | For logging and health checks |
 
 ### Consumers
 
@@ -155,7 +155,7 @@ A Pino-based logger wrapper that includes service name, request ID, and trace ID
 
 ### Consumers
 
-All 13 backend services import `shared-rabbitmq`.
+All 17 backend services import `shared-rabbitmq`.
 
 ## shared-auth
 
@@ -165,10 +165,10 @@ Authentication and authorization primitives for NestJS services.
 
 **Guards:**
 
-| Guard        | Purpose                                          |
-| ------------ | ------------------------------------------------ |
-| `AuthGuard`  | Validates JWT from Authorization header          |
-| `RolesGuard` | Checks user role against `@Roles()` decorator    |
+| Guard        | Purpose                                       |
+| ------------ | --------------------------------------------- |
+| `AuthGuard`  | Validates JWT from Authorization header       |
+| `RolesGuard` | Checks user role against `@Roles()` decorator |
 
 **Decorators:**
 
@@ -185,10 +185,7 @@ Authentication and authorization primitives for NestJS services.
 export class ThreadController {
   @Post()
   @Roles(UserRole.ADMIN, UserRole.OPERATOR)
-  create(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: CreateThreadDto,
-  ): Promise<Thread> {
+  create(@CurrentUser() user: AuthUser, @Body() dto: CreateThreadDto): Promise<Thread> {
     return this.threadService.create(user.id, dto);
   }
 

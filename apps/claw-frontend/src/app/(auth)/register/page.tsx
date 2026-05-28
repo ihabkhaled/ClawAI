@@ -9,25 +9,22 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ROUTES } from '@/constants';
-import { useLogin } from '@/hooks/auth/use-login';
+import { useRegister } from '@/hooks/auth/use-register';
 import { useTranslation } from '@/lib/i18n';
-import { loginSchema } from '@/lib/validation/login.schema';
-import type { LoginFormValues } from '@/lib/validation/login.schema';
+import { registerSchema } from '@/lib/validation/register.schema';
+import type { RegisterFormValues } from '@/lib/validation/register.schema';
 
-export default function LoginPage() {
-  const { login, isPending, isError, error } = useLogin();
+export default function RegisterPage(): React.ReactElement {
+  const { register, isPending, isError, error } = useRegister();
   const { t } = useTranslation();
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+  const form = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: { email: '', password: '', confirmPassword: '' },
   });
 
-  const onSubmit = (data: LoginFormValues) => {
-    login(data);
+  const onSubmit = (data: RegisterFormValues): void => {
+    register({ email: data.email, password: data.password });
   };
 
   return (
@@ -43,8 +40,8 @@ export default function LoginPage() {
 
         <Card>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-xl">{t('auth.loginTitle')}</CardTitle>
-            <CardDescription>{t('auth.loginSubtitle')}</CardDescription>
+            <CardTitle className="text-xl">{t('auth.registerTitle')}</CardTitle>
+            <CardDescription>{t('auth.registerSubtitle')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -73,7 +70,7 @@ export default function LoginPage() {
                   id="password"
                   type="password"
                   placeholder={t('auth.passwordPlaceholder')}
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   disabled={isPending}
                   {...form.register('password')}
                 />
@@ -84,27 +81,43 @@ export default function LoginPage() {
                 ) : null}
               </div>
 
+              <div className="space-y-2">
+                <label htmlFor="confirmPassword" className="text-sm font-medium leading-none">
+                  {t('auth.confirmPassword')}
+                </label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  disabled={isPending}
+                  {...form.register('confirmPassword')}
+                />
+                {form.formState.errors.confirmPassword ? (
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.confirmPassword.message}
+                  </p>
+                ) : null}
+              </div>
+
               {isError ? (
                 <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                  {error?.message ?? t('auth.loginFailed')}
+                  {error?.message ?? t('auth.registerFailed')}
                 </div>
               ) : null}
 
               <Button type="submit" className="w-full" disabled={isPending}>
-                {isPending ? t('auth.signingIn') : t('auth.loginButton')}
+                {isPending ? t('auth.registering') : t('auth.registerButton')}
               </Button>
             </form>
+
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              {t('auth.alreadyHaveAccount')}{' '}
+              <Link href={ROUTES.LOGIN} className="font-medium text-primary hover:underline">
+                {t('auth.signInLink')}
+              </Link>
+            </p>
           </CardContent>
         </Card>
-
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          {t('auth.noAccount')}{' '}
-          <Link href={ROUTES.REGISTER} className="font-medium text-primary hover:underline">
-            {t('auth.signUpLink')}
-          </Link>
-        </p>
-
-        <p className="mt-6 text-center text-xs text-muted-foreground">{t('auth.tagline')}</p>
       </div>
     </div>
   );

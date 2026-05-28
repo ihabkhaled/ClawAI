@@ -8,17 +8,17 @@ Give operators and end users transparency into routing decisions. Add a "Try a m
 
 ## Surfaces to ship
 
-| Surface | Type | Path | Status today | New file paths |
-|---------|------|------|--------------|----------------|
-| Playground | FE page | `/routing/playground` | missing | `apps/claw-frontend/src/app/(portal)/routing/playground/page.tsx` |
-| "Why this model?" | FE component | inline in chat message | missing | `apps/claw-frontend/src/components/chat/why-this-model.tsx` |
-| Category drill-down | FE filter | `/routing` recent list | missing | extend `use-routing-decisions.ts` + add filter to existing page |
-| Circuit-breaker dashboard | FE page | `/routing/circuit-breakers` | missing (BE exists) | `apps/claw-frontend/src/app/(portal)/routing/circuit-breakers/page.tsx` |
-| Taxonomy admin UI | FE page | `/routing/taxonomy` | missing (BE exists) | `apps/claw-frontend/src/app/(portal)/routing/taxonomy/page.tsx` |
-| Per-user routing history | FE page | `/settings/routing-history` | missing | `apps/claw-frontend/src/app/(portal)/settings/routing-history/page.tsx` |
-| "Rerun decision" button | FE button on recent decision row | existing | missing | extend `routing-decision-row.tsx` |
-| "Save playground case as fixture" | FE button on playground | new | missing | inside playground page |
-| "Compare policies on sample prompt" | FE page | `/routing/policy-compare` | missing | `apps/claw-frontend/src/app/(portal)/routing/policy-compare/page.tsx` |
+| Surface                             | Type                             | Path                        | Status today        | New file paths                                                          |
+| ----------------------------------- | -------------------------------- | --------------------------- | ------------------- | ----------------------------------------------------------------------- |
+| Playground                          | FE page                          | `/routing/playground`       | missing             | `apps/claw-frontend/src/app/(portal)/routing/playground/page.tsx`       |
+| "Why this model?"                   | FE component                     | inline in chat message      | missing             | `apps/claw-frontend/src/components/chat/why-this-model.tsx`             |
+| Category drill-down                 | FE filter                        | `/routing` recent list      | missing             | extend `use-routing-decisions.ts` + add filter to existing page         |
+| Circuit-breaker dashboard           | FE page                          | `/routing/circuit-breakers` | missing (BE exists) | `apps/claw-frontend/src/app/(portal)/routing/circuit-breakers/page.tsx` |
+| Taxonomy admin UI                   | FE page                          | `/routing/taxonomy`         | missing (BE exists) | `apps/claw-frontend/src/app/(portal)/routing/taxonomy/page.tsx`         |
+| Per-user routing history            | FE page                          | `/settings/routing-history` | missing             | `apps/claw-frontend/src/app/(portal)/settings/routing-history/page.tsx` |
+| "Rerun decision" button             | FE button on recent decision row | existing                    | missing             | extend `routing-decision-row.tsx`                                       |
+| "Save playground case as fixture"   | FE button on playground          | new                         | missing             | inside playground page                                                  |
+| "Compare policies on sample prompt" | FE page                          | `/routing/policy-compare`   | missing             | `apps/claw-frontend/src/app/(portal)/routing/policy-compare/page.tsx`   |
 
 ## Playground API contract
 
@@ -99,20 +99,20 @@ apps/claw-frontend/src/hooks/routing/use-routing-history-mine.ts
 
 ## Acceptance criteria
 
-| # | Test | Expected |
-|---|------|----------|
-| 1 | Playground happy path: type message → submit | v1+v2+ollama all return; score breakdown visible |
-| 2 | Playground does NOT actually execute the chat model | only the routing decision; no token spend |
-| 3 | "Why this model?" expands in chat | shows reasonTags + cost estimate + workflow |
-| 4 | Category filter on `/routing` | filtering to "Coding" shows only Coding-routed decisions |
-| 5 | Circuit-breaker dashboard shows current state | OPEN/HALF_OPEN/CLOSED + recent failures + manual reset button |
-| 6 | Taxonomy CRUD | admin can create/edit/delete TaxonomyRole entries via UI |
-| 7 | Per-user routing history at `/settings/routing-history` | user sees their own decisions, with override option |
-| 8 | Rerun decision button | hits `POST /routing/evaluate` with same context, shows new decision side-by-side |
-| 9 | Save playground case as fixture | converts the playground decision into a replay-fixture row |
-| 10 | Dark mode / mobile / RTL | all surfaces pass |
+| #   | Test                                                    | Expected                                                                         |
+| --- | ------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| 1   | Playground happy path: type message → submit            | v1+v2+ollama all return; score breakdown visible                                 |
+| 2   | Playground does NOT actually execute the chat model     | only the routing decision; no token spend                                        |
+| 3   | "Why this model?" expands in chat                       | shows reasonTags + cost estimate + workflow                                      |
+| 4   | Category filter on `/routing`                           | filtering to "Coding" shows only Coding-routed decisions                         |
+| 5   | Circuit-breaker dashboard shows current state           | OPEN/HALF_OPEN/CLOSED + recent failures + manual reset button                    |
+| 6   | Taxonomy CRUD                                           | admin can create/edit/delete TaxonomyRole entries via UI                         |
+| 7   | Per-user routing history at `/settings/routing-history` | user sees their own decisions, with override option                              |
+| 8   | Rerun decision button                                   | hits `POST /routing/evaluate` with same context, shows new decision side-by-side |
+| 9   | Save playground case as fixture                         | converts the playground decision into a replay-fixture row                       |
+| 10  | Dark mode / mobile / RTL                                | all surfaces pass                                                                |
 
-## i18n keys (need real translations in all 8 locales)
+## i18n keys (need real translations in all 9 locales)
 
 ```typescript
 {

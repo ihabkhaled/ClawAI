@@ -31,6 +31,7 @@ Send one prompt to 2-5 AI models simultaneously and see their responses side by 
 **Endpoint**: `POST /api/v1/chat-messages/parallel`
 
 **Request Body** (Zod validated):
+
 ```json
 {
   "threadId": "cmnrhvexf0000mwd5cs84x2vk",
@@ -45,6 +46,7 @@ Send one prompt to 2-5 AI models simultaneously and see their responses side by 
 ```
 
 **Response**:
+
 ```json
 {
   "messageId": "cmns...",
@@ -89,6 +91,7 @@ Send one prompt to 2-5 AI models simultaneously and see their responses side by 
 ```
 
 **Key Files**:
+
 - `src/modules/chat-messages/managers/parallel-execution.manager.ts` — Uses `Promise.allSettled` to call all models simultaneously
 - `src/modules/chat-messages/types/parallel.types.ts` — ParallelModelResponse, ParallelResponse
 - `src/modules/chat-messages/dto/parallel-message.dto.ts` — Zod schema (2-5 models, max 10 files)
@@ -114,16 +117,18 @@ Send one prompt to 2-5 AI models simultaneously and see their responses side by 
 **Page**: `/chat/compare`
 
 **Components**:
+
 - `ParallelModelSelector` — Multi-select grouped by provider, 2-5 models, excludes image-only models
 - `ParallelResponseCard` — Single model response with provider badge, latency, tokens, markdown content, fastest badge
 - `ParallelResultsGrid` — Responsive grid (1 col mobile, 2 col tablet, 3+ col desktop)
 - `ParallelSummaryBar` — Total latency, completed/failed counts, fastest model highlight
 
 **Hooks**:
+
 - `useParallelCompare` — useMutation wrapping chatRepository.sendParallel()
 - `useParallelComparePage` — controller hook: model selection, prompt state, validation, send
 
-**i18n**: 16 keys in all 8 locales (compare.title, compare.selectModels, compare.fastest, etc.)
+**i18n**: 16 keys in all 9 locales (compare.title, compare.selectModels, compare.fastest, etc.)
 
 ## Constraints
 

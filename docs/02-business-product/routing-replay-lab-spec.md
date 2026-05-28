@@ -29,6 +29,7 @@ Replay output is useful for more than reporting. The summary trends and reason t
 **Endpoint**: `POST /api/v1/routing/replay`
 
 **Request Body** (Zod validated):
+
 ```json
 {
   "threadId": "optional-thread-filter",
@@ -40,6 +41,7 @@ Replay output is useful for more than reporting. The summary trends and reason t
 ```
 
 **Response**:
+
 ```json
 {
   "totalReplayed": 50,
@@ -74,6 +76,7 @@ Replay output is useful for more than reporting. The summary trends and reason t
 ```
 
 **Key Files**:
+
 - `src/modules/routing/managers/replay.manager.ts` — ReplayManager with `replayDecisions()` and `calculateImprovementScore()`
 - `src/modules/routing/types/replay.types.ts` — ReplayResult, ReplayBatchResult, ReplayFilters
 - `src/modules/routing/dto/replay-routing.dto.ts` — Zod schema
@@ -84,19 +87,22 @@ Replay output is useful for more than reporting. The summary trends and reason t
 **Page**: `/routing/replay`
 
 **Components**:
+
 - `ReplayFilters` — routing mode selector, limit selector, Run Replay button
 - `ReplaySummaryCard` — total/changed/unchanged/confidence stats
 - `ReplayResultRow` — old vs new route with improvement badge
 
 **Hooks**:
+
 - `useReplayRouting` — useMutation for triggering replay
 - `useReplayLabPage` — controller hook orchestrating filters + mutation + results
 
-**i18n**: 15 keys in all 8 locales (replay.title, replay.runReplay, replay.changed, etc.)
+**i18n**: 15 keys in all 9 locales (replay.title, replay.runReplay, replay.changed, etc.)
 
 ## Improvement Score
 
 Calculated as:
+
 - +0.5 if new confidence > old confidence
 - +0.5 if new cost class is lower (free > low > medium > high)
 - -0.5 if new confidence < old confidence

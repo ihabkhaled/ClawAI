@@ -63,6 +63,17 @@ export type TranslationDictionary = {
     tagline: string;
     authenticating: string;
     emailPlaceholder: string;
+    registerTitle: string;
+    registerSubtitle: string;
+    registerButton: string;
+    registering: string;
+    registerFailed: string;
+    confirmPassword: string;
+    passwordsDoNotMatch: string;
+    alreadyHaveAccount: string;
+    signInLink: string;
+    noAccount: string;
+    signUpLink: string;
   };
   nav: {
     dashboard: string;
@@ -2088,6 +2099,7 @@ export type TranslationDictionary = {
   };
   toast: {
     loginSuccess: string;
+    registerSuccess: string;
     loginFailed: string;
     logoutFailed: string;
     sessionExpired: string;

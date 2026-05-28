@@ -230,7 +230,7 @@ Ollama library and registry overlap. Installed models may use aliased names (`qw
 - Page: `/models/discovery` — single-page UI with toolbar, runs timeline, candidates grid, packs grid
 - Hooks: `useDiscoveryPage()`, `useDiscoverySources()`, `useDiscoveryRuns()`, `useDiscoveryCandidates()`, `useHardwarePacks()` + mutation hooks
 - Components: `DiscoveryToolbar`, `CandidateCard`, `RunsTimeline`, `HardwarePacksGrid`, `RunStatusIcon`
-- i18n: all 8 locales (EN, AR, DE, ES, FR, IT, PT, RU)
+- i18n: all 9 locales (EN, AR, DE, ES, FR, HI, IT, PT, RU)
 
 ## Testing
 
@@ -260,5 +260,5 @@ Via UI: `/models/discovery` → Sources panel → New source.
 
 1. Add to `BusinessCategory` enum in `apps/claw-ollama-service/src/common/enums/business-category.enum.ts`
 2. Add mapping in `FAMILY_TAXONOMY` and/or `KEYWORD_TO_BUSINESS`
-3. Add i18n label in 8 locales
+3. Add i18n label in 9 locales
 4. Run tests

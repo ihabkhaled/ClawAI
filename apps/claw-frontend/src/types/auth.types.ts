@@ -1,6 +1,11 @@
-import type { UserProfile } from "./user.types";
+import type { UserProfile } from './user.types';
 
 export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
   email: string;
   password: string;
 }
@@ -11,6 +16,11 @@ export type TokenPair = {
 };
 
 export type LoginResponse = {
+  tokens: TokenPair;
+  user: UserProfile;
+};
+
+export type RegisterResponse = {
   tokens: TokenPair;
   user: UserProfile;
 };

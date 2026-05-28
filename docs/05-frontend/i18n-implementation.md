@@ -6,16 +6,16 @@
 
 ## 1. Supported Languages
 
-| Code | Language   | Direction | Locale File                         |
-| ---- | ---------- | --------- | ----------------------------------- |
-| `en` | English    | LTR       | `src/lib/i18n/locales/en.ts`        |
-| `ar` | Arabic     | RTL       | `src/lib/i18n/locales/ar.ts`        |
-| `de` | German     | LTR       | `src/lib/i18n/locales/de.ts`        |
-| `es` | Spanish    | LTR       | `src/lib/i18n/locales/es.ts`        |
-| `fr` | French     | LTR       | `src/lib/i18n/locales/fr.ts`        |
-| `it` | Italian    | LTR       | `src/lib/i18n/locales/it.ts`        |
-| `pt` | Portuguese | LTR       | `src/lib/i18n/locales/pt.ts`        |
-| `ru` | Russian    | LTR       | `src/lib/i18n/locales/ru.ts`        |
+| Code | Language   | Direction | Locale File                  |
+| ---- | ---------- | --------- | ---------------------------- |
+| `en` | English    | LTR       | `src/lib/i18n/locales/en.ts` |
+| `ar` | Arabic     | RTL       | `src/lib/i18n/locales/ar.ts` |
+| `de` | German     | LTR       | `src/lib/i18n/locales/de.ts` |
+| `es` | Spanish    | LTR       | `src/lib/i18n/locales/es.ts` |
+| `fr` | French     | LTR       | `src/lib/i18n/locales/fr.ts` |
+| `it` | Italian    | LTR       | `src/lib/i18n/locales/it.ts` |
+| `pt` | Portuguese | LTR       | `src/lib/i18n/locales/pt.ts` |
+| `ru` | Russian    | LTR       | `src/lib/i18n/locales/ru.ts` |
 
 ---
 
@@ -48,9 +48,7 @@ The `LocaleProvider` wraps the entire application in `src/app/providers.tsx`:
 ```tsx
 <LocaleProvider>
   <ThemeProvider>
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   </ThemeProvider>
 </LocaleProvider>
 ```
@@ -117,7 +115,7 @@ function MyComponent(): ReactElement {
 ### Rules
 
 1. **Never hardcode user-facing text** -- always use `t('key')`
-2. **All 8 locale files must stay in sync** -- every key in `en.ts` must exist in all others
+2. **All 9 locale files must stay in sync** -- every key in `en.ts` must exist in all others
 3. **Keys are type-safe** -- TypeScript will error if you use a key that does not exist
 4. **Domain-organized** -- keys are grouped by feature area (common, auth, chat, connectors, etc.)
 
@@ -133,7 +131,7 @@ Edit `src/types/i18n.types.ts` to add the new key:
 export type TranslationDictionary = {
   common: {
     // ... existing keys
-    newKey: string;  // Add here
+    newKey: string; // Add here
   };
   // ...
 };
@@ -229,29 +227,29 @@ The user's language preference is stored in the user profile via the settings pa
 
 Keys are organized by domain to keep them manageable:
 
-| Section       | Purpose                              | Example Keys                           |
-| ------------- | ------------------------------------ | -------------------------------------- |
-| `common`      | Shared across features               | save, cancel, delete, loading, error   |
-| `auth`        | Authentication screens               | login, logout, email, password         |
-| `chat`        | Chat feature                         | newThread, sendMessage, noMessages     |
-| `connectors`  | Connector management                 | create, testConnection, syncModels     |
-| `models`      | Model management                     | localModels, pullModel, assignRole     |
-| `routing`     | Routing policies                     | createPolicy, autoMode, decisions      |
-| `memory`      | Memory management                    | createMemory, memoryTypes, toggle      |
-| `files`       | File management                      | upload, processing, download           |
-| `audit`       | Audit logs                           | auditLog, usageStats, actions          |
-| `logs`        | Log viewer                           | clientLogs, serverLogs, level          |
-| `settings`    | User settings                        | appearance, language, changePassword   |
-| `admin`       | Admin page                           | userManagement, roles                  |
-| `dashboard`   | Dashboard                            | title, recentActivity, systemHealth    |
-| `health`      | Health/observability                 | healthy, degraded, unhealthy           |
-| `validation`  | Form validation messages             | required, tooLong, invalidEmail        |
-| `errors`      | Error messages                       | serverError, networkError              |
+| Section      | Purpose                  | Example Keys                         |
+| ------------ | ------------------------ | ------------------------------------ |
+| `common`     | Shared across features   | save, cancel, delete, loading, error |
+| `auth`       | Authentication screens   | login, logout, email, password       |
+| `chat`       | Chat feature             | newThread, sendMessage, noMessages   |
+| `connectors` | Connector management     | create, testConnection, syncModels   |
+| `models`     | Model management         | localModels, pullModel, assignRole   |
+| `routing`    | Routing policies         | createPolicy, autoMode, decisions    |
+| `memory`     | Memory management        | createMemory, memoryTypes, toggle    |
+| `files`      | File management          | upload, processing, download         |
+| `audit`      | Audit logs               | auditLog, usageStats, actions        |
+| `logs`       | Log viewer               | clientLogs, serverLogs, level        |
+| `settings`   | User settings            | appearance, language, changePassword |
+| `admin`      | Admin page               | userManagement, roles                |
+| `dashboard`  | Dashboard                | title, recentActivity, systemHealth  |
+| `health`     | Health/observability     | healthy, degraded, unhealthy         |
+| `validation` | Form validation messages | required, tooLong, invalidEmail      |
+| `errors`     | Error messages           | serverError, networkError            |
 
 ---
 
 ## 8. Testing Translation Completeness
 
-A test in `src/lib/i18n/__tests__/` verifies that all 8 locale files have the same keys as the English file. This prevents missing translations from reaching production.
+A test in `src/lib/i18n/__tests__/` verifies that all 9 locale files have the same keys as the English file. This prevents missing translations from reaching production.
 
 The test iterates over all keys in `en.ts` and asserts they exist in every other locale file.

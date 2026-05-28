@@ -38,7 +38,7 @@ ClawAI supports cloud AI providers through the connector system. Adding a new pr
 5. **Update the frontend**
    - Add the provider to the connector creation form
    - Add the provider icon/logo
-   - Update i18n files (all 8 locales) with the provider name
+   - Update i18n files (all 9 locales) with the provider name
 
 6. **Add tests**
    - Adapter unit tests (connector service)

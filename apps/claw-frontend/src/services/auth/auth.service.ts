@@ -1,10 +1,29 @@
-import { authRepository } from "@/repositories/auth/auth.repository";
-import { useAuthStore } from "@/stores/auth.store";
-import type { LoginRequest, LoginResponse, UserProfile } from "@/types";
+import { authRepository } from '@/repositories/auth/auth.repository';
+import { useAuthStore } from '@/stores/auth.store';
+import type {
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  RegisterResponse,
+  UserProfile,
+} from '@/types';
 
 export const authService = {
   async login(data: LoginRequest): Promise<LoginResponse> {
     const response = await authRepository.login(data);
+    useAuthStore.getState().setAuth({
+      accessToken: response.tokens.accessToken,
+      refreshToken: response.tokens.refreshToken,
+      user: response.user,
+    });
+    if (typeof document !== 'undefined') {
+      document.cookie = 'claw-auth-token=1; path=/; SameSite=Lax';
+    }
+    return response;
+  },
+
+  async register(data: RegisterRequest): Promise<RegisterResponse> {
+    const response = await authRepository.register(data);
     useAuthStore.getState().setAuth({
       accessToken: response.tokens.accessToken,
       refreshToken: response.tokens.refreshToken,
@@ -37,7 +56,7 @@ export const authService = {
     const { refreshToken } = useAuthStore.getState();
     if (!refreshToken) {
       useAuthStore.getState().clearAuth();
-      throw new Error("No refresh token available");
+      throw new Error('No refresh token available');
     }
     const response = await authRepository.refresh(refreshToken);
     useAuthStore.getState().setTokens({

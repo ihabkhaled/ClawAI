@@ -64,21 +64,21 @@ apps/claw-routing-service/src/modules/routing/constants/locale-keywords/
 
 Activation: `ROUTING_R7_SUPPORTED_LOCALES=en,ar,es,de` (extend per release).
 
-Roadmap: fr, it, pt, ru, hi, ja, zh-cn (post-stream).
+Roadmap: fr, hi, it, pt, ru, hi, ja, zh-cn (post-stream).
 
 ## Acceptance criteria
 
-| # | Test | Expected |
-|---|------|----------|
-| 1 | Arabic message "كود تصنيف صور" | `detectedLanguage=ar`, classified as Coding via AR keywords |
-| 2 | Spanish "Necesito un médico" | `detectedLanguage=es`, classified as Medical via ES keywords |
-| 3 | German "Wie funktioniert dieses Gesetz?" | `detectedLanguage=de`, classified as Legal via DE keywords |
-| 4 | Code-mixed "Write me a 'دالة' in Python" | `isCodeMixed=true`, primary lang detected, both keyword sets scanned |
-| 5 | Arabic + routing prefers `claude-opus-4` (high AR strength) | candidate score boosted; opus wins over gemini-flash |
-| 6 | RTL message → response system prompt includes RTL hint | when flag enabled |
-| 7 | Language confidence < 0.6 | falls through to EN keywords; tag `language_uncertain` |
-| 8 | Unsupported locale (e.g. hi for now) | detected + saved + classifier falls back to EN |
-| 9 | Performance: detection adds <10ms | cld3 is fast; measure p95 |
+| #   | Test                                                        | Expected                                                             |
+| --- | ----------------------------------------------------------- | -------------------------------------------------------------------- |
+| 1   | Arabic message "كود تصنيف صور"                              | `detectedLanguage=ar`, classified as Coding via AR keywords          |
+| 2   | Spanish "Necesito un médico"                                | `detectedLanguage=es`, classified as Medical via ES keywords         |
+| 3   | German "Wie funktioniert dieses Gesetz?"                    | `detectedLanguage=de`, classified as Legal via DE keywords           |
+| 4   | Code-mixed "Write me a 'دالة' in Python"                    | `isCodeMixed=true`, primary lang detected, both keyword sets scanned |
+| 5   | Arabic + routing prefers `claude-opus-4` (high AR strength) | candidate score boosted; opus wins over gemini-flash                 |
+| 6   | RTL message → response system prompt includes RTL hint      | when flag enabled                                                    |
+| 7   | Language confidence < 0.6                                   | falls through to EN keywords; tag `language_uncertain`               |
+| 8   | Unsupported locale (e.g. hi for now)                        | detected + saved + classifier falls back to EN                       |
+| 9   | Performance: detection adds <10ms                           | cld3 is fast; measure p95                                            |
 
 ## Endpoint contract
 
@@ -118,13 +118,13 @@ Seeded via `apps/claw-routing-service/prisma/seed/language-strength.seed.ts`.
 
 ```
 apps/claw-routing-service/src/modules/language-detection/managers/__tests__/language-classifier.manager.spec.ts
-  - 8 languages detected correctly with confidence > 0.8
+  - 9 languages detected correctly with confidence > 0.8
   - code-mixed detected
   - very short message (1 word) returns 'en' fallback
   - empty message returns null
 
 qa/test-routing-r7-language-detection.sh
-  - 20 prompts in 8 languages, assert detection correct
+  - 20 prompts in 9 languages, assert detection correct
   - assert routing biases toward stronger-language models
 ```
 

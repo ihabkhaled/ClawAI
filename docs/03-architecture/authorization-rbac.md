@@ -2,7 +2,7 @@
 
 ## Overview
 
-ClawAI enforces Role-Based Access Control (RBAC) with three roles: ADMIN, OPERATOR, and VIEWER. Authorization is implemented through two NestJS guards from the `shared-auth` package, applied across all 13 backend services.
+ClawAI enforces Role-Based Access Control (RBAC) with three roles: ADMIN, OPERATOR, and VIEWER. Authorization is implemented through two NestJS guards from the `shared-auth` package, applied across all 17 backend services.
 
 ---
 
@@ -30,27 +30,27 @@ Typical users: Auditors, observers, stakeholders needing visibility without writ
 
 ## Permission Matrix
 
-| Resource | ADMIN | OPERATOR | VIEWER |
-| --- | --- | --- | --- |
-| **Users** | Full CRUD | -- | -- |
-| **System Settings** | Full CRUD | -- | -- |
-| **Connectors** | Full CRUD | Read | -- |
-| **Routing Policies** | Full CRUD | Read | -- |
-| **Chat Threads (own)** | Full CRUD | Full CRUD | Read |
-| **Chat Threads (all)** | Full CRUD | -- | -- |
-| **Chat Messages (own)** | Full CRUD | Full CRUD | Read |
-| **Memories (own)** | Full CRUD | Full CRUD | Read |
-| **Context Packs (own)** | Full CRUD | Full CRUD | Read |
-| **Files (own)** | Full CRUD | Full CRUD | -- |
-| **Audit Logs** | Full access | Read | -- |
-| **Usage Ledger** | Full access | Read | -- |
-| **Ollama Models** | Full CRUD | Read | -- |
-| **Model Catalog** | Full access | Read + Pull | Read |
-| **Health Status** | Full access | Full access | Full access |
-| **Server Logs** | Full access | -- | -- |
-| **Client Logs** | Full access | -- | -- |
-| **Image Generation** | Full access | Full access | -- |
-| **File Generation** | Full access | Full access | -- |
+| Resource                | ADMIN       | OPERATOR    | VIEWER      |
+| ----------------------- | ----------- | ----------- | ----------- |
+| **Users**               | Full CRUD   | --          | --          |
+| **System Settings**     | Full CRUD   | --          | --          |
+| **Connectors**          | Full CRUD   | Read        | --          |
+| **Routing Policies**    | Full CRUD   | Read        | --          |
+| **Chat Threads (own)**  | Full CRUD   | Full CRUD   | Read        |
+| **Chat Threads (all)**  | Full CRUD   | --          | --          |
+| **Chat Messages (own)** | Full CRUD   | Full CRUD   | Read        |
+| **Memories (own)**      | Full CRUD   | Full CRUD   | Read        |
+| **Context Packs (own)** | Full CRUD   | Full CRUD   | Read        |
+| **Files (own)**         | Full CRUD   | Full CRUD   | --          |
+| **Audit Logs**          | Full access | Read        | --          |
+| **Usage Ledger**        | Full access | Read        | --          |
+| **Ollama Models**       | Full CRUD   | Read        | --          |
+| **Model Catalog**       | Full access | Read + Pull | Read        |
+| **Health Status**       | Full access | Full access | Full access |
+| **Server Logs**         | Full access | --          | --          |
+| **Client Logs**         | Full access | --          | --          |
+| **Image Generation**    | Full access | Full access | --          |
+| **File Generation**     | Full access | Full access | --          |
 
 ---
 
@@ -58,7 +58,7 @@ Typical users: Auditors, observers, stakeholders needing visibility without writ
 
 ### AuthGuard (Global)
 
-Applied to every endpoint across all 13 services. Part of the `shared-auth` package.
+Applied to every endpoint across all 17 services. Part of the `shared-auth` package.
 
 ```
 Request -> AuthGuard
@@ -77,6 +77,7 @@ Request -> AuthGuard
 ```
 
 **Bypass**: Endpoints decorated with `@Public()` skip authentication entirely. Used for:
+
 - `POST /auth/login`
 - `POST /auth/refresh`
 - `GET /health` (all services)
@@ -122,13 +123,13 @@ Beyond role-based access, ClawAI enforces resource ownership at the service laye
 
 ### User-Scoped Resources
 
-| Resource | Ownership Check |
-| --- | --- |
-| Chat Threads | `thread.userId === currentUser.id` |
-| Chat Messages | Via thread ownership |
-| Memories | `memory.userId === currentUser.id` |
-| Context Packs | `pack.userId === currentUser.id` |
-| Files | `file.userId === currentUser.id` |
+| Resource      | Ownership Check                    |
+| ------------- | ---------------------------------- |
+| Chat Threads  | `thread.userId === currentUser.id` |
+| Chat Messages | Via thread ownership               |
+| Memories      | `memory.userId === currentUser.id` |
+| Context Packs | `pack.userId === currentUser.id`   |
+| Files         | `file.userId === currentUser.id`   |
 
 ### Enforcement Pattern
 
@@ -147,14 +148,14 @@ ADMIN users can bypass ownership checks for administrative purposes (e.g., viewi
 
 ## Error Responses
 
-| Status | Code | When |
-| --- | --- | --- |
-| 401 | UNAUTHORIZED | Missing, invalid, or expired JWT |
-| 403 | FORBIDDEN | Role not allowed for endpoint |
-| 403 | FORBIDDEN_THREAD_ACCESS | Accessing another user's thread |
-| 403 | FORBIDDEN_MEMORY_ACCESS | Accessing another user's memory |
-| 403 | FORBIDDEN_CONTEXT_PACK_ACCESS | Accessing another user's context pack |
-| 403 | FORBIDDEN_FILE_ACCESS | Accessing another user's file |
+| Status | Code                          | When                                  |
+| ------ | ----------------------------- | ------------------------------------- |
+| 401    | UNAUTHORIZED                  | Missing, invalid, or expired JWT      |
+| 403    | FORBIDDEN                     | Role not allowed for endpoint         |
+| 403    | FORBIDDEN_THREAD_ACCESS       | Accessing another user's thread       |
+| 403    | FORBIDDEN_MEMORY_ACCESS       | Accessing another user's memory       |
+| 403    | FORBIDDEN_CONTEXT_PACK_ACCESS | Accessing another user's context pack |
+| 403    | FORBIDDEN_FILE_ACCESS         | Accessing another user's file         |
 
 ---
 

@@ -8,31 +8,31 @@
 
 All types live in `src/types/` and are re-exported from `src/types/index.ts`:
 
-| File                          | Purpose                                              |
-| ----------------------------- | ---------------------------------------------------- |
-| `api.types.ts`                | API response wrappers, pagination, error types       |
-| `audit.types.ts`              | Audit log and usage record types                     |
-| `auth.types.ts`               | User, session, login/register payloads               |
-| `catalog.types.ts`            | Model catalog entries, download job types             |
-| `chat.types.ts`               | Thread, message, attachment, stream event types       |
-| `component.types.ts`          | Shared component prop types                          |
-| `connector.types.ts`          | Connector, connector model types                     |
-| `context-pack.types.ts`       | Context pack, context pack item types                |
-| `dashboard.types.ts`          | Dashboard statistics types                           |
-| `file.types.ts`               | File, file chunk types                               |
-| `file-generation.types.ts`    | File generation request/response types               |
-| `health.types.ts`             | Health check, service status types                   |
-| `hook.types.ts`               | Hook return types (controller hooks)                 |
-| `i18n.types.ts`               | Translation dictionary structure                     |
-| `image-generation.types.ts`   | Image generation request/response types              |
-| `log.types.ts`                | Client/server log types                              |
-| `markdown.types.ts`           | Markdown rendering types                             |
-| `memory.types.ts`             | Memory record, memory filter types                   |
-| `preference.types.ts`         | User preference types                                |
-| `routing.types.ts`            | Routing decision, policy, mode types                 |
-| `store.types.ts`              | Zustand store state and action types                 |
-| `user.types.ts`               | User profile, role types                             |
-| `index.ts`                    | Re-exports all types from all files                  |
+| File                        | Purpose                                         |
+| --------------------------- | ----------------------------------------------- |
+| `api.types.ts`              | API response wrappers, pagination, error types  |
+| `audit.types.ts`            | Audit log and usage record types                |
+| `auth.types.ts`             | User, session, login/register payloads          |
+| `catalog.types.ts`          | Model catalog entries, download job types       |
+| `chat.types.ts`             | Thread, message, attachment, stream event types |
+| `component.types.ts`        | Shared component prop types                     |
+| `connector.types.ts`        | Connector, connector model types                |
+| `context-pack.types.ts`     | Context pack, context pack item types           |
+| `dashboard.types.ts`        | Dashboard statistics types                      |
+| `file.types.ts`             | File, file chunk types                          |
+| `file-generation.types.ts`  | File generation request/response types          |
+| `health.types.ts`           | Health check, service status types              |
+| `hook.types.ts`             | Hook return types (controller hooks)            |
+| `i18n.types.ts`             | Translation dictionary structure                |
+| `image-generation.types.ts` | Image generation request/response types         |
+| `log.types.ts`              | Client/server log types                         |
+| `markdown.types.ts`         | Markdown rendering types                        |
+| `memory.types.ts`           | Memory record, memory filter types              |
+| `preference.types.ts`       | User preference types                           |
+| `routing.types.ts`          | Routing decision, policy, mode types            |
+| `store.types.ts`            | Zustand store state and action types            |
+| `user.types.ts`             | User profile, role types                        |
+| `index.ts`                  | Re-exports all types from all files             |
 
 ---
 
@@ -40,38 +40,38 @@ All types live in `src/types/` and are re-exported from `src/types/index.ts`:
 
 All enums live in `src/enums/` and are re-exported from `src/enums/index.ts`:
 
-| File                              | Enum Name                   | Values                                |
-| --------------------------------- | --------------------------- | ------------------------------------- |
-| `audit-action.enum.ts`            | `AuditAction`               | LOGIN, LOGOUT, CREATE, UPDATE, etc.   |
-| `audit-severity.enum.ts`          | `AuditSeverity`             | LOW, MEDIUM, HIGH, CRITICAL          |
-| `badge-variant.enum.ts`           | `BadgeVariant`              | DEFAULT, SUCCESS, WARNING, ERROR     |
-| `component-size.enum.ts`          | `ComponentSize`             | SM, MD, LG                           |
-| `connector-auth-type.enum.ts`     | `ConnectorAuthType`         | API_KEY, OAUTH                       |
-| `connector-provider.enum.ts`      | `ConnectorProvider`         | OPENAI, ANTHROPIC, GOOGLE, etc.      |
-| `connector-status.enum.ts`        | `ConnectorStatus`           | ACTIVE, INACTIVE, ERROR              |
-| `context-pack-item-type.enum.ts`  | `ContextPackItemType`       | TEXT, FILE                           |
-| `direction.enum.ts`               | `Direction`                 | LTR, RTL                            |
-| `file-generation-status.enum.ts`  | `FileGenerationStatus`      | PENDING, PROCESSING, COMPLETED, FAILED |
-| `file-ingestion-status.enum.ts`   | `FileIngestionStatus`       | PENDING, PROCESSING, COMPLETED, FAILED |
-| `health-status.enum.ts`           | `HealthStatus`              | HEALTHY, DEGRADED, UNHEALTHY         |
-| `http-method.enum.ts`             | `HttpMethod`                | GET, POST, PUT, PATCH, DELETE        |
-| `image-generation-status.enum.ts` | `ImageGenerationStatus`     | PENDING, PROCESSING, COMPLETED, FAILED |
-| `locale.enum.ts`                  | `Locale`                    | EN, AR, DE, ES, FR, IT, PT, RU       |
-| `log-level.enum.ts`               | `LogLevel`                  | DEBUG, INFO, WARN, ERROR             |
-| `logs-tab.enum.ts`                | `LogsTab`                   | CLIENT, SERVER                       |
-| `memory-filter-value.enum.ts`     | `MemoryFilterValue`         | ALL, ENABLED, DISABLED               |
-| `memory-type.enum.ts`             | `MemoryType`                | FACT, PREFERENCE, INSTRUCTION, SUMMARY |
-| `message-feedback.enum.ts`        | `MessageFeedback`           | THUMBS_UP, THUMBS_DOWN              |
-| `message-role.enum.ts`            | `MessageRole`               | USER, ASSISTANT, SYSTEM              |
-| `model-lifecycle.enum.ts`         | `ModelLifecycle`            | ACTIVE, DEPRECATED, PREVIEW          |
-| `routing-mode.enum.ts`            | `RoutingMode`               | AUTO, MANUAL_MODEL, LOCAL_ONLY, etc.  |
-| `service-status.enum.ts`          | `ServiceStatus`             | UP, DOWN, DEGRADED                   |
-| `stream-event-type.enum.ts`       | `StreamEventType`           | FALLBACK_ATTEMPT, ERROR, COMPLETION  |
-| `theme.enum.ts`                   | `Theme`                     | LIGHT, DARK, SYSTEM                  |
-| `user-appearance-preference.enum.ts` | `UserAppearancePreference` | LIGHT, DARK, SYSTEM               |
-| `user-language-preference.enum.ts`| `UserLanguagePreference`    | EN, AR, DE, ES, FR, IT, PT, RU       |
-| `user-role.enum.ts`               | `UserRole`                  | ADMIN, OPERATOR, VIEWER              |
-| `user-status.enum.ts`             | `UserStatus`                | ACTIVE, INACTIVE, SUSPENDED          |
+| File                                 | Enum Name                  | Values                                 |
+| ------------------------------------ | -------------------------- | -------------------------------------- |
+| `audit-action.enum.ts`               | `AuditAction`              | LOGIN, LOGOUT, CREATE, UPDATE, etc.    |
+| `audit-severity.enum.ts`             | `AuditSeverity`            | LOW, MEDIUM, HIGH, CRITICAL            |
+| `badge-variant.enum.ts`              | `BadgeVariant`             | DEFAULT, SUCCESS, WARNING, ERROR       |
+| `component-size.enum.ts`             | `ComponentSize`            | SM, MD, LG                             |
+| `connector-auth-type.enum.ts`        | `ConnectorAuthType`        | API_KEY, OAUTH                         |
+| `connector-provider.enum.ts`         | `ConnectorProvider`        | OPENAI, ANTHROPIC, GOOGLE, etc.        |
+| `connector-status.enum.ts`           | `ConnectorStatus`          | ACTIVE, INACTIVE, ERROR                |
+| `context-pack-item-type.enum.ts`     | `ContextPackItemType`      | TEXT, FILE                             |
+| `direction.enum.ts`                  | `Direction`                | LTR, RTL                               |
+| `file-generation-status.enum.ts`     | `FileGenerationStatus`     | PENDING, PROCESSING, COMPLETED, FAILED |
+| `file-ingestion-status.enum.ts`      | `FileIngestionStatus`      | PENDING, PROCESSING, COMPLETED, FAILED |
+| `health-status.enum.ts`              | `HealthStatus`             | HEALTHY, DEGRADED, UNHEALTHY           |
+| `http-method.enum.ts`                | `HttpMethod`               | GET, POST, PUT, PATCH, DELETE          |
+| `image-generation-status.enum.ts`    | `ImageGenerationStatus`    | PENDING, PROCESSING, COMPLETED, FAILED |
+| `locale.enum.ts`                     | `Locale`                   | EN, AR, DE, ES, FR, HI, IT, PT, RU     |
+| `log-level.enum.ts`                  | `LogLevel`                 | DEBUG, INFO, WARN, ERROR               |
+| `logs-tab.enum.ts`                   | `LogsTab`                  | CLIENT, SERVER                         |
+| `memory-filter-value.enum.ts`        | `MemoryFilterValue`        | ALL, ENABLED, DISABLED                 |
+| `memory-type.enum.ts`                | `MemoryType`               | FACT, PREFERENCE, INSTRUCTION, SUMMARY |
+| `message-feedback.enum.ts`           | `MessageFeedback`          | THUMBS_UP, THUMBS_DOWN                 |
+| `message-role.enum.ts`               | `MessageRole`              | USER, ASSISTANT, SYSTEM                |
+| `model-lifecycle.enum.ts`            | `ModelLifecycle`           | ACTIVE, DEPRECATED, PREVIEW            |
+| `routing-mode.enum.ts`               | `RoutingMode`              | AUTO, MANUAL_MODEL, LOCAL_ONLY, etc.   |
+| `service-status.enum.ts`             | `ServiceStatus`            | UP, DOWN, DEGRADED                     |
+| `stream-event-type.enum.ts`          | `StreamEventType`          | FALLBACK_ATTEMPT, ERROR, COMPLETION    |
+| `theme.enum.ts`                      | `Theme`                    | LIGHT, DARK, SYSTEM                    |
+| `user-appearance-preference.enum.ts` | `UserAppearancePreference` | LIGHT, DARK, SYSTEM                    |
+| `user-language-preference.enum.ts`   | `UserLanguagePreference`   | EN, AR, DE, ES, FR, HI, IT, PT, RU     |
+| `user-role.enum.ts`                  | `UserRole`                 | ADMIN, OPERATOR, VIEWER                |
+| `user-status.enum.ts`                | `UserStatus`               | ACTIVE, INACTIVE, SUSPENDED            |
 
 ---
 

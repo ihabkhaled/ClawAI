@@ -8,17 +8,17 @@ The following root-level docs were updated in Phase 3:
 
 - `README.md` — fixed service count (16), added research service (4016), fixed workspace port (4017)
 - `INSTALL.md` — added research service container + DB, fixed workspace port (4017), 35-container count
-- `ARCHITECTURE.md` — full rewrite: all 16 services, adapter factory table, SSE pattern, fire-and-forget pattern, chat-service 14-manager pipeline, routing 5-stage pipeline, end-to-end message flow
+- `ARCHITECTURE.md` — full rewrite: all 17 services, adapter factory table, SSE pattern, fire-and-forget pattern, chat-service 14-manager pipeline, routing 5-stage pipeline, end-to-end message flow
 - `ENVIRONMENT_VARIABLES.md` — full rewrite: all 12 PG instances, all inter-service URLs, per-service ports, workspace OAuth vars, research vars, image/file-gen/agent/ClamAV vars
 - `SECURITY.md` — full rewrite: 16-service secret table, file upload 4-check pipeline, workspace OAuth2/PKCE, agent terminal approval, RBAC 3 roles, helmet section, pino redaction
-- `TESTING.md` — full rewrite: hard testing mandate (T1-T7), 8 delivery blockers, all 16 services in test tables, manual matrix expanded with research/workspace/agent
+- `TESTING.md` — full rewrite: hard testing mandate (T1-T7), 8 delivery blockers, all 17 services in test tables, manual matrix expanded with research/workspace/agent
 
 ## Phase 2 Status (2026-04-22): COMPLETED
 
 The following docs were created in Phase 2:
 
 - `docs/04-backend/utilities-reference.md` — All 89 backend utilities cataloged by service
-- `docs/04-backend/managers-reference.md` — All 47 managers across 13 services
+- `docs/04-backend/managers-reference.md` — All 47 managers across 17 services
 - `docs/04-backend/adapters-reference.md` — All 33 adapters (connector, image, file-gen, ollama, research, workspace)
 - `docs/04-backend/shared-packages-reference.md` — Updated (already existed)
 - `docs/04-backend/service-guide-workspace.md` — Workspace service architecture

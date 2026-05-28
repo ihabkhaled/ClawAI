@@ -91,6 +91,7 @@ Even though all PostgreSQL databases run on the same host (in development), serv
 ### Rule 3: Data Access via APIs
 
 When a service needs data from another service, it uses:
+
 - **HTTP**: For synchronous request-response needs
 - **RabbitMQ events**: For async notifications with data payloads
 
@@ -104,28 +105,28 @@ Events carry all data the consumer needs. The consumer does not need to call bac
 
 ### HTTP (Synchronous)
 
-| Caller | Callee | Endpoint | Purpose |
-| --- | --- | --- | --- |
-| chat-service | memory-service | GET /memories | Fetch user memories for context |
-| chat-service | memory-service | GET /context-packs/:id/items | Fetch context pack items |
-| chat-service | file-service | GET /files/:id/chunks | Fetch file chunks for context |
-| chat-service | ollama-service | POST /ollama/generate | Local LLM generation |
-| chat-service | connector-service | POST /connectors/:id/proxy | Cloud provider API call |
-| routing-service | ollama-service | POST /ollama/generate | Router model inference |
-| routing-service | ollama-service | GET /internal/ollama/installed-models | Get installed models for prompt building |
-| health-service | all services | GET /health | Health aggregation |
+| Caller          | Callee            | Endpoint                              | Purpose                                  |
+| --------------- | ----------------- | ------------------------------------- | ---------------------------------------- |
+| chat-service    | memory-service    | GET /memories                         | Fetch user memories for context          |
+| chat-service    | memory-service    | GET /context-packs/:id/items          | Fetch context pack items                 |
+| chat-service    | file-service      | GET /files/:id/chunks                 | Fetch file chunks for context            |
+| chat-service    | ollama-service    | POST /ollama/generate                 | Local LLM generation                     |
+| chat-service    | connector-service | POST /connectors/:id/proxy            | Cloud provider API call                  |
+| routing-service | ollama-service    | POST /ollama/generate                 | Router model inference                   |
+| routing-service | ollama-service    | GET /internal/ollama/installed-models | Get installed models for prompt building |
+| health-service  | all services      | GET /health                           | Health aggregation                       |
 
 ### RabbitMQ (Asynchronous)
 
-| Publisher | Event | Consumer(s) | Data Flow |
-| --- | --- | --- | --- |
-| chat-service | message.created | routing-service | Message content + thread settings |
-| routing-service | message.routed | chat-service | Provider/model selection + fallback |
-| chat-service | message.completed | memory-service | Full message content for extraction |
-| chat-service | message.completed | audit-service | Token counts, provider, latency |
-| auth-service | user.login | audit-service | User ID, IP, user agent |
-| connector-service | connector.synced | routing-service | Available models updated |
-| all services | log.server | server-logs-service | Structured log entry |
+| Publisher         | Event             | Consumer(s)         | Data Flow                           |
+| ----------------- | ----------------- | ------------------- | ----------------------------------- |
+| chat-service      | message.created   | routing-service     | Message content + thread settings   |
+| routing-service   | message.routed    | chat-service        | Provider/model selection + fallback |
+| chat-service      | message.completed | memory-service      | Full message content for extraction |
+| chat-service      | message.completed | audit-service       | Token counts, provider, latency     |
+| auth-service      | user.login        | audit-service       | User ID, IP, user agent             |
+| connector-service | connector.synced  | routing-service     | Available models updated            |
+| all services      | log.server        | server-logs-service | Structured log entry                |
 
 ---
 
@@ -143,7 +144,7 @@ Events carry all data the consumer needs. The consumer does not need to call bac
 
 1. **Increased latency**: Cross-service data access requires HTTP calls instead of simple joins.
 2. **Eventual consistency**: RabbitMQ events introduce a delay between data changes and downstream updates.
-3. **More infrastructure**: 9 PostgreSQL databases + 3 MongoDB databases require more resources than a single shared database.
+3. **More infrastructure**: 13 PostgreSQL databases + 3 MongoDB databases require more resources than a single shared database.
 4. **Data duplication**: Event payloads sometimes duplicate data that already exists in the publisher's database.
 
 ### Mitigations

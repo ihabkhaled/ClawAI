@@ -6,7 +6,7 @@ Accepted (2025-Q1)
 
 ## Context
 
-With 13 microservices, the team needed to decide how to handle data persistence. The traditional approach of a shared database is simpler to set up but creates tight coupling between services. When service A reads service B's tables directly, schema changes in B require coordinated deployments of both services.
+With 17 microservices, the team needed to decide how to handle data persistence. The traditional approach of a shared database is simpler to set up but creates tight coupling between services. When service A reads service B's tables directly, schema changes in B require coordinated deployments of both services.
 
 ClawAI's domains have different data characteristics:
 
@@ -19,20 +19,20 @@ ClawAI's domains have different data characteristics:
 
 Each service owns its own database instance. No service may read or write another service's database.
 
-| Service    | Database          | Instance       | Rationale                          |
-| ---------- | ----------------- | -------------- | ---------------------------------- |
-| auth       | PostgreSQL        | claw_auth      | Relational users, sessions         |
-| chat       | PostgreSQL        | claw_chat      | Threads, messages, attachments     |
-| connector  | PostgreSQL        | claw_connectors| Encrypted configs, model registry  |
-| routing    | PostgreSQL        | claw_routing   | Decisions, policies                |
-| memory     | PostgreSQL+pgvector| claw_memory   | Memory records with embeddings     |
-| file       | PostgreSQL        | claw_files     | File metadata, chunks              |
-| ollama     | PostgreSQL        | claw_ollama    | Local models, pull jobs, catalog   |
-| image      | PostgreSQL        | claw_images    | Image generation records           |
-| file-gen   | PostgreSQL        | claw_file_gen  | File generation records            |
-| audit      | MongoDB           | claw_audit     | Append-heavy audit logs, ledger    |
-| client-logs| MongoDB           | claw_logs      | TTL 30d, unstructured frontend logs|
-| server-logs| MongoDB           | claw_logs      | TTL 30d, structured backend logs   |
+| Service     | Database            | Instance        | Rationale                           |
+| ----------- | ------------------- | --------------- | ----------------------------------- |
+| auth        | PostgreSQL          | claw_auth       | Relational users, sessions          |
+| chat        | PostgreSQL          | claw_chat       | Threads, messages, attachments      |
+| connector   | PostgreSQL          | claw_connectors | Encrypted configs, model registry   |
+| routing     | PostgreSQL          | claw_routing    | Decisions, policies                 |
+| memory      | PostgreSQL+pgvector | claw_memory     | Memory records with embeddings      |
+| file        | PostgreSQL          | claw_files      | File metadata, chunks               |
+| ollama      | PostgreSQL          | claw_ollama     | Local models, pull jobs, catalog    |
+| image       | PostgreSQL          | claw_images     | Image generation records            |
+| file-gen    | PostgreSQL          | claw_file_gen   | File generation records             |
+| audit       | MongoDB             | claw_audit      | Append-heavy audit logs, ledger     |
+| client-logs | MongoDB             | claw_logs       | TTL 30d, unstructured frontend logs |
+| server-logs | MongoDB             | claw_logs       | TTL 30d, structured backend logs    |
 
 Cross-service data access is achieved through:
 
@@ -54,7 +54,7 @@ Cross-service data access is achieved through:
 - **Data duplication**: Some data is denormalized across services (e.g., userId appears in every service's tables).
 - **No cross-service joins**: Assembling a complete view (e.g., "show me all activity for user X") requires querying multiple services.
 - **Eventual consistency**: After publishing an event, the consumer may not have processed it yet. The UI must handle this gracefully.
-- **Operational overhead**: 9 PostgreSQL instances + 1 MongoDB instance to manage, back up, and monitor.
+- **Operational overhead**: 13 PostgreSQL instances + 1 MongoDB instance to manage, back up, and monitor.
 - **Development environment cost**: Docker Compose must spin up 10 database containers.
 
 ## Alternatives Considered

@@ -8,17 +8,17 @@ Make the routing service production-grade with real test coverage, regression su
 
 ## Test coverage targets
 
-| Component | Current (est) | Target initial | Target final |
-|-----------|--------------:|---------------:|-------------:|
-| `routing.manager.ts` (1635 LOC) | ~10% | 80% | 92% |
-| `route-evaluator/` v2 | ~30% | 80% | 92% |
-| `scoring/scoring-engine.manager.ts` | ~20% | 80% | 92% |
-| `workflows/workflow-orchestrator.manager.ts` | 0% (scaffold) | 80% (after R.3) | 92% |
-| `classifier/classifier.manager.ts` | ~40% | 85% | 92% |
-| `learning-loop/learning-loop.manager.ts` | ~30% | 80% | 92% |
-| `reliability/circuit-breaker.manager.ts` | ~50% | 85% | 92% |
-| `sync/router-sync.manager.ts` | ~40% | 80% | 92% |
-| `observability/observability.service.ts` | ~30% | 75% | 90% |
+| Component                                    | Current (est) |  Target initial | Target final |
+| -------------------------------------------- | ------------: | --------------: | -----------: |
+| `routing.manager.ts` (1635 LOC)              |          ~10% |             80% |          92% |
+| `route-evaluator/` v2                        |          ~30% |             80% |          92% |
+| `scoring/scoring-engine.manager.ts`          |          ~20% |             80% |          92% |
+| `workflows/workflow-orchestrator.manager.ts` | 0% (scaffold) | 80% (after R.3) |          92% |
+| `classifier/classifier.manager.ts`           |          ~40% |             85% |          92% |
+| `learning-loop/learning-loop.manager.ts`     |          ~30% |             80% |          92% |
+| `reliability/circuit-breaker.manager.ts`     |          ~50% |             85% |          92% |
+| `sync/router-sync.manager.ts`                |          ~40% |             80% |          92% |
+| `observability/observability.service.ts`     |          ~30% |             75% |          90% |
 
 ## Test artifacts to ship
 
@@ -26,7 +26,7 @@ Make the routing service production-grade with real test coverage, regression su
 apps/claw-routing-service/test/
 ├── fixtures/
 │   ├── routing-500-prompts.json                    (500-prompt regression set)
-│   ├── multilingual-routing-prompts.json           (top 8 languages, 25 each)
+│   ├── multilingual-routing-prompts.json           (top 9 languages, 25 each)
 │   ├── multimodal-routing-prompts.json             (PDF/YouTube/audio/video × 25 each)
 │   ├── replay-confirmed-regressions.json           (promoted suspicious cases)
 │   └── provider-mock-responses.json                (mocks for OpenAI/Anthropic/Gemini/etc.)
@@ -128,14 +128,14 @@ MUST PASS before any merge to main:
 
 ## Acceptance
 
-| # | Test | Expected |
-|---|------|----------|
-| 1 | npm run test:cov in clean repo | ≥80% statements/branches |
-| 2 | Add a routing regression by hand-editing routing.constants.ts | 500-prompt regression suite catches it; PR blocked |
-| 3 | Run k6 load test | p95 routing decision < 50ms at 100 req/s |
-| 4 | Drift detector against frozen baseline | Identifies the change; emits alert |
-| 5 | Add a new migration + rollback test | Both forward + backward succeed without data loss |
-| 6 | Provider mock test (no live cloud) | Tests pass deterministically; runs in CI |
+| #   | Test                                                          | Expected                                           |
+| --- | ------------------------------------------------------------- | -------------------------------------------------- |
+| 1   | npm run test:cov in clean repo                                | ≥80% statements/branches                           |
+| 2   | Add a routing regression by hand-editing routing.constants.ts | 500-prompt regression suite catches it; PR blocked |
+| 3   | Run k6 load test                                              | p95 routing decision < 50ms at 100 req/s           |
+| 4   | Drift detector against frozen baseline                        | Identifies the change; emits alert                 |
+| 5   | Add a new migration + rollback test                           | Both forward + backward succeed without data loss  |
+| 6   | Provider mock test (no live cloud)                            | Tests pass deterministically; runs in CI           |
 
 ## Rollback
 

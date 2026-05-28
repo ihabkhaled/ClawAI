@@ -6,7 +6,7 @@ Accepted (2025-Q1)
 
 ## Context
 
-The Next.js frontend communicates with 13 backend services through an Nginx reverse proxy. Nearly every page fetches data from one or more services: threads, messages, connectors, models, memories, files, audit logs, and more.
+The Next.js frontend communicates with 17 backend services through an Nginx reverse proxy. Nearly every page fetches data from one or more services: threads, messages, connectors, models, memories, files, audit logs, and more.
 
 Managing server state (fetched data, loading states, error states, cache invalidation, refetching) manually with `useState` + `useEffect` leads to:
 

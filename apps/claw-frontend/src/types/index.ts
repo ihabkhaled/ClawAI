@@ -1,5 +1,12 @@
 export type { User, UserProfile } from './user.types';
-export type { LoginRequest, LoginResponse, RefreshResponse, AuthState } from './auth.types';
+export type {
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  RegisterResponse,
+  RefreshResponse,
+  AuthState,
+} from './auth.types';
 export type {
   ChatThread,
   ChatMessage,

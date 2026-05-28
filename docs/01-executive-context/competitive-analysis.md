@@ -10,17 +10,17 @@ ClawAI occupies a unique position in the AI tooling market: a self-hosted, multi
 
 ### Category: AI Chat Interfaces
 
-| Product | Type | Providers | Local AI | Privacy | Routing | Self-Hosted |
-| --- | --- | --- | --- | --- | --- | --- |
-| **ClawAI** | Orchestration Platform | 5 cloud + local | Yes (Ollama, 30 models) | Local-first | 7 intelligent modes | Yes |
-| ChatGPT | Single Provider | OpenAI only | No | Cloud only | None | No |
-| Claude.ai | Single Provider | Anthropic only | No | Cloud only | None | No |
-| Google AI Studio | Single Provider | Google only | No | Cloud only | None | No |
-| OpenRouter | Multi-Provider API | 100+ models | No | Cloud | Manual selection | No |
-| Jan.ai | Local AI Client | Local only | Yes | Local only | None | Yes |
-| LM Studio | Local AI Client | Local only | Yes | Local only | None | Yes |
-| Ollama WebUI (Open WebUI) | Local + Cloud | Limited cloud | Yes | Local-first | None | Yes |
-| LibreChat | Multi-Provider Chat | Several cloud | Limited | Cloud | Manual | Yes |
+| Product                   | Type                   | Providers       | Local AI                | Privacy     | Routing             | Self-Hosted |
+| ------------------------- | ---------------------- | --------------- | ----------------------- | ----------- | ------------------- | ----------- |
+| **ClawAI**                | Orchestration Platform | 5 cloud + local | Yes (Ollama, 30 models) | Local-first | 7 intelligent modes | Yes         |
+| ChatGPT                   | Single Provider        | OpenAI only     | No                      | Cloud only  | None                | No          |
+| Claude.ai                 | Single Provider        | Anthropic only  | No                      | Cloud only  | None                | No          |
+| Google AI Studio          | Single Provider        | Google only     | No                      | Cloud only  | None                | No          |
+| OpenRouter                | Multi-Provider API     | 100+ models     | No                      | Cloud       | Manual selection    | No          |
+| Jan.ai                    | Local AI Client        | Local only      | Yes                     | Local only  | None                | Yes         |
+| LM Studio                 | Local AI Client        | Local only      | Yes                     | Local only  | None                | Yes         |
+| Ollama WebUI (Open WebUI) | Local + Cloud          | Limited cloud   | Yes                     | Local-first | None                | Yes         |
+| LibreChat                 | Multi-Provider Chat    | Several cloud   | Limited                 | Cloud       | Manual              | Yes         |
 
 ---
 
@@ -28,18 +28,18 @@ ClawAI occupies a unique position in the AI tooling market: a self-hosted, multi
 
 ### vs ChatGPT / Claude / Gemini (Single-Provider Apps)
 
-| Dimension | Single Provider | ClawAI |
-| --- | --- | --- |
-| **Best model for task** | Locked to one provider | AUTO routes to best model per task |
-| **Provider outage** | Complete downtime | Automatic fallback to alternatives |
-| **Cost control** | Pay for everything | Free local models for simple tasks |
-| **Privacy** | All data to cloud | LOCAL_ONLY keeps data on-premises |
-| **Memory** | Limited (per-conversation) | Cross-conversation extraction (FACT/PREFERENCE/INSTRUCTION) |
-| **Audit trail** | Minimal or none | Full audit + usage ledger |
-| **Access control** | Basic (teams) | RBAC with 3 roles, user management |
-| **File analysis** | Limited formats | JSON, CSV, Markdown, text with chunked context |
-| **Customization** | None | System prompts, temperature, context packs, routing policies |
-| **Self-hosted** | No | Yes (Docker Compose) |
+| Dimension               | Single Provider            | ClawAI                                                       |
+| ----------------------- | -------------------------- | ------------------------------------------------------------ |
+| **Best model for task** | Locked to one provider     | AUTO routes to best model per task                           |
+| **Provider outage**     | Complete downtime          | Automatic fallback to alternatives                           |
+| **Cost control**        | Pay for everything         | Free local models for simple tasks                           |
+| **Privacy**             | All data to cloud          | LOCAL_ONLY keeps data on-premises                            |
+| **Memory**              | Limited (per-conversation) | Cross-conversation extraction (FACT/PREFERENCE/INSTRUCTION)  |
+| **Audit trail**         | Minimal or none            | Full audit + usage ledger                                    |
+| **Access control**      | Basic (teams)              | RBAC with 3 roles, user management                           |
+| **File analysis**       | Limited formats            | JSON, CSV, Markdown, text with chunked context               |
+| **Customization**       | None                       | System prompts, temperature, context packs, routing policies |
+| **Self-hosted**         | No                         | Yes (Docker Compose)                                         |
 
 **ClawAI advantage**: No vendor lock-in. Best model for each task. Privacy guarantees. Cost savings on simple queries.
 
@@ -47,17 +47,17 @@ ClawAI occupies a unique position in the AI tooling market: a self-hosted, multi
 
 ### vs OpenRouter (Multi-Provider API)
 
-| Dimension | OpenRouter | ClawAI |
-| --- | --- | --- |
-| **Access** | API only (no UI) | Full web UI + API |
-| **Local models** | No | Yes (Ollama, 30 models in catalog) |
-| **Routing** | Manual model selection | 7 intelligent modes with AUTO |
-| **Privacy** | All requests go through OpenRouter | Direct to providers or local |
-| **Memory** | None | Automatic memory extraction |
-| **Audit** | API logs only | Full audit trail + usage analytics |
-| **User management** | API keys | RBAC with ADMIN/OPERATOR/VIEWER |
-| **Self-hosted** | No | Yes |
-| **Cost** | Per-token markup | No markup (direct provider pricing + free local) |
+| Dimension           | OpenRouter                         | ClawAI                                           |
+| ------------------- | ---------------------------------- | ------------------------------------------------ |
+| **Access**          | API only (no UI)                   | Full web UI + API                                |
+| **Local models**    | No                                 | Yes (Ollama, 30 models in catalog)               |
+| **Routing**         | Manual model selection             | 7 intelligent modes with AUTO                    |
+| **Privacy**         | All requests go through OpenRouter | Direct to providers or local                     |
+| **Memory**          | None                               | Automatic memory extraction                      |
+| **Audit**           | API logs only                      | Full audit trail + usage analytics               |
+| **User management** | API keys                           | RBAC with ADMIN/OPERATOR/VIEWER                  |
+| **Self-hosted**     | No                                 | Yes                                              |
+| **Cost**            | Per-token markup                   | No markup (direct provider pricing + free local) |
 
 **ClawAI advantage**: Complete platform (not just an API). Local models. Intelligent routing. No per-token markup.
 
@@ -65,19 +65,19 @@ ClawAI occupies a unique position in the AI tooling market: a self-hosted, multi
 
 ### vs Jan.ai / LM Studio (Local AI Clients)
 
-| Dimension | Local Clients | ClawAI |
-| --- | --- | --- |
-| **Cloud providers** | None or limited | 5 providers (OpenAI, Anthropic, Gemini, DeepSeek, xAI) |
-| **Routing** | Manual model selection | 7 modes with automatic selection |
-| **Multi-user** | Single user | Multi-user with RBAC |
-| **Memory** | None | Cross-conversation memory extraction |
-| **Context packs** | None | Curated knowledge collections |
-| **File analysis** | Limited | Upload + chunk + context injection |
-| **Audit** | None | Full audit trail |
-| **Image generation** | Limited | 3 providers (DALL-E, Gemini, SD) |
-| **File generation** | None | 7 formats (PDF, DOCX, CSV, etc.) |
-| **API** | REST API | REST API + SSE + RabbitMQ events |
-| **Deployment** | Desktop app | Docker Compose (server) |
+| Dimension            | Local Clients          | ClawAI                                                 |
+| -------------------- | ---------------------- | ------------------------------------------------------ |
+| **Cloud providers**  | None or limited        | 5 providers (OpenAI, Anthropic, Gemini, DeepSeek, xAI) |
+| **Routing**          | Manual model selection | 7 modes with automatic selection                       |
+| **Multi-user**       | Single user            | Multi-user with RBAC                                   |
+| **Memory**           | None                   | Cross-conversation memory extraction                   |
+| **Context packs**    | None                   | Curated knowledge collections                          |
+| **File analysis**    | Limited                | Upload + chunk + context injection                     |
+| **Audit**            | None                   | Full audit trail                                       |
+| **Image generation** | Limited                | 3 providers (DALL-E, Gemini, SD)                       |
+| **File generation**  | None                   | 7 formats (PDF, DOCX, CSV, etc.)                       |
+| **API**              | REST API               | REST API + SSE + RabbitMQ events                       |
+| **Deployment**       | Desktop app            | Docker Compose (server)                                |
 
 **ClawAI advantage**: Cloud + local hybrid. Multi-user. Enterprise features (audit, RBAC, policies).
 
@@ -85,19 +85,19 @@ ClawAI occupies a unique position in the AI tooling market: a self-hosted, multi
 
 ### vs Open WebUI (Ollama WebUI)
 
-| Dimension | Open WebUI | ClawAI |
-| --- | --- | --- |
-| **Architecture** | Monolithic (Python) | 13 microservices (NestJS) |
-| **Cloud providers** | Basic (OpenAI-compatible) | 5 native provider integrations |
-| **Routing intelligence** | None | 7 modes, Ollama-powered AUTO, policies |
-| **Privacy routing** | Manual | Automatic (PRIVACY_FIRST, LOCAL_ONLY) |
-| **Memory** | RAG (document upload) | Automatic extraction + manual curation + context packs |
-| **Scalability** | Single process | Horizontally scalable microservices |
-| **Event system** | None | RabbitMQ with DLQ and retry |
-| **Audit trail** | None | 10 event types, usage ledger |
-| **Image generation** | Via Ollama (limited) | 3 providers with multi-provider fallback |
-| **File generation** | None | 7 formats |
-| **i18n** | Community translations | 8 languages with RTL support |
+| Dimension                | Open WebUI                | ClawAI                                                 |
+| ------------------------ | ------------------------- | ------------------------------------------------------ |
+| **Architecture**         | Monolithic (Python)       | 17 microservices (NestJS)                              |
+| **Cloud providers**      | Basic (OpenAI-compatible) | 5 native provider integrations                         |
+| **Routing intelligence** | None                      | 7 modes, Ollama-powered AUTO, policies                 |
+| **Privacy routing**      | Manual                    | Automatic (PRIVACY_FIRST, LOCAL_ONLY)                  |
+| **Memory**               | RAG (document upload)     | Automatic extraction + manual curation + context packs |
+| **Scalability**          | Single process            | Horizontally scalable microservices                    |
+| **Event system**         | None                      | RabbitMQ with DLQ and retry                            |
+| **Audit trail**          | None                      | 10 event types, usage ledger                           |
+| **Image generation**     | Via Ollama (limited)      | 3 providers with multi-provider fallback               |
+| **File generation**      | None                      | 7 formats                                              |
+| **i18n**                 | Community translations    | 9 languages with RTL support                           |
 
 **ClawAI advantage**: Enterprise architecture. Intelligent routing. Comprehensive audit. Production scalability.
 
@@ -133,10 +133,10 @@ The entire platform runs on user-controlled infrastructure. No data leaves the o
 
 ## Target Market Segments
 
-| Segment | Primary Need | ClawAI Fit |
-| --- | --- | --- |
-| **Regulated industries** (finance, healthcare, legal) | Data sovereignty, audit trail | LOCAL_ONLY + audit logging |
-| **Software development teams** | Best model per task, cost control | AUTO routing + COST_SAVER |
-| **Privacy-conscious organizations** | No cloud data leakage | PRIVACY_FIRST + routing transparency |
-| **AI-first companies** | Multi-provider optimization | All 5 cloud providers + intelligent routing |
-| **Cost-conscious teams** | Reduce AI spending | Local models for simple tasks + usage analytics |
+| Segment                                               | Primary Need                      | ClawAI Fit                                      |
+| ----------------------------------------------------- | --------------------------------- | ----------------------------------------------- |
+| **Regulated industries** (finance, healthcare, legal) | Data sovereignty, audit trail     | LOCAL_ONLY + audit logging                      |
+| **Software development teams**                        | Best model per task, cost control | AUTO routing + COST_SAVER                       |
+| **Privacy-conscious organizations**                   | No cloud data leakage             | PRIVACY_FIRST + routing transparency            |
+| **AI-first companies**                                | Multi-provider optimization       | All 5 cloud providers + intelligent routing     |
+| **Cost-conscious teams**                              | Reduce AI spending                | Local models for simple tasks + usage analytics |

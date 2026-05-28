@@ -113,7 +113,7 @@ reRouteAttempts?: number;
   ↺ Re-routed from local-ollama/gemma3:4b (20%)
   ```
 
-**i18n**: 4 keys in all 8 locales (`reRouted`, `reRoutedFrom`, `weakResponse`, `qualityScore`)
+**i18n**: 4 keys in all 9 locales (`reRouted`, `reRoutedFrom`, `weakResponse`, `qualityScore`)
 
 ## Constraints
 

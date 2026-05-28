@@ -16,21 +16,21 @@ The team needed an architecture that allows independent development, deployment,
 
 Split the backend into 13 independently deployable NestJS microservices, each owning a single bounded context:
 
-| Service              | Port | Bounded Context                        |
-| -------------------- | ---- | -------------------------------------- |
-| auth-service         | 4001 | Users, sessions, JWT, RBAC             |
-| chat-service         | 4002 | Threads, messages, context, execution  |
-| connector-service    | 4003 | Cloud providers, health, model sync    |
-| routing-service      | 4004 | Routing decisions, policies, AUTO mode |
-| memory-service       | 4005 | Memory records, extraction, packs      |
-| file-service         | 4006 | File upload, storage, chunking         |
-| audit-service        | 4007 | Audit events, usage ledger             |
-| ollama-service       | 4008 | Local model management, generation     |
-| health-service       | 4009 | Aggregated health monitoring           |
-| client-logs-service  | 4010 | Frontend log collection                |
-| server-logs-service  | 4011 | Backend log aggregation                |
-| image-service        | 4012 | Image generation (DALL-E, SD, Gemini)  |
-| file-gen-service     | 4013 | Document export (PDF, DOCX, CSV, etc.) |
+| Service             | Port | Bounded Context                        |
+| ------------------- | ---- | -------------------------------------- |
+| auth-service        | 4001 | Users, sessions, JWT, RBAC             |
+| chat-service        | 4002 | Threads, messages, context, execution  |
+| connector-service   | 4003 | Cloud providers, health, model sync    |
+| routing-service     | 4004 | Routing decisions, policies, AUTO mode |
+| memory-service      | 4005 | Memory records, extraction, packs      |
+| file-service        | 4006 | File upload, storage, chunking         |
+| audit-service       | 4007 | Audit events, usage ledger             |
+| ollama-service      | 4008 | Local model management, generation     |
+| health-service      | 4009 | Aggregated health monitoring           |
+| client-logs-service | 4010 | Frontend log collection                |
+| server-logs-service | 4011 | Backend log aggregation                |
+| image-service       | 4012 | Image generation (DALL-E, SD, Gemini)  |
+| file-gen-service    | 4013 | Document export (PDF, DOCX, CSV, etc.) |
 
 All services share a common NestJS boilerplate (guards, filters, interceptors, pipes) and communicate via RabbitMQ events or HTTP internal endpoints. An Nginx reverse proxy (port 4000) routes frontend requests to the correct service.
 
@@ -47,7 +47,7 @@ All services share a common NestJS boilerplate (guards, filters, interceptors, p
 
 ### Negative
 
-- **Operational complexity**: 13 services + databases + message broker + reverse proxy = 22+ Docker containers in development.
+- **Operational complexity**: 17 services + databases + message broker + reverse proxy = 22+ Docker containers in development.
 - **Network overhead**: Context assembly requires HTTP calls to memory-service and file-service during every message execution.
 - **Distributed debugging**: Tracing a request across services requires X-Request-ID correlation and checking multiple log streams.
 - **Shared package management**: Changes to `shared-types` or `shared-rabbitmq` require rebuilding and restarting all dependent services.

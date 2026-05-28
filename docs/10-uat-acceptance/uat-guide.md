@@ -182,7 +182,7 @@ Last updated: 2026-04-09
 
 | ID     | Scenario         | Steps                                     | Expected Outcome                                                        |
 | ------ | ---------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
-| OBS-01 | Health dashboard | Navigate to health/observability page     | All 13 services show status (healthy/unhealthy); response times visible |
+| OBS-01 | Health dashboard | Navigate to health/observability page     | All 17 services show status (healthy/unhealthy); response times visible |
 | OBS-02 | Audit logs       | Navigate to Audits page                   | Recent events listed: login, message, connector operations              |
 | OBS-03 | Usage stats      | Navigate to usage view                    | Token usage, message counts, provider breakdown displayed               |
 | OBS-04 | Client logs      | Navigate to Logs page, filter client logs | Frontend log entries visible with component, action, timestamp          |
@@ -212,7 +212,7 @@ Last updated: 2026-04-09
 | ------- | --------------- | ----------------------------------- | ----------------------------------------------------------- |
 | I18N-01 | Language switch | Change language to German           | All UI text switches to German; no untranslated strings     |
 | I18N-02 | RTL support     | Change language to Arabic           | Layout mirrors to RTL; text aligned right; sidebar on right |
-| I18N-03 | All languages   | Switch through all 8 languages      | No missing translations; no layout breaks                   |
+| I18N-03 | All languages   | Switch through all 9 languages      | No missing translations; no layout breaks                   |
 | I18N-04 | Persistence     | Set language to French, reload page | Language preference persists across sessions                |
 
 **Evidence required**: Screenshots of the same page in English, Arabic (RTL), and one other language.

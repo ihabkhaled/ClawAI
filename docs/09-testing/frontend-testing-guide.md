@@ -71,24 +71,14 @@ import { describe, expect, it } from 'vitest';
 
 describe('EmptyState', () => {
   it('should render the title and description', () => {
-    render(
-      <EmptyState
-        title="No results"
-        description="Try a different search"
-      />,
-    );
+    render(<EmptyState title="No results" description="Try a different search" />);
 
     expect(screen.getByText('No results')).toBeDefined();
     expect(screen.getByText('Try a different search')).toBeDefined();
   });
 
   it('should render the action button when provided', () => {
-    render(
-      <EmptyState
-        title="No items"
-        action={{ label: 'Create', onClick: vi.fn() }}
-      />,
-    );
+    render(<EmptyState title="No items" action={{ label: 'Create', onClick: vi.fn() }} />);
 
     expect(screen.getByRole('button', { name: 'Create' })).toBeDefined();
   });
@@ -134,10 +124,9 @@ describe('useDebounce', () => {
   });
 
   it('should debounce value updates', () => {
-    const { result, rerender } = renderHook(
-      ({ value }) => useDebounce(value, 300),
-      { initialProps: { value: 'hello' } },
-    );
+    const { result, rerender } = renderHook(({ value }) => useDebounce(value, 300), {
+      initialProps: { value: 'hello' },
+    });
 
     rerender({ value: 'world' });
     expect(result.current).toBe('hello'); // Not yet updated
@@ -336,7 +325,7 @@ import { de } from '../locales/de';
 // ... all locales
 
 describe('Translation completeness', () => {
-  const locales = { ar, de, es, fr, it, pt, ru };
+  const locales = { ar, de, es, fr, hi, it, pt, ru };
 
   function getKeys(obj: Record<string, unknown>, prefix = ''): string[] {
     return Object.entries(obj).flatMap(([key, value]) => {
@@ -390,8 +379,12 @@ vi.mock('@/lib/i18n', () => ({
 const mockStorage: Record<string, string> = {};
 vi.stubGlobal('localStorage', {
   getItem: (key: string) => mockStorage[key] ?? null,
-  setItem: (key: string, value: string) => { mockStorage[key] = value; },
-  removeItem: (key: string) => { delete mockStorage[key]; },
+  setItem: (key: string, value: string) => {
+    mockStorage[key] = value;
+  },
+  removeItem: (key: string) => {
+    delete mockStorage[key];
+  },
 });
 
 // matchMedia

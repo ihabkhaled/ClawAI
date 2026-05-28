@@ -356,7 +356,7 @@ Published by all backend services for centralized log aggregation.
 | `error`       | object or null | Error details (stack, code)      |
 | `timestamp`   | ISO 8601       | When the log was created         |
 
-**Publisher**: all 13 services
+**Publisher**: all 17 services
 **Consumers**: server-logs-service
 
 ---

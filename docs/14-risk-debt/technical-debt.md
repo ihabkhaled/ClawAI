@@ -146,7 +146,7 @@ Last updated: 2026-04-09
 ### TD-014: Single-Instance Services
 
 - **Severity**: High
-- **Location**: All 13 services (Docker Compose configuration)
+- **Location**: All 17 services (Docker Compose configuration)
 - **Detail**: Each service runs as a single container instance. There is no horizontal scaling, load balancing (beyond Nginx routing), or service discovery.
 - **Impact**: A single service crash causes complete feature outage. No ability to handle traffic spikes.
 - **Recommendation**: For production readiness:

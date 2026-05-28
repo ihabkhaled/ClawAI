@@ -36,10 +36,10 @@ Last updated: 2026-04-11
 | F-013 | Parallel Multi-Model Compare   | GA     | Send one prompt to 2-5 models simultaneously, view side-by-side responses                            |
 | F-014 | Auto Re-Routing on Weak Answer | GA     | Detects weak responses (short, repetitive, refusal) and re-routes to fallback provider automatically |
 | F-015 | Judge-and-Referee Layer        | GA     | Generator-critic-judge pipeline: second model critiques, local judge accepts/revises/escalates       |
-| F-016 | Consensus Response Mode        | GA     | Collects multiple candidate answers and synthesizes a consensus result                                |
-| F-017 | Escalation Chain               | GA     | Starts with lower-cost or faster models, escalates to stronger ones when thresholds are not met       |
-| F-018 | Answer Repair and Verification | GA     | Repair, verify, and best-of-n style quality workflows before final delivery                           |
-| F-019 | Role Packs and Pipelines       | GA     | Multi-role prompt packs and staged response pipelines                                                 |
+| F-016 | Consensus Response Mode        | GA     | Collects multiple candidate answers and synthesizes a consensus result                               |
+| F-017 | Escalation Chain               | GA     | Starts with lower-cost or faster models, escalates to stronger ones when thresholds are not met      |
+| F-018 | Answer Repair and Verification | GA     | Repair, verify, and best-of-n style quality workflows before final delivery                          |
+| F-019 | Role Packs and Pipelines       | GA     | Multi-role prompt packs and staged response pipelines                                                |
 
 ### User Stories
 
@@ -198,13 +198,13 @@ Last updated: 2026-04-11
 
 ## 9. Workspace and External Context
 
-| #     | Feature                   | Status | Description                                                           |
-| ----- | ------------------------- | ------ | --------------------------------------------------------------------- |
-| F-150 | Workspace Connector CRUD  | GA     | Create, update, test, sync, and remove workspace connectors           |
-| F-151 | Workspace OAuth Flows     | GA     | OAuth init and callback flows for supported workspace providers       |
-| F-152 | Workspace Search          | GA     | Search synced external objects for grounding and retrieval            |
-| F-153 | Workspace Object Browser  | GA     | View synced issues, docs, files, messages, and related object detail  |
-| F-154 | Workspace Action Approval | GA     | Draft, approve, reject, and execute external workspace actions        |
+| #     | Feature                   | Status | Description                                                          |
+| ----- | ------------------------- | ------ | -------------------------------------------------------------------- |
+| F-150 | Workspace Connector CRUD  | GA     | Create, update, test, sync, and remove workspace connectors          |
+| F-151 | Workspace OAuth Flows     | GA     | OAuth init and callback flows for supported workspace providers      |
+| F-152 | Workspace Search          | GA     | Search synced external objects for grounding and retrieval           |
+| F-153 | Workspace Object Browser  | GA     | View synced issues, docs, files, messages, and related object detail |
+| F-154 | Workspace Action Approval | GA     | Draft, approve, reject, and execute external workspace actions       |
 
 ### User Stories
 
@@ -217,12 +217,12 @@ Last updated: 2026-04-11
 
 ## 10. Local Agent Runtime
 
-| #     | Feature                     | Status | Description                                                     |
-| ----- | --------------------------- | ------ | --------------------------------------------------------------- |
-| F-160 | Agent Session Registration  | GA     | Register and monitor local desktop agent sessions               |
-| F-161 | Command Approval Workflow   | GA     | Queue commands, approve/reject, execute, and record results     |
-| F-162 | Repository Awareness        | GA     | Register and browse local repositories connected to a session   |
-| F-163 | File Event Reporting        | GA     | Stream local file-system changes from the CLI to the backend    |
+| #     | Feature                    | Status | Description                                                   |
+| ----- | -------------------------- | ------ | ------------------------------------------------------------- |
+| F-160 | Agent Session Registration | GA     | Register and monitor local desktop agent sessions             |
+| F-161 | Command Approval Workflow  | GA     | Queue commands, approve/reject, execute, and record results   |
+| F-162 | Repository Awareness       | GA     | Register and browse local repositories connected to a session |
+| F-163 | File Event Reporting       | GA     | Stream local file-system changes from the CLI to the backend  |
 
 ### User Stories
 
@@ -247,14 +247,14 @@ Last updated: 2026-04-11
 
 ## 12. Audit & Observability
 
-| #     | Feature             | Status | Description                                           |
-| ----- | ------------------- | ------ | ----------------------------------------------------- |
+| #     | Feature             | Status | Description                                            |
+| ----- | ------------------- | ------ | ------------------------------------------------------ |
 | F-180 | Audit Logging       | GA     | 10+ event types, immutable append-only logs in MongoDB |
-| F-181 | Usage Ledger        | GA     | Token consumption tracking by provider, model, user   |
-| F-182 | Health Dashboard    | GA     | Aggregated health from 14 downstream services         |
-| F-183 | Server Logs         | GA     | Centralized backend logs with 30-day TTL              |
-| F-184 | Client Logs         | GA     | Frontend log ingestion with 30-day TTL                |
-| F-185 | Request Correlation | GA     | X-Request-ID from frontend through all services       |
+| F-181 | Usage Ledger        | GA     | Token consumption tracking by provider, model, user    |
+| F-182 | Health Dashboard    | GA     | Aggregated health from 14 downstream services          |
+| F-183 | Server Logs         | GA     | Centralized backend logs with 30-day TTL               |
+| F-184 | Client Logs         | GA     | Frontend log ingestion with 30-day TTL                 |
+| F-185 | Request Correlation | GA     | X-Request-ID from frontend through all services        |
 
 ---
 
@@ -263,7 +263,7 @@ Last updated: 2026-04-11
 | #     | Feature            | Status | Description                                                    |
 | ----- | ------------------ | ------ | -------------------------------------------------------------- |
 | F-200 | Theme Toggle       | GA     | Light/dark mode via CSS variables, system preference detection |
-| F-201 | Language Selection | GA     | 8 languages: EN, AR, DE, ES, FR, IT, PT, RU                    |
+| F-201 | Language Selection | GA     | 9 languages: EN, AR, DE, ES, FR, HI, IT, PT, RU                |
 | F-202 | RTL Support        | GA     | Full right-to-left layout for Arabic                           |
 | F-203 | Password Change    | GA     | Authenticated password update                                  |
 | F-204 | User Preferences   | GA     | Stored in User record, applied at login                        |
@@ -272,13 +272,13 @@ Last updated: 2026-04-11
 
 ## 14. Infrastructure Features
 
-| #     | Feature                   | Status | Description                                        |
-| ----- | ------------------------- | ------ | -------------------------------------------------- |
-| F-220 | Docker Compose Deployment | GA     | Single-command startup for the 33-container dev stack |
+| #     | Feature                   | Status | Description                                              |
+| ----- | ------------------------- | ------ | -------------------------------------------------------- |
+| F-220 | Docker Compose Deployment | GA     | Single-command startup for the 33-container dev stack    |
 | F-221 | Nginx Reverse Proxy       | GA     | Route mappings for all backend services with SSE support |
-| F-222 | Hot Reload Development    | GA     | Node --watch for source, auto-migration for Prisma |
-| F-223 | Pre-Commit Quality Gates  | GA     | Prettier + ESLint + TypeScript + Build + Test      |
-| F-224 | CI/CD Pipeline            | GA     | GitHub Actions: lint -> typecheck -> test -> build |
+| F-222 | Hot Reload Development    | GA     | Node --watch for source, auto-migration for Prisma       |
+| F-223 | Pre-Commit Quality Gates  | GA     | Prettier + ESLint + TypeScript + Build + Test            |
+| F-224 | CI/CD Pipeline            | GA     | GitHub Actions: lint -> typecheck -> test -> build       |
 
 ---
 

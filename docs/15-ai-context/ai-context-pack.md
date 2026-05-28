@@ -10,7 +10,7 @@ Optimized reference for AI coding agents working on the ClawAI codebase. Read th
 
 **Why**: Organizations need a single interface that intelligently selects from multiple AI providers while keeping sensitive data local when required.
 
-**How**: 13 NestJS microservices communicate via RabbitMQ events, each owning its own database. A Next.js frontend connects through an Nginx reverse proxy. Ollama runs locally for privacy-sensitive tasks and as the routing brain in AUTO mode.
+**How**: 17 NestJS microservices communicate via RabbitMQ events, each owning its own database. A Next.js frontend connects through an Nginx reverse proxy. Ollama runs locally for privacy-sensitive tasks and as the routing brain in AUTO mode.
 
 ---
 
@@ -147,7 +147,7 @@ Controllers never contain try/catch or throw statements. Repositories never thro
 2. **Controller hook**: `apps/claw-frontend/src/hooks/<domain>/use-<name>.ts`
 3. **Repository**: `apps/claw-frontend/src/repositories/<domain>/<domain>.repository.ts`
 4. **Types**: `apps/claw-frontend/src/types/<domain>.types.ts`
-5. **i18n**: Add keys to all 8 locale files in `apps/claw-frontend/src/lib/i18n/locales/`
+5. **i18n**: Add keys to all 9 locale files in `apps/claw-frontend/src/lib/i18n/locales/`
 6. **Sidebar**: Update navigation components if needed
 
 ### Add a New Database Table
@@ -184,7 +184,7 @@ Controllers never contain try/catch or throw statements. Repositories never thro
 - **Every new function needs a test.** No exceptions.
 - **Test files are exempt** from the no-`any` rule and inline restrictions.
 - **Pre-commit hook runs all tests** -- they must pass before commit.
-- **312+ tests** across 9 services as of baseline.
+- **312+ tests** across 17 services as of baseline.
 
 ---
 
@@ -195,7 +195,7 @@ Controllers never contain try/catch or throw statements. Repositories never thro
 3. **Prisma migrations** -- Never delete or modify existing migration files. Always create new ones.
 4. **Auth flow** -- JWT + refresh token rotation is security-critical. Test thoroughly after any auth changes.
 5. **Connector encryption** -- AES-256-GCM. Changing encryption logic or key format breaks all stored API keys.
-6. **i18n completeness** -- All 8 locales must have every key. Missing keys cause runtime errors in non-English locales.
+6. **i18n completeness** -- All 9 locales must have every key. Missing keys cause runtime errors in non-English locales.
 7. **Database isolation** -- Services never share databases. Cross-service data access goes through RabbitMQ or HTTP.
 8. **Import patterns** -- Third-party libraries are wrapped in utilities. Direct imports outside wrappers will fail linting.
 9. **Nginx routes** -- Changing route patterns without updating both Nginx config and frontend API calls breaks the frontend.

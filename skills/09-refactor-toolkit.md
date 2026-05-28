@@ -65,7 +65,7 @@ diff apps/claw-<service>-service/src/common/utilities/jwt.utility.ts \
 
 Common candidates for shared-utilities (per Phase A audit):
 
-- `jwt.utility.ts` (verifier) — 13 services have identical copies
+- `jwt.utility.ts` (verifier) — 17 services have identical copies
 - `http-client.utility.ts` — 7 services, two flavours (fetch vs axios)
 - `crypto.utility.ts` — 4 services
 - `url-safety.utility.ts` — 2 services

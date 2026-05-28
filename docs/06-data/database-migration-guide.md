@@ -1,13 +1,13 @@
 # Database Migration Guide
 
-How to create, apply, and manage database migrations across ClawAI's 9 PostgreSQL databases.
+How to create, apply, and manage database migrations across ClawAI's 13 PostgreSQL databases.
 
 ---
 
 ## Overview
 
 - **ORM**: Prisma 5.22
-- **9 PostgreSQL databases**: claw_auth, claw_chat, claw_connectors, claw_routing, claw_memory, claw_files, claw_ollama, claw_images, claw_file_generations
+- **13 PostgreSQL databases**: claw_auth, claw_chat, claw_connectors, claw_routing, claw_memory, claw_files, claw_ollama, claw_images, claw_file_generations
 - **3 MongoDB databases**: claw_audit, claw_client_logs, claw_server_logs (no migrations — schema-on-write)
 - Each service has its own Prisma schema at `apps/claw-<service>/prisma/schema.prisma`
 
@@ -18,6 +18,7 @@ How to create, apply, and manage database migrations across ClawAI's 9 PostgreSQ
 ### 1. Modify the Prisma Schema
 
 Edit the schema file for the target service:
+
 ```
 apps/claw-<service>/prisma/schema.prisma
 ```
@@ -30,6 +31,7 @@ npx prisma migrate dev --name <descriptive-name>
 ```
 
 Naming conventions:
+
 - `add_<table>` — new table
 - `add_<column>_to_<table>` — new column
 - `remove_<column>_from_<table>` — column removal
@@ -37,6 +39,7 @@ Naming conventions:
 - `add_index_on_<table>_<columns>` — new index
 
 Example:
+
 ```bash
 cd apps/claw-chat-service
 npx prisma migrate dev --name add_feedback_to_messages
@@ -45,6 +48,7 @@ npx prisma migrate dev --name add_feedback_to_messages
 ### 3. Generate Prisma Client
 
 After migration, regenerate the client:
+
 ```bash
 npx prisma generate
 ```
@@ -62,6 +66,7 @@ Migrations are applied automatically via `prisma migrate dev` during development
 ### Docker (Dev and Prod)
 
 Each service's Docker entrypoint runs:
+
 ```bash
 npx prisma migrate deploy
 ```
@@ -92,6 +97,7 @@ npx prisma migrate dev --name remove_bad_column
 ```
 
 For emergencies, you can reset the database (DESTROYS ALL DATA):
+
 ```bash
 npx prisma migrate reset
 ```
@@ -111,11 +117,11 @@ npx tsx prisma/seed.ts
 
 ### Existing Seeds
 
-| Service | Seed File | What It Seeds |
-|---------|-----------|---------------|
-| auth | `prisma/seed.ts` | Default admin user |
-| ollama | `prisma/seed-catalog.ts` | 30 model catalog entries |
-| routing | `prisma/seed.ts` | Default routing policies (if any) |
+| Service | Seed File                | What It Seeds                     |
+| ------- | ------------------------ | --------------------------------- |
+| auth    | `prisma/seed.ts`         | Default admin user                |
+| ollama  | `prisma/seed-catalog.ts` | 30 model catalog entries          |
+| routing | `prisma/seed.ts`         | Default routing policies (if any) |
 
 ### Creating a New Seed
 
@@ -130,7 +136,9 @@ const prisma = new PrismaClient();
 
 async function main(): Promise<void> {
   await prisma.routingPolicy.upsert({
-    where: { /* unique field */ },
+    where: {
+      /* unique field */
+    },
     update: {},
     create: {
       name: 'Default AUTO Policy',
@@ -151,6 +159,7 @@ main()
 ```
 
 4. Add to `package.json` if using `prisma db seed`:
+
 ```json
 {
   "prisma": {
@@ -164,6 +173,7 @@ main()
 ## Migration Files
 
 Migrations are stored in:
+
 ```
 apps/claw-<service>/prisma/migrations/
   20260101120000_init/
@@ -187,6 +197,7 @@ npx prisma migrate reset
 ```
 
 This:
+
 1. Drops the database
 2. Recreates it
 3. Applies all migrations
@@ -201,6 +212,7 @@ This:
 When adding a new service with its own database:
 
 1. Add database container to all Docker compose files:
+
 ```yaml
 pg-<service>:
   image: postgres:16
@@ -209,7 +221,7 @@ pg-<service>:
     POSTGRES_PASSWORD: ${PG_<SERVICE>_PASSWORD}
     POSTGRES_DB: ${PG_<SERVICE>_DB}
   ports:
-    - "${PG_<SERVICE>_PORT}:5432"
+    - '${PG_<SERVICE>_PORT}:5432'
   volumes:
     - pg-<service>-data:/var/lib/postgresql/data
 ```
@@ -219,6 +231,7 @@ pg-<service>:
 3. Add volume to compose volumes section
 
 4. Add DATABASE_URL to `.env`:
+
 ```
 <SERVICE>_DATABASE_URL=postgresql://claw:claw_secret@pg-<service>:5432/claw_<service>?schema=public
 ```
@@ -243,18 +256,23 @@ pg-<service>:
 ## Troubleshooting
 
 ### Migration conflicts
+
 If two developers create migrations from the same base:
+
 ```bash
 npx prisma migrate resolve --applied <migration-name>
 ```
 
 ### Drift detection
+
 Check if schema matches database:
+
 ```bash
 npx prisma migrate diff --from-schema-datamodel prisma/schema.prisma --to-schema-datasource prisma/schema.prisma
 ```
 
 ### Database doesn't exist
+
 ```bash
 npx prisma migrate dev --create-only
 # Then manually create the database

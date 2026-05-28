@@ -29,7 +29,7 @@ Before touching any file, enumerate every dimension:
 - Which components (`src/components/...`)?
 - Which hooks (`src/hooks/...`)?
 - Which types (`src/types/...`)?
-- Which i18n keys (all 8 locales)?
+- Which i18n keys (all 9 locales)?
 
 **Infrastructure:**
 

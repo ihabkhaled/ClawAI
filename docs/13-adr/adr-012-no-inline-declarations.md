@@ -6,7 +6,7 @@ Accepted (2025-Q1)
 
 ## Context
 
-As the codebase grew to 13 backend services and a complex frontend, the team observed recurring problems with inline type definitions, constants, and enums in logic files:
+As the codebase grew to 17 backend services and a complex frontend, the team observed recurring problems with inline type definitions, constants, and enums in logic files:
 
 - **Duplication**: The same type or constant was defined in multiple files, leading to drift when one was updated but not the others.
 - **Discovery**: Finding all types related to a domain required searching through service, controller, and manager files instead of looking in one predictable location.
@@ -20,24 +20,24 @@ Ban all inline type, interface, enum, and module-level constant declarations in 
 
 ### Backend Extraction Rules
 
-| Declaration      | Must go in                                         |
-| ---------------- | -------------------------------------------------- |
-| Types/interfaces | `src/modules/<domain>/types/<name>.types.ts`       |
-| Enums            | `src/common/enums/<name>.enum.ts`                  |
-| Constants        | `src/common/constants/` or module `constants/`     |
-| Utilities        | `src/common/utilities/<name>.utility.ts`           |
-| DTOs             | `src/modules/<domain>/dto/<name>.dto.ts`           |
+| Declaration      | Must go in                                     |
+| ---------------- | ---------------------------------------------- |
+| Types/interfaces | `src/modules/<domain>/types/<name>.types.ts`   |
+| Enums            | `src/common/enums/<name>.enum.ts`              |
+| Constants        | `src/common/constants/` or module `constants/` |
+| Utilities        | `src/common/utilities/<name>.utility.ts`       |
+| DTOs             | `src/modules/<domain>/dto/<name>.dto.ts`       |
 
 ### Frontend Extraction Rules
 
-| Declaration      | Must go in                                |
-| ---------------- | ----------------------------------------- |
-| Types            | `src/types/<domain>.types.ts`             |
-| Prop types       | `src/types/component.types.ts`            |
-| Enums            | `src/enums/<name>.enum.ts`                |
-| Constants        | `src/constants/<name>.constants.ts`       |
-| Hooks            | `src/hooks/<domain>/use-<name>.ts`        |
-| Utilities        | `src/utilities/<name>.utility.ts`         |
+| Declaration | Must go in                          |
+| ----------- | ----------------------------------- |
+| Types       | `src/types/<domain>.types.ts`       |
+| Prop types  | `src/types/component.types.ts`      |
+| Enums       | `src/enums/<name>.enum.ts`          |
+| Constants   | `src/constants/<name>.constants.ts` |
+| Hooks       | `src/hooks/<domain>/use-<name>.ts`  |
+| Utilities   | `src/utilities/<name>.utility.ts`   |
 
 ### Files Subject to This Rule
 

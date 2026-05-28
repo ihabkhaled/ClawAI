@@ -688,7 +688,7 @@ shared-auth       (depends on shared-types)
 shared-utilities  (depends on shared-types, shared-constants)  ← added 2026-04-26
 ```
 
-All 14 backend services depend on `shared-types`, `shared-constants`, `shared-rabbitmq`, and `shared-auth`. **12** also depend on `shared-utilities` (after Phase C of the codebase-wide refactor); the remaining services adopt it in their per-service refactor phases.
+All 17 backend services depend on `shared-types`, `shared-constants`, `shared-rabbitmq`, and `shared-auth`. **12** also depend on `shared-utilities` (after Phase C of the codebase-wide refactor); the remaining services adopt it in their per-service refactor phases.
 
 ### Build Order
 

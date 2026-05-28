@@ -341,14 +341,14 @@ The following quality aspects may be deferred to a follow-up work item if explic
 - Advanced pagination features (cursor-based, sortable columns) when offset-based pagination ships first.
 - Mobile responsiveness for operator-only tools (not client-facing).
 - Performance optimization beyond the stated targets, if the feature is functional and within 2x the target.
-- Additional language support beyond 8 locales already required.
+- Additional language support beyond 9 locales already required.
 - Analytics or usage tracking instrumentation (does not affect feature correctness).
 
 ### What Cannot Be Deferred
 
 The following quality bars cannot be reduced under any circumstances:
 
-- All 8 i18n locales complete before ship. A feature with missing translations is not shipped.
+- All 9 i18n locales complete before ship. A feature with missing translations is not shipped.
 - Privacy routing enforcement. LOCAL_ONLY and PRIVACY_FIRST must never route to cloud. No exceptions.
 - Error states for every API-backed component. No page ships with "white screen on error."
 - Auth protection on all new endpoints. No endpoint ships without `AuthGuard` and appropriate `@Roles()`.

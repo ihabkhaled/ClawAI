@@ -370,7 +370,7 @@ enum Status {
 
 ## ESLint Rules Summary
 
-All 13 backend services share an identical ESLint configuration. ESLint 9 flat config with 4 plugin groups.
+All 17 backend services share an identical ESLint configuration. ESLint 9 flat config with 4 plugin groups.
 
 ### TypeScript Rules (Errors -- Build Fails)
 
@@ -613,6 +613,6 @@ Use this checklist before submitting any code change:
 - [ ] New tests written for new functionality
 - [ ] Prisma migrations created if schema changed
 - [ ] Environment variables added to `.env.example`, `.env`, and install scripts
-- [ ] i18n translations added for all 8 locales if user-facing text
+- [ ] i18n translations added for all 9 locales if user-facing text
 - [ ] Documentation updated if architecture affected
 - [ ] `CLAUDE.md` updated if new patterns or rules introduced

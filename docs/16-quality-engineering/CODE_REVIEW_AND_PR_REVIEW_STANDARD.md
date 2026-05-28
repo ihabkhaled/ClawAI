@@ -10,7 +10,7 @@
 
 - Every PR requires at least one reviewer who did not write the code.
 - For changes touching auth, security, or encryption: two reviewers required.
-- For changes touching shared packages (`packages/*`): reviewer must understand downstream impact on all 13 services.
+- For changes touching shared packages (`packages/*`): reviewer must understand downstream impact on all 17 services.
 
 ### Review Workflow
 
@@ -237,7 +237,7 @@ Checklist:
 ## Section 6: Internationalization (i18n)
 
 - [ ] No hardcoded user-facing text in components
-- [ ] All new text keys added to ALL 8 locale files:
+- [ ] All new text keys added to ALL 9 locale files:
   - `src/lib/i18n/locales/en.ts`
   - `src/lib/i18n/locales/ar.ts`
   - `src/lib/i18n/locales/de.ts`

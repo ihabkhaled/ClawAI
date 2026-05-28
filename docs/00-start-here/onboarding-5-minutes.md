@@ -33,7 +33,7 @@ cd ClawAI
 npm install
 ```
 
-This installs dependencies for all 15 backend services, the frontend, and shared packages (npm workspaces handles everything from the root).
+This installs dependencies for all 17 backend services, the frontend, and shared packages (npm workspaces handles everything from the root).
 
 ---
 
@@ -65,7 +65,7 @@ The installer creates the `.env` file, sets up databases, runs Prisma migrations
 ./scripts/claw.sh up -d
 ```
 
-This starts 33 containers: 15 backend services, frontend, Nginx, 11 PostgreSQL databases, MongoDB, Redis, RabbitMQ, Ollama, and ClamAV.
+This starts 33 containers: 17 backend services, frontend, Nginx, 13 PostgreSQL databases, MongoDB, Redis, RabbitMQ, Ollama, and ClamAV.
 
 Wait about 60 seconds for all services to initialize, run migrations, and pull local models.
 
@@ -98,13 +98,13 @@ Password: ClawAdmin123!
 
 ### Daily Development
 
-| Command                                                         | What It Does                |
-| --------------------------------------------------------------- | --------------------------- |
+| Command                                  | What It Does                |
+| ---------------------------------------- | --------------------------- |
 | `./scripts/claw.sh up -d`                | Start all containers        |
 | `./scripts/claw.sh down`                 | Stop all containers         |
 | `./scripts/claw.sh logs -f chat-service` | Follow logs for one service |
-| `./scripts/claw.sh status`                                      | Check all service health    |
-| `./scripts/claw.sh logs`                                        | Tail all service logs       |
+| `./scripts/claw.sh status`               | Check all service health    |
+| `./scripts/claw.sh logs`                 | Tail all service logs       |
 
 ### Code Quality
 
@@ -235,7 +235,7 @@ apps/claw-frontend/
     constants/                  # Frontend constants
     utilities/                  # Utility functions
     lib/
-      i18n/locales/             # 8 locale files
+      i18n/locales/             # 9 locale files
       validation/               # Zod schemas for forms
 ```
 

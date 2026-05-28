@@ -8,7 +8,7 @@
 
 ## Purpose and Philosophy
 
-Planning exists for one reason: to prevent wasted effort. In a system with 13 NestJS microservices, 9 PostgreSQL databases, RabbitMQ event flows, Nginx routing, shared packages used by every service, and a Next.js frontend with 8 language locales — a change that seems isolated rarely is. An unplanned change to `claw-routing-service` can break the frontend replay lab, invalidate shared types consumed by `claw-chat-service`, corrupt the CI pipeline, and ship with missing Nginx routes all at the same time.
+Planning exists for one reason: to prevent wasted effort. In a system with 17 NestJS microservices, 13 PostgreSQL databases, RabbitMQ event flows, Nginx routing, shared packages used by every service, and a Next.js frontend with 8 language locales — a change that seems isolated rarely is. An unplanned change to `claw-routing-service` can break the frontend replay lab, invalidate shared types consumed by `claw-chat-service`, corrupt the CI pipeline, and ship with missing Nginx routes all at the same time.
 
 Planning is not bureaucracy. It is the activity that turns a vague request into a precise, bounded, testable work item. It answers every question before the first function is written so that implementation is execution, not discovery.
 
@@ -31,7 +31,7 @@ Planning is required for **every work item without exception**:
 | Bug fix               | Yes                | Sections 1–5 + risk              |
 | Refactor              | Yes                | Sections 1–5 + regression scope  |
 | Schema migration      | Yes                | Full (all sections)              |
-| Shared package change | Yes                | Full (impact on all 13 services) |
+| Shared package change | Yes                | Full (impact on all 17 services) |
 | New env variable      | Yes                | Sections 1–4 + infra checklist   |
 | i18n addition only    | Yes                | Sections 1–2 + locale checklist  |
 | Documentation update  | Yes                | Section 1 only                   |
@@ -83,7 +83,7 @@ Before writing code, fill every row of this table. A row marked "N/A" is a posit
 
 | Area                        | Impacted? | Specific Files / Items Affected                                                 |
 | --------------------------- | --------- | ------------------------------------------------------------------------------- |
-| **Backend services**        |           | Which of the 13 services? (claw-routing-service, claw-chat-service, etc.)       |
+| **Backend services**        |           | Which of the 17 services? (claw-routing-service, claw-chat-service, etc.)       |
 | **Frontend pages**          |           | Which pages in `src/app/(portal)/`?                                             |
 | **Frontend components**     |           | Which files in `src/components/<feature>/`?                                     |
 | **Frontend hooks**          |           | Which files in `src/hooks/<domain>/`?                                           |
@@ -100,7 +100,7 @@ Before writing code, fill every row of this table. A row marked "N/A" is a posit
 | **Nginx config**            |           | New upstream block? New location block? SSE route?                              |
 | **Health service**          |           | `apps/claw-health-service` — new service URL registered?                        |
 | **CI pipeline**             |           | `.github/workflows/ci.yml` — Prisma generate loop? Test env vars?               |
-| **i18n locales**            |           | New translation keys? All 8 locales: en, ar, de, es, fr, it, pt, ru             |
+| **i18n locales**            |           | New translation keys? All 9 locales: en, ar, de, es, fr, hi, it, pt, ru         |
 | **Frontend types**          |           | `src/types/<domain>.types.ts` — synced with backend DTO changes?                |
 | **Frontend enums**          |           | `src/enums/index.ts` — new enum exported?                                       |
 | **Frontend constants**      |           | `src/constants/<name>.constants.ts` — new constants?                            |
@@ -127,7 +127,7 @@ Before writing code, fill every row of this table. A row marked "N/A" is a posit
 | Docker compose        | No        | N/A                                                            |
 | Nginx config          | No        | N/A (existing route already covers `/routing/replay/*`)        |
 | CI pipeline           | No        | N/A                                                            |
-| i18n locales          | Yes       | Add `replayLab.pagination.*` keys to all 8 locale files        |
+| i18n locales          | Yes       | Add `replayLab.pagination.*` keys to all 9 locale files        |
 | Frontend types        | Yes       | `src/types/replay.types.ts` — add `PaginatedRunsResponse` type |
 | Root CLAUDE.md        | No        | N/A                                                            |
 
@@ -163,7 +163,7 @@ Identify every risk introduced by this change. Do not skip this. Optimism about 
 
 | Risk                                                                       | Likelihood | Severity | Mitigation                                                       |
 | -------------------------------------------------------------------------- | ---------- | -------- | ---------------------------------------------------------------- |
-| All 13 service containers need rebuild if shared-types changes             | HIGH       | HIGH     | Follow full stop → rm → rmi → build procedure for every consumer |
+| All 17 service containers need rebuild if shared-types changes             | HIGH       | HIGH     | Follow full stop → rm → rmi → build procedure for every consumer |
 | CI fails for services that import shared-types but don't consume the event | MEDIUM     | MEDIUM   | Add new pattern as optional field with backward-compatible type  |
 | Event name typo causes silent no-delivery in RabbitMQ                      | MEDIUM     | HIGH     | Use `RoutingEventPatterns` enum — never hardcode event strings   |
 
@@ -253,7 +253,7 @@ List the existing flows that this change could affect. For each flow, state expl
 | Replay POST returns outcome labels         | Yes                | Yes           | API + unit tests |
 | Frontend filters by outcome label          | Yes                | Yes           | UI test          |
 | claw-chat-service consuming routing events | Yes                | Yes           | Integration test |
-| All 13 services CI build                   | Yes                | Yes           | CI pipeline      |
+| All 17 services CI build                   | Yes                | Yes           | CI pipeline      |
 
 ---
 
@@ -349,7 +349,7 @@ IN SCOPE:
 - Zod DTO validation for page/limit with sane defaults and caps
 - Frontend pagination control component in replay runs tab
 - URL state preservation for current page
-- i18n keys for pagination labels (all 8 locales)
+- i18n keys for pagination labels (all 9 locales)
 
 OUT OF SCOPE (separate work items):
 - Cursor-based pagination — complexity not justified for this volume
@@ -365,7 +365,7 @@ OUT OF SCOPE (separate work items):
 | Dependency                               | Type      | Status           | Impact if Blocked                 |
 | ---------------------------------------- | --------- | ---------------- | --------------------------------- |
 | Migration must run before service starts | Technical | Resolved at boot | Deploy fails if migration skipped |
-| shared-types must be rebuilt first       | Technical | Manual step      | All 13 services fail typecheck    |
+| shared-types must be rebuilt first       | Technical | Manual step      | All 17 services fail typecheck    |
 | Nginx config change needs nginx restart  | Infra     | Manual step      | New route returns 404             |
 | Feature X must ship before this feature  | Product   | Note dependency  | End-to-end flow incomplete        |
 

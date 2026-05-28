@@ -8,14 +8,14 @@
 
 ClawAI enforces quality at two levels:
 
-| Gate           | When          | Tool         | Threshold | Blocks          |
-| -------------- | ------------- | ------------ | --------- | --------------- |
-| Formatting     | Pre-commit    | Prettier     | Auto-fix  | Commit          |
-| Linting        | Pre-commit + CI | ESLint 9   | 0 errors  | Commit + PR     |
-| Type checking  | Pre-commit + CI | TypeScript | 0 errors  | Commit + PR     |
-| Build          | Pre-commit + CI | tsc / Next | 0 errors  | Commit + PR     |
-| Tests          | Pre-commit + CI | Jest/Vitest| All pass  | Commit + PR     |
-| Commit message | Commit        | commitlint   | Format    | Commit          |
+| Gate           | When            | Tool        | Threshold | Blocks      |
+| -------------- | --------------- | ----------- | --------- | ----------- |
+| Formatting     | Pre-commit      | Prettier    | Auto-fix  | Commit      |
+| Linting        | Pre-commit + CI | ESLint 9    | 0 errors  | Commit + PR |
+| Type checking  | Pre-commit + CI | TypeScript  | 0 errors  | Commit + PR |
+| Build          | Pre-commit + CI | tsc / Next  | 0 errors  | Commit + PR |
+| Tests          | Pre-commit + CI | Jest/Vitest | All pass  | Commit + PR |
+| Commit message | Commit          | commitlint  | Format    | Commit      |
 
 ---
 
@@ -37,9 +37,10 @@ Automatically formats all staged files according to project Prettier configurati
 npm run lint
 ```
 
-Runs ESLint across ALL workspaces (13 backend services + frontend + shared packages).
+Runs ESLint across ALL workspaces (17 backend services + frontend + shared packages).
 
 **What it catches**:
+
 - `any` type usage
 - `console.log` statements
 - Missing `import type` syntax
@@ -58,6 +59,7 @@ npm run typecheck
 Runs `tsc --noEmit` across all workspaces with `strict: true`.
 
 **What it catches**:
+
 - Type errors
 - Missing return types
 - Null safety violations
@@ -72,6 +74,7 @@ npm run build
 Builds all workspaces for production.
 
 **What it catches**:
+
 - Module resolution issues
 - Circular dependencies
 - Missing exports
@@ -87,6 +90,7 @@ npm run test
 Runs the full test suite (Jest for backend, Vitest for frontend).
 
 **What it catches**:
+
 - Broken functionality
 - Regression bugs
 - Invalid test assertions
@@ -126,7 +130,7 @@ Each job runs on a fresh runner and performs:
    ```
    shared-types -> shared-constants -> shared-rabbitmq -> shared-auth
    ```
-5. Generate Prisma clients for 9 services:
+5. Generate Prisma clients for 17 services:
    ```
    auth, chat, connector, routing, memory, file, ollama, image, file-generation
    ```
@@ -162,19 +166,19 @@ Enforced by commitlint:
 
 ### Allowed Types
 
-| Type       | Purpose                                  |
-| ---------- | ---------------------------------------- |
-| `feat`     | New feature                              |
-| `fix`      | Bug fix                                  |
-| `docs`     | Documentation only                       |
-| `style`    | Formatting, no code change               |
-| `refactor` | Code change without feature/fix          |
-| `perf`     | Performance improvement                  |
-| `test`     | Adding or updating tests                 |
-| `build`    | Build system or dependencies             |
-| `ci`       | CI configuration                         |
-| `chore`    | Maintenance tasks                        |
-| `revert`   | Reverting a previous commit              |
+| Type       | Purpose                         |
+| ---------- | ------------------------------- |
+| `feat`     | New feature                     |
+| `fix`      | Bug fix                         |
+| `docs`     | Documentation only              |
+| `style`    | Formatting, no code change      |
+| `refactor` | Code change without feature/fix |
+| `perf`     | Performance improvement         |
+| `test`     | Adding or updating tests        |
+| `build`    | Build system or dependencies    |
+| `ci`       | CI configuration                |
+| `chore`    | Maintenance tasks               |
+| `revert`   | Reverting a previous commit     |
 
 ### Rules
 
@@ -238,15 +242,15 @@ npm run test --workspace=apps/claw-auth-service
 
 ### Common Failures and Fixes
 
-| Failure                          | Fix                                           |
-| -------------------------------- | --------------------------------------------- |
-| ESLint: `no-explicit-any`        | Replace `any` with `unknown` or proper type   |
-| ESLint: `no-console`             | Replace `console.log` with logger utility     |
-| ESLint: inline type declaration  | Extract to `src/types/` or `src/enums/`       |
-| TypeScript: missing return type  | Add explicit return type annotation            |
-| TypeScript: null safety          | Add null check or use optional chaining        |
-| Build: module not found          | Check imports, rebuild shared packages         |
-| Test: assertion failure          | Fix the code or update the test               |
+| Failure                         | Fix                                         |
+| ------------------------------- | ------------------------------------------- |
+| ESLint: `no-explicit-any`       | Replace `any` with `unknown` or proper type |
+| ESLint: `no-console`            | Replace `console.log` with logger utility   |
+| ESLint: inline type declaration | Extract to `src/types/` or `src/enums/`     |
+| TypeScript: missing return type | Add explicit return type annotation         |
+| TypeScript: null safety         | Add null check or use optional chaining     |
+| Build: module not found         | Check imports, rebuild shared packages      |
+| Test: assertion failure         | Fix the code or update the test             |
 
 ---
 
@@ -254,14 +258,14 @@ npm run test --workspace=apps/claw-auth-service
 
 The CI pipeline provides implicit quality metrics:
 
-| Metric               | Where to Check                        |
-| -------------------- | ------------------------------------- |
-| ESLint violations    | CI Lint job output                    |
-| Type errors          | CI Typecheck job output               |
-| Test pass rate       | CI Test job output                    |
-| Build success        | CI Build job output                   |
-| Test coverage        | `npm run test -- --coverage`          |
-| Bundle size          | `npm run build` output (frontend)     |
+| Metric            | Where to Check                    |
+| ----------------- | --------------------------------- |
+| ESLint violations | CI Lint job output                |
+| Type errors       | CI Typecheck job output           |
+| Test pass rate    | CI Test job output                |
+| Build success     | CI Build job output               |
+| Test coverage     | `npm run test -- --coverage`      |
+| Bundle size       | `npm run build` output (frontend) |
 
 ---
 

@@ -6,7 +6,7 @@ Accepted (2025-Q1)
 
 ## Context
 
-With 13 microservices, services need to communicate asynchronously. The message flow alone involves at least 5 services (chat, routing, memory, audit, and optionally file/connector). Synchronous HTTP calls for every inter-service interaction would create tight coupling, cascade failures, and make the system fragile.
+With 17 microservices, services need to communicate asynchronously. The message flow alone involves at least 5 services (chat, routing, memory, audit, and optionally file/connector). Synchronous HTTP calls for every inter-service interaction would create tight coupling, cascade failures, and make the system fragile.
 
 The team evaluated several async messaging approaches. Key requirements:
 

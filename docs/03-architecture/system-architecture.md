@@ -2,7 +2,7 @@
 
 ## Overview
 
-ClawAI is a local-first AI orchestration platform built as a distributed microservices system. It routes user prompts to the optimal AI provider (local Ollama or cloud) based on task type, privacy requirements, cost constraints, and latency targets. The system now comprises 15 NestJS backend services, a Next.js frontend, and supporting infrastructure including 11 PostgreSQL databases, MongoDB, Redis, RabbitMQ, Ollama, and ClamAV.
+ClawAI is a local-first AI orchestration platform built as a distributed microservices system. It routes user prompts to the optimal AI provider (local Ollama or cloud) based on task type, privacy requirements, cost constraints, and latency targets. The system now comprises 17 NestJS backend services, a Next.js frontend, and supporting infrastructure including 13 PostgreSQL databases, MongoDB, Redis, RabbitMQ, Ollama, and ClamAV.
 
 ---
 
@@ -65,23 +65,23 @@ ClawAI is a local-first AI orchestration platform built as a distributed microse
 
 ### Service Inventory
 
-| Service                 | Port | Database                      | Technology                  | Responsibility                                             |
-| ----------------------- | ---- | ----------------------------- | --------------------------- | ---------------------------------------------------------- |
-| auth-service            | 4001 | PG `claw_auth`                | NestJS, Prisma, argon2      | Authentication, authorization, user management, sessions   |
-| chat-service            | 4002 | PG `claw_chat`                | NestJS, Prisma, SSE         | Threads, messages, context assembly, LLM execution         |
-| connector-service       | 4003 | PG `claw_connectors`          | NestJS, Prisma, AES-256-GCM | Cloud provider management, health checks, model sync       |
-| routing-service         | 4004 | PG `claw_routing`             | NestJS, Prisma              | Intelligent routing, 7 modes, policies, decision recording |
-| memory-service          | 4005 | PG `claw_memory` (pgvector)   | NestJS, Prisma              | Memory extraction, CRUD, context packs                     |
-| file-service            | 4006 | PG `claw_files`               | NestJS, Prisma              | File upload, chunking, ingestion, scanning                 |
-| audit-service           | 4007 | MongoDB `claw_audit`          | NestJS, Mongoose            | Audit events, usage ledger                                 |
-| ollama-service          | 4008 | PG `claw_ollama`              | NestJS, Prisma              | Local model management, roles, generation proxy            |
-| health-service          | 4009 | None                          | NestJS                      | Aggregated health from downstream services                 |
-| client-logs-service     | 4010 | MongoDB `claw_client_logs`    | NestJS, Mongoose            | Frontend log ingestion, TTL 30d                            |
-| server-logs-service     | 4011 | MongoDB `claw_server_logs`    | NestJS, Mongoose            | Backend log aggregation, TTL 30d                           |
-| image-service           | 4012 | PG `claw_images`              | NestJS, Prisma              | AI image generation                                        |
-| file-generation-service | 4013 | PG `claw_file_generations`    | NestJS, Prisma              | AI file generation                                         |
-| workspace-service       | 4014 | PG `claw_workspace`           | NestJS, Prisma              | External sync, search, object graph, action approval       |
-| agent-service           | 4015 | PG `claw_agent`               | NestJS, Prisma              | Local agent sessions, commands, repos, file events         |
+| Service                 | Port | Database                    | Technology                  | Responsibility                                             |
+| ----------------------- | ---- | --------------------------- | --------------------------- | ---------------------------------------------------------- |
+| auth-service            | 4001 | PG `claw_auth`              | NestJS, Prisma, argon2      | Authentication, authorization, user management, sessions   |
+| chat-service            | 4002 | PG `claw_chat`              | NestJS, Prisma, SSE         | Threads, messages, context assembly, LLM execution         |
+| connector-service       | 4003 | PG `claw_connectors`        | NestJS, Prisma, AES-256-GCM | Cloud provider management, health checks, model sync       |
+| routing-service         | 4004 | PG `claw_routing`           | NestJS, Prisma              | Intelligent routing, 7 modes, policies, decision recording |
+| memory-service          | 4005 | PG `claw_memory` (pgvector) | NestJS, Prisma              | Memory extraction, CRUD, context packs                     |
+| file-service            | 4006 | PG `claw_files`             | NestJS, Prisma              | File upload, chunking, ingestion, scanning                 |
+| audit-service           | 4007 | MongoDB `claw_audit`        | NestJS, Mongoose            | Audit events, usage ledger                                 |
+| ollama-service          | 4008 | PG `claw_ollama`            | NestJS, Prisma              | Local model management, roles, generation proxy            |
+| health-service          | 4009 | None                        | NestJS                      | Aggregated health from downstream services                 |
+| client-logs-service     | 4010 | MongoDB `claw_client_logs`  | NestJS, Mongoose            | Frontend log ingestion, TTL 30d                            |
+| server-logs-service     | 4011 | MongoDB `claw_server_logs`  | NestJS, Mongoose            | Backend log aggregation, TTL 30d                           |
+| image-service           | 4012 | PG `claw_images`            | NestJS, Prisma              | AI image generation                                        |
+| file-generation-service | 4013 | PG `claw_file_generations`  | NestJS, Prisma              | AI file generation                                         |
+| workspace-service       | 4014 | PG `claw_workspace`         | NestJS, Prisma              | External sync, search, object graph, action approval       |
+| agent-service           | 4015 | PG `claw_agent`             | NestJS, Prisma              | Local agent sessions, commands, repos, file events         |
 
 ### Database Topology
 

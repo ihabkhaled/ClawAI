@@ -8,7 +8,7 @@
 
 ## Purpose
 
-In a system with 13 microservices, 4 Docker Compose files, an Nginx reverse proxy, 9 PostgreSQL databases, RabbitMQ, Redis, Ollama, a CI/CD pipeline, 8 i18n locales, and a shared monorepo — every structural change has ripple effects. This checklist ensures none of them are missed.
+In a system with 17 microservices, 4 Docker Compose files, an Nginx reverse proxy, 13 PostgreSQL databases, RabbitMQ, Redis, Ollama, a CI/CD pipeline, 9 i18n locales, and a shared monorepo — every structural change has ripple effects. This checklist ensures none of them are missed.
 
 **This checklist is derived from the 18-item mandatory update list in root `CLAUDE.md`.** It adds exact verification steps, severity ratings, and historical failure patterns for each item.
 
@@ -184,7 +184,7 @@ grep 'AUTO_PULL_MODELS\|ollama\|comfyui' docker-compose.dev.ollama.yml
 
 ### Item 9: `infra/nginx/nginx.conf`
 
-**WHAT:** The Nginx reverse proxy configuration. Routes all traffic from port 4000 to the 13 backend services.
+**WHAT:** The Nginx reverse proxy configuration. Routes all traffic from port 4000 to the 17 backend services.
 
 **WHEN:**
 
@@ -252,7 +252,7 @@ curl -s http://localhost:4009/api/v1/health | jq '.services["new-service-name"]'
 
 ### Item 11: `packages/shared-constants`
 
-**WHAT:** The shared constants package consumed by all 13 services. Contains service port numbers, service names, exchange names, API prefix, and pagination defaults.
+**WHAT:** The shared constants package consumed by all 17 services. Contains service port numbers, service names, exchange names, API prefix, and pagination defaults.
 
 **WHEN:**
 
@@ -423,14 +423,14 @@ npx tsx prisma/seed-catalog.ts
 
 ### Item 16: All 8 i18n Locale Files
 
-**WHAT:** The translation files at `apps/claw-frontend/src/lib/i18n/locales/{en,ar,de,es,fr,it,pt,ru}.ts`.
+**WHAT:** The translation files at `apps/claw-frontend/src/lib/i18n/locales/{en,ar,de,es,fr,hi,it,pt,ru}.ts`.
 
 **WHEN:** Any new user-facing text is added in any component, hook, or page.
 
 **HOW TO VERIFY:**
 
 ```bash
-# Check that the new key exists in all 8 locale files
+# Check that the new key exists in all 9 locale files
 for lang in en ar de es fr it pt ru; do
   grep 'newTranslationKey' apps/claw-frontend/src/lib/i18n/locales/$lang.ts || echo "MISSING in $lang"
 done
@@ -543,7 +543,7 @@ For each item, the reviewer must confirm the following before approving a PR:
 | `ci.yml`                         | CI pipeline green; new service in Prisma generate step           |
 | Prisma migration                 | Migration file in diff; migration applies on fresh container     |
 | Seed files                       | Seed runs without error; data visible in DB via psql             |
-| i18n (all 8)                     | All 8 locale files in diff; `npm run typecheck` 0 errors         |
+| i18n (all 8)                     | All 9 locale files in diff; `npm run typecheck` 0 errors         |
 | Frontend types                   | `npm run typecheck` 0 errors on frontend workspace               |
 | Root `CLAUDE.md`                 | New service/endpoint/var/pattern visible in diff                 |
 
@@ -565,7 +565,7 @@ These are the items most frequently missed in ClawAI development. Treat them as 
 
 6. **Seed file updated but seed script not re-run in dev or prod.** The new catalog entry exists in the seed file but not in the database. Run the seed explicitly after deploying.
 
-7. **`shared-types` updated but not all 13 service containers rebuilt.** Shared package change requires full stop → rm → rmi → build for every service that imports the package. See Docker Rebuild Procedure in `CLAUDE.md`.
+7. **`shared-types` updated but not all 17 service containers rebuilt.** Shared package change requires full stop → rm → rmi → build for every service that imports the package. See Docker Rebuild Procedure in `CLAUDE.md`.
 
 8. **`CLAUDE.md` not updated after adding a new Replay Lab endpoint.** The endpoint table in the Routing section is now stale. The next engineer implementing a related feature misses the new endpoint and duplicates it.
 

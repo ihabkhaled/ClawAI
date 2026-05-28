@@ -32,7 +32,7 @@ This document defines the primary user personas for ClawAI. Each persona represe
 2. **Routing Policy Configuration:** Go to Routing page, create policies (e.g., "Route all coding tasks to Anthropic," "Use LOCAL_ONLY for anything mentioning internal projects"), set priorities, and monitor decision history to validate behavior.
 3. **Usage Monitoring:** Check the Audits page for event logs and the Usage section for cost and latency summaries. Export or filter by date range, provider, or model to prepare monthly reports.
 4. **User Management:** Open Admin page, create or deactivate user accounts, assign roles (ADMIN/OPERATOR/VIEWER), and force password resets when needed.
-5. **Health Monitoring:** Use the Observability dashboard to see aggregated health across all 11 backend services, Ollama runtime, and external connectors. Investigate server logs when services degrade.
+5. **Health Monitoring:** Use the Observability dashboard to see aggregated health across all 17 backend services, Ollama runtime, and external connectors. Investigate server logs when services degrade.
 
 ### Feature Usage
 

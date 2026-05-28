@@ -253,7 +253,7 @@ Lucide React icons are used exclusively. No other icon libraries.
 
 ### Implementation
 
-- Locale files: `src/lib/i18n/locales/{en,ar,de,es,fr,it,pt,ru}.ts`
+- Locale files: `src/lib/i18n/locales/{en,ar,de,es,fr,hi,it,pt,ru}.ts`
 - Type-safe keys defined in `src/types/i18n.types.ts`
 - All user-facing text uses `t('key')` from `useTranslation()` hook
 - **No hardcoded text** in any component

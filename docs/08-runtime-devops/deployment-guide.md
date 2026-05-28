@@ -103,7 +103,7 @@ ADMIN_PASSWORD=<strong-password>
 # Database passwords (MUST change from defaults)
 PG_AUTH_PASSWORD=<strong-password>
 PG_CHAT_PASSWORD=<strong-password>
-# ... (all 9 PostgreSQL instances)
+# ... (all 13 PostgreSQL instances)
 MONGO_PASSWORD=<strong-password>
 RABBITMQ_DEFAULT_PASS=<strong-password>
 

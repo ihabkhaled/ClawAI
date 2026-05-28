@@ -8,7 +8,7 @@ Testing strategy and mandatory quality gates for the Claw platform.
 
 ## Testing Strategy Overview
 
-Claw uses a layered testing approach across the frontend and all 16 backend microservices:
+Claw uses a layered testing approach across the frontend and all 17 backend microservices:
 
 ```
               ┌──────────────────────┐
@@ -151,7 +151,7 @@ Document evidence in `.claude/Integrations/<feature>__QA_output.md`:
 5. QA script producing failures (must be 0)
 6. DB verification skipped
 7. Docker logs showing `UnhandledPromiseRejection` or `FATAL`
-8. Missing i18n keys in any of the 8 locales
+8. Missing i18n keys in any of the 9 locales
 9. Missing error state handling in new UI components
 10. `storeErrorMessage` not in try-catch for fire-and-forget managers
 

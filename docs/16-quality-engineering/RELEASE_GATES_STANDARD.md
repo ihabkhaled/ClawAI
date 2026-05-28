@@ -361,7 +361,7 @@ This checklist is completed immediately before merge/deploy. Every item is check
 ### i18n and Localization
 
 - [ ] All new user-facing text has translation keys (not hardcoded strings)
-- [ ] All 8 locale files updated: en, ar, de, es, fr, it, pt, ru
+- [ ] All 9 locale files updated: en, ar, de, es, fr, hi, it, pt, ru
 - [ ] `i18n.types.ts` updated with new translation keys
 - [ ] `npm run typecheck` passes on frontend workspace (confirms type-safe keys)
 

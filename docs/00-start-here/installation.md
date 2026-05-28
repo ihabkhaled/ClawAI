@@ -266,9 +266,9 @@ npm install
 This installs dependencies for all workspaces:
 
 - Root workspace (shared tooling)
-- All 16 service apps
+- All 17 service apps
 - `apps/claw-frontend` (Next.js)
-- All 4 shared packages
+- All 5 shared packages
 
 ### 3. Build Shared Packages
 

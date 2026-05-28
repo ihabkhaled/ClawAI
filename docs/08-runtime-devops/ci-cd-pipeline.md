@@ -82,7 +82,7 @@ Services import types and constants from shared packages. Without building them 
 
 ### Prisma Generate Loop
 
-Each Prisma service needs its client generated before linting, type-checking, or testing. The loop covers 9 services:
+Each Prisma service needs its client generated before linting, type-checking, or testing. The loop covers 17 services:
 
 1. `claw-auth-service`
 2. `claw-chat-service`
@@ -192,11 +192,13 @@ All tests must pass.
 When adding a new backend service with Prisma:
 
 1. Add to the Prisma generate loop in all 4 jobs:
+
    ```yaml
    for svc in auth chat connector routing memory file ollama image file-generation NEW_SERVICE; do
    ```
 
 2. Add any required dummy env vars to the test job:
+
    ```yaml
    env:
      NEW_SERVICE_DATABASE_URL: postgresql://test:test@localhost:5432/test
@@ -217,11 +219,13 @@ Enforced by commitlint:
 **Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
 
 **Rules**:
+
 - Subject: max 100 characters
 - No sentence-case, start-case, pascal-case, or upper-case
 - Lowercase only
 
 **Examples**:
+
 ```
 feat(chat): add file attachment support
 fix(routing): handle Ollama timeout

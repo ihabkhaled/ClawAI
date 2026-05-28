@@ -19,19 +19,19 @@ ClawAI uses a two-tier health check system:
 
 ```yaml
 healthcheck:
-  test: ["CMD-SHELL", "pg_isready -U ${PG_AUTH_USER} -d ${PG_AUTH_DB}"]
+  test: ['CMD-SHELL', 'pg_isready -U ${PG_AUTH_USER} -d ${PG_AUTH_DB}']
   interval: 10s
   timeout: 5s
   retries: 5
 ```
 
-All 9 PostgreSQL instances use `pg_isready` with service-specific user and database.
+All 13 PostgreSQL instances use `pg_isready` with service-specific user and database.
 
 ### MongoDB
 
 ```yaml
 healthcheck:
-  test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok"]
+  test: ['CMD', 'mongosh', '--eval', "db.runCommand('ping').ok"]
   interval: 10s
   timeout: 5s
   retries: 5
@@ -41,7 +41,7 @@ healthcheck:
 
 ```yaml
 healthcheck:
-  test: ["CMD", "redis-cli", "ping"]
+  test: ['CMD', 'redis-cli', 'ping']
   interval: 10s
   timeout: 5s
   retries: 5
@@ -51,7 +51,7 @@ healthcheck:
 
 ```yaml
 healthcheck:
-  test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+  test: ['CMD', 'rabbitmq-diagnostics', 'check_running']
   interval: 10s
   timeout: 5s
   retries: 5
@@ -61,7 +61,7 @@ healthcheck:
 
 ```yaml
 healthcheck:
-  test: ["CMD", "wget", "-qO-", "http://localhost:PORT/api/v1/health"]
+  test: ['CMD', 'wget', '-qO-', 'http://localhost:PORT/api/v1/health']
   interval: 15s
   timeout: 10s
   retries: 10
@@ -74,7 +74,7 @@ Each service exposes a `/api/v1/health` endpoint that returns basic health infor
 
 ```yaml
 healthcheck:
-  test: ["CMD", "ollama", "list"]
+  test: ['CMD', 'ollama', 'list']
   interval: 30s
   timeout: 10s
   retries: 5
@@ -91,7 +91,7 @@ Docker Compose uses `depends_on` with `condition: service_healthy` to enforce st
 
 ```
 Layer 1 (no dependencies):
-  All 9 PostgreSQL instances
+  All 13 PostgreSQL instances
   MongoDB
   Redis
   RabbitMQ
@@ -113,7 +113,7 @@ Layer 2 (depends on databases + infra being healthy):
   server-logs-service --> mongodb, redis, rabbitmq
 
 Layer 3 (depends on all services being healthy):
-  nginx --> all 13 backend services
+  nginx --> all 17 backend services
 
 Layer 4 (depends on proxy being started):
   frontend --> nginx (service_started, not health check)
@@ -165,6 +165,7 @@ GET /api/v1/health
 ### Frontend Observability Page
 
 The `/observability` page in the frontend displays this data in a dashboard with:
+
 - Overall system status
 - Per-service health indicators
 - Response times
@@ -224,11 +225,13 @@ The start_period is 45 seconds. If a service stays in "starting" beyond that:
 ### Service Marked "Unhealthy"
 
 1. Check the health check output:
+
    ```bash
    docker inspect --format='{{json .State.Health.Log}}' claw-<service> | jq '.[0]'
    ```
 
 2. Check service logs for errors:
+
    ```bash
    docker compose logs <service> --tail=100
    ```
@@ -248,6 +251,7 @@ Nginx depends on all services being healthy. If it starts but returns 502:
 3. The service is running but its `/api/v1/health` endpoint fails
 
 Fix:
+
 ```bash
 # Check which service is unhealthy
 docker compose ps
@@ -276,11 +280,11 @@ After a system reboot, Docker volumes persist but containers need to start fresh
 
 ## 7. Health Check Timing Reference
 
-| Container Type    | Interval | Timeout | Retries | Start Period | Max Startup Time |
-| ----------------- | -------- | ------- | ------- | ------------ | ---------------- |
-| PostgreSQL        | 10s      | 5s      | 5       | 0s           | 50s              |
-| MongoDB           | 10s      | 5s      | 5       | 0s           | 50s              |
-| Redis             | 10s      | 5s      | 5       | 0s           | 50s              |
-| RabbitMQ          | 10s      | 5s      | 5       | 0s           | 50s              |
-| Ollama            | 30s      | 10s     | 5       | 30s          | 180s             |
-| Backend services  | 15s      | 10s     | 10      | 45s          | 195s             |
+| Container Type   | Interval | Timeout | Retries | Start Period | Max Startup Time |
+| ---------------- | -------- | ------- | ------- | ------------ | ---------------- |
+| PostgreSQL       | 10s      | 5s      | 5       | 0s           | 50s              |
+| MongoDB          | 10s      | 5s      | 5       | 0s           | 50s              |
+| Redis            | 10s      | 5s      | 5       | 0s           | 50s              |
+| RabbitMQ         | 10s      | 5s      | 5       | 0s           | 50s              |
+| Ollama           | 30s      | 10s     | 5       | 30s          | 180s             |
+| Backend services | 15s      | 10s     | 10      | 45s          | 195s             |

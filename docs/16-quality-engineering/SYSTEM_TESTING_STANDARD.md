@@ -4,7 +4,7 @@
 
 ## Purpose
 
-System testing verifies that the entire ClawAI platform operates correctly as a unified system: all 13 services start, communicate, and remain stable under normal operating conditions. This is infrastructure-level validation, not feature-level testing.
+System testing verifies that the entire ClawAI platform operates correctly as a unified system: all 17 services start, communicate, and remain stable under normal operating conditions. This is infrastructure-level validation, not feature-level testing.
 
 ---
 
@@ -42,7 +42,7 @@ curl -s http://localhost:4000/api/v1/health | jq .
 
 **Assertions:**
 
-- All 13 services report `"up"`
+- All 17 services report `"up"`
 - No service latency exceeds 5000ms (indicates a problem)
 - Response returns within 10 seconds
 
@@ -546,7 +546,7 @@ curl -s -u guest:guest http://localhost:15672/api/queues/%2F | \
 curl -s -u guest:guest http://localhost:15672/api/connections | jq '.[].name' | wc -l
 ```
 
-**Assertion:** Number of connections matches number of services that use RabbitMQ (all 13 services minus health-service = 12 minimum).
+**Assertion:** Number of connections matches number of services that use RabbitMQ (all 17 services minus health-service = 12 minimum).
 
 ---
 
@@ -746,16 +746,16 @@ exit $FAIL
 
 ## 15. Tools Quick Reference
 
-| Tool              | Command                                                                      | Purpose                         |
-| ----------------- | ---------------------------------------------------------------------------- | ------------------------------- |
+| Tool              | Command                                               | Purpose                         |
+| ----------------- | ----------------------------------------------------- | ------------------------------- |
 | Container status  | `./scripts/claw.sh ps`                                | Check all container states      |
 | Service logs      | `./scripts/claw.sh logs <service> --since <duration>` | Inspect service output          |
 | All logs (recent) | `./scripts/claw.sh logs --since 5m`                   | Broad error scan                |
-| Resource usage    | `docker stats --no-stream`                                                   | CPU/memory per container        |
-| RabbitMQ UI       | `http://localhost:15672`                                                     | Queue inspection, message rates |
-| Redis CLI         | `docker compose exec redis redis-cli`                                        | Cache key inspection            |
-| PostgreSQL        | `docker compose exec <db> psql -U claw -d <database>`                        | Direct DB queries               |
-| MongoDB           | `docker compose exec mongo mongosh <database>`                               | Audit/log DB queries            |
-| Ollama API        | `curl http://localhost:11434/api/tags`                                       | Model list                      |
-| Nginx config      | `docker compose exec nginx cat /etc/nginx/nginx.conf`                        | Proxy configuration             |
-| Health check      | `curl http://localhost:4000/api/v1/health`                                   | System-wide health              |
+| Resource usage    | `docker stats --no-stream`                            | CPU/memory per container        |
+| RabbitMQ UI       | `http://localhost:15672`                              | Queue inspection, message rates |
+| Redis CLI         | `docker compose exec redis redis-cli`                 | Cache key inspection            |
+| PostgreSQL        | `docker compose exec <db> psql -U claw -d <database>` | Direct DB queries               |
+| MongoDB           | `docker compose exec mongo mongosh <database>`        | Audit/log DB queries            |
+| Ollama API        | `curl http://localhost:11434/api/tags`                | Model list                      |
+| Nginx config      | `docker compose exec nginx cat /etc/nginx/nginx.conf` | Proxy configuration             |
+| Health check      | `curl http://localhost:4000/api/v1/health`            | System-wide health              |

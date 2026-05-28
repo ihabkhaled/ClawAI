@@ -13,6 +13,7 @@
 **Scope:** add `selectedWorkflow` field to RoutingDecision; for now always set `DIRECT_LLM`. Unlocks future R.3 work + UI badge in stream R.5.
 
 **Files:**
+
 - `apps/claw-routing-service/prisma/schema.prisma` — add `selectedWorkflow WorkflowKind?`
 - `apps/claw-routing-service/src/modules/routing/managers/routing.manager.ts` — set `DIRECT_LLM` on every decision
 - `apps/claw-frontend/src/types/routing.types.ts` — add field
@@ -30,9 +31,10 @@
 **Scope:** small `ⓘ` icon next to provider/model badge in chat-message bubble; click expands to existing `explanation` text.
 
 **Files:**
+
 - `apps/claw-frontend/src/components/chat/message-bubble.tsx` — add icon + popover
 - `apps/claw-frontend/src/hooks/chat/use-message-explanation.ts` — new hook; uses existing decision in props
-- i18n keys in 8 locales for "Why this model?"
+- i18n keys in 9 locales for "Why this model?"
 
 **Acceptance:** user clicks ⓘ → sees explanation; closes on outside click.
 **Rollback:** hide icon via flag.
@@ -45,6 +47,7 @@
 **Scope:** new page that calls existing `/routing/evaluate` (v1) endpoint with a textarea + submit; renders decision JSON.
 
 **Files:**
+
 - `apps/claw-frontend/src/app/(portal)/routing/playground/page.tsx`
 - `apps/claw-frontend/src/hooks/routing/use-playground.ts`
 - `apps/claw-frontend/src/components/routing/playground-result-display.tsx`
@@ -61,6 +64,7 @@
 **Scope:** detect YouTube URLs in message; set `detectedModality=YOUTUBE_INPUT` on decision; log a TODO line. No actual transcript fetching.
 
 **Files:**
+
 - `apps/claw-routing-service/src/modules/routing/managers/routing.manager.ts` — single regex check before other detection
 - `apps/claw-routing-service/src/modules/routing/constants/youtube-url.constants.ts` — regex (already scaffolded in R.2)
 
@@ -75,6 +79,7 @@
 **Scope:** if request has attachment with `application/pdf` MIME + verb (`summarize|explain`) → set `workflowHint=PDF_EXTRACTION` on decision. No actual PDF extraction wired.
 
 **Files:**
+
 - `apps/claw-routing-service/src/modules/routing/managers/routing.manager.ts` — single check before AUTO
 - Wire attachments into `RoutingContext` (chat-service change required — see Blocker B1)
 
@@ -89,6 +94,7 @@
 **Scope:** add `categoryFilter?: string` query param to `GET /routing/decisions/:threadId`; pipe through to repository.
 
 **Files:**
+
 - `apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts` — accept query param
 - `apps/claw-routing-service/src/modules/routing/repositories/routing-decisions.repository.ts` — add WHERE clause
 - `apps/claw-frontend/src/hooks/routing/use-routing-decisions.ts` — pass filter
@@ -104,6 +110,7 @@
 **Scope:** new chart on `/routing/adaptive-insights` showing per-(provider, model) success/failure/latency over 7/30/90-day window.
 
 **Files:**
+
 - `apps/claw-frontend/src/components/routing/provider-model-chart.tsx` — new component using recharts (already in deps)
 - `apps/claw-frontend/src/app/(portal)/routing/adaptive-insights/page.tsx` — add the chart
 - Backend already exposes this data via existing observability endpoint
@@ -118,6 +125,7 @@
 **Scope:** operational ticket — pick 5 high-value confirmed regressions from Replay Lab, run "Promote to fixture" on each, commit the generated test code.
 
 **Files:**
+
 - `apps/claw-routing-service/test/regression/promoted-fixtures.spec.ts` — appended with 5 new test cases
 
 **Acceptance:** 5 new tests in repo; all pass; PR-blocking on regression.
@@ -130,6 +138,7 @@
 **Scope:** small refresh icon on each row; clicking re-fires `/routing/evaluate` with the original context; shows old vs new decision in modal.
 
 **Files:**
+
 - `apps/claw-frontend/src/components/routing/routing-decision-row.tsx` — add button
 - `apps/claw-frontend/src/hooks/routing/use-rerun-decision.ts` — new mutation hook
 - `apps/claw-frontend/src/components/routing/rerun-decision-modal.tsx` — comparison modal
@@ -144,6 +153,7 @@
 **Scope:** run cheap character-set detector (no lib needed: count non-ASCII chars / total chars > 0.3 → mark as non-EN); save `detectedLanguage='non-en'` flag on decision. Real language detection comes in R.7.
 
 **Files:**
+
 - `apps/claw-routing-service/src/modules/routing/utilities/quick-language-detector.utility.ts` — new pure utility
 - `apps/claw-routing-service/src/modules/routing/managers/routing.manager.ts` — call before other detection
 
@@ -155,6 +165,7 @@
 ## Activation order (no dependencies)
 
 All 10 are independent; ship in any order. Suggest:
+
 1. 11.1 (workflow on decision) — unlocks UI badges
 2. 11.6 (category filter) — easy admin win
 3. 11.7 (provider+model chart) — visible improvement

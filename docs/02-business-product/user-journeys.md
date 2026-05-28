@@ -13,7 +13,7 @@ This document describes the key user journeys through the ClawAI platform. Each 
 
 1. **Run the installer.** Execute `scripts/install.ps1` (Windows) or `scripts/install.sh` (Linux/macOS). The script generates the `.env` file with default values, pulls Docker images, and starts all containers.
 
-2. **Verify services are running.** Open the Observability page or run `./scripts/claw.sh status`. All 11 backend services, databases, RabbitMQ, Redis, and Ollama should report healthy. The Ollama service auto-pulls 5 local models (gemma3:4b, llama3.2:3b, phi3:mini, gemma2:2b, tinyllama) on first startup.
+2. **Verify services are running.** Open the Observability page or run `./scripts/claw.sh status`. All 17 backend services, databases, RabbitMQ, Redis, and Ollama should report healthy. The Ollama service auto-pulls 5 local models (gemma3:4b, llama3.2:3b, phi3:mini, gemma2:2b, tinyllama) on first startup.
 
 3. **Log in with the default admin account.** Navigate to `http://localhost:3000/login`. Enter the default admin credentials (configured in .env as ADMIN_EMAIL and ADMIN_PASSWORD). The system returns JWT tokens and redirects to the Dashboard.
 
