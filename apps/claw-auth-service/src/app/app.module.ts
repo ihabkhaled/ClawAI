@@ -16,6 +16,8 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { AuthModule } from '../modules/auth/auth.module';
 import { RolesModule } from '../modules/roles/roles.module';
 import { PlansModule } from '../modules/plans/plans.module';
+import { QuotaModule } from '../modules/quota/quota.module';
+import { EntitlementsModule } from '../modules/entitlements/entitlements.module';
 import { UsersModule } from '../modules/users/users.module';
 import { HealthModule } from '../modules/health/health.module';
 
@@ -58,6 +60,8 @@ import { HealthModule } from '../modules/health/health.module';
     AuthModule,
     RolesModule,
     PlansModule,
+    QuotaModule,
+    EntitlementsModule,
     UsersModule,
     HealthModule,
     ThrottlerModule.forRoot([
