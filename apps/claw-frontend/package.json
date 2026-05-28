@@ -14,7 +14,7 @@
     "format:check": "prettier --check 'src/**/*.{ts,tsx,css}'",
     "typecheck": "tsgo --noEmit",
     "validate": "npm run typecheck && npm run lint:strict && npm run format:check",
-    "test": "node scripts/run-vitest.cjs",
+    "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "test:e2e": "playwright test",

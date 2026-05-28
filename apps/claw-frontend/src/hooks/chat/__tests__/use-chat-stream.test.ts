@@ -20,13 +20,21 @@ const { mockConnectSse, mockLogger } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('@/lib/i18n', () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-    locale: 'en',
-    dir: 'ltr',
-  }),
-}));
+// `t` MUST be a stable reference: the real useTranslation memoizes it with
+// useCallback, and useChatStream lists `t` in a useEffect dependency array.
+// Returning a fresh `t` per render makes that effect re-run every render →
+// resetStream() → setState → re-render → infinite loop that OOMs the worker.
+// Define it inside the factory (which runs once) so every call reuses it.
+vi.mock('@/lib/i18n', () => {
+  const t = (key: string): string => key;
+  return {
+    useTranslation: () => ({
+      t,
+      locale: 'en',
+      dir: 'ltr',
+    }),
+  };
+});
 
 vi.mock('@/utilities', () => ({
   connectSse: (...args: unknown[]) => mockConnectSse(...args),
