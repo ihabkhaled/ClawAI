@@ -129,6 +129,10 @@ describe('ChatMessagesService', () => {
       { write: jest.fn(), getByMessageId: jest.fn() } as unknown as ConstructorParameters<
         typeof ChatMessagesService
       >[16],
+      {
+        assertCanSendMessage: jest.fn(),
+        recordUsage: jest.fn(),
+      } as unknown as ConstructorParameters<typeof ChatMessagesService>[17],
     );
   });
 
@@ -330,6 +334,10 @@ describe('ChatMessagesService', () => {
         { write: jest.fn(), getByMessageId: jest.fn() } as unknown as ConstructorParameters<
           typeof ChatMessagesService
         >[16],
+        {
+          assertCanSendMessage: jest.fn(),
+          recordUsage: jest.fn(),
+        } as unknown as ConstructorParameters<typeof ChatMessagesService>[17],
       );
 
       const result = await localService.executeVerify('user-1', {

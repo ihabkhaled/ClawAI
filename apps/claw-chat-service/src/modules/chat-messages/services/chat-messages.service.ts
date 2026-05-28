@@ -28,6 +28,7 @@ import { VerifierManager } from '../managers/verifier.manager';
 import { PipelineManager } from '../managers/pipeline.manager';
 import { RolePackManager } from '../managers/role-pack.manager';
 import { ChatStreamService } from './chat-stream.service';
+import { AccessControlService } from './access-control.service';
 import { type CreateMessageDto } from '../dto/create-message.dto';
 import { type ResearchRunResponse } from '../types/research.types';
 import { type UserMessageMetadata } from '../types/user-message-metadata.types';
@@ -88,6 +89,7 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly chatStreamService: ChatStreamService,
     private readonly rabbitMQService: RabbitMQService,
     private readonly contextReceiptService: ContextReceiptService,
+    private readonly accessControlService: AccessControlService,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -116,6 +118,13 @@ export class ChatMessagesService implements OnModuleInit {
     this.logger.debug(
       `createMessage: resolved routing mode=${effectiveRoutingMode}, provider=${forcedProvider ?? 'auto'}, model=${forcedModel ?? 'auto'}, research=${dto.researchMode ?? 'OFF'}`,
     );
+
+    // Backend enforcement: reject a forbidden manually-selected model and a
+    // user whose daily quota is exhausted, before any work is done.
+    await this.accessControlService.assertCanSendMessage(userId, {
+      provider: forcedProvider,
+      model: forcedModel,
+    });
 
     this.chatStreamService.emitRequestAccepted(dto.threadId);
 
@@ -884,9 +893,7 @@ export class ChatMessagesService implements OnModuleInit {
     return {
       ...(workflow === null ? {} : { workflow }),
       ...(workflowReason === null ? {} : { workflowReason }),
-      ...(llmResponse.searchFirst === undefined
-        ? {}
-        : { searchFirst: llmResponse.searchFirst }),
+      ...(llmResponse.searchFirst === undefined ? {} : { searchFirst: llmResponse.searchFirst }),
     };
   }
 
