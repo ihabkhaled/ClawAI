@@ -8,11 +8,11 @@ Thank you for your interest in contributing to Claw. This guide will help you ge
 
 1. **Fork the repository** and clone your fork locally.
 
-2. **Set up the development environment** by following the [Installation Guide](INSTALL.md).
+2. **Set up the development environment** by following the [Installation Guide](../docs/00-start-here/installation.md).
 
-3. **Read the project rules** in [CLAUDE.md](CLAUDE.md) -- these are the coding standards enforced across the project.
+3. **Read the project rules** in [CLAUDE.md](../CLAUDE.md) -- these are the coding standards enforced across the project.
 
-4. **Understand the architecture**: Claw uses a microservices architecture with 9 backend services, 4 shared packages, and a Next.js frontend. See [ADR-004](docs/adrs/004-microservices-architecture.md) for the architectural rationale.
+4. **Understand the architecture**: Claw uses a microservices architecture with 9 backend services, 4 shared packages, and a Next.js frontend. See [ADR-004](../docs/adrs/004-microservices-architecture.md) for the architectural rationale.
 
 ---
 
@@ -61,6 +61,7 @@ git checkout -b docs/update-architecture
 ```
 
 Branch naming conventions:
+
 - `feat/` -- New features
 - `fix/` -- Bug fixes
 - `refactor/` -- Code refactoring (no behavior change)
@@ -125,6 +126,7 @@ mkdir -p apps/claw-<name>-service/src
 ```
 
 Follow the structure of an existing service (e.g., `claw-auth-service`) as a template:
+
 - `src/main.ts` -- NestJS bootstrap
 - `src/app.module.ts` -- Root module with RabbitMQ, database, and shared-auth imports
 - `src/<domain>/` -- Controllers, services, repositories
@@ -138,6 +140,7 @@ Add the port to `packages/shared-constants` and document it. Follow the existing
 ### 3. Add Database (if needed)
 
 If the service needs its own database:
+
 - Add a new PostgreSQL (or MongoDB) service to `docker/docker-compose.dev.databases.yml` and `docker/docker-compose.prod.databases.yml`
 - Assign the next available host port (5447+ for PostgreSQL)
 - Add connection variables to `.env.example`
@@ -153,6 +156,7 @@ Update the Health service to include the new service in its health aggregation.
 ### 6. Add RabbitMQ Events
 
 If the service publishes or consumes events:
+
 - Define event types in `@claw/shared-types`
 - Define routing keys in `@claw/shared-constants`
 - Use `@claw/shared-rabbitmq` for publishing and consuming
@@ -171,12 +175,12 @@ Update `README.md`, `INSTALL.md`, `ENVIRONMENT_VARIABLES.md`, and any other affe
 
 The 4 shared packages under `packages/` are consumed by all microservices:
 
-| Package                  | Purpose                              |
-|--------------------------|--------------------------------------|
-| `@claw/shared-types`    | Enums, TypeScript types, event contracts |
-| `@claw/shared-constants`| Service ports, names, exchange config |
-| `@claw/shared-rabbitmq` | NestJS RabbitMQ module wrapper       |
-| `@claw/shared-auth`     | JWT guard and role decorators        |
+| Package                  | Purpose                                  |
+| ------------------------ | ---------------------------------------- |
+| `@claw/shared-types`     | Enums, TypeScript types, event contracts |
+| `@claw/shared-constants` | Service ports, names, exchange config    |
+| `@claw/shared-rabbitmq`  | NestJS RabbitMQ module wrapper           |
+| `@claw/shared-auth`      | JWT guard and role decorators            |
 
 ### Making Changes to Shared Packages
 
@@ -240,7 +244,7 @@ docker compose up -d --build
 
 ## Code Standards
 
-The full code standards are documented in [CLAUDE.md](CLAUDE.md). Key rules:
+The full code standards are documented in [CLAUDE.md](../CLAUDE.md). Key rules:
 
 ### TypeScript
 
@@ -306,16 +310,16 @@ The full code standards are documented in [CLAUDE.md](CLAUDE.md). Key rules:
 
 All contributions must include appropriate tests:
 
-| Change Type            | Required Tests                                       |
-|------------------------|------------------------------------------------------|
-| New microservice       | Unit tests for service, integration test for API     |
-| New frontend page      | Component test, update E2E if it is a critical path  |
-| Bug fix                | Regression test that fails without the fix           |
-| Utility function       | Unit tests covering edge cases                       |
-| Shared package change  | Unit tests in the package, verify consuming services |
-| Refactor               | Existing tests must continue to pass                 |
+| Change Type           | Required Tests                                       |
+| --------------------- | ---------------------------------------------------- |
+| New microservice      | Unit tests for service, integration test for API     |
+| New frontend page     | Component test, update E2E if it is a critical path  |
+| Bug fix               | Regression test that fails without the fix           |
+| Utility function      | Unit tests covering edge cases                       |
+| Shared package change | Unit tests in the package, verify consuming services |
+| Refactor              | Existing tests must continue to pass                 |
 
-See [TESTING.md](TESTING.md) for detailed testing guidance.
+See [Testing Overview](../docs/09-testing/testing-overview.md) for detailed testing guidance.
 
 ---
 
@@ -334,7 +338,7 @@ Claw follows conventional commit format:
 ### Types
 
 | Type       | Purpose                                  |
-|------------|------------------------------------------|
+| ---------- | ---------------------------------------- |
 | `feat`     | New feature                              |
 | `fix`      | Bug fix                                  |
 | `docs`     | Documentation changes                    |
@@ -346,21 +350,21 @@ Claw follows conventional commit format:
 
 ### Scopes
 
-| Scope        | Area                           |
-|--------------|--------------------------------|
-| `frontend`   | Frontend application           |
-| `auth`       | Auth service                   |
-| `chat`       | Chat service                   |
-| `connectors` | Connector service              |
-| `routing`    | Routing service                |
-| `memory`     | Memory service                 |
-| `file`       | File service                   |
-| `audit`      | Audit service                  |
-| `ollama`     | Ollama service                 |
-| `health`     | Health service                 |
-| `shared`     | Shared packages                |
-| `infra`      | Docker, CI, deployment         |
-| `docs`       | Documentation                  |
+| Scope        | Area                   |
+| ------------ | ---------------------- |
+| `frontend`   | Frontend application   |
+| `auth`       | Auth service           |
+| `chat`       | Chat service           |
+| `connectors` | Connector service      |
+| `routing`    | Routing service        |
+| `memory`     | Memory service         |
+| `file`       | File service           |
+| `audit`      | Audit service          |
+| `ollama`     | Ollama service         |
+| `health`     | Health service         |
+| `shared`     | Shared packages        |
+| `infra`      | Docker, CI, deployment |
+| `docs`       | Documentation          |
 
 ### Examples
 

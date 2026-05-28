@@ -1,374 +1,409 @@
-# Environment Variables Reference
+# Environment Variables
 
-> Complete reference for all ClawAI environment variables. Single `.env` file at the project root.
+Complete reference for all environment variables used by Claw.
 
----
-
-## Overview
-
-ClawAI uses a single `.env` file at the repository root as the source of truth for all configuration. This file is consumed by:
-
-- Docker Compose files (`${VAR}` interpolation)
-- All backend microservices (`env_file: .env` in Compose)
-- Frontend Next.js (`env_file: .env` in Compose)
-
-Copy `.env.example` to `.env` before first run. The install scripts (`scripts/install.sh`, `scripts/install.ps1`) generate this automatically.
+All variables are defined in `.env.example` at the project root. Copy it to `.env` and fill in secrets before starting.
 
 ---
 
-## 1. General
+## General
 
-| Variable       | Default                                                      | Required | Description                                               | Used By              |
-| -------------- | ------------------------------------------------------------ | -------- | --------------------------------------------------------- | -------------------- |
-| `NODE_ENV`     | `development`                                                | Yes      | Runtime environment (`development`, `production`, `test`) | All services         |
-| `CORS_ORIGINS` | `http://localhost:3000,http://localhost:80,http://localhost` | Yes      | Comma-separated allowed CORS origins                      | All backend services |
-
----
-
-## 2. Rate Limiting
-
-| Variable         | Default | Required | Description                       | Used By              |
-| ---------------- | ------- | -------- | --------------------------------- | -------------------- |
-| `THROTTLE_TTL`   | `60000` | Yes      | Rate limit window in milliseconds | All backend services |
-| `THROTTLE_LIMIT` | `100`   | Yes      | Maximum requests per window       | All backend services |
+| Variable         | Required | Default                 | Description                              |
+| ---------------- | -------- | ----------------------- | ---------------------------------------- |
+| `NODE_ENV`       | No       | `development`           | `development` or `production`            |
+| `CORS_ORIGINS`   | Yes      | `http://localhost:3000` | Comma-separated allowed origins for CORS |
+| `THROTTLE_TTL`   | No       | `60000`                 | Rate-limit window in milliseconds        |
+| `THROTTLE_LIMIT` | No       | `100`                   | Max requests per window per user/IP      |
 
 ---
 
-## 3. PostgreSQL Credentials
+## PostgreSQL Instances
 
-Each PostgreSQL service has its own database container with dedicated credentials.
+Claw uses 12 separate PostgreSQL instances, one per data-owning service.
 
-### Auth Database
+| Variable                       | Required | Default                    | Description                         |
+| ------------------------------ | -------- | -------------------------- | ----------------------------------- |
+| `PG_AUTH_HOST`                 | Yes      | `claw-pg-auth`             | Auth database host                  |
+| `PG_AUTH_PORT`                 | Yes      | `5432`                     | Auth database port (internal)       |
+| `PG_AUTH_USER`                 | Yes      | `claw`                     | Auth database username              |
+| `PG_AUTH_PASSWORD`             | Yes      | `claw_secret`              | Auth database password              |
+| `PG_AUTH_DB`                   | Yes      | `claw_auth`                | Auth database name                  |
+| `PG_CHAT_HOST`                 | Yes      | `claw-pg-chat`             | Chat database host                  |
+| `PG_CHAT_PORT`                 | Yes      | `5432`                     | Chat database port                  |
+| `PG_CHAT_USER`                 | Yes      | `claw`                     | Chat database username              |
+| `PG_CHAT_PASSWORD`             | Yes      | `claw_secret`              | Chat database password              |
+| `PG_CHAT_DB`                   | Yes      | `claw_chat`                | Chat database name                  |
+| `PG_CONNECTORS_HOST`           | Yes      | `claw-pg-connector`        | Connector database host             |
+| `PG_CONNECTORS_PORT`           | Yes      | `5432`                     | Connector database port             |
+| `PG_CONNECTORS_USER`           | Yes      | `claw`                     | Connector database username         |
+| `PG_CONNECTORS_PASSWORD`       | Yes      | `claw_secret`              | Connector database password         |
+| `PG_CONNECTORS_DB`             | Yes      | `claw_connectors`          | Connector database name             |
+| `PG_ROUTING_HOST`              | Yes      | `claw-pg-routing`          | Routing database host               |
+| `PG_ROUTING_PORT`              | Yes      | `5432`                     | Routing database port               |
+| `PG_ROUTING_USER`              | Yes      | `claw`                     | Routing database username           |
+| `PG_ROUTING_PASSWORD`          | Yes      | `claw_secret`              | Routing database password           |
+| `PG_ROUTING_DB`                | Yes      | `claw_routing`             | Routing database name               |
+| `PG_MEMORY_HOST`               | Yes      | `claw-pg-memory`           | Memory database host                |
+| `PG_MEMORY_PORT`               | Yes      | `5432`                     | Memory database port                |
+| `PG_MEMORY_USER`               | Yes      | `claw`                     | Memory database username            |
+| `PG_MEMORY_PASSWORD`           | Yes      | `claw_secret`              | Memory database password            |
+| `PG_MEMORY_DB`                 | Yes      | `claw_memory`              | Memory database name                |
+| `PG_FILES_HOST`                | Yes      | `claw-pg-files`            | File database host                  |
+| `PG_FILES_PORT`                | Yes      | `5432`                     | File database port                  |
+| `PG_FILES_USER`                | Yes      | `claw`                     | File database username              |
+| `PG_FILES_PASSWORD`            | Yes      | `claw_secret`              | File database password              |
+| `PG_FILES_DB`                  | Yes      | `claw_files`               | File database name                  |
+| `PG_OLLAMA_HOST`               | Yes      | `claw-pg-ollama`           | Ollama service database host        |
+| `PG_OLLAMA_PORT`               | Yes      | `5432`                     | Ollama service database port        |
+| `PG_OLLAMA_USER`               | Yes      | `claw`                     | Ollama service database username    |
+| `PG_OLLAMA_PASSWORD`           | Yes      | `claw_secret`              | Ollama service database password    |
+| `PG_OLLAMA_DB`                 | Yes      | `claw_ollama`              | Ollama service database name        |
+| `PG_IMAGES_HOST`               | Yes      | `claw-pg-images`           | Image service database host         |
+| `PG_IMAGES_PORT`               | Yes      | `5432`                     | Image service database port         |
+| `PG_IMAGES_USER`               | Yes      | `claw`                     | Image service database username     |
+| `PG_IMAGES_PASSWORD`           | Yes      | `claw_secret`              | Image service database password     |
+| `PG_IMAGES_DB`                 | Yes      | `claw_images`              | Image service database name         |
+| `PG_FILE_GENERATIONS_HOST`     | Yes      | `claw-pg-file-generations` | File gen database host              |
+| `PG_FILE_GENERATIONS_PORT`     | Yes      | `5432`                     | File gen database port              |
+| `PG_FILE_GENERATIONS_USER`     | Yes      | `claw`                     | File gen database username          |
+| `PG_FILE_GENERATIONS_PASSWORD` | Yes      | `claw_secret`              | File gen database password          |
+| `PG_FILE_GENERATIONS_DB`       | Yes      | `claw_file_generations`    | File gen database name              |
+| `PG_AGENT_HOST`                | Yes      | `claw-pg-agent`            | Agent service database host         |
+| `PG_AGENT_PORT`                | Yes      | `5432`                     | Agent service database port         |
+| `PG_AGENT_USER`                | Yes      | `claw`                     | Agent service database username     |
+| `PG_AGENT_PASSWORD`            | Yes      | `claw_secret`              | Agent service database password     |
+| `PG_AGENT_DB`                  | Yes      | `claw_agent`               | Agent service database name         |
+| `PG_RESEARCH_HOST`             | Yes      | `claw-pg-research`         | Research service database host      |
+| `PG_RESEARCH_PORT`             | Yes      | `5432`                     | Research service database port      |
+| `PG_RESEARCH_USER`             | Yes      | `claw`                     | Research service database username  |
+| `PG_RESEARCH_PASSWORD`         | Yes      | `claw_secret`              | Research service database password  |
+| `PG_RESEARCH_DB`               | Yes      | `claw_research`            | Research service database name      |
+| `PG_WORKSPACE_HOST`            | Yes      | `claw-pg-workspace`        | Workspace service database host     |
+| `PG_WORKSPACE_PORT`            | Yes      | `5432`                     | Workspace service database port     |
+| `PG_WORKSPACE_USER`            | Yes      | `claw`                     | Workspace service database username |
+| `PG_WORKSPACE_PASSWORD`        | Yes      | `claw_secret`              | Workspace service database password |
+| `PG_WORKSPACE_DB`              | Yes      | `claw_workspace`           | Workspace service database name     |
 
-| Variable           | Default       | Required | Secret  | Description       |
-| ------------------ | ------------- | -------- | ------- | ----------------- |
-| `PG_AUTH_USER`     | `claw`        | Yes      | No      | Database username |
-| `PG_AUTH_PASSWORD` | `claw_secret` | Yes      | **Yes** | Database password |
-| `PG_AUTH_DB`       | `claw_auth`   | Yes      | No      | Database name     |
-| `PG_AUTH_PORT`     | `5441`        | Yes      | No      | Host-mapped port  |
+**Notes:**
 
-### Chat Database
-
-| Variable           | Default       | Required | Secret  | Description       |
-| ------------------ | ------------- | -------- | ------- | ----------------- |
-| `PG_CHAT_USER`     | `claw`        | Yes      | No      | Database username |
-| `PG_CHAT_PASSWORD` | `claw_secret` | Yes      | **Yes** | Database password |
-| `PG_CHAT_DB`       | `claw_chat`   | Yes      | No      | Database name     |
-| `PG_CHAT_PORT`     | `5442`        | Yes      | No      | Host-mapped port  |
-
-### Connector Database
-
-| Variable                | Default           | Required | Secret  | Description       |
-| ----------------------- | ----------------- | -------- | ------- | ----------------- |
-| `PG_CONNECTOR_USER`     | `claw`            | Yes      | No      | Database username |
-| `PG_CONNECTOR_PASSWORD` | `claw_secret`     | Yes      | **Yes** | Database password |
-| `PG_CONNECTOR_DB`       | `claw_connectors` | Yes      | No      | Database name     |
-| `PG_CONNECTOR_PORT`     | `5443`            | Yes      | No      | Host-mapped port  |
-
-### Routing Database
-
-| Variable              | Default        | Required | Secret  | Description       |
-| --------------------- | -------------- | -------- | ------- | ----------------- |
-| `PG_ROUTING_USER`     | `claw`         | Yes      | No      | Database username |
-| `PG_ROUTING_PASSWORD` | `claw_secret`  | Yes      | **Yes** | Database password |
-| `PG_ROUTING_DB`       | `claw_routing` | Yes      | No      | Database name     |
-| `PG_ROUTING_PORT`     | `5444`         | Yes      | No      | Host-mapped port  |
-
-### Memory Database
-
-| Variable             | Default       | Required | Secret  | Description       |
-| -------------------- | ------------- | -------- | ------- | ----------------- |
-| `PG_MEMORY_USER`     | `claw`        | Yes      | No      | Database username |
-| `PG_MEMORY_PASSWORD` | `claw_secret` | Yes      | **Yes** | Database password |
-| `PG_MEMORY_DB`       | `claw_memory` | Yes      | No      | Database name     |
-| `PG_MEMORY_PORT`     | `5445`        | Yes      | No      | Host-mapped port  |
-
-### Files Database
-
-| Variable            | Default       | Required | Secret  | Description       |
-| ------------------- | ------------- | -------- | ------- | ----------------- |
-| `PG_FILES_USER`     | `claw`        | Yes      | No      | Database username |
-| `PG_FILES_PASSWORD` | `claw_secret` | Yes      | **Yes** | Database password |
-| `PG_FILES_DB`       | `claw_files`  | Yes      | No      | Database name     |
-| `PG_FILES_PORT`     | `5446`        | Yes      | No      | Host-mapped port  |
-
-### Ollama Database
-
-| Variable             | Default       | Required | Secret  | Description       |
-| -------------------- | ------------- | -------- | ------- | ----------------- |
-| `PG_OLLAMA_USER`     | `claw`        | Yes      | No      | Database username |
-| `PG_OLLAMA_PASSWORD` | `claw_secret` | Yes      | **Yes** | Database password |
-| `PG_OLLAMA_DB`       | `claw_ollama` | Yes      | No      | Database name     |
-| `PG_OLLAMA_PORT`     | `5447`        | Yes      | No      | Host-mapped port  |
-
-### Images Database
-
-| Variable             | Default       | Required | Secret  | Description       |
-| -------------------- | ------------- | -------- | ------- | ----------------- |
-| `PG_IMAGES_USER`     | `claw`        | Yes      | No      | Database username |
-| `PG_IMAGES_PASSWORD` | `claw_secret` | Yes      | **Yes** | Database password |
-| `PG_IMAGES_DB`       | `claw_images` | Yes      | No      | Database name     |
-| `PG_IMAGES_PORT`     | `5448`        | Yes      | No      | Host-mapped port  |
+- Inside Docker Compose, services use Docker service names as hosts (e.g., `claw-pg-auth`) with internal port `5432`.
+- When running services locally (outside Docker), use `localhost` with the host port (e.g., `5441` for auth).
+- Each PostgreSQL instance is a separate Docker container for fault isolation.
+- Memory service uses pgvector extension for embedding similarity search.
 
 ---
 
-## 4. MongoDB
+## MongoDB
 
-A single MongoDB instance hosts three logical databases.
+| Variable         | Required | Default        | Description                        |
+| ---------------- | -------- | -------------- | ---------------------------------- |
+| `MONGO_HOST`     | Yes      | `claw-mongodb` | MongoDB host                       |
+| `MONGO_PORT`     | Yes      | `27017`        | MongoDB port (internal)            |
+| `MONGO_USER`     | No       | —              | MongoDB username (if auth enabled) |
+| `MONGO_PASSWORD` | No       | —              | MongoDB password (if auth enabled) |
 
-| Variable         | Default       | Required | Secret  | Description                             |
-| ---------------- | ------------- | -------- | ------- | --------------------------------------- |
-| `MONGO_USER`     | `claw`        | Yes      | No      | MongoDB admin username                  |
-| `MONGO_PASSWORD` | `claw_secret` | Yes      | **Yes** | MongoDB admin password                  |
-| `MONGO_DB`       | `claw_audit`  | Yes      | No      | Default database name                   |
-| `MONGO_PORT`     | `27018`       | Yes      | No      | Host-mapped port (container uses 27017) |
+**Notes:**
 
----
-
-## 5. Redis
-
-| Variable     | Default              | Required | Secret | Description                            |
-| ------------ | -------------------- | -------- | ------ | -------------------------------------- |
-| `REDIS_URL`  | `redis://redis:6379` | Yes      | No     | Redis connection URL (Docker internal) |
-| `REDIS_PORT` | `6380`               | Yes      | No     | Host-mapped port                       |
+- Used by Audit service (`claw_audit`), Client Logs service (`claw_client_logs`), and Server Logs service (`claw_server_logs`).
+- Internal Docker port is `27017`; host port is `27018`.
+- All log collections have a 30-day TTL index.
 
 ---
 
-## 6. RabbitMQ
+## Redis
 
-| Variable                   | Default                                 | Required | Secret  | Description                                |
-| -------------------------- | --------------------------------------- | -------- | ------- | ------------------------------------------ |
-| `RABBITMQ_USER`            | `claw`                                  | Yes      | No      | RabbitMQ username                          |
-| `RABBITMQ_PASSWORD`        | `claw_secret`                           | Yes      | **Yes** | RabbitMQ password                          |
-| `RABBITMQ_URL`             | `amqp://claw:claw_secret@rabbitmq:5672` | Yes      | **Yes** | AMQP connection URL (includes credentials) |
-| `RABBITMQ_PORT`            | `5672`                                  | Yes      | No      | Host-mapped AMQP port                      |
-| `RABBITMQ_MANAGEMENT_PORT` | `15672`                                 | Yes      | No      | Host-mapped management UI port             |
+| Variable     | Required | Default                   | Description           |
+| ------------ | -------- | ------------------------- | --------------------- |
+| `REDIS_HOST` | Yes      | `claw-redis`              | Redis host            |
+| `REDIS_PORT` | Yes      | `6379`                    | Redis port (internal) |
+| `REDIS_URL`  | No       | `redis://claw-redis:6379` | Redis connection URL  |
 
----
+**Notes:**
 
-## 7. JWT
-
-| Variable             | Default                   | Required | Secret  | Description                                                          |
-| -------------------- | ------------------------- | -------- | ------- | -------------------------------------------------------------------- |
-| `JWT_SECRET`         | `claw-dev-jwt-secret-...` | Yes      | **Yes** | HMAC signing secret. Use a random 32+ character string in production |
-| `JWT_ACCESS_EXPIRY`  | `15m`                     | Yes      | No      | Access token lifetime (e.g., `15m`, `1h`)                            |
-| `JWT_REFRESH_EXPIRY` | `7d`                      | Yes      | No      | Refresh token lifetime (e.g., `7d`, `30d`)                           |
-
-**Security note:** The default `JWT_SECRET` is for development only. Generate a cryptographically random secret for production.
+- Used by Ollama service for state, by routing service for prompt cache (5-minute TTL), and by throttler middleware for rate-limit counters.
+- Internal port `6379`; host port `6380`.
 
 ---
 
-## 8. Encryption
+## RabbitMQ
 
-| Variable         | Default                      | Required | Secret  | Description                                                                                                           |
-| ---------------- | ---------------------------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------- |
-| `ENCRYPTION_KEY` | `a1b2c3d4...` (64 hex chars) | Yes      | **Yes** | AES-256-GCM key for encrypting connector API keys. 64 hex characters = 32 bytes. Generate with `openssl rand -hex 32` |
+| Variable             | Required | Default            | Description                 |
+| -------------------- | -------- | ------------------ | --------------------------- |
+| `RABBITMQ_HOST`      | Yes      | `claw-rabbitmq`    | RabbitMQ host               |
+| `RABBITMQ_PORT`      | Yes      | `5672`             | RabbitMQ AMQP port          |
+| `RABBITMQ_USER`      | Yes      | `guest`            | RabbitMQ username           |
+| `RABBITMQ_PASSWORD`  | Yes      | `guest`            | RabbitMQ password           |
+| `RABBITMQ_URL`       | No       | (built from above) | Full AMQP URL               |
+| `RABBITMQ_MGMT_PORT` | No       | `15672`            | RabbitMQ management UI port |
 
-**Security note:** If this key is lost or rotated, all encrypted connector configurations become unreadable. Back up securely.
+**Notes:**
 
----
-
-## 9. Admin Seed
-
-Used by the auth service to create the initial admin user on first startup.
-
-| Variable         | Default            | Required | Secret  | Description                                      |
-| ---------------- | ------------------ | -------- | ------- | ------------------------------------------------ |
-| `ADMIN_EMAIL`    | `admin@claw.local` | Yes      | No      | Admin user email                                 |
-| `ADMIN_USERNAME` | `claw-admin`       | Yes      | No      | Admin username                                   |
-| `ADMIN_PASSWORD` | `ClawAdmin123!`    | Yes      | **Yes** | Admin initial password. Change after first login |
+- Topic exchange `claw.events` with dead-letter queue and 3 retries with backoff.
+- Change default credentials in production.
 
 ---
 
-## 10. Frontend (Next.js)
+## Authentication / JWT
 
-| Variable               | Default                 | Required | Secret | Description                                                                              |
-| ---------------------- | ----------------------- | -------- | ------ | ---------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_API_URL`  | `http://localhost:4000` | Yes      | No     | Backend API base URL (Nginx proxy). `NEXT_PUBLIC_` prefix makes it available client-side |
-| `NEXT_PUBLIC_APP_NAME` | `Claw`                  | Yes      | No     | Application display name                                                                 |
-| `NEXT_PUBLIC_APP_URL`  | `http://localhost:3000` | Yes      | No     | Frontend URL                                                                             |
-| `FRONTEND_PORT`        | `3000`                  | Yes      | No     | Host-mapped frontend port                                                                |
+| Variable             | Required | Default | Description                                         |
+| -------------------- | -------- | ------- | --------------------------------------------------- |
+| `JWT_SECRET`         | Yes      | —       | Secret key for signing JWTs (minimum 32 characters) |
+| `JWT_ACCESS_EXPIRY`  | No       | `15m`   | Access token lifetime (e.g., `15m`, `1h`)           |
+| `JWT_REFRESH_EXPIRY` | No       | `7d`    | Refresh token lifetime (e.g., `7d`, `30d`)          |
 
-**Security note:** Only `NEXT_PUBLIC_*` variables are exposed to the browser. Never put secrets in `NEXT_PUBLIC_*` variables.
+**Notes:**
 
----
-
-## 11. Ollama (Local AI Runtime)
-
-| Variable                   | Default               | Required | Secret | Description                                                                     |
-| -------------------------- | --------------------- | -------- | ------ | ------------------------------------------------------------------------------- |
-| `OLLAMA_BASE_URL`          | `http://ollama:11434` | Yes      | No     | Ollama API endpoint (Docker internal)                                           |
-| `OLLAMA_ROUTER_MODEL`      | `gemma3:4b`           | Yes      | No     | Model used for AUTO routing decisions                                           |
-| `OLLAMA_ROUTER_TIMEOUT_MS` | `10000`               | Yes      | No     | Timeout for router model calls (ms). Falls back to heuristic routing on timeout |
-| `MEMORY_EXTRACTION_MODEL`  | `gemma3:4b`           | Yes      | No     | Model used for extracting memories from conversations                           |
+- Generate with: `openssl rand -base64 48`
+- Every microservice validates JWTs independently using `@claw/shared-auth`.
 
 ---
 
-## 12. File Storage
+## Encryption
 
-| Variable            | Default       | Required | Secret | Description                                            |
-| ------------------- | ------------- | -------- | ------ | ------------------------------------------------------ |
-| `FILE_STORAGE_PATH` | `/data/files` | Yes      | No     | Directory for uploaded file storage (inside container) |
+| Variable         | Required | Default | Description                                            |
+| ---------------- | -------- | ------- | ------------------------------------------------------ |
+| `ENCRYPTION_KEY` | Yes      | —       | 32-byte hex string (64 hex characters) for AES-256-GCM |
 
----
+**Notes:**
 
-## 13. Image Generation
-
-| Variable               | Default                        | Required | Secret | Description                         |
-| ---------------------- | ------------------------------ | -------- | ------ | ----------------------------------- |
-| `STABLE_DIFFUSION_URL` | `http://stable-diffusion:7860` | No       | No     | Stable Diffusion WebUI API endpoint |
+- Used by Connector service to encrypt provider API keys at rest.
+- Generate with: `openssl rand -hex 32`
+- Never commit this value to version control.
 
 ---
 
-## 14. Inter-Service URLs
+## Admin Seed
 
-Docker-internal hostnames for service-to-service HTTP communication.
-
-| Variable                  | Default                           | Required | Description                      |
-| ------------------------- | --------------------------------- | -------- | -------------------------------- |
-| `OLLAMA_SERVICE_URL`      | `http://ollama-service:4008`      | Yes      | Ollama service internal URL      |
-| `CONNECTOR_SERVICE_URL`   | `http://connector-service:4003`   | Yes      | Connector service internal URL   |
-| `AUTH_SERVICE_URL`        | `http://auth-service:4001`        | Yes      | Auth service internal URL        |
-| `CHAT_SERVICE_URL`        | `http://chat-service:4002`        | Yes      | Chat service internal URL        |
-| `ROUTING_SERVICE_URL`     | `http://routing-service:4004`     | Yes      | Routing service internal URL     |
-| `MEMORY_SERVICE_URL`      | `http://memory-service:4005`      | Yes      | Memory service internal URL      |
-| `FILE_SERVICE_URL`        | `http://file-service:4006`        | Yes      | File service internal URL        |
-| `AUDIT_SERVICE_URL`       | `http://audit-service:4007`       | Yes      | Audit service internal URL       |
-| `CLIENT_LOGS_SERVICE_URL` | `http://client-logs-service:4010` | Yes      | Client logs service internal URL |
-| `SERVER_LOGS_SERVICE_URL` | `http://server-logs-service:4011` | Yes      | Server logs service internal URL |
-| `IMAGE_SERVICE_URL`       | `http://image-service:4012`       | Yes      | Image service internal URL       |
+| Variable         | Required | Default                    | Description                           |
+| ---------------- | -------- | -------------------------- | ------------------------------------- |
+| `ADMIN_EMAIL`    | No       | `admin@claw.local`         | Email for the seeded admin account    |
+| `ADMIN_USERNAME` | No       | `claw-admin`               | Username for the seeded admin account |
+| `ADMIN_PASSWORD` | Yes      | `change-me-on-first-login` | Password for the seeded admin account |
 
 ---
 
-## 15. Per-Service Ports
+## Frontend
 
-Host-mapped ports for each backend service. Docker containers bind to these ports.
+| Variable               | Required | Default                 | Description                                 |
+| ---------------------- | -------- | ----------------------- | ------------------------------------------- |
+| `NEXT_PUBLIC_API_URL`  | Yes      | `http://localhost:4000` | API URL via Nginx (accessible from browser) |
+| `NEXT_PUBLIC_APP_NAME` | No       | `Claw`                  | Application display name                    |
+| `NEXT_PUBLIC_APP_URL`  | No       | `http://localhost:3000` | Frontend public URL                         |
+| `FRONTEND_PORT`        | No       | `3000`                  | Port the Next.js frontend listens on        |
 
-| Variable           | Default | Required | Service                  |
-| ------------------ | ------- | -------- | ------------------------ |
-| `AUTH_PORT`        | `4001`  | Yes      | claw-auth-service        |
-| `CHAT_PORT`        | `4002`  | Yes      | claw-chat-service        |
-| `CONNECTOR_PORT`   | `4003`  | Yes      | claw-connector-service   |
-| `ROUTING_PORT`     | `4004`  | Yes      | claw-routing-service     |
-| `MEMORY_PORT`      | `4005`  | Yes      | claw-memory-service      |
-| `FILES_PORT`       | `4006`  | Yes      | claw-file-service        |
-| `AUDIT_PORT`       | `4007`  | Yes      | claw-audit-service       |
-| `OLLAMA_PORT`      | `4008`  | Yes      | claw-ollama-service      |
-| `HEALTH_PORT`      | `4009`  | Yes      | claw-health-service      |
-| `CLIENT_LOGS_PORT` | `4010`  | Yes      | claw-client-logs-service |
-| `SERVER_LOGS_PORT` | `4011`  | Yes      | claw-server-logs-service |
-| `IMAGE_PORT`       | `4012`  | Yes      | claw-image-service       |
+**Notes:**
+
+- Variables prefixed with `NEXT_PUBLIC_` are embedded in the browser bundle. Never put secrets here.
 
 ---
 
-## 16. Per-Service Database URLs
+## Ollama (Local AI Runtime)
 
-Full connection strings used by each service to connect to its database.
+| Variable                     | Required | Default                    | Description                                                                |
+| ---------------------------- | -------- | -------------------------- | -------------------------------------------------------------------------- |
+| `OLLAMA_BASE_URL`            | Yes      | `http://claw-ollama:11434` | Ollama HTTP API base URL                                                   |
+| `OLLAMA_ROUTER_MODEL`        | No       | `qwen3:1.7b`               | Model used for routing decisions                                           |
+| `OLLAMA_ROUTER_TIMEOUT_MS`   | No       | `10000`                    | Timeout for router model calls (ms)                                        |
+| `ROUTER_COMPACT_PROMPT`      | No       | `true`                     | Toggles compact vs expanded AUTO router prompt layout                      |
+| `OLLAMA_GENERATE_TIMEOUT_MS` | No       | `300000`                   | Timeout for non-router generation calls (ms)                               |
+| `OLLAMA_KEEP_ALIVE`          | No       | `-1m`                      | How long the runtime keeps a model resident; `-1m` = forever until evicted |
+| `OLLAMA_MAX_LOADED_MODELS`   | No       | `2`                        | Max number of models loaded into VRAM concurrently                         |
+| `OLLAMA_NUM_PARALLEL`        | No       | `1`                        | Parallel generation slots per loaded model                                 |
+| `OLLAMA_FLASH_ATTENTION`     | No       | `1`                        | Enable flash-attention kernel when supported by the GPU                    |
+| `OLLAMA_KV_CACHE_TYPE`       | No       | `q8_0`                     | KV-cache quantization (`f16`, `q8_0`, `q4_0`)                              |
+| `MEMORY_EXTRACTION_MODEL`    | No       | `AUTO`                     | Model used for memory extraction (`AUTO` picks best installed)             |
+| `AUTO_PULL_MODELS`           | No       | `qwen3:1.7b`               | Space-separated list of models to auto-pull on startup                     |
 
-### PostgreSQL Connection Strings
+**Notes:**
 
-| Variable                 | Default                                                                         | Service                |
-| ------------------------ | ------------------------------------------------------------------------------- | ---------------------- |
-| `AUTH_DATABASE_URL`      | `postgresql://claw:claw_secret@pg-auth:5432/claw_auth?schema=public`            | claw-auth-service      |
-| `CHAT_DATABASE_URL`      | `postgresql://claw:claw_secret@pg-chat:5432/claw_chat?schema=public`            | claw-chat-service      |
-| `CONNECTOR_DATABASE_URL` | `postgresql://claw:claw_secret@pg-connector:5432/claw_connectors?schema=public` | claw-connector-service |
-| `ROUTING_DATABASE_URL`   | `postgresql://claw:claw_secret@pg-routing:5432/claw_routing?schema=public`      | claw-routing-service   |
-| `MEMORY_DATABASE_URL`    | `postgresql://claw:claw_secret@pg-memory:5432/claw_memory?schema=public`        | claw-memory-service    |
-| `FILES_DATABASE_URL`     | `postgresql://claw:claw_secret@pg-files:5432/claw_files?schema=public`          | claw-file-service      |
-| `OLLAMA_DATABASE_URL`    | `postgresql://claw:claw_secret@pg-ollama:5432/claw_ollama?schema=public`        | claw-ollama-service    |
-| `IMAGE_DATABASE_URL`     | `postgresql://claw:claw_secret@pg-images:5432/claw_images?schema=public`        | claw-image-service     |
-
-**Note:** The hostnames (`pg-auth`, `pg-chat`, etc.) are Docker container names. The internal port is always `5432`. The host-mapped ports (`PG_*_PORT`) are only for external access (e.g., database tools).
-
-### MongoDB Connection Strings
-
-| Variable                  | Default                                                                      | Service                  |
-| ------------------------- | ---------------------------------------------------------------------------- | ------------------------ |
-| `AUDIT_MONGODB_URI`       | `mongodb://claw:claw_secret@mongodb:27017/claw_audit?authSource=admin`       | claw-audit-service       |
-| `CLIENT_LOGS_MONGODB_URI` | `mongodb://claw:claw_secret@mongodb:27017/claw_client_logs?authSource=admin` | claw-client-logs-service |
-| `SERVER_LOGS_MONGODB_URI` | `mongodb://claw:claw_secret@mongodb:27017/claw_server_logs?authSource=admin` | claw-server-logs-service |
-
-**Security note:** All database connection strings contain credentials. They are marked as **secrets** and must never be logged or exposed to the frontend.
+- Inside Docker, use the container service name as host (`claw-ollama`).
+- When running Ollama on the host, use `http://host.docker.internal:11434`.
+- Router models are auto-excluded from user-facing model selector dropdowns.
 
 ---
 
-## 17. Security Summary
+## File Storage
 
-### Variables That Are Secrets
-
-The following variables contain sensitive information and must be protected:
-
-| Variable              | Risk                          |
-| --------------------- | ----------------------------- |
-| `PG_*_PASSWORD` (x8)  | Database access               |
-| `MONGO_PASSWORD`      | MongoDB access                |
-| `RABBITMQ_PASSWORD`   | Message broker access         |
-| `RABBITMQ_URL`        | Contains embedded credentials |
-| `JWT_SECRET`          | Token forgery if leaked       |
-| `ENCRYPTION_KEY`      | Connector API key decryption  |
-| `ADMIN_PASSWORD`      | Admin account takeover        |
-| `*_DATABASE_URL` (x8) | Contain embedded credentials  |
-| `*_MONGODB_URI` (x3)  | Contain embedded credentials  |
-
-### Production Recommendations
-
-1. **Generate unique secrets** for all password/secret variables.
-2. **Use a secrets manager** (Vault, AWS Secrets Manager, etc.) instead of `.env` files in production.
-3. **Never commit `.env`** to version control (already in `.gitignore`).
-4. **Rotate `JWT_SECRET`** periodically (invalidates all active sessions).
-5. **Rotate `ENCRYPTION_KEY`** requires re-encrypting all connector configs.
-6. **Change `ADMIN_PASSWORD`** immediately after first login.
-7. **Restrict `CORS_ORIGINS`** to exact production domain(s).
+| Variable            | Required | Default         | Description                                   |
+| ------------------- | -------- | --------------- | --------------------------------------------- |
+| `FILE_STORAGE_PATH` | Yes      | `/data/uploads` | Absolute path where uploaded files are stored |
+| `CLAMAV_HOST`       | No       | `clamav`        | ClamAV container host                         |
+| `CLAMAV_PORT`       | No       | `3310`          | ClamAV TCP port                               |
+| `CLAMAV_ENABLED`    | No       | `true`          | Enable/disable antivirus scanning             |
 
 ---
 
-## 18. Adding New Environment Variables
+## Image Service
 
-When adding a new environment variable, update ALL of these locations:
+| Variable               | Required | Default                          | Description                    |
+| ---------------------- | -------- | -------------------------------- | ------------------------------ |
+| `IMAGE_SERVICE_URL`    | Yes      | `http://claw-image-service:4012` | Internal image service URL     |
+| `IMAGE_PORT`           | No       | `4012`                           | Image service port             |
+| `STABLE_DIFFUSION_URL` | No       | `http://claw-comfyui:8188`       | ComfyUI / Stable Diffusion URL |
+| `COMFYUI_BASE_URL`     | No       | `http://claw-comfyui:8188`       | ComfyUI API base URL           |
+| `COMFYUI_PORT`         | No       | `8188`                           | ComfyUI container port         |
 
-1. `.env.example` -- add with a safe default value and comment
-2. `.env` -- add with working development value
-3. `scripts/install.sh` -- add to the generated `.env` block
-4. `scripts/install.ps1` -- add to the Windows installer
-5. `CLAUDE.md` -- add to the environment variables section
-6. Service `AppConfig` (Zod schema) -- validate the variable
-7. `docker/docker-compose.dev.yml` -- if the variable needs container-level access
-8. This document -- add to the appropriate category
+---
 
-## Desktop-Agent Flagship — Capability Framework (Stream 10)
+## Inter-Service URLs
 
-Added 2026-04-26.
+All services communicate via internal Docker service names.
 
-| Variable                                            | Default       | Purpose                                                                                                                                        |
-| --------------------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CAPABILITY_QUEUE_EXPIRY_MINUTES`                   | `60`          | A `PENDING_APPROVAL` capability invocation auto-transitions to `EXPIRED` after this many minutes.                                              |
-| `CAPABILITY_RISK_AUTO_APPROVE_MAX`                  | `25`          | Default cap above which AUTO_APPROVE policies do NOT auto-approve, regardless of policy match. Per-policy `autoApproveMaxRiskScore` overrides. |
-| `CAPABILITY_DEPRECATED_TERMINAL_COMMAND_DUAL_WRITE` | `true`        | When true, every legacy TerminalCommand also writes a parallel CapabilityInvocation row. Flip to false after 4-week soak.                      |
-| `CAPABILITY_EXPIRY_SWEEPER_CRON`                    | `*/5 * * * *` | Cron expression for the expiry sweeper.                                                                                                        |
+| Variable                      | Required | Default                                    |
+| ----------------------------- | -------- | ------------------------------------------ |
+| `AUTH_SERVICE_URL`            | Yes      | `http://claw-auth-service:4001`            |
+| `CHAT_SERVICE_URL`            | Yes      | `http://claw-chat-service:4002`            |
+| `CONNECTOR_SERVICE_URL`       | Yes      | `http://claw-connector-service:4003`       |
+| `ROUTING_SERVICE_URL`         | Yes      | `http://claw-routing-service:4004`         |
+| `MEMORY_SERVICE_URL`          | Yes      | `http://claw-memory-service:4005`          |
+| `FILE_SERVICE_URL`            | Yes      | `http://claw-file-service:4006`            |
+| `AUDIT_SERVICE_URL`           | Yes      | `http://claw-audit-service:4007`           |
+| `OLLAMA_SERVICE_URL`          | Yes      | `http://claw-ollama-service:4008`          |
+| `HEALTH_SERVICE_URL`          | Yes      | `http://claw-health-service:4009`          |
+| `IMAGE_SERVICE_URL`           | Yes      | `http://claw-image-service:4012`           |
+| `FILE_GENERATION_SERVICE_URL` | Yes      | `http://claw-file-generation-service:4013` |
+| `AGENT_SERVICE_URL`           | Yes      | `http://claw-agent-service:4015`           |
+| `RESEARCH_SERVICE_URL`        | Yes      | `http://claw-research-service:4016`        |
+| `WORKSPACE_SERVICE_URL`       | Yes      | `http://claw-workspace-service:4014`       |
 
-## Desktop-Agent Flagship — Filesystem (Stream 11)
+---
 
-| Variable                    | Default                                                                                                                                                    | Purpose                                                                                          |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `FS_DEFAULT_ALLOW_GLOBS`    | `~/Documents/**,~/Downloads/**,~/Desktop/**,~/Pictures/**,~/Videos/**,~/Music/**`                                                                          | Comma-separated allow-globs for fs read/write.                                                   |
-| `FS_DEFAULT_DENY_GLOBS`     | `**/.ssh/**,**/.aws/**,**/.kube/**,**/credentials*,**/.env*,/etc/**,/sys/**,/proc/**,/boot/**,C:/Windows/**,C:/Program Files/**,C:/Program Files (x86)/**` | Comma-separated deny-globs.                                                                      |
-| `FS_MAX_READ_BYTES_PREVIEW` | `1048576`                                                                                                                                                  | Max bytes returned in fs-preview endpoint.                                                       |
-| `FS_USE_TRASH_FOR_DELETE`   | `true`                                                                                                                                                     | When true, `fs.delete` defaults to OS trash. Permanent delete requires `payload.permanent=true`. |
-| `FS_MAX_WATCH_DEPTH`        | `5`                                                                                                                                                        | Max recursion depth for `fs.watch`.                                                              |
+## Per-Service Port Variables
 
-## Desktop-Agent Flagship — Process Management (Stream 12)
+| Variable               | Default | Service         |
+| ---------------------- | ------- | --------------- |
+| `AUTH_PORT`            | `4001`  | Auth            |
+| `CHAT_PORT`            | `4002`  | Chat            |
+| `CONNECTOR_PORT`       | `4003`  | Connector       |
+| `ROUTING_PORT`         | `4004`  | Routing         |
+| `MEMORY_PORT`          | `4005`  | Memory          |
+| `FILE_PORT`            | `4006`  | File            |
+| `AUDIT_PORT`           | `4007`  | Audit           |
+| `OLLAMA_SERVICE_PORT`  | `4008`  | Ollama Service  |
+| `HEALTH_PORT`          | `4009`  | Health          |
+| `CLIENT_LOGS_PORT`     | `4010`  | Client Logs     |
+| `SERVER_LOGS_PORT`     | `4011`  | Server Logs     |
+| `IMAGE_PORT`           | `4012`  | Image           |
+| `FILE_GENERATION_PORT` | `4013`  | File Generation |
+| `AGENT_PORT`           | `4015`  | Agent           |
+| `RESEARCH_PORT`        | `4016`  | Research        |
+| `WORKSPACE_PORT`       | `4014`  | Workspace       |
 
-| Variable                        | Default                                                                                                      | Purpose                                                                |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| `PROCESS_KILL_GRACE_SECONDS`    | `5`                                                                                                          | Time between SIGTERM and SIGKILL on `process.kill`.                    |
-| `PROCESS_DEFAULT_DENY_BINARIES` | `init,systemd,launchd,services.exe,wininit.exe,csrss.exe,smss.exe,kernel*,kthreadd,sshd,gpg-agent,ssh-agent` | Comma-separated binary names that are never killable.                  |
-| `PROCESS_TAIL_BUFFER_BYTES`     | `65536`                                                                                                      | Per-stream (stdout/stderr) ring-buffer size for `process.tail-output`. |
+---
 
-## Desktop-Agent Flagship — Recipe Engine (Stream 13)
+## Per-Service Database URLs
 
-| Variable                         | Default  | Purpose                                    |
-| -------------------------------- | -------- | ------------------------------------------ |
-| `RECIPE_MAX_STEPS_PER_RUN`       | `100`    | Hard cap on steps per recipe.              |
-| `RECIPE_MAX_PARALLEL_STEPS`      | `5`      | Concurrency cap within a `parallel_group`. |
-| `RECIPE_DEFAULT_STEP_TIMEOUT_MS` | `60000`  | Per-step wall-clock cap.                   |
-| `RECIPE_RUN_HARD_WALL_CLOCK_MS`  | `600000` | Per-run wall-clock cap (10min).            |
+Prisma reads from `DATABASE_URL` per service. Each service's `.env` or the root `.env` sets a namespaced variable:
+
+| Variable                        | Service         |
+| ------------------------------- | --------------- |
+| `AUTH_DATABASE_URL`             | Auth            |
+| `CHAT_DATABASE_URL`             | Chat            |
+| `CONNECTOR_DATABASE_URL`        | Connector       |
+| `ROUTING_DATABASE_URL`          | Routing         |
+| `MEMORY_DATABASE_URL`           | Memory          |
+| `FILES_DATABASE_URL`            | File            |
+| `OLLAMA_DATABASE_URL`           | Ollama Service  |
+| `IMAGES_DATABASE_URL`           | Image           |
+| `FILE_GENERATIONS_DATABASE_URL` | File Generation |
+| `AGENT_DATABASE_URL`            | Agent           |
+| `RESEARCH_DATABASE_URL`         | Research        |
+| `WORKSPACE_DATABASE_URL`        | Workspace       |
+| `AUDIT_MONGODB_URI`             | Audit           |
+| `CLIENT_LOGS_MONGODB_URI`       | Client Logs     |
+| `SERVER_LOGS_MONGODB_URI`       | Server Logs     |
+
+---
+
+## Workspace OAuth Credentials
+
+| Variable               | Required | Description                           |
+| ---------------------- | -------- | ------------------------------------- |
+| `GITHUB_CLIENT_ID`     | No       | GitHub OAuth app client ID            |
+| `GITHUB_CLIENT_SECRET` | No       | GitHub OAuth app client secret        |
+| `GITLAB_CLIENT_ID`     | No       | GitLab OAuth app client ID            |
+| `GITLAB_CLIENT_SECRET` | No       | GitLab OAuth app client secret        |
+| `SLACK_CLIENT_ID`      | No       | Slack app client ID                   |
+| `SLACK_CLIENT_SECRET`  | No       | Slack app client secret               |
+| `JIRA_CLIENT_ID`       | No       | Jira (Atlassian) OAuth client ID      |
+| `JIRA_CLIENT_SECRET`   | No       | Jira OAuth client secret              |
+| `GOOGLE_CLIENT_ID`     | No       | Google OAuth client ID (Drive, Gmail) |
+| `GOOGLE_CLIENT_SECRET` | No       | Google OAuth client secret            |
+| `FIGMA_CLIENT_ID`      | No       | Figma OAuth client ID                 |
+| `FIGMA_CLIENT_SECRET`  | No       | Figma OAuth client secret             |
+
+---
+
+## Research Service
+
+| Variable           | Required | Default | Description                    |
+| ------------------ | -------- | ------- | ------------------------------ |
+| `TAVILY_API_KEY`   | No       | —       | Tavily search provider API key |
+| `SEARXNG_BASE_URL` | No       | —       | SearXNG instance base URL      |
+
+---
+
+## Dynamic Model Discovery (Ollama service)
+
+| Variable                            | Required | Default | Description                                                   |
+| ----------------------------------- | -------- | ------- | ------------------------------------------------------------- |
+| `DISCOVERY_AUTO_REFRESH_ENABLED`    | No       | `true`  | Enable background refresh of the Ollama model catalog         |
+| `DISCOVERY_MAX_RESULTS_PER_SOURCE`  | No       | `50`    | Max catalog entries pulled per discovery source per refresh   |
+| `DISCOVERY_AUTO_APPROVE_CONFIDENCE` | No       | `0.85`  | Min classifier confidence for auto-approving new catalog rows |
+
+---
+
+## Desktop Agent Auth (Phase A — magic-link pairing + device-code + refresh rotation)
+
+| Variable                        | Required | Default | Description                                                               |
+| ------------------------------- | -------- | ------- | ------------------------------------------------------------------------- |
+| `AGENT_ACCESS_TTL_SECONDS`      | No       | `900`   | Access token lifetime for a paired desktop agent session                  |
+| `AGENT_REFRESH_TTL_DAYS`        | No       | `30`    | Refresh token lifetime for a paired desktop agent session                 |
+| `AGENT_PAIRING_TTL_SECONDS`     | No       | `120`   | Window for a user to complete magic-link pairing                          |
+| `AGENT_DEVICE_CODE_TTL_SECONDS` | No       | `900`   | Device-code authorization request lifetime                                |
+| `AGENT_REFRESH_GRACE_SECONDS`   | No       | `15`    | Grace window allowing the old refresh token after rotation (replay guard) |
+
+---
+
+## Provider API Keys
+
+Optional — can also be configured through the UI connector management interface.
+
+| Variable                | Required | Default     | Description                |
+| ----------------------- | -------- | ----------- | -------------------------- |
+| `OPENAI_API_KEY`        | No       | —           | OpenAI API key             |
+| `ANTHROPIC_API_KEY`     | No       | —           | Anthropic API key          |
+| `GOOGLE_GEMINI_API_KEY` | No       | —           | Google Gemini API key      |
+| `AWS_ACCESS_KEY_ID`     | No       | —           | AWS access key for Bedrock |
+| `AWS_SECRET_ACCESS_KEY` | No       | —           | AWS secret key for Bedrock |
+| `AWS_REGION`            | No       | `us-east-1` | AWS region for Bedrock     |
+| `DEEPSEEK_API_KEY`      | No       | —           | DeepSeek API key           |
+| `GROK_API_KEY`          | No       | —           | xAI Grok API key           |
+
+**Notes:**
+
+- Keys configured through the UI (connectors) take precedence over environment variables.
+- All keys are encrypted at rest with AES-256-GCM when stored via the Connector service.
+
+---
+
+## Testing
+
+| Variable             | Required | Default | Description                                     |
+| -------------------- | -------- | ------- | ----------------------------------------------- |
+| `USE_MOCK_PROVIDERS` | No       | `false` | Use mock provider adapters instead of real APIs |
+
+---
+
+## Generating Secure Values
+
+```bash
+# JWT_SECRET (64 random characters, base64)
+openssl rand -base64 48
+
+# ENCRYPTION_KEY (32 bytes as 64 hex characters)
+openssl rand -hex 32
+
+# ADMIN_PASSWORD (strong random password)
+openssl rand -base64 24
+```

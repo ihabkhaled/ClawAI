@@ -199,7 +199,7 @@ claw/
 | `npm run test:e2e`                               | Run end-to-end tests (Playwright)        |
 | `npm run format`                                 | Format code with Prettier                |
 | `npm run clean`                                  | Remove build artifacts and node_modules  |
-| `./scripts/claw.sh up`                        | Start the full dev stack                 |
+| `./scripts/claw.sh up`                           | Start the full dev stack                 |
 | `./scripts/claw.sh down`                         | Stop the full dev stack                  |
 | `./scripts/claw.sh logs -f <service>`            | Tail logs for a specific container       |
 
@@ -207,18 +207,19 @@ claw/
 
 ## Documentation
 
-- [Installation Guide](INSTALL.md)
-- [Environment Variables](ENVIRONMENT_VARIABLES.md)
+- [Installation Guide](docs/00-start-here/installation.md)
+- [Environment Variables](docs/06-data/environment-variables.md)
+- [Architecture Overview](docs/ARCHITECTURE.md)
 - [Documentation Hub](docs/README.md)
 - [Backend Services Index](docs/04-backend/services-index.md)
 - [Workspace Service Guide](docs/04-backend/service-guide-workspace.md)
 - [Agent API Reference](docs/12-reference/api-reference-agent.md)
 - [Workspace API Reference](docs/12-reference/api-reference-workspace.md)
-- [Security](SECURITY.md)
-- [Testing](TESTING.md)
-- [Contributing](CONTRIBUTING.md)
-- [Changelog](CHANGELOG.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Security](.github/SECURITY.md)
+- [Testing](docs/09-testing/testing-overview.md)
+- [Contributing](.github/CONTRIBUTING.md)
+- [Changelog](docs/CHANGELOG.md)
+- [Code of Conduct](.github/CODE_OF_CONDUCT.md)
 - [ADR-004: Microservices Architecture](docs/adrs/004-microservices-architecture.md)
 
 ---
