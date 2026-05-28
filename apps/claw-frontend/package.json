@@ -7,7 +7,7 @@
     "dev": "npm run clear-cache && next dev --turbopack --port 3000",
     "build": "npm run clear-cache && next build --turbopack",
     "start": "next start",
-    "lint": "eslint src/",
+    "lint": "eslint src/ --concurrency=4",
     "lint:strict": "next lint && eslint src/ --max-warnings 0",
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write 'src/**/*.{ts,tsx,css}'",
