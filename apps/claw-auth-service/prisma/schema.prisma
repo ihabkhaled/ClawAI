@@ -9,6 +9,7 @@ datasource db {
 
 enum UserRole {
   ADMIN
+  USER
   OPERATOR
   VIEWER
 }
@@ -41,7 +42,10 @@ model User {
   email              String     @unique
   username           String     @unique
   passwordHash       String     @map("password_hash")
-  role               UserRole   @default(VIEWER)
+  role               UserRole   @default(USER)
+  // Dynamic RBAC FK (Auth/RBAC/Plans flagship). Nullable during the backfill
+  // window; the resolver falls back to the `role` enum when roleId is null.
+  roleId             String?    @map("role_id")
   status             UserStatus @default(PENDING)
   mustChangePassword    Boolean                  @default(false) @map("must_change_password")
   languagePreference    UserLanguagePreference   @default(EN) @map("language_preference")
@@ -50,10 +54,47 @@ model User {
   updatedAt             DateTime                 @updatedAt @map("updated_at")
 
   sessions Session[]
+  roleRef  Role? @relation(fields: [roleId], references: [id])
 
   @@index([email])
   @@index([status])
+  @@index([roleId])
   @@map("users")
+}
+
+// Dynamic, admin-editable role (Auth/RBAC/Plans flagship). System roles
+// (ADMIN, USER) are seeded with isSystem=true and cannot be deleted/renamed.
+// Admins may create custom roles (e.g. SUPPORT, READ_ONLY_ADMIN) and grant
+// any subset of the fixed Permission catalog via RolePermission rows.
+model Role {
+  id           String           @id @default(cuid())
+  slug         String           @unique
+  name         String
+  description  String?
+  isSystem     Boolean          @default(false) @map("is_system")
+  isAssignable Boolean          @default(true) @map("is_assignable")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  permissions RolePermission[]
+  users       User[]
+
+  @@map("roles")
+}
+
+// One row per (role, permission) grant. `permission` stores a value from the
+// fixed Permission code-catalog (shared-types). Admins toggle these rows.
+model RolePermission {
+  id         String   @id @default(cuid())
+  roleId     String   @map("role_id")
+  permission String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permission])
+  @@index([roleId])
+  @@map("role_permissions")
 }
 
 model Session {

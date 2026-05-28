@@ -1,4 +1,5 @@
 export { UserRole } from './user-role.enum';
+export { Permission } from './permission.enum';
 export { UserStatus } from './user-status.enum';
 export { ConnectorProvider } from './connector-provider.enum';
 export { ConnectorStatus } from './connector-status.enum';
