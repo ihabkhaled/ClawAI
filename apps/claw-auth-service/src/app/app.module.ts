@@ -15,6 +15,7 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 import { AuthModule } from '../modules/auth/auth.module';
 import { RolesModule } from '../modules/roles/roles.module';
+import { PlansModule } from '../modules/plans/plans.module';
 import { UsersModule } from '../modules/users/users.module';
 import { HealthModule } from '../modules/health/health.module';
 
@@ -56,6 +57,7 @@ import { HealthModule } from '../modules/health/health.module';
     RedisModule,
     AuthModule,
     RolesModule,
+    PlansModule,
     UsersModule,
     HealthModule,
     ThrottlerModule.forRoot([

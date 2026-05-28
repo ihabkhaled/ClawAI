@@ -4,9 +4,10 @@ import { AuthService } from './services/auth.service';
 import { AuthManager } from './managers/auth.manager';
 import { AuthRepository } from './repositories/auth.repository';
 import { RolesModule } from '../roles/roles.module';
+import { PlansModule } from '../plans/plans.module';
 
 @Module({
-  imports: [RolesModule],
+  imports: [RolesModule, PlansModule],
   controllers: [AuthController],
   providers: [AuthService, AuthManager, AuthRepository],
   exports: [AuthService],

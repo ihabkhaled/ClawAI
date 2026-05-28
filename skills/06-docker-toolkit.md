@@ -2,6 +2,12 @@
 
 > Use this skill for all Docker-related operations: starting services, rebuilding containers, inspecting state, and diagnosing networking issues.
 
+> **Base image:** all images are `node:26-bookworm-slim` (Debian/glibc), **never
+> Alpine** — the tsgo and llama.cpp release binaries are glibc-linked. `scripts/claw.sh`
+> is the only supported entrypoint (it stitches the split `docker/` compose files +
+> the right GPU overlay); never call `docker compose -f …` directly. Build internals:
+> [docs/08-runtime-devops/build-system.md](../docs/08-runtime-devops/build-system.md).
+
 ---
 
 ## Start/Stop Commands

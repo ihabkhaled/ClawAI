@@ -97,12 +97,79 @@ const SYSTEM_ROLES = [
   },
 ];
 
+// Default plans (Phase B). A plan with ZERO PlanModelAccess rows means "no
+// model restriction" — admins opt into restriction by adding rows, which keeps
+// the v1 hot path working out of the box.
+const SYSTEM_PLANS = [
+  {
+    slug: 'free',
+    name: 'Free',
+    description: 'Free tier with a daily token allowance.',
+    displayOrder: 0,
+    isDefault: true,
+    dailyTokenQuota: 50000,
+    allowCompareMode: false,
+    allowJudgeMode: false,
+    priceMonthly: 0,
+  },
+  {
+    slug: 'pro',
+    name: 'Pro',
+    description: 'Higher quota, compare and judge modes.',
+    displayOrder: 1,
+    isDefault: false,
+    dailyTokenQuota: 500000,
+    allowCompareMode: true,
+    allowJudgeMode: true,
+    priceMonthly: 20,
+  },
+  {
+    slug: 'team',
+    name: 'Team',
+    description: 'Large quota and all features.',
+    displayOrder: 2,
+    isDefault: false,
+    dailyTokenQuota: 5000000,
+    allowCompareMode: true,
+    allowJudgeMode: true,
+    priceMonthly: 50,
+  },
+];
+
 const connectionString = process.env.AUTH_DATABASE_URL;
 if (!connectionString) {
   throw new Error('AUTH_DATABASE_URL must be set when running prisma db seed');
 }
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
+
+async function upsertSystemPlan(def) {
+  return prisma.plan.upsert({
+    where: { slug: def.slug },
+    update: {
+      name: def.name,
+      description: def.description,
+      displayOrder: def.displayOrder,
+      dailyTokenQuota: def.dailyTokenQuota,
+      allowCompareMode: def.allowCompareMode,
+      allowJudgeMode: def.allowJudgeMode,
+    },
+    create: {
+      slug: def.slug,
+      name: def.name,
+      description: def.description,
+      displayOrder: def.displayOrder,
+      isDefault: def.isDefault,
+      isActive: true,
+      isPublic: true,
+      dailyTokenQuota: def.dailyTokenQuota,
+      allowCompareMode: def.allowCompareMode,
+      allowJudgeMode: def.allowJudgeMode,
+      priceMonthly: def.priceMonthly,
+      currency: 'USD',
+    },
+  });
+}
 
 async function upsertSystemRole(def) {
   const role = await prisma.role.upsert({
@@ -152,7 +219,28 @@ async function seed() {
     console.warn(`Backfilled roleId on ${adminBackfill.count + userBackfill.count} user(s)`);
   }
 
-  // 3. Create the default admin only when there are no users at all.
+  // 3. System plans (idempotent) + backfill activePlanId on plan-less non-admin
+  //    users to the default (Free) plan, with an ACTIVE assignment row.
+  const planBySlug = {};
+  for (const def of SYSTEM_PLANS) {
+    planBySlug[def.slug] = await upsertSystemPlan(def);
+  }
+  const freePlanId = planBySlug['free'].id;
+  const planless = await prisma.user.findMany({
+    where: { activePlanId: null, role: { not: 'ADMIN' } },
+    select: { id: true },
+  });
+  for (const u of planless) {
+    await prisma.user.update({ where: { id: u.id }, data: { activePlanId: freePlanId } });
+    await prisma.userPlanAssignment.create({
+      data: { userId: u.id, planId: freePlanId, status: 'ACTIVE' },
+    });
+  }
+  if (planless.length > 0) {
+    console.warn(`Assigned ${planless.length} user(s) to the Free plan`);
+  }
+
+  // 4. Create the default admin only when there are no users at all.
   const existingCount = await prisma.user.count();
   if (existingCount > 0) {
     console.warn('Users already exist — skipping admin creation.');

@@ -14,6 +14,7 @@ import {
   InvalidRefreshTokenException,
 } from '../../../common/errors';
 import { RolesService } from '../../roles/services/roles.service';
+import { PlansRepository } from '../../plans/repositories/plans.repository';
 import { AuthRepository } from '../repositories/auth.repository';
 import {
   AuthUserSummary,
@@ -31,6 +32,7 @@ export class AuthManager {
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly rolesService: RolesService,
+    private readonly plansRepository: PlansRepository,
   ) {}
 
   // Self-registration: always creates a USER, status ACTIVE, on the default
@@ -62,7 +64,17 @@ export class AuthManager {
       mustChangePassword: false,
     });
 
-    this.logger.log(`register: created user ${user.id} role=USER`);
+    // Assign the default (Free) plan if one is configured. Non-fatal: a user
+    // without a plan is still created (ADMIN-style unrestricted fallback is
+    // handled downstream), but normally the default plan exists from seed.
+    const defaultPlan = await this.plansRepository.findDefault();
+    if (defaultPlan) {
+      await this.plansRepository.assignUserToPlan(user.id, defaultPlan.id);
+    }
+
+    this.logger.log(
+      `register: created user ${user.id} role=USER plan=${defaultPlan?.slug ?? 'none'}`,
+    );
     const tokens = await this.issueTokenPair(user);
     return { tokens, user: await this.toUserSummary(user) };
   }

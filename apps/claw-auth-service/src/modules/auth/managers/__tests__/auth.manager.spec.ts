@@ -1,6 +1,7 @@
 import { AuthManager } from '../auth.manager';
 import { type AuthRepository } from '../../repositories/auth.repository';
 import { type RolesService } from '../../../roles/services/roles.service';
+import { type PlansRepository } from '../../../plans/repositories/plans.repository';
 import { UserRole, UserStatus } from '../../../../common/enums';
 import {
   AccountSuspendedException,
@@ -65,17 +66,26 @@ const mockRolesService = (): {
   getDefaultUserRoleId: jest.fn().mockResolvedValue('role-user'),
 });
 
+// PlansRepository — registration assigns the default plan.
+const mockPlansRepository = (): { findDefault: jest.Mock; assignUserToPlan: jest.Mock } => ({
+  findDefault: jest.fn().mockResolvedValue({ id: 'plan-free', slug: 'free' }),
+  assignUserToPlan: jest.fn(),
+});
+
 describe('AuthManager', () => {
   let manager: AuthManager;
   let repository: ReturnType<typeof mockRepository>;
   let rolesService: ReturnType<typeof mockRolesService>;
+  let plansRepository: ReturnType<typeof mockPlansRepository>;
 
   beforeEach(() => {
     repository = mockRepository();
     rolesService = mockRolesService();
+    plansRepository = mockPlansRepository();
     manager = new AuthManager(
       repository as unknown as AuthRepository,
       rolesService as unknown as RolesService,
+      plansRepository as unknown as PlansRepository,
     );
     jest.clearAllMocks();
     // Re-set defaults after clearAllMocks

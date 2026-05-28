@@ -128,15 +128,22 @@ Every new service must be added to:
 When a new package is added under `packages/`, **all four jobs** in `.github/workflows/ci.yml` (lint, typecheck, test, build) have a "Build shared packages" step that compiles each package's `dist/` before service typecheck runs. This step MUST include the new package, otherwise consumer services fail with `Cannot find module '@claw/<new-package>'` even though the package is in `package-lock.json`.
 
 ```yaml
+- name: Link tsgo binary (@typescript/native-preview)
+  run: npm rebuild @typescript/native-preview
 - name: Build shared packages
   run: |
-    cd packages/shared-types && npx tsc
-    cd ../shared-constants && npx tsc
-    cd ../shared-rabbitmq && npx tsc
-    cd ../shared-auth && npx tsc
-    cd ../shared-utilities && npx tsc       # added Phase C-1
-    cd ../<new-shared-package> && npx tsc   # MUST add for any new shared package
+    cd packages/shared-types && npx tsgo -p tsconfig.build.json
+    cd ../shared-constants && npx tsgo -p tsconfig.build.json
+    cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
+    cd ../shared-auth && npx tsgo -p tsconfig.build.json
+    cd ../shared-utilities && npx tsgo -p tsconfig.build.json
+    cd ../<new-shared-package> && npx tsgo -p tsconfig.build.json   # MUST add for any new shared package
 ```
+
+> The repo compiles with **tsgo** (`@typescript/native-preview`), not `tsc` /
+> `nest build`. The `npm rebuild @typescript/native-preview` step links the
+> native binary after `npm ci --ignore-scripts`. Full toolchain reference:
+> [docs/08-runtime-devops/build-system.md](../docs/08-runtime-devops/build-system.md).
 
 **Why it bites:** local builds work because `node_modules/@claw/<pkg>` is a symlink populated by `npm install`, and `dist/` is created by the developer's local `npm run build`. CI starts from a fresh checkout where `dist/` doesn't exist — so `require('@claw/<new-pkg>')` resolves to a `main` path that doesn't exist on disk yet.
 
