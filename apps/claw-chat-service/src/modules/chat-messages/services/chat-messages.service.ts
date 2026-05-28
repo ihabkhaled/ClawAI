@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import { EventPattern, LogLevel } from '@claw/shared-types';
+import { allowedModelKeys } from '@claw/shared-entitlements';
 import { AppConfig } from '../../../app/config/app.config';
 import { recordGet, runResearch } from '../../../common/utilities';
 import {
@@ -120,11 +121,13 @@ export class ChatMessagesService implements OnModuleInit {
     );
 
     // Backend enforcement: reject a forbidden manually-selected model and a
-    // user whose daily quota is exhausted, before any work is done.
-    await this.accessControlService.assertCanSendMessage(userId, {
+    // user whose daily quota is exhausted, before any work is done. The
+    // returned entitlements feed AUTO-mode router gating below.
+    const entitlements = await this.accessControlService.assertCanSendMessage(userId, {
       provider: forcedProvider,
       model: forcedModel,
     });
+    const allowedModels = entitlements ? allowedModelKeys(entitlements) : [];
 
     this.chatStreamService.emitRequestAccepted(dto.threadId);
 
@@ -147,7 +150,14 @@ export class ChatMessagesService implements OnModuleInit {
 
     this.logger.log(`createMessage: created message ${message.id} in thread ${dto.threadId}`);
     this.logMessageCreated(userId, dto.threadId, message.id);
-    this.publishMessageCreated(message, userId, effectiveRoutingMode, forcedProvider, forcedModel);
+    this.publishMessageCreated(
+      message,
+      userId,
+      effectiveRoutingMode,
+      forcedProvider,
+      forcedModel,
+      allowedModels,
+    );
 
     return message;
   }
@@ -1308,6 +1318,7 @@ export class ChatMessagesService implements OnModuleInit {
     routingMode: RoutingMode,
     forcedProvider: string | undefined,
     forcedModel: string | undefined,
+    allowedModels: string[],
   ): void {
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
       messageId: message.id,
@@ -1317,6 +1328,9 @@ export class ChatMessagesService implements OnModuleInit {
       routingMode,
       forcedProvider,
       forcedModel,
+      // Phase C: plan-allowed "provider/model" keys for AUTO-mode router gating.
+      // Empty = no restriction (allow-all) — preserves the v1 hot path.
+      allowedModels,
       timestamp: new Date().toISOString(),
     });
   }

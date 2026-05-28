@@ -21,6 +21,7 @@ import { LlamacppHealthManager } from '../managers/llamacpp-health.manager';
 import { AIRoutePlannerManager } from '../../intelligence/managers/ai-route-planner.manager';
 import { SemanticIntentAnalyzerManager } from '../../intelligence/managers/semantic-intent-analyzer.manager';
 import { detectHighRisk } from '../utilities/high-risk-detector.utility';
+import { applyPlanModelGate } from '../utilities/plan-model-gate.utility';
 import type {
   AIRoutePlannerInput,
   PlannerCandidate,
@@ -365,7 +366,15 @@ export class RoutingService implements OnModuleInit {
       return;
     }
 
-    const { messageId, threadId, content, routingMode, forcedProvider, forcedModel } = parsed;
+    const {
+      messageId,
+      threadId,
+      content,
+      routingMode,
+      forcedProvider,
+      forcedModel,
+      allowedModels,
+    } = parsed;
 
     this.logMessageCreatedConsumed(messageId, threadId);
 
@@ -383,8 +392,20 @@ export class RoutingService implements OnModuleInit {
       content,
       routingMode ?? calibrated.decision.routingMode,
     );
+    // Phase C — AUTO-mode plan gate: never let the router land on a model the
+    // user's plan forbids. Empty allowedModels = no restriction (allow-all).
+    const gate = applyPlanModelGate(decisionWithWorkflow, allowedModels);
+    if (gate.outcome === 'promoted') {
+      this.logger.warn(
+        `planModelGate: promoted ${gate.decision.selectedProvider}/${gate.decision.selectedModel} (primary was off-plan)`,
+      );
+    } else if (gate.outcome === 'unsatisfiable') {
+      this.logger.error(
+        `planModelGate: plan allows none of the candidates — chat-service will block execution`,
+      );
+    }
 
-    await this.storeAndPublishDecision(messageId, threadId, content, decisionWithWorkflow);
+    await this.storeAndPublishDecision(messageId, threadId, content, gate.decision);
   }
 
   private parseMessageCreatedPayload(payload: Record<string, unknown>): {
@@ -394,6 +415,7 @@ export class RoutingService implements OnModuleInit {
     routingMode: RoutingMode | undefined;
     forcedProvider: string | undefined;
     forcedModel: string | undefined;
+    allowedModels: string[];
   } | null {
     const threadId = payload['threadId'] as string | undefined;
     const content = payload['content'] as string | undefined;
@@ -403,6 +425,11 @@ export class RoutingService implements OnModuleInit {
       return null;
     }
 
+    const rawAllowed = payload['allowedModels'];
+    const allowedModels = Array.isArray(rawAllowed)
+      ? rawAllowed.filter((m): m is string => typeof m === 'string')
+      : [];
+
     return {
       messageId: payload['messageId'] as string | undefined,
       threadId,
@@ -410,6 +437,7 @@ export class RoutingService implements OnModuleInit {
       routingMode: payload['routingMode'] as RoutingMode | undefined,
       forcedProvider: payload['forcedProvider'] as string | undefined,
       forcedModel: payload['forcedModel'] as string | undefined,
+      allowedModels,
     };
   }
 
@@ -474,9 +502,7 @@ export class RoutingService implements OnModuleInit {
       // Workflow selection is additive — failing here must NEVER block
       // routing. Fall back to the decision as-is and log so the failure
       // is visible in ops dashboards.
-      this.logger.error(
-        `attachWorkflowSelection: failed — ${(error as Error).message}`,
-      );
+      this.logger.error(`attachWorkflowSelection: failed — ${(error as Error).message}`);
       return decision;
     }
   }
@@ -572,7 +598,7 @@ export class RoutingService implements OnModuleInit {
       const record = await this.semanticAnalyzer.analyze(input);
       await this.decisionsRepository.updateSemanticAnalysisByMessageId(
         messageId,
-        record as unknown as Prisma.InputJsonValue,
+        toInputJson(record),
       );
       this.logger.debug(
         `runSemanticAnalysisShadow: stored analysis status=${record.status} for messageId=${messageId}`,
@@ -623,10 +649,7 @@ export class RoutingService implements OnModuleInit {
         candidates: this.buildPlannerCandidates(decision),
       };
       const record = await this.aiRoutePlanner.plan(input);
-      await this.decisionsRepository.updateAiRoutePlanByMessageId(
-        messageId,
-        record as unknown as Prisma.InputJsonValue,
-      );
+      await this.decisionsRepository.updateAiRoutePlanByMessageId(messageId, toInputJson(record));
       this.logger.debug(
         `runAiRoutePlannerShadow: stored plan status=${record.status} for messageId=${messageId}`,
       );
@@ -641,13 +664,8 @@ export class RoutingService implements OnModuleInit {
   // SemanticIntentAnalysisRecord JSON column. The column stores the full
   // record (status + analysis + metadata); the planner only needs the
   // analysis payload.
-  private extractSemanticIntent(
-    semanticAnalysisColumn: unknown,
-  ): SemanticIntentAnalysis | null {
-    if (
-      semanticAnalysisColumn === null ||
-      typeof semanticAnalysisColumn !== 'object'
-    ) {
+  private extractSemanticIntent(semanticAnalysisColumn: unknown): SemanticIntentAnalysis | null {
+    if (semanticAnalysisColumn === null || typeof semanticAnalysisColumn !== 'object') {
       return null;
     }
     const record = semanticAnalysisColumn as { analysis?: SemanticIntentAnalysis | null };

@@ -24,10 +24,15 @@ export class AccessControlService {
 
   // Throws 403 if a manually-selected model is not in the user's plan, or 429
   // if the daily quota is exhausted. ADMIN / unlimited / unrestricted pass.
-  async assertCanSendMessage(userId: string, opts: SendMessageAccessOptions = {}): Promise<void> {
+  // Returns the resolved entitlements (or null when failing open) so the caller
+  // can forward allowedModels to the router for AUTO-mode gating.
+  async assertCanSendMessage(
+    userId: string,
+    opts: SendMessageAccessOptions = {},
+  ): Promise<UserEntitlements | null> {
     const ent = await this.resolve(userId);
     if (!ent) {
-      return; // fail-open
+      return null; // fail-open
     }
     if (opts.provider && opts.model) {
       const allowed = isModelAllowedForUsage(
@@ -55,6 +60,7 @@ export class AccessControlService {
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
+    return ent;
   }
 
   // Records actual token usage to the durable ledger after a completed message.
