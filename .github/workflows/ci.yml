@@ -111,6 +111,7 @@ jobs:
           cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
           cd ../shared-auth && npx tsgo -p tsconfig.build.json
           cd ../shared-utilities && npx tsgo -p tsconfig.build.json
+          cd ../shared-entitlements && npx tsgo -p tsconfig.build.json
 
       - name: Generate Prisma client
         if: matrix.prisma == true
@@ -216,6 +217,7 @@ jobs:
           cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
           cd ../shared-auth && npx tsgo -p tsconfig.build.json
           cd ../shared-utilities && npx tsgo -p tsconfig.build.json
+          cd ../shared-entitlements && npx tsgo -p tsconfig.build.json
 
       - name: Generate Prisma client
         if: matrix.prisma == true
@@ -366,6 +368,7 @@ jobs:
           cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
           cd ../shared-auth && npx tsgo -p tsconfig.build.json
           cd ../shared-utilities && npx tsgo -p tsconfig.build.json
+          cd ../shared-entitlements && npx tsgo -p tsconfig.build.json
 
       - name: Generate Prisma client
         if: matrix.prisma == true
@@ -481,6 +484,7 @@ jobs:
           cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
           cd ../shared-auth && npx tsgo -p tsconfig.build.json
           cd ../shared-utilities && npx tsgo -p tsconfig.build.json
+          cd ../shared-entitlements && npx tsgo -p tsconfig.build.json
 
       - name: Generate Prisma client
         if: matrix.prisma == true

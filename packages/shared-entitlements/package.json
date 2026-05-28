@@ -1,0 +1,27 @@
+{
+  "name": "@claw/shared-entitlements",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "typecheck": "tsgo --noEmit",
+    "build": "tsgo -p tsconfig.build.json",
+    "lint": "eslint src/ --concurrency=4",
+    "lint:fix": "eslint src/ --fix",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "@claw/shared-types": "*"
+  },
+  "devDependencies": {
+    "@nestjs/common": "^11.1.24",
+    "@nestjs/core": "^11.1.21",
+    "@types/jest": "^30.0.0",
+    "@typescript/native-preview": "^7.0.0-dev.20260421.2",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.11",
+    "typescript": "npm:@typescript/native-preview@beta"
+  }
+}
