@@ -75,6 +75,21 @@ jobs:
           - service: frontend
             workspace: claw-frontend
             prisma: false
+          - service: shared-types
+            workspace: '@claw/shared-types'
+            prisma: false
+          - service: shared-constants
+            workspace: '@claw/shared-constants'
+            prisma: false
+          - service: shared-rabbitmq
+            workspace: '@claw/shared-rabbitmq'
+            prisma: false
+          - service: shared-auth
+            workspace: '@claw/shared-auth'
+            prisma: false
+          - service: shared-utilities
+            workspace: '@claw/shared-utilities'
+            prisma: false
     steps:
       - uses: actions/checkout@v6
 
@@ -91,11 +106,11 @@ jobs:
 
       - name: Build shared packages
         run: |
-          cd packages/shared-types && npx tsgo
-          cd ../shared-constants && npx tsgo
-          cd ../shared-rabbitmq && npx tsgo
-          cd ../shared-auth && npx tsgo
-          cd ../shared-utilities && npx tsgo
+          cd packages/shared-types && npx tsgo -p tsconfig.build.json
+          cd ../shared-constants && npx tsgo -p tsconfig.build.json
+          cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
+          cd ../shared-auth && npx tsgo -p tsconfig.build.json
+          cd ../shared-utilities && npx tsgo -p tsconfig.build.json
 
       - name: Generate Prisma client
         if: matrix.prisma == true
@@ -165,6 +180,21 @@ jobs:
           - service: frontend
             workspace: claw-frontend
             prisma: false
+          - service: shared-types
+            workspace: '@claw/shared-types'
+            prisma: false
+          - service: shared-constants
+            workspace: '@claw/shared-constants'
+            prisma: false
+          - service: shared-rabbitmq
+            workspace: '@claw/shared-rabbitmq'
+            prisma: false
+          - service: shared-auth
+            workspace: '@claw/shared-auth'
+            prisma: false
+          - service: shared-utilities
+            workspace: '@claw/shared-utilities'
+            prisma: false
     steps:
       - uses: actions/checkout@v6
 
@@ -181,11 +211,11 @@ jobs:
 
       - name: Build shared packages
         run: |
-          cd packages/shared-types && npx tsgo
-          cd ../shared-constants && npx tsgo
-          cd ../shared-rabbitmq && npx tsgo
-          cd ../shared-auth && npx tsgo
-          cd ../shared-utilities && npx tsgo
+          cd packages/shared-types && npx tsgo -p tsconfig.build.json
+          cd ../shared-constants && npx tsgo -p tsconfig.build.json
+          cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
+          cd ../shared-auth && npx tsgo -p tsconfig.build.json
+          cd ../shared-utilities && npx tsgo -p tsconfig.build.json
 
       - name: Generate Prisma client
         if: matrix.prisma == true
@@ -255,6 +285,21 @@ jobs:
           - service: frontend
             workspace: claw-frontend
             prisma: false
+          - service: shared-types
+            workspace: '@claw/shared-types'
+            prisma: false
+          - service: shared-constants
+            workspace: '@claw/shared-constants'
+            prisma: false
+          - service: shared-rabbitmq
+            workspace: '@claw/shared-rabbitmq'
+            prisma: false
+          - service: shared-auth
+            workspace: '@claw/shared-auth'
+            prisma: false
+          - service: shared-utilities
+            workspace: '@claw/shared-utilities'
+            prisma: false
     env:
       # vitest (claw-frontend) on Node v24 + tinypool 1.x exhausts the
       # default ~4GB v8 heap during worker-pool teardown. All tests pass,
@@ -316,11 +361,11 @@ jobs:
 
       - name: Build shared packages
         run: |
-          cd packages/shared-types && npx tsgo
-          cd ../shared-constants && npx tsgo
-          cd ../shared-rabbitmq && npx tsgo
-          cd ../shared-auth && npx tsgo
-          cd ../shared-utilities && npx tsgo
+          cd packages/shared-types && npx tsgo -p tsconfig.build.json
+          cd ../shared-constants && npx tsgo -p tsconfig.build.json
+          cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
+          cd ../shared-auth && npx tsgo -p tsconfig.build.json
+          cd ../shared-utilities && npx tsgo -p tsconfig.build.json
 
       - name: Generate Prisma client
         if: matrix.prisma == true
@@ -395,6 +440,21 @@ jobs:
           - service: frontend
             workspace: claw-frontend
             prisma: false
+          - service: shared-types
+            workspace: '@claw/shared-types'
+            prisma: false
+          - service: shared-constants
+            workspace: '@claw/shared-constants'
+            prisma: false
+          - service: shared-rabbitmq
+            workspace: '@claw/shared-rabbitmq'
+            prisma: false
+          - service: shared-auth
+            workspace: '@claw/shared-auth'
+            prisma: false
+          - service: shared-utilities
+            workspace: '@claw/shared-utilities'
+            prisma: false
     env:
       # next build (claw-frontend) hits the same v8-heap ceiling that
       # the test job documents. Apply globally for parity — backend
@@ -416,11 +476,11 @@ jobs:
 
       - name: Build shared packages
         run: |
-          cd packages/shared-types && npx tsgo
-          cd ../shared-constants && npx tsgo
-          cd ../shared-rabbitmq && npx tsgo
-          cd ../shared-auth && npx tsgo
-          cd ../shared-utilities && npx tsgo
+          cd packages/shared-types && npx tsgo -p tsconfig.build.json
+          cd ../shared-constants && npx tsgo -p tsconfig.build.json
+          cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
+          cd ../shared-auth && npx tsgo -p tsconfig.build.json
+          cd ../shared-utilities && npx tsgo -p tsconfig.build.json
 
       - name: Generate Prisma client
         if: matrix.prisma == true

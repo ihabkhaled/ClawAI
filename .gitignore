@@ -86,3 +86,5 @@ qa-run.log
 
 apps/claw-frontend/scripts/
 !apps/claw-frontend/scripts/run-vitest.cjs
+# ESLint cache
+.eslintcache

@@ -1,8 +1,12 @@
-import { Injectable, Inject, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import amqplib from 'amqplib';
 import { EXCHANGE_NAME, RABBITMQ_QUEUE_PREFIX } from '@claw/shared-constants';
 import { type EventPattern } from '@claw/shared-types';
-import { RABBITMQ_MODULE_OPTIONS, type RabbitMQModuleOptions, type PendingSubscription } from './rabbitmq.types';
+import {
+  type PendingSubscription,
+  RABBITMQ_MODULE_OPTIONS,
+  type RabbitMQModuleOptions,
+} from './rabbitmq.types';
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 5000;
@@ -189,37 +193,47 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     });
     await this.channel.bindQueue(queueName, this.exchangeName, pattern);
 
-    await this.channel.consume(queueName, async (msg) => {
+    await this.channel.consume(queueName, (msg) => {
       if (!msg) {
         return;
       }
-
-      const retryCount = this.getRetryCount(msg);
-
-      try {
-        const content = JSON.parse(msg.content.toString()) as Record<string, unknown>;
-        await handler(content['data'] ?? content);
-        this.channel?.ack(msg);
-      } catch (err) {
-        const errMsg = err instanceof Error ? err.message : 'Unknown error';
-
-        if (retryCount < MAX_RETRIES) {
-          this.logger.warn(
-            `Retry ${String(retryCount + 1)}/${String(MAX_RETRIES)} for ${pattern}: ${errMsg}`,
-          );
-          this.channel?.ack(msg);
-          setTimeout(() => {
-            this.republishWithRetry(pattern, msg.content, retryCount + 1);
-          }, RETRY_DELAY_MS * (retryCount + 1));
-        } else {
-          this.logger.error(
-            `Message exhausted ${String(MAX_RETRIES)} retries on ${pattern}, sending to DLQ: ${errMsg}`,
-          );
-          this.channel?.nack(msg, false, false);
-        }
-      }
+      void this.handleConsumedMessage(msg, pattern, handler);
     });
 
     this.logger.log(`Subscribed to: ${pattern} on queue: ${queueName} (DLQ: ${dlqName})`);
+  }
+
+  private async handleConsumedMessage(
+    msg: amqplib.ConsumeMessage,
+    pattern: string,
+    handler: (data: unknown) => Promise<void>,
+  ): Promise<void> {
+    const retryCount = this.getRetryCount(msg);
+
+    try {
+      const content = JSON.parse(msg.content.toString()) as Record<string, unknown>;
+      await handler(content['data'] ?? content);
+      this.channel?.ack(msg);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Unknown error';
+
+      if (retryCount < MAX_RETRIES) {
+        this.logger.warn(
+          `Retry ${String(retryCount + 1)}/${String(MAX_RETRIES)} for ${pattern}: ${errMsg}`,
+        );
+        this.channel?.ack(msg);
+        setTimeout(
+          () => {
+            this.republishWithRetry(pattern, msg.content, retryCount + 1);
+          },
+          RETRY_DELAY_MS * (retryCount + 1),
+        );
+      } else {
+        this.logger.error(
+          `Message exhausted ${String(MAX_RETRIES)} retries on ${pattern}, sending to DLQ: ${errMsg}`,
+        );
+        this.channel?.nack(msg, false, false);
+      }
+    }
   }
 }

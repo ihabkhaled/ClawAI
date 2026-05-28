@@ -30,7 +30,9 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "moduleResolution": "Node16"
+    "moduleResolution": "Node16",
+    "typeRoots": ["../../node_modules/@types", "./node_modules/@types"],
+    "types": ["jest", "node"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

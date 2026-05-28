@@ -6,8 +6,11 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "typecheck": "tsgo --noEmit",
-    "build": "tsgo",
-    "test": "jest --passWithNoTests"
+    "build": "tsgo -p tsconfig.build.json",
+    "test": "jest --passWithNoTests",
+    "lint": "eslint src/ --concurrency=4",
+    "lint:fix": "eslint src/ --fix",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@claw/shared-constants": "0.1.0",

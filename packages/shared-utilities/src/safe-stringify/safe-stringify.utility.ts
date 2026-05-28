@@ -1,14 +1,16 @@
+// Stored lower-cased because the lookup below compares against
+// `key.toLowerCase()`. camelCase entries (e.g. refreshToken) would never
+// match and silently leak the value — keep every entry lower-case.
 const REDACTED_KEYS = new Set([
   'password',
   'token',
-  'apiKey',
   'apikey',
-  'refreshToken',
-  'accessToken',
+  'refreshtoken',
+  'accesstoken',
   'secret',
   'authorization',
   'cookie',
-  'clientSecret',
+  'clientsecret',
 ]);
 
 const REDACTED_PLACEHOLDER = '[REDACTED]';

@@ -15,7 +15,9 @@
     "sourceMap": true,
     "moduleResolution": "Node16",
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "typeRoots": ["../../node_modules/@types", "./node_modules/@types"],
+    "types": ["jest", "node"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
