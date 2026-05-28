@@ -40,6 +40,9 @@ export const de: TranslationDictionary = {
     download: 'Herunterladen',
     noDataAvailable: 'Keine Daten verfügbar',
     showingPage: 'Seite {page} von {total} wird angezeigt',
+    errorBoundaryTitle: 'Etwas ist schiefgelaufen',
+    errorBoundaryDescription:
+      'Auf dieser Seite ist ein unerwarteter Fehler aufgetreten. Versuchen Sie es erneut oder wechseln Sie zu einer anderen Seite.',
   },
   auth: {
     login: 'Anmelden',
@@ -2744,7 +2747,8 @@ export const de: TranslationDictionary = {
       reset: 'Zurücksetzen',
       running: 'Analyzer wird ausgeführt…',
       error: 'Semantische Analyse fehlgeschlagen',
-      emptyHint: 'Geben Sie eine Eingabe ein und klicken Sie auf "Semantischen Analyzer ausführen", um die Ergebnisse zu sehen.',
+      emptyHint:
+        'Geben Sie eine Eingabe ein und klicken Sie auf "Semantischen Analyzer ausführen", um die Ergebnisse zu sehen.',
     },
     result: {
       title: 'Ergebnis der semantischen Analyse',

@@ -40,6 +40,9 @@ export const es: TranslationDictionary = {
     download: 'Descargar',
     noDataAvailable: 'No hay datos disponibles',
     showingPage: 'Mostrando página {page} de {total}',
+    errorBoundaryTitle: 'Algo salió mal',
+    errorBoundaryDescription:
+      'Esta página encontró un error inesperado. Inténtalo de nuevo o ve a otra página.',
   },
   auth: {
     login: 'Iniciar sesión',
@@ -2723,7 +2726,8 @@ export const es: TranslationDictionary = {
     debugBadge: '[depurar]',
     openLabel: 'Inspeccionar contexto del hilo',
     title: 'Inspector de contexto del hilo',
-    description: 'Vista en modo desarrollador del paquete de contexto ensamblado para este mensaje.',
+    description:
+      'Vista en modo desarrollador del paquete de contexto ensamblado para este mensaje.',
     loading: 'Cargando recibo…',
     loadFailed: 'No se pudo cargar el recibo de contexto.',
     noReceipt: 'Sin recibo de contexto — el mensaje es anterior a esta función.',
@@ -2746,7 +2750,8 @@ export const es: TranslationDictionary = {
       reset: 'Restablecer',
       running: 'Ejecutando analizador…',
       error: 'Análisis semántico falló',
-      emptyHint: 'Introduce un prompt y pulsa "Ejecutar analizador semántico" para ver el resultado.',
+      emptyHint:
+        'Introduce un prompt y pulsa "Ejecutar analizador semántico" para ver el resultado.',
     },
     result: {
       title: 'Resultado del análisis semántico',

@@ -40,6 +40,9 @@ export const ar: TranslationDictionary = {
     download: 'تنزيل',
     noDataAvailable: 'لا توجد بيانات متاحة',
     showingPage: 'عرض الصفحة {page} من {total}',
+    errorBoundaryTitle: 'حدث خطأ ما',
+    errorBoundaryDescription:
+      'واجهت هذه الصفحة خطأً غير متوقع. حاول مرة أخرى أو انتقل إلى صفحة أخرى.',
   },
   auth: {
     login: 'تسجيل الدخول',
@@ -2213,8 +2216,7 @@ export const ar: TranslationDictionary = {
       activateHint:
         'يبدأ خادم النموذج. يستهلك الذاكرة (وذاكرة GPU عند توفّرها). مطلوب قبل أن يردّ هذا النموذج على رسائل المحادثة.',
       deactivate: 'إلغاء التفعيل',
-      deactivateHint:
-        'يحرّر الذاكرة. يبقى النموذج منزَّلًا ويمكن إعادة تفعيله في أي وقت.',
+      deactivateHint: 'يحرّر الذاكرة. يبقى النموذج منزَّلًا ويمكن إعادة تفعيله في أي وقت.',
       loading: 'جارٍ التفعيل…',
       deleteWeights: 'حذف الأوزان',
       configure: 'إعدادات التشغيل',

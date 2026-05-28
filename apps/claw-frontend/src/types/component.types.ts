@@ -127,6 +127,21 @@ export type ErrorBoundaryState = {
   error: Error | null;
 };
 
+// Next.js App Router error.tsx contract: the framework passes the thrown error
+// (optionally with a `digest`) plus a `reset` callback that re-renders the
+// segment subtree.
+export type RouteErrorBoundaryProps = {
+  error: Error & { digest?: string };
+  reset: () => void;
+};
+
+export type RouteErrorBoundaryView = {
+  title: string;
+  description: string;
+  retryLabel: string;
+  onRetry: () => void;
+};
+
 export type LoadingSpinnerProps = {
   className?: string;
   size?: ComponentSize;

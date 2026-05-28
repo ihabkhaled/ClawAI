@@ -23,9 +23,9 @@ import { useUpdateMemory } from './use-update-memory';
 export function useMemoryPage() {
   const [activeTab, setActiveTab] = useState<MemoryTab>(MemoryTab.SAVED);
   const [filterType, setFilterType] = useState<MemoryFilterType>(MemoryFilterValue.ALL);
-  const [filterScope, setFilterScope] = useState<string>('');
-  const [filterSource, setFilterSource] = useState<string>('');
-  const [filterSensitivity, setFilterSensitivity] = useState<string>('');
+  const [filterScope, setFilterScope] = useState<string>(MemoryFilterValue.ALL);
+  const [filterSource, setFilterSource] = useState<string>(MemoryFilterValue.ALL);
+  const [filterSensitivity, setFilterSensitivity] = useState<string>(MemoryFilterValue.ALL);
   const [search, setSearch] = useState<string>('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingMemory, setEditingMemory] = useState<MemoryRecord | null>(null);
@@ -35,13 +35,13 @@ export function useMemoryPage() {
     if (filterType !== MemoryFilterValue.ALL) {
       f['type'] = filterType;
     }
-    if (filterScope) {
+    if (filterScope !== MemoryFilterValue.ALL) {
       f['scope'] = filterScope;
     }
-    if (filterSource) {
+    if (filterSource !== MemoryFilterValue.ALL) {
       f['source'] = filterSource;
     }
-    if (filterSensitivity) {
+    if (filterSensitivity !== MemoryFilterValue.ALL) {
       f['sensitivity'] = filterSensitivity;
     }
     if (search.trim().length > 0) {

@@ -40,6 +40,9 @@ export const it: TranslationDictionary = {
     download: 'Scarica',
     noDataAvailable: 'Nessun dato disponibile',
     showingPage: 'Pagina {page} di {total}',
+    errorBoundaryTitle: 'Qualcosa è andato storto',
+    errorBoundaryDescription:
+      "Questa pagina ha riscontrato un errore imprevisto. Riprova o passa a un'altra pagina.",
   },
   auth: {
     login: 'Accedi',
@@ -2265,7 +2268,8 @@ export const it: TranslationDictionary = {
         'I pesi sono su disco ma il modello non è caricato. Attivalo perché possa rispondere alla chat.',
       loading: 'Attivazione…',
       crashed: 'Bloccato',
-      crashedHint: 'Il processo del modello si è interrotto inaspettatamente. Riprova ad attivarlo.',
+      crashedHint:
+        'Il processo del modello si è interrotto inaspettatamente. Riprova ad attivarlo.',
       notActiveHelp:
         'Perché la chat non sta usando questo modello? Attivalo per caricarlo in memoria; solo un modello frontier locale può essere attivo alla volta.',
     },
@@ -2713,7 +2717,8 @@ export const it: TranslationDictionary = {
     debugBadge: '[debug]',
     openLabel: 'Ispeziona contesto del thread',
     title: 'Ispettore di contesto del thread',
-    description: 'Vista in modalità sviluppatore del bundle di contesto assemblato per questo messaggio.',
+    description:
+      'Vista in modalità sviluppatore del bundle di contesto assemblato per questo messaggio.',
     loading: 'Caricamento ricevuta…',
     loadFailed: 'Impossibile caricare la ricevuta di contesto.',
     noReceipt: 'Nessuna ricevuta di contesto — il messaggio precede questa funzionalità.',
@@ -2736,7 +2741,8 @@ export const it: TranslationDictionary = {
       reset: 'Reimposta',
       running: 'Esecuzione analizzatore…',
       error: 'Analisi semantica fallita',
-      emptyHint: 'Inserisci un prompt e clicca su "Esegui analizzatore semantico" per vedere il risultato.',
+      emptyHint:
+        'Inserisci un prompt e clicca su "Esegui analizzatore semantico" per vedere il risultato.',
     },
     result: {
       title: 'Risultato analisi semantica',

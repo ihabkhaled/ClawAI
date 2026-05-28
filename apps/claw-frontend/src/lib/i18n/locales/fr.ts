@@ -40,6 +40,9 @@ export const fr: TranslationDictionary = {
     download: 'Télécharger',
     noDataAvailable: 'Aucune donnée disponible',
     showingPage: 'Affichage de la page {page} sur {total}',
+    errorBoundaryTitle: 'Une erreur est survenue',
+    errorBoundaryDescription:
+      'Cette page a rencontré une erreur inattendue. Réessayez ou accédez à une autre page.',
   },
   auth: {
     login: 'Connexion',
@@ -2279,7 +2282,8 @@ export const fr: TranslationDictionary = {
         'Les poids sont sur disque mais le modèle n’est pas chargé. Activez-le pour qu’il puisse répondre au chat.',
       loading: 'Activation…',
       crashed: 'Planté',
-      crashedHint: 'Le processus du modèle s’est arrêté de façon inattendue. Réessayez de l’activer.',
+      crashedHint:
+        'Le processus du modèle s’est arrêté de façon inattendue. Réessayez de l’activer.',
       notActiveHelp:
         'Pourquoi le chat n’utilise-t-il pas ce modèle ? Activez-le pour le charger en mémoire ; un seul modèle frontier local peut être actif à la fois.',
     },
@@ -2734,7 +2738,7 @@ export const fr: TranslationDictionary = {
     description: 'Vue en mode développeur du bundle de contexte assemblé pour ce message.',
     loading: 'Chargement du reçu…',
     loadFailed: 'Impossible de charger le reçu de contexte.',
-    noReceipt: "Aucun reçu de contexte — le message précède cette fonctionnalité.",
+    noReceipt: 'Aucun reçu de contexte — le message précède cette fonctionnalité.',
     fieldMemories: 'Mémoires',
     fieldPackItems: 'Éléments du pack',
     fieldTokensUsed: 'Tokens utilisés',
@@ -2754,7 +2758,8 @@ export const fr: TranslationDictionary = {
       reset: 'Réinitialiser',
       running: 'Exécution de l’analyseur…',
       error: 'Échec de l’analyse sémantique',
-      emptyHint: 'Entrez une invite et cliquez sur "Exécuter l’analyseur sémantique" pour voir le résultat.',
+      emptyHint:
+        'Entrez une invite et cliquez sur "Exécuter l’analyseur sémantique" pour voir le résultat.',
     },
     result: {
       title: "Résultat de l'analyse sémantique",

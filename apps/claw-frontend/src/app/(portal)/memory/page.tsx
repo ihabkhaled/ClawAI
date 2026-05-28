@@ -21,7 +21,13 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MEMORY_FILTER_OPTIONS } from '@/constants';
-import { MemoryScope, MemorySensitivity, MemorySource, MemoryTab } from '@/enums';
+import {
+  MemoryFilterValue,
+  MemoryScope,
+  MemorySensitivity,
+  MemorySource,
+  MemoryTab,
+} from '@/enums';
 import { useMemoryPage } from '@/hooks/memory/use-memory-page';
 import { useTranslation } from '@/lib/i18n';
 import type { MemoryFilterType } from '@/types';
@@ -136,7 +142,7 @@ export default function MemoryPage(): React.ReactElement {
                 <SelectValue placeholder={t('memory.filterAllScopes')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{t('memory.filterAllScopes')}</SelectItem>
+                <SelectItem value={MemoryFilterValue.ALL}>{t('memory.filterAllScopes')}</SelectItem>
                 <SelectItem value={MemoryScope.USER}>{t('memory.scopeUser')}</SelectItem>
                 <SelectItem value={MemoryScope.THREAD}>{t('memory.scopeThread')}</SelectItem>
                 <SelectItem value={MemoryScope.WORKSPACE}>{t('memory.scopeWorkspace')}</SelectItem>
@@ -148,7 +154,9 @@ export default function MemoryPage(): React.ReactElement {
                 <SelectValue placeholder={t('memory.filterAllSources')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{t('memory.filterAllSources')}</SelectItem>
+                <SelectItem value={MemoryFilterValue.ALL}>
+                  {t('memory.filterAllSources')}
+                </SelectItem>
                 <SelectItem value={MemorySource.USER_MANUAL}>
                   {t('memory.sourceUserManual')}
                 </SelectItem>
@@ -166,7 +174,9 @@ export default function MemoryPage(): React.ReactElement {
                 <SelectValue placeholder={t('memory.filterAllSensitivities')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{t('memory.filterAllSensitivities')}</SelectItem>
+                <SelectItem value={MemoryFilterValue.ALL}>
+                  {t('memory.filterAllSensitivities')}
+                </SelectItem>
                 <SelectItem value={MemorySensitivity.NORMAL}>
                   {t('memory.sensitivityNormal')}
                 </SelectItem>

@@ -52,6 +52,14 @@ describe('ContextPacksController', () => {
     expect(serviceMock.getContextPacks).toHaveBeenCalledWith('u1', 1, 20, undefined);
   });
 
+  // Regression: non-numeric / negative page/limit must NOT reach Prisma as NaN
+  // (that surfaced as a 500). They fall back to safe defaults.
+  it('findAll falls back to safe defaults for non-numeric page/limit (no NaN → no 500)', async () => {
+    serviceMock.getContextPacks.mockResolvedValue({ data: [], meta: {} });
+    await controller.findAll(user as never, 'abc', '-5', 'foo');
+    expect(serviceMock.getContextPacks).toHaveBeenCalledWith('u1', 1, 20, 'foo');
+  });
+
   it('findOne forwards id and user.id', async () => {
     await controller.findOne('cp1', user as never);
     expect(serviceMock.getContextPack).toHaveBeenCalledWith('cp1', 'u1');

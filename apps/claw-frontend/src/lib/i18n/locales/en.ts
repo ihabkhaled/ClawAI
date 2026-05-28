@@ -40,6 +40,9 @@ export const en: TranslationDictionary = {
     download: 'Download',
     noDataAvailable: 'No data available',
     showingPage: 'Showing page {page} of {total}',
+    errorBoundaryTitle: 'Something went wrong',
+    errorBoundaryDescription:
+      'This page hit an unexpected error. Try again, or move to another page.',
   },
   auth: {
     login: 'Login',
@@ -2713,7 +2716,8 @@ export const en: TranslationDictionary = {
       reset: 'Reset',
       running: 'Running analyser…',
       error: 'Semantic analysis failed',
-      emptyHint: 'Enter a prompt and click "Run semantic analyser" to see what the analyser produces.',
+      emptyHint:
+        'Enter a prompt and click "Run semantic analyser" to see what the analyser produces.',
     },
     result: {
       title: 'Semantic analysis result',

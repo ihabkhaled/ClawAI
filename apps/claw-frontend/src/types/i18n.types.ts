@@ -41,6 +41,8 @@ export type TranslationDictionary = {
     download: string;
     noDataAvailable: string;
     showingPage: string;
+    errorBoundaryTitle: string;
+    errorBoundaryDescription: string;
   };
   auth: {
     login: string;

@@ -40,6 +40,9 @@ export const pt: TranslationDictionary = {
     download: 'Baixar',
     noDataAvailable: 'Nenhum dado disponível',
     showingPage: 'Exibindo página {page} de {total}',
+    errorBoundaryTitle: 'Algo deu errado',
+    errorBoundaryDescription:
+      'Esta página encontrou um erro inesperado. Tente novamente ou vá para outra página.',
   },
   auth: {
     login: 'Entrar',
@@ -2730,7 +2733,8 @@ export const pt: TranslationDictionary = {
       reset: 'Redefinir',
       running: 'Executando analisador…',
       error: 'Análise semântica falhou',
-      emptyHint: 'Insira um prompt e clique em "Executar analisador semântico" para ver o resultado.',
+      emptyHint:
+        'Insira um prompt e clique em "Executar analisador semântico" para ver o resultado.',
     },
     result: {
       title: 'Resultado da análise semântica',
