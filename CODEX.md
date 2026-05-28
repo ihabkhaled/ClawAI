@@ -32,16 +32,16 @@ Every AI agent (Claude, Codex, Cursor, or any other) working on this codebase MU
 
 ## What This Is
 
-Local-first AI orchestration platform. 13 NestJS microservices + Next.js frontend + 9 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama. Monorepo with npm workspaces.
+Local-first AI orchestration platform. 17 NestJS microservices + Next.js frontend + 13 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama. Monorepo with npm workspaces.
 
 ## Architecture at a Glance
 
 ```
 Frontend (Next.js 16, port 3000)
   → Nginx reverse proxy (port 4000)
-    → 11 backend services (ports 4001-4011)
+    → 17 backend services (ports 4001-4017)
       → RabbitMQ (async events, topic exchange: claw.events)
-      → 9 PostgreSQL (pgvector), 1 MongoDB (3 databases), 1 Redis
+      → 13 PostgreSQL (pgvector), 1 MongoDB (3 databases), 1 Redis
       → Ollama (local AI runtime, port 11434)
 ```
 
@@ -80,8 +80,20 @@ docs/                # 11 architecture audit documents
 
 ## Key Versions
 
-- Node >= 22.13, NestJS 11.1, Next.js 16.2, React 19.2, Prisma 6.19, Zod 3.24, TypeScript 6.0+
-- ESLint 9 (flat config), Prettier 3.8, Jest (backend), Vitest (frontend), Playwright (E2E)
+- Node >= 20 (Docker images run Node 26), NestJS 11.1, Next.js 16.2, React 19.2, Prisma 7.8, Zod 4.4
+- **TypeScript via tsgo** (`@typescript/native-preview`, the Go-native TS7 compiler) + `tsc-alias` — NOT `tsc`/`nest build`
+- ESLint 9 (flat config), Prettier 3.8, Jest 30 (backend, ts-jest), Vitest 4 (frontend), Playwright (E2E)
+
+### Build toolchain (tsgo) — see docs/08-runtime-devops/build-system.md
+
+Every backend service AND shared package compiles with **tsgo**, not `tsc`/`nest build`. Path aliases (`@app/*`, `@common/*`, `@modules/*`) are rewritten to relative paths after compile by **tsc-alias** (tsgo does not rewrite paths). Per-workspace npm scripts:
+
+- `dev` = `tsgo -p tsconfig.build.json && tsc-alias -p tsconfig.build.json && concurrently -k … "tsgo … --watch" "tsc-alias … --watch" "nodemon --watch dist … dist/main.js"`
+- `build` = `tsgo -p tsconfig.build.json && tsc-alias -p tsconfig.build.json`
+- `typecheck` = `tsgo --noEmit`
+- `start` = `node dist/main.js`
+
+The `typescript` dependency is **aliased** to `@typescript/native-preview@beta`; real `tsc` 6.x still resolves transitively (ts-jest uses it). Docker images use **`node:26-bookworm-slim`** (glibc — tsgo and llama.cpp release binaries are not musl-compatible, so NOT Alpine). CI links the native binary with `npm rebuild @typescript/native-preview` and builds shared packages with `npx tsgo -p tsconfig.build.json`. The frontend runs `vitest run` directly (no wrapper script).
 
 ---
 
@@ -94,7 +106,7 @@ docs/                # 11 architecture audit documents
 3. **`scripts/install.sh`** — add the variable to the generated .env block
 4. **`scripts/install.ps1`** — same for Windows PowerShell installer
 5. **ALL Docker compose files** — the split compose files (`docker/docker-compose.dev.{databases,services,ollama}.yml` + `docker/docker-compose.prod.*` mirrors + `docker/docker-compose.{dev,prod}.gpu-{nvidia,rocm,vulkan}.yml` overlays) — if new service, port, volume, database, or AI runtime dependency
-6. **i18n locale files** — if any new user-facing text (ALL 8 locales: en, ar, de, es, fr, it, pt, ru)
+6. **i18n locale files** — if any new user-facing text (ALL 9 locales: en, ar, de, es, fr, hi, it, pt, ru)
 7. **Architecture docs** (`docs/`) — if the change affects documented architecture
 8. **Prisma migrations** — if any schema change (`npx prisma migrate dev --name <name>`)
 9. **Seed files** — if new default data needed (e.g., admin user, default policies)
@@ -396,7 +408,7 @@ Page (.tsx) → Controller Hook (useX) → Service → Repository/API
 
 ### i18n Rules
 
-- 8 languages: EN, AR, DE, ES, FR, IT, PT, RU (Arabic is RTL)
+- 9 languages: EN, AR, DE, ES, FR, HI, IT, PT, RU (Arabic is RTL)
 - ALL user-facing text must use `t('key')` from `useTranslation()`
 - NEVER hardcode text in components
 - Locale files: `src/lib/i18n/locales/{en,ar,de,es,fr,it,pt,ru}.ts`
@@ -687,7 +699,7 @@ Active policies (sorted by priority) can override the mode.
 - JWT + refresh token rotation (argon2 password hashing)
 - RBAC: ADMIN, OPERATOR, VIEWER (AuthGuard + RolesGuard on all services)
 - Rate limiting: @nestjs/throttler (100 req/min, configurable via THROTTLE_TTL/THROTTLE_LIMIT)
-- Helmet security headers on all 11 services
+- Helmet security headers on all 17 services
 - Zod validation on all DTOs
 - Prisma ORM (no raw SQL)
 - AES-256-GCM encryption for connector API keys
@@ -751,7 +763,7 @@ login, dashboard, chat, chat/[threadId], chat/compare, connectors, connectors/[i
 
 - shadcn/ui + Radix UI primitives + Tailwind CSS + Lucide icons
 - Dark mode via CSS variables, system preference detection
-- i18n: 8 languages (EN, AR, FR, DE, ES, IT, PT, RU), RTL support for Arabic
+- i18n: 9 languages (EN, AR, DE, ES, FR, HI, IT, PT, RU), RTL support for Arabic
 - Mobile responsive (collapsible sidebar, responsive grids)
 
 ### Key Chat Components
@@ -848,13 +860,13 @@ do not invoke `docker compose -f …` directly.
 
 ### Per-vendor GPU overlay matrix
 
-| Host GPU                          | Probe                     | Overlay file applied                       | Container gets                                                                      |
-| --------------------------------- | ------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Host GPU                          | Probe                     | Overlay file applied                              | Container gets                                                                      |
+| --------------------------------- | ------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | NVIDIA (Linux/WSL2/Win)           | `nvidia-smi -L` succeeds  | `docker/docker-compose.{dev,prod}.gpu-nvidia.yml` | `deploy.resources.reservations.devices.driver=nvidia`, `NVIDIA_VISIBLE_DEVICES=all` |
 | AMD ROCm (Linux only)             | `/dev/kfd` exists         | `docker/docker-compose.{dev,prod}.gpu-rocm.yml`   | `devices: [/dev/kfd, /dev/dri]`, `group_add: [video, render]`, `ipc: host`          |
 | Intel iGPU / Arc / Vulkan (Linux) | `/dev/dri/render*` exists | `docker/docker-compose.{dev,prod}.gpu-vulkan.yml` | `devices: [/dev/dri]`, `group_add: [video, render]`                                 |
-| Apple Silicon Metal               | `uname -s = Darwin`       | (none — warns)                             | CPU-only inside container; run `claw-llamacpp-service` natively for Metal           |
-| None                              | (no probe matches)        | (none)                                     | CPU-only                                                                            |
+| Apple Silicon Metal               | `uname -s = Darwin`       | (none — warns)                                    | CPU-only inside container; run `claw-llamacpp-service` natively for Metal           |
+| None                              | (no probe matches)        | (none)                                            | CPU-only                                                                            |
 
 The `claw-llamacpp-service` `BinaryInstallerManager` queries the GitHub API for the latest llama.cpp release on every container start and matches the right archive per platform key (e.g. `linux-x64-cuda12` → `llama-{TAG}-bin-ubuntu-cuda-*-x64.tar.gz`, `linux-x64-rocm` → `llama-{TAG}-bin-ubuntu-rocm-*-x64.tar.gz`). When you flip GPU passthrough on, the next `claw.sh up` will both expose the GPU to the container AND auto-pull the matching binary build.
 
@@ -941,7 +953,7 @@ Claude MUST verify ALL of these before saying a task is complete:
 - [ ] No raw HTML elements where shadcn/ui required
 - [ ] No `any` types introduced
 - [ ] No inline types/enums/constants in restricted files
-- [ ] All new user-facing text has i18n keys in all 8 locales
+- [ ] All new user-facing text has i18n keys in all 9 locales
 - [ ] Error states (not just happy paths) implemented and testable
 - [ ] storeErrorMessage wrapped in try-catch for all fire-and-forget managers
 - [ ] emitError called before storeErrorMessage in error paths
@@ -1157,7 +1169,7 @@ Check and update ALL of these:
 8. **`packages/shared-types`** — add new event patterns if the service publishes events
 9. **`apps/claw-health-service`** — add the new service URL to health check list
 10. **`.github/workflows/ci.yml`** — add new service to the Prisma generate loop and test env vars
-11. **i18n locale files** — if any new user-facing text (ALL 8 locales: en, ar, de, es, fr, it, pt, ru)
+11. **i18n locale files** — if any new user-facing text (ALL 9 locales: en, ar, de, es, fr, hi, it, pt, ru)
 12. **Architecture docs** (`docs/`) — if the change affects documented architecture
 13. **Prisma migrations** — if any schema change (`npx prisma migrate dev --name <name>`)
 14. **Seed files** — if new default data needed (e.g., catalog entries, default policies)
@@ -1684,7 +1696,7 @@ docs/
   - `.env` and `.env.example`
   - `scripts/install.sh` + `scripts/install.ps1`
   - `.github/workflows/ci.yml`
-  - i18n (all 8 locales) if user-facing
+  - i18n (all 9 locales) if user-facing
   - `docs/04-backend/services-index.md`
   - `CLAUDE.md` workspace layout
   - Frontend types, hooks, and pages if user-facing
@@ -1866,12 +1878,12 @@ When adding a new package under `packages/`, you MUST update `.github/workflows/
 ```yaml
 - name: Build shared packages
   run: |
-    cd packages/shared-types && npx tsc
-    cd ../shared-constants && npx tsc
-    cd ../shared-rabbitmq && npx tsc
-    cd ../shared-auth && npx tsc
-    cd ../shared-utilities && npx tsc
-    cd ../<new-shared-package> && npx tsc
+    cd packages/shared-types && npx tsgo -p tsconfig.build.json
+    cd ../shared-constants && npx tsgo -p tsconfig.build.json
+    cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
+    cd ../shared-auth && npx tsgo -p tsconfig.build.json
+    cd ../shared-utilities && npx tsgo -p tsconfig.build.json
+    cd ../<new-shared-package> && npx tsgo -p tsconfig.build.json
 ```
 
 Local builds work because `node_modules/@claw/<pkg>` is a symlink + `dist/` is populated by the developer's `npm run build`. CI starts from a fresh checkout — consumers then fail with `Cannot find module '@claw/<pkg>'`. Cost a CI red after adding `@claw/shared-utilities` (fixed in commit `ad38ccf`). Don't repeat.

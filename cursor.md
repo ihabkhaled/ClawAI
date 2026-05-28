@@ -41,7 +41,7 @@ These are DELIVERY BLOCKERS — a PR without them is rejected:
 
 **Follow `CLAUDE.md` and `rules/` exactly.** `CLAUDE.md` defines:
 
-- Architecture (14 NestJS microservices + Next.js + Ollama + 9 PostgreSQL + MongoDB + Redis + RabbitMQ)
+- Architecture (17 NestJS microservices + Next.js + Ollama + 13 PostgreSQL + MongoDB + Redis + RabbitMQ)
 - Layer boundaries (Controller → Service → Repository → Manager)
 - ESLint rules (no `any`, no inline types, strict enums, no string literal unions)
 - The 18-item delivery checklist
@@ -116,6 +116,10 @@ Cross-service utility location:
 - values → `packages/shared-constants/`
 - functions → `packages/shared-utilities/`
 
+## Build toolchain (tsgo) — see docs/08-runtime-devops/build-system.md
+
+The repo compiles with **tsgo** (`@typescript/native-preview`), not `tsc`/`nest build`. After compile, **tsc-alias** rewrites path aliases (`@app/*`, `@common/*`, `@modules/*`) to relative paths. The `typescript` dependency is aliased to `@typescript/native-preview@beta`; ts-jest still pulls real `tsc` transitively. Per-workspace scripts: `build` = `tsgo -p tsconfig.build.json && tsc-alias -p tsconfig.build.json`; `typecheck` = `tsgo --noEmit`; `dev` runs tsgo + tsc-alias in `--watch` under `nodemon`. Docker images use `node:26-bookworm-slim` (glibc — tsgo binaries are not musl-compatible, so never Alpine). All 5 shared packages also build/lint/test/typecheck with tsgo and are first-class CI matrix entries.
+
 ## Cursor editing conventions
 
 - Never mass-rename without reading every file first.
@@ -128,7 +132,7 @@ Cross-service utility location:
 - Conventional commits: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert` + scope.
 - Commit bodies describe WHY, not WHAT.
 - Include `Co-Authored-By: Cursor <noreply@cursor.sh>` footer line.
-- Never use `--no-verify`. The pre-commit hook runs lint-staged → lint → typecheck → build → test.
+- Never use `--no-verify`. The pre-commit hook runs lint-staged (eslint --fix + prettier) + `npm run typecheck`; the pre-push hook runs `npm run build` + `npm run test`.
 - Chunk commits by logical boundary (schema, backend logic, frontend, infra, docs) — not by time.
 
 ## If Cursor suggests something contrary to CLAUDE.md
@@ -151,17 +155,19 @@ Cross-service utility location:
 
 ## CI Workflow Footgun (added 2026-04-27)
 
-When you add a new package under `packages/`, the CI workflow needs an extra `npx tsc` line to compile its `dist/` before consumer services typecheck. Local builds hide this because `node_modules/@claw/<pkg>` symlink + `dist/` are populated by `npm install` + `npm run build`. CI starts fresh and fails with `Cannot find module '@claw/<pkg>'` until the line is added.
+When you add a new package under `packages/`, the CI workflow needs an extra build line to compile its `dist/` before consumer services typecheck. Local builds hide this because `node_modules/@claw/<pkg>` symlink + `dist/` are populated by `npm install` + `npm run build`. CI starts fresh and fails with `Cannot find module '@claw/<pkg>'` until the line is added.
 
 ```yaml
+- name: Link tsgo binary (@typescript/native-preview)
+  run: npm rebuild @typescript/native-preview
 - name: Build shared packages
   run: |
-    cd packages/shared-types && npx tsc
-    cd ../shared-constants && npx tsc
-    cd ../shared-rabbitmq && npx tsc
-    cd ../shared-auth && npx tsc
-    cd ../shared-utilities && npx tsc       # added 2026-04-26
-    cd ../<new-shared-package> && npx tsc   # MUST add for any new shared package
+    cd packages/shared-types && npx tsgo -p tsconfig.build.json
+    cd ../shared-constants && npx tsgo -p tsconfig.build.json
+    cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
+    cd ../shared-auth && npx tsgo -p tsconfig.build.json
+    cd ../shared-utilities && npx tsgo -p tsconfig.build.json
+    cd ../<new-shared-package> && npx tsgo -p tsconfig.build.json   # MUST add for any new shared package
 ```
 
-Update all four jobs (`lint`, `typecheck`, `test`, `build`) — they each have their own copy of the step.
+Update all four jobs (`lint`, `typecheck`, `test`, `build`) — they each have their own copy of the step. Each job is a ~23-entry matrix (17 services + frontend + 5 shared packages).
