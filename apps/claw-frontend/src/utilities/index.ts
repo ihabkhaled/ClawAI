@@ -81,3 +81,6 @@ export { stringifyPayload, isConnectorStale } from './approval-card.utility';
 export { serializeApprovalPayload } from './approval-edit.utility';
 export { parsePolicyWeightsJson, formatPolicyWeightsJson } from './policy-weights.utility';
 export { prettyJson, toMarkdownJsonBlock } from './json-pretty.utility';
+export { groupPermissions } from './permission-group.utility';
+export { resolvePlanSubmitLabelKey } from './plan-form.utility';
+export { formatTokenCount, formatNullableLimit, computeUsagePercent } from './plan-display.utility';

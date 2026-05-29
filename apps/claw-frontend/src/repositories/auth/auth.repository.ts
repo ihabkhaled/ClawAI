@@ -5,6 +5,7 @@ import type {
   RefreshResponse,
   RegisterRequest,
   RegisterResponse,
+  UserEntitlements,
   UserProfile,
 } from '@/types';
 
@@ -32,6 +33,11 @@ export const authRepository = {
 
   async me(): Promise<UserProfile> {
     const response = await apiClient.get<UserProfile>('/auth/me');
+    return response.data;
+  },
+
+  async entitlements(): Promise<UserEntitlements> {
+    const response = await apiClient.get<UserEntitlements>('/auth/me/entitlements');
     return response.data;
   },
 };

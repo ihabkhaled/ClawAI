@@ -76,6 +76,21 @@ export const queryKeys = {
   admin: {
     users: ['admin', 'users'] as const,
   },
+  adminPlans: {
+    all: ['adminPlans'] as const,
+    lists: () => [...queryKeys.adminPlans.all, 'list'] as const,
+    detail: (id: string) => [...queryKeys.adminPlans.all, 'detail', id] as const,
+    users: (id: string) => [...queryKeys.adminPlans.all, 'users', id] as const,
+  },
+  adminRoles: {
+    all: ['adminRoles'] as const,
+    lists: () => [...queryKeys.adminRoles.all, 'list'] as const,
+    detail: (id: string) => [...queryKeys.adminRoles.all, 'detail', id] as const,
+    permissions: () => [...queryKeys.adminRoles.all, 'permissions'] as const,
+  },
+  myEntitlements: {
+    all: ['myEntitlements'] as const,
+  },
   memory: {
     all: ['memory'] as const,
     lists: () => [...queryKeys.memory.all, 'list'] as const,

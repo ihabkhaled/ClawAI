@@ -41,6 +41,9 @@ import {
   SlidersHorizontal,
   Send,
   ScrollIcon,
+  CreditCard,
+  Gauge,
+  UserCog,
 } from 'lucide-react';
 
 import { ROUTES } from './routes.constants';
@@ -193,7 +196,19 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
         href: ROUTES.ADMIN_WEBHOOK_DELIVERIES,
         icon: ScrollIcon,
       },
+      {
+        labelKey: 'nav.adminPlans',
+        href: ROUTES.ADMIN_PLANS,
+        icon: CreditCard,
+      },
+      {
+        labelKey: 'nav.adminRoles',
+        href: ROUTES.ADMIN_ROLES,
+        icon: UserCog,
+      },
     ],
   },
+  { labelKey: 'nav.plan', href: ROUTES.PLAN, icon: CreditCard },
+  { labelKey: 'nav.usage', href: ROUTES.USAGE, icon: Gauge },
   { labelKey: 'nav.settings', href: ROUTES.SETTINGS, icon: Settings },
 ];

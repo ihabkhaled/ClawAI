@@ -190,3 +190,5 @@ export {
   ROUTING_PLAYGROUND_TAB_SEMANTIC,
 } from './routing-playground.constants';
 export { THREAD_CONTEXT_INSPECTOR_ENABLED } from './thread-context-inspector.constants';
+export { PLAN_FORM_DEFAULTS, PLAN_FEATURE_GATE_FIELDS } from './plan.constants';
+export { PERMISSION_GROUP_PREFIXES, PERMISSION_GROUP_ORDER } from './role.constants';
