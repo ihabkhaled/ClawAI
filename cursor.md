@@ -170,4 +170,14 @@ When you add a new package under `packages/`, the CI workflow needs an extra bui
     cd ../<new-shared-package> && npx tsgo -p tsconfig.build.json   # MUST add for any new shared package
 ```
 
-Update all four jobs (`lint`, `typecheck`, `test`, `build`) — they each have their own copy of the step. Each job is a ~23-entry matrix (17 services + frontend + 5 shared packages).
+Update all four jobs (`lint`, `typecheck`, `test`, `build`) — they each have their own copy of the step. Each job is a ~24-entry matrix (17 services + frontend + 6 shared packages).
+
+**SECOND required edit (added 2026-05-29):** also add the package to the per-package `strategy.matrix.include` in all four jobs, or its OWN lint/typecheck/test never runs in CI (it's only built as a dependency):
+
+```yaml
+- service: <new-shared-package>
+  workspace: '@claw/<new-shared-package>'
+  prisma: false
+```
+
+So a new `packages/<name>` = TWO edits × 4 jobs: the "Build shared packages" line AND the matrix entry. `@claw/shared-entitlements` had the build line (Phase C-1) but its matrix entry was missed until 2026-05-29 — silently never lint/typecheck/tested. Don't repeat: both edits, all four jobs.

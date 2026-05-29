@@ -2152,9 +2152,19 @@ When adding a new package under `packages/`, you MUST update `.github/workflows/
     cd ../<new-shared-package> && npx tsgo -p tsconfig.build.json   # MUST add for any new shared package
 ```
 
-**Why it bites:** local builds work because `node_modules/@claw/<pkg>` is a symlink populated by `npm install`, and `dist/` is created by the developer's local `npm run build`. CI starts from a fresh checkout where `dist/` doesn't exist — consumer services fail with `Cannot find module '@claw/<pkg>'` even though `package-lock.json` lists the package.
+**SECOND required edit (added 2026-05-29):** you MUST also add the new package to the per-package **matrix** in all four jobs of `.github/workflows/ci.yml`, otherwise the package's OWN lint/typecheck/test never runs in CI (it only gets built as a dependency). Add an entry next to `shared-utilities` in each job's `strategy.matrix.include`:
 
-This footgun cost a CI red on the first commit after adding `@claw/shared-utilities` (caught and fixed in commit `ad38ccf`). Full rule in `rules/05-infra-rules.md` and `docs/04-backend/shared-packages.md`. Future agents: don't repeat.
+```yaml
+- service: <new-shared-package>
+  workspace: '@claw/<new-shared-package>'
+  prisma: false
+```
+
+So adding ANY `packages/<name>` workspace requires TWO edits per job × 4 jobs in ci.yml: (1) the "Build shared packages" `cd ../<name> && npx tsgo ...` line, and (2) the `strategy.matrix.include` entry above.
+
+**Why it bites:** local builds work because `node_modules/@claw/<pkg>` is a symlink populated by `npm install`, and `dist/` is created by the developer's local `npm run build`. CI starts from a fresh checkout where `dist/` doesn't exist — consumer services fail with `Cannot find module '@claw/<pkg>'` even though `package-lock.json` lists the package. And a package missing from the matrix is silently never lint/typecheck/tested in CI.
+
+This footgun cost a CI red on the first commit after adding `@claw/shared-utilities` (caught and fixed in commit `ad38ccf`). `@claw/shared-entitlements` was added to the build step in Phase C-1 but its matrix entry was missed until 2026-05-29 — its own lint/typecheck/test silently never ran in CI. Full rule in `rules/05-infra-rules.md` and `docs/04-backend/shared-packages.md`. Future agents: don't repeat — both edits, all four jobs.
 
 ---
 

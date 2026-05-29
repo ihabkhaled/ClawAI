@@ -90,6 +90,9 @@ jobs:
           - service: shared-utilities
             workspace: '@claw/shared-utilities'
             prisma: false
+          - service: shared-entitlements
+            workspace: '@claw/shared-entitlements'
+            prisma: false
     steps:
       - uses: actions/checkout@v6
 
@@ -196,6 +199,9 @@ jobs:
           - service: shared-utilities
             workspace: '@claw/shared-utilities'
             prisma: false
+          - service: shared-entitlements
+            workspace: '@claw/shared-entitlements'
+            prisma: false
     steps:
       - uses: actions/checkout@v6
 
@@ -301,6 +307,9 @@ jobs:
             prisma: false
           - service: shared-utilities
             workspace: '@claw/shared-utilities'
+            prisma: false
+          - service: shared-entitlements
+            workspace: '@claw/shared-entitlements'
             prisma: false
     env:
       # vitest (claw-frontend) on Node v24 + tinypool 1.x exhausts the
@@ -457,6 +466,9 @@ jobs:
             prisma: false
           - service: shared-utilities
             workspace: '@claw/shared-utilities'
+            prisma: false
+          - service: shared-entitlements
+            workspace: '@claw/shared-entitlements'
             prisma: false
     env:
       # next build (claw-frontend) hits the same v8-heap ceiling that
