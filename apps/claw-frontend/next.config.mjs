@@ -17,20 +17,16 @@ const nextConfig = {
   // navigation, producing an "infinite loading" UX.
   // localhost stays in the list so dev access via either host works.
   allowedDevOrigins: devOrigins,
-  // The `typescript` package is aliased to `@typescript/native-preview` (TS 7),
-  // which ships only the `tsgo` CLI and does NOT expose the TypeScript
-  // compiler API that Next.js's built-in type-check step requires. SWC handles
-  // the actual TS → JS transpile during `next build`. Run `npm run typecheck`
-  // (which calls `tsgo --noEmit`) separately for type safety.
+  // The `typescript` dependency is aliased to `@typescript/native-preview`
+  // (tsgo, TS 7), which ships the tsgo CLI but does NOT expose the TypeScript
+  // compiler API Next's built-in type-check needs. SWC handles the TS → JS
+  // transpile during the build; `npm run typecheck` (tsgo --noEmit) enforces
+  // type safety separately, so we skip Next's type-check here.
   typescript: {
     ignoreBuildErrors: true,
   },
-  // ESLint's `@typescript-eslint/parser` also requires the TypeScript
-  // compiler API. Skip Next's build-time lint pass; run `npm run lint`
-  // separately when needed (it currently falls back to the root TS install).
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // NOTE: Next 16 removed the `eslint` config key and the built-in `next lint`
+  // pass, so there is no eslint block here. Linting runs via `npm run lint`.
   async headers() {
     return [
       {
