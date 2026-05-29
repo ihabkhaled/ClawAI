@@ -24,6 +24,8 @@ export type {
   StreamMetrics,
   StreamUsage,
   StreamLiveState,
+  LaneStreamState,
+  LaneStreamMap,
   VisibleProgressStage,
   SseConnection,
   FallbackAttemptInfo,
