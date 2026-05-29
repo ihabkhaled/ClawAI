@@ -2,7 +2,24 @@
 
 ## Overview
 
-ClawAI enforces Role-Based Access Control (RBAC) with three roles: ADMIN, OPERATOR, and VIEWER. Authorization is implemented through two NestJS guards from the `shared-auth` package, applied across all 17 backend services.
+ClawAI enforces authorization at the backend (frontend guards are cosmetic). The
+base layer is Role-Based Access Control via two NestJS guards from `shared-auth`,
+applied across all backend services. The **Auth/RBAC/Plans/Quota flagship**
+(2026-05) layers on top of this:
+
+- A new **`USER`** role (default for self-registration) alongside the legacy
+  ADMIN/OPERATOR/VIEWER. New users register as ACTIVE on the default **Free** plan.
+- **Dynamic, DB-backed roles + permissions** — a fixed `Permission` code catalog
+  (`@claw/shared-types`, 30 entries) granted to roles via the `RolePermission`
+  table; admins create custom roles and toggle grants. Effective permissions =
+  role grants ∩ plan feature-gates.
+- **Plans + daily token quota + per-plan model access**, resolved fresh per
+  request by the shared `EntitlementsAdapter` (Redis-cached, event-invalidated)
+  so a plan/role change applies on the next request without re-issuing the JWT.
+- **ADMIN bypasses** quota + model-access + plan checks entirely.
+
+See [Flagship: Dynamic RBAC, Plans, Quota & Model Access](#flagship-dynamic-rbac-plans-quota--model-access)
+below for the full model.
 
 ---
 
@@ -166,3 +183,62 @@ ADMIN users can bypass ownership checks for administrative purposes (e.g., viewi
 3. **Guards are global**: AuthGuard is registered at the application level, not per-module. Every endpoint is protected by default.
 4. **Defense in depth**: Both guard-level (role check) and service-level (ownership check) enforcement exist. Even if a guard is misconfigured, the service layer validates ownership.
 5. **Audit trail**: All 403 responses are logged. Repeated forbidden access attempts can be detected in audit logs.
+
+---
+
+## Flagship: Dynamic RBAC, Plans, Quota & Model Access
+
+This section documents the SaaS-ification layer added in 2026-05.
+
+### Roles & permissions (DB-backed, admin-editable)
+
+- `Role` (slug unique, `isSystem`, `isAssignable`) + `RolePermission` (one row per
+  granted permission) live in `claw_auth`. Seeded system roles: **ADMIN** (all
+  permissions) and **USER** (own-scoped set). `User.roleId` FKs the role; the JWT
+  carries the role slug only (`sub,email,role`) — entitlements are **not** embedded.
+- `Permission` is a fixed code catalog in `@claw/shared-types`
+  (`packages/shared-types/src/enums/permission.enum.ts`), 30 entries: `CHAT_*`,
+  `MEMORY_*`, `CONTEXT_PACK_*`, `WORKSPACE_*`, `MODEL_USE_ALLOWED`, `ROUTER_USE`,
+  `COMPARE_USE`, `JUDGE_USE`, and the `ADMIN_*` management permissions.
+- Admin role/permission management (auth-service `roles` module, `@Roles(ADMIN)`):
+  `GET/POST/PATCH/DELETE /api/v1/admin/roles`, `GET /api/v1/admin/roles/permissions`
+  (catalog), `PUT /api/v1/admin/roles/:id/permissions` (set grants). System roles
+  cannot be deleted; ADMIN cannot be stripped of `ADMIN_PERMISSIONS_MANAGE` (lockout
+  guard).
+
+### Plans, quota & per-plan model access
+
+- `Plan` (name/slug/prices/`dailyTokenQuota`/feature gates: allowCompareMode,
+  allowJudgeMode, allowWorkspaces, allowMemory, allowContextPacks), `PlanModelAccess`
+  (provider/model + allowAsPrimary/Fallback/Judge/InCompare), `UserPlanAssignment`,
+  `TokenUsageLedger`. Seeded plans: **free / pro / team**.
+- Admin plan management (auth-service `plans` module, `@Roles(ADMIN)`) under
+  `/api/v1/admin/plans` — CRUD, activate/deactivate, set-default, reorder,
+  `PUT /:id/model-access`, assign-user.
+- **Quota** is a Redis-atomic reserve→finalize→release counter keyed
+  `quota:{userId}:{YYYY-MM-DD}` (TTL to end of day) backed by the durable
+  `TokenUsageLedger`. chat-service reserves before the LLM call and finalizes after.
+
+### Entitlements resolution (the adapter)
+
+- auth-service is the source of truth. `GET /internal/users/:id/entitlements`
+  (`@Public`, service-to-service) returns `{ role, isAdmin, permissions[], plan,
+allowedModels[], allowedProviders[], quota{dailyLimit,used,remaining,unlimited} }`.
+- The shared `@claw/shared-entitlements` `EntitlementsAdapter` resolves this
+  fresh per request (Redis-cached, event-invalidated on plan/role/quota changes),
+  plus helpers `hasPermission`, `hasPlanFeature`, `isModelAllowedForUsage`.
+- The frontend uses the auth-guarded **`GET /api/v1/auth/me/entitlements`** (same
+  aggregate, scoped to the caller) to render `/plan` and `/usage`.
+
+### Enforcement points
+
+| Layer                               | Enforcement                                                                                                                                                                                                                      |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| chat-service `AccessControlService` | 403 `MODEL_NOT_ALLOWED_FOR_PLAN` on a forbidden manual model; 429 `quota.dailyLimitExceeded` when the daily budget is exhausted. **Fail-open** on an entitlements outage (auth remains the hard backstop). ADMIN/unlimited pass. |
+| routing-service AUTO path           | `applyPlanModelGate(decision, allowedModels)` drops off-plan candidates and promotes the first allowed fallback; empty `allowedModels` = allow-all (preserves the v1 hot path).                                                  |
+| routing-service `RoutingController` | `@Roles(ADMIN, OPERATOR)` on the whole controller — `RoutingDecision` rows carry `messageContent` but no `userId`, so `decisions/detail/:id` is admin/operator-only to prevent a cross-user prompt leak.                         |
+
+### ADMIN bypass
+
+The `ADMIN` role bypasses Quota, ModelAccess and Plan checks entirely (no plan
+assignment required). Chosen over a synthetic "unrestricted plan".
