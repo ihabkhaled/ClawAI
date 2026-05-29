@@ -26,6 +26,7 @@ RUN cd packages/shared-constants && npx tsgo
 RUN cd packages/shared-rabbitmq && npx tsgo
 RUN cd packages/shared-auth && npx tsgo
 RUN cd packages/shared-utilities && npx tsgo
+RUN cd packages/shared-entitlements && npx tsgo
 
 WORKDIR /app/apps/claw-chat-service
 RUN npx prisma generate

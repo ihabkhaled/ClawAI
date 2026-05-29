@@ -20,6 +20,9 @@ import { CostEnsembleManager } from './managers/cost-ensemble.manager';
 import { RolePackManager } from './managers/role-pack.manager';
 import { SearchFirstManager } from './managers/search-first.manager';
 import { ChatStreamService } from './services/chat-stream.service';
+import { StreamCancellationService } from './services/stream-cancellation.service';
+import { StreamControlService } from './services/stream-control.service';
+import { ProviderStreamExecutor } from './managers/provider-stream-executor.manager';
 import { AccessControlService } from './services/access-control.service';
 import { AdvancedModuleModelSelectionService } from './services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from './services/local-model-selection.service';
@@ -49,6 +52,9 @@ import { ContextReceiptsModule } from '../context-receipts/context-receipts.modu
     RolePackManager,
     SearchFirstManager,
     ChatStreamService,
+    StreamCancellationService,
+    StreamControlService,
+    ProviderStreamExecutor,
     AccessControlService,
     AdvancedModuleModelSelectionService,
     LocalModelSelectionService,

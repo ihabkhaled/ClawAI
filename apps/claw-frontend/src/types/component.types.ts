@@ -36,6 +36,7 @@ import type {
   ChatThread,
   FallbackAttemptInfo,
   JudgeModelOption,
+  StreamLiveState,
   VisibleProgressStage,
 } from './chat.types';
 import type { ConfluencePageMetadata } from './confluence.types';
@@ -303,6 +304,9 @@ export type ThinkingIndicatorProps = {
   judgeModel?: string | null;
   progressStages?: VisibleProgressStage[];
   currentStageLabel?: string | null;
+  streamLive?: StreamLiveState;
+  onCancel?: () => void;
+  isCancelling?: boolean;
 };
 
 export type ModelSelection = {
@@ -490,6 +494,9 @@ export type VirtualizedMessagesProps = {
   judgeModel?: string | null;
   progressStages: VisibleProgressStage[];
   currentStageLabel: string | null;
+  streamLive?: StreamLiveState;
+  onCancelStream?: () => void;
+  isCancellingStream?: boolean;
   t: TranslateFunction;
   onStartReached: () => void;
   onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;

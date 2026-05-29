@@ -1,5 +1,10 @@
 export enum StreamEventType {
   CHUNK = 'chunk',
+  LIFECYCLE = 'lifecycle',
+  CONTENT_DELTA = 'content_delta',
+  REASONING_DELTA = 'reasoning_delta',
+  METRICS = 'metrics',
+  USAGE = 'usage',
   REQUEST_ACCEPTED = 'request_accepted',
   ROUTER_STARTED = 'router_started',
   ROUTER_COMPLETED = 'router_completed',

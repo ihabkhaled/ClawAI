@@ -148,6 +148,45 @@ export type TranslationDictionary = {
     usage: string;
   };
   chat: {
+    stream: {
+      progress: string;
+      estimated: string;
+      liveResponse: string;
+      cancel: string;
+      cancelFailed: string;
+      elapsed: string;
+      timeToFirstToken: string;
+      ttft: string;
+      throughput: string;
+      tokens: string;
+      cost: string;
+      costUnavailable: string;
+      reasoning: {
+        title: string;
+        providerExposed: string;
+        modelEmitted: string;
+        summaryOnly: string;
+        none: string;
+      };
+      stage: {
+        queued: string;
+        resolvingRoute: string;
+        retrievingContext: string;
+        connecting: string;
+        authenticating: string;
+        waitingFirstToken: string;
+        thinking: string;
+        generating: string;
+        toolCalling: string;
+        finalizing: string;
+        complete: string;
+        incomplete: string;
+        retrying: string;
+        rateLimited: string;
+        cancelled: string;
+        error: string;
+      };
+    };
     newThread: string;
     threads: string;
     searchThreads: string;

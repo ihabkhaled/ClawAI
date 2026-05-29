@@ -1,4 +1,7 @@
 import type {
+  AiReasoningVisibility,
+  AiStreamProgressConfidence,
+  AiStreamStage,
   FallbackFailureType,
   JudgeResponseType,
   JudgeReviewDecision,
@@ -177,6 +180,54 @@ export type StreamEvent = {
   nextModel?: string;
   criticModel?: string;
   judgeModel?: string;
+  // --- Rich streaming additions (mirror backend StreamEvent) ---
+  streamRunId?: string;
+  laneId?: string;
+  parallelGroupId?: string;
+  messageId?: string;
+  stage?: AiStreamStage;
+  delta?: string;
+  accumulatedChars?: number;
+  reasoningDelta?: string;
+  reasoningVisibility?: AiReasoningVisibility;
+  progressPercent?: number;
+  progressConfidence?: AiStreamProgressConfidence;
+  metrics?: StreamMetrics;
+  usage?: StreamUsage;
+  code?: string;
+  retryable?: boolean;
+  partialContentPreserved?: boolean;
+};
+
+export type StreamMetrics = {
+  elapsedMs: number;
+  timeToFirstTokenMs?: number;
+  tokensPerSecond?: number;
+  generatedTokens: number;
+  estimatedTotalOutputTokens?: number;
+  progressPercent: number;
+  progressConfidence: AiStreamProgressConfidence;
+  estimatedCostUsd?: number;
+};
+
+export type StreamUsage = {
+  promptTokens?: number;
+  completionTokens?: number;
+  reasoningTokens?: number;
+  totalTokens?: number;
+  finalCostUsd?: number;
+  costAvailable: boolean;
+};
+
+// Accumulated live-stream state surfaced by useChatStream to the UI.
+export type StreamLiveState = {
+  content: string;
+  reasoning: string;
+  reasoningVisibility?: AiReasoningVisibility;
+  stage?: AiStreamStage;
+  metrics?: StreamMetrics;
+  usage?: StreamUsage;
+  isStreaming: boolean;
 };
 
 export type VisibleProgressStage = {

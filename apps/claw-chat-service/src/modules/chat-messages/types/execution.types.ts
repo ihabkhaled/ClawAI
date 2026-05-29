@@ -172,6 +172,9 @@ export type OpenAiChatRequest = {
   stream: boolean;
   temperature?: number;
   max_tokens?: number;
+  // Asks OpenAI-compatible providers to include a final usage chunk while
+  // streaming (token totals). Ignored by providers that don't support it.
+  stream_options?: { include_usage: boolean };
 };
 
 export type ThreadSettings = {

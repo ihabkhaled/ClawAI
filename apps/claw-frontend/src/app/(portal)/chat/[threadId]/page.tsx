@@ -36,6 +36,9 @@ export default function ThreadDetailPage() {
     judgeModel,
     progressStages,
     currentStageLabel,
+    streamLive,
+    cancelStream,
+    isCancellingStream,
     isSending,
     isDeleting,
     virtualizedMessages,
@@ -178,6 +181,9 @@ export default function ThreadDetailPage() {
             judgeModel={judgeModel}
             progressStages={progressStages}
             currentStageLabel={currentStageLabel}
+            streamLive={streamLive}
+            onCancelStream={cancelStream}
+            isCancellingStream={isCancellingStream}
             t={t}
             onStartReached={virtualizedMessages.fetchPreviousPage}
             onFeedback={handleFeedback}

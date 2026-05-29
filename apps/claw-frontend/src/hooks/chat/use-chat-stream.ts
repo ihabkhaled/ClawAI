@@ -7,6 +7,7 @@ import type {
   FallbackAttemptInfo,
   SseConnection,
   StreamEvent,
+  StreamLiveState,
   VisibleProgressStage,
 } from '@/types';
 import { connectSse, logger } from '@/utilities';
@@ -20,7 +21,16 @@ export function useChatStream(threadId: string, isActive: boolean) {
   const [judgeModel, setJudgeModel] = useState<string | null>(null);
   const [progressStages, setProgressStages] = useState<VisibleProgressStage[]>([]);
   const [currentStageLabel, setCurrentStageLabel] = useState<string | null>(null);
+  const [streamLive, setStreamLive] = useState<StreamLiveState>({
+    content: '',
+    reasoning: '',
+    isStreaming: false,
+  });
   const connectionRef = useRef<SseConnection | null>(null);
+  // Content/reasoning arrive token-by-token; buffer in refs and flush to state
+  // on the throttled METRICS events to avoid one React render per token.
+  const contentRef = useRef('');
+  const reasoningRef = useRef('');
 
   const resetStream = useCallback((): void => {
     setFallbackAttempts([]);
@@ -30,6 +40,21 @@ export function useChatStream(threadId: string, isActive: boolean) {
     setJudgeModel(null);
     setProgressStages([]);
     setCurrentStageLabel(null);
+    contentRef.current = '';
+    reasoningRef.current = '';
+    setStreamLive({ content: '', reasoning: '', isStreaming: false });
+  }, []);
+
+  const flushLive = useCallback((event: StreamEvent, isStreaming: boolean): void => {
+    setStreamLive((prev) => ({
+      content: contentRef.current,
+      reasoning: reasoningRef.current,
+      reasoningVisibility: event.reasoningVisibility ?? prev.reasoningVisibility,
+      stage: event.stage ?? prev.stage,
+      metrics: event.metrics ?? prev.metrics,
+      usage: event.usage ?? prev.usage,
+      isStreaming,
+    }));
   }, []);
 
   const upsertStage = useCallback((event: StreamEvent, status: VisibleProgressStage['status']) => {
@@ -88,6 +113,23 @@ export function useChatStream(threadId: string, isActive: boolean) {
             upsertStage(parsed, parsed.status ?? VisibleProgressStageStatus.ACTIVE);
           }
 
+          if (parsed.type === StreamEventType.CONTENT_DELTA) {
+            contentRef.current += parsed.delta ?? '';
+          }
+
+          if (parsed.type === StreamEventType.REASONING_DELTA) {
+            reasoningRef.current += parsed.reasoningDelta ?? '';
+            flushLive(parsed, true);
+          }
+
+          if (
+            parsed.type === StreamEventType.LIFECYCLE ||
+            parsed.type === StreamEventType.METRICS ||
+            parsed.type === StreamEventType.USAGE
+          ) {
+            flushLive(parsed, true);
+          }
+
           if (parsed.type === StreamEventType.FALLBACK_ATTEMPT) {
             logger.warn({
               component: 'chat',
@@ -141,6 +183,7 @@ export function useChatStream(threadId: string, isActive: boolean) {
             setJudgeEvaluating(false);
             setExecutingModel(null);
             setJudgeModel(null);
+            flushLive(parsed, false);
             upsertStage(parsed, VisibleProgressStageStatus.COMPLETED);
           }
 
@@ -152,6 +195,7 @@ export function useChatStream(threadId: string, isActive: boolean) {
               details: { threadId, error: parsed.error },
             });
             setStreamError(parsed.error ?? t('chat.allProvidersFailed'));
+            flushLive(parsed, false);
             upsertStage(parsed, VisibleProgressStageStatus.ERROR);
           }
         } catch {
@@ -174,7 +218,7 @@ export function useChatStream(threadId: string, isActive: boolean) {
       connection.close();
       connectionRef.current = null;
     };
-  }, [threadId, isActive, resetStream, upsertStage, t]);
+  }, [threadId, isActive, resetStream, upsertStage, flushLive, t]);
 
   // Clean up when no longer waiting
   useEffect(() => {
@@ -192,6 +236,7 @@ export function useChatStream(threadId: string, isActive: boolean) {
     judgeModel,
     progressStages,
     currentStageLabel,
+    streamLive,
     resetStream,
   };
 }
