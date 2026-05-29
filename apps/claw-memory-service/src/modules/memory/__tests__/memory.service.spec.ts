@@ -139,4 +139,39 @@ describe('MemoryService (V2)', () => {
       code: 'FORGET_CONFIRMATION_REQUIRED',
     });
   });
+
+  describe('IDOR — cross-user access is rejected', () => {
+    beforeEach(() => {
+      // The memory belongs to user-1; every call below comes from "attacker".
+      (memoryRepo.findById as unknown as jest.Mock).mockResolvedValue(
+        buildMemoryRecord({ userId: 'user-1' }),
+      );
+    });
+
+    it('getMemory rejects a non-owner with FORBIDDEN_MEMORY_ACCESS', async () => {
+      await expect(service.getMemory('mem-1', 'attacker')).rejects.toMatchObject({
+        code: 'FORBIDDEN_MEMORY_ACCESS',
+      });
+    });
+
+    it('updateMemory rejects a non-owner and never calls repository.update', async () => {
+      await expect(
+        service.updateMemory('mem-1', 'attacker', { content: 'hijacked' }),
+      ).rejects.toMatchObject({ code: 'FORBIDDEN_MEMORY_ACCESS' });
+      expect(memoryRepo.update as unknown as jest.Mock).not.toHaveBeenCalled();
+    });
+
+    it('deleteMemory rejects a non-owner even with confirmForget and never deletes', async () => {
+      await expect(service.deleteMemory('mem-1', 'attacker', true)).rejects.toMatchObject({
+        code: 'FORBIDDEN_MEMORY_ACCESS',
+      });
+      expect(memoryRepo.delete as unknown as jest.Mock).not.toHaveBeenCalled();
+    });
+
+    it('toggleMemory rejects a non-owner', async () => {
+      await expect(service.toggleMemory('mem-1', 'attacker')).rejects.toMatchObject({
+        code: 'FORBIDDEN_MEMORY_ACCESS',
+      });
+    });
+  });
 });

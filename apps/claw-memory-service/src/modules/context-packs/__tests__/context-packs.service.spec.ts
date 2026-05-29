@@ -120,4 +120,48 @@ describe('ContextPacksService (V2)', () => {
     expect(item.itemType).toBe(ContextPackItemType.SNIPPET);
     expect(item.legacyType).toBe('snippet');
   });
+
+  describe('IDOR — cross-user access is rejected', () => {
+    const buildIsolatedService = (): {
+      service: ContextPacksService;
+      repo: ContextPacksRepository;
+    } => {
+      const repo = makeStub<ContextPacksRepository>();
+      const rabbit = { publish: jest.fn(), subscribe: jest.fn() };
+      // The pack is owned by user-1; the attacker is a different user.
+      (repo.findById as unknown as jest.Mock).mockResolvedValue({
+        ...buildPack({ userId: 'user-1', ownerUserId: 'user-1' }),
+        items: [],
+      });
+      const service = new ContextPacksService(
+        repo,
+        rabbit as unknown as ConstructorParameters<typeof ContextPacksService>[1],
+        makeStub(),
+      );
+      return { service, repo };
+    };
+
+    it('getContextPack rejects a non-owner with FORBIDDEN_CONTEXT_PACK_ACCESS', async () => {
+      const { service } = buildIsolatedService();
+      await expect(service.getContextPack('pack-1', 'attacker')).rejects.toMatchObject({
+        code: 'FORBIDDEN_CONTEXT_PACK_ACCESS',
+      });
+    });
+
+    it('updateContextPack rejects a non-owner and never calls repository.update', async () => {
+      const { service, repo } = buildIsolatedService();
+      await expect(
+        service.updateContextPack('pack-1', 'attacker', { name: 'hijacked' }),
+      ).rejects.toMatchObject({ code: 'FORBIDDEN_CONTEXT_PACK_ACCESS' });
+      expect(repo.update as unknown as jest.Mock).not.toHaveBeenCalled();
+    });
+
+    it('deleteContextPack rejects a non-owner and never calls repository.delete', async () => {
+      const { service, repo } = buildIsolatedService();
+      await expect(service.deleteContextPack('pack-1', 'attacker')).rejects.toMatchObject({
+        code: 'FORBIDDEN_CONTEXT_PACK_ACCESS',
+      });
+      expect(repo.delete as unknown as jest.Mock).not.toHaveBeenCalled();
+    });
+  });
 });

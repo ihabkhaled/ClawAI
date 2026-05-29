@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
+import { Roles } from '../../../app/decorators/roles.decorator';
+import { UserRole } from '../../../common/enums';
 import { type PaginatedResult } from '../../../common/types';
 import { RoutingService } from '../services/routing.service';
 import { CreatePolicyDto, createPolicySchema } from '../dto/create-policy.dto';
@@ -31,7 +33,14 @@ import type {
   RoutingEducationSnapshot,
 } from '../types/routing-education.types';
 
+// Policy management + routing decisions/replay are admin/operator diagnostic
+// tooling. RoutingDecision rows carry messageContent (a user's prompt) but no
+// userId, so an arbitrary decisions/detail/:id lookup would otherwise leak
+// another user's prompt to any authenticated caller. The chat routing
+// transparency UI reads decision data from chat-message metadata, not these
+// endpoints, so restricting them does not affect regular users.
 @Controller('routing')
+@Roles(UserRole.ADMIN, UserRole.OPERATOR)
 export class RoutingController {
   constructor(private readonly routingService: RoutingService) {}
 
