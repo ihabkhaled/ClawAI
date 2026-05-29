@@ -37,6 +37,15 @@ export class ConnectorsController {
     return this.connectorsService.getConnectors(query);
   }
 
+  // USER-facing aggregated model catalog for the chat picker (cloud + connector
+  // models). MODEL_USE_ALLOWED, not connector-admin. MUST stay above @Get(':id')
+  // so the static segment is not captured as an :id param.
+  @Get('available-models')
+  @RequirePermissions(Permission.MODEL_USE_ALLOWED)
+  async getAvailableModels(): Promise<ConnectorModel[]> {
+    return this.connectorsService.getAvailableModels();
+  }
+
   @Get(':id')
   @RequirePermissions(Permission.ADMIN_CONNECTORS_MANAGE)
   async findOne(@Param('id') id: string): Promise<ConnectorWithModels> {

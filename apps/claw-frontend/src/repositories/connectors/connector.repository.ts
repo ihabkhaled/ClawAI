@@ -1,4 +1,4 @@
-import { apiClient } from "@/services/shared/api-client";
+import { apiClient } from '@/services/shared/api-client';
 import type {
   Connector,
   CreateConnectorRequest,
@@ -7,21 +7,16 @@ import type {
   HealthCheckResponse,
   SyncModelsResponse,
   ConnectorModelsResponse,
-} from "@/types";
+} from '@/types';
 
 export const connectorRepository = {
   async createConnector(data: CreateConnectorRequest): Promise<Connector> {
-    const response = await apiClient.post<Connector>("/connectors", data);
+    const response = await apiClient.post<Connector>('/connectors', data);
     return response.data;
   },
 
-  async getConnectors(
-    params?: Record<string, string>,
-  ): Promise<ConnectorsListResponse> {
-    const response = await apiClient.get<ConnectorsListResponse>(
-      "/connectors",
-      params,
-    );
+  async getConnectors(params?: Record<string, string>): Promise<ConnectorsListResponse> {
+    const response = await apiClient.get<ConnectorsListResponse>('/connectors', params);
     return response.data;
   },
 
@@ -30,14 +25,8 @@ export const connectorRepository = {
     return response.data;
   },
 
-  async updateConnector(
-    id: string,
-    data: UpdateConnectorRequest,
-  ): Promise<Connector> {
-    const response = await apiClient.patch<Connector>(
-      `/connectors/${id}`,
-      data,
-    );
+  async updateConnector(id: string, data: UpdateConnectorRequest): Promise<Connector> {
+    const response = await apiClient.patch<Connector>(`/connectors/${id}`, data);
     return response.data;
   },
 
@@ -46,23 +35,25 @@ export const connectorRepository = {
   },
 
   async testConnector(id: string): Promise<HealthCheckResponse> {
-    const response = await apiClient.post<HealthCheckResponse>(
-      `/connectors/${id}/test`,
-    );
+    const response = await apiClient.post<HealthCheckResponse>(`/connectors/${id}/test`);
     return response.data;
   },
 
   async syncModels(id: string): Promise<SyncModelsResponse> {
-    const response = await apiClient.post<SyncModelsResponse>(
-      `/connectors/${id}/sync`,
-    );
+    const response = await apiClient.post<SyncModelsResponse>(`/connectors/${id}/sync`);
     return response.data;
   },
 
   async getModels(id: string): Promise<ConnectorModelsResponse> {
-    const response = await apiClient.get<ConnectorModelsResponse>(
-      `/connectors/${id}/models`,
-    );
+    const response = await apiClient.get<ConnectorModelsResponse>(`/connectors/${id}/models`);
+    return response.data;
+  },
+
+  // USER-facing aggregated model catalog for the chat picker. Gated by
+  // MODEL_USE_ALLOWED on the backend (not connector-admin), so normal users
+  // get cloud models without the connector management surface.
+  async getAvailableModels(): Promise<ConnectorModelsResponse> {
+    const response = await apiClient.get<ConnectorModelsResponse>('/connectors/available-models');
     return response.data;
   },
 };

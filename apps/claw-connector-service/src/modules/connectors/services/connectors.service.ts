@@ -1,23 +1,23 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { RabbitMQService, StructuredLogger } from "@claw/shared-rabbitmq";
-import { EventPattern, LogLevel } from "@claw/shared-types";
-import { type ConnectorModel } from "../../../generated/prisma";
-import { AppConfig } from "../../../app/config/app.config";
-import { encrypt } from "../../../common/utilities";
-import { EntityNotFoundException } from "../../../common/errors";
-import { type PaginatedResult } from "../../../common/types";
-import { ConnectorsRepository } from "../repositories/connectors.repository";
-import { ConnectorModelsRepository } from "../repositories/connector-models.repository";
-import { ConnectorsManager } from "../managers/connectors.manager";
-import { type CreateConnectorDto } from "../dto/create-connector.dto";
-import { type UpdateConnectorDto } from "../dto/update-connector.dto";
-import { type ListConnectorsQueryDto } from "../dto/list-connectors-query.dto";
+import { Injectable, Logger } from '@nestjs/common';
+import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
+import { EventPattern, LogLevel } from '@claw/shared-types';
+import { type ConnectorModel } from '../../../generated/prisma';
+import { AppConfig } from '../../../app/config/app.config';
+import { encrypt } from '../../../common/utilities';
+import { EntityNotFoundException } from '../../../common/errors';
+import { type PaginatedResult } from '../../../common/types';
+import { ConnectorsRepository } from '../repositories/connectors.repository';
+import { ConnectorModelsRepository } from '../repositories/connector-models.repository';
+import { ConnectorsManager } from '../managers/connectors.manager';
+import { type CreateConnectorDto } from '../dto/create-connector.dto';
+import { type UpdateConnectorDto } from '../dto/update-connector.dto';
+import { type ListConnectorsQueryDto } from '../dto/list-connectors-query.dto';
 import {
   type ConnectorConfigResult,
   type ConnectorWithModels,
   type HealthCheckResult,
   type SyncModelsResult,
-} from "../types/connectors.types";
+} from '../types/connectors.types';
 
 @Injectable()
 export class ConnectorsService {
@@ -68,7 +68,9 @@ export class ConnectorsService {
       timestamp: new Date().toISOString(),
     });
 
-    this.logger.log(`createConnector: completed — connectorId=${connector.id}, provider=${dto.provider}`);
+    this.logger.log(
+      `createConnector: completed — connectorId=${connector.id}, provider=${dto.provider}`,
+    );
     return { ...connector, _count: { models: 0 } };
   }
 
@@ -107,9 +109,11 @@ export class ConnectorsService {
     this.logger.debug(`getConnector: fetching connector ${id}`);
     const connector = await this.connectorsRepository.findById(id);
     if (!connector) {
-      throw new EntityNotFoundException("Connector", id);
+      throw new EntityNotFoundException('Connector', id);
     }
-    this.logger.debug(`getConnector: found connector ${id} "${connector.name}" (${connector.provider})`);
+    this.logger.debug(
+      `getConnector: found connector ${id} "${connector.name}" (${connector.provider})`,
+    );
     return this.maskSecrets({ ...connector, _count: { models: 0 } });
   }
 
@@ -117,7 +121,7 @@ export class ConnectorsService {
     this.logger.log(`updateConnector: updating connector ${id}`);
     const connector = await this.connectorsRepository.findById(id);
     if (!connector) {
-      throw new EntityNotFoundException("Connector", id);
+      throw new EntityNotFoundException('Connector', id);
     }
 
     const encryptedConfig = dto.apiKey
@@ -148,7 +152,7 @@ export class ConnectorsService {
     this.logger.log(`deleteConnector: deleting connector ${id}`);
     const connector = await this.connectorsRepository.findById(id);
     if (!connector) {
-      throw new EntityNotFoundException("Connector", id);
+      throw new EntityNotFoundException('Connector', id);
     }
 
     const deleted = await this.connectorsRepository.delete(id);
@@ -167,7 +171,7 @@ export class ConnectorsService {
     this.logger.log(`testConnector: testing connector ${id}`);
     const connector = await this.connectorsRepository.findById(id);
     if (!connector) {
-      throw new EntityNotFoundException("Connector", id);
+      throw new EntityNotFoundException('Connector', id);
     }
 
     const result = await this.connectorsManager.testConnector(connector);
@@ -197,7 +201,7 @@ export class ConnectorsService {
     this.logger.log(`syncModels: syncing models for connector ${id}`);
     const connector = await this.connectorsRepository.findById(id);
     if (!connector) {
-      throw new EntityNotFoundException("Connector", id);
+      throw new EntityNotFoundException('Connector', id);
     }
 
     const result = await this.connectorsManager.syncModels(connector);
@@ -231,7 +235,7 @@ export class ConnectorsService {
     this.logger.debug(`getConnectorConfig: fetching config for provider=${provider}`);
     const connector = await this.connectorsRepository.findByProvider(provider);
     if (!connector) {
-      throw new EntityNotFoundException("Connector", provider);
+      throw new EntityNotFoundException('Connector', provider);
     }
     return this.connectorsManager.getDecryptedConfig(connector);
   }
@@ -240,16 +244,28 @@ export class ConnectorsService {
     this.logger.debug(`getModels: fetching models for connector ${connectorId}`);
     const connector = await this.connectorsRepository.findById(connectorId);
     if (!connector) {
-      throw new EntityNotFoundException("Connector", connectorId);
+      throw new EntityNotFoundException('Connector', connectorId);
     }
     const models = await this.connectorModelsRepository.findByConnectorId(connectorId);
-    this.logger.debug(`getModels: returned ${String(models.length)} models for connector ${connectorId}`);
+    this.logger.debug(
+      `getModels: returned ${String(models.length)} models for connector ${connectorId}`,
+    );
     return models;
+  }
+
+  // USER-facing model catalog for the chat picker: every ACTIVE model from
+  // enabled connectors, with NO connector config/secrets. Gated by
+  // MODEL_USE_ALLOWED (not connector-admin) so normal users can pick cloud
+  // models without seeing the connector management surface.
+  async getAvailableModels(): Promise<ConnectorModel[]> {
+    this.logger.debug('getAvailableModels: listing enabled connector models');
+    const rows = await this.connectorModelsRepository.findAllForSnapshot();
+    return rows.map(({ connector: _connector, ...model }) => model);
   }
 
   private maskSecrets<T extends { encryptedConfig?: string | null }>(connector: T): T {
     if (connector.encryptedConfig) {
-      return { ...connector, encryptedConfig: "****" };
+      return { ...connector, encryptedConfig: '****' };
     }
     return connector;
   }

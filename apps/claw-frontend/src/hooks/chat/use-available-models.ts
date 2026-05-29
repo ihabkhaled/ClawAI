@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { FrontierDownloadStatus } from '@/enums/local-frontier.enum';
-import { useAllModels } from '@/hooks/connectors/use-all-models';
+import { useAvailableConnectorModels } from '@/hooks/chat/use-available-connector-models';
 import { useFrontierCatalog } from '@/hooks/local-frontier/use-frontier-catalog';
 import { useLocalModels } from '@/hooks/ollama/use-local-models';
 import type { GroupedModels, ModelSelection } from '@/types';
@@ -26,7 +26,7 @@ export function useAvailableModels(): {
   groupedModels: GroupedModels[];
   isLoading: boolean;
 } {
-  const { models, isLoading: isLoadingCloud } = useAllModels();
+  const { models, isLoading: isLoadingCloud } = useAvailableConnectorModels();
   const { models: localModels, isLoading: isLoadingLocal } = useLocalModels();
   const frontierQuery = useFrontierCatalog({ limit: 100 });
   const frontierEntries = useMemo(() => frontierQuery.data?.data ?? [], [frontierQuery.data?.data]);

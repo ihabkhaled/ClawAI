@@ -20,6 +20,7 @@ export const queryKeys = {
     list: (filters: Record<string, unknown>) => [...queryKeys.connectors.lists(), filters] as const,
     detail: (id: string) => [...queryKeys.connectors.all, 'detail', id] as const,
     models: (id: string) => [...queryKeys.connectors.all, 'models', id] as const,
+    availableModels: () => [...queryKeys.connectors.all, 'available-models'] as const,
   },
   models: {
     all: ['models'] as const,
