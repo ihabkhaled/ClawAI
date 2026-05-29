@@ -4,12 +4,13 @@ import { RolesModule } from '../roles/roles.module';
 import { PlansModule } from '../plans/plans.module';
 import { QuotaModule } from '../quota/quota.module';
 import { EntitlementsInternalController } from './controllers/entitlements-internal.controller';
+import { MeEntitlementsController } from './controllers/me-entitlements.controller';
 import { QuotaInternalController } from '../quota/controllers/quota-internal.controller';
 import { EntitlementsService } from './services/entitlements.service';
 
 @Module({
   imports: [RolesModule, PlansModule, QuotaModule],
-  controllers: [EntitlementsInternalController, QuotaInternalController],
+  controllers: [EntitlementsInternalController, MeEntitlementsController, QuotaInternalController],
   providers: [EntitlementsService, AuthRepository],
   exports: [EntitlementsService],
 })

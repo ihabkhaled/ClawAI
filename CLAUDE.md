@@ -875,8 +875,9 @@ Failed checks → HTTP 422 with reason codes. Filenames sanitized before storage
 
 | Frontend Path            | Backend Service  | Notes                                                                                         |
 | ------------------------ | ---------------- | --------------------------------------------------------------------------------------------- |
-| /api/v1/auth/\*          | auth:4001        | Login, refresh, logout, me                                                                    |
+| /api/v1/auth/\*          | auth:4001        | Login, refresh, logout, me, me/entitlements (self plan+quota)                                 |
 | /api/v1/users/\*         | auth:4001        | User CRUD (admin)                                                                             |
+| /api/v1/admin/\*         | auth:4001        | Admin RBAC: plans + roles CRUD (ADMIN-gated)                                                  |
 | /api/v1/chat-threads/\*  | chat:4002        | Thread CRUD                                                                                   |
 | /api/v1/chat-messages/\* | chat:4002        | Message CRUD, feedback, regenerate, parallel compare                                          |
 | /api/v1/connectors/\*    | connector:4003   | Connector CRUD, test, sync                                                                    |
