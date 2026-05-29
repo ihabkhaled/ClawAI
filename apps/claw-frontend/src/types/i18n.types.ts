@@ -1008,6 +1008,15 @@ export type TranslationDictionary = {
     judgeEscalated: string;
     modelsProcessing: string;
     processingMessage: string;
+    viewRaw: string;
+    viewMarkdown: string;
+    copy: string;
+    copied: string;
+    exportMd: string;
+    exportAll: string;
+    close: string;
+    fullOutput: string;
+    copyFailed: string;
   };
   consensus: {
     title: string;

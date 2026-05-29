@@ -19,6 +19,8 @@ export interface UsageEntry {
   action: string;
   quantity: number;
   unit?: string;
+  context?: string;
+  estimated?: boolean;
   metadata?: Record<string, unknown>;
   createdAt: string;
 }
@@ -98,6 +100,7 @@ export interface UsageListParams {
   limit?: number;
   provider?: string;
   model?: string;
+  context?: string;
   startDate?: string;
   endDate?: string;
 }

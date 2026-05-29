@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 
 import type { SidebarItem } from '@/constants';
 import type {
+  CompareJudgeState,
   ComponentSize,
   ConnectorStatus,
   CostTier,
@@ -883,6 +884,19 @@ export type ParallelResponseCardProps = {
 
 export type ParallelResultsGridProps = {
   messages: ChatMessage[];
+  prompt?: string;
+  t: TranslateFunction;
+};
+
+export type CompareResultCardProps = {
+  response: ParallelModelResponse;
+  isFastest: boolean;
+  isBest: boolean;
+  t: TranslateFunction;
+};
+
+export type CompareJudgeBadgesProps = {
+  judgeState: CompareJudgeState;
   t: TranslateFunction;
 };
 

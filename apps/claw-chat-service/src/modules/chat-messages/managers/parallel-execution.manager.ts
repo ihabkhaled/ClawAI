@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { TokenLedgerContext } from '@claw/shared-types';
 import { CompareJudgeState, ProgressActorType, StreamEventType } from '../../../common/enums';
 import { ChatExecutionManager } from './chat-execution.manager';
 import { ContextAssemblyManager } from './context-assembly.manager';
@@ -328,6 +329,11 @@ export class ParallelExecutionManager {
       judgeErrorState,
       judgeDialogAvailable: judgeResult.judgeVerdict.wasFallback !== true,
       judgeReview,
+      // Feature 1/2 — surface judge/critic token usage for the compare message.
+      judgeInputTokens: judgeResult.tokenUsage?.inputTokens,
+      judgeOutputTokens: judgeResult.tokenUsage?.outputTokens,
+      judgeTokenEstimated: judgeResult.tokenUsage?.estimated,
+      judgeTokenSource: judgeResult.tokenUsage?.source,
     };
   }
 
@@ -436,6 +442,9 @@ export class ParallelExecutionManager {
         modelStart,
         false,
         threadSettings,
+        undefined,
+        undefined,
+        TokenLedgerContext.COMPARE,
       );
 
       return {
@@ -445,6 +454,9 @@ export class ParallelExecutionManager {
         latencyMs: llmResponse.latencyMs,
         inputTokens: llmResponse.inputTokens ?? null,
         outputTokens: llmResponse.outputTokens ?? null,
+        tokenEstimated: llmResponse.tokenEstimated,
+        tokenSource: llmResponse.tokenSource,
+        tokenContext: llmResponse.tokenContext ?? TokenLedgerContext.COMPARE,
         status: 'completed',
         errorMessage: null,
       };
@@ -502,6 +514,10 @@ export class ParallelExecutionManager {
       parallelExecution: true,
       parallelGroupId,
       status: response.status,
+      // Feature 2 — persist token usage transparency on each compare message.
+      ...(response.tokenEstimated === undefined ? {} : { tokenEstimated: response.tokenEstimated }),
+      ...(response.tokenSource === undefined ? {} : { tokenSource: response.tokenSource }),
+      tokenContext: response.tokenContext ?? TokenLedgerContext.COMPARE,
       judgeEnabled: response.judgeEnabled === true,
       judgeModel: response.judgeModel ?? null,
       judgeDisplayName: response.judgeDisplayName ?? response.judgeModel ?? null,
@@ -509,6 +525,18 @@ export class ParallelExecutionManager {
       judgeErrorState: response.judgeErrorState ?? null,
       judgeDialogAvailable: response.judgeDialogAvailable === true,
       ...(response.judgeReview ? { judgeReview: response.judgeReview } : {}),
+      ...(response.judgeInputTokens === undefined
+        ? {}
+        : { judgeInputTokens: response.judgeInputTokens }),
+      ...(response.judgeOutputTokens === undefined
+        ? {}
+        : { judgeOutputTokens: response.judgeOutputTokens }),
+      ...(response.judgeTokenEstimated === undefined
+        ? {}
+        : { judgeTokenEstimated: response.judgeTokenEstimated }),
+      ...(response.judgeTokenSource === undefined
+        ? {}
+        : { judgeTokenSource: response.judgeTokenSource }),
       routeRoadmap: this.buildParallelRouteRoadmap(response),
       progressSummary: this.buildParallelProgressSummary(response),
     };

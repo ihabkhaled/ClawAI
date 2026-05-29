@@ -20,6 +20,24 @@ export const APPROX_CHARS_PER_TOKEN = 4;
 
 export const LOCAL_ONLY_ROUTING_MODES = new Set(['LOCAL_ONLY', 'PRIVACY_FIRST']);
 
+// Connector provider tokens that may appear as the explicit `provider` half of a
+// user-chosen judge model string ("PROVIDER:model"). Used by parseJudgeModel to
+// recognize whether the leading segment is a real provider (so it is routed
+// through callProvider) vs. part of the model name (e.g. "gpt-4o:latest").
+// All compared case-insensitively against the upper-cased segment.
+export const KNOWN_JUDGE_PROVIDERS = new Set([
+  'OPENAI',
+  'ANTHROPIC',
+  'GEMINI',
+  'AWS_BEDROCK',
+  'DEEPSEEK',
+  'GROK',
+  OLLAMA_CONNECTOR_PROVIDER,
+  LLAMACPP_CONNECTOR_PROVIDER,
+  OLLAMA_PROVIDER,
+  LLAMACPP_PROVIDER,
+]);
+
 export const PROVIDER_BASE_URLS: Record<string, string> = {
   OPENAI: 'https://api.openai.com/v1',
   GEMINI: 'https://generativelanguage.googleapis.com/v1beta/openai',

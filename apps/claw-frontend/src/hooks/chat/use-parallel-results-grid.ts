@@ -1,20 +1,24 @@
 import { useMemo } from 'react';
 
+import { useCompareExportAll } from '@/hooks/chat/use-compare-export-all';
 import type { ChatMessage, ParallelModelResponse } from '@/types';
 import { getBestResponse, getFastestModel, messagesToParallelResponses } from '@/utilities';
 
-export function useParallelResultsGrid(messages: ChatMessage[]): {
+export function useParallelResultsGrid(
+  messages: ChatMessage[],
+  prompt = '',
+): {
   responses: ParallelModelResponse[];
   fastestModel: string | null;
   bestModel: string | null;
+  exportAll: () => void;
 } {
-  // The grid renders every response in full — no per-card expand/collapse —
-  // because side-by-side compare loses its purpose when responses are
-  // truncated. Removed `expandedIds` / `toggleExpanded` state along with
-  // the 300-char preview in parallel-results-grid.tsx.
+  // Per-card expand/scroll now lives in `useCompareResultCard`; this controller
+  // only assembles the grid-level data + the combined "export all" action.
   const responses = useMemo(() => messagesToParallelResponses(messages), [messages]);
   const fastestModel = useMemo(() => getFastestModel(responses), [responses]);
   const bestModel = useMemo(() => getBestResponse(responses), [responses]);
+  const { exportAll } = useCompareExportAll(prompt, responses);
 
-  return { responses, fastestModel, bestModel };
+  return { responses, fastestModel, bestModel, exportAll };
 }

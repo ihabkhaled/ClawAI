@@ -4,6 +4,7 @@ import type { QualityCheckManager } from '../managers/quality-check.manager';
 import type { JudgeRefereeManager } from '../managers/judge-referee.manager';
 import type { ChatStreamService } from '../services/chat-stream.service';
 import type { LocalModelSelectionService } from '../services/local-model-selection.service';
+import type { AccessControlService } from '../services/access-control.service';
 import type { AssembledContext } from '../types/context.types';
 import { JudgeDecision } from '../../../common/enums';
 // Import the live caps so the test moves with the constants rather than
@@ -115,6 +116,7 @@ describe('ChatExecutionManager', () => {
           outcome: { applied: false, results: [], runId: null, warning: null },
         })),
       } as any,
+      { recordUsage: jest.fn() } as unknown as AccessControlService,
       localModelSelection as unknown as LocalModelSelectionService,
     );
   });

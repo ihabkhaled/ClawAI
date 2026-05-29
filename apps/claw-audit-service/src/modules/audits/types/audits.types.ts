@@ -27,6 +27,8 @@ export interface CreateUsageLedgerInput {
   quantity: number;
   unit?: string;
   metadata?: Record<string, unknown>;
+  context?: string;
+  estimated?: boolean;
 }
 
 export interface UsageLedgerFilters {
@@ -35,6 +37,7 @@ export interface UsageLedgerFilters {
   action?: string;
   provider?: string;
   model?: string;
+  context?: string;
   startDate?: string;
   endDate?: string;
   page?: number;
