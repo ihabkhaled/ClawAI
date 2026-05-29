@@ -100,6 +100,13 @@ export const chatRepository = {
     return response.data;
   },
 
+  async cancelStream(threadId: string): Promise<{ cancelled: boolean }> {
+    const response = await apiClient.post<{ cancelled: boolean }>(
+      `/chat-messages/stream/${threadId}/cancel`,
+    );
+    return response.data;
+  },
+
   async setFeedback(messageId: string, feedback: MessageFeedback | null): Promise<ChatMessage> {
     const response = await apiClient.patch<ChatMessage>(`/chat-messages/${messageId}/feedback`, {
       feedback,

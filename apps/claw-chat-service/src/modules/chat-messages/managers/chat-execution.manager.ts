@@ -49,6 +49,11 @@ import { SearchFirstManager } from './search-first.manager';
 import { WORKFLOW_KIND_SEARCH_FIRST } from '../constants/search-first.constants';
 import type { SearchFirstOutcome } from '../types/search-first.types';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { StreamCancellationService } from '../services/stream-cancellation.service';
+import { ProviderStreamExecutor } from './provider-stream-executor.manager';
+import { AiStreamProtocol } from '../../../common/enums';
+import { estimateTokensFromText } from '../utilities/token-estimator.utility';
+import type { StreamContext, StreamExecutionInput } from '../types/stream-execution.types';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { AccessControlService } from '../services/access-control.service';
 import {
@@ -84,6 +89,8 @@ export class ChatExecutionManager implements OnModuleInit {
     private readonly searchFirstManager: SearchFirstManager,
     private readonly accessControlService: AccessControlService,
     private readonly localModelSelection?: LocalModelSelectionService,
+    private readonly providerStreamExecutor?: ProviderStreamExecutor,
+    private readonly streamCancellation?: StreamCancellationService,
   ) {}
 
   onModuleInit(): void {
@@ -332,6 +339,27 @@ export class ChatExecutionManager implements OnModuleInit {
       candidate.provider,
       candidate.model,
     );
+
+    // Rich streaming path: when the executor + cancellation registry are wired
+    // and the provider is streamable, emit live content/reasoning/metric deltas
+    // instead of the legacy fake "still working" heartbeat. Falls back to the
+    // buffered path for non-streamable providers (image/file-gen) or in tests.
+    const streamContext: StreamContext = {
+      threadId: payload.threadId,
+      messageId: payload.messageId,
+    };
+    if (this.canStreamCandidate(candidate.provider)) {
+      return this.streamCandidate(
+        candidate,
+        executionContext,
+        startTime,
+        candidateIndex > 0,
+        threadSettings,
+        executionOptions,
+        streamContext,
+      );
+    }
+
     this.chatStreamService.emitResponseStreaming(
       payload.threadId,
       candidate.provider,
@@ -356,6 +384,256 @@ export class ChatExecutionManager implements OnModuleInit {
     } finally {
       stopProgressHeartbeat();
     }
+  }
+
+  // True only when the rich streaming dependencies are present AND the provider
+  // produces text token streams. Image/file-generation providers never stream.
+  private canStreamCandidate(provider: string): boolean {
+    if (this.providerStreamExecutor === undefined || this.streamCancellation === undefined) {
+      return false;
+    }
+    if (provider === FILE_GENERATION_PROVIDER || provider.startsWith(IMAGE_PROVIDER_PREFIX)) {
+      return false;
+    }
+    return true;
+  }
+
+  // Dispatches a streamable candidate to the right transport: native SSE for
+  // cloud + llama.cpp, native NDJSON for the Ollama connector, and a simulated
+  // chunked replay for local Ollama (ollama-service has no streaming endpoint).
+  // Public entry used by the parallel/compare flow to stream ONE model on its
+  // own lane. Falls back to the buffered call for non-streamable providers.
+  async streamModelForLane(
+    provider: string,
+    model: string,
+    context: AssembledContext,
+    startTime: number,
+    threadSettings: ThreadSettings | undefined,
+    streamContext: StreamContext,
+  ): Promise<LlmResponse> {
+    if (!this.canStreamCandidate(provider)) {
+      return this.callProvider(provider, model, context, startTime, false, threadSettings);
+    }
+    return this.streamCandidate(
+      { provider, model },
+      context,
+      startTime,
+      false,
+      threadSettings,
+      undefined,
+      streamContext,
+    );
+  }
+
+  private async streamCandidate(
+    candidate: { provider: string; model: string },
+    context: AssembledContext,
+    startTime: number,
+    usedFallback: boolean,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions | undefined,
+    streamContext: StreamContext,
+  ): Promise<LlmResponse> {
+    if (candidate.provider === OLLAMA_PROVIDER) {
+      return this.simulateOllamaStream(
+        candidate.model,
+        context,
+        startTime,
+        usedFallback,
+        threadSettings,
+        executionOptions,
+        streamContext,
+      );
+    }
+    if (
+      candidate.provider === LLAMACPP_PROVIDER ||
+      candidate.provider === LLAMACPP_CONNECTOR_PROVIDER
+    ) {
+      return this.streamLlamacpp(
+        candidate.provider,
+        candidate.model,
+        context,
+        startTime,
+        usedFallback,
+        threadSettings,
+        executionOptions,
+        streamContext,
+      );
+    }
+    return this.streamCloud(
+      candidate.provider,
+      candidate.model,
+      context,
+      startTime,
+      usedFallback,
+      threadSettings,
+      executionOptions,
+      streamContext,
+    );
+  }
+
+  private async streamCloud(
+    provider: string,
+    model: string,
+    context: AssembledContext,
+    startTime: number,
+    usedFallback: boolean,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions | undefined,
+    streamContext: StreamContext,
+  ): Promise<LlmResponse> {
+    const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
+    const isOllamaConnector = provider === OLLAMA_CONNECTOR_PROVIDER;
+    const effectiveModel = isOllamaConnector ? this.normalizeCloudOllamaModel(model) : model;
+    const url = isOllamaConnector ? `${baseUrl}/chat` : `${baseUrl}/chat/completions`;
+    const body: unknown = isOllamaConnector
+      ? { ...this.buildOllamaChatRequestBody(model, context, threadSettings, executionOptions), stream: true }
+      : this.buildStreamingChatBody(model, context, threadSettings, executionOptions);
+    const protocol = isOllamaConnector
+      ? AiStreamProtocol.OLLAMA_NDJSON
+      : AiStreamProtocol.OPENAI_SSE;
+    return this.runExecutor(
+      {
+        threadId: streamContext.threadId,
+        messageId: streamContext.messageId,
+        laneId: streamContext.laneId,
+        parallelGroupId: streamContext.parallelGroupId,
+        provider,
+        model: effectiveModel,
+        url,
+        headers: { Authorization: `Bearer ${apiKey}` },
+        body,
+        protocol,
+        startMs: startTime,
+        promptTokensEstimate: this.estimatePromptTokens(context),
+        maxOutputTokens: executionOptions?.maxOutputTokens,
+        timeoutMs: AppConfig.get().OLLAMA_GENERATE_TIMEOUT_MS,
+      },
+      usedFallback,
+    );
+  }
+
+  private async streamLlamacpp(
+    provider: string,
+    model: string,
+    context: AssembledContext,
+    startTime: number,
+    usedFallback: boolean,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions | undefined,
+    streamContext: StreamContext,
+  ): Promise<LlmResponse> {
+    const config = AppConfig.get();
+    return this.runExecutor(
+      {
+        threadId: streamContext.threadId,
+        messageId: streamContext.messageId,
+        laneId: streamContext.laneId,
+        parallelGroupId: streamContext.parallelGroupId,
+        provider,
+        model,
+        url: `${config.LLAMACPP_SERVICE_URL}/api/v1/v1/chat/completions`,
+        body: this.buildStreamingChatBody(model, context, threadSettings, executionOptions),
+        protocol: AiStreamProtocol.OPENAI_SSE,
+        startMs: startTime,
+        promptTokensEstimate: this.estimatePromptTokens(context),
+        maxOutputTokens: executionOptions?.maxOutputTokens,
+        timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
+      },
+      usedFallback,
+    );
+  }
+
+  // Local Ollama has no streaming HTTP endpoint, so we reuse the existing
+  // buffered call and replay the result as simulated chunks for a live UI.
+  private async simulateOllamaStream(
+    model: string,
+    context: AssembledContext,
+    startTime: number,
+    usedFallback: boolean,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions | undefined,
+    streamContext: StreamContext,
+  ): Promise<LlmResponse> {
+    const executor = this.providerStreamExecutor;
+    const buffered = await this.callOllama(
+      model,
+      context,
+      startTime,
+      usedFallback,
+      threadSettings,
+      executionOptions,
+    );
+    if (executor !== undefined) {
+      await executor.runSimulated({
+        threadId: streamContext.threadId,
+        messageId: streamContext.messageId,
+        laneId: streamContext.laneId,
+        parallelGroupId: streamContext.parallelGroupId,
+        provider: OLLAMA_PROVIDER,
+        model: buffered.model,
+        fullContent: buffered.content,
+        inputTokens: buffered.inputTokens,
+        outputTokens: buffered.outputTokens,
+        startMs: startTime,
+        promptTokensEstimate: this.estimatePromptTokens(context),
+        maxOutputTokens: executionOptions?.maxOutputTokens,
+      });
+    }
+    return buffered;
+  }
+
+  private async runExecutor(
+    base: Omit<StreamExecutionInput, 'abortSignal'>,
+    usedFallback: boolean,
+  ): Promise<LlmResponse> {
+    const executor = this.providerStreamExecutor;
+    const cancellation = this.streamCancellation;
+    if (executor === undefined || cancellation === undefined) {
+      throw new BusinessException('Streaming dependencies unavailable', 'STREAM_NOT_AVAILABLE');
+    }
+    // Lane runs (parallel/compare) register under their laneId so each model
+    // can be cancelled independently; single-chat runs key off threadId.
+    const cancelKey = base.laneId ?? base.threadId;
+    const controller = cancellation.register(cancelKey);
+    try {
+      const result = await executor.run({ ...base, abortSignal: controller.signal });
+      if (result.content.trim().length === 0 && !result.cancelled) {
+        throw new BusinessException(
+          `Provider ${base.provider} returned no content`,
+          'STREAM_EMPTY_RESPONSE',
+        );
+      }
+      return {
+        content: result.content,
+        provider: base.provider,
+        model: base.model,
+        inputTokens: result.inputTokens,
+        outputTokens: result.outputTokens ?? estimateTokensFromText(result.content),
+        latencyMs: Date.now() - base.startMs,
+        finishReason: result.cancelled ? 'cancelled' : (result.finishReason ?? 'stop'),
+        usedFallback,
+      };
+    } finally {
+      cancellation.release(cancelKey);
+    }
+  }
+
+  private buildStreamingChatBody(
+    model: string,
+    context: AssembledContext,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions | undefined,
+  ): OpenAiChatRequest {
+    return {
+      ...this.buildChatRequestBody(model, context, threadSettings, executionOptions),
+      stream: true,
+      stream_options: { include_usage: true },
+    };
+  }
+
+  private estimatePromptTokens(context: AssembledContext): number {
+    return estimateTokensFromText(this.contextAssembly.buildPromptString(context));
   }
 
   private async maybeEscalateFastPath(

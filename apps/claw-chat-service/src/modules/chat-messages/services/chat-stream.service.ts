@@ -1,6 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Subject } from 'rxjs';
-import { type StreamEvent } from '../types/stream.types';
+import {
+  type ContentDeltaEmitInput,
+  type LifecycleEmitInput,
+  type MetricsEmitInput,
+  type ReasoningDeltaEmitInput,
+  type StreamErrorEmitInput,
+  type StreamEvent,
+  type UsageEmitInput,
+} from '../types/stream.types';
 import { type FallbackAttemptData } from '../types/execution.types';
 import { ProgressActorType, StreamEventType } from '../../../common/enums';
 
@@ -257,6 +265,118 @@ export class ChatStreamService {
     return () => {
       clearInterval(interval);
     };
+  }
+
+  // --- Rich streaming emitters (live token / reasoning / metric deltas) ---
+  // NOTE: delta / reasoningDelta / metrics / usage fields are NOT passed
+  // through the 240-char label sanitizer (sanitizeEvent only touches
+  // label/description/error), so the model's real answer text streams intact.
+
+  emitStreamLifecycle(threadId: string, input: LifecycleEmitInput): void {
+    this.emit({
+      threadId,
+      type: StreamEventType.LIFECYCLE,
+      provider: input.provider,
+      model: input.model,
+      streamRunId: input.streamRunId,
+      messageId: input.messageId,
+      laneId: input.laneId,
+      parallelGroupId: input.parallelGroupId,
+      protocol: input.protocol,
+      stage: input.stage,
+      progressPercent: input.progressPercent,
+      progressConfidence: input.progressConfidence,
+      reasoningVisibility: input.reasoningVisibility,
+      label: input.label,
+      description: input.description,
+      actorType: ProgressActorType.MODEL,
+      actorName: `${input.provider} / ${input.model}`,
+      stageId: `stream:${input.laneId ?? input.streamRunId ?? threadId}:${input.stage}`,
+      status: input.status ?? 'active',
+    });
+  }
+
+  emitContentDelta(threadId: string, input: ContentDeltaEmitInput): void {
+    this.emit({
+      threadId,
+      type: StreamEventType.CONTENT_DELTA,
+      provider: input.provider,
+      model: input.model,
+      streamRunId: input.streamRunId,
+      messageId: input.messageId,
+      laneId: input.laneId,
+      parallelGroupId: input.parallelGroupId,
+      delta: input.delta,
+      accumulatedChars: input.accumulatedChars,
+    });
+  }
+
+  emitReasoningDelta(threadId: string, input: ReasoningDeltaEmitInput): void {
+    this.emit({
+      threadId,
+      type: StreamEventType.REASONING_DELTA,
+      provider: input.provider,
+      model: input.model,
+      streamRunId: input.streamRunId,
+      messageId: input.messageId,
+      laneId: input.laneId,
+      parallelGroupId: input.parallelGroupId,
+      reasoningDelta: input.reasoningDelta,
+      reasoningVisibility: input.visibility,
+    });
+  }
+
+  emitMetrics(threadId: string, input: MetricsEmitInput): void {
+    this.emit({
+      threadId,
+      type: StreamEventType.METRICS,
+      provider: input.provider,
+      model: input.model,
+      streamRunId: input.streamRunId,
+      messageId: input.messageId,
+      laneId: input.laneId,
+      parallelGroupId: input.parallelGroupId,
+      metrics: input.metrics,
+      progressPercent: input.metrics.progressPercent,
+      progressConfidence: input.metrics.progressConfidence,
+    });
+  }
+
+  emitUsage(threadId: string, input: UsageEmitInput): void {
+    this.emit({
+      threadId,
+      type: StreamEventType.USAGE,
+      provider: input.provider,
+      model: input.model,
+      streamRunId: input.streamRunId,
+      messageId: input.messageId,
+      laneId: input.laneId,
+      parallelGroupId: input.parallelGroupId,
+      usage: input.usage,
+    });
+  }
+
+  emitStreamError(threadId: string, input: StreamErrorEmitInput): void {
+    this.emit({
+      threadId,
+      type: StreamEventType.ERROR,
+      provider: input.provider,
+      model: input.model,
+      streamRunId: input.streamRunId,
+      messageId: input.messageId,
+      laneId: input.laneId,
+      parallelGroupId: input.parallelGroupId,
+      stage: input.stage,
+      code: input.code,
+      retryable: input.retryable,
+      partialContentPreserved: input.partialContentPreserved,
+      label: 'Response failed',
+      description: input.safeMessage,
+      actorType: ProgressActorType.SYSTEM,
+      actorName: `${input.provider} / ${input.model}`,
+      stageId: `stream:${input.laneId ?? input.streamRunId ?? threadId}:error`,
+      status: 'error',
+    });
   }
 
   getRecentEvents(threadId: string): StreamEvent[] {

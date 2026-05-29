@@ -10,6 +10,7 @@ import type {
 } from '@/types';
 import { logger } from '@/utilities';
 
+import { useCancelStream } from './use-cancel-stream';
 import { useDeleteThread } from './use-delete-thread';
 import { useMessageFeedback } from './use-message-feedback';
 import { useRegenerateMessage } from './use-regenerate-message';
@@ -34,9 +35,11 @@ export const useThreadDetailPage = ({
     judgeModel,
     progressStages,
     currentStageLabel,
+    streamLive,
     virtualizedMessages,
   } = useThreadDetail(threadId);
 
+  const { cancel: cancelStream, isCancelling: isCancellingStream } = useCancelStream(threadId);
   const { sendMessage, isPending: isSending } = useSendMessage(threadId, startWaitingForResponse);
   const { deleteThread, isPending: isDeleting } = useDeleteThread();
   const { setFeedback } = useMessageFeedback(threadId);
@@ -136,6 +139,9 @@ export const useThreadDetailPage = ({
     judgeModel,
     progressStages,
     currentStageLabel,
+    streamLive,
+    cancelStream,
+    isCancellingStream,
     isSending,
     isDeleting,
     virtualizedMessages,

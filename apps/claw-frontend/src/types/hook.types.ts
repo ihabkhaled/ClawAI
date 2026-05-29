@@ -10,6 +10,7 @@ import type {
   ChatThread,
   FallbackAttemptInfo,
   JudgeModelOption,
+  StreamLiveState,
   UseVirtualizedMessagesReturn,
   VisibleProgressStage,
 } from './chat.types';
@@ -199,6 +200,9 @@ export type UseThreadDetailPageReturn = {
   judgeModel: string | null;
   progressStages: VisibleProgressStage[];
   currentStageLabel: string | null;
+  streamLive: StreamLiveState;
+  cancelStream: () => void;
+  isCancellingStream: boolean;
   isSending: boolean;
   isDeleting: boolean;
   virtualizedMessages: UseVirtualizedMessagesReturn;

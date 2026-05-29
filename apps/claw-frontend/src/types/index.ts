@@ -21,6 +21,9 @@ export type {
   UpdateThreadMutationParams,
   SetFeedbackParams,
   StreamEvent,
+  StreamMetrics,
+  StreamUsage,
+  StreamLiveState,
   VisibleProgressStage,
   SseConnection,
   FallbackAttemptInfo,
@@ -306,6 +309,14 @@ export type {
   RolePackResultCardProps,
   RolePackMemberCardProps,
 } from './component.types';
+export type {
+  StreamProgressBarProps,
+  StreamStageBadgeProps,
+  StreamMetricsHudProps,
+  StreamThinkingPanelProps,
+  StreamLiveAnswerProps,
+  ParallelLaneCardProps,
+} from './stream-component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
   AdvancedModelSelectionMode,

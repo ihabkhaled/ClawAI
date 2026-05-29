@@ -25,6 +25,9 @@ export function VirtualizedMessages({
   judgeModel,
   progressStages,
   currentStageLabel,
+  streamLive,
+  onCancelStream,
+  isCancellingStream,
   t,
   onStartReached,
   onFeedback,
@@ -91,6 +94,9 @@ export function VirtualizedMessages({
             judgeModel={judgeModel}
             progressStages={progressStages}
             currentStageLabel={currentStageLabel}
+            streamLive={streamLive}
+            onCancel={onCancelStream}
+            isCancelling={isCancellingStream}
           />
         </div>
       );
@@ -105,6 +111,9 @@ export function VirtualizedMessages({
     judgeModel,
     progressStages,
     currentStageLabel,
+    streamLive,
+    onCancelStream,
+    isCancellingStream,
   ]);
 
   const handleStartReached = useCallback((): void => {

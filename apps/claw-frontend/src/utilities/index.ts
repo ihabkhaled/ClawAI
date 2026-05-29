@@ -91,3 +91,9 @@ export {
   buildCompareRunMarkdown,
   downloadMarkdownFile,
 } from './markdown-export.utility';
+export {
+  formatElapsed,
+  formatTokensPerSecond,
+  formatStreamTokens,
+  formatCostUsd,
+} from './stream-format.utility';
