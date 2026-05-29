@@ -62,4 +62,18 @@ describe('listUsageQuerySchema', () => {
     expect(result.startDate).toBe('2026-01-01');
     expect(result.endDate).toBe('2026-12-31');
   });
+
+  it('accepts an optional context filter', () => {
+    const result = listUsageQuerySchema.parse({ context: 'judge' });
+    expect(result.context).toBe('judge');
+  });
+
+  it('leaves context undefined when omitted', () => {
+    const result = listUsageQuerySchema.parse({});
+    expect(result.context).toBeUndefined();
+  });
+
+  it('rejects context longer than 100 chars', () => {
+    expect(listUsageQuerySchema.safeParse({ context: 'a'.repeat(101) }).success).toBe(false);
+  });
 });

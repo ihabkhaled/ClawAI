@@ -35,6 +35,7 @@ export class UsageLedgerRepository {
     if (filters.action) query['action'] = filters.action;
     if (filters.provider) query['metadata.provider'] = filters.provider;
     if (filters.model) query['metadata.model'] = filters.model;
+    if (filters.context) query['context'] = filters.context;
     if (filters.startDate || filters.endDate) {
       query['createdAt'] = {};
       if (filters.startDate) {

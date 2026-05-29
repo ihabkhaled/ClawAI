@@ -295,7 +295,7 @@ describe('JudgeRefereeManager', () => {
   });
 
   describe('evaluate', () => {
-    it('falls back to an honest local critic label when the cloud critic is unavailable', async () => {
+    it('labels the critic with the selected model and falls back the judge to local when a cloud critic call fails', async () => {
       const executionManager = {
         callProvider: jest
           .fn()
@@ -346,7 +346,7 @@ describe('JudgeRefereeManager', () => {
 
       const result = await manager.evaluate(response as any, context, config, payload);
 
-      expect(result.criticEvaluation.model).toBe('local-ollama/AUTO');
+      expect(result.criticEvaluation.model).toBe('ANTHROPIC/claude-sonnet-4');
       expect(result.judgeVerdict.model).toBe('local-ollama/AUTO');
       expect(executionManager.callProvider).toHaveBeenCalledTimes(2);
     });

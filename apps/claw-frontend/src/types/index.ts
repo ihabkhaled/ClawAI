@@ -32,6 +32,7 @@ export type {
   MessageRenderItem,
   ParallelExpandedMessage,
 } from './chat.types';
+export type { UseDailyTokenIndicatorResult } from './daily-token.types';
 export type {
   Connector,
   ConnectorModel,
@@ -409,6 +410,10 @@ export type {
   UseInThreadCompareReturn,
 } from './parallel.types';
 export type {
+  CompareResultMarkdownInput,
+  UseCompareResultCardReturn,
+} from './compare.types';
+export type {
   ConsensusModelBreakdown,
   ConsensusAnalysis,
   ConsensusMetadata,
@@ -638,6 +643,8 @@ export type {
   ResearchProviderRowProps,
   ConnectorStatusBadgeProps,
   ConnectorDetailViewProps,
+  CompareResultCardProps,
+  CompareJudgeBadgesProps,
 } from './component.types';
 export type { ResearchProviderFormState, UseResearchProvidersPageReturn } from './hook.types';
 export type {

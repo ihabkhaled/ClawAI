@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
-import { EventPattern, LogLevel } from '@claw/shared-types';
+import { EventPattern, LogLevel, TokenLedgerContext } from '@claw/shared-types';
 import { allowedModelKeys } from '@claw/shared-entitlements';
 import { AppConfig } from '../../../app/config/app.config';
 import { recordGet, runResearch } from '../../../common/utilities';
@@ -879,12 +879,29 @@ export class ChatMessagesService implements OnModuleInit {
       sourceMessageId: payload.messageId,
       ...this.buildReRouteMetaPart(llmResponse),
       ...this.buildFastPathMetaPart(llmResponse),
+      ...this.buildTokenUsageMetaPart(llmResponse),
       ...this.buildWorkflowMetaPart(llmResponse, payload),
       ...(!hasVisibleContent ? { emptyContent: true } : {}),
       ...this.buildDisplayNameMetaPart(latestUserMetadata),
       routeRoadmap,
       progressSummary,
       ...(llmResponse.judgeRefereeMetadata ?? {}),
+    };
+  }
+
+  // Feature 2 — persists token usage transparency on the assistant message so
+  // the FE can show whether counts were native or estimated and which context
+  // produced them, surviving a page refresh.
+  private buildTokenUsageMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
+    if (llmResponse.imageGenerationId || llmResponse.fileGenerationId) {
+      return {};
+    }
+    return {
+      tokenContext: llmResponse.tokenContext ?? TokenLedgerContext.CHAT,
+      ...(llmResponse.tokenEstimated === undefined
+        ? {}
+        : { tokenEstimated: llmResponse.tokenEstimated }),
+      ...(llmResponse.tokenSource === undefined ? {} : { tokenSource: llmResponse.tokenSource }),
     };
   }
 
@@ -1163,6 +1180,7 @@ export class ChatMessagesService implements OnModuleInit {
     },
   ): void {
     const lastUserMsg = [...messages].reverse().find((m) => m.role === 'USER');
+    const tokenContext = llmResponse.tokenContext ?? TokenLedgerContext.CHAT;
     void this.rabbitMQService.publish(EventPattern.MESSAGE_COMPLETED, {
       messageId: payload.messageId,
       threadId: payload.threadId,
@@ -1181,26 +1199,25 @@ export class ChatMessagesService implements OnModuleInit {
       timestamp: new Date().toISOString(),
       executionSuccess: outcomeOverrides?.executionSuccess ?? true,
       finalStatus: outcomeOverrides?.finalStatus ?? 'completed',
+      // Feature 2 — usage attribution: tag the completed message with the call
+      // context and whether the token counts were estimated / native / mixed.
+      tokenContext,
+      ...(llmResponse.tokenEstimated === undefined
+        ? {}
+        : { tokenEstimated: llmResponse.tokenEstimated }),
+      ...(llmResponse.tokenSource === undefined ? {} : { tokenSource: llmResponse.tokenSource }),
       ...(outcomeOverrides?.errorMessage ? { errorMessage: outcomeOverrides.errorMessage } : {}),
       ...(payload.routerModel ? { routerModel: payload.routerModel } : {}),
       ...this.buildFastPathMetaPart(llmResponse),
       ...this.buildPublishReRoutePart(llmResponse),
       ...this.buildPublishJudgePart(llmResponse),
     });
-
-    // Phase C: record actual token usage to the quota ledger (fail-soft). This
-    // is what advances the daily counter that QuotaGuard checks on the next
-    // request. Skipped for image/file generation responses (no token usage).
-    if (thread?.userId && !llmResponse.imageGenerationId && !llmResponse.fileGenerationId) {
-      void this.accessControlService.recordUsage({
-        userId: thread.userId,
-        planId: null,
-        inputTokens: llmResponse.inputTokens ?? 0,
-        outputTokens: llmResponse.outputTokens ?? 0,
-        provider: llmResponse.provider,
-        model: llmResponse.model,
-      });
-    }
+    // Token deduction is NOT done here. It happens universally at the
+    // ChatExecutionManager.callProvider chokepoint, so EVERY mode (chat,
+    // compare per-model, judge critic/judge/revision, consensus, escalation,
+    // repair, verify, best-of-n, cost-ensemble, role-pack, pipeline, decompose)
+    // consumes the user's daily quota — not only normal chat. This method only
+    // publishes the MESSAGE_COMPLETED event for the audit ledger + memory.
   }
 
   private buildPublishReRoutePart(llmResponse: LlmResponse): Record<string, unknown> {

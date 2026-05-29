@@ -42,6 +42,7 @@ export { ImageGenerationStatus } from './image-generation-status.enum';
 export { FileGenerationStatus } from './file-generation-status.enum';
 export { ParallelModelStatus } from './parallel-model-status.enum';
 export { CompareJudgeState } from './compare-judge-state.enum';
+export { CompareResultViewMode } from './compare-result-view-mode.enum';
 export { FallbackFailureType } from './fallback-failure-type.enum';
 export { ReplayOutcomeLabel } from './replay-outcome-label.enum';
 export { ConsensusConfidenceLevel } from './consensus-confidence-level.enum';

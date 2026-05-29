@@ -5,6 +5,7 @@ export const listUsageQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional().default(20),
   provider: z.string().optional(),
   model: z.string().optional(),
+  context: z.string().max(100).optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
 });

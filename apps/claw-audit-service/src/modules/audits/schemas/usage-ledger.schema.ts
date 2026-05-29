@@ -21,8 +21,21 @@ export class UsageLedger extends Document {
   @Prop({ type: Object })
   metadata?: Record<string, unknown>;
 
+  // Call context for the usage entry (e.g. chat, compare, judge, repair, verify).
+  // Optional + schemaless-friendly: legacy rows without it keep working.
+  @Prop()
+  context?: string;
+
+  // Whether the recorded token quantity is an estimate rather than a provider-reported count.
+  @Prop()
+  estimated?: boolean;
+
   @Prop({ default: Date.now })
   createdAt!: Date;
 }
 
 export const UsageLedgerSchema = SchemaFactory.createForClass(UsageLedger);
+
+// Indexes to support per-user usage attribution and context filtering/aggregation.
+UsageLedgerSchema.index({ userId: 1, createdAt: -1 });
+UsageLedgerSchema.index({ context: 1 });

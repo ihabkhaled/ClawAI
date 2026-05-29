@@ -1,3 +1,4 @@
+import type { TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 import type { AttemptRecord } from './fallback-executor.types';
 import type { JudgeRefereeMetadata } from './judge-referee.types';
 
@@ -65,6 +66,14 @@ export type LlmResponse = {
   model: string;
   inputTokens?: number;
   outputTokens?: number;
+  // Feature 2 — token usage transparency. Every model call now produces a
+  // complete usage with a fallback estimate when the provider omits native
+  // counts. `tokenEstimated` is true when at least one side was estimated,
+  // `tokenSource` records NATIVE / ESTIMATED / MIXED, and `tokenContext` tags
+  // which call path produced the usage (CHAT, REGENERATE, COMPARE, JUDGE, …).
+  tokenEstimated?: boolean;
+  tokenSource?: TokenUsageSource;
+  tokenContext?: TokenLedgerContext;
   latencyMs: number;
   finishReason?: string;
   usedFallback: boolean;

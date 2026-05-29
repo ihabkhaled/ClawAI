@@ -1,5 +1,15 @@
+import type { TokenUsageSource } from '@claw/shared-types';
 import type { JudgeDecision } from '../../../common/enums';
 import type { LlmResponse } from './execution.types';
+
+// Feature 1/2 — aggregated token usage consumed by the judge + critic calls
+// (cloud or local), tagged so it can be recorded with TokenLedgerContext.JUDGE.
+export type JudgeTokenUsage = {
+  inputTokens: number;
+  outputTokens: number;
+  estimated: boolean;
+  source: TokenUsageSource;
+};
 
 export type CriticEvaluation = {
   feedback: string[];
@@ -7,6 +17,11 @@ export type CriticEvaluation = {
   category: string;
   model: string;
   latencyMs: number;
+  // Feature 2 — token usage from the critic call (cloud or local).
+  inputTokens?: number;
+  outputTokens?: number;
+  tokenEstimated?: boolean;
+  tokenSource?: TokenUsageSource;
 };
 
 export type JudgeResponseType =
@@ -27,6 +42,11 @@ export type JudgeVerdict = {
   latencyMs: number;
   wasFallback?: boolean;
   fallbackState?: 'failed' | 'unavailable';
+  // Feature 2 — token usage from the judge call (cloud or local).
+  inputTokens?: number;
+  outputTokens?: number;
+  tokenEstimated?: boolean;
+  tokenSource?: TokenUsageSource;
 };
 
 export type ParsedJudgeVerdict = {
@@ -78,6 +98,9 @@ export type JudgeRefereeResult = {
   revisedResponse?: LlmResponse;
   escalatedResponse?: LlmResponse;
   totalLatencyMs: number;
+  // Feature 1/2 — combined critic + judge token usage so the chat service can
+  // record it to the usage ledger with TokenLedgerContext.JUDGE.
+  tokenUsage?: JudgeTokenUsage;
 };
 
 export type JudgeRefereeConfig = {
@@ -100,4 +123,9 @@ export type JudgeRefereeMetadata = {
   judgeTotalLatencyMs: number;
   judgeErrorState?: 'failed' | 'unavailable' | null;
   judgeReview: JudgeReviewPayload;
+  // Feature 2 — token usage transparency for the judge/critic pipeline.
+  judgeInputTokens?: number;
+  judgeOutputTokens?: number;
+  judgeTokenEstimated?: boolean;
+  judgeTokenSource?: TokenUsageSource;
 };

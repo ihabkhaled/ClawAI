@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 
 import { OLLAMA_PROVIDER } from '../../../common/constants';
 import { JudgeDecision } from '../../../common/enums';
-import { recordGet } from '../../../common/utilities';
+import { parseJudgeModel, recordGet } from '../../../common/utilities';
 import {
   CRITIC_CLOUD_MODELS,
   CRITIC_LOCAL_MODEL,
@@ -22,9 +23,11 @@ import type {
   JudgeRefereeResult,
   JudgeResponseType,
   JudgeReviewPayload,
+  JudgeTokenUsage,
   JudgeVerdict,
   ParsedJudgeVerdict,
 } from '../types/judge-referee.types';
+import type { ParsedJudgeModel } from '../../../common/types';
 import { ChatExecutionManager } from './chat-execution.manager';
 import { ChatStreamService } from '../services/chat-stream.service';
 
@@ -68,8 +71,10 @@ export class JudgeRefereeManager {
     const criticModelInfo = await this.selectCriticModel(response.provider, config.isLocalOnly);
     const criticModelLabel = `${criticModelInfo.provider}/${criticModelInfo.model}`;
     const overrideJudgeModel = threadSettings?.judgeModel ?? null;
-    const effectiveJudgeModel = await this.resolveModel(overrideJudgeModel ?? JUDGE_LOCAL_MODEL);
-    const judgeModelLabel = `local-ollama/${effectiveJudgeModel}`;
+    // Feature 1 — a user-chosen cloud connector model now runs through the
+    // normal provider path. AUTO / unset keeps the local-first default.
+    const judgeTarget = await this.resolveJudgeTarget(overrideJudgeModel ?? JUDGE_LOCAL_MODEL);
+    const judgeModelLabel = `${judgeTarget.provider}/${judgeTarget.model}`;
     this.chatStreamService.emitJudgeEvaluating(payload.threadId, criticModelLabel, judgeModelLabel);
 
     const criticEvaluation = await this.callCriticWithModel(
@@ -84,7 +89,7 @@ export class JudgeRefereeManager {
       criticEvaluation,
       context,
       config,
-      effectiveJudgeModel,
+      judgeTarget,
     );
 
     const totalLatencyMs = Date.now() - startTime;
@@ -97,6 +102,7 @@ export class JudgeRefereeManager {
       criticEvaluation,
       judgeVerdict,
       totalLatencyMs,
+      tokenUsage: this.buildJudgeTokenUsage(criticEvaluation, judgeVerdict),
     };
 
     if (judgeVerdict.decision === JudgeDecision.REVISE && this.executionManager) {
@@ -115,8 +121,8 @@ export class JudgeRefereeManager {
     ) {
       result.escalatedResponse = {
         content: judgeVerdict.response,
-        provider: OLLAMA_PROVIDER,
-        model: effectiveJudgeModel,
+        provider: judgeTarget.provider,
+        model: judgeTarget.model,
         latencyMs: judgeVerdict.latencyMs,
         usedFallback: false,
       };
@@ -141,6 +147,15 @@ export class JudgeRefereeManager {
       judgeTotalLatencyMs: result.totalLatencyMs,
       judgeErrorState: result.judgeVerdict.fallbackState ?? null,
       judgeReview,
+      // Feature 2 — judge/critic combined token usage transparency.
+      ...(result.tokenUsage === undefined
+        ? {}
+        : {
+            judgeInputTokens: result.tokenUsage.inputTokens,
+            judgeOutputTokens: result.tokenUsage.outputTokens,
+            judgeTokenEstimated: result.tokenUsage.estimated,
+            judgeTokenSource: result.tokenUsage.source,
+          }),
     };
   }
 
@@ -179,6 +194,10 @@ export class JudgeRefereeManager {
         criticContext,
         startTime,
         false,
+        undefined,
+        undefined,
+        undefined,
+        TokenLedgerContext.JUDGE,
       );
 
       const parsed = this.parseCriticOutput(criticResponse.content);
@@ -188,8 +207,12 @@ export class JudgeRefereeManager {
         feedback: parsed.feedback,
         score: parsed.score,
         category: config.category ?? 'generic',
-        model: `${OLLAMA_PROVIDER}/${CRITIC_LOCAL_MODEL}`,
+        model: `${criticModel.provider}/${criticModel.model}`,
         latencyMs,
+        inputTokens: criticResponse.inputTokens,
+        outputTokens: criticResponse.outputTokens,
+        tokenEstimated: criticResponse.tokenEstimated,
+        tokenSource: criticResponse.tokenSource,
       };
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
@@ -198,7 +221,7 @@ export class JudgeRefereeManager {
         feedback: [],
         score: 1.0,
         category: config.category ?? 'generic',
-        model: `${OLLAMA_PROVIDER}/${CRITIC_LOCAL_MODEL}`,
+        model: `${criticModel.provider}/${criticModel.model}`,
         latencyMs: Date.now() - startTime,
       };
     }
@@ -209,47 +232,43 @@ export class JudgeRefereeManager {
     criticEval: CriticEvaluation,
     context: AssembledContext,
     _config: JudgeRefereeConfig,
-    judgeModelOverride?: string,
+    judgeTarget: { provider: string; model: string },
   ): Promise<JudgeVerdict> {
     const startTime = Date.now();
-    const judgeModel = await this.resolveModel(judgeModelOverride ?? JUDGE_LOCAL_MODEL);
+    const judgeLabel = `${judgeTarget.provider}/${judgeTarget.model}`;
 
-    this.logger.debug(`callJudge: using ${OLLAMA_PROVIDER}/${judgeModel}`);
+    this.logger.debug(`callJudge: using ${judgeLabel}`);
 
-    const userPrompt = this.extractUserPrompt(context);
-    const judgeInput = [
-      `User question: ${userPrompt}`,
-      `\nAI response:\n${response.content}`,
-      `\nCritic evaluation:`,
-      `Score: ${String(criticEval.score)}`,
-      `Feedback: ${criticEval.feedback.length > 0 ? criticEval.feedback.join('; ') : 'No issues found'}`,
-    ].join('\n');
-
-    const judgeContext: AssembledContext = {
-      ...context,
-      systemPrompt: JUDGE_SYSTEM_PROMPT,
-      threadMessages: [
-        { role: 'USER', content: judgeInput } as AssembledContext['threadMessages'][0],
-      ],
-    };
+    const judgeContext = this.buildJudgeContext(response, criticEval, context);
 
     try {
       if (!this.executionManager) {
         throw new Error('ExecutionManager not set');
       }
+      // Feature 1 — execute the judge (cloud or local) through the SAME
+      // provider path as chat so its token usage is captured + estimated, and
+      // tag it with the JUDGE context.
       const judgeResponse = await this.executionManager.callProvider(
-        OLLAMA_PROVIDER,
-        judgeModel,
+        judgeTarget.provider,
+        judgeTarget.model,
         judgeContext,
         startTime,
         false,
+        undefined,
+        undefined,
+        undefined,
+        TokenLedgerContext.JUDGE,
       );
 
       const verdict = this.parseJudgeOutput(judgeResponse.content);
       return {
         ...verdict,
-        model: `${OLLAMA_PROVIDER}/${judgeModel}`,
+        model: judgeLabel,
         latencyMs: Date.now() - startTime,
+        inputTokens: judgeResponse.inputTokens,
+        outputTokens: judgeResponse.outputTokens,
+        tokenEstimated: judgeResponse.tokenEstimated,
+        tokenSource: judgeResponse.tokenSource,
       };
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
@@ -262,12 +281,35 @@ export class JudgeRefereeManager {
         response: 'The answer passed review because the judge service was unavailable.',
         responseType: 'verification_note',
         recommendedChanges: [],
-        model: `${OLLAMA_PROVIDER}/${judgeModel}`,
+        model: judgeLabel,
         latencyMs: Date.now() - startTime,
         wasFallback: true,
         fallbackState: 'unavailable',
       };
     }
+  }
+
+  private buildJudgeContext(
+    response: LlmResponse,
+    criticEval: CriticEvaluation,
+    context: AssembledContext,
+  ): AssembledContext {
+    const userPrompt = this.extractUserPrompt(context);
+    const judgeInput = [
+      `User question: ${userPrompt}`,
+      `\nAI response:\n${response.content}`,
+      `\nCritic evaluation:`,
+      `Score: ${String(criticEval.score)}`,
+      `Feedback: ${criticEval.feedback.length > 0 ? criticEval.feedback.join('; ') : 'No issues found'}`,
+    ].join('\n');
+
+    return {
+      ...context,
+      systemPrompt: JUDGE_SYSTEM_PROMPT,
+      threadMessages: [
+        { role: 'USER', content: judgeInput } as AssembledContext['threadMessages'][0],
+      ],
+    };
   }
 
   private buildJudgeReviewPayload(result: JudgeRefereeResult): JudgeReviewPayload {
@@ -352,6 +394,9 @@ export class JudgeRefereeManager {
         Date.now(),
         false,
         threadSettings,
+        undefined,
+        undefined,
+        TokenLedgerContext.JUDGE,
       );
       this.logger.log(
         `attemptRevision: revision complete — contentLen=${String(revised.content.length)}`,
@@ -384,6 +429,50 @@ export class JudgeRefereeManager {
       return model;
     }
     return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+  }
+
+  // Feature 1 — resolves a user-chosen judge/critic selection into a concrete
+  // execution target. A `PROVIDER:model` string with a known cloud/connector
+  // provider routes through that provider (so tokens are captured + recorded);
+  // a plain model name keeps the local-first Ollama behavior. AUTO / empty
+  // falls back to the resolved local default model.
+  private async resolveJudgeTarget(rawModel: string): Promise<{ provider: string; model: string }> {
+    const parsed: ParsedJudgeModel = parseJudgeModel(rawModel);
+    if (parsed.provider !== null) {
+      const isOllamaLocal = parsed.provider === OLLAMA_PROVIDER;
+      return {
+        provider: parsed.provider,
+        model: isOllamaLocal ? await this.resolveModel(parsed.model) : parsed.model,
+      };
+    }
+    const localModel = parsed.model.length > 0 ? parsed.model : 'AUTO';
+    return { provider: OLLAMA_PROVIDER, model: await this.resolveModel(localModel) };
+  }
+
+  // Feature 2 — combines critic + judge token usage into a single JUDGE-context
+  // ledger entry. Treats a missing side as 0 and downgrades the source to MIXED
+  // when one half was estimated and the other native.
+  private buildJudgeTokenUsage(
+    critic: CriticEvaluation,
+    judge: JudgeVerdict,
+  ): JudgeTokenUsage {
+    const criticEstimated = critic.tokenEstimated ?? false;
+    const judgeEstimated = judge.tokenEstimated ?? false;
+    const criticSource = critic.tokenSource ?? TokenUsageSource.ESTIMATED;
+    const judgeSource = judge.tokenSource ?? TokenUsageSource.ESTIMATED;
+    const allNative =
+      criticSource === TokenUsageSource.NATIVE && judgeSource === TokenUsageSource.NATIVE;
+    const allEstimated =
+      criticSource === TokenUsageSource.ESTIMATED && judgeSource === TokenUsageSource.ESTIMATED;
+    const source = allNative
+      ? TokenUsageSource.NATIVE
+      : (allEstimated ? TokenUsageSource.ESTIMATED : TokenUsageSource.MIXED);
+    return {
+      inputTokens: (critic.inputTokens ?? 0) + (judge.inputTokens ?? 0),
+      outputTokens: (critic.outputTokens ?? 0) + (judge.outputTokens ?? 0),
+      estimated: criticEstimated || judgeEstimated,
+      source,
+    };
   }
 
   private buildCriticPrompt(category: string | undefined): string {

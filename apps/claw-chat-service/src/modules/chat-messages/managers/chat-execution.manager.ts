@@ -1,5 +1,11 @@
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { LocalModelRole } from '@claw/shared-types';
+import {
+  LocalModelRole,
+  TokenLedgerContext,
+  type TokenUsage,
+  TokenUsageSource,
+} from '@claw/shared-types';
+import { extractOllamaUsage, extractOpenAiCompatibleUsage } from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest, recordGet } from '../../../common/utilities';
 import { BusinessException } from '../../../common/errors';
@@ -44,6 +50,7 @@ import { WORKFLOW_KIND_SEARCH_FIRST } from '../constants/search-first.constants'
 import type { SearchFirstOutcome } from '../types/search-first.types';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
+import { AccessControlService } from '../services/access-control.service';
 import {
   DEFAULT_MAX_OUTPUT_TOKENS,
   FAST_PATH_COMPLEXITY_PATTERN,
@@ -75,6 +82,7 @@ export class ChatExecutionManager implements OnModuleInit {
     private readonly judgeRefereeManager: JudgeRefereeManager,
     private readonly chatStreamService: ChatStreamService,
     private readonly searchFirstManager: SearchFirstManager,
+    private readonly accessControlService: AccessControlService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
@@ -797,6 +805,58 @@ export class ChatExecutionManager implements OnModuleInit {
     threadSettings?: ThreadSettings,
     routingMode?: string,
     executionOptions?: ExecutionOptions,
+    tokenContext?: TokenLedgerContext,
+  ): Promise<LlmResponse> {
+    const response = await this.dispatchProvider(
+      provider,
+      model,
+      context,
+      startTime,
+      usedFallback,
+      threadSettings,
+      routingMode,
+      executionOptions,
+    );
+    // Feature 2 — tag the produced usage with the call context (CHAT default).
+    // Image / file generation responses carry no token usage so we leave them
+    // untagged to keep them out of the token ledger.
+    if (this.isGenerationResponse(response)) {
+      return response;
+    }
+    const tagged = { ...response, tokenContext: tokenContext ?? TokenLedgerContext.CHAT };
+    this.recordChokepointUsage(context, tagged);
+    return tagged;
+  }
+
+  // Universal token deduction. EVERY model call — normal chat, regenerate,
+  // compare (per model), judge (critic/judge/revision), consensus, escalation,
+  // repair, verify, best-of-n, cost-ensemble, role-pack, pipeline, decompose —
+  // flows through callProvider, so recording here guarantees all modes consume
+  // the user's daily quota, not just normal chat. Fail-soft; generation
+  // responses are excluded above (no token usage).
+  private recordChokepointUsage(context: AssembledContext, response: LlmResponse): void {
+    if (!context.userId) {
+      return;
+    }
+    void this.accessControlService.recordUsage({
+      userId: context.userId,
+      planId: null,
+      inputTokens: response.inputTokens ?? 0,
+      outputTokens: response.outputTokens ?? 0,
+      provider: response.provider,
+      model: response.model,
+    });
+  }
+
+  private async dispatchProvider(
+    provider: string,
+    model: string,
+    context: AssembledContext,
+    startTime: number,
+    usedFallback: boolean,
+    threadSettings?: ThreadSettings,
+    routingMode?: string,
+    executionOptions?: ExecutionOptions,
   ): Promise<LlmResponse> {
     this.logger.debug(
       `callProvider: dispatching to provider type — provider=${provider} model=${model} usedFallback=${String(usedFallback)}`,
@@ -916,6 +976,7 @@ export class ChatExecutionManager implements OnModuleInit {
         'CLOUD_PROVIDER_REQUEST_FAILED',
       );
     }
+    const promptTextForEstimate = `${systemPrompt}\n${userPrompt}`;
     const parsed = isOllamaConnector
       ? this.parseOllamaChatResponse(
           response.data as OllamaChatResponse,
@@ -923,6 +984,7 @@ export class ChatExecutionManager implements OnModuleInit {
           model,
           startTime,
           false,
+          promptTextForEstimate,
         )
       : this.parseCloudResponse(
           response.data as OpenAiChatResponse,
@@ -930,6 +992,7 @@ export class ChatExecutionManager implements OnModuleInit {
           model,
           startTime,
           false,
+          promptTextForEstimate,
         );
     return {
       content: parsed.content,
@@ -975,7 +1038,7 @@ export class ChatExecutionManager implements OnModuleInit {
       );
       throw new BusinessException(errorMessage, 'OLLAMA_REQUEST_FAILED');
     }
-    return this.buildOllamaResponse(response.data, startTime, usedFallback);
+    return this.buildOllamaResponse(response.data, startTime, usedFallback, requestBody.prompt);
   }
 
   private buildOllamaRequest(
@@ -1019,6 +1082,7 @@ export class ChatExecutionManager implements OnModuleInit {
     data: OllamaGenerateResponse,
     startTime: number,
     usedFallback: boolean,
+    promptText?: string,
   ): LlmResponse {
     const latencyMs = Date.now() - startTime;
     const thinkingLength = data.thinking?.length ?? 0;
@@ -1034,15 +1098,17 @@ export class ChatExecutionManager implements OnModuleInit {
         'OLLAMA_EMPTY_RESPONSE',
       );
     }
+    // Feature 2 — native Ollama generate reports promptEvalCount / evalCount;
+    // estimate the missing side from text when either is absent.
+    const usage = extractOllamaUsage(data, { promptText, completionText: data.response });
     this.logger.log(
-      `callOllama: completed model=${data.model} latencyMs=${String(latencyMs)} inputTokens=${String(data.promptEvalCount ?? 0)} outputTokens=${String(data.evalCount ?? 0)}`,
+      `callOllama: completed model=${data.model} latencyMs=${String(latencyMs)} inputTokens=${String(usage.promptTokens)} outputTokens=${String(usage.completionTokens)} tokenSource=${usage.source}`,
     );
     return {
       content: data.response,
       provider: OLLAMA_PROVIDER,
       model: data.model,
-      inputTokens: data.promptEvalCount ?? undefined,
-      outputTokens: data.evalCount ?? undefined,
+      ...this.buildTokenUsageFields(usage),
       latencyMs,
       finishReason: data.done ? 'stop' : 'incomplete',
       usedFallback,
@@ -1081,7 +1147,15 @@ export class ChatExecutionManager implements OnModuleInit {
       throw new BusinessException(errorMessage, 'LLAMACPP_REQUEST_FAILED');
     }
 
-    const result = this.parseCloudResponse(response.data, provider, model, startTime, usedFallback);
+    const promptText = this.buildPromptTextForEstimate(context);
+    const result = this.parseCloudResponse(
+      response.data,
+      provider,
+      model,
+      startTime,
+      usedFallback,
+      promptText,
+    );
     this.logger.log(
       `callLlamacpp: completed model=${model} latencyMs=${String(result.latencyMs)} inputTokens=${String(result.inputTokens ?? 0)} outputTokens=${String(result.outputTokens ?? 0)}`,
     );
@@ -1132,6 +1206,7 @@ export class ChatExecutionManager implements OnModuleInit {
     }
 
     this.logger.debug('callCloudProvider: parsing cloud response');
+    const promptText = this.buildPromptTextForEstimate(context);
     const result = isOllamaConnector
       ? this.parseOllamaChatResponse(
           response.data as OllamaChatResponse,
@@ -1139,6 +1214,7 @@ export class ChatExecutionManager implements OnModuleInit {
           model,
           startTime,
           usedFallback,
+          promptText,
         )
       : this.parseCloudResponse(
           response.data as OpenAiChatResponse,
@@ -1146,6 +1222,7 @@ export class ChatExecutionManager implements OnModuleInit {
           model,
           startTime,
           usedFallback,
+          promptText,
         );
     this.logger.log(
       `callCloudProvider: completed ${provider}/${model} latencyMs=${String(result.latencyMs)} inputTokens=${String(result.inputTokens ?? 0)} outputTokens=${String(result.outputTokens ?? 0)}`,
@@ -1268,6 +1345,7 @@ export class ChatExecutionManager implements OnModuleInit {
     model: string,
     startTime: number,
     usedFallback: boolean,
+    promptText?: string,
   ): LlmResponse {
     this.logger.debug(`parseCloudResponse: parsing response from ${provider}/${model}`);
     const latencyMs = Date.now() - startTime;
@@ -1286,16 +1364,22 @@ export class ChatExecutionManager implements OnModuleInit {
     );
     const responseContent =
       typeof firstChoice.message.content === 'string' ? firstChoice.message.content : '';
+    // Feature 2 — fill any missing native usage from a CHAR_DIV_4 estimate so
+    // every cloud / llama.cpp call yields a complete, tagged TokenUsage. The
+    // extractor prefers native counts and only estimates the missing side.
+    const usage = extractOpenAiCompatibleUsage(data, {
+      promptText,
+      completionText: responseContent,
+    });
     this.logger.debug(
-      `parseCloudResponse: responseContentLen=${String(responseContent.length)} inputTokens=${String(data.usage?.prompt_tokens ?? 0)} outputTokens=${String(data.usage?.completion_tokens ?? 0)}`,
+      `parseCloudResponse: responseContentLen=${String(responseContent.length)} inputTokens=${String(usage.promptTokens)} outputTokens=${String(usage.completionTokens)} tokenSource=${usage.source}`,
     );
 
     return {
       content: responseContent,
       provider,
       model,
-      inputTokens: data.usage?.prompt_tokens,
-      outputTokens: data.usage?.completion_tokens,
+      ...this.buildTokenUsageFields(usage),
       latencyMs,
       finishReason: firstChoice.finish_reason,
       usedFallback,
@@ -1308,6 +1392,7 @@ export class ChatExecutionManager implements OnModuleInit {
     model: string,
     startTime: number,
     usedFallback: boolean,
+    promptText?: string,
   ): LlmResponse {
     const latencyMs = Date.now() - startTime;
     const responseContent = data.message?.content ?? '';
@@ -1319,15 +1404,50 @@ export class ChatExecutionManager implements OnModuleInit {
       );
     }
 
+    // Feature 2 — native Ollama chat reports prompt_eval_count / eval_count;
+    // estimate the missing side from text when either is absent.
+    const usage = extractOllamaUsage(data, { promptText, completionText: responseContent });
+
     return {
       content: responseContent,
       provider,
       model,
-      inputTokens: data.prompt_eval_count,
-      outputTokens: data.eval_count,
+      ...this.buildTokenUsageFields(usage),
       latencyMs,
       finishReason: data.done_reason ?? (data.done ? 'stop' : undefined),
       usedFallback,
+    };
+  }
+
+  // Feature 2 — best-effort prompt text used ONLY to estimate prompt tokens
+  // when the provider omits native usage. Reuses the same prompt assembly the
+  // request used so the estimate tracks the real input size. Never throws; on
+  // any failure it falls back to the last user message so a missing estimate
+  // never blocks a response.
+  private buildPromptTextForEstimate(context: AssembledContext): string {
+    try {
+      return this.contextAssembly.buildPromptString(context);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'unknown';
+      this.logger.warn(`buildPromptTextForEstimate: falling back to user prompt — ${msg}`);
+      return this.extractUserPrompt(context);
+    }
+  }
+
+  // Feature 2 — maps a shared TokenUsage onto the LlmResponse token fields.
+  // Never throws; always yields complete input/output counts plus the
+  // estimated flag and NATIVE/ESTIMATED/MIXED source tag.
+  private buildTokenUsageFields(usage: TokenUsage): {
+    inputTokens: number;
+    outputTokens: number;
+    tokenEstimated: boolean;
+    tokenSource: TokenUsageSource;
+  } {
+    return {
+      inputTokens: usage.promptTokens,
+      outputTokens: usage.completionTokens,
+      tokenEstimated: usage.estimated,
+      tokenSource: usage.source,
     };
   }
 

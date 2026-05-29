@@ -102,6 +102,13 @@ export interface MessageCompletedPayload extends BaseEventPayload {
   criticScore?: number;
   executionPath?: string;
   targetLatencyMs?: number;
+  // Usage-attribution fields (optional, additive — populated by chat-service so the
+  // audit usage ledger can attribute model-call usage to the real user and tag it
+  // by call context instead of hardcoding userId:'system'/context:'chat').
+  userId?: string;
+  tokenContext?: string;
+  tokenEstimated?: boolean;
+  tokenSource?: string;
 }
 
 export interface MessageFeedbackSetPayload extends BaseEventPayload {

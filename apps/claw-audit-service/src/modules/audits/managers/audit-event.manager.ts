@@ -348,19 +348,25 @@ export class AuditEventManager implements OnModuleInit {
     });
 
     const totalTokens = (payload.inputTokens ?? 0) + (payload.outputTokens ?? 0);
+    const context = payload.tokenContext ?? 'chat';
 
     await this.usageService.createUsageEntry({
-      userId: 'system',
+      userId: payload.userId ?? 'system',
       resourceType: 'llm_tokens',
       action: 'message.completed',
       quantity: totalTokens,
       unit: 'tokens',
+      context,
+      estimated: payload.tokenEstimated,
       metadata: {
         messageId: payload.messageId,
         threadId: payload.threadId,
         provider: payload.provider,
         model: payload.model,
         latencyMs: payload.latencyMs,
+        context,
+        estimated: payload.tokenEstimated,
+        tokenSource: payload.tokenSource,
       },
     });
   }

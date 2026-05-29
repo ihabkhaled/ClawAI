@@ -32,3 +32,14 @@ export { ContextPackItemType } from './context-pack-item-type.enum';
 export { ContextPackVisibility } from './context-pack-visibility.enum';
 // === Memory + Context Integration V2 ===
 export { RetrievalReason } from './retrieval-reason.enum';
+// === Universal Judge / Token Accounting / Compare / Markdown ===
+export { ModelRuntime } from './model-runtime.enum';
+export { ModelCapability } from './model-capability.enum';
+export { ModelAvailabilityStatus } from './model-availability-status.enum';
+export { ModelSelectorContext } from './model-selector-context.enum';
+export { TokenUsageSource } from './token-usage-source.enum';
+export { TokenEstimatorKind } from './token-estimator-kind.enum';
+export { TokenLedgerContext } from './token-ledger-context.enum';
+export { JudgeCriterionKey } from './judge-criterion-key.enum';
+export { JudgeExecutionMode } from './judge-execution-mode.enum';
+export { CompareResultViewMode } from './compare-result-view-mode.enum';

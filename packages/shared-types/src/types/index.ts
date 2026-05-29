@@ -9,3 +9,13 @@ export type {
   RetrievalRequest,
   ContextReceipt,
 } from './retrieval.type';
+// === Universal Judge / Token Accounting / Compare / Markdown ===
+export type { TokenUsage, UserTokenQuotaSummary } from './token-usage.type';
+export type { AvailableModelOption } from './model-option.type';
+export type {
+  JudgeCriterion,
+  JudgeScore,
+  JudgeRequest,
+  JudgeEvaluationResult,
+} from './judge.type';
+export type { CompareModelError, CompareModelResult } from './compare-result.type';

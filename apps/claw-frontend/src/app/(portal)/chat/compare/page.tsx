@@ -3,6 +3,7 @@
 import { ArrowRight, GitCompareArrows, Loader2, Send } from 'lucide-react';
 
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
+import { DailyTokenIndicator } from '@/components/chat/daily-token-indicator';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
 import { ParallelResultsGrid } from '@/components/chat/parallel-results-grid';
 import { ParallelSummaryBar } from '@/components/chat/parallel-summary-bar';
@@ -45,6 +46,8 @@ export default function ComparePage() {
   return (
     <div className="flex h-full flex-col gap-6">
       <PageHeader title={t('compare.title')} description={t('compare.description')} />
+
+      <DailyTokenIndicator />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
@@ -127,7 +130,7 @@ export default function ComparePage() {
 
           {allResponded ? <ParallelSummaryBar messages={pollingMessages} t={t} /> : null}
 
-          <ParallelResultsGrid messages={pollingMessages} t={t} />
+          <ParallelResultsGrid messages={pollingMessages} prompt={prompt} t={t} />
         </div>
       ) : null}
 

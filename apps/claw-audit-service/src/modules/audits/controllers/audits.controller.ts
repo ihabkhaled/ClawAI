@@ -51,6 +51,7 @@ export class AuditsController {
       limit: query.limit,
       provider: query.provider,
       model: query.model,
+      context: query.context,
       startDate: query.startDate,
       endDate: query.endDate,
     });

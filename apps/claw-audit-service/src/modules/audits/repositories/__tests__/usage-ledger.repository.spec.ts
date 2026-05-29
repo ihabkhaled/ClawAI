@@ -86,6 +86,23 @@ describe('UsageLedgerRepository', () => {
       expect(q['metadata.model']).toBe('gpt-4');
     });
 
+    it('applies context filter when present', async () => {
+      const queryChain = buildQueryChain();
+      modelMock.find.mockReturnValue(queryChain);
+      await repository.findAll({ context: 'compare' });
+      const q = modelMock.find.mock.calls[0]?.[0];
+      expect(q.context).toBe('compare');
+    });
+
+    it('omits context from the query when absent', async () => {
+      const queryChain = buildQueryChain();
+      modelMock.find.mockReturnValue(queryChain);
+      await repository.findAll({ provider: 'openai' });
+      const q = modelMock.find.mock.calls[0]?.[0];
+      expect(q.context).toBeUndefined();
+      expect('context' in q).toBe(false);
+    });
+
     it('applies date range filters', async () => {
       const queryChain = buildQueryChain();
       modelMock.find.mockReturnValue(queryChain);
