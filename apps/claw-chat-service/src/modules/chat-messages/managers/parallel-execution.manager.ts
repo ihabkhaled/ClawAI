@@ -163,7 +163,7 @@ export class ParallelExecutionManager {
     threadId: string,
   ): Promise<ParallelModelResponse[]> {
     const promises = models.map((target) =>
-      this.executeWithTimeout(target, context, threadSettings),
+      this.executeWithTimeout(target, context, threadSettings, parallelGroupId, threadId),
     );
 
     const settled = await Promise.allSettled(promises);
@@ -390,8 +390,16 @@ export class ParallelExecutionManager {
     target: ParallelModelTarget,
     context: AssembledContext,
     threadSettings: ThreadSettings | undefined,
+    parallelGroupId: string,
+    threadId: string,
   ): Promise<ParallelModelResponse> {
-    const modelPromise = this.executeSingleModel(target, context, threadSettings);
+    const modelPromise = this.executeSingleModel(
+      target,
+      context,
+      threadSettings,
+      parallelGroupId,
+      threadId,
+    );
     let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
     const timeoutPromise = new Promise<never>((_resolve, reject) => {
       timeoutHandle = setTimeout(
@@ -424,18 +432,23 @@ export class ParallelExecutionManager {
     target: ParallelModelTarget,
     context: AssembledContext,
     threadSettings: ThreadSettings | undefined,
+    parallelGroupId: string,
+    threadId: string,
   ): Promise<ParallelModelResponse> {
     const modelStart = Date.now();
-    this.logger.debug(`executeSingleModel: calling ${target.provider}/${target.model}`);
+    const laneId = `${parallelGroupId}:${target.provider}:${target.model}`;
+    this.logger.debug(`executeSingleModel: streaming lane ${laneId}`);
 
     try {
-      const llmResponse = await this.chatExecutionManager.callProvider(
+      // Each compared model streams on its own lane so the UI can show
+      // independent live progress per model.
+      const llmResponse = await this.chatExecutionManager.streamModelForLane(
         target.provider,
         target.model,
         context,
         modelStart,
-        false,
         threadSettings,
+        { threadId, messageId: laneId, laneId, parallelGroupId },
       );
 
       return {

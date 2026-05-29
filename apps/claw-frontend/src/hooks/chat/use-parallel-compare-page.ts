@@ -4,6 +4,7 @@ import { MIN_PARALLEL_MODELS, MAX_PARALLEL_MODELS } from '@/constants';
 import { useJudgeModelOptions } from '@/hooks/chat/use-judge-model-options';
 import { useParallelCompare } from '@/hooks/chat/use-parallel-compare';
 import { useParallelPoll } from '@/hooks/chat/use-parallel-poll';
+import { useParallelStream } from '@/hooks/chat/use-parallel-stream';
 import { useTranslation } from '@/lib/i18n';
 import type { ParallelModelTarget, UseParallelComparePageReturn } from '@/types';
 
@@ -22,6 +23,7 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     threadId,
     selectedModels.length,
   );
+  const { lanes: laneStreams } = useParallelStream(threadId ?? undefined, isPending || isPolling);
 
   const selectionError =
     selectedModels.length > 0 && selectedModels.length < MIN_PARALLEL_MODELS
@@ -69,6 +71,7 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     pollingMessages,
     isPolling,
     allResponded,
+    laneStreams,
     handleViewInThread,
     judgeEnabled,
     setJudgeEnabled,

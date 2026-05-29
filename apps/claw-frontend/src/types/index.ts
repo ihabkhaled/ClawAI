@@ -314,6 +314,7 @@ export type {
   StreamMetricsHudProps,
   StreamThinkingPanelProps,
   StreamLiveAnswerProps,
+  ParallelLaneCardProps,
 } from './stream-component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {

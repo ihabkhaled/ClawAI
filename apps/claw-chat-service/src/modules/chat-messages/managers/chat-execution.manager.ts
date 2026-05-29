@@ -393,13 +393,37 @@ export class ChatExecutionManager implements OnModuleInit {
   // Dispatches a streamable candidate to the right transport: native SSE for
   // cloud + llama.cpp, native NDJSON for the Ollama connector, and a simulated
   // chunked replay for local Ollama (ollama-service has no streaming endpoint).
+  // Public entry used by the parallel/compare flow to stream ONE model on its
+  // own lane. Falls back to the buffered call for non-streamable providers.
+  async streamModelForLane(
+    provider: string,
+    model: string,
+    context: AssembledContext,
+    startTime: number,
+    threadSettings: ThreadSettings | undefined,
+    streamContext: StreamContext,
+  ): Promise<LlmResponse> {
+    if (!this.canStreamCandidate(provider)) {
+      return this.callProvider(provider, model, context, startTime, false, threadSettings);
+    }
+    return this.streamCandidate(
+      { provider, model },
+      context,
+      startTime,
+      false,
+      threadSettings,
+      undefined,
+      streamContext,
+    );
+  }
+
   private async streamCandidate(
     candidate: { provider: string; model: string },
     context: AssembledContext,
     startTime: number,
     usedFallback: boolean,
     threadSettings: ThreadSettings | undefined,
-    executionOptions: ExecutionOptions,
+    executionOptions: ExecutionOptions | undefined,
     streamContext: StreamContext,
   ): Promise<LlmResponse> {
     if (candidate.provider === OLLAMA_PROVIDER) {
@@ -447,7 +471,7 @@ export class ChatExecutionManager implements OnModuleInit {
     startTime: number,
     usedFallback: boolean,
     threadSettings: ThreadSettings | undefined,
-    executionOptions: ExecutionOptions,
+    executionOptions: ExecutionOptions | undefined,
     streamContext: StreamContext,
   ): Promise<LlmResponse> {
     const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
@@ -464,6 +488,8 @@ export class ChatExecutionManager implements OnModuleInit {
       {
         threadId: streamContext.threadId,
         messageId: streamContext.messageId,
+        laneId: streamContext.laneId,
+        parallelGroupId: streamContext.parallelGroupId,
         provider,
         model: effectiveModel,
         url,
@@ -472,7 +498,7 @@ export class ChatExecutionManager implements OnModuleInit {
         protocol,
         startMs: startTime,
         promptTokensEstimate: this.estimatePromptTokens(context),
-        maxOutputTokens: executionOptions.maxOutputTokens,
+        maxOutputTokens: executionOptions?.maxOutputTokens,
         timeoutMs: AppConfig.get().OLLAMA_GENERATE_TIMEOUT_MS,
       },
       usedFallback,
@@ -486,7 +512,7 @@ export class ChatExecutionManager implements OnModuleInit {
     startTime: number,
     usedFallback: boolean,
     threadSettings: ThreadSettings | undefined,
-    executionOptions: ExecutionOptions,
+    executionOptions: ExecutionOptions | undefined,
     streamContext: StreamContext,
   ): Promise<LlmResponse> {
     const config = AppConfig.get();
@@ -494,6 +520,8 @@ export class ChatExecutionManager implements OnModuleInit {
       {
         threadId: streamContext.threadId,
         messageId: streamContext.messageId,
+        laneId: streamContext.laneId,
+        parallelGroupId: streamContext.parallelGroupId,
         provider,
         model,
         url: `${config.LLAMACPP_SERVICE_URL}/api/v1/v1/chat/completions`,
@@ -501,7 +529,7 @@ export class ChatExecutionManager implements OnModuleInit {
         protocol: AiStreamProtocol.OPENAI_SSE,
         startMs: startTime,
         promptTokensEstimate: this.estimatePromptTokens(context),
-        maxOutputTokens: executionOptions.maxOutputTokens,
+        maxOutputTokens: executionOptions?.maxOutputTokens,
         timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
       },
       usedFallback,
@@ -516,7 +544,7 @@ export class ChatExecutionManager implements OnModuleInit {
     startTime: number,
     usedFallback: boolean,
     threadSettings: ThreadSettings | undefined,
-    executionOptions: ExecutionOptions,
+    executionOptions: ExecutionOptions | undefined,
     streamContext: StreamContext,
   ): Promise<LlmResponse> {
     const executor = this.providerStreamExecutor;
@@ -532,6 +560,8 @@ export class ChatExecutionManager implements OnModuleInit {
       await executor.runSimulated({
         threadId: streamContext.threadId,
         messageId: streamContext.messageId,
+        laneId: streamContext.laneId,
+        parallelGroupId: streamContext.parallelGroupId,
         provider: OLLAMA_PROVIDER,
         model: buffered.model,
         fullContent: buffered.content,
@@ -539,7 +569,7 @@ export class ChatExecutionManager implements OnModuleInit {
         outputTokens: buffered.outputTokens,
         startMs: startTime,
         promptTokensEstimate: this.estimatePromptTokens(context),
-        maxOutputTokens: executionOptions.maxOutputTokens,
+        maxOutputTokens: executionOptions?.maxOutputTokens,
       });
     }
     return buffered;
@@ -554,7 +584,10 @@ export class ChatExecutionManager implements OnModuleInit {
     if (executor === undefined || cancellation === undefined) {
       throw new BusinessException('Streaming dependencies unavailable', 'STREAM_NOT_AVAILABLE');
     }
-    const controller = cancellation.register(base.threadId);
+    // Lane runs (parallel/compare) register under their laneId so each model
+    // can be cancelled independently; single-chat runs key off threadId.
+    const cancelKey = base.laneId ?? base.threadId;
+    const controller = cancellation.register(cancelKey);
     try {
       const result = await executor.run({ ...base, abortSignal: controller.signal });
       if (result.content.trim().length === 0 && !result.cancelled) {
@@ -574,7 +607,7 @@ export class ChatExecutionManager implements OnModuleInit {
         usedFallback,
       };
     } finally {
-      cancellation.release(base.threadId);
+      cancellation.release(cancelKey);
     }
   }
 

@@ -5,13 +5,13 @@ import { ArrowRight, GitCompareArrows, Loader2, Send } from 'lucide-react';
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
 import { ParallelResultsGrid } from '@/components/chat/parallel-results-grid';
+import { ParallelLaneCard } from '@/components/chat/stream/parallel-lane-card';
 import { ParallelSummaryBar } from '@/components/chat/parallel-summary-bar';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useParallelComparePage } from '@/hooks/chat/use-parallel-compare-page';
 
@@ -29,6 +29,7 @@ export default function ComparePage() {
     pollingMessages,
     isPolling,
     allResponded,
+    laneStreams,
     handleViewInThread,
     judgeEnabled,
     setJudgeEnabled,
@@ -94,13 +95,12 @@ export default function ComparePage() {
       {showLoading ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {selectedModels.map((m) => (
-            <Card key={`${m.provider}:${m.model}`} className="p-4">
-              <Skeleton className="mb-2 h-4 w-2/3" />
-              <Skeleton className="mb-4 h-3 w-1/3" />
-              <Skeleton className="mb-2 h-3 w-full" />
-              <Skeleton className="mb-2 h-3 w-5/6" />
-              <Skeleton className="h-3 w-4/6" />
-            </Card>
+            <ParallelLaneCard
+              key={`${m.provider}:${m.model}`}
+              provider={m.provider}
+              model={m.model}
+              lane={laneStreams[`${m.provider}:${m.model}`]}
+            />
           ))}
         </div>
       ) : null}

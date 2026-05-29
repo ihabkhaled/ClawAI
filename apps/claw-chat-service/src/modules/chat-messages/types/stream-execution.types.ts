@@ -6,6 +6,8 @@ import { type AiStreamProtocol } from '../../../common/enums';
 export type StreamExecutionInput = {
   threadId: string;
   messageId?: string;
+  laneId?: string;
+  parallelGroupId?: string;
   provider: string;
   model: string;
   url: string;
@@ -34,6 +36,9 @@ export type StreamExecutionResult = {
 export type StreamContext = {
   threadId: string;
   messageId: string;
+  // Set for parallel/compare runs so each model streams on its own lane.
+  laneId?: string;
+  parallelGroupId?: string;
 };
 
 // Input for the simulated path: provider could not stream natively, so a
@@ -42,6 +47,8 @@ export type StreamContext = {
 export type SimulatedStreamInput = {
   threadId: string;
   messageId?: string;
+  laneId?: string;
+  parallelGroupId?: string;
   provider: string;
   model: string;
   fullContent: string;

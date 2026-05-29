@@ -1,6 +1,6 @@
 import type { CompareJudgeState, ParallelModelStatus } from '@/enums';
 
-import type { ChatMessage, JudgeModelOption, JudgeReview } from './chat.types';
+import type { ChatMessage, JudgeModelOption, JudgeReview, LaneStreamMap } from './chat.types';
 
 export type ParallelModelResponse = {
   provider: string;
@@ -66,6 +66,7 @@ export type UseParallelComparePageReturn = {
   pollingMessages: ChatMessage[];
   isPolling: boolean;
   allResponded: boolean;
+  laneStreams: LaneStreamMap;
   handleViewInThread: () => void;
   judgeEnabled: boolean;
   setJudgeEnabled: (value: boolean) => void;

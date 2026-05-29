@@ -24,6 +24,8 @@ type EmitCtx = {
   provider: string;
   model: string;
   messageId?: string;
+  laneId?: string;
+  parallelGroupId?: string;
   protocol: AiStreamProtocol;
 };
 
@@ -81,6 +83,8 @@ export class ProviderStreamExecutor {
       provider: input.provider,
       model: input.model,
       messageId: input.messageId,
+      laneId: input.laneId,
+      parallelGroupId: input.parallelGroupId,
       protocol: AiStreamProtocol.SIMULATED,
     };
     const tracker = new StreamProgressTracker(
@@ -192,6 +196,8 @@ export class ProviderStreamExecutor {
       model: ctx.model,
       streamRunId: ctx.messageId,
       messageId: ctx.messageId,
+      laneId: ctx.laneId,
+      parallelGroupId: ctx.parallelGroupId,
       delta: text,
       accumulatedChars: state.content.length,
     });
@@ -215,6 +221,8 @@ export class ProviderStreamExecutor {
       model: ctx.model,
       streamRunId: ctx.messageId,
       messageId: ctx.messageId,
+      laneId: ctx.laneId,
+      parallelGroupId: ctx.parallelGroupId,
       reasoningDelta: text,
       visibility,
     });
@@ -246,6 +254,8 @@ export class ProviderStreamExecutor {
       model: ctx.model,
       streamRunId: ctx.messageId,
       messageId: ctx.messageId,
+      laneId: ctx.laneId,
+      parallelGroupId: ctx.parallelGroupId,
       metrics: tracker.snapshot(AiStreamStage.GENERATING, now),
     });
   }
@@ -257,6 +267,8 @@ export class ProviderStreamExecutor {
       model: ctx.model,
       streamRunId: ctx.messageId,
       messageId: ctx.messageId,
+      laneId: ctx.laneId,
+      parallelGroupId: ctx.parallelGroupId,
       metrics: tracker.snapshot(stage, Date.now()),
     });
     this.logger.debug(
@@ -270,6 +282,8 @@ export class ProviderStreamExecutor {
       model: ctx.model,
       streamRunId: ctx.messageId,
       messageId: ctx.messageId,
+      laneId: ctx.laneId,
+      parallelGroupId: ctx.parallelGroupId,
       protocol: ctx.protocol,
       stage,
       label,
@@ -282,6 +296,8 @@ export class ProviderStreamExecutor {
       provider: input.provider,
       model: input.model,
       messageId: input.messageId,
+      laneId: input.laneId,
+      parallelGroupId: input.parallelGroupId,
       protocol: input.protocol,
     };
   }

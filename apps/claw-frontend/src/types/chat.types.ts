@@ -230,6 +230,14 @@ export type StreamLiveState = {
   isStreaming: boolean;
 };
 
+// Per-lane live state for parallel/compare runs, keyed by `${provider}:${model}`.
+export type LaneStreamState = StreamLiveState & {
+  provider: string;
+  model: string;
+};
+
+export type LaneStreamMap = Record<string, LaneStreamState>;
+
 export type VisibleProgressStage = {
   id: string;
   type: StreamEventType;

@@ -1,6 +1,6 @@
 import type { AiReasoningVisibility, AiStreamProgressConfidence, AiStreamStage } from '@/enums';
 
-import type { StreamMetrics, StreamUsage } from './chat.types';
+import type { LaneStreamState, StreamMetrics, StreamUsage } from './chat.types';
 
 export type StreamProgressBarProps = {
   percent: number;
@@ -29,4 +29,10 @@ export type StreamLiveAnswerProps = {
   content: string;
   isStreaming: boolean;
   className?: string;
+};
+
+export type ParallelLaneCardProps = {
+  provider: string;
+  model: string;
+  lane?: LaneStreamState;
 };
