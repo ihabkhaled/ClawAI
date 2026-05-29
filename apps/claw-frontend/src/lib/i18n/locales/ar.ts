@@ -783,6 +783,11 @@ export const ar: TranslationDictionary = {
     roleAdmin: 'مشرف',
     roleOperator: 'مُشغِّل',
     roleViewer: 'مُشاهد',
+    planColumn: 'الخطة',
+    assignPlan: 'تعيين خطة',
+    noPlan: 'لا توجد خطة',
+    planAssigned: 'تم تعيين الخطة',
+    planAssignFailed: 'فشل تعيين الخطة',
   },
   settings: {
     title: 'الإعدادات',

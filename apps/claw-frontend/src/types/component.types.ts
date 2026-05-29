@@ -76,6 +76,7 @@ import type {
   ParallelResponse,
 } from './parallel.types';
 import type { PipelineResult, PipelineStageResult } from './pipeline.types';
+import type { PlanView } from './plan.types';
 import type { ProviderFailureStat, RecentFallback } from './recovery.types';
 import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
 import type { ReplayBatchResult, ReplayResult } from './replay.types';
@@ -270,10 +271,14 @@ export type GroupedModels = {
 
 export type UserTableProps = {
   users: AdminUser[];
+  plans: PlanView[];
+  pendingId: string | null;
   onChangeRole: (userId: string, role: string) => void;
   onDeactivate: (userId: string) => void;
+  onAssignPlan: (userId: string, planId: string) => void;
   isRoleChangePending: boolean;
   isDeactivatePending: boolean;
+  isAssignPlanPending: boolean;
 };
 
 // ─── Chat component props ───────────────────────────────────────────────────
@@ -651,10 +656,14 @@ export type UsersContentProps = {
   isLoading: boolean;
   isError: boolean;
   users: AdminUser[];
+  plans: PlanView[];
+  pendingId: string | null;
   onChangeRole: (userId: string, role: string) => void;
   onDeactivate: (userId: string) => void;
+  onAssignPlan: (userId: string, planId: string) => void;
   isRoleChangePending: boolean;
   isDeactivatePending: boolean;
+  isAssignPlanPending: boolean;
   t: TranslateFunction;
 };
 

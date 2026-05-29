@@ -797,6 +797,11 @@ export const es: TranslationDictionary = {
     roleAdmin: 'Administrador',
     roleOperator: 'Operador',
     roleViewer: 'Visualizador',
+    planColumn: 'Plan',
+    assignPlan: 'Asignar plan',
+    noPlan: 'Sin plan',
+    planAssigned: 'Plan asignado',
+    planAssignFailed: 'No se pudo asignar el plan',
   },
   settings: {
     title: 'Ajustes',

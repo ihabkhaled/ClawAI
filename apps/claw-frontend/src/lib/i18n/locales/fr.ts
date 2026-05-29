@@ -800,6 +800,11 @@ export const fr: TranslationDictionary = {
     roleAdmin: 'Administration',
     roleOperator: 'Opérateur',
     roleViewer: 'Observateur',
+    planColumn: 'Forfait',
+    assignPlan: 'Attribuer un forfait',
+    noPlan: 'Aucun forfait',
+    planAssigned: 'Forfait attribué',
+    planAssignFailed: "Échec de l'attribution du forfait",
   },
   settings: {
     title: 'Paramètres',

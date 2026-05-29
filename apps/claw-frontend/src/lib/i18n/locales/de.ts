@@ -798,6 +798,11 @@ export const de: TranslationDictionary = {
     roleAdmin: 'Admin',
     roleOperator: 'Operator',
     roleViewer: 'Betrachter',
+    planColumn: 'Tarif',
+    assignPlan: 'Tarif zuweisen',
+    noPlan: 'Kein Tarif',
+    planAssigned: 'Tarif zugewiesen',
+    planAssignFailed: 'Tarif konnte nicht zugewiesen werden',
   },
   settings: {
     title: 'Einstellungen',

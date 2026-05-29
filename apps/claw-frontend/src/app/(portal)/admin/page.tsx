@@ -17,13 +17,17 @@ export default function AdminPage() {
     t,
     user,
     users,
+    plans,
+    actionPending,
     activeCount,
     usersQuery,
     healthQuery,
     handleChangeRole,
     handleDeactivate,
+    handleAssignPlan,
     isRoleChangePending,
     isDeactivatePending,
+    isAssignPlanPending,
   } = useAdminPage();
 
   if (user && user.role !== UserRole.ADMIN) {
@@ -69,9 +73,12 @@ export default function AdminPage() {
                   variant="outline"
                   className={cn(
                     'capitalize',
-                    healthQuery.data.status === HealthStatus.HEALTHY && 'border-emerald-500 text-emerald-600 dark:text-emerald-400',
-                    healthQuery.data.status === HealthStatus.DEGRADED && 'border-amber-500 text-amber-600 dark:text-amber-400',
-                    healthQuery.data.status === HealthStatus.UNHEALTHY && 'border-destructive text-destructive',
+                    healthQuery.data.status === HealthStatus.HEALTHY &&
+                      'border-emerald-500 text-emerald-600 dark:text-emerald-400',
+                    healthQuery.data.status === HealthStatus.DEGRADED &&
+                      'border-amber-500 text-amber-600 dark:text-amber-400',
+                    healthQuery.data.status === HealthStatus.UNHEALTHY &&
+                      'border-destructive text-destructive',
                   )}
                 >
                   {healthQuery.data.status}
@@ -98,10 +105,14 @@ export default function AdminPage() {
           isLoading={usersQuery.isLoading}
           isError={usersQuery.isError}
           users={users}
+          plans={plans}
+          pendingId={actionPending}
           onChangeRole={handleChangeRole}
           onDeactivate={handleDeactivate}
+          onAssignPlan={handleAssignPlan}
           isRoleChangePending={isRoleChangePending}
           isDeactivatePending={isDeactivatePending}
+          isAssignPlanPending={isAssignPlanPending}
           t={t}
         />
       </div>

@@ -790,6 +790,11 @@ export const hi: TranslationDictionary = {
     roleAdmin: 'एडमिन',
     roleOperator: 'ऑपरेटर',
     roleViewer: 'दर्शक',
+    planColumn: 'योजना',
+    assignPlan: 'योजना सौंपें',
+    noPlan: 'कोई योजना नहीं',
+    planAssigned: 'योजना सौंपी गई',
+    planAssignFailed: 'योजना सौंपने में विफल',
   },
   settings: {
     title: 'सेटिंग्स',

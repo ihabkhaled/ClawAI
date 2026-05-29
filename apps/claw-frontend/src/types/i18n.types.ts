@@ -782,6 +782,11 @@ export type TranslationDictionary = {
     roleAdmin: string;
     roleOperator: string;
     roleViewer: string;
+    planColumn: string;
+    assignPlan: string;
+    noPlan: string;
+    planAssigned: string;
+    planAssignFailed: string;
   };
   settings: {
     title: string;

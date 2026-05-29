@@ -14,6 +14,7 @@ export interface SafeUser {
   mustChangePassword: boolean;
   languagePreference: string;
   appearancePreference: string;
+  activePlanId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

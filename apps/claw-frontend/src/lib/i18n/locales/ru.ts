@@ -795,6 +795,11 @@ export const ru: TranslationDictionary = {
     roleAdmin: 'Администратор',
     roleOperator: 'Оператор',
     roleViewer: 'Наблюдатель',
+    planColumn: 'Тариф',
+    assignPlan: 'Назначить тариф',
+    noPlan: 'Без тарифа',
+    planAssigned: 'Тариф назначен',
+    planAssignFailed: 'Не удалось назначить тариф',
   },
   settings: {
     title: 'Настройки',

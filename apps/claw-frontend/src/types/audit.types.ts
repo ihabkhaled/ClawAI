@@ -1,4 +1,4 @@
-import type { AuditAction, AuditSeverity } from "@/enums";
+import type { AuditAction, AuditSeverity } from '@/enums';
 
 export interface AuditLog {
   _id: string;
@@ -109,6 +109,7 @@ export interface AdminUser {
   role: string;
   status: string;
   createdAt: string;
+  activePlanId: string | null;
 }
 
 export interface AdminUsersResponse {

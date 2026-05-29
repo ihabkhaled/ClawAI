@@ -9,10 +9,14 @@ export function UsersContent({
   isLoading,
   isError,
   users,
+  plans,
+  pendingId,
   onChangeRole,
   onDeactivate,
+  onAssignPlan,
   isRoleChangePending,
   isDeactivatePending,
+  isAssignPlanPending,
   t,
 }: UsersContentProps): React.ReactElement {
   if (isLoading) {
@@ -32,10 +36,14 @@ export function UsersContent({
   return (
     <UserTable
       users={users}
+      plans={plans}
+      pendingId={pendingId}
       onChangeRole={onChangeRole}
       onDeactivate={onDeactivate}
+      onAssignPlan={onAssignPlan}
       isRoleChangePending={isRoleChangePending}
       isDeactivatePending={isDeactivatePending}
+      isAssignPlanPending={isAssignPlanPending}
     />
   );
 }

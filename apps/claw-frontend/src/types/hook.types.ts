@@ -18,6 +18,7 @@ import type { UploadFileRequest } from './file.types';
 import type { AggregatedHealth } from './health.types';
 import type { TranslateFunction } from './i18n.types';
 import type { PipelineResult } from './pipeline.types';
+import type { PlanView } from './plan.types';
 import type { RecoveryStats } from './recovery.types';
 import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
 import type { ReplayBatchResult } from './replay.types';
@@ -37,6 +38,7 @@ export type UseAdminPageReturn = {
   user: { role: string } | null;
   actionPending: string | null;
   users: AdminUser[];
+  plans: PlanView[];
   activeCount: number;
   usersQuery: {
     isLoading: boolean;
@@ -49,8 +51,10 @@ export type UseAdminPageReturn = {
   };
   handleChangeRole: (userId: string, role: string) => void;
   handleDeactivate: (userId: string) => void;
+  handleAssignPlan: (userId: string, planId: string) => void;
   isRoleChangePending: boolean;
   isDeactivatePending: boolean;
+  isAssignPlanPending: boolean;
 };
 
 export type UseUserTableStateReturn = {

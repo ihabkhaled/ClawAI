@@ -24,13 +24,18 @@ import type { UserTableProps } from '@/types';
 
 export function UserTable({
   users,
+  plans,
+  pendingId,
   onChangeRole,
   onDeactivate,
+  onAssignPlan,
   isRoleChangePending,
   isDeactivatePending,
+  isAssignPlanPending,
 }: UserTableProps) {
   const { editingUserId, setEditingUserId, handleRoleSelect } = useUserTableState();
   const { t } = useTranslation();
+  const activePlans = plans.filter((plan) => plan.isActive);
 
   if (users.length === 0) {
     return (
@@ -49,6 +54,7 @@ export function UserTable({
             <TableHead>{t('admin.colEmail')}</TableHead>
             <TableHead>{t('admin.colRole')}</TableHead>
             <TableHead>{t('admin.colStatus')}</TableHead>
+            <TableHead>{t('admin.planColumn')}</TableHead>
             <TableHead>{t('admin.colJoined')}</TableHead>
             <TableHead className="text-end">{t('admin.colActions')}</TableHead>
           </TableRow>
@@ -89,6 +95,24 @@ export function UserTable({
                 <Badge variant={user.status === 'ACTIVE' ? 'default' : 'secondary'}>
                   {user.status}
                 </Badge>
+              </TableCell>
+              <TableCell>
+                <Select
+                  value={user.activePlanId ?? undefined}
+                  disabled={isAssignPlanPending && pendingId === user.id}
+                  onValueChange={(value) => onAssignPlan(user.id, value)}
+                >
+                  <SelectTrigger className="w-[160px]" aria-label={t('admin.assignPlan')}>
+                    <SelectValue placeholder={t('admin.noPlan')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activePlans.map((plan) => (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        {plan.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </TableCell>
               <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
               <TableCell className="text-end">

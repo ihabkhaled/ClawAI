@@ -1,5 +1,5 @@
-import { type User } from "../../../generated/prisma";
-import { type SafeUser } from "../types/users.types";
+import { type User } from '../../../generated/prisma';
+import { type SafeUser } from '../types/users.types';
 
 export function toSafeUser(user: User): SafeUser {
   return {
@@ -11,6 +11,7 @@ export function toSafeUser(user: User): SafeUser {
     mustChangePassword: user.mustChangePassword,
     languagePreference: user.languagePreference,
     appearancePreference: user.appearancePreference,
+    activePlanId: user.activePlanId,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
