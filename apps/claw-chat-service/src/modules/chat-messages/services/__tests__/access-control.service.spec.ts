@@ -38,9 +38,12 @@ describe('AccessControlService', () => {
     service = new AccessControlService();
   });
 
-  it('allows when no model restriction and quota remaining', async () => {
+  it('allows and returns entitlements when no model restriction and quota remaining', async () => {
     getEntitlements.mockResolvedValue(ent());
-    await expect(service.assertCanSendMessage('u1', {})).resolves.toBeUndefined();
+    await expect(service.assertCanSendMessage('u1', {})).resolves.toMatchObject({
+      userId: 'u1',
+      isAdmin: false,
+    });
   });
 
   it('rejects a forbidden manual model (403)', async () => {
@@ -80,12 +83,12 @@ describe('AccessControlService', () => {
     );
     await expect(
       service.assertCanSendMessage('u1', { provider: 'ANTHROPIC', model: 'claude-opus' }),
-    ).resolves.toBeUndefined();
+    ).resolves.toMatchObject({ isAdmin: true });
   });
 
-  it('fails OPEN when the entitlements service is unreachable', async () => {
+  it('fails OPEN (returns null) when the entitlements service is unreachable', async () => {
     getEntitlements.mockRejectedValue(new Error('auth down'));
-    await expect(service.assertCanSendMessage('u1', {})).resolves.toBeUndefined();
+    await expect(service.assertCanSendMessage('u1', {})).resolves.toBeNull();
   });
 
   it('recordUsage swallows adapter errors (fail-soft)', async () => {
