@@ -33,6 +33,15 @@ export enum Permission {
   COMPARE_USE = 'COMPARE_USE',
   JUDGE_USE = 'JUDGE_USE',
 
+  // Feature-page access (gate whole pages + their non-admin endpoints). These
+  // let the role→permission matrix decide which product surfaces a role sees,
+  // independently of the per-resource *_OWN write permissions above.
+  FILES_USE = 'FILES_USE',
+  RESEARCH_USE = 'RESEARCH_USE',
+  AGENT_USE = 'AGENT_USE',
+  MODELS_CATALOG_VIEW = 'MODELS_CATALOG_VIEW',
+  VIEW_DASHBOARD = 'VIEW_DASHBOARD',
+
   // Admin
   ADMIN_USERS_MANAGE = 'ADMIN_USERS_MANAGE',
   ADMIN_PLANS_MANAGE = 'ADMIN_PLANS_MANAGE',
@@ -40,6 +49,7 @@ export enum Permission {
   ADMIN_CONNECTORS_MANAGE = 'ADMIN_CONNECTORS_MANAGE',
   ADMIN_ROUTING_MANAGE = 'ADMIN_ROUTING_MANAGE',
   ADMIN_MODELS_MANAGE = 'ADMIN_MODELS_MANAGE',
+  ADMIN_WORKSPACE_AUTOMATION_MANAGE = 'ADMIN_WORKSPACE_AUTOMATION_MANAGE',
   ADMIN_SYSTEM_VIEW = 'ADMIN_SYSTEM_VIEW',
   ADMIN_LOGS_VIEW = 'ADMIN_LOGS_VIEW',
   ADMIN_WORKSPACES_VIEW = 'ADMIN_WORKSPACES_VIEW',

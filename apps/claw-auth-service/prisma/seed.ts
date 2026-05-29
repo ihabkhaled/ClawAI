@@ -27,11 +27,23 @@ async function upsertSystemRole(def: (typeof SYSTEM_ROLE_SEED)[number]): Promise
       isAssignable: true,
     },
   });
-  const existingGrants = await prisma.rolePermission.count({ where: { roleId: role.id } });
-  if (existingGrants === 0) {
+  // System roles are code-owned: reconcile grants to the seed (add missing,
+  // remove extras) on every run so the platform baseline access policy is
+  // deterministic. Admins customise via CUSTOM roles, which are never touched.
+  const wanted = new Set<string>(def.permissions);
+  const existing = await prisma.rolePermission.findMany({ where: { roleId: role.id } });
+  const existingSet = new Set(existing.map((g) => g.permission));
+  const toAdd = def.permissions.filter((permission) => !existingSet.has(permission));
+  const toRemove = existing.filter((g) => !wanted.has(g.permission)).map((g) => g.permission);
+  if (toAdd.length > 0) {
     await prisma.rolePermission.createMany({
-      data: def.permissions.map((permission) => ({ roleId: role.id, permission })),
+      data: toAdd.map((permission) => ({ roleId: role.id, permission })),
       skipDuplicates: true,
+    });
+  }
+  if (toRemove.length > 0) {
+    await prisma.rolePermission.deleteMany({
+      where: { roleId: role.id, permission: { in: toRemove } },
     });
   }
   return role.id;

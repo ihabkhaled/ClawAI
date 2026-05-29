@@ -47,39 +47,36 @@ const ALL_PERMISSIONS = [
   'ROUTER_USE',
   'COMPARE_USE',
   'JUDGE_USE',
+  'FILES_USE',
+  'RESEARCH_USE',
+  'AGENT_USE',
+  'MODELS_CATALOG_VIEW',
+  'VIEW_DASHBOARD',
   'ADMIN_USERS_MANAGE',
   'ADMIN_PLANS_MANAGE',
   'ADMIN_PERMISSIONS_MANAGE',
   'ADMIN_CONNECTORS_MANAGE',
   'ADMIN_ROUTING_MANAGE',
   'ADMIN_MODELS_MANAGE',
+  'ADMIN_WORKSPACE_AUTOMATION_MANAGE',
   'ADMIN_SYSTEM_VIEW',
   'ADMIN_LOGS_VIEW',
   'ADMIN_WORKSPACES_VIEW',
   'ADMIN_USAGE_VIEW',
 ];
 
+// Minimal self-service surface for the USER system role (keep in sync with
+// apps/claw-auth-service/src/common/constants/rbac.constants.ts).
 const USER_DEFAULT_PERMISSIONS = [
   'CHAT_USE',
   'CHAT_READ_OWN',
   'CHAT_DELETE_OWN',
-  'MEMORY_USE',
-  'MEMORY_READ_OWN',
-  'MEMORY_CREATE_OWN',
-  'MEMORY_UPDATE_OWN',
-  'MEMORY_DELETE_OWN',
-  'CONTEXT_PACK_READ_OWN',
-  'CONTEXT_PACK_CREATE_OWN',
-  'CONTEXT_PACK_UPDATE_OWN',
-  'CONTEXT_PACK_DELETE_OWN',
   'WORKSPACE_CONNECT_OWN',
   'WORKSPACE_READ_OWN',
   'WORKSPACE_SYNC_OWN',
   'WORKSPACE_ACTION_OWN',
   'MODEL_USE_ALLOWED',
-  'ROUTER_USE',
-  'COMPARE_USE',
-  'JUDGE_USE',
+  'AGENT_USE',
 ];
 
 const SYSTEM_ROLES = [
@@ -183,15 +180,31 @@ async function upsertSystemRole(def) {
       isAssignable: true,
     },
   });
-  // Only seed grants if the role has none — preserves any admin edits made
-  // through the roles admin UI on subsequent re-seeds.
-  const existingGrants = await prisma.rolePermission.count({ where: { roleId: role.id } });
-  if (existingGrants === 0) {
+  // System roles (ADMIN/USER) are code-owned: their grants are reconciled to
+  // the seed definition on every run (add missing, remove extras). Admins who
+  // need different grants create CUSTOM roles via the matrix — those are never
+  // touched here. This keeps the platform's baseline access policy
+  // deterministic across deploys.
+  const wanted = new Set(def.permissions);
+  const existing = await prisma.rolePermission.findMany({ where: { roleId: role.id } });
+  const existingSet = new Set(existing.map((g) => g.permission));
+  const toAdd = def.permissions.filter((permission) => !existingSet.has(permission));
+  const toRemove = existing.filter((g) => !wanted.has(g.permission)).map((g) => g.permission);
+  if (toAdd.length > 0) {
     await prisma.rolePermission.createMany({
-      data: def.permissions.map((permission) => ({ roleId: role.id, permission })),
+      data: toAdd.map((permission) => ({ roleId: role.id, permission })),
       skipDuplicates: true,
     });
-    console.warn(`Seeded ${def.permissions.length} permissions for role ${def.slug}`);
+  }
+  if (toRemove.length > 0) {
+    await prisma.rolePermission.deleteMany({
+      where: { roleId: role.id, permission: { in: toRemove } },
+    });
+  }
+  if (toAdd.length > 0 || toRemove.length > 0) {
+    console.warn(
+      `Reconciled role ${def.slug}: +${toAdd.length} -${toRemove.length} (now ${def.permissions.length} grants)`,
+    );
   }
   return role;
 }

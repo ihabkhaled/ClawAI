@@ -12,3 +12,7 @@ export {
   type PlanFeatureGates,
   type UserEntitlements,
 } from './types';
+export { PermissionGuard } from './permission.guard';
+export { RequirePermissions } from './require-permissions.decorator';
+export { EntitlementsModule, type EntitlementsModuleOptions } from './entitlements.module';
+export { ENTITLEMENTS_ADAPTER, REQUIRE_PERMISSIONS_KEY } from './entitlements.tokens';

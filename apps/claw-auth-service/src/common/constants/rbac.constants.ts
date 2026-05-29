@@ -7,29 +7,24 @@ import { Permission, UserRole } from '@claw/shared-types';
 // Every permission in the catalog (ADMIN baseline).
 export const ALL_PERMISSIONS: Permission[] = Object.values(Permission);
 
-// Own-scoped product usage for self-registered USERs. COMPARE_USE / JUDGE_USE
-// are granted here but further gated by plan feature flags at resolve time.
+// Minimal self-service surface for self-registered USERs: Chat, their own
+// Workspace connectors, the Desktop Agent (still plan-gated), and the
+// model-read permission the chat model-picker needs. Everything else
+// (model/connector/routing config, the Memory & Context management pages,
+// Files, Research, observability, admin) is withheld by default and can be
+// granted per-role by an admin in the role→permission matrix.
+// NOTE: MODEL_USE_ALLOWED gates only the model-LIST read endpoints the chat
+// picker calls — NOT the /models management pages (MODELS_CATALOG_VIEW).
 export const USER_DEFAULT_PERMISSIONS: Permission[] = [
   Permission.CHAT_USE,
   Permission.CHAT_READ_OWN,
   Permission.CHAT_DELETE_OWN,
-  Permission.MEMORY_USE,
-  Permission.MEMORY_READ_OWN,
-  Permission.MEMORY_CREATE_OWN,
-  Permission.MEMORY_UPDATE_OWN,
-  Permission.MEMORY_DELETE_OWN,
-  Permission.CONTEXT_PACK_READ_OWN,
-  Permission.CONTEXT_PACK_CREATE_OWN,
-  Permission.CONTEXT_PACK_UPDATE_OWN,
-  Permission.CONTEXT_PACK_DELETE_OWN,
   Permission.WORKSPACE_CONNECT_OWN,
   Permission.WORKSPACE_READ_OWN,
   Permission.WORKSPACE_SYNC_OWN,
   Permission.WORKSPACE_ACTION_OWN,
   Permission.MODEL_USE_ALLOWED,
-  Permission.ROUTER_USE,
-  Permission.COMPARE_USE,
-  Permission.JUDGE_USE,
+  Permission.AGENT_USE,
 ];
 
 // Slugs of the two system roles. Slugs intentionally equal the UserRole enum
