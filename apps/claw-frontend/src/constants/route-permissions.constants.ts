@@ -43,6 +43,14 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   { prefix: ROUTES.CONTEXT, permission: Permission.CONTEXT_PACK_READ_OWN },
   { prefix: ROUTES.FILES, permission: Permission.FILES_USE },
   { prefix: '/research', permission: Permission.RESEARCH_USE },
+  // Workspace CONFIG sub-pages are admin-only (OAuth client/app secrets +
+  // sync-health dashboard); the provider catalog and per-user connect/use
+  // pages stay open so members can still connect their own accounts.
+  {
+    prefix: ROUTES.WORKSPACE_APP_CONFIGS,
+    permission: Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE,
+  },
+  { prefix: ROUTES.WORKSPACE_SYNC_HEALTH, permission: Permission.ADMIN_WORKSPACES_VIEW },
   { prefix: ROUTES.OBSERVABILITY, permission: Permission.ADMIN_SYSTEM_VIEW },
   { prefix: ROUTES.AUDITS, permission: Permission.ADMIN_SYSTEM_VIEW },
   { prefix: ROUTES.LOGS, permission: Permission.ADMIN_LOGS_VIEW },

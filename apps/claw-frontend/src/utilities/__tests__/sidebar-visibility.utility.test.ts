@@ -61,10 +61,14 @@ describe('sidebar-visibility.utility', () => {
       expect(chat?.children).toEqual([]);
     });
 
-    it('keeps the open Workspace parent with all its open children', () => {
+    it('keeps the open Workspace parent but strips its admin config children', () => {
       const workspace = visible.find((i) => i.labelKey === 'nav.workspace');
-      const original = SIDEBAR_NAV_ITEMS.find((i) => i.labelKey === 'nav.workspace');
-      expect(workspace?.children?.length).toBe(original?.children?.length);
+      const childLabels = (workspace?.children ?? []).map((c) => c.labelKey);
+      // Member keeps usage children (connect/use own accounts)...
+      expect(childLabels).toContain('nav.workspaceInbox');
+      // ...but the admin config children are hidden (OAuth app config + sync-health dashboard).
+      expect(childLabels).not.toContain('nav.workspaceAppConfigs');
+      expect(childLabels).not.toContain('nav.workspaceSyncHealth');
     });
   });
 

@@ -34,14 +34,18 @@ export class WorkspaceProviderRegistryController {
     private readonly appConfigs: ProviderAppConfigService,
   ) {}
 
+  // Provider CATALOG (definitions only, no secrets) — readable by any
+  // authenticated user incl. the normal USER role, so members can browse
+  // providers to connect their own accounts. USER was missing from the legacy
+  // (ADMIN/OPERATOR/VIEWER) list, which blocked the connect-own-account flow.
   @Get('providers')
-  @Roles(UserRole.ADMIN, UserRole.OPERATOR, UserRole.VIEWER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATOR, UserRole.VIEWER, UserRole.USER)
   listProviders(): Promise<WorkspaceProviderDefinition[]> {
     return this.registry.list();
   }
 
   @Get('providers/:provider')
-  @Roles(UserRole.ADMIN, UserRole.OPERATOR, UserRole.VIEWER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATOR, UserRole.VIEWER, UserRole.USER)
   getProvider(@Param('provider') provider: string): Promise<WorkspaceProviderDefinition> {
     return this.registry.getByProvider(provider as WorkspaceProvider);
   }
