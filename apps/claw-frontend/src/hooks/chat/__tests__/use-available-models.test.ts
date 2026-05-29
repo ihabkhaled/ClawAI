@@ -8,8 +8,8 @@ const mockUseAllModels = vi.fn();
 const mockUseLocalModels = vi.fn();
 const mockUseFrontierCatalog = vi.fn();
 
-vi.mock('@/hooks/connectors/use-all-models', () => ({
-  useAllModels: () => mockUseAllModels(),
+vi.mock('@/hooks/chat/use-available-connector-models', () => ({
+  useAvailableConnectorModels: () => mockUseAllModels(),
 }));
 
 vi.mock('@/hooks/ollama/use-local-models', () => ({
