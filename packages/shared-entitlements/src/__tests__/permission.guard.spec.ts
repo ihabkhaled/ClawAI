@@ -49,9 +49,11 @@ describe('PermissionGuard', () => {
     expect(adapter.getEntitlements).not.toHaveBeenCalled();
   });
 
-  it('denies when there is no authenticated user', async () => {
+  it('throws UNAUTHORIZED when there is no authenticated user', async () => {
     reflector.getAllAndOverride.mockReturnValue([Permission.ADMIN_CONNECTORS_MANAGE]);
-    await expect(guard.canActivate(makeContext())).resolves.toBe(false);
+    await expect(guard.canActivate(makeContext())).rejects.toMatchObject({
+      response: { errorCode: 'UNAUTHORIZED' },
+    });
   });
 
   it('allows when the user holds every required permission', async () => {
@@ -62,10 +64,17 @@ describe('PermissionGuard', () => {
     await expect(guard.canActivate(makeContext({ sub: 'u1', role: 'USER' }))).resolves.toBe(true);
   });
 
-  it('denies when the user is missing a required permission', async () => {
+  it('throws INSUFFICIENT_PERMISSIONS (with requiredPermissions) when missing a permission', async () => {
     reflector.getAllAndOverride.mockReturnValue([Permission.ADMIN_ROUTING_MANAGE]);
     adapter.getEntitlements.mockResolvedValue(makeEnt({ permissions: [Permission.CHAT_USE] }));
-    await expect(guard.canActivate(makeContext({ sub: 'u1', role: 'USER' }))).resolves.toBe(false);
+    await expect(guard.canActivate(makeContext({ sub: 'u1', role: 'USER' }))).rejects.toMatchObject(
+      {
+        response: {
+          errorCode: 'INSUFFICIENT_PERMISSIONS',
+          requiredPermissions: [Permission.ADMIN_ROUTING_MANAGE],
+        },
+      },
+    );
   });
 
   it('allows when entitlements mark the user as admin (isAdmin)', async () => {
@@ -76,10 +85,14 @@ describe('PermissionGuard', () => {
     );
   });
 
-  it('fails CLOSED (denies) when the entitlements lookup throws', async () => {
+  it('fails CLOSED (throws FORBIDDEN) when the entitlements lookup throws', async () => {
     reflector.getAllAndOverride.mockReturnValue([Permission.ADMIN_LOGS_VIEW]);
     adapter.getEntitlements.mockRejectedValue(new Error('auth down'));
-    await expect(guard.canActivate(makeContext({ sub: 'u1', role: 'USER' }))).resolves.toBe(false);
+    await expect(guard.canActivate(makeContext({ sub: 'u1', role: 'USER' }))).rejects.toMatchObject(
+      {
+        response: { errorCode: 'INSUFFICIENT_PERMISSIONS' },
+      },
+    );
   });
 
   it('requires ALL listed permissions (AND semantics)', async () => {
@@ -90,6 +103,10 @@ describe('PermissionGuard', () => {
     adapter.getEntitlements.mockResolvedValue(
       makeEnt({ permissions: [Permission.ADMIN_PLANS_MANAGE] }),
     );
-    await expect(guard.canActivate(makeContext({ sub: 'u1', role: 'USER' }))).resolves.toBe(false);
+    await expect(guard.canActivate(makeContext({ sub: 'u1', role: 'USER' }))).rejects.toMatchObject(
+      {
+        response: { errorCode: 'INSUFFICIENT_PERMISSIONS' },
+      },
+    );
   });
 });

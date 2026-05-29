@@ -10,6 +10,8 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
+import { Permission } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 import { Roles } from '../../app/decorators/roles.decorator';
 import { ZodValidationPipe } from '../../app/pipes/zod-validation.pipe';
 import { UserRole } from '../../common/enums/user-role.enum';
@@ -72,6 +74,7 @@ export class OllamaDiscoveryController {
 
   @Post('catalog/reclassify')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   reclassifySearchBrowser(): Promise<SearchBrowserReclassifySummary> {
     return this.catalogClassification.reclassifySearchBrowser();
   }
@@ -84,6 +87,7 @@ export class OllamaDiscoveryController {
 
   @Post('discovery/sources')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   @HttpCode(HttpStatus.CREATED)
   createSource(
     @Body(new ZodValidationPipe(createDiscoverySourceSchema)) dto: CreateDiscoverySourceDto,
@@ -93,6 +97,7 @@ export class OllamaDiscoveryController {
 
   @Put('discovery/sources/:id')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   updateSource(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateDiscoverySourceSchema)) dto: UpdateDiscoverySourceDto,
@@ -102,6 +107,7 @@ export class OllamaDiscoveryController {
 
   @Delete('discovery/sources/:id')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteSource(@Param('id') id: string): Promise<void> {
     await this.sourceService.delete(id);
@@ -109,6 +115,7 @@ export class OllamaDiscoveryController {
 
   @Post('discovery/refresh')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   @HttpCode(HttpStatus.ACCEPTED)
   triggerRefresh(
     @Body(new ZodValidationPipe(discoveryTriggerSchema)) dto: DiscoveryTriggerDto,
@@ -144,6 +151,7 @@ export class OllamaDiscoveryController {
 
   @Post('discovery/candidates/:id/approve')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   approveCandidate(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(approveCandidateSchema)) dto: ApproveCandidateDto,
@@ -153,6 +161,7 @@ export class OllamaDiscoveryController {
 
   @Post('discovery/candidates/:id/reject')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   rejectCandidate(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(rejectCandidateSchema)) dto: RejectCandidateDto,
@@ -162,6 +171,7 @@ export class OllamaDiscoveryController {
 
   @Post('discovery/candidates/bulk-approve')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   bulkApprove(
     @Body(new ZodValidationPipe(bulkApproveSchema)) dto: BulkApproveDto,
   ): Promise<{ approved: number; duplicates: number; failed: number }> {
@@ -170,6 +180,7 @@ export class OllamaDiscoveryController {
 
   @Post('catalog/admin')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   @HttpCode(HttpStatus.CREATED)
   createCatalogEntry(
     @Body(new ZodValidationPipe(createCatalogEntrySchema)) dto: CreateCatalogEntryDto,
@@ -179,6 +190,7 @@ export class OllamaDiscoveryController {
 
   @Put('catalog/admin/:id')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   updateCatalogEntry(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateCatalogEntrySchema)) dto: UpdateCatalogEntryDto,
@@ -188,6 +200,7 @@ export class OllamaDiscoveryController {
 
   @Delete('catalog/admin/:id')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteCatalogEntry(@Param('id') id: string): Promise<void> {
     await this.catalogSync.deleteEntry(id);
@@ -200,6 +213,7 @@ export class OllamaDiscoveryController {
 
   @Post('packs/:profile/install')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   installPack(@Param('profile') profile: string): Promise<InstallPackResult> {
     return this.hardwarePackService.installPack({ profile });
   }

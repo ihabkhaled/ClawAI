@@ -1,4 +1,6 @@
 import { Body, Controller, Get, Post, Query, UsePipes } from '@nestjs/common';
+import { RequirePermissions } from '@claw/shared-entitlements';
+import { Permission } from '@claw/shared-types';
 import { Public } from '../../../app/decorators/public.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { ServerLogsService } from '../services/server-logs.service';
@@ -44,22 +46,26 @@ export class ServerLogsController {
   }
 
   @Get()
+  @RequirePermissions(Permission.ADMIN_LOGS_VIEW)
   @UsePipes(new ZodValidationPipe(listServerLogsQuerySchema))
   async listLogs(@Query() query: ListServerLogsQueryDto): Promise<PaginatedResult<ServerLog>> {
     return this.serverLogsService.getLogs(query);
   }
 
   @Get('stats')
+  @RequirePermissions(Permission.ADMIN_LOGS_VIEW)
   async getStats(): Promise<ServerLogStatsResponse> {
     return this.serverLogsService.getStats();
   }
 
   @Get('distinct')
+  @RequirePermissions(Permission.ADMIN_LOGS_VIEW)
   async getDistinctValues(@Query('field') field: string): Promise<DistinctValuesResult> {
     return this.serverLogsService.getDistinctValues(field, {});
   }
 
   @Get('timeseries')
+  @RequirePermissions(Permission.ADMIN_LOGS_VIEW)
   @UsePipes(new ZodValidationPipe(listServerLogsQuerySchema))
   async getTimeSeries(@Query() query: ListServerLogsQueryDto): Promise<TimeSeriesBucket[]> {
     return this.serverLogsService.getTimeSeries(query, query.interval ?? 5);

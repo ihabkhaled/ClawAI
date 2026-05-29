@@ -11,7 +11,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { CurrentUser, Roles } from '@claw/shared-auth';
-import { type AuthenticatedUser, UserRole } from '@claw/shared-types';
+import { type AuthenticatedUser, Permission, UserRole } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import type { WorkspaceProvider, WorkspaceProviderDefinition } from '../../../generated/prisma';
 import {
@@ -47,6 +48,7 @@ export class WorkspaceProviderRegistryController {
 
   @Get('provider-app-configs')
   @Roles(UserRole.ADMIN, UserRole.OPERATOR)
+  @RequirePermissions(Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE)
   listAppConfigs(
     @Query(new ZodValidationPipe(listProviderAppConfigsQuerySchema))
     query: ListProviderAppConfigsQueryDto,
@@ -56,6 +58,7 @@ export class WorkspaceProviderRegistryController {
 
   @Post('provider-app-configs')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE)
   @HttpCode(HttpStatus.CREATED)
   createAppConfig(
     @Body(new ZodValidationPipe(createProviderAppConfigSchema)) dto: CreateProviderAppConfigDto,
@@ -66,12 +69,14 @@ export class WorkspaceProviderRegistryController {
 
   @Get('provider-app-configs/:id')
   @Roles(UserRole.ADMIN, UserRole.OPERATOR)
+  @RequirePermissions(Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE)
   getAppConfig(@Param('id') id: string): Promise<ProviderAppConfigPublic> {
     return this.appConfigs.getById(id);
   }
 
   @Put('provider-app-configs/:id')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE)
   updateAppConfig(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateProviderAppConfigSchema)) dto: UpdateProviderAppConfigDto,
@@ -81,6 +86,7 @@ export class WorkspaceProviderRegistryController {
 
   @Delete('provider-app-configs/:id')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteAppConfig(@Param('id') id: string): Promise<void> {
     await this.appConfigs.delete(id);

@@ -12,6 +12,8 @@ import {
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { defer, EMPTY, type Observable, switchMap } from 'rxjs';
+import { RequirePermissions } from '@claw/shared-entitlements';
+import { Permission } from '@claw/shared-types';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { Public } from '../../../app/decorators/public.decorator';
 import { SkipLogging } from '../../../app/decorators/skip-logging.decorator';
@@ -39,6 +41,7 @@ export class PullJobsController {
     private readonly progressEmitter: PullJobProgressEmitterManager,
   ) {}
 
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   @Post('catalog/:id/pull')
   initiate(
     @Param('id') id: string,
@@ -64,12 +67,14 @@ export class PullJobsController {
     return this.pullJobsService.findById(id);
   }
 
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   @Delete('pull-jobs/:id')
   @HttpCode(HttpStatus.OK)
   cancel(@Param('id') id: string): Promise<PullJobCancelResult> {
     return this.pullJobsService.cancel(id);
   }
 
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   @Post('pull-jobs/:id/retry')
   @HttpCode(HttpStatus.ACCEPTED)
   retry(@Param('id') id: string): Promise<PullJobCreateResult> {

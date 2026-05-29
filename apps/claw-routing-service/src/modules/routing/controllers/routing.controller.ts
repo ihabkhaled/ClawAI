@@ -1,4 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { RequirePermissions } from '@claw/shared-entitlements';
+import { Permission } from '@claw/shared-types';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { Roles } from '../../../app/decorators/roles.decorator';
 import { UserRole } from '../../../common/enums';
@@ -41,6 +43,7 @@ import type {
 // endpoints, so restricting them does not affect regular users.
 @Controller('routing')
 @Roles(UserRole.ADMIN, UserRole.OPERATOR)
+@RequirePermissions(Permission.ADMIN_ROUTING_MANAGE)
 export class RoutingController {
   constructor(private readonly routingService: RoutingService) {}
 

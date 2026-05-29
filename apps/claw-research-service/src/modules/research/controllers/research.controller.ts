@@ -1,5 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
+import { RequirePermissions } from '@claw/shared-entitlements';
+import { Permission } from '@claw/shared-types';
 
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { type ExecuteResearchDto, executeResearchSchema } from '../dto/execute-research.dto';
@@ -9,6 +11,7 @@ import type { AuthenticatedUser } from '../../../common/types/auth.types';
 import type { ResearchRun } from '../../../generated/prisma';
 
 @Controller('research/runs')
+@RequirePermissions(Permission.RESEARCH_USE)
 export class ResearchController {
   constructor(
     private readonly manager: ResearchManager,

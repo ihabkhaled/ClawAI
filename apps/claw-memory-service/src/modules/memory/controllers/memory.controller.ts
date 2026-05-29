@@ -1,4 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Permission } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 import { type MemoryRecord } from '../../../generated/prisma';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
@@ -10,6 +12,7 @@ import { type ListMemoriesQueryDto, listMemoriesQuerySchema } from '../dto/list-
 import { type SearchMemoriesDto, searchMemoriesSchema } from '../dto/search-memories.dto';
 
 @Controller('memories')
+@RequirePermissions(Permission.MEMORY_USE)
 export class MemoryController {
   constructor(private readonly memoryService: MemoryService) {}
 

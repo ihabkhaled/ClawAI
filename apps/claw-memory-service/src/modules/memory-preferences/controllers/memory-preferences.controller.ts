@@ -1,4 +1,6 @@
 import { Body, Controller, Get, Put } from '@nestjs/common';
+import { Permission } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 import type { MemoryPreference } from '../../../generated/prisma';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
@@ -10,6 +12,7 @@ import {
 } from '../dto/upsert-memory-preference.dto';
 
 @Controller('memory-preferences')
+@RequirePermissions(Permission.MEMORY_USE)
 export class MemoryPreferencesController {
   constructor(private readonly service: MemoryPreferenceService) {}
 

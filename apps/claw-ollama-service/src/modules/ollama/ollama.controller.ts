@@ -11,6 +11,8 @@ import {
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { type Observable } from 'rxjs';
+import { Permission } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 import { type PullJob, type RuntimeConfig } from '../../generated/prisma';
 import { Public } from '../../app/decorators/public.decorator';
 import { SkipLogging } from '../../app/decorators/skip-logging.decorator';
@@ -54,6 +56,7 @@ export class OllamaController {
   }
 
   @Post('catalog/:id/pull')
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   async pullFromCatalog(@Param('id') id: string): Promise<{ pullJobId: string }> {
     return this.ollamaService.pullFromCatalog(id);
   }
@@ -71,16 +74,19 @@ export class OllamaController {
   }
 
   @Delete('models/:id')
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   async deleteModel(@Param('id') id: string): Promise<void> {
     return this.ollamaService.deleteModel(id);
   }
 
   @Delete('pull-jobs/:id')
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   async cancelPullJob(@Param('id') id: string): Promise<PullJob> {
     return this.ollamaService.cancelPullJob(id);
   }
 
   @Post('pull')
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   async pullModel(
     @Body(new ZodValidationPipe(pullModelSchema)) dto: PullModelDto,
   ): Promise<LocalModel> {
@@ -88,6 +94,7 @@ export class OllamaController {
   }
 
   @Post('assign-role')
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   async assignRole(
     @Body(new ZodValidationPipe(assignRoleSchema)) dto: AssignRoleDto,
   ): Promise<LocalModelRoleAssignment> {

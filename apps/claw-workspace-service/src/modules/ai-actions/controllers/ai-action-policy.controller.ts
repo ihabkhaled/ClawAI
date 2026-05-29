@@ -11,7 +11,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser, Roles } from '@claw/shared-auth';
-import { UserRole } from '@claw/shared-types';
+import { Permission, UserRole } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 
 import { AdminIpAllowlistGuard } from '../../../common/guards/admin-ip-allowlist.guard';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -27,6 +28,7 @@ import type { AiActionPolicy } from '../../../generated/prisma';
 
 @Controller('workspace/ai-actions/policies')
 @UseGuards(AdminIpAllowlistGuard)
+@RequirePermissions(Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE)
 export class AiActionPolicyController {
   constructor(private readonly service: AiActionPolicyService) {}
 
@@ -68,10 +70,7 @@ export class AiActionPolicyController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Roles(UserRole.ADMIN)
-  async remove(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('id') id: string,
-  ): Promise<void> {
+  async remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string): Promise<void> {
     await this.service.deleteById(id, user.id);
   }
 }

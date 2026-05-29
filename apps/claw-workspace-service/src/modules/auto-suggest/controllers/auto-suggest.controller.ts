@@ -1,14 +1,7 @@
-import {
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import { Roles } from '@claw/shared-auth';
-import { UserRole } from '@claw/shared-types';
+import { Permission, UserRole } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 
 import { AutoSuggestRunRepository } from '../repositories/auto-suggest-run.repository';
 import { AutoSuggestSchedulerManager } from '../managers/auto-suggest-scheduler.manager';
@@ -26,6 +19,7 @@ export class AutoSuggestController {
   @Get('runs')
   @HttpCode(HttpStatus.OK)
   @Roles(UserRole.ADMIN, UserRole.OPERATOR)
+  @RequirePermissions(Permission.ADMIN_WORKSPACES_VIEW)
   async listRuns(@Query('limit') limitRaw: string | undefined): Promise<AutoSuggestRun[]> {
     const parsed = limitRaw === undefined ? 20 : Number(limitRaw);
     const limit = Number.isFinite(parsed) ? Math.min(100, Math.max(1, parsed)) : 20;

@@ -4,8 +4,10 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
+import { EntitlementsModule, PermissionGuard } from '@claw/shared-entitlements';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
 
+import { AppConfig } from './config/app.config';
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { LlamacppEventsModule } from '../common/events/llamacpp-events.module';
 
@@ -65,6 +67,7 @@ import { PullJobsModule } from '../modules/pull-jobs/pull-jobs.module';
         serviceName: 'llamacpp-service',
       }),
     }),
+    EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
     PrismaModule,
     LlamacppEventsModule,
     ScheduleModule.forRoot(),
@@ -86,6 +89,7 @@ import { PullJobsModule } from '../modules/pull-jobs/pull-jobs.module';
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useExisting: PermissionGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
   ],

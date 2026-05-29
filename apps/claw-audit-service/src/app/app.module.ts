@@ -3,11 +3,13 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
+import { EntitlementsModule, PermissionGuard } from '@claw/shared-entitlements';
 import type { IncomingMessage } from 'node:http';
 
 import { MongooseDatabaseModule } from '../infrastructure/database/mongoose/mongoose.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
 
+import { AppConfig } from './config/app.config';
 import { AuthGuard } from './guards/auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { GlobalExceptionFilter } from './filters/global-exception.filter';
@@ -52,12 +54,15 @@ import { HealthModule } from '../modules/health/health.module';
     }),
     MongooseDatabaseModule,
     RedisModule,
+    EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
     AuditsModule,
     HealthModule,
-    ThrottlerModule.forRoot([{
-      ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
-      limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
+        limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
+      },
+    ]),
   ],
   providers: [
     {
@@ -71,6 +76,10 @@ import { HealthModule } from '../modules/health/health.module';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useExisting: PermissionGuard,
     },
     {
       provide: APP_GUARD,

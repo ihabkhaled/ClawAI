@@ -1,11 +1,12 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 const appConfigSchema = z.object({
-  AUDIT_MONGODB_URI: z.string().min(1, "AUDIT_MONGODB_URI is required"),
-  REDIS_URL: z.string().min(1, "REDIS_URL is required"),
-  RABBITMQ_URL: z.string().min(1, "RABBITMQ_URL is required"),
-  JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
-  AUDIT_PORT: z.string().default("4007"),
+  AUDIT_MONGODB_URI: z.string().min(1, 'AUDIT_MONGODB_URI is required'),
+  REDIS_URL: z.string().min(1, 'REDIS_URL is required'),
+  RABBITMQ_URL: z.string().min(1, 'RABBITMQ_URL is required'),
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
+  AUTH_SERVICE_URL: z.string().min(1).default('http://auth-service:4001'),
+  AUDIT_PORT: z.string().default('4007'),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;
@@ -17,8 +18,8 @@ export class AppConfig {
     const result = appConfigSchema.safeParse(process.env);
     if (!result.success) {
       const formatted = result.error.issues
-        .map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`)
-        .join("\n");
+        .map((issue) => `  - ${issue.path.join('.')}: ${issue.message}`)
+        .join('\n');
       throw new Error(`Invalid environment configuration:\n${formatted}`);
     }
     cachedConfig = result.data;

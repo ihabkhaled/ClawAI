@@ -1,5 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
+import { RequirePermissions } from '@claw/shared-entitlements';
+import { Permission } from '@claw/shared-types';
 
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { type FetchRequestDto, fetchRequestSchema } from '../dto/fetch-request.dto';
@@ -9,6 +11,7 @@ import type { FetchJob } from '../../../generated/prisma';
 import type { FetchResult } from '../types/fetch.types';
 
 @Controller('research/fetch')
+@RequirePermissions(Permission.RESEARCH_USE)
 export class FetchController {
   constructor(private readonly service: FetchService) {}
 

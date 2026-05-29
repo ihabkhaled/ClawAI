@@ -5,8 +5,10 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
 import { AuthGuard, RolesGuard } from '@claw/shared-auth';
+import { EntitlementsModule, PermissionGuard } from '@claw/shared-entitlements';
 import type { IncomingMessage } from 'node:http';
 
+import { AppConfig } from './config/app.config';
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
 import { GlobalExceptionFilter } from './filters/global-exception.filter';
@@ -77,6 +79,7 @@ import { ChainsModule } from '../modules/chains/chains.module';
       },
     ]),
     ScheduleModule.forRoot(),
+    EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
     PrismaModule,
     RedisModule,
     HealthModule,
@@ -99,6 +102,7 @@ import { ChainsModule } from '../modules/chains/chains.module';
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useExisting: PermissionGuard },
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],

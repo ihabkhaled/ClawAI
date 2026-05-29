@@ -1,4 +1,6 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
+import { Permission } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 import type { ContextPackVersion } from '../../../generated/prisma';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
@@ -8,6 +10,7 @@ import { type SnapshotVersionDto, snapshotVersionSchema } from '../dto/snapshot-
 import type { VersionDiff } from '../types/context-pack-version.types';
 
 @Controller('context-packs')
+@RequirePermissions(Permission.CONTEXT_PACK_READ_OWN)
 export class ContextPackVersionsController {
   constructor(private readonly service: ContextPackVersionService) {}
 

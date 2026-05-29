@@ -34,6 +34,7 @@ const appConfigSchema = z.object({
   JIRA_CLIENT_SECRET: z.string().default(''),
   GOOGLE_CLIENT_ID: z.string().default(''),
   GOOGLE_CLIENT_SECRET: z.string().default(''),
+  AUTH_SERVICE_URL: z.string().min(1).default('http://auth-service:4001'),
   OLLAMA_SERVICE_URL: z.string().min(1).default('http://ollama-service:4008'),
   CHAT_SERVICE_URL: z.string().min(1).default('http://chat-service:4002'),
   CONNECTOR_SERVICE_URL: z.string().min(1).default('http://connector-service:4003'),
@@ -84,11 +85,7 @@ const appConfigSchema = z.object({
     .enum(['true', 'false'])
     .default('true')
     .transform((v) => v === 'true'),
-  WORKSPACE_GMAIL_MAX_ATTACHMENT_BYTES: z.coerce
-    .number()
-    .int()
-    .positive()
-    .default(26_214_400),
+  WORKSPACE_GMAIL_MAX_ATTACHMENT_BYTES: z.coerce.number().int().positive().default(26_214_400),
   // Stream 41 — ticket planning + coding bridge
   AGENT_SERVICE_URL: z.string().min(1).default('http://agent-service:4015'),
   IMPL_PROMPT_HANDOFF_DEFAULT_MODE: z.enum(['CHAT', 'AGENT', 'CLIPBOARD']).default('CHAT'),

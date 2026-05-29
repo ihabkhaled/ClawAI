@@ -4,11 +4,13 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
+import { EntitlementsModule, PermissionGuard } from '@claw/shared-entitlements';
 import type { IncomingMessage } from 'node:http';
 
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
 
+import { AppConfig } from './config/app.config';
 import { AuthGuard } from './guards/auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { GlobalExceptionFilter } from './filters/global-exception.filter';
@@ -51,6 +53,7 @@ import { HealthModule } from '../modules/health/health.module';
         serviceName: 'ollama-service',
       }),
     }),
+    EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
     PrismaModule,
     RedisModule,
     ScheduleModule.forRoot(),
@@ -75,6 +78,10 @@ import { HealthModule } from '../modules/health/health.module';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useExisting: PermissionGuard,
     },
     {
       provide: APP_GUARD,

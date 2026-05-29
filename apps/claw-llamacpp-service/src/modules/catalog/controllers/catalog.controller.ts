@@ -1,4 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
+import { RequirePermissions } from '@claw/shared-entitlements';
+import { Permission } from '@claw/shared-types';
 import { Roles } from '../../../app/decorators/roles.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { UserRole } from '../../../common/enums';
@@ -41,6 +43,7 @@ export class CatalogController {
   }
 
   @Roles(UserRole.ADMIN, UserRole.OPERATOR)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   @Post('hf-import')
   @HttpCode(HttpStatus.CREATED)
   importFromHf(
@@ -55,6 +58,7 @@ export class CatalogController {
   }
 
   @Roles(UserRole.ADMIN, UserRole.OPERATOR)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   @Post('refresh')
   @HttpCode(HttpStatus.ACCEPTED)
   refresh(@Body() _body: unknown): Promise<{ refreshed: number; failed: number }> {
@@ -62,6 +66,7 @@ export class CatalogController {
   }
 
   @Roles(UserRole.ADMIN, UserRole.OPERATOR)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   @Post('hf-auto-sync')
   @HttpCode(HttpStatus.ACCEPTED)
   triggerHfAutoSync(@Body() _body: unknown): Promise<HfAutoSyncReport> {

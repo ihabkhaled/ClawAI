@@ -1,13 +1,6 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Patch,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post } from '@nestjs/common';
+import { RequirePermissions } from '@claw/shared-entitlements';
+import { Permission } from '@claw/shared-types';
 import { Roles } from '../../../app/decorators/roles.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { UserRole } from '../../../common/enums';
@@ -32,6 +25,7 @@ export class ModelIntelligenceController {
 
   @Patch(':provider/:model')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   async patch(
     @Param('provider') provider: string,
     @Param('model') model: string,
@@ -43,6 +37,7 @@ export class ModelIntelligenceController {
 
   @Post(':provider/:model/reset')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   @HttpCode(HttpStatus.OK)
   async reset(
     @Param('provider') provider: string,

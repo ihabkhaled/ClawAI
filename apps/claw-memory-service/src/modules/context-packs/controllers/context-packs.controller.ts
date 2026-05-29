@@ -1,4 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Permission } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 import { type ContextPack, type ContextPackItem } from '../../../generated/prisma';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
@@ -14,6 +16,7 @@ import {
 import { type ContextPackWithItems } from '../types/context-packs.types';
 
 @Controller('context-packs')
+@RequirePermissions(Permission.CONTEXT_PACK_READ_OWN)
 export class ContextPacksController {
   constructor(private readonly contextPacksService: ContextPacksService) {}
 

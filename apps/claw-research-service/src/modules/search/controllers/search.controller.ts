@@ -1,5 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
+import { RequirePermissions } from '@claw/shared-entitlements';
+import { Permission } from '@claw/shared-types';
 
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { type ExecuteSearchDto, executeSearchSchema } from '../dto/execute-search.dto';
@@ -9,6 +11,7 @@ import type { SearchRun } from '../../../generated/prisma';
 import type { SearchExecutionResult } from '../types/search-execution-result.types';
 
 @Controller('research/search')
+@RequirePermissions(Permission.RESEARCH_USE)
 export class SearchController {
   constructor(private readonly service: SearchExecutionService) {}
 

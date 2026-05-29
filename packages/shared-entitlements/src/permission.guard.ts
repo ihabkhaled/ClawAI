@@ -1,9 +1,11 @@
 import {
   type CanActivate,
   type ExecutionContext,
+  ForbiddenException,
   Inject,
   Injectable,
   Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { type Permission, UserRole } from '@claw/shared-types';
@@ -11,6 +13,13 @@ import { EntitlementsAdapter } from './entitlements-adapter';
 import { ENTITLEMENTS_ADAPTER, REQUIRE_PERMISSIONS_KEY } from './entitlements.tokens';
 
 type RequestUser = { sub?: string; id?: string; role?: string };
+type GuardedRequest = {
+  user?: RequestUser;
+  method?: string;
+  url?: string;
+  ip?: string;
+  headers?: Record<string, string | string[] | undefined>;
+};
 
 // Permission-matrix enforcement. Resolves the caller's effective permissions
 // from the auth-service (the admin-editable role→permission grants) and allows
@@ -24,6 +33,8 @@ type RequestUser = { sub?: string; id?: string; role?: string };
 //   keep working even if the auth-service is unreachable.
 // - For decorated (admin/config) routes, fail CLOSED on a resolution error: an
 //   entitlements outage must never silently grant privileged access.
+// - Denials throw the structured INSUFFICIENT_PERMISSIONS contract and are
+//   audit-logged (ships to MongoDB via the Pino → server-logs pipeline).
 @Injectable()
 export class PermissionGuard implements CanActivate {
   private readonly logger = new Logger(PermissionGuard.name);
@@ -41,19 +52,28 @@ export class PermissionGuard implements CanActivate {
     if (!required || required.length === 0) {
       return true;
     }
-    const request = context.switchToHttp().getRequest<{ user?: RequestUser }>();
+    const request = context.switchToHttp().getRequest<GuardedRequest>();
     const user = request.user;
-    if (!user) {
-      return false;
+    const userId = user?.sub ?? user?.id;
+    if (!user || userId === undefined) {
+      throw new UnauthorizedException({
+        errorCode: 'UNAUTHORIZED',
+        messageKey: 'errors.auth.unauthorized',
+      });
     }
     if (user.role === UserRole.ADMIN) {
       return true;
     }
-    const userId = user.sub ?? user.id;
-    if (userId === undefined) {
-      return false;
+    const granted = await this.resolveAndCheck(userId, required);
+    if (!granted) {
+      this.logDenied(userId, request, required);
+      throw new ForbiddenException({
+        errorCode: 'INSUFFICIENT_PERMISSIONS',
+        messageKey: 'errors.permissions.insufficient',
+        requiredPermissions: required,
+      });
     }
-    return this.resolveAndCheck(userId, required);
+    return true;
   }
 
   private async resolveAndCheck(userId: string, required: Permission[]): Promise<boolean> {
@@ -65,9 +85,17 @@ export class PermissionGuard implements CanActivate {
       return required.every((permission) => ent.permissions.includes(permission));
     } catch (error) {
       this.logger.warn(
-        `canActivate: entitlements unavailable for user=${userId} — denying: ${(error as Error).message}`,
+        `resolveAndCheck: entitlements unavailable for user=${userId} — failing closed: ${(error as Error).message}`,
       );
       return false;
     }
+  }
+
+  private logDenied(userId: string, request: GuardedRequest, required: Permission[]): void {
+    const ua = request.headers?.['user-agent'];
+    this.logger.warn(
+      `permission denied user=${userId} ${request.method ?? '?'} ${request.url ?? '?'} ` +
+        `required=[${required.join(',')}] ip=${request.ip ?? '?'} ua=${typeof ua === 'string' ? ua : '?'}`,
+    );
   }
 }

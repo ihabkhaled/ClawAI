@@ -1,9 +1,12 @@
 import { Body, Controller, Get, Header, Post } from '@nestjs/common';
+import { Permission } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../../common/types';
 import { type ImportResult, MemoryPortableService } from '../services/memory-portable.service';
 
 @Controller('memories-portable')
+@RequirePermissions(Permission.MEMORY_USE)
 export class MemoryPortableController {
   constructor(private readonly service: MemoryPortableService) {}
 

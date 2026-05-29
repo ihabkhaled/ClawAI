@@ -10,7 +10,8 @@ import {
   Post,
 } from '@nestjs/common';
 import { CurrentUser, Roles } from '@claw/shared-auth';
-import { UserRole } from '@claw/shared-types';
+import { Permission, UserRole } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import {
@@ -31,17 +32,20 @@ export class SearchProviderController {
   constructor(private readonly service: SearchProviderService) {}
 
   @Get()
+  @RequirePermissions(Permission.RESEARCH_USE)
   list(@CurrentUser() _user: AuthenticatedUser): Promise<SanitizedSearchProvider[]> {
     return this.service.list();
   }
 
   @Get(':id')
+  @RequirePermissions(Permission.RESEARCH_USE)
   getOne(@Param('id') id: string): Promise<SanitizedSearchProvider> {
     return this.service.getById(id);
   }
 
   @Post()
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body(new ZodValidationPipe(createSearchProviderSchema))
@@ -52,6 +56,7 @@ export class SearchProviderController {
 
   @Patch(':id')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
   update(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateSearchProviderSchema))
@@ -62,6 +67,7 @@ export class SearchProviderController {
 
   @Delete(':id')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string): Promise<void> {
     return this.service.delete(id);
@@ -69,6 +75,7 @@ export class SearchProviderController {
 
   @Post(':id/test')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
   @HttpCode(HttpStatus.OK)
   test(@Param('id') id: string): Promise<ProviderHealthResult> {
     return this.service.testConnection(id);

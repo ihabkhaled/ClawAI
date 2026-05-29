@@ -53,6 +53,7 @@ const validBaseConfig = {
   AUTO_SUGGEST_DEDUP_TTL_DAYS: 7,
   AI_ACTION_REQUEST_TIMEOUT_MS: 120_000,
   AI_ACTION_MODEL_RESOLVER_TTL_SECONDS: 300,
+  AUTH_SERVICE_URL: 'http://auth-service:4001',
   CHAT_SERVICE_URL: 'http://chat-service:4002',
   CONNECTOR_SERVICE_URL: 'http://connector-service:4003',
   MEMORY_SERVICE_URL: 'http://memory-service:4005',
@@ -70,7 +71,7 @@ const validBaseConfig = {
   AI_ACTION_PER_USER_RATE_PER_MIN: 1000,
   AI_ACTION_PER_USER_RATE_PER_HOUR: 10000,
   ADMIN_IP_ALLOWLIST: '',
-    CLAW_HOSTNAME: 'claw.local',
+  CLAW_HOSTNAME: 'claw.local',
 };
 
 describe('OrphanSyncRecoveryManager', () => {

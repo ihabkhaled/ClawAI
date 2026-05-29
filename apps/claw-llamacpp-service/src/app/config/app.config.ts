@@ -41,6 +41,7 @@ const appConfigSchema = z.object({
   HF_AUTO_SYNC_LIKES_LIMIT: z.coerce.number().int().min(0).max(200).default(40),
   RABBITMQ_URL: z.string().min(1, 'RABBITMQ_URL is required'),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
+  AUTH_SERVICE_URL: z.string().min(1).default('http://auth-service:4001'),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

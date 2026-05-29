@@ -12,6 +12,8 @@ import {
   Res,
 } from '@nestjs/common';
 import { type Response } from 'express';
+import { RequirePermissions } from '@claw/shared-entitlements';
+import { Permission } from '@claw/shared-types';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { Roles } from '../../../app/decorators/roles.decorator';
 import { UserRole } from '../../../common/enums';
@@ -27,12 +29,14 @@ import { type LoadedModelSnapshot, type RuntimeConfig } from '../types/process.t
 export class ModelsLifecycleController {
   constructor(private readonly lifecycle: ModelsLifecycleService) {}
 
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   @Post(':id/load')
   @HttpCode(HttpStatus.OK)
   load(@Param('id') id: string): Promise<LoadedModelSnapshot> {
     return this.lifecycle.load(id);
   }
 
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   @Post(':id/unload')
   @HttpCode(HttpStatus.OK)
   async unload(@Param('id') _id: string, @Res() res: Response): Promise<void> {
@@ -51,6 +55,7 @@ export class ModelsLifecycleController {
   }
 
   @Roles(UserRole.ADMIN, UserRole.OPERATOR)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   @Put(':id/config')
   updateConfig(
     @Param('id') id: string,
@@ -60,6 +65,7 @@ export class ModelsLifecycleController {
   }
 
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   @Delete(':id/weights')
   deleteWeights(
     @Param('id') id: string,

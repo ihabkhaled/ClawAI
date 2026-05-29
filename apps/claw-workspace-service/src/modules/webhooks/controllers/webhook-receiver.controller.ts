@@ -10,7 +10,8 @@ import {
   Req,
 } from '@nestjs/common';
 import { Public, Roles } from '@claw/shared-auth';
-import { UserRole } from '@claw/shared-types';
+import { Permission, UserRole } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 import type { Request } from 'express';
 
 import { RawWebhookBody } from '../../../app/decorators/raw-webhook-body.decorator';
@@ -55,6 +56,7 @@ export class WebhookReceiverController {
   @Get('deliveries')
   @HttpCode(HttpStatus.OK)
   @Roles(UserRole.ADMIN, UserRole.OPERATOR)
+  @RequirePermissions(Permission.ADMIN_WORKSPACES_VIEW)
   async list(
     @Query(new ZodValidationPipe(listWebhookDeliveriesQuerySchema))
     query: ListWebhookDeliveriesQueryDto,

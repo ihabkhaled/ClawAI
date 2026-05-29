@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@claw/shared-constants": "*",
+    "@claw/shared-entitlements": "*",
     "@claw/shared-rabbitmq": "*",
     "@claw/shared-types": "*",
     "@claw/shared-utilities": "*",

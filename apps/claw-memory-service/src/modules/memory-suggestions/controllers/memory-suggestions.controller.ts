@@ -1,4 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
+import { Permission } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 import type { MemoryRecord, MemorySuggestion } from '../../../generated/prisma';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
@@ -16,6 +18,7 @@ import {
 import { type RejectSuggestionDto, rejectSuggestionSchema } from '../dto/reject-suggestion.dto';
 
 @Controller('memory-suggestions')
+@RequirePermissions(Permission.MEMORY_USE)
 export class MemorySuggestionsController {
   constructor(private readonly service: MemorySuggestionService) {}
 

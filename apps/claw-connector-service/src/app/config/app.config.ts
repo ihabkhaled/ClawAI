@@ -14,6 +14,8 @@ const appConfigSchema = z.object({
 
   CONNECTOR_PORT: z.coerce.number().int().positive().default(4003),
 
+  AUTH_SERVICE_URL: z.string().min(1).default('http://auth-service:4001'),
+
   OLLAMA_BASE_URL: z.string().min(1).default('http://ollama:11434'),
 });
 

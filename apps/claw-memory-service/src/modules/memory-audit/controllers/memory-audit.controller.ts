@@ -1,10 +1,13 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Permission } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 import type { MemoryAuditLog } from '../../../generated/prisma';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../../common/types';
 import { MemoryAuditService } from '../services/memory-audit.service';
 
 @Controller('memory-audit')
+@RequirePermissions(Permission.MEMORY_USE)
 export class MemoryAuditController {
   constructor(private readonly service: MemoryAuditService) {}
 

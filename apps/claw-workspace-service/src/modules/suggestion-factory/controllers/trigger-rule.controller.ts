@@ -10,7 +10,8 @@ import {
   Post,
 } from '@nestjs/common';
 import { CurrentUser, Roles } from '@claw/shared-auth';
-import { UserRole } from '@claw/shared-types';
+import { Permission, UserRole } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import {
@@ -24,6 +25,7 @@ import type { AuthenticatedUser } from '../../../common/types/auth.types';
 import type { SuggestionTriggerRule } from '../../../generated/prisma';
 
 @Controller('workspace/suggestion-rules')
+@RequirePermissions(Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE)
 export class TriggerRuleController {
   constructor(private readonly service: SuggestionTriggerRuleService) {}
 
