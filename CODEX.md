@@ -1886,4 +1886,14 @@ When adding a new package under `packages/`, you MUST update `.github/workflows/
     cd ../<new-shared-package> && npx tsgo -p tsconfig.build.json
 ```
 
-Local builds work because `node_modules/@claw/<pkg>` is a symlink + `dist/` is populated by the developer's `npm run build`. CI starts from a fresh checkout — consumers then fail with `Cannot find module '@claw/<pkg>'`. Cost a CI red after adding `@claw/shared-utilities` (fixed in commit `ad38ccf`). Don't repeat.
+**SECOND required edit (added 2026-05-29):** also add the package to the per-package `strategy.matrix.include` in all four jobs, or its OWN lint/typecheck/test never runs in CI (it's only built as a dependency):
+
+```yaml
+- service: <new-shared-package>
+  workspace: '@claw/<new-shared-package>'
+  prisma: false
+```
+
+So a new `packages/<name>` workspace = TWO edits × 4 jobs in ci.yml: the "Build shared packages" `cd ../<name> && npx tsgo` line AND the matrix entry.
+
+Local builds work because `node_modules/@claw/<pkg>` is a symlink + `dist/` is populated by the developer's `npm run build`. CI starts from a fresh checkout — consumers then fail with `Cannot find module '@claw/<pkg>'`, and a package missing from the matrix is silently never lint/typecheck/tested. Cost a CI red after adding `@claw/shared-utilities` (fixed in commit `ad38ccf`); `@claw/shared-entitlements` had the build line but its matrix entry was missed until 2026-05-29. Don't repeat — both edits, all four jobs.
