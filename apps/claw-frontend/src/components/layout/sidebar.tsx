@@ -4,7 +4,7 @@ import { Zap } from 'lucide-react';
 import Link from 'next/link';
 
 import { Separator } from '@/components/ui/separator';
-import { ROUTES, SIDEBAR_NAV_ITEMS } from '@/constants';
+import { ROUTES } from '@/constants';
 import { useSidebarController } from '@/hooks/layout/use-sidebar-controller';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -13,7 +13,7 @@ import { GpuBadge } from './gpu-badge';
 import { SidebarNavItem } from './sidebar-nav-item';
 
 export function Sidebar() {
-  const { isOpen, close, handleOverlayClick } = useSidebarController();
+  const { isOpen, close, handleOverlayClick, items } = useSidebarController();
   const { t } = useTranslation();
 
   return (
@@ -51,7 +51,7 @@ export function Sidebar() {
         </div>
         <Separator />
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-          {SIDEBAR_NAV_ITEMS.map((item) => (
+          {items.map((item) => (
             <SidebarNavItem key={item.href} item={item} />
           ))}
         </nav>

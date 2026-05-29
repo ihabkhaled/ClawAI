@@ -25,6 +25,7 @@ export { showToast } from './toast.utility';
 export { logger } from './logger.utility';
 export { estimateCost } from './cost.utility';
 export { isAdmin, hasPermission, hasAnyPermission } from './permissions.utility';
+export { requiredPermissionForPath } from './route-permission.utility';
 export { connectSse } from './sse.utility';
 export {
   encodeModelValue,

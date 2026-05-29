@@ -5,6 +5,7 @@ export { ROUTES, PUBLIC_ROUTES } from './routes.constants';
 export { PROGRESS_EVENT_TYPES } from './progress.constants';
 export { SIDEBAR_NAV_ITEMS } from './sidebar.constants';
 export type { SidebarItem } from './sidebar.constants';
+export { ROUTE_PERMISSIONS } from './route-permissions.constants';
 export { SPINNER_SIZE_CLASSES } from './spinner.constants';
 export {
   DASHBOARD_STAT_CARD_DEFAULTS,

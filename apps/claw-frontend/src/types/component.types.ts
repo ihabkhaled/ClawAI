@@ -166,6 +166,10 @@ export type SidebarNavItemProps = {
   item: SidebarItem;
 };
 
+export type PortalContentProps = {
+  children: React.ReactNode;
+};
+
 // ─── Memory component props ─────────────────────────────────────────────────
 
 export type MemoryCardProps = {

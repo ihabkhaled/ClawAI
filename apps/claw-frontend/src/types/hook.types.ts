@@ -1,5 +1,6 @@
 import type { MessageFeedback } from '@/enums';
 
+import type { SidebarItem } from '../constants/sidebar.constants';
 import type { ResearchProviderKind } from '../enums/research-provider-kind.enum';
 
 import type { AdaptiveLearningInsights } from './adaptive-learning.types';
@@ -259,11 +260,16 @@ export type UseSidebarControllerReturn = {
   isOpen: boolean;
   close: () => void;
   handleOverlayClick: () => void;
+  items: SidebarItem[];
 };
 
 export type UseSidebarNavItemStateReturn = {
   expanded: boolean;
   toggle: () => void;
+};
+
+export type UseSidebarVisibleItemsReturn = {
+  items: SidebarItem[];
 };
 
 // ─── Replay hook types ────────────────────────────────────────────────────

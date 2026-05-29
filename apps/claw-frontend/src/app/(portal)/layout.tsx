@@ -2,6 +2,7 @@
 
 import { ErrorBoundary } from '@/components/common/error-boundary';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
+import { PortalContent } from '@/components/layout/portal-content';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Topbar } from '@/components/layout/topbar';
 import { ComponentSize } from '@/enums';
@@ -28,7 +29,9 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar />
         <main className="flex-1 overflow-y-auto p-3 sm:p-6">
-          <ErrorBoundary>{children}</ErrorBoundary>
+          <ErrorBoundary>
+            <PortalContent>{children}</PortalContent>
+          </ErrorBoundary>
         </main>
       </div>
     </div>

@@ -7,6 +7,7 @@ export type {
   RefreshResponse,
   AuthState,
 } from './auth.types';
+export type { RoutePermission, UseRoutePermissionGuardReturn } from './route-permission.types';
 export type {
   ChatThread,
   ChatMessage,
@@ -195,6 +196,7 @@ export type {
   PageHeaderProps,
   StatusBadgeProps,
   SidebarNavItemProps,
+  PortalContentProps,
   ProvidersProps,
   ThemeProviderProps,
   MemoryCardProps,
@@ -349,6 +351,7 @@ export type {
   UseFileUploadZoneStateReturn,
   UseGlobalSearchControllerReturn,
   UseSidebarControllerReturn,
+  UseSidebarVisibleItemsReturn,
   UseReplayLabPageReturn,
   UseRecoveryPageReturn,
   UseAdaptiveLearningPageReturn,
