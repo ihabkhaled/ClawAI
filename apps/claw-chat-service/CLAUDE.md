@@ -137,3 +137,17 @@ After completing any implementation task on this service, produce:
 ## Llamacpp execution dispatch
 
 `ChatExecutionManager.callLlamacpp()` (`src/modules/chat-messages/managers/chat-execution.manager.ts`) handles BOTH `local-llamacpp` (frontend ModelSelector option) and `LLAMACPP` (registered connector) provider strings. POSTs to `${LLAMACPP_SERVICE_URL}/api/v1/v1/chat/completions` (the OpenAI-compatible passthrough). Bypasses `resolveProviderConfig` — no API key needed. Errors with code `LLAMACPP_REQUEST_FAILED` on non-2xx. `LLAMACPP_SERVICE_URL` Zod-required in `app.config.ts` (default `http://llamacpp-service:4017`).
+
+## Universal token deduction chokepoint (do not bypass)
+
+Every model call in this service flows through `ChatExecutionManager.callProvider()`. That wrapper records usage to `AccessControlService.recordUsage` for **every** mode — chat, regenerate, compare (parallel per-model), judge critic/judge/revision, consensus, escalation-chain, repair, verify, best-of-n, cost-ensemble, role-pack, pipeline, task-decomposition. There is **no** per-mode deduction call anywhere else (the old `recordCompletionUsage` / `recordJudgeUsage` are gone, to avoid double-counting).
+
+Rules:
+
+1. New orchestration modes MUST call `executionManager.callProvider(provider, model, prompt, context, tokenContext)` with a `tokenContext: TokenLedgerContext` and a parent `AssembledContext` that carries `userId`. Spread the parent context when building sub-contexts (`{ ...parent, ... }`) so `userId` is preserved.
+2. Do NOT call `accessControlService.recordUsage` from a mode manager — the chokepoint owns deduction.
+3. Generation responses (image/file-gen) skip deduction via `isGenerationResponse` and stay un-charged.
+4. `LlmResponse` carries `tokenEstimated: boolean` and `tokenSource: 'NATIVE' | 'ESTIMATED' | 'MIXED'`. Always go through the per-provider extractors in `@claw/shared-utilities/token-usage` so missing native usage is filled by the `ceil(len/4)` estimator.
+5. Cloud judge selection is encoded as `"PROVIDER:model"` (e.g. `"OPENAI:gpt-4o-mini"`). Parse with `parseJudgeModel(raw)` (`src/common/utilities/judge-model-parse.utility.ts`); it checks the leading segment against `KNOWN_JUDGE_PROVIDERS` so local tags like `gemma3:4b` are not mis-parsed.
+
+See `docs/03-architecture/universal-token-accounting.md` for the full picture.
