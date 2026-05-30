@@ -12,6 +12,8 @@ import { VirtualizedMessages } from '@/components/chat/virtualized-messages';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants';
+import { PlanFeature } from '@/enums';
+import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
 import { useEditableTitle } from '@/hooks/chat/use-editable-title';
 import { useInThreadCompare } from '@/hooks/chat/use-in-thread-compare';
 import { useResizableComposer } from '@/hooks/chat/use-resizable-composer';
@@ -51,6 +53,10 @@ export default function ThreadDetailPage() {
 
   const editableTitle = useEditableTitle(threadId, thread?.title ?? undefined);
   const { composerHeight, handleMouseDown } = useResizableComposer();
+  const planFeatures = usePlanFeatures();
+  const canCompare = planFeatures.has(PlanFeature.ALLOW_COMPARE_MODE);
+  const canJudge = planFeatures.has(PlanFeature.ALLOW_JUDGE_MODE);
+  const canResearch = planFeatures.has(PlanFeature.ALLOW_RESEARCH_MODE);
   const comparePanel = useInThreadCompare({
     threadId,
     initialJudgeEnabled: threadSettings.judgeEnabled,
@@ -76,15 +82,17 @@ export default function ThreadDetailPage() {
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Button
-            variant={comparePanel.isOpen ? 'default' : 'outline'}
-            size="sm"
-            className="min-h-11 min-w-11"
-            onClick={comparePanel.toggleOpen}
-          >
-            <GitCompareArrows className="h-4 w-4 sm:me-2" />
-            <span className="hidden sm:inline">{t('compare.title')}</span>
-          </Button>
+          {canCompare ? (
+            <Button
+              variant={comparePanel.isOpen ? 'default' : 'outline'}
+              size="sm"
+              className="min-h-11 min-w-11"
+              onClick={comparePanel.toggleOpen}
+            >
+              <GitCompareArrows className="h-4 w-4 sm:me-2" />
+              <span className="hidden sm:inline">{t('compare.title')}</span>
+            </Button>
+          ) : null}
           <Button
             variant="outline"
             size="sm"
@@ -113,7 +121,7 @@ export default function ThreadDetailPage() {
         </div>
       </div>
 
-      {comparePanel.isOpen ? (
+      {comparePanel.isOpen && canCompare ? (
         <InThreadComparePanel
           selectedModels={comparePanel.selectedModels}
           onToggleModel={comparePanel.handleToggleModel}
@@ -130,6 +138,8 @@ export default function ThreadDetailPage() {
           judgeModelOptionsLoading={comparePanel.isJudgeModelOptionsLoading}
           researchMode={comparePanel.researchMode}
           onResearchModeChange={comparePanel.setResearchMode}
+          allowJudgeMode={canJudge}
+          allowResearchMode={canResearch}
           t={t}
         />
       ) : null}
@@ -153,6 +163,7 @@ export default function ThreadDetailPage() {
             judgeModel={threadSettings.judgeModel}
             onJudgeModelChange={threadSettings.setJudgeModel}
             judgeModelOptions={threadSettings.judgeModelOptions}
+            allowJudgeMode={canJudge}
             qualityThreshold={threadSettings.qualityThreshold}
             onQualityThresholdChange={threadSettings.setQualityThreshold}
             maxReRouteAttempts={threadSettings.maxReRouteAttempts}

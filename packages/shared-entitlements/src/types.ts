@@ -3,6 +3,7 @@ import type { Permission } from '@claw/shared-types';
 export type PlanFeatureGates = {
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
+  allowResearchMode: boolean;
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;

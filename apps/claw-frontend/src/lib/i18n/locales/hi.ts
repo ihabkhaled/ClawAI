@@ -2883,6 +2883,7 @@ export const hi: TranslationDictionary = {
     gate: {
       allowCompareMode: 'तुलना मोड',
       allowJudgeMode: 'जज मोड',
+      allowResearchMode: 'रिसर्च मोड',
       allowWorkspaces: 'वर्कस्पेस',
       allowMemory: 'मेमोरी',
       allowContextPacks: 'कॉन्टेक्स्ट पैक',

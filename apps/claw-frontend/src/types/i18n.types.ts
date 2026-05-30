@@ -2826,6 +2826,7 @@ export type TranslationDictionary = {
     gate: {
       allowCompareMode: string;
       allowJudgeMode: string;
+      allowResearchMode: string;
       allowWorkspaces: string;
       allowMemory: string;
       allowContextPacks: string;

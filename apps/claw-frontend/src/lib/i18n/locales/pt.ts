@@ -2893,6 +2893,7 @@ export const pt: TranslationDictionary = {
     gate: {
       allowCompareMode: 'Modo comparação',
       allowJudgeMode: 'Modo juiz',
+      allowResearchMode: 'Modo pesquisa',
       allowWorkspaces: 'Workspaces',
       allowMemory: 'Memória',
       allowContextPacks: 'Pacotes de contexto',

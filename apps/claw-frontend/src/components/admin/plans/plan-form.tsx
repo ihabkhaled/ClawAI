@@ -280,6 +280,16 @@ export function PlanForm({
           />
         </div>
         <div className="flex items-center justify-between gap-2">
+          <label htmlFor="plan-allow-research" className="text-sm">
+            {t('adminPlans.gate.allowResearchMode')}
+          </label>
+          <Switch
+            id="plan-allow-research"
+            checked={state.allowResearchMode}
+            onCheckedChange={(next) => setField('allowResearchMode', next)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
           <label htmlFor="plan-allow-workspaces" className="text-sm">
             {t('adminPlans.gate.allowWorkspaces')}
           </label>

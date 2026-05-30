@@ -258,6 +258,9 @@ export type ThreadSettingsProps = {
   onUseContextChange: (value: boolean) => void;
   onSave: () => void;
   isPending: boolean;
+  // Plan-feature gate: when false the judge toggle + judge-model selector are
+  // hidden entirely. ADMIN passes true via usePlanFeatures.
+  allowJudgeMode: boolean;
 };
 
 export type JudgeRefereeDetailsProps = {
@@ -964,6 +967,10 @@ export type InThreadComparePanelProps = {
   judgeModelOptionsLoading: boolean;
   researchMode: CompareResearchMode;
   onResearchModeChange: (value: CompareResearchMode) => void;
+  // Plan-feature gates: hide judge / research controls when the user's plan
+  // does not unlock them. ADMIN passes true via usePlanFeatures.
+  allowJudgeMode: boolean;
+  allowResearchMode: boolean;
   t: TranslateFunction;
 };
 

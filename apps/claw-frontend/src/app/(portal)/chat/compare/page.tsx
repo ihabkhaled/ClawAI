@@ -15,6 +15,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { PlanFeature } from '@/enums';
+import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
 import { useParallelComparePage } from '@/hooks/chat/use-parallel-compare-page';
 
 export default function ComparePage() {
@@ -43,6 +45,10 @@ export default function ComparePage() {
     setResearchMode,
   } = useParallelComparePage();
 
+  const planFeatures = usePlanFeatures();
+  const canJudge = planFeatures.has(PlanFeature.ALLOW_JUDGE_MODE);
+  const canResearch = planFeatures.has(PlanFeature.ALLOW_RESEARCH_MODE);
+
   const showLoading = isPending || (isPolling && pollingMessages.length === 0);
   const showResults = pollingMessages.length > 0;
   const showEmpty = !isPending && !isPolling && pollingMessages.length === 0;
@@ -62,20 +68,24 @@ export default function ComparePage() {
               selectionError={selectionError}
               t={t}
             />
-            <CompareJudgeControls
-              judgeEnabled={judgeEnabled}
-              onJudgeEnabledChange={setJudgeEnabled}
-              judgeModel={judgeModel}
-              onJudgeModelChange={setJudgeModel}
-              judgeModelOptions={judgeModelOptions}
-              judgeModelOptionsLoading={isJudgeModelOptionsLoading}
-              t={t}
-            />
-            <CompareResearchModeControl
-              value={researchMode}
-              onChange={setResearchMode}
-              t={t}
-            />
+            {canJudge ? (
+              <CompareJudgeControls
+                judgeEnabled={judgeEnabled}
+                onJudgeEnabledChange={setJudgeEnabled}
+                judgeModel={judgeModel}
+                onJudgeModelChange={setJudgeModel}
+                judgeModelOptions={judgeModelOptions}
+                judgeModelOptionsLoading={isJudgeModelOptionsLoading}
+                t={t}
+              />
+            ) : null}
+            {canResearch ? (
+              <CompareResearchModeControl
+                value={researchMode}
+                onChange={setResearchMode}
+                t={t}
+              />
+            ) : null}
           </div>
         </div>
 

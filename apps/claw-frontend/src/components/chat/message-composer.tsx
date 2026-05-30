@@ -6,6 +6,8 @@ import { PreviewContextButton } from '@/components/chat/preview-context-button';
 import { ResearchToggle } from '@/components/chat/research-toggle';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { PlanFeature } from '@/enums';
+import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
 import { useMessageComposerState } from '@/hooks/chat/use-message-composer-state';
 import { useTranslation } from '@/lib/i18n';
 import type { MessageComposerProps } from '@/types';
@@ -18,6 +20,8 @@ export function MessageComposer({
   threadId,
 }: MessageComposerProps): React.ReactElement {
   const { t } = useTranslation();
+  const planFeatures = usePlanFeatures();
+  const canResearch = planFeatures.has(PlanFeature.ALLOW_RESEARCH_MODE);
   const {
     content,
     validationError,
@@ -41,13 +45,15 @@ export function MessageComposer({
           onChange={setSelectedFileIds}
           disabled={isPending}
         />
-        <ResearchToggle
-          value={research}
-          providers={researchProviders}
-          isProvidersLoading={isResearchProvidersLoading}
-          onChange={setResearch}
-          disabled={isPending}
-        />
+        {canResearch ? (
+          <ResearchToggle
+            value={research}
+            providers={researchProviders}
+            isProvidersLoading={isResearchProvidersLoading}
+            onChange={setResearch}
+            disabled={isPending}
+          />
+        ) : null}
         {threadId ? <PreviewContextButton threadId={threadId} draft={content} /> : null}
       </div>
       <div className="flex min-h-0 flex-1 gap-2">

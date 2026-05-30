@@ -19,6 +19,7 @@ const base: UserEntitlements = {
     featureGates: {
       allowCompareMode: false,
       allowJudgeMode: false,
+      allowResearchMode: false,
       allowWorkspaces: true,
       allowMemory: true,
       allowContextPacks: true,

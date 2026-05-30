@@ -25,8 +25,11 @@ export function ResearchToggle({
   const { t } = useTranslation();
   const selectableProviders = providers.filter((provider) => provider.enabled);
   const providerValue = value.providerId ?? 'auto';
-  const providerDisabled =
-    disabled || value.mode === ResearchMode.OFF || selectableProviders.length === 0;
+  // No longer dims based on `value.mode === OFF`. Plan-feature gating happens
+  // one level up (MessageComposer hides the whole control when the plan does
+  // not unlock research). The provider dropdown stays enabled as long as the
+  // composer isn't busy AND there is at least one provider to pick.
+  const providerDisabled = disabled || selectableProviders.length === 0;
 
   return (
     <div className="flex items-center gap-1">

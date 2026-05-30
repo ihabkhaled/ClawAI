@@ -1,7 +1,8 @@
 import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import { EventPattern, LogLevel, Permission, TokenLedgerContext } from '@claw/shared-types';
-import { allowedModelKeys } from '@claw/shared-entitlements';
+import { allowedModelKeys, type PlanFeature } from '@claw/shared-entitlements';
+import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { AppConfig } from '../../../app/config/app.config';
 import { recordGet, runResearch } from '../../../common/utilities';
 import {
@@ -122,11 +123,9 @@ export class ChatMessagesService implements OnModuleInit {
 
     // Backend enforcement: reject a forbidden manually-selected model and a
     // user whose daily quota is exhausted, before any work is done. The
-    // returned entitlements feed AUTO-mode router gating below.
-    const entitlements = await this.accessControlService.assertCanSendMessage(userId, {
-      provider: forcedProvider,
-      model: forcedModel,
-    });
+    // returned entitlements feed AUTO-mode router gating below. Research mode
+    // additionally requires the plan-level allowResearchMode unlock.
+    const entitlements = await this.assertSendAccess(userId, dto, forcedProvider, forcedModel);
     const allowedModels = entitlements ? allowedModelKeys(entitlements) : [];
 
     this.chatStreamService.emitRequestAccepted(dto.threadId);
@@ -160,6 +159,27 @@ export class ChatMessagesService implements OnModuleInit {
     );
 
     return message;
+  }
+
+  // Resolves plan-feature requirements for a single-message send and asserts
+  // them against the user's entitlements. Returns the resolved entitlements
+  // (or null when failing open). Throws PLAN_FEATURE_DISABLED if research is
+  // requested but the user's plan does not unlock it.
+  private async assertSendAccess(
+    userId: string,
+    dto: CreateMessageDto,
+    forcedProvider: string | undefined,
+    forcedModel: string | undefined,
+  ): Promise<Awaited<ReturnType<AccessControlService['assertCanSendMessage']>>> {
+    const requireFeature: PlanFeature | undefined =
+      dto.researchMode !== undefined && dto.researchMode !== 'OFF'
+        ? 'allowResearchMode'
+        : undefined;
+    return this.accessControlService.assertCanSendMessage(userId, {
+      provider: forcedProvider,
+      model: forcedModel,
+      ...(requireFeature ? { requireFeature } : {}),
+    });
   }
 
   private async runResearchIfRequested(
@@ -267,18 +287,20 @@ export class ChatMessagesService implements OnModuleInit {
 
   // Plan-feature + RBAC gates for compare mode. Extracted so
   // createParallelMessage stays under the 30-line service limit and the gates
-  // can be unit-tested in isolation. Research is permission-gated (USER_DEFAULT
-  // grants RESEARCH_USE so the default unblocks the dropdown).
+  // can be unit-tested in isolation. Research is gated by BOTH the plan-level
+  // allowResearchMode flag AND the RESEARCH_USE permission (USER_DEFAULT
+  // grants RESEARCH_USE so the default unblocks the dropdown once the plan
+  // unlocks it).
   private async assertCompareAccess(userId: string, dto: ParallelMessageDto): Promise<void> {
-    await this.accessControlService.assertCanSendMessage(userId, {
-      requireFeature: 'allowCompareMode',
-    });
+    const features: PlanFeature[] = ['allowCompareMode'];
     if (dto.judgeEnabled === true) {
-      await this.accessControlService.assertCanSendMessage(userId, {
-        requireFeature: 'allowJudgeMode',
-      });
+      features.push('allowJudgeMode');
     }
-    if (dto.researchMode !== undefined && dto.researchMode !== 'NONE') {
+    if (dto.researchMode !== undefined && dto.researchMode !== ResearchMode.NONE) {
+      features.push('allowResearchMode');
+    }
+    await this.accessControlService.assertCanSendMessage(userId, { requireFeature: features });
+    if (dto.researchMode !== undefined && dto.researchMode !== ResearchMode.NONE) {
       await this.accessControlService.assertCanSendMessage(userId, {
         requirePermission: Permission.RESEARCH_USE,
       });

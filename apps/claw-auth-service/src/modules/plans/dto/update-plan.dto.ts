@@ -17,6 +17,7 @@ export const updatePlanSchema = z.object({
   maxMemoryItems: z.number().int().min(0).max(1_000_000).optional(),
   allowCompareMode: z.boolean().optional(),
   allowJudgeMode: z.boolean().optional(),
+  allowResearchMode: z.boolean().optional(),
   allowWorkspaces: z.boolean().optional(),
   allowMemory: z.boolean().optional(),
   allowContextPacks: z.boolean().optional(),

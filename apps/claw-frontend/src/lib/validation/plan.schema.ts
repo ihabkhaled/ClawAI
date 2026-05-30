@@ -53,6 +53,7 @@ export const createPlanSchema = z.object({
   maxMemoryItems: optionalNonNegativeInt,
   allowCompareMode: z.boolean().optional(),
   allowJudgeMode: z.boolean().optional(),
+  allowResearchMode: z.boolean().optional(),
   allowWorkspaces: z.boolean().optional(),
   allowMemory: z.boolean().optional(),
   allowContextPacks: z.boolean().optional(),

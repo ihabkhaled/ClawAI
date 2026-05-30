@@ -153,4 +153,40 @@ describe('usePlanFeatures', () => {
 
     expect(result.current.isLoading).toBe(true);
   });
+
+  it('member with allowResearchMode=true → has(ALLOW_RESEARCH_MODE) === true', async () => {
+    setUser(makeUser(UserRole.USER));
+    mockEntitlements.mockResolvedValue(entWithGates({ allowResearchMode: true }));
+
+    const { result } = renderHook(() => usePlanFeatures(), { wrapper: makeWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+    expect(result.current.has(PlanFeature.ALLOW_RESEARCH_MODE)).toBe(true);
+  });
+
+  it('member with allowResearchMode=false → has(ALLOW_RESEARCH_MODE) === false', async () => {
+    setUser(makeUser(UserRole.USER));
+    mockEntitlements.mockResolvedValue(entWithGates({ allowResearchMode: false }));
+
+    const { result } = renderHook(() => usePlanFeatures(), { wrapper: makeWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+    expect(result.current.has(PlanFeature.ALLOW_RESEARCH_MODE)).toBe(false);
+  });
+
+  it('ADMIN: has(ALLOW_RESEARCH_MODE) === true even when plan locks it', async () => {
+    setUser(makeUser(UserRole.ADMIN));
+    mockEntitlements.mockResolvedValue(entWithGates({ allowResearchMode: false }));
+
+    const { result } = renderHook(() => usePlanFeatures(), { wrapper: makeWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.isAdmin).toBe(true);
+    });
+    expect(result.current.has(PlanFeature.ALLOW_RESEARCH_MODE)).toBe(true);
+  });
 });

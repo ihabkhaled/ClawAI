@@ -20,6 +20,7 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   maxMemoryItems: '',
   allowCompareMode: true,
   allowJudgeMode: true,
+  allowResearchMode: true,
   allowWorkspaces: true,
   allowMemory: true,
   allowContextPacks: true,
@@ -34,6 +35,7 @@ export const PLAN_FEATURE_GATE_FIELDS: ReadonlyArray<{
 }> = [
   { field: 'allowCompareMode', labelKey: 'adminPlans.gate.allowCompareMode' },
   { field: 'allowJudgeMode', labelKey: 'adminPlans.gate.allowJudgeMode' },
+  { field: 'allowResearchMode', labelKey: 'adminPlans.gate.allowResearchMode' },
   { field: 'allowWorkspaces', labelKey: 'adminPlans.gate.allowWorkspaces' },
   { field: 'allowMemory', labelKey: 'adminPlans.gate.allowMemory' },
   { field: 'allowContextPacks', labelKey: 'adminPlans.gate.allowContextPacks' },

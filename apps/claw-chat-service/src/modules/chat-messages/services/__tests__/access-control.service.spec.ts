@@ -155,5 +155,81 @@ describe('AccessControlService', () => {
         service.assertCanSendMessage('u1', { requireFeature: 'allowCompareMode' }),
       ).resolves.toBeNull();
     });
+
+    it('rejects when judgeEnabled=true but allowJudgeMode plan gate is locked', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({
+          plan: {
+            id: 'p1',
+            slug: 'free',
+            name: 'Free',
+            featureGates: { allowCompareMode: true, allowJudgeMode: false },
+          },
+        }),
+      );
+      await expect(
+        service.assertCanSendMessage('u1', { requireFeature: 'allowJudgeMode' }),
+      ).rejects.toMatchObject({ code: 'PLAN_FEATURE_DISABLED' });
+    });
+
+    it('rejects when researchMode=SEARCH but allowResearchMode plan gate is locked', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({
+          plan: {
+            id: 'p1',
+            slug: 'free',
+            name: 'Free',
+            featureGates: { allowResearchMode: false },
+          },
+        }),
+      );
+      await expect(
+        service.assertCanSendMessage('u1', { requireFeature: 'allowResearchMode' }),
+      ).rejects.toMatchObject({ code: 'PLAN_FEATURE_DISABLED' });
+    });
+
+    it('accepts an array of features when ALL three are unlocked on the plan', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({
+          plan: {
+            id: 'p1',
+            slug: 'pro',
+            name: 'Pro',
+            featureGates: {
+              allowCompareMode: true,
+              allowJudgeMode: true,
+              allowResearchMode: true,
+            },
+          },
+        }),
+      );
+      await expect(
+        service.assertCanSendMessage('u1', {
+          requireFeature: ['allowCompareMode', 'allowJudgeMode', 'allowResearchMode'],
+        }),
+      ).resolves.toMatchObject({ userId: 'u1' });
+    });
+
+    it('rejects on the first locked feature when an array is passed', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({
+          plan: {
+            id: 'p1',
+            slug: 'mixed',
+            name: 'Mixed',
+            featureGates: {
+              allowCompareMode: true,
+              allowJudgeMode: true,
+              allowResearchMode: false,
+            },
+          },
+        }),
+      );
+      await expect(
+        service.assertCanSendMessage('u1', {
+          requireFeature: ['allowCompareMode', 'allowJudgeMode', 'allowResearchMode'],
+        }),
+      ).rejects.toMatchObject({ code: 'PLAN_FEATURE_DISABLED' });
+    });
   });
 });

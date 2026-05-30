@@ -7,6 +7,7 @@ export type PlanWithAccess = Plan & { modelAccess: PlanModelAccess[] };
 export type PlanFeatureGates = {
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
+  allowResearchMode: boolean;
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;
@@ -44,6 +45,7 @@ export type PlanView = {
   maxMemoryItems: number | null;
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
+  allowResearchMode: boolean;
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;
@@ -70,6 +72,7 @@ export type CreatePlanData = {
   maxMemoryItems?: number;
   allowCompareMode?: boolean;
   allowJudgeMode?: boolean;
+  allowResearchMode?: boolean;
   allowWorkspaces?: boolean;
   allowMemory?: boolean;
   allowContextPacks?: boolean;

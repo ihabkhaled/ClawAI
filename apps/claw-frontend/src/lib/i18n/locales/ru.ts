@@ -2901,6 +2901,7 @@ export const ru: TranslationDictionary = {
     gate: {
       allowCompareMode: 'Режим сравнения',
       allowJudgeMode: 'Режим оценки',
+      allowResearchMode: 'Режим исследования',
       allowWorkspaces: 'Рабочие пространства',
       allowMemory: 'Память',
       allowContextPacks: 'Пакеты контекста',

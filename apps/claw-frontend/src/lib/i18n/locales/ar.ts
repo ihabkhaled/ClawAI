@@ -2852,6 +2852,7 @@ export const ar: TranslationDictionary = {
     gate: {
       allowCompareMode: 'وضع المقارنة',
       allowJudgeMode: 'وضع التحكيم',
+      allowResearchMode: 'وضع البحث',
       allowWorkspaces: 'مساحات العمل',
       allowMemory: 'الذاكرة',
       allowContextPacks: 'حزم السياق',

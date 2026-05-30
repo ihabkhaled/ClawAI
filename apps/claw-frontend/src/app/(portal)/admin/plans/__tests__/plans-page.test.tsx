@@ -31,6 +31,7 @@ const samplePlan = {
   maxMemoryItems: null,
   allowCompareMode: true,
   allowJudgeMode: true,
+  allowResearchMode: false,
   allowWorkspaces: true,
   allowMemory: true,
   allowContextPacks: true,

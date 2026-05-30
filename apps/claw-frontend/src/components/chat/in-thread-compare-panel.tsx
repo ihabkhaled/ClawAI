@@ -25,6 +25,8 @@ export function InThreadComparePanel({
   judgeModelOptionsLoading,
   researchMode,
   onResearchModeChange,
+  allowJudgeMode,
+  allowResearchMode,
   t,
 }: InThreadComparePanelProps): React.ReactElement {
   return (
@@ -48,21 +50,25 @@ export function InThreadComparePanel({
           t={t}
         />
 
-        <CompareJudgeControls
-          judgeEnabled={judgeEnabled}
-          onJudgeEnabledChange={onJudgeEnabledChange}
-          judgeModel={judgeModel}
-          onJudgeModelChange={onJudgeModelChange}
-          judgeModelOptions={judgeModelOptions}
-          judgeModelOptionsLoading={judgeModelOptionsLoading}
-          t={t}
-        />
+        {allowJudgeMode ? (
+          <CompareJudgeControls
+            judgeEnabled={judgeEnabled}
+            onJudgeEnabledChange={onJudgeEnabledChange}
+            judgeModel={judgeModel}
+            onJudgeModelChange={onJudgeModelChange}
+            judgeModelOptions={judgeModelOptions}
+            judgeModelOptionsLoading={judgeModelOptionsLoading}
+            t={t}
+          />
+        ) : null}
 
-        <CompareResearchModeControl
-          value={researchMode}
-          onChange={onResearchModeChange}
-          t={t}
-        />
+        {allowResearchMode ? (
+          <CompareResearchModeControl
+            value={researchMode}
+            onChange={onResearchModeChange}
+            t={t}
+          />
+        ) : null}
 
         <form
           className="flex gap-2"

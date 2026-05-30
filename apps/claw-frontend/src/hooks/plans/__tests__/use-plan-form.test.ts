@@ -25,6 +25,7 @@ const seedPlan = {
   maxMemoryItems: 100,
   allowCompareMode: true,
   allowJudgeMode: false,
+  allowResearchMode: true,
   allowWorkspaces: true,
   allowMemory: true,
   allowContextPacks: false,

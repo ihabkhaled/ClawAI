@@ -17,6 +17,7 @@ const t = (key: string): string => key;
 const gates: EntitlementFeatureGates = {
   allowCompareMode: true,
   allowJudgeMode: false,
+  allowResearchMode: false,
   allowWorkspaces: true,
   allowMemory: false,
   allowContextPacks: true,

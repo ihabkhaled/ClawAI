@@ -142,6 +142,7 @@ export class PlansService {
       maxMemoryItems: plan.maxMemoryItems,
       allowCompareMode: plan.allowCompareMode,
       allowJudgeMode: plan.allowJudgeMode,
+      allowResearchMode: plan.allowResearchMode,
       allowWorkspaces: plan.allowWorkspaces,
       allowMemory: plan.allowMemory,
       allowContextPacks: plan.allowContextPacks,

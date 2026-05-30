@@ -40,7 +40,7 @@ export class AccessControlService {
       return null; // fail-open
     }
     if (opts.requireFeature !== undefined) {
-      this.assertFeatureEnabled(ent, opts.requireFeature, userId);
+      this.assertFeaturesEnabled(ent, opts.requireFeature, userId);
     }
     if (opts.requirePermission !== undefined) {
       this.assertPermissionGranted(ent, opts.requirePermission, userId);
@@ -58,6 +58,19 @@ export class AccessControlService {
   // surface a precise error.
   assertPlanFeature(ent: UserEntitlements, feature: PlanFeature): void {
     this.assertFeatureEnabled(ent, feature, ent.userId);
+  }
+
+  private assertFeaturesEnabled(
+    ent: UserEntitlements,
+    features: PlanFeature | readonly PlanFeature[],
+    userId: string,
+  ): void {
+    const list: readonly PlanFeature[] = Array.isArray(features)
+      ? (features as readonly PlanFeature[])
+      : [features as PlanFeature];
+    for (const feature of list) {
+      this.assertFeatureEnabled(ent, feature, userId);
+    }
   }
 
   // Records actual token usage to the durable ledger after a completed message.

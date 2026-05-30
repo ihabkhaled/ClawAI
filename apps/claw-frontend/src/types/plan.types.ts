@@ -36,6 +36,7 @@ export type PlanView = {
   maxMemoryItems: number | null;
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
+  allowResearchMode: boolean;
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;
@@ -73,6 +74,7 @@ export type CreatePlanRequest = {
   maxMemoryItems?: number;
   allowCompareMode?: boolean;
   allowJudgeMode?: boolean;
+  allowResearchMode?: boolean;
   allowWorkspaces?: boolean;
   allowMemory?: boolean;
   allowContextPacks?: boolean;
@@ -97,6 +99,7 @@ export type PlanUserIds = {
 export type EntitlementFeatureGates = {
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
+  allowResearchMode: boolean;
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;
@@ -147,6 +150,7 @@ export type PlanFormState = {
   maxMemoryItems: string;
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
+  allowResearchMode: boolean;
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;

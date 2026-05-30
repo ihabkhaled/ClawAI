@@ -5,6 +5,7 @@
 export enum PlanFeature {
   ALLOW_COMPARE_MODE = 'allowCompareMode',
   ALLOW_JUDGE_MODE = 'allowJudgeMode',
+  ALLOW_RESEARCH_MODE = 'allowResearchMode',
   ALLOW_WORKSPACES = 'allowWorkspaces',
   ALLOW_MEMORY = 'allowMemory',
   ALLOW_CONTEXT_PACKS = 'allowContextPacks',

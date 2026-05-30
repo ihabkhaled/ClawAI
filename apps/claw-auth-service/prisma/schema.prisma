@@ -98,6 +98,7 @@ model Plan {
   maxMemoryItems         Int?     @map("max_memory_items")
   allowCompareMode       Boolean  @default(false) @map("allow_compare_mode")
   allowJudgeMode         Boolean  @default(false) @map("allow_judge_mode")
+  allowResearchMode      Boolean  @default(false) @map("allow_research_mode")
   allowWorkspaces        Boolean  @default(true) @map("allow_workspaces")
   allowMemory            Boolean  @default(true) @map("allow_memory")
   allowContextPacks      Boolean  @default(true) @map("allow_context_packs")

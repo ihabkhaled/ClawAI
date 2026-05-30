@@ -42,6 +42,7 @@ export function ThreadSettings({
   onUseContextChange,
   onSave,
   isPending,
+  allowJudgeMode,
 }: ThreadSettingsProps): React.ReactElement {
   return (
     <Card>
@@ -117,21 +118,23 @@ export function ThreadSettings({
           />
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <label className="text-sm font-medium" htmlFor="judge-enabled">
-              {t('chat.judgeReferee')}
-            </label>
-            <p className="text-xs text-muted-foreground">{t('chat.judgeRefereeDescription')}</p>
+        {allowJudgeMode ? (
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <label className="text-sm font-medium" htmlFor="judge-enabled">
+                {t('chat.judgeReferee')}
+              </label>
+              <p className="text-xs text-muted-foreground">{t('chat.judgeRefereeDescription')}</p>
+            </div>
+            <Switch
+              id="judge-enabled"
+              checked={judgeEnabled}
+              onCheckedChange={onJudgeEnabledChange}
+            />
           </div>
-          <Switch
-            id="judge-enabled"
-            checked={judgeEnabled}
-            onCheckedChange={onJudgeEnabledChange}
-          />
-        </div>
+        ) : null}
 
-        {judgeEnabled && (
+        {allowJudgeMode && judgeEnabled ? (
           <div className="space-y-2">
             <label className="text-sm font-medium">{t('chat.judgeModelLabel')}</label>
             <p className="text-xs text-muted-foreground">{t('chat.judgeModelDescription')}</p>
@@ -155,7 +158,7 @@ export function ThreadSettings({
               </SelectContent>
             </Select>
           </div>
-        )}
+        ) : null}
 
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="quality-threshold">
