@@ -142,16 +142,15 @@ if (!connectionString) {
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 
 async function upsertSystemPlan(def) {
+  // Plans are ADMIN-tunable in /admin/plans (unlike system roles, which are
+  // code-owned and reconciled every run). Seed only ever CREATES a plan that
+  // doesn't exist yet — it must never overwrite an existing row's mutable
+  // fields (dailyTokenQuota, allowCompareMode, allowJudgeMode, displayOrder,
+  // pricing, name, description), or container restarts would clobber every
+  // dashboard edit. Empty `update` makes the upsert a no-op on existing rows.
   return prisma.plan.upsert({
     where: { slug: def.slug },
-    update: {
-      name: def.name,
-      description: def.description,
-      displayOrder: def.displayOrder,
-      dailyTokenQuota: def.dailyTokenQuota,
-      allowCompareMode: def.allowCompareMode,
-      allowJudgeMode: def.allowJudgeMode,
-    },
+    update: {},
     create: {
       slug: def.slug,
       name: def.name,
