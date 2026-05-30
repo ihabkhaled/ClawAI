@@ -257,6 +257,16 @@ export class ConnectorsService {
   // enabled connectors, with NO connector config/secrets. Gated by
   // MODEL_USE_ALLOWED (not connector-admin) so normal users can pick cloud
   // models without seeing the connector management surface.
+  //
+  // IMPORTANT — same list for every plan tier:
+  // This endpoint returns the SAME model list to ALL users regardless of plan.
+  // Plan-tier restrictions on model SELECTION are an admin-only surface managed
+  // via PlanModelAccess (claw-auth-service). When that table has zero rows for
+  // a plan (the default), every plan sees every connector model — see the
+  // contract comment in claw-auth-service EntitlementsService.getForUser. The
+  // ThreadSettings and MessageComposer model selectors both consume this list
+  // unmodified; plan features (compare/judge/critic/research) gate WORKFLOWS,
+  // never which model the user can pick.
   async getAvailableModels(): Promise<ConnectorModel[]> {
     this.logger.debug('getAvailableModels: listing enabled connector models');
     const rows = await this.connectorModelsRepository.findAllForSnapshot();

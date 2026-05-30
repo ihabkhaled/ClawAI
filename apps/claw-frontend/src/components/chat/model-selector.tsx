@@ -21,6 +21,18 @@ export function ModelSelector({
 }: ModelSelectorProps): React.ReactElement {
   const { groupedModels, isLoading } = useAvailableModels();
 
+  // Both selector callsites (MessageComposer + ThreadSettings) MUST share the
+  // exact same enabling logic. The Select is disabled ONLY for runtime reasons:
+  //   1. the caller passed `disabled` (e.g. an inflight send/save) — transient
+  //   2. the available-models query is still loading
+  //   3. the query has settled with zero options to choose
+  // The Select is NEVER disabled by plan-feature flags (compare/judge/critic/
+  // research) — those gate workflows, not model selection. Model SELECTION is
+  // always open to every plan tier; admin-only PlanModelAccess restrictions (if
+  // any rows exist) are enforced server-side at execution time, not in the UI.
+  const totalModelCount = groupedModels.reduce((sum, g) => sum + g.models.length, 0);
+  const hasNoModels = !isLoading && totalModelCount === 0;
+
   const selectedValue = value ? encodeModelValue(value.provider, value.model) : MODEL_AUTO_VALUE;
 
   const handleChange = (val: string): void => {
@@ -40,11 +52,26 @@ export function ModelSelector({
     );
   };
 
+  const resolvePlaceholder = (): string => {
+    if (isLoading) {
+      return 'Loading models...';
+    }
+    if (hasNoModels) {
+      return 'No models available';
+    }
+    return 'Auto';
+  };
+  const placeholder = resolvePlaceholder();
+
   return (
-    <Select value={selectedValue} onValueChange={handleChange} disabled={disabled || isLoading}>
+    <Select
+      value={selectedValue}
+      onValueChange={handleChange}
+      disabled={disabled || isLoading || hasNoModels}
+    >
       <SelectTrigger className="h-9 w-[220px] text-xs sm:w-[260px]">
         <Bot className="mr-1 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-        <SelectValue placeholder={isLoading ? 'Loading models...' : 'Auto'} />
+        <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent className="w-[min(420px,calc(100vw-2rem))]">
         <SelectItem value={MODEL_AUTO_VALUE}>Auto (routing decides)</SelectItem>

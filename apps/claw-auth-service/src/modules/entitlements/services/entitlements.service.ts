@@ -36,6 +36,13 @@ export class EntitlementsService {
       ? { dailyLimit: 0, used: 0, remaining: 0, unlimited: true }
       : { ...(await this.quotaService.getSnapshot(userId, dailyLimit)), unlimited: false };
 
+    // PlanModelAccess contract: an EMPTY rows array means "no model restriction
+    // configured" — every plan tier sees every connector model. A POPULATED rows
+    // array restricts the user to ONLY those entries with isAllowed=true. This is
+    // an admin-only restriction surface; until an admin explicitly inserts
+    // restrictive rows for a plan, the frontend ModelSelector receives the full
+    // catalog from GET /connectors/available-models (no plan-feature gating on
+    // model SELECTION — feature gates govern WORKFLOWS like compare/judge).
     const modelAccess = (plan?.modelAccess ?? []).filter((m) => m.isAllowed);
 
     return {

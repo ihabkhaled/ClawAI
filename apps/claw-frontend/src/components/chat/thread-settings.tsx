@@ -53,7 +53,15 @@ export function ThreadSettings({
         <div className="space-y-2">
           <label className="text-sm font-medium">{t('chat.preferredModel')}</label>
           <p className="text-xs text-muted-foreground">{t('chat.preferredModelDescription')}</p>
-          <ModelSelector value={selectedModel} onChange={onModelChange} />
+          {/* Symmetric with MessageComposer: pass `disabled={isPending}` so both */}
+          {/* selectors share IDENTICAL runtime gating. Model SELECTION is never */}
+          {/* gated by plan features — compare/judge/critic/research gate workflows, */}
+          {/* not which model you can pick. See model-selector.tsx for full rules. */}
+          <ModelSelector
+            value={selectedModel}
+            onChange={onModelChange}
+            disabled={isPending}
+          />
         </div>
 
         <div className="space-y-2">
