@@ -46,6 +46,41 @@ Ollama microservice for the Claw platform. Manages local AI model lifecycle: pul
 | /ollama/pull-jobs/:id             | DELETE    | Yes    | Cancel download                        |
 | /internal/ollama/router-model     | GET       | Public | Get router model (internal)            |
 | /internal/ollama/installed-models | GET       | Public | Installed models with roles (internal) |
+| /runtime-progress/probe           | GET       | ADMIN  | Local-runtime rich-progress probe      |
+
+## Runtime-progress probe (PR1 — local-runtime rich-progress)
+
+`GET /api/v1/ollama/runtime-progress/probe` — admin-only diagnostic snapshot of
+the Ollama runtime. Returns a `RuntimeProbeReport` (shape defined in
+`@claw/shared-types/runtime-progress`) with reachability status, version,
+installed models, optional execution profile, recent generate events, and a
+boolean capability matrix:
+
+```ts
+RuntimeProbeReport = {
+  provider: RuntimeProvider.OLLAMA,
+  runtimeUrl: string,
+  status: RuntimeProbeStatus,  // REACHABLE | UNREACHABLE | DEGRADED | …
+  probedAtMs: number,
+  latencyMs?: number,
+  version?: string,
+  models?: RuntimeProbeModel[],
+  executionProfile?: RuntimeExecutionProfile, // CPU | CUDA | ROCM | METAL | …
+  capabilities?: { streamingText, thinking, promptProgress, cancel, metrics, … },
+  recentEvents?: RuntimeProbeRecentEvent[],
+  errorType?: StreamingErrorType,
+  errorMessage?: string,
+};
+```
+
+Implementation: `src/modules/runtime-progress/controllers/runtime-progress.controller.ts`
+
+- `services/ollama-probe.service.ts`. Guarded by `@Roles(UserRole.ADMIN)` —
+  non-admins receive 403.
+
+The probe powers the experiment-report capability matrix at
+`docs/LOCAL_RUNTIME_PROGRESS_EXPERIMENT_REPORT.md`. Full architecture:
+[`docs/03-architecture/runtime-progress.md`](../../docs/03-architecture/runtime-progress.md).
 
 ## Model Categories & Roles
 

@@ -88,3 +88,7 @@ apps/claw-frontend/scripts/
 !apps/claw-frontend/scripts/run-vitest.cjs
 # ESLint cache
 .eslintcache
+
+# Local runtime probe dumps (operator diagnostics; never committed).
+# Populated by scripts/local-runtime-probes/probe-*.mjs.
+.local-runtime-probes/

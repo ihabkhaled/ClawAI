@@ -25,10 +25,7 @@ export { showToast } from './toast.utility';
 export { logger } from './logger.utility';
 export { estimateCost } from './cost.utility';
 export { isAdmin, hasPermission, hasAnyPermission } from './permissions.utility';
-export {
-  requiredPermissionForPath,
-  requiredRequirementForPath,
-} from './route-permission.utility';
+export { requiredPermissionForPath, requiredRequirementForPath } from './route-permission.utility';
 export { connectSse } from './sse.utility';
 export {
   encodeModelValue,
@@ -100,3 +97,4 @@ export {
   formatStreamTokens,
   formatCostUsd,
 } from './stream-format.utility';
+export { serializeRuntimeEvent } from './runtime-event-serializer.utility';

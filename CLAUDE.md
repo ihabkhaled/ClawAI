@@ -576,83 +576,143 @@ Mitigations (in priority order):
 
 Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 
-| Event                             | Publisher    | Consumers                |
-| --------------------------------- | ------------ | ------------------------ |
-| message.created                   | chat         | routing                  |
-| message.routed                    | routing      | chat                     |
-| message.completed                 | chat         | audit, memory            |
-| thread.created                    | chat         | —                        |
-| user.login/logout                 | auth         | audit                    |
-| connector.created/updated/deleted | connector    | audit                    |
-| connector.synced                  | connector    | audit, routing           |
-| connector.health_checked          | connector    | audit, routing           |
-| routing.decision_made             | routing      | audit                    |
-| memory.extracted                  | memory       | audit                    |
-| memory.suggested                  | memory       | audit                    |
-| memory.approved                   | memory       | audit                    |
-| memory.rejected                   | memory       | audit                    |
-| memory.used                       | memory       | audit                    |
-| memory.forgotten                  | memory       | audit                    |
-| memory.paused                     | memory       | audit                    |
-| memory.redacted                   | memory       | audit                    |
-| context_pack.created              | memory       | audit                    |
-| context_pack.updated              | memory       | audit                    |
-| context_pack.deleted              | memory       | audit                    |
-| context_pack.attached             | memory       | audit                    |
-| context_pack.detached             | memory       | audit                    |
-| context_pack.used                 | memory       | audit                    |
-| context_pack.version_created      | memory       | audit                    |
-| context_pack.version_reverted     | memory       | audit                    |
-| context_pack.shared               | memory       | audit                    |
-| context.receipt_written           | chat         | audit                    |
-| chat_thread.memory_toggled        | chat         | audit                    |
-| chat_thread.context_toggled       | chat         | audit                    |
-| file.uploaded/chunked             | file         | —                        |
-| log.server                        | all services | server-logs              |
-| image.generated                   | image        | audit                    |
-| image.failed                      | image        | audit                    |
-| file.generated                    | file-gen     | audit                    |
-| file_generation.failed            | file-gen     | audit                    |
-| agent.session.connected           | agent        | audit                    |
-| agent.session.disconnected        | agent        | audit                    |
-| agent.device_paired               | agent        | audit                    |
-| agent.device_revoked              | agent        | audit                    |
-| agent.token_rotated               | agent        | audit                    |
-| agent.token_reuse_detected        | agent        | audit                    |
-| agent.policy_violated             | agent        | audit                    |
-| agent.capability.proposed         | agent        | audit                    |
-| agent.capability.policy_matched   | agent        | audit                    |
-| agent.capability.auto_approved    | agent        | audit, capability-runner |
-| agent.capability.approved         | agent        | audit, capability-runner |
-| agent.capability.rejected         | agent        | audit                    |
-| agent.capability.executing        | agent        | audit                    |
-| agent.capability.executed         | agent        | audit                    |
-| agent.capability.failed           | agent        | audit                    |
-| agent.capability.cancelled        | agent        | audit                    |
-| agent.capability.expired          | agent        | audit                    |
-| agent.capability.rolled_back      | agent        | audit                    |
-| agent.capability.denied           | agent        | audit                    |
-| workspace.sync.run_started        | workspace    | audit                    |
-| workspace.sync.run_completed      | workspace    | audit                    |
-| workspace.sync.run_failed         | workspace    | audit                    |
-| workspace.sync.stale_detected     | workspace    | audit                    |
-| workspace.sync.manual_triggered   | workspace    | audit                    |
-| workspace.sync.paused             | workspace    | audit                    |
-| workspace.sync.resumed            | workspace    | audit                    |
-| workspace.sync.rate_limited       | workspace    | audit                    |
-| workspace.sync.dlq_sent           | workspace    | audit                    |
-| llamacpp.binary.installed         | llamacpp     | audit                    |
-| llamacpp.binary.updated           | llamacpp     | audit                    |
-| llamacpp.pull.started             | llamacpp     | audit                    |
-| llamacpp.pull.progress            | llamacpp     | audit                    |
-| llamacpp.pull.completed           | llamacpp     | audit                    |
-| llamacpp.pull.failed              | llamacpp     | audit                    |
-| llamacpp.model.loaded             | llamacpp     | audit, routing           |
-| llamacpp.model.unloaded           | llamacpp     | audit, routing           |
-| llamacpp.model.crashed            | llamacpp     | audit, routing           |
-| llamacpp.weights.deleted          | llamacpp     | audit                    |
-| llamacpp.preflight.overridden     | llamacpp     | audit                    |
-| routing.models.synced             | routing      | audit                    |
+| Event                                 | Publisher    | Consumers                |
+| ------------------------------------- | ------------ | ------------------------ |
+| message.created                       | chat         | routing                  |
+| message.routed                        | routing      | chat                     |
+| message.completed                     | chat         | audit, memory            |
+| thread.created                        | chat         | —                        |
+| user.login/logout                     | auth         | audit                    |
+| connector.created/updated/deleted     | connector    | audit                    |
+| connector.synced                      | connector    | audit, routing           |
+| connector.health_checked              | connector    | audit, routing           |
+| routing.decision_made                 | routing      | audit                    |
+| memory.extracted                      | memory       | audit                    |
+| memory.suggested                      | memory       | audit                    |
+| memory.approved                       | memory       | audit                    |
+| memory.rejected                       | memory       | audit                    |
+| memory.used                           | memory       | audit                    |
+| memory.forgotten                      | memory       | audit                    |
+| memory.paused                         | memory       | audit                    |
+| memory.redacted                       | memory       | audit                    |
+| context_pack.created                  | memory       | audit                    |
+| context_pack.updated                  | memory       | audit                    |
+| context_pack.deleted                  | memory       | audit                    |
+| context_pack.attached                 | memory       | audit                    |
+| context_pack.detached                 | memory       | audit                    |
+| context_pack.used                     | memory       | audit                    |
+| context_pack.version_created          | memory       | audit                    |
+| context_pack.version_reverted         | memory       | audit                    |
+| context_pack.shared                   | memory       | audit                    |
+| context.receipt_written               | chat         | audit                    |
+| chat_thread.memory_toggled            | chat         | audit                    |
+| chat_thread.context_toggled           | chat         | audit                    |
+| file.uploaded/chunked                 | file         | —                        |
+| log.server                            | all services | server-logs              |
+| image.generated                       | image        | audit                    |
+| image.failed                          | image        | audit                    |
+| file.generated                        | file-gen     | audit                    |
+| file_generation.failed                | file-gen     | audit                    |
+| agent.session.connected               | agent        | audit                    |
+| agent.session.disconnected            | agent        | audit                    |
+| agent.device_paired                   | agent        | audit                    |
+| agent.device_revoked                  | agent        | audit                    |
+| agent.token_rotated                   | agent        | audit                    |
+| agent.token_reuse_detected            | agent        | audit                    |
+| agent.policy_violated                 | agent        | audit                    |
+| agent.capability.proposed             | agent        | audit                    |
+| agent.capability.policy_matched       | agent        | audit                    |
+| agent.capability.auto_approved        | agent        | audit, capability-runner |
+| agent.capability.approved             | agent        | audit, capability-runner |
+| agent.capability.rejected             | agent        | audit                    |
+| agent.capability.executing            | agent        | audit                    |
+| agent.capability.executed             | agent        | audit                    |
+| agent.capability.failed               | agent        | audit                    |
+| agent.capability.cancelled            | agent        | audit                    |
+| agent.capability.expired              | agent        | audit                    |
+| agent.capability.rolled_back          | agent        | audit                    |
+| agent.capability.denied               | agent        | audit                    |
+| workspace.sync.run_started            | workspace    | audit                    |
+| workspace.sync.run_completed          | workspace    | audit                    |
+| workspace.sync.run_failed             | workspace    | audit                    |
+| workspace.sync.stale_detected         | workspace    | audit                    |
+| workspace.sync.manual_triggered       | workspace    | audit                    |
+| workspace.sync.paused                 | workspace    | audit                    |
+| workspace.sync.resumed                | workspace    | audit                    |
+| workspace.sync.rate_limited           | workspace    | audit                    |
+| workspace.sync.dlq_sent               | workspace    | audit                    |
+| llamacpp.binary.installed             | llamacpp     | audit                    |
+| llamacpp.binary.updated               | llamacpp     | audit                    |
+| llamacpp.pull.started                 | llamacpp     | audit                    |
+| llamacpp.pull.progress                | llamacpp     | audit                    |
+| llamacpp.pull.completed               | llamacpp     | audit                    |
+| llamacpp.pull.failed                  | llamacpp     | audit                    |
+| llamacpp.model.loaded                 | llamacpp     | audit, routing           |
+| llamacpp.model.unloaded               | llamacpp     | audit, routing           |
+| llamacpp.model.crashed                | llamacpp     | audit, routing           |
+| llamacpp.weights.deleted              | llamacpp     | audit                    |
+| llamacpp.preflight.overridden         | llamacpp     | audit                    |
+| routing.models.synced                 | routing      | audit                    |
+| runtime.progress.stage_changed        | chat (PR4)   | audit (PR4)              |
+| runtime.progress.content_delta        | chat (PR4)   | audit (PR4)              |
+| runtime.progress.reasoning_delta      | chat (PR4)   | audit (PR4)              |
+| runtime.progress.metrics_tick         | chat (PR4)   | audit (PR4)              |
+| runtime.progress.usage_final          | chat (PR4)   | audit (PR4)              |
+| runtime.progress.image_preview        | chat (PR4)   | audit (PR4)              |
+| runtime.progress.node_progress        | chat (PR4)   | audit (PR4)              |
+| runtime.progress.step_progress        | chat (PR4)   | audit (PR4)              |
+| runtime.progress.prompt_eval_progress | chat (PR4)   | audit (PR4)              |
+| runtime.progress.artifact_saved       | chat (PR4)   | audit (PR4)              |
+| runtime.progress.error                | chat (PR4)   | audit (PR4)              |
+| runtime.progress.cancelled            | chat (PR4)   | audit (PR4)              |
+
+> **Note:** the 12 `runtime.progress.*` patterns are **declared in
+> `packages/shared-constants/src/runtime-progress-events.constants.ts` but
+> NOT YET PUBLISHED**. PR1 ships the contract; PR4 wires the publishers in
+> chat-service and the consumer in audit-service. See
+> `docs/03-architecture/runtime-progress.md` §9.
+
+---
+
+## Local-runtime rich-progress (extends cloud rich-progress)
+
+ClawAI's cloud chat path already streams lifecycle stages + content deltas +
+reasoning deltas + token/cost metrics over `@Sse('stream/:threadId')` in
+chat-service. Local runtimes (Ollama, llama.cpp, ComfyUI, SD WebUI) historically
+showed only a generic spinner because chat-service called them buffered and
+re-emitted a single `COMPLETE` event when the response returned.
+
+PR1 ships the foundation that closes the gap. Full architecture in
+[`docs/03-architecture/runtime-progress.md`](docs/03-architecture/runtime-progress.md);
+user-facing summary in
+[`docs/LOCAL_RUNTIME_PROGRESS.md`](docs/LOCAL_RUNTIME_PROGRESS.md); decision
+record in [`docs/LOCAL_RUNTIME_PROGRESS_ADR.md`](docs/LOCAL_RUNTIME_PROGRESS_ADR.md).
+
+Key contracts shipped in PR1:
+
+- **Envelope** — `ClawRuntimeProgressEvent` + 9 enums in
+  `packages/shared-types/src/runtime-progress/`. Strict superset of
+  `StreamEvent`; both coexist on the existing SSE channel.
+- **Admin probe endpoints** — `GET /api/v1/ollama/runtime-progress/probe` and
+  `GET /api/v1/llamacpp/runtime-progress/probe`. Return
+  `RuntimeProbeReport` (reachability, models, capabilities, execution profile,
+  slot/queue state). ADMIN-only.
+- **Think-tag leak fix** — `InferenceProxyManager` in claw-llamacpp-service
+  now runs streaming `<think>…</think>` content through `ThinkTagScanner`
+  (from `@claw/shared-utilities`) and emits the inside as
+  `choices[].delta.reasoning_content`. Gated by
+  `LLAMACPP_REASONING_EXTRACTION_ENABLED` (default `true`).
+- **Frontend decomposition** — `RuntimeProgressPanel`, `VisibleReasoningPanel`,
+  `RuntimeMetricsHud`, `RuntimeRawEventsDrawer`, `RuntimeStageTimeline` (stub)
+  in `apps/claw-frontend/src/components/chat/runtime-progress/`.
+  `thinking-indicator.tsx` keeps its import name and delegates.
+- **Probe scripts** — `scripts/local-runtime-probes/{probe-ollama,probe-llamacpp,probe-sd-webui,probe-comfyui}.mjs`.
+  Output to gitignored `.local-runtime-probes/`.
+
+**This work EXTENDS the cloud rich-progress system. It does NOT build a parallel
+stack.** PR2 wires local-runtime adapters into `ProviderStreamExecutor`; PR3
+polishes the FE HUD; PR4 promotes the RabbitMQ patterns to publish/consume;
+PR5 lights up image-runtime parity.
 
 ---
 
@@ -2042,9 +2102,21 @@ docs/
   - Pure computation → utility file (cross-service if reusable)
 - A file exceeding 500 lines MUST be split into multiple files in the same directory or extracted into sub-managers/sub-services.
 
+### 26. Extend-don't-parallelize mindset (added 2026-05-30)
+
+- When the codebase ALREADY ships a layer that solves the problem class (auth pipeline, RBAC, RabbitMQ event bus, SSE rich-progress, http-client retry, repository pattern, capability framework, etc.), **EXTEND that layer** rather than build a second one.
+- The audit-first mindset (rule 4) tells you to read first; this rule tells you what to do once you've read: identify the seam, extend through the seam, do NOT introduce a parallel system that re-implements 80% of what already exists.
+- Concrete examples in this codebase:
+  - Local-runtime rich-progress (PR1, 2026-05-30) extends `ChatStreamService` + `ProviderStreamExecutor` + the existing `@Sse('stream/:threadId')` channel rather than creating a new `claw-runtime-stream-service` and a new SSE endpoint. See `docs/LOCAL_RUNTIME_PROGRESS_ADR.md`.
+  - The desktop-agent capability framework (Stream 10) extends `AccessPolicy` rather than introducing a parallel `CapabilityPolicy` table.
+  - `@claw/shared-utilities` consolidated per-service `jwt.utility.ts`, `http-client.utility.ts`, `crypto.utility.ts` rather than letting each service keep its own copy.
+- If you find yourself writing "a new service that does X but for Y", stop and ask: is there a seam in the existing X-doer that lets me extend it for Y? Almost always the answer is yes.
+- Acceptable reasons to build parallel: (a) the existing system is on a deprecation path, (b) the new use case has fundamentally incompatible constraints (different data shape that cannot be subsetted, different security boundary, different SLA), (c) the existing system would be doubled in surface area by accommodating the new case. All three should be challenged in code review.
+- When extending, the trade-off pattern is usually: one wider envelope vs N narrow per-case envelopes. The wider envelope wins almost every time — it consolidates client code, lets receivers ignore optional fields, and keeps the mental model "one channel, one contract."
+
 ---
 
-**These 25 mindsets are the default operating mode.** Any AI agent that does not follow them is doing it wrong. Any code reviewer seeing a violation should block the merge.
+**These 26 mindsets are the default operating mode.** Any AI agent that does not follow them is doing it wrong. Any code reviewer seeing a violation should block the merge.
 
 ---
 
@@ -2138,6 +2210,8 @@ When refactoring an existing service:
 - **Add a new `packages/<name>` workspace without also adding the corresponding `cd ../<name> && npx tsc` line to ALL FOUR jobs in `.github/workflows/ci.yml` "Build shared packages" step** (see CI Workflow Footgun below)
 
 ### CI Workflow Footgun (added 2026-04-27)
+
+**Scope clarification:** this rule applies ONLY when you add a NEW top-level `packages/<name>/` workspace (its own `package.json`, its own `@claw/<name>` entry in the root workspaces array). Subfolders inside an existing `packages/<name>/` (e.g. `packages/shared-utilities/runtime-progress/`) are covered automatically by the parent package's existing CI entries — no ci.yml edits are needed for subfolder additions.
 
 When adding a new package under `packages/`, you MUST update `.github/workflows/ci.yml` "Build shared packages" step in **all four jobs** (lint, typecheck, test, build):
 

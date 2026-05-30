@@ -18,6 +18,7 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 import { OllamaModule } from '../modules/ollama/ollama.module';
 import { HealthModule } from '../modules/health/health.module';
+import { RuntimeProgressModule } from '../modules/runtime-progress/runtime-progress.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { HealthModule } from '../modules/health/health.module';
     ScheduleModule.forRoot(),
     OllamaModule,
     HealthModule,
+    RuntimeProgressModule,
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),

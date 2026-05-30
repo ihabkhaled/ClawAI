@@ -3045,4 +3045,26 @@ export const fr: TranslationDictionary = {
     unlimited: 'Illimité',
     unlimitedHint: 'Votre forfait n’a pas de limite quotidienne de jetons.',
   },
+  runtimeProgress: {
+    metrics: {
+      executionProfile: {
+        cpu: 'Processeur',
+        cuda: 'CUDA',
+        rocm: 'ROCm',
+        vulkan: 'Vulkan',
+        metal: 'Metal',
+        mixed: 'Mixte',
+        unknown: 'Environnement d’exécution inconnu',
+      },
+    },
+    rawEvents: {
+      title: 'Événements bruts',
+      toggle: 'Afficher/masquer les événements bruts',
+      copy: 'Copier l’événement',
+      empty: 'Aucun événement pour le moment.',
+    },
+    bottleneck: {
+      title: 'Goulot d’étranglement',
+    },
+  },
 };

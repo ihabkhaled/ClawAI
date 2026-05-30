@@ -3026,4 +3026,26 @@ export const ru: TranslationDictionary = {
     unlimited: 'Без ограничений',
     unlimitedHint: 'У вашего тарифа нет дневного лимита токенов.',
   },
+  runtimeProgress: {
+    metrics: {
+      executionProfile: {
+        cpu: 'CPU',
+        cuda: 'CUDA',
+        rocm: 'ROCm',
+        vulkan: 'Vulkan',
+        metal: 'Metal',
+        mixed: 'Смешанный',
+        unknown: 'Неизвестная среда выполнения',
+      },
+    },
+    rawEvents: {
+      title: 'Сырые события',
+      toggle: 'Показать/скрыть сырые события',
+      copy: 'Копировать событие',
+      empty: 'Событий пока нет.',
+    },
+    bottleneck: {
+      title: 'Узкое место',
+    },
+  },
 };

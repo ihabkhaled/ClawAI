@@ -19,6 +19,6 @@ import { ModelsLifecycleService } from './services/models-lifecycle.service';
     RuntimeConfigManager,
     LoadEventsRepository,
   ],
-  exports: [ModelsLifecycleService],
+  exports: [ModelsLifecycleService, LoadEventsRepository, ProcessSupervisorManager],
 })
 export class ModelsLifecycleModule {}

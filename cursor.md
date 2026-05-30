@@ -87,6 +87,7 @@ Every mindset in `CLAUDE.md` applies to Cursor identically:
 23. **Shared-utilities-first** — search `packages/shared-utilities/` before writing a new utility (added 2026-04-26)
 24. **Inline-extraction** — zero inline `type`/`interface`/`enum`/`const`/`function` in logic files (added 2026-04-26)
 25. **Method-size discipline** — service ≤50 lines, manager ≤80 lines, file ≤500 lines (added 2026-04-26)
+26. **Extend-don't-parallelize** — when the codebase ships a layer that solves the problem class (auth, RBAC, SSE rich-progress, event bus, repository pattern), EXTEND it through the existing seam rather than building a parallel stack. Examples: local-runtime rich-progress extends `ChatStreamService` + `ProviderStreamExecutor` (PR1, 2026-05-30) — see `docs/LOCAL_RUNTIME_PROGRESS_ADR.md`; capability framework extends `AccessPolicy`; `@claw/shared-utilities` consolidated per-service utilities. (added 2026-05-30)
 
 ## Refactor standards (2026-04-26)
 
@@ -115,6 +116,25 @@ Cross-service utility location:
 - types → `packages/shared-types/`
 - values → `packages/shared-constants/`
 - functions → `packages/shared-utilities/`
+
+## Local-runtime rich-progress (extends cloud rich-progress)
+
+PR1 (2026-05-30) ships the foundation for local-runtime rich-progress: the
+`ClawRuntimeProgressEvent` envelope, two admin probe endpoints, the llama.cpp
+think-tag leak fix, and a frontend panel decomposition. **It EXTENDS the
+cloud rich-progress stack (`ChatStreamService` + `ProviderStreamExecutor` +
+`@Sse('stream/:threadId')` in chat-service) — it does NOT build a parallel
+stack.** See:
+
+- `docs/03-architecture/runtime-progress.md` — full architecture
+- `docs/LOCAL_RUNTIME_PROGRESS.md` — user-facing summary
+- `docs/LOCAL_RUNTIME_PROGRESS_ADR.md` — decision record
+- `docs/LOCAL_RUNTIME_PROGRESS_EXPERIMENT_REPORT.md` — capability matrix template
+
+If you are Cursor and a user asks for "live progress for local models" or
+similar, reject any suggestion that introduces a new SSE endpoint, a new
+microservice, or a parallel envelope. The seams are already there; PR2 wires
+adapters into `ProviderStreamExecutor`.
 
 ## Build toolchain (tsgo) — see docs/08-runtime-devops/build-system.md
 

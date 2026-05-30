@@ -3008,4 +3008,26 @@ export const hi: TranslationDictionary = {
     unlimited: 'असीमित',
     unlimitedHint: 'आपकी योजना में कोई दैनिक टोकन सीमा नहीं है।',
   },
+  runtimeProgress: {
+    metrics: {
+      executionProfile: {
+        cpu: 'CPU',
+        cuda: 'CUDA',
+        rocm: 'ROCm',
+        vulkan: 'Vulkan',
+        metal: 'Metal',
+        mixed: 'मिश्रित',
+        unknown: 'अज्ञात रनटाइम',
+      },
+    },
+    rawEvents: {
+      title: 'कच्चे इवेंट',
+      toggle: 'कच्चे इवेंट दिखाएं/छिपाएं',
+      copy: 'इवेंट कॉपी करें',
+      empty: 'अभी तक कोई इवेंट नहीं।',
+    },
+    bottleneck: {
+      title: 'अवरोधक बिंदु',
+    },
+  },
 };

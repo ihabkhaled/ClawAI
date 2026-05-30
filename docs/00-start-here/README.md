@@ -114,3 +114,17 @@ The desktop-agent flagship initiative pushes the existing claw-agent-service fro
 | [ADR-030](../13-adr/ADR-030-filesystem-capability.md)                          | Filesystem provider design                                         |
 | [ADR-031](../13-adr/ADR-031-process-capability.md)                             | Process management provider design                                 |
 | [ADR-032](../13-adr/ADR-032-recipe-engine-architecture.md)                     | Recipe DSL + DAG runner + safe expression evaluator                |
+
+---
+
+## Local-runtime Rich-Progress (added 2026-05-30)
+
+PR1 of the local-runtime rich-progress initiative extends the existing cloud rich-progress stack (`ChatStreamService` + `ProviderStreamExecutor` + `@Sse('stream/:threadId')`) to cover local runtimes (Ollama, llama.cpp, ComfyUI, SD WebUI). Foundation ships in PR1; chat-service adapter wiring follows in PR2+.
+
+| Document                                                                     | Purpose                                                                       |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [Architecture](../03-architecture/runtime-progress.md)                       | Full architecture: envelope, probes, think-tag fix, FE decomposition, roadmap |
+| [User-facing summary](../LOCAL_RUNTIME_PROGRESS.md)                          | What shipped in PR1, what's deferred, where to read next                      |
+| [ADR](../LOCAL_RUNTIME_PROGRESS_ADR.md)                                      | Decision record: extend the cloud rich-progress stack, do not parallelize     |
+| [Experiment report template](../LOCAL_RUNTIME_PROGRESS_EXPERIMENT_REPORT.md) | Capability matrix per runtime; filled in by probe runs                        |
+| [Streaming audit (cloud baseline)](../../STREAMING_AUDIT.md)                 | Phase 0 audit of the existing cloud rich-progress system this work extends    |

@@ -2,11 +2,13 @@ import type { LucideIcon } from 'lucide-react';
 
 import type { SidebarItem } from '@/constants';
 import type {
+  AiReasoningVisibility,
   CompareJudgeState,
   CompareResearchMode,
   ComponentSize,
   ConnectorStatus,
   CostTier,
+  ExecutionProfile,
   MessageFeedback,
   RepairType,
   ReplayOutcomeLabel,
@@ -39,6 +41,8 @@ import type {
   FallbackAttemptInfo,
   JudgeModelOption,
   StreamLiveState,
+  StreamMetrics,
+  StreamUsage,
   VisibleProgressStage,
 } from './chat.types';
 import type { ConfluencePageMetadata } from './confluence.types';
@@ -85,6 +89,7 @@ import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './
 import type { ReplayBatchResult, ReplayResult } from './replay.types';
 import type { RoleMemberResult, RolePackResult } from './role-pack.types';
 import type { CreatePolicyRequest, RoutingDecision, RoutingPolicy } from './routing.types';
+import type { RuntimeProgressMetrics } from './runtime-progress.types';
 import type { SlackMessageMetadata } from './slack.types';
 import type { PullRequestMetadata } from './source-control.types';
 import type { DecompositionResultState, SubTaskResult } from './task-decomposition.types';
@@ -323,6 +328,78 @@ export type ThinkingIndicatorProps = {
   streamLive?: StreamLiveState;
   onCancel?: () => void;
   isCancelling?: boolean;
+};
+
+// ─── Runtime progress panel props ───────────────────────────────────────────
+// Top-level pluggable panel that replaces the monolithic ThinkingIndicator.
+// Composes existing stream-* primitives with new runtime-neutral sub-panels
+// (visible reasoning, runtime metrics, raw events drawer, stage timeline).
+// PR1 keeps the surface identical to ThinkingIndicatorProps; PR2 hooks the
+// extra runtime metrics + execution profile + raw events into the dataflow.
+export type RuntimeProgressPanelProps = {
+  className?: string;
+  fallbackAttempts?: FallbackAttemptInfo[];
+  streamError?: string | null;
+  judgeEvaluating?: boolean;
+  executingModel?: string | null;
+  judgeModel?: string | null;
+  progressStages?: VisibleProgressStage[];
+  currentStageLabel?: string | null;
+  streamLive?: StreamLiveState;
+  onCancel?: () => void;
+  isCancelling?: boolean;
+  // PR2: when true, renders the collapsible RuntimeRawEventsDrawer below the
+  // live answer (dev-only). Defaults to false — current call-sites do not
+  // pass this and ship a noop drawer surface.
+  showRawEvents?: boolean;
+  // PR2: stream of raw events forwarded into RuntimeRawEventsDrawer when
+  // showRawEvents is true. Kept as unknown[] so the drawer stays
+  // runtime-neutral and never decodes shape.
+  rawEvents?: unknown[];
+  // PR2: optional execution profile (cpu/cuda/rocm/vulkan/metal/mixed/unknown)
+  // surfaced by RuntimeMetricsHud. Today still undefined for all call-sites.
+  executionProfile?: ExecutionProfile;
+};
+
+// Visible reasoning panel. Same behaviour as StreamThinkingPanel today; adds
+// an onToggle callback so PR2 can wire user-controlled reveal/hide.
+export type VisibleReasoningPanelProps = {
+  reasoning: string;
+  visibility?: AiReasoningVisibility;
+  className?: string;
+  // PR2 — fires when the user expands/collapses the native <details>. Hosts
+  // can persist the open state across runtime stages.
+  onToggle?: (isOpen: boolean) => void;
+};
+
+// Runtime-neutral metrics HUD. Accepts either the existing StreamMetrics
+// (PR1) or the broader RuntimeProgressMetrics shape (PR2) — only the legacy
+// StreamMetrics path is exercised today; the second path compiles but is
+// unused until PR2 wires the local runtime feed.
+export type RuntimeMetricsHudProps = {
+  metrics: StreamMetrics | RuntimeProgressMetrics | null;
+  usage: StreamUsage | null;
+  executionProfile?: ExecutionProfile;
+  className?: string;
+};
+
+// Dev-only raw events drawer. Renders a collapsible JSON dump of the last 50
+// events with a per-row copy button. Kept runtime-neutral: events are
+// `unknown[]` so the drawer never decodes the payload shape.
+export type RuntimeRawEventsDrawerProps = {
+  events: unknown[];
+  isOpen: boolean;
+  onToggle: (isOpen: boolean) => void;
+  className?: string;
+};
+
+// Stage timeline placeholder. PR1 ships an empty render; PR2 will animate
+// the historical stage chain.
+export type RuntimeStageTimelineProps = {
+  className?: string;
+  // PR2 fields are intentionally omitted from PR1 to avoid premature shape
+  // freezing. The empty object keeps the type extensible without dead
+  // properties leaking into call-sites.
 };
 
 // Floating "Jump to latest" pill rendered over the chat scroll container while
