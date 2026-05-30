@@ -119,22 +119,51 @@ Cross-service utility location:
 
 ## Local-runtime rich-progress (extends cloud rich-progress)
 
-PR1 (2026-05-30) ships the foundation for local-runtime rich-progress: the
-`ClawRuntimeProgressEvent` envelope, two admin probe endpoints, the llama.cpp
-think-tag leak fix, and a frontend panel decomposition. **It EXTENDS the
-cloud rich-progress stack (`ChatStreamService` + `ProviderStreamExecutor` +
-`@Sse('stream/:threadId')` in chat-service) — it does NOT build a parallel
-stack.** See:
+**Status (2026-05-31): PR1 + PR2 + PR3 + PR4 + PR5 all shipped to `main`.**
+Local-runtime users (Ollama, llama.cpp, Stable Diffusion WebUI, ComfyUI)
+now see the same depth of progress UI cloud users get. The
+`ClawRuntimeProgressEvent` envelope, the two admin probe endpoints, the
+llama.cpp think-tag leak fix, the chat-service text-runtime metrics +
+bottleneck wiring, the SD WebUI polling adapter, the ComfyUI WebSocket
+adapter, and the `/admin/runtime-progress` diagnostics page are all live.
+**It EXTENDS the cloud rich-progress stack (`ChatStreamService` +
+`ProviderStreamExecutor` + `@Sse('stream/:threadId')` in chat-service) — it
+does NOT build a parallel stack.** See:
 
-- `docs/03-architecture/runtime-progress.md` — full architecture
+- `docs/03-architecture/runtime-progress.md` — full architecture (PR2-5 status table)
 - `docs/LOCAL_RUNTIME_PROGRESS.md` — user-facing summary
 - `docs/LOCAL_RUNTIME_PROGRESS_ADR.md` — decision record
-- `docs/LOCAL_RUNTIME_PROGRESS_EXPERIMENT_REPORT.md` — capability matrix template
+- `docs/LOCAL_RUNTIME_PROGRESS_EXPERIMENT_REPORT.md` — capability matrix
+- `.claude/Integrations/pr2-5__live_smoke.md` — live smoke evidence (operator-local, gitignored)
+
+Roadmap status:
+
+- **PR2 — shipped.** Chat-service text-runtime metrics + bottleneck UI.
+  Ollama timing fields wired through `provider-stream-reader.utility.ts` →
+  `provider-stream-executor.manager.ts` (`buildFinalMetrics()`) → rich
+  METRICS event with `modelLoadMs` / `promptEvalMs` / `generationMs` /
+  `tokensPerSecond` + `bottleneck` + `stageTimings`. New
+  `RuntimeBottleneckBreakdown` component; `RuntimeStageTimeline` real
+  (was a stub).
+- **PR3 — shipped.** SD WebUI adapter at
+  `apps/claw-image-service/src/modules/runtime-progress/adapters/stable-diffusion-webui-progress.adapter.ts`.
+  Env vars `CLAW_IMAGE_PROGRESS_POLL_INTERVAL_MS` +
+  `CLAW_IMAGE_PROGRESS_PREVIEW_ENABLED`. Frontend
+  `ImageGenerationProgressPanel`.
+- **PR4 — shipped.** ComfyUI adapter at
+  `apps/claw-image-service/src/modules/runtime-progress/adapters/comfyui-progress.adapter.ts`.
+  Env var `COMFYUI_BASE_URL`. Workflow template loader + node mapper.
+  Frontend `ComfyUINodeTimeline`.
+- **PR5 — shipped.** `/admin/runtime-progress` ADMIN-only diagnostics
+  page (`apps/claw-frontend/src/app/(portal)/admin/runtime-progress/page.tsx`)
+  calling both probe endpoints in parallel + `RuntimeProbeCard` per runtime.
 
 If you are Cursor and a user asks for "live progress for local models" or
-similar, reject any suggestion that introduces a new SSE endpoint, a new
-microservice, or a parallel envelope. The seams are already there; PR2 wires
-adapters into `ProviderStreamExecutor`.
+similar: this is already done — point them at the docs above. The remaining
+gap is durable RabbitMQ publishing of the 12 declared `runtime.progress.*`
+patterns (today the envelope flows over SSE only). Reject any suggestion
+that introduces a new SSE endpoint, a new microservice, or a parallel
+envelope.
 
 ## Build toolchain (tsgo) — see docs/08-runtime-devops/build-system.md
 

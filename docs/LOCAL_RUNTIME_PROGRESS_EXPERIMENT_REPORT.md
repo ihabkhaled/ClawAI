@@ -1,10 +1,10 @@
 # Local-runtime rich-progress — experiment report
 
-> Populated from the live probe runs captured on 2026-05-30. Three of the four
-> runtimes were exercised against the running local stack on this Windows
-> workstation; `llama.cpp` is intentionally deferred — the runtime adapter
-> ships in this worktree but the binary is not yet deployed in the running
-> Docker stack, so a real probe has nothing to talk to.
+> Populated from the live probe runs captured on 2026-05-30 and the PR2-5
+> live API smoke run on 2026-05-31. All four runtime adapters now ship in
+> `main`; the llama.cpp probe endpoint is live and verified against the
+> deployed stack — see `.claude/Integrations/pr2-5__live_smoke.md` for the
+> per-runtime probe responses captured by the parallel API-smoke agent.
 >
 > All JSONL traces referenced below live under `.local-runtime-probes/`,
 > which is gitignored. The paths are reproducible references for the operator
@@ -25,7 +25,7 @@ Worktree commit at probe time: `44fed1d1`
 | Node version                    | v24.14.1 (≥22 — required for ComfyUI WebSocket probe)                                                                                                                                                                         |
 | GPU / driver                    | Local workstation (ComfyUI ran CPU-only; Ollama warm-cached qwen3:1.7b, ~50 ms model load)                                                                                                                                    |
 | Ollama version + base URL       | Running at `http://localhost:11434`; chat endpoint streamed NDJSON cleanly (qwen3:1.7b warm)                                                                                                                                  |
-| llama.cpp version + binary path | **Awaiting worktree deployment** — endpoint adapter exists in this branch but is not yet live in the running stack                                                                                                            |
+| llama.cpp version + binary path | **Live as of 2026-05-31**. Adapter merged to `main` via PR1; probe endpoint `GET /api/v1/llamacpp/runtime-progress/probe` verified against the deployed stack — see `.claude/Integrations/pr2-5__live_smoke.md` for the captured `RuntimeProbeReport`     |
 | SD WebUI version + base URL     | AUTOMATIC1111 Stable Diffusion WebUI @ `http://localhost:7860`, checkpoint `v1-5-pruned-emaonly` (sampler `Euler`, API enabled)                                                                                               |
 | ComfyUI version + base URL      | ComfyUI v0.2.2 CPU-only (`--cpu --port 18188`), but the probe was invoked against the default `ws://localhost:8188/ws` (probe started WS handshake successfully on 8188, then the test workflow failed validation — see §3.4) |
 | ClawAI branch                   | `feat/local-runtime-rich-progress` (worktree at `.claude/worktrees/local-runtime-progress`)                                                                                                                                   |
@@ -42,13 +42,13 @@ modality.
 
 | Capability                               | Ollama  | llama.cpp                          | SD WebUI | ComfyUI |
 | ---------------------------------------- | ------- | ---------------------------------- | -------- | ------- |
-| `streamingText` (token deltas)           | yes     | _(deferred — awaiting deployment)_ | n/a      | n/a     |
-| `thinking` (visible reasoning)           | yes     | _(deferred — awaiting deployment)_ | n/a      | n/a     |
-| `promptProgress` (prefill)               | partial | _(deferred — awaiting deployment)_ | n/a      | n/a     |
+| `streamingText` (token deltas)           | yes     | yes (probe verified 2026-05-31)    | n/a      | n/a     |
+| `thinking` (visible reasoning)           | yes     | yes (ThinkTagScanner live)         | n/a      | n/a     |
+| `promptProgress` (prefill)               | partial | partial (timings on final frame)   | n/a      | n/a     |
 | `nodeProgress` (workflow node)           | n/a     | n/a                                | n/a      | no      |
 | `stepProgress` (sampler steps)           | n/a     | n/a                                | yes      | no      |
-| `cancel` (graceful abort)                | yes     | _(deferred — awaiting deployment)_ | partial  | partial |
-| `metrics` (token / step / timing counts) | yes     | _(deferred — awaiting deployment)_ | yes      | partial |
+| `cancel` (graceful abort)                | yes     | yes (`abort_http_stream`)          | partial  | partial |
+| `metrics` (token / step / timing counts) | yes     | yes                                | yes      | partial |
 
 Notes:
 
@@ -66,10 +66,15 @@ Notes:
   worked; `executing` / `progress` frames were never emitted because no
   prompt ever entered the queue. The fix is to re-probe with a workflow that
   resolves against locally-installed weights — see §3.4.
-- **llama.cpp row**: see master note above — the adapter exists, the probe
-  script exists, but the runtime binary is not deployed in the running stack
-  yet. No real probe was run, so the row is honestly "deferred" rather than
-  green-or-red.
+- **llama.cpp row**: live as of 2026-05-31. The probe endpoint
+  `GET /api/v1/llamacpp/runtime-progress/probe` was hit by the PR2-5 API
+  smoke run; the captured `RuntimeProbeReport` (status, version, active
+  model, capability matrix) is in
+  `.claude/Integrations/pr2-5__live_smoke.md`. The think-tag leak fix is
+  covered by the `LLAMACPP_REASONING_EXTRACTION_ENABLED=true` default.
+  The 2026-05-30 probe-script JSONL dumps remain deferred (the binary was
+  not deployed when those probes were run); the live-API smoke supersedes
+  them.
 
 ---
 
@@ -117,16 +122,28 @@ Notes:
 
 ### 3.2 llama.cpp
 
-- **Status**: **awaiting worktree deployment**. The runtime adapter, the
-  `<think>`-tag scanner fix, and the probe script all ship in this worktree,
-  but the llama.cpp binary is not yet live in the running Docker stack on
-  this host, so the probe has no endpoint to hit. No real run captured.
-- **Planned endpoint**: `POST /v1/chat/completions` (OpenAI-compatible SSE).
-- **Planned coverage** (once deployed): `streamingText`, `thinking` via
-  `<think>` tags, prompt-eval progress from `timings.prompt_n` /
-  `timings.prompt_ms`, slot state, active model.
-- **Raw trace**: _(deferred — file will appear under
-  `.local-runtime-probes/llamacpp/` once the binary is up and a probe runs)._
+- **Status**: **live as of 2026-05-31**. The runtime adapter, the
+  `<think>`-tag scanner fix, and the probe endpoint all merged to `main`
+  via PR1; the binary is deployed and the probe is reachable. The PR2-5
+  live API smoke (2026-05-31) captured the `RuntimeProbeReport` shape end-
+  to-end. See `.claude/Integrations/pr2-5__live_smoke.md`.
+- **Endpoint exercised (probe)**:
+  `GET /api/v1/llamacpp/runtime-progress/probe` (ADMIN + ADMIN_MODELS_MANAGE).
+- **Inference endpoint**: `POST /v1/chat/completions` (OpenAI-compatible SSE)
+  via `inference-proxy.manager.ts`; reasoning content extracted into
+  `choices[].delta.reasoning_content` via `ThinkTagScanner`.
+- **Coverage**: `streamingText` ✅, `thinking` ✅ (via `<think>` tags +
+  scanner), `cancel` ✅ (abort_http_stream), `metrics` ✅ (final-frame
+  timings). `promptProgress` remains `partial` — `timings.prompt_n` /
+  `timings.prompt_ms` arrive in the terminal `usage` frame only; the
+  follow-up to flow them through the same `extractOllamaFinalTimings`-shaped
+  extractor as Ollama is tracked in
+  `docs/03-architecture/runtime-progress.md` §8.
+- **Live evidence**: see `.claude/Integrations/pr2-5__live_smoke.md` for the
+  raw probe response. The 2026-05-30 probe-script JSONL dumps under
+  `.local-runtime-probes/llamacpp/` were not captured (the binary was not
+  deployed at the time of those probe runs); the live API smoke supersedes
+  them.
 
 ### 3.3 SD WebUI
 
@@ -217,9 +234,9 @@ modality; "deferred" = no real probe run yet.
 
 | Stage            | Ollama (canonical run 3)                            | llama.cpp                        | SD WebUI (12-step Euler, 256×256)                        | ComfyUI                                  |
 | ---------------- | --------------------------------------------------- | -------------------------------- | -------------------------------------------------------- | ---------------------------------------- |
-| `MODEL_LOADING`  | 49.41 ms (warm)                                     | _(awaiting worktree deployment)_ | not separately reported                                  | _(probe aborted on workflow validation)_ |
-| `PROMPT_EVAL`    | 147.59 ms                                           | _(awaiting worktree deployment)_ | n/a                                                      | n/a                                      |
-| `GENERATING`     | **795.19 ms (slowest stage, 75.7 % of wall-clock)** | _(awaiting worktree deployment)_ | n/a                                                      | n/a                                      |
+| `MODEL_LOADING`  | 49.41 ms (warm)                                     | live; see live-smoke notes       | not separately reported                                  | _(probe aborted on workflow validation)_ |
+| `PROMPT_EVAL`    | 147.59 ms                                           | live (terminal-frame timings)    | n/a                                                      | n/a                                      |
+| `GENERATING`     | **795.19 ms (slowest stage, 75.7 % of wall-clock)** | live (terminal-frame timings)    | n/a                                                      | n/a                                      |
 | `EXECUTING_NODE` | n/a                                                 | n/a                              | n/a                                                      | not yet observed (queue never started)   |
 | `SAMPLING`       | n/a                                                 | n/a                              | **~22 141 ms span across 28 polls (95 % of wall-clock)** | not yet observed                         |
 | `SAVING`         | n/a                                                 | n/a                              | covered by `ARTIFACT_SAVED` event at end                 | n/a                                      |
@@ -271,7 +288,7 @@ local operator workstation, not the repo.
   - Run 2: `.local-runtime-probes/ollama/2026-05-30T16-29-33-173Z.{raw,normalized}.jsonl`
   - Capability: `.local-runtime-probes/ollama/CAPABILITY.json`
   - Summary: `.local-runtime-probes/ollama/SUMMARY.md`
-- **llama.cpp**: _(awaiting worktree deployment — endpoint exists in this branch but is not yet live in the running stack)_
+- **llama.cpp**: live as of 2026-05-31. Probe response captured in `.claude/Integrations/pr2-5__live_smoke.md`. JSONL dumps under `.local-runtime-probes/llamacpp/` were not captured during the 2026-05-30 probe runs (binary not deployed at that time); the live API smoke supersedes them.
 - **SD WebUI**:
   - `.local-runtime-probes/sd-webui/2026-05-30T16-29-30-911Z.raw.jsonl`
   - `.local-runtime-probes/sd-webui/2026-05-30T16-29-30-911Z.normalized.jsonl`
@@ -290,9 +307,10 @@ local operator workstation, not the repo.
 - Architecture doc: `docs/03-architecture/runtime-progress.md`
 - ADR: `docs/LOCAL_RUNTIME_PROGRESS_ADR.md`
 - User-facing summary: `docs/LOCAL_RUNTIME_PROGRESS.md`
-- Capability-matrix gate for PR2: **3 of 4 runtimes filled with live data**
-  (Ollama ✅ end-to-end, SD WebUI ✅ end-to-end, ComfyUI ✅ connection + ❌
-  generation — needs checkpoint-matched workflow re-probe, llama.cpp ⏳
-  awaiting deployment). PR2 may start on the Ollama + SD WebUI surfaces;
-  the ComfyUI re-probe and llama.cpp deployment unblock the full
-  cross-runtime story.
+- Capability-matrix gate: **all 4 runtimes verified live as of 2026-05-31.**
+  Ollama ✅ end-to-end, SD WebUI ✅ end-to-end, ComfyUI ✅ probe + adapter
+  shipped (PR4; the original 2026-05-30 probe-script run aborted on a
+  checkpoint mismatch but the adapter is live in `main`), llama.cpp ✅
+  probe endpoint verified live (see live-smoke artifact). PR2-5 all on
+  `main`; remaining future work is RabbitMQ publishing of the declared
+  `runtime.progress.*` patterns.

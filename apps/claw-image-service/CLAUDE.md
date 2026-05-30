@@ -133,6 +133,84 @@ After completing any implementation task on this service, produce:
 5. **Known gaps or follow-up items**
 6. **Evidence**: typecheck output, lint output, test output
 
+## Runtime-progress adapters (PR3 + PR4 — shipped 2026-05-31)
+
+This service hosts the two image-runtime adapters that emit
+`ClawRuntimeProgressEvent` envelopes for in-flight image generation jobs.
+Both adapters publish over the existing in-process SSE channel; durable
+RabbitMQ publishing of the declared `runtime.progress.*` patterns is on
+the future-work backlog and is NOT live in this service yet.
+
+### Stable Diffusion WebUI adapter (PR3)
+
+Location:
+`src/modules/runtime-progress/adapters/stable-diffusion-webui-progress.adapter.ts`.
+
+- **Wire format**: synchronous `POST /sdapi/v1/txt2img` for the actual job;
+  background polling of `GET /sdapi/v1/progress` (optionally with
+  `skip_current_image=true` when previews are disabled).
+- **Cancel endpoint**: `POST /sdapi/v1/interrupt` — invoked from
+  `adapter.cancel()`. Frontend Cancel button on
+  `ImageGenerationProgressPanel` wires straight to this.
+- **Emitted events**: `STEP_PROGRESS` (per poll, with `currentStep` /
+  `totalSteps` / `progressPercent` / `eta` derived from the
+  `/sdapi/v1/progress` response), `ARTIFACT_SAVED` on completion, and the
+  standard `LIFECYCLE` / `METRICS` siblings.
+- **Env vars** (defined in `src/app/config/app.config.ts`):
+  - `CLAW_IMAGE_PROGRESS_POLL_INTERVAL_MS` — default `1000`, minimum `300`
+    (Zod-enforced floor; lower values would thrash the runtime).
+  - `CLAW_IMAGE_PROGRESS_PREVIEW_ENABLED` — default `false`. When `true`,
+    the adapter drops `skip_current_image=true` and the `current_image`
+    base64 frame flows through. Caller is responsible for the 64 KB cap
+    per `docs/03-architecture/runtime-progress.md` §10.1.
+- **Constants**: `SD_PROGRESS_POLL_DEFAULT_INTERVAL_MS`,
+  `SD_PROGRESS_POLL_MIN_INTERVAL_MS`, `SD_PROGRESS_HTTP_TIMEOUT_MS`,
+  `SD_INTERRUPT_HTTP_TIMEOUT_MS`, `SD_PROGRESS_MAX_CONSECUTIVE_ERRORS` in
+  `src/modules/runtime-progress/constants/sd-webui-progress.constants.ts`.
+
+### ComfyUI adapter (PR4)
+
+Location: `src/modules/runtime-progress/adapters/comfyui-progress.adapter.ts`.
+
+- **Wire format**: `POST /prompt` (workflow submission), then consume
+  `/ws?clientId=…` WebSocket frames (`status`, `executing`, `progress`,
+  `executed`, `execution_cached`, `execution_error`); finalize with
+  `GET /history/:promptId` to resolve the output artifact node.
+- **Cancel endpoint**: `DELETE /queue` (documented mechanism — wiring is
+  in place; live confirmation deferred to a follow-up probe).
+- **Emitted events**: `EXECUTING_NODE` / `NODE_PROGRESS` / `NODE_COMPLETED`
+  (with `nodeId` + `nodeName` resolved via
+  `workflows/comfyui-workflow-node.mapper.ts`), `ARTIFACT_SAVED`,
+  standard `LIFECYCLE` / `METRICS` siblings, and `ERROR` with
+  classified `errorType` on workflow validation failures.
+- **Workflow templates**: `workflows/sd15-minimal.workflow.ts` is the
+  baseline SD-1.5 graph. New templates land in the same directory and are
+  loaded by id; the node mapper is shared.
+- **Env var** (defined in `src/app/config/app.config.ts`):
+  - `COMFYUI_BASE_URL` — default `http://comfyui:8188`. The WebSocket URL
+    is derived from this base (`ws://` / `wss://` schema swap).
+- **Constants**: `COMFYUI_HTTP_TIMEOUT_MS`, `COMFYUI_WS_PING_INTERVAL_MS`,
+  the WS event-type tag set, and node-mapper defaults in
+  `src/modules/runtime-progress/constants/comfyui.constants.ts`.
+
+### Cancel-endpoint pattern (both adapters)
+
+Both adapters expose an `adapter.cancel(session)` method. The chat-service
+caller invokes it when the user hits Cancel on
+`ImageGenerationProgressPanel` (SD WebUI) or `ComfyUINodeTimeline` (ComfyUI),
+or when the parent `AbortController` aborts. The cancel call fires the
+runtime-specific HTTP request above; the adapter then emits a `CANCELLED`
+lifecycle event and closes the session.
+
+### Frontend surfaces wired to these adapters
+
+- `apps/claw-frontend/src/components/chat/runtime-progress/ImageGenerationProgressPanel.tsx`
+  (SD WebUI step bar + ETA + Cancel button)
+- `apps/claw-frontend/src/components/chat/runtime-progress/ComfyUINodeTimeline.tsx`
+  (per-node card with mapper-resolved names + elapsed time)
+
+Full architecture: [`docs/03-architecture/runtime-progress.md`](../../docs/03-architecture/runtime-progress.md).
+
 ## Inter-service auth for file-service internal endpoints
 
 `claw-file-service`'s `/api/v1/internal/files/*` routes (`store-image`, `:id/content`, `:id/chunks`, `download/:id`, `upload-internal`, `download-internal`, `metadata-internal`) are guarded by `ServiceTokenGuard`. Every call from this service to those routes — currently `storeImage()` in `image-execution.manager.ts` — MUST send `Authorization: Service <token>` where `<token>` is the value of `INTER_SERVICE_AUTH_TOKEN` (the single shared secret in root `.env` — do NOT introduce a per-service variant).

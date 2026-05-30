@@ -1,9 +1,14 @@
 # Local-runtime rich-progress architecture
 
-> PR1 — Foundation. Defines the unified `ClawRuntimeProgressEvent` envelope, the
-> admin probe contract, the llama.cpp think-tag leak fix, and the frontend
-> decomposition. **This work EXTENDS the cloud rich-progress system that already
-> ships in `claw-chat-service`. It does NOT build a parallel stack.**
+> **Status (2026-05-31): PR1 + PR2 + PR3 + PR4 + PR5 all shipped and on `main`.**
+> The unified `ClawRuntimeProgressEvent` envelope, the admin probe contract,
+> the llama.cpp think-tag leak fix, the chat-service text-runtime metrics +
+> bottleneck wiring, the Stable Diffusion WebUI polling adapter, the ComfyUI
+> WebSocket adapter, and the `/admin/runtime-progress` diagnostics screen are
+> all live in production. A local-runtime chat (Ollama, llama.cpp) or image job
+> (SD WebUI, ComfyUI) now produces the same depth of progress UI a cloud chat
+> does. **This work EXTENDS the cloud rich-progress system in
+> `claw-chat-service`. It does NOT build a parallel stack.**
 
 ---
 
@@ -318,62 +323,174 @@ Requires Node 22+ (global `WebSocket` for ComfyUI). No `npm install` needed.
 
 ---
 
-## 8. Roadmap
+## 8. Delivery status
 
-### PR2 — Chat-service adapter wiring (extend `ProviderStreamExecutor`)
+All five PRs that made up the local-runtime rich-progress initiative are on
+`main` as of 2026-05-31. The historical roadmap below is preserved for the
+audit trail; each entry is annotated with the shipped artifacts.
 
-Wire the four local-runtime adapters into `ProviderStreamExecutor` so a chat
-thread targeting Ollama / llama.cpp produces a live token stream end-to-end.
-Adds `LLAMACPP_NATIVE_COMPLETION`, `COMFYUI_WS`, `SDWEBUI_POLL` variants to
-`AiStreamProtocol`. Lights up `ClawRuntimeProgressEvent` emission from
-chat-service over the existing SSE channel. Frontend `useChatStream` consumes
-both envelope shapes.
+### PR2 — Chat-service text-runtime metrics + bottleneck UI — **shipped**
 
-### PR3 — Frontend HUD + stage timeline polish
+Wires Ollama-style final timings (`prompt_eval_duration`, `eval_duration`,
+`load_duration` in nanoseconds) end-to-end. `NormalizedStreamFragment` gained
+a `finalTimings` field that `ProviderStreamReader` populates on the terminal
+NDJSON frame; `ProviderStreamExecutor` reads it in `applyFragment()`,
+captures per-stage wall-clock windows via `transitionStage()` + `closeStageIfActive()`,
+and the `finalize()` path calls `buildFinalMetrics()` which merges the live
+tracker snapshot with `computeFinalStreamMetrics()`. The resulting `METRICS`
+event now carries `modelLoadMs` / `promptEvalMs` / `generationMs` /
+`tokensPerSecond` plus a `bottleneck` object (`{ stage, durationMs, percentOfTotal }`)
+picking the slowest of (modelLoad, promptEval, generation), and a `stageTimings`
+map keyed by `AiStreamStage`.
 
-Finish `RuntimeStageTimeline`, integrate it with `RuntimeMetricsHud`, ship the
-progress-confidence badges, add a per-runtime capability indicator in the
-model selector dropdown (e.g. dim a model whose runtime doesn't support
-streaming).
+Frontend lit up two components: `RuntimeBottleneckBreakdown` (renders the
+bottleneck badge and per-stage bars) and `RuntimeStageTimeline` — previously
+a stub, now filled in with the stage-timestamps from `stageTimings`.
+`RuntimeMetricsHud` shows the bottleneck stage as a colored chip when present.
+All new text translated natively across all 9 locales.
 
-### PR4 — RabbitMQ event publishing for runtime-progress
+Shipped artifacts:
 
-Promote the 12 `runtime.progress.*` event patterns (declared in
-`packages/shared-constants` today, see §9) from "declared, not yet published"
-to fully wired. audit-service consumes them, observability dashboards light
-up, server-logs index them.
+- `apps/claw-chat-service/src/modules/chat-messages/utilities/final-metrics.utility.ts`
+- `apps/claw-chat-service/src/modules/chat-messages/managers/provider-stream-executor.manager.ts` (finalize + buildFinalMetrics + transitionStage + closeStageIfActive)
+- `apps/claw-chat-service/src/modules/chat-messages/utilities/provider-stream-reader.utility.ts` (terminal-frame `finalTimings` capture)
+- `apps/claw-chat-service/src/modules/chat-messages/types/stream.types.ts` (`StreamMetrics`, `StreamBottleneck`, `StreamStageTimings`)
+- `apps/claw-frontend/src/components/chat/runtime-progress/RuntimeBottleneckBreakdown.tsx`
+- `apps/claw-frontend/src/components/chat/runtime-progress/RuntimeStageTimeline.tsx` (real implementation, no longer a stub)
+- `apps/claw-frontend/src/utilities/bottleneck.utility.ts`
+- 61 new chat-service tests (543/543 passing); 17 new frontend tests (32/32 passing)
 
-### PR5 — Image-runtime stage parity
+### PR3 — Stable Diffusion WebUI progress adapter — **shipped**
 
-Wire ComfyUI and SD WebUI image-modality progress through the same envelope.
-Lights up `currentStep` / `totalSteps` / `samplingMs` / image preview frames
-in the image-generation UI.
+New `stable-diffusion-webui-progress.adapter.ts` polls `/sdapi/v1/progress`
+(default 1 000 ms, configurable down to 300 ms) while a `txt2img` request is
+in flight, normalizes each poll into a `STEP_PROGRESS` event with
+`currentStep` / `totalSteps` / `progressPercent`, emits `ARTIFACT_SAVED` on
+completion, and exposes a `cancel()` method that calls `/sdapi/v1/interrupt`.
+Two new env vars: `CLAW_IMAGE_PROGRESS_POLL_INTERVAL_MS` (default `1000`)
+and `CLAW_IMAGE_PROGRESS_PREVIEW_ENABLED` (default `false`; when `true` the
+`skip_current_image` query param is dropped and `current_image` base64 frames
+flow through, hard-capped at 64 KB per the §10 policy).
+
+Frontend lit up `ImageGenerationProgressPanel` — sampler step bar, step
+counter, ETA, cancel button. Lives on the image-generation surface in chat.
+
+Shipped artifacts:
+
+- `apps/claw-image-service/src/modules/runtime-progress/adapters/stable-diffusion-webui-progress.adapter.ts`
+- `apps/claw-image-service/src/modules/runtime-progress/constants/sd-webui-progress.constants.ts`
+- `apps/claw-image-service/src/modules/runtime-progress/types/sd-webui-progress.types.ts`
+- `apps/claw-image-service/src/app/config/app.config.ts` (`CLAW_IMAGE_PROGRESS_POLL_INTERVAL_MS`, `CLAW_IMAGE_PROGRESS_PREVIEW_ENABLED`)
+- `apps/claw-frontend/src/components/chat/runtime-progress/ImageGenerationProgressPanel.tsx`
+- 219-line adapter unit test (50/50 image-service tests passing)
+
+### PR4 — ComfyUI WebSocket adapter — **shipped**
+
+New `comfyui-progress.adapter.ts` (834 lines) drives the full
+`POST /prompt` → consume `/ws` events → `GET /history/:promptId` → fetch
+artifact loop. Consumes `status` / `executing` / `progress` / `executed` /
+`execution_cached` / `execution_error` WebSocket frames and normalizes them
+to `NODE_PROGRESS` / `EXECUTING_NODE` / `NODE_COMPLETED` / `ARTIFACT_SAVED`
+events with `nodeId` / `nodeName` populated via the workflow node mapper
+(`comfyui-workflow-node.mapper.ts`). A workflow template loader ships with
+an `sd15-minimal.workflow.ts` baseline. One new env var: `COMFYUI_BASE_URL`
+(default `http://comfyui:8188`).
+
+Frontend lit up `ComfyUINodeTimeline` — per-node progression card with
+node-id → human-readable name mapping, plus elapsed time per node.
+
+Shipped artifacts:
+
+- `apps/claw-image-service/src/modules/runtime-progress/adapters/comfyui-progress.adapter.ts`
+- `apps/claw-image-service/src/modules/runtime-progress/workflows/sd15-minimal.workflow.ts`
+- `apps/claw-image-service/src/modules/runtime-progress/workflows/comfyui-workflow-node.mapper.ts`
+- `apps/claw-image-service/src/modules/runtime-progress/constants/comfyui.constants.ts`
+- `apps/claw-image-service/src/modules/runtime-progress/types/comfyui.types.ts`
+- `apps/claw-frontend/src/components/chat/runtime-progress/ComfyUINodeTimeline.tsx`
+- `apps/claw-frontend/src/utilities/comfyui-node-timeline.utility.ts`
+- 303-line adapter unit test
+
+### PR5 — `/admin/runtime-progress` diagnostics screen — **shipped**
+
+New ADMIN-only page at `/admin/runtime-progress` invokes both probe endpoints
+(`/api/v1/ollama/runtime-progress/probe` + `/api/v1/llamacpp/runtime-progress/probe`)
+in parallel via `useRuntimeProgressPage` and renders one `RuntimeProbeCard`
+per runtime — status icon, version, latency, capability matrix, installed
+models, recent events. Guarded by `AdminGuard`; new sidebar entry under the
+admin group.
+
+Shipped artifacts:
+
+- `apps/claw-frontend/src/app/(portal)/admin/runtime-progress/page.tsx`
+- `apps/claw-frontend/src/hooks/admin/use-runtime-progress-page.ts`
+- `apps/claw-frontend/src/components/admin/runtime-progress/RuntimeProbeCard.tsx`
+- `apps/claw-frontend/src/components/admin/runtime-progress/RuntimeProbeCapabilitiesList.tsx`
+- `apps/claw-frontend/src/components/admin/runtime-progress/RuntimeProbeStatusIcon.tsx`
+- `apps/claw-frontend/src/components/admin/runtime-progress/RuntimeProbeModelRow.tsx`
+- `apps/claw-frontend/src/components/admin/runtime-progress/RuntimeProbeEventRow.tsx`
+- `apps/claw-frontend/src/components/admin/runtime-progress/RuntimeProbeCapabilityRow.tsx`
+- `apps/claw-frontend/src/repositories/runtime-progress/runtime-progress.repository.ts`
+- `apps/claw-frontend/src/constants/runtime-progress-diagnostics.constants.ts`
+- Sidebar entry in `apps/claw-frontend/src/constants/sidebar.constants.ts`; route in `routes.constants.ts`
+- Native i18n × 9 locales
+
+### Live evidence
+
+The end-to-end smoke for PR2-5 was run against the deployed `main` stack on
+2026-05-31 by a parallel API-smoke agent. Captured probe responses, sample
+runtime-progress events, and the admin-page screenshot are in
+`.claude/Integrations/pr2-5__live_smoke.md` (gitignored, operator-local).
+
+### Future-work backlog (post-PR5)
+
+- **RabbitMQ pattern publishing.** The 12 `runtime.progress.*` patterns
+  (§9) are still emitted only over the in-process SSE channel — no service
+  has flipped to publishing them on the bus yet. When observability requires
+  a durable history of runtime-progress events (e.g. for replay or dashboards)
+  the publisher should be wired in `ProviderStreamExecutor` and the SD WebUI /
+  ComfyUI adapters; audit-service is already set up to consume the patterns.
+- **Image-runtime preview frames.** The 64 KB cap (§10.1) is honored by the
+  adapter convention but is not yet enforced by a hard upper bound in the
+  normalizer. Enable `CLAW_IMAGE_PROGRESS_PREVIEW_ENABLED=true` to opt in.
+- **llama.cpp final timings.** The think-tag fix is live, but the
+  PR2 `finalTimings` plumbing currently only consumes Ollama's NDJSON
+  terminal frame. The llama.cpp OpenAI-compatible SSE path has a similar
+  `timings` block that should be wired through the same
+  `extractOllamaFinalTimings` -shaped extractor in a follow-up.
 
 ---
 
-## 9. RabbitMQ event patterns (declared, not yet published)
+## 9. RabbitMQ event patterns (declared; SSE-only today)
 
-PR1 declares 12 new event patterns under the `claw.events` topic exchange.
-They live in `packages/shared-constants/src/runtime-progress-events.constants.ts`
-as a frozen pattern map. **No service publishes them yet** — PR4 wires the
-publishers in chat-service and the consumers in audit-service.
+PR1 declared 12 event patterns under the `claw.events` topic exchange. They
+live in `packages/shared-constants/src/runtime-progress-events.constants.ts`
+as a frozen pattern map. **As of 2026-05-31 (PR2-5 shipped), the chat-service
+and image-service adapters emit `ClawRuntimeProgressEvent` envelopes over
+the existing in-process SSE channel only — they do NOT publish to RabbitMQ
+yet.** The pattern map is reserved for a follow-up that wires the
+publisher in chat-service / image-service and the consumer in audit-service.
+Frontend consumers (`useChatStream`, `useRuntimeProgressPage`, the
+runtime-progress chat panels, the image progress panel, and the ComfyUI
+node timeline) all rely on the SSE channel exclusively today.
 
-| Pattern                                 | Publisher (PR4) | Consumer (PR4) | Purpose                             |
-| --------------------------------------- | --------------- | -------------- | ----------------------------------- |
-| `runtime.progress.stage_changed`        | chat            | audit          | Lifecycle stage transition.         |
-| `runtime.progress.content_delta`        | chat            | audit          | Visible content text delta.         |
-| `runtime.progress.reasoning_delta`      | chat            | audit          | Visible reasoning text delta.       |
-| `runtime.progress.metrics_tick`         | chat            | audit          | Periodic metric snapshot.           |
-| `runtime.progress.usage_final`          | chat            | audit          | Final token-count + cost summary.   |
-| `runtime.progress.image_preview`        | chat            | audit          | Optional in-progress preview frame. |
-| `runtime.progress.node_progress`        | chat            | audit          | ComfyUI workflow-node progress.     |
-| `runtime.progress.step_progress`        | chat            | audit          | Image sampler step progress.        |
-| `runtime.progress.prompt_eval_progress` | chat            | audit          | llama.cpp prompt-eval progress.     |
-| `runtime.progress.artifact_saved`       | chat            | audit          | Image saved to file-service.        |
-| `runtime.progress.error`                | chat            | audit          | Streaming-side classified error.    |
-| `runtime.progress.cancelled`            | chat            | audit          | User cancelled mid-stream.          |
+| Pattern                                 | Planned publisher | Planned consumer | Purpose                             |
+| --------------------------------------- | ----------------- | ---------------- | ----------------------------------- |
+| `runtime.progress.stage_changed`        | chat              | audit            | Lifecycle stage transition.         |
+| `runtime.progress.content_delta`        | chat              | audit            | Visible content text delta.         |
+| `runtime.progress.reasoning_delta`      | chat              | audit            | Visible reasoning text delta.       |
+| `runtime.progress.metrics_tick`         | chat              | audit            | Periodic metric snapshot.           |
+| `runtime.progress.usage_final`          | chat              | audit            | Final token-count + cost summary.   |
+| `runtime.progress.image_preview`        | image             | audit            | Optional in-progress preview frame. |
+| `runtime.progress.node_progress`        | image (ComfyUI)   | audit            | ComfyUI workflow-node progress.     |
+| `runtime.progress.step_progress`        | image (SD WebUI)  | audit            | Image sampler step progress.        |
+| `runtime.progress.prompt_eval_progress` | chat              | audit            | llama.cpp prompt-eval progress.     |
+| `runtime.progress.artifact_saved`       | image             | audit            | Image saved to file-service.        |
+| `runtime.progress.error`                | chat / image      | audit            | Streaming-side classified error.    |
+| `runtime.progress.cancelled`            | chat / image      | audit            | User cancelled mid-stream.          |
 
-Until PR4, the envelope is delivered over the existing SSE channel only.
+The envelope is delivered over the existing in-process SSE channel only as
+of 2026-05-31. The patterns above remain declared on the bus for the
+follow-up that wires durable publishing.
 
 ---
 

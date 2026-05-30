@@ -653,23 +653,28 @@ Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 | llamacpp.weights.deleted              | llamacpp     | audit                    |
 | llamacpp.preflight.overridden         | llamacpp     | audit                    |
 | routing.models.synced                 | routing      | audit                    |
-| runtime.progress.stage_changed        | chat (PR4)   | audit (PR4)              |
-| runtime.progress.content_delta        | chat (PR4)   | audit (PR4)              |
-| runtime.progress.reasoning_delta      | chat (PR4)   | audit (PR4)              |
-| runtime.progress.metrics_tick         | chat (PR4)   | audit (PR4)              |
-| runtime.progress.usage_final          | chat (PR4)   | audit (PR4)              |
-| runtime.progress.image_preview        | chat (PR4)   | audit (PR4)              |
-| runtime.progress.node_progress        | chat (PR4)   | audit (PR4)              |
-| runtime.progress.step_progress        | chat (PR4)   | audit (PR4)              |
-| runtime.progress.prompt_eval_progress | chat (PR4)   | audit (PR4)              |
-| runtime.progress.artifact_saved       | chat (PR4)   | audit (PR4)              |
-| runtime.progress.error                | chat (PR4)   | audit (PR4)              |
-| runtime.progress.cancelled            | chat (PR4)   | audit (PR4)              |
+| runtime.progress.stage_changed        | chat / image (declared, SSE today) | audit (planned)          |
+| runtime.progress.content_delta        | chat (declared, SSE today)         | audit (planned)          |
+| runtime.progress.reasoning_delta      | chat (declared, SSE today)         | audit (planned)          |
+| runtime.progress.metrics_tick         | chat (declared, SSE today)         | audit (planned)          |
+| runtime.progress.usage_final          | chat (declared, SSE today)         | audit (planned)          |
+| runtime.progress.image_preview        | image (declared, SSE today)        | audit (planned)          |
+| runtime.progress.node_progress        | image / ComfyUI (PR4 — SSE today)  | audit (planned)          |
+| runtime.progress.step_progress        | image / SD WebUI (PR3 — SSE today) | audit (planned)          |
+| runtime.progress.prompt_eval_progress | chat / llama.cpp (declared)        | audit (planned)          |
+| runtime.progress.artifact_saved       | image (PR3+PR4 — SSE today)        | audit (planned)          |
+| runtime.progress.error                | chat / image (declared, SSE today) | audit (planned)          |
+| runtime.progress.cancelled            | chat / image (declared, SSE today) | audit (planned)          |
 
-> **Note:** the 12 `runtime.progress.*` patterns are **declared in
-> `packages/shared-constants/src/runtime-progress-events.constants.ts` but
-> NOT YET PUBLISHED**. PR1 ships the contract; PR4 wires the publishers in
-> chat-service and the consumer in audit-service. See
+> **Note (2026-05-31, PR2-5 shipped):** the 12 `runtime.progress.*` patterns
+> are declared in `packages/shared-constants/src/runtime-progress-events.constants.ts`.
+> PR2-5 emit `ClawRuntimeProgressEvent` envelopes for these semantics
+> end-to-end (chat-service for text runtimes; image-service SD WebUI +
+> ComfyUI adapters for image runtimes — specifically `step_progress`,
+> `node_progress`, `artifact_saved`, and their `stage_changed` /
+> `metrics_tick` / `error` / `cancelled` siblings) but deliver them over
+> the in-process SSE channel only. Durable RabbitMQ publishing of these
+> patterns is on the future-work backlog. See
 > `docs/03-architecture/runtime-progress.md` §9.
 
 ---
@@ -682,37 +687,56 @@ chat-service. Local runtimes (Ollama, llama.cpp, ComfyUI, SD WebUI) historically
 showed only a generic spinner because chat-service called them buffered and
 re-emitted a single `COMPLETE` event when the response returned.
 
-PR1 ships the foundation that closes the gap. Full architecture in
+**Status (2026-05-31): PR1 + PR2 + PR3 + PR4 + PR5 all shipped to `main`.**
+Local-runtime users now get the same depth of progress UI cloud users get.
+Full architecture in
 [`docs/03-architecture/runtime-progress.md`](docs/03-architecture/runtime-progress.md);
 user-facing summary in
 [`docs/LOCAL_RUNTIME_PROGRESS.md`](docs/LOCAL_RUNTIME_PROGRESS.md); decision
 record in [`docs/LOCAL_RUNTIME_PROGRESS_ADR.md`](docs/LOCAL_RUNTIME_PROGRESS_ADR.md).
 
-Key contracts shipped in PR1:
+Roadmap status:
 
-- **Envelope** — `ClawRuntimeProgressEvent` + 9 enums in
-  `packages/shared-types/src/runtime-progress/`. Strict superset of
-  `StreamEvent`; both coexist on the existing SSE channel.
-- **Admin probe endpoints** — `GET /api/v1/ollama/runtime-progress/probe` and
-  `GET /api/v1/llamacpp/runtime-progress/probe`. Return
-  `RuntimeProbeReport` (reachability, models, capabilities, execution profile,
-  slot/queue state). ADMIN-only.
-- **Think-tag leak fix** — `InferenceProxyManager` in claw-llamacpp-service
-  now runs streaming `<think>…</think>` content through `ThinkTagScanner`
-  (from `@claw/shared-utilities`) and emits the inside as
-  `choices[].delta.reasoning_content`. Gated by
-  `LLAMACPP_REASONING_EXTRACTION_ENABLED` (default `true`).
-- **Frontend decomposition** — `RuntimeProgressPanel`, `VisibleReasoningPanel`,
-  `RuntimeMetricsHud`, `RuntimeRawEventsDrawer`, `RuntimeStageTimeline` (stub)
-  in `apps/claw-frontend/src/components/chat/runtime-progress/`.
-  `thinking-indicator.tsx` keeps its import name and delegates.
-- **Probe scripts** — `scripts/local-runtime-probes/{probe-ollama,probe-llamacpp,probe-sd-webui,probe-comfyui}.mjs`.
-  Output to gitignored `.local-runtime-probes/`.
+- **PR1 — shipped.** Envelope (`ClawRuntimeProgressEvent` + 9 enums in
+  `packages/shared-types/src/runtime-progress/`), admin probe endpoints,
+  llama.cpp think-tag leak fix (`ThinkTagScanner` via
+  `LLAMACPP_REASONING_EXTRACTION_ENABLED`), frontend panel decomposition
+  (`RuntimeProgressPanel` + sub-panels), probe scripts under
+  `scripts/local-runtime-probes/`.
+- **PR2 — shipped.** Chat-service text-runtime metrics + bottleneck.
+  `NormalizedStreamFragment.finalTimings` propagates Ollama-style
+  `prompt_eval_duration` / `eval_duration` / `load_duration` through
+  `ProviderStreamReader` → `ProviderStreamExecutor.buildFinalMetrics()`,
+  and the final METRICS event now carries `modelLoadMs` / `promptEvalMs` /
+  `generationMs` / `tokensPerSecond` + a `bottleneck` object + a
+  `stageTimings` map. New `RuntimeBottleneckBreakdown` component +
+  `RuntimeStageTimeline` filled in (was a PR1 stub).
+- **PR3 — shipped.** Stable Diffusion WebUI progress adapter
+  (`stable-diffusion-webui-progress.adapter.ts`): polls
+  `/sdapi/v1/progress`, emits `STEP_PROGRESS` + `ARTIFACT_SAVED`,
+  cancels via `/sdapi/v1/interrupt`. New env vars
+  `CLAW_IMAGE_PROGRESS_POLL_INTERVAL_MS` (default `1000`, min `300`) and
+  `CLAW_IMAGE_PROGRESS_PREVIEW_ENABLED` (default `false`). New frontend
+  `ImageGenerationProgressPanel`.
+- **PR4 — shipped.** ComfyUI WebSocket adapter
+  (`comfyui-progress.adapter.ts`): drives `POST /prompt` → consume `/ws`
+  events → fetch `/history` artifact, normalizes to NODE_PROGRESS /
+  EXECUTING_NODE / NODE_COMPLETED / ARTIFACT_SAVED. New env var
+  `COMFYUI_BASE_URL` (default `http://comfyui:8188`). Workflow template
+  loader + node mapper (SD-1.5 baseline). New frontend
+  `ComfyUINodeTimeline` component.
+- **PR5 — shipped.** `/admin/runtime-progress` parallel-probe diagnostics
+  page with `RuntimeProbeCard` per runtime. ADMIN-gated, sidebar entry
+  added, AdminGuard enforced.
 
-**This work EXTENDS the cloud rich-progress system. It does NOT build a parallel
-stack.** PR2 wires local-runtime adapters into `ProviderStreamExecutor`; PR3
-polishes the FE HUD; PR4 promotes the RabbitMQ patterns to publish/consume;
-PR5 lights up image-runtime parity.
+**This work EXTENDS the cloud rich-progress system. It does NOT build a
+parallel stack.** The only remaining future-work item is wiring the 12
+declared `runtime.progress.*` RabbitMQ patterns to publish durably (today
+they flow over the in-process SSE channel only — that includes the PR3
+SD WebUI `step_progress` / `artifact_saved` stream and the PR4 ComfyUI
+`node_progress` / `executing_node` / `node_completed` / `artifact_saved`
+stream). See `.claude/Integrations/pr2-5__live_smoke.md` for the
+end-to-end smoke evidence against the deployed stack.
 
 ---
 
