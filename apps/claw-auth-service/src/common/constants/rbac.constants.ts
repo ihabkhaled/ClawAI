@@ -21,6 +21,8 @@ export const USER_DEFAULT_PERMISSIONS: Permission[] = [
   Permission.CHAT_USE,
   Permission.CHAT_READ_OWN,
   Permission.CHAT_DELETE_OWN,
+  Permission.WORKSPACE_VIEW,
+  Permission.WORKSPACE_APP_CONFIG_VIEW,
   Permission.WORKSPACE_CONNECT_OWN,
   Permission.WORKSPACE_READ_OWN,
   Permission.WORKSPACE_SYNC_OWN,

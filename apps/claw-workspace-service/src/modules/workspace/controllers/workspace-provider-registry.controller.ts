@@ -50,9 +50,14 @@ export class WorkspaceProviderRegistryController {
     return this.registry.getByProvider(provider as WorkspaceProvider);
   }
 
+  // Listing app-configs is sanitised (ProviderAppConfigPublic OMITS
+  // encryptedSecret; only `hasSecret: boolean` is exposed) so normal USERs
+  // can browse the admin-created configs to discover which provider apps
+  // are ready to connect their own accounts against. Mutations (POST/PUT/
+  // DELETE) stay locked to ADMIN + ADMIN_WORKSPACE_AUTOMATION_MANAGE.
   @Get('provider-app-configs')
-  @Roles(UserRole.ADMIN, UserRole.OPERATOR)
-  @RequirePermissions(Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE)
+  @Roles(UserRole.ADMIN, UserRole.OPERATOR, UserRole.VIEWER, UserRole.USER)
+  @RequirePermissions(Permission.WORKSPACE_APP_CONFIG_VIEW)
   listAppConfigs(
     @Query(new ZodValidationPipe(listProviderAppConfigsQuerySchema))
     query: ListProviderAppConfigsQueryDto,
@@ -72,8 +77,8 @@ export class WorkspaceProviderRegistryController {
   }
 
   @Get('provider-app-configs/:id')
-  @Roles(UserRole.ADMIN, UserRole.OPERATOR)
-  @RequirePermissions(Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE)
+  @Roles(UserRole.ADMIN, UserRole.OPERATOR, UserRole.VIEWER, UserRole.USER)
+  @RequirePermissions(Permission.WORKSPACE_APP_CONFIG_VIEW)
   getAppConfig(@Param('id') id: string): Promise<ProviderAppConfigPublic> {
     return this.appConfigs.getById(id);
   }

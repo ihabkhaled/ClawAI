@@ -128,6 +128,12 @@ export type AppConfigRowProps = {
   isTestPending: boolean;
   isDeletePending: boolean;
   isConnectPending: boolean;
+  // True iff the caller holds ADMIN_WORKSPACE_AUTOMATION_MANAGE (the perm the
+  // BE requires for create/update/delete on provider-app-configs). When false
+  // the row hides Edit / Delete so the UI matches the BE 403 surface — the
+  // Connect and Test buttons stay visible because USER holds the relaxed
+  // WORKSPACE_APP_CONFIG_VIEW + WORKSPACE_CONNECT_OWN grants.
+  canManage: boolean;
   t: TranslateFunction;
 };
 
@@ -242,6 +248,10 @@ export type UseAppConfigsPageReturn = {
   handleTest: (id: string, provider: string) => void;
   handleConnect: (id: string, provider: string) => Promise<void>;
   isConnectPending: boolean;
+  // True iff the caller holds ADMIN_WORKSPACE_AUTOMATION_MANAGE — admins can
+  // create/edit/delete app-level OAuth configs; regular USERs cannot. Used by
+  // the page + AppConfigRow to hide mutation buttons.
+  canManage: boolean;
 };
 
 export type AppConfigEditDialogProps = {

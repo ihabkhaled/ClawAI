@@ -1,5 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
+import { Permission } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { WorkspaceConnectorService } from '../services/workspace-connector.service';
 import { type OAuthInitDto, oauthInitSchema } from '../dto/oauth-init.dto';
@@ -23,6 +25,7 @@ export class WorkspaceOAuthController {
 
   @Post('init')
   @HttpCode(HttpStatus.OK)
+  @RequirePermissions(Permission.WORKSPACE_CONNECT_OWN)
   async initOAuth(
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(oauthInitSchema)) dto: OAuthInitDto,
@@ -31,6 +34,7 @@ export class WorkspaceOAuthController {
   }
 
   @Get('callback')
+  @RequirePermissions(Permission.WORKSPACE_CONNECT_OWN)
   async handleCallback(
     @CurrentUser() user: AuthenticatedUser,
     @Query(new ZodValidationPipe(oauthCallbackSchema)) dto: OAuthCallbackDto,
@@ -40,6 +44,7 @@ export class WorkspaceOAuthController {
 
   @Post('test-connection')
   @HttpCode(HttpStatus.OK)
+  @RequirePermissions(Permission.WORKSPACE_APP_CONFIG_VIEW)
   async testAppConfigConnection(
     @CurrentUser() _user: AuthenticatedUser,
     @Body(new ZodValidationPipe(testConnectionSchema)) dto: TestConnectionDto,
@@ -49,6 +54,7 @@ export class WorkspaceOAuthController {
 
   @Post('test-pat')
   @HttpCode(HttpStatus.OK)
+  @RequirePermissions(Permission.WORKSPACE_CONNECT_OWN)
   async testPatToken(
     @CurrentUser() _user: AuthenticatedUser,
     @Body(new ZodValidationPipe(testPatSchema)) dto: TestPatDto,

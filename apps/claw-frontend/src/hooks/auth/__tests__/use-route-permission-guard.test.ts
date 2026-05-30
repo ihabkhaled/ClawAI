@@ -28,6 +28,8 @@ const USER_PERMISSIONS: Permission[] = [
   Permission.CHAT_USE,
   Permission.CHAT_READ_OWN,
   Permission.CHAT_DELETE_OWN,
+  Permission.WORKSPACE_VIEW,
+  Permission.WORKSPACE_APP_CONFIG_VIEW,
   Permission.WORKSPACE_CONNECT_OWN,
   Permission.WORKSPACE_READ_OWN,
   Permission.WORKSPACE_SYNC_OWN,
@@ -210,5 +212,44 @@ describe('useRoutePermissionGuard', () => {
 
     expect(result.current.allowed).toBe(false);
     expect(result.current.requiredPermission).toBe(Permission.MEMORY_USE);
+  });
+
+  it('allows USER on /workspace (WORKSPACE_VIEW is part of the default grant)', async () => {
+    setUser(makeUser(UserRole.USER, USER_PERMISSIONS));
+    mockEntitlements.mockResolvedValue(entWithGates({}));
+    mockPathname = '/workspace';
+
+    const { result } = renderHook(() => useRoutePermissionGuard(), { wrapper: makeWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.allowed).toBe(true);
+    });
+    expect(result.current.requiredPermission).toBe(Permission.WORKSPACE_VIEW);
+  });
+
+  it('allows USER on /workspace/app-configs (WORKSPACE_APP_CONFIG_VIEW is granted)', async () => {
+    setUser(makeUser(UserRole.USER, USER_PERMISSIONS));
+    mockEntitlements.mockResolvedValue(entWithGates({}));
+    mockPathname = '/workspace/app-configs';
+
+    const { result } = renderHook(() => useRoutePermissionGuard(), { wrapper: makeWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.allowed).toBe(true);
+    });
+    expect(result.current.requiredPermission).toBe(Permission.WORKSPACE_APP_CONFIG_VIEW);
+  });
+
+  it('still blocks USER on /workspace/sync-health (admin observability)', async () => {
+    setUser(makeUser(UserRole.USER, USER_PERMISSIONS));
+    mockEntitlements.mockResolvedValue(entWithGates({}));
+    mockPathname = '/workspace/sync-health';
+
+    const { result } = renderHook(() => useRoutePermissionGuard(), { wrapper: makeWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.allowed).toBe(false);
+    });
+    expect(result.current.requiredPermission).toBe(Permission.ADMIN_WORKSPACES_VIEW);
   });
 });

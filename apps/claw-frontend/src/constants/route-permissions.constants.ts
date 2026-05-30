@@ -53,14 +53,25 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   // remain gated by RESEARCH_USE (the page's own data, plus chat-service
   // service-to-service calls from the compare ResearchEnricher).
   { prefix: '/research', permission: Permission.ADMIN_SYSTEM_VIEW },
-  // Workspace CONFIG sub-pages are admin-only (OAuth client/app secrets +
-  // sync-health dashboard); the provider catalog and per-user connect/use
-  // pages stay open so members can still connect their own accounts.
+  // Workspace pages.
+  // - /workspace/sync-health = ADMIN observability dashboard, stays admin-only.
+  // - /workspace/app-configs = browse the admin-created OAuth app configs
+  //   (sanitised — no client secrets returned). Members need this page to
+  //   discover which provider apps are ready to connect their own account
+  //   against; the create/edit/delete buttons are still hidden from non-admins
+  //   in the UI, and the backend mutations stay locked to ADMIN +
+  //   ADMIN_WORKSPACE_AUTOMATION_MANAGE.
+  // - /workspace = the landing page listing each user's own connectors +
+  //   their Connect button — open to anyone with WORKSPACE_VIEW.
+  //
+  // The /workspace/app-configs entry MUST precede the bare /workspace entry
+  // so longest-prefix-first resolution picks the more specific gate.
+  { prefix: ROUTES.WORKSPACE_SYNC_HEALTH, permission: Permission.ADMIN_WORKSPACES_VIEW },
   {
     prefix: ROUTES.WORKSPACE_APP_CONFIGS,
-    permission: Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE,
+    permission: Permission.WORKSPACE_APP_CONFIG_VIEW,
   },
-  { prefix: ROUTES.WORKSPACE_SYNC_HEALTH, permission: Permission.ADMIN_WORKSPACES_VIEW },
+  { prefix: ROUTES.WORKSPACE, permission: Permission.WORKSPACE_VIEW },
   { prefix: ROUTES.OBSERVABILITY, permission: Permission.ADMIN_SYSTEM_VIEW },
   { prefix: ROUTES.AUDITS, permission: Permission.ADMIN_SYSTEM_VIEW },
   { prefix: ROUTES.LOGS, permission: Permission.ADMIN_LOGS_VIEW },

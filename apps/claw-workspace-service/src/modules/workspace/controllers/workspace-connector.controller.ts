@@ -11,6 +11,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
+import { Permission } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { WorkspaceConnectorService } from '../services/workspace-connector.service';
 import { WorkspaceObjectService } from '../services/workspace-object.service';
@@ -46,6 +48,7 @@ export class WorkspaceConnectorController {
   ) {}
 
   @Post()
+  @RequirePermissions(Permission.WORKSPACE_CONNECT_OWN)
   async create(
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(createWorkspaceConnectorSchema)) dto: CreateWorkspaceConnectorDto,
@@ -54,6 +57,7 @@ export class WorkspaceConnectorController {
   }
 
   @Get()
+  @RequirePermissions(Permission.WORKSPACE_VIEW)
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
     @Query(new ZodValidationPipe(listWorkspaceConnectorsQuerySchema))
@@ -63,6 +67,7 @@ export class WorkspaceConnectorController {
   }
 
   @Get(':id')
+  @RequirePermissions(Permission.WORKSPACE_VIEW)
   async findOne(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -71,6 +76,7 @@ export class WorkspaceConnectorController {
   }
 
   @Patch(':id')
+  @RequirePermissions(Permission.WORKSPACE_CONNECT_OWN)
   async update(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -80,6 +86,7 @@ export class WorkspaceConnectorController {
   }
 
   @Delete(':id')
+  @RequirePermissions(Permission.WORKSPACE_CONNECT_OWN)
   async remove(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -89,6 +96,7 @@ export class WorkspaceConnectorController {
 
   @Post(':id/health')
   @HttpCode(HttpStatus.OK)
+  @RequirePermissions(Permission.WORKSPACE_VIEW)
   async testHealth(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -98,6 +106,7 @@ export class WorkspaceConnectorController {
 
   @Post(':id/sync')
   @HttpCode(HttpStatus.OK)
+  @RequirePermissions(Permission.WORKSPACE_SYNC_OWN)
   async triggerSync(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -111,6 +120,7 @@ export class WorkspaceConnectorController {
   }
 
   @Patch(':id/cadence')
+  @RequirePermissions(Permission.WORKSPACE_SYNC_OWN)
   async updateCadence(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -121,6 +131,7 @@ export class WorkspaceConnectorController {
 
   @Post(':id/pause')
   @HttpCode(HttpStatus.OK)
+  @RequirePermissions(Permission.WORKSPACE_SYNC_OWN)
   async pause(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -131,6 +142,7 @@ export class WorkspaceConnectorController {
 
   @Post(':id/resume')
   @HttpCode(HttpStatus.OK)
+  @RequirePermissions(Permission.WORKSPACE_SYNC_OWN)
   async resume(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -139,6 +151,7 @@ export class WorkspaceConnectorController {
   }
 
   @Get(':id/sync-runs')
+  @RequirePermissions(Permission.WORKSPACE_VIEW)
   async listSyncRuns(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -151,6 +164,7 @@ export class WorkspaceConnectorController {
   }
 
   @Get(':id/health-events')
+  @RequirePermissions(Permission.WORKSPACE_VIEW)
   async listHealthEvents(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,

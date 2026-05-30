@@ -4,7 +4,9 @@ import {
   EMPTY_APP_CONFIG_FORM,
   WORKSPACE_OAUTH_CALLBACK_PATH,
 } from '@/constants/workspace-providers.constants';
+import { Permission } from '@/enums';
 import { WorkspaceProviderAuthMode } from '@/enums/workspace-provider-auth-mode.enum';
+import { usePermissions } from '@/hooks/auth/use-permissions';
 import { useTranslation } from '@/lib/i18n';
 import type {
   ProviderAppConfigFormValues,
@@ -26,6 +28,8 @@ import { useProviderCatalog } from './use-provider-catalog';
 
 export function useWorkspaceAppConfigsPage(): UseAppConfigsPageReturn {
   const { t } = useTranslation();
+  const permissions = usePermissions();
+  const canManage = permissions.isAdmin || permissions.can(Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE);
   const catalog = useProviderCatalog();
   const list = useProviderAppConfigs();
   const createMutation = useCreateProviderAppConfig();
@@ -205,5 +209,6 @@ export function useWorkspaceAppConfigsPage(): UseAppConfigsPageReturn {
     handleTest,
     handleConnect,
     isConnectPending: initOAuthMutation.isPending,
+    canManage,
   };
 }

@@ -10,6 +10,8 @@ const USER_PERMISSIONS: Permission[] = [
   Permission.CHAT_USE,
   Permission.CHAT_READ_OWN,
   Permission.CHAT_DELETE_OWN,
+  Permission.WORKSPACE_VIEW,
+  Permission.WORKSPACE_APP_CONFIG_VIEW,
   Permission.WORKSPACE_CONNECT_OWN,
   Permission.WORKSPACE_READ_OWN,
   Permission.WORKSPACE_SYNC_OWN,
@@ -72,13 +74,16 @@ describe('sidebar-visibility.utility', () => {
       expect(childLabels).not.toContain('nav.verifierLab');
     });
 
-    it('keeps the open Workspace parent but strips its admin config children', () => {
+    it('keeps the open Workspace parent + member-visible children (app-configs + others)', () => {
       const workspace = visible.find((i) => i.labelKey === 'nav.workspace');
       const childLabels = (workspace?.children ?? []).map((c) => c.labelKey);
       // Member keeps usage children (connect/use own accounts)...
       expect(childLabels).toContain('nav.workspaceInbox');
-      // ...but the admin config children are hidden (OAuth app config + sync-health dashboard).
-      expect(childLabels).not.toContain('nav.workspaceAppConfigs');
+      // ...AND can browse the admin-created app configs (sanitised list — no
+      // secrets returned) so they can connect their own account against a
+      // provider; mutation buttons are hidden in-page by usePermissions().
+      expect(childLabels).toContain('nav.workspaceAppConfigs');
+      // The sync-health dashboard remains admin-only.
       expect(childLabels).not.toContain('nav.workspaceSyncHealth');
     });
   });

@@ -18,6 +18,7 @@ export function AppConfigRow({
   isTestPending,
   isDeletePending,
   isConnectPending,
+  canManage,
   t,
 }: AppConfigRowProps): React.ReactElement {
   const canConnect =
@@ -49,15 +50,17 @@ export function AppConfigRow({
       </td>
       <td className="px-4 py-2 text-right">
         <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={isTestPending}
-            onClick={() => onTest(config.id, config.provider)}
-          >
-            <ShieldCheck className="h-4 w-4" />
-            {t('workspaceProviders.appConfigs.test')}
-          </Button>
+          {canManage ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isTestPending}
+              onClick={() => onTest(config.id, config.provider)}
+            >
+              <ShieldCheck className="h-4 w-4" />
+              {t('workspaceProviders.appConfigs.test')}
+            </Button>
+          ) : null}
           {canConnect ? (
             <Button
               variant="default"
@@ -71,17 +74,21 @@ export function AppConfigRow({
               {t('workspaceProviders.appConfigs.connect')}
             </Button>
           ) : null}
-          <Button variant="ghost" size="sm" onClick={() => onEdit(config)}>
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={isDeletePending}
-            onClick={() => onDelete(config.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {canManage ? (
+            <Button variant="ghost" size="sm" onClick={() => onEdit(config)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          ) : null}
+          {canManage ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={isDeletePending}
+              onClick={() => onDelete(config.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          ) : null}
         </div>
       </td>
     </tr>

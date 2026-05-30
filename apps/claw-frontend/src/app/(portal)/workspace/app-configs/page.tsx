@@ -21,10 +21,12 @@ export default function WorkspaceAppConfigsPage(): React.ReactElement {
         title={ctrl.t('workspaceProviders.appConfigs.title')}
         description={ctrl.t('workspaceProviders.appConfigs.description')}
         actions={
-          <Button onClick={ctrl.openCreateDialog}>
-            <Plus className="me-2 size-4" />
-            {ctrl.t('workspaceProviders.appConfigs.createButton')}
-          </Button>
+          ctrl.canManage ? (
+            <Button onClick={ctrl.openCreateDialog}>
+              <Plus className="me-2 size-4" />
+              {ctrl.t('workspaceProviders.appConfigs.createButton')}
+            </Button>
+          ) : null
         }
       />
 
@@ -94,10 +96,12 @@ export default function WorkspaceAppConfigsPage(): React.ReactElement {
           title={ctrl.t('workspaceProviders.appConfigs.emptyTitle')}
           description={ctrl.t('workspaceProviders.appConfigs.emptyDescription')}
           action={
-            <Button onClick={ctrl.openCreateDialog}>
-              <Plus className="me-2 size-4" />
-              {ctrl.t('workspaceProviders.appConfigs.createButton')}
-            </Button>
+            ctrl.canManage ? (
+              <Button onClick={ctrl.openCreateDialog}>
+                <Plus className="me-2 size-4" />
+                {ctrl.t('workspaceProviders.appConfigs.createButton')}
+              </Button>
+            ) : undefined
           }
         />
       ) : null}
@@ -142,6 +146,7 @@ export default function WorkspaceAppConfigsPage(): React.ReactElement {
                   isTestPending={ctrl.isTestPending}
                   isDeletePending={ctrl.isDeletePending}
                   isConnectPending={ctrl.isConnectPending}
+                  canManage={ctrl.canManage}
                   t={ctrl.t}
                 />
               ))}

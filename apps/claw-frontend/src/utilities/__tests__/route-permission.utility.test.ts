@@ -12,8 +12,6 @@ describe('route-permission.utility', () => {
     it('returns null for routes with no entry (open to all authed users)', () => {
       expect(requiredPermissionForPath('/chat')).toBeNull();
       expect(requiredPermissionForPath('/chat/abc-123')).toBeNull();
-      expect(requiredPermissionForPath('/workspace')).toBeNull();
-      expect(requiredPermissionForPath('/workspace/inbox')).toBeNull();
       expect(requiredPermissionForPath('/agent')).toBeNull();
       expect(requiredPermissionForPath('/agent/terminal')).toBeNull();
       expect(requiredPermissionForPath('/profile')).toBeNull();
@@ -103,6 +101,25 @@ describe('route-permission.utility', () => {
       expect(requiredPermissionForPath('/administration')).toBeNull();
       // '/files' must NOT match '/file-generations'.
       expect(requiredPermissionForPath('/file-generations')).toBeNull();
+    });
+
+    it('gates /workspace by the new WORKSPACE_VIEW permission (visible to USER)', () => {
+      expect(requiredPermissionForPath('/workspace')).toBe(Permission.WORKSPACE_VIEW);
+      // Sub-pages without their own entry inherit the /workspace gate.
+      expect(requiredPermissionForPath('/workspace/inbox')).toBe(Permission.WORKSPACE_VIEW);
+      expect(requiredPermissionForPath('/workspace/jira')).toBe(Permission.WORKSPACE_VIEW);
+    });
+
+    it('gates /workspace/app-configs by WORKSPACE_APP_CONFIG_VIEW (NOT admin-only)', () => {
+      expect(requiredPermissionForPath('/workspace/app-configs')).toBe(
+        Permission.WORKSPACE_APP_CONFIG_VIEW,
+      );
+    });
+
+    it('keeps /workspace/sync-health admin-only (longest-prefix beats /workspace)', () => {
+      expect(requiredPermissionForPath('/workspace/sync-health')).toBe(
+        Permission.ADMIN_WORKSPACES_VIEW,
+      );
     });
   });
 
