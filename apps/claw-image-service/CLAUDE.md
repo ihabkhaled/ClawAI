@@ -132,3 +132,20 @@ After completing any implementation task on this service, produce:
 4. **Infrastructure changes** (env vars, Docker, Nginx, CI)
 5. **Known gaps or follow-up items**
 6. **Evidence**: typecheck output, lint output, test output
+
+## Inter-service auth for file-service internal endpoints
+
+`claw-file-service`'s `/api/v1/internal/files/*` routes (`store-image`, `:id/content`, `:id/chunks`, `download/:id`, `upload-internal`, `download-internal`, `metadata-internal`) are guarded by `ServiceTokenGuard`. Every call from this service to those routes — currently `storeImage()` in `image-execution.manager.ts` — MUST send `Authorization: Service <token>` where `<token>` is the value of `INTER_SERVICE_AUTH_TOKEN` (the single shared secret in root `.env` — do NOT introduce a per-service variant).
+
+Use the wrapper:
+
+```ts
+import { buildInterServiceAuthHeader, httpPost } from '@common/utilities';
+
+await httpPost(`${config.FILE_SERVICE_URL}/api/v1/internal/files/store-image`, body, {
+  timeout: 30_000,
+  headers: { Authorization: buildInterServiceAuthHeader() },
+});
+```
+
+The wrapper lives at `src/common/utilities/inter-service-auth.utility.ts` and reads `AppConfig.get().INTER_SERVICE_AUTH_TOKEN`. Mirrors the pattern in `apps/claw-workspace-service/src/common/utilities/file-service-client.utility.ts#buildAuthHeader`. Forgetting the header will manifest as `401 Service token required` from file-service; image generation will succeed at the provider but fail to persist, leaving the user with an error and no asset.

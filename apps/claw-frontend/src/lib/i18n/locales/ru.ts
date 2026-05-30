@@ -738,7 +738,13 @@ export const ru: TranslationDictionary = {
     colRoles: 'Роли',
     noneRole: 'Нет',
     modelNamePlaceholder: 'llama3:8b',
-    capabilities: 'Возможности',
+    capabilities: {
+      label: 'Возможности',
+      vision: 'Зрение',
+      pdf: 'PDF',
+      extractOnly: 'Только текст',
+      unsupported: 'Не поддерживается',
+    },
     context: 'Контекст',
     lifecycle: 'Жизненный цикл',
     noSyncedModels: 'Нет синхронизированных моделей',
@@ -1091,6 +1097,22 @@ export const ru: TranslationDictionary = {
       modelLabel: 'Модель критика',
       modelPlaceholder: 'Выбрать модель критика',
       notRequested: 'Критик не запрашивался для этого разбора.',
+    },
+    attachments: {
+      title: 'Прикреплённые файлы',
+      addFiles: 'Добавить файлы',
+      noneSelected: 'Файлы не выбраны',
+      warning:
+        'Прикреплённые файлы будут отправлены каждой выбранной для сравнения модели, которая их поддерживает.',
+    },
+    delivery: {
+      filesProvided: 'Передано файлов: {count}',
+      extractedText: 'Текст',
+      nativeImage: 'Изображение',
+      omittedNoVision: 'Пропущено (без зрения)',
+      omittedUnsupported: 'Пропущено (не поддерживается)',
+      truncatedText: 'Усечено',
+      tooltip: 'Сводка доставки по моделям',
     },
   },
   judgeReview: {

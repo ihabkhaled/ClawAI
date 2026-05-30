@@ -148,6 +148,8 @@ export default function ThreadDetailPage() {
           allowJudgeMode={canJudge}
           allowCriticReview={canCritic}
           allowResearchMode={canResearch}
+          selectedFileIds={comparePanel.selectedFileIds}
+          onSelectedFileIdsChange={comparePanel.setSelectedFileIds}
           t={t}
         />
       ) : null}

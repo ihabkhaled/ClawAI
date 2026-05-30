@@ -50,6 +50,14 @@ const appConfigSchema = z.object({
     .string()
     .default('false')
     .transform((value) => value.toLowerCase() === 'true'),
+
+  // Stream 22 — shared secret for `Authorization: Service <token>` calls into
+  // file-service guarded `/api/v1/internal/files/*` endpoints. Matches the
+  // value in claw-file-service AppConfig + claw-workspace-service AppConfig.
+  INTER_SERVICE_AUTH_TOKEN: z
+    .string()
+    .min(32, 'INTER_SERVICE_AUTH_TOKEN must be at least 32 chars')
+    .default('change-me-inter-service-token-32-chars-min'),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

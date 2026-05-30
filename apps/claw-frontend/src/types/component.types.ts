@@ -1107,6 +1107,10 @@ export type InThreadComparePanelProps = {
   allowJudgeMode: boolean;
   allowCriticReview: boolean;
   allowResearchMode: boolean;
+  // Compare-mode file attachments. Threaded into the parallel send payload
+  // as `fileIds`. The picker mirrors the main composer's attachment UX.
+  selectedFileIds: string[];
+  onSelectedFileIdsChange: (ids: string[]) => void;
   t: TranslateFunction;
 };
 

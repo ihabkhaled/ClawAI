@@ -63,6 +63,13 @@ export {
   getFastestMessage,
 } from './parallel.utility';
 export {
+  countFileDeliveriesByMode,
+  getFileDeliveryModeLabel,
+  buildFileDeliveryTooltip,
+  readFileDeliveryFromMetadata,
+  getMessageFilesProvidedCount,
+} from './file-delivery.utility';
+export {
   getEscalationStatusBadgeVariant,
   getEscalationStatusLabel,
   isModelInChain,

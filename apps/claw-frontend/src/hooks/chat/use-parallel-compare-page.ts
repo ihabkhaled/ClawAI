@@ -20,6 +20,7 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
   const [criticEnabled, setCriticEnabled] = useState(false);
   const [criticModel, setCriticModel] = useState<string | null>(null);
   const [researchMode, setResearchMode] = useState<CompareResearchMode>(CompareResearchMode.NONE);
+  const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const { send, result, isPending, isError } = useParallelCompare();
 
   const threadId = result?.threadId ?? null;
@@ -69,7 +70,11 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
       // Only attach the field when the user picked a non-NONE mode so v1
       // server-side defaults stay the source of truth for the OFF path.
       ...(researchMode === CompareResearchMode.NONE ? {} : { researchMode }),
+      // Only attach file IDs when the user picked at least one; omit
+      // entirely on the empty path so the BE DTO stays clean.
+      ...(selectedFileIds.length > 0 ? { fileIds: selectedFileIds } : {}),
     });
+    setSelectedFileIds([]);
   }, [
     canSend,
     send,
@@ -80,6 +85,7 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     criticEnabled,
     criticModel,
     researchMode,
+    selectedFileIds,
   ]);
 
   return {
@@ -111,5 +117,7 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     setCriticModel,
     researchMode,
     setResearchMode,
+    selectedFileIds,
+    setSelectedFileIds,
   };
 }

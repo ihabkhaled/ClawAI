@@ -176,3 +176,22 @@ panels) handle both shapes until `StreamEvent` is retired in a future PR.
 engineering mindset ("extend, don't parallelize") is the binding rule here.
 Full architecture:
 [`docs/03-architecture/runtime-progress.md`](../../docs/03-architecture/runtime-progress.md).
+
+## Inter-service auth for file-service internal endpoints
+
+`claw-file-service`'s `/api/v1/internal/files/*` routes (`:id/content`, `:id/chunks`, `download/:id`, `store-image`, `upload-internal`, `download-internal`, `metadata-internal`) are guarded by `ServiceTokenGuard`. Every call from this service to those routes MUST send `Authorization: Service <token>` where `<token>` is the value of `INTER_SERVICE_AUTH_TOKEN` (the single shared secret in root `.env` — do NOT introduce a per-service variant).
+
+Use the wrapper:
+
+```ts
+import { buildInterServiceAuthHeader, httpRequest } from '../../../common/utilities';
+
+await httpRequest({
+  url,
+  method: 'GET',
+  headers: { Authorization: buildInterServiceAuthHeader() },
+  timeoutMs: 10_000,
+});
+```
+
+The wrapper lives at `src/common/utilities/inter-service-auth.utility.ts` and reads `AppConfig.get().INTER_SERVICE_AUTH_TOKEN`. Mirrors the pattern in `apps/claw-workspace-service/src/common/utilities/file-service-client.utility.ts#buildAuthHeader`. Forgetting the header will manifest as `401 Service token required` from file-service; users will see context-assembly silently skip attached files (caught as non-blocking) and judge/critic compare lanes will run without their attachments.

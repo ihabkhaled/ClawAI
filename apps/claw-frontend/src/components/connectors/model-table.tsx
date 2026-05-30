@@ -42,7 +42,7 @@ export function ModelTable({ models, showProvider = false, emptyMessage }: Model
     },
     {
       key: 'capabilities',
-      header: t('models.capabilities'),
+      header: t('models.capabilities.label'),
       render: (model) => (
         <div className="flex flex-wrap gap-1">
           {model.supportsStreaming ? (

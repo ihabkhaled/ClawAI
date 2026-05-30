@@ -1,5 +1,6 @@
 import type { TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 import type { CompareJudgeState, ResearchMode } from '../../../common/enums';
+import type { FileDeliveryEntry } from './file-delivery.types';
 import type { JudgeReviewPayload } from './judge-referee.types';
 
 export type ParallelModelTarget = {
@@ -32,6 +33,11 @@ export type ParallelModelResponse = {
   judgeOutputTokens?: number;
   judgeTokenEstimated?: boolean;
   judgeTokenSource?: TokenUsageSource;
+  // Slice A — per-lane file-delivery telemetry. One entry per attached file
+  // describing whether it reached this provider+model as extracted text,
+  // native image, or was omitted. Mirrored verbatim into the assistant
+  // message metadata.fileDelivery JSON for the FE + judge/critic.
+  attachmentDelivery?: FileDeliveryEntry[];
 };
 
 export type ParallelJudgeConfig = {

@@ -739,7 +739,13 @@ export const de: TranslationDictionary = {
     colRoles: 'Rollen',
     noneRole: 'Keine',
     modelNamePlaceholder: 'llama3:8b',
-    capabilities: 'Fähigkeiten',
+    capabilities: {
+      label: 'Fähigkeiten',
+      vision: 'Bild',
+      pdf: 'PDF',
+      extractOnly: 'Nur Text',
+      unsupported: 'Nicht unterstützt',
+    },
     context: 'Kontext',
     lifecycle: 'Lebenszyklus',
     noSyncedModels: 'Keine synchronisierten Modelle',
@@ -1096,6 +1102,22 @@ export const de: TranslationDictionary = {
       modelLabel: 'Kritiker-Modell',
       modelPlaceholder: 'Kritiker-Modell auswählen',
       notRequested: 'Für diese Prüfung wurde kein Kritiker angefordert.',
+    },
+    attachments: {
+      title: 'Angehängte Dateien',
+      addFiles: 'Dateien hinzufügen',
+      noneSelected: 'Keine Dateien ausgewählt',
+      warning:
+        'Angehängte Dateien werden an jedes ausgewählte Vergleichsmodell gesendet, das sie unterstützt.',
+    },
+    delivery: {
+      filesProvided: 'Bereitgestellte Dateien: {count}',
+      extractedText: 'Text',
+      nativeImage: 'Bild',
+      omittedNoVision: 'Übersprungen (keine Bildunterstützung)',
+      omittedUnsupported: 'Übersprungen (nicht unterstützt)',
+      truncatedText: 'Gekürzt',
+      tooltip: 'Zustellungsübersicht pro Modell',
     },
   },
   judgeReview: {

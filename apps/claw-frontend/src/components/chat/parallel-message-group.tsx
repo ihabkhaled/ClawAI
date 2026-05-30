@@ -14,6 +14,7 @@ import {
   Clock,
 } from 'lucide-react';
 
+import { AttachmentDeliveryChip } from '@/components/chat/attachments/attachment-delivery-chip';
 import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -175,6 +176,9 @@ export function ParallelMessageGroup({
                       {formatLatency(msg.latencyMs)}
                     </span>
                   ) : null}
+                  {response.attachmentDelivery && response.attachmentDelivery.length > 0 ? (
+                    <AttachmentDeliveryChip delivery={response.attachmentDelivery} />
+                  ) : null}
                 </div>
               </div>
 
@@ -196,7 +200,7 @@ export function ParallelMessageGroup({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 self-end gap-1.5 px-2 text-xs"
+                className="h-6 gap-1.5 self-end px-2 text-xs"
                 onClick={() => openExpanded(msg, isFastest)}
               >
                 <Expand className="h-3 w-3" />

@@ -53,6 +53,7 @@ import { StreamCancellationService } from '../services/stream-cancellation.servi
 import { ProviderStreamExecutor } from './provider-stream-executor.manager';
 import { AiStreamProtocol } from '../../../common/enums';
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
+import { transformOpenAiMessagesToOllama } from '../utilities/ollama-message-shape.utility';
 import type { StreamContext, StreamExecutionInput } from '../types/stream-execution.types';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { AccessControlService } from '../services/access-control.service';
@@ -487,7 +488,10 @@ export class ChatExecutionManager implements OnModuleInit {
     const effectiveModel = isOllamaConnector ? this.normalizeCloudOllamaModel(model) : model;
     const url = isOllamaConnector ? `${baseUrl}/chat` : `${baseUrl}/chat/completions`;
     const body: unknown = isOllamaConnector
-      ? { ...this.buildOllamaChatRequestBody(model, context, threadSettings, executionOptions), stream: true }
+      ? {
+          ...this.buildOllamaChatRequestBody(model, context, threadSettings, executionOptions),
+          stream: true,
+        }
       : this.buildStreamingChatBody(model, context, threadSettings, executionOptions);
     const protocol = isOllamaConnector
       ? AiStreamProtocol.OLLAMA_NDJSON
@@ -1588,9 +1592,21 @@ export class ChatExecutionManager implements OnModuleInit {
     threadSettings?: ThreadSettings,
     executionOptions?: ExecutionOptions,
   ): OllamaChatRequest {
+    const openAiMessages = this.contextAssembly.buildChatMessages(context);
+    const shape = transformOpenAiMessagesToOllama(openAiMessages);
+    if (shape.imageCount > 0) {
+      this.logger.debug(
+        `buildOllamaChatRequestBody: transformed ${String(shape.imageCount)} image part(s) to native Ollama images[] for model=${model}`,
+      );
+    }
+    for (const warning of shape.warnings) {
+      this.logger.warn(
+        `buildOllamaChatRequestBody: dropped image (reason=${warning.reason}) — ${warning.detail}`,
+      );
+    }
     const requestBody: OllamaChatRequest = {
       model: this.normalizeCloudOllamaModel(model),
-      messages: this.contextAssembly.buildChatMessages(context),
+      messages: shape.messages,
       stream: false,
     };
 

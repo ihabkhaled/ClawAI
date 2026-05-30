@@ -21,8 +21,7 @@ export const CRITIC_CLOUD_MODELS = [
 // FE depends on `score` (0..1), `summary` (single sentence) and `feedback`
 // (array of strings) being present — the parser falls back to a "parse
 // failed" marker when the LLM strays from this shape.
-export const CRITIC_STRUCTURED_OUTPUT_HINT =
-  `Respond with ONLY one JSON object (no prose, no code fences), with these exact fields:
+export const CRITIC_STRUCTURED_OUTPUT_HINT = `Respond with ONLY one JSON object (no prose, no code fences), with these exact fields:
 {"score": 0.0-1.0, "summary": "single-sentence verdict for the user", "feedback": ["short actionable note 1", "note 2"]}
 - score: float between 0 and 1, where 1 = excellent and 0 = unusable.
 - summary: ONE short sentence the user can read at a glance. Required even when feedback is empty.
@@ -36,6 +35,15 @@ export const CRITIC_PARSE_FAILURE_SUMMARY = 'Critic response could not be parsed
 export const MAX_REVISION_ATTEMPTS = 1;
 
 export const JUDGE_CONFIDENCE_THRESHOLD = 0.6;
+
+// Appended to the judge system prompt when the AssembledContext carries file
+// content. Tells the judge to evaluate file-grounding fairly: penalize claims
+// that are unsupported by the file evidence, but do NOT penalize lanes that
+// legitimately did not receive a file (mode OMITTED_*).
+export const JUDGE_FILE_GROUNDING_CLAUSE = `\n\nFile grounding rule:
+- If files were attached, evaluate whether each candidate response is grounded in the file evidence in the <attached_files> block above.
+- Penalize unsupported claims that contradict or fabricate file content.
+- Do NOT penalize a candidate that legitimately did not receive a file (see Delivery summary — OMITTED_NO_VISION / OMITTED_UNSUPPORTED / TRUNCATED_TEXT). Judge it on its own merits.`;
 
 export const CRITIC_SYSTEM_PROMPTS: Record<string, string> = {
   coding: `You are an expert code reviewer. Analyze the following AI-generated response to a coding question.

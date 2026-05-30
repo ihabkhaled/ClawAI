@@ -728,7 +728,13 @@ export type TranslationDictionary = {
     colRoles: string;
     noneRole: string;
     modelNamePlaceholder: string;
-    capabilities: string;
+    capabilities: {
+      label: string;
+      vision: string;
+      pdf: string;
+      extractOnly: string;
+      unsupported: string;
+    };
     context: string;
     lifecycle: string;
     noSyncedModels: string;
@@ -1074,6 +1080,21 @@ export type TranslationDictionary = {
       modelLabel: string;
       modelPlaceholder: string;
       notRequested: string;
+    };
+    attachments: {
+      title: string;
+      addFiles: string;
+      noneSelected: string;
+      warning: string;
+    };
+    delivery: {
+      filesProvided: string;
+      extractedText: string;
+      nativeImage: string;
+      omittedNoVision: string;
+      omittedUnsupported: string;
+      truncatedText: string;
+      tooltip: string;
     };
   };
   judgeReview: {

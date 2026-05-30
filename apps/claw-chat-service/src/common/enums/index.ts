@@ -16,3 +16,4 @@ export { ResearchWorkflow } from './research-workflow.enum';
 export { ResearchMode } from './research-mode.enum';
 export { ProgressActorType } from './progress-actor-type.enum';
 export { ModelSelectionMode } from './model-selection-mode.enum';
+export { FileDeliveryMode } from './file-delivery-mode.enum';

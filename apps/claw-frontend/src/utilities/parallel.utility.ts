@@ -11,6 +11,7 @@ import {
 import { CompareJudgeState, ParallelModelStatus } from '@/enums';
 import type { ChatMessage, JudgeReview, MessageRenderItem, ParallelModelResponse } from '@/types';
 
+import { readFileDeliveryFromMetadata } from './file-delivery.utility';
 import { getJudgeReviewFromMessage } from './judge-review.utility';
 
 export function groupParallelMessages(messages: ChatMessage[]): MessageRenderItem[] {
@@ -89,6 +90,10 @@ export function messageToParallelResponse(msg: ChatMessage): ParallelModelRespon
   const judgeState = getParallelJudgeState(meta, judgeReview, status as ParallelModelStatus);
   const judgeModel = getString(meta?.['judgeModel']);
   const judgeDisplayName = getString(meta?.['judgeDisplayName'], judgeModel ?? '');
+  // Slice A — chat-service writes per-lane delivery records to
+  // `metadata.fileDelivery`. Pass them through here so the FE chip can
+  // render which files reached this lane and which were skipped/truncated.
+  const attachmentDelivery = readFileDeliveryFromMetadata(meta);
 
   return {
     provider: msg.provider ?? '',
@@ -107,6 +112,7 @@ export function messageToParallelResponse(msg: ChatMessage): ParallelModelRespon
     judgeDialogAvailable: judgeReview?.judgeDialogAvailable === true,
     judgeReview,
     message: msg,
+    ...(attachmentDelivery !== undefined ? { attachmentDelivery } : {}),
   };
 }
 

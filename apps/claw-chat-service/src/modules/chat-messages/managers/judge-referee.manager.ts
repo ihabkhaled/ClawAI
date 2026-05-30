@@ -4,8 +4,11 @@ import { TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 import { OLLAMA_PROVIDER } from '../../../common/constants';
 import { JudgeDecision } from '../../../common/enums';
 import {
+  buildAttachedFilesManifest,
   buildCriticSystemPrompt,
   buildCriticUserPrompt,
+  buildFileDeliveryEntries,
+  buildLaneDeliverySummary,
   parseJudgeModel,
 } from '../../../common/utilities';
 import {
@@ -13,6 +16,7 @@ import {
   CRITIC_LOCAL_MODEL,
   CRITIC_PARSE_FAILURE_SUMMARY,
   JUDGE_CONFIDENCE_THRESHOLD,
+  JUDGE_FILE_GROUNDING_CLAUSE,
   JUDGE_LOCAL_MODEL,
   JUDGE_REFEREE_AUTO_CATEGORIES,
   JUDGE_SYSTEM_PROMPT,
@@ -81,9 +85,10 @@ export class JudgeRefereeManager {
     const judgeModelLabel = `${judgeTarget.provider}/${judgeTarget.model}`;
     this.chatStreamService.emitJudgeEvaluating(payload.threadId, criticModelLabel, judgeModelLabel);
 
-    const criticEvaluation = config.criticEnabled === true
-      ? await this.callCriticWithModel(response, context, config, criticModelInfo)
-      : this.buildSkippedCriticEvaluation(config, criticModelInfo);
+    const criticEvaluation =
+      config.criticEnabled === true
+        ? await this.callCriticWithModel(response, context, config, criticModelInfo)
+        : this.buildSkippedCriticEvaluation(config, criticModelInfo);
 
     const judgeVerdict = await this.callJudge(
       response,
@@ -177,13 +182,14 @@ export class JudgeRefereeManager {
     );
 
     const userPrompt = this.extractUserPrompt(context);
+    const attachments = this.buildAttachmentsBlock(context, response.provider, response.model);
     const criticContext: AssembledContext = {
       ...context,
       systemPrompt: criticPrompt,
       threadMessages: [
         {
           role: 'USER',
-          content: buildCriticUserPrompt(userPrompt, response.content),
+          content: buildCriticUserPrompt(userPrompt, response.content, attachments),
         } as AssembledContext['threadMessages'][0],
       ],
     };
@@ -325,20 +331,53 @@ export class JudgeRefereeManager {
     context: AssembledContext,
   ): AssembledContext {
     const userPrompt = this.extractUserPrompt(context);
-    const judgeInput = [
-      `User question: ${userPrompt}`,
-      `\nAI response:\n${response.content}`,
-      `\nCritic evaluation:`,
-      `Score: ${String(criticEval.score)}`,
+    const attachments = this.buildAttachmentsBlock(context, response.provider, response.model);
+    const sections: string[] = [];
+    if (attachments !== undefined) {
+      if (attachments.manifestBlock.length > 0) {
+        sections.push(attachments.manifestBlock);
+      }
+      if (attachments.perLaneDelivery.length > 0) {
+        sections.push(`Delivery summary:\n${attachments.perLaneDelivery}`);
+      }
+    }
+    sections.push(`User question: ${userPrompt}`);
+    sections.push(`\nAI response:\n${response.content}`);
+    sections.push(`\nCritic evaluation:`);
+    sections.push(`Score: ${String(criticEval.score)}`);
+    sections.push(
       `Feedback: ${criticEval.feedback.length > 0 ? criticEval.feedback.join('; ') : 'No issues found'}`,
-    ].join('\n');
+    );
+
+    const hasFiles = context.fileContents.length > 0;
+    const systemPrompt = hasFiles
+      ? `${JUDGE_SYSTEM_PROMPT}${JUDGE_FILE_GROUNDING_CLAUSE}`
+      : JUDGE_SYSTEM_PROMPT;
 
     return {
       ...context,
-      systemPrompt: JUDGE_SYSTEM_PROMPT,
+      systemPrompt,
       threadMessages: [
-        { role: 'USER', content: judgeInput } as AssembledContext['threadMessages'][0],
+        { role: 'USER', content: sections.join('\n') } as AssembledContext['threadMessages'][0],
       ],
+    };
+  }
+
+  // Builds the attachments block consumed by the judge + critic prompts.
+  // Returns undefined when there are no files (so callers can short-circuit
+  // back to the legacy prompt shape).
+  private buildAttachmentsBlock(
+    context: AssembledContext,
+    provider: string,
+    model: string,
+  ): { manifestBlock: string; perLaneDelivery: string } | undefined {
+    if (context.fileContents.length === 0) {
+      return undefined;
+    }
+    const entries = buildFileDeliveryEntries(context.fileContents, provider, model);
+    return {
+      manifestBlock: buildAttachedFilesManifest(context.fileContents),
+      perLaneDelivery: buildLaneDeliverySummary(entries),
     };
   }
 
@@ -353,9 +392,9 @@ export class JudgeRefereeManager {
       result.judgeVerdict.reasoning;
     const judgeResponseType: JudgeResponseType = escalatedAnswer
       ? 'escalated_answer'
-      : (revisedAnswer
+      : revisedAnswer
         ? 'revised_answer'
-        : result.judgeVerdict.responseType);
+        : result.judgeVerdict.responseType;
 
     return {
       version: 1,
@@ -512,10 +551,7 @@ export class JudgeRefereeManager {
   // Feature 2 — combines critic + judge token usage into a single JUDGE-context
   // ledger entry. Treats a missing side as 0 and downgrades the source to MIXED
   // when one half was estimated and the other native.
-  private buildJudgeTokenUsage(
-    critic: CriticEvaluation,
-    judge: JudgeVerdict,
-  ): JudgeTokenUsage {
+  private buildJudgeTokenUsage(critic: CriticEvaluation, judge: JudgeVerdict): JudgeTokenUsage {
     const criticEstimated = critic.tokenEstimated ?? false;
     const judgeEstimated = judge.tokenEstimated ?? false;
     const criticSource = critic.tokenSource ?? TokenUsageSource.ESTIMATED;
@@ -526,7 +562,9 @@ export class JudgeRefereeManager {
       criticSource === TokenUsageSource.ESTIMATED && judgeSource === TokenUsageSource.ESTIMATED;
     const source = allNative
       ? TokenUsageSource.NATIVE
-      : (allEstimated ? TokenUsageSource.ESTIMATED : TokenUsageSource.MIXED);
+      : allEstimated
+        ? TokenUsageSource.ESTIMATED
+        : TokenUsageSource.MIXED;
     return {
       inputTokens: (critic.inputTokens ?? 0) + (judge.inputTokens ?? 0),
       outputTokens: (critic.outputTokens ?? 0) + (judge.outputTokens ?? 0),
@@ -546,9 +584,9 @@ export class JudgeRefereeManager {
     const responseType: JudgeResponseType =
       decision === JudgeDecision.ESCALATE
         ? 'escalated_answer'
-        : (decision === JudgeDecision.REVISE
+        : decision === JudgeDecision.REVISE
           ? 'summary'
-          : 'verification_note');
+          : 'verification_note';
 
     return {
       decision,
@@ -677,9 +715,9 @@ export class JudgeRefereeManager {
       response:
         typeof response === 'string' && response.trim().length > 0
           ? response
-          : (decision === JudgeDecision.ESCALATE
+          : decision === JudgeDecision.ESCALATE
             ? 'A stronger answer is required for this request.'
-            : 'The answer passed review.'),
+            : 'The answer passed review.',
       responseType: this.resolveJudgeResponseType(responseType, decision),
       recommendedChanges: Array.isArray(recommendedChangesRaw)
         ? recommendedChangesRaw.filter(
@@ -704,9 +742,12 @@ export class JudgeRefereeManager {
     return decision === JudgeDecision.ESCALATE ? 'escalated_answer' : 'verification_note';
   }
 
-  private parseCriticOutput(
-    content: string,
-  ): { feedback: string[]; score: number; summary: string; parseFailed: boolean } {
+  private parseCriticOutput(content: string): {
+    feedback: string[];
+    score: number;
+    summary: string;
+    parseFailed: boolean;
+  } {
     try {
       let jsonStr = content.trim();
 

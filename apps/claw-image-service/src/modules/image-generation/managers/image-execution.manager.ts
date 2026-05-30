@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
-import { httpGet, httpPost } from '@common/utilities';
+import { buildInterServiceAuthHeader, httpGet, httpPost } from '@common/utilities';
 import { BusinessException } from '../../../common/errors';
 import {
   type ConnectorConfigResponse,
@@ -184,7 +184,10 @@ export class ImageExecutionManager {
         mimeType: response.mimeType,
         base64Data,
       },
-      { timeout: 30_000 },
+      {
+        timeout: 30_000,
+        headers: { Authorization: buildInterServiceAuthHeader() },
+      },
     );
 
     this.logger.debug(`storeImage: file stored — fileId=${storeResponse.fileId}`);

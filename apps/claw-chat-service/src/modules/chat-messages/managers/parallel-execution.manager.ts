@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { TokenLedgerContext } from '@claw/shared-types';
-import { CompareJudgeState, ProgressActorType, ResearchMode, StreamEventType } from '../../../common/enums';
+import {
+  CompareJudgeState,
+  ProgressActorType,
+  ResearchMode,
+  StreamEventType,
+} from '../../../common/enums';
 import { ChatExecutionManager } from './chat-execution.manager';
 import { ContextAssemblyManager } from './context-assembly.manager';
 import { JudgeRefereeManager } from './judge-referee.manager';
@@ -22,6 +27,7 @@ import { type AssembledContext } from '../types/context.types';
 import { type ChatThread, type Prisma } from '../../../generated/prisma';
 import { AppConfig } from '../../../app/config/app.config';
 import { type JudgeRefereeResult, type JudgeReviewPayload } from '../types/judge-referee.types';
+import { buildFileDeliveryEntries } from '../../../common/utilities';
 
 @Injectable()
 export class ParallelExecutionManager {
@@ -400,9 +406,9 @@ export class ParallelExecutionManager {
     const finalContent =
       state === CompareJudgeState.ESCALATED
         ? (judgeResult.escalatedResponse?.content ?? response.content)
-        : (state === CompareJudgeState.REVISED
+        : state === CompareJudgeState.REVISED
           ? (judgeResult.revisedResponse?.content ?? response.content)
-          : response.content);
+          : response.content;
 
     return {
       ...response,
@@ -542,6 +548,12 @@ export class ParallelExecutionManager {
         { threadId, messageId: laneId, laneId, parallelGroupId },
       );
 
+      const attachmentDelivery = buildFileDeliveryEntries(
+        context.fileContents,
+        llmResponse.provider,
+        llmResponse.model,
+      );
+
       return {
         provider: llmResponse.provider,
         model: llmResponse.model,
@@ -554,6 +566,7 @@ export class ParallelExecutionManager {
         tokenContext: llmResponse.tokenContext ?? TokenLedgerContext.COMPARE,
         status: 'completed',
         errorMessage: null,
+        attachmentDelivery,
       };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -561,12 +574,20 @@ export class ParallelExecutionManager {
         `executeSingleModel: ${target.provider}/${target.model} failed — ${errorMessage}`,
       );
 
-      return this.buildFailedResponse(
+      const failed = this.buildFailedResponse(
         target.provider,
         target.model,
         errorMessage,
         Date.now() - modelStart,
       );
+      // Still emit a delivery summary so the FE knows which files would
+      // have reached this lane, marked against the requested target.
+      failed.attachmentDelivery = buildFileDeliveryEntries(
+        context.fileContents,
+        target.provider,
+        target.model,
+      );
+      return failed;
     }
   }
 
@@ -632,6 +653,12 @@ export class ParallelExecutionManager {
       ...(response.judgeTokenSource === undefined
         ? {}
         : { judgeTokenSource: response.judgeTokenSource }),
+      // Slice A — per-lane attachment delivery telemetry. Mirrored to the FE
+      // via ParallelModelResponse.attachmentDelivery so it can render which
+      // files reached which lane, and consumed by the judge prompt builder.
+      ...(response.attachmentDelivery && response.attachmentDelivery.length > 0
+        ? { fileDelivery: response.attachmentDelivery }
+        : {}),
       routeRoadmap: this.buildParallelRouteRoadmap(response),
       progressSummary: this.buildParallelProgressSummary(response),
     };

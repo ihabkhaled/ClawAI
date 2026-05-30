@@ -749,6 +749,8 @@ PR5 lights up image-runtime parity.
 7. message.completed published for each successful response
 ```
 
+Compare / judge / critic now accept `fileIds: string[]` end-to-end (FE picker → parallel orchestration → judge + critic prompts), and each lane writes a per-model `FileDeliveryEntry[]` into the ASSISTANT message's `metadata.fileDelivery` (also surfaced on `ParallelModelResponse.attachmentDelivery`) so the FE can render a delivery-mode chip (`NATIVE_IMAGE` / `EXTRACTED_TEXT` / `OMITTED_NO_VISION` / `OMITTED_UNSUPPORTED` / `TRUNCATED_TEXT`) per model. Slice A also fixed three critical bugs: (1) `FileProcessingManager` was never wired into the parallel path so attachments silently dropped; (2) `ServiceTokenGuard` rejected internal file-content calls from chat-service when the parallel lane re-issued the service token; (3) cloud adapters sent `image_url` parts to Ollama, which silently dropped images — Ollama now receives the native `images: [base64]` shape and cloud lanes keep `image_url`. Full canonical chain in `docs/03-architecture/compare-file-attachments.md`.
+
 ---
 
 ## Local Ollama Models (auto-pulled on startup)
@@ -909,7 +911,7 @@ Active policies (sorted by priority) can override the mode.
 - Pino log redaction (authorization, password, refreshToken, apiKey, token, secret)
 - X-Request-ID correlation from frontend to backend
 
-### Plan feature gates (Plan.allow* fields, enforced by `@claw/shared-entitlements`)
+### Plan feature gates (Plan.allow\* fields, enforced by `@claw/shared-entitlements`)
 
 `allowCompareMode`, `allowJudgeMode`, `allowCriticReview`, `allowResearchMode`,
 `allowWorkspaces`, `allowMemory`, `allowContextPacks`. Each plan toggles the
@@ -960,6 +962,7 @@ unparseable" without inferring from empty feedback. All critic fields
 `ChatMessage.metadata` under `JudgeRefereeMetadata`. The feature is plan-gated
 by `allowCriticReview`; the DTO further enforces `criticEnabled ⇒ judgeEnabled`
 and `criticEnabled ⇒ criticModel != ''`.
+
 - **End-to-end local TLS via mkcert** (see `docs/08-runtime-devops/tls-setup.md`):
   browser → nginx :443 → every backend service is HTTPS, with cert
   verification at every hop. Forced on by `scripts/install.{sh,ps1}` Step 6/9

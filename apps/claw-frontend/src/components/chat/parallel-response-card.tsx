@@ -1,5 +1,6 @@
 import { CheckCircle, XCircle, Zap } from 'lucide-react';
 
+import { AttachmentDeliveryChip } from '@/components/chat/attachments/attachment-delivery-chip';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ParallelModelStatus } from '@/enums';
@@ -28,12 +29,8 @@ export function ParallelResponseCard({ response, isFastest, t }: ParallelRespons
                 {t('compare.fastest')}
               </Badge>
             ) : null}
-            {isCompleted ? (
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            ) : null}
-            {isFailed ? (
-              <XCircle className="h-4 w-4 text-destructive" />
-            ) : null}
+            {isCompleted ? <CheckCircle className="h-4 w-4 text-green-500" /> : null}
+            {isFailed ? <XCircle className="h-4 w-4 text-destructive" /> : null}
           </div>
         </div>
 
@@ -43,8 +40,12 @@ export function ParallelResponseCard({ response, isFastest, t }: ParallelRespons
           </span>
           {response.inputTokens !== null ? (
             <span>
-              {t('compare.tokens')}: {response.inputTokens.toLocaleString()}/{(response.outputTokens ?? 0).toLocaleString()}
+              {t('compare.tokens')}: {response.inputTokens.toLocaleString()}/
+              {(response.outputTokens ?? 0).toLocaleString()}
             </span>
+          ) : null}
+          {response.attachmentDelivery && response.attachmentDelivery.length > 0 ? (
+            <AttachmentDeliveryChip delivery={response.attachmentDelivery} />
           ) : null}
         </div>
       </CardHeader>
