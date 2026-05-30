@@ -349,7 +349,7 @@ export class JudgeRefereeManager {
       `Feedback: ${criticEval.feedback.length > 0 ? criticEval.feedback.join('; ') : 'No issues found'}`,
     );
 
-    const hasFiles = context.fileContents.length > 0;
+    const hasFiles = (context.fileContents ?? []).length > 0;
     const systemPrompt = hasFiles
       ? `${JUDGE_SYSTEM_PROMPT}${JUDGE_FILE_GROUNDING_CLAUSE}`
       : JUDGE_SYSTEM_PROMPT;
@@ -371,12 +371,13 @@ export class JudgeRefereeManager {
     provider: string,
     model: string,
   ): { manifestBlock: string; perLaneDelivery: string } | undefined {
-    if (context.fileContents.length === 0) {
+    const files = context.fileContents ?? [];
+    if (files.length === 0) {
       return undefined;
     }
-    const entries = buildFileDeliveryEntries(context.fileContents, provider, model);
+    const entries = buildFileDeliveryEntries(files, provider, model);
     return {
-      manifestBlock: buildAttachedFilesManifest(context.fileContents),
+      manifestBlock: buildAttachedFilesManifest(files),
       perLaneDelivery: buildLaneDeliverySummary(entries),
     };
   }
@@ -392,9 +393,9 @@ export class JudgeRefereeManager {
       result.judgeVerdict.reasoning;
     const judgeResponseType: JudgeResponseType = escalatedAnswer
       ? 'escalated_answer'
-      : revisedAnswer
+      : (revisedAnswer
         ? 'revised_answer'
-        : result.judgeVerdict.responseType;
+        : result.judgeVerdict.responseType);
 
     return {
       version: 1,
@@ -562,9 +563,9 @@ export class JudgeRefereeManager {
       criticSource === TokenUsageSource.ESTIMATED && judgeSource === TokenUsageSource.ESTIMATED;
     const source = allNative
       ? TokenUsageSource.NATIVE
-      : allEstimated
+      : (allEstimated
         ? TokenUsageSource.ESTIMATED
-        : TokenUsageSource.MIXED;
+        : TokenUsageSource.MIXED);
     return {
       inputTokens: (critic.inputTokens ?? 0) + (judge.inputTokens ?? 0),
       outputTokens: (critic.outputTokens ?? 0) + (judge.outputTokens ?? 0),
@@ -584,9 +585,9 @@ export class JudgeRefereeManager {
     const responseType: JudgeResponseType =
       decision === JudgeDecision.ESCALATE
         ? 'escalated_answer'
-        : decision === JudgeDecision.REVISE
+        : (decision === JudgeDecision.REVISE
           ? 'summary'
-          : 'verification_note';
+          : 'verification_note');
 
     return {
       decision,
@@ -715,9 +716,9 @@ export class JudgeRefereeManager {
       response:
         typeof response === 'string' && response.trim().length > 0
           ? response
-          : decision === JudgeDecision.ESCALATE
+          : (decision === JudgeDecision.ESCALATE
             ? 'A stronger answer is required for this request.'
-            : 'The answer passed review.',
+            : 'The answer passed review.'),
       responseType: this.resolveJudgeResponseType(responseType, decision),
       recommendedChanges: Array.isArray(recommendedChangesRaw)
         ? recommendedChangesRaw.filter(
