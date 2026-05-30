@@ -3,10 +3,11 @@ import { REQUIRE_PERMISSIONS_KEY } from '@claw/shared-entitlements';
 
 import { AutomationPreferenceController } from '../automation-preference.controller';
 
-// Pure metadata test: protects the @RequirePermissions decorator on the
-// upsert endpoint (PUT /:actionKind). The row is per-user but the policy
-// treats automation preference writes as admin-config — a regression here
-// would let a normal USER tune the AI automation thresholds.
+// Pure metadata test: protects the RBAC posture of the AutomationPreferenceController.
+// Automation preferences are per-USER settings — every read AND every write is open
+// to any authenticated user (the service layer scopes by @CurrentUser). A regression
+// that re-adds @RequirePermissions(ADMIN_WORKSPACE_AUTOMATION_MANAGE) on the upsert
+// would lock normal USERs out of tuning their OWN thresholds.
 function getRequiredPermissions(handler: object): Permission[] {
   return (
     (Reflect.getMetadata(REQUIRE_PERMISSIONS_KEY, handler) as Permission[] | undefined) ?? []
@@ -26,11 +27,9 @@ describe('AutomationPreferenceController RBAC decorators', () => {
     });
   });
 
-  describe('mutation — admin only, MUST NOT regress', () => {
-    it('PUT /:actionKind requires ADMIN_WORKSPACE_AUTOMATION_MANAGE', () => {
-      expect(getRequiredPermissions(prototype.upsert)).toEqual([
-        Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE,
-      ]);
+  describe('mutation is per-user, NOT admin-gated', () => {
+    it('PUT /:actionKind has no @RequirePermissions decorator so a normal USER can save their own thresholds', () => {
+      expect(getRequiredPermissions(prototype.upsert)).toEqual([]);
     });
   });
 });

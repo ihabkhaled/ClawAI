@@ -7,29 +7,45 @@ import {
 } from '../../modules/chat-messages/constants/file-delivery.constants';
 import type { FileContentResponse } from '../../modules/chat-messages/types/context.types';
 import type { FileDeliveryEntry } from '../../modules/chat-messages/types/file-delivery.types';
+import type { ModelMetadata } from '../../modules/chat-messages/types/model-metadata.types';
 
-// Per SHARED CONTRACT — Slice A Lane 2. Builds the FileDeliveryEntry list for
-// a single (provider, model) lane from the AssembledContext's fileContents.
+// Per SHARED CONTRACT — Slice A Lane 2 (extended in Slice B). Builds the
+// FileDeliveryEntry list for a single (provider, model) lane from the
+// AssembledContext's fileContents.
 // Classification rules:
 //   text/*, json, csv, markdown, code → EXTRACTED_TEXT
-//   image/* + provider has vision     → NATIVE_IMAGE
-//   image/* + provider lacks vision   → OMITTED_NO_VISION
+//   image/* + model has vision        → NATIVE_IMAGE
+//   image/* + model lacks vision      → OMITTED_NO_VISION
 //   anything else                     → OMITTED_UNSUPPORTED
 // TRUNCATED_TEXT is reserved for the assembly path to emit when it cuts a
 // file for token budget; this utility never produces TRUNCATED_TEXT (the
 // budget owner does, see Slice B).
+//
+// Vision capability resolution (in order of preference):
+//   1. `modelMetadata.supportsVision` — per-model truth from the connector
+//      catalog. Prefer this whenever it's available; it's the authoritative
+//      source for whether THIS specific model accepts native images.
+//   2. `VISION_CAPABLE_PROVIDERS` heuristic — coarse provider-level fallback
+//      kept for legacy callers that have not yet been threaded through the
+//      ModelMetadata pipeline. Will misclassify text-only models from
+//      vision-capable providers as vision-capable.
+//
+// Prefer passing `modelMetadata` for per-model accuracy; the heuristic is a
+// fallback only.
 export function buildFileDeliveryEntries(
   files: FileContentResponse[],
   provider: string,
   model: string,
+  modelMetadata?: ModelMetadata,
 ): FileDeliveryEntry[] {
-  return files.map((file) => buildSingleEntry(file, provider, model));
+  return files.map((file) => buildSingleEntry(file, provider, model, modelMetadata));
 }
 
 function buildSingleEntry(
   file: FileContentResponse,
   provider: string,
   model: string,
+  modelMetadata: ModelMetadata | undefined,
 ): FileDeliveryEntry {
   const mime = (file.mimeType ?? '').toLowerCase();
 
@@ -45,7 +61,7 @@ function buildSingleEntry(
   }
 
   if (mime.startsWith(IMAGE_MIME_PREFIX)) {
-    if (providerSupportsVision(provider)) {
+    if (resolveSupportsVision(provider, modelMetadata)) {
       return {
         fileId: file.id,
         filename: file.filename,
@@ -87,7 +103,21 @@ function isTextLikeMime(mime: string): boolean {
   return TEXT_LIKE_MIME_EXACT.has(mime);
 }
 
-function providerSupportsVision(provider: string): boolean {
+// Authoritative-first vision resolution: trust the per-model metadata when
+// supplied; otherwise fall back to the provider-level heuristic. Exported
+// indirectly through buildFileDeliveryEntries — direct callers should use
+// the public API rather than reaching into this helper.
+function resolveSupportsVision(
+  provider: string,
+  modelMetadata: ModelMetadata | undefined,
+): boolean {
+  if (modelMetadata !== undefined) {
+    return modelMetadata.supportsVision;
+  }
+  return providerSupportsVisionHeuristic(provider);
+}
+
+function providerSupportsVisionHeuristic(provider: string): boolean {
   return (
     VISION_CAPABLE_PROVIDERS.has(provider) || VISION_CAPABLE_PROVIDERS.has(provider.toUpperCase())
   );

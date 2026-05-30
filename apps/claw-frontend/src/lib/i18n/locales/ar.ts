@@ -360,6 +360,10 @@ export const ar: TranslationDictionary = {
       tooltipDirect: 'أجاب ClawAI مباشرة من النموذج.',
       searchDegraded: 'حاولنا البحث ولكن تراجعنا إلى إجابة مباشرة.',
     },
+    localOnly: {
+      imagesDropped:
+        'تم تجاهل الصور: لا يوجد نموذج محلي يدعم الرؤية مثبت في الوضع المحلي فقط. قم بسحب llava أو moondream من كتالوج النماذج للتفعيل.',
+    },
   },
   receipt: {
     openLabel: 'إظهار ما استخدمه الذكاء الاصطناعي',

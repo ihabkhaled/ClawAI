@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
-import { EventPattern } from '@claw/shared-types';
+import {
+  EventPattern,
+  type FileChunkedPayload,
+  FileIngestionStatus as SharedFileIngestionStatus,
+  type FileFailedPayload,
+} from '@claw/shared-types';
 import { type File, FileIngestionStatus } from '../../../generated/prisma';
 import { readFile } from '../../../common/utilities';
 import { extractTextFromPdf } from '../../../common/utilities/pdf-parser.utility';
@@ -36,12 +41,13 @@ export class FileProcessingManager {
       await this.fileChunksRepository.createMany(chunks);
       await this.updateIngestionStatus(file.id, FileIngestionStatus.COMPLETED);
 
-      void this.rabbitMQService.publish(EventPattern.FILE_CHUNKED, {
+      const chunkedPayload: FileChunkedPayload = {
         fileId: file.id,
-        userId: file.userId,
-        chunksCreated: chunks.length,
+        chunkCount: chunks.length,
+        status: SharedFileIngestionStatus.COMPLETED,
         timestamp: new Date().toISOString(),
-      });
+      };
+      void this.rabbitMQService.publish(EventPattern.FILE_CHUNKED, chunkedPayload);
 
       this.logger.log(`File ${file.id} processed: ${String(chunks.length)} chunks created`);
     } catch (error: unknown) {
@@ -49,12 +55,15 @@ export class FileProcessingManager {
       this.logger.error(`File ${file.id} processing failed: ${errorMessage}`);
       await this.updateIngestionStatus(file.id, FileIngestionStatus.FAILED);
 
-      void this.rabbitMQService.publish('file.failed', {
+      const failedPayload: FileFailedPayload = {
         fileId: file.id,
         userId: file.userId,
-        error: errorMessage,
+        filename: file.filename,
+        errorMessage,
+        failureStage: 'EXTRACTION',
         timestamp: new Date().toISOString(),
-      });
+      };
+      void this.rabbitMQService.publish(EventPattern.FILE_FAILED, failedPayload);
     }
   }
 

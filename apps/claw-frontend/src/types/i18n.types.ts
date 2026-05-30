@@ -362,6 +362,10 @@ export type TranslationDictionary = {
       tooltipDirect: string;
       searchDegraded: string;
     };
+    // Slice B — LOCAL_ONLY / PRIVACY_FIRST attachment behavior
+    localOnly: {
+      imagesDropped: string;
+    };
   };
   receipt: {
     openLabel: string;

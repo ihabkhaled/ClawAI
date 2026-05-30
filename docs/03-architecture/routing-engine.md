@@ -40,6 +40,18 @@ All messages are routed to the local Ollama instance. No data leaves the user's 
 - No cloud fallback
 - Confidence: 1.0
 
+#### LOCAL_ONLY + attachments (Slice B — drop + warn behavior)
+
+When a user attaches images to a thread that resolves to `LOCAL_ONLY` (or to `PRIVACY_FIRST` when the cloud fallback is not taken), the orchestrator must decide whether the local model can actually see those images. The rule is **drop + warn** by default, never silent forwarding:
+
+1. **Vision-capability probe** — the chat orchestrator asks `ollama-service` (per-model registry) which installed models advertise `supportsVision=true`. A model is considered vision-capable iff its name matches `OLLAMA_MULTIMODAL_MODEL_PATTERNS` (currently: `llava`, `bakllava`, `moondream`, `minicpm-v`, `cogvlm`, `llama3.2-vision`, `*-vision`, `*-multimodal`). The probe is bounded by `LOCAL_VISION_MODEL_DETECTION_TIMEOUT_MS` (default 3000 ms); on timeout the registry is treated as having no vision model.
+2. **Decision matrix:**
+   - At least one installed local model is vision-capable → forward images to that model (route may upgrade the selected model from text-only to the vision-capable one).
+   - No vision-capable local model installed AND `ALLOW_LOCAL_ONLY_ATTACHMENTS_WITHOUT_VISION=false` (default) → **drop the images from the prompt**, send the text-only portion to the local model, and surface the i18n warning `chat.localOnly.imagesDropped` to the user (alongside a Model Catalog deep-link to `llava` / `moondream`).
+   - No vision-capable local model installed AND `ALLOW_LOCAL_ONLY_ATTACHMENTS_WITHOUT_VISION=true` → forward images as base64 anyway. The text-only model will ignore them; users opting in accept the lossy behavior.
+3. **Why drop, not silently forward** — Ollama's text-only models accept the `images` field on chat requests and silently discard it. Without the warning, a user pasting a screenshot into `LOCAL_ONLY` mode would get a confidently wrong answer that pretended to "see" the image. The drop+warn path keeps `LOCAL_ONLY` honest about its capability ceiling.
+4. **Audit + transparency** — each dropped attachment is recorded as a `FileDeliveryEntry` with mode `OMITTED_NO_VISION` on the assistant message's `metadata.fileDelivery`, so the chat UI can render an "omitted (no local vision model)" chip per dropped file. This is the same mechanism documented in `docs/03-architecture/compare-file-attachments.md`, extended to the LOCAL_ONLY path.
+
 ### PRIVACY_FIRST
 
 Prefers local processing. Falls back to the most privacy-respecting cloud provider only if local Ollama is unhealthy.
@@ -47,6 +59,8 @@ Prefers local processing. Falls back to the most privacy-respecting cloud provid
 - Primary: `local-ollama` / `gemma3:4b`
 - Fallback: `anthropic` / `claude-sonnet-4` (Anthropic has strong data privacy commitments)
 - Privacy class: HIGH
+
+The `LOCAL_ONLY + attachments` rule above applies verbatim to `PRIVACY_FIRST` whenever the local primary is healthy and the cloud fallback is *not* taken. Once the cloud fallback engages (e.g., the user did not opt into the local-only forward), the cloud provider's native vision support handles attachments normally and no drop/warn is emitted.
 
 ### LOW_LATENCY
 

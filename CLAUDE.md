@@ -1903,6 +1903,12 @@ Full standards live in `docs/16-quality-engineering/`:
 - Backend tests run with Jest, frontend with Vitest — different APIs
 - Test files (`*.spec.ts`, `*.test.ts`) have all ESLint restrictions OFF
 
+### Local Vision Attachments (LOCAL_ONLY / PRIVACY_FIRST)
+
+- Per-model vision: Ollama models default `supportsVision=false` unless name matches `OLLAMA_MULTIMODAL_MODEL_PATTERNS` (llava, bakllava, moondream, minicpm-v, cogvlm, llama3.2-vision, *-vision, *-multimodal).
+- `LOCAL_ONLY` / `PRIVACY_FIRST` modes drop image attachments if no local vision model is installed (configurable via `ALLOW_LOCAL_ONLY_ATTACHMENTS_WITHOUT_VISION`). The user is warned with the `chat.localOnly.imagesDropped` i18n key.
+- Detection timeout is bounded by `LOCAL_VISION_MODEL_DETECTION_TIMEOUT_MS` (default 3000 ms); on timeout we treat the registry as having no vision model and warn the user instead of silently forwarding images to a text-only model.
+
 ---
 
 ## Documentation System

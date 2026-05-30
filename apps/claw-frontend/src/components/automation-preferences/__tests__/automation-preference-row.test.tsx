@@ -21,47 +21,32 @@ function makePref(overrides: Partial<AutomationPreferenceView> = {}): Automation
 // Passthrough translator that surfaces the key — assertions use these keys.
 const t: AutomationPreferenceRowProps['t'] = ((key: string) => key) as AutomationPreferenceRowProps['t'];
 
-function renderRow(canManage: boolean): void {
+function renderRow(): void {
   render(
     <AutomationPreferenceRow
       preference={makePref()}
       onSave={vi.fn()}
       isPending={false}
-      canManage={canManage}
       t={t}
     />,
   );
 }
 
-describe('AutomationPreferenceRow — RBAC-driven disabled state', () => {
-  describe('as a regular USER (canManage=false)', () => {
-    it('renders the action kind + status (read-only viewing stays available)', () => {
-      renderRow(false);
-      expect(screen.getByText('SUMMARIZE')).toBeInTheDocument();
-    });
-
-    it('disables every save control so the row cannot be mutated', () => {
-      renderRow(false);
-      const toggle = screen.getByRole('switch');
-      expect(toggle).toBeDisabled();
-      const slider = screen.getByRole('slider');
-      expect(slider).toBeDisabled();
-      const budgetInput = screen.getByRole('spinbutton');
-      expect(budgetInput).toBeDisabled();
-      const clearButton = screen.getByRole('button', { name: /automationPreferences\.row\.clear/i });
-      expect(clearButton).toBeDisabled();
-    });
+describe('AutomationPreferenceRow — per-USER editable defaults', () => {
+  it('renders the action kind + status (read-only viewing stays available)', () => {
+    renderRow();
+    expect(screen.getByText('SUMMARIZE')).toBeInTheDocument();
   });
 
-  describe('as an ADMIN (canManage=true)', () => {
-    it('leaves the toggle + slider + budget input enabled for mutation', () => {
-      renderRow(true);
-      const toggle = screen.getByRole('switch');
-      expect(toggle).not.toBeDisabled();
-      const slider = screen.getByRole('slider');
-      expect(slider).not.toBeDisabled();
-      const budgetInput = screen.getByRole('spinbutton');
-      expect(budgetInput).not.toBeDisabled();
-    });
+  it('leaves the toggle + slider + budget input + clear button enabled by default so the user can tune their own thresholds', () => {
+    renderRow();
+    const toggle = screen.getByRole('switch');
+    expect(toggle).not.toBeDisabled();
+    const slider = screen.getByRole('slider');
+    expect(slider).not.toBeDisabled();
+    const budgetInput = screen.getByRole('spinbutton');
+    expect(budgetInput).not.toBeDisabled();
+    const clearButton = screen.getByRole('button', { name: /automationPreferences\.row\.clear/i });
+    expect(clearButton).not.toBeDisabled();
   });
 });

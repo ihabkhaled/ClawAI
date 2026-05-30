@@ -365,6 +365,10 @@ export const de: TranslationDictionary = {
       tooltipDirect: 'ClawAI hat direkt aus dem Modell geantwortet.',
       searchDegraded: 'Suche versucht, aber auf direkte Antwort zurückgefallen.',
     },
+    localOnly: {
+      imagesDropped:
+        'Bilder verworfen: Im Nur-lokal-Modus ist kein bildfähiges Modell installiert. Ziehen Sie llava oder moondream aus dem Modellkatalog, um es zu aktivieren.',
+    },
   },
   receipt: {
     openLabel: 'Zeige, was die KI verwendet hat',

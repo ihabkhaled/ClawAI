@@ -375,7 +375,12 @@ export class JudgeRefereeManager {
     if (files.length === 0) {
       return undefined;
     }
-    const entries = buildFileDeliveryEntries(files, provider, model);
+    // TODO(Slice B follow-up): pass ModelMetadata.supportsVision sourced from
+    // the connector-service catalog so judge/critic prompts classify image
+    // attachments accurately per-model rather than via the provider heuristic.
+    // For now we pass `undefined`; the heuristic in file-delivery.utility
+    // remains in force.
+    const entries = buildFileDeliveryEntries(files, provider, model, undefined);
     return {
       manifestBlock: buildAttachedFilesManifest(files),
       perLaneDelivery: buildLaneDeliverySummary(entries),

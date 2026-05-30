@@ -1,6 +1,11 @@
 // Providers known to accept native image parts (image_url / inline_data /
 // images: base64). Used as a heuristic classifier when the connector model's
 // supportsVision flag is unavailable. NOT exhaustive — falls back to false.
+//
+// FALLBACK ONLY: this provider-level allow-list is used by file-delivery.utility
+// when per-model `ModelMetadata.supportsVision` is not supplied by the caller.
+// Per-model metadata is the authoritative source of truth and should be
+// preferred whenever available — see file-delivery.utility#resolveSupportsVision.
 export const VISION_CAPABLE_PROVIDERS = new Set([
   'OPENAI',
   'ANTHROPIC',

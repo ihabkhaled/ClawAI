@@ -548,10 +548,16 @@ export class ParallelExecutionManager {
         { threadId, messageId: laneId, laneId, parallelGroupId },
       );
 
+      // TODO(Slice B follow-up): pass authoritative ModelMetadata.supportsVision
+      // sourced from the connector-service catalog so the delivery classifier
+      // can override the provider-level VISION_CAPABLE_PROVIDERS heuristic on a
+      // per-model basis. For now we pass `undefined` so the heuristic remains
+      // in force; the API is ready when the data source lands.
       const attachmentDelivery = buildFileDeliveryEntries(
         context.fileContents,
         llmResponse.provider,
         llmResponse.model,
+        undefined,
       );
 
       return {
@@ -582,10 +588,13 @@ export class ParallelExecutionManager {
       );
       // Still emit a delivery summary so the FE knows which files would
       // have reached this lane, marked against the requested target.
+      // TODO(Slice B follow-up): thread ModelMetadata once available; see note
+      // on the success path above.
       failed.attachmentDelivery = buildFileDeliveryEntries(
         context.fileContents,
         target.provider,
         target.model,
+        undefined,
       );
       return failed;
     }

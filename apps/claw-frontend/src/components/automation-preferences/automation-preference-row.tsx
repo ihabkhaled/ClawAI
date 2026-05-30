@@ -11,12 +11,11 @@ export function AutomationPreferenceRow({
   preference,
   onSave,
   isPending,
-  canManage,
   t,
 }: AutomationPreferenceRowProps): ReactElement {
-  // Non-admins see the row read-only — every control is disabled so the
-  // values can be inspected but never saved. Backend stays the authority.
-  const isDisabled = isPending || !canManage;
+  // Per-USER settings — the row is always editable. Controls only disable
+  // while a save is in flight, or when the row itself is toggled off.
+  const isDisabled = isPending;
   const isSliderDisabled = isDisabled || !preference.isEnabled;
   const isBudgetDisabled = isDisabled || !preference.isEnabled;
   const handleToggleEnabled = (next: boolean): void => {

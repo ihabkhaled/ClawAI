@@ -141,7 +141,8 @@ describe('FileProcessingManager', () => {
         EventPattern.FILE_CHUNKED,
         expect.objectContaining({
           fileId: 'file-1',
-          userId: 'user-1',
+          chunkCount: expect.any(Number),
+          status: FileIngestionStatus.COMPLETED,
         }),
       );
     });
@@ -158,10 +159,13 @@ describe('FileProcessingManager', () => {
         FileIngestionStatus.FAILED,
       );
       expect(rabbitMQ.publish).toHaveBeenCalledWith(
-        'file.failed',
+        EventPattern.FILE_FAILED,
         expect.objectContaining({
           fileId: 'file-1',
-          error: 'File not found',
+          userId: 'user-1',
+          filename: 'test.txt',
+          errorMessage: 'File not found',
+          failureStage: 'EXTRACTION',
         }),
       );
     });

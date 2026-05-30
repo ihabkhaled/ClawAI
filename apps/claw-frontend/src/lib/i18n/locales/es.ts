@@ -363,6 +363,10 @@ export const es: TranslationDictionary = {
       tooltipDirect: 'ClawAI respondió directamente desde el modelo.',
       searchDegraded: 'Intentó buscar pero recurrió a respuesta directa.',
     },
+    localOnly: {
+      imagesDropped:
+        'Imágenes descartadas: el modo solo-local no tiene ningún modelo con capacidad de visión instalado. Descarga llava o moondream desde el Catálogo de Modelos para activarlo.',
+    },
   },
   receipt: {
     openLabel: 'Mostrar lo que usó la IA',

@@ -26,6 +26,9 @@ import {
   type ConnectorSyncedPayload,
   type ConnectorUpdatedPayload,
   EventPattern,
+  type FileChunkedPayload,
+  type FileFailedPayload,
+  type FileUploadedPayload,
   type MemoryExtractedPayload,
   type MessageCompletedPayload,
   type RoutingDecisionMadePayload,
@@ -54,11 +57,23 @@ export class AuditEventManager implements OnModuleInit {
       ...this.coreEventSubscriptions(),
       ...this.agentLifecycleEventSubscriptions(),
       ...this.capabilityEventSubscriptions(),
+      ...this.fileEventSubscriptions(),
     ];
     for (const [pattern, handler] of subscriptions) {
       await this.rabbitMQService.subscribe(pattern, handler);
       this.logger.log(`Subscribed to event: ${pattern}`);
     }
+  }
+
+  // === File ingestion events (Slice B — added 2026-05-31) ===
+  // Subscribes to file-service lifecycle events so that uploads, chunking
+  // completion, and failures are persisted to the audit MongoDB collection.
+  private fileEventSubscriptions(): Array<[string, (data: unknown) => Promise<void>]> {
+    return [
+      [EventPattern.FILE_UPLOADED, (d) => this.handleFileUploaded(d as FileUploadedPayload)],
+      [EventPattern.FILE_CHUNKED, (d) => this.handleFileChunked(d as FileChunkedPayload)],
+      [EventPattern.FILE_FAILED, (d) => this.handleFileFailed(d as FileFailedPayload)],
+    ];
   }
 
   // === Desktop-agent lifecycle events (V2 Stream 01c — added 2026-05-24) ===
@@ -683,5 +698,82 @@ export class AuditEventManager implements OnModuleInit {
         riskLabel: payload.riskLabel,
       },
     });
+  }
+
+  // ==================== File ingestion (Slice B) ====================
+
+  async handleFileUploaded(payload: FileUploadedPayload): Promise<void> {
+    this.logger.debug(
+      `handleFileUploaded: recording upload fileId=${payload.fileId} userId=${payload.userId}`,
+    );
+    try {
+      await this.auditsService.createAuditLog({
+        userId: payload.userId,
+        action: 'file.uploaded',
+        entityType: 'file',
+        entityId: payload.fileId,
+        severity: 'LOW',
+        details: {
+          filename: payload.fileName,
+          sizeBytes: payload.sizeBytes,
+          mimeType: payload.mimeType,
+          source: 'upload',
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `handleFileUploaded: failed fileId=${payload.fileId} — ${(error as Error).message}`,
+      );
+      throw error;
+    }
+  }
+
+  async handleFileChunked(payload: FileChunkedPayload): Promise<void> {
+    this.logger.debug(
+      `handleFileChunked: recording chunk completion fileId=${payload.fileId} chunkCount=${String(payload.chunkCount)}`,
+    );
+    try {
+      await this.auditsService.createAuditLog({
+        userId: 'system',
+        action: 'file.chunked',
+        entityType: 'file',
+        entityId: payload.fileId,
+        severity: 'LOW',
+        details: {
+          chunkCount: payload.chunkCount,
+          status: payload.status,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `handleFileChunked: failed fileId=${payload.fileId} — ${(error as Error).message}`,
+      );
+      throw error;
+    }
+  }
+
+  async handleFileFailed(payload: FileFailedPayload): Promise<void> {
+    this.logger.debug(
+      `handleFileFailed: recording failure fileId=${payload.fileId} stage=${payload.failureStage}`,
+    );
+    try {
+      await this.auditsService.createAuditLog({
+        userId: payload.userId,
+        action: 'file.failed',
+        entityType: 'file',
+        entityId: payload.fileId,
+        severity: 'ERROR',
+        details: {
+          filename: payload.filename,
+          errorMessage: payload.errorMessage,
+          failureStage: payload.failureStage,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `handleFileFailed: failed fileId=${payload.fileId} — ${(error as Error).message}`,
+      );
+      throw error;
+    }
   }
 }

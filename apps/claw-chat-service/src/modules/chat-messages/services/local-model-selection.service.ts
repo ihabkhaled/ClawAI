@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
+import { isLocalVisionModel } from '../constants/local-vision-heuristics.constants';
 import type {
   InstalledModelInfo,
   InstalledModelsResponse,
@@ -73,6 +74,34 @@ export class LocalModelSelectionService {
   async isInstalledModel(modelName: string): Promise<boolean> {
     const installedModels = await this.listInstalledModelNames();
     return installedModels.includes(modelName);
+  }
+
+  // Returns true when at least one installed local model matches the vision
+  // heuristic (LLaVA, BakLLaVA, Moondream, MiniCPM-V, CogVLM, Llama-3.2-Vision,
+  // or anything containing `vision` / `multimodal` in its name).
+  //
+  // Slice B note: the source of truth for `supportsVision` should be the
+  // connector-service ConnectorModel catalog; for now we apply a name-based
+  // heuristic identical to the one used by the connector adapter so a
+  // freshly-installed `llava:7b` is detected without a follow-up sync.
+  async hasLocalVisionModel(): Promise<boolean> {
+    this.logger.debug('hasLocalVisionModel: probing installed models');
+    try {
+      const models = await this.fetchInstalledModels();
+      const matched = models.find((model) => {
+        const identity = `${model.name}:${model.tag}`;
+        return isLocalVisionModel(identity) || isLocalVisionModel(model.name);
+      });
+      const result = matched !== undefined;
+      this.logger.debug(
+        `hasLocalVisionModel: result=${String(result)} (probed ${String(models.length)} models)`,
+      );
+      return result;
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`hasLocalVisionModel: failed — ${msg}`);
+      return false;
+    }
   }
 
   private async listUsableModels(): Promise<InstalledModelInfo[]> {

@@ -10,7 +10,7 @@ import { useTranslation } from '@/lib/i18n';
 
 export default function AutomationPreferencesPage(): ReactElement {
   const { t } = useTranslation();
-  const { preferences, isLoading, isError, error, isSaving, savePreference, canManage } =
+  const { preferences, isLoading, isError, error, isSaving, savePreference } =
     useAutomationPreferencesPage();
 
   return (
@@ -42,7 +42,6 @@ export default function AutomationPreferencesPage(): ReactElement {
               preference={preference}
               onSave={savePreference}
               isPending={isSaving}
-              canManage={canManage}
               t={t}
             />
           ))}

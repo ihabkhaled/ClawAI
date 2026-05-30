@@ -362,6 +362,10 @@ export const en: TranslationDictionary = {
       tooltipDirect: 'ClawAI answered directly from the model.',
       searchDegraded: 'Tried to search but degraded to direct answer.',
     },
+    localOnly: {
+      imagesDropped:
+        'Images dropped: local-only mode has no vision-capable model installed. Pull llava or moondream from the Model Catalog to enable.',
+    },
   },
   receipt: {
     openLabel: 'Show what the AI used',

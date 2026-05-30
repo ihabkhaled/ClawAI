@@ -157,7 +157,7 @@ export class OllamaAdapter implements ProviderAdapter {
       capabilities: {
         supportsStreaming: true,
         supportsTools: false,
-        supportsVision: false,
+        supportsVision: isOllamaMultimodalModel(modelKey),
         supportsAudio: false,
         supportsStructuredOutput: false,
       },

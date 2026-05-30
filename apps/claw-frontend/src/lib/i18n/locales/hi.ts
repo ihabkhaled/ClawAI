@@ -363,6 +363,10 @@ export const hi: TranslationDictionary = {
       tooltipDirect: 'ClawAI ने सीधे मॉडल से उत्तर दिया।',
       searchDegraded: 'खोज की कोशिश की लेकिन सीधे उत्तर पर वापस आना पड़ा।',
     },
+    localOnly: {
+      imagesDropped:
+        'चित्र हटा दिए गए: केवल-स्थानीय मोड में कोई दृष्टि-सक्षम मॉडल स्थापित नहीं है। सक्षम करने के लिए मॉडल कैटलॉग से llava या moondream खींचें।',
+    },
   },
   receipt: {
     openLabel: 'दिखाएँ कि AI ने क्या उपयोग किया',

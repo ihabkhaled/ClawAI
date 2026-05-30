@@ -68,6 +68,8 @@ export type {
   RoutingDecisionMadePayload,
   FileUploadedPayload,
   FileChunkedPayload,
+  FileFailedPayload,
+  FileFailureStage,
   MemoryExtractedPayload,
   AuditEventPayload,
   HealthCheckPayload,

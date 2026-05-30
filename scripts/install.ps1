@@ -796,6 +796,14 @@ OLLAMA_FLASH_ATTENTION=1
 OLLAMA_KV_CACHE_TYPE=q8_0
 MEMORY_EXTRACTION_MODEL=AUTO
 
+# --- Local-only vision attachment policy (Slice B) ---
+# When LOCAL_ONLY/PRIVACY_FIRST routing has no vision-capable local model
+# (llava, bakllava, moondream, minicpm-v, llama3.2-vision, *-vision,
+# *-multimodal), image attachments are dropped and the user is warned via
+# chat.localOnly.imagesDropped. Flip to true to forward images anyway.
+ALLOW_LOCAL_ONLY_ATTACHMENTS_WITHOUT_VISION=false
+LOCAL_VISION_MODEL_DETECTION_TIMEOUT_MS=3000
+
 # =============================================================================
 # Memory + Context V2 Flagship
 # =============================================================================
