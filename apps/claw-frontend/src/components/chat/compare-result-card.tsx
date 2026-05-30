@@ -163,7 +163,12 @@ export function CompareResultCard({
       ) : null}
 
       <Dialog open={expanded} onOpenChange={setExpanded}>
-        <DialogContent className="max-w-4xl">
+        {/* Bound the dialog to the viewport and use a flex column so the body
+            section can shrink (min-h-0) and own the scroll — without this the
+            inner div's max-h-[80vh] is dominated by the dialog growing to fit
+            its content, so long responses overflowed past the viewport with
+            no scrollbar. */}
+        <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col gap-4">
           <DialogHeader>
             <DialogTitle className="flex flex-wrap items-center gap-2">
               <span>{response.model}</span>
@@ -175,7 +180,7 @@ export function CompareResultCard({
               </span>
             </DialogTitle>
           </DialogHeader>
-          <div className="max-h-[80vh] overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1">
             {isMarkdown ? (
               <div className="prose prose-sm dark:prose-invert max-w-none">
                 <MarkdownRenderer content={response.content} />

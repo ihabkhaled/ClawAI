@@ -1,5 +1,6 @@
 export { UserRole } from './user-role.enum';
 export { Permission } from './permission.enum';
+export { PlanFeature } from './plan-feature.enum';
 export { PermissionGroupKey } from './permission-group.enum';
 export { UserStatus } from './user-status.enum';
 export { ConnectorProvider } from './connector-provider.enum';

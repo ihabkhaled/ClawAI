@@ -104,4 +104,56 @@ describe('AccessControlService', () => {
       }),
     ).resolves.toBeUndefined();
   });
+
+  describe('plan feature gating (PLAN_FEATURE_DISABLED)', () => {
+    it('rejects when allowCompareMode is locked (403)', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({ plan: { id: 'p1', slug: 'free', name: 'Free', featureGates: { allowCompareMode: false } } }),
+      );
+      await expect(
+        service.assertCanSendMessage('u1', { requireFeature: 'allowCompareMode' }),
+      ).rejects.toMatchObject({ code: 'PLAN_FEATURE_DISABLED' });
+    });
+
+    it('rejects when allowJudgeMode is locked (403)', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({ plan: { id: 'p1', slug: 'free', name: 'Free', featureGates: { allowJudgeMode: false } } }),
+      );
+      await expect(
+        service.assertCanSendMessage('u1', { requireFeature: 'allowJudgeMode' }),
+      ).rejects.toMatchObject({ code: 'PLAN_FEATURE_DISABLED' });
+    });
+
+    it('rejects when the plan is missing entirely (403)', async () => {
+      getEntitlements.mockResolvedValue(ent({ plan: null }));
+      await expect(
+        service.assertCanSendMessage('u1', { requireFeature: 'allowCompareMode' }),
+      ).rejects.toMatchObject({ code: 'PLAN_FEATURE_DISABLED' });
+    });
+
+    it('allows when allowCompareMode is true', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({ plan: { id: 'p1', slug: 'pro', name: 'Pro', featureGates: { allowCompareMode: true } } }),
+      );
+      await expect(
+        service.assertCanSendMessage('u1', { requireFeature: 'allowCompareMode' }),
+      ).resolves.toMatchObject({ userId: 'u1' });
+    });
+
+    it('ADMIN bypasses the feature gate even when the plan locks it', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({ isAdmin: true, plan: { id: 'p1', slug: 'free', name: 'Free', featureGates: { allowCompareMode: false } } }),
+      );
+      await expect(
+        service.assertCanSendMessage('u1', { requireFeature: 'allowCompareMode' }),
+      ).resolves.toMatchObject({ isAdmin: true });
+    });
+
+    it('fails OPEN (returns null) on entitlements outage — does not block compare', async () => {
+      getEntitlements.mockRejectedValue(new Error('auth down'));
+      await expect(
+        service.assertCanSendMessage('u1', { requireFeature: 'allowCompareMode' }),
+      ).resolves.toBeNull();
+    });
+  });
 });

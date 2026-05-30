@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { SIDEBAR_NAV_ITEMS } from '@/constants';
-import { Permission } from '@/enums';
+import { Permission, PlanFeature } from '@/enums';
 
 import { filterSidebarItems } from '../sidebar-visibility.utility';
 
@@ -23,12 +23,18 @@ const userCan =
   (p: Permission): boolean =>
     permissions.includes(p);
 const adminCan = (): boolean => true;
+const noFeatures = (): boolean => false;
+const adminFeatures = (): boolean => true;
+const featuresFromSet =
+  (features: PlanFeature[]) =>
+  (f: PlanFeature): boolean =>
+    features.includes(f);
 
 const labelKeys = (items: { labelKey: string }[]): string[] => items.map((i) => i.labelKey);
 
 describe('sidebar-visibility.utility', () => {
-  describe('filterSidebarItems for a normal USER', () => {
-    const visible = filterSidebarItems(SIDEBAR_NAV_ITEMS, userCan(USER_PERMISSIONS));
+  describe('filterSidebarItems for a normal USER with no plan features unlocked', () => {
+    const visible = filterSidebarItems(SIDEBAR_NAV_ITEMS, userCan(USER_PERMISSIONS), noFeatures);
     const visibleKeys = labelKeys(visible);
 
     it('keeps chat, workspace, agent, and account pages', () => {
@@ -55,10 +61,15 @@ describe('sidebar-visibility.utility', () => {
       expect(visibleKeys).not.toContain('nav.dashboard');
     });
 
-    it('keeps the open Chat parent but strips its gated lab children', () => {
+    it('keeps the open Chat parent but strips its gated lab children (no features)', () => {
       const chat = visible.find((i) => i.labelKey === 'nav.chat');
       expect(chat).toBeDefined();
-      expect(chat?.children).toEqual([]);
+      // Compare + Verify are PLAN-feature gated and the test user has no
+      // unlocked features, so they MUST be hidden alongside the existing
+      // permission-gated lab children.
+      const childLabels = labelKeys(chat?.children ?? []);
+      expect(childLabels).not.toContain('nav.compareModels');
+      expect(childLabels).not.toContain('nav.verifierLab');
     });
 
     it('keeps the open Workspace parent but strips its admin config children', () => {
@@ -74,12 +85,58 @@ describe('sidebar-visibility.utility', () => {
 
   describe('filterSidebarItems for an ADMIN', () => {
     it('keeps every top-level item and every child (admin can do all)', () => {
-      const visible = filterSidebarItems(SIDEBAR_NAV_ITEMS, adminCan);
+      const visible = filterSidebarItems(SIDEBAR_NAV_ITEMS, adminCan, adminFeatures);
       expect(visible.length).toBe(SIDEBAR_NAV_ITEMS.length);
 
       const admin = visible.find((i) => i.labelKey === 'nav.admin');
       const originalAdmin = SIDEBAR_NAV_ITEMS.find((i) => i.labelKey === 'nav.admin');
       expect(admin?.children?.length).toBe(originalAdmin?.children?.length);
+    });
+
+    it('reveals Compare and Verify children for admin even with no features bypass needed', () => {
+      const visible = filterSidebarItems(SIDEBAR_NAV_ITEMS, adminCan, adminFeatures);
+      const chat = visible.find((i) => i.labelKey === 'nav.chat');
+      const childLabels = labelKeys(chat?.children ?? []);
+      expect(childLabels).toContain('nav.compareModels');
+      expect(childLabels).toContain('nav.verifierLab');
+    });
+  });
+
+  describe('filterSidebarItems with plan-feature gating', () => {
+    it('reveals nav.compareModels when allowCompareMode is unlocked for the user', () => {
+      const visible = filterSidebarItems(
+        SIDEBAR_NAV_ITEMS,
+        userCan(USER_PERMISSIONS),
+        featuresFromSet([PlanFeature.ALLOW_COMPARE_MODE]),
+      );
+      const chat = visible.find((i) => i.labelKey === 'nav.chat');
+      const childLabels = labelKeys(chat?.children ?? []);
+      expect(childLabels).toContain('nav.compareModels');
+      expect(childLabels).not.toContain('nav.verifierLab');
+    });
+
+    it('reveals nav.verifierLab when allowJudgeMode is unlocked for the user', () => {
+      const visible = filterSidebarItems(
+        SIDEBAR_NAV_ITEMS,
+        userCan(USER_PERMISSIONS),
+        featuresFromSet([PlanFeature.ALLOW_JUDGE_MODE]),
+      );
+      const chat = visible.find((i) => i.labelKey === 'nav.chat');
+      const childLabels = labelKeys(chat?.children ?? []);
+      expect(childLabels).toContain('nav.verifierLab');
+      expect(childLabels).not.toContain('nav.compareModels');
+    });
+
+    it('hides both Compare and Verify when the plan unlocks neither feature', () => {
+      const visible = filterSidebarItems(
+        SIDEBAR_NAV_ITEMS,
+        userCan(USER_PERMISSIONS),
+        noFeatures,
+      );
+      const chat = visible.find((i) => i.labelKey === 'nav.chat');
+      const childLabels = labelKeys(chat?.children ?? []);
+      expect(childLabels).not.toContain('nav.compareModels');
+      expect(childLabels).not.toContain('nav.verifierLab');
     });
   });
 
@@ -87,12 +144,13 @@ describe('sidebar-visibility.utility', () => {
     it('reveals a gated chat lab child when the user holds the lab permission', () => {
       const visible = filterSidebarItems(
         SIDEBAR_NAV_ITEMS,
-        userCan([...USER_PERMISSIONS, Permission.COMPARE_USE]),
+        userCan([...USER_PERMISSIONS, Permission.ROUTER_USE]),
+        noFeatures,
       );
       const chat = visible.find((i) => i.labelKey === 'nav.chat');
-      expect(labelKeys(chat?.children ?? [])).toContain('nav.compareModels');
-      // Lab children that still require ROUTER_USE/JUDGE_USE stay hidden.
-      expect(labelKeys(chat?.children ?? [])).not.toContain('nav.consensusMode');
+      // ROUTER_USE-gated children become visible; feature-gated ones remain hidden.
+      expect(labelKeys(chat?.children ?? [])).toContain('nav.consensusMode');
+      expect(labelKeys(chat?.children ?? [])).not.toContain('nav.compareModels');
       expect(labelKeys(chat?.children ?? [])).not.toContain('nav.verifierLab');
     });
   });

@@ -241,6 +241,19 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   async createParallelMessage(userId: string, dto: ParallelMessageDto): Promise<ParallelResponse> {
+    // Plan-feature gate: compare mode is a paid feature. ADMIN bypasses via
+    // the hasPlanFeature helper inside the service. When the judge is also
+    // requested, the JUDGE feature must be unlocked too (a plan can ship
+    // compare without judge, e.g. for downgrade scenarios).
+    await this.accessControlService.assertCanSendMessage(userId, {
+      requireFeature: 'allowCompareMode',
+    });
+    if (dto.judgeEnabled === true) {
+      await this.accessControlService.assertCanSendMessage(userId, {
+        requireFeature: 'allowJudgeMode',
+      });
+    }
+
     const thread =
       dto.threadId && dto.threadId.length > 0
         ? await this.getThreadForMessage(dto.threadId, userId)
@@ -330,6 +343,11 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   async executeVerify(userId: string, dto: VerifyMessageDto): Promise<VerifyResponse> {
+    // Plan-feature gate: verifier lab requires the judge mode unlock since
+    // verification is a judge-driven critique loop. ADMIN bypasses.
+    await this.accessControlService.assertCanSendMessage(userId, {
+      requireFeature: 'allowJudgeMode',
+    });
     return this.verifierManager.executeVerify(userId, dto);
   }
 

@@ -7,7 +7,12 @@ export type {
   RefreshResponse,
   AuthState,
 } from './auth.types';
-export type { RoutePermission, UseRoutePermissionGuardReturn } from './route-permission.types';
+export type {
+  RoutePermission,
+  RouteRequirement,
+  UseRoutePermissionGuardReturn,
+} from './route-permission.types';
+export type { UsePlanFeaturesReturn } from './plan-feature-hook.types';
 export type {
   ChatThread,
   ChatMessage,

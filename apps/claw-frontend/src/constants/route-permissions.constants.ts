@@ -1,12 +1,13 @@
-import { Permission } from '@/enums';
+import { Permission, PlanFeature } from '@/enums';
 import type { RoutePermission } from '@/types';
 
 import { ROUTES } from './routes.constants';
 
-// Maps route prefixes to the Permission required to view the page. Ordered
-// LONGEST-PREFIX-FIRST so requiredPermissionForPath returns the most specific
-// match. A route lacking any entry here is open to all authenticated users.
-// The backend remains the authoritative enforcer — this only gates the UI.
+// Maps route prefixes to the Permission and/or PlanFeature required to view
+// the page. Ordered LONGEST-PREFIX-FIRST so requiredRequirementForPath returns
+// the most specific match. A route lacking any entry here is open to all
+// authenticated users. The backend remains the authoritative enforcer — this
+// only gates the UI. ADMIN bypasses every requirement.
 export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   // Admin specific pages (MUST precede the /admin catch-all below).
   {
@@ -23,8 +24,11 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   { prefix: '/admin/usage', permission: Permission.ADMIN_USAGE_VIEW },
 
   // Chat sub-pages (MUST precede the bare /chat which stays open).
-  { prefix: ROUTES.CHAT_COMPARE, permission: Permission.COMPARE_USE },
-  { prefix: ROUTES.CHAT_VERIFY, permission: Permission.JUDGE_USE },
+  // Compare + Verify are PLAN-feature gated (allowCompareMode / allowJudgeMode)
+  // not Permission-gated — the lab itself is open to any user whose plan
+  // unlocks it. Backend enforcement lives in claw-chat-service AccessControlService.
+  { prefix: ROUTES.CHAT_COMPARE, feature: PlanFeature.ALLOW_COMPARE_MODE },
+  { prefix: ROUTES.CHAT_VERIFY, feature: PlanFeature.ALLOW_JUDGE_MODE },
   { prefix: ROUTES.CHAT_CONSENSUS, permission: Permission.ROUTER_USE },
   { prefix: ROUTES.CHAT_ESCALATION, permission: Permission.ROUTER_USE },
   { prefix: ROUTES.CHAT_REPAIR, permission: Permission.ROUTER_USE },

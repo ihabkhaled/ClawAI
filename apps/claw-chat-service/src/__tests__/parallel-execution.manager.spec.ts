@@ -24,9 +24,21 @@ jest.spyOn(AppConfig, 'get').mockReturnValue({
 describe('ParallelExecutionManager', () => {
   let manager: ParallelExecutionManager;
 
-  const mockChatExecutionManager = {
+  // streamModelForLane delegates to callProvider so test setups that mock
+  // callProvider drive both the buffered + streaming code paths uniformly.
+  // (ParallelExecutionManager now picks the streaming entry for streamable
+  // providers; the buffered callProvider remains the fallback.) Explicit type
+  // annotation breaks the self-referential implicit-any inference.
+  const mockChatExecutionManager: {
+    callProvider: jest.Mock;
+    streamModelForLane: jest.Mock;
+  } = {
     callProvider: jest.fn(),
+    streamModelForLane: jest.fn(),
   };
+  mockChatExecutionManager.streamModelForLane.mockImplementation((...args: unknown[]) =>
+    mockChatExecutionManager.callProvider(...args),
+  );
 
   const mockContextAssemblyManager = {
     assemble: jest.fn(),

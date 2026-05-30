@@ -18,27 +18,7 @@ import {
   type StreamExecutionInput,
   type StreamExecutionResult,
 } from '../types/stream-execution.types';
-
-type EmitCtx = {
-  threadId: string;
-  provider: string;
-  model: string;
-  messageId?: string;
-  laneId?: string;
-  parallelGroupId?: string;
-  protocol: AiStreamProtocol;
-};
-
-type LoopState = {
-  content: string;
-  reasoning: string;
-  inputTokens?: number;
-  outputTokens?: number;
-  finishReason?: string;
-  sawContent: boolean;
-  lastMetricsAt: number;
-  cancelled: boolean;
-};
+import { type EmitCtx, type LoopState } from '../types/provider-stream-executor.types';
 
 // Runs the read → normalize → split → emit loop for a single streaming model
 // run, emitting live content/reasoning/metric deltas over the existing SSE

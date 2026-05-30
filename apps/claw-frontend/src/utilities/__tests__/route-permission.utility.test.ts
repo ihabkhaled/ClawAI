@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { Permission } from '@/enums';
+import { Permission, PlanFeature } from '@/enums';
 
-import { requiredPermissionForPath } from '../route-permission.utility';
+import {
+  requiredPermissionForPath,
+  requiredRequirementForPath,
+} from '../route-permission.utility';
 
 describe('route-permission.utility', () => {
   describe('requiredPermissionForPath', () => {
@@ -49,8 +52,11 @@ describe('route-permission.utility', () => {
     });
 
     it('maps chat sub-pages to their lab permission while keeping /chat base open', () => {
-      expect(requiredPermissionForPath('/chat/compare')).toBe(Permission.COMPARE_USE);
-      expect(requiredPermissionForPath('/chat/verify')).toBe(Permission.JUDGE_USE);
+      // Compare + Verify are now PLAN-feature gated, NOT permission gated, so
+      // requiredPermissionForPath returns null for them. See the feature-gate
+      // test block below for the parallel assertion.
+      expect(requiredPermissionForPath('/chat/compare')).toBeNull();
+      expect(requiredPermissionForPath('/chat/verify')).toBeNull();
       expect(requiredPermissionForPath('/chat/consensus')).toBe(Permission.ROUTER_USE);
       expect(requiredPermissionForPath('/chat/escalation')).toBe(Permission.ROUTER_USE);
       expect(requiredPermissionForPath('/chat/repair')).toBe(Permission.ROUTER_USE);
@@ -92,6 +98,36 @@ describe('route-permission.utility', () => {
       expect(requiredPermissionForPath('/administration')).toBeNull();
       // '/files' must NOT match '/file-generations'.
       expect(requiredPermissionForPath('/file-generations')).toBeNull();
+    });
+  });
+
+  describe('requiredRequirementForPath', () => {
+    it('returns null for open routes', () => {
+      expect(requiredRequirementForPath('/chat')).toBeNull();
+      expect(requiredRequirementForPath('/totally-unknown')).toBeNull();
+    });
+
+    it('maps /chat/compare to the allowCompareMode plan feature (no permission)', () => {
+      const req = requiredRequirementForPath('/chat/compare');
+      expect(req).toEqual({ feature: PlanFeature.ALLOW_COMPARE_MODE });
+      expect(req?.permission).toBeUndefined();
+    });
+
+    it('maps /chat/verify to the allowJudgeMode plan feature (no permission)', () => {
+      const req = requiredRequirementForPath('/chat/verify');
+      expect(req).toEqual({ feature: PlanFeature.ALLOW_JUDGE_MODE });
+      expect(req?.permission).toBeUndefined();
+    });
+
+    it('maps a permission-gated route to its permission (no feature)', () => {
+      const req = requiredRequirementForPath('/dashboard');
+      expect(req).toEqual({ permission: Permission.VIEW_DASHBOARD });
+      expect(req?.feature).toBeUndefined();
+    });
+
+    it('covers sub-pages of a feature-gated prefix', () => {
+      const req = requiredRequirementForPath('/chat/compare/sub-path');
+      expect(req).toEqual({ feature: PlanFeature.ALLOW_COMPARE_MODE });
     });
   });
 });
