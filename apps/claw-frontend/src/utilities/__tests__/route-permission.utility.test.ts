@@ -46,9 +46,14 @@ describe('route-permission.utility', () => {
       );
       expect(requiredPermissionForPath('/models')).toBe(Permission.MODELS_CATALOG_VIEW);
       expect(requiredPermissionForPath('/models/catalog')).toBe(Permission.MODELS_CATALOG_VIEW);
-      expect(requiredPermissionForPath('/research')).toBe(Permission.RESEARCH_USE);
-      expect(requiredPermissionForPath('/research/providers')).toBe(Permission.RESEARCH_USE);
-      expect(requiredPermissionForPath('/research/runs')).toBe(Permission.RESEARCH_USE);
+      // /research/* are admin observability pages — gated by ADMIN_SYSTEM_VIEW
+      // so normal users don't see the standalone Research section. The
+      // RESEARCH_USE permission stays for backend research endpoints (used
+      // by the in-chat / in-compare research selector and the compare
+      // ResearchEnricher's service-to-service calls).
+      expect(requiredPermissionForPath('/research')).toBe(Permission.ADMIN_SYSTEM_VIEW);
+      expect(requiredPermissionForPath('/research/providers')).toBe(Permission.ADMIN_SYSTEM_VIEW);
+      expect(requiredPermissionForPath('/research/runs')).toBe(Permission.ADMIN_SYSTEM_VIEW);
     });
 
     it('maps chat sub-pages to their lab permission while keeping /chat base open', () => {

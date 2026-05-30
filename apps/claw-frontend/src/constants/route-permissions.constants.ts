@@ -46,7 +46,13 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   { prefix: ROUTES.MEMORY, permission: Permission.MEMORY_USE },
   { prefix: ROUTES.CONTEXT, permission: Permission.CONTEXT_PACK_READ_OWN },
   { prefix: ROUTES.FILES, permission: Permission.FILES_USE },
-  { prefix: '/research', permission: Permission.RESEARCH_USE },
+  // The /research/* PAGES (providers + runs) are admin observability and
+  // stay hidden from normal users — they have RESEARCH_USE so the in-chat /
+  // in-compare research selector works against the backend, but the standalone
+  // Research section in the sidebar is admin-only. Backend research endpoints
+  // remain gated by RESEARCH_USE (the page's own data, plus chat-service
+  // service-to-service calls from the compare ResearchEnricher).
+  { prefix: '/research', permission: Permission.ADMIN_SYSTEM_VIEW },
   // Workspace CONFIG sub-pages are admin-only (OAuth client/app secrets +
   // sync-health dashboard); the provider catalog and per-user connect/use
   // pages stay open so members can still connect their own accounts.
