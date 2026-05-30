@@ -1,6 +1,6 @@
 import type { TranslateFunction } from './i18n.types';
 import type { RuntimeProbeReport } from './runtime-probe-report.types';
-import type { User } from './user.types';
+import type { UserProfile } from './user.types';
 
 // Result shape returned by the controller hook for the admin runtime
 // diagnostics page (/admin/runtime-progress). Each probe is exposed as an
@@ -15,7 +15,7 @@ export type RuntimeProgressProbeState = {
 
 export type UseRuntimeProgressPageReturn = {
   t: TranslateFunction;
-  user: User | null;
+  user: UserProfile | null;
   isAdmin: boolean;
   ollama: RuntimeProgressProbeState;
   llamacpp: RuntimeProgressProbeState;
