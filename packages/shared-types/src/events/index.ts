@@ -70,6 +70,8 @@ export type {
   FileChunkedPayload,
   FileFailedPayload,
   FileFailureStage,
+  FileRetentionExpiredPayload,
+  FileArchiveExpandedPayload,
   MemoryExtractedPayload,
   AuditEventPayload,
   HealthCheckPayload,

@@ -6,6 +6,7 @@ import { type File, type FileChunk } from '../../../generated/prisma';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { deleteFile, readFile, saveFile } from '../../../common/utilities';
 import { type PaginatedResult } from '../../../common/types';
+import { AppConfig } from '../../../app/config/app.config';
 import { FilesRepository } from '../repositories/files.repository';
 import { FileChunksRepository } from '../repositories/file-chunks.repository';
 import { FileSecurityManager } from '../managers/file-security.manager';
@@ -47,6 +48,7 @@ export class FilesService {
       sizeBytes: buffer.length,
       storagePath,
       content: body.contentBase64,
+      retentionExpiresAt: this.computeRetentionExpiry(),
     });
     void this.rabbitMQService.publish(EventPattern.FILE_UPLOADED, {
       fileId: file.id,
@@ -77,6 +79,7 @@ export class FilesService {
       sizeBytes: dto.sizeBytes,
       storagePath,
       content: dto.content ?? null,
+      retentionExpiresAt: this.computeRetentionExpiry(),
     });
 
     this.logger.log(`uploadFile: uploaded file ${file.id} "${safeName}" (security checks passed)`);
@@ -123,7 +126,9 @@ export class FilesService {
       this.filesRepository.countAll(filters),
     ]);
 
-    this.logger.debug(`getFiles: returned ${String(files.length)} of ${String(total)} files for user ${userId}`);
+    this.logger.debug(
+      `getFiles: returned ${String(files.length)} of ${String(total)} files for user ${userId}`,
+    );
     return {
       data: files,
       meta: {
@@ -273,6 +278,7 @@ export class FilesService {
       sizeBytes: contentBuffer.length,
       storagePath,
       content: data.base64Data,
+      retentionExpiresAt: this.computeRetentionExpiry(),
     });
 
     this.logger.log(
@@ -289,5 +295,17 @@ export class FilesService {
         HttpStatus.FORBIDDEN,
       );
     }
+  }
+
+  // Slice C foundation 3 — compute the retention expiry for a new upload.
+  // Returns null when FILE_RETENTION_DAYS = 0 (retention disabled / keep forever),
+  // otherwise returns a Date that is FILE_RETENTION_DAYS days in the future.
+  private computeRetentionExpiry(): Date | null {
+    const days = AppConfig.get().FILE_RETENTION_DAYS;
+    if (days === 0) {
+      return null;
+    }
+    const millisPerDay = 24 * 60 * 60 * 1000;
+    return new Date(Date.now() + days * millisPerDay);
   }
 }

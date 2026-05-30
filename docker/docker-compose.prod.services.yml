@@ -153,6 +153,12 @@ services:
     volumes:
       - file-storage-data:/data/files
       - ../certs:/certs:ro
+    # Slice C foundation 3 — ZIP archive expansion uses an in-memory tmpfs so
+    # ZIP-bomb extraction can never fill the host disk and so temp files
+    # disappear if the container crashes mid-extraction. Cap matches the
+    # ZIP_MAX_EXTRACTED_SIZE_MB default × 2 for headroom.
+    tmpfs:
+      - /tmp/claw-zip-extraction:size=1g,mode=1700
     healthcheck:
       test:
         [

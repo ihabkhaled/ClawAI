@@ -205,6 +205,7 @@ describe('ParallelExecutionManager', () => {
 
       // Access private method via bracket notation (test pattern)
       const results: ParallelModelResponse[] = await (manager as any).executeAllModels(
+        'user-1',
         sampleModels,
         mockContext,
         disabledJudgeConfig,
@@ -233,6 +234,7 @@ describe('ParallelExecutionManager', () => {
         .mockRejectedValueOnce(new Error('Provider timeout'));
 
       const results: ParallelModelResponse[] = await (manager as any).executeAllModels(
+        'user-1',
         sampleModels,
         mockContext,
         disabledJudgeConfig,
@@ -254,6 +256,7 @@ describe('ParallelExecutionManager', () => {
         .mockRejectedValueOnce(new Error('Rate limited'));
 
       const results: ParallelModelResponse[] = await (manager as any).executeAllModels(
+        'user-1',
         sampleModels,
         mockContext,
         disabledJudgeConfig,
@@ -273,6 +276,7 @@ describe('ParallelExecutionManager', () => {
       mockChatExecutionManager.callProvider.mockRejectedValue(new Error('fail'));
 
       const results: ParallelModelResponse[] = await (manager as any).executeAllModels(
+        'user-1',
         sampleModels,
         mockContext,
         disabledJudgeConfig,

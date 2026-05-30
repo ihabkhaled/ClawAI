@@ -1,4 +1,5 @@
 import { FileProcessingManager } from '../managers/file-processing.manager';
+import { type ZipExpansionManager } from '../managers/zip-expansion.manager';
 import { type FilesRepository } from '../repositories/files.repository';
 import { type FileChunksRepository } from '../repositories/file-chunks.repository';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
@@ -31,6 +32,10 @@ const mockFile = {
   storagePath: '/data/uploads/test-file.txt',
   content: null,
   ingestionStatus: FileIngestionStatus.PENDING,
+  retentionExpiresAt: null,
+  parentFileId: null,
+  isExtracted: false,
+  extractionMetadata: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -49,20 +54,27 @@ const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
   publish: jest.fn().mockResolvedValue(void 0),
 });
 
+const mockZipExpansion = (): Partial<Record<keyof ZipExpansionManager, jest.Mock>> => ({
+  expandArchive: jest.fn().mockResolvedValue(void 0),
+});
+
 describe('FileProcessingManager', () => {
   let manager: FileProcessingManager;
   let filesRepo: ReturnType<typeof mockFilesRepository>;
   let chunksRepo: ReturnType<typeof mockFileChunksRepository>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
+  let zipExpansion: ReturnType<typeof mockZipExpansion>;
 
   beforeEach(() => {
     filesRepo = mockFilesRepository();
     chunksRepo = mockFileChunksRepository();
     rabbitMQ = mockRabbitMQ();
+    zipExpansion = mockZipExpansion();
     manager = new FileProcessingManager(
       filesRepo as unknown as FilesRepository,
       chunksRepo as unknown as FileChunksRepository,
       rabbitMQ as unknown as RabbitMQService,
+      zipExpansion as unknown as ZipExpansionManager,
     );
   });
 

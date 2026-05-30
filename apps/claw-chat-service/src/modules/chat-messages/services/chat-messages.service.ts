@@ -300,7 +300,9 @@ export class ChatMessagesService implements OnModuleInit {
   // can be unit-tested in isolation. Research is gated by BOTH the plan-level
   // allowResearchMode flag AND the RESEARCH_USE permission (USER_DEFAULT
   // grants RESEARCH_USE so the default unblocks the dropdown once the plan
-  // unlocks it).
+  // unlocks it). Compare itself is gated by BOTH the plan-level
+  // allowCompareMode flag AND the COMPARE_USE permission (parallel here with
+  // research). Judge runs additionally require JUDGE_USE.
   private async assertCompareAccess(userId: string, dto: ParallelMessageDto): Promise<void> {
     const features: PlanFeature[] = ['allowCompareMode'];
     if (dto.judgeEnabled === true) {
@@ -317,6 +319,17 @@ export class ChatMessagesService implements OnModuleInit {
       features.push('allowResearchMode');
     }
     await this.accessControlService.assertCanSendMessage(userId, { requireFeature: features });
+    // Backend-enforced RBAC permission gates. Frontend route guards already
+    // hide the entry points; this is defense-in-depth so a direct API call
+    // (curl, scripts, a custom client) cannot bypass the matrix.
+    await this.accessControlService.assertCanSendMessage(userId, {
+      requirePermission: Permission.COMPARE_USE,
+    });
+    if (dto.judgeEnabled === true) {
+      await this.accessControlService.assertCanSendMessage(userId, {
+        requirePermission: Permission.JUDGE_USE,
+      });
+    }
     if (dto.researchMode !== undefined && dto.researchMode !== ResearchMode.NONE) {
       await this.accessControlService.assertCanSendMessage(userId, {
         requirePermission: Permission.RESEARCH_USE,
@@ -324,10 +337,7 @@ export class ChatMessagesService implements OnModuleInit {
     }
   }
 
-  private async resolveCompareThread(
-    userId: string,
-    dto: ParallelMessageDto,
-  ): Promise<ChatThread> {
+  private async resolveCompareThread(userId: string, dto: ParallelMessageDto): Promise<ChatThread> {
     if (dto.threadId && dto.threadId.length > 0) {
       return this.getThreadForMessage(dto.threadId, userId);
     }
@@ -409,6 +419,10 @@ export class ChatMessagesService implements OnModuleInit {
     // verification is a judge-driven critique loop. ADMIN bypasses.
     await this.accessControlService.assertCanSendMessage(userId, {
       requireFeature: 'allowJudgeMode',
+    });
+    // Backend-enforced RBAC permission gate parallel to the compare path.
+    await this.accessControlService.assertCanSendMessage(userId, {
+      requirePermission: Permission.JUDGE_USE,
     });
     return this.verifierManager.executeVerify(userId, dto);
   }

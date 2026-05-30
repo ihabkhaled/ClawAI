@@ -21,6 +21,7 @@ import {
   JUDGE_REFEREE_AUTO_CATEGORIES,
   JUDGE_SYSTEM_PROMPT,
 } from '../constants/judge-referee.constants';
+import { AccessControlService } from '../services/access-control.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type { AssembledContext } from '../types/context.types';
 import type { LlmResponse, MessageRoutedData, ThreadSettings } from '../types/execution.types';
@@ -46,6 +47,10 @@ export class JudgeRefereeManager {
   constructor(
     private readonly chatStreamService: ChatStreamService,
     private readonly localModelSelection?: LocalModelSelectionService,
+    // Optional so legacy tests that construct the manager with two args keep
+    // compiling; supplied by the Nest DI container in production where the
+    // plan-feature defense-in-depth gate must fire before any critic LLM call.
+    private readonly accessControlService?: AccessControlService,
   ) {}
 
   private executionManager: ChatExecutionManager | null = null;
@@ -197,6 +202,14 @@ export class JudgeRefereeManager {
     try {
       if (!this.executionManager) {
         throw new Error('ExecutionManager not set');
+      }
+      // Defense-in-depth — re-assert the plan-feature gate right before the
+      // critic LLM is invoked. The service-boundary check
+      // (assertCompareAccess) already ran for the user-facing request; this
+      // catches any future code path that bypasses the boundary. Skipped if
+      // no userId was supplied (legacy tests / callers).
+      if (config.userId !== undefined && this.accessControlService) {
+        await this.accessControlService.assertCanUseCritic(config.userId);
       }
       const criticResponse = await this.executionManager.callProvider(
         criticModel.provider,
@@ -380,7 +393,7 @@ export class JudgeRefereeManager {
     // attachments accurately per-model rather than via the provider heuristic.
     // For now we pass `undefined`; the heuristic in file-delivery.utility
     // remains in force.
-    const entries = buildFileDeliveryEntries(files, provider, model, undefined);
+    const entries = buildFileDeliveryEntries(files, provider, model);
     return {
       manifestBlock: buildAttachedFilesManifest(files),
       perLaneDelivery: buildLaneDeliverySummary(entries),

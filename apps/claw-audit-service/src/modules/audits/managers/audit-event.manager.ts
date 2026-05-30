@@ -26,8 +26,10 @@ import {
   type ConnectorSyncedPayload,
   type ConnectorUpdatedPayload,
   EventPattern,
+  type FileArchiveExpandedPayload,
   type FileChunkedPayload,
   type FileFailedPayload,
+  type FileRetentionExpiredPayload,
   type FileUploadedPayload,
   type MemoryExtractedPayload,
   type MessageCompletedPayload,
@@ -73,6 +75,14 @@ export class AuditEventManager implements OnModuleInit {
       [EventPattern.FILE_UPLOADED, (d) => this.handleFileUploaded(d as FileUploadedPayload)],
       [EventPattern.FILE_CHUNKED, (d) => this.handleFileChunked(d as FileChunkedPayload)],
       [EventPattern.FILE_FAILED, (d) => this.handleFileFailed(d as FileFailedPayload)],
+      [
+        EventPattern.FILE_RETENTION_EXPIRED,
+        (d) => this.handleFileRetentionExpired(d as FileRetentionExpiredPayload),
+      ],
+      [
+        EventPattern.FILE_ARCHIVE_EXPANDED,
+        (d) => this.handleFileArchiveExpanded(d as FileArchiveExpandedPayload),
+      ],
     ];
   }
 
@@ -774,6 +784,65 @@ export class AuditEventManager implements OnModuleInit {
         `handleFileFailed: failed fileId=${payload.fileId} — ${(error as Error).message}`,
       );
       throw error;
+    }
+  }
+
+  // Slice C backend 2 — ZIP archive expansion.
+  // Persists a `file.archive_expanded` audit row when an archive is fully
+  // onboarded (or partially onboarded, if some entries were rejected by the
+  // per-entry security pipeline). Severity is LOW because the action is a
+  // routine ingestion outcome — security rejections of unsafe entries are
+  // surfaced via their own `file.failed` events.
+  async handleFileArchiveExpanded(payload: FileArchiveExpandedPayload): Promise<void> {
+    this.logger.debug(
+      `handleFileArchiveExpanded: parentFileId=${payload.parentFileId} children=${String(payload.childFileCount)}`,
+    );
+    try {
+      await this.auditsService.createAuditLog({
+        userId: payload.userId,
+        action: 'file.archive_expanded',
+        entityType: 'file',
+        entityId: payload.parentFileId,
+        severity: 'LOW',
+        details: {
+          parentFilename: payload.parentFilename,
+          childFileCount: payload.childFileCount,
+          totalExtractedBytes: payload.totalExtractedBytes,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `handleFileArchiveExpanded: failed parentFileId=${payload.parentFileId} — ${(error as Error).message}`,
+      );
+      throw error;
+    }
+  }
+
+  // Slice C foundation 3 — retention sweeper reaped a file. Recorded as a
+  // LOW-severity audit so the per-user "what happened to my old uploads?"
+  // audit trail stays intact. DO NOT rethrow on failure — the sweeper has
+  // already deleted disk + DB; rethrowing here would only DLQ the message.
+  async handleFileRetentionExpired(payload: FileRetentionExpiredPayload): Promise<void> {
+    this.logger.debug(
+      `handleFileRetentionExpired: recording expiry fileId=${payload.fileId} userId=${payload.userId}`,
+    );
+    try {
+      await this.auditsService.createAuditLog({
+        userId: payload.userId,
+        action: 'file.retention_expired',
+        entityType: 'file',
+        entityId: payload.fileId,
+        severity: 'LOW',
+        details: {
+          filename: payload.filename,
+          retentionExpiresAt: payload.retentionExpiresAt,
+          sizeBytes: payload.sizeBytes,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `handleFileRetentionExpired: failed fileId=${payload.fileId} — ${(error as Error).message}`,
+      );
     }
   }
 }

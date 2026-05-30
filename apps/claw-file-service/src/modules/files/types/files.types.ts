@@ -7,6 +7,10 @@ export interface CreateFileData {
   sizeBytes: number;
   storagePath: string;
   content?: string | null;
+  // Slice C foundation 3 — file retention sweeper.
+  // When non-null, the retention sweeper will delete this file's row + on-disk
+  // contents once the configured retention window elapses. null/undefined = keep forever.
+  retentionExpiresAt?: Date | null;
 }
 
 export interface FileFilters {
@@ -82,6 +86,9 @@ export const ALLOWED_MIME_TYPES = [
   'image/webp',
   'image/gif',
   'image/svg+xml',
+  // Archives (expanded server-side via ZipExpansionManager — Slice C backend 2)
+  'application/zip',
+  'application/x-zip-compressed',
 ] as const;
 
 export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB

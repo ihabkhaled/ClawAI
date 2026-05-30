@@ -560,6 +560,16 @@ export const hi: TranslationDictionary = {
     statusProcessing: 'प्रसंस्करण',
     statusCompleted: 'पूर्ण',
     statusFailed: 'विफल',
+    zip: {
+      bombRejected: 'संग्रह अस्वीकृत: संदिग्ध संपीड़न अनुपात का पता चला',
+    },
+    retention: {
+      expired: 'फ़ाइल की अवधि समाप्त हो गई और प्रतिधारण नीति द्वारा हटा दी गई',
+    },
+    permissions: {
+      denied:
+        'आपको फ़ाइलों तक पहुँचने की अनुमति नहीं है। अपने वर्कस्पेस व्यवस्थापक से संपर्क करें।',
+    },
   },
   context: {
     title: 'कॉन्टेक्स्ट पैक',

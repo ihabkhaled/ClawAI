@@ -310,40 +310,41 @@ Use the `fetch` API with `ReadableStream` to consume SSE streams instead of the 
 
 ## ADR Summary Table
 
-| ID  | Decision                     | Status   | Key Driver                                                 |
-| --- | ---------------------------- | -------- | ---------------------------------------------------------- |
-| 001 | Microservices (17 services)  | Accepted | Failure isolation, independent deployment                  |
-| 002 | PostgreSQL per service       | Accepted | Data isolation, independent schemas                        |
-| 003 | RabbitMQ for async           | Accepted | Reliability, retry/DLQ, decoupling                         |
-| 004 | Ollama local AI              | Accepted | Privacy, cost, routing independence                        |
-| 005 | Zod over class-validator     | Accepted | Type inference, composability                              |
-| 006 | Event-driven routing         | Accepted | Decoupling, auditability                                   |
-| 007 | SSE over WebSocket           | Accepted | Simplicity, HTTP compatibility                             |
-| 008 | Nginx reverse proxy          | Accepted | Single entry point, SSE support                            |
-| 009 | npm workspaces monorepo      | Accepted | Shared code, atomic changes                                |
-| 010 | fetch-based SSE              | Accepted | Auth header support                                        |
-| 018 | Universal webhook receiver   | Accepted | One signed entry-point per provider                        |
-| 019 | Auto-suggest scheduler       | Accepted | Cron + advisory locks across replicas                      |
-| 020 | Suggestion factory pipeline  | Accepted | Single entry-point for events → queue                      |
-| 021 | Write-action adapter pattern | Accepted | Uniform `executeWriteAction` per adapter                   |
-| 022 | HTML email sanitisation      | Accepted | DOMPurify + iframe sandbox; service-token /upload-internal |
-| 023 | Calendar providers           | Accepted | GoogleCalendar + OutlookCalendar adapters; MEETING object  |
-| 024 | Inbox + pgvector search      | Accepted | Cross-provider inbox + memory-service embeddings table     |
-| 025 | Digest dashboard             | Accepted | Hourly cron + advisory lock + Intl.DateTimeFormat tz match |
-| 026 | User-pref intersection       | Accepted | Most-restrictive-wins (admin > user)                       |
-| 027 | Memory learning loop         | Accepted | Heuristic v1; LLM classifier v1.x                          |
-| 028 | IMPL_PROMPT handoff          | Accepted | Workspace ↔ chat/agent bridge with secret scanner          |
-| 029 | Capability framework         | Accepted | Generalises agent + workspace approvals                    |
-| 040 | Router model registry        | Accepted | Canonical model identity store (Phase 1)                   |
-| 041 | Cost confidence annotation   | Accepted | EXACT/ESTIMATED/UNKNOWN; uncertainty penalty               |
-| 042 | RoutingDecisionV2 Zod schema | Accepted | Strict output contract for the router (Phase 7)            |
-| 043 | Route-only contract          | Accepted | Filter router-only models before scoring                   |
-| 044 | Learned scores split table   | Accepted | Per-(profile, domain, taskFamily) bounded updates          |
-| 045 | Persisted circuit breakers   | Accepted | DB-backed; survives container restart                      |
-| 046 | Simulator same code path     | Accepted | Phase 13 dry-run uses production evaluator                 |
-| 047 | 14-dim scoring weights       | Accepted | Per-RoutingMode weight vectors sum to 1                    |
-| 048 | Workflow vs. model decision  | Accepted | Workflow selection inside router (Phase 9)                 |
-| 049 | Local TLS everywhere (mkcert)| Accepted | One install command, end-to-end HTTPS incl. service-to-service |
-| 050 | Critic as sibling plan feature of Judge | Accepted | `allowCriticReview` flag + user-selectable critic model + parse-failed marker |
-| 051 | Narrow workspace VIEW + CONNECT permissions for USER | Accepted | `WORKSPACE_VIEW` + `WORKSPACE_APP_CONFIG_VIEW`; partial-relax over admin-only |
+| ID  | Decision                                                      | Status   | Key Driver                                                                    |
+| --- | ------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------- |
+| 001 | Microservices (17 services)                                   | Accepted | Failure isolation, independent deployment                                     |
+| 002 | PostgreSQL per service                                        | Accepted | Data isolation, independent schemas                                           |
+| 003 | RabbitMQ for async                                            | Accepted | Reliability, retry/DLQ, decoupling                                            |
+| 004 | Ollama local AI                                               | Accepted | Privacy, cost, routing independence                                           |
+| 005 | Zod over class-validator                                      | Accepted | Type inference, composability                                                 |
+| 006 | Event-driven routing                                          | Accepted | Decoupling, auditability                                                      |
+| 007 | SSE over WebSocket                                            | Accepted | Simplicity, HTTP compatibility                                                |
+| 008 | Nginx reverse proxy                                           | Accepted | Single entry point, SSE support                                               |
+| 009 | npm workspaces monorepo                                       | Accepted | Shared code, atomic changes                                                   |
+| 010 | fetch-based SSE                                               | Accepted | Auth header support                                                           |
+| 018 | Universal webhook receiver                                    | Accepted | One signed entry-point per provider                                           |
+| 019 | Auto-suggest scheduler                                        | Accepted | Cron + advisory locks across replicas                                         |
+| 020 | Suggestion factory pipeline                                   | Accepted | Single entry-point for events → queue                                         |
+| 021 | Write-action adapter pattern                                  | Accepted | Uniform `executeWriteAction` per adapter                                      |
+| 022 | HTML email sanitisation                                       | Accepted | DOMPurify + iframe sandbox; service-token /upload-internal                    |
+| 023 | Calendar providers                                            | Accepted | GoogleCalendar + OutlookCalendar adapters; MEETING object                     |
+| 024 | Inbox + pgvector search                                       | Accepted | Cross-provider inbox + memory-service embeddings table                        |
+| 025 | Digest dashboard                                              | Accepted | Hourly cron + advisory lock + Intl.DateTimeFormat tz match                    |
+| 026 | User-pref intersection                                        | Accepted | Most-restrictive-wins (admin > user)                                          |
+| 027 | Memory learning loop                                          | Accepted | Heuristic v1; LLM classifier v1.x                                             |
+| 028 | IMPL_PROMPT handoff                                           | Accepted | Workspace ↔ chat/agent bridge with secret scanner                             |
+| 029 | Capability framework                                          | Accepted | Generalises agent + workspace approvals                                       |
+| 040 | Router model registry                                         | Accepted | Canonical model identity store (Phase 1)                                      |
+| 041 | Cost confidence annotation                                    | Accepted | EXACT/ESTIMATED/UNKNOWN; uncertainty penalty                                  |
+| 042 | RoutingDecisionV2 Zod schema                                  | Accepted | Strict output contract for the router (Phase 7)                               |
+| 043 | Route-only contract                                           | Accepted | Filter router-only models before scoring                                      |
+| 044 | Learned scores split table                                    | Accepted | Per-(profile, domain, taskFamily) bounded updates                             |
+| 045 | Persisted circuit breakers                                    | Accepted | DB-backed; survives container restart                                         |
+| 046 | Simulator same code path                                      | Accepted | Phase 13 dry-run uses production evaluator                                    |
+| 047 | 14-dim scoring weights                                        | Accepted | Per-RoutingMode weight vectors sum to 1                                       |
+| 048 | Workflow vs. model decision                                   | Accepted | Workflow selection inside router (Phase 9)                                    |
+| 049 | Local TLS everywhere (mkcert)                                 | Accepted | One install command, end-to-end HTTPS incl. service-to-service                |
+| 050 | Critic as sibling plan feature of Judge                       | Accepted | `allowCriticReview` flag + user-selectable critic model + parse-failed marker |
+| 051 | Narrow workspace VIEW + CONNECT permissions for USER          | Accepted | `WORKSPACE_VIEW` + `WORKSPACE_APP_CONFIG_VIEW`; partial-relax over admin-only |
 | 052 | Shared `RichPromptTextarea` + `use-sticky-bottom-scroll` hook | Accepted | One autosize textarea everywhere; one auto-follow scroll behaviour everywhere |
+| 053 | File retention sweeper + ZIP archive guardrails               | Accepted | Nightly cron sweep + 4 ZIP bomb hard caps + tmpfs sandbox                     |

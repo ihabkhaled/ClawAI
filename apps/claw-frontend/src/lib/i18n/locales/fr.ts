@@ -563,6 +563,16 @@ export const fr: TranslationDictionary = {
     statusProcessing: 'Traitement',
     statusCompleted: 'Terminé',
     statusFailed: 'Échec',
+    zip: {
+      bombRejected: 'Archive rejetée : taux de compression suspect détecté',
+    },
+    retention: {
+      expired: 'Le fichier a expiré et a été supprimé par la politique de rétention',
+    },
+    permissions: {
+      denied:
+        "Vous n'avez pas l'autorisation d'accéder aux fichiers. Contactez l'administrateur de votre espace de travail.",
+    },
   },
   context: {
     title: 'Packs de contexte',
@@ -3120,7 +3130,8 @@ export const fr: TranslationDictionary = {
     },
     diagnostics: {
       title: 'Diagnostic du runtime',
-      description: 'Sondez les runtimes IA locaux, inspectez les modèles installés et passez en revue les événements récents.',
+      description:
+        'Sondez les runtimes IA locaux, inspectez les modèles installés et passez en revue les événements récents.',
       refreshAll: 'Tout actualiser',
       refresh: 'Actualiser',
       loading: 'Sondage du runtime…',

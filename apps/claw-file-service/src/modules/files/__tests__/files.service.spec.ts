@@ -13,6 +13,17 @@ jest.mock('../../../common/utilities', () => ({
   readFile: jest.fn().mockReturnValue(Buffer.from('test content')),
 }));
 
+// Slice C foundation 3 — mock AppConfig so computeRetentionExpiry()
+// inside uploadFile/createTextFile/uploadFileWithSecurity does not hit
+// the Zod env validator in unit tests (no FILES_DATABASE_URL etc. needed).
+jest.mock('../../../app/config/app.config', () => ({
+  AppConfig: {
+    get: jest.fn(() => ({
+      FILE_RETENTION_DAYS: 0,
+    })),
+  },
+}));
+
 const mockFile = {
   id: 'file-1',
   userId: 'user-1',
@@ -54,6 +65,10 @@ const mockFilesRepository = (): Record<keyof FilesRepository, jest.Mock> => ({
   updateIngestionStatus: jest.fn(),
   delete: jest.fn(),
   countAll: jest.fn(),
+  findExpiredBefore: jest.fn(),
+  deleteById: jest.fn(),
+  markAsExtractedChild: jest.fn(),
+  recordExtractionMetadata: jest.fn(),
 });
 
 const mockFileChunksRepository = (): Record<keyof FileChunksRepository, jest.Mock> => ({

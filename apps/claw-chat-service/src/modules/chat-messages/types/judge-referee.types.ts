@@ -123,9 +123,17 @@ export type JudgeRefereeConfig = {
   // User-selected critic configuration. When `criticEnabled` is true, the
   // critic LLM is invoked using `criticModel` instead of the legacy hardcoded
   // CRITIC_CLOUD_MODELS pick. Plan-feature gating (allowCriticReview) is
-  // enforced upstream in AccessControlService; this type stays neutral.
+  // enforced upstream in AccessControlService at the service boundary, and a
+  // defense-in-depth re-check fires inside the manager right before the
+  // critic LLM call when `userId` is supplied (slice C backend 3).
   criticEnabled?: boolean;
   criticModel?: string | null;
+  // Caller user id, supplied so the manager can run a defense-in-depth
+  // assertCanUseCritic check before the critic LLM call. Optional for
+  // backward compatibility with legacy call sites and tests that pre-date
+  // the gate; when undefined the in-manager check is skipped (the upstream
+  // service-boundary gate remains the source of truth).
+  userId?: string;
 };
 
 export type JudgeRefereeMetadata = {

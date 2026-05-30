@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
+import { EntitlementsModule, PermissionGuard } from '@claw/shared-entitlements';
 import type { IncomingMessage } from 'node:http';
 
+import { AppConfig } from './config/app.config';
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
 
@@ -52,12 +55,16 @@ import { HealthModule } from '../modules/health/health.module';
     }),
     PrismaModule,
     RedisModule,
+    ScheduleModule.forRoot(),
     FilesModule,
     HealthModule,
-    ThrottlerModule.forRoot([{
-      ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
-      limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
-    }]),
+    EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
+        limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
+      },
+    ]),
   ],
   providers: [
     {
@@ -71,6 +78,10 @@ import { HealthModule } from '../modules/health/health.module';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useExisting: PermissionGuard,
     },
     {
       provide: APP_INTERCEPTOR,

@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, Query, Res } from '@nestjs/common';
 import { type Response } from 'express';
+import { Permission } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 import { type File, type FileChunk } from '../../../generated/prisma';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
@@ -8,7 +10,11 @@ import { FilesService } from '../services/files.service';
 import { type UploadFileDto, uploadFileSchema } from '../dto/upload-file.dto';
 import { type ListFilesQueryDto, listFilesQuerySchema } from '../dto/list-files-query.dto';
 
+// Slice C backend 3 — all user-facing file endpoints require FILES_USE.
+// Internal service-to-service routes live in FilesInternalController and stay
+// guarded by ServiceTokenGuard (no plan/permission gate there).
 @Controller('files')
+@RequirePermissions(Permission.FILES_USE)
 export class FilesController {
   constructor(private readonly filesService: FilesService) {}
 

@@ -564,6 +564,16 @@ export const de: TranslationDictionary = {
     statusProcessing: 'Wird verarbeitet',
     statusCompleted: 'Abgeschlossen',
     statusFailed: 'Fehlgeschlagen',
+    zip: {
+      bombRejected: 'Archiv abgelehnt: verdächtiges Komprimierungsverhältnis erkannt',
+    },
+    retention: {
+      expired: 'Datei ist abgelaufen und wurde durch die Aufbewahrungsrichtlinie entfernt',
+    },
+    permissions: {
+      denied:
+        'Sie haben keine Berechtigung, auf Dateien zuzugreifen. Wenden Sie sich an Ihren Workspace-Administrator.',
+    },
   },
   context: {
     title: 'Kontext-Packs',
@@ -3108,7 +3118,8 @@ export const de: TranslationDictionary = {
     },
     diagnostics: {
       title: 'Laufzeitdiagnose',
-      description: 'Lokale KI-Laufzeiten prüfen, installierte Modelle einsehen und letzte Ereignisse durchgehen.',
+      description:
+        'Lokale KI-Laufzeiten prüfen, installierte Modelle einsehen und letzte Ereignisse durchgehen.',
       refreshAll: 'Alle aktualisieren',
       refresh: 'Aktualisieren',
       loading: 'Laufzeit wird geprüft…',

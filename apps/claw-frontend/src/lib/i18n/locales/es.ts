@@ -560,6 +560,16 @@ export const es: TranslationDictionary = {
     statusProcessing: 'Procesando',
     statusCompleted: 'Completado',
     statusFailed: 'Fallido',
+    zip: {
+      bombRejected: 'Archivo rechazado: se detectó una proporción de compresión sospechosa',
+    },
+    retention: {
+      expired: 'El archivo caducó y fue eliminado por la política de retención',
+    },
+    permissions: {
+      denied:
+        'No tienes permiso para acceder a los archivos. Contacta con el administrador de tu espacio de trabajo.',
+    },
   },
   context: {
     title: 'Paquetes de contexto',
@@ -3110,7 +3120,8 @@ export const es: TranslationDictionary = {
     },
     diagnostics: {
       title: 'Diagnóstico de runtime',
-      description: 'Sondea los runtimes de IA locales, inspecciona los modelos instalados y revisa los eventos recientes.',
+      description:
+        'Sondea los runtimes de IA locales, inspecciona los modelos instalados y revisa los eventos recientes.',
       refreshAll: 'Actualizar todo',
       refresh: 'Actualizar',
       loading: 'Sondeando runtime…',

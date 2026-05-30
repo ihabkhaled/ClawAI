@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import {
   EventPattern,
   type FileChunkedPayload,
-  FileIngestionStatus as SharedFileIngestionStatus,
   type FileFailedPayload,
+  FileIngestionStatus as SharedFileIngestionStatus,
 } from '@claw/shared-types';
 import { type File, FileIngestionStatus } from '../../../generated/prisma';
 import { readFile } from '../../../common/utilities';
@@ -18,6 +18,8 @@ import {
   MIME_TYPE_PDF,
   MIME_TYPE_XLSX,
 } from '../constants/file-processing.constants';
+import { ZIP_MIME_TYPES } from '../constants/zip-expansion.constants';
+import { ZipExpansionManager } from './zip-expansion.manager';
 
 @Injectable()
 export class FileProcessingManager {
@@ -27,10 +29,19 @@ export class FileProcessingManager {
     private readonly filesRepository: FilesRepository,
     private readonly fileChunksRepository: FileChunksRepository,
     private readonly rabbitMQService: RabbitMQService,
+    @Inject(forwardRef(() => ZipExpansionManager))
+    private readonly zipExpansionManager: ZipExpansionManager,
   ) {}
 
   async processFile(file: File): Promise<void> {
     this.logger.log(`processFile: starting processing for file ${file.id} (${file.mimeType})`);
+
+    if (ZIP_MIME_TYPES.includes(file.mimeType)) {
+      this.logger.debug(`processFile: routing fileId=${file.id} to ZipExpansionManager`);
+      await this.zipExpansionManager.expandArchive(file);
+      return;
+    }
+
     await this.updateIngestionStatus(file.id, FileIngestionStatus.PROCESSING);
 
     try {

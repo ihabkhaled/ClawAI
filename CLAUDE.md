@@ -576,83 +576,83 @@ Mitigations (in priority order):
 
 Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 
-| Event                                 | Publisher    | Consumers                |
-| ------------------------------------- | ------------ | ------------------------ |
-| message.created                       | chat         | routing                  |
-| message.routed                        | routing      | chat                     |
-| message.completed                     | chat         | audit, memory            |
-| thread.created                        | chat         | —                        |
-| user.login/logout                     | auth         | audit                    |
-| connector.created/updated/deleted     | connector    | audit                    |
-| connector.synced                      | connector    | audit, routing           |
-| connector.health_checked              | connector    | audit, routing           |
-| routing.decision_made                 | routing      | audit                    |
-| memory.extracted                      | memory       | audit                    |
-| memory.suggested                      | memory       | audit                    |
-| memory.approved                       | memory       | audit                    |
-| memory.rejected                       | memory       | audit                    |
-| memory.used                           | memory       | audit                    |
-| memory.forgotten                      | memory       | audit                    |
-| memory.paused                         | memory       | audit                    |
-| memory.redacted                       | memory       | audit                    |
-| context_pack.created                  | memory       | audit                    |
-| context_pack.updated                  | memory       | audit                    |
-| context_pack.deleted                  | memory       | audit                    |
-| context_pack.attached                 | memory       | audit                    |
-| context_pack.detached                 | memory       | audit                    |
-| context_pack.used                     | memory       | audit                    |
-| context_pack.version_created          | memory       | audit                    |
-| context_pack.version_reverted         | memory       | audit                    |
-| context_pack.shared                   | memory       | audit                    |
-| context.receipt_written               | chat         | audit                    |
-| chat_thread.memory_toggled            | chat         | audit                    |
-| chat_thread.context_toggled           | chat         | audit                    |
-| file.uploaded/chunked                 | file         | —                        |
-| log.server                            | all services | server-logs              |
-| image.generated                       | image        | audit                    |
-| image.failed                          | image        | audit                    |
-| file.generated                        | file-gen     | audit                    |
-| file_generation.failed                | file-gen     | audit                    |
-| agent.session.connected               | agent        | audit                    |
-| agent.session.disconnected            | agent        | audit                    |
-| agent.device_paired                   | agent        | audit                    |
-| agent.device_revoked                  | agent        | audit                    |
-| agent.token_rotated                   | agent        | audit                    |
-| agent.token_reuse_detected            | agent        | audit                    |
-| agent.policy_violated                 | agent        | audit                    |
-| agent.capability.proposed             | agent        | audit                    |
-| agent.capability.policy_matched       | agent        | audit                    |
-| agent.capability.auto_approved        | agent        | audit, capability-runner |
-| agent.capability.approved             | agent        | audit, capability-runner |
-| agent.capability.rejected             | agent        | audit                    |
-| agent.capability.executing            | agent        | audit                    |
-| agent.capability.executed             | agent        | audit                    |
-| agent.capability.failed               | agent        | audit                    |
-| agent.capability.cancelled            | agent        | audit                    |
-| agent.capability.expired              | agent        | audit                    |
-| agent.capability.rolled_back          | agent        | audit                    |
-| agent.capability.denied               | agent        | audit                    |
-| workspace.sync.run_started            | workspace    | audit                    |
-| workspace.sync.run_completed          | workspace    | audit                    |
-| workspace.sync.run_failed             | workspace    | audit                    |
-| workspace.sync.stale_detected         | workspace    | audit                    |
-| workspace.sync.manual_triggered       | workspace    | audit                    |
-| workspace.sync.paused                 | workspace    | audit                    |
-| workspace.sync.resumed                | workspace    | audit                    |
-| workspace.sync.rate_limited           | workspace    | audit                    |
-| workspace.sync.dlq_sent               | workspace    | audit                    |
-| llamacpp.binary.installed             | llamacpp     | audit                    |
-| llamacpp.binary.updated               | llamacpp     | audit                    |
-| llamacpp.pull.started                 | llamacpp     | audit                    |
-| llamacpp.pull.progress                | llamacpp     | audit                    |
-| llamacpp.pull.completed               | llamacpp     | audit                    |
-| llamacpp.pull.failed                  | llamacpp     | audit                    |
-| llamacpp.model.loaded                 | llamacpp     | audit, routing           |
-| llamacpp.model.unloaded               | llamacpp     | audit, routing           |
-| llamacpp.model.crashed                | llamacpp     | audit, routing           |
-| llamacpp.weights.deleted              | llamacpp     | audit                    |
-| llamacpp.preflight.overridden         | llamacpp     | audit                    |
-| routing.models.synced                 | routing      | audit                    |
+| Event                                 | Publisher                          | Consumers                |
+| ------------------------------------- | ---------------------------------- | ------------------------ |
+| message.created                       | chat                               | routing                  |
+| message.routed                        | routing                            | chat                     |
+| message.completed                     | chat                               | audit, memory            |
+| thread.created                        | chat                               | —                        |
+| user.login/logout                     | auth                               | audit                    |
+| connector.created/updated/deleted     | connector                          | audit                    |
+| connector.synced                      | connector                          | audit, routing           |
+| connector.health_checked              | connector                          | audit, routing           |
+| routing.decision_made                 | routing                            | audit                    |
+| memory.extracted                      | memory                             | audit                    |
+| memory.suggested                      | memory                             | audit                    |
+| memory.approved                       | memory                             | audit                    |
+| memory.rejected                       | memory                             | audit                    |
+| memory.used                           | memory                             | audit                    |
+| memory.forgotten                      | memory                             | audit                    |
+| memory.paused                         | memory                             | audit                    |
+| memory.redacted                       | memory                             | audit                    |
+| context_pack.created                  | memory                             | audit                    |
+| context_pack.updated                  | memory                             | audit                    |
+| context_pack.deleted                  | memory                             | audit                    |
+| context_pack.attached                 | memory                             | audit                    |
+| context_pack.detached                 | memory                             | audit                    |
+| context_pack.used                     | memory                             | audit                    |
+| context_pack.version_created          | memory                             | audit                    |
+| context_pack.version_reverted         | memory                             | audit                    |
+| context_pack.shared                   | memory                             | audit                    |
+| context.receipt_written               | chat                               | audit                    |
+| chat_thread.memory_toggled            | chat                               | audit                    |
+| chat_thread.context_toggled           | chat                               | audit                    |
+| file.uploaded/chunked                 | file                               | —                        |
+| log.server                            | all services                       | server-logs              |
+| image.generated                       | image                              | audit                    |
+| image.failed                          | image                              | audit                    |
+| file.generated                        | file-gen                           | audit                    |
+| file_generation.failed                | file-gen                           | audit                    |
+| agent.session.connected               | agent                              | audit                    |
+| agent.session.disconnected            | agent                              | audit                    |
+| agent.device_paired                   | agent                              | audit                    |
+| agent.device_revoked                  | agent                              | audit                    |
+| agent.token_rotated                   | agent                              | audit                    |
+| agent.token_reuse_detected            | agent                              | audit                    |
+| agent.policy_violated                 | agent                              | audit                    |
+| agent.capability.proposed             | agent                              | audit                    |
+| agent.capability.policy_matched       | agent                              | audit                    |
+| agent.capability.auto_approved        | agent                              | audit, capability-runner |
+| agent.capability.approved             | agent                              | audit, capability-runner |
+| agent.capability.rejected             | agent                              | audit                    |
+| agent.capability.executing            | agent                              | audit                    |
+| agent.capability.executed             | agent                              | audit                    |
+| agent.capability.failed               | agent                              | audit                    |
+| agent.capability.cancelled            | agent                              | audit                    |
+| agent.capability.expired              | agent                              | audit                    |
+| agent.capability.rolled_back          | agent                              | audit                    |
+| agent.capability.denied               | agent                              | audit                    |
+| workspace.sync.run_started            | workspace                          | audit                    |
+| workspace.sync.run_completed          | workspace                          | audit                    |
+| workspace.sync.run_failed             | workspace                          | audit                    |
+| workspace.sync.stale_detected         | workspace                          | audit                    |
+| workspace.sync.manual_triggered       | workspace                          | audit                    |
+| workspace.sync.paused                 | workspace                          | audit                    |
+| workspace.sync.resumed                | workspace                          | audit                    |
+| workspace.sync.rate_limited           | workspace                          | audit                    |
+| workspace.sync.dlq_sent               | workspace                          | audit                    |
+| llamacpp.binary.installed             | llamacpp                           | audit                    |
+| llamacpp.binary.updated               | llamacpp                           | audit                    |
+| llamacpp.pull.started                 | llamacpp                           | audit                    |
+| llamacpp.pull.progress                | llamacpp                           | audit                    |
+| llamacpp.pull.completed               | llamacpp                           | audit                    |
+| llamacpp.pull.failed                  | llamacpp                           | audit                    |
+| llamacpp.model.loaded                 | llamacpp                           | audit, routing           |
+| llamacpp.model.unloaded               | llamacpp                           | audit, routing           |
+| llamacpp.model.crashed                | llamacpp                           | audit, routing           |
+| llamacpp.weights.deleted              | llamacpp                           | audit                    |
+| llamacpp.preflight.overridden         | llamacpp                           | audit                    |
+| routing.models.synced                 | routing                            | audit                    |
 | runtime.progress.stage_changed        | chat / image (declared, SSE today) | audit (planned)          |
 | runtime.progress.content_delta        | chat (declared, SSE today)         | audit (planned)          |
 | runtime.progress.reasoning_delta      | chat (declared, SSE today)         | audit (planned)          |
@@ -1929,9 +1929,16 @@ Full standards live in `docs/16-quality-engineering/`:
 
 ### Local Vision Attachments (LOCAL_ONLY / PRIVACY_FIRST)
 
-- Per-model vision: Ollama models default `supportsVision=false` unless name matches `OLLAMA_MULTIMODAL_MODEL_PATTERNS` (llava, bakllava, moondream, minicpm-v, cogvlm, llama3.2-vision, *-vision, *-multimodal).
+- Per-model vision: Ollama models default `supportsVision=false` unless name matches `OLLAMA_MULTIMODAL_MODEL_PATTERNS` (llava, bakllava, moondream, minicpm-v, cogvlm, llama3.2-vision, _-vision, _-multimodal).
 - `LOCAL_ONLY` / `PRIVACY_FIRST` modes drop image attachments if no local vision model is installed (configurable via `ALLOW_LOCAL_ONLY_ATTACHMENTS_WITHOUT_VISION`). The user is warned with the `chat.localOnly.imagesDropped` i18n key.
 - Detection timeout is bounded by `LOCAL_VISION_MODEL_DETECTION_TIMEOUT_MS` (default 3000 ms); on timeout we treat the registry as having no vision model and warn the user instead of silently forwarding images to a text-only model.
+
+### File retention + ZIP archive guardrails (Slice C foundation 3)
+
+- The file-service runs a nightly retention sweep via NestJS `@nestjs/schedule` driven by `FILE_RETENTION_SWEEP_CRON` (default `'0 2 * * *'`). It deletes `File` + `FileChunk` rows older than `FILE_RETENTION_DAYS` (default 30) in batches of `FILE_RETENTION_SWEEP_BATCH_LIMIT` (default 100). Set `FILE_RETENTION_DAYS=0` to disable.
+- Cron-sweeper pattern: query expired rows → delete blob from disk → cascade-delete chunks via Prisma → delete `File` row → emit structured log per row with `requestId=retention-sweep-<runId>`. Failures to remove the blob are logged as `warn` but the DB row still goes — never leave orphan rows.
+- ZIP uploads validate against `ZIP_MAX_NESTING_DEPTH` (default 5), `ZIP_MAX_ENTRY_COUNT` (default 10000), `ZIP_COMPRESSION_RATIO_THRESHOLD` (default 1000), and `ZIP_MAX_EXTRACTED_SIZE_MB` (default 500) BEFORE extraction. Validation order is fixed; any violation surfaces `files.zip.bombRejected` to the user. Extraction sandbox `ZIP_TEMP_EXTRACTION_PATH` (default `/tmp/claw-zip-extraction`) is mounted as a 1 GB tmpfs in both dev + prod docker compose so a bomb attempt can never fill the host disk.
+- See `docs/04-backend/service-guide-file.md` and ADR `docs/13-adr/053-file-retention-and-zip-guardrails.md`.
 
 ---
 

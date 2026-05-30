@@ -113,6 +113,7 @@ export class ParallelExecutionManager {
         researchOptions,
       );
       const responses = await this.executeAllModels(
+        userId,
         models,
         enrichedContext,
         threadSettings,
@@ -240,6 +241,7 @@ export class ParallelExecutionManager {
   }
 
   private async executeAllModels(
+    userId: string,
     models: ParallelModelTarget[],
     context: AssembledContext,
     threadSettings: ThreadSettings | undefined,
@@ -268,6 +270,7 @@ export class ParallelExecutionManager {
     });
 
     return this.applyJudgeToResponses(
+      userId,
       baseResponses,
       context,
       threadSettings,
@@ -279,6 +282,7 @@ export class ParallelExecutionManager {
   }
 
   private async applyJudgeToResponses(
+    userId: string,
     responses: ParallelModelResponse[],
     context: AssembledContext,
     threadSettings: ThreadSettings | undefined,
@@ -317,6 +321,7 @@ export class ParallelExecutionManager {
         }
 
         return this.judgeSingleResponse(
+          userId,
           response,
           context,
           judgeThreadSettings,
@@ -332,6 +337,7 @@ export class ParallelExecutionManager {
   }
 
   private async judgeSingleResponse(
+    userId: string,
     response: ParallelModelResponse,
     context: AssembledContext,
     threadSettings: ThreadSettings | undefined,
@@ -366,6 +372,9 @@ export class ParallelExecutionManager {
           isLocalOnly: false,
           criticEnabled: criticConfig.enabled,
           criticModel: criticConfig.model,
+          // Threaded so JudgeRefereeManager can run the defense-in-depth
+          // assertCanUseCritic gate right before the critic LLM call.
+          userId,
         },
         {
           messageId: parallelGroupId,
@@ -403,12 +412,7 @@ export class ParallelExecutionManager {
     const judgeReview = this.judgeRefereeManager.buildMetadata(judgeResult).judgeReview;
     const state = this.resolveJudgeState(judgeResult, judgeReview, response.status);
     const judgeErrorState = this.resolveJudgeErrorState(judgeResult.judgeVerdict.fallbackState);
-    const finalContent =
-      state === CompareJudgeState.ESCALATED
-        ? (judgeResult.escalatedResponse?.content ?? response.content)
-        : state === CompareJudgeState.REVISED
-          ? (judgeResult.revisedResponse?.content ?? response.content)
-          : response.content;
+    const finalContent = this.resolveFinalContent(state, judgeResult, response);
 
     return {
       ...response,
@@ -426,6 +430,20 @@ export class ParallelExecutionManager {
       judgeTokenEstimated: judgeResult.tokenUsage?.estimated,
       judgeTokenSource: judgeResult.tokenUsage?.source,
     };
+  }
+
+  private resolveFinalContent(
+    state: CompareJudgeState,
+    judgeResult: JudgeRefereeResult,
+    response: ParallelModelResponse,
+  ): string {
+    if (state === CompareJudgeState.ESCALATED) {
+      return judgeResult.escalatedResponse?.content ?? response.content;
+    }
+    if (state === CompareJudgeState.REVISED) {
+      return judgeResult.revisedResponse?.content ?? response.content;
+    }
+    return response.content;
   }
 
   private resolveJudgeState(
@@ -557,7 +575,6 @@ export class ParallelExecutionManager {
         context.fileContents,
         llmResponse.provider,
         llmResponse.model,
-        undefined,
       );
 
       return {
@@ -594,7 +611,6 @@ export class ParallelExecutionManager {
         context.fileContents,
         target.provider,
         target.model,
-        undefined,
       );
       return failed;
     }

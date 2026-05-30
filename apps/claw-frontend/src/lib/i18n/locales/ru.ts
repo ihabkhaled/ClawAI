@@ -562,6 +562,16 @@ export const ru: TranslationDictionary = {
     statusProcessing: 'Обработка',
     statusCompleted: 'Завершено',
     statusFailed: 'Не удалось',
+    zip: {
+      bombRejected: 'Архив отклонён: обнаружен подозрительный коэффициент сжатия',
+    },
+    retention: {
+      expired: 'Срок хранения файла истёк, и он был удалён политикой хранения',
+    },
+    permissions: {
+      denied:
+        'У вас нет разрешения на доступ к файлам. Обратитесь к администратору вашего рабочего пространства.',
+    },
   },
   context: {
     title: 'Пакеты контекста',

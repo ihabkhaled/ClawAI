@@ -60,6 +60,21 @@ export class AccessControlService {
     this.assertFeatureEnabled(ent, feature, ent.userId);
   }
 
+  // Defense-in-depth gate fired from inside the judge-referee manager right
+  // before the critic LLM is invoked. The service-boundary gate
+  // (assertCompareAccess) already checks `allowCriticReview` — this second
+  // check ensures a future code path that bypasses the boundary (e.g. an
+  // internal helper, a re-run, a regression) still cannot run the critic
+  // without the plan unlock. Fail-OPEN on entitlement-service errors so an
+  // auth outage never breaks the compare lane.
+  async assertCanUseCritic(userId: string): Promise<void> {
+    const ent = await this.resolve(userId);
+    if (!ent) {
+      return; // fail-open
+    }
+    this.assertFeatureEnabled(ent, 'allowCriticReview', userId);
+  }
+
   private assertFeaturesEnabled(
     ent: UserEntitlements,
     features: PlanFeature | readonly PlanFeature[],
@@ -100,17 +115,11 @@ export class AccessControlService {
     }
   }
 
-  private assertFeatureEnabled(
-    ent: UserEntitlements,
-    feature: PlanFeature,
-    userId: string,
-  ): void {
+  private assertFeatureEnabled(ent: UserEntitlements, feature: PlanFeature, userId: string): void {
     if (hasPlanFeature(ent, feature)) {
       return;
     }
-    this.logger.warn(
-      `assertFeatureEnabled: plan feature locked user=${userId} feature=${feature}`,
-    );
+    this.logger.warn(`assertFeatureEnabled: plan feature locked user=${userId} feature=${feature}`);
     throw new BusinessException(
       'Feature not available on your plan',
       'PLAN_FEATURE_DISABLED',
@@ -152,9 +161,7 @@ export class AccessControlService {
     if (allowed) {
       return;
     }
-    this.logger.warn(
-      `assertCanSendMessage: forbidden model user=${userId} ${provider}/${model}`,
-    );
+    this.logger.warn(`assertCanSendMessage: forbidden model user=${userId} ${provider}/${model}`);
     throw new BusinessException(
       'The selected model is not available on your plan',
       'MODEL_NOT_ALLOWED_FOR_PLAN',

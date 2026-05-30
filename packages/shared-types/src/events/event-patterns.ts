@@ -17,6 +17,8 @@ export enum EventPattern {
   FILE_UPLOADED = 'file.uploaded',
   FILE_CHUNKED = 'file.chunked',
   FILE_FAILED = 'file.failed',
+  FILE_RETENTION_EXPIRED = 'file.retention_expired',
+  FILE_ARCHIVE_EXPANDED = 'file.archive_expanded',
   MEMORY_EXTRACTED = 'memory.extracted',
   AUDIT_EVENT = 'audit.event',
   HEALTH_CHECK = 'health.check',

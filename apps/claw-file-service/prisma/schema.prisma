@@ -15,21 +15,27 @@ enum FileIngestionStatus {
 }
 
 model File {
-  id              String              @id @default(cuid())
-  userId          String              @map("user_id")
-  filename        String
-  mimeType        String              @map("mime_type")
-  sizeBytes       Int                 @map("size_bytes")
-  storagePath     String              @map("storage_path")
-  content         String?             @map("content")
-  ingestionStatus FileIngestionStatus @default(COMPLETED) @map("ingestion_status")
-  createdAt       DateTime            @default(now()) @map("created_at")
-  updatedAt       DateTime            @updatedAt @map("updated_at")
+  id                  String              @id @default(cuid())
+  userId              String              @map("user_id")
+  filename            String
+  mimeType            String              @map("mime_type")
+  sizeBytes           Int                 @map("size_bytes")
+  storagePath         String              @map("storage_path")
+  content             String?             @map("content")
+  ingestionStatus     FileIngestionStatus @default(COMPLETED) @map("ingestion_status")
+  retentionExpiresAt  DateTime?           @map("retention_expires_at")
+  parentFileId        String?             @map("parent_file_id")
+  isExtracted         Boolean             @default(false) @map("is_extracted")
+  extractionMetadata  Json?               @map("extraction_metadata")
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
 
   chunks FileChunk[]
 
   @@index([userId])
   @@index([ingestionStatus])
+  @@index([retentionExpiresAt])
+  @@index([parentFileId])
   @@map("files")
 }
 

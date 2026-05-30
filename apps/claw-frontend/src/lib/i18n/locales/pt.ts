@@ -562,6 +562,16 @@ export const pt: TranslationDictionary = {
     statusProcessing: 'Processando',
     statusCompleted: 'Concluído',
     statusFailed: 'Falhou',
+    zip: {
+      bombRejected: 'Arquivo rejeitado: proporção de compressão suspeita detectada',
+    },
+    retention: {
+      expired: 'O arquivo expirou e foi removido pela política de retenção',
+    },
+    permissions: {
+      denied:
+        'Você não tem permissão para acessar arquivos. Entre em contato com o administrador do seu espaço de trabalho.',
+    },
   },
   context: {
     title: 'Pacotes de Contexto',

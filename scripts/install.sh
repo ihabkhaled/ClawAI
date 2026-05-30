@@ -912,6 +912,18 @@ RETRIEVAL_TOKEN_GUARD_PCT=0.4
 # =============================================================================
 FILE_STORAGE_PATH=/data/files
 
+# --- File retention (Slice C foundation 3) ---
+FILE_RETENTION_DAYS=30
+FILE_RETENTION_SWEEP_CRON='0 2 * * *'
+FILE_RETENTION_SWEEP_BATCH_LIMIT=100
+
+# --- ZIP archive expansion guardrails (Slice C foundation 3) ---
+ZIP_MAX_EXTRACTED_SIZE_MB=500
+ZIP_MAX_ENTRY_COUNT=10000
+ZIP_MAX_NESTING_DEPTH=5
+ZIP_COMPRESSION_RATIO_THRESHOLD=1000
+ZIP_TEMP_EXTRACTION_PATH=/tmp/claw-zip-extraction
+
 # =============================================================================
 # Inter-Service URLs
 # =============================================================================

@@ -564,6 +564,16 @@ export const it: TranslationDictionary = {
     statusProcessing: 'Elaborazione',
     statusCompleted: 'Completato',
     statusFailed: 'Fallito',
+    zip: {
+      bombRejected: 'Archivio rifiutato: rilevato rapporto di compressione sospetto',
+    },
+    retention: {
+      expired: 'Il file è scaduto ed è stato rimosso dalla politica di conservazione',
+    },
+    permissions: {
+      denied:
+        "Non hai il permesso di accedere ai file. Contatta l'amministratore del tuo spazio di lavoro.",
+    },
   },
   context: {
     title: 'Pacchetti di contesto',

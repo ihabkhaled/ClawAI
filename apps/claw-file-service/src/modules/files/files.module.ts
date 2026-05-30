@@ -6,6 +6,8 @@ import { FilesRepository } from './repositories/files.repository';
 import { FileChunksRepository } from './repositories/file-chunks.repository';
 import { FileProcessingManager } from './managers/file-processing.manager';
 import { FileSecurityManager } from './managers/file-security.manager';
+import { FileRetentionSweeperManager } from './managers/file-retention-sweeper.manager';
+import { ZipExpansionManager } from './managers/zip-expansion.manager';
 
 @Module({
   controllers: [FilesController, FilesInternalController],
@@ -15,6 +17,8 @@ import { FileSecurityManager } from './managers/file-security.manager';
     FileChunksRepository,
     FileProcessingManager,
     FileSecurityManager,
+    FileRetentionSweeperManager,
+    ZipExpansionManager,
   ],
   exports: [FilesService, FilesRepository, FileChunksRepository],
 })

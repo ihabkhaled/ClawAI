@@ -557,6 +557,15 @@ export const en: TranslationDictionary = {
     statusProcessing: 'Processing',
     statusCompleted: 'Completed',
     statusFailed: 'Failed',
+    zip: {
+      bombRejected: 'Archive rejected: suspicious compression ratio detected',
+    },
+    retention: {
+      expired: 'File expired and was removed by retention policy',
+    },
+    permissions: {
+      denied: "You don't have permission to access files. Contact your workspace administrator.",
+    },
   },
   context: {
     title: 'Context Packs',
@@ -3075,7 +3084,8 @@ export const en: TranslationDictionary = {
     },
     diagnostics: {
       title: 'Runtime diagnostics',
-      description: 'Probe local AI runtimes, inspect installed models, and review recent runtime events.',
+      description:
+        'Probe local AI runtimes, inspect installed models, and review recent runtime events.',
       refreshAll: 'Refresh all',
       refresh: 'Refresh',
       loading: 'Probing runtime…',

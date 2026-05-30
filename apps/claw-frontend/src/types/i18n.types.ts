@@ -558,6 +558,15 @@ export type TranslationDictionary = {
     statusProcessing: string;
     statusCompleted: string;
     statusFailed: string;
+    zip: {
+      bombRejected: string;
+    };
+    retention: {
+      expired: string;
+    };
+    permissions: {
+      denied: string;
+    };
   };
   context: {
     title: string;

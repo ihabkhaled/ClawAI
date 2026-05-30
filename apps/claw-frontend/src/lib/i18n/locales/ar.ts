@@ -555,6 +555,15 @@ export const ar: TranslationDictionary = {
     statusProcessing: 'قيد المعالجة',
     statusCompleted: 'مكتمل',
     statusFailed: 'فشل',
+    zip: {
+      bombRejected: 'تم رفض الأرشيف: تم اكتشاف نسبة ضغط مشبوهة',
+    },
+    retention: {
+      expired: 'انتهت صلاحية الملف وتمت إزالته بواسطة سياسة الاحتفاظ',
+    },
+    permissions: {
+      denied: 'ليس لديك إذن للوصول إلى الملفات. تواصل مع مسؤول مساحة العمل لديك.',
+    },
   },
   context: {
     title: 'حزم السياق',
@@ -3050,7 +3059,8 @@ export const ar: TranslationDictionary = {
     },
     diagnostics: {
       title: 'تشخيص بيئة التشغيل',
-      description: 'فحص بيئات تشغيل الذكاء الاصطناعي المحلية، وعرض النماذج المثبتة، ومراجعة الأحداث الأخيرة.',
+      description:
+        'فحص بيئات تشغيل الذكاء الاصطناعي المحلية، وعرض النماذج المثبتة، ومراجعة الأحداث الأخيرة.',
       refreshAll: 'تحديث الكل',
       refresh: 'تحديث',
       loading: 'جارٍ الفحص…',

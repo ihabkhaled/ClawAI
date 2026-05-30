@@ -197,6 +197,22 @@ export interface FileFailedPayload extends BaseEventPayload {
   failureStage: FileFailureStage;
 }
 
+export interface FileRetentionExpiredPayload extends BaseEventPayload {
+  fileId: string;
+  userId: string;
+  filename: string;
+  retentionExpiresAt: string;
+  sizeBytes: number;
+}
+
+export interface FileArchiveExpandedPayload extends BaseEventPayload {
+  parentFileId: string;
+  userId: string;
+  parentFilename: string;
+  childFileCount: number;
+  totalExtractedBytes: number;
+}
+
 // ---- Memory Events ----
 
 export interface MemoryExtractedPayload extends BaseEventPayload {
@@ -703,6 +719,8 @@ export type EventPayload =
   | FileUploadedPayload
   | FileChunkedPayload
   | FileFailedPayload
+  | FileRetentionExpiredPayload
+  | FileArchiveExpandedPayload
   | MemoryExtractedPayload
   | AuditEventPayload
   | HealthCheckPayload
