@@ -1074,6 +1074,15 @@ export const pt: TranslationDictionary = {
     close: 'Fechar',
     fullOutput: 'Saída completa',
     copyFailed: 'Falha ao copiar',
+    research: {
+      label: 'Pesquisa na web',
+      hint: 'Fundamenta cada modelo nas mesmas evidências da web atualizadas antes da execução.',
+      none: 'Sem pesquisa',
+      search: 'Pesquisa na web',
+      searchFetch: 'Pesquisa + Buscar',
+      searchExtract: 'Pesquisa + Extrair',
+      sources: 'Fontes de evidência da web',
+    },
   },
   consensus: {
     title: 'Modo Consenso',

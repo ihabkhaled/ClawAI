@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 
 import { MAX_PARALLEL_MODELS, MIN_PARALLEL_MODELS } from '@/constants';
+import { CompareResearchMode } from '@/enums';
 import { useJudgeModelOptions } from '@/hooks/chat/use-judge-model-options';
 import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
@@ -28,6 +29,7 @@ export function useInThreadCompare({
     useJudgeModelOptions();
   const [judgeEnabled, setJudgeEnabled] = useState(initialJudgeEnabled);
   const [judgeModel, setJudgeModel] = useState<string | null>(initialJudgeModel);
+  const [researchMode, setResearchMode] = useState<CompareResearchMode>(CompareResearchMode.NONE);
 
   const mutation = useMutation({
     mutationFn: (data: ParallelRequest) => {
@@ -86,9 +88,10 @@ export function useInThreadCompare({
         models: selectedModels,
         judgeEnabled,
         judgeModel,
+        ...(researchMode === CompareResearchMode.NONE ? {} : { researchMode }),
       });
     },
-    [canSend, mutation, threadId, selectedModels, judgeEnabled, judgeModel],
+    [canSend, mutation, threadId, selectedModels, judgeEnabled, judgeModel, researchMode],
   );
 
   return {
@@ -107,5 +110,7 @@ export function useInThreadCompare({
     setJudgeModel,
     judgeModelOptions,
     isJudgeModelOptionsLoading,
+    researchMode,
+    setResearchMode,
   };
 }

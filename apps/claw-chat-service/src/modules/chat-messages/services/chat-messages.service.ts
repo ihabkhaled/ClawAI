@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
-import { EventPattern, LogLevel, TokenLedgerContext } from '@claw/shared-types';
+import { EventPattern, LogLevel, Permission, TokenLedgerContext } from '@claw/shared-types';
 import { allowedModelKeys } from '@claw/shared-entitlements';
 import { AppConfig } from '../../../app/config/app.config';
 import { recordGet, runResearch } from '../../../common/utilities';
@@ -240,29 +240,13 @@ export class ChatMessagesService implements OnModuleInit {
     return Object.keys(metadata).length === 0 ? undefined : metadata;
   }
 
-  async createParallelMessage(userId: string, dto: ParallelMessageDto): Promise<ParallelResponse> {
-    // Plan-feature gate: compare mode is a paid feature. ADMIN bypasses via
-    // the hasPlanFeature helper inside the service. When the judge is also
-    // requested, the JUDGE feature must be unlocked too (a plan can ship
-    // compare without judge, e.g. for downgrade scenarios).
-    await this.accessControlService.assertCanSendMessage(userId, {
-      requireFeature: 'allowCompareMode',
-    });
-    if (dto.judgeEnabled === true) {
-      await this.accessControlService.assertCanSendMessage(userId, {
-        requireFeature: 'allowJudgeMode',
-      });
-    }
-
-    const thread =
-      dto.threadId && dto.threadId.length > 0
-        ? await this.getThreadForMessage(dto.threadId, userId)
-        : await this.chatThreadsRepository.create({
-            userId,
-            title: `Compare: ${dto.content.slice(0, 50)}`,
-            routingMode: RoutingMode.MANUAL_MODEL,
-          });
-
+  async createParallelMessage(
+    userId: string,
+    dto: ParallelMessageDto,
+    userToken: string,
+  ): Promise<ParallelResponse> {
+    await this.assertCompareAccess(userId, dto);
+    const thread = await this.resolveCompareThread(userId, dto);
     return this.parallelExecutionManager.executeParallel(
       userId,
       thread.id,
@@ -273,7 +257,46 @@ export class ChatMessagesService implements OnModuleInit {
         model: dto.judgeModel ?? null,
       } as ParallelJudgeConfig,
       dto.fileIds,
+      {
+        mode: dto.researchMode,
+        query: dto.researchQuery,
+        userToken,
+      },
     );
+  }
+
+  // Plan-feature + RBAC gates for compare mode. Extracted so
+  // createParallelMessage stays under the 30-line service limit and the gates
+  // can be unit-tested in isolation. Research is permission-gated (USER_DEFAULT
+  // grants RESEARCH_USE so the default unblocks the dropdown).
+  private async assertCompareAccess(userId: string, dto: ParallelMessageDto): Promise<void> {
+    await this.accessControlService.assertCanSendMessage(userId, {
+      requireFeature: 'allowCompareMode',
+    });
+    if (dto.judgeEnabled === true) {
+      await this.accessControlService.assertCanSendMessage(userId, {
+        requireFeature: 'allowJudgeMode',
+      });
+    }
+    if (dto.researchMode !== undefined && dto.researchMode !== 'NONE') {
+      await this.accessControlService.assertCanSendMessage(userId, {
+        requirePermission: Permission.RESEARCH_USE,
+      });
+    }
+  }
+
+  private async resolveCompareThread(
+    userId: string,
+    dto: ParallelMessageDto,
+  ): Promise<ChatThread> {
+    if (dto.threadId && dto.threadId.length > 0) {
+      return this.getThreadForMessage(dto.threadId, userId);
+    }
+    return this.chatThreadsRepository.create({
+      userId,
+      title: `Compare: ${dto.content.slice(0, 50)}`,
+      routingMode: RoutingMode.MANUAL_MODEL,
+    });
   }
 
   async createConsensusMessage(

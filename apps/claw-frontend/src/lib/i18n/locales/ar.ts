@@ -1058,6 +1058,15 @@ export const ar: TranslationDictionary = {
     close: 'إغلاق',
     fullOutput: 'الإخراج الكامل',
     copyFailed: 'فشل النسخ',
+    research: {
+      label: 'البحث على الويب',
+      hint: 'تزويد جميع النماذج بنفس الأدلة الحديثة من الويب قبل التشغيل.',
+      none: 'بدون بحث',
+      search: 'بحث على الويب',
+      searchFetch: 'بحث ‎+‎ جلب',
+      searchExtract: 'بحث ‎+‎ استخراج',
+      sources: 'مصادر الأدلة من الويب',
+    },
   },
   consensus: {
     title: 'وضع الإجماع',

@@ -1077,6 +1077,15 @@ export const es: TranslationDictionary = {
     close: 'Cerrar',
     fullOutput: 'Salida completa',
     copyFailed: 'Error al copiar',
+    research: {
+      label: 'Investigación web',
+      hint: 'Fundamenta cada modelo con la misma evidencia web reciente antes de la ejecución.',
+      none: 'Sin investigación',
+      search: 'Búsqueda web',
+      searchFetch: 'Búsqueda + Descarga',
+      searchExtract: 'Búsqueda + Extracción',
+      sources: 'Fuentes de evidencia web',
+    },
   },
   consensus: {
     title: 'Modo consenso',

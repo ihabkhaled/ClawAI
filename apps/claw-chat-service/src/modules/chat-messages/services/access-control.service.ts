@@ -1,12 +1,14 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import {
   EntitlementsAdapter,
+  hasPermission,
   hasPlanFeature,
   isModelAllowedForUsage,
   ModelUsageType,
   type PlanFeature,
   type UserEntitlements,
 } from '@claw/shared-entitlements';
+import { type Permission } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException } from '../../../common/errors';
 import { type SendMessageAccessOptions } from '../types/access-control.types';
@@ -39,6 +41,9 @@ export class AccessControlService {
     }
     if (opts.requireFeature !== undefined) {
       this.assertFeatureEnabled(ent, opts.requireFeature, userId);
+    }
+    if (opts.requirePermission !== undefined) {
+      this.assertPermissionGranted(ent, opts.requirePermission, userId);
     }
     if (opts.provider && opts.model) {
       this.assertModelAllowed(ent, opts.provider, opts.model, userId);
@@ -96,6 +101,30 @@ export class AccessControlService {
     throw new BusinessException(
       'Feature not available on your plan',
       'PLAN_FEATURE_DISABLED',
+      HttpStatus.FORBIDDEN,
+    );
+  }
+
+  // RBAC permission gate, parallels the contract emitted by shared-
+  // entitlements' PermissionGuard (errorCode INSUFFICIENT_PERMISSIONS) so the
+  // FE renders the same 403 it would have rendered for a guarded route. ADMIN
+  // bypasses via hasPermission. Used by callers that need an in-service
+  // permission check (e.g. compare-mode research enricher) and cannot decorate
+  // the controller with @RequirePermissions because the gate is conditional.
+  private assertPermissionGranted(
+    ent: UserEntitlements,
+    permission: Permission,
+    userId: string,
+  ): void {
+    if (hasPermission(ent, permission)) {
+      return;
+    }
+    this.logger.warn(
+      `assertPermissionGranted: permission denied user=${userId} permission=${permission}`,
+    );
+    throw new BusinessException(
+      'You do not have permission to perform this action',
+      'INSUFFICIENT_PERMISSIONS',
       HttpStatus.FORBIDDEN,
     );
   }

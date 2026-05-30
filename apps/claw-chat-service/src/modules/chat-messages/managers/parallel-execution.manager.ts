@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { TokenLedgerContext } from '@claw/shared-types';
-import { CompareJudgeState, ProgressActorType, StreamEventType } from '../../../common/enums';
+import { CompareJudgeState, ProgressActorType, ResearchMode, StreamEventType } from '../../../common/enums';
 import { ChatExecutionManager } from './chat-execution.manager';
 import { ContextAssemblyManager } from './context-assembly.manager';
 import { JudgeRefereeManager } from './judge-referee.manager';
+import { ResearchEnricherManager } from './research-enricher.manager';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
@@ -11,8 +12,10 @@ import {
   type ParallelJudgeConfig,
   type ParallelModelResponse,
   type ParallelModelTarget,
+  type ParallelResearchOptions,
   type ParallelResponse,
 } from '../types/parallel.types';
+import { type ResearchEnrichResult } from '../types/research-enricher.types';
 import { type ThreadSettings } from '../types/execution.types';
 import { type AssembledContext } from '../types/context.types';
 import { type ChatThread, type Prisma } from '../../../generated/prisma';
@@ -31,6 +34,7 @@ export class ParallelExecutionManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly researchEnricherManager: ResearchEnricherManager,
   ) {
     this.timeoutMs = AppConfig.get().OLLAMA_GENERATE_TIMEOUT_MS;
   }
@@ -42,6 +46,7 @@ export class ParallelExecutionManager {
     models: ParallelModelTarget[],
     judgeConfig: ParallelJudgeConfig,
     fileIds?: string[],
+    researchOptions?: ParallelResearchOptions,
   ): Promise<ParallelResponse> {
     this.logger.log(
       `executeParallel: queuing ${String(models.length)} models in thread ${threadId}`,
@@ -50,7 +55,16 @@ export class ParallelExecutionManager {
 
     const userMessage = await this.storeUserMessage(threadId, content, judgeConfig, fileIds);
 
-    void this.executeInBackground(userId, threadId, userMessage.id, models, judgeConfig, fileIds);
+    void this.executeInBackground(
+      userId,
+      threadId,
+      userMessage.id,
+      content,
+      models,
+      judgeConfig,
+      fileIds,
+      researchOptions,
+    );
 
     return {
       messageId: userMessage.id,
@@ -69,9 +83,11 @@ export class ParallelExecutionManager {
     userId: string,
     threadId: string,
     parallelGroupId: string,
+    userMessageContent: string,
     models: ParallelModelTarget[],
     judgeConfig: ParallelJudgeConfig,
     fileIds?: string[],
+    researchOptions?: ParallelResearchOptions,
   ): Promise<void> {
     try {
       this.chatStreamService.emitProgressStage(threadId, StreamEventType.RESPONSE_STREAMING, {
@@ -81,9 +97,14 @@ export class ParallelExecutionManager {
         actorName: 'Parallel compare',
       });
       const { context, threadSettings } = await this.buildContext(userId, threadId, fileIds);
+      const enrichedContext = await this.applyResearchEnrichment(
+        context,
+        userMessageContent,
+        researchOptions,
+      );
       const responses = await this.executeAllModels(
         models,
-        context,
+        enrichedContext,
         threadSettings,
         judgeConfig,
         parallelGroupId,
@@ -153,6 +174,58 @@ export class ParallelExecutionManager {
     );
 
     return { context, threadSettings };
+  }
+
+  // Compare-mode research enricher. NONE / undefined / empty-token short-
+  // circuits to the original context so v1 callers keep working. On any
+  // enricher error we log a warning and proceed without evidence — research
+  // must NEVER block the parallel run.
+  private async applyResearchEnrichment(
+    context: AssembledContext,
+    userMessageContent: string,
+    options: ParallelResearchOptions | undefined,
+  ): Promise<AssembledContext> {
+    if (options === undefined) {
+      return context;
+    }
+    const mode = options.mode ?? ResearchMode.NONE;
+    if (mode === ResearchMode.NONE) {
+      return context;
+    }
+    if (options.userToken.length === 0) {
+      this.logger.warn(
+        `applyResearchEnrichment: mode=${mode} but no bearer token — skipping enrichment`,
+      );
+      return context;
+    }
+    const query = options.query?.trim() ?? '';
+    const finalQuery = query.length > 0 ? query : userMessageContent;
+    try {
+      const result = await this.researchEnricherManager.enrich({
+        mode,
+        query: finalQuery,
+        userAuthHeader: `Bearer ${options.userToken}`,
+      });
+      return this.injectResearchIntoContext(context, result);
+    } catch (error) {
+      this.logger.warn(
+        `applyResearchEnrichment: failed mode=${mode} — ${(error as Error).message}`,
+      );
+      return context;
+    }
+  }
+
+  private injectResearchIntoContext(
+    context: AssembledContext,
+    result: ResearchEnrichResult,
+  ): AssembledContext {
+    if (result.evidence.length === 0) {
+      return context;
+    }
+    const trimmedPrompt = (context.systemPrompt ?? '').trim();
+    const nextSystemPrompt =
+      trimmedPrompt.length > 0 ? `${result.evidence}\n\n${trimmedPrompt}` : result.evidence;
+    return { ...context, systemPrompt: nextSystemPrompt };
   }
 
   private async executeAllModels(

@@ -1068,6 +1068,15 @@ export const hi: TranslationDictionary = {
     close: 'बंद करें',
     fullOutput: 'पूरा आउटपुट',
     copyFailed: 'कॉपी करने में विफल',
+    research: {
+      label: 'वेब अनुसंधान',
+      hint: 'रन से पहले हर मॉडल को एक ही ताज़ा वेब प्रमाण पर आधारित करें।',
+      none: 'कोई अनुसंधान नहीं',
+      search: 'वेब खोज',
+      searchFetch: 'खोज + लाएँ',
+      searchExtract: 'खोज + निकालें',
+      sources: 'वेब प्रमाण के स्रोत',
+    },
   },
   consensus: {
     title: 'सहमति मोड',

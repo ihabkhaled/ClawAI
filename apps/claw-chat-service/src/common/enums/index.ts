@@ -13,5 +13,6 @@ export { EscalationChainStatus } from './escalation-chain-status.enum';
 export { RepairType } from './repair-type.enum';
 export { TaskDecompositionStatus } from './task-decomposition-status.enum';
 export { ResearchWorkflow } from './research-workflow.enum';
+export { ResearchMode } from './research-mode.enum';
 export { ProgressActorType } from './progress-actor-type.enum';
 export { ModelSelectionMode } from './model-selection-mode.enum';

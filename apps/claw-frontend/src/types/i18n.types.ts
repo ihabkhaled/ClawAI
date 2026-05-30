@@ -1056,6 +1056,15 @@ export type TranslationDictionary = {
     close: string;
     fullOutput: string;
     copyFailed: string;
+    research: {
+      label: string;
+      hint: string;
+      none: string;
+      search: string;
+      searchFetch: string;
+      searchExtract: string;
+      sources: string;
+    };
   };
   consensus: {
     title: string;

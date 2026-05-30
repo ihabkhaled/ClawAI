@@ -65,6 +65,13 @@ describe('ParallelExecutionManager', () => {
     emitError: jest.fn(),
   };
 
+  // Default to a no-op enricher that returns the original mode + empty
+  // evidence so existing tests stay assertion-equivalent (compare path is
+  // unchanged when researchMode is NONE / undefined).
+  const mockResearchEnricherManager = {
+    enrich: jest.fn().mockResolvedValue({ evidence: '', sources: [], mode: 'NONE' }),
+  };
+
   const mockContext: AssembledContext = {
     userId: 'user-1',
     systemPrompt: null,
@@ -106,6 +113,7 @@ describe('ParallelExecutionManager', () => {
       mockChatMessagesRepository as any,
       mockChatThreadsRepository as any,
       mockChatStreamService as any,
+      mockResearchEnricherManager as any,
     );
   });
 
@@ -592,6 +600,7 @@ describe('ParallelExecutionManager', () => {
         'user-1',
         'thread-1',
         'group-1',
+        'user prompt',
         [{ provider: 'ANTHROPIC', model: 'claude-sonnet-4' }],
         disabledJudgeConfig,
       );
@@ -615,6 +624,7 @@ describe('ParallelExecutionManager', () => {
         'user-1',
         'thread-1',
         'group-1',
+        'user prompt',
         sampleModels,
         disabledJudgeConfig,
       );

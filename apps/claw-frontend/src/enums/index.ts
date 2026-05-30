@@ -81,6 +81,7 @@ export { SelectedModelSource } from './selected-model-source.enum';
 export { JudgeResponseType } from './judge-response-type.enum';
 export { JudgeReviewDecision } from './judge-review-decision.enum';
 export { ResearchProviderSelectionMode } from './research-provider-selection-mode.enum';
+export { CompareResearchMode } from './compare-research-mode.enum';
 export {
   CandidateStatus,
   CandidateStatusFilter,

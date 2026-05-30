@@ -288,6 +288,7 @@ export type {
   ParallelMessageGroupProps,
   ParallelModelSelectorProps,
   CompareJudgeControlsProps,
+  CompareResearchModeControlProps,
   ParallelResponseCardProps,
   ParallelResultsGridProps,
   ParallelSummaryBarProps,
@@ -426,6 +427,7 @@ export type {
   UseParallelComparePageReturn,
   UseInThreadCompareParams,
   UseInThreadCompareReturn,
+  CompareResearchModeOption,
 } from './parallel.types';
 export type {
   CompareResultMarkdownInput,

@@ -3,6 +3,7 @@
 import { ArrowRight, GitCompareArrows, Loader2, Send } from 'lucide-react';
 
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
+import { CompareResearchModeControl } from '@/components/chat/compare-research-mode-control';
 import { DailyTokenIndicator } from '@/components/chat/daily-token-indicator';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
 import { ParallelResultsGrid } from '@/components/chat/parallel-results-grid';
@@ -38,6 +39,8 @@ export default function ComparePage() {
     setJudgeModel,
     judgeModelOptions,
     isJudgeModelOptionsLoading,
+    researchMode,
+    setResearchMode,
   } = useParallelComparePage();
 
   const showLoading = isPending || (isPolling && pollingMessages.length === 0);
@@ -66,6 +69,11 @@ export default function ComparePage() {
               onJudgeModelChange={setJudgeModel}
               judgeModelOptions={judgeModelOptions}
               judgeModelOptionsLoading={isJudgeModelOptionsLoading}
+              t={t}
+            />
+            <CompareResearchModeControl
+              value={researchMode}
+              onChange={setResearchMode}
               t={t}
             />
           </div>

@@ -1,5 +1,5 @@
 import type { TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
-import type { CompareJudgeState } from '../../../common/enums';
+import type { CompareJudgeState, ResearchMode } from '../../../common/enums';
 import type { JudgeReviewPayload } from './judge-referee.types';
 
 export type ParallelModelTarget = {
@@ -49,4 +49,14 @@ export type ParallelResponse = {
   failedCount: number;
   judgeEnabled: boolean;
   judgeModel: string | null;
+};
+
+// Compare-mode research enricher options surfaced from the DTO down to the
+// ParallelExecutionManager so it can call ResearchEnricherManager BEFORE
+// assembling the shared context for the parallel lanes.
+export type ParallelResearchOptions = {
+  mode?: ResearchMode;
+  query?: string;
+  /** Raw bearer token (without the "Bearer " prefix). May be empty. */
+  userToken: string;
 };

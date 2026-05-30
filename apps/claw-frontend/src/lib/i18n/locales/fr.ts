@@ -1080,6 +1080,15 @@ export const fr: TranslationDictionary = {
     close: 'Fermer',
     fullOutput: 'Sortie complète',
     copyFailed: 'Échec de la copie',
+    research: {
+      label: 'Recherche web',
+      hint: 'Fournit à chaque modèle les mêmes preuves web fraîches avant l’exécution.',
+      none: 'Aucune recherche',
+      search: 'Recherche web',
+      searchFetch: 'Recherche + Récupération',
+      searchExtract: 'Recherche + Extraction',
+      sources: 'Sources des preuves web',
+    },
   },
   consensus: {
     title: 'Mode consensus',

@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import type { SidebarItem } from '@/constants';
 import type {
   CompareJudgeState,
+  CompareResearchMode,
   ComponentSize,
   ConnectorStatus,
   CostTier,
@@ -883,6 +884,12 @@ export type CompareJudgeControlsProps = {
   t: TranslateFunction;
 };
 
+export type CompareResearchModeControlProps = {
+  value: CompareResearchMode;
+  onChange: (value: CompareResearchMode) => void;
+  t: TranslateFunction;
+};
+
 export type ParallelResponseCardProps = {
   response: ParallelModelResponse;
   isFastest: boolean;
@@ -955,6 +962,8 @@ export type InThreadComparePanelProps = {
   onJudgeModelChange: (value: string | null) => void;
   judgeModelOptions: JudgeModelOption[];
   judgeModelOptionsLoading: boolean;
+  researchMode: CompareResearchMode;
+  onResearchModeChange: (value: CompareResearchMode) => void;
   t: TranslateFunction;
 };
 

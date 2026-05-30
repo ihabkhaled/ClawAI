@@ -128,6 +128,8 @@ export default function ThreadDetailPage() {
           onJudgeModelChange={comparePanel.setJudgeModel}
           judgeModelOptions={comparePanel.judgeModelOptions}
           judgeModelOptionsLoading={comparePanel.isJudgeModelOptionsLoading}
+          researchMode={comparePanel.researchMode}
+          onResearchModeChange={comparePanel.setResearchMode}
           t={t}
         />
       ) : null}

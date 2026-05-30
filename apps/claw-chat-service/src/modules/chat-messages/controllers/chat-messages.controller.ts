@@ -52,9 +52,10 @@ export class ChatMessagesController {
   @Post('parallel')
   async createParallel(
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
     @Body(new ZodValidationPipe(parallelMessageSchema)) dto: ParallelMessageDto,
   ): Promise<ParallelResponse> {
-    return this.chatMessagesService.createParallelMessage(user.id, dto);
+    return this.chatMessagesService.createParallelMessage(user.id, dto, extractBearer(req));
   }
 
   @Post('consensus')

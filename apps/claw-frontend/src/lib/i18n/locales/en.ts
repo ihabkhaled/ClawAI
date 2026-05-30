@@ -1064,6 +1064,15 @@ export const en: TranslationDictionary = {
     close: 'Close',
     fullOutput: 'Full output',
     copyFailed: 'Failed to copy',
+    research: {
+      label: 'Web research',
+      hint: 'Ground every model on the same fresh web evidence before the run.',
+      none: 'No Research',
+      search: 'Web Search',
+      searchFetch: 'Search + Fetch',
+      searchExtract: 'Search + Extract',
+      sources: 'Web evidence sources',
+    },
   },
   consensus: {
     title: 'Consensus Mode',

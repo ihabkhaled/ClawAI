@@ -1,6 +1,7 @@
 import { CheckCircle, Loader2, Play, X } from 'lucide-react';
 
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
+import { CompareResearchModeControl } from '@/components/chat/compare-research-mode-control';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,8 +23,10 @@ export function InThreadComparePanel({
   onJudgeModelChange,
   judgeModelOptions,
   judgeModelOptionsLoading,
+  researchMode,
+  onResearchModeChange,
   t,
-}: InThreadComparePanelProps) {
+}: InThreadComparePanelProps): React.ReactElement {
   return (
     <Card className="mb-4">
       <CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -52,6 +55,12 @@ export function InThreadComparePanel({
           onJudgeModelChange={onJudgeModelChange}
           judgeModelOptions={judgeModelOptions}
           judgeModelOptionsLoading={judgeModelOptionsLoading}
+          t={t}
+        />
+
+        <CompareResearchModeControl
+          value={researchMode}
+          onChange={onResearchModeChange}
           t={t}
         />
 

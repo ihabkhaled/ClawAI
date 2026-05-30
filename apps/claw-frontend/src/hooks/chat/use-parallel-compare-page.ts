@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { MIN_PARALLEL_MODELS, MAX_PARALLEL_MODELS } from '@/constants';
+import { CompareResearchMode } from '@/enums';
 import { useJudgeModelOptions } from '@/hooks/chat/use-judge-model-options';
 import { useParallelCompare } from '@/hooks/chat/use-parallel-compare';
 import { useParallelPoll } from '@/hooks/chat/use-parallel-poll';
@@ -16,6 +17,7 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
   const [prompt, setPrompt] = useState('');
   const [judgeEnabled, setJudgeEnabled] = useState(false);
   const [judgeModel, setJudgeModel] = useState<string | null>(null);
+  const [researchMode, setResearchMode] = useState<CompareResearchMode>(CompareResearchMode.NONE);
   const { send, result, isPending, isError } = useParallelCompare();
 
   const threadId = result?.threadId ?? null;
@@ -53,8 +55,16 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     if (!canSend) {
       return;
     }
-    send({ content: prompt.trim(), models: selectedModels, judgeEnabled, judgeModel });
-  }, [canSend, send, prompt, selectedModels, judgeEnabled, judgeModel]);
+    send({
+      content: prompt.trim(),
+      models: selectedModels,
+      judgeEnabled,
+      judgeModel,
+      // Only attach the field when the user picked a non-NONE mode so v1
+      // server-side defaults stay the source of truth for the OFF path.
+      ...(researchMode === CompareResearchMode.NONE ? {} : { researchMode }),
+    });
+  }, [canSend, send, prompt, selectedModels, judgeEnabled, judgeModel, researchMode]);
 
   return {
     t,
@@ -79,5 +89,7 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     setJudgeModel,
     judgeModelOptions,
     isJudgeModelOptionsLoading,
+    researchMode,
+    setResearchMode,
   };
 }

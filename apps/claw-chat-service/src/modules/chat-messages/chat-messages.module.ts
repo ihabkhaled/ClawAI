@@ -12,6 +12,7 @@ import { ContextAssemblyManager } from './managers/context-assembly.manager';
 import { EscalationChainManager } from './managers/escalation-chain.manager';
 import { FallbackExecutorManager } from './managers/fallback-executor.manager';
 import { ParallelExecutionManager } from './managers/parallel-execution.manager';
+import { ResearchEnricherManager } from './managers/research-enricher.manager';
 import { QualityCheckManager } from './managers/quality-check.manager';
 import { JudgeRefereeManager } from './managers/judge-referee.manager';
 import { VerifierManager } from './managers/verifier.manager';
@@ -44,6 +45,7 @@ import { ContextReceiptsModule } from '../context-receipts/context-receipts.modu
     EscalationChainManager,
     FallbackExecutorManager,
     ParallelExecutionManager,
+    ResearchEnricherManager,
     QualityCheckManager,
     JudgeRefereeManager,
     VerifierManager,

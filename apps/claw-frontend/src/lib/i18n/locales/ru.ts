@@ -1074,6 +1074,15 @@ export const ru: TranslationDictionary = {
     close: 'Закрыть',
     fullOutput: 'Полный вывод',
     copyFailed: 'Не удалось скопировать',
+    research: {
+      label: 'Веб-исследование',
+      hint: 'Перед запуском подайте всем моделям одни и те же свежие веб-доказательства.',
+      none: 'Без исследования',
+      search: 'Веб-поиск',
+      searchFetch: 'Поиск + загрузка',
+      searchExtract: 'Поиск + извлечение',
+      sources: 'Источники веб-доказательств',
+    },
   },
   consensus: {
     title: 'Режим консенсуса',

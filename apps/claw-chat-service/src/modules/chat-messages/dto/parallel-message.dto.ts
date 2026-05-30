@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { researchFields } from './research-fields.dto';
+import { ResearchMode } from '../../../common/enums/research-mode.enum';
 
 export const parallelMessageSchema = z.object({
   threadId: z.string().max(255, 'Thread ID must be at most 255 characters').optional(),
@@ -26,7 +26,20 @@ export const parallelMessageSchema = z.object({
     .array(z.string().max(255, 'File ID must be at most 255 characters'))
     .max(10, 'Maximum 10 files per message')
     .optional(),
-  ...researchFields,
+  // Compare-mode research enricher (added 2026-05-30). The user picks ONE of
+  // four modes; the chat-service calls research-service before parallel lane
+  // execution and pre-pends formatted evidence to the shared system prompt so
+  // every lane sees the same web evidence. NONE preserves v1 behavior.
+  // Distinct from the per-message ResearchWorkflow on createMessageSchema.
+  researchMode: z.nativeEnum(ResearchMode).default(ResearchMode.NONE).optional(),
+  researchQuery: z
+    .string()
+    .max(500, 'Research query must be at most 500 characters')
+    .optional(),
+  researchProviderId: z
+    .string()
+    .max(64, 'Research provider id must be at most 64 characters')
+    .optional(),
 });
 
 export type ParallelMessageDto = z.infer<typeof parallelMessageSchema>;

@@ -1079,6 +1079,15 @@ export const de: TranslationDictionary = {
     close: 'Schließen',
     fullOutput: 'Vollständige Ausgabe',
     copyFailed: 'Kopieren fehlgeschlagen',
+    research: {
+      label: 'Web-Recherche',
+      hint: 'Versorgt jedes Modell vor dem Lauf mit denselben aktuellen Web-Belegen.',
+      none: 'Keine Recherche',
+      search: 'Web-Suche',
+      searchFetch: 'Suche + Abruf',
+      searchExtract: 'Suche + Extraktion',
+      sources: 'Web-Belegquellen',
+    },
   },
   consensus: {
     title: 'Konsensmodus',

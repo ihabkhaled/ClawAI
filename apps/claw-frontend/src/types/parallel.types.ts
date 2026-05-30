@@ -1,4 +1,4 @@
-import type { CompareJudgeState, ParallelModelStatus } from '@/enums';
+import type { CompareJudgeState, CompareResearchMode, ParallelModelStatus } from '@/enums';
 
 import type { ChatMessage, JudgeModelOption, JudgeReview, LaneStreamMap } from './chat.types';
 
@@ -49,6 +49,10 @@ export type ParallelRequest = {
   models: ParallelModelTarget[];
   judgeEnabled?: boolean;
   judgeModel?: string | null;
+  /** Compare-mode research enricher. Omit / NONE preserves v1 behavior. */
+  researchMode?: CompareResearchMode;
+  /** Optional explicit query (defaults to `content` server-side). */
+  researchQuery?: string;
 };
 
 export type UseParallelComparePageReturn = {
@@ -74,6 +78,8 @@ export type UseParallelComparePageReturn = {
   setJudgeModel: (value: string | null) => void;
   judgeModelOptions: JudgeModelOption[];
   isJudgeModelOptionsLoading: boolean;
+  researchMode: CompareResearchMode;
+  setResearchMode: (value: CompareResearchMode) => void;
 };
 
 export type UseInThreadCompareParams = {
@@ -98,4 +104,13 @@ export type UseInThreadCompareReturn = {
   setJudgeModel: (value: string | null) => void;
   judgeModelOptions: JudgeModelOption[];
   isJudgeModelOptionsLoading: boolean;
+  researchMode: CompareResearchMode;
+  setResearchMode: (value: CompareResearchMode) => void;
+};
+
+// Declarative option for CompareResearchModeControl. `labelKey` is an i18n
+// key into compare.research.* so the control body stays a pure render.
+export type CompareResearchModeOption = {
+  value: CompareResearchMode;
+  labelKey: string;
 };
