@@ -10,6 +10,11 @@ import type { AuthenticatedUser } from '../../../common/types/auth.types';
 import type { FetchJob } from '../../../generated/prisma';
 import type { FetchResult } from '../types/fetch.types';
 
+// POST /research/fetch is the ACTION endpoint the compare ResearchEnricher
+// (and the in-chat research selector) calls when the user picks Search+Fetch
+// or Search+Extract — stays on RESEARCH_USE. The GET jobs endpoints back
+// the standalone Research UI's history view (admin observability) and are
+// method-overridden to ADMIN_SYSTEM_VIEW.
 @Controller('research/fetch')
 @RequirePermissions(Permission.RESEARCH_USE)
 export class FetchController {
@@ -25,6 +30,7 @@ export class FetchController {
   }
 
   @Get('jobs')
+  @RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
   listJobs(
     @CurrentUser() user: AuthenticatedUser,
     @Query('limit') limit?: string,
@@ -35,6 +41,7 @@ export class FetchController {
   }
 
   @Get('jobs/:id')
+  @RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
   getJob(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string): Promise<FetchJob> {
     return this.service.getJob(id, user.id);
   }

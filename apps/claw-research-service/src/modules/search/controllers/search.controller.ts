@@ -10,6 +10,11 @@ import type { AuthenticatedUser } from '../../../common/types/auth.types';
 import type { SearchRun } from '../../../generated/prisma';
 import type { SearchExecutionResult } from '../types/search-execution-result.types';
 
+// POST /research/search is the ACTION endpoint the in-chat / in-compare
+// research selector + the compare ResearchEnricher call — it stays on
+// RESEARCH_USE so normal users can use the feature. The GET runs endpoints
+// only back the standalone Research UI (admin observability) and are
+// method-overridden to ADMIN_SYSTEM_VIEW so they match the gated FE pages.
 @Controller('research/search')
 @RequirePermissions(Permission.RESEARCH_USE)
 export class SearchController {
@@ -25,6 +30,7 @@ export class SearchController {
   }
 
   @Get('runs')
+  @RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
   listRuns(
     @CurrentUser() user: AuthenticatedUser,
     @Query('limit') limit?: string,
@@ -35,6 +41,7 @@ export class SearchController {
   }
 
   @Get('runs/:id')
+  @RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
   getRun(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string): Promise<SearchRun> {
     return this.service.getRun(id, user.id);
   }

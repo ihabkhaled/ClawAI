@@ -10,8 +10,12 @@ import { ResearchService } from '../services/research.service';
 import type { AuthenticatedUser } from '../../../common/types/auth.types';
 import type { ResearchRun } from '../../../generated/prisma';
 
+// All /research/runs/* endpoints back the standalone Research UI's "Research
+// Runs" page (admin observability) — the compare ResearchEnricher uses
+// /research/search + /research/fetch directly, not this workflow runner. So
+// the whole controller moves to ADMIN_SYSTEM_VIEW to match the FE page gate.
 @Controller('research/runs')
-@RequirePermissions(Permission.RESEARCH_USE)
+@RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
 export class ResearchController {
   constructor(
     private readonly manager: ResearchManager,

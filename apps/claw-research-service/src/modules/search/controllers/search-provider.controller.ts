@@ -31,14 +31,19 @@ import type { ProviderHealthResult } from '../types/search.types';
 export class SearchProviderController {
   constructor(private readonly service: SearchProviderService) {}
 
+  // Provider catalog is back-data for the "Research Providers" admin page.
+  // The compare ResearchEnricher does NOT need to list providers — it just
+  // posts to /research/search and the backend picks the provider. So these
+  // reads move to ADMIN_SYSTEM_VIEW to match the FE page gate; the compare
+  // selector keeps working because it never hits this endpoint.
   @Get()
-  @RequirePermissions(Permission.RESEARCH_USE)
+  @RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
   list(@CurrentUser() _user: AuthenticatedUser): Promise<SanitizedSearchProvider[]> {
     return this.service.list();
   }
 
   @Get(':id')
-  @RequirePermissions(Permission.RESEARCH_USE)
+  @RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
   getOne(@Param('id') id: string): Promise<SanitizedSearchProvider> {
     return this.service.getById(id);
   }
