@@ -47,27 +47,38 @@ Typical users: Auditors, observers, stakeholders needing visibility without writ
 
 ## Permission Matrix
 
-| Resource                | ADMIN       | OPERATOR    | VIEWER      |
-| ----------------------- | ----------- | ----------- | ----------- |
-| **Users**               | Full CRUD   | --          | --          |
-| **System Settings**     | Full CRUD   | --          | --          |
-| **Connectors**          | Full CRUD   | Read        | --          |
-| **Routing Policies**    | Full CRUD   | Read        | --          |
-| **Chat Threads (own)**  | Full CRUD   | Full CRUD   | Read        |
-| **Chat Threads (all)**  | Full CRUD   | --          | --          |
-| **Chat Messages (own)** | Full CRUD   | Full CRUD   | Read        |
-| **Memories (own)**      | Full CRUD   | Full CRUD   | Read        |
-| **Context Packs (own)** | Full CRUD   | Full CRUD   | Read        |
-| **Files (own)**         | Full CRUD   | Full CRUD   | --          |
-| **Audit Logs**          | Full access | Read        | --          |
-| **Usage Ledger**        | Full access | Read        | --          |
-| **Ollama Models**       | Full CRUD   | Read        | --          |
-| **Model Catalog**       | Full access | Read + Pull | Read        |
-| **Health Status**       | Full access | Full access | Full access |
-| **Server Logs**         | Full access | --          | --          |
-| **Client Logs**         | Full access | --          | --          |
-| **Image Generation**    | Full access | Full access | --          |
-| **File Generation**     | Full access | Full access | --          |
+| Resource                          | ADMIN       | OPERATOR    | VIEWER      | USER        |
+| --------------------------------- | ----------- | ----------- | ----------- | ----------- |
+| **Users**                         | Full CRUD   | --          | --          | --          |
+| **System Settings**               | Full CRUD   | --          | --          | --          |
+| **Connectors**                    | Full CRUD   | Read        | --          | --          |
+| **Routing Policies**              | Full CRUD   | Read        | --          | --          |
+| **Chat Threads (own)**            | Full CRUD   | Full CRUD   | Read        | Full CRUD   |
+| **Chat Threads (all)**            | Full CRUD   | --          | --          | --          |
+| **Chat Messages (own)**           | Full CRUD   | Full CRUD   | Read        | Full CRUD   |
+| **Memories (own)**                | Full CRUD   | Full CRUD   | Read        | --          |
+| **Context Packs (own)**           | Full CRUD   | Full CRUD   | Read        | --          |
+| **Files (own)**                   | Full CRUD   | Full CRUD   | --          | --          |
+| **Workspace shell**¹              | Full        | Read        | Read        | Read        |
+| **Provider app-configs**¹         | Full CRUD   | Read        | Read        | Read        |
+| **Workspace own-connector flow**¹ | Full        | --          | --          | Full (own)  |
+| **Audit Logs**                    | Full access | Read        | --          | --          |
+| **Usage Ledger**                  | Full access | Read        | --          | --          |
+| **Ollama Models**                 | Full CRUD   | Read        | --          | --          |
+| **Model Catalog**                 | Full access | Read + Pull | Read        | --          |
+| **Health Status**                 | Full access | Full access | Full access | Full access |
+| **Server Logs**                   | Full access | --          | --          | --          |
+| **Client Logs**                   | Full access | --          | --          | --          |
+| **Image Generation**              | Full access | Full access | --          | --          |
+| **File Generation**               | Full access | Full access | --          | --          |
+
+¹ Backed by the new `WORKSPACE_VIEW` and `WORKSPACE_APP_CONFIG_VIEW`
+permissions (added 2026-05-30). USER also receives `WORKSPACE_CONNECT_OWN`,
+`WORKSPACE_READ_OWN`, `WORKSPACE_SYNC_OWN`, `WORKSPACE_ACTION_OWN` to use
+their own connections; write/delete of provider-app-configs and policy
+mutations stay locked to `ADMIN_WORKSPACE_AUTOMATION_MANAGE`. See
+[Workspace partial-relax pattern](#workspace-partial-relax-permission-pattern)
+below.
 
 ---
 
@@ -197,9 +208,13 @@ This section documents the SaaS-ification layer added in 2026-05.
   permissions) and **USER** (own-scoped set). `User.roleId` FKs the role; the JWT
   carries the role slug only (`sub,email,role`) — entitlements are **not** embedded.
 - `Permission` is a fixed code catalog in `@claw/shared-types`
-  (`packages/shared-types/src/enums/permission.enum.ts`), 30 entries: `CHAT_*`,
-  `MEMORY_*`, `CONTEXT_PACK_*`, `WORKSPACE_*`, `MODEL_USE_ALLOWED`, `ROUTER_USE`,
-  `COMPARE_USE`, `JUDGE_USE`, and the `ADMIN_*` management permissions.
+  (`packages/shared-types/src/enums/permission.enum.ts`). Categories: `CHAT_*`,
+  `MEMORY_*`, `CONTEXT_PACK_*`, `WORKSPACE_*` (including the new read-only
+  `WORKSPACE_VIEW` and `WORKSPACE_APP_CONFIG_VIEW` — see
+  [Workspace partial-relax permission pattern](#workspace-partial-relax-permission-pattern)),
+  `MODEL_USE_ALLOWED`, `ROUTER_USE`, `COMPARE_USE`, `JUDGE_USE`, `FILES_USE`,
+  `RESEARCH_USE`, `AGENT_USE`, `MODELS_CATALOG_VIEW`, `VIEW_DASHBOARD`, and the
+  `ADMIN_*` management permissions.
 - Admin role/permission management (auth-service `roles` module, `@Roles(ADMIN)`):
   `GET/POST/PATCH/DELETE /api/v1/admin/roles`, `GET /api/v1/admin/roles/permissions`
   (catalog), `PUT /api/v1/admin/roles/:id/permissions` (set grants). System roles
@@ -242,3 +257,34 @@ allowedModels[], allowedProviders[], quota{dailyLimit,used,remaining,unlimited} 
 
 The `ADMIN` role bypasses Quota, ModelAccess and Plan checks entirely (no plan
 assignment required). Chosen over a synthetic "unrestricted plan".
+
+---
+
+## Workspace partial-relax permission pattern
+
+The workspace surface ships with a deliberately **two-tier** permission scope so
+USER can self-serve their own connectors without giving them write access to
+admin-managed infrastructure (provider-app-configs, policies, webhook replay).
+The split was introduced 2026-05-30 because the legacy admin-only gate hid the
+whole `/workspace/*` route tree from USER even though we needed them to browse
+providers and connect their own GitHub/Slack/etc. account.
+
+The two new narrow permissions:
+
+| Permission                  | Granted to USER? | What it unlocks                                                                                                                    |
+| --------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `WORKSPACE_VIEW`            | Yes              | Read-only access to the workspace shell — the `/workspace`, `/workspace/connections`, and provider-listing pages.                  |
+| `WORKSPACE_APP_CONFIG_VIEW` | Yes              | Browse admin-created provider-app-configs (sanitised as `ProviderAppConfigPublic` — `hasSecret: boolean` only; never `encryptedSecret`). Required so the connect-own-account flow can pick which provider app to use. |
+
+The existing `*_OWN` workspace permissions then let USER actually use the
+shell: `WORKSPACE_CONNECT_OWN` (create a connector for themselves),
+`WORKSPACE_READ_OWN`, `WORKSPACE_SYNC_OWN`, `WORKSPACE_ACTION_OWN`. Every
+mutation that affects admin-managed state (creating/updating/deleting
+provider-app-configs, suggestion rules, policies, replaying webhooks) stays
+gated by `ADMIN_WORKSPACE_AUTOMATION_MANAGE` + `@Roles(ADMIN)`.
+
+This is the **partial-relax** pattern: rather than introducing a single coarse
+`WORKSPACE_USER` permission, two narrow permissions are added so admins can
+take each capability away independently in the role→permission matrix without
+having to re-engineer the gate. The same pattern is the template for future
+"USER can read but not write" surfaces.

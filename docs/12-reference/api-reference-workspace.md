@@ -59,3 +59,23 @@ Used to start and complete provider authorization flows.
 - `POST /workspace/actions/:id/reject`
 
 These routes support human-reviewed external action drafts such as issue creation or outbound messages.
+
+---
+
+## Provider Registry (catalog + admin app-configs)
+
+| Endpoint                                       | Method | Required permission                  | Notes                                                                       |
+| ---------------------------------------------- | ------ | ------------------------------------ | --------------------------------------------------------------------------- |
+| `GET /workspace/providers`                     | GET    | (any auth role)                      | Provider definition catalog (no secrets).                                   |
+| `GET /workspace/providers/:provider`           | GET    | (any auth role)                      | Single provider definition.                                                 |
+| `GET /workspace/provider-app-configs`          | GET    | `WORKSPACE_APP_CONFIG_VIEW`          | Sanitised list (`ProviderAppConfigPublic` — `hasSecret: boolean`, no key).  |
+| `POST /workspace/provider-app-configs`         | POST   | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`  | Admin-only. Creates an OAuth client-id/secret config for a provider.        |
+| `GET /workspace/provider-app-configs/:id`      | GET    | `WORKSPACE_APP_CONFIG_VIEW`          | Sanitised single record.                                                    |
+| `PUT /workspace/provider-app-configs/:id`      | PUT    | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`  | Admin-only. Update client-id/secret.                                        |
+| `DELETE /workspace/provider-app-configs/:id`   | DELETE | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`  | Admin-only. 204 on success.                                                 |
+
+USER (and OPERATOR / VIEWER) can browse the list to choose which provider app
+to connect their own account against; mutations are admin-only so secret
+rotations stay centralised. See
+[`service-guide-workspace.md`: USER VIEW + CONNECT Permission Scope](../04-backend/service-guide-workspace.md#user-view--connect-permission-scope-2026-05-30)
+for the full per-endpoint permission matrix.

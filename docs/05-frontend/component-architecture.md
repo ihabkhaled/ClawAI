@@ -307,7 +307,7 @@ Application shell components:
 
 Domain-specific components:
 
-- `src/components/chat/` -- MessageBubble, MessageComposer, ModelSelector, ThreadSettings, RoutingTransparency, ThinkingIndicator
+- `src/components/chat/` -- MessageBubble, MessageComposer, ModelSelector, ThreadSettings, RoutingTransparency, ThinkingIndicator, **RichPromptTextarea**
 - `src/components/connectors/` -- ConnectorCard, ConnectorForm
 - `src/components/models/` -- ModelCard, ModelCatalog
 - `src/components/memory/` -- MemoryForm, MemoryList
@@ -316,6 +316,43 @@ Domain-specific components:
 - `src/components/audit/` -- AuditLogTable, UsageChart
 - `src/components/logs/` -- LogViewer, LogFilters
 - `src/components/admin/` -- UserTable
+
+### `RichPromptTextarea` (2026-05-30)
+
+Use it on every rich prompt-entry surface — the main chat `MessageComposer`,
+the in-thread compare panel, and any future authoring surface that needs
+multiline prompt input. It wraps shadcn `<Textarea>` with: autosize from
+`minRows` to `maxRows` (then internal scroll), Enter-to-submit (Shift+Enter
+inserts a newline), IME-safe composition tracking (never submits while a
+CJK/IME composition is in flight), and `ref` forwarding via
+`useImperativeHandle` so parents can imperatively focus. The component is
+pure render composition; all imperative DOM work (autosize math, key
+handling, composition events) lives in `use-rich-prompt-textarea` per the
+"TSX = render only" + "no inline sub-components" rules. It was authored fresh
+rather than retrofitted onto `MessageComposer` because the in-thread compare
+panel needs the same behaviour and the old single-line `<Input>` couldn't be
+incrementally widened. Props contract: `{ value, onChange, onSubmit,
+placeholder?, disabled?, minRows, maxRows, ariaLabel?, className? }`.
+
+### `use-sticky-bottom-scroll` (2026-05-30)
+
+A hook that keeps a scroll container pinned to its bottom sentinel while
+content streams in, with three UX guarantees: (1) **pin if at-bottom** — when
+the user is within `threshold` px of the bottom and `contentSignal` changes,
+the container auto-scrolls to the sentinel; (2) **pause if scrolled-up** —
+when the user scrolls up beyond the threshold, auto-scroll stops until they
+return; (3) **jump-to-latest button** — derived from the returned
+`isAtBottom: false`, the page renders a small button that calls
+`scrollToBottom()`. Wiring: attach `scrollRef` to the `overflow-y: auto`
+container, render `<div ref={sentinelRef} />` as the LAST child, and pass a
+`contentSignal` that changes when content grows (typically
+`messages.length + streamingText.length`). Internally combines
+`IntersectionObserver` on the sentinel (primary), a scroll listener (for the
+within-threshold band), a `ResizeObserver` on the sentinel's parent (catches
+fast streaming token growth), and `requestAnimationFrame` to batch the
+`scrollIntoView` write so React renders flush before scrollTop mutates — this
+is what eliminates the visible "jumping" you get from synchronous writes.
+Default threshold is `STICKY_BOTTOM_THRESHOLD_PX` from `src/constants`.
 
 ---
 

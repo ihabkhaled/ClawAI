@@ -300,6 +300,56 @@ Per-provider cadence defaults live in table `workspace_sync_cadence_defaults`. O
 
 ---
 
+## USER VIEW + CONNECT Permission Scope (2026-05-30)
+
+Two narrow permissions were added so the new `USER` role can self-serve
+workspace connections without admins giving away write access to the
+provider-app-config catalog:
+
+| Permission                  | Granted to USER | Unlocks                                                                                  |
+| --------------------------- | --------------- | ---------------------------------------------------------------------------------------- |
+| `WORKSPACE_VIEW`            | Yes             | Read access to the workspace shell and provider listing endpoints.                       |
+| `WORKSPACE_APP_CONFIG_VIEW` | Yes             | Browse admin-created provider-app-configs (sanitised — `hasSecret: boolean`, no secret). |
+| `WORKSPACE_CONNECT_OWN`     | Yes             | Create / update / delete the user's own `WorkspaceConnector` row.                        |
+| `WORKSPACE_READ_OWN`        | Yes             | List + read the user's own connectors, objects, and action drafts.                       |
+| `WORKSPACE_SYNC_OWN`        | Yes             | Trigger sync, pause/resume, override cadence on the user's own connectors.               |
+| `WORKSPACE_ACTION_OWN`      | Yes             | Approve / reject action drafts the user owns.                                            |
+
+### Partial-relax model
+
+The split is deliberate: USER reads (provider catalog, provider-app-configs)
+and connects (own connectors), but admin owns infrastructure mutations. The
+matrix below summarises:
+
+| Endpoint group                                          | USER  | ADMIN     | Backing permission                       |
+| ------------------------------------------------------- | ----- | --------- | ---------------------------------------- |
+| `GET /workspace/providers[/:provider]`                  | Read  | Read      | (any authenticated role)                 |
+| `GET /workspace/provider-app-configs[/:id]`             | Read  | Read      | `WORKSPACE_APP_CONFIG_VIEW`              |
+| `POST / PUT / DELETE /workspace/provider-app-configs`   | --    | Full CRUD | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`      |
+| `GET / POST / PATCH / DELETE /workspace/connectors[*]`  | Own   | All       | `WORKSPACE_CONNECT_OWN` / `*_READ_OWN`   |
+| `POST /workspace/connectors/:id/health\|sync\|pause\|resume\|cadence` | Own | All | `WORKSPACE_SYNC_OWN`                    |
+| `POST /workspace/oauth/init` + `GET /oauth/callback`    | Own   | All       | `WORKSPACE_CONNECT_OWN`                  |
+| `POST /workspace/search` + `GET /workspace/objects[*]`  | Own   | All       | `WORKSPACE_READ_OWN`                     |
+| `GET / POST /workspace/actions[*]/approve\|reject`      | Own   | All       | `WORKSPACE_ACTION_OWN`                   |
+| `GET /workspace/ai-actions/policies[*]`                 | --    | All       | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`      |
+| `POST / PATCH / DELETE /workspace/ai-actions/policies[*]` | --  | All       | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`      |
+| `GET / POST / PATCH / DELETE /workspace/suggestion-rules[*]` | -- | All     | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`      |
+| `GET /workspace/webhooks/deliveries`                    | --    | All       | `ADMIN_WORKSPACES_VIEW`                  |
+| `POST /workspace/webhooks/deliveries/:id/replay`        | --    | All       | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`      |
+| `GET /workspace/sync/dashboard`                         | --    | All       | `ADMIN_WORKSPACES_VIEW`                  |
+
+All endpoints carry both `@Roles(...)` AND
+`@RequirePermissions(Permission.XXX)`. Roles gate the legacy enum-based
+classes (so ADMIN, OPERATOR, VIEWER, USER each see what they should), and
+`@RequirePermissions` is the modern entitlements check (admin can withhold any
+single permission per-role via `PUT /api/v1/admin/roles/:id/permissions`). The
+sanitised `ProviderAppConfigPublic` shape is the second line of defence — even
+if `WORKSPACE_APP_CONFIG_VIEW` is mis-granted, no encrypted secret can leak.
+
+See also: [Authorization & RBAC — Workspace partial-relax permission pattern](../03-architecture/authorization-rbac.md#workspace-partial-relax-permission-pattern).
+
+---
+
 ## Related Docs
 
 - [Services Index](services-index.md)

@@ -840,7 +840,7 @@ Active policies (sorted by priority) can override the mode.
 ## Security
 
 - JWT + refresh token rotation (argon2 password hashing)
-- RBAC: ADMIN, OPERATOR, VIEWER (AuthGuard + RolesGuard on all services)
+- RBAC: ADMIN, OPERATOR, VIEWER, USER (AuthGuard + RolesGuard + RequirePermissions on all services)
 - Rate limiting: @nestjs/throttler (100 req/min, configurable via THROTTLE_TTL/THROTTLE_LIMIT)
 - Helmet security headers on all 17 services
 - Zod validation on all DTOs
@@ -848,6 +848,58 @@ Active policies (sorted by priority) can override the mode.
 - AES-256-GCM encryption for connector API keys
 - Pino log redaction (authorization, password, refreshToken, apiKey, token, secret)
 - X-Request-ID correlation from frontend to backend
+
+### Plan feature gates (Plan.allow* fields, enforced by `@claw/shared-entitlements`)
+
+`allowCompareMode`, `allowJudgeMode`, `allowCriticReview`, `allowResearchMode`,
+`allowWorkspaces`, `allowMemory`, `allowContextPacks`. Each plan toggles the
+flag; the chat-service `AccessControlService` and the FE `useFeatureGates` hook
+read the entitlement payload to gate the corresponding UI/endpoint.
+`allowCriticReview` (added 2026-05-30) is a sibling of `allowJudgeMode` — Judge
+can be on without Critic, but Critic always requires Judge (DTO refine).
+
+### Permission catalog (`@claw/shared-types` Permission enum)
+
+Source of truth: `packages/shared-types/src/enums/permission.enum.ts`. Key
+permissions: `CHAT_*`, `MEMORY_*`, `CONTEXT_PACK_*`, `WORKSPACE_VIEW`,
+`WORKSPACE_APP_CONFIG_VIEW`, `WORKSPACE_CONNECT_OWN`, `WORKSPACE_READ_OWN`,
+`WORKSPACE_SYNC_OWN`, `WORKSPACE_ACTION_OWN`, `MODEL_USE_ALLOWED`,
+`ROUTER_USE`, `COMPARE_USE`, `JUDGE_USE`, `FILES_USE`, `RESEARCH_USE`,
+`AGENT_USE`, `MODELS_CATALOG_VIEW`, `VIEW_DASHBOARD`, and the `ADMIN_*`
+management permissions. `WORKSPACE_VIEW` + `WORKSPACE_APP_CONFIG_VIEW`
+(added 2026-05-30) are narrow read-only permissions: USER can browse the
+workspace shell and the admin-created provider-app-configs (sanitised
+without `encryptedSecret`) but cannot mutate either — write/delete stays
+gated by `ADMIN_WORKSPACE_AUTOMATION_MANAGE`.
+
+### USER role default permission grants
+
+Seeded from `USER_DEFAULT_PERMISSIONS` in
+`apps/claw-auth-service/src/common/constants/rbac.constants.ts`: `CHAT_USE`,
+`CHAT_READ_OWN`, `CHAT_DELETE_OWN`, `WORKSPACE_VIEW`,
+`WORKSPACE_APP_CONFIG_VIEW`, `WORKSPACE_CONNECT_OWN`, `WORKSPACE_READ_OWN`,
+`WORKSPACE_SYNC_OWN`, `WORKSPACE_ACTION_OWN`, `MODEL_USE_ALLOWED`,
+`AGENT_USE`, `RESEARCH_USE`. Everything else (Memory/Context management
+pages, Files, observability, admin) is withheld by default and admin-grantable
+per-role via `PUT /api/v1/admin/roles/:id/permissions`.
+
+### Judge + Critic pipeline (chat-service `JudgeRefereeManager`)
+
+When `judgeEnabled=true` on a compare lane (or thread auto-trigger fires), the
+manager runs a Critic → Judge two-step on top of the generator response. Critic
+prompts come from `CRITIC_SYSTEM_PROMPTS` in `judge-referee.constants.ts`. When
+`criticEnabled=true` AND `criticModel` is supplied in the compare DTO,
+`resolveCriticTarget()` uses the user-selected model verbatim
+(`PROVIDER:model` parsed the same way judge models are) — otherwise it falls
+back to the legacy auto-pick. `parseCriticOutput()` tolerates non-JSON critic
+output by persisting a `parseFailed=true` marker into
+`JudgeRefereeMetadata.criticParseFailed` so the UI can render "critic output
+unparseable" without inferring from empty feedback. All critic fields
+(`criticModel`, `criticFeedback`, `criticScore`, `criticSummary`,
+`criticRequested`, `criticParseFailed`, `criticLatencyMs`) are stored in
+`ChatMessage.metadata` under `JudgeRefereeMetadata`. The feature is plan-gated
+by `allowCriticReview`; the DTO further enforces `criticEnabled ⇒ judgeEnabled`
+and `criticEnabled ⇒ criticModel != ''`.
 - **End-to-end local TLS via mkcert** (see `docs/08-runtime-devops/tls-setup.md`):
   browser → nginx :443 → every backend service is HTTPS, with cert
   verification at every hop. Forced on by `scripts/install.{sh,ps1}` Step 6/9
@@ -925,9 +977,11 @@ login, dashboard, chat, chat/[threadId], chat/compare, connectors, connectors/[i
 - `ContextPackSelector` — checkbox list in thread settings
 - `RoutingTransparency` — expandable decision details (confidence, reasons, privacy/cost)
 - `MessageBubble` — provider/model badge, feedback, regenerate, token counts
-- `MessageComposer` — textarea + model selector + file picker
+- `MessageComposer` — textarea + model selector + file picker (wraps `RichPromptTextarea`)
 - `ThreadSettings` — system prompt, temperature, max tokens, model, context packs
 - `ThinkingIndicator` — shown during polling for AI response
+- `RichPromptTextarea` — shared autosize/IME-safe shadcn `Textarea` wrapper used by `MessageComposer` AND the in-thread compare panel; logic lives in `use-rich-prompt-textarea` per the no-inline-subcomponent rule
+- `use-sticky-bottom-scroll` — chat-thread/compare hook that keeps the scroll container pinned to its sentinel while the user is at the bottom and pauses auto-scroll when scrolled up; renders a "jump to latest" button once paused
 
 ---
 

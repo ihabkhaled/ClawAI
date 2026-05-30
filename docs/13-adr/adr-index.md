@@ -343,3 +343,7 @@ Use the `fetch` API with `ReadableStream` to consume SSE streams instead of the 
 | 046 | Simulator same code path     | Accepted | Phase 13 dry-run uses production evaluator                 |
 | 047 | 14-dim scoring weights       | Accepted | Per-RoutingMode weight vectors sum to 1                    |
 | 048 | Workflow vs. model decision  | Accepted | Workflow selection inside router (Phase 9)                 |
+| 049 | Local TLS everywhere (mkcert)| Accepted | One install command, end-to-end HTTPS incl. service-to-service |
+| 050 | Critic as sibling plan feature of Judge | Accepted | `allowCriticReview` flag + user-selectable critic model + parse-failed marker |
+| 051 | Narrow workspace VIEW + CONNECT permissions for USER | Accepted | `WORKSPACE_VIEW` + `WORKSPACE_APP_CONFIG_VIEW`; partial-relax over admin-only |
+| 052 | Shared `RichPromptTextarea` + `use-sticky-bottom-scroll` hook | Accepted | One autosize textarea everywhere; one auto-follow scroll behaviour everywhere |

@@ -147,6 +147,81 @@ When all providers fail, the service stores an error message as an ASSISTANT rec
 - **ChatExecutionManager** -- executes LLM calls with fallback chain, quality checking, and auto re-routing
 - **QualityCheckManager** -- scores response quality (5 signals), recommends re-routing for weak answers
 - **ParallelExecutionManager** -- executes the same prompt against 2-5 models simultaneously via `Promise.allSettled`
+- **JudgeRefereeManager** -- runs the Critic → Judge quality pipeline on top of a generator response (see [Judge + Critic Pipeline](#judge--critic-pipeline) below)
+
+---
+
+## Judge + Critic Pipeline
+
+### When the pipeline runs
+
+`JudgeRefereeManager.execute()` is invoked from `ChatExecutionManager.execute()`
+(step 8a of the message flow above) and from `ParallelExecutionManager` per
+lane. It activates when **(a)** the lane/thread carries `judgeEnabled=true`,
+or **(b)** the routing decision flagged an auto-trigger category (coding,
+security, medical, legal, finance, data-analysis). On success the manager
+returns a `JudgeRefereeResult` containing the original response, the critic
+evaluation, the judge verdict, and (optionally) a revised or escalated response.
+
+### Critic target resolution
+
+`resolveCriticTarget(generatorProvider, config)` picks the model for the
+critic LLM call in this order:
+
+1. **User-supplied wins**. If `config.criticEnabled === true` AND
+   `config.criticModel` is a non-empty string, the value is parsed via
+   `parseJudgeModel()` (the same `PROVIDER:model` parser the Judge uses).
+   A known provider (e.g. `anthropic:claude-sonnet-4`) routes through that
+   connector so token usage is captured natively; a plain model name routes
+   through Ollama with `resolveModel()` mapping `AUTO` to the configured
+   default local model.
+2. **Auto-pick fallback**. Otherwise `selectCriticModel()` returns the first
+   entry of `CRITIC_CLOUD_MODELS` whose provider differs from the generator
+   (avoids self-critique bias), or the local Ollama default when
+   `isLocalOnly`. This is the legacy v1 behaviour preserved unchanged.
+
+The DTO refinement (`apps/claw-chat-service/.../parallel-message.dto.ts`)
+enforces `criticEnabled ⇒ criticModel != ''` AND
+`criticEnabled ⇒ judgeEnabled` before the request reaches the manager, so the
+gate above only has to make a positive selection.
+
+### Critic output parsing
+
+`parseCriticOutput(content)` is fault-tolerant by design — critic models
+sometimes wrap JSON in prose or fenced code blocks. The parser:
+
+1. Strips a ` ```json ... ``` ` fence if present.
+2. Extracts the first `{ ... }` block via regex.
+3. JSON-parses and clamps `score` into `[0, 1]`, filters non-string feedback
+   entries, falls back to a derived summary when `summary` is missing.
+4. **On any failure**, returns
+   `{ feedback: [], score: 1.0, summary: CRITIC_PARSE_FAILURE_SUMMARY, parseFailed: true }`
+   and logs `parseCriticOutput: failed to parse critic output. Persisting
+   parse-failure marker.` so the failure is observable without poisoning the
+   downstream Judge decision.
+
+### Persistence into ChatMessage.metadata
+
+`buildMetadata()` assembles a `JudgeRefereeMetadata` object stored under
+`ChatMessage.metadata` (JSON column). The critic-specific fields are
+`criticModel`, `criticFeedback`, `criticScore`, `criticSummary`,
+`criticRequested`, `criticParseFailed`, plus a `criticLatencyMs` rolled up
+into `judgeTotalLatencyMs` and (when the run had real token accounting)
+combined judge+critic token usage in the top-level
+`judgeInputTokens/judgeOutputTokens` for a single `TokenLedgerContext.JUDGE`
+ledger entry. The full payload also lands in `metadata.judgeReview`
+(`JudgeReviewPayload`) so the FE can render the Judge panel without
+recomputing anything.
+
+### Plan-feature gating
+
+`AccessControlService.assertCanSendMessage()` (chat-service) is called by
+`createParallelMessage()` BEFORE the manager fires. It pushes plan-feature
+checks into a single `requireFeature: PlanFeature[]` call:
+`allowCompareMode` (always), plus `allowJudgeMode` when `judgeEnabled`, plus
+`allowCriticReview` when `criticEnabled`, plus `allowResearchMode` when the
+research enricher is requested. A locked plan flag returns `403
+MODEL_NOT_ALLOWED_FOR_PLAN` before any LLM tokens are spent.
 
 ---
 

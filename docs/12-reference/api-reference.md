@@ -504,6 +504,66 @@ Set feedback on a message.
 
 ---
 
+### POST /api/v1/chat-messages/parallel
+
+**Auth Required:** Yes
+
+Send the same prompt to 2-5 models simultaneously (compare mode). Optionally
+runs the Critic → Judge quality pipeline per lane.
+
+**Request Body:**
+
+```json
+{
+  "threadId": "uuid",
+  "content": "Explain REST vs GraphQL",
+  "models": [
+    { "provider": "anthropic", "model": "claude-sonnet-4" },
+    { "provider": "openai", "model": "gpt-4o-mini" }
+  ],
+  "judgeEnabled": true,
+  "judgeModel": "anthropic:claude-sonnet-4",
+  "criticEnabled": true,
+  "criticModel": "openai:gpt-4o-mini",
+  "fileIds": []
+}
+```
+
+| Field           | Type     | Required          | Constraints                                                                    |
+| --------------- | -------- | ----------------- | ------------------------------------------------------------------------------ |
+| threadId        | string   | No                | Max 255 chars (auto-creates a thread when omitted)                             |
+| content         | string   | Yes               | 1 to 100,000 chars                                                             |
+| models          | array    | Yes               | 2-5 `{provider, model}` pairs                                                  |
+| judgeEnabled    | boolean  | No                | Activates the Judge step on every lane                                         |
+| judgeModel      | string   | No                | `PROVIDER:model` or plain local model name (max 255)                           |
+| criticEnabled   | boolean  | No (default false)| Activates the Critic step; **requires `judgeEnabled=true` AND `criticModel`**  |
+| criticModel     | string   | Conditional       | Required + non-empty whenever `criticEnabled=true` (max 200 chars)             |
+| researchMode    | enum     | No                | `NONE`, `WEB_SEARCH`, `FETCH`, `EXTRACT` — enricher pre-pends shared evidence  |
+| researchQuery   | string   | No                | Max 500 chars                                                                  |
+| researchProviderId | string| No                | Max 64 chars                                                                   |
+| fileIds         | string[] | No                | Max 10 items                                                                   |
+
+**Validation rules (Zod superRefine):**
+
+- `criticEnabled=true` AND `judgeEnabled !== true` → `400 VALIDATION_ERROR` on path `criticEnabled`
+- `criticEnabled=true` AND `criticModel` empty/whitespace → `400 VALIDATION_ERROR` on path `criticModel`
+
+**Plan-feature gates** (enforced by `AccessControlService`):
+`allowCompareMode`, plus `allowJudgeMode` when `judgeEnabled`, plus
+`allowCriticReview` when `criticEnabled`, plus `allowResearchMode` when
+`researchMode !== NONE`. A locked plan returns `403 MODEL_NOT_ALLOWED_FOR_PLAN`.
+
+**Response (200):** `ParallelResponse` with per-model `{ provider, model, status,
+content, messageId, inputTokens, outputTokens, latencyMs, error? }` plus
+`totalLatencyMs`. When Judge/Critic ran, each fulfilled message's
+`metadata.judgeReview` carries the full `JudgeReviewPayload` (critic feedback,
+score, parse-failed flag, judge decision, revised/escalated answer).
+
+See [Judge & Critic Spec](../02-business-product/judge-referee-spec.md) for
+the full architectural narrative.
+
+---
+
 ### GET /api/v1/chat-messages/stream/:threadId (SSE)
 
 **Auth Required:** Yes

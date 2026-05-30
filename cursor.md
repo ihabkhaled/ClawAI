@@ -181,3 +181,12 @@ Update all four jobs (`lint`, `typecheck`, `test`, `build`) — they each have t
 ```
 
 So a new `packages/<name>` = TWO edits × 4 jobs: the "Build shared packages" line AND the matrix entry. `@claw/shared-entitlements` had the build line (Phase C-1) but its matrix entry was missed until 2026-05-29 — silently never lint/typecheck/tested. Don't repeat: both edits, all four jobs.
+
+## 2026-05-30 feature additions (single source of truth: CLAUDE.md)
+
+Critic plan feature (`allowCriticReview` + selectable critic model on compare),
+`WORKSPACE_VIEW` / `WORKSPACE_APP_CONFIG_VIEW` permissions (USER read-only
+access to workspace pages and admin provider-app-configs), `RichPromptTextarea`
+(shared autosize textarea), and `use-sticky-bottom-scroll` (auto-follow streaming
+tokens) are detailed in `CLAUDE.md` — single source of truth. ADR-050 / 051 /
+052 capture the architectural decisions.

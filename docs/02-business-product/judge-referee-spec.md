@@ -89,3 +89,80 @@ All within `claw-chat-service`:
 ## Tests
 
 24 unit tests covering: `shouldActivate`, `selectCriticModel`, `parseJudgeOutput`, `buildMetadata`
+
+---
+
+## Critic Review (user-selectable critic, 2026-05-30)
+
+The Critic step was promoted from an internal auto-pick to a first-class,
+user-selectable feature with its own plan gate.
+
+### Plan-feature gate
+
+`allowCriticReview` is a sibling of `allowJudgeMode`. Both plans toggle
+independently:
+
+| Plan flag         | Effect                                          |
+| ----------------- | ----------------------------------------------- |
+| `allowJudgeMode`  | Unlocks the Judge step (verdict + revise/escalate). |
+| `allowCriticReview` | Unlocks the user-supplied Critic model on top of Judge. Pro can ship without Critic if desired. |
+
+DTO refinement enforces `criticEnabled ⇒ judgeEnabled` — the Critic
+always feeds the Judge; you cannot run Critic standalone.
+
+### When it fires
+
+On `POST /chat-messages/parallel` (compare mode). Per-lane payload:
+
+```json
+{
+  "judgeEnabled": true,
+  "judgeModel": "anthropic:claude-sonnet-4",
+  "criticEnabled": true,
+  "criticModel": "openai:gpt-4o-mini"
+}
+```
+
+If `criticEnabled=true` but `criticModel` is empty/whitespace, the DTO returns
+`400 VALIDATION_ERROR` (Zod superRefine).
+
+### Critic prompt + parse contract
+
+The category-specific prompt comes from `CRITIC_SYSTEM_PROMPTS` in
+`apps/claw-chat-service/src/modules/chat-messages/constants/judge-referee.constants.ts`.
+The expected critic output is:
+
+```json
+{ "score": 0.0-1.0, "summary": "<one-line>", "feedback": ["<note>", "..."] }
+```
+
+`parseCriticOutput()` tolerates fenced code blocks (` ```json ... ``` `), prose
+preamble around a JSON object, and string-only output. When parsing fails it
+persists `criticParseFailed: true` and a fixed `CRITIC_PARSE_FAILURE_SUMMARY`
+into `JudgeRefereeMetadata` so the UI can render a distinct "critic output
+unparseable" state instead of inferring it from an empty `feedback[]`.
+
+### Persistence target
+
+All critic state lives in `ChatMessage.metadata` under the `JudgeRefereeMetadata`
+shape (`apps/claw-chat-service/src/modules/chat-messages/types/judge-referee.types.ts`):
+
+| Field               | Source                                                            |
+| ------------------- | ----------------------------------------------------------------- |
+| `criticModel`       | Resolved by `resolveCriticTarget()` (user pick wins).             |
+| `criticFeedback`    | `parseCriticOutput().feedback` (string[]).                        |
+| `criticScore`       | `parseCriticOutput().score` (clamped 0-1).                        |
+| `criticSummary`     | `parseCriticOutput().summary` or fallback.                        |
+| `criticRequested`   | `true` if `criticEnabled` was set in the DTO; `false` otherwise.  |
+| `criticParseFailed` | `true` when the model output couldn't be parsed.                  |
+| `criticLatencyMs`   | Wall-clock ms of the critic LLM call.                             |
+
+### FE control surface
+
+The compare panel exposes two grouped controls per lane:
+
+- `CompareCriticControls` — toggle + model picker (only enabled when
+  `allowCriticReview` is true on the user's plan AND the lane has `judgeEnabled`).
+- `JudgeReviewCriticSection` — 4-way render of the critic block in the message:
+  not requested / requested-no-feedback / requested-parsed-feedback / requested-parse-failed.
+  The render branch is chosen from `criticRequested` × `criticParseFailed` × `criticFeedback.length`.
