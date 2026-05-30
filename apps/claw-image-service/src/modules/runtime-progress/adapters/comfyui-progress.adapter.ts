@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
 import { buildRuntimeProgressEvent, httpGet, httpPost } from '@claw/shared-utilities';
@@ -77,7 +77,7 @@ export class ComfyUIProgressAdapter {
   private readonly httpGetImpl: ComfyUIHttpGetFn;
   private readonly httpPostImpl: ComfyUIHttpPostFn;
 
-  constructor(deps: ComfyUIProgressAdapterDeps = {}) {
+  constructor(@Optional() deps: ComfyUIProgressAdapterDeps = {}) {
     this.webSocketFactory =
       deps.webSocketFactory ?? ((url: string) => this.createDefaultWebSocket(url));
     this.httpGetImpl = deps.httpGet ?? (httpGet as ComfyUIHttpGetFn);
