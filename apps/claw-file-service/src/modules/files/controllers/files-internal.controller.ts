@@ -1,4 +1,14 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { type Response } from 'express';
 import { Public } from '../../../app/decorators/public.decorator';
 import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
@@ -17,12 +27,14 @@ export class FilesInternalController {
   ) {}
 
   @Public()
+  @UseGuards(ServiceTokenGuard)
   @Get(':id/chunks')
   async getChunks(@Param('id') fileId: string): Promise<FileChunk[]> {
     return this.fileChunksRepository.findByFileId(fileId);
   }
 
   @Public()
+  @UseGuards(ServiceTokenGuard)
   @Get(':id/content')
   async getContent(
     @Param('id') fileId: string,
@@ -40,12 +52,14 @@ export class FilesInternalController {
   }
 
   @Public()
+  @UseGuards(ServiceTokenGuard)
   @Get('download/:id')
   async download(@Param('id') id: string, @Res() res: Response): Promise<void> {
     return this.filesService.downloadFilePublic(id, res);
   }
 
   @Public()
+  @UseGuards(ServiceTokenGuard)
   @Post('store-image')
   async storeImage(
     @Body() body: { userId: string; filename: string; mimeType: string; base64Data: string },

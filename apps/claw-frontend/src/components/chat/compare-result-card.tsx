@@ -14,17 +14,13 @@ import {
   Zap,
 } from 'lucide-react';
 
+import { AttachmentDeliveryChip } from '@/components/chat/attachments/attachment-delivery-chip';
 import { CompareJudgeBadges } from '@/components/chat/compare-judge-badges';
 import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CompareJudgeState, CompareResultViewMode, ParallelModelStatus } from '@/enums';
 import { useCompareResultCard } from '@/hooks/chat/use-compare-result-card';
 import { MarkdownRenderer } from '@/lib/markdown';
@@ -103,6 +99,9 @@ export function CompareResultCard({
             </span>
           ) : null}
           <CompareJudgeBadges judgeState={judgeState} t={t} />
+          {response.attachmentDelivery && response.attachmentDelivery.length > 0 ? (
+            <AttachmentDeliveryChip delivery={response.attachmentDelivery} />
+          ) : null}
         </div>
       </CardHeader>
 
@@ -133,11 +132,21 @@ export function CompareResultCard({
 
       {hasContent ? (
         <CardFooter className="shrink-0 flex-wrap gap-1.5 pt-2">
-          <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs" onClick={toggleViewMode}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1 px-2 text-xs"
+            onClick={toggleViewMode}
+          >
             {isMarkdown ? <Code className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
             {isMarkdown ? t('compare.viewRaw') : t('compare.viewMarkdown')}
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs" onClick={copyContent}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1 px-2 text-xs"
+            onClick={copyContent}
+          >
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             {copied ? t('compare.copied') : t('compare.copy')}
           </Button>

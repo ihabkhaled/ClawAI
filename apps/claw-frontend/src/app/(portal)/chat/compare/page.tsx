@@ -6,6 +6,7 @@ import { CompareCriticControls } from '@/components/chat/compare-critic-controls
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
 import { CompareResearchModeControl } from '@/components/chat/compare-research-mode-control';
 import { DailyTokenIndicator } from '@/components/chat/daily-token-indicator';
+import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
 import { ParallelResultsGrid } from '@/components/chat/parallel-results-grid';
 import { ParallelSummaryBar } from '@/components/chat/parallel-summary-bar';
@@ -48,6 +49,8 @@ export default function ComparePage() {
     setCriticModel,
     researchMode,
     setResearchMode,
+    selectedFileIds,
+    setSelectedFileIds,
   } = useParallelComparePage();
 
   const planFeatures = usePlanFeatures();
@@ -97,11 +100,7 @@ export default function ComparePage() {
               />
             ) : null}
             {canResearch ? (
-              <CompareResearchModeControl
-                value={researchMode}
-                onChange={setResearchMode}
-                t={t}
-              />
+              <CompareResearchModeControl value={researchMode} onChange={setResearchMode} t={t} />
             ) : null}
           </div>
         </div>
@@ -115,7 +114,16 @@ export default function ComparePage() {
                 placeholder={t('compare.sendPrompt')}
                 className="min-h-[100px] resize-y"
               />
-              <div className="mt-3 flex justify-end">
+              <div className="mt-3 flex items-center justify-between gap-2">
+                {selectedModels.length > 0 ? (
+                  <FileAttachmentPicker
+                    selectedFileIds={selectedFileIds}
+                    onChange={setSelectedFileIds}
+                    disabled={isPending || isPolling}
+                  />
+                ) : (
+                  <span />
+                )}
                 <Button onClick={handleSend} disabled={!canSend}>
                   {isPending || isPolling ? (
                     <Loader2 className="me-2 h-4 w-4 animate-spin" />

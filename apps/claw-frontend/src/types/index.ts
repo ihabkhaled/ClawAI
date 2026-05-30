@@ -328,6 +328,7 @@ export type {
   StreamThinkingPanelProps,
   StreamLiveAnswerProps,
   ParallelLaneCardProps,
+  AttachmentDeliveryChipProps,
 } from './stream-component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
@@ -437,10 +438,8 @@ export type {
   UseInThreadCompareReturn,
   CompareResearchModeOption,
 } from './parallel.types';
-export type {
-  CompareResultMarkdownInput,
-  UseCompareResultCardReturn,
-} from './compare.types';
+export type { FileDeliveryEntry, FileDeliveryCounts } from './file-delivery.types';
+export type { CompareResultMarkdownInput, UseCompareResultCardReturn } from './compare.types';
 export type {
   ConsensusModelBreakdown,
   ConsensusAnalysis,

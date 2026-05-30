@@ -1,5 +1,6 @@
 import { CircleDot, Loader2 } from 'lucide-react';
 
+import { AttachmentDeliveryChip } from '@/components/chat/attachments/attachment-delivery-chip';
 import { StreamLiveAnswer } from '@/components/chat/stream/stream-live-answer';
 import { StreamMetricsHud } from '@/components/chat/stream/stream-metrics-hud';
 import { StreamProgressBar } from '@/components/chat/stream/stream-progress-bar';
@@ -15,6 +16,7 @@ export function ParallelLaneCard({
   provider,
   model,
   lane,
+  attachmentDelivery,
 }: ParallelLaneCardProps): React.ReactElement {
   const { t } = useTranslation();
 
@@ -54,6 +56,9 @@ export function ParallelLaneCard({
       )}
       {lane?.metrics !== undefined ? (
         <StreamMetricsHud metrics={lane.metrics} usage={lane.usage} />
+      ) : null}
+      {attachmentDelivery && attachmentDelivery.length > 0 ? (
+        <AttachmentDeliveryChip delivery={attachmentDelivery} />
       ) : null}
     </Card>
   );

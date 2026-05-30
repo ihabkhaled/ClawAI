@@ -82,6 +82,7 @@ export { JudgeResponseType } from './judge-response-type.enum';
 export { JudgeReviewDecision } from './judge-review-decision.enum';
 export { ResearchProviderSelectionMode } from './research-provider-selection-mode.enum';
 export { CompareResearchMode } from './compare-research-mode.enum';
+export { FileDeliveryMode } from './file-delivery-mode.enum';
 export {
   CandidateStatus,
   CandidateStatusFilter,

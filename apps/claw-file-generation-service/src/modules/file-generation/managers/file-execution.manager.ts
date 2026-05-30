@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
-import { httpPost } from '@common/utilities';
+import { buildInterServiceAuthHeader, httpPost } from '@common/utilities';
 import { FORMAT_TO_EXTENSION, FORMAT_TO_MIME_TYPE } from '../../../common/constants';
 import { type StoreFileResponse } from '../types/file-generation.types';
 import { convertToTxt } from '../adapters/txt.adapter';
@@ -58,7 +58,9 @@ export class FileExecutionManager {
     format: string;
     buffer: Buffer;
   }): Promise<string> {
-    this.logger.log(`storeFile: storing file "${params.filename}" format=${params.format} size=${String(params.buffer.length)} bytes`);
+    this.logger.log(
+      `storeFile: storing file "${params.filename}" format=${params.format} size=${String(params.buffer.length)} bytes`,
+    );
     const config = AppConfig.get();
     const mimeType = FORMAT_TO_MIME_TYPE[params.format.toUpperCase()] ?? 'application/octet-stream';
     this.logger.debug(`storeFile: resolved mimeType=${mimeType}`);
@@ -74,7 +76,10 @@ export class FileExecutionManager {
         mimeType,
         base64Data,
       },
-      { timeout: 30_000 },
+      {
+        timeout: 30_000,
+        headers: { Authorization: buildInterServiceAuthHeader() },
+      },
     );
 
     this.logger.debug(`storeFile: file stored — fileId=${response.fileId}`);

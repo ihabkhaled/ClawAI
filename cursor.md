@@ -181,3 +181,7 @@ Update all four jobs (`lint`, `typecheck`, `test`, `build`) — they each have t
 ```
 
 So a new `packages/<name>` = TWO edits × 4 jobs: the "Build shared packages" line AND the matrix entry. `@claw/shared-entitlements` had the build line (Phase C-1) but its matrix entry was missed until 2026-05-29 — silently never lint/typecheck/tested. Don't repeat: both edits, all four jobs.
+
+## Compare / judge / critic file attachments (Slice A, 2026-05-30)
+
+Compare / judge / critic now accept `fileIds: string[]` end-to-end: FE picker → `POST /chat-messages/parallel` → per-lane attachment resolution → judge + critic prompts. Each lane writes a per-model `FileDeliveryEntry[]` into `ChatMessage.metadata.fileDelivery` (also surfaced on `ParallelModelResponse.attachmentDelivery`) so the FE renders a delivery-mode chip (`NATIVE_IMAGE` / `EXTRACTED_TEXT` / `OMITTED_NO_VISION` / `OMITTED_UNSUPPORTED` / `TRUNCATED_TEXT`) per model. Three critical bugs were fixed: (1) `FileProcessingManager` was never wired into the parallel path so attachments silently dropped; (2) `ServiceTokenGuard` rejected internal file-content calls from chat-service when the parallel lane re-issued the service token; (3) cloud adapters sent `image_url` parts to Ollama, which silently dropped images — Ollama now receives the native `images: [base64]` shape and cloud lanes keep `image_url`. Full canonical chain in `docs/03-architecture/compare-file-attachments.md`.

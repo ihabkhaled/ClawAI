@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpCircle, ClipboardList, RefreshCw, ShieldCheck } from 'lucide-react';
+import { ArrowUpCircle, ClipboardList, Paperclip, RefreshCw, ShieldCheck } from 'lucide-react';
 
 import { JudgeReviewCriticSection } from '@/components/chat/judge-review-critic-section';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,7 @@ import {
   getJudgeDecisionLabel,
   getJudgeDecisionTone,
   getJudgeResponseTypeLabel,
+  getMessageFilesProvidedCount,
 } from '@/utilities';
 
 function DecisionIcon({ decision }: { decision: JudgeReviewDecision }): React.ReactElement {
@@ -72,6 +73,7 @@ export function JudgeRefereeDetails({
   const decisionLabel = getJudgeDecisionLabel(judgeReview.judgeDecision, t);
   const responseTypeLabel = getJudgeResponseTypeLabel(judgeReview.judgeResponseType, t);
   const decisionTone = getJudgeDecisionTone(judgeReview.judgeDecision);
+  const fileCount = getMessageFilesProvidedCount(message);
 
   return (
     <>
@@ -80,6 +82,12 @@ export function JudgeRefereeDetails({
           <DecisionIcon decision={judgeReview.judgeDecision} />
           {decisionLabel}
         </Badge>
+        {fileCount > 0 ? (
+          <Badge variant="outline" className="gap-1 text-[10px]">
+            <Paperclip className="h-3 w-3" />
+            {t('compare.delivery.filesProvided', { count: fileCount })}
+          </Badge>
+        ) : null}
         <span className="text-muted-foreground">{judgeReview.judgeSummary}</span>
         <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={openJudgeReview}>
           <ClipboardList className="me-1 h-3.5 w-3.5" />
@@ -98,6 +106,12 @@ export function JudgeRefereeDetails({
                 <DecisionIcon decision={judgeReview.judgeDecision} />
                 {decisionLabel}
               </Badge>
+              {fileCount > 0 ? (
+                <Badge variant="outline" className="gap-1 text-[10px]">
+                  <Paperclip className="h-3 w-3" />
+                  {t('compare.delivery.filesProvided', { count: fileCount })}
+                </Badge>
+              ) : null}
               <span>{t('chat.judgeReviewTitle')}</span>
             </DialogTitle>
             <DialogDescription>{t('chat.judgeReviewDescription')}</DialogDescription>
@@ -200,9 +214,17 @@ export function JudgeRefereeDetails({
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-sm font-medium text-foreground">
-                  {t('judgeReview.criticHeader')}
-                </h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-sm font-medium text-foreground">
+                    {t('judgeReview.criticHeader')}
+                  </h3>
+                  {fileCount > 0 ? (
+                    <Badge variant="outline" className="gap-1 text-[10px]">
+                      <Paperclip className="h-3 w-3" />
+                      {t('compare.delivery.filesProvided', { count: fileCount })}
+                    </Badge>
+                  ) : null}
+                </div>
                 <JudgeReviewCriticSection
                   criticRequested={judgeReview.criticRequested}
                   criticParseFailed={judgeReview.criticParseFailed}

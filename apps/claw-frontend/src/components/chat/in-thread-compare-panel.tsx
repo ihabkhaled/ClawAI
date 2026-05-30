@@ -3,6 +3,7 @@ import { CheckCircle, Loader2, Play, X } from 'lucide-react';
 import { CompareCriticControls } from '@/components/chat/compare-critic-controls';
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
 import { CompareResearchModeControl } from '@/components/chat/compare-research-mode-control';
+import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +36,8 @@ export function InThreadComparePanel({
   allowJudgeMode,
   allowCriticReview,
   allowResearchMode,
+  selectedFileIds,
+  onSelectedFileIdsChange,
   t,
 }: InThreadComparePanelProps): React.ReactElement {
   return (
@@ -83,12 +86,16 @@ export function InThreadComparePanel({
         ) : null}
 
         {allowResearchMode ? (
-          <CompareResearchModeControl
-            value={researchMode}
-            onChange={onResearchModeChange}
-            t={t}
-          />
+          <CompareResearchModeControl value={researchMode} onChange={onResearchModeChange} t={t} />
         ) : null}
+
+        <div className="flex items-center gap-2">
+          <FileAttachmentPicker
+            selectedFileIds={selectedFileIds}
+            onChange={onSelectedFileIdsChange}
+            disabled={isPending}
+          />
+        </div>
 
         <form
           className="flex items-end gap-2"

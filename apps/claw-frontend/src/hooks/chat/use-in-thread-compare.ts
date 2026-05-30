@@ -33,6 +33,7 @@ export function useInThreadCompare({
   const [criticEnabled, setCriticEnabled] = useState(false);
   const [criticModel, setCriticModel] = useState<string | null>(null);
   const [researchMode, setResearchMode] = useState<CompareResearchMode>(CompareResearchMode.NONE);
+  const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
 
   const mutation = useMutation({
     mutationFn: (data: ParallelRequest) => {
@@ -48,6 +49,7 @@ export function useInThreadCompare({
         title: t('compare.title'),
         description: t('compare.modelsProcessing'),
       });
+      setSelectedFileIds([]);
       await queryClient.invalidateQueries({ queryKey: queryKeys.threads.all });
       await queryClient.invalidateQueries({
         queryKey: queryKeys.threads.messagesInfinite(threadId),
@@ -63,7 +65,16 @@ export function useInThreadCompare({
     },
   });
 
-  const toggleOpen = useCallback(() => setIsOpen((v) => !v), []);
+  const toggleOpen = useCallback(() => {
+    setIsOpen((v) => {
+      // Reset file selection when closing the panel so a stale selection
+      // doesn't survive the next open.
+      if (v) {
+        setSelectedFileIds([]);
+      }
+      return !v;
+    });
+  }, []);
   useEffect(() => {
     setJudgeEnabled(initialJudgeEnabled);
     setJudgeModel(initialJudgeModel);
@@ -93,6 +104,7 @@ export function useInThreadCompare({
         judgeModel,
         ...(judgeEnabled && criticEnabled ? { criticEnabled: true, criticModel } : {}),
         ...(researchMode === CompareResearchMode.NONE ? {} : { researchMode }),
+        ...(selectedFileIds.length > 0 ? { fileIds: selectedFileIds } : {}),
       });
     },
     [
@@ -105,6 +117,7 @@ export function useInThreadCompare({
       criticEnabled,
       criticModel,
       researchMode,
+      selectedFileIds,
     ],
   );
 
@@ -144,5 +157,7 @@ export function useInThreadCompare({
     setCriticModel,
     researchMode,
     setResearchMode,
+    selectedFileIds,
+    setSelectedFileIds,
   };
 }

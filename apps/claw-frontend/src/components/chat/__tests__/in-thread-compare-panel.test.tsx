@@ -6,6 +6,21 @@ import { describe, expect, it, vi } from 'vitest';
 import { InThreadComparePanel } from '@/components/chat/in-thread-compare-panel';
 import { CompareResearchMode } from '@/enums';
 
+// The compare panel mounts FileAttachmentPicker, which transitively calls
+// useTranslation() (LocaleProvider-backed) plus useFiles()/useUploadFile().
+// In this unit test we don't render a LocaleProvider, so mock those modules.
+vi.mock('@/lib/i18n/use-translation', () => ({
+  useTranslation: () => ({ t: (k: string) => k }),
+}));
+
+vi.mock('@/hooks/files/use-files', () => ({
+  useFiles: () => ({ files: [], isLoading: false, isError: false, error: null }),
+}));
+
+vi.mock('@/hooks/files/use-upload-file', () => ({
+  useUploadFile: () => ({ uploadFile: vi.fn(), isPending: false }),
+}));
+
 const t = (key: string): string => key;
 
 const baseProps = {
@@ -31,6 +46,8 @@ const baseProps = {
   allowCriticReview: false,
   researchMode: CompareResearchMode.NONE,
   onResearchModeChange: vi.fn(),
+  selectedFileIds: [],
+  onSelectedFileIdsChange: vi.fn(),
   t,
 };
 
@@ -45,11 +62,7 @@ describe('InThreadComparePanel — plan-feature gates', () => {
   it('hides judge controls when allowJudgeMode is false', () => {
     render(
       withQueryClient(
-        <InThreadComparePanel
-          {...baseProps}
-          allowJudgeMode={false}
-          allowResearchMode
-        />,
+        <InThreadComparePanel {...baseProps} allowJudgeMode={false} allowResearchMode />,
       ),
     );
     expect(screen.queryByText('chat.judgeReferee')).not.toBeInTheDocument();
@@ -58,11 +71,7 @@ describe('InThreadComparePanel — plan-feature gates', () => {
   it('hides research controls when allowResearchMode is false', () => {
     render(
       withQueryClient(
-        <InThreadComparePanel
-          {...baseProps}
-          allowJudgeMode
-          allowResearchMode={false}
-        />,
+        <InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode={false} />,
       ),
     );
     expect(screen.queryByText('compare.research.label')).not.toBeInTheDocument();
@@ -70,9 +79,7 @@ describe('InThreadComparePanel — plan-feature gates', () => {
 
   it('shows both judge + research controls when plan unlocks both', () => {
     render(
-      withQueryClient(
-        <InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode />,
-      ),
+      withQueryClient(<InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode />),
     );
     expect(screen.getByText('chat.judgeReferee')).toBeInTheDocument();
     expect(screen.getByText('compare.research.label')).toBeInTheDocument();
@@ -81,11 +88,7 @@ describe('InThreadComparePanel — plan-feature gates', () => {
   it('hides BOTH judge + research controls when plan locks both', () => {
     render(
       withQueryClient(
-        <InThreadComparePanel
-          {...baseProps}
-          allowJudgeMode={false}
-          allowResearchMode={false}
-        />,
+        <InThreadComparePanel {...baseProps} allowJudgeMode={false} allowResearchMode={false} />,
       ),
     );
     expect(screen.queryByText('chat.judgeReferee')).not.toBeInTheDocument();

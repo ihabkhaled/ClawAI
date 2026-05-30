@@ -135,9 +135,19 @@ export type OllamaGenerateResponse = {
   evalDuration?: number;
 };
 
+// Native Ollama /api/chat message shape — content is a plain string and any
+// attached images travel on a sibling `images` array carrying raw base64
+// payloads (no `data:` prefix). This differs from the OpenAI shape where
+// images ride inside content as `image_url` parts.
+export type OllamaChatMessage = {
+  role: string;
+  content: string;
+  images?: string[];
+};
+
 export type OllamaChatRequest = {
   model: string;
-  messages: OpenAiChatMessage[];
+  messages: OllamaChatMessage[];
   stream: boolean;
   options?: {
     temperature?: number;

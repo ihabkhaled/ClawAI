@@ -151,3 +151,22 @@ Rules:
 5. Cloud judge selection is encoded as `"PROVIDER:model"` (e.g. `"OPENAI:gpt-4o-mini"`). Parse with `parseJudgeModel(raw)` (`src/common/utilities/judge-model-parse.utility.ts`); it checks the leading segment against `KNOWN_JUDGE_PROVIDERS` so local tags like `gemma3:4b` are not mis-parsed.
 
 See `docs/03-architecture/universal-token-accounting.md` for the full picture.
+
+## Inter-service auth for file-service internal endpoints
+
+`claw-file-service`'s `/api/v1/internal/files/*` routes (`:id/content`, `:id/chunks`, `download/:id`, `store-image`, `upload-internal`, `download-internal`, `metadata-internal`) are guarded by `ServiceTokenGuard`. Every call from this service to those routes MUST send `Authorization: Service <token>` where `<token>` is the value of `INTER_SERVICE_AUTH_TOKEN` (the single shared secret in root `.env` — do NOT introduce a per-service variant).
+
+Use the wrapper:
+
+```ts
+import { buildInterServiceAuthHeader, httpRequest } from '../../../common/utilities';
+
+await httpRequest({
+  url,
+  method: 'GET',
+  headers: { Authorization: buildInterServiceAuthHeader() },
+  timeoutMs: 10_000,
+});
+```
+
+The wrapper lives at `src/common/utilities/inter-service-auth.utility.ts` and reads `AppConfig.get().INTER_SERVICE_AUTH_TOKEN`. Mirrors the pattern in `apps/claw-workspace-service/src/common/utilities/file-service-client.utility.ts#buildAuthHeader`. Forgetting the header will manifest as `401 Service token required` from file-service; users will see context-assembly silently skip attached files (caught as non-blocking) and judge/critic compare lanes will run without their attachments.

@@ -25,10 +25,7 @@ export { showToast } from './toast.utility';
 export { logger } from './logger.utility';
 export { estimateCost } from './cost.utility';
 export { isAdmin, hasPermission, hasAnyPermission } from './permissions.utility';
-export {
-  requiredPermissionForPath,
-  requiredRequirementForPath,
-} from './route-permission.utility';
+export { requiredPermissionForPath, requiredRequirementForPath } from './route-permission.utility';
 export { connectSse } from './sse.utility';
 export {
   encodeModelValue,
@@ -65,6 +62,13 @@ export {
   messagesToParallelResponses,
   getFastestMessage,
 } from './parallel.utility';
+export {
+  countFileDeliveriesByMode,
+  getFileDeliveryModeLabel,
+  buildFileDeliveryTooltip,
+  readFileDeliveryFromMetadata,
+  getMessageFilesProvidedCount,
+} from './file-delivery.utility';
 export {
   getEscalationStatusBadgeVariant,
   getEscalationStatusLabel,

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
-import { httpRequest, runResearch } from '../../../common/utilities';
+import { buildInterServiceAuthHeader, httpRequest, runResearch } from '../../../common/utilities';
 import {
   APPROX_CHARS_PER_TOKEN,
   MEMORY_FETCH_LIMIT,
@@ -474,6 +474,7 @@ export class ContextAssemblyManager {
         const response = await httpRequest<FileContentResponse>({
           url,
           method: 'GET',
+          headers: { Authorization: buildInterServiceAuthHeader() },
           timeoutMs: 10_000,
         });
 

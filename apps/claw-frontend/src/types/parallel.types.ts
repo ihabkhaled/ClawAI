@@ -1,6 +1,7 @@
 import type { CompareJudgeState, CompareResearchMode, ParallelModelStatus } from '@/enums';
 
 import type { ChatMessage, JudgeModelOption, JudgeReview, LaneStreamMap } from './chat.types';
+import type { FileDeliveryEntry } from './file-delivery.types';
 
 export type ParallelModelResponse = {
   provider: string;
@@ -19,6 +20,10 @@ export type ParallelModelResponse = {
   judgeDialogAvailable?: boolean;
   judgeReview?: JudgeReview | null;
   message?: ChatMessage;
+  // Per-file delivery record for THIS lane. Populated by chat-service from
+  // ASSISTANT message `metadata.fileDelivery`. Lane 5 renders delivery
+  // indicators off these entries.
+  attachmentDelivery?: FileDeliveryEntry[];
 };
 
 export type ParallelModelTarget = {
@@ -59,6 +64,14 @@ export type ParallelRequest = {
   researchMode?: CompareResearchMode;
   /** Optional explicit query (defaults to `content` server-side). */
   researchQuery?: string;
+  /**
+   * Optional file IDs to attach to this compare run. Each lane (provider+model)
+   * receives a per-lane prompt assembled by chat-service: text files are
+   * extracted+injected, images are wired natively when the model has vision,
+   * otherwise omitted. Per-file delivery results come back on each
+   * `ParallelModelResponse.attachmentDelivery`.
+   */
+  fileIds?: string[];
 };
 
 export type UseParallelComparePageReturn = {
@@ -90,6 +103,10 @@ export type UseParallelComparePageReturn = {
   setCriticModel: (value: string | null) => void;
   researchMode: CompareResearchMode;
   setResearchMode: (value: CompareResearchMode) => void;
+  // File attachments selected for the compare run. Threaded into the
+  // parallel send payload as `fileIds` and reset on successful send.
+  selectedFileIds: string[];
+  setSelectedFileIds: (ids: string[]) => void;
 };
 
 export type UseInThreadCompareParams = {
@@ -128,6 +145,11 @@ export type UseInThreadCompareReturn = {
   setCriticModel: (value: string | null) => void;
   researchMode: CompareResearchMode;
   setResearchMode: (value: CompareResearchMode) => void;
+  // File attachments selected for the in-thread compare run. Threaded into
+  // the parallel send payload as `fileIds` and reset on successful send /
+  // panel close.
+  selectedFileIds: string[];
+  setSelectedFileIds: (ids: string[]) => void;
 };
 
 // Declarative option for CompareResearchModeControl. `labelKey` is an i18n
