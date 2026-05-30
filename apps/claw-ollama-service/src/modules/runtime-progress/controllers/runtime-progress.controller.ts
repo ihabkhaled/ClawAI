@@ -6,7 +6,7 @@ import { UserRole } from '../../../common/enums/user-role.enum';
 import { type RuntimeProbeQueryDto, runtimeProbeQuerySchema } from '../dto/runtime-probe-query.dto';
 import { OllamaProbeService } from '../services/ollama-probe.service';
 
-@Controller('runtime-progress')
+@Controller('ollama/runtime-progress')
 export class RuntimeProgressController {
   constructor(private readonly ollamaProbeService: OllamaProbeService) {}
 
