@@ -376,4 +376,10 @@ export const queryKeys = {
     all: ['connectorGrants'] as const,
     list: (connectorId: string) => ['connectorGrants', 'list', connectorId] as const,
   },
+  runtimeProgress: {
+    all: ['runtimeProgress'] as const,
+    probes: () => [...queryKeys.runtimeProgress.all, 'probe'] as const,
+    ollamaProbe: () => [...queryKeys.runtimeProgress.probes(), 'ollama'] as const,
+    llamacppProbe: () => [...queryKeys.runtimeProgress.probes(), 'llamacpp'] as const,
+  },
 } as const;

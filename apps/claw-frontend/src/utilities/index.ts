@@ -98,3 +98,9 @@ export {
   formatCostUsd,
 } from './stream-format.utility';
 export { serializeRuntimeEvent } from './runtime-event-serializer.utility';
+export {
+  buildBottleneckSegments,
+  formatBottleneckDuration,
+  getStreamMetricsBottleneck,
+  type BottleneckSegment,
+} from './bottleneck.utility';

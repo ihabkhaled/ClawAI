@@ -76,4 +76,37 @@ describe('ProviderStreamReader — Ollama NDJSON', () => {
       { kind: 'content', text: 'hey' },
     ]);
   });
+
+  it('attaches Ollama nanosecond timings to the done fragment on the terminal frame', () => {
+    const reader = new ProviderStreamReader(AiStreamProtocol.OLLAMA_NDJSON);
+    const frags = reader.push(
+      '{"response":"!","done":true,"done_reason":"stop","total_duration":3000000000,"load_duration":500000000,"prompt_eval_count":12,"prompt_eval_duration":200000000,"eval_count":40,"eval_duration":2200000000}\n',
+    );
+    const doneFrag = frags.find((f) => f.kind === 'done');
+    expect(doneFrag).toBeDefined();
+    if (doneFrag === undefined || doneFrag.kind !== 'done') {
+      throw new Error('expected done fragment');
+    }
+    expect(doneFrag.finishReason).toBe('stop');
+    expect(doneFrag.finalTimings).toEqual({
+      totalDurationNs: 3_000_000_000,
+      loadDurationNs: 500_000_000,
+      promptEvalCount: 12,
+      promptEvalDurationNs: 200_000_000,
+      evalCount: 40,
+      evalDurationNs: 2_200_000_000,
+      doneReason: 'stop',
+    });
+  });
+
+  it('omits finalTimings when the terminal frame has no timing fields', () => {
+    const reader = new ProviderStreamReader(AiStreamProtocol.OLLAMA_NDJSON);
+    const frags = reader.push('{"response":"","done":true}\n');
+    const doneFrag = frags.find((f) => f.kind === 'done');
+    expect(doneFrag).toBeDefined();
+    if (doneFrag === undefined || doneFrag.kind !== 'done') {
+      throw new Error('expected done fragment');
+    }
+    expect(doneFrag.finalTimings).toBeUndefined();
+  });
 });

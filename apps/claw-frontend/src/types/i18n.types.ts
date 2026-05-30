@@ -144,6 +144,7 @@ export type TranslationDictionary = {
     adminWebhookDeliveries: string;
     adminPlans: string;
     adminRoles: string;
+    adminRuntimeProgress: string;
     plan: string;
     usage: string;
   };
@@ -2971,6 +2972,75 @@ export type TranslationDictionary = {
     };
     bottleneck: {
       title: string;
+      modelLoad: string;
+      promptEval: string;
+      generation: string;
+      badge: string;
+      ariaLabel: string;
+    };
+    stageTimeline: {
+      title: string;
+      active: string;
+      completed: string;
+      queued: string;
+      empty: string;
+    };
+    image: {
+      title: string;
+      starting: string;
+      stepProgress: string;
+      eta: string;
+      interrupt: string;
+      preview: string;
+    };
+    comfyui: {
+      timeline: string;
+      cached: string;
+      stepOf: string;
+    };
+    diagnostics: {
+      title: string;
+      description: string;
+      refreshAll: string;
+      refresh: string;
+      loading: string;
+      error: string;
+      ollamaTitle: string;
+      llamacppTitle: string;
+      runtimeUrl: string;
+      version: string;
+      latency: string;
+      executionProfile: string;
+      capabilitiesTitle: string;
+      capabilitiesUnknown: string;
+      modelsTitle: string;
+      modelsEmpty: string;
+      recentEventsTitle: string;
+      recentEventsEmpty: string;
+      recentEventsTime: string;
+      recentEventsType: string;
+      recentEventsModel: string;
+      recentEventsDuration: string;
+      lastUpdatedNever: string;
+      lastUpdatedAt: string;
+      status: {
+        REACHABLE: string;
+        UNREACHABLE: string;
+        DEGRADED: string;
+        BINARY_MISSING: string;
+        NOT_CONFIGURED: string;
+        AUTH_REQUIRED: string;
+        UNKNOWN: string;
+      };
+      capabilities: {
+        streamingText: string;
+        thinking: string;
+        promptProgress: string;
+        nodeProgress: string;
+        stepProgress: string;
+        cancel: string;
+        metrics: string;
+      };
     };
   };
 };

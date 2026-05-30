@@ -67,6 +67,7 @@ export const ROUTES = {
   ADMIN_PLAN_MODEL_ACCESS: (id: string) => `/admin/plans/${id}/model-access` as const,
   ADMIN_ROLES: '/admin/roles',
   ADMIN_ROLE_DETAIL: (id: string) => `/admin/roles/${id}` as const,
+  ADMIN_RUNTIME_PROGRESS: '/admin/runtime-progress',
   USAGE: '/usage',
   PLAN: '/plan',
   AGENT: '/agent',

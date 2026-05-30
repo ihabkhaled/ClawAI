@@ -9,6 +9,12 @@ const appConfigSchema = z.object({
   FILE_SERVICE_URL: z.string().min(1, 'FILE_SERVICE_URL is required'),
   CONNECTOR_SERVICE_URL: z.string().min(1, 'CONNECTOR_SERVICE_URL is required'),
   STABLE_DIFFUSION_URL: z.string().default('http://stable-diffusion:7860'),
+  COMFYUI_BASE_URL: z.string().default('http://comfyui:8188'),
+  CLAW_IMAGE_PROGRESS_POLL_INTERVAL_MS: z.coerce.number().int().min(300).default(1000),
+  CLAW_IMAGE_PROGRESS_PREVIEW_ENABLED: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true' || v === '1'),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

@@ -206,6 +206,11 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
         href: ROUTES.ADMIN_ROLES,
         icon: UserCog,
       },
+      {
+        labelKey: 'nav.adminRuntimeProgress',
+        href: ROUTES.ADMIN_RUNTIME_PROGRESS,
+        icon: Gauge,
+      },
     ],
   },
   { labelKey: 'nav.plan', href: ROUTES.PLAN, icon: CreditCard },

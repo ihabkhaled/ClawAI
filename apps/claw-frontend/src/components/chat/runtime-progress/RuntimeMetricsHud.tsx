@@ -1,6 +1,6 @@
-import { Clock, Coins, Cpu, Gauge, Hash, Timer } from 'lucide-react';
+import { AlertTriangle, Clock, Coins, Cpu, Gauge, Hash, Timer } from 'lucide-react';
 
-import { EXECUTION_PROFILE_LABEL_KEYS } from '@/constants';
+import { BOTTLENECK_LABEL_KEYS, EXECUTION_PROFILE_LABEL_KEYS } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { RuntimeMetricsHudProps } from '@/types';
@@ -9,6 +9,7 @@ import {
   formatElapsed,
   formatStreamTokens,
   formatTokensPerSecond,
+  getStreamMetricsBottleneck,
 } from '@/utilities';
 
 // Runtime-neutral HUD. Mirrors the legacy StreamMetricsHud rendering exactly
@@ -39,6 +40,11 @@ export function RuntimeMetricsHud({
   );
   const profileLabelKey =
     executionProfile !== undefined ? EXECUTION_PROFILE_LABEL_KEYS[executionProfile] : null;
+  const bottleneck = getStreamMetricsBottleneck(metrics);
+  const bottleneckStageLabel =
+    bottleneck !== null ? t(BOTTLENECK_LABEL_KEYS[bottleneck.stage]) : null;
+  const bottleneckPercent =
+    bottleneck !== null ? Math.round(bottleneck.percentOfTotal * 100) : null;
 
   return (
     <div
@@ -73,6 +79,18 @@ export function RuntimeMetricsHud({
       {profileLabelKey !== null ? (
         <span className="inline-flex items-center gap-1">
           <Cpu className="h-3 w-3" /> {t(profileLabelKey)}
+        </span>
+      ) : null}
+      {bottleneck !== null && bottleneckStageLabel !== null && bottleneckPercent !== null ? (
+        <span
+          className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-amber-700 dark:text-amber-300"
+          title={t('runtimeProgress.bottleneck.title')}
+        >
+          <AlertTriangle className="h-3 w-3" />
+          {t('runtimeProgress.bottleneck.badge', {
+            stage: bottleneckStageLabel,
+            percent: String(bottleneckPercent),
+          })}
         </span>
       ) : null}
     </div>

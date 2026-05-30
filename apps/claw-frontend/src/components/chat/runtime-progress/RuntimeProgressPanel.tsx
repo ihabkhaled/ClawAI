@@ -8,15 +8,17 @@ import {
   XCircle,
 } from 'lucide-react';
 
+import { RuntimeBottleneckBreakdown } from '@/components/chat/runtime-progress/RuntimeBottleneckBreakdown';
 import { RuntimeMetricsHud } from '@/components/chat/runtime-progress/RuntimeMetricsHud';
 import { RuntimeRawEventsDrawer } from '@/components/chat/runtime-progress/RuntimeRawEventsDrawer';
+import { RuntimeStageTimeline } from '@/components/chat/runtime-progress/RuntimeStageTimeline';
 import { VisibleReasoningPanel } from '@/components/chat/runtime-progress/VisibleReasoningPanel';
 import { StreamLiveAnswer } from '@/components/chat/stream/stream-live-answer';
 import { StreamProgressBar } from '@/components/chat/stream/stream-progress-bar';
 import { StreamStageBadge } from '@/components/chat/stream/stream-stage-badge';
 import { Button } from '@/components/ui/button';
 import { THINKING_INDICATOR_LABEL } from '@/constants';
-import { FallbackFailureType, VisibleProgressStageStatus } from '@/enums';
+import { AiStreamStage, FallbackFailureType, VisibleProgressStageStatus } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { RuntimeProgressPanelProps } from '@/types';
@@ -47,6 +49,7 @@ export function RuntimeProgressPanel({
   showRawEvents = false,
   rawEvents,
   executionProfile,
+  showBottleneck = true,
 }: RuntimeProgressPanelProps): React.ReactElement {
   const { t } = useTranslation();
   const hasFallbacks = fallbackAttempts !== undefined && fallbackAttempts.length > 0;
@@ -174,6 +177,21 @@ export function RuntimeProgressPanel({
                     usage={streamLive.usage ?? null}
                     executionProfile={executionProfile}
                   />
+                  {showBottleneck &&
+                  !streamLive.isStreaming &&
+                  (streamLive.stage === AiStreamStage.COMPLETE ||
+                    streamLive.metrics?.bottleneck !== undefined) ? (
+                    <RuntimeBottleneckBreakdown
+                      stageTimings={streamLive.metrics?.stageTimings ?? null}
+                      metrics={streamLive.metrics ?? null}
+                    />
+                  ) : null}
+                  {showBottleneck && streamLive.metrics?.stageTimings !== undefined ? (
+                    <RuntimeStageTimeline
+                      stageTimings={streamLive.metrics.stageTimings}
+                      activeStage={streamLive.stage}
+                    />
+                  ) : null}
                   {showRawEvents ? (
                     <RuntimeRawEventsDrawer
                       events={rawEvents ?? []}

@@ -3038,6 +3038,31 @@ export const pt: TranslationDictionary = {
     },
     bottleneck: {
       title: 'Gargalo',
+      modelLoad: 'Carregamento do modelo',
+      promptEval: 'Avaliação do prompt',
+      generation: 'Geração',
+      badge: '{stage} {percent}% do total',
+      ariaLabel: 'Detalhamento de gargalos',
+    },
+    stageTimeline: {
+      title: 'Linha do tempo das etapas',
+      active: 'Ativo',
+      completed: 'Concluído',
+      queued: 'Na fila',
+      empty: 'Nenhuma etapa registrada ainda.',
+    },
+    image: {
+      title: 'Geração de imagem',
+      starting: 'Iniciando...',
+      stepProgress: 'Passo {current} de {total}',
+      eta: '~{seconds}s restantes',
+      interrupt: 'Interromper',
+      preview: 'Pré-visualização',
+    },
+    comfyui: {
+      timeline: 'Nós do fluxo de trabalho',
+      cached: 'em cache',
+      stepOf: '{current} de {total}',
     },
   },
 };
