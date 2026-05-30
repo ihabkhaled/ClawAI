@@ -6,6 +6,7 @@ import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/services/auth/auth.service';
 import type { LoginRequest } from '@/types';
 import { logger, showToast } from '@/utilities';
+import { saveCredential } from '@/utilities/credential-storage.utility';
 
 export function useLogin() {
   const router = useRouter();
@@ -13,7 +14,11 @@ export function useLogin() {
 
   const mutation = useMutation({
     mutationFn: (data: LoginRequest) => authService.login(data),
-    onSuccess: () => {
+    // Trigger the browser's "Save password?" prompt via the Credential
+    // Management API. SPA logins don't navigate, so Chrome/Edge can't
+    // detect the form submission heuristically — store explicitly here.
+    onSuccess: (_data, variables) => {
+      void saveCredential({ email: variables.email, password: variables.password });
       logger.info({ component: 'auth', action: 'login', message: 'User logged in successfully' });
       showToast.success({ title: t('toast.loginSuccess') });
       router.push(ROUTES.CHAT);

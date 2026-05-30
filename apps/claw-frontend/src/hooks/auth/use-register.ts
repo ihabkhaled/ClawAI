@@ -6,6 +6,7 @@ import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/services/auth/auth.service';
 import type { RegisterRequest } from '@/types';
 import { logger, showToast } from '@/utilities';
+import { saveCredential } from '@/utilities/credential-storage.utility';
 
 export function useRegister() {
   const router = useRouter();
@@ -13,7 +14,11 @@ export function useRegister() {
 
   const mutation = useMutation({
     mutationFn: (data: RegisterRequest) => authService.register(data),
-    onSuccess: () => {
+    // Trigger the browser's "Save password?" prompt via the Credential
+    // Management API. SPA flow — no real form-navigation — so Chrome/Edge
+    // can't detect the submit heuristically; store explicitly here.
+    onSuccess: (_data, variables) => {
+      void saveCredential({ email: variables.email, password: variables.password });
       logger.info({
         component: 'auth',
         action: 'register',
