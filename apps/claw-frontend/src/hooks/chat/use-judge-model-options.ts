@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { useAllModels } from '@/hooks/connectors/use-all-models';
+import { useAvailableConnectorModels } from '@/hooks/chat/use-available-connector-models';
 import { useLocalModels } from '@/hooks/ollama/use-local-models';
 import type { JudgeModelOption } from '@/types';
 
@@ -14,7 +14,10 @@ export function useJudgeModelOptions(): {
   isLoading: boolean;
 } {
   const { models: localModels, isLoading: isLoadingLocal } = useLocalModels();
-  const { models: cloudModels, isLoading: isLoadingCloud } = useAllModels();
+  // Use the USER-facing connector catalog endpoint (MODEL_USE_ALLOWED), NOT
+  // the admin connectors list — otherwise normal users get only local models
+  // in the judge picker even though the backend now accepts any cloud judge.
+  const { models: cloudModels, isLoading: isLoadingCloud } = useAvailableConnectorModels();
 
   const options = useMemo((): JudgeModelOption[] => {
     const local: JudgeModelOption[] = localModels
