@@ -209,7 +209,10 @@ export function ParallelMessageGroup({
 
       {expanded ? (
         <Dialog open onOpenChange={closeExpanded}>
-          <DialogContent className="max-h-[92vh] w-[min(96vw,72rem)] max-w-none overflow-hidden p-0">
+          {/* DialogContent now defaults to flex flex-col + max-h-[90vh] + overflow-hidden
+              (see src/components/ui/dialog.tsx); the body needs min-h-0 + flex-1 +
+              overflow-y-auto so it actually scrolls inside the capped container. */}
+          <DialogContent className="w-[min(96vw,72rem)] max-w-none gap-0 p-0">
             <DialogHeader className="border-b border-border px-6 py-4">
               <DialogTitle className="flex items-center gap-2">
                 {expanded.isFastest ? <Zap className="h-4 w-4 text-green-500" /> : null}
@@ -219,7 +222,7 @@ export function ParallelMessageGroup({
                 {[expanded.message.provider, expanded.message.model].filter(Boolean).join(' / ')}
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-3 overflow-y-auto px-6 py-4">
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-6 py-4">
               {expanded.message.latencyMs !== null ? (
                 <div className="flex gap-3 text-xs text-muted-foreground">
                   <span>
