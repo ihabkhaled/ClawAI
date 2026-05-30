@@ -31,19 +31,21 @@ import type { ProviderHealthResult } from '../types/search.types';
 export class SearchProviderController {
   constructor(private readonly service: SearchProviderService) {}
 
-  // Provider catalog is back-data for the "Research Providers" admin page.
-  // The compare ResearchEnricher does NOT need to list providers — it just
-  // posts to /research/search and the backend picks the provider. So these
-  // reads move to ADMIN_SYSTEM_VIEW to match the FE page gate; the compare
-  // selector keeps working because it never hits this endpoint.
+  // Provider catalog read is USER-accessible (RESEARCH_USE) — the in-thread
+  // message-composer's research-toggle dropdown populates from it. The catalog
+  // is already secret-stripped (SanitizedSearchProvider) and exposes only id /
+  // name / kind / enabled, so it's safe to read for any user with the research
+  // feature. The standalone /research/providers PAGE stays hidden by the FE
+  // route-permissions gate (ADMIN_SYSTEM_VIEW). Admin writes (POST/PATCH/
+  // DELETE/test) below stay admin-only.
   @Get()
-  @RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
+  @RequirePermissions(Permission.RESEARCH_USE)
   list(@CurrentUser() _user: AuthenticatedUser): Promise<SanitizedSearchProvider[]> {
     return this.service.list();
   }
 
   @Get(':id')
-  @RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
+  @RequirePermissions(Permission.RESEARCH_USE)
   getOne(@Param('id') id: string): Promise<SanitizedSearchProvider> {
     return this.service.getById(id);
   }
