@@ -49,6 +49,12 @@ export type ParallelRequest = {
   models: ParallelModelTarget[];
   judgeEnabled?: boolean;
   judgeModel?: string | null;
+  // Critic toggle + model. UI keeps `criticEnabled` gated behind judgeEnabled;
+  // backend's parallel DTO refines that `criticEnabled === true` requires both
+  // `judgeEnabled === true` AND a non-empty `criticModel`. Backend also gates
+  // on the `allowCriticReview` plan feature.
+  criticEnabled?: boolean;
+  criticModel?: string | null;
   /** Compare-mode research enricher. Omit / NONE preserves v1 behavior. */
   researchMode?: CompareResearchMode;
   /** Optional explicit query (defaults to `content` server-side). */
@@ -78,6 +84,10 @@ export type UseParallelComparePageReturn = {
   setJudgeModel: (value: string | null) => void;
   judgeModelOptions: JudgeModelOption[];
   isJudgeModelOptionsLoading: boolean;
+  criticEnabled: boolean;
+  setCriticEnabled: (value: boolean) => void;
+  criticModel: string | null;
+  setCriticModel: (value: string | null) => void;
   researchMode: CompareResearchMode;
   setResearchMode: (value: CompareResearchMode) => void;
 };
@@ -93,6 +103,14 @@ export type UseInThreadCompareReturn = {
   toggleOpen: () => void;
   selectedModels: ParallelModelTarget[];
   handleToggleModel: (provider: string, model: string, checked: boolean) => void;
+  // Controlled prompt state for the in-thread compare textarea. RichPromptTextarea
+  // binds to prompt/setPrompt; Enter (no Shift, not composing) fires handleSend
+  // which clears `prompt` and forwards to handleCompare.
+  prompt: string;
+  setPrompt: (value: string) => void;
+  handleSend: () => void;
+  // Lower-level imperative entry point. Callers may bypass the controlled
+  // textarea and fire a compare with an explicit prompt (e.g. unit tests).
   handleCompare: (prompt: string) => void;
   result: ParallelResponse | undefined;
   isPending: boolean;
@@ -104,6 +122,10 @@ export type UseInThreadCompareReturn = {
   setJudgeModel: (value: string | null) => void;
   judgeModelOptions: JudgeModelOption[];
   isJudgeModelOptionsLoading: boolean;
+  criticEnabled: boolean;
+  setCriticEnabled: (value: boolean) => void;
+  criticModel: string | null;
+  setCriticModel: (value: string | null) => void;
   researchMode: CompareResearchMode;
   setResearchMode: (value: CompareResearchMode) => void;
 };

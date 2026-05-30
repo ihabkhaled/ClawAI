@@ -14,6 +14,15 @@ export type JudgeTokenUsage = {
 export type CriticEvaluation = {
   feedback: string[];
   score: number;
+  summary: string;
+  // True when the critic ran and returned (parsed or fallback). False when the
+  // user did not request a critic for this run — surfaces "Critic was not
+  // requested for this review." in the UI without inferring from feedback length.
+  requested: boolean;
+  // True when the critic was requested but the LLM response could not be parsed
+  // into the structured { score, summary, feedback } shape. UI uses this to
+  // distinguish "no feedback because the parse failed" from "no feedback".
+  parseFailed?: boolean;
   category: string;
   model: string;
   latencyMs: number;
@@ -75,6 +84,9 @@ export type JudgeReviewPayload = {
   criticDisplayName: string;
   criticFeedback: string[];
   criticScore: number;
+  criticSummary: string;
+  criticRequested: boolean;
+  criticParseFailed: boolean;
   originalExecutionModel: string;
   originalExecutionDisplayName: string;
   originalAnswerSnapshot: string;
@@ -108,6 +120,12 @@ export type JudgeRefereeConfig = {
   category: string | undefined;
   routingMode: string;
   isLocalOnly: boolean;
+  // User-selected critic configuration. When `criticEnabled` is true, the
+  // critic LLM is invoked using `criticModel` instead of the legacy hardcoded
+  // CRITIC_CLOUD_MODELS pick. Plan-feature gating (allowCriticReview) is
+  // enforced upstream in AccessControlService; this type stays neutral.
+  criticEnabled?: boolean;
+  criticModel?: string | null;
 };
 
 export type JudgeRefereeMetadata = {
@@ -115,6 +133,9 @@ export type JudgeRefereeMetadata = {
   criticModel: string;
   criticFeedback: string[];
   criticScore: number;
+  criticSummary: string;
+  criticRequested: boolean;
+  criticParseFailed: boolean;
   judgeModel: string;
   judgeDecision: string;
   judgeReasoning: string;

@@ -52,6 +52,7 @@ export class EntitlementsService {
               allowCompareMode: plan.allowCompareMode,
               allowJudgeMode: plan.allowJudgeMode,
               allowResearchMode: plan.allowResearchMode,
+              allowCriticReview: plan.allowCriticReview,
               allowWorkspaces: plan.allowWorkspaces,
               allowMemory: plan.allowMemory,
               allowContextPacks: plan.allowContextPacks,

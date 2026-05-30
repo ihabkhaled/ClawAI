@@ -350,6 +350,7 @@ export const ru: TranslationDictionary = {
     tryingFallback: 'Пробуем резервный вариант...',
     verifyingWith: 'Проверка с помощью {model}',
     visibleAiProgress: 'Видимый прогресс ИИ',
+    jumpToLatest: 'Перейти к последнему',
     useMemoryLabel: 'Использовать память в этом разговоре',
     useMemoryDescription: 'Когда выключено, никакие воспоминания не вставляются в запрос.',
     useContextLabel: 'Использовать пакеты контекста в этом разговоре',
@@ -1083,6 +1084,17 @@ export const ru: TranslationDictionary = {
       searchExtract: 'Поиск + извлечение',
       sources: 'Источники веб-доказательств',
     },
+    critic: {
+      enabled: 'Проверка критиком',
+      enabledHint:
+        'Добавляет второй LLM-критик, который оценивает ответ и помечает проблемы для судьи.',
+      modelLabel: 'Модель критика',
+      modelPlaceholder: 'Выбрать модель критика',
+      notRequested: 'Критик не запрашивался для этого разбора.',
+    },
+  },
+  judgeReview: {
+    criticHeader: 'Проверка критиком',
   },
   consensus: {
     title: 'Режим консенсуса',
@@ -2865,6 +2877,9 @@ export const ru: TranslationDictionary = {
     createFailed: 'Не удалось создать тариф.',
     updateSucceeded: 'Тариф обновлён.',
     updateFailed: 'Не удалось обновить тариф.',
+    featureAllowCriticReview: 'Проверка критиком',
+    featureAllowCriticReviewHint:
+      'Позволяет пользователям добавлять второй LLM-критик к запускам судьи в режиме сравнения.',
     create: {
       title: 'Новый тариф',
       description: 'Создайте новый тариф подписки.',
@@ -2902,6 +2917,7 @@ export const ru: TranslationDictionary = {
       allowCompareMode: 'Режим сравнения',
       allowJudgeMode: 'Режим оценки',
       allowResearchMode: 'Режим исследования',
+      allowCriticReview: 'Проверка критиком',
       allowWorkspaces: 'Рабочие пространства',
       allowMemory: 'Память',
       allowContextPacks: 'Пакеты контекста',

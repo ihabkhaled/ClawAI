@@ -347,6 +347,7 @@ export const ar: TranslationDictionary = {
     tryingFallback: 'جاري تجربة البديل...',
     verifyingWith: 'جاري التحقق باستخدام {model}',
     visibleAiProgress: 'تقدم الذكاء الاصطناعي المرئي',
+    jumpToLatest: 'الانتقال إلى الأحدث',
     useMemoryLabel: 'استخدام الذاكرة في هذه المحادثة',
     useMemoryDescription: 'عند الإيقاف، لن يتم إدخال أي ذكريات في الموجه.',
     useContextLabel: 'استخدام حزم السياق في هذه المحادثة',
@@ -1067,6 +1068,17 @@ export const ar: TranslationDictionary = {
       searchExtract: 'بحث ‎+‎ استخراج',
       sources: 'مصادر الأدلة من الويب',
     },
+    critic: {
+      enabled: 'مراجعة الناقد',
+      enabledHint:
+        'أضف نموذجاً ناقداً يمنح الإجابة درجة ويرصد الملاحظات قبل عرضها على المحكّم.',
+      modelLabel: 'نموذج الناقد',
+      modelPlaceholder: 'اختر نموذج الناقد',
+      notRequested: 'لم يُطلب الناقد لهذه المراجعة.',
+    },
+  },
+  judgeReview: {
+    criticHeader: 'مراجعة الناقد',
   },
   consensus: {
     title: 'وضع الإجماع',
@@ -2816,6 +2828,9 @@ export const ar: TranslationDictionary = {
     createFailed: 'تعذَّر إنشاء الخطة.',
     updateSucceeded: 'تم تحديث الخطة.',
     updateFailed: 'تعذَّر تحديث الخطة.',
+    featureAllowCriticReview: 'مراجعة الناقد',
+    featureAllowCriticReviewHint:
+      'يُتيح للمستخدمين إضافة نموذج ناقد ثانوي إلى تشغيلات المحكّم في وضع المقارنة.',
     create: {
       title: 'خطة جديدة',
       description: 'أنشئ خطة اشتراك جديدة.',
@@ -2853,6 +2868,7 @@ export const ar: TranslationDictionary = {
       allowCompareMode: 'وضع المقارنة',
       allowJudgeMode: 'وضع التحكيم',
       allowResearchMode: 'وضع البحث',
+      allowCriticReview: 'مراجعة الناقد',
       allowWorkspaces: 'مساحات العمل',
       allowMemory: 'الذاكرة',
       allowContextPacks: 'حزم السياق',

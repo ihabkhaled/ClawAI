@@ -37,6 +37,7 @@ export type PlanView = {
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
   allowResearchMode: boolean;
+  allowCriticReview: boolean;
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;
@@ -75,6 +76,7 @@ export type CreatePlanRequest = {
   allowCompareMode?: boolean;
   allowJudgeMode?: boolean;
   allowResearchMode?: boolean;
+  allowCriticReview?: boolean;
   allowWorkspaces?: boolean;
   allowMemory?: boolean;
   allowContextPacks?: boolean;
@@ -100,6 +102,7 @@ export type EntitlementFeatureGates = {
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
   allowResearchMode: boolean;
+  allowCriticReview: boolean;
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;
@@ -151,6 +154,7 @@ export type PlanFormState = {
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
   allowResearchMode: boolean;
+  allowCriticReview: boolean;
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;

@@ -216,6 +216,9 @@ describe('JudgeRefereeManager', () => {
         criticEvaluation: {
           feedback: ['Missing error handling', 'No input validation'],
           score: 0.6,
+          summary: 'Two coding issues found.',
+          requested: true,
+          parseFailed: false,
           category: 'coding',
           model: 'ANTHROPIC/claude-sonnet-4',
           latencyMs: 2000,
@@ -263,6 +266,9 @@ describe('JudgeRefereeManager', () => {
         criticEvaluation: {
           feedback: [],
           score: 0.9,
+          summary: 'No critical issues detected.',
+          requested: true,
+          parseFailed: false,
           category: 'generic',
           model: 'GEMINI/gemini-2.5-flash',
           latencyMs: 1000,
@@ -295,11 +301,18 @@ describe('JudgeRefereeManager', () => {
   });
 
   describe('evaluate', () => {
-    it('labels the critic with the selected model and falls back the judge to local when a cloud critic call fails', async () => {
+    // New critic contract (post-allowCriticReview flagship): the critic LLM
+    // only runs when the caller passes `criticEnabled: true` AND a model. When
+    // it does run, the auto-pick now points at the user-selected criticModel
+    // (label preserved on the metadata). When `criticEnabled` is false / unset
+    // (this test case) the critic is skipped entirely and the judge runs on
+    // local-ollama by default — only ONE callProvider invocation happens (the
+    // judge), and the critic metadata records `requested: false` so the FE
+    // renders "Critic was not requested for this review.".
+    it('skips the critic call entirely when criticEnabled is unset and judges via local', async () => {
       const executionManager = {
         callProvider: jest
           .fn()
-          .mockRejectedValueOnce(new Error('Anthropic connector unavailable'))
           .mockResolvedValueOnce({
             content: '{"decision":"ACCEPT","reasoning":"Looks good","confidence":0.95}',
             provider: 'local-ollama',
@@ -346,9 +359,13 @@ describe('JudgeRefereeManager', () => {
 
       const result = await manager.evaluate(response as any, context, config, payload);
 
-      expect(result.criticEvaluation.model).toBe('ANTHROPIC/claude-sonnet-4');
+      // Critic auto-pick label still records the legacy ANTHROPIC default so
+      // the UI surfaces "Critic was not requested" with a stable label.
+      expect(result.criticEvaluation.requested).toBe(false);
+      expect(result.criticEvaluation.feedback).toEqual([]);
       expect(result.judgeVerdict.model).toBe('local-ollama/AUTO');
-      expect(executionManager.callProvider).toHaveBeenCalledTimes(2);
+      // Only the judge call happened; the critic was skipped entirely.
+      expect(executionManager.callProvider).toHaveBeenCalledTimes(1);
     });
   });
 });

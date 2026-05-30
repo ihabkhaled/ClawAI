@@ -39,6 +39,15 @@ export type ParallelJudgeConfig = {
   model: string | null;
 };
 
+// User-selected critic configuration threaded into the JudgeRefereeManager.
+// `enabled` requires judgeEnabled to also be true (enforced in the DTO refine).
+// `model` is the encoded selection from the FE — either a plain local model
+// name or a `PROVIDER:model` cloud-judge string parsed by parseJudgeModel.
+export type ParallelCriticConfig = {
+  enabled: boolean;
+  model: string | null;
+};
+
 export type ParallelResponse = {
   messageId: string;
   threadId: string;

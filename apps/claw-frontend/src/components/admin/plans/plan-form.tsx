@@ -290,6 +290,21 @@ export function PlanForm({
           />
         </div>
         <div className="flex items-center justify-between gap-2">
+          <div className="space-y-0.5">
+            <label htmlFor="plan-allow-critic" className="text-sm">
+              {t('adminPlans.gate.allowCriticReview')}
+            </label>
+            <p className="text-xs text-muted-foreground">
+              {t('adminPlans.featureAllowCriticReviewHint')}
+            </p>
+          </div>
+          <Switch
+            id="plan-allow-critic"
+            checked={state.allowCriticReview}
+            onCheckedChange={(next) => setField('allowCriticReview', next)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
           <label htmlFor="plan-allow-workspaces" className="text-sm">
             {t('adminPlans.gate.allowWorkspaces')}
           </label>

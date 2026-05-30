@@ -210,6 +210,67 @@ describe('AccessControlService', () => {
       ).resolves.toMatchObject({ userId: 'u1' });
     });
 
+    it('rejects when criticEnabled=true but allowCriticReview plan gate is locked', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({
+          plan: {
+            id: 'p1',
+            slug: 'free',
+            name: 'Free',
+            featureGates: {
+              allowCompareMode: true,
+              allowJudgeMode: true,
+              allowCriticReview: false,
+            },
+          },
+        }),
+      );
+      await expect(
+        service.assertCanSendMessage('u1', {
+          requireFeature: ['allowCompareMode', 'allowJudgeMode', 'allowCriticReview'],
+        }),
+      ).rejects.toMatchObject({ code: 'PLAN_FEATURE_DISABLED' });
+    });
+
+    it('allows when allowCriticReview is true alongside judge + compare', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({
+          plan: {
+            id: 'p1',
+            slug: 'pro',
+            name: 'Pro',
+            featureGates: {
+              allowCompareMode: true,
+              allowJudgeMode: true,
+              allowCriticReview: true,
+            },
+          },
+        }),
+      );
+      await expect(
+        service.assertCanSendMessage('u1', {
+          requireFeature: ['allowCompareMode', 'allowJudgeMode', 'allowCriticReview'],
+        }),
+      ).resolves.toMatchObject({ userId: 'u1' });
+    });
+
+    it('ADMIN bypasses allowCriticReview gate even when plan locks it', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({
+          isAdmin: true,
+          plan: {
+            id: 'p1',
+            slug: 'free',
+            name: 'Free',
+            featureGates: { allowCriticReview: false },
+          },
+        }),
+      );
+      await expect(
+        service.assertCanSendMessage('u1', { requireFeature: 'allowCriticReview' }),
+      ).resolves.toMatchObject({ isAdmin: true });
+    });
+
     it('rejects on the first locked feature when an array is passed', async () => {
       getEntitlements.mockResolvedValue(
         ent({

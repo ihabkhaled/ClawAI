@@ -18,6 +18,7 @@ export const updatePlanSchema = z.object({
   allowCompareMode: z.boolean().optional(),
   allowJudgeMode: z.boolean().optional(),
   allowResearchMode: z.boolean().optional(),
+  allowCriticReview: z.boolean().optional(),
   allowWorkspaces: z.boolean().optional(),
   allowMemory: z.boolean().optional(),
   allowContextPacks: z.boolean().optional(),

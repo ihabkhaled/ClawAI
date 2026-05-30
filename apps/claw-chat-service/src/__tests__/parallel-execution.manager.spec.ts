@@ -91,6 +91,7 @@ describe('ParallelExecutionManager', () => {
     { provider: 'GEMINI', model: 'gemini-2.5-flash' },
   ];
   const disabledJudgeConfig = { enabled: false, model: null };
+  const disabledCriticConfig = { enabled: false, model: null };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -125,6 +126,7 @@ describe('ParallelExecutionManager', () => {
         'Hello world',
         sampleModels,
         disabledJudgeConfig,
+        disabledCriticConfig,
       );
 
       expect(mockChatMessagesRepository.create).toHaveBeenCalledWith({
@@ -149,6 +151,7 @@ describe('ParallelExecutionManager', () => {
         'Hello',
         sampleModels,
         disabledJudgeConfig,
+        disabledCriticConfig,
       );
 
       expect(result.responses).toEqual([]);
@@ -164,6 +167,7 @@ describe('ParallelExecutionManager', () => {
         'Analyze this',
         sampleModels,
         disabledJudgeConfig,
+        disabledCriticConfig,
         ['file-1', 'file-2'],
       );
 
@@ -204,6 +208,7 @@ describe('ParallelExecutionManager', () => {
         sampleModels,
         mockContext,
         disabledJudgeConfig,
+        disabledCriticConfig,
         'group-1',
         'thread-1',
       );
@@ -231,6 +236,7 @@ describe('ParallelExecutionManager', () => {
         sampleModels,
         mockContext,
         disabledJudgeConfig,
+        disabledCriticConfig,
         'group-1',
         'thread-1',
       );
@@ -251,6 +257,7 @@ describe('ParallelExecutionManager', () => {
         sampleModels,
         mockContext,
         disabledJudgeConfig,
+        disabledCriticConfig,
         'group-1',
         'thread-1',
       );
@@ -269,6 +276,7 @@ describe('ParallelExecutionManager', () => {
         sampleModels,
         mockContext,
         disabledJudgeConfig,
+        disabledCriticConfig,
         'group-1',
         'thread-1',
       );
@@ -603,6 +611,7 @@ describe('ParallelExecutionManager', () => {
         'user prompt',
         [{ provider: 'ANTHROPIC', model: 'claude-sonnet-4' }],
         disabledJudgeConfig,
+        disabledCriticConfig,
       );
 
       expect(mockContextAssemblyManager.assemble).toHaveBeenCalled();
@@ -627,6 +636,7 @@ describe('ParallelExecutionManager', () => {
         'user prompt',
         sampleModels,
         disabledJudgeConfig,
+        disabledCriticConfig,
       );
 
       // Should store a failed response

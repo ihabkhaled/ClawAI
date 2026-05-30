@@ -73,6 +73,13 @@ export type JudgeReview = {
   criticDisplayName: string;
   criticFeedback: string[];
   criticScore: number;
+  // Human-readable single-sentence verdict from the critic. Empty string when
+  // critic was not requested; set to a parse-failure marker when the critic
+  // ran but its response could not be parsed. The modal uses this to decide
+  // which surfacing path to take (not-requested / parse-failed / has feedback).
+  criticSummary: string;
+  criticRequested: boolean;
+  criticParseFailed: boolean;
   originalExecutionModel: string;
   originalExecutionDisplayName: string;
   originalAnswerSnapshot: string;

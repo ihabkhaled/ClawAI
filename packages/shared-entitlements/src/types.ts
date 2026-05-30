@@ -4,6 +4,11 @@ export type PlanFeatureGates = {
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
   allowResearchMode: boolean;
+  // First-class sibling of allowJudgeMode. Unlocks the second-pass Critic LLM
+  // in compare-mode runs. UI keeps criticEnabled gated behind judgeEnabled,
+  // backend asserts BOTH allowJudgeMode + allowCriticReview when criticEnabled
+  // is true so the flag works the same way every other plan feature does.
+  allowCriticReview: boolean;
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;

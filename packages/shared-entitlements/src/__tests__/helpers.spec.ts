@@ -20,6 +20,7 @@ const base: UserEntitlements = {
       allowCompareMode: false,
       allowJudgeMode: false,
       allowResearchMode: false,
+      allowCriticReview: false,
       allowWorkspaces: true,
       allowMemory: true,
       allowContextPacks: true,
@@ -69,6 +70,10 @@ describe('entitlements helpers', () => {
     it('USER follows plan gates', () => {
       expect(hasPlanFeature(base, 'allowMemory')).toBe(true);
       expect(hasPlanFeature(base, 'allowCompareMode')).toBe(false);
+      expect(hasPlanFeature(base, 'allowCriticReview')).toBe(false);
+    });
+    it('ADMIN bypasses allowCriticReview even when plan locks it', () => {
+      expect(hasPlanFeature(admin, 'allowCriticReview')).toBe(true);
     });
   });
 

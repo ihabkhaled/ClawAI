@@ -351,6 +351,7 @@ export const fr: TranslationDictionary = {
     tryingFallback: 'Tentative de secours...',
     verifyingWith: 'Vérification avec {model}',
     visibleAiProgress: "Progression visible de l'IA",
+    jumpToLatest: 'Aller au plus récent',
     useMemoryLabel: 'Utiliser la mémoire dans cette conversation',
     useMemoryDescription: "Lorsque désactivé, aucune mémoire n'est injectée dans l'invite.",
     useContextLabel: 'Utiliser les paquets de contexte dans cette conversation',
@@ -1089,6 +1090,17 @@ export const fr: TranslationDictionary = {
       searchExtract: 'Recherche + Extraction',
       sources: 'Sources des preuves web',
     },
+    critic: {
+      enabled: 'Revue du critique',
+      enabledHint:
+        'Ajoute un second LLM critique qui note la réponse et signale les problèmes au juge.',
+      modelLabel: 'Modèle du critique',
+      modelPlaceholder: 'Choisir un modèle critique',
+      notRequested: "Aucun critique n'a été demandé pour cette revue.",
+    },
+  },
+  judgeReview: {
+    criticHeader: 'Revue du critique',
   },
   consensus: {
     title: 'Mode consensus',
@@ -2883,6 +2895,9 @@ export const fr: TranslationDictionary = {
     createFailed: 'Impossible de créer le forfait.',
     updateSucceeded: 'Forfait mis à jour.',
     updateFailed: 'Impossible de mettre à jour le forfait.',
+    featureAllowCriticReview: 'Revue du critique',
+    featureAllowCriticReviewHint:
+      'Permet aux utilisateurs d’ajouter un second LLM critique aux exécutions du juge en mode comparaison.',
     create: {
       title: 'Nouveau forfait',
       description: 'Créez un nouveau forfait d’abonnement.',
@@ -2920,6 +2935,7 @@ export const fr: TranslationDictionary = {
       allowCompareMode: 'Mode comparaison',
       allowJudgeMode: 'Mode juge',
       allowResearchMode: 'Mode recherche',
+      allowCriticReview: 'Revue du critique',
       allowWorkspaces: 'Espaces de travail',
       allowMemory: 'Mémoire',
       allowContextPacks: 'Packs de contexte',

@@ -26,6 +26,7 @@ const seedPlan = {
   allowCompareMode: true,
   allowJudgeMode: false,
   allowResearchMode: true,
+  allowCriticReview: false,
   allowWorkspaces: true,
   allowMemory: true,
   allowContextPacks: false,

@@ -18,6 +18,7 @@ const gates: EntitlementFeatureGates = {
   allowCompareMode: true,
   allowJudgeMode: false,
   allowResearchMode: false,
+  allowCriticReview: false,
   allowWorkspaces: true,
   allowMemory: false,
   allowContextPacks: true,

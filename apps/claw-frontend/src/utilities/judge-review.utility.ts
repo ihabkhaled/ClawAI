@@ -74,6 +74,9 @@ function normalizeNestedJudgeReview(review: Record<string, unknown>): JudgeRevie
     criticDisplayName: getString(review['criticDisplayName'], getString(review['criticModel'])),
     criticFeedback: getStringArray(review['criticFeedback']),
     criticScore: getNumber(review['criticScore']),
+    criticSummary: getString(review['criticSummary']),
+    criticRequested: review['criticRequested'] !== false,
+    criticParseFailed: review['criticParseFailed'] === true,
     originalExecutionModel: getString(review['originalExecutionModel']),
     originalExecutionDisplayName: getString(
       review['originalExecutionDisplayName'],
@@ -117,6 +120,12 @@ function normalizeLegacyJudgeReview(
     criticDisplayName: getString(metadata['criticModel']),
     criticFeedback: getStringArray(metadata['criticFeedback']),
     criticScore: getNumber(metadata['criticScore']),
+    // Legacy v0 metadata predates criticSummary/criticRequested/criticParseFailed.
+    // Default to "critic ran with no surfacable summary" so the modal stays
+    // truthful — pre-flagship data did not record a not-requested signal.
+    criticSummary: getString(metadata['criticSummary']),
+    criticRequested: metadata['criticRequested'] !== false,
+    criticParseFailed: metadata['criticParseFailed'] === true,
     originalExecutionModel: [message.provider, message.model].filter(Boolean).join('/'),
     originalExecutionDisplayName: [message.provider, message.model].filter(Boolean).join('/'),
     originalAnswerSnapshot: message.content,

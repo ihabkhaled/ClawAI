@@ -2,6 +2,7 @@
 
 import { ArrowRight, GitCompareArrows, Loader2, Send } from 'lucide-react';
 
+import { CompareCriticControls } from '@/components/chat/compare-critic-controls';
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
 import { CompareResearchModeControl } from '@/components/chat/compare-research-mode-control';
 import { DailyTokenIndicator } from '@/components/chat/daily-token-indicator';
@@ -41,6 +42,10 @@ export default function ComparePage() {
     setJudgeModel,
     judgeModelOptions,
     isJudgeModelOptionsLoading,
+    criticEnabled,
+    setCriticEnabled,
+    criticModel,
+    setCriticModel,
     researchMode,
     setResearchMode,
   } = useParallelComparePage();
@@ -48,6 +53,7 @@ export default function ComparePage() {
   const planFeatures = usePlanFeatures();
   const canJudge = planFeatures.has(PlanFeature.ALLOW_JUDGE_MODE);
   const canResearch = planFeatures.has(PlanFeature.ALLOW_RESEARCH_MODE);
+  const canCritic = planFeatures.has(PlanFeature.ALLOW_CRITIC_REVIEW);
 
   const showLoading = isPending || (isPolling && pollingMessages.length === 0);
   const showResults = pollingMessages.length > 0;
@@ -76,6 +82,17 @@ export default function ComparePage() {
                 onJudgeModelChange={setJudgeModel}
                 judgeModelOptions={judgeModelOptions}
                 judgeModelOptionsLoading={isJudgeModelOptionsLoading}
+                t={t}
+              />
+            ) : null}
+            {canJudge && canCritic && judgeEnabled ? (
+              <CompareCriticControls
+                criticEnabled={criticEnabled}
+                onCriticEnabledChange={setCriticEnabled}
+                criticModel={criticModel}
+                onCriticModelChange={setCriticModel}
+                criticModelOptions={judgeModelOptions}
+                criticModelOptionsLoading={isJudgeModelOptionsLoading}
                 t={t}
               />
             ) : null}

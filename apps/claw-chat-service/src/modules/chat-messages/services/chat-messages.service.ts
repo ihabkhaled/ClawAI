@@ -56,7 +56,11 @@ import { type TaskDecompositionResponse } from '../types/task-decomposition.type
 import { type BestOfNResponse } from '../types/best-of-n.types';
 import { type CostEnsembleResponse } from '../types/cost-ensemble.types';
 import { type VerifyResponse } from '../types/verifier.types';
-import { type ParallelJudgeConfig, type ParallelResponse } from '../types/parallel.types';
+import {
+  type ParallelCriticConfig,
+  type ParallelJudgeConfig,
+  type ParallelResponse,
+} from '../types/parallel.types';
 import { type PipelineResponse } from '../types/pipeline.types';
 import { type RolePackResponse } from '../types/role-pack.types';
 import { type ParallelMessageDto } from '../dto/parallel-message.dto';
@@ -267,15 +271,21 @@ export class ChatMessagesService implements OnModuleInit {
   ): Promise<ParallelResponse> {
     await this.assertCompareAccess(userId, dto);
     const thread = await this.resolveCompareThread(userId, dto);
+    const judgeConfig: ParallelJudgeConfig = {
+      enabled: dto.judgeEnabled === true,
+      model: dto.judgeModel ?? null,
+    };
+    const criticConfig: ParallelCriticConfig = {
+      enabled: dto.criticEnabled === true,
+      model: dto.criticModel ?? null,
+    };
     return this.parallelExecutionManager.executeParallel(
       userId,
       thread.id,
       dto.content,
       dto.models,
-      {
-        enabled: dto.judgeEnabled === true,
-        model: dto.judgeModel ?? null,
-      } as ParallelJudgeConfig,
+      judgeConfig,
+      criticConfig,
       dto.fileIds,
       {
         mode: dto.researchMode,
@@ -295,6 +305,13 @@ export class ChatMessagesService implements OnModuleInit {
     const features: PlanFeature[] = ['allowCompareMode'];
     if (dto.judgeEnabled === true) {
       features.push('allowJudgeMode');
+    }
+    // Critic is a first-class sibling of Judge — gate it on its own plan
+    // feature so admins can let Pro keep Judge but withhold Critic if desired.
+    // The DTO refine guarantees criticEnabled implies judgeEnabled, so the
+    // judge gate is already in the array above when this fires.
+    if (dto.criticEnabled === true) {
+      features.push('allowCriticReview');
     }
     if (dto.researchMode !== undefined && dto.researchMode !== ResearchMode.NONE) {
       features.push('allowResearchMode');

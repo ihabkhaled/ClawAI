@@ -28,6 +28,7 @@ function makePlan(overrides: Partial<PlanView> = {}): PlanView {
     allowCompareMode: true,
     allowJudgeMode: true,
     allowResearchMode: false,
+    allowCriticReview: false,
     allowWorkspaces: true,
     allowMemory: true,
     allowContextPacks: true,

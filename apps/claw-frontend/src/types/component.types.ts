@@ -267,6 +267,17 @@ export type JudgeRefereeDetailsProps = {
   message: ChatMessage;
 };
 
+// Props for the small critic-section inside the Judge Review modal. Extracted
+// so the parent .tsx renders a single component instead of a 4-branch nested
+// ternary (which the no-nested-ternary lint rule forbids).
+export type JudgeReviewCriticSectionProps = {
+  criticRequested: boolean;
+  criticParseFailed: boolean;
+  criticFeedback: string[];
+  criticSummary: string;
+  t: TranslateFunction;
+};
+
 export type ResearchRunDetailsProps = {
   message: ChatMessage;
 };
@@ -314,6 +325,16 @@ export type ThinkingIndicatorProps = {
   isCancelling?: boolean;
 };
 
+// Floating "Jump to latest" pill rendered over the chat scroll container while
+// the assistant is streaming AND the user has scrolled away from the bottom.
+// Clicking it pins the viewport to the latest content and re-enables the
+// sticky-bottom auto-follow behaviour driven by useStickyBottomScroll.
+export type JumpToLatestButtonProps = {
+  visible: boolean;
+  onClick: () => void;
+  t: TranslateFunction;
+};
+
 export type ModelSelection = {
   provider: string;
   model: string;
@@ -357,6 +378,21 @@ export type MessageComposerProps = {
   selectedModel: ModelSelection | null;
   onModelChange: (model: ModelSelection | null) => void;
   threadId?: string | null;
+};
+
+// Shared rich prompt textarea used by both the main chat MessageComposer and
+// the in-thread compare panel. Wraps shadcn <Textarea> with auto-resize,
+// Enter-to-submit (Shift+Enter for newline), and IME-safe composition handling.
+export type RichPromptTextareaProps = {
+  value: string;
+  onChange: (next: string) => void;
+  onSubmit?: () => void;
+  placeholder?: string;
+  disabled?: boolean;
+  minRows?: number;
+  maxRows?: number;
+  ariaLabel?: string;
+  className?: string;
 };
 
 export type ResearchToggleProps = {
@@ -887,6 +923,20 @@ export type CompareJudgeControlsProps = {
   t: TranslateFunction;
 };
 
+// Sibling of CompareJudgeControls. The critic is a second-pass review surfaced
+// in the Judge Review modal. The user-supplied model is encoded the same way
+// the judge picker encodes its selection — `PROVIDER:model` for cloud, plain
+// model name for local — and parsed by the backend via parseJudgeModel.
+export type CompareCriticControlsProps = {
+  criticEnabled: boolean;
+  onCriticEnabledChange: (value: boolean) => void;
+  criticModel: string | null;
+  onCriticModelChange: (value: string | null) => void;
+  criticModelOptions: JudgeModelOption[];
+  criticModelOptionsLoading: boolean;
+  t: TranslateFunction;
+};
+
 export type CompareResearchModeControlProps = {
   value: CompareResearchMode;
   onChange: (value: CompareResearchMode) => void;
@@ -954,7 +1004,11 @@ export type ConsensusMetadataProps = {
 export type InThreadComparePanelProps = {
   selectedModels: ParallelModelTarget[];
   onToggleModel: (provider: string, model: string, checked: boolean) => void;
-  onCompare: (prompt: string) => void;
+  // Controlled prompt textarea. Wired to use-in-thread-compare's prompt /
+  // setPrompt / handleSend trio so Enter-to-send + the Send button share state.
+  prompt: string;
+  onPromptChange: (value: string) => void;
+  onSend: () => void;
   onClose: () => void;
   result: ParallelResponse | undefined;
   isPending: boolean;
@@ -965,11 +1019,16 @@ export type InThreadComparePanelProps = {
   onJudgeModelChange: (value: string | null) => void;
   judgeModelOptions: JudgeModelOption[];
   judgeModelOptionsLoading: boolean;
+  criticEnabled: boolean;
+  onCriticEnabledChange: (value: boolean) => void;
+  criticModel: string | null;
+  onCriticModelChange: (value: string | null) => void;
   researchMode: CompareResearchMode;
   onResearchModeChange: (value: CompareResearchMode) => void;
-  // Plan-feature gates: hide judge / research controls when the user's plan
-  // does not unlock them. ADMIN passes true via usePlanFeatures.
+  // Plan-feature gates: hide judge / critic / research controls when the
+  // user's plan does not unlock them. ADMIN passes true via usePlanFeatures.
   allowJudgeMode: boolean;
+  allowCriticReview: boolean;
   allowResearchMode: boolean;
   t: TranslateFunction;
 };

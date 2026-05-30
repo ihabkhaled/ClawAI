@@ -349,6 +349,7 @@ export const en: TranslationDictionary = {
     tryingFallback: 'Trying fallback...',
     verifyingWith: 'Verifying with {model}',
     visibleAiProgress: 'Visible AI progress',
+    jumpToLatest: 'Jump to latest',
     useMemoryLabel: 'Use memory in this thread',
     useMemoryDescription: 'When off, no memories are injected into the prompt.',
     useContextLabel: 'Use context packs in this thread',
@@ -1073,6 +1074,17 @@ export const en: TranslationDictionary = {
       searchExtract: 'Search + Extract',
       sources: 'Web evidence sources',
     },
+    critic: {
+      enabled: 'Critic Review',
+      enabledHint:
+        'Add a second-pass Critic LLM that scores the answer and flags issues for the Judge.',
+      modelLabel: 'Critic Model',
+      modelPlaceholder: 'Select a critic model',
+      notRequested: 'Critic was not requested for this review.',
+    },
+  },
+  judgeReview: {
+    criticHeader: 'Critic Review',
   },
   consensus: {
     title: 'Consensus Mode',
@@ -2840,6 +2852,9 @@ export const en: TranslationDictionary = {
     createFailed: 'Could not create the plan.',
     updateSucceeded: 'Plan updated.',
     updateFailed: 'Could not update the plan.',
+    featureAllowCriticReview: 'Critic review',
+    featureAllowCriticReviewHint:
+      'Lets users add a second-pass Critic LLM to compare-mode Judge runs.',
     create: {
       title: 'New Plan',
       description: 'Create a new subscription plan.',
@@ -2877,6 +2892,7 @@ export const en: TranslationDictionary = {
       allowCompareMode: 'Compare mode',
       allowJudgeMode: 'Judge mode',
       allowResearchMode: 'Research mode',
+      allowCriticReview: 'Critic review',
       allowWorkspaces: 'Workspaces',
       allowMemory: 'Memory',
       allowContextPacks: 'Context packs',

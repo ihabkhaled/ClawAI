@@ -17,6 +17,8 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
   const [prompt, setPrompt] = useState('');
   const [judgeEnabled, setJudgeEnabled] = useState(false);
   const [judgeModel, setJudgeModel] = useState<string | null>(null);
+  const [criticEnabled, setCriticEnabled] = useState(false);
+  const [criticModel, setCriticModel] = useState<string | null>(null);
   const [researchMode, setResearchMode] = useState<CompareResearchMode>(CompareResearchMode.NONE);
   const { send, result, isPending, isError } = useParallelCompare();
 
@@ -60,11 +62,25 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
       models: selectedModels,
       judgeEnabled,
       judgeModel,
+      // Critic only flows up when judge is on too — DTO refine on the backend
+      // rejects criticEnabled=true without judgeEnabled=true. The model is
+      // optional from the FE's perspective; backend rejects it if missing.
+      ...(judgeEnabled && criticEnabled ? { criticEnabled: true, criticModel } : {}),
       // Only attach the field when the user picked a non-NONE mode so v1
       // server-side defaults stay the source of truth for the OFF path.
       ...(researchMode === CompareResearchMode.NONE ? {} : { researchMode }),
     });
-  }, [canSend, send, prompt, selectedModels, judgeEnabled, judgeModel, researchMode]);
+  }, [
+    canSend,
+    send,
+    prompt,
+    selectedModels,
+    judgeEnabled,
+    judgeModel,
+    criticEnabled,
+    criticModel,
+    researchMode,
+  ]);
 
   return {
     t,
@@ -89,6 +105,10 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     setJudgeModel,
     judgeModelOptions,
     isJudgeModelOptionsLoading,
+    criticEnabled,
+    setCriticEnabled,
+    criticModel,
+    setCriticModel,
     researchMode,
     setResearchMode,
   };

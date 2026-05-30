@@ -2,6 +2,7 @@
 
 import { ArrowUpCircle, ClipboardList, RefreshCw, ShieldCheck } from 'lucide-react';
 
+import { JudgeReviewCriticSection } from '@/components/chat/judge-review-critic-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -200,17 +201,15 @@ export function JudgeRefereeDetails({
 
               <div className="space-y-2">
                 <h3 className="text-sm font-medium text-foreground">
-                  {t('chat.judgeCriticFeedback')}
+                  {t('judgeReview.criticHeader')}
                 </h3>
-                {judgeReview.criticFeedback.length > 0 ? (
-                  <ul className="space-y-1 text-sm text-muted-foreground">
-                    {judgeReview.criticFeedback.map((item) => (
-                      <li key={item}>• {item}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-muted-foreground">{t('chat.judgeNoCriticFeedback')}</p>
-                )}
+                <JudgeReviewCriticSection
+                  criticRequested={judgeReview.criticRequested}
+                  criticParseFailed={judgeReview.criticParseFailed}
+                  criticFeedback={judgeReview.criticFeedback}
+                  criticSummary={judgeReview.criticSummary}
+                  t={t}
+                />
               </div>
 
               {judgeReview.judgeMetadata.recommendedChanges.length > 0 ? (

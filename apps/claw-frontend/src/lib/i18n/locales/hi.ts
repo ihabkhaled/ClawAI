@@ -350,6 +350,7 @@ export const hi: TranslationDictionary = {
     tryingFallback: 'फ़ॉलबैक आज़मा रहे हैं...',
     verifyingWith: '{model} के साथ सत्यापित किया जा रहा है',
     visibleAiProgress: 'दृश्य AI प्रगति',
+    jumpToLatest: 'नवीनतम पर जाएँ',
     useMemoryLabel: 'इस वार्तालाप में मेमोरी उपयोग करें',
     useMemoryDescription: 'बंद होने पर, प्रॉम्प्ट में कोई मेमोरी इंजेक्ट नहीं की जाती।',
     useContextLabel: 'इस वार्तालाप में संदर्भ पैक उपयोग करें',
@@ -1077,6 +1078,17 @@ export const hi: TranslationDictionary = {
       searchExtract: 'खोज + निकालें',
       sources: 'वेब प्रमाण के स्रोत',
     },
+    critic: {
+      enabled: 'क्रिटिक समीक्षा',
+      enabledHint:
+        'एक दूसरा क्रिटिक LLM जोड़ें जो उत्तर को स्कोर करे और जज के लिए मुद्दे चिह्नित करे।',
+      modelLabel: 'क्रिटिक मॉडल',
+      modelPlaceholder: 'क्रिटिक मॉडल चुनें',
+      notRequested: 'इस समीक्षा के लिए क्रिटिक नहीं मांगा गया था।',
+    },
+  },
+  judgeReview: {
+    criticHeader: 'क्रिटिक समीक्षा',
   },
   consensus: {
     title: 'सहमति मोड',
@@ -2847,6 +2859,9 @@ export const hi: TranslationDictionary = {
     createFailed: 'योजना नहीं बनाई जा सकी।',
     updateSucceeded: 'योजना अपडेट हो गई।',
     updateFailed: 'योजना अपडेट नहीं हो सकी।',
+    featureAllowCriticReview: 'क्रिटिक समीक्षा',
+    featureAllowCriticReviewHint:
+      'उपयोगकर्ताओं को तुलना मोड के जज रनों में दूसरा क्रिटिक LLM जोड़ने देता है।',
     create: {
       title: 'नई योजना',
       description: 'एक नई सदस्यता योजना बनाएँ।',
@@ -2884,6 +2899,7 @@ export const hi: TranslationDictionary = {
       allowCompareMode: 'तुलना मोड',
       allowJudgeMode: 'जज मोड',
       allowResearchMode: 'रिसर्च मोड',
+      allowCriticReview: 'क्रिटिक समीक्षा',
       allowWorkspaces: 'वर्कस्पेस',
       allowMemory: 'मेमोरी',
       allowContextPacks: 'कॉन्टेक्स्ट पैक',

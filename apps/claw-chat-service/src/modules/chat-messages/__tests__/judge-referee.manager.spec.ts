@@ -67,11 +67,17 @@ describe('JudgeRefereeManager — cloud judge + token capture', () => {
   let chatStream: Partial<Record<keyof ChatStreamService, jest.Mock>>;
   let localSelection: Partial<Record<keyof LocalModelSelectionService, jest.Mock>>;
 
+  // Critic + judge are both exercised here so the "cloud judge + token
+  // capture" assertions can verify the combined ledger entry. criticEnabled
+  // must be true (post-allowCriticReview flagship) for the critic LLM call to
+  // happen; otherwise callProvider only fires once (judge only).
   const config: JudgeRefereeConfig = {
     enabled: true,
     category: undefined,
     routingMode: 'MANUAL_MODEL',
     isLocalOnly: false,
+    criticEnabled: true,
+    criticModel: 'GEMINI:gemini-2.5-flash',
   };
 
   beforeEach(() => {

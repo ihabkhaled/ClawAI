@@ -89,6 +89,53 @@ describe('useParallelComparePage — researchMode round-trip', () => {
     expect(payload.content).toBe('hello');
   });
 
+  it('threads criticEnabled + criticModel through when judge is also on', async () => {
+    const { result } = renderHook(() => useParallelComparePage(), { wrapper });
+
+    act(() => {
+      result.current.setPrompt('hello');
+      result.current.handleToggleModel('OPENAI', 'gpt-4o', true);
+      result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
+      result.current.setJudgeEnabled(true);
+      result.current.setCriticEnabled(true);
+      result.current.setCriticModel('OPENAI:gpt-4o-mini');
+    });
+
+    act(() => {
+      result.current.handleSend();
+    });
+
+    await waitFor(() => {
+      expect(sendParallelMock).toHaveBeenCalledTimes(1);
+    });
+    const payload = sendParallelMock.mock.calls[0]![0] as ParallelRequest;
+    expect(payload.criticEnabled).toBe(true);
+    expect(payload.criticModel).toBe('OPENAI:gpt-4o-mini');
+  });
+
+  it('drops critic fields when judge is off (UI rule)', async () => {
+    const { result } = renderHook(() => useParallelComparePage(), { wrapper });
+
+    act(() => {
+      result.current.setPrompt('hello');
+      result.current.handleToggleModel('OPENAI', 'gpt-4o', true);
+      result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
+      result.current.setCriticEnabled(true);
+      result.current.setCriticModel('OPENAI:gpt-4o-mini');
+    });
+
+    act(() => {
+      result.current.handleSend();
+    });
+
+    await waitFor(() => {
+      expect(sendParallelMock).toHaveBeenCalledTimes(1);
+    });
+    const payload = sendParallelMock.mock.calls[0]![0] as ParallelRequest;
+    expect(payload.criticEnabled).toBeUndefined();
+    expect(payload.criticModel).toBeUndefined();
+  });
+
   it('forwards researchMode when set to a non-NONE value', async () => {
     const { result } = renderHook(() => useParallelComparePage(), { wrapper });
 

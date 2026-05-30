@@ -8,6 +8,7 @@ export type PlanFeatureGates = {
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
   allowResearchMode: boolean;
+  allowCriticReview: boolean;
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;
@@ -46,6 +47,7 @@ export type PlanView = {
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
   allowResearchMode: boolean;
+  allowCriticReview: boolean;
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;
@@ -73,6 +75,7 @@ export type CreatePlanData = {
   allowCompareMode?: boolean;
   allowJudgeMode?: boolean;
   allowResearchMode?: boolean;
+  allowCriticReview?: boolean;
   allowWorkspaces?: boolean;
   allowMemory?: boolean;
   allowContextPacks?: boolean;

@@ -17,6 +17,22 @@ export const CRITIC_CLOUD_MODELS = [
   { provider: 'OPENAI', model: 'gpt-4o-mini' },
 ];
 
+// Structured-output schema hint appended to every critic system prompt. The
+// FE depends on `score` (0..1), `summary` (single sentence) and `feedback`
+// (array of strings) being present — the parser falls back to a "parse
+// failed" marker when the LLM strays from this shape.
+export const CRITIC_STRUCTURED_OUTPUT_HINT =
+  `Respond with ONLY one JSON object (no prose, no code fences), with these exact fields:
+{"score": 0.0-1.0, "summary": "single-sentence verdict for the user", "feedback": ["short actionable note 1", "note 2"]}
+- score: float between 0 and 1, where 1 = excellent and 0 = unusable.
+- summary: ONE short sentence the user can read at a glance. Required even when feedback is empty.
+- feedback: list of concrete improvement points. Use an empty array when no fixes are needed.`;
+
+// Fallback critic body persisted to the JudgeReview when the critic was
+// requested but the LLM response could not be parsed into the structured
+// shape. The UI surfaces this string so users see WHY no feedback appeared.
+export const CRITIC_PARSE_FAILURE_SUMMARY = 'Critic response could not be parsed.';
+
 export const MAX_REVISION_ATTEMPTS = 1;
 
 export const JUDGE_CONFIDENCE_THRESHOLD = 0.6;

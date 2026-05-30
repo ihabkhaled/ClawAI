@@ -9,6 +9,7 @@ import { ChatMessagesRepository } from '../repositories/chat-messages.repository
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
 import {
+  type ParallelCriticConfig,
   type ParallelJudgeConfig,
   type ParallelModelResponse,
   type ParallelModelTarget,
@@ -45,6 +46,7 @@ export class ParallelExecutionManager {
     content: string,
     models: ParallelModelTarget[],
     judgeConfig: ParallelJudgeConfig,
+    criticConfig: ParallelCriticConfig,
     fileIds?: string[],
     researchOptions?: ParallelResearchOptions,
   ): Promise<ParallelResponse> {
@@ -62,6 +64,7 @@ export class ParallelExecutionManager {
       content,
       models,
       judgeConfig,
+      criticConfig,
       fileIds,
       researchOptions,
     );
@@ -86,6 +89,7 @@ export class ParallelExecutionManager {
     userMessageContent: string,
     models: ParallelModelTarget[],
     judgeConfig: ParallelJudgeConfig,
+    criticConfig: ParallelCriticConfig,
     fileIds?: string[],
     researchOptions?: ParallelResearchOptions,
   ): Promise<void> {
@@ -107,6 +111,7 @@ export class ParallelExecutionManager {
         enrichedContext,
         threadSettings,
         judgeConfig,
+        criticConfig,
         parallelGroupId,
         threadId,
       );
@@ -233,6 +238,7 @@ export class ParallelExecutionManager {
     context: AssembledContext,
     threadSettings: ThreadSettings | undefined,
     judgeConfig: ParallelJudgeConfig,
+    criticConfig: ParallelCriticConfig,
     parallelGroupId: string,
     threadId: string,
   ): Promise<ParallelModelResponse[]> {
@@ -260,6 +266,7 @@ export class ParallelExecutionManager {
       context,
       threadSettings,
       judgeConfig,
+      criticConfig,
       parallelGroupId,
       threadId,
     );
@@ -270,6 +277,7 @@ export class ParallelExecutionManager {
     context: AssembledContext,
     threadSettings: ThreadSettings | undefined,
     judgeConfig: ParallelJudgeConfig,
+    criticConfig: ParallelCriticConfig,
     parallelGroupId: string,
     threadId: string,
   ): Promise<ParallelModelResponse[]> {
@@ -309,6 +317,7 @@ export class ParallelExecutionManager {
           parallelGroupId,
           threadId,
           judgeConfig,
+          criticConfig,
         );
       }),
     );
@@ -323,6 +332,7 @@ export class ParallelExecutionManager {
     parallelGroupId: string,
     threadId: string,
     judgeConfig: ParallelJudgeConfig,
+    criticConfig: ParallelCriticConfig,
   ): Promise<ParallelModelResponse> {
     const judgeModel = judgeConfig.model ?? null;
     this.chatStreamService.emitJudgeEvaluating(
@@ -348,6 +358,8 @@ export class ParallelExecutionManager {
           category: undefined,
           routingMode: 'MANUAL_MODEL',
           isLocalOnly: false,
+          criticEnabled: criticConfig.enabled,
+          criticModel: criticConfig.model,
         },
         {
           messageId: parallelGroupId,

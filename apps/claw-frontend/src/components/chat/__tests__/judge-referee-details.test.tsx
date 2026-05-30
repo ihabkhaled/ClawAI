@@ -45,6 +45,9 @@ const message: ChatMessage = {
       criticDisplayName: 'OPENAI/gpt-4o-mini',
       criticFeedback: ['Incomplete answer'],
       criticScore: 0.4,
+      criticSummary: 'Critic flagged 1 issue.',
+      criticRequested: true,
+      criticParseFailed: false,
       originalExecutionModel: 'local-ollama/qwen3:1.7b',
       originalExecutionDisplayName: 'local-ollama/qwen3:1.7b',
       originalAnswerSnapshot: 'Original answer',
@@ -73,5 +76,31 @@ describe('JudgeRefereeDetails', () => {
     expect(screen.getAllByText('The answer required escalation.').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Here is a stronger answer.').length).toBeGreaterThan(0);
     expect(screen.getByText(/Answer directly/)).toBeInTheDocument();
+  });
+
+  it('renders the critic feedback list and summary when critic was requested', () => {
+    render(<JudgeRefereeDetails message={message} />);
+    fireEvent.click(screen.getByRole('button', { name: 'chat.judgeOpenReview' }));
+    expect(screen.getByText('Critic flagged 1 issue.')).toBeInTheDocument();
+    expect(screen.getByText('• Incomplete answer')).toBeInTheDocument();
+  });
+
+  it('renders the "not requested" message when criticRequested is false', () => {
+    const messageNoCritic: ChatMessage = {
+      ...message,
+      metadata: {
+        ...message.metadata,
+        judgeReview: {
+          ...(message.metadata as { judgeReview: Record<string, unknown> }).judgeReview,
+          criticRequested: false,
+          criticFeedback: [],
+          criticSummary: '',
+          criticParseFailed: false,
+        },
+      },
+    };
+    render(<JudgeRefereeDetails message={messageNoCritic} />);
+    fireEvent.click(screen.getByRole('button', { name: 'chat.judgeOpenReview' }));
+    expect(screen.getByText('compare.critic.notRequested')).toBeInTheDocument();
   });
 });

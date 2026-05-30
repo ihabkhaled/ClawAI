@@ -345,6 +345,9 @@ export type TranslationDictionary = {
     tryingFallback: string;
     verifyingWith: string;
     visibleAiProgress: string;
+    // Floating "Jump to latest" pill shown while AI is streaming and user has
+    // scrolled up away from the bottom of the chat history.
+    jumpToLatest: string;
     // Integration V2 — thread-settings toggles
     useMemoryLabel: string;
     useMemoryDescription: string;
@@ -1065,6 +1068,16 @@ export type TranslationDictionary = {
       searchExtract: string;
       sources: string;
     };
+    critic: {
+      enabled: string;
+      enabledHint: string;
+      modelLabel: string;
+      modelPlaceholder: string;
+      notRequested: string;
+    };
+  };
+  judgeReview: {
+    criticHeader: string;
   };
   consensus: {
     title: string;
@@ -2790,6 +2803,8 @@ export type TranslationDictionary = {
     createFailed: string;
     updateSucceeded: string;
     updateFailed: string;
+    featureAllowCriticReview: string;
+    featureAllowCriticReviewHint: string;
     create: {
       title: string;
       description: string;
@@ -2827,6 +2842,7 @@ export type TranslationDictionary = {
       allowCompareMode: string;
       allowJudgeMode: string;
       allowResearchMode: string;
+      allowCriticReview: string;
       allowWorkspaces: string;
       allowMemory: string;
       allowContextPacks: string;

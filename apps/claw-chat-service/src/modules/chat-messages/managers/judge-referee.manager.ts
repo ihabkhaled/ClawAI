@@ -3,11 +3,15 @@ import { TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 
 import { OLLAMA_PROVIDER } from '../../../common/constants';
 import { JudgeDecision } from '../../../common/enums';
-import { parseJudgeModel, recordGet } from '../../../common/utilities';
+import {
+  buildCriticSystemPrompt,
+  buildCriticUserPrompt,
+  parseJudgeModel,
+} from '../../../common/utilities';
 import {
   CRITIC_CLOUD_MODELS,
   CRITIC_LOCAL_MODEL,
-  CRITIC_SYSTEM_PROMPTS,
+  CRITIC_PARSE_FAILURE_SUMMARY,
   JUDGE_CONFIDENCE_THRESHOLD,
   JUDGE_LOCAL_MODEL,
   JUDGE_REFEREE_AUTO_CATEGORIES,
@@ -68,7 +72,7 @@ export class JudgeRefereeManager {
       `evaluate: starting judge-referee for ${payload.messageId} category=${config.category ?? 'none'}`,
     );
 
-    const criticModelInfo = await this.selectCriticModel(response.provider, config.isLocalOnly);
+    const criticModelInfo = await this.resolveCriticTarget(response.provider, config);
     const criticModelLabel = `${criticModelInfo.provider}/${criticModelInfo.model}`;
     const overrideJudgeModel = threadSettings?.judgeModel ?? null;
     // Feature 1 — a user-chosen cloud connector model now runs through the
@@ -77,12 +81,9 @@ export class JudgeRefereeManager {
     const judgeModelLabel = `${judgeTarget.provider}/${judgeTarget.model}`;
     this.chatStreamService.emitJudgeEvaluating(payload.threadId, criticModelLabel, judgeModelLabel);
 
-    const criticEvaluation = await this.callCriticWithModel(
-      response,
-      context,
-      config,
-      criticModelInfo,
-    );
+    const criticEvaluation = config.criticEnabled === true
+      ? await this.callCriticWithModel(response, context, config, criticModelInfo)
+      : this.buildSkippedCriticEvaluation(config, criticModelInfo);
 
     const judgeVerdict = await this.callJudge(
       response,
@@ -139,6 +140,9 @@ export class JudgeRefereeManager {
       criticModel: result.criticEvaluation.model,
       criticFeedback: result.criticEvaluation.feedback,
       criticScore: result.criticEvaluation.score,
+      criticSummary: result.criticEvaluation.summary,
+      criticRequested: result.criticEvaluation.requested,
+      criticParseFailed: result.criticEvaluation.parseFailed === true,
       judgeModel: result.judgeVerdict.model,
       judgeDecision: result.judgeVerdict.decision,
       judgeReasoning: result.judgeVerdict.reasoning,
@@ -166,7 +170,7 @@ export class JudgeRefereeManager {
     criticModel: { provider: string; model: string },
   ): Promise<CriticEvaluation> {
     const startTime = Date.now();
-    const criticPrompt = this.buildCriticPrompt(config.category);
+    const criticPrompt = buildCriticSystemPrompt(config.category);
 
     this.logger.debug(
       `callCritic: using ${criticModel.provider}/${criticModel.model} for category=${config.category ?? 'generic'}`,
@@ -179,7 +183,7 @@ export class JudgeRefereeManager {
       threadMessages: [
         {
           role: 'USER',
-          content: `User question: ${userPrompt}\n\nAI response to evaluate:\n${response.content}`,
+          content: buildCriticUserPrompt(userPrompt, response.content),
         } as AssembledContext['threadMessages'][0],
       ],
     };
@@ -206,6 +210,9 @@ export class JudgeRefereeManager {
       return {
         feedback: parsed.feedback,
         score: parsed.score,
+        summary: parsed.summary,
+        requested: true,
+        parseFailed: parsed.parseFailed,
         category: config.category ?? 'generic',
         model: `${criticModel.provider}/${criticModel.model}`,
         latencyMs,
@@ -216,15 +223,38 @@ export class JudgeRefereeManager {
       };
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.warn(`callCritic: failed — ${msg}. Defaulting to pass-through.`);
+      this.logger.warn(`callCritic: failed — ${msg}. Persisting parse-failure marker.`);
       return {
         feedback: [],
         score: 1.0,
+        summary: CRITIC_PARSE_FAILURE_SUMMARY,
+        requested: true,
+        parseFailed: true,
         category: config.category ?? 'generic',
         model: `${criticModel.provider}/${criticModel.model}`,
         latencyMs: Date.now() - startTime,
       };
     }
+  }
+
+  // Used when the user did not opt into the critic for this run. We still
+  // record a CriticEvaluation row so the JudgeReview payload has a stable
+  // shape and the UI can render "Critic was not requested." instead of
+  // pretending the critic produced an empty review.
+  private buildSkippedCriticEvaluation(
+    config: JudgeRefereeConfig,
+    criticModel: { provider: string; model: string },
+  ): CriticEvaluation {
+    return {
+      feedback: [],
+      score: 1.0,
+      summary: '',
+      requested: false,
+      parseFailed: false,
+      category: config.category ?? 'generic',
+      model: `${criticModel.provider}/${criticModel.model}`,
+      latencyMs: 0,
+    };
   }
 
   private async callJudge(
@@ -341,6 +371,9 @@ export class JudgeRefereeManager {
       criticDisplayName: result.criticEvaluation.model,
       criticFeedback: result.criticEvaluation.feedback,
       criticScore: result.criticEvaluation.score,
+      criticSummary: result.criticEvaluation.summary,
+      criticRequested: result.criticEvaluation.requested,
+      criticParseFailed: result.criticEvaluation.parseFailed === true,
       originalExecutionModel: `${result.originalResponse.provider}/${result.originalResponse.model}`,
       originalExecutionDisplayName: `${result.originalResponse.provider}/${result.originalResponse.model}`,
       originalAnswerSnapshot: result.originalResponse.content,
@@ -409,6 +442,33 @@ export class JudgeRefereeManager {
     }
   }
 
+  // Resolves the critic execution target. When the user explicitly selected a
+  // critic model in the compare DTO, that selection wins — parsed the same way
+  // judge models are (PROVIDER:model or plain local model name). Otherwise we
+  // fall back to the legacy auto-pick: local in local-only mode, else the first
+  // cloud critic from CRITIC_CLOUD_MODELS that doesn't match the generator's
+  // provider. This is the single fix for the "Critic model is hardcoded to
+  // ANTHROPIC/claude-sonnet-4" bug.
+  async resolveCriticTarget(
+    generatorProvider: string,
+    config: JudgeRefereeConfig,
+  ): Promise<{ provider: string; model: string }> {
+    const userSelected = config.criticEnabled === true ? (config.criticModel ?? '').trim() : '';
+    if (userSelected.length > 0) {
+      const parsed: ParsedJudgeModel = parseJudgeModel(userSelected);
+      if (parsed.provider !== null) {
+        const isOllamaLocal = parsed.provider === OLLAMA_PROVIDER;
+        return {
+          provider: parsed.provider,
+          model: isOllamaLocal ? await this.resolveModel(parsed.model) : parsed.model,
+        };
+      }
+      const localModel = parsed.model.length > 0 ? parsed.model : CRITIC_LOCAL_MODEL;
+      return { provider: OLLAMA_PROVIDER, model: await this.resolveModel(localModel) };
+    }
+    return this.selectCriticModel(generatorProvider, config.isLocalOnly);
+  }
+
   async selectCriticModel(
     generatorProvider: string,
     isLocalOnly: boolean,
@@ -473,18 +533,6 @@ export class JudgeRefereeManager {
       estimated: criticEstimated || judgeEstimated,
       source,
     };
-  }
-
-  private buildCriticPrompt(category: string | undefined): string {
-    const generic = recordGet(CRITIC_SYSTEM_PROMPTS, 'generic') ?? '';
-    if (!category) {
-      return generic;
-    }
-    const complianceCategories = new Set(['medical', 'legal', 'finance']);
-    if (complianceCategories.has(category)) {
-      return recordGet(CRITIC_SYSTEM_PROMPTS, 'compliance') ?? '';
-    }
-    return recordGet(CRITIC_SYSTEM_PROMPTS, category) ?? generic;
   }
 
   private parseJudgePlainTextOutput(content: string): ParsedJudgeVerdict | null {
@@ -656,7 +704,9 @@ export class JudgeRefereeManager {
     return decision === JudgeDecision.ESCALATE ? 'escalated_answer' : 'verification_note';
   }
 
-  private parseCriticOutput(content: string): { feedback: string[]; score: number } {
+  private parseCriticOutput(
+    content: string,
+  ): { feedback: string[]; score: number; summary: string; parseFailed: boolean } {
     try {
       let jsonStr = content.trim();
 
@@ -672,16 +722,36 @@ export class JudgeRefereeManager {
 
       const parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
       const feedback = Array.isArray(parsed['feedback'])
-        ? (parsed['feedback'] as unknown[]).filter((f): f is string => typeof f === 'string')
+        ? (parsed['feedback'] as unknown[]).filter(
+            (f): f is string => typeof f === 'string' && f.trim().length > 0,
+          )
         : [];
       const score =
         typeof parsed['score'] === 'number' ? Math.max(0, Math.min(1, parsed['score'])) : 0.5;
+      const summary =
+        typeof parsed['summary'] === 'string' && parsed['summary'].trim().length > 0
+          ? parsed['summary'].trim()
+          : this.deriveSummaryFallback(feedback);
 
-      return { feedback, score };
+      return { feedback, score, summary, parseFailed: false };
     } catch {
-      this.logger.warn('parseCriticOutput: failed to parse critic output. Defaulting to pass.');
-      return { feedback: [], score: 1.0 };
+      this.logger.warn(
+        'parseCriticOutput: failed to parse critic output. Persisting parse-failure marker.',
+      );
+      return {
+        feedback: [],
+        score: 1.0,
+        summary: CRITIC_PARSE_FAILURE_SUMMARY,
+        parseFailed: true,
+      };
     }
+  }
+
+  private deriveSummaryFallback(feedback: string[]): string {
+    if (feedback.length === 0) {
+      return 'No critical issues detected.';
+    }
+    return `Critic raised ${String(feedback.length)} note(s); see details for the full list.`;
   }
 
   private extractUserPrompt(context: AssembledContext): string {

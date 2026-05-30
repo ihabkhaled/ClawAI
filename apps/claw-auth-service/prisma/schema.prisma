@@ -99,6 +99,7 @@ model Plan {
   allowCompareMode       Boolean  @default(false) @map("allow_compare_mode")
   allowJudgeMode         Boolean  @default(false) @map("allow_judge_mode")
   allowResearchMode      Boolean  @default(false) @map("allow_research_mode")
+  allowCriticReview      Boolean  @default(false) @map("allow_critic_review")
   allowWorkspaces        Boolean  @default(true) @map("allow_workspaces")
   allowMemory            Boolean  @default(true) @map("allow_memory")
   allowContextPacks      Boolean  @default(true) @map("allow_context_packs")

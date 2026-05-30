@@ -353,6 +353,7 @@ export const it: TranslationDictionary = {
     tryingFallback: 'Tentativo di fallback...',
     verifyingWith: 'Verifica con {model}',
     visibleAiProgress: "Avanzamento visibile dell'IA",
+    jumpToLatest: 'Vai al più recente',
     useMemoryLabel: 'Usa la memoria in questa conversazione',
     useMemoryDescription: 'Se disattivato, nessuna memoria viene inserita nel prompt.',
     useContextLabel: 'Usa i pacchetti di contesto in questa conversazione',
@@ -1084,6 +1085,17 @@ export const it: TranslationDictionary = {
       searchExtract: 'Ricerca + Estrai',
       sources: 'Fonti delle prove web',
     },
+    critic: {
+      enabled: 'Revisione del critico',
+      enabledHint:
+        'Aggiunge un secondo LLM critico che valuta la risposta e segnala i problemi al giudice.',
+      modelLabel: 'Modello del critico',
+      modelPlaceholder: 'Seleziona modello del critico',
+      notRequested: 'Per questa revisione non è stato richiesto un critico.',
+    },
+  },
+  judgeReview: {
+    criticHeader: 'Revisione del critico',
   },
   consensus: {
     title: 'Modalità consenso',
@@ -2866,6 +2878,9 @@ export const it: TranslationDictionary = {
     createFailed: 'Impossibile creare il piano.',
     updateSucceeded: 'Piano aggiornato.',
     updateFailed: 'Impossibile aggiornare il piano.',
+    featureAllowCriticReview: 'Revisione del critico',
+    featureAllowCriticReviewHint:
+      'Consente agli utenti di aggiungere un secondo LLM critico alle esecuzioni del giudice in modalità confronto.',
     create: {
       title: 'Nuovo piano',
       description: 'Crea un nuovo piano di abbonamento.',
@@ -2903,6 +2918,7 @@ export const it: TranslationDictionary = {
       allowCompareMode: 'Modalità confronto',
       allowJudgeMode: 'Modalità giudice',
       allowResearchMode: 'Modalità ricerca',
+      allowCriticReview: 'Revisione del critico',
       allowWorkspaces: 'Workspace',
       allowMemory: 'Memoria',
       allowContextPacks: 'Pacchetti di contesto',

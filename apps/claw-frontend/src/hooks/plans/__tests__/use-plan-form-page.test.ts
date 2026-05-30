@@ -82,6 +82,7 @@ const samplePlan = {
   allowCompareMode: true,
   allowJudgeMode: true,
   allowResearchMode: false,
+  allowCriticReview: false,
   allowWorkspaces: true,
   allowMemory: true,
   allowContextPacks: true,

@@ -352,6 +352,7 @@ export const de: TranslationDictionary = {
     tryingFallback: 'Fallback wird versucht...',
     verifyingWith: 'Verifizierung mit {model}',
     visibleAiProgress: 'Sichtbarer KI-Fortschritt',
+    jumpToLatest: 'Zum neuesten springen',
     useMemoryLabel: 'Erinnerung in diesem Gespräch verwenden',
     useMemoryDescription: 'Wenn deaktiviert, werden keine Erinnerungen in den Prompt eingefügt.',
     useContextLabel: 'Kontextpakete in diesem Gespräch verwenden',
@@ -1088,6 +1089,17 @@ export const de: TranslationDictionary = {
       searchExtract: 'Suche + Extraktion',
       sources: 'Web-Belegquellen',
     },
+    critic: {
+      enabled: 'Kritiker-Prüfung',
+      enabledHint:
+        'Fügt ein zweites Kritiker-LLM hinzu, das die Antwort bewertet und Mängel für den Richter markiert.',
+      modelLabel: 'Kritiker-Modell',
+      modelPlaceholder: 'Kritiker-Modell auswählen',
+      notRequested: 'Für diese Prüfung wurde kein Kritiker angefordert.',
+    },
+  },
+  judgeReview: {
+    criticHeader: 'Kritiker-Prüfung',
   },
   consensus: {
     title: 'Konsensmodus',
@@ -2871,6 +2883,9 @@ export const de: TranslationDictionary = {
     createFailed: 'Tarif konnte nicht erstellt werden.',
     updateSucceeded: 'Tarif aktualisiert.',
     updateFailed: 'Tarif konnte nicht aktualisiert werden.',
+    featureAllowCriticReview: 'Kritiker-Prüfung',
+    featureAllowCriticReviewHint:
+      'Erlaubt Nutzern, einen zweiten Kritiker-LLM zu den Richter-Läufen im Vergleichsmodus hinzuzufügen.',
     create: {
       title: 'Neuer Tarif',
       description: 'Einen neuen Abonnement-Tarif erstellen.',
@@ -2908,6 +2923,7 @@ export const de: TranslationDictionary = {
       allowCompareMode: 'Vergleichsmodus',
       allowJudgeMode: 'Bewertungsmodus',
       allowResearchMode: 'Recherchemodus',
+      allowCriticReview: 'Kritiker-Prüfung',
       allowWorkspaces: 'Workspaces',
       allowMemory: 'Speicher',
       allowContextPacks: 'Kontextpakete',

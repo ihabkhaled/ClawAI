@@ -351,6 +351,7 @@ export const pt: TranslationDictionary = {
     tryingFallback: 'Tentando alternativa...',
     verifyingWith: 'Verificando com {model}',
     visibleAiProgress: 'Progresso visível da IA',
+    jumpToLatest: 'Ir para o mais recente',
     useMemoryLabel: 'Usar memória nesta conversa',
     useMemoryDescription: 'Quando desativado, nenhuma memória é injetada no prompt.',
     useContextLabel: 'Usar pacotes de contexto nesta conversa',
@@ -1083,6 +1084,17 @@ export const pt: TranslationDictionary = {
       searchExtract: 'Pesquisa + Extrair',
       sources: 'Fontes de evidência da web',
     },
+    critic: {
+      enabled: 'Revisão do crítico',
+      enabledHint:
+        'Adiciona um segundo LLM crítico que pontua a resposta e sinaliza problemas para o juiz.',
+      modelLabel: 'Modelo do crítico',
+      modelPlaceholder: 'Selecionar modelo do crítico',
+      notRequested: 'O crítico não foi solicitado para esta revisão.',
+    },
+  },
+  judgeReview: {
+    criticHeader: 'Revisão do crítico',
   },
   consensus: {
     title: 'Modo Consenso',
@@ -2857,6 +2869,9 @@ export const pt: TranslationDictionary = {
     createFailed: 'Não foi possível criar o plano.',
     updateSucceeded: 'Plano atualizado.',
     updateFailed: 'Não foi possível atualizar o plano.',
+    featureAllowCriticReview: 'Revisão do crítico',
+    featureAllowCriticReviewHint:
+      'Permite que os usuários adicionem um segundo LLM crítico às execuções do juiz no modo comparação.',
     create: {
       title: 'Novo plano',
       description: 'Crie um novo plano de assinatura.',
@@ -2894,6 +2909,7 @@ export const pt: TranslationDictionary = {
       allowCompareMode: 'Modo comparação',
       allowJudgeMode: 'Modo juiz',
       allowResearchMode: 'Modo pesquisa',
+      allowCriticReview: 'Revisão do crítico',
       allowWorkspaces: 'Workspaces',
       allowMemory: 'Memória',
       allowContextPacks: 'Pacotes de contexto',
