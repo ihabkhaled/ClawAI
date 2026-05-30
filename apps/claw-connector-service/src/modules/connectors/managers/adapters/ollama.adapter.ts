@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { httpGet, httpGetText } from '../../../../common/utilities/http.utility';
 import { ConnectorStatus, ModelLifecycle } from '../../../../generated/prisma';
+import { isOllamaMultimodalModel } from '../../constants/ollama-vision-heuristics.constants';
 import {
   OLLAMA_CATALOG_CLOUD_URL,
   OLLAMA_CATALOG_LIBRARY_LINK_REGEX,

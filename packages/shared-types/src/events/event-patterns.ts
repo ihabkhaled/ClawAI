@@ -16,6 +16,7 @@ export enum EventPattern {
   ROUTING_DECISION_MADE = 'routing.decision_made',
   FILE_UPLOADED = 'file.uploaded',
   FILE_CHUNKED = 'file.chunked',
+  FILE_FAILED = 'file.failed',
   MEMORY_EXTRACTED = 'memory.extracted',
   AUDIT_EVENT = 'audit.event',
   HEALTH_CHECK = 'health.check',

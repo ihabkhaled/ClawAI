@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import { useCanManageWorkspaceConfig } from '@/hooks/auth/use-can-manage-workspace-config';
 import type {
   UpsertAutomationPreferenceRequest,
   UseAutomationPreferencesPageResult,
@@ -11,6 +12,7 @@ import {
 } from './use-automation-preferences';
 
 export function useAutomationPreferencesPage(): UseAutomationPreferencesPageResult {
+  const canManage = useCanManageWorkspaceConfig();
   const query = useAutomationPreferencesQuery();
   const mutation = useUpsertAutomationPreference();
 
@@ -28,5 +30,6 @@ export function useAutomationPreferencesPage(): UseAutomationPreferencesPageResu
     error: query.error,
     isSaving: mutation.isPending,
     savePreference,
+    canManage,
   };
 }

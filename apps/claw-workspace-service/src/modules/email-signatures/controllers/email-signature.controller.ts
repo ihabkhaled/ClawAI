@@ -10,6 +10,8 @@ import {
   Post,
 } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
+import { Permission } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import {
@@ -47,7 +49,12 @@ export class EmailSignatureController {
     return this.service.getOwn(user.id, id);
   }
 
+  // Mutations are admin-config-writes — gated by
+  // ADMIN_WORKSPACE_AUTOMATION_MANAGE so a normal USER cannot create, edit,
+  // or delete email signatures. Reads stay open (the row is still scoped by
+  // user.id at the service layer so each user only sees their own).
   @Post()
+  @RequirePermissions(Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE)
   @HttpCode(HttpStatus.CREATED)
   async create(
     @CurrentUser() user: AuthenticatedUser,
@@ -57,6 +64,7 @@ export class EmailSignatureController {
   }
 
   @Patch(':id')
+  @RequirePermissions(Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE)
   @HttpCode(HttpStatus.OK)
   async update(
     @CurrentUser() user: AuthenticatedUser,
@@ -67,6 +75,7 @@ export class EmailSignatureController {
   }
 
   @Delete(':id')
+  @RequirePermissions(Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE)
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string): Promise<void> {
     await this.service.deleteById(user.id, id);

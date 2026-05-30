@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 
+import { useCanManageWorkspaceConfig } from '@/hooks/auth/use-can-manage-workspace-config';
 import type {
   EmailTemplateDraft,
   UseEmailTemplatesPageResult,
@@ -22,6 +23,7 @@ const EMPTY_DRAFT: EmailTemplateDraft = {
 };
 
 export function useEmailTemplatesPage(): UseEmailTemplatesPageResult {
+  const canManage = useCanManageWorkspaceConfig();
   const query = useEmailTemplatesQuery();
   const createMutation = useCreateEmailTemplate();
   const updateMutation = useUpdateEmailTemplate();
@@ -101,5 +103,6 @@ export function useEmailTemplatesPage(): UseEmailTemplatesPageResult {
     isSaving: createMutation.isPending || updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
     saveError: createMutation.error ?? updateMutation.error,
+    canManage,
   };
 }

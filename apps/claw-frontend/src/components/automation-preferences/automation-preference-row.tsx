@@ -11,8 +11,14 @@ export function AutomationPreferenceRow({
   preference,
   onSave,
   isPending,
+  canManage,
   t,
 }: AutomationPreferenceRowProps): ReactElement {
+  // Non-admins see the row read-only — every control is disabled so the
+  // values can be inspected but never saved. Backend stays the authority.
+  const isDisabled = isPending || !canManage;
+  const isSliderDisabled = isDisabled || !preference.isEnabled;
+  const isBudgetDisabled = isDisabled || !preference.isEnabled;
   const handleToggleEnabled = (next: boolean): void => {
     onSave(preference.actionKind, { isEnabled: next });
   };
@@ -51,7 +57,7 @@ export function AutomationPreferenceRow({
         <Switch
           checked={preference.isEnabled}
           onCheckedChange={handleToggleEnabled}
-          disabled={isPending}
+          disabled={isDisabled}
           aria-label={t('automationPreferences.row.toggleAria', { kind: preference.actionKind })}
         />
       </div>
@@ -68,7 +74,7 @@ export function AutomationPreferenceRow({
           step={5}
           value={preference.autoApproveBelowRiskScore ?? 0}
           onChange={handleSliderChange}
-          disabled={isPending || !preference.isEnabled}
+          disabled={isSliderDisabled}
           aria-label={t('automationPreferences.row.autoApproveBelowRisk')}
         />
         <span className="text-xs">
@@ -91,7 +97,7 @@ export function AutomationPreferenceRow({
           max={10_000}
           value={preference.perDayBudget ?? ''}
           onChange={handleBudgetChange}
-          disabled={isPending || !preference.isEnabled}
+          disabled={isBudgetDisabled}
           className="w-24"
           placeholder={t('automationPreferences.row.perDayBudgetPlaceholder')}
         />
@@ -100,7 +106,7 @@ export function AutomationPreferenceRow({
           variant="ghost"
           size="sm"
           onClick={() => onSave(preference.actionKind, { perDayBudget: null })}
-          disabled={isPending || preference.perDayBudget === null}
+          disabled={isDisabled || preference.perDayBudget === null}
         >
           {t('automationPreferences.row.clear')}
         </Button>

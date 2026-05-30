@@ -27,6 +27,10 @@ export type AutomationPreferenceRowProps = {
     },
   ) => void;
   isPending: boolean;
+  // When false (regular USER without ADMIN_WORKSPACE_AUTOMATION_MANAGE) every
+  // control on the row is rendered disabled so the values can be read but not
+  // saved. Backend remains the authoritative enforcer.
+  canManage: boolean;
   t: TranslateFunction;
 };
 
@@ -37,6 +41,9 @@ export type UseAutomationPreferencesPageResult = {
   error: Error | null;
   isSaving: boolean;
   savePreference: (actionKind: string, payload: UpsertAutomationPreferenceRequest) => void;
+  // True iff the current viewer is allowed to mutate workspace-level configs
+  // (ADMIN or anyone holding ADMIN_WORKSPACE_AUTOMATION_MANAGE).
+  canManage: boolean;
 };
 
 export type RiskBadgeProps = {

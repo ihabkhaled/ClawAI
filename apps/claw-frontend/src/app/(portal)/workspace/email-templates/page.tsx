@@ -18,7 +18,11 @@ export default function EmailTemplatesPage(): ReactElement {
       <PageHeader
         title={t('emailTemplates.page.title')}
         description={t('emailTemplates.page.description')}
-        actions={<Button onClick={ctrl.startCreate}>{t('emailTemplates.page.create')}</Button>}
+        actions={
+          ctrl.canManage ? (
+            <Button onClick={ctrl.startCreate}>{t('emailTemplates.page.create')}</Button>
+          ) : null
+        }
       />
 
       {ctrl.isLoading ? (
@@ -44,6 +48,7 @@ export default function EmailTemplatesPage(): ReactElement {
               onEdit={ctrl.startEdit}
               onDelete={(id) => void ctrl.deleteTemplate(id)}
               isDeleting={ctrl.isDeleting}
+              canManage={ctrl.canManage}
               labels={{
                 defaultBadge: t('emailTemplates.page.defaultBadge'),
                 subjectLabel: t('emailTemplates.page.subjectLabel'),

@@ -12,6 +12,7 @@ export function EmailTemplateRow({
   onEdit,
   onDelete,
   isDeleting,
+  canManage,
   labels,
 }: EmailTemplateRowProps): ReactElement {
   return (
@@ -29,19 +30,21 @@ export function EmailTemplateRow({
             {template.body}
           </pre>
         </div>
-        <div className="flex shrink-0 flex-col gap-1">
-          <Button size="sm" variant="outline" onClick={() => onEdit(template)}>
-            {labels.edit}
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={isDeleting}
-            onClick={() => onDelete(template.id)}
-          >
-            {isDeleting ? labels.deleting : labels.delete}
-          </Button>
-        </div>
+        {canManage ? (
+          <div className="flex shrink-0 flex-col gap-1">
+            <Button size="sm" variant="outline" onClick={() => onEdit(template)}>
+              {labels.edit}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={isDeleting}
+              onClick={() => onDelete(template.id)}
+            >
+              {isDeleting ? labels.deleting : labels.delete}
+            </Button>
+          </div>
+        ) : null}
       </div>
     </Card>
   );

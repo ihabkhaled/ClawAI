@@ -8,6 +8,9 @@ export type EmailTemplateRowProps = {
   onEdit: (tpl: EmailTemplate) => void;
   onDelete: (id: string) => void;
   isDeleting: boolean;
+  // When false (regular USER without ADMIN_WORKSPACE_AUTOMATION_MANAGE) the
+  // Edit and Delete buttons are hidden — the row stays viewable but read-only.
+  canManage: boolean;
   labels: {
     defaultBadge: string;
     subjectLabel: string;

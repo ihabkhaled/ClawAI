@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 
+import { useCanManageWorkspaceConfig } from '@/hooks/auth/use-can-manage-workspace-config';
 import type {
   EmailSignatureDraft,
   UseEmailSignaturesPageResult,
@@ -21,6 +22,7 @@ const EMPTY_DRAFT: EmailSignatureDraft = {
 };
 
 export function useEmailSignaturesPage(): UseEmailSignaturesPageResult {
+  const canManage = useCanManageWorkspaceConfig();
   const query = useEmailSignaturesQuery();
   const createMutation = useCreateEmailSignature();
   const updateMutation = useUpdateEmailSignature();
@@ -88,5 +90,6 @@ export function useEmailSignaturesPage(): UseEmailSignaturesPageResult {
     isSaving: createMutation.isPending || updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
     saveError: createMutation.error ?? updateMutation.error,
+    canManage,
   };
 }

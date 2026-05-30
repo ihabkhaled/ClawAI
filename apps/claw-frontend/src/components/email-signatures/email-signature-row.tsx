@@ -12,6 +12,7 @@ export function EmailSignatureRow({
   onEdit,
   onDelete,
   isDeleting,
+  canManage,
   labels,
 }: EmailSignatureRowProps): ReactElement {
   return (
@@ -26,19 +27,21 @@ export function EmailSignatureRow({
             {signature.body}
           </pre>
         </div>
-        <div className="flex shrink-0 flex-col gap-1">
-          <Button size="sm" variant="outline" onClick={() => onEdit(signature)}>
-            {labels.edit}
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={isDeleting}
-            onClick={() => onDelete(signature.id)}
-          >
-            {isDeleting ? labels.deleting : labels.delete}
-          </Button>
-        </div>
+        {canManage ? (
+          <div className="flex shrink-0 flex-col gap-1">
+            <Button size="sm" variant="outline" onClick={() => onEdit(signature)}>
+              {labels.edit}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={isDeleting}
+              onClick={() => onDelete(signature.id)}
+            >
+              {isDeleting ? labels.deleting : labels.delete}
+            </Button>
+          </div>
+        ) : null}
       </div>
     </Card>
   );

@@ -18,7 +18,11 @@ export default function EmailSignaturesPage(): ReactElement {
       <PageHeader
         title={t('emailSignatures.page.title')}
         description={t('emailSignatures.page.description')}
-        actions={<Button onClick={ctrl.startCreate}>{t('emailSignatures.page.create')}</Button>}
+        actions={
+          ctrl.canManage ? (
+            <Button onClick={ctrl.startCreate}>{t('emailSignatures.page.create')}</Button>
+          ) : null
+        }
       />
 
       {ctrl.isLoading ? (
@@ -44,6 +48,7 @@ export default function EmailSignaturesPage(): ReactElement {
               onEdit={ctrl.startEdit}
               onDelete={(id) => void ctrl.deleteSignature(id)}
               isDeleting={ctrl.isDeleting}
+              canManage={ctrl.canManage}
               labels={{
                 defaultBadge: t('emailSignatures.page.defaultBadge'),
                 edit: t('emailSignatures.page.edit'),

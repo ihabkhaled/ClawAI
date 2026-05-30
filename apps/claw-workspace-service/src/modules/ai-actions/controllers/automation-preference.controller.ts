@@ -1,5 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Put, Query } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
+import { Permission } from '@claw/shared-types';
+import { RequirePermissions } from '@claw/shared-entitlements';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -25,7 +27,12 @@ export class AutomationPreferenceController {
     return this.service.listForUser(user.id);
   }
 
+  // Mutations are admin-config-writes — gated by
+  // ADMIN_WORKSPACE_AUTOMATION_MANAGE so a normal USER can read the
+  // automation preferences but cannot save changes. The row is still
+  // scoped by user.id at the service layer.
   @Put(':actionKind')
+  @RequirePermissions(Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE)
   @HttpCode(HttpStatus.OK)
   async upsert(
     @CurrentUser() user: AuthenticatedUser,

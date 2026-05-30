@@ -187,6 +187,16 @@ export interface FileChunkedPayload extends BaseEventPayload {
   status: FileIngestionStatus;
 }
 
+export type FileFailureStage = 'EXTRACTION' | 'CHUNKING' | 'UPLOAD' | 'OTHER';
+
+export interface FileFailedPayload extends BaseEventPayload {
+  fileId: string;
+  userId: string;
+  filename: string;
+  errorMessage: string;
+  failureStage: FileFailureStage;
+}
+
 // ---- Memory Events ----
 
 export interface MemoryExtractedPayload extends BaseEventPayload {
@@ -692,6 +702,7 @@ export type EventPayload =
   | RoutingDecisionMadePayload
   | FileUploadedPayload
   | FileChunkedPayload
+  | FileFailedPayload
   | MemoryExtractedPayload
   | AuditEventPayload
   | HealthCheckPayload

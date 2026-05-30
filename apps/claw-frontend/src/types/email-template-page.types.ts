@@ -31,4 +31,9 @@ export type UseEmailTemplatesPageResult = {
   isSaving: boolean;
   isDeleting: boolean;
   saveError: Error | null;
+  // True iff the current viewer is allowed to mutate workspace-level configs
+  // (ADMIN or anyone holding ADMIN_WORKSPACE_AUTOMATION_MANAGE). Drives the
+  // visibility of Create / Edit / Delete buttons. Backend remains the
+  // authoritative enforcer.
+  canManage: boolean;
 };
