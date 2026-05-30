@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { type LoadEventType } from '../../../common/enums';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { type RecentLoadEvent } from '../types/load-events.types';
 
 @Injectable()
 export class LoadEventsRepository {
@@ -25,5 +26,22 @@ export class LoadEventsRepository {
         errorMessage: payload.errorMessage ?? null,
       },
     });
+  }
+
+  async findRecent(limit: number): Promise<RecentLoadEvent[]> {
+    this.logger.debug(`findRecent: limit=${limit}`);
+    const rows = await this.prisma.modelLoadEvent.findMany({
+      orderBy: { occurredAt: 'desc' },
+      take: limit,
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      modelId: row.modelId,
+      eventType: row.eventType,
+      pid: row.pid,
+      port: row.port,
+      errorMessage: row.errorMessage,
+      occurredAt: row.occurredAt,
+    }));
   }
 }

@@ -151,3 +151,28 @@ Rules:
 5. Cloud judge selection is encoded as `"PROVIDER:model"` (e.g. `"OPENAI:gpt-4o-mini"`). Parse with `parseJudgeModel(raw)` (`src/common/utilities/judge-model-parse.utility.ts`); it checks the leading segment against `KNOWN_JUDGE_PROVIDERS` so local tags like `gemma3:4b` are not mis-parsed.
 
 See `docs/03-architecture/universal-token-accounting.md` for the full picture.
+
+## Local-runtime extension point (PR1 — local-runtime rich-progress foundation)
+
+The cloud rich-progress stack in this service (`ChatStreamService` +
+`ProviderStreamExecutor` + `@Sse('stream/:threadId')` + `AiStreamStage` +
+`AiStreamProtocol`) is the foundation that local-runtime rich-progress
+extends. **PR1 does NOT modify any of these.** They are mentioned here so
+that PR2+ work knows the exact seams.
+
+| Existing seam                                  | PR2 extension                                                                                            |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `ChatStreamService` (RxJS Subject per thread)  | Local-runtime adapters publish into the SAME Subject. No new SSE endpoint.                               |
+| `ProviderStreamExecutor` (OpenAI-SSE + Ollama) | Register per-`RuntimeProvider` adapters. Dispatch logic unchanged.                                       |
+| `AiStreamProtocol` enum                        | Add `LLAMACPP_NATIVE_COMPLETION`, `COMFYUI_WS`, `SDWEBUI_POLL` variants.                                 |
+| `StreamEvent` envelope                         | Coexist with `ClawRuntimeProgressEvent` (`@claw/shared-types/runtime-progress`) on the SAME SSE channel. |
+| `@Sse('stream/:threadId')` controller          | Unchanged.                                                                                               |
+
+The new envelope `ClawRuntimeProgressEvent` is a strict superset of
+`StreamEvent`. Frontend consumers (`useChatStream`, the runtime-progress
+panels) handle both shapes until `StreamEvent` is retired in a future PR.
+
+**Do not introduce a parallel SSE channel for local runtimes.** The 26th
+engineering mindset ("extend, don't parallelize") is the binding rule here.
+Full architecture:
+[`docs/03-architecture/runtime-progress.md`](../../docs/03-architecture/runtime-progress.md).

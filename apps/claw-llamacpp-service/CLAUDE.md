@@ -76,3 +76,63 @@ Manages the full lifecycle of frontier open-weight models that exceed Ollama's p
 ## GPU passthrough
 
 `./scripts/claw.sh` auto-detects host GPU and applies `docker-compose.{dev,prod}.gpu-{nvidia,rocm,vulkan}.yml` overlay. Service-side `detectGpuBackend()` cascades NVIDIA → ROCm → Vulkan → CPU; with passthrough on, the dynamic binary resolver picks the matching CUDA / ROCm / Vulkan archive automatically.
+
+## Runtime-progress probe (PR1 — local-runtime rich-progress)
+
+`GET /api/v1/llamacpp/runtime-progress/probe` — admin-only diagnostic snapshot
+of the llama.cpp runtime. Returns a `RuntimeProbeReport` (shape defined in
+`@claw/shared-types/runtime-progress`) describing reachability, binary install
+state, active model, slot/queue state, execution profile, and a boolean
+capability matrix:
+
+```ts
+RuntimeProbeReport = {
+  provider: RuntimeProvider.LLAMACPP,
+  runtimeUrl: string,
+  status: RuntimeProbeStatus, // REACHABLE | UNREACHABLE | BINARY_MISSING | …
+  probedAtMs: number,
+  latencyMs?: number,
+  version?: string,
+  models?: RuntimeProbeModel[],   // installed weights (PullJob completed)
+  activeModelId?: string,          // currently RESIDENT in the child process
+  executionProfile?: RuntimeExecutionProfile, // CPU | CUDA | ROCM | VULKAN | METAL
+  queueDepth?: number,
+  slots?: RuntimeProbeSlot[],     // llama-server parallel slot state
+  capabilities?: { streamingText, thinking, promptProgress, cancel, metrics, … },
+  recentEvents?: RuntimeProbeRecentEvent[],
+  errorType?: StreamingErrorType,
+  errorMessage?: string,
+};
+```
+
+Implementation:
+`src/modules/runtime-progress/controllers/runtime-progress.controller.ts` +
+`services/llamacpp-probe.service.ts`. Guarded by `@Roles(UserRole.ADMIN)` AND
+`@RequirePermissions(Permission.ADMIN_MODELS_MANAGE)`.
+
+## Think-tag leak fix (PR1, mandatory)
+
+`llama-server` emits `<think>…</think>` blocks inline in
+`choices[].delta.content` for reasoning models (DeepSeek R1, GLM-Thinking,
+QwQ, Qwen-Thinking). Without intervention the raw chain-of-thought leaks into
+the user-visible content stream.
+
+`InferenceProxyManager` (`src/modules/inference/managers/inference-proxy.manager.ts`)
+now wraps every streaming chunk through `ThinkTagScanner` from
+`@claw/shared-utilities` (streaming-safe state machine that buffers across
+chunk boundaries). Text inside `<think>` is re-emitted as
+`choices[].delta.reasoning_content`; text outside is emitted as ordinary
+`delta.content`. `flushStreamTail` drains the scanner state on stream end so
+no trailing reasoning fragment is dropped.
+
+**Kill switch:** `LLAMACPP_REASONING_EXTRACTION_ENABLED` (env var, default
+`'true'`). Set to `'false'` to restore the pre-PR1 raw pass-through behavior
+— debugging only. Defined as a Zod schema field in
+`src/app/config/app.config.ts`, transformed to boolean.
+
+**Do not bypass the scanner.** PR2 will use the same scanner for the Ollama
+and llama.cpp text adapters in chat-service. Removing it here would re-leak
+think tags into the chat UI.
+
+Full architecture:
+[`docs/03-architecture/runtime-progress.md`](../../docs/03-architecture/runtime-progress.md).

@@ -485,31 +485,81 @@ Page (.tsx) → Controller Hook (useX) → Service → Repository/API
 
 Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 
-| Event                             | Publisher    | Consumers      |
-| --------------------------------- | ------------ | -------------- |
-| message.created                   | chat         | routing        |
-| message.routed                    | routing      | chat           |
-| message.completed                 | chat         | audit, memory  |
-| thread.created                    | chat         | —              |
-| user.login/logout                 | auth         | audit          |
-| connector.created/updated/deleted | connector    | audit          |
-| connector.synced                  | connector    | audit, routing |
-| connector.health_checked          | connector    | audit, routing |
-| routing.decision_made             | routing      | audit          |
-| memory.extracted                  | memory       | audit          |
-| file.uploaded/chunked             | file         | —              |
-| log.server                        | all services | server-logs    |
-| image.generated                   | image        | audit          |
-| image.failed                      | image        | audit          |
-| file.generated                    | file-gen     | audit          |
-| file_generation.failed            | file-gen     | audit          |
-| agent.session.connected           | agent        | audit          |
-| agent.session.disconnected        | agent        | audit          |
-| agent.device_paired               | agent        | audit          |
-| agent.device_revoked              | agent        | audit          |
-| agent.token_rotated               | agent        | audit          |
-| agent.token_reuse_detected        | agent        | audit          |
-| agent.policy_violated             | agent        | audit          |
+| Event                                 | Publisher    | Consumers      |
+| ------------------------------------- | ------------ | -------------- |
+| message.created                       | chat         | routing        |
+| message.routed                        | routing      | chat           |
+| message.completed                     | chat         | audit, memory  |
+| thread.created                        | chat         | —              |
+| user.login/logout                     | auth         | audit          |
+| connector.created/updated/deleted     | connector    | audit          |
+| connector.synced                      | connector    | audit, routing |
+| connector.health_checked              | connector    | audit, routing |
+| routing.decision_made                 | routing      | audit          |
+| memory.extracted                      | memory       | audit          |
+| file.uploaded/chunked                 | file         | —              |
+| log.server                            | all services | server-logs    |
+| image.generated                       | image        | audit          |
+| image.failed                          | image        | audit          |
+| file.generated                        | file-gen     | audit          |
+| file_generation.failed                | file-gen     | audit          |
+| agent.session.connected               | agent        | audit          |
+| agent.session.disconnected            | agent        | audit          |
+| agent.device_paired                   | agent        | audit          |
+| agent.device_revoked                  | agent        | audit          |
+| agent.token_rotated                   | agent        | audit          |
+| agent.token_reuse_detected            | agent        | audit          |
+| agent.policy_violated                 | agent        | audit          |
+| runtime.progress.stage_changed        | chat (PR4)   | audit (PR4)    |
+| runtime.progress.content_delta        | chat (PR4)   | audit (PR4)    |
+| runtime.progress.reasoning_delta      | chat (PR4)   | audit (PR4)    |
+| runtime.progress.metrics_tick         | chat (PR4)   | audit (PR4)    |
+| runtime.progress.usage_final          | chat (PR4)   | audit (PR4)    |
+| runtime.progress.image_preview        | chat (PR4)   | audit (PR4)    |
+| runtime.progress.node_progress        | chat (PR4)   | audit (PR4)    |
+| runtime.progress.step_progress        | chat (PR4)   | audit (PR4)    |
+| runtime.progress.prompt_eval_progress | chat (PR4)   | audit (PR4)    |
+| runtime.progress.artifact_saved       | chat (PR4)   | audit (PR4)    |
+| runtime.progress.error                | chat (PR4)   | audit (PR4)    |
+| runtime.progress.cancelled            | chat (PR4)   | audit (PR4)    |
+
+> **Note:** the 12 `runtime.progress.*` patterns are declared in
+> `packages/shared-constants/src/runtime-progress-events.constants.ts` but
+> NOT YET PUBLISHED. PR1 ships the contract; PR4 wires publishers and
+> consumers. See `docs/03-architecture/runtime-progress.md`.
+
+---
+
+## Local-runtime rich-progress (extends cloud rich-progress)
+
+ClawAI's cloud chat path already streams lifecycle + content + reasoning +
+metrics over `@Sse('stream/:threadId')` in chat-service. Local runtimes
+(Ollama, llama.cpp, ComfyUI, SD WebUI) historically lacked that signal.
+
+PR1 ships the foundation. Architecture in
+`docs/03-architecture/runtime-progress.md`; user summary in
+`docs/LOCAL_RUNTIME_PROGRESS.md`; decision record in
+`docs/LOCAL_RUNTIME_PROGRESS_ADR.md`.
+
+What PR1 ships:
+
+- **Envelope** — `ClawRuntimeProgressEvent` + 9 enums in
+  `packages/shared-types/src/runtime-progress/`. Superset of `StreamEvent`.
+- **Admin probe endpoints** — `GET /api/v1/ollama/runtime-progress/probe` and
+  `GET /api/v1/llamacpp/runtime-progress/probe`. Return `RuntimeProbeReport`.
+- **Think-tag leak fix** — `InferenceProxyManager` runs streaming content
+  through `ThinkTagScanner` (from `@claw/shared-utilities`); gated by env var
+  `LLAMACPP_REASONING_EXTRACTION_ENABLED` (default `'true'`).
+- **Frontend decomposition** — `RuntimeProgressPanel` + `VisibleReasoningPanel`
+  - `RuntimeMetricsHud` + `RuntimeRawEventsDrawer` + `RuntimeStageTimeline`
+    stub. `thinking-indicator.tsx` keeps its import name and delegates.
+- **Probe scripts** — `scripts/local-runtime-probes/*.mjs`. Output to gitignored
+  `.local-runtime-probes/`.
+
+**This work EXTENDS the cloud rich-progress system. It does NOT build a
+parallel stack.** PR2 wires local-runtime adapters into
+`ProviderStreamExecutor`; PR3 polishes the FE HUD; PR4 promotes the RabbitMQ
+patterns; PR5 lights up image-runtime parity.
 
 ---
 
@@ -1865,9 +1915,20 @@ docs/
 - File ceiling: **500 lines** for all production files (excluding `*.constants.ts`, locale files, generated catalogs).
 - A method exceeding its ceiling MUST be split. A file exceeding 500 lines MUST be split into multiple files in the same directory or extracted into sub-managers/sub-services.
 
+### 26. Extend-don't-parallelize mindset (added 2026-05-30)
+
+- When the codebase ALREADY ships a layer that solves the problem class (auth pipeline, RBAC, RabbitMQ event bus, SSE rich-progress, http-client retry, repository pattern, capability framework, etc.), **EXTEND that layer** rather than build a second one.
+- The audit-first mindset (rule 4) tells you to read first; this rule tells you what to do once you've read: identify the seam, extend through the seam, do NOT introduce a parallel system that re-implements 80% of what already exists.
+- Concrete examples in this codebase:
+  - Local-runtime rich-progress (PR1, 2026-05-30) extends `ChatStreamService` + `ProviderStreamExecutor` + the existing `@Sse('stream/:threadId')` channel rather than creating a new `claw-runtime-stream-service` and a new SSE endpoint. See `docs/LOCAL_RUNTIME_PROGRESS_ADR.md`.
+  - The desktop-agent capability framework (Stream 10) extends `AccessPolicy` rather than introducing a parallel `CapabilityPolicy` table.
+  - `@claw/shared-utilities` consolidated per-service `jwt.utility.ts`, `http-client.utility.ts`, `crypto.utility.ts` rather than letting each service keep its own copy.
+- If you find yourself writing "a new service that does X but for Y", stop and ask: is there a seam in the existing X-doer that lets me extend it for Y? Almost always the answer is yes.
+- Acceptable reasons to build parallel: (a) the existing system is on a deprecation path, (b) the new use case has fundamentally incompatible constraints (different data shape that cannot be subsetted, different security boundary, different SLA), (c) the existing system would be doubled in surface area by accommodating the new case. All three should be challenged in code review.
+
 ---
 
-**These 25 mindsets are the default operating mode.** Any AI agent that does not follow them is doing it wrong. Any code reviewer seeing a violation should block the merge.
+**These 26 mindsets are the default operating mode.** Any AI agent that does not follow them is doing it wrong. Any code reviewer seeing a violation should block the merge.
 
 ---
 

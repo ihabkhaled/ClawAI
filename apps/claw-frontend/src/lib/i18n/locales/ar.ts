@@ -1070,8 +1070,7 @@ export const ar: TranslationDictionary = {
     },
     critic: {
       enabled: 'مراجعة الناقد',
-      enabledHint:
-        'أضف نموذجاً ناقداً يمنح الإجابة درجة ويرصد الملاحظات قبل عرضها على المحكّم.',
+      enabledHint: 'أضف نموذجاً ناقداً يمنح الإجابة درجة ويرصد الملاحظات قبل عرضها على المحكّم.',
       modelLabel: 'نموذج الناقد',
       modelPlaceholder: 'اختر نموذج الناقد',
       notRequested: 'لم يُطلب الناقد لهذه المراجعة.',
@@ -2976,5 +2975,27 @@ export const ar: TranslationDictionary = {
     remaining: 'متبقٍّ {remaining}',
     unlimited: 'غير محدود',
     unlimitedHint: 'خطتك بلا حد يومي للرموز.',
+  },
+  runtimeProgress: {
+    metrics: {
+      executionProfile: {
+        cpu: 'وحدة المعالجة',
+        cuda: 'CUDA',
+        rocm: 'ROCm',
+        vulkan: 'Vulkan',
+        metal: 'Metal',
+        mixed: 'مختلط',
+        unknown: 'بيئة تشغيل غير معروفة',
+      },
+    },
+    rawEvents: {
+      title: 'الأحداث الخام',
+      toggle: 'إظهار/إخفاء الأحداث الخام',
+      copy: 'نسخ الحدث',
+      empty: 'لا توجد أحداث بعد.',
+    },
+    bottleneck: {
+      title: 'نقطة الاختناق',
+    },
   },
 };

@@ -23,6 +23,7 @@ import { HealthModule } from '../modules/health/health.module';
 import { InferenceModule } from '../modules/inference/inference.module';
 import { ModelsLifecycleModule } from '../modules/models-lifecycle/models-lifecycle.module';
 import { PullJobsModule } from '../modules/pull-jobs/pull-jobs.module';
+import { RuntimeProgressModule } from '../modules/runtime-progress/runtime-progress.module';
 
 @Module({
   imports: [
@@ -77,6 +78,7 @@ import { PullJobsModule } from '../modules/pull-jobs/pull-jobs.module';
     PullJobsModule,
     ModelsLifecycleModule,
     InferenceModule,
+    RuntimeProgressModule,
     HealthModule,
     ThrottlerModule.forRoot([
       {

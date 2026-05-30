@@ -3033,4 +3033,26 @@ export const de: TranslationDictionary = {
     unlimited: 'Unbegrenzt',
     unlimitedHint: 'Ihr Tarif hat kein tägliches Token-Limit.',
   },
+  runtimeProgress: {
+    metrics: {
+      executionProfile: {
+        cpu: 'CPU',
+        cuda: 'CUDA',
+        rocm: 'ROCm',
+        vulkan: 'Vulkan',
+        metal: 'Metal',
+        mixed: 'Gemischt',
+        unknown: 'Unbekannte Laufzeitumgebung',
+      },
+    },
+    rawEvents: {
+      title: 'Rohereignisse',
+      toggle: 'Rohereignisse ein-/ausblenden',
+      copy: 'Ereignis kopieren',
+      empty: 'Noch keine Ereignisse.',
+    },
+    bottleneck: {
+      title: 'Engpass',
+    },
+  },
 };

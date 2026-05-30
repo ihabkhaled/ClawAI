@@ -2951,6 +2951,28 @@ export type TranslationDictionary = {
     unlimited: string;
     unlimitedHint: string;
   };
+  runtimeProgress: {
+    metrics: {
+      executionProfile: {
+        cpu: string;
+        cuda: string;
+        rocm: string;
+        vulkan: string;
+        metal: string;
+        mixed: string;
+        unknown: string;
+      };
+    };
+    rawEvents: {
+      title: string;
+      toggle: string;
+      copy: string;
+      empty: string;
+    };
+    bottleneck: {
+      title: string;
+    };
+  };
 };
 
 export type TranslationNamespace = keyof TranslationDictionary;

@@ -3001,4 +3001,26 @@ export const en: TranslationDictionary = {
     unlimited: 'Unlimited',
     unlimitedHint: 'Your plan has no daily token limit.',
   },
+  runtimeProgress: {
+    metrics: {
+      executionProfile: {
+        cpu: 'CPU',
+        cuda: 'CUDA',
+        rocm: 'ROCm',
+        vulkan: 'Vulkan',
+        metal: 'Metal',
+        mixed: 'Mixed',
+        unknown: 'Unknown runtime',
+      },
+    },
+    rawEvents: {
+      title: 'Raw events',
+      toggle: 'Toggle raw events',
+      copy: 'Copy event',
+      empty: 'No events yet.',
+    },
+    bottleneck: {
+      title: 'Bottleneck',
+    },
+  },
 };

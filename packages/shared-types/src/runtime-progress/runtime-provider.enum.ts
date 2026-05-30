@@ -1,0 +1,6 @@
+export enum RuntimeProvider {
+  OLLAMA = 'OLLAMA',
+  LLAMACPP = 'LLAMACPP',
+  STABLE_DIFFUSION_WEBUI = 'STABLE_DIFFUSION_WEBUI',
+  COMFYUI = 'COMFYUI',
+}

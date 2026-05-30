@@ -329,6 +329,14 @@ export type {
   StreamLiveAnswerProps,
   ParallelLaneCardProps,
 } from './stream-component.types';
+export type { RuntimeProgressMetrics } from './runtime-progress.types';
+export type {
+  RuntimeProgressPanelProps,
+  VisibleReasoningPanelProps,
+  RuntimeMetricsHudProps,
+  RuntimeRawEventsDrawerProps,
+  RuntimeStageTimelineProps,
+} from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
   AdvancedModelSelectionMode,
@@ -437,10 +445,7 @@ export type {
   UseInThreadCompareReturn,
   CompareResearchModeOption,
 } from './parallel.types';
-export type {
-  CompareResultMarkdownInput,
-  UseCompareResultCardReturn,
-} from './compare.types';
+export type { CompareResultMarkdownInput, UseCompareResultCardReturn } from './compare.types';
 export type {
   ConsensusModelBreakdown,
   ConsensusAnalysis,

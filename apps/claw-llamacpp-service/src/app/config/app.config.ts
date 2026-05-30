@@ -25,6 +25,15 @@ const appConfigSchema = z.object({
     .transform((value) => value.toLowerCase() === 'true'),
   LLAMACPP_LOAD_TIMEOUT_MS: z.coerce.number().default(600_000),
   LLAMACPP_BIND_HOST: z.string().default('127.0.0.1'),
+  // When true (default), the InferenceProxyManager scans assistant content
+  // for `<think>…</think>` blocks and surfaces them as `reasoning_content`
+  // (streaming) or `message.reasoning_content` (non-streaming) so they do
+  // not leak into the user-visible content stream. Flip to false for the
+  // pre-PR1 raw pass-through behaviour (debugging only).
+  LLAMACPP_REASONING_EXTRACTION_ENABLED: z
+    .string()
+    .default('true')
+    .transform((value) => value.toLowerCase() === 'true'),
   LLAMACPP_PROCESS_PORT_MIN: z.coerce.number().default(48_500),
   LLAMACPP_PROCESS_PORT_MAX: z.coerce.number().default(48_999),
   HUGGINGFACE_TOKEN: z.string().optional(),
