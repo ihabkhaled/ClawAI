@@ -23,12 +23,15 @@ export function useInThreadCompare({
 }: UseInThreadCompareParams): UseInThreadCompareReturn {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedModels, setSelectedModels] = useState<ParallelModelTarget[]>([]);
+  const [prompt, setPrompt] = useState('');
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { options: judgeModelOptions, isLoading: isJudgeModelOptionsLoading } =
     useJudgeModelOptions();
   const [judgeEnabled, setJudgeEnabled] = useState(initialJudgeEnabled);
   const [judgeModel, setJudgeModel] = useState<string | null>(initialJudgeModel);
+  const [criticEnabled, setCriticEnabled] = useState(false);
+  const [criticModel, setCriticModel] = useState<string | null>(null);
   const [researchMode, setResearchMode] = useState<CompareResearchMode>(CompareResearchMode.NONE);
 
   const mutation = useMutation({
@@ -78,27 +81,52 @@ export function useInThreadCompare({
   const canSend = selectedModels.length >= MIN_PARALLEL_MODELS && !mutation.isPending;
 
   const handleCompare = useCallback(
-    (prompt: string) => {
-      if (!canSend || prompt.trim().length === 0) {
+    (promptValue: string) => {
+      if (!canSend || promptValue.trim().length === 0) {
         return;
       }
       mutation.mutate({
         threadId,
-        content: prompt.trim(),
+        content: promptValue.trim(),
         models: selectedModels,
         judgeEnabled,
         judgeModel,
+        ...(judgeEnabled && criticEnabled ? { criticEnabled: true, criticModel } : {}),
         ...(researchMode === CompareResearchMode.NONE ? {} : { researchMode }),
       });
     },
-    [canSend, mutation, threadId, selectedModels, judgeEnabled, judgeModel, researchMode],
+    [
+      canSend,
+      mutation,
+      threadId,
+      selectedModels,
+      judgeEnabled,
+      judgeModel,
+      criticEnabled,
+      criticModel,
+      researchMode,
+    ],
   );
+
+  // Wrapper around handleCompare that uses the controlled prompt state. The
+  // RichPromptTextarea's Enter handler + the Send button both call this so
+  // there is a single source of truth for "send the current prompt".
+  const handleSend = useCallback(() => {
+    if (!canSend || prompt.trim().length === 0) {
+      return;
+    }
+    handleCompare(prompt);
+    setPrompt('');
+  }, [canSend, prompt, handleCompare]);
 
   return {
     isOpen,
     toggleOpen,
     selectedModels,
     handleToggleModel,
+    prompt,
+    setPrompt,
+    handleSend,
     handleCompare,
     result: mutation.data as ParallelResponse | undefined,
     isPending: mutation.isPending,
@@ -110,6 +138,10 @@ export function useInThreadCompare({
     setJudgeModel,
     judgeModelOptions,
     isJudgeModelOptionsLoading,
+    criticEnabled,
+    setCriticEnabled,
+    criticModel,
+    setCriticModel,
     researchMode,
     setResearchMode,
   };

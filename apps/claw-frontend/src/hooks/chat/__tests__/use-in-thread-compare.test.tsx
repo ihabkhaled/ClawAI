@@ -76,6 +76,66 @@ describe('useInThreadCompare — researchMode round-trip', () => {
     expect(payload.content).toBe('hello');
   });
 
+  it('omits critic fields by default (criticEnabled=false)', async () => {
+    const { result } = renderHook(() => useInThreadCompare({ threadId: 't1' }), { wrapper });
+
+    act(() => {
+      result.current.handleToggleModel('OPENAI', 'gpt-4o', true);
+      result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
+    });
+    act(() => {
+      result.current.handleCompare('hello');
+    });
+    await waitFor(() => {
+      expect(sendParallelMock).toHaveBeenCalledTimes(1);
+    });
+    const payload = sendParallelMock.mock.calls[0]![0] as ParallelRequest;
+    expect(payload.criticEnabled).toBeUndefined();
+    expect(payload.criticModel).toBeUndefined();
+  });
+
+  it('forwards criticEnabled + criticModel ONLY when judge is also enabled', async () => {
+    const { result } = renderHook(() => useInThreadCompare({ threadId: 't1' }), { wrapper });
+
+    act(() => {
+      result.current.handleToggleModel('OPENAI', 'gpt-4o', true);
+      result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
+      result.current.setJudgeEnabled(true);
+      result.current.setCriticEnabled(true);
+      result.current.setCriticModel('OPENAI:gpt-4o-mini');
+    });
+    act(() => {
+      result.current.handleCompare('with critic');
+    });
+    await waitFor(() => {
+      expect(sendParallelMock).toHaveBeenCalledTimes(1);
+    });
+    const payload = sendParallelMock.mock.calls[0]![0] as ParallelRequest;
+    expect(payload.criticEnabled).toBe(true);
+    expect(payload.criticModel).toBe('OPENAI:gpt-4o-mini');
+  });
+
+  it('drops criticEnabled when judge is off (UI rule mirrored in hook)', async () => {
+    const { result } = renderHook(() => useInThreadCompare({ threadId: 't1' }), { wrapper });
+
+    act(() => {
+      result.current.handleToggleModel('OPENAI', 'gpt-4o', true);
+      result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
+      result.current.setCriticEnabled(true);
+      result.current.setCriticModel('OPENAI:gpt-4o-mini');
+      // NOTE: judge is intentionally left off.
+    });
+    act(() => {
+      result.current.handleCompare('critic without judge');
+    });
+    await waitFor(() => {
+      expect(sendParallelMock).toHaveBeenCalledTimes(1);
+    });
+    const payload = sendParallelMock.mock.calls[0]![0] as ParallelRequest;
+    expect(payload.criticEnabled).toBeUndefined();
+    expect(payload.criticModel).toBeUndefined();
+  });
+
   it('forwards researchMode when set to SEARCH_EXTRACT', async () => {
     const { result } = renderHook(() => useInThreadCompare({ threadId: 't1' }), { wrapper });
 

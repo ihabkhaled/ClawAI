@@ -152,6 +152,26 @@ export type UseMessageComposerStateReturn = {
   handleChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 };
 
+// Inputs to the keyboard / autosize / IME controller for RichPromptTextarea.
+// The component itself stays a pure render — useRichPromptTextarea owns the
+// imperative DOM glue and exposes a ref + handler bag.
+export type UseRichPromptTextareaParams = {
+  value: string;
+  onChange: (next: string) => void;
+  onSubmit?: () => void;
+  disabled?: boolean;
+  minRows?: number;
+  maxRows?: number;
+};
+
+export type UseRichPromptTextareaReturn = {
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  handleChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  handleCompositionStart: () => void;
+  handleCompositionEnd: () => void;
+};
+
 export type UseThreadDetailPageParams = {
   threadId: string;
 };
@@ -221,6 +241,24 @@ export type UseThreadDetailPageReturn = {
 export type UseVirtualizedThreadsParams = {
   search?: string;
   showArchived?: boolean;
+};
+
+// ─── Sticky-bottom auto-scroll hook ────────────────────────────────────────
+// Used by the chat thread message list to follow streaming tokens only when
+// the user is already at (or very near) the bottom of the scroll container.
+// `contentSignal` is anything that changes when content grows (e.g. the
+// concatenation of messages.length and the streaming text length); the hook
+// re-evaluates the scroll position whenever it changes.
+export type UseStickyBottomScrollParams = {
+  contentSignal: unknown;
+  threshold?: number;
+};
+
+export type UseStickyBottomScrollReturn = {
+  scrollRef: React.RefObject<HTMLDivElement | null>;
+  sentinelRef: React.RefObject<HTMLDivElement | null>;
+  isAtBottom: boolean;
+  scrollToBottom: (behavior?: ScrollBehavior) => void;
 };
 
 // ─── Common hook types ──────────────────────────────────────────────────────

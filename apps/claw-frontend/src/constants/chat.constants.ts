@@ -27,6 +27,19 @@ export const COMPOSER_MAX_HEIGHT_RATIO = 0.5;
 export const COMPOSER_DEFAULT_HEIGHT = 200;
 export const VIRTUOSO_START_INDEX = 1_000_000;
 
+// Pixel threshold below which the chat scroll container is considered "at the
+// bottom" — used by useStickyBottomScroll to decide whether to auto-follow
+// streaming tokens. Matches the visual breathing room of the last message
+// bubble; anything more would pin too eagerly when the user is reading.
+export const STICKY_BOTTOM_THRESHOLD_PX = 80;
+
+// ─── RichPromptTextarea (shared chat/compare prompt input) ──────────────────
+// Default row bounds for the shared rich prompt textarea. The component
+// auto-grows from RICH_PROMPT_DEFAULT_MIN_ROWS up to RICH_PROMPT_DEFAULT_MAX_ROWS
+// (then scrolls internally). Parents may override via the minRows/maxRows props.
+export const RICH_PROMPT_DEFAULT_MIN_ROWS = 2;
+export const RICH_PROMPT_DEFAULT_MAX_ROWS = 12;
+
 /**
  * Rough per-token cost estimates (USD) for common providers.
  * Used only for display — not billing.

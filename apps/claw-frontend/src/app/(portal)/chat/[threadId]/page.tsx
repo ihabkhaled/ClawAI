@@ -57,6 +57,7 @@ export default function ThreadDetailPage() {
   const canCompare = planFeatures.has(PlanFeature.ALLOW_COMPARE_MODE);
   const canJudge = planFeatures.has(PlanFeature.ALLOW_JUDGE_MODE);
   const canResearch = planFeatures.has(PlanFeature.ALLOW_RESEARCH_MODE);
+  const canCritic = planFeatures.has(PlanFeature.ALLOW_CRITIC_REVIEW);
   const comparePanel = useInThreadCompare({
     threadId,
     initialJudgeEnabled: threadSettings.judgeEnabled,
@@ -125,7 +126,9 @@ export default function ThreadDetailPage() {
         <InThreadComparePanel
           selectedModels={comparePanel.selectedModels}
           onToggleModel={comparePanel.handleToggleModel}
-          onCompare={comparePanel.handleCompare}
+          prompt={comparePanel.prompt}
+          onPromptChange={comparePanel.setPrompt}
+          onSend={comparePanel.handleSend}
           onClose={comparePanel.toggleOpen}
           result={comparePanel.result}
           isPending={comparePanel.isPending}
@@ -136,9 +139,14 @@ export default function ThreadDetailPage() {
           onJudgeModelChange={comparePanel.setJudgeModel}
           judgeModelOptions={comparePanel.judgeModelOptions}
           judgeModelOptionsLoading={comparePanel.isJudgeModelOptionsLoading}
+          criticEnabled={comparePanel.criticEnabled}
+          onCriticEnabledChange={comparePanel.setCriticEnabled}
+          criticModel={comparePanel.criticModel}
+          onCriticModelChange={comparePanel.setCriticModel}
           researchMode={comparePanel.researchMode}
           onResearchModeChange={comparePanel.setResearchMode}
           allowJudgeMode={canJudge}
+          allowCriticReview={canCritic}
           allowResearchMode={canResearch}
           t={t}
         />

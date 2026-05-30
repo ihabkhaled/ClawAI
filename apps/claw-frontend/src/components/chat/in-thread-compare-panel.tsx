@@ -1,18 +1,21 @@
 import { CheckCircle, Loader2, Play, X } from 'lucide-react';
 
+import { CompareCriticControls } from '@/components/chat/compare-critic-controls';
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
 import { CompareResearchModeControl } from '@/components/chat/compare-research-mode-control';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
+import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import type { InThreadComparePanelProps } from '@/types';
 
 export function InThreadComparePanel({
   selectedModels,
   onToggleModel,
-  onCompare,
+  prompt,
+  onPromptChange,
+  onSend,
   onClose,
   result,
   isPending,
@@ -23,9 +26,14 @@ export function InThreadComparePanel({
   onJudgeModelChange,
   judgeModelOptions,
   judgeModelOptionsLoading,
+  criticEnabled,
+  onCriticEnabledChange,
+  criticModel,
+  onCriticModelChange,
   researchMode,
   onResearchModeChange,
   allowJudgeMode,
+  allowCriticReview,
   allowResearchMode,
   t,
 }: InThreadComparePanelProps): React.ReactElement {
@@ -62,6 +70,18 @@ export function InThreadComparePanel({
           />
         ) : null}
 
+        {allowJudgeMode && allowCriticReview && judgeEnabled ? (
+          <CompareCriticControls
+            criticEnabled={criticEnabled}
+            onCriticEnabledChange={onCriticEnabledChange}
+            criticModel={criticModel}
+            onCriticModelChange={onCriticModelChange}
+            criticModelOptions={judgeModelOptions}
+            criticModelOptionsLoading={judgeModelOptionsLoading}
+            t={t}
+          />
+        ) : null}
+
         {allowResearchMode ? (
           <CompareResearchModeControl
             value={researchMode}
@@ -71,21 +91,20 @@ export function InThreadComparePanel({
         ) : null}
 
         <form
-          className="flex gap-2"
+          className="flex items-end gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            const input = e.currentTarget.elements.namedItem('compare-prompt') as HTMLInputElement;
-            if (input.value.trim()) {
-              onCompare(input.value);
-              input.value = '';
-            }
+            onSend();
           }}
         >
-          <Input
-            name="compare-prompt"
-            placeholder={t('compare.description')}
-            className="flex-1"
+          <RichPromptTextarea
+            value={prompt}
+            onChange={onPromptChange}
+            onSubmit={onSend}
+            placeholder={t('compare.sendPrompt')}
+            ariaLabel={t('compare.sendPrompt')}
             disabled={isPending}
+            className="flex-1"
           />
           <Button type="submit" disabled={!canSend || isPending} size="sm">
             {isPending ? (
