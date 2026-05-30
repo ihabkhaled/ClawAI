@@ -27,6 +27,9 @@ export type {
   SetFeedbackParams,
   StreamEvent,
   StreamMetrics,
+  StreamBottleneck,
+  StreamStageTimings,
+  StreamStageTimestamps,
   StreamUsage,
   StreamLiveState,
   LaneStreamState,
@@ -332,11 +335,17 @@ export type {
 } from './stream-component.types';
 export type { RuntimeProgressMetrics } from './runtime-progress.types';
 export type {
+  ClawRuntimeProgressEnvelope,
+  RuntimeProgressEnvelopeMetrics,
+} from './runtime-progress-envelope.types';
+export type {
   RuntimeProgressPanelProps,
   VisibleReasoningPanelProps,
   RuntimeMetricsHudProps,
   RuntimeRawEventsDrawerProps,
   RuntimeStageTimelineProps,
+  RuntimeBottleneckBreakdownProps,
+  ImageGenerationProgressPanelProps,
 } from './component.types';
 export type { UpdatePreferencesRequest, ChangePasswordRequest } from './preference.types';
 export type {
@@ -743,3 +752,21 @@ export type {
   RoleRowProps,
   PermissionGroupSectionProps,
 } from './role.types';
+export type {
+  RuntimeProbeModel,
+  RuntimeProbeSlot,
+  RuntimeProbeRecentEvent,
+  RuntimeProbeCapabilities,
+  RuntimeProbeExecutionProfile,
+  RuntimeProbeReport,
+} from './runtime-probe-report.types';
+export type {
+  RuntimeProgressProbeState,
+  UseRuntimeProgressPageReturn,
+  RuntimeProbeCardProps,
+  RuntimeProbeStatusIconProps,
+  RuntimeProbeCapabilityRowProps,
+  RuntimeProbeCapabilitiesListProps,
+  RuntimeProbeModelRowProps,
+  RuntimeProbeEventRowProps,
+} from './runtime-progress-page.types';

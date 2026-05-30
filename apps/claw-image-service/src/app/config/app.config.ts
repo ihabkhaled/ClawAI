@@ -16,6 +16,12 @@ const appConfigSchema = z.object({
     .string()
     .min(32, 'INTER_SERVICE_AUTH_TOKEN must be at least 32 chars')
     .default('change-me-inter-service-token-32-chars-min'),
+  COMFYUI_BASE_URL: z.string().default('http://comfyui:8188'),
+  CLAW_IMAGE_PROGRESS_POLL_INTERVAL_MS: z.coerce.number().int().min(300).default(1000),
+  CLAW_IMAGE_PROGRESS_PREVIEW_ENABLED: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true' || v === '1'),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

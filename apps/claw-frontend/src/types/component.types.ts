@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import type { SidebarItem } from '@/constants';
 import type {
   AiReasoningVisibility,
+  AiStreamStage,
   CompareJudgeState,
   CompareResearchMode,
   ComponentSize,
@@ -42,6 +43,7 @@ import type {
   JudgeModelOption,
   StreamLiveState,
   StreamMetrics,
+  StreamStageTimings,
   StreamUsage,
   VisibleProgressStage,
 } from './chat.types';
@@ -90,6 +92,7 @@ import type { ReplayBatchResult, ReplayResult } from './replay.types';
 import type { RoleMemberResult, RolePackResult } from './role-pack.types';
 import type { CreatePolicyRequest, RoutingDecision, RoutingPolicy } from './routing.types';
 import type { RuntimeProgressMetrics } from './runtime-progress.types';
+import type { ClawRuntimeProgressEnvelope } from './runtime-progress-envelope.types';
 import type { SlackMessageMetadata } from './slack.types';
 import type { PullRequestMetadata } from './source-control.types';
 import type { DecompositionResultState, SubTaskResult } from './task-decomposition.types';
@@ -359,6 +362,10 @@ export type RuntimeProgressPanelProps = {
   // PR2: optional execution profile (cpu/cuda/rocm/vulkan/metal/mixed/unknown)
   // surfaced by RuntimeMetricsHud. Today still undefined for all call-sites.
   executionProfile?: ExecutionProfile;
+  // PR2: when true (default) render the bottleneck breakdown bar +
+  // stage timeline below the live answer once the run completes. Disable
+  // for embedded surfaces where the extra vertical space is unwelcome.
+  showBottleneck?: boolean;
 };
 
 // Visible reasoning panel. Same behaviour as StreamThinkingPanel today; adds
@@ -393,13 +400,37 @@ export type RuntimeRawEventsDrawerProps = {
   className?: string;
 };
 
-// Stage timeline placeholder. PR1 ships an empty render; PR2 will animate
-// the historical stage chain.
+// PR2: vertical timeline of completed runtime stages. Each row maps to an
+// AiStreamStage value present in `stageTimings`, with the currently-active
+// stage rendered with a pulsing dot. Stages without an `endedAtMs` are
+// considered active; everything else is completed.
 export type RuntimeStageTimelineProps = {
   className?: string;
-  // PR2 fields are intentionally omitted from PR1 to avoid premature shape
-  // freezing. The empty object keeps the type extensible without dead
-  // properties leaking into call-sites.
+  stageTimings?: StreamStageTimings | null;
+  activeStage?: AiStreamStage;
+};
+
+// PR2: horizontal stacked bar showing modelLoadMs / promptEvalMs /
+// generationMs as proportional colored segments with their absolute
+// duration label underneath. Renders nothing when stageTimings is null or
+// every duration is zero.
+export type RuntimeBottleneckBreakdownProps = {
+  className?: string;
+  stageTimings?: StreamStageTimings | null;
+  metrics?: StreamMetrics | null;
+};
+
+// PR3: image-generation step-by-step sampling progress panel. Reads the
+// latest ClawRuntimeProgressEnvelope surfaced over the same SSE channel
+// the lifecycle status flows on, and renders steps + ETA + optional
+// preview frame + an interrupt button.
+export type ImageGenerationProgressPanelProps = {
+  className?: string;
+  progress: ClawRuntimeProgressEnvelope | null;
+  onCancel?: () => void;
+  isCancelling?: boolean;
+  /** Used as the alt-text for any rendered preview frame. */
+  prompt?: string;
 };
 
 // Floating "Jump to latest" pill rendered over the chat scroll container while

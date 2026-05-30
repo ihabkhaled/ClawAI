@@ -206,6 +206,27 @@ export type StreamEvent = {
   partialContentPreserved?: boolean;
 };
 
+// Per-stage wall-clock window captured by the streaming executor. Mirrors
+// the BE StreamStageTimestamps shape exactly so the FE can render a
+// stage-by-stage timeline without re-deriving the window from elapsedMs.
+export type StreamStageTimestamps = {
+  startedAtMs: number;
+  endedAtMs?: number;
+};
+
+// Map of AiStreamStage → timestamp window. Backed by the BE
+// `StreamStageTimings` record; key strings are AiStreamStage enum values.
+export type StreamStageTimings = Record<string, StreamStageTimestamps>;
+
+// Bottleneck breakdown emitted on the final METRICS frame. Mirrors the BE
+// `StreamBottleneck` shape — `stage` is the slowest of model-load /
+// prompt-eval / generation; `percentOfTotal` is in [0, 1].
+export type StreamBottleneck = {
+  stage: 'modelLoad' | 'promptEval' | 'generation';
+  durationMs: number;
+  percentOfTotal: number;
+};
+
 export type StreamMetrics = {
   elapsedMs: number;
   timeToFirstTokenMs?: number;
@@ -215,6 +236,17 @@ export type StreamMetrics = {
   progressPercent: number;
   progressConfidence: AiStreamProgressConfidence;
   estimatedCostUsd?: number;
+  // ── PR2: rich local-runtime metrics. Populated only on the terminal
+  // METRICS frame for Ollama / llama.cpp runs. Undefined for cloud streams.
+  modelLoadMs?: number;
+  promptEvalMs?: number;
+  generationMs?: number;
+  totalMs?: number;
+  promptTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  bottleneck?: StreamBottleneck;
+  stageTimings?: StreamStageTimings;
 };
 
 export type StreamUsage = {

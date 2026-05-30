@@ -3072,6 +3072,31 @@ export const ru: TranslationDictionary = {
     },
     bottleneck: {
       title: 'Узкое место',
+      modelLoad: 'Загрузка модели',
+      promptEval: 'Оценка запроса',
+      generation: 'Генерация',
+      badge: '{stage} {percent}% от общего времени',
+      ariaLabel: 'Разбивка узкого места',
+    },
+    stageTimeline: {
+      title: 'Хронология этапов',
+      active: 'Активный',
+      completed: 'Завершён',
+      queued: 'В очереди',
+      empty: 'Пока этапы не зарегистрированы.',
+    },
+    image: {
+      title: 'Генерация изображения',
+      starting: 'Запуск...',
+      stepProgress: 'Шаг {current} из {total}',
+      eta: 'Осталось ~{seconds} с',
+      interrupt: 'Прервать',
+      preview: 'Предпросмотр',
+    },
+    comfyui: {
+      timeline: 'Узлы рабочего процесса',
+      cached: 'в кэше',
+      stepOf: '{current} из {total}',
     },
   },
 };

@@ -12,15 +12,21 @@ import {
 import { generateWithOpenAI } from '../adapters/openai-image.adapter';
 import { generateWithGemini } from '../adapters/gemini-image.adapter';
 import { generateWithStableDiffusion } from '../adapters/stable-diffusion.adapter';
+import { randomUUID } from 'node:crypto';
+import { ComfyUIProgressAdapter } from '../../runtime-progress/adapters/comfyui-progress.adapter';
+import { buildSd15MinimalWorkflow } from '../../runtime-progress/workflows/sd15-minimal.workflow';
 import {
   IMAGE_PROVIDER_GEMINI,
   IMAGE_PROVIDER_LOCAL,
+  IMAGE_PROVIDER_LOCAL_COMFYUI,
   IMAGE_PROVIDER_OPENAI,
 } from '../../../common/constants';
 
 @Injectable()
 export class ImageExecutionManager {
   private readonly logger = new Logger(ImageExecutionManager.name);
+
+  constructor(private readonly comfyAdapter: ComfyUIProgressAdapter) {}
 
   async execute(params: GenerateImageParams): Promise<GenerateImageResult> {
     const startTime = Date.now();
@@ -68,6 +74,13 @@ export class ImageExecutionManager {
         params.referenceImageBase64,
         params.referenceImageMimeType,
       );
+    }
+
+    if (provider === IMAGE_PROVIDER_LOCAL_COMFYUI) {
+      this.logger.debug(
+        `callProvider: routing to local ComfyUI provider — model=${model} size=${String(w)}x${String(h)}`,
+      );
+      return this.callComfyUIProvider(prompt, w, h, model);
     }
 
     this.logger.debug(`callProvider: mapping provider ${provider} to connector provider`);
@@ -207,6 +220,52 @@ export class ImageExecutionManager {
       `downloadImageAsBase64: downloaded — durationMs=${String(durationMs)} base64Len=${String(base64.length)}`,
     );
     return base64;
+  }
+
+  private async callComfyUIProvider(
+    prompt: string,
+    width: number,
+    height: number,
+    checkpointName: string | undefined,
+  ): Promise<ImageProviderResponse> {
+    const config = AppConfig.get();
+    const baseUrl = config.COMFYUI_BASE_URL;
+    const clientId = `clawai-${randomUUID()}`;
+    const runId = randomUUID();
+    this.logger.debug(
+      `callComfyUIProvider: baseUrl=${baseUrl} clientId=${clientId} runId=${runId}`,
+    );
+    const workflow = buildSd15MinimalWorkflow(clientId, {
+      prompt,
+      width,
+      height,
+      checkpointName,
+    });
+    try {
+      const result = await this.comfyAdapter.streamGenerate({
+        runId,
+        baseUrl,
+        workflow,
+        onEvent: () => undefined,
+      });
+      this.logger.debug(
+        `callComfyUIProvider: completed promptId=${result.promptId} filename=${result.filename} nodes=${String(result.nodeTimings.length)}`,
+      );
+      return {
+        imageBase64: result.imageBase64,
+        revisedPrompt: undefined,
+        mimeType: result.mimeType,
+        width,
+        height,
+      };
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'ComfyUI unavailable';
+      this.logger.error(`callComfyUIProvider: failed — ${msg}`);
+      throw new BusinessException(
+        `ComfyUI image generation failed: ${msg}`,
+        'COMFYUI_IMAGE_GENERATION_FAILED',
+      );
+    }
   }
 
   private mapToConnectorProvider(imageProvider: string): string {

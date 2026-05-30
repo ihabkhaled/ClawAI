@@ -1,5 +1,8 @@
 import { AiReasoningVisibility, AiStreamProtocol } from '../../../common/enums';
-import { type NormalizedStreamFragment } from '../types/provider-stream.types';
+import {
+  type NormalizedStreamFragment,
+  type ProviderStreamFinalTimings,
+} from '../types/provider-stream.types';
 
 // Stateful, chunk-boundary-safe reader that normalizes a provider's raw stream
 // text into NormalizedStreamFragment[]. Supports the two wire formats ClawAI
@@ -122,9 +125,55 @@ export class ProviderStreamReader {
         promptTokens: getNumber(frame, 'prompt_eval_count'),
         completionTokens: getNumber(frame, 'eval_count'),
       });
-      out.push({ kind: 'done', finishReason: getString(frame, 'done_reason') ?? 'stop' });
+      const finalTimings = extractOllamaFinalTimings(frame);
+      out.push({
+        kind: 'done',
+        finishReason: getString(frame, 'done_reason') ?? 'stop',
+        ...(finalTimings !== undefined ? { finalTimings } : {}),
+      });
     }
   }
+}
+
+// Reads the nanosecond-precision Ollama final-frame timing fields into a
+// ProviderStreamFinalTimings. Returns undefined when none of the timing
+// fields are present so callers can decide whether to emit a rich metrics
+// event without an extra null check on every key.
+function extractOllamaFinalTimings(
+  frame: Record<string, unknown>,
+): ProviderStreamFinalTimings | undefined {
+  const totalDurationNs = getNumber(frame, 'total_duration');
+  const loadDurationNs = getNumber(frame, 'load_duration');
+  const promptEvalCount = getNumber(frame, 'prompt_eval_count');
+  const promptEvalDurationNs = getNumber(frame, 'prompt_eval_duration');
+  const evalCount = getNumber(frame, 'eval_count');
+  const evalDurationNs = getNumber(frame, 'eval_duration');
+  const doneReason = getString(frame, 'done_reason');
+
+  const timings: ProviderStreamFinalTimings = {};
+  if (totalDurationNs !== undefined) {
+    timings.totalDurationNs = totalDurationNs;
+  }
+  if (loadDurationNs !== undefined) {
+    timings.loadDurationNs = loadDurationNs;
+  }
+  if (promptEvalCount !== undefined) {
+    timings.promptEvalCount = promptEvalCount;
+  }
+  if (promptEvalDurationNs !== undefined) {
+    timings.promptEvalDurationNs = promptEvalDurationNs;
+  }
+  if (evalCount !== undefined) {
+    timings.evalCount = evalCount;
+  }
+  if (evalDurationNs !== undefined) {
+    timings.evalDurationNs = evalDurationNs;
+  }
+  if (doneReason !== undefined) {
+    timings.doneReason = doneReason;
+  }
+
+  return Object.keys(timings).length > 0 ? timings : undefined;
 }
 
 function safeParseJson(text: string): Record<string, unknown> | null {

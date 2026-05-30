@@ -9,6 +9,30 @@ import {
 
 export type VisibleProgressStatus = 'queued' | 'active' | 'completed' | 'error';
 
+// Per-stage timestamp window captured by the streaming executor. The bounds
+// are wall-clock milliseconds (`Date.now()`) so the FE can render a stage
+// timeline without re-deriving them from the elapsed time. `endedAtMs` is
+// undefined while the stage is still active.
+export type StreamStageTimestamps = {
+  startedAtMs: number;
+  endedAtMs?: number;
+};
+
+// Map of AiStreamStage → timestamp window. Used by the FE to render a
+// stage-by-stage timeline + the bottleneck breakdown bar. Only stages that
+// actually fired during the run appear as keys.
+export type StreamStageTimings = Record<string, StreamStageTimestamps>;
+
+// Bottleneck breakdown emitted on the final METRICS frame. `stage` is the
+// slowest of (modelLoadMs, promptEvalMs, generationMs); `percentOfTotal` is
+// a fraction in [0, 1] so the FE can multiply by 100 for display or pipe it
+// into a progress bar.
+export type StreamBottleneck = {
+  stage: 'modelLoad' | 'promptEval' | 'generation';
+  durationMs: number;
+  percentOfTotal: number;
+};
+
 // Live metrics computed by StreamProgressManager and pushed on METRICS events.
 export type StreamMetrics = {
   elapsedMs: number;
@@ -19,7 +43,37 @@ export type StreamMetrics = {
   progressPercent: number;
   progressConfidence: AiStreamProgressConfidence;
   estimatedCostUsd?: number;
+  // ── PR2: rich local-runtime metrics. Populated on the terminal METRICS
+  // frame for Ollama / llama.cpp runs that report nanosecond-precision
+  // durations. Undefined for cloud streams (no parity field on the wire).
+  modelLoadMs?: number;
+  promptEvalMs?: number;
+  generationMs?: number;
+  totalMs?: number;
+  promptTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  bottleneck?: StreamBottleneck;
+  stageTimings?: StreamStageTimings;
 };
+
+// Subset of StreamMetrics that the rich-final-frame path (Ollama terminal
+// timings) can populate. The caller spreads this into a base StreamMetrics so
+// the live tracker's progressPercent / progressConfidence / etc. survive
+// unchanged. Every field is optional because not every runtime / version
+// reports it.
+export type FinalStreamMetricsPatch = Pick<
+  StreamMetrics,
+  | 'modelLoadMs'
+  | 'promptEvalMs'
+  | 'generationMs'
+  | 'totalMs'
+  | 'tokensPerSecond'
+  | 'promptTokens'
+  | 'outputTokens'
+  | 'totalTokens'
+  | 'bottleneck'
+>;
 
 // Final accounting pushed on USAGE events once the provider reports totals.
 export type StreamUsage = {

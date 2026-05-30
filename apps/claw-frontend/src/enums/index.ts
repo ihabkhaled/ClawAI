@@ -107,3 +107,5 @@ export { SemanticMessageRoleEnum } from './semantic-message-role.enum';
 export { SemanticModalityKindEnum } from './semantic-modality-kind.enum';
 export { SemanticPrivacyClassEnum } from './semantic-privacy-class.enum';
 export { SemanticRiskLevelEnum } from './semantic-risk-level.enum';
+export { RuntimeProvider } from './runtime-provider.enum';
+export { RuntimeProbeStatus } from './runtime-probe-status.enum';

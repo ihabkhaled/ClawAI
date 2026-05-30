@@ -3073,6 +3073,31 @@ export const it: TranslationDictionary = {
     },
     bottleneck: {
       title: 'Collo di bottiglia',
+      modelLoad: 'Caricamento modello',
+      promptEval: 'Valutazione prompt',
+      generation: 'Generazione',
+      badge: '{stage} {percent}% del totale',
+      ariaLabel: 'Dettaglio collo di bottiglia',
+    },
+    stageTimeline: {
+      title: 'Cronologia delle fasi',
+      active: 'Attivo',
+      completed: 'Completato',
+      queued: 'In coda',
+      empty: 'Nessuna fase registrata finora.',
+    },
+    image: {
+      title: 'Generazione immagine',
+      starting: 'Avvio...',
+      stepProgress: 'Passo {current} di {total}',
+      eta: '~{seconds}s rimanenti',
+      interrupt: 'Interrompi',
+      preview: 'Anteprima',
+    },
+    comfyui: {
+      timeline: 'Nodi del workflow',
+      cached: 'in cache',
+      stepOf: '{current} di {total}',
     },
   },
 };

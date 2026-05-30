@@ -5,6 +5,7 @@ import { ImageGenerationService } from './services/image-generation.service';
 import { ImageGenerationEventsService } from './services/image-generation-events.service';
 import { ImageExecutionManager } from './managers/image-execution.manager';
 import { ImageGenerationRepository } from './repositories/image-generation.repository';
+import { ComfyUIProgressAdapter } from '../runtime-progress/adapters/comfyui-progress.adapter';
 
 @Module({
   controllers: [ImageGenerationController, InternalImageController],
@@ -13,6 +14,7 @@ import { ImageGenerationRepository } from './repositories/image-generation.repos
     ImageGenerationEventsService,
     ImageExecutionManager,
     ImageGenerationRepository,
+    ComfyUIProgressAdapter,
   ],
   exports: [ImageGenerationService],
 })

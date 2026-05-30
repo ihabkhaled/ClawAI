@@ -7,6 +7,7 @@ import { ProviderStreamReader } from '../utilities/provider-stream-reader.utilit
 import { ThinkingFragmentScanner } from '../utilities/thinking-fragment-scanner.utility';
 import { StreamProgressTracker } from '../utilities/stream-progress-tracker.utility';
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
+import { computeFinalStreamMetrics } from '../utilities/final-metrics.utility';
 import {
   METRICS_THROTTLE_MS,
   SIMULATED_CHUNK_DELAY_MS,
@@ -18,6 +19,11 @@ import {
   type StreamExecutionInput,
   type StreamExecutionResult,
 } from '../types/stream-execution.types';
+import {
+  type StreamMetrics,
+  type StreamStageTimestamps,
+  type StreamStageTimings,
+} from '../types/stream.types';
 import { type EmitCtx, type LoopState } from '../types/provider-stream-executor.types';
 
 // Runs the read → normalize → split → emit loop for a single streaming model
@@ -33,7 +39,8 @@ export class ProviderStreamExecutor {
 
   async run(input: StreamExecutionInput): Promise<StreamExecutionResult> {
     const ctx = this.toCtx(input);
-    this.emitLifecycle(ctx, AiStreamStage.CONNECTING_PROVIDER, 'Connecting to provider');
+    const state = this.newState();
+    this.transitionStage(ctx, state, AiStreamStage.CONNECTING_PROVIDER, 'Connecting to provider');
     const result = await httpStream({
       url: input.url,
       method: 'POST',
@@ -51,8 +58,8 @@ export class ProviderStreamExecutor {
       );
     }
 
-    this.emitLifecycle(ctx, AiStreamStage.WAITING_FIRST_TOKEN, 'Waiting for first token');
-    return this.consume(ctx, input, result.chunks);
+    this.transitionStage(ctx, state, AiStreamStage.WAITING_FIRST_TOKEN, 'Waiting for first token');
+    return this.consume(ctx, input, result.chunks, state);
   }
 
   // Simulated path: the provider returned a fully-buffered response which we
@@ -77,7 +84,7 @@ export class ProviderStreamExecutor {
     const scanner = new ThinkingFragmentScanner();
     const state = this.newState();
 
-    this.emitLifecycle(ctx, AiStreamStage.CONNECTING_PROVIDER, 'Connecting to provider');
+    this.transitionStage(ctx, state, AiStreamStage.CONNECTING_PROVIDER, 'Connecting to provider');
     if (input.reasoningContent !== undefined && input.reasoningContent.length > 0) {
       for (const piece of this.chunkText(input.reasoningContent)) {
         this.applyReasoning(piece, AiReasoningVisibility.MODEL_EMITTED, ctx, state);
@@ -102,6 +109,7 @@ export class ProviderStreamExecutor {
     ctx: EmitCtx,
     input: StreamExecutionInput,
     chunks: AsyncGenerator<string>,
+    state: LoopState,
   ): Promise<StreamExecutionResult> {
     const reader = new ProviderStreamReader(input.protocol);
     const scanner = new ThinkingFragmentScanner();
@@ -112,7 +120,6 @@ export class ProviderStreamExecutor {
       input.promptTokensEstimate,
       input.maxOutputTokens,
     );
-    const state = this.newState();
 
     for await (const chunk of chunks) {
       if (input.abortSignal.aborted) {
@@ -153,6 +160,9 @@ export class ProviderStreamExecutor {
       return;
     }
     state.finishReason = fragment.finishReason ?? state.finishReason;
+    if (fragment.finalTimings !== undefined) {
+      state.finalTimings = fragment.finalTimings;
+    }
   }
 
   private applyContent(
@@ -167,7 +177,7 @@ export class ProviderStreamExecutor {
     if (!state.sawContent) {
       state.sawContent = true;
       tracker.recordFirstToken(Date.now());
-      this.emitLifecycle(ctx, AiStreamStage.GENERATING, 'Generating response');
+      this.transitionStage(ctx, state, AiStreamStage.GENERATING, 'Generating response');
     }
     state.content += text;
     tracker.recordContentDelta(text.length, estimateTokensFromText(text));
@@ -193,7 +203,7 @@ export class ProviderStreamExecutor {
       return;
     }
     if (!state.sawContent && state.reasoning.length === 0) {
-      this.emitLifecycle(ctx, AiStreamStage.THINKING, 'Thinking');
+      this.transitionStage(ctx, state, AiStreamStage.THINKING, 'Thinking');
     }
     state.reasoning += text;
     this.streamService.emitReasoningDelta(ctx.threadId, {
@@ -242,6 +252,9 @@ export class ProviderStreamExecutor {
 
   private finalize(ctx: EmitCtx, tracker: StreamProgressTracker, state: LoopState): void {
     const stage = state.cancelled ? AiStreamStage.CANCELLED : AiStreamStage.FINALIZING;
+    this.closeStageIfActive(state, Date.now());
+    const baseMetrics = tracker.snapshot(stage, Date.now());
+    const enriched = this.buildFinalMetrics(baseMetrics, state);
     this.streamService.emitMetrics(ctx.threadId, {
       provider: ctx.provider,
       model: ctx.model,
@@ -249,14 +262,55 @@ export class ProviderStreamExecutor {
       messageId: ctx.messageId,
       laneId: ctx.laneId,
       parallelGroupId: ctx.parallelGroupId,
-      metrics: tracker.snapshot(stage, Date.now()),
+      metrics: enriched,
     });
     this.logger.debug(
-      `finalize: provider=${ctx.provider} model=${ctx.model} chars=${String(state.content.length)} cancelled=${String(state.cancelled)}`,
+      `finalize: provider=${ctx.provider} model=${ctx.model} chars=${String(state.content.length)} cancelled=${String(state.cancelled)} bottleneck=${enriched.bottleneck?.stage ?? 'none'}`,
     );
   }
 
-  private emitLifecycle(ctx: EmitCtx, stage: AiStreamStage, label: string): void {
+  // Merges the live tracker snapshot with any Ollama-style nanosecond timings
+  // captured on the terminal frame + the per-stage wall-clock map. Bottleneck
+  // is the slowest of (modelLoad, promptEval, generation) when those numbers
+  // are available; otherwise undefined (cloud streams skip the breakdown bar).
+  private buildFinalMetrics(base: StreamMetrics, state: LoopState): StreamMetrics {
+    const stageTimings = this.serializeStageTimings(state.stageTimings);
+    if (state.finalTimings === undefined) {
+      return Object.keys(stageTimings).length > 0 ? { ...base, stageTimings } : base;
+    }
+    const rich = computeFinalStreamMetrics(state.finalTimings);
+    return {
+      ...base,
+      ...rich,
+      ...(Object.keys(stageTimings).length > 0 ? { stageTimings } : {}),
+    };
+  }
+
+  private serializeStageTimings(
+    map: Map<AiStreamStage, StreamStageTimestamps>,
+  ): StreamStageTimings {
+    const result: StreamStageTimings = {};
+    for (const [stage, window] of map) {
+      result[stage] = { ...window };
+    }
+    return result;
+  }
+
+  // Public lifecycle emit + per-stage wall-clock window capture. Closes the
+  // previous stage's `endedAtMs` before opening the new one so the timeline
+  // ends up with contiguous, non-overlapping windows.
+  private transitionStage(
+    ctx: EmitCtx,
+    state: LoopState,
+    stage: AiStreamStage,
+    label: string,
+  ): void {
+    const now = Date.now();
+    this.closeStageIfActive(state, now);
+    if (!state.stageTimings.has(stage)) {
+      state.stageTimings.set(stage, { startedAtMs: now });
+    }
+    state.currentStage = stage;
     this.streamService.emitStreamLifecycle(ctx.threadId, {
       provider: ctx.provider,
       model: ctx.model,
@@ -268,6 +322,16 @@ export class ProviderStreamExecutor {
       stage,
       label,
     });
+  }
+
+  private closeStageIfActive(state: LoopState, nowMs: number): void {
+    if (state.currentStage === undefined) {
+      return;
+    }
+    const existing = state.stageTimings.get(state.currentStage);
+    if (existing !== undefined && existing.endedAtMs === undefined) {
+      state.stageTimings.set(state.currentStage, { ...existing, endedAtMs: nowMs });
+    }
   }
 
   private toCtx(input: StreamExecutionInput): EmitCtx {
@@ -283,7 +347,14 @@ export class ProviderStreamExecutor {
   }
 
   private newState(): LoopState {
-    return { content: '', reasoning: '', sawContent: false, lastMetricsAt: 0, cancelled: false };
+    return {
+      content: '',
+      reasoning: '',
+      sawContent: false,
+      lastMetricsAt: 0,
+      cancelled: false,
+      stageTimings: new Map(),
+    };
   }
 
   private toResult(state: LoopState): StreamExecutionResult {

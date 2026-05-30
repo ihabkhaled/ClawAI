@@ -61,4 +61,21 @@ describe('RuntimeMetricsHud', () => {
       screen.queryByText('runtimeProgress.metrics.executionProfile.cuda'),
     ).not.toBeInTheDocument();
   });
+
+  it('renders the bottleneck badge when metrics carry a bottleneck breakdown', () => {
+    const enriched: StreamMetrics = {
+      ...baseMetrics,
+      modelLoadMs: 500,
+      promptEvalMs: 200,
+      generationMs: 2_300,
+      bottleneck: { stage: 'generation', durationMs: 2_300, percentOfTotal: 0.77 },
+    };
+    render(<RuntimeMetricsHud metrics={enriched} usage={baseUsage} />);
+    expect(screen.getByText(/runtimeProgress\.bottleneck\.badge/)).toBeInTheDocument();
+  });
+
+  it('omits the bottleneck badge when metrics have no bottleneck field (cloud stream)', () => {
+    render(<RuntimeMetricsHud metrics={baseMetrics} usage={baseUsage} />);
+    expect(screen.queryByText(/runtimeProgress\.bottleneck\.badge/)).not.toBeInTheDocument();
+  });
 });
