@@ -37,7 +37,7 @@ describe('AppConfig', () => {
     setRequiredEnv();
     const config = AppConfig.validate();
     expect(config.LLAMACPP_PORT).toBe('4017');
-    expect(config.LLAMACPP_DEFAULT_CTX_SIZE).toBe(8192);
+    expect(config.LLAMACPP_DEFAULT_CTX_SIZE).toBe(32_768);
     expect(config.LLAMACPP_AUTO_INSTALL_BINARY).toBe(true);
   });
 });

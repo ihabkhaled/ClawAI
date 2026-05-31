@@ -144,7 +144,7 @@ Published by claw-llamacpp-service, consumed by `claw-audit-service` (and `claw-
 | `LLAMACPP_DATA_PATH`                  | Filesystem root for binary + weights           | required                       |
 | `LLAMACPP_BINARY_VERSION`             | Pinned llama.cpp release tag                   | `b4123`                        |
 | `LLAMACPP_GPU_BACKEND`                | `auto` / `cuda12` / `vulkan` / `cpu` / `metal` | `auto`                         |
-| `LLAMACPP_DEFAULT_CTX_SIZE`           | Default `--ctx-size`                           | `8192`                         |
+| `LLAMACPP_DEFAULT_CTX_SIZE`           | Default `--ctx-size`                           | `32768`                        |
 | `LLAMACPP_AUTO_INSTALL_BINARY`        | Run installer on bootstrap                     | `true`                         |
 | `LLAMACPP_PREFLIGHT_OVERRIDE_ALLOWED` | Allow RAM/GPU override path                    | `true`                         |
 | `LLAMACPP_LOAD_TIMEOUT_MS`            | Max load time before FAILED                    | `600000`                       |

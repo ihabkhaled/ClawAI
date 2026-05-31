@@ -1,5 +1,8 @@
+import type { RuntimeProbeExecutionProfile } from '@/enums/runtime-probe-execution-profile.enum';
 import type { RuntimeProbeStatus } from '@/enums/runtime-probe-status.enum';
 import type { RuntimeProvider } from '@/enums/runtime-provider.enum';
+
+export type { RuntimeProbeExecutionProfile };
 
 // Mirrors @claw/shared-types RuntimeProbeReport. Kept here so the frontend
 // never has to depend on packages/shared-types directly. Sync with
@@ -37,18 +40,6 @@ export type RuntimeProbeCapabilities = {
   cancel: boolean;
   metrics: boolean;
 };
-
-// Uppercase enum string from the backend — the FE keeps its own ExecutionProfile
-// enum (lowercase) used by stream metrics. Diagnostics reports use the BE shape
-// directly to avoid lossy mapping.
-export type RuntimeProbeExecutionProfile =
-  | 'CPU'
-  | 'CUDA'
-  | 'ROCM'
-  | 'VULKAN'
-  | 'METAL'
-  | 'MIXED'
-  | 'UNKNOWN';
 
 export type RuntimeProbeReport = {
   provider: RuntimeProvider;

@@ -975,12 +975,25 @@ export class ChatMessagesService implements OnModuleInit {
       ...this.buildFastPathMetaPart(llmResponse),
       ...this.buildTokenUsageMetaPart(llmResponse),
       ...this.buildWorkflowMetaPart(llmResponse, payload),
+      ...this.buildTruncationMetaPart(llmResponse),
       ...(!hasVisibleContent ? { emptyContent: true } : {}),
       ...this.buildDisplayNameMetaPart(latestUserMetadata),
       routeRoadmap,
       progressSummary,
       ...(llmResponse.judgeRefereeMetadata ?? {}),
     };
+  }
+
+  // Bug-hunt 2026-05-31, Fix 2 — surface mid-sentence truncation in the
+  // assistant message metadata so the FE can render a "context exhausted
+  // — raise ctx_size or shorten prompt" banner instead of silently
+  // showing the cut-off reply. The flag is additive; existing consumers
+  // that don't know about it ignore unknown metadata keys.
+  private buildTruncationMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
+    if (llmResponse.finishReason !== 'length') {
+      return {};
+    }
+    return { truncatedAtContextLimit: true };
   }
 
   // Feature 2 — persists token usage transparency on the assistant message so

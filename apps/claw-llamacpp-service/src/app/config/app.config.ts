@@ -7,7 +7,7 @@ const appConfigSchema = z.object({
   LLAMACPP_DATA_PATH: z.string().min(1, 'LLAMACPP_DATA_PATH is required'),
   LLAMACPP_BINARY_VERSION: z.string().default('b4123'),
   LLAMACPP_GPU_BACKEND: z.string().default('auto'),
-  LLAMACPP_DEFAULT_CTX_SIZE: z.coerce.number().min(512).max(1_048_576).default(8192),
+  LLAMACPP_DEFAULT_CTX_SIZE: z.coerce.number().min(512).max(1_048_576).default(32_768),
   LLAMACPP_AUTO_INSTALL_BINARY: z
     .string()
     .default('true')

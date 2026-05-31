@@ -370,6 +370,10 @@ export const de: TranslationDictionary = {
       imagesDropped:
         'Bilder verworfen: Im Nur-lokal-Modus ist kein bildfähiges Modell installiert. Ziehen Sie llava oder moondream aus dem Modellkatalog, um es zu aktivieren.',
     },
+    truncated: {
+      title: 'Antwort abgeschnitten',
+      body: 'Das Modell hat aufgehört, weil das Kontextfenster voll war. Versuche eine kürzere Eingabe, weniger Recherchequellen oder eine kleinere Frage.',
+    },
   },
   receipt: {
     openLabel: 'Zeige, was die KI verwendet hat',

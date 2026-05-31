@@ -1,5 +1,7 @@
 // PR4 — Frontend types for the ComfyUI node-timeline UI.
 
+import type { ComfyUINodeTimelineStatus } from '@/enums/comfyui-node-timeline-status.enum';
+
 import type { ClawRuntimeProgressEnvelope } from './runtime-progress-envelope.types';
 
 // Single row in the rendered node timeline. The reducer that derives
@@ -13,8 +15,6 @@ export type ComfyUINodeTimelineEntry = {
   /** Cached nodes show a "cached" pill instead of a step counter. */
   cached: boolean;
 };
-
-export type ComfyUINodeTimelineStatus = 'pending' | 'executing' | 'completed';
 
 export type ComfyUINodeTimelineProps = {
   /**

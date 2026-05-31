@@ -369,6 +369,10 @@ export const fr: TranslationDictionary = {
       imagesDropped:
         "Images ignorées : le mode local uniquement n'a aucun modèle prenant en charge la vision installé. Téléchargez llava ou moondream depuis le Catalogue de Modèles pour l'activer.",
     },
+    truncated: {
+      title: 'Réponse tronquée',
+      body: "Le modèle s'est arrêté car la fenêtre de contexte était pleine. Essayez une invite plus courte, moins de sources de recherche ou une question plus petite.",
+    },
   },
   receipt: {
     openLabel: "Voir ce que l'IA a utilisé",

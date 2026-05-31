@@ -368,6 +368,10 @@ export const es: TranslationDictionary = {
       imagesDropped:
         'Imágenes descartadas: el modo solo-local no tiene ningún modelo con capacidad de visión instalado. Descarga llava o moondream desde el Catálogo de Modelos para activarlo.',
     },
+    truncated: {
+      title: 'Respuesta truncada',
+      body: 'El modelo se detuvo porque la ventana de contexto estaba llena. Prueba con un mensaje más corto, menos fuentes de investigación o una pregunta más pequeña.',
+    },
   },
   receipt: {
     openLabel: 'Mostrar lo que usó la IA',

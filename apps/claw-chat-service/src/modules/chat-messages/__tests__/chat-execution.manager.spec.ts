@@ -204,11 +204,12 @@ describe('ChatExecutionManager', () => {
       options: { num_predict: number };
     };
     expect(requestBody.think).toBe(false);
-    // AUTO without fast-path no longer applies a default num_predict cap
-    // — the manager passes `undefined` so the model decides when to stop
-    // and the adapter omits the field. Only an explicit thread.maxTokens
-    // setting reintroduces a cap (bounded by HARD_MAX_OUTPUT_TOKENS).
-    expect(requestBody.options.num_predict).toBeUndefined();
+    // Bug-hunt 2026-05-31, Fix 3 — AUTO-no-fast-path used to send
+    // `num_predict: undefined` so the local runtime silently truncated at
+    // its own ctx ceiling. The manager now computes a safe default from
+    // (ctxSize - promptTokensEstimate - SAFETY_MARGIN), so `num_predict`
+    // is always a positive integer. Floor is MIN_OUTPUT_TOKENS=512.
+    expect(requestBody.options.num_predict).toBeGreaterThanOrEqual(512);
   });
 
   it('caps cloud max_tokens and injects short constraint in fast AUTO mode', async () => {
@@ -798,6 +799,182 @@ describe('ChatExecutionManager', () => {
 
       const calls = httpRequest.mock.calls.map((call) => call[0].url as string);
       expect(calls.some((url) => url.includes('/connectors/config'))).toBe(false);
+    });
+  });
+
+  // Bug-hunt 2026-05-31 — Ollama mid-sentence truncation. These tests pin
+  // the contract that `done_reason` from Ollama is propagated faithfully
+  // into LlmResponse.finishReason instead of being squashed to 'stop'.
+  // Without these tests the regression slips back in any time someone
+  // touches buildOllamaResponse.
+  describe('Ollama done_reason propagation (truncation telemetry)', () => {
+    it('returns finishReason="length" when Ollama signals length cap', async () => {
+      const context = makeContext('long research prompt that fills context');
+      httpRequest.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          model: 'deepseek-v4-pro',
+          response: 'Mid-sentence answer that got cut off because ctx',
+          done: true,
+          done_reason: 'length',
+          promptEvalCount: 5800,
+          evalCount: 256,
+        },
+      });
+
+      const result = await manager.callProvider(
+        'local-ollama',
+        'deepseek-v4-pro',
+        context,
+        Date.now(),
+        false,
+        undefined,
+        'MANUAL_MODEL',
+        { fastPathEnabled: false, maxOutputTokens: 256, applyShortResponseConstraint: false },
+      );
+
+      expect(result.finishReason).toBe('length');
+    });
+
+    it('returns finishReason="stop" when Ollama signals a clean stop', async () => {
+      const context = makeContext('short prompt');
+      httpRequest.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          model: 'deepseek-v4-pro',
+          response: 'All good.',
+          done: true,
+          done_reason: 'stop',
+          promptEvalCount: 5,
+          evalCount: 3,
+        },
+      });
+
+      const result = await manager.callProvider(
+        'local-ollama',
+        'deepseek-v4-pro',
+        context,
+        Date.now(),
+        false,
+        undefined,
+        'MANUAL_MODEL',
+        { fastPathEnabled: false, maxOutputTokens: 256, applyShortResponseConstraint: false },
+      );
+
+      expect(result.finishReason).toBe('stop');
+    });
+
+    it('falls back to finishReason="stop" when done_reason is absent but done=true', async () => {
+      const context = makeContext('short prompt');
+      httpRequest.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          model: 'deepseek-v4-pro',
+          response: 'All good.',
+          done: true,
+          promptEvalCount: 5,
+          evalCount: 3,
+        },
+      });
+
+      const result = await manager.callProvider(
+        'local-ollama',
+        'deepseek-v4-pro',
+        context,
+        Date.now(),
+        false,
+        undefined,
+        'MANUAL_MODEL',
+        { fastPathEnabled: false, maxOutputTokens: 256, applyShortResponseConstraint: false },
+      );
+
+      expect(result.finishReason).toBe('stop');
+    });
+  });
+
+  // Bug-hunt 2026-05-31 — universal truncation telemetry, buffered paths.
+  // The user reported the Ollama Cloud Connector with deepseek-v4-pro was
+  // also truncating mid-sentence. Verifies that BOTH cloud parsers
+  // (parseCloudResponse for OpenAI-compat shim providers AND
+  // parseOllamaChatResponse for the OLLAMA connector's native /api/chat
+  // shape) round-trip the truncation signal into LlmResponse.finishReason
+  // so the universal truncatedAtContextLimit metadata flag fires for
+  // every provider, not just local Ollama.
+  describe('Cloud truncation propagation (truncation telemetry, buffered)', () => {
+    it('parseCloudResponse: round-trips finish_reason="length" for OpenAI-compat cloud providers', async () => {
+      const context = makeContext('long openai prompt');
+      httpRequest
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          data: { provider: 'OPENAI', apiKey: 'k', baseUrl: 'https://api.openai.com/v1' },
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          data: {
+            id: 'chatcmpl-trunc',
+            choices: [
+              {
+                index: 0,
+                message: { role: 'assistant', content: 'Mid-sentence answer that was cut' },
+                finish_reason: 'length',
+              },
+            ],
+            usage: { prompt_tokens: 5800, completion_tokens: 256, total_tokens: 6056 },
+          },
+        });
+
+      const result = await manager.callProvider(
+        'OPENAI',
+        'gpt-4o',
+        context,
+        Date.now(),
+        false,
+        undefined,
+        'MANUAL_MODEL',
+        { fastPathEnabled: false, maxOutputTokens: 256, applyShortResponseConstraint: false },
+      );
+
+      expect(result.finishReason).toBe('length');
+    });
+
+    it('parseOllamaChatResponse: round-trips done_reason="length" for the OLLAMA cloud connector (deepseek-v4-pro)', async () => {
+      const context = makeContext('long deepseek prompt');
+      httpRequest
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          data: { provider: 'OLLAMA', apiKey: 'k', baseUrl: 'http://localhost:11434' },
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          data: {
+            model: 'deepseek-v4-pro',
+            message: { role: 'assistant', content: 'Mid-sentence cloud answer that got cut' },
+            done: true,
+            done_reason: 'length',
+            prompt_eval_count: 5800,
+            eval_count: 256,
+          },
+        });
+
+      const result = await manager.callProvider(
+        'OLLAMA',
+        'deepseek-v4-pro',
+        context,
+        Date.now(),
+        false,
+        undefined,
+        'MANUAL_MODEL',
+        { fastPathEnabled: false, maxOutputTokens: 256, applyShortResponseConstraint: false },
+      );
+
+      expect(result.finishReason).toBe('length');
     });
   });
 });

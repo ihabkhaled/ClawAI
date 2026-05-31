@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   ArrowUpCircle,
   Brain,
   FileText,
@@ -117,6 +118,9 @@ export function MessageBubble({
           warning: string | null;
         })
       : undefined;
+  // Banner shown on assistant messages where the model ran out of context
+  // window mid-generation. BE persists this in ChatMessage.metadata.
+  const isTruncatedAtContextLimit = metadata?.['truncatedAtContextLimit'] === true;
 
   const handleFeedback = (value: MessageFeedback): void => {
     if (!onFeedback) {
@@ -135,6 +139,20 @@ export function MessageBubble({
             {formatShortDateTime(message.createdAt)}
           </span>
         </div>
+        {!isUser && isTruncatedAtContextLimit ? (
+          <div
+            role="alert"
+            className="flex w-full items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200"
+          >
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <div className="flex flex-col gap-0.5">
+              <span className="font-semibold">{t('chat.truncated.title')}</span>
+              <span className="text-amber-700/90 dark:text-amber-200/80">
+                {t('chat.truncated.body')}
+              </span>
+            </div>
+          </div>
+        ) : null}
         <div
           className={cn(
             'rounded-lg px-4 py-2.5 text-sm',

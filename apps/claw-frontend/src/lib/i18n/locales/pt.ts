@@ -369,6 +369,10 @@ export const pt: TranslationDictionary = {
       imagesDropped:
         'Imagens descartadas: o modo apenas-local não tem nenhum modelo com capacidade de visão instalado. Baixe llava ou moondream do Catálogo de Modelos para habilitar.',
     },
+    truncated: {
+      title: 'Resposta truncada',
+      body: 'O modelo parou porque a janela de contexto estava cheia. Tente um prompt mais curto, menos fontes de pesquisa ou uma pergunta menor.',
+    },
   },
   receipt: {
     openLabel: 'Mostrar o que a IA usou',

@@ -1,5 +1,6 @@
 import { CheckCircle2, CircleDashed, Loader2, Sparkles } from 'lucide-react';
 
+import { ComfyUINodeTimelineStatus } from '@/enums/comfyui-node-timeline-status.enum';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { ComfyUINodeTimelineProps } from '@/types/comfyui-node-timeline.types';
@@ -37,42 +38,54 @@ export function ComfyUINodeTimeline({
       <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
         {t('runtimeProgress.comfyui.timeline')}
       </div>
-      {entries.map((entry, idx) => (
-        <div
-          key={entry.nodeId}
-          className={cn(
-            'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs',
-            entry.status === 'executing' && 'bg-sky-500/10',
-          )}
-        >
-          {entry.cached ? (
-            <Sparkles className="h-3.5 w-3.5 shrink-0 text-emerald-500" aria-hidden />
-          ) : entry.status === 'completed' ? (
-            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" aria-hidden />
-          ) : entry.status === 'executing' ? (
+      {entries.map((entry, idx) => {
+        let icon: React.ReactElement;
+        if (entry.cached) {
+          icon = <Sparkles className="h-3.5 w-3.5 shrink-0 text-emerald-500" aria-hidden />;
+        } else if (entry.status === ComfyUINodeTimelineStatus.COMPLETED) {
+          icon = <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" aria-hidden />;
+        } else if (entry.status === ComfyUINodeTimelineStatus.EXECUTING) {
+          icon = (
             <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-sky-500" aria-hidden />
-          ) : (
+          );
+        } else {
+          icon = (
             <CircleDashed className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
-          )}
-          <span
+          );
+        }
+        let pillLabel: string;
+        if (entry.cached) {
+          pillLabel = t('runtimeProgress.comfyui.cached');
+        } else {
+          pillLabel = t('runtimeProgress.comfyui.stepOf', {
+            current: String(idx + 1),
+            total: String(total),
+          });
+        }
+        return (
+          <div
+            key={entry.nodeId}
             className={cn(
-              'truncate font-medium',
-              entry.status === 'completed' ? 'text-foreground' : 'text-muted-foreground',
-              entry.status === 'executing' && 'text-foreground',
+              'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs',
+              entry.status === 'executing' && 'bg-sky-500/10',
             )}
           >
-            {entry.label}
-          </span>
-          <span className="ml-auto text-[10px] tracking-wide text-muted-foreground">
-            {entry.cached
-              ? t('runtimeProgress.comfyui.cached')
-              : t('runtimeProgress.comfyui.stepOf', {
-                  current: String(idx + 1),
-                  total: String(total),
-                })}
-          </span>
-        </div>
-      ))}
+            {icon}
+            <span
+              className={cn(
+                'truncate font-medium',
+                entry.status === 'completed' ? 'text-foreground' : 'text-muted-foreground',
+                entry.status === 'executing' && 'text-foreground',
+              )}
+            >
+              {entry.label}
+            </span>
+            <span className="ml-auto text-[10px] tracking-wide text-muted-foreground">
+              {pillLabel}
+            </span>
+          </div>
+        );
+      })}
     </section>
   );
 }

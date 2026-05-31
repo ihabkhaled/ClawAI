@@ -1,8 +1,6 @@
+import { ComfyUINodeTimelineStatus } from '@/enums/comfyui-node-timeline-status.enum';
+import type { ComfyUINodeTimelineEntry } from '@/types/comfyui-node-timeline.types';
 import type { ClawRuntimeProgressEnvelope } from '@/types/runtime-progress-envelope.types';
-import type {
-  ComfyUINodeTimelineEntry,
-  ComfyUINodeTimelineStatus,
-} from '@/types/comfyui-node-timeline.types';
 
 // COMFYUI provider literal. We accept either the BE enum string or the
 // lowercase variant to keep the FE robust to enum drift.
@@ -69,9 +67,12 @@ export function deriveComfyUITimeline(
       continue;
     }
     if (evt.stage === STAGE_NODE_COMPLETED) {
-      existing.status = 'completed';
-    } else if (evt.stage === STAGE_EXECUTING_NODE && existing.status !== 'completed') {
-      existing.status = 'executing';
+      existing.status = ComfyUINodeTimelineStatus.COMPLETED;
+    } else if (
+      evt.stage === STAGE_EXECUTING_NODE &&
+      existing.status !== ComfyUINodeTimelineStatus.COMPLETED
+    ) {
+      existing.status = ComfyUINodeTimelineStatus.EXECUTING;
     }
     if (evt.nodeName) {
       existing.label = evt.nodeName;
@@ -84,10 +85,10 @@ export function deriveComfyUITimeline(
 
 function deriveStatus(stage: string): ComfyUINodeTimelineStatus {
   if (stage === STAGE_NODE_COMPLETED) {
-    return 'completed';
+    return ComfyUINodeTimelineStatus.COMPLETED;
   }
   if (stage === STAGE_EXECUTING_NODE) {
-    return 'executing';
+    return ComfyUINodeTimelineStatus.EXECUTING;
   }
-  return 'pending';
+  return ComfyUINodeTimelineStatus.PENDING;
 }

@@ -142,7 +142,7 @@ model RuntimeConfig {
   modelId       String                @unique
   model         FrontierCatalogEntry  @relation(fields: [modelId], references: [id])
   nGpuLayers    Int?
-  ctxSize       Int                   @default(8192)
+  ctxSize       Int                   @default(32768)
   cpuMoe        Boolean               @default(false)
   threads       Int?
   customArgs    String?               @db.Text

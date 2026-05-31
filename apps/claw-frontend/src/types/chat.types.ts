@@ -8,6 +8,7 @@ import type {
   MessageFeedback,
   MessageRole,
   RoutingMode,
+  StreamBottleneckStage,
   StreamEventType,
   VisibleProgressActorType,
   VisibleProgressStageStatus,
@@ -222,7 +223,7 @@ export type StreamStageTimings = Record<string, StreamStageTimestamps>;
 // `StreamBottleneck` shape — `stage` is the slowest of model-load /
 // prompt-eval / generation; `percentOfTotal` is in [0, 1].
 export type StreamBottleneck = {
-  stage: 'modelLoad' | 'promptEval' | 'generation';
+  stage: StreamBottleneckStage;
   durationMs: number;
   percentOfTotal: number;
 };

@@ -85,6 +85,10 @@ import {
   MIN_OUTPUT_TOKENS,
   STANDARD_TARGET_LATENCY_MS,
 } from '../constants/execution-fast-path.constants';
+import {
+  computeDefaultMaxTokens,
+  OUTPUT_BOUNDS_DEFAULT_CTX_SIZE,
+} from '../constants/output-token-bounds.constants';
 import type { ExecutionOptions } from '../types/execution-options.types';
 
 @Injectable()
@@ -681,6 +685,17 @@ export class ChatExecutionManager implements OnModuleInit {
           'STREAM_EMPTY_RESPONSE',
         );
       }
+      const finishReason = result.cancelled ? 'cancelled' : (result.finishReason ?? 'stop');
+      // Bug-hunt 2026-05-31, Fix 2 — when the model stopped because it
+      // hit the ctx/length cap, leave a loud trail in the logs so an
+      // operator scrolling through chat-service output can correlate a
+      // mid-sentence reply with ctx exhaustion. The FE banner (driven by
+      // metadata.truncatedAtContextLimit) is the user-visible signal.
+      if (finishReason === 'length') {
+        this.logger.warn(
+          `runExecutor: finish_reason=length — likely ctx_size exhausted; provider=${base.provider} model=${base.model} promptTokens=${String(base.promptTokensEstimate)} outputLen=${String(result.content.length)}`,
+        );
+      }
       return {
         content: result.content,
         provider: base.provider,
@@ -688,7 +703,7 @@ export class ChatExecutionManager implements OnModuleInit {
         inputTokens: result.inputTokens,
         outputTokens: result.outputTokens ?? estimateTokensFromText(result.content),
         latencyMs: Date.now() - base.startMs,
-        finishReason: result.cancelled ? 'cancelled' : (result.finishReason ?? 'stop'),
+        finishReason,
         usedFallback,
       };
     } finally {
@@ -702,8 +717,19 @@ export class ChatExecutionManager implements OnModuleInit {
     threadSettings: ThreadSettings | undefined,
     executionOptions: ExecutionOptions | undefined,
   ): OpenAiChatRequest {
+    const body = this.buildChatRequestBody(model, context, threadSettings, executionOptions);
+    // Bug-hunt 2026-05-31, Fix 3 — when neither the caller nor the thread
+    // pinned a max_tokens, compute a safe default from the resident
+    // ctx size minus the prompt estimate minus a safety margin. This
+    // bounds runaway generation AND lets `finish_reason: 'length'`
+    // signal "we hit OUR cap" rather than "we hit the runtime's
+    // ctx ceiling" (which is silent and mid-sentence).
+    body.max_tokens ??= computeDefaultMaxTokens(
+      OUTPUT_BOUNDS_DEFAULT_CTX_SIZE,
+      this.estimatePromptTokens(context),
+    );
     return {
-      ...this.buildChatRequestBody(model, context, threadSettings, executionOptions),
+      ...body,
       stream: true,
       stream_options: { include_usage: true },
     };
@@ -1416,9 +1442,17 @@ export class ChatExecutionManager implements OnModuleInit {
       .map((f) => f.content)
       .filter((c): c is string => c !== null && c.length > 0);
     this.logger.debug(`callOllama: found ${String(images.length)} images for multimodal input`);
-    const maxOutputTokens =
+    const resolvedMaxOutputTokens =
       executionOptions?.maxOutputTokens ??
       this.resolveMaxOutputTokens('AUTO', threadSettings, false, originalModel);
+    // Bug-hunt 2026-05-31, Fix 3 — local Ollama manages ctx internally,
+    // but we still want to pass an explicit `num_predict` from our side
+    // so the runtime cannot silently truncate at its own ceiling. When
+    // neither the caller nor the thread pinned a cap, compute a safe
+    // default from `ctxSize - promptTokensEstimate - SAFETY_MARGIN`.
+    const maxOutputTokens =
+      resolvedMaxOutputTokens ??
+      computeDefaultMaxTokens(OUTPUT_BOUNDS_DEFAULT_CTX_SIZE, estimateTokensFromText(prompt));
     return {
       model: resolvedModel,
       prompt: constrainedPrompt,
@@ -1465,7 +1499,12 @@ export class ChatExecutionManager implements OnModuleInit {
       model: data.model,
       ...this.buildTokenUsageFields(usage),
       latencyMs,
-      finishReason: data.done ? 'stop' : 'incomplete',
+      // Propagate the truthful done_reason ("length", "stop", "tool_calls", …)
+      // from Ollama when present so the truncation signal survives — the
+      // previous boolean fallback (`done ? 'stop' : 'incomplete'`) was
+      // throwing away `done_reason: 'length'` and hiding mid-sentence
+      // ctx-size exhaustion. Bug-hunt 2026-05-31, Fix 2.
+      finishReason: data.done_reason ?? (data.done ? 'stop' : 'incomplete'),
       usedFallback,
     };
   }

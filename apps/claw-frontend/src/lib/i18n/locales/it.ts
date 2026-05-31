@@ -371,6 +371,10 @@ export const it: TranslationDictionary = {
       imagesDropped:
         'Immagini scartate: la modalità solo-locale non ha alcun modello con capacità di visione installato. Scarica llava o moondream dal Catalogo Modelli per abilitarlo.',
     },
+    truncated: {
+      title: 'Risposta troncata',
+      body: 'Il modello si è fermato perché la finestra di contesto era piena. Prova con un prompt più breve, meno fonti di ricerca o una domanda più piccola.',
+    },
   },
   receipt: {
     openLabel: "Mostra cosa ha usato l'IA",

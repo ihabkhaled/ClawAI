@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { RuntimeBottleneckBreakdown } from '@/components/chat/runtime-progress';
-import { AiStreamProgressConfidence } from '@/enums';
+import { AiStreamProgressConfidence, StreamBottleneckStage } from '@/enums';
 import type { StreamMetrics } from '@/types';
 
 vi.mock('@/lib/i18n', () => ({
@@ -21,7 +21,7 @@ const richMetrics: StreamMetrics = {
   modelLoadMs: 500,
   promptEvalMs: 200,
   generationMs: 2300,
-  bottleneck: { stage: 'generation', durationMs: 2300, percentOfTotal: 0.77 },
+  bottleneck: { stage: StreamBottleneckStage.GENERATION, durationMs: 2300, percentOfTotal: 0.77 },
 };
 
 describe('RuntimeBottleneckBreakdown', () => {

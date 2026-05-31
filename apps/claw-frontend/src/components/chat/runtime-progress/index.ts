@@ -4,4 +4,4 @@ export { RuntimeMetricsHud } from './RuntimeMetricsHud';
 export { RuntimeRawEventsDrawer } from './RuntimeRawEventsDrawer';
 export { RuntimeStageTimeline } from './RuntimeStageTimeline';
 export { RuntimeBottleneckBreakdown } from './RuntimeBottleneckBreakdown';
-export { ComfyUINodeTimeline } from './ComfyUINodeTimeline';
+export { ComfyUINodeTimeline } from './ComfyUiNodeTimeline';

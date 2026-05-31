@@ -45,6 +45,27 @@ describe('ProviderStreamReader — OpenAI SSE', () => {
     const reader = new ProviderStreamReader(AiStreamProtocol.OPENAI_SSE);
     expect(reader.push(': keep-alive\n\n')).toEqual([]);
   });
+
+  // Bug-hunt 2026-05-31 — universal truncation telemetry. Pins that the
+  // OpenAI-SSE streaming parser surfaces `finish_reason: 'length'` from the
+  // terminal frame as a done fragment with finishReason='length'. Cloud
+  // OpenAI-compat shim providers (Anthropic OpenAI-compat, Gemini
+  // OpenAI-compat, DeepSeek, Grok, llama.cpp, Ollama OpenAI-compat) all
+  // emit this finish_reason when they hit max_tokens — the executor
+  // depends on this round-trip to set state.finishReason='length' so the
+  // universal truncatedAtContextLimit warn fires.
+  it("round-trips finish_reason='length' from the terminal SSE frame as a done fragment", () => {
+    const reader = new ProviderStreamReader(AiStreamProtocol.OPENAI_SSE);
+    const frags = reader.push(
+      'data: {"choices":[{"delta":{},"finish_reason":"length"}]}\n\n',
+    );
+    const doneFrag = frags.find((f) => f.kind === 'done');
+    expect(doneFrag).toBeDefined();
+    if (doneFrag === undefined || doneFrag.kind !== 'done') {
+      throw new Error('expected done fragment');
+    }
+    expect(doneFrag.finishReason).toBe('length');
+  });
 });
 
 describe('ProviderStreamReader — Ollama NDJSON', () => {
@@ -108,5 +129,24 @@ describe('ProviderStreamReader — Ollama NDJSON', () => {
       throw new Error('expected done fragment');
     }
     expect(doneFrag.finalTimings).toBeUndefined();
+  });
+
+  // Bug-hunt 2026-05-31 — Ollama Cloud Connector truncation telemetry.
+  // The Ollama native NDJSON terminal frame uses `done_reason: 'length'`
+  // when the model hits its context cap. Pins that the streaming reader
+  // surfaces this verbatim on the done fragment so the executor can
+  // store it on state.finishReason. Same mechanism that fires the
+  // universal truncatedAtContextLimit warn for local AND cloud Ollama.
+  it("round-trips done_reason='length' from the terminal Ollama NDJSON frame", () => {
+    const reader = new ProviderStreamReader(AiStreamProtocol.OLLAMA_NDJSON);
+    const frags = reader.push(
+      '{"response":"","done":true,"done_reason":"length","prompt_eval_count":5800,"eval_count":256}\n',
+    );
+    const doneFrag = frags.find((f) => f.kind === 'done');
+    expect(doneFrag).toBeDefined();
+    if (doneFrag === undefined || doneFrag.kind !== 'done') {
+      throw new Error('expected done fragment');
+    }
+    expect(doneFrag.finishReason).toBe('length');
   });
 });

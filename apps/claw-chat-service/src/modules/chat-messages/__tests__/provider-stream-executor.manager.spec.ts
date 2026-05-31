@@ -1,4 +1,5 @@
 import { AiStreamProtocol, AiStreamStage, StreamEventType } from '../../../common/enums';
+import { httpStream as httpStreamMock } from '../../../common/utilities';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { ProviderStreamExecutor } from '../managers/provider-stream-executor.manager';
 import type { StreamExecutionInput } from '../types/stream-execution.types';
@@ -11,8 +12,6 @@ jest.mock('../../../common/utilities', () => {
     httpStream: jest.fn(),
   };
 });
-
-import { httpStream as httpStreamMock } from '../../../common/utilities';
 
 const mockedHttpStream = httpStreamMock as unknown as jest.Mock;
 

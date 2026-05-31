@@ -130,6 +130,12 @@ export type OllamaGenerateResponse = {
   response: string;
   thinking?: string;
   done: boolean;
+  // Native Ollama generate emits `done_reason` ("stop", "length",
+  // "tool_calls", …) alongside `done: true`. We must propagate it so the
+  // chat-service can surface ctx-size exhaustion to the FE instead of
+  // silently storing a truncated reply as if it had stopped cleanly.
+  // Bug-hunt 2026-05-31, Fix 2 (buildOllamaResponse).
+  done_reason?: string;
   totalDuration?: number;
   loadDuration?: number;
   promptEvalCount?: number;

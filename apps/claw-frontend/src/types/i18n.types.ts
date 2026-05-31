@@ -367,6 +367,12 @@ export type TranslationDictionary = {
     localOnly: {
       imagesDropped: string;
     };
+    // Banner shown on assistant messages where the model ran out of
+    // context window mid-generation (truncatedAtContextLimit metadata).
+    truncated: {
+      title: string;
+      body: string;
+    };
   };
   receipt: {
     openLabel: string;

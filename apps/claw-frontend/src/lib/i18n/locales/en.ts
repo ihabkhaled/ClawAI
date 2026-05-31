@@ -367,6 +367,10 @@ export const en: TranslationDictionary = {
       imagesDropped:
         'Images dropped: local-only mode has no vision-capable model installed. Pull llava or moondream from the Model Catalog to enable.',
     },
+    truncated: {
+      title: 'Response truncated',
+      body: 'The model stopped because the context window was full. Try a shorter prompt, fewer research sources, or a smaller question.',
+    },
   },
   receipt: {
     openLabel: 'Show what the AI used',
