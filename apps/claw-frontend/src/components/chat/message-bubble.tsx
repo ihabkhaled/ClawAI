@@ -284,7 +284,7 @@ export function MessageBubble({
           </div>
         ) : null}
         {!isUser ? (
-          <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-1">
             <ContextReceiptButton messageId={message.id} />
             {onRegenerate ? (
               <Button

@@ -70,6 +70,7 @@ import { buildGeminiRequestBody } from '../utilities/gemini-request-builder.util
 import type { GeminiFileUploadFn } from '../types/gemini.types';
 import { GeminiFilesApiManager } from './gemini-files-api.manager';
 import type { StreamContext, StreamExecutionInput } from '../types/stream-execution.types';
+import type { VisibleProgressStatus } from '../types/stream.types';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { AccessControlService } from '../services/access-control.service';
 import {
@@ -105,6 +106,10 @@ import {
   OLLAMA_CLOUD_TOOL_DEFINITIONS,
   truncateResult,
 } from '../utilities/ollama-cloud-tool-runner.utility';
+import {
+  TOOL_WEB_FETCH,
+  TOOL_WEB_SEARCH,
+} from '../constants/ollama-cloud-tools.constants';
 import type {
   OllamaCloudToolCall,
   OllamaToolTranscript,
@@ -2078,40 +2083,55 @@ export class ChatExecutionManager implements OnModuleInit {
     threadId: string | undefined,
     toolName: string,
     toolArgs: Record<string, unknown>,
-    phase: 'started' | 'completed',
+    phase: OllamaToolPhase,
   ): void {
     if (threadId === undefined) {
       return;
     }
-    const label =
-      toolName === 'web_search'
-        ? phase === 'started'
-          ? 'Searching the web'
-          : 'Web search complete'
-        : toolName === 'web_fetch'
-          ? phase === 'started'
-            ? this.buildWebFetchLabel(toolArgs)
-            : 'Page fetched'
-          : phase === 'started'
-            ? `Running tool ${toolName}`
-            : `Tool ${toolName} complete`;
-    this.chatStreamService.emitProgressStage(
-      threadId,
-      phase === 'started' ? StreamEventType.TOOL_STARTED : StreamEventType.TOOL_COMPLETED,
-      {
-        label,
-        description:
-          toolName === 'web_search' && typeof toolArgs.query === 'string'
-            ? `Query: ${toolArgs.query.slice(0, 120)}`
-            : toolName === 'web_fetch' && typeof toolArgs.url === 'string'
-              ? `URL: ${toolArgs.url.slice(0, 200)}`
-              : undefined,
-        actorType: ProgressActorType.SYSTEM,
-        actorName: 'Ollama agentic tools',
-        stageId: `ollama-tool:${toolName}:${phase}`,
-        status: phase === 'completed' ? 'completed' : 'active',
-      },
-    );
+    const label = this.buildToolLifecycleLabel(toolName, toolArgs, phase);
+    const description = this.buildToolLifecycleDescription(toolName, toolArgs);
+    const eventType =
+      phase === OllamaToolPhase.STARTED
+        ? StreamEventType.TOOL_STARTED
+        : StreamEventType.TOOL_COMPLETED;
+    const status: VisibleProgressStatus =
+      phase === OllamaToolPhase.COMPLETED ? 'completed' : 'active';
+    this.chatStreamService.emitProgressStage(threadId, eventType, {
+      label,
+      description,
+      actorType: ProgressActorType.SYSTEM,
+      actorName: 'Ollama agentic tools',
+      stageId: `ollama-tool:${toolName}:${phase}`,
+      status,
+    });
+  }
+
+  private buildToolLifecycleLabel(
+    toolName: string,
+    toolArgs: Record<string, unknown>,
+    phase: OllamaToolPhase,
+  ): string {
+    const started = phase === OllamaToolPhase.STARTED;
+    if (toolName === TOOL_WEB_SEARCH) {
+      return started ? 'Searching the web' : 'Web search complete';
+    }
+    if (toolName === TOOL_WEB_FETCH) {
+      return started ? this.buildWebFetchLabel(toolArgs) : 'Page fetched';
+    }
+    return started ? `Running tool ${toolName}` : `Tool ${toolName} complete`;
+  }
+
+  private buildToolLifecycleDescription(
+    toolName: string,
+    toolArgs: Record<string, unknown>,
+  ): string | undefined {
+    if (toolName === TOOL_WEB_SEARCH && typeof toolArgs.query === 'string') {
+      return `Query: ${toolArgs.query.slice(0, 120)}`;
+    }
+    if (toolName === TOOL_WEB_FETCH && typeof toolArgs.url === 'string') {
+      return `URL: ${toolArgs.url.slice(0, 200)}`;
+    }
+    return undefined;
   }
 
   private buildWebFetchLabel(toolArgs: Record<string, unknown>): string {

@@ -1,4 +1,5 @@
-import { ApiErrorCode, PlanFeature } from '@/enums';
+import { ApiErrorCode } from '@/enums';
+import type { PlanFeature } from '@/enums';
 import type { ApiClientError } from '@/services/shared/api-client';
 
 // When the backend rejects a request because the user's plan does not unlock a

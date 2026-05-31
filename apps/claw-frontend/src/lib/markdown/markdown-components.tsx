@@ -6,7 +6,10 @@ import { useTranslation } from '@/lib/i18n';
 
 function PreBlock({ children, ...props }: React.JSX.IntrinsicElements['pre']): React.JSX.Element {
   return (
-    <pre className="overflow-x-auto rounded-lg bg-muted p-4 text-sm" {...props}>
+    <pre
+      className="my-2 overflow-x-auto rounded-lg bg-muted p-3 text-[13px] leading-relaxed sm:p-4"
+      {...props}
+    >
       {children}
     </pre>
   );
@@ -20,7 +23,10 @@ function CodeBlock({
   const isInline = !className;
   if (isInline) {
     return (
-      <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" {...props}>
+      <code
+        className="break-words rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em]"
+        {...props}
+      >
         {children}
       </code>
     );
@@ -64,7 +70,7 @@ function TableCell({ children, ...props }: React.JSX.IntrinsicElements['td']): R
 function Anchor({ children, ...props }: React.JSX.IntrinsicElements['a']): React.JSX.Element {
   return (
     <a
-      className="text-primary underline hover:no-underline"
+      className="break-words text-primary underline underline-offset-2 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
       target="_blank"
       rel="noopener noreferrer"
       {...props}
