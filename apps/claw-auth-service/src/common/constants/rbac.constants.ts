@@ -30,6 +30,8 @@ export const USER_DEFAULT_PERMISSIONS: Permission[] = [
   Permission.MODEL_USE_ALLOWED,
   Permission.AGENT_USE,
   Permission.RESEARCH_USE,
+  Permission.COMPARE_USE,
+  Permission.FILES_USE,
 ];
 
 // Slugs of the two system roles. Slugs intentionally equal the UserRole enum
