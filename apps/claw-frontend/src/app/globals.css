@@ -132,6 +132,45 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+
+    /* Layout surfaces — refined "AI control plane" depth */
+    --surface-shell: 220 20% 98%;
+    --surface-panel: 0 0% 100%;
+    --surface-panel-subtle: 220 25% 97%;
+    --surface-elevated: 0 0% 100%;
+    --surface-glass: 0 0% 100% / 0.78;
+
+    /* Soft text tiers */
+    --text-soft: 215 16% 46%;
+    --text-faint: 215 14% 62%;
+
+    /* Semantic status colors */
+    --success: 142 72% 35%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 24 95% 16%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+
+    /* Radius scale */
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.25rem;
+    --radius-2xl: 1.5rem;
+
+    /* Elevation */
+    --shadow-soft: 0 1px 2px hsl(220 43% 11% / 0.05), 0 8px 24px hsl(220 43% 11% / 0.06);
+    --shadow-panel: 0 1px 2px hsl(220 43% 11% / 0.06), 0 12px 32px hsl(220 43% 11% / 0.08);
+    --shadow-floating: 0 18px 60px hsl(220 43% 11% / 0.16);
+
+    /* Shell dimensions */
+    --topbar-height: 4rem;
+    --sidebar-width: 16rem;
+    --sidebar-width-expanded: 17.5rem;
+    --mobile-bottom-nav-height: 4rem;
+    --composer-max-height-mobile: 9.5rem;
+    --composer-max-height-desktop: 14rem;
   }
 
   .dark {
@@ -155,6 +194,30 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
     --radius: 0.5rem;
+
+    /* Layout surfaces — deep but not black-on-black */
+    --surface-shell: 222 47% 5%;
+    --surface-panel: 222 36% 8%;
+    --surface-panel-subtle: 222 30% 11%;
+    --surface-elevated: 222 28% 12%;
+    --surface-glass: 222 36% 8% / 0.82;
+
+    /* Soft text tiers */
+    --text-soft: 215 18% 72%;
+    --text-faint: 215 12% 56%;
+
+    /* Semantic status colors */
+    --success: 142 70% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 56%;
+    --warning-foreground: 24 95% 16%;
+    --info: 217 91% 66%;
+    --info-foreground: 0 0% 100%;
+
+    /* Elevation */
+    --shadow-soft: 0 1px 2px hsl(0 0% 0% / 0.25), 0 8px 24px hsl(0 0% 0% / 0.22);
+    --shadow-panel: 0 1px 2px hsl(0 0% 0% / 0.32), 0 12px 32px hsl(0 0% 0% / 0.28);
+    --shadow-floating: 0 18px 60px hsl(0 0% 0% / 0.45);
   }
 }
 
@@ -163,7 +226,46 @@
     @apply border-border;
   }
 
+  html {
+    height: 100%;
+  }
+
   body {
     @apply bg-background text-foreground;
+    min-height: 100dvh;
+  }
+}
+
+@layer utilities {
+  /* Respect iOS/Android home-indicator + notch insets for fixed/sticky chrome */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* Fade the tail of long scroll regions (e.g. sidebar nav) */
+  .scroll-fade-y {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 0.75rem,
+      #000 calc(100% - 0.75rem),
+      transparent 100%
+    );
+  }
+}
+
+/* Honor the user's reduced-motion preference globally */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

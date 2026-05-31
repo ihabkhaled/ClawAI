@@ -11,6 +11,7 @@ import type {
   CostTier,
   ExecutionProfile,
   MessageFeedback,
+  PlanFeature,
   RepairType,
   ReplayOutcomeLabel,
   RoutingMode,
@@ -207,6 +208,16 @@ export type FileListItemProps = {
   onDelete: (id: string) => void;
   onViewChunks: (id: string) => void;
   isDeletePending: boolean;
+};
+
+export type FileRetentionBadgeProps = {
+  retentionExpiresAt: string | null | undefined;
+};
+
+export type UseFileRetentionBadgeReturn = {
+  shouldRender: boolean;
+  label: string;
+  toneClass: string;
 };
 
 // ─── Form validation types ──────────────────────────────────────────────────
@@ -470,6 +481,13 @@ export type FileAttachmentPickerProps = {
   selectedFileIds: string[];
   onChange: (fileIds: string[]) => void;
   disabled?: boolean;
+};
+
+export type FileAttachmentRowProps = {
+  file: UploadedFile;
+  checked: boolean;
+  indented: boolean;
+  onToggle: (fileId: string, checked: boolean) => void;
 };
 
 export type ContextPackSelectorProps = {
@@ -1103,6 +1121,16 @@ export type ParallelResponseCardProps = {
 export type ParallelResultsGridProps = {
   messages: ChatMessage[];
   prompt?: string;
+  t: TranslateFunction;
+};
+
+export type UpgradeCtaBannerProps = {
+  // The locked plan feature the user tried to use (judge, critic, research).
+  // The banner localizes a human-friendly feature label off this value.
+  feature: PlanFeature;
+  // Pure-render callback fired when the user clicks the dismiss button. The
+  // page hook owns the dismissal state.
+  onDismiss: () => void;
   t: TranslateFunction;
 };
 
