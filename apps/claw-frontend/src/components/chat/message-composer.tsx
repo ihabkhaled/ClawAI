@@ -38,7 +38,7 @@ export function MessageComposer({
 
   return (
     <form onSubmit={handleSubmit} className="flex h-full min-h-0 flex-col gap-1">
-      <div className="mb-1 flex shrink-0 flex-wrap items-center gap-2">
+      <div className="mb-1 flex shrink-0 items-center gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-x-visible sm:pb-0 [&>*]:shrink-0">
         <ModelSelector value={selectedModel} onChange={onModelChange} disabled={isPending} />
         <FileAttachmentPicker
           selectedFileIds={selectedFileIds}
