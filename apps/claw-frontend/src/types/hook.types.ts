@@ -1,4 +1,5 @@
 import type { MessageFeedback } from '@/enums';
+import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
 
 import type { SidebarItem } from '../constants/sidebar.constants';
 import type { ResearchProviderKind } from '../enums/research-provider-kind.enum';
@@ -10,11 +11,12 @@ import type {
   ChatThread,
   FallbackAttemptInfo,
   JudgeModelOption,
+  MessageRenderItem,
   StreamLiveState,
   UseVirtualizedMessagesReturn,
   VisibleProgressStage,
 } from './chat.types';
-import type { ModelSelection } from './component.types';
+import type { ModelSelection, VirtualizedMessagesProps } from './component.types';
 import type { CostEnsembleResult as CostEnsembleResultType } from './cost-ensemble.types';
 import type { UploadFileRequest } from './file.types';
 import type { AggregatedHealth } from './health.types';
@@ -226,6 +228,7 @@ export type UseThreadDetailPageReturn = {
   isSending: boolean;
   isDeleting: boolean;
   virtualizedMessages: UseVirtualizedMessagesReturn;
+  virtualizedMessagesProps: VirtualizedMessagesProps;
   threadSettings: UseThreadSettingsReturn;
   handleSend: (
     content: string,
@@ -241,24 +244,6 @@ export type UseThreadDetailPageReturn = {
 export type UseVirtualizedThreadsParams = {
   search?: string;
   showArchived?: boolean;
-};
-
-// ─── Sticky-bottom auto-scroll hook ────────────────────────────────────────
-// Used by the chat thread message list to follow streaming tokens only when
-// the user is already at (or very near) the bottom of the scroll container.
-// `contentSignal` is anything that changes when content grows (e.g. the
-// concatenation of messages.length and the streaming text length); the hook
-// re-evaluates the scroll position whenever it changes.
-export type UseStickyBottomScrollParams = {
-  contentSignal: unknown;
-  threshold?: number;
-};
-
-export type UseStickyBottomScrollReturn = {
-  scrollRef: React.RefObject<HTMLDivElement | null>;
-  sentinelRef: React.RefObject<HTMLDivElement | null>;
-  isAtBottom: boolean;
-  scrollToBottom: (behavior?: ScrollBehavior) => void;
 };
 
 // ─── Common hook types ──────────────────────────────────────────────────────
@@ -519,4 +504,77 @@ export type UseResearchProvidersPageReturn = {
   handleSubmit: () => Promise<void>;
   handleDelete: (id: string) => void;
   handleTest: (id: string) => void;
+};
+
+// ─── Virtualized messages controller / streaming follow ─────────────────────
+
+// Inputs to useVirtualizedMessagesController. The controller composes
+// useFollowStreamingTokens with the Virtuoso wiring callbacks and produces
+// the flat prop bag (`VirtualizedMessagesProps`) the .tsx spreads.
+export type UseVirtualizedMessagesControllerParams = {
+  messages: ChatMessage[];
+  isLoading: boolean;
+  isFetchingPreviousPage: boolean;
+  hasPreviousPage: boolean;
+  firstItemIndex: number;
+  isWaitingForResponse: boolean;
+  fallbackAttempts: FallbackAttemptInfo[];
+  streamError: string | null;
+  judgeEvaluating?: boolean;
+  executingModel?: string | null;
+  judgeModel?: string | null;
+  progressStages: VisibleProgressStage[];
+  currentStageLabel: string | null;
+  streamLive?: StreamLiveState;
+  onCancelStream?: () => void;
+  isCancellingStream?: boolean;
+  onStartReached: () => void;
+  onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
+  onRegenerate: (messageId: string) => void;
+  // i18n surface forwarded into sub-components.
+  loadingLabel: string;
+  emptyLabel: string;
+  jumpToLatestLabelKey: string;
+  t: TranslateFunction;
+};
+
+export type UseVirtualizedMessagesControllerReturn = {
+  // Display states the .tsx renders directly.
+  isLoading: boolean;
+  isEmpty: boolean;
+  loadingLabel: string;
+  emptyLabel: string;
+  // Virtuoso wiring.
+  virtuosoRef: React.Ref<VirtuosoHandle>;
+  renderItems: MessageRenderItem[];
+  itemContent: (index: number, item: MessageRenderItem) => React.ReactElement;
+  headerContent: () => React.ReactElement | null;
+  footerContent: () => React.ReactElement | null;
+  handleFollowOutput: FollowOutputCallback;
+  onAtBottomStateChange: (atBottom: boolean) => void;
+  handleStartReached: () => void;
+  initialTopMostItemIndex: number;
+  increaseViewportBy: { top: number; bottom: number };
+  firstItemIndex: number;
+  // Jump-to-latest pill.
+  showJumpToLatest: boolean;
+  onJumpToLatest: () => void;
+  // Forwarded so the .tsx can spread a single prop bag onto
+  // <VirtualizedMessages> without re-wiring i18n.
+  t: TranslateFunction;
+};
+
+// useFollowStreamingTokens — watches the last message's content length plus
+// the sticky-bottom state, and imperatively scrolls Virtuoso to the last
+// row when the assistant's tokens are appended in place during streaming.
+//
+// Virtuoso's native followOutput only triggers when the messages-array length
+// changes; it cannot detect intra-row content growth. This hook bridges that
+// gap.
+export type UseFollowStreamingTokensParams = {
+  virtuosoRef: React.RefObject<VirtuosoHandle | null>;
+  isAtBottom: boolean;
+  lastMessageId: string | null;
+  lastContentLength: number;
+  lastIndex: number;
 };

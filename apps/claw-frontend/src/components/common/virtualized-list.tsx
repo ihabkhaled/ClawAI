@@ -1,7 +1,6 @@
 'use client';
 
-import { Virtuoso } from 'react-virtuoso';
-
+import { Virtuoso } from '@/lib/virtuoso';
 import type { VirtualizedListProps } from '@/types';
 
 export function VirtualizedList<T>({

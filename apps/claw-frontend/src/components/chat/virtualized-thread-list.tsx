@@ -2,10 +2,10 @@
 
 import { Loader2 } from 'lucide-react';
 import { useCallback } from 'react';
-import { Virtuoso } from 'react-virtuoso';
 
 import { ThreadListItem } from '@/components/chat/thread-list-item';
 import { useTranslation } from '@/lib/i18n';
+import { Virtuoso } from '@/lib/virtuoso';
 import type { VirtualizedThreadListProps } from '@/types';
 
 export function VirtualizedThreadList({

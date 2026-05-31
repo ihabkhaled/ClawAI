@@ -20,6 +20,7 @@ import type { ConsensusConfidenceLevel } from '@/enums/consensus-confidence-leve
 import type { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { WorkspaceConnectorStatus } from '@/enums/workspace-connector-status.enum';
+import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
 import type { TranslateFunction } from '@/types/i18n.types';
 import type {
   ResearchEvidenceBundle,
@@ -41,6 +42,7 @@ import type {
   ChatThread,
   FallbackAttemptInfo,
   JudgeModelOption,
+  MessageRenderItem,
   StreamLiveState,
   StreamMetrics,
   StreamStageTimings,
@@ -91,8 +93,8 @@ import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './
 import type { ReplayBatchResult, ReplayResult } from './replay.types';
 import type { RoleMemberResult, RolePackResult } from './role-pack.types';
 import type { CreatePolicyRequest, RoutingDecision, RoutingPolicy } from './routing.types';
-import type { RuntimeProgressMetrics } from './runtime-progress.types';
 import type { ClawRuntimeProgressEnvelope } from './runtime-progress-envelope.types';
+import type { RuntimeProgressMetrics } from './runtime-progress.types';
 import type { SlackMessageMetadata } from './slack.types';
 import type { PullRequestMetadata } from './source-control.types';
 import type { DecompositionResultState, SubTaskResult } from './task-decomposition.types';
@@ -629,12 +631,56 @@ export type MessagesContentProps = {
   onRegenerate: (messageId: string) => void;
 };
 
+// Strict pure-render props for VirtualizedMessages. After the strict-TSX
+// refactor (2026-05-31) the component takes a flat prop bag produced by
+// useVirtualizedMessagesController so the .tsx file calls ZERO hooks.
+//
+// The header / footer / item render callbacks are produced by the controller
+// hook (which delegates to the three new pure sub-components) so the .tsx
+// only forwards them as-is to Virtuoso.
 export type VirtualizedMessagesProps = {
-  messages: ChatMessage[];
+  // Display states the .tsx renders directly.
   isLoading: boolean;
+  isEmpty: boolean;
+  loadingLabel: string;
+  emptyLabel: string;
+  // Virtuoso wiring (controller-owned).
+  virtuosoRef: React.Ref<VirtuosoHandle>;
+  renderItems: MessageRenderItem[];
+  itemContent: (index: number, item: MessageRenderItem) => React.ReactElement;
+  headerContent: () => React.ReactElement | null;
+  footerContent: () => React.ReactElement | null;
+  handleFollowOutput: FollowOutputCallback;
+  onAtBottomStateChange: (atBottom: boolean) => void;
+  handleStartReached: () => void;
+  firstItemIndex: number;
+  initialTopMostItemIndex: number;
+  increaseViewportBy: { top: number; bottom: number };
+  // Jump-to-latest pill.
+  showJumpToLatest: boolean;
+  onJumpToLatest: () => void;
+  t: TranslateFunction;
+};
+
+// Pure-render props for the new VirtualizedMessageItem (single row).
+export type VirtualizedMessageItemProps = {
+  item: MessageRenderItem;
+  onFeedback?: (messageId: string, feedback: MessageFeedback | null) => void;
+  onRegenerate?: (messageId: string) => void;
+  t: TranslateFunction;
+};
+
+// Pure-render props for the header banner that fronts the Virtuoso list.
+// Either renders a "loading older" spinner or a "beginning of conversation"
+// marker depending on the infinite-query state.
+export type VirtualizedMessagesHeaderProps = {
   isFetchingPreviousPage: boolean;
   hasPreviousPage: boolean;
-  firstItemIndex: number;
+  t: TranslateFunction;
+};
+
+// Pure-render props for the footer wrapper around ThinkingIndicator.
+export type VirtualizedMessagesFooterProps = {
   isWaitingForResponse: boolean;
   fallbackAttempts: FallbackAttemptInfo[];
   streamError: string | null;
@@ -646,10 +692,6 @@ export type VirtualizedMessagesProps = {
   streamLive?: StreamLiveState;
   onCancelStream?: () => void;
   isCancellingStream?: boolean;
-  t: TranslateFunction;
-  onStartReached: () => void;
-  onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
-  onRegenerate: (messageId: string) => void;
 };
 
 export type VirtualizedThreadListProps = {

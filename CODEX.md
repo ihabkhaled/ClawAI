@@ -155,6 +155,19 @@ The `typescript` dependency is **aliased** to `@typescript/native-preview@beta`;
 
 Every third-party library MUST be wrapped in `src/common/utilities/<name>.utility.ts`. Services/controllers NEVER import third-party packages directly. If the library changes, only the wrapper file needs updating.
 
+On the frontend the same rule applies: `react-virtuoso` is wrapped at
+`apps/claw-frontend/src/lib/virtuoso.ts` and EVERY consumer (chat, threads,
+common virtualized-list, all tests) imports `Virtuoso` / `VirtuosoHandle` /
+`FollowOutputCallback` from `@/lib/virtuoso`, never from `react-virtuoso`
+directly. As of 2026-05-31, `apps/claw-frontend/src/components/chat/virtualized-messages.tsx`
+is the canonical pure-render TSX example: ZERO hook calls (built-in or
+custom), every Virtuoso prop produced by `useVirtualizedMessagesController`
+and spread in. Token-level auto-scroll during streaming is handled by the
+new `useFollowStreamingTokens` hook — Virtuoso's native `followOutput` only
+fires on array-length changes, so the hook watches the last message's
+content length and imperatively calls `scrollToIndex({ behavior: 'auto',
+align: 'end' })` while the user is pinned to the bottom.
+
 ---
 
 ## ESLint Rules (Enforced Across All Services)

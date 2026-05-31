@@ -41,7 +41,8 @@ Controller hooks orchestrate multiple domain hooks for a specific page. Each pag
 | Hook                       | File                                        | Composes                                                     |
 | -------------------------- | ------------------------------------------- | ------------------------------------------------------------ |
 | `useChatPage`              | `hooks/chat/use-chat-page.ts`               | useVirtualizedThreads, useCreateThread, usePinThread, useArchiveThread, useDebounce |
-| `useThreadDetailPage`      | `hooks/chat/use-thread-detail-page.ts`      | useThreadDetail, useSendMessage, useChatStream, useVirtualizedMessages, useThreadSettings |
+| `useThreadDetailPage`      | `hooks/chat/use-thread-detail-page.ts`      | useThreadDetail, useSendMessage, useChatStream, useVirtualizedMessages, useThreadSettings, useVirtualizedMessagesController |
+| `useVirtualizedMessagesController` | `hooks/chat/use-virtualized-messages-controller.ts` | useFollowStreamingTokens + virtuosoRef/isAtBottom/itemContent/headerContent/footerContent — produces the flat prop bag the pure-render `<VirtualizedMessages>` spreads in. |
 | `useConnectorsPage`        | `hooks/connectors/use-connectors-page.ts`   | useConnectors, useCreateConnector, useDeleteConnector, useConnectorFormState |
 | `useConnectorDetailPage`   | `hooks/connectors/use-connector-detail-page.ts` | useConnectorDetail, useUpdateConnector, useSyncConnector, useTestConnector |
 | `useLocalModelsPage`       | `hooks/ollama/use-local-models-page.ts`     | useLocalModels, usePullModel, useAssignRole |
@@ -142,6 +143,7 @@ Each wraps a single `useMutation` call with `onSuccess` cache invalidation.
 | `useUserTableState`         | admin      | User table filters and selection              |
 | `useImageErrorState`        | chat       | Image loading error handling                  |
 | `useImageGenerationBubbleState` | chat    | Image generation progress in message bubble   |
+| `useFollowStreamingTokens`   | chat       | Watches last-message content length + isAtBottom and imperatively `scrollToIndex({ behavior: 'auto', align: 'end' })` so Virtuoso follows in-place token growth (which the native `followOutput` cannot detect). |
 
 ---
 

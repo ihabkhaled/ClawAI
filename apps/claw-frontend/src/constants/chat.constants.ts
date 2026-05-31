@@ -33,6 +33,12 @@ export const VIRTUOSO_START_INDEX = 1_000_000;
 // bubble; anything more would pin too eagerly when the user is reading.
 export const STICKY_BOTTOM_THRESHOLD_PX = 80;
 
+// Virtuoso `increaseViewportBy` for the VirtualizedMessages list. Pre-renders
+// extra rows above so scrolling back to read recent history feels instant,
+// and a smaller window below so the streaming footer + ThinkingIndicator
+// stay mounted while the assistant types.
+export const VIRTUALIZED_MESSAGES_VIEWPORT_BUFFER = { top: 1200, bottom: 200 } as const;
+
 // ─── RichPromptTextarea (shared chat/compare prompt input) ──────────────────
 // Default row bounds for the shared rich prompt textarea. The component
 // auto-grows from RICH_PROMPT_DEFAULT_MIN_ROWS up to RICH_PROMPT_DEFAULT_MAX_ROWS

@@ -20,35 +20,19 @@ import { useResizableComposer } from '@/hooks/chat/use-resizable-composer';
 import { useThreadDetailPage } from '@/hooks/chat/use-thread-detail-page';
 import { useTranslation } from '@/lib/i18n/use-translation';
 
-export default function ThreadDetailPage() {
+export default function ThreadDetailPage(): React.ReactElement {
   const params = useParams<{ threadId: string }>();
   const threadId = params.threadId ?? '';
   const { t } = useTranslation();
 
   const {
     thread,
-    messages,
-    isLoadingThread,
-    isLoadingMessages,
-    isWaitingForResponse,
-    fallbackAttempts,
-    streamError,
-    judgeEvaluating,
-    executingModel,
-    judgeModel,
-    progressStages,
-    currentStageLabel,
-    streamLive,
-    cancelStream,
-    isCancellingStream,
-    isSending,
     isDeleting,
-    virtualizedMessages,
+    isSending,
     threadSettings,
+    virtualizedMessagesProps,
     handleSend,
     handleDelete,
-    handleFeedback,
-    handleRegenerate,
   } = useThreadDetailPage({ threadId });
 
   const editableTitle = useEditableTitle(threadId, thread?.title ?? undefined);
@@ -190,28 +174,7 @@ export default function ThreadDetailPage() {
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
         <div className="min-h-0 flex-1 overflow-hidden">
-          <VirtualizedMessages
-            messages={messages}
-            isLoading={isLoadingThread || isLoadingMessages}
-            isFetchingPreviousPage={virtualizedMessages.isFetchingPreviousPage}
-            hasPreviousPage={virtualizedMessages.hasPreviousPage}
-            firstItemIndex={virtualizedMessages.firstItemIndex}
-            isWaitingForResponse={isWaitingForResponse}
-            fallbackAttempts={fallbackAttempts}
-            streamError={streamError}
-            judgeEvaluating={judgeEvaluating}
-            executingModel={executingModel}
-            judgeModel={judgeModel}
-            progressStages={progressStages}
-            currentStageLabel={currentStageLabel}
-            streamLive={streamLive}
-            onCancelStream={cancelStream}
-            isCancellingStream={isCancellingStream}
-            t={t}
-            onStartReached={virtualizedMessages.fetchPreviousPage}
-            onFeedback={handleFeedback}
-            onRegenerate={handleRegenerate}
-          />
+          <VirtualizedMessages {...virtualizedMessagesProps} />
         </div>
 
         <div className="relative shrink-0 border-t" style={{ height: composerHeight }}>

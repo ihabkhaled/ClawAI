@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { type MessageFeedback, RoutingMode } from '@/enums';
 import { ResearchMode } from '@/enums/research-mode.enum';
+import { useTranslation } from '@/lib/i18n/use-translation';
 import type {
   ModelSelection,
   ResearchOptions,
@@ -17,10 +18,12 @@ import { useRegenerateMessage } from './use-regenerate-message';
 import { useSendMessage } from './use-send-message';
 import { useThreadDetail } from './use-thread-detail';
 import { useThreadSettings } from './use-thread-settings';
+import { useVirtualizedMessagesController } from './use-virtualized-messages-controller';
 
 export const useThreadDetailPage = ({
   threadId,
 }: UseThreadDetailPageParams): UseThreadDetailPageReturn => {
+  const { t } = useTranslation();
   const {
     thread,
     messages,
@@ -126,6 +129,35 @@ export const useThreadDetailPage = ({
     deleteThread(threadId);
   }, [threadId, deleteThread]);
 
+  // Compose the virtualized-messages controller so the page TSX can spread a
+  // single prop bag onto <VirtualizedMessages> instead of hand-wiring 18
+  // props. The .tsx never calls a hook itself.
+  const virtualizedMessagesProps = useVirtualizedMessagesController({
+    messages,
+    isLoading: isLoadingThread || isLoadingMessages,
+    isFetchingPreviousPage: virtualizedMessages.isFetchingPreviousPage,
+    hasPreviousPage: virtualizedMessages.hasPreviousPage,
+    firstItemIndex: virtualizedMessages.firstItemIndex,
+    isWaitingForResponse,
+    fallbackAttempts,
+    streamError,
+    judgeEvaluating,
+    executingModel,
+    judgeModel,
+    progressStages,
+    currentStageLabel,
+    streamLive,
+    onCancelStream: cancelStream,
+    isCancellingStream,
+    onStartReached: virtualizedMessages.fetchPreviousPage,
+    onFeedback: handleFeedback,
+    onRegenerate: handleRegenerate,
+    loadingLabel: t('chat.loadingMessages'),
+    emptyLabel: t('chat.noMessagesYet'),
+    jumpToLatestLabelKey: 'chat.jumpToLatest',
+    t,
+  });
+
   return {
     thread,
     messages,
@@ -145,6 +177,7 @@ export const useThreadDetailPage = ({
     isSending,
     isDeleting,
     virtualizedMessages,
+    virtualizedMessagesProps,
     threadSettings,
     handleSend,
     handleDelete,
