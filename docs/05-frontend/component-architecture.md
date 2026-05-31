@@ -73,6 +73,26 @@ export default function ChatPage(): ReactElement {
 5. No data fetching or API calls
 6. Only default exports (required by Next.js App Router)
 
+### Page Shell Pattern (for complex pages)
+
+When a page needs more than a handful of children, build a dedicated
+**pure-render shell component** (`src/components/<feature>/<feature>-shell.tsx`)
+and have the page render exactly `<FeatureShell {...shellProps} />`. The
+controller hook then composes whatever sub-hooks it needs (data layer,
+title-editing, plan-features, in-thread compare, etc.) and assembles a
+single `shellProps` bag. Two examples in the codebase:
+
+- `apps/claw-frontend/src/app/(portal)/chat/[threadId]/page.tsx` →
+  `useThreadDetailPage()` → `<ChatThreadShell {...shellProps} />`. The
+  controller composes `useParams`, `useTranslation`, `useThreadDataController`
+  (which itself composes 8 chat hooks), `useEditableTitle`,
+  `useResizableComposer`, `usePlanFeatures`, and `useInThreadCompare`.
+- `apps/claw-frontend/src/components/chat/virtualized-messages.tsx` is a
+  ZERO-hook pure render driven by `useVirtualizedMessagesController`.
+
+This keeps the .tsx well under the lint-mandated "ONE controller hook"
+ceiling no matter how many small UI hooks the page needs.
+
 ---
 
 ## 3. Controller Hook Pattern

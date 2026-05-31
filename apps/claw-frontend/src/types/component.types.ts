@@ -47,6 +47,7 @@ import type {
   StreamMetrics,
   StreamStageTimings,
   StreamUsage,
+  UseEditableTitleReturn,
   VisibleProgressStage,
 } from './chat.types';
 import type { ConfluencePageMetadata } from './confluence.types';
@@ -1185,6 +1186,46 @@ export type InThreadComparePanelProps = {
   selectedFileIds: string[];
   onSelectedFileIdsChange: (ids: string[]) => void;
   t: TranslateFunction;
+};
+
+// ─── Chat thread page shell ─────────────────────────────────────────────────
+
+// Single flat prop bag the page TSX spreads onto <ChatThreadShell />. Built
+// by useThreadDetailPage (the lone controller hook the page is allowed to
+// call). The shell renders header / in-thread compare / thread settings /
+// virtualized messages / composer — all stateless, props-driven.
+export type ChatThreadShellProps = {
+  // Bootstrap.
+  threadId: string;
+  isLoadingPlaceholder: boolean;
+  loadingLabel: string;
+  // Header.
+  title: string;
+  thread: ChatThread | null;
+  editableTitle: UseEditableTitleReturn;
+  canCompare: boolean;
+  compareToggleOpen: () => void;
+  compareIsOpen: boolean;
+  threadSettingsOpen: boolean;
+  threadSettingsToggleOpen: () => void;
+  isDeleting: boolean;
+  handleDelete: () => void;
+  backToThreadsHref: string;
+  backToThreadsLabel: string;
+  threadSettingsLabel: string;
+  deleteLabel: string;
+  compareLabel: string;
+  // In-thread compare panel (only rendered when compareIsOpen && canCompare).
+  inThreadComparePanelProps: InThreadComparePanelProps;
+  // Thread settings card (only rendered when threadSettingsOpen).
+  threadSettingsProps: ThreadSettingsProps;
+  // Virtualized messages.
+  virtualizedMessagesProps: VirtualizedMessagesProps;
+  // Composer + resize handle.
+  composerHeight: number;
+  onResizeHandleMouseDown: (e: React.MouseEvent) => void;
+  resizeAriaLabel: string;
+  composerProps: MessageComposerProps;
 };
 
 // ─── Escalation Chain component props ───────────────────────────────────────

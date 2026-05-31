@@ -16,7 +16,11 @@ import type {
   UseVirtualizedMessagesReturn,
   VisibleProgressStage,
 } from './chat.types';
-import type { ModelSelection, VirtualizedMessagesProps } from './component.types';
+import type {
+  ChatThreadShellProps,
+  ModelSelection,
+  VirtualizedMessagesProps,
+} from './component.types';
 import type { CostEnsembleResult as CostEnsembleResultType } from './cost-ensemble.types';
 import type { UploadFileRequest } from './file.types';
 import type { AggregatedHealth } from './health.types';
@@ -178,6 +182,43 @@ export type UseThreadDetailPageParams = {
   threadId: string;
 };
 
+export type UseThreadDataControllerParams = {
+  threadId: string;
+  t: TranslateFunction;
+};
+
+export type UseThreadDataControllerReturn = {
+  thread: ChatThread | null;
+  messages: ChatMessage[];
+  isLoadingThread: boolean;
+  isLoadingMessages: boolean;
+  isWaitingForResponse: boolean;
+  fallbackAttempts: FallbackAttemptInfo[];
+  streamError: string | null;
+  judgeEvaluating: boolean;
+  executingModel: string | null;
+  judgeModel: string | null;
+  progressStages: VisibleProgressStage[];
+  currentStageLabel: string | null;
+  streamLive: StreamLiveState;
+  cancelStream: () => void;
+  isCancellingStream: boolean;
+  isSending: boolean;
+  isDeleting: boolean;
+  virtualizedMessages: UseVirtualizedMessagesReturn;
+  virtualizedMessagesProps: VirtualizedMessagesProps;
+  threadSettings: UseThreadSettingsReturn;
+  handleSend: (
+    content: string,
+    modelSelection?: ModelSelection,
+    fileIds?: string[],
+    research?: ResearchOptions,
+  ) => void;
+  handleDelete: () => void;
+  handleFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
+  handleRegenerate: (messageId: string) => void;
+};
+
 export type UseThreadSettingsReturn = {
   isOpen: boolean;
   toggleOpen: () => void;
@@ -209,36 +250,13 @@ export type UseThreadSettingsReturn = {
   isPending: boolean;
 };
 
+// Return shape of the page-bootstrap controller hook. The .tsx renders a
+// single <ChatThreadShell {...shellProps} /> with this prop bag — see
+// `apps/claw-frontend/CLAUDE.md` rule 12: page TSX may call EXACTLY ONE
+// controller hook. The shellProps bag carries everything the shell needs
+// (header / messages / composer / in-thread compare / thread settings).
 export type UseThreadDetailPageReturn = {
-  thread: ChatThread | null;
-  messages: ChatMessage[];
-  isLoadingThread: boolean;
-  isLoadingMessages: boolean;
-  isWaitingForResponse: boolean;
-  fallbackAttempts: FallbackAttemptInfo[];
-  streamError: string | null;
-  judgeEvaluating: boolean;
-  executingModel: string | null;
-  judgeModel: string | null;
-  progressStages: VisibleProgressStage[];
-  currentStageLabel: string | null;
-  streamLive: StreamLiveState;
-  cancelStream: () => void;
-  isCancellingStream: boolean;
-  isSending: boolean;
-  isDeleting: boolean;
-  virtualizedMessages: UseVirtualizedMessagesReturn;
-  virtualizedMessagesProps: VirtualizedMessagesProps;
-  threadSettings: UseThreadSettingsReturn;
-  handleSend: (
-    content: string,
-    modelSelection?: ModelSelection,
-    fileIds?: string[],
-    research?: ResearchOptions,
-  ) => void;
-  handleDelete: () => void;
-  handleFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
-  handleRegenerate: (messageId: string) => void;
+  shellProps: ChatThreadShellProps;
 };
 
 export type UseVirtualizedThreadsParams = {

@@ -168,6 +168,16 @@ fires on array-length changes, so the hook watches the last message's
 content length and imperatively calls `scrollToIndex({ behavior: 'auto',
 align: 'end' })` while the user is pinned to the bottom.
 
+Page shell pattern (2026-05-31): when a page would otherwise have to call
+more than one hook, build a pure-render shell component (e.g.
+`ChatThreadShell` at `apps/claw-frontend/src/components/chat/chat-thread-shell.tsx`)
+and have the .tsx render exactly `<FeatureShell {...shellProps} />`. The
+controller hook composes everything — `/chat/[threadId]/page.tsx` calls only
+`useThreadDetailPage()`, which internally composes `useParams`,
+`useTranslation`, `useThreadDataController`, `useEditableTitle`,
+`useResizableComposer`, `usePlanFeatures`, `useInThreadCompare` and returns
+a single `shellProps` bag.
+
 ---
 
 ## ESLint Rules (Enforced Across All Services)

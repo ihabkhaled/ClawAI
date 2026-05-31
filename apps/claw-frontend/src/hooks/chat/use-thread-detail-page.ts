@@ -1,187 +1,132 @@
-import { useCallback } from 'react';
+'use client';
 
-import { type MessageFeedback, RoutingMode } from '@/enums';
-import { ResearchMode } from '@/enums/research-mode.enum';
+import { useParams } from 'next/navigation';
+
+import { ROUTES } from '@/constants';
+import { PlanFeature } from '@/enums';
+import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
+import { useEditableTitle } from '@/hooks/chat/use-editable-title';
+import { useInThreadCompare } from '@/hooks/chat/use-in-thread-compare';
+import { useResizableComposer } from '@/hooks/chat/use-resizable-composer';
+import { useThreadDataController } from '@/hooks/chat/use-thread-data-controller';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type {
-  ModelSelection,
-  ResearchOptions,
-  UseThreadDetailPageParams,
+  ChatThreadShellProps,
   UseThreadDetailPageReturn,
 } from '@/types';
-import { logger } from '@/utilities';
 
-import { useCancelStream } from './use-cancel-stream';
-import { useDeleteThread } from './use-delete-thread';
-import { useMessageFeedback } from './use-message-feedback';
-import { useRegenerateMessage } from './use-regenerate-message';
-import { useSendMessage } from './use-send-message';
-import { useThreadDetail } from './use-thread-detail';
-import { useThreadSettings } from './use-thread-settings';
-import { useVirtualizedMessagesController } from './use-virtualized-messages-controller';
-
-export const useThreadDetailPage = ({
-  threadId,
-}: UseThreadDetailPageParams): UseThreadDetailPageReturn => {
+// Page-bootstrap controller for /chat/[threadId]. The .tsx may call EXACTLY
+// ONE hook (this one). Composes useParams + useTranslation + the data
+// controller + four small UI hooks and returns a single shell-props bag.
+export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
+  const params = useParams<{ threadId: string }>();
+  const threadId = params.threadId ?? '';
   const { t } = useTranslation();
-  const {
-    thread,
-    messages,
-    isLoadingThread,
-    isLoadingMessages,
-    isWaitingForResponse,
-    startWaitingForResponse,
-    fallbackAttempts,
-    streamError,
-    judgeEvaluating,
-    executingModel,
-    judgeModel,
-    progressStages,
-    currentStageLabel,
-    streamLive,
-    virtualizedMessages,
-  } = useThreadDetail(threadId);
-
-  const { cancel: cancelStream, isCancelling: isCancellingStream } = useCancelStream(threadId);
-  const { sendMessage, isPending: isSending } = useSendMessage(threadId, startWaitingForResponse);
-  const { deleteThread, isPending: isDeleting } = useDeleteThread();
-  const { setFeedback } = useMessageFeedback(threadId);
-  const { regenerate } = useRegenerateMessage(threadId, startWaitingForResponse);
-  const threadSettings = useThreadSettings(thread);
-
-  const handleSend = useCallback(
-    (
-      content: string,
-      modelSelection?: ModelSelection,
-      fileIds?: string[],
-      research?: ResearchOptions,
-    ): void => {
-      logger.info({
-        component: 'chat',
-        action: 'user-send',
-        message: 'User sending message',
-        details: {
-          threadId,
-          contentLength: content.length,
-          hasModel: !!modelSelection,
-          fileCount: fileIds?.length ?? 0,
-          researchMode: research?.mode ?? 'OFF',
-        },
-      });
-      // Flip the waiting state immediately so the ThinkingIndicator appears
-      // before the POST round-trip completes — otherwise the user sees no
-      // feedback for 200–500ms after clicking Send. The mutation's onSuccess
-      // still fires startWaitingForResponse() (which is idempotent) and
-      // refreshes the message list.
-      startWaitingForResponse();
-      sendMessage({
-        threadId,
-        content,
-        ...(modelSelection
-          ? {
-              routingMode: RoutingMode.MANUAL_MODEL,
-              provider: modelSelection.provider,
-              model: modelSelection.model,
-              modelDisplayName: modelSelection.displayName,
-            }
-          : {}),
-        ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
-        ...(research && research.mode !== ResearchMode.OFF
-          ? {
-              researchMode: research.mode,
-              ...(research.providerId !== undefined
-                ? { researchProviderId: research.providerId }
-                : {}),
-            }
-          : {}),
-      });
-    },
-    [threadId, sendMessage, startWaitingForResponse],
-  );
-
-  const handleRegenerate = useCallback(
-    (messageId: string): void => {
-      logger.info({
-        component: 'chat',
-        action: 'user-regenerate',
-        message: 'User regenerating message',
-        details: { threadId, messageId },
-      });
-      regenerate(messageId);
-    },
-    [regenerate, threadId],
-  );
-
-  const handleFeedback = useCallback(
-    (messageId: string, feedback: MessageFeedback | null): void => {
-      setFeedback({ messageId, feedback });
-    },
-    [setFeedback],
-  );
-
-  const handleDelete = useCallback((): void => {
-    logger.info({
-      component: 'chat',
-      action: 'user-delete-thread',
-      message: 'User deleting thread',
-      details: { threadId },
-    });
-    deleteThread(threadId);
-  }, [threadId, deleteThread]);
-
-  // Compose the virtualized-messages controller so the page TSX can spread a
-  // single prop bag onto <VirtualizedMessages> instead of hand-wiring 18
-  // props. The .tsx never calls a hook itself.
-  const virtualizedMessagesProps = useVirtualizedMessagesController({
-    messages,
-    isLoading: isLoadingThread || isLoadingMessages,
-    isFetchingPreviousPage: virtualizedMessages.isFetchingPreviousPage,
-    hasPreviousPage: virtualizedMessages.hasPreviousPage,
-    firstItemIndex: virtualizedMessages.firstItemIndex,
-    isWaitingForResponse,
-    fallbackAttempts,
-    streamError,
-    judgeEvaluating,
-    executingModel,
-    judgeModel,
-    progressStages,
-    currentStageLabel,
-    streamLive,
-    onCancelStream: cancelStream,
-    isCancellingStream,
-    onStartReached: virtualizedMessages.fetchPreviousPage,
-    onFeedback: handleFeedback,
-    onRegenerate: handleRegenerate,
-    loadingLabel: t('chat.loadingMessages'),
-    emptyLabel: t('chat.noMessagesYet'),
-    jumpToLatestLabelKey: 'chat.jumpToLatest',
-    t,
+  const data = useThreadDataController({ threadId, t });
+  const editableTitle = useEditableTitle(threadId, data.thread?.title ?? undefined);
+  const { composerHeight, handleMouseDown } = useResizableComposer();
+  const planFeatures = usePlanFeatures();
+  const compare = useInThreadCompare({
+    threadId,
+    initialJudgeEnabled: data.threadSettings.judgeEnabled,
+    initialJudgeModel: data.threadSettings.judgeModel,
   });
 
-  return {
-    thread,
-    messages,
-    isLoadingThread,
-    isLoadingMessages,
-    isWaitingForResponse,
-    fallbackAttempts,
-    streamError,
-    judgeEvaluating,
-    executingModel,
-    judgeModel,
-    progressStages,
-    currentStageLabel,
-    streamLive,
-    cancelStream,
-    isCancellingStream,
-    isSending,
-    isDeleting,
-    virtualizedMessages,
-    virtualizedMessagesProps,
-    threadSettings,
-    handleSend,
-    handleDelete,
-    handleFeedback,
-    handleRegenerate,
+  const canCompare = planFeatures.has(PlanFeature.ALLOW_COMPARE_MODE);
+  const canJudge = planFeatures.has(PlanFeature.ALLOW_JUDGE_MODE);
+  const canResearch = planFeatures.has(PlanFeature.ALLOW_RESEARCH_MODE);
+  const canCritic = planFeatures.has(PlanFeature.ALLOW_CRITIC_REVIEW);
+  const title = data.thread?.title ?? t('chat.untitled');
+
+  const shellProps: ChatThreadShellProps = {
+    threadId,
+    isLoadingPlaceholder: !threadId,
+    loadingLabel: t('chat.loadingThread'),
+    title,
+    thread: data.thread,
+    editableTitle,
+    canCompare,
+    compareToggleOpen: compare.toggleOpen,
+    compareIsOpen: compare.isOpen,
+    threadSettingsOpen: data.threadSettings.isOpen,
+    threadSettingsToggleOpen: data.threadSettings.toggleOpen,
+    isDeleting: data.isDeleting,
+    handleDelete: data.handleDelete,
+    backToThreadsHref: ROUTES.CHAT,
+    backToThreadsLabel: t('chat.backToThreads'),
+    threadSettingsLabel: t('chat.threadSettings'),
+    deleteLabel: t('common.delete'),
+    compareLabel: t('compare.title'),
+    inThreadComparePanelProps: {
+      selectedModels: compare.selectedModels,
+      onToggleModel: compare.handleToggleModel,
+      prompt: compare.prompt,
+      onPromptChange: compare.setPrompt,
+      onSend: compare.handleSend,
+      onClose: compare.toggleOpen,
+      result: compare.result,
+      isPending: compare.isPending,
+      canSend: compare.canSend,
+      judgeEnabled: compare.judgeEnabled,
+      onJudgeEnabledChange: compare.setJudgeEnabled,
+      judgeModel: compare.judgeModel,
+      onJudgeModelChange: compare.setJudgeModel,
+      judgeModelOptions: compare.judgeModelOptions,
+      judgeModelOptionsLoading: compare.isJudgeModelOptionsLoading,
+      criticEnabled: compare.criticEnabled,
+      onCriticEnabledChange: compare.setCriticEnabled,
+      criticModel: compare.criticModel,
+      onCriticModelChange: compare.setCriticModel,
+      researchMode: compare.researchMode,
+      onResearchModeChange: compare.setResearchMode,
+      allowJudgeMode: canJudge,
+      allowCriticReview: canCritic,
+      allowResearchMode: canResearch,
+      selectedFileIds: compare.selectedFileIds,
+      onSelectedFileIdsChange: compare.setSelectedFileIds,
+      t,
+    },
+    threadSettingsProps: {
+      t,
+      systemPrompt: data.threadSettings.systemPrompt,
+      onSystemPromptChange: data.threadSettings.setSystemPrompt,
+      temperature: data.threadSettings.temperature,
+      onTemperatureChange: data.threadSettings.setTemperature,
+      maxTokens: data.threadSettings.maxTokens,
+      onMaxTokensChange: data.threadSettings.setMaxTokens,
+      selectedModel: data.threadSettings.selectedModel,
+      onModelChange: data.threadSettings.handleModelChange,
+      contextPackIds: data.threadSettings.contextPackIds,
+      onContextPackIdsChange: data.threadSettings.setContextPackIds,
+      judgeEnabled: data.threadSettings.judgeEnabled,
+      onJudgeEnabledChange: data.threadSettings.setJudgeEnabled,
+      judgeModel: data.threadSettings.judgeModel,
+      onJudgeModelChange: data.threadSettings.setJudgeModel,
+      judgeModelOptions: data.threadSettings.judgeModelOptions,
+      allowJudgeMode: canJudge,
+      qualityThreshold: data.threadSettings.qualityThreshold,
+      onQualityThresholdChange: data.threadSettings.setQualityThreshold,
+      maxReRouteAttempts: data.threadSettings.maxReRouteAttempts,
+      onMaxReRouteAttemptsChange: data.threadSettings.setMaxReRouteAttempts,
+      useMemory: data.threadSettings.useMemory,
+      onUseMemoryChange: data.threadSettings.setUseMemory,
+      useContext: data.threadSettings.useContext,
+      onUseContextChange: data.threadSettings.setUseContext,
+      onSave: data.threadSettings.handleSave,
+      isPending: data.threadSettings.isPending,
+    },
+    virtualizedMessagesProps: data.virtualizedMessagesProps,
+    composerHeight,
+    onResizeHandleMouseDown: handleMouseDown,
+    resizeAriaLabel: t('accessibility.resizeInput'),
+    composerProps: {
+      onSend: data.handleSend,
+      isPending: data.isSending,
+      selectedModel: data.threadSettings.selectedModel,
+      onModelChange: data.threadSettings.handleModelChange,
+      threadId,
+    },
   };
+
+  return { shellProps };
 };
