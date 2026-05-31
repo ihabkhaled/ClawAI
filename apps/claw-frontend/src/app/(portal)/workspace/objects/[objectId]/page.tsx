@@ -12,7 +12,7 @@ export default function WorkspaceObjectDetailPage(): React.ReactElement {
   const ctrl = useWorkspaceObjectDetailPage();
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader
         title={ctrl.t('workspaceObjectDetail.title')}
         description={ctrl.t('workspaceObjectDetail.description')}

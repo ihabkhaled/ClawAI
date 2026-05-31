@@ -18,7 +18,7 @@ export default function RoutingDecisionDetailPage({
   const { decision, isLoading, isError } = useRoutingDecisionDetail(resolvedParams.id, true);
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader
         title={t('decisionDetail.title')}
         description={t('decisionDetail.description')}

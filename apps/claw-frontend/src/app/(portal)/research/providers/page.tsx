@@ -14,7 +14,7 @@ export default function ResearchProvidersPage(): React.ReactElement {
   const ctrl = useResearchProvidersPage();
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader
         title={ctrl.t('research.providers.title')}
         description={ctrl.t('research.providers.description')}

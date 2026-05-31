@@ -56,7 +56,7 @@ export default function ReplayLabPage(): React.ReactElement {
   } = useReplayLabPage();
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader title={t('replay.title')} description={t('replay.description')} />
 
       <ReplayFiltersForm

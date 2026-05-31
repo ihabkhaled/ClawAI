@@ -35,7 +35,7 @@ export default function ConsensusPage() {
   const showEmpty = !isPending && !isPolling && !isSynthesisReady;
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader title={t('consensus.title')} description={t('consensus.description')} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

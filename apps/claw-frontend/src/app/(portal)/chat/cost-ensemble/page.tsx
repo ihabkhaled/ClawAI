@@ -36,7 +36,7 @@ export default function CostEnsemblePage(): React.ReactElement {
   const showEmpty = !isPending && !isPolling && !isCostEnsembleReady && !hasAnyError;
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader title={t('costEnsemble.title')} description={t('costEnsemble.description')} />
 
       <Card>

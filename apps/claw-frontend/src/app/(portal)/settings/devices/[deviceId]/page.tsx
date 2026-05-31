@@ -16,9 +16,9 @@ export default function DeviceDetailPage(): React.ReactElement {
   const page = useDeviceDetailPage(deviceId);
   if (page.isError) {
     return (
-      <div className="flex h-full flex-col">
+      <div>
         <PageHeader title={t('settings.devices.title')} />
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex items-center justify-center py-12">
           <p className="text-sm text-destructive">
             {page.error instanceof Error ? page.error.message : t('agent.loadFailed')}
           </p>
@@ -27,7 +27,7 @@ export default function DeviceDetailPage(): React.ReactElement {
     );
   }
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader title={t('settings.devices.title')} />
       {page.isLoading ? <LoadingSpinner label={t('agent.loading')} /> : null}
       {!page.isLoading && page.device !== null ? (

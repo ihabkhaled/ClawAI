@@ -149,7 +149,7 @@ export default function LocalFrontierCatalogPage(): React.ReactElement {
   };
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
+    <div className="flex flex-col gap-4 p-4">
       <header className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('localFrontier.title')}</h1>

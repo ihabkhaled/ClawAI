@@ -42,9 +42,9 @@ export default function ModelCatalogPage(): React.ReactElement {
 
   if (isError) {
     return (
-      <div className="flex h-full flex-col">
+      <div>
         <PageHeader title={t('catalog.title')} description={t('catalog.description')} />
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex items-center justify-center py-12">
           <p className="text-sm text-destructive">{t('models.loadFailed')}</p>
         </div>
       </div>
@@ -52,7 +52,7 @@ export default function ModelCatalogPage(): React.ReactElement {
   }
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader title={t('catalog.title')} description={t('catalog.description')} />
 
       <CatalogCategoryFilter selectedCategory={category} onSelect={handleCategoryChange} t={t} />

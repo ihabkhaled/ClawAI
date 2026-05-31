@@ -37,7 +37,7 @@ export default function DiscoveryPage(): React.ReactElement {
   } = useDiscoveryPage();
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader title={t('discovery.title')} description={t('discovery.description')} />
 
       <DiscoveryToolbar

@@ -51,9 +51,9 @@ export default function ContextPage() {
 
   if (isError) {
     return (
-      <div className="flex h-full flex-col">
+      <div>
         <PageHeader title={t('context.title')} description={t('context.description')} />
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex items-center justify-center py-12">
           <p className="text-sm text-destructive">{error?.message ?? t('context.loadFailed')}</p>
         </div>
       </div>
@@ -62,7 +62,7 @@ export default function ContextPage() {
 
   if (selectedPackId) {
     return (
-      <div className="flex h-full flex-col">
+      <div>
         <nav
           aria-label="Breadcrumb"
           className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground"
@@ -153,7 +153,7 @@ export default function ContextPage() {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div>
       <PageHeader
         title={t('context.title')}
         description={t('context.description')}

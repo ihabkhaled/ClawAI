@@ -27,9 +27,9 @@ export default function AgentTerminalPage(): React.ReactElement {
 
   if (isError) {
     return (
-      <div className="flex h-full flex-col">
+      <div>
         <PageHeader title={t('agent.terminal')} description={t('agent.terminalDesc')} />
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex items-center justify-center py-12">
           <p className="text-sm text-destructive">
             {error instanceof Error ? error.message : t('agent.loadFailed')}
           </p>
@@ -41,19 +41,17 @@ export default function AgentTerminalPage(): React.ReactElement {
   const total = pendingCommands.length + recentCommands.length;
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader title={t('agent.terminal')} description={t('agent.terminalDesc')} />
 
       {isLoading && <LoadingSpinner label={t('agent.loading')} />}
 
       {!isLoading && total === 0 && (
-        <div className="flex flex-1 items-center justify-center">
-          <EmptyState
-            icon={Terminal}
-            title={t('agent.noCommands')}
-            description={t('agent.noCommandsDesc')}
-          />
-        </div>
+        <EmptyState
+          icon={Terminal}
+          title={t('agent.noCommands')}
+          description={t('agent.noCommandsDesc')}
+        />
       )}
 
       {!isLoading && pendingCommands.length > 0 && (

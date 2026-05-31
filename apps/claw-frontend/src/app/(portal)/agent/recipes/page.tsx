@@ -18,9 +18,9 @@ export default function AgentRecipesPage(): ReactElement {
 
   if (isError) {
     return (
-      <div className="flex h-full flex-col">
+      <div>
         <PageHeader title={t('agent.recipes')} description={t('agent.recipesDesc')} />
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex items-center justify-center py-12">
           <p className="text-sm text-destructive">
             {error instanceof Error ? error.message : t('agent.loadFailed')}
           </p>
@@ -30,7 +30,7 @@ export default function AgentRecipesPage(): ReactElement {
   }
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader
         title={t('agent.recipes')}
         description={t('agent.recipesDesc')}
@@ -40,13 +40,11 @@ export default function AgentRecipesPage(): ReactElement {
       {isLoading && <LoadingSpinner label={t('agent.loading')} />}
 
       {!isLoading && recipes.length === 0 && (
-        <div className="flex flex-1 items-center justify-center">
-          <EmptyState
-            icon={ChefHat}
-            title={t('agent.noRecipes')}
-            description={t('agent.noRecipesDesc')}
-          />
-        </div>
+        <EmptyState
+          icon={ChefHat}
+          title={t('agent.noRecipes')}
+          description={t('agent.noRecipesDesc')}
+        />
       )}
 
       {!isLoading && recipes.length > 0 && (

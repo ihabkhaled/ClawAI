@@ -45,7 +45,7 @@ export default function VerifyPage(): React.ReactElement {
   const showEmpty = !isPending && !isPolling && !isVerifyReady && !hasAnyError;
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader title={t('verify.title')} description={t('verify.description')} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

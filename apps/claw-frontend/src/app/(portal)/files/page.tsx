@@ -33,12 +33,12 @@ export default function FilesPage() {
 
   if (isError) {
     return (
-      <div className="flex h-full flex-col">
+      <div>
         <PageHeader
           title={t('files.title')}
           description={t('files.description')}
         />
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex items-center justify-center py-12">
           <p className="text-sm text-destructive">{error?.message ?? t('files.loadFailed')}</p>
         </div>
       </div>
@@ -46,7 +46,7 @@ export default function FilesPage() {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div>
       <PageHeader
         title={t('files.title')}
         description={t('files.description')}

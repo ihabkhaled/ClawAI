@@ -74,9 +74,9 @@ export default function MemoryPage(): React.ReactElement {
 
   if (isError) {
     return (
-      <div className="flex h-full flex-col">
+      <div>
         <PageHeader title={t('memory.title')} description={t('memory.description')} />
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex items-center justify-center py-12">
           <p className="text-sm text-destructive">{error?.message ?? t('memory.loadFailed')}</p>
         </div>
       </div>
@@ -84,7 +84,7 @@ export default function MemoryPage(): React.ReactElement {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div>
       <PageHeader
         title={t('memory.title')}
         description={t('memory.description')}
@@ -99,7 +99,7 @@ export default function MemoryPage(): React.ReactElement {
       <Tabs
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as MemoryTab)}
-        className="flex flex-1 flex-col gap-4"
+        className="mt-6 flex flex-col gap-4"
       >
         <TabsList className="self-start">
           <TabsTrigger value={MemoryTab.SAVED}>{t('memory.tabSaved')}</TabsTrigger>

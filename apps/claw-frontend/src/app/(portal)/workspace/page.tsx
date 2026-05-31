@@ -35,12 +35,12 @@ export default function WorkspacePage(): React.ReactElement {
 
   if (isError) {
     return (
-      <div className="flex h-full flex-col">
+      <div>
         <PageHeader
           title={t('workspaceConnectors.title')}
           description={t('workspaceConnectors.description')}
         />
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex items-center justify-center py-12">
           <p className="text-sm text-destructive">
             {error instanceof Error ? error.message : t('workspaceConnectors.loadFailed')}
           </p>
@@ -50,7 +50,7 @@ export default function WorkspacePage(): React.ReactElement {
   }
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader
         title={t('workspaceConnectors.title')}
         description={t('workspaceConnectors.overviewDescription')}
@@ -67,21 +67,19 @@ export default function WorkspacePage(): React.ReactElement {
       {isLoading && <LoadingSpinner label={t('workspaceConnectors.loadingConnectors')} />}
 
       {!isLoading && connectors.length === 0 && (
-        <div className="flex flex-1 items-center justify-center">
-          <EmptyState
-            icon={Plug}
-            title={t('workspaceConnectors.noConnectors')}
-            description={t('workspaceConnectors.noConnectorsGuidance')}
-            action={
-              <Button asChild>
-                <Link href={ROUTES.WORKSPACE_APP_CONFIGS}>
-                  <KeyRound className="me-2 size-4" />
-                  {t('workspaceConnectors.goToAppConfigs')}
-                </Link>
-              </Button>
-            }
-          />
-        </div>
+        <EmptyState
+          icon={Plug}
+          title={t('workspaceConnectors.noConnectors')}
+          description={t('workspaceConnectors.noConnectorsGuidance')}
+          action={
+            <Button asChild>
+              <Link href={ROUTES.WORKSPACE_APP_CONFIGS}>
+                <KeyRound className="me-2 size-4" />
+                {t('workspaceConnectors.goToAppConfigs')}
+              </Link>
+            </Button>
+          }
+        />
       )}
 
       {!isLoading && connectors.length > 0 && (

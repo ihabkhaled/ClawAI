@@ -34,19 +34,23 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
        * 2.4.1 (Bypass Blocks). */}
       <SkipToContent />
       <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div
+        className={[
+          'flex flex-1 flex-col overflow-hidden',
+          // On phones, reserve space for the fixed MobileBottomNav AT THE
+          // COLUMN LEVEL (outside the scrollable area). Putting this clearance
+          // on <main>'s padding-bottom let users scroll into a dead band of
+          // pure padding past their content. Margin-bottom here shrinks the
+          // column instead, so the scroll container's bottom edge ALWAYS
+          // matches the last rendered child. Desktop has no bottom nav.
+          'mb-[calc(var(--mobile-bottom-nav-height)+env(safe-area-inset-bottom))] md:mb-0',
+        ].join(' ')}
+      >
         <Topbar />
         <main
           id="main-content"
           tabIndex={-1}
-          className={[
-            'flex-1 overflow-y-auto p-3 sm:p-6 focus-visible:outline-none',
-            // On phones, leave room for the fixed MobileBottomNav (its height
-            // plus the iOS safe-area inset). Desktop has no bottom nav, so the
-            // standard sm:p-6 padding applies.
-            'pb-[calc(var(--mobile-bottom-nav-height)+env(safe-area-inset-bottom))]',
-            'md:pb-6',
-          ].join(' ')}
+          className="flex-1 overflow-y-auto p-3 focus-visible:outline-none sm:p-6"
         >
           <ErrorBoundary>
             <PortalContent>{children}</PortalContent>

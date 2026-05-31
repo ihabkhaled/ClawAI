@@ -25,9 +25,9 @@ export default function AgentCapabilitiesPage(): ReactElement {
 
   if (isError) {
     return (
-      <div className="flex h-full flex-col">
+      <div>
         <PageHeader title={t('agent.capabilities')} description={t('agent.capabilitiesDesc')} />
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex items-center justify-center py-12">
           <p className="text-sm text-destructive">
             {error instanceof Error ? error.message : t('agent.loadFailed')}
           </p>
@@ -39,19 +39,17 @@ export default function AgentCapabilitiesPage(): ReactElement {
   const total = pending.length + recent.length;
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader title={t('agent.capabilities')} description={t('agent.capabilitiesDesc')} />
 
       {isLoading && <LoadingSpinner label={t('agent.loading')} />}
 
       {!isLoading && total === 0 && (
-        <div className="flex flex-1 items-center justify-center">
-          <EmptyState
-            icon={Shield}
-            title={t('agent.noCommands')}
-            description={t('agent.capabilitiesDesc')}
-          />
-        </div>
+        <EmptyState
+          icon={Shield}
+          title={t('agent.noCommands')}
+          description={t('agent.capabilitiesDesc')}
+        />
       )}
 
       {!isLoading && pending.length > 0 && (

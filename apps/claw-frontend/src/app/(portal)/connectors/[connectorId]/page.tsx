@@ -56,7 +56,7 @@ export default function ConnectorDetailPage() {
 
   if (isError || !connector) {
     return (
-      <div className="flex h-full flex-col">
+      <div>
         <PageHeader
           title={t('connectors.connectorDetail')}
           description={t('connectors.connectorNotFound')}
@@ -69,7 +69,7 @@ export default function ConnectorDetailPage() {
             </Button>
           }
         />
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex items-center justify-center py-12">
           <p className="text-sm text-destructive">
             {error?.message ?? t('connectors.loadFailed')}
           </p>
@@ -82,7 +82,7 @@ export default function ConnectorDetailPage() {
   const providerName = PROVIDER_DISPLAY_NAMES[connector.provider] ?? connector.provider;
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader
         title={connector.name}
         description={providerName}

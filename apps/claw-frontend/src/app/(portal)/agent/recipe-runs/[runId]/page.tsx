@@ -22,9 +22,9 @@ export default function RecipeRunDetailPage(): ReactElement {
 
   if (isError) {
     return (
-      <div className="flex h-full flex-col">
+      <div>
         <PageHeader title={t('agent.recipeRunDetail')} description={t('agent.recipeRunDetailDesc')} />
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex items-center justify-center py-12">
           <p className="text-sm text-destructive">
             {error instanceof Error ? error.message : t('agent.loadFailed')}
           </p>
@@ -35,7 +35,7 @@ export default function RecipeRunDetailPage(): ReactElement {
 
   if (isLoading || run === undefined) {
     return (
-      <div className="flex h-full flex-col">
+      <div>
         <PageHeader title={t('agent.recipeRunDetail')} description={t('agent.recipeRunDetailDesc')} />
         <LoadingSpinner label={t('agent.loading')} />
       </div>
@@ -45,7 +45,7 @@ export default function RecipeRunDetailPage(): ReactElement {
   const isTerminal = ['SUCCEEDED', 'FAILED', 'CANCELLED', 'TIMED_OUT'].includes(run.status);
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader
         title={t('agent.recipeRunDetail')}
         description={`${t('agent.runStatus')}: ${run.status}`}

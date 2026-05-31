@@ -13,7 +13,7 @@ export default function WorkspaceConnectorDetailPage(): React.ReactElement {
   const ctrl = useConnectorDetailPage();
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader
         title={ctrl.t('connectorDetail.title')}
         description={ctrl.t('connectorDetail.description')}

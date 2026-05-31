@@ -13,7 +13,7 @@ export default function ConnectDevicePage(): React.ReactElement {
   const page = useConnectDevicePage();
   if (page.pairingCode === null) {
     return (
-      <div className="flex h-full flex-col gap-6">
+      <div className="space-y-6">
         <PageHeader
           title={t('agent.connect.title')}
           description={t('agent.connect.approveDescription')}
@@ -24,7 +24,7 @@ export default function ConnectDevicePage(): React.ReactElement {
   }
   if (page.approvedDeviceId !== null) {
     return (
-      <div className="flex h-full flex-col gap-6">
+      <div className="space-y-6">
         <PageHeader title={t('agent.connect.title')} />
         <PairingEmptyState t={t} kind={PairingEmptyStateKind.SUCCESS} />
       </div>
@@ -32,14 +32,14 @@ export default function ConnectDevicePage(): React.ReactElement {
   }
   if (page.denyStatus === MutationStatus.SUCCESS) {
     return (
-      <div className="flex h-full flex-col gap-6">
+      <div className="space-y-6">
         <PageHeader title={t('agent.connect.title')} />
         <PairingEmptyState t={t} kind={PairingEmptyStateKind.DENIED} />
       </div>
     );
   }
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader
         title={t('agent.connect.title')}
         description={t('agent.connect.approveDescription')}

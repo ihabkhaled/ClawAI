@@ -11,7 +11,7 @@ export default function WorkspaceSearchPage(): React.ReactElement {
   const { query, setQuery, results, isLoading, isError } = useWorkspaceSearchPage();
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader
         title={t('workspaceSearch.title')}
         description={t('workspaceSearch.description')}

@@ -66,7 +66,7 @@ export default function ComparePage() {
   const showEmpty = !isPending && !isPolling && pollingMessages.length === 0;
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader title={t('compare.title')} description={t('compare.description')} />
 
       <DailyTokenIndicator />

@@ -16,7 +16,7 @@ export default function WorkspaceAppConfigsPage(): React.ReactElement {
   const ctrl = useWorkspaceAppConfigsPage();
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader
         title={ctrl.t('workspaceProviders.appConfigs.title')}
         description={ctrl.t('workspaceProviders.appConfigs.description')}

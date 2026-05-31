@@ -39,7 +39,7 @@ export default function RepairPage() {
   const showEmpty = !isPending && !isPolling && !isRepairReady && !hasAnyError;
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader title={t('repair.title')} description={t('repair.description')} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

@@ -44,7 +44,7 @@ export default function RoutingPlaygroundPage(): React.ReactElement {
   } = useRoutingPlaygroundPage();
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader
         title={t('routingPlayground.title')}
         description={t('routingPlayground.description')}

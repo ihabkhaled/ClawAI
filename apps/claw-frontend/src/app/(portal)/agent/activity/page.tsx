@@ -21,9 +21,9 @@ export default function AgentActivityPage(): ReactElement {
 
   if (isError) {
     return (
-      <div className="flex h-full flex-col">
+      <div>
         <PageHeader title={t('agent.activity')} description={t('agent.activityDesc')} />
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex items-center justify-center py-12">
           <p className="text-sm text-destructive">
             {error instanceof Error ? error.message : t('agent.loadFailed')}
           </p>
@@ -37,19 +37,17 @@ export default function AgentActivityPage(): ReactElement {
   const totalRecent = recent.length;
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader title={t('agent.activity')} description={t('agent.activityDesc')} />
 
       {isLoading && <LoadingSpinner label={t('agent.loading')} />}
 
       {!isLoading && totalRecent === 0 && pending.length === 0 && (
-        <div className="flex flex-1 items-center justify-center">
-          <EmptyState
-            icon={Activity}
-            title={t('agent.noCommands')}
-            description={t('agent.activityDesc')}
-          />
-        </div>
+        <EmptyState
+          icon={Activity}
+          title={t('agent.noCommands')}
+          description={t('agent.activityDesc')}
+        />
       )}
 
       {!isLoading && (totalRecent > 0 || pending.length > 0) && (

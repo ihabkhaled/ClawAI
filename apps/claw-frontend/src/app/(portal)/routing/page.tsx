@@ -90,9 +90,9 @@ export default function RoutingPage(): React.ReactElement {
 
   if (isError) {
     return (
-      <div className="flex h-full flex-col">
+      <div>
         <PageHeader title={t('routing.title')} description={t('routing.description')} />
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex items-center justify-center py-12">
           <p className="text-sm text-destructive">{error?.message ?? t('routing.loadFailed')}</p>
         </div>
       </div>
@@ -100,7 +100,7 @@ export default function RoutingPage(): React.ReactElement {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div>
       <PageHeader
         title={t('routing.title')}
         description={t('routing.description')}

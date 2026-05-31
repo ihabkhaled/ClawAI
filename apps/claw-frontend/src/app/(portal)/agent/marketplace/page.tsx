@@ -18,9 +18,9 @@ export default function AgentMarketplacePage(): ReactElement {
 
   if (isError) {
     return (
-      <div className="flex h-full flex-col">
+      <div>
         <PageHeader title={t('agent.marketplace')} description={t('agent.marketplaceDesc')} />
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex items-center justify-center py-12">
           <p className="text-sm text-destructive">
             {error instanceof Error ? error.message : t('agent.loadFailed')}
           </p>
@@ -30,7 +30,7 @@ export default function AgentMarketplacePage(): ReactElement {
   }
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader
         title={t('agent.marketplace')}
         description={t('agent.marketplaceDesc')}
@@ -40,13 +40,11 @@ export default function AgentMarketplacePage(): ReactElement {
       {isLoading && <LoadingSpinner label={t('agent.loading')} />}
 
       {!isLoading && listings.length === 0 && (
-        <div className="flex flex-1 items-center justify-center">
-          <EmptyState
-            icon={Store}
-            title={t('agent.noListings')}
-            description={t('agent.noListingsDesc')}
-          />
-        </div>
+        <EmptyState
+          icon={Store}
+          title={t('agent.noListings')}
+          description={t('agent.noListingsDesc')}
+        />
       )}
 
       {!isLoading && listings.length > 0 && (

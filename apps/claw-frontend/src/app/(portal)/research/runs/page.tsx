@@ -16,7 +16,7 @@ export default function ResearchRunsPage(): React.ReactElement {
   const { runs, isLoading, isError } = useResearchRuns(30);
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader title={t('research.runs.title')} description={t('research.runs.description')} />
       {isLoading ? <LoadingSpinner label={t('common.loading')} /> : null}
       {isError ? (

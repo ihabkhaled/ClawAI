@@ -15,7 +15,7 @@ export default function WorkspaceProvidersPage(): React.ReactElement {
   const { providers, isLoading, isError } = useProviderCatalog();
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader
         title={t('workspaceProviders.catalog.title')}
         description={t('workspaceProviders.catalog.description')}
