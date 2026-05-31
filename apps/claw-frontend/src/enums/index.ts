@@ -130,3 +130,4 @@ export { ComposerControlVariant } from './composer-control-variant.enum';
 export { CopyButtonVariant } from './copy-button-variant.enum';
 export { ScrollDirection } from './scroll-direction.enum';
 export { ActivitySeverity } from './activity-severity.enum';
+export { OrchestrationStageStatus } from './orchestration-stage-status.enum';

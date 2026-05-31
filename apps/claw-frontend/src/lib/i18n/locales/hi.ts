@@ -3301,4 +3301,25 @@ export const hi: TranslationDictionary = {
       },
     },
   },
+  orchestrationStage: {
+    timeline: {
+      title: 'चरण समयरेखा',
+    },
+    status: {
+      pending: 'लंबित',
+      active: 'सक्रिय',
+      done: 'पूर्ण',
+      failed: 'विफल',
+    },
+  },
+  orchestrationShell: {
+    inputColumnLabel: 'इनपुट',
+    outputColumnLabel: 'आउटपुट',
+    promptLabel: 'संकेत',
+    promptPlaceholder: 'बताएं कि आप इस लैब को किस पर चलाना चाहते हैं…',
+    pickModelHint: 'चलाने के लिए स्थानीय मॉडल चुनें।',
+    runningLabel: 'चल रहा है…',
+    progressTitle: 'लाइव प्रगति',
+    errorTitle: 'निष्पादन विफल',
+  },
 };

@@ -3265,4 +3265,25 @@ export const ar: TranslationDictionary = {
       },
     },
   },
+  orchestrationStage: {
+    timeline: {
+      title: 'الجدول الزمني للمراحل',
+    },
+    status: {
+      pending: 'قيد الانتظار',
+      active: 'نشط',
+      done: 'مكتمل',
+      failed: 'فشل',
+    },
+  },
+  orchestrationShell: {
+    inputColumnLabel: 'المدخلات',
+    outputColumnLabel: 'الناتج',
+    promptLabel: 'الموجه',
+    promptPlaceholder: 'صف ما تريد من هذا المختبر تنفيذه…',
+    pickModelHint: 'اختر نموذجًا محليًا لتمكين التشغيل.',
+    runningLabel: 'جارٍ التنفيذ…',
+    progressTitle: 'التقدم المباشر',
+    errorTitle: 'فشل التشغيل',
+  },
 };

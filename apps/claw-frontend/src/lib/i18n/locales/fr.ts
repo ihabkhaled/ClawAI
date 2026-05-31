@@ -3342,4 +3342,25 @@ export const fr: TranslationDictionary = {
       },
     },
   },
+  orchestrationStage: {
+    timeline: {
+      title: 'Chronologie des étapes',
+    },
+    status: {
+      pending: 'En attente',
+      active: 'Actif',
+      done: 'Terminé',
+      failed: 'Échoué',
+    },
+  },
+  orchestrationShell: {
+    inputColumnLabel: 'Entrées',
+    outputColumnLabel: 'Sortie',
+    promptLabel: 'Invite',
+    promptPlaceholder: 'Décrivez ce sur quoi ce laboratoire doit travailler…',
+    pickModelHint: 'Choisissez un modèle local pour activer l’exécution.',
+    runningLabel: 'En cours…',
+    progressTitle: 'Progression en direct',
+    errorTitle: 'Échec de l’exécution',
+  },
 };

@@ -3328,4 +3328,25 @@ export const de: TranslationDictionary = {
       },
     },
   },
+  orchestrationStage: {
+    timeline: {
+      title: 'Phasen-Zeitleiste',
+    },
+    status: {
+      pending: 'Ausstehend',
+      active: 'Aktiv',
+      done: 'Fertig',
+      failed: 'Fehlgeschlagen',
+    },
+  },
+  orchestrationShell: {
+    inputColumnLabel: 'Eingaben',
+    outputColumnLabel: 'Ausgabe',
+    promptLabel: 'Eingabeaufforderung',
+    promptPlaceholder: 'Beschreibe, womit dieses Labor arbeiten soll…',
+    pickModelHint: 'Wähle ein lokales Modell, um die Ausführung zu aktivieren.',
+    runningLabel: 'Läuft…',
+    progressTitle: 'Live-Fortschritt',
+    errorTitle: 'Ausführung fehlgeschlagen',
+  },
 };

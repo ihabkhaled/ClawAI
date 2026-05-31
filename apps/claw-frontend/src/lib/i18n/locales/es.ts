@@ -3331,4 +3331,25 @@ export const es: TranslationDictionary = {
       },
     },
   },
+  orchestrationStage: {
+    timeline: {
+      title: 'Cronología de etapas',
+    },
+    status: {
+      pending: 'Pendiente',
+      active: 'Activo',
+      done: 'Completado',
+      failed: 'Fallido',
+    },
+  },
+  orchestrationShell: {
+    inputColumnLabel: 'Entradas',
+    outputColumnLabel: 'Resultado',
+    promptLabel: 'Indicación',
+    promptPlaceholder: 'Describe sobre qué quieres que actúe este laboratorio…',
+    pickModelHint: 'Elige un modelo local para habilitar la ejecución.',
+    runningLabel: 'Ejecutando…',
+    progressTitle: 'Progreso en vivo',
+    errorTitle: 'La ejecución falló',
+  },
 };

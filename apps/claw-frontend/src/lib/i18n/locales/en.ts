@@ -3292,4 +3292,25 @@ export const en: TranslationDictionary = {
       },
     },
   },
+  orchestrationStage: {
+    timeline: {
+      title: 'Stage timeline',
+    },
+    status: {
+      pending: 'Pending',
+      active: 'Active',
+      done: 'Done',
+      failed: 'Failed',
+    },
+  },
+  orchestrationShell: {
+    inputColumnLabel: 'Inputs',
+    outputColumnLabel: 'Output',
+    promptLabel: 'Prompt',
+    promptPlaceholder: 'Describe what you want this lab to run on…',
+    pickModelHint: 'Pick a local model to enable the run.',
+    runningLabel: 'Running…',
+    progressTitle: 'Live progress',
+    errorTitle: 'Run failed',
+  },
 };

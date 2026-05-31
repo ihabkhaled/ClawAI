@@ -3254,6 +3254,27 @@ export type TranslationDictionary = {
       };
     };
   };
+  orchestrationStage: {
+    timeline: {
+      title: string;
+    };
+    status: {
+      pending: string;
+      active: string;
+      done: string;
+      failed: string;
+    };
+  };
+  orchestrationShell: {
+    inputColumnLabel: string;
+    outputColumnLabel: string;
+    promptLabel: string;
+    promptPlaceholder: string;
+    pickModelHint: string;
+    runningLabel: string;
+    progressTitle: string;
+    errorTitle: string;
+  };
 };
 
 export type TranslationNamespace = keyof TranslationDictionary;

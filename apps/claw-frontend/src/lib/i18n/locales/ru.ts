@@ -3321,4 +3321,25 @@ export const ru: TranslationDictionary = {
       },
     },
   },
+  orchestrationStage: {
+    timeline: {
+      title: 'Временная шкала этапов',
+    },
+    status: {
+      pending: 'Ожидает',
+      active: 'Активно',
+      done: 'Готово',
+      failed: 'Сбой',
+    },
+  },
+  orchestrationShell: {
+    inputColumnLabel: 'Входные данные',
+    outputColumnLabel: 'Результат',
+    promptLabel: 'Запрос',
+    promptPlaceholder: 'Опишите, над чем должна работать эта лаборатория…',
+    pickModelHint: 'Выберите локальную модель, чтобы запустить выполнение.',
+    runningLabel: 'Выполняется…',
+    progressTitle: 'Прогресс в реальном времени',
+    errorTitle: 'Сбой выполнения',
+  },
 };
