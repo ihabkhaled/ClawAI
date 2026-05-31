@@ -83,4 +83,10 @@ describe('EmptyState', () => {
       'No items',
     );
   });
+
+  it('omits the description paragraph when description is not provided', () => {
+    const { container } = render(<EmptyState icon={MockIcon} title="No items" />);
+    expect(screen.getByText('No items')).toBeInTheDocument();
+    expect(container.querySelector('p')).toBeNull();
+  });
 });

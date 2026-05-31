@@ -1,0 +1,81 @@
+/*
+ * UI/UX refactor — phase 1 animation keyframes.
+ *
+ * Imported once from app/globals.css so every component (skeleton shimmer,
+ * status pulse-ring, sidebar active-indicator slide) shares the same motion
+ * vocabulary. Reduced-motion users are already protected by the global
+ * media query in globals.css.
+ */
+
+@keyframes slide-in {
+  from {
+    transform: translateX(-4px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Active nav indicator (Phase 3 — Sidebar polish). The indicator is a 3px-wide,
+ * 60%-tall rounded-right bar that anchors to the inline-start of the active
+ * leaf item and slides into view from -8px on the inline-axis. Reduced-motion
+ * users get a snap-in via the global @media block in globals.css. */
+@keyframes slide-in-indicator {
+  from {
+    transform: translateX(-8px) scaleY(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 8px hsl(var(--primary) / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Utility classes that wrap the keyframes. Tailwind doesn't pick these up via
+ * `theme.extend.animation` because we want fine-grained control on a per-use
+ * basis and these keyframes are deliberately not in the public Tailwind API. */
+.animate-slide-in {
+  animation: slide-in var(--duration-fast) var(--ease-out-quint);
+}
+
+.animate-nav-indicator {
+  animation: slide-in-indicator var(--duration-normal) var(--ease-out-expo);
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.6s var(--ease-in-out) infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted) / 0.5) 0%,
+    hsl(var(--muted) / 0.8) 50%,
+    hsl(var(--muted) / 0.5) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s var(--ease-in-out) infinite;
+}

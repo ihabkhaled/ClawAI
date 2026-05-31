@@ -4,22 +4,34 @@ import type { SidebarItem } from '@/constants';
 import type {
   AiReasoningVisibility,
   AiStreamStage,
+  ChatThreadListTab,
   CompareJudgeState,
   CompareResearchMode,
   ComponentSize,
+  ConnectorAuthType,
+  ConnectorProvider,
   ConnectorStatus,
   CostTier,
+  DashboardGreetingKey,
+  DashboardOperationalState,
   ExecutionProfile,
+  HealthStatus,
   MessageFeedback,
+  ModelCatalogViewMode,
   PlanFeature,
   RepairType,
   ReplayOutcomeLabel,
   ResponsiveGridColumns,
   ResponsivePageWidth,
   RoutingMode,
+  ThreadDateGroup,
 } from '@/enums';
 import type { AiActionKind } from '@/enums/ai-action-kind.enum';
+import type { AlertVariant } from '@/enums/alert-variant.enum';
+import type { ComposerControlVariant } from '@/enums/composer-control-variant.enum';
 import type { ConsensusConfidenceLevel } from '@/enums/consensus-confidence-level.enum';
+import type { CopyButtonVariant } from '@/enums/copy-button-variant.enum';
+import type { EmptyStateVariant } from '@/enums/empty-state-variant.enum';
 import type { LoadingStateVariant } from '@/enums/loading-state.enum';
 import type { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
@@ -55,10 +67,21 @@ import type {
   VisibleProgressStage,
 } from './chat.types';
 import type { ConfluencePageMetadata } from './confluence.types';
-import type { Connector, ConnectorModel, CreateConnectorRequest } from './connector.types';
+import type {
+  Connector,
+  ConnectorFormFieldErrors,
+  ConnectorModel,
+  CreateConnectorRequest,
+} from './connector.types';
 import type { ConsensusMetadata, ConsensusModelBreakdown } from './consensus.types';
-import type { CreateContextPackItemRequest, CreateContextPackRequest } from './context-pack.types';
+import type {
+  ContextPack,
+  ContextPackItem,
+  CreateContextPackItemRequest,
+  CreateContextPackRequest,
+} from './context-pack.types';
 import type { CostEnsembleResult } from './cost-ensemble.types';
+import type { DashboardQuickAction, DashboardStatCard } from './dashboard.types';
 import type { DocFileMetadata } from './docs.types';
 import type {
   EscalationChainStep,
@@ -120,6 +143,12 @@ export type DataTableColumn<T> = {
   header: string;
   render: (row: T) => React.ReactNode;
   className?: string;
+  // Optional richer rendering that is used only when the column is promoted
+  // to the mobile-card title (selected via DataTableProps.mobileTitleKey).
+  // When omitted, `render` is reused as the title. Useful for columns whose
+  // desktop cell is plain text but whose mobile header should include a
+  // secondary line (e.g. an identifier underneath the primary label).
+  renderMobileTitle?: (row: T) => React.ReactNode;
 };
 
 export type DataTableProps<T> = {
@@ -127,13 +156,75 @@ export type DataTableProps<T> = {
   data: T[];
   keyExtractor: (row: T) => string;
   emptyMessage?: string;
+  // Selects which column is promoted to the mobile-card header (the
+  // referenced column is then suppressed from the dl below the title so
+  // the primary identifier isn't repeated on small screens). When
+  // omitted, the first column is used.
+  mobileTitleKey?: string;
+  className?: string;
 };
 
 export type EmptyStateProps = {
   icon: LucideIcon;
   title: string;
-  description: string;
+  // UI/UX refactor — phase 5 sweep. `description` is optional so empty states
+  // that are already self-explanatory in their title don't need a redundant
+  // second line. Most consumers still pass one for context, but flow-control
+  // pages (e.g. "no frontier models match your filters") use the title alone.
+  description?: string;
   action?: React.ReactNode;
+  // UI/UX refactor — phase 1 foundation. `default` keeps the historical
+  // dashed-border card; `compact` is used inside small panels (sidebar, drawer);
+  // `page` centers content in a tall (60vh) page-level container.
+  variant?: EmptyStateVariant;
+};
+
+export type TextSkeletonProps = {
+  lines?: number;
+  className?: string;
+};
+
+export type AvatarSkeletonProps = {
+  size?: ComponentSize;
+  className?: string;
+};
+
+export type TableRowSkeletonProps = {
+  cols?: number;
+  className?: string;
+};
+
+export type CopyButtonProps = {
+  text: string;
+  label?: string;
+  size?: ComponentSize;
+  variant?: CopyButtonVariant;
+  className?: string;
+};
+
+export type ResponsiveTableColumn<T> = {
+  key: string;
+  header: string;
+  render: (row: T) => React.ReactNode;
+  className?: string;
+};
+
+export type ResponsiveTableProps<T> = {
+  rows: T[];
+  columns: ResponsiveTableColumn<T>[];
+  keyExtractor: (row: T) => string;
+  mobileTitle: (row: T) => React.ReactNode;
+  emptyMessage?: string;
+  className?: string;
+};
+
+export type AlertProps = {
+  variant?: AlertVariant;
+  icon?: LucideIcon;
+  title?: string;
+  description?: React.ReactNode;
+  action?: React.ReactNode;
+  className?: string;
 };
 
 export type ErrorBoundaryProps = {
@@ -210,6 +301,14 @@ export type StatusBadgeProps = {
   className?: string;
 };
 
+export type KbdHintProps = {
+  // Each entry renders as its own glyph pip inside a single .kbd-hint pill,
+  // e.g. ['⌘', 'K'] becomes ⌘K next to a trigger button. Keep entries short —
+  // longer labels (Ctrl, Shift) are fine too, they just take up more width.
+  keys: string[];
+  className?: string;
+};
+
 // ─── Layout component props ──────────────────────────────────────────────────
 
 export type SidebarNavItemProps = {
@@ -236,6 +335,8 @@ export type FileUploadZoneProps = {
   onFileSelected: (file: File) => void;
   isUploading: boolean;
   validationError: string | null;
+  uploadProgress?: number;
+  uploadingFilename?: string | null;
 };
 
 export type FileListItemProps = {
@@ -483,13 +584,18 @@ export type ImageGenerationProgressPanelProps = {
 };
 
 // Floating "Jump to latest" pill rendered over the chat scroll container while
-// the assistant is streaming AND the user has scrolled away from the bottom.
-// Clicking it pins the viewport to the latest content and re-enables the
-// sticky-bottom auto-follow behaviour driven by useStickyBottomScroll.
+// the user has scrolled away from the bottom. Clicking it pins the viewport to
+// the latest content and re-enables the sticky-bottom auto-follow behaviour
+// driven by useStickyBottomScroll.
+//
+// `unreadCount` (Phase 4 — chat UI/UX refactor) shows a numeric badge for
+// messages that arrived while the user was reading older history. When
+// undefined or 0, no badge is rendered.
 export type JumpToLatestButtonProps = {
   visible: boolean;
   onClick: () => void;
   t: TranslateFunction;
+  unreadCount?: number;
 };
 
 export type ModelSelection = {
@@ -503,6 +609,13 @@ export type ModelSelectorProps = {
   value: ModelSelection | null;
   onChange: (selection: ModelSelection | null) => void;
   disabled?: boolean;
+  // Phase 2 mobile composer redesign. `default` keeps the historical full-width
+  // trigger (220–260px, label always visible). `compact` shrinks the trigger to
+  // an icon-only button (h-8 w-8 rounded-xl) suitable for the mobile composer
+  // top row; pass `showLabel` to render the selected model name beside the icon
+  // even in compact mode (e.g. when there is room on tablet breakpoints).
+  variant?: ComposerControlVariant;
+  showLabel?: boolean;
 };
 
 export type AdvancedModuleModelSelectorProps = {
@@ -516,6 +629,11 @@ export type FileAttachmentPickerProps = {
   selectedFileIds: string[];
   onChange: (fileIds: string[]) => void;
   disabled?: boolean;
+  // Phase 2 mobile composer redesign — see ModelSelectorProps for the contract.
+  // `compact` shrinks the trigger to a single 32px square icon button; passing
+  // `showLabel` opts back into the "Attach files" text alongside the paperclip.
+  variant?: ComposerControlVariant;
+  showLabel?: boolean;
 };
 
 export type FileAttachmentRowProps = {
@@ -616,6 +734,9 @@ export type ThreadListItemProps = {
   onArchive?: (id: string, isArchived: boolean) => void;
   isPinPending?: boolean;
   isArchivePending?: boolean;
+  // Optional search query; when present, occurrences inside the title are
+  // wrapped in `<mark>` via the `HighlightedText` primitive.
+  searchQuery?: string;
 };
 
 export type GlobalSearchProps = {
@@ -710,9 +831,11 @@ export type VirtualizedMessagesProps = {
   firstItemIndex: number;
   initialTopMostItemIndex: number;
   increaseViewportBy: { top: number; bottom: number };
-  // Jump-to-latest pill.
+  // Jump-to-latest pill. `unreadCount` (Phase 4) surfaces a badge when new
+  // assistant messages arrived while the user was reading older history.
   showJumpToLatest: boolean;
   onJumpToLatest: () => void;
+  unreadCount?: number;
   t: TranslateFunction;
 };
 
@@ -761,6 +884,58 @@ export type VirtualizedThreadListProps = {
   search: string;
 };
 
+// One of the four date buckets the chat thread list groups threads into.
+// Used by `groupThreadsByDate` and the `GroupedThreadList` component.
+export type ThreadDateGroupId = ThreadDateGroup;
+
+export type ThreadDateGroupBucket = {
+  id: ThreadDateGroup;
+  threads: ChatThread[];
+};
+
+// Segment of a string after `splitHighlightSegments` has scanned for a search
+// needle. Renderers wrap segments where `isMatch=true` in `<mark>`. `start`
+// is the segment's byte offset inside the original haystack — used by
+// `HighlightedText` as a stable, collision-free React key.
+export type HighlightSegment = {
+  start: number;
+  text: string;
+  isMatch: boolean;
+};
+
+export type HighlightedTextProps = {
+  text: string;
+  query: string;
+  className?: string;
+};
+
+export type GroupedThreadListProps = {
+  threads: ChatThread[];
+  isLoading: boolean;
+  isFetchingNextPage: boolean;
+  hasNextPage: boolean;
+  onEndReached: () => void;
+  onPin: (id: string, isPinned: boolean) => void;
+  onArchive: (id: string, isArchived: boolean) => void;
+  isPinPending: boolean;
+  isArchivePending: boolean;
+  search: string;
+};
+
+// A single suggested-prompt button rendered in the empty-state of the chat
+// thread list. Clicking the button creates a new thread seeded with `prompt`.
+export type SuggestedPrompt = {
+  id: string;
+  label: string;
+  prompt: string;
+};
+
+export type SuggestedPromptsProps = {
+  prompts: SuggestedPrompt[];
+  onSelect: (prompt: SuggestedPrompt) => void;
+  disabled?: boolean;
+};
+
 export type ChatPageReturn = {
   pinnedThreads: ChatThread[];
   unpinnedThreads: ChatThread[];
@@ -773,7 +948,10 @@ export type ChatPageReturn = {
   setSearch: (value: string) => void;
   showArchived: boolean;
   toggleShowArchived: () => void;
+  activeTab: ChatThreadListTab;
+  setActiveTab: (tab: ChatThreadListTab) => void;
   handleNewChat: () => void;
+  handleSuggestedPrompt: (prompt: SuggestedPrompt) => void;
   isCreating: boolean;
   handlePin: (id: string, isPinned: boolean) => void;
   handleArchive: (id: string, isArchived: boolean) => void;
@@ -811,10 +989,78 @@ export type ConnectorFormProps = {
   connector?: Connector | null;
 };
 
+export type ConnectorFormFieldsProps = {
+  fieldErrors: ConnectorFormFieldErrors;
+  isEditing: boolean;
+  name: string;
+  setName: (value: string) => void;
+  provider: ConnectorProvider | null;
+  setProvider: (value: ConnectorProvider) => void;
+  authType: ConnectorAuthType;
+  setAuthType: (value: ConnectorAuthType) => void;
+  apiKey: string;
+  setApiKey: (value: string) => void;
+  baseUrl: string;
+  setBaseUrl: (value: string) => void;
+  region: string;
+  setRegion: (value: string) => void;
+  defaultBaseUrl: string | null;
+};
+
 export type ModelTableProps = {
   models: ConnectorModel[];
   showProvider?: boolean;
   emptyMessage?: string;
+  // Multi-select for compare. When `compareSelection` is supplied, the table
+  // renders a leading checkbox column and `onToggleCompare(modelId)` is fired
+  // when the user toggles a row. When omitted, the table renders unchanged.
+  compareSelection?: ReadonlySet<string>;
+  onToggleCompare?: (modelId: string) => void;
+};
+
+export type ModelCardProps = {
+  model: ConnectorModel;
+  // Optional compare-mode selection. When `selected` is `true` the card is
+  // visually highlighted; clicking the card toggles selection. When both
+  // props are omitted, the card is purely presentational.
+  selected?: boolean;
+  onToggleSelect?: (modelId: string) => void;
+};
+
+export type ModelCardGridProps = {
+  models: ConnectorModel[];
+  emptyMessage?: string;
+  compareSelection?: ReadonlySet<string>;
+  onToggleCompare?: (modelId: string) => void;
+};
+
+export type ModelViewToggleProps = {
+  value: ModelCatalogViewMode;
+  onChange: (mode: ModelCatalogViewMode) => void;
+};
+
+// A single active filter chip rendered above the table/grid. Clicking the
+// "X" inside the pill clears just that filter (calls `onClear`).
+export type ActiveFilterPill = {
+  id: string;
+  label: string;
+  onClear: () => void;
+};
+
+export type ModelFilterPillsProps = {
+  pills: ActiveFilterPill[];
+  onClearAll: () => void;
+};
+
+export type ModelCompareToolbarProps = {
+  selectedCount: number;
+  // Optional list of selected model display labels for the toolbar copy.
+  selectedLabels: string[];
+  onClear: () => void;
+  onCompare: () => void;
+  // True when the user has flipped on compare mode but has selected fewer
+  // than two models. The "Compare" CTA is disabled in that state.
+  canCompare: boolean;
 };
 
 // ─── Context pack component props ───────────────────────────────────────────
@@ -831,6 +1077,40 @@ export type ContextPackItemFormProps = {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: CreateContextPackItemRequest) => void;
   isPending: boolean;
+};
+
+export type ContextPackItemRowProps = {
+  item: ContextPackItem;
+  index: number;
+  isFirst: boolean;
+  isLast: boolean;
+  isDragSupported: boolean;
+  isDragging: boolean;
+  isDragTarget: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onRemove: () => void;
+  onDragStart: (index: number) => void;
+  onDragOver: (event: React.DragEvent, index: number) => void;
+  onDragLeave: (event: React.DragEvent) => void;
+  onDrop: (event: React.DragEvent, index: number) => void;
+  onDragEnd: () => void;
+  isUpdatePending: boolean;
+  isRemovePending: boolean;
+};
+
+export type ContextPackListGridProps = {
+  packs: ContextPack[];
+  onSelectPack: (id: string) => void;
+};
+
+export type ContextPackItemListProps = {
+  items: ContextPackItem[];
+  isDragSupported: boolean;
+  onReorder: (itemId: string, newSortOrder: number) => void;
+  onRemove: (itemId: string) => void;
+  isUpdatePending: boolean;
+  isRemovePending: boolean;
 };
 
 // ─── File component props (extended) ────────────────────────────────────────
@@ -898,6 +1178,17 @@ export type PolicyFormProps = {
 // ─── Admin sub-component props ─────────────────────────────────────────────
 
 export type AccessDeniedProps = {
+  t: TranslateFunction;
+};
+
+export type RecentAuditEventsListProps = {
+  events: AuditLog[];
+};
+
+export type RecentAuditEventsBodyProps = {
+  isLoading: boolean;
+  isError: boolean;
+  events: AuditLog[];
   t: TranslateFunction;
 };
 
@@ -1759,4 +2050,28 @@ export type WorkflowActionsBarProps = {
   hasItems: boolean;
   onAction: (kind: AiActionKind) => void;
   t: TranslateFunction;
+};
+
+// Dashboard sub-component props — extracted per the no-inline-subcomponent
+// rule in rules/03-frontend-rules.md.
+export type DashboardHeroProps = {
+  greetingKey: DashboardGreetingKey;
+  greetingName: string;
+  operationalState: DashboardOperationalState;
+};
+
+export type DashboardStatCardProps = {
+  card: DashboardStatCard;
+  isLoading: boolean;
+};
+
+export type DashboardQuickActionCardProps = {
+  action: DashboardQuickAction;
+};
+
+export type DashboardSystemHealthCardProps = {
+  healthStatus: HealthStatus | null;
+  healthServices: AggregatedHealth['services'];
+  healthSummary: AggregatedHealth['summary'] | null;
+  isLoading: boolean;
 };

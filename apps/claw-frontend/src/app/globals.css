@@ -1,6 +1,11 @@
 /* highlight.js syntax highlighting theme — must be before @tailwind */
 @import 'highlight.js/styles/github.css';
 
+/* Animation keyframes used by the design-system primitives (skeleton shimmer,
+ * status pulse, active-nav slide indicator). Loaded before tailwind so the
+ * keyframe names are available to utility classes built on top. */
+@import '../styles/animations.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -169,8 +174,87 @@
     --sidebar-width: 16rem;
     --sidebar-width-expanded: 17.5rem;
     --mobile-bottom-nav-height: 4rem;
-    --composer-max-height-mobile: 9.5rem;
-    --composer-max-height-desktop: 14rem;
+    /* Composer max-height tokens (UI/UX refactor — phase 2 mobile composer).
+     * Mobile pins to ~30dvh so the textarea grows up to roughly a third of the
+     * viewport before scrolling; desktop allows ~50dvh for longer prompts. */
+    --composer-max-height-mobile: 30dvh;
+    --composer-max-height-desktop: 50dvh;
+
+    /* Typography scale (UI/UX refactor — phase 1 foundation) */
+    --text-xs: 0.75rem; /* 12px */
+    --text-sm: 0.8125rem; /* 13px */
+    --text-base: 0.9375rem; /* 15px — slightly tighter than 16px for a denser console feel */
+    --text-md: 1rem; /* 16px */
+    --text-lg: 1.125rem; /* 18px */
+    --text-xl: 1.25rem; /* 20px */
+    --text-2xl: 1.5rem; /* 24px */
+    --text-3xl: 1.875rem; /* 30px */
+    --text-4xl: 2.25rem; /* 36px */
+
+    --leading-none: 1;
+    --leading-tight: 1.2;
+    --leading-snug: 1.35;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.65;
+    --leading-loose: 1.8;
+
+    --weight-regular: 400;
+    --weight-medium: 500;
+    --weight-semibold: 600;
+    --weight-bold: 700;
+
+    --tracking-tight: -0.015em;
+    --tracking-normal: 0;
+    --tracking-wide: 0.025em;
+    --tracking-wider: 0.05em;
+
+    /* Sans stack — Inter and SF Pro as preferred system fallbacks. The Next.js
+     * Inter import via `next/font/google` exposes `var(--font-inter)` already,
+     * so we honor it first and degrade to system Inter / SF Pro / generic
+     * sans-serif. */
+    --font-sans:
+      var(--font-inter), 'Inter', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+      Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+    /* Animation duration + easing tokens */
+    --duration-instant: 100ms;
+    --duration-fast: 150ms;
+    --duration-normal: 250ms;
+    --duration-slow: 400ms;
+
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* Glass effect tokens (frosted panel surfaces) */
+    --glass-blur: 12px;
+    --glass-saturate: 180%;
+    --glass-opacity-light: 0.78;
+    --glass-opacity-dark: 0.82;
+
+    /* Accent colors — used sparingly for highlights, badges, and gradients */
+    --accent-purple: 262 83% 58%;
+    --accent-teal: 173 80% 40%;
+    --accent-amber: 38 92% 50%;
+    --accent-rose: 346 77% 49%;
+
+    /* Gradient presets (HSL-driven so dark mode can override end-stops) */
+    --gradient-brand: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--accent-purple)) 100%
+    );
+    --gradient-success: linear-gradient(
+      135deg,
+      hsl(var(--success)) 0%,
+      hsl(var(--accent-teal)) 100%
+    );
+    --gradient-warm: linear-gradient(
+      135deg,
+      hsl(var(--accent-amber)) 0%,
+      hsl(var(--accent-rose)) 100%
+    );
   }
 
   .dark {
@@ -218,6 +302,12 @@
     --shadow-soft: 0 1px 2px hsl(0 0% 0% / 0.25), 0 8px 24px hsl(0 0% 0% / 0.22);
     --shadow-panel: 0 1px 2px hsl(0 0% 0% / 0.32), 0 12px 32px hsl(0 0% 0% / 0.28);
     --shadow-floating: 0 18px 60px hsl(0 0% 0% / 0.45);
+
+    /* Accent colors — brightened for AA contrast on the deep dark shell */
+    --accent-purple: 262 90% 70%;
+    --accent-teal: 173 70% 55%;
+    --accent-amber: 38 95% 60%;
+    --accent-rose: 346 80% 62%;
   }
 }
 
@@ -233,6 +323,119 @@
   body {
     @apply bg-background text-foreground;
     min-height: 100dvh;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+  }
+}
+
+@layer components {
+  /* Surface treatments — apply consistent depth/glass effects across panels.
+   * Each class is opt-in: a div that wants frosted glass adds `.surface-glass`,
+   * a hovered card adds `.surface-elevated`, etc. */
+  .surface-panel {
+    background-color: hsl(var(--surface-panel));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .surface-glass {
+    background-color: hsl(var(--surface-glass));
+    backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+    -webkit-backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+    border: 1px solid hsl(var(--border) / 0.6);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-panel);
+  }
+
+  .surface-elevated {
+    background-color: hsl(var(--surface-elevated));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-panel);
+  }
+
+  .surface-floating {
+    background-color: hsl(var(--surface-elevated));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-floating);
+  }
+
+  /* Input focus + error utilities — referenced by the shadcn Input wrapper so
+   * any input across the app can opt into the same focus ring + error tint
+   * without redefining the rules in every form. */
+  .input-focus-ring {
+    @apply focus-visible:outline-none;
+    transition:
+      box-shadow var(--duration-fast) var(--ease-out-quint),
+      border-color var(--duration-fast) var(--ease-out-quint);
+  }
+
+  .input-focus-ring:focus-visible {
+    border-color: hsl(var(--primary) / 0.5);
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.2);
+  }
+
+  .input-error {
+    border-color: hsl(var(--destructive));
+  }
+
+  .input-error:focus-visible {
+    border-color: hsl(var(--destructive));
+    box-shadow: 0 0 0 3px hsl(var(--destructive) / 0.2);
+  }
+
+  /* Phase 2 mobile composer redesign. Applies the mobile composer max-height
+   * token by default and swaps to the desktop token at md+. Used by the
+   * Textarea inside <MessageComposer /> so the textarea grows up to ~30dvh on
+   * mobile and ~50dvh on desktop before scrolling. */
+  .composer-max-height {
+    max-height: var(--composer-max-height-mobile);
+  }
+
+  @media (min-width: 768px) {
+    .composer-max-height {
+      max-height: var(--composer-max-height-desktop);
+    }
+  }
+
+  /* Phase 3 — Topbar polish. Small "kbd-style" pill that hints at a keyboard
+   * shortcut next to a trigger button. Uses muted surface + tabular-nums so
+   * the glyph row stays evenly spaced. Hidden under sm by default — callers
+   * opt into desktop display via `hidden sm:inline-flex`. */
+  .kbd-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.125rem;
+    padding: 0.0625rem 0.375rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid hsl(var(--border));
+    background-color: hsl(var(--muted) / 0.6);
+    color: hsl(var(--muted-foreground));
+    font-family: var(--font-sans);
+    font-size: 0.6875rem; /* 11px — sits comfortably next to text-sm */
+    line-height: 1;
+    font-weight: var(--weight-medium);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Phase 3 — Sidebar polish. Compact pill with a gradient border using the
+   * --gradient-brand token. Implemented via a double-layered background:
+   *   - background-image #1 is the inner surface (so border shows through)
+   *   - background-image #2 is the gradient (visible through the 1px border)
+   * `background-origin: border-box; background-clip: padding-box, border-box;`
+   * lets the inner image sit inside the border while the outer gradient fills
+   * the border area. The result is a pill that has a colored gradient ring
+   * without needing an SVG mask. */
+  .gradient-border-pill {
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    background-image:
+      linear-gradient(hsl(var(--surface-panel)), hsl(var(--surface-panel))), var(--gradient-brand);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
   }
 }
 

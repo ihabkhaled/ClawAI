@@ -1,4 +1,8 @@
+import type { UseFormReturn } from 'react-hook-form';
+
 import type { MessageFeedback } from '@/enums';
+import type { ScrollDirection } from '@/enums/scroll-direction.enum';
+import type { LoginFormValues } from '@/lib/validation/login.schema';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
 
 import type { SidebarItem } from '../constants/sidebar.constants';
@@ -39,6 +43,22 @@ import type {
   WorkspaceSyncRun,
 } from './workspace.types';
 
+// ─── Auth hook types ────────────────────────────────────────────────────────
+
+export type UseLoginFormReturn = {
+  form: UseFormReturn<LoginFormValues>;
+  showPassword: boolean;
+  togglePasswordVisibility: () => void;
+  rememberMe: boolean;
+  handleRememberMeChange: (checked: boolean) => void;
+  handleForgotPasswordClick: () => void;
+  onSubmit: (event?: React.BaseSyntheticEvent) => Promise<void>;
+  isPending: boolean;
+  isError: boolean;
+  errorMessage: string | null;
+  t: TranslateFunction;
+};
+
 // ─── Admin hook types ───────────────────────────────────────────────────────
 
 export type UseAdminPageReturn = {
@@ -73,6 +93,12 @@ export type UseUserTableStateReturn = {
     role: string,
     onChangeRole: (userId: string, role: string) => void,
   ) => void;
+};
+
+export type UseRecentAuditEventsReturn = {
+  events: AuditLog[];
+  isLoading: boolean;
+  isError: boolean;
 };
 
 // ─── Audit hook types ───────────────────────────────────────────────────────
@@ -574,9 +600,11 @@ export type UseVirtualizedMessagesControllerReturn = {
   initialTopMostItemIndex: number;
   increaseViewportBy: { top: number; bottom: number };
   firstItemIndex: number;
-  // Jump-to-latest pill.
+  // Jump-to-latest pill. `unreadCount` (Phase 4) tracks messages that
+  // arrived while the user was scrolled away from the bottom.
   showJumpToLatest: boolean;
   onJumpToLatest: () => void;
+  unreadCount: number;
   // Forwarded so the .tsx can spread a single prop bag onto
   // <VirtualizedMessages> without re-wiring i18n.
   t: TranslateFunction;
@@ -596,3 +624,17 @@ export type UseFollowStreamingTokensParams = {
   lastContentLength: number;
   lastIndex: number;
 };
+
+// ─── UI primitive hook returns (Phase 1 design-system foundation) ───────────
+
+export type UseCopyButtonReturn = {
+  copied: boolean;
+  onClick: () => Promise<void>;
+};
+
+export type UseKeyboardShortcutOptions = {
+  enabled?: boolean;
+  preventDefault?: boolean;
+};
+
+export type UseScrollDirectionReturn = ScrollDirection | null;

@@ -1,11 +1,23 @@
 export { getAccessToken, getRefreshToken, setTokens, clearAuthStorage } from './api.utility';
 export { cn } from './cn.utility';
+export { extractTextFromReactNode } from './react-node-text.utility';
 export { getConfidenceLabel, getConfidenceClass } from './confidence.utility';
 export { formatBytes } from './format-bytes.utility';
 export { getLevelBadgeClass, formatLogLatency } from './log-stats.utility';
 export { formatDuration, formatSpeed } from './format-duration.utility';
 export { formatDate, formatOptionalIsoDate, formatDateTimeSafe } from './date.utility';
+export { getThreadDateGroupId, groupThreadsByDate } from './thread-grouping.utility';
+export { splitHighlightSegments } from './highlight.utility';
+export {
+  readPersistedModelViewMode,
+  writePersistedModelViewMode,
+} from './model-view-storage.utility';
+export { buildThreadPreviewSnippet } from './thread-preview-snippet.utility';
 export { getHealthStatusColor } from './health-status.utility';
+export {
+  getDashboardGreetingKey,
+  deriveDashboardOperationalState,
+} from './dashboard-greeting.utility';
 export {
   formatRelativeDate,
   formatShortDateTime,
@@ -13,6 +25,20 @@ export {
   formatLatency,
   formatContextTokens,
 } from './format.utility';
+export {
+  getFileTypeDescriptor,
+  isImageMime,
+  isTextLikeMime,
+} from './file-type-icon.utility';
+export { formatTimeAgo } from './relative-time.utility';
+export {
+  getConnectorStatusDotTone,
+  getConnectorStatusLabelKey,
+} from './connector-status-style.utility';
+export {
+  getContextPackItemTypeIcon,
+  getContextPackItemTypeTone,
+} from './context-pack-item-style.utility';
 export { getLifecycleBadgeVariant } from './lifecycle.utility';
 export { getInitials } from './string.utility';
 export {
@@ -114,3 +140,5 @@ export {
   type BottleneckSegment,
 } from './bottleneck.utility';
 export { daysUntilExpiry } from './file-retention.utility';
+export { parseKeyCombo, matchesCombo, isMac, getModKeyLabel } from './keyboard-shortcut.utility';
+export type { ParsedCombo } from './keyboard-shortcut.utility';

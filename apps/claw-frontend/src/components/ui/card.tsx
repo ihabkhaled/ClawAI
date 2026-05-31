@@ -1,17 +1,41 @@
+import { cva } from "class-variance-authority";
+import type { VariantProps } from "class-variance-authority";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+// Card variants — added in the Phase 1 design-system foundation.
+// - default: historical look (rounded, bordered, low elevation).
+// - interactive: hoverable card surface used for clickable list cards. Lifts
+//   on hover and snaps back on press for tactile feedback.
+// - ghost: borderless / background-less surface used inside nested panels
+//   where a second border would create visual noise.
+const cardVariants = cva(
+  "rounded-lg border bg-card text-card-foreground shadow-sm",
+  {
+    variants: {
+      variant: {
+        default: "",
+        interactive:
+          "cursor-pointer transition-all duration-normal ease-quint-out hover:shadow-panel hover:border-primary/20 hover:-translate-y-0.5 active:translate-y-0",
+        ghost: "border-0 bg-transparent shadow-none",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  },
+);
+
+export type CardVariantProps = VariantProps<typeof cardVariants>;
+
 const Card = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
+  React.HTMLAttributes<HTMLDivElement> & CardVariantProps
+>(({ className, variant, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm",
-      className,
-    )}
+    className={cn(cardVariants({ variant, className }))}
     {...props}
   />
 ));
@@ -83,4 +107,5 @@ export {
   CardTitle,
   CardDescription,
   CardContent,
+  cardVariants,
 };

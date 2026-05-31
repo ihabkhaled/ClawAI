@@ -6,7 +6,11 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  // `transition-all duration-fast ease-quint-out` swaps the colour-only
+  // transition for an all-property transition that catches the new
+  // `active:scale-[0.97]` press-down without a sudden snap. The press scale
+  // is the same micro-interaction shipped across the iOS design system.
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all duration-fast ease-quint-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -25,6 +29,11 @@ const buttonVariants = cva(
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
+        // Smaller icon-button variants for inline use inside lists, panels,
+        // and the new CopyButton primitive. The xs size also tightens the
+        // rounded corners so the button doesn't dominate small text rows.
+        "icon-sm": "h-8 w-8",
+        "icon-xs": "h-7 w-7 rounded-sm",
       },
     },
     defaultVariants: {
