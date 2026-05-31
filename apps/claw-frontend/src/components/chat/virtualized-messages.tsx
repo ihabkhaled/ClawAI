@@ -42,6 +42,7 @@ export function VirtualizedMessages(props: VirtualizedMessagesProps): React.Reac
       <JumpToLatestButton
         visible={props.showJumpToLatest}
         onClick={props.onJumpToLatest}
+        unreadCount={props.unreadCount}
         t={props.t}
       />
     </div>

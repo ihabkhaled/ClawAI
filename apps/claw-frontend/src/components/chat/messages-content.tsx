@@ -31,7 +31,12 @@ export function MessagesContent({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div
+      className="flex flex-col gap-4"
+      role="log"
+      aria-live="polite"
+      aria-relevant="additions"
+    >
       {messages.map((message: ChatMessage) => (
         <MessageBubble
           key={message.id}

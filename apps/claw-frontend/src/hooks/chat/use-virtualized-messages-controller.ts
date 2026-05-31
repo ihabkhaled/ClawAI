@@ -1,9 +1,10 @@
-import { createElement, useCallback, useMemo, useRef, useState } from 'react';
+import { createElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { VirtualizedMessageItem } from '@/components/chat/virtualized-message-item';
 import { VirtualizedMessagesFooter } from '@/components/chat/virtualized-messages-footer';
 import { VirtualizedMessagesHeader } from '@/components/chat/virtualized-messages-header';
 import { VIRTUALIZED_MESSAGES_VIEWPORT_BUFFER } from '@/constants';
+import { MessageRole } from '@/enums';
 import { useFollowStreamingTokens } from '@/hooks/chat/use-follow-streaming-tokens';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
 import type {
@@ -24,6 +25,13 @@ export function useVirtualizedMessagesController(
 ): UseVirtualizedMessagesControllerReturn {
   const virtuosoRef = useRef<VirtuosoHandle | null>(null);
   const [isAtBottom, setIsAtBottom] = useState<boolean>(true);
+  // Phase 4 (UI/UX refactor): Slack/Discord-style unread badge. We snapshot
+  // the assistant-message count the moment the user scrolls away from the
+  // bottom, then any subsequent assistant messages count as "unread" until
+  // the user jumps back. Counted from `renderItems` (so a parallel group of
+  // N lanes still increments the badge by 1).
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const lastSeenAssistantCountRef = useRef<number>(0);
 
   const renderItems = useMemo<MessageRenderItem[]>(
     () => groupParallelMessages(params.messages),
@@ -34,6 +42,19 @@ export function useVirtualizedMessagesController(
   const lastMessageId = lastMessage?.id ?? null;
   const lastContentLength = lastMessage?.content?.length ?? 0;
 
+  // Total number of assistant-side render groups visible right now. Used as
+  // the "high water mark" for the unread-count tracker; we never count user
+  // messages because the user just sent them. Single items inspect the
+  // wrapped message role; parallel groups are always assistant-side by
+  // construction (parallel lanes are model responses).
+  const assistantRenderCount = useMemo<number>(
+    () =>
+      renderItems.filter((item) =>
+        item.kind === 'single' ? item.message.role !== MessageRole.USER : true,
+      ).length,
+    [renderItems],
+  );
+
   useFollowStreamingTokens({
     virtuosoRef,
     isAtBottom,
@@ -41,6 +62,26 @@ export function useVirtualizedMessagesController(
     lastContentLength,
     lastIndex,
   });
+
+  // Reset the unread-water-mark whenever the user is back at the bottom so a
+  // future scroll-away starts the count fresh.
+  useEffect(() => {
+    if (isAtBottom) {
+      lastSeenAssistantCountRef.current = assistantRenderCount;
+      setUnreadCount(0);
+    }
+  }, [isAtBottom, assistantRenderCount]);
+
+  // Increment the badge when new assistant messages arrive while scrolled
+  // up. Clamp to 0 so a backfill (older messages prepended) cannot produce
+  // a negative count.
+  useEffect(() => {
+    if (isAtBottom) {
+      return;
+    }
+    const delta = assistantRenderCount - lastSeenAssistantCountRef.current;
+    setUnreadCount(delta > 0 ? delta : 0);
+  }, [isAtBottom, assistantRenderCount]);
 
   const handleFollowOutput = useCallback<FollowOutputCallback>(
     (atBottom) => (atBottom ? 'smooth' : false),
@@ -128,8 +169,13 @@ export function useVirtualizedMessagesController(
     initialTopMostItemIndex: Math.max(0, renderItems.length - 1),
     increaseViewportBy: VIRTUALIZED_MESSAGES_VIEWPORT_BUFFER,
     firstItemIndex: params.firstItemIndex,
-    showJumpToLatest: !isAtBottom && params.isWaitingForResponse,
+    // Phase 4 (UI/UX refactor): show the pill whenever the user is scrolled
+    // away from the bottom (matches Slack/Discord), regardless of whether
+    // the assistant is mid-stream. The unread badge only renders when new
+    // assistant content arrived during that scroll-up window.
+    showJumpToLatest: !isAtBottom && renderItems.length > 0,
     onJumpToLatest: handleJumpToLatest,
+    unreadCount,
     t: params.t,
   };
 }

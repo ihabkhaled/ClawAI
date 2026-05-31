@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ToastVariant } from '@/enums/toast-variant.enum';
 import { showToast } from '@/utilities/toast.utility';
 
 const mockToast = vi.fn();
@@ -16,13 +17,15 @@ describe('showToast', () => {
   // ---------- success ----------
 
   describe('success', () => {
-    it('calls toast with default title "Success" when no title provided', () => {
+    it('calls toast with success variant and default title', () => {
       showToast.success({ description: 'Done!' });
 
       expect(mockToast).toHaveBeenCalledWith({
         title: 'Success',
         description: 'Done!',
-        variant: 'default',
+        variant: ToastVariant.Success,
+        action: undefined,
+        durationMs: undefined,
       });
     });
 
@@ -32,7 +35,26 @@ describe('showToast', () => {
       expect(mockToast).toHaveBeenCalledWith({
         title: 'Saved',
         description: 'Record saved',
-        variant: 'default',
+        variant: ToastVariant.Success,
+        action: undefined,
+        durationMs: undefined,
+      });
+    });
+
+    it('forwards optional action and durationMs', () => {
+      const onClick = vi.fn();
+      showToast.success({
+        description: 'Saved',
+        action: { label: 'Undo', onClick },
+        durationMs: 8000,
+      });
+
+      expect(mockToast).toHaveBeenCalledWith({
+        title: 'Success',
+        description: 'Saved',
+        variant: ToastVariant.Success,
+        action: { label: 'Undo', onClick },
+        durationMs: 8000,
       });
     });
   });
@@ -40,13 +62,15 @@ describe('showToast', () => {
   // ---------- error ----------
 
   describe('error', () => {
-    it('calls toast with destructive variant', () => {
+    it('calls toast with error variant', () => {
       showToast.error({ description: 'Something failed' });
 
       expect(mockToast).toHaveBeenCalledWith({
         title: 'Error',
         description: 'Something failed',
-        variant: 'destructive',
+        variant: ToastVariant.Error,
+        action: undefined,
+        durationMs: undefined,
       });
     });
 
@@ -56,8 +80,21 @@ describe('showToast', () => {
       expect(mockToast).toHaveBeenCalledWith({
         title: 'Oops',
         description: 'Nope',
-        variant: 'destructive',
+        variant: ToastVariant.Error,
+        action: undefined,
+        durationMs: undefined,
       });
+    });
+
+    it('forwards a Retry action', () => {
+      const onClick = vi.fn();
+      showToast.error({
+        description: 'Network failed',
+        action: { label: 'Retry', onClick },
+      });
+
+      const call = mockToast.mock.calls[0] as [{ action: { label: string } }];
+      expect(call[0].action?.label).toBe('Retry');
     });
   });
 
@@ -70,7 +107,9 @@ describe('showToast', () => {
       expect(mockToast).toHaveBeenCalledWith({
         title: 'Error',
         description: 'Fallback message',
-        variant: 'destructive',
+        variant: ToastVariant.Error,
+        action: undefined,
+        durationMs: undefined,
       });
     });
 
@@ -80,7 +119,9 @@ describe('showToast', () => {
       expect(mockToast).toHaveBeenCalledWith({
         title: 'Error',
         description: 'An unexpected error occurred',
-        variant: 'destructive',
+        variant: ToastVariant.Error,
+        action: undefined,
+        durationMs: undefined,
       });
     });
 
@@ -91,7 +132,9 @@ describe('showToast', () => {
       expect(mockToast).toHaveBeenCalledWith({
         title: 'Error',
         description: 'Invalid credentials',
-        variant: 'destructive',
+        variant: ToastVariant.Error,
+        action: undefined,
+        durationMs: undefined,
       });
     });
 
@@ -119,21 +162,35 @@ describe('showToast', () => {
       expect(mockToast).toHaveBeenCalledWith({
         title: 'Error',
         description: 'Custom fallback',
-        variant: 'destructive',
+        variant: ToastVariant.Error,
+        action: undefined,
+        durationMs: undefined,
       });
+    });
+
+    it('forwards an optional action passed via options', () => {
+      const onClick = vi.fn();
+      showToast.apiError(new Error('boom'), 'Network failed', {
+        action: { label: 'Retry', onClick },
+      });
+
+      const call = mockToast.mock.calls[0] as [{ action: { label: string } }];
+      expect(call[0].action?.label).toBe('Retry');
     });
   });
 
   // ---------- info ----------
 
   describe('info', () => {
-    it('calls toast with default variant and Info title', () => {
+    it('calls toast with info variant and Info title', () => {
       showToast.info({ description: 'FYI' });
 
       expect(mockToast).toHaveBeenCalledWith({
         title: 'Info',
         description: 'FYI',
-        variant: 'default',
+        variant: ToastVariant.Info,
+        action: undefined,
+        durationMs: undefined,
       });
     });
   });
@@ -141,13 +198,15 @@ describe('showToast', () => {
   // ---------- warning ----------
 
   describe('warning', () => {
-    it('calls toast with destructive variant and Warning title', () => {
+    it('calls toast with warning variant and Warning title', () => {
       showToast.warning({ description: 'Careful!' });
 
       expect(mockToast).toHaveBeenCalledWith({
         title: 'Warning',
         description: 'Careful!',
-        variant: 'destructive',
+        variant: ToastVariant.Warning,
+        action: undefined,
+        durationMs: undefined,
       });
     });
   });

@@ -84,15 +84,44 @@ describe('useVirtualizedMessagesController', () => {
     expect(result.current.isEmpty).toBe(true);
   });
 
-  it('showJumpToLatest requires both not-at-bottom AND waiting', () => {
+  it('showJumpToLatest fires whenever the user is not-at-bottom (waiting state no longer required)', () => {
     const { result } = renderHook(() =>
-      useVirtualizedMessagesController(makeParams({ isWaitingForResponse: true })),
+      useVirtualizedMessagesController(makeParams({ isWaitingForResponse: false })),
     );
     expect(result.current.showJumpToLatest).toBe(false);
     act(() => {
       result.current.onAtBottomStateChange(false);
     });
+    // Even without an active stream, scrolling up should reveal the pill so
+    // the user can return to the latest content quickly (Slack/Discord
+    // parity — Phase 4 chat UI/UX refactor).
     expect(result.current.showJumpToLatest).toBe(true);
+  });
+
+  it('unreadCount stays 0 while at-bottom and increments only after scrolling away', () => {
+    const { result, rerender } = renderHook(
+      (params: UseVirtualizedMessagesControllerParams) =>
+        useVirtualizedMessagesController(params),
+      { initialProps: makeParams() },
+    );
+    expect(result.current.unreadCount).toBe(0);
+
+    // Scroll away from the bottom; no new messages yet, count stays 0.
+    act(() => {
+      result.current.onAtBottomStateChange(false);
+    });
+    expect(result.current.unreadCount).toBe(0);
+
+    // A new assistant message arrives while the user is reading older
+    // history. The badge should reflect 1 unread.
+    rerender(makeParams({ messages: [makeMessage('m1'), makeMessage('m2'), makeMessage('m3')] }));
+    expect(result.current.unreadCount).toBe(1);
+
+    // Returning to the bottom clears the badge.
+    act(() => {
+      result.current.onAtBottomStateChange(true);
+    });
+    expect(result.current.unreadCount).toBe(0);
   });
 
   it('handleStartReached invokes onStartReached only when hasPreviousPage AND not fetching', () => {

@@ -9,6 +9,7 @@ import {
   ThumbsDown,
   ThumbsUp,
 } from 'lucide-react';
+import { memo } from 'react';
 
 import { ContextReceiptButton } from '@/components/chat/context-receipt-button';
 import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
@@ -23,17 +24,24 @@ import { RoutingTransparency } from '@/components/chat/routing-transparency';
 import { ThreadContextInspector } from '@/components/chat/thread-context-inspector';
 import { WhyThisModelPanel } from '@/components/chat/why-this-model-panel';
 import { WorkflowBadge } from '@/components/chat/workflow-badge';
+import { CopyButton } from '@/components/common/copy-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MESSAGE_ROLE_LABELS, RE_ROUTE_REASON_LABELS } from '@/constants';
-import { MessageFeedback, MessageRole, RoutingMode } from '@/enums';
+import { ComponentSize, MessageFeedback, MessageRole, RoutingMode } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
 import { MarkdownRenderer } from '@/lib/markdown';
 import { cn } from '@/lib/utils';
 import type { MessageBubbleProps, OllamaToolTranscript, ResearchTranscript } from '@/types';
 import { formatLatency, formatShortDateTime, getJudgeReviewFromMessage } from '@/utilities';
 
-export function MessageBubble({
+// Memoized: a chat thread renders 20-200 MessageBubble instances. Without
+// memoization, every parent re-render (new SSE token, polling tick, scroll
+// position change) re-rendered every bubble in the list, re-running its
+// metadata destructuring AND its nested MarkdownRenderer. With memo +
+// memoized MarkdownRenderer (see lib/markdown/markdown-renderer.tsx), only
+// the bubble whose props actually changed re-renders.
+function MessageBubbleBase({
   message,
   routingDecision,
   onFeedback,
@@ -150,16 +158,23 @@ export function MessageBubble({
   };
 
   return (
-    <div className={cn('flex w-full', isUser ? 'justify-end' : 'justify-start')}>
+    <div className={cn('group/bubble flex w-full', isUser ? 'justify-end' : 'justify-start')}>
       <div
         className={cn(
           'flex flex-col gap-1',
           isUser ? 'max-w-[88%] items-end sm:max-w-[80%]' : 'max-w-full items-start sm:max-w-[85%]',
         )}
       >
-        <div className="flex items-center gap-2">
+        <div
+          className={cn(
+            'flex items-center gap-2',
+            // Right-align meta row above the assistant bubble too; user side
+            // already flows end-justified via the wrapper.
+            isUser ? 'self-end' : 'self-start',
+          )}
+        >
           <span className="text-xs text-muted-foreground">{roleLabel}</span>
-          <span className="text-[10px] text-muted-foreground/60">
+          <span className="text-[10px] text-muted-foreground/60 transition-opacity md:opacity-60 md:group-hover/bubble:opacity-100">
             {formatShortDateTime(message.createdAt)}
           </span>
         </div>
@@ -179,8 +194,10 @@ export function MessageBubble({
         ) : null}
         <div
           className={cn(
-            'rounded-lg px-4 py-2.5 text-sm',
-            isUser ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',
+            'rounded-lg px-4 py-2.5 text-sm transition-colors',
+            isUser
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted text-foreground group-hover/bubble:bg-card/80',
           )}
         >
           {isUser ? (
@@ -201,6 +218,21 @@ export function MessageBubble({
           ) : null}
           {!isUser && !isImageGeneration && !isFileGeneration ? assistantContent : null}
         </div>
+        {isUser && message.content.trim().length > 0 ? (
+          <div
+            className={cn(
+              'flex items-center gap-1 self-end transition-opacity',
+              'md:opacity-0 md:group-hover/bubble:opacity-100 md:focus-within:opacity-100',
+            )}
+          >
+            <CopyButton
+              text={message.content}
+              size={ComponentSize.SM}
+              label={t('chat.copyMessage')}
+              className="h-7 w-7 text-muted-foreground"
+            />
+          </div>
+        ) : null}
         {!isUser && toolTranscript !== null ? (
           <OllamaToolTranscriptPanel transcript={toolTranscript} />
         ) : null}
@@ -302,8 +334,23 @@ export function MessageBubble({
           </div>
         ) : null}
         {!isUser ? (
-          <div className="flex flex-wrap items-center gap-1">
+          <div
+            className={cn(
+              'flex flex-wrap items-center gap-1 transition-opacity',
+              // Hover-only on desktop (where pointer hover is the affordance);
+              // always visible on touch/small viewports.
+              'md:opacity-0 md:group-hover/bubble:opacity-100 md:focus-within:opacity-100',
+            )}
+          >
             <ContextReceiptButton messageId={message.id} />
+            {hasVisibleAssistantContent ? (
+              <CopyButton
+                text={message.content}
+                size={ComponentSize.SM}
+                label={t('chat.copyMessage')}
+                className="h-7 w-7 text-muted-foreground"
+              />
+            ) : null}
             {onRegenerate ? (
               <Button
                 variant="ghost"
@@ -327,6 +374,7 @@ export function MessageBubble({
                       : 'text-muted-foreground',
                   )}
                   onClick={() => handleFeedback(MessageFeedback.POSITIVE)}
+                  aria-label={t('chat.feedbackPositive')}
                 >
                   <ThumbsUp className="h-3.5 w-3.5" />
                 </Button>
@@ -340,6 +388,7 @@ export function MessageBubble({
                       : 'text-muted-foreground',
                   )}
                   onClick={() => handleFeedback(MessageFeedback.NEGATIVE)}
+                  aria-label={t('chat.feedbackNegative')}
                 >
                   <ThumbsDown className="h-3.5 w-3.5" />
                 </Button>
@@ -357,3 +406,5 @@ export function MessageBubble({
     </div>
   );
 }
+
+export const MessageBubble = memo(MessageBubbleBase);

@@ -10,7 +10,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { MODEL_AUTO_VALUE } from '@/constants';
+import { ComposerControlVariant } from '@/enums';
 import { useAvailableModels } from '@/hooks/chat/use-available-models';
+import { cn } from '@/lib/utils';
 import type { ModelSelectorProps } from '@/types';
 import { decodeModelValue, encodeModelValue } from '@/utilities';
 
@@ -18,6 +20,8 @@ export function ModelSelector({
   value,
   onChange,
   disabled,
+  variant = ComposerControlVariant.Default,
+  showLabel,
 }: ModelSelectorProps): React.ReactElement {
   const { groupedModels, isLoading } = useAvailableModels();
 
@@ -63,15 +67,33 @@ export function ModelSelector({
   };
   const placeholder = resolvePlaceholder();
 
+  // Compact variant — icon-only square button, optional inline label.
+  // Default variant — keeps the historical full-width trigger.
+  const isCompact = variant === ComposerControlVariant.Compact;
+  const triggerClass = isCompact
+    ? cn(
+        'h-8 gap-1 rounded-xl border-border/60 px-2 text-xs',
+        showLabel ? 'min-w-[7rem]' : 'w-8 justify-center px-0',
+      )
+    : 'h-9 w-[220px] text-xs sm:w-[260px]';
+
   return (
     <Select
       value={selectedValue}
       onValueChange={handleChange}
       disabled={disabled || isLoading || hasNoModels}
     >
-      <SelectTrigger className="h-9 w-[220px] text-xs sm:w-[260px]">
-        <Bot className="mr-1 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-        <SelectValue placeholder={placeholder} />
+      <SelectTrigger
+        className={triggerClass}
+        aria-label={isCompact && !showLabel ? placeholder : undefined}
+      >
+        <Bot
+          className={cn(
+            'shrink-0 text-muted-foreground',
+            isCompact ? 'h-4 w-4' : 'mr-1 h-3.5 w-3.5',
+          )}
+        />
+        {isCompact && !showLabel ? null : <SelectValue placeholder={placeholder} />}
       </SelectTrigger>
       <SelectContent className="w-[min(420px,calc(100vw-2rem))]">
         <SelectItem value={MODEL_AUTO_VALUE}>Auto (routing decides)</SelectItem>

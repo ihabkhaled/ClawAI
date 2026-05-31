@@ -1,17 +1,33 @@
 import { Download } from 'lucide-react';
 import type { Components } from 'react-markdown';
 
+import { CopyButton } from '@/components/common/copy-button';
 import { API_BASE_URL } from '@/constants';
+import { ComponentSize } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
+import { extractTextFromReactNode } from '@/utilities';
 
 function PreBlock({ children, ...props }: React.JSX.IntrinsicElements['pre']): React.JSX.Element {
+  // Extracts the raw source of the enclosed <code> child once per render so
+  // CopyButton can ship it to navigator.clipboard. The Markdown AST guarantees
+  // <pre>'s only meaningful child is a single <code>, so this stays cheap.
+  const codeText = extractTextFromReactNode(children);
   return (
-    <pre
-      className="my-2 overflow-x-auto rounded-lg bg-muted p-3 text-[13px] leading-relaxed sm:p-4"
-      {...props}
-    >
-      {children}
-    </pre>
+    <div className="group/code relative my-2">
+      <pre
+        className="overflow-x-auto rounded-lg bg-muted p-3 pe-12 text-[13px] leading-relaxed sm:p-4 sm:pe-14"
+        {...props}
+      >
+        {children}
+      </pre>
+      {codeText.length > 0 ? (
+        <CopyButton
+          text={codeText}
+          size={ComponentSize.SM}
+          className="absolute end-2 top-2 h-7 w-7 bg-background/80 opacity-100 backdrop-blur-sm transition-opacity hover:bg-background md:opacity-0 md:group-hover/code:opacity-100 md:focus-visible:opacity-100"
+        />
+      ) : null}
+    </div>
   );
 }
 

@@ -9,11 +9,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ComposerControlVariant } from '@/enums';
 import { useFileAttachmentPickerState } from '@/hooks/chat/use-file-attachment-picker-state';
 import { useFileAttachmentGrouping } from '@/hooks/files/use-file-attachment-grouping';
 import { useFiles } from '@/hooks/files/use-files';
 import { useUploadFile } from '@/hooks/files/use-upload-file';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import { cn } from '@/lib/utils';
 import type { FileAttachmentPickerProps } from '@/types';
 
 import { FileAttachmentRow } from './file-attachment-row';
@@ -22,6 +24,8 @@ export function FileAttachmentPicker({
   selectedFileIds,
   onChange,
   disabled,
+  variant = ComposerControlVariant.Default,
+  showLabel,
 }: FileAttachmentPickerProps): React.ReactElement {
   const { t } = useTranslation();
   const { files, isLoading } = useFiles();
@@ -40,6 +44,18 @@ export function FileAttachmentPicker({
   const { groups, standalone, hasGroups, isParentExpanded, toggleParentExpansion } =
     useFileAttachmentGrouping(files);
 
+  // Phase 2 mobile composer redesign — `compact` shrinks the trigger to a
+  // 32px square icon button with optional inline label. `default` keeps the
+  // historical pill button (icon + "Attach files" label hidden under sm).
+  const isCompact = variant === ComposerControlVariant.Compact;
+  const triggerClass = isCompact
+    ? cn(
+        'relative h-8 gap-1 rounded-xl border-border/60 px-2 text-xs',
+        showLabel ? 'min-w-[6.5rem]' : 'w-8 justify-center px-0',
+      )
+    : 'relative h-9 gap-1 text-xs';
+  const renderTriggerLabel = isCompact ? showLabel === true : true;
+
   return (
     <>
       <DropdownMenu>
@@ -47,13 +63,26 @@ export function FileAttachmentPicker({
           <Button
             variant="outline"
             size="sm"
-            className="relative h-9 gap-1 text-xs"
+            className={triggerClass}
             disabled={disabled || isLoading}
+            aria-label={isCompact && !showLabel ? t('chat.attachFiles') : undefined}
           >
-            <Paperclip className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">{t('chat.attachFiles')}</span>
+            <Paperclip className={cn('shrink-0', isCompact ? 'h-4 w-4' : 'h-3.5 w-3.5')} />
+            {renderTriggerLabel ? (
+              <span className={isCompact ? 'inline' : 'hidden sm:inline'}>
+                {t('chat.attachFiles')}
+              </span>
+            ) : null}
             {selectedCount > 0 ? (
-              <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1 text-[10px]">
+              <Badge
+                variant="secondary"
+                className={cn(
+                  'h-5 min-w-5 px-1 text-[10px]',
+                  isCompact && !showLabel
+                    ? 'absolute -right-1 -top-1 ml-0'
+                    : 'ml-1',
+                )}
+              >
                 {selectedCount}
               </Badge>
             ) : null}

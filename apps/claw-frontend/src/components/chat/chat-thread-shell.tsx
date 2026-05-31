@@ -20,51 +20,77 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
   }
   return (
     <div className="flex h-full flex-col">
-      <div className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between sm:pb-6">
-        <div className="min-w-0">
-          <EditableTitle title={props.title} editableTitle={props.editableTitle} />
-          {props.thread ? (
-            <p className="mt-1 text-muted-foreground">
-              {props.thread.routingMode}
-              {props.thread.lastModel ? ` · ${props.thread.lastModel}` : ''}
-            </p>
-          ) : null}
+      {/* Sticky top header — frosted glass + safe-top inset on mobile so it
+          sits below the iOS notch / Android status bar without overlap. */}
+      <div className="surface-glass safe-top sticky top-0 z-20 -mx-3 mb-3 flex flex-col gap-3 px-3 py-3 sm:-mx-4 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:rounded-none sm:px-4 sm:py-4">
+        <div className="flex min-w-0 items-center gap-2">
+          {/* Mobile: icon-only back button at the start of the header.
+              Desktop: appears as labeled button in the actions cluster. */}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="shrink-0 sm:hidden"
+            aria-label={props.backToThreadsLabel}
+            asChild
+          >
+            <Link href={props.backToThreadsHref}>
+              <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+            </Link>
+          </Button>
+          <div className="min-w-0 flex-1">
+            <EditableTitle title={props.title} editableTitle={props.editableTitle} />
+            {props.thread ? (
+              <p className="mt-0.5 truncate text-xs text-muted-foreground sm:mt-1 sm:text-sm">
+                {props.thread.routingMode}
+                {/* Only show the last-model meta on sm+ — on mobile the title
+                    truncation already eats most of the row width. */}
+                {props.thread.lastModel ? (
+                  <span className="hidden sm:inline">{` · ${props.thread.lastModel}`}</span>
+                ) : null}
+              </p>
+            ) : null}
+          </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           {props.canCompare ? (
             <Button
-              variant={props.compareIsOpen ? 'default' : 'outline'}
-              size="sm"
-              className="min-h-11 min-w-11"
+              variant={props.compareIsOpen ? 'default' : 'ghost'}
+              size="icon-sm"
+              className="sm:size-auto sm:h-9 sm:w-auto sm:px-3"
               onClick={props.compareToggleOpen}
+              aria-label={props.compareLabel}
             >
               <GitCompareArrows className="h-4 w-4 sm:me-2" />
               <span className="hidden sm:inline">{props.compareLabel}</span>
             </Button>
           ) : null}
           <Button
-            variant="outline"
-            size="sm"
-            className="min-h-11 min-w-11"
+            variant="ghost"
+            size="icon-sm"
+            className="sm:size-auto sm:h-9 sm:w-auto sm:px-3"
             onClick={props.threadSettingsToggleOpen}
+            aria-label={props.threadSettingsLabel}
           >
             <Settings className="h-4 w-4 sm:me-2" />
             <span className="hidden sm:inline">{props.threadSettingsLabel}</span>
           </Button>
           <Button
-            variant="destructive"
-            size="sm"
-            className="min-h-11 min-w-11"
+            variant="ghost"
+            size="icon-sm"
+            className="text-destructive hover:text-destructive sm:size-auto sm:h-9 sm:w-auto sm:px-3"
             onClick={props.handleDelete}
             disabled={props.isDeleting}
+            aria-label={props.deleteLabel}
           >
             <Trash2 className="h-4 w-4 sm:me-2" />
             <span className="hidden sm:inline">{props.deleteLabel}</span>
           </Button>
-          <Button variant="outline" size="sm" className="min-h-11" asChild>
+          {/* Desktop-only labeled back button — mobile uses the icon-only one
+              positioned next to the title above. */}
+          <Button variant="outline" size="sm" className="hidden sm:inline-flex" asChild>
             <Link href={props.backToThreadsHref}>
               <ArrowLeft className="h-4 w-4 sm:me-2 rtl:rotate-180" />
-              <span className="hidden sm:inline">{props.backToThreadsLabel}</span>
+              <span>{props.backToThreadsLabel}</span>
             </Link>
           </Button>
         </div>

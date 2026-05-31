@@ -98,6 +98,7 @@ export function ImageGenerationProgressPanel({
         <img
           src={`data:image/png;base64,${previewBase64}`}
           alt={prompt ?? t('runtimeProgress.image.preview')}
+          loading="lazy"
           className="max-h-48 w-auto rounded-lg border border-border object-contain"
         />
       ) : null}

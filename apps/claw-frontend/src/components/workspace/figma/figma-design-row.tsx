@@ -24,6 +24,7 @@ export function FigmaDesignRow({
           src={metadata.thumbnailUrl}
           alt=""
           aria-hidden="true"
+          loading="lazy"
           className="mt-0.5 size-8 shrink-0 rounded object-cover"
         />
       ) : (

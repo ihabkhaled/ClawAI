@@ -60,6 +60,7 @@ export function FigmaDesignDialog({
                 <img
                   src={metadata.thumbnailUrl}
                   alt={design.title}
+                  loading="lazy"
                   className="w-full object-cover"
                 />
               </div>

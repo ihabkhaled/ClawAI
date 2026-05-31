@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
+import { COMPOSER_SEED_STORAGE_KEY } from '@/constants/chat.constants';
 import { DEFAULT_RESEARCH_OPTIONS } from '@/constants/research.constants';
 import { ResearchMode } from '@/enums/research-mode.enum';
 import { useResearchProviders } from '@/hooks/research/use-research-providers';
@@ -21,6 +22,33 @@ export const useMessageComposerState = ({
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
   const providerQuery = useResearchProviders();
+
+  // Hydrate the composer from a one-shot seed written by the /chat
+  // suggested-prompt buttons. Read on mount, then immediately clear the key
+  // so navigating away and back doesn't re-seed. Skip if the user already
+  // typed (content !== '') — happens when the effect races with hot reload.
+  useEffect(() => {
+    try {
+      const seed = window.localStorage.getItem(COMPOSER_SEED_STORAGE_KEY);
+      if (seed !== null && seed.trim().length > 0) {
+        window.localStorage.removeItem(COMPOSER_SEED_STORAGE_KEY);
+        setContent((prev) => (prev.length > 0 ? prev : seed));
+        logger.info({
+          component: 'chat',
+          action: 'composer-seed-consumed',
+          message: 'Pre-filled composer from suggested-prompt seed',
+          details: { length: seed.length },
+        });
+      }
+    } catch (error) {
+      logger.warn({
+        component: 'chat',
+        action: 'composer-seed-read',
+        message: 'localStorage read failed; suggested prompt seed not applied',
+        details: { error: (error as Error).message },
+      });
+    }
+  }, []);
 
   const validateAndSend = useCallback((): boolean => {
     const result = sendMessageSchema.safeParse({ content: content.trim() });

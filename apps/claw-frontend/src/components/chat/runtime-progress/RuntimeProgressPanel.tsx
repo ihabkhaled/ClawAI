@@ -22,6 +22,7 @@ import { AiStreamStage, FallbackFailureType, VisibleProgressStageStatus } from '
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { RuntimeProgressPanelProps } from '@/types';
+import { formatElapsed } from '@/utilities';
 
 // Top-level pluggable progress panel. Composes the existing stream-*
 // primitives (StreamStageBadge, StreamProgressBar, StreamLiveAnswer) with
@@ -123,8 +124,12 @@ export function RuntimeProgressPanel({
         ) : null}
 
         {streamError !== null && streamError !== undefined && streamError !== '' ? (
-          <div className="flex items-center gap-1.5 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            <XCircle className="h-3.5 w-3.5 shrink-0" />
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="flex items-center gap-1.5 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive"
+          >
+            <XCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>{streamError}</span>
           </div>
         ) : (
@@ -133,6 +138,8 @@ export function RuntimeProgressPanel({
               <section
                 className="w-full min-w-[18rem] max-w-xl overflow-hidden rounded-2xl border border-sky-500/25 bg-card shadow-sm"
                 aria-label={t('chat.stream.liveResponse')}
+                aria-live="polite"
+                aria-atomic="false"
               >
                 <div className="flex items-center justify-between gap-3 border-b border-border/60 px-3 py-2">
                   <div className="flex items-center gap-2">
@@ -205,6 +212,8 @@ export function RuntimeProgressPanel({
             <section
               className="w-full min-w-[18rem] max-w-xl overflow-hidden rounded-2xl border border-sky-500/25 bg-gradient-to-br from-sky-500/10 via-background to-emerald-500/10 shadow-sm"
               aria-label={t('chat.currentAiProgress', { status: statusLabel })}
+              aria-live="polite"
+              aria-atomic="false"
             >
               <div className="flex items-center justify-between gap-3 border-b border-border/60 px-3 py-2">
                 <div className="min-w-0">
@@ -280,13 +289,25 @@ export function RuntimeProgressPanel({
             </section>
             <div className="rounded-lg bg-muted px-4 py-2.5 text-sm text-foreground">
               <div
-                className="flex items-center gap-1"
+                className="flex items-center gap-2"
                 role="status"
                 aria-label={THINKING_INDICATOR_LABEL}
               >
-                <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:0ms]" />
-                <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:150ms]" />
-                <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:300ms]" />
+                <div className="flex items-center gap-1" aria-hidden="true">
+                  <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:0ms]" />
+                  <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:150ms]" />
+                  <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:300ms]" />
+                </div>
+                {executingModel !== null && executingModel !== undefined ? (
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {executingModel}
+                  </span>
+                ) : null}
+                {streamLive?.metrics?.elapsedMs !== undefined ? (
+                  <span className="ms-auto font-mono text-[11px] tabular-nums text-muted-foreground/80">
+                    {formatElapsed(streamLive.metrics.elapsedMs)}
+                  </span>
+                ) : null}
               </div>
             </div>
           </>

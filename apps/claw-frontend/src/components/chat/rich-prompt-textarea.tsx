@@ -66,8 +66,10 @@ export const RichPromptTextarea = forwardRef<HTMLTextAreaElement, RichPromptText
         aria-label={ariaLabel}
         disabled={disabled}
         rows={minRows}
-        // Disable native drag-resize handle — we own the height via autosize.
-        className={cn('resize-none', className)}
+        // Allow vertical drag-resize. Autosize still drives initial height
+        // and content-grow up to maxRows; the hook latches "user resized"
+        // via ResizeObserver and stops auto-growing once the handle is used.
+        className={cn('resize-y', className)}
       />
     );
   },

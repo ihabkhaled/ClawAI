@@ -29,4 +29,25 @@ describe('JumpToLatestButton', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Jump to latest' }));
     expect(onClick).toHaveBeenCalledTimes(1);
   });
+
+  it('renders the unread badge when unreadCount > 0', () => {
+    render(<JumpToLatestButton visible onClick={vi.fn()} t={t} unreadCount={3} />);
+    expect(screen.getByText('3')).toBeInTheDocument();
+    // The accessible name should include the count so screen readers announce it.
+    expect(screen.getByRole('button', { name: /Jump to latest \(3\)/ })).toBeInTheDocument();
+  });
+
+  it('clamps the unread badge label to 99+', () => {
+    render(<JumpToLatestButton visible onClick={vi.fn()} t={t} unreadCount={250} />);
+    expect(screen.getByText('99+')).toBeInTheDocument();
+  });
+
+  it('hides the unread badge when unreadCount is 0 or undefined', () => {
+    const { rerender } = render(
+      <JumpToLatestButton visible onClick={vi.fn()} t={t} unreadCount={0} />,
+    );
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
+    rerender(<JumpToLatestButton visible onClick={vi.fn()} t={t} />);
+    expect(screen.queryByText(/^\d/)).not.toBeInTheDocument();
+  });
 });

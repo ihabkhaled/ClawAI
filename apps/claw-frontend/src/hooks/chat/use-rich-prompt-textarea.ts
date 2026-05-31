@@ -40,6 +40,15 @@ export function useRichPromptTextarea(
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const isComposingRef = useRef(false);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
+  // True once the user has manually drag-resized the textarea — at that
+  // point we stop auto-growing and let the user own the height. Reset to
+  // false when the value clears (submit / external reset) so autosize
+  // resumes for the next message.
+  const userResizedRef = useRef(false);
+  // The most recent height that the autosize effect wrote. We compare this
+  // to ResizeObserver reports — any divergence > 1 px means the user
+  // dragged the native resize handle.
+  const lastAutoHeightRef = useRef<number | null>(null);
 
   // Measure the textarea's computed line-height ONCE the ref is attached so we
   // can translate minRows/maxRows into a pixel min-height / max-height. We
@@ -63,9 +72,19 @@ export function useRichPromptTextarea(
   // Auto-resize: reset height to auto, then size to scrollHeight clamped to
   // [minRows*lineHeight, maxRows*lineHeight]. Past the upper bound the
   // textarea is capped and its overflow-y kicks in (default browser scroll).
+  // Once the user manually drag-resizes the handle, autosize defers — the
+  // user owns the height until the value clears.
   useEffect(() => {
     const el = textareaRef.current;
     if (el === null || lineHeightPx === null) {
+      return;
+    }
+    // When the value goes empty (post-submit / external reset), let autosize
+    // take over again so the next message starts from the configured min.
+    if (value.length === 0) {
+      userResizedRef.current = false;
+    }
+    if (userResizedRef.current) {
       return;
     }
     const minPx = Math.round(minRows * lineHeightPx);
@@ -75,7 +94,27 @@ export function useRichPromptTextarea(
     const next = Math.min(Math.max(el.scrollHeight, minPx), maxPx);
     el.style.height = `${next}px`;
     el.style.overflowY = el.scrollHeight > maxPx ? 'auto' : 'hidden';
+    lastAutoHeightRef.current = next;
   }, [value, minRows, maxRows, lineHeightPx]);
+
+  // Watch for manual drag-resize. When the rendered height diverges from the
+  // last autosize-applied height, the user dragged the native handle —
+  // latch userResizedRef so subsequent autosize passes stop fighting them.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (el === null) {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      const currentHeight = el.getBoundingClientRect().height;
+      const autoHeight = lastAutoHeightRef.current;
+      if (autoHeight !== null && Math.abs(currentHeight - autoHeight) > 1) {
+        userResizedRef.current = true;
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
