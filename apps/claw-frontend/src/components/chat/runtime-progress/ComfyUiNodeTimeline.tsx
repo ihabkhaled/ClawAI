@@ -67,15 +67,17 @@ export function ComfyUINodeTimeline({
             key={entry.nodeId}
             className={cn(
               'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs',
-              entry.status === 'executing' && 'bg-sky-500/10',
+              entry.status === ComfyUINodeTimelineStatus.EXECUTING && 'bg-sky-500/10',
             )}
           >
             {icon}
             <span
               className={cn(
                 'truncate font-medium',
-                entry.status === 'completed' ? 'text-foreground' : 'text-muted-foreground',
-                entry.status === 'executing' && 'text-foreground',
+                entry.status === ComfyUINodeTimelineStatus.COMPLETED
+                  ? 'text-foreground'
+                  : 'text-muted-foreground',
+                entry.status === ComfyUINodeTimelineStatus.EXECUTING && 'text-foreground',
               )}
             >
               {entry.label}

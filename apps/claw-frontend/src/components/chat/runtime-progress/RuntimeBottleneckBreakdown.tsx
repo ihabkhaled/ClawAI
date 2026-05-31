@@ -1,3 +1,4 @@
+import { StreamBottleneckStage } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { RuntimeBottleneckBreakdownProps } from '@/types';
@@ -27,9 +28,9 @@ export function RuntimeBottleneckBreakdown({
   const total = segments.reduce((sum, seg) => sum + seg.durationMs, 0);
   const bottleneckStage = metrics?.bottleneck?.stage;
   const stageLabels: Record<string, string> = {
-    modelLoad: t('runtimeProgress.bottleneck.modelLoad'),
-    promptEval: t('runtimeProgress.bottleneck.promptEval'),
-    generation: t('runtimeProgress.bottleneck.generation'),
+    [StreamBottleneckStage.MODEL_LOAD]: t('runtimeProgress.bottleneck.modelLoad'),
+    [StreamBottleneckStage.PROMPT_EVAL]: t('runtimeProgress.bottleneck.promptEval'),
+    [StreamBottleneckStage.GENERATION]: t('runtimeProgress.bottleneck.generation'),
   };
 
   return (
@@ -51,9 +52,9 @@ export function RuntimeBottleneckBreakdown({
               key={seg.stage}
               className={cn(
                 'h-full transition-all',
-                seg.stage === 'modelLoad' && 'bg-amber-500/80',
-                seg.stage === 'promptEval' && 'bg-sky-500/80',
-                seg.stage === 'generation' && 'bg-emerald-500/80',
+                seg.stage === StreamBottleneckStage.MODEL_LOAD && 'bg-amber-500/80',
+                seg.stage === StreamBottleneckStage.PROMPT_EVAL && 'bg-sky-500/80',
+                seg.stage === StreamBottleneckStage.GENERATION && 'bg-emerald-500/80',
                 isBottleneck && 'ring-2 ring-offset-0 ring-foreground/40',
               )}
               style={{ width: `${String(widthPct)}%` }}
@@ -68,9 +69,9 @@ export function RuntimeBottleneckBreakdown({
             <span
               className={cn(
                 'h-2 w-2 rounded-full',
-                seg.stage === 'modelLoad' && 'bg-amber-500/80',
-                seg.stage === 'promptEval' && 'bg-sky-500/80',
-                seg.stage === 'generation' && 'bg-emerald-500/80',
+                seg.stage === StreamBottleneckStage.MODEL_LOAD && 'bg-amber-500/80',
+                seg.stage === StreamBottleneckStage.PROMPT_EVAL && 'bg-sky-500/80',
+                seg.stage === StreamBottleneckStage.GENERATION && 'bg-emerald-500/80',
               )}
               aria-hidden
             />

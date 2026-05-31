@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { RuntimeMetricsHud } from '@/components/chat/runtime-progress';
-import { AiStreamProgressConfidence, ExecutionProfile } from '@/enums';
+import { AiStreamProgressConfidence, ExecutionProfile, StreamBottleneckStage } from '@/enums';
 import type { StreamMetrics, StreamUsage } from '@/types';
 
 vi.mock('@/lib/i18n', () => ({
@@ -68,7 +68,7 @@ describe('RuntimeMetricsHud', () => {
       modelLoadMs: 500,
       promptEvalMs: 200,
       generationMs: 2_300,
-      bottleneck: { stage: 'generation', durationMs: 2_300, percentOfTotal: 0.77 },
+      bottleneck: { stage: StreamBottleneckStage.GENERATION, durationMs: 2_300, percentOfTotal: 0.77 },
     };
     render(<RuntimeMetricsHud metrics={enriched} usage={baseUsage} />);
     expect(screen.getByText(/runtimeProgress\.bottleneck\.badge/)).toBeInTheDocument();

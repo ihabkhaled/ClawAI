@@ -1,3 +1,4 @@
+import { StreamBottleneckStage } from '@/enums';
 import type {
   RuntimeProgressMetrics,
   StreamBottleneck,
@@ -45,13 +46,13 @@ export function buildBottleneckSegments(
   const fromMetrics: BottleneckSegment[] = [];
   if (metrics !== null) {
     if (typeof metrics.modelLoadMs === 'number' && metrics.modelLoadMs > 0) {
-      fromMetrics.push({ stage: 'modelLoad', durationMs: metrics.modelLoadMs });
+      fromMetrics.push({ stage: StreamBottleneckStage.MODEL_LOAD, durationMs: metrics.modelLoadMs });
     }
     if (typeof metrics.promptEvalMs === 'number' && metrics.promptEvalMs > 0) {
-      fromMetrics.push({ stage: 'promptEval', durationMs: metrics.promptEvalMs });
+      fromMetrics.push({ stage: StreamBottleneckStage.PROMPT_EVAL, durationMs: metrics.promptEvalMs });
     }
     if (typeof metrics.generationMs === 'number' && metrics.generationMs > 0) {
-      fromMetrics.push({ stage: 'generation', durationMs: metrics.generationMs });
+      fromMetrics.push({ stage: StreamBottleneckStage.GENERATION, durationMs: metrics.generationMs });
     }
   }
   if (fromMetrics.length > 0) {
