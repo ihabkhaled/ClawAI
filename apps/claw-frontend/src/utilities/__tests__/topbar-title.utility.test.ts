@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
-import { resolveActiveNavItem } from '@/utilities/topbar-title.utility';
 import type { SidebarItem } from '@/constants';
+import { resolveActiveNavItem } from '@/utilities/topbar-title.utility';
 
 const icon = (() => null) as unknown as SidebarItem['icon'];
 
