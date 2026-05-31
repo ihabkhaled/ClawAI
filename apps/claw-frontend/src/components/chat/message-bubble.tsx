@@ -141,7 +141,12 @@ export function MessageBubble({
 
   return (
     <div className={cn('flex w-full', isUser ? 'justify-end' : 'justify-start')}>
-      <div className={cn('flex max-w-[75%] flex-col gap-1', isUser ? 'items-end' : 'items-start')}>
+      <div
+        className={cn(
+          'flex flex-col gap-1',
+          isUser ? 'max-w-[88%] items-end sm:max-w-[80%]' : 'max-w-full items-start sm:max-w-[85%]',
+        )}
+      >
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">{roleLabel}</span>
           <span className="text-[10px] text-muted-foreground/60">
