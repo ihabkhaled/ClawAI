@@ -1,6 +1,12 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
-import { buildInterServiceAuthHeader, httpRequest, runResearch } from '../../../common/utilities';
+import {
+  buildInterServiceAuthHeader,
+  httpRequest,
+  mapResearchModeToWorkflow,
+  runResearch,
+} from '../../../common/utilities';
+import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import {
   APPROX_CHARS_PER_TOKEN,
   MEMORY_FETCH_LIMIT,
@@ -24,7 +30,6 @@ import {
 } from '../types/context.types';
 import { type ResearchOptions } from '../types/research-options.types';
 import { type ResearchRunResponse } from '../types/research.types';
-import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
 import {
   MAX_FILE_CONTENT_LENGTH,
   TEXT_FILE_EXTENSIONS,
@@ -130,7 +135,7 @@ export class ContextAssemblyManager {
     research: ResearchOptions | undefined,
   ): void {
     this.logger.log(
-      `assemble: starting for user ${userId} with ${String(threadMessages.length)} messages, ${String(contextPackIds?.length ?? 0)} packs, ${String(fileIds?.length ?? 0)} files, research=${research?.mode ?? 'OFF'}`,
+      `assemble: starting for user ${userId} with ${String(threadMessages.length)} messages, ${String(contextPackIds?.length ?? 0)} packs, ${String(fileIds?.length ?? 0)} files, research=${research?.mode ?? ResearchMode.NONE}`,
     );
   }
 
@@ -191,7 +196,7 @@ export class ContextAssemblyManager {
     }
     // Fallback: caller passed an explicit ResearchOptions and still holds
     // a bearer token. Useful for internal orchestrators.
-    if (research === undefined || research.mode === 'OFF' || intent.length === 0) {
+    if (research === undefined || research.mode === ResearchMode.NONE || intent.length === 0) {
       return null;
     }
     const config = AppConfig.get();
@@ -199,7 +204,7 @@ export class ContextAssemblyManager {
       userToken: research.userToken,
       userId,
       intent,
-      workflow: research.mode as ResearchWorkflow,
+      workflow: mapResearchModeToWorkflow(research.mode),
       searchProviderId: research.providerId,
       requestedModel: research.requestedModel,
       requestedProvider: research.requestedProvider,

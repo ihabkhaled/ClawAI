@@ -176,7 +176,9 @@ export type UseInThreadCompareReturn = {
 
 // Declarative option for CompareResearchModeControl. `labelKey` is an i18n
 // key into compare.research.* so the control body stays a pure render.
+// `tooltipKey` points to a research.toggle.tooltip* key explaining the mode.
 export type CompareResearchModeOption = {
   value: CompareResearchMode;
   labelKey: string;
+  tooltipKey: string;
 };

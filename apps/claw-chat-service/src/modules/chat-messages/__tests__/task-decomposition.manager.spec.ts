@@ -1,6 +1,8 @@
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
+import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { TaskDecompositionManager } from '../managers/task-decomposition.manager';
+import { type ResearchEnricherManager } from '../managers/research-enricher.manager';
 import { type ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { type ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { type ChatStreamService } from '../services/chat-stream.service';
@@ -40,21 +42,37 @@ const mockStreamService = (): Partial<Record<keyof ChatStreamService, jest.Mock>
 const makeOllamaSuccess = (text: string) =>
   Promise.resolve({ ok: true, status: 200, data: { response: text } });
 
+type ResearchEnricherStub = {
+  enrichForOrchestration: jest.Mock;
+  service: ResearchEnricherManager;
+};
+
+function mockResearchEnricher(): ResearchEnricherStub {
+  const enrichForOrchestration = jest
+    .fn()
+    .mockResolvedValue({ transcript: null, systemPrompt: '' });
+  const service = { enrichForOrchestration } as unknown as ResearchEnricherManager;
+  return { enrichForOrchestration, service };
+}
+
 describe('TaskDecompositionManager', () => {
   let manager: TaskDecompositionManager;
   let messagesRepo: ReturnType<typeof mockMessagesRepo>;
   let threadsRepo: ReturnType<typeof mockThreadsRepo>;
   let streamService: ReturnType<typeof mockStreamService>;
+  let researchEnricher: ResearchEnricherStub;
 
   beforeEach(() => {
     jest.clearAllMocks();
     messagesRepo = mockMessagesRepo();
     threadsRepo = mockThreadsRepo();
     streamService = mockStreamService();
+    researchEnricher = mockResearchEnricher();
     manager = new TaskDecompositionManager(
       messagesRepo as unknown as ChatMessagesRepository,
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
+      researchEnricher.service,
     );
   });
 
@@ -62,11 +80,15 @@ describe('TaskDecompositionManager', () => {
     it('should return messageId and threadId when threadId is provided', async () => {
       messagesRepo.create!.mockResolvedValue({ id: 'msg-1', threadId: 'thread-1' });
 
-      const result = await manager.executeDecomposition('user-1', {
-        content: 'A complex task with enough characters',
-        threadId: 'thread-1',
-        maxSubTasks: 3,
-      });
+      const result = await manager.executeDecomposition(
+        'user-1',
+        {
+          content: 'A complex task with enough characters',
+          threadId: 'thread-1',
+          maxSubTasks: 3,
+        },
+        '',
+      );
 
       expect(result).toEqual({ messageId: 'msg-1', threadId: 'thread-1' });
     });
@@ -75,10 +97,14 @@ describe('TaskDecompositionManager', () => {
       threadsRepo.create!.mockResolvedValue({ id: 'new-thread', userId: 'user-1' });
       messagesRepo.create!.mockResolvedValue({ id: 'msg-2', threadId: 'new-thread' });
 
-      const result = await manager.executeDecomposition('user-1', {
-        content: 'A complex task with enough characters',
-        maxSubTasks: 2,
-      });
+      const result = await manager.executeDecomposition(
+        'user-1',
+        {
+          content: 'A complex task with enough characters',
+          maxSubTasks: 2,
+        },
+        '',
+      );
 
       expect(threadsRepo.create).toHaveBeenCalled();
       expect(result.threadId).toBe('new-thread');
@@ -87,11 +113,15 @@ describe('TaskDecompositionManager', () => {
     it('should always resolve (fire-and-forget for background)', async () => {
       messagesRepo.create!.mockResolvedValue({ id: 'msg-3', threadId: 'thread-1' });
 
-      const promise = manager.executeDecomposition('user-1', {
-        content: 'A complex task with enough characters',
-        threadId: 'thread-1',
-        maxSubTasks: 3,
-      });
+      const promise = manager.executeDecomposition(
+        'user-1',
+        {
+          content: 'A complex task with enough characters',
+          threadId: 'thread-1',
+          maxSubTasks: 3,
+        },
+        '',
+      );
 
       await expect(promise).resolves.toBeDefined();
     });
@@ -99,11 +129,15 @@ describe('TaskDecompositionManager', () => {
     it('should store the user message in the repository', async () => {
       messagesRepo.create!.mockResolvedValue({ id: 'msg-4', threadId: 'thread-1' });
 
-      await manager.executeDecomposition('user-1', {
-        content: 'A complex task to decompose and execute',
-        threadId: 'thread-1',
-        maxSubTasks: 3,
-      });
+      await manager.executeDecomposition(
+        'user-1',
+        {
+          content: 'A complex task to decompose and execute',
+          threadId: 'thread-1',
+          maxSubTasks: 3,
+        },
+        '',
+      );
 
       expect(messagesRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -258,18 +292,23 @@ describe('TaskDecompositionManager', () => {
         messagesRepo as unknown as ChatMessagesRepository,
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
+        researchEnricher.service,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 
       await expect(
-        isolated.executeDecomposition('user-1', {
-          content: 'A complex task with enough characters',
-          threadId: 'thread-1',
-          maxSubTasks: 2,
-          requestedProvider: 'OPENAI',
-          requestedModel: 'gpt-4.1',
-          modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
-        }),
+        isolated.executeDecomposition(
+          'user-1',
+          {
+            content: 'A complex task with enough characters',
+            threadId: 'thread-1',
+            maxSubTasks: 2,
+            requestedProvider: 'OPENAI',
+            requestedModel: 'gpt-4.1',
+            modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
+          },
+          '',
+        ),
       ).rejects.toThrow('unsupported provider');
       expect(messagesRepo.create).not.toHaveBeenCalled();
     });
@@ -343,6 +382,86 @@ describe('TaskDecompositionManager', () => {
       ).metadata;
       expect(metadata?.modelSelection?.modelSelectionMode).toBe(ModelSelectionMode.AUTO);
       expect(metadata?.modelSelection?.actualProvider).toBe('local-ollama');
+    });
+  });
+
+  describe('research enrichment wiring', () => {
+    it('does NOT thread researchTranscript into metadata when researchMode is undefined', async () => {
+      httpRequest
+        .mockResolvedValueOnce(
+          makeOllamaSuccess(
+            JSON.stringify([{ title: 'T', instruction: 'do', category: 'general' }]),
+          ),
+        )
+        .mockResolvedValueOnce(makeOllamaSuccess('sub'))
+        .mockResolvedValueOnce(makeOllamaSuccess('merged'));
+      messagesRepo.create!.mockResolvedValue({ id: 'msg-no-research', threadId: 'thread-n' });
+
+      await manager.executeInBackground(
+        'thread-n',
+        'Some complex task',
+        2,
+        undefined,
+        undefined,
+        undefined,
+        '',
+      );
+
+      const assistantCall = messagesRepo.create!.mock.calls.find(
+        (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
+      );
+      const metadata = (
+        assistantCall![0] as { metadata?: { researchTranscript?: unknown } }
+      ).metadata;
+      expect(metadata?.researchTranscript).toBeUndefined();
+    });
+
+    it('threads the enricher transcript onto the ASSISTANT message when researchMode is SEARCH', async () => {
+      const transcript = {
+        mode: ResearchMode.SEARCH,
+        query: 'Some complex task',
+        sources: [{ title: 'Wiki', url: 'https://wiki.example.com', snippet: 'snippet' }],
+        latencyMs: 50,
+        warnings: [],
+      };
+      researchEnricher.enrichForOrchestration.mockResolvedValue({
+        transcript,
+        systemPrompt: '## Web research evidence (mode: SEARCH, gathered now)\n\n[1] Wiki — https://wiki.example.com\nsnippet\n',
+      });
+      httpRequest
+        .mockResolvedValueOnce(
+          makeOllamaSuccess(
+            JSON.stringify([{ title: 'T', instruction: 'do', category: 'general' }]),
+          ),
+        )
+        .mockResolvedValueOnce(makeOllamaSuccess('sub'))
+        .mockResolvedValueOnce(makeOllamaSuccess('merged'));
+      messagesRepo.create!.mockResolvedValue({ id: 'msg-research', threadId: 'thread-r' });
+
+      await manager.executeInBackground(
+        'thread-r',
+        'Some complex task',
+        2,
+        undefined,
+        ResearchMode.SEARCH,
+        undefined,
+        'bearer-stub',
+      );
+
+      expect(researchEnricher.enrichForOrchestration).toHaveBeenCalledWith({
+        threadId: 'thread-r',
+        mode: ResearchMode.SEARCH,
+        query: 'Some complex task',
+        userToken: 'bearer-stub',
+        providerId: undefined,
+      });
+      const assistantCall = messagesRepo.create!.mock.calls.find(
+        (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
+      );
+      const metadata = (
+        assistantCall![0] as { metadata?: { researchTranscript?: { sources?: unknown[] } } }
+      ).metadata;
+      expect(metadata?.researchTranscript).toEqual(transcript);
     });
   });
 });

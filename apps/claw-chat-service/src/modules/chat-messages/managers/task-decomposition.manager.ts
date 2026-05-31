@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ProgressActorType, StreamEventType } from '../../../common/enums';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
+import { ResearchMode } from '../../../common/enums/research-mode.enum';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
@@ -15,6 +16,8 @@ import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-thre
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
+import { ResearchEnricherManager } from './research-enricher.manager';
+import { prependResearchEvidence } from '../utilities/research-prompt.utility';
 import type { DecomposeTaskDto } from '../dto/decompose-task.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type {
@@ -23,6 +26,7 @@ import type {
   TaskDecompositionResponse,
 } from '../types/task-decomposition.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
+import type { ResearchTranscript } from '../types/research-transcript.types';
 import { type Prisma, type RoutingMode } from '../../../generated/prisma';
 
 @Injectable()
@@ -33,6 +37,7 @@ export class TaskDecompositionManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
@@ -40,6 +45,7 @@ export class TaskDecompositionManager {
   async executeDecomposition(
     userId: string,
     dto: DecomposeTaskDto,
+    userToken: string,
   ): Promise<TaskDecompositionResponse> {
     this.logger.log(`executeDecomposition: starting for user ${userId}`);
 
@@ -54,7 +60,15 @@ export class TaskDecompositionManager {
       metadata: { decompositionRequest: true, modelSelection: selection },
     });
 
-    void this.executeInBackground(threadId, dto.content, dto.maxSubTasks, selection);
+    void this.executeInBackground(
+      threadId,
+      dto.content,
+      dto.maxSubTasks,
+      selection,
+      dto.researchMode,
+      dto.researchProviderId,
+      userToken,
+    );
 
     return { messageId: userMessage.id, threadId };
   }
@@ -64,6 +78,9 @@ export class TaskDecompositionManager {
     content: string,
     maxSubTasks: number,
     selection?: AdvancedModelSelectionResolution,
+    researchMode?: ResearchMode,
+    researchProviderId?: string,
+    userToken?: string,
   ): Promise<void> {
     const startTime = Date.now();
     try {
@@ -74,15 +91,39 @@ export class TaskDecompositionManager {
         actorType: ProgressActorType.SYSTEM,
         actorName: 'Task decomposition',
       });
-      const subTasks = await this.decomposeContent(content, maxSubTasks, resolvedSelection);
+      // Enrich ONCE — sub-task generation, sub-task execution, AND the merge
+      // step all reuse the same evidence so the model can ground at every
+      // hop without re-querying research-service.
+      const enrichment = await this.researchEnricherManager.enrichForOrchestration({
+        threadId,
+        mode: researchMode,
+        query: content,
+        userToken: userToken ?? '',
+        providerId: researchProviderId,
+      });
+      const subTasks = await this.decomposeContent(
+        content,
+        maxSubTasks,
+        resolvedSelection,
+        enrichment.systemPrompt,
+      );
       this.chatStreamService.emitProgressStage(threadId, StreamEventType.RESPONSE_STREAMING, {
         label: 'Executing sub-tasks',
         description: `${String(subTasks.length)} sub-tasks are running in parallel.`,
         actorType: ProgressActorType.SYSTEM,
         actorName: 'Task decomposition',
       });
-      const subTaskResults = await this.executeSubTasks(subTasks, resolvedSelection);
-      const mergedContent = await this.mergeResults(content, subTaskResults, resolvedSelection);
+      const subTaskResults = await this.executeSubTasks(
+        subTasks,
+        resolvedSelection,
+        enrichment.systemPrompt,
+      );
+      const mergedContent = await this.mergeResults(
+        content,
+        subTaskResults,
+        resolvedSelection,
+        enrichment.systemPrompt,
+      );
       const resolvedModel = resolvedSelection.actualModel;
 
       await this.chatMessagesRepository.create({
@@ -97,6 +138,7 @@ export class TaskDecompositionManager {
           resolvedSelection,
           resolvedModel,
           subTaskResults,
+          enrichment.transcript,
         ) as Prisma.InputJsonValue,
       });
 
@@ -118,11 +160,13 @@ export class TaskDecompositionManager {
     resolvedSelection: AdvancedModelSelectionResolution,
     resolvedModel: string,
     subTaskResults: Array<unknown>,
+    researchTranscript: ResearchTranscript | null,
   ): Record<string, unknown> {
     return {
       decomposed: true,
       subTasks: subTaskResults,
       modelSelection: resolvedSelection,
+      ...(researchTranscript === null ? {} : { researchTranscript }),
       routeRoadmap: {
         routingMode: resolvedSelection.modelSelectionMode,
         routerModel: null,
@@ -177,11 +221,12 @@ export class TaskDecompositionManager {
     content: string,
     maxSubTasks: number,
     selection: AdvancedModelSelectionResolution,
+    researchEvidence: string,
   ): Promise<SubTask[]> {
     const config = AppConfig.get();
     const model = selection.actualModel;
 
-    const prompt = `You are a task decomposition assistant. Break the following complex task into ${String(maxSubTasks)} or fewer focused sub-tasks.
+    const basePrompt = `You are a task decomposition assistant. Break the following complex task into ${String(maxSubTasks)} or fewer focused sub-tasks.
 
 Task:
 ---
@@ -189,6 +234,7 @@ ${content}
 ---
 
 Return a JSON array of sub-tasks. Each sub-task must have: title (string), instruction (string), category (string: "research"|"reasoning"|"coding"|"writing"|"analysis"|"general"). Return ONLY the JSON array, no markdown, no explanation.`;
+    const prompt = prependResearchEvidence(basePrompt, researchEvidence);
 
     const requestBody: OllamaGenerateRequest = {
       model,
@@ -241,10 +287,11 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
   private async executeSubTasks(
     subTasks: SubTask[],
     selection: AdvancedModelSelectionResolution,
+    researchEvidence: string,
   ): Promise<SubTaskResult[]> {
     const fallbackModel = selection.actualModel;
     const results = await Promise.allSettled(
-      subTasks.map((subTask) => this.executeOneSubTask(subTask, selection)),
+      subTasks.map((subTask) => this.executeOneSubTask(subTask, selection, researchEvidence)),
     );
 
     return results.map((result, index) => {
@@ -267,6 +314,7 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
   private async executeOneSubTask(
     subTask: SubTask,
     selection: AdvancedModelSelectionResolution,
+    researchEvidence: string,
   ): Promise<SubTaskResult> {
     const config = AppConfig.get();
     const startTime = Date.now();
@@ -274,7 +322,7 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
 
     const requestBody: OllamaGenerateRequest = {
       model,
-      prompt: subTask.instruction,
+      prompt: prependResearchEvidence(subTask.instruction, researchEvidence),
       stream: false,
       think: false,
     };
@@ -305,6 +353,7 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
     originalContent: string,
     subTaskResults: SubTaskResult[],
     selection: AdvancedModelSelectionResolution,
+    researchEvidence: string,
   ): Promise<string> {
     const config = AppConfig.get();
     const model = selection.actualModel;
@@ -313,7 +362,7 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
       .map((r, i) => `## Sub-task ${String(i + 1)}: ${r.title}\n${r.result}`)
       .join('\n\n');
 
-    const mergePrompt = `You are a synthesis assistant. The following complex task was decomposed into sub-tasks and each was executed. Synthesize all sub-task results into a single coherent, well-structured final answer.
+    const baseMergePrompt = `You are a synthesis assistant. The following complex task was decomposed into sub-tasks and each was executed. Synthesize all sub-task results into a single coherent, well-structured final answer.
 
 Original task:
 ---
@@ -326,6 +375,7 @@ ${subTasksSummary}
 ---
 
 Provide a unified, coherent response that integrates all sub-task results into a single well-structured answer.`;
+    const mergePrompt = prependResearchEvidence(baseMergePrompt, researchEvidence);
 
     const requestBody: OllamaGenerateRequest = {
       model,

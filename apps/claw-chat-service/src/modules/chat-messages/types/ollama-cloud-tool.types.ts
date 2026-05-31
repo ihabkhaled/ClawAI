@@ -31,10 +31,22 @@ export type OllamaToolTranscriptTurn = {
 };
 
 // Cumulative transcript stored on metadata.toolTranscript.
+//
+// `gracefullyWrapped` is set in tandem with `capReached`: when the loop
+// hits the iteration / total-timeout cap, the chat-service issues ONE
+// final tool-less POST asking the model to synthesize an answer from
+// the evidence already gathered. If that wrap-up POST succeeds, the
+// `content` field returned by `runOllamaCloudToolLoop` is the
+// synthesized answer AND `gracefullyWrapped=true`. If the wrap-up POST
+// fails (network/model error), the loop falls back to the previous
+// behaviour of returning the partial accumulated content with
+// `gracefullyWrapped=false` so the FE can render a clear error hint
+// instead of a misleading "complete" answer.
 export type OllamaToolTranscript = {
   turns: OllamaToolTranscriptTurn[];
   iterations: number;
   capReached: boolean;
+  gracefullyWrapped?: boolean;
   totalDurationMs: number;
 };
 

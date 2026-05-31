@@ -50,7 +50,7 @@ export const useMessageComposerState = ({
       result.data.content,
       selectedModel ?? undefined,
       selectedFileIds.length > 0 ? selectedFileIds : undefined,
-      research.mode === ResearchMode.OFF ? undefined : research,
+      research.mode === ResearchMode.NONE ? undefined : research,
     );
     setContent('');
     setSelectedFileIds([]);

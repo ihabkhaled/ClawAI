@@ -179,6 +179,11 @@ export const es: TranslationDictionary = {
         thinking: 'Pensando',
         generating: 'Generando',
         toolCalling: 'Llamando a herramientas',
+        researchStarted: 'Buscando en la web...',
+        researchSourcesFound: '{count} fuentes encontradas',
+        researchFetching: 'Cargando {host}',
+        researchCompleted: 'Investigación completa',
+        researchFailed: 'Investigación fallida: {reason}',
         finalizing: 'Finalizando',
         complete: 'Completado',
         incomplete: 'Incompleto',
@@ -1760,12 +1765,32 @@ export const es: TranslationDictionary = {
       placeholder: 'Investigación',
       autoProvider: 'Proveedor automático',
       noProviders: 'No hay proveedores configurados',
+      tooltipNone: 'Sin investigación web. El modelo responde solo desde su entrenamiento.',
+      tooltipSearch:
+        'Ejecuta una búsqueda web y pasa los títulos y fragmentos de los resultados al modelo.',
+      tooltipSearchFetch:
+        'Busca en la web, luego obtiene las páginas principales y fundamenta al modelo en el texto completo.',
+      tooltipSearchExtract:
+        'Busca en la web, obtiene las páginas principales y extrae hechos estructurados antes de que el modelo responda.',
+      lockedUpgrade: 'La investigación web está bloqueada en tu plan. Actualiza para habilitarla.',
     },
     modes: {
-      off: 'Sin investigación',
-      searchOnly: 'Búsqueda web',
-      searchThenFetch: 'Búsqueda + obtener',
-      searchFetchExtract: 'Búsqueda + extraer',
+      none: 'Sin investigación',
+      search: 'Búsqueda web',
+      searchFetch: 'Búsqueda + obtener',
+      searchExtract: 'Búsqueda + extraer',
+    },
+    transcript: {
+      title: 'Se usaron {count} fuentes',
+      expand: 'Mostrar fuentes',
+      sourcesCount: '{count} fuentes',
+    },
+    lifecycle: {
+      started: 'Buscando en la web...',
+      sourcesFound: '{count} fuentes encontradas',
+      fetching: 'Cargando {host}',
+      completed: 'Investigación completa',
+      failed: 'Investigación fallida: {reason}',
     },
     providers: {
       title: 'Proveedores de investigación',

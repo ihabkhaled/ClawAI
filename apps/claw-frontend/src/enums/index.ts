@@ -84,6 +84,9 @@ export { SelectedModelSource } from './selected-model-source.enum';
 export { JudgeResponseType } from './judge-response-type.enum';
 export { JudgeReviewDecision } from './judge-review-decision.enum';
 export { ResearchProviderSelectionMode } from './research-provider-selection-mode.enum';
+export { ResearchMode } from './research-mode.enum';
+// Deprecated alias kept for foundation-step back-compat — Phase 2 sweeps
+// every consumer over to `ResearchMode` directly and removes the alias.
 export { CompareResearchMode } from './compare-research-mode.enum';
 export { FileDeliveryMode } from './file-delivery-mode.enum';
 export {

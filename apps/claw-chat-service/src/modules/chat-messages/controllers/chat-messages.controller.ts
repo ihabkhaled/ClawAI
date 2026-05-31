@@ -65,73 +65,82 @@ export class ChatMessagesController {
   @Post('consensus')
   async createConsensus(
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
     @Body(new ZodValidationPipe(consensusMessageSchema)) dto: ConsensusMessageDto,
   ): Promise<ConsensusResponse> {
-    return this.chatMessagesService.createConsensusMessage(user.id, dto);
+    return this.chatMessagesService.createConsensusMessage(user.id, dto, extractBearer(req));
   }
 
   @Post('escalation-chain')
   async createEscalationChain(
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
     @Body(new ZodValidationPipe(escalationChainMessageSchema)) dto: EscalationChainMessageDto,
   ): Promise<EscalationChainResponse> {
-    return this.chatMessagesService.createEscalationChainMessage(user.id, dto);
+    return this.chatMessagesService.createEscalationChainMessage(user.id, dto, extractBearer(req));
   }
 
   @Post('repair')
   async createRepair(
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
     @Body(new ZodValidationPipe(repairMessageSchema)) dto: RepairMessageDto,
   ): Promise<AnswerRepairResponse> {
-    return this.chatMessagesService.createRepairMessage(user.id, dto);
+    return this.chatMessagesService.createRepairMessage(user.id, dto, extractBearer(req));
   }
 
   @Post('decompose')
   async decomposeTask(
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
     @Body(new ZodValidationPipe(decomposeTaskSchema)) dto: DecomposeTaskDto,
   ): Promise<TaskDecompositionResponse> {
-    return this.chatMessagesService.executeDecomposition(user.id, dto);
+    return this.chatMessagesService.executeDecomposition(user.id, dto, extractBearer(req));
   }
 
   @Post('best-of-n')
   async bestOfN(
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
     @Body(new ZodValidationPipe(bestOfNMessageSchema)) dto: BestOfNMessageDto,
   ): Promise<BestOfNResponse> {
-    return this.chatMessagesService.executeBestOfN(user.id, dto);
+    return this.chatMessagesService.executeBestOfN(user.id, dto, extractBearer(req));
   }
 
   @Post('cost-ensemble')
   async costEnsemble(
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
     @Body(new ZodValidationPipe(costEnsembleMessageSchema)) dto: CostEnsembleMessageDto,
   ): Promise<CostEnsembleResponse> {
-    return this.chatMessagesService.executeCostEnsemble(user.id, dto);
+    return this.chatMessagesService.executeCostEnsemble(user.id, dto, extractBearer(req));
   }
 
   @Post('verify')
   async verify(
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
     @Body(new ZodValidationPipe(verifyMessageSchema)) dto: VerifyMessageDto,
   ): Promise<VerifyResponse> {
-    return this.chatMessagesService.executeVerify(user.id, dto);
+    return this.chatMessagesService.executeVerify(user.id, dto, extractBearer(req));
   }
 
   @Post('role-pack')
   async executeRolePack(
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
     @Body(new ZodValidationPipe(rolePackMessageSchema)) dto: RolePackMessageDto,
   ): Promise<RolePackResponse> {
-    return this.chatMessagesService.executeRolePack(user.id, dto);
+    return this.chatMessagesService.executeRolePack(user.id, dto, extractBearer(req));
   }
 
   @Post('pipeline')
   async executePipeline(
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
     @Body(new ZodValidationPipe(pipelineMessageSchema)) dto: PipelineMessageDto,
   ): Promise<PipelineResponse> {
-    return this.chatMessagesService.executePipeline(user.id, dto);
+    return this.chatMessagesService.executePipeline(user.id, dto, extractBearer(req));
   }
 
   @Get('thread/:threadId')

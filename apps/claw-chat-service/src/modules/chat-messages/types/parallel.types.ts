@@ -2,6 +2,7 @@ import type { TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 import type { CompareJudgeState, ResearchMode } from '../../../common/enums';
 import type { FileDeliveryEntry } from './file-delivery.types';
 import type { JudgeReviewPayload } from './judge-referee.types';
+import type { ResearchTranscript } from './research-transcript.types';
 
 export type ParallelModelTarget = {
   provider: string;
@@ -38,6 +39,12 @@ export type ParallelModelResponse = {
   // native image, or was omitted. Mirrored verbatim into the assistant
   // message metadata.fileDelivery JSON for the FE + judge/critic.
   attachmentDelivery?: FileDeliveryEntry[];
+  // Shared enricher transcript persisted on every assistant message produced
+  // by this lane. Identical across all lanes by construction — the enricher
+  // is invoked ONCE before fan-out and the transcript is replayed onto every
+  // assistant message so a page refresh shows the same "Used N web sources"
+  // badge whichever lane the user is looking at.
+  researchTranscript?: ResearchTranscript;
 };
 
 export type ParallelJudgeConfig = {

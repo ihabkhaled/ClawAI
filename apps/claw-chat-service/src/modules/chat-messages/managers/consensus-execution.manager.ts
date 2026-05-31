@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ConsensusConfidenceLevel } from '../../../common/enums/consensus-confidence.enum';
+import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import {
   CONSENSUS_MIN_CONTENT_LENGTH,
@@ -22,8 +23,10 @@ import type {
 import type { ParallelModelResponse, ParallelModelTarget } from '../types/parallel.types';
 import type { AssembledContext } from '../types/context.types';
 import type { ThreadSettings } from '../types/execution.types';
+import type { ResearchTranscript } from '../types/research-transcript.types';
 import { ChatExecutionManager } from './chat-execution.manager';
 import { ContextAssemblyManager } from './context-assembly.manager';
+import { ResearchEnricherManager } from './research-enricher.manager';
 import { type ChatThread } from '../../../generated/prisma';
 
 @Injectable()
@@ -37,6 +40,7 @@ export class ConsensusExecutionManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {
     this.timeoutMs = AppConfig.get().OLLAMA_GENERATE_TIMEOUT_MS;
@@ -48,6 +52,9 @@ export class ConsensusExecutionManager {
     content: string,
     models: ParallelModelTarget[],
     fileIds?: string[],
+    researchMode?: ResearchMode,
+    researchProviderId?: string,
+    userToken?: string,
   ): Promise<ConsensusResponse> {
     this.logger.log(
       `executeConsensus: queuing ${String(models.length)} models in thread ${threadId}`,
@@ -55,7 +62,17 @@ export class ConsensusExecutionManager {
 
     const userMessage = await this.storeUserMessage(threadId, content, fileIds);
 
-    void this.executeInBackground(userId, threadId, userMessage.id, content, models, fileIds);
+    void this.executeInBackground(
+      userId,
+      threadId,
+      userMessage.id,
+      content,
+      models,
+      fileIds,
+      researchMode,
+      researchProviderId,
+      userToken,
+    );
 
     return { messageId: userMessage.id, threadId, prompt: content };
   }
@@ -67,16 +84,38 @@ export class ConsensusExecutionManager {
     content: string,
     models: ParallelModelTarget[],
     fileIds?: string[],
+    researchMode?: ResearchMode,
+    researchProviderId?: string,
+    userToken?: string,
   ): Promise<void> {
     try {
-      const { context, threadSettings } = await this.buildContext(userId, threadId, fileIds);
+      const { context: rawContext, threadSettings } = await this.buildContext(
+        userId,
+        threadId,
+        fileIds,
+      );
+      // Enrich ONCE before fan-out — same dedupe pattern parallel uses.
+      // Every lane and the synthesis row share the same transcript.
+      const enrichment = await this.researchEnricherManager.enrichForOrchestration({
+        threadId,
+        mode: researchMode,
+        query: content,
+        userToken: userToken ?? '',
+        providerId: researchProviderId,
+      });
+      const context = this.applyResearchToContext(rawContext, enrichment.systemPrompt);
       const responses = await this.executeAllModels(models, context, threadSettings);
       const completedResponses = responses.filter((r) => r.status === 'completed');
 
-      await this.storeModelMessages(threadId, consensusGroupId, responses);
+      await this.storeModelMessages(threadId, consensusGroupId, responses, enrichment.transcript);
 
       const synthesis = await this.synthesize(content, completedResponses, models);
-      await this.storeSynthesisMessage(threadId, consensusGroupId, synthesis);
+      await this.storeSynthesisMessage(
+        threadId,
+        consensusGroupId,
+        synthesis,
+        enrichment.transcript,
+      );
 
       this.logger.log(
         `executeInBackground: consensus done — ${String(completedResponses.length)}/${String(responses.length)} completed, score=${String(synthesis.analysis.agreementScore.toFixed(2))}`,
@@ -89,9 +128,26 @@ export class ConsensusExecutionManager {
         threadId,
         consensusGroupId,
         this.buildFallbackSynthesis(msg),
+        null,
       );
       this.chatStreamService.emitError(threadId, `Consensus execution failed: ${msg}`);
     }
+  }
+
+  // Prepend the enricher's evidence block to the assembled-context system
+  // prompt so every lane sees the same web evidence (same shape parallel
+  // uses via injectResearchIntoContext).
+  private applyResearchToContext(
+    context: AssembledContext,
+    evidence: string,
+  ): AssembledContext {
+    if (evidence.length === 0) {
+      return context;
+    }
+    const trimmedPrompt = (context.systemPrompt ?? '').trim();
+    const nextSystemPrompt =
+      trimmedPrompt.length > 0 ? `${evidence}\n\n${trimmedPrompt}` : evidence;
+    return { ...context, systemPrompt: nextSystemPrompt };
   }
 
   private async buildContext(
@@ -409,6 +465,7 @@ Rules: agreementScore 0.0-1.0, confidenceLevel must be HIGH/MEDIUM/LOW, max 3 it
     threadId: string,
     consensusGroupId: string,
     responses: ParallelModelResponse[],
+    researchTranscript: ResearchTranscript | null,
   ): Promise<void> {
     const storePromises = responses.map((r) =>
       this.chatMessagesRepository.create({
@@ -421,7 +478,12 @@ Rules: agreementScore 0.0-1.0, confidenceLevel must be HIGH/MEDIUM/LOW, max 3 it
         outputTokens: r.outputTokens ?? undefined,
         latencyMs: r.latencyMs,
         usedFallback: false,
-        metadata: { consensusExecution: true, consensusGroupId, status: r.status },
+        metadata: {
+          consensusExecution: true,
+          consensusGroupId,
+          status: r.status,
+          ...(researchTranscript === null ? {} : { researchTranscript }),
+        },
       }),
     );
     await Promise.all(storePromises);
@@ -431,6 +493,7 @@ Rules: agreementScore 0.0-1.0, confidenceLevel must be HIGH/MEDIUM/LOW, max 3 it
     threadId: string,
     consensusGroupId: string,
     synthesis: ConsensusSynthesisResult,
+    researchTranscript: ResearchTranscript | null,
   ): Promise<void> {
     await this.chatMessagesRepository.create({
       threadId,
@@ -449,6 +512,7 @@ Rules: agreementScore 0.0-1.0, confidenceLevel must be HIGH/MEDIUM/LOW, max 3 it
         confidenceLevel: synthesis.analysis.confidenceLevel,
         synthesisRationale: synthesis.analysis.synthesisRationale,
         modelBreakdown: synthesis.modelBreakdown,
+        ...(researchTranscript === null ? {} : { researchTranscript }),
       },
     });
   }

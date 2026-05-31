@@ -43,6 +43,11 @@ describe('ConsensusExecutionManager', () => {
     emitError: jest.fn(),
   };
 
+  // Universal-research PR2: research-enricher dependency.
+  const mockResearchEnricherManager = {
+    enrichForOrchestration: jest.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
+  };
+
   const mockContext: AssembledContext = {
     userId: 'user-1',
     systemPrompt: null,
@@ -79,12 +84,17 @@ describe('ConsensusExecutionManager', () => {
     mockChatStreamService.emitCompletion.mockImplementation(() => {});
     mockChatStreamService.emitError.mockImplementation(() => {});
 
+    mockResearchEnricherManager.enrichForOrchestration.mockResolvedValue({
+      transcript: null,
+      systemPrompt: '',
+    });
     manager = new ConsensusExecutionManager(
       mockChatExecutionManager as any,
       mockContextAssemblyManager as any,
       mockChatMessagesRepository as any,
       mockChatThreadsRepository as any,
       mockChatStreamService as any,
+      mockResearchEnricherManager as any,
     );
   });
 
@@ -168,6 +178,7 @@ describe('ConsensusExecutionManager', () => {
         isolatedRepo as any,
         mockChatThreadsRepository as any,
         mockChatStreamService as any,
+        mockResearchEnricherManager as any,
       );
 
       // Mock Ollama synthesis to fail (test heuristic fallback path)
@@ -215,6 +226,7 @@ describe('ConsensusExecutionManager', () => {
         isolatedRepo as any,
         mockChatThreadsRepository as any,
         mockChatStreamService as any,
+        mockResearchEnricherManager as any,
       );
 
       globalThis.fetch = jest.fn().mockRejectedValue(new Error('Ollama unavailable'));

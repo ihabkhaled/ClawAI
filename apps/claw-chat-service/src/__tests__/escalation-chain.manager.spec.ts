@@ -48,6 +48,11 @@ describe('EscalationChainManager', () => {
     checkResponseQuality: jest.fn(),
   };
 
+  // Universal-research PR2: research-enricher dependency.
+  const mockResearchEnricherManager = {
+    enrichForOrchestration: jest.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
+  };
+
   const mockContext: AssembledContext = {
     userId: 'user-1',
     systemPrompt: null,
@@ -100,6 +105,10 @@ describe('EscalationChainManager', () => {
     mockChatStreamService.emitCompletion.mockImplementation(() => {});
     mockChatStreamService.emitError.mockImplementation(() => {});
 
+    mockResearchEnricherManager.enrichForOrchestration.mockResolvedValue({
+      transcript: null,
+      systemPrompt: '',
+    });
     manager = new EscalationChainManager(
       mockChatExecutionManager as any,
       mockContextAssemblyManager as any,
@@ -107,6 +116,7 @@ describe('EscalationChainManager', () => {
       mockChatThreadsRepository as any,
       mockChatStreamService as any,
       mockQualityCheckManager as any,
+      mockResearchEnricherManager as any,
     );
   });
 

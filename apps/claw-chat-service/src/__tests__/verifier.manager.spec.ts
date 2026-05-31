@@ -108,6 +108,11 @@ const verifierJsonResponse = JSON.stringify({
   suggestions: [],
 });
 
+// Universal-research PR2: research-enricher dependency stub.
+const mockResearchEnricherManager = {
+  enrichForOrchestration: jest.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
+};
+
 describe('VerifierManager', () => {
   let manager: VerifierManager;
   let messagesRepo: ReturnType<typeof mockMessagesRepository>;
@@ -118,11 +123,16 @@ describe('VerifierManager', () => {
     messagesRepo = mockMessagesRepository();
     threadsRepo = mockThreadsRepository();
     streamService = mockStreamService();
+    mockResearchEnricherManager.enrichForOrchestration.mockResolvedValue({
+      transcript: null,
+      systemPrompt: '',
+    });
 
     manager = new VerifierManager(
       messagesRepo as unknown as ChatMessagesRepository,
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
+      mockResearchEnricherManager as any,
     );
 
     jest.clearAllMocks();
@@ -135,11 +145,15 @@ describe('VerifierManager', () => {
     it('should return messageId and threadId', async () => {
       messagesRepo.create!.mockResolvedValue(mockUserMessage);
 
-      const result = await manager.executeVerify('user-1', {
-        content: 'test prompt',
-        threadId: 'thread-verify-1',
-        maxRevisions: 1,
-      });
+      const result = await manager.executeVerify(
+        'user-1',
+        {
+          content: 'test prompt',
+          threadId: 'thread-verify-1',
+          maxRevisions: 1,
+        },
+        '',
+      );
 
       expect(result).toHaveProperty('messageId');
       expect(result).toHaveProperty('threadId', 'thread-verify-1');
@@ -149,10 +163,14 @@ describe('VerifierManager', () => {
       threadsRepo.create!.mockResolvedValue(mockThread);
       messagesRepo.create!.mockResolvedValue(mockUserMessage);
 
-      const result = await manager.executeVerify('user-1', {
-        content: 'test prompt',
-        maxRevisions: 1,
-      });
+      const result = await manager.executeVerify(
+        'user-1',
+        {
+          content: 'test prompt',
+          maxRevisions: 1,
+        },
+        '',
+      );
 
       expect(threadsRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -288,18 +306,23 @@ describe('VerifierManager', () => {
         messagesRepo as unknown as ChatMessagesRepository,
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
+        mockResearchEnricherManager as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 
       await expect(
-        isolated.executeVerify('user-1', {
-          content: 'please verify this answer',
-          threadId: 'thread-verify-1',
-          maxRevisions: 1,
-          requestedProvider: 'OPENAI',
-          requestedModel: 'gpt-4.1',
-          modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
-        }),
+        isolated.executeVerify(
+          'user-1',
+          {
+            content: 'please verify this answer',
+            threadId: 'thread-verify-1',
+            maxRevisions: 1,
+            requestedProvider: 'OPENAI',
+            requestedModel: 'gpt-4.1',
+            modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
+          },
+          '',
+        ),
       ).rejects.toThrow('unsupported provider');
       expect(messagesRepo.create).not.toHaveBeenCalled();
     });

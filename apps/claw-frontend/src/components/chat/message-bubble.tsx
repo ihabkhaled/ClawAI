@@ -18,6 +18,7 @@ import { MessageAttachments } from '@/components/chat/message-attachments';
 import { MessageProvenance } from '@/components/chat/message-provenance';
 import { OllamaToolTranscriptPanel } from '@/components/chat/ollama-tool-transcript-panel';
 import { ResearchRunDetails } from '@/components/chat/research-run-details';
+import { ResearchTranscriptPanel } from '@/components/chat/research-transcript-panel';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
 import { ThreadContextInspector } from '@/components/chat/thread-context-inspector';
 import { WhyThisModelPanel } from '@/components/chat/why-this-model-panel';
@@ -29,7 +30,7 @@ import { MessageFeedback, MessageRole, RoutingMode } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
 import { MarkdownRenderer } from '@/lib/markdown';
 import { cn } from '@/lib/utils';
-import type { MessageBubbleProps, OllamaToolTranscript } from '@/types';
+import type { MessageBubbleProps, OllamaToolTranscript, ResearchTranscript } from '@/types';
 import { formatLatency, formatShortDateTime, getJudgeReviewFromMessage } from '@/utilities';
 
 export function MessageBubble({
@@ -131,6 +132,15 @@ export function MessageBubble({
       ? (metadata['toolTranscript'] as OllamaToolTranscript)
       : null;
 
+  // Research enricher transcript. Present when the assistant turn was
+  // enriched with web research evidence (search / search+fetch /
+  // search+extract). BE persists this under metadata.researchTranscript.
+  const researchTranscript =
+    typeof metadata?.['researchTranscript'] === 'object' &&
+    metadata['researchTranscript'] !== null
+      ? (metadata['researchTranscript'] as ResearchTranscript)
+      : null;
+
   const handleFeedback = (value: MessageFeedback): void => {
     if (!onFeedback) {
       return;
@@ -193,6 +203,9 @@ export function MessageBubble({
         </div>
         {!isUser && toolTranscript !== null ? (
           <OllamaToolTranscriptPanel transcript={toolTranscript} />
+        ) : null}
+        {!isUser && researchTranscript !== null ? (
+          <ResearchTranscriptPanel transcript={researchTranscript} />
         ) : null}
         {!isUser && (providerModel || totalTokens > 0 || message.latencyMs !== null) ? (
           <div className="flex flex-wrap items-center gap-1.5">

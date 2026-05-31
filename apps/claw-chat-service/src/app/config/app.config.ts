@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import {
+  OLLAMA_TOOL_LOOP_MAX_ITERATIONS_DEFAULT,
+  OLLAMA_TOOL_LOOP_MAX_ITERATIONS_HARD_CAP,
+  OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS_DEFAULT,
+  OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS_HARD_CAP,
+} from '../../modules/chat-messages/constants/agentic-loop.constants';
 
 const appConfigSchema = z.object({
   CHAT_DATABASE_URL: z.string().min(1, 'CHAT_DATABASE_URL is required'),
@@ -21,6 +27,25 @@ const appConfigSchema = z.object({
   OLLAMA_GENERATE_TIMEOUT_MS: z.coerce.number().default(300_000),
   OLLAMA_KEEP_ALIVE: z.string().min(1).default('20m'),
   CHAT_PORT: z.coerce.number().int().positive().default(4002),
+
+  // ─── Ollama Cloud agentic tool-loop caps ──────────────────────────────
+  // Raised 10 → 50 on 2026-05-31 so kimi-k2 / deepseek-v4-pro / glm-5.1
+  // have enough turns for multi-step research without prematurely hitting
+  // the safety cap. The wrap-up path now also synthesizes a final answer
+  // from already-gathered evidence on cap-reached instead of returning a
+  // user-visible error string.
+  OLLAMA_TOOL_LOOP_MAX_ITERATIONS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(OLLAMA_TOOL_LOOP_MAX_ITERATIONS_HARD_CAP)
+    .default(OLLAMA_TOOL_LOOP_MAX_ITERATIONS_DEFAULT),
+  OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS_HARD_CAP)
+    .default(OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS_DEFAULT),
 
   // ─── Semantic Router Flagship feature flags consumed by chat-service ─────
   // See docs/03-architecture/semantic-router-flagship-plan.md. Defaults

@@ -71,7 +71,7 @@ export const useThreadDataController = ({
             }
           : {}),
         ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
-        ...(research && research.mode !== ResearchMode.OFF
+        ...(research && research.mode !== ResearchMode.NONE
           ? {
               researchMode: research.mode,
               ...(research.providerId !== undefined

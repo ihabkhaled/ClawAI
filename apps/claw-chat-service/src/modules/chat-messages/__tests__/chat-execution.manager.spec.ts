@@ -32,12 +32,21 @@ const { AppConfig } = jest.requireMock('../../../app/config/app.config') as {
   AppConfig: { get: jest.Mock };
 };
 
-AppConfig.get.mockReturnValue({
+// Default AppConfig fixture used by EVERY test. Re-applied inside the
+// beforeEach (after `jest.clearAllMocks()` wipes mock state) so the new
+// OLLAMA_TOOL_LOOP_* caps survive the reset. Without this, the agentic
+// loop reads `undefined` and every cloud-Ollama test fails with
+// "No API key configured for provider OLLAMA" because the iteration cap
+// is undefined and the while-loop short-circuits.
+const DEFAULT_APP_CONFIG = {
   OLLAMA_SERVICE_URL: 'http://ollama:4008',
   OLLAMA_GENERATE_TIMEOUT_MS: 10_000,
   CONNECTOR_SERVICE_URL: 'http://connector:4011',
   FILE_GENERATION_SERVICE_URL: 'http://file-generation:4013',
-});
+  OLLAMA_TOOL_LOOP_MAX_ITERATIONS: 50,
+  OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS: 600_000,
+};
+AppConfig.get.mockReturnValue(DEFAULT_APP_CONFIG);
 
 const makeContext = (content: string): AssembledContext =>
   ({
@@ -68,6 +77,10 @@ describe('ChatExecutionManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Re-pin the AppConfig mock — clearAllMocks wipes the module-scope
+    // default set above, and several methods (runOllamaCloudToolLoop in
+    // particular) call AppConfig.get() many times per invocation.
+    AppConfig.get.mockReturnValue(DEFAULT_APP_CONFIG);
 
     contextAssembly = {
       buildPromptString: jest.fn().mockReturnValue('user prompt'),
@@ -1113,7 +1126,22 @@ describe('ChatExecutionManager', () => {
       expect(toolMessage?.tool_call_id).toBe('tool-1');
     });
 
-    it('bails with capReached=true when the model never stops calling tools', async () => {
+    it('bails with capReached=true AND gracefully wraps up when the model never stops calling tools', async () => {
+      // Pin the iteration cap to 10 for THIS test so the existing
+      // assertion arithmetic stays readable (the canonical runtime cap is
+      // now 50). The graceful wrap-up POST adds ONE extra non-tool /chat
+      // call after the iteration cap is hit, then synthesizes the answer.
+      // mockReturnValue (not mockReturnValueOnce) is used because
+      // AppConfig.get() is called many times per `callProvider` invocation
+      // (resolveProviderConfig + callCloudProvider + the loop itself + …).
+      AppConfig.get.mockReturnValue({
+        OLLAMA_SERVICE_URL: 'http://ollama:4008',
+        OLLAMA_GENERATE_TIMEOUT_MS: 10_000,
+        CONNECTOR_SERVICE_URL: 'http://connector:4011',
+        FILE_GENERATION_SERVICE_URL: 'http://file-generation:4013',
+        OLLAMA_TOOL_LOOP_MAX_ITERATIONS: 10,
+        OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS: 600_000,
+      });
       const context = makeContext('infinite-loop scenario');
       // 1 connector config
       httpRequest.mockResolvedValueOnce({
@@ -1123,7 +1151,8 @@ describe('ChatExecutionManager', () => {
       });
       // Each /api/chat turn returns a tool_call; the matching /api/web_search
       // returns an empty result. With OLLAMA_TOOL_LOOP_MAX_ITERATIONS=10 and
-      // (chat + tool) per turn we expect 1 (config) + 10 (chat) + 10 (tool) = 21 calls.
+      // (chat + tool) per turn we expect 1 (config) + 10 (chat) + 10 (tool)
+      // + 1 (graceful wrap-up POST) = 22 calls.
       for (let i = 0; i < 10; i += 1) {
         httpRequest
           .mockResolvedValueOnce({
@@ -1146,6 +1175,20 @@ describe('ChatExecutionManager', () => {
           })
           .mockResolvedValueOnce({ ok: true, status: 200, data: { results: [] } });
       }
+      // Graceful wrap-up — final tool-less POST that synthesizes an answer.
+      httpRequest.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          model: 'deepseek-v4-pro',
+          message: {
+            role: 'assistant',
+            content: 'Based on the available evidence I could not produce a definitive answer.',
+          },
+          done: true,
+          done_reason: 'stop',
+        },
+      });
 
       const result = await manager.callProvider(
         'OLLAMA',
@@ -1160,10 +1203,26 @@ describe('ChatExecutionManager', () => {
 
       expect(result.toolTranscript).toBeDefined();
       expect(result.toolTranscript?.capReached).toBe(true);
+      expect(result.toolTranscript?.gracefullyWrapped).toBe(true);
       expect(result.toolTranscript?.iterations).toBe(10);
-      expect(result.content).toContain('safety cap');
-      // 1 (connector) + 10 (chat) + 10 (web_search) = 21 calls
-      expect(httpRequest).toHaveBeenCalledTimes(21);
+      // The synthesized wrap-up content surfaces verbatim as the assistant
+      // message, no longer a generic "safety cap" error string.
+      expect(result.content).toBe(
+        'Based on the available evidence I could not produce a definitive answer.',
+      );
+      // The wrap-up POST does NOT include `tools` so the model is forced
+      // to text. Inspect the last httpRequest call's body to confirm.
+      const wrapUpCall = httpRequest.mock.calls.at(-1)?.[0] as {
+        body: { tools?: unknown; messages: Array<{ role: string; content: string }> };
+      };
+      expect(wrapUpCall.body.tools).toBeUndefined();
+      // The final message MUST be the synthesized-instruction system note
+      // so the model knows the research budget is exhausted.
+      const lastMessage = wrapUpCall.body.messages.at(-1);
+      expect(lastMessage?.role).toBe('system');
+      expect(lastMessage?.content).toContain('maximum allowed research budget');
+      // 1 (connector) + 10 (chat) + 10 (web_search) + 1 (wrap-up) = 22 calls
+      expect(httpRequest).toHaveBeenCalledTimes(22);
     });
   });
 });

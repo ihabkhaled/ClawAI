@@ -179,6 +179,11 @@ export const pt: TranslationDictionary = {
         thinking: 'Pensando',
         generating: 'Gerando',
         toolCalling: 'Chamando ferramentas',
+        researchStarted: 'Pesquisando na web...',
+        researchSourcesFound: '{count} fontes encontradas',
+        researchFetching: 'Buscando {host}',
+        researchCompleted: 'Pesquisa concluída',
+        researchFailed: 'Pesquisa falhou: {reason}',
         finalizing: 'Finalizando',
         complete: 'Concluído',
         incomplete: 'Incompleto',
@@ -1750,12 +1755,32 @@ export const pt: TranslationDictionary = {
       placeholder: 'Pesquisa',
       autoProvider: 'Provedor Automático',
       noProviders: 'Nenhum provedor configurado',
+      tooltipNone: 'Sem pesquisa na web. O modelo responde apenas com base em seu treinamento.',
+      tooltipSearch:
+        'Execute uma pesquisa na web e passe os títulos e trechos dos resultados ao modelo.',
+      tooltipSearchFetch:
+        'Pesquise na web, depois busque as principais páginas e fundamente o modelo no texto completo.',
+      tooltipSearchExtract:
+        'Pesquise na web, busque as principais páginas e extraia fatos estruturados antes da resposta do modelo.',
+      lockedUpgrade: 'A pesquisa na web está bloqueada no seu plano. Faça upgrade para ativar.',
     },
     modes: {
-      off: 'Sem pesquisa',
-      searchOnly: 'Pesquisa web',
-      searchThenFetch: 'Pesquisa + busca',
-      searchFetchExtract: 'Pesquisa + extração',
+      none: 'Sem pesquisa',
+      search: 'Pesquisa web',
+      searchFetch: 'Pesquisa + busca',
+      searchExtract: 'Pesquisa + extração',
+    },
+    transcript: {
+      title: '{count} fontes usadas',
+      expand: 'Mostrar fontes',
+      sourcesCount: '{count} fontes',
+    },
+    lifecycle: {
+      started: 'Pesquisando na web...',
+      sourcesFound: '{count} fontes encontradas',
+      fetching: 'Buscando {host}',
+      completed: 'Pesquisa concluída',
+      failed: 'Pesquisa falhou: {reason}',
     },
     providers: {
       title: 'Provedores de Pesquisa',

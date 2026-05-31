@@ -179,6 +179,11 @@ export const it: TranslationDictionary = {
         thinking: 'Sta pensando',
         generating: 'Generazione in corso',
         toolCalling: 'Chiamata agli strumenti',
+        researchStarted: 'Ricerca sul web in corso...',
+        researchSourcesFound: '{count} fonti trovate',
+        researchFetching: 'Recupero di {host}',
+        researchCompleted: 'Ricerca completata',
+        researchFailed: 'Ricerca fallita: {reason}',
         finalizing: 'Finalizzazione',
         complete: 'Completato',
         incomplete: 'Incompleto',
@@ -1759,12 +1764,32 @@ export const it: TranslationDictionary = {
       placeholder: 'Ricerca',
       autoProvider: 'Provider automatico',
       noProviders: 'Nessun provider configurato',
+      tooltipNone: 'Nessuna ricerca web. Il modello risponde solo dal suo addestramento.',
+      tooltipSearch:
+        'Esegui una ricerca web e passa al modello i titoli e i frammenti dei risultati.',
+      tooltipSearchFetch:
+        'Cerca sul web, quindi recupera le pagine principali e fonda il modello sul testo completo.',
+      tooltipSearchExtract:
+        'Cerca sul web, recupera le pagine principali, quindi estrai fatti strutturati prima della risposta del modello.',
+      lockedUpgrade: 'La ricerca web è bloccata nel tuo piano. Aggiorna per abilitarla.',
     },
     modes: {
-      off: 'Nessuna ricerca',
-      searchOnly: 'Ricerca web',
-      searchThenFetch: 'Ricerca + recupero',
-      searchFetchExtract: 'Ricerca + estrazione',
+      none: 'Nessuna ricerca',
+      search: 'Ricerca web',
+      searchFetch: 'Ricerca + recupero',
+      searchExtract: 'Ricerca + estrazione',
+    },
+    transcript: {
+      title: '{count} fonti utilizzate',
+      expand: 'Mostra fonti',
+      sourcesCount: '{count} fonti',
+    },
+    lifecycle: {
+      started: 'Ricerca sul web in corso...',
+      sourcesFound: '{count} fonti trovate',
+      fetching: 'Recupero di {host}',
+      completed: 'Ricerca completata',
+      failed: 'Ricerca fallita: {reason}',
     },
     providers: {
       title: 'Provider di ricerca',

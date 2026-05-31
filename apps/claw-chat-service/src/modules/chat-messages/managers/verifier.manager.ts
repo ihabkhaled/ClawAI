@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
+import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import {
   DEFAULT_VERIFIER_MODEL,
@@ -14,6 +15,9 @@ import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-thre
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
+import { ResearchEnricherManager } from './research-enricher.manager';
+import { prependResearchEvidence } from '../utilities/research-prompt.utility';
+import type { ResearchTranscript } from '../types/research-transcript.types';
 import type { VerifyMessageDto } from '../dto/verify-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { VerifierCheckResult, VerifyResponse } from '../types/verifier.types';
@@ -28,11 +32,16 @@ export class VerifierManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
-  async executeVerify(userId: string, dto: VerifyMessageDto): Promise<VerifyResponse> {
+  async executeVerify(
+    userId: string,
+    dto: VerifyMessageDto,
+    userToken: string,
+  ): Promise<VerifyResponse> {
     this.logger.log(`executeVerify: starting for user ${userId}`);
 
     const threadId = await this.resolveThreadId(userId, dto);
@@ -45,7 +54,15 @@ export class VerifierManager {
       metadata: { verifyRequest: true, maxRevisions: dto.maxRevisions, modelSelection: selection },
     });
 
-    void this.executeInBackground(threadId, dto.content, dto.maxRevisions, selection);
+    void this.executeInBackground(
+      threadId,
+      dto.content,
+      dto.maxRevisions,
+      selection,
+      dto.researchMode,
+      dto.researchProviderId,
+      userToken,
+    );
 
     return { messageId: userMessage.id, threadId };
   }
@@ -55,11 +72,24 @@ export class VerifierManager {
     content: string,
     maxRevisions: number,
     selection?: AdvancedModelSelectionResolution,
+    researchMode?: ResearchMode,
+    researchProviderId?: string,
+    userToken?: string,
   ): Promise<void> {
     const startTime = Date.now();
     try {
       const resolvedSelection = selection ?? (await this.buildAutoSelection());
-      const draft = await this.generateDraft(content, resolvedSelection);
+      // Enrich ONCE — initial draft, every verifier-check, and every repair
+      // step share the same evidence so a hallucinated fact in the draft can
+      // be repaired against the same web sources.
+      const enrichment = await this.researchEnricherManager.enrichForOrchestration({
+        threadId,
+        mode: researchMode,
+        query: content,
+        userToken: userToken ?? '',
+        providerId: researchProviderId,
+      });
+      const draft = await this.generateDraft(content, resolvedSelection, enrichment.systemPrompt);
       const checkResult = await this.runVerifierCheck(content, draft, resolvedSelection);
 
       if (checkResult.score >= VERIFIER_PASS_THRESHOLD || maxRevisions === 0) {
@@ -70,6 +100,7 @@ export class VerifierManager {
           0,
           startTime,
           resolvedSelection,
+          enrichment.transcript,
         );
         this.chatStreamService.emitCompletion(
           threadId,
@@ -85,6 +116,7 @@ export class VerifierManager {
         checkResult,
         maxRevisions,
         resolvedSelection,
+        enrichment.systemPrompt,
       );
 
       await this.storeVerifiedMessage(
@@ -94,6 +126,7 @@ export class VerifierManager {
         revisionCount,
         startTime,
         resolvedSelection,
+        enrichment.transcript,
       );
       this.chatStreamService.emitCompletion(
         threadId,
@@ -119,6 +152,7 @@ export class VerifierManager {
     initialCheck: VerifierCheckResult,
     maxRevisions: number,
     selection: AdvancedModelSelectionResolution,
+    researchEvidence: string,
   ): Promise<{ finalDraft: string; finalCheck: VerifierCheckResult; revisionCount: number }> {
     let currentDraft = initialDraft;
     let currentCheck = initialCheck;
@@ -130,6 +164,7 @@ export class VerifierManager {
         currentDraft,
         currentCheck.suggestions,
         selection,
+        researchEvidence,
       );
       const recheck = await this.runVerifierCheck(content, revised, selection);
       revisionCount += 1;
@@ -147,13 +182,14 @@ export class VerifierManager {
   private async generateDraft(
     content: string,
     selection: AdvancedModelSelectionResolution,
+    researchEvidence: string,
   ): Promise<string> {
     const config = AppConfig.get();
     const model = selection.actualModel;
 
     const requestBody: OllamaGenerateRequest = {
       model,
-      prompt: content,
+      prompt: prependResearchEvidence(content, researchEvidence),
       stream: false,
       think: false,
     };
@@ -243,6 +279,7 @@ Return ONLY JSON: { "score": <average 0-1>, "issues": ["..."], "suggestions": ["
     draft: string,
     suggestions: string[],
     selection: AdvancedModelSelectionResolution,
+    researchEvidence: string,
   ): Promise<string> {
     const config = AppConfig.get();
     const model = selection.actualModel;
@@ -252,7 +289,7 @@ Return ONLY JSON: { "score": <average 0-1>, "issues": ["..."], "suggestions": ["
         ? suggestions.map((s) => `- ${s}`).join('\n')
         : '- Improve overall quality';
 
-    const repairPrompt = `You are a response improvement assistant. Revise the following response based on the suggestions.
+    const baseRepairPrompt = `You are a response improvement assistant. Revise the following response based on the suggestions.
 
 Original question: ${content}
 
@@ -263,6 +300,7 @@ Suggestions for improvement:
 ${suggestionText}
 
 Return ONLY the improved response. Do not explain changes.`;
+    const repairPrompt = prependResearchEvidence(baseRepairPrompt, researchEvidence);
 
     const requestBody: OllamaGenerateRequest = {
       model,
@@ -296,6 +334,7 @@ Return ONLY the improved response. Do not explain changes.`;
     revisionCount: number,
     startTime: number,
     selection: AdvancedModelSelectionResolution,
+    researchTranscript: ResearchTranscript | null,
   ): Promise<void> {
     await this.chatMessagesRepository.create({
       threadId,
@@ -315,6 +354,7 @@ Return ONLY the improved response. Do not explain changes.`;
         verifierIssues: checkResult.issues,
         revisionCount,
         modelSelection: selection,
+        ...(researchTranscript === null ? {} : { researchTranscript }),
       },
     });
   }

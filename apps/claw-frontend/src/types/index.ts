@@ -807,3 +807,9 @@ export type {
   OllamaToolTranscriptTurn,
   UseOllamaToolTranscriptPanelReturn,
 } from './ollama-tool-transcript.types';
+export type {
+  ResearchTranscript,
+  ResearchTranscriptPanelProps,
+  ResearchTranscriptSource,
+  UseResearchTranscriptPanelReturn,
+} from './research-transcript.types';

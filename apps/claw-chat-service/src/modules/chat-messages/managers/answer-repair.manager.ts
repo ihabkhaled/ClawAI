@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { RepairType } from '../../../common/enums/repair-type.enum';
+import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import { REPAIR_GENERATION_TIMEOUT_MS } from '../constants/answer-repair.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
@@ -10,6 +11,8 @@ import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-thre
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
+import { ResearchEnricherManager } from './research-enricher.manager';
+import { prependResearchEvidence } from '../utilities/research-prompt.utility';
 import type { RepairMessageDto } from '../dto/repair-message.dto';
 import type { AnswerRepairResponse } from '../types/answer-repair.types';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
@@ -24,11 +27,16 @@ export class AnswerRepairManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
-  async executeRepair(userId: string, dto: RepairMessageDto): Promise<AnswerRepairResponse> {
+  async executeRepair(
+    userId: string,
+    dto: RepairMessageDto,
+    userToken: string,
+  ): Promise<AnswerRepairResponse> {
     this.logger.log(
       `executeRepair: starting repair for user ${userId} with types=${dto.repairTypes.join(',')}`,
     );
@@ -48,7 +56,15 @@ export class AnswerRepairManager {
       },
     });
 
-    void this.executeInBackground(threadId, originalContent, dto.repairTypes, selection);
+    void this.executeInBackground(
+      threadId,
+      originalContent,
+      dto.repairTypes,
+      selection,
+      dto.researchMode,
+      dto.researchProviderId,
+      userToken,
+    );
 
     return { messageId: userMessage.id, threadId };
   }
@@ -58,14 +74,25 @@ export class AnswerRepairManager {
     originalContent: string,
     repairTypes: RepairType[],
     selection?: AdvancedModelSelectionResolution,
+    researchMode?: ResearchMode,
+    researchProviderId?: string,
+    userToken?: string,
   ): Promise<void> {
     const startTime = Date.now();
     try {
       const resolvedSelection = selection ?? (await this.buildAutoSelection());
+      const enrichment = await this.researchEnricherManager.enrichForOrchestration({
+        threadId,
+        mode: researchMode,
+        query: originalContent,
+        userToken: userToken ?? '',
+        providerId: researchProviderId,
+      });
       const repairedContent = await this.callRepairLlm(
         originalContent,
         repairTypes,
         resolvedSelection,
+        enrichment.systemPrompt,
       );
 
       const provider = resolvedSelection.actualProvider;
@@ -85,6 +112,7 @@ export class AnswerRepairManager {
           repairProvider: provider,
           repairModel: model,
           modelSelection: resolvedSelection,
+          ...(enrichment.transcript === null ? {} : { researchTranscript: enrichment.transcript }),
         },
       });
 
@@ -109,9 +137,11 @@ export class AnswerRepairManager {
     originalContent: string,
     repairTypes: RepairType[],
     selection: AdvancedModelSelectionResolution,
+    researchEvidence: string,
   ): Promise<string> {
     const config = AppConfig.get();
-    const repairPrompt = this.buildRepairPrompt(originalContent, repairTypes);
+    const baseRepairPrompt = this.buildRepairPrompt(originalContent, repairTypes);
+    const repairPrompt = prependResearchEvidence(baseRepairPrompt, researchEvidence);
     const model = selection.actualModel;
 
     const requestBody: OllamaGenerateRequest = {

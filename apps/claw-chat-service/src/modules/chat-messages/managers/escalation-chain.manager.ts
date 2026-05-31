@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { EscalationChainStatus } from '../../../common/enums/escalation-chain-status.enum';
+import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { DEFAULT_QUALITY_THRESHOLD } from '../constants/escalation-chain.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
@@ -13,9 +14,11 @@ import type {
 } from '../types/escalation-chain.types';
 import type { AssembledContext } from '../types/context.types';
 import type { ThreadSettings } from '../types/execution.types';
+import type { ResearchTranscript } from '../types/research-transcript.types';
 import { ChatExecutionManager } from './chat-execution.manager';
 import { ContextAssemblyManager } from './context-assembly.manager';
 import { QualityCheckManager } from './quality-check.manager';
+import { ResearchEnricherManager } from './research-enricher.manager';
 import { type ChatThread } from '../../../generated/prisma';
 
 @Injectable()
@@ -29,6 +32,7 @@ export class EscalationChainManager {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly qualityCheckManager: QualityCheckManager,
+    private readonly researchEnricherManager: ResearchEnricherManager,
   ) {}
 
   async executeEscalationChain(
@@ -37,6 +41,8 @@ export class EscalationChainManager {
     content: string,
     chain: EscalationChainStep[],
     fileIds?: string[],
+    researchMode?: ResearchMode,
+    userToken?: string,
   ): Promise<EscalationChainResponse> {
     this.logger.log(
       `executeEscalationChain: queuing ${String(chain.length)}-step chain in thread ${threadId}`,
@@ -44,7 +50,15 @@ export class EscalationChainManager {
 
     const userMessage = await this.storeUserMessage(threadId, content, fileIds);
 
-    void this.executeInBackground(userId, threadId, content, chain, fileIds);
+    void this.executeInBackground(
+      userId,
+      threadId,
+      content,
+      chain,
+      fileIds,
+      researchMode,
+      userToken,
+    );
 
     return { messageId: userMessage.id, threadId, prompt: content };
   }
@@ -55,11 +69,26 @@ export class EscalationChainManager {
     content: string,
     chain: EscalationChainStep[],
     fileIds?: string[],
+    researchMode?: ResearchMode,
+    userToken?: string,
   ): Promise<void> {
     try {
-      const { context, threadSettings } = await this.buildContext(userId, threadId, fileIds);
+      const { context: rawContext, threadSettings } = await this.buildContext(
+        userId,
+        threadId,
+        fileIds,
+      );
+      // Enrich ONCE at the chain level — every step sees the same evidence
+      // block prepended to the shared system prompt.
+      const enrichment = await this.researchEnricherManager.enrichForOrchestration({
+        threadId,
+        mode: researchMode,
+        query: content,
+        userToken: userToken ?? '',
+      });
+      const context = this.applyResearchToContext(rawContext, enrichment.systemPrompt);
       const result = await this.runChain(content, chain, context, threadSettings);
-      await this.storeChainResult(threadId, result);
+      await this.storeChainResult(threadId, result, enrichment.transcript);
 
       this.logger.log(
         `executeInBackground: escalation done — stepUsed=${String(result.stepUsed)}/${String(result.totalSteps)} status=${result.status}`,
@@ -76,6 +105,21 @@ export class EscalationChainManager {
         this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
       }
     }
+  }
+
+  // Prepend the enricher's evidence block to the shared system prompt so
+  // every escalation step sees the same web evidence.
+  private applyResearchToContext(
+    context: AssembledContext,
+    evidence: string,
+  ): AssembledContext {
+    if (evidence.length === 0) {
+      return context;
+    }
+    const trimmedPrompt = (context.systemPrompt ?? '').trim();
+    const nextSystemPrompt =
+      trimmedPrompt.length > 0 ? `${evidence}\n\n${trimmedPrompt}` : evidence;
+    return { ...context, systemPrompt: nextSystemPrompt };
   }
 
   private async buildContext(
@@ -237,7 +281,11 @@ export class EscalationChainManager {
     return this.chatMessagesRepository.create({ threadId, role: 'USER', content, metadata });
   }
 
-  private async storeChainResult(threadId: string, result: EscalationChainResult): Promise<void> {
+  private async storeChainResult(
+    threadId: string,
+    result: EscalationChainResult,
+    researchTranscript: ResearchTranscript | null,
+  ): Promise<void> {
     await this.chatMessagesRepository.create({
       threadId,
       role: 'ASSISTANT',
@@ -254,6 +302,7 @@ export class EscalationChainManager {
         stepResults: result.stepResults,
         finalProvider: result.finalProvider,
         finalModel: result.finalModel,
+        ...(researchTranscript === null ? {} : { researchTranscript }),
       },
     });
   }

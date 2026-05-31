@@ -1,4 +1,4 @@
-import { ProgressActorType, StreamEventType } from '../../../common/enums';
+import { AiStreamStage, ProgressActorType, StreamEventType } from '../../../common/enums';
 import { ChatStreamService } from '../services/chat-stream.service';
 
 describe('ChatStreamService', () => {
@@ -138,6 +138,126 @@ describe('ChatStreamService', () => {
       expect.objectContaining({ sequence: 1, type: StreamEventType.REQUEST_ACCEPTED }),
       expect.objectContaining({ sequence: 2, type: StreamEventType.ROUTER_STARTED }),
       expect.objectContaining({ sequence: 3, type: StreamEventType.PROVIDER_SELECTED }),
+    ]);
+  });
+
+  it('emitResearchProgress(STARTED) puts a RESEARCH_PROGRESS frame on the bus with mode+query details', () => {
+    const nextSpy = jest.spyOn(service.eventBus, 'next');
+
+    service.emitResearchProgress('thread-research-1', {
+      stage: AiStreamStage.RESEARCH_STARTED,
+      details: { mode: 'SEARCH_FETCH', query: 'gpt-5 launch' },
+    });
+
+    expect(nextSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        threadId: 'thread-research-1',
+        type: StreamEventType.RESEARCH_PROGRESS,
+        stage: AiStreamStage.RESEARCH_STARTED,
+        label: 'Starting research',
+        actorType: ProgressActorType.TOOL,
+        actorName: 'Research enricher',
+        stageId: `research:${AiStreamStage.RESEARCH_STARTED}`,
+        status: 'active',
+        researchDetails: { mode: 'SEARCH_FETCH', query: 'gpt-5 launch' },
+        sequence: 1,
+      }),
+    );
+  });
+
+  it('emitResearchProgress(SOURCES_FOUND) carries the sourcesCount in researchDetails', () => {
+    const nextSpy = jest.spyOn(service.eventBus, 'next');
+
+    service.emitResearchProgress('thread-research-2', {
+      stage: AiStreamStage.RESEARCH_SOURCES_FOUND,
+      details: { mode: 'SEARCH', query: 'q', sourcesCount: 5 },
+    });
+
+    expect(nextSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: StreamEventType.RESEARCH_PROGRESS,
+        stage: AiStreamStage.RESEARCH_SOURCES_FOUND,
+        status: 'active',
+        researchDetails: expect.objectContaining({ sourcesCount: 5 }),
+      }),
+    );
+  });
+
+  it('emitResearchProgress(FETCHING) includes currentUrl in researchDetails', () => {
+    const nextSpy = jest.spyOn(service.eventBus, 'next');
+
+    service.emitResearchProgress('thread-research-3', {
+      stage: AiStreamStage.RESEARCH_FETCHING,
+      details: { mode: 'SEARCH_FETCH', query: 'q', currentUrl: 'https://example/x' },
+    });
+
+    expect(nextSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: StreamEventType.RESEARCH_PROGRESS,
+        stage: AiStreamStage.RESEARCH_FETCHING,
+        researchDetails: expect.objectContaining({ currentUrl: 'https://example/x' }),
+      }),
+    );
+  });
+
+  it('emitResearchProgress(COMPLETED) marks the event status as completed', () => {
+    const nextSpy = jest.spyOn(service.eventBus, 'next');
+
+    service.emitResearchProgress('thread-research-4', {
+      stage: AiStreamStage.RESEARCH_COMPLETED,
+      details: { mode: 'SEARCH_FETCH', query: 'q', sourcesCount: 3 },
+    });
+
+    expect(nextSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: StreamEventType.RESEARCH_PROGRESS,
+        stage: AiStreamStage.RESEARCH_COMPLETED,
+        status: 'completed',
+        researchDetails: expect.objectContaining({ sourcesCount: 3 }),
+      }),
+    );
+  });
+
+  it('emitResearchProgress(FAILED) emits with status=error, actorType=system and error in details', () => {
+    const nextSpy = jest.spyOn(service.eventBus, 'next');
+
+    service.emitResearchProgress('thread-research-5', {
+      stage: AiStreamStage.RESEARCH_FAILED,
+      details: { mode: 'SEARCH_FETCH', query: 'q', error: 'network down' },
+    });
+
+    expect(nextSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: StreamEventType.RESEARCH_PROGRESS,
+        stage: AiStreamStage.RESEARCH_FAILED,
+        status: 'error',
+        actorType: ProgressActorType.SYSTEM,
+        researchDetails: expect.objectContaining({ error: 'network down' }),
+      }),
+    );
+  });
+
+  it('emitResearchProgress increments sequence and stores frames in the replay buffer', () => {
+    service.emitResearchProgress('thread-replay', {
+      stage: AiStreamStage.RESEARCH_STARTED,
+      details: { mode: 'SEARCH', query: 'q' },
+    });
+    service.emitResearchProgress('thread-replay', {
+      stage: AiStreamStage.RESEARCH_COMPLETED,
+      details: { mode: 'SEARCH', query: 'q', sourcesCount: 0 },
+    });
+
+    expect(service.getRecentEvents('thread-replay')).toEqual([
+      expect.objectContaining({
+        sequence: 1,
+        type: StreamEventType.RESEARCH_PROGRESS,
+        stage: AiStreamStage.RESEARCH_STARTED,
+      }),
+      expect.objectContaining({
+        sequence: 2,
+        type: StreamEventType.RESEARCH_PROGRESS,
+        stage: AiStreamStage.RESEARCH_COMPLETED,
+      }),
     ]);
   });
 

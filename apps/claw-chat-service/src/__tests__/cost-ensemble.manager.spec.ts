@@ -107,6 +107,11 @@ const makeQualityManager = (): Partial<Record<keyof QualityCheckManager, jest.Mo
   checkResponseQuality: jest.fn().mockReturnValue({ score: 0.8, reasons: [], isWeak: false }),
 });
 
+// Universal-research PR2: research-enricher dependency.
+const mockResearchEnricherManager = {
+  enrichForOrchestration: jest.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
+};
+
 describe('CostEnsembleManager', () => {
   let manager: CostEnsembleManager;
   let messagesRepo: ReturnType<typeof makeMessagesRepo>;
@@ -119,12 +124,17 @@ describe('CostEnsembleManager', () => {
     threadsRepo = makeThreadsRepo();
     streamService = makeStreamService();
     qualityManager = makeQualityManager();
+    mockResearchEnricherManager.enrichForOrchestration.mockResolvedValue({
+      transcript: null,
+      systemPrompt: '',
+    });
 
     manager = new CostEnsembleManager(
       messagesRepo as unknown as ChatMessagesRepository,
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
       qualityManager as unknown as QualityCheckManager,
+      mockResearchEnricherManager as any,
     );
 
     jest.clearAllMocks();
@@ -147,10 +157,14 @@ describe('CostEnsembleManager', () => {
     it('should return messageId and threadId', async () => {
       messagesRepo.create!.mockResolvedValue(mockUserMessage);
 
-      const result = await manager.executeCostEnsemble('user-1', {
-        content: 'test prompt',
-        threadId: 'thread-ce-1',
-      });
+      const result = await manager.executeCostEnsemble(
+        'user-1',
+        {
+          content: 'test prompt',
+          threadId: 'thread-ce-1',
+        },
+        '',
+      );
 
       expect(result).toHaveProperty('messageId');
       expect(result).toHaveProperty('threadId', 'thread-ce-1');
@@ -160,9 +174,13 @@ describe('CostEnsembleManager', () => {
       threadsRepo.create!.mockResolvedValue(mockThread);
       messagesRepo.create!.mockResolvedValue(mockUserMessage);
 
-      const result = await manager.executeCostEnsemble('user-1', {
-        content: 'test prompt',
-      });
+      const result = await manager.executeCostEnsemble(
+        'user-1',
+        {
+          content: 'test prompt',
+        },
+        '',
+      );
 
       expect(threadsRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -349,17 +367,22 @@ describe('CostEnsembleManager', () => {
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
         qualityManager as unknown as QualityCheckManager,
+        mockResearchEnricherManager as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 
       await expect(
-        isolated.executeCostEnsemble('user-1', {
-          content: 'please ensemble this',
-          threadId: 'thread-ce-1',
-          requestedProvider: 'OPENAI',
-          requestedModel: 'gpt-4.1',
-          modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
-        }),
+        isolated.executeCostEnsemble(
+          'user-1',
+          {
+            content: 'please ensemble this',
+            threadId: 'thread-ce-1',
+            requestedProvider: 'OPENAI',
+            requestedModel: 'gpt-4.1',
+            modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
+          },
+          '',
+        ),
       ).rejects.toThrow('unsupported provider');
       expect(messagesRepo.create).not.toHaveBeenCalled();
     });

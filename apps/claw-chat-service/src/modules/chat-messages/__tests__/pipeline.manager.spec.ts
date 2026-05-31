@@ -1,6 +1,8 @@
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
+import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { PipelineManager } from '../managers/pipeline.manager';
+import { type ResearchEnricherManager } from '../managers/research-enricher.manager';
 import { type ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { type ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { type ChatStreamService } from '../services/chat-stream.service';
@@ -37,6 +39,24 @@ const mockStreamService = (): Partial<Record<keyof ChatStreamService, jest.Mock>
   emitError: jest.fn(),
 });
 
+// Universal-research PR2: every orchestration manager calls
+// enrichForOrchestration at the top of its background loop. The default stub
+// returns the no-op shape (mode=NONE / empty token short-circuit) so the
+// existing tests don't see any extra side effect — individual tests can
+// override the mock when they want to assert enrichment behaviour.
+type ResearchEnricherStub = {
+  enrichForOrchestration: jest.Mock;
+  service: ResearchEnricherManager;
+};
+
+function mockResearchEnricher(): ResearchEnricherStub {
+  const enrichForOrchestration = jest
+    .fn()
+    .mockResolvedValue({ transcript: null, systemPrompt: '' });
+  const service = { enrichForOrchestration } as unknown as ResearchEnricherManager;
+  return { enrichForOrchestration, service };
+}
+
 const makeOllamaSuccess = (text: string) =>
   Promise.resolve({ ok: true, status: 200, data: { response: text } });
 
@@ -45,16 +65,19 @@ describe('PipelineManager', () => {
   let messagesRepo: ReturnType<typeof mockMessagesRepo>;
   let threadsRepo: ReturnType<typeof mockThreadsRepo>;
   let streamService: ReturnType<typeof mockStreamService>;
+  let researchEnricher: ResearchEnricherStub;
 
   beforeEach(() => {
     jest.clearAllMocks();
     messagesRepo = mockMessagesRepo();
     threadsRepo = mockThreadsRepo();
     streamService = mockStreamService();
+    researchEnricher = mockResearchEnricher();
     manager = new PipelineManager(
       messagesRepo as unknown as ChatMessagesRepository,
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
+      researchEnricher.service,
     );
   });
 
@@ -62,11 +85,15 @@ describe('PipelineManager', () => {
     it('should return messageId and threadId', async () => {
       messagesRepo.create!.mockResolvedValue({ id: 'msg-1', threadId: 'thread-1' });
 
-      const result = await manager.executePipeline('user-1', {
-        content: 'A request that is long enough',
-        threadId: 'thread-1',
-        template: 'analyze-reason-format',
-      });
+      const result = await manager.executePipeline(
+        'user-1',
+        {
+          content: 'A request that is long enough',
+          threadId: 'thread-1',
+          template: 'analyze-reason-format',
+        },
+        '',
+      );
 
       expect(result).toEqual({ messageId: 'msg-1', threadId: 'thread-1' });
     });
@@ -75,10 +102,14 @@ describe('PipelineManager', () => {
       threadsRepo.create!.mockResolvedValue({ id: 'new-thread', userId: 'user-1' });
       messagesRepo.create!.mockResolvedValue({ id: 'msg-2', threadId: 'new-thread' });
 
-      const result = await manager.executePipeline('user-1', {
-        content: 'A request that is long enough',
-        template: 'analyze-reason-format',
-      });
+      const result = await manager.executePipeline(
+        'user-1',
+        {
+          content: 'A request that is long enough',
+          template: 'analyze-reason-format',
+        },
+        '',
+      );
 
       expect(threadsRepo.create).toHaveBeenCalled();
       expect(result.threadId).toBe('new-thread');
@@ -87,11 +118,15 @@ describe('PipelineManager', () => {
     it('should resolve immediately (fire-and-forget)', async () => {
       messagesRepo.create!.mockResolvedValue({ id: 'msg-3', threadId: 'thread-1' });
 
-      const promise = manager.executePipeline('user-1', {
-        content: 'A request that is long enough',
-        threadId: 'thread-1',
-        template: 'analyze-reason-format',
-      });
+      const promise = manager.executePipeline(
+        'user-1',
+        {
+          content: 'A request that is long enough',
+          threadId: 'thread-1',
+          template: 'analyze-reason-format',
+        },
+        '',
+      );
 
       await expect(promise).resolves.toBeDefined();
     });
@@ -298,18 +333,23 @@ describe('PipelineManager', () => {
         messagesRepo as unknown as ChatMessagesRepository,
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
+        researchEnricher.service,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 
       await expect(
-        isolated.executePipeline('user-1', {
-          content: 'A request that will be rejected',
-          threadId: 'thread-1',
-          template: 'analyze-reason-format',
-          requestedProvider: 'OPENAI',
-          requestedModel: 'gpt-4.1',
-          modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
-        }),
+        isolated.executePipeline(
+          'user-1',
+          {
+            content: 'A request that will be rejected',
+            threadId: 'thread-1',
+            template: 'analyze-reason-format',
+            requestedProvider: 'OPENAI',
+            requestedModel: 'gpt-4.1',
+            modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
+          },
+          '',
+        ),
       ).rejects.toThrow('unsupported provider');
       expect(messagesRepo.create).not.toHaveBeenCalled();
     });
@@ -396,6 +436,86 @@ describe('PipelineManager', () => {
       expect(metadata?.modelSelection?.modelSelectionMode).toBe(ModelSelectionMode.AUTO);
       expect(metadata?.routeRoadmap?.finalProvider).toBe('local-ollama');
       expect(metadata?.routeRoadmap?.finalModel).toBe('gemma3:4b');
+    });
+  });
+
+  describe('research enrichment wiring', () => {
+    it('does NOT invoke enrichForOrchestration when researchMode is undefined/NONE', async () => {
+      httpRequest
+        .mockResolvedValueOnce(makeOllamaSuccess('s1'))
+        .mockResolvedValueOnce(makeOllamaSuccess('s2'))
+        .mockResolvedValueOnce(makeOllamaSuccess('s3'));
+      messagesRepo.create!.mockResolvedValue({ id: 'msg-no-research', threadId: 'thread-1' });
+
+      await manager.executeInBackground(
+        'thread-1',
+        'My request content',
+        { content: 'My request content', template: 'analyze-reason-format' },
+        undefined,
+        '',
+      );
+
+      // enrichForOrchestration IS still called (the helper itself short-circuits
+      // internally on mode=undefined/NONE) — but it must not have produced any
+      // transcript on the assistant message.
+      const assistantCall = messagesRepo.create!.mock.calls.find(
+        (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
+      );
+      const metadata = (
+        assistantCall![0] as { metadata?: { researchTranscript?: unknown } }
+      ).metadata;
+      expect(metadata?.researchTranscript).toBeUndefined();
+    });
+
+    it('threads enricher transcript onto the ASSISTANT message when researchMode is SEARCH', async () => {
+      const transcript = {
+        mode: ResearchMode.SEARCH,
+        query: 'What is the weather today?',
+        sources: [{ title: 'src', url: 'https://example.com', snippet: 'snippet' }],
+        latencyMs: 12,
+        warnings: [],
+      };
+      researchEnricher.enrichForOrchestration.mockResolvedValue({
+        transcript,
+        systemPrompt: '## Web research evidence (mode: SEARCH, gathered now)\n\n[1] src — https://example.com\nsnippet\n',
+      });
+      httpRequest
+        .mockResolvedValueOnce(makeOllamaSuccess('Analysis output'))
+        .mockResolvedValueOnce(makeOllamaSuccess('Reasoning output'))
+        .mockResolvedValueOnce(makeOllamaSuccess('Formatted output'));
+      messagesRepo.create!.mockResolvedValue({ id: 'msg-research', threadId: 'thread-r' });
+
+      await manager.executeInBackground(
+        'thread-r',
+        'What is the weather today?',
+        {
+          content: 'What is the weather today?',
+          template: 'analyze-reason-format',
+          researchMode: ResearchMode.SEARCH,
+        },
+        undefined,
+        'bearer-token-stub',
+      );
+
+      expect(researchEnricher.enrichForOrchestration).toHaveBeenCalledWith({
+        threadId: 'thread-r',
+        mode: ResearchMode.SEARCH,
+        query: 'What is the weather today?',
+        userToken: 'bearer-token-stub',
+        providerId: undefined,
+      });
+      const assistantCall = messagesRepo.create!.mock.calls.find(
+        (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
+      );
+      const metadata = (
+        assistantCall![0] as { metadata?: { researchTranscript?: { sources?: unknown[] } } }
+      ).metadata;
+      expect(metadata?.researchTranscript).toEqual(transcript);
+      // Every stage prompt got the evidence prepended.
+      for (const call of httpRequest.mock.calls) {
+        const body = (call[0] as { body?: { prompt?: string } }).body;
+        expect(body?.prompt).toContain('## Web research evidence');
+      }
     });
   });
 });

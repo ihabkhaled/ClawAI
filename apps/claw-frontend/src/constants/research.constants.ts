@@ -2,13 +2,36 @@ import { ResearchMode } from '@/enums/research-mode.enum';
 import { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
 import type { ResearchOptions } from '@/types';
 
-export const DEFAULT_RESEARCH_OPTIONS: ResearchOptions = { mode: ResearchMode.OFF };
+export const DEFAULT_RESEARCH_OPTIONS: ResearchOptions = { mode: ResearchMode.NONE };
 
-export const RESEARCH_MODES: ReadonlyArray<{ value: ResearchMode; labelKey: string }> = [
-  { value: ResearchMode.OFF, labelKey: 'research.modes.off' },
-  { value: ResearchMode.SEARCH_ONLY, labelKey: 'research.modes.searchOnly' },
-  { value: ResearchMode.SEARCH_THEN_FETCH, labelKey: 'research.modes.searchThenFetch' },
-  { value: ResearchMode.SEARCH_FETCH_EXTRACT, labelKey: 'research.modes.searchFetchExtract' },
+// Labels bind to the canonical `research.modes.*` i18n keys after the Phase 2
+// rename (NONE/SEARCH/SEARCH_FETCH/SEARCH_EXTRACT). Tooltip keys describe
+// each mode in plain language for the universal research dropdown.
+export const RESEARCH_MODES: ReadonlyArray<{
+  value: ResearchMode;
+  labelKey: string;
+  tooltipKey: string;
+}> = [
+  {
+    value: ResearchMode.NONE,
+    labelKey: 'research.modes.none',
+    tooltipKey: 'research.toggle.tooltipNone',
+  },
+  {
+    value: ResearchMode.SEARCH,
+    labelKey: 'research.modes.search',
+    tooltipKey: 'research.toggle.tooltipSearch',
+  },
+  {
+    value: ResearchMode.SEARCH_FETCH,
+    labelKey: 'research.modes.searchFetch',
+    tooltipKey: 'research.toggle.tooltipSearchFetch',
+  },
+  {
+    value: ResearchMode.SEARCH_EXTRACT,
+    labelKey: 'research.modes.searchExtract',
+    tooltipKey: 'research.toggle.tooltipSearchExtract',
+  },
 ];
 
 export const RESEARCH_PROVIDER_KINDS: ReadonlyArray<ResearchProviderKind> = [

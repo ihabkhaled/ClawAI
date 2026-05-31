@@ -35,7 +35,7 @@ export function ResearchToggle({
     <div className="flex items-center gap-1">
       <Globe
         className={
-          value.mode === ResearchMode.OFF ? 'size-4 text-muted-foreground' : 'size-4 text-primary'
+          value.mode === ResearchMode.NONE ? 'size-4 text-muted-foreground' : 'size-4 text-primary'
         }
         aria-hidden
       />
@@ -49,7 +49,12 @@ export function ResearchToggle({
         </SelectTrigger>
         <SelectContent>
           {RESEARCH_MODES.map((option) => (
-            <SelectItem key={option.value} value={option.value} className="text-xs">
+            <SelectItem
+              key={option.value}
+              value={option.value}
+              className="text-xs"
+              title={t(option.tooltipKey)}
+            >
               {t(option.labelKey)}
             </SelectItem>
           ))}

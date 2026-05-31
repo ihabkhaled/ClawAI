@@ -179,6 +179,11 @@ export const ru: TranslationDictionary = {
         thinking: 'Размышление',
         generating: 'Генерация',
         toolCalling: 'Вызов инструментов',
+        researchStarted: 'Поиск в интернете...',
+        researchSourcesFound: 'Найдено {count} источников',
+        researchFetching: 'Загрузка {host}',
+        researchCompleted: 'Исследование завершено',
+        researchFailed: 'Исследование не удалось: {reason}',
         finalizing: 'Завершение',
         complete: 'Завершено',
         incomplete: 'Не завершено',
@@ -1757,12 +1762,32 @@ export const ru: TranslationDictionary = {
       placeholder: 'Исследование',
       autoProvider: 'Авто провайдер',
       noProviders: 'Провайдеры не настроены',
+      tooltipNone: 'Без веб-поиска. Модель отвечает только на основе обучения.',
+      tooltipSearch: 'Выполнить веб-поиск и передать модели заголовки и фрагменты результатов.',
+      tooltipSearchFetch:
+        'Найти в интернете, затем загрузить топовые страницы и опереть модель на полный текст.',
+      tooltipSearchExtract:
+        'Найти в интернете, загрузить топовые страницы и извлечь структурированные факты перед ответом модели.',
+      lockedUpgrade:
+        'Веб-поиск заблокирован в вашем тарифе. Обновите тариф, чтобы включить функцию.',
     },
     modes: {
-      off: 'Без исследования',
-      searchOnly: 'Веб-поиск',
-      searchThenFetch: 'Поиск + загрузка',
-      searchFetchExtract: 'Поиск + извлечение',
+      none: 'Без исследования',
+      search: 'Веб-поиск',
+      searchFetch: 'Поиск + загрузка',
+      searchExtract: 'Поиск + извлечение',
+    },
+    transcript: {
+      title: 'Использовано {count} источников',
+      expand: 'Показать источники',
+      sourcesCount: '{count} источников',
+    },
+    lifecycle: {
+      started: 'Поиск в интернете...',
+      sourcesFound: 'Найдено {count} источников',
+      fetching: 'Загрузка {host}',
+      completed: 'Исследование завершено',
+      failed: 'Исследование не удалось: {reason}',
     },
     providers: {
       title: 'Провайдеры исследований',

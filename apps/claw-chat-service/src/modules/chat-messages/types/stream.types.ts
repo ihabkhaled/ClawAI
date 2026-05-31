@@ -85,6 +85,20 @@ export type StreamUsage = {
   costAvailable: boolean;
 };
 
+// Payload emitted on every RESEARCH_PROGRESS frame so the FE can render
+// what the enricher is doing right now. All fields are optional so the
+// shape works for STARTED (mode+query only), SOURCES_FOUND (+sourcesCount),
+// FETCHING (+currentUrl), COMPLETED (final sourcesCount), and FAILED
+// (+error). `mode` carries the ResearchMode label as a string to avoid
+// coupling stream.types to the ResearchMode enum.
+export type ResearchProgressDetails = {
+  mode?: string;
+  query?: string;
+  sourcesCount?: number;
+  currentUrl?: string;
+  error?: string;
+};
+
 export type StreamEvent = {
   eventId?: string;
   threadId: string;
@@ -132,6 +146,8 @@ export type StreamEvent = {
   code?: string;
   retryable?: boolean;
   partialContentPreserved?: boolean;
+  // RESEARCH_PROGRESS payload (compare-mode research-enricher lifecycle).
+  researchDetails?: ResearchProgressDetails;
 };
 
 // Shared identity for rich-stream emitters (one model run / lane).
@@ -179,6 +195,13 @@ export type StreamErrorEmitInput = StreamRunRef & {
   safeMessage: string;
   retryable: boolean;
   partialContentPreserved: boolean;
+};
+
+export type ResearchProgressEmitInput = {
+  stage: AiStreamStage;
+  details?: ResearchProgressDetails;
+  label?: string;
+  description?: string;
 };
 
 export type CancelStreamResult = {

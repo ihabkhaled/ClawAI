@@ -8,7 +8,7 @@ import {
   type PlanFeature,
   type UserEntitlements,
 } from '@claw/shared-entitlements';
-import { type Permission } from '@claw/shared-types';
+import { Permission } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException } from '../../../common/errors';
 import { type SendMessageAccessOptions } from '../types/access-control.types';
@@ -73,6 +73,22 @@ export class AccessControlService {
       return; // fail-open
     }
     this.assertFeatureEnabled(ent, 'allowCriticReview', userId);
+  }
+
+  // Centralized research-mode gate used by every chat entry point that exposes
+  // the `researchMode` DTO field (normal chat + the 9 orchestration modes).
+  // Combines the plan-level `allowResearchMode` unlock with the RESEARCH_USE
+  // RBAC permission so a USER without RESEARCH_USE or on a plan that does not
+  // unlock research gets a 403 before any enricher / research-service hop runs.
+  // Fail-OPEN on entitlement-service errors so an auth outage never breaks
+  // chat — the auth-service stays the hard source of truth once reachable.
+  async assertResearchAccess(userId: string): Promise<void> {
+    const ent = await this.resolve(userId);
+    if (!ent) {
+      return; // fail-open
+    }
+    this.assertFeatureEnabled(ent, 'allowResearchMode', userId);
+    this.assertPermissionGranted(ent, Permission.RESEARCH_USE, userId);
   }
 
   private assertFeaturesEnabled(

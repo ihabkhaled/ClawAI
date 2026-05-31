@@ -44,12 +44,26 @@ describe('AnswerRepairManager', () => {
     emitError: jest.fn(),
   };
 
+  // Universal-research PR2: orchestration managers now take a
+  // ResearchEnricherManager. Default stub returns the no-op shape so existing
+  // tests don't accidentally invoke web-research.
+  const mockResearchEnricherManager = {
+    enrichForOrchestration: jest
+      .fn()
+      .mockResolvedValue({ transcript: null, systemPrompt: '' }),
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
+    mockResearchEnricherManager.enrichForOrchestration.mockResolvedValue({
+      transcript: null,
+      systemPrompt: '',
+    });
     manager = new AnswerRepairManager(
       mockChatMessagesRepository as any,
       mockChatThreadsRepository as any,
       mockChatStreamService as any,
+      mockResearchEnricherManager as any,
     );
   });
 
@@ -66,7 +80,7 @@ describe('AnswerRepairManager', () => {
         content: 'Some poorly formatted answer',
         threadId: 'thread-1',
         repairTypes: [RepairType.FORMAT],
-      });
+      }, '');
 
       expect(result.messageId).toBe('msg-1');
       expect(result.threadId).toBe('thread-1');
@@ -87,7 +101,7 @@ describe('AnswerRepairManager', () => {
         content: 'Incomplete schema with bad formatting',
         threadId: 'thread-2',
         repairTypes: [RepairType.SCHEMA, RepairType.FORMAT, RepairType.COMPLETENESS],
-      });
+      }, '');
 
       expect(result.threadId).toBe('thread-2');
     });
@@ -104,7 +118,7 @@ describe('AnswerRepairManager', () => {
       const result = await manager.executeRepair('user-1', {
         content: 'Some content to repair',
         repairTypes: [RepairType.COMPLETENESS],
-      });
+      }, '');
 
       expect(mockChatThreadsRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({ userId: 'user-1' }),
@@ -128,7 +142,7 @@ describe('AnswerRepairManager', () => {
         messageId: 'existing-msg',
         threadId: 'thread-3',
         repairTypes: [RepairType.FACTUALITY],
-      });
+      }, '');
 
       expect(mockChatMessagesRepository.findById).toHaveBeenCalledWith('existing-msg');
       expect(result.messageId).toBe('msg-4');
@@ -187,11 +201,7 @@ describe('AnswerRepairManager', () => {
         .mockResolvedValueOnce({ id: 'user-msg' })
         .mockResolvedValueOnce({ id: 'assistant-msg' });
       const isolatedRepo = { ...mockChatMessagesRepository, create: createMock };
-      const isolatedManager = new AnswerRepairManager(
-        isolatedRepo as any,
-        mockChatThreadsRepository as any,
-        mockChatStreamService as any,
-      );
+      const isolatedManager = new AnswerRepairManager(isolatedRepo as any, mockChatThreadsRepository as any, mockChatStreamService as any, mockResearchEnricherManager as any,);
       mockHttpRequest.mockResolvedValue({
         ok: true,
         status: 200,
@@ -202,7 +212,7 @@ describe('AnswerRepairManager', () => {
         content: 'Original answer',
         threadId: 'thread-bg',
         repairTypes: [RepairType.FORMAT],
-      });
+      }, '');
       // allow background to settle
       await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -223,10 +233,11 @@ describe('AnswerRepairManager', () => {
         .mockResolvedValueOnce({ id: 'a-1' });
       const streamMock = { emitCompletion: jest.fn(), emitError: jest.fn() };
       const isolatedManager = new AnswerRepairManager(
-        { ...mockChatMessagesRepository, create: createMock } as any,
-        mockChatThreadsRepository as any,
-        streamMock as any,
-      );
+      { ...mockChatMessagesRepository, create: createMock } as any,
+      mockChatThreadsRepository as any,
+      streamMock as any,
+      mockResearchEnricherManager as any,
+    );
       mockHttpRequest.mockResolvedValue({
         ok: true,
         status: 200,
@@ -237,7 +248,7 @@ describe('AnswerRepairManager', () => {
         content: 'Answer',
         threadId: 'thread-sse',
         repairTypes: [RepairType.SCHEMA],
-      });
+      }, '');
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(streamMock.emitCompletion).toHaveBeenCalledWith(
@@ -253,10 +264,11 @@ describe('AnswerRepairManager', () => {
         .mockResolvedValueOnce({ id: 'u-2' })
         .mockResolvedValueOnce({ id: 'a-2' });
       const isolatedManager = new AnswerRepairManager(
-        { ...mockChatMessagesRepository, create: createMock } as any,
-        mockChatThreadsRepository as any,
-        mockChatStreamService as any,
-      );
+      { ...mockChatMessagesRepository, create: createMock } as any,
+      mockChatThreadsRepository as any,
+      mockChatStreamService as any,
+      mockResearchEnricherManager as any,
+    );
       mockHttpRequest.mockResolvedValue({
         ok: true,
         status: 200,
@@ -267,7 +279,7 @@ describe('AnswerRepairManager', () => {
         content: 'Text',
         threadId: 'thread-meta',
         repairTypes: [RepairType.COMPLETENESS, RepairType.FACTUALITY],
-      });
+      }, '');
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(createMock).toHaveBeenNthCalledWith(
@@ -287,17 +299,18 @@ describe('AnswerRepairManager', () => {
         .mockResolvedValueOnce({ id: 'err-msg' });
       const streamMock = { emitCompletion: jest.fn(), emitError: jest.fn() };
       const isolatedManager = new AnswerRepairManager(
-        { ...mockChatMessagesRepository, create: createMock } as any,
-        mockChatThreadsRepository as any,
-        streamMock as any,
-      );
+      { ...mockChatMessagesRepository, create: createMock } as any,
+      mockChatThreadsRepository as any,
+      streamMock as any,
+      mockResearchEnricherManager as any,
+    );
       mockHttpRequest.mockResolvedValue({ ok: false, status: 503, data: {} });
 
       await isolatedManager.executeRepair('user-1', {
         content: 'Content',
         threadId: 'thread-fail',
         repairTypes: [RepairType.FORMAT],
-      });
+      }, '');
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(streamMock.emitError).toHaveBeenCalledWith(
@@ -320,10 +333,11 @@ describe('AnswerRepairManager', () => {
         .mockResolvedValue({ id: 'err-4' });
       const streamMock = { emitCompletion: jest.fn(), emitError: jest.fn() };
       const isolatedManager = new AnswerRepairManager(
-        { ...mockChatMessagesRepository, create: createMock } as any,
-        mockChatThreadsRepository as any,
-        streamMock as any,
-      );
+      { ...mockChatMessagesRepository, create: createMock } as any,
+      mockChatThreadsRepository as any,
+      streamMock as any,
+      mockResearchEnricherManager as any,
+    );
       mockHttpRequest.mockResolvedValue({ ok: false, status: 500, data: {} });
 
       await expect(
@@ -331,7 +345,7 @@ describe('AnswerRepairManager', () => {
           content: 'test',
           threadId: 'thread-ff',
           repairTypes: [RepairType.SCHEMA],
-        }),
+        }, ''),
       ).resolves.toMatchObject({ messageId: 'u-4', threadId: 'thread-ff' });
     });
 
@@ -343,7 +357,7 @@ describe('AnswerRepairManager', () => {
           messageId: 'non-existent-msg',
           threadId: 'thread-x',
           repairTypes: [RepairType.FORMAT],
-        }),
+        }, ''),
       ).rejects.toThrow('Could not resolve original content to repair');
     });
 
@@ -354,17 +368,18 @@ describe('AnswerRepairManager', () => {
         .mockResolvedValue({ id: 'err-5' });
       const streamMock = { emitCompletion: jest.fn(), emitError: jest.fn() };
       const isolatedManager = new AnswerRepairManager(
-        { ...mockChatMessagesRepository, create: createMock } as any,
-        mockChatThreadsRepository as any,
-        streamMock as any,
-      );
+      { ...mockChatMessagesRepository, create: createMock } as any,
+      mockChatThreadsRepository as any,
+      streamMock as any,
+      mockResearchEnricherManager as any,
+    );
       mockHttpRequest.mockResolvedValue({ ok: true, status: 200, data: { response: '   ' } });
 
       await isolatedManager.executeRepair('user-1', {
         content: 'Something',
         threadId: 'thread-empty',
         repairTypes: [RepairType.COMPLETENESS],
-      });
+      }, '');
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(streamMock.emitError).toHaveBeenCalledWith(
@@ -379,10 +394,11 @@ describe('AnswerRepairManager', () => {
         .mockResolvedValueOnce({ id: 'u-6' })
         .mockResolvedValueOnce({ id: 'a-6' });
       const isolatedManager = new AnswerRepairManager(
-        { ...mockChatMessagesRepository, create: createMock } as any,
-        mockChatThreadsRepository as any,
-        mockChatStreamService as any,
-      );
+      { ...mockChatMessagesRepository, create: createMock } as any,
+      mockChatThreadsRepository as any,
+      mockChatStreamService as any,
+      mockResearchEnricherManager as any,
+    );
       mockHttpRequest.mockResolvedValue({
         ok: true,
         status: 200,
@@ -395,7 +411,7 @@ describe('AnswerRepairManager', () => {
         repairTypes: [RepairType.SCHEMA],
         targetProvider: 'local-ollama',
         targetModel: 'qwen2.5:7b',
-      });
+      }, '');
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(createMock).toHaveBeenNthCalledWith(
@@ -423,11 +439,12 @@ describe('AnswerRepairManager', () => {
           ),
       };
       const isolatedManager = new AnswerRepairManager(
-        mockChatMessagesRepository as any,
-        mockChatThreadsRepository as any,
-        mockChatStreamService as any,
-        selectionService as any,
-      );
+      mockChatMessagesRepository as any,
+      mockChatThreadsRepository as any,
+      mockChatStreamService as any,
+      mockResearchEnricherManager as any,
+      selectionService as any,
+    );
 
       await expect(
         isolatedManager.executeRepair('user-1', {
@@ -436,7 +453,7 @@ describe('AnswerRepairManager', () => {
           repairTypes: [RepairType.FORMAT],
           requestedProvider: 'OPENAI',
           requestedModel: 'gpt-4.1',
-        }),
+        }, ''),
       ).rejects.toThrow('unsupported provider');
       expect(mockChatMessagesRepository.create).not.toHaveBeenCalled();
     });
@@ -453,10 +470,11 @@ describe('AnswerRepairManager', () => {
       };
       const createMock = jest.fn().mockResolvedValue({ id: 'a-8' });
       const isolatedManager = new AnswerRepairManager(
-        { ...mockChatMessagesRepository, create: createMock } as any,
-        mockChatThreadsRepository as any,
-        mockChatStreamService as any,
-      );
+      { ...mockChatMessagesRepository, create: createMock } as any,
+      mockChatThreadsRepository as any,
+      mockChatStreamService as any,
+      mockResearchEnricherManager as any,
+    );
       mockHttpRequest.mockResolvedValue({
         ok: true,
         status: 200,
@@ -489,10 +507,11 @@ describe('AnswerRepairManager', () => {
         .mockResolvedValueOnce({ id: 'u-7' })
         .mockResolvedValueOnce({ id: 'a-7' });
       const isolatedManager = new AnswerRepairManager(
-        { ...mockChatMessagesRepository, create: createMock } as any,
-        mockChatThreadsRepository as any,
-        mockChatStreamService as any,
-      );
+      { ...mockChatMessagesRepository, create: createMock } as any,
+      mockChatThreadsRepository as any,
+      mockChatStreamService as any,
+      mockResearchEnricherManager as any,
+    );
       mockHttpRequest.mockResolvedValue({
         ok: true,
         status: 200,
@@ -503,7 +522,7 @@ describe('AnswerRepairManager', () => {
         content: 'Plain text',
         threadId: 'thread-default',
         repairTypes: [RepairType.FORMAT],
-      });
+      }, '');
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(createMock).toHaveBeenNthCalledWith(

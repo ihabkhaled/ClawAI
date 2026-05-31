@@ -14,10 +14,13 @@ import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-thre
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
+import { ResearchEnricherManager } from './research-enricher.manager';
+import { prependResearchEvidence } from '../utilities/research-prompt.utility';
 import type { PipelineMessageDto } from '../dto/pipeline-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { PipelineResponse, PipelineStage, PipelineStageResult } from '../types/pipeline.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
+import type { ResearchTranscript } from '../types/research-transcript.types';
 import { type Prisma, type RoutingMode } from '../../../generated/prisma';
 
 /**
@@ -41,11 +44,16 @@ export class PipelineManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
-  async executePipeline(userId: string, dto: PipelineMessageDto): Promise<PipelineResponse> {
+  async executePipeline(
+    userId: string,
+    dto: PipelineMessageDto,
+    userToken: string,
+  ): Promise<PipelineResponse> {
     this.logger.log(`executePipeline: starting for user ${userId}`);
 
     const threadId = await this.resolveThreadId(userId, dto);
@@ -59,7 +67,7 @@ export class PipelineManager {
       metadata: { pipelineRequest: true, modelSelection: selection },
     });
 
-    void this.executeInBackground(threadId, dto.content, dto, selection);
+    void this.executeInBackground(threadId, dto.content, dto, selection, userToken);
 
     return { messageId: userMessage.id, threadId };
   }
@@ -69,6 +77,7 @@ export class PipelineManager {
     content: string,
     dto: PipelineMessageDto,
     selection?: AdvancedModelSelectionResolution,
+    userToken?: string,
   ): Promise<void> {
     const startTime = Date.now();
     try {
@@ -87,7 +96,24 @@ export class PipelineManager {
         actorName: 'Pipeline workflow',
       });
       const config = AppConfig.get();
-      const stageResults = await this.runAllStages(stages, content, config.OLLAMA_SERVICE_URL);
+      // Enrich ONCE before the pipeline runs — every stage gets the same
+      // evidence prepended to its prompt so a downstream stage (e.g.
+      // "format") sees the same web facts as an upstream stage (e.g.
+      // "research"). Pipeline templates are stage chains of varying
+      // specialization; one shared enrichment keeps the FE badge consistent.
+      const enrichment = await this.researchEnricherManager.enrichForOrchestration({
+        threadId,
+        mode: dto.researchMode,
+        query: content,
+        userToken: userToken ?? '',
+        providerId: dto.researchProviderId,
+      });
+      const stageResults = await this.runAllStages(
+        stages,
+        content,
+        config.OLLAMA_SERVICE_URL,
+        enrichment.systemPrompt,
+      );
       const finalOutput = stageResults.at(-1)?.output ?? content;
       const resolvedModel = resolvedSelection.actualModel;
 
@@ -104,6 +130,7 @@ export class PipelineManager {
           resolvedSelection,
           resolvedModel,
           stageResults,
+          enrichment.transcript,
         ) as Prisma.InputJsonValue,
       });
 
@@ -126,6 +153,7 @@ export class PipelineManager {
     resolvedSelection: AdvancedModelSelectionResolution,
     resolvedModel: string,
     stageResults: Array<{ output: string }>,
+    researchTranscript: ResearchTranscript | null,
   ): Record<string, unknown> {
     return {
       pipeline: true,
@@ -133,6 +161,7 @@ export class PipelineManager {
       stages: stageResults,
       stageCount: stageResults.length,
       modelSelection: resolvedSelection,
+      ...(researchTranscript === null ? {} : { researchTranscript }),
       routeRoadmap: {
         routingMode: resolvedSelection.modelSelectionMode,
         routerModel: null,
@@ -197,12 +226,13 @@ export class PipelineManager {
     stages: PipelineStage[],
     content: string,
     ollamaUrl: string,
+    researchEvidence: string,
   ): Promise<PipelineStageResult[]> {
     const results: PipelineStageResult[] = [];
     let previousOutput = content;
 
     for (const stage of stages) {
-      const result = await this.runStage(stage, previousOutput, ollamaUrl);
+      const result = await this.runStage(stage, previousOutput, ollamaUrl, researchEvidence);
       results.push(result);
       previousOutput = result.output;
     }
@@ -214,9 +244,11 @@ export class PipelineManager {
     stage: PipelineStage,
     input: string,
     ollamaUrl: string,
+    researchEvidence: string,
   ): Promise<PipelineStageResult> {
     const startTime = Date.now();
-    const prompt = `${stage.instruction}\n\n${input}`;
+    const basePrompt = `${stage.instruction}\n\n${input}`;
+    const prompt = prependResearchEvidence(basePrompt, researchEvidence);
     const model = await this.resolveModel(stage.model);
 
     const requestBody: OllamaGenerateRequest = {

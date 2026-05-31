@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
+import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import { CANDIDATE_TIMEOUT_MS, DEFAULT_CANDIDATE_MODEL } from '../constants/best-of-n.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
@@ -10,6 +11,8 @@ import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { QualityCheckManager } from './quality-check.manager';
+import { ResearchEnricherManager } from './research-enricher.manager';
+import { prependResearchEvidence } from '../utilities/research-prompt.utility';
 import type { BestOfNMessageDto } from '../dto/best-of-n-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { BestOfNResponse, CandidateResult } from '../types/best-of-n.types';
@@ -39,11 +42,16 @@ export class BestOfNManager {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly qualityCheckManager: QualityCheckManager,
+    private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
-  async executeBestOfN(userId: string, dto: BestOfNMessageDto): Promise<BestOfNResponse> {
+  async executeBestOfN(
+    userId: string,
+    dto: BestOfNMessageDto,
+    userToken: string,
+  ): Promise<BestOfNResponse> {
     this.logger.log(`executeBestOfN: starting for user ${userId}, n=${String(dto.n)}`);
 
     const threadId = await this.resolveThreadId(userId, dto);
@@ -56,7 +64,16 @@ export class BestOfNManager {
       metadata: { bestOfNRequest: true, modelSelection: selection },
     });
 
-    void this.executeInBackground(threadId, dto.content, dto.n, selection, dto.models);
+    void this.executeInBackground(
+      threadId,
+      dto.content,
+      dto.n,
+      selection,
+      dto.models,
+      dto.researchMode,
+      dto.researchProviderId,
+      userToken,
+    );
 
     return { messageId: userMessage.id, threadId };
   }
@@ -67,6 +84,9 @@ export class BestOfNManager {
     n: number,
     selectionOrModels?: AdvancedModelSelectionResolution | string[],
     models?: string[],
+    researchMode?: ResearchMode,
+    researchProviderId?: string,
+    userToken?: string,
   ): Promise<void> {
     const startTime = Date.now();
     try {
@@ -79,7 +99,20 @@ export class BestOfNManager {
         resolvedSelection,
         isLegacyModels ? selectionOrModels : models,
       );
-      const candidates = await this.runCandidates(content, candidateModels, startTime);
+      // Shared enricher transcript across all N candidates.
+      const enrichment = await this.researchEnricherManager.enrichForOrchestration({
+        threadId,
+        mode: researchMode,
+        query: content,
+        userToken: userToken ?? '',
+        providerId: researchProviderId,
+      });
+      const candidates = await this.runCandidates(
+        content,
+        candidateModels,
+        startTime,
+        enrichment.systemPrompt,
+      );
       const ranked = this.rankCandidates(candidates, content);
       const best = ranked[0];
 
@@ -104,6 +137,7 @@ export class BestOfNManager {
           candidates: ranked,
           bestRank: 1,
           modelSelection: resolvedSelection,
+          ...(enrichment.transcript === null ? {} : { researchTranscript: enrichment.transcript }),
         },
       });
 
@@ -139,6 +173,7 @@ export class BestOfNManager {
     content: string,
     candidateModels: string[],
     startTime: number,
+    researchEvidence: string,
   ): Promise<CandidateResult[]> {
     const config = AppConfig.get();
     const resolvedModels = candidateModels.includes(DEFAULT_CANDIDATE_MODEL)
@@ -147,7 +182,7 @@ export class BestOfNManager {
       : candidateModels;
     const results = await Promise.allSettled(
       resolvedModels.map((model) =>
-        this.runOneCandidate(config.OLLAMA_SERVICE_URL, model, content, startTime),
+        this.runOneCandidate(config.OLLAMA_SERVICE_URL, model, content, startTime, researchEvidence),
       ),
     );
 
@@ -168,11 +203,12 @@ export class BestOfNManager {
     model: string,
     content: string,
     _globalStartTime: number,
+    researchEvidence: string,
   ): Promise<CandidateResult> {
     const candidateStart = Date.now();
     const requestBody: OllamaGenerateRequest = {
       model,
-      prompt: content,
+      prompt: prependResearchEvidence(content, researchEvidence),
       stream: false,
       think: false,
     };

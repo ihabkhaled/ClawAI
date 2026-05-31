@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
+import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import {
   COST_ENSEMBLE_TIMEOUT_MS,
@@ -15,6 +16,8 @@ import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { QualityCheckManager } from './quality-check.manager';
+import { ResearchEnricherManager } from './research-enricher.manager';
+import { prependResearchEvidence } from '../utilities/research-prompt.utility';
 import type { CostEnsembleMessageDto } from '../dto/cost-ensemble-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type {
@@ -25,7 +28,8 @@ import type {
   RawClassification,
 } from '../types/cost-ensemble.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
-import { RoutingMode } from '../../../generated/prisma';
+import type { ResearchTranscript } from '../types/research-transcript.types';
+import { type Prisma, RoutingMode } from '../../../generated/prisma';
 
 /**
  * Classifies the request (complexity/risk/ambiguity), picks an ensemble tier
@@ -51,6 +55,7 @@ export class CostEnsembleManager {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly qualityCheckManager: QualityCheckManager,
+    private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
@@ -58,6 +63,7 @@ export class CostEnsembleManager {
   async executeCostEnsemble(
     userId: string,
     dto: CostEnsembleMessageDto,
+    userToken: string,
   ): Promise<CostEnsembleResponse> {
     this.logger.log(`executeCostEnsemble: starting for user ${userId}`);
 
@@ -71,7 +77,14 @@ export class CostEnsembleManager {
       metadata: { costEnsembleRequest: true, modelSelection: selection },
     });
 
-    void this.executeInBackground(threadId, dto.content, selection);
+    void this.executeInBackground(
+      threadId,
+      dto.content,
+      selection,
+      dto.researchMode,
+      dto.researchProviderId,
+      userToken,
+    );
 
     return { messageId: userMessage.id, threadId };
   }
@@ -80,14 +93,32 @@ export class CostEnsembleManager {
     threadId: string,
     content: string,
     selection?: AdvancedModelSelectionResolution,
+    researchMode?: ResearchMode,
+    researchProviderId?: string,
+    userToken?: string,
   ): Promise<void> {
     try {
       const resolvedSelection = selection ?? (await this.buildAutoSelection());
+      // Enrich ONCE — classification step skips evidence (it just labels the
+      // task), every ensemble candidate sees the same evidence prepended to
+      // its prompt.
+      const enrichment = await this.researchEnricherManager.enrichForOrchestration({
+        threadId,
+        mode: researchMode,
+        query: content,
+        userToken: userToken ?? '',
+        providerId: researchProviderId,
+      });
       const rawClassification = await this.classifyTask(content, resolvedSelection);
       const tier = this.determineTier(rawClassification);
       const classification: CostClassification = { tier, ...rawClassification };
 
-      const candidates = await this.runEnsemble(content, tier, resolvedSelection);
+      const candidates = await this.runEnsemble(
+        content,
+        tier,
+        resolvedSelection,
+        enrichment.systemPrompt,
+      );
       const { selectedIndex, best } = this.selectBest(candidates, content);
 
       await this.chatMessagesRepository.create({
@@ -102,39 +133,14 @@ export class CostEnsembleManager {
           resolvedSelection.modelSelectionMode === 'MANUAL_MODEL'
             ? RoutingMode.MANUAL_MODEL
             : RoutingMode.AUTO,
-        metadata: {
-          costEnsemble: true,
+        metadata: this.buildCostEnsembleMetadata(
+          resolvedSelection,
           tier,
           classification,
           candidates,
           selectedIndex,
-          modelSelection: resolvedSelection,
-          routeRoadmap: {
-            routingMode: resolvedSelection.modelSelectionMode,
-            routerModel: null,
-            selectedProvider:
-              resolvedSelection.requestedProvider ?? resolvedSelection.actualProvider,
-            selectedModel: resolvedSelection.requestedModel ?? resolvedSelection.actualModel,
-            finalProvider: resolvedSelection.actualProvider,
-            finalModel: resolvedSelection.actualModel,
-            finalDisplayName: resolvedSelection.actualModel,
-            steps: [
-              {
-                stage: 'tool',
-                provider: 'cost-ensemble',
-                model: tier,
-                displayName: `Cost-aware ${tier} ensemble`,
-                description: `${String(candidates.length)} candidates evaluated; winner index=${String(selectedIndex)}`,
-              },
-              {
-                stage: 'execution',
-                provider: resolvedSelection.actualProvider,
-                model: resolvedSelection.actualModel,
-                displayName: resolvedSelection.actualModel,
-              },
-            ],
-          },
-        },
+          enrichment.transcript,
+        ) as Prisma.InputJsonValue,
       });
 
       this.chatStreamService.emitCompletion(
@@ -153,6 +159,49 @@ export class CostEnsembleManager {
         this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
       }
     }
+  }
+
+  private buildCostEnsembleMetadata(
+    resolvedSelection: AdvancedModelSelectionResolution,
+    tier: CostTier,
+    classification: CostClassification,
+    candidates: EnsembleCandidate[],
+    selectedIndex: number,
+    researchTranscript: ResearchTranscript | null,
+  ): Record<string, unknown> {
+    return {
+      costEnsemble: true,
+      tier,
+      classification,
+      candidates,
+      selectedIndex,
+      modelSelection: resolvedSelection,
+      ...(researchTranscript === null ? {} : { researchTranscript }),
+      routeRoadmap: {
+        routingMode: resolvedSelection.modelSelectionMode,
+        routerModel: null,
+        selectedProvider: resolvedSelection.requestedProvider ?? resolvedSelection.actualProvider,
+        selectedModel: resolvedSelection.requestedModel ?? resolvedSelection.actualModel,
+        finalProvider: resolvedSelection.actualProvider,
+        finalModel: resolvedSelection.actualModel,
+        finalDisplayName: resolvedSelection.actualModel,
+        steps: [
+          {
+            stage: 'tool',
+            provider: 'cost-ensemble',
+            model: tier,
+            displayName: `Cost-aware ${tier} ensemble`,
+            description: `${String(candidates.length)} candidates evaluated; winner index=${String(selectedIndex)}`,
+          },
+          {
+            stage: 'execution',
+            provider: resolvedSelection.actualProvider,
+            model: resolvedSelection.actualModel,
+            displayName: resolvedSelection.actualModel,
+          },
+        ],
+      },
+    };
   }
 
   private async classifyTask(
@@ -229,13 +278,14 @@ export class CostEnsembleManager {
     content: string,
     tier: CostTier,
     selection: AdvancedModelSelectionResolution,
+    researchEvidence: string,
   ): Promise<EnsembleCandidate[]> {
     const count = this.tierToCount(tier);
     const config = AppConfig.get();
     const model = selection.actualModel;
 
     const calls = Array.from({ length: count }, () =>
-      this.runOneCall(config.OLLAMA_SERVICE_URL, content, model),
+      this.runOneCall(config.OLLAMA_SERVICE_URL, content, model, researchEvidence),
     );
 
     const results = await Promise.allSettled(calls);
@@ -257,11 +307,12 @@ export class CostEnsembleManager {
     ollamaServiceUrl: string,
     content: string,
     model: string,
+    researchEvidence: string,
   ): Promise<EnsembleCandidate> {
     const start = Date.now();
     const requestBody: OllamaGenerateRequest = {
       model,
-      prompt: content,
+      prompt: prependResearchEvidence(content, researchEvidence),
       stream: false,
       think: false,
     };

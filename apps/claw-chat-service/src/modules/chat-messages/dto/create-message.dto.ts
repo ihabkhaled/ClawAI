@@ -1,12 +1,14 @@
 import { z } from 'zod';
 import { RoutingMode } from '../../../generated/prisma';
+import { ResearchMode } from '../../../common/enums/research-mode.enum';
 
-export const researchModeSchema = z.enum([
-  'OFF',
-  'SEARCH_ONLY',
-  'SEARCH_THEN_FETCH',
-  'SEARCH_FETCH_EXTRACT',
-]);
+// Canonical research-mode schema for every chat DTO. Replaces the inline
+// OFF/SEARCH_ONLY/SEARCH_THEN_FETCH/SEARCH_FETCH_EXTRACT string union that
+// previously coexisted with the NONE/SEARCH/SEARCH_FETCH/SEARCH_EXTRACT
+// enum used by the compare DTO — chat-messages.service.ts was comparing
+// against BOTH dialects which silently mismatched. ResearchMode (single
+// source of truth) is exported from src/common/enums and re-used here.
+export const researchModeSchema = z.nativeEnum(ResearchMode);
 
 export const createMessageSchema = z.object({
   threadId: z.string().max(255, 'Thread ID must be at most 255 characters'),
@@ -27,4 +29,8 @@ export const createMessageSchema = z.object({
 });
 
 export type CreateMessageDto = z.infer<typeof createMessageSchema>;
-export type ResearchMode = z.infer<typeof researchModeSchema>;
+// Re-export the enum value-type for downstream consumers. Phase 2 will
+// migrate every `import { ResearchMode } from '.../dto/create-message.dto'`
+// to import directly from `src/common/enums/research-mode.enum` so the
+// type-vs-value distinction collapses too.
+export { ResearchMode };

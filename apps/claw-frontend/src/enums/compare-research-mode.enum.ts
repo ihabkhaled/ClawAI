@@ -1,14 +1,10 @@
-// Compare-mode research enricher. Mirrors backend
-// apps/claw-chat-service/src/common/enums/research-mode.enum.ts.
+// DEPRECATED alias. Both compare-mode and the single-message composer
+// now share a single canonical `ResearchMode` enum (NONE / SEARCH /
+// SEARCH_FETCH / SEARCH_EXTRACT). This file re-exports that enum under
+// its legacy name so the foundation-step enum collapse can land without
+// touching every caller at once — Phase 2 will sweep every
+// `CompareResearchMode` import over to `ResearchMode` and delete this
+// file outright.
 //
-// Distinct from `ResearchMode` (which mirrors the per-message
-// ResearchWorkflow on createMessageSchema — OFF/SEARCH_ONLY/SEARCH_THEN_
-// FETCH/SEARCH_FETCH_EXTRACT). `CompareResearchMode` is the lightweight,
-// compare-time control. Wire value passed over /chat-messages/parallel as
-// `researchMode`.
-export enum CompareResearchMode {
-  NONE = 'NONE',
-  SEARCH = 'SEARCH',
-  SEARCH_FETCH = 'SEARCH_FETCH',
-  SEARCH_EXTRACT = 'SEARCH_EXTRACT',
-}
+// Do NOT add new code that depends on this alias.
+export { ResearchMode as CompareResearchMode } from './research-mode.enum';

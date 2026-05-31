@@ -1145,6 +1145,11 @@ export type CompareResearchModeControlProps = {
   value: CompareResearchMode;
   onChange: (value: CompareResearchMode) => void;
   t: TranslateFunction;
+  // When true, dim the control. Useful for plan-gating ("Web research is
+  // locked on your plan"). The wrapper renders the `lockedTooltipKey`
+  // (e.g. `research.toggle.lockedUpgrade`) as a native `title` tooltip.
+  disabled?: boolean;
+  lockedTooltipKey?: string;
 };
 
 export type ParallelResponseCardProps = {

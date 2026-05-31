@@ -95,6 +95,11 @@ const mockStreamService = (): Partial<Record<keyof ChatStreamService, jest.Mock>
   emitError: jest.fn(),
 });
 
+// Universal-research PR2: research-enricher dependency stub.
+const mockResearchEnricherManager = {
+  enrichForOrchestration: jest.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
+};
+
 describe('RolePackManager', () => {
   let manager: RolePackManager;
   let messagesRepo: ReturnType<typeof mockMessagesRepository>;
@@ -105,11 +110,16 @@ describe('RolePackManager', () => {
     messagesRepo = mockMessagesRepository();
     threadsRepo = mockThreadsRepository();
     streamService = mockStreamService();
+    mockResearchEnricherManager.enrichForOrchestration.mockResolvedValue({
+      transcript: null,
+      systemPrompt: '',
+    });
 
     manager = new RolePackManager(
       messagesRepo as unknown as ChatMessagesRepository,
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
+      mockResearchEnricherManager as any,
     );
 
     jest.clearAllMocks();
@@ -124,11 +134,15 @@ describe('RolePackManager', () => {
     it('should return messageId and threadId', async () => {
       messagesRepo.create!.mockResolvedValue(mockUserMessage);
 
-      const result = await manager.executeRolePack('user-1', {
-        content: 'implement a login form',
-        threadId: 'thread-role-1',
-        pack: 'coding-team',
-      });
+      const result = await manager.executeRolePack(
+        'user-1',
+        {
+          content: 'implement a login form',
+          threadId: 'thread-role-1',
+          pack: 'coding-team',
+        },
+        '',
+      );
 
       expect(result).toHaveProperty('messageId');
       expect(result).toHaveProperty('threadId', 'thread-role-1');
@@ -138,10 +152,14 @@ describe('RolePackManager', () => {
       threadsRepo.create!.mockResolvedValue(mockThread);
       messagesRepo.create!.mockResolvedValue(mockUserMessage);
 
-      const result = await manager.executeRolePack('user-1', {
-        content: 'implement a login form',
-        pack: 'coding-team',
-      });
+      const result = await manager.executeRolePack(
+        'user-1',
+        {
+          content: 'implement a login form',
+          pack: 'coding-team',
+        },
+        '',
+      );
 
       expect(threadsRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -302,18 +320,23 @@ describe('RolePackManager', () => {
         messagesRepo as unknown as ChatMessagesRepository,
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
+        mockResearchEnricherManager as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 
       await expect(
-        isolated.executeRolePack('user-1', {
-          content: 'implement login',
-          threadId: 'thread-role-1',
-          pack: 'coding-team',
-          requestedProvider: 'OPENAI',
-          requestedModel: 'gpt-4.1',
-          modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
-        }),
+        isolated.executeRolePack(
+          'user-1',
+          {
+            content: 'implement login',
+            threadId: 'thread-role-1',
+            pack: 'coding-team',
+            requestedProvider: 'OPENAI',
+            requestedModel: 'gpt-4.1',
+            modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
+          },
+          '',
+        ),
       ).rejects.toThrow('unsupported provider');
       expect(messagesRepo.create).not.toHaveBeenCalled();
     });

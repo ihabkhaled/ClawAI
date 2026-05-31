@@ -18,6 +18,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
+import { AiStreamStage } from '../../../common/enums';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { httpRequest } from '../../../common/utilities';
 import {
@@ -30,18 +31,27 @@ import {
   RESEARCH_ENRICHER_QUERY_LOG_PREVIEW_CHARS,
   RESEARCH_ENRICHER_SEARCH_TIMEOUT_MS,
 } from '../constants/research-enricher.constants';
+import { ChatStreamService } from '../services/chat-stream.service';
 import {
   type ResearchEnrichInput,
   type ResearchEnrichResult,
   type ResearchFetchWireResponse,
+  type ResearchOrchestrationInput,
+  type ResearchOrchestrationResult,
   type ResearchSearchEntry,
   type ResearchSearchWireResponse,
   type ResearchSource,
 } from '../types/research-enricher.types';
+import {
+  type ResearchTranscript,
+  type ResearchTranscriptSource,
+} from '../types/research-transcript.types';
 
 @Injectable()
 export class ResearchEnricherManager {
   private readonly logger = new Logger(ResearchEnricherManager.name);
+
+  constructor(private readonly chatStreamService: ChatStreamService) {}
 
   async enrich(input: ResearchEnrichInput): Promise<ResearchEnrichResult> {
     this.logger.debug(
@@ -50,13 +60,27 @@ export class ResearchEnricherManager {
     if (input.mode === ResearchMode.NONE) {
       return { evidence: '', sources: [], mode: ResearchMode.NONE };
     }
+    this.emitResearch(input, AiStreamStage.RESEARCH_STARTED, {
+      mode: input.mode,
+      query: input.query,
+    });
     try {
       const searchResults = await this.runSearch(
         input,
         input.topResults ?? RESEARCH_ENRICHER_DEFAULT_TOP_RESULTS,
       );
+      this.emitResearch(input, AiStreamStage.RESEARCH_SOURCES_FOUND, {
+        mode: input.mode,
+        query: input.query,
+        sourcesCount: searchResults.length,
+      });
       if (searchResults.length === 0) {
         this.logger.log(`enrich: mode=${input.mode} sources=0 (empty search)`);
+        this.emitResearch(input, AiStreamStage.RESEARCH_COMPLETED, {
+          mode: input.mode,
+          query: input.query,
+          sourcesCount: 0,
+        });
         return {
           evidence: RESEARCH_ENRICHER_EMPTY_RESULTS_BLOCK,
           sources: [],
@@ -68,13 +92,154 @@ export class ResearchEnricherManager {
       this.logger.log(
         `enrich: mode=${input.mode} sources=${String(sources.length)} (completed)`,
       );
+      this.emitResearch(input, AiStreamStage.RESEARCH_COMPLETED, {
+        mode: input.mode,
+        query: input.query,
+        sourcesCount: sources.length,
+      });
       return { evidence, sources, mode: input.mode };
     } catch (error) {
-      this.logger.error(
-        `enrich: failed mode=${input.mode} — ${(error as Error).message}`,
-      );
+      const message = (error as Error).message;
+      this.logger.error(`enrich: failed mode=${input.mode} — ${message}`);
+      this.emitResearch(input, AiStreamStage.RESEARCH_FAILED, {
+        mode: input.mode,
+        query: input.query,
+        error: message,
+      });
       throw error;
     }
+  }
+
+  // Orchestration-shared entry point. Used by EVERY orchestration manager
+  // (consensus, escalation, repair, decompose, best-of-n, cost-ensemble,
+  // verify, pipeline, role-pack) so each one runs the SAME enrichment pipeline
+  // parallel/compare already runs. Returns a `{ transcript, systemPrompt }`
+  // pair so callers can:
+  //   1. Prepend `systemPrompt` to whatever system prompt they would have
+  //      passed to the LLM (empty string is a safe no-op).
+  //   2. Persist `transcript` on every assistant ChatMessage they write via
+  //      `metadata.researchTranscript` so the FE renders the "Used N web
+  //      sources" badge after a page refresh.
+  //
+  // Research enrichment MUST NEVER block the orchestration call. Every
+  // failure path returns a non-null transcript with a populated `warnings`
+  // array so analytics still see the attempt.
+  async enrichForOrchestration(
+    input: ResearchOrchestrationInput,
+  ): Promise<ResearchOrchestrationResult> {
+    const mode = input.mode;
+    if (mode === undefined || mode === ResearchMode.NONE) {
+      return { transcript: null, systemPrompt: '' };
+    }
+    if (input.userToken.length === 0) {
+      this.logger.warn(
+        `enrichForOrchestration: mode=${mode} but no bearer token — skipping enrichment`,
+      );
+      return {
+        transcript: this.buildSkippedOrchestrationTranscript(
+          mode,
+          input.query,
+          input.providerId,
+          'research.missingBearerToken',
+        ),
+        systemPrompt: '',
+      };
+    }
+    const startedAt = Date.now();
+    try {
+      const result = await this.enrich({
+        mode,
+        query: input.query,
+        userAuthHeader: `Bearer ${input.userToken}`,
+        threadId: input.threadId,
+      });
+      const transcript = this.buildOrchestrationTranscriptFromEnricher(
+        mode,
+        input.query,
+        input.providerId,
+        result,
+        Math.max(1, Date.now() - startedAt),
+      );
+      return { transcript, systemPrompt: result.evidence };
+    } catch (error) {
+      const message = (error as Error).message;
+      this.logger.warn(
+        `enrichForOrchestration: failed mode=${mode} — ${message}; continuing without evidence`,
+      );
+      return {
+        transcript: this.buildSkippedOrchestrationTranscript(
+          mode,
+          input.query,
+          input.providerId,
+          `research.enrichmentFailed:${message}`,
+          Math.max(1, Date.now() - startedAt),
+        ),
+        systemPrompt: '',
+      };
+    }
+  }
+
+  private buildOrchestrationTranscriptFromEnricher(
+    mode: ResearchMode,
+    query: string,
+    providerId: string | undefined,
+    result: ResearchEnrichResult,
+    latencyMs: number,
+  ): ResearchTranscript {
+    const sources: ResearchTranscriptSource[] = result.sources.map((source) => ({
+      title: source.title,
+      url: source.url,
+      ...(source.snippet === undefined ? {} : { snippet: source.snippet }),
+      ...(source.extracted === undefined ? {} : { extracted: source.extracted }),
+    }));
+    return {
+      mode,
+      ...(providerId === undefined ? {} : { providerId }),
+      query,
+      sources,
+      latencyMs,
+      warnings: [],
+    };
+  }
+
+  private buildSkippedOrchestrationTranscript(
+    mode: ResearchMode,
+    query: string,
+    providerId: string | undefined,
+    warning: string,
+    latencyMs = 0,
+  ): ResearchTranscript {
+    return {
+      mode,
+      ...(providerId === undefined ? {} : { providerId }),
+      query,
+      sources: [],
+      latencyMs,
+      warnings: [warning],
+    };
+  }
+
+  // Single-source emit helper so the enrich pipeline stays readable and the
+  // threadId-guard lives in exactly one place. Callers without a threadId
+  // (tests, background batch jobs) get a silent no-op.
+  private emitResearch(
+    input: ResearchEnrichInput,
+    stage: AiStreamStage,
+    details: { mode?: ResearchMode; query?: string; sourcesCount?: number; currentUrl?: string; error?: string },
+  ): void {
+    if (input.threadId === undefined || input.threadId.length === 0) {
+      return;
+    }
+    this.chatStreamService.emitResearchProgress(input.threadId, {
+      stage,
+      details: {
+        mode: details.mode,
+        query: details.query,
+        sourcesCount: details.sourcesCount,
+        currentUrl: details.currentUrl,
+        error: details.error,
+      },
+    });
   }
 
   private async enrichSourcesByMode(
@@ -130,6 +295,11 @@ export class ResearchEnricherManager {
     input: ResearchEnrichInput,
     entry: ResearchSearchEntry,
   ): Promise<ResearchSource> {
+    this.emitResearch(input, AiStreamStage.RESEARCH_FETCHING, {
+      mode: input.mode,
+      query: input.query,
+      currentUrl: entry.url,
+    });
     try {
       const config = AppConfig.get();
       const response = await httpRequest<ResearchFetchWireResponse>({

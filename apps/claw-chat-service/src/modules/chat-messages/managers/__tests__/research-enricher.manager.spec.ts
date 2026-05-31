@@ -1,5 +1,7 @@
 import { ResearchEnricherManager } from '../research-enricher.manager';
 import { ResearchMode } from '../../../../common/enums/research-mode.enum';
+import { AiStreamStage } from '../../../../common/enums';
+import { type ChatStreamService } from '../../services/chat-stream.service';
 
 jest.mock('../../../../common/utilities', () => ({
   httpRequest: jest.fn(),
@@ -16,24 +18,38 @@ const { AppConfig } = jest.requireMock('../../../../app/config/app.config') as {
 const RESEARCH_URL = 'http://research-service:4016';
 const AUTH_HEADER = 'Bearer abc.def.ghi';
 
+const buildStreamServiceMock = (): {
+  emitResearchProgress: jest.Mock;
+  service: ChatStreamService;
+} => {
+  const emitResearchProgress = jest.fn();
+  const service = { emitResearchProgress } as unknown as ChatStreamService;
+  return { emitResearchProgress, service };
+};
+
 describe('ResearchEnricherManager', () => {
   let manager: ResearchEnricherManager;
+  let emitResearchProgress: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
     AppConfig.get.mockReturnValue({ RESEARCH_SERVICE_URL: RESEARCH_URL });
-    manager = new ResearchEnricherManager();
+    const stream = buildStreamServiceMock();
+    emitResearchProgress = stream.emitResearchProgress;
+    manager = new ResearchEnricherManager(stream.service);
   });
 
-  it('NONE: returns empty evidence + sources, never calls fetch', async () => {
+  it('NONE: returns empty evidence + sources, never calls fetch, never emits SSE', async () => {
     const result = await manager.enrich({
       mode: ResearchMode.NONE,
       query: 'what is the weather today',
       userAuthHeader: AUTH_HEADER,
+      threadId: 'thread-none',
     });
 
     expect(result).toEqual({ evidence: '', sources: [], mode: ResearchMode.NONE });
     expect(httpRequest).not.toHaveBeenCalled();
+    expect(emitResearchProgress).not.toHaveBeenCalled();
   });
 
   it('SEARCH: calls /research/search once, formats evidence with snippets, no fetch', async () => {
@@ -195,5 +211,166 @@ describe('ResearchEnricherManager', () => {
     });
     expect(result.evidence).toBe('## Web search returned no results.');
     expect(result.sources).toEqual([]);
+  });
+
+  it('emits RESEARCH_STARTED → SOURCES_FOUND → FETCHING (per URL) → COMPLETED in order when threadId is provided', async () => {
+    httpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: {
+        runId: 'run-sse',
+        providerKind: 'tavily',
+        results: [
+          { id: 'r1', title: 'A1', url: 'https://a/1', snippet: 's1' },
+          { id: 'r2', title: 'A2', url: 'https://a/2', snippet: 's2' },
+        ],
+      },
+    });
+    httpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { url: 'https://a/1', content: 'Body 1.', httpStatus: 200 },
+    });
+    httpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { url: 'https://a/2', content: 'Body 2.', httpStatus: 200 },
+    });
+
+    await manager.enrich({
+      mode: ResearchMode.SEARCH_FETCH,
+      query: 'sse test',
+      userAuthHeader: AUTH_HEADER,
+      threadId: 'thread-sse-1',
+      topResults: 2,
+      topFetch: 2,
+    });
+
+    const stages = emitResearchProgress.mock.calls.map(
+      (call: [string, { stage: AiStreamStage }]) => call[1].stage,
+    );
+    expect(stages).toEqual([
+      AiStreamStage.RESEARCH_STARTED,
+      AiStreamStage.RESEARCH_SOURCES_FOUND,
+      AiStreamStage.RESEARCH_FETCHING,
+      AiStreamStage.RESEARCH_FETCHING,
+      AiStreamStage.RESEARCH_COMPLETED,
+    ]);
+
+    const [firstThreadId, firstPayload] = emitResearchProgress.mock.calls[0] as [
+      string,
+      { stage: AiStreamStage; details: { mode?: string; query?: string } },
+    ];
+    expect(firstThreadId).toBe('thread-sse-1');
+    expect(firstPayload.details).toEqual(
+      expect.objectContaining({ mode: ResearchMode.SEARCH_FETCH, query: 'sse test' }),
+    );
+
+    const sourcesFoundPayload = emitResearchProgress.mock.calls[1][1] as {
+      details: { sourcesCount?: number };
+    };
+    expect(sourcesFoundPayload.details.sourcesCount).toBe(2);
+
+    const fetchingUrls = emitResearchProgress.mock.calls
+      .filter((call: [string, { stage: AiStreamStage }]) => call[1].stage === AiStreamStage.RESEARCH_FETCHING)
+      .map((call: [string, { details: { currentUrl?: string } }]) => call[1].details.currentUrl);
+    expect(fetchingUrls).toEqual(['https://a/1', 'https://a/2']);
+
+    const completedPayload = emitResearchProgress.mock.calls.at(-1)?.[1] as {
+      details: { sourcesCount?: number };
+    };
+    expect(completedPayload.details.sourcesCount).toBe(2);
+  });
+
+  it('emits RESEARCH_STARTED then RESEARCH_COMPLETED with sourcesCount=0 when search returns empty', async () => {
+    httpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { runId: 'run-empty', providerKind: 'tavily', results: [] },
+    });
+
+    await manager.enrich({
+      mode: ResearchMode.SEARCH,
+      query: 'no-hits',
+      userAuthHeader: AUTH_HEADER,
+      threadId: 'thread-empty',
+    });
+
+    const stages = emitResearchProgress.mock.calls.map(
+      (call: [string, { stage: AiStreamStage }]) => call[1].stage,
+    );
+    expect(stages).toEqual([
+      AiStreamStage.RESEARCH_STARTED,
+      AiStreamStage.RESEARCH_SOURCES_FOUND,
+      AiStreamStage.RESEARCH_COMPLETED,
+    ]);
+    const completed = emitResearchProgress.mock.calls.at(-1)?.[1] as {
+      details: { sourcesCount?: number };
+    };
+    expect(completed.details.sourcesCount).toBe(0);
+  });
+
+  it('does NOT emit any SSE frames when threadId is omitted', async () => {
+    httpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: {
+        runId: 'run-no-thread',
+        providerKind: 'tavily',
+        results: [{ id: 'r1', title: 'A1', url: 'https://a/1', snippet: 's1' }],
+      },
+    });
+
+    await manager.enrich({
+      mode: ResearchMode.SEARCH,
+      query: 'no thread',
+      userAuthHeader: AUTH_HEADER,
+    });
+
+    expect(emitResearchProgress).not.toHaveBeenCalled();
+  });
+
+  it('emits RESEARCH_FAILED with error details when an unexpected exception is thrown from enrichSourcesByMode', async () => {
+    httpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: {
+        runId: 'run-fail',
+        providerKind: 'tavily',
+        results: [{ id: 'r1', title: 'A1', url: 'https://a/1', snippet: 's1' }],
+      },
+    });
+    const originalEnrichSourcesByMode = (
+      manager as unknown as {
+        enrichSourcesByMode: (...args: unknown[]) => Promise<unknown>;
+      }
+    ).enrichSourcesByMode;
+    (
+      manager as unknown as { enrichSourcesByMode: (...args: unknown[]) => Promise<unknown> }
+    ).enrichSourcesByMode = jest.fn().mockRejectedValueOnce(new Error('boom'));
+
+    await expect(
+      manager.enrich({
+        mode: ResearchMode.SEARCH_FETCH,
+        query: 'q',
+        userAuthHeader: AUTH_HEADER,
+        threadId: 'thread-fail',
+        topResults: 1,
+        topFetch: 1,
+      }),
+    ).rejects.toThrow('boom');
+
+    const stages = emitResearchProgress.mock.calls.map(
+      (call: [string, { stage: AiStreamStage }]) => call[1].stage,
+    );
+    expect(stages).toContain(AiStreamStage.RESEARCH_FAILED);
+    const failedPayload = emitResearchProgress.mock.calls.find(
+      (call: [string, { stage: AiStreamStage }]) => call[1].stage === AiStreamStage.RESEARCH_FAILED,
+    )?.[1] as { details: { error?: string } };
+    expect(failedPayload.details.error).toBe('boom');
+
+    (
+      manager as unknown as { enrichSourcesByMode: typeof originalEnrichSourcesByMode }
+    ).enrichSourcesByMode = originalEnrichSourcesByMode;
   });
 });

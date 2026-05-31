@@ -1,0 +1,27 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`STREAM_STAGE_LABEL_KEYS > matches the full snapshot 1`] = `
+{
+  "authenticating": "chat.stream.stage.authenticating",
+  "cancelled": "chat.stream.stage.cancelled",
+  "complete": "chat.stream.stage.complete",
+  "connecting_provider": "chat.stream.stage.connecting",
+  "error": "chat.stream.stage.error",
+  "finalizing": "chat.stream.stage.finalizing",
+  "generating": "chat.stream.stage.generating",
+  "incomplete": "chat.stream.stage.incomplete",
+  "queued": "chat.stream.stage.queued",
+  "rate_limited": "chat.stream.stage.rateLimited",
+  "research_completed": "chat.stream.stage.researchCompleted",
+  "research_failed": "chat.stream.stage.researchFailed",
+  "research_fetching": "chat.stream.stage.researchFetching",
+  "research_sources_found": "chat.stream.stage.researchSourcesFound",
+  "research_started": "chat.stream.stage.researchStarted",
+  "resolving_route": "chat.stream.stage.resolvingRoute",
+  "retrieving_context": "chat.stream.stage.retrievingContext",
+  "retrying": "chat.stream.stage.retrying",
+  "thinking": "chat.stream.stage.thinking",
+  "tool_calling": "chat.stream.stage.toolCalling",
+  "waiting_first_token": "chat.stream.stage.waitingFirstToken",
+}
+`;

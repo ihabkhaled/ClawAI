@@ -27,6 +27,10 @@ import {
   type ParallelResponse,
 } from '../types/parallel.types';
 import { type ResearchEnrichResult } from '../types/research-enricher.types';
+import {
+  type ResearchTranscript,
+  type ResearchTranscriptSource,
+} from '../types/research-transcript.types';
 import { type ThreadSettings } from '../types/execution.types';
 import { type AssembledContext } from '../types/context.types';
 import { type ChatThread, type Prisma } from '../../../generated/prisma';
@@ -113,12 +117,14 @@ export class ParallelExecutionManager {
         actorName: 'Parallel compare',
       });
       const { context, threadSettings } = await this.buildContext(userId, threadId, fileIds);
-      const enrichedContext = await this.applyResearchEnrichment(
-        context,
-        userMessageContent,
-        researchOptions,
-      );
-      const responses = await this.executeAllModels(
+      const { context: enrichedContext, transcript: researchTranscript } =
+        await this.applyResearchEnrichment(
+          context,
+          userMessageContent,
+          researchOptions,
+          threadId,
+        );
+      const responsesRaw = await this.executeAllModels(
         userId,
         models,
         enrichedContext,
@@ -128,6 +134,9 @@ export class ParallelExecutionManager {
         parallelGroupId,
         threadId,
       );
+      // Replay the shared enricher transcript onto every lane response so the
+      // assistant message metadata carries it for FE rendering + analytics.
+      const responses = this.applyTranscriptToResponses(responsesRaw, researchTranscript);
       await this.storeAssistantMessages(userId, threadId, parallelGroupId, responses);
       const completed = responses.filter((r) => r.status === 'completed').length;
       this.logger.log(
@@ -198,38 +207,65 @@ export class ParallelExecutionManager {
   // circuits to the original context so v1 callers keep working. On any
   // enricher error we log a warning and proceed without evidence — research
   // must NEVER block the parallel run.
+  //
+  // Dedupe — the enricher is invoked ONCE here, BEFORE the parallel lane
+  // fan-out (`executeAllModels`). The resulting transcript is replayed onto
+  // every assistant message via `applyTranscriptToResponses`, so all N lanes
+  // share the exact same evidence and the user sees the same "Used N web
+  // sources" badge whichever lane they look at. We never re-invoke the
+  // enricher inside a lane.
   private async applyResearchEnrichment(
     context: AssembledContext,
     userMessageContent: string,
     options: ParallelResearchOptions | undefined,
-  ): Promise<AssembledContext> {
+    threadId: string,
+  ): Promise<{ context: AssembledContext; transcript: ResearchTranscript | null }> {
     if (options === undefined) {
-      return context;
+      return { context, transcript: null };
     }
     const mode = options.mode ?? ResearchMode.NONE;
     if (mode === ResearchMode.NONE) {
-      return context;
+      return { context, transcript: null };
     }
+    const trimmedQuery = options.query?.trim() ?? '';
+    const finalQuery = trimmedQuery.length > 0 ? trimmedQuery : userMessageContent;
     if (options.userToken.length === 0) {
       this.logger.warn(
         `applyResearchEnrichment: mode=${mode} but no bearer token — skipping enrichment`,
       );
-      return context;
+      return {
+        context,
+        transcript: this.buildSkippedTranscript(mode, finalQuery, 'research.missingBearerToken'),
+      };
     }
-    const query = options.query?.trim() ?? '';
-    const finalQuery = query.length > 0 ? query : userMessageContent;
+    const startedAt = Date.now();
     try {
       const result = await this.researchEnricherManager.enrich({
         mode,
         query: finalQuery,
         userAuthHeader: `Bearer ${options.userToken}`,
+        threadId,
       });
-      return this.injectResearchIntoContext(context, result);
-    } catch (error) {
-      this.logger.warn(
-        `applyResearchEnrichment: failed mode=${mode} — ${(error as Error).message}`,
+      const transcript = this.buildTranscriptFromEnricher(
+        mode,
+        finalQuery,
+        result,
+        Math.max(1, Date.now() - startedAt),
       );
-      return context;
+      return { context: this.injectResearchIntoContext(context, result), transcript };
+    } catch (error) {
+      const message = (error as Error).message;
+      this.logger.warn(`applyResearchEnrichment: failed mode=${mode} — ${message}`);
+      this.chatStreamService.emitError(threadId, `Research enrichment failed: ${message}`);
+      return {
+        context,
+        transcript: this.buildSkippedTranscript(
+          mode,
+          finalQuery,
+          `research.enrichmentFailed:${message}`,
+          Math.max(1, Date.now() - startedAt),
+        ),
+      };
     }
   }
 
@@ -244,6 +280,54 @@ export class ParallelExecutionManager {
     const nextSystemPrompt =
       trimmedPrompt.length > 0 ? `${result.evidence}\n\n${trimmedPrompt}` : result.evidence;
     return { ...context, systemPrompt: nextSystemPrompt };
+  }
+
+  private buildTranscriptFromEnricher(
+    mode: ResearchMode,
+    query: string,
+    result: ResearchEnrichResult,
+    latencyMs: number,
+  ): ResearchTranscript {
+    const sources: ResearchTranscriptSource[] = result.sources.map((source) => ({
+      title: source.title,
+      url: source.url,
+      ...(source.snippet !== undefined ? { snippet: source.snippet } : {}),
+      ...(source.extracted !== undefined ? { extracted: source.extracted } : {}),
+    }));
+    return { mode, query, sources, latencyMs, warnings: [] };
+  }
+
+  private buildSkippedTranscript(
+    mode: ResearchMode,
+    query: string,
+    warning: string,
+    latencyMs = 0,
+  ): ResearchTranscript {
+    return { mode, query, sources: [], latencyMs, warnings: [warning] };
+  }
+
+  private applyTranscriptToResponses(
+    responses: ParallelModelResponse[],
+    transcript: ResearchTranscript | null,
+  ): ParallelModelResponse[] {
+    if (transcript === null) {
+      return responses;
+    }
+    return responses.map((response) => ({ ...response, researchTranscript: transcript }));
+  }
+
+  // Extracted so buildParallelMessageMetadata stays under the complexity 15 cap.
+  // Shared enricher transcript — identical across all lanes by construction
+  // (dedupe: enricher runs ONCE before fan-out, not per lane). Persisted on
+  // every assistant message so the FE renders the same "Used N web sources"
+  // badge whichever lane the user is viewing.
+  private buildResearchTranscriptMetaPart(
+    response: ParallelModelResponse,
+  ): Record<string, unknown> {
+    if (response.researchTranscript === undefined) {
+      return {};
+    }
+    return { researchTranscript: response.researchTranscript };
   }
 
   private async executeAllModels(
@@ -752,6 +836,7 @@ export class ParallelExecutionManager {
       ...(response.judgeTokenSource === undefined
         ? {}
         : { judgeTokenSource: response.judgeTokenSource }),
+      ...this.buildResearchTranscriptMetaPart(response),
       // Slice A — per-lane attachment delivery telemetry. Mirrored to the FE
       // via ParallelModelResponse.attachmentDelivery so it can render which
       // files reached which lane, and consumed by the judge prompt builder.

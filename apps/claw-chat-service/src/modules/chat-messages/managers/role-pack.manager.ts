@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
+import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import { recordGet } from '../../../common/utilities/record-lookup.utility';
 import {
@@ -14,6 +15,8 @@ import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-thre
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
+import { ResearchEnricherManager } from './research-enricher.manager';
+import { prependResearchEvidence } from '../utilities/research-prompt.utility';
 import type { RolePackMessageDto } from '../dto/role-pack-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { RoleMember, RoleMemberResult, RolePackResponse } from '../types/role-pack.types';
@@ -39,11 +42,16 @@ export class RolePackManager {
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
+    private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
 
-  async executeRolePack(userId: string, dto: RolePackMessageDto): Promise<RolePackResponse> {
+  async executeRolePack(
+    userId: string,
+    dto: RolePackMessageDto,
+    userToken: string,
+  ): Promise<RolePackResponse> {
     this.logger.log(`executeRolePack: starting for user ${userId}, pack=${dto.pack}`);
 
     const threadId = await this.resolveThreadId(userId, dto);
@@ -56,7 +64,15 @@ export class RolePackManager {
       metadata: { rolePackRequest: true, modelSelection: selection },
     });
 
-    void this.executeInBackground(threadId, dto.content, dto.pack, selection);
+    void this.executeInBackground(
+      threadId,
+      dto.content,
+      dto.pack,
+      selection,
+      dto.researchMode,
+      dto.researchProviderId,
+      userToken,
+    );
 
     return { messageId: userMessage.id, threadId };
   }
@@ -66,6 +82,9 @@ export class RolePackManager {
     content: string,
     pack: string,
     selection?: AdvancedModelSelectionResolution,
+    researchMode?: ResearchMode,
+    researchProviderId?: string,
+    userToken?: string,
   ): Promise<void> {
     const startTime = Date.now();
     try {
@@ -73,7 +92,21 @@ export class RolePackManager {
       const members = recordGet(ROLE_PACKS, pack) ?? [];
       const config = AppConfig.get();
       const resolvedMembers = await this.resolveMembers(members, resolvedSelection);
-      const results = await this.runAllMembers(resolvedMembers, content, config.OLLAMA_SERVICE_URL);
+      // Enrich ONCE — every role member sees the same evidence; the FE badge
+      // is rendered on the single ASSISTANT row this manager writes.
+      const enrichment = await this.researchEnricherManager.enrichForOrchestration({
+        threadId,
+        mode: researchMode,
+        query: content,
+        userToken: userToken ?? '',
+        providerId: researchProviderId,
+      });
+      const results = await this.runAllMembers(
+        resolvedMembers,
+        content,
+        config.OLLAMA_SERVICE_URL,
+        enrichment.systemPrompt,
+      );
       const allFailed = results.every((r) => r.output === 'Role failed');
       if (allFailed) {
         throw new Error('All role pack members failed to produce output');
@@ -92,7 +125,13 @@ export class RolePackManager {
           resolvedSelection.modelSelectionMode === 'MANUAL_MODEL'
             ? RoutingMode.MANUAL_MODEL
             : RoutingMode.AUTO,
-        metadata: { rolePack: true, pack, members: results, modelSelection: resolvedSelection },
+        metadata: {
+          rolePack: true,
+          pack,
+          members: results,
+          modelSelection: resolvedSelection,
+          ...(enrichment.transcript === null ? {} : { researchTranscript: enrichment.transcript }),
+        },
       });
 
       this.chatStreamService.emitCompletion(
@@ -117,10 +156,11 @@ export class RolePackManager {
     members: RoleMember[],
     content: string,
     ollamaUrl: string,
+    researchEvidence: string,
   ): Promise<RoleMemberResult[]> {
     const fallbackModel = await this.resolveModel();
     const settled = await Promise.allSettled(
-      members.map((member) => this.runMember(member, content, ollamaUrl)),
+      members.map((member) => this.runMember(member, content, ollamaUrl, researchEvidence)),
     );
 
     return settled.map((result, index) => {
@@ -143,9 +183,11 @@ export class RolePackManager {
     member: RoleMember,
     content: string,
     ollamaUrl: string,
+    researchEvidence: string,
   ): Promise<RoleMemberResult> {
     const startTime = Date.now();
-    const prompt = `${member.instruction}\n\n${content}`;
+    const basePrompt = `${member.instruction}\n\n${content}`;
+    const prompt = prependResearchEvidence(basePrompt, researchEvidence);
     const model = await this.resolveModel(member.model);
 
     const requestBody: OllamaGenerateRequest = {

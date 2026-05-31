@@ -179,6 +179,11 @@ export type TranslationDictionary = {
         thinking: string;
         generating: string;
         toolCalling: string;
+        researchStarted: string;
+        researchSourcesFound: string;
+        researchFetching: string;
+        researchCompleted: string;
+        researchFailed: string;
         finalizing: string;
         complete: string;
         incomplete: string;
@@ -1970,12 +1975,29 @@ export type TranslationDictionary = {
       placeholder: string;
       autoProvider: string;
       noProviders: string;
+      tooltipNone: string;
+      tooltipSearch: string;
+      tooltipSearchFetch: string;
+      tooltipSearchExtract: string;
+      lockedUpgrade: string;
     };
     modes: {
-      off: string;
-      searchOnly: string;
-      searchThenFetch: string;
-      searchFetchExtract: string;
+      none: string;
+      search: string;
+      searchFetch: string;
+      searchExtract: string;
+    };
+    transcript: {
+      title: string;
+      expand: string;
+      sourcesCount: string;
+    };
+    lifecycle: {
+      started: string;
+      sourcesFound: string;
+      fetching: string;
+      completed: string;
+      failed: string;
     };
     providers: {
       title: string;

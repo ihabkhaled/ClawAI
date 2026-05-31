@@ -107,6 +107,11 @@ const mockQualityCheckManager = (): Partial<Record<keyof QualityCheckManager, je
   checkResponseQuality: jest.fn().mockReturnValue({ score: 0.8, reasons: [], isWeak: false }),
 });
 
+// Universal-research PR2: stub for the new ResearchEnricherManager dependency.
+const mockResearchEnricherManager = {
+  enrichForOrchestration: jest.fn().mockResolvedValue({ transcript: null, systemPrompt: '' }),
+};
+
 describe('BestOfNManager', () => {
   let manager: BestOfNManager;
   let messagesRepo: ReturnType<typeof mockMessagesRepository>;
@@ -119,12 +124,17 @@ describe('BestOfNManager', () => {
     threadsRepo = mockThreadsRepository();
     streamService = mockStreamService();
     qualityManager = mockQualityCheckManager();
+    mockResearchEnricherManager.enrichForOrchestration.mockResolvedValue({
+      transcript: null,
+      systemPrompt: '',
+    });
 
     manager = new BestOfNManager(
       messagesRepo as unknown as ChatMessagesRepository,
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
       qualityManager as unknown as QualityCheckManager,
+      mockResearchEnricherManager as any,
     );
 
     jest.clearAllMocks();
@@ -139,12 +149,16 @@ describe('BestOfNManager', () => {
     it('should return messageId and threadId', async () => {
       messagesRepo.create!.mockResolvedValue(mockUserMessage);
 
-      const result = await manager.executeBestOfN('user-1', {
-        content: 'test prompt',
-        threadId: 'thread-best-1',
-        n: 3,
-        models: undefined,
-      });
+      const result = await manager.executeBestOfN(
+        'user-1',
+        {
+          content: 'test prompt',
+          threadId: 'thread-best-1',
+          n: 3,
+          models: undefined,
+        },
+        '',
+      );
 
       expect(result).toHaveProperty('messageId');
       expect(result).toHaveProperty('threadId', 'thread-best-1');
@@ -154,11 +168,15 @@ describe('BestOfNManager', () => {
       threadsRepo.create!.mockResolvedValue(mockThread);
       messagesRepo.create!.mockResolvedValue(mockUserMessage);
 
-      const result = await manager.executeBestOfN('user-1', {
-        content: 'test prompt',
-        n: 2,
-        models: undefined,
-      });
+      const result = await manager.executeBestOfN(
+        'user-1',
+        {
+          content: 'test prompt',
+          n: 2,
+          models: undefined,
+        },
+        '',
+      );
 
       expect(threadsRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -269,6 +287,7 @@ describe('BestOfNManager', () => {
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
         qualityManager as unknown as QualityCheckManager,
+        mockResearchEnricherManager as any,
       );
       await isolatedManager.executeInBackground('thread-err', 'prompt', 2);
       expect(createMock).toHaveBeenCalledWith(
@@ -320,6 +339,7 @@ describe('BestOfNManager', () => {
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
         qualityManager as unknown as QualityCheckManager,
+        mockResearchEnricherManager as any,
       );
       await expect(
         isolatedManager.executeInBackground('thread-double-fail', 'prompt', 2),
@@ -377,19 +397,24 @@ describe('BestOfNManager', () => {
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
         qualityManager as unknown as QualityCheckManager,
+        mockResearchEnricherManager as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 
       await expect(
-        isolated.executeBestOfN('user-1', {
-          content: 'test prompt',
-          threadId: 'thread-best-1',
-          n: 3,
-          models: undefined,
-          requestedProvider: 'OPENAI',
-          requestedModel: 'gpt-4.1',
-          modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
-        }),
+        isolated.executeBestOfN(
+          'user-1',
+          {
+            content: 'test prompt',
+            threadId: 'thread-best-1',
+            n: 3,
+            models: undefined,
+            requestedProvider: 'OPENAI',
+            requestedModel: 'gpt-4.1',
+            modelSelectionMode: ModelSelectionMode.MANUAL_MODEL,
+          },
+          '',
+        ),
       ).rejects.toThrow('unsupported provider');
       expect(messagesRepo.create).not.toHaveBeenCalled();
     });

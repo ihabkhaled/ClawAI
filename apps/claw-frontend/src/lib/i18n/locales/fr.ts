@@ -179,6 +179,11 @@ export const fr: TranslationDictionary = {
         thinking: 'Réflexion',
         generating: 'Génération',
         toolCalling: 'Appel des outils',
+        researchStarted: 'Recherche sur le web...',
+        researchSourcesFound: '{count} sources trouvées',
+        researchFetching: 'Récupération de {host}',
+        researchCompleted: 'Recherche terminée',
+        researchFailed: 'Échec de la recherche : {reason}',
         finalizing: 'Finalisation',
         complete: 'Terminé',
         incomplete: 'Incomplet',
@@ -1766,12 +1771,33 @@ export const fr: TranslationDictionary = {
       placeholder: 'Recherche',
       autoProvider: 'Fournisseur automatique',
       noProviders: 'Aucun fournisseur configuré',
+      tooltipNone: 'Pas de recherche web. Le modèle répond uniquement à partir de son entraînement.',
+      tooltipSearch:
+        'Exécute une recherche web et transmet au modèle les titres et extraits des résultats.',
+      tooltipSearchFetch:
+        'Recherche sur le web, puis récupère les meilleures pages et ancre le modèle sur le texte complet.',
+      tooltipSearchExtract:
+        'Recherche sur le web, récupère les meilleures pages, puis extrait des faits structurés avant que le modèle ne réponde.',
+      lockedUpgrade:
+        'La recherche web est verrouillée dans votre forfait. Mettez à niveau pour l’activer.',
     },
     modes: {
-      off: 'Pas de recherche',
-      searchOnly: 'Recherche web',
-      searchThenFetch: 'Recherche + récupération',
-      searchFetchExtract: 'Recherche + extraction',
+      none: 'Pas de recherche',
+      search: 'Recherche web',
+      searchFetch: 'Recherche + récupération',
+      searchExtract: 'Recherche + extraction',
+    },
+    transcript: {
+      title: '{count} sources utilisées',
+      expand: 'Afficher les sources',
+      sourcesCount: '{count} sources',
+    },
+    lifecycle: {
+      started: 'Recherche sur le web...',
+      sourcesFound: '{count} sources trouvées',
+      fetching: 'Récupération de {host}',
+      completed: 'Recherche terminée',
+      failed: 'Échec de la recherche : {reason}',
     },
     providers: {
       title: 'Fournisseurs de recherche',

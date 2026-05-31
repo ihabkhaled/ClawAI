@@ -796,6 +796,14 @@ OLLAMA_FLASH_ATTENTION=1
 OLLAMA_KV_CACHE_TYPE=q8_0
 MEMORY_EXTRACTION_MODEL=AUTO
 
+# --- Ollama Cloud agentic tool-loop caps ---
+# Bounds the runaway agentic tool loop used by deepseek-v4-pro / kimi-k2 /
+# glm-5.1. When EITHER cap is hit, chat-service issues one final tool-less
+# POST forcing the model to synthesize an answer from already gathered
+# evidence (metadata.toolTranscript.gracefullyWrapped=true).
+OLLAMA_TOOL_LOOP_MAX_ITERATIONS=50
+OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS=600000
+
 # --- Local-only vision attachment policy (Slice B) ---
 # When LOCAL_ONLY/PRIVACY_FIRST routing has no vision-capable local model
 # (llava, bakllava, moondream, minicpm-v, llama3.2-vision, *-vision,

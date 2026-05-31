@@ -131,8 +131,14 @@ describe('ChatMessagesService', () => {
       >[16],
       {
         assertCanSendMessage: jest.fn(),
+        assertResearchAccess: jest.fn(),
         recordUsage: jest.fn(),
       } as unknown as ConstructorParameters<typeof ChatMessagesService>[17],
+      // ResearchEnricherManager — no-op for legacy tests; flows that don't set
+      // researchMode never reach the enricher.
+      {
+        enrich: jest.fn().mockResolvedValue({ evidence: '', sources: [], mode: 'NONE' }),
+      } as unknown as ConstructorParameters<typeof ChatMessagesService>[18],
     );
   });
 
@@ -336,19 +342,31 @@ describe('ChatMessagesService', () => {
         >[16],
         {
           assertCanSendMessage: jest.fn(),
+          assertResearchAccess: jest.fn(),
           recordUsage: jest.fn(),
         } as unknown as ConstructorParameters<typeof ChatMessagesService>[17],
+        {
+          enrich: jest.fn().mockResolvedValue({ evidence: '', sources: [], mode: 'NONE' }),
+        } as unknown as ConstructorParameters<typeof ChatMessagesService>[18],
       );
 
-      const result = await localService.executeVerify('user-1', {
-        content: 'test',
-        maxRevisions: 1,
-      });
+      const result = await localService.executeVerify(
+        'user-1',
+        {
+          content: 'test',
+          maxRevisions: 1,
+        },
+        '',
+      );
 
-      expect(verifierManager.executeVerify).toHaveBeenCalledWith('user-1', {
-        content: 'test',
-        maxRevisions: 1,
-      });
+      expect(verifierManager.executeVerify).toHaveBeenCalledWith(
+        'user-1',
+        {
+          content: 'test',
+          maxRevisions: 1,
+        },
+        '',
+      );
       expect(result).toEqual(mockResult);
     });
   });

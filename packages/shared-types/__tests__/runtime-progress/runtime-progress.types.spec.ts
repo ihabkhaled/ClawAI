@@ -17,7 +17,7 @@ describe('runtime-progress shared types', () => {
   it('exports every enum with the expected member counts', () => {
     expect(Object.keys(RuntimeProvider)).toHaveLength(4);
     expect(Object.keys(RuntimeModality)).toHaveLength(3);
-    expect(Object.keys(RuntimeProgressStage)).toHaveLength(20);
+    expect(Object.keys(RuntimeProgressStage)).toHaveLength(25);
     expect(Object.keys(RuntimeProgressEventType)).toHaveLength(11);
     expect(Object.keys(RuntimeProgressConfidence)).toHaveLength(5);
     expect(Object.keys(RuntimeExecutionProfile)).toHaveLength(7);
@@ -33,6 +33,14 @@ describe('runtime-progress shared types', () => {
     expect(RuntimeProvider.COMFYUI).toBe('COMFYUI');
     expect(RuntimeProgressStage.GENERATING).toBe('GENERATING');
     expect(RuntimeProbeStatus.REACHABLE).toBe('REACHABLE');
+  });
+
+  it('exposes the RESEARCH_* lifecycle stages with stable string values', () => {
+    expect(RuntimeProgressStage.RESEARCH_STARTED).toBe('RESEARCH_STARTED');
+    expect(RuntimeProgressStage.RESEARCH_SOURCES_FOUND).toBe('RESEARCH_SOURCES_FOUND');
+    expect(RuntimeProgressStage.RESEARCH_FETCHING).toBe('RESEARCH_FETCHING');
+    expect(RuntimeProgressStage.RESEARCH_COMPLETED).toBe('RESEARCH_COMPLETED');
+    expect(RuntimeProgressStage.RESEARCH_FAILED).toBe('RESEARCH_FAILED');
   });
 
   it('accepts a minimal ClawRuntimeProgressEvent shape', () => {

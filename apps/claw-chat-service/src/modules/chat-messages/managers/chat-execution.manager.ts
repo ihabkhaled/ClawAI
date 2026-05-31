@@ -97,10 +97,7 @@ import {
   pickDefaultCtxSizeForProvider,
 } from '../constants/output-token-bounds.constants';
 import type { ExecutionOptions } from '../types/execution-options.types';
-import {
-  OLLAMA_TOOL_LOOP_MAX_ITERATIONS,
-  OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS,
-} from '../constants/agentic-loop.constants';
+import { OLLAMA_TOOL_LOOP_WRAPUP_INSTRUCTION } from '../constants/agentic-loop.constants';
 import {
   executeOllamaCloudToolCall,
   OLLAMA_CLOUD_TOOL_DEFINITIONS,
@@ -1754,10 +1751,16 @@ export class ChatExecutionManager implements OnModuleInit {
   // final LlmResponse with `toolTranscript` set so the FE can render an
   // expandable trace under the assistant message.
   //
-  // Caps: OLLAMA_TOOL_LOOP_MAX_ITERATIONS turns, OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS
-  // wall clock. When either cap is hit we return the last message
-  // content (or a marker if it's empty) with `toolTranscript.capReached
-  // = true` so the user is not left with a blank reply.
+  // Caps: OLLAMA_TOOL_LOOP_MAX_ITERATIONS turns,
+  // OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS wall clock (both env-overridable
+  // via AppConfig — see `app.config.ts`). When either cap is hit, the
+  // loop emits a TOOL_LOOP_CAP_REACHED lifecycle event and issues ONE
+  // final POST without the `tools` field, forcing the model to produce a
+  // text-only synthesis from the evidence already gathered. The
+  // transcript carries `capReached=true` AND `gracefullyWrapped=true` on
+  // that path. If the wrap-up POST itself fails, the partial accumulated
+  // content is returned with `gracefullyWrapped=false` so the FE can
+  // render a clear error hint instead of a misleading complete answer.
   private async runOllamaCloudToolLoop(args: {
     provider: string;
     model: string;
@@ -1772,50 +1775,44 @@ export class ChatExecutionManager implements OnModuleInit {
     const { provider, model, initialBody, baseUrl, apiKey, startTime, streamThreadId } = args;
     const config = AppConfig.get();
     const url = `${baseUrl}/chat`;
-    const messages: OllamaChatMessage[] = [...initialBody.messages];
-    const turns: OllamaToolTranscriptTurn[] = [];
-    let iteration = 0;
-    let capReached = false;
-    let lastData: OllamaChatResponse | undefined;
-
-    while (iteration < OLLAMA_TOOL_LOOP_MAX_ITERATIONS) {
-      iteration += 1;
-      if (this.toolLoopTimedOut(startTime, iteration)) {
-        capReached = true;
-        break;
-      }
-
-      const turnResult = await this.postOneToolLoopTurn({
+    const maxIterations = config.OLLAMA_TOOL_LOOP_MAX_ITERATIONS;
+    const totalTimeoutMs = config.OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS;
+    const loopResult = await this.driveToolLoopTurns({
+      url,
+      apiKey,
+      baseUrl,
+      provider,
+      model,
+      initialBody,
+      startTime,
+      streamThreadId,
+      maxIterations,
+      totalTimeoutMs,
+      generateTimeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
+    });
+    // Graceful wrap-up — when we hit either cap with pending tool_calls,
+    // issue one final POST with NO `tools` so the model is forced to
+    // synthesize an answer from the evidence already gathered. Replaces
+    // the previous behaviour of returning a generic "safety cap" error
+    // string as the user-visible reply.
+    let { lastData } = loopResult;
+    let gracefullyWrapped = false;
+    if (loopResult.capReached) {
+      const wrapUp = await this.runToolLoopWrapUp({
         url,
         apiKey,
         initialBody,
-        messages,
+        messages: loopResult.messages,
         provider,
-        iteration,
-        timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
-      });
-      lastData = turnResult.data;
-      if (turnResult.toolCalls.length === 0) {
-        break;
-      }
-
-      await this.advanceToolLoopWithToolCalls({
-        messages,
-        turns,
-        turnContent: turnResult.content,
-        toolCalls: turnResult.toolCalls,
-        baseUrl,
-        apiKey,
         timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
         streamThreadId,
-        provider,
-        model,
-        iteration,
+        maxIterations,
+        totalTimeoutMs,
       });
-    }
-
-    if (this.toolLoopExhaustedWithPendingCalls(iteration, lastData)) {
-      capReached = true;
+      if (wrapUp !== null) {
+        lastData = wrapUp;
+        gracefullyWrapped = true;
+      }
     }
 
     return this.finalizeToolLoopResult({
@@ -1824,19 +1821,172 @@ export class ChatExecutionManager implements OnModuleInit {
       usedFallback: args.usedFallback,
       context: args.context,
       startTime,
-      iteration,
-      capReached,
-      turns,
+      iteration: loopResult.iteration,
+      capReached: loopResult.capReached,
+      gracefullyWrapped,
+      turns: loopResult.turns,
       lastData,
+    });
+  }
+
+  // Drives the agentic turn loop until either the model stops emitting
+  // tool_calls, the iteration cap, or the wall-clock budget is hit.
+  // Mutates a local `messages` list with assistant + tool messages so the
+  // wrap-up POST sees the full history. Returns the accumulated transcript
+  // turns, the final response, and whether either cap fired.
+  private async driveToolLoopTurns(args: {
+    url: string;
+    apiKey: string;
+    baseUrl: string;
+    provider: string;
+    model: string;
+    initialBody: OllamaChatRequest;
+    startTime: number;
+    streamThreadId: string | undefined;
+    maxIterations: number;
+    totalTimeoutMs: number;
+    generateTimeoutMs: number;
+  }): Promise<{
+    iteration: number;
+    capReached: boolean;
+    turns: OllamaToolTranscriptTurn[];
+    messages: OllamaChatMessage[];
+    lastData: OllamaChatResponse | undefined;
+  }> {
+    const messages: OllamaChatMessage[] = [...args.initialBody.messages];
+    const turns: OllamaToolTranscriptTurn[] = [];
+    let iteration = 0;
+    let capReached = false;
+    let lastData: OllamaChatResponse | undefined;
+    while (iteration < args.maxIterations) {
+      iteration += 1;
+      if (this.toolLoopTimedOut(args.startTime, iteration, args.totalTimeoutMs)) {
+        capReached = true;
+        break;
+      }
+      const turnResult = await this.postOneToolLoopTurn({
+        url: args.url,
+        apiKey: args.apiKey,
+        initialBody: args.initialBody,
+        messages,
+        provider: args.provider,
+        iteration,
+        timeoutMs: args.generateTimeoutMs,
+      });
+      lastData = turnResult.data;
+      if (turnResult.toolCalls.length === 0) {
+        break;
+      }
+      await this.advanceToolLoopWithToolCalls({
+        messages,
+        turns,
+        turnContent: turnResult.content,
+        toolCalls: turnResult.toolCalls,
+        baseUrl: args.baseUrl,
+        apiKey: args.apiKey,
+        timeoutMs: args.generateTimeoutMs,
+        streamThreadId: args.streamThreadId,
+        provider: args.provider,
+        model: args.model,
+        iteration,
+      });
+    }
+    if (this.toolLoopExhaustedWithPendingCalls(iteration, lastData, args.maxIterations)) {
+      capReached = true;
+    }
+    return { iteration, capReached, turns, messages, lastData };
+  }
+
+  // Issues ONE final POST without the `tools` field, asking the model to
+  // synthesize a comprehensive answer from the evidence already gathered.
+  // Emits a TOOL_LOOP_CAP_REACHED lifecycle event before the POST so the
+  // FE can render a "research budget reached" hint. Returns the parsed
+  // response on success, or `null` if the POST itself fails — the caller
+  // falls back to the partial accumulated content with
+  // `gracefullyWrapped=false` in that case.
+  private async runToolLoopWrapUp(args: {
+    url: string;
+    apiKey: string;
+    initialBody: OllamaChatRequest;
+    messages: OllamaChatMessage[];
+    provider: string;
+    timeoutMs: number;
+    streamThreadId: string | undefined;
+    maxIterations: number;
+    totalTimeoutMs: number;
+  }): Promise<OllamaChatResponse | null> {
+    const { url, apiKey, initialBody, messages, provider, timeoutMs, streamThreadId } = args;
+    this.emitToolLoopCapReached(streamThreadId, args.maxIterations, args.totalTimeoutMs);
+    const wrappedMessages: OllamaChatMessage[] = [
+      ...messages,
+      { role: 'system', content: OLLAMA_TOOL_LOOP_WRAPUP_INSTRUCTION },
+    ];
+    // Strip the `tools` field so the model has no choice but to produce
+    // a text answer. Keep every other initialBody knob (model, options,
+    // temperature, …) so the wrap-up call stays consistent with the run.
+    const { tools: _omittedTools, ...rest } = initialBody as OllamaChatRequest & {
+      tools?: unknown;
+    };
+    const body: OllamaChatRequest = { ...rest, messages: wrappedMessages };
+    try {
+      const response = await httpRequest<OllamaChatResponse>({
+        url,
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}` },
+        body,
+        timeoutMs,
+      });
+      if (!response.ok) {
+        this.logger.warn(
+          `runToolLoopWrapUp: ${provider} wrap-up POST failed status=${String(response.status)} — falling back to partial content`,
+        );
+        return null;
+      }
+      const content = response.data.message?.content ?? '';
+      this.logger.log(
+        `runToolLoopWrapUp: wrap-up synthesized ${String(content.length)} chars for ${provider}`,
+      );
+      return response.data;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'unknown';
+      this.logger.warn(
+        `runToolLoopWrapUp: wrap-up POST threw — ${message} — falling back to partial content`,
+      );
+      return null;
+    }
+  }
+
+  // SSE lifecycle event so the FE can render a small "research budget
+  // reached — synthesizing a final answer" note under the assistant
+  // message while the wrap-up POST is in flight.
+  private emitToolLoopCapReached(
+    threadId: string | undefined,
+    maxIterations: number,
+    totalTimeoutMs: number,
+  ): void {
+    if (threadId === undefined) {
+      return;
+    }
+    this.chatStreamService.emitProgressStage(threadId, StreamEventType.TOOL_LOOP_CAP_REACHED, {
+      label: 'Research budget reached',
+      description: `Synthesizing a final answer from the evidence already gathered (cap: ${String(maxIterations)} turns / ${String(Math.round(totalTimeoutMs / 1000))}s).`,
+      actorType: ProgressActorType.SYSTEM,
+      actorName: 'Ollama agentic tools',
+      stageId: 'ollama-tool:cap-reached',
+      status: 'active',
     });
   }
 
   // Wall-clock guard for the agentic loop. Returns true (and warns) when
   // the cumulative elapsed time since loop entry exceeds the configured
   // total budget, so the outer loop can flip capReached and bail.
-  private toolLoopTimedOut(startTime: number, iteration: number): boolean {
+  private toolLoopTimedOut(
+    startTime: number,
+    iteration: number,
+    totalTimeoutMs: number,
+  ): boolean {
     const elapsed = Date.now() - startTime;
-    if (elapsed >= OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS) {
+    if (elapsed >= totalTimeoutMs) {
       this.logger.warn(
         `runOllamaCloudToolLoop: total timeout reached after ${String(elapsed)}ms — capping at turn ${String(iteration - 1)}`,
       );
@@ -1928,14 +2078,15 @@ export class ChatExecutionManager implements OnModuleInit {
   private toolLoopExhaustedWithPendingCalls(
     iteration: number,
     lastData: OllamaChatResponse | undefined,
+    maxIterations: number,
   ): boolean {
-    if (iteration < OLLAMA_TOOL_LOOP_MAX_ITERATIONS || lastData === undefined) {
+    if (iteration < maxIterations || lastData === undefined) {
       return false;
     }
     const stillCalling = (lastData.message?.tool_calls ?? []).length > 0;
     if (stillCalling) {
       this.logger.warn(
-        `runOllamaCloudToolLoop: max iterations (${String(OLLAMA_TOOL_LOOP_MAX_ITERATIONS)}) reached with tool_calls still pending`,
+        `runOllamaCloudToolLoop: max iterations (${String(maxIterations)}) reached with tool_calls still pending`,
       );
     }
     return stillCalling;
@@ -1944,7 +2095,9 @@ export class ChatExecutionManager implements OnModuleInit {
   // Build the final LlmResponse for the agentic loop: resolves visible
   // content (falling back to a cap-reached marker if empty), computes
   // token usage + latency, and attaches the tool-transcript metadata for
-  // FE rendering.
+  // FE rendering. When `gracefullyWrapped=true`, the lastData carries
+  // the synthesized wrap-up answer; otherwise the cap-reached marker is
+  // used so the user sees a clear hint rather than empty text.
   private finalizeToolLoopResult(args: {
     provider: string;
     model: string;
@@ -1953,6 +2106,7 @@ export class ChatExecutionManager implements OnModuleInit {
     startTime: number;
     iteration: number;
     capReached: boolean;
+    gracefullyWrapped: boolean;
     turns: OllamaToolTranscriptTurn[];
     lastData: OllamaChatResponse | undefined;
   }): LlmResponse {
@@ -1964,10 +2118,16 @@ export class ChatExecutionManager implements OnModuleInit {
       startTime,
       iteration,
       capReached,
+      gracefullyWrapped,
       turns,
       lastData,
     } = args;
-    const finalContent = this.resolveFinalToolLoopContent(lastData, capReached, turns.length);
+    const finalContent = this.resolveFinalToolLoopContent(
+      lastData,
+      capReached,
+      gracefullyWrapped,
+      turns.length,
+    );
     const promptText = this.buildPromptTextForEstimate(context);
     const usage = extractOllamaUsage(lastData ?? {}, { promptText, completionText: finalContent });
     const latencyMs = Date.now() - startTime;
@@ -1976,9 +2136,10 @@ export class ChatExecutionManager implements OnModuleInit {
       iterations: iteration,
       capReached,
       totalDurationMs: latencyMs,
+      ...(capReached ? { gracefullyWrapped } : {}),
     };
     this.logger.log(
-      `runOllamaCloudToolLoop: completed ${provider}/${model} turns=${String(turns.length)} iterations=${String(iteration)} capReached=${String(capReached)} latencyMs=${String(latencyMs)} contentLen=${String(finalContent.length)}`,
+      `runOllamaCloudToolLoop: completed ${provider}/${model} turns=${String(turns.length)} iterations=${String(iteration)} capReached=${String(capReached)} gracefullyWrapped=${String(gracefullyWrapped)} latencyMs=${String(latencyMs)} contentLen=${String(finalContent.length)}`,
     );
     return {
       content: finalContent,
@@ -2067,14 +2228,19 @@ export class ChatExecutionManager implements OnModuleInit {
   private resolveFinalToolLoopContent(
     lastData: OllamaChatResponse | undefined,
     capReached: boolean,
+    gracefullyWrapped: boolean,
     turnCount: number,
   ): string {
     const finalContent = lastData?.message?.content ?? '';
     if (finalContent.trim().length > 0) {
       return finalContent;
     }
-    if (capReached) {
-      return `The agentic web tool loop exceeded its safety cap (${String(OLLAMA_TOOL_LOOP_MAX_ITERATIONS)} turns / ${String(Math.round(OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS / 1000))}s) before the model produced a final answer. ${String(turnCount)} tool call(s) were executed — see the trace below. Please regenerate or shorten the prompt.`;
+    // Cap reached AND the wrap-up POST failed (or didn't run) — leave a
+    // clear marker so the user knows the assistant ran out of budget
+    // before producing a final answer.
+    if (capReached && !gracefullyWrapped) {
+      const config = AppConfig.get();
+      return `The agentic web tool loop exceeded its safety cap (${String(config.OLLAMA_TOOL_LOOP_MAX_ITERATIONS)} turns / ${String(Math.round(config.OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS / 1000))}s) before the model produced a final answer, and the wrap-up synthesis call also failed. ${String(turnCount)} tool call(s) were executed — see the trace below. Please regenerate or shorten the prompt.`;
     }
     return 'The model returned no visible answer. Please regenerate.';
   }

@@ -5,12 +5,13 @@ import {
   type LifecycleEmitInput,
   type MetricsEmitInput,
   type ReasoningDeltaEmitInput,
+  type ResearchProgressEmitInput,
   type StreamErrorEmitInput,
   type StreamEvent,
   type UsageEmitInput,
 } from '../types/stream.types';
 import { type FallbackAttemptData } from '../types/execution.types';
-import { ProgressActorType, StreamEventType } from '../../../common/enums';
+import { AiStreamStage, ProgressActorType, StreamEventType } from '../../../common/enums';
 
 @Injectable()
 export class ChatStreamService {
@@ -99,6 +100,80 @@ export class ChatStreamService {
     this.logger.debug(
       `Emitted research_completed for thread ${threadId}: items=${String(itemCount)}`,
     );
+  }
+
+  // Fine-grained research-enricher lifecycle frame. One method covers all
+  // five RESEARCH_* sub-stages (started / sources_found / fetching /
+  // completed / failed). Follows the same RxJS+replay buffer pattern as
+  // emitProgressStage — the event lands on the shared eventBus + recent
+  // event buffer so the FE rich-progress panel reconstructs the lifecycle
+  // on reconnect.
+  emitResearchProgress(threadId: string, input: ResearchProgressEmitInput): void {
+    const defaults = this.researchStageDefaults(input.stage);
+    const actorType =
+      input.stage === AiStreamStage.RESEARCH_FAILED
+        ? ProgressActorType.SYSTEM
+        : ProgressActorType.TOOL;
+    this.emit({
+      threadId,
+      type: StreamEventType.RESEARCH_PROGRESS,
+      stage: input.stage,
+      label: input.label ?? defaults.label,
+      description: input.description ?? defaults.description,
+      actorType,
+      actorName: 'Research enricher',
+      stageId: `research:${input.stage}`,
+      status: defaults.status,
+      researchDetails: input.details,
+    });
+    this.logger.debug(
+      `Emitted research_progress for thread ${threadId}: stage=${input.stage}`,
+    );
+  }
+
+  private researchStageDefaults(stage: AiStreamStage): {
+    label: string;
+    description: string;
+    status: StreamEvent['status'];
+  } {
+    switch (stage) {
+      case AiStreamStage.RESEARCH_STARTED:
+        return {
+          label: 'Starting research',
+          description: 'Running a web search to gather evidence for this run.',
+          status: 'active',
+        };
+      case AiStreamStage.RESEARCH_SOURCES_FOUND:
+        return {
+          label: 'Search results found',
+          description: 'Selecting sources to fetch for deeper context.',
+          status: 'active',
+        };
+      case AiStreamStage.RESEARCH_FETCHING:
+        return {
+          label: 'Fetching source',
+          description: 'Reading a candidate source to extract supporting text.',
+          status: 'active',
+        };
+      case AiStreamStage.RESEARCH_COMPLETED:
+        return {
+          label: 'Research complete',
+          description: 'Evidence is ready and will be included in the prompt.',
+          status: 'completed',
+        };
+      case AiStreamStage.RESEARCH_FAILED:
+        return {
+          label: 'Research failed',
+          description: 'The research step could not complete; continuing without evidence.',
+          status: 'error',
+        };
+      default:
+        return {
+          label: 'Research update',
+          description: 'Research enricher progress.',
+          status: 'active',
+        };
+    }
   }
 
   emitProgressStage(

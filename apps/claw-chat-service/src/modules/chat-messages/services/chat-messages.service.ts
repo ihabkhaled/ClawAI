@@ -4,7 +4,7 @@ import { EventPattern, LogLevel, Permission, TokenLedgerContext } from '@claw/sh
 import { allowedModelKeys, type PlanFeature } from '@claw/shared-entitlements';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { AppConfig } from '../../../app/config/app.config';
-import { recordGet, runResearch } from '../../../common/utilities';
+import { mapResearchModeToWorkflow, recordGet, runResearch } from '../../../common/utilities';
 import {
   FILE_FOLLOW_UP_PREFIXES,
   IMAGE_FOLLOW_UP_PREFIXES,
@@ -12,7 +12,6 @@ import {
   SHORT_FOLLOW_UP_EXACT_MATCHES,
   SHORT_FOLLOW_UP_MAX_LENGTH,
 } from '../constants/follow-up-detection.constants';
-import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ContextReceiptService } from '../../context-receipts/services/context-receipt.service';
@@ -29,10 +28,15 @@ import { ParallelExecutionManager } from '../managers/parallel-execution.manager
 import { VerifierManager } from '../managers/verifier.manager';
 import { PipelineManager } from '../managers/pipeline.manager';
 import { RolePackManager } from '../managers/role-pack.manager';
+import { ResearchEnricherManager } from '../managers/research-enricher.manager';
 import { ChatStreamService } from './chat-stream.service';
 import { AccessControlService } from './access-control.service';
 import { type CreateMessageDto } from '../dto/create-message.dto';
 import { type ResearchRunResponse } from '../types/research.types';
+import {
+  type ResearchTranscript,
+  type ResearchTranscriptSource,
+} from '../types/research-transcript.types';
 import { type UserMessageMetadata } from '../types/user-message-metadata.types';
 import { type ConsensusMessageDto } from '../dto/consensus-message.dto';
 import { type EscalationChainMessageDto } from '../dto/escalation-chain-message.dto';
@@ -96,6 +100,7 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly rabbitMQService: RabbitMQService,
     private readonly contextReceiptService: ContextReceiptService,
     private readonly accessControlService: AccessControlService,
+    private readonly researchEnricherManager: ResearchEnricherManager,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -122,7 +127,7 @@ export class ChatMessagesService implements OnModuleInit {
     );
 
     this.logger.debug(
-      `createMessage: resolved routing mode=${effectiveRoutingMode}, provider=${forcedProvider ?? 'auto'}, model=${forcedModel ?? 'auto'}, research=${dto.researchMode ?? 'OFF'}`,
+      `createMessage: resolved routing mode=${effectiveRoutingMode}, provider=${forcedProvider ?? 'auto'}, model=${forcedModel ?? 'auto'}, research=${dto.researchMode ?? ResearchMode.NONE}`,
     );
 
     // Backend enforcement: reject a forbidden manually-selected model and a
@@ -176,14 +181,37 @@ export class ChatMessagesService implements OnModuleInit {
     forcedModel: string | undefined,
   ): Promise<Awaited<ReturnType<AccessControlService['assertCanSendMessage']>>> {
     const requireFeature: PlanFeature | undefined =
-      dto.researchMode !== undefined && dto.researchMode !== 'OFF'
+      dto.researchMode !== undefined && dto.researchMode !== ResearchMode.NONE
         ? 'allowResearchMode'
         : undefined;
-    return this.accessControlService.assertCanSendMessage(userId, {
+    const entitlements = await this.accessControlService.assertCanSendMessage(userId, {
       provider: forcedProvider,
       model: forcedModel,
       ...(requireFeature ? { requireFeature } : {}),
     });
+    // Defense-in-depth — also gate the RESEARCH_USE RBAC permission when the
+    // research toggle is set. Matches the compare-path gate in
+    // assertCompareAccess so a direct API call cannot bypass the matrix.
+    if (requireFeature !== undefined) {
+      await this.accessControlService.assertResearchAccess(userId);
+    }
+    return entitlements;
+  }
+
+  // Centralized research-mode gate for the 9 orchestration entry points
+  // (consensus, escalation-chain, repair, verify, decompose, best-of-n,
+  // cost-ensemble, role-pack, pipeline). Combines the plan-level
+  // allowResearchMode unlock with the RESEARCH_USE permission so a USER
+  // without either is rejected with a 403 before any enricher hop runs.
+  // No-op when researchMode is NONE / undefined, so v1 callers are unaffected.
+  private async assertOrchestrationResearchGate(
+    userId: string,
+    researchMode: ResearchMode | undefined,
+  ): Promise<void> {
+    if (researchMode === undefined || researchMode === ResearchMode.NONE) {
+      return;
+    }
+    await this.accessControlService.assertResearchAccess(userId);
   }
 
   private async runResearchIfRequested(
@@ -194,7 +222,7 @@ export class ChatMessagesService implements OnModuleInit {
     forcedProvider: string | undefined,
     forcedModel: string | undefined,
   ): Promise<ResearchRunResponse | null> {
-    if (dto.researchMode !== undefined && dto.researchMode !== 'OFF') {
+    if (dto.researchMode !== undefined && dto.researchMode !== ResearchMode.NONE) {
       this.chatStreamService.emitResearchStarted(threadId, dto.researchMode);
     }
     return this.runResearchForIntent(userId, userToken, threadId, dto.content, {
@@ -216,25 +244,26 @@ export class ChatMessagesService implements OnModuleInit {
     threadId: string,
     intent: string,
     options: {
-      mode?: string;
+      mode?: ResearchMode | string;
       providerId?: string;
       forcedProvider?: string;
       forcedModel?: string;
     },
   ): Promise<ResearchRunResponse | null> {
-    if (options.mode === undefined || options.mode === 'OFF') {
+    if (options.mode === undefined || options.mode === ResearchMode.NONE) {
       return null;
     }
     if (userToken.length === 0) {
       this.logger.warn(`research: researchMode=${options.mode} but no bearer token; skipping`);
       return null;
     }
+    const workflow = mapResearchModeToWorkflow(options.mode as ResearchMode);
     const config = AppConfig.get();
     const run = await runResearch(config.RESEARCH_SERVICE_URL, {
       userToken,
       userId,
       intent,
-      workflow: options.mode as ResearchWorkflow,
+      workflow,
       searchProviderId: options.providerId,
       requestedProvider: options.forcedProvider,
       requestedModel: options.forcedModel,
@@ -262,6 +291,98 @@ export class ChatMessagesService implements OnModuleInit {
       metadata.research = { runId: run.id, mode: run.workflow, bundle: run.bundle };
     }
     return Object.keys(metadata).length === 0 ? undefined : metadata;
+  }
+
+  // Shared enricher runner used by the normal-chat path (and reusable by
+  // orchestration managers). Catches every failure and returns a transcript
+  // whose `warnings` field captures the failure reason — research MUST NEVER
+  // block the chat call. The model runs with whatever evidence it got (zero
+  // is acceptable). On SSE-visible failures the caller is expected to also
+  // emit RESEARCH_FAILED through chatStreamService — handled in
+  // runResearchIfRequested below.
+  async runEnricherTranscript(
+    userToken: string,
+    mode: ResearchMode,
+    query: string,
+    providerId: string | undefined,
+  ): Promise<ResearchTranscript> {
+    if (userToken.length === 0) {
+      return this.buildEmptyEnricherTranscript(mode, query, providerId, [
+        'research.missingBearerToken',
+      ]);
+    }
+    const startedAt = Date.now();
+    try {
+      const result = await this.researchEnricherManager.enrich({
+        mode,
+        query,
+        userAuthHeader: `Bearer ${userToken}`,
+      });
+      return this.buildSuccessEnricherTranscript(
+        mode,
+        query,
+        providerId,
+        result.sources,
+        Math.max(1, Date.now() - startedAt),
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'unknown';
+      this.logger.warn(
+        `runEnricherTranscript: enricher failed mode=${mode} — ${message}; continuing without evidence`,
+      );
+      return this.buildEmptyEnricherTranscript(
+        mode,
+        query,
+        providerId,
+        [`research.enrichmentFailed:${message}`],
+        Math.max(1, Date.now() - startedAt),
+      );
+    }
+  }
+
+  private buildSuccessEnricherTranscript(
+    mode: ResearchMode,
+    query: string,
+    providerId: string | undefined,
+    rawSources: ReadonlyArray<{
+      title: string;
+      url: string;
+      snippet?: string;
+      extracted?: string;
+    }>,
+    latencyMs: number,
+  ): ResearchTranscript {
+    const sources: ResearchTranscriptSource[] = rawSources.map((source) => ({
+      title: source.title,
+      url: source.url,
+      ...(source.snippet !== undefined ? { snippet: source.snippet } : {}),
+      ...(source.extracted !== undefined ? { extracted: source.extracted } : {}),
+    }));
+    return {
+      mode,
+      ...(providerId !== undefined ? { providerId } : {}),
+      query,
+      sources,
+      latencyMs,
+      warnings: [],
+    };
+  }
+
+  private buildEmptyEnricherTranscript(
+    mode: ResearchMode,
+    query: string,
+    providerId: string | undefined,
+    warnings: string[],
+    latencyMs = 0,
+  ): ResearchTranscript {
+    return {
+      mode,
+      ...(providerId !== undefined ? { providerId } : {}),
+      query,
+      sources: [],
+      latencyMs,
+      warnings,
+    };
   }
 
   async createParallelMessage(
@@ -351,7 +472,9 @@ export class ChatMessagesService implements OnModuleInit {
   async createConsensusMessage(
     userId: string,
     dto: ConsensusMessageDto,
+    userToken: string,
   ): Promise<ConsensusResponse> {
+    await this.assertOrchestrationResearchGate(userId, dto.researchMode);
     const thread =
       dto.threadId && dto.threadId.length > 0
         ? await this.getThreadForMessage(dto.threadId, userId)
@@ -367,13 +490,24 @@ export class ChatMessagesService implements OnModuleInit {
       dto.content,
       dto.models,
       dto.fileIds,
+      dto.researchMode,
+      dto.researchProviderId,
+      userToken,
     );
   }
 
   async createEscalationChainMessage(
     userId: string,
     dto: EscalationChainMessageDto,
+    userToken: string,
   ): Promise<EscalationChainResponse> {
+    // Gate research at the chain level — the per-step DTO field is forwarded
+    // verbatim to each escalation step; the user-facing gate fires once at
+    // the entry point regardless of how many steps request research.
+    const chainResearchMode = dto.chain.find(
+      (step) => step.researchMode !== undefined && step.researchMode !== ResearchMode.NONE,
+    )?.researchMode;
+    await this.assertOrchestrationResearchGate(userId, chainResearchMode);
     const thread =
       dto.threadId && dto.threadId.length > 0
         ? await this.getThreadForMessage(dto.threadId, userId)
@@ -389,32 +523,52 @@ export class ChatMessagesService implements OnModuleInit {
       dto.content,
       dto.chain,
       dto.fileIds,
+      chainResearchMode,
+      userToken,
     );
   }
 
-  async createRepairMessage(userId: string, dto: RepairMessageDto): Promise<AnswerRepairResponse> {
-    return this.answerRepairManager.executeRepair(userId, dto);
+  async createRepairMessage(
+    userId: string,
+    dto: RepairMessageDto,
+    userToken: string,
+  ): Promise<AnswerRepairResponse> {
+    await this.assertOrchestrationResearchGate(userId, dto.researchMode);
+    return this.answerRepairManager.executeRepair(userId, dto, userToken);
   }
 
   async executeDecomposition(
     userId: string,
     dto: DecomposeTaskDto,
+    userToken: string,
   ): Promise<TaskDecompositionResponse> {
-    return this.taskDecompositionManager.executeDecomposition(userId, dto);
+    await this.assertOrchestrationResearchGate(userId, dto.researchMode);
+    return this.taskDecompositionManager.executeDecomposition(userId, dto, userToken);
   }
 
-  async executeBestOfN(userId: string, dto: BestOfNMessageDto): Promise<BestOfNResponse> {
-    return this.bestOfNManager.executeBestOfN(userId, dto);
+  async executeBestOfN(
+    userId: string,
+    dto: BestOfNMessageDto,
+    userToken: string,
+  ): Promise<BestOfNResponse> {
+    await this.assertOrchestrationResearchGate(userId, dto.researchMode);
+    return this.bestOfNManager.executeBestOfN(userId, dto, userToken);
   }
 
   async executeCostEnsemble(
     userId: string,
     dto: CostEnsembleMessageDto,
+    userToken: string,
   ): Promise<CostEnsembleResponse> {
-    return this.costEnsembleManager.executeCostEnsemble(userId, dto);
+    await this.assertOrchestrationResearchGate(userId, dto.researchMode);
+    return this.costEnsembleManager.executeCostEnsemble(userId, dto, userToken);
   }
 
-  async executeVerify(userId: string, dto: VerifyMessageDto): Promise<VerifyResponse> {
+  async executeVerify(
+    userId: string,
+    dto: VerifyMessageDto,
+    userToken: string,
+  ): Promise<VerifyResponse> {
     // Plan-feature gate: verifier lab requires the judge mode unlock since
     // verification is a judge-driven critique loop. ADMIN bypasses.
     await this.accessControlService.assertCanSendMessage(userId, {
@@ -424,15 +578,26 @@ export class ChatMessagesService implements OnModuleInit {
     await this.accessControlService.assertCanSendMessage(userId, {
       requirePermission: Permission.JUDGE_USE,
     });
-    return this.verifierManager.executeVerify(userId, dto);
+    await this.assertOrchestrationResearchGate(userId, dto.researchMode);
+    return this.verifierManager.executeVerify(userId, dto, userToken);
   }
 
-  async executePipeline(userId: string, dto: PipelineMessageDto): Promise<PipelineResponse> {
-    return this.pipelineManager.executePipeline(userId, dto);
+  async executePipeline(
+    userId: string,
+    dto: PipelineMessageDto,
+    userToken: string,
+  ): Promise<PipelineResponse> {
+    await this.assertOrchestrationResearchGate(userId, dto.researchMode);
+    return this.pipelineManager.executePipeline(userId, dto, userToken);
   }
 
-  async executeRolePack(userId: string, dto: RolePackMessageDto): Promise<RolePackResponse> {
-    return this.rolePackManager.executeRolePack(userId, dto);
+  async executeRolePack(
+    userId: string,
+    dto: RolePackMessageDto,
+    userToken: string,
+  ): Promise<RolePackResponse> {
+    await this.assertOrchestrationResearchGate(userId, dto.researchMode);
+    return this.rolePackManager.executeRolePack(userId, dto, userToken);
   }
 
   async getMessages(
@@ -971,6 +1136,7 @@ export class ChatMessagesService implements OnModuleInit {
     return {
       ...this.buildContextMetaPart(contextMetadata),
       ...this.buildResearchMetaPart(latestUserMetadata),
+      ...this.buildResearchTranscriptMetaPart(latestUserMetadata),
       ...this.buildGenerationMetaPart(llmResponse),
       sourceMessageId: payload.messageId,
       ...this.buildReRouteMetaPart(llmResponse),
@@ -996,6 +1162,102 @@ export class ChatMessagesService implements OnModuleInit {
       return {};
     }
     return { toolTranscript: llmResponse.toolTranscript };
+  }
+
+  // Persists the lightweight ResearchEnricherManager transcript so the FE can
+  // render an expandable "Used N web sources" badge under the assistant
+  // message after a page refresh. Empty when research was NONE / undefined or
+  // when the enricher failed without producing a transcript. Distinct from
+  // the heavy `metadata.research` bundle (full EvidenceBundle from
+  // /research/runs) — this is the flat source list with per-run latency and
+  // warnings, mirroring the buildToolTranscriptMetaPart pattern. When the
+  // USER message carries the heavy bundle but no explicit transcript
+  // (normal-chat path that ran the workflow runner instead of the enricher),
+  // we synthesize a transcript from the bundle so every flow that touched
+  // research surfaces the same shape on the assistant message.
+  private buildResearchTranscriptMetaPart(
+    latestUserMetadata: Record<string, unknown> | null | undefined,
+  ): Record<string, unknown> {
+    if (!latestUserMetadata) {
+      return {};
+    }
+    const transcript = latestUserMetadata['researchTranscript'];
+    if (transcript !== undefined && transcript !== null && typeof transcript === 'object') {
+      return { researchTranscript: transcript };
+    }
+    const synthesized = this.synthesizeTranscriptFromBundle(latestUserMetadata);
+    return synthesized !== null ? { researchTranscript: synthesized } : {};
+  }
+
+  // Builds a transcript-shaped record from the heavy `metadata.research.bundle`
+  // payload persisted by the workflow runner. Lets the normal-chat path
+  // expose the same `researchTranscript` shape on the assistant message
+  // without invoking the lightweight enricher twice.
+  private synthesizeTranscriptFromBundle(
+    latestUserMetadata: Record<string, unknown>,
+  ): ResearchTranscript | null {
+    const researchRecord = this.readNestedObject(latestUserMetadata, 'research');
+    if (researchRecord === null) {
+      return null;
+    }
+    const mode = this.readMetaString(researchRecord, 'mode');
+    if (mode === undefined) {
+      return null;
+    }
+    const bundleRecord = this.readNestedObject(researchRecord, 'bundle');
+    if (bundleRecord === null) {
+      return {
+        mode: this.coerceResearchMode(mode),
+        query: this.readMetaString(latestUserMetadata, 'modelDisplayName') ?? '',
+        sources: [],
+        latencyMs: 0,
+        warnings: [],
+      };
+    }
+    const items = recordGet(bundleRecord, 'items');
+    const sources: ResearchTranscriptSource[] = Array.isArray(items)
+      ? items
+          .filter((item): item is Record<string, unknown> => item !== null && typeof item === 'object')
+          .map((item) => this.toTranscriptSource(item))
+      : [];
+    const warningsRaw = recordGet(bundleRecord, 'warnings');
+    const warnings = Array.isArray(warningsRaw)
+      ? warningsRaw.filter((value): value is string => typeof value === 'string')
+      : [];
+    return {
+      mode: this.coerceResearchMode(mode),
+      query: this.readMetaString(bundleRecord, 'intent') ?? '',
+      sources,
+      latencyMs: 0,
+      warnings,
+    };
+  }
+
+  private toTranscriptSource(item: Record<string, unknown>): ResearchTranscriptSource {
+    const title = this.readMetaString(item, 'title') ?? this.readMetaString(item, 'url') ?? '';
+    const url = this.readMetaString(item, 'url') ?? '';
+    const snippet = this.readMetaString(item, 'snippet');
+    const score = this.readMetaNumber(item, 'confidence');
+    return {
+      title,
+      url,
+      ...(snippet !== undefined ? { snippet } : {}),
+      ...(score !== undefined ? { score } : {}),
+    };
+  }
+
+  // Maps the workflow-runner's `mode` string (which may be one of the
+  // ResearchWorkflow enum values like SEARCH_ONLY) onto the lightweight
+  // ResearchMode enum used by the enricher. Unrecognized values default to
+  // SEARCH so the FE always sees a valid mode.
+  private coerceResearchMode(raw: string): ResearchMode {
+    if (raw === ResearchMode.NONE || raw === ResearchMode.SEARCH) {
+      return raw;
+    }
+    if (raw === ResearchMode.SEARCH_FETCH || raw === ResearchMode.SEARCH_EXTRACT) {
+      return raw;
+    }
+    return ResearchMode.SEARCH;
   }
 
   // Bug-hunt 2026-05-31, Fix 2 — surface mid-sentence truncation in the
