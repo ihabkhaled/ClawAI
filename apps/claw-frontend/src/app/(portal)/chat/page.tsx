@@ -43,8 +43,8 @@ export default function ChatPage() {
         }
       />
 
-      <div className="flex flex-1 flex-col gap-4 overflow-hidden md:flex-row md:gap-6">
-        <div className="flex w-full shrink-0 flex-col gap-3 overflow-hidden md:w-80">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row md:gap-6">
+        <div className="flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden md:w-80 md:flex-none">
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -66,7 +66,7 @@ export default function ChatPage() {
             </Button>
           </div>
 
-          <div className="flex-1 overflow-hidden">
+          <div className="min-h-0 flex-1 overflow-hidden">
             <VirtualizedThreadList
               threads={allThreads}
               isLoading={isLoading}
