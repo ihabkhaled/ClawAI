@@ -373,6 +373,14 @@ export const pt: TranslationDictionary = {
       title: 'Resposta truncada',
       body: 'O modelo parou porque a janela de contexto estava cheia. Tente um prompt mais curto, menos fontes de pesquisa ou uma pergunta menor.',
     },
+    toolTranscript: {
+      summary: 'Usadas {count} ferramentas web',
+      capReached: 'Limite de segurança do laço de ferramentas atingido',
+      turnLabel: 'Turno {turn}',
+      error: 'falhou',
+      argsLabel: 'Argumentos',
+      previewLabel: 'Pré-visualização',
+    },
   },
   receipt: {
     openLabel: 'Mostrar o que a IA usou',

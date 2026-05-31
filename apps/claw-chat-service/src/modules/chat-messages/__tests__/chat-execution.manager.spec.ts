@@ -977,4 +977,193 @@ describe('ChatExecutionManager', () => {
       expect(result.finishReason).toBe('length');
     });
   });
+
+  describe('Ollama Cloud agentic tool loop', () => {
+    it('passes through with no toolTranscript when the model emits no tool_calls', async () => {
+      const context = makeContext('plain prompt with no web access required');
+      httpRequest
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          data: { provider: 'OLLAMA', apiKey: 'k', baseUrl: 'http://localhost:11434' },
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          data: {
+            model: 'deepseek-v4-pro',
+            message: { role: 'assistant', content: 'Direct answer, no tools needed.' },
+            done: true,
+            done_reason: 'stop',
+            prompt_eval_count: 12,
+            eval_count: 7,
+          },
+        });
+
+      const result = await manager.callProvider(
+        'OLLAMA',
+        'deepseek-v4-pro',
+        context,
+        Date.now(),
+        false,
+        undefined,
+        'MANUAL_MODEL',
+        { fastPathEnabled: false, maxOutputTokens: 128, applyShortResponseConstraint: false },
+      );
+
+      expect(result.content).toBe('Direct answer, no tools needed.');
+      expect(result.toolTranscript).toBeUndefined();
+      expect(httpRequest).toHaveBeenCalledTimes(2);
+      const firstChatBody = httpRequest.mock.calls[1][0].body as {
+        tools?: Array<{ type: string; function: { name: string } }>;
+      };
+      expect(firstChatBody.tools?.map((t) => t.function.name)).toEqual([
+        'web_search',
+        'web_fetch',
+      ]);
+    });
+
+    it('runs a single tool turn and re-POSTs with the tool result', async () => {
+      const context = makeContext('what is the latest react version?');
+      httpRequest
+        // 1: connector config
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          data: { provider: 'OLLAMA', apiKey: 'k', baseUrl: 'http://localhost:11434' },
+        })
+        // 2: first /api/chat — model emits a tool_call
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          data: {
+            model: 'deepseek-v4-pro',
+            message: {
+              role: 'assistant',
+              content: '',
+              tool_calls: [
+                {
+                  id: 'tool-1',
+                  function: { name: 'web_search', arguments: { query: 'react latest version' } },
+                },
+              ],
+            },
+            done: false,
+          },
+        })
+        // 3: /api/web_search — tool result
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          data: { results: [{ title: 'React 19', content: 'React 19 released' }] },
+        })
+        // 4: second /api/chat — final answer, no more tool_calls
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          data: {
+            model: 'deepseek-v4-pro',
+            message: {
+              role: 'assistant',
+              content: 'React 19 is the latest release.',
+            },
+            done: true,
+            done_reason: 'stop',
+            prompt_eval_count: 22,
+            eval_count: 9,
+          },
+        });
+
+      const result = await manager.callProvider(
+        'OLLAMA',
+        'deepseek-v4-pro',
+        context,
+        Date.now(),
+        false,
+        undefined,
+        'MANUAL_MODEL',
+        { fastPathEnabled: false, maxOutputTokens: 256, applyShortResponseConstraint: false },
+      );
+
+      expect(result.content).toBe('React 19 is the latest release.');
+      expect(result.toolTranscript).toBeDefined();
+      expect(result.toolTranscript?.turns).toHaveLength(1);
+      expect(result.toolTranscript?.turns[0]).toMatchObject({
+        turn: 1,
+        tool: 'web_search',
+        ok: true,
+      });
+      expect(result.toolTranscript?.iterations).toBe(2);
+      expect(result.toolTranscript?.capReached).toBe(false);
+
+      // The web_search call was dispatched to the dedicated endpoint.
+      // resolveOllamaConnectorBaseUrl pins the cloud connector baseUrl to
+      // 'https://ollama.com/api' regardless of what the connector record
+      // stores, so tool dispatch lands there too.
+      const toolUrl = httpRequest.mock.calls[2][0].url as string;
+      expect(toolUrl).toBe('https://ollama.com/api/web_search');
+
+      // The follow-up chat carries the tool result as a `tool` message.
+      const secondChatBody = httpRequest.mock.calls[3][0].body as {
+        messages: Array<{ role: string; content: string; tool_call_id?: string }>;
+      };
+      const toolMessage = secondChatBody.messages.find((m) => m.role === 'tool');
+      expect(toolMessage).toBeDefined();
+      expect(toolMessage?.content).toContain('React 19');
+      expect(toolMessage?.tool_call_id).toBe('tool-1');
+    });
+
+    it('bails with capReached=true when the model never stops calling tools', async () => {
+      const context = makeContext('infinite-loop scenario');
+      // 1 connector config
+      httpRequest.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: { provider: 'OLLAMA', apiKey: 'k', baseUrl: 'http://localhost:11434' },
+      });
+      // Each /api/chat turn returns a tool_call; the matching /api/web_search
+      // returns an empty result. With OLLAMA_TOOL_LOOP_MAX_ITERATIONS=10 and
+      // (chat + tool) per turn we expect 1 (config) + 10 (chat) + 10 (tool) = 21 calls.
+      for (let i = 0; i < 10; i += 1) {
+        httpRequest
+          .mockResolvedValueOnce({
+            ok: true,
+            status: 200,
+            data: {
+              model: 'deepseek-v4-pro',
+              message: {
+                role: 'assistant',
+                content: '',
+                tool_calls: [
+                  {
+                    id: `t-${String(i)}`,
+                    function: { name: 'web_search', arguments: { query: 'loop' } },
+                  },
+                ],
+              },
+              done: false,
+            },
+          })
+          .mockResolvedValueOnce({ ok: true, status: 200, data: { results: [] } });
+      }
+
+      const result = await manager.callProvider(
+        'OLLAMA',
+        'deepseek-v4-pro',
+        context,
+        Date.now(),
+        false,
+        undefined,
+        'MANUAL_MODEL',
+        { fastPathEnabled: false, maxOutputTokens: 128, applyShortResponseConstraint: false },
+      );
+
+      expect(result.toolTranscript).toBeDefined();
+      expect(result.toolTranscript?.capReached).toBe(true);
+      expect(result.toolTranscript?.iterations).toBe(10);
+      expect(result.content).toContain('safety cap');
+      // 1 (connector) + 10 (chat) + 10 (web_search) = 21 calls
+      expect(httpRequest).toHaveBeenCalledTimes(21);
+    });
+  });
 });

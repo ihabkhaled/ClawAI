@@ -16,6 +16,7 @@ import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble
 import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
 import { MessageAttachments } from '@/components/chat/message-attachments';
 import { MessageProvenance } from '@/components/chat/message-provenance';
+import { OllamaToolTranscriptPanel } from '@/components/chat/ollama-tool-transcript-panel';
 import { ResearchRunDetails } from '@/components/chat/research-run-details';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
 import { ThreadContextInspector } from '@/components/chat/thread-context-inspector';
@@ -28,7 +29,7 @@ import { MessageFeedback, MessageRole, RoutingMode } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
 import { MarkdownRenderer } from '@/lib/markdown';
 import { cn } from '@/lib/utils';
-import type { MessageBubbleProps } from '@/types';
+import type { MessageBubbleProps, OllamaToolTranscript } from '@/types';
 import { formatLatency, formatShortDateTime, getJudgeReviewFromMessage } from '@/utilities';
 
 export function MessageBubble({
@@ -122,6 +123,14 @@ export function MessageBubble({
   // window mid-generation. BE persists this in ChatMessage.metadata.
   const isTruncatedAtContextLimit = metadata?.['truncatedAtContextLimit'] === true;
 
+  // Ollama Cloud agentic tool-call trace. Present only when the assistant
+  // turn used web_search / web_fetch one or more times. BE persists the
+  // shape under metadata.toolTranscript in chat-messages.service.ts.
+  const toolTranscript =
+    typeof metadata?.['toolTranscript'] === 'object' && metadata['toolTranscript'] !== null
+      ? (metadata['toolTranscript'] as OllamaToolTranscript)
+      : null;
+
   const handleFeedback = (value: MessageFeedback): void => {
     if (!onFeedback) {
       return;
@@ -177,6 +186,9 @@ export function MessageBubble({
           ) : null}
           {!isUser && !isImageGeneration && !isFileGeneration ? assistantContent : null}
         </div>
+        {!isUser && toolTranscript !== null ? (
+          <OllamaToolTranscriptPanel transcript={toolTranscript} />
+        ) : null}
         {!isUser && (providerModel || totalTokens > 0 || message.latencyMs !== null) ? (
           <div className="flex flex-wrap items-center gap-1.5">
             {providerModel ? (

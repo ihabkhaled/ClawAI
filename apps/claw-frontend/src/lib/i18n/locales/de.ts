@@ -374,6 +374,14 @@ export const de: TranslationDictionary = {
       title: 'Antwort abgeschnitten',
       body: 'Das Modell hat aufgehört, weil das Kontextfenster voll war. Versuche eine kürzere Eingabe, weniger Recherchequellen oder eine kleinere Frage.',
     },
+    toolTranscript: {
+      summary: '{count} Web-Werkzeug(e) verwendet',
+      capReached: 'Sicherheitsgrenze der Werkzeug-Schleife erreicht',
+      turnLabel: 'Durchgang {turn}',
+      error: 'fehlgeschlagen',
+      argsLabel: 'Argumente',
+      previewLabel: 'Vorschau',
+    },
   },
   receipt: {
     openLabel: 'Zeige, was die KI verwendet hat',

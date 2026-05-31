@@ -784,3 +784,9 @@ export type {
   RuntimeProbeModelRowProps,
   RuntimeProbeEventRowProps,
 } from './runtime-progress-page.types';
+export type {
+  OllamaToolTranscript,
+  OllamaToolTranscriptPanelProps,
+  OllamaToolTranscriptTurn,
+  UseOllamaToolTranscriptPanelReturn,
+} from './ollama-tool-transcript.types';

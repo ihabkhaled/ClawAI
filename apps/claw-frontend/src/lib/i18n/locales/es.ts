@@ -372,6 +372,14 @@ export const es: TranslationDictionary = {
       title: 'Respuesta truncada',
       body: 'El modelo se detuvo porque la ventana de contexto estaba llena. Prueba con un mensaje más corto, menos fuentes de investigación o una pregunta más pequeña.',
     },
+    toolTranscript: {
+      summary: 'Se usaron {count} herramientas web',
+      capReached: 'Se alcanzó el límite de seguridad del bucle de herramientas',
+      turnLabel: 'Turno {turn}',
+      error: 'falló',
+      argsLabel: 'Argumentos',
+      previewLabel: 'Vista previa',
+    },
   },
   receipt: {
     openLabel: 'Mostrar lo que usó la IA',

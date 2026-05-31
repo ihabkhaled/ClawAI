@@ -371,6 +371,14 @@ export const en: TranslationDictionary = {
       title: 'Response truncated',
       body: 'The model stopped because the context window was full. Try a shorter prompt, fewer research sources, or a smaller question.',
     },
+    toolTranscript: {
+      summary: 'Used {count} web tool(s)',
+      capReached: 'Tool loop safety cap reached',
+      turnLabel: 'Turn {turn}',
+      error: 'failed',
+      argsLabel: 'Args',
+      previewLabel: 'Preview',
+    },
   },
   receipt: {
     openLabel: 'Show what the AI used',

@@ -373,6 +373,16 @@ export type TranslationDictionary = {
       title: string;
       body: string;
     };
+    // Ollama Cloud agentic tool-call transcript shown under the assistant
+    // message bubble when the model used web_search / web_fetch.
+    toolTranscript: {
+      summary: string;
+      capReached: string;
+      turnLabel: string;
+      error: string;
+      argsLabel: string;
+      previewLabel: string;
+    };
   };
   receipt: {
     openLabel: string;

@@ -373,6 +373,14 @@ export const fr: TranslationDictionary = {
       title: 'Réponse tronquée',
       body: "Le modèle s'est arrêté car la fenêtre de contexte était pleine. Essayez une invite plus courte, moins de sources de recherche ou une question plus petite.",
     },
+    toolTranscript: {
+      summary: '{count} outil(s) web utilisé(s)',
+      capReached: 'Limite de sécurité de la boucle d’outils atteinte',
+      turnLabel: 'Tour {turn}',
+      error: 'échec',
+      argsLabel: 'Arguments',
+      previewLabel: 'Aperçu',
+    },
   },
   receipt: {
     openLabel: "Voir ce que l'IA a utilisé",

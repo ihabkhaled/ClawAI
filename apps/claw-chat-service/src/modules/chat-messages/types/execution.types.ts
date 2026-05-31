@@ -3,6 +3,11 @@ import type { AttemptRecord } from './fallback-executor.types';
 import type { JudgeRefereeMetadata } from './judge-referee.types';
 import type { AnthropicMessage } from './anthropic-message-shape.types';
 import type { GeminiContent } from './gemini.types';
+import type {
+  OllamaCloudToolCall,
+  OllamaCloudToolDefinition,
+  OllamaToolTranscript,
+} from './ollama-cloud-tool.types';
 
 export type RouteRoadmapStep = {
   stage: 'router' | 'decision' | 'research' | 'tool' | 'execution' | 'fallback';
@@ -109,6 +114,11 @@ export type LlmResponse = {
   // for the FE developer drawer. Empty array when the message succeeded
   // on the very first try with no quality re-route.
   attempts?: AttemptRecord[];
+  // Ollama Cloud agentic tool loop transcript. Set only when the assistant
+  // turn went through one or more web_search / web_fetch tool calls. The FE
+  // renders this as an expandable "Used X web tools" trace under the
+  // message bubble.
+  toolTranscript?: OllamaToolTranscript;
 };
 
 export type OllamaGenerateRequest = {
@@ -147,10 +157,19 @@ export type OllamaGenerateResponse = {
 // attached images travel on a sibling `images` array carrying raw base64
 // payloads (no `data:` prefix). This differs from the OpenAI shape where
 // images ride inside content as `image_url` parts.
+//
+// `tool_call_id` is set on `role: 'tool'` messages so the model can
+// correlate a tool result with the call that produced it (Ollama Cloud
+// agentic tool-loop). `tool_calls` is echoed back when we re-POST the
+// assistant turn that emitted them — Ollama's docs show clients carry
+// the prior assistant.tool_calls into the next request so the loop is
+// reproducible.
 export type OllamaChatMessage = {
   role: string;
   content: string;
   images?: string[];
+  tool_call_id?: string;
+  tool_calls?: OllamaCloudToolCall[];
 };
 
 export type OllamaChatRequest = {
@@ -161,6 +180,11 @@ export type OllamaChatRequest = {
     temperature?: number;
     num_predict?: number;
   };
+  // Ollama Cloud agentic tool descriptors. Passing this enables the model
+  // to emit `message.tool_calls` for web_search / web_fetch. Non-agentic
+  // models ignore the field — safe to pass unconditionally for the
+  // OLLAMA cloud connector.
+  tools?: OllamaCloudToolDefinition[];
 };
 
 export type OllamaChatResponse = {
@@ -169,6 +193,9 @@ export type OllamaChatResponse = {
   message?: {
     role?: string;
     content?: string;
+    // Ollama Cloud agentic tool-call output. Populated only when the
+    // model wants the client to execute a web_search / web_fetch call.
+    tool_calls?: OllamaCloudToolCall[];
   };
   done?: boolean;
   done_reason?: string;

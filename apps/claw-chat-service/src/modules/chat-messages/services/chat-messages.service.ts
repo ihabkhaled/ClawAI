@@ -976,12 +976,24 @@ export class ChatMessagesService implements OnModuleInit {
       ...this.buildTokenUsageMetaPart(llmResponse),
       ...this.buildWorkflowMetaPart(llmResponse, payload),
       ...this.buildTruncationMetaPart(llmResponse),
+      ...this.buildToolTranscriptMetaPart(llmResponse),
       ...(!hasVisibleContent ? { emptyContent: true } : {}),
       ...this.buildDisplayNameMetaPart(latestUserMetadata),
       routeRoadmap,
       progressSummary,
       ...(llmResponse.judgeRefereeMetadata ?? {}),
     };
+  }
+
+  // Persists the Ollama Cloud agentic tool-call transcript so the FE can
+  // render an expandable "Used X web tools" badge under the assistant
+  // message after a page refresh. Empty when the model did not call any
+  // tools (the common path for non-agentic models).
+  private buildToolTranscriptMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
+    if (llmResponse.toolTranscript === undefined) {
+      return {};
+    }
+    return { toolTranscript: llmResponse.toolTranscript };
   }
 
   // Bug-hunt 2026-05-31, Fix 2 — surface mid-sentence truncation in the

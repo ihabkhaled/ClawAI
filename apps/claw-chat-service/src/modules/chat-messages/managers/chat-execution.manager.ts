@@ -29,6 +29,7 @@ import {
   type ImageGenerateResponse,
   type LlmResponse,
   type MessageRoutedData,
+  type OllamaChatMessage,
   type OllamaChatRequest,
   type OllamaChatResponse,
   type OllamaGenerateRequest,
@@ -90,6 +91,21 @@ import {
   pickDefaultCtxSizeForProvider,
 } from '../constants/output-token-bounds.constants';
 import type { ExecutionOptions } from '../types/execution-options.types';
+import {
+  OLLAMA_TOOL_LOOP_MAX_ITERATIONS,
+  OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS,
+} from '../constants/agentic-loop.constants';
+import {
+  OLLAMA_CLOUD_TOOL_DEFINITIONS,
+  executeOllamaCloudToolCall,
+  truncateResult,
+} from '../utilities/ollama-cloud-tool-runner.utility';
+import { ProgressActorType, StreamEventType } from '../../../common/enums';
+import type {
+  OllamaCloudToolCall,
+  OllamaToolTranscript,
+  OllamaToolTranscriptTurn,
+} from '../types/ollama-cloud-tool.types';
 
 @Injectable()
 export class ChatExecutionManager implements OnModuleInit {
@@ -497,9 +513,26 @@ export class ChatExecutionManager implements OnModuleInit {
     executionOptions: ExecutionOptions | undefined,
     streamContext: StreamContext,
   ): Promise<LlmResponse> {
-    const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
     const isOllamaConnector = provider === OLLAMA_CONNECTOR_PROVIDER;
-    const effectiveModel = isOllamaConnector ? this.normalizeCloudOllamaModel(model) : model;
+    if (isOllamaConnector) {
+      // Ollama Cloud agentic models loop on tool_calls; the native
+      // streaming protocol cannot be re-driven mid-stream after the
+      // client executes a tool, so we run the buffered tool loop and
+      // replay the final answer as simulated chunks to keep the UI
+      // animated end-to-end.
+      return this.simulateOllamaCloudStream(
+        provider,
+        model,
+        context,
+        startTime,
+        usedFallback,
+        threadSettings,
+        executionOptions,
+        streamContext,
+      );
+    }
+    const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
+    const effectiveModel = model;
     const { url, body, protocol, headers } = await this.resolveStreamCloudRequest({
       provider,
       model,
@@ -652,6 +685,52 @@ export class ChatExecutionManager implements OnModuleInit {
         laneId: streamContext.laneId,
         parallelGroupId: streamContext.parallelGroupId,
         provider: OLLAMA_PROVIDER,
+        model: buffered.model,
+        fullContent: buffered.content,
+        inputTokens: buffered.inputTokens,
+        outputTokens: buffered.outputTokens,
+        startMs: startTime,
+        promptTokensEstimate: this.estimatePromptTokens(context),
+        maxOutputTokens: executionOptions?.maxOutputTokens,
+      });
+    }
+    return buffered;
+  }
+
+  // Ollama Cloud streaming path. Native /api/chat streaming cannot be
+  // re-driven mid-stream after the client executes a tool_call, so for
+  // agentic models (deepseek-v4-pro / kimi-k2 / GLM-5.1) we MUST run
+  // the buffered tool loop and replay the final answer as simulated
+  // chunks. Non-agentic Ollama Cloud models simply do one buffered
+  // call with no tool_calls and the same replay path applies.
+  private async simulateOllamaCloudStream(
+    provider: string,
+    model: string,
+    context: AssembledContext,
+    startTime: number,
+    usedFallback: boolean,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions | undefined,
+    streamContext: StreamContext,
+  ): Promise<LlmResponse> {
+    const executor = this.providerStreamExecutor;
+    const buffered = await this.callCloudProvider(
+      provider,
+      model,
+      context,
+      startTime,
+      usedFallback,
+      threadSettings,
+      executionOptions,
+      streamContext,
+    );
+    if (executor !== undefined) {
+      await executor.runSimulated({
+        threadId: streamContext.threadId,
+        messageId: streamContext.messageId,
+        laneId: streamContext.laneId,
+        parallelGroupId: streamContext.parallelGroupId,
+        provider,
         model: buffered.model,
         fullContent: buffered.content,
         inputTokens: buffered.inputTokens,
@@ -1584,6 +1663,7 @@ export class ChatExecutionManager implements OnModuleInit {
     usedFallback: boolean,
     threadSettings?: ThreadSettings,
     executionOptions?: ExecutionOptions,
+    streamContext?: StreamContext,
   ): Promise<LlmResponse> {
     this.logger.log(`callCloudProvider: calling ${provider}/${model}`);
     const config = AppConfig.get();
@@ -1605,6 +1685,23 @@ export class ChatExecutionManager implements OnModuleInit {
       `callCloudProvider: request body built — messageCount=${String(requestBody.messages.length)}`,
     );
     this.logger.debug(`callCloudProvider: sending POST to ${url}`);
+    if (isOllamaConnector) {
+      // Ollama Cloud agentic models (deepseek-v4-pro / kimi-k2 / GLM-5.1)
+      // emit message.tool_calls and rely on the client to execute web
+      // search/fetch and loop. Run the dedicated tool loop instead of a
+      // single-shot POST.
+      return this.runOllamaCloudToolLoop({
+        provider,
+        model,
+        initialBody: requestBody as OllamaChatRequest,
+        baseUrl,
+        apiKey,
+        startTime,
+        usedFallback,
+        context,
+        streamThreadId: streamContext?.threadId,
+      });
+    }
     const response = await httpRequest<OpenAiChatResponse | OllamaChatResponse>({
       url,
       method: 'POST',
@@ -1626,27 +1723,300 @@ export class ChatExecutionManager implements OnModuleInit {
 
     this.logger.debug('callCloudProvider: parsing cloud response');
     const promptText = this.buildPromptTextForEstimate(context);
-    const result = isOllamaConnector
-      ? this.parseOllamaChatResponse(
-          response.data as OllamaChatResponse,
-          provider,
-          model,
-          startTime,
-          usedFallback,
-          promptText,
-        )
-      : this.parseCloudResponse(
-          response.data as OpenAiChatResponse,
-          provider,
-          model,
-          startTime,
-          usedFallback,
-          promptText,
-        );
+    const result = this.parseCloudResponse(
+      response.data as OpenAiChatResponse,
+      provider,
+      model,
+      startTime,
+      usedFallback,
+      promptText,
+    );
     this.logger.log(
       `callCloudProvider: completed ${provider}/${model} latencyMs=${String(result.latencyMs)} inputTokens=${String(result.inputTokens ?? 0)} outputTokens=${String(result.outputTokens ?? 0)}`,
     );
     return result;
+  }
+
+  // Ollama Cloud agentic tool loop.
+  //
+  // Posts /api/chat with tools enabled, and while the model emits
+  // `tool_calls`, executes each call via /api/web_search or /api/web_fetch,
+  // appends the result as a `tool` message, and re-POSTs. Returns the
+  // final LlmResponse with `toolTranscript` set so the FE can render an
+  // expandable trace under the assistant message.
+  //
+  // Caps: OLLAMA_TOOL_LOOP_MAX_ITERATIONS turns, OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS
+  // wall clock. When either cap is hit we return the last message
+  // content (or a marker if it's empty) with `toolTranscript.capReached
+  // = true` so the user is not left with a blank reply.
+  private async runOllamaCloudToolLoop(args: {
+    provider: string;
+    model: string;
+    initialBody: OllamaChatRequest;
+    baseUrl: string;
+    apiKey: string;
+    startTime: number;
+    usedFallback: boolean;
+    context: AssembledContext;
+    streamThreadId?: string;
+  }): Promise<LlmResponse> {
+    const {
+      provider,
+      model,
+      initialBody,
+      baseUrl,
+      apiKey,
+      startTime,
+      usedFallback,
+      context,
+      streamThreadId,
+    } = args;
+    const config = AppConfig.get();
+    const url = `${baseUrl}/chat`;
+    const messages: OllamaChatMessage[] = [...initialBody.messages];
+    const turns: OllamaToolTranscriptTurn[] = [];
+    let iteration = 0;
+    let capReached = false;
+    let lastData: OllamaChatResponse | undefined;
+
+    while (iteration < OLLAMA_TOOL_LOOP_MAX_ITERATIONS) {
+      iteration += 1;
+      const elapsed = Date.now() - startTime;
+      if (elapsed >= OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS) {
+        this.logger.warn(
+          `runOllamaCloudToolLoop: total timeout reached after ${String(elapsed)}ms — capping at turn ${String(iteration - 1)}`,
+        );
+        capReached = true;
+        break;
+      }
+
+      const body: OllamaChatRequest = { ...initialBody, messages };
+      this.logger.debug(
+        `runOllamaCloudToolLoop: turn=${String(iteration)} POST ${url} messageCount=${String(messages.length)}`,
+      );
+      const response = await httpRequest<OllamaChatResponse>({
+        url,
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}` },
+        body,
+        timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
+      });
+      if (!response.ok) {
+        const errorMessage = this.extractHttpErrorMessage(
+          response.data,
+          `Cloud provider ${provider} returned status ${String(response.status)}`,
+        );
+        this.logger.error(
+          `runOllamaCloudToolLoop: turn=${String(iteration)} ${provider} returned status=${String(response.status)} message=${errorMessage}`,
+        );
+        throw new BusinessException(errorMessage, 'CLOUD_PROVIDER_REQUEST_FAILED');
+      }
+      lastData = response.data;
+      const toolCalls = response.data.message?.tool_calls ?? [];
+      const turnContent = response.data.message?.content ?? '';
+      this.logger.debug(
+        `runOllamaCloudToolLoop: turn=${String(iteration)} contentLen=${String(turnContent.length)} toolCalls=${String(toolCalls.length)}`,
+      );
+
+      if (toolCalls.length === 0) {
+        // Final turn — model produced its answer.
+        break;
+      }
+
+      // Echo the assistant turn (with its tool_calls) back into the
+      // message history, then dispatch every tool_call and append the
+      // result as a `tool` message before re-POSTing.
+      messages.push({
+        role: 'assistant',
+        content: turnContent,
+        tool_calls: toolCalls,
+      });
+      const toolResults = await this.executeToolCalls({
+        toolCalls,
+        baseUrl,
+        apiKey,
+        timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
+        streamThreadId,
+        provider,
+        model,
+        iteration,
+      });
+      for (const entry of toolResults) {
+        messages.push({
+          role: 'tool',
+          content: entry.result,
+          tool_call_id: entry.toolCallId,
+        });
+        turns.push(entry.transcriptTurn);
+      }
+    }
+
+    if (iteration >= OLLAMA_TOOL_LOOP_MAX_ITERATIONS && lastData !== undefined) {
+      const stillCalling = (lastData.message?.tool_calls ?? []).length > 0;
+      if (stillCalling) {
+        this.logger.warn(
+          `runOllamaCloudToolLoop: max iterations (${String(OLLAMA_TOOL_LOOP_MAX_ITERATIONS)}) reached with tool_calls still pending`,
+        );
+        capReached = true;
+      }
+    }
+
+    const finalContent = this.resolveFinalToolLoopContent(lastData, capReached, turns.length);
+    const promptText = this.buildPromptTextForEstimate(context);
+    const usage = extractOllamaUsage(lastData ?? {}, {
+      promptText,
+      completionText: finalContent,
+    });
+    const latencyMs = Date.now() - startTime;
+    const transcript: OllamaToolTranscript = {
+      turns,
+      iterations: iteration,
+      capReached,
+      totalDurationMs: latencyMs,
+    };
+
+    this.logger.log(
+      `runOllamaCloudToolLoop: completed ${provider}/${model} turns=${String(turns.length)} iterations=${String(iteration)} capReached=${String(capReached)} latencyMs=${String(latencyMs)} contentLen=${String(finalContent.length)}`,
+    );
+
+    return {
+      content: finalContent,
+      provider,
+      model,
+      ...this.buildTokenUsageFields(usage),
+      latencyMs,
+      finishReason: lastData?.done_reason ?? (lastData?.done === true ? 'stop' : undefined),
+      usedFallback,
+      ...(turns.length > 0 ? { toolTranscript: transcript } : {}),
+    };
+  }
+
+  // Per-turn dispatcher. Executes every tool_call serially so we can
+  // emit lifecycle events in deterministic order and bail fast on the
+  // first failure. Each invocation tracks its own transcript entry so
+  // the FE can show ok/error per call.
+  private async executeToolCalls(args: {
+    toolCalls: OllamaCloudToolCall[];
+    baseUrl: string;
+    apiKey: string;
+    timeoutMs: number;
+    streamThreadId: string | undefined;
+    provider: string;
+    model: string;
+    iteration: number;
+  }): Promise<Array<{ toolCallId: string; result: string; transcriptTurn: OllamaToolTranscriptTurn }>> {
+    const results: Array<{
+      toolCallId: string;
+      result: string;
+      transcriptTurn: OllamaToolTranscriptTurn;
+    }> = [];
+    for (let i = 0; i < args.toolCalls.length; i += 1) {
+      const call = args.toolCalls[i];
+      if (call === undefined) {
+        continue;
+      }
+      const callStart = Date.now();
+      const toolName = call.function.name;
+      const callId = call.id ?? `${toolName}-${String(args.iteration)}-${String(i)}`;
+      this.emitToolLifecycle(args.streamThreadId, toolName, call.function.arguments, 'started');
+      let resultText: string;
+      let ok = true;
+      let errorMessage: string | undefined;
+      try {
+        resultText = await executeOllamaCloudToolCall(call, {
+          baseUrl: args.baseUrl,
+          apiKey: args.apiKey,
+          timeoutMs: args.timeoutMs,
+        });
+      } catch (error: unknown) {
+        ok = false;
+        errorMessage = error instanceof Error ? error.message : 'unknown';
+        // Surface the error to the model so it can recover (e.g. retry
+        // with a different URL). Truncate for safety.
+        resultText = truncateResult(
+          JSON.stringify({ error: errorMessage, tool: toolName }),
+        );
+        this.logger.warn(
+          `executeToolCalls: tool=${toolName} call_id=${callId} failed — ${errorMessage}`,
+        );
+      }
+      const durationMs = Date.now() - callStart;
+      this.emitToolLifecycle(args.streamThreadId, toolName, call.function.arguments, 'completed');
+      const transcriptTurn: OllamaToolTranscriptTurn = {
+        turn: args.iteration,
+        tool: toolName,
+        args: call.function.arguments,
+        resultPreview: resultText.slice(0, 500),
+        durationMs,
+        ok,
+        ...(errorMessage === undefined ? {} : { error: errorMessage }),
+      };
+      results.push({ toolCallId: callId, result: resultText, transcriptTurn });
+    }
+    return results;
+  }
+
+  private resolveFinalToolLoopContent(
+    lastData: OllamaChatResponse | undefined,
+    capReached: boolean,
+    turnCount: number,
+  ): string {
+    const finalContent = lastData?.message?.content ?? '';
+    if (finalContent.trim().length > 0) {
+      return finalContent;
+    }
+    if (capReached) {
+      return `The agentic web tool loop exceeded its safety cap (${String(OLLAMA_TOOL_LOOP_MAX_ITERATIONS)} turns / ${String(Math.round(OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS / 1000))}s) before the model produced a final answer. ${String(turnCount)} tool call(s) were executed — see the trace below. Please regenerate or shorten the prompt.`;
+    }
+    return 'The model returned no visible answer. Please regenerate.';
+  }
+
+  private emitToolLifecycle(
+    threadId: string | undefined,
+    toolName: string,
+    toolArgs: Record<string, unknown>,
+    phase: 'started' | 'completed',
+  ): void {
+    if (threadId === undefined) {
+      return;
+    }
+    const label =
+      toolName === 'web_search'
+        ? phase === 'started'
+          ? 'Searching the web'
+          : 'Web search complete'
+        : toolName === 'web_fetch'
+          ? phase === 'started'
+            ? this.buildWebFetchLabel(toolArgs)
+            : 'Page fetched'
+          : phase === 'started'
+            ? `Running tool ${toolName}`
+            : `Tool ${toolName} complete`;
+    this.chatStreamService.emitProgressStage(
+      threadId,
+      phase === 'started' ? StreamEventType.TOOL_STARTED : StreamEventType.TOOL_COMPLETED,
+      {
+        label,
+        description:
+          toolName === 'web_search' && typeof toolArgs.query === 'string'
+            ? `Query: ${toolArgs.query.slice(0, 120)}`
+            : toolName === 'web_fetch' && typeof toolArgs.url === 'string'
+              ? `URL: ${toolArgs.url.slice(0, 200)}`
+              : undefined,
+        actorType: ProgressActorType.SYSTEM,
+        actorName: 'Ollama agentic tools',
+        stageId: `ollama-tool:${toolName}:${phase}`,
+        status: phase === 'completed' ? 'completed' : 'active',
+      },
+    );
+  }
+
+  private buildWebFetchLabel(toolArgs: Record<string, unknown>): string {
+    const url = typeof toolArgs.url === 'string' ? toolArgs.url : '';
+    if (url.length === 0) {
+      return 'Fetching page';
+    }
+    return `Fetching ${url.slice(0, 80)}`;
   }
 
   private async resolveProviderConfig(
@@ -2037,6 +2407,14 @@ export class ChatExecutionManager implements OnModuleInit {
       ...(requestBody.options ?? {}),
       num_predict: numPredict,
     };
+
+    // Ollama Cloud agentic tool descriptors. The model decides whether to
+    // call them; non-agentic models silently ignore the field. We pass
+    // them unconditionally so deepseek-v4-pro / kimi-k2 / GLM-5.1 / etc.
+    // can do real web access end-to-end. The client (this service) is
+    // responsible for executing the emitted tool_calls — see
+    // runOllamaCloudToolLoop.
+    requestBody.tools = OLLAMA_CLOUD_TOOL_DEFINITIONS;
 
     return requestBody;
   }

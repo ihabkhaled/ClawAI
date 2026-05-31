@@ -372,6 +372,14 @@ export const hi: TranslationDictionary = {
       title: 'उत्तर काट दिया गया',
       body: 'मॉडल रुक गया क्योंकि संदर्भ विंडो भर गई थी। एक छोटा संकेत, कम शोध स्रोत, या एक छोटा प्रश्न आज़माएँ।',
     },
+    toolTranscript: {
+      summary: '{count} वेब टूल का उपयोग किया गया',
+      capReached: 'टूल लूप सुरक्षा सीमा तक पहुँच गया',
+      turnLabel: 'चरण {turn}',
+      error: 'विफल',
+      argsLabel: 'तर्क',
+      previewLabel: 'पूर्वावलोकन',
+    },
   },
   receipt: {
     openLabel: 'दिखाएँ कि AI ने क्या उपयोग किया',

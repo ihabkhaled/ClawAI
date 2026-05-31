@@ -369,6 +369,14 @@ export const ar: TranslationDictionary = {
       title: 'تم اقتطاع الرد',
       body: 'توقف النموذج لأن نافذة السياق ممتلئة. جرّب طلبًا أقصر، أو عددًا أقل من مصادر البحث، أو سؤالًا أصغر.',
     },
+    toolTranscript: {
+      summary: 'تم استخدام {count} أداة ويب',
+      capReached: 'تم بلوغ حد أمان حلقة الأدوات',
+      turnLabel: 'الدورة {turn}',
+      error: 'فشل',
+      argsLabel: 'الوسائط',
+      previewLabel: 'معاينة',
+    },
   },
   receipt: {
     openLabel: 'إظهار ما استخدمه الذكاء الاصطناعي',

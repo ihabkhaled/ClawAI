@@ -375,6 +375,14 @@ export const it: TranslationDictionary = {
       title: 'Risposta troncata',
       body: 'Il modello si è fermato perché la finestra di contesto era piena. Prova con un prompt più breve, meno fonti di ricerca o una domanda più piccola.',
     },
+    toolTranscript: {
+      summary: 'Usati {count} strumenti web',
+      capReached: 'Raggiunto il limite di sicurezza del ciclo degli strumenti',
+      turnLabel: 'Turno {turn}',
+      error: 'non riuscito',
+      argsLabel: 'Argomenti',
+      previewLabel: 'Anteprima',
+    },
   },
   receipt: {
     openLabel: "Mostra cosa ha usato l'IA",
