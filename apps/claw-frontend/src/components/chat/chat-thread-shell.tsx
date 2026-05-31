@@ -85,16 +85,21 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
           <VirtualizedMessages {...props.virtualizedMessagesProps} />
         </div>
 
-        <div className="relative shrink-0 border-t" style={{ height: props.composerHeight }}>
+        <div
+          className="relative shrink-0 border-t md:h-[var(--composer-h)]"
+          style={{ '--composer-h': `${props.composerHeight}px` } as React.CSSProperties}
+        >
+          {/* Drag-to-resize is a pointer affordance — hidden on touch/mobile
+              where the composer is natural-height and the gesture has no effect. */}
           <button
             type="button"
             aria-label={props.resizeAriaLabel}
-            className="absolute inset-x-0 top-0 z-10 flex h-3 cursor-ns-resize items-center justify-center hover:bg-muted/50"
+            className="absolute inset-x-0 top-0 z-10 hidden h-3 cursor-ns-resize items-center justify-center hover:bg-muted/50 md:flex"
             onMouseDown={props.onResizeHandleMouseDown}
           >
             <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
           </button>
-          <div className="flex h-full flex-col p-4 pt-3">
+          <div className="flex flex-col p-3 pt-3 sm:p-4 md:h-full">
             <MessageComposer {...props.composerProps} />
           </div>
         </div>

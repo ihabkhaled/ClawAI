@@ -37,7 +37,7 @@ export function MessageComposer({
   } = useMessageComposerState({ onSend, isPending, selectedModel });
 
   return (
-    <form onSubmit={handleSubmit} className="flex h-full flex-col gap-1">
+    <form onSubmit={handleSubmit} className="flex h-full min-h-0 flex-col gap-1">
       <div className="mb-1 flex shrink-0 flex-wrap items-center gap-2">
         <ModelSelector value={selectedModel} onChange={onModelChange} disabled={isPending} />
         <FileAttachmentPicker
@@ -62,7 +62,7 @@ export function MessageComposer({
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder={t('chat.composerPlaceholder')}
-          className="h-full min-h-0 flex-1 resize-none"
+          className="min-h-[60px] flex-1 resize-none text-[15px] md:h-full md:min-h-0"
           disabled={isPending}
         />
         <Button
