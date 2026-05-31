@@ -1,7 +1,15 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { type Response } from 'express';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
-import { EventPattern } from '@claw/shared-types';
+import {
+  EventPattern,
+  type FileDeletedPayload,
+  type FileDeletionReason,
+  type FileDownloadedPayload,
+  type FileDownloadMethod,
+  type FileUploadCompletedPayload,
+  type FileUploadStartedPayload,
+} from '@claw/shared-types';
 import { type File, type FileChunk } from '../../../generated/prisma';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { deleteFile, readFile, saveFile } from '../../../common/utilities';
@@ -50,12 +58,7 @@ export class FilesService {
       content: body.contentBase64,
       retentionExpiresAt: this.computeRetentionExpiry(),
     });
-    void this.rabbitMQService.publish(EventPattern.FILE_UPLOADED, {
-      fileId: file.id,
-      userId: body.userId,
-      filename: file.filename,
-      timestamp: new Date().toISOString(),
-    });
+    this.publishUploadCompleted(file);
     return file;
   }
 
@@ -65,6 +68,17 @@ export class FilesService {
     );
     this.validateMimeType(dto.mimeType);
     this.validateFileSize(dto.sizeBytes);
+
+    this.publishUploadStarted({
+      // fileId is unknown until the row is created — use empty string until then;
+      // the started event still carries enough metadata (user + filename +
+      // mimeType + size) for the audit trail.
+      fileId: '',
+      userId,
+      filename: dto.filename,
+      mimeType: dto.mimeType,
+      sizeBytes: dto.sizeBytes,
+    });
 
     const contentBuffer = dto.content ? Buffer.from(dto.content, 'base64') : Buffer.alloc(0);
     await this.runSecurityChecks(dto.filename, dto.mimeType, contentBuffer);
@@ -83,14 +97,48 @@ export class FilesService {
     });
 
     this.logger.log(`uploadFile: uploaded file ${file.id} "${safeName}" (security checks passed)`);
-    void this.rabbitMQService.publish(EventPattern.FILE_UPLOADED, {
-      fileId: file.id,
-      userId,
-      filename: file.filename,
-      timestamp: new Date().toISOString(),
-    });
+    this.publishUploadCompleted(file);
 
     return file;
+  }
+
+  private publishUploadStarted(args: {
+    fileId: string;
+    userId: string;
+    filename: string;
+    mimeType: string;
+    sizeBytes: number;
+  }): void {
+    const payload: FileUploadStartedPayload = {
+      fileId: args.fileId,
+      userId: args.userId,
+      filename: args.filename,
+      mimeType: args.mimeType,
+      sizeBytes: args.sizeBytes,
+      timestamp: new Date().toISOString(),
+    };
+    void this.rabbitMQService.publish(EventPattern.FILE_UPLOAD_STARTED, payload);
+  }
+
+  // Publishes BOTH the new FILE_UPLOAD_COMPLETED (canonical) and the legacy
+  // FILE_UPLOADED (deprecated, kept for one release cycle). New consumers
+  // should subscribe to FILE_UPLOAD_COMPLETED; existing consumers continue to
+  // work without changes.
+  private publishUploadCompleted(file: File): void {
+    // The new + legacy payload shapes share the same field set (alias type in
+    // shared-types). threadId is unknown at this layer — pass empty string.
+    const completedPayload: FileUploadCompletedPayload = {
+      fileId: file.id,
+      threadId: '',
+      userId: file.userId,
+      fileName: file.filename,
+      mimeType: file.mimeType,
+      sizeBytes: file.sizeBytes,
+      timestamp: new Date().toISOString(),
+    };
+    void this.rabbitMQService.publish(EventPattern.FILE_UPLOAD_COMPLETED, completedPayload);
+    // Backward-compat — same payload shape, deprecated pattern.
+    void this.rabbitMQService.publish(EventPattern.FILE_UPLOADED, completedPayload);
   }
 
   private async runSecurityChecks(
@@ -171,7 +219,24 @@ export class FilesService {
     this.logger.log(
       `deleteFile: completed — fileId=${id}, filename="${file.filename}", mimeType=${file.mimeType}, sizeBytes=${String(file.sizeBytes)}`,
     );
+    this.publishFileDeleted(deleted, userId, 'USER');
     return deleted;
+  }
+
+  // Slice D backend 3 — file-deletion lifecycle event.
+  // Published by user-driven deletes (reason='USER'). The retention sweeper
+  // publishes its own FILE_DELETED via the FileRetentionSweeperManager so
+  // every delete path lands a single canonical event in the audit trail.
+  private publishFileDeleted(file: File, deletedBy: string, reason: FileDeletionReason): void {
+    const payload: FileDeletedPayload = {
+      fileId: file.id,
+      userId: file.userId,
+      filename: file.filename,
+      deletedBy,
+      reason,
+      timestamp: new Date().toISOString(),
+    };
+    void this.rabbitMQService.publish(EventPattern.FILE_DELETED, payload);
   }
 
   async getChunks(id: string, userId: string): Promise<FileChunk[]> {
@@ -229,6 +294,7 @@ export class FilesService {
     this.logger.debug(
       `downloadFile: completed — fileId=${id}, filename="${file.filename}", bytes=${String(buffer.length)}`,
     );
+    this.publishFileDownloaded(file, userId, 'BROWSER');
   }
 
   async downloadFilePublic(id: string, res: Response): Promise<void> {
@@ -252,6 +318,26 @@ export class FilesService {
     this.logger.debug(
       `downloadFilePublic: completed — fileId=${id}, filename="${file.filename}", bytes=${String(buffer.length)}`,
     );
+    // Internal route — downloadedBy is 'system' (the service token).
+    this.publishFileDownloaded(file, 'system', 'INTERNAL_API');
+  }
+
+  // Slice D backend 3 — file-download lifecycle event.
+  // downloadMethod = 'BROWSER' for the user-facing /files/download/:id route,
+  // 'INTERNAL_API' for /internal/files/download/* + /download-internal/:id.
+  private publishFileDownloaded(
+    file: File,
+    downloadedBy: string,
+    downloadMethod: FileDownloadMethod,
+  ): void {
+    const payload: FileDownloadedPayload = {
+      fileId: file.id,
+      userId: file.userId,
+      downloadedBy,
+      downloadMethod,
+      timestamp: new Date().toISOString(),
+    };
+    void this.rabbitMQService.publish(EventPattern.FILE_DOWNLOADED, payload);
   }
 
   async storeImage(data: {

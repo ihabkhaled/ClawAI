@@ -570,6 +570,9 @@ export const hi: TranslationDictionary = {
       denied:
         'आपको फ़ाइलों तक पहुँचने की अनुमति नहीं है। अपने वर्कस्पेस व्यवस्थापक से संपर्क करें।',
     },
+    lifecycle: {
+      uploadStarted: 'अपलोड शुरू हो रहा है…',
+    },
   },
   context: {
     title: 'कॉन्टेक्स्ट पैक',
@@ -1121,6 +1124,10 @@ export const hi: TranslationDictionary = {
       omittedUnsupported: 'छोड़ा गया (असमर्थित)',
       truncatedText: 'काटा गया',
       tooltip: 'प्रति-मॉडल डिलीवरी सारांश',
+      ocrProcessing: 'छवि से टेक्स्ट निकाला जा रहा है…',
+      ocrFailed: 'टेक्स्ट निकालने में विफल',
+      geminiUploading: 'बड़ी फ़ाइल Gemini पर अपलोड हो रही है…',
+      anthropicNativePdf: 'PDF Anthropic को मूल रूप से भेजा गया',
     },
   },
   judgeReview: {

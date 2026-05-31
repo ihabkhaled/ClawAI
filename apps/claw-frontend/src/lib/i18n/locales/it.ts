@@ -574,6 +574,9 @@ export const it: TranslationDictionary = {
       denied:
         "Non hai il permesso di accedere ai file. Contatta l'amministratore del tuo spazio di lavoro.",
     },
+    lifecycle: {
+      uploadStarted: 'Caricamento in corso…',
+    },
   },
   context: {
     title: 'Pacchetti di contesto',
@@ -1129,6 +1132,10 @@ export const it: TranslationDictionary = {
       omittedUnsupported: 'Ignorato (non supportato)',
       truncatedText: 'Troncato',
       tooltip: 'Riepilogo consegna per modello',
+      ocrProcessing: 'Estrazione del testo dall’immagine…',
+      ocrFailed: 'Estrazione del testo non riuscita',
+      geminiUploading: 'Caricamento del file di grandi dimensioni su Gemini…',
+      anthropicNativePdf: 'PDF inviato in modo nativo ad Anthropic',
     },
   },
   judgeReview: {

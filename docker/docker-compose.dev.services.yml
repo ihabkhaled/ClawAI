@@ -192,6 +192,12 @@ services:
     container_name: claw-file-service
     restart: unless-stopped
     env_file: ../.env
+    # Slice D foundation 3 — OCR pipeline. env_file already loads everything
+    # from root .env; this explicit passthrough block is a documentation hint
+    # so future maintainers see OCR is a file-service concern. Values are
+    # interpolated from the root .env at compose-up time.
+    environment:
+      OCR_ENABLED: ${OCR_ENABLED:-false}
     ports:
       - '4006:4006'
     volumes:

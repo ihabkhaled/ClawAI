@@ -10,7 +10,9 @@ import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest, recordGet } from '../../../common/utilities';
 import { BusinessException } from '../../../common/errors';
 import {
+  ANTHROPIC_PROVIDER,
   FILE_GENERATION_PROVIDER,
+  GEMINI_PROVIDER,
   IMAGE_PROVIDER_PREFIX,
   LLAMACPP_CONNECTOR_PROVIDER,
   LLAMACPP_PROVIDER,
@@ -20,8 +22,10 @@ import {
   PROVIDER_BASE_URLS,
 } from '../../../common/constants';
 import {
+  type AnthropicMessagesRequest,
   type ConnectorConfigResponse,
   type FileGenerateResponse,
+  type GeminiNativeChatRequest,
   type ImageGenerateResponse,
   type LlmResponse,
   type MessageRoutedData,
@@ -29,6 +33,7 @@ import {
   type OllamaChatResponse,
   type OllamaGenerateRequest,
   type OllamaGenerateResponse,
+  type OpenAiChatMessage,
   type OpenAiChatRequest,
   type OpenAiChatResponse,
   type ThreadSettings,
@@ -54,6 +59,10 @@ import { ProviderStreamExecutor } from './provider-stream-executor.manager';
 import { AiStreamProtocol } from '../../../common/enums';
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
 import { transformOpenAiMessagesToOllama } from '../utilities/ollama-message-shape.utility';
+import { transformOpenAiMessagesToAnthropic } from '../utilities/anthropic-message-shape.utility';
+import { buildGeminiRequestBody } from '../utilities/gemini-request-builder.utility';
+import type { GeminiFileUploadFn } from '../types/gemini.types';
+import { GeminiFilesApiManager } from './gemini-files-api.manager';
 import type { StreamContext, StreamExecutionInput } from '../types/stream-execution.types';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { AccessControlService } from '../services/access-control.service';
@@ -89,6 +98,7 @@ export class ChatExecutionManager implements OnModuleInit {
     private readonly chatStreamService: ChatStreamService,
     private readonly searchFirstManager: SearchFirstManager,
     private readonly accessControlService: AccessControlService,
+    private readonly geminiFilesApiManager: GeminiFilesApiManager,
     private readonly localModelSelection?: LocalModelSelectionService,
     private readonly providerStreamExecutor?: ProviderStreamExecutor,
     private readonly streamCancellation?: StreamCancellationService,
@@ -486,16 +496,16 @@ export class ChatExecutionManager implements OnModuleInit {
     const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
     const isOllamaConnector = provider === OLLAMA_CONNECTOR_PROVIDER;
     const effectiveModel = isOllamaConnector ? this.normalizeCloudOllamaModel(model) : model;
-    const url = isOllamaConnector ? `${baseUrl}/chat` : `${baseUrl}/chat/completions`;
-    const body: unknown = isOllamaConnector
-      ? {
-          ...this.buildOllamaChatRequestBody(model, context, threadSettings, executionOptions),
-          stream: true,
-        }
-      : this.buildStreamingChatBody(model, context, threadSettings, executionOptions);
-    const protocol = isOllamaConnector
-      ? AiStreamProtocol.OLLAMA_NDJSON
-      : AiStreamProtocol.OPENAI_SSE;
+    const { url, body, protocol, headers } = await this.resolveStreamCloudRequest({
+      provider,
+      model,
+      context,
+      threadSettings,
+      executionOptions,
+      baseUrl,
+      apiKey,
+      isOllamaConnector,
+    });
     return this.runExecutor(
       {
         threadId: streamContext.threadId,
@@ -505,7 +515,7 @@ export class ChatExecutionManager implements OnModuleInit {
         provider,
         model: effectiveModel,
         url,
-        headers: { Authorization: `Bearer ${apiKey}` },
+        headers,
         body,
         protocol,
         startMs: startTime,
@@ -515,6 +525,69 @@ export class ChatExecutionManager implements OnModuleInit {
       },
       usedFallback,
     );
+  }
+
+  private async resolveStreamCloudRequest(args: {
+    provider: string;
+    model: string;
+    context: AssembledContext;
+    threadSettings: ThreadSettings | undefined;
+    executionOptions: ExecutionOptions | undefined;
+    baseUrl: string;
+    apiKey: string;
+    isOllamaConnector: boolean;
+  }): Promise<{
+    url: string;
+    body: unknown;
+    protocol: AiStreamProtocol;
+    headers: Record<string, string>;
+  }> {
+    const config = AppConfig.get();
+    const { provider, model, context, threadSettings, executionOptions, baseUrl, apiKey } = args;
+    if (args.isOllamaConnector) {
+      return {
+        url: `${baseUrl}/chat`,
+        body: {
+          ...this.buildOllamaChatRequestBody(model, context, threadSettings, executionOptions),
+          stream: true,
+        },
+        protocol: AiStreamProtocol.OLLAMA_NDJSON,
+        headers: { Authorization: `Bearer ${apiKey}` },
+      };
+    }
+    if (provider === ANTHROPIC_PROVIDER && config.ENABLE_ANTHROPIC_NATIVE_PDF) {
+      return {
+        url: `${baseUrl}/chat/completions`,
+        body: this.buildAnthropicNativeStreamingBody(
+          model,
+          context,
+          threadSettings,
+          executionOptions,
+        ),
+        protocol: AiStreamProtocol.OPENAI_SSE,
+        headers: { Authorization: `Bearer ${apiKey}` },
+      };
+    }
+    if (provider === GEMINI_PROVIDER && config.ENABLE_GEMINI_FILES_API) {
+      const geminiBody = await this.buildGeminiNativeStreamingBody(
+        model,
+        context,
+        threadSettings,
+        executionOptions,
+      );
+      return {
+        url: `${baseUrl}/chat/completions`,
+        body: geminiBody,
+        protocol: AiStreamProtocol.OPENAI_SSE,
+        headers: { Authorization: `Bearer ${apiKey}` },
+      };
+    }
+    return {
+      url: `${baseUrl}/chat/completions`,
+      body: this.buildStreamingChatBody(model, context, threadSettings, executionOptions),
+      protocol: AiStreamProtocol.OPENAI_SSE,
+      headers: { Authorization: `Bearer ${apiKey}` },
+    };
   }
 
   private async streamLlamacpp(
@@ -1460,9 +1533,14 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.debug(`callCloudProvider: config resolved — baseUrl=${baseUrl}`);
 
     const isOllamaConnector = provider === OLLAMA_CONNECTOR_PROVIDER;
-    const requestBody = isOllamaConnector
-      ? this.buildOllamaChatRequestBody(model, context, threadSettings, executionOptions)
-      : this.buildChatRequestBody(model, context, threadSettings, executionOptions);
+    const requestBody = await this.buildCloudProviderRequestBody({
+      provider,
+      model,
+      context,
+      threadSettings,
+      executionOptions,
+      isOllamaConnector,
+    });
     const url = isOllamaConnector ? `${baseUrl}/chat` : `${baseUrl}/chat/completions`;
     this.logger.debug(
       `callCloudProvider: request body built — messageCount=${String(requestBody.messages.length)}`,
@@ -1584,6 +1662,254 @@ export class ChatExecutionManager implements OnModuleInit {
     }
 
     return requestBody;
+  }
+
+  // Slice D — request-body dispatcher used by callCloudProvider. Picks the
+  // native Anthropic / Gemini shape when the corresponding feature flag is on
+  // and the provider matches; otherwise falls through to the OpenAI-compat
+  // shape (which Gemini and OpenAI both accept) or the native Ollama shape
+  // for the Cloud Ollama connector.
+  private async buildCloudProviderRequestBody(args: {
+    provider: string;
+    model: string;
+    context: AssembledContext;
+    threadSettings: ThreadSettings | undefined;
+    executionOptions: ExecutionOptions | undefined;
+    isOllamaConnector: boolean;
+  }): Promise<{ messages: ReadonlyArray<unknown> } & Record<string, unknown>> {
+    const config = AppConfig.get();
+    const { provider, model, context, threadSettings, executionOptions } = args;
+    if (args.isOllamaConnector) {
+      return this.buildOllamaChatRequestBody(model, context, threadSettings, executionOptions);
+    }
+    if (provider === ANTHROPIC_PROVIDER && config.ENABLE_ANTHROPIC_NATIVE_PDF) {
+      return this.buildAnthropicMessagesRequestBody(
+        model,
+        context,
+        threadSettings,
+        executionOptions,
+        false,
+      );
+    }
+    if (provider === GEMINI_PROVIDER && config.ENABLE_GEMINI_FILES_API) {
+      const geminiBody = await this.buildGeminiNativeRequestBody(
+        model,
+        context,
+        threadSettings,
+        executionOptions,
+        false,
+      );
+      // Mirror the OpenAI-compat "messages" field so logging in callCloudProvider
+      // (which reads requestBody.messages.length) keeps working uniformly.
+      return { ...geminiBody, messages: geminiBody.contents };
+    }
+    return this.buildChatRequestBody(model, context, threadSettings, executionOptions);
+  }
+
+  // Slice D — Anthropic native Messages API body builder. Routes every
+  // OpenAI image_url part through transformOpenAiMessagesToAnthropic so PDFs
+  // land as `document` blocks (Anthropic's only shape that lets the model
+  // actually read PDF bytes) and images land as `image` blocks.
+  private buildAnthropicMessagesRequestBody(
+    model: string,
+    context: AssembledContext,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions | undefined,
+    stream: boolean,
+  ): AnthropicMessagesRequest {
+    const openAiMessages = this.contextAssembly.buildChatMessages(context);
+    const baseMessages = this.applyShortConstraintToOpenAiMessages(
+      openAiMessages,
+      executionOptions,
+    );
+    const { system, conversation } = this.partitionAnthropicSystem(baseMessages);
+    const shape = transformOpenAiMessagesToAnthropic(conversation);
+    if (shape.pdfCount > 0 || shape.imageCount > 0) {
+      this.logger.debug(
+        `buildAnthropicMessagesRequestBody: transformed pdfCount=${String(shape.pdfCount)} imageCount=${String(shape.imageCount)} for model=${model}`,
+      );
+    }
+    for (const warning of shape.warnings) {
+      this.logger.warn(
+        `buildAnthropicMessagesRequestBody: dropped part (reason=${warning.reason}) — ${warning.detail}`,
+      );
+    }
+    const requestBody: AnthropicMessagesRequest = {
+      model,
+      messages: shape.messages,
+      stream,
+    };
+    if (system.length > 0) {
+      requestBody.system = system;
+    }
+    if (threadSettings?.temperature !== null && threadSettings?.temperature !== undefined) {
+      requestBody.temperature = threadSettings.temperature;
+    }
+    const resolvedMaxTokens = this.resolveBoundedMaxTokens(threadSettings, executionOptions);
+    if (resolvedMaxTokens !== undefined) {
+      requestBody.max_tokens = resolvedMaxTokens;
+    }
+    return requestBody;
+  }
+
+  private buildAnthropicNativeStreamingBody(
+    model: string,
+    context: AssembledContext,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions | undefined,
+  ): AnthropicMessagesRequest {
+    return this.buildAnthropicMessagesRequestBody(
+      model,
+      context,
+      threadSettings,
+      executionOptions,
+      true,
+    );
+  }
+
+  private partitionAnthropicSystem(messages: OpenAiChatMessage[]): {
+    system: string;
+    conversation: OpenAiChatMessage[];
+  } {
+    const systemTexts: string[] = [];
+    const conversation: OpenAiChatMessage[] = [];
+    for (const message of messages) {
+      if (message.role.toLowerCase() === 'system') {
+        const text =
+          typeof message.content === 'string'
+            ? message.content
+            : message.content
+                .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+                .map((p) => p.text)
+                .join('\n');
+        if (text.length > 0) {
+          systemTexts.push(text);
+        }
+        continue;
+      }
+      conversation.push(message);
+    }
+    return { system: systemTexts.join('\n'), conversation };
+  }
+
+  private applyShortConstraintToOpenAiMessages(
+    messages: OpenAiChatMessage[],
+    executionOptions: ExecutionOptions | undefined,
+  ): OpenAiChatMessage[] {
+    if (executionOptions?.applyShortResponseConstraint !== true) {
+      return messages;
+    }
+    return [{ role: 'system', content: FAST_PATH_RESPONSE_CONSTRAINT }, ...messages];
+  }
+
+  private resolveBoundedMaxTokens(
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions | undefined,
+  ): number | undefined {
+    if (executionOptions?.maxOutputTokens !== undefined) {
+      return executionOptions.maxOutputTokens;
+    }
+    if (threadSettings?.maxTokens !== null && threadSettings?.maxTokens !== undefined) {
+      return Math.min(threadSettings.maxTokens, HARD_MAX_OUTPUT_TOKENS);
+    }
+    return undefined;
+  }
+
+  // Slice D — Gemini native generateContent body builder. Routes every
+  // OpenAI image_url part through buildGeminiRequestBody, uploading large
+  // payloads to the Files API via GeminiFilesApiManager and inlining the
+  // rest as base64. Falls back to inline_data on any upload failure.
+  private async buildGeminiNativeRequestBody(
+    model: string,
+    context: AssembledContext,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions | undefined,
+    stream: boolean,
+  ): Promise<GeminiNativeChatRequest> {
+    const config = AppConfig.get();
+    const openAiMessages = this.contextAssembly.buildChatMessages(context);
+    const baseMessages = this.applyShortConstraintToOpenAiMessages(
+      openAiMessages,
+      executionOptions,
+    );
+    const fileUploadFn = this.buildGeminiFileUploadFn(context);
+    const shape = await buildGeminiRequestBody(
+      baseMessages,
+      fileUploadFn,
+      config.GEMINI_FILES_API_SIZE_THRESHOLD_BYTES,
+    );
+    if (shape.fileDataCount > 0 || shape.inlineCount > 0) {
+      this.logger.debug(
+        `buildGeminiNativeRequestBody: parts inline=${String(shape.inlineCount)} file_data=${String(shape.fileDataCount)} for model=${model}`,
+      );
+    }
+    for (const warning of shape.warnings) {
+      this.logger.warn(
+        `buildGeminiNativeRequestBody: part warning (reason=${warning.reason}) — ${warning.detail}`,
+      );
+    }
+    const requestBody: GeminiNativeChatRequest = {
+      model,
+      contents: shape.body.contents,
+      stream,
+    };
+    if (shape.body.systemInstruction !== undefined) {
+      requestBody.systemInstruction = shape.body.systemInstruction;
+    }
+    const temperature = threadSettings?.temperature;
+    const maxOutputTokens = this.resolveBoundedMaxTokens(threadSettings, executionOptions);
+    if ((temperature !== null && temperature !== undefined) || maxOutputTokens !== undefined) {
+      requestBody.generationConfig = {
+        ...(temperature !== null && temperature !== undefined ? { temperature } : {}),
+        ...(maxOutputTokens !== undefined ? { maxOutputTokens } : {}),
+      };
+    }
+    return requestBody;
+  }
+
+  private async buildGeminiNativeStreamingBody(
+    model: string,
+    context: AssembledContext,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions | undefined,
+  ): Promise<GeminiNativeChatRequest> {
+    return this.buildGeminiNativeRequestBody(
+      model,
+      context,
+      threadSettings,
+      executionOptions,
+      true,
+    );
+  }
+
+  // Builds the per-attachment upload function the Gemini request builder
+  // invokes for each large `image_url` part. We look up the matching file
+  // from the assembled context (matching by base64 content) so we can pass
+  // its `id` as the cache key — same attachment across compare lanes is
+  // uploaded once.
+  private buildGeminiFileUploadFn(context: AssembledContext): GeminiFileUploadFn {
+    const manager = this.geminiFilesApiManager;
+    return async (data: Buffer, mimeType: string): Promise<string> => {
+      const fileId = this.resolveGeminiFileIdForUpload(context, data, mimeType);
+      return manager.getCachedOrUpload(fileId, data, mimeType);
+    };
+  }
+
+  private resolveGeminiFileIdForUpload(
+    context: AssembledContext,
+    data: Buffer,
+    mimeType: string,
+  ): string {
+    const base64 = data.toString('base64');
+    for (const file of context.fileContents) {
+      if (file.mimeType === mimeType && file.content === base64) {
+        return file.id;
+      }
+    }
+    // Fall back to a content-derived id so identical bytes still dedupe in
+    // the cache even when the file is not in `context.fileContents` (e.g.
+    // synthesised image_url from a tool call).
+    return `inline:${mimeType}:${base64.length}:${base64.slice(0, 16)}`;
   }
 
   private buildOllamaChatRequestBody(

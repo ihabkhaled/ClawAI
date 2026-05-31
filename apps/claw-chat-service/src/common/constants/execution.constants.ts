@@ -6,6 +6,14 @@ export const LLAMACPP_PROVIDER = 'local-llamacpp';
 
 export const LLAMACPP_CONNECTOR_PROVIDER = 'LLAMACPP';
 
+// Cloud provider identifiers used by the chat-execution dispatcher to opt
+// individual providers into native request shapes (Anthropic Messages API,
+// Gemini generateContent + Files API). Identical to the `provider` value
+// that flows through MessageRoutedData.selectedProvider.
+export const ANTHROPIC_PROVIDER = 'ANTHROPIC';
+
+export const GEMINI_PROVIDER = 'GEMINI';
+
 export const IMAGE_PROVIDER_PREFIX = 'IMAGE_';
 
 export const FILE_GENERATION_PROVIDER = 'FILE_GENERATION';

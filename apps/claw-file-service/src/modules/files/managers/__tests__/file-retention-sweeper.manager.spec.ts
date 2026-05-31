@@ -111,10 +111,13 @@ describe('FileRetentionSweeperManager', () => {
     expect(filesRepo.deleteById).toHaveBeenNthCalledWith(2, 'f2');
     expect(filesRepo.deleteById).toHaveBeenNthCalledWith(3, 'f3');
 
-    expect(rabbitMQ.publish).toHaveBeenCalledTimes(3);
+    // Slice D backend 3 — sweeper now publishes BOTH FILE_RETENTION_EXPIRED
+    // AND the canonical FILE_DELETED (reason='RETENTION') per file, so the
+    // call count is 2 × files.
+    expect(rabbitMQ.publish).toHaveBeenCalledTimes(6);
     for (const [index, file] of files.entries()) {
       expect(rabbitMQ.publish).toHaveBeenNthCalledWith(
-        index + 1,
+        index * 2 + 1,
         EventPattern.FILE_RETENTION_EXPIRED,
         expect.objectContaining({
           fileId: file.id,
@@ -122,6 +125,18 @@ describe('FileRetentionSweeperManager', () => {
           filename: file.filename,
           sizeBytes: file.sizeBytes,
           retentionExpiresAt: expect.any(String),
+          timestamp: expect.any(String),
+        }),
+      );
+      expect(rabbitMQ.publish).toHaveBeenNthCalledWith(
+        index * 2 + 2,
+        EventPattern.FILE_DELETED,
+        expect.objectContaining({
+          fileId: file.id,
+          userId: file.userId,
+          filename: file.filename,
+          deletedBy: 'system',
+          reason: 'RETENTION',
           timestamp: expect.any(String),
         }),
       );
@@ -150,7 +165,8 @@ describe('FileRetentionSweeperManager', () => {
     expect(limitArg).toBe(2);
     expect(deleteFile).toHaveBeenCalledTimes(2);
     expect(filesRepo.deleteById).toHaveBeenCalledTimes(2);
-    expect(rabbitMQ.publish).toHaveBeenCalledTimes(2);
+    // 2 files × 2 events each (FILE_RETENTION_EXPIRED + FILE_DELETED) = 4.
+    expect(rabbitMQ.publish).toHaveBeenCalledTimes(4);
   });
 
   it('keeps the DB row when disk delete throws, logs the error, and continues with the next file', async () => {
@@ -190,11 +206,12 @@ describe('FileRetentionSweeperManager', () => {
     expect(filesRepo.deleteById).toHaveBeenCalledWith('good1');
     expect(filesRepo.deleteById).toHaveBeenCalledWith('good2');
 
-    expect(rabbitMQ.publish).toHaveBeenCalledTimes(2);
+    // 2 successful files × 2 events each (FILE_RETENTION_EXPIRED + FILE_DELETED) = 4.
+    expect(rabbitMQ.publish).toHaveBeenCalledTimes(4);
     const publishedIds = rabbitMQ.publish!.mock.calls.map(
       (call: unknown[]) => (call[1] as { fileId: string }).fileId,
     );
-    expect(publishedIds).toEqual(['good1', 'good2']);
+    expect(publishedIds).toEqual(['good1', 'good1', 'good2', 'good2']);
     expect(publishedIds).not.toContain('bad');
 
     // Error logged with the failing file's id + path.

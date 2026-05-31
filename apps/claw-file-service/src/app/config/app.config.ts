@@ -41,6 +41,25 @@ const appConfigSchema = z.object({
   ZIP_COMPRESSION_RATIO_THRESHOLD: z.coerce.number().int().min(1).default(1000),
   // Temporary extraction path (should be tmpfs/ramdisk in production).
   ZIP_TEMP_EXTRACTION_PATH: z.string().default('/tmp/claw-zip-extraction'),
+
+  // ─── Slice D foundation 3 — OCR pipeline (tesseract worker) ────────────
+  // Off by default. When enabled, scanned PDFs (extracted-text char count
+  // below SCANNED_PDF_CHAR_THRESHOLD) and images bound for text-only models
+  // are routed through a tesseract worker pool. OCR results are cached on
+  // the File row so the work is done once per upload, not per attachment.
+  // See docs/03-architecture/compare-file-attachments.md (Slice D close-out).
+  OCR_ENABLED: z
+    .string()
+    .default('false')
+    .transform((v) => v.toLowerCase() === 'true'),
+  OCR_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
+  OCR_CONFIDENCE_MIN: z.coerce.number().min(0).max(1).default(0.5),
+  OCR_LANGUAGE: z.string().min(1).default('eng'),
+  OCR_WORKER_THREADS: z.coerce.number().int().min(1).max(16).default(2),
+  // Char count below which a PDF's extracted text is treated as "scanned"
+  // and routed to OCR. 100 chars catches the common "letter-of-employment.pdf"
+  // case where the PDF wraps a single full-page image with no real text layer.
+  SCANNED_PDF_CHAR_THRESHOLD: z.coerce.number().int().min(0).default(100),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

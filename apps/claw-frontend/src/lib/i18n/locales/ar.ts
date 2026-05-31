@@ -564,6 +564,9 @@ export const ar: TranslationDictionary = {
     permissions: {
       denied: 'ليس لديك إذن للوصول إلى الملفات. تواصل مع مسؤول مساحة العمل لديك.',
     },
+    lifecycle: {
+      uploadStarted: 'جارٍ بدء الرفع…',
+    },
   },
   context: {
     title: 'حزم السياق',
@@ -1109,6 +1112,10 @@ export const ar: TranslationDictionary = {
       omittedUnsupported: 'تم التخطي (غير مدعوم)',
       truncatedText: 'تم الاقتطاع',
       tooltip: 'ملخص التسليم لكل نموذج',
+      ocrProcessing: 'جارٍ استخراج النص من الصورة…',
+      ocrFailed: 'فشل استخراج النص',
+      geminiUploading: 'جارٍ رفع ملف كبير إلى Gemini…',
+      anthropicNativePdf: 'تم إرسال ملف PDF بشكل أصلي إلى Anthropic',
     },
   },
   judgeReview: {

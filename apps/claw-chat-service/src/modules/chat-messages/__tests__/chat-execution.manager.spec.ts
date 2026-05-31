@@ -117,6 +117,13 @@ describe('ChatExecutionManager', () => {
         })),
       } as any,
       { recordUsage: jest.fn() } as unknown as AccessControlService,
+      // Slice D — Gemini Files API manager. Default mock matches the
+      // ENABLE_GEMINI_FILES_API=false path (no uploads), so no test should
+      // hit it unless it explicitly flips the flag.
+      {
+        uploadFile: jest.fn(),
+        getCachedOrUpload: jest.fn(),
+      } as any,
       localModelSelection as unknown as LocalModelSelectionService,
     );
   });

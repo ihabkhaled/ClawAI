@@ -13,6 +13,11 @@ import { ResearchEnricherManager } from './research-enricher.manager';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
+import { FileDeliveryRecordService } from '../services/file-delivery-record.service';
+import { FileDeliveryMode } from '../../../common/enums/file-delivery-mode.enum';
+import { VISION_CAPABLE_PROVIDERS } from '../constants/file-delivery.constants';
+import { type FileDeliveryEntry } from '../types/file-delivery.types';
+import { type FileDeliveryRecordInput } from '../types/file-delivery-record.types';
 import {
   type ParallelCriticConfig,
   type ParallelJudgeConfig,
@@ -42,6 +47,7 @@ export class ParallelExecutionManager {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly researchEnricherManager: ResearchEnricherManager,
+    private readonly fileDeliveryRecordService: FileDeliveryRecordService,
   ) {
     this.timeoutMs = AppConfig.get().OLLAMA_GENERATE_TIMEOUT_MS;
   }
@@ -122,7 +128,7 @@ export class ParallelExecutionManager {
         parallelGroupId,
         threadId,
       );
-      await this.storeAssistantMessages(threadId, parallelGroupId, responses);
+      await this.storeAssistantMessages(userId, threadId, parallelGroupId, responses);
       const completed = responses.filter((r) => r.status === 'completed').length;
       this.logger.log(
         `executeInBackground: done — ${String(completed)}/${String(responses.length)} completed`,
@@ -131,7 +137,7 @@ export class ParallelExecutionManager {
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`executeInBackground: failed — ${msg}`);
-      await this.storeAssistantMessages(threadId, parallelGroupId, [
+      await this.storeAssistantMessages(userId, threadId, parallelGroupId, [
         {
           ...this.buildFailedResponse('system', 'parallel', `Parallel execution failed: ${msg}`),
           judgeEnabled: judgeConfig.enabled,
@@ -617,6 +623,7 @@ export class ParallelExecutionManager {
   }
 
   private async storeAssistantMessages(
+    userId: string,
     threadId: string,
     parallelGroupId: string,
     responses: ParallelModelResponse[],
@@ -638,7 +645,74 @@ export class ParallelExecutionManager {
         ) as Prisma.InputJsonValue,
       }),
     );
-    await Promise.all(storePromises);
+    const storedMessages = await Promise.all(storePromises);
+    // Dual-write window (2 releases): legacy metadata.fileDelivery is
+    // populated above; here we ALSO persist a normalized row per (message,
+    // file, provider, model) so the new GET /chat-messages/:id/file-delivery
+    // endpoint and downstream consumers can read structured data.
+    await this.dualWriteFileDeliveryRecords(userId, threadId, storedMessages, responses);
+  }
+
+  private async dualWriteFileDeliveryRecords(
+    userId: string,
+    threadId: string,
+    storedMessages: { id: string }[],
+    responses: ParallelModelResponse[],
+  ): Promise<void> {
+    const records: FileDeliveryRecordInput[] = [];
+    for (const [index, response] of responses.entries()) {
+      const message = storedMessages.at(index);
+      if (!message) {
+        continue;
+      }
+      const entries = response.attachmentDelivery ?? [];
+      for (const entry of entries) {
+        records.push(this.buildDeliveryRecordInput(message.id, threadId, userId, entry));
+      }
+    }
+    if (records.length === 0) {
+      return;
+    }
+    try {
+      await this.fileDeliveryRecordService.recordDeliveries(records);
+    } catch (error) {
+      this.logger.warn(
+        `dualWriteFileDeliveryRecords: failed — ${(error as Error).message}; metadata.fileDelivery still populated`,
+      );
+    }
+  }
+
+  private buildDeliveryRecordInput(
+    messageId: string,
+    threadId: string,
+    userId: string,
+    entry: FileDeliveryEntry,
+  ): FileDeliveryRecordInput {
+    return {
+      messageId,
+      threadId,
+      userId,
+      fileId: entry.fileId,
+      filename: entry.filename,
+      mimeType: entry.mimeType,
+      provider: entry.provider,
+      model: entry.model,
+      mode: entry.mode,
+      supportsVision: this.resolveSupportsVisionForRecord(entry),
+    };
+  }
+
+  private resolveSupportsVisionForRecord(entry: FileDeliveryEntry): boolean {
+    if (entry.mode === FileDeliveryMode.NATIVE_IMAGE) {
+      return true;
+    }
+    if (entry.mode === FileDeliveryMode.OMITTED_NO_VISION) {
+      return false;
+    }
+    const provider = entry.provider;
+    return (
+      VISION_CAPABLE_PROVIDERS.has(provider) || VISION_CAPABLE_PROVIDERS.has(provider.toUpperCase())
+    );
   }
 
   private buildParallelMessageContent(response: ParallelModelResponse): string {

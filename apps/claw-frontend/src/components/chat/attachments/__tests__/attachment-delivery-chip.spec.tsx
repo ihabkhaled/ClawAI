@@ -1,4 +1,6 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import type { ReactElement, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AttachmentDeliveryChip } from '@/components/chat/attachments/attachment-delivery-chip';
@@ -18,6 +20,13 @@ vi.mock('@/lib/i18n', () => ({
     },
   }),
 }));
+
+function withQueryClient(children: ReactNode): ReactElement {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
 
 const delivery: FileDeliveryEntry[] = [
   {
@@ -49,12 +58,12 @@ const delivery: FileDeliveryEntry[] = [
 
 describe('AttachmentDeliveryChip', () => {
   it('returns null when delivery is empty', () => {
-    const { container } = render(<AttachmentDeliveryChip delivery={[]} />);
+    const { container } = render(withQueryClient(<AttachmentDeliveryChip delivery={[]} />));
     expect(container.firstChild).toBeNull();
   });
 
   it('renders one chip per non-zero mode count', () => {
-    render(<AttachmentDeliveryChip delivery={delivery} />);
+    render(withQueryClient(<AttachmentDeliveryChip delivery={delivery} />));
     const root = screen.getByTestId('attachment-delivery-chip');
     expect(root).toBeInTheDocument();
     // Two extracted-text files -> the chip text includes the count `2`.
@@ -68,7 +77,7 @@ describe('AttachmentDeliveryChip', () => {
   });
 
   it('builds a tooltip listing each filename with its mode and reason', () => {
-    render(<AttachmentDeliveryChip delivery={delivery} />);
+    render(withQueryClient(<AttachmentDeliveryChip delivery={delivery} />));
     const root = screen.getByTestId('attachment-delivery-chip');
     const tooltip = root.getAttribute('title') ?? '';
     expect(tooltip).toContain('compare.delivery.tooltip');
@@ -80,7 +89,7 @@ describe('AttachmentDeliveryChip', () => {
   });
 
   it('exposes an aria-label so screen readers announce the chip group', () => {
-    render(<AttachmentDeliveryChip delivery={delivery} />);
+    render(withQueryClient(<AttachmentDeliveryChip delivery={delivery} />));
     const root = screen.getByLabelText('compare.delivery.tooltip');
     expect(root).toBeInTheDocument();
   });

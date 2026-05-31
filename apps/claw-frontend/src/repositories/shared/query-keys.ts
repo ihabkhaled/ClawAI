@@ -122,6 +122,11 @@ export const queryKeys = {
     preview: (threadId: string, draftHash: string) =>
       [...queryKeys.contextReceipts.all, 'preview', threadId, draftHash] as const,
   },
+  chat: {
+    all: ['chat'] as const,
+    fileDelivery: (messageId: string) =>
+      [...queryKeys.chat.all, 'file-delivery', messageId] as const,
+  },
   files: {
     all: ['files'] as const,
     lists: () => [...queryKeys.files.all, 'list'] as const,

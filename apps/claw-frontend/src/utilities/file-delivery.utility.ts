@@ -1,9 +1,10 @@
 import { FileDeliveryMode } from '@/enums';
-import type { ChatMessage, FileDeliveryCounts, FileDeliveryEntry } from '@/types';
-
-// Translator signature used inside the FE i18n hook. Local alias avoids an
-// import cycle through the heavier i18n types.
-type Translator = (key: string, params?: Record<string, string | number>) => string;
+import type {
+  ChatMessage,
+  FileDeliveryCounts,
+  FileDeliveryEntry,
+  FileDeliveryTranslator,
+} from '@/types';
 
 // Group a flat FileDeliveryEntry[] by delivery mode so the chip can render
 // one badge per non-zero count. Pure function — no i18n, no React.
@@ -32,7 +33,10 @@ export function countFileDeliveriesByMode(delivery: FileDeliveryEntry[]): FileDe
 }
 
 // Resolve the i18n-translated mode label for a single delivery entry.
-export function getFileDeliveryModeLabel(mode: FileDeliveryMode, t: Translator): string {
+export function getFileDeliveryModeLabel(
+  mode: FileDeliveryMode,
+  t: FileDeliveryTranslator,
+): string {
   if (mode === FileDeliveryMode.EXTRACTED_TEXT) {
     return t('compare.delivery.extractedText');
   }
@@ -52,7 +56,10 @@ export function getFileDeliveryModeLabel(mode: FileDeliveryMode, t: Translator):
 // the localised header, subsequent lines list each file with its mode label
 // and optional reason. Returns a single newline-joined string suitable for
 // the native HTML `title` attribute.
-export function buildFileDeliveryTooltip(delivery: FileDeliveryEntry[], t: Translator): string {
+export function buildFileDeliveryTooltip(
+  delivery: FileDeliveryEntry[],
+  t: FileDeliveryTranslator,
+): string {
   const header = t('compare.delivery.tooltip');
   const lines = delivery.map((entry) => {
     const modeLabel = getFileDeliveryModeLabel(entry.mode, t);
@@ -118,6 +125,19 @@ export function readFileDeliveryFromMetadata(
     });
   }
   return entries.length > 0 ? entries : undefined;
+}
+
+// Inline-metadata first-step of the dual-read file-delivery resolution path.
+// Reads `message.metadata.fileDelivery` (the JSON the parallel orchestrator
+// mirrors onto the assistant message at completion). Returns [] when missing
+// or malformed so callers can OR-coalesce against the API-backed read from
+// `useFileDelivery` without branching on undefined. The "fresh" / authoritative
+// read happens at the component layer via the hook; this function is the
+// always-available fallback that works pre-completion and offline.
+export function resolveFileDelivery(message: ChatMessage): FileDeliveryEntry[] {
+  const meta = message.metadata as Record<string, unknown> | null;
+  const entries = readFileDeliveryFromMetadata(meta);
+  return entries ?? [];
 }
 
 // Derive the "files provided" count for the judge/critic informational chip.

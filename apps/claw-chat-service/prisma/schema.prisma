@@ -91,8 +91,9 @@ model ChatMessage {
   metadata      Json?
   createdAt     DateTime     @default(now()) @map("created_at")
 
-  thread      ChatThread          @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  attachments MessageAttachment[]
+  thread               ChatThread           @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  attachments          MessageAttachment[]
+  fileDeliveryRecords  FileDeliveryRecord[]
 
   @@index([threadId])
   @@index([createdAt])
@@ -109,4 +110,26 @@ model MessageAttachment {
 
   @@index([messageId])
   @@map("message_attachments")
+}
+
+model FileDeliveryRecord {
+  id             String   @id @default(uuid())
+  messageId      String   @map("message_id")
+  threadId       String   @map("thread_id")
+  userId         String   @map("user_id")
+  fileId         String   @map("file_id")
+  filename       String
+  mimeType       String   @map("mime_type")
+  provider       String
+  model          String
+  mode           String
+  supportsVision Boolean  @map("supports_vision")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([fileId, provider, model])
+  @@index([threadId, fileId])
+  @@map("file_delivery_records")
 }

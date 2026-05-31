@@ -145,3 +145,27 @@ Validation order (a violation at any step aborts the upload and surfaces `files.
 5. **Path traversal** — every entry name normalized; any entry that escapes `ZIP_TEMP_EXTRACTION_PATH` (absolute path, `..` segments, drive letters) rejects.
 
 Only after all five checks pass is the archive streamed into the sandbox for chunking. The sandbox is cleaned up after every upload regardless of outcome.
+
+## OCR pipeline (Slice D foundation 3)
+
+When `OCR_ENABLED=true`, the file-service runs a tesseract worker pool that extracts text from images and scanned PDFs so non-vision chat lanes can still receive the content. The pipeline activates in two cases:
+
+1. **Scanned PDFs.** After the normal PDF text-extraction pass, if the extracted text contains fewer than `SCANNED_PDF_CHAR_THRESHOLD` characters (default `100`) the file is treated as a scanned PDF. Each page is rasterised to an image and OCR'd. This catches the common "letter-of-employment.pdf" case where the PDF wraps a single page-image with no real text layer.
+2. **Image attachments for text-only models.** Before Slice D the AttachmentResolver in `claw-chat-service` marked these as `OMITTED_NO_VISION`. With OCR enabled it instead asks file-service for OCR text and routes the file as `EXTRACTED_TEXT`, so the non-vision lane still receives the content.
+
+| Env var                      | Default | Purpose                                                                                                      |
+| ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------ |
+| `OCR_ENABLED`                | `false` | Master switch. Default-OFF so existing installs keep Slice A behaviour.                                      |
+| `OCR_TIMEOUT_MS`             | `30000` | Per-file timeout. A worker that exceeds this returns `OCR_FAILED` and the lane falls back to its prior mode. |
+| `OCR_CONFIDENCE_MIN`         | `0.5`   | Minimum tesseract confidence accepted. Below this we tag the FileDelivery metadata `lowConfidenceOcr=true`.  |
+| `OCR_LANGUAGE`               | `eng`   | Tesseract language pack. Use combinations like `eng+ara` for multi-language uploads.                         |
+| `OCR_WORKER_THREADS`         | `2`     | Parallel tesseract workers per file-service container. Increase for high-throughput installs; watch memory.  |
+| `SCANNED_PDF_CHAR_THRESHOLD` | `100`   | Char count below which a PDF's extracted text is treated as "scanned" and routed to OCR.                     |
+
+OCR output is stored on the existing `File.content` column (the same field that already holds PDF/DOCX extracted text), so context-assembly's existing chunk loader picks it up with no code changes downstream. The work is done once per upload, not per attachment use.
+
+Failure modes:
+
+- Worker timeout → emit `OCR_FAILED` on the FileDelivery; the FE renders the i18n key `compare.delivery.ocrFailed`.
+- Zero-confidence output → treated as failure, same path as timeout.
+- Worker pool exhausted → enqueue and serve in FIFO order; the FE renders `compare.delivery.ocrProcessing` until the worker frees up.

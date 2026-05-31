@@ -348,3 +348,4 @@ Use the `fetch` API with `ReadableStream` to consume SSE streams instead of the 
 | 051 | Narrow workspace VIEW + CONNECT permissions for USER          | Accepted | `WORKSPACE_VIEW` + `WORKSPACE_APP_CONFIG_VIEW`; partial-relax over admin-only |
 | 052 | Shared `RichPromptTextarea` + `use-sticky-bottom-scroll` hook | Accepted | One autosize textarea everywhere; one auto-follow scroll behaviour everywhere |
 | 053 | File retention sweeper + ZIP archive guardrails               | Accepted | Nightly cron sweep + 4 ZIP bomb hard caps + tmpfs sandbox                     |
+| 054 | `file_delivery_records` extracted from JSON                   | Accepted | Per-model delivery records → typed table; 30-day dual-write window            |

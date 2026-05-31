@@ -8,26 +8,26 @@ ClawAI integrates with 5 AI providers for text generation and 4 providers for im
 
 ### Text Generation
 
-| Provider     | Type  | Models                    | Context  | Streaming | Vision | Tools | Privacy  | Cost       | Latency |
-| ------------ | ----- | ------------------------- | -------- | --------- | ------ | ----- | -------- | ---------- | ------- |
-| OpenAI       | Cloud | gpt-4o, gpt-4o-mini      | 128K     | Yes       | Yes    | Yes   | CLOUD    | STANDARD   | LOW     |
-| Anthropic    | Cloud | claude-sonnet-4, claude-opus-4 | 200K | Yes       | Yes    | Yes   | CLOUD    | HIGH       | MEDIUM  |
-| Gemini       | Cloud | gemini-2.5-flash          | 1M       | Yes       | Yes    | Yes   | CLOUD    | LOW        | LOW     |
-| DeepSeek     | Cloud | deepseek-chat             | 128K     | Yes       | No     | Yes   | CLOUD    | LOW        | MEDIUM  |
-| Local Ollama | Local | 25+ models (catalog)      | 4K-128K  | No*       | No     | No    | LOCAL    | FREE       | VARIABLE|
+| Provider     | Type  | Models                         | Context | Streaming | Vision | Tools | Privacy | Cost     | Latency  |
+| ------------ | ----- | ------------------------------ | ------- | --------- | ------ | ----- | ------- | -------- | -------- |
+| OpenAI       | Cloud | gpt-4o, gpt-4o-mini            | 128K    | Yes       | Yes    | Yes   | CLOUD   | STANDARD | LOW      |
+| Anthropic    | Cloud | claude-sonnet-4, claude-opus-4 | 200K    | Yes       | Yes    | Yes   | CLOUD   | HIGH     | MEDIUM   |
+| Gemini       | Cloud | gemini-2.5-flash               | 1M      | Yes       | Yes    | Yes   | CLOUD   | LOW      | LOW      |
+| DeepSeek     | Cloud | deepseek-chat                  | 128K    | Yes       | No     | Yes   | CLOUD   | LOW      | MEDIUM   |
+| Local Ollama | Local | 25+ models (catalog)           | 4K-128K | No\*      | No     | No    | LOCAL   | FREE     | VARIABLE |
 
-*Ollama supports streaming but ClawAI currently uses non-streaming mode.
+\*Ollama supports streaming but ClawAI currently uses non-streaming mode.
 
 ### Image Generation
 
-| Provider          | Type  | Models                  | Max Resolution | Formats | Cost    |
-| ----------------- | ----- | ----------------------- | -------------- | ------- | ------- |
-| OpenAI (DALL-E)   | Cloud | dall-e-3                | 1792x1024      | PNG     | $0.04+  |
-| Gemini            | Cloud | gemini-2.5-flash        | 1024x1024      | PNG     | Varies  |
-| SD WebUI          | Local | SDXL, SD 3.5            | Unlimited*     | PNG     | FREE    |
-| ComfyUI           | Local | FLUX, SDXL, SD 3.5      | Unlimited*     | PNG     | FREE    |
+| Provider        | Type  | Models             | Max Resolution | Formats | Cost   |
+| --------------- | ----- | ------------------ | -------------- | ------- | ------ |
+| OpenAI (DALL-E) | Cloud | dall-e-3           | 1792x1024      | PNG     | $0.04+ |
+| Gemini          | Cloud | gemini-2.5-flash   | 1024x1024      | PNG     | Varies |
+| SD WebUI        | Local | SDXL, SD 3.5       | Unlimited\*    | PNG     | FREE   |
+| ComfyUI         | Local | FLUX, SDXL, SD 3.5 | Unlimited\*    | PNG     | FREE   |
 
-*Limited by GPU VRAM.
+\*Limited by GPU VRAM.
 
 ## Provider Details
 
@@ -52,14 +52,22 @@ ClawAI integrates with 5 AI providers for text generation and 4 providers for im
 
 **API Pattern**: REST, JSON, `x-api-key` header auth
 
+**API version**: `anthropic-version: 2024-06-01` (bumped from `2023-06-01` in Slice D foundation 3 to unlock the native `document` content type used for PDF attachments). Centralised in `apps/claw-connector-service/src/modules/connectors/constants/anthropic.constants.ts`.
+
 **Models:**
 
-| Model          | Context | Output | Input $/1M | Output $/1M | Notes              |
-| -------------- | ------- | ------ | ---------- | ----------- | ------------------ |
-| claude-sonnet-4| 200K    | 8K     | $3.00      | $15.00      | Best for coding    |
-| claude-opus-4  | 200K    | 8K     | $15.00     | $75.00      | Best for reasoning |
+| Model           | Context | Output | Input $/1M | Output $/1M | Notes              |
+| --------------- | ------- | ------ | ---------- | ----------- | ------------------ |
+| claude-sonnet-4 | 200K    | 8K     | $3.00      | $15.00      | Best for coding    |
+| claude-opus-4   | 200K    | 8K     | $15.00     | $75.00      | Best for reasoning |
 
 **Routing triggers**: Code generation, debugging, code review, architecture, complex analysis
+
+**File capabilities** (Slice D foundation 3):
+
+- **Native PDF input** — when `ENABLE_ANTHROPIC_NATIVE_PDF=true`, PDFs are sent as the native `document` content part rather than routed through extracted-text. Falls back to `EXTRACTED_TEXT` mode when the flag is OFF or the model lane rejects the document. See `docs/03-architecture/compare-file-attachments.md` Slice D close-out section 2.
+- **Images**: sent as `image_url` content parts. No size threshold (inline base64 only — Anthropic has no equivalent of the Gemini Files API today).
+- **Other file types**: fall through to extracted-text injection in the system block.
 
 ### Google Gemini
 
@@ -69,11 +77,18 @@ ClawAI integrates with 5 AI providers for text generation and 4 providers for im
 
 **Models:**
 
-| Model            | Context | Output | Input $/1M | Output $/1M | Notes               |
+| Model            | Context | Output | Input $/1M | Output $/1M | Notes                |
 | ---------------- | ------- | ------ | ---------- | ----------- | -------------------- |
 | gemini-2.5-flash | 1M      | 8K     | $0.075     | $0.30       | Huge context, vision |
 
 **Routing triggers**: Image analysis, YouTube content, file analysis, web search, multimodal
+
+**File capabilities** (Slice D foundation 3):
+
+- **Files API for large attachments** — when `ENABLE_GEMINI_FILES_API=true` and the attachment is at least `GEMINI_FILES_API_SIZE_THRESHOLD_BYTES` (default 20 MB), the file is uploaded to the Gemini Files API and referenced by `file://` URI. Below the threshold, inline base64 continues. Files API entries live for 48 h on Google's side; the chat-service URI cache lives for 24 h (`GEMINI_FILES_API_TTL_MINUTES=1440`) so a cache hit can never serve an expired URI.
+- **Concurrency control** — `GEMINI_CONCURRENT_UPLOADS_LIMIT` (default 3) bounds simultaneous uploads per chat-service container so a compare run spanning many models cannot stampede the Files API quota.
+- **Failure fallback** — an upload failure within `GEMINI_FILES_API_TIMEOUT_MS` (default 60 s) transparently falls back to inline base64 with a `warn` log; the user still gets a response.
+- See `docs/03-architecture/compare-file-attachments.md` Slice D close-out section 3 for the full design.
 
 ### DeepSeek
 
@@ -83,9 +98,9 @@ ClawAI integrates with 5 AI providers for text generation and 4 providers for im
 
 **Models:**
 
-| Model         | Context | Output | Input $/1M | Output $/1M | Notes          |
-| ------------- | ------- | ------ | ---------- | ----------- | -------------- |
-| deepseek-chat | 128K    | 8K     | $0.14      | $0.28       | Very cheap     |
+| Model         | Context | Output | Input $/1M | Output $/1M | Notes      |
+| ------------- | ------- | ------ | ---------- | ----------- | ---------- |
+| deepseek-chat | 128K    | 8K     | $0.14      | $0.28       | Very cheap |
 
 **Routing triggers**: Math problems, algorithms, cost-sensitive tasks
 
@@ -113,26 +128,26 @@ ClawAI integrates with 5 AI providers for text generation and 4 providers for im
 
 The AUTO router uses this priority when selecting a provider:
 
-| Task Type              | Primary Choice          | Fallback 1            | Fallback 2      |
-| ---------------------- | ----------------------- | --------------------- | --------------- |
-| Coding/debugging       | Anthropic/claude-sonnet-4| Local coding model   | OpenAI/gpt-4o   |
-| Deep reasoning         | Anthropic/claude-opus-4  | Local reasoning model| Gemini           |
-| Vision/multimodal      | Gemini/gemini-2.5-flash | OpenAI/gpt-4o        | N/A             |
-| Creative writing       | OpenAI/gpt-4o-mini      | Gemini               | Local            |
-| Simple Q&A             | Local/gemma3:4b          | OpenAI/gpt-4o-mini   | Gemini           |
-| Privacy-sensitive      | Local/gemma3:4b          | N/A (never cloud)    | N/A             |
-| Math/algorithms        | DeepSeek/deepseek-chat   | Local/phi3:mini      | Anthropic        |
-| File/data analysis     | Gemini/gemini-2.5-flash | Anthropic             | OpenAI           |
+| Task Type          | Primary Choice            | Fallback 1            | Fallback 2    |
+| ------------------ | ------------------------- | --------------------- | ------------- |
+| Coding/debugging   | Anthropic/claude-sonnet-4 | Local coding model    | OpenAI/gpt-4o |
+| Deep reasoning     | Anthropic/claude-opus-4   | Local reasoning model | Gemini        |
+| Vision/multimodal  | Gemini/gemini-2.5-flash   | OpenAI/gpt-4o         | N/A           |
+| Creative writing   | OpenAI/gpt-4o-mini        | Gemini                | Local         |
+| Simple Q&A         | Local/gemma3:4b           | OpenAI/gpt-4o-mini    | Gemini        |
+| Privacy-sensitive  | Local/gemma3:4b           | N/A (never cloud)     | N/A           |
+| Math/algorithms    | DeepSeek/deepseek-chat    | Local/phi3:mini       | Anthropic     |
+| File/data analysis | Gemini/gemini-2.5-flash   | Anthropic             | OpenAI        |
 
 ## API Authentication Comparison
 
-| Provider  | Auth Method                 | Header/Param                          |
-| --------- | --------------------------- | ------------------------------------- |
-| OpenAI    | Bearer token                | `Authorization: Bearer sk-...`        |
-| Anthropic | API key header              | `x-api-key: sk-ant-...`              |
-| Gemini    | Query parameter             | `?key=AIza...`                        |
-| DeepSeek  | Bearer token (OpenAI compat)| `Authorization: Bearer sk-...`        |
-| Ollama    | None (local only)           | N/A                                   |
+| Provider  | Auth Method                  | Header/Param                   |
+| --------- | ---------------------------- | ------------------------------ |
+| OpenAI    | Bearer token                 | `Authorization: Bearer sk-...` |
+| Anthropic | API key header               | `x-api-key: sk-ant-...`        |
+| Gemini    | Query parameter              | `?key=AIza...`                 |
+| DeepSeek  | Bearer token (OpenAI compat) | `Authorization: Bearer sk-...` |
+| Ollama    | None (local only)            | N/A                            |
 
 ## Common API Response Patterns
 
@@ -141,12 +156,12 @@ All cloud providers return similar structures. ClawAI normalizes responses in th
 ```typescript
 // Normalized response (internal)
 {
-  content: string;          // Generated text
-  inputTokens: number;      // Prompt token count
-  outputTokens: number;     // Completion token count
-  provider: Provider;        // Which provider was used
-  model: string;            // Which model was used
-  latencyMs: number;        // Round-trip time
+  content: string; // Generated text
+  inputTokens: number; // Prompt token count
+  outputTokens: number; // Completion token count
+  provider: Provider; // Which provider was used
+  model: string; // Which model was used
+  latencyMs: number; // Round-trip time
 }
 ```
 
@@ -154,44 +169,45 @@ All cloud providers return similar structures. ClawAI normalizes responses in th
 
 This matrix scores each provider on quality (1-5), cost (1-5, lower is cheaper), latency (1-5, lower is faster), and privacy (LOCAL=5, CLOUD=1) for each of the 15 capability classes.
 
-| Capability Class | Best Provider | Quality | Cost | Latency | Privacy | When To Use |
-| --- | --- | --- | --- | --- | --- | --- |
-| Coding | Anthropic/claude-sonnet-4 | 5 | 3 | 3 | 1 | Complex code gen, debugging, refactoring |
-| Reasoning | Anthropic/claude-opus-4 | 5 | 5 | 4 | 1 | Architecture decisions, complex analysis |
-| Thinking | Gemini/gemini-2.5-flash | 4 | 1 | 2 | 1 | Research, deep investigation, comparisons |
-| Infrastructure | Anthropic/claude-sonnet-4 | 5 | 3 | 3 | 1 | Terraform, K8s, Docker, cloud configs |
-| Data Analysis | Gemini/gemini-2.5-flash | 4 | 1 | 2 | 1 | Large datasets, SQL, ETL, visualization |
-| Business | OpenAI/gpt-4o-mini | 3 | 1 | 1 | 1 | KPIs, proposals, meeting summaries |
-| Creative Writing | OpenAI/gpt-4o-mini | 4 | 1 | 1 | 1 | Blog posts, copy, scripts, narratives |
-| Security | Anthropic/claude-sonnet-4 | 5 | 3 | 3 | 1 | Vulnerability analysis, threat modeling |
-| Medical | local-ollama (privacy) | 2 | 0 | 3 | 5 | Always local -- HIPAA, patient data |
-| Legal | local-ollama (privacy) | 2 | 0 | 3 | 5 | Always local if NDA/privileged content |
-| Translation | local-ollama/gemma3:4b | 3 | 0 | 2 | 5 | Simple translations, i18n |
-| Image Generation | IMAGE_GEMINI | 4 | 2 | 2 | 1 | Text-to-image, logos, illustrations |
-| File Generation | FILE_GENERATION | 4 | 2 | 2 | 1 | PDF, CSV, DOCX export |
-| Privacy-sensitive | local-ollama/gemma3:4b | 2 | 0 | 3 | 5 | Any content with PII, financial, medical |
-| General Chat | OpenAI/gpt-4o-mini | 3 | 1 | 1 | 1 | Small talk, Q&A, summaries |
+| Capability Class  | Best Provider             | Quality | Cost | Latency | Privacy | When To Use                               |
+| ----------------- | ------------------------- | ------- | ---- | ------- | ------- | ----------------------------------------- |
+| Coding            | Anthropic/claude-sonnet-4 | 5       | 3    | 3       | 1       | Complex code gen, debugging, refactoring  |
+| Reasoning         | Anthropic/claude-opus-4   | 5       | 5    | 4       | 1       | Architecture decisions, complex analysis  |
+| Thinking          | Gemini/gemini-2.5-flash   | 4       | 1    | 2       | 1       | Research, deep investigation, comparisons |
+| Infrastructure    | Anthropic/claude-sonnet-4 | 5       | 3    | 3       | 1       | Terraform, K8s, Docker, cloud configs     |
+| Data Analysis     | Gemini/gemini-2.5-flash   | 4       | 1    | 2       | 1       | Large datasets, SQL, ETL, visualization   |
+| Business          | OpenAI/gpt-4o-mini        | 3       | 1    | 1       | 1       | KPIs, proposals, meeting summaries        |
+| Creative Writing  | OpenAI/gpt-4o-mini        | 4       | 1    | 1       | 1       | Blog posts, copy, scripts, narratives     |
+| Security          | Anthropic/claude-sonnet-4 | 5       | 3    | 3       | 1       | Vulnerability analysis, threat modeling   |
+| Medical           | local-ollama (privacy)    | 2       | 0    | 3       | 5       | Always local -- HIPAA, patient data       |
+| Legal             | local-ollama (privacy)    | 2       | 0    | 3       | 5       | Always local if NDA/privileged content    |
+| Translation       | local-ollama/gemma3:4b    | 3       | 0    | 2       | 5       | Simple translations, i18n                 |
+| Image Generation  | IMAGE_GEMINI              | 4       | 2    | 2       | 1       | Text-to-image, logos, illustrations       |
+| File Generation   | FILE_GENERATION           | 4       | 2    | 2       | 1       | PDF, CSV, DOCX export                     |
+| Privacy-sensitive | local-ollama/gemma3:4b    | 2       | 0    | 3       | 5       | Any content with PII, financial, medical  |
+| General Chat      | OpenAI/gpt-4o-mini        | 3       | 1    | 1       | 1       | Small talk, Q&A, summaries                |
 
 ### When to Use Each Provider
 
-| Provider | Use When | Avoid When |
-| --- | --- | --- |
+| Provider                      | Use When                                                                    | Avoid When                                               |
+| ----------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------- |
 | **Anthropic claude-sonnet-4** | Code generation, debugging, code review, security audits, technical writing | Simple Q&A, cost-sensitive tasks, privacy-sensitive data |
-| **Anthropic claude-opus-4** | Complex reasoning, architecture decisions, deep analysis, system design | Simple tasks, high-volume workloads (expensive) |
-| **OpenAI gpt-4o-mini** | Creative writing, general chat, summaries, low-latency requirements | Complex coding, deep reasoning, privacy-sensitive |
-| **OpenAI gpt-4o** | Fallback for coding tasks when Anthropic is unavailable | Cost-sensitive tasks (expensive) |
-| **Gemini gemini-2.5-flash** | Image analysis, file parsing, data analysis, research, large context | Privacy-sensitive content, offline scenarios |
-| **DeepSeek deepseek-chat** | Math problems, algorithms, competitive programming, cost-sensitive coding | Privacy-sensitive, complex natural language tasks |
-| **local-ollama** | Privacy-sensitive, simple Q&A, translations, offline usage, cost-free tasks | Complex reasoning (quality gap vs. cloud) |
-| **IMAGE_GEMINI** | Image generation, default image provider | Offline-only deployments |
-| **IMAGE_OPENAI (DALL-E)** | Photorealistic images, highest quality image gen | Budget-constrained, Gemini is available |
-| **IMAGE_LOCAL (SD)** | Offline image generation, zero-cost images | Quality matters more than cost |
+| **Anthropic claude-opus-4**   | Complex reasoning, architecture decisions, deep analysis, system design     | Simple tasks, high-volume workloads (expensive)          |
+| **OpenAI gpt-4o-mini**        | Creative writing, general chat, summaries, low-latency requirements         | Complex coding, deep reasoning, privacy-sensitive        |
+| **OpenAI gpt-4o**             | Fallback for coding tasks when Anthropic is unavailable                     | Cost-sensitive tasks (expensive)                         |
+| **Gemini gemini-2.5-flash**   | Image analysis, file parsing, data analysis, research, large context        | Privacy-sensitive content, offline scenarios             |
+| **DeepSeek deepseek-chat**    | Math problems, algorithms, competitive programming, cost-sensitive coding   | Privacy-sensitive, complex natural language tasks        |
+| **local-ollama**              | Privacy-sensitive, simple Q&A, translations, offline usage, cost-free tasks | Complex reasoning (quality gap vs. cloud)                |
+| **IMAGE_GEMINI**              | Image generation, default image provider                                    | Offline-only deployments                                 |
+| **IMAGE_OPENAI (DALL-E)**     | Photorealistic images, highest quality image gen                            | Budget-constrained, Gemini is available                  |
+| **IMAGE_LOCAL (SD)**          | Offline image generation, zero-cost images                                  | Quality matters more than cost                           |
 
 ### Fallback Chain Strategy
 
 The routing engine builds a 3-layer fallback chain for every decision. The strategy varies by primary provider:
 
 **Primary is Cloud:**
+
 ```
 1. Selected cloud provider/model
 2. local-ollama / gemma3:4b (if Ollama healthy)
@@ -200,6 +216,7 @@ The routing engine builds a 3-layer fallback chain for every decision. The strat
 ```
 
 **Primary is Local:**
+
 ```
 1. local-ollama / selected local model
 2. Healthy cloud providers in priority order:
@@ -207,12 +224,14 @@ The routing engine builds a 3-layer fallback chain for every decision. The strat
 ```
 
 **Privacy-Enforced:**
+
 ```
 1. local-ollama / gemma3:4b
 2. (NO cloud fallbacks -- chain filtered to local only)
 ```
 
 **Image Generation:**
+
 ```
 1. IMAGE_GEMINI / gemini-2.5-flash-image
 2. IMAGE_OPENAI / dall-e-3
@@ -227,12 +246,12 @@ Cloud provider priority order is fixed: Anthropic > OpenAI > Gemini. This reflec
 
 For a typical workload of 1000 messages/day with average 500 input + 200 output tokens:
 
-| Provider             | Daily Cost | Monthly Cost |
-| -------------------- | ---------- | ------------ |
-| OpenAI gpt-4o-mini   | $0.20      | $6           |
-| Gemini 2.5 Flash     | $0.10      | $3           |
-| DeepSeek             | $0.13      | $4           |
-| OpenAI gpt-4o        | $3.25      | $98          |
-| Anthropic Claude Sonnet | $3.50   | $105         |
-| Anthropic Claude Opus | $18.25    | $548         |
-| Local Ollama         | $0         | $0           |
+| Provider                | Daily Cost | Monthly Cost |
+| ----------------------- | ---------- | ------------ |
+| OpenAI gpt-4o-mini      | $0.20      | $6           |
+| Gemini 2.5 Flash        | $0.10      | $3           |
+| DeepSeek                | $0.13      | $4           |
+| OpenAI gpt-4o           | $3.25      | $98          |
+| Anthropic Claude Sonnet | $3.50      | $105         |
+| Anthropic Claude Opus   | $18.25     | $548         |
+| Local Ollama            | $0         | $0           |

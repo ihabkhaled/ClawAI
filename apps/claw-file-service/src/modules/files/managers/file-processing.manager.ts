@@ -3,13 +3,20 @@ import { RabbitMQService } from '@claw/shared-rabbitmq';
 import {
   EventPattern,
   type FileChunkedPayload,
+  type FileExtractionFailedPayload,
   type FileFailedPayload,
+  type FileOcrCompletedPayload,
+  type FileOcrFailedPayload,
+  type FileOcrFailureStage,
+  type FileOcrStartedPayload,
   FileIngestionStatus as SharedFileIngestionStatus,
 } from '@claw/shared-types';
 import { type File, FileIngestionStatus } from '../../../generated/prisma';
 import { readFile } from '../../../common/utilities';
 import { extractTextFromPdf } from '../../../common/utilities/pdf-parser.utility';
 import { extractTextFromDocx } from '../../../common/utilities/docx-parser.utility';
+import { extractTextFromImage } from '../../../common/utilities/ocr-parser.utility';
+import { AppConfig } from '../../../app/config/app.config';
 import { FilesRepository } from '../repositories/files.repository';
 import { FileChunksRepository } from '../repositories/file-chunks.repository';
 import { type ChunkData } from '../types/files.types';
@@ -46,7 +53,7 @@ export class FileProcessingManager {
 
     try {
       const rawBuffer = readFile(file.storagePath);
-      const textContent = await this.extractText(rawBuffer, file.mimeType, file.filename);
+      const textContent = await this.extractText(rawBuffer, file, file.storagePath);
       const chunks = this.splitIntoChunks(textContent, file.mimeType, file.id);
 
       await this.fileChunksRepository.createMany(chunks);
@@ -65,16 +72,7 @@ export class FileProcessingManager {
       const errorMessage = error instanceof Error ? error.message : 'Unknown processing error';
       this.logger.error(`File ${file.id} processing failed: ${errorMessage}`);
       await this.updateIngestionStatus(file.id, FileIngestionStatus.FAILED);
-
-      const failedPayload: FileFailedPayload = {
-        fileId: file.id,
-        userId: file.userId,
-        filename: file.filename,
-        errorMessage,
-        failureStage: 'EXTRACTION',
-        timestamp: new Date().toISOString(),
-      };
-      void this.rabbitMQService.publish(EventPattern.FILE_FAILED, failedPayload);
+      this.publishExtractionFailure(file, errorMessage);
     }
   }
 
@@ -83,10 +81,11 @@ export class FileProcessingManager {
     await this.filesRepository.updateIngestionStatus(fileId, status);
   }
 
-  private async extractText(buffer: Buffer, mimeType: string, filename: string): Promise<string> {
+  private async extractText(buffer: Buffer, file: File, storagePath: string): Promise<string> {
+    const { mimeType, filename } = file;
+
     if (mimeType === MIME_TYPE_PDF) {
-      this.logger.debug(`extractText: parsing PDF "${filename}"`);
-      return extractTextFromPdf(buffer);
+      return this.extractPdfText(buffer, file, storagePath);
     }
 
     if (mimeType === MIME_TYPE_DOCX) {
@@ -100,12 +99,122 @@ export class FileProcessingManager {
     }
 
     if (mimeType.startsWith('image/')) {
-      this.logger.debug(`extractText: image file "${filename}" — storing base64 reference`);
-      return `[Image file: ${filename}]`;
+      return this.extractImageText(file, storagePath);
     }
 
     this.logger.debug(`extractText: text file "${filename}" (${mimeType}) — UTF-8 decode`);
     return buffer.toString('utf-8');
+  }
+
+  // Slice D backend 3 — PDF extraction with OCR fallback for scanned PDFs.
+  // The pdf-parser utility returns { text, isScanned } where isScanned means
+  // the text layer is too short to be real content. When OCR is enabled we
+  // route the same file through tesseract; otherwise we keep the original
+  // (possibly empty) text so existing behaviour is preserved.
+  private async extractPdfText(buffer: Buffer, file: File, storagePath: string): Promise<string> {
+    const cfg = AppConfig.get();
+    const { text, isScanned } = await extractTextFromPdf(buffer, cfg.SCANNED_PDF_CHAR_THRESHOLD);
+    this.logger.debug(
+      `extractPdfText: fileId=${file.id} chars=${String(text.length)} isScanned=${String(isScanned)} ocrEnabled=${String(cfg.OCR_ENABLED)}`,
+    );
+    if (!isScanned || !cfg.OCR_ENABLED) {
+      return text;
+    }
+    return this.runOcrFallback(file, storagePath, true);
+  }
+
+  // Slice D backend 3 — Image OCR branch.
+  // Off by default (OCR_ENABLED=false → returns the legacy placeholder so
+  // image attachments still appear in chunks the way they did pre-Slice D).
+  private async extractImageText(file: File, storagePath: string): Promise<string> {
+    const cfg = AppConfig.get();
+    if (!cfg.OCR_ENABLED) {
+      this.logger.debug(`extractImageText: OCR disabled — fileId=${file.id} placeholder only`);
+      return `[Image file: ${file.filename}]`;
+    }
+    return this.runOcrFallback(file, storagePath, false);
+  }
+
+  // Single OCR entry-point: publishes FILE_OCR_STARTED → FILE_OCR_COMPLETED
+  // (or FILE_OCR_FAILED on error). Returns the OCR text on success; on
+  // failure returns a safe placeholder so chunking still emits a row.
+  private async runOcrFallback(
+    file: File,
+    storagePath: string,
+    isScannedPdf: boolean,
+  ): Promise<string> {
+    const cfg = AppConfig.get();
+    const startedPayload: FileOcrStartedPayload = {
+      fileId: file.id,
+      userId: file.userId,
+      mimeType: file.mimeType,
+      isImageFile: file.mimeType.startsWith('image/'),
+      isScannedPdf,
+      timestamp: new Date().toISOString(),
+    };
+    void this.rabbitMQService.publish(EventPattern.FILE_OCR_STARTED, startedPayload);
+
+    try {
+      const result = await extractTextFromImage(storagePath, file.mimeType, {
+        language: cfg.OCR_LANGUAGE,
+        timeoutMs: cfg.OCR_TIMEOUT_MS,
+        confidenceMin: cfg.OCR_CONFIDENCE_MIN,
+        workerThreads: cfg.OCR_WORKER_THREADS,
+      });
+      const completedPayload: FileOcrCompletedPayload = {
+        fileId: file.id,
+        userId: file.userId,
+        extractedTextLength: result.text.length,
+        confidence: result.confidence,
+        durationMs: result.durationMs,
+        timestamp: new Date().toISOString(),
+      };
+      void this.rabbitMQService.publish(EventPattern.FILE_OCR_COMPLETED, completedPayload);
+      this.logger.log(
+        `runOcrFallback: fileId=${file.id} chars=${String(result.text.length)} confidence=${result.confidence.toFixed(2)}`,
+      );
+      return result.text.length > 0 ? result.text : `[Image file: ${file.filename}]`;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'OCR failed';
+      const stage: FileOcrFailureStage = errorMessage.toLowerCase().includes('timed out')
+        ? 'TIMEOUT'
+        : 'PROCESSING';
+      const failedPayload: FileOcrFailedPayload = {
+        fileId: file.id,
+        userId: file.userId,
+        errorMessage,
+        failureStage: stage,
+        timestamp: new Date().toISOString(),
+      };
+      void this.rabbitMQService.publish(EventPattern.FILE_OCR_FAILED, failedPayload);
+      this.logger.error(`runOcrFallback: fileId=${file.id} stage=${stage} — ${errorMessage}`);
+      return `[Image file: ${file.filename}]`;
+    }
+  }
+
+  // Slice D backend 3 — extraction failure publisher.
+  // Emits BOTH the new FILE_EXTRACTION_FAILED (more specific) and the legacy
+  // FILE_FAILED (deprecated, kept for one cycle for backward compat).
+  private publishExtractionFailure(file: File, errorMessage: string): void {
+    const extractionPayload: FileExtractionFailedPayload = {
+      fileId: file.id,
+      userId: file.userId,
+      filename: file.filename,
+      errorMessage,
+      failureStage: 'PARSE',
+      timestamp: new Date().toISOString(),
+    };
+    void this.rabbitMQService.publish(EventPattern.FILE_EXTRACTION_FAILED, extractionPayload);
+
+    const legacyPayload: FileFailedPayload = {
+      fileId: file.id,
+      userId: file.userId,
+      filename: file.filename,
+      errorMessage,
+      failureStage: 'EXTRACTION',
+      timestamp: new Date().toISOString(),
+    };
+    void this.rabbitMQService.publish(EventPattern.FILE_FAILED, legacyPayload);
   }
 
   private splitIntoChunks(content: string, mimeType: string, fileId: string): ChunkData[] {

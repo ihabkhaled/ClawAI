@@ -1,6 +1,8 @@
 import type { TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 import type { AttemptRecord } from './fallback-executor.types';
 import type { JudgeRefereeMetadata } from './judge-referee.types';
+import type { AnthropicMessage } from './anthropic-message-shape.types';
+import type { GeminiContent } from './gemini.types';
 
 export type RouteRoadmapStep = {
   stage: 'router' | 'decision' | 'research' | 'tool' | 'execution' | 'fallback';
@@ -263,4 +265,31 @@ export type FileGenerateResponse = {
   generationId: string;
   status: string;
   format: string;
+};
+
+// Slice D — Anthropic native Messages API request body shape (when
+// ENABLE_ANTHROPIC_NATIVE_PDF is on). Anthropic's native endpoint expects
+// `system` as a top-level string and per-message `content` as either a
+// string or a discriminated content-block array.
+export type AnthropicMessagesRequest = {
+  model: string;
+  messages: AnthropicMessage[];
+  stream: boolean;
+  system?: string;
+  temperature?: number;
+  max_tokens?: number;
+};
+
+// Slice D — Gemini native generateContent request body shape (when
+// ENABLE_GEMINI_FILES_API is on). Gemini expects `contents` (not
+// `messages`), with each `content` carrying typed `parts`.
+export type GeminiNativeChatRequest = {
+  model: string;
+  contents: GeminiContent[];
+  stream: boolean;
+  systemInstruction?: { parts: Array<{ text: string }> };
+  generationConfig?: {
+    temperature?: number;
+    maxOutputTokens?: number;
+  };
 };

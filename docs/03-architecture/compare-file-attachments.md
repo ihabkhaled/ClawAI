@@ -159,3 +159,178 @@ The following are intentionally out-of-scope and tracked for later slices:
 
 `apps/claw-frontend/src/types/i18n.types.ts` was updated atomically with
 the locales per ClawAI's atomic-i18n rule.
+
+---
+
+## Slice D close-out (2026-05-31)
+
+Slice D burns down the four largest items on Slice A's "NOT in scope" list
+plus the table-extraction follow-up Slices B/C deferred. It is an
+additive, default-OFF rollout: every new path is gated behind a feature
+flag so existing installs keep the Slice A behaviour until the operator
+opts in.
+
+### 1. `file_delivery_records` table (extracted from JSON)
+
+**Status: DONE (Slice D foundation 1).**
+
+Slice A wrote per-model delivery into `ChatMessage.metadata.fileDelivery`
+(JSON column). Slice D extracts that data into a dedicated
+`file_delivery_records` Postgres table on chat-service, with proper
+indexes for the dominant query "show me every message that received
+file X" and "show me every model that ever received file Y".
+
+- **Dual-write window**: chat-service continues writing the JSON column
+  AND the new table for the entire Slice D rollout, so existing
+  consumers (FE rendering, admin debug tools) see no behavioural
+  change. The legacy JSON column is the source of truth for now; the
+  table is the secondary copy. After 30 days of zero divergence in the
+  drift checker, a follow-up slice flips the read path to the table
+  and drops the JSON column. See ADR-054 for the migration plan.
+- **Indexes**: `(messageId)`, `(fileId)`, `(threadId)`, plus a partial
+  index on `(fileId)` where `deliveryMode = 'NATIVE_IMAGE'` to keep
+  the common "vision-capable lanes only" query cheap.
+- **Schema**: see `apps/claw-chat-service/prisma/schema.prisma`
+  (model `FileDeliveryRecord`). Backfill migration is idempotent and
+  re-runnable; failures log to `server-logs` with
+  `requestId=slice-d-backfill-<runId>`.
+
+### 2. Native PDF input for Anthropic
+
+**Status: DONE.** Was on Slice A's "NOT in scope" list.
+
+When `ENABLE_ANTHROPIC_NATIVE_PDF=true`, the Anthropic adapter
+(`apps/claw-connector-service/src/modules/connectors/managers/adapters/anthropic.adapter.ts`)
+forwards PDFs as the native `document` content part instead of routing
+them through extracted-text. Per-model `attachmentDelivery` records
+the mode as `NATIVE_PDF` so the FE renders the new
+`compare.delivery.anthropicNativePdf` badge.
+
+Requires bumping the `anthropic-version` header to `2024-06-01`. The
+bump is centralised in
+`apps/claw-connector-service/src/modules/connectors/constants/anthropic.constants.ts`
+so every Anthropic call (chat + compare + judge + critic) uses the
+new version. Backward compatibility for non-PDF requests is
+unchanged — only the new content type requires the bumped header.
+
+Default OFF. When OFF, PDFs fall through to the Slice A behaviour
+(extracted-text injection in the system block, mode
+`EXTRACTED_TEXT`).
+
+### 3. Gemini Files API for large attachments
+
+**Status: DONE.**
+
+When `ENABLE_GEMINI_FILES_API=true` and an attachment is at least
+`GEMINI_FILES_API_SIZE_THRESHOLD_BYTES` (default 20 MB), the Gemini
+adapter uploads the file to Google's Files API, gets a `file://` URI
+back, and references that URI in the request payload. Below the
+threshold, inline base64 continues (the Slice A behaviour).
+
+Trade-offs the implementation makes:
+
+- **TTL alignment**. Gemini stores Files API entries for 48 h. We
+  cache the URI for 24 h (`GEMINI_FILES_API_TTL_MINUTES=1440`) so a
+  cache hit can never serve an expired URI. On the second pass for
+  the same file we re-upload rather than risk a 404 at inference.
+- **Concurrent uploads**. `GEMINI_CONCURRENT_UPLOADS_LIMIT` (default 3) bounds simultaneous uploads per chat-service container to
+  protect against thundering-herd uploads when a compare run spans
+  many models.
+- **Failure mode**. An upload failure within
+  `GEMINI_FILES_API_TIMEOUT_MS` (default 60 s) falls back to inline
+  base64 transparently with a `warn`-level log; the user still gets
+  a response. The per-model `attachmentDelivery` records the mode
+  as `NATIVE_IMAGE` (or whatever the underlying delivery is); the
+  Files-API vs inline distinction is logged but not surfaced to the
+  user beyond the transient `compare.delivery.geminiUploading`
+  status pill.
+
+Default OFF.
+
+### 4. OCR pipeline for images and scanned PDFs
+
+**Status: DONE.** Was on Slice A's "NOT in scope" list.
+
+`claw-file-service` gains a tesseract-backed OCR worker pool. The
+pipeline activates when `OCR_ENABLED=true` and one of two conditions
+applies:
+
+1. **Scanned PDFs**. After PDF text extraction, if the extracted text
+   has fewer than `SCANNED_PDF_CHAR_THRESHOLD` characters (default 100) the PDF is treated as scanned and routed through OCR. Each
+   page is rendered to an image, then tesseract extracts text.
+2. **Image attachments for text-only models**. The Slice A
+   AttachmentResolver marked these as `OMITTED_NO_VISION`. With OCR
+   enabled the resolver instead routes them through OCR and emits
+   them as `EXTRACTED_TEXT` so the non-vision lane still receives
+   the content.
+
+Outputs:
+
+- OCR text is stored on the `File.content` column (same field
+  PDF/DOCX text already uses) so context-assembly's existing chunk
+  loader picks it up with no changes.
+- Tesseract reports a confidence score; results below
+  `OCR_CONFIDENCE_MIN` (default 0.5) are tagged on the FileDelivery
+  metadata so the judge/critic prompt sees "low-confidence OCR"
+  and can weigh it accordingly.
+- OCR worker pool: `OCR_WORKER_THREADS` (default 2) parallel
+  workers per file-service container. Each worker has its own
+  `OCR_TIMEOUT_MS` (default 30 s) per file.
+- `OCR_LANGUAGE` selects the tesseract language pack; default
+  `eng`. Multi-language uploads use `eng+ara`-style combinations.
+
+The FE shows the transient `compare.delivery.ocrProcessing` pill
+while OCR runs and `compare.delivery.ocrFailed` (with retry on the
+next attachment use) if the worker times out or returns
+zero-confidence output.
+
+Default OFF.
+
+### Status of items previously listed as NOT in scope
+
+| Slice A "NOT" item                               | Status   | Where it landed                             |
+| ------------------------------------------------ | -------- | ------------------------------------------- |
+| Native PDF input (Anthropic / Gemini)            | DONE     | Slice D, sections 2 + 3 above               |
+| OCR for image attachments                        | DONE     | Slice D, section 4 above                    |
+| Dedicated `file_delivery_records` table          | DONE     | Slice D, section 1 above (dual-write)       |
+| Dedicated RBAC permission `compare.attach_files` | DONE     | Slice C foundation 2                        |
+| Plan gate on attached-file count / total bytes   | DONE     | Slice C foundation 2                        |
+| Retention TTL on compare-attached files          | DONE     | Slice C foundation 3 (ADR-053)              |
+| Prompt-injection wrapper as a standalone module  | DEFERRED | Tracked for the agent-prompt shielding work |
+| ZIP / archive expansion                          | DONE     | Slice C foundation 3 (ADR-053)              |
+
+### Env vars added (all default-safe; features OFF by default)
+
+| Env var                                 | Default      | Owner        |
+| --------------------------------------- | ------------ | ------------ |
+| `ENABLE_ANTHROPIC_NATIVE_PDF`           | `false`      | chat-service |
+| `ENABLE_GEMINI_FILES_API`               | `false`      | chat-service |
+| `GEMINI_FILES_API_SIZE_THRESHOLD_BYTES` | `20000000`   | chat-service |
+| `GEMINI_FILES_API_TIMEOUT_MS`           | `60000`      | chat-service |
+| `GEMINI_FILES_API_CACHE_ENABLED`        | `true`       | chat-service |
+| `GEMINI_FILES_API_TTL_MINUTES`          | `1440` (24h) | chat-service |
+| `GEMINI_CONCURRENT_UPLOADS_LIMIT`       | `3`          | chat-service |
+| `OCR_ENABLED`                           | `false`      | file-service |
+| `OCR_TIMEOUT_MS`                        | `30000`      | file-service |
+| `OCR_CONFIDENCE_MIN`                    | `0.5`        | file-service |
+| `OCR_LANGUAGE`                          | `eng`        | file-service |
+| `OCR_WORKER_THREADS`                    | `2`          | file-service |
+| `SCANNED_PDF_CHAR_THRESHOLD`            | `100`        | file-service |
+
+Plus the centralised `ANTHROPIC_VERSION` constant bumped to
+`2024-06-01` in connector-service.
+
+### i18n keys added (all 9 locales, real native translations)
+
+- `compare.delivery.ocrProcessing` — "Extracting text from image…"
+- `compare.delivery.ocrFailed` — "Text extraction failed"
+- `compare.delivery.geminiUploading` — "Uploading large file to Gemini…"
+- `compare.delivery.anthropicNativePdf` — "PDF sent natively to Anthropic"
+- `files.lifecycle.uploadStarted` — "Upload starting…"
+
+### Related ADRs
+
+- ADR-054: `file_delivery_records` extraction from JSON (dual-write
+  migration plan and read-flip criteria).
+- ADR-053: File retention sweeper + ZIP archive guardrails.
+- ADR-050: Critic as sibling plan feature of Judge.

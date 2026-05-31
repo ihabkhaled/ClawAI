@@ -213,6 +213,75 @@ export interface FileArchiveExpandedPayload extends BaseEventPayload {
   totalExtractedBytes: number;
 }
 
+// ---- Slice D — File lifecycle + OCR events ----
+
+export type FileExtractionFailureStage = 'PARSE' | 'CHUNK' | 'OCR';
+export type FileDownloadMethod = 'BROWSER' | 'INTERNAL_API';
+export type FileDeletionReason = 'USER' | 'RETENTION' | 'ADMIN';
+export type FileOcrFailureStage = 'WORKER_INIT' | 'PROCESSING' | 'TIMEOUT';
+
+export interface FileUploadStartedPayload extends BaseEventPayload {
+  fileId: string;
+  userId: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+}
+
+/**
+ * Emitted when the upload + ingestion pipeline finishes successfully. Shape
+ * mirrors the legacy {@link FileUploadedPayload} so existing consumers can be
+ * migrated without code changes; once the deprecated FILE_UPLOADED pattern is
+ * retired this type may diverge.
+ */
+export type FileUploadCompletedPayload = FileUploadedPayload;
+
+export interface FileExtractionFailedPayload extends BaseEventPayload {
+  fileId: string;
+  userId: string;
+  filename: string;
+  errorMessage: string;
+  failureStage: FileExtractionFailureStage;
+}
+
+export interface FileDownloadedPayload extends BaseEventPayload {
+  fileId: string;
+  userId: string;
+  downloadedBy: string;
+  downloadMethod: FileDownloadMethod;
+}
+
+export interface FileDeletedPayload extends BaseEventPayload {
+  fileId: string;
+  userId: string;
+  filename: string;
+  deletedBy: string;
+  reason: FileDeletionReason;
+}
+
+export interface FileOcrStartedPayload extends BaseEventPayload {
+  fileId: string;
+  userId: string;
+  mimeType: string;
+  isImageFile: boolean;
+  isScannedPdf: boolean;
+}
+
+export interface FileOcrCompletedPayload extends BaseEventPayload {
+  fileId: string;
+  userId: string;
+  extractedTextLength: number;
+  confidence: number;
+  durationMs: number;
+}
+
+export interface FileOcrFailedPayload extends BaseEventPayload {
+  fileId: string;
+  userId: string;
+  errorMessage: string;
+  failureStage: FileOcrFailureStage;
+}
+
 // ---- Memory Events ----
 
 export interface MemoryExtractedPayload extends BaseEventPayload {
@@ -721,6 +790,14 @@ export type EventPayload =
   | FileFailedPayload
   | FileRetentionExpiredPayload
   | FileArchiveExpandedPayload
+  | FileUploadStartedPayload
+  | FileUploadCompletedPayload
+  | FileExtractionFailedPayload
+  | FileDownloadedPayload
+  | FileDeletedPayload
+  | FileOcrStartedPayload
+  | FileOcrCompletedPayload
+  | FileOcrFailedPayload
   | MemoryExtractedPayload
   | AuditEventPayload
   | HealthCheckPayload

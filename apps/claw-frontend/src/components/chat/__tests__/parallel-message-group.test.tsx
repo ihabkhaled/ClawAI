@@ -1,4 +1,6 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import type { ReactElement, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ParallelMessageGroup } from '@/components/chat/parallel-message-group';
@@ -9,6 +11,13 @@ import type { ChatMessage } from '@/types';
 vi.mock('@/lib/i18n/use-translation', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
 }));
+
+function withQueryClient(children: ReactNode): ReactElement {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
 
 const t = (key: string): string => key;
 
@@ -51,7 +60,7 @@ describe('ParallelMessageGroup — in-thread compare card parity', () => {
       makeAssistantMessage('msg-2', 'anthropic', 'claude-sonnet-4'),
     ];
 
-    render(<ParallelMessageGroup messages={messages} t={t} />);
+    render(withQueryClient(<ParallelMessageGroup messages={messages} t={t} />));
 
     // Toolbar (one row per card) — these labels come from CompareResultCard
     // (the SAME card used by /chat/compare). Two cards => two of each.
@@ -90,7 +99,7 @@ describe('ParallelMessageGroup — in-thread compare card parity', () => {
       },
     );
 
-    render(<ParallelMessageGroup messages={[messageWithImage]} t={t} />);
+    render(withQueryClient(<ParallelMessageGroup messages={[messageWithImage]} t={t} />));
 
     // AttachmentDeliveryChip is the shared file-delivery indicator that the
     // compare-page card already renders — confirm it shows up in-thread too.

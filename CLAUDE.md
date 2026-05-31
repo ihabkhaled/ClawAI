@@ -1271,6 +1271,21 @@ Single root `.env` (copy from `.env.example`). Groups:
   - RETRIEVAL_MEMORY_SEMANTIC_BUDGET (default 5) — top-K memories per retrieval
   - RETRIEVAL_CONTEXT_SEMANTIC_BUDGET (default 12) — top-K pack items per retrieval
   - RETRIEVAL_TOKEN_GUARD_PCT (default 0.4) — fraction of token budget memory+context may consume
+- Compare/Judge/Critic file attachments — Slice D foundation 3 (2026-05-31, ADR-054, docs/03-architecture/compare-file-attachments.md Slice D close-out). All flags default OFF / safe-mode:
+  - ENABLE_ANTHROPIC_NATIVE_PDF (default false) — chat-service: when true, Anthropic adapter forwards PDFs as the native `document` content part instead of routing through extracted-text. Requires `anthropic-version >= 2024-06-01` (bumped centrally in `apps/claw-connector-service/src/modules/connectors/constants/anthropic.constants.ts`).
+  - ENABLE_GEMINI_FILES_API (default false) — chat-service: when true, attachments >= GEMINI_FILES_API_SIZE_THRESHOLD_BYTES use Gemini's Files API.
+  - GEMINI_FILES_API_SIZE_THRESHOLD_BYTES (default 20000000 = 20 MB)
+  - GEMINI_FILES_API_TIMEOUT_MS (default 60000)
+  - GEMINI_FILES_API_CACHE_ENABLED (default true) — chat-service in-process URI cache keyed by (fileId, model)
+  - GEMINI_FILES_API_TTL_MINUTES (default 1440 = 24h) — half of Google's 48h server-side TTL
+  - GEMINI_CONCURRENT_UPLOADS_LIMIT (default 3) — max parallel Files API uploads per chat-service container
+  - OCR_ENABLED (default false) — file-service: tesseract worker pool for scanned PDFs (extracted text < SCANNED_PDF_CHAR_THRESHOLD) and images bound for text-only models
+  - OCR_TIMEOUT_MS (default 30000) — per-file tesseract timeout
+  - OCR_CONFIDENCE_MIN (default 0.5) — below this we tag the FileDelivery as low-confidence
+  - OCR_LANGUAGE (default `eng`) — tesseract language pack (e.g. `eng+ara`)
+  - OCR_WORKER_THREADS (default 2) — parallel tesseract workers per file-service container
+  - SCANNED_PDF_CHAR_THRESHOLD (default 100) — char count below which a PDF is treated as scanned and routed to OCR
+- Dual-write window: chat-service now writes `FileDeliveryEntry` data to BOTH the legacy `ChatMessage.metadata.fileDelivery` JSON column AND the new `file_delivery_records` table (ADR-054). The JSON column stays the source of truth for the first 30 days of zero divergence in the drift checker, then the read path flips to the table and the JSON column is dropped in a follow-up migration. Set `FILE_DELIVERY_RECORDS_DUAL_WRITE=false` to disable the new table write (legacy JSON only) — escape hatch only; remove after the dual-write window closes.
 
 ---
 

@@ -572,6 +572,9 @@ export const ru: TranslationDictionary = {
       denied:
         'У вас нет разрешения на доступ к файлам. Обратитесь к администратору вашего рабочего пространства.',
     },
+    lifecycle: {
+      uploadStarted: 'Начинается загрузка…',
+    },
   },
   context: {
     title: 'Пакеты контекста',
@@ -1128,6 +1131,10 @@ export const ru: TranslationDictionary = {
       omittedUnsupported: 'Пропущено (не поддерживается)',
       truncatedText: 'Усечено',
       tooltip: 'Сводка доставки по моделям',
+      ocrProcessing: 'Извлечение текста из изображения…',
+      ocrFailed: 'Не удалось извлечь текст',
+      geminiUploading: 'Загрузка большого файла в Gemini…',
+      anthropicNativePdf: 'PDF отправлен в Anthropic в исходном формате',
     },
   },
   judgeReview: {

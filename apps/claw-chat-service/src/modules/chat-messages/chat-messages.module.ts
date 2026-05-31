@@ -7,6 +7,7 @@ import { AnswerRepairManager } from './managers/answer-repair.manager';
 import { BestOfNManager } from './managers/best-of-n.manager';
 import { TaskDecompositionManager } from './managers/task-decomposition.manager';
 import { ChatExecutionManager } from './managers/chat-execution.manager';
+import { GeminiFilesApiManager } from './managers/gemini-files-api.manager';
 import { ConsensusExecutionManager } from './managers/consensus-execution.manager';
 import { ContextAssemblyManager } from './managers/context-assembly.manager';
 import { EscalationChainManager } from './managers/escalation-chain.manager';
@@ -28,6 +29,8 @@ import { AccessControlService } from './services/access-control.service';
 import { AdvancedModuleModelSelectionService } from './services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from './services/local-model-selection.service';
 import { ChatMessagesRepository } from './repositories/chat-messages.repository';
+import { FileDeliveryRecordRepository } from './repositories/file-delivery-record.repository';
+import { FileDeliveryRecordService } from './services/file-delivery-record.service';
 import { ChatThreadsRepository } from '../chat-threads/repositories/chat-threads.repository';
 import { ContextReceiptsModule } from '../context-receipts/context-receipts.module';
 
@@ -40,6 +43,7 @@ import { ContextReceiptsModule } from '../context-receipts/context-receipts.modu
     BestOfNManager,
     TaskDecompositionManager,
     ChatExecutionManager,
+    GeminiFilesApiManager,
     ConsensusExecutionManager,
     ContextAssemblyManager,
     EscalationChainManager,
@@ -61,8 +65,10 @@ import { ContextReceiptsModule } from '../context-receipts/context-receipts.modu
     AdvancedModuleModelSelectionService,
     LocalModelSelectionService,
     ChatMessagesRepository,
+    FileDeliveryRecordRepository,
+    FileDeliveryRecordService,
     ChatThreadsRepository,
   ],
-  exports: [ChatMessagesService, ChatMessagesRepository],
+  exports: [ChatMessagesService, ChatMessagesRepository, FileDeliveryRecordService],
 })
 export class ChatMessagesModule {}

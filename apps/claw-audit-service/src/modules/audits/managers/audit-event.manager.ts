@@ -28,9 +28,17 @@ import {
   EventPattern,
   type FileArchiveExpandedPayload,
   type FileChunkedPayload,
+  type FileDeletedPayload,
+  type FileDownloadedPayload,
+  type FileExtractionFailedPayload,
   type FileFailedPayload,
+  type FileOcrCompletedPayload,
+  type FileOcrFailedPayload,
+  type FileOcrStartedPayload,
   type FileRetentionExpiredPayload,
+  type FileUploadCompletedPayload,
   type FileUploadedPayload,
+  type FileUploadStartedPayload,
   type MemoryExtractedPayload,
   type MessageCompletedPayload,
   type RoutingDecisionMadePayload,
@@ -70,6 +78,12 @@ export class AuditEventManager implements OnModuleInit {
   // === File ingestion events (Slice B — added 2026-05-31) ===
   // Subscribes to file-service lifecycle events so that uploads, chunking
   // completion, and failures are persisted to the audit MongoDB collection.
+  // Slice D backend 3 (2026-05-31) added 8 new lifecycle events:
+  //   FILE_UPLOAD_STARTED / FILE_UPLOAD_COMPLETED (canonical, with FILE_UPLOADED kept as deprecated alias)
+  //   FILE_EXTRACTION_FAILED (more specific than FILE_FAILED)
+  //   FILE_DOWNLOADED (browser + internal API paths)
+  //   FILE_DELETED (canonical delete; emitted alongside FILE_RETENTION_EXPIRED)
+  //   FILE_OCR_STARTED / FILE_OCR_COMPLETED / FILE_OCR_FAILED
   private fileEventSubscriptions(): Array<[string, (data: unknown) => Promise<void>]> {
     return [
       [EventPattern.FILE_UPLOADED, (d) => this.handleFileUploaded(d as FileUploadedPayload)],
@@ -83,6 +97,26 @@ export class AuditEventManager implements OnModuleInit {
         EventPattern.FILE_ARCHIVE_EXPANDED,
         (d) => this.handleFileArchiveExpanded(d as FileArchiveExpandedPayload),
       ],
+      [
+        EventPattern.FILE_UPLOAD_STARTED,
+        (d) => this.handleFileUploadStarted(d as FileUploadStartedPayload),
+      ],
+      [
+        EventPattern.FILE_UPLOAD_COMPLETED,
+        (d) => this.handleFileUploadCompleted(d as FileUploadCompletedPayload),
+      ],
+      [
+        EventPattern.FILE_EXTRACTION_FAILED,
+        (d) => this.handleFileExtractionFailed(d as FileExtractionFailedPayload),
+      ],
+      [EventPattern.FILE_DOWNLOADED, (d) => this.handleFileDownloaded(d as FileDownloadedPayload)],
+      [EventPattern.FILE_DELETED, (d) => this.handleFileDeleted(d as FileDeletedPayload)],
+      [EventPattern.FILE_OCR_STARTED, (d) => this.handleFileOcrStarted(d as FileOcrStartedPayload)],
+      [
+        EventPattern.FILE_OCR_COMPLETED,
+        (d) => this.handleFileOcrCompleted(d as FileOcrCompletedPayload),
+      ],
+      [EventPattern.FILE_OCR_FAILED, (d) => this.handleFileOcrFailed(d as FileOcrFailedPayload)],
     ];
   }
 
@@ -842,6 +876,203 @@ export class AuditEventManager implements OnModuleInit {
     } catch (error) {
       this.logger.error(
         `handleFileRetentionExpired: failed fileId=${payload.fileId} — ${(error as Error).message}`,
+      );
+    }
+  }
+
+  // ==================== Slice D backend 3 — file lifecycle + OCR ====================
+  // Eight new handlers covering the canonical lifecycle/OCR events. None of
+  // these rethrow — file-service has already done the work, and re-failing in
+  // audit would DLQ the message without any operational benefit.
+
+  async handleFileUploadStarted(payload: FileUploadStartedPayload): Promise<void> {
+    this.logger.debug(
+      `handleFileUploadStarted: userId=${payload.userId} filename="${payload.filename}" mimeType=${payload.mimeType}`,
+    );
+    try {
+      await this.auditsService.createAuditLog({
+        userId: payload.userId,
+        action: 'file.upload_started',
+        entityType: 'file',
+        entityId: payload.fileId,
+        severity: 'LOW',
+        details: {
+          filename: payload.filename,
+          mimeType: payload.mimeType,
+          sizeBytes: payload.sizeBytes,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `handleFileUploadStarted: failed userId=${payload.userId} — ${(error as Error).message}`,
+      );
+    }
+  }
+
+  async handleFileUploadCompleted(payload: FileUploadCompletedPayload): Promise<void> {
+    this.logger.debug(
+      `handleFileUploadCompleted: fileId=${payload.fileId} userId=${payload.userId}`,
+    );
+    try {
+      await this.auditsService.createAuditLog({
+        userId: payload.userId,
+        action: 'file.upload_completed',
+        entityType: 'file',
+        entityId: payload.fileId,
+        severity: 'LOW',
+        details: {
+          filename: payload.fileName,
+          mimeType: payload.mimeType,
+          sizeBytes: payload.sizeBytes,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `handleFileUploadCompleted: failed fileId=${payload.fileId} — ${(error as Error).message}`,
+      );
+    }
+  }
+
+  async handleFileExtractionFailed(payload: FileExtractionFailedPayload): Promise<void> {
+    this.logger.debug(
+      `handleFileExtractionFailed: fileId=${payload.fileId} stage=${payload.failureStage}`,
+    );
+    try {
+      await this.auditsService.createAuditLog({
+        userId: payload.userId,
+        action: 'file.extraction_failed',
+        entityType: 'file',
+        entityId: payload.fileId,
+        severity: 'ERROR',
+        details: {
+          filename: payload.filename,
+          errorMessage: payload.errorMessage,
+          failureStage: payload.failureStage,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `handleFileExtractionFailed: failed fileId=${payload.fileId} — ${(error as Error).message}`,
+      );
+    }
+  }
+
+  async handleFileDownloaded(payload: FileDownloadedPayload): Promise<void> {
+    this.logger.debug(
+      `handleFileDownloaded: fileId=${payload.fileId} downloadedBy=${payload.downloadedBy} method=${payload.downloadMethod}`,
+    );
+    try {
+      await this.auditsService.createAuditLog({
+        userId: payload.userId,
+        action: 'file.downloaded',
+        entityType: 'file',
+        entityId: payload.fileId,
+        severity: 'LOW',
+        details: {
+          downloadedBy: payload.downloadedBy,
+          downloadMethod: payload.downloadMethod,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `handleFileDownloaded: failed fileId=${payload.fileId} — ${(error as Error).message}`,
+      );
+    }
+  }
+
+  async handleFileDeleted(payload: FileDeletedPayload): Promise<void> {
+    this.logger.debug(
+      `handleFileDeleted: fileId=${payload.fileId} reason=${payload.reason} deletedBy=${payload.deletedBy}`,
+    );
+    try {
+      await this.auditsService.createAuditLog({
+        userId: payload.userId,
+        action: 'file.deleted',
+        entityType: 'file',
+        entityId: payload.fileId,
+        // ADMIN deletes are MEDIUM — they bypass the user-side delete path.
+        // USER + RETENTION are routine LOW-severity events.
+        severity: payload.reason === 'ADMIN' ? 'MEDIUM' : 'LOW',
+        details: {
+          filename: payload.filename,
+          deletedBy: payload.deletedBy,
+          reason: payload.reason,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `handleFileDeleted: failed fileId=${payload.fileId} — ${(error as Error).message}`,
+      );
+    }
+  }
+
+  async handleFileOcrStarted(payload: FileOcrStartedPayload): Promise<void> {
+    this.logger.debug(
+      `handleFileOcrStarted: fileId=${payload.fileId} mimeType=${payload.mimeType} isScannedPdf=${String(payload.isScannedPdf)}`,
+    );
+    try {
+      await this.auditsService.createAuditLog({
+        userId: payload.userId,
+        action: 'file.ocr_started',
+        entityType: 'file',
+        entityId: payload.fileId,
+        severity: 'LOW',
+        details: {
+          mimeType: payload.mimeType,
+          isImageFile: payload.isImageFile,
+          isScannedPdf: payload.isScannedPdf,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `handleFileOcrStarted: failed fileId=${payload.fileId} — ${(error as Error).message}`,
+      );
+    }
+  }
+
+  async handleFileOcrCompleted(payload: FileOcrCompletedPayload): Promise<void> {
+    this.logger.debug(
+      `handleFileOcrCompleted: fileId=${payload.fileId} chars=${String(payload.extractedTextLength)} confidence=${payload.confidence.toFixed(2)}`,
+    );
+    try {
+      await this.auditsService.createAuditLog({
+        userId: payload.userId,
+        action: 'file.ocr_completed',
+        entityType: 'file',
+        entityId: payload.fileId,
+        severity: 'LOW',
+        details: {
+          extractedTextLength: payload.extractedTextLength,
+          confidence: payload.confidence,
+          durationMs: payload.durationMs,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `handleFileOcrCompleted: failed fileId=${payload.fileId} — ${(error as Error).message}`,
+      );
+    }
+  }
+
+  async handleFileOcrFailed(payload: FileOcrFailedPayload): Promise<void> {
+    this.logger.debug(
+      `handleFileOcrFailed: fileId=${payload.fileId} stage=${payload.failureStage}`,
+    );
+    try {
+      await this.auditsService.createAuditLog({
+        userId: payload.userId,
+        action: 'file.ocr_failed',
+        entityType: 'file',
+        entityId: payload.fileId,
+        severity: 'ERROR',
+        details: {
+          errorMessage: payload.errorMessage,
+          failureStage: payload.failureStage,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `handleFileOcrFailed: failed fileId=${payload.fileId} — ${(error as Error).message}`,
       );
     }
   }

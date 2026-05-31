@@ -1,28 +1,32 @@
 import { Badge } from '@/components/ui/badge';
+import { useAttachmentDeliveryChip } from '@/hooks/chat/use-attachment-delivery-chip';
 import { useTranslation } from '@/lib/i18n';
 import type { AttachmentDeliveryChipProps } from '@/types';
 import { buildFileDeliveryTooltip, countFileDeliveriesByMode } from '@/utilities';
 
 // Pure presentational chip strip showing per-mode counts for one compare lane.
-// Backed by chat-service's `metadata.fileDelivery` JSON (mirrored to FE on
-// `ParallelModelResponse.attachmentDelivery`). One chip per mode that has at
-// least one file, plus a native `title` tooltip listing every file + mode +
-// reason so the user can drill into why a file was skipped/truncated.
+// Backed by chat-service's `file_delivery_records` table (Slice D dual-read):
+// when a `messageId` is provided we fetch fresh, authoritative rows via the
+// `useAttachmentDeliveryChip` controller hook; otherwise we fall back to the
+// inline `delivery` array (mirror of `metadata.fileDelivery` on the assistant
+// message, populated by ParallelExecutionManager).
 //
 // Allowed to call useTranslation directly: this is a leaf presentational
 // component with no business logic and no other hooks. All non-render logic
-// lives in `@/utilities/file-delivery.utility`.
+// lives in `@/utilities/file-delivery.utility` + `useAttachmentDeliveryChip`.
 export function AttachmentDeliveryChip({
   delivery,
+  messageId,
 }: AttachmentDeliveryChipProps): React.ReactElement | null {
   const { t } = useTranslation();
+  const resolved = useAttachmentDeliveryChip(delivery, messageId);
 
-  if (delivery.length === 0) {
+  if (resolved.length === 0) {
     return null;
   }
 
-  const counts = countFileDeliveriesByMode(delivery);
-  const tooltip = buildFileDeliveryTooltip(delivery, t);
+  const counts = countFileDeliveriesByMode(resolved);
+  const tooltip = buildFileDeliveryTooltip(resolved, t);
 
   return (
     <div

@@ -241,6 +241,9 @@ export type {
   AttachmentThumbnailProps,
   MessagesContentProps,
   VirtualizedMessagesProps,
+  VirtualizedMessageItemProps,
+  VirtualizedMessagesHeaderProps,
+  VirtualizedMessagesFooterProps,
   VirtualizedThreadListProps,
   ChatPageReturn,
   VirtualizedListProps,
@@ -392,8 +395,6 @@ export type {
   UseThreadSettingsReturn,
   UseToggleReturn,
   UseVirtualizedThreadsParams,
-  UseStickyBottomScrollParams,
-  UseStickyBottomScrollReturn,
   UseFileUploadZoneStateReturn,
   UseGlobalSearchControllerReturn,
   UseSidebarControllerReturn,
@@ -403,6 +404,9 @@ export type {
   UseAdaptiveLearningPageReturn,
   UseCostEnsembleHookPageReturn,
   UseConnectorDetailPageReturn,
+  UseVirtualizedMessagesControllerParams,
+  UseVirtualizedMessagesControllerReturn,
+  UseFollowStreamingTokensParams,
 } from './hook.types';
 export type {
   CandidateResult,
@@ -455,7 +459,14 @@ export type {
   UseInThreadCompareReturn,
   CompareResearchModeOption,
 } from './parallel.types';
-export type { FileDeliveryEntry, FileDeliveryCounts } from './file-delivery.types';
+export type {
+  FileDeliveryEntry,
+  FileDeliveryCounts,
+  FileDeliveryRecordWire,
+  FileDeliveryTranslator,
+  UseFileDeliveryOptions,
+  UseFileDeliveryResult,
+} from './file-delivery.types';
 export type { CompareResultMarkdownInput, UseCompareResultCardReturn } from './compare.types';
 export type {
   ConsensusModelBreakdown,

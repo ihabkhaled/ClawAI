@@ -14,11 +14,25 @@ export enum EventPattern {
   CONNECTOR_SYNCED = 'connector.synced',
   CONNECTOR_HEALTH_CHECKED = 'connector.health_checked',
   ROUTING_DECISION_MADE = 'routing.decision_made',
+  /**
+   * @deprecated Use FILE_UPLOAD_COMPLETED instead. Kept as a backward-compat
+   * alias for two release cycles to avoid breaking existing publishers and
+   * consumers during the Slice D file-lifecycle migration.
+   */
   FILE_UPLOADED = 'file.uploaded',
   FILE_CHUNKED = 'file.chunked',
   FILE_FAILED = 'file.failed',
   FILE_RETENTION_EXPIRED = 'file.retention_expired',
   FILE_ARCHIVE_EXPANDED = 'file.archive_expanded',
+  // === Slice D — File lifecycle + OCR events ===
+  FILE_UPLOAD_STARTED = 'file.upload_started',
+  FILE_UPLOAD_COMPLETED = 'file.upload_completed',
+  FILE_EXTRACTION_FAILED = 'file.extraction_failed',
+  FILE_DOWNLOADED = 'file.downloaded',
+  FILE_DELETED = 'file.deleted',
+  FILE_OCR_STARTED = 'file.ocr_started',
+  FILE_OCR_COMPLETED = 'file.ocr_completed',
+  FILE_OCR_FAILED = 'file.ocr_failed',
   MEMORY_EXTRACTED = 'memory.extracted',
   AUDIT_EVENT = 'audit.event',
   HEALTH_CHECK = 'health.check',

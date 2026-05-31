@@ -14,7 +14,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
-import { EventPattern, type FileRetentionExpiredPayload } from '@claw/shared-types';
+import {
+  EventPattern,
+  type FileDeletedPayload,
+  type FileRetentionExpiredPayload,
+} from '@claw/shared-types';
 import { type File } from '../../../generated/prisma';
 import { AppConfig } from '../../../app/config/app.config';
 import { deleteFile } from '../../../common/utilities';
@@ -84,6 +88,21 @@ export class FileRetentionSweeperManager {
       timestamp: new Date().toISOString(),
     };
     void this.rabbitMQService.publish(EventPattern.FILE_RETENTION_EXPIRED, payload);
+
+    // Slice D backend 3 — also publish the canonical FILE_DELETED with
+    // reason='RETENTION' so a single audit-side handler covers every delete
+    // path. FILE_RETENTION_EXPIRED is kept for backward compat consumers that
+    // already depend on the sweep-specific event.
+    const deletedPayload: FileDeletedPayload = {
+      fileId: file.id,
+      userId: file.userId,
+      filename: file.filename,
+      deletedBy: 'system',
+      reason: 'RETENTION',
+      timestamp: new Date().toISOString(),
+    };
+    void this.rabbitMQService.publish(EventPattern.FILE_DELETED, deletedPayload);
+
     this.logger.debug(`reapOne: reaped fileId=${file.id} filename="${file.filename}"`);
     return true;
   }

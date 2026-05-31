@@ -567,6 +567,9 @@ export type TranslationDictionary = {
     permissions: {
       denied: string;
     };
+    lifecycle: {
+      uploadStarted: string;
+    };
   };
   context: {
     title: string;
@@ -1109,6 +1112,10 @@ export type TranslationDictionary = {
       omittedUnsupported: string;
       truncatedText: string;
       tooltip: string;
+      ocrProcessing: string;
+      ocrFailed: string;
+      geminiUploading: string;
+      anthropicNativePdf: string;
     };
   };
   judgeReview: {

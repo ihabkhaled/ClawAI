@@ -58,6 +58,49 @@ const appConfigSchema = z.object({
     .string()
     .min(32, 'INTER_SERVICE_AUTH_TOKEN must be at least 32 chars')
     .default('change-me-inter-service-token-32-chars-min'),
+
+  // Slice B — operator override letting a deployment accept image attachments
+  // in LOCAL_ONLY / PRIVACY_FIRST modes even when no local vision-capable
+  // model is installed. Default off: the safer behaviour is to drop images
+  // with a user-visible warning rather than silently let them reach a cloud
+  // fallback. Flip to true only when an out-of-band local vision pipeline
+  // is wired up (e.g. an external OCR sidecar).
+  ALLOW_LOCAL_ONLY_ATTACHMENTS_WITHOUT_VISION: z.coerce.boolean().default(false),
+
+  // Slice B — timeout for the LocalModelSelectionService.hasLocalVisionModel()
+  // probe. The probe sits in the request hot path; if ollama-service is slow
+  // we'd rather fail-closed (assume no vision model) than block the user.
+  LOCAL_VISION_MODEL_DETECTION_TIMEOUT_MS: z.coerce.number().int().positive().default(3000),
+
+  // ─── Slice D foundation 3 — Compare/Judge/Critic file attachments ──────
+  // See docs/03-architecture/compare-file-attachments.md (Slice D close-out).
+  // All flags default OFF; deployments opt-in.
+
+  // Anthropic native PDF input — when true, the anthropic adapter forwards
+  // PDF bytes as a `document` content part instead of falling through to
+  // extracted text. Requires `anthropic-version` >= 2024-06-01 (bumped
+  // centrally in connector-service constants).
+  ENABLE_ANTHROPIC_NATIVE_PDF: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
+
+  // Gemini Files API — when true, large attachments (>= threshold) are
+  // uploaded to Gemini's Files API and referenced by URI instead of inlined
+  // as base64. Files API entries live for 48h on Google's side; we cache the
+  // URI for half that window to be safe.
+  ENABLE_GEMINI_FILES_API: z
+    .string()
+    .default('false')
+    .transform((value) => value.toLowerCase() === 'true'),
+  GEMINI_FILES_API_SIZE_THRESHOLD_BYTES: z.coerce.number().int().positive().default(20_000_000),
+  GEMINI_FILES_API_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+  GEMINI_FILES_API_CACHE_ENABLED: z
+    .string()
+    .default('true')
+    .transform((value) => value.toLowerCase() === 'true'),
+  GEMINI_FILES_API_TTL_MINUTES: z.coerce.number().int().positive().default(1440),
+  GEMINI_CONCURRENT_UPLOADS_LIMIT: z.coerce.number().int().positive().max(20).default(3),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

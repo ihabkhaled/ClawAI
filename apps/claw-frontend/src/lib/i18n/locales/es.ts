@@ -570,6 +570,9 @@ export const es: TranslationDictionary = {
       denied:
         'No tienes permiso para acceder a los archivos. Contacta con el administrador de tu espacio de trabajo.',
     },
+    lifecycle: {
+      uploadStarted: 'Iniciando la carga…',
+    },
   },
   context: {
     title: 'Paquetes de contexto',
@@ -1131,6 +1134,10 @@ export const es: TranslationDictionary = {
       omittedUnsupported: 'Omitido (no compatible)',
       truncatedText: 'Truncado',
       tooltip: 'Resumen de entrega por modelo',
+      ocrProcessing: 'Extrayendo texto de la imagen…',
+      ocrFailed: 'Falló la extracción de texto',
+      geminiUploading: 'Subiendo archivo grande a Gemini…',
+      anthropicNativePdf: 'PDF enviado de forma nativa a Anthropic',
     },
   },
   judgeReview: {

@@ -72,6 +72,14 @@ describe('ParallelExecutionManager', () => {
     enrich: jest.fn().mockResolvedValue({ evidence: '', sources: [], mode: 'NONE' }),
   };
 
+  // Slice D — FileDeliveryRecordService dual-write. No-op mock keeps the
+  // existing parallel-execution assertions intact while satisfying the
+  // updated constructor signature.
+  const mockFileDeliveryRecordService = {
+    recordDeliveries: jest.fn().mockImplementation(async () => {}),
+    getDeliveriesForMessage: jest.fn().mockResolvedValue([]),
+  };
+
   const mockContext: AssembledContext = {
     userId: 'user-1',
     systemPrompt: null,
@@ -115,6 +123,7 @@ describe('ParallelExecutionManager', () => {
       mockChatThreadsRepository as any,
       mockChatStreamService as any,
       mockResearchEnricherManager as any,
+      mockFileDeliveryRecordService as any,
     );
   });
 
@@ -423,7 +432,7 @@ describe('ParallelExecutionManager', () => {
         },
       ];
 
-      await (manager as any).storeAssistantMessages('thread-1', 'group-1', responses);
+      await (manager as any).storeAssistantMessages('user-1', 'thread-1', 'group-1', responses);
 
       expect(mockChatMessagesRepository.create).toHaveBeenCalledTimes(2);
 
@@ -488,7 +497,7 @@ describe('ParallelExecutionManager', () => {
         },
       ];
 
-      await (manager as any).storeAssistantMessages('thread-1', 'group-1', responses);
+      await (manager as any).storeAssistantMessages('user-1', 'thread-1', 'group-1', responses);
 
       expect(mockChatMessagesRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -529,7 +538,7 @@ describe('ParallelExecutionManager', () => {
         },
       ];
 
-      await (manager as any).storeAssistantMessages('thread-1', 'group-1', responses);
+      await (manager as any).storeAssistantMessages('user-1', 'thread-1', 'group-1', responses);
 
       expect(mockChatMessagesRepository.create).toHaveBeenCalledTimes(2);
     });
@@ -548,7 +557,7 @@ describe('ParallelExecutionManager', () => {
         },
       ];
 
-      await (manager as any).storeAssistantMessages('thread-1', 'group-1', responses);
+      await (manager as any).storeAssistantMessages('user-1', 'thread-1', 'group-1', responses);
 
       expect(mockChatMessagesRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({

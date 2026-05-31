@@ -566,6 +566,9 @@ export const en: TranslationDictionary = {
     permissions: {
       denied: "You don't have permission to access files. Contact your workspace administrator.",
     },
+    lifecycle: {
+      uploadStarted: 'Upload starting…',
+    },
   },
   context: {
     title: 'Context Packs',
@@ -1116,6 +1119,10 @@ export const en: TranslationDictionary = {
       omittedUnsupported: 'Skipped (unsupported)',
       truncatedText: 'Truncated',
       tooltip: 'Per-model delivery summary',
+      ocrProcessing: 'Extracting text from image…',
+      ocrFailed: 'Text extraction failed',
+      geminiUploading: 'Uploading large file to Gemini…',
+      anthropicNativePdf: 'PDF sent natively to Anthropic',
     },
   },
   judgeReview: {

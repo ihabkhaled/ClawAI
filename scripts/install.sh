@@ -924,6 +924,25 @@ ZIP_MAX_NESTING_DEPTH=5
 ZIP_COMPRESSION_RATIO_THRESHOLD=1000
 ZIP_TEMP_EXTRACTION_PATH=/tmp/claw-zip-extraction
 
+# --- Compare/Judge/Critic file attachments (Slice D foundation 3) ---
+# Anthropic native PDF + Gemini Files API + OCR pipeline. All flags default
+# OFF / safe-mode so deployments opt-in. See docs/03-architecture/compare-file-attachments.md.
+ENABLE_ANTHROPIC_NATIVE_PDF=false
+
+ENABLE_GEMINI_FILES_API=false
+GEMINI_FILES_API_SIZE_THRESHOLD_BYTES=20000000
+GEMINI_FILES_API_TIMEOUT_MS=60000
+GEMINI_FILES_API_CACHE_ENABLED=true
+GEMINI_FILES_API_TTL_MINUTES=1440
+GEMINI_CONCURRENT_UPLOADS_LIMIT=3
+
+OCR_ENABLED=false
+OCR_TIMEOUT_MS=30000
+OCR_CONFIDENCE_MIN=0.5
+OCR_LANGUAGE=eng
+OCR_WORKER_THREADS=2
+SCANNED_PDF_CHAR_THRESHOLD=100
+
 # =============================================================================
 # Inter-Service URLs
 # =============================================================================

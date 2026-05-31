@@ -26,3 +26,46 @@ export type FileDeliveryCounts = {
   unsupported: number;
   truncated: number;
 };
+
+// Options for `useFileDelivery`. `enabled` defaults to true; callers can set
+// it to false to opt out of the network fetch (e.g. when no messageId is
+// available yet, or while the caller wants to rely solely on the inline
+// metadata fallback during streaming).
+export type UseFileDeliveryOptions = {
+  enabled?: boolean;
+};
+
+// Shape returned by `useFileDelivery`. `entries` is always an array — empty
+// while loading, disabled, or after a 404 — so callers can fall back to the
+// inline `metadata.fileDelivery` reader without branching on undefined.
+export type UseFileDeliveryResult = {
+  entries: FileDeliveryEntry[];
+  isLoading: boolean;
+  error: unknown;
+};
+
+// Raw shape returned by chat-service's `GET /chat-messages/:id/file-delivery`.
+// Mirrors the `FileDeliveryRecord` Prisma row (file_delivery_records) so the
+// mapper in the repository layer can narrow the wire string into our FE
+// FileDeliveryMode enum.
+export type FileDeliveryRecordWire = {
+  id: string;
+  messageId: string;
+  threadId: string;
+  userId: string;
+  fileId: string;
+  filename: string;
+  mimeType: string;
+  provider: string;
+  model: string;
+  mode: string;
+  supportsVision: boolean;
+  createdAt: string;
+};
+
+// Translator signature used inside the FE i18n utilities. Local alias avoids
+// an import cycle through the heavier i18n types.
+export type FileDeliveryTranslator = (
+  key: string,
+  params?: Record<string, string | number>,
+) => string;

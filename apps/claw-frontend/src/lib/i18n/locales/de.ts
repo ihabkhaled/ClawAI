@@ -574,6 +574,9 @@ export const de: TranslationDictionary = {
       denied:
         'Sie haben keine Berechtigung, auf Dateien zuzugreifen. Wenden Sie sich an Ihren Workspace-Administrator.',
     },
+    lifecycle: {
+      uploadStarted: 'Hochladen wird gestartet…',
+    },
   },
   context: {
     title: 'Kontext-Packs',
@@ -1133,6 +1136,10 @@ export const de: TranslationDictionary = {
       omittedUnsupported: 'Übersprungen (nicht unterstützt)',
       truncatedText: 'Gekürzt',
       tooltip: 'Zustellungsübersicht pro Modell',
+      ocrProcessing: 'Text wird aus dem Bild extrahiert…',
+      ocrFailed: 'Textextraktion fehlgeschlagen',
+      geminiUploading: 'Große Datei wird zu Gemini hochgeladen…',
+      anthropicNativePdf: 'PDF nativ an Anthropic gesendet',
     },
   },
   judgeReview: {

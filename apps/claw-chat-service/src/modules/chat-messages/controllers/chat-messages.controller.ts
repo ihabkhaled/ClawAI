@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
 import { type Request } from 'express';
 import { ChatMessagesService } from '../services/chat-messages.service';
+import { FileDeliveryRecordService } from '../services/file-delivery-record.service';
 import { extractBearer } from '../../../common/utilities';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { type ConsensusMessageDto, consensusMessageSchema } from '../dto/consensus-message.dto';
@@ -34,11 +35,14 @@ import { type VerifyResponse } from '../types/verifier.types';
 import { type ParallelResponse } from '../types/parallel.types';
 import { type PipelineResponse } from '../types/pipeline.types';
 import { type RolePackResponse } from '../types/role-pack.types';
-import { type ChatMessage } from '../../../generated/prisma';
+import { type ChatMessage, type FileDeliveryRecord } from '../../../generated/prisma';
 
 @Controller('chat-messages')
 export class ChatMessagesController {
-  constructor(private readonly chatMessagesService: ChatMessagesService) {}
+  constructor(
+    private readonly chatMessagesService: ChatMessagesService,
+    private readonly fileDeliveryRecordService: FileDeliveryRecordService,
+  ) {}
 
   @Post()
   async create(
@@ -162,5 +166,13 @@ export class ChatMessagesController {
     @Body(new ZodValidationPipe(setFeedbackSchema)) dto: SetFeedbackDto,
   ): Promise<ChatMessage> {
     return this.chatMessagesService.setFeedback(user.id, id, dto.feedback);
+  }
+
+  @Get(':id/file-delivery')
+  async getFileDelivery(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<FileDeliveryRecord[]> {
+    return this.fileDeliveryRecordService.getDeliveriesForMessage(id, user.id);
   }
 }
