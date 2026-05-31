@@ -24,11 +24,14 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   { prefix: '/admin/usage', permission: Permission.ADMIN_USAGE_VIEW },
 
   // Chat sub-pages (MUST precede the bare /chat which stays open).
-  // Compare + Verify are PLAN-feature gated (allowCompareMode / allowJudgeMode)
-  // not Permission-gated — the lab itself is open to any user whose plan
-  // unlocks it. Backend enforcement lives in claw-chat-service AccessControlService.
+  // Compare is PLAN-feature gated (allowCompareMode). Verifier is a separate
+  // orchestration lab on the same access tier as Consensus / Escalation /
+  // Best-of-N: gated by ROUTER_USE (admin-grantable, NOT in the USER default
+  // permission set). It is explicitly NOT shared with the per-lane Judge or
+  // Critic toggles inside compare mode — those keep their own plan-feature
+  // gates (allowJudgeMode / allowCriticReview) and apply independently.
   { prefix: ROUTES.CHAT_COMPARE, feature: PlanFeature.ALLOW_COMPARE_MODE },
-  { prefix: ROUTES.CHAT_VERIFY, feature: PlanFeature.ALLOW_JUDGE_MODE },
+  { prefix: ROUTES.CHAT_VERIFY, permission: Permission.ROUTER_USE },
   { prefix: ROUTES.CHAT_CONSENSUS, permission: Permission.ROUTER_USE },
   { prefix: ROUTES.CHAT_ESCALATION, permission: Permission.ROUTER_USE },
   { prefix: ROUTES.CHAT_REPAIR, permission: Permission.ROUTER_USE },

@@ -569,14 +569,14 @@ export class ChatMessagesService implements OnModuleInit {
     dto: VerifyMessageDto,
     userToken: string,
   ): Promise<VerifyResponse> {
-    // Plan-feature gate: verifier lab requires the judge mode unlock since
-    // verification is a judge-driven critique loop. ADMIN bypasses.
+    // Verifier is a separate orchestration lab gated by ROUTER_USE — same
+    // permission tier as Consensus / Escalation / Best-of-N. It is
+    // intentionally NOT the same gate as the per-lane Judge / Critic
+    // toggles inside compare mode (those keep their own allowJudgeMode /
+    // allowCriticReview / JUDGE_USE checks), which is why this endpoint
+    // does not depend on JUDGE_USE.
     await this.accessControlService.assertCanSendMessage(userId, {
-      requireFeature: 'allowJudgeMode',
-    });
-    // Backend-enforced RBAC permission gate parallel to the compare path.
-    await this.accessControlService.assertCanSendMessage(userId, {
-      requirePermission: Permission.JUDGE_USE,
+      requirePermission: Permission.ROUTER_USE,
     });
     await this.assertOrchestrationResearchGate(userId, dto.researchMode);
     return this.verifierManager.executeVerify(userId, dto, userToken);
