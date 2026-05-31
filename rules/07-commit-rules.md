@@ -2,6 +2,33 @@
 
 ---
 
+## Per-Service Gates Before Commit (MANDATORY)
+
+When you change code under `apps/<service>/` (e.g. `apps/claw-chat-service/`), run the gates **inside that service folder ONLY** before any commit. Do NOT run the all-workspace pre-commit hook from a fresh worktree — it will false-fail on unchanged services whose Prisma client wasn't generated locally.
+
+```bash
+cd apps/claw-<service>
+npx tsgo --noEmit         # → 0 errors required
+npm run lint              # → 0 errors on touched files (warnings on untouched files acceptable)
+npm test                  # → all tests pass; coverage may not drop
+npm run build             # → success
+```
+
+When all four gates are green:
+
+```bash
+git commit --no-verify -m "<conventional-commit-message>"
+git push --no-verify origin <branch>
+```
+
+`--no-verify` is justified here ONLY because the all-workspace pre-commit hook false-fails on unchanged sibling services in fresh worktrees (documented "Prisma-not-generated-in-fresh-worktree" footgun). The four per-service gates above are the real quality bar.
+
+If any gate fails: fix and re-run before committing. **Never skip a gate.** **Never use `--no-verify` to bypass real failures in the service you actually changed.**
+
+This rule applies to every service folder under `apps/`. When a change spans multiple services, run the gates **for every affected service** before a single combined commit. Documentation-only commits (e.g. updating `docs/**`, `CLAUDE.md`, `rules/**`, locale files only when accompanied by `i18n.types.ts`) can skip the gates but must still be conventional-format.
+
+---
+
 ## Conventional Commits Format
 
 ```

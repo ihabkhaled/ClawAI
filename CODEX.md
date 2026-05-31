@@ -1074,7 +1074,34 @@ Single root `.env` (copy from `.env.example`). Groups:
 
 ## Quality Gates
 
-### Pre-Commit Hook (5 steps, all must pass)
+### Per-Service Gates Before Commit (MANDATORY — agent workflow)
+
+When you change code under `apps/<service>/` (e.g. `apps/claw-chat-service/`), run the gates **inside that service folder ONLY** before any commit. Do NOT run the all-workspace pre-commit hook from a fresh worktree — it will false-fail on unchanged services whose Prisma client wasn't generated locally.
+
+```bash
+cd apps/claw-<service>
+npx tsgo --noEmit         # → 0 errors required
+npm run lint              # → 0 errors on touched files (warnings on untouched files acceptable)
+npm test                  # → all tests pass; coverage may not drop
+npm run build             # → success
+```
+
+When all four gates are green:
+
+```bash
+git commit --no-verify -m "<conventional-commit-message>"
+git push --no-verify origin <branch>
+```
+
+`--no-verify` is justified here ONLY to bypass the all-workspace pre-commit hook's false-fails on unchanged sibling services in fresh worktrees (documented "Prisma-not-generated-in-fresh-worktree" footgun). The four per-service gates above are the real quality bar.
+
+If any gate fails: fix and re-run before committing. **Never skip a gate.** **Never use `--no-verify` to bypass real failures in the service you actually changed.**
+
+When a change spans multiple services, run the gates **for every affected service** before a single combined commit. Documentation-only commits (e.g. updating `docs/**`, `CLAUDE.md`, `rules/**`, locale files only when accompanied by `i18n.types.ts`) can skip the gates but must still be conventional-format.
+
+### Pre-Commit Hook (5 steps, all must pass — legacy all-workspace path)
+
+When NOT in a fresh worktree (i.e. all Prisma clients generated), the full pre-commit hook is also fine:
 
 ```bash
 1. prettier --write        # Format staged files

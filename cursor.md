@@ -181,8 +181,28 @@ The repo compiles with **tsgo** (`@typescript/native-preview`), not `tsc`/`nest 
 - Conventional commits: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert` + scope.
 - Commit bodies describe WHY, not WHAT.
 - Include `Co-Authored-By: Cursor <noreply@cursor.sh>` footer line.
-- Never use `--no-verify`. The pre-commit hook runs lint-staged (eslint --fix + prettier) + `npm run typecheck`; the pre-push hook runs `npm run build` + `npm run test`.
 - Chunk commits by logical boundary (schema, backend logic, frontend, infra, docs) — not by time.
+
+### Per-service gates before commit (MANDATORY for agent workflows)
+
+When you change code under `apps/<service>/`, run the gates **inside that service folder only** before any commit. The all-workspace pre-commit hook false-fails on unchanged services whose Prisma client wasn't generated locally, so:
+
+```bash
+cd apps/claw-<service>
+npx tsgo --noEmit         # 0 errors
+npm run lint              # 0 errors on touched files
+npm test                  # all green
+npm run build             # success
+```
+
+When all four are green:
+
+```bash
+git commit --no-verify -m "<conventional-commit-message>"
+git push --no-verify origin <branch>
+```
+
+`--no-verify` is acceptable ONLY to bypass the all-workspace hook's false-fails on unchanged sibling services (documented Prisma footgun). The four per-service gates are the real quality bar. **Never skip a gate.** **Never use `--no-verify` to bypass real failures in the service you actually changed.** Multi-service changes run the gates for every affected service before a single combined commit. Docs-only commits (`docs/**`, `CLAUDE.md`, `rules/**`, locale files paired with `i18n.types.ts`) can skip the gates but stay conventional-format.
 
 ## If Cursor suggests something contrary to CLAUDE.md
 
