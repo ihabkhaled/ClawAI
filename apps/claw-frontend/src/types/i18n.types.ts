@@ -35,7 +35,11 @@ export type TranslationDictionary = {
     no: string;
     never: string;
     accessDenied: string;
+    accessDeniedTitle: string;
+    accessDeniedBody: string;
+    backToDashboard: string;
     brandName: string;
+    brandTagline: string;
     brandVersion: string;
     select: string;
     download: string;
@@ -74,6 +78,22 @@ export type TranslationDictionary = {
     signInLink: string;
     noAccount: string;
     signUpLink: string;
+    rememberMe: string;
+    forgotPassword: string;
+    forgotPasswordComingSoonTitle: string;
+    forgotPasswordComingSoonDesc: string;
+    showPasswordAria: string;
+    hidePasswordAria: string;
+    loginFailedTitle: string;
+    brandingHeadline: string;
+    brandingSubheadline: string;
+    featuresAriaLabel: string;
+    feature1Title: string;
+    feature1Desc: string;
+    feature2Title: string;
+    feature2Desc: string;
+    feature3Title: string;
+    feature3Desc: string;
   };
   nav: {
     dashboard: string;
@@ -147,6 +167,7 @@ export type TranslationDictionary = {
     adminRuntimeProgress: string;
     plan: string;
     usage: string;
+    more: string;
   };
   chat: {
     stream: {
@@ -344,6 +365,13 @@ export type TranslationDictionary = {
     open: string;
     preparingDownload: string;
     regenerate: string;
+    // Phase 4 (UI/UX refactor): per-message hover actions on assistant
+    // bubbles. `copyMessage` labels the copy-to-clipboard button; the
+    // feedback labels are accessible names for the existing thumb up/down
+    // buttons (previously had no aria-label).
+    copyMessage: string;
+    feedbackPositive: string;
+    feedbackNegative: string;
     searching: string;
     threadActions: string;
     toggleProvenance: string;
@@ -368,6 +396,32 @@ export type TranslationDictionary = {
       tooltipDirect: string;
       searchDegraded: string;
     };
+    // UX-experiment Phase 3: chat thread list date-bucket headings, tab
+    // strip labels, "suggested starter prompts" empty state, and the mobile
+    // FAB label.
+    groups: {
+      today: string;
+      yesterday: string;
+      thisWeek: string;
+      older: string;
+    };
+    tabs: {
+      all: string;
+      pinned: string;
+      archived: string;
+    };
+    suggestedPrompts: {
+      heading: string;
+      summarizeLabel: string;
+      summarizePrompt: string;
+      brainstormLabel: string;
+      brainstormPrompt: string;
+      explainLabel: string;
+      explainPrompt: string;
+      codeLabel: string;
+      codePrompt: string;
+    };
+    newChatFab: string;
     // Slice B — LOCAL_ONLY / PRIVACY_FIRST attachment behavior
     localOnly: {
       imagesDropped: string;
@@ -801,6 +855,30 @@ export type TranslationDictionary = {
     streaming: string;
     tools: string;
     vision: string;
+    // UX-experiment Phase 3 — Models page upgrades: view-mode toggle, capability
+    // chips beyond the existing vision/tools/streaming set, filter-pill copy,
+    // and "Compare models" multi-select toolbar.
+    code: string;
+    imageGen: string;
+    view: {
+      label: string;
+      table: string;
+      grid: string;
+    };
+    filters: {
+      activeCount: string;
+      clearAll: string;
+      providerPill: string;
+      lifecyclePill: string;
+    };
+    compare: {
+      enable: string;
+      cancel: string;
+      selectedCount: string;
+      compareCta: string;
+      compareMinHint: string;
+      clear: string;
+    };
   };
   observability: {
     title: string;
@@ -895,6 +973,17 @@ export type TranslationDictionary = {
     noPlan: string;
     planAssigned: string;
     planAssignFailed: string;
+    platformHealthLinkDesc: string;
+    platformHealthLinkBody: string;
+    viewSystemHealth: string;
+    recentAuditEventsTitle: string;
+    recentAuditEventsDescription: string;
+    recentAuditEventsEmptyTitle: string;
+    recentAuditEventsEmptyDesc: string;
+    recentAuditEventsErrorTitle: string;
+    recentAuditEventsErrorDesc: string;
+    loadingAuditEvents: string;
+    viewAllAudits: string;
   };
   settings: {
     title: string;
@@ -971,6 +1060,16 @@ export type TranslationDictionary = {
     manageConnectorsDesc: string;
     routingSettingsLabel: string;
     routingSettingsDesc: string;
+    // Phase 3 dashboard hero (UI/UX refactor) — personalized greeting + status pill
+    heroGreetingMorning: string;
+    heroGreetingAfternoon: string;
+    heroGreetingEvening: string;
+    heroSubtitle: string;
+    allSystemsOperational: string;
+    someSystemsDegraded: string;
+    systemsDown: string;
+    statusUnknown: string;
+    openCta: string;
   };
   catalog: {
     title: string;
@@ -2300,6 +2399,17 @@ export type TranslationDictionary = {
     languageSelector: string;
     themeToggle: string;
     resizeInput: string;
+    userStatusOnline: string;
+    keyboardShortcutHint: string;
+    skipToContent: string;
+    statusSuccess: string;
+    statusError: string;
+    statusWarning: string;
+    statusInfo: string;
+    statusPending: string;
+    loadingRegion: string;
+    errorRegion: string;
+    streamingRegion: string;
   };
   actions: {
     test: string;
