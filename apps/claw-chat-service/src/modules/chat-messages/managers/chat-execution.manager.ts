@@ -1323,22 +1323,27 @@ export class ChatExecutionManager implements OnModuleInit {
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
     ];
+    // Defensive default: same rationale as buildOllamaChatRequestBody — Ollama
+    // Cloud's server-side num_predict default is too low for long answers.
+    const effectiveMaxTokens =
+      maxTokens ??
+      computeDefaultMaxTokens(
+        OUTPUT_BOUNDS_DEFAULT_CTX_SIZE,
+        estimateTokensFromText(`${systemPrompt}\n${userPrompt}`),
+      );
+    const cappedMaxTokens = Math.min(effectiveMaxTokens, HARD_MAX_OUTPUT_TOKENS);
     const body: OpenAiChatRequest | OllamaChatRequest = isOllamaConnector
       ? {
           model,
           messages,
           stream: false,
-          ...(maxTokens === undefined
-            ? {}
-            : { options: { num_predict: Math.min(maxTokens, HARD_MAX_OUTPUT_TOKENS) } }),
+          options: { num_predict: cappedMaxTokens },
         }
       : {
           model,
           messages,
           stream: false,
-          ...(maxTokens === undefined
-            ? {}
-            : { max_tokens: Math.min(maxTokens, HARD_MAX_OUTPUT_TOKENS) }),
+          max_tokens: cappedMaxTokens,
         };
     const startTime = Date.now();
     const response = await httpRequest<OpenAiChatResponse | OllamaChatResponse>({
@@ -1982,18 +1987,33 @@ export class ChatExecutionManager implements OnModuleInit {
       };
     }
 
-    const maxOutputTokens =
+    const explicitMaxOutputTokens =
       executionOptions?.maxOutputTokens ??
       (threadSettings?.maxTokens !== null && threadSettings?.maxTokens !== undefined
         ? Math.min(threadSettings.maxTokens, HARD_MAX_OUTPUT_TOKENS)
         : undefined);
 
-    if (maxOutputTokens !== undefined) {
-      requestBody.options = {
-        ...(requestBody.options ?? {}),
-        num_predict: maxOutputTokens,
-      };
-    }
+    // Defensive default: when neither the user nor the thread settings supply a
+    // cap, Ollama Cloud's server-side default for num_predict is ~256, which
+    // truncates non-trivial answers (bug 2026-05-31: Ollama Cloud Connector
+    // returning ~750 chars for long prompts). Compute a sensible ctx-aware
+    // default so the model isn't capped by the server side default.
+    const promptTokensEstimate = estimateTokensFromText(
+      shape.messages
+        .map((m) => (typeof m.content === 'string' ? m.content : ''))
+        .join('\n'),
+    );
+    const numPredict =
+      explicitMaxOutputTokens ??
+      Math.min(
+        computeDefaultMaxTokens(OUTPUT_BOUNDS_DEFAULT_CTX_SIZE, promptTokensEstimate),
+        HARD_MAX_OUTPUT_TOKENS,
+      );
+
+    requestBody.options = {
+      ...(requestBody.options ?? {}),
+      num_predict: numPredict,
+    };
 
     return requestBody;
   }
