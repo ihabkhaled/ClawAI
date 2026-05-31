@@ -18,6 +18,15 @@ const appConfigSchema = z.object({
   ADMIN_EMAIL: z.string().email().optional(),
   ADMIN_USERNAME: z.string().min(1).optional(),
   ADMIN_PASSWORD: z.string().min(8).optional(),
+
+  // System-role permissions reconciliation gate (auth-service boot seeder).
+  // 'true' (default) makes the boot-time seeder ADD missing grants AND REMOVE
+  // extras so system roles always match the canonical SYSTEM_ROLE_SEED list.
+  // 'false' makes the seeder ADD-only, preserving operator-applied extras.
+  SEED_RECONCILE_PERMISSIONS: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

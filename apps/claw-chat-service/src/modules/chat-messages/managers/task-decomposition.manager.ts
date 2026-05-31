@@ -13,6 +13,7 @@ import {
 } from '../constants/task-decomposition.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
+import { AccessControlService } from '../services/access-control.service';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
@@ -38,6 +39,7 @@ export class TaskDecompositionManager {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly researchEnricherManager: ResearchEnricherManager,
+    private readonly accessControlService: AccessControlService,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
@@ -64,6 +66,7 @@ export class TaskDecompositionManager {
       threadId,
       dto.content,
       dto.maxSubTasks,
+      userId,
       selection,
       dto.researchMode,
       dto.researchProviderId,
@@ -77,6 +80,7 @@ export class TaskDecompositionManager {
     threadId: string,
     content: string,
     maxSubTasks: number,
+    userId: string,
     selection?: AdvancedModelSelectionResolution,
     researchMode?: ResearchMode,
     researchProviderId?: string,
@@ -106,6 +110,7 @@ export class TaskDecompositionManager {
         maxSubTasks,
         resolvedSelection,
         enrichment.systemPrompt,
+        userId,
       );
       this.chatStreamService.emitProgressStage(threadId, StreamEventType.RESPONSE_STREAMING, {
         label: 'Executing sub-tasks',
@@ -117,12 +122,14 @@ export class TaskDecompositionManager {
         subTasks,
         resolvedSelection,
         enrichment.systemPrompt,
+        userId,
       );
       const mergedContent = await this.mergeResults(
         content,
         subTaskResults,
         resolvedSelection,
         enrichment.systemPrompt,
+        userId,
       );
       const resolvedModel = resolvedSelection.actualModel;
 
@@ -222,6 +229,7 @@ export class TaskDecompositionManager {
     maxSubTasks: number,
     selection: AdvancedModelSelectionResolution,
     researchEvidence: string,
+    userId: string,
   ): Promise<SubTask[]> {
     const config = AppConfig.get();
     const model = selection.actualModel;
@@ -253,6 +261,16 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
     if (!response.ok) {
       throw new Error(`Ollama decomposition returned status ${String(response.status)}`);
     }
+
+    // Universal token deduction: decomposition planner hop.
+    void this.accessControlService.recordUsage({
+      userId,
+      planId: null,
+      inputTokens: response.data.promptEvalCount ?? 0,
+      outputTokens: response.data.evalCount ?? 0,
+      provider: 'local-ollama',
+      model,
+    });
 
     return this.parseSubTasks(response.data.response.trim(), content);
   }
@@ -288,10 +306,13 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
     subTasks: SubTask[],
     selection: AdvancedModelSelectionResolution,
     researchEvidence: string,
+    userId: string,
   ): Promise<SubTaskResult[]> {
     const fallbackModel = selection.actualModel;
     const results = await Promise.allSettled(
-      subTasks.map((subTask) => this.executeOneSubTask(subTask, selection, researchEvidence)),
+      subTasks.map((subTask) =>
+        this.executeOneSubTask(subTask, selection, researchEvidence, userId),
+      ),
     );
 
     return results.map((result, index) => {
@@ -315,6 +336,7 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
     subTask: SubTask,
     selection: AdvancedModelSelectionResolution,
     researchEvidence: string,
+    userId: string,
   ): Promise<SubTaskResult> {
     const config = AppConfig.get();
     const startTime = Date.now();
@@ -338,6 +360,16 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
       throw new Error(`Sub-task execution failed with status ${String(response.status)}`);
     }
 
+    // Universal token deduction: each sub-task is a real LLM call.
+    void this.accessControlService.recordUsage({
+      userId,
+      planId: null,
+      inputTokens: response.data.promptEvalCount ?? 0,
+      outputTokens: response.data.evalCount ?? 0,
+      provider: 'local-ollama',
+      model,
+    });
+
     return {
       title: subTask.title,
       instruction: subTask.instruction,
@@ -354,6 +386,7 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
     subTaskResults: SubTaskResult[],
     selection: AdvancedModelSelectionResolution,
     researchEvidence: string,
+    userId: string,
   ): Promise<string> {
     const config = AppConfig.get();
     const model = selection.actualModel;
@@ -394,6 +427,16 @@ Provide a unified, coherent response that integrates all sub-task results into a
     if (!response.ok) {
       throw new Error(`Merge step failed with status ${String(response.status)}`);
     }
+
+    // Universal token deduction: merge synthesis hop.
+    void this.accessControlService.recordUsage({
+      userId,
+      planId: null,
+      inputTokens: response.data.promptEvalCount ?? 0,
+      outputTokens: response.data.evalCount ?? 0,
+      provider: 'local-ollama',
+      model,
+    });
 
     const merged = response.data.response.trim();
     if (merged.length === 0) {

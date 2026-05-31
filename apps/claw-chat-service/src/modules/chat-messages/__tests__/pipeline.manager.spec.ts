@@ -78,6 +78,7 @@ describe('PipelineManager', () => {
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
       researchEnricher.service,
+      { recordUsage: jest.fn() } as any,
     );
   });
 
@@ -144,7 +145,7 @@ describe('PipelineManager', () => {
       await manager.executeInBackground('thread-1', 'My request content', {
         content: 'My request content',
         template: 'analyze-reason-format',
-      });
+      }, 'user-1');
 
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
@@ -166,7 +167,7 @@ describe('PipelineManager', () => {
       await manager.executeInBackground('thread-1', 'My request content', {
         content: 'My request content',
         template: 'analyze-reason-format',
-      });
+      }, 'user-1');
 
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
@@ -187,7 +188,7 @@ describe('PipelineManager', () => {
       await manager.executeInBackground('thread-1', 'My request content', {
         content: 'My request content',
         template: 'analyze-reason-format',
-      });
+      }, 'user-1');
 
       expect(streamService.emitCompletion).toHaveBeenCalledWith('thread-1', 'local-ollama', 'AUTO');
     });
@@ -199,7 +200,7 @@ describe('PipelineManager', () => {
       await manager.executeInBackground('thread-1', 'My request content', {
         content: 'My request content',
         template: 'analyze-reason-format',
-      });
+      }, 'user-1');
 
       expect(streamService.emitError).toHaveBeenCalledWith('thread-1', expect.any(String));
       const errorCall = messagesRepo.create!.mock.calls.find(
@@ -216,7 +217,7 @@ describe('PipelineManager', () => {
         manager.executeInBackground('thread-1', 'My request content', {
           content: 'My request content',
           template: 'analyze-reason-format',
-        }),
+        }, 'user-1'),
       ).resolves.toBeUndefined();
     });
 
@@ -231,7 +232,7 @@ describe('PipelineManager', () => {
       await manager.executeInBackground('thread-1', 'Content here', {
         content: 'Content here',
         template: 'analyze-reason-format',
-      });
+      }, 'user-1');
 
       expect(httpRequest).toHaveBeenCalledTimes(3);
     });
@@ -250,7 +251,7 @@ describe('PipelineManager', () => {
           { name: 'Stage A', instruction: 'Do A:', model: 'AUTO' },
           { name: 'Stage B', instruction: 'Do B:', model: 'AUTO' },
         ],
-      });
+      }, 'user-1');
 
       expect(httpRequest).toHaveBeenCalledTimes(2);
       const assistantCall = messagesRepo.create!.mock.calls.find(
@@ -334,6 +335,7 @@ describe('PipelineManager', () => {
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
         researchEnricher.service,
+        { recordUsage: jest.fn() } as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 
@@ -374,6 +376,7 @@ describe('PipelineManager', () => {
         'thread-m',
         'My content',
         { content: 'My content', template: 'analyze-reason-format' },
+        'user-1',
         manualResolution,
       );
 
@@ -419,6 +422,7 @@ describe('PipelineManager', () => {
         'thread-a',
         'My content',
         { content: 'My content', template: 'analyze-reason-format' },
+        'user-1',
         autoResolution,
       );
 
@@ -451,6 +455,7 @@ describe('PipelineManager', () => {
         'thread-1',
         'My request content',
         { content: 'My request content', template: 'analyze-reason-format' },
+        'user-1',
         undefined,
         '',
       );
@@ -493,6 +498,7 @@ describe('PipelineManager', () => {
           template: 'analyze-reason-format',
           researchMode: ResearchMode.SEARCH,
         },
+        'user-1',
         undefined,
         'bearer-token-stub',
       );

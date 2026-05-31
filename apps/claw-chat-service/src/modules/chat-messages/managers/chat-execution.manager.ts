@@ -470,6 +470,42 @@ export class ChatExecutionManager implements OnModuleInit {
     threadSettings: ThreadSettings | undefined,
     executionOptions: ExecutionOptions | undefined,
     streamContext: StreamContext,
+    tokenContext?: TokenLedgerContext,
+  ): Promise<LlmResponse> {
+    const dispatched = await this.dispatchStreamCandidate(
+      candidate,
+      context,
+      startTime,
+      usedFallback,
+      threadSettings,
+      executionOptions,
+      streamContext,
+    );
+    // Universal token deduction for the streaming path. The buffered
+    // `callProvider` path records via `recordChokepointUsage` at the
+    // end of the call; this mirror records for EVERY streaming hop
+    // (single-chat SSE, parallel/compare lanes via streamModelForLane,
+    // simulated local-ollama replays, Ollama Cloud tool-loop wrap-up
+    // replays). Tagged with TokenLedgerContext so the ledger row can
+    // be attributed to the right mode (chat / compare / etc.). Without
+    // this, the streaming path silently bypassed daily-quota consumption
+    // — every prompt yesterday on /chat or /chat/compare appeared free.
+    const tagged: LlmResponse = {
+      ...dispatched,
+      tokenContext: dispatched.tokenContext ?? tokenContext ?? TokenLedgerContext.CHAT,
+    };
+    this.recordChokepointUsage(context, tagged);
+    return tagged;
+  }
+
+  private async dispatchStreamCandidate(
+    candidate: { provider: string; model: string },
+    context: AssembledContext,
+    startTime: number,
+    usedFallback: boolean,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions | undefined,
+    streamContext: StreamContext,
   ): Promise<LlmResponse> {
     if (candidate.provider === OLLAMA_PROVIDER) {
       return this.simulateOllamaStream(

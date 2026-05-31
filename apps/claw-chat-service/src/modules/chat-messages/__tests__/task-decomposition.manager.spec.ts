@@ -73,6 +73,7 @@ describe('TaskDecompositionManager', () => {
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
       researchEnricher.service,
+      { recordUsage: jest.fn() } as any,
     );
   });
 
@@ -205,7 +206,7 @@ describe('TaskDecompositionManager', () => {
 
       messagesRepo.create!.mockResolvedValue({ id: 'assist-1', threadId: 'thread-1' });
 
-      await manager.executeInBackground('thread-1', 'Complex task', 3);
+      await manager.executeInBackground('thread-1', 'Complex task', 3, 'user-1');
 
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
@@ -220,7 +221,7 @@ describe('TaskDecompositionManager', () => {
       httpRequest.mockResolvedValueOnce({ ok: false, status: 500, data: { response: '' } });
       messagesRepo.create!.mockResolvedValue({ id: 'err-msg', threadId: 'thread-1' });
 
-      await manager.executeInBackground('thread-1', 'Complex task', 2);
+      await manager.executeInBackground('thread-1', 'Complex task', 2, 'user-1');
 
       expect(streamService.emitError).toHaveBeenCalledWith('thread-1', expect.any(String));
       const errorCall = messagesRepo.create!.mock.calls.find(
@@ -245,7 +246,7 @@ describe('TaskDecompositionManager', () => {
 
       messagesRepo.create!.mockResolvedValue({ id: 'msg-fallback', threadId: 'thread-1' });
 
-      await manager.executeInBackground('thread-1', 'Complex task content', 3);
+      await manager.executeInBackground('thread-1', 'Complex task content', 3, 'user-1');
 
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
@@ -268,7 +269,7 @@ describe('TaskDecompositionManager', () => {
 
       messagesRepo.create!.mockResolvedValue({ id: 'msg-done', threadId: 'thread-1' });
 
-      await manager.executeInBackground('thread-1', 'Complex task content here', 2);
+      await manager.executeInBackground('thread-1', 'Complex task content here', 2, 'user-1');
 
       expect(streamService.emitCompletion).toHaveBeenCalledWith('thread-1', 'local-ollama', 'AUTO');
     });
@@ -293,6 +294,7 @@ describe('TaskDecompositionManager', () => {
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
         researchEnricher.service,
+        { recordUsage: jest.fn() } as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 
@@ -333,7 +335,7 @@ describe('TaskDecompositionManager', () => {
         .mockResolvedValueOnce(makeOllamaSuccess('merged'));
       messagesRepo.create!.mockResolvedValue({ id: 'msg-manual', threadId: 'thread-m' });
 
-      await manager.executeInBackground('thread-m', 'Some complex task', 2, manualResolution);
+      await manager.executeInBackground('thread-m', 'Some complex task', 2, 'user-1', manualResolution);
 
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
@@ -369,7 +371,7 @@ describe('TaskDecompositionManager', () => {
         .mockResolvedValueOnce(makeOllamaSuccess('merged'));
       messagesRepo.create!.mockResolvedValue({ id: 'msg-auto', threadId: 'thread-a' });
 
-      await manager.executeInBackground('thread-a', 'Some complex task', 2);
+      await manager.executeInBackground('thread-a', 'Some complex task', 2, 'user-1');
 
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
@@ -401,6 +403,7 @@ describe('TaskDecompositionManager', () => {
         'thread-n',
         'Some complex task',
         2,
+        'user-1',
         undefined,
         undefined,
         undefined,
@@ -442,6 +445,7 @@ describe('TaskDecompositionManager', () => {
         'thread-r',
         'Some complex task',
         2,
+        'user-1',
         undefined,
         ResearchMode.SEARCH,
         undefined,

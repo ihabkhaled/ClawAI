@@ -12,6 +12,7 @@ import {
 } from '../constants/role-pack.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
+import { AccessControlService } from '../services/access-control.service';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
@@ -43,6 +44,7 @@ export class RolePackManager {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly researchEnricherManager: ResearchEnricherManager,
+    private readonly accessControlService: AccessControlService,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
@@ -68,6 +70,7 @@ export class RolePackManager {
       threadId,
       dto.content,
       dto.pack,
+      userId,
       selection,
       dto.researchMode,
       dto.researchProviderId,
@@ -81,6 +84,7 @@ export class RolePackManager {
     threadId: string,
     content: string,
     pack: string,
+    userId: string,
     selection?: AdvancedModelSelectionResolution,
     researchMode?: ResearchMode,
     researchProviderId?: string,
@@ -106,6 +110,7 @@ export class RolePackManager {
         content,
         config.OLLAMA_SERVICE_URL,
         enrichment.systemPrompt,
+        userId,
       );
       const allFailed = results.every((r) => r.output === 'Role failed');
       if (allFailed) {
@@ -157,10 +162,13 @@ export class RolePackManager {
     content: string,
     ollamaUrl: string,
     researchEvidence: string,
+    userId: string,
   ): Promise<RoleMemberResult[]> {
     const fallbackModel = await this.resolveModel();
     const settled = await Promise.allSettled(
-      members.map((member) => this.runMember(member, content, ollamaUrl, researchEvidence)),
+      members.map((member) =>
+        this.runMember(member, content, ollamaUrl, researchEvidence, userId),
+      ),
     );
 
     return settled.map((result, index) => {
@@ -184,6 +192,7 @@ export class RolePackManager {
     content: string,
     ollamaUrl: string,
     researchEvidence: string,
+    userId: string,
   ): Promise<RoleMemberResult> {
     const startTime = Date.now();
     const basePrompt = `${member.instruction}\n\n${content}`;
@@ -207,6 +216,16 @@ export class RolePackManager {
     if (!response.ok) {
       throw new Error(`Ollama returned status ${String(response.status)} for role ${member.role}`);
     }
+
+    // Universal token deduction: each role-pack member is a real LLM call.
+    void this.accessControlService.recordUsage({
+      userId,
+      planId: null,
+      inputTokens: response.data.promptEvalCount ?? 0,
+      outputTokens: response.data.evalCount ?? 0,
+      provider: 'local-ollama',
+      model,
+    });
 
     return {
       role: member.role,

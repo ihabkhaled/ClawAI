@@ -135,6 +135,7 @@ describe('CostEnsembleManager', () => {
       streamService as unknown as ChatStreamService,
       qualityManager as unknown as QualityCheckManager,
       mockResearchEnricherManager as any,
+      { recordUsage: jest.fn() } as any,
     );
 
     jest.clearAllMocks();
@@ -214,7 +215,7 @@ describe('CostEnsembleManager', () => {
           data: { response: 'candidate answer' },
         });
 
-      await manager.executeInBackground('thread-ce-1', 'test prompt');
+      await manager.executeInBackground('thread-ce-1', 'test prompt', 'user-1');
 
       expect(messagesRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -245,7 +246,7 @@ describe('CostEnsembleManager', () => {
           data: { response: 'some answer' },
         });
 
-      await manager.executeInBackground('thread-ce-1', 'complex task');
+      await manager.executeInBackground('thread-ce-1', 'complex task', 'user-1');
 
       const callArg = (messagesRepo.create as jest.Mock).mock.calls[0][0] as Record<
         string,
@@ -276,7 +277,7 @@ describe('CostEnsembleManager', () => {
           data: { response: 'answer' },
         });
 
-      await manager.executeInBackground('thread-ce-1', 'test prompt');
+      await manager.executeInBackground('thread-ce-1', 'test prompt', 'user-1');
 
       expect(streamService.emitCompletion).toHaveBeenCalledWith(
         'thread-ce-1',
@@ -289,7 +290,7 @@ describe('CostEnsembleManager', () => {
       (httpClientModule.httpRequest as jest.Mock).mockRejectedValue(new Error('Ollama down'));
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
-      await manager.executeInBackground('thread-ce-1', 'test prompt');
+      await manager.executeInBackground('thread-ce-1', 'test prompt', 'user-1');
 
       expect(streamService.emitError).toHaveBeenCalledWith('thread-ce-1', expect.any(String));
       expect(messagesRepo.create).toHaveBeenCalledWith(
@@ -304,7 +305,7 @@ describe('CostEnsembleManager', () => {
       messagesRepo.create!.mockRejectedValue(new Error('DB down'));
 
       await expect(
-        manager.executeInBackground('thread-ce-1', 'test prompt'),
+        manager.executeInBackground('thread-ce-1', 'test prompt', 'user-1'),
       ).resolves.toBeUndefined();
     });
 
@@ -313,7 +314,7 @@ describe('CostEnsembleManager', () => {
       messagesRepo.create!.mockRejectedValue(new Error('DB also down'));
 
       await expect(
-        manager.executeInBackground('thread-store-fail', 'prompt'),
+        manager.executeInBackground('thread-store-fail', 'prompt', 'user-1'),
       ).resolves.toBeUndefined();
     });
   });
@@ -368,6 +369,7 @@ describe('CostEnsembleManager', () => {
         streamService as unknown as ChatStreamService,
         qualityManager as unknown as QualityCheckManager,
         mockResearchEnricherManager as any,
+        { recordUsage: jest.fn() } as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 
@@ -404,10 +406,11 @@ describe('CostEnsembleManager', () => {
           executeInBackground: (
             threadId: string,
             content: string,
+            userId: string,
             selection: AdvancedModelSelectionResolution,
           ) => Promise<void>;
         }
-      ).executeInBackground('thread-ce-1', 'please ensemble this', manualResolution);
+      ).executeInBackground('thread-ce-1', 'please ensemble this', 'user-1', manualResolution);
 
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
@@ -445,10 +448,11 @@ describe('CostEnsembleManager', () => {
           executeInBackground: (
             threadId: string,
             content: string,
+            userId: string,
             selection: AdvancedModelSelectionResolution,
           ) => Promise<void>;
         }
-      ).executeInBackground('thread-ce-1', 'please ensemble auto', autoResolution);
+      ).executeInBackground('thread-ce-1', 'please ensemble auto', 'user-1', autoResolution);
 
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',

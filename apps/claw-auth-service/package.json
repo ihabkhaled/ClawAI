@@ -22,6 +22,7 @@
     "migrate": "prisma migrate deploy",
     "migrate:dev": "prisma migrate dev",
     "seed": "ts-node prisma/seed.ts",
+    "seed:permissions": "node prisma/seed-permissions.js",
     "prisma:generate": "prisma generate"
   },
   "prisma": {

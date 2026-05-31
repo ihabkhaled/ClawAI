@@ -64,6 +64,7 @@ describe('AnswerRepairManager', () => {
       mockChatThreadsRepository as any,
       mockChatStreamService as any,
       mockResearchEnricherManager as any,
+      { recordUsage: jest.fn() } as any,
     );
   });
 
@@ -201,7 +202,7 @@ describe('AnswerRepairManager', () => {
         .mockResolvedValueOnce({ id: 'user-msg' })
         .mockResolvedValueOnce({ id: 'assistant-msg' });
       const isolatedRepo = { ...mockChatMessagesRepository, create: createMock };
-      const isolatedManager = new AnswerRepairManager(isolatedRepo as any, mockChatThreadsRepository as any, mockChatStreamService as any, mockResearchEnricherManager as any,);
+      const isolatedManager = new AnswerRepairManager(isolatedRepo as any, mockChatThreadsRepository as any, mockChatStreamService as any, mockResearchEnricherManager as any, { recordUsage: jest.fn() } as any,);
       mockHttpRequest.mockResolvedValue({
         ok: true,
         status: 200,
@@ -237,6 +238,7 @@ describe('AnswerRepairManager', () => {
       mockChatThreadsRepository as any,
       streamMock as any,
       mockResearchEnricherManager as any,
+      { recordUsage: jest.fn() } as any,
     );
       mockHttpRequest.mockResolvedValue({
         ok: true,
@@ -268,6 +270,7 @@ describe('AnswerRepairManager', () => {
       mockChatThreadsRepository as any,
       mockChatStreamService as any,
       mockResearchEnricherManager as any,
+      { recordUsage: jest.fn() } as any,
     );
       mockHttpRequest.mockResolvedValue({
         ok: true,
@@ -303,6 +306,7 @@ describe('AnswerRepairManager', () => {
       mockChatThreadsRepository as any,
       streamMock as any,
       mockResearchEnricherManager as any,
+      { recordUsage: jest.fn() } as any,
     );
       mockHttpRequest.mockResolvedValue({ ok: false, status: 503, data: {} });
 
@@ -337,6 +341,7 @@ describe('AnswerRepairManager', () => {
       mockChatThreadsRepository as any,
       streamMock as any,
       mockResearchEnricherManager as any,
+      { recordUsage: jest.fn() } as any,
     );
       mockHttpRequest.mockResolvedValue({ ok: false, status: 500, data: {} });
 
@@ -372,6 +377,7 @@ describe('AnswerRepairManager', () => {
       mockChatThreadsRepository as any,
       streamMock as any,
       mockResearchEnricherManager as any,
+      { recordUsage: jest.fn() } as any,
     );
       mockHttpRequest.mockResolvedValue({ ok: true, status: 200, data: { response: '   ' } });
 
@@ -398,6 +404,7 @@ describe('AnswerRepairManager', () => {
       mockChatThreadsRepository as any,
       mockChatStreamService as any,
       mockResearchEnricherManager as any,
+      { recordUsage: jest.fn() } as any,
     );
       mockHttpRequest.mockResolvedValue({
         ok: true,
@@ -443,6 +450,7 @@ describe('AnswerRepairManager', () => {
       mockChatThreadsRepository as any,
       mockChatStreamService as any,
       mockResearchEnricherManager as any,
+      { recordUsage: jest.fn() } as any,
       selectionService as any,
     );
 
@@ -474,6 +482,7 @@ describe('AnswerRepairManager', () => {
       mockChatThreadsRepository as any,
       mockChatStreamService as any,
       mockResearchEnricherManager as any,
+      { recordUsage: jest.fn() } as any,
     );
       mockHttpRequest.mockResolvedValue({
         ok: true,
@@ -485,6 +494,7 @@ describe('AnswerRepairManager', () => {
         'thread-manual',
         'Text to fix',
         [RepairType.FORMAT],
+        'user-1',
         manualSelection,
       );
 
@@ -511,6 +521,7 @@ describe('AnswerRepairManager', () => {
       mockChatThreadsRepository as any,
       mockChatStreamService as any,
       mockResearchEnricherManager as any,
+      { recordUsage: jest.fn() } as any,
     );
       mockHttpRequest.mockResolvedValue({
         ok: true,

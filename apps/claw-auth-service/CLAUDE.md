@@ -61,9 +61,22 @@ npm run lint             # ESLint
 npm run test             # Unit tests
 npm run migrate          # Run migrations (production)
 npm run migrate:dev      # Create + run migration (dev)
-npm run seed             # Seed admin user
+npm run seed             # Seed admin user + system roles + plans (full seed)
+npm run seed:permissions # Reconcile system-role permissions ONLY (no users/plans)
 npm run prisma:generate  # Regenerate Prisma client
 ```
+
+## Role-Permissions Auto-Sync (drift correction)
+
+`PermissionsSeederService` (`src/modules/roles/services/permissions-seeder.service.ts`) runs on every auth-service boot via `OnModuleInit`. It diffs the canonical `SYSTEM_ROLE_SEED` in `src/common/constants/rbac.constants.ts` against the in-DB `role_permissions` rows for the two system roles (ADMIN, USER) and reconciles drift:
+
+- **Adds** any permission present in the seed but missing from the DB (e.g., when a new permission is appended to `USER_DEFAULT_PERMISSIONS` after the initial deploy).
+- **Removes** extras gated by `SEED_RECONCILE_PERMISSIONS=true` (default). Set to `false` for ADD-only mode if you have hand-applied extras you want to preserve.
+- Emits a structured warn log per role on drift: `roleSlug=… added=[…] removed=[…] finalGrantCount=…`
+- Custom (non-system) roles are NEVER touched — admins manage those via the role→permission matrix UI.
+- `onModuleInit` soft-fails: a transient DB error logs but does not crash auth-service startup.
+
+Operators can run the reconciler standalone (no full deploy) via `npm run seed:permissions` (backed by `prisma/seed-permissions.js`). Useful for rolling a permission catalog change out to an existing install.
 
 ## Docker Container Rebuild Procedure
 

@@ -175,7 +175,20 @@ describe('JudgeRefereeManager — attachments injection', () => {
   });
 
   it('classifies image attachments as NATIVE_IMAGE for vision-capable providers and OMITTED_NO_VISION otherwise', async () => {
-    // Two runs: vision-capable provider (OpenAI), non-vision lane (DEEPSEEK).
+    // Two runs: vision-capable provider (OpenAI) vs a provider NOT in
+    // VISION_CAPABLE_PROVIDERS heuristic (MISTRAL is not registered).
+    //
+    // NOTE: This test exercises the heuristic-only path of
+    // buildFileDeliveryEntries (no `modelMetadata` is plumbed through the
+    // judge-referee buildAttachmentsBlock call). Commit 1b426cb3 intentionally
+    // added DEEPSEEK + GROK to VISION_CAPABLE_PROVIDERS to support
+    // deepseek-vl / grok-2-vision family — they now resolve to NATIVE_IMAGE
+    // under the heuristic, with the trade-off that text-only siblings
+    // (deepseek-chat, grok-2) also classify as NATIVE_IMAGE until the
+    // connector-catalog `supportsVision` metadata is threaded into this
+    // code path. To get a deterministic OMITTED_NO_VISION classification at
+    // the heuristic layer we use a provider NOT in the heuristic set
+    // (MISTRAL).
     callProviderMock
       // Vision run — critic + judge.
       .mockResolvedValueOnce(criticOkResponse)
@@ -210,9 +223,10 @@ describe('JudgeRefereeManager — attachments injection', () => {
     const visionCriticMsg = callProviderMock.mock.calls[0]![2] as AssembledContext;
     expect(visionCriticMsg.threadMessages[0]!.content as string).toContain('1 NATIVE_IMAGE');
 
-    // Now a non-vision provider lane.
+    // Now a provider NOT in the heuristic VISION_CAPABLE_PROVIDERS set
+    // (MISTRAL) — must classify as OMITTED_NO_VISION.
     await manager.evaluate(
-      buildResponse({ provider: 'DEEPSEEK', model: 'deepseek-chat' }),
+      buildResponse({ provider: 'MISTRAL', model: 'mistral-large-latest' }),
       ctx,
       {
         enabled: true,

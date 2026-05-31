@@ -95,6 +95,7 @@ describe('ConsensusExecutionManager', () => {
       mockChatThreadsRepository as any,
       mockChatStreamService as any,
       mockResearchEnricherManager as any,
+      { recordUsage: jest.fn() } as any,
     );
   });
 
@@ -179,6 +180,7 @@ describe('ConsensusExecutionManager', () => {
         mockChatThreadsRepository as any,
         mockChatStreamService as any,
         mockResearchEnricherManager as any,
+        { recordUsage: jest.fn() } as any,
       );
 
       // Mock Ollama synthesis to fail (test heuristic fallback path)
@@ -227,6 +229,7 @@ describe('ConsensusExecutionManager', () => {
         mockChatThreadsRepository as any,
         mockChatStreamService as any,
         mockResearchEnricherManager as any,
+        { recordUsage: jest.fn() } as any,
       );
 
       globalThis.fetch = jest.fn().mockRejectedValue(new Error('Ollama unavailable'));

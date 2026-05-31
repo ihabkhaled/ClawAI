@@ -135,6 +135,7 @@ describe('BestOfNManager', () => {
       streamService as unknown as ChatStreamService,
       qualityManager as unknown as QualityCheckManager,
       mockResearchEnricherManager as any,
+      { recordUsage: jest.fn() } as any,
     );
 
     jest.clearAllMocks();
@@ -222,7 +223,7 @@ describe('BestOfNManager', () => {
     it('should store ASSISTANT message with bestOfN:true metadata', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
-      await manager.executeInBackground('thread-best-1', 'test prompt', 2);
+      await manager.executeInBackground('thread-best-1', 'test prompt', 2, 'user-1');
 
       expect(messagesRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -235,7 +236,7 @@ describe('BestOfNManager', () => {
     it('should store message where best candidate has rank 1', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
-      await manager.executeInBackground('thread-best-1', 'test prompt', 2);
+      await manager.executeInBackground('thread-best-1', 'test prompt', 2, 'user-1');
 
       expect(messagesRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -247,7 +248,7 @@ describe('BestOfNManager', () => {
     it('should emit SSE completion on success', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
-      await manager.executeInBackground('thread-best-1', 'test prompt', 2);
+      await manager.executeInBackground('thread-best-1', 'test prompt', 2, 'user-1');
 
       expect(streamService.emitCompletion).toHaveBeenCalledWith(
         'thread-best-1',
@@ -262,7 +263,7 @@ describe('BestOfNManager', () => {
       );
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
-      await manager.executeInBackground('thread-best-1', 'test prompt', 2);
+      await manager.executeInBackground('thread-best-1', 'test prompt', 2, 'user-1');
 
       expect(streamService.emitError).toHaveBeenCalledWith('thread-best-1', expect.any(String));
     });
@@ -272,7 +273,7 @@ describe('BestOfNManager', () => {
       messagesRepo.create!.mockRejectedValue(new Error('DB down'));
 
       await expect(
-        manager.executeInBackground('thread-best-1', 'test prompt', 2),
+        manager.executeInBackground('thread-best-1', 'test prompt', 2, 'user-1'),
       ).resolves.toBeUndefined();
     });
 
@@ -288,8 +289,9 @@ describe('BestOfNManager', () => {
         streamService as unknown as ChatStreamService,
         qualityManager as unknown as QualityCheckManager,
         mockResearchEnricherManager as any,
+        { recordUsage: jest.fn() } as any,
       );
-      await isolatedManager.executeInBackground('thread-err', 'prompt', 2);
+      await isolatedManager.executeInBackground('thread-err', 'prompt', 2, 'user-1');
       expect(createMock).toHaveBeenCalledWith(
         expect.objectContaining({ metadata: expect.objectContaining({ error: true }) }),
       );
@@ -302,7 +304,7 @@ describe('BestOfNManager', () => {
         .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'answer B' } })
         .mockResolvedValueOnce({ ok: true, status: 200, data: { response: 'answer C' } });
 
-      await manager.executeInBackground('thread-best-1', 'prompt', 3);
+      await manager.executeInBackground('thread-best-1', 'prompt', 3, 'user-1');
 
       const call = (messagesRepo.create as jest.Mock).mock.calls[0][0] as Record<string, unknown>;
       const meta = call['metadata'] as Record<string, unknown>;
@@ -313,7 +315,7 @@ describe('BestOfNManager', () => {
     it('uses provided models array when given', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
-      await manager.executeInBackground('thread-best-1', 'prompt', 2, [
+      await manager.executeInBackground('thread-best-1', 'prompt', 2, 'user-1', [
         'qwen2.5-coder:7b',
         'deepseek-coder-v2:16b',
       ]);
@@ -340,9 +342,10 @@ describe('BestOfNManager', () => {
         streamService as unknown as ChatStreamService,
         qualityManager as unknown as QualityCheckManager,
         mockResearchEnricherManager as any,
+        { recordUsage: jest.fn() } as any,
       );
       await expect(
-        isolatedManager.executeInBackground('thread-double-fail', 'prompt', 2),
+        isolatedManager.executeInBackground('thread-double-fail', 'prompt', 2, 'user-1'),
       ).resolves.toBeUndefined();
     });
   });
@@ -398,6 +401,7 @@ describe('BestOfNManager', () => {
         streamService as unknown as ChatStreamService,
         qualityManager as unknown as QualityCheckManager,
         mockResearchEnricherManager as any,
+        { recordUsage: jest.fn() } as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 
@@ -437,11 +441,12 @@ describe('BestOfNManager', () => {
             threadId: string,
             content: string,
             n: number,
+            userId: string,
             selection: AdvancedModelSelectionResolution,
             models?: string[],
           ) => Promise<void>;
         }
-      ).executeInBackground('thread-best-1', 'test prompt', 2, manualResolution);
+      ).executeInBackground('thread-best-1', 'test prompt', 2, 'user-1', manualResolution);
 
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
@@ -474,11 +479,12 @@ describe('BestOfNManager', () => {
             threadId: string,
             content: string,
             n: number,
+            userId: string,
             selection: AdvancedModelSelectionResolution,
             models?: string[],
           ) => Promise<void>;
         }
-      ).executeInBackground('thread-best-1', 'test prompt', 3, autoResolution);
+      ).executeInBackground('thread-best-1', 'test prompt', 3, 'user-1', autoResolution);
 
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',

@@ -10,6 +10,7 @@ import {
 } from '../constants/consensus.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
+import { AccessControlService } from '../services/access-control.service';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type {
@@ -41,6 +42,7 @@ export class ConsensusExecutionManager {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly researchEnricherManager: ResearchEnricherManager,
+    private readonly accessControlService: AccessControlService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {
     this.timeoutMs = AppConfig.get().OLLAMA_GENERATE_TIMEOUT_MS;
@@ -109,7 +111,7 @@ export class ConsensusExecutionManager {
 
       await this.storeModelMessages(threadId, consensusGroupId, responses, enrichment.transcript);
 
-      const synthesis = await this.synthesize(content, completedResponses, models);
+      const synthesis = await this.synthesize(content, completedResponses, models, userId);
       await this.storeSynthesisMessage(
         threadId,
         consensusGroupId,
@@ -255,6 +257,7 @@ export class ConsensusExecutionManager {
     prompt: string,
     completedResponses: ParallelModelResponse[],
     allModels: ParallelModelTarget[],
+    userId: string,
   ): Promise<ConsensusSynthesisResult> {
     if (completedResponses.length === 0) {
       return this.buildFallbackSynthesis('No models produced a valid response');
@@ -266,7 +269,7 @@ export class ConsensusExecutionManager {
       }
     }
     try {
-      return await this.runOllamaSynthesis(prompt, completedResponses, allModels);
+      return await this.runOllamaSynthesis(prompt, completedResponses, allModels, userId);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Synthesis failed';
       this.logger.warn(`synthesize: Ollama synthesis failed, using heuristic — ${msg}`);
@@ -278,6 +281,7 @@ export class ConsensusExecutionManager {
     prompt: string,
     completedResponses: ParallelModelResponse[],
     allModels: ParallelModelTarget[],
+    userId: string,
   ): Promise<ConsensusSynthesisResult> {
     const config = AppConfig.get();
     const responseList = completedResponses
@@ -292,8 +296,9 @@ export class ConsensusExecutionManager {
       responseList,
       completedResponses.length,
     );
+    const synthesisModel = await this.resolveModel();
     const requestBody: OllamaGenerateRequest = {
-      model: await this.resolveModel(),
+      model: synthesisModel,
       prompt: synthesisPrompt,
       stream: false,
       think: false,
@@ -310,6 +315,17 @@ export class ConsensusExecutionManager {
     if (!response.ok) {
       throw new Error(`Ollama synthesis returned status ${String(response.status)}`);
     }
+
+    // Universal token deduction: synthesis hop is a real LLM call (the
+    // per-lane calls already record via ChatExecutionManager.callProvider).
+    void this.accessControlService.recordUsage({
+      userId,
+      planId: null,
+      inputTokens: response.data.promptEvalCount ?? 0,
+      outputTokens: response.data.evalCount ?? 0,
+      provider: 'local-ollama',
+      model: synthesisModel,
+    });
 
     const parsed = this.parseSynthesisJson(response.data.response);
     return this.buildSynthesisResult(parsed, completedResponses, allModels);

@@ -7,6 +7,7 @@ import { httpRequest } from '../../../common/utilities/http-client.utility';
 import { CANDIDATE_TIMEOUT_MS, DEFAULT_CANDIDATE_MODEL } from '../constants/best-of-n.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
+import { AccessControlService } from '../services/access-control.service';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
@@ -43,6 +44,7 @@ export class BestOfNManager {
     private readonly chatStreamService: ChatStreamService,
     private readonly qualityCheckManager: QualityCheckManager,
     private readonly researchEnricherManager: ResearchEnricherManager,
+    private readonly accessControlService: AccessControlService,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
@@ -68,6 +70,7 @@ export class BestOfNManager {
       threadId,
       dto.content,
       dto.n,
+      userId,
       selection,
       dto.models,
       dto.researchMode,
@@ -82,6 +85,7 @@ export class BestOfNManager {
     threadId: string,
     content: string,
     n: number,
+    userId: string,
     selectionOrModels?: AdvancedModelSelectionResolution | string[],
     models?: string[],
     researchMode?: ResearchMode,
@@ -112,6 +116,7 @@ export class BestOfNManager {
         candidateModels,
         startTime,
         enrichment.systemPrompt,
+        userId,
       );
       const ranked = this.rankCandidates(candidates, content);
       const best = ranked[0];
@@ -174,6 +179,7 @@ export class BestOfNManager {
     candidateModels: string[],
     startTime: number,
     researchEvidence: string,
+    userId: string,
   ): Promise<CandidateResult[]> {
     const config = AppConfig.get();
     const resolvedModels = candidateModels.includes(DEFAULT_CANDIDATE_MODEL)
@@ -182,7 +188,14 @@ export class BestOfNManager {
       : candidateModels;
     const results = await Promise.allSettled(
       resolvedModels.map((model) =>
-        this.runOneCandidate(config.OLLAMA_SERVICE_URL, model, content, startTime, researchEvidence),
+        this.runOneCandidate(
+          config.OLLAMA_SERVICE_URL,
+          model,
+          content,
+          startTime,
+          researchEvidence,
+          userId,
+        ),
       ),
     );
 
@@ -204,6 +217,7 @@ export class BestOfNManager {
     content: string,
     _globalStartTime: number,
     researchEvidence: string,
+    userId: string,
   ): Promise<CandidateResult> {
     const candidateStart = Date.now();
     const requestBody: OllamaGenerateRequest = {
@@ -226,6 +240,18 @@ export class BestOfNManager {
 
     const latencyMs = Date.now() - candidateStart;
     const responseContent = response.data.response.trim();
+
+    // Universal token deduction: each best-of-N candidate is a real LLM
+    // call against ollama-service and MUST consume the user's daily quota.
+    // Without this, a 5-candidate best-of-N hop was 5 free LLM hits.
+    void this.accessControlService.recordUsage({
+      userId,
+      planId: null,
+      inputTokens: response.data.promptEvalCount ?? 0,
+      outputTokens: response.data.evalCount ?? 0,
+      provider: 'local-ollama',
+      model,
+    });
 
     const qualityResult = this.qualityCheckManager.checkResponseQuality(responseContent, content);
 

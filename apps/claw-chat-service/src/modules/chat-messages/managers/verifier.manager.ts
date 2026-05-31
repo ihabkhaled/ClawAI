@@ -12,6 +12,7 @@ import {
 } from '../constants/verifier.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
+import { AccessControlService } from '../services/access-control.service';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
@@ -33,6 +34,7 @@ export class VerifierManager {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly researchEnricherManager: ResearchEnricherManager,
+    private readonly accessControlService: AccessControlService,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
@@ -58,6 +60,7 @@ export class VerifierManager {
       threadId,
       dto.content,
       dto.maxRevisions,
+      userId,
       selection,
       dto.researchMode,
       dto.researchProviderId,
@@ -71,6 +74,7 @@ export class VerifierManager {
     threadId: string,
     content: string,
     maxRevisions: number,
+    userId: string,
     selection?: AdvancedModelSelectionResolution,
     researchMode?: ResearchMode,
     researchProviderId?: string,
@@ -89,8 +93,13 @@ export class VerifierManager {
         userToken: userToken ?? '',
         providerId: researchProviderId,
       });
-      const draft = await this.generateDraft(content, resolvedSelection, enrichment.systemPrompt);
-      const checkResult = await this.runVerifierCheck(content, draft, resolvedSelection);
+      const draft = await this.generateDraft(
+        content,
+        resolvedSelection,
+        enrichment.systemPrompt,
+        userId,
+      );
+      const checkResult = await this.runVerifierCheck(content, draft, resolvedSelection, userId);
 
       if (checkResult.score >= VERIFIER_PASS_THRESHOLD || maxRevisions === 0) {
         await this.storeVerifiedMessage(
@@ -117,6 +126,7 @@ export class VerifierManager {
         maxRevisions,
         resolvedSelection,
         enrichment.systemPrompt,
+        userId,
       );
 
       await this.storeVerifiedMessage(
@@ -153,6 +163,7 @@ export class VerifierManager {
     maxRevisions: number,
     selection: AdvancedModelSelectionResolution,
     researchEvidence: string,
+    userId: string,
   ): Promise<{ finalDraft: string; finalCheck: VerifierCheckResult; revisionCount: number }> {
     let currentDraft = initialDraft;
     let currentCheck = initialCheck;
@@ -165,8 +176,9 @@ export class VerifierManager {
         currentCheck.suggestions,
         selection,
         researchEvidence,
+        userId,
       );
-      const recheck = await this.runVerifierCheck(content, revised, selection);
+      const recheck = await this.runVerifierCheck(content, revised, selection, userId);
       revisionCount += 1;
       currentDraft = revised;
       currentCheck = recheck;
@@ -183,6 +195,7 @@ export class VerifierManager {
     content: string,
     selection: AdvancedModelSelectionResolution,
     researchEvidence: string,
+    userId: string,
   ): Promise<string> {
     const config = AppConfig.get();
     const model = selection.actualModel;
@@ -205,6 +218,16 @@ export class VerifierManager {
       throw new Error(`Ollama draft generation returned status ${String(response.status)}`);
     }
 
+    // Universal token deduction: draft hop.
+    void this.accessControlService.recordUsage({
+      userId,
+      planId: null,
+      inputTokens: response.data.promptEvalCount ?? 0,
+      outputTokens: response.data.evalCount ?? 0,
+      provider: 'local-ollama',
+      model,
+    });
+
     const draft = response.data.response.trim();
     if (draft.length === 0) {
       throw new Error('Ollama returned an empty draft response');
@@ -217,6 +240,7 @@ export class VerifierManager {
     content: string,
     draft: string,
     selection: AdvancedModelSelectionResolution,
+    userId: string,
   ): Promise<VerifierCheckResult> {
     const config = AppConfig.get();
     const model = selection.actualModel;
@@ -251,6 +275,16 @@ Return ONLY JSON: { "score": <average 0-1>, "issues": ["..."], "suggestions": ["
       return { passed: true, score: 1, issues: [], suggestions: [] };
     }
 
+    // Universal token deduction: verifier-check hop.
+    void this.accessControlService.recordUsage({
+      userId,
+      planId: null,
+      inputTokens: response.data.promptEvalCount ?? 0,
+      outputTokens: response.data.evalCount ?? 0,
+      provider: 'local-ollama',
+      model,
+    });
+
     return this.parseVerifierResponse(response.data.response);
   }
 
@@ -280,6 +314,7 @@ Return ONLY JSON: { "score": <average 0-1>, "issues": ["..."], "suggestions": ["
     suggestions: string[],
     selection: AdvancedModelSelectionResolution,
     researchEvidence: string,
+    userId: string,
   ): Promise<string> {
     const config = AppConfig.get();
     const model = selection.actualModel;
@@ -322,6 +357,16 @@ Return ONLY the improved response. Do not explain changes.`;
       );
       return draft;
     }
+
+    // Universal token deduction: repair hop.
+    void this.accessControlService.recordUsage({
+      userId,
+      planId: null,
+      inputTokens: response.data.promptEvalCount ?? 0,
+      outputTokens: response.data.evalCount ?? 0,
+      provider: 'local-ollama',
+      model,
+    });
 
     const repaired = response.data.response.trim();
     return repaired.length > 0 ? repaired : draft;

@@ -12,6 +12,7 @@ import {
 } from '../constants/cost-ensemble.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
+import { AccessControlService } from '../services/access-control.service';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
@@ -56,6 +57,7 @@ export class CostEnsembleManager {
     private readonly chatStreamService: ChatStreamService,
     private readonly qualityCheckManager: QualityCheckManager,
     private readonly researchEnricherManager: ResearchEnricherManager,
+    private readonly accessControlService: AccessControlService,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
@@ -80,6 +82,7 @@ export class CostEnsembleManager {
     void this.executeInBackground(
       threadId,
       dto.content,
+      userId,
       selection,
       dto.researchMode,
       dto.researchProviderId,
@@ -92,6 +95,7 @@ export class CostEnsembleManager {
   async executeInBackground(
     threadId: string,
     content: string,
+    userId: string,
     selection?: AdvancedModelSelectionResolution,
     researchMode?: ResearchMode,
     researchProviderId?: string,
@@ -109,7 +113,7 @@ export class CostEnsembleManager {
         userToken: userToken ?? '',
         providerId: researchProviderId,
       });
-      const rawClassification = await this.classifyTask(content, resolvedSelection);
+      const rawClassification = await this.classifyTask(content, resolvedSelection, userId);
       const tier = this.determineTier(rawClassification);
       const classification: CostClassification = { tier, ...rawClassification };
 
@@ -118,6 +122,7 @@ export class CostEnsembleManager {
         tier,
         resolvedSelection,
         enrichment.systemPrompt,
+        userId,
       );
       const { selectedIndex, best } = this.selectBest(candidates, content);
 
@@ -207,6 +212,7 @@ export class CostEnsembleManager {
   private async classifyTask(
     content: string,
     selection: AdvancedModelSelectionResolution,
+    userId: string,
   ): Promise<RawClassification> {
     const config = AppConfig.get();
     const classifyPrompt = [
@@ -238,6 +244,16 @@ export class CostEnsembleManager {
       if (!response.ok) {
         return this.defaultClassification();
       }
+
+      // Universal token deduction: the classifier hop is a real LLM call.
+      void this.accessControlService.recordUsage({
+        userId,
+        planId: null,
+        inputTokens: response.data.promptEvalCount ?? 0,
+        outputTokens: response.data.evalCount ?? 0,
+        provider: 'local-ollama',
+        model: selection.actualModel,
+      });
 
       const raw = response.data.response.trim();
       const parsed = JSON.parse(raw) as Record<string, unknown>;
@@ -279,13 +295,14 @@ export class CostEnsembleManager {
     tier: CostTier,
     selection: AdvancedModelSelectionResolution,
     researchEvidence: string,
+    userId: string,
   ): Promise<EnsembleCandidate[]> {
     const count = this.tierToCount(tier);
     const config = AppConfig.get();
     const model = selection.actualModel;
 
     const calls = Array.from({ length: count }, () =>
-      this.runOneCall(config.OLLAMA_SERVICE_URL, content, model, researchEvidence),
+      this.runOneCall(config.OLLAMA_SERVICE_URL, content, model, researchEvidence, userId),
     );
 
     const results = await Promise.allSettled(calls);
@@ -308,6 +325,7 @@ export class CostEnsembleManager {
     content: string,
     model: string,
     researchEvidence: string,
+    userId: string,
   ): Promise<EnsembleCandidate> {
     const start = Date.now();
     const requestBody: OllamaGenerateRequest = {
@@ -327,6 +345,16 @@ export class CostEnsembleManager {
     if (!response.ok) {
       throw new Error(`Ollama returned status ${String(response.status)}`);
     }
+
+    // Universal token deduction for every ensemble candidate.
+    void this.accessControlService.recordUsage({
+      userId,
+      planId: null,
+      inputTokens: response.data.promptEvalCount ?? 0,
+      outputTokens: response.data.evalCount ?? 0,
+      provider: 'local-ollama',
+      model,
+    });
 
     return {
       model,

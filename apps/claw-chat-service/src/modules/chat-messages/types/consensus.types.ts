@@ -45,4 +45,6 @@ export type OllamaGenerateResponse = {
   response: string;
   thinking?: string;
   done: boolean;
+  promptEvalCount?: number;
+  evalCount?: number;
 };

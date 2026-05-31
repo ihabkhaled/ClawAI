@@ -133,6 +133,7 @@ describe('VerifierManager', () => {
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
       mockResearchEnricherManager as any,
+      { recordUsage: jest.fn() } as any,
     );
 
     jest.clearAllMocks();
@@ -186,7 +187,7 @@ describe('VerifierManager', () => {
     it('should store ASSISTANT with verified:true metadata', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
-      await manager.executeInBackground('thread-verify-1', 'test prompt', 1);
+      await manager.executeInBackground('thread-verify-1', 'test prompt', 1, 'user-1');
 
       expect(messagesRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -199,7 +200,7 @@ describe('VerifierManager', () => {
     it('should store ASSISTANT with verifierScore in metadata', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
-      await manager.executeInBackground('thread-verify-1', 'test prompt', 1);
+      await manager.executeInBackground('thread-verify-1', 'test prompt', 1, 'user-1');
 
       expect(messagesRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -211,7 +212,7 @@ describe('VerifierManager', () => {
     it('should emit SSE completion on success', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
-      await manager.executeInBackground('thread-verify-1', 'test prompt', 1);
+      await manager.executeInBackground('thread-verify-1', 'test prompt', 1, 'user-1');
 
       expect(streamService.emitCompletion).toHaveBeenCalledWith(
         'thread-verify-1',
@@ -226,7 +227,7 @@ describe('VerifierManager', () => {
       );
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
-      await manager.executeInBackground('thread-verify-1', 'test prompt', 1);
+      await manager.executeInBackground('thread-verify-1', 'test prompt', 1, 'user-1');
 
       expect(streamService.emitError).toHaveBeenCalledWith('thread-verify-1', expect.any(String));
       expect(messagesRepo.create).toHaveBeenCalledWith(
@@ -239,7 +240,7 @@ describe('VerifierManager', () => {
       messagesRepo.create!.mockRejectedValue(new Error('DB down'));
 
       await expect(
-        manager.executeInBackground('thread-verify-1', 'test prompt', 1),
+        manager.executeInBackground('thread-verify-1', 'test prompt', 1, 'user-1'),
       ).resolves.toBeUndefined();
     });
   });
@@ -307,6 +308,7 @@ describe('VerifierManager', () => {
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
         mockResearchEnricherManager as any,
+        { recordUsage: jest.fn() } as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 
@@ -345,10 +347,11 @@ describe('VerifierManager', () => {
             threadId: string,
             content: string,
             maxRevisions: number,
+            userId: string,
             selection: AdvancedModelSelectionResolution,
           ) => Promise<void>;
         }
-      ).executeInBackground('thread-verify-1', 'please verify', 0, manualResolution);
+      ).executeInBackground('thread-verify-1', 'please verify', 0, 'user-1', manualResolution);
 
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
@@ -381,10 +384,11 @@ describe('VerifierManager', () => {
             threadId: string,
             content: string,
             maxRevisions: number,
+            userId: string,
             selection: AdvancedModelSelectionResolution,
           ) => Promise<void>;
         }
-      ).executeInBackground('thread-verify-1', 'please verify', 0, autoResolution);
+      ).executeInBackground('thread-verify-1', 'please verify', 0, 'user-1', autoResolution);
 
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',

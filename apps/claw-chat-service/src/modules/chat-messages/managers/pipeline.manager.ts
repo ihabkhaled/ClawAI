@@ -11,6 +11,7 @@ import {
 } from '../constants/pipeline.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
+import { AccessControlService } from '../services/access-control.service';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
@@ -45,6 +46,7 @@ export class PipelineManager {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly researchEnricherManager: ResearchEnricherManager,
+    private readonly accessControlService: AccessControlService,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
@@ -67,7 +69,7 @@ export class PipelineManager {
       metadata: { pipelineRequest: true, modelSelection: selection },
     });
 
-    void this.executeInBackground(threadId, dto.content, dto, selection, userToken);
+    void this.executeInBackground(threadId, dto.content, dto, userId, selection, userToken);
 
     return { messageId: userMessage.id, threadId };
   }
@@ -76,6 +78,7 @@ export class PipelineManager {
     threadId: string,
     content: string,
     dto: PipelineMessageDto,
+    userId: string,
     selection?: AdvancedModelSelectionResolution,
     userToken?: string,
   ): Promise<void> {
@@ -113,6 +116,7 @@ export class PipelineManager {
         content,
         config.OLLAMA_SERVICE_URL,
         enrichment.systemPrompt,
+        userId,
       );
       const finalOutput = stageResults.at(-1)?.output ?? content;
       const resolvedModel = resolvedSelection.actualModel;
@@ -227,12 +231,19 @@ export class PipelineManager {
     content: string,
     ollamaUrl: string,
     researchEvidence: string,
+    userId: string,
   ): Promise<PipelineStageResult[]> {
     const results: PipelineStageResult[] = [];
     let previousOutput = content;
 
     for (const stage of stages) {
-      const result = await this.runStage(stage, previousOutput, ollamaUrl, researchEvidence);
+      const result = await this.runStage(
+        stage,
+        previousOutput,
+        ollamaUrl,
+        researchEvidence,
+        userId,
+      );
       results.push(result);
       previousOutput = result.output;
     }
@@ -245,6 +256,7 @@ export class PipelineManager {
     input: string,
     ollamaUrl: string,
     researchEvidence: string,
+    userId: string,
   ): Promise<PipelineStageResult> {
     const startTime = Date.now();
     const basePrompt = `${stage.instruction}\n\n${input}`;
@@ -270,6 +282,16 @@ export class PipelineManager {
         `Pipeline stage "${stage.name}" failed with status ${String(response.status)}`,
       );
     }
+
+    // Universal token deduction: each pipeline stage is a real LLM call.
+    void this.accessControlService.recordUsage({
+      userId,
+      planId: null,
+      inputTokens: response.data.promptEvalCount ?? 0,
+      outputTokens: response.data.evalCount ?? 0,
+      provider: 'local-ollama',
+      model,
+    });
 
     return {
       stageName: stage.name,

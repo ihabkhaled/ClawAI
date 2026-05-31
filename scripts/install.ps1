@@ -770,6 +770,8 @@ ENCRYPTION_KEY=$encryptionKey
 ADMIN_EMAIL=$adminEmail
 ADMIN_USERNAME=$adminUsername
 ADMIN_PASSWORD=$adminPass
+# Reconcile system-role permissions on every auth-service boot (drift fix).
+SEED_RECONCILE_PERMISSIONS=true
 
 # =============================================================================
 # Frontend

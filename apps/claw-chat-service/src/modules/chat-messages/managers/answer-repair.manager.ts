@@ -8,6 +8,7 @@ import { httpRequest } from '../../../common/utilities/http-client.utility';
 import { REPAIR_GENERATION_TIMEOUT_MS } from '../constants/answer-repair.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
+import { AccessControlService } from '../services/access-control.service';
 import { ChatStreamService } from '../services/chat-stream.service';
 import { AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
@@ -28,6 +29,7 @@ export class AnswerRepairManager {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatStreamService: ChatStreamService,
     private readonly researchEnricherManager: ResearchEnricherManager,
+    private readonly accessControlService: AccessControlService,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
   ) {}
@@ -60,6 +62,7 @@ export class AnswerRepairManager {
       threadId,
       originalContent,
       dto.repairTypes,
+      userId,
       selection,
       dto.researchMode,
       dto.researchProviderId,
@@ -73,6 +76,7 @@ export class AnswerRepairManager {
     threadId: string,
     originalContent: string,
     repairTypes: RepairType[],
+    userId: string,
     selection?: AdvancedModelSelectionResolution,
     researchMode?: ResearchMode,
     researchProviderId?: string,
@@ -93,6 +97,7 @@ export class AnswerRepairManager {
         repairTypes,
         resolvedSelection,
         enrichment.systemPrompt,
+        userId,
       );
 
       const provider = resolvedSelection.actualProvider;
@@ -138,6 +143,7 @@ export class AnswerRepairManager {
     repairTypes: RepairType[],
     selection: AdvancedModelSelectionResolution,
     researchEvidence: string,
+    userId: string,
   ): Promise<string> {
     const config = AppConfig.get();
     const baseRepairPrompt = this.buildRepairPrompt(originalContent, repairTypes);
@@ -161,6 +167,16 @@ export class AnswerRepairManager {
     if (!response.ok) {
       throw new Error(`Ollama repair returned status ${String(response.status)}`);
     }
+
+    // Universal token deduction: repair hop is a real LLM call.
+    void this.accessControlService.recordUsage({
+      userId,
+      planId: null,
+      inputTokens: response.data.promptEvalCount ?? 0,
+      outputTokens: response.data.evalCount ?? 0,
+      provider: 'local-ollama',
+      model,
+    });
 
     const repaired = response.data.response.trim();
     if (repaired.length === 0) {
