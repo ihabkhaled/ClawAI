@@ -106,11 +106,11 @@ const SYSTEM_PLANS = [
   {
     slug: 'free',
     name: 'Free',
-    description: 'Free tier with a daily token allowance.',
+    description: 'Free tier with compare mode and a daily token allowance.',
     displayOrder: 0,
     isDefault: true,
     dailyTokenQuota: 50000,
-    allowCompareMode: false,
+    allowCompareMode: true,
     allowJudgeMode: false,
     allowResearchMode: false,
     allowCriticReview: false,
@@ -119,7 +119,7 @@ const SYSTEM_PLANS = [
   {
     slug: 'pro',
     name: 'Pro',
-    description: 'Higher quota, compare, judge, critic and research modes.',
+    description: 'Higher quota, judge, critic and research modes.',
     displayOrder: 1,
     isDefault: false,
     dailyTokenQuota: 500000,

@@ -67,6 +67,7 @@ export {
   getFileDeliveryModeLabel,
   buildFileDeliveryTooltip,
   readFileDeliveryFromMetadata,
+  resolveFileDelivery,
   getMessageFilesProvidedCount,
 } from './file-delivery.utility';
 export {

@@ -47,6 +47,15 @@ export type ParallelLaneCardProps = {
 // truncated) with a hover tooltip listing each filename + mode + reason.
 // Backed by `metadata.fileDelivery` written by chat-service per parallel
 // lane and surfaced on `ParallelModelResponse.attachmentDelivery`.
+//
+// Dual-read (Slice D): when `messageId` is provided the chip will attempt a
+// fresh fetch from `GET /chat-messages/:id/file-delivery` (authoritative
+// `file_delivery_records` rows) and prefer its non-empty result. If the API
+// returns an empty array, errors, or `messageId` is omitted, the chip falls
+// back to the inline `delivery` array passed by the parent. This makes the
+// component back-compatible with every existing call-site that only has the
+// metadata read.
 export type AttachmentDeliveryChipProps = {
   delivery: FileDeliveryEntry[];
+  messageId?: string;
 };

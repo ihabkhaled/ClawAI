@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import {
   EventPattern,
@@ -29,6 +29,7 @@ export class ZipExpansionManager {
     private readonly fileSecurityManager: FileSecurityManager,
     private readonly filesRepository: FilesRepository,
     private readonly fileChunksRepository: FileChunksRepository,
+    @Inject(forwardRef(() => FileProcessingManager))
     private readonly fileProcessingManager: FileProcessingManager,
     private readonly rabbitMQService: RabbitMQService,
   ) {}
