@@ -1,24 +1,47 @@
 import { DataTable } from '@/components/common/data-table';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { LIFECYCLE_LABELS, PROVIDER_DISPLAY_NAMES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import type { ConnectorModel, DataTableColumn, ModelTableProps } from '@/types';
 import { formatContextTokens, getLifecycleBadgeVariant } from '@/utilities';
 
-export function ModelTable({ models, showProvider = false, emptyMessage }: ModelTableProps) {
+export function ModelTable({
+  models,
+  showProvider = false,
+  emptyMessage,
+  compareSelection,
+  onToggleCompare,
+}: ModelTableProps) {
   const { t } = useTranslation();
-  const columns: DataTableColumn<ConnectorModel>[] = [
-    {
-      key: 'displayName',
-      header: t('models.colModel'),
+  const isCompareMode = compareSelection !== undefined && onToggleCompare !== undefined;
+  const columns: DataTableColumn<ConnectorModel>[] = [];
+
+  if (isCompareMode) {
+    columns.push({
+      key: 'select',
+      header: '',
+      className: 'w-10',
       render: (model) => (
-        <div>
-          <span className="font-medium">{model.displayName}</span>
-          <p className="text-xs text-muted-foreground">{model.modelKey}</p>
-        </div>
+        <Checkbox
+          checked={compareSelection.has(model.id)}
+          onCheckedChange={() => onToggleCompare(model.id)}
+          aria-label={model.displayName}
+        />
       ),
-    },
-  ];
+    });
+  }
+
+  columns.push({
+    key: 'displayName',
+    header: t('models.colModel'),
+    render: (model) => (
+      <div>
+        <span className="font-medium">{model.displayName}</span>
+        <p className="text-xs text-muted-foreground">{model.modelKey}</p>
+      </div>
+    ),
+  });
 
   if (showProvider) {
     columns.push({
@@ -81,6 +104,7 @@ export function ModelTable({ models, showProvider = false, emptyMessage }: Model
       data={models}
       keyExtractor={(model) => model.id}
       emptyMessage={emptyMessage ?? t('models.noSyncedModels')}
+      mobileTitleKey="displayName"
     />
   );
 }

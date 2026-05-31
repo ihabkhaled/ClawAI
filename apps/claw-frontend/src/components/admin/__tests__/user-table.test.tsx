@@ -71,25 +71,33 @@ const baseProps = {
   isAssignPlanPending: false,
 };
 
+// UserTable now uses the responsive DataTable wrapper which mounts BOTH
+// the mobile-card and desktop-table representations in the DOM (CSS
+// toggles visibility). In jsdom CSS is not applied, so every element
+// appears twice — tests therefore assert on `getAllByX` and verify
+// presence rather than uniqueness.
+
 describe('UserTable plan column', () => {
   it('renders the plan column header', () => {
     render(<UserTable users={[makeUser()]} {...baseProps} />);
-    expect(screen.getByText('admin.planColumn')).toBeInTheDocument();
+    expect(screen.getAllByText('admin.planColumn').length).toBeGreaterThan(0);
   });
 
   it('shows the noPlan placeholder when the user has no active plan', () => {
     render(<UserTable users={[makeUser({ activePlanId: null })]} {...baseProps} />);
-    expect(screen.getByText('admin.noPlan')).toBeInTheDocument();
+    expect(screen.getAllByText('admin.noPlan').length).toBeGreaterThan(0);
   });
 
   it('shows the current plan name when the user is assigned a plan', () => {
     render(<UserTable users={[makeUser({ activePlanId: 'pl1' })]} {...baseProps} />);
-    expect(screen.getByText('Pro')).toBeInTheDocument();
+    expect(screen.getAllByText('Pro').length).toBeGreaterThan(0);
   });
 
   it('exposes the plan select trigger with an assign-plan aria-label', () => {
     render(<UserTable users={[makeUser()]} {...baseProps} />);
-    expect(screen.getByRole('combobox', { name: 'admin.assignPlan' })).toBeInTheDocument();
+    expect(screen.getAllByRole('combobox', { name: 'admin.assignPlan' }).length).toBeGreaterThan(
+      0,
+    );
   });
 
   it('disables the plan select for the row that is pending assignment', () => {
@@ -101,7 +109,11 @@ describe('UserTable plan column', () => {
         isAssignPlanPending
       />,
     );
-    expect(screen.getByRole('combobox', { name: 'admin.assignPlan' })).toBeDisabled();
+    const selects = screen.getAllByRole('combobox', { name: 'admin.assignPlan' });
+    expect(selects.length).toBeGreaterThan(0);
+    for (const select of selects) {
+      expect(select).toBeDisabled();
+    }
   });
 
   it('does not disable the plan select for a different pending row', () => {
@@ -113,6 +125,10 @@ describe('UserTable plan column', () => {
         isAssignPlanPending
       />,
     );
-    expect(screen.getByRole('combobox', { name: 'admin.assignPlan' })).not.toBeDisabled();
+    const selects = screen.getAllByRole('combobox', { name: 'admin.assignPlan' });
+    expect(selects.length).toBeGreaterThan(0);
+    for (const select of selects) {
+      expect(select).not.toBeDisabled();
+    }
   });
 });

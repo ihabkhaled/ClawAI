@@ -191,6 +191,7 @@ export default function RoutingPage(): React.ReactElement {
             data={policies}
             keyExtractor={(row) => row.id}
             emptyMessage={t('routing.noPoliciesConfigured')}
+            mobileTitleKey="name"
           />
         )}
       </div>

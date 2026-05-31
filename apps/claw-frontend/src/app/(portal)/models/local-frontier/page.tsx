@@ -1,7 +1,9 @@
 'use client';
 
-import { Cpu, Loader2, Sparkles } from 'lucide-react';
+import { Cpu, Sparkles } from 'lucide-react';
 
+import { EmptyState } from '@/components/common/empty-state';
+import { LoadingState } from '@/components/common/loading-state';
 import { CatalogGrid } from '@/components/local-frontier/catalog-grid';
 import { DeleteWeightsDialog } from '@/components/local-frontier/delete-weights-dialog';
 import { DownloadsDrawer } from '@/components/local-frontier/downloads-drawer';
@@ -199,22 +201,14 @@ export default function LocalFrontierCatalogPage(): React.ReactElement {
         labels={drawerLabels}
       />
 
-      {ctrl.isLoading && (
-        <div className="flex items-center justify-center gap-2 py-8">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden />
-          <span className="text-sm text-muted-foreground">{t('localFrontier.loading')}</span>
-        </div>
-      )}
+      {ctrl.isLoading && <LoadingState rows={3} label={t('localFrontier.loading')} />}
       {!ctrl.isLoading && ctrl.isError && (
         <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
           {t('localFrontier.catalogError')}
         </p>
       )}
       {!ctrl.isLoading && !ctrl.isError && ctrl.entries.length === 0 && (
-        <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
-          <Cpu className="size-8" aria-hidden />
-          <p className="text-sm">{t('localFrontier.catalogEmpty')}</p>
-        </div>
+        <EmptyState icon={Cpu} title={t('localFrontier.catalogEmpty')} />
       )}
       {!ctrl.isLoading && !ctrl.isError && ctrl.entries.length > 0 && (
         <CatalogGrid

@@ -256,6 +256,7 @@ export default function LocalModelsPage(): React.ReactElement {
             data={models}
             keyExtractor={(row) => row.id}
             emptyMessage={t('models.noLocalModels')}
+            mobileTitleKey="name"
           />
         )}
       </div>

@@ -1,4 +1,9 @@
-import type { HealthStatus } from '@/enums';
+import type {
+  DashboardGreetingKey,
+  DashboardOperationalState,
+  DashboardStatGradient,
+  HealthStatus,
+} from '@/enums';
 
 import type { AggregatedHealth } from './health.types';
 
@@ -14,6 +19,7 @@ export type DashboardStatCard = {
   label: string;
   value: number | string;
   icon: React.ComponentType<{ className?: string }>;
+  gradient: DashboardStatGradient;
 };
 
 export type DashboardQuickAction = {
@@ -34,4 +40,9 @@ export type DashboardDataResult = {
 
 export type DashboardPageResult = DashboardDataResult & {
   quickActions: DashboardQuickAction[];
+  // Personalized hero state — computed in use-dashboard-page so the TSX stays
+  // pure render composition.
+  greetingKey: DashboardGreetingKey;
+  greetingName: string;
+  operationalState: DashboardOperationalState;
 };

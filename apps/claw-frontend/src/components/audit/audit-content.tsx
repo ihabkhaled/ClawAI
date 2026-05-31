@@ -29,6 +29,14 @@ export function AuditContent({
       key: 'action',
       header: t('audits.action'),
       render: (row) => <Badge variant="outline">{row.action}</Badge>,
+      renderMobileTitle: (row) => (
+        <div className="flex flex-col">
+          <span>{row.action}</span>
+          <span className="text-xs font-normal text-muted-foreground">
+            {new Date(row.createdAt).toLocaleString()}
+          </span>
+        </div>
+      ),
     },
     {
       key: 'userId',
@@ -104,6 +112,7 @@ export function AuditContent({
         data={auditLogs}
         keyExtractor={(row) => row._id}
         emptyMessage={t('audits.noMatchingAudits')}
+        mobileTitleKey="action"
       />
 
       <div className="mt-4 flex items-center justify-between">

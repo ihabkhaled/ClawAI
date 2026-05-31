@@ -46,6 +46,12 @@ export const VIRTUALIZED_MESSAGES_VIEWPORT_BUFFER = { top: 1200, bottom: 200 } a
 export const RICH_PROMPT_DEFAULT_MIN_ROWS = 2;
 export const RICH_PROMPT_DEFAULT_MAX_ROWS = 12;
 
+// localStorage key used to pass a seed prompt from /chat (suggested-prompt
+// buttons) into the composer on the newly-created thread page. Written by
+// use-chat-page.ts.handleSuggestedPrompt; consumed once on composer mount in
+// use-message-composer-state.ts and immediately cleared.
+export const COMPOSER_SEED_STORAGE_KEY = 'chat:nextComposerSeed';
+
 /**
  * Rough per-token cost estimates (USD) for common providers.
  * Used only for display — not billing.

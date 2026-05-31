@@ -1,142 +1,63 @@
 'use client';
 
-import { LayoutDashboard } from 'lucide-react';
-import Link from 'next/link';
-
-import { PageHeader } from '@/components/common/page-header';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { HealthStatus, ServiceStatus } from '@/enums';
+import { DashboardHero } from '@/components/dashboard/dashboard-hero';
+import { DashboardQuickActionCard } from '@/components/dashboard/dashboard-quick-action-card';
+import { DashboardStatCard } from '@/components/dashboard/dashboard-stat-card';
+import { DashboardSystemHealthCard } from '@/components/dashboard/dashboard-system-health-card';
 import { useDashboardPage } from '@/hooks/dashboard/use-dashboard-page';
 import { useTranslation } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
-import { getHealthStatusColor } from '@/utilities';
 
-export default function DashboardPage() {
-  const { statCards, quickActions, isLoading, healthStatus, healthServices, healthSummary } =
-    useDashboardPage();
+export default function DashboardPage(): React.ReactElement {
+  const {
+    statCards,
+    quickActions,
+    isLoading,
+    healthStatus,
+    healthServices,
+    healthSummary,
+    greetingKey,
+    greetingName,
+    operationalState,
+  } = useDashboardPage();
   const { t } = useTranslation();
 
   return (
     <div>
-      <PageHeader
-        title={t('dashboard.title')}
-        description={t('dashboard.description')}
-        actions={
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <LayoutDashboard className="h-5 w-5" />
-          </div>
-        }
+      <DashboardHero
+        greetingKey={greetingKey}
+        greetingName={greetingName}
+        operationalState={operationalState}
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Mobile: 2-column stat grid. Tablet+ keeps the 4-up layout. */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {statCards.map((stat) => (
-          <Card key={stat.label}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t(stat.label)}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{isLoading ? '-' : stat.value}</div>
-            </CardContent>
-          </Card>
+          <DashboardStatCard key={stat.label} card={stat} isLoading={isLoading} />
         ))}
       </div>
 
-      <div className="mt-8">
-        <h2 className="mb-4 text-xl font-semibold tracking-tight">{t('dashboard.quickActions')}</h2>
+      <section className="mt-8">
+        <h2 className="mb-4 text-lg font-semibold tracking-tight sm:text-xl">
+          {t('dashboard.quickActions')}
+        </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
           {quickActions.map((action) => (
-            <Card key={action.label} className="transition-colors hover:border-primary/50">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <action.icon className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-base">{t(action.label)}</CardTitle>
-                </div>
-                <CardDescription>{t(action.description)}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button asChild variant="outline" className="w-full">
-                  <Link href={action.href}>{t(action.label)}</Link>
-                </Button>
-              </CardContent>
-            </Card>
+            <DashboardQuickActionCard key={action.label} action={action} />
           ))}
         </div>
-      </div>
+      </section>
 
-      <div className="mt-8">
-        <h2 className="mb-4 text-xl font-semibold tracking-tight">{t('dashboard.systemHealth')}</h2>
-        {healthStatus === null ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">{t('dashboard.serviceStatus')}</CardTitle>
-              <CardDescription>
-                {isLoading ? t('dashboard.checkingHealth') : t('dashboard.healthUnreachable')}
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        ) : (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-base">{t('dashboard.serviceStatus')}</CardTitle>
-                  <CardDescription>
-                    {healthSummary
-                      ? t('dashboard.servicesOperational', {
-                          up: String(healthSummary.up),
-                          total: String(healthSummary.total),
-                        })
-                      : t('common.loading')}
-                  </CardDescription>
-                </div>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    'capitalize',
-                    healthStatus === HealthStatus.HEALTHY &&
-                      'border-emerald-500 text-emerald-600 dark:text-emerald-400',
-                    healthStatus === HealthStatus.DEGRADED &&
-                      'border-amber-500 text-amber-600 dark:text-amber-400',
-                    healthStatus === HealthStatus.UNHEALTHY &&
-                      'border-destructive text-destructive',
-                  )}
-                >
-                  {healthStatus}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {healthServices.map((svc) => (
-                  <div key={svc.name} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          'inline-block h-2 w-2 rounded-full',
-                          getHealthStatusColor(
-                            svc.status === ServiceStatus.UP
-                              ? HealthStatus.HEALTHY
-                              : HealthStatus.UNHEALTHY,
-                          ),
-                        )}
-                      />
-                      <span>{svc.name}</span>
-                    </div>
-                    <span className="text-muted-foreground">
-                      {svc.responseTimeMs !== null
-                        ? t('dashboard.responseTimeMs', { ms: String(svc.responseTimeMs) })
-                        : t('dashboard.unreachable')}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      <section className="mt-8">
+        <h2 className="mb-4 text-lg font-semibold tracking-tight sm:text-xl">
+          {t('dashboard.systemHealth')}
+        </h2>
+        <DashboardSystemHealthCard
+          healthStatus={healthStatus}
+          healthServices={healthServices}
+          healthSummary={healthSummary}
+          isLoading={isLoading}
+        />
+      </section>
     </div>
   );
 }

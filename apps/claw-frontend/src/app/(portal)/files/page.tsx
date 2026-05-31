@@ -20,6 +20,8 @@ export default function FilesPage() {
     handleFileSelected,
     isUploadPending,
     fileValidationError,
+    uploadProgress,
+    uploadingFilename,
     handleDelete,
     isDeletePending,
     viewingChunksId,
@@ -53,8 +55,10 @@ export default function FilesPage() {
       <div className="mb-6">
         <FileUploadZone
           onFileSelected={handleFileSelected}
-          isUploading={isUploadPending}
+          isUploading={isUploadPending || uploadProgress > 0}
           validationError={fileValidationError}
+          uploadProgress={uploadProgress}
+          uploadingFilename={uploadingFilename}
         />
       </div>
 

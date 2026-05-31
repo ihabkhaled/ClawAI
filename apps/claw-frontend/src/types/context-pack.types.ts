@@ -88,3 +88,19 @@ export type ContextPackItemFormStateReturn = {
   handleSubmit: (e: React.FormEvent) => void;
   handleOpenChange: (nextOpen: boolean) => void;
 };
+
+export type UseContextPackItemDragArgs = {
+  items: ContextPackItem[];
+  isDragSupported: boolean;
+  onReorder: (itemId: string, newSortOrder: number) => void;
+};
+
+export type UseContextPackItemDragReturn = {
+  draggingIndex: number | null;
+  targetIndex: number | null;
+  handleDragStart: (index: number) => void;
+  handleDragOver: (event: React.DragEvent, index: number) => void;
+  handleDragLeave: (event: React.DragEvent) => void;
+  handleDrop: (event: React.DragEvent, index: number) => void;
+  handleDragEnd: () => void;
+};

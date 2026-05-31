@@ -1,6 +1,7 @@
 import { Archive, ArchiveRestore, MoreVertical, Pin, PinOff } from 'lucide-react';
 import Link from 'next/link';
 
+import { HighlightedText } from '@/components/common/highlighted-text';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -12,7 +13,7 @@ import { ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { ThreadListItemProps } from '@/types';
-import { formatRelativeDate } from '@/utilities';
+import { buildThreadPreviewSnippet, formatRelativeDate } from '@/utilities';
 
 import { RoutingBadge } from './routing-badge';
 
@@ -23,10 +24,17 @@ export function ThreadListItem({
   onArchive,
   isPinPending,
   isArchivePending,
+  searchQuery,
 }: ThreadListItemProps) {
   const { t } = useTranslation();
   const messageCount = thread._count?.messages ?? 0;
   const hasActions = onPin !== undefined || onArchive !== undefined;
+  const title = thread.title ?? t('chat.untitled');
+  // The BE doesn't expose a `lastMessage.content` on the thread list payload,
+  // so we surface the most recent model identifier (provider/model) as the
+  // preview snippet — this is what actually gives the user context about
+  // which conversation it is.
+  const previewSnippet = buildThreadPreviewSnippet(thread.lastProvider, thread.lastModel);
 
   const handlePin = (e: React.MouseEvent): void => {
     e.preventDefault();
@@ -52,7 +60,13 @@ export function ThreadListItem({
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
           {thread.isPinned ? <Pin className="h-3 w-3 shrink-0 text-primary" /> : null}
-          <span className="truncate text-sm font-medium">{thread.title ?? 'Untitled'}</span>
+          <span className="truncate text-sm font-medium">
+            {searchQuery !== undefined && searchQuery.trim().length > 0 ? (
+              <HighlightedText text={title} query={searchQuery} />
+            ) : (
+              title
+            )}
+          </span>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <span className="text-xs text-muted-foreground">
@@ -110,6 +124,9 @@ export function ThreadListItem({
           ) : null}
         </div>
       </div>
+      {previewSnippet !== null ? (
+        <p className="truncate text-xs text-muted-foreground">{previewSnippet}</p>
+      ) : null}
       <div className="flex items-center justify-between gap-2">
         <RoutingBadge mode={thread.routingMode} />
         <span className="text-xs text-muted-foreground">

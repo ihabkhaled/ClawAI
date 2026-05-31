@@ -1,6 +1,4 @@
-import { Info } from 'lucide-react';
-
-import { FieldHint } from '@/components/connectors/field-hint';
+import { ConnectorFormFields } from '@/components/connectors/connector-form-fields';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -10,22 +8,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  AUTH_TYPE_LABELS,
-  CONNECTOR_AUTH_TYPE_OPTIONS,
-  CONNECTOR_PROVIDER_OPTIONS,
-  PROVIDER_DISPLAY_NAMES,
-} from '@/constants';
-import { ConnectorAuthType, ConnectorProvider } from '@/enums';
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { useConnectorFormState } from '@/hooks/connectors/use-connector-form-state';
+import { useMediaQuery } from '@/hooks/ui/use-media-query';
 import { useTranslation } from '@/lib/i18n';
 import type { ConnectorFormProps } from '@/types';
 
@@ -37,6 +29,7 @@ export function ConnectorForm({
   connector,
 }: ConnectorFormProps) {
   const { t } = useTranslation();
+  const isDesktop = useMediaQuery('(min-width: 768px)');
   const {
     name,
     setName,
@@ -59,155 +52,67 @@ export function ConnectorForm({
     handleOpenChange,
   } = useConnectorFormState({ open, connector, onSubmit, onOpenChange });
 
+  const title = isEditing ? t('connectors.editConnector') : t('connectors.addConnector');
+  const description = isEditing
+    ? t('connectors.editConnectorDesc')
+    : t('connectors.addConnectorDesc');
+
+  const fields = (
+    <ConnectorFormFields
+      fieldErrors={fieldErrors}
+      isEditing={isEditing}
+      name={name}
+      setName={setName}
+      provider={provider}
+      setProvider={setProvider}
+      authType={authType}
+      setAuthType={setAuthType}
+      apiKey={apiKey}
+      setApiKey={setApiKey}
+      baseUrl={baseUrl}
+      setBaseUrl={setBaseUrl}
+      region={region}
+      setRegion={setRegion}
+      defaultBaseUrl={defaultBaseUrl}
+    />
+  );
+
+  if (isDesktop) {
+    return (
+      <Sheet open={open} onOpenChange={handleOpenChange}>
+        <SheetContent side="right" className="flex w-full flex-col sm:max-w-md md:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>{title}</SheetTitle>
+            <SheetDescription>{description}</SheetDescription>
+          </SheetHeader>
+          <form
+            onSubmit={handleSubmit}
+            className="mt-4 flex flex-1 flex-col gap-4 overflow-y-auto pr-1"
+          >
+            {fields}
+            <SheetFooter className="sticky bottom-0 mt-auto -mx-6 -mb-6 border-t bg-background p-4">
+              <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? pendingLabel : submitLabel}
+              </Button>
+            </SheetFooter>
+          </form>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? t('connectors.editConnector') : t('connectors.addConnector')}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing ? t('connectors.editConnectorDesc') : t('connectors.addConnectorDesc')}
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid gap-2">
-            <label htmlFor="connector-name" className="text-sm font-medium">
-              {t('connectors.name')}
-            </label>
-            <Input
-              id="connector-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t('connectors.namePlaceholder')}
-            />
-            <FieldHint text={t('connectors.nameHelp')} />
-            {fieldErrors.name ? (
-              <p className="mt-1 text-sm text-destructive">{fieldErrors.name[0]}</p>
-            ) : null}
-          </div>
-
-          <div className="grid gap-2">
-            <label htmlFor="connector-provider" className="text-sm font-medium">
-              {t('connectors.provider')}
-            </label>
-            <Select
-              value={provider ?? undefined}
-              onValueChange={(value) => setProvider(value as ConnectorProvider)}
-              disabled={isEditing}
-            >
-              <SelectTrigger id="connector-provider">
-                <SelectValue placeholder={t('connectors.selectProvider')} />
-              </SelectTrigger>
-              <SelectContent>
-                {CONNECTOR_PROVIDER_OPTIONS.map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {PROVIDER_DISPLAY_NAMES[p]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FieldHint text={t('connectors.providerHelp')} />
-            {fieldErrors.provider ? (
-              <p className="mt-1 text-sm text-destructive">{fieldErrors.provider[0]}</p>
-            ) : null}
-          </div>
-
-          <div className="grid gap-2">
-            <label htmlFor="connector-auth" className="text-sm font-medium">
-              {t('connectors.authType')}
-            </label>
-            <Select
-              value={authType}
-              onValueChange={(value) => setAuthType(value as ConnectorAuthType)}
-            >
-              <SelectTrigger id="connector-auth">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CONNECTOR_AUTH_TYPE_OPTIONS.map((a) => (
-                  <SelectItem key={a} value={a}>
-                    {AUTH_TYPE_LABELS[a]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FieldHint text={t('connectors.authTypeHelp')} />
-            {fieldErrors.authType ? (
-              <p className="mt-1 text-sm text-destructive">{fieldErrors.authType[0]}</p>
-            ) : null}
-          </div>
-
-          {authType === ConnectorAuthType.API_KEY ? (
-            <div className="grid gap-2">
-              <label htmlFor="connector-api-key" className="text-sm font-medium">
-                {t('connectors.apiKey')}
-              </label>
-              <Input
-                id="connector-api-key"
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder={
-                  isEditing
-                    ? t('connectors.apiKeyPlaceholderEdit')
-                    : t('connectors.apiKeyPlaceholder')
-                }
-              />
-              <FieldHint text={t('connectors.apiKeyHelp')} />
-              {fieldErrors.apiKey ? (
-                <p className="mt-1 text-sm text-destructive">{fieldErrors.apiKey[0]}</p>
-              ) : null}
-            </div>
-          ) : null}
-
-          <div className="grid gap-2">
-            <label htmlFor="connector-base-url" className="text-sm font-medium">
-              {t('connectors.baseUrlOptional')}
-            </label>
-            <Input
-              id="connector-base-url"
-              value={baseUrl}
-              onChange={(e) => setBaseUrl(e.target.value)}
-              placeholder={defaultBaseUrl ?? t('connectors.baseUrlPlaceholder')}
-            />
-            <FieldHint text={t('connectors.baseUrlHelp')} />
-            {defaultBaseUrl !== null ? (
-              <p className="text-xs text-muted-foreground">
-                {t('connectors.defaultLabel')}{' '}
-                <code className="rounded bg-muted px-1 py-0.5">{defaultBaseUrl}</code>
-              </p>
-            ) : null}
-            {fieldErrors.baseUrl ? (
-              <p className="mt-1 text-sm text-destructive">{fieldErrors.baseUrl[0]}</p>
-            ) : null}
-          </div>
-
-          {provider === ConnectorProvider.AWS_BEDROCK ? (
-            <div className="grid gap-2">
-              <label htmlFor="connector-region" className="text-sm font-medium">
-                {t('connectors.region')}
-              </label>
-              <Input
-                id="connector-region"
-                value={region}
-                onChange={(e) => setRegion(e.target.value)}
-                placeholder={t('connectors.regionPlaceholder')}
-              />
-              <FieldHint text={t('connectors.regionHelp')} />
-              {fieldErrors.region ? (
-                <p className="mt-1 text-sm text-destructive">{fieldErrors.region[0]}</p>
-              ) : null}
-            </div>
-          ) : null}
-
-          {!isEditing ? (
-            <div className="flex items-start gap-2 rounded-md border bg-muted/50 p-3 text-xs text-muted-foreground">
-              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              <span>{t('connectors.saveFirstThenTest')}</span>
-            </div>
-          ) : null}
-
+          {fields}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               {t('common.cancel')}

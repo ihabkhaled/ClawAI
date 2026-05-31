@@ -1,110 +1,12 @@
-'use client';
+import { LoginBrandingPanel } from '@/components/auth/login-branding-panel';
+import { LoginForm } from '@/components/auth/login-form';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Zap } from 'lucide-react';
-import Link from 'next/link';
-import { useForm } from 'react-hook-form';
-
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { ROUTES } from '@/constants';
-import { useLogin } from '@/hooks/auth/use-login';
-import { useTranslation } from '@/lib/i18n';
-import { loginSchema } from '@/lib/validation/login.schema';
-import type { LoginFormValues } from '@/lib/validation/login.schema';
-
-export default function LoginPage() {
-  const { login, isPending, isError, error } = useLogin();
-  const { t } = useTranslation();
-
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-  });
-
-  const onSubmit = (data: LoginFormValues) => {
-    login(data);
-  };
-
+export default function LoginPage(): React.ReactElement {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-            <Zap className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <h1 className="mt-4 text-2xl font-bold">{t('auth.welcomeTitle')}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t('auth.welcomeSubtitle')}</p>
-        </div>
-
-        <Card>
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-xl">{t('auth.loginTitle')}</CardTitle>
-            <CardDescription>{t('auth.loginSubtitle')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium leading-none">
-                  {t('auth.email')}
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder={t('auth.emailPlaceholder')}
-                  autoComplete="email"
-                  disabled={isPending}
-                  {...form.register('email')}
-                />
-                {form.formState.errors.email ? (
-                  <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
-                ) : null}
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium leading-none">
-                  {t('auth.password')}
-                </label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder={t('auth.passwordPlaceholder')}
-                  autoComplete="current-password"
-                  disabled={isPending}
-                  {...form.register('password')}
-                />
-                {form.formState.errors.password ? (
-                  <p className="text-xs text-destructive">
-                    {form.formState.errors.password.message}
-                  </p>
-                ) : null}
-              </div>
-
-              {isError ? (
-                <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                  {error?.message ?? t('auth.loginFailed')}
-                </div>
-              ) : null}
-
-              <Button type="submit" className="w-full" disabled={isPending}>
-                {isPending ? t('auth.signingIn') : t('auth.loginButton')}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          {t('auth.noAccount')}{' '}
-          <Link href={ROUTES.REGISTER} className="font-medium text-primary hover:underline">
-            {t('auth.signUpLink')}
-          </Link>
-        </p>
-
-        <p className="mt-6 text-center text-xs text-muted-foreground">{t('auth.tagline')}</p>
+    <div className="grid min-h-screen w-full grid-cols-1 lg:grid-cols-2">
+      <LoginBrandingPanel />
+      <div className="flex items-center justify-center bg-background px-4 py-10 sm:px-6 lg:px-8">
+        <LoginForm />
       </div>
     </div>
   );

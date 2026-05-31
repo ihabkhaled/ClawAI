@@ -3,11 +3,10 @@
 import { Activity, AlertCircle, CheckCircle2 } from 'lucide-react';
 import type { ReactElement } from 'react';
 
-import { RiskBadge } from '@/components/agent/risk-badge';
+import { AgentActivityEntry } from '@/components/agent/activity-entry';
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   TERMINAL_BAD_STATUSES as TERMINAL_BAD,
@@ -66,7 +65,7 @@ export default function AgentActivityPage(): ReactElement {
           </Card>
           <Card>
             <CardContent className="flex items-center gap-3 py-3">
-              <CheckCircle2 className="size-4 text-green-500" />
+              <CheckCircle2 className="size-4 text-[hsl(var(--accent-teal))]" />
               <div className="flex flex-col">
                 <span className="text-xs text-muted-foreground">{t('agent.autoApproved')}</span>
                 <span className="text-lg font-semibold">{okCount}</span>
@@ -75,7 +74,7 @@ export default function AgentActivityPage(): ReactElement {
           </Card>
           <Card>
             <CardContent className="flex items-center gap-3 py-3">
-              <AlertCircle className="size-4 text-destructive" />
+              <AlertCircle className="size-4 text-[hsl(var(--accent-rose))]" />
               <div className="flex flex-col">
                 <span className="text-xs text-muted-foreground">{t('agent.denied')}</span>
                 <span className="text-lg font-semibold">{badCount}</span>
@@ -86,26 +85,10 @@ export default function AgentActivityPage(): ReactElement {
       )}
 
       {!isLoading && totalRecent > 0 && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold">{t('agent.recentCommands')}</h2>
           {recent.slice(0, 30).map((inv) => (
-            <Card key={inv.id}>
-              <CardContent className="flex items-center gap-3 py-2">
-                <Badge
-                  variant={TERMINAL_OK.has(inv.status) ? 'default' : 'destructive'}
-                  className="shrink-0 text-xs"
-                >
-                  {inv.status}
-                </Badge>
-                <Badge variant="outline" className="shrink-0 font-mono text-xs">
-                  {inv.capabilityClass}.{inv.capabilityOperation}
-                </Badge>
-                <code className="flex-1 truncate text-xs text-muted-foreground">
-                  {JSON.stringify(inv.targetDescriptor)}
-                </code>
-                <RiskBadge label={inv.riskLabel} score={inv.riskScore} />
-              </CardContent>
-            </Card>
+            <AgentActivityEntry key={inv.id} t={t} invocation={inv} />
           ))}
         </div>
       )}

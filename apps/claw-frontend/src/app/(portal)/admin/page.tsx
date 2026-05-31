@@ -1,18 +1,19 @@
 'use client';
 
 import { ShieldCheck, Users } from 'lucide-react';
+import Link from 'next/link';
 
 import { AccessDenied } from '@/components/admin/access-denied';
-import { HealthCardContent } from '@/components/admin/health-card-content';
+import { RecentAuditEvents } from '@/components/admin/recent-audit-events';
 import { UsersContent } from '@/components/admin/users-content';
 import { PageHeader } from '@/components/common/page-header';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { HealthStatus, UserRole } from '@/enums';
+import { ROUTES } from '@/constants';
+import { UserRole } from '@/enums';
 import { useAdminPage } from '@/hooks/admin/use-admin-page';
-import { cn } from '@/lib/utils';
 
-export default function AdminPage() {
+export default function AdminPage(): React.ReactElement {
   const {
     t,
     user,
@@ -21,7 +22,6 @@ export default function AdminPage() {
     actionPending,
     activeCount,
     usersQuery,
-    healthQuery,
     handleChangeRole,
     handleDeactivate,
     handleAssignPlan,
@@ -35,14 +35,14 @@ export default function AdminPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader title={t('admin.title')} description={t('admin.description')} />
 
-      <div className="mb-6 grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-muted-foreground" />
+              <Users className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
               <CardTitle className="text-lg">{t('admin.userStats')}</CardTitle>
             </div>
             <CardDescription>{t('admin.userStatsDesc')}</CardDescription>
@@ -63,40 +63,24 @@ export default function AdminPage() {
 
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg">{t('admin.platformHealth')}</CardTitle>
-              </div>
-              {healthQuery.data ? (
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    'capitalize',
-                    healthQuery.data.status === HealthStatus.HEALTHY &&
-                      'border-emerald-500 text-emerald-600 dark:text-emerald-400',
-                    healthQuery.data.status === HealthStatus.DEGRADED &&
-                      'border-amber-500 text-amber-600 dark:text-amber-400',
-                    healthQuery.data.status === HealthStatus.UNHEALTHY &&
-                      'border-destructive text-destructive',
-                  )}
-                >
-                  {healthQuery.data.status}
-                </Badge>
-              ) : null}
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+              <CardTitle className="text-lg">{t('admin.platformHealth')}</CardTitle>
             </div>
-            <CardDescription>{t('admin.systemStatusOverview')}</CardDescription>
+            <CardDescription>{t('admin.platformHealthLinkDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <HealthCardContent
-              isLoading={healthQuery.isLoading}
-              isError={healthQuery.isError}
-              health={healthQuery.data ?? null}
-              t={t}
-            />
+            <p className="mb-4 text-sm text-muted-foreground">
+              {t('admin.platformHealthLinkBody')}
+            </p>
+            <Button asChild variant="outline">
+              <Link href={ROUTES.DASHBOARD}>{t('admin.viewSystemHealth')}</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
+
+      <RecentAuditEvents />
 
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">{t('admin.userManagement')}</h2>
