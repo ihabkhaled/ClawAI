@@ -3,8 +3,8 @@ import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import type { ErrorStateProps } from '@/types/component.types';
 import { extractErrorMessage } from '@/utilities/error-state.utility';
-import type { ErrorStateProps } from '@/types';
 
 export function ErrorState({
   title,

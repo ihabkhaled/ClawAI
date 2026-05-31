@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
 
-import { ResponsivePage } from '@/components/common/responsive-page';
 import { ResponsiveGrid } from '@/components/common/responsive-grid';
+import { ResponsivePage } from '@/components/common/responsive-page';
 
 describe('ResponsivePage', () => {
   it('renders children', () => {

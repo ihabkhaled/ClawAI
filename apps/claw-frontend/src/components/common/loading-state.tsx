@@ -1,9 +1,9 @@
-import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
-import { LoadingStateVariant } from '@/enums/loading-state.enum';
 import { CardSkeleton } from '@/components/common/skeletons/card-skeleton';
 import { ListRowSkeleton } from '@/components/common/skeletons/list-row-skeleton';
 import { TableRowSkeleton } from '@/components/common/skeletons/table-row-skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
+import { LoadingStateVariant } from '@/enums/loading-state.enum';
+import { cn } from '@/lib/utils';
 import type { LoadingStateProps } from '@/types/component.types';
 
 export function LoadingState({

@@ -1,8 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi } from 'vitest';
 
 import { ErrorState } from '@/components/common/error-state';
+
+vi.mock('@/lib/i18n', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
 
 describe('ErrorState', () => {
   it('renders an explicit title and description', () => {

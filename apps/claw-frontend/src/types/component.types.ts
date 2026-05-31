@@ -14,10 +14,13 @@ import type {
   PlanFeature,
   RepairType,
   ReplayOutcomeLabel,
+  ResponsiveGridColumns,
+  ResponsivePageWidth,
   RoutingMode,
 } from '@/enums';
 import type { AiActionKind } from '@/enums/ai-action-kind.enum';
 import type { ConsensusConfidenceLevel } from '@/enums/consensus-confidence-level.enum';
+import type { LoadingStateVariant } from '@/enums/loading-state.enum';
 import type { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { WorkspaceConnectorStatus } from '@/enums/workspace-connector-status.enum';
@@ -168,6 +171,38 @@ export type PageHeaderProps = {
   title: string;
   description?: string;
   actions?: React.ReactNode;
+  badges?: React.ReactNode;
+};
+
+export type ResponsivePageProps = {
+  children: React.ReactNode;
+  width?: ResponsivePageWidth;
+  fullHeight?: boolean;
+  className?: string;
+};
+
+export type ResponsiveGridProps = {
+  children: React.ReactNode;
+  columns?: ResponsiveGridColumns;
+  className?: string;
+};
+
+export type ErrorStateProps = {
+  title?: string;
+  description?: string;
+  error?: unknown;
+  onRetry?: () => void;
+  retryLabel?: string;
+  requestId?: string;
+  icon?: React.ReactNode;
+  className?: string;
+};
+
+export type LoadingStateProps = {
+  variant?: LoadingStateVariant;
+  rows?: number;
+  className?: string;
+  label?: string;
 };
 
 export type StatusBadgeProps = {

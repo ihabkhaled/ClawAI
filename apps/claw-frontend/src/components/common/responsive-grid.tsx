@@ -1,10 +1,11 @@
-import { cn } from '@/lib/utils';
 import { RESPONSIVE_GRID_COLUMN_CLASSES } from '@/constants/responsive.constants';
+import { ResponsiveGridColumns } from '@/enums';
+import { cn } from '@/lib/utils';
 import type { ResponsiveGridProps } from '@/types/component.types';
 
 export function ResponsiveGrid({
   children,
-  columns = 'cards',
+  columns = ResponsiveGridColumns.CARDS,
   className,
 }: ResponsiveGridProps): React.ReactElement {
   return (

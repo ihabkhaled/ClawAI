@@ -1,10 +1,11 @@
-import { cn } from '@/lib/utils';
 import { RESPONSIVE_PAGE_WIDTH_CLASSES } from '@/constants/responsive.constants';
+import { ResponsivePageWidth } from '@/enums';
+import { cn } from '@/lib/utils';
 import type { ResponsivePageProps } from '@/types/component.types';
 
 export function ResponsivePage({
   children,
-  width = 'standard',
+  width = ResponsivePageWidth.STANDARD,
   fullHeight = false,
   className,
 }: ResponsivePageProps): React.ReactElement {
