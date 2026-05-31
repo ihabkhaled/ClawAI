@@ -8,8 +8,28 @@ export type UploadedFile = {
   sizeBytes: number;
   storagePath: string;
   ingestionStatus: FileIngestionStatus;
+  parentFileId?: string | null;
+  isExtracted?: boolean;
   createdAt: string;
   updatedAt: string;
+  retentionExpiresAt?: string | null;
+};
+
+export type FileAttachmentGroup = {
+  parent: UploadedFile;
+  children: UploadedFile[];
+};
+
+export type FileAttachmentGrouping = {
+  groups: FileAttachmentGroup[];
+  standalone: UploadedFile[];
+  hasGroups: boolean;
+};
+
+export type UseFileAttachmentGroupingReturn = FileAttachmentGrouping & {
+  expandedParentIds: ReadonlySet<string>;
+  toggleParentExpansion: (parentId: string) => void;
+  isParentExpanded: (parentId: string) => boolean;
 };
 
 export type FileChunk = {

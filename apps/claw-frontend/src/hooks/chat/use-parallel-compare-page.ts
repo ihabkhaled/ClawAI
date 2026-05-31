@@ -21,7 +21,8 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
   const [criticModel, setCriticModel] = useState<string | null>(null);
   const [researchMode, setResearchMode] = useState<CompareResearchMode>(CompareResearchMode.NONE);
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
-  const { send, result, isPending, isError } = useParallelCompare();
+  const { send, result, isPending, isError, upgradeFeature, clearUpgradeFeature } =
+    useParallelCompare();
 
   const threadId = result?.threadId ?? null;
   const { pollingMessages, isPolling, allResponded, handleViewInThread } = useParallelPoll(
@@ -119,5 +120,7 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     setResearchMode,
     selectedFileIds,
     setSelectedFileIds,
+    upgradeFeature,
+    clearUpgradeFeature,
   };
 }

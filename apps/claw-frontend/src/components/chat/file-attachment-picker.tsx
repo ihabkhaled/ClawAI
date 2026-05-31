@@ -1,21 +1,22 @@
-import { Paperclip, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Paperclip, Plus } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { FileIngestionStatus } from '@/enums';
 import { useFileAttachmentPickerState } from '@/hooks/chat/use-file-attachment-picker-state';
+import { useFileAttachmentGrouping } from '@/hooks/files/use-file-attachment-grouping';
 import { useFiles } from '@/hooks/files/use-files';
 import { useUploadFile } from '@/hooks/files/use-upload-file';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type { FileAttachmentPickerProps } from '@/types';
+
+import { FileAttachmentRow } from './file-attachment-row';
 
 export function FileAttachmentPicker({
   selectedFileIds,
@@ -35,6 +36,9 @@ export function FileAttachmentPicker({
     handleDragLeave,
     selectedCount,
   } = useFileAttachmentPickerState({ selectedFileIds, onChange, uploadFile });
+
+  const { groups, standalone, hasGroups, isParentExpanded, toggleParentExpansion } =
+    useFileAttachmentGrouping(files);
 
   return (
     <>
@@ -87,23 +91,63 @@ export function FileAttachmentPicker({
               {t('chat.noFiles')}
             </div>
           ) : (
-            files.map((file) => (
-              <DropdownMenuCheckboxItem
-                key={file.id}
-                checked={selectedFileIds.includes(file.id)}
-                onCheckedChange={(checked) => handleToggle(file.id, checked === true)}
-                onSelect={(e) => e.preventDefault()}
-              >
-                <div className="flex flex-col gap-0.5 overflow-hidden">
-                  <span className="truncate text-sm">{file.filename}</span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {file.ingestionStatus === FileIngestionStatus.COMPLETED
-                      ? FileIngestionStatus.COMPLETED
-                      : file.ingestionStatus}
-                  </span>
-                </div>
-              </DropdownMenuCheckboxItem>
-            ))
+            <>
+              {hasGroups
+                ? groups.map((group) => {
+                    const expanded = isParentExpanded(group.parent.id);
+                    return (
+                      <div key={group.parent.id} className="flex flex-col">
+                        <FileAttachmentRow
+                          file={group.parent}
+                          checked={selectedFileIds.includes(group.parent.id)}
+                          indented={false}
+                          onToggle={handleToggle}
+                        />
+                        <button
+                          type="button"
+                          className="flex items-center gap-1.5 px-2 py-1 text-left text-[11px] text-muted-foreground hover:bg-accent/40"
+                          onClick={() => toggleParentExpansion(group.parent.id)}
+                          aria-expanded={expanded}
+                        >
+                          {expanded ? (
+                            <ChevronDown className="h-3 w-3" />
+                          ) : (
+                            <ChevronRight className="h-3 w-3" />
+                          )}
+                          <span className="truncate">
+                            {t('files.zip.extractedFromLabel', {
+                              filename: group.parent.filename,
+                            })}
+                          </span>
+                          <Badge variant="secondary" className="ml-auto h-4 px-1 text-[10px]">
+                            {t('files.zip.childCountLabel', { count: group.children.length })}
+                          </Badge>
+                        </button>
+                        {expanded
+                          ? group.children.map((child) => (
+                              <FileAttachmentRow
+                                key={child.id}
+                                file={child}
+                                checked={selectedFileIds.includes(child.id)}
+                                indented
+                                onToggle={handleToggle}
+                              />
+                            ))
+                          : null}
+                      </div>
+                    );
+                  })
+                : null}
+              {standalone.map((file) => (
+                <FileAttachmentRow
+                  key={file.id}
+                  file={file}
+                  checked={selectedFileIds.includes(file.id)}
+                  indented={false}
+                  onToggle={handleToggle}
+                />
+              ))}
+            </>
           )}
         </DropdownMenuContent>
       </DropdownMenu>

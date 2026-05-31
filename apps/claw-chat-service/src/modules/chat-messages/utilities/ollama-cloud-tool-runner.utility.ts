@@ -2,69 +2,19 @@ import { Logger } from '@nestjs/common';
 import { BusinessException } from '../../../common/errors';
 import { httpRequest } from '../../../common/utilities';
 import { OLLAMA_TOOL_RESULT_MAX_CHARS } from '../constants/agentic-loop.constants';
+import {
+  OLLAMA_CLOUD_TOOL_DEFINITIONS,
+  TOOL_WEB_FETCH,
+  TOOL_WEB_SEARCH,
+} from '../constants/ollama-cloud-tools.constants';
 import type {
+  ExecuteOllamaCloudToolCallOptions,
   OllamaCloudToolCall,
-  OllamaCloudToolDefinition,
 } from '../types/ollama-cloud-tool.types';
 
+export { OLLAMA_CLOUD_TOOL_DEFINITIONS };
+
 const logger = new Logger('OllamaCloudToolRunner');
-
-// Tool names recognized by ollama.com/api/web_search and /api/web_fetch.
-// Both endpoints are documented at https://docs.ollama.com/capabilities/web-search.
-const TOOL_WEB_SEARCH = 'web_search';
-const TOOL_WEB_FETCH = 'web_fetch';
-
-// JSON-schema descriptors exposed to the agentic model in the `tools`
-// field of /api/chat. Mirrors the schemas shown in the Ollama docs so
-// the model emits compatible arguments shapes.
-export const OLLAMA_CLOUD_TOOL_DEFINITIONS: OllamaCloudToolDefinition[] = [
-  {
-    type: 'function',
-    function: {
-      name: TOOL_WEB_SEARCH,
-      description:
-        'Search the web for up-to-date information. Returns a list of result objects with title, url, and content snippets.',
-      parameters: {
-        type: 'object',
-        properties: {
-          query: {
-            type: 'string',
-            description: 'The natural-language search query to run.',
-          },
-          max_results: {
-            type: 'integer',
-            description: 'Maximum number of results to return (default 5).',
-          },
-        },
-        required: ['query'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: TOOL_WEB_FETCH,
-      description:
-        'Fetch the readable text content of a single web page given its URL. Use this when web_search results show a URL worth reading in full.',
-      parameters: {
-        type: 'object',
-        properties: {
-          url: {
-            type: 'string',
-            description: 'The absolute URL (must start with http:// or https://) to fetch.',
-          },
-        },
-        required: ['url'],
-      },
-    },
-  },
-];
-
-export type ExecuteOllamaCloudToolCallOptions = {
-  baseUrl: string;
-  apiKey: string;
-  timeoutMs: number;
-};
 
 // Dispatches a single Ollama Cloud tool_call to its matching endpoint
 // (web_search or web_fetch), returns the JSON-stringified result

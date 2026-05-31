@@ -182,7 +182,15 @@ export type {
   RetrievalReasonValue,
   PreviewContextRequest,
 } from './context-receipt.types';
-export type { UploadedFile, FileChunk, FileWithChunks, UploadFileRequest } from './file.types';
+export type {
+  UploadedFile,
+  FileChunk,
+  FileWithChunks,
+  UploadFileRequest,
+  FileAttachmentGroup,
+  FileAttachmentGrouping,
+  UseFileAttachmentGroupingReturn,
+} from './file.types';
 export type {
   DashboardStats,
   DashboardStatCard,
@@ -216,12 +224,15 @@ export type {
   MemoryCardProps,
   FileUploadZoneProps,
   FileListItemProps,
+  FileRetentionBadgeProps,
+  UseFileRetentionBadgeReturn,
   FormFieldErrors,
   UserTableProps,
   MessageBubbleProps,
   ModelSelection,
   ModelSelectorProps,
   FileAttachmentPickerProps,
+  FileAttachmentRowProps,
   ContextPackSelectorProps,
   MessageComposerProps,
   RichPromptTextareaProps,
@@ -300,6 +311,7 @@ export type {
   CompareResearchModeControlProps,
   ParallelResponseCardProps,
   ParallelResultsGridProps,
+  UpgradeCtaBannerProps,
   ParallelSummaryBarProps,
   ChatThreadShellProps,
   InThreadComparePanelProps,
@@ -458,6 +470,7 @@ export type {
   ParallelResponse,
   ParallelRequest,
   UseParallelComparePageReturn,
+  UseParallelCompareReturn,
   UseInThreadCompareParams,
   UseInThreadCompareReturn,
   CompareResearchModeOption,

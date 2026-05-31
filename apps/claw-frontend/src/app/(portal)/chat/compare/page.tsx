@@ -11,6 +11,7 @@ import { ParallelModelSelector } from '@/components/chat/parallel-model-selector
 import { ParallelResultsGrid } from '@/components/chat/parallel-results-grid';
 import { ParallelSummaryBar } from '@/components/chat/parallel-summary-bar';
 import { ParallelLaneCard } from '@/components/chat/stream/parallel-lane-card';
+import { UpgradeCtaBanner } from '@/components/chat/upgrade-cta-banner';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
 import { Badge } from '@/components/ui/badge';
@@ -51,6 +52,8 @@ export default function ComparePage() {
     setResearchMode,
     selectedFileIds,
     setSelectedFileIds,
+    upgradeFeature,
+    clearUpgradeFeature,
   } = useParallelComparePage();
 
   const planFeatures = usePlanFeatures();
@@ -137,6 +140,10 @@ export default function ComparePage() {
           </Card>
         </div>
       </div>
+
+      {upgradeFeature !== null ? (
+        <UpgradeCtaBanner feature={upgradeFeature} onDismiss={clearUpgradeFeature} t={t} />
+      ) : null}
 
       {showLoading ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">

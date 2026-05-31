@@ -91,6 +91,7 @@ export {
   CATALOG_PAGE_SIZE,
   DOWNLOAD_STATS_TICK_INTERVAL_MS,
 } from './catalog.constants';
+export { PLAN_FEATURE_LABEL_KEYS } from './upgrade-cta.constants';
 export {
   MIN_PARALLEL_MODELS,
   MAX_PARALLEL_MODELS,

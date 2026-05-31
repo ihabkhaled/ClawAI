@@ -383,6 +383,24 @@ export type TranslationDictionary = {
       argsLabel: string;
       previewLabel: string;
     };
+    // Upgrade CTA shown above results when a compare/judge/critic/research
+    // request is rejected with PLAN_FEATURE_DISABLED. `features.*` provides
+    // a localized feature name to interpolate into `title` ("Unlock {feature}").
+    upgrade: {
+      title: string;
+      body: string;
+      cta: string;
+      dismiss: string;
+      features: {
+        compare: string;
+        judge: string;
+        critic: string;
+        research: string;
+        workspaces: string;
+        memory: string;
+        contextPacks: string;
+      };
+    };
   };
   receipt: {
     openLabel: string;
@@ -576,9 +594,13 @@ export type TranslationDictionary = {
     statusFailed: string;
     zip: {
       bombRejected: string;
+      extractedFromLabel: string;
+      childCountLabel: string;
     };
     retention: {
       expired: string;
+      expiresInDays: string;
+      expiresToday: string;
     };
     permissions: {
       denied: string;

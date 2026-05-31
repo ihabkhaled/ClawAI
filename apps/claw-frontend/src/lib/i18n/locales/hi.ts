@@ -380,6 +380,21 @@ export const hi: TranslationDictionary = {
       argsLabel: 'तर्क',
       previewLabel: 'पूर्वावलोकन',
     },
+    upgrade: {
+      title: '{feature} अनलॉक करें',
+      body: 'इस सुविधा का उपयोग करने के लिए Pro पर अपग्रेड करें',
+      cta: 'योजनाएँ देखें',
+      dismiss: 'शायद बाद में',
+      features: {
+        compare: 'तुलना मोड',
+        judge: 'न्यायाधीश मोड',
+        critic: 'समीक्षक समीक्षा',
+        research: 'वेब शोध',
+        workspaces: 'कार्यक्षेत्र',
+        memory: 'स्मृति',
+        contextPacks: 'संदर्भ पैक',
+      },
+    },
   },
   receipt: {
     openLabel: 'दिखाएँ कि AI ने क्या उपयोग किया',
@@ -574,9 +589,13 @@ export const hi: TranslationDictionary = {
     statusFailed: 'विफल',
     zip: {
       bombRejected: 'संग्रह अस्वीकृत: संदिग्ध संपीड़न अनुपात का पता चला',
+      extractedFromLabel: '{filename} से निकाला गया',
+      childCountLabel: '{count} फ़ाइलें',
     },
     retention: {
       expired: 'फ़ाइल की अवधि समाप्त हो गई और प्रतिधारण नीति द्वारा हटा दी गई',
+      expiresInDays: '{n} दिनों में समाप्त हो जाएगी',
+      expiresToday: 'आज समाप्त हो रही है',
     },
     permissions: {
       denied:

@@ -4,12 +4,23 @@ import type { ApiClientRequestOptions, ApiResponse } from '@/types';
 export class ApiClientError extends Error {
   status: number;
   errors?: Record<string, string[]>;
+  // Backend BusinessException carries a machine-readable `code` (e.g.
+  // PLAN_FEATURE_DISABLED, INSUFFICIENT_PERMISSIONS) so the FE can map a
+  // specific error to a tailored UX (e.g. plan upgrade CTA) instead of a
+  // generic toast.
+  code?: string;
 
-  constructor(params: { message: string; status: number; errors?: Record<string, string[]> }) {
+  constructor(params: {
+    message: string;
+    status: number;
+    errors?: Record<string, string[]>;
+    code?: string;
+  }) {
     super(params.message);
     this.name = 'ApiClientError';
     this.status = params.status;
     this.errors = params.errors;
+    this.code = params.code;
   }
 }
 
@@ -78,7 +89,7 @@ function toApiClientError(error: unknown): ApiClientError {
     const axiosError = error as {
       response?: {
         status: number;
-        data?: { message?: string; errors?: Record<string, string[]> };
+        data?: { message?: string; code?: string; errors?: Record<string, string[]> };
       };
     };
 
@@ -91,6 +102,9 @@ function toApiClientError(error: unknown): ApiClientError {
         : (axiosError.response?.data?.message ?? 'An unexpected error occurred'),
       status,
       errors: isServerError ? undefined : axiosError.response?.data?.errors,
+      // 5xx codes (if any) are intentionally suppressed alongside details so
+      // we never leak internals via the `code` field either.
+      code: isServerError ? undefined : axiosError.response?.data?.code,
     });
   }
   return new ApiClientError({ message: 'Network error', status: 0 });

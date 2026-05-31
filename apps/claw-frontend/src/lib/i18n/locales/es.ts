@@ -380,6 +380,21 @@ export const es: TranslationDictionary = {
       argsLabel: 'Argumentos',
       previewLabel: 'Vista previa',
     },
+    upgrade: {
+      title: 'Desbloquea {feature}',
+      body: 'Actualiza al plan Pro para usar esta función',
+      cta: 'Ver planes',
+      dismiss: 'Quizás más tarde',
+      features: {
+        compare: 'Modo de comparación',
+        judge: 'Modo juez',
+        critic: 'Revisión del crítico',
+        research: 'Búsqueda web',
+        workspaces: 'Espacios de trabajo',
+        memory: 'Memoria',
+        contextPacks: 'Paquetes de contexto',
+      },
+    },
   },
   receipt: {
     openLabel: 'Mostrar lo que usó la IA',
@@ -574,9 +589,13 @@ export const es: TranslationDictionary = {
     statusFailed: 'Fallido',
     zip: {
       bombRejected: 'Archivo rechazado: se detectó una proporción de compresión sospechosa',
+      extractedFromLabel: 'Extraído de {filename}',
+      childCountLabel: '{count} archivos',
     },
     retention: {
       expired: 'El archivo caducó y fue eliminado por la política de retención',
+      expiresInDays: 'Caduca en {n} días',
+      expiresToday: 'Caduca hoy',
     },
     permissions: {
       denied:

@@ -17,14 +17,14 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
 
   if (!isReady) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-dvh items-center justify-center">
         <LoadingSpinner size={ComponentSize.LG} label={t('auth.authenticating')} />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-dvh overflow-hidden bg-surface-shell">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar />

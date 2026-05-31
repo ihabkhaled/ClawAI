@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
 import { buildInterServiceAuthHeader, httpRequest, runResearch } from '../../../common/utilities';
 import {
@@ -7,7 +7,7 @@ import {
   THREAD_CONTEXT_LIMIT,
   WORKSPACE_CONTEXT_LIMIT,
 } from '../../../common/constants';
-import { type ChatMessage } from '../../../generated/prisma';
+import { RoutingMode, type ChatMessage } from '../../../generated/prisma';
 import {
   type OpenAiChatMessage,
   type OpenAiContentPart,
@@ -30,10 +30,16 @@ import {
   TEXT_FILE_EXTENSIONS,
   TEXT_MIME_PREFIXES,
 } from '../constants/file-content.constants';
+import { filterImagesForLocalOnly } from '../validators/local-only-attachment.validator';
+import { LocalModelSelectionService } from '../services/local-model-selection.service';
 
 @Injectable()
 export class ContextAssemblyManager {
   private readonly logger = new Logger(ContextAssemblyManager.name);
+
+  constructor(
+    @Optional() private readonly localModelSelection?: LocalModelSelectionService,
+  ) {}
 
   async assemble(
     userId: string,
@@ -42,6 +48,7 @@ export class ContextAssemblyManager {
     contextPackIds?: string[],
     fileIds?: string[],
     research?: ResearchOptions,
+    routingMode?: RoutingMode,
   ): Promise<AssembledContext> {
     this.logStartAssemble(userId, threadMessages, contextPackIds, fileIds, research);
     const recentMessages = threadMessages.slice(-THREAD_CONTEXT_LIMIT);
@@ -56,6 +63,11 @@ export class ContextAssemblyManager {
       research,
       lastUserMessage: recentMessages.at(-1),
     });
+    const filteredFileContents = await this.applyLocalOnlyAttachmentGate(
+      fetched.fileContents,
+      routingMode,
+      userId,
+    );
     const researchEvidence = this.extractEvidenceCitations(fetched.researchRun);
     const researchWarnings = this.extractResearchWarnings(fetched.researchRun);
     const tokenBudget = threadSettings?.maxTokens ?? 4096;
@@ -65,13 +77,49 @@ export class ContextAssemblyManager {
       threadMessages: recentMessages,
       memories: fetched.memories,
       contextPackItems: fetched.contextPackItems,
-      fileContents: fetched.fileContents,
+      fileContents: filteredFileContents,
       workspaceCitations: fetched.workspaceCitations,
       researchEvidence,
       researchRunId: fetched.researchRun?.id ?? null,
       researchWarnings,
       tokenBudget,
     };
+  }
+
+  // Slice B local-only image gate. When the caller's routingMode forbids
+  // exfiltrating images to a cloud provider (LOCAL_ONLY / PRIVACY_FIRST) AND
+  // no local vision-capable model is installed AND the operator escape hatch
+  // is off, drop image attachments before they reach the LLM call site. The
+  // surviving text attachments are always preserved. We log a warning for
+  // each dropped image so the FE can correlate the "images dropped" toast
+  // (`chat.localOnly.imagesDropped`) with a concrete request.
+  private async applyLocalOnlyAttachmentGate(
+    fileContents: FileContentResponse[],
+    routingMode: RoutingMode | undefined,
+    userId: string,
+  ): Promise<FileContentResponse[]> {
+    if (routingMode === undefined || fileContents.length === 0) {
+      return fileContents;
+    }
+    if (routingMode !== RoutingMode.LOCAL_ONLY && routingMode !== RoutingMode.PRIVACY_FIRST) {
+      return fileContents;
+    }
+    const allowOverride = AppConfig.get().ALLOW_LOCAL_ONLY_ATTACHMENTS_WITHOUT_VISION;
+    const hasLocalVisionModel = allowOverride
+      ? true
+      : ((await this.localModelSelection?.hasLocalVisionModel()) ?? false);
+    const { kept, dropped } = filterImagesForLocalOnly(
+      fileContents,
+      routingMode,
+      hasLocalVisionModel,
+      allowOverride,
+    );
+    if (dropped.length > 0) {
+      this.logger.warn(
+        `applyLocalOnlyAttachmentGate: dropped ${String(dropped.length)} image attachment(s) for user=${userId} routingMode=${routingMode} hasLocalVisionModel=${String(hasLocalVisionModel)} allowOverride=${String(allowOverride)} — surface chat.localOnly.imagesDropped on FE; dropped=${dropped.map((f) => f.filename).join(',')}`,
+      );
+    }
+    return kept;
   }
 
   private logStartAssemble(

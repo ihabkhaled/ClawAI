@@ -25,8 +25,16 @@ export class GrokAdapter implements ProviderAdapter {
       .join(' ');
   }
 
+  // Grok 2 series exposes vision via dedicated `*-vision*` SKUs
+  // (grok-2-vision, grok-2-vision-1212). Grok 4 and later ship with vision
+  // built into the base model, so the heuristic accepts the family prefix
+  // verbatim. Text-only SKUs (grok-2, grok-2-mini, grok-3) return false.
   private static supportsVision(modelId: string): boolean {
-    return modelId.includes('vision');
+    const lower = modelId.toLowerCase();
+    if (lower.includes('vision')) {
+      return true;
+    }
+    return lower.startsWith('grok-4');
   }
 
   async healthCheck(config: ConnectorConfig): Promise<HealthCheckResult> {

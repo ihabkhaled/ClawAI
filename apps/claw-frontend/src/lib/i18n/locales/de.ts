@@ -382,6 +382,21 @@ export const de: TranslationDictionary = {
       argsLabel: 'Argumente',
       previewLabel: 'Vorschau',
     },
+    upgrade: {
+      title: '{feature} freischalten',
+      body: 'Wechsle zu Pro, um diese Funktion zu nutzen',
+      cta: 'Tarife anzeigen',
+      dismiss: 'Vielleicht später',
+      features: {
+        compare: 'Vergleichsmodus',
+        judge: 'Juror-Modus',
+        critic: 'Kritiker-Überprüfung',
+        research: 'Web-Recherche',
+        workspaces: 'Arbeitsbereiche',
+        memory: 'Speicher',
+        contextPacks: 'Kontext-Pakete',
+      },
+    },
   },
   receipt: {
     openLabel: 'Zeige, was die KI verwendet hat',
@@ -578,9 +593,13 @@ export const de: TranslationDictionary = {
     statusFailed: 'Fehlgeschlagen',
     zip: {
       bombRejected: 'Archiv abgelehnt: verdächtiges Komprimierungsverhältnis erkannt',
+      extractedFromLabel: 'Extrahiert aus {filename}',
+      childCountLabel: '{count} Dateien',
     },
     retention: {
       expired: 'Datei ist abgelaufen und wurde durch die Aufbewahrungsrichtlinie entfernt',
+      expiresInDays: 'Läuft in {n} Tagen ab',
+      expiresToday: 'Läuft heute ab',
     },
     permissions: {
       denied:

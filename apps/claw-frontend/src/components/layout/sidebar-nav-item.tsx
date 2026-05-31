@@ -24,9 +24,9 @@ export function SidebarNavItem({ item }: SidebarNavItemProps) {
   });
 
   const leafClass = cn(
-    'flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+    'flex min-h-12 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors md:min-h-11',
     isActive
-      ? 'bg-primary/10 text-primary'
+      ? 'bg-primary/10 font-semibold text-primary'
       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
   );
 

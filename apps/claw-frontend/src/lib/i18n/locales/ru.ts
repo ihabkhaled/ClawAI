@@ -380,6 +380,21 @@ export const ru: TranslationDictionary = {
       argsLabel: 'Аргументы',
       previewLabel: 'Предпросмотр',
     },
+    upgrade: {
+      title: 'Откройте {feature}',
+      body: 'Перейдите на план Pro, чтобы использовать эту функцию',
+      cta: 'Посмотреть тарифы',
+      dismiss: 'Возможно, позже',
+      features: {
+        compare: 'Режим сравнения',
+        judge: 'Режим судьи',
+        critic: 'Обзор критика',
+        research: 'Веб-поиск',
+        workspaces: 'Рабочие пространства',
+        memory: 'Память',
+        contextPacks: 'Пакеты контекста',
+      },
+    },
   },
   receipt: {
     openLabel: 'Показать, что использовал ИИ',
@@ -576,9 +591,13 @@ export const ru: TranslationDictionary = {
     statusFailed: 'Не удалось',
     zip: {
       bombRejected: 'Архив отклонён: обнаружен подозрительный коэффициент сжатия',
+      extractedFromLabel: 'Извлечено из {filename}',
+      childCountLabel: '{count} файлов',
     },
     retention: {
       expired: 'Срок хранения файла истёк, и он был удалён политикой хранения',
+      expiresInDays: 'Истекает через {n} дней',
+      expiresToday: 'Истекает сегодня',
     },
     permissions: {
       denied:

@@ -383,6 +383,21 @@ export const it: TranslationDictionary = {
       argsLabel: 'Argomenti',
       previewLabel: 'Anteprima',
     },
+    upgrade: {
+      title: 'Sblocca {feature}',
+      body: 'Passa a Pro per usare questa funzione',
+      cta: 'Visualizza piani',
+      dismiss: 'Forse più tardi',
+      features: {
+        compare: 'Modalità Confronto',
+        judge: 'Modalità Giudice',
+        critic: 'Revisione del Critico',
+        research: 'Ricerca Web',
+        workspaces: 'Aree di lavoro',
+        memory: 'Memoria',
+        contextPacks: 'Pacchetti di contesto',
+      },
+    },
   },
   receipt: {
     openLabel: "Mostra cosa ha usato l'IA",
@@ -578,9 +593,13 @@ export const it: TranslationDictionary = {
     statusFailed: 'Fallito',
     zip: {
       bombRejected: 'Archivio rifiutato: rilevato rapporto di compressione sospetto',
+      extractedFromLabel: 'Estratto da {filename}',
+      childCountLabel: '{count} file',
     },
     retention: {
       expired: 'Il file è scaduto ed è stato rimosso dalla politica di conservazione',
+      expiresInDays: 'Scade tra {n} giorni',
+      expiresToday: 'Scade oggi',
     },
     permissions: {
       denied:

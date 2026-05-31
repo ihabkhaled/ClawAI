@@ -377,6 +377,21 @@ export const ar: TranslationDictionary = {
       argsLabel: 'الوسائط',
       previewLabel: 'معاينة',
     },
+    upgrade: {
+      title: 'افتح {feature}',
+      body: 'قم بالترقية إلى الخطة الاحترافية لاستخدام هذه الميزة',
+      cta: 'عرض الخطط',
+      dismiss: 'ربما لاحقًا',
+      features: {
+        compare: 'وضع المقارنة',
+        judge: 'وضع المحكّم',
+        critic: 'مراجعة الناقد',
+        research: 'البحث على الويب',
+        workspaces: 'مساحات العمل',
+        memory: 'الذاكرة',
+        contextPacks: 'حزم السياق',
+      },
+    },
   },
   receipt: {
     openLabel: 'إظهار ما استخدمه الذكاء الاصطناعي',
@@ -569,9 +584,13 @@ export const ar: TranslationDictionary = {
     statusFailed: 'فشل',
     zip: {
       bombRejected: 'تم رفض الأرشيف: تم اكتشاف نسبة ضغط مشبوهة',
+      extractedFromLabel: 'مستخرج من {filename}',
+      childCountLabel: '{count} ملفات',
     },
     retention: {
       expired: 'انتهت صلاحية الملف وتمت إزالته بواسطة سياسة الاحتفاظ',
+      expiresInDays: 'تنتهي الصلاحية خلال {n} أيام',
+      expiresToday: 'تنتهي الصلاحية اليوم',
     },
     permissions: {
       denied: 'ليس لديك إذن للوصول إلى الملفات. تواصل مع مسؤول مساحة العمل لديك.',

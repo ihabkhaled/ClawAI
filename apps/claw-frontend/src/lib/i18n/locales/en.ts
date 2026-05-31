@@ -379,6 +379,21 @@ export const en: TranslationDictionary = {
       argsLabel: 'Args',
       previewLabel: 'Preview',
     },
+    upgrade: {
+      title: 'Unlock {feature}',
+      body: 'Upgrade to Pro to use this feature',
+      cta: 'View plans',
+      dismiss: 'Maybe later',
+      features: {
+        compare: 'Compare Mode',
+        judge: 'Judge Mode',
+        critic: 'Critic Review',
+        research: 'Web Research',
+        workspaces: 'Workspaces',
+        memory: 'Memory',
+        contextPacks: 'Context Packs',
+      },
+    },
   },
   receipt: {
     openLabel: 'Show what the AI used',
@@ -571,9 +586,13 @@ export const en: TranslationDictionary = {
     statusFailed: 'Failed',
     zip: {
       bombRejected: 'Archive rejected: suspicious compression ratio detected',
+      extractedFromLabel: 'Extracted from {filename}',
+      childCountLabel: '{count} files',
     },
     retention: {
       expired: 'File expired and was removed by retention policy',
+      expiresInDays: 'Expires in {n} days',
+      expiresToday: 'Expires today',
     },
     permissions: {
       denied: "You don't have permission to access files. Contact your workspace administrator.",

@@ -22,9 +22,13 @@ import {
   JUDGE_SYSTEM_PROMPT,
 } from '../constants/judge-referee.constants';
 import { AccessControlService } from '../services/access-control.service';
+import { FileDeliveryRecordService } from '../services/file-delivery-record.service';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import type { AssembledContext } from '../types/context.types';
 import type { LlmResponse, MessageRoutedData, ThreadSettings } from '../types/execution.types';
+import type { FileDeliveryRecordView } from '../types/file-delivery-record.types';
+import type { FileDeliveryEntry } from '../types/file-delivery.types';
+import { FileDeliveryMode } from '../../../common/enums/file-delivery-mode.enum';
 import type {
   CriticEvaluation,
   JudgeRefereeConfig,
@@ -51,6 +55,12 @@ export class JudgeRefereeManager {
     // compiling; supplied by the Nest DI container in production where the
     // plan-feature defense-in-depth gate must fire before any critic LLM call.
     private readonly accessControlService?: AccessControlService,
+    // Slice D — optional source-of-truth for per-(message, file, model)
+    // delivery mode. When supplied, judge/critic prompts prefer the durable
+    // file_delivery_records table over the inline metadata.fileDelivery JSON
+    // path. Optional so legacy tests that construct the manager without it
+    // keep compiling and fall back to the context.fileContents heuristic.
+    private readonly fileDeliveryRecordService?: FileDeliveryRecordService,
   ) {}
 
   private executionManager: ChatExecutionManager | null = null;
@@ -90,9 +100,15 @@ export class JudgeRefereeManager {
     const judgeModelLabel = `${judgeTarget.provider}/${judgeTarget.model}`;
     this.chatStreamService.emitJudgeEvaluating(payload.threadId, criticModelLabel, judgeModelLabel);
 
+    // Slice D — prefer file_delivery_records (durable, per-(message,file,model)
+    // truth) over the inline metadata.fileDelivery JSON path. Falls back to
+    // context.fileContents when the table is empty (legacy / pre-Slice-D
+    // messages) or the service is unavailable (tests).
+    const deliveryRecords = await this.loadDeliveryRecords(payload.messageId, context.userId);
+
     const criticEvaluation =
       config.criticEnabled === true
-        ? await this.callCriticWithModel(response, context, config, criticModelInfo)
+        ? await this.callCriticWithModel(response, context, config, criticModelInfo, deliveryRecords)
         : this.buildSkippedCriticEvaluation(config, criticModelInfo);
 
     const judgeVerdict = await this.callJudge(
@@ -101,6 +117,7 @@ export class JudgeRefereeManager {
       context,
       config,
       judgeTarget,
+      deliveryRecords,
     );
 
     const totalLatencyMs = Date.now() - startTime;
@@ -178,6 +195,7 @@ export class JudgeRefereeManager {
     context: AssembledContext,
     config: JudgeRefereeConfig,
     criticModel: { provider: string; model: string },
+    deliveryRecords?: FileDeliveryRecordView[],
   ): Promise<CriticEvaluation> {
     const startTime = Date.now();
     const criticPrompt = buildCriticSystemPrompt(config.category);
@@ -187,7 +205,12 @@ export class JudgeRefereeManager {
     );
 
     const userPrompt = this.extractUserPrompt(context);
-    const attachments = this.buildAttachmentsBlock(context, response.provider, response.model);
+    const attachments = this.buildAttachmentsBlock(
+      context,
+      response.provider,
+      response.model,
+      deliveryRecords,
+    );
     const criticContext: AssembledContext = {
       ...context,
       systemPrompt: criticPrompt,
@@ -282,13 +305,14 @@ export class JudgeRefereeManager {
     context: AssembledContext,
     _config: JudgeRefereeConfig,
     judgeTarget: { provider: string; model: string },
+    deliveryRecords?: FileDeliveryRecordView[],
   ): Promise<JudgeVerdict> {
     const startTime = Date.now();
     const judgeLabel = `${judgeTarget.provider}/${judgeTarget.model}`;
 
     this.logger.debug(`callJudge: using ${judgeLabel}`);
 
-    const judgeContext = this.buildJudgeContext(response, criticEval, context);
+    const judgeContext = this.buildJudgeContext(response, criticEval, context, deliveryRecords);
 
     try {
       if (!this.executionManager) {
@@ -342,9 +366,15 @@ export class JudgeRefereeManager {
     response: LlmResponse,
     criticEval: CriticEvaluation,
     context: AssembledContext,
+    deliveryRecords?: FileDeliveryRecordView[],
   ): AssembledContext {
     const userPrompt = this.extractUserPrompt(context);
-    const attachments = this.buildAttachmentsBlock(context, response.provider, response.model);
+    const attachments = this.buildAttachmentsBlock(
+      context,
+      response.provider,
+      response.model,
+      deliveryRecords,
+    );
     const sections: string[] = [];
     if (attachments !== undefined) {
       if (attachments.manifestBlock.length > 0) {
@@ -362,7 +392,10 @@ export class JudgeRefereeManager {
       `Feedback: ${criticEval.feedback.length > 0 ? criticEval.feedback.join('; ') : 'No issues found'}`,
     );
 
-    const hasFiles = (context.fileContents ?? []).length > 0;
+    // Records (durable) win over context.fileContents (legacy) when present.
+    const hasFiles =
+      (deliveryRecords !== undefined && deliveryRecords.length > 0) ||
+      (context.fileContents ?? []).length > 0;
     const systemPrompt = hasFiles
       ? `${JUDGE_SYSTEM_PROMPT}${JUDGE_FILE_GROUNDING_CLAUSE}`
       : JUDGE_SYSTEM_PROMPT;
@@ -379,25 +412,81 @@ export class JudgeRefereeManager {
   // Builds the attachments block consumed by the judge + critic prompts.
   // Returns undefined when there are no files (so callers can short-circuit
   // back to the legacy prompt shape).
+  //
+  // Slice D — when `deliveryRecords` is supplied AND non-empty, the per-lane
+  // delivery summary is built from the durable file_delivery_records table
+  // (source of truth) instead of re-classifying context.fileContents via the
+  // provider-vision heuristic. The manifest block still uses
+  // context.fileContents because the records table does not store snippet
+  // content. When records are absent we fall back to the legacy heuristic
+  // path so pre-Slice-D messages keep their existing prompt shape.
   private buildAttachmentsBlock(
     context: AssembledContext,
     provider: string,
     model: string,
+    deliveryRecords?: FileDeliveryRecordView[],
   ): { manifestBlock: string; perLaneDelivery: string } | undefined {
     const files = context.fileContents ?? [];
-    if (files.length === 0) {
+    const records = deliveryRecords ?? [];
+    if (files.length === 0 && records.length === 0) {
       return undefined;
     }
-    // TODO(Slice B follow-up): pass ModelMetadata.supportsVision sourced from
-    // the connector-service catalog so judge/critic prompts classify image
-    // attachments accurately per-model rather than via the provider heuristic.
-    // For now we pass `undefined`; the heuristic in file-delivery.utility
-    // remains in force.
-    const entries = buildFileDeliveryEntries(files, provider, model);
+    const entries =
+      records.length > 0
+        ? this.deliveryEntriesFromRecords(records, provider, model)
+        : buildFileDeliveryEntries(files, provider, model);
     return {
       manifestBlock: buildAttachedFilesManifest(files),
       perLaneDelivery: buildLaneDeliverySummary(entries),
     };
+  }
+
+  // Slice D — converts persisted FileDeliveryRecord rows for THIS lane
+  // (provider+model) into the FileDeliveryEntry shape expected by
+  // buildLaneDeliverySummary. Rows for other lanes are filtered out so the
+  // lane summary only counts what this specific (provider, model) actually
+  // received at execution time.
+  private deliveryEntriesFromRecords(
+    records: FileDeliveryRecordView[],
+    provider: string,
+    model: string,
+  ): FileDeliveryEntry[] {
+    return records
+      .filter((row) => row.provider === provider && row.model === model)
+      .map((row) => ({
+        fileId: row.fileId,
+        filename: row.filename,
+        mimeType: row.mimeType,
+        provider: row.provider,
+        model: row.model,
+        mode: row.mode as FileDeliveryMode,
+      }));
+  }
+
+  // Slice D — attempts to load the durable file_delivery_records rows for
+  // the original message. Returns undefined (NOT empty) when the lookup
+  // fails or the service is not wired so callers can cleanly distinguish
+  // "records source-of-truth applies" from "fall back to context.fileContents".
+  private async loadDeliveryRecords(
+    messageId: string,
+    userId: string,
+  ): Promise<FileDeliveryRecordView[] | undefined> {
+    if (!this.fileDeliveryRecordService) {
+      return undefined;
+    }
+    try {
+      const rows = await this.fileDeliveryRecordService.getDeliveriesForMessage(messageId, userId);
+      this.logger.debug(
+        `loadDeliveryRecords: messageId=${messageId} returned ${String(rows.length)} rows`,
+      );
+      return rows;
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(
+        `loadDeliveryRecords: failed for messageId=${messageId} — ${msg}. Falling back to context.fileContents.`,
+      );
+      return undefined;
+    }
   }
 
   private buildJudgeReviewPayload(result: JudgeRefereeResult): JudgeReviewPayload {

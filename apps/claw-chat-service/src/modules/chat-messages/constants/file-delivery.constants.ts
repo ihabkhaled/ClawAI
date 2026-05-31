@@ -11,7 +11,19 @@ export const VISION_CAPABLE_PROVIDERS = new Set([
   'ANTHROPIC',
   'GEMINI',
   'AWS_BEDROCK',
+  // Bedrock hosts Claude 3/3.5/3.7 + Nova Lite/Pro, all of which accept
+  // OpenAI-compatible image_url parts when routed through the existing
+  // OpenAI-compat passthrough. Per-model `supportsVision` from the connector
+  // catalog is still preferred; this entry is the heuristic fallback only.
   'GROK',
+  // Grok 2 Vision + Grok 4 family accept OpenAI-style image_url parts on
+  // the same /v1/chat/completions endpoint. Text-only Grok models (grok-2,
+  // grok-2-mini, grok-3) will be filtered by per-model `supportsVision` when
+  // the connector catalog metadata is threaded through.
+  'DEEPSEEK',
+  // DeepSeek's vision models (deepseek-vl, deepseek-vl2) speak OpenAI-compat
+  // image_url. deepseek-chat / deepseek-reasoner are text-only and will be
+  // filtered by per-model `supportsVision` from the connector catalog.
   'LLAMACPP',
   'local-llamacpp',
   // OLLAMA / local-ollama only when running a multimodal local model; we let

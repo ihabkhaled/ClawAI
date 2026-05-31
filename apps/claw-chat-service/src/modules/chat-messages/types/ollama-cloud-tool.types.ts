@@ -49,3 +49,12 @@ export type OllamaCloudToolDefinition = {
     parameters: Record<string, unknown>;
   };
 };
+
+// Options bag for executeOllamaCloudToolCall — passes the connector
+// base URL, decrypted apiKey, and per-call timeout into the runner so
+// it can dispatch the tool against /api/web_search or /api/web_fetch.
+export type ExecuteOllamaCloudToolCallOptions = {
+  baseUrl: string;
+  apiKey: string;
+  timeoutMs: number;
+};

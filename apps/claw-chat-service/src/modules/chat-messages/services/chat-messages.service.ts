@@ -611,6 +611,8 @@ export class ChatMessagesService implements OnModuleInit {
       threadSettings,
       thread?.contextPackIds ?? undefined,
       fileIds,
+      undefined,
+      payload.routingMode as RoutingMode,
     );
     try {
       await this.runLlmAndStore(

@@ -20,6 +20,16 @@ export class DeepSeekAdapter implements ProviderAdapter {
       .join(" ");
   }
 
+  // DeepSeek-VL (vl, vl2, vl2-tiny, vl2-small) speak OpenAI-compatible
+  // image_url; deepseek-chat / deepseek-coder / deepseek-reasoner are
+  // text-only. Heuristic kept narrow on purpose — when a new vision model
+  // family ships, extend the pattern explicitly rather than expanding to a
+  // catch-all that misclassifies text-only models.
+  private static supportsVision(modelId: string): boolean {
+    const lower = modelId.toLowerCase();
+    return lower.includes("vl") || lower.includes("vision");
+  }
+
   async healthCheck(config: ConnectorConfig): Promise<HealthCheckResult> {
     const baseUrl = config.baseUrl ?? DEEPSEEK_DEFAULT_BASE_URL;
     logger.debug(`healthCheck: checking DeepSeek health at ${baseUrl}`);
@@ -86,18 +96,23 @@ export class DeepSeekAdapter implements ProviderAdapter {
       capabilities: {
         supportsStreaming: true,
         supportsTools: !model.id.includes("reasoner"),
-        supportsVision: false,
+        supportsVision: DeepSeekAdapter.supportsVision(model.id),
         supportsAudio: false,
         supportsStructuredOutput: !model.id.includes("reasoner"),
       },
     }));
   }
 
+  // Provider-level capability flag is `true` because *some* DeepSeek
+  // models (deepseek-vl family) accept native images. Per-model truth
+  // comes from `syncModels()` via DeepSeekAdapter.supportsVision; routing
+  // and the file-delivery classifier should prefer the per-model metadata
+  // and fall back to this provider-level flag only when metadata is missing.
   getCapabilities(): ProviderCapabilities {
     return {
       supportsStreaming: true,
       supportsTools: true,
-      supportsVision: false,
+      supportsVision: true,
     };
   }
 }

@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils';
 import type { FileListItemProps } from '@/types';
 import { formatFileSize, formatShortDateTime } from '@/utilities';
 
+import { FileRetentionBadge } from './file-retention-badge';
+
 export function FileListItem({ file, onDelete, onViewChunks, isDeletePending }: FileListItemProps) {
   const { t } = useTranslation();
   const statusLabel = t(INGESTION_STATUS_LABELS[file.ingestionStatus] ?? file.ingestionStatus);
@@ -31,6 +33,7 @@ export function FileListItem({ file, onDelete, onViewChunks, isDeletePending }: 
       <Badge variant="outline" className={cn('shrink-0 text-xs', statusColor)}>
         {statusLabel}
       </Badge>
+      <FileRetentionBadge retentionExpiresAt={file.retentionExpiresAt} />
       <Button
         variant="ghost"
         size="icon"

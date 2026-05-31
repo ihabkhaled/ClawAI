@@ -381,6 +381,21 @@ export const pt: TranslationDictionary = {
       argsLabel: 'Argumentos',
       previewLabel: 'Pré-visualização',
     },
+    upgrade: {
+      title: 'Desbloquear {feature}',
+      body: 'Atualize para o Pro para usar este recurso',
+      cta: 'Ver planos',
+      dismiss: 'Talvez mais tarde',
+      features: {
+        compare: 'Modo de Comparação',
+        judge: 'Modo Juiz',
+        critic: 'Revisão do Crítico',
+        research: 'Pesquisa Web',
+        workspaces: 'Espaços de Trabalho',
+        memory: 'Memória',
+        contextPacks: 'Pacotes de Contexto',
+      },
+    },
   },
   receipt: {
     openLabel: 'Mostrar o que a IA usou',
@@ -576,9 +591,13 @@ export const pt: TranslationDictionary = {
     statusFailed: 'Falhou',
     zip: {
       bombRejected: 'Arquivo rejeitado: proporção de compressão suspeita detectada',
+      extractedFromLabel: 'Extraído de {filename}',
+      childCountLabel: '{count} arquivos',
     },
     retention: {
       expired: 'O arquivo expirou e foi removido pela política de retenção',
+      expiresInDays: 'Expira em {n} dias',
+      expiresToday: 'Expira hoje',
     },
     permissions: {
       denied:

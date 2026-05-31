@@ -1,4 +1,9 @@
-import type { CompareJudgeState, CompareResearchMode, ParallelModelStatus } from '@/enums';
+import type {
+  CompareJudgeState,
+  CompareResearchMode,
+  ParallelModelStatus,
+  PlanFeature,
+} from '@/enums';
 
 import type { ChatMessage, JudgeModelOption, JudgeReview, LaneStreamMap } from './chat.types';
 import type { FileDeliveryEntry } from './file-delivery.types';
@@ -74,6 +79,17 @@ export type ParallelRequest = {
   fileIds?: string[];
 };
 
+export type UseParallelCompareReturn = {
+  send: (data: ParallelRequest) => void;
+  result: ParallelResponse | undefined;
+  isPending: boolean;
+  isError: boolean;
+  // Locked plan feature surfaced from the latest send attempt. When non-null,
+  // the page renders an upgrade CTA banner instead of a generic toast.
+  upgradeFeature: PlanFeature | null;
+  clearUpgradeFeature: () => void;
+};
+
 export type UseParallelComparePageReturn = {
   t: (key: string, params?: Record<string, string | number>) => string;
   selectedModels: ParallelModelTarget[];
@@ -107,6 +123,12 @@ export type UseParallelComparePageReturn = {
   // parallel send payload as `fileIds` and reset on successful send.
   selectedFileIds: string[];
   setSelectedFileIds: (ids: string[]) => void;
+  // Set to the locked PlanFeature when the latest send was rejected with a
+  // PLAN_FEATURE_DISABLED 403 from the backend (judge/critic/research). The
+  // page renders an UpgradeCtaBanner above the results when non-null;
+  // clearUpgradeFeature dismisses the banner.
+  upgradeFeature: PlanFeature | null;
+  clearUpgradeFeature: () => void;
 };
 
 export type UseInThreadCompareParams = {

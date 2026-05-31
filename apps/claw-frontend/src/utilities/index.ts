@@ -22,6 +22,7 @@ export {
   themeToAppearance,
 } from './preference.utility';
 export { showToast } from './toast.utility';
+export { detectPlanFeatureGate } from './plan-feature-error.utility';
 export { logger } from './logger.utility';
 export { estimateCost } from './cost.utility';
 export { isAdmin, hasPermission, hasAnyPermission } from './permissions.utility';
@@ -112,3 +113,4 @@ export {
   getStreamMetricsBottleneck,
   type BottleneckSegment,
 } from './bottleneck.utility';
+export { daysUntilExpiry } from './file-retention.utility';
