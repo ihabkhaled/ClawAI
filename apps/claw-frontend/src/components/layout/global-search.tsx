@@ -2,12 +2,14 @@
 
 import { Search, X } from 'lucide-react';
 
+import { KbdHint } from '@/components/common/kbd-hint';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useGlobalSearchController } from '@/hooks/layout/use-global-search-controller';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { GlobalSearchProps } from '@/types';
+import { getModKeyLabel } from '@/utilities';
 
 import { SearchResults } from './search-results';
 
@@ -53,15 +55,31 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
           </Button>
         </div>
       ) : (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9"
-          onClick={handleToggle}
-          aria-label={t('accessibility.openSearch')}
-        >
-          <Search className="h-4 w-4" />
-        </Button>
+        <>
+          {/* Mobile: icon-only trigger, keeps the topbar tight. */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 sm:hidden"
+            onClick={handleToggle}
+            aria-label={t('accessibility.openSearch')}
+          >
+            <Search className="h-4 w-4" />
+          </Button>
+          {/* Desktop (sm+): labeled trigger with a Cmd/Ctrl+K hint pill. The
+           * pill is decorative — the actual binding lives in
+           * useGlobalSearchController via useKeyboardShortcut('mod+k'). */}
+          <Button
+            variant="ghost"
+            onClick={handleToggle}
+            aria-label={t('accessibility.openSearch')}
+            className="hidden h-9 items-center gap-2 px-2.5 text-sm font-normal text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
+          >
+            <Search className="h-4 w-4" />
+            <span>{t('accessibility.search')}</span>
+            <KbdHint keys={[getModKeyLabel(), 'K']} className="ms-1" />
+          </Button>
+        </>
       )}
 
       {showResults ? (

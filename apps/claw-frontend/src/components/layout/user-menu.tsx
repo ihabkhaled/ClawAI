@@ -31,9 +31,20 @@ export function UserMenu(): React.ReactElement | null {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-accent">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="text-xs">{getInitials(user.username)}</AvatarFallback>
-          </Avatar>
+          {/* Avatar wrapper carries the primary-tinted ring + an online status
+           * dot anchored to the bottom-end corner. The dot uses `end-0` so it
+           * mirrors automatically under RTL, and a 2px card-colored border
+           * around it punches it visually away from the avatar circle. */}
+          <span className="relative inline-flex">
+            <Avatar className="h-8 w-8 ring-2 ring-primary/20 transition-shadow duration-fast ease-expo-out hover:ring-primary/40">
+              <AvatarFallback className="text-xs">{getInitials(user.username)}</AvatarFallback>
+            </Avatar>
+            <span
+              className="absolute bottom-0 end-0 inline-block h-2.5 w-2.5 rounded-full border-2 border-card bg-[hsl(var(--success))]"
+              role="status"
+              aria-label={t('accessibility.userStatusOnline')}
+            />
+          </span>
           <span className="max-w-[120px] truncate font-medium">{user.username}</span>
         </button>
       </DropdownMenuTrigger>

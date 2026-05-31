@@ -19,7 +19,11 @@ export function Topbar() {
   const title = useTopbarTitle();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-2 border-b bg-card/85 px-4 backdrop-blur supports-[backdrop-filter]:bg-card/70 sm:px-6">
+    // Glass topbar: backdrop-blur over the surface-glass token tint, with a
+    // subtle bottom hairline (border-border/30) so it separates from the
+    // shell without competing with the sidebar's solid border. Falls back to
+    // a flat card tint on browsers without backdrop-filter support.
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-2 border-b border-border/30 bg-card/85 px-4 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-[hsl(var(--surface-glass))] sm:px-6">
       <div className="flex min-w-0 items-center gap-2 sm:gap-4">
         <Button
           variant="ghost"
@@ -31,7 +35,16 @@ export function Topbar() {
           <Menu className="h-5 w-5" />
         </Button>
         {title ? (
-          <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">{title}</h1>
+          // The `key={title}` forces React to re-mount the heading whenever
+          // the page title changes so the tailwindcss-animate enter
+          // animation replays. `animate-in fade-in slide-in-from-left-2
+          // duration-300` is the standard combo from tailwindcss-animate.
+          <h1
+            key={title}
+            className="truncate text-base font-semibold tracking-tight duration-300 ease-expo-out animate-in fade-in slide-in-from-left-2 sm:text-lg"
+          >
+            {title}
+          </h1>
         ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">

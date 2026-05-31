@@ -29,21 +29,39 @@ export function Sidebar() {
         />
       ) : null}
 
-      {/* Sidebar */}
+      {/* Sidebar
+       * Desktop (md+): static left rail, w-[var(--sidebar-width)], border-e.
+       * Mobile (max-md): bottom-sheet — full-width, inset bottom, h-85dvh,
+       * rounded-t-2xl, border-t (NOT border-e), slides down via translate-y-full
+       * when closed. Drag-handle visible only on mobile. */}
       <aside
         className={cn(
-          'fixed inset-y-0 start-0 z-50 flex h-full w-[min(86vw,320px)] flex-col border-e bg-card transition-transform duration-200 ease-in-out md:static md:z-auto md:w-64 md:translate-x-0',
-          isOpen
-            ? 'translate-x-0 max-md:shadow-floating'
-            : 'max-md:ltr:-translate-x-full max-md:rtl:translate-x-full',
+          'fixed z-50 flex flex-col bg-card transition-transform duration-normal ease-expo-out',
+          // Mobile: bottom sheet
+          'inset-x-0 bottom-0 top-auto h-[85dvh] rounded-t-2xl border-t shadow-floating',
+          // Desktop overrides: revert to left rail layout
+          'md:static md:inset-auto md:h-full md:w-[var(--sidebar-width)] md:translate-y-0 md:rounded-none md:border-e md:border-t-0 md:shadow-none',
+          isOpen ? 'translate-y-0' : 'max-md:translate-y-full',
         )}
       >
+        {/* Mobile-only drag handle */}
+        <div className="flex justify-center pt-2 md:hidden" aria-hidden>
+          <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+        </div>
         <div className="flex h-16 items-center justify-between gap-2 px-4 sm:px-6">
-          <Link href={ROUTES.CHAT} className="flex items-center gap-2 text-lg font-bold">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <Zap className="h-4 w-4 text-primary-foreground" />
+          <Link
+            href={ROUTES.CHAT}
+            className="group flex items-center gap-3 rounded-lg outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary/40"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20 transition-all duration-normal ease-expo-out group-hover:bg-primary/15 group-hover:ring-primary/30">
+              <Zap className="h-4 w-4 text-primary" />
             </div>
-            <span>{t('common.brandName')}</span>
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-bold tracking-tight">{t('common.brandName')}</span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                {t('common.brandTagline')}
+              </span>
+            </div>
           </Link>
           <Button
             variant="ghost"

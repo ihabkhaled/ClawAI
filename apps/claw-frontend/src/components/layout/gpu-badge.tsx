@@ -12,10 +12,12 @@ export function GpuBadge(): React.ReactElement {
   const { t } = useTranslation();
 
   if (!data.hasGpu) {
+    // No-GPU pill keeps the neutral muted treatment — gradient border is the
+    // reward for actually having a detected accelerator.
     return (
       <Link
         href={ROUTES.MODELS_LOCAL_FRONTIER}
-        className="flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-muted"
+        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted"
         title={t('gpuBadge.noGpu')}
       >
         <Cpu className="size-3" aria-hidden />
@@ -27,10 +29,13 @@ export function GpuBadge(): React.ReactElement {
   const vendorLabel = t(`gpuBadge.vendor.${data.vendor}` as `gpuBadge.vendor.nvidia`);
   const summary = data.vramGb ? `${vendorLabel} · ${data.vramGb} GB` : vendorLabel;
 
+  // Gradient-border pill (uses .gradient-border-pill helper backed by
+  // --gradient-brand). The Zap glyph and label tint use the primary token so
+  // the pill reads as "GPU active" without the previous hard-coded emerald.
   return (
     <Link
       href={ROUTES.MODELS_LOCAL_FRONTIER}
-      className="flex items-center gap-1.5 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-medium text-emerald-700 transition-colors hover:bg-emerald-500/20 dark:text-emerald-300"
+      className="gradient-border-pill inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold text-primary transition-transform duration-fast ease-expo-out hover:scale-[1.02]"
       title={data.model ?? vendorLabel}
     >
       <Zap className="size-3" aria-hidden />
