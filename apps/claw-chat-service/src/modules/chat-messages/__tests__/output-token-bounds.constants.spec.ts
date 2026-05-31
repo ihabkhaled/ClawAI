@@ -1,8 +1,10 @@
 import {
   computeDefaultMaxTokens,
   OUTPUT_BOUNDS_DEFAULT_CTX_SIZE,
+  OUTPUT_BOUNDS_LOCAL_OLLAMA_DEFAULT_CTX_SIZE,
   OUTPUT_BOUNDS_MIN_OUTPUT_TOKENS,
   OUTPUT_BOUNDS_SAFETY_MARGIN,
+  pickDefaultCtxSizeForProvider,
 } from '../constants/output-token-bounds.constants';
 
 // Bug-hunt 2026-05-31, Fix 3 — these tests pin the defensive default
@@ -42,5 +44,43 @@ describe('output-token-bounds: computeDefaultMaxTokens', () => {
     // Pick ctxSize so available == 512 exactly: 512 + 256 + promptTokens.
     // ctxSize=1024, promptTokens=256 → 1024 - 256 - 256 = 512.
     expect(computeDefaultMaxTokens(1_024, 256)).toBe(OUTPUT_BOUNDS_MIN_OUTPUT_TOKENS);
+  });
+});
+
+// Bug-hunt 2026-05-31, Fix 4 — the defensive default ctx size is now
+// provider-aware. Local-Ollama on CPU cannot produce ~31_500 tokens
+// inside the 5-min HTTP timeout, so we pin it to 4_096; every other
+// provider keeps the generous 32_768 baseline.
+describe('output-token-bounds: pickDefaultCtxSizeForProvider', () => {
+  it('exposes the documented local-ollama default', () => {
+    expect(OUTPUT_BOUNDS_LOCAL_OLLAMA_DEFAULT_CTX_SIZE).toBe(4_096);
+  });
+
+  it('returns 4096 for the local-ollama provider', () => {
+    expect(pickDefaultCtxSizeForProvider('local-ollama')).toBe(4_096);
+  });
+
+  it('returns 32_768 for the Ollama Cloud Connector provider (OLLAMA)', () => {
+    expect(pickDefaultCtxSizeForProvider('OLLAMA')).toBe(32_768);
+  });
+
+  it('returns 32_768 for the local llama.cpp service provider', () => {
+    expect(pickDefaultCtxSizeForProvider('local-llamacpp')).toBe(32_768);
+  });
+
+  it('returns 32_768 for the LLAMACPP connector provider', () => {
+    expect(pickDefaultCtxSizeForProvider('LLAMACPP')).toBe(32_768);
+  });
+
+  it('returns 32_768 for OPENAI (cloud OpenAI-compat)', () => {
+    expect(pickDefaultCtxSizeForProvider('OPENAI')).toBe(32_768);
+  });
+
+  it('returns 32_768 for an unknown provider literal', () => {
+    expect(pickDefaultCtxSizeForProvider('SOME_FUTURE_PROVIDER')).toBe(32_768);
+  });
+
+  it('returns 32_768 for an empty string', () => {
+    expect(pickDefaultCtxSizeForProvider('')).toBe(32_768);
   });
 });

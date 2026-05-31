@@ -87,7 +87,7 @@ import {
 } from '../constants/execution-fast-path.constants';
 import {
   computeDefaultMaxTokens,
-  OUTPUT_BOUNDS_DEFAULT_CTX_SIZE,
+  pickDefaultCtxSizeForProvider,
 } from '../constants/output-token-bounds.constants';
 import type { ExecutionOptions } from '../types/execution-options.types';
 
@@ -588,7 +588,7 @@ export class ChatExecutionManager implements OnModuleInit {
     }
     return {
       url: `${baseUrl}/chat/completions`,
-      body: this.buildStreamingChatBody(model, context, threadSettings, executionOptions),
+      body: this.buildStreamingChatBody(provider, model, context, threadSettings, executionOptions),
       protocol: AiStreamProtocol.OPENAI_SSE,
       headers: { Authorization: `Bearer ${apiKey}` },
     };
@@ -614,7 +614,7 @@ export class ChatExecutionManager implements OnModuleInit {
         provider,
         model,
         url: `${config.LLAMACPP_SERVICE_URL}/api/v1/v1/chat/completions`,
-        body: this.buildStreamingChatBody(model, context, threadSettings, executionOptions),
+        body: this.buildStreamingChatBody(provider, model, context, threadSettings, executionOptions),
         protocol: AiStreamProtocol.OPENAI_SSE,
         startMs: startTime,
         promptTokensEstimate: this.estimatePromptTokens(context),
@@ -712,6 +712,7 @@ export class ChatExecutionManager implements OnModuleInit {
   }
 
   private buildStreamingChatBody(
+    provider: string,
     model: string,
     context: AssembledContext,
     threadSettings: ThreadSettings | undefined,
@@ -724,8 +725,12 @@ export class ChatExecutionManager implements OnModuleInit {
     // bounds runaway generation AND lets `finish_reason: 'length'`
     // signal "we hit OUR cap" rather than "we hit the runtime's
     // ctx ceiling" (which is silent and mid-sentence).
+    //
+    // Bug-hunt 2026-05-31, Fix 4 — the ctx baseline is now provider-aware
+    // (local-ollama → 4_096, all others → 32_768) so CPU local-ollama
+    // models don't time out trying to produce ~31_500 tokens.
     body.max_tokens ??= computeDefaultMaxTokens(
-      OUTPUT_BOUNDS_DEFAULT_CTX_SIZE,
+      pickDefaultCtxSizeForProvider(provider),
       this.estimatePromptTokens(context),
     );
     return {
@@ -1325,10 +1330,12 @@ export class ChatExecutionManager implements OnModuleInit {
     ];
     // Defensive default: same rationale as buildOllamaChatRequestBody — Ollama
     // Cloud's server-side num_predict default is too low for long answers.
+    // Bug-hunt 2026-05-31, Fix 4 — pick the ctx baseline by provider so
+    // local-ollama gets a tight 4_096 default and won't time out on CPU.
     const effectiveMaxTokens =
       maxTokens ??
       computeDefaultMaxTokens(
-        OUTPUT_BOUNDS_DEFAULT_CTX_SIZE,
+        pickDefaultCtxSizeForProvider(provider),
         estimateTokensFromText(`${systemPrompt}\n${userPrompt}`),
       );
     const cappedMaxTokens = Math.min(effectiveMaxTokens, HARD_MAX_OUTPUT_TOKENS);
@@ -1455,9 +1462,17 @@ export class ChatExecutionManager implements OnModuleInit {
     // so the runtime cannot silently truncate at its own ceiling. When
     // neither the caller nor the thread pinned a cap, compute a safe
     // default from `ctxSize - promptTokensEstimate - SAFETY_MARGIN`.
+    //
+    // Bug-hunt 2026-05-31, Fix 4 — this is the local-Ollama path; we
+    // explicitly use the OLLAMA_PROVIDER baseline (4_096) here so CPU
+    // 14B/27B models don't time out trying to produce ~31_500 tokens
+    // inside the 5-min HTTP timeout.
     const maxOutputTokens =
       resolvedMaxOutputTokens ??
-      computeDefaultMaxTokens(OUTPUT_BOUNDS_DEFAULT_CTX_SIZE, estimateTokensFromText(prompt));
+      computeDefaultMaxTokens(
+        pickDefaultCtxSizeForProvider(OLLAMA_PROVIDER),
+        estimateTokensFromText(prompt),
+      );
     return {
       model: resolvedModel,
       prompt: constrainedPrompt,
@@ -1998,6 +2013,11 @@ export class ChatExecutionManager implements OnModuleInit {
     // truncates non-trivial answers (bug 2026-05-31: Ollama Cloud Connector
     // returning ~750 chars for long prompts). Compute a sensible ctx-aware
     // default so the model isn't capped by the server side default.
+    //
+    // Bug-hunt 2026-05-31, Fix 4 — this builder is only invoked for the
+    // Ollama *Cloud* connector (isOllamaConnector path), so we use the
+    // OLLAMA_CONNECTOR_PROVIDER baseline (32_768) here. The local-Ollama
+    // path goes through buildOllamaRequest, not this method.
     const promptTokensEstimate = estimateTokensFromText(
       shape.messages
         .map((m) => (typeof m.content === 'string' ? m.content : ''))
@@ -2006,7 +2026,10 @@ export class ChatExecutionManager implements OnModuleInit {
     const numPredict =
       explicitMaxOutputTokens ??
       Math.min(
-        computeDefaultMaxTokens(OUTPUT_BOUNDS_DEFAULT_CTX_SIZE, promptTokensEstimate),
+        computeDefaultMaxTokens(
+          pickDefaultCtxSizeForProvider(OLLAMA_CONNECTOR_PROVIDER),
+          promptTokensEstimate,
+        ),
         HARD_MAX_OUTPUT_TOKENS,
       );
 
