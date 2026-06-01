@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
+import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import { recordGet } from '../../../common/utilities/record-lookup.utility';
@@ -106,6 +107,7 @@ export class RolePackManager {
         providerId: researchProviderId,
       });
       const results = await this.runAllMembers(
+        threadId,
         resolvedMembers,
         content,
         config.OLLAMA_SERVICE_URL,
@@ -116,7 +118,18 @@ export class RolePackManager {
       if (allFailed) {
         throw new Error('All role pack members failed to produce output');
       }
+      this.safeEmitStage(threadId, {
+        label: 'Aggregating',
+        status: OrchestrationStageStatus.ACTIVE,
+        detail: `Selecting best output from ${String(results.length)} role(s)`,
+        stageId: 'role-pack:aggregate',
+      });
       const bestOutput = this.selectBestOutput(results, pack);
+      this.safeEmitStage(threadId, {
+        label: 'Aggregating',
+        status: OrchestrationStageStatus.COMPLETED,
+        stageId: 'role-pack:aggregate',
+      });
 
       await this.chatMessagesRepository.create({
         threadId,
@@ -139,6 +152,11 @@ export class RolePackManager {
         },
       });
 
+      this.safeEmitStage(threadId, {
+        label: 'Complete',
+        status: OrchestrationStageStatus.COMPLETED,
+        stageId: 'role-pack:complete',
+      });
       this.chatStreamService.emitCompletion(
         threadId,
         resolvedSelection.actualProvider,
@@ -147,6 +165,12 @@ export class RolePackManager {
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Role pack execution failed';
       this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
+      this.safeEmitStage(threadId, {
+        label: 'Role pack failed',
+        status: OrchestrationStageStatus.ERROR,
+        detail: errorMsg,
+        stageId: 'role-pack:error',
+      });
       this.chatStreamService.emitError(threadId, errorMsg);
       try {
         await this.storeErrorMessage(threadId, errorMsg);
@@ -158,6 +182,7 @@ export class RolePackManager {
   }
 
   private async runAllMembers(
+    threadId: string,
     members: RoleMember[],
     content: string,
     ollamaUrl: string,
@@ -166,9 +191,36 @@ export class RolePackManager {
   ): Promise<RoleMemberResult[]> {
     const fallbackModel = await this.resolveModel();
     const settled = await Promise.allSettled(
-      members.map((member) =>
-        this.runMember(member, content, ollamaUrl, researchEvidence, userId),
-      ),
+      members.map((member) => {
+        const stageId = `role-pack:role:${member.role}`;
+        this.safeEmitStage(threadId, {
+          label: `Role ${member.role} dispatched`,
+          status: OrchestrationStageStatus.ACTIVE,
+          detail: member.model ?? 'local-ollama',
+          stageId,
+        });
+        return this.runMember(member, content, ollamaUrl, researchEvidence, userId).then(
+          (value) => {
+            this.safeEmitStage(threadId, {
+              label: `Role ${member.role} returned`,
+              status: OrchestrationStageStatus.COMPLETED,
+              detail: `${value.model} — ${String(value.latencyMs)}ms`,
+              stageId,
+            });
+            return value;
+          },
+          (reason: unknown) => {
+            const errMsg = reason instanceof Error ? reason.message : 'Role failed';
+            this.safeEmitStage(threadId, {
+              label: `Role ${member.role} returned`,
+              status: OrchestrationStageStatus.ERROR,
+              detail: errMsg,
+              stageId,
+            });
+            throw reason instanceof Error ? reason : new Error(errMsg);
+          },
+        );
+      }),
     );
 
     return settled.map((result, index) => {
@@ -185,6 +237,23 @@ export class RolePackManager {
         latencyMs: 0,
       };
     });
+  }
+
+  private safeEmitStage(
+    threadId: string,
+    payload: {
+      label: string;
+      status: OrchestrationStageStatus;
+      detail?: string;
+      stageId?: string;
+    },
+  ): void {
+    try {
+      this.chatStreamService.emitOrchestrationStage(threadId, payload);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown emit error';
+      this.logger.warn(`safeEmitStage: failed to emit "${payload.label}" — ${msg}`);
+    }
   }
 
   private async runMember(

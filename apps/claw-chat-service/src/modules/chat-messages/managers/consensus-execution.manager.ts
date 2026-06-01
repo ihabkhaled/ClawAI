@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ConsensusConfidenceLevel } from '../../../common/enums/consensus-confidence.enum';
+import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import {
@@ -106,12 +107,36 @@ export class ConsensusExecutionManager {
         providerId: researchProviderId,
       });
       const context = this.applyResearchToContext(rawContext, enrichment.systemPrompt);
-      const responses = await this.executeAllModels(models, context, threadSettings);
+      this.safeEmitStage(threadId, {
+        label: 'Dispatching candidates',
+        status: OrchestrationStageStatus.ACTIVE,
+        detail: `${String(models.length)} models in parallel`,
+        stageId: 'consensus:dispatch',
+      });
+      const responses = await this.executeAllModels(threadId, models, context, threadSettings);
       const completedResponses = responses.filter((r) => r.status === 'completed');
+      this.safeEmitStage(threadId, {
+        label: 'Dispatching candidates',
+        status: OrchestrationStageStatus.COMPLETED,
+        detail: `${String(completedResponses.length)}/${String(responses.length)} returned`,
+        stageId: 'consensus:dispatch',
+      });
 
       await this.storeModelMessages(threadId, consensusGroupId, responses, enrichment.transcript);
 
+      this.safeEmitStage(threadId, {
+        label: 'Judge dispatched',
+        status: OrchestrationStageStatus.ACTIVE,
+        detail: 'Synthesizing consensus from candidates',
+        stageId: 'consensus:judge',
+      });
       const synthesis = await this.synthesize(content, completedResponses, models, userId);
+      this.safeEmitStage(threadId, {
+        label: 'Judge returned',
+        status: OrchestrationStageStatus.COMPLETED,
+        detail: `Agreement score ${String(synthesis.analysis.agreementScore.toFixed(2))}`,
+        stageId: 'consensus:judge',
+      });
       await this.storeSynthesisMessage(
         threadId,
         consensusGroupId,
@@ -122,10 +147,21 @@ export class ConsensusExecutionManager {
       this.logger.log(
         `executeInBackground: consensus done — ${String(completedResponses.length)}/${String(responses.length)} completed, score=${String(synthesis.analysis.agreementScore.toFixed(2))}`,
       );
+      this.safeEmitStage(threadId, {
+        label: 'Complete',
+        status: OrchestrationStageStatus.COMPLETED,
+        stageId: 'consensus:complete',
+      });
       this.chatStreamService.emitCompletion(threadId, 'consensus', 'consensus');
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`executeInBackground: consensus failed — ${msg}`);
+      this.safeEmitStage(threadId, {
+        label: 'Consensus failed',
+        status: OrchestrationStageStatus.ERROR,
+        detail: msg,
+        stageId: 'consensus:error',
+      });
       await this.storeSynthesisMessage(
         threadId,
         consensusGroupId,
@@ -139,10 +175,7 @@ export class ConsensusExecutionManager {
   // Prepend the enricher's evidence block to the assembled-context system
   // prompt so every lane sees the same web evidence (same shape parallel
   // uses via injectResearchIntoContext).
-  private applyResearchToContext(
-    context: AssembledContext,
-    evidence: string,
-  ): AssembledContext {
+  private applyResearchToContext(context: AssembledContext, evidence: string): AssembledContext {
     if (evidence.length === 0) {
       return context;
     }
@@ -172,12 +205,13 @@ export class ConsensusExecutionManager {
   }
 
   private async executeAllModels(
+    threadId: string,
     models: ParallelModelTarget[],
     context: AssembledContext,
     threadSettings: ThreadSettings | undefined,
   ): Promise<ParallelModelResponse[]> {
-    const promises = models.map((target) =>
-      this.executeWithTimeout(target, context, threadSettings),
+    const promises = models.map((target, index) =>
+      this.executeWithTimeout(threadId, target, index + 1, models.length, context, threadSettings),
     );
     const settled = await Promise.allSettled(promises);
     return settled.map((result, index) => {
@@ -194,11 +228,32 @@ export class ConsensusExecutionManager {
   }
 
   private async executeWithTimeout(
+    threadId: string,
     target: ParallelModelTarget,
+    candidateIndex: number,
+    totalCandidates: number,
     context: AssembledContext,
     threadSettings: ThreadSettings | undefined,
   ): Promise<ParallelModelResponse> {
-    const modelPromise = this.executeSingleModel(target, context, threadSettings);
+    const stageId = `consensus:candidate:${String(candidateIndex)}`;
+    this.safeEmitStage(threadId, {
+      label: `Candidate ${String(candidateIndex)}/${String(totalCandidates)} dispatched`,
+      status: OrchestrationStageStatus.ACTIVE,
+      detail: `${target.provider}/${target.model}`,
+      stageId,
+    });
+    const modelPromise = this.executeSingleModel(target, context, threadSettings).then((result) => {
+      this.safeEmitStage(threadId, {
+        label: `Candidate ${String(candidateIndex)}/${String(totalCandidates)} returned`,
+        status:
+          result.status === 'completed'
+            ? OrchestrationStageStatus.COMPLETED
+            : OrchestrationStageStatus.ERROR,
+        detail: `${target.provider}/${target.model} — ${result.status}`,
+        stageId,
+      });
+      return result;
+    });
     const timeoutPromise = new Promise<never>((_resolve, reject) => {
       setTimeout(
         () => reject(new Error(`Timeout after ${String(this.timeoutMs)}ms`)),
@@ -211,9 +266,32 @@ export class ConsensusExecutionManager {
     } catch (error: unknown) {
       const isTimeout = error instanceof Error && error.message.includes('Timeout after');
       if (isTimeout) {
+        this.safeEmitStage(threadId, {
+          label: `Candidate ${String(candidateIndex)}/${String(totalCandidates)} returned`,
+          status: OrchestrationStageStatus.ERROR,
+          detail: `${target.provider}/${target.model} — timeout`,
+          stageId,
+        });
         return this.buildTimedOutResponse(target.provider, target.model);
       }
       throw error;
+    }
+  }
+
+  private safeEmitStage(
+    threadId: string,
+    payload: {
+      label: string;
+      status: OrchestrationStageStatus;
+      detail?: string;
+      stageId?: string;
+    },
+  ): void {
+    try {
+      this.chatStreamService.emitOrchestrationStage(threadId, payload);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown emit error';
+      this.logger.warn(`safeEmitStage: failed to emit "${payload.label}" — ${msg}`);
     }
   }
 

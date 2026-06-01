@@ -18,3 +18,4 @@ export { ProgressActorType } from './progress-actor-type.enum';
 export { ModelSelectionMode } from './model-selection-mode.enum';
 export { FileDeliveryMode } from './file-delivery-mode.enum';
 export { OllamaToolPhase } from './ollama-tool-phase.enum';
+export { OrchestrationStageStatus } from './orchestration-stage-status.enum';

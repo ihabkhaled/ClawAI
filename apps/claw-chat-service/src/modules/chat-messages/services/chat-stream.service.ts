@@ -11,7 +11,13 @@ import {
   type UsageEmitInput,
 } from '../types/stream.types';
 import { type FallbackAttemptData } from '../types/execution.types';
-import { AiStreamStage, ProgressActorType, StreamEventType } from '../../../common/enums';
+import { type OrchestrationStagePayload } from '../types/orchestration-stage.types';
+import {
+  AiStreamStage,
+  OrchestrationStageStatus,
+  ProgressActorType,
+  StreamEventType,
+} from '../../../common/enums';
 
 @Injectable()
 export class ChatStreamService {
@@ -126,9 +132,7 @@ export class ChatStreamService {
       status: defaults.status,
       researchDetails: input.details,
     });
-    this.logger.debug(
-      `Emitted research_progress for thread ${threadId}: stage=${input.stage}`,
-    );
+    this.logger.debug(`Emitted research_progress for thread ${threadId}: stage=${input.stage}`);
   }
 
   private researchStageDefaults(stage: AiStreamStage): {
@@ -203,6 +207,42 @@ export class ChatStreamService {
       status: options.status ?? 'active',
     });
     this.logger.debug(`Emitted ${type} for thread ${threadId}: ${options.label}`);
+  }
+
+  // Emit one orchestration sub-stage frame for the 9 advanced-orchestration
+  // managers (consensus / escalation-chain / repair / decompose / best-of-n /
+  // verifier / pipeline / cost-ensemble / role-pack). The payload reuses the
+  // shared RESPONSE_STREAMING StreamEventType so the FE rich-progress panel
+  // picks it up via the same `progressStages` channel the chat-thread page
+  // already renders. `threadId` may be the empty string in rare paths — when
+  // empty we no-op rather than crash the orchestration.
+  emitOrchestrationStage(threadId: string, payload: OrchestrationStagePayload): void {
+    if (threadId.length === 0) {
+      return;
+    }
+    this.emit({
+      threadId,
+      type: StreamEventType.RESPONSE_STREAMING,
+      label: payload.label,
+      description: payload.detail,
+      actorType: ProgressActorType.SYSTEM,
+      actorName: 'Orchestration',
+      stageId: payload.stageId ?? `orchestration:${payload.label}`,
+      status: this.mapOrchestrationStatus(payload.status),
+    });
+    this.logger.debug(
+      `Emitted orchestration_stage for thread ${threadId}: ${payload.label} (${payload.status})`,
+    );
+  }
+
+  private mapOrchestrationStatus(status: OrchestrationStageStatus): StreamEvent['status'] {
+    if (status === OrchestrationStageStatus.COMPLETED) {
+      return 'completed';
+    }
+    if (status === OrchestrationStageStatus.ERROR) {
+      return 'error';
+    }
+    return 'active';
   }
 
   emitCompletion(threadId: string, provider: string, model: string): void {

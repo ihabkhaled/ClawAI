@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ProgressActorType, StreamEventType } from '../../../common/enums';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
+import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 
 import { AppConfig } from '../../../app/config/app.config';
@@ -95,6 +96,12 @@ export class TaskDecompositionManager {
         actorType: ProgressActorType.SYSTEM,
         actorName: 'Task decomposition',
       });
+      this.safeEmitStage(threadId, {
+        label: 'Decomposing prompt',
+        status: OrchestrationStageStatus.ACTIVE,
+        detail: `Planning up to ${String(maxSubTasks)} sub-tasks`,
+        stageId: 'decompose:plan',
+      });
       // Enrich ONCE — sub-task generation, sub-task execution, AND the merge
       // step all reuse the same evidence so the model can ground at every
       // hop without re-querying research-service.
@@ -112,6 +119,12 @@ export class TaskDecompositionManager {
         enrichment.systemPrompt,
         userId,
       );
+      this.safeEmitStage(threadId, {
+        label: 'Decomposing prompt',
+        status: OrchestrationStageStatus.COMPLETED,
+        detail: `${String(subTasks.length)} sub-tasks planned`,
+        stageId: 'decompose:plan',
+      });
       this.chatStreamService.emitProgressStage(threadId, StreamEventType.RESPONSE_STREAMING, {
         label: 'Executing sub-tasks',
         description: `${String(subTasks.length)} sub-tasks are running in parallel.`,
@@ -119,11 +132,18 @@ export class TaskDecompositionManager {
         actorName: 'Task decomposition',
       });
       const subTaskResults = await this.executeSubTasks(
+        threadId,
         subTasks,
         resolvedSelection,
         enrichment.systemPrompt,
         userId,
       );
+      this.safeEmitStage(threadId, {
+        label: 'Aggregating',
+        status: OrchestrationStageStatus.ACTIVE,
+        detail: 'Merging sub-task results into a final answer',
+        stageId: 'decompose:aggregate',
+      });
       const mergedContent = await this.mergeResults(
         content,
         subTaskResults,
@@ -131,6 +151,12 @@ export class TaskDecompositionManager {
         enrichment.systemPrompt,
         userId,
       );
+      this.safeEmitStage(threadId, {
+        label: 'Aggregating',
+        status: OrchestrationStageStatus.COMPLETED,
+        detail: `${String(subTaskResults.length)} sub-tasks merged`,
+        stageId: 'decompose:aggregate',
+      });
       const resolvedModel = resolvedSelection.actualModel;
 
       await this.chatMessagesRepository.create({
@@ -149,10 +175,21 @@ export class TaskDecompositionManager {
         ) as Prisma.InputJsonValue,
       });
 
+      this.safeEmitStage(threadId, {
+        label: 'Complete',
+        status: OrchestrationStageStatus.COMPLETED,
+        stageId: 'decompose:complete',
+      });
       this.chatStreamService.emitCompletion(threadId, 'local-ollama', resolvedModel);
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Task decomposition failed';
       this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
+      this.safeEmitStage(threadId, {
+        label: 'Decomposition failed',
+        status: OrchestrationStageStatus.ERROR,
+        detail: errorMsg,
+        stageId: 'decompose:error',
+      });
       this.chatStreamService.emitError(threadId, errorMsg);
       try {
         await this.storeErrorMessage(threadId, errorMsg);
@@ -303,16 +340,45 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
   }
 
   private async executeSubTasks(
+    threadId: string,
     subTasks: SubTask[],
     selection: AdvancedModelSelectionResolution,
     researchEvidence: string,
     userId: string,
   ): Promise<SubTaskResult[]> {
     const fallbackModel = selection.actualModel;
+    const total = subTasks.length;
     const results = await Promise.allSettled(
-      subTasks.map((subTask) =>
-        this.executeOneSubTask(subTask, selection, researchEvidence, userId),
-      ),
+      subTasks.map((subTask, index) => {
+        const stageId = `decompose:subtask:${String(index + 1)}`;
+        this.safeEmitStage(threadId, {
+          label: `Sub-task ${String(index + 1)}/${String(total)}`,
+          status: OrchestrationStageStatus.ACTIVE,
+          detail: subTask.title,
+          stageId,
+        });
+        return this.executeOneSubTask(subTask, selection, researchEvidence, userId).then(
+          (value) => {
+            this.safeEmitStage(threadId, {
+              label: `Sub-task ${String(index + 1)}/${String(total)}`,
+              status: OrchestrationStageStatus.COMPLETED,
+              detail: subTask.title,
+              stageId,
+            });
+            return value;
+          },
+          (reason: unknown) => {
+            const errMsg = reason instanceof Error ? reason.message : 'Sub-task failed';
+            this.safeEmitStage(threadId, {
+              label: `Sub-task ${String(index + 1)}/${String(total)}`,
+              status: OrchestrationStageStatus.ERROR,
+              detail: `${subTask.title} — ${errMsg}`,
+              stageId,
+            });
+            throw reason instanceof Error ? reason : new Error(errMsg);
+          },
+        );
+      }),
     );
 
     return results.map((result, index) => {
@@ -330,6 +396,23 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
         latencyMs: 0,
       };
     });
+  }
+
+  private safeEmitStage(
+    threadId: string,
+    payload: {
+      label: string;
+      status: OrchestrationStageStatus;
+      detail?: string;
+      stageId?: string;
+    },
+  ): void {
+    try {
+      this.chatStreamService.emitOrchestrationStage(threadId, payload);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown emit error';
+      this.logger.warn(`safeEmitStage: failed to emit "${payload.label}" — ${msg}`);
+    }
   }
 
   private async executeOneSubTask(

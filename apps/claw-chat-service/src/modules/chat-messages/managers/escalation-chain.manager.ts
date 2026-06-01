@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { EscalationChainStatus } from '../../../common/enums/escalation-chain-status.enum';
+import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { DEFAULT_QUALITY_THRESHOLD } from '../constants/escalation-chain.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
@@ -87,16 +88,28 @@ export class EscalationChainManager {
         userToken: userToken ?? '',
       });
       const context = this.applyResearchToContext(rawContext, enrichment.systemPrompt);
-      const result = await this.runChain(content, chain, context, threadSettings);
+      const result = await this.runChain(threadId, content, chain, context, threadSettings);
       await this.storeChainResult(threadId, result, enrichment.transcript);
 
       this.logger.log(
         `executeInBackground: escalation done — stepUsed=${String(result.stepUsed)}/${String(result.totalSteps)} status=${result.status}`,
       );
+      this.safeEmitStage(threadId, {
+        label: 'Complete',
+        status: OrchestrationStageStatus.COMPLETED,
+        detail: `Resolved at tier ${String(result.stepUsed)}/${String(result.totalSteps)} (${result.finalProvider}/${result.finalModel})`,
+        stageId: 'escalation:complete',
+      });
       this.chatStreamService.emitCompletion(threadId, result.finalProvider, result.finalModel);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`executeInBackground: escalation chain failed — ${msg}`);
+      this.safeEmitStage(threadId, {
+        label: 'Escalation failed',
+        status: OrchestrationStageStatus.ERROR,
+        detail: msg,
+        stageId: 'escalation:error',
+      });
       this.chatStreamService.emitError(threadId, `Escalation chain failed: ${msg}`);
       try {
         await this.storeErrorMessage(threadId, msg);
@@ -109,10 +122,7 @@ export class EscalationChainManager {
 
   // Prepend the enricher's evidence block to the shared system prompt so
   // every escalation step sees the same web evidence.
-  private applyResearchToContext(
-    context: AssembledContext,
-    evidence: string,
-  ): AssembledContext {
+  private applyResearchToContext(context: AssembledContext, evidence: string): AssembledContext {
     if (evidence.length === 0) {
       return context;
     }
@@ -142,6 +152,7 @@ export class EscalationChainManager {
   }
 
   private async runChain(
+    threadId: string,
     content: string,
     chain: EscalationChainStep[],
     context: AssembledContext,
@@ -155,16 +166,42 @@ export class EscalationChainManager {
         continue;
       }
 
-      const stepResult = await this.executeStep(i + 1, step, content, context, threadSettings);
+      const stepNumber = i + 1;
+      const stageId = `escalation:tier:${String(stepNumber)}`;
+      this.safeEmitStage(threadId, {
+        label: `Tier ${String(stepNumber)}/${String(chain.length)} dispatched`,
+        status: OrchestrationStageStatus.ACTIVE,
+        detail: `${step.provider}/${step.model}`,
+        stageId,
+      });
+      const stepResult = await this.executeStep(stepNumber, step, content, context, threadSettings);
       stepResults.push(stepResult);
+      const tierStatus =
+        stepResult.errorMessage === null
+          ? OrchestrationStageStatus.COMPLETED
+          : OrchestrationStageStatus.ERROR;
+      this.safeEmitStage(threadId, {
+        label: `Tier ${String(stepNumber)}/${String(chain.length)} returned`,
+        status: tierStatus,
+        detail: `${step.provider}/${step.model} — quality ${String(stepResult.qualityScore.toFixed(2))}`,
+        stageId,
+      });
 
       if (stepResult.passed) {
-        return this.buildPassedResult(stepResult, i + 1, chain.length, stepResults);
+        return this.buildPassedResult(stepResult, stepNumber, chain.length, stepResults);
       }
 
       this.logger.log(
-        `runChain: step ${String(i + 1)} quality score ${String(stepResult.qualityScore.toFixed(2))} below threshold — escalating`,
+        `runChain: step ${String(stepNumber)} quality score ${String(stepResult.qualityScore.toFixed(2))} below threshold — escalating`,
       );
+      if (stepNumber < chain.length) {
+        this.safeEmitStage(threadId, {
+          label: 'Escalating',
+          status: OrchestrationStageStatus.ACTIVE,
+          detail: `Tier ${String(stepNumber)} below threshold; escalating to tier ${String(stepNumber + 1)}`,
+          stageId: `escalation:escalate:${String(stepNumber)}`,
+        });
+      }
     }
 
     const lastStep = chain.at(-1);
@@ -317,6 +354,23 @@ export class EscalationChainManager {
       usedFallback: false,
       metadata: { escalationChain: true, error: true },
     });
+  }
+
+  private safeEmitStage(
+    threadId: string,
+    payload: {
+      label: string;
+      status: OrchestrationStageStatus;
+      detail?: string;
+      stageId?: string;
+    },
+  ): void {
+    try {
+      this.chatStreamService.emitOrchestrationStage(threadId, payload);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown emit error';
+      this.logger.warn(`safeEmitStage: failed to emit "${payload.label}" — ${msg}`);
+    }
   }
 
   private extractThreadSettings(thread: ChatThread | null): ThreadSettings | undefined {

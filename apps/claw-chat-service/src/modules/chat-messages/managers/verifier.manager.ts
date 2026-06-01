@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
+import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import {
@@ -93,13 +94,37 @@ export class VerifierManager {
         userToken: userToken ?? '',
         providerId: researchProviderId,
       });
+      this.safeEmitStage(threadId, {
+        label: 'Generating',
+        status: OrchestrationStageStatus.ACTIVE,
+        detail: `${resolvedSelection.actualProvider}/${resolvedSelection.actualModel}`,
+        stageId: 'verifier:draft',
+      });
       const draft = await this.generateDraft(
         content,
         resolvedSelection,
         enrichment.systemPrompt,
         userId,
       );
+      this.safeEmitStage(threadId, {
+        label: 'Generating',
+        status: OrchestrationStageStatus.COMPLETED,
+        detail: `Draft ready (${String(draft.length)} chars)`,
+        stageId: 'verifier:draft',
+      });
+      this.safeEmitStage(threadId, {
+        label: 'Verifier judging',
+        status: OrchestrationStageStatus.ACTIVE,
+        detail: 'Scoring factuality / completeness / safety / formatting',
+        stageId: 'verifier:check:0',
+      });
       const checkResult = await this.runVerifierCheck(content, draft, resolvedSelection, userId);
+      this.safeEmitStage(threadId, {
+        label: 'Verifier judging',
+        status: OrchestrationStageStatus.COMPLETED,
+        detail: `Score ${String(checkResult.score.toFixed(2))}`,
+        stageId: 'verifier:check:0',
+      });
 
       if (checkResult.score >= VERIFIER_PASS_THRESHOLD || maxRevisions === 0) {
         await this.storeVerifiedMessage(
@@ -111,6 +136,12 @@ export class VerifierManager {
           resolvedSelection,
           enrichment.transcript,
         );
+        this.safeEmitStage(threadId, {
+          label: 'Complete',
+          status: OrchestrationStageStatus.COMPLETED,
+          detail: 'Passed on first check',
+          stageId: 'verifier:complete',
+        });
         this.chatStreamService.emitCompletion(
           threadId,
           resolvedSelection.actualProvider,
@@ -120,6 +151,7 @@ export class VerifierManager {
       }
 
       const { finalDraft, finalCheck, revisionCount } = await this.runRevisions(
+        threadId,
         content,
         draft,
         checkResult,
@@ -138,6 +170,12 @@ export class VerifierManager {
         resolvedSelection,
         enrichment.transcript,
       );
+      this.safeEmitStage(threadId, {
+        label: 'Complete',
+        status: OrchestrationStageStatus.COMPLETED,
+        detail: `Final score ${String(finalCheck.score.toFixed(2))} after ${String(revisionCount)} revision(s)`,
+        stageId: 'verifier:complete',
+      });
       this.chatStreamService.emitCompletion(
         threadId,
         resolvedSelection.actualProvider,
@@ -146,6 +184,12 @@ export class VerifierManager {
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Verification failed';
       this.logger.error(`executeInBackground: failed for thread ${threadId} — ${msg}`);
+      this.safeEmitStage(threadId, {
+        label: 'Verifier failed',
+        status: OrchestrationStageStatus.ERROR,
+        detail: msg,
+        stageId: 'verifier:error',
+      });
       this.chatStreamService.emitError(threadId, `Verifier failed: ${msg}`);
       try {
         await this.storeErrorMessage(threadId, msg);
@@ -157,6 +201,7 @@ export class VerifierManager {
   }
 
   private async runRevisions(
+    threadId: string,
     content: string,
     initialDraft: string,
     initialCheck: VerifierCheckResult,
@@ -170,6 +215,14 @@ export class VerifierManager {
     let revisionCount = 0;
 
     for (let i = 0; i < maxRevisions; i++) {
+      const round = i + 1;
+      const stageId = `verifier:revise:${String(round)}`;
+      this.safeEmitStage(threadId, {
+        label: `Revising (round ${String(round)})`,
+        status: OrchestrationStageStatus.ACTIVE,
+        detail: `Applying ${String(currentCheck.suggestions.length)} suggestion(s)`,
+        stageId,
+      });
       const revised = await this.repairDraft(
         content,
         currentDraft,
@@ -182,6 +235,12 @@ export class VerifierManager {
       revisionCount += 1;
       currentDraft = revised;
       currentCheck = recheck;
+      this.safeEmitStage(threadId, {
+        label: `Revising (round ${String(round)})`,
+        status: OrchestrationStageStatus.COMPLETED,
+        detail: `Score ${String(recheck.score.toFixed(2))}`,
+        stageId,
+      });
 
       if (currentCheck.score >= VERIFIER_PASS_THRESHOLD) {
         break;
@@ -189,6 +248,23 @@ export class VerifierManager {
     }
 
     return { finalDraft: currentDraft, finalCheck: currentCheck, revisionCount };
+  }
+
+  private safeEmitStage(
+    threadId: string,
+    payload: {
+      label: string;
+      status: OrchestrationStageStatus;
+      detail?: string;
+      stageId?: string;
+    },
+  ): void {
+    try {
+      this.chatStreamService.emitOrchestrationStage(threadId, payload);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown emit error';
+      this.logger.warn(`safeEmitStage: failed to emit "${payload.label}" — ${msg}`);
+    }
   }
 
   private async generateDraft(

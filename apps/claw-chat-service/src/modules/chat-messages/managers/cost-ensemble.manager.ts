@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
+import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import {
@@ -113,18 +114,43 @@ export class CostEnsembleManager {
         userToken: userToken ?? '',
         providerId: researchProviderId,
       });
+      this.safeEmitStage(threadId, {
+        label: 'Classifying task',
+        status: OrchestrationStageStatus.ACTIVE,
+        detail: 'Scoring complexity, risk, ambiguity',
+        stageId: 'cost-ensemble:classify',
+      });
       const rawClassification = await this.classifyTask(content, resolvedSelection, userId);
       const tier = this.determineTier(rawClassification);
       const classification: CostClassification = { tier, ...rawClassification };
+      this.safeEmitStage(threadId, {
+        label: 'Classifying task',
+        status: OrchestrationStageStatus.COMPLETED,
+        detail: `Tier: ${tier} (complexity ${String(rawClassification.complexity.toFixed(2))})`,
+        stageId: 'cost-ensemble:classify',
+      });
 
       const candidates = await this.runEnsemble(
+        threadId,
         content,
         tier,
         resolvedSelection,
         enrichment.systemPrompt,
         userId,
       );
+      this.safeEmitStage(threadId, {
+        label: 'Cost selection',
+        status: OrchestrationStageStatus.ACTIVE,
+        detail: `Picking best of ${String(candidates.length)} candidate(s)`,
+        stageId: 'cost-ensemble:select',
+      });
       const { selectedIndex, best } = this.selectBest(candidates, content);
+      this.safeEmitStage(threadId, {
+        label: 'Cost selection',
+        status: OrchestrationStageStatus.COMPLETED,
+        detail: `Selected candidate ${String(selectedIndex + 1)}`,
+        stageId: 'cost-ensemble:select',
+      });
 
       await this.chatMessagesRepository.create({
         threadId,
@@ -148,6 +174,11 @@ export class CostEnsembleManager {
         ) as Prisma.InputJsonValue,
       });
 
+      this.safeEmitStage(threadId, {
+        label: 'Complete',
+        status: OrchestrationStageStatus.COMPLETED,
+        stageId: 'cost-ensemble:complete',
+      });
       this.chatStreamService.emitCompletion(
         threadId,
         resolvedSelection.actualProvider,
@@ -156,6 +187,12 @@ export class CostEnsembleManager {
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Cost ensemble generation failed';
       this.logger.error(`executeInBackground: failed for thread ${threadId} — ${errorMsg}`);
+      this.safeEmitStage(threadId, {
+        label: 'Cost ensemble failed',
+        status: OrchestrationStageStatus.ERROR,
+        detail: errorMsg,
+        stageId: 'cost-ensemble:error',
+      });
       this.chatStreamService.emitError(threadId, errorMsg);
       try {
         await this.storeErrorMessage(threadId, errorMsg);
@@ -291,6 +328,7 @@ export class CostEnsembleManager {
   }
 
   private async runEnsemble(
+    threadId: string,
     content: string,
     tier: CostTier,
     selection: AdvancedModelSelectionResolution,
@@ -301,9 +339,42 @@ export class CostEnsembleManager {
     const config = AppConfig.get();
     const model = selection.actualModel;
 
-    const calls = Array.from({ length: count }, () =>
-      this.runOneCall(config.OLLAMA_SERVICE_URL, content, model, researchEvidence, userId),
-    );
+    const calls = Array.from({ length: count }, (_unused, index) => {
+      const stageId = `cost-ensemble:provider:${String(index + 1)}`;
+      this.safeEmitStage(threadId, {
+        label: `Provider ${String(index + 1)}/${String(count)} dispatched`,
+        status: OrchestrationStageStatus.ACTIVE,
+        detail: model,
+        stageId,
+      });
+      return this.runOneCall(
+        config.OLLAMA_SERVICE_URL,
+        content,
+        model,
+        researchEvidence,
+        userId,
+      ).then(
+        (value) => {
+          this.safeEmitStage(threadId, {
+            label: `Provider ${String(index + 1)}/${String(count)} returned`,
+            status: OrchestrationStageStatus.COMPLETED,
+            detail: `${model} — ${String(value.latencyMs)}ms`,
+            stageId,
+          });
+          return value;
+        },
+        (reason: unknown) => {
+          const errMsg = reason instanceof Error ? reason.message : 'Call failed';
+          this.safeEmitStage(threadId, {
+            label: `Provider ${String(index + 1)}/${String(count)} returned`,
+            status: OrchestrationStageStatus.ERROR,
+            detail: `${model} — ${errMsg}`,
+            stageId,
+          });
+          throw reason instanceof Error ? reason : new Error(errMsg);
+        },
+      );
+    });
 
     const results = await Promise.allSettled(calls);
     const candidates: EnsembleCandidate[] = [];
@@ -318,6 +389,23 @@ export class CostEnsembleManager {
     }
 
     return candidates;
+  }
+
+  private safeEmitStage(
+    threadId: string,
+    payload: {
+      label: string;
+      status: OrchestrationStageStatus;
+      detail?: string;
+      stageId?: string;
+    },
+  ): void {
+    try {
+      this.chatStreamService.emitOrchestrationStage(threadId, payload);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown emit error';
+      this.logger.warn(`safeEmitStage: failed to emit "${payload.label}" — ${msg}`);
+    }
   }
 
   private async runOneCall(

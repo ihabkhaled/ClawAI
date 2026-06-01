@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ProgressActorType, StreamEventType } from '../../../common/enums';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
+import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
@@ -112,6 +113,7 @@ export class PipelineManager {
         providerId: dto.researchProviderId,
       });
       const stageResults = await this.runAllStages(
+        threadId,
         stages,
         content,
         config.OLLAMA_SERVICE_URL,
@@ -138,10 +140,22 @@ export class PipelineManager {
         ) as Prisma.InputJsonValue,
       });
 
+      this.safeEmitStage(threadId, {
+        label: 'Complete',
+        status: OrchestrationStageStatus.COMPLETED,
+        detail: `${String(stageResults.length)} stages produced final output`,
+        stageId: 'pipeline:complete',
+      });
       this.chatStreamService.emitCompletion(threadId, 'local-ollama', resolvedModel);
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Pipeline execution failed';
       this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
+      this.safeEmitStage(threadId, {
+        label: 'Pipeline failed',
+        status: OrchestrationStageStatus.ERROR,
+        detail: errorMsg,
+        stageId: 'pipeline:error',
+      });
       this.chatStreamService.emitError(threadId, errorMsg);
       try {
         await this.storeErrorMessage(threadId, errorMsg);
@@ -227,6 +241,7 @@ export class PipelineManager {
   }
 
   private async runAllStages(
+    threadId: string,
     stages: PipelineStage[],
     content: string,
     ollamaUrl: string,
@@ -235,20 +250,67 @@ export class PipelineManager {
   ): Promise<PipelineStageResult[]> {
     const results: PipelineStageResult[] = [];
     let previousOutput = content;
+    const total = stages.length;
 
-    for (const stage of stages) {
-      const result = await this.runStage(
-        stage,
-        previousOutput,
-        ollamaUrl,
-        researchEvidence,
-        userId,
-      );
-      results.push(result);
-      previousOutput = result.output;
+    for (let i = 0; i < stages.length; i++) {
+      const stage = stages.at(i);
+      if (!stage) {
+        continue;
+      }
+      const stepNumber = i + 1;
+      const stageId = `pipeline:step:${String(stepNumber)}`;
+      this.safeEmitStage(threadId, {
+        label: `Step ${String(stepNumber)}/${String(total)}: ${stage.name}`,
+        status: OrchestrationStageStatus.ACTIVE,
+        detail: stage.model ?? 'local-ollama',
+        stageId,
+      });
+      try {
+        const result = await this.runStage(
+          stage,
+          previousOutput,
+          ollamaUrl,
+          researchEvidence,
+          userId,
+        );
+        results.push(result);
+        previousOutput = result.output;
+        this.safeEmitStage(threadId, {
+          label: `Step ${String(stepNumber)}/${String(total)}: ${stage.name}`,
+          status: OrchestrationStageStatus.COMPLETED,
+          detail: `${result.model} — ${String(result.latencyMs)}ms`,
+          stageId,
+        });
+      } catch (error: unknown) {
+        const errMsg = error instanceof Error ? error.message : 'Stage failed';
+        this.safeEmitStage(threadId, {
+          label: `Step ${String(stepNumber)}/${String(total)}: ${stage.name}`,
+          status: OrchestrationStageStatus.ERROR,
+          detail: errMsg,
+          stageId,
+        });
+        throw error;
+      }
     }
 
     return results;
+  }
+
+  private safeEmitStage(
+    threadId: string,
+    payload: {
+      label: string;
+      status: OrchestrationStageStatus;
+      detail?: string;
+      stageId?: string;
+    },
+  ): void {
+    try {
+      this.chatStreamService.emitOrchestrationStage(threadId, payload);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown emit error';
+      this.logger.warn(`safeEmitStage: failed to emit "${payload.label}" — ${msg}`);
+    }
   }
 
   private async runStage(

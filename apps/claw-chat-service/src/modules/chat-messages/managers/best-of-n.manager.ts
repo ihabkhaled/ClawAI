@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
+import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import { CANDIDATE_TIMEOUT_MS, DEFAULT_CANDIDATE_MODEL } from '../constants/best-of-n.constants';
@@ -112,18 +113,37 @@ export class BestOfNManager {
         providerId: researchProviderId,
       });
       const candidates = await this.runCandidates(
+        threadId,
         content,
         candidateModels,
         startTime,
         enrichment.systemPrompt,
         userId,
       );
+      this.safeEmitStage(threadId, {
+        label: 'Scoring',
+        status: OrchestrationStageStatus.ACTIVE,
+        detail: `${String(candidates.length)} candidates scored on quality`,
+        stageId: 'best-of-n:scoring',
+      });
       const ranked = this.rankCandidates(candidates, content);
       const best = ranked[0];
 
       if (!best) {
         throw new Error('No candidates produced a result');
       }
+      this.safeEmitStage(threadId, {
+        label: 'Scoring',
+        status: OrchestrationStageStatus.COMPLETED,
+        detail: `Top score ${String(best.qualityScore.toFixed(2))}`,
+        stageId: 'best-of-n:scoring',
+      });
+      this.safeEmitStage(threadId, {
+        label: 'Selecting winner',
+        status: OrchestrationStageStatus.COMPLETED,
+        detail: `${best.model} — rank 1 of ${String(ranked.length)}`,
+        stageId: 'best-of-n:winner',
+      });
 
       await this.chatMessagesRepository.create({
         threadId,
@@ -146,10 +166,21 @@ export class BestOfNManager {
         },
       });
 
+      this.safeEmitStage(threadId, {
+        label: 'Complete',
+        status: OrchestrationStageStatus.COMPLETED,
+        stageId: 'best-of-n:complete',
+      });
       this.chatStreamService.emitCompletion(threadId, 'local-ollama', best.model);
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Best-of-N generation failed';
       this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
+      this.safeEmitStage(threadId, {
+        label: 'Best-of-N failed',
+        status: OrchestrationStageStatus.ERROR,
+        detail: errorMsg,
+        stageId: 'best-of-n:error',
+      });
       this.chatStreamService.emitError(threadId, errorMsg);
       try {
         await this.storeErrorMessage(threadId, errorMsg);
@@ -175,6 +206,7 @@ export class BestOfNManager {
   }
 
   private async runCandidates(
+    threadId: string,
     content: string,
     candidateModels: string[],
     startTime: number,
@@ -186,17 +218,45 @@ export class BestOfNManager {
       ? ((await this.localModelSelection?.resolveModelList(candidateModels.length)) ??
         Array.from({ length: candidateModels.length }, () => 'AUTO'))
       : candidateModels;
+    const total = resolvedModels.length;
     const results = await Promise.allSettled(
-      resolvedModels.map((model) =>
-        this.runOneCandidate(
+      resolvedModels.map((model, index) => {
+        const stageId = `best-of-n:sample:${String(index + 1)}`;
+        this.safeEmitStage(threadId, {
+          label: `Sampling ${String(index + 1)}/${String(total)}`,
+          status: OrchestrationStageStatus.ACTIVE,
+          detail: model,
+          stageId,
+        });
+        return this.runOneCandidate(
           config.OLLAMA_SERVICE_URL,
           model,
           content,
           startTime,
           researchEvidence,
           userId,
-        ),
-      ),
+        ).then(
+          (value) => {
+            this.safeEmitStage(threadId, {
+              label: `Sampling ${String(index + 1)}/${String(total)}`,
+              status: OrchestrationStageStatus.COMPLETED,
+              detail: `${model} — quality ${String(value.qualityScore.toFixed(2))}`,
+              stageId,
+            });
+            return value;
+          },
+          (reason: unknown) => {
+            const errMsg = reason instanceof Error ? reason.message : 'Candidate failed';
+            this.safeEmitStage(threadId, {
+              label: `Sampling ${String(index + 1)}/${String(total)}`,
+              status: OrchestrationStageStatus.ERROR,
+              detail: `${model} — ${errMsg}`,
+              stageId,
+            });
+            throw reason instanceof Error ? reason : new Error(errMsg);
+          },
+        );
+      }),
     );
 
     return results
@@ -209,6 +269,23 @@ export class BestOfNManager {
         return null;
       })
       .filter((c): c is CandidateResult => c !== null);
+  }
+
+  private safeEmitStage(
+    threadId: string,
+    payload: {
+      label: string;
+      status: OrchestrationStageStatus;
+      detail?: string;
+      stageId?: string;
+    },
+  ): void {
+    try {
+      this.chatStreamService.emitOrchestrationStage(threadId, payload);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown emit error';
+      this.logger.warn(`safeEmitStage: failed to emit "${payload.label}" — ${msg}`);
+    }
   }
 
   private async runOneCandidate(

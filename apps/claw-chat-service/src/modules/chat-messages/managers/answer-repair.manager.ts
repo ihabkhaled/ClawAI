@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
+import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import { RepairType } from '../../../common/enums/repair-type.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
@@ -85,12 +86,24 @@ export class AnswerRepairManager {
     const startTime = Date.now();
     try {
       const resolvedSelection = selection ?? (await this.buildAutoSelection());
+      this.safeEmitStage(threadId, {
+        label: 'Generating draft',
+        status: OrchestrationStageStatus.ACTIVE,
+        detail: `Analyzing original answer for ${String(repairTypes.length)} repair type(s)`,
+        stageId: 'repair:draft',
+      });
       const enrichment = await this.researchEnricherManager.enrichForOrchestration({
         threadId,
         mode: researchMode,
         query: originalContent,
         userToken: userToken ?? '',
         providerId: researchProviderId,
+      });
+      this.safeEmitStage(threadId, {
+        label: 'Draft critique',
+        status: OrchestrationStageStatus.ACTIVE,
+        detail: `Repair types: ${repairTypes.join(', ')}`,
+        stageId: 'repair:critique',
       });
       const repairedContent = await this.callRepairLlm(
         originalContent,
@@ -102,6 +115,12 @@ export class AnswerRepairManager {
 
       const provider = resolvedSelection.actualProvider;
       const model = resolvedSelection.actualModel;
+      this.safeEmitStage(threadId, {
+        label: 'Repair applied',
+        status: OrchestrationStageStatus.COMPLETED,
+        detail: `${provider}/${model}`,
+        stageId: 'repair:applied',
+      });
 
       await this.chatMessagesRepository.create({
         threadId,
@@ -124,10 +143,21 @@ export class AnswerRepairManager {
       this.logger.log(
         `executeInBackground: repair complete for thread ${threadId}, types=${repairTypes.join(',')}`,
       );
+      this.safeEmitStage(threadId, {
+        label: 'Complete',
+        status: OrchestrationStageStatus.COMPLETED,
+        stageId: 'repair:complete',
+      });
       this.chatStreamService.emitCompletion(threadId, provider, model);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`executeInBackground: repair failed for thread ${threadId} — ${msg}`);
+      this.safeEmitStage(threadId, {
+        label: 'Repair failed',
+        status: OrchestrationStageStatus.ERROR,
+        detail: msg,
+        stageId: 'repair:error',
+      });
       this.chatStreamService.emitError(threadId, `Answer repair failed: ${msg}`);
       try {
         await this.storeErrorMessage(threadId, msg);
@@ -258,6 +288,23 @@ Return ONLY the repaired answer. Do not explain what you changed. Do not add pre
       return model;
     }
     return this.localModelSelection?.resolveDefaultModel() ?? 'AUTO';
+  }
+
+  private safeEmitStage(
+    threadId: string,
+    payload: {
+      label: string;
+      status: OrchestrationStageStatus;
+      detail?: string;
+      stageId?: string;
+    },
+  ): void {
+    try {
+      this.chatStreamService.emitOrchestrationStage(threadId, payload);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown emit error';
+      this.logger.warn(`safeEmitStage: failed to emit "${payload.label}" — ${msg}`);
+    }
   }
 
   private async resolveSelection(dto: RepairMessageDto): Promise<AdvancedModelSelectionResolution> {
