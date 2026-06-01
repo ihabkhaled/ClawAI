@@ -7,9 +7,15 @@ import { ROUTES } from '@/constants';
 import { useGpuBadge } from '@/hooks/layout/use-gpu-badge';
 import { useTranslation } from '@/lib/i18n';
 
-export function GpuBadge(): React.ReactElement {
+export function GpuBadge(): React.ReactElement | null {
   const data = useGpuBadge();
   const { t } = useTranslation();
+
+  if (!data.canView) {
+    // ADMIN_SYSTEM_VIEW gates the runtime/hardware diagnostics pill — non-admin
+    // users without the permission never see GPU/CPU info in the sidebar.
+    return null;
+  }
 
   if (!data.hasGpu) {
     // No-GPU pill keeps the neutral muted treatment — gradient border is the
