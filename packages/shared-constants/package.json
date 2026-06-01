@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
-    "@typescript/native-preview": "^7.0.0-dev.20260421.2",
+    "@typescript/native-preview": "^7.0.0-dev.20260601.1",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.11",
     "typescript": "npm:@typescript/native-preview@beta"
