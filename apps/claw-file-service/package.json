@@ -79,6 +79,6 @@
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.17",
     "typescript": "npm:@typescript/native-preview@beta",
-    "typescript-eslint": "^8.59.3"
+    "typescript-eslint": "^8.60.1"
   }
 }
