@@ -25,6 +25,19 @@ export type OrchestrationStage = {
   actorName?: string;
 };
 
+// Return shape of `useOrchestrationStages(threadId, isActive)`. The host
+// page reads `stages` straight into <OrchestrationPageShell>'s `stages`
+// prop, surfaces `errorMessage` to the shell's Alert variant, and gates
+// the loading-vs-progress swap with `hasProgress`. `reset()` is exposed
+// so controller hooks can clear residual progress from a previous run
+// before triggering the next mutation.
+export type UseOrchestrationStagesResult = {
+  stages: OrchestrationStage[];
+  hasProgress: boolean;
+  errorMessage: string | null;
+  reset: () => void;
+};
+
 export type OrchestrationStageTimelineProps = {
   stages: OrchestrationStage[];
   className?: string;

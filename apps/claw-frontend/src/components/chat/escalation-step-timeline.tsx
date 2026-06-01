@@ -1,9 +1,14 @@
+import type * as React from 'react';
+
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import type { EscalationStepTimelineProps } from '@/types';
 
-export function EscalationStepTimeline({ stepResults, t }: EscalationStepTimelineProps) {
+export function EscalationStepTimeline({
+  stepResults,
+  t,
+}: EscalationStepTimelineProps): React.ReactElement | null {
   if (stepResults.length === 0) {
     return null;
   }

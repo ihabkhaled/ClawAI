@@ -1670,6 +1670,17 @@ export type CandidateCardProps = {
   t: TranslateFunction;
 };
 
+// Props for the small N-candidate count selector rendered inside the
+// Best-of-N orchestration shell's `extraFieldsSlot`. Extracted from the
+// page TSX so the page stays render-only and the selector can be unit
+// tested in isolation.
+export type BestOfNCountSelectorProps = {
+  value: number;
+  onChange: (next: number) => void;
+  disabled: boolean;
+  t: TranslateFunction;
+};
+
 // ─── Verifier component props ────────────────────────────────────────────────
 
 export type VerifyResultCardProps = {

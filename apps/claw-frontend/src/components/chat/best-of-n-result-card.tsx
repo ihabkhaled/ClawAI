@@ -5,7 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { BestOfNResultCardProps } from '@/types';
 
-export function BestOfNResultCard({ result, onViewInThread, t }: BestOfNResultCardProps) {
+export function BestOfNResultCard({
+  result,
+  onViewInThread,
+  t,
+}: BestOfNResultCardProps): React.ReactElement {
   return (
     <div className="space-y-4">
       <Card>

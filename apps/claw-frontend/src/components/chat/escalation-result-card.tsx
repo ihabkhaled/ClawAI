@@ -1,4 +1,5 @@
 import { CheckCircle2, ExternalLink, GitFork } from 'lucide-react';
+import type * as React from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,11 @@ import { MarkdownRenderer } from '@/lib/markdown';
 import type { EscalationResultCardProps } from '@/types';
 import { getEscalationStatusBadgeVariant, getEscalationStatusLabel } from '@/utilities';
 
-export function EscalationResultCard({ result, onViewInThread, t }: EscalationResultCardProps) {
+export function EscalationResultCard({
+  result,
+  onViewInThread,
+  t,
+}: EscalationResultCardProps): React.ReactElement {
   const { metadata } = result;
   const statusVariant = getEscalationStatusBadgeVariant(metadata.status);
   const statusLabel = getEscalationStatusLabel(metadata.status, t);

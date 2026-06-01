@@ -6,7 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { COST_TIER_LABEL_KEYS } from '@/constants';
 import type { CostEnsembleResultCardProps } from '@/types';
 
-export function CostEnsembleResultCard({ result, onViewInThread, t }: CostEnsembleResultCardProps) {
+export function CostEnsembleResultCard({
+  result,
+  onViewInThread,
+  t,
+}: CostEnsembleResultCardProps): React.ReactElement {
   const { classification, tier, candidates, selectedIndex } = result.metadata;
 
   const tierLabelKey = COST_TIER_LABEL_KEYS[tier] ?? COST_TIER_LABEL_KEYS['single'];

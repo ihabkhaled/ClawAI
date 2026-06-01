@@ -361,6 +361,7 @@ export type {
   DecompositionResultCardProps,
   SubTaskResultCardProps,
   BestOfNResultCardProps,
+  BestOfNCountSelectorProps,
   CandidateCardProps,
   VerifyResultCardProps,
   AdaptiveProviderTableProps,
@@ -581,6 +582,7 @@ export type {
   UseDecomposeSendResult,
   UseDecomposePollResult,
   UseDecomposePageReturn,
+  DecomposeMaxSubTasksSelectProps,
 } from './task-decomposition.types';
 export type {
   VerifyMetadata,
@@ -629,6 +631,7 @@ export type {
   UseRolePackPollResult,
   UseRolePackPageReturn,
 } from './role-pack.types';
+export type { UseRolePackStagesResult } from './role-pack-stages.types';
 export type {
   WorkspaceConnector,
   WorkspaceHealthEvent,
@@ -859,4 +862,5 @@ export type {
   OrchestrationPageHeaderProps,
   OrchestrationSingleModelSelectProps,
   OrchestrationPageShellProps,
+  UseOrchestrationStagesResult,
 } from './orchestration.types';

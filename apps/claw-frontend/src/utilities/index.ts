@@ -25,11 +25,7 @@ export {
   formatLatency,
   formatContextTokens,
 } from './format.utility';
-export {
-  getFileTypeDescriptor,
-  isImageMime,
-  isTextLikeMime,
-} from './file-type-icon.utility';
+export { getFileTypeDescriptor, isImageMime, isTextLikeMime } from './file-type-icon.utility';
 export { formatTimeAgo } from './relative-time.utility';
 export {
   getConnectorStatusDotTone,
@@ -54,12 +50,23 @@ export { estimateCost } from './cost.utility';
 export { isAdmin, hasPermission, hasAnyPermission } from './permissions.utility';
 export { requiredPermissionForPath, requiredRequirementForPath } from './route-permission.utility';
 export { connectSse } from './sse.utility';
+export { mapVisibleStatusToOrchestrationStatus } from './orchestration-stage.utility';
 export {
   encodeModelValue,
   decodeModelValue,
   getLocalModelSpecificationLabels,
 } from './model-selector.utility';
 export { buildAdvancedModelSelectionPayload } from './advanced-model-selection.utility';
+export { buildDecomposeStages } from './decompose-stages.utility';
+export type { DecomposeStageInputs } from './decompose-stages.utility';
+export {
+  mapVisibleProgressStageToOrchestrationStage,
+  mapVisibleProgressStagesToOrchestrationStages,
+} from './pipeline-stage-mapping.utility';
+export {
+  buildInitialRolePackStages,
+  applyStreamEventToRolePackStages,
+} from './role-pack-stage-mapping.utility';
 export {
   getSystemTheme,
   getStoredTheme,

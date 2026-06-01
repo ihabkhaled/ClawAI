@@ -1,4 +1,5 @@
 import { ArrowDown, ArrowUp, ChevronRight, Trash2 } from 'lucide-react';
+import type * as React from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,7 @@ export function EscalationChainBuilder({
   onMoveDown,
   selectionError,
   t,
-}: EscalationChainBuilderProps) {
+}: EscalationChainBuilderProps): React.ReactElement {
   const { groupedModels, isLoading } = useAvailableModels();
 
   const isMaxReached = chainModels.length >= MAX_CHAIN_STEPS;
