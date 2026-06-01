@@ -1,7 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { REPAIR_CONTENT_MIN_LENGTH } from '@/constants';
 import type { RepairType } from '@/enums/repair-type.enum';
+import { useOrchestrationStages } from '@/hooks/chat/use-orchestration-stages';
 import { useRepairPoll } from '@/hooks/chat/use-repair-poll';
 import { useSendRepair } from '@/hooks/chat/use-send-repair';
 import { useTranslation } from '@/lib/i18n';
@@ -20,12 +21,27 @@ export function useRepairPage(): UseRepairPageReturn {
   const { repairMessage, isPolling, isRepairReady, isRepairError, handleViewInThread } =
     useRepairPoll(threadId);
 
+  // Subscribe to the chat-service rich-progress SSE channel for the
+  // current run. The shared hook does the SSE plumbing — we only own
+  // the lifecycle gate (`isPending || isPolling`) so the connection
+  // auto-closes once the repair lane finishes.
+  const isRunActive = (isPending || isPolling) && !isRepairReady && !isRepairError;
+  const { stages, reset: resetStages } = useOrchestrationStages(threadId, isRunActive);
+
+  // When the host page kicks off a new run (a new threadId arrives),
+  // make sure any residual stages from the previous run are cleared.
+  useEffect(() => {
+    if (threadId === null) {
+      resetStages();
+    }
+  }, [threadId, resetStages]);
+
   const handleToggleRepairType = useCallback((type: RepairType): void => {
-    setSelectedRepairTypes((prev) => {
-      if (prev.includes(type)) {
-        return prev.filter((t) => t !== type);
+    setSelectedRepairTypes((previous) => {
+      if (previous.includes(type)) {
+        return previous.filter((value) => value !== type);
       }
-      return [...prev, type];
+      return [...previous, type];
     });
   }, []);
 
@@ -35,10 +51,13 @@ export function useRepairPage(): UseRepairPageReturn {
     !isPending &&
     !isPolling;
 
+  const canSubmit = canSend && selectedModel !== null;
+
   const handleSend = useCallback((): void => {
-    if (!canSend) {
+    if (!canSubmit) {
       return;
     }
+    resetStages();
     send({
       content: content.trim(),
       repairTypes: selectedRepairTypes,
@@ -46,7 +65,11 @@ export function useRepairPage(): UseRepairPageReturn {
       targetModel: selectedModel?.model,
       ...buildAdvancedModelSelectionPayload(selectedModel),
     });
-  }, [canSend, send, content, selectedRepairTypes, selectedModel]);
+  }, [canSubmit, send, resetStages, content, selectedRepairTypes, selectedModel]);
+
+  const hasProgress = stages.length > 0;
+  const isAnyError = isError || isRepairError;
+  const errorMessage = isAnyError ? t('repair.sendFailed') : null;
 
   return {
     t,
@@ -61,9 +84,13 @@ export function useRepairPage(): UseRepairPageReturn {
     isError,
     isRepairError,
     canSend,
+    canSubmit,
     repairMessage,
     isPolling,
     isRepairReady,
     handleViewInThread,
+    stages,
+    hasProgress,
+    errorMessage,
   };
 }

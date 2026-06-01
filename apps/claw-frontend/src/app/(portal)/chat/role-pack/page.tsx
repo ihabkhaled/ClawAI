@@ -1,13 +1,10 @@
 'use client';
 
-import { Loader2, Send, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 
-import { AdvancedModuleModelSelector } from '@/components/chat/advanced-module-model-selector';
+import { OrchestrationPageShell } from '@/components/chat/orchestration/orchestration-page-shell';
 import { RolePackResultCard } from '@/components/chat/role-pack-result-card';
 import { EmptyState } from '@/components/common/empty-state';
-import { PageHeader } from '@/components/common/page-header';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -15,8 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Textarea } from '@/components/ui/textarea';
 import { ROLE_PACK_OPTIONS } from '@/constants';
 import type { RolePackName } from '@/enums/role-pack.enum';
 import { useRolePackPage } from '@/hooks/chat/use-role-pack-page';
@@ -31,113 +26,79 @@ export default function RolePackPage(): React.ReactElement {
     selectedModel,
     setSelectedModel,
     handleSend,
-    canSend,
+    canSubmit,
     isPending,
-    isError,
-    isRolePackError,
-    rolePackResult,
     isPolling,
     isRolePackReady,
+    rolePackResult,
     handleViewInThread,
+    stages,
+    errorMessage,
   } = useRolePackPage();
 
-  const hasAnyError = isError || isRolePackError;
-  const showLoading = isPending || (isPolling && !isRolePackReady && !isRolePackError);
-  const showResults = isRolePackReady && rolePackResult !== null;
-  const showEmpty = !isPending && !isPolling && !isRolePackReady && !hasAnyError;
+  const isRunning = isPending || isPolling;
+  const submitLabel = isRunning ? t('rolePack.running') : t('rolePack.sendPrompt');
+  const showResult = isRolePackReady && rolePackResult !== null && !isRunning;
+  const hasProgress = stages.length > 0;
+
+  const packSelector = (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-foreground" htmlFor="role-pack-select">
+        {t('rolePack.packLabel')}
+      </label>
+      <Select
+        value={pack}
+        onValueChange={(value) => setPack(value as RolePackName)}
+        disabled={isRunning}
+      >
+        <SelectTrigger id="role-pack-select" className="w-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {ROLE_PACK_OPTIONS.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {t(option.labelKey)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
+  const resultSlot = showResult ? (
+    <RolePackResultCard result={rolePackResult} onViewInThread={handleViewInThread} t={t} />
+  ) : null;
+
+  const emptySlot = (
+    <EmptyState
+      icon={Users}
+      title={t('rolePack.noResults')}
+      description={t('rolePack.description')}
+    />
+  );
 
   return (
-    <div className="space-y-6">
-      <PageHeader title={t('rolePack.title')} description={t('rolePack.description')} />
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
-          <Card>
-            <CardContent className="pt-4">
-              <label className="mb-1.5 block text-sm font-medium" htmlFor="role-pack-content">
-                {t('rolePack.contentLabel')}
-              </label>
-              <Textarea
-                id="role-pack-content"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder={t('rolePack.contentPlaceholder')}
-                className="min-h-[160px] resize-y"
-              />
-              <div className="mt-3 flex justify-end">
-                <Button onClick={handleSend} disabled={!canSend}>
-                  {isPending || isPolling ? (
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="me-2 h-4 w-4" />
-                  )}
-                  {isPending || isPolling ? t('rolePack.running') : t('rolePack.sendPrompt')}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="lg:col-span-1">
-          <Card>
-            <CardContent className="pt-4">
-              <label className="mb-1.5 block text-sm font-medium" htmlFor="role-pack-select">
-                {t('rolePack.packLabel')}
-              </label>
-              <Select value={pack} onValueChange={(v) => setPack(v as RolePackName)}>
-                <SelectTrigger id="role-pack-select">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROLE_PACK_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {t(option.labelKey)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="mt-4">
-                <AdvancedModuleModelSelector
-                  t={t}
-                  value={selectedModel}
-                  onChange={setSelectedModel}
-                  disabled={isPending || isPolling}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {showLoading ? (
-        <div className="space-y-4">
-          <Card className="p-4">
-            <Skeleton className="mb-2 h-4 w-1/2" />
-            <Skeleton className="mb-2 h-3 w-full" />
-            <Skeleton className="mb-2 h-3 w-5/6" />
-            <Skeleton className="h-3 w-4/6" />
-          </Card>
-          <p className="text-center text-sm text-muted-foreground">{t('rolePack.synthesizing')}</p>
-        </div>
-      ) : null}
-
-      {showResults && rolePackResult !== null ? (
-        <RolePackResultCard result={rolePackResult} onViewInThread={handleViewInThread} t={t} />
-      ) : null}
-
-      {hasAnyError ? (
-        <Card className="border-destructive bg-destructive/10 p-4">
-          <p className="text-sm text-destructive">{t('rolePack.sendFailed')}</p>
-        </Card>
-      ) : null}
-
-      {showEmpty ? (
-        <EmptyState
-          icon={Users}
-          title={t('rolePack.noResults')}
-          description={t('rolePack.description')}
-        />
-      ) : null}
-    </div>
+    <OrchestrationPageShell
+      headerIcon={Users}
+      headerTitle={t('nav.rolePackLab')}
+      headerDescription={t('rolePack.description')}
+      selectedModel={selectedModel}
+      onModelChange={setSelectedModel}
+      prompt={content}
+      onPromptChange={setContent}
+      promptLabel={t('rolePack.contentLabel')}
+      promptPlaceholder={t('rolePack.contentPlaceholder')}
+      extraFieldsSlot={packSelector}
+      onSubmit={handleSend}
+      submitLabel={submitLabel}
+      isSubmitDisabled={!canSubmit}
+      isPending={isRunning}
+      hasProgress={hasProgress}
+      stages={stages}
+      resultSlot={resultSlot}
+      emptySlot={emptySlot}
+      errorMessage={errorMessage}
+      t={t}
+    />
   );
 }

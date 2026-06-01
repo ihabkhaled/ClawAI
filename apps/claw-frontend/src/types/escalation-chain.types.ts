@@ -1,4 +1,8 @@
 import type { EscalationChainStatus } from '@/enums';
+import type { TranslateFunction } from '@/types/i18n.types';
+import type { OrchestrationStage } from '@/types/orchestration.types';
+
+import type { AdvancedModuleModelSelection } from './advanced-model-selection.types';
 
 export type EscalationChainStep = {
   provider: string;
@@ -60,8 +64,16 @@ export type UseEscalationPollResult = {
 };
 
 export type UseEscalationPageReturn = {
-  t: (key: string, params?: Record<string, string | number>) => string;
-  chainModels: EscalationChainStep[];
+  t: TranslateFunction;
+  // The PRIMARY model (step 1 of the escalation chain). Surfaced through
+  // <OrchestrationSingleModelSelect> in the shared orchestration shell.
+  // Submit is gated on `selectedModel !== null` AND prompt is non-empty.
+  selectedModel: AdvancedModuleModelSelection;
+  setSelectedModel: (selection: AdvancedModuleModelSelection) => void;
+  // Additional escalation steps beyond the primary. The total chain
+  // submitted to the BE is `[selectedModel, ...additionalChainModels]`.
+  // BE enforces total chain length ≥ MIN_CHAIN_STEPS (2) and ≤ MAX_CHAIN_STEPS (5).
+  additionalChainModels: EscalationChainStep[];
   prompt: string;
   setPrompt: (value: string) => void;
   handleAddModel: (provider: string, model: string) => void;
@@ -71,8 +83,14 @@ export type UseEscalationPageReturn = {
   handleSend: () => void;
   isPending: boolean;
   isError: boolean;
-  canSend: boolean;
+  // True iff the user can submit right now: a primary model is picked,
+  // the prompt is non-empty, the combined chain length is within bounds,
+  // and no run is currently in flight.
+  canSubmit: boolean;
   selectionError: string | null;
+  // Live progress projected from chat-service SSE `orchestration_stage`
+  // events for the current threadId. Drives the shell's stage timeline.
+  stages: OrchestrationStage[];
   synthesisMessage: EscalationChainSynthesisState | null;
   isPolling: boolean;
   isSynthesisReady: boolean;

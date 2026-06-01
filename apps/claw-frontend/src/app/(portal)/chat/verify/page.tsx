@@ -1,13 +1,10 @@
 'use client';
 
-import { Loader2, Send, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 
-import { AdvancedModuleModelSelector } from '@/components/chat/advanced-module-model-selector';
+import { OrchestrationPageShell } from '@/components/chat/orchestration/orchestration-page-shell';
 import { VerifyResultCard } from '@/components/chat/verify-result-card';
 import { EmptyState } from '@/components/common/empty-state';
-import { PageHeader } from '@/components/common/page-header';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -15,8 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Textarea } from '@/components/ui/textarea';
+import { VERIFIER_MAX_REVISIONS_OPTIONS } from '@/constants';
 import { useVerifyPage } from '@/hooks/chat/use-verify-page';
 
 export default function VerifyPage(): React.ReactElement {
@@ -29,115 +25,81 @@ export default function VerifyPage(): React.ReactElement {
     selectedModel,
     setSelectedModel,
     handleSend,
-    canSend,
-    isPending,
+    canSubmit,
+    isRunning,
     isError,
     isVerifyError,
-    verifyResult,
-    isPolling,
     isVerifyReady,
+    verifyResult,
     handleViewInThread,
+    stages,
+    hasProgress,
   } = useVerifyPage();
 
+  const submitLabel = isRunning ? t('verify.running') : t('verify.sendPrompt');
   const hasAnyError = isError || isVerifyError;
-  const showLoading = isPending || (isPolling && !isVerifyReady && !isVerifyError);
-  const showResults = isVerifyReady && verifyResult !== null;
-  const showEmpty = !isPending && !isPolling && !isVerifyReady && !hasAnyError;
+  const errorMessage = hasAnyError ? t('verify.sendFailed') : null;
+  const showResult = isVerifyReady && verifyResult !== null && !isRunning;
+
+  const maxRevisionsField = (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-foreground" htmlFor="verify-max-revisions">
+        {t('verify.maxRevisionsLabel')}
+      </label>
+      <Select
+        value={String(maxRevisions)}
+        onValueChange={(value) => setMaxRevisions(Number(value))}
+        disabled={isRunning}
+      >
+        <SelectTrigger id="verify-max-revisions" className="w-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {VERIFIER_MAX_REVISIONS_OPTIONS.map((option) => (
+            <SelectItem key={option} value={String(option)}>
+              {String(option)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <p className="text-xs text-muted-foreground">{t('verify.maxRevisionsHelper')}</p>
+    </div>
+  );
+
+  const resultSlot = showResult ? (
+    <VerifyResultCard result={verifyResult} onViewInThread={handleViewInThread} t={t} />
+  ) : null;
+
+  const emptySlot = (
+    <EmptyState
+      icon={ShieldCheck}
+      title={t('verify.noResults')}
+      description={t('verify.description')}
+    />
+  );
 
   return (
-    <div className="space-y-6">
-      <PageHeader title={t('verify.title')} description={t('verify.description')} />
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
-          <Card>
-            <CardContent className="pt-4">
-              <label className="mb-1.5 block text-sm font-medium" htmlFor="verify-content">
-                {t('verify.contentLabel')}
-              </label>
-              <Textarea
-                id="verify-content"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder={t('verify.contentPlaceholder')}
-                className="min-h-[160px] resize-y"
-              />
-              <div className="mt-3 flex justify-end">
-                <Button onClick={handleSend} disabled={!canSend}>
-                  {isPending || isPolling ? (
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="me-2 h-4 w-4" />
-                  )}
-                  {isPending || isPolling ? t('verify.running') : t('verify.sendPrompt')}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="lg:col-span-1">
-          <Card>
-            <CardContent className="pt-4">
-              <label className="mb-1.5 block text-sm font-medium" htmlFor="max-revisions">
-                {t('verify.maxRevisionsLabel')}
-              </label>
-              <Select
-                value={String(maxRevisions)}
-                onValueChange={(val) => setMaxRevisions(Number(val))}
-              >
-                <SelectTrigger id="max-revisions">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">0</SelectItem>
-                  <SelectItem value="1">1</SelectItem>
-                  <SelectItem value="2">2</SelectItem>
-                  <SelectItem value="3">3</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="mt-4">
-                <AdvancedModuleModelSelector
-                  t={t}
-                  value={selectedModel}
-                  onChange={setSelectedModel}
-                  disabled={isPending || isPolling}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {showLoading ? (
-        <div className="space-y-4">
-          <Card className="p-4">
-            <Skeleton className="mb-2 h-4 w-1/2" />
-            <Skeleton className="mb-2 h-3 w-full" />
-            <Skeleton className="mb-2 h-3 w-5/6" />
-            <Skeleton className="h-3 w-4/6" />
-          </Card>
-          <p className="text-center text-sm text-muted-foreground">{t('verify.synthesizing')}</p>
-        </div>
-      ) : null}
-
-      {showResults && verifyResult !== null ? (
-        <VerifyResultCard result={verifyResult} onViewInThread={handleViewInThread} t={t} />
-      ) : null}
-
-      {hasAnyError ? (
-        <Card className="border-destructive bg-destructive/10 p-4">
-          <p className="text-sm text-destructive">{t('verify.sendFailed')}</p>
-        </Card>
-      ) : null}
-
-      {showEmpty ? (
-        <EmptyState
-          icon={ShieldCheck}
-          title={t('verify.noResults')}
-          description={t('verify.description')}
-        />
-      ) : null}
-    </div>
+    <OrchestrationPageShell
+      headerIcon={ShieldCheck}
+      headerTitle={t('nav.verifierLab')}
+      headerDescription={t('verify.description')}
+      selectedModel={selectedModel}
+      onModelChange={setSelectedModel}
+      prompt={content}
+      onPromptChange={setContent}
+      promptLabel={t('verify.contentLabel')}
+      promptPlaceholder={t('verify.contentPlaceholder')}
+      extraFieldsSlot={maxRevisionsField}
+      onSubmit={handleSend}
+      submitLabel={submitLabel}
+      isSubmitDisabled={!canSubmit}
+      isPending={isRunning}
+      hasProgress={hasProgress}
+      stages={stages}
+      resultSlot={resultSlot}
+      emptySlot={emptySlot}
+      errorMessage={errorMessage}
+      t={t}
+    />
   );
 }

@@ -82,7 +82,8 @@ export const ar: TranslationDictionary = {
     rememberMe: 'تذكرني',
     forgotPassword: 'هل نسيت كلمة المرور؟',
     forgotPasswordComingSoonTitle: 'قريبًا',
-    forgotPasswordComingSoonDesc: 'إعادة تعيين كلمة المرور قيد التطوير. يُرجى التواصل مع المسؤول حتى ذلك الحين.',
+    forgotPasswordComingSoonDesc:
+      'إعادة تعيين كلمة المرور قيد التطوير. يُرجى التواصل مع المسؤول حتى ذلك الحين.',
     showPasswordAria: 'إظهار كلمة المرور',
     hidePasswordAria: 'إخفاء كلمة المرور',
     loginFailedTitle: 'تعذر تسجيل الدخول',
@@ -95,7 +96,8 @@ export const ar: TranslationDictionary = {
     feature2Title: 'الخصوصية أولاً',
     feature2Desc: 'تُوجَّه الطلبات الحساسة إلى Ollama المحلي؛ لا شيء يغادر جهازك.',
     feature3Title: 'متعدد المزودين',
-    feature3Desc: 'OpenAI وAnthropic وGemini وDeepSeek وGrok وBedrock والمحلي — جميعها في مكان واحد.',
+    feature3Desc:
+      'OpenAI وAnthropic وGemini وDeepSeek وGrok وBedrock والمحلي — جميعها في مكان واحد.',
   },
   nav: {
     dashboard: 'لوحة التحكم',
@@ -1278,6 +1280,8 @@ export const ar: TranslationDictionary = {
     low: 'منخفض',
     modelsSelected: 'تم اختيار {count} نماذج',
     synthesisRationaleLabel: 'مبرّر التوليف',
+    promptLabel: 'الموجّه',
+    promptPlaceholder: 'اطرح سؤالاً وستُولّد النماذج المختارة إجابة إجماعية…',
   },
   escalation: {
     title: 'سلسلة التصعيد',
@@ -1292,6 +1296,8 @@ export const ar: TranslationDictionary = {
     maxSteps: 'الحد الأقصى {max} نماذج في السلسلة',
     sendPrompt: 'تشغيل السلسلة',
     running: 'جار تشغيل السلسلة...',
+    contentLabel: 'النص التوجيهي',
+    contentPlaceholder: 'صف السؤال أو المهمة المراد تصعيدها عبر السلسلة…',
     sendFailed: 'فشل بدء سلسلة التصعيد',
     synthesizing: 'جار تنفيذ التصعيد...',
     synthesisReady: 'النتيجة جاهزة',
@@ -1340,6 +1346,11 @@ export const ar: TranslationDictionary = {
     finalAnswer: 'الإجابة النهائية',
     provider: 'المزود',
     model: 'النموذج',
+    empty: {
+      title: 'جاهز لإصلاح إجابة',
+      description:
+        'الصق الإجابة في الأعلى، حدِّد أنواع الإصلاح التي تحتاجها، ثم اختر نموذجًا محليًا لتفعيل التشغيل.',
+    },
   },
   decompose: {
     title: 'مُوجِّه تفكيك المهام',
@@ -1360,6 +1371,12 @@ export const ar: TranslationDictionary = {
     latencyMs: 'زمن الاستجابة',
     noResults: 'لا توجد نتائج تفكيك',
     sendFailed: 'فشل تفكيك المهمة. حاول مرة أخرى.',
+    stages: {
+      submit: 'إرسال المهمة',
+      plan: 'تخطيط المهام الفرعية',
+      execute: 'تنفيذ المهام الفرعية',
+      result: 'توليف الإجابة',
+    },
   },
   bestOfN: {
     title: 'توليد الأفضل من N',
@@ -1367,6 +1384,8 @@ export const ar: TranslationDictionary = {
     contentLabel: 'الموجّه',
     contentPlaceholder: 'أدخل موجّهك لتوليد عدة مرشحات…',
     nCandidates: 'عدد المرشحات (N)',
+    candidateCountHelper:
+      'يُعاد استدعاء النموذج بهذا العدد من المرات، وتفوز الإجابة الأعلى تقييمًا.',
     sendPrompt: 'توليد الأفضل من N',
     running: 'جار توليد المرشحات…',
     synthesizing: 'جار تقييم واختيار أفضل مرشح…',
@@ -1408,6 +1427,7 @@ export const ar: TranslationDictionary = {
     contentLabel: 'موجّهك',
     contentPlaceholder: 'أدخل سؤالك أو مهمتك...',
     maxRevisionsLabel: 'أقصى المراجعات',
+    maxRevisionsHelper: 'عدد المرات التي قد يراجع فيها المُدقِّق الإجابة قبل إرجاع الأفضل.',
     sendPrompt: 'تحقق وأرسل',
     running: 'جار التحقق...',
     synthesizing: 'جار توليد الرد والتحقق منه...',
@@ -1501,6 +1521,11 @@ export const ar: TranslationDictionary = {
     model: 'النموذج',
     latency: 'زمن الاستجابة',
     viewInThread: 'عرض في المحادثة',
+    stages: {
+      submitting: 'جار إرسال الطلب',
+      runningRoles: 'تشغيل الأدوار بالتوازي',
+      synthesizing: 'تجميع مخرجات الفريق',
+    },
   },
   advancedModelSelector: {
     label: 'نموذج التنفيذ',
@@ -1821,7 +1846,8 @@ export const ar: TranslationDictionary = {
       tooltipNone: 'لا يوجد بحث على الويب. يجيب النموذج من تدريبه فقط.',
       tooltipSearch: 'تشغيل بحث على الويب وتمرير العناوين والمقتطفات إلى النموذج.',
       tooltipSearchFetch: 'البحث على الويب، ثم جلب أهم الصفحات وتأسيس النموذج على النص الكامل.',
-      tooltipSearchExtract: 'البحث على الويب، جلب أهم الصفحات، ثم استخراج حقائق منظمة قبل إجابة النموذج.',
+      tooltipSearchExtract:
+        'البحث على الويب، جلب أهم الصفحات، ثم استخراج حقائق منظمة قبل إجابة النموذج.',
       lockedUpgrade: 'البحث على الويب مقيد في خطتك. قم بالترقية للتفعيل.',
     },
     modes: {

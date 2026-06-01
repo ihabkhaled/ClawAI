@@ -87,16 +87,18 @@ export const fr: TranslationDictionary = {
     showPasswordAria: 'Afficher le mot de passe',
     hidePasswordAria: 'Masquer le mot de passe',
     loginFailedTitle: 'Impossible de vous connecter',
-    brandingHeadline: "IA local-first, selon vos règles",
+    brandingHeadline: 'IA local-first, selon vos règles',
     brandingSubheadline:
       'Orchestrez des modèles cloud et locaux, conservez les données sensibles sur votre appareil et auditez chaque décision de routage.',
     featuresAriaLabel: 'Points forts de la plateforme',
     feature1Title: 'Routage intelligent',
-    feature1Desc: 'Choisissez automatiquement le meilleur modèle par tâche — ou écrasez-le par fil.',
+    feature1Desc:
+      'Choisissez automatiquement le meilleur modèle par tâche — ou écrasez-le par fil.',
     feature2Title: 'Vie privée avant tout',
     feature2Desc: 'Les prompts sensibles passent par Ollama local ; rien ne quitte votre machine.',
     feature3Title: 'Multi-fournisseurs',
-    feature3Desc: 'OpenAI, Anthropic, Gemini, DeepSeek, Grok, Bedrock et local — tout au même endroit.',
+    feature3Desc:
+      'OpenAI, Anthropic, Gemini, DeepSeek, Grok, Bedrock et local — tout au même endroit.',
   },
   nav: {
     dashboard: 'Tableau de bord',
@@ -985,8 +987,7 @@ export const fr: TranslationDictionary = {
     recentAuditEventsEmptyTitle: 'Aucune activité récente',
     recentAuditEventsEmptyDesc: "Aucun événement d'audit n'a encore été enregistré.",
     recentAuditEventsErrorTitle: 'Impossible de charger les événements',
-    recentAuditEventsErrorDesc:
-      "Le service d'audit était injoignable. Réessayez dans un instant.",
+    recentAuditEventsErrorDesc: "Le service d'audit était injoignable. Réessayez dans un instant.",
     loadingAuditEvents: "Chargement des événements d'audit...",
     viewAllAudits: 'Tout voir',
   },
@@ -1070,7 +1071,7 @@ export const fr: TranslationDictionary = {
     heroGreetingMorning: 'Bonjour',
     heroGreetingAfternoon: 'Bon après-midi',
     heroGreetingEvening: 'Bonsoir',
-    heroSubtitle: "Voici ce qui se passe en ce moment dans votre espace de travail IA.",
+    heroSubtitle: 'Voici ce qui se passe en ce moment dans votre espace de travail IA.',
     allSystemsOperational: 'Tous les systèmes opérationnels',
     someSystemsDegraded: 'Certains services dégradés',
     systemsDown: 'Services indisponibles',
@@ -1305,6 +1306,9 @@ export const fr: TranslationDictionary = {
     low: 'Faible',
     modelsSelected: '{count} modèles sélectionnés',
     synthesisRationaleLabel: 'Justification de la synthèse',
+    promptLabel: 'Invite',
+    promptPlaceholder:
+      'Posez une question — les modèles sélectionnés produiront une réponse consensuelle…',
   },
   escalation: {
     title: "Chaîne d'escalade",
@@ -1319,6 +1323,8 @@ export const fr: TranslationDictionary = {
     maxSteps: 'Maximum {max} modèles dans la chaîne',
     sendPrompt: 'Lancer la chaîne',
     running: 'Chaîne en cours...',
+    contentLabel: 'Invite',
+    contentPlaceholder: 'Décrivez la question ou la tâche à faire remonter dans la chaîne…',
     sendFailed: "Échec du démarrage de la chaîne d'escalade",
     synthesizing: 'Escalade en cours...',
     synthesisReady: 'Résultat prêt',
@@ -1371,6 +1377,11 @@ export const fr: TranslationDictionary = {
     finalAnswer: 'Réponse finale',
     provider: 'Fournisseur',
     model: 'Modèle',
+    empty: {
+      title: 'Prêt à réparer une réponse',
+      description:
+        'Collez la réponse ci-dessus, cochez les types de réparation requis, puis sélectionnez un modèle local pour activer l’exécution.',
+    },
   },
   decompose: {
     title: 'Routeur de décomposition de tâches',
@@ -1392,6 +1403,12 @@ export const fr: TranslationDictionary = {
     latencyMs: 'Latence',
     noResults: 'Aucun résultat de décomposition',
     sendFailed: 'Échec de la décomposition de la tâche. Veuillez réessayer.',
+    stages: {
+      submit: 'Envoi de la tâche',
+      plan: 'Planification des sous-tâches',
+      execute: 'Exécution des sous-tâches',
+      result: 'Synthèse de la réponse',
+    },
   },
   bestOfN: {
     title: 'Génération de candidats Best-of-N',
@@ -1400,6 +1417,8 @@ export const fr: TranslationDictionary = {
     contentLabel: 'Invite',
     contentPlaceholder: 'Saisissez votre invite pour générer plusieurs candidats...',
     nCandidates: 'Candidats (N)',
+    candidateCountHelper:
+      'Le modèle est interrogé ce nombre de fois ; la meilleure réponse l’emporte.',
     sendPrompt: 'Générer Best-of-N',
     running: 'Génération des candidats...',
     synthesizing: 'Notation et sélection du meilleur candidat...',
@@ -1442,6 +1461,8 @@ export const fr: TranslationDictionary = {
     contentLabel: 'Votre invite',
     contentPlaceholder: 'Saisissez votre question ou tâche...',
     maxRevisionsLabel: 'Révisions max',
+    maxRevisionsHelper:
+      'Nombre de révisions que le vérificateur peut effectuer avant de renvoyer la meilleure réponse.',
     sendPrompt: 'Vérifier et envoyer',
     running: 'Vérification...',
     synthesizing: 'Génération et vérification de la réponse...',
@@ -1536,6 +1557,11 @@ export const fr: TranslationDictionary = {
     model: 'Modèle',
     latency: 'Latence',
     viewInThread: 'Voir dans le fil',
+    stages: {
+      submitting: 'Envoi de la requête',
+      runningRoles: 'Exécution des rôles en parallèle',
+      synthesizing: "Synthèse du résultat d'équipe",
+    },
   },
   advancedModelSelector: {
     label: "Modèle d'exécution",
@@ -1864,7 +1890,8 @@ export const fr: TranslationDictionary = {
       placeholder: 'Recherche',
       autoProvider: 'Fournisseur automatique',
       noProviders: 'Aucun fournisseur configuré',
-      tooltipNone: 'Pas de recherche web. Le modèle répond uniquement à partir de son entraînement.',
+      tooltipNone:
+        'Pas de recherche web. Le modèle répond uniquement à partir de son entraînement.',
       tooltipSearch:
         'Exécute une recherche web et transmet au modèle les titres et extraits des résultats.',
       tooltipSearchFetch:
@@ -2212,7 +2239,7 @@ export const fr: TranslationDictionary = {
     statusInfo: 'Information',
     statusPending: 'En attente',
     loadingRegion: 'Chargement du contenu',
-    errorRegion: 'Message d\'erreur',
+    errorRegion: "Message d'erreur",
     streamingRegion: 'Réponse IA en direct',
   },
   actions: {

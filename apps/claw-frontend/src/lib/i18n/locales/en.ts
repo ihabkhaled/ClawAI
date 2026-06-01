@@ -82,7 +82,8 @@ export const en: TranslationDictionary = {
     rememberMe: 'Remember me',
     forgotPassword: 'Forgot password?',
     forgotPasswordComingSoonTitle: 'Coming soon',
-    forgotPasswordComingSoonDesc: 'Password reset is on the roadmap. Please contact an administrator for now.',
+    forgotPasswordComingSoonDesc:
+      'Password reset is on the roadmap. Please contact an administrator for now.',
     showPasswordAria: 'Show password',
     hidePasswordAria: 'Hide password',
     loginFailedTitle: "We couldn't sign you in",
@@ -95,7 +96,8 @@ export const en: TranslationDictionary = {
     feature2Title: 'Privacy-first',
     feature2Desc: 'Sensitive prompts route to local Ollama; nothing leaves your machine.',
     feature3Title: 'Multi-provider',
-    feature3Desc: 'OpenAI, Anthropic, Gemini, DeepSeek, Grok, Bedrock, and local — all in one place.',
+    feature3Desc:
+      'OpenAI, Anthropic, Gemini, DeepSeek, Grok, Bedrock, and local — all in one place.',
   },
   nav: {
     dashboard: 'Dashboard',
@@ -1285,6 +1287,8 @@ export const en: TranslationDictionary = {
     low: 'Low',
     modelsSelected: '{count} models selected',
     synthesisRationaleLabel: 'Synthesis rationale',
+    promptLabel: 'Prompt',
+    promptPlaceholder: 'Ask a question and the selected models will produce a consensus answer…',
   },
   escalation: {
     title: 'Escalation Chain',
@@ -1299,6 +1303,8 @@ export const en: TranslationDictionary = {
     maxSteps: 'Maximum {max} models in chain',
     sendPrompt: 'Run Chain',
     running: 'Running chain...',
+    contentLabel: 'Prompt',
+    contentPlaceholder: 'Describe the question or task to escalate through the chain…',
     sendFailed: 'Failed to start escalation chain',
     synthesizing: 'Running escalation...',
     synthesisReady: 'Result ready',
@@ -1347,6 +1353,11 @@ export const en: TranslationDictionary = {
     finalAnswer: 'Final Answer',
     provider: 'Provider',
     model: 'Model',
+    empty: {
+      title: 'Ready to repair an answer',
+      description:
+        'Paste the answer above, tick the repair types you need, then pick a local model to enable the run.',
+    },
   },
   decompose: {
     title: 'Task Decomposition Router',
@@ -1368,6 +1379,12 @@ export const en: TranslationDictionary = {
     latencyMs: 'Latency',
     noResults: 'No Decomposition Results',
     sendFailed: 'Task decomposition failed. Please try again.',
+    stages: {
+      submit: 'Submitting task',
+      plan: 'Planning sub-tasks',
+      execute: 'Executing sub-tasks',
+      result: 'Synthesizing answer',
+    },
   },
   bestOfN: {
     title: 'Best-of-N Candidate Generation',
@@ -1376,6 +1393,8 @@ export const en: TranslationDictionary = {
     contentLabel: 'Prompt',
     contentPlaceholder: 'Enter your prompt to generate multiple candidates from\u2026',
     nCandidates: 'Candidates (N)',
+    candidateCountHelper:
+      'The model is sampled this many times; the highest-scoring response wins.',
     sendPrompt: 'Generate Best-of-N',
     running: 'Generating candidates\u2026',
     synthesizing: 'Scoring and selecting the best candidate\u2026',
@@ -1417,6 +1436,7 @@ export const en: TranslationDictionary = {
     contentLabel: 'Your prompt',
     contentPlaceholder: 'Enter your question or task...',
     maxRevisionsLabel: 'Max revisions',
+    maxRevisionsHelper: 'Number of times the verifier may revise before returning the best answer.',
     sendPrompt: 'Verify & Send',
     running: 'Verifying...',
     synthesizing: 'Generating and verifying response...',
@@ -1510,6 +1530,11 @@ export const en: TranslationDictionary = {
     model: 'Model',
     latency: 'Latency',
     viewInThread: 'View in Thread',
+    stages: {
+      submitting: 'Submitting request',
+      runningRoles: 'Running roles in parallel',
+      synthesizing: 'Synthesizing team output',
+    },
   },
   advancedModelSelector: {
     label: 'Execution model',

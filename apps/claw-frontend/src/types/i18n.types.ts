@@ -1293,6 +1293,8 @@ export type TranslationDictionary = {
     low: string;
     modelsSelected: string;
     synthesisRationaleLabel: string;
+    promptLabel: string;
+    promptPlaceholder: string;
   };
   escalation: {
     title: string;
@@ -1306,6 +1308,8 @@ export type TranslationDictionary = {
     maxSteps: string;
     sendPrompt: string;
     running: string;
+    contentLabel: string;
+    contentPlaceholder: string;
     sendFailed: string;
     synthesizing: string;
     synthesisReady: string;
@@ -1353,6 +1357,10 @@ export type TranslationDictionary = {
     finalAnswer: string;
     provider: string;
     model: string;
+    empty: {
+      title: string;
+      description: string;
+    };
   };
   decompose: {
     title: string;
@@ -1372,6 +1380,12 @@ export type TranslationDictionary = {
     latencyMs: string;
     noResults: string;
     sendFailed: string;
+    stages: {
+      submit: string;
+      plan: string;
+      execute: string;
+      result: string;
+    };
   };
   bestOfN: {
     title: string;
@@ -1379,6 +1393,7 @@ export type TranslationDictionary = {
     contentLabel: string;
     contentPlaceholder: string;
     nCandidates: string;
+    candidateCountHelper: string;
     sendPrompt: string;
     running: string;
     synthesizing: string;
@@ -1420,6 +1435,7 @@ export type TranslationDictionary = {
     contentLabel: string;
     contentPlaceholder: string;
     maxRevisionsLabel: string;
+    maxRevisionsHelper: string;
     sendPrompt: string;
     running: string;
     synthesizing: string;
@@ -1513,6 +1529,11 @@ export type TranslationDictionary = {
     model: string;
     latency: string;
     viewInThread: string;
+    stages: {
+      submitting: string;
+      runningRoles: string;
+      synthesizing: string;
+    };
   };
   advancedModelSelector: {
     label: string;

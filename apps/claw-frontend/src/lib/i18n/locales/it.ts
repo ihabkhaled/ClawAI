@@ -89,14 +89,16 @@ export const it: TranslationDictionary = {
     loginFailedTitle: 'Non siamo riusciti ad autenticarti',
     brandingHeadline: 'IA local-first, alle tue condizioni',
     brandingSubheadline:
-      "Orchestra modelli cloud e locali, mantieni i dati sensibili sul dispositivo e verifica ogni decisione di routing.",
+      'Orchestra modelli cloud e locali, mantieni i dati sensibili sul dispositivo e verifica ogni decisione di routing.',
     featuresAriaLabel: 'Punti di forza della piattaforma',
     feature1Title: 'Routing intelligente',
-    feature1Desc: 'Scegli automaticamente il miglior modello per ogni attività — o sovrascrivi per thread.',
+    feature1Desc:
+      'Scegli automaticamente il miglior modello per ogni attività — o sovrascrivi per thread.',
     feature2Title: 'Privacy prima di tutto',
-    feature2Desc: "I prompt sensibili passano da Ollama locale; nulla lascia il tuo dispositivo.",
+    feature2Desc: 'I prompt sensibili passano da Ollama locale; nulla lascia il tuo dispositivo.',
     feature3Title: 'Multi-provider',
-    feature3Desc: 'OpenAI, Anthropic, Gemini, DeepSeek, Grok, Bedrock e locale — tutto in un unico posto.',
+    feature3Desc:
+      'OpenAI, Anthropic, Gemini, DeepSeek, Grok, Bedrock e locale — tutto in un unico posto.',
   },
   nav: {
     dashboard: 'Dashboard',
@@ -981,7 +983,7 @@ export const it: TranslationDictionary = {
     recentAuditEventsEmptyTitle: 'Nessuna attività recente',
     recentAuditEventsEmptyDesc: 'Nessun evento di audit è stato ancora registrato.',
     recentAuditEventsErrorTitle: 'Impossibile caricare gli eventi',
-    recentAuditEventsErrorDesc: "Il servizio di audit non era raggiungibile. Riprova tra poco.",
+    recentAuditEventsErrorDesc: 'Il servizio di audit non era raggiungibile. Riprova tra poco.',
     loadingAuditEvents: 'Caricamento eventi di audit...',
     viewAllAudits: 'Vedi tutti',
   },
@@ -1299,6 +1301,9 @@ export const it: TranslationDictionary = {
     low: 'Bassa',
     modelsSelected: '{count} modelli selezionati',
     synthesisRationaleLabel: 'Motivazione della sintesi',
+    promptLabel: 'Prompt',
+    promptPlaceholder:
+      'Fai una domanda e i modelli selezionati produrranno una risposta condivisa…',
   },
   escalation: {
     title: 'Catena di escalation',
@@ -1313,6 +1318,8 @@ export const it: TranslationDictionary = {
     maxSteps: 'Massimo {max} modelli nella catena',
     sendPrompt: 'Esegui catena',
     running: 'Esecuzione catena...',
+    contentLabel: 'Prompt',
+    contentPlaceholder: 'Descrivi la domanda o il compito da inoltrare lungo la catena…',
     sendFailed: 'Avvio catena di escalation non riuscito',
     synthesizing: 'Escalation in corso...',
     synthesisReady: 'Risultato pronto',
@@ -1362,6 +1369,11 @@ export const it: TranslationDictionary = {
     finalAnswer: 'Risposta finale',
     provider: 'Fornitore',
     model: 'Modello',
+    empty: {
+      title: 'Pronto per riparare una risposta',
+      description:
+        'Incolla sopra la risposta, seleziona i tipi di riparazione necessari, poi scegli un modello locale per abilitare l’esecuzione.',
+    },
   },
   decompose: {
     title: 'Router di decomposizione attività',
@@ -1383,6 +1395,12 @@ export const it: TranslationDictionary = {
     latencyMs: 'Latenza',
     noResults: 'Nessun risultato di decomposizione',
     sendFailed: 'Decomposizione attività non riuscita. Riprova.',
+    stages: {
+      submit: 'Invio attività',
+      plan: 'Pianificazione delle sotto-attività',
+      execute: 'Esecuzione delle sotto-attività',
+      result: 'Sintesi della risposta',
+    },
   },
   bestOfN: {
     title: 'Generazione candidati Best-of-N',
@@ -1391,6 +1409,8 @@ export const it: TranslationDictionary = {
     contentLabel: 'Prompt',
     contentPlaceholder: 'Inserisci il prompt per generare più candidati…',
     nCandidates: 'Candidati (N)',
+    candidateCountHelper:
+      'Il modello viene interrogato questo numero di volte; vince la risposta con il punteggio più alto.',
     sendPrompt: 'Genera Best-of-N',
     running: 'Generazione candidati…',
     synthesizing: 'Valutazione e selezione del miglior candidato…',
@@ -1433,6 +1453,8 @@ export const it: TranslationDictionary = {
     contentLabel: 'Il tuo prompt',
     contentPlaceholder: 'Inserisci la tua domanda o attività...',
     maxRevisionsLabel: 'Revisioni massime',
+    maxRevisionsHelper:
+      'Numero di volte in cui il verificatore può revisionare la risposta prima di restituire la migliore.',
     sendPrompt: 'Verifica e invia',
     running: 'Verifica...',
     synthesizing: 'Generazione e verifica della risposta...',
@@ -1527,6 +1549,11 @@ export const it: TranslationDictionary = {
     model: 'Modello',
     latency: 'Latenza',
     viewInThread: 'Visualizza nella conversazione',
+    stages: {
+      submitting: 'Invio della richiesta',
+      runningRoles: 'Esecuzione dei ruoli in parallelo',
+      synthesizing: 'Sintesi dell’output del team',
+    },
   },
   advancedModelSelector: {
     label: 'Modello di esecuzione',

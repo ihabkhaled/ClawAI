@@ -5,6 +5,7 @@ import type {
   AdvancedModelSelectionPayload,
 } from './advanced-model-selection.types';
 import type { TranslateFunction } from './i18n.types';
+import type { OrchestrationStage } from './orchestration.types';
 
 export type RolePack = RolePackName;
 
@@ -62,6 +63,9 @@ export type UseRolePackPageReturn = {
   setSelectedModel: (value: AdvancedModuleModelSelection) => void;
   handleSend: () => void;
   canSend: boolean;
+  // True iff the trimmed prompt is long enough AND a model has been
+  // explicitly picked. Mirrors the OrchestrationPageShell submit gate.
+  canSubmit: boolean;
   isPending: boolean;
   isError: boolean;
   isRolePackError: boolean;
@@ -69,4 +73,12 @@ export type UseRolePackPageReturn = {
   isPolling: boolean;
   isRolePackReady: boolean;
   handleViewInThread: () => void;
+  // OrchestrationStageTimeline rows. The controller hook materialises the
+  // submitting → running-roles → synthesizing pipeline from SSE events on
+  // the chat-service stream channel; falls back to the mutation/poll
+  // states when SSE is unavailable.
+  stages: OrchestrationStage[];
+  // Human-readable error surface for the OrchestrationPageShell's Alert.
+  // null when there is no error.
+  errorMessage: string | null;
 };

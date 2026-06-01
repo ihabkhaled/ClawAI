@@ -1299,6 +1299,9 @@ export const pt: TranslationDictionary = {
     low: 'Baixa',
     modelsSelected: '{count} modelos selecionados',
     synthesisRationaleLabel: 'Justificativa da síntese',
+    promptLabel: 'Prompt',
+    promptPlaceholder:
+      'Faça uma pergunta e os modelos selecionados produzirão uma resposta de consenso…',
   },
   escalation: {
     title: 'Cadeia de Escalonamento',
@@ -1313,6 +1316,8 @@ export const pt: TranslationDictionary = {
     maxSteps: 'Máximo de {max} modelos na cadeia',
     sendPrompt: 'Executar Cadeia',
     running: 'Executando cadeia...',
+    contentLabel: 'Prompt',
+    contentPlaceholder: 'Descreva a pergunta ou tarefa para escalonar pela cadeia…',
     sendFailed: 'Falha ao iniciar cadeia de escalonamento',
     synthesizing: 'Executando escalonamento...',
     synthesisReady: 'Resultado pronto',
@@ -1363,6 +1368,11 @@ export const pt: TranslationDictionary = {
     finalAnswer: 'Resposta Final',
     provider: 'Provedor',
     model: 'Modelo',
+    empty: {
+      title: 'Pronto para reparar uma resposta',
+      description:
+        'Cole a resposta acima, marque os tipos de reparo necessários e escolha um modelo local para habilitar a execução.',
+    },
   },
   decompose: {
     title: 'Roteador de Decomposição de Tarefas',
@@ -1384,6 +1394,12 @@ export const pt: TranslationDictionary = {
     latencyMs: 'Latência',
     noResults: 'Sem Resultados de Decomposição',
     sendFailed: 'Decomposição de tarefa falhou. Tente novamente.',
+    stages: {
+      submit: 'Enviando tarefa',
+      plan: 'Planejando subtarefas',
+      execute: 'Executando subtarefas',
+      result: 'Sintetizando resposta',
+    },
   },
   bestOfN: {
     title: 'Geração de Candidatos Best-of-N',
@@ -1392,6 +1408,8 @@ export const pt: TranslationDictionary = {
     contentLabel: 'Prompt',
     contentPlaceholder: 'Insira seu prompt para gerar múltiplos candidatos...',
     nCandidates: 'Candidatos (N)',
+    candidateCountHelper:
+      'O modelo é consultado este número de vezes; vence a resposta com a maior pontuação.',
     sendPrompt: 'Gerar Best-of-N',
     running: 'Gerando candidatos...',
     synthesizing: 'Pontuando e selecionando o melhor candidato...',
@@ -1433,6 +1451,8 @@ export const pt: TranslationDictionary = {
     contentLabel: 'Seu prompt',
     contentPlaceholder: 'Insira sua pergunta ou tarefa...',
     maxRevisionsLabel: 'Máx. revisões',
+    maxRevisionsHelper:
+      'Número de vezes que o verificador pode revisar a resposta antes de devolver a melhor.',
     sendPrompt: 'Verificar e Enviar',
     running: 'Verificando...',
     synthesizing: 'Gerando e verificando resposta...',
@@ -1527,6 +1547,11 @@ export const pt: TranslationDictionary = {
     model: 'Modelo',
     latency: 'Latência',
     viewInThread: 'Ver na Conversa',
+    stages: {
+      submitting: 'Enviando requisição',
+      runningRoles: 'Executando funções em paralelo',
+      synthesizing: 'Sintetizando saída do time',
+    },
   },
   advancedModelSelector: {
     label: 'Modelo de execução',

@@ -3,6 +3,7 @@ import type {
   AdvancedModelSelectionPayload,
 } from './advanced-model-selection.types';
 import type { TranslateFunction } from './i18n.types';
+import type { OrchestrationStage } from './orchestration.types';
 
 export type SubTaskResult = {
   title: string;
@@ -50,6 +51,13 @@ export type UseDecomposePollResult = {
   handleViewInThread: () => void;
 };
 
+export type DecomposeMaxSubTasksSelectProps = {
+  value: number;
+  onChange: (next: number) => void;
+  disabled?: boolean;
+  t: TranslateFunction;
+};
+
 export type UseDecomposePageReturn = {
   t: TranslateFunction;
   content: string;
@@ -60,6 +68,7 @@ export type UseDecomposePageReturn = {
   setSelectedModel: (value: AdvancedModuleModelSelection) => void;
   handleSend: () => void;
   canSend: boolean;
+  canSubmit: boolean;
   isPending: boolean;
   isError: boolean;
   decompositionResult: DecompositionResultState | null;
@@ -67,4 +76,7 @@ export type UseDecomposePageReturn = {
   isDecompositionReady: boolean;
   isDecompositionError: boolean;
   handleViewInThread: () => void;
+  stages: OrchestrationStage[];
+  hasProgress: boolean;
+  errorMessage: string | null;
 };

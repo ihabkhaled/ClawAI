@@ -1,22 +1,29 @@
 'use client';
 
-import { GitFork, Loader2, Send } from 'lucide-react';
+import { GitFork } from 'lucide-react';
+import type * as React from 'react';
 
 import { EscalationChainBuilder } from '@/components/chat/escalation-chain-builder';
 import { EscalationResultCard } from '@/components/chat/escalation-result-card';
 import { EscalationStepTimeline } from '@/components/chat/escalation-step-timeline';
+import { OrchestrationPageShell } from '@/components/chat/orchestration/orchestration-page-shell';
 import { EmptyState } from '@/components/common/empty-state';
-import { PageHeader } from '@/components/common/page-header';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Textarea } from '@/components/ui/textarea';
 import { useEscalationPage } from '@/hooks/chat/use-escalation-page';
 
-export default function EscalationPage() {
+// The Escalation Chain lab. Renders the shared <OrchestrationPageShell>:
+//   • single-model select picks the PRIMARY (step-1) model
+//   • prompt textarea + submit button live in the shell's input column
+//   • the existing EscalationChainBuilder slots into `extraFieldsSlot` so
+//     the user can add additional escalation steps (BE requires total
+//     chain length 2..5)
+//   • the output column flips between progress timeline → result card +
+//     per-step timeline → empty state, all owned by the shell
+export default function EscalationPage(): React.ReactElement {
   const {
     t,
-    chainModels,
+    selectedModel,
+    setSelectedModel,
+    additionalChainModels,
     prompt,
     setPrompt,
     handleAddModel,
@@ -26,97 +33,69 @@ export default function EscalationPage() {
     handleSend,
     isPending,
     isError,
-    canSend,
+    canSubmit,
     selectionError,
+    stages,
     synthesisMessage,
     isPolling,
     isSynthesisReady,
     handleViewInThread,
   } = useEscalationPage();
 
-  const showLoading = isPending || (isPolling && !isSynthesisReady);
+  const isRunning = isPending || isPolling;
+  const hasProgress = stages.length > 0;
   const showResults = isSynthesisReady && synthesisMessage !== null;
-  const showEmpty = !isPending && !isPolling && !isSynthesisReady && !isError;
+  const errorMessage = isError ? t('escalation.sendFailed') : null;
+
+  const extraFieldsSlot = (
+    <EscalationChainBuilder
+      chainModels={additionalChainModels}
+      onAddModel={handleAddModel}
+      onRemoveModel={handleRemoveModel}
+      onMoveUp={handleMoveUp}
+      onMoveDown={handleMoveDown}
+      selectionError={selectionError}
+      t={t}
+    />
+  );
+
+  const resultSlot = showResults ? (
+    <>
+      <EscalationResultCard result={synthesisMessage} onViewInThread={handleViewInThread} t={t} />
+      <EscalationStepTimeline stepResults={synthesisMessage.metadata.stepResults} t={t} />
+    </>
+  ) : null;
+
+  const emptySlot = (
+    <EmptyState
+      icon={GitFork}
+      title={t('escalation.noResults')}
+      description={t('escalation.description')}
+    />
+  );
 
   return (
-    <div className="space-y-6">
-      <PageHeader title={t('escalation.title')} description={t('escalation.description')} />
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <EscalationChainBuilder
-            chainModels={chainModels}
-            onAddModel={handleAddModel}
-            onRemoveModel={handleRemoveModel}
-            onMoveUp={handleMoveUp}
-            onMoveDown={handleMoveDown}
-            selectionError={selectionError}
-            t={t}
-          />
-        </div>
-
-        <div className="space-y-4 lg:col-span-2">
-          <Card>
-            <CardContent className="pt-4">
-              <Textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder={t('escalation.sendPrompt')}
-                className="min-h-[100px] resize-y"
-              />
-              <div className="mt-3 flex justify-end">
-                <Button onClick={handleSend} disabled={!canSend}>
-                  {isPending || isPolling ? (
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="me-2 h-4 w-4" />
-                  )}
-                  {isPending || isPolling ? t('escalation.running') : t('escalation.sendPrompt')}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {showLoading ? (
-        <div className="space-y-4">
-          <Card className="p-4">
-            <Skeleton className="mb-2 h-4 w-1/2" />
-            <Skeleton className="mb-2 h-3 w-full" />
-            <Skeleton className="mb-2 h-3 w-5/6" />
-            <Skeleton className="h-3 w-4/6" />
-          </Card>
-          <p className="text-center text-sm text-muted-foreground">
-            {t('escalation.synthesizing')}
-          </p>
-        </div>
-      ) : null}
-
-      {showResults && synthesisMessage !== null ? (
-        <div className="space-y-4">
-          <EscalationResultCard
-            result={synthesisMessage}
-            onViewInThread={handleViewInThread}
-            t={t}
-          />
-          <EscalationStepTimeline stepResults={synthesisMessage.metadata.stepResults} t={t} />
-        </div>
-      ) : null}
-
-      {isError ? (
-        <Card className="border-destructive bg-destructive/10 p-4">
-          <p className="text-sm text-destructive">{t('escalation.sendFailed')}</p>
-        </Card>
-      ) : null}
-
-      {showEmpty ? (
-        <EmptyState
-          icon={GitFork}
-          title={t('escalation.noResults')}
-          description={t('escalation.description')}
-        />
-      ) : null}
-    </div>
+    <OrchestrationPageShell
+      headerIcon={GitFork}
+      headerTitle={t('nav.escalationChain')}
+      headerDescription={t('escalation.description')}
+      selectedModel={selectedModel}
+      onModelChange={setSelectedModel}
+      prompt={prompt}
+      onPromptChange={setPrompt}
+      promptLabel={t('escalation.contentLabel')}
+      promptPlaceholder={t('escalation.contentPlaceholder')}
+      extraFieldsSlot={extraFieldsSlot}
+      onSubmit={handleSend}
+      submitLabel={isRunning ? t('escalation.running') : t('escalation.sendPrompt')}
+      isSubmitDisabled={!canSubmit}
+      isPending={isRunning}
+      hasProgress={hasProgress}
+      stages={stages}
+      resultSlot={resultSlot}
+      emptySlot={emptySlot}
+      errorMessage={errorMessage}
+      t={t}
+    />
   );
 }

@@ -5,6 +5,7 @@ import type {
   AdvancedModelSelectionPayload,
 } from './advanced-model-selection.types';
 import type { TranslateFunction } from './i18n.types';
+import type { OrchestrationStage } from './orchestration.types';
 
 export type CostClassification = {
   tier: CostTier;
@@ -65,6 +66,10 @@ export type UseCostEnsemblePageReturn = {
   setSelectedModel: (value: AdvancedModuleModelSelection) => void;
   handleSend: () => void;
   canSend: boolean;
+  // `canSubmit` is the shell-friendly gate: `content.trim().length > 0`
+  // AND `selectedModel !== null`. It does NOT factor in run state — the
+  // shell disables the button on its own while `isPending` is true.
+  canSubmit: boolean;
   isPending: boolean;
   isError: boolean;
   costEnsembleResult: CostEnsembleResult | null;
@@ -72,4 +77,14 @@ export type UseCostEnsemblePageReturn = {
   isCostEnsembleReady: boolean;
   isCostEnsembleError: boolean;
   handleViewInThread: () => void;
+  // Live orchestration sub-stage timeline projected from the chat-service
+  // SSE channel. Mapped from `orchestration_stage` events the cost-ensemble
+  // manager emits during classification / candidate runs / synthesis.
+  stages: OrchestrationStage[];
+  // True iff at least one orchestration stage has arrived. Lets the shell
+  // swap the loading skeleton for the live progress timeline.
+  hasProgress: boolean;
+  // True while either the mutation is in-flight OR a result is still being
+  // polled / streamed. The shell wires this into its skeleton + button gate.
+  isRunning: boolean;
 };

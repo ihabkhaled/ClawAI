@@ -92,11 +92,14 @@ export const ru: TranslationDictionary = {
       'Управляйте облачными и локальными моделями, держите конфиденциальные данные на устройстве и проверяйте каждое решение маршрутизации.',
     featuresAriaLabel: 'Преимущества платформы',
     feature1Title: 'Умная маршрутизация',
-    feature1Desc: 'Автоматически выбирайте лучшую модель для каждой задачи — или переопределяйте в каждом чате.',
+    feature1Desc:
+      'Автоматически выбирайте лучшую модель для каждой задачи — или переопределяйте в каждом чате.',
     feature2Title: 'Конфиденциальность прежде всего',
-    feature2Desc: 'Чувствительные запросы идут в локальный Ollama; ничего не покидает ваше устройство.',
+    feature2Desc:
+      'Чувствительные запросы идут в локальный Ollama; ничего не покидает ваше устройство.',
     feature3Title: 'Несколько провайдеров',
-    feature3Desc: 'OpenAI, Anthropic, Gemini, DeepSeek, Grok, Bedrock и локальные — всё в одном месте.',
+    feature3Desc:
+      'OpenAI, Anthropic, Gemini, DeepSeek, Grok, Bedrock и локальные — всё в одном месте.',
   },
   nav: {
     dashboard: 'Панель управления',
@@ -1298,6 +1301,8 @@ export const ru: TranslationDictionary = {
     low: 'Низкая',
     modelsSelected: 'Выбрано моделей: {count}',
     synthesisRationaleLabel: 'Обоснование синтеза',
+    promptLabel: 'Запрос',
+    promptPlaceholder: 'Задайте вопрос — выбранные модели подготовят согласованный ответ…',
   },
   escalation: {
     title: 'Цепочка эскалации',
@@ -1312,6 +1317,8 @@ export const ru: TranslationDictionary = {
     maxSteps: 'Максимум {max} моделей в цепочке',
     sendPrompt: 'Запустить цепочку',
     running: 'Выполняется цепочка...',
+    contentLabel: 'Запрос',
+    contentPlaceholder: 'Опишите вопрос или задачу, которую нужно провести через цепочку…',
     sendFailed: 'Не удалось запустить цепочку эскалации',
     synthesizing: 'Выполняется эскалация...',
     synthesisReady: 'Результат готов',
@@ -1363,6 +1370,11 @@ export const ru: TranslationDictionary = {
     finalAnswer: 'Итоговый ответ',
     provider: 'Провайдер',
     model: 'Модель',
+    empty: {
+      title: 'Готово к исправлению ответа',
+      description:
+        'Вставьте ответ выше, отметьте нужные типы исправления, затем выберите локальную модель, чтобы активировать запуск.',
+    },
   },
   decompose: {
     title: 'Маршрутизатор декомпозиции задач',
@@ -1384,6 +1396,12 @@ export const ru: TranslationDictionary = {
     latencyMs: 'Задержка',
     noResults: 'Результатов декомпозиции нет',
     sendFailed: 'Декомпозиция задачи не удалась. Попробуйте снова.',
+    stages: {
+      submit: 'Отправка задачи',
+      plan: 'Планирование подзадач',
+      execute: 'Выполнение подзадач',
+      result: 'Синтез ответа',
+    },
   },
   bestOfN: {
     title: 'Генерация кандидатов Best-of-N',
@@ -1392,6 +1410,7 @@ export const ru: TranslationDictionary = {
     contentLabel: 'Подсказка',
     contentPlaceholder: 'Введите подсказку для генерации нескольких кандидатов…',
     nCandidates: 'Кандидатов (N)',
+    candidateCountHelper: 'Модель опрашивается столько раз; побеждает ответ с наивысшей оценкой.',
     sendPrompt: 'Сгенерировать Best-of-N',
     running: 'Генерация кандидатов…',
     synthesizing: 'Оценка и выбор лучшего кандидата…',
@@ -1434,6 +1453,8 @@ export const ru: TranslationDictionary = {
     contentLabel: 'Ваша подсказка',
     contentPlaceholder: 'Введите ваш вопрос или задачу...',
     maxRevisionsLabel: 'Макс. ревизий',
+    maxRevisionsHelper:
+      'Сколько раз верификатор может пересматривать ответ перед возвратом лучшего.',
     sendPrompt: 'Проверить и отправить',
     running: 'Проверка...',
     synthesizing: 'Генерация и проверка ответа...',
@@ -1528,6 +1549,11 @@ export const ru: TranslationDictionary = {
     model: 'Модель',
     latency: 'Задержка',
     viewInThread: 'Открыть в чате',
+    stages: {
+      submitting: 'Отправка запроса',
+      runningRoles: 'Параллельное выполнение ролей',
+      synthesizing: 'Синтез итогового результата команды',
+    },
   },
   advancedModelSelector: {
     label: 'Модель выполнения',

@@ -1,5 +1,8 @@
 import type { ConsensusConfidenceLevel, ConsensusModelStatus } from '@/enums';
 
+import type { ModelSelection } from './component.types';
+import type { OrchestrationStage } from './orchestration.types';
+
 export type ConsensusModelBreakdown = {
   provider: string;
   model: string;
@@ -70,9 +73,15 @@ export type UseConsensusPageReturn = {
   isPending: boolean;
   isError: boolean;
   canSend: boolean;
+  canSubmit: boolean;
   selectionError: string | null;
   synthesisMessage: ConsensusSynthesisState | null;
   isPolling: boolean;
   isSynthesisReady: boolean;
   handleViewInThread: () => void;
+  selectedModel: ModelSelection | null;
+  setSelectedModel: (model: ModelSelection | null) => void;
+  stages: OrchestrationStage[];
+  hasProgress: boolean;
+  errorMessage: string | null;
 };

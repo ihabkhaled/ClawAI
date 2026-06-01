@@ -3,6 +3,7 @@ import type {
   AdvancedModelSelectionPayload,
 } from './advanced-model-selection.types';
 import type { TranslateFunction } from './i18n.types';
+import type { OrchestrationStage } from './orchestration.types';
 
 export type PipelineStageResult = {
   stageName: string;
@@ -59,11 +60,15 @@ export type UsePipelinePageReturn = {
   setSelectedModel: (value: AdvancedModuleModelSelection) => void;
   handleSend: () => void;
   canSend: boolean;
+  canSubmit: boolean;
   isPending: boolean;
   isError: boolean;
   isPipelineError: boolean;
   pipelineResult: PipelineResult | null;
   isPolling: boolean;
   isPipelineReady: boolean;
+  stages: OrchestrationStage[];
+  hasProgress: boolean;
+  errorMessage: string | null;
   handleViewInThread: () => void;
 };

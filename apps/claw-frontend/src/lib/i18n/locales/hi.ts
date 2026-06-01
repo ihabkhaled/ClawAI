@@ -94,7 +94,8 @@ export const hi: TranslationDictionary = {
     feature1Title: 'स्मार्ट रूटिंग',
     feature1Desc: 'हर कार्य के लिए स्वचालित रूप से सर्वोत्तम मॉडल चुनें — या प्रति थ्रेड बदलें।',
     feature2Title: 'गोपनीयता पहले',
-    feature2Desc: 'संवेदनशील प्रॉम्प्ट स्थानीय Ollama पर जाते हैं; कुछ भी आपके डिवाइस से बाहर नहीं जाता।',
+    feature2Desc:
+      'संवेदनशील प्रॉम्प्ट स्थानीय Ollama पर जाते हैं; कुछ भी आपके डिवाइस से बाहर नहीं जाता।',
     feature3Title: 'बहु-प्रदाता',
     feature3Desc: 'OpenAI, Anthropic, Gemini, DeepSeek, Grok, Bedrock और स्थानीय — सब एक ही जगह।',
   },
@@ -1291,6 +1292,8 @@ export const hi: TranslationDictionary = {
     low: 'निम्न',
     modelsSelected: '{count} मॉडल चुने गए',
     synthesisRationaleLabel: 'संश्लेषण तर्काधार',
+    promptLabel: 'प्रॉम्प्ट',
+    promptPlaceholder: 'एक प्रश्न पूछें और चयनित मॉडल सहमति-आधारित उत्तर तैयार करेंगे…',
   },
   escalation: {
     title: 'एस्केलेशन चेन',
@@ -1305,6 +1308,8 @@ export const hi: TranslationDictionary = {
     maxSteps: 'चेन में अधिकतम {max} मॉडल',
     sendPrompt: 'चेन चलाएं',
     running: 'चेन चल रही है...',
+    contentLabel: 'प्रॉम्प्ट',
+    contentPlaceholder: 'चेन के माध्यम से एस्केलेट करने के लिए प्रश्न या कार्य का वर्णन करें…',
     sendFailed: 'एस्केलेशन चेन शुरू करने में विफल',
     synthesizing: 'एस्केलेशन चल रहा है...',
     synthesisReady: 'परिणाम तैयार',
@@ -1352,6 +1357,11 @@ export const hi: TranslationDictionary = {
     finalAnswer: 'अंतिम उत्तर',
     provider: 'प्रोवाइडर',
     model: 'मॉडल',
+    empty: {
+      title: 'उत्तर ठीक करने के लिए तैयार',
+      description:
+        'ऊपर उत्तर पेस्ट करें, आवश्यक रिपेयर प्रकारों पर टिक करें, फिर रन सक्षम करने के लिए एक लोकल मॉडल चुनें।',
+    },
   },
   decompose: {
     title: 'कार्य विघटन राउटर',
@@ -1373,6 +1383,12 @@ export const hi: TranslationDictionary = {
     latencyMs: 'विलंबता',
     noResults: 'कोई विघटन परिणाम नहीं',
     sendFailed: 'कार्य विघटन विफल। कृपया पुनः प्रयास करें।',
+    stages: {
+      submit: 'कार्य भेजा जा रहा है',
+      plan: 'उप-कार्यों की योजना बनाई जा रही है',
+      execute: 'उप-कार्य निष्पादित किए जा रहे हैं',
+      result: 'उत्तर संश्लेषित किया जा रहा है',
+    },
   },
   bestOfN: {
     title: 'बेस्ट-ऑफ़-N उम्मीदवार जनरेशन',
@@ -1381,6 +1397,7 @@ export const hi: TranslationDictionary = {
     contentLabel: 'प्रॉम्प्ट',
     contentPlaceholder: 'कई उम्मीदवार उत्पन्न करने के लिए अपना प्रॉम्प्ट दर्ज करें…',
     nCandidates: 'उम्मीदवार (N)',
+    candidateCountHelper: 'मॉडल इतनी बार चलाया जाएगा; सबसे अधिक स्कोर वाला उत्तर चुना जाएगा.',
     sendPrompt: 'बेस्ट-ऑफ़-N उत्पन्न करें',
     running: 'उम्मीदवार उत्पन्न हो रहे हैं…',
     synthesizing: 'सबसे अच्छे उम्मीदवार को स्कोर और चयन हो रहा है…',
@@ -1422,6 +1439,8 @@ export const hi: TranslationDictionary = {
     contentLabel: 'आपका प्रॉम्प्ट',
     contentPlaceholder: 'अपना प्रश्न या कार्य दर्ज करें...',
     maxRevisionsLabel: 'अधिकतम संशोधन',
+    maxRevisionsHelper:
+      'सर्वोत्तम उत्तर लौटाने से पहले सत्यापनकर्ता द्वारा किए जा सकने वाले संशोधनों की संख्या।',
     sendPrompt: 'सत्यापित करें और भेजें',
     running: 'सत्यापित हो रहा है...',
     synthesizing: 'प्रतिक्रिया उत्पन्न और सत्यापित हो रही है...',
@@ -1515,6 +1534,11 @@ export const hi: TranslationDictionary = {
     model: 'मॉडल',
     latency: 'विलंबता',
     viewInThread: 'थ्रेड में देखें',
+    stages: {
+      submitting: 'अनुरोध भेजा जा रहा है',
+      runningRoles: 'भूमिकाएं समानांतर में चल रही हैं',
+      synthesizing: 'टीम आउटपुट संश्लेषित किया जा रहा है',
+    },
   },
   advancedModelSelector: {
     label: 'निष्पादन मॉडल',

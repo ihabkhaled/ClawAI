@@ -92,11 +92,13 @@ export const de: TranslationDictionary = {
       'Orchestrieren Sie Cloud- und lokale Modelle, halten Sie sensible Daten auf Ihrem Gerät und prüfen Sie jede Routing-Entscheidung.',
     featuresAriaLabel: 'Plattform-Highlights',
     feature1Title: 'Intelligentes Routing',
-    feature1Desc: 'Wählen Sie automatisch das beste Modell pro Aufgabe — oder überschreiben Sie es pro Thread.',
+    feature1Desc:
+      'Wählen Sie automatisch das beste Modell pro Aufgabe — oder überschreiben Sie es pro Thread.',
     feature2Title: 'Datenschutz zuerst',
     feature2Desc: 'Sensible Prompts gehen an das lokale Ollama; nichts verlässt Ihr Gerät.',
     feature3Title: 'Mehrere Anbieter',
-    feature3Desc: 'OpenAI, Anthropic, Gemini, DeepSeek, Grok, Bedrock und lokal — alles an einem Ort.',
+    feature3Desc:
+      'OpenAI, Anthropic, Gemini, DeepSeek, Grok, Bedrock und lokal — alles an einem Ort.',
   },
   nav: {
     dashboard: 'Übersicht',
@@ -1304,6 +1306,9 @@ export const de: TranslationDictionary = {
     low: 'Niedrig',
     modelsSelected: '{count} Modelle ausgewählt',
     synthesisRationaleLabel: 'Synthese-Begründung',
+    promptLabel: 'Eingabeaufforderung',
+    promptPlaceholder:
+      'Stelle eine Frage – die ausgewählten Modelle erstellen eine Konsens-Antwort…',
   },
   escalation: {
     title: 'Eskalationskette',
@@ -1318,6 +1323,9 @@ export const de: TranslationDictionary = {
     maxSteps: 'Maximal {max} Modelle in der Kette',
     sendPrompt: 'Kette ausführen',
     running: 'Kette läuft...',
+    contentLabel: 'Eingabeaufforderung',
+    contentPlaceholder:
+      'Beschreiben Sie die Frage oder Aufgabe, die durch die Kette eskaliert werden soll…',
     sendFailed: 'Eskalationskette konnte nicht gestartet werden',
     synthesizing: 'Eskalation läuft...',
     synthesisReady: 'Ergebnis bereit',
@@ -1368,6 +1376,11 @@ export const de: TranslationDictionary = {
     finalAnswer: 'Finale Antwort',
     provider: 'Anbieter',
     model: 'Modell',
+    empty: {
+      title: 'Bereit, eine Antwort zu reparieren',
+      description:
+        'Fügen Sie oben die Antwort ein, wählen Sie die benötigten Reparaturtypen aus und wählen Sie dann ein lokales Modell, um den Lauf zu aktivieren.',
+    },
   },
   decompose: {
     title: 'Task-Decomposition-Router',
@@ -1389,6 +1402,12 @@ export const de: TranslationDictionary = {
     latencyMs: 'Latenz',
     noResults: 'Keine Zerlegungsergebnisse',
     sendFailed: 'Aufgabenzerlegung fehlgeschlagen. Bitte erneut versuchen.',
+    stages: {
+      submit: 'Aufgabe wird gesendet',
+      plan: 'Teilaufgaben werden geplant',
+      execute: 'Teilaufgaben werden ausgeführt',
+      result: 'Antwort wird zusammengeführt',
+    },
   },
   bestOfN: {
     title: 'Best-of-N-Kandidatengenerierung',
@@ -1397,6 +1416,8 @@ export const de: TranslationDictionary = {
     contentLabel: 'Prompt',
     contentPlaceholder: 'Geben Sie Ihren Prompt ein, um mehrere Kandidaten zu generieren...',
     nCandidates: 'Kandidaten (N)',
+    candidateCountHelper:
+      'Das Modell wird so oft abgefragt; die Antwort mit der höchsten Bewertung gewinnt.',
     sendPrompt: 'Best-of-N generieren',
     running: 'Kandidaten werden generiert...',
     synthesizing: 'Bester Kandidat wird bewertet und ausgewählt...',
@@ -1438,6 +1459,8 @@ export const de: TranslationDictionary = {
     contentLabel: 'Ihr Prompt',
     contentPlaceholder: 'Geben Sie Ihre Frage oder Aufgabe ein...',
     maxRevisionsLabel: 'Max. Überarbeitungen',
+    maxRevisionsHelper:
+      'Wie oft der Verifizierer die Antwort überarbeiten darf, bevor das beste Ergebnis zurückgegeben wird.',
     sendPrompt: 'Verifizieren & Senden',
     running: 'Wird verifiziert...',
     synthesizing: 'Antwort wird generiert und verifiziert...',
@@ -1533,6 +1556,11 @@ export const de: TranslationDictionary = {
     model: 'Modell',
     latency: 'Latenz',
     viewInThread: 'Im Thread anzeigen',
+    stages: {
+      submitting: 'Anfrage wird gesendet',
+      runningRoles: 'Rollen werden parallel ausgeführt',
+      synthesizing: 'Team-Ausgabe wird zusammengeführt',
+    },
   },
   advancedModelSelector: {
     label: 'Ausführungsmodell',

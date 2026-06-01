@@ -96,7 +96,8 @@ export const es: TranslationDictionary = {
     feature2Title: 'Privacidad primero',
     feature2Desc: 'Los prompts sensibles se enrutan a Ollama local; nada sale de tu equipo.',
     feature3Title: 'Multiproveedor',
-    feature3Desc: 'OpenAI, Anthropic, Gemini, DeepSeek, Grok, Bedrock y local — todo en un solo lugar.',
+    feature3Desc:
+      'OpenAI, Anthropic, Gemini, DeepSeek, Grok, Bedrock y local — todo en un solo lugar.',
   },
   nav: {
     dashboard: 'Panel',
@@ -1302,6 +1303,9 @@ export const es: TranslationDictionary = {
     low: 'Baja',
     modelsSelected: '{count} modelos seleccionados',
     synthesisRationaleLabel: 'Justificación de la síntesis',
+    promptLabel: 'Indicación',
+    promptPlaceholder:
+      'Haz una pregunta y los modelos seleccionados producirán una respuesta de consenso…',
   },
   escalation: {
     title: 'Cadena de escalada',
@@ -1316,6 +1320,8 @@ export const es: TranslationDictionary = {
     maxSteps: 'Máximo {max} modelos en la cadena',
     sendPrompt: 'Ejecutar cadena',
     running: 'Ejecutando cadena...',
+    contentLabel: 'Indicación',
+    contentPlaceholder: 'Describe la pregunta o tarea que quieres escalar a través de la cadena…',
     sendFailed: 'Error al iniciar la cadena de escalada',
     synthesizing: 'Ejecutando escalada...',
     synthesisReady: 'Resultado listo',
@@ -1367,6 +1373,11 @@ export const es: TranslationDictionary = {
     finalAnswer: 'Respuesta final',
     provider: 'Proveedor',
     model: 'Modelo',
+    empty: {
+      title: 'Listo para reparar una respuesta',
+      description:
+        'Pega la respuesta arriba, marca los tipos de reparación que necesites y luego elige un modelo local para habilitar la ejecución.',
+    },
   },
   decompose: {
     title: 'Enrutador de descomposición de tareas',
@@ -1388,6 +1399,12 @@ export const es: TranslationDictionary = {
     latencyMs: 'Latencia',
     noResults: 'No hay resultados de descomposición',
     sendFailed: 'La descomposición de la tarea falló. Inténtalo de nuevo.',
+    stages: {
+      submit: 'Enviando tarea',
+      plan: 'Planificando subtareas',
+      execute: 'Ejecutando subtareas',
+      result: 'Sintetizando respuesta',
+    },
   },
   bestOfN: {
     title: 'Generación de candidatos Best-of-N',
@@ -1396,6 +1413,8 @@ export const es: TranslationDictionary = {
     contentLabel: 'Indicación',
     contentPlaceholder: 'Introduce tu prompt para generar múltiples candidatos…',
     nCandidates: 'Candidatos (N)',
+    candidateCountHelper:
+      'El modelo se consulta este número de veces; gana la respuesta con la puntuación más alta.',
     sendPrompt: 'Generar Best-of-N',
     running: 'Generando candidatos…',
     synthesizing: 'Puntuando y seleccionando el mejor candidato…',
@@ -1438,6 +1457,8 @@ export const es: TranslationDictionary = {
     contentLabel: 'Tu prompt',
     contentPlaceholder: 'Introduce tu pregunta o tarea...',
     maxRevisionsLabel: 'Revisiones máximas',
+    maxRevisionsHelper:
+      'Número de veces que el verificador puede revisar la respuesta antes de devolver la mejor.',
     sendPrompt: 'Verificar y enviar',
     running: 'Verificando...',
     synthesizing: 'Generando y verificando respuesta...',
@@ -1532,6 +1553,11 @@ export const es: TranslationDictionary = {
     model: 'Modelo',
     latency: 'Latencia',
     viewInThread: 'Ver en la conversación',
+    stages: {
+      submitting: 'Enviando solicitud',
+      runningRoles: 'Ejecutando roles en paralelo',
+      synthesizing: 'Sintetizando la salida del equipo',
+    },
   },
   advancedModelSelector: {
     label: 'Modelo de ejecución',
