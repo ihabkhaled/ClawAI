@@ -120,7 +120,11 @@ describe('sidebar-visibility.utility', () => {
       expect(childLabels).not.toContain('nav.verifierLab');
     });
 
-    it('reveals nav.verifierLab when allowJudgeMode is unlocked for the user', () => {
+    it('does NOT reveal nav.verifierLab when only allowJudgeMode is unlocked', () => {
+      // Verifier is now permission-gated by ROUTER_USE, independent of the
+      // per-lane Judge / Critic toggles which keep their allowJudgeMode /
+      // allowCriticReview / JUDGE_USE gates. Unlocking allowJudgeMode alone
+      // therefore does NOT make the standalone Verifier Lab visible.
       const visible = filterSidebarItems(
         SIDEBAR_NAV_ITEMS,
         userCan(USER_PERMISSIONS),
@@ -128,16 +132,12 @@ describe('sidebar-visibility.utility', () => {
       );
       const chat = visible.find((i) => i.labelKey === 'nav.chat');
       const childLabels = labelKeys(chat?.children ?? []);
-      expect(childLabels).toContain('nav.verifierLab');
+      expect(childLabels).not.toContain('nav.verifierLab');
       expect(childLabels).not.toContain('nav.compareModels');
     });
 
     it('hides both Compare and Verify when the plan unlocks neither feature', () => {
-      const visible = filterSidebarItems(
-        SIDEBAR_NAV_ITEMS,
-        userCan(USER_PERMISSIONS),
-        noFeatures,
-      );
+      const visible = filterSidebarItems(SIDEBAR_NAV_ITEMS, userCan(USER_PERMISSIONS), noFeatures);
       const chat = visible.find((i) => i.labelKey === 'nav.chat');
       const childLabels = labelKeys(chat?.children ?? []);
       expect(childLabels).not.toContain('nav.compareModels');
@@ -153,10 +153,12 @@ describe('sidebar-visibility.utility', () => {
         noFeatures,
       );
       const chat = visible.find((i) => i.labelKey === 'nav.chat');
-      // ROUTER_USE-gated children become visible; feature-gated ones remain hidden.
+      // ROUTER_USE reveals every orchestration lab gated by it — including
+      // the standalone Verifier — but feature-gated children (Compare) stay
+      // hidden until the matching plan feature is unlocked.
       expect(labelKeys(chat?.children ?? [])).toContain('nav.consensusMode');
+      expect(labelKeys(chat?.children ?? [])).toContain('nav.verifierLab');
       expect(labelKeys(chat?.children ?? [])).not.toContain('nav.compareModels');
-      expect(labelKeys(chat?.children ?? [])).not.toContain('nav.verifierLab');
     });
   });
 });

@@ -178,9 +178,14 @@ describe('useRoutePermissionGuard', () => {
     expect(result.current.requiredFeature).toBe(PlanFeature.ALLOW_COMPARE_MODE);
   });
 
-  it('blocks /chat/verify when the plan locks allowJudgeMode', async () => {
+  it('blocks /chat/verify for a USER who lacks ROUTER_USE', async () => {
+    // Verifier Lab is now permission-gated by ROUTER_USE (parallel to the
+    // other orchestration labs) — independent of the per-lane Judge / Critic
+    // toggles in compare mode which keep their allowJudgeMode /
+    // allowCriticReview / JUDGE_USE gates. USER_PERMISSIONS does not include
+    // ROUTER_USE, so a normal user must be blocked here.
     setUser(makeUser(UserRole.USER, USER_PERMISSIONS));
-    mockEntitlements.mockResolvedValue(entWithGates({ allowJudgeMode: false }));
+    mockEntitlements.mockResolvedValue(entWithGates({ allowJudgeMode: true }));
     mockPathname = '/chat/verify';
 
     const { result } = renderHook(() => useRoutePermissionGuard(), { wrapper: makeWrapper() });
@@ -189,7 +194,7 @@ describe('useRoutePermissionGuard', () => {
       expect(result.current.isLoading).toBe(false);
     });
     expect(result.current.allowed).toBe(false);
-    expect(result.current.requiredFeature).toBe(PlanFeature.ALLOW_JUDGE_MODE);
+    expect(result.current.requiredPermission).toBe(Permission.ROUTER_USE);
   });
 
   it('allows ADMIN on /chat/compare even when no entitlements have arrived (admin bypass)', async () => {

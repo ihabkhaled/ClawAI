@@ -22,6 +22,7 @@ export function GpuBadge(): React.ReactElement | null {
     // reward for actually having a detected accelerator.
     return (
       <Link
+        data-testid="sidebar-gpu-pill"
         href={ROUTES.MODELS_LOCAL_FRONTIER}
         className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted"
         title={t('gpuBadge.noGpu')}
@@ -40,6 +41,7 @@ export function GpuBadge(): React.ReactElement | null {
   // the pill reads as "GPU active" without the previous hard-coded emerald.
   return (
     <Link
+      data-testid="sidebar-gpu-pill"
       href={ROUTES.MODELS_LOCAL_FRONTIER}
       className="gradient-border-pill inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold text-primary transition-transform duration-fast ease-expo-out hover:scale-[1.02]"
       title={data.model ?? vendorLabel}

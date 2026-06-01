@@ -2,10 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { Permission, PlanFeature } from '@/enums';
 
-import {
-  requiredPermissionForPath,
-  requiredRequirementForPath,
-} from '../route-permission.utility';
+import { requiredPermissionForPath, requiredRequirementForPath } from '../route-permission.utility';
 
 describe('route-permission.utility', () => {
   describe('requiredPermissionForPath', () => {
@@ -55,11 +52,13 @@ describe('route-permission.utility', () => {
     });
 
     it('maps chat sub-pages to their lab permission while keeping /chat base open', () => {
-      // Compare + Verify are now PLAN-feature gated, NOT permission gated, so
-      // requiredPermissionForPath returns null for them. See the feature-gate
-      // test block below for the parallel assertion.
+      // Compare is PLAN-feature gated (allowCompareMode), so
+      // requiredPermissionForPath returns null. Verify is now permission
+      // gated by ROUTER_USE (same tier as the other orchestration labs)
+      // — independent of the per-lane Judge/Critic toggles which keep
+      // their own allowJudgeMode / allowCriticReview / JUDGE_USE gates.
       expect(requiredPermissionForPath('/chat/compare')).toBeNull();
-      expect(requiredPermissionForPath('/chat/verify')).toBeNull();
+      expect(requiredPermissionForPath('/chat/verify')).toBe(Permission.ROUTER_USE);
       expect(requiredPermissionForPath('/chat/consensus')).toBe(Permission.ROUTER_USE);
       expect(requiredPermissionForPath('/chat/escalation')).toBe(Permission.ROUTER_USE);
       expect(requiredPermissionForPath('/chat/repair')).toBe(Permission.ROUTER_USE);
@@ -135,10 +134,10 @@ describe('route-permission.utility', () => {
       expect(req?.permission).toBeUndefined();
     });
 
-    it('maps /chat/verify to the allowJudgeMode plan feature (no permission)', () => {
+    it('maps /chat/verify to the ROUTER_USE permission (no plan feature)', () => {
       const req = requiredRequirementForPath('/chat/verify');
-      expect(req).toEqual({ feature: PlanFeature.ALLOW_JUDGE_MODE });
-      expect(req?.permission).toBeUndefined();
+      expect(req).toEqual({ permission: Permission.ROUTER_USE });
+      expect(req?.feature).toBeUndefined();
     });
 
     it('maps a permission-gated route to its permission (no feature)', () => {
