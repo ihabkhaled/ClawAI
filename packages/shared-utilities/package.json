@@ -22,7 +22,7 @@
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.7",
-    "@types/node": "^24.10.0",
+    "@types/node": "^25.9.1",
     "@typescript/native-preview": "^7.0.0-dev.20260421.2",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.11",

@@ -62,7 +62,7 @@
     "@types/express": "^4.17.21",
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.7",
-    "@types/node": "^22.7.0",
+    "@types/node": "^25.9.1",
     "@types/tar": "^7.0.87",
     "@typescript/native-preview": "^7.0.0-dev.20260421.2",
     "concurrently": "^9.2.1",
