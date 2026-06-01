@@ -62,7 +62,7 @@
     "@types/node": "^22.7.0",
     "@types/picomatch": "^4.0.0",
     "@typescript/native-preview": "^7.0.0-dev.20260421.2",
-    "concurrently": "^9.2.1",
+    "concurrently": "^10.0.1",
     "eslint": "^9.39.4",
     "eslint-plugin-import-x": "^4.3.0",
     "eslint-plugin-security": "^4.0.0",
