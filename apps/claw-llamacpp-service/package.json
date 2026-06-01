@@ -66,7 +66,7 @@
     "@types/tar": "^7.0.87",
     "@typescript/native-preview": "^7.0.0-dev.20260421.2",
     "concurrently": "^9.2.1",
-    "eslint": "^9.39.4",
+    "eslint": "^10.4.1",
     "eslint-plugin-import-x": "^4.3.0",
     "eslint-plugin-security": "^4.0.0",
     "eslint-plugin-unicorn": "^64.0.0",
