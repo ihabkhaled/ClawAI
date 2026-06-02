@@ -8,6 +8,7 @@ import { useTopbarTitle } from '@/hooks/layout/use-topbar-title';
 import { useTranslation } from '@/lib/i18n';
 import { useSidebarStore } from '@/stores/sidebar.store';
 
+import { Breadcrumb } from './breadcrumb';
 import { GlobalSearch } from './global-search';
 import { LocaleSwitcher } from './locale-switcher';
 import { ThemeSwitcher } from './theme-switcher';
@@ -34,6 +35,7 @@ export function Topbar() {
         >
           <Menu className="h-5 w-5" />
         </Button>
+        <Breadcrumb />
         {title ? (
           // The `key={title}` forces React to re-mount the heading whenever
           // the page title changes so the tailwindcss-animate enter

@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest';
 
 import type { SidebarItem } from '@/constants';
-import { resolveActiveNavItem } from '@/utilities/topbar-title.utility';
+import {
+  resolveActiveNavItem,
+  resolveBreadcrumbTrail,
+} from '@/utilities/topbar-title.utility';
 
 const icon = (() => null) as unknown as SidebarItem['icon'];
 
@@ -37,5 +40,33 @@ describe('resolveActiveNavItem', () => {
 
   it('does not partial-match across path segments', () => {
     expect(resolveActiveNavItem(items, '/chatter')).toBeNull();
+  });
+});
+
+describe('resolveBreadcrumbTrail', () => {
+  it('returns [parent, child] for a matched child route', () => {
+    const trail = resolveBreadcrumbTrail(items, '/models/catalog');
+    expect(trail.map((c) => c.href)).toEqual(['/models', '/models/catalog']);
+  });
+
+  it('returns a single crumb for a matched top-level route', () => {
+    const trail = resolveBreadcrumbTrail(items, '/dashboard');
+    expect(trail.map((c) => c.href)).toEqual(['/dashboard']);
+  });
+
+  it('returns the parent section single crumb for a non-nav sub-route', () => {
+    // /chat/compare is not its own nav entry → resolves to the /chat section.
+    const trail = resolveBreadcrumbTrail(items, '/chat/compare');
+    expect(trail.map((c) => c.href)).toEqual(['/chat']);
+  });
+
+  it('returns [] when nothing matches', () => {
+    expect(resolveBreadcrumbTrail(items, '/unknown')).toEqual([]);
+  });
+
+  it('carries the labelKey through for translation', () => {
+    const trail = resolveBreadcrumbTrail(items, '/models/catalog');
+    expect(trail[0]?.labelKey).toBe('nav.models');
+    expect(trail[1]?.labelKey).toBe('nav.modelCatalog');
   });
 });

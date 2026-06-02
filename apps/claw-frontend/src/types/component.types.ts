@@ -315,6 +315,24 @@ export type SidebarNavItemProps = {
   item: SidebarItem;
 };
 
+// One node in the topbar breadcrumb trail. `labelKey` is an i18n key; `href` is
+// the route the crumb links to (the last crumb renders as plain current-page text).
+export type BreadcrumbCrumb = {
+  labelKey: string;
+  href: string;
+};
+
+export type BreadcrumbProps = {
+  className?: string;
+};
+
+// A breadcrumb crumb after i18n resolution, ready for render.
+export type ResolvedCrumb = {
+  label: string;
+  href: string;
+  isCurrent: boolean;
+};
+
 export type PortalContentProps = {
   children: React.ReactNode;
 };
