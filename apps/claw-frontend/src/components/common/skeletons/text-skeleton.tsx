@@ -13,17 +13,20 @@ export function TextSkeleton({
 }: TextSkeletonProps = {}): React.ReactElement {
   const count = Math.max(1, lines);
   const fallback = TEXT_SKELETON_LINE_WIDTHS.at(-1) ?? 'w-7/12';
-  const widths = Array.from({ length: count }, (_, index) => {
-    return TEXT_SKELETON_LINE_WIDTHS.at(index) ?? fallback;
-  });
+  // Precompute a stable key per line up front. Width values are not unique
+  // across longer line counts (the fallback width repeats), so the key is
+  // composed from the line position. Skeletons never re-order or change
+  // content, so a position-derived key is safe — and computing it here keeps
+  // the bare loop index out of the JSX (satisfies react/no-array-index-key).
+  const linePlaceholders = Array.from({ length: count }, (_, index) => ({
+    key: `line-${index}`,
+    width: TEXT_SKELETON_LINE_WIDTHS.at(index) ?? fallback,
+  }));
 
   return (
     <div className={cn('space-y-2', className)}>
-      {widths.map((width, index) => (
-        // Width values are not unique across longer line counts (fallback is
-        // reused), so we compose a stable, index-derived key. Skeletons never
-        // re-order or change content, so this is safe.
-        <Skeleton key={`line-${index}`} className={cn('h-3', width)} />
+      {linePlaceholders.map((line) => (
+        <Skeleton key={line.key} className={cn('h-3', line.width)} />
       ))}
     </div>
   );
