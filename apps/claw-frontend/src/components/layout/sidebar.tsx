@@ -81,9 +81,9 @@ export function Sidebar() {
         </nav>
         <Separator />
         <div className="flex items-center justify-between gap-2 px-4 py-3">
-          <p className="text-xs text-muted-foreground">
+          <span className="rounded-full bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
             {t('common.brandVersion', { version: '0.1.0' })}
-          </p>
+          </span>
           <GpuBadge />
         </div>
       </aside>

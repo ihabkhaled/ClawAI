@@ -34,17 +34,18 @@ export function MobileBottomNavItem({
         isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
       )}
     >
-      {/* Top active-bar (rendered only when active so it never paints over inactive tabs) */}
+      {/* Top active-indicator: centered glowing pill (rendered only when active
+          so it never paints over inactive tabs). */}
       {isActive ? (
         <span
           aria-hidden
-          className="absolute inset-x-3 top-0 h-0.5 rounded-full bg-primary"
+          className="absolute left-1/2 top-0 h-1 w-6 -translate-x-1/2 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.5)]"
         />
       ) : null}
       <item.icon
         className={cn(
-          'h-5 w-5 shrink-0 transition-transform duration-150',
-          isActive ? 'scale-110' : 'scale-100',
+          'h-5 w-5 shrink-0 transition-transform duration-150 motion-reduce:transition-none',
+          isActive ? 'scale-110 motion-reduce:scale-100' : 'scale-100',
         )}
       />
       <span className="truncate">{t(item.labelKey)}</span>
