@@ -53,6 +53,7 @@ export function EscalationChainBuilder({
                   disabled={index === 0}
                   onClick={() => onMoveUp(index)}
                   title={t('escalation.moveUp')}
+                  aria-label={t('escalation.moveUp')}
                 >
                   <ArrowUp className="h-3 w-3" />
                 </Button>
@@ -63,6 +64,7 @@ export function EscalationChainBuilder({
                   disabled={index === chainModels.length - 1}
                   onClick={() => onMoveDown(index)}
                   title={t('escalation.moveDown')}
+                  aria-label={t('escalation.moveDown')}
                 >
                   <ArrowDown className="h-3 w-3" />
                 </Button>
@@ -72,6 +74,7 @@ export function EscalationChainBuilder({
                   className="h-7 w-7 text-destructive hover:text-destructive"
                   onClick={() => onRemoveModel(index)}
                   title={t('escalation.removeModel')}
+                  aria-label={t('escalation.removeModel')}
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>

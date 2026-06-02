@@ -90,6 +90,7 @@ export function WorkspaceConnectorCard({
           onClick={() => onDelete(connector.id)}
           disabled={isDeleting}
           className="shrink-0 text-destructive hover:text-destructive"
+          aria-label={t('common.delete')}
         >
           <Trash2 className="size-4" />
         </Button>
