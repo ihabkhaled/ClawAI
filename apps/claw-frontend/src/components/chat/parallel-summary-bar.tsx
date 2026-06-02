@@ -32,7 +32,7 @@ export function ParallelSummaryBar({ messages, t }: ParallelSummaryBarProps): Re
         </Badge>
 
         {completedCount > 0 ? (
-          <Badge variant="outline" className="gap-1 text-green-600">
+          <Badge variant="outline" className="gap-1 text-success">
             <CheckCircle className="h-3 w-3" />
             {t('compare.completedCount', { count: completedCount })}
           </Badge>
@@ -46,7 +46,7 @@ export function ParallelSummaryBar({ messages, t }: ParallelSummaryBarProps): Re
         ) : null}
 
         {timeoutCount > 0 ? (
-          <Badge variant="outline" className="gap-1 text-yellow-600">
+          <Badge variant="outline" className="gap-1 text-warning">
             <Clock className="h-3 w-3" />
             {t('compare.timeoutCount', { count: timeoutCount })}
           </Badge>
@@ -54,7 +54,7 @@ export function ParallelSummaryBar({ messages, t }: ParallelSummaryBarProps): Re
 
         {fastestModel ? (
           <div className="flex items-center gap-1 text-sm">
-            <Zap className="h-3.5 w-3.5 text-green-500" />
+            <Zap className="h-3.5 w-3.5 text-success" />
             <span className="text-muted-foreground">{t('compare.fastest')}:</span>
             <span className="font-medium">{fastestModel}</span>
           </div>
@@ -62,7 +62,7 @@ export function ParallelSummaryBar({ messages, t }: ParallelSummaryBarProps): Re
 
         {bestModel && bestModel !== fastestModel ? (
           <div className="flex items-center gap-1 text-sm">
-            <Trophy className="h-3.5 w-3.5 text-amber-500" />
+            <Trophy className="h-3.5 w-3.5 text-warning" />
             <span className="text-muted-foreground">{t('compare.bestResponse')}:</span>
             <span className="font-medium">{bestModel}</span>
           </div>

@@ -52,10 +52,10 @@ export function CompareResultCard({
     <Card
       className={cn(
         'flex flex-col',
-        isFastest && 'border-green-500/40',
-        isBest && 'border-amber-500/40',
+        isFastest && 'border-success/40',
+        isBest && 'border-warning/40',
         isFailed && 'border-destructive/30',
-        isTimeout && 'border-yellow-500/30',
+        isTimeout && 'border-warning/30',
       )}
     >
       <CardHeader className="shrink-0 pb-2">
@@ -68,20 +68,20 @@ export function CompareResultCard({
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
             {isFastest ? (
-              <Badge className="gap-1 bg-green-500/10 text-xs text-green-600">
+              <Badge className="gap-1 bg-success/10 text-xs text-success">
                 <Zap className="h-3 w-3" />
                 {t('compare.fastest')}
               </Badge>
             ) : null}
             {isBest ? (
-              <Badge className="gap-1 bg-amber-500/10 text-xs text-amber-600">
+              <Badge className="gap-1 bg-warning/10 text-xs text-warning">
                 <Trophy className="h-3 w-3" />
                 {t('compare.bestResponse')}
               </Badge>
             ) : null}
-            {isCompleted ? <CheckCircle className="h-4 w-4 text-green-500" /> : null}
+            {isCompleted ? <CheckCircle className="h-4 w-4 text-success" /> : null}
             {isFailed ? <XCircle className="h-4 w-4 text-destructive" /> : null}
-            {isTimeout ? <Clock className="h-4 w-4 text-yellow-500" /> : null}
+            {isTimeout ? <Clock className="h-4 w-4 text-warning" /> : null}
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export function CompareResultCard({
             </span>
           ) : null}
           {isFailed ? <span className="text-destructive">{t('compare.failed')}</span> : null}
-          {isTimeout ? <span className="text-yellow-600">{t('compare.timeout')}</span> : null}
+          {isTimeout ? <span className="text-warning">{t('compare.timeout')}</span> : null}
           {totalTokens > 0 ? (
             <span>
               {t('compare.tokens')}: {totalTokens.toLocaleString()}

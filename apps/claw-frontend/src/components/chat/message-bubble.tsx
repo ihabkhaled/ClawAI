@@ -181,14 +181,12 @@ function MessageBubbleBase({
         {!isUser && isTruncatedAtContextLimit ? (
           <div
             role="alert"
-            className="flex w-full items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200"
+            className="flex w-full items-start gap-2 rounded-md border border-warning/40 bg-warning-surface px-3 py-2 text-xs text-warning"
           >
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <div className="flex flex-col gap-0.5">
               <span className="font-semibold">{t('chat.truncated.title')}</span>
-              <span className="text-amber-700/90 dark:text-amber-200/80">
-                {t('chat.truncated.body')}
-              </span>
+              <span className="text-warning/90">{t('chat.truncated.body')}</span>
             </div>
           </div>
         ) : null}
@@ -262,10 +260,7 @@ function MessageBubbleBase({
               searchFirst={searchFirstMeta}
             />
             {isReRouted && originalProvider && originalModel ? (
-              <Badge
-                variant="outline"
-                className="gap-1 border-amber-500/50 text-xs text-amber-600 dark:text-amber-400"
-              >
+              <Badge variant="warning" className="gap-1 text-xs">
                 <RotateCcw className="h-3 w-3" />
                 Re-routed from {originalProvider}/{originalModel}
                 {originalScore !== null ? ` (${String(Math.round(originalScore * 100))}%)` : null}
@@ -273,38 +268,25 @@ function MessageBubbleBase({
             ) : null}
             {isReRouted && reRouteReasons.length > 0
               ? reRouteReasons.map((reason) => (
-                  <Badge
-                    key={reason}
-                    variant="outline"
-                    className="border-amber-500/30 text-xs text-amber-600 dark:text-amber-400"
-                  >
+                  <Badge key={reason} variant="warning" className="text-xs">
                     {RE_ROUTE_REASON_LABELS[reason] ?? reason}
                   </Badge>
                 ))
               : null}
             {judgeDecision === 'ACCEPT' ? (
-              <Badge
-                variant="outline"
-                className="gap-1 border-green-500/50 text-xs text-green-600 dark:text-green-400"
-              >
+              <Badge variant="success" className="gap-1 text-xs">
                 <ShieldCheck className="h-3 w-3" />
                 {t('chat.judgeVerified')}
               </Badge>
             ) : null}
             {judgeDecision === 'REVISE' ? (
-              <Badge
-                variant="outline"
-                className="gap-1 border-amber-500/50 text-xs text-amber-600 dark:text-amber-400"
-              >
+              <Badge variant="warning" className="gap-1 text-xs">
                 <RefreshCw className="h-3 w-3" />
                 {t('chat.judgeRevised')}
               </Badge>
             ) : null}
             {judgeDecision === 'ESCALATE' ? (
-              <Badge
-                variant="outline"
-                className="gap-1 border-blue-500/50 text-xs text-blue-600 dark:text-blue-400"
-              >
+              <Badge variant="info" className="gap-1 text-xs">
                 <ArrowUpCircle className="h-3 w-3" />
                 {t('chat.judgeEscalated')}
               </Badge>

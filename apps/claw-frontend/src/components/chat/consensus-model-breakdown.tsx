@@ -9,10 +9,10 @@ import type { ConsensusModelBreakdownProps } from '@/types/component.types';
 
 function StatusIcon({ status }: { status: ConsensusModelStatus }) {
   if (status === ConsensusModelStatus.COMPLETED) {
-    return <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />;
+    return <CheckCircle2 className="h-3.5 w-3.5 text-success" />;
   }
   if (status === ConsensusModelStatus.TIMEOUT) {
-    return <Clock className="h-3.5 w-3.5 text-yellow-500" />;
+    return <Clock className="h-3.5 w-3.5 text-warning" />;
   }
   return <XCircle className="h-3.5 w-3.5 text-destructive" />;
 }

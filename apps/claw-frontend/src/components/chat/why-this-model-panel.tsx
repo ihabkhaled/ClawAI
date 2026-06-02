@@ -97,7 +97,7 @@ export function WhyThisModelPanel({ message }: WhyThisModelPanelProps): React.Re
               <span>{message.routingMode ?? '—'}</span>
             </WhyThisModelRow>
             <WhyThisModelRow label={t('whyThisModel.fallbackUsed')}>
-              <span className={cn(usedFallback ? 'text-amber-600 dark:text-amber-400' : '')}>
+              <span className={cn(usedFallback ? 'text-warning' : '')}>
                 {usedFallback ? t('common.yes') : t('common.no')}
               </span>
             </WhyThisModelRow>

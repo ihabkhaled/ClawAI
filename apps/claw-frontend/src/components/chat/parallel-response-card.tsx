@@ -29,7 +29,7 @@ export function ParallelResponseCard({ response, isFastest, t }: ParallelRespons
                 {t('compare.fastest')}
               </Badge>
             ) : null}
-            {isCompleted ? <CheckCircle className="h-4 w-4 text-green-500" /> : null}
+            {isCompleted ? <CheckCircle className="h-4 w-4 text-success" /> : null}
             {isFailed ? <XCircle className="h-4 w-4 text-destructive" /> : null}
           </div>
         </div>

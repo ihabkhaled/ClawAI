@@ -19,7 +19,7 @@ export function CompareJudgeBadges({
 }: CompareJudgeBadgesProps): React.ReactElement | null {
   if (judgeState === CompareJudgeState.VERIFIED) {
     return (
-      <span className="inline-flex items-center gap-1 text-green-600">
+      <span className="inline-flex items-center gap-1 text-success">
         <ShieldCheck className="h-3.5 w-3.5" />
         {t('compare.judgeVerified')}
       </span>
@@ -27,7 +27,7 @@ export function CompareJudgeBadges({
   }
   if (judgeState === CompareJudgeState.REVISED) {
     return (
-      <span className="inline-flex items-center gap-1 text-amber-600">
+      <span className="inline-flex items-center gap-1 text-warning">
         <RefreshCw className="h-3.5 w-3.5" />
         {t('compare.judgeRevised')}
       </span>
@@ -35,7 +35,7 @@ export function CompareJudgeBadges({
   }
   if (judgeState === CompareJudgeState.ESCALATED) {
     return (
-      <span className="inline-flex items-center gap-1 text-blue-600">
+      <span className="inline-flex items-center gap-1 text-info">
         <ArrowUpCircle className="h-3.5 w-3.5" />
         {t('compare.judgeEscalated')}
       </span>
@@ -43,7 +43,7 @@ export function CompareJudgeBadges({
   }
   if (judgeState === CompareJudgeState.FAILED) {
     return (
-      <span className="inline-flex items-center gap-1 text-red-600">
+      <span className="inline-flex items-center gap-1 text-destructive">
         <AlertTriangle className="h-3.5 w-3.5" />
         {t('compare.judgeFailed')}
       </span>
@@ -51,7 +51,7 @@ export function CompareJudgeBadges({
   }
   if (judgeState === CompareJudgeState.UNAVAILABLE) {
     return (
-      <span className="inline-flex items-center gap-1 text-orange-600">
+      <span className="inline-flex items-center gap-1 text-warning">
         <AlertTriangle className="h-3.5 w-3.5" />
         {t('compare.judgeUnavailable')}
       </span>

@@ -62,7 +62,7 @@ export function ConsensusSynthesisCard({
             <ul className="space-y-1">
               {synthesis.agreements.map((item) => (
                 <li key={item} className="flex items-start gap-1.5 text-xs text-foreground">
-                  <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green-500" />
+                  <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
                   {item}
                 </li>
               ))}
@@ -78,7 +78,7 @@ export function ConsensusSynthesisCard({
             <ul className="space-y-1">
               {synthesis.disagreements.map((item) => (
                 <li key={item} className="flex items-start gap-1.5 text-xs text-foreground">
-                  <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-yellow-500" />
+                  <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
                   {item}
                 </li>
               ))}

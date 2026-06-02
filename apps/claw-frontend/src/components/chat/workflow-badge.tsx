@@ -25,8 +25,8 @@ export function WorkflowBadge({ workflow, searchFirst }: WorkflowBadgeProps) {
         className={cn(
           'gap-1 text-xs',
           searchDegraded
-            ? 'border-amber-500/50 text-amber-600 dark:text-amber-400'
-            : 'border-emerald-500/50 text-emerald-700 dark:text-emerald-400',
+            ? 'border-warning/50 text-warning'
+            : 'border-success/50 text-success',
         )}
       >
         <Globe className="h-3 w-3" />
@@ -54,7 +54,7 @@ export function WorkflowBadge({ workflow, searchFirst }: WorkflowBadgeProps) {
   return (
     <Badge
       variant="outline"
-      className="gap-1 border-amber-500/50 text-xs text-amber-600 dark:text-amber-400"
+      className="gap-1 border-warning/50 text-xs text-warning"
     >
       {t('chat.workflow.unavailable', { workflow: String(workflow) })}
     </Badge>
