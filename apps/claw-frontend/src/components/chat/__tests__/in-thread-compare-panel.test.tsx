@@ -48,6 +48,7 @@ const baseProps = {
   onResearchModeChange: vi.fn(),
   selectedFileIds: [],
   onSelectedFileIdsChange: vi.fn(),
+  onIngestFiles: vi.fn(),
   t,
 };
 

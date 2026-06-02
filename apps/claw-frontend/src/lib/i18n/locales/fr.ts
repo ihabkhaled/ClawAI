@@ -291,6 +291,11 @@ export const fr: TranslationDictionary = {
     notHelpful: 'Pas utile',
     feedbackSaved: 'Retour enregistré',
     attachFiles: 'Joindre des fichiers',
+    attachment: {
+      added: "{name} joint",
+      uploading: "Téléversement de la pièce jointe…",
+      dropToAttach: "Déposez des fichiers à joindre",
+    },
     noFiles: 'Aucun fichier téléchargé',
     selectedFiles: '{count} fichier(s) joint(s)',
     contextPacks: 'Packs de contexte',

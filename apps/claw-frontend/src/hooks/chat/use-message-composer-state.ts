@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { COMPOSER_SEED_STORAGE_KEY } from '@/constants/chat.constants';
 import { DEFAULT_RESEARCH_OPTIONS } from '@/constants/research.constants';
 import { ResearchMode } from '@/enums/research-mode.enum';
+import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
 import { useResearchProviders } from '@/hooks/research/use-research-providers';
 import { sendMessageSchema } from '@/lib/validation/message.schema';
 import type {
@@ -22,6 +23,11 @@ export const useMessageComposerState = ({
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
   const providerQuery = useResearchProviders();
+  const { ingestFiles, isUploading: isUploadingAttachment } = useComposerAttachments({
+    selectedFileIds,
+    onChange: setSelectedFileIds,
+    disabled: isPending,
+  });
 
   // Hydrate the composer from a one-shot seed written by the /chat
   // suggested-prompt buttons. Read on mount, then immediately clear the key
@@ -132,5 +138,7 @@ export const useMessageComposerState = ({
     handleSubmit,
     handleKeyDown,
     handleChange,
+    ingestFiles,
+    isUploadingAttachment,
   };
 };

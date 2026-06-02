@@ -677,6 +677,18 @@ export type RichPromptTextareaProps = {
   className?: string;
 };
 
+// Reusable wrapper that adds clipboard-paste + drag-and-drop file ingestion to
+// any composer surface. Renders its children, listens for paste/drop anywhere
+// inside, shows a drag overlay, and forwards captured files to `onFiles`. The
+// host owns the actual upload-and-attach via useComposerAttachments.
+export type ComposerDropzoneProps = {
+  onFiles: (files: FileList | File[]) => void;
+  disabled?: boolean;
+  className?: string;
+  overlayLabel?: string;
+  children: React.ReactNode;
+};
+
 export type ResearchToggleProps = {
   value: ResearchOptions;
   providers: SanitizedResearchProvider[];
@@ -1544,6 +1556,8 @@ export type InThreadComparePanelProps = {
   // as `fileIds`. The picker mirrors the main composer's attachment UX.
   selectedFileIds: string[];
   onSelectedFileIdsChange: (ids: string[]) => void;
+  // Paste/drop ingestion for the compare prompt area (upload-and-attach).
+  onIngestFiles: (files: FileList | File[]) => void;
   t: TranslateFunction;
 };
 

@@ -123,6 +123,8 @@ export type UseParallelComparePageReturn = {
   // parallel send payload as `fileIds` and reset on successful send.
   selectedFileIds: string[];
   setSelectedFileIds: (ids: string[]) => void;
+  // Paste/drop ingestion: uploads files and appends their ids to selectedFileIds.
+  ingestFiles: (files: FileList | File[]) => void;
   // Set to the locked PlanFeature when the latest send was rejected with a
   // PLAN_FEATURE_DISABLED 403 from the backend (judge/critic/research). The
   // page renders an UpgradeCtaBanner above the results when non-null;
@@ -172,6 +174,8 @@ export type UseInThreadCompareReturn = {
   // panel close.
   selectedFileIds: string[];
   setSelectedFileIds: (ids: string[]) => void;
+  // Paste/drop ingestion: uploads files and appends their ids to selectedFileIds.
+  ingestFiles: (files: FileList | File[]) => void;
 };
 
 // Declarative option for CompareResearchModeControl. `labelKey` is an i18n

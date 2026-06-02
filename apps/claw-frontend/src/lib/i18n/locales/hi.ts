@@ -290,6 +290,11 @@ export const hi: TranslationDictionary = {
     notHelpful: 'सहायक नहीं',
     feedbackSaved: 'फ़ीडबैक सहेजा गया',
     attachFiles: 'फ़ाइलें संलग्न करें',
+    attachment: {
+      added: "{name} संलग्न किया गया",
+      uploading: "अनुलग्नक अपलोड हो रहा है…",
+      dropToAttach: "संलग्न करने के लिए फ़ाइलें छोड़ें",
+    },
     noFiles: 'अभी तक कोई फ़ाइल अपलोड नहीं',
     selectedFiles: '{count} फ़ाइल(ें) संलग्न',
     contextPacks: 'कॉन्टेक्स्ट पैक',

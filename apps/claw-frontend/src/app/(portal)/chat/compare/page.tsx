@@ -5,6 +5,7 @@ import { ArrowRight, GitCompareArrows, Loader2, Send } from 'lucide-react';
 import { CompareCriticControls } from '@/components/chat/compare-critic-controls';
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
 import { CompareResearchModeControl } from '@/components/chat/compare-research-mode-control';
+import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { DailyTokenIndicator } from '@/components/chat/daily-token-indicator';
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
@@ -52,6 +53,7 @@ export default function ComparePage() {
     setResearchMode,
     selectedFileIds,
     setSelectedFileIds,
+    ingestFiles,
     upgradeFeature,
     clearUpgradeFeature,
   } = useParallelComparePage();
@@ -111,12 +113,14 @@ export default function ComparePage() {
         <div className="space-y-4 lg:col-span-2">
           <Card>
             <CardContent className="pt-4">
-              <Textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder={t('compare.sendPrompt')}
-                className="min-h-[100px] resize-y"
-              />
+              <ComposerDropzone onFiles={ingestFiles} disabled={isPending || isPolling}>
+                <Textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder={t('compare.sendPrompt')}
+                  className="min-h-[100px] resize-y"
+                />
+              </ComposerDropzone>
               <div className="mt-3 flex items-center justify-between gap-2">
                 {selectedModels.length > 0 ? (
                   <FileAttachmentPicker

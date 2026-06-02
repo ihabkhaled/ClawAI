@@ -292,6 +292,11 @@ export const de: TranslationDictionary = {
     notHelpful: 'Nicht hilfreich',
     feedbackSaved: 'Feedback gespeichert',
     attachFiles: 'Dateien anhängen',
+    attachment: {
+      added: "{name} angehängt",
+      uploading: "Anhang wird hochgeladen…",
+      dropToAttach: "Dateien zum Anhängen ablegen",
+    },
     noFiles: 'Noch keine Dateien hochgeladen',
     selectedFiles: '{count} Datei(en) angehängt',
     contextPacks: 'Kontext-Packs',

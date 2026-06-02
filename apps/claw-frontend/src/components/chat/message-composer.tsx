@@ -1,5 +1,6 @@
 import { Send } from 'lucide-react';
 
+import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ModelSelector } from '@/components/chat/model-selector';
 import { PreviewContextButton } from '@/components/chat/preview-context-button';
@@ -35,6 +36,8 @@ export function MessageComposer({
     handleSubmit,
     handleKeyDown,
     handleChange,
+    ingestFiles,
+    isUploadingAttachment,
   } = useMessageComposerState({ onSend, isPending, selectedModel });
 
   const hasContent = content.trim().length > 0;
@@ -51,10 +54,15 @@ export function MessageComposer({
   // on mobile, and the same wrapper also clamps max-height via the CSS vars
   // --composer-max-height-{mobile,desktop}.
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="safe-bottom flex h-full min-h-0 flex-col gap-1.5"
+    <ComposerDropzone
+      onFiles={ingestFiles}
+      disabled={isPending}
+      className="safe-bottom flex h-full min-h-0 flex-col"
     >
+      <form
+        onSubmit={handleSubmit}
+        className="flex h-full min-h-0 flex-col gap-1.5"
+      >
       {/* Mobile top row — compact model + research + preview. */}
       <div className="flex shrink-0 items-center gap-2 overflow-x-auto pb-0.5 md:hidden [&>*]:shrink-0">
         <ModelSelector
@@ -161,7 +169,15 @@ export function MessageComposer({
         </Button>
       </div>
 
-      {validationError ? <p className="mt-1 text-sm text-destructive">{validationError}</p> : null}
-    </form>
+        {validationError ? (
+          <p className="mt-1 text-sm text-destructive">{validationError}</p>
+        ) : null}
+        {isUploadingAttachment ? (
+          <p className="mt-1 text-xs text-muted-foreground" aria-live="polite">
+            {t('chat.attachment.uploading')}
+          </p>
+        ) : null}
+      </form>
+    </ComposerDropzone>
   );
 }

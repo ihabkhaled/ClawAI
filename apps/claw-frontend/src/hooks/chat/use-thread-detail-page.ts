@@ -84,6 +84,7 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
       allowResearchMode: canResearch,
       selectedFileIds: compare.selectedFileIds,
       onSelectedFileIdsChange: compare.setSelectedFileIds,
+      onIngestFiles: compare.ingestFiles,
       t,
     },
     threadSettingsProps: {

@@ -285,6 +285,11 @@ export type TranslationDictionary = {
     notHelpful: string;
     feedbackSaved: string;
     attachFiles: string;
+    attachment: {
+      added: string;
+      uploading: string;
+      dropToAttach: string;
+    };
     noFiles: string;
     selectedFiles: string;
     contextPacks: string;

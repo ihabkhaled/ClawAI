@@ -148,6 +148,36 @@ export type UseImageErrorStateReturn = {
   closePicker: () => void;
 };
 
+// Reusable composer attachment ingestion (paste / drop / file-input). Uploads
+// each file through the existing secure upload pipeline and, on success, adds
+// the resulting fileId to the caller's selected-file list so it is sent to the
+// model exactly like a paperclip-picked file.
+export type UseComposerAttachmentsParams = {
+  selectedFileIds: string[];
+  onChange: (fileIds: string[]) => void;
+  disabled?: boolean;
+};
+
+export type UseComposerAttachmentsReturn = {
+  ingestFiles: (files: FileList | File[] | null | undefined) => void;
+  isUploading: boolean;
+  pendingCount: number;
+};
+
+export type UseComposerDropzoneParams = {
+  onFiles: (files: File[]) => void;
+  disabled?: boolean;
+};
+
+export type UseComposerDropzoneReturn = {
+  isDragActive: boolean;
+  handlePaste: (event: React.ClipboardEvent) => void;
+  handleDragOver: (event: React.DragEvent) => void;
+  handleDragEnter: (event: React.DragEvent) => void;
+  handleDragLeave: (event: React.DragEvent) => void;
+  handleDrop: (event: React.DragEvent) => void;
+};
+
 export type UseImageGenerationBubbleStateParams = {
   generationId: string;
 };
@@ -182,6 +212,10 @@ export type UseMessageComposerStateReturn = {
   handleSubmit: (e: React.FormEvent) => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   handleChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  // Paste / drop ingestion — uploads files and appends their ids to
+  // selectedFileIds so they are sent to the model like picked files.
+  ingestFiles: (files: FileList | File[]) => void;
+  isUploadingAttachment: boolean;
 };
 
 // Inputs to the keyboard / autosize / IME controller for RichPromptTextarea.

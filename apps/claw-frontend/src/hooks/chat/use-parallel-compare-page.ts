@@ -6,6 +6,7 @@ import { useJudgeModelOptions } from '@/hooks/chat/use-judge-model-options';
 import { useParallelCompare } from '@/hooks/chat/use-parallel-compare';
 import { useParallelPoll } from '@/hooks/chat/use-parallel-poll';
 import { useParallelStream } from '@/hooks/chat/use-parallel-stream';
+import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
 import { useTranslation } from '@/lib/i18n';
 import type { ParallelModelTarget, UseParallelComparePageReturn } from '@/types';
 
@@ -21,6 +22,10 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
   const [criticModel, setCriticModel] = useState<string | null>(null);
   const [researchMode, setResearchMode] = useState<CompareResearchMode>(CompareResearchMode.NONE);
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
+  const { ingestFiles } = useComposerAttachments({
+    selectedFileIds,
+    onChange: setSelectedFileIds,
+  });
   const { send, result, isPending, isError, upgradeFeature, clearUpgradeFeature } =
     useParallelCompare();
 
@@ -120,6 +125,7 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     setResearchMode,
     selectedFileIds,
     setSelectedFileIds,
+    ingestFiles,
     upgradeFeature,
     clearUpgradeFeature,
   };

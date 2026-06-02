@@ -292,6 +292,11 @@ export const it: TranslationDictionary = {
     notHelpful: 'Non utile',
     feedbackSaved: 'Feedback salvato',
     attachFiles: 'Allega file',
+    attachment: {
+      added: "{name} allegato",
+      uploading: "Caricamento allegato…",
+      dropToAttach: "Trascina i file per allegarli",
+    },
     noFiles: 'Nessun file caricato',
     selectedFiles: '{count} file allegato/i',
     contextPacks: 'Pacchetti di contesto',

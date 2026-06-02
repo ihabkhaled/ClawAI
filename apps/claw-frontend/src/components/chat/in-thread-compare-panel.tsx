@@ -3,6 +3,7 @@ import { CheckCircle, Loader2, Play, X } from 'lucide-react';
 import { CompareCriticControls } from '@/components/chat/compare-critic-controls';
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
 import { CompareResearchModeControl } from '@/components/chat/compare-research-mode-control';
+import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
@@ -38,6 +39,7 @@ export function InThreadComparePanel({
   allowResearchMode,
   selectedFileIds,
   onSelectedFileIdsChange,
+  onIngestFiles,
   t,
 }: InThreadComparePanelProps): React.ReactElement {
   return (
@@ -95,7 +97,7 @@ export function InThreadComparePanel({
           ) : null}
         </div>
 
-        <div className="space-y-4">
+        <ComposerDropzone onFiles={onIngestFiles} disabled={isPending} className="space-y-4">
           <div className="flex items-center gap-2">
             <FileAttachmentPicker
               selectedFileIds={selectedFileIds}
@@ -138,7 +140,7 @@ export function InThreadComparePanel({
               </span>
             </div>
           ) : null}
-        </div>
+        </ComposerDropzone>
       </CardContent>
     </Card>
   );

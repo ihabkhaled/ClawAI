@@ -292,6 +292,11 @@ export const ru: TranslationDictionary = {
     notHelpful: 'Бесполезно',
     feedbackSaved: 'Отзыв сохранён',
     attachFiles: 'Прикрепить файлы',
+    attachment: {
+      added: "{name} прикреплён",
+      uploading: "Загрузка вложения…",
+      dropToAttach: "Перетащите файлы для прикрепления",
+    },
     noFiles: 'Файлы ещё не загружены',
     selectedFiles: 'Прикреплено файлов: {count}',
     contextPacks: 'Пакеты контекста',

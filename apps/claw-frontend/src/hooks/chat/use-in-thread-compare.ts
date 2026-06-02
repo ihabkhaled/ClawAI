@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { MAX_PARALLEL_MODELS, MIN_PARALLEL_MODELS } from '@/constants';
 import { CompareResearchMode } from '@/enums';
 import { useJudgeModelOptions } from '@/hooks/chat/use-judge-model-options';
+import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
 import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
@@ -34,6 +35,10 @@ export function useInThreadCompare({
   const [criticModel, setCriticModel] = useState<string | null>(null);
   const [researchMode, setResearchMode] = useState<CompareResearchMode>(CompareResearchMode.NONE);
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
+  const { ingestFiles } = useComposerAttachments({
+    selectedFileIds,
+    onChange: setSelectedFileIds,
+  });
 
   const mutation = useMutation({
     mutationFn: (data: ParallelRequest) => {
@@ -159,5 +164,6 @@ export function useInThreadCompare({
     setResearchMode,
     selectedFileIds,
     setSelectedFileIds,
+    ingestFiles,
   };
 }

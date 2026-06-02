@@ -289,6 +289,11 @@ export const ar: TranslationDictionary = {
     notHelpful: 'غير مفيد',
     feedbackSaved: 'تم حفظ التقييم',
     attachFiles: 'إرفاق ملفات',
+    attachment: {
+      added: "تم إرفاق {name}",
+      uploading: "جارٍ رفع المرفق…",
+      dropToAttach: "أفلِت الملفات للإرفاق",
+    },
     noFiles: 'لم يتم رفع أي ملفات بعد',
     selectedFiles: 'تم إرفاق {count} ملف',
     contextPacks: 'حزم السياق',

@@ -290,6 +290,11 @@ export const es: TranslationDictionary = {
     notHelpful: 'No útil',
     feedbackSaved: 'Valoración guardada',
     attachFiles: 'Adjuntar archivos',
+    attachment: {
+      added: "{name} adjuntado",
+      uploading: "Subiendo adjunto…",
+      dropToAttach: "Suelta archivos para adjuntar",
+    },
     noFiles: 'Aún no se han subido archivos',
     selectedFiles: '{count} archivo(s) adjunto(s)',
     contextPacks: 'Paquetes de contexto',
