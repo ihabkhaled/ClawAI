@@ -333,6 +333,21 @@ export type ResolvedCrumb = {
   isCurrent: boolean;
 };
 
+// Reusable confirmation dialog built on the shadcn Dialog primitive (no new
+// radix dependency). Controlled via `open`/`onOpenChange`; `onConfirm` fires
+// then the host closes it. `isConfirming` shows a spinner + disables actions.
+export type ConfirmDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description?: string;
+  confirmLabel: string;
+  cancelLabel: string;
+  onConfirm: () => void;
+  destructive?: boolean;
+  isConfirming?: boolean;
+};
+
 export type PortalContentProps = {
   children: React.ReactNode;
 };
@@ -1601,6 +1616,13 @@ export type ChatThreadShellProps = {
   threadSettingsToggleOpen: () => void;
   isDeleting: boolean;
   handleDelete: () => void;
+  // Delete-confirmation dialog state (data-loss guard for thread deletion).
+  deleteConfirmOpen: boolean;
+  openDeleteConfirm: () => void;
+  setDeleteConfirmOpen: (open: boolean) => void;
+  deleteConfirmTitle: string;
+  deleteConfirmDescription: string;
+  cancelLabel: string;
   backToThreadsHref: string;
   backToThreadsLabel: string;
   threadSettingsLabel: string;

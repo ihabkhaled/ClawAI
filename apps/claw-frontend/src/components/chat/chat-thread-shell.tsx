@@ -8,6 +8,7 @@ import { InThreadComparePanel } from '@/components/chat/in-thread-compare-panel'
 import { MessageComposer } from '@/components/chat/message-composer';
 import { ThreadSettings } from '@/components/chat/thread-settings';
 import { VirtualizedMessages } from '@/components/chat/virtualized-messages';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Button } from '@/components/ui/button';
 import type { ChatThreadShellProps } from '@/types';
@@ -78,7 +79,7 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
             variant="ghost"
             size="icon-sm"
             className="text-destructive hover:text-destructive sm:size-auto sm:h-9 sm:w-auto sm:px-3"
-            onClick={props.handleDelete}
+            onClick={props.openDeleteConfirm}
             disabled={props.isDeleting}
             aria-label={props.deleteLabel}
           >
@@ -130,6 +131,18 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={props.deleteConfirmOpen}
+        onOpenChange={props.setDeleteConfirmOpen}
+        title={props.deleteConfirmTitle}
+        description={props.deleteConfirmDescription}
+        confirmLabel={props.deleteLabel}
+        cancelLabel={props.cancelLabel}
+        onConfirm={props.handleDelete}
+        isConfirming={props.isDeleting}
+        destructive
+      />
     </div>
   );
 }

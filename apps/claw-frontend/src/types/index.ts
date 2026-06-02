@@ -235,6 +235,7 @@ export type {
   BreadcrumbCrumb,
   BreadcrumbProps,
   ResolvedCrumb,
+  ConfirmDialogProps,
   PortalContentProps,
   ProvidersProps,
   ThemeProviderProps,

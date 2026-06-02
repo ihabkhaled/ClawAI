@@ -9,6 +9,7 @@ import { useEditableTitle } from '@/hooks/chat/use-editable-title';
 import { useInThreadCompare } from '@/hooks/chat/use-in-thread-compare';
 import { useResizableComposer } from '@/hooks/chat/use-resizable-composer';
 import { useThreadDataController } from '@/hooks/chat/use-thread-data-controller';
+import { useToggle } from '@/hooks/common/use-toggle';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type {
   ChatThreadShellProps,
@@ -37,6 +38,7 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
   const canResearch = planFeatures.has(PlanFeature.ALLOW_RESEARCH_MODE);
   const canCritic = planFeatures.has(PlanFeature.ALLOW_CRITIC_REVIEW);
   const title = data.thread?.title ?? t('chat.untitled');
+  const deleteConfirm = useToggle(false);
 
   const shellProps: ChatThreadShellProps = {
     threadId,
@@ -52,6 +54,18 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
     threadSettingsToggleOpen: data.threadSettings.toggleOpen,
     isDeleting: data.isDeleting,
     handleDelete: data.handleDelete,
+    deleteConfirmOpen: deleteConfirm.isOpen,
+    openDeleteConfirm: deleteConfirm.open,
+    setDeleteConfirmOpen: (open: boolean): void => {
+      if (open) {
+        deleteConfirm.open();
+      } else {
+        deleteConfirm.close();
+      }
+    },
+    deleteConfirmTitle: t('chat.deleteThread'),
+    deleteConfirmDescription: t('chat.deleteThreadConfirm'),
+    cancelLabel: t('common.cancel'),
     backToThreadsHref: ROUTES.CHAT,
     backToThreadsLabel: t('chat.backToThreads'),
     threadSettingsLabel: t('chat.threadSettings'),
