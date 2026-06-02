@@ -13,6 +13,14 @@ const connectionString = process.env['AUTH_DATABASE_URL'];
 if (!connectionString) {
   throw new Error('AUTH_DATABASE_URL must be set when running prisma db seed');
 }
+// Add-only by default (SEED_RECONCILE_PERMISSIONS=false): first DB init still
+// seeds the full SYSTEM_ROLE_SEED (the role row is created here and starts with
+// zero grants, so every seed permission is ADDED), but later boots NEVER remove
+// permissions an admin granted via the UI — that is what kept resetting Compare/
+// Judge after `docker up`. Set the flag to 'true' to hard-reconcile (add AND
+// remove) the two system roles back to the canonical seed.
+const RECONCILE_ENABLED =
+  (process.env['SEED_RECONCILE_PERMISSIONS'] ?? 'false').toLowerCase() === 'true';
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 
 async function upsertSystemRole(def: (typeof SYSTEM_ROLE_SEED)[number]): Promise<string> {
@@ -27,14 +35,15 @@ async function upsertSystemRole(def: (typeof SYSTEM_ROLE_SEED)[number]): Promise
       isAssignable: true,
     },
   });
-  // System roles are code-owned: reconcile grants to the seed (add missing,
-  // remove extras) on every run so the platform baseline access policy is
-  // deterministic. Admins customise via CUSTOM roles, which are never touched.
   const wanted = new Set<string>(def.permissions);
   const existing = await prisma.rolePermission.findMany({ where: { roleId: role.id } });
   const existingSet = new Set(existing.map((g) => g.permission));
   const toAdd = def.permissions.filter((permission) => !existingSet.has(permission));
-  const toRemove = existing.filter((g) => !wanted.has(g.permission)).map((g) => g.permission);
+  // Only strip extras when explicitly asked to hard-reconcile. Add-only mode
+  // leaves admin-granted permissions in place across restarts.
+  const toRemove = RECONCILE_ENABLED
+    ? existing.filter((g) => !wanted.has(g.permission)).map((g) => g.permission)
+    : [];
   if (toAdd.length > 0) {
     await prisma.rolePermission.createMany({
       data: toAdd.map((permission) => ({ roleId: role.id, permission })),

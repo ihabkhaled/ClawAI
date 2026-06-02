@@ -20,9 +20,12 @@ import {
 // UI silently denies new features for upgraded installs.
 //
 // This service closes that gap: every boot it diffs the canonical
-// SYSTEM_ROLE_SEED against role_permissions, inserts the missing grants, and
-// (when SEED_RECONCILE_PERMISSIONS=true) removes extras that aren't in the
-// seed. Custom (non-system) roles are NEVER touched.
+// SYSTEM_ROLE_SEED against role_permissions and inserts the missing grants.
+// Removing extras that aren't in the seed is gated behind
+// SEED_RECONCILE_PERMISSIONS (default 'false' = add-only), so permissions an
+// admin granted via the UI — e.g. JUDGE_USE on the USER role — survive every
+// `docker up`. Set the flag to 'true' to hard-reconcile back to the seed.
+// Custom (non-system) roles are NEVER touched either way.
 @Injectable()
 export class PermissionsSeederService implements OnModuleInit {
   private readonly logger = new Logger(PermissionsSeederService.name);

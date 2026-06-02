@@ -854,8 +854,9 @@ ENCRYPTION_KEY=${ENCRYPTION_KEY}
 ADMIN_EMAIL=${ADMIN_EMAIL}
 ADMIN_USERNAME=${ADMIN_USERNAME}
 ADMIN_PASSWORD=${ADMIN_PASS}
-# Reconcile system-role permissions on every auth-service boot (drift fix).
-SEED_RECONCILE_PERMISSIONS=true
+# Permission reconcile on auth boot: false=add-only (first init seeds fully,
+# later boots only ADD new seed permissions, never remove admin-granted extras).
+SEED_RECONCILE_PERMISSIONS=false
 
 # =============================================================================
 # Frontend

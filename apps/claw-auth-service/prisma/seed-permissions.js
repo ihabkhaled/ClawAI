@@ -85,7 +85,9 @@ if (!connectionString) {
   throw new Error('AUTH_DATABASE_URL must be set when running seed-permissions');
 }
 
-const reconcileEnabled = (process.env.SEED_RECONCILE_PERMISSIONS ?? 'true').toLowerCase() !== 'false';
+// Add-only by default (matches prisma/seed.ts + PermissionsSeederService): only
+// hard-reconcile (remove extras) when SEED_RECONCILE_PERMISSIONS=true.
+const reconcileEnabled = (process.env.SEED_RECONCILE_PERMISSIONS ?? 'false').toLowerCase() === 'true';
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 

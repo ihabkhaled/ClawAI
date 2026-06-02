@@ -20,12 +20,14 @@ const appConfigSchema = z.object({
   ADMIN_PASSWORD: z.string().min(8).optional(),
 
   // System-role permissions reconciliation gate (auth-service boot seeder).
-  // 'true' (default) makes the boot-time seeder ADD missing grants AND REMOVE
-  // extras so system roles always match the canonical SYSTEM_ROLE_SEED list.
-  // 'false' makes the seeder ADD-only, preserving operator-applied extras.
+  // 'false' (default) makes the boot-time seeder ADD-only: first init seeds the
+  // full SYSTEM_ROLE_SEED, later boots only ADD newly-introduced seed grants and
+  // NEVER remove extras an admin granted via the UI (so Compare/Judge survive a
+  // restart). 'true' hard-reconciles — ADD missing AND REMOVE extras so the two
+  // system roles always match the canonical SYSTEM_ROLE_SEED list.
   SEED_RECONCILE_PERMISSIONS: z
     .enum(['true', 'false'])
-    .default('true')
+    .default('false')
     .transform((v) => v === 'true'),
 });
 
