@@ -141,7 +141,7 @@ export function LoginForm(): React.ReactElement {
               />
             ) : null}
 
-            <Button type="submit" className="w-full" disabled={isPending}>
+            <Button type="submit" className="w-full" isLoading={isPending}>
               {isPending ? t('auth.signingIn') : t('auth.loginButton')}
             </Button>
           </form>

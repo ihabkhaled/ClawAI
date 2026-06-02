@@ -28,7 +28,7 @@ export default function RegisterPage(): React.ReactElement {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="flex min-h-dvh items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
@@ -105,7 +105,7 @@ export default function RegisterPage(): React.ReactElement {
                 </div>
               ) : null}
 
-              <Button type="submit" className="w-full" disabled={isPending}>
+              <Button type="submit" className="w-full" isLoading={isPending}>
                 {isPending ? t('auth.registering') : t('auth.registerButton')}
               </Button>
             </form>
