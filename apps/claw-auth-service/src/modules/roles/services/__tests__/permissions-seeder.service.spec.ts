@@ -3,6 +3,7 @@ import { Permission, UserRole } from '@claw/shared-types';
 import { AppConfig } from '../../../../app/config/app.config';
 import { PermissionsSeederService } from '../permissions-seeder.service';
 import { type PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
+import { USER_DEFAULT_PERMISSIONS } from '../../../../common/constants/rbac.constants';
 
 // Lightweight in-memory Prisma double. Only the four methods reconcile() uses
 // are stubbed; everything else throws if hit, so tests catch accidental
@@ -80,21 +81,15 @@ describe('PermissionsSeederService', () => {
               Object.values(Permission).map((p) => ({ permission: p })),
             );
           }
-          // USER: missing COMPARE_USE + FILES_USE (the live prod drift).
-          return Promise.resolve([
-            { permission: Permission.CHAT_USE },
-            { permission: Permission.CHAT_READ_OWN },
-            { permission: Permission.CHAT_DELETE_OWN },
-            { permission: Permission.WORKSPACE_VIEW },
-            { permission: Permission.WORKSPACE_APP_CONFIG_VIEW },
-            { permission: Permission.WORKSPACE_CONNECT_OWN },
-            { permission: Permission.WORKSPACE_READ_OWN },
-            { permission: Permission.WORKSPACE_SYNC_OWN },
-            { permission: Permission.WORKSPACE_ACTION_OWN },
-            { permission: Permission.MODEL_USE_ALLOWED },
-            { permission: Permission.AGENT_USE },
-            { permission: Permission.RESEARCH_USE },
-          ]);
+          // USER is behind the seed by COMPARE_USE + FILES_USE (the exact live
+          // prod drift this PR fixes). Derive the "present" set from the
+          // canonical constant minus those two so the fixture self-updates when
+          // USER_DEFAULT_PERMISSIONS grows.
+          return Promise.resolve(
+            USER_DEFAULT_PERMISSIONS.filter(
+              (p) => p !== Permission.COMPARE_USE && p !== Permission.FILES_USE,
+            ).map((permission) => ({ permission })),
+          );
         },
       );
 
@@ -108,7 +103,7 @@ describe('PermissionsSeederService', () => {
       );
       expect(userResult?.added).toHaveLength(2);
       expect(userResult?.removed).toEqual([]);
-      expect(userResult?.finalGrantCount).toBe(14);
+      expect(userResult?.finalGrantCount).toBe(USER_DEFAULT_PERMISSIONS.length);
 
       // createMany must be called once for USER with exactly the 2 missing
       // permissions, never for ADMIN (which has no drift).
@@ -143,21 +138,11 @@ describe('PermissionsSeederService', () => {
               Object.values(Permission).map((p) => ({ permission: p })),
             );
           }
+          // Canonical USER set PLUS one EXTRA (ADMIN_USERS_MANAGE) that is not
+          // in the seed. Deriving the base from the constant keeps this fixture
+          // current when USER_DEFAULT_PERMISSIONS changes.
           return Promise.resolve([
-            { permission: Permission.CHAT_USE },
-            { permission: Permission.CHAT_READ_OWN },
-            { permission: Permission.CHAT_DELETE_OWN },
-            { permission: Permission.WORKSPACE_VIEW },
-            { permission: Permission.WORKSPACE_APP_CONFIG_VIEW },
-            { permission: Permission.WORKSPACE_CONNECT_OWN },
-            { permission: Permission.WORKSPACE_READ_OWN },
-            { permission: Permission.WORKSPACE_SYNC_OWN },
-            { permission: Permission.WORKSPACE_ACTION_OWN },
-            { permission: Permission.MODEL_USE_ALLOWED},
-            { permission: Permission.AGENT_USE },
-            { permission: Permission.RESEARCH_USE },
-            { permission: Permission.COMPARE_USE },
-            { permission: Permission.FILES_USE },
+            ...USER_DEFAULT_PERMISSIONS.map((permission) => ({ permission })),
             { permission: Permission.ADMIN_USERS_MANAGE },
           ]);
         },
@@ -228,22 +213,11 @@ describe('PermissionsSeederService', () => {
               Object.values(Permission).map((p) => ({ permission: p })),
             );
           }
-          return Promise.resolve([
-            { permission: Permission.CHAT_USE },
-            { permission: Permission.CHAT_READ_OWN },
-            { permission: Permission.CHAT_DELETE_OWN },
-            { permission: Permission.WORKSPACE_VIEW },
-            { permission: Permission.WORKSPACE_APP_CONFIG_VIEW },
-            { permission: Permission.WORKSPACE_CONNECT_OWN },
-            { permission: Permission.WORKSPACE_READ_OWN },
-            { permission: Permission.WORKSPACE_SYNC_OWN },
-            { permission: Permission.WORKSPACE_ACTION_OWN },
-            { permission: Permission.MODEL_USE_ALLOWED },
-            { permission: Permission.AGENT_USE },
-            { permission: Permission.RESEARCH_USE },
-            { permission: Permission.COMPARE_USE },
-            { permission: Permission.FILES_USE },
-          ]);
+          // Derive from the canonical constant so this "no drift" fixture
+          // never goes stale when USER_DEFAULT_PERMISSIONS gains a permission.
+          return Promise.resolve(
+            USER_DEFAULT_PERMISSIONS.map((permission) => ({ permission })),
+          );
         },
       );
 

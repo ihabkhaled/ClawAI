@@ -31,6 +31,7 @@ export const USER_DEFAULT_PERMISSIONS: Permission[] = [
   Permission.AGENT_USE,
   Permission.RESEARCH_USE,
   Permission.COMPARE_USE,
+  Permission.JUDGE_USE,
   Permission.FILES_USE,
 ];
 
