@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import { REDUCED_MOTION_QUERY } from '@/constants/media-query.constants';
 import { useIsomorphicLayoutEffect } from '@/hooks/common/use-isomorphic-layout-effect';
 
 // SSR-safe `window.matchMedia` wrapper. On the server (no window) it always
@@ -38,4 +39,12 @@ export function useMediaQuery(query: string): boolean {
   }, [query]);
 
   return matches;
+}
+
+// True when the user has asked the OS to minimise non-essential motion.
+// JS-side companion to the global `@media (prefers-reduced-motion)` CSS guard —
+// lets motion-driving hooks (stagger, page transition, gestures) skip work
+// entirely rather than relying on the animation being CSS-cancelled.
+export function useReducedMotion(): boolean {
+  return useMediaQuery(REDUCED_MOTION_QUERY);
 }

@@ -16,6 +16,14 @@ const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
+        // Status variants — soft tinted surface + solid status foreground.
+        // Use for health/availability/state pills (vs. the solid `default`).
+        success:
+          "border-transparent bg-success-surface text-success",
+        warning:
+          "border-transparent bg-warning-surface text-warning",
+        info:
+          "border-transparent bg-info-surface text-info",
       },
     },
     defaultVariants: {

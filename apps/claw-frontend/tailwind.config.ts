@@ -65,18 +65,23 @@ const config: Config = {
           panel: "hsl(var(--surface-panel))",
           "panel-subtle": "hsl(var(--surface-panel-subtle))",
           elevated: "hsl(var(--surface-elevated))",
+          raised: "hsl(var(--surface-raised))",
         },
+        overlay: "hsl(var(--overlay))",
         success: {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
+          surface: "hsl(var(--status-success-surface))",
         },
         warning: {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
+          surface: "hsl(var(--status-warning-surface))",
         },
         info: {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
+          surface: "hsl(var(--status-info-surface))",
         },
       },
       boxShadow: {
