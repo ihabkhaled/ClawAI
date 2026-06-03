@@ -34,7 +34,14 @@ export class EntitlementsAdapter {
   private readonly timeoutMs: number;
 
   constructor(options: EntitlementsAdapterOptions) {
-    this.authServiceUrl = options.authServiceUrl.replace(/\/+$/, '');
+    // Strip trailing slashes with a linear scan instead of a backtracking regex.
+    // /\/+$/ is a polynomial-ReDoS pattern on uncontrolled input (CodeQL alert
+    // #25); a single reverse walk is O(n) and cannot backtrack.
+    let end = options.authServiceUrl.length;
+    while (end > 0 && options.authServiceUrl[end - 1] === '/') {
+      end -= 1;
+    }
+    this.authServiceUrl = options.authServiceUrl.slice(0, end);
     this.timeoutMs = options.timeoutMs ?? 5000;
   }
 

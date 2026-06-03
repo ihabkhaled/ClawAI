@@ -21,9 +21,11 @@
 // Env: QA_ADMIN_EMAIL, QA_ADMIN_PASS (defaults admin@claw.local / ClawAdmin123!)
 
 import { randomUUID } from 'node:crypto';
-import { mkdir, open } from 'node:fs/promises';
+import { mkdir, open, readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { Agent } from 'undici';
 
 import {
   buildEnvelope,
@@ -86,14 +88,34 @@ async function writeJsonl(handle, obj) {
   await handle.write(`${JSON.stringify(obj)}\n`);
 }
 
-// fetch wrapper that tolerates self-signed certs on https://localhost.
-// claw.sh up issues a mkcert-signed leaf cert that node's built-in trust
-// store doesn't know about; rather than wire up undici Agents we scope
-// NODE_TLS_REJECT_UNAUTHORIZED=0 to this process only (operator diagnostic,
-// never propagates to the rest of the system).
+// fetch wrapper for https://localhost backed by mkcert leaf certs.
+// `claw.sh up` issues a mkcert-signed cert whose CA node's built-in trust store
+// doesn't know about. Instead of disabling certificate validation (a CodeQL
+// High — alert #26), we build an undici Agent that *trusts the local mkcert root
+// CA* (certs/rootCA.pem, or whatever NODE_EXTRA_CA_CERTS points at). Validation
+// stays ON — we just teach the probe about the local CA.
+let httpsDispatcher; // undici Agent | null, resolved lazily once per process
+
+async function getHttpsDispatcher() {
+  if (httpsDispatcher !== undefined) return httpsDispatcher;
+  const caPath = process.env.NODE_EXTRA_CA_CERTS ?? resolve(WORKTREE_ROOT, 'certs', 'rootCA.pem');
+  try {
+    const ca = await readFile(caPath, 'utf-8');
+    httpsDispatcher = new Agent({ connect: { ca } });
+  } catch {
+    // No local CA on disk — fall back to the default trust store (works when the
+    // operator exported NODE_EXTRA_CA_CERTS at process start). Never insecure.
+    httpsDispatcher = null;
+  }
+  return httpsDispatcher;
+}
+
 async function fetchLocal(url, init) {
-  if (url.startsWith('https:') && process.env.NODE_TLS_REJECT_UNAUTHORIZED !== '0') {
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  if (url.startsWith('https:')) {
+    const dispatcher = await getHttpsDispatcher();
+    if (dispatcher !== null) {
+      return fetch(url, { ...init, dispatcher });
+    }
   }
   return fetch(url, init);
 }

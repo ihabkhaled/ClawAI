@@ -29,7 +29,11 @@ export class WebhookReceiverManager {
     headers: Record<string, string | string[] | undefined>,
     ipAddress: string | null,
   ): Promise<WebhookReceiveResult> {
-    if (!Buffer.isBuffer(rawBody)) {
+    // rawBody arrives from express body-parser (validated by RawWebhookBodyPipe).
+    // Re-assert the type with an Array.isArray + Buffer.isBuffer barrier so a
+    // tampered array/object payload can never reach the .length / hashing path —
+    // defends CodeQL "type confusion through parameter tampering" (alert #24).
+    if (Array.isArray(rawBody) || !Buffer.isBuffer(rawBody)) {
       throw new TypeError('webhook receive(): rawBody must be a Buffer');
     }
     const bodyBytes = rawBody.length;
