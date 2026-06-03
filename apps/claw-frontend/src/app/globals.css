@@ -6,9 +6,12 @@
  * keyframe names are available to utility classes built on top. */
 @import '../styles/animations.css';
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind CSS v4: a single import replaces the v3 @tailwind base/components/
+ * utilities directives. @config keeps our existing JS config (custom tokens,
+ * tailwindcss-animate plugin, content globs) authoritative via v4's
+ * legacy-config compatibility path. */
+@import 'tailwindcss';
+@config '../../tailwind.config.ts';
 
 .dark pre code.hljs {
   background: transparent;

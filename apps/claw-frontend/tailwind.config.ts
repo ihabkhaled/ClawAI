@@ -2,7 +2,9 @@ import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
 
 const config: Config = {
-  darkMode: ["class"],
+  // Tailwind v4: the bare "class" strategy toggles dark mode on the `.dark`
+  // class (set on <html> by next-themes). v4 removed the array form.
+  darkMode: "class",
   // Broadened content paths so dynamic / map-derived class names that live
   // OUTSIDE app + components (e.g. variant maps in constants, derived
   // classNames returned from hooks or utilities) are not purged in the
