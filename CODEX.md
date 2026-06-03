@@ -1074,30 +1074,42 @@ Single root `.env` (copy from `.env.example`). Groups:
 
 ## Quality Gates
 
-### Per-Service Gates Before Commit (MANDATORY — agent workflow)
+### Scoped Quality Gates Before Commit (MANDATORY — STRICT — applies to EVERY change, EVERYWHERE)
 
-When you change code under `apps/<service>/` (e.g. `apps/claw-chat-service/`), run the gates **inside that service folder ONLY** before any commit. Do NOT run the all-workspace pre-commit hook from a fresh worktree — it will false-fail on unchanged services whose Prisma client wasn't generated locally.
+**Run the gates ONLY in the folder(s) you actually touched. NEVER run the full all-workspace lint/typecheck/test/build.** This repo is 17 backend services + the frontend + 6 shared packages. An all-workspace gate run generates 13 Prisma clients, compiles every service, and executes thousands of tests — many minutes of CPU for a one-file change. It is the wrong default for an agent on two counts: it is **prohibitively expensive**, and it **false-fails** on unchanged sibling services whose Prisma client isn't generated in a fresh worktree. Cost is the primary reason; the worktree footgun is secondary.
+
+**The rule — for ANY change, in ANY folder:**
+
+1. Identify which workspace folder(s) you edited: `apps/claw-<service>/`, `apps/claw-frontend/`, or `packages/<shared-pkg>/`.
+2. Run the four gates INSIDE each touched folder ONLY:
 
 ```bash
-cd apps/claw-<service>
-npx tsgo --noEmit         # → 0 errors required
-npm run lint              # → 0 errors on touched files (warnings on untouched files acceptable)
-npm test                  # → all tests pass; coverage may not drop
-npm run build             # → success
+cd apps/claw-<service>      # or apps/claw-frontend, or packages/<pkg>
+npx tsgo --noEmit          # 0 errors  (frontend: npm run typecheck)
+npm run lint               # 0 errors on touched files (pre-existing warnings on untouched files OK)
+npm test                   # all tests pass; coverage may not drop
+npm run build              # success
 ```
 
-When all four gates are green:
+3. Multi-folder change → run the gates for EACH touched folder, never for the untouched ones.
+4. Non-workspace files with no gate (`scripts/**`, `infra/**`, plain `*.mjs`) → do the cheapest equivalent check (`node --check <file>`, JSON/schema validate). Do NOT trigger an all-workspace run "to be safe".
+5. When ALL gates for the touched folders are green:
 
 ```bash
 git commit --no-verify -m "<conventional-commit-message>"
 git push --no-verify origin <branch>
 ```
 
-`--no-verify` is justified here ONLY to bypass the all-workspace pre-commit hook's false-fails on unchanged sibling services in fresh worktrees (documented "Prisma-not-generated-in-fresh-worktree" footgun). The four per-service gates above are the real quality bar.
+**Why `--no-verify`:** the repo pre-commit hook runs the all-workspace gate — exactly the expensive, false-failing path this rule avoids. The per-folder gates above ARE the real quality bar; `--no-verify` skips only the redundant hook, NEVER a real failure in the folder you changed.
 
-If any gate fails: fix and re-run before committing. **Never skip a gate.** **Never use `--no-verify` to bypass real failures in the service you actually changed.**
+**Hard limits (never violate):**
 
-When a change spans multiple services, run the gates **for every affected service** before a single combined commit. Documentation-only commits (e.g. updating `docs/**`, `CLAUDE.md`, `rules/**`, locale files only when accompanied by `i18n.types.ts`) can skip the gates but must still be conventional-format.
+- NEVER skip a gate for a folder you changed.
+- NEVER `--no-verify` to bypass a REAL failure in the folder you changed — fix it.
+- NEVER expand to the all-workspace gate after the touched-folder gates pass.
+- Docs-only changes (`docs/**`, `CLAUDE.md`, `CODEX.md`, `cursor.md`, `rules/**`, locale files paired with `i18n.types.ts`) skip the gates but stay conventional-commit format.
+
+**Re-read this rule before EVERY commit/push operation.** It is mirrored verbatim in `CLAUDE.md`, `CODEX.md`, `cursor.md`, `rules/07-commit-rules.md`, and the agent memory `feedback_per_folder_gates_before_commit`. If memory is wiped, these files are the canonical reload source.
 
 ### Pre-Commit Hook (5 steps, all must pass — legacy all-workspace path)
 

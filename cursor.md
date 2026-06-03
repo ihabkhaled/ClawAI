@@ -183,26 +183,30 @@ The repo compiles with **tsgo** (`@typescript/native-preview`), not `tsc`/`nest 
 - Include `Co-Authored-By: Cursor <noreply@cursor.sh>` footer line.
 - Chunk commits by logical boundary (schema, backend logic, frontend, infra, docs) — not by time.
 
-### Per-service gates before commit (MANDATORY for agent workflows)
+### Scoped quality gates before commit (MANDATORY — STRICT — EVERY change, EVERYWHERE)
 
-When you change code under `apps/<service>/`, run the gates **inside that service folder only** before any commit. The all-workspace pre-commit hook false-fails on unchanged services whose Prisma client wasn't generated locally, so:
+> Mirrored verbatim in `CLAUDE.md`, `CODEX.md`, `rules/07-commit-rules.md`, and agent memory `feedback_per_folder_gates_before_commit`. Re-read before EVERY commit/push.
+
+**Run the gates ONLY in the folder(s) you actually touched. NEVER run the full all-workspace lint/typecheck/test/build.** This repo is 17 backend services + the frontend + 6 shared packages; an all-workspace run generates 13 Prisma clients, compiles every service, and runs thousands of tests — minutes of CPU for a one-file change. It is the wrong default on two counts: **prohibitively expensive**, and it **false-fails** on unchanged sibling services whose Prisma client isn't generated in a fresh worktree. Cost is the primary reason; the worktree footgun is secondary.
+
+For ANY change, in ANY folder (`apps/claw-<service>/`, `apps/claw-frontend/`, `packages/<pkg>/`):
 
 ```bash
-cd apps/claw-<service>
-npx tsgo --noEmit         # 0 errors
-npm run lint              # 0 errors on touched files
-npm test                  # all green
-npm run build             # success
+cd apps/claw-<service>      # or apps/claw-frontend, or packages/<pkg>
+npx tsgo --noEmit          # 0 errors  (frontend: npm run typecheck)
+npm run lint               # 0 errors on touched files (pre-existing warnings on untouched files OK)
+npm test                   # all green; coverage may not drop
+npm run build              # success
 ```
 
-When all four are green:
+When all four are green for every touched folder:
 
 ```bash
 git commit --no-verify -m "<conventional-commit-message>"
 git push --no-verify origin <branch>
 ```
 
-`--no-verify` is acceptable ONLY to bypass the all-workspace hook's false-fails on unchanged sibling services (documented Prisma footgun). The four per-service gates are the real quality bar. **Never skip a gate.** **Never use `--no-verify` to bypass real failures in the service you actually changed.** Multi-service changes run the gates for every affected service before a single combined commit. Docs-only commits (`docs/**`, `CLAUDE.md`, `rules/**`, locale files paired with `i18n.types.ts`) can skip the gates but stay conventional-format.
+`--no-verify` skips ONLY the redundant all-workspace pre-commit hook (the expensive, false-failing path) — NEVER a real failure in the folder you changed. Multi-folder change → run the gates for EACH touched folder, never the untouched ones. Non-workspace files (`scripts/**`, `*.mjs`) → cheapest equivalent check (`node --check`). **Never skip a gate. Never `--no-verify` past a real failure. Never expand to the all-workspace gate after touched-folder gates pass.** Docs-only commits (`docs/**`, `CLAUDE.md`, `CODEX.md`, `cursor.md`, `rules/**`, locale files paired with `i18n.types.ts`) skip the gates but stay conventional-format.
 
 ## If Cursor suggests something contrary to CLAUDE.md
 

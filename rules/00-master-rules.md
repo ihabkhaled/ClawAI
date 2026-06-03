@@ -33,6 +33,12 @@ These are NEVER acceptable. They block delivery unconditionally:
 7. **Public method missing logging** — every method in `*.service.ts` / `*.manager.ts` / `*.adapter.ts` / `*.utility.ts` / `*.repository.ts` MUST emit `logger.debug` on entry and `logger.error` in every `catch` block
 8. **Cross-service duplicate utility** — if a utility lives identically in 2+ services, it MUST be moved to `packages/shared-utilities/`. Per-service copies are a delivery blocker.
 
+## Scoped Quality Gates Before Commit (STRICT — read before EVERY commit/push)
+
+> Full text: `rules/07-commit-rules.md` → "Scoped Quality Gates Before Commit". Mirrored in `CLAUDE.md`, `CODEX.md`, `cursor.md`, and agent memory `feedback_per_folder_gates_before_commit`.
+
+**Run lint/typecheck/test/build ONLY in the folder(s) you touched — NEVER across all 17 services.** The all-workspace gate is prohibitively expensive (13 Prisma clients, every service compiled, thousands of tests) and false-fails on unchanged sibling services in a fresh worktree. For ANY change in ANY folder (`apps/claw-<service>/`, `apps/claw-frontend/`, `packages/<pkg>/`): run the four gates inside that folder; when green, `git commit --no-verify` + `git push --no-verify`. `--no-verify` skips only the redundant all-workspace hook, never a real failure in the folder you changed. Non-workspace files (`scripts/**`, `*.mjs`) → cheapest equivalent check (`node --check`). Docs-only changes skip the gates but stay conventional-format.
+
 ## The Non-Negotiable Mandate
 
 > **"Done" means all phases complete, all tests green, all docs written, all QA evidence documented.**
