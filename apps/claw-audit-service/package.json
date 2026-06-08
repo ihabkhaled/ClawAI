@@ -55,7 +55,7 @@
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^25.9.1",
-    "@typescript/native-preview": "^7.0.0-dev.20260601.1",
+    "@typescript/native-preview": "^7.0.0-dev.20260607.1",
     "concurrently": "^10.0.1",
     "eslint": "^9.39.4",
     "eslint-plugin-import-x": "^4.3.0",
