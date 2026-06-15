@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@claw/shared-utilities": "*",
-    "@nestjs/common": "^11.1.24",
+    "@nestjs/common": "^11.1.26",
     "@nestjs/core": "^11.1.21",
     "@nestjs/platform-express": "^11.1.0",
     "@nestjs/throttler": "^6.5.0",
