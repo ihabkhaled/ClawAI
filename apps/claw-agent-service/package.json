@@ -52,9 +52,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
-    "@nestjs/cli": "^11.0.19",
+    "@nestjs/cli": "^11.0.23",
     "@nestjs/schematics": "^11.0.10",
-    "@nestjs/testing": "^11.1.24",
+    "@nestjs/testing": "^11.1.27",
     "@types/amqplib": "^0.10.5",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
@@ -64,17 +64,17 @@
     "@typescript/native-preview": "^7.0.0-dev.20260601.1",
     "concurrently": "^10.0.1",
     "eslint": "^9.39.4",
-    "eslint-plugin-import-x": "^4.3.0",
-    "eslint-plugin-security": "^4.0.0",
+    "eslint-plugin-import-x": "^4.17.1",
+    "eslint-plugin-security": "^4.0.1",
     "eslint-plugin-unicorn": "^64.0.0",
     "jest": "^30.4.2",
     "nodemon": "^3.1.10",
-    "prettier": "^3.3.0",
+    "prettier": "^3.9.1",
     "prisma": "^7.8.0",
     "ts-jest": "^29.4.11",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.17",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.60.1"
+    "typescript-eslint": "^8.62.0"
   }
 }
