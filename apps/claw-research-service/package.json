@@ -33,7 +33,7 @@
     "@claw/shared-utilities": "*",
     "@nestjs/common": "^11.1.24",
     "@nestjs/core": "^11.1.21",
-    "@nestjs/platform-express": "^11.1.0",
+    "@nestjs/platform-express": "^11.1.26",
     "@nestjs/throttler": "^6.5.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
