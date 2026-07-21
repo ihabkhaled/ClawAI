@@ -35,4 +35,4 @@ export const HTML_SANITISER_FORBID_ATTR = [
  * Allow-list for URI schemes inside href / src / action / cite. Strips
  * `javascript:`, `data:` (except text/css for inline-style), `vbscript:`, etc.
  */
-export const HTML_SANITISER_ALLOWED_URL_REGEXP = /^(?:https?|mailto|cid|tel):/i;
+export const HTML_SANITISER_ALLOWED_URI_REGEXP = /^(?:https?|mailto|cid|tel):/i;

@@ -143,7 +143,7 @@ All backend services share these common properties:
 | ----------- | -------------------------------------------------------------- |
 | Port        | 4007                                                           |
 | Database    | MongoDB                                                        |
-| Key Env     | AUDIT_MONGODB_URL                                              |
+| Key Env     | AUDIT_MONGODB_URI                                              |
 | Depends On  | mongodb, redis, rabbitmq                                       |
 
 ### Ollama Service
@@ -170,7 +170,7 @@ All backend services share these common properties:
 | ----------- | -------------------------------------------------------------- |
 | Port        | 4010                                                           |
 | Database    | MongoDB                                                        |
-| Key Env     | CLIENT_LOGS_MONGODB_URL                                        |
+| Key Env     | CLIENT_LOGS_MONGODB_URI                                        |
 | Depends On  | mongodb, redis, rabbitmq                                       |
 
 ### Server Logs Service
@@ -179,7 +179,7 @@ All backend services share these common properties:
 | ----------- | -------------------------------------------------------------- |
 | Port        | 4011                                                           |
 | Database    | MongoDB                                                        |
-| Key Env     | SERVER_LOGS_MONGODB_URL                                        |
+| Key Env     | SERVER_LOGS_MONGODB_URI                                        |
 | Depends On  | mongodb, redis, rabbitmq                                       |
 
 ### Image Service

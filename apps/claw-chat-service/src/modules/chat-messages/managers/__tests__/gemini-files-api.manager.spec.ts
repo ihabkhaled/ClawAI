@@ -123,13 +123,13 @@ describe('GeminiFilesApiManager', () => {
       });
     });
 
-    it('throws GEMINI_FILES_API_MISSING_URL when the response lacks file.uri', async () => {
+    it('throws GEMINI_FILES_API_MISSING_URI when the response lacks file.uri', async () => {
       global.fetch = jest
         .fn<Promise<Response>, FetchArgs>()
         .mockResolvedValue(buildResponse({ file: {} })) as unknown as typeof fetch;
 
       await expect(manager.uploadFile(Buffer.from('x'), 'image/png', 'pic')).rejects.toMatchObject({
-        code: 'GEMINI_FILES_API_MISSING_URL',
+        code: 'GEMINI_FILES_API_MISSING_URI',
       });
     });
 

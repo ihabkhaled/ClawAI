@@ -1,5 +1,5 @@
 import {
-  HTML_SANITISER_ALLOWED_URL_REGEXP as ALLOWED_URL_REGEXP,
+  HTML_SANITISER_ALLOWED_URI_REGEXP as ALLOWED_URI_REGEXP,
   HTML_SANITISER_FORBID_ATTR as FORBID_ATTR,
   HTML_SANITISER_FORBID_TAGS as FORBID_TAGS,
 } from '../constants/html-sanitiser.constants';
@@ -40,7 +40,7 @@ export function sanitiseHtml(rawHtml: string): string {
   return getDompurify().sanitize(rawHtml, {
     FORBID_TAGS,
     FORBID_ATTR,
-    ALLOWED_URL_REGEXP,
+    ALLOWED_URI_REGEXP,
     ALLOW_DATA_ATTR: false,
     KEEP_CONTENT: true,
     USE_PROFILES: { html: true },

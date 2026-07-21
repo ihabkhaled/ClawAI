@@ -90,7 +90,7 @@ Adding a new microservice to the ClawAI platform.
    - Add named volume for the database
 
    MongoDB:
-   - Add `<NAME>_MONGODB_URL` to `.env.example` and `.env`
+   - Add `<NAME>_MONGODB_URI` to `.env.example` and `.env`
 
 4. **Add to Docker Compose**
 

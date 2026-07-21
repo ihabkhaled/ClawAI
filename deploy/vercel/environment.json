@@ -738,7 +738,7 @@
   ],
   "audit": [
     {
-      "name": "AUDIT_MONGODB_URL",
+      "name": "AUDIT_MONGODB_URI",
       "required": true,
       "secret": true,
       "targets": [
@@ -750,7 +750,7 @@
   ],
   "client-logs": [
     {
-      "name": "CLIENT_LOGS_MONGODB_URL",
+      "name": "CLIENT_LOGS_MONGODB_URI",
       "required": true,
       "secret": true,
       "targets": [
@@ -762,7 +762,7 @@
   ],
   "server-logs": [
     {
-      "name": "SERVER_LOGS_MONGODB_URL",
+      "name": "SERVER_LOGS_MONGODB_URI",
       "required": true,
       "secret": true,
       "targets": [

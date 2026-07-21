@@ -1247,7 +1247,7 @@ Single root `.env` (copy from `.env.example`). Groups:
 - Files: FILE_STORAGE_PATH
 - Inter-service URLs: \*\_SERVICE_URL (11 entries)
 - Per-service ports: \*\_PORT (12 entries)
-- Per-service database URLs: _\_DATABASE_URL/_\_MONGODB_URL (11 entries)
+- Per-service database URLs: _\_DATABASE_URL/_\_MONGODB_URI (11 entries)
 - Image: STABLE_DIFFUSION_URL, IMAGE_SERVICE_URL, IMAGE_PORT, IMAGE_DATABASE_URL
 - ComfyUI: COMFYUI_BASE_URL, COMFYUI_PORT, COMFYUI_MODELS_PATH (path inside ollama-service where the shared `comfyui-models-data` volume is mounted so the ComfyUI runtime adapter can drop HuggingFace-downloaded weights for ComfyUI to pick up)
 - Model Catalog: AUTO_PULL_MODELS (space-separated list of models to auto-pull on Docker startup)

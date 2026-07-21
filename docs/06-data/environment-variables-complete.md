@@ -203,9 +203,9 @@ Prisma connection strings for each service.
 | `OLLAMA_DATABASE_URL` | claw_ollama | ollama-service |
 | `IMAGE_DATABASE_URL` | claw_images | image-service |
 | `FILE_GENERATION_DATABASE_URL` | claw_file_generations | file-generation-service |
-| `AUDIT_MONGODB_URL` | claw_audit | audit-service |
-| `CLIENT_LOGS_MONGODB_URL` | claw_client_logs | client-logs-service |
-| `SERVER_LOGS_MONGODB_URL` | claw_server_logs | server-logs-service |
+| `AUDIT_MONGODB_URI` | claw_audit | audit-service |
+| `CLIENT_LOGS_MONGODB_URI` | claw_client_logs | client-logs-service |
+| `SERVER_LOGS_MONGODB_URI` | claw_server_logs | server-logs-service |
 
 Format for PostgreSQL:
 ```

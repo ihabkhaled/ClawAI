@@ -10,7 +10,7 @@ import { AppConfig } from '../../../app/config/app.config';
       useFactory: () => {
         const config = AppConfig.get();
         return {
-          uri: config.AUDIT_MONGODB_URL,
+          uri: config.AUDIT_MONGODB_URI,
         };
       },
     }),

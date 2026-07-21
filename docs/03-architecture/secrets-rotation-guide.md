@@ -135,7 +135,7 @@ This guide covers procedures for rotating all secrets in the ClawAI platform. Re
    MONGO_PASSWORD=<new>
    ```
 
-3. Update `*_MONGODB_URL` values in `.env`.
+3. Update `*_MONGODB_URI` values in `.env`.
 
 4. Restart affected services:
    ```bash

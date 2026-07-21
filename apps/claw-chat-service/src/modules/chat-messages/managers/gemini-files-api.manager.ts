@@ -173,7 +173,7 @@ export class GeminiFilesApiManager {
       );
       throw new BusinessException(
         'Gemini Files API succeeded but returned no file URI',
-        'GEMINI_FILES_API_MISSING_URL',
+        'GEMINI_FILES_API_MISSING_URI',
       );
     }
 

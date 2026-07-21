@@ -108,9 +108,9 @@ MONGO_USER=claw
 MONGO_PASSWORD=claw_secret
 MONGO_DB=claw_audit
 MONGO_PORT=27018
-AUDIT_MONGODB_URL=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/${MONGO_DB}?authSource=admin
-CLIENT_LOGS_MONGODB_URL=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/claw_client_logs?authSource=admin
-SERVER_LOGS_MONGODB_URL=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/claw_server_logs?authSource=admin
+AUDIT_MONGODB_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/${MONGO_DB}?authSource=admin
+CLIENT_LOGS_MONGODB_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/claw_client_logs?authSource=admin
+SERVER_LOGS_MONGODB_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/claw_server_logs?authSource=admin
 ```
 
 #### Redis

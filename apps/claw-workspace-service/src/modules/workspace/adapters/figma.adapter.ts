@@ -8,7 +8,7 @@ import {
   FIGMA_TOKEN_URL,
   HEALTH_CHECK_TIMEOUT_MS,
   OAUTH_PROBE_INVALID_CODE,
-  OAUTH_PROBE_INVALID_REDIRECT_URL,
+  OAUTH_PROBE_INVALID_REDIRECT_URI,
 } from '../../../common/constants/workspace.constants';
 import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
 import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
@@ -234,7 +234,7 @@ export class FigmaAdapter implements WorkspaceAdapter {
       client_secret: appCredentials.clientSecret,
       grant_type: 'authorization_code',
       code: OAUTH_PROBE_INVALID_CODE,
-      redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URL,
+      redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
     });
     return probeOAuthAppCredentials({
       tokenUrl: FIGMA_TOKEN_URL,

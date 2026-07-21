@@ -309,9 +309,9 @@ Prisma reads from `DATABASE_URL` per service. Each service's `.env` or the root 
 | `AGENT_DATABASE_URL`            | Agent           |
 | `RESEARCH_DATABASE_URL`         | Research        |
 | `WORKSPACE_DATABASE_URL`        | Workspace       |
-| `AUDIT_MONGODB_URL`             | Audit           |
-| `CLIENT_LOGS_MONGODB_URL`       | Client Logs     |
-| `SERVER_LOGS_MONGODB_URL`       | Server Logs     |
+| `AUDIT_MONGODB_URI`             | Audit           |
+| `CLIENT_LOGS_MONGODB_URI`       | Client Logs     |
+| `SERVER_LOGS_MONGODB_URI`       | Server Logs     |
 
 ---
 

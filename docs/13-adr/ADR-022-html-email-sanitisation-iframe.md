@@ -19,7 +19,7 @@ Two-layer defence:
 
 - `FORBID_TAGS`: `script`, `style`, `iframe`, `object`, `embed`, `base`, `meta`, `link`
 - `FORBID_ATTR`: every `on*` event handler + `formaction` + `srcdoc`
-- `ALLOWED_URL_REGEXP`: `/^(?:https?|mailto|cid|tel):/i` — strips `javascript:`, `data:` (except plain text), `vbscript:`, `view-source:`
+- `ALLOWED_URI_REGEXP`: `/^(?:https?|mailto|cid|tel):/i` — strips `javascript:`, `data:` (except plain text), `vbscript:`, `view-source:`
 - `ALLOW_DATA_ATTR: false` — defeats `data-` callbacks used as XSS vectors
 - `KEEP_CONTENT: true` — text inside stripped elements is retained as plain text
 

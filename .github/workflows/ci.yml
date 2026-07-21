@@ -346,9 +346,9 @@ jobs:
       LLAMACPP_SERVICE_URL: http://localhost:4017
       LLAMACPP_DATA_PATH: /tmp/llamacpp-test
       # MongoDB
-      AUDIT_MONGODB_URL: mongodb://localhost:27017/test
-      CLIENT_LOGS_MONGODB_URL: mongodb://localhost:27017/test
-      SERVER_LOGS_MONGODB_URL: mongodb://localhost:27017/test
+      AUDIT_MONGODB_URI: mongodb://localhost:27017/test
+      CLIENT_LOGS_MONGODB_URI: mongodb://localhost:27017/test
+      SERVER_LOGS_MONGODB_URI: mongodb://localhost:27017/test
       # Workspace runtime gates (Phase E close-out, 2026-05-02)
       # These all have Zod defaults; the explicit values here mirror prod and
       # ensure the spec env-fixture types match without relying on defaults.

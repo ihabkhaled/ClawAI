@@ -10,7 +10,7 @@ import {
   GITHUB_TOKEN_URL,
   HEALTH_CHECK_TIMEOUT_MS,
   OAUTH_PROBE_INVALID_CODE,
-  OAUTH_PROBE_INVALID_REDIRECT_URL,
+  OAUTH_PROBE_INVALID_REDIRECT_URI,
 } from '../../../common/constants/workspace.constants';
 import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
 import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
@@ -300,7 +300,7 @@ export class GitHubAdapter implements WorkspaceAdapter {
           client_id: appCredentials.clientId,
           client_secret: appCredentials.clientSecret,
           code: OAUTH_PROBE_INVALID_CODE,
-          redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URL,
+          redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
         }),
       }),
       interpret: (payload) => {
