@@ -28,6 +28,15 @@ import { join } from 'node:path';
 
 import { REPO_ROOT, loadProjects, parseArgs, log, runScript } from './lib/common.mjs';
 
+/**
+ * All 16 projects are linked to the SAME GitHub repository, so leaving Vercel's
+ * Git integration on means one push fans out into 16 automatic deployments —
+ * which exhausted the free plan's 100-deployments-per-day quota. The GitHub
+ * Actions workflows are the deployment driver; Vercel should build only when
+ * they ask it to. The repo link stays (the dashboard and CLI need it).
+ */
+const GIT_DEPLOYMENTS_DISABLED = { deploymentEnabled: false };
+
 /** Services whose work is long-running enough to need more than the default 60s. */
 const EXTENDED_DURATION = new Set(['chat', 'image', 'research', 'file', 'file-generation']);
 
@@ -165,6 +174,7 @@ function renderVercelJson(project) {
     // Everything reaches the Nest router; Nest's own global prefix and route
     // table decide what is a 404.
     rewrites: [{ source: '/(.*)', destination: '/api/index.js' }],
+    git: GIT_DEPLOYMENTS_DISABLED,
   };
   return `${JSON.stringify(config, null, 2)}\n`;
 }
@@ -177,6 +187,7 @@ function renderFrontendVercelJson(project) {
     installCommand: project.installCommand,
     buildCommand: project.buildCommand,
     outputDirectory: project.outputDirectory,
+    git: GIT_DEPLOYMENTS_DISABLED,
     // Backend proxying is declared in next.config.mjs rewrites(), driven by the
     // *_SERVICE_URL variables that resolve-service-urls.mjs syncs. Putting it
     // there rather than here keeps one source of truth for the route map.

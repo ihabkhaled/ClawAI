@@ -4,5 +4,8 @@
   "framework": "nextjs",
   "installCommand": "cd ../.. && npm ci",
   "buildCommand": "bash ../../scripts/vercel/build-service.sh claw-frontend",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "git": {
+    "deploymentEnabled": false
+  }
 }

@@ -16,5 +16,8 @@
       "source": "/(.*)",
       "destination": "/api/index.js"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": false
+  }
 }
