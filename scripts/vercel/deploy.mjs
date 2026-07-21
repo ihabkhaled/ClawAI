@@ -15,13 +15,14 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { join } from 'node:path';
 
 import {
   REPO_ROOT,
   loadProjects,
   loadDeploymentEnv,
   readVercelCredentials,
+  vercelRequest,
+  vercelErrorMessage,
   parseArgs,
   resolveTarget,
   isDryRun,
@@ -46,18 +47,18 @@ function cliAvailable() {
 
 /**
  * Build the non-interactive Vercel CLI invocation for one project.
- * `--cwd` keeps every deploy scoped to its own root directory, so services
- * never bleed into one another's build context.
+ *
+ * Deploys from the REPOSITORY ROOT, not the service directory. The Vercel
+ * project already carries `rootDirectory: apps/<service>`, and Vercel applies
+ * it relative to whatever is uploaded — so passing `--cwd apps/<service>` made
+ * it look for `apps/<service>/apps/<service>` and fail. The repo root is also
+ * the only place the npm workspace lockfile exists.
+ *
+ * Which project receives the deploy is set by VERCEL_PROJECT_ID in the
+ * environment (see deployProject), since one directory now maps to 16 projects.
  */
-function buildArgs(project, credentials, target) {
-  const args = [
-    'deploy',
-    '--yes',
-    '--token',
-    credentials.token,
-    '--cwd',
-    join(REPO_ROOT, project.rootDirectory),
-  ];
+function buildArgs(credentials, target) {
+  const args = ['deploy', '--yes', '--token', credentials.token];
   if (credentials.teamId !== undefined) {
     args.push('--scope', credentials.teamId);
   }
@@ -65,6 +66,15 @@ function buildArgs(project, credentials, target) {
     args.push('--prod');
   }
   return args;
+}
+
+/** Look up a project's Vercel id so the CLI targets it without a .vercel link. */
+async function resolveProjectId(credentials, projectName) {
+  const result = await vercelRequest(credentials, 'GET', `/v9/projects/${encodeURIComponent(projectName)}`);
+  if (!result.ok) {
+    throw new Error(`could not resolve project id — ${vercelErrorMessage(result)}`);
+  }
+  return { id: result.body.id, orgId: result.body.accountId };
 }
 
 /** Redact the token from anything we echo to the operator. */
@@ -77,19 +87,32 @@ function renderCommand(args) {
   return `${VERCEL_CLI} ${safe.join(' ')}`;
 }
 
-function deployProject(project, credentials, target, dryRun) {
-  const args = buildArgs(project, credentials, target);
-  log.info(renderCommand(args));
+async function deployProject(project, credentials, target, dryRun) {
+  const args = buildArgs(credentials, target);
+  log.info(`${renderCommand(args)}   [project ${project.projectName}, root ${project.rootDirectory}]`);
 
   if (dryRun) {
     return { ok: true, url: null, dryRun: true };
+  }
+
+  let identity;
+  try {
+    identity = await resolveProjectId(credentials, project.projectName);
+  } catch (error) {
+    return { ok: false, message: error.message };
   }
 
   const result = spawnSync(VERCEL_CLI, args, {
     cwd: REPO_ROOT,
     encoding: 'utf8',
     shell: process.platform === 'win32',
-    env: { ...process.env, VERCEL_ORG_ID: credentials.teamId ?? process.env.VERCEL_ORG_ID },
+    env: {
+      ...process.env,
+      // These two are how the CLI knows which project to deploy to when the
+      // working directory is shared by every project in the monorepo.
+      VERCEL_PROJECT_ID: identity.id,
+      VERCEL_ORG_ID: credentials.teamId ?? identity.orgId,
+    },
   });
 
   if (result.error !== undefined && result.error !== null) {
@@ -165,7 +188,7 @@ async function main() {
     }
 
     log.step(`${project.projectName} → ${target}`);
-    const outcome = deployProject(project, credentials, target, dryRun);
+    const outcome = await deployProject(project, credentials, target, dryRun);
 
     if (!outcome.ok) {
       log.error(`${project.projectName}: ${outcome.message}`);

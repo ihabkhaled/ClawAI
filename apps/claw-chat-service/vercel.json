@@ -2,8 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "installCommand": "cd ../.. && npm ci",
-  "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-chat-service && npm run build --workspace=claw-chat-service",
+  "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-chat-service && npm run build --workspace=claw-chat-service",
   "framework": null,
+  "outputDirectory": "public",
   "functions": {
     "api/index.js": {
       "maxDuration": 300,

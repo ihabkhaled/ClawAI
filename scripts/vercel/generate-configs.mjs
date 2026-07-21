@@ -150,6 +150,10 @@ function renderVercelJson(project) {
     buildCommand: project.buildCommand,
     // Nest services are plain Node functions, not a detected framework.
     framework: null,
+    // Vercel requires a static output directory whenever a custom buildCommand
+    // is set. These projects serve everything through api/index.js and emit no
+    // static assets, so the build creates an empty public/ for it to find.
+    outputDirectory: project.outputDirectory,
     functions: {
       'api/index.js': {
         // Hobby plans cap maxDuration at 60s. Raise the plan or lower this

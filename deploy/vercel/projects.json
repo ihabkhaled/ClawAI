@@ -28,9 +28,9 @@
       "localPort": 4001,
       "portVariable": "AUTH_PORT",
       "serviceUrlVariable": "AUTH_SERVICE_URL",
-      "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-auth-service && npm run build --workspace=claw-auth-service",
+      "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-auth-service && npm run build --workspace=claw-auth-service",
       "installCommand": "cd ../.. && npm ci",
-      "outputDirectory": null,
+      "outputDirectory": "public",
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/users",
       "databaseType": "postgresql",
@@ -56,8 +56,16 @@
         "NODE_ENV"
       ],
       "dependencies": [],
-      "publicRoutes": ["/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/health"],
-      "routes": ["/api/v1/auth/*", "/api/v1/users/*", "/api/v1/admin/*"],
+      "publicRoutes": [
+        "/api/v1/auth/login",
+        "/api/v1/auth/refresh",
+        "/api/v1/health"
+      ],
+      "routes": [
+        "/api/v1/auth/*",
+        "/api/v1/users/*",
+        "/api/v1/admin/*"
+      ],
       "runtimeCaveats": []
     },
     {
@@ -73,9 +81,9 @@
       "localPort": 4002,
       "portVariable": "CHAT_PORT",
       "serviceUrlVariable": "CHAT_SERVICE_URL",
-      "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-chat-service && npm run build --workspace=claw-chat-service",
+      "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-chat-service && npm run build --workspace=claw-chat-service",
       "installCommand": "cd ../.. && npm ci",
-      "outputDirectory": null,
+      "outputDirectory": "public",
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/chat-threads",
       "streamingPath": "/api/v1/chat-messages/stream/health-probe",
@@ -135,8 +143,13 @@
         "workspace",
         "research"
       ],
-      "publicRoutes": ["/api/v1/health"],
-      "routes": ["/api/v1/chat-threads/*", "/api/v1/chat-messages/*"],
+      "publicRoutes": [
+        "/api/v1/health"
+      ],
+      "routes": [
+        "/api/v1/chat-threads/*",
+        "/api/v1/chat-messages/*"
+      ],
       "runtimeCaveats": [
         "SSE streaming (@Sse chat-messages/stream/:threadId) is bounded by the Vercel function maxDuration. Set CHAT streaming clients to reconnect; see docs/deployment/vercel-automated-deployment.md#streaming.",
         "LLAMACPP_SERVICE_URL is intentionally not synced — claw-llamacpp-service is not-vercel-compatible."
@@ -155,9 +168,9 @@
       "localPort": 4003,
       "portVariable": "CONNECTOR_PORT",
       "serviceUrlVariable": "CONNECTOR_SERVICE_URL",
-      "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-connector-service && npm run build --workspace=claw-connector-service",
+      "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-connector-service && npm run build --workspace=claw-connector-service",
       "installCommand": "cd ../.. && npm ci",
-      "outputDirectory": null,
+      "outputDirectory": "public",
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/connectors",
       "databaseType": "postgresql",
@@ -179,9 +192,15 @@
         "CLAW_HOSTNAME",
         "NODE_ENV"
       ],
-      "dependencies": ["auth"],
-      "publicRoutes": ["/api/v1/health"],
-      "routes": ["/api/v1/connectors/*"],
+      "dependencies": [
+        "auth"
+      ],
+      "publicRoutes": [
+        "/api/v1/health"
+      ],
+      "routes": [
+        "/api/v1/connectors/*"
+      ],
       "runtimeCaveats": []
     },
     {
@@ -197,9 +216,9 @@
       "localPort": 4004,
       "portVariable": "ROUTING_PORT",
       "serviceUrlVariable": "ROUTING_SERVICE_URL",
-      "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-routing-service && npm run build --workspace=claw-routing-service",
+      "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-routing-service && npm run build --workspace=claw-routing-service",
       "installCommand": "cd ../.. && npm ci",
-      "outputDirectory": null,
+      "outputDirectory": "public",
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/routing/policies",
       "databaseType": "postgresql",
@@ -241,9 +260,15 @@
         "CLAW_HOSTNAME",
         "NODE_ENV"
       ],
-      "dependencies": ["auth"],
-      "publicRoutes": ["/api/v1/health"],
-      "routes": ["/api/v1/routing/*"],
+      "dependencies": [
+        "auth"
+      ],
+      "publicRoutes": [
+        "/api/v1/health"
+      ],
+      "routes": [
+        "/api/v1/routing/*"
+      ],
       "runtimeCaveats": [
         "OLLAMA_ROUTER_WARMUP_ENABLED must be false on Vercel — the warmup interval timer cannot survive between serverless invocations."
       ]
@@ -261,9 +286,9 @@
       "localPort": 4005,
       "portVariable": "MEMORY_PORT",
       "serviceUrlVariable": "MEMORY_SERVICE_URL",
-      "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-memory-service && npm run build --workspace=claw-memory-service",
+      "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-memory-service && npm run build --workspace=claw-memory-service",
       "installCommand": "cd ../.. && npm ci",
-      "outputDirectory": null,
+      "outputDirectory": "public",
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/memories",
       "databaseType": "postgresql",
@@ -302,9 +327,16 @@
         "CLAW_HOSTNAME",
         "NODE_ENV"
       ],
-      "dependencies": ["auth"],
-      "publicRoutes": ["/api/v1/health"],
-      "routes": ["/api/v1/memories/*", "/api/v1/context-packs/*"],
+      "dependencies": [
+        "auth"
+      ],
+      "publicRoutes": [
+        "/api/v1/health"
+      ],
+      "routes": [
+        "/api/v1/memories/*",
+        "/api/v1/context-packs/*"
+      ],
       "runtimeCaveats": [
         "Requires a PostgreSQL instance with the pgvector extension enabled (Neon, Supabase, and Vercel Postgres all support it)."
       ]
@@ -322,9 +354,9 @@
       "localPort": 4006,
       "portVariable": "FILES_PORT",
       "serviceUrlVariable": "FILE_SERVICE_URL",
-      "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-file-service && npm run build --workspace=claw-file-service",
+      "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-file-service && npm run build --workspace=claw-file-service",
       "installCommand": "cd ../.. && npm ci",
-      "outputDirectory": null,
+      "outputDirectory": "public",
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/files",
       "databaseType": "postgresql",
@@ -363,9 +395,15 @@
         "CLAW_HOSTNAME",
         "NODE_ENV"
       ],
-      "dependencies": ["auth"],
-      "publicRoutes": ["/api/v1/health"],
-      "routes": ["/api/v1/files/*"],
+      "dependencies": [
+        "auth"
+      ],
+      "publicRoutes": [
+        "/api/v1/health"
+      ],
+      "routes": [
+        "/api/v1/files/*"
+      ],
       "runtimeCaveats": [
         "Vercel functions have an ephemeral, read-only filesystem apart from /tmp. FILE_STORAGE_PATH must point at /tmp and durable blobs must go to object storage (BLOB_READ_WRITE_TOKEN). Uploads written only to FILE_STORAGE_PATH will not survive an invocation.",
         "CLAMAV_ENABLED must be false unless an externally reachable ClamAV TCP endpoint is provided — there is no ClamAV sidecar on Vercel.",
@@ -386,9 +424,9 @@
       "localPort": 4007,
       "portVariable": "AUDIT_PORT",
       "serviceUrlVariable": "AUDIT_SERVICE_URL",
-      "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run build --workspace=claw-audit-service",
+      "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run build --workspace=claw-audit-service",
       "installCommand": "cd ../.. && npm ci",
-      "outputDirectory": null,
+      "outputDirectory": "public",
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/audits",
       "databaseType": "mongodb",
@@ -407,9 +445,16 @@
         "CLAW_HOSTNAME",
         "NODE_ENV"
       ],
-      "dependencies": ["auth"],
-      "publicRoutes": ["/api/v1/health"],
-      "routes": ["/api/v1/audits/*", "/api/v1/usage/*"],
+      "dependencies": [
+        "auth"
+      ],
+      "publicRoutes": [
+        "/api/v1/health"
+      ],
+      "routes": [
+        "/api/v1/audits/*",
+        "/api/v1/usage/*"
+      ],
       "runtimeCaveats": [
         "audit-service is a RabbitMQ consumer. A serverless function only runs while an HTTP request is in flight, so durable event consumption requires a queue provider that can push over HTTPS (see QUEUE_PROVIDER in .env.vercel.example). Without it, audit rows are only written by direct HTTP calls."
       ]
@@ -427,9 +472,9 @@
       "localPort": 4009,
       "portVariable": "HEALTH_PORT",
       "serviceUrlVariable": "HEALTH_SERVICE_URL",
-      "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run build --workspace=claw-health-service",
+      "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run build --workspace=claw-health-service",
       "installCommand": "cd ../.. && npm ci",
-      "outputDirectory": null,
+      "outputDirectory": "public",
       "healthPath": "/api/v1/health",
       "protectedProbePath": null,
       "databaseType": "none",
@@ -457,8 +502,12 @@
         "NODE_ENV"
       ],
       "dependencies": [],
-      "publicRoutes": ["/api/v1/health"],
-      "routes": ["/api/v1/health"],
+      "publicRoutes": [
+        "/api/v1/health"
+      ],
+      "routes": [
+        "/api/v1/health"
+      ],
       "runtimeCaveats": [
         "health-service resolves peers from SERVICE_URLS in apps/claw-health-service/src/modules/health/constants/health.constants.ts, which is hardcoded to Docker hostnames. On Vercel it reads the *_SERVICE_URL variables synced by scripts/vercel/resolve-service-urls.mjs; peers without a synced URL report as unreachable rather than failing the aggregate."
       ]
@@ -476,9 +525,9 @@
       "localPort": 4010,
       "portVariable": "CLIENT_LOGS_PORT",
       "serviceUrlVariable": "CLIENT_LOGS_SERVICE_URL",
-      "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run build --workspace=claw-client-logs-service",
+      "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run build --workspace=claw-client-logs-service",
       "installCommand": "cd ../.. && npm ci",
-      "outputDirectory": null,
+      "outputDirectory": "public",
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/client-logs",
       "databaseType": "mongodb",
@@ -491,10 +540,18 @@
         "RABBITMQ_URL",
         "JWT_SECRET"
       ],
-      "optionalEnvironmentVariables": ["CORS_ORIGINS", "CLAW_HOSTNAME", "NODE_ENV"],
+      "optionalEnvironmentVariables": [
+        "CORS_ORIGINS",
+        "CLAW_HOSTNAME",
+        "NODE_ENV"
+      ],
       "dependencies": [],
-      "publicRoutes": ["/api/v1/health"],
-      "routes": ["/api/v1/client-logs"],
+      "publicRoutes": [
+        "/api/v1/health"
+      ],
+      "routes": [
+        "/api/v1/client-logs"
+      ],
       "runtimeCaveats": [
         "ClientLog documents rely on a MongoDB TTL index (30 days). The index is created by scripts/vercel/migrate.mjs, not by the running function."
       ]
@@ -512,9 +569,9 @@
       "localPort": 4011,
       "portVariable": "SERVER_LOGS_PORT",
       "serviceUrlVariable": "SERVER_LOGS_SERVICE_URL",
-      "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run build --workspace=claw-server-logs-service",
+      "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run build --workspace=claw-server-logs-service",
       "installCommand": "cd ../.. && npm ci",
-      "outputDirectory": null,
+      "outputDirectory": "public",
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/server-logs",
       "databaseType": "mongodb",
@@ -533,9 +590,15 @@
         "CLAW_HOSTNAME",
         "NODE_ENV"
       ],
-      "dependencies": ["auth"],
-      "publicRoutes": ["/api/v1/health"],
-      "routes": ["/api/v1/server-logs"],
+      "dependencies": [
+        "auth"
+      ],
+      "publicRoutes": [
+        "/api/v1/health"
+      ],
+      "routes": [
+        "/api/v1/server-logs"
+      ],
       "runtimeCaveats": [
         "ServerLog documents rely on a MongoDB TTL index (30 days). The index is created by scripts/vercel/migrate.mjs.",
         "The Pino -> RabbitMQ log.server consumer needs an HTTPS-push queue provider on Vercel; without one only direct HTTP ingestion is recorded."
@@ -554,9 +617,9 @@
       "localPort": 4012,
       "portVariable": "IMAGE_PORT",
       "serviceUrlVariable": "IMAGE_SERVICE_URL",
-      "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-image-service && npm run build --workspace=claw-image-service",
+      "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-image-service && npm run build --workspace=claw-image-service",
       "installCommand": "cd ../.. && npm ci",
-      "outputDirectory": null,
+      "outputDirectory": "public",
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/images",
       "databaseType": "postgresql",
@@ -579,9 +642,16 @@
         "CLAW_HOSTNAME",
         "NODE_ENV"
       ],
-      "dependencies": ["file", "connector"],
-      "publicRoutes": ["/api/v1/health"],
-      "routes": ["/api/v1/images/*"],
+      "dependencies": [
+        "file",
+        "connector"
+      ],
+      "publicRoutes": [
+        "/api/v1/health"
+      ],
+      "routes": [
+        "/api/v1/images/*"
+      ],
       "runtimeCaveats": [
         "The local diffusion adapters (STABLE_DIFFUSION_URL, COMFYUI_BASE_URL) are not provisioned on Vercel. Only cloud image providers (DALL-E, Gemini) work; local-runtime image generation degrades with an explicit unavailable response."
       ]
@@ -599,9 +669,9 @@
       "localPort": 4013,
       "portVariable": "FILE_GENERATION_PORT",
       "serviceUrlVariable": "FILE_GENERATION_SERVICE_URL",
-      "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-file-generation-service && npm run build --workspace=claw-file-generation-service",
+      "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-file-generation-service && npm run build --workspace=claw-file-generation-service",
       "installCommand": "cd ../.. && npm ci",
-      "outputDirectory": null,
+      "outputDirectory": "public",
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/file-generations",
       "databaseType": "postgresql",
@@ -616,10 +686,20 @@
         "FILE_SERVICE_URL",
         "INTER_SERVICE_AUTH_TOKEN"
       ],
-      "optionalEnvironmentVariables": ["CORS_ORIGINS", "CLAW_HOSTNAME", "NODE_ENV"],
-      "dependencies": ["file"],
-      "publicRoutes": ["/api/v1/health"],
-      "routes": ["/api/v1/file-generations/*"],
+      "optionalEnvironmentVariables": [
+        "CORS_ORIGINS",
+        "CLAW_HOSTNAME",
+        "NODE_ENV"
+      ],
+      "dependencies": [
+        "file"
+      ],
+      "publicRoutes": [
+        "/api/v1/health"
+      ],
+      "routes": [
+        "/api/v1/file-generations/*"
+      ],
       "runtimeCaveats": [
         "apps/claw-file-generation-service/prisma has no migrations directory. scripts/vercel/migrate.mjs uses `prisma db push` for this service; see deploy/vercel/migrations.json."
       ]
@@ -637,9 +717,9 @@
       "localPort": 4014,
       "portVariable": "WORKSPACE_PORT",
       "serviceUrlVariable": "WORKSPACE_SERVICE_URL",
-      "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-workspace-service && npm run build --workspace=claw-workspace-service",
+      "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-workspace-service && npm run build --workspace=claw-workspace-service",
       "installCommand": "cd ../.. && npm ci",
-      "outputDirectory": null,
+      "outputDirectory": "public",
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/workspace/connectors",
       "databaseType": "postgresql",
@@ -706,9 +786,21 @@
         "CLAW_HOSTNAME",
         "NODE_ENV"
       ],
-      "dependencies": ["auth", "chat", "connector", "memory", "file", "agent"],
-      "publicRoutes": ["/api/v1/health", "/api/v1/workspace/webhooks/*"],
-      "routes": ["/api/v1/workspace/*"],
+      "dependencies": [
+        "auth",
+        "chat",
+        "connector",
+        "memory",
+        "file",
+        "agent"
+      ],
+      "publicRoutes": [
+        "/api/v1/health",
+        "/api/v1/workspace/webhooks/*"
+      ],
+      "routes": [
+        "/api/v1/workspace/*"
+      ],
       "runtimeCaveats": [
         "WORKSPACE_SCHEDULER_ENABLED must be false on Vercel — the in-process @nestjs/schedule sync ticker cannot run between invocations. KNOWN GAP: scheduled background sync, stale detection, and auto-suggest collectors will not run. Manual sync via the existing HTTP endpoints still works. Wiring Vercel Cron needs trigger endpoints that do not exist yet.",
         "In-memory sliding-window rate limits (WORKSPACE_SUGGESTION_FACTORY_RATE_PER_HOUR, WEBHOOK_CONNECTOR_REQUESTS_PER_MINUTE) are per-invocation on Vercel and therefore only approximate."
@@ -727,9 +819,9 @@
       "localPort": 4015,
       "portVariable": "AGENT_PORT",
       "serviceUrlVariable": "AGENT_SERVICE_URL",
-      "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-agent-service && npm run build --workspace=claw-agent-service",
+      "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-agent-service && npm run build --workspace=claw-agent-service",
       "installCommand": "cd ../.. && npm ci",
-      "outputDirectory": null,
+      "outputDirectory": "public",
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/agent/sessions",
       "databaseType": "postgresql",
@@ -757,8 +849,12 @@
         "NODE_ENV"
       ],
       "dependencies": [],
-      "publicRoutes": ["/api/v1/health"],
-      "routes": ["/api/v1/agent/*"],
+      "publicRoutes": [
+        "/api/v1/health"
+      ],
+      "routes": [
+        "/api/v1/agent/*"
+      ],
       "runtimeCaveats": [
         "The desktop agent CLI connects outbound to this service, so the control plane works on Vercel. Capability execution still happens on the user's own machine — nothing agent-side runs in the Vercel runtime."
       ]
@@ -776,9 +872,9 @@
       "localPort": 4016,
       "portVariable": "RESEARCH_PORT",
       "serviceUrlVariable": "RESEARCH_SERVICE_URL",
-      "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-research-service && npm run build --workspace=claw-research-service",
+      "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-research-service && npm run build --workspace=claw-research-service",
       "installCommand": "cd ../.. && npm ci",
-      "outputDirectory": null,
+      "outputDirectory": "public",
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/research/providers",
       "databaseType": "postgresql",
@@ -802,9 +898,15 @@
         "CLAW_HOSTNAME",
         "NODE_ENV"
       ],
-      "dependencies": ["auth"],
-      "publicRoutes": ["/api/v1/health"],
-      "routes": ["/api/v1/research/*"],
+      "dependencies": [
+        "auth"
+      ],
+      "publicRoutes": [
+        "/api/v1/health"
+      ],
+      "routes": [
+        "/api/v1/research/*"
+      ],
       "runtimeCaveats": [
         "Repository cloning writes to disk. On Vercel it must target /tmp and is bounded by the function's ephemeral storage; long clones will exceed maxDuration."
       ]
@@ -831,7 +933,10 @@
       "databaseVariable": null,
       "directDatabaseVariable": null,
       "prismaSchema": null,
-      "requiredEnvironmentVariables": ["NEXT_PUBLIC_API_URL", "NEXT_PUBLIC_APP_URL"],
+      "requiredEnvironmentVariables": [
+        "NEXT_PUBLIC_API_URL",
+        "NEXT_PUBLIC_APP_URL"
+      ],
       "optionalEnvironmentVariables": [
         "NEXT_PUBLIC_APP_NAME",
         "NEXT_PUBLIC_ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED",
@@ -855,8 +960,13 @@
         "agent",
         "research"
       ],
-      "publicRoutes": ["/", "/login"],
-      "routes": ["/*"],
+      "publicRoutes": [
+        "/",
+        "/login"
+      ],
+      "routes": [
+        "/*"
+      ],
       "runtimeCaveats": [
         "next.config.mjs sets output: 'standalone' for the Docker image. Vercel ignores that setting and uses its own Next.js build output; no change is required.",
         "The frontend reaches backends through NEXT_PUBLIC_API_URL. On Vercel there is no nginx, so the generated vercel.json declares rewrites from /api/v1/<domain>/* to each backend project's URL. Those rewrites are written by scripts/vercel/resolve-service-urls.mjs, never hardcoded in source."
@@ -888,7 +998,9 @@
       "optionalEnvironmentVariables": [],
       "dependencies": [],
       "publicRoutes": [],
-      "routes": ["/api/v1/ollama/*"],
+      "routes": [
+        "/api/v1/ollama/*"
+      ],
       "notVercelCompatibleReason": "Manages a LOCAL Ollama runtime: pulls multi-gigabyte model weights onto a persistent volume, supervises pull jobs over SSE for many minutes, and writes ComfyUI model files to COMFYUI_MODELS_PATH. Vercel functions have no persistent volume, no GPU, and a bounded maximum duration. ClawAI on Vercel uses an external Ollama-compatible API instead (OLLAMA_BASE_URL + OLLAMA_API_KEY), which chat, routing, memory, connector, and workspace call directly.",
       "runtimeCaveats": []
     },
@@ -918,7 +1030,9 @@
       "optionalEnvironmentVariables": [],
       "dependencies": [],
       "publicRoutes": [],
-      "routes": ["/api/v1/llamacpp/*"],
+      "routes": [
+        "/api/v1/llamacpp/*"
+      ],
       "notVercelCompatibleReason": "Downloads and executes glibc-linked llama.cpp release binaries, supervises a single-resident long-lived inference process, and stores GGUF weights on the llamacpp-data volume. None of that exists in the Vercel runtime. Explicitly out of scope for Vercel deployment.",
       "runtimeCaveats": []
     }

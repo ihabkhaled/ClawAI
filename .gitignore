@@ -102,3 +102,7 @@ apps/claw-frontend/scripts/
 # be committed — that is what keeps generated hostnames out of source control.
 deploy/vercel/generated/
 .vercel/
+
+# Empty static output dir the Vercel buildCommand creates for Nest services.
+# The frontend has a real, committed public/ — only service dirs are ignored.
+apps/claw-*-service/public/
