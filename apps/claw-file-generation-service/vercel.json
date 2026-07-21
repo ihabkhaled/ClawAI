@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "installCommand": "cd ../.. && npm ci",
-  "buildCommand": "mkdir -p public && cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-file-generation-service && npm run build --workspace=claw-file-generation-service",
+  "buildCommand": "mkdir -p public && printf '<!doctype html><title>claw-file-generation-service</title><p>ClawAI API service. Health: /api/v1/health' > public/index.html && cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-file-generation-service && npm run build --workspace=claw-file-generation-service",
   "framework": null,
   "outputDirectory": "public",
   "functions": {
