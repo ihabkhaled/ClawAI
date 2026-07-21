@@ -52,6 +52,25 @@ jobs:
       - name: Validate deployment manifests
         run: node scripts/vercel/validate.mjs --target production
 
+      # A fresh checkout has no generated Prisma clients, so every Prisma-backed
+      # service fails typecheck with "Cannot find module '../generated/prisma'".
+      # Generate for every workspace that ships a schema — including the two
+      # not-vercel-compatible services, because the all-workspace typecheck and
+      # test steps below still compile them.
+      - name: Generate Prisma clients
+        shell: bash
+        run: |
+          set -euo pipefail
+          # `npx prisma generate` rather than the prisma:generate npm script,
+          # because claw-llamacpp-service and claw-ollama-service ship a schema
+          # without that script (same approach ci.yml uses).
+          for schema in apps/*/prisma/schema.prisma; do
+            service_dir=$(dirname "$(dirname "$schema")")
+            echo "::group::prisma generate $service_dir"
+            (cd "$service_dir" && npx prisma generate)
+            echo "::endgroup::"
+          done
+
       - name: Typecheck all workspaces
         run: npm run typecheck
 
