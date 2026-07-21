@@ -89,10 +89,12 @@ jobs:
     name: Deploy production
     runs-on: ubuntu-latest
     needs: quality
-    # VERCEL_TOKEN is stored in the ClawAI environment, so that is where these
-    # workflows read their credentials from.
     environment:
-      name: ClawAI
+      name: production
+    env:
+      # A step-level `if` cannot read the secrets context; job-level env can.
+      HAS_APP_SECRETS: ${{ secrets.JWT_SECRET != '' }}
+      HAS_DIRECT_DB_URLS: ${{ secrets.AUTH_DIRECT_DATABASE_URL != '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -109,12 +111,74 @@ jobs:
       - name: Provision missing projects
         run: node scripts/vercel/provision.mjs --all
 
+      # sync-env is what PUTS the application secrets into Vercel, so on the
+      # first run they have to come from somewhere. Two supported paths:
+      #
+      #   1. Add them as GitHub secrets — this step then pushes them to Vercel.
+      #   2. Run `npm run vercel:env:sync` once from a machine with a filled
+      #      .env.vercel. Vercel then holds the values and CI never needs them.
+      #
+      # The step is gated on JWT_SECRET so path 2 does not fail the pipeline:
+      # with no secrets in GitHub it is skipped, and whatever is already in
+      # Vercel stays untouched.
       - name: Sync production environment variables
+        if: env.HAS_APP_SECRETS == 'true'
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          INTER_SERVICE_AUTH_TOKEN: ${{ secrets.INTER_SERVICE_AUTH_TOKEN }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          RABBITMQ_URL: ${{ secrets.RABBITMQ_URL }}
+          CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
+          OLLAMA_BASE_URL: ${{ secrets.OLLAMA_BASE_URL }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          AUTH_DATABASE_URL: ${{ secrets.AUTH_DATABASE_URL }}
+          CHAT_DATABASE_URL: ${{ secrets.CHAT_DATABASE_URL }}
+          CONNECTOR_DATABASE_URL: ${{ secrets.CONNECTOR_DATABASE_URL }}
+          ROUTING_DATABASE_URL: ${{ secrets.ROUTING_DATABASE_URL }}
+          MEMORY_DATABASE_URL: ${{ secrets.MEMORY_DATABASE_URL }}
+          FILES_DATABASE_URL: ${{ secrets.FILES_DATABASE_URL }}
+          IMAGE_DATABASE_URL: ${{ secrets.IMAGE_DATABASE_URL }}
+          FILE_GENERATION_DATABASE_URL: ${{ secrets.FILE_GENERATION_DATABASE_URL }}
+          WORKSPACE_DATABASE_URL: ${{ secrets.WORKSPACE_DATABASE_URL }}
+          AGENT_DATABASE_URL: ${{ secrets.AGENT_DATABASE_URL }}
+          RESEARCH_DATABASE_URL: ${{ secrets.RESEARCH_DATABASE_URL }}
+          AUDIT_MONGODB_URI: ${{ secrets.AUDIT_MONGODB_URI }}
+          CLIENT_LOGS_MONGODB_URI: ${{ secrets.CLIENT_LOGS_MONGODB_URI }}
+          SERVER_LOGS_MONGODB_URI: ${{ secrets.SERVER_LOGS_MONGODB_URI }}
         run: node scripts/vercel/sync-env.mjs --all --target production
 
+      - name: Skip environment sync
+        if: env.HAS_APP_SECRETS != 'true'
+        run: |
+          echo "No application secrets in GitHub — leaving the values already stored in Vercel untouched."
+          echo "To drive the sync from CI, add the secrets listed in .env.vercel.example to this environment."
+
+      # Migrations need the direct (non-pooled) database URLs. Skipped entirely
+      # when they are not available rather than failing the deployment.
       - name: Run database migrations
-        if: github.event.inputs.skip_migrations != 'true'
+        if: github.event.inputs.skip_migrations != 'true' && env.HAS_DIRECT_DB_URLS == 'true'
+        env:
+          AUTH_DIRECT_DATABASE_URL: ${{ secrets.AUTH_DIRECT_DATABASE_URL }}
+          CHAT_DIRECT_DATABASE_URL: ${{ secrets.CHAT_DIRECT_DATABASE_URL }}
+          CONNECTOR_DIRECT_DATABASE_URL: ${{ secrets.CONNECTOR_DIRECT_DATABASE_URL }}
+          ROUTING_DIRECT_DATABASE_URL: ${{ secrets.ROUTING_DIRECT_DATABASE_URL }}
+          MEMORY_DIRECT_DATABASE_URL: ${{ secrets.MEMORY_DIRECT_DATABASE_URL }}
+          FILES_DIRECT_DATABASE_URL: ${{ secrets.FILES_DIRECT_DATABASE_URL }}
+          IMAGE_DIRECT_DATABASE_URL: ${{ secrets.IMAGE_DIRECT_DATABASE_URL }}
+          FILE_GENERATION_DIRECT_DATABASE_URL: ${{ secrets.FILE_GENERATION_DIRECT_DATABASE_URL }}
+          WORKSPACE_DIRECT_DATABASE_URL: ${{ secrets.WORKSPACE_DIRECT_DATABASE_URL }}
+          AGENT_DIRECT_DATABASE_URL: ${{ secrets.AGENT_DIRECT_DATABASE_URL }}
+          RESEARCH_DIRECT_DATABASE_URL: ${{ secrets.RESEARCH_DIRECT_DATABASE_URL }}
+          AUDIT_MONGODB_URI: ${{ secrets.AUDIT_MONGODB_URI }}
+          CLIENT_LOGS_MONGODB_URI: ${{ secrets.CLIENT_LOGS_MONGODB_URI }}
+          SERVER_LOGS_MONGODB_URI: ${{ secrets.SERVER_LOGS_MONGODB_URI }}
         run: node scripts/vercel/migrate.mjs --all
+
+      - name: Skip database migrations
+        if: env.HAS_DIRECT_DB_URLS != 'true'
+        run: echo "No direct database URLs in GitHub — skipping migrations. Run 'npm run vercel:migrate' locally instead."
 
       - name: Deploy backend services
         if: github.event.inputs.service == ''
