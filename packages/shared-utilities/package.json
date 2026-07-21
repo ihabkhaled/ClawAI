@@ -16,7 +16,7 @@
     "@claw/shared-constants": "0.1.0",
     "@claw/shared-types": "0.1.0",
     "@nestjs/common": "^11.1.26",
-    "axios": "^1.16.1",
+    "axios": "^1.18.1",
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
