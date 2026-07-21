@@ -30,6 +30,10 @@ out/
 # Environment (secrets)
 .env
 .env.local
+# Vercel deployment secrets — filled from .env.vercel.example, NEVER committed.
+.env.vercel
+.env.vercel.*
+!.env.vercel.example
 .env.development.local
 .env.test.local
 .env.production.local
@@ -92,3 +96,9 @@ apps/claw-frontend/scripts/
 # Local runtime probe dumps (operator diagnostics; never committed).
 # Populated by scripts/local-runtime-probes/probe-*.mjs.
 .local-runtime-probes/
+
+# Vercel deployment automation outputs. Everything under generated/ is derived
+# from live Vercel state (deployment URLs, verification reports) and must never
+# be committed — that is what keeps generated hostnames out of source control.
+deploy/vercel/generated/
+.vercel/
