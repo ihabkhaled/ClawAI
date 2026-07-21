@@ -23,7 +23,7 @@
     "@nestjs/core": "^11.1.21",
     "@types/amqplib": "^0.10.5",
     "@types/jest": "^30.0.0",
-    "@typescript/native-preview": "^7.0.0-dev.20260601.1",
+    "@typescript/native-preview": "^7.0.0-dev.20260607.1",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.11",
     "typescript": "^6.0.3"
