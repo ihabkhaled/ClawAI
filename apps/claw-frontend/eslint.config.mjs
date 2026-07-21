@@ -206,9 +206,16 @@ export default defineConfig([
       'security/detect-possible-timing-attacks': 'warn',
 
       // ── Unicorn ────────────────────────────────────────────────────────
+      // eslint-plugin-unicorn 65 extended this rule from filenames to directory
+      // names. The ignore list covers names the framework dictates and we
+      // cannot rename: Jest/Vitest `__tests__` and `__mocks__`, Next.js dynamic
+      // segments (`[threadId]`, `[...slug]`), and route groups (`(portal)`).
       'unicorn/filename-case': [
         'error',
-        { cases: { kebabCase: true, pascalCase: true } },
+        {
+          cases: { kebabCase: true, pascalCase: true },
+          ignore: [/^__tests__$/u, /^__mocks__$/u, /^\[.+\]$/u, /^\(.+\)$/u],
+        },
       ],
       'unicorn/no-null': 'off',
       'unicorn/prevent-abbreviations': 'off',
