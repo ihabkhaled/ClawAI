@@ -29,7 +29,17 @@
     "docker:logs": "docker compose logs -f",
     "docker:ps": "docker compose ps",
     "prepare": "node .husky/install.mjs",
-    "lint-staged": "lint-staged"
+    "lint-staged": "lint-staged",
+    "vercel:build:shared": "npm run build --workspace=@claw/shared-types --workspace=@claw/shared-constants --workspace=@claw/shared-rabbitmq --workspace=@claw/shared-auth --workspace=@claw/shared-utilities --workspace=@claw/shared-entitlements --if-present",
+    "vercel:generate-configs": "node scripts/vercel/generate-configs.mjs",
+    "vercel:validate": "node scripts/vercel/validate.mjs",
+    "vercel:provision": "node scripts/vercel/provision.mjs",
+    "vercel:env:sync": "node scripts/vercel/sync-env.mjs",
+    "vercel:migrate": "node scripts/vercel/migrate.mjs",
+    "vercel:deploy": "node scripts/vercel/deploy.mjs",
+    "vercel:verify": "node scripts/vercel/verify.mjs",
+    "vercel:resolve-urls": "node scripts/vercel/resolve-service-urls.mjs",
+    "vercel:setup": "node scripts/vercel/setup.mjs"
   },
   "engines": {
     "node": ">=22.13.0"
