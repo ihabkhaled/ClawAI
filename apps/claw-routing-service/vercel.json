@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "installCommand": "cd ../.. && npm ci",
-  "buildCommand": "mkdir -p public && printf '<!doctype html><title>claw-routing-service</title><p>ClawAI API service. Health: /api/v1/health' > public/index.html && cd ../.. && npm run vercel:build:shared && npm run prisma:generate --workspace=claw-routing-service && npm run build --workspace=claw-routing-service",
+  "buildCommand": "bash ../../scripts/vercel/build-service.sh claw-routing-service",
   "framework": null,
   "outputDirectory": "public",
   "functions": {

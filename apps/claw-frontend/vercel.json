@@ -3,6 +3,6 @@
   "version": 2,
   "framework": "nextjs",
   "installCommand": "cd ../.. && npm ci",
-  "buildCommand": "cd ../.. && npm run vercel:build:shared && npm run build --workspace=claw-frontend",
+  "buildCommand": "bash ../../scripts/vercel/build-service.sh claw-frontend",
   "outputDirectory": ".next"
 }

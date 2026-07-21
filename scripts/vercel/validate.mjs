@@ -122,6 +122,18 @@ function checkProjectPaths(projects, findings) {
     }
     if (project.buildCommand === null || project.buildCommand === undefined) {
       findings.fail('build-command', `${project.key} is deployable but declares no buildCommand`);
+    } else if (project.buildCommand.length > 256) {
+      // vercel.json schema validation rejects anything longer.
+      findings.fail(
+        'build-command-length',
+        `${project.key} buildCommand is ${project.buildCommand.length} chars; Vercel caps it at 256. Move the work into scripts/vercel/build-service.sh.`,
+      );
+    }
+    if (project.installCommand !== null && project.installCommand !== undefined && project.installCommand.length > 256) {
+      findings.fail(
+        'install-command-length',
+        `${project.key} installCommand is ${project.installCommand.length} chars; Vercel caps it at 256.`,
+      );
     }
     if (project.prismaSchema !== null && pkg.scripts?.['prisma:generate'] === undefined) {
       findings.fail('prisma-generate', `${project.key} has a Prisma schema but no "prisma:generate" script`);
