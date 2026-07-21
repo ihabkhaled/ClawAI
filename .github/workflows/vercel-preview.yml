@@ -150,8 +150,10 @@ jobs:
     # Forked PRs cannot read repository secrets, so a deploy would fail on an
     # empty token. Skip rather than fail red for something the author cannot fix.
     if: github.event.pull_request.head.repo.full_name == github.repository
+    # VERCEL_TOKEN is stored in the ClawAI environment, so that is where these
+    # workflows read their credentials from.
     environment:
-      name: preview
+      name: ClawAI
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
