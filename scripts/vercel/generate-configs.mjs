@@ -204,7 +204,10 @@ async function main() {
 
     for (const target of targets) {
       const current = existsSync(target.path) ? readFileSync(target.path, 'utf8') : null;
-      if (current === target.contents) {
+      // Compare content, not line endings. Git checks these files out with CRLF
+      // on Windows while the generator always emits LF, so a raw comparison
+      // reports every file as stale on a Windows working copy.
+      if (current !== null && current.replace(/\r\n/g, '\n') === target.contents) {
         continue;
       }
       const relative = target.path.slice(REPO_ROOT.length + 1).replace(/\\/g, '/');
