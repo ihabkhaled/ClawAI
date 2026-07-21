@@ -39,7 +39,7 @@ async function bootstrap(): Promise<void> {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
   });
-  await app.listen(AppConfig.get().SERVER_LOGS_PORT);
+  await app.listen(process.env['PORT'] ?? AppConfig.get().SERVER_LOGS_PORT);
 }
 
 void bootstrap();

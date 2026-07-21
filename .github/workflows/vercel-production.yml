@@ -1,0 +1,149 @@
+name: Vercel Production
+
+# Production deployment. Runs only on a merge to main or an explicit manual
+# dispatch — never from a pull request. Every step is idempotent, so a failed
+# run can be re-run from the start once the cause is fixed.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      skip_migrations:
+        description: 'Skip database migrations (only when the schema is unchanged)'
+        type: boolean
+        required: false
+        default: false
+      service:
+        description: 'Deploy a single project key (empty = all)'
+        required: false
+        default: ''
+
+# Never allow two production deployments to interleave. Unlike preview, an
+# in-flight production run is allowed to finish.
+concurrency:
+  group: vercel-production
+  cancel-in-progress: false
+
+env:
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+  VERCEL_GIT_REPOSITORY: ${{ github.repository }}
+  VERCEL_PRODUCTION_BRANCH: main
+
+jobs:
+  quality:
+    name: Validate, typecheck, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm rebuild @typescript/native-preview
+      - run: npm run vercel:build:shared
+
+      - name: Generated Vercel configs are current
+        run: node scripts/vercel/generate-configs.mjs --check
+
+      - name: Validate deployment manifests
+        run: node scripts/vercel/validate.mjs --target production
+
+      - name: Typecheck all workspaces
+        run: npm run typecheck
+
+      - name: Test all workspaces
+        run: npm run test
+
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vercel-validation-production
+          path: deploy/vercel/generated/validation-report.json
+          if-no-files-found: ignore
+
+  deploy:
+    name: Deploy production
+    runs-on: ubuntu-latest
+    needs: quality
+    environment:
+      name: production
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm i -g vercel@latest
+
+      # Vercel holds the application and database secrets. Only the two Vercel
+      # credentials live in GitHub, which keeps database URLs out of this runner
+      # and therefore out of any workflow log.
+      - name: Provision missing projects
+        run: node scripts/vercel/provision.mjs --all
+
+      - name: Sync production environment variables
+        run: node scripts/vercel/sync-env.mjs --all --target production
+
+      - name: Run database migrations
+        if: github.event.inputs.skip_migrations != 'true'
+        run: node scripts/vercel/migrate.mjs --all
+
+      - name: Deploy backend services
+        if: github.event.inputs.service == ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          KEYS=$(node -e "
+            const m = require('./deploy/vercel/projects.json');
+            console.log(m.projects
+              .filter(p => p.status === 'enabled' && p.key !== 'frontend')
+              .map(p => p.key).join(' '));
+          ")
+          for key in $KEYS; do
+            node scripts/vercel/deploy.mjs --service "$key" --target production
+          done
+
+      - name: Deploy a single project
+        if: github.event.inputs.service != ''
+        run: node scripts/vercel/deploy.mjs --service "${{ github.event.inputs.service }}" --target production
+
+      - name: Resolve and sync production service URLs
+        run: node scripts/vercel/resolve-service-urls.mjs --target production --sync
+
+      # The frontend goes last, after every backend URL is in place, so it never
+      # ships pointing at a service that has not been updated yet.
+      - name: Deploy frontend
+        if: github.event.inputs.service == ''
+        run: node scripts/vercel/deploy.mjs --service frontend --target production
+
+      - name: Verify production deployment
+        id: verify
+        run: node scripts/vercel/verify.mjs --target production
+
+      - name: Upload deployment artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vercel-production-reports
+          path: |
+            deploy/vercel/generated/deployments.production.json
+            deploy/vercel/generated/verification-report.json
+            deploy/vercel/generated/verification-report.md
+          if-no-files-found: ignore
+
+      - name: Job summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f deploy/vercel/generated/verification-report.md ]; then
+            cat deploy/vercel/generated/verification-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'No verification report was produced.' >> "$GITHUB_STEP_SUMMARY"
+          fi

@@ -51,7 +51,7 @@ async function bootstrap(): Promise<void> {
     // RabbitMQ not available â€” continue with pino only
   }
 
-  await app.listen(config.RESEARCH_PORT);
+  await app.listen(process.env['PORT'] ?? config.RESEARCH_PORT);
 }
 
 void bootstrap();

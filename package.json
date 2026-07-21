@@ -29,35 +29,46 @@
     "docker:logs": "docker compose logs -f",
     "docker:ps": "docker compose ps",
     "prepare": "node .husky/install.mjs",
-    "lint-staged": "lint-staged"
+    "lint-staged": "lint-staged",
+    "vercel:build:shared": "npm run build --workspace=@claw/shared-types --workspace=@claw/shared-constants --workspace=@claw/shared-rabbitmq --workspace=@claw/shared-auth --workspace=@claw/shared-utilities --workspace=@claw/shared-entitlements --if-present",
+    "vercel:generate-configs": "node scripts/vercel/generate-configs.mjs",
+    "vercel:validate": "node scripts/vercel/validate.mjs",
+    "vercel:provision": "node scripts/vercel/provision.mjs",
+    "vercel:env:sync": "node scripts/vercel/sync-env.mjs",
+    "vercel:migrate": "node scripts/vercel/migrate.mjs",
+    "vercel:deploy": "node scripts/vercel/deploy.mjs",
+    "vercel:verify": "node scripts/vercel/verify.mjs",
+    "vercel:resolve-urls": "node scripts/vercel/resolve-service-urls.mjs",
+    "vercel:setup": "node scripts/vercel/setup.mjs"
   },
   "engines": {
     "node": ">=22.13.0"
   },
   "license": "MIT",
   "devDependencies": {
-    "@commitlint/cli": "^21.0.2",
+    "@commitlint/cli": "^21.2.1",
     "@commitlint/config-conventional": "^21.0.2",
-    "@typescript/native-preview": "^7.0.0-dev.20260601.1",
+    "@typescript/native-preview": "^7.0.0-dev.20260607.1",
     "eslint": "^9.39.4",
     "husky": "^9.1.7",
-    "lint-staged": "^16.4.0",
-    "prettier": "^3.8.1",
+    "lint-staged": "^17.0.7",
+    "prettier": "^3.9.5",
     "prisma": "^7.8.0",
-    "vitest": "^4.1.8",
-    "typescript-eslint": "^8.60.1",
-    "eslint-plugin-security": "^4.0.0",
-    "eslint-plugin-unicorn": "^64.0.0",
-    "eslint-plugin-import-x": "^4.3.0",
+    "vitest": "^4.1.10",
+    "typescript-eslint": "^8.64.0",
+    "eslint-plugin-security": "^4.0.1",
+    "eslint-plugin-unicorn": "^65.0.0",
+    "eslint-plugin-import-x": "^4.17.1",
     "@eslint/js": "^9.39.4"
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.24",
+    "@nestjs/common": "^11.1.26",
     "@nestjs/core": "^11.1.21",
-    "@nestjs/platform-express": "^11.1.18",
-    "better-sqlite3": "^12.10.0",
+    "@nestjs/platform-express": "^11.1.26",
+    "better-sqlite3": "^12.11.1",
     "rxjs": "^7.8.2",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "mongoose": "^9.7.4"
   },
   "overrides": {
     "@xmldom/xmldom": "^0.8.13",
@@ -77,7 +88,10 @@
     "react-dom": "^19.2.7",
     "react-hook-form": "^7.77.0",
     "pino": "^10.3.1",
-    "mongoose": "^9.6.3",
-    "@hono/node-server": "^1.19.13"
+    "mongoose": "^9.7.4",
+    "@hono/node-server": "^1.19.13",
+    "hono": "^4.12.31",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3"
   }
 }

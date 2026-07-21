@@ -1,0 +1,247 @@
+name: Vercel Preview
+
+# Preview deployments for pull requests. Deliberately never touches production:
+# every script defaults to --target preview and the production alias is only
+# published by vercel-production.yml.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      services:
+        description: 'Comma-separated project keys to deploy (empty = affected only)'
+        required: false
+        default: ''
+
+concurrency:
+  group: vercel-preview-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+  VERCEL_GIT_REPOSITORY: ${{ github.repository }}
+  VERCEL_PRODUCTION_BRANCH: main
+
+jobs:
+  detect:
+    name: Detect affected projects
+    runs-on: ubuntu-latest
+    outputs:
+      keys: ${{ steps.affected.outputs.keys }}
+      any: ${{ steps.affected.outputs.any }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - id: affected
+        name: Map changed files to project keys
+        shell: bash
+        run: |
+          set -euo pipefail
+          MANUAL='${{ github.event.inputs.services }}'
+          if [ -n "$MANUAL" ]; then
+            echo "keys=$MANUAL" >> "$GITHUB_OUTPUT"
+            echo "any=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          BASE='${{ github.event.pull_request.base.sha }}'
+          HEAD='${{ github.event.pull_request.head.sha }}'
+          CHANGED=$(git diff --name-only "$BASE" "$HEAD")
+          echo "Changed files:"; echo "$CHANGED"
+
+          # A change to a shared package, the lockfile, or the deployment
+          # manifests can affect every service, so widen to all of them.
+          if echo "$CHANGED" | grep -qE '^(packages/|package-lock\.json|package\.json|deploy/vercel/|scripts/vercel/)'; then
+            KEYS=$(node -e "
+              const m = require('./deploy/vercel/projects.json');
+              console.log(m.projects.filter(p => p.status === 'enabled').map(p => p.key).join(','));
+            ")
+          else
+            KEYS=$(node -e "
+              const m = require('./deploy/vercel/projects.json');
+              const changed = process.argv[1].split('\n').filter(Boolean);
+              const hit = m.projects
+                .filter(p => p.status === 'enabled')
+                .filter(p => changed.some(f => f.startsWith(p.rootDirectory + '/')))
+                .map(p => p.key);
+              console.log(hit.join(','));
+            " "$CHANGED")
+          fi
+
+          echo "Affected: ${KEYS:-<none>}"
+          echo "keys=$KEYS" >> "$GITHUB_OUTPUT"
+          if [ -n "$KEYS" ]; then echo "any=true" >> "$GITHUB_OUTPUT"; else echo "any=false" >> "$GITHUB_OUTPUT"; fi
+
+  validate:
+    name: Validate deployment manifests
+    runs-on: ubuntu-latest
+    needs: detect
+    if: needs.detect.outputs.any == 'true'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Generated Vercel configs are current
+        run: node scripts/vercel/generate-configs.mjs --check
+
+      - name: Validate
+        run: node scripts/vercel/validate.mjs --target preview
+
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vercel-validation-preview
+          path: deploy/vercel/generated/validation-report.json
+          if-no-files-found: ignore
+
+  build:
+    name: Build affected projects
+    runs-on: ubuntu-latest
+    needs: [detect, validate]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm rebuild @typescript/native-preview
+      - run: npm run vercel:build:shared
+
+      - name: Build each affected workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          IFS=',' read -ra KEYS <<< "${{ needs.detect.outputs.keys }}"
+          for key in "${KEYS[@]}"; do
+            [ -z "$key" ] && continue
+            info=$(node -e "
+              const m = require('./deploy/vercel/projects.json');
+              const p = m.projects.find(x => x.key === '$key');
+              if (!p) process.exit(0);
+              console.log([p.workspaceName, p.prismaSchema ? '1' : '0'].join(' '));
+            ")
+            [ -z "$info" ] && continue
+            set -- $info
+            workspace=$1; hasPrisma=$2
+            echo "::group::build $workspace"
+            if [ "$hasPrisma" = "1" ]; then
+              npm run prisma:generate --workspace="$workspace"
+            fi
+            npm run build --workspace="$workspace"
+            echo "::endgroup::"
+          done
+
+  deploy:
+    name: Deploy preview
+    runs-on: ubuntu-latest
+    needs: [detect, build]
+    # Forked PRs cannot read repository secrets, so a deploy would fail on an
+    # empty token. Skip rather than fail red for something the author cannot fix.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    environment:
+      name: preview
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm i -g vercel@latest
+
+      - name: Provision any missing projects
+        run: node scripts/vercel/provision.mjs --all
+
+      - name: Sync preview environment variables
+        env:
+          JWT_SECRET: ${{ secrets.PREVIEW_JWT_SECRET }}
+          ENCRYPTION_KEY: ${{ secrets.PREVIEW_ENCRYPTION_KEY }}
+          INTER_SERVICE_AUTH_TOKEN: ${{ secrets.PREVIEW_INTER_SERVICE_AUTH_TOKEN }}
+        run: node scripts/vercel/sync-env.mjs --all --target preview
+
+      - name: Deploy affected projects
+        shell: bash
+        run: |
+          set -euo pipefail
+          IFS=',' read -ra KEYS <<< "${{ needs.detect.outputs.keys }}"
+          for key in "${KEYS[@]}"; do
+            [ -z "$key" ] && continue
+            node scripts/vercel/deploy.mjs --service "$key" --target preview
+          done
+
+      - name: Resolve and sync preview service URLs
+        run: node scripts/vercel/resolve-service-urls.mjs --target preview --sync
+
+      - name: Verify preview deployment
+        id: verify
+        continue-on-error: true
+        run: node scripts/vercel/verify.mjs --target preview
+
+      - name: Upload deployment artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vercel-preview-reports
+          path: |
+            deploy/vercel/generated/deployments.preview.json
+            deploy/vercel/generated/verification-report.json
+            deploy/vercel/generated/verification-report.md
+          if-no-files-found: ignore
+
+      - name: Comment deployment URLs on the PR
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'deploy/vercel/generated/deployments.preview.json';
+            if (!fs.existsSync(path)) {
+              core.info('No deployment record produced — nothing to comment.');
+              return;
+            }
+            const record = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const deployed = record.results.filter((r) => r.url);
+            if (deployed.length === 0) {
+              core.info('No URLs to report.');
+              return;
+            }
+            const rows = deployed
+              .map((r) => `| \`${r.key}\` | ${r.url} | [health](${r.url}${r.healthPath ?? '/'}) |`)
+              .join('\n');
+            const verifyStatus = '${{ steps.verify.outcome }}' === 'success'
+              ? 'All required verification checks passed.'
+              : 'Verification reported failures — see the `vercel-preview-reports` artifact.';
+            const body = [
+              '### ClawAI preview deployment',
+              '',
+              '| Project | URL | Probe |',
+              '| --- | --- | --- |',
+              rows,
+              '',
+              verifyStatus,
+            ].join('\n');
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
+
+      - name: Fail if verification failed
+        if: steps.verify.outcome == 'failure'
+        run: |
+          echo "Preview verification failed. See the uploaded report."
+          exit 1

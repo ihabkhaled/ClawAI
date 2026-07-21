@@ -68,7 +68,7 @@ async function bootstrap(): Promise<void> {
   }
 
   app.enableShutdownHooks();
-  await app.listen(config.CHAT_PORT, '0.0.0.0');
+  await app.listen(process.env['PORT'] ?? config.CHAT_PORT, '0.0.0.0');
 }
 
 void bootstrap();

@@ -1,0 +1,262 @@
+{
+  "$schema": "./migrations.schema.json",
+  "version": 1,
+  "description": "Database migration plan for ClawAI on Vercel. Consumed by scripts/vercel/migrate.mjs. Entries run in the declared order. Every project in projects.json that has a databaseType other than 'none' MUST have an entry here (enforced by scripts/vercel/validate.mjs).",
+  "policy": {
+    "neverRunDev": true,
+    "note": "`prisma migrate dev` is never used. Services with a prisma/migrations directory use `prisma migrate deploy`. Services whose schema has no migrations directory yet use `prisma db push` and are flagged so the gap is visible rather than silent.",
+    "urlResolution": "Each entry is migrated with its directDatabaseVariable when that variable is set in .env.vercel, otherwise with databaseVariable. Pooled (pgbouncer) URLs break Prisma's advisory locks, so a direct URL is strongly preferred and validate.mjs warns when one is missing."
+  },
+  "migrations": [
+    {
+      "service": "auth",
+      "projectName": "claw-auth-service",
+      "engine": "prisma",
+      "schema": "apps/claw-auth-service/prisma/schema.prisma",
+      "databaseVariable": "AUTH_DATABASE_URL",
+      "directDatabaseVariable": "AUTH_DIRECT_DATABASE_URL",
+      "hasMigrationsDirectory": true,
+      "command": "npx prisma migrate deploy",
+      "order": 1,
+      "postCommands": [],
+      "notes": "Seeding of the initial admin user (ADMIN_EMAIL / ADMIN_USERNAME / ADMIN_PASSWORD) happens at service boot, not here."
+    },
+    {
+      "service": "connector",
+      "projectName": "claw-connector-service",
+      "engine": "prisma",
+      "schema": "apps/claw-connector-service/prisma/schema.prisma",
+      "databaseVariable": "CONNECTOR_DATABASE_URL",
+      "directDatabaseVariable": "CONNECTOR_DIRECT_DATABASE_URL",
+      "hasMigrationsDirectory": true,
+      "command": "npx prisma migrate deploy",
+      "order": 2,
+      "postCommands": [],
+      "notes": ""
+    },
+    {
+      "service": "routing",
+      "projectName": "claw-routing-service",
+      "engine": "prisma",
+      "schema": "apps/claw-routing-service/prisma/schema.prisma",
+      "databaseVariable": "ROUTING_DATABASE_URL",
+      "directDatabaseVariable": "ROUTING_DIRECT_DATABASE_URL",
+      "hasMigrationsDirectory": true,
+      "command": "npx prisma migrate deploy",
+      "order": 3,
+      "postCommands": [],
+      "notes": ""
+    },
+    {
+      "service": "memory",
+      "projectName": "claw-memory-service",
+      "engine": "prisma",
+      "schema": "apps/claw-memory-service/prisma/schema.prisma",
+      "databaseVariable": "MEMORY_DATABASE_URL",
+      "directDatabaseVariable": "MEMORY_DIRECT_DATABASE_URL",
+      "hasMigrationsDirectory": true,
+      "command": "npx prisma migrate deploy",
+      "order": 4,
+      "requiresExtensions": ["vector"],
+      "postCommands": [],
+      "notes": "The memory database needs the pgvector extension. scripts/vercel/migrate.mjs issues CREATE EXTENSION IF NOT EXISTS vector before the migration and fails loudly if the role lacks permission."
+    },
+    {
+      "service": "file",
+      "projectName": "claw-file-service",
+      "engine": "prisma",
+      "schema": "apps/claw-file-service/prisma/schema.prisma",
+      "databaseVariable": "FILES_DATABASE_URL",
+      "directDatabaseVariable": "FILES_DIRECT_DATABASE_URL",
+      "hasMigrationsDirectory": true,
+      "command": "npx prisma migrate deploy",
+      "order": 5,
+      "postCommands": [],
+      "notes": ""
+    },
+    {
+      "service": "chat",
+      "projectName": "claw-chat-service",
+      "engine": "prisma",
+      "schema": "apps/claw-chat-service/prisma/schema.prisma",
+      "databaseVariable": "CHAT_DATABASE_URL",
+      "directDatabaseVariable": "CHAT_DIRECT_DATABASE_URL",
+      "hasMigrationsDirectory": true,
+      "command": "npx prisma migrate deploy",
+      "order": 6,
+      "postCommands": [],
+      "notes": ""
+    },
+    {
+      "service": "image",
+      "projectName": "claw-image-service",
+      "engine": "prisma",
+      "schema": "apps/claw-image-service/prisma/schema.prisma",
+      "databaseVariable": "IMAGE_DATABASE_URL",
+      "directDatabaseVariable": "IMAGE_DIRECT_DATABASE_URL",
+      "hasMigrationsDirectory": true,
+      "command": "npx prisma migrate deploy",
+      "order": 7,
+      "postCommands": [],
+      "notes": ""
+    },
+    {
+      "service": "agent",
+      "projectName": "claw-agent-service",
+      "engine": "prisma",
+      "schema": "apps/claw-agent-service/prisma/schema.prisma",
+      "databaseVariable": "AGENT_DATABASE_URL",
+      "directDatabaseVariable": "AGENT_DIRECT_DATABASE_URL",
+      "hasMigrationsDirectory": true,
+      "command": "npx prisma migrate deploy",
+      "order": 8,
+      "postCommands": [],
+      "notes": ""
+    },
+    {
+      "service": "research",
+      "projectName": "claw-research-service",
+      "engine": "prisma",
+      "schema": "apps/claw-research-service/prisma/schema.prisma",
+      "databaseVariable": "RESEARCH_DATABASE_URL",
+      "directDatabaseVariable": "RESEARCH_DIRECT_DATABASE_URL",
+      "hasMigrationsDirectory": true,
+      "command": "npx prisma migrate deploy",
+      "order": 9,
+      "postCommands": [],
+      "notes": ""
+    },
+    {
+      "service": "file-generation",
+      "projectName": "claw-file-generation-service",
+      "engine": "prisma",
+      "schema": "apps/claw-file-generation-service/prisma/schema.prisma",
+      "databaseVariable": "FILE_GENERATION_DATABASE_URL",
+      "directDatabaseVariable": "FILE_GENERATION_DIRECT_DATABASE_URL",
+      "hasMigrationsDirectory": false,
+      "command": "npx prisma db push --skip-generate --accept-data-loss=false",
+      "order": 10,
+      "postCommands": [],
+      "notes": "KNOWN GAP: this service ships a schema but no prisma/migrations directory, so there is no reviewable migration history. `db push` is used until a baseline migration is generated. Do not treat this as production-grade schema management."
+    },
+    {
+      "service": "workspace",
+      "projectName": "claw-workspace-service",
+      "engine": "prisma",
+      "schema": "apps/claw-workspace-service/prisma/schema.prisma",
+      "databaseVariable": "WORKSPACE_DATABASE_URL",
+      "directDatabaseVariable": "WORKSPACE_DIRECT_DATABASE_URL",
+      "hasMigrationsDirectory": true,
+      "command": "npx prisma migrate deploy",
+      "order": 11,
+      "postCommands": [],
+      "notes": ""
+    },
+    {
+      "service": "audit",
+      "projectName": "claw-audit-service",
+      "engine": "mongodb",
+      "schema": null,
+      "databaseVariable": "AUDIT_MONGODB_URI",
+      "directDatabaseVariable": null,
+      "hasMigrationsDirectory": false,
+      "command": null,
+      "order": 12,
+      "indexes": [
+        {
+          "collection": "auditlogs",
+          "keys": { "userId": 1, "createdAt": -1 },
+          "options": { "name": "auditlogs_user_createdAt_idx" }
+        },
+        {
+          "collection": "auditlogs",
+          "keys": { "entityType": 1, "entityId": 1 },
+          "options": { "name": "auditlogs_entity_idx" }
+        },
+        {
+          "collection": "usageledgers",
+          "keys": { "userId": 1, "createdAt": -1 },
+          "options": { "name": "usageledgers_user_createdAt_idx" }
+        }
+      ],
+      "notes": "Audit rows are retained indefinitely — no TTL index by design."
+    },
+    {
+      "service": "client-logs",
+      "projectName": "claw-client-logs-service",
+      "engine": "mongodb",
+      "schema": null,
+      "databaseVariable": "CLIENT_LOGS_MONGODB_URI",
+      "directDatabaseVariable": null,
+      "hasMigrationsDirectory": false,
+      "command": null,
+      "order": 13,
+      "indexes": [
+        {
+          "collection": "clientlogs",
+          "keys": { "createdAt": 1 },
+          "options": {
+            "name": "clientlogs_ttl_idx",
+            "expireAfterSeconds": 2592000
+          }
+        },
+        {
+          "collection": "clientlogs",
+          "keys": { "level": 1, "createdAt": -1 },
+          "options": { "name": "clientlogs_level_createdAt_idx" }
+        }
+      ],
+      "notes": "TTL index expires client logs after 30 days (2592000s), matching the documented retention."
+    },
+    {
+      "service": "server-logs",
+      "projectName": "claw-server-logs-service",
+      "engine": "mongodb",
+      "schema": null,
+      "databaseVariable": "SERVER_LOGS_MONGODB_URI",
+      "directDatabaseVariable": null,
+      "hasMigrationsDirectory": false,
+      "command": null,
+      "order": 14,
+      "indexes": [
+        {
+          "collection": "serverlogs",
+          "keys": { "createdAt": 1 },
+          "options": {
+            "name": "serverlogs_ttl_idx",
+            "expireAfterSeconds": 2592000
+          }
+        },
+        {
+          "collection": "serverlogs",
+          "keys": { "serviceName": 1, "level": 1, "createdAt": -1 },
+          "options": { "name": "serverlogs_service_level_createdAt_idx" }
+        },
+        {
+          "collection": "serverlogs",
+          "keys": { "requestId": 1 },
+          "options": { "name": "serverlogs_requestId_idx" }
+        }
+      ],
+      "notes": "TTL index expires server logs after 30 days (2592000s), matching the documented retention."
+    }
+  ],
+  "excluded": [
+    {
+      "service": "ollama",
+      "reason": "claw-ollama-service is not-vercel-compatible; its database is never provisioned on Vercel."
+    },
+    {
+      "service": "llamacpp",
+      "reason": "claw-llamacpp-service is not-vercel-compatible; its database is never provisioned on Vercel."
+    },
+    {
+      "service": "health",
+      "reason": "health-service has no database (databaseType: none)."
+    },
+    {
+      "service": "frontend",
+      "reason": "claw-frontend has no database (databaseType: none)."
+    }
+  ]
+}

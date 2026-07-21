@@ -28,7 +28,7 @@ async function bootstrap(): Promise<void> {
   const clawHost = process.env['CLAW_HOSTNAME'] ?? 'claw.local';
   const corsOrigins = process.env['CORS_ORIGINS']?.split(',') ?? [`https://${clawHost}`, `https://${clawHost}:3000`];
   app.enableCors({ origin: corsOrigins, credentials: true, methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'] });
-  await app.listen(process.env['HEALTH_PORT'] ?? 4009);
+  await app.listen(process.env['PORT'] ?? process.env['HEALTH_PORT'] ?? 4009);
 }
 
 void bootstrap();

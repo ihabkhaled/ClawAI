@@ -94,9 +94,9 @@ jobs:
             workspace: '@claw/shared-entitlements'
             prisma: false
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -203,9 +203,9 @@ jobs:
             workspace: '@claw/shared-entitlements'
             prisma: false
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -357,9 +357,9 @@ jobs:
       AUTO_SUGGEST_INBOX_REPLY_CRON: '0 */15 * * * *'
       AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS: '48'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -476,9 +476,9 @@ jobs:
       # builds are small and don't notice.
       NODE_OPTIONS: --max-old-space-size=8192
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
