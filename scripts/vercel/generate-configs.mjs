@@ -169,6 +169,11 @@ function renderVercelJson(project) {
         // value if a deploy is rejected for exceeding the account limit.
         maxDuration: EXTENDED_DURATION.has(project.key) ? 300 : 60,
         memory: 1024,
+        // Vercel's bundler traces `require` graphs statically. NestJS resolves
+        // a lot at runtime, and the generated Prisma client ships a native
+        // query-engine binary that no static trace will find — so ship the
+        // whole build output rather than hope the trace is complete.
+        includeFiles: 'dist/**',
       },
     },
     // Everything reaches the Nest router; Nest's own global prefix and route

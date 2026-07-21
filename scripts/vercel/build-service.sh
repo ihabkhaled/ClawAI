@@ -51,4 +51,16 @@ fi
 echo "==> compiling ${WORKSPACE}"
 npm run build --workspace="${WORKSPACE}"
 
+# The Prisma client is generated into src/generated/prisma as plain .js/.d.ts.
+# tsgo only compiles .ts, so it never lands in dist/, and the compiled
+# dist/infrastructure/database/prisma/prisma.service.js fails at runtime with
+# "Cannot find module '../../../generated/prisma'". The Dockerfile has always
+# done this copy (see apps/*/Dockerfile); the Vercel build needs it too.
+if [ -d "${SERVICE_DIR}/src/generated" ]; then
+  echo "==> copying generated Prisma client into dist/"
+  mkdir -p "${SERVICE_DIR}/dist/generated"
+  cp -r "${SERVICE_DIR}/src/generated/." "${SERVICE_DIR}/dist/generated/"
+  ls "${SERVICE_DIR}/dist/generated"
+fi
+
 echo "==> done"

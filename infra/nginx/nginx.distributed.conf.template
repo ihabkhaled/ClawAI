@@ -1,0 +1,506 @@
+##############################################################################
+# ClawAI — distributed nginx edge router
+#
+# A sibling of infra/nginx/nginx.conf, NOT a replacement. Use this one when the
+# microservices no longer share a Docker network and each lives on its own host
+# (Vercel, Render, Fly, separate VMs). The local config stays as it is.
+#
+#   nginx.conf                     services co-located, Docker DNS, mkcert CA
+#   nginx.distributed.conf.template  one origin per service, public DNS, public CA
+#
+# ---------------------------------------------------------------------------
+# What changed vs the local config, and why
+# ---------------------------------------------------------------------------
+# 1. resolver        127.0.0.11 (Docker DNS) -> public DNS. Managed platforms
+#                    rotate IPs, so every origin is re-resolved at runtime.
+# 2. proxy_pass      Kept as `set $var; proxy_pass $var;` — deliberately NOT
+#                    upstream{} blocks. nginx resolves upstream server names
+#                    once at startup; a Vercel/Render IP change would then be
+#                    invisible until reload. The variable form re-resolves via
+#                    the resolver directive above.
+# 3. Host header     $host -> $proxy_host. THE critical change. Managed
+#                    platforms route by Host/SNI, so forwarding the browser's
+#                    Host ("claw.example.com") reaches the platform edge and
+#                    404s. Backends still see the original via X-Forwarded-Host.
+# 4. Upstream TLS    mkcert rootCA -> system CA bundle, plus proxy_ssl_name for
+#                    correct SNI on shared-IP platforms.
+# 5. Origins         Hardcoded service:port -> ${CLAW_*_ORIGIN} env variables,
+#                    substituted at container start.
+#
+# Everything else — every route, rewrite, timeout and SSE setting — is carried
+# over unchanged, because that behaviour is transport-independent.
+#
+# ---------------------------------------------------------------------------
+# How to run it
+# ---------------------------------------------------------------------------
+#   docker run --rm \
+#     --env-file infra/nginx/.env.distributed \
+#     -e NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx \
+#     -v $PWD/infra/nginx/nginx.distributed.conf.template:/etc/nginx/templates/nginx.conf.template:ro \
+#     -v $PWD/certs:/etc/nginx/certs:ro \
+#     -p 443:443 -p 80:80 nginx:1.27-alpine
+#
+# The official image runs envsubst over /etc/nginx/templates/*.template at
+# start-up. NGINX_ENVSUBST_OUTPUT_DIR makes it write /etc/nginx/nginx.conf.
+#
+# Origin variables take a HOST[:PORT] with NO scheme — https is applied here:
+#   CLAW_AUTH_ORIGIN=claw-auth-service.vercel.app
+#   CLAW_AUTH_ORIGIN=auth.internal.example.com:4001
+#
+# See infra/nginx/.env.distributed.example for the full list.
+##############################################################################
+
+events {
+    worker_connections 4096;
+}
+
+http {
+    # --- DNS resolver -------------------------------------------------------
+    # Public resolver, not Docker's 127.0.0.11. `valid=` caps how long a record
+    # is cached: managed platforms move IPs, and a stale record is a hard-down
+    # origin. Override with CLAW_DNS_RESOLVER (e.g. a VPC resolver).
+    resolver ${CLAW_DNS_RESOLVER} valid=30s ipv6=off;
+    resolver_timeout 5s;
+
+    # --- Timeouts -----------------------------------------------------------
+    # Higher than the local config: this hop now crosses the public internet,
+    # and a cold serverless origin can take seconds to answer its first request.
+    proxy_connect_timeout 15s;
+    proxy_send_timeout    120s;
+    proxy_read_timeout    120s;
+
+    # --- Request body -------------------------------------------------------
+    client_max_body_size 75m;
+
+    # --- Security headers ---------------------------------------------------
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header X-XSS-Protection "0" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+
+    server_tokens off;
+
+    # --- Edge TLS (browser -> nginx) ---------------------------------------
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    # --- Upstream TLS (nginx -> service) -----------------------------------
+    # Public CA bundle, not the mkcert root: these origins present certificates
+    # from real authorities. proxy_ssl_name/server_name send the correct SNI,
+    # without which a shared-IP platform cannot pick the right certificate and
+    # the handshake fails.
+    proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+    proxy_ssl_verify              on;
+    proxy_ssl_verify_depth        3;
+    proxy_ssl_server_name         on;
+    proxy_ssl_name                $proxy_host;
+    proxy_ssl_protocols           TLSv1.2 TLSv1.3;
+
+    # --- WebSocket upgrade --------------------------------------------------
+    # Sends `Connection: upgrade` only for real upgrade requests and
+    # `Connection: ""` otherwise, which is what keeps SSE responses unbuffered
+    # on a keepalive connection.
+    map $http_upgrade $connection_upgrade {
+        default upgrade;
+        ''      '';
+    }
+
+    # --- Service origins ----------------------------------------------------
+    # Substituted by envsubst at container start. Declared once here as maps so
+    # a typo is a start-up failure rather than a 502 discovered in production.
+    map $host $origin_auth            { default "${CLAW_AUTH_ORIGIN}"; }
+    map $host $origin_chat            { default "${CLAW_CHAT_ORIGIN}"; }
+    map $host $origin_connector       { default "${CLAW_CONNECTOR_ORIGIN}"; }
+    map $host $origin_routing         { default "${CLAW_ROUTING_ORIGIN}"; }
+    map $host $origin_memory          { default "${CLAW_MEMORY_ORIGIN}"; }
+    map $host $origin_file            { default "${CLAW_FILE_ORIGIN}"; }
+    map $host $origin_audit           { default "${CLAW_AUDIT_ORIGIN}"; }
+    map $host $origin_health          { default "${CLAW_HEALTH_ORIGIN}"; }
+    map $host $origin_client_logs     { default "${CLAW_CLIENT_LOGS_ORIGIN}"; }
+    map $host $origin_server_logs     { default "${CLAW_SERVER_LOGS_ORIGIN}"; }
+    map $host $origin_image           { default "${CLAW_IMAGE_ORIGIN}"; }
+    map $host $origin_file_generation { default "${CLAW_FILE_GENERATION_ORIGIN}"; }
+    map $host $origin_workspace       { default "${CLAW_WORKSPACE_ORIGIN}"; }
+    map $host $origin_agent           { default "${CLAW_AGENT_ORIGIN}"; }
+    map $host $origin_research        { default "${CLAW_RESEARCH_ORIGIN}"; }
+    map $host $origin_frontend        { default "${CLAW_FRONTEND_ORIGIN}"; }
+
+    # Local-runtime services. These have no remote origin in a distributed
+    # deployment (they need a GPU, a persistent volume and local binaries), so
+    # they are allowed to be empty and answer 503 rather than 502.
+    map $host $origin_ollama          { default "${CLAW_OLLAMA_ORIGIN}"; }
+    map $host $origin_llamacpp        { default "${CLAW_LLAMACPP_ORIGIN}"; }
+
+    # ---- HTTP -> HTTPS redirect -------------------------------------------
+    server {
+        listen 80;
+        server_name _;
+        return 301 https://$host$request_uri;
+    }
+
+    # ---- Main TLS server block --------------------------------------------
+    server {
+        listen 443 ssl;
+        http2 on;
+        server_name ${CLAW_PUBLIC_HOSTNAME} _;
+
+        ssl_certificate     ${CLAW_TLS_CERT_PATH};
+        ssl_certificate_key ${CLAW_TLS_KEY_PATH};
+
+        # --- Shared proxy headers ------------------------------------------
+        # Host is the UPSTREAM's hostname so managed platforms route correctly.
+        # The browser's original host/proto travel in the X-Forwarded-* headers,
+        # which is what the services read for absolute-URL construction.
+        proxy_set_header Host              $proxy_host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+        proxy_set_header X-Request-ID      $request_id;
+        proxy_set_header Origin            $http_origin;
+
+        # HTTP/1.1 keepalive to the origins; required for SSE to stream.
+        proxy_http_version 1.1;
+
+        # --- Auth Service ---
+        location /api/v1/auth {
+            set $backend https://$origin_auth;
+            proxy_pass $backend;
+        }
+
+        location /api/v1/users {
+            set $backend https://$origin_auth;
+            proxy_pass $backend;
+        }
+
+        # Admin RBAC: plans + roles CRUD (auth-service, ADMIN-gated controllers).
+        location /api/v1/admin {
+            set $backend https://$origin_auth;
+            proxy_pass $backend;
+        }
+
+        # --- Chat Service ---
+        location /api/v1/threads {
+            set $backend https://$origin_chat;
+            rewrite ^/api/v1/threads/(.*)$ /api/v1/chat-threads/$1 break;
+            proxy_pass $backend;
+        }
+
+        location /api/v1/messages {
+            set $backend https://$origin_chat;
+            rewrite ^/api/v1/messages/(.*)$ /api/v1/chat-messages/$1 break;
+            proxy_pass $backend;
+        }
+
+        location /api/v1/chat-threads {
+            set $backend https://$origin_chat;
+            proxy_pass $backend;
+        }
+
+        location /api/v1/chat-messages/stream {
+            set $backend https://$origin_chat;
+            proxy_pass $backend;
+            proxy_set_header Connection "";
+            proxy_read_timeout 86400;
+            proxy_buffering off;
+            proxy_cache off;
+        }
+
+        location /api/v1/chat-messages/parallel {
+            set $backend https://$origin_chat;
+            proxy_pass $backend;
+            proxy_read_timeout 180s;
+        }
+
+        location /api/v1/chat-messages/consensus {
+            set $backend https://$origin_chat;
+            proxy_pass $backend;
+            proxy_read_timeout 180s;
+        }
+
+        location /api/v1/chat-messages/escalation-chain {
+            set $backend https://$origin_chat;
+            proxy_pass $backend;
+            proxy_read_timeout 180s;
+        }
+
+        location /api/v1/chat-messages/decompose {
+            set $backend https://$origin_chat;
+            proxy_pass $backend;
+            proxy_read_timeout 30s;
+        }
+
+        location /api/v1/chat-messages/best-of-n {
+            set $backend https://$origin_chat;
+            proxy_pass $backend;
+            proxy_read_timeout 30s;
+        }
+
+        location /api/v1/chat-messages/verify {
+            set $backend https://$origin_chat;
+            proxy_pass $backend;
+            proxy_read_timeout 30s;
+        }
+
+        location /api/v1/chat-messages/pipeline {
+            set $backend https://$origin_chat;
+            proxy_pass $backend;
+            proxy_read_timeout 120s;
+        }
+
+        location /api/v1/chat-messages/cost-ensemble {
+            set $backend https://$origin_chat;
+            proxy_pass $backend;
+            proxy_read_timeout 120s;
+        }
+
+        location /api/v1/chat-messages/role-pack {
+            set $backend https://$origin_chat;
+            proxy_pass $backend;
+            proxy_read_timeout 120s;
+        }
+
+        location /api/v1/chat-messages {
+            set $backend https://$origin_chat;
+            proxy_pass $backend;
+        }
+
+        # --- Connector Service ---
+        location /api/v1/connectors {
+            set $backend https://$origin_connector;
+            proxy_pass $backend;
+        }
+
+        location /api/v1/models {
+            set $backend https://$origin_connector;
+            proxy_pass $backend;
+        }
+
+        # --- Routing Service ---
+        location /api/v1/routing/adaptive-insights {
+            set $backend https://$origin_routing;
+            proxy_pass $backend;
+            proxy_read_timeout 30s;
+        }
+
+        location /api/v1/routing {
+            set $backend https://$origin_routing;
+            proxy_pass $backend;
+        }
+
+        # --- Memory Service ---
+        location /api/v1/memory {
+            set $backend https://$origin_memory;
+            rewrite ^/api/v1/memory/(.*)$ /api/v1/memories/$1 break;
+            proxy_pass $backend;
+        }
+
+        location /api/v1/context {
+            set $backend https://$origin_memory;
+            rewrite ^/api/v1/context/(.*)$ /api/v1/context-packs/$1 break;
+            proxy_pass $backend;
+        }
+
+        location /api/v1/memories {
+            set $backend https://$origin_memory;
+            proxy_pass $backend;
+        }
+
+        location /api/v1/context-packs {
+            set $backend https://$origin_memory;
+            proxy_pass $backend;
+        }
+
+        # --- File Service ---
+        location /api/v1/files {
+            set $backend https://$origin_file;
+            proxy_pass $backend;
+            # Uploads cross the public internet here; give them room.
+            proxy_request_buffering off;
+            proxy_send_timeout 300s;
+            proxy_read_timeout 300s;
+        }
+
+        # --- Audit Service ---
+        location /api/v1/audits {
+            set $backend https://$origin_audit;
+            proxy_pass $backend;
+        }
+
+        location /api/v1/usage {
+            set $backend https://$origin_audit;
+            proxy_pass $backend;
+        }
+
+        # --- Ollama Service: SSE pull-progress (must come before generic) ---
+        location ~ ^/api/v1/ollama/pull-jobs/[^/]+/progress$ {
+            if ($origin_ollama = "") { return 503 '{"error":"ollama-service is a local-runtime service and has no remote origin"}'; }
+            set $backend https://$origin_ollama;
+            proxy_pass $backend;
+            proxy_set_header Connection "";
+            proxy_set_header X-Accel-Buffering "no";
+            proxy_read_timeout 86400;
+            proxy_buffering off;
+            proxy_cache off;
+        }
+
+        # --- Ollama Service ---
+        location /api/v1/ollama {
+            if ($origin_ollama = "") { return 503 '{"error":"ollama-service is a local-runtime service and has no remote origin"}'; }
+            set $backend https://$origin_ollama;
+            proxy_pass $backend;
+        }
+
+        # --- Image Service ---
+        location /api/v1/images {
+            set $backend https://$origin_image;
+            proxy_pass $backend;
+        }
+
+        # --- Image Service SSE ---
+        location /api/v1/images/ {
+            set $backend https://$origin_image;
+            proxy_pass $backend;
+            proxy_set_header Connection "";
+            proxy_read_timeout 86400;
+            proxy_buffering off;
+            proxy_cache off;
+        }
+
+        # --- File Generation Service ---
+        location /api/v1/file-generations {
+            set $backend https://$origin_file_generation;
+            proxy_pass $backend;
+        }
+
+        # --- File Generation Service SSE ---
+        location /api/v1/file-generations/ {
+            set $backend https://$origin_file_generation;
+            proxy_pass $backend;
+            proxy_set_header Connection "";
+            proxy_read_timeout 86400;
+            proxy_buffering off;
+            proxy_cache off;
+        }
+
+        # --- Workspace Service ---
+        # AI action generation runs the LLM synchronously and routinely sits at
+        # 60-120s. Declared BEFORE the generic /workspace block so nginx's
+        # longest-prefix match picks it.
+        location /api/v1/workspace/ai-actions/run {
+            set $backend https://$origin_workspace;
+            proxy_pass $backend;
+            proxy_read_timeout 600s;
+            proxy_send_timeout 600s;
+        }
+
+        location /api/v1/workspace {
+            set $backend https://$origin_workspace;
+            proxy_pass $backend;
+        }
+
+        # --- Agent Service (SSE stream — must be declared before generic) ---
+        location ~ ^/api/v1/agent/commands/[^/]+/stream$ {
+            set $backend https://$origin_agent;
+            proxy_pass $backend;
+            proxy_set_header Connection "";
+            proxy_set_header X-Accel-Buffering "no";
+            proxy_buffering off;
+            proxy_cache off;
+            proxy_read_timeout 86400s;
+            proxy_send_timeout 86400s;
+        }
+
+        # --- Agent Service ---
+        location /api/v1/agent {
+            set $backend https://$origin_agent;
+            proxy_pass $backend;
+        }
+
+        # --- Research Service ---
+        location /api/v1/research {
+            set $backend https://$origin_research;
+            proxy_pass $backend;
+            # Fetch/scrape/clone reach out to third parties before answering.
+            proxy_read_timeout 300s;
+        }
+
+        # --- Client Logs Service ---
+        location /api/v1/client-logs {
+            set $backend https://$origin_client_logs;
+            proxy_pass $backend;
+        }
+
+        # --- Server Logs Service ---
+        location /api/v1/server-logs {
+            set $backend https://$origin_server_logs;
+            proxy_pass $backend;
+        }
+
+        # --- Llamacpp Service: SSE pull-progress (must come before generic) ---
+        # Service controllers are NOT under /llamacpp/ (unlike ollama-service); strip the prefix.
+        location ~ ^/api/v1/llamacpp/pull-jobs/[^/]+/progress$ {
+            if ($origin_llamacpp = "") { return 503 '{"error":"llamacpp-service is a local-runtime service and has no remote origin"}'; }
+            set $backend https://$origin_llamacpp;
+            rewrite ^/api/v1/llamacpp(/.*)$ /api/v1$1 break;
+            proxy_pass $backend;
+            proxy_set_header Connection "";
+            proxy_set_header X-Accel-Buffering "no";
+            proxy_buffering off;
+            proxy_cache off;
+            proxy_read_timeout 86400s;
+            proxy_send_timeout 86400s;
+        }
+
+        # --- Llamacpp Service: OpenAI-compatible inference (SSE-capable) ---
+        location /api/v1/llamacpp/v1/ {
+            if ($origin_llamacpp = "") { return 503 '{"error":"llamacpp-service is a local-runtime service and has no remote origin"}'; }
+            set $backend https://$origin_llamacpp;
+            rewrite ^/api/v1/llamacpp(/.*)$ /api/v1$1 break;
+            proxy_pass $backend;
+            proxy_set_header Connection "";
+            proxy_buffering off;
+            proxy_cache off;
+            proxy_read_timeout 86400;
+            proxy_request_buffering off;
+        }
+
+        # --- Llamacpp Service: catalog / pull / models / hardware / runtime / health ---
+        location /api/v1/llamacpp/ {
+            if ($origin_llamacpp = "") { return 503 '{"error":"llamacpp-service is a local-runtime service and has no remote origin"}'; }
+            set $backend https://$origin_llamacpp;
+            rewrite ^/api/v1/llamacpp(/.*)$ /api/v1$1 break;
+            proxy_pass $backend;
+        }
+
+        # --- Health Service ---
+        location /api/v1/health {
+            set $backend https://$origin_health;
+            proxy_pass $backend;
+        }
+
+        # --- Edge health check ---
+        # Answers without touching any origin, so a load balancer can tell
+        # "nginx is up" apart from "the services are up".
+        location = /_nginx/health {
+            access_log off;
+            add_header Content-Type application/json always;
+            return 200 '{"status":"ok","role":"edge"}';
+        }
+
+        # --- Frontend ---
+        # Catch-all: everything that isn't /api/v1/* goes to the frontend.
+        # Declared LAST so longest-prefix match picks the API routes first.
+        location / {
+            set $backend https://$origin_frontend;
+            proxy_pass $backend;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+            proxy_read_timeout 86400;
+        }
+    }
+}
