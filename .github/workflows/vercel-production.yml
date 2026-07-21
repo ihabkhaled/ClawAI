@@ -144,9 +144,9 @@ jobs:
           WORKSPACE_DATABASE_URL: ${{ secrets.WORKSPACE_DATABASE_URL }}
           AGENT_DATABASE_URL: ${{ secrets.AGENT_DATABASE_URL }}
           RESEARCH_DATABASE_URL: ${{ secrets.RESEARCH_DATABASE_URL }}
-          AUDIT_MONGODB_URI: ${{ secrets.AUDIT_MONGODB_URI }}
-          CLIENT_LOGS_MONGODB_URI: ${{ secrets.CLIENT_LOGS_MONGODB_URI }}
-          SERVER_LOGS_MONGODB_URI: ${{ secrets.SERVER_LOGS_MONGODB_URI }}
+          AUDIT_MONGODB_URL: ${{ secrets.AUDIT_MONGODB_URL }}
+          CLIENT_LOGS_MONGODB_URL: ${{ secrets.CLIENT_LOGS_MONGODB_URL }}
+          SERVER_LOGS_MONGODB_URL: ${{ secrets.SERVER_LOGS_MONGODB_URL }}
         run: node scripts/vercel/sync-env.mjs --all --target production
 
       - name: Skip environment sync
@@ -171,9 +171,9 @@ jobs:
           WORKSPACE_DIRECT_DATABASE_URL: ${{ secrets.WORKSPACE_DIRECT_DATABASE_URL }}
           AGENT_DIRECT_DATABASE_URL: ${{ secrets.AGENT_DIRECT_DATABASE_URL }}
           RESEARCH_DIRECT_DATABASE_URL: ${{ secrets.RESEARCH_DIRECT_DATABASE_URL }}
-          AUDIT_MONGODB_URI: ${{ secrets.AUDIT_MONGODB_URI }}
-          CLIENT_LOGS_MONGODB_URI: ${{ secrets.CLIENT_LOGS_MONGODB_URI }}
-          SERVER_LOGS_MONGODB_URI: ${{ secrets.SERVER_LOGS_MONGODB_URI }}
+          AUDIT_MONGODB_URL: ${{ secrets.AUDIT_MONGODB_URL }}
+          CLIENT_LOGS_MONGODB_URL: ${{ secrets.CLIENT_LOGS_MONGODB_URL }}
+          SERVER_LOGS_MONGODB_URL: ${{ secrets.SERVER_LOGS_MONGODB_URL }}
         run: node scripts/vercel/migrate.mjs --all
 
       - name: Skip database migrations

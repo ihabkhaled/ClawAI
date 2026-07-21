@@ -3,7 +3,7 @@ import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connec
 import {
   HEALTH_CHECK_TIMEOUT_MS,
   OAUTH_PROBE_INVALID_CODE,
-  OAUTH_PROBE_INVALID_REDIRECT_URI,
+  OAUTH_PROBE_INVALID_REDIRECT_URL,
   SLACK_API_BASE,
   SLACK_AUTH_URL,
   SLACK_TOKEN_URL,
@@ -137,7 +137,7 @@ export class SlackAdapter implements WorkspaceAdapter {
       client_id: appCredentials.clientId,
       client_secret: appCredentials.clientSecret,
       code: OAUTH_PROBE_INVALID_CODE,
-      redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
+      redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URL,
     });
     return probeOAuthAppCredentials({
       tokenUrl: SLACK_TOKEN_URL,

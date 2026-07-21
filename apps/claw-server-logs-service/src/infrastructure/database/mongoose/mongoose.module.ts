@@ -10,7 +10,7 @@ import { AppConfig } from '../../../app/config/app.config';
       useFactory: () => {
         const config = AppConfig.get();
         return {
-          uri: config.SERVER_LOGS_MONGODB_URI,
+          uri: config.SERVER_LOGS_MONGODB_URL,
         };
       },
     }),

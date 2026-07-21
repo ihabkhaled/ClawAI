@@ -369,7 +369,7 @@ function checkProductionValues(projects, env, target, findings) {
       ...(project.requiredEnvironmentVariables ?? []),
       ...(project.optionalEnvironmentVariables ?? []),
     ]) {
-      if (variable.endsWith('_URL') || variable.endsWith('_URI') || variable.endsWith('_BASE_URL')) {
+      if (variable.endsWith('_URL') || variable.endsWith('_URL') || variable.endsWith('_BASE_URL')) {
         urlVariables.add(variable);
       }
     }
@@ -436,7 +436,7 @@ function checkNoSecretsInSource(findings) {
     }
     const key = line.slice(0, eq);
     const value = line.slice(eq + 1).trim();
-    const looksSecret = /TOKEN|SECRET|PASSWORD|KEY|_URI|_URL/i.test(key);
+    const looksSecret = /TOKEN|SECRET|PASSWORD|KEY|_URL|_URL/i.test(key);
     // Placeholder scheme prefixes are fine; a filled-in credential is not.
     const isPlaceholder =
       value === '' || /^(https?:\/\/)?$/.test(value) || value.startsWith('<') || value.startsWith('changeme');

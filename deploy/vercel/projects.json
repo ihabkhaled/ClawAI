@@ -430,11 +430,11 @@
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/audits",
       "databaseType": "mongodb",
-      "databaseVariable": "AUDIT_MONGODB_URI",
+      "databaseVariable": "AUDIT_MONGODB_URL",
       "directDatabaseVariable": null,
       "prismaSchema": null,
       "requiredEnvironmentVariables": [
-        "AUDIT_MONGODB_URI",
+        "AUDIT_MONGODB_URL",
         "REDIS_URL",
         "RABBITMQ_URL",
         "JWT_SECRET"
@@ -531,11 +531,11 @@
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/client-logs",
       "databaseType": "mongodb",
-      "databaseVariable": "CLIENT_LOGS_MONGODB_URI",
+      "databaseVariable": "CLIENT_LOGS_MONGODB_URL",
       "directDatabaseVariable": null,
       "prismaSchema": null,
       "requiredEnvironmentVariables": [
-        "CLIENT_LOGS_MONGODB_URI",
+        "CLIENT_LOGS_MONGODB_URL",
         "REDIS_URL",
         "RABBITMQ_URL",
         "JWT_SECRET"
@@ -575,11 +575,11 @@
       "healthPath": "/api/v1/health",
       "protectedProbePath": "/api/v1/server-logs",
       "databaseType": "mongodb",
-      "databaseVariable": "SERVER_LOGS_MONGODB_URI",
+      "databaseVariable": "SERVER_LOGS_MONGODB_URL",
       "directDatabaseVariable": null,
       "prismaSchema": null,
       "requiredEnvironmentVariables": [
-        "SERVER_LOGS_MONGODB_URI",
+        "SERVER_LOGS_MONGODB_URL",
         "REDIS_URL",
         "RABBITMQ_URL",
         "JWT_SECRET"

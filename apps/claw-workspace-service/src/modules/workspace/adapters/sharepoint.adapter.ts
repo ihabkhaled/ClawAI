@@ -8,7 +8,7 @@ import {
   MICROSOFT_SHAREPOINT_SYNC_LIMIT,
   MICROSOFT_TOKEN_URL,
   OAUTH_PROBE_INVALID_CODE,
-  OAUTH_PROBE_INVALID_REDIRECT_URI,
+  OAUTH_PROBE_INVALID_REDIRECT_URL,
 } from '../../../common/constants/workspace.constants';
 import { encodeGraphPath } from '../../../common/utilities/microsoft-graph-path.utility';
 import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
@@ -150,7 +150,7 @@ export class SharePointAdapter implements WorkspaceAdapter {
       client_secret: appCredentials.clientSecret,
       grant_type: 'authorization_code',
       code: OAUTH_PROBE_INVALID_CODE,
-      redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URI,
+      redirect_uri: OAUTH_PROBE_INVALID_REDIRECT_URL,
     });
     return probeOAuthAppCredentials({
       tokenUrl,

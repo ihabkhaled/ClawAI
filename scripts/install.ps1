@@ -1065,9 +1065,9 @@ ROUTING_LEARNING_LOOP_INTEGRATED_ENABLED=false
 # Phase 8 - Dev-only context inspector panel
 ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED=false
 
-AUDIT_MONGODB_URI=mongodb://claw:$($mongoPass)@mongodb:27017/claw_audit?authSource=admin
-CLIENT_LOGS_MONGODB_URI=mongodb://claw:$($mongoPass)@mongodb:27017/claw_client_logs?authSource=admin
-SERVER_LOGS_MONGODB_URI=mongodb://claw:$($mongoPass)@mongodb:27017/claw_server_logs?authSource=admin
+AUDIT_MONGODB_URL=mongodb://claw:$($mongoPass)@mongodb:27017/claw_audit?authSource=admin
+CLIENT_LOGS_MONGODB_URL=mongodb://claw:$($mongoPass)@mongodb:27017/claw_client_logs?authSource=admin
+SERVER_LOGS_MONGODB_URL=mongodb://claw:$($mongoPass)@mongodb:27017/claw_server_logs?authSource=admin
 
 # =============================================================================
 # Desktop Agent — native capability tooling (populated by install-agent-tooling)

@@ -104,7 +104,7 @@ The values you cannot skip:
 | Vercel account | `VERCEL_TOKEN`, `VERCEL_TEAM_ID`, `VERCEL_GIT_REPOSITORY`, `VERCEL_PRODUCTION_BRANCH` |
 | Shared security | `JWT_SECRET` (≥32 chars), `ENCRYPTION_KEY` (64 hex), `INTER_SERVICE_AUTH_TOKEN` (≥32 chars) |
 | Infrastructure | `REDIS_URL`, `RABBITMQ_URL`, `BLOB_READ_WRITE_TOKEN` |
-| Databases | 11 × `*_DATABASE_URL` + `*_DIRECT_DATABASE_URL`, 3 × `*_MONGODB_URI` |
+| Databases | 11 × `*_DATABASE_URL` + `*_DIRECT_DATABASE_URL`, 3 × `*_MONGODB_URL` |
 | AI runtime | `OLLAMA_BASE_URL`, `OLLAMA_API_KEY` |
 | Browser | `CORS_ORIGINS` |
 
@@ -444,9 +444,9 @@ convention.
 | workspace | PostgreSQL | `WORKSPACE_DATABASE_URL` | `WORKSPACE_DIRECT_DATABASE_URL` |
 | agent | PostgreSQL | `AGENT_DATABASE_URL` | `AGENT_DIRECT_DATABASE_URL` |
 | research | PostgreSQL | `RESEARCH_DATABASE_URL` | `RESEARCH_DIRECT_DATABASE_URL` |
-| audit | MongoDB | `AUDIT_MONGODB_URI` | — |
-| client-logs | MongoDB | `CLIENT_LOGS_MONGODB_URI` | — |
-| server-logs | MongoDB | `SERVER_LOGS_MONGODB_URI` | — |
+| audit | MongoDB | `AUDIT_MONGODB_URL` | — |
+| client-logs | MongoDB | `CLIENT_LOGS_MONGODB_URL` | — |
+| server-logs | MongoDB | `SERVER_LOGS_MONGODB_URL` | — |
 | health | none | — | — |
 | frontend | none | — | — |
 
