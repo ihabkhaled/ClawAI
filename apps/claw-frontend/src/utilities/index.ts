@@ -149,3 +149,19 @@ export {
 export { daysUntilExpiry } from './file-retention.utility';
 export { parseKeyCombo, matchesCombo, isMac, getModKeyLabel } from './keyboard-shortcut.utility';
 export type { ParsedCombo } from './keyboard-shortcut.utility';
+export {
+  getPublishedPages,
+  getIndexablePages,
+  getAdEligiblePages,
+  getPageBySlug,
+  isKnownPublicPath,
+  isAdEligiblePath,
+} from './content-registry.utility';
+export { isPublicPath } from './route-visibility.utility';
+export { getConfiguredSocialLinks } from './social-links.utility';
+export {
+  buildWebsiteJsonLd,
+  buildOrganizationJsonLd,
+  buildSoftwareApplicationJsonLd,
+  serializeJsonLd,
+} from './structured-data.utility';

@@ -873,3 +873,23 @@ export type {
   OrchestrationPageShellProps,
   UseOrchestrationStagesResult,
 } from './orchestration.types';
+export type { ContentRegistryEntry } from './content-registry.types';
+export type {
+  UseMarketingLocaleSwitcherReturn,
+  UseMarketingThemeToggleReturn,
+  MarketingNavLink,
+  UseMarketingMobileMenuReturn,
+  MarketingMobileMenuProps,
+  MarketingFooterLinkGroup,
+  MarketingSocialLink,
+  HomeHeroProps,
+} from './marketing.types';
+export type {
+  RoutingModeDescriptor,
+  MessageFlowStep,
+  OrchestrationPrimitive,
+  IntegrationHighlight,
+  FaqEntry,
+  UseCaseEntry,
+} from './home-content.types';
+export type { JsonLdObject } from './structured-data.types';

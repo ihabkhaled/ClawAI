@@ -3301,6 +3301,40 @@ export type TranslationDictionary = {
     progressTitle: string;
     errorTitle: string;
   };
+  marketing: {
+    header: {
+      navLabel: string;
+      navFeatures: string;
+      navHowItWorks: string;
+      navArchitecture: string;
+      navLocalFirst: string;
+      navUseCases: string;
+      navFaq: string;
+      github: string;
+      login: string;
+      openClaw: string;
+      menuOpen: string;
+      menuTitle: string;
+      languageSwitcherLabel: string;
+      themeToggleLabel: string;
+    };
+    footer: {
+      tagline: string;
+      resourcesHeading: string;
+      github: string;
+      documentation: string;
+      getStartedHeading: string;
+      copyright: string;
+      socialX: string;
+      socialLinkedin: string;
+      socialDiscord: string;
+    };
+    notFound: {
+      title: string;
+      description: string;
+      backHome: string;
+    };
+  };
 };
 
 export type TranslationNamespace = keyof TranslationDictionary;

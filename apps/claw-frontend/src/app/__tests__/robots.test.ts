@@ -1,0 +1,51 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// First dynamic import of a route module in a cold vitest worker compiles a
+// large chunk of the app's module graph — generous timeout is about
+// cold-compile cost, not slow logic.
+const DYNAMIC_IMPORT_TIMEOUT_MS = 20_000;
+
+describe('robots', () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    delete process.env['SITE_URL'];
+    delete process.env['VERCEL_ENV'];
+  });
+
+  it(
+    'disallows every known private route prefix in production',
+    async () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      process.env['SITE_URL'] = 'https://claw.example';
+      const { PRIVATE_ROUTE_PREFIXES } = await import('@/constants');
+      const robots = (await import('../robots')).default;
+
+      const result = robots();
+      expect(result.sitemap).toBe('https://claw.example/sitemap.xml');
+      const disallow = Array.isArray(result.rules)
+        ? result.rules[0]?.disallow
+        : (result.rules as { disallow?: string | string[] }).disallow;
+      for (const prefix of PRIVATE_ROUTE_PREFIXES) {
+        expect(disallow).toContain(prefix);
+      }
+    },
+    DYNAMIC_IMPORT_TIMEOUT_MS,
+  );
+
+  it(
+    'disallows everything in non-canonical environments',
+    async () => {
+      vi.stubEnv('NODE_ENV', 'development');
+      const robots = (await import('../robots')).default;
+
+      const result = robots();
+      const rules = Array.isArray(result.rules) ? result.rules[0] : result.rules;
+      expect(rules?.disallow).toBe('/');
+    },
+    DYNAMIC_IMPORT_TIMEOUT_MS,
+  );
+});

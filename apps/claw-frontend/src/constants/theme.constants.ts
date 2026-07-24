@@ -16,6 +16,16 @@ export const THEME_ICONS: Record<Theme, LucideIcon> = {
   [Theme.DARK]: Moon,
 };
 
+// Local-only cycle (Theme -> Theme) for surfaces that must never call the
+// authenticated preferences mutation — public marketing pages. The portal's
+// THEME_CYCLE above additionally maps to UserAppearancePreference for
+// persisting to the backend; this one stays purely client-local.
+export const MARKETING_THEME_CYCLE: Record<Theme, Theme> = {
+  [Theme.SYSTEM]: Theme.LIGHT,
+  [Theme.LIGHT]: Theme.DARK,
+  [Theme.DARK]: Theme.SYSTEM,
+};
+
 export const THEME_INIT_SCRIPT = `
 (function() {
   try {
