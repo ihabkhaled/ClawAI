@@ -6,7 +6,7 @@
     },
     "@claw/shared-constants": {
       "runner": "jest",
-      "testFiles": 2
+      "testFiles": 1
     },
     "@claw/shared-entitlements": {
       "runner": "jest",
@@ -22,7 +22,7 @@
     },
     "@claw/shared-utilities": {
       "runner": "jest",
-      "testFiles": 21
+      "testFiles": 16
     },
     "claw-agent-service": {
       "runner": "jest",
@@ -98,5 +98,5 @@
     }
   },
   "generated": true,
-  "total": 532
+  "total": 526
 }
