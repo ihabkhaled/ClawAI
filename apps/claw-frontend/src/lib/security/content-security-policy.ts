@@ -49,12 +49,14 @@ export function generateCspNonce(): string {
 export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions): string {
   const { nonce, isDev, adsenseEnabled } = options;
 
-  const scriptSrc = [
-    "'self'",
-    `'nonce-${nonce}'`,
-    "'strict-dynamic'",
-    ...(isDev ? ["'unsafe-eval'"] : []),
-  ];
+  // In development we must NOT emit a nonce or 'strict-dynamic': a CSP3 browser
+  // ignores 'unsafe-inline' the moment a nonce/hash is present, which would
+  // block Next.js/Turbopack HMR + React Refresh inline scripts. Dev therefore
+  // gets a deliberately relaxed script-src. Production is strict: nonce +
+  // 'strict-dynamic', no 'unsafe-inline', no 'unsafe-eval'.
+  const scriptSrc = isDev
+    ? ["'self'", "'unsafe-inline'", "'unsafe-eval'"]
+    : ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'"];
 
   const connectSrc = [
     "'self'",

@@ -48,6 +48,14 @@ describe('buildContentSecurityPolicy', () => {
     );
   });
 
+  it('does not emit a nonce or strict-dynamic in development (would break HMR)', () => {
+    const dev = buildContentSecurityPolicy({ ...baseOptions, isDev: true });
+    const scriptDirective = dev.split(';').find((d) => d.trim().startsWith('script-src'));
+    expect(scriptDirective).not.toContain('nonce-');
+    expect(scriptDirective).not.toContain('strict-dynamic');
+    expect(scriptDirective).toContain("'unsafe-inline'");
+  });
+
   it('adds unsafe-eval and websocket sources in development only', () => {
     const dev = buildContentSecurityPolicy({ ...baseOptions, isDev: true });
     expect(dev).toContain("'unsafe-eval'");
