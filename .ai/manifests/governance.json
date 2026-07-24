@@ -110,7 +110,7 @@
       "file": "rules/07-backend-controllers-and-transport.md"
     },
     {
-      "bytes": 5711,
+      "bytes": 6370,
       "file": "rules/07-commit-rules.md"
     },
     {
@@ -182,7 +182,7 @@
       "file": "rules/22-testing-and-coverage.md"
     },
     {
-      "bytes": 3234,
+      "bytes": 3426,
       "file": "rules/23-git-commits-hooks-and-release-gates.md"
     },
     {

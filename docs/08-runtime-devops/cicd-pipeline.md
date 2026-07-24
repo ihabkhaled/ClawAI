@@ -146,15 +146,15 @@ npm run test
 
 Runs the full test suite. All tests must pass.
 
-### Bypassing the Hook
+### Do NOT bypass the hook
 
-In exceptional cases (documentation-only changes, emergency fixes), the hook can be bypassed:
-
-```bash
-git commit --no-verify -m "docs: update README"
-```
-
-This should be used sparingly and only when you are confident the changes do not affect code quality.
+`--no-verify` (and any equivalent hook bypass) is **banned** — see
+[ADR-061](../13-adr/adr-061-git-hook-policy-no-bypass.md). The pre-commit
+hook is scoped and fast (lint-staged + knowledge freshness + affected
+typecheck of only the staged workspaces), so there is no legitimate routine
+reason to skip it; a failure is a real problem in something you staged, which
+you fix rather than bypass. The single exception is a documented incident
+procedure with explicit human sign-off (`docs/exceptions/README.md`).
 
 ---
 

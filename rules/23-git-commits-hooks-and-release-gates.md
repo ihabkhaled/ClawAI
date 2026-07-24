@@ -17,9 +17,11 @@ Every commit and push in the repo; the git hooks; `.github/workflows/ci.yml`.
    run the four gates **inside those folders only**: `npx tsgo --noEmit`
    (frontend: `npm run typecheck`), `npm run lint`, `npm test`, `npm run build`.
    Never run the all-workspace gate for a scoped change.
-2. **Green then commit.** When touched-folder gates pass, commit and push. The repo
-   pre-commit hook runs the expensive all-workspace gate, so `--no-verify` is used
-   **only** to skip that redundant hook — never to bypass a real failure in your folder.
+2. **Green then commit.** When touched-folder gates pass, commit and push and let the
+   hook run. The pre-commit hook is now scoped + fast (lint-staged + knowledge
+   freshness + `affected typecheck --staged`), so there is no reason to bypass it.
+   **`--no-verify` is banned** ([ADR-061](../docs/13-adr/adr-061-git-hook-policy-no-bypass.md));
+   a hook failure is a real problem in something you staged — fix it, never skip it.
 3. **Non-workspace files** (`scripts/**`, `infra/**`, plain `*.mjs`) → cheapest
    equivalent check (`node --check`, JSON/schema validate). Do not escalate to the
    full gate "to be safe."
@@ -36,7 +38,7 @@ Every commit and push in the repo; the git hooks; `.github/workflows/ci.yml`.
 
 ## Prohibited patterns
 
-- `--no-verify` to bypass a REAL failure in the folder you changed.
+- `--no-verify` (or any hook bypass) on commit or push — banned outright.
 - Running lint/typecheck/test/build across all 17 services for a one-service change.
 - `git add -A` / `git add .` when splitting a commit.
 - A non-conventional commit subject.
@@ -47,8 +49,8 @@ Every commit and push in the repo; the git hooks; `.github/workflows/ci.yml`.
 cd apps/claw-chat-service
 npx tsgo --noEmit && npm run lint && npm test && npm run build   # touched folder only
 git add apps/claw-chat-service/src/modules/chat/…                # explicit paths
-git commit --no-verify -m "feat(chat): add criticModel to compare DTO"
-git push --no-verify origin <branch>
+git commit -m "feat(chat): add criticModel to compare DTO"       # hook runs (scoped + fast)
+git push origin <branch>
 ```
 
 ## Enforcement

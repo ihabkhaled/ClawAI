@@ -4,9 +4,11 @@
 
 ## Scoped Quality Gates Before Commit (MANDATORY — STRICT — applies to EVERY change, EVERYWHERE)
 
-> **Read this section before EVERY commit/push. No exceptions.** It is mirrored verbatim in `CLAUDE.md`, `CODEX.md`, `cursor.md`, and the agent memory `feedback_per_folder_gates_before_commit`.
+> **Read this section before EVERY commit/push. No exceptions.** It is mirrored in `CLAUDE.md`, `CODEX.md`, `cursor.md`, and the agent memory `feedback_per_folder_gates_before_commit`. Policy authority: [ADR-061](../docs/13-adr/adr-061-git-hook-policy-no-bypass.md).
 
-**Run the gates ONLY in the folder(s) you actually touched. NEVER run the full all-workspace lint/typecheck/test/build.** This repo is 17 backend services + the frontend + 6 shared packages. An all-workspace gate run generates 13 Prisma clients, compiles every service, and executes thousands of tests — many minutes of CPU for a one-file change. It is the wrong default for an agent on two counts: it is **prohibitively expensive**, and it **false-fails** on unchanged sibling services whose Prisma client isn't generated in a fresh worktree. Cost is the primary reason; the worktree footgun is secondary.
+**The pre-commit hook is now scoped + fast** — it lint-stages only the staged files, checks knowledge freshness, and typechecks ONLY the workspaces your staged changes touch (`tools/affected/index.mjs typecheck --staged`). It does NOT run the old expensive all-workspace gate. Because it is cheap and scoped, there is **no reason to ever bypass it**. `--no-verify` is banned (ADR-061); `knowledge:verify` scans the canonical docs and fails on any `--no-verify` recommendation.
+
+**Run the manual gates ONLY in the folder(s) you actually touched — as a confidence check before you commit, not as a replacement for the hook. NEVER run the full all-workspace lint/typecheck/test/build.** This repo is 17 backend services + the frontend + 6 shared packages. An all-workspace gate run generates 13 Prisma clients, compiles every service, and executes thousands of tests — many minutes of CPU for a one-file change. It is the wrong default for an agent on two counts: it is **prohibitively expensive**, and it **false-fails** on unchanged sibling services whose Prisma client isn't generated in a fresh worktree.
 
 **The rule — for ANY change, in ANY folder:**
 
@@ -23,21 +25,21 @@ npm run build              # success
 
 3. Multi-folder change → run the gates for EACH touched folder, never for the untouched ones.
 4. Non-workspace files with no gate (`scripts/**`, `infra/**`, plain `*.mjs`) → do the cheapest equivalent check (`node --check <file>`, JSON/schema validate). Do NOT trigger an all-workspace run "to be safe".
-5. When ALL gates for the touched folders are green:
+5. When ALL gates for the touched folders are green, commit and let the hook run (it re-verifies the scoped subset):
 
 ```bash
-git commit --no-verify -m "<conventional-commit-message>"
-git push --no-verify origin <branch>
+git commit -m "<conventional-commit-message>"
+git push origin <branch>
 ```
 
-**Why `--no-verify`:** the repo pre-commit hook runs the all-workspace gate — exactly the expensive, false-failing path this rule avoids. The per-folder gates above ARE the real quality bar; `--no-verify` skips only the redundant hook, NEVER a real failure in the folder you changed.
+**Never use `--no-verify`** (nor `-c core.hooksPath=/dev/null` or any other bypass). The hook is scoped and fast; a failure in it is a real problem in something you staged — fix it, don't skip it. The only exception is a documented incident procedure with explicit human sign-off (see `docs/exceptions/README.md`).
 
 **Hard limits (never violate):**
 
 - NEVER skip a gate for a folder you changed.
-- NEVER `--no-verify` to bypass a REAL failure in the folder you changed — fix it.
+- NEVER bypass the pre-commit / pre-push hook with `--no-verify` (or any equivalent).
 - NEVER expand to the all-workspace gate after the touched-folder gates pass.
-- Docs-only changes (`docs/**`, `CLAUDE.md`, `CODEX.md`, `cursor.md`, `rules/**`, locale files paired with `i18n.types.ts`) skip the gates but stay conventional-commit format.
+- Docs-only changes (`docs/**`, `CLAUDE.md`, `CODEX.md`, `cursor.md`, `rules/**`, locale files paired with `i18n.types.ts`) still run the (fast) hook and stay conventional-commit format.
 
 ---
 
