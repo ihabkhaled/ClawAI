@@ -9,19 +9,21 @@ import { existsSync } from 'node:fs';
 import { computeGeneratedFiles } from './build.mjs';
 import { repoPath, readText, listFiles, walkFiles, toRel } from '../lib/repo.mjs';
 import { readFileSync } from 'node:fs';
+import { normalizeEol } from '../lib/fact.mjs';
 import {
   findContradictions,
   findBypassRecommendations,
 } from '../lib/analyzers.mjs';
 import { extractAll } from '../lib/extractors.mjs';
-import { isMain } from '../lib/repo.mjs';
+import { isMain, exists } from '../lib/repo.mjs';
+import { TASK_PACKS } from './classify-task.mjs';
 
 function checkFreshness() {
   const files = computeGeneratedFiles();
   const stale = [];
   for (const [rel, content] of Object.entries(files)) {
     const abs = repoPath(rel);
-    const existing = existsSync(abs) ? readFileSync(abs, 'utf8') : null;
+    const existing = existsSync(abs) ? normalizeEol(readFileSync(abs, 'utf8')) : null;
     if (existing !== content) stale.push(rel);
   }
   return stale.map((s) => `stale generated file: ${s} (run npm run knowledge:build)`);
@@ -58,6 +60,33 @@ function checkBypass() {
   return findBypassRecommendations().map((f) => f.message);
 }
 
+// Every reviewer named by a task pack must have an agents/<role>.md file, and
+// every canonical file the BOOTSTRAP/authority-hierarchy references must exist.
+// This is the check that would have caught the frontend-architecture-reviewer /
+// dependency-reviewer name drift.
+function checkOrphans() {
+  const errors = [];
+  const reviewers = new Set();
+  for (const p of TASK_PACKS) for (const r of p.reviewers) reviewers.add(r);
+  for (const r of [...reviewers].sort()) {
+    if (!exists(repoPath('agents', `${r}.md`))) {
+      errors.push(`orphan reviewer: task pack references agents/${r}.md which does not exist`);
+    }
+  }
+  for (const canonical of [
+    'CLAUDE.md',
+    'rules/00-non-negotiable-rules.md',
+    'context/architecture-map.md',
+    'context/stack-and-toolchain.md',
+    'context/service-catalog.md',
+  ]) {
+    if (!exists(repoPath(canonical))) {
+      errors.push(`missing canonical file referenced by authority hierarchy: ${canonical}`);
+    }
+  }
+  return errors;
+}
+
 function checkContradictions() {
   const inv = extractAll();
   return findContradictions(inv)
@@ -70,6 +99,7 @@ export function runVerify() {
     freshness: checkFreshness(),
     links: checkLinks(),
     bypass: checkBypass(),
+    orphans: checkOrphans(),
     contradictions: checkContradictions(),
   };
 }
@@ -80,6 +110,7 @@ function main() {
     ...results.freshness,
     ...results.links,
     ...results.bypass,
+    ...results.orphans,
     ...results.contradictions,
   ];
   if (all.length > 0) {
@@ -87,7 +118,9 @@ function main() {
     for (const e of all) console.error(`  ✖ ${e}`);
     process.exit(1);
   }
-  console.log('knowledge:verify OK — generated files fresh, links valid, no hook-bypass, no high-severity contradictions.');
+  console.log(
+    'knowledge:verify OK — generated files fresh, links valid, no orphan reviewers, no hook-bypass, no high-severity contradictions.',
+  );
 }
 
 if (isMain(import.meta.url)) main();

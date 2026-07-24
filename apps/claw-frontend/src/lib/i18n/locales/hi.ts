@@ -67,6 +67,7 @@ export const hi: TranslationDictionary = {
     loginFailed: 'लॉगिन विफल। कृपया पुनः प्रयास करें।',
     tagline: 'Claw - लोकल-फर्स्ट AI ऑर्केस्ट्रेशन',
     authenticating: 'प्रमाणित किया जा रहा है...',
+    backToHome: 'होम पर वापस जाएं',
     emailPlaceholder: 'you@example.com',
     registerTitle: 'अपना Claw खाता बनाएं',
     registerSubtitle: 'अपने ईमेल और पासवर्ड से साइन अप करें',

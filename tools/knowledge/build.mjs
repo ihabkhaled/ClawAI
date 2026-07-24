@@ -9,7 +9,7 @@ import { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from 'node
 import { join } from 'node:path';
 import { buildManifests } from '../lib/manifests.mjs';
 import { repoPath, isMain } from '../lib/repo.mjs';
-import { stableStringify, hash } from '../lib/fact.mjs';
+import { stableStringify, hash, normalizeEol } from '../lib/fact.mjs';
 import { renderBootstrap } from './render-bootstrap.mjs';
 import { renderWorkspaceAgents } from './render-workspace-agents.mjs';
 import { renderPacks } from './render-packs.mjs';
@@ -59,7 +59,7 @@ function checkAll(files) {
   const stale = [];
   for (const [rel, content] of Object.entries(files)) {
     const abs = repoPath(rel);
-    const existing = existsSync(abs) ? readFileSync(abs, 'utf8') : null;
+    const existing = existsSync(abs) ? normalizeEol(readFileSync(abs, 'utf8')) : null;
     if (existing !== content) stale.push(rel);
   }
   return stale;

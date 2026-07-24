@@ -67,6 +67,7 @@ export const en: TranslationDictionary = {
     loginFailed: 'Login failed. Please try again.',
     tagline: 'Claw - Local-first AI Orchestration',
     authenticating: 'Authenticating...',
+    backToHome: 'Back to home',
     emailPlaceholder: 'you@example.com',
     registerTitle: 'Create your Claw account',
     registerSubtitle: 'Sign up with your email and password',

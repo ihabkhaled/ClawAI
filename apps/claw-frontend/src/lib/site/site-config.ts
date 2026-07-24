@@ -5,12 +5,18 @@ import { z } from 'zod';
 // the browser bundle; every consumer (generateMetadata, robots.ts,
 // sitemap.ts, manifest.ts, the root layout) runs on the server.
 //
-// Validation rules (per the SEO spec): production canonical origin must be
+// Validation rules (per the SEO spec): a crawlable canonical origin must be
 // https://, must not be localhost/127.0.0.1/an unmapped Vercel preview
-// domain, and must be a bare origin (no path, query, or fragment). Preview,
-// development, and any deployment where SITE_URL is missing or invalid are
-// treated as non-canonical and are told to noindex everything — fail-safe,
-// never fail-open on indexability.
+// domain, and must be a bare origin (no path, query, or fragment).
+//
+// Crawlability signal: explicitly setting a VALID SITE_URL is the operator's
+// deliberate opt-in that this deployment is the public canonical origin and
+// should be indexed. We therefore allow crawling whenever SITE_URL is valid
+// and we are NOT on a Vercel preview/development deployment — this covers
+// self-hosted production (including a real domain served from the Docker
+// stack, even when NODE_ENV is not literally "production"). A missing/invalid
+// SITE_URL, a localhost/127.0.0.1 value, or a Vercel non-production env all
+// fall back to site-wide noindex — fail-safe, never fail-open on indexability.
 const DEV_FALLBACK_SITE_URL = 'http://localhost:3000';
 
 const siteUrlSchema = z
@@ -62,11 +68,13 @@ function readValidatedSiteUrl(): string | undefined {
 }
 
 export function isProductionCanonical(): boolean {
-  return (
-    process.env.NODE_ENV === 'production' &&
-    !isVercelPreviewOrDevEnvironment() &&
-    readValidatedSiteUrl() !== undefined
-  );
+  // A validly-configured, non-preview SITE_URL is the operator's explicit
+  // signal that this is the public canonical origin. NODE_ENV is deliberately
+  // NOT part of this check: a self-hosted production deployment (e.g. served
+  // at a real domain from the Docker stack) is crawlable even if it does not
+  // run with NODE_ENV=production, while localhost/preview/unset still fall
+  // back to noindex via SITE_URL validation + the Vercel-env guard.
+  return !isVercelPreviewOrDevEnvironment() && readValidatedSiteUrl() !== undefined;
 }
 
 export function shouldNoIndexEverything(): boolean {

@@ -10,6 +10,7 @@ const STATIC_PUBLIC_PATHS: ReadonlyArray<string> = [
   '/apple-icon.png',
   '/opengraph-image',
   '/favicon.ico',
+  '/ads.txt',
 ];
 
 // Single implementation of "unknown routes default to non-indexable":

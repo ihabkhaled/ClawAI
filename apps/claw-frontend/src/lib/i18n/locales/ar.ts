@@ -67,6 +67,7 @@ export const ar: TranslationDictionary = {
     loginFailed: 'فشل تسجيل الدخول. حاول مرة أخرى.',
     tagline: 'Claw - تنسيق ذكاء اصطناعي محلي أولاً',
     authenticating: 'جاري المصادقة...',
+    backToHome: 'العودة إلى الصفحة الرئيسية',
     emailPlaceholder: 'you@example.com',
     registerTitle: 'أنشئ حساب Claw الخاص بك',
     registerSubtitle: 'سجّل باستخدام بريدك الإلكتروني وكلمة المرور',

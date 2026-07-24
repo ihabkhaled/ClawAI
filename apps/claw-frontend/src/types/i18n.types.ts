@@ -66,6 +66,7 @@ export type TranslationDictionary = {
     loginFailed: string;
     tagline: string;
     authenticating: string;
+    backToHome: string;
     emailPlaceholder: string;
     registerTitle: string;
     registerSubtitle: string;

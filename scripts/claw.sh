@@ -34,16 +34,44 @@ if [ -f "$PROJECT_ROOT/.env" ]; then
 fi
 
 MODE="${CLAW_ENV:-dev}"
+LOCAL_AI_FLAG=""
 
 ARGS=()
 for arg in "$@"; do
   case "$arg" in
-    --prod) MODE="prod" ;;
-    --dev)  MODE="dev" ;;
-    *)      ARGS+=("$arg") ;;
+    --prod)        MODE="prod" ;;
+    --dev)         MODE="dev" ;;
+    --local-ai)    LOCAL_AI_FLAG="true" ;;
+    --no-local-ai) LOCAL_AI_FLAG="false" ;;
+    *)             ARGS+=("$arg") ;;
   esac
 done
 set -- "${ARGS[@]}"
+
+# ─── Local-AI mode ───────────────────────────────────────────────────────────
+# CLAW_LOCAL_AI decides whether the heavy local runtimes exist at all:
+# claw-ollama-service, claw-llamacpp-service, the Ollama runtime, ComfyUI,
+# Stable Diffusion, their two postgres databases, and multi-GB model pulls.
+# They are tagged with the `local-ai` compose profile; when the profile is not
+# activated, compose never creates them.
+#
+# Default OFF: the app runs against external AI APIs (Ollama cloud API key,
+# OpenAI, Gemini, Anthropic, ...) configured through the Connectors UI, and
+# the AUTO router falls back to its built-in heuristic classifier.
+#
+# Precedence: --local-ai/--no-local-ai flag > CLAW_LOCAL_AI env > .env > off.
+LOCAL_AI="${LOCAL_AI_FLAG:-${CLAW_LOCAL_AI:-}}"
+if [ -z "$LOCAL_AI" ] && [ -f "$PROJECT_ROOT/.env" ]; then
+  LOCAL_AI="$(grep -E '^CLAW_LOCAL_AI=' "$PROJECT_ROOT/.env" | tail -1 | cut -d= -f2- | tr -d '\r' | tr '[:upper:]' '[:lower:]')"
+fi
+case "$LOCAL_AI" in
+  true|1|yes) LOCAL_AI="true" ;;
+  *)          LOCAL_AI="false" ;;
+esac
+
+if [ "$LOCAL_AI" = "true" ]; then
+  export COMPOSE_PROFILES=local-ai
+fi
 
 # Compose files for this mode
 if [ "$MODE" = "prod" ]; then
@@ -199,20 +227,30 @@ case "$1" in
     detect_gpu
     ensure_network
     SVC_FLAGS=$(build_svc_compose_flags)
-    OLLAMA_FLAGS=$(build_ollama_compose_flags)
-    echo "Starting all ClawAI services ($MODE mode, gpu=$GPU_VENDOR)..."
+    echo "Starting all ClawAI services ($MODE mode, gpu=$GPU_VENDOR, local-ai=$LOCAL_AI)..."
     docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" up -d
     echo "Waiting for databases to become healthy..."
     sleep 10
     # shellcheck disable=SC2086
     docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS up -d
-    echo "Starting Ollama runtime..."
-    # shellcheck disable=SC2086
-    docker compose $ENV_FILE_FLAG -p claw $OLLAMA_FLAGS up -d
+    if [ "$LOCAL_AI" = "true" ]; then
+      OLLAMA_FLAGS=$(build_ollama_compose_flags)
+      echo "Starting local-AI runtime (Ollama / ComfyUI / Stable Diffusion)..."
+      # shellcheck disable=SC2086
+      docker compose $ENV_FILE_FLAG -p claw $OLLAMA_FLAGS up -d
+    else
+      echo "Local-AI runtime SKIPPED — external AI APIs only."
+      echo "  Configure a provider (Ollama API key, OpenAI, Gemini, ...) in the Connectors UI."
+      echo "  Enable local models later with:  ./scripts/claw.sh --local-ai up"
+    fi
     echo "All services started."
     ;;
   down)
     echo "Stopping all ClawAI services ($MODE mode)..."
+    # Force the local-ai profile for teardown so any local runtime containers
+    # started in a previous `--local-ai up` are removed even when this `down`
+    # was invoked without the flag. Harmless when nothing profiled is running.
+    export COMPOSE_PROFILES=local-ai
     SVC_FLAGS=$(build_svc_compose_flags)
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
     # shellcheck disable=SC2086
@@ -312,6 +350,9 @@ case "$1" in
     docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS up -d --no-build
     ;;
   ollama:up)
+    # Explicit request for the local runtime — always activate the profile,
+    # regardless of the default local-ai setting.
+    export COMPOSE_PROFILES=local-ai
     detect_gpu
     ensure_network
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
@@ -320,6 +361,7 @@ case "$1" in
     docker compose $ENV_FILE_FLAG -p claw $OLLAMA_FLAGS up -d
     ;;
   ollama:down)
+    export COMPOSE_PROFILES=local-ai
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
     echo "Stopping Ollama runtime ($MODE mode)..."
     # shellcheck disable=SC2086
@@ -327,9 +369,11 @@ case "$1" in
     ;;
   status)
     detect_gpu
+    # Force the profile so the status view includes any running local runtime.
+    export COMPOSE_PROFILES=local-ai
     SVC_FLAGS=$(build_svc_compose_flags)
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
-    echo "=== ClawAI Status ($MODE mode, gpu=$GPU_VENDOR) ==="
+    echo "=== ClawAI Status ($MODE mode, gpu=$GPU_VENDOR, local-ai=$LOCAL_AI) ==="
     echo ""
     echo "--- Databases + Infrastructure ---"
     docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" ps
@@ -368,8 +412,13 @@ case "$1" in
     echo "Flags:"
     echo "  --dev             Use development compose files (default)"
     echo "  --prod            Use production compose files"
+    echo "  --local-ai        Include the heavy local-AI runtime (Ollama, ComfyUI,"
+    echo "                    Stable Diffusion, llamacpp) and its databases"
+    echo "  --no-local-ai     Exclude the local-AI runtime (default) — external"
+    echo "                    AI APIs only (Ollama API key, OpenAI, Gemini, ...)"
     echo ""
-    echo "  Environment variable CLAW_ENV=dev|prod also supported."
+    echo "  Environment variables CLAW_ENV=dev|prod and CLAW_LOCAL_AI=true|false"
+    echo "  are also honoured (flag > env > .env > off)."
     echo ""
     echo "Commands:"
     echo "  up                Start everything (databases -> services -> ollama)"
@@ -392,8 +441,10 @@ case "$1" in
     echo "  - Apple Silicon Metal  — Docker can't access; runs CPU-only"
     echo ""
     echo "Examples:"
-    echo "  ./scripts/claw.sh up                  # Dev (default), auto-GPU"
-    echo "  ./scripts/claw.sh --prod up           # Production, auto-GPU"
+    echo "  ./scripts/claw.sh up                  # Dev, external AI APIs only (light)"
+    echo "  ./scripts/claw.sh --local-ai up       # Dev + full local-AI runtime"
+    echo "  ./scripts/claw.sh --prod up           # Production, external AI APIs only"
+    echo "  ./scripts/claw.sh --prod --local-ai up"
     echo "  ./scripts/claw.sh gpu                 # Just probe and report"
     echo "  ./scripts/claw.sh --prod services:rebuild"
     ;;

@@ -67,6 +67,7 @@ export const de: TranslationDictionary = {
     loginFailed: 'Anmeldung fehlgeschlagen. Bitte erneut versuchen.',
     tagline: 'Claw – Local-first KI-Orchestrierung',
     authenticating: 'Authentifizierung läuft...',
+    backToHome: 'Zurück zur Startseite',
     emailPlaceholder: 'you@example.com',
     registerTitle: 'Erstelle dein Claw-Konto',
     registerSubtitle: 'Registriere dich mit deiner E-Mail und deinem Passwort',

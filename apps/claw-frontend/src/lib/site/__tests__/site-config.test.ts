@@ -70,6 +70,19 @@ describe('site-config', () => {
     vi.unstubAllEnvs();
   });
 
+  it('is crawlable with a valid SITE_URL even outside NODE_ENV=production (self-hosted)', async () => {
+    // The self-hosted dev/prod container scenario: NODE_ENV is not literally
+    // "production" but the operator has set a real canonical https origin.
+    vi.stubEnv('NODE_ENV', 'development');
+    process.env['SITE_URL'] = 'https://claw.local';
+    delete process.env['VERCEL_ENV'];
+    const { isProductionCanonical, shouldNoIndexEverything } = await import('../site-config');
+
+    expect(isProductionCanonical()).toBe(true);
+    expect(shouldNoIndexEverything()).toBe(false);
+    vi.unstubAllEnvs();
+  });
+
   it('treats a non-production Vercel preview environment as non-canonical even with a valid SITE_URL', async () => {
     vi.stubEnv('NODE_ENV', 'production');
     process.env['SITE_URL'] = 'https://claw.example';

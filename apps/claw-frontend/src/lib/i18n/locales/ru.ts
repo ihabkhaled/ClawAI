@@ -67,6 +67,7 @@ export const ru: TranslationDictionary = {
     loginFailed: 'Не удалось войти. Попробуйте снова.',
     tagline: 'Claw — локально-первая оркестрация ИИ',
     authenticating: 'Аутентификация...',
+    backToHome: 'Вернуться на главную',
     emailPlaceholder: 'you@example.com',
     registerTitle: 'Создайте аккаунт Claw',
     registerSubtitle: 'Зарегистрируйтесь с помощью эл. почты и пароля',

@@ -3,5 +3,12 @@
 *.sh text eol=lf
 docker-entrypoint*.sh text eol=lf
 
+# Generated AI-native-OS knowledge layer + generated workspace guides MUST stay
+# LF on every OS. They are byte-compared against LF-computed content by
+# knowledge:check / audit:check; a CRLF checkout would false-fail the gate.
+.ai/** text eol=lf
+**/AGENTS.md text eol=lf
+docs/features/ai-native-engineering-os/inventory.snapshot.json text eol=lf
+
 # Keep other text files cross-platform-friendly.
 * text=auto

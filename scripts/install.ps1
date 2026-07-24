@@ -10,7 +10,9 @@
 param(
     [switch]$Dev,
     [switch]$Prod,
-    [switch]$NoGpu
+    [switch]$NoGpu,
+    [switch]$LocalAi,
+    [switch]$NoLocalAi
 )
 
 $ErrorActionPreference = "Stop"
@@ -512,16 +514,52 @@ if (-not $reuseExistingAdmin) {
 Write-Host ""
 
 # =============================================================================
-# Step 5: GPU / Ollama detection
+# Step 5: AI mode + GPU detection
 # =============================================================================
-Write-Host "Step 5/9: Ollama & GPU detection" -ForegroundColor White
+Write-Host "Step 5/9: AI mode & GPU detection" -ForegroundColor White
+Write-Host ""
+
+# --- 5a: local-AI vs API-only ---
+# API-only (default) skips the Ollama runtime, llamacpp, ComfyUI, Stable
+# Diffusion, their extra databases, and all multi-GB model downloads.
+if ($LocalAi) {
+    $localAi = $true
+} elseif ($NoLocalAi) {
+    $localAi = $false
+} else {
+    Write-Host "How should Claw run AI models?"
+    Write-Host "  1) API only (recommended, default) - external providers via the"
+    Write-Host "     Connectors UI (OpenAI, Anthropic, Gemini, DeepSeek, Grok, or an"
+    Write-Host "     Ollama-compatible API key). No local downloads, fast install."
+    Write-Host "  2) Local + API - also run Ollama, llamacpp, ComfyUI and Stable"
+    Write-Host "     Diffusion locally. Offline-capable, GPU-accelerated, pulls"
+    Write-Host "     several GB of model weights on first start."
+    Write-Host ""
+    $aiChoice = Read-Host "Choose [1]"
+    $localAi = ($aiChoice -eq "2")
+}
+
+$localAiValue = if ($localAi) { "true" } else { "false" }
+if ($localAi) {
+    Write-Ok "Local-AI runtime ENABLED - Ollama / llamacpp / ComfyUI / Stable Diffusion"
+    $env:COMPOSE_PROFILES = "local-ai"
+} else {
+    Write-Ok "API-only mode - no local models will be downloaded"
+    Write-Info "Add a provider (OpenAI, Gemini, Anthropic, ...) in the Connectors UI after startup."
+    Remove-Item Env:\COMPOSE_PROFILES -ErrorAction SilentlyContinue
+}
 Write-Host ""
 
 $useGpu = $false
 $gpuStatus = "No supported GPU detected"
 
+if (-not $localAi) {
+    Write-Info "Skipping GPU detection (API-only mode)."
+    $gpuStatus = "n/a (API-only mode)"
+}
+
 try {
-    $gpuInfo = Get-GpuInfo
+    $gpuInfo = if ($localAi) { Get-GpuInfo } else { $null }
     if ($gpuInfo) {
         Write-Ok "GPU detected: $($gpuInfo.Name)"
 
@@ -644,6 +682,11 @@ if (-not $skipEnv) {
 
 # --- General ---
 NODE_ENV=$NodeEnvValue
+
+# --- Local-AI runtime toggle (set by install: $localAiValue) ---
+# false = API-only (external providers via Connectors UI). true = full local
+# runtime. scripts/claw.sh reads this. See .env.example for details.
+CLAW_LOCAL_AI=$localAiValue
 
 # --- Hostname / Public URL (single source of truth) ---
 # Change CLAW_HOSTNAME and re-run scripts/install-tls.ps1 to reissue the TLS cert.
@@ -783,11 +826,30 @@ NEXT_PUBLIC_APP_URL=$clawBaseUrl
 # Phase 8 UI transparency — dev-only Thread Context Inspector toggle.
 NEXT_PUBLIC_ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED=false
 FRONTEND_PORT=3000
+# Server-only canonical origin for the public marketing site (sitemap,
+# robots.txt, canonical URLs, Open Graph, ads.txt). Reuses the same
+# resolved hostname as NEXT_PUBLIC_APP_URL for local installs; replace with
+# your real production domain before deploying publicly.
+SITE_URL=$clawBaseUrl
+NEXT_PUBLIC_SOCIAL_X_URL=
+NEXT_PUBLIC_SOCIAL_LINKEDIN_URL=
+NEXT_PUBLIC_SOCIAL_DISCORD_URL=
+# Google AdSense (marketing pages only). OFF by default; set a real
+# ca-pub-... id to enable /ads.txt + the verification/serving machinery.
+NEXT_PUBLIC_ADSENSE_CLIENT_ID=
+NEXT_PUBLIC_ADSENSE_SERVING_ENABLED=false
+NEXT_PUBLIC_ADSENSE_REVIEW_MODE=false
+ADSENSE_PUBLISHER_ID=
 
 # =============================================================================
 # Ollama
 # =============================================================================
+# Used only when CLAW_LOCAL_AI=true. In API-only mode the runtime is absent and
+# routing falls back to its heuristic classifier.
 OLLAMA_BASE_URL=http://ollama:11434
+# Bearer token for a hosted Ollama-compatible API. Empty for the local runtime.
+# Never expose to the frontend / any NEXT_PUBLIC_* variable.
+OLLAMA_API_KEY=
 OLLAMA_ROUTER_MODEL=qwen3:1.7b
 OLLAMA_ROUTER_TIMEOUT_MS=10000
 ROUTER_COMPACT_PROMPT=true
@@ -1106,9 +1168,14 @@ Write-Host "  Admin username:    $adminUsername"
 Write-Host "  Admin password:    stored in .env"
 Write-Host "  GPU:               $gpuStatus"
 Write-Host ""
-$ollamaMode = if ($useGpu) { "Enabled (GPU)" } else { "Enabled (CPU)" }
-Write-Host "  Ollama:            $ollamaMode"
-Write-Host "  Containers:        ~22"
+if ($localAi) {
+    $aiModeLabel = if ($useGpu) { "Local + API (GPU)" } else { "Local + API (CPU)" }
+    Write-Host "  AI mode:           $aiModeLabel"
+    Write-Host "  Containers:        ~25 (13 databases, 15 services, nginx, frontend, redis, rabbitmq, ollama, comfyui, stable-diffusion)"
+} else {
+    Write-Host "  AI mode:           API only (external providers via Connectors UI)"
+    Write-Host "  Containers:        ~20 (11 databases, 13 services, nginx, frontend, redis, rabbitmq) - no local-AI runtime"
+}
 Write-Host ""
 Write-Host ("=" * 64) -ForegroundColor Cyan
 Write-Host ""

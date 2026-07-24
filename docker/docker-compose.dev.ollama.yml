@@ -11,6 +11,9 @@ name: claw
 
 services:
   ollama:
+    # Local-AI runtime component. Created only when the local-ai compose
+    # profile is active (CLAW_LOCAL_AI=true via scripts/claw.sh or installer).
+    profiles: ['local-ai']
     image: ollama/ollama:latest
     container_name: claw-ollama
     restart: unless-stopped
@@ -80,6 +83,9 @@ services:
   # Stable Diffusion (Local Image Generation)
   # ---------------------------------------------------------------------------
   stable-diffusion:
+    # Local-AI runtime component. Created only when the local-ai compose
+    # profile is active (CLAW_LOCAL_AI=true via scripts/claw.sh or installer).
+    profiles: ['local-ai']
     image: ghcr.io/ai-dock/stable-diffusion-webui:latest
     container_name: claw-stable-diffusion
     restart: unless-stopped
@@ -119,6 +125,9 @@ services:
   # so it can drop HuggingFace-downloaded weights into ComfyUI's models tree.
   # See claw-ollama-service entry in docker-compose.dev.services.yml.
   comfyui:
+    # Local-AI runtime component. Created only when the local-ai compose
+    # profile is active (CLAW_LOCAL_AI=true via scripts/claw.sh or installer).
+    profiles: ['local-ai']
     image: ghcr.io/ai-dock/comfyui:latest
     container_name: claw-comfyui
     restart: unless-stopped

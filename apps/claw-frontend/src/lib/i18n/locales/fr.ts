@@ -67,6 +67,7 @@ export const fr: TranslationDictionary = {
     loginFailed: 'Échec de la connexion. Veuillez réessayer.',
     tagline: "Claw - Orchestration IA locale d'abord",
     authenticating: 'Authentification...',
+    backToHome: 'Retour à l’accueil',
     emailPlaceholder: 'you@example.com',
     registerTitle: 'Créez votre compte Claw',
     registerSubtitle: 'Inscrivez-vous avec votre e-mail et votre mot de passe',

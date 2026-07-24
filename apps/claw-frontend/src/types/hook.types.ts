@@ -59,6 +59,13 @@ export type UseLoginFormReturn = {
   t: TranslateFunction;
 };
 
+export type UseRedirectIfAuthenticatedReturn = {
+  // False while auth state is still hydrating or a redirect is in flight —
+  // the auth page must not render its form until this is true, otherwise an
+  // already-logged-in user briefly sees the login form before the redirect.
+  shouldRenderAuthPage: boolean;
+};
+
 // ─── Admin hook types ───────────────────────────────────────────────────────
 
 export type UseAdminPageReturn = {

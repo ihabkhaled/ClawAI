@@ -23,8 +23,32 @@ test('manifests include the core derivable set', () => {
     'frontend-routes',
     'event-graph',
     'workspace-dependency-graph',
+    'data-ownership',
   ]) {
     assert.ok(key in m, `missing manifest ${key}`);
+  }
+});
+
+test('data-ownership manifest lists each DB-owning service with its models', () => {
+  const m = buildManifests();
+  const owners = m['data-ownership'].byService;
+  assert.ok(owners.length >= 10, 'many services own data');
+  const auth = owners.find((o) => o.service === 'claw-auth-service');
+  assert.ok(auth, 'auth-service owns data');
+  assert.ok(auth.prismaModels.includes('User'), 'auth owns the User model');
+});
+
+test('every task-pack reviewer has a matching agents/<role>.md file', async () => {
+  const { TASK_PACKS } = await import('../knowledge/classify-task.mjs');
+  const { existsSync } = await import('node:fs');
+  const { repoPath } = await import('../lib/repo.mjs');
+  for (const pack of TASK_PACKS) {
+    for (const reviewer of pack.reviewers) {
+      assert.ok(
+        existsSync(repoPath('agents', `${reviewer}.md`)),
+        `task pack ${pack.pack} references missing agents/${reviewer}.md`,
+      );
+    }
   }
 });
 

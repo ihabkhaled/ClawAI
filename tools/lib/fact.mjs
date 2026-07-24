@@ -31,6 +31,16 @@ export function by(getKey) {
   return (a, b) => cmp(getKey(a), getKey(b));
 }
 
+/**
+ * Normalize line endings to LF. Generated content is always computed with `\n`,
+ * but a Windows checkout (core.autocrlf / `* text=auto`) may materialize the
+ * on-disk file as CRLF. Freshness comparisons must normalize the on-disk side or
+ * they false-fail on Windows after a fresh clone.
+ */
+export function normalizeEol(text) {
+  return text.replace(/\r\n/g, '\n');
+}
+
 /** True when a tagged fact (or plain value) is unverified. */
 export function isUnverified(fact) {
   return Boolean(fact) && typeof fact === 'object' && fact.confidence === 'unverified';

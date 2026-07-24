@@ -144,6 +144,9 @@ services:
       - claw-network
 
   pg-ollama:
+    # Local-AI runtime component. Created only when the local-ai compose
+    # profile is active (CLAW_LOCAL_AI=true via scripts/claw.sh or installer).
+    profiles: ['local-ai']
     image: pgvector/pgvector:pg16
     container_name: claw-pg-ollama
     restart: unless-stopped
@@ -261,6 +264,9 @@ services:
       - claw-network
 
   pg-llamacpp:
+    # Local-AI runtime component. Created only when the local-ai compose
+    # profile is active (CLAW_LOCAL_AI=true via scripts/claw.sh or installer).
+    profiles: ['local-ai']
     image: pgvector/pgvector:pg16
     container_name: claw-pg-llamacpp
     restart: unless-stopped

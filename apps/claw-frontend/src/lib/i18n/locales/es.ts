@@ -67,6 +67,7 @@ export const es: TranslationDictionary = {
     loginFailed: 'Error al iniciar sesión. Inténtalo de nuevo.',
     tagline: 'Claw - Orquestación de IA local primero',
     authenticating: 'Autenticando...',
+    backToHome: 'Volver al inicio',
     emailPlaceholder: 'you@example.com',
     registerTitle: 'Crea tu cuenta de Claw',
     registerSubtitle: 'Regístrate con tu correo y contraseña',

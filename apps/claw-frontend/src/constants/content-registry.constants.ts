@@ -33,7 +33,11 @@ export const CONTENT_REGISTRY: ReadonlyArray<ContentRegistryEntry> = [
     canonicalPath: '/',
     lastReviewed: '2026-07-24',
     indexability: Indexability.INDEXABLE,
-    adEligibility: AdEligibility.INELIGIBLE,
+    // The homepage is the one reviewed editorial page live in Phase A, so it
+    // is the only ad-eligible route. Whether ads actually serve is still
+    // gated by NEXT_PUBLIC_ADSENSE_SERVING_ENABLED (off by default) — this
+    // flag only makes the page a valid ad surface, not an active one.
+    adEligibility: AdEligibility.ELIGIBLE,
     reviewStatus: ContentReviewStatus.REVIEWED,
     relatedSlugs: ['about', 'how-it-works', 'architecture'],
     structuredDataType: StructuredDataType.WEBSITE,

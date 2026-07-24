@@ -203,6 +203,9 @@ services:
       - claw-network
 
   ollama-service:
+    # Local-AI runtime component. Created only when the local-ai compose
+    # profile is active (CLAW_LOCAL_AI=true via scripts/claw.sh or installer).
+    profiles: ['local-ai']
     build:
       context: ..
       dockerfile: apps/claw-ollama-service/Dockerfile
@@ -333,6 +336,8 @@ services:
         condition: service_healthy
       ollama-service:
         condition: service_healthy
+        # Profiled service — ignore this dependency when local-ai is inactive.
+        required: false
       client-logs-service:
         condition: service_healthy
       server-logs-service:
@@ -454,6 +459,9 @@ services:
   # Llamacpp Service (Local Frontier — Phase 1+)
   # ---------------------------------------------------------------------------
   llamacpp-service:
+    # Local-AI runtime component. Created only when the local-ai compose
+    # profile is active (CLAW_LOCAL_AI=true via scripts/claw.sh or installer).
+    profiles: ['local-ai']
     build:
       context: ..
       dockerfile: apps/claw-llamacpp-service/Dockerfile

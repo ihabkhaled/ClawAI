@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { extractAll } from '../lib/extractors.mjs';
 import { buildInventory } from '../audit/index.mjs';
-import { stableStringify, hash, verified, unverified, isUnverified } from '../lib/fact.mjs';
+import { stableStringify, hash, verified, unverified, isUnverified, normalizeEol, cmp } from '../lib/fact.mjs';
 import {
   findContradictions,
   findPortCoverageGaps,
@@ -82,6 +82,21 @@ test('fact helpers tag confidence correctly', () => {
   assert.equal(unverified(1, 'x', 'why').confidence, 'unverified');
   assert.ok(isUnverified(unverified(1, 'x', 'why')));
   assert.ok(!isUnverified(verified(1, 'x')));
+});
+
+test('normalizeEol makes CRLF and LF content compare equal', () => {
+  const lf = 'a\nb\nc\n';
+  const crlf = 'a\r\nb\r\nc\r\n';
+  assert.equal(normalizeEol(crlf), lf);
+  assert.equal(hash(normalizeEol(crlf)), hash(lf));
+});
+
+test('cmp is a stable code-unit comparator', () => {
+  assert.equal(cmp('a', 'b'), -1);
+  assert.equal(cmp('b', 'a'), 1);
+  assert.equal(cmp('a', 'a'), 0);
+  // dot before underscore in code-unit order (locale-independent).
+  assert.equal(cmp('message.a', 'message_a'), -1);
 });
 
 test('stableStringify sorts keys recursively', () => {

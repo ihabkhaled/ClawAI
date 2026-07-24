@@ -4,19 +4,28 @@
     "contradictions": [],
     "duplication": [
       {
-        "evidence": ["CLAUDE.md", "CODEX.md"],
+        "evidence": [
+          "CLAUDE.md",
+          "CODEX.md"
+        ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 169 identical headings (155951 vs 118039 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 170 identical headings (151827 vs 118039 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
-        "evidence": ["CLAUDE.md", "cursor.md"],
+        "evidence": [
+          "CLAUDE.md",
+          "cursor.md"
+        ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 3 identical headings (155951 vs 19206 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 3 identical headings (151827 vs 19206 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
-        "evidence": ["CODEX.md", "cursor.md"],
+        "evidence": [
+          "CODEX.md",
+          "cursor.md"
+        ],
         "kind": "mirrored-instruction-overlap",
         "message": "CODEX.md and cursor.md share 4 identical headings (118039 vs 19206 bytes) — candidates for compact routing",
         "severity": "medium"
@@ -24,13 +33,19 @@
     ],
     "portCoverageGaps": [
       {
-        "evidence": ["apps/claw-client-logs-service", "packages/shared-constants/src/index.ts"],
+        "evidence": [
+          "apps/claw-client-logs-service",
+          "packages/shared-constants/src/index.ts"
+        ],
         "kind": "service-without-port-constant",
         "message": "service claw-client-logs-service has no *_SERVICE_PORT constant in shared-constants (port is env-only, not in the canonical catalog)",
         "severity": "medium"
       },
       {
-        "evidence": ["apps/claw-server-logs-service", "packages/shared-constants/src/index.ts"],
+        "evidence": [
+          "apps/claw-server-logs-service",
+          "packages/shared-constants/src/index.ts"
+        ],
         "kind": "service-without-port-constant",
         "message": "service claw-server-logs-service has no *_SERVICE_PORT constant in shared-constants (port is env-only, not in the canonical catalog)",
         "severity": "medium"
@@ -2773,7 +2788,10 @@
         "name": "client-logs-service"
       },
       {
-        "files": ["docker/docker-compose.dev.ollama.yml", "docker/docker-compose.prod.ollama.yml"],
+        "files": [
+          "docker/docker-compose.dev.ollama.yml",
+          "docker/docker-compose.prod.ollama.yml"
+        ],
         "name": "comfyui"
       },
       {
@@ -2995,7 +3013,10 @@
         "name": "server-logs-service"
       },
       {
-        "files": ["docker/docker-compose.dev.ollama.yml", "docker/docker-compose.prod.ollama.yml"],
+        "files": [
+          "docker/docker-compose.dev.ollama.yml",
+          "docker/docker-compose.prod.ollama.yml"
+        ],
         "name": "stable-diffusion"
       },
       {
@@ -3021,6 +3042,11 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "ADMIN_USERNAME"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "ADSENSE_PUBLISHER_ID"
       },
       {
         "confidence": "verified",
@@ -3641,6 +3667,21 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "MONGO_USER"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "NEXT_PUBLIC_ADSENSE_CLIENT_ID"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "NEXT_PUBLIC_ADSENSE_REVIEW_MODE"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "NEXT_PUBLIC_ADSENSE_SERVING_ENABLED"
       },
       {
         "confidence": "verified",
@@ -5605,7 +5646,7 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 155951,
+          "bytes": 151827,
           "file": "CLAUDE.md"
         },
         {
@@ -5640,6 +5681,7 @@
         "docs/11-runbooks",
         "docs/12-reference",
         "docs/13-adr",
+        "docs/14-ai-native-development",
         "docs/14-risk-debt",
         "docs/15-ai-context",
         "docs/16-quality-engineering",
@@ -5713,7 +5755,7 @@
           "file": "rules/07-backend-controllers-and-transport.md"
         },
         {
-          "bytes": 5711,
+          "bytes": 6370,
           "file": "rules/07-commit-rules.md"
         },
         {
@@ -5785,7 +5827,7 @@
           "file": "rules/22-testing-and-coverage.md"
         },
         {
-          "bytes": 3234,
+          "bytes": 3426,
           "file": "rules/23-git-commits-hooks-and-release-gates.md"
         },
         {
@@ -6013,10 +6055,20 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 3058
+        "value": 3059
       },
       "localeCount": 9,
-      "locales": ["ar", "de", "en", "es", "fr", "hi", "it", "pt", "ru"],
+      "locales": [
+        "ar",
+        "de",
+        "en",
+        "es",
+        "fr",
+        "hi",
+        "it",
+        "pt",
+        "ru"
+      ],
       "source": "apps/claw-frontend/src/lib/i18n/locales"
     },
     "mongooseModels": {
@@ -7362,7 +7414,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 161
+        "testFiles": 163
       },
       "claw-health-service": {
         "runner": "jest",
@@ -7680,7 +7732,9 @@
       },
       {
         "dir": "apps/claw-health-service",
-        "internalDeps": ["@claw/shared-utilities"],
+        "internalDeps": [
+          "@claw/shared-utilities"
+        ],
         "name": "claw-health-service",
         "scripts": [
           "build",
@@ -7955,9 +8009,18 @@
       },
       {
         "dir": "packages/shared-auth",
-        "internalDeps": ["@claw/shared-types"],
+        "internalDeps": [
+          "@claw/shared-types"
+        ],
         "name": "@claw/shared-auth",
-        "scripts": ["build", "lint", "lint:fix", "test", "test:watch", "typecheck"],
+        "scripts": [
+          "build",
+          "lint",
+          "lint:fix",
+          "test",
+          "test:watch",
+          "typecheck"
+        ],
         "source": "packages/shared-auth/package.json",
         "type": "shared-package"
       },
@@ -7965,23 +8028,49 @@
         "dir": "packages/shared-constants",
         "internalDeps": [],
         "name": "@claw/shared-constants",
-        "scripts": ["build", "lint", "lint:fix", "test", "test:watch", "typecheck"],
+        "scripts": [
+          "build",
+          "lint",
+          "lint:fix",
+          "test",
+          "test:watch",
+          "typecheck"
+        ],
         "source": "packages/shared-constants/package.json",
         "type": "shared-package"
       },
       {
         "dir": "packages/shared-entitlements",
-        "internalDeps": ["@claw/shared-types"],
+        "internalDeps": [
+          "@claw/shared-types"
+        ],
         "name": "@claw/shared-entitlements",
-        "scripts": ["build", "lint", "lint:fix", "test", "test:watch", "typecheck"],
+        "scripts": [
+          "build",
+          "lint",
+          "lint:fix",
+          "test",
+          "test:watch",
+          "typecheck"
+        ],
         "source": "packages/shared-entitlements/package.json",
         "type": "shared-package"
       },
       {
         "dir": "packages/shared-rabbitmq",
-        "internalDeps": ["@claw/shared-constants", "@claw/shared-types"],
+        "internalDeps": [
+          "@claw/shared-constants",
+          "@claw/shared-types"
+        ],
         "name": "@claw/shared-rabbitmq",
-        "scripts": ["build", "lint", "lint:fix", "test", "test:watch", "typecheck"],
+        "scripts": [
+          "build",
+          "lint",
+          "lint:fix",
+          "test",
+          "test:watch",
+          "typecheck"
+        ],
         "source": "packages/shared-rabbitmq/package.json",
         "type": "shared-package"
       },
@@ -7989,15 +8078,32 @@
         "dir": "packages/shared-types",
         "internalDeps": [],
         "name": "@claw/shared-types",
-        "scripts": ["build", "lint", "lint:fix", "test", "test:watch", "typecheck"],
+        "scripts": [
+          "build",
+          "lint",
+          "lint:fix",
+          "test",
+          "test:watch",
+          "typecheck"
+        ],
         "source": "packages/shared-types/package.json",
         "type": "shared-package"
       },
       {
         "dir": "packages/shared-utilities",
-        "internalDeps": ["@claw/shared-constants", "@claw/shared-types"],
+        "internalDeps": [
+          "@claw/shared-constants",
+          "@claw/shared-types"
+        ],
         "name": "@claw/shared-utilities",
-        "scripts": ["build", "lint", "lint:fix", "test", "test:watch", "typecheck"],
+        "scripts": [
+          "build",
+          "lint",
+          "lint:fix",
+          "test",
+          "test:watch",
+          "typecheck"
+        ],
         "source": "packages/shared-utilities/package.json",
         "type": "shared-package"
       }
@@ -8009,7 +8115,7 @@
     "contradictionCount": 0,
     "dockerServiceCount": 39,
     "endpointCount": 493,
-    "envVarCount": 278,
+    "envVarCount": 282,
     "eventCount": 147,
     "frontendRouteCount": 89,
     "localeCount": 9,
@@ -8020,7 +8126,7 @@
     "serviceCount": 17,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 517,
+    "totalTestFiles": 519,
     "workspaceCount": 24
   }
 }

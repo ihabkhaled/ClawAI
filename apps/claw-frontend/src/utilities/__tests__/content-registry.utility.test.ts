@@ -51,8 +51,11 @@ describe('getIndexablePages / getAdEligiblePages defense in depth', () => {
     }
   });
 
-  it('getAdEligiblePages returns none in Phase A (home is ad-ineligible)', () => {
-    expect(getAdEligiblePages()).toHaveLength(0);
+  it('getAdEligiblePages returns only the reviewed, published homepage', () => {
+    const eligible = getAdEligiblePages();
+    expect(eligible).toHaveLength(1);
+    expect(eligible[0]?.canonicalPath).toBe('/');
+    expect(eligible[0]?.status).toBe(ContentLifecycleStatus.PUBLISHED);
   });
 });
 

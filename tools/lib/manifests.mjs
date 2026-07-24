@@ -67,6 +67,17 @@ export function buildManifests() {
     i18n: { locales: inv.i18n.locales, approxKeyCount: inv.i18n.approxKeyCount.value },
     tests: { byWorkspace: inv.tests, total: sumTests(inv.tests) },
     governance: inv.governance,
+    'data-ownership': {
+      note: 'Each service owns its data — cross-service access is HTTP or RabbitMQ only.',
+      byService: serviceCatalog
+        .filter((s) => s.database !== 'none')
+        .map((s) => ({
+          service: s.name,
+          database: s.database,
+          prismaModels: s.prismaModels,
+          mongooseModels: s.mongooseModels,
+        })),
+    },
     'workspace-dependency-graph': { edges: workspaceEdges(inv.workspaces) },
     'event-graph': buildEventGraph(inv),
   };

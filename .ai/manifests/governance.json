@@ -1,7 +1,7 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 155951,
+      "bytes": 151827,
       "file": "CLAUDE.md"
     },
     {
@@ -36,6 +36,7 @@
     "docs/11-runbooks",
     "docs/12-reference",
     "docs/13-adr",
+    "docs/14-ai-native-development",
     "docs/14-risk-debt",
     "docs/15-ai-context",
     "docs/16-quality-engineering",

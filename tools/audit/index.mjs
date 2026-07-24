@@ -17,7 +17,7 @@ import {
   findPortCoverageGaps,
 } from '../lib/analyzers.mjs';
 import { repoPath, readText, isMain } from '../lib/repo.mjs';
-import { stableStringify, hash } from '../lib/fact.mjs';
+import { stableStringify, hash, normalizeEol } from '../lib/fact.mjs';
 
 export function buildInventory() {
   const inv = extractAll();
@@ -58,7 +58,7 @@ function main() {
 
   if (check) {
     const existing = readText(snapshotPath);
-    const existingHash = existing ? hash(existing) : 'absent';
+    const existingHash = existing ? hash(normalizeEol(existing)) : 'absent';
     const freshHash = hash(json);
     if (existingHash !== freshHash) {
       console.error('audit:check FAILED — inventory snapshot is stale. Run `npm run audit` and commit the result.');

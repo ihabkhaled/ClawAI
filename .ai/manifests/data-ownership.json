@@ -1,0 +1,240 @@
+{
+  "byService": [
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
+        "AccessPolicy",
+        "ActivityMemoryEntry",
+        "AgentSession",
+        "AgentSuggestion",
+        "CapabilityInvocation",
+        "Device",
+        "DeviceCodeRequest",
+        "FileWatchEvent",
+        "LocalRepo",
+        "MarketplaceInstall",
+        "MarketplaceListing",
+        "Organization",
+        "OrganizationMember",
+        "PairingRequest",
+        "Recipe",
+        "RecipeRun",
+        "RecipeRunStep",
+        "RefreshToken",
+        "ScheduledCommand",
+        "TerminalCommand"
+      ],
+      "service": "claw-agent-service"
+    },
+    {
+      "database": "mongodb",
+      "mongooseModels": [
+        "AuditLog",
+        "UsageLedger"
+      ],
+      "prismaModels": [],
+      "service": "claw-audit-service"
+    },
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
+        "Plan",
+        "PlanModelAccess",
+        "Role",
+        "RolePermission",
+        "Session",
+        "SystemSetting",
+        "TokenUsageLedger",
+        "User",
+        "UserPlanAssignment"
+      ],
+      "service": "claw-auth-service"
+    },
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
+        "ChatMessage",
+        "ChatMessageContextReceipt",
+        "ChatThread",
+        "FileDeliveryRecord",
+        "MessageAttachment"
+      ],
+      "service": "claw-chat-service"
+    },
+    {
+      "database": "mongodb",
+      "mongooseModels": [
+        "ClientLog"
+      ],
+      "prismaModels": [],
+      "service": "claw-client-logs-service"
+    },
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
+        "Connector",
+        "ConnectorHealthEvent",
+        "ConnectorModel",
+        "ModelSyncRun"
+      ],
+      "service": "claw-connector-service"
+    },
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
+        "FileGeneration",
+        "FileGenerationAsset",
+        "FileGenerationEvent"
+      ],
+      "service": "claw-file-generation-service"
+    },
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
+        "File",
+        "FileChunk"
+      ],
+      "service": "claw-file-service"
+    },
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
+        "ImageGeneration",
+        "ImageGenerationAsset",
+        "ImageGenerationEvent"
+      ],
+      "service": "claw-image-service"
+    },
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
+        "BinaryRelease",
+        "FrontierCatalogEntry",
+        "HardwareSnapshot",
+        "ModelLoadEvent",
+        "PreflightOverrideAudit",
+        "PullJob",
+        "RuntimeConfig"
+      ],
+      "service": "claw-llamacpp-service"
+    },
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
+        "ContextPack",
+        "ContextPackAttachment",
+        "ContextPackItem",
+        "ContextPackTemplate",
+        "ContextPackUsage",
+        "ContextPackVersion",
+        "MemoryAuditLog",
+        "MemoryPreference",
+        "MemoryRecord",
+        "MemorySuggestion",
+        "MemoryUsage",
+        "WorkspaceObjectEmbedding"
+      ],
+      "service": "claw-memory-service"
+    },
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
+        "DiscoverySource",
+        "LocalModel",
+        "LocalModelRoleAssignment",
+        "ModelCatalogEntry",
+        "ModelDiscoveryCandidate",
+        "ModelDiscoveryRun",
+        "PullJob",
+        "RuntimeConfig"
+      ],
+      "service": "claw-ollama-service"
+    },
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
+        "FetchJob",
+        "PageCache",
+        "ResearchRun",
+        "SearchProvider",
+        "SearchRun"
+      ],
+      "service": "claw-research-service"
+    },
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
+        "ReplayCase",
+        "ReplayRun",
+        "RouterAdminOverride",
+        "RouterCircuitBreaker",
+        "RouterLearnedScore",
+        "RouterModelProfile",
+        "RouterModelRegistry",
+        "RouterTopicProfile",
+        "RouterWorkflow",
+        "RoutingCalibrationSnapshot",
+        "RoutingDecision",
+        "RoutingFeedbackRecord",
+        "RoutingOutcomeRecord",
+        "RoutingPolicy",
+        "TaxonomyRole"
+      ],
+      "service": "claw-routing-service"
+    },
+    {
+      "database": "mongodb",
+      "mongooseModels": [
+        "ServerLog"
+      ],
+      "prismaModels": [],
+      "service": "claw-server-logs-service"
+    },
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
+        "AiActionApprovalQueue",
+        "AiActionPolicy",
+        "AutoSuggestRun",
+        "DigestSnapshot",
+        "ImplPromptHandoff",
+        "SuggestionDeduplication",
+        "SuggestionTriggerRule",
+        "SyncCadenceDefault",
+        "UserAutomationPreference",
+        "UserDigestPreference",
+        "UserEmailSignature",
+        "UserEmailTemplate",
+        "WebhookDelivery",
+        "WorkspaceAction",
+        "WorkspaceChain",
+        "WorkspaceChainRun",
+        "WorkspaceChainRunStep",
+        "WorkspaceConnector",
+        "WorkspaceConnectorGrant",
+        "WorkspaceHealthEvent",
+        "WorkspaceObject",
+        "WorkspaceObjectLink",
+        "WorkspaceProviderAppConfig",
+        "WorkspaceProviderDefinition",
+        "WorkspaceSyncRun"
+      ],
+      "service": "claw-workspace-service"
+    }
+  ],
+  "generated": true,
+  "note": "Each service owns its data — cross-service access is HTTP or RabbitMQ only."
+}
