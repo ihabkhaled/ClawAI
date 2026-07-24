@@ -29,6 +29,7 @@ enum UserLanguagePreference {
   ES
   RU
   PT
+  HI
 }
 
 enum UserAppearancePreference {

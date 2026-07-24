@@ -1,7 +1,4 @@
-import {
-  UserAppearancePreference,
-  UserLanguagePreference,
-} from '../../../../generated/prisma';
+import { UserAppearancePreference, UserLanguagePreference } from '../../../../generated/prisma';
 import { updatePreferencesSchema } from '../update-preferences.dto';
 
 describe('updatePreferencesSchema', () => {
@@ -27,6 +24,17 @@ describe('updatePreferencesSchema', () => {
     if (result.success) {
       expect(result.data.languagePreference).toBe(UserLanguagePreference.FR);
       expect(result.data.appearancePreference).toBeUndefined();
+    }
+  });
+
+  it('should accept HI (Hindi) — regression: the frontend offered Hindi but the backend enum lacked it, 400ing the save', () => {
+    const result = updatePreferencesSchema.safeParse({
+      languagePreference: UserLanguagePreference.HI,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.languagePreference).toBe(UserLanguagePreference.HI);
     }
   });
 
@@ -64,25 +72,27 @@ describe('updatePreferencesSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it.each(
-    Object.values(UserLanguagePreference),
-  )('should accept language preference %s', (language) => {
-    const result = updatePreferencesSchema.safeParse({
-      languagePreference: language,
-    });
+  it.each(Object.values(UserLanguagePreference))(
+    'should accept language preference %s',
+    (language) => {
+      const result = updatePreferencesSchema.safeParse({
+        languagePreference: language,
+      });
 
-    expect(result.success).toBe(true);
-  });
+      expect(result.success).toBe(true);
+    },
+  );
 
-  it.each(
-    Object.values(UserAppearancePreference),
-  )('should accept appearance preference %s', (appearance) => {
-    const result = updatePreferencesSchema.safeParse({
-      appearancePreference: appearance,
-    });
+  it.each(Object.values(UserAppearancePreference))(
+    'should accept appearance preference %s',
+    (appearance) => {
+      const result = updatePreferencesSchema.safeParse({
+        appearancePreference: appearance,
+      });
 
-    expect(result.success).toBe(true);
-  });
+      expect(result.success).toBe(true);
+    },
+  );
 
   it('should strip unknown fields', () => {
     const result = updatePreferencesSchema.safeParse({
