@@ -3410,6 +3410,29 @@ export const it: TranslationDictionary = {
       description: 'La pagina che cerchi non esiste o potrebbe essere stata spostata.',
       backHome: 'Torna alla home',
     },
+    contact: {
+      title: 'Contatti',
+      subtitle:
+        'Domande su self-hosting, routing, integrazioni o l’agente desktop? Inviaci un messaggio e ti risponderemo.',
+      nameLabel: 'Nome',
+      emailLabel: 'Email',
+      subjectLabel: 'Oggetto',
+      messageLabel: 'Messaggio',
+      nameRequired: 'Inserisci il tuo nome.',
+      emailInvalid: 'Inserisci un indirizzo email valido.',
+      subjectRequired: 'Inserisci un oggetto.',
+      messageRequired: 'Inserisci un messaggio (almeno 10 caratteri).',
+      submit: 'Invia messaggio',
+      submitting: 'Invio in corso…',
+      privacyNote:
+        'Usiamo i tuoi dati solo per rispondere a questo messaggio. Consulta la nostra informativa sulla privacy.',
+      successTitle: 'Messaggio inviato',
+      successBody: 'Grazie per averci contattato. Risponderemo alla tua email il prima possibile.',
+      sendAnother: 'Invia un altro messaggio',
+      errorInvalid: 'Controlla il modulo e riprova.',
+      errorRateLimited: 'Troppi messaggi. Attendi un momento prima di riprovare.',
+      errorGeneric: 'Si è verificato un errore durante l’invio del messaggio. Riprova.',
+    },
     home: {
       hero: {
         title: 'Orchestrazione AI local-first, senza rinunciare ai modelli cloud',

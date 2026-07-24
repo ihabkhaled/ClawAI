@@ -3400,6 +3400,29 @@ export const pt: TranslationDictionary = {
       description: 'A página que você procura não existe ou pode ter sido movida.',
       backHome: 'Voltar ao início',
     },
+    contact: {
+      title: 'Contato',
+      subtitle:
+        'Dúvidas sobre auto-hospedagem, roteamento, integrações ou o agente de desktop? Envie-nos uma mensagem e entraremos em contato.',
+      nameLabel: 'Nome',
+      emailLabel: 'E-mail',
+      subjectLabel: 'Assunto',
+      messageLabel: 'Mensagem',
+      nameRequired: 'Digite seu nome.',
+      emailInvalid: 'Digite um endereço de e-mail válido.',
+      subjectRequired: 'Digite um assunto.',
+      messageRequired: 'Digite uma mensagem (pelo menos 10 caracteres).',
+      submit: 'Enviar mensagem',
+      submitting: 'Enviando…',
+      privacyNote:
+        'Usamos seus dados apenas para responder a esta mensagem. Consulte nossa política de privacidade.',
+      successTitle: 'Mensagem enviada',
+      successBody: 'Obrigado pelo contato. Responderemos ao seu e-mail o mais rápido possível.',
+      sendAnother: 'Enviar outra mensagem',
+      errorInvalid: 'Verifique o formulário e tente novamente.',
+      errorRateLimited: 'Muitas mensagens. Aguarde um momento antes de tentar novamente.',
+      errorGeneric: 'Ocorreu um erro ao enviar sua mensagem. Tente novamente.',
+    },
     home: {
       hero: {
         title: 'Orquestração de IA local em primeiro lugar, sem abrir mão dos modelos na cloud',

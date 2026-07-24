@@ -37,10 +37,13 @@ describe('content registry integrity', () => {
     }
   });
 
-  it('exactly one entry is PUBLISHED in Phase A: the homepage', () => {
+  it('publishes the homepage and the contact page (both indexable)', () => {
     const published = getPublishedPages();
-    expect(published).toHaveLength(1);
-    expect(published[0]?.canonicalPath).toBe('/');
+    const paths = published.map((page) => page.canonicalPath).sort();
+    expect(paths).toEqual(['/', '/contact']);
+    for (const page of published) {
+      expect(page.indexability).toBe(Indexability.INDEXABLE);
+    }
   });
 });
 

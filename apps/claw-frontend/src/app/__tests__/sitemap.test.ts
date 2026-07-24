@@ -17,15 +17,16 @@ describe('sitemap', () => {
   });
 
   it(
-    'contains only the homepage, as a fully-qualified URL, in production',
+    'contains every published+indexable page as a fully-qualified URL in production',
     async () => {
       vi.stubEnv('NODE_ENV', 'production');
       process.env['SITE_URL'] = 'https://claw.example';
       const sitemap = (await import('../sitemap')).default;
 
-      const result = sitemap();
-      expect(result).toHaveLength(1);
-      expect(result[0]?.url).toBe('https://claw.example/');
+      const urls = sitemap()
+        .map((entry) => entry.url)
+        .sort();
+      expect(urls).toEqual(['https://claw.example/', 'https://claw.example/contact']);
     },
     DYNAMIC_IMPORT_TIMEOUT_MS,
   );

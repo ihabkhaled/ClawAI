@@ -840,6 +840,19 @@ NEXT_PUBLIC_ADSENSE_CLIENT_ID=
 NEXT_PUBLIC_ADSENSE_SERVING_ENABLED=false
 NEXT_PUBLIC_ADSENSE_REVIEW_MODE=false
 ADSENSE_PUBLISHER_ID=
+# Public contact form (/api/contact). Server-only — SMTP creds never reach the
+# browser. OFF by default; set ENABLED=true + PROVIDER=smtp with credentials.
+CONTACT_EMAIL_ENABLED=false
+CONTACT_EMAIL_PROVIDER=none
+CONTACT_EMAIL_FROM=no-reply@claw.local
+CONTACT_EMAIL_TO=
+CONTACT_RATE_LIMIT_MAX=3
+CONTACT_RATE_LIMIT_WINDOW_MS=3600000
+CONTACT_SMTP_HOST=
+CONTACT_SMTP_PORT=587
+CONTACT_SMTP_SECURE=false
+CONTACT_SMTP_USER=
+CONTACT_SMTP_PASS=
 
 # =============================================================================
 # Ollama
