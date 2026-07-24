@@ -70,11 +70,19 @@ const nextConfig = {
     return rewrites;
   },
 
+  // Static, request-independent security headers. The per-request
+  // Content-Security-Policy (with its nonce) is set in middleware.ts because
+  // it must vary per response. HSTS is safe here: the whole stack is HTTPS
+  // (mkcert locally, real certs in prod) — see docs/08-runtime-devops/tls-setup.md.
   async headers() {
     return [
       {
         source: '/(.*)',
         headers: [
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
           {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
@@ -84,8 +92,11 @@ const nextConfig = {
             value: 'DENY',
           },
           {
+            // Modern browsers dropped the legacy XSS auditor; `0` disables it
+            // explicitly, which is the current OWASP guidance (the old filter
+            // could itself be abused). CSP is the real XSS defence.
             key: 'X-XSS-Protection',
-            value: '1; mode=block',
+            value: '0',
           },
           {
             key: 'Referrer-Policy',
@@ -93,7 +104,11 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
+            value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
+          },
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin',
           },
         ],
       },

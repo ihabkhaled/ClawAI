@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { headers } from 'next/headers';
 
 import { SITE_DESCRIPTION, SITE_TITLE } from '@/constants/site-metadata.constants';
 import { THEME_INIT_SCRIPT } from '@/constants/theme.constants';
@@ -50,7 +51,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}): Promise<React.ReactElement> {
+  // The nonce is stamped onto the request headers by middleware. Reading it
+  // here authorises the inline theme-init script under the strict CSP and
+  // opts the tree into per-request rendering (unavoidable for nonce CSP —
+  // a static HTML file cannot carry a unique per-request nonce).
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
+
   return (
     <html
       lang={DEFAULT_LOCALE}
@@ -60,6 +71,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <head>
         <script
+          nonce={nonce}
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
         />

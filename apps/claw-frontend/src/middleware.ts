@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+import { getAdSenseConfig } from '@/lib/adsense/adsense-config';
+import {
+  buildContentSecurityPolicy,
+  generateCspNonce,
+} from '@/lib/security/content-security-policy';
 import { isPublicPath } from '@/utilities/route-visibility.utility';
 
 const PUBLIC_AUTH_PATHS = ['/login', '/register'];
@@ -12,7 +17,25 @@ export function middleware(request: NextRequest): NextResponse {
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
 
-  const response = NextResponse.next();
+  // Per-request nonce authorises the inline theme-init script and lets Next
+  // nonce its own hydration scripts, so script-src can stay strict (no
+  // 'unsafe-inline'). The nonce rides on a request header the root layout
+  // reads via next/headers.
+  const nonce = generateCspNonce();
+  const adsense = getAdSenseConfig();
+  const adsenseEnabled = adsense.isConfigured && (adsense.reviewMode || adsense.servingEnabled);
+  const csp = buildContentSecurityPolicy({
+    nonce,
+    isDev: process.env.NODE_ENV !== 'production',
+    adsenseEnabled,
+  });
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
+  requestHeaders.set('content-security-policy', csp);
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set('content-security-policy', csp);
 
   // Enforce non-indexability at the response-header level for every path
   // that is not an explicitly registered public page. This is the backstop

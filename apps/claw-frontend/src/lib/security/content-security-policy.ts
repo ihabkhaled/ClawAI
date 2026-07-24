@@ -1,0 +1,87 @@
+import type { ContentSecurityPolicyOptions } from '@/types/security.types';
+
+// Google ad domains that the browser must be allowed to frame / fetch from
+// when the AdSense loader is (or may be) injected. script-src relies on
+// 'strict-dynamic': once the nonce-trusted loader runs, the scripts it
+// inserts inherit trust, so we do NOT list script hosts here. frame-src,
+// img-src, and connect-src are NOT covered by strict-dynamic and must name
+// the hosts explicitly. These are only added when AdSense can actually load.
+const GOOGLE_AD_FRAME_HOSTS: ReadonlyArray<string> = [
+  'https://googleads.g.doubleclick.net',
+  'https://tpc.googlesyndication.com',
+  'https://www.google.com',
+];
+
+const GOOGLE_AD_CONNECT_HOSTS: ReadonlyArray<string> = [
+  'https://pagead2.googlesyndication.com',
+  'https://googleads.g.doubleclick.net',
+  'https://www.google-analytics.com',
+];
+
+const GOOGLE_AD_IMG_HOSTS: ReadonlyArray<string> = [
+  'https://pagead2.googlesyndication.com',
+  'https://googleads.g.doubleclick.net',
+  'https://tpc.googlesyndication.com',
+];
+
+// Generates a fresh, cryptographically-random nonce for a single response.
+// Uses Web Crypto so it runs on both the Edge (middleware) and Node runtimes.
+export function generateCspNonce(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  let binary = '';
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary);
+}
+
+// Builds the Content-Security-Policy header value.
+//
+// - Production script-src is strict: only 'self' + the per-request nonce,
+//   with 'strict-dynamic' so framework/ad scripts loaded by trusted code
+//   inherit trust. No 'unsafe-inline', no host allowlist for scripts.
+// - Development adds 'unsafe-eval' (React Refresh / Turbopack HMR) and
+//   ws:/wss: connect sources (HMR socket).
+// - style-src keeps 'unsafe-inline' because Next.js and Tailwind inject
+//   inline <style> blocks that cannot carry a nonce reliably; this is the
+//   documented, accepted relaxation and does not enable script execution.
+export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions): string {
+  const { nonce, isDev, adsenseEnabled } = options;
+
+  const scriptSrc = [
+    "'self'",
+    `'nonce-${nonce}'`,
+    "'strict-dynamic'",
+    ...(isDev ? ["'unsafe-eval'"] : []),
+  ];
+
+  const connectSrc = [
+    "'self'",
+    ...(isDev ? ['ws:', 'wss:'] : []),
+    ...(adsenseEnabled ? GOOGLE_AD_CONNECT_HOSTS : []),
+  ];
+
+  const frameSrc = ["'self'", ...(adsenseEnabled ? GOOGLE_AD_FRAME_HOSTS : [])];
+
+  const imgSrc = ["'self'", 'data:', 'blob:', ...(adsenseEnabled ? GOOGLE_AD_IMG_HOSTS : [])];
+
+  const directives: ReadonlyArray<string> = [
+    `default-src 'self'`,
+    `script-src ${scriptSrc.join(' ')}`,
+    `style-src 'self' 'unsafe-inline'`,
+    `img-src ${imgSrc.join(' ')}`,
+    `font-src 'self' data:`,
+    `connect-src ${connectSrc.join(' ')}`,
+    `frame-src ${frameSrc.join(' ')}`,
+    `object-src 'none'`,
+    `base-uri 'self'`,
+    `form-action 'self'`,
+    `frame-ancestors 'none'`,
+    `manifest-src 'self'`,
+    `worker-src 'self' blob:`,
+    ...(isDev ? [] : ['upgrade-insecure-requests']),
+  ];
+
+  return directives.join('; ');
+}
