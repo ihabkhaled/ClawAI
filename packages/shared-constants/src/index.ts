@@ -20,6 +20,7 @@ export const WORKSPACE_SERVICE_PORT = 4014;
 export const AGENT_SERVICE_PORT = 4015;
 export const RESEARCH_SERVICE_PORT = 4016;
 export const LLAMACPP_SERVICE_PORT = 4017;
+export const PAYMENT_SERVICE_PORT = 4018;
 
 // ---- Service Names ----
 
@@ -38,6 +39,7 @@ export const WORKSPACE_SERVICE = 'workspace-service';
 export const AGENT_SERVICE = 'agent-service';
 export const RESEARCH_SERVICE = 'research-service';
 export const LLAMACPP_SERVICE = 'llamacpp-service';
+export const PAYMENT_SERVICE = 'payment-service';
 
 // ---- API ----
 
@@ -59,3 +61,4 @@ export const LONG_HTTP_TIMEOUT = 120_000;
 export const JWT_ALGORITHM = 'HS256' as const;
 
 export * from './runtime-progress-events.constants';
+export * from './billing.constants';

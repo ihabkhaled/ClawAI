@@ -191,6 +191,61 @@
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {
+      "key": "BILLING_ENTITLEMENT_RECONCILE_REQUESTED",
+      "pattern": "billing.entitlement.reconcile_requested",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "BILLING_PAYMENT_CHARGEBACK",
+      "pattern": "billing.payment.chargeback",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "BILLING_PAYMENT_REFUNDED",
+      "pattern": "billing.payment.refunded",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "BILLING_SUBSCRIPTION_ACTIVATED",
+      "pattern": "billing.subscription.activated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "BILLING_SUBSCRIPTION_CANCELLED",
+      "pattern": "billing.subscription.cancelled",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "BILLING_SUBSCRIPTION_DOWNGRADE_SCHEDULED",
+      "pattern": "billing.subscription.downgrade_scheduled",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "BILLING_SUBSCRIPTION_EXPIRED",
+      "pattern": "billing.subscription.expired",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "BILLING_SUBSCRIPTION_PAST_DUE",
+      "pattern": "billing.subscription.past_due",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "BILLING_SUBSCRIPTION_RENEWED",
+      "pattern": "billing.subscription.renewed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "BILLING_SUBSCRIPTION_SUSPENDED",
+      "pattern": "billing.subscription.suspended",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "BILLING_SUBSCRIPTION_UPGRADED",
+      "pattern": "billing.subscription.upgraded",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
       "key": "CATALOG_UPDATED",
       "pattern": "catalog.updated",
       "source": "packages/shared-types/src/events/event-patterns.ts"

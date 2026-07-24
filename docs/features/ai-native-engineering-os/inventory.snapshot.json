@@ -3276,6 +3276,61 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "CONTACT_EMAIL_ENABLED"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "CONTACT_EMAIL_FROM"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "CONTACT_EMAIL_PROVIDER"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "CONTACT_EMAIL_TO"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "CONTACT_RATE_LIMIT_MAX"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "CONTACT_RATE_LIMIT_WINDOW_MS"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "CONTACT_SMTP_HOST"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "CONTACT_SMTP_PASS"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "CONTACT_SMTP_PORT"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "CONTACT_SMTP_SECURE"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "CONTACT_SMTP_USER"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "CONTEXT_COMPRESSION_MODEL"
       },
       {
@@ -4631,6 +4686,61 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "BILLING_ENTITLEMENT_RECONCILE_REQUESTED",
+        "pattern": "billing.entitlement.reconcile_requested",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "BILLING_PAYMENT_CHARGEBACK",
+        "pattern": "billing.payment.chargeback",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "BILLING_PAYMENT_REFUNDED",
+        "pattern": "billing.payment.refunded",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "BILLING_SUBSCRIPTION_ACTIVATED",
+        "pattern": "billing.subscription.activated",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "BILLING_SUBSCRIPTION_CANCELLED",
+        "pattern": "billing.subscription.cancelled",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "BILLING_SUBSCRIPTION_DOWNGRADE_SCHEDULED",
+        "pattern": "billing.subscription.downgrade_scheduled",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "BILLING_SUBSCRIPTION_EXPIRED",
+        "pattern": "billing.subscription.expired",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "BILLING_SUBSCRIPTION_PAST_DUE",
+        "pattern": "billing.subscription.past_due",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "BILLING_SUBSCRIPTION_RENEWED",
+        "pattern": "billing.subscription.renewed",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "BILLING_SUBSCRIPTION_SUSPENDED",
+        "pattern": "billing.subscription.suspended",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "BILLING_SUBSCRIPTION_UPGRADED",
+        "pattern": "billing.subscription.upgraded",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "CATALOG_UPDATED",
         "pattern": "catalog.updated",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -5191,6 +5301,11 @@
         "file": "apps/claw-frontend/src/app/(auth)/register/page.tsx",
         "kind": "page",
         "route": "/register"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/contact/page.tsx",
+        "kind": "page",
+        "route": "/contact"
       },
       {
         "file": "apps/claw-frontend/src/app/(marketing)/layout.tsx",
@@ -6055,7 +6170,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 3168
+        "value": 3188
       },
       "localeCount": 9,
       "locales": [
@@ -6629,6 +6744,11 @@
         "confidence": "verified",
         "source": "packages/shared-constants/src/index.ts",
         "value": 4008
+      },
+      "PAYMENT_SERVICE_PORT": {
+        "confidence": "verified",
+        "source": "packages/shared-constants/src/index.ts",
+        "value": 4018
       },
       "RESEARCH_SERVICE_PORT": {
         "confidence": "verified",
@@ -7362,7 +7482,7 @@
       },
       "@claw/shared-constants": {
         "runner": "jest",
-        "testFiles": 1
+        "testFiles": 2
       },
       "@claw/shared-entitlements": {
         "runner": "jest",
@@ -7378,7 +7498,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "jest",
-        "testFiles": 16
+        "testFiles": 21
       },
       "claw-agent-service": {
         "runner": "jest",
@@ -7414,7 +7534,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 163
+        "testFiles": 170
       },
       "claw-health-service": {
         "runner": "jest",
@@ -8115,18 +8235,18 @@
     "contradictionCount": 0,
     "dockerServiceCount": 39,
     "endpointCount": 493,
-    "envVarCount": 282,
-    "eventCount": 147,
-    "frontendRouteCount": 89,
+    "envVarCount": 293,
+    "eventCount": 158,
+    "frontendRouteCount": 90,
     "localeCount": 9,
     "nginxRouteCount": 46,
     "permissionCount": 38,
-    "portCount": 15,
+    "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 17,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 519,
+    "totalTestFiles": 532,
     "workspaceCount": 24
   }
 }

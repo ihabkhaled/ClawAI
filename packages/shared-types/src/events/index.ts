@@ -1,5 +1,21 @@
 export { EventPattern } from './event-patterns';
 export type {
+  BillingEventEnvelope,
+  BillingEventPayload,
+  BillingSubscriptionEventBase,
+  BillingSubscriptionActivatedPayload,
+  BillingSubscriptionRenewedPayload,
+  BillingSubscriptionUpgradedPayload,
+  BillingSubscriptionDowngradeScheduledPayload,
+  BillingSubscriptionCancelledPayload,
+  BillingSubscriptionExpiredPayload,
+  BillingSubscriptionPastDuePayload,
+  BillingSubscriptionSuspendedPayload,
+  BillingPaymentRefundedPayload,
+  BillingPaymentChargebackPayload,
+  BillingEntitlementReconcileRequestedPayload,
+} from './billing-events.types';
+export type {
   AgentEventTimestamp,
   AgentSessionConnectedPayload,
   AgentSessionDisconnectedPayload,
