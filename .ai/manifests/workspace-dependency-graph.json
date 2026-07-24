@@ -1,0 +1,345 @@
+{
+  "edges": [
+    {
+      "from": "@claw/shared-auth",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "@claw/shared-entitlements",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "@claw/shared-rabbitmq",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "@claw/shared-rabbitmq",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "@claw/shared-utilities",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "@claw/shared-utilities",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-agent-service",
+      "to": "@claw/shared-auth"
+    },
+    {
+      "from": "claw-agent-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-agent-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-agent-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-agent-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-audit-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-audit-service",
+      "to": "@claw/shared-entitlements"
+    },
+    {
+      "from": "claw-audit-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-audit-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-audit-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-auth-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-auth-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-auth-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-auth-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-chat-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-chat-service",
+      "to": "@claw/shared-entitlements"
+    },
+    {
+      "from": "claw-chat-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-chat-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-chat-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-client-logs-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-client-logs-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-client-logs-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-client-logs-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-connector-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-connector-service",
+      "to": "@claw/shared-entitlements"
+    },
+    {
+      "from": "claw-connector-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-connector-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-connector-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-file-generation-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-file-generation-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-file-generation-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-file-generation-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-file-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-file-service",
+      "to": "@claw/shared-entitlements"
+    },
+    {
+      "from": "claw-file-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-file-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-file-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-health-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-image-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-image-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-image-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-image-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-llamacpp-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-llamacpp-service",
+      "to": "@claw/shared-entitlements"
+    },
+    {
+      "from": "claw-llamacpp-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-llamacpp-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-llamacpp-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-memory-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-memory-service",
+      "to": "@claw/shared-entitlements"
+    },
+    {
+      "from": "claw-memory-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-memory-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-memory-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-ollama-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-ollama-service",
+      "to": "@claw/shared-entitlements"
+    },
+    {
+      "from": "claw-ollama-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-ollama-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-ollama-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-research-service",
+      "to": "@claw/shared-auth"
+    },
+    {
+      "from": "claw-research-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-research-service",
+      "to": "@claw/shared-entitlements"
+    },
+    {
+      "from": "claw-research-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-research-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-research-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-routing-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-routing-service",
+      "to": "@claw/shared-entitlements"
+    },
+    {
+      "from": "claw-routing-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-routing-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-routing-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-server-logs-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-server-logs-service",
+      "to": "@claw/shared-entitlements"
+    },
+    {
+      "from": "claw-server-logs-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-server-logs-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-server-logs-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-workspace-service",
+      "to": "@claw/shared-auth"
+    },
+    {
+      "from": "claw-workspace-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-workspace-service",
+      "to": "@claw/shared-entitlements"
+    },
+    {
+      "from": "claw-workspace-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-workspace-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-workspace-service",
+      "to": "@claw/shared-utilities"
+    }
+  ],
+  "generated": true
+}

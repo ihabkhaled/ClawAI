@@ -1,0 +1,11 @@
+{
+  "apiPrefix": "/api/v1",
+  "eventExchange": "claw.events",
+  "frontend": "claw-frontend",
+  "generated": true,
+  "name": "ClawAI",
+  "reverseProxy": "nginx",
+  "serviceCount": 17,
+  "sharedPackageCount": 6,
+  "workspaceCount": 24
+}

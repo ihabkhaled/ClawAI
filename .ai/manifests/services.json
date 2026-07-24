@@ -1,0 +1,460 @@
+{
+  "generated": true,
+  "services": [
+    {
+      "database": "postgresql",
+      "dir": "apps/claw-agent-service",
+      "endpointCount": 83,
+      "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-constants",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-agent-service",
+      "port": 4015,
+      "portSource": "shared-constants",
+      "prismaModels": [
+        "AccessPolicy",
+        "ActivityMemoryEntry",
+        "AgentSession",
+        "AgentSuggestion",
+        "CapabilityInvocation",
+        "Device",
+        "DeviceCodeRequest",
+        "FileWatchEvent",
+        "LocalRepo",
+        "MarketplaceInstall",
+        "MarketplaceListing",
+        "Organization",
+        "OrganizationMember",
+        "PairingRequest",
+        "Recipe",
+        "RecipeRun",
+        "RecipeRunStep",
+        "RefreshToken",
+        "ScheduledCommand",
+        "TerminalCommand"
+      ],
+      "testFiles": 9,
+      "testRunner": "jest"
+    },
+    {
+      "database": "mongodb",
+      "dir": "apps/claw-audit-service",
+      "endpointCount": 7,
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [
+        "AuditLog",
+        "UsageLedger"
+      ],
+      "name": "claw-audit-service",
+      "port": 4007,
+      "portSource": "shared-constants",
+      "prismaModels": [],
+      "testFiles": 13,
+      "testRunner": "jest"
+    },
+    {
+      "database": "postgresql",
+      "dir": "apps/claw-auth-service",
+      "endpointCount": 38,
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-auth-service",
+      "port": 4001,
+      "portSource": "shared-constants",
+      "prismaModels": [
+        "Plan",
+        "PlanModelAccess",
+        "Role",
+        "RolePermission",
+        "Session",
+        "SystemSetting",
+        "TokenUsageLedger",
+        "User",
+        "UserPlanAssignment"
+      ],
+      "testFiles": 22,
+      "testRunner": "jest"
+    },
+    {
+      "database": "postgresql",
+      "dir": "apps/claw-chat-service",
+      "endpointCount": 27,
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-chat-service",
+      "port": 4002,
+      "portSource": "shared-constants",
+      "prismaModels": [
+        "ChatMessage",
+        "ChatMessageContextReceipt",
+        "ChatThread",
+        "FileDeliveryRecord",
+        "MessageAttachment"
+      ],
+      "testFiles": 54,
+      "testRunner": "jest"
+    },
+    {
+      "database": "mongodb",
+      "dir": "apps/claw-client-logs-service",
+      "endpointCount": 5,
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [
+        "ClientLog"
+      ],
+      "name": "claw-client-logs-service",
+      "port": null,
+      "portSource": "env-only (no constant)",
+      "prismaModels": [],
+      "testFiles": 6,
+      "testRunner": "jest"
+    },
+    {
+      "database": "postgresql",
+      "dir": "apps/claw-connector-service",
+      "endpointCount": 13,
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-connector-service",
+      "port": 4003,
+      "portSource": "shared-constants",
+      "prismaModels": [
+        "Connector",
+        "ConnectorHealthEvent",
+        "ConnectorModel",
+        "ModelSyncRun"
+      ],
+      "testFiles": 16,
+      "testRunner": "jest"
+    },
+    {
+      "database": "postgresql",
+      "dir": "apps/claw-file-generation-service",
+      "endpointCount": 7,
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-file-generation-service",
+      "port": 4013,
+      "portSource": "shared-constants",
+      "prismaModels": [
+        "FileGeneration",
+        "FileGenerationAsset",
+        "FileGenerationEvent"
+      ],
+      "testFiles": 7,
+      "testRunner": "jest"
+    },
+    {
+      "database": "postgresql",
+      "dir": "apps/claw-file-service",
+      "endpointCount": 14,
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-file-service",
+      "port": 4006,
+      "portSource": "shared-constants",
+      "prismaModels": [
+        "File",
+        "FileChunk"
+      ],
+      "testFiles": 15,
+      "testRunner": "jest"
+    },
+    {
+      "database": "none",
+      "dir": "apps/claw-health-service",
+      "endpointCount": 1,
+      "internalDeps": [
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-health-service",
+      "port": 4009,
+      "portSource": "shared-constants",
+      "prismaModels": [],
+      "testFiles": 4,
+      "testRunner": "jest"
+    },
+    {
+      "database": "postgresql",
+      "dir": "apps/claw-image-service",
+      "endpointCount": 9,
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-image-service",
+      "port": 4012,
+      "portSource": "shared-constants",
+      "prismaModels": [
+        "ImageGeneration",
+        "ImageGenerationAsset",
+        "ImageGenerationEvent"
+      ],
+      "testFiles": 9,
+      "testRunner": "jest"
+    },
+    {
+      "database": "postgresql",
+      "dir": "apps/claw-llamacpp-service",
+      "endpointCount": 26,
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-llamacpp-service",
+      "port": 4017,
+      "portSource": "shared-constants",
+      "prismaModels": [
+        "BinaryRelease",
+        "FrontierCatalogEntry",
+        "HardwareSnapshot",
+        "ModelLoadEvent",
+        "PreflightOverrideAudit",
+        "PullJob",
+        "RuntimeConfig"
+      ],
+      "testFiles": 16,
+      "testRunner": "jest"
+    },
+    {
+      "database": "postgresql",
+      "dir": "apps/claw-memory-service",
+      "endpointCount": 46,
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-memory-service",
+      "port": 4005,
+      "portSource": "shared-constants",
+      "prismaModels": [
+        "ContextPack",
+        "ContextPackAttachment",
+        "ContextPackItem",
+        "ContextPackTemplate",
+        "ContextPackUsage",
+        "ContextPackVersion",
+        "MemoryAuditLog",
+        "MemoryPreference",
+        "MemoryRecord",
+        "MemorySuggestion",
+        "MemoryUsage",
+        "WorkspaceObjectEmbedding"
+      ],
+      "testFiles": 12,
+      "testRunner": "jest"
+    },
+    {
+      "database": "postgresql",
+      "dir": "apps/claw-ollama-service",
+      "endpointCount": 34,
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-ollama-service",
+      "port": 4008,
+      "portSource": "shared-constants",
+      "prismaModels": [
+        "DiscoverySource",
+        "LocalModel",
+        "LocalModelRoleAssignment",
+        "ModelCatalogEntry",
+        "ModelDiscoveryCandidate",
+        "ModelDiscoveryRun",
+        "PullJob",
+        "RuntimeConfig"
+      ],
+      "testFiles": 17,
+      "testRunner": "jest"
+    },
+    {
+      "database": "postgresql",
+      "dir": "apps/claw-research-service",
+      "endpointCount": 16,
+      "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-research-service",
+      "port": 4016,
+      "portSource": "shared-constants",
+      "prismaModels": [
+        "FetchJob",
+        "PageCache",
+        "ResearchRun",
+        "SearchProvider",
+        "SearchRun"
+      ],
+      "testFiles": 14,
+      "testRunner": "jest"
+    },
+    {
+      "database": "postgresql",
+      "dir": "apps/claw-routing-service",
+      "endpointCount": 57,
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-routing-service",
+      "port": 4004,
+      "portSource": "shared-constants",
+      "prismaModels": [
+        "ReplayCase",
+        "ReplayRun",
+        "RouterAdminOverride",
+        "RouterCircuitBreaker",
+        "RouterLearnedScore",
+        "RouterModelProfile",
+        "RouterModelRegistry",
+        "RouterTopicProfile",
+        "RouterWorkflow",
+        "RoutingCalibrationSnapshot",
+        "RoutingDecision",
+        "RoutingFeedbackRecord",
+        "RoutingOutcomeRecord",
+        "RoutingPolicy",
+        "TaxonomyRole"
+      ],
+      "testFiles": 49,
+      "testRunner": "jest"
+    },
+    {
+      "database": "mongodb",
+      "dir": "apps/claw-server-logs-service",
+      "endpointCount": 7,
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [
+        "ServerLog"
+      ],
+      "name": "claw-server-logs-service",
+      "port": null,
+      "portSource": "env-only (no constant)",
+      "prismaModels": [],
+      "testFiles": 7,
+      "testRunner": "jest"
+    },
+    {
+      "database": "postgresql",
+      "dir": "apps/claw-workspace-service",
+      "endpointCount": 103,
+      "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-workspace-service",
+      "port": 4014,
+      "portSource": "shared-constants",
+      "prismaModels": [
+        "AiActionApprovalQueue",
+        "AiActionPolicy",
+        "AutoSuggestRun",
+        "DigestSnapshot",
+        "ImplPromptHandoff",
+        "SuggestionDeduplication",
+        "SuggestionTriggerRule",
+        "SyncCadenceDefault",
+        "UserAutomationPreference",
+        "UserDigestPreference",
+        "UserEmailSignature",
+        "UserEmailTemplate",
+        "WebhookDelivery",
+        "WorkspaceAction",
+        "WorkspaceChain",
+        "WorkspaceChainRun",
+        "WorkspaceChainRunStep",
+        "WorkspaceConnector",
+        "WorkspaceConnectorGrant",
+        "WorkspaceHealthEvent",
+        "WorkspaceObject",
+        "WorkspaceObjectLink",
+        "WorkspaceProviderAppConfig",
+        "WorkspaceProviderDefinition",
+        "WorkspaceSyncRun"
+      ],
+      "testFiles": 66,
+      "testRunner": "jest"
+    }
+  ]
+}

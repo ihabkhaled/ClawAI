@@ -1,0 +1,741 @@
+{
+  "events": [
+    {
+      "key": "AGENT_CAPABILITY_APPROVED",
+      "pattern": "agent.capability.approved",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_CAPABILITY_AUTO_APPROVED",
+      "pattern": "agent.capability.auto_approved",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_CAPABILITY_CANCELLED",
+      "pattern": "agent.capability.cancelled",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_CAPABILITY_DENIED",
+      "pattern": "agent.capability.denied",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_CAPABILITY_EXECUTED",
+      "pattern": "agent.capability.executed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_CAPABILITY_EXECUTING",
+      "pattern": "agent.capability.executing",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_CAPABILITY_EXPIRED",
+      "pattern": "agent.capability.expired",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_CAPABILITY_FAILED",
+      "pattern": "agent.capability.failed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_CAPABILITY_POLICY_MATCHED",
+      "pattern": "agent.capability.policy_matched",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_CAPABILITY_PROPOSED",
+      "pattern": "agent.capability.proposed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_CAPABILITY_REJECTED",
+      "pattern": "agent.capability.rejected",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_CAPABILITY_ROLLED_BACK",
+      "pattern": "agent.capability.rolled_back",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_COMMAND_APPROVED",
+      "pattern": "agent.command_approved",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_COMMAND_CANCELLED",
+      "pattern": "agent.command_cancelled",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_COMMAND_COMPLETED",
+      "pattern": "agent.command_completed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_COMMAND_REJECTED",
+      "pattern": "agent.command_rejected",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_COMMAND_REQUESTED",
+      "pattern": "agent.command_requested",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_COMMAND_STREAMED",
+      "pattern": "agent.command_streamed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_DEVICE_PAIRED",
+      "pattern": "agent.device_paired",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_DEVICE_REVOKED",
+      "pattern": "agent.device_revoked",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_POLICY_VIOLATED",
+      "pattern": "agent.policy_violated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_SESSION_CONNECTED",
+      "pattern": "agent.session_connected",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_SESSION_DISCONNECTED",
+      "pattern": "agent.session_disconnected",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_TOKEN_REUSE_DETECTED",
+      "pattern": "agent.token_reuse_detected",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AGENT_TOKEN_ROTATED",
+      "pattern": "agent.token_rotated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AI_ACTION_APPROVED",
+      "pattern": "ai_action.approved",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AI_ACTION_AUTO_APPROVED",
+      "pattern": "ai_action.auto_approved",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AI_ACTION_DENIED",
+      "pattern": "ai_action.denied",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AI_ACTION_EDITED",
+      "pattern": "ai_action.edited",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AI_ACTION_EXECUTED",
+      "pattern": "ai_action.executed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AI_ACTION_EXPIRED",
+      "pattern": "ai_action.expired",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AI_ACTION_PENDING_APPROVAL",
+      "pattern": "ai_action.pending_approval",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AI_ACTION_POLICY_CREATED",
+      "pattern": "ai_action.policy.created",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AI_ACTION_POLICY_DELETED",
+      "pattern": "ai_action.policy.deleted",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AI_ACTION_POLICY_UPDATED",
+      "pattern": "ai_action.policy.updated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AI_ACTION_REJECTED",
+      "pattern": "ai_action.rejected",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AI_ACTION_SUGGESTION_CREATED",
+      "pattern": "ai_action.suggestion_created",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "AUDIT_EVENT",
+      "pattern": "audit.event",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CATALOG_UPDATED",
+      "pattern": "catalog.updated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CHAT_THREAD_CONTEXT_TOGGLED",
+      "pattern": "chat_thread.context_toggled",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CHAT_THREAD_MEMORY_TOGGLED",
+      "pattern": "chat_thread.memory_toggled",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CONNECTOR_CREATED",
+      "pattern": "connector.created",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CONNECTOR_DELETED",
+      "pattern": "connector.deleted",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CONNECTOR_HEALTH_CHECKED",
+      "pattern": "connector.health_checked",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CONNECTOR_SYNCED",
+      "pattern": "connector.synced",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CONNECTOR_UPDATED",
+      "pattern": "connector.updated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CONTEXT_RECEIPT_WRITTEN",
+      "pattern": "context.receipt_written",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CONTEXT_PACK_ATTACHED",
+      "pattern": "context_pack.attached",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CONTEXT_PACK_CREATED",
+      "pattern": "context_pack.created",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CONTEXT_PACK_DELETED",
+      "pattern": "context_pack.deleted",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CONTEXT_PACK_DETACHED",
+      "pattern": "context_pack.detached",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CONTEXT_PACK_SHARED",
+      "pattern": "context_pack.shared",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CONTEXT_PACK_UPDATED",
+      "pattern": "context_pack.updated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CONTEXT_PACK_USED",
+      "pattern": "context_pack.used",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CONTEXT_PACK_VERSION_CREATED",
+      "pattern": "context_pack.version_created",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CONTEXT_PACK_VERSION_REVERTED",
+      "pattern": "context_pack.version_reverted",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_ARCHIVE_EXPANDED",
+      "pattern": "file.archive_expanded",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_CHUNKED",
+      "pattern": "file.chunked",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_DELETED",
+      "pattern": "file.deleted",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_DOWNLOADED",
+      "pattern": "file.downloaded",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_EXTRACTION_FAILED",
+      "pattern": "file.extraction_failed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_FAILED",
+      "pattern": "file.failed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_GENERATED",
+      "pattern": "file.generated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_OCR_COMPLETED",
+      "pattern": "file.ocr_completed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_OCR_FAILED",
+      "pattern": "file.ocr_failed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_OCR_STARTED",
+      "pattern": "file.ocr_started",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_RETENTION_EXPIRED",
+      "pattern": "file.retention_expired",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_UPLOAD_COMPLETED",
+      "pattern": "file.upload_completed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_UPLOAD_STARTED",
+      "pattern": "file.upload_started",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_UPLOADED",
+      "pattern": "file.uploaded",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "FILE_GENERATION_FAILED",
+      "pattern": "file_generation.failed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "HEALTH_CHECK",
+      "pattern": "health.check",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "IMAGE_FAILED",
+      "pattern": "image.failed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "IMAGE_GENERATED",
+      "pattern": "image.generated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "LLAMACPP_BINARY_INSTALLED",
+      "pattern": "llamacpp.binary.installed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "LLAMACPP_BINARY_UPDATED",
+      "pattern": "llamacpp.binary.updated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "LLAMACPP_MODEL_CRASHED",
+      "pattern": "llamacpp.model.crashed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "LLAMACPP_MODEL_LOADED",
+      "pattern": "llamacpp.model.loaded",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "LLAMACPP_MODEL_UNLOADED",
+      "pattern": "llamacpp.model.unloaded",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "LLAMACPP_PREFLIGHT_OVERRIDDEN",
+      "pattern": "llamacpp.preflight.overridden",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "LLAMACPP_PULL_COMPLETED",
+      "pattern": "llamacpp.pull.completed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "LLAMACPP_PULL_FAILED",
+      "pattern": "llamacpp.pull.failed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "LLAMACPP_PULL_PROGRESS",
+      "pattern": "llamacpp.pull.progress",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "LLAMACPP_PULL_STARTED",
+      "pattern": "llamacpp.pull.started",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "LLAMACPP_WEIGHTS_DELETED",
+      "pattern": "llamacpp.weights.deleted",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "LOG_SERVER",
+      "pattern": "log.server",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "MEMORY_APPROVED",
+      "pattern": "memory.approved",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "MEMORY_EXTRACTED",
+      "pattern": "memory.extracted",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "MEMORY_FORGOTTEN",
+      "pattern": "memory.forgotten",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "MEMORY_PAUSED",
+      "pattern": "memory.paused",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "MEMORY_PREFERENCE_UPSERTED",
+      "pattern": "memory.preference.upserted",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "MEMORY_REDACTED",
+      "pattern": "memory.redacted",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "MEMORY_REJECTED",
+      "pattern": "memory.rejected",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "MEMORY_SUGGESTED",
+      "pattern": "memory.suggested",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "MEMORY_USED",
+      "pattern": "memory.used",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "MESSAGE_COMPLETED",
+      "pattern": "message.completed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "MESSAGE_CREATED",
+      "pattern": "message.created",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "MESSAGE_FEEDBACK_SET",
+      "pattern": "message.feedback_set",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "MESSAGE_ROUTED",
+      "pattern": "message.routed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "MODEL_DELETED",
+      "pattern": "model.deleted",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "MODEL_PULLED",
+      "pattern": "model.pulled",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "ROUTING_CIRCUIT_BREAKER_CLOSED",
+      "pattern": "routing.circuit_breaker.closed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "ROUTING_CIRCUIT_BREAKER_HALF_OPEN",
+      "pattern": "routing.circuit_breaker.half_open",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "ROUTING_CIRCUIT_BREAKER_OPENED",
+      "pattern": "routing.circuit_breaker.opened",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "ROUTING_DECISION_MADE",
+      "pattern": "routing.decision_made",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "ROUTING_LEARNED_SCORE_UPDATED",
+      "pattern": "routing.learned_score.updated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "ROUTING_MODELS_SYNCED",
+      "pattern": "routing.models.synced",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "ROUTING_NO_EXECUTION_MODEL",
+      "pattern": "routing.no_execution_model",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "ROUTING_POLICY_CHANGED",
+      "pattern": "routing.policy.changed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "ROUTING_PROFILE_CREATED",
+      "pattern": "routing.profile.created",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "ROUTING_PROFILE_LIFECYCLE_CHANGED",
+      "pattern": "routing.profile.lifecycle_changed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "ROUTING_PROFILE_UPDATED",
+      "pattern": "routing.profile.updated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "USER_CREATED",
+      "pattern": "user.created",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "USER_DEACTIVATED",
+      "pattern": "user.deactivated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "USER_LOGIN",
+      "pattern": "user.login",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "USER_LOGOUT",
+      "pattern": "user.logout",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "USER_ROLE_CHANGED",
+      "pattern": "user.role_changed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_AUTO_SUGGEST_TICK_COMPLETED",
+      "pattern": "workspace.auto_suggest.tick.completed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_AUTO_SUGGEST_TICK_FAILED",
+      "pattern": "workspace.auto_suggest.tick.failed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_AUTO_SUGGEST_TICK_STARTED",
+      "pattern": "workspace.auto_suggest.tick.started",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_SUGGESTION_FACTORY_PROCESSED",
+      "pattern": "workspace.suggestion.factory_processed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_SYNC_DLQ_SENT",
+      "pattern": "workspace.sync.dlq_sent",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_SYNC_MANUAL_TRIGGERED",
+      "pattern": "workspace.sync.manual_triggered",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_SYNC_PAUSED",
+      "pattern": "workspace.sync.paused",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_SYNC_RATE_LIMITED",
+      "pattern": "workspace.sync.rate_limited",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_SYNC_RESUMED",
+      "pattern": "workspace.sync.resumed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_SYNC_RUN_COMPLETED",
+      "pattern": "workspace.sync.run_completed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_SYNC_RUN_FAILED",
+      "pattern": "workspace.sync.run_failed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_SYNC_RUN_STARTED",
+      "pattern": "workspace.sync.run_started",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_SYNC_STALE_DETECTED",
+      "pattern": "workspace.sync.stale_detected",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_WEBHOOK_RECEIVED",
+      "pattern": "workspace.webhook.received",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_WEBHOOK_REJECTED",
+      "pattern": "workspace.webhook.rejected",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_WEBHOOK_REPLAYED",
+      "pattern": "workspace.webhook.replayed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_ACTION_APPROVED",
+      "pattern": "workspace_action.approved",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_ACTION_BULK_APPROVED",
+      "pattern": "workspace_action.bulk_approved",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_ACTION_DRAFTED",
+      "pattern": "workspace_action.drafted",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_ACTION_EDITED",
+      "pattern": "workspace_action.edited",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_ACTION_EXECUTED",
+      "pattern": "workspace_action.executed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_ACTION_FAILED",
+      "pattern": "workspace_action.failed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_ACTION_REJECTED",
+      "pattern": "workspace_action.rejected",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_ACTION_STALE_BLOCKED",
+      "pattern": "workspace_action.stale_blocked",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_CONNECTOR_CREATED",
+      "pattern": "workspace_connector.created",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_CONNECTOR_DELETED",
+      "pattern": "workspace_connector.deleted",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_CONNECTOR_HEALTH_CHECKED",
+      "pattern": "workspace_connector.health_checked",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_CONNECTOR_SYNCED",
+      "pattern": "workspace_connector.synced",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_CONNECTOR_UPDATED",
+      "pattern": "workspace_connector.updated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "WORKSPACE_OBJECT_SYNCED",
+      "pattern": "workspace_object.synced",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    }
+  ],
+  "exchange": "claw.events",
+  "generated": true
+}

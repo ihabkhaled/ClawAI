@@ -202,11 +202,11 @@ npm run build              # success
 When all four are green for every touched folder:
 
 ```bash
-git commit --no-verify -m "<conventional-commit-message>"
-git push --no-verify origin <branch>
+git commit -m "<conventional-commit-message>"
+git push origin <branch>
 ```
 
-`--no-verify` skips ONLY the redundant all-workspace pre-commit hook (the expensive, false-failing path) — NEVER a real failure in the folder you changed. Multi-folder change → run the gates for EACH touched folder, never the untouched ones. Non-workspace files (`scripts/**`, `*.mjs`) → cheapest equivalent check (`node --check`). **Never skip a gate. Never `--no-verify` past a real failure. Never expand to the all-workspace gate after touched-folder gates pass.** Docs-only commits (`docs/**`, `CLAUDE.md`, `CODEX.md`, `cursor.md`, `rules/**`, locale files paired with `i18n.types.ts`) skip the gates but stay conventional-format.
+The git hooks run the **affected** lane (`node tools/affected/index.mjs …`), so they validate only the workspaces your diff touches — fast, and never false-failing on unchanged siblings. Never use `--no-verify`; a hook failure is a real problem in something you changed. Multi-folder change → run the gates for EACH touched folder, never the untouched ones. Non-workspace files (`scripts/**`, `*.mjs`) → cheapest equivalent check (`node --check`). **Never skip a gate. Never bypass a hook past a real failure. Never expand to the all-workspace gate after touched-folder gates pass.** Docs-only commits (`docs/**`, `CLAUDE.md`, `CODEX.md`, `cursor.md`, `rules/**`, locale files paired with `i18n.types.ts`) skip the gates but stay conventional-format.
 
 ## If Cursor suggests something contrary to CLAUDE.md
 

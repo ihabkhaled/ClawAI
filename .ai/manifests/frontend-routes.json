@@ -1,0 +1,450 @@
+{
+  "generated": true,
+  "routes": [
+    {
+      "file": "apps/claw-frontend/src/app/(auth)/login/page.tsx",
+      "kind": "page",
+      "route": "/login"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(auth)/register/page.tsx",
+      "kind": "page",
+      "route": "/register"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/page.tsx",
+      "kind": "page",
+      "route": "/"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/ai-action-policies/page.tsx",
+      "kind": "page",
+      "route": "/admin/ai-action-policies"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/page.tsx",
+      "kind": "page",
+      "route": "/admin"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/plans/[id]/edit/page.tsx",
+      "kind": "page",
+      "route": "/admin/plans/[id]/edit"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/plans/[id]/model-access/page.tsx",
+      "kind": "page",
+      "route": "/admin/plans/[id]/model-access"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/plans/new/page.tsx",
+      "kind": "page",
+      "route": "/admin/plans/new"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/plans/page.tsx",
+      "kind": "page",
+      "route": "/admin/plans"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/roles/[id]/page.tsx",
+      "kind": "page",
+      "route": "/admin/roles/[id]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/roles/page.tsx",
+      "kind": "page",
+      "route": "/admin/roles"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/runtime-progress/page.tsx",
+      "kind": "page",
+      "route": "/admin/runtime-progress"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/suggestion-rules/page.tsx",
+      "kind": "page",
+      "route": "/admin/suggestion-rules"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/webhook-deliveries/page.tsx",
+      "kind": "page",
+      "route": "/admin/webhook-deliveries"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/agent/activity-memory/page.tsx",
+      "kind": "page",
+      "route": "/agent/activity-memory"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/agent/activity/page.tsx",
+      "kind": "page",
+      "route": "/agent/activity"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/agent/capabilities/page.tsx",
+      "kind": "page",
+      "route": "/agent/capabilities"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/agent/connect/page.tsx",
+      "kind": "page",
+      "route": "/agent/connect"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/agent/marketplace/page.tsx",
+      "kind": "page",
+      "route": "/agent/marketplace"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/agent/page.tsx",
+      "kind": "page",
+      "route": "/agent"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/agent/recipe-runs/[runId]/page.tsx",
+      "kind": "page",
+      "route": "/agent/recipe-runs/[runId]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/agent/recipes/page.tsx",
+      "kind": "page",
+      "route": "/agent/recipes"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/agent/repos/page.tsx",
+      "kind": "page",
+      "route": "/agent/repos"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/agent/terminal/page.tsx",
+      "kind": "page",
+      "route": "/agent/terminal"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/audits/page.tsx",
+      "kind": "page",
+      "route": "/audits"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/chat/[threadId]/page.tsx",
+      "kind": "page",
+      "route": "/chat/[threadId]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/chat/best-of-n/page.tsx",
+      "kind": "page",
+      "route": "/chat/best-of-n"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/chat/compare/page.tsx",
+      "kind": "page",
+      "route": "/chat/compare"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/chat/consensus/page.tsx",
+      "kind": "page",
+      "route": "/chat/consensus"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/chat/cost-ensemble/page.tsx",
+      "kind": "page",
+      "route": "/chat/cost-ensemble"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/chat/decompose/page.tsx",
+      "kind": "page",
+      "route": "/chat/decompose"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/chat/escalation/page.tsx",
+      "kind": "page",
+      "route": "/chat/escalation"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/chat/page.tsx",
+      "kind": "page",
+      "route": "/chat"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/chat/pipeline/page.tsx",
+      "kind": "page",
+      "route": "/chat/pipeline"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/chat/repair/page.tsx",
+      "kind": "page",
+      "route": "/chat/repair"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/chat/role-pack/page.tsx",
+      "kind": "page",
+      "route": "/chat/role-pack"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/chat/verify/page.tsx",
+      "kind": "page",
+      "route": "/chat/verify"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/connectors/[connectorId]/page.tsx",
+      "kind": "page",
+      "route": "/connectors/[connectorId]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/connectors/page.tsx",
+      "kind": "page",
+      "route": "/connectors"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/context/page.tsx",
+      "kind": "page",
+      "route": "/context"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/dashboard/page.tsx",
+      "kind": "page",
+      "route": "/dashboard"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/files/page.tsx",
+      "kind": "page",
+      "route": "/files"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/logs/page.tsx",
+      "kind": "page",
+      "route": "/logs"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/memory/page.tsx",
+      "kind": "page",
+      "route": "/memory"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/models/catalog/page.tsx",
+      "kind": "page",
+      "route": "/models/catalog"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/models/discovery/page.tsx",
+      "kind": "page",
+      "route": "/models/discovery"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/models/local-frontier/page.tsx",
+      "kind": "page",
+      "route": "/models/local-frontier"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/models/local/page.tsx",
+      "kind": "page",
+      "route": "/models/local"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/models/page.tsx",
+      "kind": "page",
+      "route": "/models"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/observability/page.tsx",
+      "kind": "page",
+      "route": "/observability"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/plan/page.tsx",
+      "kind": "page",
+      "route": "/plan"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/research/providers/page.tsx",
+      "kind": "page",
+      "route": "/research/providers"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/research/runs/page.tsx",
+      "kind": "page",
+      "route": "/research/runs"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/routing/adaptive-insights/page.tsx",
+      "kind": "page",
+      "route": "/routing/adaptive-insights"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/routing/decisions/[id]/page.tsx",
+      "kind": "page",
+      "route": "/routing/decisions/[id]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/routing/models/page.tsx",
+      "kind": "page",
+      "route": "/routing/models"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/routing/page.tsx",
+      "kind": "page",
+      "route": "/routing"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/routing/playground/page.tsx",
+      "kind": "page",
+      "route": "/routing/playground"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/routing/recovery/page.tsx",
+      "kind": "page",
+      "route": "/routing/recovery"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/routing/replay/page.tsx",
+      "kind": "page",
+      "route": "/routing/replay"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/settings/devices/[deviceId]/page.tsx",
+      "kind": "page",
+      "route": "/settings/devices/[deviceId]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/settings/devices/page.tsx",
+      "kind": "page",
+      "route": "/settings/devices"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/settings/page.tsx",
+      "kind": "page",
+      "route": "/settings"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/usage/page.tsx",
+      "kind": "page",
+      "route": "/usage"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/actions/page.tsx",
+      "kind": "page",
+      "route": "/workspace/actions"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/app-configs/page.tsx",
+      "kind": "page",
+      "route": "/workspace/app-configs"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/approvals/page.tsx",
+      "kind": "page",
+      "route": "/workspace/approvals"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/automation-preferences/page.tsx",
+      "kind": "page",
+      "route": "/workspace/automation-preferences"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/confluence/page.tsx",
+      "kind": "page",
+      "route": "/workspace/confluence"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/connectors/[connectorId]/page.tsx",
+      "kind": "page",
+      "route": "/workspace/connectors/[connectorId]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/digest/page.tsx",
+      "kind": "page",
+      "route": "/workspace/digest"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/docs/page.tsx",
+      "kind": "page",
+      "route": "/workspace/docs"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/email-signatures/page.tsx",
+      "kind": "page",
+      "route": "/workspace/email-signatures"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/email-templates/page.tsx",
+      "kind": "page",
+      "route": "/workspace/email-templates"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/figma/page.tsx",
+      "kind": "page",
+      "route": "/workspace/figma"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/gmail/page.tsx",
+      "kind": "page",
+      "route": "/workspace/gmail"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/impl-handoffs/page.tsx",
+      "kind": "page",
+      "route": "/workspace/impl-handoffs"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/inbox/page.tsx",
+      "kind": "page",
+      "route": "/workspace/inbox"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/jira/page.tsx",
+      "kind": "page",
+      "route": "/workspace/jira"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/oauth/callback/page.tsx",
+      "kind": "page",
+      "route": "/workspace/oauth/callback"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/objects/[objectId]/page.tsx",
+      "kind": "page",
+      "route": "/workspace/objects/[objectId]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/page.tsx",
+      "kind": "page",
+      "route": "/workspace"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/providers/page.tsx",
+      "kind": "page",
+      "route": "/workspace/providers"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/search/page.tsx",
+      "kind": "page",
+      "route": "/workspace/search"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/semantic-search/page.tsx",
+      "kind": "page",
+      "route": "/workspace/semantic-search"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/slack/page.tsx",
+      "kind": "page",
+      "route": "/workspace/slack"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/source-control/page.tsx",
+      "kind": "page",
+      "route": "/workspace/source-control"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/sync-health/page.tsx",
+      "kind": "page",
+      "route": "/workspace/sync-health"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/workflows/page.tsx",
+      "kind": "page",
+      "route": "/workspace/workflows"
+    }
+  ]
+}

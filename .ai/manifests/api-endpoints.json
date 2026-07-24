@@ -1,0 +1,2505 @@
+{
+  "byService": {
+    "claw-agent-service": [
+      {
+        "method": "GET",
+        "route": "/agent/activity-memory",
+        "source": "apps/claw-agent-service/src/modules/activity-memory/controllers/activity-memory.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/activity-memory",
+        "source": "apps/claw-agent-service/src/modules/activity-memory/controllers/activity-memory.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/auth/device-code/approve",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-auth.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/auth/device-code/create",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-auth.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/auth/device-code/deny",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-auth.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/auth/device-code/token",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-auth.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/auth/pair/approve",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-auth.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/auth/pair/deny",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-auth.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/auth/pair/init",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-auth.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/auth/pair/poll",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-auth.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/auth/refresh",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-auth.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/capabilities",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/capability.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/capabilities",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/capability.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/capabilities/:id",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/capability.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/capabilities/:id/approve",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/capability.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/capabilities/:id/approve",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/capability.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/capabilities/:id/cancel",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/capability.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/capabilities/:id/reject",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/capability.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/capabilities/:id/rollback",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/capability.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/capabilities/bulk-approve",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/capability.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/capabilities/dual-write-status",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/capability.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/cli-capabilities/:id/complete",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/capability-cli.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/cli-capabilities/pending",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/capability-cli.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/commands",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-command.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/commands",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-command.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/commands/:id",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-command.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/commands/:id/approve",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-command.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/commands/:id/cancel",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-command-stream.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/commands/:id/chunks",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-command-stream.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/commands/:id/complete",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-command.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/commands/:id/reject",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-command.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/commands/:id/stream",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-command-stream.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/commands/pending",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-command.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/devices",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-device.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/devices/:id",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-device.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/agent/devices/:id",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-device.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/devices/:id/revoke",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-device.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/events",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-event.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/events",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-event.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/marketplace/listings",
+        "source": "apps/claw-agent-service/src/modules/marketplace/controllers/marketplace.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/marketplace/listings",
+        "source": "apps/claw-agent-service/src/modules/marketplace/controllers/marketplace.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/marketplace/listings/:id",
+        "source": "apps/claw-agent-service/src/modules/marketplace/controllers/marketplace.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/marketplace/listings/:id",
+        "source": "apps/claw-agent-service/src/modules/marketplace/controllers/marketplace.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/marketplace/listings/:id/analyse",
+        "source": "apps/claw-agent-service/src/modules/marketplace/controllers/marketplace.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/marketplace/listings/:id/install",
+        "source": "apps/claw-agent-service/src/modules/marketplace/controllers/marketplace.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/marketplace/listings/:id/republish",
+        "source": "apps/claw-agent-service/src/modules/marketplace/controllers/marketplace.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/marketplace/listings/:id/unpublish",
+        "source": "apps/claw-agent-service/src/modules/marketplace/controllers/marketplace.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/marketplace/listings/mine",
+        "source": "apps/claw-agent-service/src/modules/marketplace/controllers/marketplace.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/organizations",
+        "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/organizations",
+        "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/organizations/:id/devices",
+        "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/organizations/:id/members",
+        "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/organizations/:id/members",
+        "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/organizations/:slug/sso/callback",
+        "source": "apps/claw-agent-service/src/modules/fleet/controllers/saml.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/organizations/:slug/sso/metadata",
+        "source": "apps/claw-agent-service/src/modules/fleet/controllers/saml.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/recipes",
+        "source": "apps/claw-agent-service/src/modules/recipes/controllers/recipe.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/recipes",
+        "source": "apps/claw-agent-service/src/modules/recipes/controllers/recipe.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/agent/recipes/:id",
+        "source": "apps/claw-agent-service/src/modules/recipes/controllers/recipe.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/recipes/:id",
+        "source": "apps/claw-agent-service/src/modules/recipes/controllers/recipe-run.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/recipes/:id",
+        "source": "apps/claw-agent-service/src/modules/recipes/controllers/recipe.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/agent/recipes/:id",
+        "source": "apps/claw-agent-service/src/modules/recipes/controllers/recipe.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/recipes/:id/cancel",
+        "source": "apps/claw-agent-service/src/modules/recipes/controllers/recipe-run.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/recipes/:id/runs",
+        "source": "apps/claw-agent-service/src/modules/recipes/controllers/recipe-run.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/recipes/:id/runs",
+        "source": "apps/claw-agent-service/src/modules/recipes/controllers/recipe-run.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/repos",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-repo.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/repos",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-repo.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/agent/repos/:id",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-repo.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/repos/:id",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-repo.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/agent/repos/:id",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-repo.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/scheduled-commands",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-scheduled-command.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/scheduled-commands",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-scheduled-command.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/agent/scheduled-commands/:id",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-scheduled-command.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/agent/scheduled-commands/:id/status",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-scheduled-command.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/sessions",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-session.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/sessions",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-session.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/agent/sessions/:id",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-session.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/sessions/:id",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-session.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/sessions/:id/heartbeat",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-session.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/sessions/attach",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-session.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/suggestions",
+        "source": "apps/claw-agent-service/src/modules/activity-memory/controllers/agent-suggestion.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/suggestions/:id/review",
+        "source": "apps/claw-agent-service/src/modules/activity-memory/controllers/agent-suggestion.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-agent-service/src/modules/health/health.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/agent/terminal/seed-command",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-terminal-internal.controller.ts"
+      }
+    ],
+    "claw-audit-service": [
+      {
+        "method": "GET",
+        "route": "/audits",
+        "source": "apps/claw-audit-service/src/modules/audits/controllers/audits.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/audits/stats",
+        "source": "apps/claw-audit-service/src/modules/audits/controllers/audits.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-audit-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/usage",
+        "source": "apps/claw-audit-service/src/modules/audits/controllers/audits.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/usage/cost",
+        "source": "apps/claw-audit-service/src/modules/audits/controllers/audits.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/usage/latency",
+        "source": "apps/claw-audit-service/src/modules/audits/controllers/audits.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/usage/summary",
+        "source": "apps/claw-audit-service/src/modules/audits/controllers/audits.controller.ts"
+      }
+    ],
+    "claw-auth-service": [
+      {
+        "method": "GET",
+        "route": "/admin/plans",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/plans",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/plans/:id",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/admin/plans/:id",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/plans/:id/activate",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/plans/:id/deactivate",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/admin/plans/:id/model-access",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/plans/:id/set-default",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/plans/:id/users",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/plans/reorder",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/plans/users/:userId/assign",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/roles",
+        "source": "apps/claw-auth-service/src/modules/roles/controllers/roles.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/roles",
+        "source": "apps/claw-auth-service/src/modules/roles/controllers/roles.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/admin/roles/:id",
+        "source": "apps/claw-auth-service/src/modules/roles/controllers/roles.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/roles/:id",
+        "source": "apps/claw-auth-service/src/modules/roles/controllers/roles.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/admin/roles/:id",
+        "source": "apps/claw-auth-service/src/modules/roles/controllers/roles.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/admin/roles/:id/permissions",
+        "source": "apps/claw-auth-service/src/modules/roles/controllers/roles.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/roles/permissions",
+        "source": "apps/claw-auth-service/src/modules/roles/controllers/roles.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/auth/login",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/auth/logout",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/auth/me",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/auth/me/entitlements",
+        "source": "apps/claw-auth-service/src/modules/entitlements/controllers/me-entitlements.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/auth/refresh",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/auth/register",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-auth-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/quota/finalize",
+        "source": "apps/claw-auth-service/src/modules/quota/controllers/quota-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/quota/release",
+        "source": "apps/claw-auth-service/src/modules/quota/controllers/quota-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/quota/reserve",
+        "source": "apps/claw-auth-service/src/modules/quota/controllers/quota-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/users/:id/entitlements",
+        "source": "apps/claw-auth-service/src/modules/entitlements/controllers/entitlements-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/users",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/users",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/users/:id",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/users/:id",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/users/:id",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/users/:id/reactivate",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/users/:id/role",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/users/me/password",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/users/me/preferences",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      }
+    ],
+    "claw-chat-service": [
+      {
+        "method": "POST",
+        "route": "/chat-messages",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/chat-messages/:id",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/chat-messages/:id/context-receipt",
+        "source": "apps/claw-chat-service/src/modules/context-receipts/controllers/context-receipt.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/chat-messages/:id/feedback",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/chat-messages/:id/file-delivery",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/:id/regenerate",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/best-of-n",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/consensus",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/cost-ensemble",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/decompose",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/escalation-chain",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/parallel",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/pipeline",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/repair",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/role-pack",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/stream/:threadId/cancel",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-stream.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/chat-messages/thread/:threadId",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/verify",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/chat-threads",
+        "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-threads",
+        "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/chat-threads/:id",
+        "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/chat-threads/:id",
+        "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/chat-threads/:id",
+        "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-threads/:id/preview-context",
+        "source": "apps/claw-chat-service/src/modules/context-preview/controllers/context-preview.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-chat-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/chat/generate",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/chat/threads/seeded",
+        "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads-internal.controller.ts"
+      }
+    ],
+    "claw-client-logs-service": [
+      {
+        "method": "GET",
+        "route": "/client-logs",
+        "source": "apps/claw-client-logs-service/src/modules/client-logs/controllers/client-logs.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/client-logs",
+        "source": "apps/claw-client-logs-service/src/modules/client-logs/controllers/client-logs.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/client-logs/distinct",
+        "source": "apps/claw-client-logs-service/src/modules/client-logs/controllers/client-logs.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/client-logs/stats",
+        "source": "apps/claw-client-logs-service/src/modules/client-logs/controllers/client-logs.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-client-logs-service/src/modules/health/controllers/health.controller.ts"
+      }
+    ],
+    "claw-connector-service": [
+      {
+        "method": "GET",
+        "route": "/connectors",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/connectors",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/connectors/:id",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/connectors/:id",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/connectors/:id",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/connectors/:id",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/connectors/:id/models",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/connectors/:id/sync",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/connectors/:id/test",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/connectors/available-models",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-connector-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/connectors/config",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/connectors/models-snapshot",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
+      }
+    ],
+    "claw-file-generation-service": [
+      {
+        "method": "GET",
+        "route": "/file-generations",
+        "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/file-generation.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/file-generations/:id",
+        "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/file-generation.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/file-generations/:id/retry",
+        "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/file-generation.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-file-generation-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/file-generations/:generationId",
+        "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/internal-file-generation.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/file-generations/:generationId/retry",
+        "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/internal-file-generation.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/file-generations/generate",
+        "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/internal-file-generation.controller.ts"
+      }
+    ],
+    "claw-file-service": [
+      {
+        "method": "GET",
+        "route": "/files",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/files/:id",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/files/:id",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/files/:id/chunks",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/files/download/:id",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/files/upload",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-file-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/files/:id/chunks",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/files/:id/content",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/files/download-internal/:id",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/files/download/:id",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/files/metadata-internal/:id",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/files/store-image",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/files/upload-internal",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+      }
+    ],
+    "claw-health-service": [
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-health-service/src/modules/health/controllers/health.controller.ts"
+      }
+    ],
+    "claw-image-service": [
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-image-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/images",
+        "source": "apps/claw-image-service/src/modules/image-generation/controllers/image-generation.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/images/:id",
+        "source": "apps/claw-image-service/src/modules/image-generation/controllers/image-generation.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/images/:id/retry",
+        "source": "apps/claw-image-service/src/modules/image-generation/controllers/image-generation.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/images/:id/retry-alternate",
+        "source": "apps/claw-image-service/src/modules/image-generation/controllers/image-generation.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/images/:generationId",
+        "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/images/:generationId/retry",
+        "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/images/:generationId/retry-alternate",
+        "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/images/generate",
+        "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
+      }
+    ],
+    "claw-llamacpp-service": [
+      {
+        "method": "GET",
+        "route": "/catalog",
+        "source": "apps/claw-llamacpp-service/src/modules/catalog/controllers/catalog.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/catalog/:id",
+        "source": "apps/claw-llamacpp-service/src/modules/catalog/controllers/catalog.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/catalog/:id/pull",
+        "source": "apps/claw-llamacpp-service/src/modules/pull-jobs/controllers/pull-jobs.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/catalog/hf-auto-sync",
+        "source": "apps/claw-llamacpp-service/src/modules/catalog/controllers/catalog.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/catalog/hf-import",
+        "source": "apps/claw-llamacpp-service/src/modules/catalog/controllers/catalog.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/catalog/hf-models/:author/:name",
+        "source": "apps/claw-llamacpp-service/src/modules/catalog/controllers/catalog.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/catalog/hf-search",
+        "source": "apps/claw-llamacpp-service/src/modules/catalog/controllers/catalog.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/catalog/refresh",
+        "source": "apps/claw-llamacpp-service/src/modules/catalog/controllers/catalog.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/hardware",
+        "source": "apps/claw-llamacpp-service/src/modules/hardware/controllers/hardware.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/hardware/refresh",
+        "source": "apps/claw-llamacpp-service/src/modules/hardware/controllers/hardware.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-llamacpp-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/llamacpp/loaded-snapshot",
+        "source": "apps/claw-llamacpp-service/src/modules/catalog/controllers/catalog-internal.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/models/:id/config",
+        "source": "apps/claw-llamacpp-service/src/modules/models-lifecycle/controllers/models-lifecycle.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/models/:id/load",
+        "source": "apps/claw-llamacpp-service/src/modules/models-lifecycle/controllers/models-lifecycle.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/models/:id/unload",
+        "source": "apps/claw-llamacpp-service/src/modules/models-lifecycle/controllers/models-lifecycle.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/models/:id/weights",
+        "source": "apps/claw-llamacpp-service/src/modules/models-lifecycle/controllers/models-lifecycle.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/models/loaded",
+        "source": "apps/claw-llamacpp-service/src/modules/models-lifecycle/controllers/models-lifecycle.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/pull-jobs",
+        "source": "apps/claw-llamacpp-service/src/modules/pull-jobs/controllers/pull-jobs.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/pull-jobs/:id",
+        "source": "apps/claw-llamacpp-service/src/modules/pull-jobs/controllers/pull-jobs.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/pull-jobs/:id",
+        "source": "apps/claw-llamacpp-service/src/modules/pull-jobs/controllers/pull-jobs.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/pull-jobs/:id/retry",
+        "source": "apps/claw-llamacpp-service/src/modules/pull-jobs/controllers/pull-jobs.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/runtime-progress/probe",
+        "source": "apps/claw-llamacpp-service/src/modules/runtime-progress/controllers/runtime-progress.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/runtime/info",
+        "source": "apps/claw-llamacpp-service/src/modules/binary/controllers/binary.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/runtime/update",
+        "source": "apps/claw-llamacpp-service/src/modules/binary/controllers/binary.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/v1/chat/completions",
+        "source": "apps/claw-llamacpp-service/src/modules/inference/controllers/inference.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/v1/completions",
+        "source": "apps/claw-llamacpp-service/src/modules/inference/controllers/inference.controller.ts"
+      }
+    ],
+    "claw-memory-service": [
+      {
+        "method": "GET",
+        "route": "/context-pack-templates",
+        "source": "apps/claw-memory-service/src/modules/context-pack-templates/controllers/context-pack-templates.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/context-pack-templates/:id/clone",
+        "source": "apps/claw-memory-service/src/modules/context-pack-templates/controllers/context-pack-templates.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/context-packs",
+        "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/context-packs",
+        "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/context-packs/:id",
+        "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/context-packs/:id",
+        "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/context-packs/:id",
+        "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/context-packs/:id/export",
+        "source": "apps/claw-memory-service/src/modules/context-pack-portable/controllers/context-pack-portable.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/context-packs/:id/items",
+        "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/context-packs/:id/items/:itemId",
+        "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/context-packs/:id/versions",
+        "source": "apps/claw-memory-service/src/modules/context-pack-versions/controllers/context-pack-versions.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/context-packs/:id/versions/:from/diff/:to",
+        "source": "apps/claw-memory-service/src/modules/context-pack-versions/controllers/context-pack-versions.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/context-packs/:id/versions/:version",
+        "source": "apps/claw-memory-service/src/modules/context-pack-versions/controllers/context-pack-versions.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/context-packs/:id/versions/:version/revert",
+        "source": "apps/claw-memory-service/src/modules/context-pack-versions/controllers/context-pack-versions.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/context-packs/:id/versions/snapshot",
+        "source": "apps/claw-memory-service/src/modules/context-pack-versions/controllers/context-pack-versions.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/context-packs/import",
+        "source": "apps/claw-memory-service/src/modules/context-pack-portable/controllers/context-pack-portable.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-memory-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/context-packs/:id/items",
+        "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/embeddings/delete-by-object-id",
+        "source": "apps/claw-memory-service/src/modules/embeddings/controllers/embeddings.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/embeddings/search-workspace-objects",
+        "source": "apps/claw-memory-service/src/modules/embeddings/controllers/embeddings.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/embeddings/upsert-workspace-object",
+        "source": "apps/claw-memory-service/src/modules/embeddings/controllers/embeddings.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/memories/automation-preference",
+        "source": "apps/claw-memory-service/src/modules/memory/controllers/memory-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/memories/for-context",
+        "source": "apps/claw-memory-service/src/modules/memory/controllers/memory-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/memories/learned-preferences",
+        "source": "apps/claw-memory-service/src/modules/memory/controllers/memory-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/memories/record-usage",
+        "source": "apps/claw-memory-service/src/modules/memory/controllers/memory-retrieval.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/memories/retrieve",
+        "source": "apps/claw-memory-service/src/modules/memory/controllers/memory-retrieval.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/memories",
+        "source": "apps/claw-memory-service/src/modules/memory/controllers/memory.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/memories",
+        "source": "apps/claw-memory-service/src/modules/memory/controllers/memory.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/memories-portable/export",
+        "source": "apps/claw-memory-service/src/modules/memory-portable/controllers/memory-portable.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/memories-portable/import",
+        "source": "apps/claw-memory-service/src/modules/memory-portable/controllers/memory-portable.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/memories/:id",
+        "source": "apps/claw-memory-service/src/modules/memory/controllers/memory.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/memories/:id",
+        "source": "apps/claw-memory-service/src/modules/memory/controllers/memory.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/memories/:id",
+        "source": "apps/claw-memory-service/src/modules/memory/controllers/memory.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/memories/:id/toggle",
+        "source": "apps/claw-memory-service/src/modules/memory/controllers/memory.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/memories/search",
+        "source": "apps/claw-memory-service/src/modules/memory/controllers/memory.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/memory-audit",
+        "source": "apps/claw-memory-service/src/modules/memory-audit/controllers/memory-audit.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/memory-audit/:memoryId",
+        "source": "apps/claw-memory-service/src/modules/memory-audit/controllers/memory-audit.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/memory-preferences",
+        "source": "apps/claw-memory-service/src/modules/memory-preferences/controllers/memory-preferences.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/memory-preferences",
+        "source": "apps/claw-memory-service/src/modules/memory-preferences/controllers/memory-preferences.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/memory-suggestions",
+        "source": "apps/claw-memory-service/src/modules/memory-suggestions/controllers/memory-suggestions.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/memory-suggestions/:id",
+        "source": "apps/claw-memory-service/src/modules/memory-suggestions/controllers/memory-suggestions.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/memory-suggestions/:id/approve",
+        "source": "apps/claw-memory-service/src/modules/memory-suggestions/controllers/memory-suggestions.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/memory-suggestions/:id/reject",
+        "source": "apps/claw-memory-service/src/modules/memory-suggestions/controllers/memory-suggestions.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/memory-suggestions/bulk-approve",
+        "source": "apps/claw-memory-service/src/modules/memory-suggestions/controllers/memory-suggestions.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/memory-usage/by-memory/:memoryId",
+        "source": "apps/claw-memory-service/src/modules/memory-usage/controllers/memory-usage.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/memory-usage/by-message/:messageId",
+        "source": "apps/claw-memory-service/src/modules/memory-usage/controllers/memory-usage.controller.ts"
+      }
+    ],
+    "claw-ollama-service": [
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-ollama-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/ollama/installed-models",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/ollama/installed-snapshot",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/ollama/router-model",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/ollama/assign-role",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/ollama/catalog",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/ollama/catalog/:id",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/ollama/catalog/:id/pull",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/ollama/catalog/admin",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/ollama/catalog/admin/:id",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/ollama/catalog/admin/:id",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/ollama/catalog/reclassify",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/ollama/discovery/candidates",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/ollama/discovery/candidates/:id/approve",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/ollama/discovery/candidates/:id/reject",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/ollama/discovery/candidates/bulk-approve",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/ollama/discovery/refresh",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/ollama/discovery/runs",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/ollama/discovery/runs/:id",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/ollama/discovery/sources",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/ollama/discovery/sources",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/ollama/discovery/sources/:id",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/ollama/discovery/sources/:id",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/ollama/generate",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/ollama/health",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/ollama/models",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/ollama/models/:id",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/ollama/packs",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/ollama/packs/:profile/install",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/ollama/pull",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/ollama/pull-jobs",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/ollama/pull-jobs/:id",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/ollama/runtime-progress/probe",
+        "source": "apps/claw-ollama-service/src/modules/runtime-progress/controllers/runtime-progress.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/ollama/runtimes",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama.controller.ts"
+      }
+    ],
+    "claw-research-service": [
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-research-service/src/modules/health/health.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/research/fetch",
+        "source": "apps/claw-research-service/src/modules/fetch/controllers/fetch.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/research/fetch/jobs",
+        "source": "apps/claw-research-service/src/modules/fetch/controllers/fetch.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/research/fetch/jobs/:id",
+        "source": "apps/claw-research-service/src/modules/fetch/controllers/fetch.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/research/runs",
+        "source": "apps/claw-research-service/src/modules/research/controllers/research.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/research/runs",
+        "source": "apps/claw-research-service/src/modules/research/controllers/research.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/research/runs/:id",
+        "source": "apps/claw-research-service/src/modules/research/controllers/research.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/research/search",
+        "source": "apps/claw-research-service/src/modules/search/controllers/search.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/research/search-providers",
+        "source": "apps/claw-research-service/src/modules/search/controllers/search-provider.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/research/search-providers",
+        "source": "apps/claw-research-service/src/modules/search/controllers/search-provider.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/research/search-providers/:id",
+        "source": "apps/claw-research-service/src/modules/search/controllers/search-provider.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/research/search-providers/:id",
+        "source": "apps/claw-research-service/src/modules/search/controllers/search-provider.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/research/search-providers/:id",
+        "source": "apps/claw-research-service/src/modules/search/controllers/search-provider.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/research/search-providers/:id/test",
+        "source": "apps/claw-research-service/src/modules/search/controllers/search-provider.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/research/search/runs",
+        "source": "apps/claw-research-service/src/modules/search/controllers/search.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/research/search/runs/:id",
+        "source": "apps/claw-research-service/src/modules/search/controllers/search.controller.ts"
+      }
+    ],
+    "claw-routing-service": [
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-routing-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/router-models/intelligence/:provider/:model",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-intelligence.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/router-models/intelligence/:provider/:model",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-intelligence.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/router-models/intelligence/:provider/:model/reset",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-intelligence.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/adaptive-insights",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/circuit-breakers",
+        "source": "apps/claw-routing-service/src/modules/reliability/controllers/reliability.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/circuit-breakers/:scope",
+        "source": "apps/claw-routing-service/src/modules/reliability/controllers/reliability.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/circuit-breakers/:scope/reset",
+        "source": "apps/claw-routing-service/src/modules/reliability/controllers/reliability.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/classify",
+        "source": "apps/claw-routing-service/src/modules/classifier/controllers/classifier.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/cost-budget",
+        "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/cost-budget",
+        "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/routing/cost-budget/:id",
+        "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/cost-budget/check",
+        "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/cost-budget/me",
+        "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/routing/cost-budget/me",
+        "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/cost-budget/me/forecast",
+        "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/decisions/:threadId",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/decisions/detail/:id",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/detect-language",
+        "source": "apps/claw-routing-service/src/modules/language-detection/controllers/language-detection.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/detect-modality",
+        "source": "apps/claw-routing-service/src/modules/modality-detection/controllers/modality-detection.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/education/model-profiles",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/education/snapshot",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/education/topic-profiles",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/evaluate",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/evaluate-shadow",
+        "source": "apps/claw-routing-service/src/modules/route-evaluator/controllers/evaluate-shadow.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/evaluate-v2",
+        "source": "apps/claw-routing-service/src/modules/route-evaluator/controllers/route-evaluator.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/learning-loop/feedback",
+        "source": "apps/claw-routing-service/src/modules/learning-loop/controllers/learning-loop.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/learning-loop/profile/:profileKey",
+        "source": "apps/claw-routing-service/src/modules/learning-loop/controllers/learning-loop.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/models",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/router-models.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/models",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/router-models.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/routing/models/:id",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/router-models.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/models/:id",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/router-models.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/routing/models/:id",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/router-models.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/models/:id/overrides",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/router-models.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/routing/models/:id/overrides/:fieldName",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/router-models.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/models/sync",
+        "source": "apps/claw-routing-service/src/modules/sync/controllers/router-sync.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/observability/summary",
+        "source": "apps/claw-routing-service/src/modules/observability/controllers/observability.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/playground/analyze-semantic",
+        "source": "apps/claw-routing-service/src/modules/playground/controllers/playground.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/policies",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/policies",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/routing/policies/:id",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/policies/:id",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/routing/policies/:id",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/recovery/stats",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/replay",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/replay/cases/:caseId/promote",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/replay/cases/:caseId/review",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/replay/runs",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/replay/runs/:runId/cases",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/replay/runs/:runId/export",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/replay/runs/:runId/suspicious",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/replay/runs/compare",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/score",
+        "source": "apps/claw-routing-service/src/modules/scoring/controllers/scoring.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/taxonomy/domains",
+        "source": "apps/claw-routing-service/src/modules/taxonomy/controllers/taxonomy.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/taxonomy/roles",
+        "source": "apps/claw-routing-service/src/modules/taxonomy/controllers/taxonomy.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/taxonomy/roles",
+        "source": "apps/claw-routing-service/src/modules/taxonomy/controllers/taxonomy.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/taxonomy/roles/:id",
+        "source": "apps/claw-routing-service/src/modules/taxonomy/controllers/taxonomy.controller.ts"
+      }
+    ],
+    "claw-server-logs-service": [
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-server-logs-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/server-logs",
+        "source": "apps/claw-server-logs-service/src/modules/server-logs/controllers/server-logs.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/server-logs",
+        "source": "apps/claw-server-logs-service/src/modules/server-logs/controllers/server-logs.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/server-logs/batch",
+        "source": "apps/claw-server-logs-service/src/modules/server-logs/controllers/server-logs.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/server-logs/distinct",
+        "source": "apps/claw-server-logs-service/src/modules/server-logs/controllers/server-logs.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/server-logs/stats",
+        "source": "apps/claw-server-logs-service/src/modules/server-logs/controllers/server-logs.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/server-logs/timeseries",
+        "source": "apps/claw-server-logs-service/src/modules/server-logs/controllers/server-logs.controller.ts"
+      }
+    ],
+    "claw-workspace-service": [
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-workspace-service/src/modules/health/health.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/workspace/search",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-search-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/workspace/sync/health",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/sync-health-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/actions",
+        "source": "apps/claw-workspace-service/src/modules/actions/controllers/workspace-action.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/actions",
+        "source": "apps/claw-workspace-service/src/modules/actions/controllers/workspace-action.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/actions/:id",
+        "source": "apps/claw-workspace-service/src/modules/actions/controllers/workspace-action.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/workspace/actions/:id",
+        "source": "apps/claw-workspace-service/src/modules/actions/controllers/workspace-action.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/actions/:id/approve",
+        "source": "apps/claw-workspace-service/src/modules/actions/controllers/workspace-action.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/actions/:id/reject",
+        "source": "apps/claw-workspace-service/src/modules/actions/controllers/workspace-action.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/actions/bulk-approve",
+        "source": "apps/claw-workspace-service/src/modules/actions/controllers/workspace-action.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/ai-actions/multi-model-review",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/ai-action.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/ai-actions/multi-model-review/bundle",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/ai-action.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/ai-actions/policies",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/ai-action-policy.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/ai-actions/policies",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/ai-action-policy.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/workspace/ai-actions/policies/:id",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/ai-action-policy.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/ai-actions/policies/:id",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/ai-action-policy.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/workspace/ai-actions/policies/:id",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/ai-action-policy.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/ai-actions/queue",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/ai-action-approval-queue.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/ai-actions/queue/:id",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/ai-action-approval-queue.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/ai-actions/queue/:id/approve",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/ai-action-approval-queue.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/ai-actions/queue/:id/edit-and-approve",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/ai-action-approval-queue.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/ai-actions/queue/:id/reject",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/ai-action-approval-queue.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/ai-actions/queue/bulk-approve",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/ai-action-approval-queue.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/ai-actions/resolve",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/ai-action.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/ai-actions/run",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/ai-action.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/auto-suggest/jobs/:jobType/trigger-now",
+        "source": "apps/claw-workspace-service/src/modules/auto-suggest/controllers/auto-suggest.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/auto-suggest/runs",
+        "source": "apps/claw-workspace-service/src/modules/auto-suggest/controllers/auto-suggest.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/automation-preferences",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/automation-preference.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/workspace/automation-preferences/:actionKind",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/automation-preference.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/automation-preferences/learned",
+        "source": "apps/claw-workspace-service/src/modules/ai-actions/controllers/automation-preference.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/chains",
+        "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/chains",
+        "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/workspace/chains/:id",
+        "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/chains/:id",
+        "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/workspace/chains/:id",
+        "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/chains/:id/run",
+        "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/chains/:id/runs",
+        "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/connectors",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/connectors",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/connectors/:connectorId/grants",
+        "source": "apps/claw-workspace-service/src/modules/connector-access/controllers/connector-grant.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/connectors/:connectorId/grants",
+        "source": "apps/claw-workspace-service/src/modules/connector-access/controllers/connector-grant.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/workspace/connectors/:connectorId/grants/:granteeUserId",
+        "source": "apps/claw-workspace-service/src/modules/connector-access/controllers/connector-grant.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/workspace/connectors/:id",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/connectors/:id",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/workspace/connectors/:id",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/workspace/connectors/:id/cadence",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/connectors/:id/health",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/connectors/:id/health-events",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/connectors/:id/pause",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/connectors/:id/resume",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/connectors/:id/sync",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/connectors/:id/sync-runs",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/decompose-fanout/queue/:queueId",
+        "source": "apps/claw-workspace-service/src/modules/ticket-planning/controllers/decompose-fanout.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/digests",
+        "source": "apps/claw-workspace-service/src/modules/digest/controllers/digest.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/digests/:id",
+        "source": "apps/claw-workspace-service/src/modules/digest/controllers/digest.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/digests/preferences",
+        "source": "apps/claw-workspace-service/src/modules/digest/controllers/digest.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/workspace/digests/preferences",
+        "source": "apps/claw-workspace-service/src/modules/digest/controllers/digest.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/digests/regenerate",
+        "source": "apps/claw-workspace-service/src/modules/digest/controllers/digest.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/digests/today",
+        "source": "apps/claw-workspace-service/src/modules/digest/controllers/digest.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/digests/trigger-mine",
+        "source": "apps/claw-workspace-service/src/modules/digest/controllers/digest.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/email-signatures",
+        "source": "apps/claw-workspace-service/src/modules/email-signatures/controllers/email-signature.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/email-signatures",
+        "source": "apps/claw-workspace-service/src/modules/email-signatures/controllers/email-signature.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/workspace/email-signatures/:id",
+        "source": "apps/claw-workspace-service/src/modules/email-signatures/controllers/email-signature.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/email-signatures/:id",
+        "source": "apps/claw-workspace-service/src/modules/email-signatures/controllers/email-signature.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/workspace/email-signatures/:id",
+        "source": "apps/claw-workspace-service/src/modules/email-signatures/controllers/email-signature.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/email-signatures/default",
+        "source": "apps/claw-workspace-service/src/modules/email-signatures/controllers/email-signature.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/email-templates",
+        "source": "apps/claw-workspace-service/src/modules/email-templates/controllers/email-template.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/email-templates",
+        "source": "apps/claw-workspace-service/src/modules/email-templates/controllers/email-template.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/workspace/email-templates/:id",
+        "source": "apps/claw-workspace-service/src/modules/email-templates/controllers/email-template.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/email-templates/:id",
+        "source": "apps/claw-workspace-service/src/modules/email-templates/controllers/email-template.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/workspace/email-templates/:id",
+        "source": "apps/claw-workspace-service/src/modules/email-templates/controllers/email-template.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/email-templates/default",
+        "source": "apps/claw-workspace-service/src/modules/email-templates/controllers/email-template.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/figma/:connectorId/files/:fileKey/analysis",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/figma-design.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/impl-handoffs",
+        "source": "apps/claw-workspace-service/src/modules/ticket-planning/controllers/impl-handoff.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/impl-handoffs/:id",
+        "source": "apps/claw-workspace-service/src/modules/ticket-planning/controllers/impl-handoff.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/impl-handoffs/queue/:queueId",
+        "source": "apps/claw-workspace-service/src/modules/ticket-planning/controllers/impl-handoff.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/inbox",
+        "source": "apps/claw-workspace-service/src/modules/inbox/controllers/inbox.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/workspace/inbox/objects/:id/needs-attention",
+        "source": "apps/claw-workspace-service/src/modules/inbox/controllers/inbox.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/inbox/search",
+        "source": "apps/claw-workspace-service/src/modules/inbox/controllers/inbox.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/oauth/callback",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-oauth.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/oauth/init",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-oauth.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/oauth/test-connection",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-oauth.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/oauth/test-pat",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-oauth.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/objects",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-object.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/objects/:id",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-object.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/objects/:id/content",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-object.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/objects/:id/refresh",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-object.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/provider-app-configs",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-provider-registry.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/provider-app-configs",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-provider-registry.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/workspace/provider-app-configs/:id",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-provider-registry.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/provider-app-configs/:id",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-provider-registry.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/workspace/provider-app-configs/:id",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-provider-registry.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/providers",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-provider-registry.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/providers/:provider",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-provider-registry.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/search",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-search.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/suggestion-rules",
+        "source": "apps/claw-workspace-service/src/modules/suggestion-factory/controllers/trigger-rule.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/suggestion-rules",
+        "source": "apps/claw-workspace-service/src/modules/suggestion-factory/controllers/trigger-rule.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/workspace/suggestion-rules/:id",
+        "source": "apps/claw-workspace-service/src/modules/suggestion-factory/controllers/trigger-rule.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/workspace/suggestion-rules/:id",
+        "source": "apps/claw-workspace-service/src/modules/suggestion-factory/controllers/trigger-rule.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/sync/dashboard",
+        "source": "apps/claw-workspace-service/src/modules/workspace/controllers/sync-health.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/webhooks/:provider/:connectorId",
+        "source": "apps/claw-workspace-service/src/modules/webhooks/controllers/webhook-receiver.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/webhooks/deliveries",
+        "source": "apps/claw-workspace-service/src/modules/webhooks/controllers/webhook-receiver.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/webhooks/deliveries/:id/replay",
+        "source": "apps/claw-workspace-service/src/modules/webhooks/controllers/webhook-receiver.controller.ts"
+      }
+    ]
+  },
+  "generated": true,
+  "total": 493
+}

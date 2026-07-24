@@ -1,0 +1,62 @@
+# AI-native engineering OS gates. Runs the SAME authoritative scripts developers
+# run locally — no CI-only mystery commands. Independent from ci.yml so it can
+# run on every PR cheaply (pure Node, no Docker, no Prisma generation).
+name: ai-native-os
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  knowledge-freshness:
+    name: Knowledge freshness (generated .ai layer)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # No install needed: the tooling is dependency-light Node ESM (stdlib).
+      - name: Audit snapshot is current
+        run: node tools/audit/index.mjs --check
+      - name: Generated .ai layer is current
+        run: node tools/knowledge/build.mjs --check
+
+  knowledge-integrity:
+    name: Knowledge integrity (links, no hook-bypass, contradictions)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: knowledge:verify
+        run: node tools/knowledge/verify.mjs
+
+  tooling-tests:
+    name: Tooling tests (audit, knowledge, affected)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: knowledge tooling tests
+        run: node --test "tools/__tests__/*.test.mjs"
+
+  architecture-rules:
+    name: Architecture ESLint rule tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install (eslint for RuleTester)
+        run: npm ci --ignore-scripts
+      - name: architecture:check
+        run: node --test "eslint/architecture-plugin/__tests__/*.test.mjs"

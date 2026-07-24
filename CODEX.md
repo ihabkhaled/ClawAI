@@ -508,31 +508,31 @@ Page (.tsx) → Controller Hook (useX) → Service → Repository/API
 
 Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 
-| Event                                 | Publisher    | Consumers      |
-| ------------------------------------- | ------------ | -------------- |
-| message.created                       | chat         | routing        |
-| message.routed                        | routing      | chat           |
-| message.completed                     | chat         | audit, memory  |
-| thread.created                        | chat         | —              |
-| user.login/logout                     | auth         | audit          |
-| connector.created/updated/deleted     | connector    | audit          |
-| connector.synced                      | connector    | audit, routing |
-| connector.health_checked              | connector    | audit, routing |
-| routing.decision_made                 | routing      | audit          |
-| memory.extracted                      | memory       | audit          |
-| file.uploaded/chunked                 | file         | —              |
-| log.server                            | all services | server-logs    |
-| image.generated                       | image        | audit          |
-| image.failed                          | image        | audit          |
-| file.generated                        | file-gen     | audit          |
-| file_generation.failed                | file-gen     | audit          |
-| agent.session.connected               | agent        | audit          |
-| agent.session.disconnected            | agent        | audit          |
-| agent.device_paired                   | agent        | audit          |
-| agent.device_revoked                  | agent        | audit          |
-| agent.token_rotated                   | agent        | audit          |
-| agent.token_reuse_detected            | agent        | audit          |
-| agent.policy_violated                 | agent        | audit          |
+| Event                                 | Publisher                          | Consumers       |
+| ------------------------------------- | ---------------------------------- | --------------- |
+| message.created                       | chat                               | routing         |
+| message.routed                        | routing                            | chat            |
+| message.completed                     | chat                               | audit, memory   |
+| thread.created                        | chat                               | —               |
+| user.login/logout                     | auth                               | audit           |
+| connector.created/updated/deleted     | connector                          | audit           |
+| connector.synced                      | connector                          | audit, routing  |
+| connector.health_checked              | connector                          | audit, routing  |
+| routing.decision_made                 | routing                            | audit           |
+| memory.extracted                      | memory                             | audit           |
+| file.uploaded/chunked                 | file                               | —               |
+| log.server                            | all services                       | server-logs     |
+| image.generated                       | image                              | audit           |
+| image.failed                          | image                              | audit           |
+| file.generated                        | file-gen                           | audit           |
+| file_generation.failed                | file-gen                           | audit           |
+| agent.session.connected               | agent                              | audit           |
+| agent.session.disconnected            | agent                              | audit           |
+| agent.device_paired                   | agent                              | audit           |
+| agent.device_revoked                  | agent                              | audit           |
+| agent.token_rotated                   | agent                              | audit           |
+| agent.token_reuse_detected            | agent                              | audit           |
+| agent.policy_violated                 | agent                              | audit           |
 | runtime.progress.stage_changed        | chat / image (SSE today)           | audit (planned) |
 | runtime.progress.content_delta        | chat (SSE today)                   | audit (planned) |
 | runtime.progress.reasoning_delta      | chat (SSE today)                   | audit (planned) |
@@ -580,8 +580,8 @@ What's shipped:
   by env var `LLAMACPP_REASONING_EXTRACTION_ENABLED` (default `'true'`).
 - **PR1 — Frontend decomposition** — `RuntimeProgressPanel` +
   `VisibleReasoningPanel` + `RuntimeMetricsHud` + `RuntimeRawEventsDrawer`
-  + `RuntimeStageTimeline` (stub at PR1, filled in PR2).
-  `thinking-indicator.tsx` keeps its import name and delegates.
+  - `RuntimeStageTimeline` (stub at PR1, filled in PR2).
+    `thinking-indicator.tsx` keeps its import name and delegates.
 - **PR1 — Probe scripts** — `scripts/local-runtime-probes/*.mjs`. Output to
   gitignored `.local-runtime-probes/`.
 - **PR2 — Text-runtime metrics + bottleneck.**
@@ -1096,16 +1096,22 @@ npm run build              # success
 5. When ALL gates for the touched folders are green:
 
 ```bash
-git commit --no-verify -m "<conventional-commit-message>"
-git push --no-verify origin <branch>
+git commit -m "<conventional-commit-message>"
+git push origin <branch>
 ```
 
-**Why `--no-verify`:** the repo pre-commit hook runs the all-workspace gate — exactly the expensive, false-failing path this rule avoids. The per-folder gates above ARE the real quality bar; `--no-verify` skips only the redundant hook, NEVER a real failure in the folder you changed.
+**Hooks are scoped, not all-workspace.** The git hooks run the **affected** lane
+(`node tools/affected/index.mjs …`) — they validate only the workspaces your diff
+touches, so they are fast and never false-fail on unchanged siblings. There is no
+reason to bypass them. Never use `--no-verify`; a hook failure is a real problem
+in something you changed — fix it. (Emergency bypass = documented incident
+procedure with explicit authorization, see `docs/exceptions/README.md`, not a
+normal step.)
 
 **Hard limits (never violate):**
 
 - NEVER skip a gate for a folder you changed.
-- NEVER `--no-verify` to bypass a REAL failure in the folder you changed — fix it.
+- NEVER bypass a hook to get past a REAL failure in the folder you changed — fix it.
 - NEVER expand to the all-workspace gate after the touched-folder gates pass.
 - Docs-only changes (`docs/**`, `CLAUDE.md`, `CODEX.md`, `cursor.md`, `rules/**`, locale files paired with `i18n.types.ts`) skip the gates but stay conventional-commit format.
 

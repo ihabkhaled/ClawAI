@@ -1,0 +1,1327 @@
+{
+  "events": [
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_CAPABILITY_APPROVED",
+      "pattern": "agent.capability.approved",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_CAPABILITY_AUTO_APPROVED",
+      "pattern": "agent.capability.auto_approved",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_CAPABILITY_CANCELLED",
+      "pattern": "agent.capability.cancelled",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_CAPABILITY_DENIED",
+      "pattern": "agent.capability.denied",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_CAPABILITY_EXECUTED",
+      "pattern": "agent.capability.executed",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-agent-service",
+        "claw-audit-service"
+      ],
+      "key": "AGENT_CAPABILITY_EXECUTING",
+      "pattern": "agent.capability.executing",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_CAPABILITY_EXPIRED",
+      "pattern": "agent.capability.expired",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_CAPABILITY_FAILED",
+      "pattern": "agent.capability.failed",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_CAPABILITY_POLICY_MATCHED",
+      "pattern": "agent.capability.policy_matched",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_CAPABILITY_PROPOSED",
+      "pattern": "agent.capability.proposed",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_CAPABILITY_REJECTED",
+      "pattern": "agent.capability.rejected",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_CAPABILITY_ROLLED_BACK",
+      "pattern": "agent.capability.rolled_back",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "AGENT_COMMAND_APPROVED",
+      "pattern": "agent.command_approved",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "AGENT_COMMAND_CANCELLED",
+      "pattern": "agent.command_cancelled",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "AGENT_COMMAND_COMPLETED",
+      "pattern": "agent.command_completed",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "AGENT_COMMAND_REJECTED",
+      "pattern": "agent.command_rejected",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "AGENT_COMMAND_REQUESTED",
+      "pattern": "agent.command_requested",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "AGENT_COMMAND_STREAMED",
+      "pattern": "agent.command_streamed",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_DEVICE_PAIRED",
+      "pattern": "agent.device_paired",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_DEVICE_REVOKED",
+      "pattern": "agent.device_revoked",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_POLICY_VIOLATED",
+      "pattern": "agent.policy_violated",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_SESSION_CONNECTED",
+      "pattern": "agent.session_connected",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_SESSION_DISCONNECTED",
+      "pattern": "agent.session_disconnected",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_TOKEN_REUSE_DETECTED",
+      "pattern": "agent.token_reuse_detected",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AGENT_TOKEN_ROTATED",
+      "pattern": "agent.token_rotated",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AI_ACTION_APPROVED",
+      "pattern": "ai_action.approved",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AI_ACTION_AUTO_APPROVED",
+      "pattern": "ai_action.auto_approved",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AI_ACTION_DENIED",
+      "pattern": "ai_action.denied",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AI_ACTION_EDITED",
+      "pattern": "ai_action.edited",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AI_ACTION_EXECUTED",
+      "pattern": "ai_action.executed",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AI_ACTION_EXPIRED",
+      "pattern": "ai_action.expired",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AI_ACTION_PENDING_APPROVAL",
+      "pattern": "ai_action.pending_approval",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AI_ACTION_POLICY_CREATED",
+      "pattern": "ai_action.policy.created",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AI_ACTION_POLICY_DELETED",
+      "pattern": "ai_action.policy.deleted",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AI_ACTION_POLICY_UPDATED",
+      "pattern": "ai_action.policy.updated",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AI_ACTION_REJECTED",
+      "pattern": "ai_action.rejected",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "AI_ACTION_SUGGESTION_CREATED",
+      "pattern": "ai_action.suggestion_created",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "AUDIT_EVENT",
+      "pattern": "audit.event",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "CATALOG_UPDATED",
+      "pattern": "catalog.updated",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "CHAT_THREAD_CONTEXT_TOGGLED",
+      "pattern": "chat_thread.context_toggled",
+      "producers": [
+        "claw-chat-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "CHAT_THREAD_MEMORY_TOGGLED",
+      "pattern": "chat_thread.memory_toggled",
+      "producers": [
+        "claw-chat-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "CONNECTOR_CREATED",
+      "pattern": "connector.created",
+      "producers": [
+        "claw-connector-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "CONNECTOR_DELETED",
+      "pattern": "connector.deleted",
+      "producers": [
+        "claw-connector-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-routing-service"
+      ],
+      "key": "CONNECTOR_HEALTH_CHECKED",
+      "pattern": "connector.health_checked",
+      "producers": [
+        "claw-connector-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-routing-service"
+      ],
+      "key": "CONNECTOR_SYNCED",
+      "pattern": "connector.synced",
+      "producers": [
+        "claw-connector-service",
+        "claw-ollama-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "CONNECTOR_UPDATED",
+      "pattern": "connector.updated",
+      "producers": [
+        "claw-connector-service",
+        "claw-ollama-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "CONTEXT_RECEIPT_WRITTEN",
+      "pattern": "context.receipt_written",
+      "producers": [
+        "claw-chat-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "CONTEXT_PACK_ATTACHED",
+      "pattern": "context_pack.attached",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "CONTEXT_PACK_CREATED",
+      "pattern": "context_pack.created",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "CONTEXT_PACK_DELETED",
+      "pattern": "context_pack.deleted",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "CONTEXT_PACK_DETACHED",
+      "pattern": "context_pack.detached",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "CONTEXT_PACK_SHARED",
+      "pattern": "context_pack.shared",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "CONTEXT_PACK_UPDATED",
+      "pattern": "context_pack.updated",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "CONTEXT_PACK_USED",
+      "pattern": "context_pack.used",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "CONTEXT_PACK_VERSION_CREATED",
+      "pattern": "context_pack.version_created",
+      "producers": [
+        "claw-memory-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "CONTEXT_PACK_VERSION_REVERTED",
+      "pattern": "context_pack.version_reverted",
+      "producers": [
+        "claw-memory-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "FILE_ARCHIVE_EXPANDED",
+      "pattern": "file.archive_expanded",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "FILE_CHUNKED",
+      "pattern": "file.chunked",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "FILE_DELETED",
+      "pattern": "file.deleted",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "FILE_DOWNLOADED",
+      "pattern": "file.downloaded",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "FILE_EXTRACTION_FAILED",
+      "pattern": "file.extraction_failed",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "FILE_FAILED",
+      "pattern": "file.failed",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "FILE_GENERATED",
+      "pattern": "file.generated",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "FILE_OCR_COMPLETED",
+      "pattern": "file.ocr_completed",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "FILE_OCR_FAILED",
+      "pattern": "file.ocr_failed",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "FILE_OCR_STARTED",
+      "pattern": "file.ocr_started",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "FILE_RETENTION_EXPIRED",
+      "pattern": "file.retention_expired",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "FILE_UPLOAD_COMPLETED",
+      "pattern": "file.upload_completed",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "FILE_UPLOAD_STARTED",
+      "pattern": "file.upload_started",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "FILE_UPLOADED",
+      "pattern": "file.uploaded",
+      "producers": [
+        "claw-file-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "FILE_GENERATION_FAILED",
+      "pattern": "file_generation.failed",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "HEALTH_CHECK",
+      "pattern": "health.check",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "IMAGE_FAILED",
+      "pattern": "image.failed",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "IMAGE_GENERATED",
+      "pattern": "image.generated",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "LLAMACPP_BINARY_INSTALLED",
+      "pattern": "llamacpp.binary.installed",
+      "producers": [
+        "claw-llamacpp-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "LLAMACPP_BINARY_UPDATED",
+      "pattern": "llamacpp.binary.updated",
+      "producers": [
+        "claw-llamacpp-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-routing-service"
+      ],
+      "key": "LLAMACPP_MODEL_CRASHED",
+      "pattern": "llamacpp.model.crashed",
+      "producers": [
+        "claw-llamacpp-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-routing-service"
+      ],
+      "key": "LLAMACPP_MODEL_LOADED",
+      "pattern": "llamacpp.model.loaded",
+      "producers": [
+        "claw-llamacpp-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-routing-service"
+      ],
+      "key": "LLAMACPP_MODEL_UNLOADED",
+      "pattern": "llamacpp.model.unloaded",
+      "producers": [
+        "claw-llamacpp-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "LLAMACPP_PREFLIGHT_OVERRIDDEN",
+      "pattern": "llamacpp.preflight.overridden",
+      "producers": [
+        "claw-llamacpp-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "LLAMACPP_PULL_COMPLETED",
+      "pattern": "llamacpp.pull.completed",
+      "producers": [
+        "claw-llamacpp-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "LLAMACPP_PULL_FAILED",
+      "pattern": "llamacpp.pull.failed",
+      "producers": [
+        "claw-llamacpp-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "LLAMACPP_PULL_PROGRESS",
+      "pattern": "llamacpp.pull.progress",
+      "producers": [
+        "claw-llamacpp-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "LLAMACPP_PULL_STARTED",
+      "pattern": "llamacpp.pull.started",
+      "producers": [
+        "claw-llamacpp-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "LLAMACPP_WEIGHTS_DELETED",
+      "pattern": "llamacpp.weights.deleted",
+      "producers": [
+        "claw-llamacpp-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "LOG_SERVER",
+      "pattern": "log.server",
+      "producers": [
+        "claw-agent-service",
+        "claw-audit-service",
+        "claw-auth-service",
+        "claw-chat-service",
+        "claw-client-logs-service",
+        "claw-connector-service",
+        "claw-file-generation-service",
+        "claw-file-service",
+        "claw-image-service",
+        "claw-llamacpp-service",
+        "claw-memory-service",
+        "claw-ollama-service",
+        "claw-research-service",
+        "claw-routing-service",
+        "claw-server-logs-service",
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "MEMORY_APPROVED",
+      "pattern": "memory.approved",
+      "producers": [
+        "claw-memory-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "MEMORY_EXTRACTED",
+      "pattern": "memory.extracted",
+      "producers": [
+        "claw-memory-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "MEMORY_FORGOTTEN",
+      "pattern": "memory.forgotten",
+      "producers": [
+        "claw-memory-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "MEMORY_PAUSED",
+      "pattern": "memory.paused",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "MEMORY_PREFERENCE_UPSERTED",
+      "pattern": "memory.preference.upserted",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "MEMORY_REDACTED",
+      "pattern": "memory.redacted",
+      "producers": [
+        "claw-memory-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "MEMORY_REJECTED",
+      "pattern": "memory.rejected",
+      "producers": [
+        "claw-memory-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "MEMORY_SUGGESTED",
+      "pattern": "memory.suggested",
+      "producers": [
+        "claw-memory-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "MEMORY_USED",
+      "pattern": "memory.used",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-memory-service",
+        "claw-routing-service"
+      ],
+      "key": "MESSAGE_COMPLETED",
+      "pattern": "message.completed",
+      "producers": [
+        "claw-chat-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-routing-service"
+      ],
+      "key": "MESSAGE_CREATED",
+      "pattern": "message.created",
+      "producers": [
+        "claw-chat-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "MESSAGE_FEEDBACK_SET",
+      "pattern": "message.feedback_set",
+      "producers": [
+        "claw-chat-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-chat-service"
+      ],
+      "key": "MESSAGE_ROUTED",
+      "pattern": "message.routed",
+      "producers": [
+        "claw-routing-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-routing-service"
+      ],
+      "key": "MODEL_DELETED",
+      "pattern": "model.deleted",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-routing-service"
+      ],
+      "key": "MODEL_PULLED",
+      "pattern": "model.pulled",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-routing-service"
+      ],
+      "key": "ROUTING_CIRCUIT_BREAKER_CLOSED",
+      "pattern": "routing.circuit_breaker.closed",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "ROUTING_CIRCUIT_BREAKER_HALF_OPEN",
+      "pattern": "routing.circuit_breaker.half_open",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-routing-service"
+      ],
+      "key": "ROUTING_CIRCUIT_BREAKER_OPENED",
+      "pattern": "routing.circuit_breaker.opened",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "ROUTING_DECISION_MADE",
+      "pattern": "routing.decision_made",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-routing-service"
+      ],
+      "key": "ROUTING_LEARNED_SCORE_UPDATED",
+      "pattern": "routing.learned_score.updated",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "ROUTING_MODELS_SYNCED",
+      "pattern": "routing.models.synced",
+      "producers": [
+        "claw-routing-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "ROUTING_NO_EXECUTION_MODEL",
+      "pattern": "routing.no_execution_model",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "ROUTING_POLICY_CHANGED",
+      "pattern": "routing.policy.changed",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-routing-service"
+      ],
+      "key": "ROUTING_PROFILE_CREATED",
+      "pattern": "routing.profile.created",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-routing-service"
+      ],
+      "key": "ROUTING_PROFILE_LIFECYCLE_CHANGED",
+      "pattern": "routing.profile.lifecycle_changed",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-routing-service"
+      ],
+      "key": "ROUTING_PROFILE_UPDATED",
+      "pattern": "routing.profile.updated",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "USER_CREATED",
+      "pattern": "user.created",
+      "producers": [
+        "claw-auth-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "USER_DEACTIVATED",
+      "pattern": "user.deactivated",
+      "producers": [
+        "claw-auth-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "USER_LOGIN",
+      "pattern": "user.login",
+      "producers": [
+        "claw-auth-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "USER_LOGOUT",
+      "pattern": "user.logout",
+      "producers": [
+        "claw-auth-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "USER_ROLE_CHANGED",
+      "pattern": "user.role_changed",
+      "producers": [
+        "claw-auth-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_AUTO_SUGGEST_TICK_COMPLETED",
+      "pattern": "workspace.auto_suggest.tick.completed",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_AUTO_SUGGEST_TICK_FAILED",
+      "pattern": "workspace.auto_suggest.tick.failed",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_AUTO_SUGGEST_TICK_STARTED",
+      "pattern": "workspace.auto_suggest.tick.started",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_SUGGESTION_FACTORY_PROCESSED",
+      "pattern": "workspace.suggestion.factory_processed",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "WORKSPACE_SYNC_DLQ_SENT",
+      "pattern": "workspace.sync.dlq_sent",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "WORKSPACE_SYNC_MANUAL_TRIGGERED",
+      "pattern": "workspace.sync.manual_triggered",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "WORKSPACE_SYNC_PAUSED",
+      "pattern": "workspace.sync.paused",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "WORKSPACE_SYNC_RATE_LIMITED",
+      "pattern": "workspace.sync.rate_limited",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "WORKSPACE_SYNC_RESUMED",
+      "pattern": "workspace.sync.resumed",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "WORKSPACE_SYNC_RUN_COMPLETED",
+      "pattern": "workspace.sync.run_completed",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "WORKSPACE_SYNC_RUN_FAILED",
+      "pattern": "workspace.sync.run_failed",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "WORKSPACE_SYNC_RUN_STARTED",
+      "pattern": "workspace.sync.run_started",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "WORKSPACE_SYNC_STALE_DETECTED",
+      "pattern": "workspace.sync.stale_detected",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_WEBHOOK_RECEIVED",
+      "pattern": "workspace.webhook.received",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_WEBHOOK_REJECTED",
+      "pattern": "workspace.webhook.rejected",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_WEBHOOK_REPLAYED",
+      "pattern": "workspace.webhook.replayed",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_ACTION_APPROVED",
+      "pattern": "workspace_action.approved",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "WORKSPACE_ACTION_BULK_APPROVED",
+      "pattern": "workspace_action.bulk_approved",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_ACTION_DRAFTED",
+      "pattern": "workspace_action.drafted",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "WORKSPACE_ACTION_EDITED",
+      "pattern": "workspace_action.edited",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_ACTION_EXECUTED",
+      "pattern": "workspace_action.executed",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_ACTION_FAILED",
+      "pattern": "workspace_action.failed",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_ACTION_REJECTED",
+      "pattern": "workspace_action.rejected",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "WORKSPACE_ACTION_STALE_BLOCKED",
+      "pattern": "workspace_action.stale_blocked",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_CONNECTOR_CREATED",
+      "pattern": "workspace_connector.created",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_CONNECTOR_DELETED",
+      "pattern": "workspace_connector.deleted",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_CONNECTOR_HEALTH_CHECKED",
+      "pattern": "workspace_connector.health_checked",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_CONNECTOR_SYNCED",
+      "pattern": "workspace_connector.synced",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_CONNECTOR_UPDATED",
+      "pattern": "workspace_connector.updated",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "WORKSPACE_OBJECT_SYNCED",
+      "pattern": "workspace_object.synced",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    }
+  ],
+  "generated": true,
+  "inferenceMethod": "heuristic: EventPattern.<KEY> token + publish-verb proximity; confidence=unverified"
+}

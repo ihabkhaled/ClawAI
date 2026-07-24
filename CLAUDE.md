@@ -1313,16 +1313,22 @@ npm run build              # success
 5. When ALL gates for the touched folders are green:
 
 ```bash
-git commit --no-verify -m "<conventional-commit-message>"
-git push --no-verify origin <branch>
+git commit -m "<conventional-commit-message>"
+git push origin <branch>
 ```
 
-**Why `--no-verify`:** the repo pre-commit hook runs the all-workspace gate — exactly the expensive, false-failing path this rule avoids. The per-folder gates above ARE the real quality bar; `--no-verify` skips only the redundant hook, NEVER a real failure in the folder you changed.
+**Hooks are scoped, not all-workspace.** The git hooks run the **affected** lane
+(`node tools/affected/index.mjs …`) — they validate only the workspaces your diff
+touches, so they are fast and do not false-fail on unchanged siblings. There is
+therefore **no reason to bypass them**. Never use `--no-verify`; if a hook fails,
+it found a real problem in something you changed — fix it. (Emergency bypass is a
+documented incident procedure requiring explicit authorization — see
+`docs/exceptions/README.md` — not a normal development step.)
 
 **Hard limits (never violate):**
 
 - NEVER skip a gate for a folder you changed.
-- NEVER `--no-verify` to bypass a REAL failure in the folder you changed — fix it.
+- NEVER bypass a hook to get past a REAL failure in the folder you changed — fix it.
 - NEVER expand to the all-workspace gate after the touched-folder gates pass.
 - Docs-only changes (`docs/**`, `CLAUDE.md`, `CODEX.md`, `cursor.md`, `rules/**`, locale files paired with `i18n.types.ts`) skip the gates but stay conventional-commit format.
 

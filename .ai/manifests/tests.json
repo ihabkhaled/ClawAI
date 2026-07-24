@@ -1,0 +1,102 @@
+{
+  "byWorkspace": {
+    "@claw/shared-auth": {
+      "runner": "jest",
+      "testFiles": 0
+    },
+    "@claw/shared-constants": {
+      "runner": "jest",
+      "testFiles": 1
+    },
+    "@claw/shared-entitlements": {
+      "runner": "jest",
+      "testFiles": 2
+    },
+    "@claw/shared-rabbitmq": {
+      "runner": "jest",
+      "testFiles": 0
+    },
+    "@claw/shared-types": {
+      "runner": "jest",
+      "testFiles": 1
+    },
+    "@claw/shared-utilities": {
+      "runner": "jest",
+      "testFiles": 16
+    },
+    "claw-agent-service": {
+      "runner": "jest",
+      "testFiles": 9
+    },
+    "claw-audit-service": {
+      "runner": "jest",
+      "testFiles": 13
+    },
+    "claw-auth-service": {
+      "runner": "jest",
+      "testFiles": 22
+    },
+    "claw-chat-service": {
+      "runner": "jest",
+      "testFiles": 54
+    },
+    "claw-client-logs-service": {
+      "runner": "jest",
+      "testFiles": 6
+    },
+    "claw-connector-service": {
+      "runner": "jest",
+      "testFiles": 16
+    },
+    "claw-file-generation-service": {
+      "runner": "jest",
+      "testFiles": 7
+    },
+    "claw-file-service": {
+      "runner": "jest",
+      "testFiles": 15
+    },
+    "claw-frontend": {
+      "runner": "vitest",
+      "testFiles": 161
+    },
+    "claw-health-service": {
+      "runner": "jest",
+      "testFiles": 4
+    },
+    "claw-image-service": {
+      "runner": "jest",
+      "testFiles": 9
+    },
+    "claw-llamacpp-service": {
+      "runner": "jest",
+      "testFiles": 16
+    },
+    "claw-memory-service": {
+      "runner": "jest",
+      "testFiles": 12
+    },
+    "claw-ollama-service": {
+      "runner": "jest",
+      "testFiles": 17
+    },
+    "claw-research-service": {
+      "runner": "jest",
+      "testFiles": 14
+    },
+    "claw-routing-service": {
+      "runner": "jest",
+      "testFiles": 49
+    },
+    "claw-server-logs-service": {
+      "runner": "jest",
+      "testFiles": 7
+    },
+    "claw-workspace-service": {
+      "runner": "jest",
+      "testFiles": 66
+    }
+  },
+  "generated": true,
+  "total": 517
+}

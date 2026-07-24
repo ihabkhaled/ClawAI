@@ -1,0 +1,20 @@
+# ClawAI — Cursor rules (compact router)
+
+Do NOT invent repository facts. Before editing, run:
+  npm run knowledge:context -- --task="<task>"
+and read .ai/local/current-context.md.
+
+Canonical authority (higher wins): CLAUDE.md > rules/00-non-negotiable-rules.md >
+context/architecture-map.md > context/stack-and-toolchain.md > numbered rules/* >
+skills/* > context/* + memory/* > .ai/manifests/*.
+
+Blockers (never): --no-verify / hook bypass; eslint-disable / @ts-ignore / any /
+as unknown as; cross-service DB access; logic in controllers; DB calls outside
+repositories; process.env outside AppConfig; console.log; logging/exposing
+secrets; user-facing text without i18n (9 locales); code without a test.
+
+Validation (touched folders only):
+  npm run affected:list
+  cd <workspace> && npm run typecheck && npm run lint && npm test && npm run build
+
+Scoped rules live in .cursor/rules/*.mdc (by file glob). Full router: cursor.md + AGENTS.md.

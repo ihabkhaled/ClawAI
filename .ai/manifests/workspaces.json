@@ -1,0 +1,658 @@
+{
+  "generated": true,
+  "workspaces": [
+    {
+      "dir": "apps/claw-agent-service",
+      "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-constants",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-agent-service",
+      "scripts": [
+        "build",
+        "db:reset",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "migrate",
+        "migrate:dev",
+        "prisma:generate",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-agent-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-audit-service",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-audit-service",
+      "scripts": [
+        "build",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-audit-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-auth-service",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-auth-service",
+      "scripts": [
+        "build",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "migrate",
+        "migrate:dev",
+        "prisma:generate",
+        "seed",
+        "seed:permissions",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-auth-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-chat-service",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-chat-service",
+      "scripts": [
+        "build",
+        "db:reset",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "migrate",
+        "migrate:dev",
+        "prisma:generate",
+        "start",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-chat-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-client-logs-service",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-client-logs-service",
+      "scripts": [
+        "build",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-client-logs-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-connector-service",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-connector-service",
+      "scripts": [
+        "build",
+        "db:reset",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "migrate",
+        "migrate:dev",
+        "prisma:generate",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-connector-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-file-generation-service",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-file-generation-service",
+      "scripts": [
+        "build",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "migrate:dev",
+        "prisma:generate",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-file-generation-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-file-service",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-file-service",
+      "scripts": [
+        "build",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "migrate",
+        "migrate:dev",
+        "prisma:generate",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-file-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-frontend",
+      "internalDeps": [],
+      "name": "claw-frontend",
+      "scripts": [
+        "build",
+        "clear-cache",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint-staged",
+        "lint:fix",
+        "lint:strict",
+        "prepare",
+        "start",
+        "test",
+        "test:cov",
+        "test:e2e",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-frontend/package.json",
+      "type": "frontend"
+    },
+    {
+      "dir": "apps/claw-health-service",
+      "internalDeps": [
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-health-service",
+      "scripts": [
+        "build",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-health-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-image-service",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-image-service",
+      "scripts": [
+        "build",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "migrate:dev",
+        "prisma:generate",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-image-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-llamacpp-service",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-llamacpp-service",
+      "scripts": [
+        "build",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "seed:catalog",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-llamacpp-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-memory-service",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-memory-service",
+      "scripts": [
+        "build",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "migrate",
+        "migrate:dev",
+        "prisma:generate",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-memory-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-ollama-service",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-ollama-service",
+      "scripts": [
+        "build",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "seed:catalog",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-ollama-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-research-service",
+      "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-research-service",
+      "scripts": [
+        "build",
+        "db:reset",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "migrate",
+        "migrate:dev",
+        "prisma:generate",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-research-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-routing-service",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-routing-service",
+      "scripts": [
+        "build",
+        "db:reset",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "migrate",
+        "migrate:dev",
+        "prisma:generate",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-routing-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-server-logs-service",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-server-logs-service",
+      "scripts": [
+        "build",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-server-logs-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-workspace-service",
+      "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-workspace-service",
+      "scripts": [
+        "build",
+        "db:reset",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "migrate",
+        "migrate:dev",
+        "prisma:generate",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-workspace-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "packages/shared-auth",
+      "internalDeps": [
+        "@claw/shared-types"
+      ],
+      "name": "@claw/shared-auth",
+      "scripts": [
+        "build",
+        "lint",
+        "lint:fix",
+        "test",
+        "test:watch",
+        "typecheck"
+      ],
+      "source": "packages/shared-auth/package.json",
+      "type": "shared-package"
+    },
+    {
+      "dir": "packages/shared-constants",
+      "internalDeps": [],
+      "name": "@claw/shared-constants",
+      "scripts": [
+        "build",
+        "lint",
+        "lint:fix",
+        "test",
+        "test:watch",
+        "typecheck"
+      ],
+      "source": "packages/shared-constants/package.json",
+      "type": "shared-package"
+    },
+    {
+      "dir": "packages/shared-entitlements",
+      "internalDeps": [
+        "@claw/shared-types"
+      ],
+      "name": "@claw/shared-entitlements",
+      "scripts": [
+        "build",
+        "lint",
+        "lint:fix",
+        "test",
+        "test:watch",
+        "typecheck"
+      ],
+      "source": "packages/shared-entitlements/package.json",
+      "type": "shared-package"
+    },
+    {
+      "dir": "packages/shared-rabbitmq",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-types"
+      ],
+      "name": "@claw/shared-rabbitmq",
+      "scripts": [
+        "build",
+        "lint",
+        "lint:fix",
+        "test",
+        "test:watch",
+        "typecheck"
+      ],
+      "source": "packages/shared-rabbitmq/package.json",
+      "type": "shared-package"
+    },
+    {
+      "dir": "packages/shared-types",
+      "internalDeps": [],
+      "name": "@claw/shared-types",
+      "scripts": [
+        "build",
+        "lint",
+        "lint:fix",
+        "test",
+        "test:watch",
+        "typecheck"
+      ],
+      "source": "packages/shared-types/package.json",
+      "type": "shared-package"
+    },
+    {
+      "dir": "packages/shared-utilities",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-types"
+      ],
+      "name": "@claw/shared-utilities",
+      "scripts": [
+        "build",
+        "lint",
+        "lint:fix",
+        "test",
+        "test:watch",
+        "typecheck"
+      ],
+      "source": "packages/shared-utilities/package.json",
+      "type": "shared-package"
+    }
+  ]
+}

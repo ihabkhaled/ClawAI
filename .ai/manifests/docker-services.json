@@ -1,0 +1,286 @@
+{
+  "generated": true,
+  "services": [
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "agent-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "audit-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "auth-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "chat-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "clamav"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "client-logs-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.ollama.yml",
+        "docker/docker-compose.prod.ollama.yml"
+      ],
+      "name": "comfyui"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "connector-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "file-generation-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "file-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "frontend"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "health-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "image-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.gpu-nvidia.yml",
+        "docker/docker-compose.dev.gpu-rocm.yml",
+        "docker/docker-compose.dev.gpu-vulkan.yml",
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.gpu-nvidia.yml",
+        "docker/docker-compose.prod.gpu-rocm.yml",
+        "docker/docker-compose.prod.gpu-vulkan.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "llamacpp-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "memory-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "mongodb"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "nginx"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.ollama.gpu-nvidia.yml",
+        "docker/docker-compose.dev.ollama.yml",
+        "docker/docker-compose.prod.ollama.gpu-nvidia.yml",
+        "docker/docker-compose.prod.ollama.yml"
+      ],
+      "name": "ollama"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "ollama-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "pg-agent"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "pg-auth"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "pg-chat"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "pg-connector"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "pg-file-generations"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "pg-files"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "pg-images"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "pg-llamacpp"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "pg-memory"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "pg-ollama"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "pg-research"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "pg-routing"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "pg-workspace"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "rabbitmq"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "redis"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "research-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "routing-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "server-logs-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.ollama.yml",
+        "docker/docker-compose.prod.ollama.yml"
+      ],
+      "name": "stable-diffusion"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "workspace-service"
+    }
+  ]
+}

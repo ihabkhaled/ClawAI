@@ -1,0 +1,45 @@
+{
+  "generated": true,
+  "packages": [
+    {
+      "dir": "packages/shared-auth",
+      "internalDeps": [
+        "@claw/shared-types"
+      ],
+      "name": "@claw/shared-auth"
+    },
+    {
+      "dir": "packages/shared-constants",
+      "internalDeps": [],
+      "name": "@claw/shared-constants"
+    },
+    {
+      "dir": "packages/shared-entitlements",
+      "internalDeps": [
+        "@claw/shared-types"
+      ],
+      "name": "@claw/shared-entitlements"
+    },
+    {
+      "dir": "packages/shared-rabbitmq",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-types"
+      ],
+      "name": "@claw/shared-rabbitmq"
+    },
+    {
+      "dir": "packages/shared-types",
+      "internalDeps": [],
+      "name": "@claw/shared-types"
+    },
+    {
+      "dir": "packages/shared-utilities",
+      "internalDeps": [
+        "@claw/shared-constants",
+        "@claw/shared-types"
+      ],
+      "name": "@claw/shared-utilities"
+    }
+  ]
+}

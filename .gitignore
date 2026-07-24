@@ -106,3 +106,10 @@ deploy/vercel/generated/
 # Empty static output dir the Vercel buildCommand creates for Nest services.
 # The frontend has a real, committed public/ — only service dirs are ignored.
 apps/claw-*-service/public/
+
+# --- AI-native engineering OS ---
+# Generated .ai knowledge layer is COMMITTED except the per-developer local
+# context bundle, which is machine-specific and regenerated on demand.
+.ai/local/
+# Audit working copy (the committed snapshot lives under docs/features/).
+.audit/
