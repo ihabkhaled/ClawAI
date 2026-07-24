@@ -11,7 +11,11 @@ import { isMain } from '../lib/repo.mjs';
 import { cmp } from '../lib/fact.mjs';
 
 // npm is npm.cmd on Windows; execFileSync can't spawn a .cmd without a shell.
-const NPM = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+// Node's post-CVE-2024-27980 behavior throws EINVAL when spawning a .cmd/.bat
+// without shell:true, so the NPM invocation below MUST pass IS_WINDOWS as its
+// `shell` option — otherwise every workspace gate silently fails on Windows.
+const IS_WINDOWS = process.platform === 'win32';
+const NPM = IS_WINDOWS ? 'npm.cmd' : 'npm';
 
 function gitLines(args) {
   try {
@@ -124,7 +128,14 @@ function runGate(script, base, expandRoot, stagedOnly) {
   for (const name of list) {
     console.log(`\n▶ ${name}: npm run ${script}`);
     try {
-      execFileSync(NPM, ['run', script, '--workspace', name], { stdio: 'inherit' });
+      // shell:true on Windows so npm.cmd can be spawned (see IS_WINDOWS note
+      // above). `script` is a fixed gate name and `name` is a repo workspace
+      // slug from the manifest — neither is user-controlled, so shell quoting
+      // is not an injection surface here.
+      execFileSync(NPM, ['run', script, '--workspace', name], {
+        stdio: 'inherit',
+        shell: IS_WINDOWS,
+      });
     } catch {
       console.error(`✖ ${name} failed npm run ${script}`);
       process.exit(1);
