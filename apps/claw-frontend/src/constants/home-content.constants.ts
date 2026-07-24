@@ -7,171 +7,124 @@ import type {
   UseCaseEntry,
 } from '@/types/home-content.types';
 
+// Each array holds i18n key references; the section components resolve them
+// with t(). The English source + all translations live under the
+// marketing.home namespace in the locale files.
 export const ROUTING_MODES: ReadonlyArray<RoutingModeDescriptor> = [
   {
-    name: 'Auto',
-    description:
-      'a five-stage pipeline (privacy, image, file, category, then a local-model or heuristic classifier) picks a provider and model per message',
-  },
-  { name: 'Manual', description: 'you pin a specific provider and model for a thread' },
-  {
-    name: 'Local-only',
-    description:
-      'every request stays on your local runtime, category-aware (coding, reasoning, or general)',
+    nameKey: 'marketing.home.routing.modeAutoName',
+    descKey: 'marketing.home.routing.modeAutoDesc',
   },
   {
-    name: 'Privacy-first',
-    description:
-      'local when healthy, falling back to a configured cloud provider only when necessary',
+    nameKey: 'marketing.home.routing.modeManualName',
+    descKey: 'marketing.home.routing.modeManualDesc',
   },
   {
-    name: 'Low-latency / High-reasoning / Cost-saver',
-    description: 'bias routing toward speed, reasoning depth, or the cheapest healthy option',
+    nameKey: 'marketing.home.routing.modeLocalName',
+    descKey: 'marketing.home.routing.modeLocalDesc',
+  },
+  {
+    nameKey: 'marketing.home.routing.modePrivacyName',
+    descKey: 'marketing.home.routing.modePrivacyDesc',
+  },
+  {
+    nameKey: 'marketing.home.routing.modeBiasName',
+    descKey: 'marketing.home.routing.modeBiasDesc',
   },
 ];
 
 export const MESSAGE_FLOW_STEPS: ReadonlyArray<MessageFlowStep> = [
   {
-    title: 'You send a message',
-    description: 'in a thread, optionally attaching files or pinning a provider and model.',
+    titleKey: 'marketing.home.howItWorks.step1Title',
+    descKey: 'marketing.home.howItWorks.step1Desc',
   },
   {
-    title: 'Routing decides where it goes',
-    description: 'based on the active routing mode, message content, and connector health.',
+    titleKey: 'marketing.home.howItWorks.step2Title',
+    descKey: 'marketing.home.howItWorks.step2Desc',
   },
   {
-    title: 'Context is assembled',
-    description:
-      'relevant memories, attached context packs, and file chunks are retrieved and merged into the prompt within a token budget, alongside the thread history.',
+    titleKey: 'marketing.home.howItWorks.step3Title',
+    descKey: 'marketing.home.howItWorks.step3Desc',
   },
   {
-    title: 'The model responds',
-    description:
-      'streamed back over a live connection with token, reasoning, and metric updates as they happen, with automatic fallback if a provider fails.',
+    titleKey: 'marketing.home.howItWorks.step4Title',
+    descKey: 'marketing.home.howItWorks.step4Desc',
   },
   {
-    title: 'The exchange is remembered',
-    description:
-      'facts, preferences, and instructions worth keeping are extracted for future conversations, and the full exchange is recorded for audit.',
+    titleKey: 'marketing.home.howItWorks.step5Title',
+    descKey: 'marketing.home.howItWorks.step5Desc',
   },
 ];
 
 export const ORCHESTRATION_PRIMITIVES: ReadonlyArray<OrchestrationPrimitive> = [
   {
-    name: 'Parallel compare',
-    description:
-      'send one prompt to two to five models at once and see every response side by side, with per-model latency and token counts.',
+    nameKey: 'marketing.home.features.compareName',
+    descKey: 'marketing.home.features.compareDesc',
   },
   {
-    name: 'Consensus',
-    description:
-      'run the same prompt across several models and synthesize a single answer from where they agree.',
+    nameKey: 'marketing.home.features.consensusName',
+    descKey: 'marketing.home.features.consensusDesc',
   },
   {
-    name: 'Escalation chains',
-    description:
-      'start with a fast, cheap model and automatically escalate to a stronger one when quality falls short of a threshold.',
+    nameKey: 'marketing.home.features.escalationName',
+    descKey: 'marketing.home.features.escalationDesc',
   },
   {
-    name: 'Best-of-N',
-    description:
-      'generate several candidate answers and select the strongest one by a scoring pass.',
+    nameKey: 'marketing.home.features.bestOfNName',
+    descKey: 'marketing.home.features.bestOfNDesc',
+  },
+  { nameKey: 'marketing.home.features.repairName', descKey: 'marketing.home.features.repairDesc' },
+  { nameKey: 'marketing.home.features.verifyName', descKey: 'marketing.home.features.verifyDesc' },
+  {
+    nameKey: 'marketing.home.features.rolePackName',
+    descKey: 'marketing.home.features.rolePackDesc',
   },
   {
-    name: 'Answer repair',
-    description:
-      'detect and correct specific classes of errors in a prior response rather than regenerating from scratch.',
+    nameKey: 'marketing.home.features.pipelineName',
+    descKey: 'marketing.home.features.pipelineDesc',
   },
-  {
-    name: 'Verification',
-    description:
-      'have a second pass check a response for correctness before it reaches you, with configurable revision limits.',
-  },
-  {
-    name: 'Role packs',
-    description:
-      'run a prompt through a small team of role-specialized models (for example, a planner, a critic, and a writer) that hand off to one another.',
-  },
-  {
-    name: 'Pipelines',
-    description: 'chain multiple orchestration stages into a single named, repeatable workflow.',
-  },
-  {
-    name: 'Judge & Critic review',
-    description:
-      'an optional independent model reviews and scores a generated response before it is treated as final.',
-  },
+  { nameKey: 'marketing.home.features.judgeName', descKey: 'marketing.home.features.judgeDesc' },
 ];
 
 export const INTEGRATION_HIGHLIGHTS: ReadonlyArray<IntegrationHighlight> = [
   {
-    name: 'Workspace connectors',
-    description:
-      'connect GitHub, GitLab, Jira, Slack, Google Drive, OneDrive, SharePoint, Confluence, Figma, Gmail, Bitbucket, and ClickUp via OAuth2/PKCE, with webhook and scheduled background sync so ClawAI can search and act on your existing tools.',
+    nameKey: 'marketing.home.integrations.workspaceName',
+    descKey: 'marketing.home.integrations.workspaceDesc',
   },
   {
-    name: 'Desktop agent',
-    description:
-      'a companion agent that can propose filesystem, process, browser, and terminal actions on a paired device, each classified by risk and blast radius.',
+    nameKey: 'marketing.home.integrations.agentName',
+    descKey: 'marketing.home.integrations.agentDesc',
   },
   {
-    name: 'Human approval',
-    description:
-      'sensitive or high-impact agent actions require your explicit approval before they run, and every invocation is logged with an undo plan when one exists.',
+    nameKey: 'marketing.home.integrations.approvalName',
+    descKey: 'marketing.home.integrations.approvalDesc',
   },
   {
-    name: 'Image generation',
-    description:
-      'generate images through local Stable Diffusion / ComfyUI runtimes or connected cloud image providers.',
+    nameKey: 'marketing.home.integrations.imageName',
+    descKey: 'marketing.home.integrations.imageDesc',
   },
   {
-    name: 'File & document generation',
-    description: 'export structured output as PDF, DOCX, CSV, HTML, Markdown, TXT, or JSON.',
+    nameKey: 'marketing.home.integrations.fileGenName',
+    descKey: 'marketing.home.integrations.fileGenDesc',
   },
 ];
 
 export const FAQ_ENTRIES: ReadonlyArray<FaqEntry> = [
-  {
-    question: 'Do I need a cloud API key to use ClawAI?',
-    answer:
-      'No. ClawAI ships with a local Ollama-based runtime that handles routing and chat out of the box. Cloud providers are optional connectors you can add if you want them.',
-  },
-  {
-    question: 'Can I self-host the whole platform?',
-    answer:
-      'Yes. ClawAI is designed to run on your own infrastructure via Docker Compose, with local TLS, its own PostgreSQL and MongoDB instances, and no required external services.',
-  },
-  {
-    question: 'What happens to data I send to a cloud provider?',
-    answer:
-      'That depends on the provider you connect and the routing mode you choose. Privacy-first and local-only modes keep requests on your local runtime; routing decisions record which provider handled each message so you can audit where your data went.',
-  },
-  {
-    question: 'Is ClawAI affiliated with OpenAI, Anthropic, Google, or AWS?',
-    answer:
-      'No. ClawAI is an independent, open-source orchestration layer that can connect to those providers’ APIs when you configure your own credentials. It is not endorsed by or affiliated with them.',
-  },
+  { questionKey: 'marketing.home.faq.q1', answerKey: 'marketing.home.faq.a1' },
+  { questionKey: 'marketing.home.faq.q2', answerKey: 'marketing.home.faq.a2' },
+  { questionKey: 'marketing.home.faq.q3', answerKey: 'marketing.home.faq.a3' },
+  { questionKey: 'marketing.home.faq.q4', answerKey: 'marketing.home.faq.a4' },
 ];
 
 export const USE_CASE_ENTRIES: ReadonlyArray<UseCaseEntry> = [
   {
-    name: 'Privacy-conscious teams',
-    description:
-      'keep sensitive conversations and documents on infrastructure you control, with cloud models available only when you choose to use them.',
+    nameKey: 'marketing.home.useCases.privacyName',
+    descKey: 'marketing.home.useCases.privacyDesc',
   },
+  { nameKey: 'marketing.home.useCases.devName', descKey: 'marketing.home.useCases.devDesc' },
   {
-    name: 'Developers evaluating models',
-    description:
-      'compare responses from multiple local and cloud models side by side on the same prompt before committing to one.',
+    nameKey: 'marketing.home.useCases.selfHostName',
+    descKey: 'marketing.home.useCases.selfHostDesc',
   },
-  {
-    name: 'Self-hosters and homelab users',
-    description:
-      'run a full AI assistant stack, including local model management, on hardware you own.',
-  },
-  {
-    name: 'Small teams automating workflows',
-    description:
-      'connect existing tools (issue trackers, chat, docs, source control) and let approval-gated agent actions handle routine work.',
-  },
+  { nameKey: 'marketing.home.useCases.teamName', descKey: 'marketing.home.useCases.teamDesc' },
 ];

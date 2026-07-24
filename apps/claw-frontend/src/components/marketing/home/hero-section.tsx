@@ -1,33 +1,32 @@
+'use client';
+
 import Link from 'next/link';
 
-import { buttonVariants } from '@/components/ui/button-variants';
+import { buttonVariants } from '@/components/ui/button';
 import { MARKETING_GITHUB_URL, ROUTES } from '@/constants';
+import { useTranslation } from '@/lib/i18n';
 import type { HomeHeroProps } from '@/types';
 
 export function HeroSection({ lastReviewed }: HomeHeroProps): React.ReactElement {
+  const { t } = useTranslation();
+
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 sm:py-24 lg:px-8">
       <h1 className="text-foreground text-4xl font-bold tracking-tight sm:text-5xl">
-        Local-first AI orchestration, without giving up cloud models
+        {t('marketing.home.hero.title')}
       </h1>
       <p className="text-muted-foreground mx-auto mt-6 max-w-2xl text-lg">
-        ClawAI is a self-hosted platform that runs local AI models alongside cloud providers such as
-        OpenAI, Anthropic, Gemini, AWS Bedrock, DeepSeek, and Grok, and routes each request to the
-        model best suited for it. It exists for teams and individuals who want the convenience of a
-        modern AI assistant &mdash; chat, memory, file understanding, workspace integrations, image
-        and document generation &mdash; while keeping sensitive data and model choice under their
-        own control instead of a single vendor&apos;s.
+        {t('marketing.home.hero.subtitle')}
       </p>
-      {/* This section has no 'use client' directive — it is a real Server
-       * Component, so it renders with buttonVariants() (a plain className
-       * function) rather than the <Button asChild> component, whose Radix
-       * Slot dependency is not safe to import into a Server Component. */}
+      {/* Real Server-rendered content that also hydrates for locale switching:
+       * buttonVariants() (a plain className fn) is used instead of the Radix
+       * <Button asChild> component. */}
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <Link href={ROUTES.CHAT} className={buttonVariants({ size: 'lg' })}>
-          Open Claw
+          {t('marketing.home.hero.ctaOpen')}
         </Link>
         <Link href={ROUTES.LOGIN} className={buttonVariants({ size: 'lg', variant: 'outline' })}>
-          Log in
+          {t('marketing.home.hero.ctaLogin')}
         </Link>
         <a
           href={MARKETING_GITHUB_URL}
@@ -35,10 +34,12 @@ export function HeroSection({ lastReviewed }: HomeHeroProps): React.ReactElement
           rel="noopener noreferrer"
           className={buttonVariants({ size: 'lg', variant: 'ghost' })}
         >
-          View on GitHub
+          {t('marketing.home.hero.ctaGithub')}
         </a>
       </div>
-      <p className="text-muted-foreground mt-10 text-xs">Last reviewed {lastReviewed}</p>
+      <p className="text-muted-foreground mt-10 text-xs">
+        {t('marketing.home.hero.lastReviewed')} {lastReviewed}
+      </p>
     </section>
   );
 }

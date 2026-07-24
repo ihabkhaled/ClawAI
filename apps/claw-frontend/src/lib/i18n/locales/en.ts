@@ -3378,5 +3378,164 @@ export const en: TranslationDictionary = {
       description: "The page you're looking for doesn't exist or may have moved.",
       backHome: 'Back to home',
     },
+    home: {
+      hero: {
+        title: 'Local-first AI orchestration, without giving up cloud models',
+        subtitle:
+          'ClawAI is a self-hosted platform that runs local AI models alongside cloud providers such as OpenAI, Anthropic, Gemini, AWS Bedrock, DeepSeek, and Grok, and routes each request to the model best suited for it. It exists for teams and individuals who want the convenience of a modern AI assistant — chat, memory, file understanding, workspace integrations, image and document generation — while keeping sensitive data and model choice under their own control instead of a single vendor’s.',
+        ctaOpen: 'Open Claw',
+        ctaLogin: 'Log in',
+        ctaGithub: 'View on GitHub',
+        lastReviewed: 'Last reviewed',
+      },
+      localFirst: {
+        title: 'Local-first, cloud-optional',
+        body1:
+          'ClawAI runs an Ollama-based local AI runtime out of the box, so a working chat experience is available on your own hardware without any external API keys. Local models handle routing decisions, memory extraction, and everyday chat by default, and can be assigned specialized roles — coding, reasoning, file generation, or agentic “thinking” tasks — from a built-in catalog of curated open models spanning routing-sized models up to large general-purpose and reasoning models.',
+        body2:
+          'Cloud providers are entirely optional. When you connect OpenAI, Anthropic, Gemini, AWS Bedrock, DeepSeek, or Grok, ClawAI treats them as additional routing targets rather than a replacement for the local runtime — you choose per thread, per message, or let the router decide, and you can run with no cloud connectors configured at all if that is what your deployment requires.',
+      },
+      routing: {
+        title: 'Routing that adapts to the request, not the other way around',
+        intro:
+          'Every message can be classified into one of several dozen capability categories — coding, data analysis, creative writing, security, legal, medical, and more — and routed accordingly. Seven routing modes cover the range from fully automatic to fully manual:',
+        outro:
+          'Connectors are health-checked continuously, and routing decisions record a confidence score, the reasoning tags behind the choice, and a fallback chain so a failing provider does not stall a conversation. A Routing Replay Lab lets you re-run historical routing decisions against the current configuration to see what would change before you adopt a new policy.',
+        modeAutoName: 'Auto',
+        modeAutoDesc:
+          'a five-stage pipeline (privacy, image, file, category, then a local-model or heuristic classifier) picks a provider and model per message',
+        modeManualName: 'Manual',
+        modeManualDesc: 'you pin a specific provider and model for a thread',
+        modeLocalName: 'Local-only',
+        modeLocalDesc:
+          'every request stays on your local runtime, category-aware (coding, reasoning, or general)',
+        modePrivacyName: 'Privacy-first',
+        modePrivacyDesc:
+          'local when healthy, falling back to a configured cloud provider only when necessary',
+        modeBiasName: 'Low-latency / High-reasoning / Cost-saver',
+        modeBiasDesc: 'bias routing toward speed, reasoning depth, or the cheapest healthy option',
+      },
+      howItWorks: {
+        title: 'What happens when you send a message',
+        outro:
+          'Memory and context are opt-in per thread. Facts, preferences, and instructions are classified by sensitivity, can be scoped to a user, thread, project, or workspace, and every memory used in a response is recorded in a context receipt so you can see exactly what informed a given answer. Context packs let you bundle reusable text, files, URLs, and memory references into a named collection you attach to any thread. Uploaded files are chunked and retrieved the same way, so ClawAI can answer questions grounded in your own documents rather than the model’s training data alone.',
+        step1Title: 'You send a message',
+        step1Desc: 'in a thread, optionally attaching files or pinning a provider and model.',
+        step2Title: 'Routing decides where it goes',
+        step2Desc: 'based on the active routing mode, message content, and connector health.',
+        step3Title: 'Context is assembled',
+        step3Desc:
+          'relevant memories, attached context packs, and file chunks are retrieved and merged into the prompt within a token budget, alongside the thread history.',
+        step4Title: 'The model responds',
+        step4Desc:
+          'streamed back over a live connection with token, reasoning, and metric updates as they happen, with automatic fallback if a provider fails.',
+        step5Title: 'The exchange is remembered',
+        step5Desc:
+          'facts, preferences, and instructions worth keeping are extracted for future conversations, and the full exchange is recorded for audit.',
+      },
+      features: {
+        title: 'Beyond a single chat window',
+        intro:
+          'When one model’s answer isn’t enough on its own, ClawAI offers several ways to combine, check, and improve on it.',
+        compareName: 'Parallel compare',
+        compareDesc:
+          'send one prompt to two to five models at once and see every response side by side, with per-model latency and token counts.',
+        consensusName: 'Consensus',
+        consensusDesc:
+          'run the same prompt across several models and synthesize a single answer from where they agree.',
+        escalationName: 'Escalation chains',
+        escalationDesc:
+          'start with a fast, cheap model and automatically escalate to a stronger one when quality falls short of a threshold.',
+        bestOfNName: 'Best-of-N',
+        bestOfNDesc:
+          'generate several candidate answers and select the strongest one by a scoring pass.',
+        repairName: 'Answer repair',
+        repairDesc:
+          'detect and correct specific classes of errors in a prior response rather than regenerating from scratch.',
+        verifyName: 'Verification',
+        verifyDesc:
+          'have a second pass check a response for correctness before it reaches you, with configurable revision limits.',
+        rolePackName: 'Role packs',
+        rolePackDesc:
+          'run a prompt through a small team of role-specialized models (for example, a planner, a critic, and a writer) that hand off to one another.',
+        pipelineName: 'Pipelines',
+        pipelineDesc:
+          'chain multiple orchestration stages into a single named, repeatable workflow.',
+        judgeName: 'Judge & Critic review',
+        judgeDesc:
+          'an optional independent model reviews and scores a generated response before it is treated as final.',
+      },
+      integrations: {
+        title: 'Connected to where your work already happens',
+        intro:
+          'ClawAI reaches beyond the chat window into the tools you already use, and can act on your behalf under explicit human approval.',
+        workspaceName: 'Workspace connectors',
+        workspaceDesc:
+          'connect GitHub, GitLab, Jira, Slack, Google Drive, OneDrive, SharePoint, Confluence, Figma, Gmail, Bitbucket, and ClickUp via OAuth2/PKCE, with webhook and scheduled background sync so ClawAI can search and act on your existing tools.',
+        agentName: 'Desktop agent',
+        agentDesc:
+          'a companion agent that can propose filesystem, process, browser, and terminal actions on a paired device, each classified by risk and blast radius.',
+        approvalName: 'Human approval',
+        approvalDesc:
+          'sensitive or high-impact agent actions require your explicit approval before they run, and every invocation is logged with an undo plan when one exists.',
+        imageName: 'Image generation',
+        imageDesc:
+          'generate images through local Stable Diffusion / ComfyUI runtimes or connected cloud image providers.',
+        fileGenName: 'File & document generation',
+        fileGenDesc: 'export structured output as PDF, DOCX, CSV, HTML, Markdown, TXT, or JSON.',
+      },
+      architecture: {
+        title: 'Built as independent services, not one monolith',
+        body1:
+          'ClawAI is a set of focused backend services — authentication, chat, connectors, routing, memory, files, image and file generation, workspace, the desktop agent runtime, research, and a local model runtime among them — each owning its own database and communicating over an internal event bus and HTTP, behind a single reverse proxy. A Next.js frontend talks to all of them through one API surface. This separation means a failure or slowdown in one area, such as image generation, does not take down chat or routing.',
+        body2:
+          'Every account has a role with a specific permission set, enforced on both the frontend and every backend endpoint. Logins, connector changes, routing decisions, memory actions, generated content, and agent actions are all written to an audit log. An observability view aggregates health checks across every service so operational problems are visible in one place instead of buried in individual logs.',
+      },
+      selfHosting: {
+        title: 'Run it yourself',
+        body1:
+          'ClawAI is designed to be self-hosted from the start. A single setup script provisions every database, service, and the reverse proxy through Docker Compose, with automatic GPU detection for NVIDIA, AMD ROCm, and Intel/Vulkan hosts. Local HTTPS is configured out of the box so every hop between the browser, the proxy, and each backend service is encrypted, even in local development. The full source is available on GitHub for anyone who wants to inspect, self-host, or extend it.',
+      },
+      security: {
+        title: 'Privacy, data control, and honest limitations',
+        body1:
+          'Choosing a local-only or privacy-first routing mode keeps requests on infrastructure you control; choosing to connect a cloud provider means that provider’s own terms and data handling apply to the requests you send it. ClawAI records which provider handled each message so that choice is always auditable after the fact, rather than asking you to simply trust that it happened. Connector credentials are encrypted at rest, and desktop agent actions above a configurable risk threshold require your explicit approval before they run.',
+        body2:
+          'ClawAI does not eliminate the general risks of working with AI models: outputs can still be wrong, incomplete, or biased regardless of which provider generated them, and no orchestration layer can fully substitute for reviewing sensitive or high-stakes output yourself. Verification and judge/critic review reduce, but do not remove, the need for human judgment on anything consequential.',
+      },
+      useCases: {
+        title: 'Who ClawAI is for',
+        privacyName: 'Privacy-conscious teams',
+        privacyDesc:
+          'keep sensitive conversations and documents on infrastructure you control, with cloud models available only when you choose to use them.',
+        devName: 'Developers evaluating models',
+        devDesc:
+          'compare responses from multiple local and cloud models side by side on the same prompt before committing to one.',
+        selfHostName: 'Self-hosters and homelab users',
+        selfHostDesc:
+          'run a full AI assistant stack, including local model management, on hardware you own.',
+        teamName: 'Small teams automating workflows',
+        teamDesc:
+          'connect existing tools (issue trackers, chat, docs, source control) and let approval-gated agent actions handle routine work.',
+      },
+      faq: {
+        title: 'Frequently asked questions',
+        q1: 'Do I need a cloud API key to use ClawAI?',
+        a1: 'No. ClawAI ships with a local Ollama-based runtime that handles routing and chat out of the box. Cloud providers are optional connectors you can add if you want them.',
+        q2: 'Can I self-host the whole platform?',
+        a2: 'Yes. ClawAI is designed to run on your own infrastructure via Docker Compose, with local TLS, its own PostgreSQL and MongoDB instances, and no required external services.',
+        q3: 'What happens to data I send to a cloud provider?',
+        a3: 'That depends on the provider you connect and the routing mode you choose. Privacy-first and local-only modes keep requests on your local runtime; routing decisions record which provider handled each message so you can audit where your data went.',
+        q4: 'Is ClawAI affiliated with OpenAI, Anthropic, Google, or AWS?',
+        a4: 'No. ClawAI is an independent, open-source orchestration layer that can connect to those providers’ APIs when you configure your own credentials. It is not endorsed by or affiliated with them.',
+      },
+      cta: {
+        title: 'Try ClawAI on your own terms',
+        subtitle:
+          'Log in to an existing deployment, or clone the repository and run the setup script to stand up your own.',
+        ctaOpen: 'Open Claw',
+        ctaGithub: 'Get the source on GitHub',
+      },
+    },
   },
 };

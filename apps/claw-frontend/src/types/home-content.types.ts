@@ -1,29 +1,33 @@
+// Homepage content descriptors. Each holds i18n KEY references (not literal
+// copy) so the section components render translated strings via t(). The
+// English source (and all 8 translations) live under the marketing.home
+// namespace in the locale files.
 export type RoutingModeDescriptor = {
-  name: string;
-  description: string;
+  nameKey: string;
+  descKey: string;
 };
 
 export type MessageFlowStep = {
-  title: string;
-  description: string;
+  titleKey: string;
+  descKey: string;
 };
 
 export type OrchestrationPrimitive = {
-  name: string;
-  description: string;
+  nameKey: string;
+  descKey: string;
 };
 
 export type IntegrationHighlight = {
-  name: string;
-  description: string;
+  nameKey: string;
+  descKey: string;
 };
 
 export type FaqEntry = {
-  question: string;
-  answer: string;
+  questionKey: string;
+  answerKey: string;
 };
 
 export type UseCaseEntry = {
-  name: string;
-  description: string;
+  nameKey: string;
+  descKey: string;
 };

@@ -3335,6 +3335,108 @@ export type TranslationDictionary = {
       description: string;
       backHome: string;
     };
+    home: {
+      hero: {
+        title: string;
+        subtitle: string;
+        ctaOpen: string;
+        ctaLogin: string;
+        ctaGithub: string;
+        lastReviewed: string;
+      };
+      localFirst: { title: string; body1: string; body2: string };
+      routing: {
+        title: string;
+        intro: string;
+        outro: string;
+        modeAutoName: string;
+        modeAutoDesc: string;
+        modeManualName: string;
+        modeManualDesc: string;
+        modeLocalName: string;
+        modeLocalDesc: string;
+        modePrivacyName: string;
+        modePrivacyDesc: string;
+        modeBiasName: string;
+        modeBiasDesc: string;
+      };
+      howItWorks: {
+        title: string;
+        outro: string;
+        step1Title: string;
+        step1Desc: string;
+        step2Title: string;
+        step2Desc: string;
+        step3Title: string;
+        step3Desc: string;
+        step4Title: string;
+        step4Desc: string;
+        step5Title: string;
+        step5Desc: string;
+      };
+      features: {
+        title: string;
+        intro: string;
+        compareName: string;
+        compareDesc: string;
+        consensusName: string;
+        consensusDesc: string;
+        escalationName: string;
+        escalationDesc: string;
+        bestOfNName: string;
+        bestOfNDesc: string;
+        repairName: string;
+        repairDesc: string;
+        verifyName: string;
+        verifyDesc: string;
+        rolePackName: string;
+        rolePackDesc: string;
+        pipelineName: string;
+        pipelineDesc: string;
+        judgeName: string;
+        judgeDesc: string;
+      };
+      integrations: {
+        title: string;
+        intro: string;
+        workspaceName: string;
+        workspaceDesc: string;
+        agentName: string;
+        agentDesc: string;
+        approvalName: string;
+        approvalDesc: string;
+        imageName: string;
+        imageDesc: string;
+        fileGenName: string;
+        fileGenDesc: string;
+      };
+      architecture: { title: string; body1: string; body2: string };
+      selfHosting: { title: string; body1: string };
+      security: { title: string; body1: string; body2: string };
+      useCases: {
+        title: string;
+        privacyName: string;
+        privacyDesc: string;
+        devName: string;
+        devDesc: string;
+        selfHostName: string;
+        selfHostDesc: string;
+        teamName: string;
+        teamDesc: string;
+      };
+      faq: {
+        title: string;
+        q1: string;
+        a1: string;
+        q2: string;
+        a2: string;
+        q3: string;
+        a3: string;
+        q4: string;
+        a4: string;
+      };
+      cta: { title: string; subtitle: string; ctaOpen: string; ctaGithub: string };
+    };
   };
 };
 
