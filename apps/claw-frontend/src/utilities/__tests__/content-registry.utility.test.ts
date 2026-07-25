@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { CONTENT_REGISTRY } from '@/constants/content-registry.constants';
-import { ContentLifecycleStatus, Indexability, AdEligibility } from '@/enums';
+import { ContentLifecycleStatus, ContentReviewStatus, Indexability, AdEligibility } from '@/enums';
 import {
   getAdEligiblePages,
   getIndexablePages,
@@ -37,10 +37,22 @@ describe('content registry integrity', () => {
     }
   });
 
-  it('publishes the homepage and the contact page (both indexable)', () => {
+  // Deliberately an explicit list rather than a derived one: this is the
+  // tripwire that catches a page being flipped to PUBLISHED without anyone
+  // reviewing it, since publishing also makes it indexable and linkable.
+  it('publishes exactly the home, contact and six topic pages (all indexable)', () => {
     const published = getPublishedPages();
     const paths = published.map((page) => page.canonicalPath).sort();
-    expect(paths).toEqual(['/', '/contact']);
+    expect(paths).toEqual([
+      '/',
+      '/architecture',
+      '/contact',
+      '/faq',
+      '/features',
+      '/how-it-works',
+      '/local-first-ai',
+      '/use-cases',
+    ]);
     for (const page of published) {
       expect(page.indexability).toBe(Indexability.INDEXABLE);
     }
@@ -54,11 +66,23 @@ describe('getIndexablePages / getAdEligiblePages defense in depth', () => {
     }
   });
 
-  it('getAdEligiblePages returns only the reviewed, published homepage', () => {
+  // Contact and the organisation-facing deployment page are sales/support
+  // surfaces, so they are published and indexable but never ad surfaces.
+  it('returns only reviewed, published editorial pages as ad surfaces', () => {
     const eligible = getAdEligiblePages();
-    expect(eligible).toHaveLength(1);
-    expect(eligible[0]?.canonicalPath).toBe('/');
-    expect(eligible[0]?.status).toBe(ContentLifecycleStatus.PUBLISHED);
+    const paths = eligible.map((page) => page.canonicalPath).sort();
+    expect(paths).toEqual([
+      '/',
+      '/architecture',
+      '/faq',
+      '/features',
+      '/how-it-works',
+      '/use-cases',
+    ]);
+    for (const page of eligible) {
+      expect(page.status).toBe(ContentLifecycleStatus.PUBLISHED);
+      expect(page.reviewStatus).toBe(ContentReviewStatus.REVIEWED);
+    }
   });
 });
 

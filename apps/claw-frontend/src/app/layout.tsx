@@ -70,8 +70,28 @@ export default async function RootLayout({
       className={inter.variable}
     >
       <head>
+        {/*
+         * suppressHydrationWarning is REQUIRED here, not cosmetic.
+         *
+         * The HTML spec makes browsers "hide" a nonce: once the element is
+         * parsed, the value is moved into an internal slot (readable only via
+         * the `.nonce` IDL property) and the content attribute is blanked to
+         * "". That exists so a CSS selector like script[nonce="..."] cannot
+         * exfiltrate the nonce.
+         *
+         * The consequence is that at hydration React reads
+         * getAttribute('nonce') === "" and compares it against the
+         * server-rendered nonce="<value>", which it reports as a mismatch.
+         * The markup is correct and the CSP is working — only the comparison
+         * is meaningless.
+         *
+         * The suppressHydrationWarning on <html> does NOT cover this: the prop
+         * applies to the element it is set on and its own text content, and
+         * does not cascade to descendants.
+         */}
         <script
           nonce={nonce}
+          suppressHydrationWarning
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
         />

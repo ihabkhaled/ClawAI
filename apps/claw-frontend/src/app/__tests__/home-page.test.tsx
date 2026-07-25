@@ -3,11 +3,13 @@ import { describe, expect, it } from 'vitest';
 
 import HomePage, { generateMetadata } from '@/app/(marketing)/page';
 import { LocaleProvider } from '@/lib/i18n';
+import { getPageBySlug } from '@/utilities/content-registry.utility';
 
 // The homepage sections are client components that read copy via
-// useTranslation, so they must render inside a LocaleProvider. With the
-// default locale (en) the real i18n resolver returns the English source
-// strings the assertions below check.
+// useTranslation, so they must render inside a LocaleProvider. Assertions
+// target hrefs and structure rather than English copy — the marketing copy
+// lives in the locale files and is expected to be reworded independently of
+// this test.
 function renderHome(): void {
   render(
     <LocaleProvider>
@@ -16,25 +18,46 @@ function renderHome(): void {
   );
 }
 
+function hrefsOnPage(): string[] {
+  return screen
+    .getAllByRole('link')
+    .map((link) => link.getAttribute('href') ?? '')
+    .filter((href) => href !== '');
+}
+
 describe('HomePage', () => {
   it('renders exactly one h1', () => {
     renderHome();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
   });
 
-  it('renders primary CTAs to /chat and /login', () => {
+  it('routes the primary conversion path to sign-up and sign-in', () => {
     renderHome();
-    const openClawLinks = screen.getAllByRole('link', { name: 'Open Claw' });
-    expect(openClawLinks.length).toBeGreaterThan(0);
-    for (const link of openClawLinks) {
-      expect(link).toHaveAttribute('href', '/chat');
+    const hrefs = hrefsOnPage();
+    expect(hrefs).toContain('/register');
+    expect(hrefs).toContain('/login');
+  });
+
+  it('links out to the dedicated topic pages instead of inlining them', () => {
+    renderHome();
+    const hrefs = hrefsOnPage();
+    for (const path of ['/features', '/how-it-works', '/architecture', '/faq', '/use-cases']) {
+      expect(hrefs).toContain(path);
     }
-    expect(screen.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
+  });
+
+  it('offers the on-premise deployment only as an organisation contact path', () => {
+    renderHome();
+    const hrefs = hrefsOnPage();
+    expect(hrefs).toContain('/contact');
+    expect(hrefs).toContain('/local-first-ai');
   });
 
   it('renders the last-reviewed date from the content registry', () => {
     renderHome();
-    expect(screen.getByText(/Last reviewed 2026-07-24/)).toBeInTheDocument();
+    const lastReviewed = getPageBySlug('home')?.lastReviewed ?? '';
+    expect(lastReviewed).not.toBe('');
+    expect(document.body.textContent).toContain(lastReviewed);
   });
 });
 

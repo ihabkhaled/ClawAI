@@ -883,7 +883,18 @@ export type {
   MarketingFooterLinkGroup,
   MarketingSocialLink,
   HomeHeroProps,
+  MarketingPageHeroProps,
+  MarketingPlanTierCardProps,
+  MarketingModelFamilyCardProps,
+  MarketingPricingSectionProps,
+  UsePricingToggleReturn,
 } from './marketing.types';
+export type {
+  MarketingModelFamily,
+  MarketingPlanTier,
+  MarketingFaqEntry,
+  MarketingPageSection,
+} from './subscription-marketing.types';
 export type {
   RoutingModeDescriptor,
   MessageFlowStep,

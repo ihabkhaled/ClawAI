@@ -42,10 +42,15 @@ describe('MarketingFooter', () => {
   it('only links to PUBLISHED registry pages, never a PLANNED slug', () => {
     render(<MarketingFooter />);
     const publishedPaths = new Set(getPublishedPages().map((page) => page.canonicalPath));
+    // Auth/app entry points and same-page anchors (/#pricing) are not registry
+    // content, so they are exempt. The guarantee under test is narrower and
+    // still intact: any link that looks like a marketing route must resolve to
+    // a PUBLISHED entry, never a PLANNED one.
+    const nonRegistryLinks = new Set(['/', '/login', '/register', '/chat']);
     for (const link of screen.getAllByRole('link')) {
       const href = link.getAttribute('href') ?? '';
       const isKnownStaticLink =
-        href.startsWith('http') || href === '/' || href === '/login' || href === '/chat';
+        href.startsWith('http') || href.startsWith('/#') || nonRegistryLinks.has(href);
       if (!isKnownStaticLink) {
         expect(publishedPaths.has(href)).toBe(true);
       }

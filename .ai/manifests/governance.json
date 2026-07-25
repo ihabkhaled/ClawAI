@@ -1,15 +1,15 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 158531,
+      "bytes": 161008,
       "file": "CLAUDE.md"
     },
     {
-      "bytes": 118399,
+      "bytes": 120521,
       "file": "CODEX.md"
     },
     {
-      "bytes": 19206,
+      "bytes": 19483,
       "file": "cursor.md"
     },
     {

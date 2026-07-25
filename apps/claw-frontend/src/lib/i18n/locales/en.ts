@@ -65,7 +65,7 @@ export const en: TranslationDictionary = {
     passwordPlaceholder: 'Enter your password',
     signingIn: 'Signing in...',
     loginFailed: 'Login failed. Please try again.',
-    tagline: 'Claw - Local-first AI Orchestration',
+    tagline: 'Claw — every frontier AI model, one subscription',
     authenticating: 'Authenticating...',
     backToHome: 'Back to home',
     emailPlaceholder: 'you@example.com',
@@ -88,17 +88,18 @@ export const en: TranslationDictionary = {
     showPasswordAria: 'Show password',
     hidePasswordAria: 'Hide password',
     loginFailedTitle: "We couldn't sign you in",
-    brandingHeadline: 'Local-first AI, on your terms',
+    brandingHeadline: 'Every frontier AI model, one subscription',
     brandingSubheadline:
-      'Orchestrate cloud and local models, keep sensitive data on-device, and audit every routing decision.',
+      'Reach Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek and Grok from one account, with each message routed to the model that fits it.',
     featuresAriaLabel: 'Platform highlights',
     feature1Title: 'Smart routing',
-    feature1Desc: 'Pick the best model per task automatically — or override per thread.',
-    feature2Title: 'Privacy-first',
-    feature2Desc: 'Sensitive prompts route to local Ollama; nothing leaves your machine.',
-    feature3Title: 'Multi-provider',
+    feature1Desc: 'The best model for each task, chosen automatically — or pinned by you.',
+    feature2Title: 'One allowance',
+    feature2Desc:
+      'Cost-normalized tokens, so a single number stays fair across every model you use.',
+    feature3Title: 'Every provider',
     feature3Desc:
-      'OpenAI, Anthropic, Gemini, DeepSeek, Grok, Bedrock, and local — all in one place.',
+      'Anthropic, OpenAI, Google, Moonshot, Zhipu, Alibaba, DeepSeek, xAI and Amazon Bedrock — all in one place.',
   },
   nav: {
     dashboard: 'Dashboard',
@@ -3350,11 +3351,14 @@ export const en: TranslationDictionary = {
       navFeatures: 'Features',
       navHowItWorks: 'How It Works',
       navArchitecture: 'Architecture',
-      navLocalFirst: 'Local-First',
+      navLocalFirst: 'For Organisations',
+      navPricing: 'Pricing',
+      navEnterprise: 'For Organisations',
       navUseCases: 'Use Cases',
       navFaq: 'FAQ',
       github: 'GitHub',
       login: 'Log in',
+      createAccount: 'Create account',
       openClaw: 'Open Claw',
       menuOpen: 'Open menu',
       menuTitle: 'Menu',
@@ -3363,7 +3367,9 @@ export const en: TranslationDictionary = {
     },
     footer: {
       tagline:
-        'Local-first AI orchestration for teams and individuals who want cloud and local models working together, under their own control.',
+        'One subscription, every frontier AI model. Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek and Grok in a single account, routed to whichever one fits the task.',
+      enterpriseContact: 'For organisations',
+      pricingHeading: 'Pricing',
       resourcesHeading: 'Resources',
       github: 'GitHub repository',
       documentation: 'Documentation',
@@ -3377,6 +3383,81 @@ export const en: TranslationDictionary = {
       title: 'Page not found',
       description: "The page you're looking for doesn't exist or may have moved.",
       backHome: 'Back to home',
+    },
+    models: {
+      sectionTitle: 'Every frontier model, one account',
+      sectionSubtitle:
+        'Your subscription covers all of them. Switch freely, or let routing choose the right model for each task.',
+      modelsLabel: 'Models',
+      bestForLabel: 'Best for',
+      anthropicStrength: 'Deep reasoning, long documents, and careful code review.',
+      openaiStrength: 'Broad general capability with strong tool use and structured output.',
+      geminiStrength: 'Very large context windows, fast responses, and native multimodal input.',
+      kimiStrength: 'Long-context analysis and agentic workflows at low cost.',
+      glmStrength: 'Strong bilingual reasoning with explicit thinking modes.',
+      qwenStrength: 'Excellent code generation and a wide range of model sizes.',
+      deepseekStrength: 'Mathematics, algorithms, and step-by-step reasoning.',
+      grokStrength: 'Fast conversational answers with current-events awareness.',
+      bedrockStrength: 'Enterprise-grade hosting for teams already invested in AWS.',
+      footnote:
+        'Model availability follows each provider’s own release schedule. New models are added as they ship.',
+    },
+    pricing: {
+      sectionTitle: 'Plans that scale with you',
+      sectionSubtitle:
+        'Start free. Upgrade when you need more. Every paid plan reaches the same models — the difference is how much you can use.',
+      monthly: 'Monthly',
+      yearly: 'Yearly',
+      yearlyBadge: 'Two months free',
+      perMonth: '/month',
+      perYear: '/year',
+      mostPopular: 'Most popular',
+      dailyTokens: 'Daily allowance',
+      monthlyTokens: 'Monthly allowance',
+      ctaFree: 'Start free',
+      ctaPaid: 'Choose this plan',
+      freeName: 'Free',
+      freeTagline: 'Try ClawAI with a small daily allowance.',
+      freeHighlight1: 'Access to entry-tier models',
+      freeHighlight2: 'One trial run each of Compare, Judge and Research',
+      freeHighlight3: '2 chats and 12 messages per day',
+      starterName: 'Starter',
+      starterTagline: 'For everyday personal use.',
+      starterHighlight1: 'Adds cost-efficient cloud models',
+      starterHighlight2: '10 Compare runs per month',
+      starterHighlight3: '10 chats and 100 messages per day',
+      plusName: 'Plus',
+      plusTagline: 'For regular, heavier use.',
+      plusHighlight1: 'Adds selected mid-tier models',
+      plusHighlight2: '30 Compare and 10 Judge runs per month',
+      plusHighlight3: '25 chats and 250 messages per day',
+      proName: 'Pro',
+      proTagline: 'For professionals who rely on it daily.',
+      proHighlight1: 'Adds premium models including Claude Opus and GPT-5',
+      proHighlight2: '150 Compare and 75 Judge runs per month',
+      proHighlight3: '75 chats and 750 messages per day',
+      teamName: 'Team',
+      teamTagline: 'For small teams sharing one workspace.',
+      teamHighlight1: 'All model classes, with per-request limits',
+      teamHighlight2: 'Unlimited Compare, Judge, Critic and Research',
+      teamHighlight3: '15 workspace connections',
+      scaleName: 'Scale',
+      scaleTagline: 'For heavy, sustained workloads.',
+      scaleHighlight1: 'All models with the highest throughput',
+      scaleHighlight2: '50 workspace connections and 1,000 context packs',
+      scaleHighlight3: '1,000 chats and 10,000 messages per day',
+      unlimitedName: 'Unlimited',
+      unlimitedTagline: 'Maximum capacity, under fair use.',
+      unlimitedMonthlyTokens: 'Unlimited',
+      unlimitedHighlight1: 'Unlimited chats and messages',
+      unlimitedHighlight2: '200 workspace connections, 5,000 context packs',
+      unlimitedHighlight3: 'Premium model use subject to fair-use limits',
+      fairUseTitle: 'What “unlimited” means',
+      fairUseBody:
+        'Chats, messages and eligible models are unlimited. Premium cloud models carry a fair-use boundary so a single account cannot run up unbounded provider costs — you will always be told clearly when you reach it, never cut off silently.',
+      quotaNote:
+        'Allowances are measured in cost-normalized tokens: an expensive model draws down more of your allowance than a cheap one, so one number covers every model fairly.',
+      taxNote: 'Prices in USD. Applicable taxes may be added at checkout.',
     },
     contact: {
       title: 'Contact us',
@@ -3402,58 +3483,100 @@ export const en: TranslationDictionary = {
     },
     home: {
       hero: {
-        title: 'Local-first AI orchestration, without giving up cloud models',
+        title: 'Every frontier AI model, one subscription',
         subtitle:
-          'ClawAI is a self-hosted platform that runs local AI models alongside cloud providers such as OpenAI, Anthropic, Gemini, AWS Bedrock, DeepSeek, and Grok, and routes each request to the model best suited for it. It exists for teams and individuals who want the convenience of a modern AI assistant — chat, memory, file understanding, workspace integrations, image and document generation — while keeping sensitive data and model choice under their own control instead of a single vendor’s.',
+          'Create a ClawAI account and reach Claude Opus 5, GPT-5, Gemini 3 Pro, Kimi K2, GLM-5.1, Qwen3, DeepSeek V3.2, Grok 4 and Amazon Bedrock from a single chat — no separate vendor accounts, no separate bills, no juggling API keys. Pick a plan, log in, and start working.',
         ctaOpen: 'Open Claw',
         ctaLogin: 'Log in',
+        ctaRegister: 'Create your account',
+        ctaHowItWorks: 'See how it works',
         ctaGithub: 'View on GitHub',
+        trustNote:
+          'Start free and upgrade whenever you need more. Paid plans from $5 a month, cancel any time.',
         lastReviewed: 'Last reviewed',
       },
+      modelRoster: {
+        title: 'The models you get',
+        intro:
+          'One subscription covers every provider below. Switch models mid-conversation, or let ClawAI pick the best one for each message.',
+        footnote:
+          'New frontier models are added as they launch — your plan covers them from day one, metered against a single allowance.',
+        linkFeatures: 'Explore every feature',
+        linkArchitecture: 'See how ClawAI is built',
+      },
+      pricing: {
+        title: 'Plans and pricing',
+        intro:
+          'Every paid plan unlocks every model. The only difference is how much you can use each day and each month.',
+        toggleLabel: 'Billing period',
+        toggleMonthly: 'Monthly',
+        toggleYearly: 'Yearly',
+        yearlyNote: 'Pay yearly and get {months} months free.',
+        linkFaq: 'Billing questions? Read the FAQ',
+        linkUseCases: 'See what people build with ClawAI',
+      },
+      enterprise: {
+        eyebrow: 'For organisations',
+        title: 'Need ClawAI inside your own network?',
+        body: 'Companies can have ClawAI deployed on their own servers running local models only, so no prompt, document or conversation ever leaves their infrastructure. This is a bespoke deployment we set up with you — talk to us and we will scope it.',
+        point1Title: 'Runs on your servers',
+        point1Body:
+          'Deployed into your data centre or private cloud, managed by your team, behind your firewall.',
+        point2Title: 'Local models only',
+        point2Body:
+          'Open-weight models served on your own hardware. No external provider calls and no third-party data processing.',
+        point3Title: 'Your controls, your audit trail',
+        point3Body:
+          'SSO, role-based access, retention rules and a full audit log of every request, all kept inside your environment.',
+        ctaContact: 'Contact us',
+        ctaLearnMore: 'Read about private deployments',
+      },
       localFirst: {
-        title: 'Local-first, cloud-optional',
+        title: 'One account instead of nine',
         body1:
-          'ClawAI runs an Ollama-based local AI runtime out of the box, so a working chat experience is available on your own hardware without any external API keys. Local models handle routing decisions, memory extraction, and everyday chat by default, and can be assigned specialized roles — coding, reasoning, file generation, or agentic “thinking” tasks — from a built-in catalog of curated open models spanning routing-sized models up to large general-purpose and reasoning models.',
+          'Reaching Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek and Grok normally means nine separate subscriptions, nine billing pages and nine sets of usage limits to keep track of. ClawAI replaces all of that with one login, one allowance and one monthly bill.',
         body2:
-          'Cloud providers are entirely optional. When you connect OpenAI, Anthropic, Gemini, AWS Bedrock, DeepSeek, or Grok, ClawAI treats them as additional routing targets rather than a replacement for the local runtime — you choose per thread, per message, or let the router decide, and you can run with no cloud connectors configured at all if that is what your deployment requires.',
+          'You never handle an API key. ClawAI holds the provider relationships, keeps the model list current as new versions ship, and meters everything you use against a single figure so you always know where you stand.',
       },
       routing: {
-        title: 'Routing that adapts to the request, not the other way around',
+        title: 'Routing that adapts to the request',
         intro:
-          'Every message can be classified into one of several dozen capability categories — coding, data analysis, creative writing, security, legal, medical, and more — and routed accordingly. Seven routing modes cover the range from fully automatic to fully manual:',
+          'Every message is classified before it is sent — code, hard reasoning, data analysis, creative writing, images, everyday questions — and routed to a model that is strong at that class. Five modes decide how much of the choice you delegate:',
         outro:
-          'Connectors are health-checked continuously, and routing decisions record a confidence score, the reasoning tags behind the choice, and a fallback chain so a failing provider does not stall a conversation. A Routing Replay Lab lets you re-run historical routing decisions against the current configuration to see what would change before you adopt a new policy.',
+          'Every provider is health-checked continuously, so a provider having a bad day is skipped rather than left to fail. Each decision records a confidence score, the reasons behind it and a fallback chain, and every answer tells you which model produced it and why.',
         modeAutoName: 'Auto',
         modeAutoDesc:
-          'a five-stage pipeline (privacy, image, file, category, then a local-model or heuristic classifier) picks a provider and model per message',
+          'ClawAI classifies the message and picks the provider and model for you, one message at a time',
         modeManualName: 'Manual',
-        modeManualDesc: 'you pin a specific provider and model for a thread',
-        modeLocalName: 'Local-only',
+        modeManualDesc: 'you pin one model to a conversation and every message goes to it',
+        modeLocalName: 'Low latency',
         modeLocalDesc:
-          'every request stays on your local runtime, category-aware (coding, reasoning, or general)',
-        modePrivacyName: 'Privacy-first',
+          'prefer the fastest capable model, for quick back-and-forth work where waiting costs more than a slightly weaker answer',
+        modePrivacyName: 'High reasoning',
         modePrivacyDesc:
-          'local when healthy, falling back to a configured cloud provider only when necessary',
-        modeBiasName: 'Low-latency / High-reasoning / Cost-saver',
-        modeBiasDesc: 'bias routing toward speed, reasoning depth, or the cheapest healthy option',
+          'prefer the strongest reasoning models regardless of speed, for problems where being right is the only thing that matters',
+        modeBiasName: 'Cost saver',
+        modeBiasDesc:
+          'prefer the cheapest model that can still do the job, so a fixed allowance covers more work',
       },
       howItWorks: {
         title: 'What happens when you send a message',
         outro:
-          'Memory and context are opt-in per thread. Facts, preferences, and instructions are classified by sensitivity, can be scoped to a user, thread, project, or workspace, and every memory used in a response is recorded in a context receipt so you can see exactly what informed a given answer. Context packs let you bundle reusable text, files, URLs, and memory references into a named collection you attach to any thread. Uploaded files are chunked and retrieved the same way, so ClawAI can answer questions grounded in your own documents rather than the model’s training data alone.',
+          'Memory and context are switches you control per conversation. Everything a model was given is listed in a receipt attached to the answer, so you can check what informed it. Uploaded files are chunked and retrieved the same way, which is how ClawAI answers questions about your own documents instead of guessing from training data.',
         step1Title: 'You send a message',
-        step1Desc: 'in a thread, optionally attaching files or pinning a provider and model.',
-        step2Title: 'Routing decides where it goes',
-        step2Desc: 'based on the active routing mode, message content, and connector health.',
+        step1Desc: 'in a conversation, optionally attaching files or picking a specific model.',
+        step2Title: 'Routing picks the model',
+        step2Desc:
+          'based on the mode you chose, what the message asks for, and which providers are healthy right now.',
         step3Title: 'Context is assembled',
         step3Desc:
-          'relevant memories, attached context packs, and file chunks are retrieved and merged into the prompt within a token budget, alongside the thread history.',
-        step4Title: 'The model responds',
+          'saved memories, attached context packs and the relevant chunks of your uploaded files are merged into the prompt within a token budget, alongside the conversation history.',
+        step4Title: 'The model answers',
         step4Desc:
-          'streamed back over a live connection with token, reasoning, and metric updates as they happen, with automatic fallback if a provider fails.',
-        step5Title: 'The exchange is remembered',
+          'streamed back as it is generated, with live timing and reasoning where the model exposes it, and an automatic fallback to another model if the first one fails.',
+        step5Title: 'The exchange is recorded',
         step5Desc:
-          'facts, preferences, and instructions worth keeping are extracted for future conversations, and the full exchange is recorded for audit.',
+          'facts and preferences worth keeping are saved for next time, and the cost is metered against your allowance so there is no surprise at the end of the month.',
       },
       features: {
         title: 'Beyond a single chat window',
@@ -3493,7 +3616,7 @@ export const en: TranslationDictionary = {
           'ClawAI reaches beyond the chat window into the tools you already use, and can act on your behalf under explicit human approval.',
         workspaceName: 'Workspace connectors',
         workspaceDesc:
-          'connect GitHub, GitLab, Jira, Slack, Google Drive, OneDrive, SharePoint, Confluence, Figma, Gmail, Bitbucket, and ClickUp via OAuth2/PKCE, with webhook and scheduled background sync so ClawAI can search and act on your existing tools.',
+          'connect GitHub, GitLab, Jira, Slack, Google Drive, OneDrive, SharePoint, Confluence, Figma, Gmail, Bitbucket, and ClickUp over OAuth, with webhook and scheduled sync so ClawAI can search and act on the tools you already use.',
         agentName: 'Desktop agent',
         agentDesc:
           'a companion agent that can propose filesystem, process, browser, and terminal actions on a paired device, each classified by risk and blast radius.',
@@ -3502,61 +3625,1136 @@ export const en: TranslationDictionary = {
           'sensitive or high-impact agent actions require your explicit approval before they run, and every invocation is logged with an undo plan when one exists.',
         imageName: 'Image generation',
         imageDesc:
-          'generate images through local Stable Diffusion / ComfyUI runtimes or connected cloud image providers.',
+          'describe an image in the conversation you are already in and get it back in the thread, alongside the prompt that produced it.',
         fileGenName: 'File & document generation',
-        fileGenDesc: 'export structured output as PDF, DOCX, CSV, HTML, Markdown, TXT, or JSON.',
+        fileGenDesc: 'export any answer as PDF, DOCX, CSV, HTML, Markdown, TXT, or JSON.',
       },
       architecture: {
         title: 'Built as independent services, not one monolith',
         body1:
-          'ClawAI is a set of focused backend services — authentication, chat, connectors, routing, memory, files, image and file generation, workspace, the desktop agent runtime, research, and a local model runtime among them — each owning its own database and communicating over an internal event bus and HTTP, behind a single reverse proxy. A Next.js frontend talks to all of them through one API surface. This separation means a failure or slowdown in one area, such as image generation, does not take down chat or routing.',
+          'ClawAI is eighteen focused backend services — authentication, chat, routing, connectors, memory, files, research, workspace, image generation, document export, billing, audit and logging among them — each owning its own database and talking over HTTP and an internal event bus, behind a single reverse proxy. The web app reaches all of them through one API surface. A failure or slowdown in one area, such as image generation, cannot take down chat or routing.',
         body2:
-          'Every account has a role with a specific permission set, enforced on both the frontend and every backend endpoint. Logins, connector changes, routing decisions, memory actions, generated content, and agent actions are all written to an audit log. An observability view aggregates health checks across every service so operational problems are visible in one place instead of buried in individual logs.',
+          'Every account has a role with an explicit permission set, enforced in the interface and again on every backend endpoint. Logins, plan changes, routing decisions, memory edits and generated content are all written to an audit log, and a dedicated health service aggregates the status of every other service into one view.',
       },
       selfHosting: {
-        title: 'Run it yourself',
+        title: 'Need it inside your own network?',
         body1:
-          'ClawAI is designed to be self-hosted from the start. A single setup script provisions every database, service, and the reverse proxy through Docker Compose, with automatic GPU detection for NVIDIA, AMD ROCm, and Intel/Vulkan hosts. Local HTTPS is configured out of the box so every hop between the browser, the proxy, and each backend service is encrypted, even in local development. The full source is available on GitHub for anyone who wants to inspect, self-host, or extend it.',
+          'Organisations that cannot send data to a third-party model provider can have ClawAI deployed on their own servers, running open-weight models on their own GPUs, with no external provider calls at all. It is a scoped engagement rather than a plan you can buy online — tell us your constraints and we will size it with you.',
       },
       security: {
-        title: 'Privacy, data control, and honest limitations',
+        title: 'Privacy, data control, and honest limits',
         body1:
-          'Choosing a local-only or privacy-first routing mode keeps requests on infrastructure you control; choosing to connect a cloud provider means that provider’s own terms and data handling apply to the requests you send it. ClawAI records which provider handled each message so that choice is always auditable after the fact, rather than asking you to simply trust that it happened. Connector credentials are encrypted at rest, and desktop agent actions above a configurable risk threshold require your explicit approval before they run.',
+          'Your conversations are yours. ClawAI does not sell your data and does not use your prompts, files or conversations to train any model. When a message goes to a provider, that provider’s own terms govern that request — which is one reason every answer records exactly which model handled it, rather than asking you to take it on trust. Credentials are encrypted at rest with AES-256-GCM and every hop between services runs over TLS.',
         body2:
-          'ClawAI does not eliminate the general risks of working with AI models: outputs can still be wrong, incomplete, or biased regardless of which provider generated them, and no orchestration layer can fully substitute for reviewing sensitive or high-stakes output yourself. Verification and judge/critic review reduce, but do not remove, the need for human judgment on anything consequential.',
+          'ClawAI does not remove the general risks of working with AI. Answers can still be wrong, incomplete or biased, whichever model produced them. Verify, Judge and Critic reduce that risk without eliminating it — anything consequential still needs a human read. ClawAI holds no security certifications today; organisations with formal requirements should raise them so we can scope them per engagement.',
       },
       useCases: {
         title: 'Who ClawAI is for',
-        privacyName: 'Privacy-conscious teams',
+        privacyName: 'People who use AI every day',
         privacyDesc:
-          'keep sensitive conversations and documents on infrastructure you control, with cloud models available only when you choose to use them.',
+          'one subscription instead of three or four, with the strongest model always a click away rather than behind another paywall.',
         devName: 'Developers evaluating models',
         devDesc:
-          'compare responses from multiple local and cloud models side by side on the same prompt before committing to one.',
-        selfHostName: 'Self-hosters and homelab users',
+          'send the same prompt to five models at once and read the answers side by side before committing to one.',
+        selfHostName: 'Researchers and analysts',
         selfHostDesc:
-          'run a full AI assistant stack, including local model management, on hardware you own.',
-        teamName: 'Small teams automating workflows',
+          'work through long documents and datasets with large-context models, then have a second model check the conclusions.',
+        teamName: 'Small teams',
         teamDesc:
-          'connect existing tools (issue trackers, chat, docs, source control) and let approval-gated agent actions handle routine work.',
+          'share one workspace, connect the issue trackers, chat and docs you already use, and see exactly where the allowance goes.',
       },
       faq: {
         title: 'Frequently asked questions',
-        q1: 'Do I need a cloud API key to use ClawAI?',
-        a1: 'No. ClawAI ships with a local Ollama-based runtime that handles routing and chat out of the box. Cloud providers are optional connectors you can add if you want them.',
-        q2: 'Can I self-host the whole platform?',
-        a2: 'Yes. ClawAI is designed to run on your own infrastructure via Docker Compose, with local TLS, its own PostgreSQL and MongoDB instances, and no required external services.',
-        q3: 'What happens to data I send to a cloud provider?',
-        a3: 'That depends on the provider you connect and the routing mode you choose. Privacy-first and local-only modes keep requests on your local runtime; routing decisions record which provider handled each message so you can audit where your data went.',
+        q1: 'Do I need an API key from OpenAI or Anthropic?',
+        a1: 'No. Model access is included in your subscription. There are no provider accounts to create, no keys to paste and no separate provider bills.',
+        q2: 'Can I choose which model answers?',
+        a2: 'Yes. Pick a model for a conversation, switch mid-thread, or leave it on Auto and let ClawAI route each message to the model best suited to it.',
+        q3: 'How are usage limits measured?',
+        a3: 'In cost-normalized tokens. An expensive model draws down more of your allowance than a cheap one, so a single daily and monthly figure stays fair across models whose prices differ by more than an order of magnitude.',
         q4: 'Is ClawAI affiliated with OpenAI, Anthropic, Google, or AWS?',
-        a4: 'No. ClawAI is an independent, open-source orchestration layer that can connect to those providers’ APIs when you configure your own credentials. It is not endorsed by or affiliated with them.',
+        a4: 'No. ClawAI is an independent product that provides access to those providers’ models through one subscription. It is not endorsed by or affiliated with any of them.',
       },
       cta: {
-        title: 'Try ClawAI on your own terms',
+        title: 'Start on the free plan',
         subtitle:
-          'Log in to an existing deployment, or clone the repository and run the setup script to stand up your own.',
+          'Create an account and send your first message in under a minute. Upgrade only when you outgrow the free allowance.',
         ctaOpen: 'Open Claw',
-        ctaGithub: 'Get the source on GitHub',
+        ctaGithub: 'View the source on GitHub',
+      },
+    },
+    features: {
+      hero: {
+        title: 'Everything ClawAI does',
+        subtitle:
+          'Nine model families, five routing modes, nine ways to put several models on one problem, memory that persists between conversations, files you can ask questions about, twelve workspace connectors, and a usage view that shows exactly where your allowance went.',
+        ctaPrimary: 'Create your account',
+        ctaSecondary: 'Log in',
+        lastReviewed: 'Last reviewed',
+      },
+      providers: {
+        title: 'Every frontier model family',
+        intro:
+          'One subscription reaches all of these. Switch between them inside a single conversation — there is nothing to install and no provider account to create.',
+        modelsLabel: 'Models',
+        anthropicDesc:
+          'Careful reasoning over long documents, strong code review, and the most reliable instruction following in the roster.',
+        openaiDesc:
+          'Broad general capability with excellent tool use and dependable structured output.',
+        geminiDesc:
+          'Very large context windows, fast responses, and native handling of images, audio and video.',
+        kimiDesc: 'Long-context analysis and agentic work at a fraction of frontier pricing.',
+        glmDesc:
+          'Strong bilingual reasoning with an explicit thinking mode you can turn on for harder problems.',
+        qwenDesc:
+          'Excellent code generation across a wide range of model sizes, from fast to very large.',
+        deepseekDesc:
+          'Mathematics, algorithms and step-by-step derivations, with a dedicated reasoning variant.',
+        grokDesc: 'Fast conversational answers with awareness of recent events.',
+        bedrockDesc:
+          'AWS-hosted models for organisations that already run their workloads on Amazon.',
+        outro:
+          'The roster tracks each provider’s release schedule. When a new frontier model ships it appears in your model list — no plan change, no new contract, no second bill.',
+      },
+      routing: {
+        title: 'Five ways to choose a model',
+        intro:
+          'Auto is the default and handles most work well. The other four exist for when you want the decision yourself, or want it biased in a specific direction.',
+        autoName: 'Auto',
+        autoDesc:
+          'ClawAI classifies each message — code, reasoning, analysis, creative, image, everyday — and sends it to a model that is strong at that class.',
+        manualName: 'Manual',
+        manualDesc:
+          'Pin one model to the conversation. Every message goes to it until you change it.',
+        lowLatencyName: 'Low latency',
+        lowLatencyDesc:
+          'Prefer the fastest model that can answer, for quick back-and-forth work where waiting costs more than a slightly weaker answer.',
+        highReasoningName: 'High reasoning',
+        highReasoningDesc:
+          'Prefer the strongest reasoning models regardless of speed or cost, for problems where being right is the only thing that matters.',
+        costSaverName: 'Cost saver',
+        costSaverDesc:
+          'Prefer the cheapest model that can still handle the request, so a fixed allowance covers more work.',
+        transparencyTitle: 'You always see the decision',
+        transparencyBody:
+          'Every answer carries the provider and model that produced it, the confidence score behind the routing choice, the reasons that drove it, and what it cost against your allowance. If a provider fails mid-request, the model that stepped in is recorded too.',
+      },
+      orchestration: {
+        title: 'Nine ways to use more than one model',
+        intro:
+          'A single answer from a single model is often enough. When it is not, these modes put several models on the same problem.',
+        compareName: 'Compare',
+        compareDesc:
+          'Send one prompt to up to five models at once and read every answer side by side, with per-model latency and token counts.',
+        consensusName: 'Consensus',
+        consensusDesc:
+          'Run the same prompt across several models and synthesise one answer from where they agree — and flag where they do not.',
+        escalationName: 'Escalation',
+        escalationDesc:
+          'Start on a fast, cheap model and move up to a stronger one automatically, but only when the answer falls below a quality threshold.',
+        bestOfNName: 'Best-of-N',
+        bestOfNDesc:
+          'Generate several candidate answers to the same prompt and keep the one that scores highest.',
+        repairName: 'Repair',
+        repairDesc:
+          'Fix specific defects in an answer you already have — a broken code block, a wrong figure — instead of regenerating the whole thing.',
+        verifyName: 'Verify',
+        verifyDesc:
+          'Have a second model check an answer for correctness before you see it, with a configurable limit on revision rounds.',
+        rolePackName: 'Role packs',
+        rolePackDesc:
+          'Run a prompt through a small team of role-specialised models — planner, critic, writer — each handing off to the next.',
+        pipelineName: 'Pipelines',
+        pipelineDesc:
+          'Chain several of these stages into one named workflow you can re-run on new input.',
+        judgeName: 'Judge and Critic',
+        judgeDesc:
+          'An independent model scores a response against explicit criteria; a Critic pass adds written feedback on what is weak and why.',
+        outro:
+          'The free plan includes one trial run each of Compare, Judge and Research. Paid plans carry monthly quotas that rise with the tier, and Team and above are uncapped.',
+      },
+      memory: {
+        title: 'Memory that carries between conversations',
+        intro:
+          'ClawAI remembers what is worth remembering — and shows you every item, so you can correct it.',
+        recordsName: 'Memory records',
+        recordsDesc:
+          'Facts, preferences, instructions and summaries, each stored with a category, a confidence score and a record of where it came from.',
+        suggestionsName: 'Suggestions you approve',
+        suggestionsDesc:
+          'Nothing is remembered silently. Candidates land in a queue you approve or reject, and only high-confidence non-sensitive items are auto-approved — at a threshold you set.',
+        packsName: 'Context packs',
+        packsDesc:
+          'Bundle reusable text, files, links and memory references into a named pack, then attach it to any conversation. Packs are versioned, so you can see what changed and roll back.',
+        scopesName: 'Scopes',
+        scopesDesc:
+          'Scope a memory to yourself, to one conversation, to a project or to a workspace, so work context does not leak into personal chats.',
+        receiptsName: 'Context receipts',
+        receiptsDesc:
+          'Every answer records which memories and pack items went into the prompt, in what order, and how much of the token budget each consumed.',
+        controlsName: 'Controls',
+        controlsDesc:
+          'Pause all memory, pause one item, set an expiry date, mark something sensitive so it is redacted, or delete it outright. Every change is written to an audit log.',
+        outro:
+          'Memory and context are switches on each conversation. Turn them off for a one-off question and the prompt contains nothing but what you typed.',
+      },
+      files: {
+        title: 'Ask questions about your own files',
+        intro:
+          'Upload a document and ask about it. ClawAI handles extraction, chunking and retrieval so the model answers from your content rather than its training data.',
+        uploadName: 'Upload',
+        uploadDesc:
+          'PDF, DOCX, spreadsheets, CSV, JSON, Markdown, plain text, code files and images.',
+        chunkingName: 'Chunking and retrieval',
+        chunkingDesc:
+          'Files are split into passages and indexed, so only the parts relevant to your question are pulled into the prompt.',
+        attachmentsName: 'Attach to any message',
+        attachmentsDesc:
+          'Pick files per message, including in Compare runs, so several models can be asked about the same document at once.',
+        deliveryName: 'Per-model delivery',
+        deliveryDesc:
+          'Each model receives the form it handles best — a native image, a native PDF, or extracted text — and every message shows which form each model actually got.',
+        ocrName: 'Scanned documents',
+        ocrDesc:
+          'A scanned PDF with no text layer is run through OCR before it reaches a model, and flagged when the recognition confidence is low.',
+        scanningName: 'Upload checks',
+        scanningDesc:
+          'Every upload is virus-scanned, checked against its declared file type, screened for dangerous filenames, and rejected if an archive turns out to be a decompression bomb.',
+        outro:
+          'Uploads count against your plan’s file size and storage limits. Files are removed on a retention schedule, and you can delete any of them yourself at any time.',
+      },
+      workspace: {
+        title: 'Connected to the tools you already use',
+        intro:
+          'Connect an account once over OAuth and ClawAI can search it, pull context from it into a conversation, and act on it when you approve the action.',
+        githubDesc: 'Repositories, issues, pull requests and code search.',
+        gitlabDesc: 'Projects, issues, merge requests and pipeline status.',
+        bitbucketDesc: 'Repositories, pull requests and commit history.',
+        jiraDesc: 'Issues, sprints, comments and status transitions.',
+        clickupDesc: 'Tasks, lists and status changes.',
+        slackDesc: 'Channels, threads and message history.',
+        gmailDesc: 'Threads, search, and drafted replies you approve before anything is sent.',
+        driveDesc: 'Documents and folders in Google Drive.',
+        onedriveDesc: 'Files and folders in OneDrive.',
+        sharepointDesc: 'Sites, document libraries and lists.',
+        confluenceDesc: 'Spaces, pages and attachments.',
+        figmaDesc: 'Files, frames and comments.',
+        outro:
+          'Connections sync on a schedule and on webhooks, so search results stay current. Credentials are encrypted at rest, scoped to your account and revocable in one click. How many connections you can hold depends on your plan.',
+      },
+      generation: {
+        title: 'Images and documents, not just text',
+        intro: 'ClawAI produces finished artefacts from a conversation, not only chat replies.',
+        imageName: 'Image generation',
+        imageDesc:
+          'Describe an image and get it back in the thread, with the prompt and settings kept alongside it.',
+        documentName: 'Document export',
+        documentDesc:
+          'Turn any answer, or a whole conversation, into a formatted file you can hand to someone else.',
+        researchName: 'Research runs',
+        researchDesc:
+          'Search the web, fetch and read the pages, and get an answer with the sources it came from rather than an unattributed summary.',
+        formatsLabel: 'Export formats',
+      },
+      observability: {
+        title: 'You can see what you are spending',
+        intro: 'Usage is not a black box. Every request is metered, attributed and visible.',
+        usageName: 'Usage dashboard',
+        usageDesc:
+          'Allowance consumed today and this month, broken down by model, with the remaining balance in the same units your plan is quoted in.',
+        transparencyName: 'Per-answer detail',
+        transparencyDesc:
+          'The model that answered, why it was chosen, how long it took, how many tokens it used and what it drew from your allowance.',
+        auditName: 'Audit log',
+        auditDesc:
+          'Logins, plan changes, connector activity, memory edits and generated content, each recorded with a timestamp and an actor.',
+        progressName: 'Live progress',
+        progressDesc:
+          'While a model works you see the stage it is in, the text as it arrives, its reasoning when the model exposes it, and running token and timing counters.',
+        outro:
+          'When you reach a limit you are told which limit, how much is left on the other windows and when it resets. Nothing is cut off silently.',
+      },
+      security: {
+        title: 'How your data is handled',
+        intro: 'Mechanisms that exist in the product today, described plainly.',
+        authName: 'Accounts and sessions',
+        authDesc:
+          'Passwords hashed with Argon2, short-lived access tokens, and refresh tokens that rotate on every use so a stolen token is detectable.',
+        rbacName: 'Role-based access',
+        rbacDesc:
+          'Every account carries a role and an explicit permission set, checked in the interface and again on every backend endpoint.',
+        credentialsName: 'Credential encryption',
+        credentialsDesc:
+          'Provider and connector credentials are encrypted at rest with AES-256-GCM and are never returned to the browser.',
+        rateLimitName: 'Rate limiting',
+        rateLimitDesc:
+          'Per-account request limits protect both your allowance and the platform from runaway loops.',
+        transportName: 'Encryption in transit',
+        transportDesc:
+          'TLS from the browser to the edge, and TLS again between every internal service, with certificates verified at each hop.',
+        isolationName: 'Service isolation',
+        isolationDesc:
+          'Each service owns its own database and cannot read another’s. A failure in image generation cannot reach your conversations.',
+        enterpriseTitle: 'Requirements the hosted app cannot meet',
+        enterpriseBody:
+          'ClawAI holds no compliance certifications today, and the hosted app sends requests to third-party model providers under their terms. If your organisation cannot accept that, a private deployment inside your own network — running open-weight models only — is the answer. We scope those individually.',
+        enterpriseCta: 'Talk to us about a private deployment',
+      },
+      cta: {
+        title: 'Try it on the free plan',
+        subtitle:
+          'No card required. Send a few messages, run one Compare, and see whether the routing earns its keep.',
+        primary: 'Create your account',
+        secondary: 'Log in',
+      },
+    },
+    howItWorksPage: {
+      hero: {
+        title: 'How ClawAI works',
+        subtitle:
+          'From creating an account to reading an answer, and everything in between: how a model gets chosen, what it is given to work with, and how your usage is counted.',
+        ctaRegister: 'Create your account',
+        ctaLogin: 'Log in',
+        lastReviewed: 'Last reviewed',
+      },
+      journey: {
+        title: 'The whole thing in eight steps',
+        intro: 'Each of these gets its own section below.',
+        step1Title: 'Create an account',
+        step1Desc:
+          'an email address and a password. The free plan starts immediately, with no card required.',
+        step2Title: 'Pick a plan',
+        step2Desc:
+          'free to start; paid plans from $5 a month raise your allowance and unlock the larger models and the multi-model modes.',
+        step3Title: 'Start a conversation',
+        step3Desc:
+          'type a message, optionally attach files, and either choose a model or leave it on Auto.',
+        step4Title: 'ClawAI picks the model',
+        step4Desc:
+          'the message is classified and routed to a model that handles that kind of work well.',
+        step5Title: 'Context is assembled',
+        step5Desc:
+          'relevant memories, attached context packs and the parts of your files that matter are added to the prompt.',
+        step6Title: 'The answer streams back',
+        step6Desc:
+          'text arrives as it is generated, with live timing and, where the model exposes it, its reasoning.',
+        step7Title: 'You see what happened',
+        step7Desc:
+          'which model answered, why it was chosen, what it cost, and exactly what context it was given.',
+        step8Title: 'Usage is counted',
+        step8Desc:
+          'the cost is metered against your allowance in cost-normalized tokens and shown on your usage page.',
+      },
+      account: {
+        title: 'Creating an account and choosing a plan',
+        registerHeading: 'Registration',
+        registerBody:
+          'An email address and a password is all it takes. There is no provider account to create, no API key to paste and nothing to install — ClawAI holds the provider relationships on your behalf.',
+        plansHeading: 'The plans',
+        plansBody:
+          'Seven tiers, from free to Unlimited at $200 a month. Every paid plan reaches every model; what changes is how much you can use and which multi-model modes are unlocked.',
+        bullet1:
+          'Free — $0. A small daily allowance, entry-tier models, and one trial run each of Compare, Judge and Research.',
+        bullet2:
+          'Starter $5, Plus $10, Pro $20 a month. Rising allowances, with premium models and larger Compare and Judge quotas as you go up.',
+        bullet3:
+          'Team $50, Scale $100 a month. Unlimited Compare, Judge, Critic and Research, plus many more workspace connections.',
+        bullet4:
+          'Unlimited $200 a month. Unlimited conversations and messages, with a fair-use boundary on premium models that you are warned about before you reach it.',
+        upgradeNote:
+          'Pay yearly and you pay for ten months instead of twelve. You can change plan or cancel at any time — an upgrade applies immediately, a downgrade at the start of your next billing period.',
+        ctaRegister: 'Create your account',
+      },
+      models: {
+        title: 'The models you can reach',
+        intro:
+          'One subscription, every family below. You can switch between them inside a single conversation.',
+        anthropicStrength:
+          'Careful reasoning, long documents, and the most reliable code review in the roster.',
+        openaiStrength: 'Broad general capability with strong tool use and structured output.',
+        geminiStrength:
+          'Huge context windows, fast responses, and native image, audio and video input.',
+        kimiStrength: 'Long-context analysis and agentic work at low cost.',
+        glmStrength: 'Strong bilingual reasoning with an explicit thinking mode.',
+        qwenStrength: 'Excellent code generation across a wide range of model sizes.',
+        deepseekStrength: 'Mathematics, algorithms and step-by-step derivations.',
+        grokStrength: 'Fast conversational answers with awareness of recent events.',
+        bedrockStrength: 'AWS-hosted models for teams already standardised on Amazon.',
+        outro:
+          'Which models a plan can reach depends on the tier: entry models on Free, everything including the largest frontier models from Pro upward. New models are added as providers release them.',
+      },
+      routing: {
+        title: 'How ClawAI decides which model answers',
+        intro:
+          'In Auto mode every message is classified before it is sent. These are the classes that change the outcome most:',
+        classCodingName: 'Code',
+        classCodingDesc:
+          'writing, reviewing, refactoring or debugging code goes to the models with the strongest coding track record.',
+        classReasoningName: 'Hard reasoning',
+        classReasoningDesc:
+          'multi-step problems, proofs, architecture decisions, and anything where being wrong is expensive.',
+        classCreativeName: 'Writing',
+        classCreativeDesc:
+          'drafting, editing and rewriting, where tone and readability matter more than raw reasoning depth.',
+        classAnalysisName: 'Data and documents',
+        classAnalysisDesc:
+          'long inputs, spreadsheets and reports, routed to the models with the largest context windows.',
+        classImageName: 'Images',
+        classImageDesc:
+          'requests to generate or interpret an image go to a model that can actually handle pixels.',
+        classEverydayName: 'Everyday questions',
+        classEverydayDesc:
+          'short factual questions and quick edits go to a fast, inexpensive model — most messages land here.',
+        overrideHeading: 'You can always override it',
+        overrideBody:
+          'Pick a model from the selector and it is used for that conversation until you change it. You can also bias Auto toward speed, reasoning depth or cost, which keeps the per-message classification but changes what it optimises for. Whatever you choose, the answer tells you which model produced it.',
+      },
+      orchestration: {
+        title: 'Using more than one model at once',
+        intro:
+          'For work where one answer is not enough, paid plans unlock modes that put several models on the same prompt.',
+        compareName: 'Compare',
+        compareDesc:
+          'one prompt to up to five models, answers side by side, with latency and token counts for each.',
+        consensusName: 'Consensus',
+        consensusDesc:
+          'several models answer and ClawAI synthesises one response from where they agree, while flagging where they do not.',
+        escalationName: 'Escalation',
+        escalationDesc:
+          'start cheap and fast, and move up to a stronger model automatically only when the answer is not good enough.',
+        bestOfNName: 'Best-of-N',
+        bestOfNDesc: 'generate several candidates and keep the highest-scoring one.',
+        judgeName: 'Judge and Critic',
+        judgeDesc:
+          'an independent model scores the answer against explicit criteria, and a Critic pass writes out what is weak and why.',
+        outro:
+          'Free gives you one trial run each of Compare, Judge and Research. Paid plans have monthly quotas that rise with the tier, and Team and above are uncapped. Repair, Verify, Role packs and Pipelines round out the set on the higher plans.',
+      },
+      context: {
+        title: 'What the model is given besides your message',
+        intro:
+          'Three layers of durable context can be assembled into a prompt, all of them under your control.',
+        memoryName: 'Memory',
+        memoryDesc:
+          'facts, preferences and instructions worth carrying between conversations. Candidates go to an approval queue rather than being saved silently.',
+        packsName: 'Context packs',
+        packsDesc:
+          'named bundles of reusable text, files, links and memory references that you attach to a conversation when they are relevant.',
+        filesName: 'Files',
+        filesDesc:
+          'uploaded documents are chunked and indexed, so only the passages relevant to your question are pulled in.',
+        outro:
+          'Memory and context are per-conversation switches. When they are on, the answer carries a receipt listing exactly which memories, pack items and file chunks were used, and how much of the token budget each one took.',
+      },
+      transparency: {
+        title: 'What every answer tells you',
+        intro:
+          'Routing you cannot inspect is just a black box with better marketing. Every answer carries its own record.',
+        modelName: 'The model',
+        modelDesc:
+          'the provider and exact model version that produced the answer, including when a fallback stepped in for the first choice.',
+        reasonName: 'Why that model',
+        reasonDesc:
+          'the classification, the confidence score and the reasons behind the routing decision.',
+        costName: 'What it cost',
+        costDesc:
+          'input and output tokens, latency, and the allowance drawn down in cost-normalized terms.',
+        contextName: 'What it saw',
+        contextDesc:
+          'the memories, context pack items and file chunks assembled into the prompt, in the order they appeared.',
+        usageName: 'Where you stand',
+        usageDesc:
+          'your usage page aggregates all of it into daily and monthly balances, broken down by model.',
+        outro:
+          'All of this is visible the moment you read the answer, not in a report you have to request.',
+      },
+      allowance: {
+        title: 'How usage is counted',
+        intro:
+          'One number covers every model, and it stays fair across models whose prices differ by more than an order of magnitude.',
+        explainerHeading: 'Cost-normalized tokens',
+        explainerBody:
+          'A token from an expensive frontier model draws down more of your allowance than a token from a cheap, fast one, in proportion to what it actually costs. That way a single allowance figure works whichever model you use, and you are never penalised for picking the right tool for the job.',
+        exampleLightName: 'Light models',
+        exampleLightDesc:
+          'fast, inexpensive models draw down slowly. A day of short questions barely moves the number.',
+        exampleBalancedName: 'Mid-tier models',
+        exampleBalancedDesc:
+          'the general-purpose workhorses sit in the middle. This is where most sustained work lands.',
+        exampleFrontierName: 'Frontier models',
+        exampleFrontierDesc:
+          'the largest reasoning models draw down fastest. Worth it for hard problems, wasteful for small talk — which is exactly what Auto routing is for.',
+        windowsHeading: 'The windows',
+        windowDailyName: 'Daily',
+        windowDailyDesc:
+          'resets every 24 hours, so one heavy day never spoils the rest of the month.',
+        windowWeeklyName: 'Weekly',
+        windowWeeklyDesc:
+          'smooths out bursts on the higher tiers, where a daily limit on its own would be too coarse.',
+        windowMonthlyName: 'Monthly',
+        windowMonthlyDesc: 'the headline figure on your plan, resetting with your billing period.',
+        outro:
+          'You can see the balance on all three windows at any time. When you reach one, ClawAI tells you which limit it was, how much is left on the others and when it resets.',
+        fairUseNote:
+          'On the Unlimited plan, conversations and messages genuinely have no cap. Premium frontier models carry a fair-use boundary so a single account cannot run up unbounded provider cost — you are told clearly as you approach it, never cut off without warning.',
+      },
+      enterprise: {
+        title: 'For organisations',
+        body: 'If your organisation cannot send data to a third-party model provider, ClawAI can be deployed inside your own network running open-weight models on your own hardware. Nothing leaves your infrastructure. It is scoped per engagement, not sold as a plan.',
+        cta: 'Contact us',
+      },
+      cta: {
+        title: 'Start on the free plan',
+        subtitle:
+          'A minute to sign up, no card required. Ask a few questions, run a Compare, and see whether the routing earns its keep.',
+        ctaRegister: 'Create your account',
+        ctaLogin: 'Log in',
+        ctaContact: 'For organisations',
+      },
+    },
+    architecturePage: {
+      overview: {
+        title: 'How ClawAI is built',
+        body1:
+          'ClawAI is eighteen independently deployable services behind a single reverse proxy. Authentication, chat, routing, connectors, memory, files, research, workspace, image generation, document export, billing, audit and logging each run as their own process with their own database. The web app reaches all of them through one API surface.',
+        body2:
+          'The reason is containment. A slow provider, a stuck file conversion or a failed export cannot take chat down with it, because they share no process, no connection pool and no database. Each service is deployed, scaled and rolled back on its own.',
+        statServicesValue: '18',
+        statServicesLabel: 'Independently deployable services',
+        statDatabasesValue: 'One per service',
+        statDatabasesLabel: 'No shared database, ever',
+        statTransportsValue: 'HTTP + events',
+        statTransportsLabel: 'Synchronous calls plus an asynchronous event bus',
+        statEdgeValue: 'One entry point',
+        statEdgeLabel: 'A single reverse proxy in front of everything',
+      },
+      services: {
+        title: 'The services',
+        intro:
+          'Not every service is interesting from the outside. These are the ones a single request tends to touch, in roughly the order it touches them.',
+        authName: 'Authentication',
+        authDesc:
+          'Accounts, sessions, token issuing and refresh rotation, roles and permission sets.',
+        chatName: 'Chat',
+        chatDesc:
+          'Conversations and messages, context assembly, streaming execution and multi-model orchestration.',
+        routingName: 'Routing',
+        routingDesc:
+          'Classifies each message, applies the active mode and any policies, and records the decision with its fallback chain.',
+        connectorName: 'Connectors',
+        connectorDesc:
+          'Provider credentials, model catalogues, capability flags and continuous health checks.',
+        memoryName: 'Memory and context',
+        memoryDesc:
+          'Memory records, the suggestion queue, context packs and their versions, and semantic retrieval.',
+        fileName: 'Files',
+        fileDesc: 'Uploads, security scanning, text extraction, OCR, chunking and retention.',
+        researchName: 'Research',
+        researchDesc: 'Web search, page fetching and evidence assembly for answers with sources.',
+        workspaceName: 'Workspace',
+        workspaceDesc:
+          'OAuth connections to twelve third-party tools, webhooks, scheduled sync and cross-tool search.',
+        imageName: 'Image generation',
+        imageDesc:
+          'Image requests, provider adapters and per-step progress while an image renders.',
+        fileGenerationName: 'Document generation',
+        fileGenerationDesc: 'Rendering answers into PDF, DOCX, CSV, HTML, Markdown, TXT and JSON.',
+        paymentName: 'Billing',
+        paymentDesc: 'Plans, subscriptions, versioned prices, invoices and allowance enforcement.',
+        auditName: 'Audit',
+        auditDesc:
+          'The immutable record of who did what, plus the usage ledger every allowance figure is derived from.',
+        logsName: 'Logging',
+        logsDesc:
+          'Structured logs from every service and from the browser, retained on a rolling window.',
+        outro:
+          'Each service names the database it owns. Nothing else connects to it — a service that needs another’s data asks for it over HTTP or reacts to an event.',
+      },
+      dataOwnership: {
+        title: 'One database per service',
+        body1:
+          'Every service owns exactly one database and is the only thing that connects to it. There is no shared schema, no cross-service join, and no reporting database quietly reading everyone’s tables.',
+        body2:
+          'The cost is that some questions take two calls instead of one join. The benefit is that a schema change in billing cannot break chat, and a runaway query in logging cannot exhaust the connection pool your conversation depends on.',
+        rule1Name: 'No cross-database queries',
+        rule1Desc:
+          'A service reads its own tables and nobody else’s. Data from elsewhere arrives over an API call or an event.',
+        rule2Name: 'Schemas are private',
+        rule2Desc:
+          'A service can change its own tables without coordinating with anyone, because no external consumer depends on their shape.',
+        rule3Name: 'Migrations run per service',
+        rule3Desc:
+          'Each service migrates its own database on start-up. There is no global migration everyone has to wait for.',
+        rule4Name: 'Failures stay local',
+        rule4Desc:
+          'A database that is slow or unavailable degrades one capability rather than the whole product.',
+      },
+      lifecycle: {
+        title: 'The life of one request',
+        intro: 'What happens between pressing send and reading the answer.',
+        step1Title: 'The request is authenticated',
+        step1Desc:
+          'the reverse proxy passes it to chat, which verifies your access token and the permissions attached to your role.',
+        step2Title: 'Allowance is checked',
+        step2Desc:
+          'billing confirms your plan permits the model you asked for and that your daily and monthly allowance still has room.',
+        step3Title: 'The message is stored and announced',
+        step3Desc:
+          'chat writes the message to its own database and publishes an event. Routing is listening for it.',
+        step4Title: 'Routing chooses a model',
+        step4Desc:
+          'the message is classified, the active mode and policies are applied, connector health is consulted, and a decision with a fallback chain is recorded.',
+        step5Title: 'Context is assembled',
+        step5Desc:
+          'chat asks memory for relevant records and pack items, and files for relevant chunks, then merges them into the prompt within a token budget.',
+        step6Title: 'The model is called and streamed',
+        step6Desc:
+          'chat calls the provider and forwards stages, text, reasoning and metrics to your browser over Server-Sent Events as they arrive.',
+        step7Title: 'The result is persisted',
+        step7Desc:
+          'the answer, its routing decision, its token counts and its context receipt are written down together.',
+        step8Title: 'Usage and audit are recorded',
+        step8Desc:
+          'billing meters the cost against your allowance and audit records the event. Memory extraction runs here too.',
+        outro:
+          'Steps 1 to 7 are synchronous — you wait for them. Step 8 and memory extraction happen after the answer is already on your screen, so they add no latency to what you experience.',
+      },
+      events: {
+        title: 'The event bus',
+        body1:
+          'Work that does not need to finish before you see an answer is published as an event on a RabbitMQ topic exchange and handled by whichever services care about it. Usage metering, audit records and memory extraction all run this way.',
+        body2:
+          'Events are the reason chat does not need to know that audit exists. Chat states what happened; anything that needs to react subscribes. Adding a consumer requires no change to the publisher.',
+        topicName: 'Topic exchange',
+        topicDesc:
+          'Publishers name what happened, not who should hear it. Consumers bind to the patterns they care about.',
+        retryName: 'Retries with backoff',
+        retryDesc:
+          'A failed handler is retried three times with increasing delay, which absorbs the transient failures that make up most of them.',
+        dlqName: 'Dead-letter queue',
+        dlqDesc:
+          'A message that still fails after its retries goes to a dead-letter queue instead of being dropped or blocking everything behind it.',
+        idempotencyName: 'Idempotent handlers',
+        idempotencyDesc:
+          'Handlers tolerate the same event arriving twice, because at-least-once delivery guarantees that eventually one will.',
+        auditName: 'Everything is auditable',
+        auditDesc:
+          'Audit subscribes to every domain event, so the record of what happened does not depend on each service remembering to write one.',
+      },
+      streaming: {
+        title: 'Streaming',
+        body1:
+          'Answers arrive over Server-Sent Events, not polling. The connection opens when you send a message and carries everything until the answer is finished or cancelled.',
+        body2:
+          'Buffering is disabled end to end — at the proxy and in every service on the path — because a stream that is buffered is just a slow response with extra steps.',
+        body3:
+          'The same channel carries text generation, image generation progress and long-running research, so the interface has one way to show work in flight rather than three.',
+        stagesName: 'Stage changes',
+        stagesDesc:
+          'Queued, routing, assembling context, calling the model, finishing — so a pause always has a visible reason.',
+        contentName: 'Content deltas',
+        contentDesc: 'The answer text as the model produces it, token by token.',
+        reasoningName: 'Reasoning deltas',
+        reasoningDesc:
+          'For models that expose their thinking, the reasoning stream is delivered separately from the answer and rendered separately too.',
+        metricsName: 'Metrics ticks',
+        metricsDesc:
+          'Tokens so far, tokens per second, time to first token, and where the time actually went — model load, prompt evaluation or generation.',
+        terminalName: 'Terminal events',
+        terminalDesc:
+          'A final usage summary, or an explicit error or cancellation. The stream never just stops.',
+      },
+      dataLayer: {
+        title: 'What stores what',
+        intro: 'Four kinds of store, each used for what it is good at.',
+        postgresDesc:
+          'The system of record for accounts, conversations, routing decisions, memory, files, connections and billing — one database per service.',
+        pgvectorDesc:
+          'Vector similarity search inside PostgreSQL, used to retrieve relevant memories and context pack items without running a separate vector database.',
+        mongoDesc:
+          'Audit events, the usage ledger and structured logs: high-volume append-only data with a rolling retention window.',
+        redisDesc:
+          'Caching, rate-limit counters and short-lived coordination state. Nothing that matters is stored only here.',
+      },
+      security: {
+        title: 'Security mechanisms',
+        intro:
+          'Concrete controls that exist in the product. No certification claims — see the note at the end.',
+        tokensName: 'Access and refresh tokens',
+        tokensDesc:
+          'Short-lived access tokens with refresh rotation. Reuse of a rotated token invalidates the session.',
+        passwordsName: 'Password hashing',
+        passwordsDesc:
+          'Argon2 with per-user salts. Passwords are never stored or logged in any recoverable form.',
+        rbacName: 'Role-based access control',
+        rbacDesc:
+          'Roles carry explicit permission sets, enforced by guards on every endpoint of every service — not only in the interface.',
+        credentialsName: 'Encrypted credentials',
+        credentialsDesc:
+          'Provider and connector secrets are encrypted at rest with AES-256-GCM and are never returned by an API.',
+        validationName: 'Schema validation',
+        validationDesc:
+          'Every request body is validated against a Zod schema with explicit length and size bounds before it reaches any logic.',
+        rateLimitName: 'Rate limiting',
+        rateLimitDesc:
+          'Per-account throttling on every service, so one client cannot exhaust capacity for everyone else.',
+        headersName: 'Security headers',
+        headersDesc:
+          'A strict content security policy with per-request nonces, HSTS, and the standard hardening headers on every response.',
+        transportName: 'TLS everywhere',
+        transportDesc:
+          'TLS from the browser to the edge and again on every internal hop, with certificate verification between services.',
+        redactionName: 'Log redaction',
+        redactionDesc:
+          'Tokens, passwords, API keys and authorization headers are stripped before anything is written to a log.',
+        disclaimer:
+          'ClawAI holds no third-party security certifications today — not SOC 2, not ISO 27001, not HIPAA. We describe the mechanisms above rather than implying assurances we have not obtained. Organisations with formal requirements should raise them with us so they can be scoped as part of an engagement.',
+      },
+      observability: {
+        title: 'Observability',
+        body1:
+          'Every service emits the same signals in the same shape, and they all land somewhere queryable. An operator answering “what happened to this request” should not have to open eighteen log files.',
+        logsName: 'Structured logs',
+        logsDesc:
+          'JSON logs from every service and from the browser, shipped over the event bus and retained on a rolling window.',
+        correlationName: 'Request correlation',
+        correlationDesc:
+          'A request ID is generated in the browser and carried through every service hop, so one identifier reconstructs the whole path.',
+        auditName: 'Audit events',
+        auditDesc:
+          'A separate, immutable record of security- and business-relevant actions, kept apart from operational logs.',
+        usageName: 'Usage ledger',
+        usageDesc:
+          'Every metered call is written as a ledger entry. Allowance figures are derived from the ledger, not from a counter that could drift.',
+        healthName: 'Health aggregation',
+        healthDesc:
+          'A dedicated service polls every other service and reports one consolidated view of what is up.',
+      },
+      reliability: {
+        title: 'When something fails',
+        body1:
+          'Model providers have outages, rate limits and slow days. The platform is built to absorb them rather than pass them on to you as a spinner that never resolves.',
+        fallbackName: 'Fallback chains',
+        fallbackDesc:
+          'Every routing decision carries an ordered list of alternatives. If the chosen model fails, the next is tried automatically and the substitution is recorded.',
+        circuitName: 'Health-based avoidance',
+        circuitDesc:
+          'Connectors are health-checked continuously, and a provider that is failing is skipped by the router until it recovers.',
+        idempotencyName: 'Safe retries',
+        idempotencyDesc:
+          'Event handlers tolerate duplicate delivery, so a retry corrects a failure instead of charging your allowance twice.',
+        visibleErrorsName: 'Errors are visible',
+        visibleErrorsDesc:
+          'When every option fails, an explicit error is written into the conversation and pushed down the stream. There is no silent failure that leaves the interface waiting.',
+        isolationName: 'Blast radius',
+        isolationDesc:
+          'Separate processes and separate databases mean a failure degrades one capability. Image generation being down does not stop you chatting.',
+      },
+      enterprise: {
+        title: 'The same architecture, inside your network',
+        body1:
+          'Everything on this page describes the hosted service, but the architecture is not tied to it. The same eighteen services, the same event bus and the same data model can be deployed inside an organisation’s own network.',
+        body2:
+          'In that configuration the external model providers are replaced by open-weight models served on your own GPUs, so no prompt, document or conversation leaves your infrastructure. It is a scoped engagement rather than a plan you can buy — we size it with your team.',
+        cta: 'Talk to us about a private deployment',
+      },
+      cta: {
+        title: 'See it running',
+        subtitle:
+          'The fastest way to judge an architecture is to use what it produces. The free plan takes a minute to set up.',
+        primary: 'Create your account',
+        secondary: 'Talk to us about a private deployment',
+      },
+    },
+    useCasesPage: {
+      hero: {
+        title: 'What people actually do with ClawAI',
+        subtitle:
+          'Ten jobs that come up every day, and the model — or combination of models — that handles each one best. All on one subscription.',
+        lastReviewedLabel: 'Last reviewed',
+      },
+      grid: {
+        title: 'Ten jobs, ten routings',
+        intro:
+          'Each of these leans on a different strength. That is the whole argument for having every model available instead of picking one and living with it.',
+        problemLabel: 'The problem',
+        solutionLabel: 'What ClawAI does',
+        capabilityLabel: 'Leans on',
+      },
+      cases: {
+        softwareTitle: 'Software development',
+        softwareProblem:
+          'The model that writes the best code is rarely the one that explains a design trade-off best, and neither is the one you want reviewing a two-thousand-line diff.',
+        softwareSolution:
+          'Coding questions route to the models with the strongest code track record and architecture questions to the strongest reasoning models. Attach a file and ask several models to review it at once, then have a Judge pass score the reviews.',
+        softwareCapability: 'Auto routing + Compare',
+        researchTitle: 'Research and analysis',
+        researchProblem:
+          'Answers without sources are unusable, and one model’s summary of a topic is one model’s opinion of it.',
+        researchSolution:
+          'Research mode searches the web, fetches the pages and answers with the evidence attached. Consensus runs the same question across several models and shows where they agree and where they do not.',
+        researchCapability: 'Research + Consensus',
+        writingTitle: 'Writing and editing',
+        writingProblem:
+          'Draft quality varies enormously by model, and the differences only become obvious when you read them side by side.',
+        writingSolution:
+          'Generate drafts from several models on the same brief, keep the one that lands, then use Repair to fix specific paragraphs instead of regenerating everything.',
+        writingCapability: 'Compare + Repair',
+        dataTitle: 'Data analysis',
+        dataProblem:
+          'Spreadsheets and exports are too big for a chat box, and a model that invents a number is worse than no answer at all.',
+        dataSolution:
+          'Upload the file and ask questions about it — only the relevant parts are retrieved into the prompt. Verify has a second model check the figures before you see them.',
+        dataCapability: 'File retrieval + Verify',
+        supportTitle: 'Customer support',
+        supportProblem:
+          'Support answers have to be consistent, correct and in your voice, and the volume makes frontier models too expensive to use for everything.',
+        supportSolution:
+          'Context packs hold your product facts and tone rules. Everyday replies go to a fast, cheap model, and anything unusual escalates automatically to a stronger one.',
+        supportCapability: 'Context packs + Escalation',
+        productTitle: 'Product and strategy',
+        productProblem:
+          'Strategy work rewards disagreement, and a single model tends to agree with whatever framing you handed it.',
+        productSolution:
+          'Put the same question to several models chosen deliberately to think differently, then have a Critic pass argue against the conclusion you liked best.',
+        productCapability: 'Compare + Critic',
+        learningTitle: 'Learning and study',
+        learningProblem:
+          'A patient explanation and a rigorous derivation are different skills, and asking one model for both gets you a mediocre version of each.',
+        learningSolution:
+          'Explanations route to models that teach well and derivations to reasoning models. Memory keeps track of what you already know, so it stops re-explaining it.',
+        learningCapability: 'Auto routing + Memory',
+        translationTitle: 'Translation and localisation',
+        translationProblem:
+          'Machine translation is fluent and frequently wrong about tone, register and anything domain-specific.',
+        translationSolution:
+          'Translate with a model strong in the target language, then have a second model review the result against the source. Context packs carry your glossary and style rules into every request.',
+        translationCapability: 'Compare + Context packs',
+        documentsTitle: 'Reports and documents',
+        documentsProblem:
+          'The answer is in a chat window and the deliverable is a file someone else has to open.',
+        documentsSolution:
+          'Export any answer, or a whole conversation, as PDF, DOCX, CSV, HTML, Markdown, TXT or JSON — formatted and ready to send.',
+        documentsCapability: 'Document export',
+        imagesTitle: 'Images',
+        imagesProblem:
+          'Switching to a separate image tool means another subscription, another login, and losing the context of what you were working on.',
+        imagesSolution:
+          'Describe the image in the conversation you are already in. It is generated in place and stays with the thread, alongside the prompt that produced it.',
+        imagesCapability: 'Image generation',
+      },
+      oneSubscription: {
+        title: 'Why one subscription beats several',
+        intro:
+          'Running four AI subscriptions is not four times better than one. It is four bills, four sets of limits, and a constant low-grade decision about which tab to open.',
+        pointRightModelTitle: 'The right model, every time',
+        pointRightModelDesc:
+          'No model is best at everything. With all of them available, the answer to “which one should I use” stops being “whichever one I already pay for”.',
+        pointOneAllowanceTitle: 'One allowance',
+        pointOneAllowanceDesc:
+          'Usage is counted in cost-normalized tokens, so a single number is fair across models that differ wildly in price. No stranded credit on a plan you stopped opening.',
+        pointNoLockInTitle: 'No lock-in',
+        pointNoLockInDesc:
+          'When a new frontier model ships it appears in your model list. You are not stuck with last year’s choice because it is the one you subscribed to.',
+        pointVisibleSpendTitle: 'Visible spend',
+        pointVisibleSpendDesc:
+          'One usage page shows where the allowance went, by model and by day, instead of four dashboards that each count something different.',
+        outro:
+          'And when you genuinely need several models on the same problem, they are already in the same place — which is what makes Compare, Consensus and Judge possible at all.',
+      },
+      enterprise: {
+        title: 'Working with data that cannot leave your network?',
+        body: 'Organisations that cannot send data to an external model provider can run ClawAI on their own infrastructure with open-weight models only. Scoped per engagement.',
+        cta: 'Contact us',
+      },
+      cta: {
+        title: 'Pick a job and try it',
+        subtitle:
+          'The free plan is enough to test whether routing beats picking a model yourself. It takes a minute to set up.',
+        primary: 'Create your account',
+        secondary: 'See the plans',
+      },
+    },
+    faqPage: {
+      hero: {
+        title: 'Frequently asked questions',
+        subtitle:
+          'Plans, models, usage limits, data handling and private deployments. If your question is not answered here, ask us directly.',
+        lastReviewed: 'Last reviewed',
+      },
+      topics: {
+        title: 'Jump to',
+      },
+      gettingStarted: {
+        title: 'Getting started',
+        description: 'What ClawAI is, and how to begin.',
+        whatIsQ: 'What is ClawAI?',
+        whatIsA:
+          'A single subscription that reaches every frontier AI model — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok and Amazon Bedrock — through one chat interface. It routes each message to the model best suited to it, remembers useful context between conversations, answers questions about files you upload, and can put several models on the same problem when one answer is not enough.',
+        apiKeysQ: 'Do I need an API key from OpenAI or Anthropic?',
+        apiKeysA:
+          'No. Model access is included in your subscription. There are no provider accounts to create, no keys to paste and no separate provider bills.',
+        howToStartQ: 'How do I get started?',
+        howToStartA:
+          'Create an account with an email address and a password and you are on the free plan immediately. Send a message. If you do not choose a model, ClawAI picks one for you.',
+        freeTierQ: 'Is there a free plan?',
+        freeTierA:
+          'Yes — $0, no card required. It includes a small daily allowance, access to entry-tier models, and one trial run each of Compare, Judge and Research so you can see what the paid modes do before paying for them.',
+      },
+      plansBilling: {
+        title: 'Plans and billing',
+        description: 'What the tiers cost, and how billing works.',
+        plansQ: 'What plans are available?',
+        plansA:
+          'Seven: Free at $0, Starter $5, Plus $10, Pro $20, Team $50, Scale $100 and Unlimited $200 per month. Every paid plan reaches every model — what differs is your allowance, your daily message limits, and how many Compare, Judge and Research runs you get.',
+        paymentQ: 'How do I pay?',
+        paymentA:
+          'By card, monthly or yearly. Pay yearly and you are charged for ten months instead of twelve, so two months are free.',
+        changePlanQ: 'Can I change plan later?',
+        changePlanA:
+          'Yes, at any time. An upgrade gives you the higher allowance straight away; a downgrade takes effect at the start of your next billing period, so you keep what you have already paid for.',
+        cancelQ: 'Can I cancel?',
+        cancelA:
+          'Yes, at any time and without contacting anyone. Your plan stays active until the end of the period you have paid for, then reverts to the free plan. Your conversations, memories and files are not deleted when you cancel.',
+        failedPaymentQ: 'What happens if a payment fails?',
+        failedPaymentA:
+          'We retry it and email you, and your account keeps working during the retry window. If it still fails, the account drops to the free plan rather than being locked — you keep your data and can restore the plan by fixing the payment method.',
+        cardStorageQ: 'Do you store my card details?',
+        cardStorageA:
+          'No. Card data goes directly to our payment provider and is never stored on our servers. We hold a payment reference, not a card number.',
+      },
+      modelsRouting: {
+        title: 'Models and routing',
+        description: 'Which models you get, and how one is chosen.',
+        availableModelsQ: 'Which models can I use?',
+        availableModelsA:
+          'Claude Opus 5, Sonnet 5 and Fable 5; GPT-5 and GPT-5 mini; Gemini 3 Pro and Flash; Kimi K2; GLM-5.1; Qwen3; DeepSeek V3.2; Grok 4; and models hosted on Amazon Bedrock. Free and the lower-priced plans reach entry and mid-tier models; the premium frontier models unlock from Pro upward.',
+        autoRoutingQ: 'What does Auto routing actually do?',
+        autoRoutingA:
+          'It classifies each message — code, reasoning, analysis, creative writing, image, everyday question — and sends it to a model that is strong at that class and healthy right now. The answer then tells you which model was chosen, how confident the classification was, and why.',
+        pickModelQ: 'Can I choose the model myself?',
+        pickModelA:
+          'Yes. Pick one from the selector and every message in that conversation goes to it. You can switch mid-conversation, or bias Auto toward speed, reasoning depth or cost while keeping the per-message classification.',
+        compareJudgeQ: 'What are Compare, Consensus and Judge?',
+        compareJudgeA:
+          'Compare sends one prompt to up to five models and shows the answers side by side. Consensus synthesises one answer from where several models agree. Judge has an independent model score a response against explicit criteria, and Critic adds written feedback on what is weak. Free includes one trial run of Compare and Judge; paid plans have monthly quotas, uncapped from Team upward.',
+        allowanceBurnQ: 'Does Compare use more of my allowance?',
+        allowanceBurnA:
+          'Yes. Running one prompt against four models costs roughly four answers, weighted by how expensive each model is. The estimated draw is shown before you run it, and each answer reports what it actually consumed.',
+      },
+      usageLimits: {
+        title: 'Usage limits',
+        description: 'How usage is measured, and what happens at the limit.',
+        measurementQ: 'How are limits measured?',
+        measurementA:
+          'In cost-normalized tokens. A token from an expensive frontier model draws down more of your allowance than one from a cheap, fast model, in proportion to what it actually costs. That keeps a single number fair across models whose prices differ by more than an order of magnitude. Plans also carry daily conversation and message counts.',
+        limitReachedQ: 'What happens when I hit a limit?',
+        limitReachedA:
+          'You are told which limit you reached, how much is left on the other windows and when it resets. Daily allowances reset every 24 hours; monthly ones reset with your billing period. You can upgrade for the higher allowance immediately or wait for the reset. Nothing is deleted, and nothing stops silently.',
+      },
+      dataPrivacy: {
+        title: 'Data and privacy',
+        description: 'What happens to what you send.',
+        whoCanSeeQ: 'Who can see my conversations?',
+        whoCanSeeA:
+          'You. Conversations, memories and files are scoped to your account and are not readable by other users. Staff do not browse user content; access to production data is restricted and logged, and we would ask your permission before looking at a specific conversation to debug a problem you reported.',
+        trainingQ: 'Do you train models on my data?',
+        trainingA:
+          'No. Your prompts, files and conversations are not used to train any model, and we do not sell them. When a message goes to a model provider, that provider’s own terms govern that request — which is one reason every answer records which provider handled it.',
+        deletionQ: 'Can I delete my data?',
+        deletionA:
+          'Yes. Delete individual messages, whole conversations, memories or files at any time, or close your account and have all of it removed. Files also expire on a retention schedule. Audit records of account-level actions are kept for a limited period, because they are what makes an audit trail worth having.',
+        certificationsQ: 'Do you have SOC 2, ISO 27001 or HIPAA certification?',
+        certificationsA:
+          'No. ClawAI holds no compliance certifications today, and we will not imply otherwise. We can describe the mechanisms in detail — encryption at rest and in transit, role-based access control, audit logging, configurable retention — and organisations with formal requirements should raise them with us so they can be scoped as part of a private deployment.',
+      },
+      organisations: {
+        title: 'For organisations',
+        description: 'Teams, and deployments inside your own network.',
+        privateDeploymentQ: 'Can we run ClawAI on our own infrastructure?',
+        privateDeploymentA:
+          'Yes. Organisations that cannot send data to a third-party model provider can have the whole platform deployed inside their own network, running open-weight models on their own GPUs, with no external provider calls at all. It is a scoped engagement rather than a plan you can buy online. The trade-off is complete data isolation in exchange for the frontier models, which cannot be run on-premise — contact us and we will size it with you.',
+        teamAccountsQ: 'Do you support teams?',
+        teamAccountsA:
+          'Yes. The Team plan and above give a shared workspace, role-based permissions, more workspace connections and uncapped Compare, Judge, Critic and Research. For anything beyond that — single sign-on against your directory, custom retention rules, procurement paperwork — talk to us.',
+      },
+      contact: {
+        title: 'Still have a question?',
+        description:
+          'Ask us directly. We answer questions about plans, models, data handling and private deployments.',
+        ctaContact: 'Contact us',
+        ctaStart: 'Start on the free plan',
+      },
+    },
+    enterprise: {
+      hero: {
+        eyebrow: 'For organisations',
+        title: 'ClawAI inside your own network',
+        subtitle:
+          'A private deployment of the whole platform on your infrastructure, running open-weight models on your own hardware. No prompt, document or conversation leaves your network — because there is nowhere outside it for them to go.',
+        ctaContact: 'Contact us',
+        ctaLearnMore: 'What a deployment includes',
+        note: 'This is a scoped engagement, not a plan you can buy online. Cost depends on your hardware, your model requirements and how far the integration needs to go.',
+        lastReviewed: 'Last reviewed',
+      },
+      audience: {
+        title: 'Who this is for',
+        intro:
+          'Organisations that want modern AI tooling but cannot accept sending their data to a third-party model provider.',
+        governmentName: 'Government and public sector',
+        governmentDesc:
+          'work covered by national data rules, where processing has to stay inside a designated boundary.',
+        healthcareName: 'Healthcare',
+        healthcareDesc:
+          'clinical notes, patient records and research data that cannot be handed to an external processor.',
+        financeName: 'Financial services',
+        financeDesc:
+          'positions, client files and internal models, where leakage is a regulatory event rather than an embarrassment.',
+        legalName: 'Legal',
+        legalDesc:
+          'privileged material and client confidentiality obligations that make third-party processing a non-starter.',
+        defenceName: 'Defence and critical infrastructure',
+        defenceDesc:
+          'classified or export-controlled environments, including networks with no internet egress at all.',
+        residencyName: 'Data residency requirements',
+        residencyDesc:
+          'organisations that must keep processing inside a specific country or region, and be able to prove it.',
+      },
+      deployment: {
+        title: 'What a private deployment includes',
+        intro:
+          'The same platform described everywhere else on this site, deployed into infrastructure you control.',
+        platformName: 'The full platform',
+        platformDesc:
+          'all eighteen services, the databases, the event bus and the web app, deployed into your data centre or private cloud.',
+        modelsName: 'Models on your hardware',
+        modelsDesc:
+          'open-weight models served on your own GPUs. No external provider calls, no third-party processing, no egress required.',
+        identityName: 'Your identity provider',
+        identityDesc:
+          'single sign-on against your existing directory, with your groups mapped onto ClawAI roles and permissions.',
+        policiesName: 'Your policies',
+        policiesDesc:
+          'routing rules, retention periods, what may be uploaded and who may use which model, all configured to your requirements.',
+        auditName: 'Your audit trail',
+        auditDesc:
+          'every request, decision and administrative action recorded inside your environment and exportable to your existing log platform.',
+        tenancyName: 'Single tenancy',
+        tenancyDesc:
+          'a deployment dedicated to your organisation. Nothing is shared with another customer, because there is no shared instance.',
+      },
+      models: {
+        title: 'The models we can run on your hardware',
+        intro:
+          'Open-weight families that run well on customer GPUs. Which specific models make sense is decided during scoping, because it is bounded by the memory and throughput you actually have.',
+        familiesLabel: 'Model families',
+        qwenDesc:
+          'Strong general and coding models across a very wide range of sizes — usually the easiest family to fit to a given GPU budget.',
+        glmDesc:
+          'Capable bilingual reasoning models with explicit thinking modes, at close to frontier quality.',
+        deepseekDesc:
+          'Mathematics, algorithms and step-by-step reasoning, with dedicated reasoning variants.',
+        llamaDesc:
+          'Widely deployed general-purpose models with mature tooling and predictable behaviour.',
+        mistralDesc:
+          'Efficient models that punch above their size, useful when GPU memory is the binding constraint.',
+        gemmaDesc:
+          'Small, fast models well suited to classification, routing and high-volume everyday requests.',
+        phiDesc:
+          'Very small reasoning-focused models that run on modest hardware, including edge deployments.',
+        sizingNote:
+          'We size the model set against your actual hardware during scoping. A single workstation GPU and a rack of accelerators lead to very different answers, and we would rather tell you that before a purchase order than after one.',
+      },
+      hybrid: {
+        title: 'If some external models are acceptable',
+        body1:
+          'Not every organisation needs a fully closed deployment. Some are comfortable using external providers for low-sensitivity work and need isolation only for the material that matters.',
+        body2:
+          'That configuration is supported, with the boundary enforced by policy rather than by user discipline. Local is the default; anything else has to be explicitly permitted.',
+        allowListTitle: 'Explicit allow-lists',
+        allowListDesc:
+          'external providers are unreachable unless an administrator adds them. Nothing is enabled by default.',
+        policyTitle: 'Policy-driven routing',
+        policyDesc:
+          'rules decide what may leave — by user, by group, by content classification, by workspace or by conversation.',
+        localDefaultTitle: 'Local by default',
+        localDefaultDesc:
+          'if no rule permits an external model, the request is served on your own hardware. A misconfiguration fails closed, not open.',
+        visibilityTitle: 'Visible egress',
+        visibilityDesc:
+          'every request that goes to an external provider is recorded with who sent it, which policy allowed it and what left the network.',
+      },
+      compare: {
+        title: 'Hosted or private',
+        intro:
+          'Two different products for two different problems. Most organisations should start with the hosted app and move only if a requirement forces it.',
+        hostedBadge: 'Self-serve',
+        hostedTitle: 'ClawAI hosted',
+        hostedSubtitle: 'Sign up online, from $5 a month.',
+        hostedPoint1:
+          'Every frontier cloud model — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok and Bedrock.',
+        hostedPoint2: 'Running in minutes. Nothing to install and no hardware to buy.',
+        hostedPoint3: 'New frontier models appear as providers ship them.',
+        hostedPoint4: 'Requests are processed by the model provider under their terms.',
+        hostedPoint5: 'Plan-based allowances, billed monthly or yearly.',
+        privateBadge: 'Contact us',
+        privateTitle: 'ClawAI private deployment',
+        privateSubtitle: 'On your infrastructure, scoped per engagement.',
+        privatePoint1:
+          'Open-weight models served on your own GPUs. No external provider calls at all.',
+        privatePoint2: 'Deployed inside your network, including networks with no internet egress.',
+        privatePoint3:
+          'Your identity provider, your roles, your retention rules, your audit trail.',
+        privatePoint4: 'Model quality is bounded by your hardware, not by the frontier.',
+        privatePoint5: 'Scoped, deployed and handed over with our team.',
+        footnote:
+          'The honest trade-off: a private deployment gives you complete data isolation and costs you access to the frontier models, which cannot be run on-premise at all. If your work does not require that isolation, the hosted app will give you better answers for less money.',
+      },
+      engagement: {
+        title: 'What we do',
+        intro: 'A private deployment is a project, not a download. This is the work it involves.',
+        deployName: 'Deployment',
+        deployDesc:
+          'installing and configuring the platform on your infrastructure, around your networking, storage and GPU topology.',
+        integrateName: 'Integration',
+        integrateDesc:
+          'connecting your identity provider, your internal tools and any existing systems the platform needs to reach.',
+        modelsName: 'Model selection and tuning',
+        modelsDesc:
+          'choosing the model set your hardware can serve, benchmarking it on your actual workload, and configuring routing around it.',
+        policiesName: 'Policy configuration',
+        policiesDesc:
+          'access rules, retention periods, upload restrictions and, where relevant, the egress policy for external models.',
+        handoverName: 'Handover',
+        handoverDesc:
+          'documentation, runbooks and training, so your team can operate, upgrade and troubleshoot it without us.',
+        supportName: 'Ongoing support',
+        supportDesc:
+          'an optional support agreement covering upgrades, new model onboarding and incident response.',
+      },
+      compliance: {
+        title: 'Compliance, stated honestly',
+        body1:
+          'ClawAI holds no compliance certifications today. Not SOC 2, not ISO 27001, not HIPAA. Anyone claiming otherwise on our behalf is wrong, and we would rather lose a deal than imply an assurance we do not have.',
+        body2:
+          'What we can do is describe the mechanisms precisely — encryption at rest and in transit, role-based access control on every endpoint, full audit logging, configurable retention, single tenancy — and let your security team assess them against your framework. A private deployment also removes third-party processing from the picture entirely, which is often the hardest requirement to satisfy any other way.',
+        body3:
+          'If your procurement process requires specific controls, evidence or contractual commitments, raise them early. We scope them per engagement, and we will tell you plainly when something is out of reach rather than letting you discover it during an audit.',
+      },
+      start: {
+        title: 'How to start',
+        intro: 'Three steps, and the first one costs nothing but a conversation.',
+        step1Title: 'Tell us what you need',
+        step1Desc:
+          'your constraints, the hardware you have or plan to buy, and what the deployment actually has to do.',
+        step2Title: 'We scope it',
+        step2Desc:
+          'a concrete proposal: model set, infrastructure requirements, integration work, timeline and cost.',
+        step3Title: 'We deploy and hand over',
+        step3Desc:
+          'installation, configuration, benchmarking against your workload, documentation and training for your team.',
+        cta: 'Contact us',
+        ctaNote:
+          'Tell us your sector, your constraints and roughly how many people would use it. That is enough for a useful first conversation.',
       },
     },
   },

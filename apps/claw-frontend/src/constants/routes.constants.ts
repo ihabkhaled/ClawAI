@@ -1,6 +1,9 @@
 export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
+  // Public marketing route. Also the entry point for organisations asking
+  // about a private on-premise deployment.
+  CONTACT: '/contact',
   DASHBOARD: '/dashboard',
   CHAT: '/chat',
   CHAT_THREAD: (threadId: string) => `/chat/${threadId}` as const,

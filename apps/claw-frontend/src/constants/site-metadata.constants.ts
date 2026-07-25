@@ -1,3 +1,3 @@
-export const SITE_TITLE = 'ClawAI — Local-First AI Orchestration Platform';
+export const SITE_TITLE = 'ClawAI — Every Frontier AI Model, One Subscription';
 export const SITE_DESCRIPTION =
-  'Local-first AI orchestration platform for managing connectors, models, and conversations.';
+  'Reach Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek and Grok from a single account. Intelligent routing picks the right model for each task, metered against one allowance.';

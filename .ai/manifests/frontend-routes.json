@@ -12,14 +12,44 @@
       "route": "/register"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/architecture/page.tsx",
+      "kind": "page",
+      "route": "/architecture"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/contact/page.tsx",
       "kind": "page",
       "route": "/contact"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/faq/page.tsx",
+      "kind": "page",
+      "route": "/faq"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/features/page.tsx",
+      "kind": "page",
+      "route": "/features"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/how-it-works/page.tsx",
+      "kind": "page",
+      "route": "/how-it-works"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/local-first-ai/page.tsx",
+      "kind": "page",
+      "route": "/local-first-ai"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/page.tsx",
       "kind": "page",
       "route": "/"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/use-cases/page.tsx",
+      "kind": "page",
+      "route": "/use-cases"
     },
     {
       "file": "apps/claw-frontend/src/app/(portal)/admin/ai-action-policies/page.tsx",

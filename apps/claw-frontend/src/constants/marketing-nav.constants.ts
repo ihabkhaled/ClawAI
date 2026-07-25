@@ -1,16 +1,21 @@
 import type { MarketingNavLink } from '@/types';
 
-// Phase A: only the homepage is published, so every concept link below
-// points at a homepage anchor. Phase B repoints each entry at its own
-// dedicated page as the content registry flips that slug to PUBLISHED —
-// the labelKey/href pairs are the only lines that will need to change.
+// Phase B: every concept now has its own page, so the nav points at real
+// routes instead of homepage anchors. Each href here MUST correspond to a
+// PUBLISHED entry in CONTENT_REGISTRY — a link to a PLANNED slug would be a
+// noindex dead end.
+//
+// `navLocalFirst` keeps its key name for translation stability, but the label
+// and destination are the ORGANISATION-facing private-deployment page, not a
+// product-identity claim.
 export const MARKETING_NAV_LINKS: ReadonlyArray<MarketingNavLink> = [
-  { labelKey: 'marketing.header.navFeatures', href: '/#features' },
-  { labelKey: 'marketing.header.navHowItWorks', href: '/#how-it-works' },
-  { labelKey: 'marketing.header.navArchitecture', href: '/#architecture' },
-  { labelKey: 'marketing.header.navLocalFirst', href: '/#local-first' },
-  { labelKey: 'marketing.header.navUseCases', href: '/#use-cases' },
-  { labelKey: 'marketing.header.navFaq', href: '/#faq' },
+  { labelKey: 'marketing.header.navFeatures', href: '/features' },
+  { labelKey: 'marketing.header.navHowItWorks', href: '/how-it-works' },
+  { labelKey: 'marketing.header.navPricing', href: '/#pricing' },
+  { labelKey: 'marketing.header.navUseCases', href: '/use-cases' },
+  { labelKey: 'marketing.header.navArchitecture', href: '/architecture' },
+  { labelKey: 'marketing.header.navEnterprise', href: '/local-first-ai' },
+  { labelKey: 'marketing.header.navFaq', href: '/faq' },
 ];
 
 export const MARKETING_GITHUB_URL = 'https://github.com/ihabkhaled/ClawAI';

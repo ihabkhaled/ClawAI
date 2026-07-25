@@ -76,13 +76,23 @@ export function MarketingFooter(): React.ReactElement {
             </h2>
             <ul className="text-muted-foreground mt-3 space-y-2 text-sm">
               <li>
+                <Link href={ROUTES.REGISTER} className="hover:text-foreground">
+                  {t('marketing.header.createAccount')}
+                </Link>
+              </li>
+              <li>
                 <Link href={ROUTES.LOGIN} className="hover:text-foreground">
                   {t('marketing.header.login')}
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.CHAT} className="hover:text-foreground">
-                  {t('marketing.header.openClaw')}
+                <Link href="/#pricing" className="hover:text-foreground">
+                  {t('marketing.header.navPricing')}
+                </Link>
+              </li>
+              <li>
+                <Link href={ROUTES.CONTACT} className="hover:text-foreground">
+                  {t('marketing.footer.enterpriseContact')}
                 </Link>
               </li>
             </ul>

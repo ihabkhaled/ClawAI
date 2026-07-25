@@ -65,7 +65,7 @@ export const fr: TranslationDictionary = {
     passwordPlaceholder: 'Saisissez votre mot de passe',
     signingIn: 'Connexion en cours...',
     loginFailed: 'Échec de la connexion. Veuillez réessayer.',
-    tagline: "Claw - Orchestration IA locale d'abord",
+    tagline: 'Claw — tous les modèles d’IA de pointe, un seul abonnement',
     authenticating: 'Authentification...',
     backToHome: 'Retour à l’accueil',
     emailPlaceholder: 'you@example.com',
@@ -88,18 +88,19 @@ export const fr: TranslationDictionary = {
     showPasswordAria: 'Afficher le mot de passe',
     hidePasswordAria: 'Masquer le mot de passe',
     loginFailedTitle: 'Impossible de vous connecter',
-    brandingHeadline: 'IA local-first, selon vos règles',
+    brandingHeadline: 'Tous les modèles d’IA de pointe, un seul abonnement',
     brandingSubheadline:
-      'Orchestrez des modèles cloud et locaux, conservez les données sensibles sur votre appareil et auditez chaque décision de routage.',
+      'Accédez à Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek et Grok depuis un compte unique, chaque message étant acheminé vers le modèle qui lui convient.',
     featuresAriaLabel: 'Points forts de la plateforme',
     feature1Title: 'Routage intelligent',
     feature1Desc:
-      'Choisissez automatiquement le meilleur modèle par tâche — ou écrasez-le par fil.',
-    feature2Title: 'Vie privée avant tout',
-    feature2Desc: 'Les prompts sensibles passent par Ollama local ; rien ne quitte votre machine.',
-    feature3Title: 'Multi-fournisseurs',
+      'Le meilleur modèle pour chaque tâche, choisi automatiquement — ou fixé par vous.',
+    feature2Title: 'Un quota unique',
+    feature2Desc:
+      'Des jetons normalisés au coût, pour qu’un seul chiffre reste équitable sur tous les modèles que vous utilisez.',
+    feature3Title: 'Tous les fournisseurs',
     feature3Desc:
-      'OpenAI, Anthropic, Gemini, DeepSeek, Grok, Bedrock et local — tout au même endroit.',
+      'Anthropic, OpenAI, Google, Moonshot, Zhipu, Alibaba, DeepSeek, xAI et Amazon Bedrock — tout au même endroit.',
   },
   nav: {
     dashboard: 'Tableau de bord',
@@ -1841,7 +1842,7 @@ export const fr: TranslationDictionary = {
       autoApproveDisabled: 'Auto-approbation désactivée (toujours en file de revue)',
       autoApproveAt: 'Auto-approuver risque ≤ {score}',
       perDayBudget: 'Plafond quotidien',
-      perDayBudgetPlaceholder: 'unlimited',
+      perDayBudgetPlaceholder: 'illimité',
       clear: 'Effacer',
     },
   },
@@ -2615,13 +2616,21 @@ export const fr: TranslationDictionary = {
       notActiveHelp:
         'Pourquoi le chat n’utilise-t-il pas ce modèle ? Activez-le pour le charger en mémoire ; un seul modèle frontier local peut être actif à la fois.',
     },
-    download: { start: 'Télécharger', cancel: 'Annuler', retry: 'Réessayer' },
+    download: {
+      start: 'Télécharger',
+      cancel: 'Annuler',
+      retry: 'Réessayer',
+    },
     compat: {
       fits: 'Compatible avec votre matériel',
       warns: 'Matériel limité',
       refuses: 'Matériel insuffisant',
     },
-    qualityTier: { survival: 'Survie', balanced: 'Équilibré', best: 'Meilleur' },
+    qualityTier: {
+      survival: 'Survie',
+      balanced: 'Équilibré',
+      best: 'Meilleur',
+    },
     preflight: {
       RAM_INSUFFICIENT: 'Mémoire vive insuffisante pour ce modèle.',
       DISK_INSUFFICIENT: 'Espace disque insuffisant (non remplaçable).',
@@ -2740,7 +2749,6 @@ export const fr: TranslationDictionary = {
       save: 'Enregistrer',
     },
   },
-
   emailTemplates: {
     page: {
       title: 'Modèles d’e-mail',
@@ -2771,12 +2779,11 @@ export const fr: TranslationDictionary = {
       cancel: 'Annuler',
     },
   },
-
   inbox: {
     page: {
       title: 'Boîte de l’espace de travail',
       description:
-        'Cross-provider feed of every recent workspace object — filter by provider, type, attention.',
+        'Flux multi-fournisseurs de tous les objets récents de l’espace de travail — filtrez par fournisseur, type et niveau d’attention.',
       loading: 'Chargement de la boîte…',
       loadingMore: 'Chargement…',
       loadMore: 'Charger plus',
@@ -2812,7 +2819,7 @@ export const fr: TranslationDictionary = {
       title: 'Recherche sémantique',
       description:
         'Recherche sur tous vos objets — embeddings locaux respectueux de la vie privée.',
-      placeholder: 'Type a natural-language question…',
+      placeholder: 'Saisissez une question en langage naturel…',
       submit: 'Rechercher',
       searching: 'Recherche…',
       reset: 'Réinitialiser',
@@ -2979,7 +2986,7 @@ export const fr: TranslationDictionary = {
     page: {
       title: 'Remises de code',
       description:
-        'Approved IMPL_PROMPT actions delivered to chat threads, agent terminals, or clipboard.',
+        'Actions IMPL_PROMPT approuvées et remises aux fils de discussion, aux terminaux de l’agent ou au presse-papiers.',
       loading: 'Chargement des remises…',
       error: 'Impossible de charger les remises.',
       empty: 'Aucune remise. Approuvez un IMPL_PROMPT dans la file.',
@@ -2989,17 +2996,23 @@ export const fr: TranslationDictionary = {
       title: 'Envoyer IMPL_PROMPT à…',
       description: 'Choisissez où livrer le brief de code approuvé.',
       cancel: 'Annuler',
-      CHAT: { hint: 'Ouvrir un nouveau fil pré-chargé avec le brief' },
-      AGENT: { hint: 'Déposer dans la file de la console de l’agent connecté' },
-      CLIPBOARD: { hint: 'Copier dans le presse-papiers pour outil externe' },
+      CHAT: {
+        hint: 'Ouvrir un nouveau fil pré-chargé avec le brief',
+      },
+      AGENT: {
+        hint: 'Déposer dans la file de la console de l’agent connecté',
+      },
+      CLIPBOARD: {
+        hint: 'Copier dans le presse-papiers pour outil externe',
+      },
     },
   },
   learned: {
     panel: {
       title: 'Ce que nous avons appris',
-      subtitle: '{count} preferences',
+      subtitle: '{count} préférences',
       description:
-        'Patterns derived from your approve / reject / edit decisions. Used to personalise future suggestions.',
+        'Tendances déduites de vos décisions d’approbation, de rejet et de modification. Utilisées pour personnaliser les suggestions futures.',
       loading: 'Chargement…',
       error: 'Impossible de charger les préférences.',
       empty: 'Nous apprendrons de vos approbations — pas encore de préférences.',
@@ -3402,11 +3415,14 @@ export const fr: TranslationDictionary = {
       navFeatures: 'Fonctionnalités',
       navHowItWorks: 'Fonctionnement',
       navArchitecture: 'Architecture',
-      navLocalFirst: 'Local d’abord',
+      navLocalFirst: 'Pour les entreprises',
+      navPricing: 'Tarifs',
+      navEnterprise: 'Pour les entreprises',
       navUseCases: 'Cas d’usage',
       navFaq: 'FAQ',
       github: 'GitHub',
       login: 'Connexion',
+      createAccount: 'Créer un compte',
       openClaw: 'Ouvrir Claw',
       menuOpen: 'Ouvrir le menu',
       menuTitle: 'Menu',
@@ -3415,7 +3431,9 @@ export const fr: TranslationDictionary = {
     },
     footer: {
       tagline:
-        'Orchestration d’IA locale par défaut, pour les équipes et les particuliers qui veulent faire travailler ensemble des modèles cloud et locaux, sous leur propre contrôle.',
+        "Un seul abonnement, tous les modèles d'IA de pointe. Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek et Grok dans un compte unique, avec un routage vers celui qui convient le mieux à la tâche.",
+      enterpriseContact: 'Pour les entreprises',
+      pricingHeading: 'Tarifs',
       resourcesHeading: 'Ressources',
       github: 'Dépôt GitHub',
       documentation: 'Documentation',
@@ -3429,6 +3447,86 @@ export const fr: TranslationDictionary = {
       title: 'Page introuvable',
       description: 'La page que vous recherchez n’existe pas ou a peut-être été déplacée.',
       backHome: 'Retour à l’accueil',
+    },
+    models: {
+      sectionTitle: 'Tous les modèles de pointe, un seul compte',
+      sectionSubtitle:
+        'Votre abonnement les couvre tous. Changez librement, ou laissez le routage choisir le bon modèle pour chaque tâche.',
+      modelsLabel: 'Modèles',
+      bestForLabel: 'Idéal pour',
+      anthropicStrength: 'Raisonnement approfondi, documents longs et révision de code minutieuse.',
+      openaiStrength:
+        "Large polyvalence avec une utilisation d'outils solide et une sortie structurée fiable.",
+      geminiStrength:
+        'Fenêtres de contexte très larges, réponses rapides et entrée multimodale native.',
+      kimiStrength: 'Analyse à grand contexte et flux de travail agentiques à faible coût.',
+      glmStrength: 'Raisonnement bilingue solide avec des modes de réflexion explicites.',
+      qwenStrength: 'Excellente génération de code et un large éventail de tailles de modèles.',
+      deepseekStrength: 'Mathématiques, algorithmes et raisonnement étape par étape.',
+      grokStrength:
+        "Réponses conversationnelles rapides avec une bonne connaissance de l'actualité.",
+      bedrockStrength:
+        'Hébergement de qualité entreprise pour les équipes déjà investies dans AWS.',
+      footnote:
+        'La disponibilité des modèles suit le calendrier de sortie propre à chaque fournisseur. Les nouveaux modèles sont ajoutés dès leur lancement.',
+    },
+    pricing: {
+      sectionTitle: 'Des forfaits qui évoluent avec vous',
+      sectionSubtitle:
+        'Commencez gratuitement. Passez à un forfait supérieur quand vous avez besoin de plus. Chaque forfait payant donne accès aux mêmes modèles — la différence porte sur la quantité que vous pouvez utiliser.',
+      monthly: 'Mensuel',
+      yearly: 'Annuel',
+      yearlyBadge: 'Deux mois offerts',
+      perMonth: '/mois',
+      perYear: '/an',
+      mostPopular: 'Le plus populaire',
+      dailyTokens: 'Quota quotidien',
+      monthlyTokens: 'Quota mensuel',
+      ctaFree: 'Commencer gratuitement',
+      ctaPaid: 'Choisir ce forfait',
+      freeName: 'Free',
+      freeTagline: 'Essayez ClawAI avec un petit quota quotidien.',
+      freeHighlight1: "Accès aux modèles d'entrée de gamme",
+      freeHighlight2: 'Un essai gratuit chacun pour Comparaison, Juge et Recherche',
+      freeHighlight3: '2 conversations et 12 messages par jour',
+      starterName: 'Starter',
+      starterTagline: 'Pour un usage personnel quotidien.',
+      starterHighlight1: 'Ajoute des modèles cloud économiques',
+      starterHighlight2: '10 exécutions de Comparaison par mois',
+      starterHighlight3: '10 conversations et 100 messages par jour',
+      plusName: 'Plus',
+      plusTagline: 'Pour un usage régulier et plus intensif.',
+      plusHighlight1: 'Ajoute une sélection de modèles milieu de gamme',
+      plusHighlight2: '30 exécutions de Comparaison et 10 de Juge par mois',
+      plusHighlight3: '25 conversations et 250 messages par jour',
+      proName: 'Pro',
+      proTagline: 'Pour les professionnels qui en dépendent au quotidien.',
+      proHighlight1: 'Ajoute des modèles premium, dont Claude Opus et GPT-5',
+      proHighlight2: '150 exécutions de Comparaison et 75 de Juge par mois',
+      proHighlight3: '75 conversations et 750 messages par jour',
+      teamName: 'Team',
+      teamTagline: 'Pour les petites équipes partageant un même espace de travail.',
+      teamHighlight1: 'Toutes les catégories de modèles, avec des limites par requête',
+      teamHighlight2: 'Comparaison, Juge, Critique et Recherche illimités',
+      teamHighlight3: "15 connexions d'espace de travail",
+      scaleName: 'Scale',
+      scaleTagline: 'Pour des charges de travail lourdes et soutenues.',
+      scaleHighlight1: 'Tous les modèles avec le débit le plus élevé',
+      scaleHighlight2: "50 connexions d'espace de travail et 1 000 packs de contexte",
+      scaleHighlight3: '1 000 conversations et 10 000 messages par jour',
+      unlimitedName: 'Unlimited',
+      unlimitedTagline: "Capacité maximale, sous réserve d'une utilisation raisonnable.",
+      unlimitedMonthlyTokens: 'Illimité',
+      unlimitedHighlight1: 'Conversations et messages illimités',
+      unlimitedHighlight2: "200 connexions d'espace de travail, 5 000 packs de contexte",
+      unlimitedHighlight3:
+        "Utilisation des modèles premium soumise à des limites d'utilisation raisonnable",
+      fairUseTitle: 'Ce que signifie « illimité »',
+      fairUseBody:
+        "Les conversations, messages et modèles éligibles sont illimités. Les modèles cloud premium sont soumis à une limite d'utilisation raisonnable afin qu'un seul compte ne puisse pas générer des coûts fournisseurs illimités — vous serez toujours prévenu clairement lorsque vous l'atteignez, jamais coupé silencieusement.",
+      quotaNote:
+        "Les quotas sont mesurés en jetons pondérés selon le coût : un modèle coûteux consomme davantage votre quota qu'un modèle bon marché, si bien qu'un seul chiffre couvre équitablement chaque modèle.",
+      taxNote: 'Prix en USD. Les taxes applicables peuvent être ajoutées lors du paiement.',
     },
     contact: {
       title: 'Contact',
@@ -3457,61 +3555,102 @@ export const fr: TranslationDictionary = {
     },
     home: {
       hero: {
-        title: 'Orchestration d’IA « local-first », sans renoncer aux modèles cloud',
+        title: "Tous les modèles d'IA de pointe, un seul abonnement",
         subtitle:
-          'ClawAI est une plateforme auto-hébergée qui exécute des modèles d’IA locaux aux côtés de fournisseurs cloud tels qu’OpenAI, Anthropic, Gemini, AWS Bedrock, DeepSeek et Grok, et achemine chaque requête vers le modèle le mieux adapté. Elle s’adresse aux équipes et aux particuliers qui veulent le confort d’un assistant IA moderne — conversation, mémoire, compréhension de fichiers, intégrations avec l’espace de travail, génération d’images et de documents — tout en gardant la maîtrise de leurs données sensibles et du choix des modèles, plutôt que de la confier à un fournisseur unique.',
+          'Créez un compte ClawAI et accédez à Claude Opus 5, GPT-5, Gemini 3 Pro, Kimi K2, GLM-5.1, Qwen3, DeepSeek V3.2, Grok 4 et Amazon Bedrock depuis une seule conversation — sans comptes fournisseurs séparés, sans factures séparées, sans jongler avec des clés API. Choisissez un forfait, connectez-vous, et commencez à travailler.',
         ctaOpen: 'Ouvrir Claw',
         ctaLogin: 'Se connecter',
+        ctaRegister: 'Créez votre compte',
+        ctaHowItWorks: 'Découvrir comment ça marche',
         ctaGithub: 'Voir sur GitHub',
+        trustNote:
+          'Commencez gratuitement et passez à un forfait supérieur dès que vous avez besoin de plus. Forfaits payants à partir de 5 $ par mois, annulation à tout moment.',
         lastReviewed: 'Dernière révision',
       },
+      modelRoster: {
+        title: 'Les modèles auxquels vous avez accès',
+        intro:
+          'Un seul abonnement couvre tous les fournisseurs ci-dessous. Changez de modèle en cours de conversation, ou laissez ClawAI choisir le meilleur pour chaque message.',
+        footnote:
+          "Les nouveaux modèles de pointe sont ajoutés dès leur lancement — votre forfait les couvre dès le premier jour, décomptés d'un quota unique.",
+        linkFeatures: 'Explorer toutes les fonctionnalités',
+        linkArchitecture: 'Découvrir comment ClawAI est conçu',
+      },
+      pricing: {
+        title: 'Forfaits et tarifs',
+        intro:
+          'Chaque forfait payant débloque tous les modèles. La seule différence est la quantité que vous pouvez utiliser chaque jour et chaque mois.',
+        toggleLabel: 'Période de facturation',
+        toggleMonthly: 'Mensuel',
+        toggleYearly: 'Annuel',
+        yearlyNote: 'Payez annuellement et profitez de {months} mois offerts.',
+        linkFaq: 'Des questions sur la facturation ? Consultez la FAQ',
+        linkUseCases: 'Découvrir ce que les gens créent avec ClawAI',
+      },
+      enterprise: {
+        eyebrow: 'Pour les entreprises',
+        title: 'Besoin de ClawAI dans votre propre réseau ?',
+        body: "Les entreprises peuvent faire déployer ClawAI sur leurs propres serveurs, n'exécutant que des modèles locaux, afin qu'aucun prompt, document ou conversation ne quitte jamais leur infrastructure. Il s'agit d'un déploiement sur mesure que nous mettons en place avec vous — parlez-nous-en et nous le dimensionnerons.",
+        point1Title: 'Fonctionne sur vos serveurs',
+        point1Body:
+          'Déployé dans votre centre de données ou votre cloud privé, géré par votre équipe, derrière votre pare-feu.',
+        point2Title: 'Modèles locaux uniquement',
+        point2Body:
+          'Des modèles à poids ouverts servis sur votre propre matériel. Aucun appel à un fournisseur externe et aucun traitement de données par un tiers.',
+        point3Title: "Vos contrôles, votre journal d'audit",
+        point3Body:
+          "SSO, contrôle d'accès basé sur les rôles, règles de rétention et un journal d'audit complet de chaque requête, le tout conservé dans votre environnement.",
+        ctaContact: 'Contactez-nous',
+        ctaLearnMore: 'En savoir plus sur les déploiements privés',
+      },
       localFirst: {
-        title: 'Local d’abord, cloud en option',
+        title: 'Un seul compte au lieu de neuf',
         body1:
-          'ClawAI intègre d’emblée un moteur d’IA local basé sur Ollama, si bien qu’une expérience de conversation fonctionnelle est disponible sur votre propre matériel sans aucune clé d’API externe. Par défaut, les modèles locaux gèrent les décisions d’acheminement, l’extraction de mémoire et la conversation quotidienne, et peuvent se voir attribuer des rôles spécialisés — code, raisonnement, génération de fichiers ou tâches agentiques de « réflexion » — à partir d’un catalogue intégré de modèles ouverts sélectionnés, allant des modèles dimensionnés pour l’acheminement jusqu’aux grands modèles généralistes et de raisonnement.',
+          "Accéder à Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek et Grok signifie normalement neuf abonnements distincts, neuf pages de facturation et neuf ensembles de limites d'utilisation à suivre. ClawAI remplace tout cela par une seule connexion, un seul quota et une seule facture mensuelle.",
         body2:
-          'Les fournisseurs cloud sont entièrement optionnels. Lorsque vous connectez OpenAI, Anthropic, Gemini, AWS Bedrock, DeepSeek ou Grok, ClawAI les traite comme des cibles d’acheminement supplémentaires plutôt que comme un remplacement du moteur local — vous choisissez par fil de discussion, par message, ou vous laissez le routeur décider, et vous pouvez tout à fait fonctionner sans aucun connecteur cloud configuré si votre déploiement l’exige.',
+          'Vous ne manipulez jamais de clé API. ClawAI gère les relations avec les fournisseurs, tient la liste des modèles à jour à mesure que de nouvelles versions sortent, et mesure tout ce que vous utilisez par rapport à un chiffre unique, afin que vous sachiez toujours où vous en êtes.',
       },
       routing: {
-        title: 'Un acheminement qui s’adapte à la requête, et non l’inverse',
+        title: "Un routage qui s'adapte à la demande",
         intro:
-          'Chaque message peut être classé dans l’une de plusieurs dizaines de catégories de capacités — code, analyse de données, écriture créative, sécurité, juridique, médical, et bien d’autres — puis acheminé en conséquence. Sept modes d’acheminement couvrent tout l’éventail, du entièrement automatique au entièrement manuel :',
+          "Chaque message est classé avant d'être envoyé — code, raisonnement complexe, analyse de données, écriture créative, images, questions du quotidien — puis routé vers un modèle performant dans cette catégorie. Cinq modes déterminent la part du choix que vous déléguez :",
         outro:
-          'Les connecteurs font l’objet d’une surveillance continue de leur état de santé, et les décisions d’acheminement consignent un score de confiance, les étiquettes de raisonnement à l’origine du choix et une chaîne de repli afin qu’un fournisseur défaillant ne bloque pas une conversation. Un laboratoire de rejeu d’acheminement vous permet de réexécuter des décisions d’acheminement historiques sur la configuration actuelle pour voir ce qui changerait avant d’adopter une nouvelle politique.',
+          "Chaque fournisseur fait l'objet d'une vérification de santé continue, de sorte qu'un fournisseur ayant une mauvaise journée est contourné plutôt que laissé à l'échec. Chaque décision enregistre un score de confiance, les raisons qui la motivent et une chaîne de secours, et chaque réponse vous indique quel modèle l'a produite et pourquoi.",
         modeAutoName: 'Auto',
         modeAutoDesc:
-          'un pipeline en cinq étapes (confidentialité, image, fichier, catégorie, puis un classificateur par modèle local ou heuristique) choisit un fournisseur et un modèle pour chaque message',
+          'ClawAI classe le message et choisit le fournisseur et le modèle à votre place, message par message',
         modeManualName: 'Manuel',
-        modeManualDesc: 'vous fixez un fournisseur et un modèle précis pour un fil de discussion',
-        modeLocalName: 'Local uniquement',
+        modeManualDesc:
+          'vous épinglez un modèle à une conversation et chaque message lui est envoyé',
+        modeLocalName: 'Faible latence',
         modeLocalDesc:
-          'chaque requête reste sur votre moteur local, en tenant compte de la catégorie (code, raisonnement ou généraliste)',
-        modePrivacyName: 'Confidentialité d’abord',
+          "privilégie le modèle capable le plus rapide, pour les échanges rapides où l'attente coûte plus cher qu'une réponse légèrement moins bonne",
+        modePrivacyName: 'Raisonnement approfondi',
         modePrivacyDesc:
-          'local lorsqu’il est disponible, avec repli vers un fournisseur cloud configuré uniquement en cas de nécessité',
-        modeBiasName: 'Faible latence / Raisonnement approfondi / Économie de coûts',
+          "privilégie les modèles de raisonnement les plus puissants, quelle que soit la vitesse, pour les problèmes où seule l'exactitude compte",
+        modeBiasName: 'Économie de coûts',
         modeBiasDesc:
-          'oriente l’acheminement vers la rapidité, la profondeur de raisonnement ou l’option saine la moins coûteuse',
+          "privilégie le modèle le moins cher capable de faire le travail, afin qu'un quota fixe couvre davantage de travail",
       },
       howItWorks: {
         title: 'Ce qui se passe lorsque vous envoyez un message',
         outro:
-          'La mémoire et le contexte sont activés à la demande, fil par fil. Les faits, préférences et instructions sont classés par sensibilité, peuvent être limités à un utilisateur, un fil, un projet ou un espace de travail, et chaque mémoire utilisée dans une réponse est consignée dans un reçu de contexte afin que vous puissiez voir exactement ce qui a nourri une réponse donnée. Les packs de contexte vous permettent de regrouper des textes, fichiers, URL et références de mémoire réutilisables dans une collection nommée que vous attachez à n’importe quel fil. Les fichiers téléversés sont découpés et récupérés de la même manière, de sorte que ClawAI peut répondre à des questions ancrées dans vos propres documents plutôt que dans les seules données d’entraînement du modèle.',
+          "La mémoire et le contexte sont des interrupteurs que vous contrôlez par conversation. Tout ce qui a été fourni à un modèle est répertorié dans un reçu joint à la réponse, afin que vous puissiez vérifier ce qui l'a informée. Les fichiers téléversés sont découpés et récupérés de la même façon, ce qui permet à ClawAI de répondre à des questions sur vos propres documents plutôt que de deviner à partir des données d'entraînement.",
         step1Title: 'Vous envoyez un message',
         step1Desc:
-          'dans un fil de discussion, en y joignant éventuellement des fichiers ou en fixant un fournisseur et un modèle.',
-        step2Title: 'L’acheminement décide de sa destination',
+          'dans une conversation, en joignant éventuellement des fichiers ou en choisissant un modèle précis.',
+        step2Title: 'Le routage choisit le modèle',
         step2Desc:
-          'en fonction du mode d’acheminement actif, du contenu du message et de l’état de santé des connecteurs.',
+          'en fonction du mode choisi, de ce que demande le message, et des fournisseurs actuellement en bonne santé.',
         step3Title: 'Le contexte est assemblé',
         step3Desc:
-          'les mémoires pertinentes, les packs de contexte attachés et les fragments de fichiers sont récupérés et fusionnés dans l’invite dans la limite d’un budget de jetons, aux côtés de l’historique du fil.',
+          "les mémoires enregistrées, les packs de contexte joints et les extraits pertinents de vos fichiers téléversés sont intégrés au prompt dans la limite d'un budget de jetons, aux côtés de l'historique de la conversation.",
         step4Title: 'Le modèle répond',
         step4Desc:
-          'la réponse est diffusée en continu sur une connexion en direct, avec des mises à jour de jetons, de raisonnement et de métriques au fil de l’eau, et un repli automatique en cas de défaillance d’un fournisseur.',
-        step5Title: 'L’échange est mémorisé',
+          "diffusée au fur et à mesure de sa génération, avec un chronométrage en direct et le raisonnement lorsque le modèle l'expose, et un basculement automatique vers un autre modèle si le premier échoue.",
+        step5Title: "L'échange est enregistré",
         step5Desc:
-          'les faits, préférences et instructions dignes d’être conservés sont extraits pour de futures conversations, et l’échange complet est consigné à des fins d’audit.',
+          "les faits et préférences qui méritent d'être conservés sont sauvegardés pour la prochaine fois, et le coût est décompté de votre quota, sans surprise en fin de mois.",
       },
       features: {
         title: 'Au-delà d’une simple fenêtre de conversation',
@@ -3551,7 +3690,7 @@ export const fr: TranslationDictionary = {
           'ClawAI s’étend au-delà de la fenêtre de conversation jusqu’aux outils que vous utilisez déjà, et peut agir en votre nom sous approbation humaine explicite.',
         workspaceName: 'Connecteurs d’espace de travail',
         workspaceDesc:
-          'connectez GitHub, GitLab, Jira, Slack, Google Drive, OneDrive, SharePoint, Confluence, Figma, Gmail, Bitbucket et ClickUp via OAuth2/PKCE, avec webhook et synchronisation planifiée en arrière-plan, afin que ClawAI puisse effectuer des recherches et agir sur vos outils existants.',
+          'connectez GitHub, GitLab, Jira, Slack, Google Drive, OneDrive, SharePoint, Confluence, Figma, Gmail, Bitbucket et ClickUp via OAuth, avec synchronisation par webhook et planifiée, afin que ClawAI puisse rechercher dans les outils que vous utilisez déjà et agir sur eux.',
         agentName: 'Agent de bureau',
         agentDesc:
           'un agent compagnon capable de proposer des actions de système de fichiers, de processus, de navigateur et de terminal sur un appareil appairé, chacune classée selon son risque et son rayon d’impact.',
@@ -3560,62 +3699,1154 @@ export const fr: TranslationDictionary = {
           'les actions de l’agent sensibles ou à fort impact requièrent votre approbation explicite avant leur exécution, et chaque invocation est consignée avec un plan d’annulation lorsqu’il en existe un.',
         imageName: 'Génération d’images',
         imageDesc:
-          'générez des images via des moteurs locaux Stable Diffusion / ComfyUI ou des fournisseurs d’images cloud connectés.',
+          "décrivez une image dans la conversation où vous êtes déjà et récupérez-la dans le fil, aux côtés du prompt qui l'a produite.",
         fileGenName: 'Génération de fichiers et de documents',
         fileGenDesc:
-          'exportez des sorties structurées au format PDF, DOCX, CSV, HTML, Markdown, TXT ou JSON.',
+          "exportez n'importe quelle réponse en PDF, DOCX, CSV, HTML, Markdown, TXT ou JSON.",
       },
       architecture: {
         title: 'Conçu comme des services indépendants, non comme un monolithe',
         body1:
-          'ClawAI est un ensemble de services back-end ciblés — authentification, conversation, connecteurs, acheminement, mémoire, fichiers, génération d’images et de fichiers, espace de travail, moteur d’exécution de l’agent de bureau, recherche et moteur de modèles locaux, entre autres — chacun possédant sa propre base de données et communiquant via un bus d’événements interne et HTTP, derrière un unique proxy inverse. Un frontend Next.js dialogue avec tous ces services au travers d’une seule surface d’API. Cette séparation signifie qu’une panne ou un ralentissement dans un domaine, comme la génération d’images, n’entraîne pas l’arrêt de la conversation ou de l’acheminement.',
+          "ClawAI est composé de dix-huit services backend spécialisés — authentification, conversation, routage, connecteurs, mémoire, fichiers, recherche, espace de travail, génération d'images, export de documents, facturation, audit et journalisation parmi eux — chacun possédant sa propre base de données et communiquant via HTTP et un bus d'événements interne, derrière un unique proxy inverse. L'application web accède à tous via une seule surface d'API. Une défaillance ou un ralentissement dans un domaine, comme la génération d'images, ne peut pas mettre hors service la conversation ou le routage.",
         body2:
-          'Chaque compte possède un rôle doté d’un ensemble de permissions précis, appliqué à la fois sur le frontend et sur chaque point de terminaison back-end. Les connexions, les modifications de connecteurs, les décisions d’acheminement, les actions de mémoire, les contenus générés et les actions de l’agent sont tous consignés dans un journal d’audit. Une vue d’observabilité agrège les vérifications de santé de tous les services afin que les problèmes opérationnels soient visibles en un seul endroit plutôt qu’enfouis dans des journaux distincts.',
+          "Chaque compte possède un rôle avec un ensemble de permissions explicite, appliqué dans l'interface puis de nouveau sur chaque point de terminaison backend. Les connexions, changements de forfait, décisions de routage, modifications de mémoire et contenus générés sont tous consignés dans un journal d'audit, et un service de santé dédié agrège l'état de tous les autres services en une seule vue.",
       },
       selfHosting: {
-        title: 'Hébergez-le vous-même',
+        title: "Besoin de l'héberger dans votre propre réseau ?",
         body1:
-          'ClawAI est conçu pour être auto-hébergé dès le départ. Un unique script d’installation provisionne chaque base de données, chaque service et le proxy inverse via Docker Compose, avec détection automatique du GPU pour les hôtes NVIDIA, AMD ROCm et Intel/Vulkan. Le HTTPS local est configuré d’emblée, de sorte que chaque saut entre le navigateur, le proxy et chaque service back-end est chiffré, même en développement local. Le code source complet est disponible sur GitHub pour quiconque souhaite l’inspecter, l’auto-héberger ou l’étendre.',
+          "Les entreprises qui ne peuvent pas envoyer de données à un fournisseur de modèles tiers peuvent faire déployer ClawAI sur leurs propres serveurs, exécutant des modèles à poids ouverts sur leurs propres GPU, sans aucun appel à un fournisseur externe. C'est un engagement défini sur mesure plutôt qu'un forfait que l'on achète en ligne — indiquez-nous vos contraintes et nous le dimensionnerons avec vous.",
       },
       security: {
-        title: 'Confidentialité, maîtrise des données et limites assumées',
+        title: 'Confidentialité, maîtrise des données et limites honnêtes',
         body1:
-          'Choisir un mode d’acheminement local uniquement ou confidentialité d’abord maintient les requêtes sur une infrastructure que vous contrôlez ; choisir de connecter un fournisseur cloud signifie que les propres conditions et le traitement des données de ce fournisseur s’appliquent aux requêtes que vous lui envoyez. ClawAI consigne quel fournisseur a traité chaque message, de sorte que ce choix reste toujours auditable après coup, au lieu de vous demander de simplement croire que cela s’est bien passé. Les identifiants de connecteur sont chiffrés au repos, et les actions de l’agent de bureau dépassant un seuil de risque configurable requièrent votre approbation explicite avant leur exécution.',
+          "Vos conversations vous appartiennent. ClawAI ne vend pas vos données et n'utilise ni vos prompts, ni vos fichiers, ni vos conversations pour entraîner un quelconque modèle. Lorsqu'un message est envoyé à un fournisseur, les conditions propres à ce fournisseur régissent cette requête — c'est d'ailleurs pourquoi chaque réponse enregistre précisément quel modèle l'a traitée, plutôt que de vous demander de nous croire sur parole. Les identifiants sont chiffrés au repos avec AES-256-GCM et chaque échange entre services passe par TLS.",
         body2:
-          'ClawAI ne supprime pas les risques généraux liés au travail avec des modèles d’IA : les sorties peuvent toujours être erronées, incomplètes ou biaisées, quel que soit le fournisseur qui les a générées, et aucune couche d’orchestration ne peut se substituer entièrement à la relecture par vous-même des sorties sensibles ou à fort enjeu. La vérification et la revue « judge/critic » réduisent, sans l’éliminer, le besoin de jugement humain sur tout ce qui a des conséquences importantes.',
+          "ClawAI ne supprime pas les risques généraux liés au travail avec l'IA. Les réponses peuvent toujours être incorrectes, incomplètes ou biaisées, quel que soit le modèle qui les a produites. Verify, Judge et Critic réduisent ce risque sans l'éliminer — tout ce qui a des conséquences importantes nécessite encore une relecture humaine. ClawAI ne détient aujourd'hui aucune certification de sécurité ; les entreprises ayant des exigences formelles devraient nous en faire part afin que nous puissions les évaluer pour chaque engagement.",
       },
       useCases: {
         title: 'À qui s’adresse ClawAI',
-        privacyName: 'Équipes soucieuses de la confidentialité',
+        privacyName: "Les personnes qui utilisent l'IA au quotidien",
         privacyDesc:
-          'conservez les conversations et documents sensibles sur une infrastructure que vous contrôlez, les modèles cloud n’étant disponibles que lorsque vous choisissez de les utiliser.',
+          'un seul abonnement au lieu de trois ou quatre, avec le modèle le plus puissant toujours à portée de clic plutôt que derrière un autre péage.',
         devName: 'Développeurs évaluant des modèles',
         devDesc:
-          'comparez côte à côte les réponses de plusieurs modèles locaux et cloud sur une même invite avant de vous engager sur l’un d’eux.',
-        selfHostName: 'Auto-hébergeurs et utilisateurs de homelab',
+          "envoyez le même prompt à cinq modèles à la fois et comparez les réponses côte à côte avant de vous engager sur l'une d'elles.",
+        selfHostName: 'Chercheurs et analystes',
         selfHostDesc:
-          'exécutez une pile complète d’assistant IA, y compris la gestion des modèles locaux, sur du matériel qui vous appartient.',
-        teamName: 'Petites équipes automatisant leurs flux de travail',
+          'parcourez de longs documents et jeux de données avec des modèles à grand contexte, puis faites vérifier les conclusions par un second modèle.',
+        teamName: 'Petites équipes',
         teamDesc:
-          'connectez vos outils existants (gestionnaires de tickets, messagerie, documents, gestion de sources) et laissez des actions d’agent soumises à approbation prendre en charge le travail routinier.',
+          'partagez un seul espace de travail, connectez les outils de suivi des tickets, la messagerie et les documents que vous utilisez déjà, et voyez exactement où va votre quota.',
       },
       faq: {
         title: 'Questions fréquentes',
-        q1: 'Ai-je besoin d’une clé d’API cloud pour utiliser ClawAI ?',
-        a1: 'Non. ClawAI est livré avec un moteur local basé sur Ollama qui gère l’acheminement et la conversation d’emblée. Les fournisseurs cloud sont des connecteurs optionnels que vous pouvez ajouter si vous le souhaitez.',
-        q2: 'Puis-je auto-héberger l’ensemble de la plateforme ?',
-        a2: 'Oui. ClawAI est conçu pour fonctionner sur votre propre infrastructure via Docker Compose, avec du TLS local, ses propres instances PostgreSQL et MongoDB, et aucun service externe requis.',
-        q3: 'Qu’advient-il des données que j’envoie à un fournisseur cloud ?',
-        a3: 'Cela dépend du fournisseur que vous connectez et du mode d’acheminement que vous choisissez. Les modes confidentialité d’abord et local uniquement maintiennent les requêtes sur votre moteur local ; les décisions d’acheminement consignent quel fournisseur a traité chaque message afin que vous puissiez auditer où sont allées vos données.',
+        q1: "Ai-je besoin d'une clé API d'OpenAI ou d'Anthropic ?",
+        a1: "Non. L'accès aux modèles est inclus dans votre abonnement. Il n'y a aucun compte fournisseur à créer, aucune clé à coller et aucune facture fournisseur séparée.",
+        q2: 'Puis-je choisir quel modèle répond ?',
+        a2: 'Oui. Choisissez un modèle pour une conversation, changez en cours de conversation, ou laissez le mode Auto et laissez ClawAI router chaque message vers le modèle le mieux adapté.',
+        q3: "Comment les limites d'utilisation sont-elles mesurées ?",
+        a3: "En jetons pondérés selon le coût. Un modèle coûteux consomme davantage votre quota qu'un modèle bon marché, si bien qu'un seul chiffre quotidien et mensuel reste équitable entre des modèles dont les prix varient de plus d'un ordre de grandeur.",
         q4: 'ClawAI est-il affilié à OpenAI, Anthropic, Google ou AWS ?',
-        a4: 'Non. ClawAI est une couche d’orchestration indépendante et open source qui peut se connecter aux API de ces fournisseurs lorsque vous configurez vos propres identifiants. Il n’est ni approuvé par eux ni affilié à eux.',
+        a4: "Non. ClawAI est un produit indépendant qui donne accès aux modèles de ces fournisseurs via un seul abonnement. Il n'est approuvé ni affilié à aucun d'entre eux.",
       },
       cta: {
-        title: 'Essayez ClawAI selon vos propres conditions',
+        title: 'Commencez avec le forfait gratuit',
         subtitle:
-          'Connectez-vous à un déploiement existant, ou clonez le dépôt et exécutez le script d’installation pour mettre en place le vôtre.',
+          "Créez un compte et envoyez votre premier message en moins d'une minute. Passez à un forfait supérieur seulement lorsque vous dépassez le quota gratuit.",
         ctaOpen: 'Ouvrir Claw',
-        ctaGithub: 'Obtenir le code source sur GitHub',
+        ctaGithub: 'Voir le code source sur GitHub',
+      },
+    },
+    features: {
+      hero: {
+        title: 'Tout ce que fait ClawAI',
+        subtitle:
+          "Neuf familles de modèles, cinq modes de routage, neuf façons de faire travailler plusieurs modèles sur un même problème, une mémoire qui persiste entre les conversations, des fichiers sur lesquels vous pouvez poser des questions, douze connecteurs d'espace de travail, et une vue d'utilisation qui montre exactement où est allé votre quota.",
+        ctaPrimary: 'Créez votre compte',
+        ctaSecondary: 'Se connecter',
+        lastReviewed: 'Dernière mise à jour',
+      },
+      providers: {
+        title: 'Toutes les familles de modèles de pointe',
+        intro:
+          "Un seul abonnement donne accès à tous ces modèles. Passez de l'un à l'autre au sein d'une même conversation — rien à installer, aucun compte fournisseur à créer.",
+        modelsLabel: 'Modèles',
+        anthropicDesc:
+          "Raisonnement minutieux sur des documents longs, révision de code solide, et le suivi d'instructions le plus fiable de la gamme.",
+        openaiDesc:
+          "Large polyvalence avec une excellente utilisation d'outils et une sortie structurée fiable.",
+        geminiDesc:
+          "Fenêtres de contexte très larges, réponses rapides et traitement natif des images, de l'audio et de la vidéo.",
+        kimiDesc:
+          'Analyse à grand contexte et travail agentique à une fraction du prix des modèles de pointe.',
+        glmDesc:
+          'Raisonnement bilingue solide avec un mode de réflexion explicite activable pour les problèmes plus difficiles.',
+        qwenDesc:
+          'Excellente génération de code sur un large éventail de tailles de modèles, du plus rapide au plus volumineux.',
+        deepseekDesc:
+          'Mathématiques, algorithmes et démonstrations étape par étape, avec une variante dédiée au raisonnement.',
+        grokDesc:
+          "Réponses conversationnelles rapides avec une connaissance de l'actualité récente.",
+        bedrockDesc: 'Modèles hébergés sur AWS pour les entreprises déjà investies dans Amazon.',
+        outro:
+          'La gamme suit le calendrier de sortie de chaque fournisseur. Quand un nouveau modèle de pointe sort, il apparaît dans votre liste de modèles — aucun changement de forfait, aucun nouveau contrat, aucune facture supplémentaire.',
+      },
+      routing: {
+        title: 'Cinq façons de choisir un modèle',
+        intro:
+          'Auto est le mode par défaut et gère bien la plupart des tâches. Les quatre autres existent pour quand vous voulez décider vous-même, ou orienter le choix dans une direction précise.',
+        autoName: 'Auto',
+        autoDesc:
+          "ClawAI classe chaque message — code, raisonnement, analyse, créatif, image, quotidien — et l'envoie à un modèle performant dans cette catégorie.",
+        manualName: 'Manuel',
+        manualDesc:
+          "Épinglez un modèle à la conversation. Chaque message lui est envoyé jusqu'à ce que vous le changiez.",
+        lowLatencyName: 'Faible latence',
+        lowLatencyDesc:
+          "Privilégie le modèle le plus rapide capable de répondre, pour les échanges rapides où l'attente coûte plus cher qu'une réponse légèrement moins bonne.",
+        highReasoningName: 'Raisonnement approfondi',
+        highReasoningDesc:
+          "Privilégie les modèles de raisonnement les plus puissants, indépendamment de la vitesse ou du coût, pour les problèmes où seule l'exactitude compte.",
+        costSaverName: 'Économie de coûts',
+        costSaverDesc:
+          "Privilégie le modèle le moins cher capable de traiter la demande, afin qu'un quota fixe couvre davantage de travail.",
+        transparencyTitle: 'Vous voyez toujours la décision',
+        transparencyBody:
+          "Chaque réponse indique le fournisseur et le modèle qui l'ont produite, le score de confiance derrière le choix de routage, les raisons qui l'ont motivé, et ce qu'elle a coûté sur votre quota. Si un fournisseur échoue en cours de requête, le modèle qui a pris le relais est également enregistré.",
+      },
+      orchestration: {
+        title: "Neuf façons d'utiliser plusieurs modèles à la fois",
+        intro:
+          "Une seule réponse d'un seul modèle suffit souvent. Quand ce n'est pas le cas, ces modes font travailler plusieurs modèles sur le même problème.",
+        compareName: 'Comparaison',
+        compareDesc:
+          'Envoyez un prompt à cinq modèles à la fois et lisez chaque réponse côte à côte, avec la latence et le nombre de jetons par modèle.',
+        consensusName: 'Consensus',
+        consensusDesc:
+          "Exécutez le même prompt sur plusieurs modèles et synthétisez une réponse à partir de leurs points d'accord — en signalant les points de désaccord.",
+        escalationName: 'Escalade',
+        escalationDesc:
+          'Commencez avec un modèle rapide et bon marché, puis passez automatiquement à un modèle plus puissant, mais seulement si la réponse tombe sous un seuil de qualité.',
+        bestOfNName: 'Best-of-N',
+        bestOfNDesc:
+          'Générez plusieurs réponses candidates au même prompt et conservez celle qui obtient le meilleur score.',
+        repairName: 'Réparation',
+        repairDesc:
+          'Corrigez des défauts précis dans une réponse que vous avez déjà — un bloc de code cassé, un chiffre erroné — plutôt que de tout régénérer.',
+        verifyName: 'Vérification',
+        verifyDesc:
+          'Faites vérifier une réponse par un second modèle avant de la voir, avec une limite configurable sur le nombre de révisions.',
+        rolePackName: 'Packs de rôles',
+        rolePackDesc:
+          'Faites passer un prompt par une petite équipe de modèles spécialisés par rôle — planificateur, critique, rédacteur — chacun transmettant le relais au suivant.',
+        pipelineName: 'Pipelines',
+        pipelineDesc:
+          'Enchaînez plusieurs de ces étapes en un flux de travail nommé que vous pouvez relancer sur de nouvelles entrées.',
+        judgeName: 'Juge et Critique',
+        judgeDesc:
+          'Un modèle indépendant note une réponse selon des critères explicites ; une passe Critique ajoute un retour écrit sur ce qui est faible et pourquoi.',
+        outro:
+          'Le forfait gratuit inclut un essai gratuit chacun pour Comparaison, Juge et Recherche. Les forfaits payants comportent des quotas mensuels qui augmentent avec le niveau, et Team et au-dessus sont illimités.',
+      },
+      memory: {
+        title: 'Une mémoire qui persiste entre les conversations',
+        intro:
+          "ClawAI retient ce qui mérite d'être retenu — et vous montre chaque élément, afin que vous puissiez le corriger.",
+        recordsName: 'Enregistrements de mémoire',
+        recordsDesc:
+          'Faits, préférences, instructions et résumés, chacun stocké avec une catégorie, un score de confiance et une trace de son origine.',
+        suggestionsName: 'Des suggestions que vous approuvez',
+        suggestionsDesc:
+          "Rien n'est mémorisé silencieusement. Les candidats atterrissent dans une file d'attente que vous approuvez ou rejetez, et seuls les éléments non sensibles à haute confiance sont approuvés automatiquement — selon un seuil que vous définissez.",
+        packsName: 'Packs de contexte',
+        packsDesc:
+          "Regroupez du texte réutilisable, des fichiers, des liens et des références de mémoire dans un pack nommé, puis joignez-le à n'importe quelle conversation. Les packs sont versionnés, afin que vous puissiez voir ce qui a changé et revenir en arrière.",
+        scopesName: 'Portées',
+        scopesDesc:
+          "Limitez une mémoire à vous-même, à une conversation, à un projet ou à un espace de travail, afin que le contexte professionnel ne s'infiltre pas dans les conversations personnelles.",
+        receiptsName: 'Reçus de contexte',
+        receiptsDesc:
+          'Chaque réponse enregistre quelles mémoires et éléments de pack sont entrés dans le prompt, dans quel ordre, et quelle part du budget de jetons chacun a consommée.',
+        controlsName: 'Contrôles',
+        controlsDesc:
+          "Mettez en pause toute la mémoire, un seul élément, fixez une date d'expiration, marquez un élément comme sensible pour qu'il soit caviardé, ou supprimez-le purement et simplement. Chaque modification est consignée dans un journal d'audit.",
+        outro:
+          "La mémoire et le contexte sont des interrupteurs propres à chaque conversation. Désactivez-les pour une question ponctuelle et le prompt ne contient rien d'autre que ce que vous avez saisi.",
+      },
+      files: {
+        title: 'Posez des questions sur vos propres fichiers',
+        intro:
+          "Téléversez un document et posez vos questions. ClawAI gère l'extraction, le découpage et la récupération afin que le modèle réponde à partir de votre contenu plutôt que de ses données d'entraînement.",
+        uploadName: 'Téléversement',
+        uploadDesc:
+          'PDF, DOCX, feuilles de calcul, CSV, JSON, Markdown, texte brut, fichiers de code et images.',
+        chunkingName: 'Découpage et récupération',
+        chunkingDesc:
+          'Les fichiers sont découpés en passages et indexés, afin que seules les parties pertinentes pour votre question soient intégrées au prompt.',
+        attachmentsName: "Joindre à n'importe quel message",
+        attachmentsDesc:
+          'Choisissez des fichiers par message, y compris dans les exécutions de Comparaison, afin que plusieurs modèles puissent être interrogés sur le même document à la fois.',
+        deliveryName: 'Livraison par modèle',
+        deliveryDesc:
+          "Chaque modèle reçoit la forme qu'il traite le mieux — une image native, un PDF natif, ou du texte extrait — et chaque message indique quelle forme chaque modèle a réellement reçue.",
+        ocrName: 'Documents scannés',
+        ocrDesc:
+          "Un PDF scanné sans couche de texte passe par une reconnaissance optique (OCR) avant d'atteindre un modèle, et est signalé lorsque la confiance de reconnaissance est faible.",
+        scanningName: 'Contrôles de téléversement',
+        scanningDesc:
+          "Chaque téléversement est scanné contre les virus, vérifié par rapport à son type de fichier déclaré, passé au crible pour les noms de fichiers dangereux, et rejeté si une archive s'avère être une bombe de décompression.",
+        outro:
+          "Les téléversements comptent dans les limites de taille de fichier et de stockage de votre forfait. Les fichiers sont supprimés selon un calendrier de rétention, et vous pouvez en supprimer n'importe lequel vous-même à tout moment.",
+      },
+      workspace: {
+        title: 'Connecté aux outils que vous utilisez déjà',
+        intro:
+          "Connectez un compte une seule fois via OAuth et ClawAI peut y effectuer des recherches, en extraire du contexte dans une conversation, et agir dessus lorsque vous approuvez l'action.",
+        githubDesc: 'Dépôts, tickets, pull requests et recherche de code.',
+        gitlabDesc: 'Projets, tickets, merge requests et état des pipelines.',
+        bitbucketDesc: 'Dépôts, pull requests et historique des commits.',
+        jiraDesc: 'Tickets, sprints, commentaires et transitions de statut.',
+        clickupDesc: 'Tâches, listes et changements de statut.',
+        slackDesc: 'Canaux, fils de discussion et historique des messages.',
+        gmailDesc:
+          'Fils de discussion, recherche, et réponses rédigées que vous approuvez avant tout envoi.',
+        driveDesc: 'Documents et dossiers dans Google Drive.',
+        onedriveDesc: 'Fichiers et dossiers dans OneDrive.',
+        sharepointDesc: 'Sites, bibliothèques de documents et listes.',
+        confluenceDesc: 'Espaces, pages et pièces jointes.',
+        figmaDesc: 'Fichiers, cadres et commentaires.',
+        outro:
+          'Les connexions se synchronisent selon un calendrier et via des webhooks, afin que les résultats de recherche restent à jour. Les identifiants sont chiffrés au repos, limités à votre compte et révocables en un clic. Le nombre de connexions que vous pouvez avoir dépend de votre forfait.',
+      },
+      generation: {
+        title: 'Images et documents, pas seulement du texte',
+        intro:
+          "ClawAI produit des livrables finis à partir d'une conversation, pas seulement des réponses de chat.",
+        imageName: "Génération d'images",
+        imageDesc:
+          'Décrivez une image et récupérez-la dans le fil, avec le prompt et les paramètres conservés à ses côtés.',
+        documentName: 'Export de documents',
+        documentDesc:
+          "Transformez n'importe quelle réponse, ou une conversation entière, en un fichier formaté que vous pouvez remettre à quelqu'un d'autre.",
+        researchName: 'Exécutions Recherche',
+        researchDesc:
+          "Recherchez sur le web, récupérez et lisez les pages, et obtenez une réponse accompagnée des sources dont elle provient plutôt qu'un résumé non attribué.",
+        formatsLabel: "Formats d'export",
+      },
+      observability: {
+        title: 'Vous voyez ce que vous dépensez',
+        intro:
+          "L'utilisation n'est pas une boîte noire. Chaque requête est mesurée, attribuée et visible.",
+        usageName: "Tableau de bord d'utilisation",
+        usageDesc:
+          "Quota consommé aujourd'hui et ce mois-ci, ventilé par modèle, avec le solde restant dans les mêmes unités que celles indiquées pour votre forfait.",
+        transparencyName: 'Détail par réponse',
+        transparencyDesc:
+          "Le modèle qui a répondu, pourquoi il a été choisi, combien de temps cela a pris, combien de jetons il a utilisés et ce qu'il a prélevé sur votre quota.",
+        auditName: "Journal d'audit",
+        auditDesc:
+          'Connexions, changements de forfait, activité des connecteurs, modifications de mémoire et contenus générés, chacun enregistré avec un horodatage et un acteur.',
+        progressName: 'Progression en direct',
+        progressDesc:
+          "Pendant qu'un modèle travaille, vous voyez l'étape en cours, le texte au fur et à mesure de son arrivée, son raisonnement lorsque le modèle l'expose, et des compteurs de jetons et de temps en direct.",
+        outro:
+          "Lorsque vous atteignez une limite, on vous indique quelle limite, combien il reste sur les autres fenêtres et quand elle se réinitialise. Rien n'est coupé silencieusement.",
+      },
+      security: {
+        title: 'Comment vos données sont traitées',
+        intro: "Des mécanismes qui existent aujourd'hui dans le produit, décrits simplement.",
+        authName: 'Comptes et sessions',
+        authDesc:
+          "Mots de passe hachés avec Argon2, jetons d'accès de courte durée, et jetons de rafraîchissement qui tournent à chaque utilisation, ce qui rend détectable un jeton volé.",
+        rbacName: 'Accès basé sur les rôles',
+        rbacDesc:
+          "Chaque compte porte un rôle et un ensemble de permissions explicite, vérifié dans l'interface puis de nouveau sur chaque point de terminaison backend.",
+        credentialsName: 'Chiffrement des identifiants',
+        credentialsDesc:
+          'Les identifiants de fournisseurs et de connecteurs sont chiffrés au repos avec AES-256-GCM et ne sont jamais renvoyés au navigateur.',
+        rateLimitName: 'Limitation de débit',
+        rateLimitDesc:
+          'Des limites de requêtes par compte protègent à la fois votre quota et la plateforme contre les boucles incontrôlées.',
+        transportName: 'Chiffrement en transit',
+        transportDesc:
+          "TLS du navigateur jusqu'à la périphérie, et de nouveau TLS entre chaque service interne, avec des certificats vérifiés à chaque étape.",
+        isolationName: 'Isolation des services',
+        isolationDesc:
+          "Chaque service possède sa propre base de données et ne peut pas lire celle d'un autre. Une défaillance de la génération d'images ne peut pas atteindre vos conversations.",
+        enterpriseTitle: "Des exigences que l'application hébergée ne peut pas satisfaire",
+        enterpriseBody:
+          "ClawAI ne détient aujourd'hui aucune certification de conformité, et l'application hébergée envoie des requêtes à des fournisseurs de modèles tiers selon leurs propres conditions. Si votre entreprise ne peut pas l'accepter, un déploiement privé dans votre propre réseau — n'exécutant que des modèles à poids ouverts — est la solution. Nous les dimensionnons individuellement.",
+        enterpriseCta: "Parlez-nous d'un déploiement privé",
+      },
+      cta: {
+        title: 'Essayez-le avec le forfait gratuit',
+        subtitle:
+          'Aucune carte requise. Envoyez quelques messages, lancez une Comparaison, et voyez si le routage justifie sa place.',
+        primary: 'Créez votre compte',
+        secondary: 'Se connecter',
+      },
+    },
+    howItWorksPage: {
+      hero: {
+        title: 'Comment fonctionne ClawAI',
+        subtitle:
+          "De la création d'un compte à la lecture d'une réponse, et tout ce qui se passe entre les deux : comment un modèle est choisi, ce qu'il reçoit pour travailler, et comment votre utilisation est comptabilisée.",
+        ctaRegister: 'Créez votre compte',
+        ctaLogin: 'Se connecter',
+        lastReviewed: 'Dernière mise à jour',
+      },
+      journey: {
+        title: 'Tout le processus en huit étapes',
+        intro: "Chacune d'elles fait l'objet de sa propre section ci-dessous.",
+        step1Title: 'Créer un compte',
+        step1Desc:
+          'une adresse e-mail et un mot de passe. Le forfait gratuit démarre immédiatement, sans carte requise.',
+        step2Title: 'Choisir un forfait',
+        step2Desc:
+          'gratuit pour commencer ; les forfaits payants à partir de 5 $ par mois augmentent votre quota et débloquent les modèles plus puissants ainsi que les modes multi-modèles.',
+        step3Title: 'Démarrer une conversation',
+        step3Desc:
+          'saisissez un message, joignez éventuellement des fichiers, et choisissez un modèle ou laissez le mode Auto.',
+        step4Title: 'ClawAI choisit le modèle',
+        step4Desc:
+          'le message est classé et routé vers un modèle qui gère bien ce type de travail.',
+        step5Title: 'Le contexte est assemblé',
+        step5Desc:
+          'les mémoires pertinentes, les packs de contexte joints et les parties utiles de vos fichiers sont ajoutés au prompt.',
+        step6Title: 'La réponse arrive en flux',
+        step6Desc:
+          "le texte arrive au fur et à mesure de sa génération, avec un chronométrage en direct et, lorsque le modèle l'expose, son raisonnement.",
+        step7Title: "Vous voyez ce qui s'est passé",
+        step7Desc:
+          'quel modèle a répondu, pourquoi il a été choisi, ce que cela a coûté, et exactement quel contexte lui a été fourni.',
+        step8Title: "L'utilisation est comptabilisée",
+        step8Desc:
+          "le coût est décompté de votre quota en jetons pondérés selon le coût et affiché sur votre page d'utilisation.",
+      },
+      account: {
+        title: 'Créer un compte et choisir un forfait',
+        registerHeading: 'Inscription',
+        registerBody:
+          "Une adresse e-mail et un mot de passe suffisent. Il n'y a aucun compte fournisseur à créer, aucune clé API à coller et rien à installer — ClawAI gère les relations avec les fournisseurs en votre nom.",
+        plansHeading: 'Les forfaits',
+        plansBody:
+          "Sept niveaux, du gratuit à Unlimited à 200 $ par mois. Chaque forfait payant donne accès à tous les modèles ; ce qui change, c'est la quantité que vous pouvez utiliser et quels modes multi-modèles sont débloqués.",
+        bullet1:
+          "Free — 0 $. Un petit quota quotidien, des modèles d'entrée de gamme, et un essai gratuit chacun pour Comparaison, Juge et Recherche.",
+        bullet2:
+          'Starter 5 $, Plus 10 $, Pro 20 $ par mois. Des quotas croissants, avec des modèles premium et des quotas Comparaison et Juge plus élevés à mesure que vous montez en gamme.',
+        bullet3:
+          "Team 50 $, Scale 100 $ par mois. Comparaison, Juge, Critique et Recherche illimités, ainsi que bien plus de connexions d'espace de travail.",
+        bullet4:
+          "Unlimited 200 $ par mois. Conversations et messages illimités, avec une limite d'utilisation raisonnable sur les modèles premium dont vous êtes averti avant de l'atteindre.",
+        upgradeNote:
+          "Payez annuellement et vous ne payez que dix mois au lieu de douze. Vous pouvez changer de forfait ou annuler à tout moment — une mise à niveau s'applique immédiatement, une rétrogradation au début de votre prochaine période de facturation.",
+        ctaRegister: 'Créez votre compte',
+      },
+      models: {
+        title: 'Les modèles auxquels vous avez accès',
+        intro:
+          "Un seul abonnement, chaque famille ci-dessous. Vous pouvez passer de l'une à l'autre au sein d'une même conversation.",
+        anthropicStrength:
+          'Raisonnement minutieux, documents longs, et la révision de code la plus fiable de la gamme.',
+        openaiStrength:
+          "Large polyvalence avec une utilisation d'outils solide et une sortie structurée.",
+        geminiStrength:
+          "Fenêtres de contexte immenses, réponses rapides, et entrée native d'images, d'audio et de vidéo.",
+        kimiStrength: 'Analyse à grand contexte et travail agentique à faible coût.',
+        glmStrength: 'Raisonnement bilingue solide avec un mode de réflexion explicite.',
+        qwenStrength: 'Excellente génération de code sur un large éventail de tailles de modèles.',
+        deepseekStrength: 'Mathématiques, algorithmes et démonstrations étape par étape.',
+        grokStrength:
+          "Réponses conversationnelles rapides avec une connaissance de l'actualité récente.",
+        bedrockStrength: 'Modèles hébergés sur AWS pour les équipes déjà standardisées sur Amazon.',
+        outro:
+          "Les modèles accessibles à un forfait dépendent du niveau : modèles d'entrée sur Free, tout, y compris les plus grands modèles de pointe, à partir de Pro. De nouveaux modèles sont ajoutés à mesure que les fournisseurs les publient.",
+      },
+      routing: {
+        title: 'Comment ClawAI décide quel modèle répond',
+        intro:
+          "En mode Auto, chaque message est classé avant d'être envoyé. Voici les catégories qui influencent le plus le résultat :",
+        classCodingName: 'Code',
+        classCodingDesc:
+          'écrire, réviser, refactoriser ou déboguer du code est envoyé aux modèles ayant les meilleurs antécédents en programmation.',
+        classReasoningName: 'Raisonnement complexe',
+        classReasoningDesc:
+          "problèmes à plusieurs étapes, démonstrations, décisions d'architecture, et tout ce où se tromper coûte cher.",
+        classCreativeName: 'Écriture',
+        classCreativeDesc:
+          'rédaction, édition et réécriture, où le ton et la lisibilité comptent plus que la profondeur brute du raisonnement.',
+        classAnalysisName: 'Données et documents',
+        classAnalysisDesc:
+          'entrées longues, feuilles de calcul et rapports, routés vers les modèles ayant les plus grandes fenêtres de contexte.',
+        classImageName: 'Images',
+        classImageDesc:
+          "les demandes de génération ou d'interprétation d'image vont à un modèle capable de traiter réellement les pixels.",
+        classEverydayName: 'Questions du quotidien',
+        classEverydayDesc:
+          'les questions factuelles courtes et les modifications rapides vont à un modèle rapide et peu coûteux — la plupart des messages atterrissent ici.',
+        overrideHeading: 'Vous pouvez toujours passer outre',
+        overrideBody:
+          "Choisissez un modèle dans le sélecteur et il est utilisé pour cette conversation jusqu'à ce que vous le changiez. Vous pouvez aussi orienter le mode Auto vers la vitesse, la profondeur de raisonnement ou le coût, ce qui conserve la classification par message mais change ce qu'elle optimise. Quel que soit votre choix, la réponse vous indique quel modèle l'a produite.",
+      },
+      orchestration: {
+        title: 'Utiliser plusieurs modèles à la fois',
+        intro:
+          'Pour les tâches où une seule réponse ne suffit pas, les forfaits payants débloquent des modes qui font travailler plusieurs modèles sur le même prompt.',
+        compareName: 'Comparaison',
+        compareDesc:
+          'un prompt envoyé à cinq modèles maximum, réponses côte à côte, avec latence et nombre de jetons pour chacune.',
+        consensusName: 'Consensus',
+        consensusDesc:
+          "plusieurs modèles répondent et ClawAI synthétise une réponse à partir de leurs points d'accord, tout en signalant les points de désaccord.",
+        escalationName: 'Escalade',
+        escalationDesc:
+          "commencez avec un modèle rapide et bon marché, et passez automatiquement à un modèle plus puissant uniquement si la réponse n'est pas assez bonne.",
+        bestOfNName: 'Best-of-N',
+        bestOfNDesc:
+          'générez plusieurs candidats et conservez celui qui obtient le meilleur score.',
+        judgeName: 'Juge et Critique',
+        judgeDesc:
+          'un modèle indépendant note la réponse selon des critères explicites, et une passe Critique rédige ce qui est faible et pourquoi.',
+        outro:
+          "Free vous donne un essai gratuit chacun pour Comparaison, Juge et Recherche. Les forfaits payants ont des quotas mensuels qui augmentent avec le niveau, et Team et au-dessus sont illimités. Réparation, Vérification, les packs de rôles et les pipelines complètent l'ensemble sur les forfaits supérieurs.",
+      },
+      context: {
+        title: 'Ce que reçoit le modèle en plus de votre message',
+        intro:
+          'Trois couches de contexte durable peuvent être assemblées dans un prompt, toutes sous votre contrôle.',
+        memoryName: 'Mémoire',
+        memoryDesc:
+          "faits, préférences et instructions qui méritent d'être conservés entre les conversations. Les candidats passent par une file d'approbation plutôt que d'être sauvegardés silencieusement.",
+        packsName: 'Packs de contexte',
+        packsDesc:
+          "des ensembles nommés de texte réutilisable, de fichiers, de liens et de références de mémoire que vous joignez à une conversation lorsqu'ils sont pertinents.",
+        filesName: 'Fichiers',
+        filesDesc:
+          'les documents téléversés sont découpés et indexés, afin que seuls les passages pertinents pour votre question soient intégrés.',
+        outro:
+          "La mémoire et le contexte sont des interrupteurs propres à chaque conversation. Lorsqu'ils sont activés, la réponse porte un reçu répertoriant précisément quelles mémoires, éléments de pack et extraits de fichiers ont été utilisés, et quelle part du budget de jetons chacun a consommée.",
+      },
+      transparency: {
+        title: 'Ce que chaque réponse vous indique',
+        intro:
+          "Un routage que vous ne pouvez pas inspecter n'est qu'une boîte noire avec un meilleur marketing. Chaque réponse porte son propre historique.",
+        modelName: 'Le modèle',
+        modelDesc:
+          "le fournisseur et la version exacte du modèle qui a produit la réponse, y compris lorsqu'un modèle de secours a pris le relais du premier choix.",
+        reasonName: 'Pourquoi ce modèle',
+        reasonDesc:
+          'la classification, le score de confiance et les raisons derrière la décision de routage.',
+        costName: 'Ce que cela a coûté',
+        costDesc:
+          'jetons en entrée et en sortie, latence, et le quota consommé en termes pondérés selon le coût.',
+        contextName: "Ce qu'il a vu",
+        contextDesc:
+          "les mémoires, éléments de pack de contexte et extraits de fichiers assemblés dans le prompt, dans l'ordre où ils sont apparus.",
+        usageName: 'Où vous en êtes',
+        usageDesc:
+          "votre page d'utilisation agrège tout cela en soldes quotidiens et mensuels, ventilés par modèle.",
+        outro:
+          'Tout cela est visible dès que vous lisez la réponse, pas dans un rapport que vous devez demander.',
+      },
+      allowance: {
+        title: "Comment l'utilisation est comptabilisée",
+        intro:
+          "Un seul chiffre couvre chaque modèle, et il reste équitable entre des modèles dont les prix varient de plus d'un ordre de grandeur.",
+        explainerHeading: 'Jetons pondérés selon le coût',
+        explainerBody:
+          "Un jeton d'un modèle de pointe coûteux consomme davantage votre quota qu'un jeton d'un modèle bon marché et rapide, proportionnellement à ce qu'il coûte réellement. Ainsi, un seul chiffre de quota fonctionne quel que soit le modèle utilisé, et vous n'êtes jamais pénalisé pour avoir choisi le bon outil pour la tâche.",
+        exampleLightName: 'Modèles légers',
+        exampleLightDesc:
+          'les modèles rapides et peu coûteux consomment lentement. Une journée de questions courtes ne fait presque pas bouger le chiffre.',
+        exampleBalancedName: 'Modèles milieu de gamme',
+        exampleBalancedDesc:
+          "les modèles polyvalents se situent au milieu. C'est là qu'atterrit la majeure partie du travail soutenu.",
+        exampleFrontierName: 'Modèles de pointe',
+        exampleFrontierDesc:
+          "les plus grands modèles de raisonnement consomment le plus vite. Ça vaut le coup pour les problèmes difficiles, mais c'est du gaspillage pour la conversation légère — ce à quoi sert justement le routage Auto.",
+        windowsHeading: 'Les fenêtres',
+        windowDailyName: 'Quotidienne',
+        windowDailyDesc:
+          "se réinitialise toutes les 24 heures, afin qu'une journée chargée ne gâche jamais le reste du mois.",
+        windowWeeklyName: 'Hebdomadaire',
+        windowWeeklyDesc:
+          'lisse les pics sur les niveaux supérieurs, où une limite quotidienne seule serait trop grossière.',
+        windowMonthlyName: 'Mensuelle',
+        windowMonthlyDesc:
+          'le chiffre principal de votre forfait, réinitialisé avec votre période de facturation.',
+        outro:
+          "Vous pouvez voir le solde sur les trois fenêtres à tout moment. Lorsque vous en atteignez une, ClawAI vous indique de quelle limite il s'agit, combien il reste sur les autres et quand elle se réinitialise.",
+        fairUseNote:
+          "Sur le forfait Unlimited, les conversations et les messages n'ont réellement aucune limite. Les modèles de pointe premium sont soumis à une limite d'utilisation raisonnable afin qu'un seul compte ne puisse pas générer des coûts fournisseurs illimités — vous êtes clairement averti à l'approche de cette limite, jamais coupé sans avertissement.",
+      },
+      enterprise: {
+        title: 'Pour les entreprises',
+        body: "Si votre entreprise ne peut pas envoyer de données à un fournisseur de modèles tiers, ClawAI peut être déployé dans votre propre réseau, exécutant des modèles à poids ouverts sur votre propre matériel. Rien ne quitte votre infrastructure. C'est dimensionné par engagement, pas vendu comme un forfait.",
+        cta: 'Contactez-nous',
+      },
+      cta: {
+        title: 'Commencez avec le forfait gratuit',
+        subtitle:
+          'Une minute pour vous inscrire, aucune carte requise. Posez quelques questions, lancez une Comparaison, et voyez si le routage justifie sa place.',
+        ctaRegister: 'Créez votre compte',
+        ctaLogin: 'Se connecter',
+        ctaContact: 'Pour les entreprises',
+      },
+    },
+    architecturePage: {
+      overview: {
+        title: 'Comment ClawAI est conçu',
+        body1:
+          "ClawAI est composé de dix-huit services déployables indépendamment derrière un unique proxy inverse. Authentification, conversation, routage, connecteurs, mémoire, fichiers, recherche, espace de travail, génération d'images, export de documents, facturation, audit et journalisation s'exécutent chacun comme leur propre processus avec leur propre base de données. L'application web accède à tous via une seule surface d'API.",
+        body2:
+          "La raison est le confinement. Un fournisseur lent, une conversion de fichier bloquée ou un export échoué ne peuvent pas entraîner la panne du chat avec eux, car ils ne partagent ni processus, ni pool de connexions, ni base de données. Chaque service est déployé, mis à l'échelle et annulé indépendamment.",
+        statServicesValue: '18',
+        statServicesLabel: 'Services déployables indépendamment',
+        statDatabasesValue: 'Une par service',
+        statDatabasesLabel: 'Aucune base de données partagée, jamais',
+        statTransportsValue: 'HTTP + événements',
+        statTransportsLabel: "Appels synchrones et un bus d'événements asynchrone",
+        statEdgeValue: "Un point d'entrée",
+        statEdgeLabel: 'Un unique proxy inverse devant tout',
+      },
+      services: {
+        title: 'Les services',
+        intro:
+          "Tous les services ne sont pas intéressants vu de l'extérieur. Voici ceux qu'une requête typique a tendance à traverser, à peu près dans l'ordre où elle les traverse.",
+        authName: 'Authentification',
+        authDesc:
+          'Comptes, sessions, émission et rotation des jetons, rôles et ensembles de permissions.',
+        chatName: 'Conversation',
+        chatDesc:
+          'Conversations et messages, assemblage du contexte, exécution en flux et orchestration multi-modèles.',
+        routingName: 'Routage',
+        routingDesc:
+          'Classe chaque message, applique le mode actif et les politiques éventuelles, et enregistre la décision avec sa chaîne de secours.',
+        connectorName: 'Connecteurs',
+        connectorDesc:
+          'Identifiants de fournisseurs, catalogues de modèles, indicateurs de capacité et vérifications de santé continues.',
+        memoryName: 'Mémoire et contexte',
+        memoryDesc:
+          'Enregistrements de mémoire, file de suggestions, packs de contexte et leurs versions, et récupération sémantique.',
+        fileName: 'Fichiers',
+        fileDesc:
+          'Téléversements, analyse de sécurité, extraction de texte, OCR, découpage et rétention.',
+        researchName: 'Recherche',
+        researchDesc:
+          'Recherche web, récupération de pages et assemblage de preuves pour des réponses sourcées.',
+        workspaceName: 'Espace de travail',
+        workspaceDesc:
+          'Connexions OAuth à douze outils tiers, webhooks, synchronisation planifiée et recherche multi-outils.',
+        imageName: "Génération d'images",
+        imageDesc:
+          "Requêtes d'images, adaptateurs de fournisseurs et progression étape par étape pendant le rendu d'une image.",
+        fileGenerationName: 'Génération de documents',
+        fileGenerationDesc: 'Rendu des réponses en PDF, DOCX, CSV, HTML, Markdown, TXT et JSON.',
+        paymentName: 'Facturation',
+        paymentDesc: 'Forfaits, abonnements, prix versionnés, factures et application des quotas.',
+        auditName: 'Audit',
+        auditDesc:
+          "Le registre immuable de qui a fait quoi, plus le grand livre d'utilisation dont chaque chiffre de quota est dérivé.",
+        logsName: 'Journalisation',
+        logsDesc:
+          'Journaux structurés de chaque service et du navigateur, conservés sur une fenêtre glissante.',
+        outro:
+          "Chaque service nomme la base de données qu'il possède. Rien d'autre ne s'y connecte — un service qui a besoin des données d'un autre les demande via HTTP ou réagit à un événement.",
+      },
+      dataOwnership: {
+        title: 'Une base de données par service',
+        body1:
+          "Chaque service possède exactement une base de données et est la seule chose qui s'y connecte. Il n'y a pas de schéma partagé, pas de jointure inter-services, et pas de base de données de reporting qui lit discrètement les tables de tout le monde.",
+        body2:
+          "Le coût est que certaines questions nécessitent deux appels au lieu d'une jointure. L'avantage est qu'un changement de schéma dans la facturation ne peut pas casser la conversation, et qu'une requête incontrôlée dans la journalisation ne peut pas épuiser le pool de connexions dont dépend votre conversation.",
+        rule1Name: 'Aucune requête inter-bases de données',
+        rule1Desc:
+          "Un service lit ses propres tables et celles de personne d'autre. Les données provenant d'ailleurs arrivent via un appel API ou un événement.",
+        rule2Name: 'Les schémas sont privés',
+        rule2Desc:
+          'Un service peut modifier ses propres tables sans se coordonner avec personne, car aucun consommateur externe ne dépend de leur forme.',
+        rule3Name: "Les migrations s'exécutent par service",
+        rule3Desc:
+          "Chaque service migre sa propre base de données au démarrage. Il n'y a pas de migration globale que tout le monde doit attendre.",
+        rule4Name: 'Les défaillances restent locales',
+        rule4Desc:
+          'Une base de données lente ou indisponible dégrade une seule capacité plutôt que tout le produit.',
+      },
+      lifecycle: {
+        title: "La vie d'une requête",
+        intro: "Ce qui se passe entre l'envoi et la lecture de la réponse.",
+        step1Title: 'La requête est authentifiée',
+        step1Desc:
+          "le proxy inverse la transmet à la conversation, qui vérifie votre jeton d'accès et les permissions attachées à votre rôle.",
+        step2Title: 'Le quota est vérifié',
+        step2Desc:
+          "la facturation confirme que votre forfait autorise le modèle demandé et qu'il reste de la marge sur votre quota quotidien et mensuel.",
+        step3Title: 'Le message est stocké et annoncé',
+        step3Desc:
+          "la conversation écrit le message dans sa propre base de données et publie un événement. Le routage l'écoute.",
+        step4Title: 'Le routage choisit un modèle',
+        step4Desc:
+          'le message est classé, le mode actif et les politiques sont appliqués, la santé des connecteurs est consultée, et une décision avec une chaîne de secours est enregistrée.',
+        step5Title: 'Le contexte est assemblé',
+        step5Desc:
+          "la conversation interroge la mémoire pour les enregistrements et éléments de pack pertinents, et les fichiers pour les extraits pertinents, puis les fusionne dans le prompt dans la limite d'un budget de jetons.",
+        step6Title: 'Le modèle est appelé et diffusé en flux',
+        step6Desc:
+          'la conversation appelle le fournisseur et transmet les étapes, le texte, le raisonnement et les métriques à votre navigateur via Server-Sent Events au fur et à mesure de leur arrivée.',
+        step7Title: 'Le résultat est enregistré',
+        step7Desc:
+          'la réponse, sa décision de routage, ses comptes de jetons et son reçu de contexte sont consignés ensemble.',
+        step8Title: "L'utilisation et l'audit sont enregistrés",
+        step8Desc:
+          "la facturation décompte le coût de votre quota et l'audit enregistre l'événement. L'extraction de mémoire s'exécute également ici.",
+        outro:
+          "Les étapes 1 à 7 sont synchrones — vous les attendez. L'étape 8 et l'extraction de mémoire se produisent après que la réponse est déjà à l'écran, elles n'ajoutent donc aucune latence perceptible.",
+      },
+      events: {
+        title: "Le bus d'événements",
+        body1:
+          "Le travail qui n'a pas besoin de se terminer avant que vous voyiez une réponse est publié comme événement sur un échange à sujets RabbitMQ et traité par les services qui s'y intéressent. La mesure d'utilisation, les enregistrements d'audit et l'extraction de mémoire fonctionnent tous ainsi.",
+        body2:
+          "Les événements sont la raison pour laquelle la conversation n'a pas besoin de savoir que l'audit existe. La conversation déclare ce qui s'est passé ; tout ce qui doit réagir s'y abonne. Ajouter un consommateur ne nécessite aucun changement chez l'éditeur.",
+        topicName: 'Échange à sujets',
+        topicDesc:
+          "Les éditeurs nomment ce qui s'est passé, pas qui doit l'entendre. Les consommateurs s'abonnent aux motifs qui les intéressent.",
+        retryName: 'Nouvelles tentatives avec délai croissant',
+        retryDesc:
+          'Un gestionnaire en échec est retenté trois fois avec un délai croissant, ce qui absorbe les échecs transitoires qui en constituent la majorité.',
+        dlqName: 'File des messages morts',
+        dlqDesc:
+          "Un message qui échoue encore après ses tentatives va dans une file des messages morts au lieu d'être abandonné ou de bloquer tout ce qui se trouve derrière lui.",
+        idempotencyName: 'Gestionnaires idempotents',
+        idempotencyDesc:
+          "Les gestionnaires tolèrent l'arrivée du même événement deux fois, car la livraison au moins une fois garantit qu'une le sera finalement.",
+        auditName: 'Tout est auditable',
+        auditDesc:
+          "L'audit s'abonne à chaque événement de domaine, de sorte que le registre de ce qui s'est passé ne dépend pas du fait que chaque service se souvienne d'en écrire un.",
+      },
+      streaming: {
+        title: 'Diffusion en flux',
+        body1:
+          "Les réponses arrivent via Server-Sent Events, pas par sondage. La connexion s'ouvre lorsque vous envoyez un message et porte tout jusqu'à ce que la réponse soit terminée ou annulée.",
+        body2:
+          "La mise en tampon est désactivée de bout en bout — au niveau du proxy et dans chaque service sur le chemin — car un flux mis en tampon n'est qu'une réponse lente avec des étapes en plus.",
+        body3:
+          "Le même canal transporte la génération de texte, la progression de la génération d'images et les recherches longues, de sorte que l'interface dispose d'une seule façon de montrer le travail en cours plutôt que trois.",
+        stagesName: "Changements d'étape",
+        stagesDesc:
+          "En file d'attente, routage, assemblage du contexte, appel du modèle, finalisation — pour qu'une pause ait toujours une raison visible.",
+        contentName: 'Deltas de contenu',
+        contentDesc:
+          'Le texte de la réponse au fur et à mesure que le modèle le produit, jeton par jeton.',
+        reasoningName: 'Deltas de raisonnement',
+        reasoningDesc:
+          'Pour les modèles qui exposent leur réflexion, le flux de raisonnement est livré séparément de la réponse et affiché séparément aussi.',
+        metricsName: 'Ticks de métriques',
+        metricsDesc:
+          "Jetons jusqu'à présent, jetons par seconde, temps jusqu'au premier jeton, et où le temps est réellement passé — chargement du modèle, évaluation du prompt ou génération.",
+        terminalName: 'Événements terminaux',
+        terminalDesc:
+          "Un résumé d'utilisation final, ou une erreur ou annulation explicite. Le flux ne s'arrête jamais sans explication.",
+      },
+      dataLayer: {
+        title: 'Ce qui stocke quoi',
+        intro: "Quatre types de stockage, chacun utilisé pour ce qu'il fait le mieux.",
+        postgresDesc:
+          'Le système de référence pour les comptes, conversations, décisions de routage, mémoire, fichiers, connexions et facturation — une base de données par service.',
+        pgvectorDesc:
+          'Recherche de similarité vectorielle au sein de PostgreSQL, utilisée pour récupérer les mémoires et éléments de pack de contexte pertinents sans exécuter de base de données vectorielle séparée.',
+        mongoDesc:
+          "Événements d'audit, grand livre d'utilisation et journaux structurés : données à haut volume en ajout seul avec une fenêtre de rétention glissante.",
+        redisDesc:
+          "Mise en cache, compteurs de limitation de débit et état de coordination de courte durée. Rien d'important n'est stocké uniquement ici.",
+      },
+      security: {
+        title: 'Mécanismes de sécurité',
+        intro:
+          'Des contrôles concrets qui existent dans le produit. Aucune revendication de certification — voir la note à la fin.',
+        tokensName: "Jetons d'accès et de rafraîchissement",
+        tokensDesc:
+          "Jetons d'accès de courte durée avec rotation des jetons de rafraîchissement. La réutilisation d'un jeton pivoté invalide la session.",
+        passwordsName: 'Hachage des mots de passe',
+        passwordsDesc:
+          'Argon2 avec des sels propres à chaque utilisateur. Les mots de passe ne sont jamais stockés ni journalisés sous une forme récupérable.',
+        rbacName: "Contrôle d'accès basé sur les rôles",
+        rbacDesc:
+          "Les rôles portent des ensembles de permissions explicites, appliqués par des gardes sur chaque point de terminaison de chaque service — pas seulement dans l'interface.",
+        credentialsName: 'Identifiants chiffrés',
+        credentialsDesc:
+          'Les secrets de fournisseurs et de connecteurs sont chiffrés au repos avec AES-256-GCM et ne sont jamais renvoyés par une API.',
+        validationName: 'Validation de schéma',
+        validationDesc:
+          "Chaque corps de requête est validé selon un schéma Zod avec des bornes explicites de longueur et de taille avant d'atteindre toute logique.",
+        rateLimitName: 'Limitation de débit',
+        rateLimitDesc:
+          "Une limitation par compte sur chaque service, afin qu'un client ne puisse pas épuiser la capacité pour tous les autres.",
+        headersName: 'En-têtes de sécurité',
+        headersDesc:
+          'Une politique de sécurité du contenu stricte avec des nonces par requête, HSTS, et les en-têtes de durcissement standard sur chaque réponse.',
+        transportName: 'TLS partout',
+        transportDesc:
+          "TLS du navigateur jusqu'à la périphérie et de nouveau à chaque étape interne, avec vérification des certificats entre les services.",
+        redactionName: 'Caviardage des journaux',
+        redactionDesc:
+          "Les jetons, mots de passe, clés API et en-têtes d'autorisation sont supprimés avant qu'un journal ne soit écrit.",
+        disclaimer:
+          "ClawAI ne détient aujourd'hui aucune certification de sécurité tierce — ni SOC 2, ni ISO 27001, ni HIPAA. Nous décrivons les mécanismes ci-dessus plutôt que de suggérer des garanties que nous n'avons pas obtenues. Les entreprises ayant des exigences formelles devraient nous en faire part afin qu'elles puissent être évaluées dans le cadre d'un engagement.",
+      },
+      observability: {
+        title: 'Observabilité',
+        body1:
+          "Chaque service émet les mêmes signaux sous la même forme, et ils atterrissent tous quelque part d'interrogeable. Un opérateur qui se demande « que s'est-il passé pour cette requête » ne devrait pas avoir à ouvrir dix-huit fichiers journaux.",
+        logsName: 'Journaux structurés',
+        logsDesc:
+          "Journaux JSON de chaque service et du navigateur, transmis via le bus d'événements et conservés sur une fenêtre glissante.",
+        correlationName: 'Corrélation des requêtes',
+        correlationDesc:
+          "Un identifiant de requête est généré dans le navigateur et transporté à travers chaque étape de service, afin qu'un seul identifiant permette de reconstituer tout le trajet.",
+        auditName: "Événements d'audit",
+        auditDesc:
+          "Un registre séparé et immuable des actions pertinentes pour la sécurité et l'activité, tenu à l'écart des journaux opérationnels.",
+        usageName: "Grand livre d'utilisation",
+        usageDesc:
+          "Chaque appel mesuré est écrit comme une entrée du grand livre. Les chiffres de quota sont dérivés du grand livre, pas d'un compteur susceptible de dériver.",
+        healthName: 'Agrégation de santé',
+        healthDesc:
+          'Un service dédié interroge tous les autres services et rapporte une vue consolidée unique de ce qui fonctionne.',
+      },
+      reliability: {
+        title: 'Quand quelque chose échoue',
+        body1:
+          "Les fournisseurs de modèles connaissent des pannes, des limites de débit et des journées lentes. La plateforme est conçue pour les absorber plutôt que de vous les répercuter sous la forme d'un indicateur de chargement qui ne se résout jamais.",
+        fallbackName: 'Chaînes de secours',
+        fallbackDesc:
+          "Chaque décision de routage porte une liste ordonnée d'alternatives. Si le modèle choisi échoue, le suivant est essayé automatiquement et la substitution est enregistrée.",
+        circuitName: 'Évitement basé sur la santé',
+        circuitDesc:
+          "Les connecteurs font l'objet d'une vérification de santé continue, et un fournisseur en échec est contourné par le routeur jusqu'à ce qu'il se rétablisse.",
+        idempotencyName: 'Nouvelles tentatives sûres',
+        idempotencyDesc:
+          "Les gestionnaires d'événements tolèrent la livraison en double, de sorte qu'une nouvelle tentative corrige un échec au lieu de facturer votre quota deux fois.",
+        visibleErrorsName: 'Les erreurs sont visibles',
+        visibleErrorsDesc:
+          "Lorsque toutes les options échouent, une erreur explicite est écrite dans la conversation et poussée dans le flux. Il n'y a aucun échec silencieux qui laisse l'interface en attente.",
+        isolationName: "Périmètre d'impact",
+        isolationDesc:
+          "Des processus et des bases de données séparés signifient qu'une défaillance dégrade une seule capacité. La panne de la génération d'images ne vous empêche pas de discuter.",
+      },
+      enterprise: {
+        title: 'La même architecture, dans votre réseau',
+        body1:
+          "Tout ce qui est décrit sur cette page concerne le service hébergé, mais l'architecture n'y est pas liée. Les mêmes dix-huit services, le même bus d'événements et le même modèle de données peuvent être déployés dans le réseau d'une entreprise.",
+        body2:
+          "Dans cette configuration, les fournisseurs de modèles externes sont remplacés par des modèles à poids ouverts servis sur vos propres GPU, afin qu'aucun prompt, document ou conversation ne quitte votre infrastructure. C'est un engagement dimensionné sur mesure plutôt qu'un forfait que l'on achète — nous le dimensionnons avec votre équipe.",
+        cta: "Parlez-nous d'un déploiement privé",
+      },
+      cta: {
+        title: 'Voyez-le en action',
+        subtitle:
+          "Le moyen le plus rapide de juger une architecture est d'utiliser ce qu'elle produit. Le forfait gratuit prend une minute à configurer.",
+        primary: 'Créez votre compte',
+        secondary: "Parlez-nous d'un déploiement privé",
+      },
+    },
+    useCasesPage: {
+      hero: {
+        title: 'Ce que les gens font réellement avec ClawAI',
+        subtitle:
+          'Dix tâches qui reviennent chaque jour, et le modèle — ou la combinaison de modèles — qui les gère le mieux. Le tout sur un seul abonnement.',
+        lastReviewedLabel: 'Dernière mise à jour',
+      },
+      grid: {
+        title: 'Dix tâches, dix routages',
+        intro:
+          "Chacune d'elles s'appuie sur une force différente. C'est tout l'argument pour disposer de chaque modèle plutôt que d'en choisir un et de faire avec.",
+        problemLabel: 'Le problème',
+        solutionLabel: 'Ce que fait ClawAI',
+        capabilityLabel: "S'appuie sur",
+      },
+      cases: {
+        softwareTitle: 'Développement logiciel',
+        softwareProblem:
+          "Le modèle qui écrit le meilleur code est rarement celui qui explique le mieux un compromis de conception, et ce n'est pas non plus celui que vous voulez pour réviser une diff de deux mille lignes.",
+        softwareSolution:
+          "Les questions de code sont routées vers les modèles ayant les meilleurs antécédents en programmation et les questions d'architecture vers les modèles de raisonnement les plus puissants. Joignez un fichier et demandez à plusieurs modèles de le réviser à la fois, puis faites noter les révisions par une passe Juge.",
+        softwareCapability: 'Routage Auto + Comparaison',
+        researchTitle: 'Recherche et analyse',
+        researchProblem:
+          "Des réponses sans sources sont inutilisables, et le résumé d'un sujet par un modèle n'est que l'opinion de ce modèle.",
+        researchSolution:
+          "Le mode Recherche recherche sur le web, récupère les pages et répond avec les preuves jointes. Consensus exécute la même question sur plusieurs modèles et montre où ils s'accordent et où ils ne s'accordent pas.",
+        researchCapability: 'Recherche + Consensus',
+        writingTitle: 'Écriture et édition',
+        writingProblem:
+          "La qualité des brouillons varie énormément selon le modèle, et les différences ne deviennent évidentes que lorsqu'on les lit côte à côte.",
+        writingSolution:
+          'Générez des brouillons à partir de plusieurs modèles sur le même brief, conservez celui qui convient, puis utilisez Réparation pour corriger des paragraphes précis plutôt que de tout régénérer.',
+        writingCapability: 'Comparaison + Réparation',
+        dataTitle: 'Analyse de données',
+        dataProblem:
+          "Les feuilles de calcul et les exports sont trop volumineux pour une fenêtre de chat, et un modèle qui invente un chiffre est pire qu'aucune réponse.",
+        dataSolution:
+          'Téléversez le fichier et posez des questions dessus — seules les parties pertinentes sont récupérées dans le prompt. Vérification fait vérifier les chiffres par un second modèle avant que vous ne les voyiez.',
+        dataCapability: 'Récupération de fichiers + Vérification',
+        supportTitle: 'Support client',
+        supportProblem:
+          'Les réponses du support doivent être cohérentes, correctes et dans votre ton, et le volume rend les modèles de pointe trop coûteux à utiliser pour tout.',
+        supportSolution:
+          'Les packs de contexte contiennent les faits produits et les règles de ton. Les réponses courantes vont à un modèle rapide et bon marché, et tout ce qui est inhabituel bascule automatiquement vers un modèle plus puissant.',
+        supportCapability: 'Packs de contexte + Escalade',
+        productTitle: 'Produit et stratégie',
+        productProblem:
+          'Le travail stratégique récompense le désaccord, et un seul modèle a tendance à approuver le cadrage que vous lui avez donné.',
+        productSolution:
+          'Posez la même question à plusieurs modèles choisis délibérément pour penser différemment, puis faites argumenter une passe Critique contre la conclusion que vous préfériez.',
+        productCapability: 'Comparaison + Critique',
+        learningTitle: 'Apprentissage et études',
+        learningProblem:
+          'Une explication patiente et une démonstration rigoureuse sont des compétences différentes, et demander les deux à un seul modèle donne une version médiocre de chacune.',
+        learningSolution:
+          "Les explications sont routées vers des modèles qui enseignent bien et les démonstrations vers des modèles de raisonnement. La mémoire garde la trace de ce que vous savez déjà, afin d'arrêter de le réexpliquer.",
+        learningCapability: 'Routage Auto + Mémoire',
+        translationTitle: 'Traduction et localisation',
+        translationProblem:
+          'La traduction automatique est fluide et souvent inexacte sur le ton, le registre et tout ce qui est spécifique à un domaine.',
+        translationSolution:
+          'Traduisez avec un modèle performant dans la langue cible, puis faites réviser le résultat par un second modèle par rapport à la source. Les packs de contexte transportent votre glossaire et vos règles de style dans chaque requête.',
+        translationCapability: 'Comparaison + Packs de contexte',
+        documentsTitle: 'Rapports et documents',
+        documentsProblem:
+          "La réponse est dans une fenêtre de chat et le livrable est un fichier que quelqu'un d'autre doit ouvrir.",
+        documentsSolution:
+          "Exportez n'importe quelle réponse, ou une conversation entière, en PDF, DOCX, CSV, HTML, Markdown, TXT ou JSON — formaté et prêt à envoyer.",
+        documentsCapability: 'Export de documents',
+        imagesTitle: 'Images',
+        imagesProblem:
+          "Passer à un outil d'image séparé signifie un autre abonnement, une autre connexion, et perdre le contexte de ce sur quoi vous travailliez.",
+        imagesSolution:
+          "Décrivez l'image dans la conversation où vous êtes déjà. Elle est générée sur place et reste dans le fil, aux côtés du prompt qui l'a produite.",
+        imagesCapability: "Génération d'images",
+      },
+      oneSubscription: {
+        title: 'Pourquoi un seul abonnement vaut mieux que plusieurs',
+        intro:
+          "Gérer quatre abonnements IA n'est pas quatre fois meilleur qu'un seul. C'est quatre factures, quatre ensembles de limites, et une décision constante de bas niveau sur quel onglet ouvrir.",
+        pointRightModelTitle: 'Le bon modèle, à chaque fois',
+        pointRightModelDesc:
+          "Aucun modèle n'est le meilleur en tout. Avec tous disponibles, la réponse à « lequel dois-je utiliser » cesse d'être « celui que je paie déjà ».",
+        pointOneAllowanceTitle: 'Un seul quota',
+        pointOneAllowanceDesc:
+          "L'utilisation est comptée en jetons pondérés selon le coût, si bien qu'un seul chiffre reste équitable entre des modèles qui diffèrent énormément en prix. Aucun crédit bloqué sur un forfait que vous avez arrêté d'ouvrir.",
+        pointNoLockInTitle: 'Aucun verrouillage',
+        pointNoLockInDesc:
+          "Quand un nouveau modèle de pointe sort, il apparaît dans votre liste de modèles. Vous n'êtes pas coincé avec le choix de l'année dernière parce que c'est celui auquel vous étiez abonné.",
+        pointVisibleSpendTitle: 'Dépenses visibles',
+        pointVisibleSpendDesc:
+          "Une seule page d'utilisation montre où est allé le quota, par modèle et par jour, au lieu de quatre tableaux de bord qui comptent chacun quelque chose de différent.",
+        outro:
+          'Et quand vous avez réellement besoin de plusieurs modèles sur le même problème, ils sont déjà au même endroit — ce qui rend possible Comparaison, Consensus et Juge.',
+      },
+      enterprise: {
+        title: 'Vous travaillez avec des données qui ne peuvent pas quitter votre réseau ?',
+        body: 'Les entreprises qui ne peuvent pas envoyer de données à un fournisseur de modèles externe peuvent exécuter ClawAI sur leur propre infrastructure avec des modèles à poids ouverts uniquement. Dimensionné par engagement.',
+        cta: 'Contactez-nous',
+      },
+      cta: {
+        title: 'Choisissez une tâche et essayez-la',
+        subtitle:
+          'Le forfait gratuit suffit pour tester si le routage vaut mieux que de choisir un modèle soi-même. Cela prend une minute à configurer.',
+        primary: 'Créez votre compte',
+        secondary: 'Voir les forfaits',
+      },
+    },
+    faqPage: {
+      hero: {
+        title: 'Questions fréquentes',
+        subtitle:
+          "Forfaits, modèles, limites d'utilisation, traitement des données et déploiements privés. Si votre question n'y est pas répondue, demandez-nous directement.",
+        lastReviewed: 'Dernière mise à jour',
+      },
+      topics: {
+        title: 'Aller à',
+      },
+      gettingStarted: {
+        title: 'Premiers pas',
+        description: "Ce qu'est ClawAI, et comment commencer.",
+        whatIsQ: "Qu'est-ce que ClawAI ?",
+        whatIsA:
+          "Un abonnement unique qui donne accès à tous les modèles d'IA de pointe — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok et Amazon Bedrock — via une seule interface de conversation. Il route chaque message vers le modèle le mieux adapté, retient le contexte utile entre les conversations, répond aux questions sur les fichiers que vous téléversez, et peut faire travailler plusieurs modèles sur le même problème lorsqu'une seule réponse ne suffit pas.",
+        apiKeysQ: "Ai-je besoin d'une clé API d'OpenAI ou d'Anthropic ?",
+        apiKeysA:
+          "Non. L'accès aux modèles est inclus dans votre abonnement. Il n'y a aucun compte fournisseur à créer, aucune clé à coller et aucune facture fournisseur séparée.",
+        howToStartQ: 'Comment commencer ?',
+        howToStartA:
+          'Créez un compte avec une adresse e-mail et un mot de passe et vous êtes immédiatement sur le forfait gratuit. Envoyez un message. Si vous ne choisissez pas de modèle, ClawAI en choisit un pour vous.',
+        freeTierQ: 'Y a-t-il un forfait gratuit ?',
+        freeTierA:
+          "Oui — 0 $, aucune carte requise. Il inclut un petit quota quotidien, l'accès aux modèles d'entrée de gamme, et un essai gratuit chacun pour Comparaison, Juge et Recherche afin que vous puissiez voir ce que font les modes payants avant de les payer.",
+      },
+      plansBilling: {
+        title: 'Forfaits et facturation',
+        description: 'Ce que coûtent les niveaux, et comment fonctionne la facturation.',
+        plansQ: 'Quels forfaits sont disponibles ?',
+        plansA:
+          "Sept : Free à 0 $, Starter 5 $, Plus 10 $, Pro 20 $, Team 50 $, Scale 100 $ et Unlimited 200 $ par mois. Chaque forfait payant donne accès à tous les modèles — ce qui diffère, c'est votre quota, vos limites de messages quotidiennes, et le nombre d'exécutions Comparaison, Juge et Recherche dont vous disposez.",
+        paymentQ: 'Comment puis-je payer ?',
+        paymentA:
+          "Par carte, mensuellement ou annuellement. Payez annuellement et vous n'êtes facturé que pour dix mois au lieu de douze, soit deux mois offerts.",
+        changePlanQ: 'Puis-je changer de forfait plus tard ?',
+        changePlanA:
+          'Oui, à tout moment. Une mise à niveau vous donne immédiatement le quota supérieur ; une rétrogradation prend effet au début de votre prochaine période de facturation, afin que vous conserviez ce que vous avez déjà payé.',
+        cancelQ: 'Puis-je annuler ?',
+        cancelA:
+          "Oui, à tout moment et sans contacter personne. Votre forfait reste actif jusqu'à la fin de la période que vous avez payée, puis revient au forfait gratuit. Vos conversations, mémoires et fichiers ne sont pas supprimés lorsque vous annulez.",
+        failedPaymentQ: 'Que se passe-t-il si un paiement échoue ?',
+        failedPaymentA:
+          "Nous le retentons et vous envoyons un e-mail, et votre compte continue de fonctionner pendant la fenêtre de nouvelle tentative. S'il échoue toujours, le compte repasse au forfait gratuit plutôt que d'être bloqué — vous conservez vos données et pouvez restaurer le forfait en corrigeant le moyen de paiement.",
+        cardStorageQ: 'Stockez-vous les informations de ma carte ?',
+        cardStorageA:
+          'Non. Les données de carte vont directement à notre fournisseur de paiement et ne sont jamais stockées sur nos serveurs. Nous conservons une référence de paiement, pas un numéro de carte.',
+      },
+      modelsRouting: {
+        title: 'Modèles et routage',
+        description: "Quels modèles vous obtenez, et comment l'un d'eux est choisi.",
+        availableModelsQ: 'Quels modèles puis-je utiliser ?',
+        availableModelsA:
+          "Claude Opus 5, Sonnet 5 et Fable 5 ; GPT-5 et GPT-5 mini ; Gemini 3 Pro et Flash ; Kimi K2 ; GLM-5.1 ; Qwen3 ; DeepSeek V3.2 ; Grok 4 ; et des modèles hébergés sur Amazon Bedrock. Free et les forfaits moins chers donnent accès aux modèles d'entrée et de milieu de gamme ; les modèles de pointe premium se débloquent à partir de Pro.",
+        autoRoutingQ: 'Que fait réellement le routage Auto ?',
+        autoRoutingA:
+          "Il classe chaque message — code, raisonnement, analyse, écriture créative, image, question du quotidien — et l'envoie à un modèle performant dans cette catégorie et actuellement en bonne santé. La réponse vous indique ensuite quel modèle a été choisi, quelle a été la confiance de la classification, et pourquoi.",
+        pickModelQ: 'Puis-je choisir le modèle moi-même ?',
+        pickModelA:
+          'Oui. Choisissez-en un dans le sélecteur et chaque message de cette conversation lui sera envoyé. Vous pouvez changer en cours de conversation, ou orienter le mode Auto vers la vitesse, la profondeur de raisonnement ou le coût tout en conservant la classification par message.',
+        compareJudgeQ: 'Que sont Comparaison, Consensus et Juge ?',
+        compareJudgeA:
+          "Comparaison envoie un prompt à cinq modèles maximum et montre les réponses côte à côte. Consensus synthétise une réponse à partir des points d'accord de plusieurs modèles. Juge fait noter une réponse par un modèle indépendant selon des critères explicites, et Critique ajoute un retour écrit sur ce qui est faible. Free inclut un essai gratuit de Comparaison et Juge ; les forfaits payants ont des quotas mensuels, illimités à partir de Team.",
+        allowanceBurnQ: 'La Comparaison consomme-t-elle davantage mon quota ?',
+        allowanceBurnA:
+          "Oui. Exécuter un prompt sur quatre modèles coûte environ quatre réponses, pondérées selon le coût de chaque modèle. La consommation estimée est affichée avant que vous ne l'exécutiez, et chaque réponse indique ce qu'elle a réellement consommé.",
+      },
+      usageLimits: {
+        title: "Limites d'utilisation",
+        description: "Comment l'utilisation est mesurée, et ce qui se passe à la limite.",
+        measurementQ: 'Comment les limites sont-elles mesurées ?',
+        measurementA:
+          "En jetons pondérés selon le coût. Un jeton d'un modèle de pointe coûteux consomme davantage votre quota qu'un jeton d'un modèle bon marché et rapide, proportionnellement à ce qu'il coûte réellement. Cela garde un seul chiffre équitable entre des modèles dont les prix diffèrent de plus d'un ordre de grandeur. Les forfaits comportent aussi des nombres quotidiens de conversations et de messages.",
+        limitReachedQ: "Que se passe-t-il quand j'atteins une limite ?",
+        limitReachedA:
+          "On vous indique quelle limite vous avez atteinte, combien il reste sur les autres fenêtres et quand elle se réinitialise. Les quotas quotidiens se réinitialisent toutes les 24 heures ; les mensuels se réinitialisent avec votre période de facturation. Vous pouvez passer à un forfait supérieur pour un quota plus élevé immédiatement ou attendre la réinitialisation. Rien n'est supprimé, et rien ne s'arrête silencieusement.",
+      },
+      dataPrivacy: {
+        title: 'Données et confidentialité',
+        description: 'Ce qui arrive à ce que vous envoyez.',
+        whoCanSeeQ: 'Qui peut voir mes conversations ?',
+        whoCanSeeA:
+          "Vous. Les conversations, mémoires et fichiers sont limités à votre compte et ne sont pas lisibles par d'autres utilisateurs. Le personnel ne parcourt pas le contenu des utilisateurs ; l'accès aux données de production est restreint et journalisé, et nous vous demanderions votre autorisation avant de consulter une conversation précise pour déboguer un problème que vous avez signalé.",
+        trainingQ: 'Entraînez-vous des modèles sur mes données ?',
+        trainingA:
+          "Non. Vos prompts, fichiers et conversations ne sont utilisés pour entraîner aucun modèle, et nous ne les vendons pas. Lorsqu'un message est envoyé à un fournisseur de modèle, les conditions propres à ce fournisseur régissent cette requête — c'est d'ailleurs une des raisons pour lesquelles chaque réponse enregistre quel fournisseur l'a traitée.",
+        deletionQ: 'Puis-je supprimer mes données ?',
+        deletionA:
+          "Oui. Supprimez des messages individuels, des conversations entières, des mémoires ou des fichiers à tout moment, ou fermez votre compte et faites tout supprimer. Les fichiers expirent aussi selon un calendrier de rétention. Les enregistrements d'audit des actions au niveau du compte sont conservés pendant une durée limitée, car c'est ce qui rend un journal d'audit utile.",
+        certificationsQ: 'Avez-vous une certification SOC 2, ISO 27001 ou HIPAA ?',
+        certificationsA:
+          "Non. ClawAI ne détient aujourd'hui aucune certification de conformité, et nous ne laisserons pas entendre le contraire. Nous pouvons décrire les mécanismes en détail — chiffrement au repos et en transit, contrôle d'accès basé sur les rôles, journalisation d'audit, rétention configurable — et les entreprises ayant des exigences formelles devraient nous en faire part afin qu'elles puissent être évaluées dans le cadre d'un déploiement privé.",
+      },
+      organisations: {
+        title: 'Pour les entreprises',
+        description: 'Équipes, et déploiements dans votre propre réseau.',
+        privateDeploymentQ: 'Pouvons-nous exécuter ClawAI sur notre propre infrastructure ?',
+        privateDeploymentA:
+          "Oui. Les entreprises qui ne peuvent pas envoyer de données à un fournisseur de modèles tiers peuvent faire déployer toute la plateforme dans leur propre réseau, exécutant des modèles à poids ouverts sur leurs propres GPU, sans aucun appel à un fournisseur externe. C'est un engagement dimensionné sur mesure plutôt qu'un forfait que l'on achète en ligne. Le compromis est une isolation complète des données en échange de l'accès aux modèles de pointe, qui ne peuvent pas être exécutés sur site — contactez-nous et nous le dimensionnerons avec vous.",
+        teamAccountsQ: 'Prenez-vous en charge les équipes ?',
+        teamAccountsA:
+          "Oui. Le forfait Team et au-dessus offrent un espace de travail partagé, des permissions basées sur les rôles, davantage de connexions d'espace de travail et Comparaison, Juge, Critique et Recherche illimités. Pour tout ce qui va au-delà — authentification unique contre votre annuaire, règles de rétention personnalisées, documents d'approvisionnement — parlez-nous-en.",
+      },
+      contact: {
+        title: 'Encore une question ?',
+        description:
+          'Demandez-nous directement. Nous répondons aux questions sur les forfaits, les modèles, le traitement des données et les déploiements privés.',
+        ctaContact: 'Contactez-nous',
+        ctaStart: 'Commencez avec le forfait gratuit',
+      },
+    },
+    enterprise: {
+      hero: {
+        eyebrow: 'Pour les entreprises',
+        title: 'ClawAI dans votre propre réseau',
+        subtitle:
+          "Un déploiement privé de toute la plateforme sur votre infrastructure, exécutant des modèles à poids ouverts sur votre propre matériel. Aucun prompt, document ou conversation ne quitte votre réseau — car il n'y a nulle part ailleurs où ils pourraient aller.",
+        ctaContact: 'Contactez-nous',
+        ctaLearnMore: "Ce qu'inclut un déploiement",
+        note: "Il s'agit d'un engagement dimensionné sur mesure, pas d'un forfait que l'on achète en ligne. Le coût dépend de votre matériel, de vos exigences en matière de modèles et de la profondeur d'intégration nécessaire.",
+        lastReviewed: 'Dernière mise à jour',
+      },
+      audience: {
+        title: "À qui cela s'adresse",
+        intro:
+          "Les entreprises qui veulent des outils d'IA modernes mais ne peuvent pas accepter d'envoyer leurs données à un fournisseur de modèles tiers.",
+        governmentName: 'Gouvernement et secteur public',
+        governmentDesc:
+          "un travail couvert par des règles nationales sur les données, où le traitement doit rester à l'intérieur d'un périmètre désigné.",
+        healthcareName: 'Santé',
+        healthcareDesc:
+          'notes cliniques, dossiers patients et données de recherche qui ne peuvent pas être confiés à un processeur externe.',
+        financeName: 'Services financiers',
+        financeDesc:
+          "positions, dossiers clients et modèles internes, où une fuite est un événement réglementaire plutôt qu'un embarras.",
+        legalName: 'Juridique',
+        legalDesc:
+          'des documents protégés par le secret professionnel et des obligations de confidentialité client qui rendent le traitement par un tiers inenvisageable.',
+        defenceName: 'Défense et infrastructures critiques',
+        defenceDesc:
+          'environnements classifiés ou soumis au contrôle des exportations, y compris des réseaux sans aucune sortie vers Internet.',
+        residencyName: 'Exigences de résidence des données',
+        residencyDesc:
+          "des entreprises qui doivent garder le traitement à l'intérieur d'un pays ou d'une région spécifique, et pouvoir le prouver.",
+      },
+      deployment: {
+        title: "Ce qu'inclut un déploiement privé",
+        intro:
+          'La même plateforme décrite partout ailleurs sur ce site, déployée dans une infrastructure que vous contrôlez.',
+        platformName: 'La plateforme complète',
+        platformDesc:
+          "les dix-huit services, les bases de données, le bus d'événements et l'application web, déployés dans votre centre de données ou votre cloud privé.",
+        modelsName: 'Des modèles sur votre matériel',
+        modelsDesc:
+          'des modèles à poids ouverts servis sur vos propres GPU. Aucun appel à un fournisseur externe, aucun traitement par un tiers, aucune sortie réseau requise.',
+        identityName: "Votre fournisseur d'identité",
+        identityDesc:
+          'authentification unique contre votre annuaire existant, avec vos groupes mappés sur les rôles et permissions de ClawAI.',
+        policiesName: 'Vos politiques',
+        policiesDesc:
+          'règles de routage, périodes de rétention, ce qui peut être téléversé et qui peut utiliser quel modèle, le tout configuré selon vos exigences.',
+        auditName: "Votre journal d'audit",
+        auditDesc:
+          'chaque requête, décision et action administrative enregistrée dans votre environnement et exportable vers votre plateforme de journalisation existante.',
+        tenancyName: 'Locataire unique',
+        tenancyDesc:
+          "un déploiement dédié à votre entreprise. Rien n'est partagé avec un autre client, car il n'y a pas d'instance partagée.",
+      },
+      models: {
+        title: 'Les modèles que nous pouvons exécuter sur votre matériel',
+        intro:
+          'Des familles à poids ouverts qui fonctionnent bien sur les GPU des clients. Les modèles précis qui conviennent sont décidés lors du dimensionnement, car cela est limité par la mémoire et le débit dont vous disposez réellement.',
+        familiesLabel: 'Familles de modèles',
+        qwenDesc:
+          'Modèles généralistes et de programmation solides sur un éventail de tailles très large — souvent la famille la plus facile à adapter à un budget GPU donné.',
+        glmDesc:
+          'Modèles de raisonnement bilingue performants avec des modes de réflexion explicites, proches de la qualité des modèles de pointe.',
+        deepseekDesc:
+          'Mathématiques, algorithmes et raisonnement étape par étape, avec des variantes dédiées au raisonnement.',
+        llamaDesc:
+          'Modèles généralistes largement déployés avec des outils matures et un comportement prévisible.',
+        mistralDesc:
+          'Des modèles efficaces qui dépassent leur poids, utiles lorsque la mémoire GPU est la contrainte limitante.',
+        gemmaDesc:
+          'Des modèles petits et rapides bien adaptés à la classification, au routage et aux requêtes quotidiennes à haut volume.',
+        phiDesc:
+          'Des modèles très petits axés sur le raisonnement qui fonctionnent sur du matériel modeste, y compris les déploiements en périphérie.',
+        sizingNote:
+          "Nous dimensionnons l'ensemble de modèles par rapport à votre matériel réel lors du dimensionnement. Un seul GPU de station de travail et un rack d'accélérateurs mènent à des réponses très différentes, et nous préférons vous le dire avant un bon de commande plutôt qu'après.",
+      },
+      hybrid: {
+        title: 'Si certains modèles externes sont acceptables',
+        body1:
+          "Toutes les entreprises n'ont pas besoin d'un déploiement entièrement fermé. Certaines sont à l'aise d'utiliser des fournisseurs externes pour les travaux à faible sensibilité et n'ont besoin d'isolation que pour ce qui compte vraiment.",
+        body2:
+          'Cette configuration est prise en charge, la limite étant appliquée par politique plutôt que par la discipline des utilisateurs. Le local est le comportement par défaut ; tout le reste doit être explicitement autorisé.',
+        allowListTitle: "Listes d'autorisation explicites",
+        allowListDesc:
+          "les fournisseurs externes sont inaccessibles à moins qu'un administrateur ne les ajoute. Rien n'est activé par défaut.",
+        policyTitle: 'Routage piloté par politique',
+        policyDesc:
+          'des règles décident ce qui peut sortir — par utilisateur, par groupe, par classification de contenu, par espace de travail ou par conversation.',
+        localDefaultTitle: 'Local par défaut',
+        localDefaultDesc:
+          "si aucune règle n'autorise un modèle externe, la requête est servie sur votre propre matériel. Une mauvaise configuration échoue de manière fermée, pas ouverte.",
+        visibilityTitle: 'Sortie réseau visible',
+        visibilityDesc:
+          "chaque requête envoyée à un fournisseur externe est enregistrée avec qui l'a envoyée, quelle politique l'a autorisée et ce qui a quitté le réseau.",
+      },
+      compare: {
+        title: 'Hébergé ou privé',
+        intro:
+          "Deux produits différents pour deux problèmes différents. La plupart des entreprises devraient commencer par l'application hébergée et ne changer que si une exigence l'impose.",
+        hostedBadge: 'Libre-service',
+        hostedTitle: 'ClawAI hébergé',
+        hostedSubtitle: 'Inscrivez-vous en ligne, à partir de 5 $ par mois.',
+        hostedPoint1:
+          'Tous les modèles cloud de pointe — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok et Bedrock.',
+        hostedPoint2:
+          'Opérationnel en quelques minutes. Rien à installer et aucun matériel à acheter.',
+        hostedPoint3:
+          'Les nouveaux modèles de pointe apparaissent dès que les fournisseurs les publient.',
+        hostedPoint4:
+          'Les requêtes sont traitées par le fournisseur du modèle selon ses propres conditions.',
+        hostedPoint5: 'Quotas selon le forfait, facturés mensuellement ou annuellement.',
+        privateBadge: 'Contactez-nous',
+        privateTitle: 'Déploiement privé ClawAI',
+        privateSubtitle: 'Sur votre infrastructure, dimensionné par engagement.',
+        privatePoint1:
+          'Des modèles à poids ouverts servis sur vos propres GPU. Aucun appel à un fournisseur externe.',
+        privatePoint2:
+          'Déployé dans votre réseau, y compris les réseaux sans aucune sortie vers Internet.',
+        privatePoint3:
+          "Votre fournisseur d'identité, vos rôles, vos règles de rétention, votre journal d'audit.",
+        privatePoint4:
+          "La qualité des modèles est limitée par votre matériel, pas par l'état de l'art.",
+        privatePoint5: 'Dimensionné, déployé et remis avec notre équipe.',
+        footnote:
+          "Le compromis honnête : un déploiement privé vous donne une isolation complète des données et vous coûte l'accès aux modèles de pointe, qui ne peuvent absolument pas être exécutés sur site. Si votre travail n'exige pas cette isolation, l'application hébergée vous donnera de meilleures réponses pour moins cher.",
+      },
+      engagement: {
+        title: 'Ce que nous faisons',
+        intro:
+          'Un déploiement privé est un projet, pas un téléchargement. Voici le travail que cela implique.',
+        deployName: 'Déploiement',
+        deployDesc:
+          'installer et configurer la plateforme sur votre infrastructure, en fonction de votre réseau, de votre stockage et de votre topologie GPU.',
+        integrateName: 'Intégration',
+        integrateDesc:
+          "connecter votre fournisseur d'identité, vos outils internes et tout système existant que la plateforme doit atteindre.",
+        modelsName: 'Sélection et réglage des modèles',
+        modelsDesc:
+          "choisir l'ensemble de modèles que votre matériel peut servir, le benchmarker sur votre charge de travail réelle, et configurer le routage autour.",
+        policiesName: 'Configuration des politiques',
+        policiesDesc:
+          "règles d'accès, périodes de rétention, restrictions de téléversement et, le cas échéant, la politique de sortie pour les modèles externes.",
+        handoverName: 'Transfert',
+        handoverDesc:
+          "documentation, playbooks et formation, afin que votre équipe puisse l'exploiter, la mettre à niveau et la dépanner sans nous.",
+        supportName: 'Support continu',
+        supportDesc:
+          "un accord de support optionnel couvrant les mises à niveau, l'intégration de nouveaux modèles et la réponse aux incidents.",
+      },
+      compliance: {
+        title: 'Conformité, dite honnêtement',
+        body1:
+          "ClawAI ne détient aujourd'hui aucune certification de conformité. Ni SOC 2, ni ISO 27001, ni HIPAA. Quiconque prétend le contraire en notre nom a tort, et nous préférerions perdre une vente plutôt que de laisser entendre une garantie que nous n'avons pas.",
+        body2:
+          "Ce que nous pouvons faire, c'est décrire précisément les mécanismes — chiffrement au repos et en transit, contrôle d'accès basé sur les rôles sur chaque point de terminaison, journalisation d'audit complète, rétention configurable, locataire unique — et laisser votre équipe de sécurité les évaluer par rapport à votre référentiel. Un déploiement privé élimine aussi entièrement le traitement par un tiers, ce qui est souvent l'exigence la plus difficile à satisfaire autrement.",
+        body3:
+          "Si votre processus d'approvisionnement exige des contrôles, des preuves ou des engagements contractuels spécifiques, faites-le-nous savoir tôt. Nous les dimensionnons par engagement, et nous vous dirons clairement quand quelque chose est hors de portée plutôt que de vous laisser le découvrir lors d'un audit.",
+      },
+      start: {
+        title: 'Comment commencer',
+        intro: "Trois étapes, et la première ne coûte rien d'autre qu'une conversation.",
+        step1Title: 'Dites-nous ce dont vous avez besoin',
+        step1Desc:
+          "vos contraintes, le matériel que vous avez ou prévoyez d'acheter, et ce que le déploiement doit réellement faire.",
+        step2Title: 'Nous le dimensionnons',
+        step2Desc:
+          "une proposition concrète : ensemble de modèles, exigences d'infrastructure, travail d'intégration, calendrier et coût.",
+        step3Title: 'Nous déployons et transférons',
+        step3Desc:
+          'installation, configuration, benchmarking par rapport à votre charge de travail, documentation et formation pour votre équipe.',
+        cta: 'Contactez-nous',
+        ctaNote:
+          "Indiquez-nous votre secteur, vos contraintes et approximativement combien de personnes l'utiliseraient. C'est suffisant pour une première conversation utile.",
       },
     },
   },

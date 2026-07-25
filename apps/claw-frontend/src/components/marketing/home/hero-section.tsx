@@ -3,7 +3,8 @@
 import Link from 'next/link';
 
 import { buttonVariants } from '@/components/ui/button';
-import { MARKETING_GITHUB_URL, ROUTES } from '@/constants';
+import { MARKETING_HOME_PATHS } from '@/constants/marketing-home.constants';
+import { ROUTES } from '@/constants/routes.constants';
 import { useTranslation } from '@/lib/i18n';
 import type { HomeHeroProps } from '@/types';
 
@@ -22,21 +23,20 @@ export function HeroSection({ lastReviewed }: HomeHeroProps): React.ReactElement
        * buttonVariants() (a plain className fn) is used instead of the Radix
        * <Button asChild> component. */}
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <Link href={ROUTES.CHAT} className={buttonVariants({ size: 'lg' })}>
-          {t('marketing.home.hero.ctaOpen')}
+        <Link href={ROUTES.REGISTER} className={buttonVariants({ size: 'lg' })}>
+          {t('marketing.home.hero.ctaRegister')}
         </Link>
         <Link href={ROUTES.LOGIN} className={buttonVariants({ size: 'lg', variant: 'outline' })}>
           {t('marketing.home.hero.ctaLogin')}
         </Link>
-        <a
-          href={MARKETING_GITHUB_URL}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href={MARKETING_HOME_PATHS.HOW_IT_WORKS}
           className={buttonVariants({ size: 'lg', variant: 'ghost' })}
         >
-          {t('marketing.home.hero.ctaGithub')}
-        </a>
+          {t('marketing.home.hero.ctaHowItWorks')}
+        </Link>
       </div>
+      <p className="text-muted-foreground mt-5 text-sm">{t('marketing.home.hero.trustNote')}</p>
       <p className="text-muted-foreground mt-10 text-xs">
         {t('marketing.home.hero.lastReviewed')} {lastReviewed}
       </p>
