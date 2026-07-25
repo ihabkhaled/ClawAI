@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 170 identical headings (156085 vs 118400 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 170 identical headings (161008 vs 120521 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 3 identical headings (156085 vs 19206 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 3 identical headings (161008 vs 19483 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -27,7 +27,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CODEX.md and cursor.md share 4 identical headings (118400 vs 19206 bytes) — candidates for compact routing",
+        "message": "CODEX.md and cursor.md share 4 identical headings (120521 vs 19483 bytes) — candidates for compact routing",
         "severity": "medium"
       }
     ],
@@ -1725,6 +1725,36 @@
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-routing-service/src/modules/health/controllers/health.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/router-models/costs",
+          "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/router-models/costs",
+          "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/router-models/costs/:provider/:model",
+          "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/router-models/costs/:provider/:model/versions",
+          "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/router-models/costs/estimate",
+          "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/router-models/costs/price",
+          "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
         },
         {
           "method": "GET",
@@ -3713,6 +3743,16 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "LOCAL_COMPUTE_COST_PER_MILLION_MICRO_USD"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "LOCAL_COMPUTE_OWNERSHIP"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "LOCAL_VISION_MODEL_DETECTION_TIMEOUT_MS"
       },
       {
@@ -5500,9 +5540,29 @@
         "route": "/register"
       },
       {
+        "file": "apps/claw-frontend/src/app/(marketing)/architecture/page.tsx",
+        "kind": "page",
+        "route": "/architecture"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(marketing)/contact/page.tsx",
         "kind": "page",
         "route": "/contact"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/faq/page.tsx",
+        "kind": "page",
+        "route": "/faq"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/features/page.tsx",
+        "kind": "page",
+        "route": "/features"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/how-it-works/page.tsx",
+        "kind": "page",
+        "route": "/how-it-works"
       },
       {
         "file": "apps/claw-frontend/src/app/(marketing)/layout.tsx",
@@ -5510,9 +5570,19 @@
         "route": "/"
       },
       {
+        "file": "apps/claw-frontend/src/app/(marketing)/local-first-ai/page.tsx",
+        "kind": "page",
+        "route": "/local-first-ai"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(marketing)/page.tsx",
         "kind": "page",
         "route": "/"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/use-cases/page.tsx",
+        "kind": "page",
+        "route": "/use-cases"
       },
       {
         "file": "apps/claw-frontend/src/app/(portal)/admin/ai-action-policies/page.tsx",
@@ -5958,15 +6028,15 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 156085,
+          "bytes": 161008,
           "file": "CLAUDE.md"
         },
         {
-          "bytes": 118400,
+          "bytes": 120521,
           "file": "CODEX.md"
         },
         {
-          "bytes": 19206,
+          "bytes": 19483,
           "file": "cursor.md"
         },
         {
@@ -6367,7 +6437,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 3188
+        "value": 4014
       },
       "localeCount": 9,
       "locales": [
@@ -7096,12 +7166,32 @@
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "EntitlementInboxEvent"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "FeatureUsageRecord"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "Plan"
           },
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "PlanFeatureRule"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "PlanModelAccess"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "PlanPriceVersion"
           },
           {
             "confidence": "verified",
@@ -7112,6 +7202,11 @@
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "RolePermission"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "SeedExecution"
           },
           {
             "confidence": "verified",
@@ -7137,6 +7232,11 @@
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "UserPlanAssignment"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "WeightedUsageRecord"
           }
         ],
         "provider": {
@@ -7442,7 +7542,77 @@
           {
             "confidence": "verified",
             "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "BillingCustomer"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "CheckoutSession"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "FxQuote"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "GatewayPlanMapping"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "IdempotencyRecord"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "InboxEvent"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "Invoice"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "InvoiceLine"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "OutboxEvent"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "PaymentMethod"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "PaymentTransaction"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "ProrationQuote"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
             "value": "SeedExecution"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "Subscription"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "WebhookEvent"
           }
         ],
         "provider": {
@@ -7487,6 +7657,11 @@
       },
       "claw-routing-service": {
         "models": [
+          {
+            "confidence": "verified",
+            "source": "apps/claw-routing-service/prisma/schema.prisma",
+            "value": "ModelCostVersion"
+          },
           {
             "confidence": "verified",
             "source": "apps/claw-routing-service/prisma/schema.prisma",
@@ -7739,7 +7914,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 22
+        "testFiles": 25
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -7763,7 +7938,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 170
+        "testFiles": 171
       },
       "claw-health-service": {
         "runner": "jest",
@@ -7787,7 +7962,7 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 10
+        "testFiles": 21
       },
       "claw-research-service": {
         "runner": "jest",
@@ -7795,7 +7970,7 @@
       },
       "claw-routing-service": {
         "runner": "jest",
-        "testFiles": 49
+        "testFiles": 50
       },
       "claw-server-logs-service": {
         "runner": "jest",
@@ -8501,10 +8676,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 494,
-    "envVarCount": 326,
+    "endpointCount": 500,
+    "envVarCount": 328,
     "eventCount": 158,
-    "frontendRouteCount": 90,
+    "frontendRouteCount": 96,
     "localeCount": 9,
     "nginxRouteCount": 49,
     "permissionCount": 38,
@@ -8513,7 +8688,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 542,
+    "totalTestFiles": 558,
     "workspaceCount": 25
   }
 }

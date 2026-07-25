@@ -6,7 +6,7 @@
     ".ai/manifests/data-ownership.json": "396632ae",
     ".ai/manifests/docker-services.json": "a1f9bd7d",
     ".ai/manifests/environment-variables.json": "2890d28f",
-    ".ai/manifests/event-graph.json": "ed9b9cc3",
+    ".ai/manifests/event-graph.json": "66b3c829",
     ".ai/manifests/frontend-routes.json": "b9a79911",
     ".ai/manifests/governance.json": "2dfa1dd7",
     ".ai/manifests/i18n.json": "0e967502",
