@@ -56,10 +56,24 @@ describe('processContactSubmission', () => {
   it('delivers via the console transport when enabled', async () => {
     process.env.CONTACT_EMAIL_ENABLED = 'true';
     process.env.CONTACT_EMAIL_PROVIDER = 'console';
-    process.env.CONTACT_EMAIL_TO = 'ops@claw.local';
+    // A routable sender: a reserved-TLD from-address is refused before send,
+    // because a relay accepts it and then silently drops the mail.
+    process.env.CONTACT_EMAIL_FROM = 'no-reply@claw.ai';
+    process.env.CONTACT_EMAIL_TO = 'ops@claw.ai';
     const result = await processContactSubmission(validBody, headers());
     expect(result.httpStatus).toBe(200);
     expect(result.code).toBe(ContactResponseCode.DELIVERED);
+  });
+
+  it('refuses to send from a reserved-TLD address instead of reporting success', async () => {
+    // The failure this prevents is silent: the relay accepts the message, the
+    // app logs "delivered", and nothing arrives.
+    process.env.CONTACT_EMAIL_ENABLED = 'true';
+    process.env.CONTACT_EMAIL_PROVIDER = 'console';
+    process.env.CONTACT_EMAIL_FROM = 'no-reply@claw.local';
+    process.env.CONTACT_EMAIL_TO = 'ops@claw.ai';
+    const result = await processContactSubmission(validBody, headers());
+    expect(result.code).toBe(ContactResponseCode.ACCEPTED_NOT_CONFIGURED);
   });
 
   it('rate-limits repeated submissions from the same client', async () => {

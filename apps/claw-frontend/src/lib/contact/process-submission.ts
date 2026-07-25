@@ -9,6 +9,7 @@ import { buildContactEmail } from './contact-message-builder';
 import { resolveContactEmailTransport } from './email-transport-factory';
 import { checkRateLimit } from './rate-limiter';
 import { sanitizeForLog } from './sanitize';
+import { isNonRoutableSenderDomain } from './sender-domain';
 
 function outcome(
   code: ContactResponseCode,
@@ -54,6 +55,18 @@ export async function processContactSubmission(
   const transport = resolveContactEmailTransport(config);
   if (transport === null) {
     // Validated + accepted, but delivery is disabled/unconfigured.
+    return outcome(ContactResponseCode.ACCEPTED_NOT_CONFIGURED, 200);
+  }
+
+  // A sender on a reserved TLD is accepted by the relay and then silently
+  // dropped — the relay cannot DKIM-sign an unverifiable domain and the
+  // recipient sees no MX or SPF. Reporting "delivered" in that case is worse
+  // than failing, because nothing ever reveals the mail did not arrive.
+  if (isNonRoutableSenderDomain(config.fromAddress)) {
+    console.error(
+      `[contact] refusing to send: CONTACT_EMAIL_FROM domain is not routable ` +
+        `(${sanitizeForLog(config.fromAddress)}). Use an address verified with the mail provider.`,
+    );
     return outcome(ContactResponseCode.ACCEPTED_NOT_CONFIGURED, 200);
   }
 

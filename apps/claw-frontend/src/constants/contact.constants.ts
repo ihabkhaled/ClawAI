@@ -23,3 +23,15 @@ export const CONTACT_ERROR_MESSAGE_KEYS: Readonly<Record<string, string>> = {
 // ClientHello to those makes the server's plaintext greeting parse as a TLS
 // record, which surfaces as "wrong version number".
 export const SMTP_IMPLICIT_TLS_PORT = 465;
+
+// Reserved TLDs that can never route mail. `.local` is mDNS (RFC 6762); the
+// rest are reserved by RFC 2606. A sender on any of these is accepted by a
+// relay and then silently dropped, so it is treated as a configuration error
+// rather than a delivery attempt.
+export const NON_ROUTABLE_EMAIL_TLDS: ReadonlyArray<string> = [
+  'local',
+  'localhost',
+  'test',
+  'example',
+  'invalid',
+];
