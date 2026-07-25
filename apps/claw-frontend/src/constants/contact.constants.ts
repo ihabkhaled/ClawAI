@@ -17,3 +17,9 @@ export const CONTACT_ERROR_MESSAGE_KEYS: Readonly<Record<string, string>> = {
   error: 'marketing.contact.errorGeneric',
   rejected: 'marketing.contact.errorGeneric',
 };
+
+// The only SMTP port that speaks implicit TLS (SMTPS) from the first byte.
+// 587 and 25 begin in plaintext and upgrade via STARTTLS — sending a TLS
+// ClientHello to those makes the server's plaintext greeting parse as a TLS
+// record, which surfaces as "wrong version number".
+export const SMTP_IMPLICIT_TLS_PORT = 465;

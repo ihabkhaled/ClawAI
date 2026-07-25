@@ -28,11 +28,12 @@ const siteUrlSchema = z
   .refine(
     (value) => {
       const hostname = new URL(value).hostname.toLowerCase();
-      return (
-        hostname !== 'localhost' &&
-        hostname !== '127.0.0.1' &&
-        hostname !== '::1' &&
-      );
+      // A Vercel-assigned hostname is deliberately allowed: the production
+      // Vercel deployment is a legitimate canonical origin. Preview and
+      // development deployments are still excluded — by VERCEL_ENV in
+      // isVercelPreviewOrDevEnvironment(), which is the accurate signal, rather
+      // than by guessing from the hostname.
+      return hostname !== 'localhost' && hostname !== '127.0.0.1' && hostname !== '::1';
     },
     { message: 'SITE_URL must not be localhost, 127.0.0.1' },
   )

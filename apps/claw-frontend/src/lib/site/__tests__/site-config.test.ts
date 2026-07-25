@@ -37,13 +37,28 @@ describe('site-config', () => {
     vi.unstubAllEnvs();
   });
 
-  it('rejects a Vercel preview-shaped domain as production canonical', async () => {
+  it('accepts a Vercel production domain as canonical', async () => {
+    // The Vercel production deployment is a legitimate public origin, so the
+    // hostname alone is not disqualifying. Preview deployments are excluded by
+    // VERCEL_ENV below — the accurate signal — rather than by guessing from the
+    // hostname shape, which also rejected the real production domain.
     vi.stubEnv('NODE_ENV', 'production');
-    process.env['SITE_URL'] = 'https://my-app-git-branch.vercel.app';
+    process.env['SITE_URL'] = 'https://claw-ai.vercel.app';
     delete process.env['VERCEL_ENV'];
     const { isProductionCanonical } = await import('../site-config');
 
+    expect(isProductionCanonical()).toBe(true);
+    vi.unstubAllEnvs();
+  });
+
+  it('still rejects a Vercel PREVIEW deployment as canonical', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    process.env['SITE_URL'] = 'https://claw-ai.vercel.app';
+    process.env['VERCEL_ENV'] = 'preview';
+    const { isProductionCanonical } = await import('../site-config');
+
     expect(isProductionCanonical()).toBe(false);
+    delete process.env['VERCEL_ENV'];
     vi.unstubAllEnvs();
   });
 
