@@ -1,6 +1,16 @@
 import { z } from 'zod';
 
 const appConfigSchema = z.object({
+  // Local inference is NOT free — someone bought the GPU and someone pays for
+  // the electricity. Only compute the USER owns is genuinely zero-cost to the
+  // platform, which is the self-hosting default.
+  LOCAL_COMPUTE_OWNERSHIP: z.enum(['USER_OWNED', 'PLATFORM_HOSTED']).default('USER_OWNED'),
+  // Operational cost estimate for platform-hosted local inference, in micro-USD
+  // per million tokens. Leaving this at 0 while hosting the compute yourself is
+  // treated as a misconfiguration and fails CLOSED rather than pricing every
+  // local request as free.
+  LOCAL_COMPUTE_COST_PER_MILLION_MICRO_USD: z.coerce.number().int().min(0).default(0),
+
   ROUTING_DATABASE_URL: z.string().min(1, 'ROUTING_DATABASE_URL is required'),
   REDIS_URL: z.string().min(1, 'REDIS_URL is required'),
   RABBITMQ_URL: z.string().min(1, 'RABBITMQ_URL is required'),

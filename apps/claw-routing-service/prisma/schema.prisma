@@ -413,47 +413,47 @@ model RoutingCalibrationSnapshot {
 /// learned metrics (per (provider,model,taskFamily,topicKey)). The registry
 /// records identity, capabilities, economics, and lifecycle — one row per model.
 model RouterModelRegistry {
-  id                  String         @id @default(cuid())
+  id                       String         @id @default(cuid())
   // identity
-  provider            String // "OPENAI" | "ANTHROPIC" | "GEMINI" | "GROK" | "BEDROCK" | "DEEPSEEK" | "OLLAMA" | "LLAMACPP" | ...
-  modelKey            String         @map("model_key") // wire-name e.g. "gpt-4o-2024-11-20"
-  displayName         String         @map("display_name")
-  family              String?
-  connectorId         String?        @map("connector_id") // for cloud models — id from connector-service
-  runtimeId           String?        @map("runtime_id") // for local models — id from ollama/llamacpp service
+  provider                 String // "OPENAI" | "ANTHROPIC" | "GEMINI" | "GROK" | "BEDROCK" | "DEEPSEEK" | "OLLAMA" | "LLAMACPP" | ...
+  modelKey                 String         @map("model_key") // wire-name e.g. "gpt-4o-2024-11-20"
+  displayName              String         @map("display_name")
+  family                   String?
+  connectorId              String?        @map("connector_id") // for cloud models — id from connector-service
+  runtimeId                String?        @map("runtime_id") // for local models — id from ollama/llamacpp service
   // classification flags
-  isLocal             Boolean        @default(false) @map("is_local")
-  isRouterOnly        Boolean        @default(false) @map("is_router_only")
-  isExecutionCapable  Boolean        @default(true) @map("is_execution_capable")
-  lifecycle           ModelLifecycle @default(ACTIVE)
+  isLocal                  Boolean        @default(false) @map("is_local")
+  isRouterOnly             Boolean        @default(false) @map("is_router_only")
+  isExecutionCapable       Boolean        @default(true) @map("is_execution_capable")
+  lifecycle                ModelLifecycle @default(ACTIVE)
   // capabilities
-  modalitiesIn        ModalityKind[] @default([]) @map("modalities_in")
-  modalitiesOut       ModalityKind[] @default([]) @map("modalities_out")
-  contextWindowTokens Int?           @map("context_window_tokens")
-  maxOutputTokens     Int?           @map("max_output_tokens")
-  domainTags          DomainTag[]    @default([]) @map("domain_tags")
-  notRecommendedFor   DomainTag[]    @default([]) @map("not_recommended_for")
+  modalitiesIn             ModalityKind[] @default([]) @map("modalities_in")
+  modalitiesOut            ModalityKind[] @default([]) @map("modalities_out")
+  contextWindowTokens      Int?           @map("context_window_tokens")
+  maxOutputTokens          Int?           @map("max_output_tokens")
+  domainTags               DomainTag[]    @default([]) @map("domain_tags")
+  notRecommendedFor        DomainTag[]    @default([]) @map("not_recommended_for")
   // economics
-  inputCostPer1M      Decimal?       @map("input_cost_per_1m") @db.Decimal(12, 6)
-  outputCostPer1M     Decimal?       @map("output_cost_per_1m") @db.Decimal(12, 6)
-  costConfidence      CostConfidence @default(UNKNOWN) @map("cost_confidence")
-  costClass           CostClass?     @map("cost_class")
+  inputCostPer1M           Decimal?       @map("input_cost_per_1m") @db.Decimal(12, 6)
+  outputCostPer1M          Decimal?       @map("output_cost_per_1m") @db.Decimal(12, 6)
+  costConfidence           CostConfidence @default(UNKNOWN) @map("cost_confidence")
+  costClass                CostClass?     @map("cost_class")
   // performance (rolled from telemetry)
-  latencyP50Ms        Int?           @map("latency_p50_ms")
-  latencyP95Ms        Int?           @map("latency_p95_ms")
-  latencyClass        LatencyClass?  @map("latency_class")
+  latencyP50Ms             Int?           @map("latency_p50_ms")
+  latencyP95Ms             Int?           @map("latency_p95_ms")
+  latencyClass             LatencyClass?  @map("latency_class")
   // quality / safety
-  qualityTier         QualityTier    @default(B) @map("quality_tier")
-  hallucinationRisk   Decimal?       @map("hallucination_risk") @db.Decimal(4, 3)
-  judgeSuitability    Boolean        @default(false) @map("judge_suitability")
-  searchSuitability   Boolean        @default(false) @map("search_suitability")
-  fallbackSuitability Boolean        @default(true) @map("fallback_suitability")
+  qualityTier              QualityTier    @default(B) @map("quality_tier")
+  hallucinationRisk        Decimal?       @map("hallucination_risk") @db.Decimal(4, 3)
+  judgeSuitability         Boolean        @default(false) @map("judge_suitability")
+  searchSuitability        Boolean        @default(false) @map("search_suitability")
+  fallbackSuitability      Boolean        @default(true) @map("fallback_suitability")
   // privacy
-  privacySupport      PrivacyClass   @default(CLOUD_PERMITTED) @map("privacy_support")
+  privacySupport           PrivacyClass   @default(CLOUD_PERMITTED) @map("privacy_support")
   // metadata
-  metadataSource      String         @default("seed") @map("metadata_source") // seed | connector_sync | ollama_sync | llamacpp_sync | admin_override | learned
-  externalCardUrl     String?        @map("external_card_url")
-  notes               String?
+  metadataSource           String         @default("seed") @map("metadata_source") // seed | connector_sync | ollama_sync | llamacpp_sync | admin_override | learned
+  externalCardUrl          String?        @map("external_card_url")
+  notes                    String?
   // ─── Semantic Router Flagship — Phase 3: Model Intelligence enrichment ───
   // All fields below are additive and nullable / default-falsy. They surface
   // richer capability / cost / latency / domain metadata for the AI Route
@@ -463,48 +463,48 @@ model RouterModelRegistry {
   //
   // Capability flags. Unknown capability = NULL (NOT false). The planner
   // treats null as "do not assume; do not select for high-risk".
-  supportsStreaming         Boolean?  @default(false) @map("supports_streaming")
-  supportsTools             Boolean?  @default(false) @map("supports_tools")
-  supportsStructuredOutput  Boolean?  @default(false) @map("supports_structured_output")
-  supportsVision            Boolean?  @default(false) @map("supports_vision")
-  supportsAudioInput        Boolean?  @default(false) @map("supports_audio_input")
-  supportsAudioOutput       Boolean?  @default(false) @map("supports_audio_output")
-  supportsVideoInput        Boolean?  @default(false) @map("supports_video_input")
-  supportsFileInput         Boolean?  @default(false) @map("supports_file_input")
-  supportsEmbeddings        Boolean?  @default(false) @map("supports_embeddings")
-  supportsLongContext       Boolean?  @default(false) @map("supports_long_context")
+  supportsStreaming        Boolean?       @default(false) @map("supports_streaming")
+  supportsTools            Boolean?       @default(false) @map("supports_tools")
+  supportsStructuredOutput Boolean?       @default(false) @map("supports_structured_output")
+  supportsVision           Boolean?       @default(false) @map("supports_vision")
+  supportsAudioInput       Boolean?       @default(false) @map("supports_audio_input")
+  supportsAudioOutput      Boolean?       @default(false) @map("supports_audio_output")
+  supportsVideoInput       Boolean?       @default(false) @map("supports_video_input")
+  supportsFileInput        Boolean?       @default(false) @map("supports_file_input")
+  supportsEmbeddings       Boolean?       @default(false) @map("supports_embeddings")
+  supportsLongContext      Boolean?       @default(false) @map("supports_long_context")
   // Token ceilings as exposed by upstream cards (already covered by
   // contextWindowTokens/maxOutputTokens above — these aliases let the
   // intelligence shape stay 1:1 with §6.1 of the flagship prompt).
-  maxContextTokens          Int?      @map("max_context_tokens")
-  maxOutputTokensIntel      Int?      @map("max_output_tokens_intel")
+  maxContextTokens         Int?           @map("max_context_tokens")
+  maxOutputTokensIntel     Int?           @map("max_output_tokens_intel")
   // Domain / role guidance for the planner. String arrays so future
   // taxonomy additions don't require a new migration.
-  domainStrengths           String[]  @default([]) @map("domain_strengths")
-  roleStrengths             String[]  @default([]) @map("role_strengths")
-  weakDomains               String[]  @default([]) @map("weak_domains")
-  bestFor                   String[]  @default([]) @map("best_for")
-  avoidFor                  String[]  @default([]) @map("avoid_for")
-  languageStrengths         String[]  @default([]) @map("language_strengths")
+  domainStrengths          String[]       @default([]) @map("domain_strengths")
+  roleStrengths            String[]       @default([]) @map("role_strengths")
+  weakDomains              String[]       @default([]) @map("weak_domains")
+  bestFor                  String[]       @default([]) @map("best_for")
+  avoidFor                 String[]       @default([]) @map("avoid_for")
+  languageStrengths        String[]       @default([]) @map("language_strengths")
   // Quality / cost / latency / privacy as STRING tier labels separate from
   // the existing typed enum columns. This keeps the canonical enum columns
   // untouched while giving the planner a free-form override hook.
-  qualityTierLabel          String?   @map("quality_tier_label") // "BASIC" | "STANDARD" | "PRO" | "FRONTIER"
-  costClassLabel            String?   @map("cost_class_label")   // "FREE" | "LOW" | "MEDIUM" | "HIGH" | "PREMIUM"
-  costConfidenceLabel       String?   @map("cost_confidence_label") // "EXACT" | "ESTIMATED" | "UNKNOWN"
-  estimatedInputCostPer1M   Float?    @map("estimated_input_cost_per_1m")
-  estimatedOutputCostPer1M  Float?    @map("estimated_output_cost_per_1m")
-  latencyClassLabel         String?   @map("latency_class_label") // "FAST" | "MEDIUM" | "SLOW"
-  privacyClassLabel         String?   @map("privacy_class_label") // "local" | "cloud"
+  qualityTierLabel         String?        @map("quality_tier_label") // "BASIC" | "STANDARD" | "PRO" | "FRONTIER"
+  costClassLabel           String?        @map("cost_class_label") // "FREE" | "LOW" | "MEDIUM" | "HIGH" | "PREMIUM"
+  costConfidenceLabel      String?        @map("cost_confidence_label") // "EXACT" | "ESTIMATED" | "UNKNOWN"
+  estimatedInputCostPer1M  Float?         @map("estimated_input_cost_per_1m")
+  estimatedOutputCostPer1M Float?         @map("estimated_output_cost_per_1m")
+  latencyClassLabel        String?        @map("latency_class_label") // "FAST" | "MEDIUM" | "SLOW"
+  privacyClassLabel        String?        @map("privacy_class_label") // "local" | "cloud"
   // adminOverrideJson is the "freeze" block. Sync passes MUST NOT overwrite
   // any key present here. See `ModelIntelligenceService.applyOverrides()`
   // and `RouterSyncManager.applySnapshot()`.
-  adminOverrideJson         Json?     @map("admin_override_json")
-  lastEnrichedAt            DateTime? @map("last_enriched_at")
+  adminOverrideJson        Json?          @map("admin_override_json")
+  lastEnrichedAt           DateTime?      @map("last_enriched_at")
   // bookkeeping
-  createdAt           DateTime       @default(now()) @map("created_at")
-  updatedAt           DateTime       @updatedAt @map("updated_at")
-  lastSyncedAt        DateTime?      @map("last_synced_at")
+  createdAt                DateTime       @default(now()) @map("created_at")
+  updatedAt                DateTime       @updatedAt @map("updated_at")
+  lastSyncedAt             DateTime?      @map("last_synced_at")
 
   overrides RouterAdminOverride[]
 
@@ -521,20 +521,20 @@ model RouterModelRegistry {
 /// RouterModelRegistry so manual admin overrides stay clean and learning
 /// can be bounded/rolled back without touching the canonical registry.
 model RouterLearnedScore {
-  id                String   @id @default(cuid())
-  profileKey        String   @map("profile_key")
+  id                String    @id @default(cuid())
+  profileKey        String    @map("profile_key")
   domain            DomainTag
-  taskFamily        String   @map("task_family")
-  successRate       Decimal  @default(0.6) @map("success_rate") @db.Decimal(6, 4)
-  feedbackPositive  Int      @default(0) @map("feedback_positive")
-  feedbackNegative  Int      @default(0) @map("feedback_negative")
-  judgeVerified     Int      @default(0) @map("judge_verified")
-  judgeRevised      Int      @default(0) @map("judge_revised")
-  judgeEscalated    Int      @default(0) @map("judge_escalated")
-  fallbackTriggered Int      @default(0) @map("fallback_triggered")
-  totalRoutes       Int      @default(0) @map("total_routes")
-  lastUpdatedAt     DateTime @default(now()) @map("last_updated_at")
-  createdAt         DateTime @default(now()) @map("created_at")
+  taskFamily        String    @map("task_family")
+  successRate       Decimal   @default(0.6) @map("success_rate") @db.Decimal(6, 4)
+  feedbackPositive  Int       @default(0) @map("feedback_positive")
+  feedbackNegative  Int       @default(0) @map("feedback_negative")
+  judgeVerified     Int       @default(0) @map("judge_verified")
+  judgeRevised      Int       @default(0) @map("judge_revised")
+  judgeEscalated    Int       @default(0) @map("judge_escalated")
+  fallbackTriggered Int       @default(0) @map("fallback_triggered")
+  totalRoutes       Int       @default(0) @map("total_routes")
+  lastUpdatedAt     DateTime  @default(now()) @map("last_updated_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
 
   @@unique([profileKey, domain, taskFamily])
   @@index([profileKey])
@@ -612,4 +612,93 @@ model RouterAdminOverride {
   @@index([profileId])
   @@index([isActive])
   @@map("router_admin_overrides")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Versioned model cost accounting (payment flagship)
+//
+// Raw token count is not an economic unit — providers charge different rates for
+// input, output, cached reads, reasoning, media and tool calls. Quota is metered
+// in cost-normalized "weighted" tokens, and this table is where the cost comes
+// from.
+//
+// Every rate is integer MICRO-USD. Floating point is banned on this path: a
+// float rounding error repeated across millions of requests is a real revenue
+// leak, and JS cannot represent a tenth of a cent exactly.
+//
+// Prices are VERSIONED, not mutated. A rate change retires the current row and
+// inserts a new one, so a historical usage record can always be re-priced with
+// the rates that were actually in force when it ran.
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ModelCostSource {
+  SEED
+  PROVIDER_SYNC
+  ADMIN_OVERRIDE
+  // Cost the provider itself reported for a completed call — the most accurate
+  // source, used to reconcile an estimate against reality.
+  PROVIDER_REPORTED
+}
+
+// Who pays for a local model's compute. Local inference is NOT free: someone
+// bought the GPU and someone pays for the electricity. Only compute the USER
+// owns is genuinely zero-cost to the platform.
+enum LocalComputeOwnership {
+  USER_OWNED
+  PLATFORM_HOSTED
+}
+
+model ModelCostVersion {
+  id       String @id @default(cuid())
+  provider String
+  modelKey String @map("model_key")
+  version  Int
+  currency String @default("USD")
+
+  // Per-million-token rates, integer micro-USD. Nullable because providers
+  // publish different subsets; a null rate contributes zero to the estimate and
+  // LOWERS the confidence rather than silently pricing the modality as free.
+  inputPerMillionMicroUsd       BigInt? @map("input_per_million_micro_usd")
+  outputPerMillionMicroUsd      BigInt? @map("output_per_million_micro_usd")
+  cachedInputPerMillionMicroUsd BigInt? @map("cached_input_per_million_micro_usd")
+  cacheWritePerMillionMicroUsd  BigInt? @map("cache_write_per_million_micro_usd")
+  reasoningPerMillionMicroUsd   BigInt? @map("reasoning_per_million_micro_usd")
+
+  // Per-unit rates, integer micro-USD.
+  imagePerUnitMicroUsd      BigInt? @map("image_per_unit_micro_usd")
+  audioPerUnitMicroUsd      BigInt? @map("audio_per_unit_micro_usd")
+  videoPerUnitMicroUsd      BigInt? @map("video_per_unit_micro_usd")
+  toolCallPerUnitMicroUsd   BigInt? @map("tool_call_per_unit_micro_usd")
+  searchCallPerUnitMicroUsd BigInt? @map("search_call_per_unit_micro_usd")
+
+  costClass  CostClass       @default(STANDARD) @map("cost_class")
+  confidence CostConfidence  @default(UNKNOWN)
+  source     ModelCostSource @default(SEED)
+
+  // An automated sync must NEVER overwrite an active administrator override.
+  // Losing a hand-negotiated enterprise rate to a nightly scrape would silently
+  // mis-bill every request on that model until someone noticed.
+  isAdminOverride Boolean @default(false) @map("is_admin_override")
+
+  // Local-model compute accounting. Null for cloud models.
+  localComputeOwnership LocalComputeOwnership? @map("local_compute_ownership")
+
+  isActive  Boolean @default(true) @map("is_active")
+  // Emulated partial-unique index: carries "<provider>:<modelKey>" while this
+  // row is the live price and NULL once retired. Postgres treats every NULL as
+  // distinct, so retired rows coexist freely but a second ACTIVE price for one
+  // model is rejected by the database itself.
+  activeKey String? @unique @map("active_key")
+
+  effectiveFrom   DateTime  @default(now()) @map("effective_from")
+  retiredAt       DateTime? @map("retired_at")
+  lastVerifiedAt  DateTime? @map("last_verified_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  createdByUserId String?   @map("created_by_user_id")
+  notes           String?
+
+  @@unique([provider, modelKey, version])
+  @@index([provider, modelKey])
+  @@index([isActive])
+  @@map("model_cost_versions")
 }

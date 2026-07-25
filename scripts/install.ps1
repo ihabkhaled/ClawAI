@@ -1041,6 +1041,15 @@ AUTH_PORT=4001
 CHAT_PORT=4002
 CONNECTOR_PORT=4003
 ROUTING_PORT=4004
+# Local-model compute cost accounting (routing-service).
+# Local inference is NOT free — someone bought the GPU and someone pays for the
+# electricity. USER_OWNED means the user runs the hardware, so it costs the
+# platform nothing. PLATFORM_HOSTED means you run it, and the estimate below
+# must be set: leaving it at 0 while hosting is treated as a misconfiguration
+# and local models are priced as UNPRICED (fail closed) rather than free.
+LOCAL_COMPUTE_OWNERSHIP=USER_OWNED
+LOCAL_COMPUTE_COST_PER_MILLION_MICRO_USD=0
+
 MEMORY_PORT=4005
 FILES_PORT=4006
 AUDIT_PORT=4007
