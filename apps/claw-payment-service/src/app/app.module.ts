@@ -14,6 +14,7 @@ import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
 import { GlobalExceptionFilter } from './filters/global-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
+import { GatewaysModule } from '../modules/gateways/gateways.module';
 import { HealthModule } from '../modules/health/health.module';
 
 @Module({
@@ -80,6 +81,7 @@ import { HealthModule } from '../modules/health/health.module';
     PrismaModule,
     RedisModule,
     HealthModule,
+    GatewaysModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
