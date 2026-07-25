@@ -2,17 +2,57 @@
 # Pre-push: verify the governance/knowledge integrity + run affected tests/build.
 # NEVER bypass with --no-verify. Local scope stays cheap; CI does the full pass.
 
+# Everything below must judge what is BEING PUSHED, not what happens to be lying
+# around in the working tree. The generators and the affected-workspace walker
+# both read the filesystem, so uncommitted work makes them report on code that
+# is not part of this push — knowledge:verify then fails on a manifest that is
+# perfectly correct for the committed tree, and the push is blocked for no real
+# reason.
+#
+# So: hide anything not committed, run the checks against the committed tree,
+# then restore. The trap restores even on failure or interrupt — blocking a push
+# is a nuisance, losing a developer's uncommitted work to a hook is not.
+STASHED=0
+if ! git diff --quiet HEAD || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+  if git stash push --quiet --include-untracked --message "pre-push-verify-$$"; then
+    STASHED=1
+    echo "pre-push: parked uncommitted work so the checks see exactly what is being pushed"
+  fi
+fi
+
+restore_stash() {
+  if [ "$STASHED" = "1" ]; then
+    STASHED=0
+    git stash pop --quiet || echo "→ WARNING: could not restore your work; recover it with 'git stash list'"
+  fi
+}
+trap 'restore_stash' EXIT INT TERM
+
+fail() {
+  echo "$1"
+  restore_stash
+  exit 1
+}
+
 echo "pre-push 1/4: knowledge integrity (freshness, links, no hook-bypass, contradictions)"
-npm run knowledge:verify || exit 1
+npm run knowledge:verify || fail "→ knowledge:verify failed"
+npm run audit:check || fail "→ audit:check failed — run 'npm run audit' and commit the snapshot"
 
 echo "pre-push 2/4: knowledge + architecture tooling tests"
-npm run knowledge:test || exit 1
-npm run architecture:check || exit 1
+npm run knowledge:test || fail "→ knowledge:test failed"
+npm run architecture:check || fail "→ architecture:check failed"
 
 echo "pre-push 3/4: test affected workspaces"
-node tools/affected/index.mjs test --base=origin/HEAD || node tools/affected/index.mjs test --base=main || exit 1
+node tools/affected/index.mjs test --base=origin/HEAD ||
+  node tools/affected/index.mjs test --base=main ||
+  fail "→ affected tests failed"
 
 echo "pre-push 4/4: build affected workspaces"
-node tools/affected/index.mjs build --base=origin/HEAD || node tools/affected/index.mjs build --base=main || exit 1
+node tools/affected/index.mjs build --base=origin/HEAD ||
+  node tools/affected/index.mjs build --base=main ||
+  fail "→ affected build failed"
+
+restore_stash
+trap - EXIT INT TERM
 
 echo "pre-push OK"
